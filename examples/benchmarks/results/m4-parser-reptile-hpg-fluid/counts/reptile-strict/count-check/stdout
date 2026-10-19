@@ -1,0 +1,5 @@
+COUNT unbudgeted reptile-strict normal rune
+COUNT unbudgeted reptile-strict normal rune:opt
+COUNT unbudgeted reptile-strict normal rune:new
+COUNT unbudgeted reptile-strict normal rune:jit
+COUNT comparisons agree

@@ -1,0 +1,336 @@
+diff --git a/Makefile b/Makefile
+index 050a0907f..4215a76a8 100644
+--- a/Makefile
++++ b/Makefile
+@@ -990,6 +990,7 @@ bench-check: build/bench-catalog.rbc vm
+ bench-smoke: build/bench-catalog.rbc vm
+ 	bin/runevm build/bench-catalog.rbc --check
+ 	sh tests/benchmarks/check-catalog.sh
++	sh tests/benchmarks/check-matrix-status.sh
+ 	RUNE_BENCH_COMPILE_OPTIONS=-O2 sh scripts/run-benchmarks.sh --routine --configs rune
+ 
+ # Every imported program has a smoke and normal profile. This explicit target
+diff --git a/docs/plans/benchmarks.md b/docs/plans/benchmarks.md
+index 0685fa5a5..a2c7cf8f0 100644
+--- a/docs/plans/benchmarks.md
++++ b/docs/plans/benchmarks.md
+@@ -1,6 +1,6 @@
+ # Benchmark suite roadmap
+ 
+-Status: **in progress**, 2026-10-18. M0, M1, M2 and M3 are complete with
++Status: **in progress**, 2026-10-19. M0, M1, M2 and M3 are complete with
+ [recorded validation](../../examples/benchmarks/validation.md). M4 is in progress; M5, M6 and M7 are complete with recorded evidence; M8 remains planned. Source inventory entries are scheduled work, not passing ports.
+ 
+ ## Goal and current baseline
+@@ -35,7 +35,7 @@ The [runnable catalogue](../../examples/benchmarks/README.md) contains the M1
+ pilots, the validated M2 classic collection and the completed M5 sequential
+ Sandmark collection. M3 kernels are complete; M4 applications remain in progress; M8
+ coverage closure remains planned.
+-The current catalogue has 495 programs and 1437 profiles. The Happy wave
++The current catalogue has 503 programs and 1461 profiles. The Happy wave
+ has [recorded validation](../../examples/benchmarks/results/m3-happy/README.md):
+ all normal profiles and 50280 semantic assertions pass, with two unclassified
+ ML Kit smoke compile failures retained. Counts, serial adapter diagnostics
+@@ -48,8 +48,10 @@ Twelve complete semantic groups each pass 5081 assertions; the partial
+ legacy SML/NJ and empty-log ML Kit groups remain incomplete. Normal counts
+ and repository acceptance pass. All 92 suitable M3 inventory paths now have
+ implemented smoke/normal profiles and documented variants.
+-M4 still has anna, fluid, hpg, parser, reptile and veritas; M8 closes the
+-inventories, evidence, documentation and maintenance procedures.
++M4 now registers parser, reptile, hpg and fluid with complete independent
++reference checks; their public host/profile, count and acceptance gates are
++pending. Anna and veritas remain unported. M8 closes the inventories,
++evidence, documentation and maintenance procedures.
+ 
+ ## Sources, naming, and portable programs
+ 
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 04ff2d8c7..68e4b23c8 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -506,6 +506,14 @@ M4 applications and M8 coverage closure remain unfinished.
+ | [nucleic2-strict](#nucleic2-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/nucleic2) | Search the binary32 Pseudoknot problem with on-demand coordinates and eager finite data. |
+ | [nucleic2-shared-lazy](#nucleic2-shared-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/nucleic2) | Search the binary32 Pseudoknot problem with shared placed coordinates and memoized finite data. |
+ | [nucleic2-shared-strict](#nucleic2-shared-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/nucleic2) | Search the binary32 Pseudoknot problem with shared placed coordinates and eager finite data. |
++| [parser-lazy](#parser-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/parser) | Parse and render Haskell modules using layout, higher-order combinators and a dynamic fixity environment. |
++| [parser-strict](#parser-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/parser) | Parse and render Haskell modules using layout, higher-order combinators and a dynamic fixity environment. |
++| [reptile-lazy](#reptile-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/reptile) | Generate and hash a scripted MGR tiling-editor protocol with exact rational geometry. |
++| [reptile-strict](#reptile-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/reptile) | Generate and hash a scripted MGR tiling-editor protocol with exact rational geometry. |
++| [hpg-lazy](#hpg-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/hpg) | Generate and hash seeded Haskell types, values and expressions through continuation-passing functions. |
++| [hpg-strict](#hpg-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/hpg) | Generate and hash seeded Haskell types, values and expressions through continuation-passing functions. |
++| [fluid-lazy](#fluid-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fluid) | Solve and hash the supplied finite-element flow model using sparse tries, Cholesky and Jacobi methods. |
++| [fluid-strict](#fluid-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fluid) | Solve and hash the supplied finite-element flow model using sparse tries, Cholesky and Jacobi methods. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -34408,3 +34416,59 @@ independent result checks and literature.
+ See the [complete provenance](nucleic2-shared-strict/PROVENANCE.md) for the molecular search,
+ source variants, binary32 semantics, demand/sharing policy, fixed profiles,
+ independent result checks and literature.
++
++
++## parser-lazy
++
++See the [complete provenance](parser-lazy/PROVENANCE.md) for the workload,
++source history, variants, translation, input profiles, result checks and references.
++Public host/profile validation for this import wave is pending.
++
++
++## parser-strict
++
++See the [complete provenance](parser-strict/PROVENANCE.md) for the workload,
++source history, variants, translation, input profiles, result checks and references.
++Public host/profile validation for this import wave is pending.
++
++
++## reptile-lazy
++
++See the [complete provenance](reptile-lazy/PROVENANCE.md) for the workload,
++source history, variants, translation, input profiles, result checks and references.
++Public host/profile validation for this import wave is pending.
++
++
++## reptile-strict
++
++See the [complete provenance](reptile-strict/PROVENANCE.md) for the workload,
++source history, variants, translation, input profiles, result checks and references.
++Public host/profile validation for this import wave is pending.
++
++
++## hpg-lazy
++
++See the [complete provenance](hpg-lazy/PROVENANCE.md) for the workload,
++source history, variants, translation, input profiles, result checks and references.
++Public host/profile validation for this import wave is pending.
++
++
++## hpg-strict
++
++See the [complete provenance](hpg-strict/PROVENANCE.md) for the workload,
++source history, variants, translation, input profiles, result checks and references.
++Public host/profile validation for this import wave is pending.
++
++
++## fluid-lazy
++
++See the [complete provenance](fluid-lazy/PROVENANCE.md) for the workload,
++source history, variants, translation, input profiles, result checks and references.
++Public host/profile validation for this import wave is pending.
++
++
++## fluid-strict
++
++See the [complete provenance](fluid-strict/PROVENANCE.md) for the workload,
++source history, variants, translation, input profiles, result checks and references.
++Public host/profile validation for this import wave is pending.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index cb0230710..1c9eb64f2 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -566,14 +566,14 @@ nofib	real/eff/VS	VS	VS	M4	import	kernel		not stated in scanned source headers	b
+ nofib	real/eff/VSD	VSD	VSD	M4	import	kernel		not stated in scanned source headers	189bf8f73247270cc9714b13a9783f2321f911ee44718559f9b25a8265d9c0b9	real/eff/VSD/EffBench.hs;real/eff/VSD/Main.hs	real/eff/VSD/VSD.stdout		real/eff/VSD/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/eff/VSM	VSM	VSM	M4	import	kernel		not stated in scanned source headers	3187d3683f07f58d29ed5f73325d0d7b81f5593a01a41fd8e2f29d39e5c280a2	real/eff/VSM/EffBench.hs;real/eff/VSM/Main.hs	real/eff/VSM/VSM.stdout	real/eff/VSM/EffBench.hs:header	real/eff/VSM/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/fem	data.3	data.3	M4	import	application		Junxian Liu	7c06a52d51982c9ef4e6f964a1e262d4101adf27abc3f89bf800c7afcb160179	real/fem/Assemble_loadvec.hs;real/fem/Assemble_stiffness.hs;real/fem/Basics.hs;real/fem/DB_interface.hs;real/fem/Database.hs;real/fem/Degrees.hs;real/fem/Displacement.hs;real/fem/Elemforce.hs;real/fem/Elemstif.hs;real/fem/Main.hs;real/fem/Matrix.hs;real/fem/NofibUtils.hs;real/fem/Pre_assemble.hs;real/fem/PrintSource.hs;real/fem/Printuvwforce.hs;real/fem/VBlldecomp.hs;real/fem/VBmatrix.hs;real/fem/Vector.hs;real/fem/inC/assemble_loadvec.c;real/fem/inC/assemble_stiffness.c;real/fem/inC/bar_2d.c;real/fem/inC/database;real/fem/inC/displacement.c;real/fem/inC/fem.c;real/fem/inC/internalforce.c;real/fem/inC/pre_assemble.c;real/fem/inC/read_data.c;real/fem/inC/vblldecomp.c	real/fem/data.0;real/fem/data.1;real/fem/data.2;real/fem/data.3;real/fem/fem.stdin	real/fem/README:header	real/fem/Makefile;real/fem/README;real/fem/README:author-and-model-description;real/fem/data.0:reviewed-model-input;real/fem/data.1:reviewed-model-input;real/fem/data.2:reviewed-model-input;real/fem/data.3:reviewed-model-input	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	real/fluid	fluid	fluid	M4	import	numerical		not stated in scanned source headers	b19f1d5811ff52215d0b18f2761bb697464a539e9a54f38a00bd8e1fb52d0a50	real/fluid/Asb_routs.hs;real/fluid/C_matrix.hs;real/fluid/Chl_decomp.hs;real/fluid/Chl_method.hs;real/fluid/Chl_routs.hs;real/fluid/Defs.hs;real/fluid/Elefac.hs;real/fluid/Input_proc.hs;real/fluid/Jcb_method.hs;real/fluid/L_matrix.hs;real/fluid/Main.hs;real/fluid/Min_degree.hs;real/fluid/NofibUtils.hs;real/fluid/Norm.hs;real/fluid/Rhs_Asb_routs.hs;real/fluid/S_Array.hs;real/fluid/S_matrix.hs;real/fluid/TG_iter.hs;real/fluid/Tol_cal.hs	real/fluid/fluid.stdin		real/fluid/Makefile;real/fluid/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/fluid	fluid	fluid	M4	import	numerical		XZ (source initials)	b19f1d5811ff52215d0b18f2761bb697464a539e9a54f38a00bd8e1fb52d0a50	real/fluid/Asb_routs.hs;real/fluid/C_matrix.hs;real/fluid/Chl_decomp.hs;real/fluid/Chl_method.hs;real/fluid/Chl_routs.hs;real/fluid/Defs.hs;real/fluid/Elefac.hs;real/fluid/Input_proc.hs;real/fluid/Jcb_method.hs;real/fluid/L_matrix.hs;real/fluid/Main.hs;real/fluid/Min_degree.hs;real/fluid/NofibUtils.hs;real/fluid/Norm.hs;real/fluid/Rhs_Asb_routs.hs;real/fluid/S_Array.hs;real/fluid/S_matrix.hs;real/fluid/TG_iter.hs;real/fluid/Tol_cal.hs	real/fluid/fluid.stdin;real/fluid/runtime_files/chan8.dat		real/fluid/Defs.hs:dated-source-initials-not-expanded;real/fluid/Makefile;real/fluid/README;real/fluid/runtime_files/chan8.dat:channel-model-header;real/fluid/runtime_files/chan8.dat:runtime-mesh-input	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/fulsom/Bah.hs	Bah	Bah	-	exclude	application	nofib:gc/fulsom/Bah.hs	Duncan Sinclair	09bfd257e0a8c5886cdc5de12fef19f0a67a6f0bc68b00f93eb7d4c2489f4dc3	real/fulsom/Bah.hs;real/fulsom/Csg.hs;real/fulsom/Interval.hs;real/fulsom/Kolor.hs;real/fulsom/Matrix.hs;real/fulsom/Oct.hs;real/fulsom/Quad.hs;real/fulsom/Raster.hs;real/fulsom/Shapes.hs;real/fulsom/Types.hs;real/fulsom/Vector.hs	real/fulsom/fulsom.faststdout;real/fulsom/fulsom.slowstdout;real/fulsom/fulsom.stdout	real/fulsom/Bah.hs:header;real/fulsom/Csg.hs:header;real/fulsom/Interval.hs:header;real/fulsom/Kolor.hs:header;real/fulsom/Matrix.hs:header;real/fulsom/Oct.hs:header;real/fulsom/Quad.hs:header;real/fulsom/Raster.hs:header;real/fulsom/Shapes.hs:header;real/fulsom/Types.hs:header;real/fulsom/Vector.hs:header	real/fulsom/Interval.hs:author-and-individual-permission;real/fulsom/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+ nofib	real/fulsom/Main.hs	fulsom	fulsom-nofib	M4	import	application	nofib:gc/fulsom/Main.hs	Duncan Sinclair	ba2d312f27a9fe76c2daaf885309207f2702902e4cb4d73669575f4068774443	real/fulsom/Csg.hs;real/fulsom/Interval.hs;real/fulsom/Kolor.hs;real/fulsom/Main.hs;real/fulsom/Matrix.hs;real/fulsom/NofibUtils.hs;real/fulsom/Oct.hs;real/fulsom/Patchlevel.hs;real/fulsom/Quad.hs;real/fulsom/Raster.hs;real/fulsom/Shapes.hs;real/fulsom/Types.hs;real/fulsom/Vector.hs	real/fulsom/fulsom.faststdout;real/fulsom/fulsom.slowstdout;real/fulsom/fulsom.stdout	real/fulsom/Csg.hs:header;real/fulsom/Interval.hs:header;real/fulsom/Kolor.hs:header;real/fulsom/Main.hs:header;real/fulsom/Matrix.hs:header;real/fulsom/Oct.hs:header;real/fulsom/Patchlevel.hs:header;real/fulsom/Quad.hs:header;real/fulsom/Raster.hs:header;real/fulsom/Shapes.hs:header;real/fulsom/Types.hs:header;real/fulsom/Vector.hs:header	real/fulsom/Interval.hs:author-and-individual-permission;real/fulsom/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/gamteb	gamteb	gamteb	M4	import	application		Patricia Fasel	59954bb60ebde5c8b56c62aacdb4f252c9647f5d2689bec1147933efce5f5d19	real/gamteb/Compton.hs;real/gamteb/Consts.hs;real/gamteb/Distance.hs;real/gamteb/GamtebMain.hs;real/gamteb/GamtebType.hs;real/gamteb/InitTable.hs;real/gamteb/Main.hs;real/gamteb/NofibUtils.hs;real/gamteb/Output.hs;real/gamteb/Pair.hs;real/gamteb/PhotoElec.hs;real/gamteb/RoulSplit.hs;real/gamteb/TransPort.hs;real/gamteb/Utils.hs	real/gamteb/gamteb.faststdout;real/gamteb/gamteb.slowstdout;real/gamteb/gamteb.stdout	real/gamteb/GamtebMain.hs:header	real/gamteb/Compton.hs:author-heading;real/gamteb/Consts.hs:author-heading;real/gamteb/Distance.hs:author-heading;real/gamteb/GamtebMain.hs:author-heading;real/gamteb/GamtebType.hs:author-heading;real/gamteb/InitTable.hs:author-heading;real/gamteb/Main.hs:author-heading;real/gamteb/Makefile;real/gamteb/Output.hs:author-heading;real/gamteb/Pair.hs:author-heading;real/gamteb/PhotoElec.hs:author-heading;real/gamteb/RoulSplit.hs:author-heading;real/gamteb/TransPort.hs:author-heading;real/gamteb/Utils.hs:author-heading	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/gg	gg	gg	M4	import	application		Iain Checkland	e670c250f14ce0d26a61f15ab0286d106b24059fb7421b811c658e7fbfc2b434	real/gg/Activity.hs;real/gg/GRIP.hs;real/gg/Graph.hs;real/gg/Main.hs;real/gg/NofibUtils.hs;real/gg/PSlib.hs;real/gg/Parse.hs;real/gg/Pool.hs;real/gg/Spark.hs;real/gg/StdLib.hs	real/gg/gg.faststdin;real/gg/gg.faststdout;real/gg/gg.slowstdin;real/gg/gg.slowstdout;real/gg/gg.stdin;real/gg/gg.stdout		real/gg/Makefile;real/gg/gg.1:author-section	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/grep	grep	grep	M4	import	kernel		not stated in scanned source headers	d9dadbddd22cc3db52c300d393d12485206db6731c78dcc12a5c0b846d08e4db	real/grep/Main.lhs;real/grep/NofibUtils.hs;real/grep/Parsers.hs;real/grep/StringMatch.hs	real/grep/grep.faststdin;real/grep/grep.faststdout;real/grep/grep.slowstdin;real/grep/grep.slowstdout;real/grep/grep.stdin;real/grep/grep.stdout		real/grep/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/hidden	hidden	hidden	M4	import	application		Mark Ramaer;Stef Joosten	0e1040d3cc5da5880e37c19df57a31156894a845c07a936466cabf56384bafd1	real/hidden/Comparing.hs;real/hidden/Cross.hs;real/hidden/EdgePlate.hs;real/hidden/Geometric.hs;real/hidden/Hide.hs;real/hidden/Main.hs;real/hidden/Matrices.hs;real/hidden/Memo.hs;real/hidden/MyIO.hs;real/hidden/NofibUtils.hs;real/hidden/Numbers.hs;real/hidden/Postscript.hs;real/hidden/Preds.hs;real/hidden/Rotate.lhs;real/hidden/Solve.hs;real/hidden/Vectors.hs;real/hidden/etc/nbpip.c	real/hidden/hidden.stdin;real/hidden/runtime_files/four.plate;real/hidden/runtime_files/houses.plate;real/hidden/runtime_files/rad.plate	real/hidden/MAIL:nofib-permission	real/hidden/MAIL:authorship-and-nofib-permission;real/hidden/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	real/hpg	hpg	hpg	M4	import	integer-arithmetic		not stated in scanned source headers	b241e65bac3ced5d134bcb5be065c2b815957a9122949c6ef7f8cd80d007a309	real/hpg/Config.lhs;real/hpg/Env.lhs;real/hpg/GenExp.lhs;real/hpg/GenType.lhs;real/hpg/GenVal.lhs;real/hpg/Main.lhs;real/hpg/NofibUtils.hs;real/hpg/Types.lhs;real/hpg/Utils.lhs	real/hpg/hpg.faststdout;real/hpg/hpg.slowstdout;real/hpg/hpg.stdout	real/hpg/Config.lhs:header;real/hpg/Env.lhs:header;real/hpg/GenExp.lhs:header;real/hpg/GenType.lhs:header;real/hpg/GenVal.lhs:header;real/hpg/Main.lhs:header;real/hpg/Types.lhs:header;real/hpg/Utils.lhs:header	real/hpg/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/hpg	hpg	hpg	M4	import	compiler-application		N. D. North	b241e65bac3ced5d134bcb5be065c2b815957a9122949c6ef7f8cd80d007a309	real/hpg/Config.lhs;real/hpg/Env.lhs;real/hpg/GenExp.lhs;real/hpg/GenType.lhs;real/hpg/GenVal.lhs;real/hpg/Main.lhs;real/hpg/NofibUtils.hs;real/hpg/Types.lhs;real/hpg/Utils.lhs	real/hpg/hpg.faststdout;real/hpg/hpg.slowstdout;real/hpg/hpg.stdout	real/hpg/Config.lhs:header;real/hpg/Env.lhs:header;real/hpg/GenExp.lhs:header;real/hpg/GenType.lhs:header;real/hpg/GenVal.lhs:header;real/hpg/Main.lhs:header;real/hpg/Types.lhs:header;real/hpg/Utils.lhs:header;real/hpg/hpg.tex:Crown-Copyright-1992	real/hpg/Makefile;real/hpg/hpg.tex:program-author-title-and-address	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/infer/Main.hs	infer	infer	M4	import	compiler-application		not stated in scanned source headers	179e72dcd88a32dd9e85e0faaa4e66d7224c54335b1efa8289f55febef3f73f3	real/infer/Environment.hs;real/infer/FiniteMap.hs;real/infer/Infer.hs;real/infer/InferMonad.hs;real/infer/Main.hs;real/infer/MaybeM.hs;real/infer/MyList.hs;real/infer/NofibUtils.hs;real/infer/Parse.hs;real/infer/Shows.hs;real/infer/StateX.hs;real/infer/Substitution.hs;real/infer/Term.hs;real/infer/Type.hs	real/infer/infer.faststdin;real/infer/infer.faststdout;real/infer/infer.slowstdin;real/infer/infer.slowstdout;real/infer/infer.stdin;real/infer/infer.stdout		real/infer/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/infer/TestTerm.hs	TestTerm	TestTerm	-	exclude	kernel		not stated in scanned source headers	1bdc4828944541815460444338a91aded693be41368b6a5dde569746a0dd9d35	real/infer/Parse.hs;real/infer/Shows.hs;real/infer/Term.hs;real/infer/TestTerm.hs	real/infer/infer.faststdin;real/infer/infer.faststdout;real/infer/infer.slowstdin;real/infer/infer.slowstdout;real/infer/infer.stdin;real/infer/infer.stdout		real/infer/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+ nofib	real/infer/TestType.hs	TestType	TestType	-	exclude	kernel		not stated in scanned source headers	3b39d28013aeb14d9b53c76c7abde081ed63b26c93027803f0fdc578355799ab	real/infer/MyList.hs;real/infer/Parse.hs;real/infer/Shows.hs;real/infer/TestType.hs;real/infer/Type.hs	real/infer/infer.faststdin;real/infer/infer.faststdout;real/infer/infer.slowstdin;real/infer/infer.slowstdout;real/infer/infer.stdin;real/infer/infer.stdout		real/infer/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+@@ -584,7 +584,7 @@ nofib	real/mkhprog	mkhprog	mkhprog	M4	import	application		N. D. North	0561320677
+ nofib	real/parser	parser	parser	M4	import	compiler-application		not stated in scanned source headers	3a279f462707dcc0de97c1b91955e8727a0d7c54c4cbcb324085975ab745cae4	real/parser/Main.hs;real/parser/NofibUtils.hs	real/parser/parser.faststdin;real/parser/parser.faststdout;real/parser/parser.slowstdin;real/parser/parser.slowstdout;real/parser/parser.stdin;real/parser/parser.stdout		real/parser/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/pic	pic	pic	M4	import	application		Patricia Fasel	069f386c15bd6861b79abcb5ee53410fdbf47b4146513b5d1295f901dcf75bd6	real/pic/ChargeDensity.hs;real/pic/Consts.hs;real/pic/ElecField.hs;real/pic/Main.hs;real/pic/NofibUtils.hs;real/pic/Pic.hs;real/pic/PicType.hs;real/pic/Potential.hs;real/pic/PushParticle.hs;real/pic/Utils.hs		real/pic/Pic.hs:header	real/pic/ChargeDensity.hs:author-heading;real/pic/Consts.hs:author-heading;real/pic/ElecField.hs:author-heading;real/pic/Main.hs:author-heading;real/pic/Makefile;real/pic/Pic.hs:author-heading;real/pic/PicType.hs:author-heading;real/pic/Potential.hs:author-heading;real/pic/PushParticle.hs:author-heading;real/pic/Utils.hs:author-heading	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/prolog	prolog	prolog	M4	import	compiler-application		Mark P. Jones	3dae5175920f5e6454159ecb599db318521277610e66ac2efba7f1df3fe61c7c	real/prolog/Engine.hs;real/prolog/Interact.hs;real/prolog/Main.hs;real/prolog/NofibUtils.hs;real/prolog/Parse.hs;real/prolog/PrologData.hs;real/prolog/PureEngine.hs;real/prolog/StackEngine.hs;real/prolog/Subst.hs;real/prolog/Version.hs	real/prolog/prolog.faststdin;real/prolog/prolog.faststdout;real/prolog/prolog.slowstdin;real/prolog/prolog.slowstdout;real/prolog/prolog.stdin;real/prolog/prolog.stdout;real/prolog/runtime_files/stdlib		real/prolog/Engine.hs:author-heading;real/prolog/Interact.hs:author-heading;real/prolog/Main.hs:author-heading;real/prolog/Makefile;real/prolog/Parse.hs:author-heading;real/prolog/PrologData.hs:author-heading;real/prolog/PureEngine.hs:author-heading;real/prolog/StackEngine.hs:author-heading;real/prolog/Subst.hs:author-heading	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	real/reptile	reptile	reptile	M4	import	application		not stated in scanned source headers	c7a45764e8dead72e150a92c1566d92134217196e56ec0a78a479ecd040975c1	real/reptile/Auxprogfuns.hs;real/reptile/Diff.hs;real/reptile/Drawfuns.hs;real/reptile/Geomfuns.hs;real/reptile/Help.hs;real/reptile/Interstate.hs;real/reptile/Layout.hs;real/reptile/Main.hs;real/reptile/Mgrfuns.hs;real/reptile/NofibUtils.hs;real/reptile/Progfuns.hs;real/reptile/Psfuns.hs;real/reptile/Rational.hs;real/reptile/Tilefuns.hs	real/reptile/reptile.faststdin;real/reptile/reptile.faststdout;real/reptile/reptile.slowstdin;real/reptile/reptile.slowstdout;real/reptile/reptile.stdin;real/reptile/reptile.stdout		real/reptile/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/reptile	reptile	reptile	M4	import	application		Colin Runciman (Haskell translation);Sandra Foubister (LML original)	c7a45764e8dead72e150a92c1566d92134217196e56ec0a78a479ecd040975c1	real/reptile/Auxprogfuns.hs;real/reptile/Diff.hs;real/reptile/Drawfuns.hs;real/reptile/Geomfuns.hs;real/reptile/Help.hs;real/reptile/Interstate.hs;real/reptile/Layout.hs;real/reptile/Main.hs;real/reptile/Mgrfuns.hs;real/reptile/NofibUtils.hs;real/reptile/Progfuns.hs;real/reptile/Psfuns.hs;real/reptile/Rational.hs;real/reptile/Tilefuns.hs	real/reptile/reptile.faststdin;real/reptile/reptile.faststdout;real/reptile/reptile.slowstdin;real/reptile/reptile.slowstdout;real/reptile/reptile.stdin;real/reptile/reptile.stdout		real/reptile/Main.hs:Haskell-port-credit;real/reptile/Main.hs:LML-original-credit;real/reptile/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/rsa	rsa	rsa	M4	import	integer-arithmetic		not stated in scanned source headers	410238f11772b54d24b09e09e9680d0bed98a563f3d56b183af27a25493f47f0	real/rsa/Main.hs;real/rsa/NofibUtils.hs;real/rsa/Rsa.hs	real/rsa/rsa.faststdin;real/rsa/rsa.faststdout;real/rsa/rsa.slowstdin;real/rsa/rsa.slowstdout;real/rsa/rsa.stdin;real/rsa/rsa.stdout		real/rsa/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/scs	scs	scs	M4	import	integer-arithmetic		not stated in scanned source headers	9c74063e460b2d762d4a2aa7b1482e6688144d744b75e8cd69060e83a75de212	real/scs/LinearAlgebra.hs;real/scs/Main.hs;real/scs/Parse.hs;real/scs/ParseLib.hs;real/scs/RandomFix.hs;real/scs/Simulate.hs;real/scs/Types.hs	real/scs/runtime_files/inverter.in;real/scs/scs.stdout		real/scs/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/smallpt	smallpt	smallpt	M4	import	kernel		not stated in scanned source headers	aa2351ab8694eac36c0490eb824333b18c99d3b1649f63f7126a08a4556a660b	real/smallpt/smallpt.hs	real/smallpt/smallpt.slowstdout;real/smallpt/smallpt.stdout		real/smallpt/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 4364d5719..0b55e9308 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1436,3 +1436,27 @@ nucleic2-shared-lazy	large	nofib	spectral/hartel/nucleic2	125	nucleic2-shared-la
+ nucleic2-shared-strict	smoke	nofib	spectral/hartel/nucleic2	3	nucleic2-shared-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-shared-strict/benchmark.sml,shared/main.sml	120	1048576	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
+ nucleic2-shared-strict	normal	nofib	spectral/hartel/nucleic2	25	nucleic2-shared-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-shared-strict/benchmark.sml,shared/main.sml	600	4194304	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
+ nucleic2-shared-strict	large	nofib	spectral/hartel/nucleic2	125	nucleic2-shared-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-shared-strict/benchmark.sml,shared/main.sml	3600	8388608	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
++parser-lazy	smoke	nofib	real/parser	500 smoke.input 3D994E1AE49F5B1D	parser-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-parser-literals.sml,shared/nofib-parser-lexer.sml,shared/nofib-parser-kernel.sml,shared/nofib-parser-check.sml,parser-lazy/benchmark.sml,shared/main.sml	30	1048576	application,parsing,higher-order,allocation-lifetimes,demand-sharing,lazy-finite-data	smoke.input	exact	implemented
++parser-lazy	normal	nofib	real/parser	500 normal.input FD8F9F553C360241	parser-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-parser-literals.sml,shared/nofib-parser-lexer.sml,shared/nofib-parser-kernel.sml,shared/nofib-parser-check.sml,parser-lazy/benchmark.sml,shared/main.sml	600	4194304	application,parsing,higher-order,allocation-lifetimes,demand-sharing,lazy-finite-data	normal.input	exact	implemented
++parser-lazy	large	nofib	real/parser	500 large.input 82E26838920E4BF8	parser-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-parser-literals.sml,shared/nofib-parser-lexer.sml,shared/nofib-parser-kernel.sml,shared/nofib-parser-check.sml,parser-lazy/benchmark.sml,shared/main.sml	3600	8388608	application,parsing,higher-order,allocation-lifetimes,demand-sharing,lazy-finite-data	large.input	exact	implemented
++parser-strict	smoke	nofib	real/parser	500 smoke.input 3D994E1AE49F5B1D	parser-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-parser-literals.sml,shared/nofib-parser-lexer.sml,shared/nofib-parser-kernel.sml,shared/nofib-parser-check.sml,parser-strict/benchmark.sml,shared/main.sml	30	1048576	application,parsing,higher-order,allocation-lifetimes,demand-sharing,strict-finite-data	smoke.input	exact	implemented
++parser-strict	normal	nofib	real/parser	500 normal.input FD8F9F553C360241	parser-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-parser-literals.sml,shared/nofib-parser-lexer.sml,shared/nofib-parser-kernel.sml,shared/nofib-parser-check.sml,parser-strict/benchmark.sml,shared/main.sml	600	4194304	application,parsing,higher-order,allocation-lifetimes,demand-sharing,strict-finite-data	normal.input	exact	implemented
++parser-strict	large	nofib	real/parser	500 large.input 82E26838920E4BF8	parser-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-parser-literals.sml,shared/nofib-parser-lexer.sml,shared/nofib-parser-kernel.sml,shared/nofib-parser-check.sml,parser-strict/benchmark.sml,shared/main.sml	3600	8388608	application,parsing,higher-order,allocation-lifetimes,demand-sharing,strict-finite-data	large.input	exact	implemented
++reptile-lazy	smoke	nofib	real/reptile	500 smoke.input 919E8F689ED9FB45	reptile-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-reptile-kernel.sml,shared/nofib-reptile-check.sml,reptile-lazy/benchmark.sml,shared/main.sml	30	1048576	application,state-machine,rational-arithmetic,lists-streams,allocation-lifetimes,lazy-finite-data	smoke.input	exact	implemented
++reptile-lazy	normal	nofib	real/reptile	500 normal.input 5113F639C24EF047	reptile-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-reptile-kernel.sml,shared/nofib-reptile-check.sml,reptile-lazy/benchmark.sml,shared/main.sml	600	4194304	application,state-machine,rational-arithmetic,lists-streams,allocation-lifetimes,lazy-finite-data	normal.input	exact	implemented
++reptile-lazy	large	nofib	real/reptile	500 large.input F2391102B5A435AD	reptile-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-reptile-kernel.sml,shared/nofib-reptile-check.sml,reptile-lazy/benchmark.sml,shared/main.sml	3600	8388608	application,state-machine,rational-arithmetic,lists-streams,allocation-lifetimes,lazy-finite-data	large.input	exact	implemented
++reptile-strict	smoke	nofib	real/reptile	500 smoke.input 919E8F689ED9FB45	reptile-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-reptile-kernel.sml,shared/nofib-reptile-check.sml,reptile-strict/benchmark.sml,shared/main.sml	30	1048576	application,state-machine,rational-arithmetic,lists-streams,allocation-lifetimes,strict-finite-data	smoke.input	exact	implemented
++reptile-strict	normal	nofib	real/reptile	500 normal.input 5113F639C24EF047	reptile-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-reptile-kernel.sml,shared/nofib-reptile-check.sml,reptile-strict/benchmark.sml,shared/main.sml	600	4194304	application,state-machine,rational-arithmetic,lists-streams,allocation-lifetimes,strict-finite-data	normal.input	exact	implemented
++reptile-strict	large	nofib	real/reptile	500 large.input F2391102B5A435AD	reptile-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-reptile-kernel.sml,shared/nofib-reptile-check.sml,reptile-strict/benchmark.sml,shared/main.sml	3600	8388608	application,state-machine,rational-arithmetic,lists-streams,allocation-lifetimes,strict-finite-data	large.input	exact	implemented
++hpg-lazy	smoke	nofib	real/hpg	100 8 4 10 6 6 5EC4901296811DF0 D97AC3B2A11B93D6 713067A9C6975A3C	hpg-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nofib-hpg-random.sml,shared/nofib-hpg-kernel.sml,shared/nofib-hpg-check.sml,hpg-lazy/benchmark.sml,shared/main.sml	30	1048576	application,program-generation,continuations,pseudo-random,allocation-lifetimes,lazy-finite-data	-	exact	implemented
++hpg-lazy	normal	nofib	real/hpg	100 40 5 60 6 6 E2D7DA701E60C4DA 5FEAD039E95E2EB4 2DD8A8F094261A29	hpg-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nofib-hpg-random.sml,shared/nofib-hpg-kernel.sml,shared/nofib-hpg-check.sml,hpg-lazy/benchmark.sml,shared/main.sml	600	4194304	application,program-generation,continuations,pseudo-random,allocation-lifetimes,lazy-finite-data	-	exact	implemented
++hpg-lazy	large	nofib	real/hpg	100 80 8 100 8 8 6C48AB8F96C3899A D2E10CDF9496B73 5FB505A2B96E6DF1	hpg-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nofib-hpg-random.sml,shared/nofib-hpg-kernel.sml,shared/nofib-hpg-check.sml,hpg-lazy/benchmark.sml,shared/main.sml	3600	8388608	application,program-generation,continuations,pseudo-random,allocation-lifetimes,lazy-finite-data	-	exact	implemented
++hpg-strict	smoke	nofib	real/hpg	100 8 4 10 6 6 5EC4901296811DF0 D97AC3B2A11B93D6 713067A9C6975A3C	hpg-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nofib-hpg-random.sml,shared/nofib-hpg-kernel.sml,shared/nofib-hpg-check.sml,hpg-strict/benchmark.sml,shared/main.sml	30	1048576	application,program-generation,continuations,pseudo-random,allocation-lifetimes,strict-finite-data	-	exact	implemented
++hpg-strict	normal	nofib	real/hpg	100 40 5 60 6 6 E2D7DA701E60C4DA 5FEAD039E95E2EB4 2DD8A8F094261A29	hpg-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nofib-hpg-random.sml,shared/nofib-hpg-kernel.sml,shared/nofib-hpg-check.sml,hpg-strict/benchmark.sml,shared/main.sml	600	4194304	application,program-generation,continuations,pseudo-random,allocation-lifetimes,strict-finite-data	-	exact	implemented
++hpg-strict	large	nofib	real/hpg	100 80 8 100 8 8 6C48AB8F96C3899A D2E10CDF9496B73 5FB505A2B96E6DF1	hpg-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nofib-hpg-random.sml,shared/nofib-hpg-kernel.sml,shared/nofib-hpg-check.sml,hpg-strict/benchmark.sml,shared/main.sml	3600	8388608	application,program-generation,continuations,pseudo-random,allocation-lifetimes,strict-finite-data	-	exact	implemented
++fluid-lazy	smoke	nofib	real/fluid	35 input.stdin 9DCE0361F540E943	fluid-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/nofib-fluid-sparse.sml,shared/nofib-fluid-float-show.sml,shared/nofib-fluid-kernel.sml,shared/nofib-fluid-check.sml,fluid-lazy/benchmark.sml,shared/main.sml	30	1048576	application,numerical,sparse-data,graph-ordering,allocation-lifetimes,lazy-finite-data	input.stdin,runtime_files/chan8.dat	exact	implemented
++fluid-lazy	normal	nofib	real/fluid	350 input.stdin 9DCE0361F540E943	fluid-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/nofib-fluid-sparse.sml,shared/nofib-fluid-float-show.sml,shared/nofib-fluid-kernel.sml,shared/nofib-fluid-check.sml,fluid-lazy/benchmark.sml,shared/main.sml	600	4194304	application,numerical,sparse-data,graph-ordering,allocation-lifetimes,lazy-finite-data	input.stdin,runtime_files/chan8.dat	exact	implemented
++fluid-lazy	large	nofib	real/fluid	1750 input.stdin 9DCE0361F540E943	fluid-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/nofib-fluid-sparse.sml,shared/nofib-fluid-float-show.sml,shared/nofib-fluid-kernel.sml,shared/nofib-fluid-check.sml,fluid-lazy/benchmark.sml,shared/main.sml	3600	8388608	application,numerical,sparse-data,graph-ordering,allocation-lifetimes,lazy-finite-data	input.stdin,runtime_files/chan8.dat	exact	implemented
++fluid-strict	smoke	nofib	real/fluid	35 input.stdin 9DCE0361F540E943	fluid-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/nofib-fluid-sparse.sml,shared/nofib-fluid-float-show.sml,shared/nofib-fluid-kernel.sml,shared/nofib-fluid-check.sml,fluid-strict/benchmark.sml,shared/main.sml	30	1048576	application,numerical,sparse-data,graph-ordering,allocation-lifetimes,strict-finite-data	input.stdin,runtime_files/chan8.dat	exact	implemented
++fluid-strict	normal	nofib	real/fluid	350 input.stdin 9DCE0361F540E943	fluid-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/nofib-fluid-sparse.sml,shared/nofib-fluid-float-show.sml,shared/nofib-fluid-kernel.sml,shared/nofib-fluid-check.sml,fluid-strict/benchmark.sml,shared/main.sml	600	4194304	application,numerical,sparse-data,graph-ordering,allocation-lifetimes,strict-finite-data	input.stdin,runtime_files/chan8.dat	exact	implemented
++fluid-strict	large	nofib	real/fluid	1750 input.stdin 9DCE0361F540E943	fluid-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/nofib-fluid-sparse.sml,shared/nofib-fluid-float-show.sml,shared/nofib-fluid-kernel.sml,shared/nofib-fluid-check.sml,fluid-strict/benchmark.sml,shared/main.sml	3600	8388608	application,numerical,sparse-data,graph-ordering,allocation-lifetimes,strict-finite-data	input.stdin,runtime_files/chan8.dat	exact	implemented
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 22f4e9406..1dfe17777 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -301,7 +301,7 @@ def discover(source, root):
+ 
+ def family(name, text):
+     key = name.lower()
+-    if key in {"happy", "lift", "parstof", "transform"}:
++    if key in {"happy", "hpg", "lift", "parstof", "transform"}:
+         return "compiler-application"
+     if any(x in key for x in ("fft", "nbody", "n-body", "barnes", "mandel", "nucleic", "ray", "simple", "fem", "fluid", "almabench", "matrix", "grammatrix", "decomposition", "durand", "levinson", "minilight", "sphere", "zern", "arith")):
+         return "numerical"
+@@ -558,6 +558,42 @@ def build(source, root, lock):
+                     notices.append(str(notice.relative_to(root)))
+         authors = set()
+         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
++        if source == "nofib" and path == "real/hpg":
++            manual = parent / "hpg.tex"
++            if manual.is_file():
++                heading = manual.read_text(errors="replace")
++                if (r"\title{The Haskell Program Generator}" in heading
++                        and r"\author{N D North" in heading
++                        and "ndn@seg.npl.co.uk" in heading):
++                    authors.add("N. D. North")
++                    item["evidence"].append(path + "/hpg.tex:program-author-title-and-address")
++                if "% Crown Copyright 1992" in heading:
++                    notices.append(path + "/hpg.tex:Crown-Copyright-1992")
++        if source == "nofib" and path == "real/reptile":
++            module = parent / "Main.hs"
++            if module.is_file():
++                heading = module.read_text(errors="replace")[:1000]
++                if "-- LML original: Sandra Foubister, 1990" in heading:
++                    authors.add("Sandra Foubister (LML original)")
++                    item["evidence"].append(path + "/Main.hs:LML-original-credit")
++                if "-- Haskell translation: Colin Runciman, May 1991" in heading:
++                    authors.add("Colin Runciman (Haskell translation)")
++                    item["evidence"].append(path + "/Main.hs:Haskell-port-credit")
++        if source == "nofib" and path == "real/fluid":
++            definitions = parent / "Defs.hs"
++            if definitions.is_file():
++                heading = definitions.read_text(errors="replace")[:1000]
++                if (re.search(r"\bXZ,\s*24/10/91\b", heading)
++                        and re.search(r"\bXZ,\s*19/2/92\b", heading)):
++                    authors.add("XZ (source initials)")
++                    item["evidence"].append(path + "/Defs.hs:dated-source-initials-not-expanded")
++            data = parent / "runtime_files/chan8.dat"
++            if data.is_file():
++                inputs.add(str(data.relative_to(root)))
++                item["evidence"].append(path + "/runtime_files/chan8.dat:runtime-mesh-input")
++                heading = data.read_text(errors="replace")[:1000]
++                if "TEST CHANNEL PROBLEM WITH NONISOTHERMAL FLOW" in heading:
++                    item["evidence"].append(path + "/runtime_files/chan8.dat:channel-model-header")
+         if source == "nofib" and path == "spectral/hartel/nucleic2":
+             main = parent / "Main.hs"
+             if main.is_file():
+diff --git a/tests/basis/run-matrix.sh b/tests/basis/run-matrix.sh
+index c05a77d97..06464d296 100755
+--- a/tests/basis/run-matrix.sh
++++ b/tests/basis/run-matrix.sh
+@@ -346,7 +346,8 @@ load() {
+         return
+       fi
+       # shellcheck disable=SC2086
+-      timeout "$limit" "$cmd1" $flags -output "$loaddir/prog" "$loaddir/prog.mlb" > "$loaddir/log" 2>&1 || return 1
++      timeout "$limit" "$cmd1" $flags -output "$loaddir/prog" "$loaddir/prog.mlb" > "$loaddir/log" 2>&1 ||
++        { load_status=$?; [ "$load_status" != 124 ] || echo "compile timed out after $limit s" >> "$loaddir/log"; return 1; }
+       (cd "$loaddir" && timeout "$limit" ./prog > stdout 2>> log < "$program_input")
+       ;;
+     *:mlkit)
+@@ -374,11 +375,11 @@ load() {
+       write_mlb "$loaddir/prog.mlb" $mlkit_files
+       if [ "$mode" = check ]; then
+         (cd "$loaddir" && SML_LIB=$cmd2 timeout $((limit * 8)) "$cmd1" --no_messages -c prog.mlb > log 2>&1) ||
+-          { mlkit_error "$loaddir/log"; return 1; }
++          { load_status=$?; [ "$load_status" != 124 ] || echo "compile timed out after $((limit * 8)) s" >> "$loaddir/log"; mlkit_error "$loaddir/log"; return 1; }
+         return
+       fi
+       (cd "$loaddir" && SML_LIB=$cmd2 timeout "$limit" "$cmd1" --no_messages -o prog prog.mlb > log 2>&1) ||
+-        { mlkit_error "$loaddir/log"; return 1; }
++        { load_status=$?; [ "$load_status" != 124 ] || echo "compile timed out after $limit s" >> "$loaddir/log"; mlkit_error "$loaddir/log"; return 1; }
+       # with a cap on its memory: IntInf.toString of a number that MLKit's
+       # IntInf.scan made wrong allocates until the machine has no more
+       # (docs/bugreport/mlkit/IntInf.scan/sign-inside-the-digits)
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index fb01b12d5..a77ce788d 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -286,6 +286,60 @@ class InventoryTest(unittest.TestCase):
+         self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
+         self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
+ 
++    def application_source(self, name, source="main = print 0\n"):
++        self.nofib_roots()
++        self.file("real/" + name + "/Main.hs", source)
++        self.file("real/" + name + "/Makefile", "FAST_OPTS = 1\nNORM_OPTS = 2\n")
++        return "real/" + name
++
++    def test_hpg_generator_is_not_classified_as_arbitrary_precision_arithmetic(self):
++        self.assertEqual(AUDIT.family("hpg", "Integer values in generated programs"), "compiler-application")
++
++    def test_hpg_manual_records_program_author(self):
++        path = self.application_source("hpg")
++        self.file(path + "/hpg.tex", "\\title{The Haskell Program Generator}\n"
++                  "\\author{N D North\\\\\n{\\tt ndn@seg.npl.co.uk}}\n% Crown Copyright 1992\n")
++        row = next(r for r in self.build("nofib") if r["path"] == path)
++        self.assertIn("N. D. North", row["authors"])
++        self.assertIn(path + "/hpg.tex:Crown-Copyright-1992", row["notices"])
++
++    def test_changed_hpg_author_requires_review(self):
++        path = self.application_source("hpg")
++        self.file(path + "/hpg.tex", "\\title{The Haskell Program Generator}\n\\author{Another author}\n")
++        self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
++
++    def test_reptile_keeps_original_and_translation_roles(self):
++        self.application_source("reptile", "-- LML original: Sandra Foubister, 1990\n"
++                                "-- Haskell translation: Colin Runciman, May 1991\nmain = print 0\n")
++        row = self.build("nofib")[0]
++        self.assertIn("Sandra Foubister (LML original)", row["authors"])
++        self.assertIn("Colin Runciman (Haskell translation)", row["authors"])
++
++    def test_changed_reptile_translation_does_not_inherit_porter(self):
++        self.application_source("reptile", "-- LML original: Sandra Foubister, 1990\nmain = print 0\n")
++        self.assertNotIn("Colin Runciman", self.build("nofib")[0]["authors"])
++
++    def test_fluid_keeps_initials_without_inventing_a_full_name(self):
++        path = self.application_source("fluid")
++        self.file(path + "/Defs.hs", "{- XZ, 24/10/91 -}\n{- XZ, 19/2/92 -}\nmodule Defs where\n")
++        row = self.build("nofib")[0]
++        self.assertIn("XZ (source initials)", row["authors"])
++        self.assertIn("dated-source-initials-not-expanded", row["evidence"])
++
++    def test_fluid_dynamic_filename_still_inventories_mesh(self):
++        path = self.application_source("fluid")
++        self.file(path + "/runtime_files/chan8.dat", "TEST CHANNEL PROBLEM WITH NONISOTHERMAL FLOW\n")
++        row = self.build("nofib")[0]
++        self.assertIn(path + "/runtime_files/chan8.dat", row["inputs"])
++        self.assertIn("channel-model-header", row["evidence"])
++
++    def test_changed_fluid_mesh_does_not_inherit_channel_description(self):
++        path = self.application_source("fluid")
++        self.file(path + "/runtime_files/chan8.dat", "Another model\n")
++        row = self.build("nofib")[0]
++        self.assertIn(path + "/runtime_files/chan8.dat", row["inputs"])
++        self.assertNotIn("channel-model-header", row["evidence"])
++
+     def nucleic2_sources(self, original=True, readme=True, single=True):
+         self.nofib_roots()
+         path = "spectral/hartel/nucleic2/"

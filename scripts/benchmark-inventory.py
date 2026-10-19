@@ -301,7 +301,7 @@ def discover(source, root):
 
 def family(name, text):
     key = name.lower()
-    if key in {"happy", "lift", "parstof", "transform"}:
+    if key in {"happy", "hpg", "lift", "parstof", "transform"}:
         return "compiler-application"
     if any(x in key for x in ("fft", "nbody", "n-body", "barnes", "mandel", "nucleic", "ray", "simple", "fem", "fluid", "almabench", "matrix", "grammatrix", "decomposition", "durand", "levinson", "minilight", "sphere", "zern", "arith")):
         return "numerical"
@@ -558,6 +558,42 @@ def build(source, root, lock):
                     notices.append(str(notice.relative_to(root)))
         authors = set()
         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
+        if source == "nofib" and path == "real/hpg":
+            manual = parent / "hpg.tex"
+            if manual.is_file():
+                heading = manual.read_text(errors="replace")
+                if (r"\title{The Haskell Program Generator}" in heading
+                        and r"\author{N D North" in heading
+                        and "ndn@seg.npl.co.uk" in heading):
+                    authors.add("N. D. North")
+                    item["evidence"].append(path + "/hpg.tex:program-author-title-and-address")
+                if "% Crown Copyright 1992" in heading:
+                    notices.append(path + "/hpg.tex:Crown-Copyright-1992")
+        if source == "nofib" and path == "real/reptile":
+            module = parent / "Main.hs"
+            if module.is_file():
+                heading = module.read_text(errors="replace")[:1000]
+                if "-- LML original: Sandra Foubister, 1990" in heading:
+                    authors.add("Sandra Foubister (LML original)")
+                    item["evidence"].append(path + "/Main.hs:LML-original-credit")
+                if "-- Haskell translation: Colin Runciman, May 1991" in heading:
+                    authors.add("Colin Runciman (Haskell translation)")
+                    item["evidence"].append(path + "/Main.hs:Haskell-port-credit")
+        if source == "nofib" and path == "real/fluid":
+            definitions = parent / "Defs.hs"
+            if definitions.is_file():
+                heading = definitions.read_text(errors="replace")[:1000]
+                if (re.search(r"\bXZ,\s*24/10/91\b", heading)
+                        and re.search(r"\bXZ,\s*19/2/92\b", heading)):
+                    authors.add("XZ (source initials)")
+                    item["evidence"].append(path + "/Defs.hs:dated-source-initials-not-expanded")
+            data = parent / "runtime_files/chan8.dat"
+            if data.is_file():
+                inputs.add(str(data.relative_to(root)))
+                item["evidence"].append(path + "/runtime_files/chan8.dat:runtime-mesh-input")
+                heading = data.read_text(errors="replace")[:1000]
+                if "TEST CHANNEL PROBLEM WITH NONISOTHERMAL FLOW" in heading:
+                    item["evidence"].append(path + "/runtime_files/chan8.dat:channel-model-header")
         if source == "nofib" and path == "spectral/hartel/nucleic2":
             main = parent / "Main.hs"
             if main.is_file():

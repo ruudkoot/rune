@@ -1,0 +1,27 @@
+{
+  "started": "2026-10-18T23:34:43.069853+00:00",
+  "revision": "625f9d94403496b5535a65214abe2870d08a01ed",
+  "dirty": true,
+  "sources": {
+    "examples/benchmarks/manifest.tsv": "bcf845777c2782a2fedefed7b5f761264c8f70638aae6f0265e54063c05e3694",
+    "Makefile": "b90bd959f5eeac1be26102d01fa13740423761ce0dcf91761527be474de11ae3",
+    "tests/basis/run-matrix.sh": "5b860c1b592c25a55da6175e08313d44afc810d02941e72233b0a6ca16ed91c3",
+    "examples/benchmarks/shared/nofib-parser-check.sml": "22241602410cf1ca9630358da211d28fdb2617e956c9af4849a27fd88476804b",
+    "examples/benchmarks/shared/nofib-parser-literals.sml": "8bbc0fb41f17627dedbfc26baf23d1e206c79c8281facd8e6b400d7a6971ddee",
+    "examples/benchmarks/shared/nofib-parser-kernel.sml": "41a35c53243c130bf046b6be438eacbeee87d58394fd546ec7b791ddb80df5a9",
+    "examples/benchmarks/shared/nofib-parser-lexer.sml": "a209ebaaab9a1e4f4b854e12281edf1ae8810775384f21e957c7f21fd34c1cbe",
+    "tests/benchmarks/nofib-parser-tests.sml": "8bf7d275812b96d97db559184dba41294d1436865875f548304c518d8ce3b61f",
+    "examples/benchmarks/shared/nofib-reptile-check.sml": "8710af08f964588802166991f129b805c98410400b068abbdc8a5f1ba872261d",
+    "examples/benchmarks/shared/nofib-reptile-kernel.sml": "046f7672dd0cf9202c0d85b4da35b9ebb7096ccd8e81c955ba01b47848ae7271",
+    "tests/benchmarks/nofib-reptile-tests.sml": "01b8d531c89a8b3db0ede9f8275bc268ef3b41e615cf8733abfb9d8ea7ac0ef4",
+    "examples/benchmarks/shared/nofib-hpg-random.sml": "ad898824aba808d3b4628350067ff1d84f1bef41acd98f5b7d7f1c47a7b3431d",
+    "examples/benchmarks/shared/nofib-hpg-kernel.sml": "4ae0dfff323493b5000f2e821949a33d9a9bc94e4078e3c87b6c9d71f3b0aa6c",
+    "examples/benchmarks/shared/nofib-hpg-check.sml": "8a49ec41f61c01a1440e6709403fbfff59ebd71eb41c902102bf384613a96238",
+    "tests/benchmarks/nofib-hpg-tests.sml": "bed071ea60c8d28fa838070e2e265544456a10c5031de6b652a88bb2f25de205",
+    "examples/benchmarks/shared/nofib-fluid-check.sml": "56a3e136d6955dea443c2a2847298502519614274d99bd25f232a0035e224f0f",
+    "examples/benchmarks/shared/nofib-fluid-float-show.sml": "cdf6e014c1d36dfb9e5cfb8d02f3c1d854c2c1e76e4de9f8fe9ccbb87cb5f9da",
+    "examples/benchmarks/shared/nofib-fluid-sparse.sml": "85c52c8e2efe6b69f8967e7deebf1f7e1b8430a58a6c9f57922b618c321f221f",
+    "examples/benchmarks/shared/nofib-fluid-kernel.sml": "c181151103f7f472c39083f948bb65c8bdbf972679e54b99cbcad9c26aa9066d",
+    "tests/benchmarks/nofib-fluid-tests.sml": "cec69111d8f7d48dedb35fbf64b35bbdd378d1e14d77050e96de23881e518c31"
+  }
+}

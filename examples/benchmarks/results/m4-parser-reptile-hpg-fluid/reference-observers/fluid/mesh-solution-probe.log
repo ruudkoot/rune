@@ -1,0 +1,10 @@
+PASS complete source configuration
+PASS complete source mesh-input
+PASS complete source mesh-order
+PASS complete source mesh-factor
+runevm: uncaught exception Fail "s_array: index out of range!"
+  in BenchLazy.force at examples/benchmarks/shared/lazy.sml:14:62
+  in Need.K.solve at tests/out/benchmarks/nofib-fluid-originals/kernel.sml:655:44
+  in Need.K.loop at tests/out/benchmarks/nofib-fluid-originals/kernel.sml:659:27
+  in Need.K.choleskyMethod at tests/out/benchmarks/nofib-fluid-originals/kernel.sml:665:43
+  in <toplevel> at tests/out/benchmarks/nofib-fluid-originals/mesh-probe.sml:54:77

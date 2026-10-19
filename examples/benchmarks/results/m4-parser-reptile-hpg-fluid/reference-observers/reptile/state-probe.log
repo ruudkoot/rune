@@ -1,0 +1,6 @@
+PASS need smoke complete transition states
+PASS need normal complete transition states
+PASS need large complete transition states
+PASS strict smoke complete transition states
+PASS strict normal complete transition states
+PASS strict large complete transition states

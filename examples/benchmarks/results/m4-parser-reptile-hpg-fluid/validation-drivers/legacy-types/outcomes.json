@@ -1,0 +1,20 @@
+[
+  {
+    "family": "reptile",
+    "exit": 0,
+    "passed": true,
+    "scope": "frontend/module-instantiation probe, no benchmark result claim"
+  },
+  {
+    "family": "hpg",
+    "exit": 0,
+    "passed": true,
+    "scope": "frontend/module-instantiation probe, no benchmark result claim"
+  },
+  {
+    "family": "fluid",
+    "exit": 1,
+    "passed": false,
+    "scope": "frontend/module-instantiation probe, no benchmark result claim"
+  }
+]

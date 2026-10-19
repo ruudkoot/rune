@@ -1,0 +1,45 @@
+{
+  "command": [
+    "ghc",
+    "-O2",
+    "-cpp",
+    "-rtsopts",
+    "-fforce-recomp",
+    "Main.hs",
+    "-o",
+    "original"
+  ],
+  "profiles": [
+    {
+      "profile": "smoke",
+      "exit": 0,
+      "input_bytes": 18,
+      "input_sha256": "2ae443a32395d4bc7e9d15470b7c65f9bbfb0a86575dd4b75974bc8e3879ece9",
+      "output_bytes": 10500,
+      "lines": 500,
+      "fixture_equal": true,
+      "elapsed_seconds": 0.08341479301452637
+    },
+    {
+      "profile": "normal",
+      "exit": 0,
+      "input_bytes": 343,
+      "input_sha256": "08956a69b96fc05bd973315911447fef1a1558990f2b460a9f3e40322636f402",
+      "output_bytes": 10000,
+      "lines": 500,
+      "fixture_equal": true,
+      "elapsed_seconds": 0.9434027671813965
+    },
+    {
+      "profile": "large",
+      "exit": 0,
+      "input_bytes": 1029,
+      "input_sha256": "2939700e8f2d6dde4a3a90aff244dbd0032153d47b4c03998ac1f87fe27f6608",
+      "output_bytes": 10000,
+      "lines": 500,
+      "fixture_equal": true,
+      "elapsed_seconds": 4.023829936981201
+    }
+  ],
+  "measurement_scope": "concurrent correctness reference; not a headline timing comparison"
+}

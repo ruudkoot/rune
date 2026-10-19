@@ -1,0 +1,114 @@
+data Type1 = Cons1  | Cons2 (Array (Bool, Char, Char) ([Float], Char, Array
+Bool Bool, Double)) Float (Array () Type3) | Cons3 [Array Bool Type5] [Array
+(Char, Int, Char, Char) Type3] (((Double, Integer, Bool, Char), Int, [Char],
+Type2)) (Type7, (), Type3, (Type2, (Char, Bool), Integer)) deriving (Eq);
+data Type2 = Cons4  | Cons5 (Array ((Bool, Bool), ()) Bool) | Cons6 Type7
+Double | Cons7 ((Bool), (Type2, Char, Bool, Type2), Bool) Type6 (Array
+Integer (Array Char [Bool])) (Array () [Array Integer Integer]) | Cons8
+Type1 Bool Type5 (Array Char Type1) | Cons9 [Char] deriving (Eq);
+data Type3 = Cons10  | Cons11  | Cons12 (Type3, Array Int Type3, Array
+(Bool, Char, Char) [Bool], [[Float]]) Char Float | Cons13 [((Double, Double,
+Int, Int), [Char], [Bool])] Type1 | Cons14  | Cons15 Type3 ([()], (), Array
+(Bool, Bool, Char) [Bool], Array (Bool, Bool, Char, Bool) (Char, Bool,
+Integer)) [Double] (Type6, Type6, Bool, Array () (Array Char Bool)) deriving
+(Eq);
+data Type4 = Cons16  | Cons17 (Array Integer Type6) (Array ((Bool, Bool,
+Integer), (Char, Integer, Bool, Char), Bool) Double) | Cons18 Type4 [Type6]
+[Array (Bool, Char, Char) [Char]] | Cons19 Type6 | Cons20 (Array () ())
+(Array Char Type3) | Cons21 [Array () (Int, Int, Char, Float)] deriving
+(Eq);
+data Type5 = Cons22  deriving (Eq);
+data Type6 = Cons23  deriving (Eq);
+data Type7 = Cons24  | Cons25  | Cons26 (Array Int [Type2]) (Array Bool
+(Array Bool Double), Type4, Bool, Type1) Type7 deriving (Eq);
+data Type8 = Cons27  | Cons28 (Array () [Array Bool Bool]) Type1 [[()]]
+Type3 | Cons29 ((Char, (Integer), [Char]), Array (Int) Integer, [Array
+Char Double], Float) [Bool] () [[[Char]]] deriving (Eq);
+val101 = 186;
+val128 = 252;
+val127 = 221;
+val125 = 241;
+val126 = 93;
+val123 = 181;
+val121 = 96;
+val118 = 174;
+val114 = 45;
+val115 = 227;
+val111 = 144;
+val112 = 28;
+val110 = 229;
+val109 = 50;
+val106 = 18;
+val105 = 207;
+val104 = 151;
+val100 = 109;
+val98 = 223;
+val91 = 207;
+val35 = 44;
+val88 = 222;
+val85 = 0;
+val86 = 37;
+val83 = 115;
+val78 = 120;
+val82 = 218;
+val80 = 4;
+val81 = 256;
+val77 = 193;
+val76 = 179;
+val72 = 221;
+val74 = 59;
+val70 = 240;
+val67 = 254;
+val68 = 133;
+val69 = 241;
+val63 = 177;
+val64 = 44;
+val66 = 22;
+val36 = 226;
+val62 = 138;
+val61 = 151;
+val57 = 105;
+val56 = 4;
+val51 = 4;
+val48 = 220;
+val43 = 199;
+val37 = 218;
+val42 = 61;
+val39 = 144;
+val31 = 250;
+val22 = 23;
+val23 = 75;
+val21 = 212;
+val12 = 111;
+val15 = 81;
+val1 = Cons28 (array ((), ()) [((),[array (False, False) [(False,True)],
+array (True, False) [], array (True, True) [(True,False)], array (True,
+False) []])]) (Cons1 ) [[(), (), (), ()], [(), (), (), (), ()]] (Cons10
+);
+val2 = Cons15 (Cons12 (Cons13 [((225.0, 5.0, 152, 228), ['\ETX', '\\',
+'\EM'], [True, False, False, True]), ((17.0, 215.0, 154, 176), ['\SOH',
+'A', 'm', '\DC3'], [True, False, True]), ((138.0, 108.0, 60, 149), ['\ACK',
+'s', '0', '9'], [True, True, True]), ((216.0, 16.0, 208, 222), ['k', 'e'],
+[False, True, True])] (Cons2 (array ((False, '\'', '-'), (True, '\SOH',
+'>')) []) 190.0 (array ((), ()) [((),Cons10 )])), array (127, 130) [(127,Cons15
+(Cons10 ) ([(), ()], (), array ((False, True, '\SUB'), (True, False, '\EOT'))
+[], array ((True, True, 'S', False), (True, True, '<', False)) []) [115.0]
+(Cons23 , Cons23 , True, array ((), ()) [((),array ('d', 'f') [('d',False),('e',True),('f',True)])])),(128,Cons10
+),(129,Cons14 ),(130,Cons10 )], array ((False, '.', 's'), (False, 'i',
+'3')) [], [[182.0, 230.0], [], [150.0, 96.0, 66.0], [90.0, 41.0]]) 'U'
+251.0) ([()], (), array ((False, True, '_'), (False, True, '*')) [], array
+((False, False, 'H', False), (False, False, 'I', False)) [((False, False,
+'H', False),('b', True, 77)),((False, False, 'I', False),('r', True, 70))])
+[31.0] (Cons23 , Cons23 , True, array ((), ()) [((),array ('x', '$') [])]);
+val3 = Cons10 ;
+val4 = Cons23 ;
+val5 = Cons22 ;
+val6 = Cons24 ;
+val7 = Cons22 ;
+val8 = Cons4 ;
+val9 = Cons16 ;
+val10 = Cons26 (array (140, 130) []) (array (False, False) [(False,array
+(False, False) [(False,174.0)])], Cons21 [array ((), ()) [((),(104, 223,
+'v', 71.0))], array ((), ()) [((),(167, 132, '\SYN', 64.0))], array ((),
+()) [((),(186, 93, '\v', 217.0))], array ((), ()) [((),(177, 87, '\a',
+9.0))]], False, Cons1 ) (Cons25 );

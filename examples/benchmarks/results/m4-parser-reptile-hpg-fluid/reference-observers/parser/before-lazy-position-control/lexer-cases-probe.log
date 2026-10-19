@@ -1,0 +1,41 @@
+PASS need case-0 raw
+PASS need case-0 layout
+PASS need case-1 raw
+PASS need case-1 layout
+PASS need case-2 raw
+PASS need case-2 layout
+PASS need case-3 raw
+PASS need case-3 layout
+PASS need case-4 raw
+PASS need case-4 layout
+PASS need case-5 raw
+PASS need case-5 layout
+PASS need case-6 raw
+PASS need case-6 layout
+PASS need case-7 raw
+PASS need case-7 layout
+PASS need case-8 raw
+PASS need case-8 layout
+PASS need case-9 raw
+PASS need case-9 layout
+PASS need case-10 raw
+PASS need case-10 layout
+PASS need case-11 raw
+PASS need case-11 layout
+PASS need case-12 raw
+PASS need case-12 layout
+PASS need case-13 raw
+PASS need case-13 layout
+PASS need case-14 raw
+PASS need case-14 layout
+PASS need case-15 raw
+PASS need case-15 layout
+PASS need case-16 raw
+PASS need case-16 layout
+PASS need case-17 raw
+PASS need case-17 layout
+runevm: uncaught exception Fail "lexical case case-18 raw"
+  in NeedLexer.check at tests/out/benchmarks/nofib-parser-originals/lexer-cases-probe.sml:30:72
+  in NeedLexer.one at tests/out/benchmarks/nofib-parser-originals/lexer-cases-probe.sml:31:31
+  in app at bin/../lib/basis/pervasive.sml:58:24
+  in <toplevel> at tests/out/benchmarks/nofib-parser-originals/lexer-cases-probe.sml:34:21

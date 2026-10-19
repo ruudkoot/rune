@@ -1,0 +1,26 @@
+PASS source binary32 mass-row-sums
+PASS source binary32 mass-matrix
+PASS source binary32 subnormal
+PASS source binary32 diffusion-0
+PASS source binary32 gradient-a-0
+PASS source binary32 gradient-b-0
+PASS source binary32 convection-0
+PASS source binary32 diffusion-1
+PASS source binary32 gradient-a-1
+PASS source binary32 gradient-b-1
+PASS source binary32 convection-1
+PASS source binary32 diffusion-2
+PASS source binary32 gradient-a-2
+PASS source binary32 gradient-b-2
+PASS source binary32 convection-2
+PASS source binary32 diffusion-3
+PASS source binary32 gradient-a-3
+PASS source binary32 gradient-b-3
+PASS source binary32 convection-3
+PASS source binary32 inner
+PASS source binary32 match
+runevm: uncaught exception Fail "binary32 mismatch tolerances 0.10000000149 0.0999999940395"
+  in fn at tests/out/benchmarks/nofib-fluid-originals/numeric-probe.sml:20:96
+  in ListPair.appEq at bin/../lib/basis/listpair.sml:24:39
+  in Need.check at tests/out/benchmarks/nofib-fluid-originals/numeric-probe.sml:20:113
+  in <toplevel> at tests/out/benchmarks/nofib-fluid-originals/numeric-probe.sml:41:80

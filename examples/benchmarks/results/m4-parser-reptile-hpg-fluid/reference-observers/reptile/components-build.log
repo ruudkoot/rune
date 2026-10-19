@@ -1,0 +1,10 @@
+[4 of 9] Compiling Layout           ( Layout.hs, Layout.o ) [Source file changed]
+
+Layout.hs:125:1: warning: [-Wtabs]
+    Tab character found here, and in 40 further locations.
+    Suggested fix: Please use spaces instead.
+    |
+125 |               font 8 ++
+    | ^^^^^^^^
+[8 of 9] Compiling Components       ( Components.hs, Components.o )
+[9 of 9] Linking components

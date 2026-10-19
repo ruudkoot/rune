@@ -1,0 +1,18 @@
+[1 of 4] Compiling Norm             ( Norm.hs, Norm.o )
+
+Norm.hs:21:1: warning: [-Wtabs]
+    Tab character found here, and in 27 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+21 |                 if b then True
+   | ^^^^^^^^
+[2 of 4] Compiling S_Array          ( S_Array.hs, S_Array.o )
+
+S_Array.hs:43:1: warning: [-Wtabs]
+    Tab character found here, and in 415 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+43 |         Null | Leaf a | (Bin_Trie a) :^: (Bin_Trie a)
+   | ^^^^^^^^
+[3 of 4] Compiling Main             ( Main.hs, Main.o )
+[4 of 4] Linking observe

@@ -1,0 +1,50 @@
+[ 2 of 15] Compiling Interstate       ( Interstate.hs, Interstate.o ) [Flags changed]
+
+Interstate.hs:8:1: warning: [-Wtabs]
+    Tab character found here, and in three further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |         interprog
+  | ^^^^^^^^
+[ 6 of 15] Compiling Help             ( Help.hs, Help.o ) [Flags changed]
+
+Help.hs:21:1: warning: [-Wtabs]
+    Tab character found here, and in 91 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+21 |         "This button puts you in drawing mode.\n" ++
+   | ^^^^^^^^
+[10 of 15] Compiling Auxprogfuns      ( Auxprogfuns.hs, Auxprogfuns.o ) [Flags changed]
+
+Auxprogfuns.hs:26:1: warning: [-Wtabs]
+    Tab character found here, and in 19 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+26 |                               [676,776,876,976,676,776,876,976]
+   | ^^^^^^^^
+[11 of 15] Compiling Psfuns           ( Psfuns.hs, Psfuns.o ) [Flags changed]
+
+Psfuns.hs:16:1: warning: [-Wtabs]
+    Tab character found here, and in 22 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+16 |                    header = "%!PS-Adobe-1.0\n0.75 setlinewidth\n" ++
+   | ^^^^^^^^
+[12 of 15] Compiling Tilefuns         ( Tilefuns.hs, Tilefuns.o ) [Flags changed]
+
+Tilefuns.hs:91:1: warning: [-Wtabs]
+    Tab character found here, and in 13 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+91 |           0 -> 0
+   | ^^^^^^^^
+[13 of 15] Compiling Progfuns         ( Progfuns.hs, Progfuns.o ) [Flags changed]
+
+Progfuns.hs:30:5: warning: [-Wtabs]
+    Tab character found here, and in 67 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+30 |         if      intsave   x y then doo tsave
+   |     ^^^^
+[14 of 15] Compiling Observe          ( Observe.hs, Observe.o )
+[15 of 15] Linking observe

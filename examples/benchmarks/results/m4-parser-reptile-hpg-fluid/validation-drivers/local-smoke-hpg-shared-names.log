@@ -1,0 +1,16 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1461 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=rune BENCH_FILTER='hpg-' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.bLQXcB
+BENCH hpg-lazy smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 100
+PASS hpg-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH hpg-strict smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 100
+PASS hpg-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune

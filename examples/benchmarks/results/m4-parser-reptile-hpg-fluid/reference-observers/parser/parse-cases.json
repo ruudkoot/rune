@@ -1,0 +1,167 @@
+[
+  {
+    "name": "case-0",
+    "mode": "module",
+    "input": "module M where { x=1 }"
+  },
+  {
+    "name": "case-1",
+    "mode": "module",
+    "input": "module M where\n x=1\n y=x\n"
+  },
+  {
+    "name": "case-2",
+    "mode": "module",
+    "input": "module M where { infixr 7 +; x=a+b+c }"
+  },
+  {
+    "name": "case-3",
+    "mode": "module",
+    "input": "module M where { infixl 8 +; x=a+b*c }"
+  },
+  {
+    "name": "case-4",
+    "mode": "module",
+    "input": "module M where { data Maybe a = Nothing | Just a; f (Just x)=x }"
+  },
+  {
+    "name": "case-5",
+    "mode": "expr",
+    "input": "a+b*c"
+  },
+  {
+    "name": "case-6",
+    "mode": "expr",
+    "input": "a*b+c"
+  },
+  {
+    "name": "case-7",
+    "mode": "expr",
+    "input": "a:b:c"
+  },
+  {
+    "name": "case-8",
+    "mode": "expr",
+    "input": "a<b<c"
+  },
+  {
+    "name": "case-9",
+    "mode": "expr",
+    "input": "if x then y else z"
+  },
+  {
+    "name": "case-10",
+    "mode": "expr",
+    "input": "\\x y -> x y"
+  },
+  {
+    "name": "case-11",
+    "mode": "expr",
+    "input": "let { x=y; y=z } in x"
+  },
+  {
+    "name": "case-12",
+    "mode": "expr",
+    "input": "case xs of { [] -> []; x:rest -> x }"
+  },
+  {
+    "name": "case-13",
+    "mode": "expr",
+    "input": "[a,b,c]"
+  },
+  {
+    "name": "case-14",
+    "mode": "expr",
+    "input": "(a,b,c)"
+  },
+  {
+    "name": "case-15",
+    "mode": "expr",
+    "input": "-x*y"
+  },
+  {
+    "name": "case-16",
+    "mode": "expr",
+    "input": "\"abc\\n\""
+  },
+  {
+    "name": "case-17",
+    "mode": "expr",
+    "input": "'x'"
+  },
+  {
+    "name": "case-18",
+    "mode": "expr",
+    "input": ""
+  },
+  {
+    "name": "case-19",
+    "mode": "pat",
+    "input": "Just x"
+  },
+  {
+    "name": "case-20",
+    "mode": "pat",
+    "input": "a:rest"
+  },
+  {
+    "name": "case-21",
+    "mode": "pat",
+    "input": "[x,_,y]"
+  },
+  {
+    "name": "case-22",
+    "mode": "pat",
+    "input": "(x,y)"
+  },
+  {
+    "name": "case-23",
+    "mode": "pat",
+    "input": "((x))"
+  },
+  {
+    "name": "case-24",
+    "mode": "type",
+    "input": "Maybe a"
+  },
+  {
+    "name": "case-25",
+    "mode": "type",
+    "input": "a -> b -> c"
+  },
+  {
+    "name": "case-26",
+    "mode": "type",
+    "input": "(a,b)"
+  },
+  {
+    "name": "case-27",
+    "mode": "type",
+    "input": "[Maybe a]"
+  },
+  {
+    "name": "case-28",
+    "mode": "valdef",
+    "input": "f x = x where { y=z }"
+  },
+  {
+    "name": "case-29",
+    "mode": "valdef",
+    "input": "f x | p = a | q = b"
+  },
+  {
+    "name": "case-30",
+    "mode": "data",
+    "input": "data T a = A | B a [a]"
+  },
+  {
+    "name": "case-31",
+    "mode": "module",
+    "input": "module M where { infix 4 <; x=a<b<c }"
+  },
+  {
+    "name": "case-32",
+    "mode": "module",
+    "input": "module M where { x = ( }"
+  }
+]

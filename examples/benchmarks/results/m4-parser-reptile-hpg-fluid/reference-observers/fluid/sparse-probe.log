@@ -1,0 +1,4 @@
+runevm: uncaught exception Io <value>
+  in RuneFile.open' at bin/../lib/basis/runefile.sml:29:79
+  in TextIO.openIn at bin/../lib/basis/textio.sml:148:50
+  in <toplevel> at tests/out/benchmarks/nofib-fluid-originals/sparse-probe.sml:14:12

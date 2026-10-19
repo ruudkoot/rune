@@ -1,0 +1,17 @@
+[
+  {
+    "profile": "smoke",
+    "summary": "(91,95,1434,4438664785162099485)",
+    "result_prefix": "\n\nSucceeded, with:\n   Size env = 21\n   Next token = (99997,99997,Leof,\"\")\n\n   Result = MkModule \"Parser\" [MkTopV (MkValBind 12 (LhsPat (PatVar \"panic\")) (ExprVa"
+  },
+  {
+    "profile": "normal",
+    "summary": "(1057,1095,15653,-175746672012950975)",
+    "result_prefix": "\n\nSucceeded, with:\n   Size env = 21\n   Next token = (99997,99997,Leof,\"\")\n\n   Result = MkModule \"Parser\" [MkTopV (MkValBind 12 (LhsPat (PatVar \"panic\")) (ExprVa"
+  },
+  {
+    "profile": "large",
+    "summary": "(6852,7156,98649,-9015528911864443912)",
+    "result_prefix": "\n\nSucceeded, with:\n   Size env = 21\n   Next token = (99997,99997,Leof,\"\")\n\n   Result = MkModule \"Parser\" [MkTopV (MkValBind 12 (LhsPat (PatVar \"panic\")) (ExprVa"
+  }
+]

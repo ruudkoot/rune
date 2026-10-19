@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "120",
+    "bin/runevm",
+    "tests/out/benchmarks/nofib-fluid-originals/float-show-probe.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 12592,
+  "observed_minimum_available_kib": 19670212,
+  "peak_processes": [
+    {
+      "pid": 6,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 7,
+      "name": "runevm",
+      "rss_kib": 10796
+    }
+  ],
+  "elapsed_seconds": 26.47771587400348
+}

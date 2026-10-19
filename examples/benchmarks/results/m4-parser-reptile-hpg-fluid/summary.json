@@ -1,0 +1,24 @@
+{
+  "programs": 503,
+  "profiles": 1461,
+  "primary_combinations": 224,
+  "primary_pass": 209,
+  "rune_pass": 128,
+  "semantic_groups": 56,
+  "semantic_raw_groups": 73,
+  "semantic_complete": 52,
+  "semantic_pass": 392279,
+  "semantic_fail": 10,
+  "normal_count_samples": 32,
+  "fresh_adapter_samples": 20,
+  "fresh_preflight_rejections": 4,
+  "acceptance": {
+    "command": [
+      "make",
+      "JOBS=4",
+      "check"
+    ],
+    "exit": 0,
+    "elapsed_seconds": 1883.9002717370022
+  }
+}

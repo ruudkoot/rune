@@ -1,0 +1,11 @@
+$(SML_LIB)/basis/basis.mlb
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/matrix/native-mlkit-4.7.23/program/src/1/input.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/matrix/native-mlkit-4.7.23/program/src/2/lazy.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/matrix/native-mlkit-4.7.23/program/src/3/suspend.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/matrix/native-mlkit-4.7.23/program/src/4/hartel-ida-finite.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/matrix/native-mlkit-4.7.23/program/src/5/finite-binary32.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/matrix/native-mlkit-4.7.23/program/src/6/nofib-hpg-random.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/matrix/native-mlkit-4.7.23/program/src/7/nofib-hpg-kernel.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/matrix/native-mlkit-4.7.23/program/src/8/nofib-hpg-check.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/matrix/native-mlkit-4.7.23/program/src/9/benchmark.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/matrix/native-mlkit-4.7.23/program/src/10/main.sml"

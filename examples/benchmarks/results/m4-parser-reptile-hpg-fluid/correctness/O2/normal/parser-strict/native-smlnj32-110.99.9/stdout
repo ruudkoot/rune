@@ -1,0 +1,1475 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val filter :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-parser-literals.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-parser-literals.sml:22.25 Warning: calling polyEqual
+functor BenchParserLiteralsFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure F : <sig>
+  type text
+  structure X : <sig>
+  val internal : unit -> 'a
+  val asciiNames : string list
+  val namedEscapes : (string * int) list
+  val uncons :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t) option
+  val textPrefix :
+      ''a list
+       -> ''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t option
+  val dropText :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val digit : int -> char -> int option
+  val escapeNumber :
+      int
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (int * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) option
+  val readEscape :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (int * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) option
+  val readCharItem :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (int * bool * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+         option
+  val readCharacter :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (int list * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+         option
+  val readString :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (int list * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+         option
+  val showEscape : int -> int -> string
+  val showCharacter : int list -> string
+  val showString : int list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-parser-lexer.sml]
+functor BenchNofibParserLexFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure H : <sig>
+  structure F : <sig>
+  structure C : <sig>
+  type text
+  val text : string -> char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t
+  val string : char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t -> string
+  type input
+  val input :
+      string -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  type lex
+  type position
+  val pos : 'a -> 'a BenchLazy.state ref
+  val plus : int BenchLazy.state ref -> int -> int BenchLazy.state ref
+  val tab : int BenchLazy.state ref -> int BenchLazy.state ref
+  type token
+  type tokens
+  val token : 'a -> 'b -> 'c -> 'd -> ('a * 'b * 'c * 'd) BenchLazy.state ref
+  val eofToken :
+      (int BenchLazy.state ref * int BenchLazy.state ref
+            * <BaseFct>.<resultStr>.lex
+            * char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t) 
+           BenchLazy.state ref
+  val eofHolder : <BaseFct>.<resultStr>.tokens option ref
+  val eofTokens :
+      (int BenchLazy.state ref * int BenchLazy.state ref
+              * <BaseFct>.<resultStr>.lex
+              * char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t) 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+  val next :
+      'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> ('a * 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t) 
+         option
+  val singleton :
+      'a BenchNeed.t
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val fail :
+      int BenchLazy.state ref -> int BenchLazy.state ref -> string -> 'a
+  val symbols : string
+  val isSymbol : char -> bool
+  val isTail : char -> bool
+  val chunk :
+      int BenchLazy.state ref
+       -> ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> 'a list * int BenchLazy.state ref
+       * 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+  val integer : char list -> int
+  val dropWhile :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+  val dropOne :
+      'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val litChars :
+      bool
+       -> int BenchLazy.state ref
+       -> int BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> char list * int BenchLazy.state ref
+       * char <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+  val lexControl :
+      int BenchLazy.state ref
+       -> int BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+            * <BaseFct>.<resultStr>.lex
+            * char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t) 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val leftComment :
+      int BenchLazy.state ref
+       -> int BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+            * <BaseFct>.<resultStr>.lex
+            * char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t) 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val rightComment :
+      int BenchLazy.state ref
+       -> int BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+            * <BaseFct>.<resultStr>.lex
+            * char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t) 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val lex :
+      int
+       -> int
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+            * <BaseFct>.<resultStr>.lex
+            * char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t) 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val sameLiteral :
+      char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t -> string -> bool
+  val keyword :
+      'a * 'b * <BaseFct>.<resultStr>.lex
+       * char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t
+       -> 'a * 'b * <BaseFct>.<resultStr>.lex
+       * char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t
+  val mapTokens :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> 'b <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val closeBraces :
+      int
+       -> 'a
+       -> 'b
+       -> ('a * 'b * <BaseFct>.<resultStr>.lex
+            * char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t) 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val layout :
+      int BenchLazy.state ref
+       -> int BenchLazy.state ref list
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+            * <BaseFct>.<resultStr>.lex
+            * char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t) 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+            * <BaseFct>.<resultStr>.lex
+            * char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t) 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val main :
+      char <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+            * <BaseFct>.<resultStr>.lex
+            * char <BaseFct>.<resultStr>.H.<returnStr>.F.node D.t) 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-parser-kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-parser-kernel.sml:52.43 Warning: calling polyEqual
+functor BenchNofibParserFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure X : <sig>
+  structure F : <sig>
+  structure C : <sig>
+  type text
+  val text : string -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val string : char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t -> string
+  type ids
+  type fixity
+  type environment
+  type moduleNode
+  type fixityDeclNode
+  type dataDeclNode
+  type topDeclNode
+  type typeExprNode
+  type valBindNode
+  type lhsNode
+  type patNode
+  type exprNode
+  type caseAltNode
+  type literalNode
+  type module
+  type fixityDecl
+  type dataDecl
+  type typeExpr
+  type valBind
+  type lhs
+  type pat
+  type expr
+  type literal
+  type entry
+  type 'a resultNode
+  type 'a result
+  type 'a parser
+  val eof :
+      (int BenchLazy.state ref * int BenchLazy.state ref
+            * <BaseFct>.<resultStr>.X.<returnStr>.lex
+            * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+           BenchLazy.state ref
+  val firstToken :
+      (int BenchLazy.state ref * int BenchLazy.state ref
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+            * <BaseFct>.<resultStr>.X.<returnStr>.lex
+            * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+           BenchLazy.state ref
+  val cell : 'a -> 'a D.t
+  val one : 'a D.t -> 'a <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val fst3 : ('a * 'b * 'c) D.t -> 'a
+  val snd3 : ('a * 'b * 'c) D.t -> 'b
+  val thd3 : ('a * 'b * 'c) D.t -> 'c
+  val pair : 'a -> 'b -> ('a * 'b) D.t
+  val select1 : 'a -> 'b -> 'a
+  val select2 : 'a -> 'b -> 'b
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val sameText :
+      ''a <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> ''a <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t -> bool
+  val lookup :
+      (''a <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t * 'b D.t) 
+           <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> ''a <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> 'b D.t -> 'b D.t
+  val tokenLine :
+      ('a BenchLazy.state ref * 'b * 'c * 'd) BenchLazy.state ref -> 'a
+  val tokenColumn :
+      ('a * 'b BenchLazy.state ref * 'c * 'd) BenchLazy.state ref -> 'b
+  val pgItem :
+      <BaseFct>.<resultStr>.X.<returnStr>.lex
+       -> <BaseFct>.<resultStr>.environment
+       -> (<BaseFct>.<resultStr>.X.<returnStr>.position
+              * <BaseFct>.<resultStr>.X.<returnStr>.position
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * <BaseFct>.<resultStr>.X.<returnStr>.text) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val pgAlts :
+      ('a
+          -> (int BenchLazy.state ref * int BenchLazy.state ref
+                 * <BaseFct>.<resultStr>.X.<returnStr>.lex
+                 * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+                <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+          -> 'b <BaseFct>.<resultStr>.resultNode BenchLazy.state ref) list
+       -> 'a
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> 'b <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val pgThen2 :
+      ('a D.t -> 'b D.t -> 'c D.t)
+       -> ('d -> 'e -> 'a <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'b <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> 'd -> 'e -> 'c <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val pgThen3 :
+      ('a D.t -> 'b D.t -> 'c D.t -> 'd D.t)
+       -> ('e -> 'f -> 'a <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'b <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'c <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> 'e -> 'f -> 'd <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val pgThen4 :
+      ('a D.t -> 'b D.t -> 'c D.t -> 'd D.t -> 'e D.t)
+       -> ('f -> 'g -> 'a <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'b <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'c <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'd <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> 'f -> 'g -> 'e <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val pgApply :
+      ('a D.t -> 'b D.t)
+       -> ('c -> 'd -> 'a <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> 'c -> 'd -> 'b <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val pgZeroOrMore :
+      (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'a <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val pgOneOrMore :
+      (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'a <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val pgTwoOrMoreWithSep :
+      (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'a <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'b <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val pgOneOrMoreWithSep :
+      (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'a <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'b <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val pgEmpty :
+      'a D.t
+       -> <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> 'a <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val pgZeroOrMoreWithSep :
+      (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'a <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'b <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.environment
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val pgOptional :
+      (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'a <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> 'a D.t option <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val pgGetLineNumber :
+      ('a
+        -> (int BenchLazy.state ref * int BenchLazy.state ref
+               * <BaseFct>.<resultStr>.X.<returnStr>.lex
+               * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+              <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+        -> 'b <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> 'a
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> (int D.t * 'b D.t) <BaseFct>.<resultStr>.resultNode BenchLazy.state 
+         ref
+  val pgEatEnd :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> unit <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val pgDeclList :
+      (<BaseFct>.<resultStr>.environment
+        -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+        -> 'a <BaseFct>.<resultStr>.resultNode BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.environment
+       -> (<BaseFct>.<resultStr>.X.<returnStr>.position
+              * <BaseFct>.<resultStr>.X.<returnStr>.position
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * <BaseFct>.<resultStr>.X.<returnStr>.text) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val node1 : ('a -> 'b) -> 'a -> 'b D.t
+  val node2 : ('a * 'b -> 'c) -> 'a -> 'b -> 'c D.t
+  val node3 : ('a * 'b * 'c -> 'd) -> 'a -> 'b -> 'c -> 'd D.t
+  val minusExpr : <BaseFct>.<resultStr>.exprNode D.t
+  val zeroExpr : <BaseFct>.<resultStr>.exprNode D.t
+  val makeWhere :
+      <BaseFct>.<resultStr>.exprNode D.t
+       -> <BaseFct>.<resultStr>.valBindNode 
+             <BaseFct>.<resultStr>.X.<returnStr>.H.F.seq option D.t
+       -> <BaseFct>.<resultStr>.exprNode D.t
+  val cache_paLiteral :
+      <BaseFct>.<resultStr>.literalNode <BaseFct>.<resultStr>.parser option 
+         ref
+  val cache_paExpr :
+      <BaseFct>.<resultStr>.exprNode <BaseFct>.<resultStr>.parser option ref
+  val cache_paUnaryMinusExpr :
+      <BaseFct>.<resultStr>.exprNode <BaseFct>.<resultStr>.parser option ref
+  val cache_paCaseExpr :
+      <BaseFct>.<resultStr>.exprNode <BaseFct>.<resultStr>.parser option ref
+  val cache_paAlt :
+      <BaseFct>.<resultStr>.caseAltNode <BaseFct>.<resultStr>.parser option 
+         ref
+  val cache_paGalt :
+      (<BaseFct>.<resultStr>.expr * <BaseFct>.<resultStr>.expr) 
+             <BaseFct>.<resultStr>.parser option ref
+  val cache_paLamExpr :
+      <BaseFct>.<resultStr>.exprNode <BaseFct>.<resultStr>.parser option ref
+  val cache_paLetExpr :
+      <BaseFct>.<resultStr>.exprNode <BaseFct>.<resultStr>.parser option ref
+  val cache_paValdefs :
+      <BaseFct>.<resultStr>.valBindNode 
+               <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.parser option ref
+  val cache_paLhs :
+      <BaseFct>.<resultStr>.lhsNode <BaseFct>.<resultStr>.parser option ref
+  val cache_paValdef :
+      <BaseFct>.<resultStr>.valBindNode <BaseFct>.<resultStr>.parser option 
+         ref
+  val cache_paWhereClause :
+      <BaseFct>.<resultStr>.valBindNode 
+               <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.parser option ref
+  val cache_paGrhs :
+      (<BaseFct>.<resultStr>.expr * <BaseFct>.<resultStr>.expr) 
+             <BaseFct>.<resultStr>.parser option ref
+  val cache_paAPat :
+      <BaseFct>.<resultStr>.patNode <BaseFct>.<resultStr>.parser option ref
+  val cache_paPat :
+      <BaseFct>.<resultStr>.patNode <BaseFct>.<resultStr>.parser option ref
+  val cache_paIfExpr :
+      <BaseFct>.<resultStr>.exprNode <BaseFct>.<resultStr>.parser option ref
+  val cache_paAExpr :
+      <BaseFct>.<resultStr>.entry <BaseFct>.<resultStr>.parser option ref
+  val cache_paListExpr :
+      <BaseFct>.<resultStr>.exprNode 
+               <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.parser option ref
+  val cache_paTupleExpr :
+      <BaseFct>.<resultStr>.exprNode 
+               <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.parser option ref
+  val cache_paOp :
+      <BaseFct>.<resultStr>.entry <BaseFct>.<resultStr>.parser option ref
+  val cache_paDataDecl :
+      <BaseFct>.<resultStr>.dataDeclNode <BaseFct>.<resultStr>.parser option 
+         ref
+  val cache_paDataDecl_main :
+      <BaseFct>.<resultStr>.dataDeclNode <BaseFct>.<resultStr>.parser option 
+         ref
+  val cache_paConstrs :
+      (<BaseFct>.<resultStr>.text
+              * <BaseFct>.<resultStr>.typeExprNode 
+                <BaseFct>.<resultStr>.X.<returnStr>.H.F.seq) 
+             <BaseFct>.<resultStr>.parser option ref
+  val cache_paType :
+      <BaseFct>.<resultStr>.typeExprNode <BaseFct>.<resultStr>.parser option 
+         ref
+  val cache_paAType :
+      <BaseFct>.<resultStr>.typeExprNode <BaseFct>.<resultStr>.parser option 
+         ref
+  val cache_paInfixWord :
+      <BaseFct>.<resultStr>.fixity <BaseFct>.<resultStr>.parser option ref
+  val cache_paTopDecl :
+      <BaseFct>.<resultStr>.topDeclNode <BaseFct>.<resultStr>.parser option 
+         ref
+  val cache_paModule :
+      <BaseFct>.<resultStr>.moduleNode <BaseFct>.<resultStr>.parser option ref
+  val cache_hsAExprOrOp :
+      <BaseFct>.<resultStr>.entry <BaseFct>.<resultStr>.parser option ref
+  val cached :
+      ('a -> 'b -> 'c) option ref
+       -> (unit -> 'a -> 'b -> 'c) -> 'a -> 'b -> 'c
+  val paVar :
+      char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+         <BaseFct>.<resultStr>.parser
+  val paCon :
+      char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+         <BaseFct>.<resultStr>.parser
+  val paVarop :
+      char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+         <BaseFct>.<resultStr>.parser
+  val paConop :
+      char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+         <BaseFct>.<resultStr>.parser
+  val paMinus :
+      char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+         <BaseFct>.<resultStr>.parser
+  val defaultFixity : (<BaseFct>.<resultStr>.fixity D.t * int D.t) D.t
+  val paLiteral :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.literalNode <BaseFct>.<resultStr>.result
+  val paExpr :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.exprNode <BaseFct>.<resultStr>.result
+  val paUnaryMinusExpr :
+      <BaseFct>.<resultStr>.environment
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.exprNode <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+  val paCaseExpr :
+      <BaseFct>.<resultStr>.environment
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.exprNode <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+  val paAlt :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.caseAltNode <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+  val paGalt :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> (<BaseFct>.<resultStr>.expr * <BaseFct>.<resultStr>.expr) 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val paLamExpr :
+      <BaseFct>.<resultStr>.environment
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.exprNode <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+  val paLetExpr :
+      <BaseFct>.<resultStr>.environment
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.exprNode <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+  val paValdefs :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.valBindNode 
+               <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val paLhs :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.lhsNode <BaseFct>.<resultStr>.result
+  val paValdef :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.valBindNode <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+  val paWhereClause :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.valBindNode 
+               <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val paGrhs :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> (<BaseFct>.<resultStr>.expr * <BaseFct>.<resultStr>.expr) 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val paAPat :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.patNode <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+  val paPat :
+      <BaseFct>.<resultStr>.environment
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.patNode <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+  val paIfExpr :
+      <BaseFct>.<resultStr>.environment
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.exprNode <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+  val paAExpr :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> (bool D.t * <BaseFct>.<resultStr>.expr * <BaseFct>.<resultStr>.text) 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val paListExpr :
+      <BaseFct>.<resultStr>.environment
+       -> (<BaseFct>.<resultStr>.X.<returnStr>.position
+              * <BaseFct>.<resultStr>.X.<returnStr>.position
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * <BaseFct>.<resultStr>.X.<returnStr>.text) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.exprNode 
+               <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val paTupleExpr :
+      <BaseFct>.<resultStr>.environment
+       -> (<BaseFct>.<resultStr>.X.<returnStr>.position
+              * <BaseFct>.<resultStr>.X.<returnStr>.position
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * <BaseFct>.<resultStr>.X.<returnStr>.text) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.exprNode 
+               <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val paOp :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.entry <BaseFct>.<resultStr>.result
+  val paDataDecl :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.dataDeclNode <BaseFct>.<resultStr>.result
+  val paDataDecl_main :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.dataDeclNode <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+  val paConstrs :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> (<BaseFct>.<resultStr>.text
+              * <BaseFct>.<resultStr>.typeExprNode 
+                <BaseFct>.<resultStr>.X.<returnStr>.H.F.seq) 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val paType :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.typeExprNode <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+  val paAType :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.typeExprNode <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+  val paInfixDecl :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.fixityDeclNode 
+             <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val paInfixWord :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.fixity <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+  val paTopDecl :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.topDeclNode <BaseFct>.<resultStr>.result
+  val paModule :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.moduleNode <BaseFct>.<resultStr>.result
+  val hsAExprOrOp :
+      <BaseFct>.<resultStr>.environment
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.entry <BaseFct>.<resultStr>.result
+  val hsDoExpr :
+      <BaseFct>.<resultStr>.entry D.t list
+       -> <BaseFct>.<resultStr>.environment
+       -> (int BenchLazy.state ref * int BenchLazy.state ref
+              * <BaseFct>.<resultStr>.X.<returnStr>.lex
+              * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+             <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.exprNode <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+  val hsPrecTable :
+      (char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+            * (<BaseFct>.<resultStr>.fixity D.t * int D.t) D.t) 
+           <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val parserTest :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens
+       -> <BaseFct>.<resultStr>.moduleNode <BaseFct>.<resultStr>.result
+  val emptyText : char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  structure B : <sig>
+  val signed : int -> string
+  val showInt :
+      int
+       -> int D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showText :
+      char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showChar :
+      char D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showList :
+      (int
+        -> 'a D.t
+        -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+        -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t)
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showStrings :
+      char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node 
+           <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showTuple :
+      (char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+          -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) list
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val constructor :
+      int
+       -> string
+       -> (char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+          -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) list
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showFixity :
+      <BaseFct>.<resultStr>.fixity D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showPriority :
+      (<BaseFct>.<resultStr>.fixity D.t * int D.t) D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showModule :
+      int
+       -> <BaseFct>.<resultStr>.moduleNode D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showFixDecl :
+      int
+       -> <BaseFct>.<resultStr>.fixityDeclNode D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showDataDecl :
+      int
+       -> <BaseFct>.<resultStr>.dataDeclNode D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showTop :
+      int
+       -> <BaseFct>.<resultStr>.topDeclNode D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showType :
+      int
+       -> <BaseFct>.<resultStr>.typeExpr
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showValBind :
+      int
+       -> <BaseFct>.<resultStr>.valBind
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showLhs :
+      int
+       -> <BaseFct>.<resultStr>.lhs
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showPat :
+      int
+       -> <BaseFct>.<resultStr>.pat
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showExpr :
+      int
+       -> <BaseFct>.<resultStr>.expr
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showCaseAlt :
+      int
+       -> <BaseFct>.<resultStr>.caseAltNode D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showLiteral :
+      int
+       -> <BaseFct>.<resultStr>.literal
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showGuard :
+      (<BaseFct>.<resultStr>.expr * <BaseFct>.<resultStr>.expr) D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showConAlt :
+      (char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+          * <BaseFct>.<resultStr>.typeExprNode 
+              <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showDataParameters :
+      (<BaseFct>.<resultStr>.ids
+          * (<BaseFct>.<resultStr>.text
+             * <BaseFct>.<resultStr>.typeExprNode 
+               <BaseFct>.<resultStr>.X.<returnStr>.H.F.seq) 
+            <BaseFct>.<resultStr>.X.<returnStr>.H.F.seq) D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showTag :
+      <BaseFct>.<resultStr>.X.<returnStr>.lex
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val showToken :
+      (int BenchLazy.state ref * int BenchLazy.state ref
+            * <BaseFct>.<resultStr>.X.<returnStr>.lex
+            * char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t) 
+           BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val report :
+      <BaseFct>.<resultStr>.moduleNode <BaseFct>.<resultStr>.resultNode 
+           BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t
+  val parse :
+      char <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.moduleNode <BaseFct>.<resultStr>.result
+  structure W : <sig>
+  val hash :
+      char <BaseFct>.<resultStr>.X.<returnStr>.H.F.node D.t -> Word64.word
+  val signedHash : Word64.word -> string
+  val benchmark :
+      char <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> Word64.word
+  type input
+  val input :
+      string -> char <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-parser-check.sml]
+[autoloading]
+[autoloading done]
+functor BenchNofibParserCheckFn(K: sig
+  type input
+  val input : string -> input
+  val benchmark : input -> Word64.word
+  val signedHash : Word64.word -> string
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/parser-strict/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+-175746672012950975
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed

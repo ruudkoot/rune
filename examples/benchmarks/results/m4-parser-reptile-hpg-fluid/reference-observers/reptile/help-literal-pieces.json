@@ -1,0 +1,173 @@
+[
+  {
+    "name": "endmes",
+    "literal_pieces": [
+      "\n\n PRESS RETURN TO RETURN TO THE PROGRAM\n",
+      "OR CLICK SOMEWHERE ELSE TO FIND OUT MORE\n"
+    ],
+    "append_endmes": false
+  },
+  {
+    "name": "helpdraw",
+    "literal_pieces": [
+      "This button puts you in drawing mode.\n",
+      "Lines can be drawn in the STAMP DESIGN \n",
+      "area by holding down the middle button,\n",
+      "and deleted by clicking\n",
+      "with the right one.\n",
+      "\nLittle circles will appear if a line\n",
+      "touches the edge of the square.\n",
+      "These indicate positions on all the sides\n",
+      "that would contact that line in each of\n",
+      "the possible orientations of the print.\n",
+      "Unless special effects are being sought,\n",
+      "the recommendation is that all little\n",
+      "circles be attached to a line.\n"
+    ],
+    "append_endmes": true
+  },
+  {
+    "name": "helptile",
+    "literal_pieces": [
+      "In this mode, orientations of the print\n",
+      "can be placed in the TILE DESIGN area\n",
+      "to create a 64 X 64 big tile\n",
+      "\nUse the right button to select a print\n",
+      "and the middle button to place it.\n",
+      "\nWithin the tiling area the right button\n",
+      "may also be used to delete a square\n",
+      "\nTo rotate or invert squares within\n",
+      "the big tile it may be more convenient\n",
+      "to use the ALTER mode."
+    ],
+    "append_endmes": true
+  },
+  {
+    "name": "helpalter",
+    "literal_pieces": [
+      "In ALTER mode, squares within the\n",
+      "big tile can be adjusted.\n",
+      "The middle button causes them to \n",
+      "rotate clockwise.\n",
+      "The right button causes them to\n",
+      "invert."
+    ],
+    "append_endmes": true
+  },
+  {
+    "name": "helptsave",
+    "literal_pieces": [
+      "Sorry, SAVE is temporarily inoperative."
+    ],
+    "append_endmes": true
+  },
+  {
+    "name": "helptclear",
+    "literal_pieces": [
+      "This CLEAR button clears the TILE DESIGN\n",
+      "region and draws an empty grid."
+    ],
+    "append_endmes": true
+  },
+  {
+    "name": "helptget",
+    "literal_pieces": [
+      "Sorry, GET is temporarily inoperative."
+    ],
+    "append_endmes": true
+  },
+  {
+    "name": "helpt4",
+    "literal_pieces": [
+      "The T4 button tiles the whole big tile\n",
+      "with the pattern of the four squares\n",
+      "in the top left hand corner\n"
+    ],
+    "append_endmes": true
+  },
+  {
+    "name": "helpquit",
+    "literal_pieces": [
+      "\n\n\nClicking on QUIT allows you\n",
+      "to leave the program.\n"
+    ],
+    "append_endmes": true
+  },
+  {
+    "name": "helpbt",
+    "literal_pieces": [
+      "\n\n\nWithin the TILE DESIGN area,\n",
+      "a big tile, based on orientations of\n",
+      "a print design, can be built.\n",
+      "\nUsing TILE mode the right button\n",
+      "will select from a palette at the bottom\n",
+      "of the screen, and the middle button will\n",
+      "place the selection within the big tile.\n",
+      "Within the area the right button will\n",
+      "delete squares.\n",
+      "\nUsing ALTER mode the right button will\n",
+      "invert squares, and the middle button \n",
+      "will rotate them."
+    ],
+    "append_endmes": true
+  },
+  {
+    "name": "helppic",
+    "literal_pieces": [
+      "\nThese boxes show the eight possible\n",
+      "orientations of the print that is\n",
+      "to be used in tiling\n",
+      "\nWhen in tiling mode, clicking with the\n",
+      "right button over one of these\n",
+      "will make it the \"current selection\".\n",
+      "Clicking with the middle button in\n",
+      "the TILE DESIGN grid, will put that\n",
+      "orientation of the print at that place"
+    ],
+    "append_endmes": true
+  },
+  {
+    "name": "helpdesign",
+    "literal_pieces": [
+      "\n\n\nThis is the area in which to design \nyour print.\n",
+      "\nDraw lines by holding down the\n middle button.\n",
+      "Delete lines by clicking with the\n right button.\n",
+      "\n\nA print that has previously been saved\n",
+      "can be restored by clicking on GET\n",
+      "then typing in the filename at the prompt.\n"
+    ],
+    "append_endmes": true
+  },
+  {
+    "name": "helpdsave",
+    "literal_pieces": [
+      "Sorry, SAVE is temporarily inoperative."
+    ],
+    "append_endmes": true
+  },
+  {
+    "name": "helpdclear",
+    "literal_pieces": [
+      "\n\n\nThis clears the PRINT DESIGN grid.\n",
+      "The print currently being worked on\n",
+      "will be lost, unless it has been\n",
+      "explicitly SAVEd first\n"
+    ],
+    "append_endmes": true
+  },
+  {
+    "name": "helpdget",
+    "literal_pieces": [
+      "Sorry, GET is temporarily inoperative."
+    ],
+    "append_endmes": true
+  },
+  {
+    "name": "errmes",
+    "literal_pieces": [
+      "\n\n\nYou have clicked over an area \n",
+      "of no particular interest.\n"
+    ],
+    "append_endmes": true
+  }
+]

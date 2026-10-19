@@ -1,0 +1,106 @@
+[ 1 of 15] Compiling Diff             ( Diff.hs, Diff.o )
+
+Diff.hs:14:1: warning: [-Wtabs]
+    Tab character found here, and in one further location.
+    Suggested fix: Please use spaces instead.
+   |
+14 |            where root' a b = if a+1>=b then b
+   | ^^^^^^^^
+[ 2 of 15] Compiling Interstate       ( Interstate.hs, Interstate.o )
+
+Interstate.hs:8:1: warning: [-Wtabs]
+    Tab character found here, and in three further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |         interprog
+  | ^^^^^^^^
+[ 3 of 15] Compiling Mgrfuns          ( Mgrfuns.hs, Mgrfuns.o )
+
+Mgrfuns.hs:36:1: warning: [-Wtabs]
+    Tab character found here, and in one further location.
+    Suggested fix: Please use spaces instead.
+   |
+36 |         circle [x1,y1,r]
+   | ^^^^^^^^
+[ 4 of 15] Compiling Drawfuns         ( Drawfuns.hs, Drawfuns.o )
+
+Drawfuns.hs:17:1: warning: [-Wtabs]
+    Tab character found here, and in 21 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+17 |                           line [x1,y1,x1,y2] ++
+   | ^^^^^^^^
+[ 5 of 15] Compiling Layout           ( Layout.hs, Layout.o )
+
+Layout.hs:6:1: warning: [-Wtabs]
+    Tab character found here, and in 47 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+6 |                textarea, helptextarea, dpgrid,tpgrid,picgrid,
+  | ^^^^^^^^
+[ 6 of 15] Compiling Help             ( Help.hs, Help.o )
+
+Help.hs:21:1: warning: [-Wtabs]
+    Tab character found here, and in 91 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+21 |         "This button puts you in drawing mode.\n" ++
+   | ^^^^^^^^
+[ 7 of 15] Compiling Geomfuns         ( Geomfuns.hs, Geomfuns.o )
+
+Geomfuns.hs:73:15: warning: [-Wtabs]
+    Tab character found here, and in four further locations.
+    Suggested fix: Please use spaces instead.
+   |
+73 |                       tile (x + 2*xymax) (y + 2*xymax) (c-1)(r-1) coords
+   |               ^^
+[ 8 of 15] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[ 9 of 15] Compiling Rational         ( Rational.hs, Rational.o )
+
+Rational.hs:12:1: warning: [-Wtabs]
+    Tab character found here, and in four further locations.
+    Suggested fix: Please use spaces instead.
+   |
+12 |              v = abs y
+   | ^^^^^^^^
+[10 of 15] Compiling Auxprogfuns      ( Auxprogfuns.hs, Auxprogfuns.o )
+
+Auxprogfuns.hs:26:1: warning: [-Wtabs]
+    Tab character found here, and in 19 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+26 |                               [676,776,876,976,676,776,876,976]
+   | ^^^^^^^^
+[11 of 15] Compiling Psfuns           ( Psfuns.hs, Psfuns.o )
+
+Psfuns.hs:16:1: warning: [-Wtabs]
+    Tab character found here, and in 22 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+16 |                    header = "%!PS-Adobe-1.0\n0.75 setlinewidth\n" ++
+   | ^^^^^^^^
+[12 of 15] Compiling Tilefuns         ( Tilefuns.hs, Tilefuns.o )
+
+Tilefuns.hs:91:1: warning: [-Wtabs]
+    Tab character found here, and in 13 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+91 |           0 -> 0
+   | ^^^^^^^^
+[13 of 15] Compiling Progfuns         ( Progfuns.hs, Progfuns.o )
+
+Progfuns.hs:30:5: warning: [-Wtabs]
+    Tab character found here, and in 67 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+30 |         if      intsave   x y then doo tsave
+   |     ^^^^
+[14 of 15] Compiling Main             ( Main.hs, Main.o )
+
+Main.hs:19:1: warning: [-Wtabs]
+    Tab character found here, and in 19 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+19 |         fromMgr <- salt input
+   | ^^^^^^^^
+[15 of 15] Linking original

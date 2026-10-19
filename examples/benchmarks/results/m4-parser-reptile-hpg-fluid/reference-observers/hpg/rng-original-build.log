@@ -1,0 +1,5 @@
+[1 of 5] Compiling Config           ( Config.lhs, Config.o )
+[2 of 5] Compiling Types            ( Types.lhs, Types.o )
+[3 of 5] Compiling Env              ( Env.lhs, Env.o )
+[4 of 5] Compiling Main             ( RandomObserve.hs, RandomObserve.o )
+[5 of 5] Linking observe

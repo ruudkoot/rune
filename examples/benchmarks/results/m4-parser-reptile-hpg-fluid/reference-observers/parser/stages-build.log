@@ -1,0 +1,11 @@
+[1 of 4] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[2 of 4] Compiling Main             ( Main.hs, Main.o )
+
+Main.hs:1281:1: warning: [-Wtabs]
+    Tab character found here, and in 19 further locations.
+    Suggested fix: Please use spaces instead.
+     |
+1281 |                  else
+     | ^^^^^^^^
+[3 of 4] Compiling Stages           ( Stages.hs, Stages.o )
+[4 of 4] Linking stages

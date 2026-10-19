@@ -1,0 +1,5 @@
+COUNT unbudgeted hpg-strict normal rune
+COUNT unbudgeted hpg-strict normal rune:opt
+COUNT unbudgeted hpg-strict normal rune:new
+COUNT unbudgeted hpg-strict normal rune:jit
+COUNT comparisons agree

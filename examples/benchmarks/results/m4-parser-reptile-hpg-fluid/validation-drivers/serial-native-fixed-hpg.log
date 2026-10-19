@@ -1,0 +1,8 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1461 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:polyml BENCH_FILTER='hpg-' BENCH_LEVEL= BENCH_MODE=fresh BENCH_SAMPLES=1 BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh time
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.qIocUy
+BENCH MEASURE hpg-lazy smoke time
+BENCH MEASURE hpg-strict smoke time
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.qIocUy/report.md
+make: *** [Makefile:1011: bench] Error 1

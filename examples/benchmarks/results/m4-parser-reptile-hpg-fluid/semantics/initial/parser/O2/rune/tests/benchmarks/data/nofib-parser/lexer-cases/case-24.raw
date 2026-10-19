@@ -1,0 +1,2 @@
+ok
+[(1,1,Lvar,"module"),(1,8,Lcon,"M"),(1,10,Lvar,"where"),(1,16,Llbrace,"}"),(1,18,Lvar,"x"),(1,19,Lvarop,"="),(1,20,Lintlit,"1"),(1,21,Lsemi,";"),(1,23,Lvar,"y"),(1,24,Lvarop,"="),(1,25,Lvar,"x"),(1,27,Lrbrace,"}"),(99997,99997,Leof,"")]

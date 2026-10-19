@@ -1,0 +1,46 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1461 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt BENCH_FILTER='fluid-' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.drxEr1
+BENCH fluid-lazy normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 350
+PASS fluid-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 350
+PASS fluid-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 350
+PASS fluid-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 350
+PASS fluid-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+BENCH fluid-strict normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 350
+PASS fluid-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 350
+PASS fluid-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 350
+PASS fluid-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 350
+PASS fluid-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+reptile-strict	normal	rune	O2	compile	0	0	pass	3.44	3.71	0.11	136088	-	-	-	reptile-strict/rune/build/compile
+reptile-strict	normal	rune	O2	correctness	0	0	pass	14.90	15.75	0.02	37444	2353540968	6256692152	155655633	reptile-strict/rune/correctness.0
+reptile-strict	normal	rune	O2	count	1	1	pass	17.02	15.83	0.05	37488	2353540968	6256692152	155655633	reptile-strict/rune/fresh.1
+reptile-strict	normal	rune:opt	O2	compile	0	0	pass	3.38	3.66	0.08	136020	-	-	-	reptile-strict/rune-opt/build/compile
+reptile-strict	normal	rune:opt	O2	native-compile	0	0	pass	1.31	0.71	0.33	28112	-	-	-	reptile-strict/rune-opt/build/native-compile
+reptile-strict	normal	rune:opt	O2	correctness	0	0	pass	8.48	9.10	0.07	38900	2353540968	6256692152	155655633	reptile-strict/rune-opt/correctness.0
+reptile-strict	normal	rune:opt	O2	count	1	1	pass	10.61	8.46	0.05	38904	2353540968	6256692152	155655633	reptile-strict/rune-opt/fresh.1
+reptile-strict	normal	rune:new	O2	compile	0	0	pass	3.89	4.00	0.13	135952	-	-	-	reptile-strict/rune-new/build/compile
+reptile-strict	normal	rune:new	O2	correctness	0	0	pass	15.28	16.24	0.05	38524	1410447816	6256692152	155655633	reptile-strict/rune-new/correctness.0
+reptile-strict	normal	rune:new	O2	count	1	1	pass	17.39	16.19	0.06	38392	1410447816	6256692152	155655633	reptile-strict/rune-new/fresh.1
+reptile-strict	normal	rune:jit	O2	compile	0	0	pass	3.96	4.09	0.14	136076	-	-	-	reptile-strict/rune-jit/build/compile
+reptile-strict	normal	rune:jit	O2	correctness	0	0	pass	7.48	7.91	0.07	42380	1410447816	6256692152	155655633	reptile-strict/rune-jit/correctness.0
+reptile-strict	normal	rune:jit	O2	count	1	1	pass	7.06	7.50	0.04	42324	1410447816	6256692152	155655633	reptile-strict/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

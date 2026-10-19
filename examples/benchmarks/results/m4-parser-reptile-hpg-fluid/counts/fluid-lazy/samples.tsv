@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fluid-lazy	normal	rune	O2	compile	0	0	pass	6.42	5.45	1.41	268852	-	-	-	fluid-lazy/rune/build/compile
+fluid-lazy	normal	rune	O2	correctness	0	0	pass	38.09	38.25	0.09	11168	4338361785	11860507272	364010059	fluid-lazy/rune/correctness.0
+fluid-lazy	normal	rune	O2	count	1	1	pass	35.93	35.86	0.11	11188	4338361785	11860507272	364010059	fluid-lazy/rune/fresh.1
+fluid-lazy	normal	rune:opt	O2	compile	0	0	pass	7.00	4.69	0.42	268748	-	-	-	fluid-lazy/rune-opt/build/compile
+fluid-lazy	normal	rune:opt	O2	native-compile	0	0	pass	1.62	1.29	0.21	43204	-	-	-	fluid-lazy/rune-opt/build/native-compile
+fluid-lazy	normal	rune:opt	O2	correctness	0	0	pass	17.47	18.52	0.11	13708	4338361785	11860507272	364010059	fluid-lazy/rune-opt/correctness.0
+fluid-lazy	normal	rune:opt	O2	count	1	1	pass	19.71	18.48	0.06	13692	4338361785	11860507272	364010059	fluid-lazy/rune-opt/fresh.1
+fluid-lazy	normal	rune:new	O2	compile	0	0	pass	5.53	5.54	0.37	268816	-	-	-	fluid-lazy/rune-new/build/compile
+fluid-lazy	normal	rune:new	O2	correctness	0	0	pass	41.15	41.35	0.09	11520	2562082295	11860507272	364010059	fluid-lazy/rune-new/correctness.0
+fluid-lazy	normal	rune:new	O2	count	1	1	pass	45.00	42.50	0.13	11440	2562082295	11860507272	364010059	fluid-lazy/rune-new/fresh.1
+fluid-lazy	normal	rune:jit	O2	compile	0	0	pass	8.07	5.76	0.38	268660	-	-	-	fluid-lazy/rune-jit/build/compile
+fluid-lazy	normal	rune:jit	O2	correctness	0	0	pass	14.52	15.34	0.07	16128	2562082295	11860507272	364010059	fluid-lazy/rune-jit/correctness.0
+fluid-lazy	normal	rune:jit	O2	count	1	1	pass	16.90	15.76	0.10	16032	2562082295	11860507272	364010059	fluid-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

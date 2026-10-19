@@ -1,0 +1,1794 @@
+[
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.Ygvi3e/parser-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.Ygvi3e/parser-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.Ygvi3e/parser-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.Ygvi3e/parser-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.Ygvi3e/parser-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.Ygvi3e/parser-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.Ygvi3e/parser-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.Ygvi3e/parser-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.ANYnkt/reptile-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.ANYnkt/reptile-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.ANYnkt/reptile-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.ANYnkt/reptile-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.ANYnkt/reptile-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.ANYnkt/reptile-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.ANYnkt/reptile-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.ANYnkt/reptile-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.hDMAJK/hpg-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.hDMAJK/hpg-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.hDMAJK/hpg-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.hDMAJK/hpg-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.hDMAJK/hpg-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.hDMAJK/hpg-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.hDMAJK/hpg-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.hDMAJK/hpg-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.rl5VUy/fluid-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.rl5VUy/fluid-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.rl5VUy/fluid-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.rl5VUy/fluid-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.rl5VUy/fluid-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.rl5VUy/fluid-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.rl5VUy/fluid-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.rl5VUy/fluid-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.z58zEz/parser-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.z58zEz/parser-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.z58zEz/parser-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.z58zEz/parser-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.z58zEz/parser-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.z58zEz/parser-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.z58zEz/parser-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.z58zEz/parser-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.OKUJKy/reptile-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.OKUJKy/reptile-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.OKUJKy/reptile-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.OKUJKy/reptile-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.OKUJKy/reptile-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.OKUJKy/reptile-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.OKUJKy/reptile-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.OKUJKy/reptile-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.CK6ZEe/hpg-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.CK6ZEe/hpg-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.CK6ZEe/hpg-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.CK6ZEe/hpg-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.CK6ZEe/hpg-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.CK6ZEe/hpg-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.CK6ZEe/hpg-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.CK6ZEe/hpg-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.drxEr1/fluid-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.drxEr1/fluid-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.drxEr1/fluid-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.drxEr1/fluid-lazy/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.drxEr1/fluid-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.drxEr1/fluid-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.drxEr1/fluid-strict/result.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.drxEr1/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS native:smlnj-legacy@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS native:smlnj32@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS native:smlnj-dev@2026.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS native:mlkit@4.7.23",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS native:smlnj-legacy@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS native:smlnj32@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS native:smlnj-dev@2026.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS native:mlkit@4.7.23",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.XYOjTm/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS native:smlnj-legacy@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS native:smlnj32@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS native:smlnj-dev@2026.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS native:mlkit@4.7.23",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS native:smlnj-legacy@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS native:smlnj32@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS native:smlnj-dev@2026.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM FAIL native:mlkit@4.7.23 (load 1, exit 124)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.HtJD9M/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS native:smlnj32@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS native:smlnj-dev@2026.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS native:mlkit@4.7.23",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS native:smlnj32@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS native:smlnj-dev@2026.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS native:mlkit@4.7.23",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.dxA1Qq/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS native:smlnj32@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS native:smlnj-dev@2026.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM FAIL native:mlkit@4.7.23 (load 1, exit 124)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 1, exit 1)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM FAIL native:smlnj32@110.99.9 (load 1, exit 1)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM FAIL native:smlnj-dev@2026.2 (load 1, exit 1)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM FAIL native:mlkit@4.7.23 (load 1, exit 124)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS native:smlnj-legacy@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS native:smlnj32@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS native:smlnj-dev@2026.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-lazy",
+    "status": "PROGRAM PASS native:mlkit@4.7.23",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS native:smlnj-legacy@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS native:smlnj32@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS native:smlnj-dev@2026.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "benchmark": "parser-strict",
+    "status": "PROGRAM PASS native:mlkit@4.7.23",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF/parser-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS native:smlnj-legacy@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS native:smlnj32@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS native:smlnj-dev@2026.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-strict",
+    "status": "PROGRAM PASS native:mlkit@4.7.23",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS native:smlnj-legacy@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS native:smlnj32@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS native:smlnj-dev@2026.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "benchmark": "reptile-lazy",
+    "status": "PROGRAM PASS native:mlkit@4.7.23",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.VOXLn9/reptile-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS native:smlnj32@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS native:smlnj-dev@2026.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-strict",
+    "status": "PROGRAM PASS native:mlkit@4.7.23",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS native:smlnj32@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS native:smlnj-dev@2026.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "benchmark": "hpg-lazy",
+    "status": "PROGRAM PASS native:mlkit@4.7.23",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.H6lmmo/hpg-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS native:smlnj32@110.99.9",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS native:smlnj-dev@2026.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-lazy",
+    "status": "PROGRAM PASS native:mlkit@4.7.23",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-lazy/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune:new",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune:jit",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS rune:opt",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS native:mlton@20241230",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 1, exit 1)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM FAIL native:smlnj32@110.99.9 (load 1, exit 1)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM FAIL native:smlnj-dev@2026.2 (load 1, exit 1)",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS native:polyml@5.9.2",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-strict/result.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "benchmark": "fluid-strict",
+    "status": "PROGRAM PASS native:mlkit@4.7.23",
+    "path": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.ErfC8u/fluid-strict/result.log"
+  }
+]

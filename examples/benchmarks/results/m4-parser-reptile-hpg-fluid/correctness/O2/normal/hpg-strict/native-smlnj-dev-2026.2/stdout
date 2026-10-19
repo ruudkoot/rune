@@ -1,0 +1,772 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+                            type 'a t
+                            val delay : (unit -> 'a) -> 'a t
+                            val force : 'a t -> 'a
+                          end) :
+                        
+                          sig
+                            type 'a node
+                            type 'a seq
+                            val empty : unit -> 'a node D.t
+                            val cons : 'a D.t * 'a node D.t -> 'a node D.t
+                            val fromList : 'a list -> 'a node D.t
+                            val defer : (unit -> 'a D.t) -> 'a D.t
+                            val append : 'a node D.t
+                                          -> 'a node D.t -> 'a node D.t
+                            val take : int -> 'a node D.t -> 'a node D.t
+                            val drop : int -> 'a node D.t -> 'a node D.t
+                            val nth : 'a node D.t -> int -> 'a
+                            val update : 'a node D.t
+                                          -> int -> 'a D.t -> 'a node D.t
+                            val unify : ''a node D.t -> ''a -> ''a node D.t
+                            val foldl : ('a D.t -> 'b -> 'a D.t)
+                                         -> 'a D.t -> 'b node D.t -> 'a D.t
+                            val toList : 'a node D.t -> 'a list
+                            val map : ('a -> 'b) -> 'a node D.t -> 'b node D.t
+                            val filter : ('a -> bool)
+                                          -> 'a node D.t -> 'a node D.t
+                            val length : 'a node D.t -> int
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/finite-binary32.sml]
+structure BenchMandelSingle : 
+  sig
+    val round : real -> real
+    val add : real * real -> real
+    val sub : real * real -> real
+    val mul : real * real -> real
+    val divide : real * real -> real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-hpg-random.sml]
+functor BenchHpgRandomFn(D: sig
+                            type 'a t
+                            val delay : (unit -> 'a) -> 'a t
+                            val force : 'a t -> 'a
+                          end) :
+                        
+                          sig
+                            structure L : <sig>
+                            structure C : <sig>
+                            structure R : <sig>
+                            val combine : int * int * int -> real
+                            val step : int * int * int -> int * int * int
+                            val random : int * int * int
+                                          -> real D.t C.node BenchNeed.t
+                            val upto : int -> real D.t -> int
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-hpg-kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-hpg-kernel.sml:57.41 Warning: calling polyEqual
+functor BenchHpgFn(D: sig
+                      type 'a t
+                      val delay : (unit -> 'a) -> 'a t
+                      val force : 'a t -> 'a
+                    end) :
+                  
+                    sig
+                      structure L : <sig>
+                      structure F : <sig>
+                      structure R : <sig>
+                      structure C : <sig>
+                      type text
+                      type name
+                      type numkind
+                      type basetype
+                      type argnode
+                      type argtype
+                      type htype
+                      type typedecl
+                      type valnode
+                      type value
+                      type expnode
+                      type expression
+                      type output
+                      type env
+                      val force : 'a D.t -> 'a
+                      val scalar : 'a -> 'a D.t
+                      val empty : unit -> 'a F.node D.t
+                      val singleton : 'a D.t -> 'a F.node D.t
+                      val head : 'a F.node D.t -> 'a D.t
+                      val tail : 'a F.node D.t -> 'a F.node D.t
+                      val null : 'a F.node D.t -> bool
+                      val map : ('a D.t -> 'b D.t)
+                                 -> 'a F.node D.t -> 'b F.node D.t
+                      val flatMap : ('a D.t -> 'b F.node D.t)
+                                     -> 'a F.node D.t -> 'b F.node D.t
+                      val zip : 'a F.node D.t
+                                 -> 'b F.node D.t
+                                 -> ('a D.t * 'b D.t) F.node D.t
+                      val pairs : 'a F.node D.t
+                                   -> 'b F.node D.t
+                                   -> ('a D.t * 'b D.t) F.node D.t
+                      val listPairs : 'a F.node D.t
+                                       -> 'b F.node D.t
+                                       -> ('a D.t * 'b) F.node D.t
+                      val nth : 'a F.node D.t -> int -> 'a D.t
+                      val last : 'a F.node D.t -> 'a D.t
+                      val length : 'a F.node D.t -> int
+                      val repeat : 'a -> 'a R.C.node BenchNeed.t
+                      val rep : int -> 'a -> 'a F.node D.t
+                      val cmap : (('a D.t -> 'b -> 'c) -> 'b -> 'c) F.node D.t
+                                  -> ('a F.node D.t -> 'b -> 'c) -> 'b -> 'c
+                      val nameChars : string -> char F.node D.t
+                      val nameEqual : ''a F.node D.t -> ''a F.node D.t -> bool
+                      val names : char F.node D.t
+                                   -> int
+                                   -> char F.node D.t R.C.node BenchNeed.t
+                      val constructors : char F.node D.t R.C.node BenchNeed.t
+                      val typeNames : char F.node D.t R.C.node BenchNeed.t
+                      val valueNames : char F.node D.t R.C.node BenchNeed.t
+                      val plusName : char F.node D.t
+                      val minusName : char F.node D.t
+                      val multiplyName : char F.node D.t
+                      val divideName : char F.node D.t
+                      val negateName : char F.node D.t
+                      val notName : char F.node D.t
+                      val andName : char F.node D.t
+                      val orName : char F.node D.t
+                      val lessName : char F.node D.t
+                      val chrName : char F.node D.t
+                      val dropName : char F.node D.t
+                      val takeName : char F.node D.t
+                      val associateName : char F.node D.t
+                      val makeEnv : int * int * int -> output -> env
+                      val upto : int -> (int D.t -> env -> 'a) -> env -> 'a
+                      val choose : 'a F.node D.t
+                                    -> ('a D.t -> env -> 'b) -> env -> 'b
+                      val choosew : (int * 'a) F.node D.t
+                                     -> ('a -> env -> 'b) -> env -> 'b
+                      val takeNames : int
+                                       -> 'a R.C.node BenchNeed.t
+                                       -> 'a F.node D.t
+                      val getConstructors : int
+                                             -> (name F.node D.t -> env -> 'a)
+                                             -> env -> 'a
+                      val getTypeNames : int
+                                          -> (name F.node D.t -> env -> 'a)
+                                          -> env -> 'a
+                      val getValNames : int
+                                         -> (name F.node D.t -> env -> 'a)
+                                         -> env -> 'a
+                      val allTypeNames : (name F.node D.t -> env -> 'a)
+                                          -> env -> 'a
+                      val allTypes : (typedecl F.seq -> env -> 'a)
+                                      -> env -> 'a
+                      val allValues : ((name D.t * value) F.seq -> env -> 'a)
+                                       -> env -> 'a
+                      val allLambdas : ((name D.t * value) F.seq -> env -> 'a)
+                                        -> env -> 'a
+                      val getType : char F.node D.t D.t
+                                     -> (htype -> env -> 'a) -> env -> 'a
+                      val getOutput : (output -> env -> 'a) -> env -> 'a
+                      val extendTypes : typedecl F.node D.t
+                                         -> (env -> 'a) -> env -> 'a
+                      val extendValues : (name D.t * value) F.node D.t
+                                          -> (env -> 'a) -> env -> 'a
+                      val pushLambda : name D.t * value
+                                        -> (env -> 'a) -> env -> 'a
+                      val popLambda : (name D.t * value -> env -> 'a)
+                                       -> env -> 'a
+                      val text : string -> char R.C.node BenchNeed.t
+                      val append : 'a R.C.node BenchNeed.t
+                                    -> 'a R.C.node BenchNeed.t
+                                    -> 'a R.C.node BenchNeed.t
+                      val string : char R.C.node BenchNeed.t -> string
+                      val number : int -> string
+                      val base : basetype -> argnode D.t
+                      val numeric : numkind -> int -> valnode D.t
+                      val tuple : valnode F.seq -> valnode D.t
+                      val intVal : int -> valnode D.t
+                      val valExp : value -> expnode D.t
+                      val idExp : name -> expnode D.t
+                      val apply : expnode D.t -> expnode D.t -> expnode D.t
+                      val tagged : name D.t -> valnode F.seq -> valnode D.t
+                      val list : 'a list -> 'a F.node D.t
+                      val controlFromFinite : 'a F.node D.t
+                                               -> 'a D.t R.C.node BenchNeed.t
+                      val finiteFromControl : 'a D.t R.C.node BenchNeed.t
+                                               -> 'a F.node D.t
+                      val controlFlatMap : ('a -> 'b R.C.node BenchNeed.t)
+                                            -> 'a R.C.node BenchNeed.t
+                                            -> 'b R.C.node BenchNeed.t
+                      val range : int -> int -> int R.C.node BenchNeed.t
+                      val vrange : valnode D.t * valnode D.t
+                                    -> valnode D.t R.C.node BenchNeed.t
+                      val chooseCont : (unit -> env -> 'a) list -> env -> 'a
+                      val genIxBase : (argnode D.t -> env -> 'a) -> env -> 'a
+                      val genIxType : name F.node D.t
+                                       -> int
+                                       -> (argnode D.t -> env -> 'a)
+                                       -> env -> 'a
+                      val genBase : (argnode D.t -> env -> 'a) -> env -> 'a
+                      val genArgtype : name F.node D.t
+                                        -> int
+                                        -> (argnode D.t -> env -> 'a)
+                                        -> env -> 'a
+                      val genArgtypes : int
+                                         -> name F.node D.t
+                                         -> int
+                                         -> (argnode F.node D.t D.t
+                                          -> env -> 'a)
+                                         -> env -> 'a
+                      val genType : int
+                                     -> int
+                                     -> name F.node D.t
+                                     -> int
+                                     -> (htype D.t -> env -> 'a) -> env -> 'a
+                      val genTypes : int
+                                      -> int
+                                      -> int
+                                      -> int -> (env -> 'a) -> env -> 'a
+                      val genBasicValue : basetype
+                                           -> (valnode D.t -> env -> 'a)
+                                           -> env -> 'a
+                      val genIdValue : int
+                                        -> argnode D.t
+                                        -> (valnode D.t -> env -> 'a)
+                                        -> env -> 'a
+                      val genValue : name D.t
+                                      -> int
+                                      -> (valnode D.t -> env -> 'a)
+                                      -> env -> 'a
+                      val genValues : int -> int -> (env -> 'a) -> env -> 'a
+                      val pickExp : (int
+                                          * (('a -> 'b -> 'c -> env -> 'd)
+                                           * ('b -> bool))) F.node D.t
+                                     -> 'a -> 'b -> 'c -> env -> 'd
+                      val binary : char F.node D.t
+                                    -> int
+                                    -> valnode D.t
+                                    -> valnode D.t
+                                    -> (expnode D.t -> env -> 'a) -> env -> 'a
+                      val unary : char F.node D.t
+                                   -> int
+                                   -> valnode D.t
+                                   -> (expnode D.t -> env -> 'a) -> env -> 'a
+                      val genLambda : int
+                                       -> value
+                                       -> (expnode D.t -> env -> 'a)
+                                       -> env -> 'a
+                      val genTake : int
+                                     -> valnode F.seq
+                                     -> (expnode D.t -> env -> 'a)
+                                     -> env -> 'a
+                      val genDrop : int
+                                     -> valnode F.seq
+                                     -> (expnode D.t -> env -> 'a)
+                                     -> env -> 'a
+                      val genList : int
+                                     -> valnode F.seq
+                                     -> (expnode D.t -> env -> 'a)
+                                     -> env -> 'a
+                      val genLess : int
+                                     -> bool D.t
+                                     -> (expnode D.t -> env -> 'a)
+                                     -> env -> 'a
+                      val genOr : int
+                                   -> bool D.t
+                                   -> (expnode D.t -> env -> 'a) -> env -> 'a
+                      val genAnd : int
+                                    -> bool D.t
+                                    -> (expnode D.t -> env -> 'a) -> env -> 'a
+                      val genNot : int
+                                    -> bool D.t
+                                    -> (expnode D.t -> env -> 'a) -> env -> 'a
+                      val floatFns : unit
+                                      -> (int
+                                           * ((int
+                                             -> valnode D.t
+                                             -> (expnode D.t -> env -> 'a)
+                                             -> env -> 'a)
+                                            * (valnode D.t -> bool))) F.node 
+                                        D.t
+                      val intFns : unit
+                                    -> (int
+                                         * ((int
+                                           -> valnode D.t
+                                           -> (expnode D.t -> env -> 'a)
+                                           -> env -> 'a)
+                                          * (valnode D.t -> bool))) F.node D.t
+                      val genIntId : int
+                                      -> valnode D.t
+                                      -> (expnode D.t -> env -> 'a)
+                                      -> env -> 'a
+                      val genNegative : int
+                                         -> valnode D.t
+                                         -> (expnode D.t -> env -> 'a)
+                                         -> env -> 'a
+                      val genDiv : int
+                                    -> valnode D.t
+                                    -> (expnode D.t -> env -> 'a) -> env -> 'a
+                      val genMult : int
+                                     -> valnode D.t
+                                     -> (expnode D.t -> env -> 'a)
+                                     -> env -> 'a
+                      val genMinus : int
+                                      -> valnode D.t
+                                      -> (expnode D.t -> env -> 'a)
+                                      -> env -> 'a
+                      val genPlus : int
+                                     -> valnode D.t
+                                     -> (expnode D.t -> env -> 'a)
+                                     -> env -> 'a
+                      val genArray : int
+                                      -> (valnode D.t * valnode D.t)
+                                      * (valnode D.t * valnode D.t) F.seq
+                                      -> (expnode D.t -> env -> 'a)
+                                      -> env -> 'a
+                      val genTagged : int
+                                       -> name D.t * valnode F.seq
+                                       -> (expnode D.t -> env -> 'a)
+                                       -> env -> 'a
+                      val genTuple : int
+                                      -> valnode F.seq
+                                      -> (expnode D.t -> env -> 'a)
+                                      -> env -> 'a
+                      val genDecode : int
+                                       -> char D.t
+                                       -> (expnode D.t -> env -> 'a)
+                                       -> env -> 'a
+                      val genExpPrime : int
+                                         -> value
+                                         -> (expnode D.t -> env -> 'a)
+                                         -> env -> 'a
+                      val genExp : int
+                                    -> value
+                                    -> (expnode D.t -> env -> 'a) -> env -> 'a
+                      val genExpressions : int
+                                            -> ((name D.t * expnode D.t) 
+                                                 F.node D.t
+                                             -> env -> 'a)
+                                            -> env -> 'a
+                      structure B : <sig>
+                      val nameText : 'a F.node D.t -> 'a R.C.node BenchNeed.t
+                      val showName : 'a F.node D.t D.t
+                                      -> 'a R.C.node BenchNeed.t
+                                      -> 'a R.C.node BenchNeed.t
+                      val sep : string
+                                 -> ('a D.t
+                                  -> char R.C.node BenchNeed.t
+                                  -> char R.C.node BenchNeed.t)
+                                 -> 'a F.node D.t
+                                 -> char R.C.node BenchNeed.t
+                                 -> char R.C.node BenchNeed.t
+                      val showNumber : int
+                                        -> int D.t
+                                        -> char R.C.node BenchNeed.t
+                                        -> char R.C.node BenchNeed.t
+                      val showKind : numkind
+                                      -> char R.C.node BenchNeed.t
+                                      -> char R.C.node BenchNeed.t
+                      val showBase : basetype
+                                      -> char R.C.node BenchNeed.t
+                                      -> char R.C.node BenchNeed.t
+                      val showArg : int
+                                     -> argnode D.t
+                                     -> char R.C.node BenchNeed.t
+                                     -> char R.C.node BenchNeed.t
+                      val showTypeDecl : (char F.node D.t D.t
+                                             * (char F.node D.t D.t
+                                                  * argnode F.node D.t) F.node 
+                                               D.t) D.t
+                                          -> char R.C.node BenchNeed.t
+                                          -> char R.C.node BenchNeed.t
+                      val asciiNames : string list
+                      val charLiteral : char -> string
+                      val showValue : int
+                                       -> valnode D.t
+                                       -> char R.C.node BenchNeed.t
+                                       -> char R.C.node BenchNeed.t
+                      val showValDecl : (char F.node D.t D.t * valnode D.t) 
+                                           D.t
+                                         -> char R.C.node BenchNeed.t
+                                         -> char R.C.node BenchNeed.t
+                      val showExpression : int
+                                            -> expnode D.t
+                                            -> char R.C.node BenchNeed.t
+                                            -> char R.C.node BenchNeed.t
+                      val splitNum : int
+                                      -> char R.C.node BenchNeed.t
+                                      -> char R.C.node BenchNeed.t
+                                      * char R.C.node BenchNeed.t
+                      val span : ('a -> bool)
+                                  -> 'a R.C.node BenchNeed.t
+                                  -> 'a R.C.node BenchNeed.t
+                                  * 'a R.C.node BenchNeed.t
+                      val dropWhile : ('a -> bool)
+                                       -> 'a R.C.node BenchNeed.t
+                                       -> 'a R.C.node BenchNeed.t
+                      val splitStr : int
+                                      -> char R.C.node BenchNeed.t
+                                      -> char R.C.node BenchNeed.t
+                      val finish : 'a -> unit
+                      val printStr : text -> (env -> 'a) -> env -> 'a
+                      val printTest : (char F.node D.t D.t * expnode D.t) 
+                                           F.node D.t
+                                       -> env -> unit
+                      val printProgram : (char F.node D.t D.t * expnode D.t) 
+                                              F.node D.t
+                                          -> env -> unit
+                      val generate : int * int * int
+                                      -> int
+                                      -> int
+                                      -> int
+                                      -> int
+                                      -> int -> string -> output -> unit
+                      val hash : char R.C.node BenchNeed.t -> Word64.word
+                      val signedHash : Word64.word -> string
+                    end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-hpg-check.sml]
+functor BenchHpgCheckFn(K: sig
+                           type text
+                           val generate : int * int * int
+                                           -> int
+                                           -> int
+                                           -> int
+                                           -> int
+                                           -> int
+                                           -> string -> (text -> unit) -> unit
+                           val hash : text -> Word64.word
+                           val signedHash : Word64.word -> string
+                         end) :
+                       sig val run : string list -> string end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/hpg-strict/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Check : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+-2100970526064196390
+6911565525300424372
+3303576077907401257
+RESULT 100
+PASS hpg-strict
+SUMMARY 1 checks, 0 failed

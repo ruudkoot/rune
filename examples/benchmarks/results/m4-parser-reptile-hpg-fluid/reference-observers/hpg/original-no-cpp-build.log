@@ -1,0 +1,10 @@
+[ 1 of 10] Compiling Config           ( Config.lhs, Config.o )
+[ 2 of 10] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[ 3 of 10] Compiling Types            ( Types.lhs, Types.o )
+[ 4 of 10] Compiling Env              ( Env.lhs, Env.o )
+[ 5 of 10] Compiling Utils            ( Utils.lhs, Utils.o )
+[ 6 of 10] Compiling GenVal           ( GenVal.lhs, GenVal.o )
+[ 7 of 10] Compiling GenType          ( GenType.lhs, GenType.o )
+[ 8 of 10] Compiling GenExp           ( GenExp.lhs, GenExp.o )
+[ 9 of 10] Compiling Main             ( Main.lhs, Main.o )
+[10 of 10] Linking original

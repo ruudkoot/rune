@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "30",
+    "bin/runevm",
+    "tests/out/benchmarks/nofib-hpg-originals/large-tick.rbc"
+  ],
+  "exit": 124,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 558480,
+  "observed_minimum_available_kib": 21979284,
+  "peak_processes": [
+    {
+      "pid": 3,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 4,
+      "name": "runevm",
+      "rss_kib": 556684
+    }
+  ],
+  "elapsed_seconds": 30.14127705899591
+}

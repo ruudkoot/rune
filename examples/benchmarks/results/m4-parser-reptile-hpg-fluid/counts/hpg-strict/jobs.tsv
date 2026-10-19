@@ -1,0 +1,1 @@
+hpg-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/finite-binary32.sml shared/nofib-hpg-random.sml shared/nofib-hpg-kernel.sml shared/nofib-hpg-check.sml hpg-strict/benchmark.sml shared/main.sml	100 40 5 60 6 6 E2D7DA701E60C4DA 5FEAD039E95E2EB4 2DD8A8F094261A29	hpg-strict/normal.expected	-

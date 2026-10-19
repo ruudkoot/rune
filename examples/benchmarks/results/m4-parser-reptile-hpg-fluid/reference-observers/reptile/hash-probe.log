@@ -1,0 +1,6 @@
+PASS need smoke 21 signed hash bytes
+PASS need normal 20 signed hash bytes
+PASS need large 20 signed hash bytes
+PASS strict smoke 21 signed hash bytes
+PASS strict normal 20 signed hash bytes
+PASS strict large 20 signed hash bytes

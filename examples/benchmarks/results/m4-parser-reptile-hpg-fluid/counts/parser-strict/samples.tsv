@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+parser-strict	normal	rune	O2	compile	0	0	pass	3.29	3.20	0.35	266736	-	-	-	parser-strict/rune/build/compile
+parser-strict	normal	rune	O2	correctness	0	0	pass	54.20	52.64	0.03	18884	7829368389	19309568920	508520381	parser-strict/rune/correctness.0
+parser-strict	normal	rune	O2	count	1	1	pass	51.89	53.37	0.06	18920	7829368389	19309568920	508520381	parser-strict/rune/fresh.1
+parser-strict	normal	rune:opt	O2	compile	0	0	pass	3.35	3.20	0.36	266940	-	-	-	parser-strict/rune-opt/build/compile
+parser-strict	normal	rune:opt	O2	native-compile	0	0	pass	3.16	0.61	0.14	27092	-	-	-	parser-strict/rune-opt/build/native-compile
+parser-strict	normal	rune:opt	O2	correctness	0	0	pass	27.79	29.86	0.06	20364	7829368389	19309568920	508520381	parser-strict/rune-opt/correctness.0
+parser-strict	normal	rune:opt	O2	count	1	1	pass	28.13	27.25	0.05	20404	7829368389	19309568920	508520381	parser-strict/rune-opt/fresh.1
+parser-strict	normal	rune:new	O2	compile	0	0	pass	3.87	3.90	0.32	266740	-	-	-	parser-strict/rune-new/build/compile
+parser-strict	normal	rune:new	O2	correctness	0	0	pass	55.46	54.42	0.05	19048	4682936725	19309568920	508520381	parser-strict/rune-new/correctness.0
+parser-strict	normal	rune:new	O2	count	1	1	pass	51.54	52.89	0.02	19052	4682936725	19309568920	508520381	parser-strict/rune-new/fresh.1
+parser-strict	normal	rune:jit	O2	compile	0	0	pass	5.60	3.11	0.31	266944	-	-	-	parser-strict/rune-jit/build/compile
+parser-strict	normal	rune:jit	O2	correctness	0	0	pass	23.74	25.55	0.09	22312	4682936725	19309568920	508520381	parser-strict/rune-jit/correctness.0
+parser-strict	normal	rune:jit	O2	count	1	1	pass	26.96	26.29	0.07	22248	4682936725	19309568920	508520381	parser-strict/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

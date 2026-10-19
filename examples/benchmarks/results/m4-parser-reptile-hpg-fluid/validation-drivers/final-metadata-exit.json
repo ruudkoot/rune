@@ -1,0 +1,9 @@
+{
+  "command": [
+    "make",
+    "bench-smoke",
+    "check-docs"
+  ],
+  "exit": 0,
+  "inventory_tests": 160
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "family": "parser",
+    "exit": 1,
+    "elapsed_seconds": 409.6091821699956,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/semantics-parser.log"
+  },
+  {
+    "family": "reptile",
+    "exit": 0,
+    "elapsed_seconds": 713.012883924006,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/semantics-reptile.log"
+  },
+  {
+    "family": "hpg",
+    "exit": 1,
+    "elapsed_seconds": 480.4399815979996,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/semantics-hpg.log"
+  },
+  {
+    "family": "fluid",
+    "exit": 1,
+    "elapsed_seconds": 888.9310427679884,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/semantics-fluid.log"
+  }
+]

@@ -1,0 +1,8 @@
+[
+  {
+    "family": "fluid",
+    "exit": 0,
+    "passed": true,
+    "scope": "frontend/module-instantiation probe, no benchmark result claim"
+  }
+]

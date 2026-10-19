@@ -1,0 +1,14 @@
+[
+  {
+    "profile": "smoke",
+    "transitions": 1
+  },
+  {
+    "profile": "normal",
+    "transitions": 22
+  },
+  {
+    "profile": "large",
+    "transitions": 66
+  }
+]

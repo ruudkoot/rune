@@ -1,0 +1,34 @@
+[
+  {
+    "benchmark": "parser-strict",
+    "exit": 0
+  },
+  {
+    "benchmark": "parser-lazy",
+    "exit": 0
+  },
+  {
+    "benchmark": "reptile-strict",
+    "exit": 0
+  },
+  {
+    "benchmark": "reptile-lazy",
+    "exit": 0
+  },
+  {
+    "benchmark": "hpg-lazy",
+    "exit": 0
+  },
+  {
+    "benchmark": "hpg-strict",
+    "exit": 0
+  },
+  {
+    "benchmark": "fluid-lazy",
+    "exit": 0
+  },
+  {
+    "benchmark": "fluid-strict",
+    "exit": 0
+  }
+]

@@ -1,0 +1,106 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1461 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt,hosts BENCH_FILTER='parser-' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.aN9axF
+BENCH parser-lazy normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 500
+PASS parser-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+BENCH parser-strict normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

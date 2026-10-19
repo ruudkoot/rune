@@ -1,6 +1,6 @@
 # Benchmark suite roadmap
 
-Status: **in progress**, 2026-10-18. M0, M1, M2 and M3 are complete with
+Status: **in progress**, 2026-10-19. M0, M1, M2 and M3 are complete with
 [recorded validation](../../examples/benchmarks/validation.md). M4 is in progress; M5, M6 and M7 are complete with recorded evidence; M8 remains planned. Source inventory entries are scheduled work, not passing ports.
 
 ## Goal and current baseline
@@ -35,7 +35,7 @@ The [runnable catalogue](../../examples/benchmarks/README.md) contains the M1
 pilots, the validated M2 classic collection and the completed M5 sequential
 Sandmark collection. M3 kernels are complete; M4 applications remain in progress; M8
 coverage closure remains planned.
-The current catalogue has 495 programs and 1437 profiles. The Happy wave
+The current catalogue has 503 programs and 1461 profiles. The Happy wave
 has [recorded validation](../../examples/benchmarks/results/m3-happy/README.md):
 all normal profiles and 50280 semantic assertions pass, with two unclassified
 ML Kit smoke compile failures retained. Counts, serial adapter diagnostics
@@ -48,8 +48,13 @@ Twelve complete semantic groups each pass 5081 assertions; the partial
 legacy SML/NJ and empty-log ML Kit groups remain incomplete. Normal counts
 and repository acceptance pass. All 92 suitable M3 inventory paths now have
 implemented smoke/normal profiles and documented variants.
-M4 still has anna, fluid, hpg, parser, reptile and veritas; M8 closes the
-inventories, evidence, documentation and maintenance procedures.
+M4 now registers parser, reptile, hpg and fluid with [recorded validation](../../examples/benchmarks/results/m4-parser-reptile-hpg-fluid/README.md):
+209 of 224 profile combinations pass, including all 128 Rune combinations.
+All 32 normal allocation samples agree, 52 semantic groups complete, and
+repository acceptance passes. Host failures remain explicit. Anna is a private
+partial port with complete report agreement on the three source inputs;
+Veritas is not yet ported. Neither appears as a runnable benchmark.
+M8 closes the inventories, evidence, documentation and maintenance procedures.
 
 ## Sources, naming, and portable programs
 
@@ -202,7 +207,9 @@ fixture references, and profile completeness.
 M5 completion is recorded in the [application closure evidence](../../examples/benchmarks/validation.md#m5-closure-sequential-sandmark-applications-2026-10-18):
 all suitable pinned executables/selectors are imported and documented. Native
 SML/NJ failures remain recorded, with incorrect results excluded from timings.
-This does not mark M4 or M8 complete. M3 closure is recorded in the\n[Nucleic2 evidence](../../examples/benchmarks/results/m3-nucleic2/README.md),\nincluding retained host failures and all 92 suitable inventory paths.
+This does not mark M4 or M8 complete. M3 closure is recorded in the
+[Nucleic2 evidence](../../examples/benchmarks/results/m3-nucleic2/README.md),
+including retained host failures and all 92 suitable inventory paths.
 
 M1 depends on M0. M2, M3, and M5 build on M1; M4 follows M3's translation
 support. M6 starts with the pilots and expands with each import wave. M7
@@ -390,11 +397,11 @@ unsupported facilities. Performance improvements themselves belong to the
 relevant compiler, JIT, heap-layout, and collector roadmaps.
 
 
-### M8 follow-up discovered during Happy validation
+### M8 native-status follow-up implemented during application validation
 
-The native correctness runner's ML Kit/MLton compile-failure branches can
-return before recording the compiler exit status. Empty-log failures
-currently report a default zero in the exit field. Preserve those
-observations as unclassified compile failures. Capture actual native
-compile statuses and add independent compile-error/timeout planted checks
-during the final tooling pass; verify final reporting before closing M8.
+The native correctness runner now captures actual MLton and ML Kit compiler
+exits, including timeout status and the effective typecheck-only allowance.
+Four planted fake-host error/timeout checks and full repository acceptance
+pass. Earlier empty-log failures retain their original unclassified causes;
+the change does not retroactively explain them. The application-wave evidence
+records this tooling change; M8's remaining audit and maintenance work stays open.

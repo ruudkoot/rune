@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+hpg-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	10.38	6.96	1.79	660940	-	-	-	hpg-lazy/native-mlton/build/compile
+hpg-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.56	0.44	0.15	6732	-	-	-	hpg-lazy/native-mlton/correctness.0
+hpg-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.56	0.46	0.13	6560	-	-	-	hpg-lazy/native-mlton/fresh.1
+hpg-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	2.24	2.22	0.16	60568	-	-	-	hpg-lazy/native-smlnj-legacy/build/compile
+hpg-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	runtime-failure	0.01	0.01	0.00	4296	-	-	-	hpg-lazy/native-smlnj-legacy/correctness.0
+hpg-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.75	0.89	0.15	83868	-	-	-	hpg-lazy/native-polyml/build/compile
+hpg-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	1.00	1.29	0.89	77512	-	-	-	hpg-lazy/native-polyml/correctness.0
+hpg-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	1.00	1.10	0.94	79184	-	-	-	hpg-lazy/native-polyml/fresh.1
+hpg-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	7.67	6.25	1.78	660140	-	-	-	hpg-strict/native-mlton/build/compile
+hpg-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.27	0.28	0.00	4240	-	-	-	hpg-strict/native-mlton/correctness.0
+hpg-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.27	0.28	0.00	4240	-	-	-	hpg-strict/native-mlton/fresh.1
+hpg-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	2.07	2.04	0.16	59772	-	-	-	hpg-strict/native-smlnj-legacy/build/compile
+hpg-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	incorrect-result	0.02	0.01	0.01	5676	-	-	-	hpg-strict/native-smlnj-legacy/correctness.0
+hpg-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.60	0.59	0.12	67988	-	-	-	hpg-strict/native-polyml/build/compile
+hpg-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.88	0.97	0.90	75336	-	-	-	hpg-strict/native-polyml/correctness.0
+hpg-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.81	0.91	0.72	84028	-	-	-	hpg-strict/native-polyml/fresh.1

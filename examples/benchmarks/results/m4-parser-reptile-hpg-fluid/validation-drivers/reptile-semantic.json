@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/m4-final-applications/reptile-semantic.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 162988,
+  "observed_minimum_available_kib": 23204704,
+  "peak_processes": [
+    {
+      "pid": 5,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 6,
+      "name": "runevm",
+      "rss_kib": 161192
+    }
+  ],
+  "elapsed_seconds": 4.319726419998915
+}

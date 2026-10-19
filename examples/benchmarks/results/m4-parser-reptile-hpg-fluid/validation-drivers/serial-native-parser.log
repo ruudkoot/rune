@@ -1,0 +1,9 @@
+bin/rune --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml -o build/bench-report.rbc
+bin/rune --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml -o build/bench-counts.rbc
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1461 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:polyml BENCH_FILTER='parser-' BENCH_LEVEL= BENCH_MODE=fresh BENCH_SAMPLES=1 BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh time
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.pIziAn
+BENCH MEASURE parser-lazy smoke time
+BENCH MEASURE parser-strict smoke time
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.pIziAn/report.md

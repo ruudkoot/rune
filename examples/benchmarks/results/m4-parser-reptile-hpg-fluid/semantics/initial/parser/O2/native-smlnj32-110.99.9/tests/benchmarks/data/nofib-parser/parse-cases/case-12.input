@@ -1,0 +1,1 @@
+case xs of { [] -> []; x:rest -> x }

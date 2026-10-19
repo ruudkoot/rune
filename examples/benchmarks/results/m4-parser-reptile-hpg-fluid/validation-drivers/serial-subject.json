@@ -1,0 +1,19 @@
+{
+  "started": "2026-10-18T23:19:04.467270+00:00",
+  "sources": {
+    "examples/benchmarks/shared/nofib-parser-check.sml": "22241602410cf1ca9630358da211d28fdb2617e956c9af4849a27fd88476804b",
+    "examples/benchmarks/shared/nofib-parser-literals.sml": "8bbc0fb41f17627dedbfc26baf23d1e206c79c8281facd8e6b400d7a6971ddee",
+    "examples/benchmarks/shared/nofib-parser-kernel.sml": "41a35c53243c130bf046b6be438eacbeee87d58394fd546ec7b791ddb80df5a9",
+    "examples/benchmarks/shared/nofib-parser-lexer.sml": "a209ebaaab9a1e4f4b854e12281edf1ae8810775384f21e957c7f21fd34c1cbe",
+    "examples/benchmarks/shared/nofib-reptile-check.sml": "8710af08f964588802166991f129b805c98410400b068abbdc8a5f1ba872261d",
+    "examples/benchmarks/shared/nofib-reptile-kernel.sml": "fc5013c013efab697945b9afdf4fb10b1522cab6c727ef9b82ee9713fec81e72",
+    "examples/benchmarks/shared/nofib-hpg-random.sml": "ad898824aba808d3b4628350067ff1d84f1bef41acd98f5b7d7f1c47a7b3431d",
+    "examples/benchmarks/shared/nofib-hpg-kernel.sml": "8a165707a55484b99a9400e9c190e93a30661322c6348e0af53ab3d3be40f28b",
+    "examples/benchmarks/shared/nofib-hpg-check.sml": "8a49ec41f61c01a1440e6709403fbfff59ebd71eb41c902102bf384613a96238",
+    "examples/benchmarks/shared/nofib-fluid-check.sml": "56a3e136d6955dea443c2a2847298502519614274d99bd25f232a0035e224f0f",
+    "examples/benchmarks/shared/nofib-fluid-float-show.sml": "cdf6e014c1d36dfb9e5cfb8d02f3c1d854c2c1e76e4de9f8fe9ccbb87cb5f9da",
+    "examples/benchmarks/shared/nofib-fluid-sparse.sml": "89cf6a27482a64148fa0524b771313b00cf77bc8a19a86ad1662300b3d687076",
+    "examples/benchmarks/shared/nofib-fluid-kernel.sml": "0df6561320497cebb6f052750d56364d558ee0343b09847c170a5254c43f5ba4"
+  },
+  "mode": "one fresh-process serial adapter diagnostic; no headline timing claim"
+}

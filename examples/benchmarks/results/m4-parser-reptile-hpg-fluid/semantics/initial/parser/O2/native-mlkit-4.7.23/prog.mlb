@@ -1,0 +1,13 @@
+$(SML_LIB)/basis/basis.mlb
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-parser-checks.nwLH28/O2/native-mlkit-4.7.23/program/src/1/harness.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-parser-checks.nwLH28/O2/native-mlkit-4.7.23/program/src/2/application-test-io.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-parser-checks.nwLH28/O2/native-mlkit-4.7.23/program/src/3/input.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-parser-checks.nwLH28/O2/native-mlkit-4.7.23/program/src/4/lazy.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-parser-checks.nwLH28/O2/native-mlkit-4.7.23/program/src/5/suspend.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-parser-checks.nwLH28/O2/native-mlkit-4.7.23/program/src/6/hartel-ida-finite.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-parser-checks.nwLH28/O2/native-mlkit-4.7.23/program/src/7/nofib-parser-literals.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-parser-checks.nwLH28/O2/native-mlkit-4.7.23/program/src/8/nofib-parser-lexer.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-parser-checks.nwLH28/O2/native-mlkit-4.7.23/program/src/9/nofib-parser-kernel.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-parser-checks.nwLH28/O2/native-mlkit-4.7.23/program/src/10/nofib-parser-check.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-parser-checks.nwLH28/O2/native-mlkit-4.7.23/program/src/11/nofib-parser-tests.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-parser-checks.nwLH28/O2/native-mlkit-4.7.23/program/src/12/finish.sml"

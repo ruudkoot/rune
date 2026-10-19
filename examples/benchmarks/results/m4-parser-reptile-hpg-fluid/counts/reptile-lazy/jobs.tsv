@@ -1,0 +1,1 @@
+reptile-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/signed64.sml shared/nofib-reptile-kernel.sml shared/nofib-reptile-check.sml reptile-lazy/benchmark.sml shared/main.sml	500 normal.input 5113F639C24EF047	reptile-lazy/normal.expected	normal.input

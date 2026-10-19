@@ -1,0 +1,34 @@
+[1 of 6] Compiling Norm             ( Norm.hs, Norm.o )
+
+Norm.hs:21:1: warning: [-Wtabs]
+    Tab character found here, and in 27 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+21 |                 if b then True
+   | ^^^^^^^^
+[2 of 6] Compiling S_Array          ( S_Array.hs, S_Array.o )
+
+S_Array.hs:15:1: warning: [-Wtabs]
+    Tab character found here, and in 449 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+15 |                 S_array,                   -- counterpart of Array
+   | ^^^^^^^^
+[3 of 6] Compiling Defs             ( Defs.hs, Defs.o )
+
+Defs.hs:14:1: warning: [-Wtabs]
+    Tab character found here, and in three further locations.
+    Suggested fix: Please use spaces instead.
+   |
+14 |         Frac_type, My_Array, v_nodel, p_nodel,
+   | ^^^^^^^^
+[4 of 6] Compiling Min_degree       ( Min_degree.hs, Min_degree.o )
+
+Min_degree.hs:12:15: warning: [-Wtabs]
+    Tab character found here, and in 151 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+12 | import S_Array  -- not needed w/ proper module handling
+   |               ^^
+[5 of 6] Compiling Main             ( Main.hs, Main.o )
+[6 of 6] Linking observe

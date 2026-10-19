@@ -1,0 +1,2 @@
+input.stdin
+runtime_files/chan8.dat

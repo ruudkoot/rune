@@ -1,0 +1,19 @@
+{
+  "application": "hpg",
+  "command": [
+    "ghc",
+    "-O2",
+    "-rtsopts",
+    "-fforce-recomp",
+    "Main.lhs",
+    "-o",
+    "original"
+  ],
+  "build_exit": 0,
+  "exit": 0,
+  "input_bytes": 0,
+  "stdout_bytes": 6100,
+  "lines": 300,
+  "fixture_equal": true,
+  "elapsed_seconds": 0.16372275352478027
+}

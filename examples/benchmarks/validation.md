@@ -3365,3 +3365,21 @@ O0 runtime timeouts at the original 30 seconds. The successful retry replaces
 those four canonical results while preserving raw attempts. Other defaults
 and the upstream 3/25/125 search counts remain unchanged. The large SML matrix
 is not claimed. Native compile exit-status capture remains an M8 follow-up.
+
+## Parser, Reptile, HPG and Fluid application wave, 2026-10-19
+
+[Complete evidence](results/m4-parser-reptile-hpg-fluid/README.md) covers eight
+ports and 24 profiles, bringing the catalogue to 503 programs/1461 profiles.
+209/224 profile combinations pass, including all 128 Rune combinations.
+Three ML Kit smoke compile timeouts and twelve SML/NJ failures remain explicit.
+Canonical semantic checks record 392279 passes, ten failures, 52 complete
+groups and four incomplete SML/NJ groups; all 73 raw groups are preserved.
+
+All 32 normal allocation samples agree under eight unchanged guards. Final
+serial native adapters accept twenty fresh samples and reject four legacy
+preflights; all 24 native compiles pass. Single samples are adapter diagnostics,
+not comparative performance claims. Full repository acceptance exits zero
+after 1883.9 seconds. All 160 inventory regressions and four independent native
+compile-error/timeout regressions pass. Two test-only changes have explicit
+source epochs and focused reruns. M4 remains in progress pending Anna and
+Veritas; M8 remains open.

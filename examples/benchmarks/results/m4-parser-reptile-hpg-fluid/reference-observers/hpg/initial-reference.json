@@ -1,0 +1,14 @@
+{
+  "application": "hpg",
+  "build_exit": 1,
+  "build_command": [
+    "ghc",
+    "-O2",
+    "-cpp",
+    "-rtsopts",
+    "-fforce-recomp",
+    "Main.lhs",
+    "-o",
+    "original"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/nofib-hpg-originals/chunks-test-control-fix.rbc"
+  ],
+  "exit": -9,
+  "guard_reason": "process-tree-rss-guard",
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 2099608,
+  "observed_minimum_available_kib": 21979648,
+  "peak_processes": [
+    {
+      "pid": 3,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 4,
+      "name": "runevm",
+      "rss_kib": 2097812
+    }
+  ],
+  "elapsed_seconds": 72.0445929270063
+}

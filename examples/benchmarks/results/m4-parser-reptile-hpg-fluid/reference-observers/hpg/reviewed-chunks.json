@@ -1,0 +1,47 @@
+[
+  {
+    "profile": "smoke",
+    "params": [
+      8,
+      4,
+      10,
+      6,
+      6
+    ],
+    "hashes": [
+      "5EC4901296811DF0",
+      "D97AC3B2A11B93D6",
+      "713067A9C6975A3C"
+    ]
+  },
+  {
+    "profile": "normal",
+    "params": [
+      40,
+      5,
+      60,
+      6,
+      6
+    ],
+    "hashes": [
+      "E2D7DA701E60C4DA",
+      "5FEAD039E95E2EB4",
+      "2DD8A8F094261A29"
+    ]
+  },
+  {
+    "profile": "large",
+    "params": [
+      80,
+      8,
+      100,
+      8,
+      8
+    ],
+    "hashes": [
+      "6C48AB8F96C3899A",
+      "D2E10CDF9496B73",
+      "5FB505A2B96E6DF1"
+    ]
+  }
+]

@@ -1,0 +1,77 @@
+[
+  {
+    "name": "dpgrid",
+    "bytes": 17404,
+    "hash": 3160210674104700303
+  },
+  {
+    "name": "tpgrid",
+    "bytes": 4131,
+    "hash": -4703615704025256039
+  },
+  {
+    "name": "tmgrid",
+    "bytes": 72,
+    "hash": 1583223350944790619
+  },
+  {
+    "name": "dmgrid",
+    "bytes": 47,
+    "hash": 1977111916157226988
+  },
+  {
+    "name": "picgrid",
+    "bytes": 544,
+    "hash": -4064885400348952400
+  },
+  {
+    "name": "setup",
+    "bytes": 22608,
+    "hash": 4159317457485203241
+  },
+  {
+    "name": "todesign",
+    "bytes": 77,
+    "hash": 726683162194444447
+  },
+  {
+    "name": "totile",
+    "bytes": 4209,
+    "hash": -2148259571030695000
+  },
+  {
+    "name": "tofiddle",
+    "bytes": 78,
+    "hash": -23866905159231814
+  },
+  {
+    "name": "tohelp",
+    "bytes": 78,
+    "hash": 3674043626178738915
+  },
+  {
+    "name": "invisibletext",
+    "bytes": 28,
+    "hash": -1754703631496117798
+  },
+  {
+    "name": "line",
+    "bytes": 12,
+    "hash": 727393801923389650
+  },
+  {
+    "name": "setevent",
+    "bytes": 10,
+    "hash": 753638648254822
+  },
+  {
+    "name": "fillrect",
+    "bytes": 27,
+    "hash": -1232594283202267423
+  },
+  {
+    "name": "tile",
+    "bytes": 60,
+    "hash": -6487940516026657300
+  }
+]

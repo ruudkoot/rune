@@ -1,0 +1,1 @@
+module M where { data Maybe a = Nothing | Just a; f (Just x)=x }

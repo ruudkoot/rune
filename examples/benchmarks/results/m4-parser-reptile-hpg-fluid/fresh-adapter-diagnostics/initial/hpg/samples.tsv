@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+hpg-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	12.56	11.22	1.90	660764	-	-	-	hpg-lazy/native-mlton/build/compile
+hpg-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.92	0.72	0.25	6748	-	-	-	hpg-lazy/native-mlton/correctness.0
+hpg-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.95	0.75	0.25	6700	-	-	-	hpg-lazy/native-mlton/fresh.1
+hpg-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	0.37	0.34	0.04	36756	-	-	-	hpg-lazy/native-smlnj-legacy/build/compile
+hpg-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	1.10	1.25	0.22	86112	-	-	-	hpg-lazy/native-polyml/build/compile
+hpg-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	1.24	1.53	0.70	73068	-	-	-	hpg-lazy/native-polyml/correctness.0
+hpg-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	1.47	1.65	0.65	86048	-	-	-	hpg-lazy/native-polyml/fresh.1
+hpg-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	13.08	9.72	1.97	660452	-	-	-	hpg-strict/native-mlton/build/compile
+hpg-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.36	0.38	0.00	4224	-	-	-	hpg-strict/native-mlton/correctness.0
+hpg-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.43	0.46	0.00	4240	-	-	-	hpg-strict/native-mlton/fresh.1
+hpg-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	0.29	0.26	0.04	34524	-	-	-	hpg-strict/native-smlnj-legacy/build/compile
+hpg-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.68	0.66	0.15	69240	-	-	-	hpg-strict/native-polyml/build/compile
+hpg-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	1.10	1.14	1.16	82460	-	-	-	hpg-strict/native-polyml/correctness.0
+hpg-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	1.07	1.13	1.11	86716	-	-	-	hpg-strict/native-polyml/fresh.1

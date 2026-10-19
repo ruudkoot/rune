@@ -1,0 +1,82 @@
+[ 1 of 12] Compiling Norm             ( Norm.hs, Norm.o )
+
+Norm.hs:21:1: warning: [-Wtabs]
+    Tab character found here, and in 27 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+21 |                 if b then True
+   | ^^^^^^^^
+[ 2 of 12] Compiling S_Array          ( S_Array.hs, S_Array.o )
+
+S_Array.hs:15:1: warning: [-Wtabs]
+    Tab character found here, and in 449 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+15 |                 S_array,                   -- counterpart of Array
+   | ^^^^^^^^
+[ 3 of 12] Compiling Defs             ( Defs.hs, Defs.o )
+
+Defs.hs:14:1: warning: [-Wtabs]
+    Tab character found here, and in three further locations.
+    Suggested fix: Please use spaces instead.
+   |
+14 |         Frac_type, My_Array, v_nodel, p_nodel,
+   | ^^^^^^^^
+[ 4 of 12] Compiling Min_degree       ( Min_degree.hs, Min_degree.o )
+
+Min_degree.hs:12:15: warning: [-Wtabs]
+    Tab character found here, and in 151 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+12 | import S_Array  -- not needed w/ proper module handling
+   |               ^^
+[ 5 of 12] Compiling Input_proc       ( Input_proc.hs, Input_proc.o )
+
+Input_proc.hs:17:15: warning: [-Wtabs]
+    Tab character found here, and in 228 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+17 | import S_Array  -- not needed w/ proper module handling
+   |               ^^
+[ 6 of 12] Compiling Elefac           ( Elefac.hs, Elefac.o )
+
+Elefac.hs:16:15: warning: [-Wtabs]
+    Tab character found here, and in 85 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+16 | import S_Array  -- not needed w/ proper module handling
+   |               ^^
+[ 7 of 12] Compiling Chl_routs        ( Chl_routs.hs, Chl_routs.o )
+
+Chl_routs.hs:25:15: warning: [-Wtabs]
+    Tab character found here, and in 605 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+25 | import S_Array  -- not needed w/ proper module handling
+   |               ^^
+[ 8 of 12] Compiling Asb_routs        ( Asb_routs.hs, Asb_routs.o )
+
+Asb_routs.hs:14:1: warning: [-Wtabs]
+    Tab character found here, and in 32 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+14 |         ( get_asb_table, get_val, list_inner_prod, list_match_prod, add_mat, add_u, mult )
+   | ^^^^^^^^
+[ 9 of 12] Compiling Chl_method       ( Chl_method.hs, Chl_method.o )
+
+Chl_method.hs:20:15: warning: [-Wtabs]
+    Tab character found here, and in 193 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+20 | import S_Array  -- not needed w/ proper module handling
+   |               ^^
+[10 of 12] Compiling Chl_decomp       ( Chl_decomp.hs, Chl_decomp.o )
+
+Chl_decomp.hs:22:15: warning: [-Wtabs]
+    Tab character found here, and in 228 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+22 | import S_Array  -- not needed w/ proper module handling
+   |               ^^
+[11 of 12] Compiling Main             ( Main.hs, Main.o )
+[12 of 12] Linking observe

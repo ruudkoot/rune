@@ -1,0 +1,1 @@
+module M where { infixl 8 +; x=a+b*c }

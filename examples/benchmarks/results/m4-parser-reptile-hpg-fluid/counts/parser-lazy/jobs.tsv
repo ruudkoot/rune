@@ -1,0 +1,1 @@
+parser-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/nofib-parser-literals.sml shared/nofib-parser-lexer.sml shared/nofib-parser-kernel.sml shared/nofib-parser-check.sml parser-lazy/benchmark.sml shared/main.sml	500 normal.input FD8F9F553C360241	parser-lazy/normal.expected	normal.input

@@ -1,0 +1,10 @@
+PASS need first-empty-alternative-skips-input-and-rest
+PASS need sequence-failure-skips-later-parser
+PASS need failed-line-parser-skips-input
+PASS need furthest-line-skips-unused-columns
+PASS need semantic-attribute-demand
+PASS strict first-empty-alternative-skips-input-and-rest
+PASS strict sequence-failure-skips-later-parser
+PASS strict failed-line-parser-skips-input
+PASS strict furthest-line-skips-unused-columns
+PASS strict semantic-attribute-demand

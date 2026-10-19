@@ -1,0 +1,2155 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/application-test-io.sml]
+structure BenchApplicationTestIO : 
+  sig
+    val read : string -> TextIO.vector
+    val compare : string * TextIO.vector * TextIO.vector -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+                            type 'a t
+                            val delay : (unit -> 'a) -> 'a t
+                            val force : 'a t -> 'a
+                          end) :
+                        
+                          sig
+                            type 'a node
+                            type 'a seq
+                            val empty : unit -> 'a node D.t
+                            val cons : 'a D.t * 'a node D.t -> 'a node D.t
+                            val fromList : 'a list -> 'a node D.t
+                            val defer : (unit -> 'a D.t) -> 'a D.t
+                            val append : 'a node D.t
+                                          -> 'a node D.t -> 'a node D.t
+                            val take : int -> 'a node D.t -> 'a node D.t
+                            val drop : int -> 'a node D.t -> 'a node D.t
+                            val nth : 'a node D.t -> int -> 'a
+                            val update : 'a node D.t
+                                          -> int -> 'a D.t -> 'a node D.t
+                            val unify : ''a node D.t -> ''a -> ''a node D.t
+                            val foldl : ('a D.t -> 'b -> 'a D.t)
+                                         -> 'a D.t -> 'b node D.t -> 'a D.t
+                            val toList : 'a node D.t -> 'a list
+                            val map : ('a -> 'b) -> 'a node D.t -> 'b node D.t
+                            val filter : ('a -> bool)
+                                          -> 'a node D.t -> 'a node D.t
+                            val length : 'a node D.t -> int
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-linear-float.sml]
+structure BenchLinearFloat : sig val round : real -> real end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fluid-sparse.sml]
+functor BenchFluidSparseFn(D: sig
+                              type 'a t
+                              val delay : (unit -> 'a) -> 'a t
+                              val force : 'a t -> 'a
+                            end) :
+                          
+                            sig
+                              structure L : <sig>
+                              structure F : <sig>
+                              type 'a trieNode
+                              type 'a trie
+                              type 'a arrayNode
+                              type 'a array
+                              val cell : 'a -> 'a D.t
+                              val empty : unit -> 'a F.node D.t
+                              val singleton : 'a D.t -> 'a F.node D.t
+                              val nilTrie : unit
+                                             -> 'a trieNode BenchLazy.state 
+                                               ref
+                              val leaf : 'a D.t
+                                          -> 'a trieNode BenchLazy.state ref
+                              val head : 'a F.node D.t -> 'a D.t
+                              val tail : 'a F.node D.t -> 'a F.node D.t
+                              val null : 'a F.node D.t -> bool
+                              val map : ('a D.t -> 'b D.t)
+                                         -> 'a F.node D.t -> 'b F.node D.t
+                              val zip : 'a F.node D.t
+                                         -> 'b F.node D.t
+                                         -> ('a D.t * 'b D.t) F.node D.t
+                              val flatMap : ('a D.t -> 'b F.node D.t)
+                                             -> 'a F.node D.t -> 'b F.node D.t
+                              val range : int -> int -> int F.node D.t
+                              val foldLeft : ('a D.t -> 'b D.t -> 'a D.t)
+                                              -> 'a D.t
+                                              -> 'b F.node D.t -> 'a D.t
+                              val all : ('a D.t -> bool)
+                                         -> 'a F.node D.t -> bool
+                              val listSize : int * int -> int
+                              val height : int * int -> int
+                              val power : int -> int
+                              val treeSize : int * int -> int
+                              val inRange : int * int -> int -> bool
+                              val out : unit -> 'a
+                              val undef : unit -> 'a
+                              val multi : unit -> 'a
+                              val fork : 'a trieNode BenchLazy.state ref
+                                          -> 'a trieNode BenchLazy.state ref
+                                          -> 'a trieNode BenchLazy.state ref
+                              val partition : ('a D.t -> bool)
+                                               -> 'a F.node D.t
+                                               -> 'a F.node D.t
+                                               * 'a F.node D.t
+                              val mapIndices : int
+                                                -> (int * 'a) F.node D.t
+                                                -> (int * 'a) F.node D.t
+                              val convert : int
+                                             -> (int * 'a D.t) F.node D.t
+                                             -> (int
+                                                  * 'a trieNode 
+                                                      BenchLazy.state ref) 
+                                                 F.node D.t
+                              val check : int * int
+                                           -> (int * 'a) F.node D.t -> bool
+                              val genTrie : int
+                                             -> (int
+                                                  * 'a trieNode 
+                                                      BenchLazy.state ref) 
+                                                 F.node D.t
+                                             -> 'a trieNode BenchLazy.state 
+                                               ref
+                              val group : 'a trieNode BenchLazy.state ref 
+                                               F.node D.t
+                                           -> 'a trieNode BenchLazy.state ref 
+                                               F.node D.t
+                              val genList : int
+                                             -> 'a trieNode BenchLazy.state 
+                                                   ref F.node D.t
+                                             -> 'a trieNode BenchLazy.state 
+                                               ref
+                              val array : int * int
+                                           -> (int * 'a D.t) F.node D.t
+                                           -> 'a arrayNode BenchLazy.state ref
+                              val defArray : ('a D.t -> 'a D.t -> bool)
+                                              -> int * int
+                                              -> 'a D.t
+                                              -> (int * 'a D.t) F.node D.t
+                                              -> 'a arrayNode BenchLazy.state 
+                                                ref
+                              val listArray : int * int
+                                               -> 'a F.node D.t
+                                               -> 'a arrayNode BenchLazy.state 
+                                                 ref
+                              val defListArray : ('a D.t -> 'a D.t -> bool)
+                                                  -> int * int
+                                                  -> 'a D.t
+                                                  -> 'a F.node D.t
+                                                  -> 'a arrayNode 
+                                                      BenchLazy.state ref
+                              val bounds : 'a arrayNode BenchLazy.state ref
+                                            -> int * int
+                              val findLeaf : 'a trieNode BenchLazy.delay
+                                              -> int
+                                              -> int
+                                              -> 'a trieNode BenchLazy.state 
+                                                ref
+                              val lookup : 'a arrayNode BenchLazy.state ref
+                                            -> int -> 'a D.t
+                              val elements : 'a arrayNode BenchLazy.state ref
+                                              -> 'a F.node D.t
+                              val associations : 'a arrayNode BenchLazy.state 
+                                                    ref
+                                                  -> (int * 'a D.t) F.node D.t
+                              val sparseAssociations : 'a arrayNode 
+                                                            BenchLazy.state 
+                                                          ref
+                                                        -> (int * 'a D.t) 
+                                                            F.node D.t
+                              val update : ('a D.t -> 'a D.t -> bool)
+                                            -> 'a arrayNode BenchLazy.state 
+                                              ref
+                                            -> (int * 'a D.t) F.node D.t
+                                            -> 'a arrayNode BenchLazy.state 
+                                              ref
+                              val accum : ('a D.t -> 'a D.t -> bool)
+                                           -> ('a D.t -> 'b D.t -> 'a D.t)
+                                           -> 'a arrayNode BenchLazy.state ref
+                                           -> (int * 'b D.t) F.node D.t
+                                           -> 'a arrayNode BenchLazy.state ref
+                              val accumArray : ('a D.t -> 'a D.t -> bool)
+                                                -> ('a D.t -> 'b D.t -> 'a D.t)
+                                                -> 'a D.t
+                                                -> int * int
+                                                -> (int * 'b D.t) F.node D.t
+                                                -> 'a arrayNode 
+                                                    BenchLazy.state ref
+                              val amap : ('a D.t -> 'b D.t)
+                                          -> 'a arrayNode BenchLazy.state ref
+                                          -> 'b arrayNode BenchLazy.state ref
+                              val ixmap : int * int
+                                           -> (int -> int)
+                                           -> 'a arrayNode BenchLazy.state ref
+                                           -> 'a arrayNode BenchLazy.state ref
+                            end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fluid-float-show.sml]
+structure BenchFluidFloatShow : 
+  sig
+    val pow : IntInf.int -> int -> IntInf.int
+    val digits : real -> int list * int
+    val signed : int -> string
+    val format : int list * int -> string
+    val show : real -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fluid-kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fluid-kernel.sml:191.28 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fluid-kernel.sml:351.74 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fluid-kernel.sml:338.8 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fluid-kernel.sml:332.24 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fluid-kernel.sml:55.54 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fluid-kernel.sml:34.23 Warning: calling polyEqual
+functor BenchFluidFn(D: sig
+                        type 'a t
+                        val delay : (unit -> 'a) -> 'a t
+                        val force : 'a t -> 'a
+                      end) :
+                    
+                      sig
+                        structure L : <sig>
+                        structure A : <sig>
+                        structure F : <sig>
+                        structure C : <sig>
+                        structure R : <sig>
+                        type realv
+                        type triple
+                        type factors
+                        type elementFactor
+                        val force : 'a D.t -> 'a
+                        val cell : 'a -> 'a D.t
+                        val number : real -> real D.t
+                        val add : real D.t -> real D.t -> real D.t
+                        val sub : real D.t -> real D.t -> real D.t
+                        val mul : real D.t -> real D.t -> real D.t
+                        val divide : real D.t -> real D.t -> real D.t
+                        val negative : real D.t -> real D.t
+                        val absolute : real D.t -> real D.t
+                        val sqrt : real D.t -> real D.t
+                        val eq : real D.t -> real D.t -> bool
+                        val lt : realv -> real D.t -> bool
+                        val le : realv -> real D.t -> bool
+                        val zero : real D.t
+                        val one : real D.t
+                        val small : real D.t
+                        val large : real D.t
+                        val mult : real D.t -> real D.t -> real D.t
+                        val map : ('a D.t -> 'b D.t)
+                                   -> 'a A.F.node D.t -> 'b A.F.node D.t
+                        val zipWith : ('a D.t -> 'b D.t -> 'c D.t)
+                                       -> 'a A.F.node D.t
+                                       -> 'b A.F.node D.t -> 'c A.F.node D.t
+                        val concat : 'a A.F.node D.t A.F.node D.t
+                                      -> 'a A.F.node D.t
+                        val sum : real A.F.node D.t -> real D.t
+                        val length : 'a A.F.node D.t -> int
+                        val listEq : ('a D.t -> 'b D.t -> bool)
+                                      -> 'a A.F.node D.t
+                                      -> 'b A.F.node D.t -> bool
+                        val intEq : ''a D.t -> ''a D.t -> bool
+                        val pair : 'a -> 'b -> ('a * 'b) D.t
+                        val head : 'a A.F.node D.t -> 'a D.t
+                        val tail : 'a A.F.node D.t -> 'a A.F.node D.t
+                        val null : 'a A.F.node D.t -> bool
+                        val range : int -> int -> int A.F.node D.t
+                        val empty : unit -> 'a A.F.node D.t
+                        val singleton : 'a D.t -> 'a A.F.node D.t
+                        val triple : 'a -> 'b -> 'c -> 'a * 'b * 'c
+                        val pairFields : 'a D.t -> 'a
+                        val listInnerProd : real A.F.node D.t
+                                             -> real A.F.node D.t -> real D.t
+                        val listMatchProd : real A.F.node D.t
+                                             -> real A.F.node D.t -> real D.t
+                        val addMat : real A.arrayNode BenchLazy.state ref
+                                      -> real A.arrayNode BenchLazy.state ref
+                                      -> real A.arrayNode BenchLazy.state ref
+                        val addU : real A.arrayNode BenchLazy.state ref
+                                    * real A.arrayNode BenchLazy.state ref
+                                    -> real A.arrayNode BenchLazy.state ref
+                                    * real A.arrayNode BenchLazy.state ref
+                                    -> real A.arrayNode BenchLazy.state ref
+                                    * real A.arrayNode BenchLazy.state ref
+                        val getValues : 'a A.arrayNode BenchLazy.state ref
+                                         -> int A.F.node D.t
+                                         -> 'a A.F.node D.t
+                        val getAssemblyTable : int
+                                                -> int
+                                                -> int
+                                                -> int A.F.node D.t 
+                                                      A.arrayNode 
+                                                    BenchLazy.state ref
+                                                -> (int * int) A.F.node D.t 
+                                                      A.arrayNode 
+                                                    BenchLazy.state ref
+                        val elementFactors : int
+                                              -> (real D.t * real D.t) 
+                                                    A.arrayNode 
+                                                  BenchLazy.state ref
+                                              -> int A.F.node D.t A.arrayNode 
+                                                  BenchLazy.state ref
+                                              -> (real D.t
+                                                     * ((real D.t * real D.t
+                                                       * real D.t)
+                                                      * (real D.t * real D.t
+                                                       * real D.t))) 
+                                                    A.arrayNode 
+                                                  BenchLazy.state ref
+                        val tolerance : real A.F.node D.t
+                                         -> real A.F.node D.t
+                                         -> bool -> real D.t
+                        val massRowSums : real A.arrayNode BenchLazy.state ref
+                        val massMatrix : real A.F.node D.t A.arrayNode 
+                                              BenchLazy.state ref
+                        val components : ('a * 'b * 'c) * ('d * 'e * 'f)
+                                          -> 'a * 'b * 'c * 'd * 'e * 'f
+                        val ff1 : real D.t
+                                   -> real D.t
+                                   -> real D.t -> real D.t -> real D.t
+                        val ff2 : real D.t
+                                   -> real D.t
+                                   -> real D.t -> real D.t -> real D.t
+                        val ff3 : real D.t
+                                   -> real D.t
+                                   -> real D.t
+                                   -> real D.t
+                                   -> real D.t -> real D.t -> real D.t
+                        val f0 : 'a -> real D.t
+                        val f11 : (real D.t * 'a * 'b) * (real D.t * 'c * 'd)
+                                   -> real D.t
+                        val f12 : (real D.t * real D.t * 'a)
+                                   * (real D.t * real D.t * 'b)
+                                   -> real D.t
+                        val f13 : (real D.t * 'a * real D.t)
+                                   * (real D.t * 'b * real D.t)
+                                   -> real D.t
+                        val f15 : (real D.t * 'a * real D.t)
+                                   * (real D.t * 'b * real D.t)
+                                   -> real D.t
+                        val f16 : (real D.t * real D.t * 'a)
+                                   * (real D.t * real D.t * 'b)
+                                   -> real D.t
+                        val f22 : ('a * real D.t * 'b) * ('c * real D.t * 'd)
+                                   -> real D.t
+                        val f23 : ('a * real D.t * real D.t)
+                                   * ('b * real D.t * real D.t)
+                                   -> real D.t
+                        val f24 : ('a * real D.t * real D.t)
+                                   * ('b * real D.t * real D.t)
+                                   -> real D.t
+                        val f33 : ('a * 'b * real D.t) * ('c * 'd * real D.t)
+                                   -> real D.t
+                        val f44 : ('a * real D.t * real D.t)
+                                   * ('b * real D.t * real D.t)
+                                   -> real D.t
+                        val f45 : (real D.t * real D.t * real D.t)
+                                   * (real D.t * real D.t * real D.t)
+                                   -> real D.t
+                        val f46 : (real D.t * real D.t * real D.t)
+                                   * (real D.t * real D.t * real D.t)
+                                   -> real D.t
+                        val f55 : (real D.t * 'a * real D.t)
+                                   * (real D.t * 'b * real D.t)
+                                   -> real D.t
+                        val f56 : (real D.t * real D.t * real D.t)
+                                   * (real D.t * real D.t * real D.t)
+                                   -> real D.t
+                        val f66 : (real D.t * real D.t * 'a)
+                                   * (real D.t * real D.t * 'b)
+                                   -> real D.t
+                        val diffusionMatrix : ((real D.t * real D.t * real D.t)
+                                                      * (real D.t * real D.t
+                                                       * real D.t)
+                                                      -> real A.F.node D.t) 
+                                                     A.arrayNode 
+                                                   BenchLazy.state ref
+                        val gradientMatrix : (real D.t * real D.t * real D.t
+                                                     -> real A.F.node D.t) 
+                                                    A.arrayNode 
+                                                  BenchLazy.state ref
+                        val transposedGradient : (real D.t * real D.t
+                                                         * real D.t
+                                                         -> real A.F.node D.t) 
+                                                        A.arrayNode 
+                                                      BenchLazy.state ref
+                        val c4 : real D.t
+                        val c9 : real D.t
+                        val c11 : real D.t
+                        val c12 : real D.t
+                        val c16 : real D.t
+                        val c18 : real D.t
+                        val c20 : real D.t
+                        val c24 : real D.t
+                        val c32 : real D.t
+                        val c48 : real D.t
+                        val c78 : real D.t
+                        val c80 : real D.t
+                        val c96 : real D.t
+                        val c120 : real D.t
+                        val c128 : real D.t
+                        val c160 : real D.t
+                        val c192 : real D.t
+                        val c384 : real D.t
+                        val a11 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a12 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a13 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a14 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a15 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a16 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a22 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a23 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a24 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a25 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a26 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a33 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a34 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a35 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a36 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a44 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a45 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a46 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a55 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a56 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        val a66 : real D.t * real D.t * real D.t
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                                   * (real D.t * real D.t)
+                        type convectionEntry
+                        val selectCoefficients : convectionEntry list
+                                                  -> real A.F.node D.t
+                                                  * real A.F.node D.t
+                                                  * real A.F.node D.t
+                                                  * (realv * realv) A.F.node 
+                                                    D.t
+                                                  * (realv * realv) A.F.node 
+                                                    D.t
+                                                  * (realv * realv) A.F.node 
+                                                    D.t
+                        val convectionCoefficients : (real A.F.node D.t
+                                                           * real A.F.node D.t
+                                                           * real A.F.node D.t
+                                                           * (realv * realv) 
+                                                               A.F.node D.t
+                                                           * (realv * realv) 
+                                                               A.F.node D.t
+                                                           * (realv * realv) 
+                                                               A.F.node D.t) 
+                                                          A.F.node D.t
+                        val convectionMatrix : ((real D.t * real D.t
+                                                        * real D.t)
+                                                       * (real D.t * real D.t
+                                                        * real D.t)
+                                                       -> real A.F.node D.t
+                                                       * real A.F.node D.t
+                                                       -> real A.F.node D.t) 
+                                                      A.arrayNode 
+                                                    BenchLazy.state ref
+                        val member : ''a -> ''a A.F.node D.t -> bool
+                        val getRhs1 : elementFactor A.array
+                                       -> (int * int) A.F.node D.t A.arrayNode 
+                                           BenchLazy.state ref
+                                       -> int A.F.node D.t A.arrayNode 
+                                           BenchLazy.state ref
+                                       -> int A.F.node D.t A.arrayNode 
+                                           BenchLazy.state ref
+                                       -> real A.arrayNode BenchLazy.state ref
+                                       * (real A.arrayNode BenchLazy.state ref
+                                        * real A.arrayNode BenchLazy.state ref)
+                                       -> real A.arrayNode BenchLazy.state ref
+                                       * real A.arrayNode BenchLazy.state ref
+                        val getRhs2 : elementFactor A.array
+                                       -> (int * int) A.F.node D.t A.arrayNode 
+                                           BenchLazy.state ref
+                                       -> int A.F.node D.t A.arrayNode 
+                                           BenchLazy.state ref
+                                       -> int A.F.node D.t
+                                       -> real A.arrayNode BenchLazy.state ref
+                                       * real A.arrayNode BenchLazy.state ref
+                                       -> real A.arrayNode BenchLazy.state ref
+                        val getRhs3 : elementFactor A.array
+                                       -> (int * int) A.F.node D.t A.arrayNode 
+                                           BenchLazy.state ref
+                                       -> int A.F.node D.t A.arrayNode 
+                                           BenchLazy.state ref
+                                       -> real A.arrayNode BenchLazy.state ref
+                                       -> real A.arrayNode BenchLazy.state ref
+                                       * real A.arrayNode BenchLazy.state ref
+                        val sparseElements : 'a A.arrayNode BenchLazy.state 
+                                                ref
+                                              -> 'a A.F.node D.t
+                        val jacobi : int
+                                      -> elementFactor A.array
+                                      -> (int * int) A.F.node D.t A.arrayNode 
+                                          BenchLazy.state ref
+                                      -> int A.F.node D.t A.arrayNode 
+                                          BenchLazy.state ref
+                                      -> bool A.arrayNode BenchLazy.state ref
+                                      * (bool A.arrayNode BenchLazy.state ref
+                                       * bool A.arrayNode BenchLazy.state ref)
+                                      -> real A.arrayNode BenchLazy.state ref
+                                      * real A.arrayNode BenchLazy.state ref
+                                      -> real D.t
+                                      -> int
+                                      -> real D.t
+                                      -> real D.t
+                                      -> real A.arrayNode BenchLazy.state ref
+                                      * real A.arrayNode BenchLazy.state ref
+                        val mergeLine : int A.F.node D.t
+                                         -> int A.F.node D.t
+                                         -> int A.F.node D.t
+                        val removeList : int A.F.node D.t
+                                          -> int A.F.node D.t
+                                          -> int A.F.node D.t
+                        val mergeLines : int A.F.node D.t A.F.node D.t
+                                          -> int A.F.node D.t
+                        val equalIntLists : ''a A.F.node D.t D.t
+                                             -> ''a A.F.node D.t D.t -> bool
+                        val uniqueLists : ''a A.F.node D.t A.F.node D.t
+                                           -> ''a A.F.node D.t A.F.node D.t
+                        val minDegree : int A.F.node D.t A.arrayNode 
+                                             BenchLazy.state ref
+                                         -> int A.F.node D.t
+                        type realArray
+                        type segment
+                        type block
+                        val unusedEq : 'a -> 'b -> 'c
+                        val appendSequences : 'a A.F.node D.t D.t
+                                               -> 'a A.F.node D.t D.t
+                                               -> 'a A.F.node D.t D.t
+                        val boolEq : ''a D.t -> ''a D.t -> bool
+                        val dropWhile : ('a D.t -> bool)
+                                         -> 'a A.F.node D.t -> 'a A.F.node D.t
+                        val init : 'a A.F.node D.t -> 'a A.F.node D.t
+                        val segmentEq : (''a * real A.F.node D.t) D.t
+                                         -> (''a * real A.F.node D.t) D.t
+                                         -> bool
+                        val pressureElementMatrix : (real D.t
+                                                                  * ((real D.t
+                                                                    * real D.t
+                                                                    * real D.t)
+                                                                   * (real D.t
+                                                                    * real D.t
+                                                                    * real D.t))
+                                                                  -> real D.t) 
+                                                                 A.arrayNode 
+                                                               BenchLazy.state 
+                                                             ref A.arrayNode 
+                                                         BenchLazy.state ref
+                        val orderedMatrix : int
+                                             -> elementFactor A.array
+                                             -> int A.F.node D.t A.arrayNode 
+                                                 BenchLazy.state ref
+                                             -> int A.F.node D.t
+                                             -> (real A.arrayNode 
+                                                        BenchLazy.state ref
+                                                    * (int * real A.F.node D.t)
+                                                          A.arrayNode 
+                                                        BenchLazy.state ref) 
+                                                   A.arrayNode BenchLazy.state 
+                                               ref
+                                             * int A.arrayNode BenchLazy.state 
+                                               ref
+                        val nthCell : 'a A.F.node D.t -> int -> 'a D.t
+                        type chars
+                        type 'a reader
+                        val input : string -> char C.node BenchNeed.t
+                        val charsString : char C.node BenchNeed.t -> string
+                        val uncons : 'a C.node BenchLazy.state ref
+                                      -> ('a * 'a C.node BenchNeed.t) option
+                        val dropChars : ('a -> bool)
+                                         -> 'a C.node BenchNeed.t
+                                         -> 'a C.node BenchLazy.state ref
+                        val spanChars : ('a -> bool)
+                                         -> 'a C.node BenchNeed.t
+                                         -> 'a C.node BenchNeed.t
+                                         * 'a C.node BenchNeed.t
+                        val skipLines : int
+                                         -> char C.node BenchNeed.t
+                                         -> char C.node BenchNeed.t
+                        val textWords : char C.node BenchNeed.t
+                                         -> char C.node BenchNeed.t C.node 
+                                           BenchNeed.t
+                        val wordAt : int
+                                      -> char C.node BenchNeed.t
+                                      -> char C.node BenchNeed.t
+                        val normalizeNumber : string -> string
+                        val scanNumber : bool
+                                          -> char C.node BenchNeed.t
+                                          -> string * char C.node BenchNeed.t
+                        val readInt : char C.node BenchNeed.t
+                                       -> (int D.t * char C.node BenchNeed.t) 
+                                           BenchLazy.state ref
+                        val readFloat : char C.node BenchNeed.t
+                                         -> (real D.t
+                                              * char C.node BenchNeed.t) 
+                                             BenchLazy.state ref
+                        val readPair : 'a reader
+                                        -> 'b reader
+                                        -> chars
+                                        -> (('a D.t * 'b D.t) D.t
+                                             * char C.node BenchNeed.t) 
+                                            BenchLazy.state ref
+                        val readN : 'a reader
+                                     -> int
+                                     -> char C.node BenchNeed.t
+                                     -> 'a A.F.node D.t
+                                     * char C.node BenchLazy.state ref
+                        val readNReader : 'a reader
+                                           -> int
+                                           -> char C.node BenchNeed.t
+                                           -> ('a A.F.node D.t D.t
+                                                * char C.node BenchLazy.state 
+                                                  ref) BenchLazy.state ref
+                        val firstChars : 'a C.node BenchLazy.state ref -> 'a
+                        type config
+                        val readConfig : char C.node BenchNeed.t
+                                          -> string * config
+                        type mesh
+                        val readMesh : char C.node BenchNeed.t -> mesh
+                        val calOneElement : int * real A.F.node D.t
+                                             -> 'a
+                                             * (int * real A.F.node D.t) D.t
+                                             -> real D.t -> real D.t
+                        val calOneSegment : ('a
+                                                  * (int * real A.F.node D.t) 
+                                                    D.t) A.F.node D.t
+                                             -> ('b * real A.F.node D.t) D.t
+                                             * (int * real A.F.node D.t) D.t
+                                             -> real A.F.node D.t
+                        val matchPairs : (int * 'a) A.F.node D.t
+                                          -> (int * 'b) A.F.node D.t
+                                          -> (int * ('a * 'b) D.t) A.F.node 
+                                            D.t
+                        val cholesky : block A.array
+                                        -> (real A.arrayNode BenchLazy.state 
+                                                 ref
+                                               * (int * real A.F.node D.t) 
+                                                     A.arrayNode 
+                                                   BenchLazy.state ref) 
+                                              A.arrayNode BenchLazy.state ref
+                        val lowerPart : int
+                                         -> 'a A.arrayNode BenchLazy.state ref
+                                         -> (int * 'a D.t) A.F.node D.t
+                        val forwardSubstitution : block A.array
+                                                   -> real A.arrayNode 
+                                                       BenchLazy.state ref
+                                                   -> real A.arrayNode 
+                                                       BenchLazy.state ref
+                        val backwardSubstitution : block A.array
+                                                    -> real A.arrayNode 
+                                                        BenchLazy.state ref
+                                                    -> real A.arrayNode 
+                                                        BenchLazy.state ref
+                        val choleskyMethod : block A.array * int A.array
+                                              -> realArray
+                                              -> real D.t
+                                              -> real A.arrayNode 
+                                                  BenchLazy.state ref
+                        type 'a normalPack
+                        val andAnd : bool -> (unit -> bool) -> bool
+                        val normalReal : real D.t -> bool
+                        val normalArray : ('a D.t -> bool)
+                                           -> 'a A.arrayNode BenchLazy.state 
+                                             ref
+                                           -> bool
+                        val normalVelocity : real A.arrayNode BenchLazy.state 
+                                                ref
+                                              * real A.arrayNode 
+                                                  BenchLazy.state ref
+                                              -> bool
+                        val pack : ('a -> 'b)
+                                    -> (unit -> 'a)
+                                    -> 'a BenchLazy.state ref
+                                    * 'b BenchLazy.state ref
+                        val normalize : 'a * 'b BenchLazy.state ref -> 'b
+                        val retrieve : 'a BenchLazy.state ref * 'b -> 'a
+                        val chars : string -> char C.node BenchNeed.t
+                        structure B : <sig>
+                        val signed : int -> string
+                        val showReal : real D.t
+                                        -> char C.node BenchNeed.t
+                                        -> char C.node BenchNeed.t
+                        val showList : ('a D.t
+                                         -> char C.node BenchNeed.t
+                                         -> char C.node BenchNeed.t)
+                                        -> 'a A.F.node D.t
+                                        -> char C.node BenchNeed.t
+                                        -> char C.node BenchNeed.t
+                        val showRealArray : real A.arrayNode BenchLazy.state 
+                                               ref
+                                             -> char C.node BenchNeed.t
+                                             -> char C.node BenchNeed.t
+                        val showVelocities : real A.arrayNode BenchLazy.state 
+                                                ref
+                                              * real A.arrayNode 
+                                                  BenchLazy.state ref
+                                              -> char C.node BenchNeed.t
+                                              -> char C.node BenchNeed.t
+                        val hash : char C.node BenchNeed.t -> Word64.word
+                        val outputString : char C.node BenchNeed.t -> string
+                        val simulate : bool * int * real D.t * int * real D.t
+                                        * real D.t * real D.t
+                                        -> elementFactor A.array
+                                        -> (int * int) A.F.node D.t 
+                                              A.arrayNode BenchLazy.state ref
+                                        -> (int * int) A.F.node D.t 
+                                              A.arrayNode BenchLazy.state ref
+                                        -> int A.F.node D.t A.arrayNode 
+                                            BenchLazy.state ref
+                                        -> int A.F.node D.t A.arrayNode 
+                                            BenchLazy.state ref
+                                        -> bool A.arrayNode BenchLazy.state 
+                                          ref
+                                        * (bool A.arrayNode BenchLazy.state 
+                                           ref
+                                         * bool A.arrayNode BenchLazy.state 
+                                           ref)
+                                        -> int A.F.node D.t
+                                        -> block A.array * int A.array
+                                        -> real A.arrayNode BenchLazy.state 
+                                          ref
+                                        * (real A.arrayNode BenchLazy.state 
+                                           ref
+                                         * real A.arrayNode BenchLazy.state 
+                                           ref)
+                                        -> char C.node BenchNeed.t
+                        val run : bool * int * real D.t * int * real D.t
+                                   * real D.t * real D.t
+                                   -> mesh -> char C.node BenchNeed.t
+                      end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fluid-check.sml]
+functor BenchFluidCheckFn(K: sig
+                             type chars
+                             type mesh
+                             type config
+                             val input : string -> chars
+                             val readConfig : chars -> string * config
+                             val readMesh : chars -> mesh
+                             val run : config -> mesh -> chars
+                             val hash : chars -> Word64.word
+                           end) :
+                         
+                           sig
+                             val read : string -> TextIO.vector
+                             val run : string list -> string
+                           end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/nofib-fluid-tests.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/nofib-fluid-tests.sml:25.22 Warning: calling polyEqual
+PASS nofib-fluid/sparse/lazy/0
+PASS nofib-fluid/sparse/lazy/1
+PASS nofib-fluid/sparse/lazy/2
+PASS nofib-fluid/sparse/lazy/3
+PASS nofib-fluid/sparse/lazy/4
+PASS nofib-fluid/sparse/lazy/5
+PASS nofib-fluid/sparse/lazy/6
+PASS nofib-fluid/sparse/lazy/7
+PASS nofib-fluid/sparse/lazy/8
+PASS nofib-fluid/sparse/lazy/9
+PASS nofib-fluid/sparse/lazy/10
+PASS nofib-fluid/sparse/lazy/11
+PASS nofib-fluid/sparse/lazy/12
+PASS nofib-fluid/sparse/lazy/13
+PASS nofib-fluid/sparse/lazy/14
+PASS nofib-fluid/sparse/lazy/15
+PASS nofib-fluid/sparse/lazy/16
+PASS nofib-fluid/sparse/lazy/17
+PASS nofib-fluid/sparse/lazy/18
+PASS nofib-fluid/sparse/lazy/19
+PASS nofib-fluid/sparse/lazy/20
+PASS nofib-fluid/sparse/lazy/21
+PASS nofib-fluid/sparse/lazy/22
+PASS nofib-fluid/sparse/lazy/23
+PASS nofib-fluid/sparse/lazy/24
+PASS nofib-fluid/sparse/lazy/25
+PASS nofib-fluid/sparse/lazy/26
+PASS nofib-fluid/sparse/lazy/27
+PASS nofib-fluid/sparse/lazy/28
+PASS nofib-fluid/sparse/lazy/29
+PASS nofib-fluid/sparse/lazy/30
+PASS nofib-fluid/sparse/lazy/31
+PASS nofib-fluid/sparse/lazy/32
+PASS nofib-fluid/sparse/lazy/33
+PASS nofib-fluid/sparse/lazy/34
+PASS nofib-fluid/sparse/lazy/35
+PASS nofib-fluid/sparse/lazy/36
+PASS nofib-fluid/sparse/lazy/37
+PASS nofib-fluid/sparse/lazy/38
+PASS nofib-fluid/sparse/lazy/39
+PASS nofib-fluid/sparse/lazy/40
+PASS nofib-fluid/sparse/lazy/41
+PASS nofib-fluid/sparse/lazy/42
+PASS nofib-fluid/sparse/lazy/43
+PASS nofib-fluid/sparse/lazy/44
+PASS nofib-fluid/sparse/lazy/45
+PASS nofib-fluid/sparse/lazy/46
+PASS nofib-fluid/sparse/lazy/47
+PASS nofib-fluid/sparse/lazy/48
+PASS nofib-fluid/sparse/lazy/49
+PASS nofib-fluid/sparse/lazy/50
+PASS nofib-fluid/sparse/lazy/51
+PASS nofib-fluid/sparse/lazy/52
+PASS nofib-fluid/sparse/lazy/53
+PASS nofib-fluid/sparse/lazy/54
+PASS nofib-fluid/sparse/lazy/55
+PASS nofib-fluid/sparse/lazy/56
+PASS nofib-fluid/sparse/lazy/57
+PASS nofib-fluid/sparse/lazy/58
+PASS nofib-fluid/sparse/lazy/59
+PASS nofib-fluid/sparse/lazy/60
+PASS nofib-fluid/sparse/lazy/61
+PASS nofib-fluid/sparse/lazy/62
+PASS nofib-fluid/sparse/lazy/63
+PASS nofib-fluid/sparse/lazy/64
+PASS nofib-fluid/sparse/lazy/65
+PASS nofib-fluid/sparse/lazy/66
+PASS nofib-fluid/sparse/lazy/67
+PASS nofib-fluid/sparse/lazy/68
+PASS nofib-fluid/sparse/lazy/69
+PASS nofib-fluid/sparse/lazy/70
+PASS nofib-fluid/sparse/lazy/71
+PASS nofib-fluid/sparse/lazy/72
+PASS nofib-fluid/sparse/lazy/73
+PASS nofib-fluid/sparse/lazy/74
+PASS nofib-fluid/sparse/lazy/75
+PASS nofib-fluid/sparse/lazy/76
+PASS nofib-fluid/sparse/lazy/77
+PASS nofib-fluid/sparse/lazy/78
+PASS nofib-fluid/sparse/lazy/79
+PASS nofib-fluid/sparse/lazy/80
+PASS nofib-fluid/sparse/lazy/81
+PASS nofib-fluid/sparse/lazy/82
+PASS nofib-fluid/sparse/lazy/83
+PASS nofib-fluid/sparse/lazy/84
+PASS nofib-fluid/sparse/lazy/85
+PASS nofib-fluid/sparse/lazy/86
+PASS nofib-fluid/sparse/lazy/87
+PASS nofib-fluid/sparse/lazy/88
+PASS nofib-fluid/sparse/lazy/89
+PASS nofib-fluid/sparse/lazy/90
+PASS nofib-fluid/sparse/lazy/91
+PASS nofib-fluid/sparse/lazy/92
+PASS nofib-fluid/sparse/lazy/93
+PASS nofib-fluid/sparse/lazy/94
+PASS nofib-fluid/sparse/lazy/95
+PASS nofib-fluid/sparse/lazy/96
+PASS nofib-fluid/sparse/lazy/97
+PASS nofib-fluid/sparse/lazy/98
+PASS nofib-fluid/sparse/lazy/99
+PASS nofib-fluid/sparse/lazy/100
+PASS nofib-fluid/sparse/lazy/101
+PASS nofib-fluid/sparse/lazy/102
+PASS nofib-fluid/sparse/lazy/103
+PASS nofib-fluid/sparse/lazy/104
+PASS nofib-fluid/sparse/lazy/105
+PASS nofib-fluid/sparse/lazy/106
+PASS nofib-fluid/sparse/lazy/107
+PASS nofib-fluid/sparse/lazy/108
+PASS nofib-fluid/sparse/lazy/109
+PASS nofib-fluid/sparse/lazy/110
+PASS nofib-fluid/sparse/lazy/111
+PASS nofib-fluid/sparse/lazy/112
+PASS nofib-fluid/sparse/lazy/113
+PASS nofib-fluid/sparse/lazy/114
+PASS nofib-fluid/sparse/lazy/115
+PASS nofib-fluid/sparse/lazy/116
+PASS nofib-fluid/sparse/lazy/117
+PASS nofib-fluid/sparse/lazy/118
+PASS nofib-fluid/sparse/lazy/119
+PASS nofib-fluid/sparse/lazy/120
+PASS nofib-fluid/sparse/lazy/121
+PASS nofib-fluid/sparse/lazy/122
+PASS nofib-fluid/sparse/lazy/123
+PASS nofib-fluid/sparse/lazy/124
+PASS nofib-fluid/sparse/lazy/125
+PASS nofib-fluid/sparse/lazy/126
+PASS nofib-fluid/sparse/lazy/127
+PASS nofib-fluid/sparse/lazy/128
+PASS nofib-fluid/sparse/lazy/129
+PASS nofib-fluid/lazy/binary32/mass-row-sums/0
+PASS nofib-fluid/lazy/binary32/mass-row-sums/1
+PASS nofib-fluid/lazy/binary32/mass-row-sums/2
+PASS nofib-fluid/lazy/binary32/mass-row-sums/3
+PASS nofib-fluid/lazy/binary32/mass-row-sums/4
+PASS nofib-fluid/lazy/binary32/mass-row-sums/5
+PASS nofib-fluid/lazy/binary32/mass-matrix/6
+PASS nofib-fluid/lazy/binary32/mass-matrix/7
+PASS nofib-fluid/lazy/binary32/mass-matrix/8
+PASS nofib-fluid/lazy/binary32/mass-matrix/9
+PASS nofib-fluid/lazy/binary32/mass-matrix/10
+PASS nofib-fluid/lazy/binary32/mass-matrix/11
+PASS nofib-fluid/lazy/binary32/mass-matrix/12
+PASS nofib-fluid/lazy/binary32/mass-matrix/13
+PASS nofib-fluid/lazy/binary32/mass-matrix/14
+PASS nofib-fluid/lazy/binary32/mass-matrix/15
+PASS nofib-fluid/lazy/binary32/mass-matrix/16
+PASS nofib-fluid/lazy/binary32/mass-matrix/17
+PASS nofib-fluid/lazy/binary32/mass-matrix/18
+PASS nofib-fluid/lazy/binary32/mass-matrix/19
+PASS nofib-fluid/lazy/binary32/mass-matrix/20
+PASS nofib-fluid/lazy/binary32/mass-matrix/21
+PASS nofib-fluid/lazy/binary32/mass-matrix/22
+PASS nofib-fluid/lazy/binary32/mass-matrix/23
+PASS nofib-fluid/lazy/binary32/mass-matrix/24
+PASS nofib-fluid/lazy/binary32/mass-matrix/25
+PASS nofib-fluid/lazy/binary32/mass-matrix/26
+PASS nofib-fluid/lazy/binary32/mass-matrix/27
+PASS nofib-fluid/lazy/binary32/mass-matrix/28
+PASS nofib-fluid/lazy/binary32/mass-matrix/29
+PASS nofib-fluid/lazy/binary32/mass-matrix/30
+PASS nofib-fluid/lazy/binary32/mass-matrix/31
+PASS nofib-fluid/lazy/binary32/mass-matrix/32
+PASS nofib-fluid/lazy/binary32/mass-matrix/33
+PASS nofib-fluid/lazy/binary32/mass-matrix/34
+PASS nofib-fluid/lazy/binary32/mass-matrix/35
+PASS nofib-fluid/lazy/binary32/mass-matrix/36
+PASS nofib-fluid/lazy/binary32/mass-matrix/37
+PASS nofib-fluid/lazy/binary32/mass-matrix/38
+PASS nofib-fluid/lazy/binary32/mass-matrix/39
+PASS nofib-fluid/lazy/binary32/mass-matrix/40
+PASS nofib-fluid/lazy/binary32/mass-matrix/41
+PASS nofib-fluid/lazy/binary32/subnormal/42
+PASS nofib-fluid/lazy/binary32/diffusion-0/43
+PASS nofib-fluid/lazy/binary32/diffusion-0/44
+PASS nofib-fluid/lazy/binary32/diffusion-0/45
+PASS nofib-fluid/lazy/binary32/diffusion-0/46
+PASS nofib-fluid/lazy/binary32/diffusion-0/47
+PASS nofib-fluid/lazy/binary32/diffusion-0/48
+PASS nofib-fluid/lazy/binary32/diffusion-0/49
+PASS nofib-fluid/lazy/binary32/diffusion-0/50
+PASS nofib-fluid/lazy/binary32/diffusion-0/51
+PASS nofib-fluid/lazy/binary32/diffusion-0/52
+PASS nofib-fluid/lazy/binary32/diffusion-0/53
+PASS nofib-fluid/lazy/binary32/diffusion-0/54
+PASS nofib-fluid/lazy/binary32/diffusion-0/55
+PASS nofib-fluid/lazy/binary32/diffusion-0/56
+PASS nofib-fluid/lazy/binary32/diffusion-0/57
+PASS nofib-fluid/lazy/binary32/diffusion-0/58
+PASS nofib-fluid/lazy/binary32/diffusion-0/59
+PASS nofib-fluid/lazy/binary32/diffusion-0/60
+PASS nofib-fluid/lazy/binary32/diffusion-0/61
+PASS nofib-fluid/lazy/binary32/diffusion-0/62
+PASS nofib-fluid/lazy/binary32/diffusion-0/63
+PASS nofib-fluid/lazy/binary32/diffusion-0/64
+PASS nofib-fluid/lazy/binary32/diffusion-0/65
+PASS nofib-fluid/lazy/binary32/diffusion-0/66
+PASS nofib-fluid/lazy/binary32/diffusion-0/67
+PASS nofib-fluid/lazy/binary32/diffusion-0/68
+PASS nofib-fluid/lazy/binary32/diffusion-0/69
+PASS nofib-fluid/lazy/binary32/diffusion-0/70
+PASS nofib-fluid/lazy/binary32/diffusion-0/71
+PASS nofib-fluid/lazy/binary32/diffusion-0/72
+PASS nofib-fluid/lazy/binary32/diffusion-0/73
+PASS nofib-fluid/lazy/binary32/diffusion-0/74
+PASS nofib-fluid/lazy/binary32/diffusion-0/75
+PASS nofib-fluid/lazy/binary32/diffusion-0/76
+PASS nofib-fluid/lazy/binary32/diffusion-0/77
+PASS nofib-fluid/lazy/binary32/diffusion-0/78
+PASS nofib-fluid/lazy/binary32/gradient-a-0/79
+PASS nofib-fluid/lazy/binary32/gradient-a-0/80
+PASS nofib-fluid/lazy/binary32/gradient-a-0/81
+PASS nofib-fluid/lazy/binary32/gradient-a-0/82
+PASS nofib-fluid/lazy/binary32/gradient-a-0/83
+PASS nofib-fluid/lazy/binary32/gradient-a-0/84
+PASS nofib-fluid/lazy/binary32/gradient-a-0/85
+PASS nofib-fluid/lazy/binary32/gradient-a-0/86
+PASS nofib-fluid/lazy/binary32/gradient-a-0/87
+PASS nofib-fluid/lazy/binary32/gradient-a-0/88
+PASS nofib-fluid/lazy/binary32/gradient-a-0/89
+PASS nofib-fluid/lazy/binary32/gradient-a-0/90
+PASS nofib-fluid/lazy/binary32/gradient-a-0/91
+PASS nofib-fluid/lazy/binary32/gradient-a-0/92
+PASS nofib-fluid/lazy/binary32/gradient-a-0/93
+PASS nofib-fluid/lazy/binary32/gradient-a-0/94
+PASS nofib-fluid/lazy/binary32/gradient-a-0/95
+PASS nofib-fluid/lazy/binary32/gradient-a-0/96
+PASS nofib-fluid/lazy/binary32/gradient-b-0/97
+PASS nofib-fluid/lazy/binary32/gradient-b-0/98
+PASS nofib-fluid/lazy/binary32/gradient-b-0/99
+PASS nofib-fluid/lazy/binary32/gradient-b-0/100
+PASS nofib-fluid/lazy/binary32/gradient-b-0/101
+PASS nofib-fluid/lazy/binary32/gradient-b-0/102
+PASS nofib-fluid/lazy/binary32/gradient-b-0/103
+PASS nofib-fluid/lazy/binary32/gradient-b-0/104
+PASS nofib-fluid/lazy/binary32/gradient-b-0/105
+PASS nofib-fluid/lazy/binary32/gradient-b-0/106
+PASS nofib-fluid/lazy/binary32/gradient-b-0/107
+PASS nofib-fluid/lazy/binary32/gradient-b-0/108
+PASS nofib-fluid/lazy/binary32/gradient-b-0/109
+PASS nofib-fluid/lazy/binary32/gradient-b-0/110
+PASS nofib-fluid/lazy/binary32/gradient-b-0/111
+PASS nofib-fluid/lazy/binary32/gradient-b-0/112
+PASS nofib-fluid/lazy/binary32/gradient-b-0/113
+PASS nofib-fluid/lazy/binary32/gradient-b-0/114
+PASS nofib-fluid/lazy/binary32/convection-0/115
+PASS nofib-fluid/lazy/binary32/convection-0/116
+PASS nofib-fluid/lazy/binary32/convection-0/117
+PASS nofib-fluid/lazy/binary32/convection-0/118
+PASS nofib-fluid/lazy/binary32/convection-0/119
+PASS nofib-fluid/lazy/binary32/convection-0/120
+PASS nofib-fluid/lazy/binary32/convection-0/121
+PASS nofib-fluid/lazy/binary32/convection-0/122
+PASS nofib-fluid/lazy/binary32/convection-0/123
+PASS nofib-fluid/lazy/binary32/convection-0/124
+PASS nofib-fluid/lazy/binary32/convection-0/125
+PASS nofib-fluid/lazy/binary32/convection-0/126
+PASS nofib-fluid/lazy/binary32/convection-0/127
+PASS nofib-fluid/lazy/binary32/convection-0/128
+PASS nofib-fluid/lazy/binary32/convection-0/129
+PASS nofib-fluid/lazy/binary32/convection-0/130
+PASS nofib-fluid/lazy/binary32/convection-0/131
+PASS nofib-fluid/lazy/binary32/convection-0/132
+PASS nofib-fluid/lazy/binary32/convection-0/133
+PASS nofib-fluid/lazy/binary32/convection-0/134
+PASS nofib-fluid/lazy/binary32/convection-0/135
+PASS nofib-fluid/lazy/binary32/convection-0/136
+PASS nofib-fluid/lazy/binary32/convection-0/137
+PASS nofib-fluid/lazy/binary32/convection-0/138
+PASS nofib-fluid/lazy/binary32/convection-0/139
+PASS nofib-fluid/lazy/binary32/convection-0/140
+PASS nofib-fluid/lazy/binary32/convection-0/141
+PASS nofib-fluid/lazy/binary32/convection-0/142
+PASS nofib-fluid/lazy/binary32/convection-0/143
+PASS nofib-fluid/lazy/binary32/convection-0/144
+PASS nofib-fluid/lazy/binary32/convection-0/145
+PASS nofib-fluid/lazy/binary32/convection-0/146
+PASS nofib-fluid/lazy/binary32/convection-0/147
+PASS nofib-fluid/lazy/binary32/convection-0/148
+PASS nofib-fluid/lazy/binary32/convection-0/149
+PASS nofib-fluid/lazy/binary32/convection-0/150
+PASS nofib-fluid/lazy/binary32/diffusion-1/151
+PASS nofib-fluid/lazy/binary32/diffusion-1/152
+PASS nofib-fluid/lazy/binary32/diffusion-1/153
+PASS nofib-fluid/lazy/binary32/diffusion-1/154
+PASS nofib-fluid/lazy/binary32/diffusion-1/155
+PASS nofib-fluid/lazy/binary32/diffusion-1/156
+PASS nofib-fluid/lazy/binary32/diffusion-1/157
+PASS nofib-fluid/lazy/binary32/diffusion-1/158
+PASS nofib-fluid/lazy/binary32/diffusion-1/159
+PASS nofib-fluid/lazy/binary32/diffusion-1/160
+PASS nofib-fluid/lazy/binary32/diffusion-1/161
+PASS nofib-fluid/lazy/binary32/diffusion-1/162
+PASS nofib-fluid/lazy/binary32/diffusion-1/163
+PASS nofib-fluid/lazy/binary32/diffusion-1/164
+PASS nofib-fluid/lazy/binary32/diffusion-1/165
+PASS nofib-fluid/lazy/binary32/diffusion-1/166
+PASS nofib-fluid/lazy/binary32/diffusion-1/167
+PASS nofib-fluid/lazy/binary32/diffusion-1/168
+PASS nofib-fluid/lazy/binary32/diffusion-1/169
+PASS nofib-fluid/lazy/binary32/diffusion-1/170
+PASS nofib-fluid/lazy/binary32/diffusion-1/171
+PASS nofib-fluid/lazy/binary32/diffusion-1/172
+PASS nofib-fluid/lazy/binary32/diffusion-1/173
+PASS nofib-fluid/lazy/binary32/diffusion-1/174
+PASS nofib-fluid/lazy/binary32/diffusion-1/175
+PASS nofib-fluid/lazy/binary32/diffusion-1/176
+PASS nofib-fluid/lazy/binary32/diffusion-1/177
+PASS nofib-fluid/lazy/binary32/diffusion-1/178
+PASS nofib-fluid/lazy/binary32/diffusion-1/179
+PASS nofib-fluid/lazy/binary32/diffusion-1/180
+PASS nofib-fluid/lazy/binary32/diffusion-1/181
+PASS nofib-fluid/lazy/binary32/diffusion-1/182
+PASS nofib-fluid/lazy/binary32/diffusion-1/183
+PASS nofib-fluid/lazy/binary32/diffusion-1/184
+PASS nofib-fluid/lazy/binary32/diffusion-1/185
+PASS nofib-fluid/lazy/binary32/diffusion-1/186
+PASS nofib-fluid/lazy/binary32/gradient-a-1/187
+PASS nofib-fluid/lazy/binary32/gradient-a-1/188
+PASS nofib-fluid/lazy/binary32/gradient-a-1/189
+PASS nofib-fluid/lazy/binary32/gradient-a-1/190
+PASS nofib-fluid/lazy/binary32/gradient-a-1/191
+PASS nofib-fluid/lazy/binary32/gradient-a-1/192
+PASS nofib-fluid/lazy/binary32/gradient-a-1/193
+PASS nofib-fluid/lazy/binary32/gradient-a-1/194
+PASS nofib-fluid/lazy/binary32/gradient-a-1/195
+PASS nofib-fluid/lazy/binary32/gradient-a-1/196
+PASS nofib-fluid/lazy/binary32/gradient-a-1/197
+PASS nofib-fluid/lazy/binary32/gradient-a-1/198
+PASS nofib-fluid/lazy/binary32/gradient-a-1/199
+PASS nofib-fluid/lazy/binary32/gradient-a-1/200
+PASS nofib-fluid/lazy/binary32/gradient-a-1/201
+PASS nofib-fluid/lazy/binary32/gradient-a-1/202
+PASS nofib-fluid/lazy/binary32/gradient-a-1/203
+PASS nofib-fluid/lazy/binary32/gradient-a-1/204
+PASS nofib-fluid/lazy/binary32/gradient-b-1/205
+PASS nofib-fluid/lazy/binary32/gradient-b-1/206
+PASS nofib-fluid/lazy/binary32/gradient-b-1/207
+PASS nofib-fluid/lazy/binary32/gradient-b-1/208
+PASS nofib-fluid/lazy/binary32/gradient-b-1/209
+PASS nofib-fluid/lazy/binary32/gradient-b-1/210
+PASS nofib-fluid/lazy/binary32/gradient-b-1/211
+PASS nofib-fluid/lazy/binary32/gradient-b-1/212
+PASS nofib-fluid/lazy/binary32/gradient-b-1/213
+PASS nofib-fluid/lazy/binary32/gradient-b-1/214
+PASS nofib-fluid/lazy/binary32/gradient-b-1/215
+PASS nofib-fluid/lazy/binary32/gradient-b-1/216
+PASS nofib-fluid/lazy/binary32/gradient-b-1/217
+PASS nofib-fluid/lazy/binary32/gradient-b-1/218
+PASS nofib-fluid/lazy/binary32/gradient-b-1/219
+PASS nofib-fluid/lazy/binary32/gradient-b-1/220
+PASS nofib-fluid/lazy/binary32/gradient-b-1/221
+PASS nofib-fluid/lazy/binary32/gradient-b-1/222
+PASS nofib-fluid/lazy/binary32/convection-1/223
+PASS nofib-fluid/lazy/binary32/convection-1/224
+PASS nofib-fluid/lazy/binary32/convection-1/225
+PASS nofib-fluid/lazy/binary32/convection-1/226
+PASS nofib-fluid/lazy/binary32/convection-1/227
+PASS nofib-fluid/lazy/binary32/convection-1/228
+PASS nofib-fluid/lazy/binary32/convection-1/229
+PASS nofib-fluid/lazy/binary32/convection-1/230
+PASS nofib-fluid/lazy/binary32/convection-1/231
+PASS nofib-fluid/lazy/binary32/convection-1/232
+PASS nofib-fluid/lazy/binary32/convection-1/233
+PASS nofib-fluid/lazy/binary32/convection-1/234
+PASS nofib-fluid/lazy/binary32/convection-1/235
+PASS nofib-fluid/lazy/binary32/convection-1/236
+PASS nofib-fluid/lazy/binary32/convection-1/237
+PASS nofib-fluid/lazy/binary32/convection-1/238
+PASS nofib-fluid/lazy/binary32/convection-1/239
+PASS nofib-fluid/lazy/binary32/convection-1/240
+PASS nofib-fluid/lazy/binary32/convection-1/241
+PASS nofib-fluid/lazy/binary32/convection-1/242
+PASS nofib-fluid/lazy/binary32/convection-1/243
+PASS nofib-fluid/lazy/binary32/convection-1/244
+PASS nofib-fluid/lazy/binary32/convection-1/245
+PASS nofib-fluid/lazy/binary32/convection-1/246
+PASS nofib-fluid/lazy/binary32/convection-1/247
+PASS nofib-fluid/lazy/binary32/convection-1/248
+PASS nofib-fluid/lazy/binary32/convection-1/249
+PASS nofib-fluid/lazy/binary32/convection-1/250
+PASS nofib-fluid/lazy/binary32/convection-1/251
+PASS nofib-fluid/lazy/binary32/convection-1/252
+PASS nofib-fluid/lazy/binary32/convection-1/253
+PASS nofib-fluid/lazy/binary32/convection-1/254
+PASS nofib-fluid/lazy/binary32/convection-1/255
+PASS nofib-fluid/lazy/binary32/convection-1/256
+PASS nofib-fluid/lazy/binary32/convection-1/257
+PASS nofib-fluid/lazy/binary32/convection-1/258
+PASS nofib-fluid/lazy/binary32/diffusion-2/259
+PASS nofib-fluid/lazy/binary32/diffusion-2/260
+PASS nofib-fluid/lazy/binary32/diffusion-2/261
+PASS nofib-fluid/lazy/binary32/diffusion-2/262
+PASS nofib-fluid/lazy/binary32/diffusion-2/263
+PASS nofib-fluid/lazy/binary32/diffusion-2/264
+PASS nofib-fluid/lazy/binary32/diffusion-2/265
+PASS nofib-fluid/lazy/binary32/diffusion-2/266
+PASS nofib-fluid/lazy/binary32/diffusion-2/267
+PASS nofib-fluid/lazy/binary32/diffusion-2/268
+PASS nofib-fluid/lazy/binary32/diffusion-2/269
+PASS nofib-fluid/lazy/binary32/diffusion-2/270
+PASS nofib-fluid/lazy/binary32/diffusion-2/271
+PASS nofib-fluid/lazy/binary32/diffusion-2/272
+PASS nofib-fluid/lazy/binary32/diffusion-2/273
+PASS nofib-fluid/lazy/binary32/diffusion-2/274
+PASS nofib-fluid/lazy/binary32/diffusion-2/275
+PASS nofib-fluid/lazy/binary32/diffusion-2/276
+PASS nofib-fluid/lazy/binary32/diffusion-2/277
+PASS nofib-fluid/lazy/binary32/diffusion-2/278
+PASS nofib-fluid/lazy/binary32/diffusion-2/279
+PASS nofib-fluid/lazy/binary32/diffusion-2/280
+PASS nofib-fluid/lazy/binary32/diffusion-2/281
+PASS nofib-fluid/lazy/binary32/diffusion-2/282
+PASS nofib-fluid/lazy/binary32/diffusion-2/283
+PASS nofib-fluid/lazy/binary32/diffusion-2/284
+PASS nofib-fluid/lazy/binary32/diffusion-2/285
+PASS nofib-fluid/lazy/binary32/diffusion-2/286
+PASS nofib-fluid/lazy/binary32/diffusion-2/287
+PASS nofib-fluid/lazy/binary32/diffusion-2/288
+PASS nofib-fluid/lazy/binary32/diffusion-2/289
+PASS nofib-fluid/lazy/binary32/diffusion-2/290
+PASS nofib-fluid/lazy/binary32/diffusion-2/291
+PASS nofib-fluid/lazy/binary32/diffusion-2/292
+PASS nofib-fluid/lazy/binary32/diffusion-2/293
+PASS nofib-fluid/lazy/binary32/diffusion-2/294
+PASS nofib-fluid/lazy/binary32/gradient-a-2/295
+PASS nofib-fluid/lazy/binary32/gradient-a-2/296
+PASS nofib-fluid/lazy/binary32/gradient-a-2/297
+PASS nofib-fluid/lazy/binary32/gradient-a-2/298
+PASS nofib-fluid/lazy/binary32/gradient-a-2/299
+PASS nofib-fluid/lazy/binary32/gradient-a-2/300
+PASS nofib-fluid/lazy/binary32/gradient-a-2/301
+PASS nofib-fluid/lazy/binary32/gradient-a-2/302
+PASS nofib-fluid/lazy/binary32/gradient-a-2/303
+PASS nofib-fluid/lazy/binary32/gradient-a-2/304
+PASS nofib-fluid/lazy/binary32/gradient-a-2/305
+PASS nofib-fluid/lazy/binary32/gradient-a-2/306
+PASS nofib-fluid/lazy/binary32/gradient-a-2/307
+PASS nofib-fluid/lazy/binary32/gradient-a-2/308
+PASS nofib-fluid/lazy/binary32/gradient-a-2/309
+PASS nofib-fluid/lazy/binary32/gradient-a-2/310
+PASS nofib-fluid/lazy/binary32/gradient-a-2/311
+PASS nofib-fluid/lazy/binary32/gradient-a-2/312
+PASS nofib-fluid/lazy/binary32/gradient-b-2/313
+PASS nofib-fluid/lazy/binary32/gradient-b-2/314
+PASS nofib-fluid/lazy/binary32/gradient-b-2/315
+PASS nofib-fluid/lazy/binary32/gradient-b-2/316
+PASS nofib-fluid/lazy/binary32/gradient-b-2/317
+PASS nofib-fluid/lazy/binary32/gradient-b-2/318
+PASS nofib-fluid/lazy/binary32/gradient-b-2/319
+PASS nofib-fluid/lazy/binary32/gradient-b-2/320
+PASS nofib-fluid/lazy/binary32/gradient-b-2/321
+PASS nofib-fluid/lazy/binary32/gradient-b-2/322
+PASS nofib-fluid/lazy/binary32/gradient-b-2/323
+PASS nofib-fluid/lazy/binary32/gradient-b-2/324
+PASS nofib-fluid/lazy/binary32/gradient-b-2/325
+PASS nofib-fluid/lazy/binary32/gradient-b-2/326
+PASS nofib-fluid/lazy/binary32/gradient-b-2/327
+PASS nofib-fluid/lazy/binary32/gradient-b-2/328
+PASS nofib-fluid/lazy/binary32/gradient-b-2/329
+PASS nofib-fluid/lazy/binary32/gradient-b-2/330
+PASS nofib-fluid/lazy/binary32/convection-2/331
+PASS nofib-fluid/lazy/binary32/convection-2/332
+PASS nofib-fluid/lazy/binary32/convection-2/333
+PASS nofib-fluid/lazy/binary32/convection-2/334
+PASS nofib-fluid/lazy/binary32/convection-2/335
+PASS nofib-fluid/lazy/binary32/convection-2/336
+PASS nofib-fluid/lazy/binary32/convection-2/337
+PASS nofib-fluid/lazy/binary32/convection-2/338
+PASS nofib-fluid/lazy/binary32/convection-2/339
+PASS nofib-fluid/lazy/binary32/convection-2/340
+PASS nofib-fluid/lazy/binary32/convection-2/341
+PASS nofib-fluid/lazy/binary32/convection-2/342
+PASS nofib-fluid/lazy/binary32/convection-2/343
+PASS nofib-fluid/lazy/binary32/convection-2/344
+PASS nofib-fluid/lazy/binary32/convection-2/345
+PASS nofib-fluid/lazy/binary32/convection-2/346
+PASS nofib-fluid/lazy/binary32/convection-2/347
+PASS nofib-fluid/lazy/binary32/convection-2/348
+PASS nofib-fluid/lazy/binary32/convection-2/349
+PASS nofib-fluid/lazy/binary32/convection-2/350
+PASS nofib-fluid/lazy/binary32/convection-2/351
+PASS nofib-fluid/lazy/binary32/convection-2/352
+PASS nofib-fluid/lazy/binary32/convection-2/353
+PASS nofib-fluid/lazy/binary32/convection-2/354
+PASS nofib-fluid/lazy/binary32/convection-2/355
+PASS nofib-fluid/lazy/binary32/convection-2/356
+PASS nofib-fluid/lazy/binary32/convection-2/357
+PASS nofib-fluid/lazy/binary32/convection-2/358
+PASS nofib-fluid/lazy/binary32/convection-2/359
+PASS nofib-fluid/lazy/binary32/convection-2/360
+PASS nofib-fluid/lazy/binary32/convection-2/361
+PASS nofib-fluid/lazy/binary32/convection-2/362
+PASS nofib-fluid/lazy/binary32/convection-2/363
+PASS nofib-fluid/lazy/binary32/convection-2/364
+PASS nofib-fluid/lazy/binary32/convection-2/365
+PASS nofib-fluid/lazy/binary32/convection-2/366
+PASS nofib-fluid/lazy/binary32/diffusion-3/367
+PASS nofib-fluid/lazy/binary32/diffusion-3/368
+PASS nofib-fluid/lazy/binary32/diffusion-3/369
+PASS nofib-fluid/lazy/binary32/diffusion-3/370
+PASS nofib-fluid/lazy/binary32/diffusion-3/371
+PASS nofib-fluid/lazy/binary32/diffusion-3/372
+PASS nofib-fluid/lazy/binary32/diffusion-3/373
+PASS nofib-fluid/lazy/binary32/diffusion-3/374
+PASS nofib-fluid/lazy/binary32/diffusion-3/375
+PASS nofib-fluid/lazy/binary32/diffusion-3/376
+PASS nofib-fluid/lazy/binary32/diffusion-3/377
+PASS nofib-fluid/lazy/binary32/diffusion-3/378
+PASS nofib-fluid/lazy/binary32/diffusion-3/379
+PASS nofib-fluid/lazy/binary32/diffusion-3/380
+PASS nofib-fluid/lazy/binary32/diffusion-3/381
+PASS nofib-fluid/lazy/binary32/diffusion-3/382
+PASS nofib-fluid/lazy/binary32/diffusion-3/383
+PASS nofib-fluid/lazy/binary32/diffusion-3/384
+PASS nofib-fluid/lazy/binary32/diffusion-3/385
+PASS nofib-fluid/lazy/binary32/diffusion-3/386
+PASS nofib-fluid/lazy/binary32/diffusion-3/387
+PASS nofib-fluid/lazy/binary32/diffusion-3/388
+PASS nofib-fluid/lazy/binary32/diffusion-3/389
+PASS nofib-fluid/lazy/binary32/diffusion-3/390
+PASS nofib-fluid/lazy/binary32/diffusion-3/391
+PASS nofib-fluid/lazy/binary32/diffusion-3/392
+PASS nofib-fluid/lazy/binary32/diffusion-3/393
+PASS nofib-fluid/lazy/binary32/diffusion-3/394
+PASS nofib-fluid/lazy/binary32/diffusion-3/395
+PASS nofib-fluid/lazy/binary32/diffusion-3/396
+PASS nofib-fluid/lazy/binary32/diffusion-3/397
+PASS nofib-fluid/lazy/binary32/diffusion-3/398
+PASS nofib-fluid/lazy/binary32/diffusion-3/399
+PASS nofib-fluid/lazy/binary32/diffusion-3/400
+PASS nofib-fluid/lazy/binary32/diffusion-3/401
+PASS nofib-fluid/lazy/binary32/diffusion-3/402
+PASS nofib-fluid/lazy/binary32/gradient-a-3/403
+PASS nofib-fluid/lazy/binary32/gradient-a-3/404
+PASS nofib-fluid/lazy/binary32/gradient-a-3/405
+PASS nofib-fluid/lazy/binary32/gradient-a-3/406
+PASS nofib-fluid/lazy/binary32/gradient-a-3/407
+PASS nofib-fluid/lazy/binary32/gradient-a-3/408
+PASS nofib-fluid/lazy/binary32/gradient-a-3/409
+PASS nofib-fluid/lazy/binary32/gradient-a-3/410
+PASS nofib-fluid/lazy/binary32/gradient-a-3/411
+PASS nofib-fluid/lazy/binary32/gradient-a-3/412
+PASS nofib-fluid/lazy/binary32/gradient-a-3/413
+PASS nofib-fluid/lazy/binary32/gradient-a-3/414
+PASS nofib-fluid/lazy/binary32/gradient-a-3/415
+PASS nofib-fluid/lazy/binary32/gradient-a-3/416
+PASS nofib-fluid/lazy/binary32/gradient-a-3/417
+PASS nofib-fluid/lazy/binary32/gradient-a-3/418
+PASS nofib-fluid/lazy/binary32/gradient-a-3/419
+PASS nofib-fluid/lazy/binary32/gradient-a-3/420
+PASS nofib-fluid/lazy/binary32/gradient-b-3/421
+PASS nofib-fluid/lazy/binary32/gradient-b-3/422
+PASS nofib-fluid/lazy/binary32/gradient-b-3/423
+PASS nofib-fluid/lazy/binary32/gradient-b-3/424
+PASS nofib-fluid/lazy/binary32/gradient-b-3/425
+PASS nofib-fluid/lazy/binary32/gradient-b-3/426
+PASS nofib-fluid/lazy/binary32/gradient-b-3/427
+PASS nofib-fluid/lazy/binary32/gradient-b-3/428
+PASS nofib-fluid/lazy/binary32/gradient-b-3/429
+PASS nofib-fluid/lazy/binary32/gradient-b-3/430
+PASS nofib-fluid/lazy/binary32/gradient-b-3/431
+PASS nofib-fluid/lazy/binary32/gradient-b-3/432
+PASS nofib-fluid/lazy/binary32/gradient-b-3/433
+PASS nofib-fluid/lazy/binary32/gradient-b-3/434
+PASS nofib-fluid/lazy/binary32/gradient-b-3/435
+PASS nofib-fluid/lazy/binary32/gradient-b-3/436
+PASS nofib-fluid/lazy/binary32/gradient-b-3/437
+PASS nofib-fluid/lazy/binary32/gradient-b-3/438
+PASS nofib-fluid/lazy/binary32/convection-3/439
+PASS nofib-fluid/lazy/binary32/convection-3/440
+PASS nofib-fluid/lazy/binary32/convection-3/441
+PASS nofib-fluid/lazy/binary32/convection-3/442
+PASS nofib-fluid/lazy/binary32/convection-3/443
+PASS nofib-fluid/lazy/binary32/convection-3/444
+PASS nofib-fluid/lazy/binary32/convection-3/445
+PASS nofib-fluid/lazy/binary32/convection-3/446
+PASS nofib-fluid/lazy/binary32/convection-3/447
+PASS nofib-fluid/lazy/binary32/convection-3/448
+PASS nofib-fluid/lazy/binary32/convection-3/449
+PASS nofib-fluid/lazy/binary32/convection-3/450
+PASS nofib-fluid/lazy/binary32/convection-3/451
+PASS nofib-fluid/lazy/binary32/convection-3/452
+PASS nofib-fluid/lazy/binary32/convection-3/453
+PASS nofib-fluid/lazy/binary32/convection-3/454
+PASS nofib-fluid/lazy/binary32/convection-3/455
+PASS nofib-fluid/lazy/binary32/convection-3/456
+PASS nofib-fluid/lazy/binary32/convection-3/457
+PASS nofib-fluid/lazy/binary32/convection-3/458
+PASS nofib-fluid/lazy/binary32/convection-3/459
+PASS nofib-fluid/lazy/binary32/convection-3/460
+PASS nofib-fluid/lazy/binary32/convection-3/461
+PASS nofib-fluid/lazy/binary32/convection-3/462
+PASS nofib-fluid/lazy/binary32/convection-3/463
+PASS nofib-fluid/lazy/binary32/convection-3/464
+PASS nofib-fluid/lazy/binary32/convection-3/465
+PASS nofib-fluid/lazy/binary32/convection-3/466
+PASS nofib-fluid/lazy/binary32/convection-3/467
+PASS nofib-fluid/lazy/binary32/convection-3/468
+PASS nofib-fluid/lazy/binary32/convection-3/469
+PASS nofib-fluid/lazy/binary32/convection-3/470
+PASS nofib-fluid/lazy/binary32/convection-3/471
+PASS nofib-fluid/lazy/binary32/convection-3/472
+PASS nofib-fluid/lazy/binary32/convection-3/473
+PASS nofib-fluid/lazy/binary32/convection-3/474
+PASS nofib-fluid/lazy/binary32/inner/475
+PASS nofib-fluid/lazy/binary32/match/476
+PASS nofib-fluid/lazy/binary32/tolerances/477
+PASS nofib-fluid/lazy/binary32/tolerances/478
+PASS nofib-fluid/lazy/binary32/tolerances/479
+PASS nofib-fluid/lazy/binary32-observation-count
+PASS nofib-fluid/lazy/ordering/0
+PASS nofib-fluid/lazy/ordering/1
+PASS nofib-fluid/lazy/ordering/2
+PASS nofib-fluid/lazy/ordering/3
+PASS nofib-fluid/lazy/ordering/4
+PASS nofib-fluid/lazy/ordering/5
+PASS nofib-fluid/lazy/ordering/6
+PASS nofib-fluid/lazy/ordering/7
+PASS nofib-fluid/lazy/ordering/8
+PASS nofib-fluid/lazy/ordering/9
+PASS nofib-fluid/lazy/ordering/10
+PASS nofib-fluid/lazy/ordering/11
+PASS nofib-fluid/lazy/ordering/12
+PASS nofib-fluid/lazy/ordering/13
+PASS nofib-fluid/lazy/ordering/14
+PASS nofib-fluid/lazy/ordering/15
+PASS nofib-fluid/lazy/ordering/16
+PASS nofib-fluid/lazy/ordering/17
+PASS nofib-fluid/lazy/configuration
+PASS nofib-fluid/lazy/mesh-input
+PASS nofib-fluid/lazy/mesh-order
+PASS nofib-fluid/lazy/mesh-factor
+PASS nofib-fluid/lazy/mesh-solution
+PASS nofib-fluid/lazy/complete/fluid-output
+PASS nofib-fluid/lazy/complete/fluid-monitor
+PASS nofib-fluid/lazy/complete/fluid-two-steps
+PASS nofib-fluid/lazy/complete/fluid-two-steps-monitor
+PASS nofib-fluid/lazy/complete/fluid-tolerance-stop
+PASS nofib-fluid/lazy/zero-skips-first-operand
+PASS nofib-fluid/lazy/operand-sharing
+PASS nofib-fluid/lazy/normal-flag-deferred
+PASS nofib-fluid/lazy/normal-flag-shared
+PASS nofib-fluid/lazy/object-demand
+PASS nofib-fluid/lazy/input-value-pass
+PASS nofib-fluid/lazy/independent-input-drop-pass
+PASS nofib-fluid/lazy/zero-count-skips-files
+PASS nofib-fluid/lazy/negative-count-skips-files
+PASS nofib-fluid/lazy/reviewed-source-hash
+PASS nofib-fluid/lazy/perturbed-output-hash
+PASS nofib-fluid/sparse/strict/0
+PASS nofib-fluid/sparse/strict/1
+PASS nofib-fluid/sparse/strict/2
+PASS nofib-fluid/sparse/strict/3
+PASS nofib-fluid/sparse/strict/4
+PASS nofib-fluid/sparse/strict/5
+PASS nofib-fluid/sparse/strict/6
+PASS nofib-fluid/sparse/strict/7
+PASS nofib-fluid/sparse/strict/8
+PASS nofib-fluid/sparse/strict/9
+PASS nofib-fluid/sparse/strict/10
+PASS nofib-fluid/sparse/strict/11
+PASS nofib-fluid/sparse/strict/12
+PASS nofib-fluid/sparse/strict/13
+PASS nofib-fluid/sparse/strict/14
+PASS nofib-fluid/sparse/strict/15
+PASS nofib-fluid/sparse/strict/16
+PASS nofib-fluid/sparse/strict/17
+PASS nofib-fluid/sparse/strict/18
+PASS nofib-fluid/sparse/strict/19
+PASS nofib-fluid/sparse/strict/20
+PASS nofib-fluid/sparse/strict/21
+PASS nofib-fluid/sparse/strict/22
+PASS nofib-fluid/sparse/strict/23
+PASS nofib-fluid/sparse/strict/24
+PASS nofib-fluid/sparse/strict/25
+PASS nofib-fluid/sparse/strict/26
+PASS nofib-fluid/sparse/strict/27
+PASS nofib-fluid/sparse/strict/28
+PASS nofib-fluid/sparse/strict/29
+PASS nofib-fluid/sparse/strict/30
+PASS nofib-fluid/sparse/strict/31
+PASS nofib-fluid/sparse/strict/32
+PASS nofib-fluid/sparse/strict/33
+PASS nofib-fluid/sparse/strict/34
+PASS nofib-fluid/sparse/strict/35
+PASS nofib-fluid/sparse/strict/36
+PASS nofib-fluid/sparse/strict/37
+PASS nofib-fluid/sparse/strict/38
+PASS nofib-fluid/sparse/strict/39
+PASS nofib-fluid/sparse/strict/40
+PASS nofib-fluid/sparse/strict/41
+PASS nofib-fluid/sparse/strict/42
+PASS nofib-fluid/sparse/strict/43
+PASS nofib-fluid/sparse/strict/44
+PASS nofib-fluid/sparse/strict/45
+PASS nofib-fluid/sparse/strict/46
+PASS nofib-fluid/sparse/strict/47
+PASS nofib-fluid/sparse/strict/48
+PASS nofib-fluid/sparse/strict/49
+PASS nofib-fluid/sparse/strict/50
+PASS nofib-fluid/sparse/strict/51
+PASS nofib-fluid/sparse/strict/52
+PASS nofib-fluid/sparse/strict/53
+PASS nofib-fluid/sparse/strict/54
+PASS nofib-fluid/sparse/strict/55
+PASS nofib-fluid/sparse/strict/56
+PASS nofib-fluid/sparse/strict/57
+PASS nofib-fluid/sparse/strict/58
+PASS nofib-fluid/sparse/strict/59
+PASS nofib-fluid/sparse/strict/60
+PASS nofib-fluid/sparse/strict/61
+PASS nofib-fluid/sparse/strict/62
+PASS nofib-fluid/sparse/strict/63
+PASS nofib-fluid/sparse/strict/64
+PASS nofib-fluid/sparse/strict/65
+PASS nofib-fluid/sparse/strict/66
+PASS nofib-fluid/sparse/strict/67
+PASS nofib-fluid/sparse/strict/68
+PASS nofib-fluid/sparse/strict/69
+PASS nofib-fluid/sparse/strict/70
+PASS nofib-fluid/sparse/strict/71
+PASS nofib-fluid/sparse/strict/72
+PASS nofib-fluid/sparse/strict/73
+PASS nofib-fluid/sparse/strict/74
+PASS nofib-fluid/sparse/strict/75
+PASS nofib-fluid/sparse/strict/76
+PASS nofib-fluid/sparse/strict/77
+PASS nofib-fluid/sparse/strict/78
+PASS nofib-fluid/sparse/strict/79
+PASS nofib-fluid/sparse/strict/80
+PASS nofib-fluid/sparse/strict/81
+PASS nofib-fluid/sparse/strict/82
+PASS nofib-fluid/sparse/strict/83
+PASS nofib-fluid/sparse/strict/84
+PASS nofib-fluid/sparse/strict/85
+PASS nofib-fluid/sparse/strict/86
+PASS nofib-fluid/sparse/strict/87
+PASS nofib-fluid/sparse/strict/88
+PASS nofib-fluid/sparse/strict/89
+PASS nofib-fluid/sparse/strict/90
+PASS nofib-fluid/sparse/strict/91
+PASS nofib-fluid/sparse/strict/92
+PASS nofib-fluid/sparse/strict/93
+PASS nofib-fluid/sparse/strict/94
+PASS nofib-fluid/sparse/strict/95
+PASS nofib-fluid/sparse/strict/96
+PASS nofib-fluid/sparse/strict/97
+PASS nofib-fluid/sparse/strict/98
+PASS nofib-fluid/sparse/strict/99
+PASS nofib-fluid/sparse/strict/100
+PASS nofib-fluid/sparse/strict/101
+PASS nofib-fluid/sparse/strict/102
+PASS nofib-fluid/sparse/strict/103
+PASS nofib-fluid/sparse/strict/104
+PASS nofib-fluid/sparse/strict/105
+PASS nofib-fluid/sparse/strict/106
+PASS nofib-fluid/sparse/strict/107
+PASS nofib-fluid/sparse/strict/108
+PASS nofib-fluid/sparse/strict/109
+PASS nofib-fluid/sparse/strict/110
+PASS nofib-fluid/sparse/strict/111
+PASS nofib-fluid/sparse/strict/112
+PASS nofib-fluid/sparse/strict/113
+PASS nofib-fluid/sparse/strict/114
+PASS nofib-fluid/sparse/strict/115
+PASS nofib-fluid/sparse/strict/116
+PASS nofib-fluid/sparse/strict/117
+PASS nofib-fluid/sparse/strict/118
+PASS nofib-fluid/sparse/strict/119
+PASS nofib-fluid/sparse/strict/120
+PASS nofib-fluid/sparse/strict/121
+PASS nofib-fluid/sparse/strict/122
+PASS nofib-fluid/sparse/strict/123
+PASS nofib-fluid/sparse/strict/124
+PASS nofib-fluid/sparse/strict/125
+PASS nofib-fluid/sparse/strict/126
+PASS nofib-fluid/sparse/strict/127
+PASS nofib-fluid/sparse/strict/128
+PASS nofib-fluid/sparse/strict/129
+PASS nofib-fluid/strict/binary32/mass-row-sums/0
+PASS nofib-fluid/strict/binary32/mass-row-sums/1
+PASS nofib-fluid/strict/binary32/mass-row-sums/2
+PASS nofib-fluid/strict/binary32/mass-row-sums/3
+PASS nofib-fluid/strict/binary32/mass-row-sums/4
+PASS nofib-fluid/strict/binary32/mass-row-sums/5
+PASS nofib-fluid/strict/binary32/mass-matrix/6
+PASS nofib-fluid/strict/binary32/mass-matrix/7
+PASS nofib-fluid/strict/binary32/mass-matrix/8
+PASS nofib-fluid/strict/binary32/mass-matrix/9
+PASS nofib-fluid/strict/binary32/mass-matrix/10
+PASS nofib-fluid/strict/binary32/mass-matrix/11
+PASS nofib-fluid/strict/binary32/mass-matrix/12
+PASS nofib-fluid/strict/binary32/mass-matrix/13
+PASS nofib-fluid/strict/binary32/mass-matrix/14
+PASS nofib-fluid/strict/binary32/mass-matrix/15
+PASS nofib-fluid/strict/binary32/mass-matrix/16
+PASS nofib-fluid/strict/binary32/mass-matrix/17
+PASS nofib-fluid/strict/binary32/mass-matrix/18
+PASS nofib-fluid/strict/binary32/mass-matrix/19
+PASS nofib-fluid/strict/binary32/mass-matrix/20
+PASS nofib-fluid/strict/binary32/mass-matrix/21
+PASS nofib-fluid/strict/binary32/mass-matrix/22
+PASS nofib-fluid/strict/binary32/mass-matrix/23
+PASS nofib-fluid/strict/binary32/mass-matrix/24
+PASS nofib-fluid/strict/binary32/mass-matrix/25
+PASS nofib-fluid/strict/binary32/mass-matrix/26
+PASS nofib-fluid/strict/binary32/mass-matrix/27
+PASS nofib-fluid/strict/binary32/mass-matrix/28
+PASS nofib-fluid/strict/binary32/mass-matrix/29
+PASS nofib-fluid/strict/binary32/mass-matrix/30
+PASS nofib-fluid/strict/binary32/mass-matrix/31
+PASS nofib-fluid/strict/binary32/mass-matrix/32
+PASS nofib-fluid/strict/binary32/mass-matrix/33
+PASS nofib-fluid/strict/binary32/mass-matrix/34
+PASS nofib-fluid/strict/binary32/mass-matrix/35
+PASS nofib-fluid/strict/binary32/mass-matrix/36
+PASS nofib-fluid/strict/binary32/mass-matrix/37
+PASS nofib-fluid/strict/binary32/mass-matrix/38
+PASS nofib-fluid/strict/binary32/mass-matrix/39
+PASS nofib-fluid/strict/binary32/mass-matrix/40
+PASS nofib-fluid/strict/binary32/mass-matrix/41
+PASS nofib-fluid/strict/binary32/subnormal/42
+PASS nofib-fluid/strict/binary32/diffusion-0/43
+PASS nofib-fluid/strict/binary32/diffusion-0/44
+PASS nofib-fluid/strict/binary32/diffusion-0/45
+PASS nofib-fluid/strict/binary32/diffusion-0/46
+PASS nofib-fluid/strict/binary32/diffusion-0/47
+PASS nofib-fluid/strict/binary32/diffusion-0/48
+PASS nofib-fluid/strict/binary32/diffusion-0/49
+PASS nofib-fluid/strict/binary32/diffusion-0/50
+PASS nofib-fluid/strict/binary32/diffusion-0/51
+PASS nofib-fluid/strict/binary32/diffusion-0/52
+PASS nofib-fluid/strict/binary32/diffusion-0/53
+PASS nofib-fluid/strict/binary32/diffusion-0/54
+PASS nofib-fluid/strict/binary32/diffusion-0/55
+PASS nofib-fluid/strict/binary32/diffusion-0/56
+PASS nofib-fluid/strict/binary32/diffusion-0/57
+PASS nofib-fluid/strict/binary32/diffusion-0/58
+PASS nofib-fluid/strict/binary32/diffusion-0/59
+PASS nofib-fluid/strict/binary32/diffusion-0/60
+PASS nofib-fluid/strict/binary32/diffusion-0/61
+PASS nofib-fluid/strict/binary32/diffusion-0/62
+PASS nofib-fluid/strict/binary32/diffusion-0/63
+PASS nofib-fluid/strict/binary32/diffusion-0/64
+PASS nofib-fluid/strict/binary32/diffusion-0/65
+PASS nofib-fluid/strict/binary32/diffusion-0/66
+PASS nofib-fluid/strict/binary32/diffusion-0/67
+PASS nofib-fluid/strict/binary32/diffusion-0/68
+PASS nofib-fluid/strict/binary32/diffusion-0/69
+PASS nofib-fluid/strict/binary32/diffusion-0/70
+PASS nofib-fluid/strict/binary32/diffusion-0/71
+PASS nofib-fluid/strict/binary32/diffusion-0/72
+PASS nofib-fluid/strict/binary32/diffusion-0/73
+PASS nofib-fluid/strict/binary32/diffusion-0/74
+PASS nofib-fluid/strict/binary32/diffusion-0/75
+PASS nofib-fluid/strict/binary32/diffusion-0/76
+PASS nofib-fluid/strict/binary32/diffusion-0/77
+PASS nofib-fluid/strict/binary32/diffusion-0/78
+PASS nofib-fluid/strict/binary32/gradient-a-0/79
+PASS nofib-fluid/strict/binary32/gradient-a-0/80
+PASS nofib-fluid/strict/binary32/gradient-a-0/81
+PASS nofib-fluid/strict/binary32/gradient-a-0/82
+PASS nofib-fluid/strict/binary32/gradient-a-0/83
+PASS nofib-fluid/strict/binary32/gradient-a-0/84
+PASS nofib-fluid/strict/binary32/gradient-a-0/85
+PASS nofib-fluid/strict/binary32/gradient-a-0/86
+PASS nofib-fluid/strict/binary32/gradient-a-0/87
+PASS nofib-fluid/strict/binary32/gradient-a-0/88
+PASS nofib-fluid/strict/binary32/gradient-a-0/89
+PASS nofib-fluid/strict/binary32/gradient-a-0/90
+PASS nofib-fluid/strict/binary32/gradient-a-0/91
+PASS nofib-fluid/strict/binary32/gradient-a-0/92
+PASS nofib-fluid/strict/binary32/gradient-a-0/93
+PASS nofib-fluid/strict/binary32/gradient-a-0/94
+PASS nofib-fluid/strict/binary32/gradient-a-0/95
+PASS nofib-fluid/strict/binary32/gradient-a-0/96
+PASS nofib-fluid/strict/binary32/gradient-b-0/97
+PASS nofib-fluid/strict/binary32/gradient-b-0/98
+PASS nofib-fluid/strict/binary32/gradient-b-0/99
+PASS nofib-fluid/strict/binary32/gradient-b-0/100
+PASS nofib-fluid/strict/binary32/gradient-b-0/101
+PASS nofib-fluid/strict/binary32/gradient-b-0/102
+PASS nofib-fluid/strict/binary32/gradient-b-0/103
+PASS nofib-fluid/strict/binary32/gradient-b-0/104
+PASS nofib-fluid/strict/binary32/gradient-b-0/105
+PASS nofib-fluid/strict/binary32/gradient-b-0/106
+PASS nofib-fluid/strict/binary32/gradient-b-0/107
+PASS nofib-fluid/strict/binary32/gradient-b-0/108
+PASS nofib-fluid/strict/binary32/gradient-b-0/109
+PASS nofib-fluid/strict/binary32/gradient-b-0/110
+PASS nofib-fluid/strict/binary32/gradient-b-0/111
+PASS nofib-fluid/strict/binary32/gradient-b-0/112
+PASS nofib-fluid/strict/binary32/gradient-b-0/113
+PASS nofib-fluid/strict/binary32/gradient-b-0/114
+PASS nofib-fluid/strict/binary32/convection-0/115
+PASS nofib-fluid/strict/binary32/convection-0/116
+PASS nofib-fluid/strict/binary32/convection-0/117
+PASS nofib-fluid/strict/binary32/convection-0/118
+PASS nofib-fluid/strict/binary32/convection-0/119
+PASS nofib-fluid/strict/binary32/convection-0/120
+PASS nofib-fluid/strict/binary32/convection-0/121
+PASS nofib-fluid/strict/binary32/convection-0/122
+PASS nofib-fluid/strict/binary32/convection-0/123
+PASS nofib-fluid/strict/binary32/convection-0/124
+PASS nofib-fluid/strict/binary32/convection-0/125
+PASS nofib-fluid/strict/binary32/convection-0/126
+PASS nofib-fluid/strict/binary32/convection-0/127
+PASS nofib-fluid/strict/binary32/convection-0/128
+PASS nofib-fluid/strict/binary32/convection-0/129
+PASS nofib-fluid/strict/binary32/convection-0/130
+PASS nofib-fluid/strict/binary32/convection-0/131
+PASS nofib-fluid/strict/binary32/convection-0/132
+PASS nofib-fluid/strict/binary32/convection-0/133
+PASS nofib-fluid/strict/binary32/convection-0/134
+PASS nofib-fluid/strict/binary32/convection-0/135
+PASS nofib-fluid/strict/binary32/convection-0/136
+PASS nofib-fluid/strict/binary32/convection-0/137
+PASS nofib-fluid/strict/binary32/convection-0/138
+PASS nofib-fluid/strict/binary32/convection-0/139
+PASS nofib-fluid/strict/binary32/convection-0/140
+PASS nofib-fluid/strict/binary32/convection-0/141
+PASS nofib-fluid/strict/binary32/convection-0/142
+PASS nofib-fluid/strict/binary32/convection-0/143
+PASS nofib-fluid/strict/binary32/convection-0/144
+PASS nofib-fluid/strict/binary32/convection-0/145
+PASS nofib-fluid/strict/binary32/convection-0/146
+PASS nofib-fluid/strict/binary32/convection-0/147
+PASS nofib-fluid/strict/binary32/convection-0/148
+PASS nofib-fluid/strict/binary32/convection-0/149
+PASS nofib-fluid/strict/binary32/convection-0/150
+PASS nofib-fluid/strict/binary32/diffusion-1/151
+PASS nofib-fluid/strict/binary32/diffusion-1/152
+PASS nofib-fluid/strict/binary32/diffusion-1/153
+PASS nofib-fluid/strict/binary32/diffusion-1/154
+PASS nofib-fluid/strict/binary32/diffusion-1/155
+PASS nofib-fluid/strict/binary32/diffusion-1/156
+PASS nofib-fluid/strict/binary32/diffusion-1/157
+PASS nofib-fluid/strict/binary32/diffusion-1/158
+PASS nofib-fluid/strict/binary32/diffusion-1/159
+PASS nofib-fluid/strict/binary32/diffusion-1/160
+PASS nofib-fluid/strict/binary32/diffusion-1/161
+PASS nofib-fluid/strict/binary32/diffusion-1/162
+PASS nofib-fluid/strict/binary32/diffusion-1/163
+PASS nofib-fluid/strict/binary32/diffusion-1/164
+PASS nofib-fluid/strict/binary32/diffusion-1/165
+PASS nofib-fluid/strict/binary32/diffusion-1/166
+PASS nofib-fluid/strict/binary32/diffusion-1/167
+PASS nofib-fluid/strict/binary32/diffusion-1/168
+PASS nofib-fluid/strict/binary32/diffusion-1/169
+PASS nofib-fluid/strict/binary32/diffusion-1/170
+PASS nofib-fluid/strict/binary32/diffusion-1/171
+PASS nofib-fluid/strict/binary32/diffusion-1/172
+PASS nofib-fluid/strict/binary32/diffusion-1/173
+PASS nofib-fluid/strict/binary32/diffusion-1/174
+PASS nofib-fluid/strict/binary32/diffusion-1/175
+PASS nofib-fluid/strict/binary32/diffusion-1/176
+PASS nofib-fluid/strict/binary32/diffusion-1/177
+PASS nofib-fluid/strict/binary32/diffusion-1/178
+PASS nofib-fluid/strict/binary32/diffusion-1/179
+PASS nofib-fluid/strict/binary32/diffusion-1/180
+PASS nofib-fluid/strict/binary32/diffusion-1/181
+PASS nofib-fluid/strict/binary32/diffusion-1/182
+PASS nofib-fluid/strict/binary32/diffusion-1/183
+PASS nofib-fluid/strict/binary32/diffusion-1/184
+PASS nofib-fluid/strict/binary32/diffusion-1/185
+PASS nofib-fluid/strict/binary32/diffusion-1/186
+PASS nofib-fluid/strict/binary32/gradient-a-1/187
+PASS nofib-fluid/strict/binary32/gradient-a-1/188
+PASS nofib-fluid/strict/binary32/gradient-a-1/189
+PASS nofib-fluid/strict/binary32/gradient-a-1/190
+PASS nofib-fluid/strict/binary32/gradient-a-1/191
+PASS nofib-fluid/strict/binary32/gradient-a-1/192
+PASS nofib-fluid/strict/binary32/gradient-a-1/193
+PASS nofib-fluid/strict/binary32/gradient-a-1/194
+PASS nofib-fluid/strict/binary32/gradient-a-1/195
+PASS nofib-fluid/strict/binary32/gradient-a-1/196
+PASS nofib-fluid/strict/binary32/gradient-a-1/197
+PASS nofib-fluid/strict/binary32/gradient-a-1/198
+PASS nofib-fluid/strict/binary32/gradient-a-1/199
+PASS nofib-fluid/strict/binary32/gradient-a-1/200
+PASS nofib-fluid/strict/binary32/gradient-a-1/201
+PASS nofib-fluid/strict/binary32/gradient-a-1/202
+PASS nofib-fluid/strict/binary32/gradient-a-1/203
+PASS nofib-fluid/strict/binary32/gradient-a-1/204
+PASS nofib-fluid/strict/binary32/gradient-b-1/205
+PASS nofib-fluid/strict/binary32/gradient-b-1/206
+PASS nofib-fluid/strict/binary32/gradient-b-1/207
+PASS nofib-fluid/strict/binary32/gradient-b-1/208
+PASS nofib-fluid/strict/binary32/gradient-b-1/209
+PASS nofib-fluid/strict/binary32/gradient-b-1/210
+PASS nofib-fluid/strict/binary32/gradient-b-1/211
+PASS nofib-fluid/strict/binary32/gradient-b-1/212
+PASS nofib-fluid/strict/binary32/gradient-b-1/213
+PASS nofib-fluid/strict/binary32/gradient-b-1/214
+PASS nofib-fluid/strict/binary32/gradient-b-1/215
+PASS nofib-fluid/strict/binary32/gradient-b-1/216
+PASS nofib-fluid/strict/binary32/gradient-b-1/217
+PASS nofib-fluid/strict/binary32/gradient-b-1/218
+PASS nofib-fluid/strict/binary32/gradient-b-1/219
+PASS nofib-fluid/strict/binary32/gradient-b-1/220
+PASS nofib-fluid/strict/binary32/gradient-b-1/221
+PASS nofib-fluid/strict/binary32/gradient-b-1/222
+PASS nofib-fluid/strict/binary32/convection-1/223
+PASS nofib-fluid/strict/binary32/convection-1/224
+PASS nofib-fluid/strict/binary32/convection-1/225
+PASS nofib-fluid/strict/binary32/convection-1/226
+PASS nofib-fluid/strict/binary32/convection-1/227
+PASS nofib-fluid/strict/binary32/convection-1/228
+PASS nofib-fluid/strict/binary32/convection-1/229
+PASS nofib-fluid/strict/binary32/convection-1/230
+PASS nofib-fluid/strict/binary32/convection-1/231
+PASS nofib-fluid/strict/binary32/convection-1/232
+PASS nofib-fluid/strict/binary32/convection-1/233
+PASS nofib-fluid/strict/binary32/convection-1/234
+PASS nofib-fluid/strict/binary32/convection-1/235
+PASS nofib-fluid/strict/binary32/convection-1/236
+PASS nofib-fluid/strict/binary32/convection-1/237
+PASS nofib-fluid/strict/binary32/convection-1/238
+PASS nofib-fluid/strict/binary32/convection-1/239
+PASS nofib-fluid/strict/binary32/convection-1/240
+PASS nofib-fluid/strict/binary32/convection-1/241
+PASS nofib-fluid/strict/binary32/convection-1/242
+PASS nofib-fluid/strict/binary32/convection-1/243
+PASS nofib-fluid/strict/binary32/convection-1/244
+PASS nofib-fluid/strict/binary32/convection-1/245
+PASS nofib-fluid/strict/binary32/convection-1/246
+PASS nofib-fluid/strict/binary32/convection-1/247
+PASS nofib-fluid/strict/binary32/convection-1/248
+PASS nofib-fluid/strict/binary32/convection-1/249
+PASS nofib-fluid/strict/binary32/convection-1/250
+PASS nofib-fluid/strict/binary32/convection-1/251
+PASS nofib-fluid/strict/binary32/convection-1/252
+PASS nofib-fluid/strict/binary32/convection-1/253
+PASS nofib-fluid/strict/binary32/convection-1/254
+PASS nofib-fluid/strict/binary32/convection-1/255
+PASS nofib-fluid/strict/binary32/convection-1/256
+PASS nofib-fluid/strict/binary32/convection-1/257
+PASS nofib-fluid/strict/binary32/convection-1/258
+PASS nofib-fluid/strict/binary32/diffusion-2/259
+PASS nofib-fluid/strict/binary32/diffusion-2/260
+PASS nofib-fluid/strict/binary32/diffusion-2/261
+PASS nofib-fluid/strict/binary32/diffusion-2/262
+PASS nofib-fluid/strict/binary32/diffusion-2/263
+PASS nofib-fluid/strict/binary32/diffusion-2/264
+PASS nofib-fluid/strict/binary32/diffusion-2/265
+PASS nofib-fluid/strict/binary32/diffusion-2/266
+PASS nofib-fluid/strict/binary32/diffusion-2/267
+PASS nofib-fluid/strict/binary32/diffusion-2/268
+PASS nofib-fluid/strict/binary32/diffusion-2/269
+PASS nofib-fluid/strict/binary32/diffusion-2/270
+PASS nofib-fluid/strict/binary32/diffusion-2/271
+PASS nofib-fluid/strict/binary32/diffusion-2/272
+PASS nofib-fluid/strict/binary32/diffusion-2/273
+PASS nofib-fluid/strict/binary32/diffusion-2/274
+PASS nofib-fluid/strict/binary32/diffusion-2/275
+PASS nofib-fluid/strict/binary32/diffusion-2/276
+PASS nofib-fluid/strict/binary32/diffusion-2/277
+PASS nofib-fluid/strict/binary32/diffusion-2/278
+PASS nofib-fluid/strict/binary32/diffusion-2/279
+PASS nofib-fluid/strict/binary32/diffusion-2/280
+PASS nofib-fluid/strict/binary32/diffusion-2/281
+PASS nofib-fluid/strict/binary32/diffusion-2/282
+PASS nofib-fluid/strict/binary32/diffusion-2/283
+PASS nofib-fluid/strict/binary32/diffusion-2/284
+PASS nofib-fluid/strict/binary32/diffusion-2/285
+PASS nofib-fluid/strict/binary32/diffusion-2/286
+PASS nofib-fluid/strict/binary32/diffusion-2/287
+PASS nofib-fluid/strict/binary32/diffusion-2/288
+PASS nofib-fluid/strict/binary32/diffusion-2/289
+PASS nofib-fluid/strict/binary32/diffusion-2/290
+PASS nofib-fluid/strict/binary32/diffusion-2/291
+PASS nofib-fluid/strict/binary32/diffusion-2/292
+PASS nofib-fluid/strict/binary32/diffusion-2/293
+PASS nofib-fluid/strict/binary32/diffusion-2/294
+PASS nofib-fluid/strict/binary32/gradient-a-2/295
+PASS nofib-fluid/strict/binary32/gradient-a-2/296
+PASS nofib-fluid/strict/binary32/gradient-a-2/297
+PASS nofib-fluid/strict/binary32/gradient-a-2/298
+PASS nofib-fluid/strict/binary32/gradient-a-2/299
+PASS nofib-fluid/strict/binary32/gradient-a-2/300
+PASS nofib-fluid/strict/binary32/gradient-a-2/301
+PASS nofib-fluid/strict/binary32/gradient-a-2/302
+PASS nofib-fluid/strict/binary32/gradient-a-2/303
+PASS nofib-fluid/strict/binary32/gradient-a-2/304
+PASS nofib-fluid/strict/binary32/gradient-a-2/305
+PASS nofib-fluid/strict/binary32/gradient-a-2/306
+PASS nofib-fluid/strict/binary32/gradient-a-2/307
+PASS nofib-fluid/strict/binary32/gradient-a-2/308
+PASS nofib-fluid/strict/binary32/gradient-a-2/309
+PASS nofib-fluid/strict/binary32/gradient-a-2/310
+PASS nofib-fluid/strict/binary32/gradient-a-2/311
+PASS nofib-fluid/strict/binary32/gradient-a-2/312
+PASS nofib-fluid/strict/binary32/gradient-b-2/313
+PASS nofib-fluid/strict/binary32/gradient-b-2/314
+PASS nofib-fluid/strict/binary32/gradient-b-2/315
+PASS nofib-fluid/strict/binary32/gradient-b-2/316
+PASS nofib-fluid/strict/binary32/gradient-b-2/317
+PASS nofib-fluid/strict/binary32/gradient-b-2/318
+PASS nofib-fluid/strict/binary32/gradient-b-2/319
+PASS nofib-fluid/strict/binary32/gradient-b-2/320
+PASS nofib-fluid/strict/binary32/gradient-b-2/321
+PASS nofib-fluid/strict/binary32/gradient-b-2/322
+PASS nofib-fluid/strict/binary32/gradient-b-2/323
+PASS nofib-fluid/strict/binary32/gradient-b-2/324
+PASS nofib-fluid/strict/binary32/gradient-b-2/325
+PASS nofib-fluid/strict/binary32/gradient-b-2/326
+PASS nofib-fluid/strict/binary32/gradient-b-2/327
+PASS nofib-fluid/strict/binary32/gradient-b-2/328
+PASS nofib-fluid/strict/binary32/gradient-b-2/329
+PASS nofib-fluid/strict/binary32/gradient-b-2/330
+PASS nofib-fluid/strict/binary32/convection-2/331
+PASS nofib-fluid/strict/binary32/convection-2/332
+PASS nofib-fluid/strict/binary32/convection-2/333
+PASS nofib-fluid/strict/binary32/convection-2/334
+PASS nofib-fluid/strict/binary32/convection-2/335
+PASS nofib-fluid/strict/binary32/convection-2/336
+PASS nofib-fluid/strict/binary32/convection-2/337
+PASS nofib-fluid/strict/binary32/convection-2/338
+PASS nofib-fluid/strict/binary32/convection-2/339
+PASS nofib-fluid/strict/binary32/convection-2/340
+PASS nofib-fluid/strict/binary32/convection-2/341
+PASS nofib-fluid/strict/binary32/convection-2/342
+PASS nofib-fluid/strict/binary32/convection-2/343
+PASS nofib-fluid/strict/binary32/convection-2/344
+PASS nofib-fluid/strict/binary32/convection-2/345
+PASS nofib-fluid/strict/binary32/convection-2/346
+PASS nofib-fluid/strict/binary32/convection-2/347
+PASS nofib-fluid/strict/binary32/convection-2/348
+PASS nofib-fluid/strict/binary32/convection-2/349
+PASS nofib-fluid/strict/binary32/convection-2/350
+PASS nofib-fluid/strict/binary32/convection-2/351
+PASS nofib-fluid/strict/binary32/convection-2/352
+PASS nofib-fluid/strict/binary32/convection-2/353
+PASS nofib-fluid/strict/binary32/convection-2/354
+PASS nofib-fluid/strict/binary32/convection-2/355
+PASS nofib-fluid/strict/binary32/convection-2/356
+PASS nofib-fluid/strict/binary32/convection-2/357
+PASS nofib-fluid/strict/binary32/convection-2/358
+PASS nofib-fluid/strict/binary32/convection-2/359
+PASS nofib-fluid/strict/binary32/convection-2/360
+PASS nofib-fluid/strict/binary32/convection-2/361
+PASS nofib-fluid/strict/binary32/convection-2/362
+PASS nofib-fluid/strict/binary32/convection-2/363
+PASS nofib-fluid/strict/binary32/convection-2/364
+PASS nofib-fluid/strict/binary32/convection-2/365
+PASS nofib-fluid/strict/binary32/convection-2/366
+PASS nofib-fluid/strict/binary32/diffusion-3/367
+PASS nofib-fluid/strict/binary32/diffusion-3/368
+PASS nofib-fluid/strict/binary32/diffusion-3/369
+PASS nofib-fluid/strict/binary32/diffusion-3/370
+PASS nofib-fluid/strict/binary32/diffusion-3/371
+PASS nofib-fluid/strict/binary32/diffusion-3/372
+PASS nofib-fluid/strict/binary32/diffusion-3/373
+PASS nofib-fluid/strict/binary32/diffusion-3/374
+PASS nofib-fluid/strict/binary32/diffusion-3/375
+PASS nofib-fluid/strict/binary32/diffusion-3/376
+PASS nofib-fluid/strict/binary32/diffusion-3/377
+PASS nofib-fluid/strict/binary32/diffusion-3/378
+PASS nofib-fluid/strict/binary32/diffusion-3/379
+PASS nofib-fluid/strict/binary32/diffusion-3/380
+PASS nofib-fluid/strict/binary32/diffusion-3/381
+PASS nofib-fluid/strict/binary32/diffusion-3/382
+PASS nofib-fluid/strict/binary32/diffusion-3/383
+PASS nofib-fluid/strict/binary32/diffusion-3/384
+PASS nofib-fluid/strict/binary32/diffusion-3/385
+PASS nofib-fluid/strict/binary32/diffusion-3/386
+PASS nofib-fluid/strict/binary32/diffusion-3/387
+PASS nofib-fluid/strict/binary32/diffusion-3/388
+PASS nofib-fluid/strict/binary32/diffusion-3/389
+PASS nofib-fluid/strict/binary32/diffusion-3/390
+PASS nofib-fluid/strict/binary32/diffusion-3/391
+PASS nofib-fluid/strict/binary32/diffusion-3/392
+PASS nofib-fluid/strict/binary32/diffusion-3/393
+PASS nofib-fluid/strict/binary32/diffusion-3/394
+PASS nofib-fluid/strict/binary32/diffusion-3/395
+PASS nofib-fluid/strict/binary32/diffusion-3/396
+PASS nofib-fluid/strict/binary32/diffusion-3/397
+PASS nofib-fluid/strict/binary32/diffusion-3/398
+PASS nofib-fluid/strict/binary32/diffusion-3/399
+PASS nofib-fluid/strict/binary32/diffusion-3/400
+PASS nofib-fluid/strict/binary32/diffusion-3/401
+PASS nofib-fluid/strict/binary32/diffusion-3/402
+PASS nofib-fluid/strict/binary32/gradient-a-3/403
+PASS nofib-fluid/strict/binary32/gradient-a-3/404
+PASS nofib-fluid/strict/binary32/gradient-a-3/405
+PASS nofib-fluid/strict/binary32/gradient-a-3/406
+PASS nofib-fluid/strict/binary32/gradient-a-3/407
+PASS nofib-fluid/strict/binary32/gradient-a-3/408
+PASS nofib-fluid/strict/binary32/gradient-a-3/409
+PASS nofib-fluid/strict/binary32/gradient-a-3/410
+PASS nofib-fluid/strict/binary32/gradient-a-3/411
+PASS nofib-fluid/strict/binary32/gradient-a-3/412
+PASS nofib-fluid/strict/binary32/gradient-a-3/413
+PASS nofib-fluid/strict/binary32/gradient-a-3/414
+PASS nofib-fluid/strict/binary32/gradient-a-3/415
+PASS nofib-fluid/strict/binary32/gradient-a-3/416
+PASS nofib-fluid/strict/binary32/gradient-a-3/417
+PASS nofib-fluid/strict/binary32/gradient-a-3/418
+PASS nofib-fluid/strict/binary32/gradient-a-3/419
+PASS nofib-fluid/strict/binary32/gradient-a-3/420
+PASS nofib-fluid/strict/binary32/gradient-b-3/421
+PASS nofib-fluid/strict/binary32/gradient-b-3/422
+PASS nofib-fluid/strict/binary32/gradient-b-3/423
+PASS nofib-fluid/strict/binary32/gradient-b-3/424
+PASS nofib-fluid/strict/binary32/gradient-b-3/425
+PASS nofib-fluid/strict/binary32/gradient-b-3/426
+PASS nofib-fluid/strict/binary32/gradient-b-3/427
+PASS nofib-fluid/strict/binary32/gradient-b-3/428
+PASS nofib-fluid/strict/binary32/gradient-b-3/429
+PASS nofib-fluid/strict/binary32/gradient-b-3/430
+PASS nofib-fluid/strict/binary32/gradient-b-3/431
+PASS nofib-fluid/strict/binary32/gradient-b-3/432
+PASS nofib-fluid/strict/binary32/gradient-b-3/433
+PASS nofib-fluid/strict/binary32/gradient-b-3/434
+PASS nofib-fluid/strict/binary32/gradient-b-3/435
+PASS nofib-fluid/strict/binary32/gradient-b-3/436
+PASS nofib-fluid/strict/binary32/gradient-b-3/437
+PASS nofib-fluid/strict/binary32/gradient-b-3/438
+PASS nofib-fluid/strict/binary32/convection-3/439
+PASS nofib-fluid/strict/binary32/convection-3/440
+PASS nofib-fluid/strict/binary32/convection-3/441
+PASS nofib-fluid/strict/binary32/convection-3/442
+PASS nofib-fluid/strict/binary32/convection-3/443
+PASS nofib-fluid/strict/binary32/convection-3/444
+PASS nofib-fluid/strict/binary32/convection-3/445
+PASS nofib-fluid/strict/binary32/convection-3/446
+PASS nofib-fluid/strict/binary32/convection-3/447
+PASS nofib-fluid/strict/binary32/convection-3/448
+PASS nofib-fluid/strict/binary32/convection-3/449
+PASS nofib-fluid/strict/binary32/convection-3/450
+PASS nofib-fluid/strict/binary32/convection-3/451
+PASS nofib-fluid/strict/binary32/convection-3/452
+PASS nofib-fluid/strict/binary32/convection-3/453
+PASS nofib-fluid/strict/binary32/convection-3/454
+PASS nofib-fluid/strict/binary32/convection-3/455
+PASS nofib-fluid/strict/binary32/convection-3/456
+PASS nofib-fluid/strict/binary32/convection-3/457
+PASS nofib-fluid/strict/binary32/convection-3/458
+PASS nofib-fluid/strict/binary32/convection-3/459
+PASS nofib-fluid/strict/binary32/convection-3/460
+PASS nofib-fluid/strict/binary32/convection-3/461
+PASS nofib-fluid/strict/binary32/convection-3/462
+PASS nofib-fluid/strict/binary32/convection-3/463
+PASS nofib-fluid/strict/binary32/convection-3/464
+PASS nofib-fluid/strict/binary32/convection-3/465
+PASS nofib-fluid/strict/binary32/convection-3/466
+PASS nofib-fluid/strict/binary32/convection-3/467
+PASS nofib-fluid/strict/binary32/convection-3/468
+PASS nofib-fluid/strict/binary32/convection-3/469
+PASS nofib-fluid/strict/binary32/convection-3/470
+PASS nofib-fluid/strict/binary32/convection-3/471
+PASS nofib-fluid/strict/binary32/convection-3/472
+PASS nofib-fluid/strict/binary32/convection-3/473
+PASS nofib-fluid/strict/binary32/convection-3/474
+PASS nofib-fluid/strict/binary32/inner/475
+PASS nofib-fluid/strict/binary32/match/476
+PASS nofib-fluid/strict/binary32/tolerances/477
+PASS nofib-fluid/strict/binary32/tolerances/478
+PASS nofib-fluid/strict/binary32/tolerances/479
+PASS nofib-fluid/strict/binary32-observation-count
+PASS nofib-fluid/strict/ordering/0
+PASS nofib-fluid/strict/ordering/1
+PASS nofib-fluid/strict/ordering/2
+PASS nofib-fluid/strict/ordering/3
+PASS nofib-fluid/strict/ordering/4
+PASS nofib-fluid/strict/ordering/5
+PASS nofib-fluid/strict/ordering/6
+PASS nofib-fluid/strict/ordering/7
+PASS nofib-fluid/strict/ordering/8
+PASS nofib-fluid/strict/ordering/9
+PASS nofib-fluid/strict/ordering/10
+PASS nofib-fluid/strict/ordering/11
+PASS nofib-fluid/strict/ordering/12
+PASS nofib-fluid/strict/ordering/13
+PASS nofib-fluid/strict/ordering/14
+PASS nofib-fluid/strict/ordering/15
+PASS nofib-fluid/strict/ordering/16
+PASS nofib-fluid/strict/ordering/17
+PASS nofib-fluid/strict/configuration

@@ -1,0 +1,4 @@
+RESULT 35
+PASS fluid-lazy
+SAMPLE 1 0.315373000
+SUMMARY 1 checks, 0 failed

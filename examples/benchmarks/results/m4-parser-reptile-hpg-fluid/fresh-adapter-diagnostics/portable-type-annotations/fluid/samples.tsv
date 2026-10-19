@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fluid-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	14.96	12.09	1.51	1042324	-	-	-	fluid-lazy/native-mlton/build/compile
+fluid-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.28	0.26	0.03	9480	-	-	-	fluid-lazy/native-mlton/correctness.0
+fluid-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.31	0.26	0.06	9408	-	-	-	fluid-lazy/native-mlton/fresh.1
+fluid-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	4.98	5.08	0.21	87384	-	-	-	fluid-lazy/native-smlnj-legacy/build/compile
+fluid-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	incorrect-result	0.02	0.03	0.00	7732	-	-	-	fluid-lazy/native-smlnj-legacy/correctness.0
+fluid-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	1.37	1.77	0.30	140476	-	-	-	fluid-lazy/native-polyml/build/compile
+fluid-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.42	0.47	0.18	56184	-	-	-	fluid-lazy/native-polyml/correctness.0
+fluid-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.47	0.48	0.28	53976	-	-	-	fluid-lazy/native-polyml/fresh.1
+fluid-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	10.75	9.52	1.77	1042344	-	-	-	fluid-strict/native-mlton/build/compile
+fluid-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.13	0.13	0.00	6280	-	-	-	fluid-strict/native-mlton/correctness.0
+fluid-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.12	0.12	0.00	6212	-	-	-	fluid-strict/native-mlton/fresh.1
+fluid-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	7.41	5.48	0.21	81572	-	-	-	fluid-strict/native-smlnj-legacy/build/compile
+fluid-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	runtime-failure	0.01	0.00	0.01	5580	-	-	-	fluid-strict/native-smlnj-legacy/correctness.0
+fluid-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.87	0.97	0.22	85784	-	-	-	fluid-strict/native-polyml/build/compile
+fluid-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.28	0.25	0.17	45272	-	-	-	fluid-strict/native-polyml/correctness.0
+fluid-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.28	0.24	0.16	45564	-	-	-	fluid-strict/native-polyml/fresh.1

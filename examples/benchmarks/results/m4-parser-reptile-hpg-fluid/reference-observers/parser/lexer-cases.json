@@ -1,0 +1,106 @@
+[
+  {
+    "name": "case-0",
+    "input": ""
+  },
+  {
+    "name": "case-1",
+    "input": "("
+  },
+  {
+    "name": "case-2",
+    "input": "{"
+  },
+  {
+    "name": "case-3",
+    "input": "-"
+  },
+  {
+    "name": "case-4",
+    "input": "x"
+  },
+  {
+    "name": "case-5",
+    "input": "(+)"
+  },
+  {
+    "name": "case-6",
+    "input": "(:)"
+  },
+  {
+    "name": "case-7",
+    "input": "(\\x -> x)"
+  },
+  {
+    "name": "case-8",
+    "input": "\"a\\n\\t\""
+  },
+  {
+    "name": "case-9",
+    "input": "\\x"
+  },
+  {
+    "name": "case-10",
+    "input": "`foo`"
+  },
+  {
+    "name": "case-11",
+    "input": "`a1`"
+  },
+  {
+    "name": "case-12",
+    "input": "\"unclosed"
+  },
+  {
+    "name": "case-13",
+    "input": "'a'"
+  },
+  {
+    "name": "case-14",
+    "input": "'ab'"
+  },
+  {
+    "name": "case-15",
+    "input": "\tfoo"
+  },
+  {
+    "name": "case-16",
+    "input": "# 42 file\nx"
+  },
+  {
+    "name": "case-17",
+    "input": "#42 file\nx"
+  },
+  {
+    "name": "case-18",
+    "input": "#"
+  },
+  {
+    "name": "case-19",
+    "input": "-- comment"
+  },
+  {
+    "name": "case-20",
+    "input": "x -}"
+  },
+  {
+    "name": "case-21",
+    "input": "x\r"
+  },
+  {
+    "name": "case-22",
+    "input": "{- outer {- inner -} x -}"
+  },
+  {
+    "name": "case-23",
+    "input": "module M where\n x=1\n y=x\n"
+  },
+  {
+    "name": "case-24",
+    "input": "module M where { x=1; y=x }"
+  },
+  {
+    "name": "case-25",
+    "input": "if x then y else z"
+  }
+]

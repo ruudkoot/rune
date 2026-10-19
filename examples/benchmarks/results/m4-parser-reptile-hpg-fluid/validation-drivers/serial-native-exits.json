@@ -1,0 +1,62 @@
+[
+  {
+    "family": "parser",
+    "command": [
+      "make",
+      "bench",
+      "BENCH_PROFILE=smoke",
+      "BENCH_FILTER=parser-",
+      "BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:polyml",
+      "BENCH_SAMPLES=1",
+      "BENCH_MODE=fresh"
+    ],
+    "exit": 0,
+    "elapsed_seconds": 54.69988943800854,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/serial-native-parser.log"
+  },
+  {
+    "family": "reptile",
+    "command": [
+      "make",
+      "bench",
+      "BENCH_PROFILE=smoke",
+      "BENCH_FILTER=reptile-",
+      "BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:polyml",
+      "BENCH_SAMPLES=1",
+      "BENCH_MODE=fresh"
+    ],
+    "exit": 2,
+    "elapsed_seconds": 43.61703777000366,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/serial-native-reptile.log"
+  },
+  {
+    "family": "hpg",
+    "command": [
+      "make",
+      "bench",
+      "BENCH_PROFILE=smoke",
+      "BENCH_FILTER=hpg-",
+      "BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:polyml",
+      "BENCH_SAMPLES=1",
+      "BENCH_MODE=fresh"
+    ],
+    "exit": 2,
+    "elapsed_seconds": 38.67087660099787,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/serial-native-hpg.log"
+  },
+  {
+    "family": "fluid",
+    "command": [
+      "make",
+      "bench",
+      "BENCH_PROFILE=smoke",
+      "BENCH_FILTER=fluid-",
+      "BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:polyml",
+      "BENCH_SAMPLES=1",
+      "BENCH_MODE=fresh"
+    ],
+    "exit": 2,
+    "elapsed_seconds": 34.86369196999294,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/serial-native-fluid.log"
+  }
+]

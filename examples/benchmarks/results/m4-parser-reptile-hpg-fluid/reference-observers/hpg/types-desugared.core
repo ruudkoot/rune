@@ -1,0 +1,987 @@
+
+==================== Desugar (after optimization) ====================
+Result size of Desugar (after optimization)
+  = {terms: 1,694, types: 1,076, coercions: 4, joins: 1/18}
+
+$cshowsPrec_a1MI
+  = \ _ ds_d1Si ->
+      case ds_d1Si of {
+        Int_type -> int_type_name;
+        Integer_type -> integer_type_name;
+        Float_type -> float_type_name;
+        Double_type -> double_type_name
+      }
+
+Rec {
+$fShowNum_kind
+  = C:Show $cshowsPrec_a1MI $cshow_a1MR $cshowList_a1MY
+
+$cshowList_a1MY
+  = \ ls_a1Sl s_a1Sm ->
+      showList__ (showsPrec $fShowNum_kind (I# 0#)) ls_a1Sl s_a1Sm
+
+$cshow_a1MR
+  = \ x_a1Sq -> showsPrec $fShowNum_kind (I# 0#) x_a1Sq []
+end Rec }
+
+$cshowsPrec_a1Mh
+  = \ _ ds_d1Sg ->
+      case ds_d1Sg of {
+        Num_type k_aWP -> shows $fShowNum_kind k_aWP;
+        Bool_type -> bool_type_name;
+        Char_type -> char_type_name
+      }
+
+Rec {
+$fShowBase_type
+  = C:Show $cshowsPrec_a1Mh $cshow_a1Mr $cshowList_a1My
+
+$cshowList_a1My
+  = \ ls_a1Sl s_a1Sm ->
+      showList__ (showsPrec $fShowBase_type (I# 0#)) ls_a1Sl s_a1Sm
+
+$cshow_a1Mr
+  = \ x_a1Sq -> showsPrec $fShowBase_type (I# 0#) x_a1Sq []
+end Rec }
+
+$c==_a1H7
+  = \ a_a1sp b_a1sq ->
+      case dataToTag# a_a1sp of a#_a1sr { __DEFAULT ->
+      case dataToTag# b_a1sq of b#_a1ss { __DEFAULT ->
+      tagToEnum# (==# a#_a1sr b#_a1ss)
+      }
+      }
+
+Rec {
+$fEqNum_kind = C:Eq $c==_a1H7 $c/=_a1Hj
+
+$c/=_a1Hj
+  = \ x_a1St y_a1Su ->
+      case == $fEqNum_kind x_a1St y_a1Su of {
+        False -> True;
+        True -> False
+      }
+end Rec }
+
+$c==_a1GC
+  = \ a_a1sj b_a1sk ->
+      case case dataToTag# a_a1sj of a#_a1sl { __DEFAULT ->
+           case dataToTag# b_a1sk of b#_a1sm { __DEFAULT ->
+           /=# a#_a1sl b#_a1sm
+           }
+           }
+      of ds_d1Rp
+      { __DEFAULT ->
+      case ds_d1Rp of {
+        __DEFAULT ->
+          case a_a1sj of {
+            __DEFAULT -> True;
+            Num_type a1_a1sn ->
+              case b_a1sk of {
+                __DEFAULT -> case patError "Types.lhs:70:18-19|case"# of { };
+                Num_type b1_a1so -> == $fEqNum_kind a1_a1sn b1_a1so
+              }
+          };
+        1# -> False
+      }
+      }
+
+Rec {
+$fEqBase_type = C:Eq $c==_a1GC $c/=_a1GX
+
+$c/=_a1GX
+  = \ x_a1St y_a1Su ->
+      case == $fEqBase_type x_a1St y_a1Su of {
+        False -> True;
+        True -> False
+      }
+end Rec }
+
+Rec {
+$fEqArgtype = C:Eq $c==_a1FH $c/=_a1Gs
+
+$c/=_a1Gs
+  = \ x_a1St y_a1Su ->
+      case == $fEqArgtype x_a1St y_a1Su of {
+        False -> True;
+        True -> False
+      }
+
+$c==_a1FH
+  = let { $dEq_a1Gi = $fEq[] $fEqArgtype } in
+    let { $dEq_a1G0 = $fEq[] $fEqChar } in
+    \ a_a1s3 b_a1s4 ->
+      case case dataToTag# a_a1s3 of a#_a1s5 { __DEFAULT ->
+           case dataToTag# b_a1s4 of b#_a1s6 { __DEFAULT ->
+           /=# a#_a1s5 b#_a1s6
+           }
+           }
+      of ds_d1R4
+      { __DEFAULT ->
+      case ds_d1R4 of {
+        __DEFAULT ->
+          case a_a1s3 of {
+            Name_type a1_a1s7 ->
+              case b_a1s4 of {
+                __DEFAULT -> case patError "Types.lhs:67:18-19|case"# of { };
+                Name_type b1_a1s8 -> == $dEq_a1G0 a1_a1s7 b1_a1s8
+              };
+            Basic_type a1_a1s9 ->
+              case b_a1s4 of {
+                __DEFAULT -> case patError "Types.lhs:67:18-19|case"# of { };
+                Basic_type b1_a1sa -> == $fEqBase_type a1_a1s9 b1_a1sa
+              };
+            List_type a1_a1sb ->
+              case b_a1s4 of {
+                __DEFAULT -> case patError "Types.lhs:67:18-19|case"# of { };
+                List_type b1_a1sc -> == $fEqArgtype a1_a1sb b1_a1sc
+              };
+            Tuple_type a1_a1sd ->
+              case b_a1s4 of {
+                __DEFAULT -> case patError "Types.lhs:67:18-19|case"# of { };
+                Tuple_type b1_a1se -> == $dEq_a1Gi a1_a1sd b1_a1se
+              };
+            Array_type a1_a1sf a2_a1sg ->
+              case b_a1s4 of {
+                __DEFAULT -> case patError "Types.lhs:67:18-19|case"# of { };
+                Array_type b1_a1sh b2_a1si ->
+                  &&
+                    (== $fEqArgtype a1_a1sf b1_a1sh) (== $fEqArgtype a2_a1sg b2_a1si)
+              }
+          };
+        1# -> False
+      }
+      }
+end Rec }
+
+Rec {
+$fEqValue = C:Eq $c==_a1Ew $c/=_a1Fx
+
+$c/=_a1Fx
+  = \ x_a1St y_a1Su ->
+      case == $fEqValue x_a1St y_a1Su of {
+        False -> True;
+        True -> False
+      }
+
+$c==_a1Ew
+  = let { $dEq_a1Ft = $fEq(,) $fEqValue $fEqValue } in
+    let { $dEq_a1Fv = $fEq[] $dEq_a1Ft } in
+    let { $dEq_a1F9 = $fEq[] $fEqValue } in
+    let { $dEq_a1Fl = $fEq[] $fEqChar } in
+    \ a_a1rF b_a1rG ->
+      case case dataToTag# a_a1rF of a#_a1rH { __DEFAULT ->
+           case dataToTag# b_a1rG of b#_a1rI { __DEFAULT ->
+           /=# a#_a1rH b#_a1rI
+           }
+           }
+      of ds_d1QD
+      { __DEFAULT ->
+      case ds_d1QD of {
+        __DEFAULT ->
+          case a_a1rF of {
+            Num_val a1_a1rJ a2_a1rK ->
+              case b_a1rG of {
+                __DEFAULT -> case patError "Types.lhs:151:18-19|case"# of { };
+                Num_val b1_a1rL b2_a1rM ->
+                  && (== $fEqNum_kind a1_a1rJ b1_a1rL) (== $fEqInt a2_a1rK b2_a1rM)
+              };
+            Bool_val a1_a1rN ->
+              case b_a1rG of {
+                __DEFAULT -> case patError "Types.lhs:151:18-19|case"# of { };
+                Bool_val b1_a1rO -> == $fEqBool a1_a1rN b1_a1rO
+              };
+            Char_val a1_a1rP ->
+              case b_a1rG of {
+                __DEFAULT -> case patError "Types.lhs:151:18-19|case"# of { };
+                Char_val b1_a1rQ -> == $fEqChar a1_a1rP b1_a1rQ
+              };
+            List_val a1_a1rR ->
+              case b_a1rG of {
+                __DEFAULT -> case patError "Types.lhs:151:18-19|case"# of { };
+                List_val b1_a1rS -> == $dEq_a1F9 a1_a1rR b1_a1rS
+              };
+            Tuple_val a1_a1rT ->
+              case b_a1rG of {
+                __DEFAULT -> case patError "Types.lhs:151:18-19|case"# of { };
+                Tuple_val b1_a1rU -> == $dEq_a1F9 a1_a1rT b1_a1rU
+              };
+            Tagged_val a1_a1rV a2_a1rW ->
+              case b_a1rG of {
+                __DEFAULT -> case patError "Types.lhs:151:18-19|case"# of { };
+                Tagged_val b1_a1rX b2_a1rY ->
+                  && (== $dEq_a1Fl a1_a1rV b1_a1rX) (== $dEq_a1F9 a2_a1rW b2_a1rY)
+              };
+            Array_val a1_a1rZ a2_a1s0 ->
+              case b_a1rG of {
+                __DEFAULT -> case patError "Types.lhs:151:18-19|case"# of { };
+                Array_val b1_a1s1 b2_a1s2 ->
+                  && (== $dEq_a1Ft a1_a1rZ b1_a1s1) (== $dEq_a1Fv a2_a1s0 b2_a1s2)
+              }
+          };
+        1# -> False
+      }
+      }
+end Rec }
+
+Rec {
+$fEqExpression = C:Eq $c==_a1Dc $c/=_a1Em
+
+$c/=_a1Em
+  = \ x_a1St y_a1Su ->
+      case == $fEqExpression x_a1St y_a1Su of {
+        False -> True;
+        True -> False
+      }
+
+$c==_a1Dc
+  = let { $dEq_a1DD = $fEq[] $fEqChar } in
+    let { $dEq_a1DR = $fEq[] $fEqExpression } in
+    \ a_a1rd b_a1re ->
+      case case dataToTag# a_a1rd of a#_a1rf { __DEFAULT ->
+           case dataToTag# b_a1re of b#_a1rg { __DEFAULT ->
+           /=# a#_a1rf b#_a1rg
+           }
+           }
+      of ds_d1Q9
+      { __DEFAULT ->
+      case ds_d1Q9 of {
+        __DEFAULT ->
+          case a_a1rd of {
+            Apply_exp a1_a1rh a2_a1ri ->
+              case b_a1re of {
+                __DEFAULT -> case patError "Types.lhs:275:18-19|case"# of { };
+                Apply_exp b1_a1rj b2_a1rk ->
+                  &&
+                    (== $fEqExpression a1_a1rh b1_a1rj)
+                    (== $fEqExpression a2_a1ri b2_a1rk)
+              };
+            Id_exp a1_a1rl ->
+              case b_a1re of {
+                __DEFAULT -> case patError "Types.lhs:275:18-19|case"# of { };
+                Id_exp b1_a1rm -> == $dEq_a1DD a1_a1rl b1_a1rm
+              };
+            Val_exp a1_a1rn ->
+              case b_a1re of {
+                __DEFAULT -> case patError "Types.lhs:275:18-19|case"# of { };
+                Val_exp b1_a1ro -> == $fEqValue a1_a1rn b1_a1ro
+              };
+            Tagged_exp a1_a1rp a2_a1rq ->
+              case b_a1re of {
+                __DEFAULT -> case patError "Types.lhs:275:18-19|case"# of { };
+                Tagged_exp b1_a1rr b2_a1rs ->
+                  && (== $dEq_a1DD a1_a1rp b1_a1rr) (== $dEq_a1DR a2_a1rq b2_a1rs)
+              };
+            List_exp a1_a1rt ->
+              case b_a1re of {
+                __DEFAULT -> case patError "Types.lhs:275:18-19|case"# of { };
+                List_exp b1_a1ru -> == $dEq_a1DR a1_a1rt b1_a1ru
+              };
+            Tuple_exp a1_a1rv ->
+              case b_a1re of {
+                __DEFAULT -> case patError "Types.lhs:275:18-19|case"# of { };
+                Tuple_exp b1_a1rw -> == $dEq_a1DR a1_a1rv b1_a1rw
+              };
+            Lambda_exp a1_a1rx a2_a1ry ->
+              case b_a1re of {
+                __DEFAULT -> case patError "Types.lhs:275:18-19|case"# of { };
+                Lambda_exp b1_a1rz b2_a1rA ->
+                  &&
+                    (== $dEq_a1DD a1_a1rx b1_a1rz) (== $fEqExpression a2_a1ry b2_a1rA)
+              };
+            Array_exp a1_a1rB a2_a1rC ->
+              case b_a1re of {
+                __DEFAULT -> case patError "Types.lhs:275:18-19|case"# of { };
+                Array_exp b1_a1rD b2_a1rE ->
+                  &&
+                    (== $fEqExpression a1_a1rB b1_a1rD)
+                    (== $fEqExpression a2_a1rC b2_a1rE)
+              }
+          };
+        1# -> False
+      }
+      }
+end Rec }
+
+int_val = \ n_a13N -> Num_val Int_type n_a13N
+
+sep_list
+  = \ @a_a1uu s_a13O f_a13P ds_d1OJ ->
+      case ds_d1OJ of {
+        __DEFAULT ->
+          foldr1
+            $fFoldable[]
+            (\ x_a13U y_a13V -> . x_a13U (. s_a13O y_a13V))
+            (map f_a13P ds_d1OJ);
+        [] -> empty_string
+      }
+
+$trModule = Module (TrNameS "main"#) (TrNameS "Types"#)
+
+$krep_a1Oo = KindRepTyConApp $tcBool []
+
+$krep_a1Om = KindRepTyConApp $tcInt []
+
+$krep_a1Oc = KindRepTyConApp $tcChar []
+
+$krep_a1Ob = KindRepTyConApp $tc[] (: $krep_a1Oc [])
+
+$tcNum_kind
+  = TyCon
+      13563820499391625624##64
+      2744943168245034927##64
+      $trModule
+      (TrNameS "Num_kind"#)
+      0#
+      krep$*
+
+$krep_a1Ok = KindRepTyConApp $tcNum_kind []
+
+$tc'Int_type
+  = TyCon
+      280573061117249654##64
+      2433351334734745966##64
+      $trModule
+      (TrNameS "'Int_type"#)
+      0#
+      $krep_a1Ok
+
+$tc'Integer_type
+  = TyCon
+      10799042833702933473##64
+      10445755201801087100##64
+      $trModule
+      (TrNameS "'Integer_type"#)
+      0#
+      $krep_a1Ok
+
+$tc'Float_type
+  = TyCon
+      7819225528628203194##64
+      6467901691197679700##64
+      $trModule
+      (TrNameS "'Float_type"#)
+      0#
+      $krep_a1Ok
+
+$tc'Double_type
+  = TyCon
+      11877969599010226404##64
+      6336872990873723322##64
+      $trModule
+      (TrNameS "'Double_type"#)
+      0#
+      $krep_a1Ok
+
+$tcBase_type
+  = TyCon
+      14310547650613646541##64
+      11365968361601376803##64
+      $trModule
+      (TrNameS "Base_type"#)
+      0#
+      krep$*
+
+$krep_a1OA = KindRepTyConApp $tcBase_type []
+
+$tc'Bool_type
+  = TyCon
+      3108828879449643250##64
+      210557037700200328##64
+      $trModule
+      (TrNameS "'Bool_type"#)
+      0#
+      $krep_a1OA
+
+$tc'Char_type
+  = TyCon
+      6090152590178320428##64
+      8141840823726871528##64
+      $trModule
+      (TrNameS "'Char_type"#)
+      0#
+      $krep_a1OA
+
+$krep_a1OF = KindRepFun $krep_a1Ok $krep_a1OA
+
+$tc'Num_type
+  = TyCon
+      14445836609471158511##64
+      10100336350350537756##64
+      $trModule
+      (TrNameS "'Num_type"#)
+      0#
+      $krep_a1OF
+
+$tcArgtype
+  = TyCon
+      15460583797607354592##64
+      10576965941605753602##64
+      $trModule
+      (TrNameS "Argtype"#)
+      0#
+      krep$*
+
+$krep_a1Oy = KindRepTyConApp $tcArgtype []
+
+$krep_a1Ox = KindRepFun $krep_a1Ob $krep_a1Oy
+
+$tc'Name_type
+  = TyCon
+      12019090178505371637##64
+      2882111996966137597##64
+      $trModule
+      (TrNameS "'Name_type"#)
+      0#
+      $krep_a1Ox
+
+$krep_a1Oz = KindRepFun $krep_a1OA $krep_a1Oy
+
+$tc'Basic_type
+  = TyCon
+      11402923275796210458##64
+      6265377549169908621##64
+      $trModule
+      (TrNameS "'Basic_type"#)
+      0#
+      $krep_a1Oz
+
+$krep_a1OB = KindRepFun $krep_a1Oy $krep_a1Oy
+
+$tc'List_type
+  = TyCon
+      9558766347466774548##64
+      11906391873939621565##64
+      $trModule
+      (TrNameS "'List_type"#)
+      0#
+      $krep_a1OB
+
+$krep_a1OE = KindRepFun $krep_a1Oy $krep_a1OB
+
+$tc'Array_type
+  = TyCon
+      15679890594049622776##64
+      8050126507530636638##64
+      $trModule
+      (TrNameS "'Array_type"#)
+      0#
+      $krep_a1OE
+
+$krep_a1OD = KindRepTyConApp $tc[] (: $krep_a1Oy [])
+
+$krep_a1OC = KindRepFun $krep_a1OD $krep_a1Oy
+
+$tc'Tuple_type
+  = TyCon
+      3768876345023982932##64
+      13347536831710732999##64
+      $trModule
+      (TrNameS "'Tuple_type"#)
+      0#
+      $krep_a1OC
+
+$tcValue
+  = TyCon
+      16244431238783557233##64
+      9456443104383631387##64
+      $trModule
+      (TrNameS "Value"#)
+      0#
+      krep$*
+
+$krep_a1Oe = KindRepTyConApp $tcValue []
+
+$krep_a1Ol = KindRepFun $krep_a1Om $krep_a1Oe
+
+$krep_a1Oj = KindRepFun $krep_a1Ok $krep_a1Ol
+
+$tc'Num_val
+  = TyCon
+      2167771245878446757##64
+      9307104612464255498##64
+      $trModule
+      (TrNameS "'Num_val"#)
+      0#
+      $krep_a1Oj
+
+$krep_a1On = KindRepFun $krep_a1Oo $krep_a1Oe
+
+$tc'Bool_val
+  = TyCon
+      10820060363028343683##64
+      1768017303446427510##64
+      $trModule
+      (TrNameS "'Bool_val"#)
+      0#
+      $krep_a1On
+
+$krep_a1Op = KindRepFun $krep_a1Oc $krep_a1Oe
+
+$tc'Char_val
+  = TyCon
+      13786240601050684119##64
+      5815805418621876995##64
+      $trModule
+      (TrNameS "'Char_val"#)
+      0#
+      $krep_a1Op
+
+$krep_a1Ou
+  = KindRepTyConApp $tc(,) (: $krep_a1Oe (: $krep_a1Oe []))
+
+$krep_a1Ow = KindRepTyConApp $tc[] (: $krep_a1Ou [])
+
+$krep_a1Ov = KindRepFun $krep_a1Ow $krep_a1Oe
+
+$krep_a1Ot = KindRepFun $krep_a1Ou $krep_a1Ov
+
+$tc'Array_val
+  = TyCon
+      7547220443766915025##64
+      9044983429855668921##64
+      $trModule
+      (TrNameS "'Array_val"#)
+      0#
+      $krep_a1Ot
+
+$krep_a1Or = KindRepTyConApp $tc[] (: $krep_a1Oe [])
+
+$krep_a1Oq = KindRepFun $krep_a1Or $krep_a1Oe
+
+$tc'List_val
+  = TyCon
+      3345237862951664780##64
+      3581807800402935325##64
+      $trModule
+      (TrNameS "'List_val"#)
+      0#
+      $krep_a1Oq
+
+$tc'Tuple_val
+  = TyCon
+      7726136280934283602##64
+      885964724012470095##64
+      $trModule
+      (TrNameS "'Tuple_val"#)
+      0#
+      $krep_a1Oq
+
+$krep_a1Os = KindRepFun $krep_a1Ob $krep_a1Oq
+
+$tc'Tagged_val
+  = TyCon
+      16268351102640028732##64
+      3806122861033944943##64
+      $trModule
+      (TrNameS "'Tagged_val"#)
+      0#
+      $krep_a1Os
+
+$tcExpression
+  = TyCon
+      17599011235252365589##64
+      805378072281473225##64
+      $trModule
+      (TrNameS "Expression"#)
+      0#
+      krep$*
+
+$krep_a1O8 = KindRepTyConApp $tcExpression []
+
+$krep_a1Oa = KindRepFun $krep_a1Ob $krep_a1O8
+
+$tc'Id_exp
+  = TyCon
+      3878998627936187050##64
+      14710002411426951058##64
+      $trModule
+      (TrNameS "'Id_exp"#)
+      0#
+      $krep_a1Oa
+
+$krep_a1O9 = KindRepFun $krep_a1O8 $krep_a1O8
+
+$krep_a1Oi = KindRepFun $krep_a1Ob $krep_a1O9
+
+$tc'Lambda_exp
+  = TyCon
+      8832474384019861963##64
+      7559636614592519693##64
+      $trModule
+      (TrNameS "'Lambda_exp"#)
+      0#
+      $krep_a1Oi
+
+$krep_a1O7 = KindRepFun $krep_a1O8 $krep_a1O9
+
+$tc'Apply_exp
+  = TyCon
+      15079435354638207561##64
+      13032025995169091400##64
+      $trModule
+      (TrNameS "'Apply_exp"#)
+      0#
+      $krep_a1O7
+
+$tc'Array_exp
+  = TyCon
+      10964633358823736410##64
+      4606861884281258602##64
+      $trModule
+      (TrNameS "'Array_exp"#)
+      0#
+      $krep_a1O7
+
+$krep_a1Od = KindRepFun $krep_a1Oe $krep_a1O8
+
+$tc'Val_exp
+  = TyCon
+      13411185988631591573##64
+      6612630636289052316##64
+      $trModule
+      (TrNameS "'Val_exp"#)
+      0#
+      $krep_a1Od
+
+$krep_a1Oh = KindRepTyConApp $tc[] (: $krep_a1O8 [])
+
+$krep_a1Og = KindRepFun $krep_a1Oh $krep_a1O8
+
+$tc'List_exp
+  = TyCon
+      16223515841950971398##64
+      2141078139262201128##64
+      $trModule
+      (TrNameS "'List_exp"#)
+      0#
+      $krep_a1Og
+
+$tc'Tuple_exp
+  = TyCon
+      8817168163703857201##64
+      15941084402561726761##64
+      $trModule
+      (TrNameS "'Tuple_exp"#)
+      0#
+      $krep_a1Og
+
+$krep_a1Of = KindRepFun $krep_a1Ob $krep_a1Og
+
+$tc'Tagged_exp
+  = TyCon
+      14460211473349209121##64
+      15454686147360563952##64
+      $trModule
+      (TrNameS "'Tagged_exp"#)
+      0#
+      $krep_a1Of
+
+Rec {
+$fShowArgtype = C:Show $cshowsPrec_a1Lf $cshow_a1M0 $cshowList_a1M7
+
+$cshow_a1M0 = \ x_a1Sq -> showsPrec $fShowArgtype (I# 0#) x_a1Sq []
+
+$cshowList_a1M7
+  = \ ls_a1Sl s_a1Sm ->
+      showList__ (showsPrec $fShowArgtype (I# 0#)) ls_a1Sl s_a1Sm
+
+$cshowsPrec_a1Lf
+  = \ ds_d1S8 ds_d1S9 ->
+      case ds_d1S9 of {
+        Name_type tn_aWQ -> showString tn_aWQ;
+        Basic_type bt_aWR -> shows $fShowBase_type bt_aWR;
+        List_type at_aWS -> . lsq (. (shows $fShowArgtype at_aWS) rsq);
+        Tuple_type ats_aWT ->
+          . lbrack
+            (. (sep_list list_separator (shows $fShowArgtype) ats_aWT) rbrack);
+        Array_type at_aWV at'_aWW ->
+          showParen
+            (>= $fOrdInt ds_d1S8 apply_prec)
+            (. array_type_name
+               (. space
+                  (. (showsPrec $fShowArgtype apply_prec at_aWV)
+                     (. space (showsPrec $fShowArgtype apply_prec at'_aWW)))))
+      }
+end Rec }
+
+showsType_decl
+  = \ ds_d1Q5 ->
+      case ds_d1Q5 of { (tn_aWY, ht_aWZ) ->
+      . data_name
+        (. space
+           (. (showString tn_aWY)
+              (. type_def
+                 (. (sep_list
+                       union
+                       (\ ds_d1Q8 ->
+                          case ds_d1Q8 of { (c_aX1, ats_aX2) ->
+                          . (showString c_aX1)
+                            (. field_separator
+                               (sep_list
+                                  field_separator (showsPrec $fShowArgtype apply_prec) ats_aX2))
+                          })
+                       ht_aWZ)
+                    (. space derive_eq)))))
+      }
+
+$dIP_a1C2
+  = (pushCallStack
+       (unpackCString# "error"#,
+        SrcLoc
+          (unpackCString# "main"#)
+          (unpackCString# "Types"#)
+          (unpackCString# "Types.lhs"#)
+          (I# 211#)
+          (I# 44#)
+          (I# 211#)
+          (I# 49#))
+       emptyCallStack)
+    `cast` <Co:4> :: ...
+
+int_to_double
+  = \ n_a13M -> fromIntegral $fIntegralInt $fNumDouble n_a13M
+
+int_to_float
+  = \ n_aZb -> fromIntegral $fIntegralInt $fNumFloat n_aZb
+
+Rec {
+$fShowValue = C:Show $cshowsPrec_a1JH $cshow_a1KY $cshowList_a1L5
+
+$cshow_a1KY = \ x_a1Sq -> showsPrec $fShowValue (I# 0#) x_a1Sq []
+
+$cshowList_a1L5
+  = \ ls_a1Sl s_a1Sm ->
+      showList__ (showsPrec $fShowValue (I# 0#)) ls_a1Sl s_a1Sm
+
+$dShow_a1C6 = $fShow(,) $fShowValue $fShowValue
+
+$cshowsPrec_a1JH
+  = let { $dShow_a1KW = $fShow[] $dShow_a1C6 } in
+    \ d_aWu ds_d1RR ->
+      case ds_d1RR of {
+        Num_val ds_d1S6 n_aWv ->
+          case ds_d1S6 of {
+            Int_type -> showsPrec $fShowInt d_aWu n_aWv;
+            Integer_type -> showsPrec $fShowInt d_aWu n_aWv;
+            Float_type -> showsPrec $fShowFloat d_aWu (int_to_float n_aWv);
+            Double_type -> showsPrec $fShowDouble d_aWu (int_to_double n_aWv)
+          };
+        Bool_val b_aWD -> showsPrec $fShowBool d_aWu b_aWD;
+        Char_val c_aWF -> showsPrec $fShowChar d_aWu c_aWF;
+        List_val vs_aWG ->
+          . lsq (. (sep_list list_separator (shows $fShowValue) vs_aWG) rsq);
+        Tuple_val vs_aWH ->
+          . lbrack
+            (. (sep_list list_separator (shows $fShowValue) vs_aWH) rbrack);
+        Tagged_val c_aWJ vs_aWK ->
+          showParen
+            (>= $fOrdInt d_aWu apply_prec)
+            (. (showString c_aWJ)
+               (. field_separator
+                  (sep_list
+                     field_separator (showsPrec $fShowValue apply_prec) vs_aWK)));
+        Array_val ds_d1S7 avs_aWO ->
+          case ds_d1S7 of { (v_aWM, v'_aWN) ->
+          showParen
+            (>= $fOrdInt d_aWu apply_prec)
+            (. array_name
+               (. space
+                  (. (showsPrec
+                        $fShowValue apply_prec (Tuple_val (: v_aWM (: v'_aWN []))))
+                     (. space (showsPrec $dShow_a1KW apply_prec avs_aWO)))))
+          }
+      }
+end Rec }
+
+showsVal_decl
+  = \ ds_d1Q4 ->
+      case ds_d1Q4 of { (vn_aX3, v_aX4) ->
+      . (showString vn_aX3) (. val_def (shows $fShowValue v_aX4))
+      }
+
+Rec {
+vrange
+  = \ ds_d1OS ->
+      join {
+        fail_d1PP _
+          = error
+              $dIP_a1C2
+              (++
+                 (unpackCString# "Error: vrange called on "#)
+                 (show $dShow_a1C6 ds_d1OS)) } in
+      case ds_d1OS of { (ds_d1PI, ds_d1PJ) ->
+      case ds_d1PI of {
+        __DEFAULT -> jump fail_d1PP void#;
+        Num_val ds_d1PK n_aX5 ->
+          case ds_d1PK of {
+            __DEFAULT -> jump fail_d1PP void#;
+            Int_type ->
+              case ds_d1PJ of {
+                __DEFAULT -> jump fail_d1PP void#;
+                Num_val ds_d1PL n'_aX6 ->
+                  case ds_d1PL of {
+                    __DEFAULT -> jump fail_d1PP void#;
+                    Int_type ->
+                      letrec {
+                        ds_d1Pj
+                          = \ ds_d1Pk ->
+                              case ds_d1Pk of {
+                                [] -> [];
+                                : ds_d1Pl ds_d1Pm -> : (int_val ds_d1Pl) (ds_d1Pj ds_d1Pm)
+                              }; } in
+                      ds_d1Pj (enumFromTo $fEnumInt n_aX5 n'_aX6)
+                  }
+              };
+            Integer_type ->
+              case ds_d1PJ of {
+                __DEFAULT -> jump fail_d1PP void#;
+                Num_val ds_d1PM n'_aX9 ->
+                  case ds_d1PM of {
+                    __DEFAULT -> jump fail_d1PP void#;
+                    Integer_type ->
+                      letrec {
+                        ds_d1Pn
+                          = \ ds_d1Po ->
+                              case ds_d1Po of {
+                                [] -> [];
+                                : ds_d1Pp ds_d1Pq ->
+                                  : (Num_val Integer_type ds_d1Pp) (ds_d1Pn ds_d1Pq)
+                              }; } in
+                      ds_d1Pn (enumFromTo $fEnumInt n_aX5 n'_aX9)
+                  }
+              }
+          };
+        Bool_val b_aXb ->
+          case ds_d1PJ of {
+            __DEFAULT -> jump fail_d1PP void#;
+            Bool_val b'_aXc ->
+              letrec {
+                ds_d1Pt
+                  = \ ds_d1Pu ->
+                      case ds_d1Pu of {
+                        [] -> [];
+                        : ds_d1Pv ds_d1Pw -> : (Bool_val ds_d1Pv) (ds_d1Pt ds_d1Pw)
+                      }; } in
+              ds_d1Pt (enumFromTo $fEnumBool b_aXb b'_aXc)
+          };
+        Char_val c_aXe ->
+          case ds_d1PJ of {
+            __DEFAULT -> jump fail_d1PP void#;
+            Char_val c'_aXf ->
+              letrec {
+                ds_d1Py
+                  = \ ds_d1Pz ->
+                      case ds_d1Pz of {
+                        [] -> [];
+                        : ds_d1PA ds_d1PB -> : (Char_val ds_d1PA) (ds_d1Py ds_d1PB)
+                      }; } in
+              ds_d1Py (enumFromTo $fEnumChar c_aXe c'_aXf)
+          };
+        Tuple_val vs_aXh ->
+          case ds_d1PJ of {
+            __DEFAULT -> jump fail_d1PP void#;
+            Tuple_val vs'_aXi ->
+              letrec {
+                ds_d1PD
+                  = \ ds_d1PE ->
+                      case ds_d1PE of {
+                        [] -> [];
+                        : ds_d1PF ds_d1PG -> : (Tuple_val ds_d1PF) (ds_d1PD ds_d1PG)
+                      }; } in
+              ds_d1PD
+                (letrec {
+                   f_a1AC
+                     = \ ds_d1PR ->
+                         case ds_d1PR of {
+                           [] -> : [] [];
+                           : vs_aXk vss_aXl ->
+                             letrec {
+                               ds_d1PU
+                                 = \ ds_d1PV ->
+                                     case ds_d1PV of {
+                                       [] -> [];
+                                       : ds_d1PW ds_d1PX ->
+                                         letrec {
+                                           ds_d1PY
+                                             = \ ds_d1PZ ->
+                                                 case ds_d1PZ of {
+                                                   [] -> ds_d1PU ds_d1PX;
+                                                   : ds_d1Q0 ds_d1Q1 ->
+                                                     : (: ds_d1PW ds_d1Q0) (ds_d1PY ds_d1Q1)
+                                                 }; } in
+                                         ds_d1PY (f_a1AC vss_aXl)
+                                     }; } in
+                             ds_d1PU vs_aXk
+                         }; } in
+                 f_a1AC (map vrange (zip vs_aXh vs'_aXi)))
+          }
+      }
+      }
+end Rec }
+
+Rec {
+$fShowExpression
+  = C:Show $cshowsPrec_a1Ht $cshow_a1Jp $cshowList_a1Jx
+
+$cshow_a1Jp
+  = \ x_a1Sq -> showsPrec $fShowExpression (I# 0#) x_a1Sq []
+
+$cshowList_a1Jx
+  = \ ls_a1Sl s_a1Sm ->
+      showList__ (showsPrec $fShowExpression (I# 0#)) ls_a1Sl s_a1Sm
+
+$cshowsPrec_a1Ht
+  = \ d_aQy ds_d1RC ->
+      case ds_d1RC of {
+        Apply_exp e1_aQz e2_aQA ->
+          showParen
+            (> $fOrdInt d_aQy apply_prec)
+            (. (showsPrec $fShowExpression apply_prec e1_aQz)
+               (. space
+                  (showsPrec $fShowExpression (+ $fNumInt apply_prec one) e2_aQA)));
+        Id_exp vn_aTd ->
+          showParen
+            (case vn_aTd of {
+               __DEFAULT ->
+                 case patError "Types.lhs:290:14-45|function is_op"# of { };
+               : c_aTf _ -> not (isAlpha c_aTf)
+             })
+            (showString vn_aTd);
+        Val_exp v_aWj -> showsPrec $fShowValue d_aQy v_aWj;
+        Tagged_exp c_aWl es_aWm ->
+          showParen
+            (> $fOrdInt d_aQy apply_prec)
+            (. (showString c_aWl)
+               (. field_separator
+                  (sep_list
+                     field_separator
+                     (showsPrec $fShowExpression (+ $fNumInt apply_prec one))
+                     es_aWm)));
+        List_exp es_aWn ->
+          . lsq
+            (. (sep_list list_separator (shows $fShowExpression) es_aWn) rsq);
+        Tuple_exp es_aWo ->
+          . lbrack
+            (. (sep_list list_separator (shows $fShowExpression) es_aWo)
+               rbrack);
+        Lambda_exp vn_aWp e_aWq ->
+          . lbrack
+            (. lambda_name
+               (. (showString vn_aWp)
+                  (. space
+                     (. map_name
+                        (. space (. (shows $fShowExpression e_aWq) rbrack))))));
+        Array_exp e_aWs e'_aWt ->
+          showParen
+            (> $fOrdInt d_aQy apply_prec)
+            (. array_name
+               (. space
+                  (. (showsPrec $fShowExpression (+ $fNumInt apply_prec one) e_aWs)
+                     (. space
+                        (showsPrec $fShowExpression (+ $fNumInt apply_prec one) e'_aWt)))))
+      }
+end Rec }
+
+
+

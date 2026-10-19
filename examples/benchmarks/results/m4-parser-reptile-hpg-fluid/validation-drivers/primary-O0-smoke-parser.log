@@ -1,0 +1,46 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1461 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt BENCH_FILTER='parser-' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.Ygvi3e
+BENCH parser-lazy smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 500
+PASS parser-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 500
+PASS parser-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 500
+PASS parser-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 500
+PASS parser-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+BENCH parser-strict smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 500
+PASS parser-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

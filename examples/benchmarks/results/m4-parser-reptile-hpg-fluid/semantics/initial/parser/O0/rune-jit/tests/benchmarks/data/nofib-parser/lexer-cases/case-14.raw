@@ -1,0 +1,6 @@
+exception
+
+
+Lexical error, line 1, col 2:
+   Bad character literal
+

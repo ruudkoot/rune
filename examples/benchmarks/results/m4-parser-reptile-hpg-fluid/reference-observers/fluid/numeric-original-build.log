@@ -1,0 +1,98 @@
+[ 1 of 11] Compiling Norm             ( Norm.hs, Norm.o )
+
+Norm.hs:21:1: warning: [-Wtabs]
+    Tab character found here, and in 27 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+21 |                 if b then True
+   | ^^^^^^^^
+[ 2 of 11] Compiling S_Array          ( S_Array.hs, S_Array.o )
+
+S_Array.hs:15:1: warning: [-Wtabs]
+    Tab character found here, and in 449 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+15 |                 S_array,                   -- counterpart of Array
+   | ^^^^^^^^
+[ 3 of 11] Compiling Defs             ( Defs.hs, Defs.o )
+
+Defs.hs:14:1: warning: [-Wtabs]
+    Tab character found here, and in three further locations.
+    Suggested fix: Please use spaces instead.
+   |
+14 |         Frac_type, My_Array, v_nodel, p_nodel,
+   | ^^^^^^^^
+[ 4 of 11] Compiling L_matrix         ( L_matrix.hs, L_matrix.o )
+
+L_matrix.hs:16:15: warning: [-Wtabs]
+    Tab character found here, and in 32 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+16 | import S_Array  -- not needed w/ proper module handling
+   |               ^^
+[ 5 of 11] Compiling Asb_routs        ( Asb_routs.hs, Asb_routs.o )
+
+Asb_routs.hs:14:1: warning: [-Wtabs]
+    Tab character found here, and in 32 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+14 |         ( get_asb_table, get_val, list_inner_prod, list_match_prod, add_mat, add_u, mult )
+   | ^^^^^^^^
+[ 6 of 11] Compiling C_matrix         ( C_matrix.hs, C_matrix.o )
+
+C_matrix.hs:24:15: warning: [-Wtabs]
+    Tab character found here, and in 126 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+24 | import S_Array  -- not needed w/ proper module handling
+   |               ^^
+[ 7 of 11] Compiling S_matrix         ( S_matrix.hs, S_matrix.o )
+
+S_matrix.hs:19:15: warning: [-Wtabs]
+    Tab character found here, and in 66 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+19 | import S_Array  -- not needed w/ proper module handling
+   |               ^^
+[ 8 of 11] Compiling Tol_cal          ( Tol_cal.hs, Tol_cal.o )
+
+Tol_cal.hs:11:15: warning: [-Wtabs]
+    Tab character found here, and in 30 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+11 | import S_Array  -- not needed w/ proper module handling
+   |               ^^
+[ 9 of 11] Compiling Jcb_method       ( Jcb_method.hs, Jcb_method.o )
+
+Jcb_method.hs:16:15: warning: [-Wtabs]
+    Tab character found here, and in 317 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+16 | import S_Array  -- not needed w/ proper module handling
+   |               ^^
+[10 of 11] Compiling Main             ( Main.hs, Main.o )
+
+Main.hs:19:41: warning: [-Woperator-whitespace-ext-conflict]
+    The prefix use of a ‘$’ would denote an untyped splice
+      were the TemplateHaskell extension enabled.
+    Suggested fix: Add whitespace after the ‘$’.
+   |
+19 |    dump("diffusion-"++show i)(concatMap($factors)(s_elems s_mat))
+   |                                         ^
+
+Main.hs:20:42: warning: [-Woperator-whitespace-ext-conflict]
+    The prefix use of a ‘$’ would denote an untyped splice
+      were the TemplateHaskell extension enabled.
+    Suggested fix: Add whitespace after the ‘$’.
+   |
+20 |    dump("gradient-a-"++show i)(concatMap($a)(s_elems l_mat))
+   |                                          ^
+
+Main.hs:21:42: warning: [-Woperator-whitespace-ext-conflict]
+    The prefix use of a ‘$’ would denote an untyped splice
+      were the TemplateHaskell extension enabled.
+    Suggested fix: Add whitespace after the ‘$’.
+   |
+21 |    dump("gradient-b-"++show i)(concatMap($b)(s_elems l_mat'))
+   |                                          ^
+[11 of 11] Linking observe

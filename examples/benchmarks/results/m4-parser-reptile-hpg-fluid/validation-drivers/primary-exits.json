@@ -1,0 +1,146 @@
+[
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "parser",
+    "configs": "rune,rune:new,rune:jit,rune:opt",
+    "exit": 0,
+    "elapsed_seconds": 54.10125661401253,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O0-smoke-parser.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "reptile",
+    "configs": "rune,rune:new,rune:jit,rune:opt",
+    "exit": 0,
+    "elapsed_seconds": 54.64258113599499,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O0-smoke-reptile.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "hpg",
+    "configs": "rune,rune:new,rune:jit,rune:opt",
+    "exit": 0,
+    "elapsed_seconds": 53.804254126007436,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O0-smoke-hpg.log"
+  },
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "fluid",
+    "configs": "rune,rune:new,rune:jit,rune:opt",
+    "exit": 0,
+    "elapsed_seconds": 45.28728688698902,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O0-smoke-fluid.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "parser",
+    "configs": "rune,rune:new,rune:jit,rune:opt",
+    "exit": 0,
+    "elapsed_seconds": 504.93426677900425,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O0-normal-parser.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "reptile",
+    "configs": "rune,rune:new,rune:jit,rune:opt",
+    "exit": 0,
+    "elapsed_seconds": 350.36989000400354,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O0-normal-reptile.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "hpg",
+    "configs": "rune,rune:new,rune:jit,rune:opt",
+    "exit": 0,
+    "elapsed_seconds": 570.6697885500034,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O0-normal-hpg.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "fluid",
+    "configs": "rune,rune:new,rune:jit,rune:opt",
+    "exit": 0,
+    "elapsed_seconds": 211.65787390299374,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O0-normal-fluid.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "parser",
+    "configs": "rune,rune:new,rune:jit,rune:opt,hosts",
+    "exit": 0,
+    "elapsed_seconds": 131.64715716899082,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O2-smoke-parser.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "reptile",
+    "configs": "rune,rune:new,rune:jit,rune:opt,hosts",
+    "exit": 2,
+    "elapsed_seconds": 144.5598363110039,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O2-smoke-reptile.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "hpg",
+    "configs": "rune,rune:new,rune:jit,rune:opt,hosts",
+    "exit": 2,
+    "elapsed_seconds": 108.79062484600581,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O2-smoke-hpg.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "fluid",
+    "configs": "rune,rune:new,rune:jit,rune:opt,hosts",
+    "exit": 2,
+    "elapsed_seconds": 162.29493959399406,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O2-smoke-fluid.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "parser",
+    "configs": "rune,rune:new,rune:jit,rune:opt,hosts",
+    "exit": 0,
+    "elapsed_seconds": 420.1301073520008,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O2-normal-parser.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "reptile",
+    "configs": "rune,rune:new,rune:jit,rune:opt,hosts",
+    "exit": 0,
+    "elapsed_seconds": 401.1703286289994,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O2-normal-reptile.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "hpg",
+    "configs": "rune,rune:new,rune:jit,rune:opt,hosts",
+    "exit": 2,
+    "elapsed_seconds": 506.22872823999205,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O2-normal-hpg.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "fluid",
+    "configs": "rune,rune:new,rune:jit,rune:opt,hosts",
+    "exit": 2,
+    "elapsed_seconds": 620.2586223880062,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/primary-O2-normal-fluid.log"
+  }
+]

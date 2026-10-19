@@ -1,0 +1,45 @@
+ M Makefile
+ M docs/plans/benchmarks.md
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M scripts/benchmark-inventory.py
+ M tests/basis/run-matrix.sh
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/fluid-lazy/
+?? examples/benchmarks/fluid-strict/
+?? examples/benchmarks/hpg-lazy/
+?? examples/benchmarks/hpg-strict/
+?? examples/benchmarks/parser-lazy/
+?? examples/benchmarks/parser-strict/
+?? examples/benchmarks/reptile-lazy/
+?? examples/benchmarks/reptile-strict/
+?? examples/benchmarks/shared/nofib-fluid-check.sml
+?? examples/benchmarks/shared/nofib-fluid-float-show.sml
+?? examples/benchmarks/shared/nofib-fluid-kernel.sml
+?? examples/benchmarks/shared/nofib-fluid-sparse.sml
+?? examples/benchmarks/shared/nofib-hpg-check.sml
+?? examples/benchmarks/shared/nofib-hpg-kernel.sml
+?? examples/benchmarks/shared/nofib-hpg-random.sml
+?? examples/benchmarks/shared/nofib-parser-check.sml
+?? examples/benchmarks/shared/nofib-parser-kernel.sml
+?? examples/benchmarks/shared/nofib-parser-lexer.sml
+?? examples/benchmarks/shared/nofib-parser-literals.sml
+?? examples/benchmarks/shared/nofib-reptile-check.sml
+?? examples/benchmarks/shared/nofib-reptile-kernel.sml
+?? examples/benchmarks/shared/upstream/
+?? tests/benchmarks/application-test-io.sml
+?? tests/benchmarks/check-matrix-status.sh
+?? tests/benchmarks/check-nofib-applications.sh
+?? tests/benchmarks/check-nofib-fluid.sh
+?? tests/benchmarks/check-nofib-hpg.sh
+?? tests/benchmarks/check-nofib-parser.sh
+?? tests/benchmarks/check-nofib-reptile.sh
+?? tests/benchmarks/data/nofib-fluid/
+?? tests/benchmarks/data/nofib-hpg/
+?? tests/benchmarks/data/nofib-parser/
+?? tests/benchmarks/data/nofib-reptile/
+?? tests/benchmarks/nofib-fluid-tests.sml
+?? tests/benchmarks/nofib-hpg-tests.sml
+?? tests/benchmarks/nofib-parser-tests.sml
+?? tests/benchmarks/nofib-reptile-tests.sml

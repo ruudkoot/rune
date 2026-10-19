@@ -1,0 +1,1 @@
+reptile-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/signed64.sml shared/nofib-reptile-kernel.sml shared/nofib-reptile-check.sml reptile-strict/benchmark.sml shared/main.sml	500 normal.input 5113F639C24EF047	reptile-strict/normal.expected	normal.input

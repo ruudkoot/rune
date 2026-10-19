@@ -514,6 +514,14 @@ M4 applications and M8 coverage closure remain unfinished.
 | [nucleic2-strict](#nucleic2-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/nucleic2) | Search the binary32 Pseudoknot problem with on-demand coordinates and eager finite data. |
 | [nucleic2-shared-lazy](#nucleic2-shared-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/nucleic2) | Search the binary32 Pseudoknot problem with shared placed coordinates and memoized finite data. |
 | [nucleic2-shared-strict](#nucleic2-shared-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/nucleic2) | Search the binary32 Pseudoknot problem with shared placed coordinates and eager finite data. |
+| [parser-lazy](#parser-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/parser) | Parse and render Haskell modules using layout, higher-order combinators and a dynamic fixity environment. |
+| [parser-strict](#parser-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/parser) | Parse and render Haskell modules using layout, higher-order combinators and a dynamic fixity environment. |
+| [reptile-lazy](#reptile-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/reptile) | Generate and hash a scripted MGR tiling-editor protocol with exact rational geometry. |
+| [reptile-strict](#reptile-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/reptile) | Generate and hash a scripted MGR tiling-editor protocol with exact rational geometry. |
+| [hpg-lazy](#hpg-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/hpg) | Generate and hash seeded Haskell types, values and expressions through continuation-passing functions. |
+| [hpg-strict](#hpg-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/hpg) | Generate and hash seeded Haskell types, values and expressions through continuation-passing functions. |
+| [fluid-lazy](#fluid-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fluid) | Solve and hash the supplied finite-element flow model using sparse tries, Cholesky and Jacobi methods. |
+| [fluid-strict](#fluid-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fluid) | Solve and hash the supplied finite-element flow model using sparse tries, Cholesky and Jacobi methods. |
 
 ## Running and interpreting checks
 
@@ -34506,3 +34514,59 @@ independent result checks and literature.
 See the [complete provenance](nucleic2-shared-strict/PROVENANCE.md) for the molecular search,
 source variants, binary32 semantics, demand/sharing policy, fixed profiles,
 independent result checks and literature.
+
+
+## parser-lazy
+
+See the [complete provenance](parser-lazy/PROVENANCE.md) for the workload,
+source history, variants, translation, input profiles, result checks and references.
+Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+
+
+## parser-strict
+
+See the [complete provenance](parser-strict/PROVENANCE.md) for the workload,
+source history, variants, translation, input profiles, result checks and references.
+Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+
+
+## reptile-lazy
+
+See the [complete provenance](reptile-lazy/PROVENANCE.md) for the workload,
+source history, variants, translation, input profiles, result checks and references.
+Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+
+
+## reptile-strict
+
+See the [complete provenance](reptile-strict/PROVENANCE.md) for the workload,
+source history, variants, translation, input profiles, result checks and references.
+Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+
+
+## hpg-lazy
+
+See the [complete provenance](hpg-lazy/PROVENANCE.md) for the workload,
+source history, variants, translation, input profiles, result checks and references.
+Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+
+
+## hpg-strict
+
+See the [complete provenance](hpg-strict/PROVENANCE.md) for the workload,
+source history, variants, translation, input profiles, result checks and references.
+Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+
+
+## fluid-lazy
+
+See the [complete provenance](fluid-lazy/PROVENANCE.md) for the workload,
+source history, variants, translation, input profiles, result checks and references.
+Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+
+
+## fluid-strict
+
+See the [complete provenance](fluid-strict/PROVENANCE.md) for the workload,
+source history, variants, translation, input profiles, result checks and references.
+Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.

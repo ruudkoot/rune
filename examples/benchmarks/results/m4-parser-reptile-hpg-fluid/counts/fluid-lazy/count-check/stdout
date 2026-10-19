@@ -1,0 +1,5 @@
+COUNT unbudgeted fluid-lazy normal rune
+COUNT unbudgeted fluid-lazy normal rune:opt
+COUNT unbudgeted fluid-lazy normal rune:new
+COUNT unbudgeted fluid-lazy normal rune:jit
+COUNT comparisons agree

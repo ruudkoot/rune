@@ -1,0 +1,23 @@
+{
+  "application": "fluid",
+  "build_exit": 0,
+  "build_command": [
+    "ghc",
+    "-O2",
+    "-cpp",
+    "-rtsopts",
+    "-fforce-recomp",
+    "Main.hs",
+    "-o",
+    "original"
+  ],
+  "exit": 0,
+  "input_bytes": 1041,
+  "args": [
+    "35"
+  ],
+  "stdout_bytes": 0,
+  "lines": 0,
+  "fixture_equal": false,
+  "elapsed_seconds": 0.14304733276367188
+}

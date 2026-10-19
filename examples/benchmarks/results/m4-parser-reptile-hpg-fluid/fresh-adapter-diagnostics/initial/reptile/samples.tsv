@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+reptile-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	15.33	11.81	1.63	666020	-	-	-	reptile-lazy/native-mlton/build/compile
+reptile-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.68	0.70	0.05	49588	-	-	-	reptile-lazy/native-mlton/correctness.0
+reptile-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.72	0.75	0.05	49620	-	-	-	reptile-lazy/native-mlton/fresh.1
+reptile-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	0.56	0.55	0.06	40992	-	-	-	reptile-lazy/native-smlnj-legacy/build/compile
+reptile-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	2.18	2.60	0.42	117412	-	-	-	reptile-lazy/native-polyml/build/compile
+reptile-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	2.57	2.36	1.94	99960	-	-	-	reptile-lazy/native-polyml/correctness.0
+reptile-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	2.43	2.47	1.21	103032	-	-	-	reptile-lazy/native-polyml/fresh.1
+reptile-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	12.40	10.69	2.17	670752	-	-	-	reptile-strict/native-mlton/build/compile
+reptile-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.22	0.20	0.02	44092	-	-	-	reptile-strict/native-mlton/correctness.0
+reptile-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.22	0.19	0.04	44072	-	-	-	reptile-strict/native-mlton/fresh.1
+reptile-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	0.60	0.56	0.07	37048	-	-	-	reptile-strict/native-smlnj-legacy/build/compile
+reptile-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	4.19	2.48	0.29	111888	-	-	-	reptile-strict/native-polyml/build/compile
+reptile-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.28	0.22	0.09	42796	-	-	-	reptile-strict/native-polyml/correctness.0
+reptile-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.27	0.19	0.11	42888	-	-	-	reptile-strict/native-polyml/fresh.1

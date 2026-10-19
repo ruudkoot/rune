@@ -1,0 +1,276 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/export.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/1.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/2.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/3.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/4.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/4.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val filter :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/5.sml]
+structure BenchSigned64 : sig
+  structure W : <sig>
+  val sign : Word64.word
+  val minusOne : Word64.word
+  val negative : Word64.word -> bool
+  val negate : Word64.word -> Word64.word
+  val magnitude : Word64.word -> Word64.word
+  val less : Word64.word * Word64.word -> bool
+  val leq : Word64.word * Word64.word -> bool
+  val quotient : Word64.word * ?.word64 -> Word64.word
+  val remainder : Word64.word * ?.word64 -> Word64.word
+  val divide : Word64.word * ?.word64 -> Word64.word
+  val modulo : Word64.word * ?.word64 -> Word64.word
+  val gcd : Word64.word * Word64.word -> Word64.word
+  val lcm : ?.word64 * ?.word64 -> ?.word64
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:351.17-351.54 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: word D.t
+  operand:         integer
+  in expression:
+    (orient xymax) n
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:475.2-481.68 Error: unresolved flex record (need to know the names of ALL the fields
+ in this context)
+  type: {1:char F.node D.t, 2:'Y BenchLazy.state ref,
+          3:'X BenchLazy.state ref; 'Z}
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:486.6-486.61 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:525.25-525.57 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: word D.t
+  operand:         Word64.word D.t
+  in expression:
+    (orient xymax) old
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:534.42-534.65 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: word D.t
+  operand:         Word64.word D.t
+  in expression:
+    (orient xymax) old
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:534.82-534.106 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: word D.t
+  operand:         Word64.word D.t
+  in expression:
+    (orient xymax) next
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:544.42-544.65 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: word D.t
+  operand:         ?.word64 D.t
+  in expression:
+    (orient xymax) old
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:544.82-544.106 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: word D.t
+  operand:         ?.word64 D.t
+  in expression:
+    (orient xymax) next
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:588.40-588.57 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: char F.node D.t
+                    -> ((Word64.word F.node D.t * 'Z) F.node D.t * 'Y
+                         * ((Word64.word D.t * Word64.word D.t) D.t * word D.t)
+                             F.node D.t) BenchLazy.state ref
+                    -> 'X C.node BenchNeed.t -> 'W BenchLazy.state ref
+  operand:         char F.node D.t
+                    -> ((Word64.word F.node D.t * 'Z) F.node D.t * 'Y
+                         * ((Word64.word D.t * Word64.word D.t) D.t
+                              * Word64.word D.t) F.node D.t) BenchLazy.state 
+                      ref
+                    -> 'V
+                    -> (char F.node D.t
+                         * ((Word64.word F.node D.t * 'Z) F.node D.t * 'Y
+                              * ((Word64.word D.t * Word64.word D.t) D.t
+                                   * Word64.word D.t) F.node D.t) 
+                             BenchLazy.state ref * 'V) BenchLazy.state ref
+  in expression:
+    invoke delsq
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:584.18-594.48 Error: types of if branches do not agree [tycon mismatch]
+  then branch: char F.node D.t
+                * ((Word64.word F.node D.t * _) F.node D.t * Word64.word D.t
+                     * ((Word64.word D.t * Word64.word D.t) D.t
+                          * Word64.word D.t) F.node D.t) BenchLazy.state ref
+                * _ C.node BenchNeed.t
+  else branch: char F.node D.t
+                * ((Word64.word F.node D.t * _) F.node D.t * Word64.word D.t
+                     * ((Word64.word D.t * Word64.word D.t) D.t * word D.t) 
+                         F.node D.t) BenchLazy.state ref
+                * _ C.node BenchNeed.t
+  in expression:
+    if (intclear x) y
+  then (invoke tclear) rest
+  else if (intget x) y
+  then (invoke tget) rest
+  else if (intile4 x) y
+  then (invoke t4Mode) rest
+  else if (inquit x) y
+  then (invoke q) rest
+  else if (inbigtile x) y
+  then (invoke delsq) rest
+  else if (intoalter x) y
+  then (invoke tofiddleMode) rest
+  else if (intotile x) y
+  then (invoke totileMode) rest
+  else if (intodraw <exp>) y
+  then (invoke <exp>) rest
+  else if <exp> <exp> then <exp> <exp> else if <exp> then <exp> else <exp>
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:597.35-597.54 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: char F.node D.t
+                    -> ((Word64.word F.node D.t * _) F.node D.t
+                         * Word64.word D.t
+                         * ((Word64.word D.t * Word64.word D.t) D.t * word D.t)
+                             F.node D.t) BenchLazy.state ref
+                    -> _ C.node BenchNeed.t -> 'Z BenchLazy.state ref
+  operand:         char F.node D.t
+                    -> ((Word64.word F.node D.t * _) F.node D.t
+                         * Word64.word D.t
+                         * ((Word64.word D.t * Word64.word D.t) D.t
+                              * Word64.word D.t) F.node D.t) BenchLazy.state 
+                      ref
+                    -> 'Y
+                    -> (char F.node D.t
+                         * ((Word64.word F.node D.t * _) F.node D.t
+                              * Word64.word D.t
+                              * ((Word64.word D.t * Word64.word D.t) D.t
+                                   * Word64.word D.t) F.node D.t) 
+                             BenchLazy.state ref * 'Y) BenchLazy.state ref
+  in expression:
+    invoke invMode
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:603.18-605.97 Error: types of if branches do not agree [tycon mismatch]
+  then branch: char F.node D.t
+                * (?.X1 F.node D.t * Word64.word D.t
+                     * ((Word64.word D.t * Word64.word D.t) D.t
+                          * Word64.word D.t) F.node D.t) BenchLazy.state ref
+                * _ C.node BenchNeed.t
+  else branch: char F.node D.t
+                * ((Word64.word F.node D.t * _) F.node D.t * Word64.word D.t
+                     * ((Word64.word D.t * Word64.word D.t) D.t * word D.t) 
+                         F.node D.t) BenchLazy.state ref
+                * _ C.node BenchNeed.t
+  in expression:
+    if (indclear x) y
+  then (invoke dclear) rest
+  else if (indget x) y
+  then (invoke dget) rest
+  else L.force
+    ((tiletrans state) (C.cons (L.delay (fn () => <exp> <exp>),input)))
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:641.49-641.68 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: char F.node D.t
+                    -> ((Word64.word F.node D.t * _) F.node D.t
+                         * Word64.word D.t
+                         * ((Word64.word D.t * Word64.word D.t) D.t * word D.t)
+                             F.node D.t) BenchLazy.state ref
+                    -> _ C.node BenchNeed.t -> 'Z BenchLazy.state ref
+  operand:         char F.node D.t
+                    -> ((Word64.word F.node D.t * _) F.node D.t
+                         * Word64.word D.t
+                         * ((Word64.word D.t * Word64.word D.t) D.t
+                              * ?.word64 D.t) F.node D.t) BenchLazy.state ref
+                    -> 'Y
+                    -> (char F.node D.t
+                         * ((Word64.word F.node D.t * _) F.node D.t
+                              * Word64.word D.t
+                              * ((Word64.word D.t * Word64.word D.t) D.t
+                                   * ?.word64 D.t) F.node D.t) BenchLazy.state 
+                           ref * 'Y) BenchLazy.state ref
+  in expression:
+    invoke rotMode
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:642.49-642.68 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: char F.node D.t
+                    -> ((Word64.word F.node D.t * _) F.node D.t
+                         * Word64.word D.t
+                         * ((Word64.word D.t * Word64.word D.t) D.t * word D.t)
+                             F.node D.t) BenchLazy.state ref
+                    -> _ C.node BenchNeed.t -> 'Z BenchLazy.state ref
+  operand:         char F.node D.t
+                    -> ((Word64.word F.node D.t * _) F.node D.t * word D.t
+                         * ((Word64.word D.t * Word64.word D.t) D.t * word D.t)
+                             F.node D.t) BenchLazy.state ref
+                    -> 'Y
+                    -> (char F.node D.t
+                         * ((Word64.word F.node D.t * _) F.node D.t * word D.t
+                              * ((Word64.word D.t * Word64.word D.t) D.t
+                                   * word D.t) F.node D.t) BenchLazy.state ref
+                         * 'Y) BenchLazy.state ref
+  in expression:
+    invoke putMode
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YqjYMT/reptile-strict/native-smlnj-legacy/build/sources/6.sml:646.26-647.106 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ((Word64.word F.node D.t * _) F.node D.t * Word64.word D.t
+                         * ((Word64.word D.t * Word64.word D.t) D.t * word D.t)
+                             F.node D.t) BenchLazy.state ref
+  operand:         (?.X1 F.node D.t * Word64.word D.t
+                         * ((Word64.word D.t * Word64.word D.t) D.t
+                              * Word64.word D.t) F.node D.t) BenchLazy.state 
+                      ref
+  in expression:
+    potatotile initialState

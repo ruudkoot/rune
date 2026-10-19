@@ -1,0 +1,9 @@
+-- HPG version 1.20 dated 92/07/20
+-- Output from hpg (9807,65,32975) 8 4 10 6 6
+-- Random number generator seeds: (9807,65,32975)
+-- 8 types, of depth 4
+-- 10 values, of depth 6
+-- Expression depth: 6
+
+module Main (main) where {
+

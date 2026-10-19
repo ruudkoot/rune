@@ -1,0 +1,91 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1461 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt,hosts BENCH_FILTER='fluid-' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.NvSdRB
+BENCH fluid-lazy smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 35
+PASS fluid-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 35
+PASS fluid-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 35
+PASS fluid-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 35
+PASS fluid-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 35
+PASS fluid-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+FAIL fluid-lazy -- Fail: incorrect result: complete Fluid simulation output hash
+SUMMARY 1 checks, 1 failed
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 35
+PASS fluid-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 35
+PASS fluid-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+RESULT 35
+PASS fluid-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:mlkit@4.7.23 (load 1, exit 124)
+BENCH fluid-strict smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 35
+PASS fluid-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 35
+PASS fluid-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 35
+PASS fluid-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 35
+PASS fluid-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 35
+PASS fluid-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 1, exit 1)
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:smlnj32@110.99.9 (load 1, exit 1)
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:smlnj-dev@2026.2 (load 1, exit 1)
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+RESULT 35
+PASS fluid-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:mlkit@4.7.23 (load 1, exit 124)
+make: *** [Makefile:987: bench-check] Error 1

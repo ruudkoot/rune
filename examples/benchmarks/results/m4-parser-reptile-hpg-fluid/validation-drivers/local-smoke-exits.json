@@ -1,0 +1,54 @@
+[
+  {
+    "family": "parser",
+    "command": [
+      "make",
+      "bench-check",
+      "BENCH_PROFILE=smoke",
+      "BENCH_FILTER=parser-",
+      "BENCH_CONFIGS=rune"
+    ],
+    "exit": 0,
+    "elapsed_seconds": 26.89360316999955,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/local-smoke-parser.log"
+  },
+  {
+    "family": "reptile",
+    "command": [
+      "make",
+      "bench-check",
+      "BENCH_PROFILE=smoke",
+      "BENCH_FILTER=reptile-",
+      "BENCH_CONFIGS=rune"
+    ],
+    "exit": 0,
+    "elapsed_seconds": 21.89294624699687,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/local-smoke-reptile.log"
+  },
+  {
+    "family": "hpg",
+    "command": [
+      "make",
+      "bench-check",
+      "BENCH_PROFILE=smoke",
+      "BENCH_FILTER=hpg-",
+      "BENCH_CONFIGS=rune"
+    ],
+    "exit": 0,
+    "elapsed_seconds": 17.148566507996293,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/local-smoke-hpg.log"
+  },
+  {
+    "family": "fluid",
+    "command": [
+      "make",
+      "bench-check",
+      "BENCH_PROFILE=smoke",
+      "BENCH_FILTER=fluid-",
+      "BENCH_CONFIGS=rune"
+    ],
+    "exit": 0,
+    "elapsed_seconds": 16.977277641010005,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-final-applications/local-smoke-fluid.log"
+  }
+]

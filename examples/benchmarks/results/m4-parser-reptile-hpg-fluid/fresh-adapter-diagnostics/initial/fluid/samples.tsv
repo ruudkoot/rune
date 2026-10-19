@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fluid-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	14.83	14.03	1.52	1042120	-	-	-	fluid-lazy/native-mlton/build/compile
+fluid-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.32	0.28	0.05	9544	-	-	-	fluid-lazy/native-mlton/correctness.0
+fluid-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.33	0.29	0.05	9368	-	-	-	fluid-lazy/native-mlton/fresh.1
+fluid-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	0.20	0.18	0.03	35564	-	-	-	fluid-lazy/native-smlnj-legacy/build/compile
+fluid-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	1.54	2.01	0.30	127440	-	-	-	fluid-lazy/native-polyml/build/compile
+fluid-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.50	0.60	0.18	57272	-	-	-	fluid-lazy/native-polyml/correctness.0
+fluid-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.46	0.51	0.20	53296	-	-	-	fluid-lazy/native-polyml/fresh.1
+fluid-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	12.66	9.95	1.27	1042348	-	-	-	fluid-strict/native-mlton/build/compile
+fluid-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.12	0.11	0.01	6184	-	-	-	fluid-strict/native-mlton/correctness.0
+fluid-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.12	0.12	0.00	6224	-	-	-	fluid-strict/native-mlton/fresh.1
+fluid-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	0.19	0.16	0.04	36044	-	-	-	fluid-strict/native-smlnj-legacy/build/compile
+fluid-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.83	0.92	0.16	84936	-	-	-	fluid-strict/native-polyml/build/compile
+fluid-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.28	0.23	0.17	45848	-	-	-	fluid-strict/native-polyml/correctness.0
+fluid-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.30	0.27	0.20	43044	-	-	-	fluid-strict/native-polyml/fresh.1
