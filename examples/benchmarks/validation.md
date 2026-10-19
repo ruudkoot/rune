@@ -3383,3 +3383,21 @@ after 1883.9 seconds. All 160 inventory regressions and four independent native
 compile-error/timeout regressions pass. Two test-only changes have explicit
 source epochs and focused reruns. M4 remains in progress pending Anna and
 Veritas; M8 remains open.
+
+## Anna application wave, 2026-10-19
+
+[Recorded evidence](results/m4-anna/README.md) covers two ports and six
+profiles, bringing the catalogue to 505 programs/1467 profiles. All 32 Rune
+combinations pass; the matrix has 45/56 passes. Eight smoke host deadlines,
+two normal SML/NJ32 type-inference failures and one normal lazy ML Kit compile
+deadline remain explicit. Twelve semantic groups pass 1963 assertions each;
+one group has four passes before stopping and one reaches no assertions.
+
+All eight normal allocation samples agree under two unchanged guards. Four
+MLton/Poly/ML fresh adapter samples pass; two final legacy SML/NJ compile
+deadlines produce no accepted timings. A focused private probe confirms the
+existing SML/NJ32 literal-loss defect causes the type-inference mismatch;
+it does not alter the public source. Full make JOBS=4 check exits zero after
+1634.7 seconds. The measurement adapter now retains nonzero compiler exits
+when no image is produced, with planted status tests and the existing
+measurement regressions passing. M4 remains in progress and M8 remains open.

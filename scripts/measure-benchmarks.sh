@@ -204,7 +204,10 @@ while IFS="$(printf '\t')" read -r name seconds memory sources args expected inp
           echo 'val _ = OS.Process.exit OS.Process.success;'
         } > "$bundle/export.sml"
         execute "$bundle/compile" "$quota" "$compiler" "$bundle/export.sml"
-        if ! ls "$bundle"/prog.* > /dev/null 2>&1; then phase_exit=1; fi
+        if [ "$phase_exit" = 0 ] && ! ls "$bundle"/prog.* > /dev/null 2>&1; then
+          phase_exit=1
+          echo 'compiler exited successfully without an exported SML/NJ image' >> "$phase_dir/stderr"
+        fi
         run_command=$compiler; run_file=@SMLload=$bundle/prog
         ;;
       native:polyml)

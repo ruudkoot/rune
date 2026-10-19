@@ -522,6 +522,8 @@ M4 applications and M8 coverage closure remain unfinished.
 | [hpg-strict](#hpg-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/hpg) | Generate and hash seeded Haskell types, values and expressions through continuation-passing functions. |
 | [fluid-lazy](#fluid-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fluid) | Solve and hash the supplied finite-element flow model using sparse tries, Cholesky and Jacobi methods. |
 | [fluid-strict](#fluid-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fluid) | Solve and hash the supplied finite-element flow model using sparse tries, Cholesky and Jacobi methods. |
+| [anna-lazy](#anna-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/anna) | Infer types and compute polymorphic strictness frontiers for functional Core programs. |
+| [anna-strict](#anna-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/anna) | Infer types and compute polymorphic strictness frontiers for functional Core programs. |
 
 ## Running and interpreting checks
 
@@ -34570,3 +34572,35 @@ Public profile, count and acceptance checks are [recorded](results/m4-parser-rep
 See the [complete provenance](fluid-strict/PROVENANCE.md) for the workload,
 source history, variants, translation, input profiles, result checks and references.
 Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+
+## anna-lazy
+
+Anna 0.400 parses a typed functional Core language, lambda-lifts definitions,
+infers types, eta-abstracts and computes strictness abstractions over finite
+domains. It builds constructor inverses, uses Hunt-style frontier search,
+finds recursive fixed points and generalizes polymorphic functions through
+embedding/closure compositions. Render the complete original analysis report,
+including input, inferred types, search evaluations, domains and results.
+Preserve 100 complete analyses per invocation and reopen the lattice table
+on every repetition, as the original driver does.
+
+
+See [anna-lazy/PROVENANCE.md](anna-lazy/PROVENANCE.md) for history,
+variants, adaptations, runtime questions, inputs, checks and references.
+Public validation is [recorded](results/m4-anna/README.md), including host exceptions.
+
+## anna-strict
+
+Anna 0.400 parses a typed functional Core language, lambda-lifts definitions,
+infers types, eta-abstracts and computes strictness abstractions over finite
+domains. It builds constructor inverses, uses Hunt-style frontier search,
+finds recursive fixed points and generalizes polymorphic functions through
+embedding/closure compositions. Render the complete original analysis report,
+including input, inferred types, search evaluations, domains and results.
+Preserve 100 complete analyses per invocation and reopen the lattice table
+on every repetition, as the original driver does.
+
+
+See [anna-strict/PROVENANCE.md](anna-strict/PROVENANCE.md) for history,
+variants, adaptations, runtime questions, inputs, checks and references.
+Public validation is [recorded](results/m4-anna/README.md), including host exceptions.

@@ -4,7 +4,7 @@ set -eu
 cd "$(dirname "$0")/../.."
 root=$(pwd)
 family=$1
-case "$family" in parser|reptile|hpg|fluid) ;; *) echo "unknown nofib application" >&2; exit 2 ;; esac
+case "$family" in parser|reptile|hpg|fluid|anna) ;; *) echo "unknown nofib application" >&2; exit 2 ;; esac
 catalog=$root/build/bench-catalog.rbc
 [ -f "$catalog" ] || { echo "build the catalogue with make bench-check first" >&2; exit 2; }
 mkdir -p "$root/tests/out/benchmarks"

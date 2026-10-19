@@ -748,3 +748,14 @@ The application provenance distinguishes these background references from
 independently checked fixture results and source-based hypotheses. Exact
 binary32-derived output is the selected Fluid validation rule; it has zero
 numerical error allowance for the recorded profiles.
+
+## Anna strictness analysis
+
+Baraki, [Abstract Interpretation of Polymorphic Higher-Order Functions](https://theses.gla.ac.uk/74619/),
+PhD thesis, University of Glasgow, 1993, develops embedding/closure-based
+relations between polymorphic instances. Anna's pinned BarakiConc3 and
+BarakiMeet sources explicitly identify that approach. The thesis supplies
+theoretical background; the original GHC program establishes the selected
+workload and its expected reports. Frontier representation, fixed-point
+iteration, sharing and polymorphic instantiation are source-based diagnostic
+hypotheses until benchmark measurements establish an effect.

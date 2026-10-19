@@ -1636,10 +1636,11 @@ bench-check: build/bench-catalog.rbc vm
 	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' sh scripts/run-benchmarks.sh
 
 # Bounded correctness/metadata only; wall-clock thresholds stay outside check.
-bench-smoke: build/bench-catalog.rbc vm
+bench-smoke: build/bench-catalog.rbc build/bench-report.rbc vm
 	bin/runevm-stack build/bench-catalog.rbc --check
 	sh tests/benchmarks/check-catalog.sh
 	sh tests/benchmarks/check-matrix-status.sh
+	sh tests/benchmarks/check-measurement-status.sh
 	RUNE_BENCH_COMPILE_OPTIONS=-O2 sh scripts/run-benchmarks.sh --routine --configs rune
 
 # Every imported program has a smoke and normal profile. This explicit target
