@@ -1251,11 +1251,23 @@ void ms_string_order_short(Masm *m, AsmLabel *longer) {
     as_label_free(&min); as_label_free(&lengths); as_label_free(&done);
 }
 
+/* what the section says register s holds, at tier 2 (M8 of
+   docs/plans/jit.md); REP_ANY at tier 1 and past the section */
+static int rep_of(const Masm *m, int32_t s) {
+    return m->reps && s >= 0 && (uint32_t)s < m->nlocals ? m->reps[s] : REP_ANY;
+}
+
 /* a nullary constructor's tag is its immediate; one with an argument's is
    in the object's header */
 void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless) {
     const Home *h = ms_home(m, s);
     if (h && !is_any_word(h)) { as_mov_rr(&m->a, r, h->reg); as_sar_ri(&m->a, r, 1); return; }   /* a nullary constructor */
+    /* tier 2 (native-frames.md, M2): a datatype of nullary constructors
+       alone is its immediate wherever it is; one whose constructors all
+       carry a value is a pointer to a constructor, which the section
+       vouches for, so that its word need not be tested */
+    if (rep_of(m, s) == REP_CON0) { as_ld64(&m->a, r, BASER, SLOT(s)); as_sar_ri(&m->a, r, 1); return; }
+    if (rep_of(m, s) == REP_PTR) { as_ld16(&m->a, r, h ? h->reg : (as_ld64(&m->a, r, BASER, SLOT(s)), r), (int32_t)offsetof(Obj, contag)); return; }
     AsmLabel ptr, done;
     as_label_init(&ptr); as_label_init(&done);
     if (h) as_mov_rr(&m->a, r, h->reg); else as_ld64(&m->a, r, BASER, SLOT(s));
@@ -1271,6 +1283,45 @@ void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless) {
     as_ld16(&m->a, r, r, (int32_t)offsetof(Obj, contag));
     as_bind(&m->a, &done);
     as_label_free(&ptr); as_label_free(&done);
+}
+
+/* JUMPIFNOTTAG: to target unless R(s) is a value of the constructor of tag
+   c. At tier 2 by what the section says of s (native-frames.md, M2): a
+   nullary constructor's word compared with c's; a pointer's tag compared
+   without its word tested; a word that may be either tested for its low
+   bit and then compared, as the immediate it is or by its object's tag,
+   with no kind tested (the section vouches for a constructor). Else the
+   tag made as ms_load_tag_of_con makes it, and compared. R_S0 clobbered. */
+void ms_jump_unless_tag(Masm *m, int32_t s, int32_t c, AsmLabel *target, AsmLabel *unless) {
+    const Home *h = ms_home(m, s);
+    int rep = rep_of(m, s);
+    int64_t w = IMM(c);
+    int small = w <= INT32_MAX;   /* c's word an immediate of the compare (else the tag made, then compared) */
+    if (small && ((h && !is_any_word(h)) || rep == REP_CON0)) {
+        if (h) as_cmp_ri(&m->a, h->reg, (int32_t)w); else as_cmp_mi(&m->a, BASER, SLOT(s), (int32_t)w);
+        as_jcc(&m->a, CC_NE, target);
+        return;
+    }
+    if (small && rep == REP_CON) {
+        AsmLabel imm, done; as_label_init(&imm); as_label_init(&done);
+        int r = h ? h->reg : R_S0;
+        if (!h) as_ld64(&m->a, R_S0, BASER, SLOT(s));
+        as_test_ri(&m->a, r, 1);
+        as_jcc(&m->a, CC_NE, &imm);
+        as_ld16(&m->a, R_S0, r, (int32_t)offsetof(Obj, contag));
+        as_cmp_ri(&m->a, R_S0, c);
+        as_jcc(&m->a, CC_NE, target);
+        as_jmp(&m->a, &done);
+        as_bind(&m->a, &imm);
+        as_cmp_ri(&m->a, r, (int32_t)w);
+        as_jcc(&m->a, CC_NE, target);
+        as_bind(&m->a, &done);
+        as_label_free(&imm); as_label_free(&done);
+        return;
+    }
+    ms_load_tag_of_con(m, R_S0, s, unless);
+    as_cmp_ri(&m->a, R_S0, c);
+    as_jcc(&m->a, CC_NE, target);
 }
 
 /* ---- the VM ---- */

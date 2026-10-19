@@ -695,7 +695,21 @@ loop and tier 1 make are left out (`ms_trusts`, `ms_load_obj`; a
 that is not nullary is a pointer to a constructor,
 `ms_load_tag_of_con`), and `=` on two
 values of one immediate representation compares the payloads alone
-(`ms_immediate`). The loader's lint holds a program to its section; a
+(`ms_immediate`). A constructor's tag is tested by what the section
+says of its register (native-frames.md, M2; `ms_jump_unless_tag`, and
+`ms_load_tag_of_con` for `SWITCH`): a datatype of nullary constructors
+alone is its immediate, so `JUMPIFNOTTAG` compares the word with the
+tag's; one whose constructors all carry a value is a pointer, whose tag
+is loaded with no test of the word; a mixed one is tested for its low
+bit and then compared as the immediate it is or by its object's tag,
+with no kind tested. At either tier, the test of a constructor's tag
+under `--checked` (`FIELD`, `DECON`) is compiled in only when the VM runs
+under it, which the command line says before any code is made; and
+`int_mod` by a positive power of two -- the size of a hash table -- is an
+`and` with one less than it, which is the floor's remainder of a
+negative dividend too, where an `idiv` takes tens of cycles; no negative
+divisor passes the test, a payload being 63 bits (`Int64.int`'s keeps
+the division). The loader's lint holds a program to its section; a
 program that lies to it runs wrongly at tier 2 where the interpreter
 and tier 1 would have stopped it. **A function's code fills none of its
 registers with unit** (M6 of docs/plans/performance.md; M10 to M5 of

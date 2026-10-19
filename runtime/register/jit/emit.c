@@ -437,10 +437,30 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         as_jcc(A, CC_E, slow);
         as_cmp_ri(A, R_S1, -1);
         as_jcc(A, CC_E, slow);
+        if (p == PRIM_int_mod) {
+            /* by a power of two -- a hash table's size -- an and, where an
+               idiv is tens of cycles: the floor's remainder by a positive
+               power of two is the dividend's low bits, a negative one's
+               too, and no negative divisor passes the test, a payload
+               being 63 bits (native-frames.md, M2) */
+            AsmLabel general, done; as_label_init(&general); as_label_init(&done);
+            as_lea(A, R_S3, R_S1, -1, 1, -1);
+            as_test_rr(A, R_S3, R_S1);
+            as_jcc(A, CC_NE, &general);
+            as_and_rr(A, R_S0, R_S3);
+            as_jmp(A, &done);
+            as_bind(A, &general);
+            as_divmod(A, R_S1);
+            floor_div(j, 1);
+            as_mov_rr(A, R_S0, R_S2);   /* the remainder out of R_S2, which giving a slot its word uses */
+            as_bind(A, &done);
+            as_label_free(&general); as_label_free(&done);
+            ms_set_payload(M, d, T_INT, R_S0, slow);
+            break;
+        }
         as_divmod(A, R_S1);
         /* the remainder out of R_S2, which giving a slot its word uses */
         if (p == PRIM_int_div) { floor_div(j, 0); ms_set_payload(M, d, T_INT, R_S0, slow); }
-        else if (p == PRIM_int_mod) { floor_div(j, 1); as_mov_rr(A, R_S0, R_S2); ms_set_payload(M, d, T_INT, R_S0, slow); }
         else if (p == PRIM_int_quot) ms_set_payload(M, d, T_INT, R_S0, slow);
         else { as_mov_rr(A, R_S0, R_S2); ms_set_payload(M, d, T_INT, R_S0, slow); }
         break;
@@ -833,16 +853,15 @@ void emit_CON(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     alloc(j, K_CON, b, 1, FILL_ONE, a, c, 0, NULL);
 }
 /* --checked: the tag of the constructor in rax against t */
+/* the constructor's tag tested where the VM runs under --checked (D14),
+   which is the command line's, set before any code is made: compiled in
+   there alone (native-frames.md, M2) */
 static void checked_tag(Jit *j, int32_t t, int what) {
-    AsmLabel skip; as_label_init(&skip);
-    as_cmp32_mi(A, VMR, OFF(checked), 0);
-    as_jcc(A, CC_E, &skip);
+    if (!j->vm->checked) return;
     ms_load_contag(M, R_S1, R_S0);
     as_cmp_ri(A, R_S1, t);
     /* the message names the tag found, which is in rcx */
     as_jcc(A, CC_NE, jit_fatal(j, what, 0, t, 1));
-    as_bind(A, &skip);
-    as_label_free(&skip);
 }
 void emit_DECON(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
@@ -935,9 +954,7 @@ void emit_JUMPIF(Jit *j, uint32_t pc, int32_t a, int32_t b) { branch(j, pc, a, b
 void emit_JUMPIFNOT(Jit *j, uint32_t pc, int32_t a, int32_t b) { branch(j, pc, a, b, CC_E, FATAL_JUMPIFNOT); }
 void emit_JUMPIFNOTTAG(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
-    ms_load_tag_of_con(M, R_S0, a, jit_fatal(j, FATAL_JUMPIFNOTTAG, 0, 0, 0));
-    as_cmp_ri(A, R_S0, c);
-    as_jcc(A, CC_NE, jit_label(j, (uint32_t)b));
+    ms_jump_unless_tag(M, a, c, jit_label(j, (uint32_t)b), jit_fatal(j, FATAL_JUMPIFNOTTAG, 0, 0, 0));
 }
 /* the table of n JUMPs after the instruction is a table of offsets here:
    the tag's entry, from the table's start, added to it and jumped to */

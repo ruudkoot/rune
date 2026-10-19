@@ -35,7 +35,7 @@ plan's.
 |---|---|---|
 | M0 | This roadmap | done (2026-10-12); every decision taken as recommended the same day |
 | M1 | The gate: the call measured after performance M5 to M7 | done (2026-10-19, on `db0fba57a`): the gate open; *Where we are* and the baselines measured again, the decisions' premises restated, `scripts/hol-kernel.sh` made to run on `$RUNEVM` |
-| M2 | The body: tier 2's code for an instruction | not started |
+| M2 | The body: tier 2's code for an instruction | done (2026-10-19): a constructor's tag tested by its representation, `SWITCH`'s tag likewise, the `--checked` test compiled in only under `--checked`, `int_mod` by a power of two an `and`; the bootstrap 15.230G to 14.516G instructions (−4.7%), HOL's kernel work 53.016G to 49.953G (−5.8%); cycles, an indication, −7% and −11%; `--count` and every output unchanged; `ENV`'s tests and division by a constant not built (*M2*) |
 | M3 | Frames walked, not indexed | not started |
 | M4 | Frames in the value stack | not started; prototype F1 |
 | M5 | The watermark by a return barrier | not started; prototype F1 |
@@ -1239,6 +1239,46 @@ fused with its branch and `int_add` and `int_sub` in place; what is left
   most 8;
 * no program of tests/perf or MLton's set more instructions;
 * `--count` unchanged on every program.
+
+**Done** (2026-10-19; `runtime/register/jit/masm.c`, `emit.c`; two tests
+in `tests/lang`):
+
+* **The constructor's tag by its representation** (`ms_jump_unless_tag`,
+  and `ms_load_tag_of_con` for `SWITCH`): a datatype of nullary
+  constructors alone compares its word with the tag's, in its home or its
+  slot (2 instructions); one whose constructors all carry a value loads its
+  object's tag with no test of the word, the section vouching for a
+  constructor (3); a mixed one tests its low bit and then compares the
+  immediate or the object's tag, with no kind tested (4 or 6). A layout
+  that gave both of the mixed one's paths 5 measured worse: 14.528G
+  instructions on the bootstrap against 14.516G, the immediates being the
+  commoner. Tier 1, and a register of no known representation, keep every
+  test.
+* **The test of `vm->checked`** is compiled in only when the VM runs under
+  `--checked`, at either tier: `FIELD` from 4.6 machine instructions an
+  execution to 2.6.
+* **`int_mod` by a positive power of two** is an `and` with one less than
+  it -- the floor's remainder of a negative dividend too -- at either tier,
+  where an `idiv` takes tens of cycles: the bootstrap's hash tables
+  (`IntTable`, 7.1M of its 10.5M `idiv`s). `Int64.int`'s keeps the
+  division, whose `-2^63` would pass the test.
+* **Measured** (`perf stat`, exact; the bootstrap of `results/M9/bootwl`,
+  HOL's kernel work on HOL-midM8): the bootstrap 15.230G to 14.516G
+  instructions (−4.7%), HOL's kernel work 53.016G to 49.953G (−5.8%); by
+  callgrind on the bootstrap, `JUMPIFNOTTAG`'s body 8.1 to 5.7 instructions
+  an execution and `SWITCH`'s 17.3 to 9.4 -- both short of their targets,
+  which the tag's kind would meet if the bytecode said whether a
+  constructor is nullary, as it does not. Cycles, an indication: the
+  bootstrap 9.87G to 9.15G (−7%), HOL's kernel work 26.6G to 23.7G (−11%)
+  (`scripts/M9/ab.sh`, interleaved, the least of three). Every output the
+  same, the bootstrap's byte for byte; `--count` unchanged
+  (`check-jit.sh` in every mode).
+* **Not built:** `ENV`'s and `SELF`'s tests (about 0.6% of the bootstrap's
+  instructions, about 1% of HOL's): the loader would have to hold every
+  closure of a function to its `ENV`s and keep known calls out of
+  functions with them, across units loaded later; M4 makes the closure's
+  load one instruction instead. Division by a constant: 2.5M of the
+  bootstrap's 10.5M `idiv`s, for constants the JIT does not track.
 
 ### M3. Frames walked, not indexed (M)
 

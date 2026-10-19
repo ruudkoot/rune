@@ -209,6 +209,7 @@ void ms_check_tag(Masm *m, int32_t s, int tag, AsmLabel *unless);  /* to unless 
 void ms_load_obj(Masm *m, int r, int32_t s, int kind, AsmLabel *unless);   /* r := the object R(s) points to, of that kind */
 void ms_load_obj_tested(Masm *m, int r, int32_t s, int kind, AsmLabel *unless);   /* the same, tested whatever the section says: a program's own error to report */
 void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless);      /* r := the tag of the constructor value in R(s) */
+void ms_jump_unless_tag(Masm *m, int32_t s, int32_t c, AsmLabel *target, AsmLabel *unless);   /* JUMPIFNOTTAG: to target unless R(s) has tag c (native-frames.md, M2) */
 /* the ones the emitters of M5 to M7 wrote against the slots directly,
    through here from M9, so that a register's home may be elsewhere */
 void ms_value_to(Masm *m, int base, int32_t disp, int32_t s);      /* [base + disp] := R(s), as a Value (16 bytes) */
