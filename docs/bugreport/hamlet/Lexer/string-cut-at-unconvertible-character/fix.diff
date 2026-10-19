@@ -1,0 +1,33 @@
+diff --git a/lib/LibrarySVal.sml b/lib/LibrarySVal.sml
+index 4643878..52cb283 100755
+--- a/lib/LibrarySVal.sml
++++ b/lib/LibrarySVal.sml
+@@ -51,9 +51,13 @@ struct
+         REAL(Real.checkFloat(valOf(Real.fromString s)))
+           handle Option => raise Overflow
+ 
++  (* String.fromString stops at the first character that it cannot convert,
++     and returns those before it. The whole constant must convert. *)
+   fun stringFromString(s, t_opt) =
+-        STRING(valOf(String.fromString s))
+-          handle Option => raise Overflow
++        case String.scan Substring.getc (Substring.full s) of
++          SOME(s', rest) =>
++            if Substring.isEmpty rest then STRING s' else raise Overflow
++        | NONE => raise Overflow
+ 
+   fun charFromString(s, t_opt) =
+         CHAR(valOf(Char.fromString s))
+diff --git a/parse/Lexer.lex b/parse/Lexer.lex
+index c7fccb1..716fbef 100755
+--- a/parse/Lexer.lex
++++ b/parse/Lexer.lex
+@@ -134,7 +134,7 @@
+   tyvar      = "'"({letter} | {digit} | [_'])*;
+   longid     = ({alphanumid}".")+ ({id}|"="|"*");
+ 
+-  printable  = [^\000-\032"\127\\];
++  printable  = [^\000-\032"\127-\255\\];
+   escape     = "\\a" | "\\b" | "\\t" | "\\n" | "\\v" | "\\f" | "\\r" |
+ 	       ("\\^"[@-_])  | ("\\"{digit}{3})  | ("\\u"{hexdigit}{4}) |
+ 	       "\\\"" | "\\\\";

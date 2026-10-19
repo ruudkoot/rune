@@ -122,7 +122,7 @@ On M11's commit (`667ca3eb`), with MLKit 4.7.25 (*Left open*):
 | The REPL counted an old frame's column in the newest of the texts named `stdIn` | M7 | M7, by keeping such a column in bytes |
 | The REPL's `:search 'a list -> int` found `size`, once it was overloaded | M10 | `2f56b2a3` |
 | A reader of random functions never ended in `WideStringCvt`'s laws | M9 | `811787715` |
-| Paths opened with `CreateFileA`, and arguments in the ANSI code page, on Windows | M0 | not fixed: *Later* |
+| Paths opened with `CreateFileA`, and arguments in the ANSI code page, on Windows | M0 | not fixed: *Later*, and [windows.md](windows.md) |
 
 ### Bugs found in other compilers
 
@@ -130,9 +130,9 @@ On M11's commit (`667ca3eb`), with MLKit 4.7.25 (*Left open*):
 |---|---|---|
 | MLKit 4.7.23 and 4.7.25 | a tail call inside a `let` keeps a region and a frame for every step, despite `--preserve_tail_calls`, so `unicode.utf8` takes 7 GB | `docs/bugreport/mlkit/preserve-tail-calls` (M5); not sent upstream |
 | SML/NJ 110.99.9, 64 bits | "bogus overflow fault" now and then in `Normalize`'s properties | `docs/bugreport/smlnj/GC/bogus-overflow-fault` (M5); not reduced, not sent upstream |
-| MLKit 4.7.25 | a raw TAB in a string is taken, as six spaces | none |
-| HaMLet 2.0.1 | a literal silently loses characters: `"café"` in Latin-1 is `"caf"`, and one with U+202E or a combining mark keeps only what comes before it | none |
-| Moscow ML 2.10.1 | a NUL in a comment ends the input ("comment not terminated"), where the Definition allows any character | none, here or in `rune-mosml` |
+| MLKit 4.7.25 and 4.7.23 | a raw TAB in a string or character constant is taken, as one to eight spaces | `docs/bugreport/mlkit/Lexer/tab-in-string-becomes-spaces` (2026-10-19), with an untested `fix.diff`; not sent upstream |
+| HaMLet 2.0.1 | a string constant is cut short at its first byte above 127 or escape above 255: `"café"` in Latin-1 is `"caf"` | `docs/bugreport/hamlet/Lexer/string-cut-at-unconvertible-character` (2026-10-19), with a tested `fix.diff`; not sent upstream |
+| Moscow ML 2.10.1 | the lexer takes a NUL for the end of the input: in a comment, which the Definition lets hold any character, it is "comment not terminated"; between two declarations the rest of the file is silently dropped | `docs/bugreport/mosml/Lexer/nul-ends-comment` (2026-10-19), with a tested `fix.patch`; not sent upstream. Moscow ML's other reports are on the `mosml` branch (`rune-mosml`) |
 | MLKit 4.7.25 and SML/NJ 110.99.9 | a raw DEL taken in a string, which the Definition refuses | none (an extension rather than a fault) |
 | SML/NJ 110.99.9 | `Real.fromLargeInt`'s `maxFinite` check of xc1 wrong under load, right alone | none, and no `HOST-FLAKY` line |
 | MLton 20241230 with `allowExtendedTextConsts` | checks only the shape of UTF-8, and reads a wide literal one character a byte | none (an opt-in extension) |
@@ -145,9 +145,9 @@ build of MLton compiles; Rune refuses it rightly.
 
 ### Left open
 
-- **Bug reports to write and send.** The three without one above (MLKit's
-  TAB, HaMLet's literals, Moscow ML's NUL, the last for `rune-mosml`), and
-  the two written, which are not sent.
+- **Bug reports to send.** The five above are written and none is sent
+  upstream. The Moscow ML one belongs with the `mosml` branch's reports
+  when the branches meet.
 - **`~/.local/rune-hosts/mlkit` links to MLKit 4.7.23**, and the tree needs
   4.7.25 (`scripts/fetch-hosts.sh`): `make check` stops at
   `bin/rune-mlkit.bin`, with "Mul: diffef failed", fixed in 4.7.24. Every
@@ -4176,7 +4176,7 @@ was passed on 2026-10-18 with D20.
   `STREAM_IO` laws M9 skips run at the wide width.
 - `\x`, if Successor ML adopts it (D7).
 - Windows paths and arguments in UTF-16 (`CreateFileW`, `GetCommandLineW`),
-  or a UTF-8 manifest (*Where we are*).
+  or a UTF-8 manifest (*Where we are*; recorded in [windows.md](windows.md)).
 
 ### Why this order
 

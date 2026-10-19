@@ -1,0 +1,184 @@
+--- a/src/mosmllib/Lexing.sig
++++ b/src/mosmllib/Lexing.sig
+@@ -12,6 +12,7 @@
+ val getLexemeChar     : lexbuf -> int -> char
+ val getLexemeStart    : lexbuf -> int
+ val getLexemeEnd      : lexbuf -> int
++val atEndOfInput      : lexbuf -> bool
+ 
+ (* For internal use in generated lexers: *)
+ 
+@@ -83,4 +84,10 @@
+    [getLexemeEnd lexbuf] returns the end position, plus one, of the
+    matched string (in the input stream).  The first character in the
+    stream has position 0.  
++
++   [atEndOfInput lexbuf] is true if the matched string starts at the
++   end of the input.  The pattern eof matches the character #"\000",
++   with which the lexer buffer marks the end of the input, so an
++   action for eof can use atEndOfInput to tell the end of the input
++   from a character #"\000" in the input.
+ *)
+--- a/src/mosmllib/Lexing.sml
++++ b/src/mosmllib/Lexing.sml
+@@ -9,7 +9,8 @@
+   (* lexStartPos *)    int *
+   (* lexCurrPos *)     int *
+   (* lexLastPos *)     int *
+-  (* lexLastAction *)  (lexbuf -> obj)
++  (* lexLastAction *)  (lexbuf -> obj) *
++  (* lexEndPos *)      int        (* where the input ends; ~1 if not known *)
+ ;
+ 
+ prim_val getRefillBuff    : lexbuf -> (lexbuf -> unit) = 1 "field0";
+@@ -19,6 +20,7 @@
+ prim_val getLexCurrPos    : lexbuf -> int              = 1 "field4";
+ prim_val getLexLastPos    : lexbuf -> int              = 1 "field5";
+ prim_val getLexLastAction : lexbuf -> (lexbuf -> obj)  = 1 "field6";
++prim_val getLexEndPos     : lexbuf -> int              = 1 "field7";
+ 
+ prim_val setRefillBuff    : lexbuf -> (lexbuf -> unit) -> unit = 2 "setfield0";
+ prim_val setLexBuffer     : lexbuf -> string -> unit           = 2 "setfield1";
+@@ -27,6 +29,7 @@
+ prim_val setLexCurrPos    : lexbuf -> int -> unit              = 2 "setfield4";
+ prim_val setLexLastPos    : lexbuf -> int -> unit              = 2 "setfield5";
+ prim_val setLexLastAction : lexbuf -> (lexbuf -> obj) -> unit  = 2 "setfield6";
++prim_val setLexEndPos     : lexbuf -> int -> unit           = 2 "setfield7";
+ 
+ prim_val create_string_ : int -> string                 = 1 "create_string";
+ prim_val nth_char_      : string -> int -> char         = 2 "get_nth_char";
+@@ -49,6 +52,11 @@
+     setLexCurrPos lexbuf (getLexCurrPos lexbuf - n);
+     setLexStartPos lexbuf (getLexStartPos lexbuf - n);
+     setLexLastPos lexbuf (getLexLastPos lexbuf - n);
++    (* At the end of the input the buffer gets a character #"\000", which
++       the pattern eof matches; remember where it is, so that it can be
++       told from a #"\000" in the input. *)
++    if read > 0 orelse getLexEndPos lexbuf >= 0 then ()
++    else setLexEndPos lexbuf (getLexAbsPos lexbuf + 2048 - n);
+     if getLexStartPos lexbuf < 0 then
+       raise Fail "lexer: token too long"
+     else ()
+@@ -58,12 +66,12 @@
+ fun dummyAction x = raise Fail "lexer: illegal symbol in input";
+ 
+ fun createLexer f = LEXBUF
+-  (lexRefill f, create_string_ 2048, ~2048, 2048, 2048, 2048, dummyAction)
++  (lexRefill f, create_string_ 2048, ~2048, 2048, 2048, 2048, dummyAction, ~1)
+ ;
+ 
+ fun createLexerString s = LEXBUF
+   ( fn lexbuf => setLexCurrPos lexbuf (getLexCurrPos lexbuf - 1),
+-    s ^ "\000", 0, 0, 0, 0, dummyAction )
++    s ^ "\000", 0, 0, 0, 0, dummyAction, size s )
+ ;
+ 
+ fun getLexeme lexbuf =
+@@ -92,4 +100,9 @@
+   getLexAbsPos lexbuf + getLexCurrPos lexbuf
+ ;
+ 
++fun atEndOfInput lexbuf =
++  let val endPos = getLexEndPos lexbuf
++  in endPos >= 0 andalso getLexemeStart lexbuf >= endPos end
++;
++
+ prim_val getNextChar : lexbuf -> char = 1 "get_next_char";
+--- a/src/compiler/Lexer.lex
++++ b/src/compiler/Lexer.lex
+@@ -173,6 +173,13 @@
+   raise LexicalError(msg, getLexemeStart lexbuf, getLexemeEnd lexbuf)
+ )
+ 
++(* The pattern eof matches the character #"\000", which marks the end
++   of the input; isNul tells a #"\000" of the input from the end.  The
++   Definition, Section 2.3, allows any character in a comment. *)
++
++fun isNul lexbuf =
++  getLexemeChar lexbuf 0 = #"\000" andalso not (atEndOfInput lexbuf)
++
+ fun constTooLarge msg lexbuf =
+ (
+   resetLexerState();
+@@ -307,7 +314,8 @@
+           RPAREN
+       }
+   | ";"         { SEMICOLON }
+-  | (eof | `\^Z`) { EOF }
++  | (eof | `\^Z`)
++      { if isNul lexbuf then lexError "ill-formed token" lexbuf else EOF }
+   | ""          { if !quotation then TokenIdQ lexbuf else TokenId lexbuf }
+ 
+ and TokenId = parse
+@@ -351,7 +359,8 @@
+       { (decr comment_depth;
+          if !comment_depth > 0 then Comment lexbuf else ()) }
+   | (eof | `\^Z`)
+-      { notTerminated "comment" lexbuf }
++      { if isNul lexbuf then Comment lexbuf
++        else notTerminated "comment" lexbuf }
+   | _
+       { Comment lexbuf }
+ 
+@@ -387,7 +396,9 @@
+   | `\\`
+       { skipString "ill-formed escape sequence" SkipString lexbuf }
+   | (eof | `\^Z`)
+-      { notTerminated "string" lexbuf }
++      { if isNul lexbuf then
++          skipString "invalid character in string" SkipString lexbuf
++        else notTerminated "string" lexbuf }
+   | [`\n` `\r`]
+       { skipString "newline not permitted in string" SkipString lexbuf }
+   | [`\^A`-`\^Z` `\127` `\255`]
+@@ -404,7 +415,8 @@
+   | `\\` [` ` `\t` `\n` `\r`]+ `\\`
+       { SkipString lexbuf }
+   | (eof | `\^Z`)
+-      { notTerminated "string" lexbuf }
++      { if isNul lexbuf then SkipString lexbuf
++        else notTerminated "string" lexbuf }
+   | _
+       { SkipString lexbuf }
+ 
+@@ -419,8 +431,11 @@
+       { (store_string_char(getLexemeChar lexbuf 0);
+          Quotation lexbuf) }
+   | (eof | `\^Z`)
+-      { lexingMode := NORMALlm;
+-        notTerminated "quotation" lexbuf
++      { if isNul lexbuf then
++          skipString "invalid character in quotation" SkipQuotation lexbuf
++        else
++          (lexingMode := NORMALlm;
++           notTerminated "quotation" lexbuf)
+       }
+   | [`\^A`-`\^Z` `\127` `\255`]
+       { skipString "invalid character in quotation" SkipQuotation lexbuf }
+@@ -432,8 +447,10 @@
+     "`"
+       { lexingMode := NORMALlm }
+   | (eof | `\^Z`)
+-      { lexingMode := NORMALlm;
+-        notTerminated "quotation" lexbuf
++      { if isNul lexbuf then SkipQuotation lexbuf
++        else
++          (lexingMode := NORMALlm;
++           notTerminated "quotation" lexbuf)
+       }
+   | _
+       { SkipQuotation lexbuf }
+@@ -454,8 +471,11 @@
+         lexError "antiquotation is missing" lexbuf
+       }
+   | (eof | `\^Z`)
+-      { lexingMode := NORMALlm;
+-        notTerminated "antiquotation" lexbuf
++      { if isNul lexbuf then
++          skipString "ill-formed antiquotation" SkipQuotation lexbuf
++        else
++          (lexingMode := NORMALlm;
++           notTerminated "antiquotation" lexbuf)
+       }
+   | _
+       { 

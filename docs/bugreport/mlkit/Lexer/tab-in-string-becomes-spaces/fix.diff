@@ -1,0 +1,156 @@
+diff --git a/src/Parsing/LexBasics.sml b/src/Parsing/LexBasics.sml
+index a1a1e82..201c436 100644
+--- a/src/Parsing/LexBasics.sml
++++ b/src/Parsing/LexBasics.sml
+@@ -21,8 +21,11 @@ structure LexBasics: LEX_BASICS =
+       character of the line (counting from 0). All the lines have a "\n" at
+       the end, except the last. For ordinary text files, the last line will
+       be "". For weirder files (with EOF in the middle of the line), it
+-      will be some text without a "\n". Oh: we must remove tabs in here
+-      (see also lexFromStdIn). *)
++      will be some text without a "\n". The lines are kept as they are
++      read, TABs included, since the lexer must see them: a TAB is white
++      space between tokens but not allowed in a string constant. A
++      column, and a line shown in a report, are those of the line with its
++      TABs expanded (see positionFn). *)
+ 
+     datatype SourceText =
+       SOURCE_TEXT of {filename: string,
+@@ -50,6 +53,15 @@ structure LexBasics: LEX_BASICS =
+       fun untabify indent line = implode(untabifyL(indent, explode line))
+     end
+ 
++   (* The column of the n'th character of a line in which TABs count to
++      the next multiple of 8, the line starting at column `indent'. *)
++
++    fun untabbedColumn indent (line, n) =
++      if n <= 0 then n
++      else if n <= size line then
++        size (untabify indent (String.substring (line, 0, n)))
++      else size (untabify indent line) + (n - size line)
++
+ 
+     fun withAbsCharacter (n, (x :: xs)) =
+       {absCharacter=n, line=x} :: withAbsCharacter(n+size x, xs)
+@@ -71,7 +83,7 @@ structure LexBasics: LEX_BASICS =
+ 	  case StringCvt.scanString sourceReader s
+ 	    of SOME lines => lines
+ 	     | NONE => [""]
+-	val lines = map (untabify 0) (process string)
++	val lines = process string
+       in
+ 	SOURCE_TEXT{filename=filename, lines=withAbsCharacter(0, lines)}
+       end
+@@ -85,7 +97,7 @@ structure LexBasics: LEX_BASICS =
+ 	  case TextIO.scanStream sourceReader s
+ 	    of SOME lines => lines
+ 	     | NONE => [""]
+-	val lines = map (untabify 0) (process stream)
++	val lines = process stream
+       in
+ 	TextIO.closeIn stream;
+ 	SOURCE_TEXT{filename=filename, lines=withAbsCharacter(0, lines)}
+@@ -94,9 +106,10 @@ structure LexBasics: LEX_BASICS =
+    (* `positionFn' is suspended, for efficiency. It's used in
+       lexFromSourceText (to turn a completed SourceText into a position
+       function), and we also use it when reading interactively and
+-      making up a SourceText as we go. *)
++      making up a SourceText as we go. The lines hold their TABs; `indent'
++      is the column at which a line starts, for expanding them. *)
+ 
+-    fun positionFn (sourceTextRef, absPos) =
++    fun positionFn (indent, sourceTextRef, absPos) =
+ 					(* Must start from very top... *)
+       let
+ 	fun pr n =
+@@ -116,7 +129,7 @@ structure LexBasics: LEX_BASICS =
+ 	  let
+ 	    val ref(SOURCE_TEXT{lines, ...}) = sourceTextRef
+ 	  in
+-	    #line(List.nth (lines,n-1))
++	    untabify indent (#line(List.nth (lines,n-1)))
+ 	  end
+       in
+ 	POSITION(fn () =>
+@@ -132,7 +145,7 @@ structure LexBasics: LEX_BASICS =
+ 		    case previousLine
+ 		      of SOME{absCharacter, line} =>
+ 			   {file=filename, line=n,
+-			    column=absPos-absCharacter,
++			    column=untabbedColumn indent (line, absPos-absCharacter),
+ 			    getLine=getLine
+ 			   }
+ 
+@@ -147,7 +160,7 @@ structure LexBasics: LEX_BASICS =
+ 		  (case previousLine
+ 		     of SOME{absCharacter, line} =>
+ 			  {file=filename, line=n,
+-			   column=absPos-absCharacter,
++			   column=untabbedColumn indent (line, absPos-absCharacter),
+ 			   getLine=getLine
+ 			  }
+ 
+@@ -172,7 +185,7 @@ structure LexBasics: LEX_BASICS =
+ 	SOURCE_READER{name=filename,
+ 		      clearFn=fn () => (),
+ 		      lexingFn=lexingFn,
+-		      positionFn=fn absPos => positionFn(ref source, absPos)
++		      positionFn=fn absPos => positionFn(0, ref source, absPos)
+ 		     }	(* When we're lexing from a source file, we don't have
+ 			   the `clearFn' functionality to reset the list of
+ 			   input lines - it's too much hassle to implement.
+@@ -191,10 +204,8 @@ structure LexBasics: LEX_BASICS =
+       lexFromSourceText o fileToSourceText
+ 
+    (* lexFromStdIn is more complex. (Yes: even more complex.) We are lexing as
+-      we go along and building a SourceText line by line. Oh, it's here that
+-      we get to eliminate tabs as well. They're nuked as we read the lines of
+-      source, which saves us the hassle of dealing with them later. Don't you
+-      dare use other than 8-character tabs. *)
++      we go along and building a SourceText line by line. A line keeps its
++      TABs, which positionFn expands to 8-character tabs after the prompt. *)
+ 
+     val prompt = ". "
+ 
+@@ -209,9 +220,8 @@ structure LexBasics: LEX_BASICS =
+ 	    val _ = print prompt
+ 
+ 	    val line =
+-	        untabify (String.size prompt)
+-                         (case TextIO.inputLine TextIO.stdIn of
+-			      NONE => "" | SOME s => s)
++	      case TextIO.inputLine TextIO.stdIn of
++		NONE => "" | SOME s => s
+ 
+ 	   (* The lines (and character positions) that we've got so far,
+ 	      in reverse order (latest at front of list): *)
+@@ -237,7 +247,7 @@ structure LexBasics: LEX_BASICS =
+ 	  name=name,
+ 	  clearFn=fn () => (theSource := SOURCE_TEXT{filename=name, lines=nil}),
+ 	  lexingFn=fn _ => getLine(),
+-	  positionFn=fn absPos => positionFn(theSource, absPos)
++	  positionFn=fn absPos => positionFn(String.size prompt, theSource, absPos)
+ 	}
+       end
+ 
+diff --git a/src/Parsing/Topdec.lex b/src/Parsing/Topdec.lex
+index 23796db..02d8a96 100644
+--- a/src/Parsing/Topdec.lex
++++ b/src/Parsing/Topdec.lex
+@@ -209,12 +209,15 @@ QualifiedIdNoQuote = ({AnyIdNoQuote} ".")+ {AnyIdNoQuote};
+ <AQ>.                   => (error(arg, yypos, "bad character after antiquote");
+ 			    continue());
+ 
+-<S>[^"\\\n]*		=> (LexUtils.addChars yytext arg; continue());
++<S>[^"\\\n\000-\031\127]*	=> (LexUtils.addChars yytext arg; continue());
+ <S>"\""			=> (YYBEGIN INITIAL;
+ 			    shifting "STRING(...)";
+ 			    token1(STRING, LexUtils.asString arg,
+ 				   arg, yypos, yytext)
+ 			   );
++<S>[\000-\009\011-\031\127]	=> (error(arg, yypos, "control character in string (use an escape, such as \\t)");
++			    continue()
++			   );
+ <S>\n			=> (error(arg, yypos, "unclosed string");
+ 			    YYBEGIN INITIAL;
+ 			    shifting "STRING(bad)";
