@@ -41,7 +41,7 @@ plan's.
 | M5 | The watermark by a return barrier | done (2026-10-19): the frame at the watermark returns through a stub that lowers it and moves itself to the caller; no other return compares anything; a `fib` call 29.0 to 27.0 instructions, a `tak` call 37.3 to 35.3 (targets 24 and 32 short); the bootstrap −1.1% instructions, HOL's kernel work −2.6%; 64,033 returns through the barrier in the bootstrap's 72M; `--count` and every output unchanged (*M5*) |
 | M6 | Arguments in registers | done (2026-10-19), kept: a known call, and a tail call, puts its arguments in the homes the callee's tier-2 code takes them in, at its register entry; the bootstrap −0.93% instructions (the gate 0.5%), HOL's kernel work −1.06%; a `fib` call 27.0 to 26.0 instructions, a `tak` call 35.3 to 31.7 (target for `fib` 23.5 short); `--count` and every output unchanged (*M6*) |
 | M7 | Returns the processor predicts | done (2026-10-19) behind `--jit-returns=call`, the default staying `jmp`: a call by `call`, a return by `push [r14-8]; ret`; a `fib` call 8.05 to 7.62 cycles, a `tak` call 10.08 to 8.65, the instructions the same; on the whole programs 0.1% and 0.6% more instructions and the cycles not shown better on a loaded machine (the gate 1%); M9 measures again (*M7*) |
-| M8 | The allocation pointer in a register | done (2026-10-19): the pointer in `rbp` (`x21`), an object 5 instructions before its header (10), the bytes from the pointer's progress at the syncs, the objects by a counter per object -- D7's count per run not built, the lead's call (*M8*); the bootstrap −1.59% instructions (target 2%), HOL's kernel work −6.15% (target 2.5%); `--count`'s bytes and objects unchanged everywhere |
+| M8 | The allocation pointer in a register | done (2026-10-19): the pointer in `rbp` (`x21`), an object 5 instructions before its header (10), the bytes from the pointer's progress at the syncs, the objects by a counter per object -- D7's count per run not built, the owner's decision (*M8*); the bootstrap −1.59% instructions (target 2%), HOL's kernel work −6.15% (target 2.5%); `--count`'s bytes and objects unchanged everywhere |
 | M9 | Measure again: the owner's goal | in progress: the walks of deep recursions made cheaper after MLton's set showed four programs slower than at M1 (*M9*, found on the way) |
 
 The owner took every decision as recommended on 2026-10-12 (*Decisions*).
@@ -1663,7 +1663,7 @@ objects per run, `--gc-stress` through the limit.
   same.
 * **The objects** keep a counter written per object. D7 B counts them by
   a constant added once per run that allocates. That is not built -- the
-  lead's call, 2026-10-19, which the owner may overrule: it saves the
+  owner's decision, 2026-10-19, on the lead's recommendation: it saves the
   inline allocations less the runs that make one, measured (a build with
   `RUNE_ALLOC_RUNS`) at 52.6M less 41.7M on the bootstrap, 10.9M
   instructions or 0.08%, and 542.4M less 468.7M on HOL's kernel work,

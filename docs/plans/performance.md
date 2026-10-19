@@ -2210,7 +2210,8 @@ D8 A, in this order:
   costs 7% of its instructions where it cost 2%. Compiling other programs
   is cheaper: the compile programs of tests/perf 2 to 5% fewer
   instructions (`compile-expo` +1.3%, `compile-sigs` +0.4%) and 2 to 10%
-  fewer bytes.
+  fewer bytes. The rise in the bootstrap's bytecode instructions is
+  accepted (the owner, 2026-10-19).
 * Not met: the bootstrap's 1.10 GB; `raytrace` (−70%); MLton's set but
   for those above. What is left is out of the middle end's reach: the
   bootstrap's bytes are lists (42%), balanced trees and the buckets of
