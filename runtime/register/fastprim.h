@@ -237,6 +237,13 @@ static inline int prim_fast(VM *vm, int prim, uint32_t n, const Value *base, con
     case PRIM_char_order: CHAR2; r = fast_order(val_imm(*x) < val_imm(*y), val_imm(*x) > val_imm(*y)); break;
 
     case PRIM_string_size: OBJ(x, K_STRING); FAST_INT(obj_len(val_ptr(*x))); break;
+    /* the compiler's `=` at string (performance M5): the lengths, then the bytes */
+    case PRIM_string_eq: {
+        OBJ(x, K_STRING); OBJ(y, K_STRING);
+        Obj *a = val_ptr(*x), *b = val_ptr(*y);
+        r = mk_bool(a == b || (obj_len(a) == obj_len(b) && memcmp(obj_bytes(a), obj_bytes(b), obj_len(a)) == 0));
+        break;
+    }
     case PRIM_string_sub:
         OBJ(x, K_STRING); if (!val_is(*y, T_INT) || val_imm(*y) < 0 || (uint64_t)val_imm(*y) >= obj_len(val_ptr(*x))) return 0;
         r = mk_char((unsigned char)obj_bytes(val_ptr(*x))[val_imm(*y)]); break;

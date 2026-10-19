@@ -48,7 +48,7 @@ is the page of timings, stale until M1.
 | M2 | Signatures: sharing and `where` in one realisation | done (2026-10-12): a run of sharing by union-find, a chain of `where` at once, realisations that keep what they do not change (nothing allocated where nothing changes), matching's fast paths (equal schemes, its messages made only for an error, a merge sort, a set of the flexible names). MLton's 606 units type-checked by MLton's build: 476.0G to 153.0G instructions:u (`perf stat`, `max-heap 5g` as E20; repeatable only where the heap allows: with a fixed heap of 7 GB, 425.4G to 149.2G, E20's prototype 187.9G); `BASIS_EXTRA` 1.48-1.57 s to 0.016-0.024 s; type-checked by the compiler on `runevm --count`: 200 specs shared 16 ways 2,367M to 21.2M, nested 2,839M to 19.4M, `where` 1,000 by 400 317M to 13.3M, 2,000 specs 846M to 22.4M, one signature instantiated 256 times 90.6M to 75.4M (E20's regression gone); every output byte for byte the base's (bootstrap, Basis cache, suites, every error test's messages, xc2, MLton's 1,582 unit files); M1's budgets on the module language tightened to these counts (`compile-share`, `-sharenest`, `-where`, `-sig`, `-funsig`) |
 | M3 | Functors: typed from their signature, copies only for code (D3 decided), cheaper matching, MidCanon's quadratic | done (2026-10-12): every application typed by the functor's signature (rule 54) -- inside a functor's declaration by its summary, with the counters replayed; one that makes code by the summary realised with its copy's names -- the signature in the export basis (`UnitBasis.version` 6), a use of a functor holding by the signature's fingerprint and an application that makes code using the unit the functor is from, MidCanon's quadratic gone. MLton's 606 units type-checked by MLton's build: 476.0G to 89.1G instructions:u (`max-heap 5g`; 96.9G with a fixed heap of 7 GB, against 425.4G); Rune at tier 2 compiling MLton's compiler: elaboration 82.1 s, the compile 99 s and 5.8 GB (one run, load average 14 to 25); the compiler type-checking on `runevm --count`: a functor applied 80 times 193.9M to 44.9M, nested functors 785M to 137M (compiled), M1's budgets `compile-funapp` and `-funnest` tightened to these counts. Gate as [functors.md](functors.md)'s *A contradiction in M3*: the whole program's output the base's byte for byte (bootstrap, suites, error messages, xc2, MLton's 606 files compiled whole); every unit's code the same with identities masked, and the linked program too (it carries the identities, all new with the version); a build through the cache the same as a fresh one; `used` the base's in 780 of 791 units, 11 recording 14 to 84 fewer type variables (the base's copies, elaborated with arguments whose types drop a parameter, were more general than the signature); scenarios S65 to S67. The equality program rejected (`tests/errors/err.functor_equality.sml`), and an application that makes code no more polymorphic than its signature (`err.functor_signature_types.sml`). HOL4 built by this compiler in a fresh clone (`$D/hol` of the drafts): `hol.state` in 1,419 s (at a low priority, under load), then 210 targets more in the two hours given and none failing, as with M3's earlier builds (218 and 182) |
 | M4 | Types shared: `Ty.ty` hash-consed, `exponential.sml` compiled | not started; partial prototypes E23 (not enough) |
-| M5 | Runtime calls in line: equality, `ptr_eq`, strings, handlers, raise | not started; prototypes E11 a to e |
+| M5 | Runtime calls in line: equality, `ptr_eq`, strings, handlers, raise | D7 B done (2026-10-12, "Compare by type in the middle end, and match strings by their length"): *M5*, as built; A, `TextIO` and C not yet |
 | M6 | The call made lean | not started; prototypes E9 |
 | M7 | Pointers in registers | not started; prototype E12 |
 | M8 | Allocation in the middle end | not started |
@@ -1976,6 +1976,39 @@ memory, as MLton's, SML/NJ's and Moscow ML's are.
 * `ptr_eq`, a handler's push and `String.<` never on the generic path of a
   primitive;
 * `--count` unchanged on every program.
+
+**D7 B as built (2026-10-12).**
+
+* `Simplify` makes `=` of a type what the type says: `imm_eq` as before
+  (M11); `ptr_eq` for a ref, an array, an array of bytes or of reals, and
+  where one side is a nullary constructor, which no value in the heap
+  equals (`l = []`, `x = NONE`); `string_eq` for strings. `string_eq` is a
+  new primitive: its C, a case in the loop's `fastprim.h`, and in the JIT a
+  call of a lean helper, as `string_order` has. `ptr_eq` stays a generic
+  primitive in the loop and the JIT until A puts it in line.
+* `MatchComp` finds a value among six or more strings written as constants
+  by its length (`string_size`, tests of `imm_eq`, halved by `int_lt`),
+  then compares it with each string of that length; among eight or more
+  of one length, by a character first. The thresholds are the best of twelve
+  settings measured on the compiler compiling itself: a test of a character
+  saves comparisons of strings, but the code grows, and the compiler takes
+  longer over every node it makes.
+* Counted by a VM that counts every `PRIM` (the base's sources compiled by
+  each compiler, compiling those sources, `--jit=off`): `poly_eq` from
+  2,924,565 to 171,638 (5.9%); `ptr_eq` from 4,263 to 422,508;
+  `string_eq` 1,550,952, where `poly_eq` compared 2,156,182 strings (E11);
+  1,028,847,720 bytecode instructions to 1,027,220,383 (−0.16%); bytes
+  and output the same.
+* Machine instructions at tier 2 (`perf stat -e instructions:u`, three
+  runs each, the same counts): `tsp` −8.4%, `knuth-bendix` −8.5%, `logic`
+  −7.0%, `mlyacc` −2.5%, `hamlet` −0.8%, `boyer` −0.1%, `lexgen` +0.1%,
+  `fxp` 0.0%, `peek` 0. `hamlet` allocates 520 bytes and 15 objects less;
+  no other program of MLton's set moves.
+* The bootstrap (the register target, `--count`) from 1,039,097,094 to
+  1,045,295,433 instructions and 1,490,436,688 to 1,498,418,744 bytes: the
+  compiler's sources grew, and the base's compiler compiling them takes
+  1,045,522,524 and 1,499,456,240. The bootstrap's budgets are measured
+  again; the other programs of tests/perf move by 0.2% or less.
 
 ### M6. The call (M-L)
 

@@ -223,7 +223,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     if (n == 0 || n > 3) return 0;
     int32_t x = read_i32(L), y = n > 1 ? read_i32(L + 4) : x, z = n > 2 ? read_i32(L + 8) : x;
     switch (p) {
-    case PRIM_poly_eq: case PRIM_imm_eq: case PRIM_string_order: case PRIM_ref_new:
+    case PRIM_poly_eq: case PRIM_imm_eq: case PRIM_string_order: case PRIM_string_eq: case PRIM_ref_new:
     case PRIM_int_add: case PRIM_int_sub: case PRIM_int_mul: case PRIM_int_div: case PRIM_int_mod:
     case PRIM_int_quot: case PRIM_int_rem: case PRIM_int_neg: case PRIM_int_lt: case PRIM_int_le:
     case PRIM_int_gt: case PRIM_int_ge: case PRIM_int_order: case PRIM_int_to_char:
@@ -276,6 +276,16 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_load_obj(M, ms_arg(M, 2), y, K_STRING, slow);
         ms_call_lean(M, (MsHelper)jit_h_string_order);
         ms_set_reg(M, d, T_CON0, R_S0);
+        break;
+    case PRIM_string_eq:
+        /* `=` at string (performance M5): the two strings to the lean
+           helper, as string_order's; the bool in the flags too */
+        ms_writeback(M, M->cur_pc);
+        ms_load_obj(M, ms_arg(M, 1), x, K_STRING, slow);
+        ms_load_obj(M, ms_arg(M, 2), y, K_STRING, slow);
+        ms_call_lean(M, (MsHelper)jit_h_string_eq);
+        ms_set_reg(M, d, T_CON0, R_S0);
+        ms_bool_flags(M, R_S0);
         break;
     case PRIM_ref_new:
         alloc(j, K_REF, 0, 1, FILL_ONE, d, x, 0, NULL);
@@ -589,7 +599,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     /* a comparison leaves its bool in the flags, for the branch after
        (M7): said to the walk, and to its slow path */
     switch (p) {
-    case PRIM_poly_eq: case PRIM_imm_eq:
+    case PRIM_poly_eq: case PRIM_imm_eq: case PRIM_string_eq:
     case PRIM_int_lt: case PRIM_int_le: case PRIM_int_gt: case PRIM_int_ge:
     case PRIM_word_lt: case PRIM_word_le: case PRIM_word_gt: case PRIM_word_ge:
     case PRIM_real_lt: case PRIM_real_le: case PRIM_real_gt: case PRIM_real_ge: case PRIM_real_eq:

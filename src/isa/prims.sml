@@ -852,5 +852,8 @@ struct
          {name = "vector_extract", arity = 3, ty = "'a vector * int * int -> 'a vector", effects = [Raises, Allocates],
           doc = "The n elements of a vector from index i (vector, i, n); raises Subscript when i < 0, n < 0 or i + n is past its end."},
          {name = "utf8_decode", arity = 3, ty = "string * int * int -> int vector * int * int", effects = [Raises, Allocates],
-          doc = "The code points of the UTF-8 of a string from byte i, at most n of them, n capped at 100000000 (string, i, n): (vector, j, status), j the byte after the last decoded, status 0 when it stopped at n or at the end, 1 when a sequence that is not UTF-8 (the Unicode Standard's Table 3-7) begins at j, 2 when the bytes from j to the end begin a sequence the end cuts short; raises Subscript when i is outside 0..size or n < 0."}]]
+          doc = "The code points of the UTF-8 of a string from byte i, at most n of them, n capped at 100000000 (string, i, n): (vector, j, status), j the byte after the last decoded, status 0 when it stopped at n or at the end, 1 when a sequence that is not UTF-8 (the Unicode Standard's Table 3-7) begins at j, 2 when the bytes from j to the end begin a sequence the end cuts short; raises Subscript when i is outside 0..size or n < 0."}],
+       group "equality by type, of strings (performance M5, D7 B)"
+        [{name = "string_eq", arity = 2, ty = "string * string -> bool", effects = [],
+          doc = "Whether two strings are the same: their lengths, then their bytes. `=` where the compiler knows the type is string; it walks nothing else, so it never stops at the work limit of structural equality."}]]
 end

@@ -98,6 +98,7 @@ int jit_h_primpush(VM *vm, int prim, uint32_t at);
    moved), so that the code calls them with nothing synced or reloaded
    (M7): the VM is their first argument all the same, unused */
 int64_t jit_h_string_order(VM *vm, const Obj *a, const Obj *b);
+int64_t jit_h_string_eq(VM *vm, const Obj *a, const Obj *b);
 /* Needs the exact VM: comparison can end the process at its work limit. */
 int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y);
 void jit_h_box_real(VM *vm, int32_t slot, uint64_t bits);

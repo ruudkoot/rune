@@ -407,6 +407,7 @@ struct
   fun string_compare (a, b) =
     case String.compare (a, b) of LESS => ~1 | EQUAL => 0 | GREATER => 1
   val string_order = String.compare
+  fun string_eq (a : string, b) = a = b
   val string_from_char = String.str
   val string_implode = String.implode
   val string_explode = String.explode

@@ -1,0 +1,90 @@
+(* after simplify *)
+(funs
+  (fn g1 ((v1 : string)) : int
+    (join j1 ()
+      (return 0)
+    (let (v2 : int) (prim string_size v1 : string -> int)
+    (let (v3 : bool) (prim imm_eq v2 2 : (int * int) -> bool)
+    (if v3
+      (let (v4 : bool) (prim string_eq v1 "in" : (string * string) -> bool)
+      (if v4
+        (return 9)
+        (let (v5 : bool) (prim string_eq v1 "of" : (string * string) -> bool)
+        (if v5
+          (return 10)
+          (jump j1)))))
+      (let (v6 : bool) (prim imm_eq v2 3 : (int * int) -> bool)
+      (if v6
+        (let (v7 : char) (prim string_sub v1 0 : (string * int) -> char)
+        (let (v8 : bool) (prim char_lt v7 #"r" : (char * char) -> bool)
+        (if v8
+          (let (v9 : bool) (prim char_lt v7 #"f" : (char * char) -> bool)
+          (if v9
+            (let (v10 : bool) (prim imm_eq v7 #"a" : (char * char) -> bool)
+            (if v10
+              (let (v11 : bool) (prim string_eq v1 "and" : (string * string) -> bool)
+              (if v11
+                (return 1)
+                (jump j1)))
+              (let (v12 : bool) (prim imm_eq v7 #"e" : (char * char) -> bool)
+              (if v12
+                (let (v13 : bool) (prim string_eq v1 "end" : (string * string) -> bool)
+                (if v13
+                  (return 2)
+                  (jump j1)))
+                (jump j1)))))
+            (let (v14 : bool) (prim imm_eq v7 #"f" : (char * char) -> bool)
+            (if v14
+              (let (v15 : bool) (prim string_eq v1 "fun" : (string * string) -> bool)
+              (if v15
+                (return 3)
+                (jump j1)))
+              (let (v16 : bool) (prim imm_eq v7 #"l" : (char * char) -> bool)
+              (if v16
+                (let (v17 : bool) (prim string_eq v1 "let" : (string * string) -> bool)
+                (if v17
+                  (return 4)
+                  (jump j1)))
+                (jump j1)))))))
+          (let (v18 : bool) (prim char_lt v7 #"u" : (char * char) -> bool)
+          (if v18
+            (let (v19 : bool) (prim imm_eq v7 #"r" : (char * char) -> bool)
+            (if v19
+              (let (v20 : bool) (prim string_eq v1 "rec" : (string * string) -> bool)
+              (if v20
+                (return 6)
+                (jump j1)))
+              (let (v21 : bool) (prim imm_eq v7 #"s" : (char * char) -> bool)
+              (if v21
+                (let (v22 : bool) (prim string_eq v1 "sig" : (string * string) -> bool)
+                (if v22
+                  (return 7)
+                  (jump j1)))
+                (jump j1)))))
+            (let (v23 : bool) (prim imm_eq v7 #"u" : (char * char) -> bool)
+            (if v23
+              (let (v24 : bool) (prim string_eq v1 "use" : (string * string) -> bool)
+              (if v24
+                (return 8)
+                (jump j1)))
+              (let (v25 : bool) (prim imm_eq v7 #"v" : (char * char) -> bool)
+              (if v25
+                (let (v26 : bool) (prim string_eq v1 "val" : (string * string) -> bool)
+                (if v26
+                  (return 5)
+                  (jump j1)))
+                (jump j1))))))))))
+        (let (v27 : bool) (prim imm_eq v2 5 : (int * int) -> bool)
+        (if v27
+          (let (v28 : bool) (prim string_eq v1 "local" : (string * string) -> bool)
+          (if v28
+            (return 11)
+            (jump j1)))
+          (jump j1)))))))))))
+(val g2 : int * int * int * int * int
+  (let (v29 : int) (app g1 "val")
+  (let (v30 : int) (app g1 "in")
+  (let (v31 : int) (app g1 "x")
+  (let (v32 : int) (app g1 "local")
+  (let (v33 : int) (app g1 "vax")
+  (return (tuple v29 v30 v31 v32 v33))))))))

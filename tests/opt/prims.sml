@@ -96,6 +96,20 @@ val () = show "eq strings" (fn () => b ("abc" = "abc") ^ b ("abc" = "abd") ^ b (
 val () = show "eq lists" (fn () => b ([1, 2] = [1, 2]) ^ b ([1] = [1, 2]) ^ b ([] = [3]))
 val () = show "eq tuples" (fn () => b ((1, "x") = (1, "x")) ^ b ((1, "x") = (2, "x")))
 
+(* ---- equality by type (performance M5): string_eq, which the register VM
+   does in its loop and its JIT through a lean helper, of strings of no
+   length to 17, the same, equal, of one length and not; ptr_eq, of refs
+   and arrays, and of a list or an option with a nullary constructor *)
+val strs = ["", "a", "b", "ab", "abcdefgh", "abcdefgi", "abcdefghijklmnopq", "abcdefghijklmnopr", "h\000\255llo"]
+fun eqAll (xs : string list) (x : string) = String.concat (List.map (fn y => b (x = y)) xs)
+val () = List.app (fn x => show ("eq " ^ String.toString x) (fn () => eqAll (strs @ List.map (fn y => y ^ "") strs) x)) strs
+val refs = [ref 1, ref 1, ref 2]
+val () = show "eq refs" (fn () => String.concat (List.map (fn x => String.concat (List.map (fn y => b (x = y)) refs)) refs))
+val arrs = [Array.array (2, 0), Array.array (2, 0), Array.fromList []]
+val () = show "eq arrays" (fn () => String.concat (List.map (fn x => String.concat (List.map (fn y => b (x = y)) arrs)) arrs))
+val () = show "eq nil" (fn () => String.concat (List.map (fn l => b (l = [])) [[], [1], [1, 2]]))
+val () = show "eq none" (fn () => String.concat (List.map (fn x => b (x = NONE)) [NONE, SOME 1, SOME 2]))
+
 (* ---- ref: ref_get ref_set *)
 val cell = ref 41
 val () = show "ref" (fn () => (cell := !cell + 1; Int.toString (!cell)))

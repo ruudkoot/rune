@@ -678,6 +678,12 @@ static int p_int_order(VM *vm) { INT2("int_order"); return ret(vm, 2, mk_order(x
 static int p_word_order(VM *vm) { WORD2("word_order"); return ret(vm, 2, mk_order(x < y ? -1 : x > y)); }
 static int p_char_order(VM *vm) { CHAR2("char_order"); return ret(vm, 2, mk_order(x < y ? -1 : x > y)); }
 static int p_string_order(VM *vm) { STR2("string_order"); return ret(vm, 2, mk_order(str_cmp(a, b))); }
+/* `=` where the compiler knows the type is string (performance M5, D7 B):
+   the lengths, then the bytes -- values_equal's case for two strings. */
+static int p_string_eq(VM *vm) {
+    STR2("string_eq");
+    return ret(vm, 2, mk_bool(a == b || (obj_len(a) == obj_len(b) && memcmp(obj_bytes(a), obj_bytes(b), obj_len(a)) == 0)));
+}
 static int p_string_from_char(VM *vm) {
     check_tag(vm, ARG(0), T_CHAR, "string_from_char");
     char c = (char)val_imm(ARG(0));

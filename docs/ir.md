@@ -296,7 +296,14 @@ inlined function frames agree across optimization levels.
   -- and the first row whose patterns are all wild matches. No value is
   tested twice on a way through, and where the rows name every
   constructor of a datatype the last one is what is left, untested
-  (decision D14). Each rule's body is a `Join` whose parameters are its
+  (decision D14). A column of strings written as constants, where it
+  names six or more, is split by all of them at once: the value is found
+  by its length (`string_size`, tests of `imm_eq`, halved by `int_lt` where
+  there are many lengths), then compared with each string of that length,
+  or, where they are eight or more, told apart by the character at the
+  place they differ most (`string_sub`), and compared with the one left;
+  the rows that name none are a join point the misses jump to
+  ([plans/performance.md](plans/performance.md), M5). Each rule's body is a `Join` whose parameters are its
   variables, so that a body reached on several ways is not copied; the
   leaves `Jump` to it. An exception's constructor may be another's under
   another name, so a row of another constructor is still tested where
@@ -354,7 +361,10 @@ does.
   (`Target.t`'s `intBits`), unless it would raise; `=` of a type whose
   values are never in the heap -- int, word, char, and a datatype whose
   constructors are all nullary -- is `imm_eq`, which compares tags and
-  bits (M11); a join point nothing
+  bits (M11); `=` of a ref or an array, or where one side is a nullary
+  constructor (`l = []`), which no value in the heap equals, is `ptr_eq`,
+  and `=` of strings `string_eq`, which compares lengths and bytes and
+  walks nothing else ([plans/performance.md](plans/performance.md), M5); a join point nothing
   jumps to goes, and one jumped to once is put where the jump is, unless
   the jump is in a handler's region the join point is not; a function
   nothing uses goes, and one called once, where it is made and not from a

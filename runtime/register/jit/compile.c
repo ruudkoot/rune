@@ -308,6 +308,11 @@ int64_t jit_h_string_order(VM *vm, const Obj *a, const Obj *b) {
     if (obj_len(a) == obj_len(b)) return 1;
     return obj_len(a) < obj_len(b) ? 0 : 2;
 }
+/* string_eq (performance M5): the lengths, then the bytes */
+int64_t jit_h_string_eq(VM *vm, const Obj *a, const Obj *b) {
+    (void)vm;
+    return a == b || (obj_len(a) == obj_len(b) && memcmp(obj_bytes_c(a), obj_bytes_c(b), obj_len(a)) == 0);
+}
 int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y) { return values_equal(vm, *x, *y); }
 /* a real of tier 2 that has no immediate, boxed into its register's slot
    (masm.c, ms_emit_box_real): the allocation may collect, and the VM's
@@ -845,6 +850,7 @@ static int emit_function(Jit *j, Scan *sc) {
 static const MsHelper helpers[] = {
     (MsHelper)jit_h_prim, (MsHelper)jit_h_alloc, (MsHelper)jit_h_ret, (MsHelper)jit_h_grow, (MsHelper)jit_h_grow_frames,
     (MsHelper)jit_h_push_handler, (MsHelper)jit_h_raise, (MsHelper)jit_h_string_order, (MsHelper)jit_h_values_equal,
+    (MsHelper)jit_h_string_eq,
     (MsHelper)jit_h_box_real, (MsHelper)jit_h_box_num, (MsHelper)jit_h_primpush, (MsHelper)jit_h_called
 };
 /* The region: the stubs that enter and leave compiled code, the stub of

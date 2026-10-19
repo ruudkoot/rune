@@ -409,8 +409,9 @@ Made fast (M7): **the primitives of `fastprim.h` are in line**
 a slow path -- the helper, which does the primitive as the loop would
 and may raise -- wherever `prim_fast` would answer 0 (a tag that is not
 the one, an overflow, a divisor of 0 or -1, an index out of bounds);
-`string_order` goes to `jit_h_string_order`, which touches nothing of the
-VM and is called with nothing synced or reloaded. `poly_eq` on a pointer
+`string_order` goes to `jit_h_string_order`, and `string_eq` (`=` of
+strings, performance M5) to `jit_h_string_eq`, which touch nothing of the
+VM and are called with nothing synced or reloaded. `poly_eq` on a pointer
 or a real calls `jit_h_values_equal` with the VM exact and reloaded after:
 structural equality can end the process at its work limit. `ref_new` is an allocation
 in line. **A primitive not in line is called as the loop calls it:** its

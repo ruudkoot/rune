@@ -152,6 +152,7 @@ struct
         | [Const (Lambda.CWord a, _), Const (Lambda.CWord b, _)] => SOME (boolAtom (a = b))
         | [Const (Lambda.CChar a, _), Const (Lambda.CChar b, _)] => SOME (boolAtom (a = b))
         | [Con0 (a, _), Con0 (b, _)] => SOME (boolAtom (a = b))
+        | [Const (Lambda.CString a, _), Const (Lambda.CString b, _)] => SOME (boolAtom (a = b))
         | _ => NONE
     in
       case p of
@@ -175,7 +176,12 @@ struct
           (case xs of
              [Global (a, []), Global (b, [])] => if a = b then SOME (boolAtom true) else NONE
            | [Var (a, []), Var (b, [])] => if a = b then SOME (boolAtom true) else NONE
+           | [Con0 (a, _), Con0 (b, _)] => SOME (boolAtom (a = b))
            | _ => NONE)
+      | "string_eq" =>
+          (case xs of
+             [Var (a, []), Var (b, [])] => if a = b then SOME (boolAtom true) else NONE
+           | _ => eqs ())
       | _ => NONE
     end
 
@@ -228,6 +234,32 @@ struct
                 | _ => false)
     | _ => false
 
+  (* Whether a type's values are compared by identity: a ref, an array,
+     an array of bytes or of reals, whose `=` is their address. *)
+  fun identity (t : Ty.ty) : bool =
+    case t of
+      Ty.Con (stamp, _, _) =>
+        List.exists (fn c => stamp = #stamp c)
+                    [Types.refTycon, Types.arrayTycon, Types.bytearrayTycon, Types.realarrayTycon]
+    | _ => false
+
+  fun isString (t : Ty.ty) : bool =
+    case t of
+      Ty.Con (stamp, _, []) => stamp = #stamp Types.stringTycon
+    | _ => false
+
+  (* What `=` of values of type t is, given its arguments, where the type
+     says more than poly_eq's walk (M11; performance M5, D7 B): imm_eq for
+     values never in the heap; ptr_eq for values compared by identity, and
+     where one argument is a nullary constructor -- an immediate, which no
+     value in the heap equals (`l = []`, `x = NONE`); string_eq for
+     strings. *)
+  fun eqByType (t : Ty.ty, xs : atom list) : string option =
+    if immediate t then SOME "imm_eq"
+    else if identity t orelse List.exists (fn Con0 _ => true | _ => false) xs then SOME "ptr_eq"
+    else if isString t then SOME "string_eq"
+    else NONE
+
   fun known (env : env, r : rhs) : rhs =
     let
       fun madeOf (Var (x, [])) = IntTable.find (#known env, x)
@@ -239,7 +271,9 @@ struct
              SOME (Made (Tuple xs)) => if i < List.length xs andalso spend () then Atom (List.nth (xs, i)) else r
            | _ => r)
       | Prim ("poly_eq", pty as Ty.Arrow (Ty.Tuple [t, _], _), xs) =>
-          if immediate t andalso spend () then Prim ("imm_eq", pty, xs) else r
+          (case eqByType (t, xs) of
+             SOME p => if spend () then Prim (p, pty, xs) else r
+           | NONE => r)
       | Decon (tag, _, a) =>
           (case madeOf a of
              SOME (Made (Con (tag', _, x))) => if tag = tag' andalso spend () then Atom x else r
