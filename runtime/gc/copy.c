@@ -90,12 +90,13 @@ static void copy_value(VM *vm, Value *v) {
    there later takes its slots as they are. */
 void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
     size_t at = 0, dead = 0;
-    if (vm->frame_live && vm->frames_active)
-        for (size_t k = 0; k < vm->fp; k++) {
-            const Frame *f = &vm->frames[k];
-            size_t end = vm->frames[k + 1].base < vm->sp ? vm->frames[k + 1].base : vm->sp;
+    FrameRef *fr = NULL;
+    size_t nf = vm->frame_live ? vm_frames_from(vm, 0, &fr) : 0;   /* the frames, the top level's first (native-frames.md, M3) */
+    for (size_t k = 0; k + 1 < nf; k++) {
+            const FrameRef *f = &fr[k];
+            size_t end = fr[k + 1].base < vm->sp ? fr[k + 1].base : vm->sp;
             uint32_t n = vm->prog.funcs[f->func].nlocals;
-            uint64_t live = vm->frame_live(vm, f->func, vm->frames[k + 1].ret_pc);
+            uint64_t live = vm->frame_live(vm, f->func, f->pc);
             for (; at < f->base && at < end; at++) visit(vm, &vm->stack[at]);
             for (uint32_t r = 0; r < n && at < end; r++, at++) {
                 if (r >= 64 || ((live >> r) & 1)) visit(vm, &vm->stack[at]);
@@ -106,12 +107,12 @@ void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
             }
             vm->gc_counts.frames++;
         }
-    if (vm->frame_live && vm->frames_active && vm->top_frame == &vm->frames[vm->fp]) {
+    if (nf && vm_frame_top_live(vm, &fr[nf - 1])) {
         /* the frame that runs, where runtime/register's compiled code said
            what of it is live (VM.top_live, M6): as a frame that waits, since
            a register it has not written may hold what an earlier frame there
            wrote, and none is filled with unit */
-        const Frame *f = &vm->frames[vm->fp];
+        const FrameRef *f = &fr[nf - 1];
         uint32_t n = vm->prog.funcs[f->func].nlocals;
         for (; at < f->base && at < vm->sp; at++) visit(vm, &vm->stack[at]);
         for (uint32_t r = 0; r < n && at < vm->sp; r++, at++) {
@@ -191,7 +192,7 @@ static void collect_into(VM *vm, size_t new_size) {
         vm->gc.nborn = 0;
         los_sweep(vm);
         vm->gc.old_boxes = vm->gc.to_boxes;
-        vm_set_fp_low(vm, vm->fp);   /* nothing young is left on the stack */
+        vm_frames_mark_low(vm, vm_frame_id(vm));   /* nothing young is left on the stack */
         vm->gc.fulls++;
     } else vm->gc.closed = vm->gc.to_used - vm->gc.last->used;
     alloc_view(vm);

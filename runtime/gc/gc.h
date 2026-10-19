@@ -341,9 +341,9 @@ static inline void minor_globals(VM *vm, void (*take)(VM *, Value *)) {
         minor_globals((vm), (take_global)); \
         for (uint32_t i_ = (vm)->consts_minor; i_ < (vm)->prog.nconsts; i_++) V(&(vm)->prog.consts[i_]); \
         (vm)->consts_minor = (vm)->prog.nconsts; \
-        if ((vm)->frames_active) \
-            for (size_t i_ = (frame0); i_ <= (vm)->fp; i_++) \
-                if ((vm)->frames[i_].closure) O(&(vm)->frames[i_].closure); \
+        { FrameRef *f_; size_t n_ = vm_frames_from((vm), (frame0), &f_); \
+          for (size_t i_ = 0; i_ < n_; i_++) \
+              if (f_[i_].closure && *f_[i_].closure) O(f_[i_].closure); } \
         for (int i_ = 0; i_ < NUM_BUILTIN_EXNS; i_++) \
             if ((vm)->builtin_exns[i_]) O(&(vm)->builtin_exns[i_]); \
         for (int i_ = 0; i_ < REAL_BOXES; i_++) \
@@ -355,9 +355,9 @@ static inline void minor_globals(VM *vm, void (*take)(VM *, Value *)) {
     do { \
         for (uint32_t i_ = 0; i_ < (vm)->prog.nglobals; i_++) V(&(vm)->globals[i_]); \
         for (uint32_t i_ = 0; i_ < (vm)->prog.nconsts; i_++) V(&(vm)->prog.consts[i_]); \
-        if ((vm)->frames_active) \
-            for (size_t i_ = (frame0); i_ <= (vm)->fp; i_++) \
-                if ((vm)->frames[i_].closure) O(&(vm)->frames[i_].closure); \
+        { FrameRef *f_; size_t n_ = vm_frames_from((vm), (frame0), &f_); \
+          for (size_t i_ = 0; i_ < n_; i_++) \
+              if (f_[i_].closure && *f_[i_].closure) O(f_[i_].closure); } \
         for (int i_ = 0; i_ < NUM_BUILTIN_EXNS; i_++) \
             if ((vm)->builtin_exns[i_]) O(&(vm)->builtin_exns[i_]); \
         for (int i_ = 0; i_ < REAL_BOXES; i_++) \

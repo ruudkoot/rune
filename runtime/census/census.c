@@ -573,9 +573,10 @@ void census_gc_begin(VM *vm) {
     put_u64(sample_rec, census_clock);
     put_u64(sample_rec + 24, (uint64_t)vm->instructions);
     put_u64(sample_rec + 32, census_next_id);
-    size_t sp = vm->sp, fp = vm->fp, ptrs = 0;
+    size_t sp = vm->sp, fp = vm_frame_id(vm), ptrs = 0;
     if (fp_low > fp) fp_low = fp;
-    size_t base_low = vm->frames_active && vm->frames ? vm->frames[fp_low].base : 0;
+    FrameRef low;
+    size_t base_low = vm_frame_find(vm, fp_low, &low) ? low.base : 0;
     for (size_t i = 0; i < sp; i++) if (val_is_ptr(vm->stack[i])) ptrs++;
     uint32_t flags = (census_every && census_clock - census_last_sample_clock >= census_every ? 1u : 0u) | (final_collection ? 2u : 0u);
     put_u32(sample_rec + 40, (uint32_t)sp);
@@ -704,7 +705,10 @@ void census_prim_result(int prim, Value v) {
 void census_call(int op, Value v, int rep) {
     if (op < 0 || op >= NOP) return;
     /* a RET: the frame below the running one goes on (the loop leaves at frame 0) */
-    if (op == 4 && the_vm->fp > 0 && the_vm->fp - 1 < fp_low) fp_low = the_vm->fp - 1;
+    if (op == 4) {
+        FrameRef below;
+        if (vm_frame_top(the_vm, &below) && vm_frame_down(the_vm, &below) && below.id < fp_low) fp_low = below.id;
+    }
     VC vc = classify(v, rep);
     uint8_t tag = vc.tag;
     unsigned b = vc.bits;
@@ -713,7 +717,7 @@ void census_call(int op, Value v, int rep) {
 }
 
 void census_unwind(VM *vm) {
-    if (vm->fp < fp_low) fp_low = vm->fp;
+    if (vm_frame_id(vm) < fp_low) fp_low = vm_frame_id(vm);
 }
 
 /* ---------------------------------------------------------------- the fork's child */

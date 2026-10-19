@@ -36,7 +36,7 @@ plan's.
 | M0 | This roadmap | done (2026-10-12); every decision taken as recommended the same day |
 | M1 | The gate: the call measured after performance M5 to M7 | done (2026-10-19, on `db0fba57a`): the gate open; *Where we are* and the baselines measured again, the decisions' premises restated, `scripts/hol-kernel.sh` made to run on `$RUNEVM` |
 | M2 | The body: tier 2's code for an instruction | done (2026-10-19): a constructor's tag tested by its representation, `SWITCH`'s tag likewise, the `--checked` test compiled in only under `--checked`, `int_mod` by a power of two an `and`; the bootstrap 15.230G to 14.516G instructions (−4.7%), HOL's kernel work 53.016G to 49.953G (−5.8%); cycles, an indication, −7% and −11%; `--count` and every output unchanged; `ENV`'s tests and division by a constant not built (*M2*) |
-| M3 | Frames walked, not indexed | not started |
+| M3 | Frames walked, not indexed | done (2026-10-19): the walk of `vm.h`, given by each instruction set over the array, and every reader of frames outside the engines on it; the bootstrap 14.516G to 14.519G instructions (+0.02%), every output and count unchanged (*M3*) |
 | M4 | Frames in the value stack | not started; prototype F1 |
 | M5 | The watermark by a return barrier | not started; prototype F1 |
 | M6 | Arguments in registers | not started; prototype F1 |
@@ -1301,6 +1301,41 @@ the shared runtime over it, with no change of behaviour.
   within 0.2%;
 * `vm->frames` named nowhere but the two instruction sets' files, the
   engines' loops and the push in `vm.h`.
+
+**Done** (2026-10-19; `runtime/vm.h`, `runtime/frames_array.inc`, both
+instruction sets' files, `runtime/runtime.c`, `image.c`, `prims.c`,
+`debug.c`, `gc/copy.c`, `gc/minor.c`, `gc/mark.c`, `gc/chunk.c`,
+`gc/check.c`, `gc/gc.h`, `census/census.c`):
+
+* **The walk** (`vm.h`, *The frames, as the runtime reads them*): a frame
+  as the runtime reads it (`FrameRef`: its function, its pc, the pc it
+  returns to, its base, its id, the cell of its closure), from the one that
+  runs down (`vm_frame_top`, `vm_frame_down`, `vm_frame_find`), or the
+  frames from an id up, the top level's first, in a buffer of the VM's
+  (`vm_frames_from`, for the collector, whose order of roots stays the
+  same); and what an engine's frames must answer for the runtime: the
+  running frame's id, the frame compiled code said is live
+  (`vm_frame_top_live`), the watermark (`vm_frames_mark_low`,
+  `vm_frames_low`), a frame pushed and dropped (`vm_start`'s and the
+  debugger's), a raise's unwinding to a handler's frame, the frames an
+  image gives (`vm_frames_install`), and every frame sent to the
+  interpreter (debug mode, `Runtime.restore`). Each instruction set gives
+  them; both include `runtime/frames_array.inc`, the array of records,
+  in which a frame's id is its index.
+* **The readers on it:** the collector's scans of the stack, its roots,
+  its watermark and its check; images' writing, reading and checking;
+  traces, a fatal error's frame, a raise's frames for the REPL and its
+  unwinding, a handler's frame; `Runtime.trace` (which keeps what it needs
+  apart before it allocates, since a collection walks into the VM's
+  buffer); the debugger's frames, its primitives (`stop_frame` walks down
+  from the frame that stopped) and its keys per frame, by id; the census.
+  `vm->frames` is named now only by the engines -- the stack VM's loop,
+  `runeopt`'s glue, the register VM's loop, its JIT -- and the array's
+  file. AGENTS.md says so.
+* **Measured:** the bootstrap 14.516G to 14.519G instructions (+0.02%,
+  the walk's calls in the collector), its output byte for byte and
+  `--count` the same; the language suite on both VMs, `check-jit.sh` in
+  every mode.
 
 ### M4. Frames in the value stack (L)
 

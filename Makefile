@@ -136,7 +136,7 @@ SYS ?= posix
 VM_LIBS  = -lm $(if $(MINGW),$(WIN_LIBS))
 RT_SRCS := runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
-VM_HDRS := runtime/intinf.h runtime/vm.h runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
+VM_HDRS := runtime/intinf.h runtime/vm.h runtime/frames_array.inc runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
 AR      ?= ar
 

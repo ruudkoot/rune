@@ -2374,12 +2374,11 @@ static void push_frame(VM *vm, const char *name, const char *file, int64_t line,
     vm_push(vm, mk_ptr(t));
 }
 
-/* The frames of activation i, innermost first: its function's, and those of
-   the functions inlined where it is (trace_frames). */
-static uint32_t frames_at(VM *vm, size_t i, TraceFrame *fs, uint32_t max) {
-    uint32_t f = vm->frames[i].func;
+/* The frames of an activation of function f stopped at pc, innermost
+   first: its function's, and those of the functions inlined where it is
+   (trace_frames). */
+static uint32_t frames_at(VM *vm, uint32_t f, uint32_t pc, TraceFrame *fs, uint32_t max) {
     const char *name = f < vm->prog.nfuncs ? vm->prog.funcs[f].name : "?";
-    uint32_t pc = (i == vm->fp) ? vm->pc : vm->frames[i + 1].ret_pc;
     const LineEntry *e = line_at(&vm->prog, pc > 0 ? pc - 1 : 0);
     if (e && e->file < vm->prog.nfiles) return trace_frames(&vm->prog, e, name, fs, max);
     fs[0].name = name; fs[0].file = UINT32_MAX; fs[0].line = 0; fs[0].col = 0;
@@ -2393,21 +2392,30 @@ static int p_rt_trace(VM *vm) {
     INT1("rt_trace");
     size_t skip = x < 0 ? 0 : (size_t)x;
     vm_push(vm, mk_con0(0));
-    if (vm->frames_active) {
+    FrameRef *fr;
+    size_t nf = vm_frames_from(vm, 0, &fr);
+    if (nf) {
+        /* the activations' functions and pcs, the top level's first, kept
+           apart: what is consed below allocates, and a collection walks the
+           frames into the buffer fr is (native-frames.md, M3) */
+        uint32_t *at = malloc(2 * nf * sizeof *at);
+        if (!at) vm_fatal(vm, "out of memory (rt_trace)");
+        for (size_t i = 0; i < nf; i++) { at[2 * i] = fr[i].func; at[2 * i + 1] = fr[i].pc; }
         /* the frames of the trace, not of the VM: those of functions
            inlined count, as their calls would have */
         TraceFrame fs[64];
         size_t total = 0;
-        for (size_t i = 0; i <= vm->fp; i++) total += frames_at(vm, i, fs, 64);
+        for (size_t i = 0; i < nf; i++) total += frames_at(vm, at[2 * i], at[2 * i + 1], fs, 64);
         size_t keep = total > skip ? total - skip : 0, k = 0;
-        for (size_t i = 0; i <= vm->fp && k < keep; i++) {
-            uint32_t n = frames_at(vm, i, fs, 64);
+        for (size_t i = 0; i < nf && k < keep; i++) {
+            uint32_t n = frames_at(vm, at[2 * i], at[2 * i + 1], fs, 64);
             for (uint32_t j = n; j > 0 && k < keep; j--, k++) {
                 const TraceFrame *t = &fs[j - 1];
                 push_frame(vm, t->name, t->file == UINT32_MAX ? "" : vm->prog.files[t->file], t->line, t->col);
                 vm_cons(vm);
             }
         }
+        free(at);
     }
     Value l = vm_pop(vm);
     return ret(vm, 1, l);
@@ -2572,33 +2580,35 @@ static int p_rt_debug_step(VM *vm) {
     return began ? PRIM_NEW_WORLD : 0;
 }
 
-/* the frames of the stop: the VM's frame of frame k, or SIZE_MAX */
-static size_t stop_frame(const VM *vm, int64_t k) {
+/* the frames of the stop: frame k of it, k frames below the frame that
+   stopped, in f; 0 where there is none, or it is the REPL's own (the walk
+   of vm.h; native-frames.md, M3) */
+static int stop_frame(VM *vm, int64_t k, FrameRef *f) {
     const Debugger *d = vm->dbg;
-    if (!d || !d->in_hook || k < 0 || (uint64_t)k > d->stop_fp) return SIZE_MAX;
-    size_t i = d->stop_fp - (size_t)k;
-    if (d->stop_floor && i <= d->stop_floor) return SIZE_MAX;
-    return i;
+    if (!d || !d->in_hook || k < 0 || !vm_frame_find(vm, d->stop_fp, f)) return 0;
+    for (int64_t j = 0; j < k; j++) if (!vm_frame_down(vm, f)) return 0;
+    if (d->stop_floor && f->id <= d->stop_floor) return 0;
+    return 1;
 }
-/* the pc a trace reads for frame i of the stop: in the instruction it is at */
-static uint32_t stop_pc_in(const VM *vm, size_t i) {
+/* the pc a trace reads for a frame of the stop: in the instruction it is at */
+static uint32_t stop_pc_in(const VM *vm, const FrameRef *f) {
     const Debugger *d = vm->dbg;
-    if (i == d->stop_fp)
+    if (f->id == d->stop_fp)
         return d->event == DBG_RAISE || d->event == DBG_UNCAUGHT ? (d->stop_pc ? d->stop_pc - 1 : 0) : d->stop_pc;
-    uint32_t r = vm->frames[i + 1].ret_pc;
-    return r ? r - 1 : 0;
+    return f->pc ? f->pc - 1 : 0;
 }
 
 static int p_rt_debug_frames(VM *vm) {
     vm_push(vm, mk_con0(0));
     TraceFrame fs[64];
     size_t lowest = SIZE_MAX;
-    for (int64_t k = 0; stop_frame(vm, k) != SIZE_MAX; k++) lowest = (size_t)k;
+    FrameRef fr;
+    for (int64_t k = 0; stop_frame(vm, k, &fr); k++) lowest = (size_t)k;
     for (size_t kk = lowest + 1; lowest != SIZE_MAX && kk > 0; kk--) {
-        size_t i = stop_frame(vm, (int64_t)(kk - 1));
-        uint32_t f = vm->frames[i].func;
+        stop_frame(vm, (int64_t)(kk - 1), &fr);
+        uint32_t f = fr.func;
         const char *name = f < vm->prog.nfuncs ? vm->prog.funcs[f].name : "?";
-        const LineEntry *e = line_at(&vm->prog, stop_pc_in(vm, i));
+        const LineEntry *e = line_at(&vm->prog, stop_pc_in(vm, &fr));
         uint32_t n;
         if (e && e->file < vm->prog.nfiles) n = trace_frames(&vm->prog, e, name, fs, 64);
         else { fs[0].name = name; fs[0].file = UINT32_MAX; fs[0].line = 0; fs[0].col = 0; n = 1; }
@@ -2630,41 +2640,44 @@ static int pair(VM *vm, int arity, int64_t a, int64_t b) {
 
 static int p_rt_debug_where(VM *vm) {
     INT1("rt_debug_where");
-    size_t i = stop_frame(vm, x);
-    if (i == SIZE_MAX) return pair(vm, 1, -1, 0);
-    uint32_t f = vm->frames[i].func;
-    return pair(vm, 1, f, (int64_t)stop_pc_in(vm, i) - (int64_t)vm->prog.funcs[f].code_offset);
+    FrameRef fr;
+    if (!stop_frame(vm, x, &fr)) return pair(vm, 1, -1, 0);
+    uint32_t f = fr.func;
+    return pair(vm, 1, f, (int64_t)stop_pc_in(vm, &fr) - (int64_t)vm->prog.funcs[f].code_offset);
 }
 
 static int p_rt_debug_live(VM *vm) {
     check_tag(vm, ARG(1), T_INT, "rt_debug_live");
     check_tag(vm, ARG(0), T_INT, "rt_debug_live");
-    size_t i = stop_frame(vm, val_imm(ARG(1)));
+    FrameRef fr;
+    int found = stop_frame(vm, val_imm(ARG(1)), &fr);
     int64_t r = val_imm(ARG(0));
-    if (i == SIZE_MAX || r < 0 || (uint64_t)r >= vm->prog.funcs[vm->frames[i].func].nlocals) return ret(vm, 2, mk_int(0));
-    uint64_t live = vm->frame_live ? vm->frame_live(vm, vm->frames[i].func, vm->frames[i + 1].ret_pc) : ~(uint64_t)0;
+    if (!found || r < 0 || (uint64_t)r >= vm->prog.funcs[fr.func].nlocals) return ret(vm, 2, mk_int(0));
+    uint64_t live = vm->frame_live ? vm->frame_live(vm, fr.func, fr.pc) : ~(uint64_t)0;
     if (r < 64 && !((live >> r) & 1)) return ret(vm, 2, mk_int(0));
     /* an immediate is what a register holds before it is written, and what
        the collector leaves in one dead where its frame waited: the REPL
        reads one only at a type an immediate may be */
-    return ret(vm, 2, mk_int(val_is_ptr(vm->stack[vm->frames[i].base + (size_t)r]) ? 2 : 1));
+    return ret(vm, 2, mk_int(val_is_ptr(vm->stack[fr.base + (size_t)r]) ? 2 : 1));
 }
 
 static int p_rt_debug_local(VM *vm) {
     check_tag(vm, ARG(1), T_INT, "rt_debug_local");
     check_tag(vm, ARG(0), T_INT, "rt_debug_local");
-    size_t i = stop_frame(vm, val_imm(ARG(1)));
+    FrameRef fr;
+    int found = stop_frame(vm, val_imm(ARG(1)), &fr);
     int64_t r = val_imm(ARG(0));
-    if (i == SIZE_MAX || r < 0 || (uint64_t)r >= vm->prog.funcs[vm->frames[i].func].nlocals) return ret(vm, 2, mk_unit());
-    return ret(vm, 2, vm->stack[vm->frames[i].base + (size_t)r]);
+    if (!found || r < 0 || (uint64_t)r >= vm->prog.funcs[fr.func].nlocals) return ret(vm, 2, mk_unit());
+    return ret(vm, 2, vm->stack[fr.base + (size_t)r]);
 }
 
 static int p_rt_debug_env(VM *vm) {
     check_tag(vm, ARG(1), T_INT, "rt_debug_env");
     check_tag(vm, ARG(0), T_INT, "rt_debug_env");
-    size_t i = stop_frame(vm, val_imm(ARG(1)));
+    FrameRef fr;
+    int found = stop_frame(vm, val_imm(ARG(1)), &fr);
     int64_t e = val_imm(ARG(0));
-    Obj *c = i == SIZE_MAX ? NULL : vm->frames[i].closure;
+    Obj *c = found && fr.closure ? *fr.closure : NULL;
     if (!c || e < 0 || (uint64_t)e + 1 >= obj_len(c)) return ret(vm, 2, mk_unit());
     return ret(vm, 2, obj_field(c, (uint32_t)e + 1));
 }
@@ -2672,7 +2685,12 @@ static int p_rt_debug_env(VM *vm) {
 static int p_rt_debug_exn(VM *vm) {
     const Debugger *d = vm->dbg;
     if (!d || !d->in_hook) vm_fatal(vm, "rt_debug_exn where nothing stopped");
-    return ret(vm, 1, vm->stack[vm->frames[d->stop_fp + 1].base + 3]);
+    /* in register 3 of <debug>'s frame, the one above the frame that stopped */
+    FrameRef fr, above;
+    int found = 0;
+    for (int more = vm_frame_top(vm, &fr); more && fr.id > d->stop_fp; more = vm_frame_down(vm, &fr)) { above = fr; found = 1; }
+    if (!found) vm_fatal(vm, "rt_debug_exn where nothing stopped");
+    return ret(vm, 1, vm->stack[above.base + 3]);
 }
 
 /* rt_debug_return x, <debug>'s last: its frame off, and the program on
@@ -2681,13 +2699,13 @@ static int p_rt_debug_exn(VM *vm) {
    takes the VM up as after a raise (1) */
 static int p_rt_debug_return(VM *vm) {
     Debugger *d = vm->dbg;
-    if (!d || !d->in_hook || !vm->frames_active || vm->frames[vm->fp].func != d->func)
+    FrameRef f;
+    if (!d || !d->in_hook || !vm_frame_top(vm, &f) || f.func != d->func)
         vm_fatal(vm, "rt_debug_return outside <debug>");
     Value exn = ARG(0);
-    const Frame *f = &vm->frames[vm->fp];
-    uint32_t at = f->ret_pc;
-    size_t top = f->base;
-    vm_frame_pop(vm);
+    uint32_t at = f.ret_pc;
+    size_t top = f.base;
+    vm_frame_drop(vm);
     vm->sp = top;
     vm->pc = at;
     int event = d->event, resume = d->resume;

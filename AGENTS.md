@@ -131,7 +131,14 @@ keep these invariants:
   another folder by its path from `runtime/` (`sys/sys.h`,
   `register/jit.h`), which the one include path `-Iruntime` finds, so a
   dependency across folders shows in the include. The shared files include
-  nothing of `stack/`; keep it so.
+  nothing of `stack/`; keep it so. What is outside an engine -- the
+  collector, images, traces and raises, the debugger and its primitives,
+  the census -- reads frames only through the walk of `vm.h` (*The frames,
+  as the runtime reads them*: `vm_frame_top`, `vm_frame_down`,
+  `vm_frames_from` and the rest), which each instruction set gives
+  (`runtime/stack/isa_stack.c`, `runtime/register/isa_regs.c`), never
+  through `vm->frames`; a handler, the stack's watermark and the debugger
+  hold a frame's id, not its index (native-frames.md, M3).
 * **The stack VM's loop** (`runtime/stack/interp.c`, `runtime/stack/loop.h`) keeps its state in
   its own variables: a body of `src/isa/stack.sml` that is not shared is
   written in the loop's words (`PUSH`, `POP`, `TOP`, `LOCALV`, `JUMP_TO`,

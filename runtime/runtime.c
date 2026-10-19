@@ -12,9 +12,8 @@
    one, and the call it is waiting on in every other. A pc points past the
    instruction it is in, so one byte back is inside it, and an entry of the
    line table never begins in the middle of an instruction. */
-static uint32_t frame_pc(const VM *vm, size_t i) {
-    uint32_t pc = (i == vm->fp) ? vm->pc : vm->frames[i + 1].ret_pc;
-    return pc > 0 ? pc - 1 : 0;
+static uint32_t frame_pc(const FrameRef *f) {
+    return f->pc > 0 ? f->pc - 1 : 0;
 }
 
 /* The frames, innermost first, under a message that has already been
@@ -24,13 +23,12 @@ static uint32_t frame_pc(const VM *vm, size_t i) {
    in was inlined from other functions, each is a frame of its own, at the
    place the next called it from (the line table, docs/bytecode.md). */
 void vm_print_trace(VM *vm, FILE *out) {
-    if (!vm->frames_active) return;
     const Program *p = &vm->prog;
-    for (size_t k = vm->fp + 1; k > 0; k--) {
-        size_t i = k - 1;
-        uint32_t f = vm->frames[i].func;
+    FrameRef fr;
+    for (int more = vm_frame_top(vm, &fr); more; more = vm_frame_down(vm, &fr)) {
+        uint32_t f = fr.func;
         const char *name = f < p->nfuncs ? p->funcs[f].name : "?";
-        const LineEntry *e = line_at(p, frame_pc(vm, i));
+        const LineEntry *e = line_at(p, frame_pc(&fr));
         if (e && e->file < p->nfiles) {
             TraceFrame fs[64];
             uint32_t n = trace_frames(p, e, name, fs, 64);
@@ -45,8 +43,9 @@ void vm_fatal(VM *vm, const char *fmt, ...) {
     va_list ap;
     fflush(stdout);
     fprintf(stderr, "runevm: fatal error at pc %u", vm->pc);
-    if (vm->frames_active && vm->fp < vm->frames_cap)
-        fprintf(stderr, " in %s", vm->prog.funcs[vm->frames[vm->fp].func].name);
+    FrameRef top;
+    if (vm_frame_top(vm, &top) && top.func < vm->prog.nfuncs)
+        fprintf(stderr, " in %s", vm->prog.funcs[top.func].name);
     fprintf(stderr, ": ");
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
@@ -147,7 +146,7 @@ void vm_push_handler(VM *vm, uint32_t pc) {
     }
     vm->handlers[vm->hp].pc = pc;
     vm->handlers[vm->hp].sp = vm->sp;
-    vm->handlers[vm->hp].fp = vm->fp;
+    vm->handlers[vm->hp].fp = vm_frame_id(vm);
     vm->handlers[vm->hp].native = NULL;
     vm->hp++;
 }
@@ -286,15 +285,15 @@ int vm_raise(VM *vm, Value exn) {
     if (vm->raise_mark && vm->hp == vm->raise_mark && vm->frames_active) {
         size_t base = vm->handlers[vm->hp - 1].fp;
         vm->raise_n = 0;
-        for (size_t i = vm->fp; i > base && vm->raise_n < 64; i--) {
-            vm->raise_frames[vm->raise_n].func = vm->frames[i].func;
-            vm->raise_frames[vm->raise_n].pc = (i == vm->fp) ? vm->pc : vm->frames[i + 1].ret_pc;
+        FrameRef fr;
+        for (int more = vm_frame_top(vm, &fr); more && fr.id > base && vm->raise_n < 64; more = vm_frame_down(vm, &fr)) {
+            vm->raise_frames[vm->raise_n].func = fr.func;
+            vm->raise_frames[vm->raise_n].pc = fr.pc;
             vm->raise_n++;
         }
     }
     Handler h = vm->handlers[--vm->hp];
-    vm->fp = h.fp;
-    if (vm->fp < vm->fp_low) vm_set_fp_low(vm, vm->fp);
+    vm_frame_unwind(vm, h.fp);
     CENSUS_UNWIND(vm);
     vm->sp = h.sp;
     vm_push(vm, exn);
@@ -339,10 +338,7 @@ void vm_start(VM *vm) {
     }
 
     /* toplevel frame: function 0 applied to unit */
-    vm->sp = 0;
-    vm_push(vm, mk_unit());
-    for (uint32_t i = 1; i < p->funcs[0].nlocals; i++) vm_push(vm, mk_unit());
-    vm_push_frame(vm, 0, NULL, 0, 0);
+    vm_frame_top_level(vm);
     vm->pc = p->funcs[0].code_offset;
 }
 
@@ -387,6 +383,7 @@ void vm_release(VM *vm) {
     free(vm->unit_table);
     free(vm->stack);
     free(vm->frames);
+    free(vm->frame_buf);
     free(vm->handlers);
     free(vm->handles);
     heap_chunks_release(vm);

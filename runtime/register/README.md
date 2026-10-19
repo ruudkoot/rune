@@ -87,7 +87,11 @@ compiled code pushes records none; not in an image, made again from the
 code at `ret_pc` when one is read); the handlers `{pc, sp, fp, native}`
 are a second array; the value stack a third. All three grow by doubling
 (`realloc`), which moves the value stack; the frames keep pace with the
-stack's clean part (below).
+stack's clean part (below). The rest of the runtime reads frames through
+the walk this instruction set gives (`vm.h`, *The frames, as the runtime
+reads them*; `runtime/frames_array.inc`, which `isa_regs.c` includes, as
+`runtime/stack/isa_stack.c` does: a frame's id is its index), so that the
+frames may become this VM's own (native-frames.md, M3 and M4).
 
 A function's registers are its slots on the value stack from its frame's
 base, `nlocals` of them (the function table; the last is the scratch

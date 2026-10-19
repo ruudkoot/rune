@@ -291,3 +291,6 @@ void disassemble(const Program *p, FILE *out) {
         pc += len;
     }
 }
+
+/* the frames, as the runtime walks them (vm.h; native-frames.md, M3) */
+#include "frames_array.inc"

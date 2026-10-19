@@ -171,13 +171,15 @@ static void promote_obj(VM *vm, Obj **o) {
    the frames below it have not run since the last minor collection, which
    left nothing young in them. */
 static void minor_stack(VM *vm, size_t low) {
-    size_t at = vm->frames_active && low ? vm->frames[low].base : 0, dead = 0, from = at;
-    if (vm->frame_live && vm->frames_active)
-        for (size_t k = low; k < vm->fp; k++) {
-            const Frame *f = &vm->frames[k];
-            size_t end = vm->frames[k + 1].base < vm->sp ? vm->frames[k + 1].base : vm->sp;
+    FrameRef *fr = NULL;
+    size_t nf = vm_frames_from(vm, low, &fr);   /* the frames from the watermark's up (native-frames.md, M3) */
+    size_t at = nf && low ? fr[0].base : 0, dead = 0, from = at;
+    if (vm->frame_live)
+        for (size_t k = 0; k + 1 < nf; k++) {
+            const FrameRef *f = &fr[k];
+            size_t end = fr[k + 1].base < vm->sp ? fr[k + 1].base : vm->sp;
             uint32_t n = vm->prog.funcs[f->func].nlocals;
-            uint64_t live = vm->frame_live(vm, f->func, vm->frames[k + 1].ret_pc);
+            uint64_t live = vm->frame_live(vm, f->func, f->pc);
             for (; at < f->base && at < end; at++) promote_value(vm, &vm->stack[at]);
             for (uint32_t r = 0; r < n && at < end; r++, at++) {
                 if (r >= 64 || ((live >> r) & 1)) promote_value(vm, &vm->stack[at]);
@@ -188,10 +190,10 @@ static void minor_stack(VM *vm, size_t low) {
             }
             vm->gc_counts.frames++;
         }
-    if (vm->frame_live && vm->frames_active && vm->top_frame == &vm->frames[vm->fp]) {
+    if (vm->frame_live && nf && vm_frame_top_live(vm, &fr[nf - 1])) {
         /* the frame that runs, where compiled code said what of it is live
            (VM.top_live, M6): as a frame that waits */
-        const Frame *f = &vm->frames[vm->fp];
+        const FrameRef *f = &fr[nf - 1];
         uint32_t n = vm->prog.funcs[f->func].nlocals;
         for (; at < f->base && at < vm->sp; at++) promote_value(vm, &vm->stack[at]);
         for (uint32_t r = 0; r < n && at < vm->sp; r++, at++) {
@@ -291,7 +293,8 @@ static void minor_into(VM *vm) {
     Chunk *start = vm->gc.last;
     size_t start_at = start->used;
     vm->gc.nqueue = 0;
-    size_t low = vm->fp_low < vm->fp ? vm->fp_low : vm->fp;
+    size_t low = vm_frames_low(vm);
+    if (low > vm_frame_id(vm)) low = vm_frame_id(vm);
     minor_stack(vm, low);
 #define PROMOTE_ROOT_VALUE(v) (vm->gc_counts.other_roots++, promote_value(vm, (v)))
 #define PROMOTE_ROOT_OBJ(o) (vm->gc_counts.other_roots++, promote_obj(vm, (o)))
@@ -331,7 +334,7 @@ static void minor_into(VM *vm) {
        not one that reads as before until the nursery fills again */
     if (vm->gc_verify) memset(vm->alloc.from, 0xdb, vm->alloc.used);
     vm->alloc.used = 0;
-    vm_set_fp_low(vm, vm->fp);
+    vm_frames_mark_low(vm, vm_frame_id(vm));
     vm->box_bytes_live = vm->gc.old_boxes;
     vm->gc_count++;
     vm->gc.minors++;

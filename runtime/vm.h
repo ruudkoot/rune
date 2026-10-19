@@ -355,6 +355,9 @@ typedef struct VM {
        forgets it whenever compiled code hands back (jit_run). */
     uint64_t top_live;
     const Frame *top_frame;
+    /* the frames vm_frames_from gives, walked into a buffer of the VM's (native-frames.md, M3) */
+    struct FrameRef *frame_buf;
+    size_t frame_buf_cap;
 
     int frames_active;       /* 1 once the toplevel frame exists */
 
@@ -652,6 +655,58 @@ static inline void vm_frame_pop(VM *vm) {
     vm->fp--;
     if (vm->fp < vm->fp_low) vm_set_fp_low(vm, vm->fp);
 }
+
+/* ---- The frames, as the runtime reads them (native-frames.md, M3) ----
+   Every reader of frames outside an engine -- the collector, images,
+   traces and raises, the debugger and its primitives, the census -- goes
+   through these, which each instruction set gives
+   (runtime/stack/isa_stack.c, runtime/register/isa_regs.c), so that an
+   engine may keep its frames its own way. A frame is named while it lives
+   by its id, which is larger the deeper the frame: the watermark, a
+   handler and the debugger hold ids. */
+typedef struct FrameRef {
+    uint32_t func;      /* its function */
+    uint32_t pc;        /* where it is: the running frame's, the VM's pc; a waiting one's, where its callee returns to */
+    uint32_t ret_pc;    /* where it returns to in its caller (the top level's: what vm_start gave it) */
+    size_t base;        /* its registers' first slot */
+    size_t id;          /* what names it */
+    Obj **closure;      /* the cell of its closure, a root: *closure NULL where it has none */
+} FrameRef;
+size_t vm_frame_id(const VM *vm);                   /* the running frame's id (frames_active) */
+int vm_frame_top(VM *vm, FrameRef *f);              /* the frame that runs: 0 where there is none */
+int vm_frame_down(VM *vm, FrameRef *f);             /* f made its caller: 0 where f is the top level's */
+int vm_frame_find(VM *vm, size_t id, FrameRef *f);  /* the frame named id: 0 where none is */
+/* the frames whose id is at least low, the deepest last, in a buffer of
+   the VM's that the next call may reuse (VM.frame_buf): how many, 0 where
+   there are none */
+size_t vm_frames_from(VM *vm, size_t low, FrameRef **out);
+/* whether what compiled code said is live in the frame that runs
+   (VM.top_live, performance M6) is of the frame top */
+int vm_frame_top_live(const VM *vm, const FrameRef *top);
+/* the stack's watermark set at the frame named id: no frame below it has
+   run since (garbage-collector-v2.md, D9) */
+void vm_frames_mark_low(VM *vm, size_t id);
+/* the watermark's id (above the frame that runs only where a pop forgot
+   to lower it: runtime/gc/check.c) */
+size_t vm_frames_low(const VM *vm);
+/* a frame pushed above the one that runs, for function func at base,
+   returning to ret_pc (vm_start's of the top level, the debugger's
+   <debug>), and the frame that runs popped (rt_debug_return) */
+void vm_frame_push(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t base);
+void vm_frame_drop(VM *vm);
+/* the top level's frame, function 0 applied to unit, made on an empty
+   stack (vm_start) */
+void vm_frame_top_level(VM *vm);
+/* the frame named id made the one that runs, the frames above it gone and
+   the watermark lowered to it: a raise into a handler of it (vm_raise) */
+void vm_frame_unwind(VM *vm, size_t id);
+/* the frames an image gives, the top level's first: installed as the
+   VM's (runtime/image.c); 0 where there is no memory */
+typedef struct FrameRecord { uint32_t func, ret_pc; size_t base; Obj *closure; } FrameRecord;
+int vm_frames_install(VM *vm, const FrameRecord *frames, size_t n);
+/* every frame made to return to the interpreter: the debugger's debug
+   mode (runtime/debug.c) */
+void vm_frames_to_interpreter(VM *vm);
 /* Every normal end of a run (halt, the exit primitive, an uncaught exception)
    goes through vm_exit, which flushes and prints what --count and --stats ask for. */
 VM_NORETURN void vm_exit(VM *vm, int status);
