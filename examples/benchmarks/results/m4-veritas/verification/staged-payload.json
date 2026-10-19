@@ -1,0 +1,8 @@
+{
+  "exit": 0,
+  "files": 5174,
+  "bytes": 54901859,
+  "elapsed_seconds": 2.382912720000604,
+  "policy": "same executable/compiled/NUL and reviewed-14-byte-event-state rules as scan-staged-fast.py; streamed in 4 MiB chunks; every staged blob verified against physical bytes",
+  "policy_source_sha256": "cdd9027dcf05da032e00c0bc824d41a8b4b8db03cdd167e9b857aaf4e06365ac"
+}

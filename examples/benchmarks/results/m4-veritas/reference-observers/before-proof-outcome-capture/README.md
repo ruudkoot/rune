@@ -1,0 +1,1 @@
+The original observer assumed editor result Ok. The named-declaration discharge input actually returns Bad "Expected cancel"; it is now an explicit negative control with a captured outcome. This former observer pattern failure is not a source-program exception.

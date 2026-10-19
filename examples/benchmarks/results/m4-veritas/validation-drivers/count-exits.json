@@ -1,0 +1,10 @@
+[
+  {
+    "benchmark": "veritas-strict",
+    "exit": 0
+  },
+  {
+    "benchmark": "veritas-lazy",
+    "exit": 0
+  }
+]

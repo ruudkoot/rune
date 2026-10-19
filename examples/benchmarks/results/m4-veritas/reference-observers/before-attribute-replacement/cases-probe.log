@@ -1,0 +1,29 @@
+PASS lazy original-forall protocol
+runevm: uncaught exception Match
+  in BenchLazy.force at examples/benchmarks/shared/lazy.sml:14:62
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:22
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.K.F.toList at examples/benchmarks/shared/hartel-ida-finite.sml:24:69
+  in Need.hex at tests/out/benchmarks/nofib-veritas-originals/cases-probe.sml:8:79
+  in Need.proof at tests/out/benchmarks/nofib-veritas-originals/cases-probe.sml:13:69
+  in Need.one at tests/out/benchmarks/nofib-veritas-originals/cases-probe.sml:25:96
+  in app at bin/../lib/basis/pervasive.sml:58:24
+  in <toplevel> at tests/out/benchmarks/nofib-veritas-originals/cases-probe.sml:28:81

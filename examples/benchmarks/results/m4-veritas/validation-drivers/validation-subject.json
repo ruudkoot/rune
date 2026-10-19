@@ -1,0 +1,15 @@
+{
+  "started": "2026-10-19T03:01:05.139296+00:00",
+  "revision": "f244f1a7bf08b10e4bbfe7d6399ef11af581887b",
+  "dirty": true,
+  "sources": {
+    "examples/benchmarks/manifest.tsv": "8fbc9a679d1eb6133503230d3bab7ad6bfbba918e41e67335591a3a89c93075b",
+    "examples/benchmarks/shared/nofib-veritas-kernel.sml": "a242f38533a09f28597e5ade1d3be4ee8cd295ae4b0b0edc08fa33028383c352",
+    "examples/benchmarks/shared/nofib-veritas-check.sml": "6385ce2de1b071453476997a4acf302108d75fd4c27ef1277ce5c61aa1a7678b",
+    "tests/benchmarks/nofib-veritas-tests.sml": "1fbe8b57907a6cef50faf10b46767dfd88618709485b4277bdf0b0f42e5538d6",
+    "tests/benchmarks/check-nofib-applications.sh": "48e12579d69a86d084027250b043ad4c404a2af6fc4caa63dfcddba0f8dd5d7c",
+    "bin/rune.rbc": "8989314c5988617a41c961d79bb7770c524353121ca1c81ea49ae5459d35f7ee",
+    "bin/runevm": "bda491e13edeed6795bea7b720b0833c5d65267316dbac964d77231af7397177",
+    "bin/runevm-new": "e0b66ab4349d0c55411a718cea4d22bf4f7c67307d57c9ad2afac2c5bf5f1d87"
+  }
+}

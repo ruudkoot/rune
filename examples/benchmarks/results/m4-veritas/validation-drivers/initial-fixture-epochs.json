@@ -1,0 +1,88 @@
+[
+  {
+    "level": "O0",
+    "configuration": "rune-jit",
+    "has_case_list": false,
+    "passes": 54,
+    "summary": []
+  },
+  {
+    "level": "O0",
+    "configuration": "rune",
+    "has_case_list": false,
+    "passes": 54,
+    "summary": []
+  },
+  {
+    "level": "O0",
+    "configuration": "rune-opt",
+    "has_case_list": false,
+    "passes": 54,
+    "summary": []
+  },
+  {
+    "level": "O0",
+    "configuration": "rune-new",
+    "has_case_list": false,
+    "passes": 54,
+    "summary": []
+  },
+  {
+    "level": "O2",
+    "configuration": "native-smlnj-legacy-110.99.9",
+    "has_case_list": false,
+    "passes": 54,
+    "summary": []
+  },
+  {
+    "level": "O2",
+    "configuration": "native-smlnj-dev-2026.2",
+    "has_case_list": true,
+    "passes": 0,
+    "summary": []
+  },
+  {
+    "level": "O2",
+    "configuration": "rune-jit",
+    "has_case_list": false,
+    "passes": 54,
+    "summary": []
+  },
+  {
+    "level": "O2",
+    "configuration": "rune",
+    "has_case_list": false,
+    "passes": 54,
+    "summary": []
+  },
+  {
+    "level": "O2",
+    "configuration": "rune-opt",
+    "has_case_list": false,
+    "passes": 54,
+    "summary": []
+  },
+  {
+    "level": "O2",
+    "configuration": "native-mlton-20241230",
+    "has_case_list": false,
+    "passes": 54,
+    "summary": []
+  },
+  {
+    "level": "O2",
+    "configuration": "rune-new",
+    "has_case_list": false,
+    "passes": 54,
+    "summary": []
+  },
+  {
+    "level": "O2",
+    "configuration": "native-smlnj32-110.99.9",
+    "has_case_list": true,
+    "passes": 218,
+    "summary": [
+      "SUMMARY 218 checks, 0 failed"
+    ]
+  }
+]

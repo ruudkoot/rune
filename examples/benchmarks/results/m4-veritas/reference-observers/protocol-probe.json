@@ -1,0 +1,22 @@
+{
+  "command": [
+    "timeout",
+    "120",
+    "bin/runevm",
+    "tests/out/benchmarks/nofib-veritas-originals/protocol-probe.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 1404,
+  "observed_minimum_available_kib": 24837312,
+  "peak_processes": [
+    {
+      "pid": 6,
+      "name": "timeout",
+      "rss_kib": 1404
+    }
+  ],
+  "elapsed_seconds": 0.05146668000088539
+}

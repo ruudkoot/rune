@@ -1,0 +1,16 @@
+ M docs/plans/benchmarks.md
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/literature.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/source-variants.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/check-nofib-applications.sh
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/shared/nofib-veritas-check.sml
+?? examples/benchmarks/shared/nofib-veritas-kernel.sml
+?? examples/benchmarks/veritas-lazy/
+?? examples/benchmarks/veritas-strict/
+?? tests/benchmarks/check-nofib-veritas.sh
+?? tests/benchmarks/data/nofib-veritas/
+?? tests/benchmarks/nofib-veritas-tests.sml

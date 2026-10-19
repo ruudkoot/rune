@@ -1,0 +1,5 @@
+# Exact source and reviewed input/reference bytes.
+upstream/** -whitespace
+*.reference -whitespace
+*.input -whitespace
+runtime_files/** -whitespace

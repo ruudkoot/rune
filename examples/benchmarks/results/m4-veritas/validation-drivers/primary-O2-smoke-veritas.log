@@ -1,0 +1,81 @@
+bin/rune --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml -o build/bench-catalog.rbc
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1473 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt,hosts BENCH_FILTER='veritas-' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.E9BTaq
+BENCH veritas-lazy smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 400
+PASS veritas-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 400
+PASS veritas-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 400
+PASS veritas-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 400
+PASS veritas-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 400
+PASS veritas-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 1, exit 124)
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:smlnj32@110.99.9 (load 1, exit 124)
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:smlnj-dev@2026.2 (load 1, exit 124)
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+RESULT 400
+PASS veritas-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:mlkit@4.7.23 (load 1, exit 124)
+BENCH veritas-strict smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 400
+PASS veritas-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 400
+PASS veritas-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 400
+PASS veritas-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 400
+PASS veritas-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:mlton@20241230 (load 1, exit 124)
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 1, exit 124)
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:smlnj32@110.99.9 (load 1, exit 124)
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:smlnj-dev@2026.2 (load 1, exit 124)
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+RESULT 400
+PASS veritas-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:mlkit@4.7.23 (load 1, exit 124)
+make: *** [Makefile:994: bench-check] Error 1

@@ -1,0 +1,10 @@
+[34 of 36] Compiling Main             ( Main.hs, Main.o ) [Flags changed]
+
+Main.hs:58:1: warning: [-Wtabs]
+    Tab character found here, and in 126 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+58 |         = rqts
+   | ^^^^^^^^
+[35 of 36] Compiling ObserveMain      ( ObserveMain.hs, ObserveMain.o )
+[36 of 36] Linking observe-main

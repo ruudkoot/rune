@@ -1,0 +1,9 @@
+$(SML_LIB)/basis/basis.mlb
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-veritas-kernel.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-veritas-check.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/veritas-strict/benchmark.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml"

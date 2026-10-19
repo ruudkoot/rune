@@ -1,0 +1,152 @@
+[
+  {
+    "name": "original-forall",
+    "input_bytes": 196,
+    "protocol_bytes": 1391,
+    "editor_outcome": "1:2:proof:5468656f72656d3a2028b178203a2055302e202878203d207829290a"
+  },
+  {
+    "name": "reflex",
+    "input_bytes": 112,
+    "protocol_bytes": 498,
+    "editor_outcome": "1:0:proof:5468656f72656d3a20285530203d205530290a"
+  },
+  {
+    "name": "taut",
+    "input_bytes": 109,
+    "protocol_bytes": 481,
+    "editor_outcome": "1:0:proof:5468656f72656d3a20547275650a"
+  },
+  {
+    "name": "conjunction",
+    "input_bytes": 189,
+    "protocol_bytes": 1215,
+    "editor_outcome": "1:2:proof:5468656f72656d3a20285472756520b32054727565290a"
+  },
+  {
+    "name": "discharge",
+    "input_bytes": 184,
+    "protocol_bytes": 1166,
+    "editor_outcome": "bad=45787065637465642063616e63656c"
+  },
+  {
+    "name": "negation",
+    "input_bytes": 143,
+    "protocol_bytes": 819,
+    "editor_outcome": "1:1:proof:5468656f72656d3a2020b520b5547275650a"
+  },
+  {
+    "name": "or",
+    "input_bytes": 148,
+    "protocol_bytes": 917,
+    "editor_outcome": "1:1:proof:5468656f72656d3a20285472756520b42046616c7365290a"
+  },
+  {
+    "name": "equality",
+    "input_bytes": 178,
+    "protocol_bytes": 1348,
+    "editor_outcome": "1:2:proof:5468656f72656d3a202854727565203d2054727565290a"
+  },
+  {
+    "name": "strip",
+    "input_bytes": 115,
+    "protocol_bytes": 551,
+    "editor_outcome": "1:2:proof:5468656f72656d3a2028b178203a2055302e202878203d207829290a"
+  },
+  {
+    "name": "trivial",
+    "input_bytes": 110,
+    "protocol_bytes": 498,
+    "editor_outcome": "1:0:proof:5468656f72656d3a20285530203d205530290a"
+  },
+  {
+    "name": "views",
+    "input_bytes": 202,
+    "protocol_bytes": 1143,
+    "editor_outcome": "1:0:none"
+  },
+  {
+    "name": "named",
+    "input_bytes": 127,
+    "protocol_bytes": 551,
+    "editor_outcome": "1:0:none"
+  },
+  {
+    "name": "object",
+    "input_bytes": 153,
+    "protocol_bytes": 689,
+    "editor_outcome": "1:0:none"
+  },
+  {
+    "name": "undo",
+    "input_bytes": 140,
+    "protocol_bytes": 714,
+    "editor_outcome": "1:0:proof:5468656f72656d3a20285530203d205530290a"
+  },
+  {
+    "name": "discharge-axiom",
+    "input_bytes": 182,
+    "protocol_bytes": 1241,
+    "editor_outcome": "1:2:proof:5468656f72656d3a20205b5f203a613a20547275655d20b620547275650a"
+  },
+  {
+    "name": "complete",
+    "input_bytes": 157,
+    "protocol_bytes": 759,
+    "editor_outcome": "1:0:proof:5468656f72656d3a20285530203d205530290a"
+  },
+  {
+    "name": "axiom",
+    "input_bytes": 201,
+    "protocol_bytes": 1298,
+    "editor_outcome": "1:2:proof:5468656f72656d3a20205b5f203a613a20547275655d20b620547275650a"
+  },
+  {
+    "name": "lemma",
+    "input_bytes": 276,
+    "protocol_bytes": 2079,
+    "editor_outcome": "1:2:proof:5468656f72656d3a20547275650a"
+  },
+  {
+    "name": "disjunction-spec",
+    "input_bytes": 265,
+    "protocol_bytes": 1936,
+    "editor_outcome": "1:3:proof:496e76616c6964207468656f72656d3a20496e76616c696420696d706c69636174696f6e20656c696d696e6174696f6e0a"
+  },
+  {
+    "name": "disjunction-deriv",
+    "input_bytes": 232,
+    "protocol_bytes": 1454,
+    "editor_outcome": "1:2:proof:496e76616c6964207468656f72656d3a20496e76616c696420696d706c69636174696f6e20656c696d696e6174696f6e0a"
+  },
+  {
+    "name": "exists-spec",
+    "input_bytes": 231,
+    "protocol_bytes": 1528,
+    "editor_outcome": "1:2:proof:5468656f72656d3a20547275650a"
+  },
+  {
+    "name": "exists-deriv",
+    "input_bytes": 198,
+    "protocol_bytes": 1082,
+    "editor_outcome": "1:1:proof:496e76616c6964207468656f72656d3a20496e76616c6964206578697374656e7469616c20656c696d696e6174696f6e0a"
+  },
+  {
+    "name": "next",
+    "input_bytes": 177,
+    "protocol_bytes": 1137,
+    "editor_outcome": "1:2:proof:5468656f72656d3a2028b178203a2055302e202878203d207829290a"
+  },
+  {
+    "name": "named-cancel",
+    "input_bytes": 197,
+    "protocol_bytes": 1451,
+    "editor_outcome": "1:2:proof:5468656f72656d3a2028b178203a2055302e202878203d207829290a"
+  },
+  {
+    "name": "expanded-child",
+    "input_bytes": 213,
+    "protocol_bytes": 1744,
+    "editor_outcome": "1:2:proof:5468656f72656d3a2028b178203a2055302e202878203d207829290a"
+  }
+]

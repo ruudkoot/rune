@@ -1,0 +1,215 @@
+diff --git a/docs/plans/benchmarks.md b/docs/plans/benchmarks.md
+index 98a0925bf..6e4d6e62f 100644
+--- a/docs/plans/benchmarks.md
++++ b/docs/plans/benchmarks.md
+@@ -35,7 +35,7 @@ The [runnable catalogue](../../examples/benchmarks/README.md) contains the M1
+ pilots, the validated M2 classic collection and the completed M5 sequential
+ Sandmark collection. M3 kernels are complete; M4 applications remain in progress; M8
+ coverage closure remains planned.
+-The current catalogue has 505 programs and 1467 profiles. The Happy wave
++The current catalogue has 507 programs and 1473 profiles. The Happy wave
+ has [recorded validation](../../examples/benchmarks/results/m3-happy/README.md):
+ all normal profiles and 50280 semantic assertions pass, with two unclassified
+ ML Kit smoke compile failures retained. Counts, serial adapter diagnostics
+@@ -56,8 +56,9 @@ repository acceptance passes. Host failures remain explicit. Anna has [recorded
+ Twelve semantic groups pass all 1963 assertions, eight normal allocation
+ samples agree, and repository acceptance passes. Source-loading/compile
+ timeouts and the confirmed SML/NJ32 literal defect remain explicit.
+-Veritas is a private port with original request-stream and editor-outcome
+-agreement; its public registration and validation remain pending.
++Veritas now registers lazy and strict ports after independent request-stream
++and editor-outcome agreement and private 400-repeat smoke checks. Its public
++host/profile, count and acceptance gates remain pending; M4 is still in progress.
+ M8 closes the inventories, evidence, documentation and maintenance procedures.
+ 
+ ## Sources, naming, and portable programs
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index de05673c2..c81f7d305 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -516,6 +516,8 @@ M4 applications and M8 coverage closure remain unfinished.
+ | [fluid-strict](#fluid-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fluid) | Solve and hash the supplied finite-element flow model using sparse tries, Cholesky and Jacobi methods. |
+ | [anna-lazy](#anna-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/anna) | Infer types and compute polymorphic strictness frontiers for functional Core programs. |
+ | [anna-strict](#anna-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/anna) | Infer types and compute polymorphic strictness frontiers for functional Core programs. |
++| [veritas-lazy](#veritas-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/veritas) | Execute and validate a scripted proof-editor session using dependent-type logic and immutable proof trees. |
++| [veritas-strict](#veritas-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/veritas) | Execute and validate a scripted proof-editor session using dependent-type logic and immutable proof trees. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -34506,3 +34508,29 @@ on every repetition, as the original driver does.
+ See [anna-strict/PROVENANCE.md](anna-strict/PROVENANCE.md) for history,
+ variants, adaptations, runtime questions, inputs, checks and references.
+ Public validation is [recorded](results/m4-anna/README.md), including host exceptions.
++
++## veritas-lazy
++
++Execute the original scripted proof-editor session for the Veritas design
++logic. Tokenize and parse a functional concrete syntax, manipulate terms,
++declarations and signatures, build proof trees, apply tactics, track completion,
++render the original X-interface requests and compute their modular hash.
++The maintained nofib driver repeats the same session 400/4000/20000 times.
++
++
++See [veritas-lazy/PROVENANCE.md](veritas-lazy/PROVENANCE.md) for history,
++variants, adaptations, runtime questions, inputs, checks and references.
++Public host/profile validation is pending.
++
++## veritas-strict
++
++Execute the original scripted proof-editor session for the Veritas design
++logic. Tokenize and parse a functional concrete syntax, manipulate terms,
++declarations and signatures, build proof trees, apply tactics, track completion,
++render the original X-interface requests and compute their modular hash.
++The maintained nofib driver repeats the same session 400/4000/20000 times.
++
++
++See [veritas-strict/PROVENANCE.md](veritas-strict/PROVENANCE.md) for history,
++variants, adaptations, runtime questions, inputs, checks and references.
++Public host/profile validation is pending.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index 1c9eb64f2..4c76a99a9 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -547,7 +547,7 @@ nofib	parallel/ray	ray	ray	M3	defer	numerical	mlkit:test/ray.mlb;mlton:benchmark
+ nofib	parallel/sumeuler	sumeuler	sumeuler	M3	defer	kernel		not stated in scanned source headers	023ae272f7c4fc6bba8a1a92d012fd3f1b3a95f29a0c70c15c40b49072855635	parallel/sumeuler/ListAux.hs;parallel/sumeuler/Main.hs;parallel/sumeuler/SumEulerPrimes.hs	parallel/sumeuler/sumeuler.stdout		parallel/sumeuler/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+ nofib	parallel/transclos	transclos	transclos	M3	defer	integer-arithmetic		not stated in scanned source headers	7d05a8e53c034acb06272f76de98563feb2ec130f61de15ece2ae520a24bd802	parallel/transclos/Main.hs;parallel/transclos/TransClos.hs	parallel/transclos/transclos.stdout		parallel/transclos/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+ nofib	parallel/warshall	warshall	warshall	M3	defer	kernel		Rita Loogen, Jost Berthold	6de07f11429f38bd646d9894130857f9ee0f668d262d815aa64618e94585ce98	parallel/warshall/warshall.hs		parallel/warshall/warshall.hs:header	parallel/warshall/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+-nofib	real/anna	anna	anna	M4	import	compiler-application		not stated in scanned source headers	1264ac8c05ca354a2c3b89ea58727eecbb14797c928f3b4d992fcab4229f35f7	real/anna/AbsConc3.hs;real/anna/AbstractEval2.hs;real/anna/AbstractMisc.hs;real/anna/AbstractVals2.hs;real/anna/Apply.hs;real/anna/BarakiConc3.hs;real/anna/BarakiMeet.hs;real/anna/BaseDefs.hs;real/anna/Constructors.hs;real/anna/Dependancy.hs;real/anna/DomainExpr.hs;real/anna/EtaAbstract.hs;real/anna/FrontierDATAFN2.hs;real/anna/FrontierGENERIC2.hs;real/anna/FrontierMisc2.hs;real/anna/Inverse.hs;real/anna/LambdaLift5.hs;real/anna/Main.hs;real/anna/MakeDomains.hs;real/anna/Monster.hs;real/anna/MyUtils.hs;real/anna/NofibUtils.hs;real/anna/Parser2.hs;real/anna/PrettyPrint.hs;real/anna/PrintResults.hs;real/anna/ReadTable.hs;real/anna/Simplify.hs;real/anna/SmallerLattice.hs;real/anna/StrictAn6.hs;real/anna/SuccsAndPreds2.hs;real/anna/TExpr2DExpr.hs;real/anna/TypeCheck5.hs;real/anna/Utils.hs	real/anna/anna.faststdin;real/anna/anna.faststdout;real/anna/anna.slowstdin;real/anna/anna.slowstdout;real/anna/anna.stdin;real/anna/anna.stdout;real/anna/big.sum.out;real/anna/runtime_files/anna_table	real/anna/Main.hs:header;real/anna/Monster.hs:header	real/anna/Makefile;real/anna/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/anna	anna	anna	M4	import	compiler-application		Julian Seward (program banner)	1264ac8c05ca354a2c3b89ea58727eecbb14797c928f3b4d992fcab4229f35f7	real/anna/AbsConc3.hs;real/anna/AbstractEval2.hs;real/anna/AbstractMisc.hs;real/anna/AbstractVals2.hs;real/anna/Apply.hs;real/anna/BarakiConc3.hs;real/anna/BarakiMeet.hs;real/anna/BaseDefs.hs;real/anna/Constructors.hs;real/anna/Dependancy.hs;real/anna/DomainExpr.hs;real/anna/EtaAbstract.hs;real/anna/FrontierDATAFN2.hs;real/anna/FrontierGENERIC2.hs;real/anna/FrontierMisc2.hs;real/anna/Inverse.hs;real/anna/LambdaLift5.hs;real/anna/Main.hs;real/anna/MakeDomains.hs;real/anna/Monster.hs;real/anna/MyUtils.hs;real/anna/NofibUtils.hs;real/anna/Parser2.hs;real/anna/PrettyPrint.hs;real/anna/PrintResults.hs;real/anna/ReadTable.hs;real/anna/Simplify.hs;real/anna/SmallerLattice.hs;real/anna/StrictAn6.hs;real/anna/SuccsAndPreds2.hs;real/anna/TExpr2DExpr.hs;real/anna/TypeCheck5.hs;real/anna/Utils.hs	real/anna/anna.faststdin;real/anna/anna.faststdout;real/anna/anna.slowstdin;real/anna/anna.slowstdout;real/anna/anna.stdin;real/anna/anna.stdout;real/anna/big.sum.out;real/anna/runtime_files/anna_table	real/anna/Main.hs:header;real/anna/Monster.hs:header	real/anna/Main.hs:versioned-program-copyright-banner;real/anna/Makefile;real/anna/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/ben-raytrace	ben-raytrace	ben-raytrace	M4	defer	numerical		not stated in scanned source headers	92db379a722cd1efdeaa0dc35c4091c2b3d0584a7f5344db716400a6032b1383	real/ben-raytrace/BVH.hs;real/ben-raytrace/BoundingBox.hs;real/ben-raytrace/Colour.hs;real/ben-raytrace/Figure.hs;real/ben-raytrace/Image.hs;real/ben-raytrace/Interval.hs;real/ben-raytrace/Main.hs;real/ben-raytrace/Matrix.hs;real/ben-raytrace/Mesh.hs;real/ben-raytrace/Random/Lehmer64.hs;real/ben-raytrace/Random/Lehmer64Mut.hs;real/ben-raytrace/Random/Wyhash64.hs;real/ben-raytrace/Random.hs;real/ben-raytrace/RandomDist.hs;real/ben-raytrace/Ray.hs;real/ben-raytrace/STL.hs;real/ben-raytrace/Sampler.hs;real/ben-raytrace/SamplerMonad/Naive.hs;real/ben-raytrace/SamplerMonad/STRand.hs;real/ben-raytrace/SamplerMonad/Unboxed.hs;real/ben-raytrace/SamplerMonad.hs;real/ben-raytrace/Scene/Scene1.hs;real/ben-raytrace/Scene/Scene2.hs;real/ben-raytrace/Scene/Type.hs;real/ben-raytrace/UnboxedBVH.hs;real/ben-raytrace/Vector.hs	real/ben-raytrace/ben-raytrace.faststdout;real/ben-raytrace/ben-raytrace.slowstdout;real/ben-raytrace/ben-raytrace.stdout;real/ben-raytrace/monkey.stl		real/ben-raytrace/Makefile	source imports runtime-specific primitives, concurrency, or weak references; audit a faithful portable replacement before reconsideration
+ nofib	real/bspt	bspt	bspt	M4	import	integer-arithmetic		not stated in scanned source headers	3d5a23e34a3d831547562fce25f1c537123387be23758268c90cd3808b8bfa9d	real/bspt/BSPT.lhs;real/bspt/Euclid.lhs;real/bspt/EuclidGMS.lhs;real/bspt/GeomNum.lhs;real/bspt/Init.lhs;real/bspt/Input.lhs;real/bspt/Interface.lhs;real/bspt/Interpret.lhs;real/bspt/Libfuns.lhs;real/bspt/MGRlib.lhs;real/bspt/Main.hs;real/bspt/Merge.lhs;real/bspt/NofibUtils.hs;real/bspt/Params.lhs;real/bspt/Prog.hs;real/bspt/Rationals.lhs;real/bspt/Render.lhs;real/bspt/Stdlib.lhs	real/bspt/bspt.faststdout;real/bspt/bspt.slowstdout;real/bspt/bspt.stdin;real/bspt/bspt.stdout		real/bspt/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/cacheprof	cacheprof	cacheprof-nofib	M4	import	application	nofib:gc/cacheprof	Julian Seward	c4908fe6e2f86facda2dacbc2c38fe53a0876f2a91196ff08fc91bc7acf33c80	real/cacheprof/Arch_x86.hs;real/cacheprof/Generics.hs;real/cacheprof/Main.hs	real/cacheprof/cacheprof.faststdin;real/cacheprof/cacheprof.full;real/cacheprof/cacheprof.slowstdin;real/cacheprof/cacheprof.stdin;real/cacheprof/runtime_files/cacheprof_hooks2_x86.s	real/cacheprof/Arch_x86.hs:header;real/cacheprof/Generics.hs:header;real/cacheprof/Main.hs:header	real/cacheprof/Main.hs:author-and-GPL2-or-later-heading;real/cacheprof/Makefile;real/cacheprof/cacheprof.full:complete-assembly-input-reservoir	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -572,7 +572,7 @@ nofib	real/fulsom/Main.hs	fulsom	fulsom-nofib	M4	import	application	nofib:gc/ful
+ nofib	real/gamteb	gamteb	gamteb	M4	import	application		Patricia Fasel	59954bb60ebde5c8b56c62aacdb4f252c9647f5d2689bec1147933efce5f5d19	real/gamteb/Compton.hs;real/gamteb/Consts.hs;real/gamteb/Distance.hs;real/gamteb/GamtebMain.hs;real/gamteb/GamtebType.hs;real/gamteb/InitTable.hs;real/gamteb/Main.hs;real/gamteb/NofibUtils.hs;real/gamteb/Output.hs;real/gamteb/Pair.hs;real/gamteb/PhotoElec.hs;real/gamteb/RoulSplit.hs;real/gamteb/TransPort.hs;real/gamteb/Utils.hs	real/gamteb/gamteb.faststdout;real/gamteb/gamteb.slowstdout;real/gamteb/gamteb.stdout	real/gamteb/GamtebMain.hs:header	real/gamteb/Compton.hs:author-heading;real/gamteb/Consts.hs:author-heading;real/gamteb/Distance.hs:author-heading;real/gamteb/GamtebMain.hs:author-heading;real/gamteb/GamtebType.hs:author-heading;real/gamteb/InitTable.hs:author-heading;real/gamteb/Main.hs:author-heading;real/gamteb/Makefile;real/gamteb/Output.hs:author-heading;real/gamteb/Pair.hs:author-heading;real/gamteb/PhotoElec.hs:author-heading;real/gamteb/RoulSplit.hs:author-heading;real/gamteb/TransPort.hs:author-heading;real/gamteb/Utils.hs:author-heading	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/gg	gg	gg	M4	import	application		Iain Checkland	e670c250f14ce0d26a61f15ab0286d106b24059fb7421b811c658e7fbfc2b434	real/gg/Activity.hs;real/gg/GRIP.hs;real/gg/Graph.hs;real/gg/Main.hs;real/gg/NofibUtils.hs;real/gg/PSlib.hs;real/gg/Parse.hs;real/gg/Pool.hs;real/gg/Spark.hs;real/gg/StdLib.hs	real/gg/gg.faststdin;real/gg/gg.faststdout;real/gg/gg.slowstdin;real/gg/gg.slowstdout;real/gg/gg.stdin;real/gg/gg.stdout		real/gg/Makefile;real/gg/gg.1:author-section	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/grep	grep	grep	M4	import	kernel		not stated in scanned source headers	d9dadbddd22cc3db52c300d393d12485206db6731c78dcc12a5c0b846d08e4db	real/grep/Main.lhs;real/grep/NofibUtils.hs;real/grep/Parsers.hs;real/grep/StringMatch.hs	real/grep/grep.faststdin;real/grep/grep.faststdout;real/grep/grep.slowstdin;real/grep/grep.slowstdout;real/grep/grep.stdin;real/grep/grep.stdout		real/grep/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	real/hidden	hidden	hidden	M4	import	application		Mark Ramaer;Stef Joosten	0e1040d3cc5da5880e37c19df57a31156894a845c07a936466cabf56384bafd1	real/hidden/Comparing.hs;real/hidden/Cross.hs;real/hidden/EdgePlate.hs;real/hidden/Geometric.hs;real/hidden/Hide.hs;real/hidden/Main.hs;real/hidden/Matrices.hs;real/hidden/Memo.hs;real/hidden/MyIO.hs;real/hidden/NofibUtils.hs;real/hidden/Numbers.hs;real/hidden/Postscript.hs;real/hidden/Preds.hs;real/hidden/Rotate.lhs;real/hidden/Solve.hs;real/hidden/Vectors.hs;real/hidden/etc/nbpip.c	real/hidden/hidden.stdin;real/hidden/runtime_files/four.plate;real/hidden/runtime_files/houses.plate;real/hidden/runtime_files/rad.plate	real/hidden/MAIL:nofib-permission	real/hidden/MAIL:authorship-and-nofib-permission;real/hidden/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/hidden	hidden	hidden	M4	import	application		Mark Ramaer;Stef Joosten	0e1040d3cc5da5880e37c19df57a31156894a845c07a936466cabf56384bafd1	real/hidden/Comparing.hs;real/hidden/Cross.hs;real/hidden/EdgePlate.hs;real/hidden/Geometric.hs;real/hidden/Hide.hs;real/hidden/Main.hs;real/hidden/Matrices.hs;real/hidden/Memo.hs;real/hidden/MyIO.hs;real/hidden/NofibUtils.hs;real/hidden/Numbers.hs;real/hidden/Postscript.hs;real/hidden/Preds.hs;real/hidden/Rotate.lhs;real/hidden/Solve.hs;real/hidden/Vectors.hs;real/hidden/etc/nbpip.c	real/hidden/hidden.stdin;real/hidden/runtime_files/bookcase.plate;real/hidden/runtime_files/cube.plate;real/hidden/runtime_files/four.plate;real/hidden/runtime_files/horse.plate;real/hidden/runtime_files/houses.plate;real/hidden/runtime_files/pyramid.plate;real/hidden/runtime_files/rad.plate;real/hidden/runtime_files/table.plate	real/hidden/MAIL:nofib-permission	real/hidden/MAIL:authorship-and-nofib-permission;real/hidden/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/hpg	hpg	hpg	M4	import	compiler-application		N. D. North	b241e65bac3ced5d134bcb5be065c2b815957a9122949c6ef7f8cd80d007a309	real/hpg/Config.lhs;real/hpg/Env.lhs;real/hpg/GenExp.lhs;real/hpg/GenType.lhs;real/hpg/GenVal.lhs;real/hpg/Main.lhs;real/hpg/NofibUtils.hs;real/hpg/Types.lhs;real/hpg/Utils.lhs	real/hpg/hpg.faststdout;real/hpg/hpg.slowstdout;real/hpg/hpg.stdout	real/hpg/Config.lhs:header;real/hpg/Env.lhs:header;real/hpg/GenExp.lhs:header;real/hpg/GenType.lhs:header;real/hpg/GenVal.lhs:header;real/hpg/Main.lhs:header;real/hpg/Types.lhs:header;real/hpg/Utils.lhs:header;real/hpg/hpg.tex:Crown-Copyright-1992	real/hpg/Makefile;real/hpg/hpg.tex:program-author-title-and-address	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/infer/Main.hs	infer	infer	M4	import	compiler-application		not stated in scanned source headers	179e72dcd88a32dd9e85e0faaa4e66d7224c54335b1efa8289f55febef3f73f3	real/infer/Environment.hs;real/infer/FiniteMap.hs;real/infer/Infer.hs;real/infer/InferMonad.hs;real/infer/Main.hs;real/infer/MaybeM.hs;real/infer/MyList.hs;real/infer/NofibUtils.hs;real/infer/Parse.hs;real/infer/Shows.hs;real/infer/StateX.hs;real/infer/Substitution.hs;real/infer/Term.hs;real/infer/Type.hs	real/infer/infer.faststdin;real/infer/infer.faststdout;real/infer/infer.slowstdin;real/infer/infer.slowstdout;real/infer/infer.stdin;real/infer/infer.stdout		real/infer/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/infer/TestTerm.hs	TestTerm	TestTerm	-	exclude	kernel		not stated in scanned source headers	1bdc4828944541815460444338a91aded693be41368b6a5dde569746a0dd9d35	real/infer/Parse.hs;real/infer/Shows.hs;real/infer/Term.hs;real/infer/TestTerm.hs	real/infer/infer.faststdin;real/infer/infer.faststdout;real/infer/infer.slowstdin;real/infer/infer.slowstdout;real/infer/infer.stdin;real/infer/infer.stdout		real/infer/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+@@ -657,7 +657,7 @@ nofib	spectral/lcss	lcss	lcss-nofib	M3	import	kernel	nofib:gc/lcss	not stated in
+ nofib	spectral/life	life	life-nofib	M3	import	kernel	mlkit:test/life.sml;mlkit:test_dev/life.sml;mlton:benchmark/tests/life.sml;smlnj:programs/life	not stated in scanned source headers	86a8e72f36e2fc3014879c55d8af7a1b862bd99c3099fbc2e040d359c4b5c476	spectral/life/Main.hs	spectral/life/life.faststdout;spectral/life/life.slowstdout;spectral/life/life.stdout		spectral/life/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/mandel	mandel	mandel	M3	import	numerical	nofib:parallel/mandel	not stated in scanned source headers	9e0e3aa00d20ee1d96009e3bbc35b48f50056db76b212272f2cadaac89a8be05	spectral/mandel/Main.hs;spectral/mandel/Mandel.lhs;spectral/mandel/MandelOld.lhs;spectral/mandel/PortablePixmap.lhs		spectral/mandel/PortablePixmap.lhs:header	spectral/mandel/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/mandel2	mandel2	mandel2	M3	import	numerical		not stated in scanned source headers	cb73824f8e275065462d30d4084c246bfebb21f9b1661c23c311b9c8ceabc6d1	spectral/mandel2/Main.hs;spectral/mandel2/NofibUtils.hs			spectral/mandel2/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/mate	mate	mate	M3	import	kernel		not stated in scanned source headers	82375c77c35542a2eea499bef40b963614253068f0a12823ad0ecc4b46217857	spectral/mate/Board.hs;spectral/mate/Main.hs;spectral/mate/Move.hs;spectral/mate/Problem.hs;spectral/mate/Solution.hs	spectral/mate/mate.faststdout;spectral/mate/mate.slowstdout;spectral/mate/mate.stdout;spectral/mate/runtime_files/heathcote3.prob;spectral/mate/runtime_files/holzhausen.prob;spectral/mate/runtime_files/kohtz.prob		spectral/mate/Makefile;spectral/mate/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/mate	mate	mate	M3	import	kernel		not stated in scanned source headers	82375c77c35542a2eea499bef40b963614253068f0a12823ad0ecc4b46217857	spectral/mate/Board.hs;spectral/mate/Main.hs;spectral/mate/Move.hs;spectral/mate/Problem.hs;spectral/mate/Solution.hs	spectral/mate/mate.faststdout;spectral/mate/mate.slowstdout;spectral/mate/mate.stdout;spectral/mate/runtime_files/ellerman.prob;spectral/mate/runtime_files/ellerman.soln;spectral/mate/runtime_files/fridlizius.prob;spectral/mate/runtime_files/fridlizius.soln;spectral/mate/runtime_files/heathcote3.prob;spectral/mate/runtime_files/heathcote3.soln;spectral/mate/runtime_files/holzhausen.prob;spectral/mate/runtime_files/holzhausen.soln;spectral/mate/runtime_files/kidson.prob;spectral/mate/runtime_files/kohtz.prob;spectral/mate/runtime_files/kohtz.soln;spectral/mate/runtime_files/marin.prob;spectral/mate/runtime_files/marin.soln;spectral/mate/runtime_files/shinkman.prob;spectral/mate/runtime_files/shinkman.soln;spectral/mate/runtime_files/simple.prob;spectral/mate/runtime_files/simple.soln;spectral/mate/runtime_files/wurzburg.prob;spectral/mate/runtime_files/wurzburg.soln		spectral/mate/Makefile;spectral/mate/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/minimax	minimax	minimax-nofib	M3	import	symbolic-search	nofib:parallel/minimax;smlnj:programs/minimax	not stated in scanned source headers	efe234c33e6eab0b9d6e5273dc8abc96c55f6367e2bb3ca7fa688ee4c815e0e6	spectral/minimax/Board.hs;spectral/minimax/Game.hs;spectral/minimax/Main.hs;spectral/minimax/Prog.hs;spectral/minimax/Tree.hs;spectral/minimax/Wins.hs			spectral/minimax/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/multiplier	multiplier	multiplier	M3	import	kernel		John T. O'Donnell	90e874aa93dd491d263367d8edc31f7209b0993a9e31c156a672bba7b1b6e9a1	spectral/multiplier/Main.hs	spectral/multiplier/multiplier.faststdout;spectral/multiplier/multiplier.slowstdout;spectral/multiplier/multiplier.stdout	spectral/multiplier/Main.hs:header	spectral/multiplier/Main.hs:author-and-copyright-heading;spectral/multiplier/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/para	para	para	M3	import	application		Jeremy Gibbons;Oege de Moor	2c9525a59278dfae1c4f7df3d2fad20797ff29427db7d347fbca187d64a4ab17	spectral/para/Main.lhs;spectral/para/c++/Para.h;spectral/para/c++/Queue.h;spectral/para/c++/Thin.h	spectral/para/runtime_files/input-data	spectral/para/runtime_files/input-data:Project-Gutenberg-1993-notice	spectral/para/Main.lhs:author-heading;spectral/para/Makefile;spectral/para/runtime_files/input-data:individual-dataset-notice	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/literature.md b/examples/benchmarks/literature.md
+index f4a318f25..23f43e444 100644
+--- a/examples/benchmarks/literature.md
++++ b/examples/benchmarks/literature.md
+@@ -759,3 +759,15 @@ theoretical background; the original GHC program establishes the selected
+ workload and its expected reports. Frontier representation, fixed-point
+ iteration, sharing and polymorphic instantiation are source-based diagnostic
+ hypotheses until benchmark measurements establish an effect.
++
++## Veritas proof-editor application
++
++Hanna, Daeche and Howells, [Implementation of the Veritas Design Logic](https://www.cs.kent.ac.uk/pubs/1992/427/index.html),
++1992, is related implementation literature identified by the authors'
++University of Kent record. The pinned nofib source and README identify the
++actual historical workload and input; the paper record alone does not
++establish this exact source snapshot's authorship or release. Source analysis
++suggests diagnostics involving dependent-type terms, signatures, attributes,
++state/output combinators, persistent proof trees and lazy result fields.
++The upstream Makefile warns that its fixed script exercises a limited part
++of the prover; preserve that limit when interpreting measurements.
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 27fe84440..89fa78308 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1466,3 +1466,9 @@ anna-lazy	large	nofib	real/anna	100 large.input 18B2617540B8ED09	anna-lazy/large
+ anna-strict	smoke	nofib	real/anna	100 smoke.input F3AFC2396A8A1CB5	anna-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-anna-kernel.sml,shared/nofib-anna-check.sml,anna-strict/benchmark.sml,shared/main.sml	30	1048576	application,compiler,parsing,type-inference,abstract-interpretation,strict-finite-data	smoke.input,runtime_files/anna_table	exact	implemented
+ anna-strict	normal	nofib	real/anna	100 normal.input 2869188386E50180	anna-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-anna-kernel.sml,shared/nofib-anna-check.sml,anna-strict/benchmark.sml,shared/main.sml	600	4194304	application,compiler,parsing,type-inference,abstract-interpretation,strict-finite-data	normal.input,runtime_files/anna_table	exact	implemented
+ anna-strict	large	nofib	real/anna	100 large.input 18B2617540B8ED09	anna-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-anna-kernel.sml,shared/nofib-anna-check.sml,anna-strict/benchmark.sml,shared/main.sml	3600	8388608	application,compiler,parsing,type-inference,abstract-interpretation,strict-finite-data	large.input,runtime_files/anna_table	exact	implemented
++veritas-lazy	smoke	nofib	real/veritas	400 smoke.input CD1FC6B0A4675CFB	veritas-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-veritas-kernel.sml,shared/nofib-veritas-check.sml,veritas-lazy/benchmark.sml,shared/main.sml	30	1048576	application,proof-assistant,parsing,symbolic,closures,lazy-finite-data	smoke.input	exact	implemented
++veritas-lazy	normal	nofib	real/veritas	4000 normal.input CD1FC6B0A4675CFB	veritas-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-veritas-kernel.sml,shared/nofib-veritas-check.sml,veritas-lazy/benchmark.sml,shared/main.sml	600	4194304	application,proof-assistant,parsing,symbolic,closures,lazy-finite-data	normal.input	exact	implemented
++veritas-lazy	large	nofib	real/veritas	20000 large.input CD1FC6B0A4675CFB	veritas-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-veritas-kernel.sml,shared/nofib-veritas-check.sml,veritas-lazy/benchmark.sml,shared/main.sml	3600	8388608	application,proof-assistant,parsing,symbolic,closures,lazy-finite-data	large.input	exact	implemented
++veritas-strict	smoke	nofib	real/veritas	400 smoke.input CD1FC6B0A4675CFB	veritas-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-veritas-kernel.sml,shared/nofib-veritas-check.sml,veritas-strict/benchmark.sml,shared/main.sml	30	1048576	application,proof-assistant,parsing,symbolic,closures,strict-finite-data	smoke.input	exact	implemented
++veritas-strict	normal	nofib	real/veritas	4000 normal.input CD1FC6B0A4675CFB	veritas-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-veritas-kernel.sml,shared/nofib-veritas-check.sml,veritas-strict/benchmark.sml,shared/main.sml	600	4194304	application,proof-assistant,parsing,symbolic,closures,strict-finite-data	normal.input	exact	implemented
++veritas-strict	large	nofib	real/veritas	20000 large.input CD1FC6B0A4675CFB	veritas-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-veritas-kernel.sml,shared/nofib-veritas-check.sml,veritas-strict/benchmark.sml,shared/main.sml	3600	8388608	application,proof-assistant,parsing,symbolic,closures,strict-finite-data	large.input	exact	implemented
+diff --git a/examples/benchmarks/source-variants.tsv b/examples/benchmarks/source-variants.tsv
+index 3a3631dd6..08701be10 100644
+--- a/examples/benchmarks/source-variants.tsv
++++ b/examples/benchmarks/source-variants.tsv
+@@ -36,3 +36,4 @@ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/hartel/solid	spectral/ha
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/hartel/nucleic2	spectral/hartel/nucleic2/Main.hs	nucleic2-legacy-unboxed	GHC Haskell primitives	legacy USE_UNBOXED_FLOATS mode	Main credits Marc Feeley; README credits Lennart Augustsson for the Haskell version; individual legacy adaptation authors unstated	04a4b847f073f154d3d0422b4c239008c6c4ea8a40502eac1725a6b83f573cd5	defer	unboxed Float#/Int# representation and legacy primitive names are outside portable SML97; the custom atan2Float# also has different quadrant behavior; reconsider only with a validated historical reference and equivalent native representations under a separate feature roadmap	original source headers and correspondence retained; no separate program/dataset redistribution licence stated
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/hartel/nucleic2	spectral/hartel/nucleic2/Main.hs	nucleic2-legacy-primio	GHC Haskell PrimIO/FFI	legacy USE_GLASGOW_HACKS mode, paired with unboxed floats	Main credits Marc Feeley; README credits Lennart Augustsson for the Haskell version; individual legacy adaptation authors unstated	04a4b847f073f154d3d0422b4c239008c6c4ea8a40502eac1725a6b83f573cd5	defer	PreludeGlaST, mainPrimIO, printf _ccall_ and the primitive maximum_map backend require unavailable historical runtime/FFI facilities; retain source and reconsider with the original setup and equivalent facilities under a separate feature roadmap	original source headers and correspondence retained; no separate program/dataset redistribution licence stated
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/hartel/nucleic2	spectral/hartel/nucleic2/Types.hs	nucleic2-STR	Haskell compiler pragma	historical strict-field annotation	Main credits Marc Feeley; README credits Lennart Augustsson for the Haskell version; individual legacy adaptation authors unstated	1727d473f646217d67b9af3d87ec3f150552ba34bbfd5498dbc0c7ae27bdecbf	duplicate	GHC 9.4.7 reports the STRICT pragmas ignored; the complete 50-solution/conformation/coordinate observation is byte-identical to default; share the selected implementation and retain the diagnostic; portable eager finite-data policies are separately named and are not claimed as historical HBC STR behavior	original source headers and correspondence retained; no separate program/dataset redistribution licence stated
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/anna	real/anna/Monster.hs	anna-monster	Haskell	auxiliary lattice-enumeration utility	Julian Seward (program banner)	5aec98804ac3189e3128024caac7a7114b944d7a333a2326576519f3b23fb555	exclude	Monster.hs heading and README explicitly place this auxiliary tool outside the analyser; Monstermakefile builds it separately and the maintained nofib Makefile does not invoke it; preserve its source and the already ported all-up-slices algorithm rather than claim a second timed Anna workload	Copyright (c) Julian Seward 1992 in the Monster banner; no separate general redistribution grant stated
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 1dfe17777..47905cad7 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -540,7 +540,7 @@ def build(source, root, lock):
+             for fixture in parent.rglob("*"):
+                 if not upstream_file(root, fixture):
+                     continue
+-                if fixture.is_file() and (fixture.name == "ANSWER" or fixture.suffix in {".in", ".stdin", ".stdout", ".faststdin", ".faststdout", ".slowstdin", ".slowstdout", ".expected", ".out", ".ok"} or "DATA" in fixture.relative_to(parent).parts):
++                if fixture.is_file() and (fixture.name == "ANSWER" or fixture.suffix in {".in", ".stdin", ".stdout", ".faststdin", ".faststdout", ".slowstdin", ".slowstdout", ".expected", ".out", ".ok"} or "DATA" in fixture.relative_to(parent).parts or (source == "nofib" and "runtime_files" in fixture.relative_to(parent).parts)):
+                     inputs.add(str(fixture.relative_to(root)))
+         input_text = re.sub(r'^\s*#\s*include[^\n]*$', '', text, flags=re.M)
+         for ref in re.findall(r'"([^"\n]+)"', input_text):
+@@ -558,6 +558,14 @@ def build(source, root, lock):
+                     notices.append(str(notice.relative_to(root)))
+         authors = set()
+         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
++        if source == "nofib" and path == "real/anna":
++            main = parent / "Main.hs"
++            if main.is_file():
++                banner = main.read_text(errors="replace")
++                if ("Jules's Strictness Analyser, version 0.400" in banner
++                        and "Copyright (c) Julian Seward 1992" in banner):
++                    authors.add("Julian Seward (program banner)")
++                    item["evidence"].append(path + "/Main.hs:versioned-program-copyright-banner")
+         if source == "nofib" and path == "real/hpg":
+             manual = parent / "hpg.tex"
+             if manual.is_file():
+diff --git a/tests/benchmarks/check-nofib-applications.sh b/tests/benchmarks/check-nofib-applications.sh
+index 255f0dfb4..db291c8dc 100644
+--- a/tests/benchmarks/check-nofib-applications.sh
++++ b/tests/benchmarks/check-nofib-applications.sh
+@@ -4,7 +4,7 @@ set -eu
+ cd "$(dirname "$0")/../.."
+ root=$(pwd)
+ family=$1
+-case "$family" in parser|reptile|hpg|fluid|anna) ;; *) echo "unknown nofib application" >&2; exit 2 ;; esac
++case "$family" in parser|reptile|hpg|fluid|anna|veritas) ;; *) echo "unknown nofib application" >&2; exit 2 ;; esac
+ catalog=$root/build/bench-catalog.rbc
+ [ -f "$catalog" ] || { echo "build the catalogue with make bench-check first" >&2; exit 2; }
+ mkdir -p "$root/tests/out/benchmarks"
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index a77ce788d..0f3ee253c 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -292,6 +292,27 @@ class InventoryTest(unittest.TestCase):
+         self.file("real/" + name + "/Makefile", "FAST_OPTS = 1\nNORM_OPTS = 2\n")
+         return "real/" + name
+ 
++    def test_anna_versioned_banner_records_stated_owner(self):
++        path = self.application_source("anna", "main = putStrLn banner\n"
++                 "banner = \"Jules's Strictness Analyser, version 0.400\"\n"
++                 "copyright = \"Copyright (c) Julian Seward 1992\"\n")
++        row = self.build("nofib")[0]
++        self.assertIn("Julian Seward (program banner)", row["authors"])
++        self.assertIn("versioned-program-copyright-banner", row["evidence"])
++
++    def test_changed_anna_banner_does_not_inherit_attribution(self):
++        self.application_source("anna", "main = putStrLn \"Another analyser\"\n"
++                                "copyright = \"Copyright (c) Julian Seward 1992\"\n")
++        self.assertNotIn("Julian Seward", self.build("nofib")[0]["authors"])
++
++    def test_runtime_directory_includes_unselected_data_and_results(self):
++        path = self.application_source("alternate-data")
++        self.file(path + "/runtime_files/alternate.plate", "[1,2,3]\n")
++        self.file(path + "/runtime_files/unused.soln", "solution\n")
++        row = self.build("nofib")[0]
++        self.assertIn(path + "/runtime_files/alternate.plate", row["inputs"])
++        self.assertIn(path + "/runtime_files/unused.soln", row["inputs"])
++
+     def test_hpg_generator_is_not_classified_as_arbitrary_precision_arithmetic(self):
+         self.assertEqual(AUDIT.family("hpg", "Integer values in generated programs"), "compiler-application")
+ 

@@ -1,0 +1,2 @@
+veritas-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/nofib-veritas-kernel.sml shared/nofib-veritas-check.sml veritas-lazy/benchmark.sml shared/main.sml	400 smoke.input CD1FC6B0A4675CFB	veritas-lazy/smoke.expected	smoke.input
+veritas-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/nofib-veritas-kernel.sml shared/nofib-veritas-check.sml veritas-strict/benchmark.sml shared/main.sml	400 smoke.input CD1FC6B0A4675CFB	veritas-strict/smoke.expected	smoke.input

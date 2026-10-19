@@ -1,0 +1,13 @@
+{
+  "input_bytes": 196,
+  "protocol_bytes": 1391,
+  "input_sha256": "a4432d6381589f563a21fdb8247d027899eb65a303d051329265815c6bc4b57f",
+  "protocol_sha256": "91ae6ea6fb1188a5f90e69bdaeb0f7c3d3b5d5d6f1bf6141db14f1883bbe5865",
+  "word64": "CD1FC6B0A4675CFB",
+  "signed": -3665993109681513221,
+  "profile_repetitions": [
+    400,
+    4000,
+    20000
+  ]
+}

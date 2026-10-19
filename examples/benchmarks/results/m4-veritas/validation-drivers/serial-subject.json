@@ -1,0 +1,11 @@
+{
+  "started": "2026-10-19T02:54:57.887708+00:00",
+  "revision": "f244f1a7bf08b10e4bbfe7d6399ef11af581887b",
+  "dirty": true,
+  "sources": {
+    "examples/benchmarks/manifest.tsv": "8fbc9a679d1eb6133503230d3bab7ad6bfbba918e41e67335591a3a89c93075b",
+    "examples/benchmarks/shared/nofib-veritas-kernel.sml": "aaaf8681a28844df5fbbc00ba90ed65c0bc65998a4ed92be0a65d7947ca1a746",
+    "examples/benchmarks/shared/nofib-veritas-check.sml": "6385ce2de1b071453476997a4acf302108d75fd4c27ef1277ce5c61aa1a7678b",
+    "tests/benchmarks/nofib-veritas-tests.sml": "1fbe8b57907a6cef50faf10b46767dfd88618709485b4277bdf0b0f42e5538d6"
+  }
+}

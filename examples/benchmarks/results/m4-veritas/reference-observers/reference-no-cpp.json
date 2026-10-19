@@ -1,0 +1,19 @@
+{
+  "application": "veritas",
+  "command": [
+    "ghc",
+    "-O2",
+    "-rtsopts",
+    "-fforce-recomp",
+    "Main.hs",
+    "-o",
+    "original"
+  ],
+  "build_exit": 0,
+  "exit": 0,
+  "input_bytes": 196,
+  "stdout_bytes": 8400,
+  "lines": 400,
+  "fixture_equal": true,
+  "elapsed_seconds": 0.14369559288024902
+}

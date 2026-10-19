@@ -1,0 +1,115 @@
+diff --git a/docs/plans/benchmarks.md b/docs/plans/benchmarks.md
+index 98a0925bf..6e4d6e62f 100644
+--- a/docs/plans/benchmarks.md
++++ b/docs/plans/benchmarks.md
+@@ -35,7 +35,7 @@ The [runnable catalogue](../../examples/benchmarks/README.md) contains the M1
+ pilots, the validated M2 classic collection and the completed M5 sequential
+ Sandmark collection. M3 kernels are complete; M4 applications remain in progress; M8
+ coverage closure remains planned.
+-The current catalogue has 505 programs and 1467 profiles. The Happy wave
++The current catalogue has 507 programs and 1473 profiles. The Happy wave
+ has [recorded validation](../../examples/benchmarks/results/m3-happy/README.md):
+ all normal profiles and 50280 semantic assertions pass, with two unclassified
+ ML Kit smoke compile failures retained. Counts, serial adapter diagnostics
+@@ -56,8 +56,9 @@ repository acceptance passes. Host failures remain explicit. Anna has [recorded
+ Twelve semantic groups pass all 1963 assertions, eight normal allocation
+ samples agree, and repository acceptance passes. Source-loading/compile
+ timeouts and the confirmed SML/NJ32 literal defect remain explicit.
+-Veritas is a private port with original request-stream and editor-outcome
+-agreement; its public registration and validation remain pending.
++Veritas now registers lazy and strict ports after independent request-stream
++and editor-outcome agreement and private 400-repeat smoke checks. Its public
++host/profile, count and acceptance gates remain pending; M4 is still in progress.
+ M8 closes the inventories, evidence, documentation and maintenance procedures.
+ 
+ ## Sources, naming, and portable programs
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index de05673c2..c81f7d305 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -516,6 +516,8 @@ M4 applications and M8 coverage closure remain unfinished.
+ | [fluid-strict](#fluid-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fluid) | Solve and hash the supplied finite-element flow model using sparse tries, Cholesky and Jacobi methods. |
+ | [anna-lazy](#anna-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/anna) | Infer types and compute polymorphic strictness frontiers for functional Core programs. |
+ | [anna-strict](#anna-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/anna) | Infer types and compute polymorphic strictness frontiers for functional Core programs. |
++| [veritas-lazy](#veritas-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/veritas) | Execute and validate a scripted proof-editor session using dependent-type logic and immutable proof trees. |
++| [veritas-strict](#veritas-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/veritas) | Execute and validate a scripted proof-editor session using dependent-type logic and immutable proof trees. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -34506,3 +34508,29 @@ on every repetition, as the original driver does.
+ See [anna-strict/PROVENANCE.md](anna-strict/PROVENANCE.md) for history,
+ variants, adaptations, runtime questions, inputs, checks and references.
+ Public validation is [recorded](results/m4-anna/README.md), including host exceptions.
++
++## veritas-lazy
++
++Execute the original scripted proof-editor session for the Veritas design
++logic. Tokenize and parse a functional concrete syntax, manipulate terms,
++declarations and signatures, build proof trees, apply tactics, track completion,
++render the original X-interface requests and compute their modular hash.
++The maintained nofib driver repeats the same session 400/4000/20000 times.
++
++
++See [veritas-lazy/PROVENANCE.md](veritas-lazy/PROVENANCE.md) for history,
++variants, adaptations, runtime questions, inputs, checks and references.
++Public host/profile validation is pending.
++
++## veritas-strict
++
++Execute the original scripted proof-editor session for the Veritas design
++logic. Tokenize and parse a functional concrete syntax, manipulate terms,
++declarations and signatures, build proof trees, apply tactics, track completion,
++render the original X-interface requests and compute their modular hash.
++The maintained nofib driver repeats the same session 400/4000/20000 times.
++
++
++See [veritas-strict/PROVENANCE.md](veritas-strict/PROVENANCE.md) for history,
++variants, adaptations, runtime questions, inputs, checks and references.
++Public host/profile validation is pending.
+diff --git a/examples/benchmarks/literature.md b/examples/benchmarks/literature.md
+index f4a318f25..23f43e444 100644
+--- a/examples/benchmarks/literature.md
++++ b/examples/benchmarks/literature.md
+@@ -759,3 +759,15 @@ theoretical background; the original GHC program establishes the selected
+ workload and its expected reports. Frontier representation, fixed-point
+ iteration, sharing and polymorphic instantiation are source-based diagnostic
+ hypotheses until benchmark measurements establish an effect.
++
++## Veritas proof-editor application
++
++Hanna, Daeche and Howells, [Implementation of the Veritas Design Logic](https://www.cs.kent.ac.uk/pubs/1992/427/index.html),
++1992, is related implementation literature identified by the authors'
++University of Kent record. The pinned nofib source and README identify the
++actual historical workload and input; the paper record alone does not
++establish this exact source snapshot's authorship or release. Source analysis
++suggests diagnostics involving dependent-type terms, signatures, attributes,
++state/output combinators, persistent proof trees and lazy result fields.
++The upstream Makefile warns that its fixed script exercises a limited part
++of the prover; preserve that limit when interpreting measurements.
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 27fe84440..89fa78308 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1466,3 +1466,9 @@ anna-lazy	large	nofib	real/anna	100 large.input 18B2617540B8ED09	anna-lazy/large
+ anna-strict	smoke	nofib	real/anna	100 smoke.input F3AFC2396A8A1CB5	anna-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-anna-kernel.sml,shared/nofib-anna-check.sml,anna-strict/benchmark.sml,shared/main.sml	30	1048576	application,compiler,parsing,type-inference,abstract-interpretation,strict-finite-data	smoke.input,runtime_files/anna_table	exact	implemented
+ anna-strict	normal	nofib	real/anna	100 normal.input 2869188386E50180	anna-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-anna-kernel.sml,shared/nofib-anna-check.sml,anna-strict/benchmark.sml,shared/main.sml	600	4194304	application,compiler,parsing,type-inference,abstract-interpretation,strict-finite-data	normal.input,runtime_files/anna_table	exact	implemented
+ anna-strict	large	nofib	real/anna	100 large.input 18B2617540B8ED09	anna-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-anna-kernel.sml,shared/nofib-anna-check.sml,anna-strict/benchmark.sml,shared/main.sml	3600	8388608	application,compiler,parsing,type-inference,abstract-interpretation,strict-finite-data	large.input,runtime_files/anna_table	exact	implemented
++veritas-lazy	smoke	nofib	real/veritas	400 smoke.input CD1FC6B0A4675CFB	veritas-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-veritas-kernel.sml,shared/nofib-veritas-check.sml,veritas-lazy/benchmark.sml,shared/main.sml	30	1048576	application,proof-assistant,parsing,symbolic,closures,lazy-finite-data	smoke.input	exact	implemented
++veritas-lazy	normal	nofib	real/veritas	4000 normal.input CD1FC6B0A4675CFB	veritas-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-veritas-kernel.sml,shared/nofib-veritas-check.sml,veritas-lazy/benchmark.sml,shared/main.sml	600	4194304	application,proof-assistant,parsing,symbolic,closures,lazy-finite-data	normal.input	exact	implemented
++veritas-lazy	large	nofib	real/veritas	20000 large.input CD1FC6B0A4675CFB	veritas-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-veritas-kernel.sml,shared/nofib-veritas-check.sml,veritas-lazy/benchmark.sml,shared/main.sml	3600	8388608	application,proof-assistant,parsing,symbolic,closures,lazy-finite-data	large.input	exact	implemented
++veritas-strict	smoke	nofib	real/veritas	400 smoke.input CD1FC6B0A4675CFB	veritas-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-veritas-kernel.sml,shared/nofib-veritas-check.sml,veritas-strict/benchmark.sml,shared/main.sml	30	1048576	application,proof-assistant,parsing,symbolic,closures,strict-finite-data	smoke.input	exact	implemented
++veritas-strict	normal	nofib	real/veritas	4000 normal.input CD1FC6B0A4675CFB	veritas-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-veritas-kernel.sml,shared/nofib-veritas-check.sml,veritas-strict/benchmark.sml,shared/main.sml	600	4194304	application,proof-assistant,parsing,symbolic,closures,strict-finite-data	normal.input	exact	implemented
++veritas-strict	large	nofib	real/veritas	20000 large.input CD1FC6B0A4675CFB	veritas-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-veritas-kernel.sml,shared/nofib-veritas-check.sml,veritas-strict/benchmark.sml,shared/main.sml	3600	8388608	application,proof-assistant,parsing,symbolic,closures,strict-finite-data	large.input	exact	implemented
+diff --git a/tests/benchmarks/check-nofib-applications.sh b/tests/benchmarks/check-nofib-applications.sh
+index 255f0dfb4..db291c8dc 100644
+--- a/tests/benchmarks/check-nofib-applications.sh
++++ b/tests/benchmarks/check-nofib-applications.sh
+@@ -4,7 +4,7 @@ set -eu
+ cd "$(dirname "$0")/../.."
+ root=$(pwd)
+ family=$1
+-case "$family" in parser|reptile|hpg|fluid|anna) ;; *) echo "unknown nofib application" >&2; exit 2 ;; esac
++case "$family" in parser|reptile|hpg|fluid|anna|veritas) ;; *) echo "unknown nofib application" >&2; exit 2 ;; esac
+ catalog=$root/build/bench-catalog.rbc
+ [ -f "$catalog" ] || { echo "build the catalogue with make bench-check first" >&2; exit 2; }
+ mkdir -p "$root/tests/out/benchmarks"

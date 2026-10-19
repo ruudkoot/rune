@@ -1,7 +1,7 @@
 # Benchmark suite roadmap
 
 Status: **in progress**, 2026-10-19. M0, M1, M2 and M3 are complete with
-[recorded validation](../../examples/benchmarks/validation.md). M4 is in progress; M5, M6 and M7 are complete with recorded evidence; M8 remains planned. Source inventory entries are scheduled work, not passing ports.
+[recorded validation](../../examples/benchmarks/validation.md). M4, M5, M6 and M7 are complete with recorded evidence; M8 coverage closure is in progress. Dispositions distinguish suitable imports from deferred/excluded sources.
 
 ## Goal and current baseline
 
@@ -33,9 +33,9 @@ suite grows. Implementation starts with the
 [pinned source inventory and audit](../../examples/benchmarks/audit.md).
 The [runnable catalogue](../../examples/benchmarks/README.md) contains the M1
 pilots, the validated M2 classic collection and the completed M5 sequential
-Sandmark collection. M3 kernels are complete; M4 applications remain in progress; M8
-coverage closure remains planned.
-The current catalogue has 505 programs and 1467 profiles. The Happy wave
+Sandmark collection. M3 kernels and M4 applications are complete; M8
+coverage closure is in progress.
+The current catalogue has 507 programs and 1473 profiles. The Happy wave
 has [recorded validation](../../examples/benchmarks/results/m3-happy/README.md):
 all normal profiles and 50280 semantic assertions pass, with two unclassified
 ML Kit smoke compile failures retained. Counts, serial adapter diagnostics
@@ -56,8 +56,12 @@ repository acceptance passes. Host failures remain explicit. Anna has [recorded 
 Twelve semantic groups pass all 1963 assertions, eight normal allocation
 samples agree, and repository acceptance passes. Source-loading/compile
 timeouts and the confirmed SML/NJ32 literal defect remain explicit.
-Veritas is a private port with original request-stream and editor-outcome
-agreement; its public registration and validation remain pending.
+Veritas closes M4 with [recorded validation](../../examples/benchmarks/results/m4-veritas/README.md):
+46 of 56 profile combinations pass, including all 32 Rune combinations.
+Thirteen complete semantic groups each pass 218 assertions, eight normal
+allocation samples agree, and full repository acceptance passes. All 34
+suitable nofib real application paths now have implemented profiles;
+source-loading/compile deadlines remain recorded host failures.
 M8 closes the inventories, evidence, documentation and maintenance procedures.
 
 ## Sources, naming, and portable programs
@@ -201,17 +205,18 @@ fixture references, and profile completeness.
 | **M1 — Suite foundation and pilots** | Complete | Establish the directory contract, manifest, documentation template, portable drivers, deterministic inputs, and correctness runner. Pilot classic `tak` and list sorting, nofib primes in lazy and strict forms, and Sandmark `bdd`. | Pilots build and validate on Rune, MLton, SML/NJ, and Poly/ML. Lazy and strict variants agree on results. Negative checks demonstrate that incorrect output and resource-limit failures are detected. |
 | **M2 — Classic SML collection** | Complete | Import suitable workloads from the three SML sources. Begin with recursive kernels, rewriting, sorting, numerical programs, and search; then add larger generators, simulators, and applications. Reuse reviewed external-runner adaptations. | Every suitable classic SML workload is imported and documented. Remaining entries have concrete blockers. Each import passes smoke checks and has a validated normal profile. |
 | **M3 — nofib kernels and GC workloads** | Complete | Port suitable `imaginary`, `spectral`, `shootout`, and `gc` workloads, including nested collections such as `spectral/hartel`. Cover streams, higher-order functions, symbolic processing, graphs, arithmetic, and allocation patterns. | Every suitable kernel has a validated port. Each port records its treatment of laziness, sharing, numeric types, and forcing. Materially different lazy and strict variants are separately named and measured. |
-| **M4 — nofib applications** | In progress | Port suitable `real` applications in dependency order. Prioritize parsing, type inference, compression, interpreters, symbolic algebra, rendering, and scientific workloads. | Each application includes its required portable modules and deterministic data. Results agree with upstream fixtures or the original Haskell program. Feature-dependent applications have explicit blockers. |
+| **M4 — nofib applications** | Complete | Port suitable `real` applications in dependency order. Prioritize parsing, type inference, compression, interpreters, symbolic algebra, rendering, and scientific workloads. | Each application includes its required portable modules and deterministic data. Results agree with upstream fixtures or the original Haskell program. Feature-dependent applications have explicit blockers. |
 | **M5 — Sandmark sequential workloads** | Complete | Port self-contained sequential workloads first, including decision diagrams, rewriting, streams, numerical programs, rendering, and graph processing. Audit individual executables within collection directories. | Every suitable workload is imported or scheduled with its dependencies. OCaml library replacements and evaluation-order changes are documented. Ecosystem applications and runtime-specific workloads have explicit dispositions. |
 | **M6 — Measurement and comparisons** | Complete | Extend Rune's existing matrix, count, and profiling tools to consume the manifest. Add serial timing runs, compile measurements, raw results, and reports. | A recorded run reproduces selected inputs and configurations. Reports include correctness status, complete samples, configuration metadata, and separate failure categories. |
 | **M7 — Routine verification** | Complete | Select a bounded smoke set covering the main workload families and translation styles. Add metadata validation and smoke correctness to routine checks; retain broader explicit targets. | Routine checks remain practical. Every imported benchmark is covered by a broader correctness target. Incorrect results cannot contribute timing results. |
-| **M8 — Coverage closure and maintenance** | Planned | Reconcile imports against pinned inventories, close documentation gaps, publish the initial report, and rank additional candidates. Document upstream refresh and baseline-update procedures. | Every inventory entry is accounted for. Imported programs satisfy the suite contract. Recorded validation and outstanding checks are clearly distinguished. |
+| **M8 — Coverage closure and maintenance** | In progress | Reconcile imports against pinned inventories, close documentation gaps, publish the initial report, and rank additional candidates. Document upstream refresh and baseline-update procedures. | Every inventory entry is accounted for. Imported programs satisfy the suite contract. Recorded validation and outstanding checks are clearly distinguished. |
 
 
 M5 completion is recorded in the [application closure evidence](../../examples/benchmarks/validation.md#m5-closure-sequential-sandmark-applications-2026-10-18):
 all suitable pinned executables/selectors are imported and documented. Native
 SML/NJ failures remain recorded, with incorrect results excluded from timings.
-This does not mark M4 or M8 complete. M3 closure is recorded in the
+M4 completion is recorded in the [Veritas closure evidence](../../examples/benchmarks/results/m4-veritas/README.md).
+M8 remains in progress. M3 closure is recorded in the
 [Nucleic2 evidence](../../examples/benchmarks/results/m3-nucleic2/README.md),
 including retained host failures and all 92 suitable inventory paths.
 

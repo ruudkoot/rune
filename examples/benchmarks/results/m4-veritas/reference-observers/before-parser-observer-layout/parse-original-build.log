@@ -1,0 +1,20 @@
+[20 of 22] Compiling ObserveProtocol  ( ObserveProtocol.hs, ObserveProtocol.o ) [Flags changed]
+[21 of 22] Compiling ObserveParse     ( ObserveParse.hs, ObserveParse.o )
+
+ObserveParse.hs:35:14: error:
+    Unexpected case expression in function application:
+        case x of
+          Rvd s -> "r:" ++ hex s
+          Clr s -> "c:" ++ hex s
+          Bdr _ -> "b:" ++ hex (disp_tk x)
+    Suggested fixes:
+      • Use parentheses.
+      • Perhaps you intended to use BlockArguments
+   |
+35 |  where tok x=case x of Rvd s->"r:"++hex s;Clr s->"c:"++hex s;Bdr _->"b:"++hex(disp_tk x);
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ObserveParse.hs:36:31: error: parse error on input ‘->’
+   |
+36 |                       IfxBdr s->"d:"++hex s;IfxOp s->"o:"++hex s;Scan_Err s->"e:"++hex s
+   |                               ^^

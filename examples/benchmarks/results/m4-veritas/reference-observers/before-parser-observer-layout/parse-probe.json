@@ -1,0 +1,22 @@
+{
+  "command": [
+    "timeout",
+    "120",
+    "bin/runevm",
+    "tests/out/benchmarks/nofib-veritas-originals/parse-probe.rbc"
+  ],
+  "exit": 1,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 560,
+  "observed_minimum_available_kib": 22150032,
+  "peak_processes": [
+    {
+      "pid": 6,
+      "name": "timeout",
+      "rss_kib": 560
+    }
+  ],
+  "elapsed_seconds": 0.05143514600058552
+}

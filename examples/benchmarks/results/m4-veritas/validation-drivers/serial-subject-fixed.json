@@ -1,0 +1,10 @@
+{
+  "started": "2026-10-19T02:57:23.573106+00:00",
+  "revision": "f244f1a7bf08b10e4bbfe7d6399ef11af581887b",
+  "dirty": true,
+  "sources": {
+    "examples/benchmarks/manifest.tsv": "8fbc9a679d1eb6133503230d3bab7ad6bfbba918e41e67335591a3a89c93075b",
+    "examples/benchmarks/shared/nofib-veritas-kernel.sml": "a242f38533a09f28597e5ade1d3be4ee8cd295ae4b0b0edc08fa33028383c352",
+    "examples/benchmarks/shared/nofib-veritas-check.sml": "6385ce2de1b071453476997a4acf302108d75fd4c27ef1277ce5c61aa1a7678b"
+  }
+}

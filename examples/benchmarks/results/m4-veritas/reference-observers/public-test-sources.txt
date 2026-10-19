@@ -1,0 +1,10 @@
+tests/basis/harness.sml
+tests/benchmarks/application-test-io.sml
+examples/benchmarks/shared/input.sml
+examples/benchmarks/shared/lazy.sml
+examples/benchmarks/shared/suspend.sml
+examples/benchmarks/shared/hartel-ida-finite.sml
+examples/benchmarks/shared/nofib-veritas-kernel.sml
+examples/benchmarks/shared/nofib-veritas-check.sml
+tests/benchmarks/nofib-veritas-tests.sml
+tests/basis/finish.sml

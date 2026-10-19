@@ -1,0 +1,6 @@
+{
+  "initial_assumption": "four accepted final native fresh samples",
+  "recorded_final": "two accepted Poly/ML samples; two MLton and two legacy SML/NJ compile deadlines",
+  "earlier_epoch": "four accepted MLton/Poly/ML samples, two legacy parser-pair compile errors; retained separately",
+  "action": "correct the report to the actual final samples; no new timing or loosened deadline"
+}

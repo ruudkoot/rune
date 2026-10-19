@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+veritas-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	26.85	25.48	2.38	1042296	-	-	-	veritas-lazy/native-mlton/build/compile
+veritas-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	1.06	1.05	0.00	9368	-	-	-	veritas-lazy/native-mlton/correctness.0
+veritas-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.82	0.80	0.01	9432	-	-	-	veritas-lazy/native-mlton/fresh.1
+veritas-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	2.59	0.96	0.13	59684	-	-	-	veritas-lazy/native-smlnj-legacy/build/compile
+veritas-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	9.41	13.50	1.75	472040	-	-	-	veritas-lazy/native-polyml/build/compile
+veritas-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	1.04	1.15	0.35	78988	-	-	-	veritas-lazy/native-polyml/correctness.0
+veritas-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	1.25	1.23	0.45	84432	-	-	-	veritas-lazy/native-polyml/fresh.1
+veritas-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	24.75	22.30	2.24	1042004	-	-	-	veritas-strict/native-mlton/build/compile
+veritas-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.22	0.20	0.01	6772	-	-	-	veritas-strict/native-mlton/correctness.0
+veritas-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.21	0.19	0.01	6760	-	-	-	veritas-strict/native-mlton/fresh.1
+veritas-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	1.10	1.01	0.10	60820	-	-	-	veritas-strict/native-smlnj-legacy/build/compile
+veritas-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	3.79	5.83	0.77	220876	-	-	-	veritas-strict/native-polyml/build/compile
+veritas-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.35	0.30	0.17	44520	-	-	-	veritas-strict/native-polyml/correctness.0
+veritas-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.29	0.31	0.08	43948	-	-	-	veritas-strict/native-polyml/fresh.1

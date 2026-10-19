@@ -1,0 +1,3746 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/application-test-io.sml]
+[autoloading]
+[autoloading done]
+structure BenchApplicationTestIO : sig
+  val read : string -> TextIO.vector
+  val compare : string * TextIO.vector * TextIO.vector -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val filter :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-veritas-kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-veritas-kernel.sml:1329.51 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-veritas-kernel.sml:1318.17 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-veritas-kernel.sml:240.39 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-veritas-kernel.sml:146.57 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-veritas-kernel.sml:109.26 Warning: calling polyEqual
+functor BenchNofibVeritasFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure F : <sig>
+  structure C : <sig>
+  type integer
+  type textNode
+  type text
+  type binder
+  type unary
+  type binary
+  type constant
+  type operatorType
+  type attributeTag
+  type nameNode
+  type name
+  type attributeValueNode
+  type attribute
+  type attributes
+  type tagArgType
+  type itrNode
+  type idecNode
+  type isgnNode
+  type tagArgNode
+  type conversionNode
+  type termNode
+  type theoremNode
+  type tagData
+  type itr
+  type idec
+  type isgn
+  type term
+  type theorem
+  type tag
+  type signatureNode
+  type declarationNode
+  type signatureValue
+  type declaration
+  type flaggedNode
+  type operandNode
+  type operatorNode
+  type flagged
+  type tokenNode
+  type token
+  type tokenStream
+  type 'a optionNode
+  type ('a,'b) sumNode
+  type ('a,'b) replyNode
+  type lookupIndex
+  type lookupEntry
+  type lookupTable
+  type globalState
+  type objectNode
+  type doneNode
+  type goalNode
+  type ('a,'b,'c) treeNode
+  type ('a,'b,'c) treeStateNode
+  type proofTree
+  type proofState
+  type xin
+  type 'a actionReply
+  type 'a transaction
+  type 'a action
+  type outputAction
+  type subtermDataNode
+  type formInputNode
+  type formOutputNode
+  val force : 'a D.t -> 'a
+  val cell : 'a -> 'a D.t
+  val int : int -> int D.t
+  val add : int D.t -> int D.t -> int D.t
+  val subtract : int D.t -> int D.t -> int D.t
+  val multiply : int D.t -> int D.t -> int D.t
+  val divide : int D.t -> int D.t -> int D.t
+  val modulo : int D.t -> int D.t -> int D.t
+  val equalInt : ''a D.t -> ''a D.t -> bool
+  val less : int D.t -> int D.t -> bool
+  val leq : int D.t -> int D.t -> bool
+  val text : string -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val string : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> string
+  val head : 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a D.t
+  val tail :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val null : 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val singleton : 'a D.t -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val map :
+      ('a D.t -> 'b D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val flatMap :
+      ('a D.t -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val concat :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val pair : 'a -> 'b -> ('a * 'b) D.t
+  val triple : 'a -> 'b -> 'c -> ('a * 'b * 'c) D.t
+  val length : 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> int D.t
+  val foldLeft :
+      ('a D.t -> 'b D.t -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a D.t
+  val foldRight :
+      ('a D.t -> 'b D.t -> 'b D.t)
+       -> 'b D.t -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'b D.t
+  val reverse :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val nth :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> int D.t -> 'a D.t
+  val take :
+      int D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val drop :
+      int D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val all :
+      ('a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val any :
+      ('a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val equalLists :
+      ('a D.t -> 'b D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val equalText :
+      ''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val filter :
+      ('a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val zip :
+      ('a D.t -> 'b D.t -> 'c D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val range :
+      int D.t -> int D.t -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val fromNative :
+      'a D.t list -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val textConcat :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t list
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val controlRange :
+      int D.t -> int D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val lookup :
+      ('a -> 'b -> bool)
+       -> 'a
+       -> ('b * 'c D.t) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.optionNode D.t
+  val interleave :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val returnAction :
+      (unit -> 'a)
+       -> 'b
+       -> ('b * 'a <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val errorAction :
+      <BaseFct>.<resultStr>.text
+       -> 'a
+       -> ('a * 'b <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val forwardInput :
+      ('a BenchLazy.state ref * 'b * 'c) BenchLazy.state ref
+       -> 'a BenchLazy.state ref
+  val actionValue :
+      ('a * 'b BenchLazy.state ref * 'c) BenchLazy.state ref
+       -> 'b BenchLazy.state ref
+  val actionOutput : ('a * 'b * 'c D.t) BenchLazy.state ref -> 'c D.t
+  val outputInput :
+      ('a BenchLazy.state ref * 'b) BenchLazy.state ref
+       -> 'a BenchLazy.state ref
+  val outputText : ('a * 'b D.t) BenchLazy.state ref -> 'b D.t
+  val sequenceOutput :
+      ('a
+        -> ('b BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> ('b BenchLazy.state ref
+        -> ('d BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> 'a
+       -> ('d BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val outputThenAction :
+      ('a
+        -> ('b BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> ('b BenchLazy.state ref
+        -> ('d BenchLazy.state ref * 'e BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> 'a
+       -> ('d BenchLazy.state ref * 'e BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val bindTransaction :
+      ('a BenchLazy.state ref
+            * 'b <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+       -> ('b BenchLazy.delay
+        -> 'a BenchLazy.state ref
+        -> ('a BenchLazy.state ref
+             * 'd <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> ('a BenchLazy.state ref
+            * 'd <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val bindAction :
+      ('a
+        -> ('b BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> ('c BenchLazy.delay
+        -> 'b BenchLazy.state ref
+        -> ('b BenchLazy.state ref
+             * 'e <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> 'a
+       -> ('b BenchLazy.state ref
+            * 'e <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val pairTransactions :
+      ('a BenchLazy.state ref
+            * 'b <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+       -> ('a BenchLazy.state ref
+        -> ('a BenchLazy.state ref
+             * 'd <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> ('a BenchLazy.state ref
+            * ('b BenchLazy.delay * 'd BenchLazy.delay) 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val pairActions :
+      ('a
+        -> ('b BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> ('b BenchLazy.state ref
+        -> ('b BenchLazy.state ref
+             * 'e <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> 'a
+       -> ('b BenchLazy.state ref
+            * ('c BenchLazy.delay * 'e BenchLazy.delay) 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val listTransactions :
+      ('a BenchLazy.state ref
+            * 'b <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+       -> ('a BenchLazy.state ref
+        -> ('a BenchLazy.state ref
+             * 'b <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t 
+                   <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> ('a BenchLazy.state ref
+            * 'b <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val listActions :
+      ('a
+        -> ('b BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> ('b BenchLazy.state ref
+        -> ('b BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t 
+                   <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> 'a
+       -> ('b BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val handleTransaction :
+      ('a BenchLazy.state ref
+            * 'b <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+       -> (<BaseFct>.<resultStr>.text
+        -> 'a BenchLazy.state ref
+        -> ('a BenchLazy.state ref
+             * 'b <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> ('a BenchLazy.state ref
+            * 'b <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val handleAction :
+      ('a
+        -> ('b BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.text
+        -> 'b BenchLazy.state ref
+        -> ('b BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> 'a
+       -> ('b BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val outputActions :
+      ('a BenchLazy.state ref
+            -> ('a BenchLazy.state ref
+                 * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                BenchLazy.state ref) <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val splitList :
+      ('a -> 'b D.t -> bool)
+       -> 'a
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val appendLast :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a D.t -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val generateUid :
+      ('a * 'b
+            * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state 
+              ref) BenchLazy.state ref
+       -> (('a * 'b
+                 * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node 
+                   BenchNeed.t) BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val equalConstant :
+      <BaseFct>.<resultStr>.constant -> <BaseFct>.<resultStr>.constant -> bool
+  val equalTerm :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t -> bool
+  val equalDeclaration :
+      <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.idecNode D.t -> bool
+  val equalSignature :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.isgnNode D.t -> bool
+  val selectTerm :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.itrNode D.t
+            * <BaseFct>.<resultStr>.idecNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val escape7 : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escape0 : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escape1 : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escape2 : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escape4 : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escape5 : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escape6 : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escape8 : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escape9 : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeA : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeB : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeC : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeD : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeE : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeF : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeG : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeH : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeI : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeJ : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeK : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeL : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeM : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeN : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeO : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeP : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeQ : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeR : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeT : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapea : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapeb : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapec : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escaped : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val escapee : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val send : 'a -> 'b -> ('b * 'a) BenchLazy.state ref
+  val noOutput :
+      'a
+       -> ('a * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val composeOutputs :
+      ('a BenchLazy.state ref
+          -> ('a BenchLazy.state ref
+               * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+              BenchLazy.state ref) list
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val sendArgument :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val sendArguments :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val sendMultiple :
+      ('a D.t
+        -> 'b BenchLazy.state ref
+        -> ('b BenchLazy.state ref
+             * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b BenchLazy.state ref
+       -> ('b BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val getEscape :
+      ('a <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b * 'c) 
+           BenchLazy.state ref
+       -> (('a <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b * 'c) 
+                BenchLazy.state ref
+            * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val getArgumentNumber :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+                BenchLazy.state ref
+            * int <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val getArgument :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+                BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val getArgumentsCount :
+      int
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+                BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+                      <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val getArguments :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+                BenchLazy.state ref
+            * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+                         <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t 
+                     BenchLazy.delay
+                   * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+                     BenchLazy.delay) <BaseFct>.<resultStr>.actionReply 
+                BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val getArgumentList :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+                BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+                      <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val getMultipleCount :
+      ('a BenchLazy.state ref
+        -> ('a BenchLazy.state ref
+             * 'b <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> int
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * 'b <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val getMultiple :
+      ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+            BenchLazy.state ref
+        -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+                 BenchLazy.state ref
+             * 'c <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+                BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val controlHead :
+      'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> 'a BenchNeed.t
+  val controlTail :
+      'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val endX :
+      'a
+       -> ('a * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val enableButtons :
+      'a
+       -> ('a * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val getCommand :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+                BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val errorMessage :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+                BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val sendBoolean :
+      bool
+       -> 'a
+       -> ('a * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val sendNumber :
+      int D.t
+       -> 'a
+       -> ('a * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val sendSubtermData :
+      <BaseFct>.<resultStr>.subtermDataNode D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val sendFormInfo :
+      <BaseFct>.<resultStr>.formInputNode D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val getFormInfo :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+                BenchLazy.state ref
+            * <BaseFct>.<resultStr>.formOutputNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val getForm :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+                BenchLazy.state ref
+            * <BaseFct>.<resultStr>.formOutputNode D.t 
+                        <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t 
+                    option <BaseFct>.<resultStr>.actionReply BenchLazy.state 
+              ref * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val form :
+      bool
+       -> <BaseFct>.<resultStr>.formInputNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+                BenchLazy.state ref
+            * <BaseFct>.<resultStr>.formOutputNode D.t 
+                        <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t 
+                    option <BaseFct>.<resultStr>.actionReply BenchLazy.state 
+              ref * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val display :
+      <BaseFct>.<resultStr>.text
+       -> <BaseFct>.<resultStr>.text
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+                BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val setParent :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val setNode :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val setReadWrite :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val setDone :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val setGoal :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val setTactic :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val setArgument :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val setComment :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val setSubgoals :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val setStatus :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val unsetParent :
+      'a
+       -> ('a * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val bell :
+      'a
+       -> ('a * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val showTactics :
+      'a
+       -> ('a * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val setFull :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val unsetFull :
+      'a
+       -> ('a * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val hideWindow :
+      'a
+       -> ('a * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val showWindow :
+      'a
+       -> ('a * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val scratch :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val sendToggle :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * bool D.t) D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val sendForm :
+      <BaseFct>.<resultStr>.formInputNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val replaceAt :
+      int D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a D.t -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val replaceTerm :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val mapSymbols :
+      (int D.t
+        -> <BaseFct>.<resultStr>.integer
+        -> <BaseFct>.<resultStr>.integer
+        -> <BaseFct>.<resultStr>.itrNode 
+            <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+        -> <BaseFct>.<resultStr>.attributes
+        -> <BaseFct>.<resultStr>.itrNode D.t)
+       -> (int D.t
+        -> <BaseFct>.<resultStr>.integer
+        -> <BaseFct>.<resultStr>.integer
+        -> <BaseFct>.<resultStr>.integer
+        -> <BaseFct>.<resultStr>.itrNode 
+            <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+        -> <BaseFct>.<resultStr>.attributes
+        -> <BaseFct>.<resultStr>.itrNode D.t)
+       -> (<BaseFct>.<resultStr>.itrNode D.t
+        -> <BaseFct>.<resultStr>.itrNode D.t)
+       * (<BaseFct>.<resultStr>.idecNode D.t
+        -> <BaseFct>.<resultStr>.idecNode D.t)
+  val nthSignature :
+      int D.t
+       -> <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.isgnNode D.t
+  val nthDeclaration :
+      int D.t
+       -> <BaseFct>.<resultStr>.isgnNode D.t -> <BaseFct>.<resultStr>.idec
+  val signatureLength :
+      <BaseFct>.<resultStr>.isgnNode D.t -> <BaseFct>.<resultStr>.integer
+  val shareMap :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val canonicalIndex :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> int D.t -> int D.t
+  val shareSymbol :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.integer
+       -> <BaseFct>.<resultStr>.itrNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.attributes
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val shareConstructor :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.integer
+       -> <BaseFct>.<resultStr>.integer
+       -> <BaseFct>.<resultStr>.itrNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.attributes
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val shiftSymbol :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int D.t
+       -> int D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.integer
+       -> <BaseFct>.<resultStr>.itrNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.attributes
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val shiftConstructor :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int D.t
+       -> int D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.integer
+       -> <BaseFct>.<resultStr>.integer
+       -> <BaseFct>.<resultStr>.itrNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.attributes
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val shareTerm :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val shiftTerm :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val shiftDeclaration :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.idecNode D.t
+  val substitutionTable :
+      int D.t
+       -> <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> (int D.t
+            * (int D.t * <BaseFct>.<resultStr>.itrNode D.t) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val substituteSymbol :
+      (int D.t * <BaseFct>.<resultStr>.itrNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int D.t
+       -> int D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.attributes -> <BaseFct>.<resultStr>.itr
+  val substituteConstructor :
+      'a
+       -> int D.t
+       -> <BaseFct>.<resultStr>.integer
+       -> <BaseFct>.<resultStr>.integer
+       -> <BaseFct>.<resultStr>.itrNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.attributes
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val substituteTerm :
+      <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val substituteDeclaration :
+      <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.idecNode D.t
+  val extractionIndices :
+      <BaseFct>.<resultStr>.idecNode D.t
+       -> int D.t -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val uncurrySymbol :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int D.t
+       -> int D.t
+       -> int D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.attributes
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val uncurryConstructor :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int D.t
+       -> int D.t
+       -> int D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.integer
+       -> <BaseFct>.<resultStr>.itrNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.attributes
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val uncurryTerm :
+      <BaseFct>.<resultStr>.idecNode D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val extractDeclaration :
+      int D.t
+       -> <BaseFct>.<resultStr>.idecNode D.t -> <BaseFct>.<resultStr>.idec
+  val remakeType :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val isSymbolDeclaration : <BaseFct>.<resultStr>.idecNode D.t -> bool
+  val isAxiomDeclaration : <BaseFct>.<resultStr>.idecNode D.t -> bool
+  val isDefinitionDeclaration : <BaseFct>.<resultStr>.idecNode D.t -> bool
+  val declarationType :
+      <BaseFct>.<resultStr>.idecNode D.t -> <BaseFct>.<resultStr>.itr
+  val makePi :
+      <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val functionSpace :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val makeSymbols :
+      <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.integer
+       -> int D.t
+       -> (<BaseFct>.<resultStr>.itrNode D.t * int D.t) BenchLazy.state ref
+  val makeSymbolList :
+      <BaseFct>.<resultStr>.idecNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val selectSymbolType :
+      bool
+       -> <BaseFct>.<resultStr>.isgnNode D.t
+       -> int D.t -> int D.t -> <BaseFct>.<resultStr>.itr
+  val selectConstructorType :
+      'a -> 'b -> 'c -> 'd -> <BaseFct>.<resultStr>.itrNode D.t
+  val symbolType :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> int D.t -> int D.t -> <BaseFct>.<resultStr>.itrNode D.t
+  val constructorType :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> int D.t -> 'a -> 'b -> <BaseFct>.<resultStr>.itrNode D.t
+  val axiomType :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> int D.t -> int D.t -> <BaseFct>.<resultStr>.itrNode D.t
+  val otherTypes :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val termType :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t -> <BaseFct>.<resultStr>.itr
+  val naturalType :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val binderType :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.binder
+       -> <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val productType :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val constantType :
+      <BaseFct>.<resultStr>.constant -> <BaseFct>.<resultStr>.itr
+  val evaluateProposition : <BaseFct>.<resultStr>.itrNode D.t -> bool
+  val evaluateQuantifier :
+      bool
+       -> <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t -> bool
+  val truthTable :
+      <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val truthPairs :
+      <BaseFct>.<resultStr>.itrNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val occurs : int D.t -> <BaseFct>.<resultStr>.itrNode D.t -> bool
+  val occursDeclaration :
+      int D.t -> <BaseFct>.<resultStr>.idecNode D.t -> bool
+  val termAttributes :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.attribute 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val replaceAttributes :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.attributes -> <BaseFct>.<resultStr>.itr
+  val addType :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t -> <BaseFct>.<resultStr>.itr
+  val getTermAttributes :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.attribute 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val setTermAttributes :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.attributes
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val declarationAttributes :
+      <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.attribute 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val setDeclarationAttributes :
+      <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.attributes -> <BaseFct>.<resultStr>.idec
+  val signatureAttributes :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.attribute 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val setSignatureAttributes :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.attributes -> <BaseFct>.<resultStr>.isgn
+  val subSignature :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.isgnNode D.t
+       -> int <BaseFct>.<resultStr>.optionNode D.t
+  val foldRightOne :
+      ('a D.t -> 'a D.t -> 'a D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a D.t
+  val iterate : int D.t -> ('a -> 'a) -> 'a -> 'a
+  val makeApplication :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val etaMatch : 'a -> 'b -> 'c -> 'd
+  val makeRecursive :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val generateType :
+      int D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val generateTypeList :
+      <BaseFct>.<resultStr>.itrNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.integer
+       -> <BaseFct>.<resultStr>.integer
+       -> int D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val datatypeInformation :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> (<BaseFct>.<resultStr>.integer * <BaseFct>.<resultStr>.integer
+            * <BaseFct>.<resultStr>.itrNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.idecNode 
+              <BaseFct>.<resultStr>.F.<returnStr>.seq
+            * <BaseFct>.<resultStr>.itrNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node 
+              <BaseFct>.<resultStr>.F.<returnStr>.seq) BenchLazy.state ref
+  val parameterCount :
+      <BaseFct>.<resultStr>.itrNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.integer
+  val shiftUnder :
+      int D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val clauseTypes :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> (<BaseFct>.<resultStr>.itrNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * int <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val makeInduction :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val inductionType :
+      int D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val inductionTypeList :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.integer
+       -> <BaseFct>.<resultStr>.integer
+       -> int D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val inductionTerm :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t -> <BaseFct>.<resultStr>.itr
+  val equivalentIndices :
+      ('a D.t -> 'b -> bool)
+       -> 'b
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val union :
+      ('a D.t -> 'a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val updateIndices :
+      'a D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val addEquivalence :
+      (int D.t * int D.t) D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val addEquivalenceRange :
+      int D.t
+       -> int D.t
+       -> int D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val splitDefinition :
+      <BaseFct>.<resultStr>.idecNode D.t
+       -> (<BaseFct>.<resultStr>.idecNode D.t
+            * <BaseFct>.<resultStr>.itrNode D.t
+            * <BaseFct>.<resultStr>.itrNode D.t) BenchLazy.state ref
+  val termError : string -> <BaseFct>.<resultStr>.termNode D.t
+  val theoremError : string -> <BaseFct>.<resultStr>.theoremNode D.t
+  val signatureError : string -> <BaseFct>.<resultStr>.signatureNode D.t
+  val declarationError : string -> <BaseFct>.<resultStr>.declarationNode D.t
+  val bareConstant :
+      <BaseFct>.<resultStr>.constant -> <BaseFct>.<resultStr>.itrNode D.t
+  val bareBinder :
+      <BaseFct>.<resultStr>.binder
+       -> <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val bareBinary :
+      <BaseFct>.<resultStr>.binary
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+  val symbol :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.integer -> <BaseFct>.<resultStr>.term
+  val universe :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> int D.t -> <BaseFct>.<resultStr>.term
+  val piFormation :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val lambdaFormation :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val application :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val sigmaFormation :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val pairFormation :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val subtypeFormation :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val subtypeIntroduction :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t -> <BaseFct>.<resultStr>.term
+  val subtypeElimination :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val boolean :
+      <BaseFct>.<resultStr>.signatureNode D.t -> <BaseFct>.<resultStr>.term
+  val truth :
+      <BaseFct>.<resultStr>.signatureNode D.t -> <BaseFct>.<resultStr>.term
+  val falsehood :
+      <BaseFct>.<resultStr>.signatureNode D.t -> <BaseFct>.<resultStr>.term
+  val universal :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val existential :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val implication :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val conjunction :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val disjunction :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val negation :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val equality :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val isSubtype :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val conditional :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val choose :
+      <BaseFct>.<resultStr>.theoremNode D.t -> <BaseFct>.<resultStr>.term
+  val constructor :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.integer
+       -> <BaseFct>.<resultStr>.integer -> <BaseFct>.<resultStr>.term
+  val recurse :
+      <BaseFct>.<resultStr>.termNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val widen :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t -> <BaseFct>.<resultStr>.term
+  val setTermInformation :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.attributes -> <BaseFct>.<resultStr>.term
+  val getTermInformation :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.attribute 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val internalTerm :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> (<BaseFct>.<resultStr>.itrNode D.t
+            * <BaseFct>.<resultStr>.itrNode D.t
+            * <BaseFct>.<resultStr>.isgnNode D.t) BenchLazy.state ref
+  val restoreTerm : 'a -> <BaseFct>.<resultStr>.termNode D.t
+  val emptySignature : <BaseFct>.<resultStr>.signatureValue
+  val extendSignature :
+      <BaseFct>.<resultStr>.declarationNode D.t
+       -> <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+  val combineSignatures :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+  val shareSignature :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> int D.t -> int D.t -> <BaseFct>.<resultStr>.signatureValue
+  val getSignatureInformation :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.attribute 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val setSignatureInformation :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.attributes
+       -> <BaseFct>.<resultStr>.signatureValue
+  val internalSignature :
+      <BaseFct>.<resultStr>.signatureNode D.t -> <BaseFct>.<resultStr>.isgn
+  val restoreSignature : 'a -> <BaseFct>.<resultStr>.signatureNode D.t
+  val symbolDeclaration :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.declaration
+  val axiomDeclaration :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.declaration
+  val definition :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.declaration
+  val makeData :
+      <BaseFct>.<resultStr>.termNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.declaration
+  val polymorphicData :
+      <BaseFct>.<resultStr>.declarationNode D.t
+       -> <BaseFct>.<resultStr>.declaration
+  val declarationPair :
+      <BaseFct>.<resultStr>.declarationNode D.t
+       -> <BaseFct>.<resultStr>.declaration
+  val getDeclarationInformation :
+      <BaseFct>.<resultStr>.declarationNode D.t
+       -> <BaseFct>.<resultStr>.attribute 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val setDeclarationInformation :
+      <BaseFct>.<resultStr>.declarationNode D.t
+       -> <BaseFct>.<resultStr>.attributes
+       -> <BaseFct>.<resultStr>.declaration
+  val internalDeclaration :
+      <BaseFct>.<resultStr>.declarationNode D.t
+       -> (<BaseFct>.<resultStr>.idec * <BaseFct>.<resultStr>.isgn) 
+           BenchLazy.state ref
+  val restoreDeclaration : 'a -> 'b
+  val axiom :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> int D.t -> int D.t -> <BaseFct>.<resultStr>.theorem
+  val generalize :
+      <BaseFct>.<resultStr>.theoremNode D.t -> <BaseFct>.<resultStr>.theorem
+  val specialize :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.theorem
+  val existsIntroduction :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.theorem
+  val existsElimination :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val discharge :
+      <BaseFct>.<resultStr>.theoremNode D.t -> <BaseFct>.<resultStr>.theorem
+  val modusPonens :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val tautology :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.theorem
+  val reflexivity :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.theorem
+  val symmetry :
+      <BaseFct>.<resultStr>.theoremNode D.t -> <BaseFct>.<resultStr>.theorem
+  val betaRewrite :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val etaRewrite :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val conditionalTrueRewrite :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val conditionalFalseRewrite :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val subtermRewrite :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val injection :
+      <BaseFct>.<resultStr>.theoremNode D.t -> <BaseFct>.<resultStr>.theorem
+  val induction :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.theorem
+  val subtypeProofIntroduction :
+      <BaseFct>.<resultStr>.theoremNode D.t -> <BaseFct>.<resultStr>.theorem
+  val subtypeProofElimination :
+      <BaseFct>.<resultStr>.theoremNode D.t -> <BaseFct>.<resultStr>.theorem
+  val equalityOfTypes :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val fromSubtype :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.theorem
+  val definitionElimination :
+      <BaseFct>.<resultStr>.theoremNode D.t -> <BaseFct>.<resultStr>.theorem
+  val weaken :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val setTheoremInformation :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.attributes -> <BaseFct>.<resultStr>.theorem
+  val getTheoremInformation :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.attribute 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val restoreTheorem : 'a -> 'b
+  val internalTheorem :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> (<BaseFct>.<resultStr>.itrNode D.t
+            * <BaseFct>.<resultStr>.isgnNode D.t) BenchLazy.state ref
+  val equalWrappedTerms :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t -> bool
+  val equalWrappedSignatures :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.signatureNode D.t -> bool
+  val equalWrappedDeclarations :
+      <BaseFct>.<resultStr>.declarationNode D.t
+       -> <BaseFct>.<resultStr>.declarationNode D.t -> bool
+  val equalWrappedTheorems :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t -> bool
+  val wrappedTermType :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val wrappedDeclarationType :
+      <BaseFct>.<resultStr>.declarationNode D.t -> <BaseFct>.<resultStr>.term
+  val wrappedTheoremType :
+      <BaseFct>.<resultStr>.theoremNode D.t -> <BaseFct>.<resultStr>.term
+  val shiftWrappedTerm :
+      int D.t
+       -> <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val substituteWrappedTerm :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.term
+  val termSignature :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+  val declarationSignature :
+      <BaseFct>.<resultStr>.declarationNode D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+  val theoremSignature :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+  val validTheorem : <BaseFct>.<resultStr>.theoremNode D.t -> bool
+  val validTerm : <BaseFct>.<resultStr>.termNode D.t -> bool
+  val validSignature : <BaseFct>.<resultStr>.signatureNode D.t -> bool
+  val symbolName :
+      <BaseFct>.<resultStr>.name
+       -> (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val datatypeNames :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val symbolNamed :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val symbolIndexed :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val pairTyped :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val pairUntyped :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val letStyle :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val operatorStyle :
+      <BaseFct>.<resultStr>.operatorType
+       -> (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val infixBinder :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val prefixBinder :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val recursiveStyle :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val nondependent :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val grouped :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val ungrouped :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val declarationTyped :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val declarationUntyped :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val definitionParameter :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val definitionNonparameter :
+      (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+  val attributeValue :
+      ''a
+       -> (''a * <BaseFct>.<resultStr>.attributeValueNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.attributeValueNode D.t
+  val endOfLine : char list
+  val whiteSpace : char list
+  val symbolCharacters : char list
+  val singleCharacters : char list
+  val binderCharacters : char list
+  val infixBinderCharacters : char list
+  val infixOperatorCharacters : char list
+  val asciiAlphaNumeric : char -> bool
+  val contains : ''a list -> ''a -> bool
+  val byte : int -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val reservedTokens : <BaseFct>.<resultStr>.text list
+  val binderCharacter : char -> <BaseFct>.<resultStr>.binder
+  val tokenCons :
+      'a
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val tokenize :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.tokenNode D.t 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val integerText :
+      int D.t -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val operatorText :
+      <BaseFct>.<resultStr>.operatorType
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val unparseName :
+      <BaseFct>.<resultStr>.nameNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val unparseBinder :
+      <BaseFct>.<resultStr>.binder
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val unparseBinary :
+      <BaseFct>.<resultStr>.binary
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val unparseConstant :
+      <BaseFct>.<resultStr>.constant
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val declarationName :
+      (<BaseFct>.<resultStr>.attributeTag
+            * <BaseFct>.<resultStr>.attributeValueNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode D.t
+  val basicName :
+      <BaseFct>.<resultStr>.nameNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val constructorName :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> int D.t -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val printedSymbol :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> int D.t
+       -> int D.t
+       -> int D.t -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val lookupDeclaration :
+      <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.idecNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int D.t
+       -> int D.t -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val unparseITerm :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val unparseDeclaration :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.idecNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val unparseSignature :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val unparseWrappedTheorem :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val unparseWrappedTerm :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val unparseFlagged :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val displayToken :
+      <BaseFct>.<resultStr>.tokenNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val parseError :
+      <BaseFct>.<resultStr>.text -> <BaseFct>.<resultStr>.flaggedNode D.t
+  val operandTerm :
+      <BaseFct>.<resultStr>.itr -> <BaseFct>.<resultStr>.flaggedNode D.t
+  val operandDeclaration :
+      <BaseFct>.<resultStr>.idec -> <BaseFct>.<resultStr>.flaggedNode D.t
+  val readInteger :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> int D.t
+  val digitString : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val indexedSymbol :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.flagged
+  val indexedConstructor :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+  val flaggedBinder :
+      <BaseFct>.<resultStr>.binder
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.flagged
+  val flaggedConditional :
+      <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.flagged
+  val flaggedLet :
+      <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.flagged
+  val flaggedApplication :
+      <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.flagged
+  val flaggedDeclarationPair :
+      <BaseFct>.<resultStr>.attributes
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.flagged
+  val flaggedSymbolDeclaration :
+      <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.name
+       -> (<BaseFct>.<resultStr>.attributeTag
+            * <BaseFct>.<resultStr>.attributeValueNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.flagged
+  val flaggedRecurse :
+      <BaseFct>.<resultStr>.flaggedNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.flagged
+  val flaggedTag :
+      <BaseFct>.<resultStr>.tagData D.t
+       -> <BaseFct>.<resultStr>.tagArgNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.flagged
+  val attachTermInformation :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.attributes -> <BaseFct>.<resultStr>.term
+  val buildTerm :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t -> <BaseFct>.<resultStr>.term
+  val buildITerm :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.itr -> <BaseFct>.<resultStr>.termNode D.t
+  val buildDeclaration :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.idecNode D.t
+       -> <BaseFct>.<resultStr>.declarationNode D.t
+  val buildSignature :
+      <BaseFct>.<resultStr>.isgnNode D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+  type parseState
+  type parseResult
+  val tokenHead :
+      'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> 'a option
+  val tokenTail :
+      'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val tokenKind :
+      'a D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> 'a option
+  val reserved : string -> <BaseFct>.<resultStr>.tokenNode D.t
+  val equalToken :
+      <BaseFct>.<resultStr>.tokenNode D.t
+       -> <BaseFct>.<resultStr>.tokenNode D.t -> bool
+  val terminates :
+      <BaseFct>.<resultStr>.tokenNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.tokenNode D.t -> bool
+  val dummyTokens : <BaseFct>.<resultStr>.tokenStream
+  val operatorValue :
+      <BaseFct>.<resultStr>.operatorNode
+       -> <BaseFct>.<resultStr>.operatorType
+       -> int -> <BaseFct>.<resultStr>.flaggedNode D.t
+  val makeInfixBinder :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+  val makeInfixOperator :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+  val swapOperator :
+      <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.flaggedNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.flaggedNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val addOperator :
+      'a
+       -> <BaseFct>.<resultStr>.operatorType
+       -> <BaseFct>.<resultStr>.flaggedNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.flaggedNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val flushOperators :
+      <BaseFct>.<resultStr>.flaggedNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.flaggedNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int D.t
+       -> (<BaseFct>.<resultStr>.flaggedNode D.t -> bool)
+       -> (<BaseFct>.<resultStr>.flaggedNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.flaggedNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val prioritize :
+      <BaseFct>.<resultStr>.flaggedNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.flaggedNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val foldedApplication :
+      <BaseFct>.<resultStr>.flaggedNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+  val isSingletonList :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val lookupParsedName :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+  val extendParseState :
+      <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.tagData 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.parseState
+  val fetchTag :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> bool
+       * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+  val reservedHead :
+      <BaseFct>.<resultStr>.tokenNode D.t 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> string -> bool
+  val byteHead :
+      <BaseFct>.<resultStr>.tokenNode D.t 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> int -> bool
+  val parseOperatorType :
+      <BaseFct>.<resultStr>.tokenNode D.t 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.operatorType
+       * <BaseFct>.<resultStr>.tokenNode D.t 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val parsePrecedence :
+      <BaseFct>.<resultStr>.tokenNode D.t 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> int D.t
+       * <BaseFct>.<resultStr>.tokenNode D.t 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val parseName :
+      <BaseFct>.<resultStr>.tokenNode D.t 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> ((<BaseFct>.<resultStr>.nameNode,
+            char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+              <BaseFct>.<resultStr>.replyNode
+            * <BaseFct>.<resultStr>.tokenNode D.t 
+                <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t) 
+           BenchLazy.state ref
+  val unexpected :
+      <BaseFct>.<resultStr>.tokenNode D.t 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.nameNode,
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+         <BaseFct>.<resultStr>.replyNode
+       * <BaseFct>.<resultStr>.tokenNode D.t 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val makeDeclarationFlags :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+       -> (<BaseFct>.<resultStr>.attributeTag
+          * <BaseFct>.<resultStr>.attributeValueNode D.t) D.t
+       -> <BaseFct>.<resultStr>.flagged
+  val tryIndexed :
+      <BaseFct>.<resultStr>.tokenNode D.t 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.flagged
+          * <BaseFct>.<resultStr>.tokenNode D.t 
+              <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t) option
+  val parseTerm :
+      <BaseFct>.<resultStr>.parseState
+       -> <BaseFct>.<resultStr>.tokenNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+         BenchNeed.t
+       -> <BaseFct>.<resultStr>.parseResult
+  val parseTermParts :
+      <BaseFct>.<resultStr>.parseState
+       -> <BaseFct>.<resultStr>.tokenNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+         BenchNeed.t
+       -> (<BaseFct>.<resultStr>.flaggedNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.tokenStream) BenchLazy.state ref
+  val parseHypothesis :
+      <BaseFct>.<resultStr>.parseState
+       -> <BaseFct>.<resultStr>.tokenNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+         BenchNeed.t
+       -> <BaseFct>.<resultStr>.parseResult
+  val parseDeclaration :
+      <BaseFct>.<resultStr>.parseState
+       -> <BaseFct>.<resultStr>.tokenNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+         BenchNeed.t
+       -> <BaseFct>.<resultStr>.parseResult
+  val tokenTexts :
+      <BaseFct>.<resultStr>.tokenNode D.t 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val parseOneDeclaration :
+      <BaseFct>.<resultStr>.tagData <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.tokenNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+         BenchNeed.t
+       -> (<BaseFct>.<resultStr>.flaggedNode D.t
+            * <BaseFct>.<resultStr>.tokenNode D.t 
+                  <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref)
+           BenchLazy.state ref
+  val parseDeclarationNames :
+      <BaseFct>.<resultStr>.parseState
+       -> <BaseFct>.<resultStr>.tokenNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.tokenNode D.t 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.flagged
+            * <BaseFct>.<resultStr>.token 
+                <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t) 
+           BenchLazy.state ref
+  val parseAbbreviatedDeclaration :
+      <BaseFct>.<resultStr>.parseState
+       -> <BaseFct>.<resultStr>.tokenNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+         BenchNeed.t
+       -> <BaseFct>.<resultStr>.parseResult
+  val parseRecurseClauses :
+      <BaseFct>.<resultStr>.parseState
+       -> <BaseFct>.<resultStr>.flaggedNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+         BenchNeed.t
+       -> (<BaseFct>.<resultStr>.flaggedNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.token 
+                <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t) 
+           BenchLazy.state ref
+  val parseAtomicTerm :
+      <BaseFct>.<resultStr>.parseState
+       -> <BaseFct>.<resultStr>.tokenNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+         BenchNeed.t
+       -> (<BaseFct>.<resultStr>.flaggedNode D.t
+            * <BaseFct>.<resultStr>.tokenNode D.t 
+                  <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref)
+           BenchLazy.state ref
+  val parseTagArguments :
+      <BaseFct>.<resultStr>.parseState
+       -> <BaseFct>.<resultStr>.tagArgNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.tagArgType 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+         BenchNeed.t
+       -> (<BaseFct>.<resultStr>.tagArgNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.token 
+                <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t) 
+           BenchLazy.state ref
+  val parseIntegerList :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+         BenchNeed.t
+       -> (<BaseFct>.<resultStr>.tagArgNode D.t
+            * <BaseFct>.<resultStr>.tokenNode D.t 
+                  <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref)
+           BenchLazy.state ref
+  val parseIntegerItems :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+         BenchNeed.t
+       -> (<BaseFct>.<resultStr>.tagArgNode D.t
+            * <BaseFct>.<resultStr>.tokenStream) BenchLazy.state ref
+  val invalidInteger :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.tokenNode D.t 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.tagArgNode D.t
+       * <BaseFct>.<resultStr>.tokenNode D.t 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val parseIntegerSeparator :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.tokenNode D.t 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> (<BaseFct>.<resultStr>.tagArgNode D.t
+            * <BaseFct>.<resultStr>.tokenNode D.t 
+                <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t) 
+           BenchLazy.state ref
+  val parseDerivation :
+      <BaseFct>.<resultStr>.tagData <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * <BaseFct>.<resultStr>.signatureValue
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t
+  val derive :
+      <BaseFct>.<resultStr>.tagData <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * <BaseFct>.<resultStr>.signatureValue
+       -> <BaseFct>.<resultStr>.itr -> <BaseFct>.<resultStr>.theoremNode D.t
+  val driveParse :
+      <BaseFct>.<resultStr>.parseState
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.parseResult
+  val parseIterm :
+      <BaseFct>.<resultStr>.parseState
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.flaggedNode D.t
+  val parseTermSpec :
+      <BaseFct>.<resultStr>.signatureValue
+       -> <BaseFct>.<resultStr>.tagData 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.itrNode,
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+         <BaseFct>.<resultStr>.replyNode
+  val parseWrappedTerm :
+      <BaseFct>.<resultStr>.tagData <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * <BaseFct>.<resultStr>.signatureNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.term
+  val oneArgument : 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a D.t
+  val twoArguments :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a D.t * 'a D.t
+  val threeArguments :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a D.t * 'a D.t * 'a D.t
+  val reflexTag :
+      <BaseFct>.<resultStr>.tagArgNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val betaTag :
+      <BaseFct>.<resultStr>.tagArgNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val etaTag :
+      <BaseFct>.<resultStr>.tagArgNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val symmetryTag :
+      <BaseFct>.<resultStr>.tagArgNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val tautologyTag :
+      <BaseFct>.<resultStr>.tagArgNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val conditionalTrueTag :
+      <BaseFct>.<resultStr>.tagArgNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val defaultTags :
+      <BaseFct>.<resultStr>.tagData <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val replaceList :
+      'a D.t
+       -> int D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a <BaseFct>.<resultStr>.F.<returnStr>.node,
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val treeComplete : ('a,'b,'c) <BaseFct>.<resultStr>.treeNode D.t -> bool
+  val incompleteTree :
+      ('a,'b,'c) <BaseFct>.<resultStr>.treeNode D.t
+       -> ('a,'b,'c) <BaseFct>.<resultStr>.treeNode D.t
+  val undoTree :
+      ('a,'b,'c) <BaseFct>.<resultStr>.treeNode D.t
+       -> ('a,'b,'c) <BaseFct>.<resultStr>.treeNode D.t
+  val downTree :
+      int D.t
+       -> ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+  val upTree :
+      ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode,
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val topTree :
+      ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode,
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val searchTree :
+      (('a,'b,'c) <BaseFct>.<resultStr>.treeNode D.t -> bool)
+       -> bool
+       -> ('a,'b,'c) <BaseFct>.<resultStr>.treeNode D.t
+       -> (int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ('a,'b,'c) <BaseFct>.<resultStr>.treeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val gotoTree :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+  val failedTree :
+      'a
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b * 'c) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b * 'c) 
+                BenchLazy.state ref
+            * 'a <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val liftPureTree :
+      (('a,'b,'c) <BaseFct>.<resultStr>.treeNode D.t
+        -> (('a,'b,'c) <BaseFct>.<resultStr>.treeNode,
+            char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+              <BaseFct>.<resultStr>.replyNode BenchLazy.state ref)
+       -> ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+                BenchLazy.state ref
+            * ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val liftIOTree :
+      (('a,'b,'c) <BaseFct>.<resultStr>.treeNode D.t
+        -> 'd
+        -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'e * 'f) 
+                 BenchLazy.state ref
+             * ('a,'b,'c) <BaseFct>.<resultStr>.treeNode D.t 
+                   <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> 'd
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'e * 'f) 
+                BenchLazy.state ref
+            * ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val liftPureTreeState :
+      ('a D.t
+        -> ('a,char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+              <BaseFct>.<resultStr>.replyNode BenchLazy.state ref)
+       -> 'a D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b * 'c) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b * 'c) 
+                BenchLazy.state ref
+            * 'a D.t <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val liftIOTreeState :
+      ('a
+        -> 'b
+        -> ('c BenchLazy.state ref
+             * 'a <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> 'a
+       -> 'b
+       -> ('c BenchLazy.state ref
+            * 'a <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val treeUndo :
+      ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+                BenchLazy.state ref
+            * ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val treeTop :
+      ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+                BenchLazy.state ref
+            * ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val treeUp :
+      ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+                BenchLazy.state ref
+            * ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val treeDown :
+      int D.t
+       -> ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+                BenchLazy.state ref
+            * ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val initialGlobal : <BaseFct>.<resultStr>.globalState D.t
+  val getPrintDepth : ('a * 'b * 'c) D.t -> 'a
+  val getGlobalAttributes : ('a * 'b * 'c) D.t -> 'b
+  val getGlobalTags : ('a * 'b * 'c) D.t -> 'c
+  val setPrintDepth : 'a -> ('b * 'c * 'd) D.t -> ('a * 'c * 'd) D.t
+  val setGlobalAttributes : 'a -> ('b * 'c * 'd) D.t -> ('b * 'a * 'd) D.t
+  val setGlobalTags : 'a -> ('b * 'c * 'd) D.t -> ('b * 'c * 'a) D.t
+  val shortText :
+      int D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val removeSpaces :
+      int D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val completionText :
+      'a <BaseFct>.<resultStr>.optionNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val objectText :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val goalSummary :
+      'a
+       -> (<BaseFct>.<resultStr>.goalNode,'b,'c) 
+           <BaseFct>.<resultStr>.treeNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+  val showOption :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a)
+       -> ('b D.t -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> 'b <BaseFct>.<resultStr>.optionNode D.t -> 'a
+  val showNode :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> 'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val showGoal :
+      ('a * 'b * 'c) D.t
+       -> (<BaseFct>.<resultStr>.goalNode,'d,'e) 
+           <BaseFct>.<resultStr>.treeNode D.t
+       -> 'f BenchLazy.state ref
+       -> ('f BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val showSubgoals :
+      ('a * 'b * 'c) D.t
+       -> (<BaseFct>.<resultStr>.goalNode,'d,'e) 
+             <BaseFct>.<resultStr>.treeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'f BenchLazy.state ref
+       -> ('f BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val showDone :
+      'a <BaseFct>.<resultStr>.optionNode D.t
+       -> 'b BenchLazy.state ref
+       -> ('b BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val objectTypes :
+      <BaseFct>.<resultStr>.textNode <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val myIndex :
+      ''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ''a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int D.t
+  val optionText :
+      string
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val inputForm :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> <BaseFct>.<resultStr>.formInputNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val controlItems :
+      'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> 'a list
+  val getTree :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a
+            * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state 
+              ref) BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a
+                 * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node 
+                     BenchLazy.state ref) BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,'b,
+               int D.t * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * <BaseFct>.<resultStr>.tagData 
+                 <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+                        <BaseFct>.<resultStr>.treeStateNode D.t option 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val initialize :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a
+            * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state 
+              ref) BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a
+                 * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node 
+                     BenchLazy.state ref) BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,'b,
+               int D.t * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * <BaseFct>.<resultStr>.tagData 
+                 <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+                      <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val updateState :
+      'a
+       -> (<BaseFct>.<resultStr>.goalNode,'b,'c * 'd * 'e) 
+           <BaseFct>.<resultStr>.treeStateNode D.t
+       -> 'f BenchLazy.state ref
+       -> ('f BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val finish :
+      'a BenchLazy.state ref
+       -> ('a BenchLazy.state ref
+            * 'b <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  type tacticArguments
+  type completion
+  type completions
+  type validator
+  type orderedValidator
+  type lookupTables
+  type tacticInfo
+  type orderedTacticInfo
+  type tactic
+  type orderedTactic
+  val nullArguments :
+      'a
+       -> 'b
+       -> 'c
+       -> 'd
+       -> ('d
+            * <BaseFct>.<resultStr>.tacticArguments 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'e <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val getDone :
+      ('a,<BaseFct>.<resultStr>.doneNode,'b) <BaseFct>.<resultStr>.treeNode 
+         D.t
+       -> <BaseFct>.<resultStr>.completion
+  val getEditable :
+      (<BaseFct>.<resultStr>.goalNode,'a,'b) <BaseFct>.<resultStr>.treeNode 
+         D.t
+       -> bool D.t
+  val setTreeInformation :
+      (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+       <BaseFct>.<resultStr>.globalState) <BaseFct>.<resultStr>.treeNode D.t
+       -> bool D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+       -> <BaseFct>.<resultStr>.proofTree
+  val liftValidation :
+      (<BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+            <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+        -> <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode D.t)
+       -> 'a
+       -> (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+           <BaseFct>.<resultStr>.globalState) <BaseFct>.<resultStr>.treeNode 
+         D.t
+       -> <BaseFct>.<resultStr>.proofTree
+  val liftOrderedValidation :
+      (<BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+            <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+        -> bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+        -> (bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+             * <BaseFct>.<resultStr>.signatureNode 
+                 <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+             * <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+               D.t) BenchLazy.state ref)
+       -> 'a
+       -> (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+           <BaseFct>.<resultStr>.globalState) <BaseFct>.<resultStr>.treeNode 
+         D.t
+       -> <BaseFct>.<resultStr>.proofTree
+  val makeGoal :
+      <BaseFct>.<resultStr>.signatureValue
+       -> <BaseFct>.<resultStr>.lookupTable
+       -> bool D.t
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> ('a * 'b
+            * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state 
+              ref) BenchLazy.state ref
+       -> (('a * 'b
+                 * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node 
+                   BenchNeed.t) BenchLazy.state ref
+            * <BaseFct>.<resultStr>.proofTree 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val makeGoals :
+      <BaseFct>.<resultStr>.signatureValue
+       -> <BaseFct>.<resultStr>.lookupTable
+       -> <BaseFct>.<resultStr>.objectNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+           <BaseFct>.<resultStr>.globalState) <BaseFct>.<resultStr>.treeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a * 'b
+            * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t) 
+           BenchLazy.state ref
+       -> (('a * 'b
+                 * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node 
+                   BenchNeed.t) BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+               <BaseFct>.<resultStr>.globalState) 
+                        <BaseFct>.<resultStr>.treeNode 
+                      <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val makeOrderedGoals :
+      <BaseFct>.<resultStr>.signatureValue
+       -> (<BaseFct>.<resultStr>.lookupTable
+            * (bool D.t * <BaseFct>.<resultStr>.objectNode D.t) D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+           <BaseFct>.<resultStr>.globalState) <BaseFct>.<resultStr>.treeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a * 'b
+            * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t) 
+           BenchLazy.state ref
+       -> (('a * 'b
+                 * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node 
+                   BenchNeed.t) BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+               <BaseFct>.<resultStr>.globalState) 
+                        <BaseFct>.<resultStr>.treeNode 
+                      <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val liftTactic :
+      <BaseFct>.<resultStr>.tactic
+       -> <BaseFct>.<resultStr>.text
+       * (<BaseFct>.<resultStr>.proofState
+        -> <BaseFct>.<resultStr>.xin
+        -> (<BaseFct>.<resultStr>.xin
+             * (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+                <BaseFct>.<resultStr>.globalState) 
+                       <BaseFct>.<resultStr>.treeStateNode D.t 
+                   <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+  val liftOrderedTactic :
+      <BaseFct>.<resultStr>.orderedTactic
+       -> <BaseFct>.<resultStr>.text
+       * (<BaseFct>.<resultStr>.proofState
+        -> <BaseFct>.<resultStr>.xin
+        -> (<BaseFct>.<resultStr>.xin
+             * (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+                <BaseFct>.<resultStr>.globalState) 
+                       <BaseFct>.<resultStr>.treeStateNode D.t 
+                   <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+  val tacticOrElse :
+      ('a
+        -> 'b
+        -> ('c BenchLazy.state ref
+             * 'd <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'e <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> ('a
+        -> 'c BenchLazy.state ref
+        -> ('c BenchLazy.state ref
+             * 'd <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * 'e <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> 'a
+       -> 'b
+       -> ('c BenchLazy.state ref
+            * 'd <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * 'e <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val tacticSubtrees :
+      (('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+        -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+            BenchLazy.state ref
+        -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+                 BenchLazy.state ref
+             * ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t 
+                   <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+                BenchLazy.state ref
+            * ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val tacticAndThen :
+      ('a
+        -> 'b
+        -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+                 BenchLazy.state ref
+             * ('e,'f,'g) <BaseFct>.<resultStr>.treeStateNode D.t 
+                   <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> (('e,'f,'g) <BaseFct>.<resultStr>.treeStateNode D.t
+        -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+            BenchLazy.state ref
+        -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+                 BenchLazy.state ref
+             * ('e,'f,'g) <BaseFct>.<resultStr>.treeStateNode D.t 
+                   <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> 'a
+       -> 'b
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+                BenchLazy.state ref
+            * ('e,'f,'g) <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val repeatTactic :
+      (('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+        -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+            BenchLazy.state ref
+        -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+                 BenchLazy.state ref
+             * ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t 
+                   <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+                BenchLazy.state ref
+            * ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val forTactic :
+      int D.t
+       -> (('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+        -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+            BenchLazy.state ref
+        -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+                 BenchLazy.state ref
+             * ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t 
+                   <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+             * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+            BenchLazy.state ref)
+       -> ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+                BenchLazy.state ref
+            * ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val findTerms :
+      (int D.t -> <BaseFct>.<resultStr>.itrNode D.t -> bool)
+       -> (int D.t
+        -> <BaseFct>.<resultStr>.itrNode D.t
+        -> <BaseFct>.<resultStr>.itrNode D.t)
+       -> <BaseFct>.<resultStr>.itrNode D.t
+       -> (<BaseFct>.<resultStr>.itrNode D.t
+            * int <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val findBetas :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> (<BaseFct>.<resultStr>.itrNode D.t
+            * int <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val repeatBeta :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t
+  val conjunctionSchema : <BaseFct>.<resultStr>.itr BenchLazy.delay
+  val disjunctionSchema : <BaseFct>.<resultStr>.itr BenchLazy.delay
+  val conjunctionTheorem : <BaseFct>.<resultStr>.theorem BenchLazy.delay
+  val disjunctionTheorem : <BaseFct>.<resultStr>.theorem BenchLazy.delay
+  val deriveConjunction :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.theorem
+  val deriveDisjunction :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.theorem
+  val exactlyTwo :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a D.t * 'a D.t) option
+  val noCompletion : unit -> <BaseFct>.<resultStr>.completion
+  val completedTheorem :
+      <BaseFct>.<resultStr>.theorem -> <BaseFct>.<resultStr>.completion
+  val completedDeclaration :
+      <BaseFct>.<resultStr>.declaration -> <BaseFct>.<resultStr>.completion
+  val completedTerm :
+      <BaseFct>.<resultStr>.term -> <BaseFct>.<resultStr>.completion
+  val autoValidator :
+      <BaseFct>.<resultStr>.doneNode D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode D.t
+  val autoSubgoals :
+      'a
+       -> <BaseFct>.<resultStr>.signatureNode D.t
+       -> 'b
+       -> 'c
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> ('d <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * ('e <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+              D.t),char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val singletonValidator :
+      <BaseFct>.<resultStr>.theorem
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.completion
+  val reflexSubgoals :
+      'a
+       -> <BaseFct>.<resultStr>.signatureNode D.t
+       -> 'b
+       -> 'c
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> ('d <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * ('e <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> <BaseFct>.<resultStr>.completion),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val createDeclarationName :
+      'a
+       -> 'b
+       -> <BaseFct>.<resultStr>.idecNode D.t
+       -> (<BaseFct>.<resultStr>.idecNode D.t * 'b) BenchLazy.state ref
+  val orderedBinderValidator :
+      (<BaseFct>.<resultStr>.theorem -> <BaseFct>.<resultStr>.theorem)
+       -> <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.signatureNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.completion) BenchLazy.state ref
+  val generalizeSubgoals :
+      'a
+       -> <BaseFct>.<resultStr>.signatureNode D.t
+       -> 'b D.t
+       -> 'c
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> (<BaseFct>.<resultStr>.objectNode 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * (<BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> (bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.signatureNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.completion) BenchLazy.state ref),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val dischargeSubgoals :
+      'a
+       -> <BaseFct>.<resultStr>.signatureNode D.t
+       -> 'b D.t
+       -> 'c
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> (<BaseFct>.<resultStr>.objectNode 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * (<BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> (bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.signatureNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.completion) BenchLazy.state ref),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val autoTactic : <BaseFct>.<resultStr>.tactic
+  val reflexTactic : <BaseFct>.<resultStr>.tactic
+  val generalizeTactic : <BaseFct>.<resultStr>.orderedTactic
+  val dischargeTactic : <BaseFct>.<resultStr>.orderedTactic
+  val argumentValues :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> 'a D.t list option
+  val oneTheorem :
+      <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theorem option
+  val twoTheorems :
+      <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.theorem * <BaseFct>.<resultStr>.theorem) 
+         option
+  val threeTheorems :
+      <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.theorem * <BaseFct>.<resultStr>.theorem
+          * <BaseFct>.<resultStr>.theorem) option
+  val parsedTheorem :
+      ('a * 'b
+          * <BaseFct>.<resultStr>.tagData 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq) D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.theoremNode D.t
+  val argumentForm :
+      <BaseFct>.<resultStr>.formInputNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int
+       -> 'a
+       -> 'b
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.integer 
+              <BaseFct>.<resultStr>.C.<returnStr>.seq
+            * <BaseFct>.<resultStr>.integer 
+              <BaseFct>.<resultStr>.C.<returnStr>.seq) BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.integer 
+                   <BaseFct>.<resultStr>.C.<returnStr>.seq
+                 * <BaseFct>.<resultStr>.integer 
+                   <BaseFct>.<resultStr>.C.<returnStr>.seq) BenchLazy.state 
+              ref
+            * <BaseFct>.<resultStr>.tacticArguments 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val completeSubgoals :
+      ('a * 'b
+          * <BaseFct>.<resultStr>.tagData 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq) D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+       -> 'c
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> ('d <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * ('e <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> <BaseFct>.<resultStr>.completion),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val completeTactic : <BaseFct>.<resultStr>.tactic
+  val conjunctionValidator :
+      <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.completion
+  val conjunctionSubgoals :
+      'a
+       -> 'b
+       -> 'c
+       -> 'd
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> (<BaseFct>.<resultStr>.objectNode 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * (<BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> <BaseFct>.<resultStr>.completion),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val conjunctionTactic : <BaseFct>.<resultStr>.tactic
+  val disjunctionValidator :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.completion
+  val disjunctionTermValidator :
+      <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.completion
+  val disjunctionSubgoals :
+      ('a * 'b
+          * <BaseFct>.<resultStr>.tagData 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq) D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+       -> 'c
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> (<BaseFct>.<resultStr>.objectNode 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * (<BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> <BaseFct>.<resultStr>.completion),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val disjunctionTactic : <BaseFct>.<resultStr>.tactic
+  val tautologySubgoals :
+      'a
+       -> <BaseFct>.<resultStr>.signatureNode D.t
+       -> 'b
+       -> 'c
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> ('d <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * ('e <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> <BaseFct>.<resultStr>.completion),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val tautologyTactic : <BaseFct>.<resultStr>.tactic
+  val axiomSubgoals :
+      'a
+       -> <BaseFct>.<resultStr>.signatureNode D.t
+       -> 'b
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> 'c
+       -> ('d <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * ('e <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> <BaseFct>.<resultStr>.completion),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val axiomTactic : <BaseFct>.<resultStr>.tactic
+  val hypotheses :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.isgnNode D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.theoremNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val hypothesisDeclarations :
+      <BaseFct>.<resultStr>.signatureNode D.t
+       -> <BaseFct>.<resultStr>.idecNode D.t
+       -> int D.t
+       -> int D.t
+       -> (int D.t
+            * <BaseFct>.<resultStr>.theoremNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val hypothesisSubgoals :
+      'a
+       -> <BaseFct>.<resultStr>.signatureNode D.t
+       -> 'b
+       -> 'c <BaseFct>.<resultStr>.optionNode D.t
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> ('d <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * ('e <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> <BaseFct>.<resultStr>.completion),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val hypothesisTactic : <BaseFct>.<resultStr>.tactic
+  val lemmaValidator :
+      <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.completion
+  val lemmaSubgoals :
+      ('a * 'b
+          * <BaseFct>.<resultStr>.tagData 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq) D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+       -> 'c
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> (<BaseFct>.<resultStr>.objectNode 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * (<BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> <BaseFct>.<resultStr>.completion),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val lemmaTactic : <BaseFct>.<resultStr>.tactic
+  val parsedProof :
+      ('a * 'b
+          * <BaseFct>.<resultStr>.tagData 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq) D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t list
+       -> <BaseFct>.<resultStr>.theoremNode D.t
+  val equalityValidator :
+      ('a * 'b
+          * <BaseFct>.<resultStr>.tagData 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq) D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+       -> <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.completion
+  val equalitySubgoals :
+      ('a * 'b
+          * <BaseFct>.<resultStr>.tagData 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq) D.t
+       -> <BaseFct>.<resultStr>.signatureNode D.t
+       -> 'c
+       -> 'd
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> (<BaseFct>.<resultStr>.objectNode 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * (<BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> <BaseFct>.<resultStr>.completion),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val equalityTactic : <BaseFct>.<resultStr>.tactic
+  val orValidator :
+      ('a * 'b
+          * <BaseFct>.<resultStr>.tagData 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq) D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+       -> <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.completion
+  val orSubgoals :
+      ('a * 'b
+          * <BaseFct>.<resultStr>.tagData 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq) D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+       -> 'c
+       -> 'd <BaseFct>.<resultStr>.optionNode D.t
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> (<BaseFct>.<resultStr>.objectNode 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * (<BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> <BaseFct>.<resultStr>.completion),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val orTactic : <BaseFct>.<resultStr>.tactic
+  val notValidator :
+      ('a * 'b
+          * <BaseFct>.<resultStr>.tagData 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq) D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+       -> <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.completion
+  val notSubgoals :
+      ('a * 'b
+          * <BaseFct>.<resultStr>.tagData 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq) D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+       -> 'c
+       -> 'd <BaseFct>.<resultStr>.optionNode D.t
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> (<BaseFct>.<resultStr>.objectNode 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * (<BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> <BaseFct>.<resultStr>.completion),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val notTactic : <BaseFct>.<resultStr>.tactic
+  val existsSubgoals :
+      ('a * 'b
+          * <BaseFct>.<resultStr>.tagData 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq) D.t
+       -> <BaseFct>.<resultStr>.signatureValue
+       -> 'c
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.optionNode D.t
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> (<BaseFct>.<resultStr>.objectNode 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * (<BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> <BaseFct>.<resultStr>.completion),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val existsEliminationTactic : <BaseFct>.<resultStr>.tactic
+  val reduceInduction :
+      <BaseFct>.<resultStr>.itrNode D.t
+       -> <BaseFct>.<resultStr>.itrNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val inductionValidator :
+      <BaseFct>.<resultStr>.theoremNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.completion
+  val inductionSubgoals :
+      'a
+       -> <BaseFct>.<resultStr>.signatureNode D.t
+       -> 'b
+       -> 'c
+       -> <BaseFct>.<resultStr>.objectNode D.t
+       -> (<BaseFct>.<resultStr>.objectNode 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * (<BaseFct>.<resultStr>.doneNode <BaseFct>.<resultStr>.optionNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            -> <BaseFct>.<resultStr>.completion),
+           char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val inductionTactic : <BaseFct>.<resultStr>.tactic
+  val stripTactic :
+      (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+       <BaseFct>.<resultStr>.globalState) <BaseFct>.<resultStr>.treeStateNode 
+         D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.integer 
+              <BaseFct>.<resultStr>.C.<returnStr>.seq
+            * <BaseFct>.<resultStr>.integer 
+              <BaseFct>.<resultStr>.C.<returnStr>.seq) BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.integer 
+                   <BaseFct>.<resultStr>.C.<returnStr>.seq
+                 * <BaseFct>.<resultStr>.integer 
+                   <BaseFct>.<resultStr>.C.<returnStr>.seq) BenchLazy.state 
+              ref
+            * (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+               <BaseFct>.<resultStr>.globalState) 
+                      <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val trivialTactic :
+      <BaseFct>.<resultStr>.proofState
+       -> (<BaseFct>.<resultStr>.text
+            * <BaseFct>.<resultStr>.integer 
+              <BaseFct>.<resultStr>.C.<returnStr>.seq
+            * <BaseFct>.<resultStr>.integer 
+              <BaseFct>.<resultStr>.C.<returnStr>.seq) BenchLazy.state ref
+       -> ((<BaseFct>.<resultStr>.text
+                 * <BaseFct>.<resultStr>.integer 
+                   <BaseFct>.<resultStr>.C.<returnStr>.seq
+                 * <BaseFct>.<resultStr>.integer 
+                   <BaseFct>.<resultStr>.C.<returnStr>.seq) BenchLazy.state 
+              ref
+            * <BaseFct>.<resultStr>.proofState 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val commandAction :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ('a
+             -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b * 'c) 
+                 BenchLazy.state ref
+             -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b * 'c) 
+                      BenchLazy.state ref
+                  * 'a <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+                  * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                 BenchLazy.state ref)) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b * 'c) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b * 'c) 
+                BenchLazy.state ref
+            * 'a <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val processCommands :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ((<BaseFct>.<resultStr>.goalNode,'a,'b * 'c * 'd) 
+                 <BaseFct>.<resultStr>.treeStateNode D.t
+             -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'e * 'f) 
+                 BenchLazy.state ref
+             -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'e * 'f) 
+                      BenchLazy.state ref
+                  * (<BaseFct>.<resultStr>.goalNode,'a,'b * 'c * 'd) 
+                            <BaseFct>.<resultStr>.treeStateNode D.t 
+                        <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+                  * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                 BenchLazy.state ref)) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.goalNode,'a,'b * 'c * 'd) 
+           <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (<BaseFct>.<resultStr>.goalNode,'a,'b * 'c * 'd) 
+           <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'e * 'f) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'e * 'f) 
+                BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,'a,'b * 'c * 'd) 
+                      <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val editor :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ((<BaseFct>.<resultStr>.goalNode,'a,
+                int D.t * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                * <BaseFct>.<resultStr>.tagData 
+                  <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+                 <BaseFct>.<resultStr>.treeStateNode D.t
+             -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c
+                  * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node 
+                      BenchLazy.state ref) BenchLazy.state ref
+             -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c
+                       * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node 
+                           BenchLazy.state ref) BenchLazy.state ref
+                  * (<BaseFct>.<resultStr>.goalNode,'a,
+                     int D.t * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                     * <BaseFct>.<resultStr>.tagData 
+                       <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+                            <BaseFct>.<resultStr>.treeStateNode D.t 
+                        <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+                  * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                 BenchLazy.state ref)) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c
+            * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state 
+              ref) BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c
+                 * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node 
+                     BenchLazy.state ref) BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,'a,
+               int D.t * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * <BaseFct>.<resultStr>.tagData 
+                 <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+                      <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val proofEdit :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ((<BaseFct>.<resultStr>.goalNode,'a,
+                int D.t * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                * <BaseFct>.<resultStr>.tagData 
+                  <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+                 <BaseFct>.<resultStr>.treeStateNode D.t
+             -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c
+                  * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node 
+                      BenchLazy.state ref) BenchLazy.state ref
+             -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c
+                       * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node 
+                           BenchLazy.state ref) BenchLazy.state ref
+                  * (<BaseFct>.<resultStr>.goalNode,'a,
+                     int D.t * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                     * <BaseFct>.<resultStr>.tagData 
+                       <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+                            <BaseFct>.<resultStr>.treeStateNode D.t 
+                        <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+                  * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                 BenchLazy.state ref)) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c
+            * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state 
+              ref) BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c
+                 * int D.t <BaseFct>.<resultStr>.C.<returnStr>.node 
+                     BenchLazy.state ref) BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,'a,
+               int D.t * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * <BaseFct>.<resultStr>.tagData 
+                 <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+                      <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val objectTitle :
+      <BaseFct>.<resultStr>.objectNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val displayTree :
+      ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (<BaseFct>.<resultStr>.goalNode,'d,'e) 
+           <BaseFct>.<resultStr>.treeNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'f * 'g) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'f * 'g) 
+                BenchLazy.state ref
+            * ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val showGoalCommand :
+      (<BaseFct>.<resultStr>.goalNode,'a,'b) 
+           <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+                BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,'a,'b) 
+                      <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val showSubgoalCommand :
+      int D.t
+       -> (<BaseFct>.<resultStr>.goalNode,'a,'b) 
+           <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+                BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,'a,'b) 
+                      <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val theoryForm :
+      <BaseFct>.<resultStr>.formInputNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val showTheory :
+      (<BaseFct>.<resultStr>.goalNode,'a,'b) 
+           <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+                BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,'a,'b) 
+                      <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val showObject :
+      (<BaseFct>.<resultStr>.goalNode,'a,'b) 
+           <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+                BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,'a,'b) 
+                      <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val treeComment :
+      (<BaseFct>.<resultStr>.goalNode,'a,'b) <BaseFct>.<resultStr>.treeNode 
+         D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val setTreeComment :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+           <BaseFct>.<resultStr>.globalState) <BaseFct>.<resultStr>.treeNode 
+         D.t
+       -> <BaseFct>.<resultStr>.proofTree
+  val showComment :
+      (<BaseFct>.<resultStr>.goalNode,'a,'b) 
+           <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+                BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,'a,'b) 
+                      <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val editComment :
+      (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+       <BaseFct>.<resultStr>.globalState) <BaseFct>.<resultStr>.treeStateNode 
+         D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a * 'b) 
+                BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+               <BaseFct>.<resultStr>.globalState) 
+                      <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val showArguments :
+      (<BaseFct>.<resultStr>.goalNode,'a,'b) 
+           <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+                BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,'a,'b) 
+                      <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val showTacticsCommand :
+      'a
+       -> 'b BenchLazy.state ref
+       -> ('b BenchLazy.state ref
+            * 'a <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val incompleteCandidate :
+      ('a,'b,'c) <BaseFct>.<resultStr>.treeNode D.t -> bool
+  val gotoNext :
+      ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'd * 'e) 
+                BenchLazy.state ref
+            * ('a,'b,'c) <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val namedForm :
+      <BaseFct>.<resultStr>.formInputNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val gotoNamed :
+      (<BaseFct>.<resultStr>.goalNode,'a,'b) 
+           <BaseFct>.<resultStr>.treeStateNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+           BenchLazy.state ref
+       -> ((char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c * 'd) 
+                BenchLazy.state ref
+            * (<BaseFct>.<resultStr>.goalNode,'a,'b) 
+                      <BaseFct>.<resultStr>.treeStateNode D.t 
+                  <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val commands :
+      (<BaseFct>.<resultStr>.text
+          * (<BaseFct>.<resultStr>.proofState
+           -> <BaseFct>.<resultStr>.proofState <BaseFct>.<resultStr>.action)) 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val program :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val finalState :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+           int D.t
+           * <BaseFct>.<resultStr>.attribute 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * <BaseFct>.<resultStr>.tagData 
+             <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+               <BaseFct>.<resultStr>.treeStateNode D.t BenchLazy.state ref
+  val editorResult :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.goalNode,<BaseFct>.<resultStr>.doneNode,
+           int D.t
+           * <BaseFct>.<resultStr>.attribute 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * <BaseFct>.<resultStr>.tagData 
+             <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+                 <BaseFct>.<resultStr>.treeStateNode D.t 
+             <BaseFct>.<resultStr>.actionReply BenchLazy.state ref
+  type input
+  val input : string -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val benchmark :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> Word64.word
+  val signedHash : Word64.word -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-veritas-check.sml]
+functor BenchNofibVeritasCheckFn(K: sig
+  type input
+  val input : string -> input
+  val benchmark : input -> Word64.word
+  val signedHash : Word64.word -> string
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/nofib-veritas-tests.sml]
+[autoloading]
+[autoloading done]
+PASS nofib-veritas/lazy/protocol/send-args
+PASS nofib-veritas/lazy/protocol/form-output
+PASS nofib-veritas/lazy/protocol/set-parent
+PASS nofib-veritas/lazy/protocol/set-node
+PASS nofib-veritas/lazy/protocol/set-rw
+PASS nofib-veritas/lazy/protocol/set-done
+PASS nofib-veritas/lazy/protocol/set-goal
+PASS nofib-veritas/lazy/protocol/set-tactic
+PASS nofib-veritas/lazy/protocol/set-argument
+PASS nofib-veritas/lazy/protocol/set-comment
+PASS nofib-veritas/lazy/protocol/set-subgoals
+PASS nofib-veritas/lazy/protocol/set-status
+PASS nofib-veritas/lazy/protocol/unset-parent
+PASS nofib-veritas/lazy/protocol/bell
+PASS nofib-veritas/lazy/protocol/show-tactics
+PASS nofib-veritas/lazy/protocol/show-window
+PASS nofib-veritas/lazy/protocol/hide-window
+PASS nofib-veritas/lazy/protocol/set-full
+PASS nofib-veritas/lazy/protocol/unset-full
+PASS nofib-veritas/lazy/protocol/send-subterm
+PASS nofib-veritas/lazy/protocol/parse-form
+PASS nofib-veritas/lazy/protocol/command
+PASS nofib-veritas/lazy/protocol/ignored-error
+PASS nofib-veritas/lazy/protocol/ignored-value
+PASS nofib-veritas/lazy/protocol/ignored-pair
+PASS nofib-veritas/lazy/protocol/handled-error
+PASS nofib-veritas/lazy/tokens-forall
+PASS nofib-veritas/lazy/parse-forall
+PASS nofib-veritas/lazy/tokens-lambda
+PASS nofib-veritas/lazy/parse-lambda
+PASS nofib-veritas/lazy/tokens-nested
+PASS nofib-veritas/lazy/parse-nested
+PASS nofib-veritas/lazy/tokens-booleans
+PASS nofib-veritas/lazy/parse-booleans
+PASS nofib-veritas/lazy/tokens-parentheses
+PASS nofib-veritas/lazy/parse-parentheses
+PASS nofib-veritas/lazy/tokens-implication
+PASS nofib-veritas/lazy/parse-implication
+PASS nofib-veritas/lazy/tokens-let
+PASS nofib-veritas/lazy/parse-let
+PASS nofib-veritas/lazy/tokens-pair
+PASS nofib-veritas/lazy/parse-pair
+PASS nofib-veritas/lazy/tokens-typed-pair
+PASS nofib-veritas/lazy/parse-typed-pair
+PASS nofib-veritas/lazy/tokens-indexed
+PASS nofib-veritas/lazy/parse-indexed
+PASS nofib-veritas/lazy/tokens-undefined
+PASS nofib-veritas/lazy/parse-undefined
+PASS nofib-veritas/lazy/tokens-empty
+PASS nofib-veritas/lazy/parse-empty
+PASS nofib-veritas/lazy/tokens-comment
+PASS nofib-veritas/lazy/parse-comment
+PASS nofib-veritas/lazy/tokens-symbol
+PASS nofib-veritas/lazy/parse-symbol
+PASS nofib-veritas/lazy/original-forall/protocol
+PASS nofib-veritas/lazy/original-forall/proof
+PASS nofib-veritas/lazy/reflex/protocol
+PASS nofib-veritas/lazy/reflex/proof
+PASS nofib-veritas/lazy/taut/protocol
+PASS nofib-veritas/lazy/taut/proof
+PASS nofib-veritas/lazy/conjunction/protocol
+PASS nofib-veritas/lazy/conjunction/proof
+PASS nofib-veritas/lazy/discharge/protocol
+PASS nofib-veritas/lazy/discharge/proof
+PASS nofib-veritas/lazy/negation/protocol
+PASS nofib-veritas/lazy/negation/proof
+PASS nofib-veritas/lazy/or/protocol
+PASS nofib-veritas/lazy/or/proof
+PASS nofib-veritas/lazy/equality/protocol
+PASS nofib-veritas/lazy/equality/proof
+PASS nofib-veritas/lazy/strip/protocol
+PASS nofib-veritas/lazy/strip/proof
+PASS nofib-veritas/lazy/trivial/protocol
+PASS nofib-veritas/lazy/trivial/proof
+PASS nofib-veritas/lazy/views/protocol
+PASS nofib-veritas/lazy/views/proof
+PASS nofib-veritas/lazy/named/protocol
+PASS nofib-veritas/lazy/named/proof
+PASS nofib-veritas/lazy/object/protocol
+PASS nofib-veritas/lazy/object/proof
+PASS nofib-veritas/lazy/undo/protocol
+PASS nofib-veritas/lazy/undo/proof
+PASS nofib-veritas/lazy/discharge-axiom/protocol
+PASS nofib-veritas/lazy/discharge-axiom/proof
+PASS nofib-veritas/lazy/complete/protocol
+PASS nofib-veritas/lazy/complete/proof
+PASS nofib-veritas/lazy/axiom/protocol
+PASS nofib-veritas/lazy/axiom/proof
+PASS nofib-veritas/lazy/lemma/protocol
+PASS nofib-veritas/lazy/lemma/proof
+PASS nofib-veritas/lazy/disjunction-spec/protocol
+PASS nofib-veritas/lazy/disjunction-spec/proof
+PASS nofib-veritas/lazy/disjunction-deriv/protocol
+PASS nofib-veritas/lazy/disjunction-deriv/proof
+PASS nofib-veritas/lazy/exists-spec/protocol
+PASS nofib-veritas/lazy/exists-spec/proof
+PASS nofib-veritas/lazy/exists-deriv/protocol
+PASS nofib-veritas/lazy/exists-deriv/proof
+PASS nofib-veritas/lazy/next/protocol
+PASS nofib-veritas/lazy/next/proof
+PASS nofib-veritas/lazy/named-cancel/protocol
+PASS nofib-veritas/lazy/named-cancel/proof
+PASS nofib-veritas/lazy/expanded-child/protocol
+PASS nofib-veritas/lazy/expanded-child/proof
+PASS nofib-veritas/lazy/complete-program-hash
+PASS nofib-veritas/lazy/signed-program-hash
+PASS nofib-veritas/lazy/zero-skips-input
+PASS nofib-veritas/lazy/negative-skips-input
+PASS nofib-veritas/lazy/wrong-result-rejected
+PASS nofib-veritas/strict/protocol/send-args
+PASS nofib-veritas/strict/protocol/form-output
+PASS nofib-veritas/strict/protocol/set-parent
+PASS nofib-veritas/strict/protocol/set-node
+PASS nofib-veritas/strict/protocol/set-rw
+PASS nofib-veritas/strict/protocol/set-done
+PASS nofib-veritas/strict/protocol/set-goal
+PASS nofib-veritas/strict/protocol/set-tactic
+PASS nofib-veritas/strict/protocol/set-argument
+PASS nofib-veritas/strict/protocol/set-comment
+PASS nofib-veritas/strict/protocol/set-subgoals
+PASS nofib-veritas/strict/protocol/set-status
+PASS nofib-veritas/strict/protocol/unset-parent
+PASS nofib-veritas/strict/protocol/bell
+PASS nofib-veritas/strict/protocol/show-tactics
+PASS nofib-veritas/strict/protocol/show-window
+PASS nofib-veritas/strict/protocol/hide-window
+PASS nofib-veritas/strict/protocol/set-full
+PASS nofib-veritas/strict/protocol/unset-full
+PASS nofib-veritas/strict/protocol/send-subterm
+PASS nofib-veritas/strict/protocol/parse-form
+PASS nofib-veritas/strict/protocol/command
+PASS nofib-veritas/strict/protocol/ignored-error
+PASS nofib-veritas/strict/protocol/ignored-value
+PASS nofib-veritas/strict/protocol/ignored-pair
+PASS nofib-veritas/strict/protocol/handled-error
+PASS nofib-veritas/strict/tokens-forall
+PASS nofib-veritas/strict/parse-forall
+PASS nofib-veritas/strict/tokens-lambda
+PASS nofib-veritas/strict/parse-lambda
+PASS nofib-veritas/strict/tokens-nested
+PASS nofib-veritas/strict/parse-nested
+PASS nofib-veritas/strict/tokens-booleans
+PASS nofib-veritas/strict/parse-booleans
+PASS nofib-veritas/strict/tokens-parentheses
+PASS nofib-veritas/strict/parse-parentheses
+PASS nofib-veritas/strict/tokens-implication
+PASS nofib-veritas/strict/parse-implication
+PASS nofib-veritas/strict/tokens-let
+PASS nofib-veritas/strict/parse-let
+PASS nofib-veritas/strict/tokens-pair
+PASS nofib-veritas/strict/parse-pair
+PASS nofib-veritas/strict/tokens-typed-pair
+PASS nofib-veritas/strict/parse-typed-pair
+PASS nofib-veritas/strict/tokens-indexed
+PASS nofib-veritas/strict/parse-indexed
+PASS nofib-veritas/strict/tokens-undefined
+PASS nofib-veritas/strict/parse-undefined
+PASS nofib-veritas/strict/tokens-empty
+PASS nofib-veritas/strict/parse-empty
+PASS nofib-veritas/strict/tokens-comment
+PASS nofib-veritas/strict/parse-comment
+PASS nofib-veritas/strict/tokens-symbol
+PASS nofib-veritas/strict/parse-symbol
+PASS nofib-veritas/strict/original-forall/protocol
+PASS nofib-veritas/strict/original-forall/proof
+PASS nofib-veritas/strict/reflex/protocol
+PASS nofib-veritas/strict/reflex/proof
+PASS nofib-veritas/strict/taut/protocol
+PASS nofib-veritas/strict/taut/proof
+PASS nofib-veritas/strict/conjunction/protocol
+PASS nofib-veritas/strict/conjunction/proof
+PASS nofib-veritas/strict/discharge/protocol
+PASS nofib-veritas/strict/discharge/proof
+PASS nofib-veritas/strict/negation/protocol
+PASS nofib-veritas/strict/negation/proof
+PASS nofib-veritas/strict/or/protocol
+PASS nofib-veritas/strict/or/proof
+PASS nofib-veritas/strict/equality/protocol
+PASS nofib-veritas/strict/equality/proof
+PASS nofib-veritas/strict/strip/protocol
+PASS nofib-veritas/strict/strip/proof
+PASS nofib-veritas/strict/trivial/protocol
+PASS nofib-veritas/strict/trivial/proof
+PASS nofib-veritas/strict/views/protocol
+PASS nofib-veritas/strict/views/proof
+PASS nofib-veritas/strict/named/protocol
+PASS nofib-veritas/strict/named/proof
+PASS nofib-veritas/strict/object/protocol
+PASS nofib-veritas/strict/object/proof
+PASS nofib-veritas/strict/undo/protocol
+PASS nofib-veritas/strict/undo/proof
+PASS nofib-veritas/strict/discharge-axiom/protocol
+PASS nofib-veritas/strict/discharge-axiom/proof
+PASS nofib-veritas/strict/complete/protocol
+PASS nofib-veritas/strict/complete/proof
+PASS nofib-veritas/strict/axiom/protocol
+PASS nofib-veritas/strict/axiom/proof
+PASS nofib-veritas/strict/lemma/protocol
+PASS nofib-veritas/strict/lemma/proof
+PASS nofib-veritas/strict/disjunction-spec/protocol
+PASS nofib-veritas/strict/disjunction-spec/proof
+PASS nofib-veritas/strict/disjunction-deriv/protocol
+PASS nofib-veritas/strict/disjunction-deriv/proof
+PASS nofib-veritas/strict/exists-spec/protocol
+PASS nofib-veritas/strict/exists-spec/proof
+PASS nofib-veritas/strict/exists-deriv/protocol
+PASS nofib-veritas/strict/exists-deriv/proof
+PASS nofib-veritas/strict/next/protocol
+PASS nofib-veritas/strict/next/proof
+PASS nofib-veritas/strict/named-cancel/protocol
+PASS nofib-veritas/strict/named-cancel/proof
+PASS nofib-veritas/strict/expanded-child/protocol
+PASS nofib-veritas/strict/expanded-child/proof
+PASS nofib-veritas/strict/complete-program-hash
+PASS nofib-veritas/strict/signed-program-hash
+PASS nofib-veritas/strict/zero-skips-input
+PASS nofib-veritas/strict/negative-skips-input
+PASS nofib-veritas/strict/wrong-result-rejected
+functor NofibVeritasTestsFn(<param>: sig
+  structure D : <sig>
+  val label : string
+end) :
+sig
+  structure K : <sig>
+  structure L : <sig>
+  val root : string
+  val read : string -> TextIO.vector
+  structure Protocol : <sig>
+  structure Parsing : <sig>
+  structure Editor : <sig>
+  val input : string
+  structure Check : <sig>
+end
+structure NeedVeritas : sig
+  structure K : <sig>
+  structure L : <sig>
+  val root : string
+  val read : string -> TextIO.vector
+  structure Protocol : <sig>
+  structure Parsing : <sig>
+  structure Editor : <sig>
+  val input : string
+  structure Check : <sig>
+end
+structure StrictVeritas : sig
+  structure K : <sig>
+  structure L : <sig>
+  val root : string
+  val read : string -> TextIO.vector
+  structure Protocol : <sig>
+  structure Parsing : <sig>
+  structure Editor : <sig>
+  val input : string
+  structure Check : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 218 checks, 0 failed

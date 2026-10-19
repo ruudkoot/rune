@@ -1,0 +1,30 @@
+{
+  "command": [
+    "timeout",
+    "30",
+    "bin/runevm",
+    "tests/out/benchmarks/nofib-veritas-originals/driver-Need.rbc",
+    "400",
+    "tests/out/benchmarks/nofib-veritas-originals/source/veritas.stdin",
+    "CD1FC6B0A4675CFB"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 12992,
+  "observed_minimum_available_kib": 24186652,
+  "peak_processes": [
+    {
+      "pid": 3,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 4,
+      "name": "runevm",
+      "rss_kib": 11196
+    }
+  ],
+  "elapsed_seconds": 11.334781388010015
+}

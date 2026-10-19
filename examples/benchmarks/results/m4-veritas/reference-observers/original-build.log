@@ -1,0 +1,224 @@
+[ 1 of 34] Compiling Core_datatype    ( Core_datatype.hs, Core_datatype.o ) [Optimisation flags changed]
+
+Core_datatype.hs:21:1: warning: [-Wtabs]
+    Tab character found here, and in 108 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+21 |            | App        ITrm ITrm                   [ ITrm ] [ Attribute ]
+   | ^^^^^^^^
+[ 2 of 34] Compiling Attributes       ( Attributes.lhs, Attributes.o ) [Optimisation flags changed]
+[ 3 of 34] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o ) [Optimisation flags changed]
+[ 4 of 34] Compiling Vtslib           ( Vtslib.hs, Vtslib.o ) [Optimisation flags changed]
+
+Vtslib.hs:2:1: warning: [-Wtabs]
+    Tab character found here, and in 8 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+2 |                 haskey , uncurry , curry , for , map' , module Core_datatype )
+  | ^^^^^^^^
+[ 5 of 34] Compiling Sub_Core1        ( Sub_Core1.hs, Sub_Core1.o ) [Optimisation flags changed]
+
+Sub_Core1.hs:37:1: warning: [-Wtabs]
+    Tab character found here, and in 259 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+37 |         = cmp x1 x2 && eq_pair_wise cmp l1 l2
+   | ^^^^^^^^
+[ 6 of 34] Compiling Sub_Core2        ( Sub_Core2.hs, Sub_Core2.o ) [Optimisation flags changed]
+
+Sub_Core2.hs:61:1: warning: [-Wtabs]
+    Tab character found here, and in 132 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+61 |         = shared sg 0
+   | ^^^^^^^^
+[ 7 of 34] Compiling Sub_Core3        ( Sub_Core3.hs, Sub_Core3.o ) [Optimisation flags changed]
+
+Sub_Core3.hs:29:1: warning: [-Wtabs]
+    Tab character found here, and in 125 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+29 |         = case extract_dc j dc of
+   | ^^^^^^^^
+[ 8 of 34] Compiling Sub_Core4        ( Sub_Core4.hs, Sub_Core4.o ) [Optimisation flags changed]
+
+Sub_Core4.hs:45:1: warning: [-Wtabs]
+    Tab character found here, and in 207 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+45 |         = Symbol_dec tm att
+   | ^^^^^^^^
+[ 9 of 34] Compiling Lookup           ( Lookup.hs, Lookup.o ) [Optimisation flags changed]
+[10 of 34] Compiling Dcore            ( Dcore.hs, Dcore.o ) [Optimisation flags changed]
+
+Dcore.hs:2:1: warning: [-Wtabs]
+    Tab character found here, and in 26 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+2 |                 , encode )
+  | ^^^^^^^^
+[11 of 34] Compiling Core_database    ( Core_database.hs, Core_database.o ) [Optimisation flags changed]
+
+Core_database.hs:22:1: warning: [-Wtabs]
+    Tab character found here, and in 300 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+22 |         = BOOL_TAG | TRUE_TAG | FALSE_TAG | UNIV_TAG deriving (Eq)
+   | ^^^^^^^^
+[12 of 34] Compiling Kernel           ( Kernel.hs, Kernel.o ) [Optimisation flags changed]
+
+Kernel.hs:36:19: warning: [-Wtabs]
+    Tab character found here, and in 551 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+36 | data Sgn = SG ISgn      |
+   |                   ^^^^^^
+[13 of 34] Compiling Type_defs        ( Type_defs.lhs, Type_defs.o ) [Optimisation flags changed]
+
+Type_defs.lhs:13:12: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        either ‘showsPrec’ or ‘show’
+    • In the instance declaration for ‘Show Token’
+   |
+13 | > instance Show Token
+   |            ^^^^^^^^^^
+[14 of 34] Compiling Unparse          ( Unparse.lhs, Unparse.o ) [Optimisation flags changed]
+
+Unparse.lhs:203:3: warning: [-Woverlapping-patterns]
+    Pattern match is redundant
+    In an equation for ‘unparse_dc’: unparse_dc sg _ = ...
+    |
+203 | > unparse_dc sg _
+    |   ^^^^^^^^^^^^^^^...
+[15 of 34] Compiling Edlib            ( Edlib.lhs, Edlib.o ) [Optimisation flags changed]
+[16 of 34] Compiling Getops           ( Getops.hs, Getops.o ) [Optimisation flags changed]
+
+Getops.hs:33:1: warning: [-Wtabs]
+    Tab character found here, and in 33 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+33 |         = Ok ( [ ('t',SOME "Trm")], ["hello"])
+   | ^^^^^^^^
+[17 of 34] Compiling Token            ( Token.lhs, Token.o ) [Optimisation flags changed]
+
+Token.lhs:65:3: warning: [-Woverlapping-patterns]
+    Pattern match is redundant
+    In an equation for ‘denull’: denull x = ...
+   |
+65 | > denull x = error ( show x )
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[18 of 34] Compiling Build_itrm       ( Build_itrm.lhs, Build_itrm.o ) [Optimisation flags changed]
+
+Build_itrm.lhs:104:3: warning: [-Woverlapping-patterns]
+    Pattern match is redundant
+    In an equation for ‘let'’: let' _ _ (Opnd _) = ...
+    |
+104 | > let' _ _ ( Opnd _ ) = error "6"
+    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[19 of 34] Compiling Build_Tm         ( Build_Tm.lhs, Build_Tm.o ) [Optimisation flags changed]
+[20 of 34] Compiling Parse            ( Parse.lhs, Parse.o ) [Optimisation flags changed]
+[21 of 34] Compiling Tags             ( Tags.hs, Tags.o ) [Optimisation flags changed]
+
+Tags.hs:26:1: warning: [-Wtabs]
+    Tab character found here, and in five further locations.
+    Suggested fix: Please use spaces instead.
+   |
+26 |           ("\226"   , [ Deriv_Arg , Int_Arg ] , [ Thm_Fn beta_fn ] ) ,
+   | ^^^^^^^^
+[22 of 34] Compiling Globals          ( Globals.hs, Globals.o ) [Optimisation flags changed]
+
+Globals.hs:15:16: warning: [-Wtabs]
+    Tab character found here, and in four further locations.
+    Suggested fix: Please use spaces instead.
+   |
+15 | set_print_depth pd   ( _  , attL , tags ) = ( pd , attL , tags )
+   |                ^
+[23 of 34] Compiling DerivedRules     ( DerivedRules.hs, DerivedRules.o ) [Optimisation flags changed]
+
+DerivedRules.hs:26:1: warning: [-Wtabs]
+    Tab character found here, and in 103 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+26 |         = Binder Forall (Symbol_dec (Constant Bool' [] []) [])
+   | ^^^^^^^^
+[24 of 34] Compiling X_interface      ( X_interface.hs, X_interface.o ) [Optimisation flags changed]
+
+X_interface.hs:21:1: warning: [-Wtabs]
+    Tab character found here, and in 306 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+21 |                    InMultiText  String String              |
+   | ^^^^^^^^
+[25 of 34] Compiling Tree             ( Tree.hs, Tree.o ) [Optimisation flags changed]
+
+Tree.hs:14:1: warning: [-Wtabs]
+    Tab character found here, and in 62 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+14 |         = Tree a
+   | ^^^^^^^^
+[26 of 34] Compiling Goals            ( Goals.hs, Goals.o ) [Optimisation flags changed]
+
+Goals.hs:43:1: warning: [-Wtabs]
+    Tab character found here, and in 136 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+43 |                  ( Option [String] ) -- arguments if any
+   | ^^^^^^^^
+[27 of 34] Compiling Tactics          ( Tactics.hs, Tactics.o ) [Optimisation flags changed]
+
+Tactics.hs:18:12: warning: [-Wtabs]
+    Tab character found here, and in 143 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+18 | import Tags     -- partain
+   |            ^^^^^
+[28 of 34] Compiling Tacticals        ( Tacticals.hs, Tacticals.o ) [Optimisation flags changed]
+
+Tacticals.hs:11:15: warning: [-Wtabs]
+    Tab character found here, and in 19 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+11 | import Globals          -- partain
+   |               ^^
+[29 of 34] Compiling ThmTactics       ( ThmTactics.hs, ThmTactics.o ) [Optimisation flags changed]
+
+ThmTactics.hs:25:19: warning: [-Wtabs]
+    Tab character found here, and in 365 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+25 | import X_interface      
+   |                   ^^^^^^
+[30 of 34] Compiling Editor           ( Editor.hs, Editor.o ) [Optimisation flags changed]
+
+Editor.hs:12:15: warning: [-Wtabs]
+    Tab character found here, and in 37 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+12 | import Globals          -- partain
+   |               ^^
+[31 of 34] Compiling Display          ( Display.hs, Display.o ) [Optimisation flags changed]
+
+Display.hs:46:1: warning: [-Wtabs]
+    Tab character found here, and in 180 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+46 |         = [
+   | ^^^^^^^^
+[32 of 34] Compiling Auto             ( Auto.hs, Auto.o ) [Optimisation flags changed]
+
+Auto.hs:1:18: warning: [-Wtabs]
+    Tab character found here, and in four further locations.
+    Suggested fix: Please use spaces instead.
+  |
+1 | module Auto where       
+  |                  ^^^^^^^
+[33 of 34] Compiling Main             ( Main.hs, Main.o ) [Optimisation flags changed]
+
+Main.hs:58:1: warning: [-Wtabs]
+    Tab character found here, and in 126 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+58 |         = rqts
+   | ^^^^^^^^
+[34 of 34] Linking veritas-original

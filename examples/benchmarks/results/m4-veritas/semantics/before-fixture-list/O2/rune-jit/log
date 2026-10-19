@@ -1,0 +1,5 @@
+runevm: uncaught exception Io <value>
+  in RuneFile.open' at /home/ruud/rune/.worktrees/benchmarks/bin/../lib/basis/runefile.sml:29:79
+  in TextIO.openIn at /home/ruud/rune/.worktrees/benchmarks/bin/../lib/basis/textio.sml:148:50
+  in BenchApplicationTestIO.read at /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/application-test-io.sml:2:26
+  in <toplevel> at /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/nofib-veritas-tests.sml:105:81
