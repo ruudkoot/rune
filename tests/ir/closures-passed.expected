@@ -1,0 +1,63 @@
+(* after simplify *)
+(funs
+  (fn g1 ((v1 : int)) : int * (int -> int)
+    (fun
+      (fn v2 ((v3 : int)) : int
+        (return (prim int_add v3 v1 : (int * int) -> int)))
+    (return (tuple v1 v2)))))
+(funs
+  (fn g2 ((v4 : int -> int) (v5 : int)) : int
+    (let (v6 : int) (app v4 v5)
+    (let (v7 : int) (app v4 v6)
+    (let (v8 : int) (app v4 v7)
+    (let (v9 : int) (app v4 v8)
+    (let (v10 : int) (app v4 v9)
+    (let (v11 : int) (app v4 v10)
+    (let (v12 : int) (app v4 v11)
+    (let (v13 : int) (app v4 v12)
+    (let (v14 : int) (app v4 v13)
+    (let (v15 : int) (app v4 v14)
+    (let (v16 : int) (app v4 v15)
+    (let (v17 : int) (app v4 v16)
+    (return (app v4 v17))))))))))))))))
+(funs
+  (fn g3 ((v18 : int -> int) (v19 : int) (v20 : int)) : int
+    (let (v21 : bool) (prim imm_eq v19 0 : (int * int) -> bool)
+    (if v21
+      (return v20)
+      (let (v22 : int) (prim int_sub v19 1 : (int * int) -> int)
+      (let (v23 : int) (app g2 v18 v19)
+      (let (v24 : int) (prim int_add v20 v23 : (int * int) -> int)
+      (return (app g3 v18 v22 v24)))))))))
+(funs
+  (fn g4 ((v25 : int)) : int
+    (let (v26 : int) (prim int_add v25 3 : (int * int) -> int)
+    (let (v27 : int) (prim int_add v26 3 : (int * int) -> int)
+    (let (v28 : int) (prim int_add v27 3 : (int * int) -> int)
+    (let (v29 : int) (prim int_add v28 3 : (int * int) -> int)
+    (let (v30 : int) (prim int_add v29 3 : (int * int) -> int)
+    (let (v31 : int) (prim int_add v30 3 : (int * int) -> int)
+    (let (v32 : int) (prim int_add v31 3 : (int * int) -> int)
+    (let (v33 : int) (prim int_add v32 3 : (int * int) -> int)
+    (let (v34 : int) (prim int_add v33 3 : (int * int) -> int)
+    (let (v35 : int) (prim int_add v34 3 : (int * int) -> int)
+    (let (v36 : int) (prim int_add v35 3 : (int * int) -> int)
+    (let (v37 : int) (prim int_add v36 3 : (int * int) -> int)
+    (return (prim int_add v37 3 : (int * int) -> int)))))))))))))))
+  (fn g5 ((v38 : int)) : int
+    (return (prim int_add v38 3 : (int * int) -> int)))
+  (fn g6 ((v39 : int) (v40 : int)) : int
+    (let (v41 : bool) (prim imm_eq v39 0 : (int * int) -> bool)
+    (if v41
+      (return v40)
+      (let (v42 : int) (prim int_sub v39 1 : (int * int) -> int)
+      (let (v43 : int) (app g4 v39)
+      (let (v44 : int) (prim int_add v40 v43 : (int * int) -> int)
+      (return (app g6 v42 v44)))))))))
+(val g7 : int
+  (return (app g6 10 0)))
+(val g8 : int
+  (fun
+    (fn v45 ((v46 : int)) : int
+      (return (prim int_mul v46 2 : (int * int) -> int)))
+  (return (app g2 v45 1))))

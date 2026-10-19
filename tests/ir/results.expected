@@ -1,0 +1,94 @@
+(* after lower *)
+function f0 <toplevel> (v1, 0 captured)
+  b0:
+    v2 = ()
+    v3 = setglobal g1 v2
+    v4 = closure f1 
+    v5 = setglobal g2 v4
+    v6 = closure f3 
+    v7 = setglobal g3 v6
+    v8 = closure f4 
+    v9 = setglobal g4 v8
+    v10 = const 7
+    v11 = callk f3 v10
+    v12 = const 2
+    v13 = callk f4 v12
+    v14 = const 3
+    v15 = callk f4 v14
+    v16 = tuple v11 v13 v15
+    v17 = setglobal g5 v16
+    v18 = ()
+    return v18
+  reps v2:unit v10:int v11:int v12:int v13:int v14:int v15:int v16:ptr
+function f1 div2 (v1, 0 captured)
+  b0:
+    v2 = const 2
+    v3 = prim int_div v1 v2
+    v4 = const 2
+    v5 = prim int_mod v1 v4
+    v6 = setglobal g6 v5
+    return v3
+  reps v1:int v2:int v3:int v4:int v5:int
+function f2 find (v1 v2, 0 captured)
+  b0:
+    goto b1 v1 v2
+  b1(v3 v4):
+    iftag v4 0 b2 b3
+  b2:
+    v5 = con0 0
+    return v5
+  b3:
+    iftag v4 1 b4 b5
+  b4:
+    v6 = field 1 0 v4
+    v7 = select 0 v6
+    v8 = select 1 v6
+    v9 = field 1 1 v4
+    v10 = prim imm_eq v3 v7
+    if v10 b6 b7
+  b6:
+    v11 = con0 1
+    v12 = setglobal g1 v8
+    return v11
+  b7:
+    goto b1 v3 v9
+  b5:
+    v13 = builtinexn 0
+    v14 = ()
+    v15 = mkexn v13 v14
+    raise v15
+  reps v1:int v2:con v3:int v4:con v5:con v6:ptr v7:int v8:int v9:con v10:con0 v11:con0 v13:ptr v14:unit v15:ptr
+function f3 f (v1, 0 captured)
+  b0:
+    v2 = callk f1 v1
+    v3 = slot g6
+    v4 = prim int_add v2 v3
+    return v4
+  reps v1:int v2:int v3:int v4:int
+function f4 g (v1, 0 captured)
+  b0:
+    v2 = const 1
+    v3 = const 10
+    v4 = const 2
+    v5 = const 20
+    v6 = tuple v4 v5
+    v7 = con0 0
+    v8 = con 1 v6 v7
+    v9 = tuple v2 v3
+    v10 = con 1 v9 v8
+    v11 = callk f2 v1 v10
+    v12 = slot g1
+    iftag v11 0 b1 b2
+  b1:
+    v13 = const 0
+    return v13
+  b2:
+    iftag v11 1 b3 b4
+  b3:
+    return v12
+  b4:
+    v14 = builtinexn 0
+    v15 = ()
+    v16 = mkexn v14 v15
+    raise v16
+  reps v1:int v2:int v3:int v4:int v5:int v7:con v8:con v10:con v11:con0 v13:int v14:ptr v15:unit v16:ptr

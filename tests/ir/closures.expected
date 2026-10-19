@@ -1,0 +1,50 @@
+(* after simplify *)
+(funs
+  (fn g1 ((v1 : int -> int) (v2 : int list)) : int list
+    (let (v3 : int) (tag v2)
+    (let (v4 : bool) (prim imm_eq v3 0 : (int * int) -> bool)
+    (if v4
+      (return (con0 0 : int list))
+      (let (v5 : int) (tag v2)
+      (let (v6 : bool) (prim imm_eq v5 1 : (int * int) -> bool)
+      (if v6
+        (let (v7 : int * int list) (decon 1 v2 : int list)
+        (let (v8 : int) (select 0 v7)
+        (let (v9 : int list) (select 1 v7)
+        (let (v10 : int) (app v1 v8)
+        (let (v11 : int list) (app g1 v1 v9)
+        (let (v12 : int * int list) (tuple v10 v11)
+        (return (con 1 v12 : int list))))))))
+        (let (v13 : exncon) (builtinexn 0)
+        (let (v14 : exn) (mkexn v13 ())
+        (raise v14)))))))))))
+(funs
+  (fn g2 ((v15 : int) (v16 : int)) : int
+    (return (prim int_add v16 v15 : (int * int) -> int)))
+  (fn g3 ((v17 : int list) (v18 : int)) : int list
+    (let (v19 : int) (tag v17)
+    (let (v20 : bool) (prim imm_eq v19 0 : (int * int) -> bool)
+    (if v20
+      (return (con0 0 : int list))
+      (let (v21 : int) (tag v17)
+      (let (v22 : bool) (prim imm_eq v21 1 : (int * int) -> bool)
+      (if v22
+        (let (v23 : int * int list) (decon 1 v17 : int list)
+        (let (v24 : int) (select 0 v23)
+        (let (v25 : int list) (select 1 v23)
+        (let (v26 : int) (prim int_add v24 v18 : (int * int) -> int)
+        (let (v27 : int list) (app g3 v25 v18)
+        (let (v28 : int * int list) (tuple v26 v27)
+        (return (con 1 v28 : int list))))))))
+        (let (v29 : exncon) (builtinexn 0)
+        (let (v30 : exn) (mkexn v29 ())
+        (raise v30)))))))))))
+(funs
+  (fn g4 ((v31 : int) (v32 : int list)) : int list
+    (return (app g3 v32 v31))))
+(val g5 : int list
+  (let (v33 : int * int list) (tuple 2 (con0 0 : int list))
+  (let (v34 : int list) (con 1 v33 : int list)
+  (let (v35 : int * int list) (tuple 1 v34)
+  (let (v36 : int list) (con 1 v35 : int list)
+  (return (app g3 v36 3)))))))

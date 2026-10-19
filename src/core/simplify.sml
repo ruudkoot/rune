@@ -515,6 +515,24 @@ struct
         | Mark (sp, a) => Mark (sp, exp a)
     in exp e end
 
+  (* e with f applied to every step, in the functions made in it too. *)
+  fun mapRhs (f : rhs -> rhs) (e : exp) : exp =
+    let
+      fun go e =
+        case e of
+          Let (x, s, r, b) => Let (x, s, f r, go b)
+        | Fun (fs, b) =>
+            Fun (List.map (fn {name, tyvars, params, result, body} =>
+                             {name = name, tyvars = tyvars, params = params, result = result, body = go body}) fs,
+                 go b)
+        | Join (j, ps, jb, sc) => Join (j, ps, go jb, go sc)
+        | If (a, t, e) => If (a, go t, go e)
+        | Handle (a, x, h) => Handle (go a, x, go h)
+        | Return r => Return (f r)
+        | Mark (sp, a) => Mark (sp, go a)
+        | _ => e
+    in go e end
+
   (* The body of a function called once where it is made, in place of the
      call, is at the types of the call: its type variables are those types. *)
   fun substTypes (s : Ty.ty IntMap.map) (e : exp) : exp =
@@ -681,6 +699,18 @@ struct
      stays a call; what is left of the function Shake removes). The
      position a call is at is here. *)
   val inlineSize = 12
+  (* A function that makes functions and returns them, alone or in a
+     tuple -- a record of closures made at each call, as MLton's peek's
+     addPeek makes them -- may be twice as big: put where it is called, the
+     functions it makes are known there, to be called, inlined or given to
+     copies (performance M8). *)
+  fun inlineLimit (f : fundef) : int =
+    let fun isFun t = case t of Ty.Arrow _ => true | _ => false
+    in
+      case #result f of
+        Ty.Tuple ts => if List.exists isFun ts then 2 * inlineSize else inlineSize
+      | t => if isFun t then 2 * inlineSize else inlineSize
+    end
   val knownConSize = 16
   (* Whether e always raises: a call of a function that does is on the way
      to an error, where what the call costs does not matter, so it is not
@@ -767,8 +797,13 @@ struct
      variable of a scheme, so that the copy is of none; one copy for each
      function, types and functions given, which a call made later uses too.
      The copies are simplified after the definition whose calls made them,
-     and put before it. *)
-  val specialisable : (fundef * int list) IntTable.table ref = ref (IntTable.table 16)
+     and put before it. A function that does not call itself is copied too,
+     but only from a copy, given the local functions the copy was given
+     (performance M8: the loop of MLton's peek calls a function with the
+     closures it is given, whose results that function takes apart); from
+     elsewhere, copies of every small function of functions grew the
+     compiler by 4% and made it slower. *)
+  val specialisable : (fundef * int list * bool) IntTable.table ref = ref (IntTable.table 16)
   val globalFuns : unit IntTable.table ref = ref (IntTable.table 16)
   val copies : var StringMap.map ref = ref StringMap.empty
   val pendingCopies : fundef list ref = ref []
@@ -808,7 +843,7 @@ struct
         | _ => ()
       val () = exp (#body f)
     in
-      if !self then List.filter (fn i => Array.sub (static, i)) (List.tabulate (n, fn i => i)) else []
+      List.filter (fn i => Array.sub (static, i)) (List.tabulate (n, fn i => i))
     end
 
   fun closedTy (t : Ty.ty) : bool =
@@ -820,27 +855,275 @@ struct
     | Ty.Arrow (a, b) => closedTy a andalso closedTy b
     | Ty.ExnCon => true
 
-  fun dropFixed (fixed : (int * atom) list, xs : 'a list) : 'a list =
+  (* What a static parameter is given in a copy: a function of the top
+     level, or a local function (performance M8, D8 A, step 5) -- its code
+     made a function of the top level of what it captured and its
+     parameter, those it captured the copy's parameters after its own. *)
+  datatype fix = FixAtom of atom | FixClosure of var * (var * Ty.ty) list * Ty.ty list option
+
+  fun dropFixed (fixed : (int * 'b) list, xs : 'a list) : 'a list =
     List.mapPartial (fn (i, x) => if List.exists (fn (j, _) => j = i) fixed then NONE else SOME x)
                     (ListPair.zip (List.tabulate (List.length xs, fn i => i), xs))
+
+  (* the local functions alone in their groups, of one parameter and no
+     type variables, that do not name themselves, by name, as simplified
+     (keepFun); the scheme of each variable bound, as simp meets its binder;
+     and each local function made a function of the top level for a copy,
+     by its name, with what it captured *)
+  val localFuns : fundef IntTable.table ref = ref (IntTable.table 16)
+  val liftedFuns : (var * Ty.ty list option) IntTable.table ref = ref (IntTable.table 16)
+  (* the types of the variables bound in the expression a round simplifies,
+     and the parameters of its function, worked out where a local function
+     given asks for them, once a round *)
+  val roundInput : exp ref = ref (Return (Atom Unit))
+  val roundParams : (var * Ty.ty) list ref = ref []
+  val roundTypes : scheme IntTable.table option ref = ref NONE
+  fun typeOf (x : var) : scheme option =
+    let
+      val t =
+        case !roundTypes of
+          SOME t => t
+        | NONE =>
+            let
+              val t = IntTable.table 256
+              fun bind (y, s) = IntTable.insert (t, y, s)
+              fun exp e =
+                case e of
+                  Let (y, s, _, b) => (bind (y, s); exp b)
+                | Fun (fs, b) => (List.app (fn f => (bind (#name f, (#tyvars f, funTy f));
+                                                     List.app (fn (y, u) => bind (y, ([], u))) (#params f);
+                                                     exp (#body f))) fs;
+                                  exp b)
+                | Join (_, ps, jb, sc) => (List.app (fn (y, u) => bind (y, ([], u))) ps; exp jb; exp sc)
+                | If (_, a, b) => (exp a; exp b)
+                | Handle (a, y, h) => (exp a; bind (y, ([], Ty.exn)); exp h)
+                | Mark (_, a) => exp a
+                | _ => ()
+            in
+              List.app (fn (y, u) => bind (y, ([], u))) (!roundParams); exp (!roundInput); roundTypes := SOME t; t
+            end
+    in IntTable.find (t, x) end
+  (* how many copies and lifted functions deep the function being simplified
+     is, of those made for local functions given: a copy whose body gives a
+     local function of its own to another copy would go on for ever, where
+     two functions give each other new ones *)
+  val closureDepth : int IntTable.table ref = ref (IntTable.table 16)
+  (* the local functions a copy made of a local function it gives on
+     (makeCopy), which a copy for them is made for whatever the budget *)
+  val wrapperFuns : unit IntTable.table ref = ref (IntTable.table 16)
+  val currentDepth = ref 0
+  val maxClosureDepth = 2
+  (* The variables free in f, by stamp: f's own name among them where it
+     calls itself. *)
+  fun freeVars (f : fundef) : var list =
+    let
+      val bound : unit IntTable.table = IntTable.table 32
+      val free : unit IntMap.map ref = ref IntMap.empty
+      fun bind x = IntTable.insert (bound, x, ())
+      fun atom a = case a of Var (x, _) => if isSome (IntTable.find (bound, x)) then () else free := IntMap.insert (!free, x, ()) | _ => ()
+      fun rhs r =
+        case r of
+          Atom a => atom a
+        | App (g, xs) => List.app atom (g :: xs)
+        | Prim (_, _, xs) => List.app atom xs
+        | Tuple xs => List.app atom xs
+        | Select (_, a) => atom a
+        | Con (_, _, a) => atom a
+        | Decon (_, _, a) => atom a
+        | ConTag a => atom a
+        | MkExn (c, a) => (atom c; atom a)
+        | ExnCon a => atom a
+        | ExnArg (_, a) => atom a
+        | SetGlobal (_, a) => atom a
+        | _ => ()
+      fun exp e =
+        case e of
+          Let (x, _, r, b) => (rhs r; bind x; exp b)
+        | Fun (fs, b) => (List.app (fn g => bind (#name g)) fs;
+                          List.app (fn g => (List.app (fn (x, _) => bind x) (#params g); exp (#body g))) fs; exp b)
+        | Join (_, ps, jb, sc) => (List.app (fn (x, _) => bind x) ps; exp jb; exp sc)
+        | Jump (_, xs) => List.app atom xs
+        | If (a, t, e) => (atom a; exp t; exp e)
+        | Handle (a, x, h) => (exp a; bind x; exp h)
+        | Raise a => atom a
+        | Return r => rhs r
+        | Mark (_, a) => exp a
+    in
+      List.app (fn (x, _) => bind x) (#params f); exp (#body f);
+      IntMap.listKeys (!free)
+    end
+
+  (* Whether the parameter p, at place i of h's, is only called in e, or
+     given to h's calls of itself at its place, or to a function that may
+     be specialised on it in turn, at a static place of its, where a copy of
+     that function may be made from the copy. *)
+  fun onlyCalled (p : var, i : int, h : var, e : exp) : bool = calledOrPassed (true, p, i, h, e)
+  (* where pass, the function given it may be copied for it in turn, and
+     only calls it there: a copy that gives it on is then sure to be given
+     a copy, and never makes a closure the call did not (makeCopy) *)
+  and calledOrPassed (pass : bool, p : var, i : int, h : var, e : exp) : bool =
+    let
+      fun no a = case a of Var (x, _) => x <> p | _ => true
+      val deeper = pass andalso !currentDepth + 1 < maxClosureDepth
+      fun passed (g, k) =
+        deeper andalso (case IntTable.find (!specialisable, g) of
+                          SOME (gf, is, _) =>
+                            List.exists (fn j => j = k) is
+                            (* a copy keeps a parameter: one of all of them
+                               fixed is not made *)
+                            andalso List.length is < List.length (#params gf)
+                            andalso calledOrPassed (false, #1 (List.nth (#params gf, k)), k, g, #body gf)
+                        | NONE => false)
+      fun indexed xs = ListPair.zip (List.tabulate (List.length xs, fn k => k), xs)
+      fun rhs r =
+        case r of
+          App (Var (x, _), xs) => (x = p orelse true) andalso List.all no xs
+        | App (Global (g, _), xs) =>
+            if g = h then List.all (fn (k, a) => k = i orelse no a) (indexed xs)
+            else List.all (fn (k, a) => no a orelse passed (g, k)) (indexed xs)
+        | App (g, xs) => List.all no (g :: xs)
+        | Atom a => no a
+        | Prim (_, _, xs) => List.all no xs
+        | Tuple xs => List.all no xs
+        | Select (_, a) => no a
+        | Con (_, _, a) => no a
+        | Decon (_, _, a) => no a
+        | ConTag a => no a
+        | MkExn (c, a) => no c andalso no a
+        | ExnCon a => no a
+        | ExnArg (_, a) => no a
+        | SetGlobal (_, a) => no a
+        | _ => true
+      fun exp e =
+        case e of
+          Let (_, _, r, b) => rhs r andalso exp b
+        | Fun (fs, b) => List.all (fn g => exp (#body g)) fs andalso exp b
+        | Join (_, _, jb, sc) => exp jb andalso exp sc
+        | Jump (_, xs) => List.all no xs
+        | If (a, t, e) => no a andalso exp t andalso exp e
+        | Handle (a, _, h) => exp a andalso exp h
+        | Raise a => no a
+        | Return r => rhs r
+        | Mark (_, a) => exp a
+    in exp e end
+
+  (* Whether every use of x in e takes a field of it. *)
+  fun selectedOnly (x : var, e : exp) : bool =
+    let
+      fun no a = case a of Var (y, _) => y <> x | _ => true
+      fun rhs r =
+        case r of
+          Select (_, Var _) => true
+        | Atom a => no a
+        | App (g, xs) => List.all no (g :: xs)
+        | Prim (_, _, xs) => List.all no xs
+        | Tuple xs => List.all no xs
+        | Select (_, a) => no a
+        | Con (_, _, a) => no a
+        | Decon (_, _, a) => no a
+        | ConTag a => no a
+        | MkExn (c, a) => no c andalso no a
+        | ExnCon a => no a
+        | ExnArg (_, a) => no a
+        | SetGlobal (_, a) => no a
+        | _ => true
+      fun exp e =
+        case e of
+          Let (_, _, r, b) => rhs r andalso exp b
+        | Fun (fs, b) => List.all (fn g => exp (#body g)) fs andalso exp b
+        | Join (_, _, jb, sc) => exp jb andalso exp sc
+        | Jump (_, xs) => List.all no xs
+        | If (a, t, e) => no a andalso exp t andalso exp e
+        | Handle (a, _, h) => exp a andalso exp h
+        | Raise a => no a
+        | Return r => rhs r
+        | Mark (_, a) => exp a
+    in exp e end
+
+  (* The local function f made a function of the top level (once): what it
+     captured, then its parameter -- or, where that is a tuple it only takes
+     apart, its fields, which a call then gives (the fields' types). *)
+  fun liftedOf (f as {name, params, result, body, ...} : fundef, caps : (var * Ty.ty) list) : var * Ty.ty list option =
+    case IntTable.find (!liftedFuns, name) of
+      SOME l => l
+    | NONE =>
+        let
+          val g = freshStamp ()
+          val caps' = List.map (fn (x, t) => (x, freshStamp (), t)) caps
+          val flat =
+            case params of
+              [(p, Ty.Tuple (ts as _ :: _ :: _))] => if selectedOnly (p, body) then SOME (p, ts) else NONE
+            | _ => NONE
+          val ps' =
+            case flat of
+              SOME (_, ts) => List.map (fn t => (~1, freshStamp (), t)) ts
+            | NONE => List.map (fn (x, t) => (x, freshStamp (), t)) params
+          val s0 = List.foldl (fn ((x, y, _), m) => if x < 0 then m else IntMap.insert (m, x, y)) IntMap.empty (caps' @ ps')
+          val params' = List.map (fn (_, y, t) => (y, t)) (caps' @ ps')
+          val () = case params' of
+                     (y, _) :: _ => Translate.funNames := IntMap.insert (!Translate.funNames, y, nameOf f)
+                   | [] => ()
+          val body' = copyWith (s0, body)
+          val body' =
+            case flat of
+              SOME (p, _) =>
+                mapRhs (fn r as Select (i, Var (y, _)) => if y = p then Atom (Var (#2 (List.nth (ps', i)), [])) else r
+                         | r => r) body'
+            | NONE => body'
+          val f' = {name = g, tyvars = [], params = params', result = result, body = body'}
+          val l = (g, Option.map #2 flat)
+        in
+          IntTable.insert (!liftedFuns, name, l);
+          IntTable.insert (!closureDepth, g, !currentDepth + 1);
+          (* given to a copy as it is, where it captured nothing *)
+          IntTable.insert (!globalFuns, g, ());
+          pendingCopies := f' :: !pendingCopies;
+          l
+        end
 
   (* f's copy named h', at the types ts, with the static parameters fixed
      given those atoms, and its calls of itself calls of the copy. *)
   fun makeCopy (f as {name, tyvars, params, result, body} : fundef, h' : var, ts : Ty.ty list,
-                fixed : (int * atom) list) : fundef =
+                fixed : (int * fix) list) : fundef =
     let
       val inst = ListPair.foldl (fn (a, t, s) => IntMap.insert (s, a, t)) IntMap.empty (tyvars, ts)
       val kept = List.map (fn (x, t) => (x, freshStamp (), Ty.subst inst t)) (dropFixed (fixed, params))
+      (* what each local function given captured, the copy's parameters
+         after its own *)
+      val extra =
+        List.map (fn (i, FixClosure (g, caps, flat)) => (i, g, List.map (fn (_, t) => (freshStamp (), t)) caps, flat)
+                   | (i, FixAtom _) => (i, ~1, [], NONE)) fixed
+      val extraParams = List.concat (List.map #3 extra)
+      val extraArgs = List.map (fn (y, _) => Var (y, [])) extraParams
       val renamed = List.foldl (fn ((x, y, _), m) => IntMap.insert (m, x, y)) IntMap.empty kept
       val body = copyWith (renamed, substTypes inst body)
-      val body = List.foldl (fn ((i, a), e) => substVar (#1 (List.nth (params, i)), a) e) body fixed
-      fun rhs r =
+      val body = List.foldl (fn ((i, FixAtom a), e) => substVar (#1 (List.nth (params, i)), a) e | (_, e) => e) body fixed
+      (* a call of a local function given: of the function of the top level
+         made of it, given what it captured *)
+      fun closureOf p =
+        List.find (fn (i, g, _, _) => g >= 0 andalso #1 (List.nth (params, i)) = p) extra
+      (* a call of a local function given, and the steps that take apart
+         its argument, where its function takes the fields *)
+      fun call (r, k : rhs -> exp) =
         case r of
-          App (Global (g, _), args) => if g = name then App (Global (h', []), dropFixed (fixed, args)) else r
-        | _ => r
+          App (Global (g, _), args) => k (if g = name then App (Global (h', []), dropFixed (fixed, args) @ extraArgs) else r)
+        | App (Var (p, _), args) =>
+            (case closureOf p of
+               SOME (_, g, ys, NONE) => k (App (Global (g, []), List.map (fn (y, _) => Var (y, [])) ys @ args))
+             | SOME (_, g, ys, SOME ts) =>
+                 let
+                   val a = hd args
+                   val zs = List.map (fn t => (freshStamp (), t)) ts
+                   val call = App (Global (g, []), List.map (fn (y, _) => Var (y, [])) ys @ List.map (fn (z, _) => Var (z, [])) zs)
+                 in
+                   #2 (List.foldr (fn ((z, t), (i, e)) => (i - 1, Let (z, ([], t), Select (i, a), e)))
+                                  (List.length zs - 1, k call) zs)
+                 end
+             | NONE => k r)
+        | _ => k r
       fun exp e =
         case e of
-          Let (x, sc, r, b) => Let (x, sc, rhs r, exp b)
+          Let (x, sc, r, b) => call (r, fn r' => Let (x, sc, r', exp b))
         | Fun (fs, b) =>
             Fun (List.map (fn {name, tyvars, params, result, body} =>
                              {name = name, tyvars = tyvars, params = params, result = result, body = exp body}) fs,
@@ -848,17 +1131,37 @@ struct
         | Join (j, ps, jb, sc) => Join (j, ps, exp jb, exp sc)
         | If (a, t, e) => If (a, exp t, exp e)
         | Handle (a, x, h) => Handle (exp a, x, exp h)
-        | Return r => Return (rhs r)
+        | Return r => call (r, Return)
         | Mark (sp, a) => Mark (sp, exp a)
         | _ => e
+      (* a local function given that the copy gives on, to a function
+         that may be specialised on it in turn (onlyCalled): a local
+         function again, which calls the function of the top level made of
+         the one given -- where nothing gives it on, it goes *)
+      val wrappers =
+        List.mapPartial (fn (i, g, _, _) =>
+                           if g < 0 then NONE
+                           else
+                             let val (p, t) = List.nth (params, i)
+                             in
+                               case Ty.subst inst t of
+                                 Ty.Arrow (a, b) =>
+                                   let val z = freshStamp () val w = freshStamp ()
+                                   in
+                                     IntTable.insert (!wrapperFuns, w, ());
+                                     SOME (p, {name = w, tyvars = [], params = [(z, a)], result = b,
+                                               body = call (App (Var (p, []), [Var (z, [])]), Return)})
+                                   end
+                               | _ => NONE
+                             end) extra
       (* named as f, for traces *)
       val () =
         case kept of
           (_, y, _) :: _ => Translate.funNames := IntMap.insert (!Translate.funNames, y, nameOf f)
         | [] => ()
     in
-      {name = h', tyvars = [], params = List.map (fn (_, y, t) => (y, t)) kept, result = Ty.subst inst result,
-       body = exp body}
+      {name = h', tyvars = [], params = List.map (fn (_, y, t) => (y, t)) kept @ extraParams, result = Ty.subst inst result,
+       body = List.foldl (fn ((p, w), e) => Fun ([w], substVar (p, Var (#name w, [])) e)) (exp body) wrappers}
     end
 
   (* A call of a function that may be specialised, where it gives functions
@@ -869,13 +1172,43 @@ struct
       App (Global (h, ts), args) =>
         (case IntTable.find (!specialisable, h) of
            NONE => r
-         | SOME (f, is) =>
+         | SOME (_, _, false) => if !currentDepth = 0 then r else specialisedOn r
+         | SOME _ => specialisedOn r)
+    | _ => r
+  and specialisedOn (r : rhs) : rhs =
+    case r of
+      App (Global (h, ts), args) =>
+        (case IntTable.find (!specialisable, h) of
+           NONE => r
+         | SOME (f, is, _) =>
              let
+               (* a local function given: one alone in its group, of
+                  closed types, which captures only variables of closed
+                  types, where the copy only calls it *)
+               fun closure (i, g) =
+                 case (if !currentDepth < maxClosureDepth then IntTable.find (!localFuns, g) else NONE) of
+                   NONE => NONE
+                 | SOME lf =>
+                     let
+                       val fvs = freeVars lf
+                       val caps = List.map (fn x => (x, typeOf x)) fvs
+                     in
+                       if not (List.exists (fn x => x = g) fvs)
+                          andalso List.all (fn (_, SOME ([], t)) => closedTy t | _ => false) caps
+                          andalso closedTy (funTy lf)
+                          andalso onlyCalled (#1 (List.nth (#params f, i)), i, h, #body f)
+                       then SOME (lf, List.map (fn (x, SOME (_, t)) => (x, t) | (x, NONE) => (x, Ty.unit)) caps)
+                       else NONE
+                     end
                val fixed =
                  List.mapPartial (fn i => case List.nth (args, i) of
                                             a as Global (g, ts') =>
                                               if isSome (IntTable.find (!globalFuns, g)) andalso List.all closedTy ts'
-                                              then SOME (i, a) else NONE
+                                              then SOME (i, a, NONE) else NONE
+                                          | a as Var (g, []) =>
+                                              (case closure (i, g) of
+                                                 SOME c => SOME (i, a, SOME c)
+                                               | NONE => NONE)
                                           | _ => NONE) is
              in
                if null fixed orelse List.length args <> List.length (#params f)
@@ -883,22 +1216,43 @@ struct
                then r
                else
                  let
-                   fun given (i, Global (g, ts')) =
+                   fun given (i, Global (g, ts'), _) =
                          Int.toString i ^ ":" ^ Int.toString g ^ "[" ^ String.concatWith "," (List.map tyKey ts') ^ "]"
+                     | given (i, Var (g, _), _) = Int.toString i ^ ":L" ^ Int.toString g
                      | given _ = ""
                    val key = String.concatWith ";" (Int.toString h :: List.map tyKey ts @ List.map given fixed)
+                   fun fixes () =
+                     List.map (fn (i, a, NONE) => (i, FixAtom a)
+                                | (i, _, SOME (lf, caps)) =>
+                                    let val (g, flat) = liftedOf (lf, caps) in (i, FixClosure (g, caps, flat)) end) fixed
+                   val capArgs =
+                     List.concat (List.map (fn (_, _, SOME (_, caps)) => List.map (fn (x, _) => Var (x, [])) caps
+                                             | _ => []) fixed)
+                   val closures = List.exists (fn (_, _, c) => isSome c) fixed
                    val h' =
                      case StringMap.find (!copies, key) of
-                       SOME h' => h'
+                       SOME h' => SOME h'
                      | NONE =>
-                         let val h' = freshStamp ()
-                         in
-                           copies := StringMap.insert (!copies, key, h');
-                           pendingCopies := makeCopy (f, h', ts, fixed) :: !pendingCopies;
-                           h'
-                         end
+                         (* a copy for local functions grows the definition,
+                            as inlining does: within its budget *)
+                         if closures andalso !budget < size (#body f)
+                            andalso not (List.all (fn (_, _, SOME (lf, _)) => isSome (IntTable.find (!wrapperFuns, #name lf))
+                                                    | _ => true) fixed)
+                         then NONE
+                         else
+                           let val h' = freshStamp ()
+                           in
+                             if closures
+                             then (IntTable.insert (!closureDepth, h', !currentDepth + 1); budget := !budget - size (#body f))
+                             else ();
+                             copies := StringMap.insert (!copies, key, h');
+                             pendingCopies := makeCopy (f, h', ts, fixes ()) :: !pendingCopies;
+                             SOME h'
+                           end
                  in
-                   App (Global (h', []), dropFixed (fixed, args))
+                   case h' of
+                     SOME h' => App (Global (h', []), dropFixed (List.map (fn (i, _, c) => (i, c)) fixed, args) @ capArgs)
+                   | NONE => r
                  end
              end)
     | _ => r
@@ -956,7 +1310,29 @@ struct
          | NONE =>
              case knownCon (c, j, ps, jbody, scope) of
                SOME e => simp (c, env, e)
-             | NONE => simpJoin (c, env, j, ps, jbody, scope))
+             | NONE =>
+                 case flattenJoin (c, j, ps, jbody, scope) of
+                   SOME e => simp (c, env, e)
+                 | NONE =>
+                     case (ps, jbody) of
+                       ([(p, _)], Return (Atom (Var (p', [])))) =>
+                         if p = p' andalso spend () then
+                           (* a join point that only returns its parameter:
+                              each jump to it a return of what it gives *)
+                           let
+                             fun redirect e =
+                               case e of
+                                 Jump (j', [a]) => if j' = j then Return (Atom a) else e
+                               | Let (y, s, r, b) => Let (y, s, r, redirect b)
+                               | Fun (fs, b) => Fun (fs, redirect b)
+                               | Join (k, qs, kb, sc) => Join (k, qs, redirect kb, redirect sc)
+                               | If (a, t, f) => If (a, redirect t, redirect f)
+                               | Handle (a, y, h) => Handle (redirect a, y, redirect h)
+                               | Mark (sp, a) => Mark (sp, redirect a)
+                               | _ => e
+                           in simp (c, env, redirect scope) end
+                         else simpJoin (c, env, j, ps, jbody, scope)
+                     | _ => simpJoin (c, env, j, ps, jbody, scope))
     | Jump (j, xs) => Jump (j, List.map (fn a => substAtom (env, a)) xs)
     | If (cond, t, f) =>
         (case substAtom (env, cond) of
@@ -1002,7 +1378,15 @@ struct
         if null tvs andalso spend () then (IntTable.insert (#subst env, x, a); simp (c, env, body))
         else Let (x, s, r, simp (c, env, body))
     | _ =>
-        if uses (c, x) = 0 andalso removable r andalso spend () then simp (c, env, body)
+        (* a tuple or a constructor whose value is returned at once: made
+           in the return (Lower's results in globals, performance M8) *)
+        if (case (r, body) of
+              (Tuple _, Return (Atom (Var (y, [])))) => y = x
+            | (Con _, Return (Atom (Var (y, [])))) => y = x
+            | _ => false)
+           andalso null tvs andalso uses (c, x) = 1 andalso spend ()
+        then Return r
+        else if uses (c, x) = 0 andalso removable r andalso spend () then simp (c, env, body)
         else
           (case r of
              Tuple _ => IntTable.insert (#known env, x, Made r)
@@ -1027,6 +1411,11 @@ struct
       val fs =
         List.map (fn {name, tyvars, params, result, body = b} =>
                     {name = name, tyvars = tyvars, params = params, result = result, body = inside b}) fs
+      (* one alone in its group, which a copy may be specialised on *)
+      val () =
+        case fs of
+          [f as {tyvars = [], params = [_], ...}] => IntTable.insert (!localFuns, #name f, f)
+        | _ => ()
       (* a small one may be put where it is called in what follows, as a
          function of the top level may: what it names is in scope there too
          (M12) *)
@@ -1214,6 +1603,142 @@ struct
         else NONE
     | _ => NONE
 
+  (* A join point with a parameter that is a tuple, whose body only takes
+     its fields, where some jump gives it a tuple made there (performance
+     M8, D8 A, step 1: `val (a, b) = if c then (x, y) else (z, w)`): the
+     fields are its parameters instead, a jump gives the tuple's parts, or
+     the fields of what it gives, and the tuple, used no more, goes. One
+     rewrite, since the body's fields and the jumps' arguments change
+     together. What this makes is added to the round's census. *)
+  and flattenJoin (c : census, j : label, ps : (var * Ty.ty) list, jbody : exp, scope : exp) : exp option =
+    let
+      (* the tuples made in scope, by their variables *)
+      val made : atom list IntTable.table = IntTable.table 16
+      fun collect e =
+        case e of
+          Let (x, _, Tuple xs, b) => (IntTable.insert (made, x, xs); collect b)
+        | Let (_, _, _, b) => collect b
+        | Fun (_, b) => collect b
+        | Join (_, _, jb, sc) => (collect jb; collect sc)
+        | If (_, t, f) => (collect t; collect f)
+        | Handle (a, _, h) => (collect a; collect h)
+        | Mark (_, a) => collect a
+        | _ => ()
+      fun madeOf (Var (x, [])) = IntTable.find (made, x)
+        | madeOf _ = NONE
+      (* the arguments the jumps to j give the parameter at k *)
+      fun argsAt (k, e) : atom list =
+        case e of
+          Jump (j', xs) => if j' = j then [List.nth (xs, k)] else []
+        | Let (_, _, _, b) => argsAt (k, b)
+        | Fun (_, b) => argsAt (k, b)
+        | Join (_, _, jb, sc) => argsAt (k, jb) @ argsAt (k, sc)
+        | If (_, t, f) => argsAt (k, t) @ argsAt (k, f)
+        | Handle (a, _, h) => argsAt (k, a) @ argsAt (k, h)
+        | Mark (_, a) => argsAt (k, a)
+        | _ => []
+      (* the walks only where some parameter is a tuple *)
+      val tuples = List.exists (fn (_, Ty.Tuple (_ :: _)) => true | _ => false) ps
+      val indexed = if tuples then ListPair.zip (List.tabulate (List.length ps, fn k => k), ps) else []
+      val () = if tuples then collect scope else ()
+      val flat =
+        if not tuples then []
+        else
+        List.mapPartial (fn (k, (x, t)) =>
+                           case t of
+                             Ty.Tuple (ts as _ :: _) =>
+                               if onlySelected (x, jbody) andalso List.exists (isSome o madeOf) (argsAt (k, scope))
+                               then SOME (k, ts) else NONE
+                           | _ => NONE) indexed
+    in
+      if null flat orelse not (spend ()) then NONE
+      else
+        let
+          fun flatAt k = List.find (fn (k', _) => k' = k) flat
+          (* each parameter, or its fields as parameters *)
+          val fieldsOf : var list IntTable.table = IntTable.table 4
+          val ps' =
+            List.concat
+              (List.map (fn (k, (x, t)) =>
+                           case flatAt k of
+                             SOME (_, ts) =>
+                               let val ys = List.map (fn _ => freshStamp ()) ts
+                               in IntTable.insert (fieldsOf, x, ys); ListPair.zip (ys, ts) end
+                           | NONE => [(x, t)]) indexed)
+          fun field (i, x) = Atom (Var (List.nth (valOf (IntTable.find (fieldsOf, x)), i), []))
+          val jbody' =
+            mapRhs (fn r as Select (i, Var (x, [])) => if isSome (IntTable.find (fieldsOf, x)) then field (i, x) else r
+                     | r => r) jbody
+          (* a jump: each flattened argument its parts, or its fields
+             taken where it is not a tuple made there *)
+          fun jump xs =
+            let
+              fun go (k, a) =
+                case flatAt k of
+                  NONE => ([], [a])
+                | SOME (_, ts) =>
+                    (case madeOf a of
+                       SOME parts => ([], parts)
+                     | NONE =>
+                         let val ys = List.map (fn t => (freshStamp (), t)) ts
+                         in (List.tabulate (List.length ts, fn i => (#1 (List.nth (ys, i)), #2 (List.nth (ys, i)), Select (i, a))),
+                             List.map (fn (y, _) => Var (y, [])) ys)
+                         end)
+              val parts = List.map go (ListPair.zip (List.tabulate (List.length xs, fn k => k), xs))
+              val lets = List.concat (List.map #1 parts)
+            in
+              List.foldr (fn ((y, t, r), e) => Let (y, ([], t), r, e)) (Jump (j, List.concat (List.map #2 parts))) lets
+            end
+          fun redirect e =
+            case e of
+              Jump (j', xs) => if j' = j then jump xs else e
+            | Let (y, s, r, b) => Let (y, s, r, redirect b)
+            | Fun (fs, b) => Fun (fs, redirect b)
+            | Join (k, qs, kb, sc) => Join (k, qs, redirect kb, redirect sc)
+            | If (a, t, f) => If (a, redirect t, redirect f)
+            | Handle (a, y, h) => Handle (redirect a, y, redirect h)
+            | Mark (sp, a) => Mark (sp, redirect a)
+            | _ => e
+          val scope' = redirect scope
+        in
+          censusInto (c, jbody'); censusInto (c, scope');
+          SOME (Join (j, ps', jbody', scope'))
+        end
+    end
+
+  (* Whether every use of x in e takes a field of it. *)
+  and onlySelected (x : var, e : exp) : bool =
+    let
+      fun atom a = case a of Var (y, _) => y <> x | _ => true
+      fun rhs r =
+        case r of
+          Select (_, Var (y, _)) => true
+        | Atom a => atom a
+        | App (f, xs) => List.all atom (f :: xs)
+        | Prim (_, _, xs) => List.all atom xs
+        | Tuple xs => List.all atom xs
+        | Select (_, a) => atom a
+        | Con (_, _, a) => atom a
+        | Decon (_, _, a) => atom a
+        | ConTag a => atom a
+        | MkExn (y, z) => atom y andalso atom z
+        | ExnCon a => atom a
+        | ExnArg (_, a) => atom a
+        | SetGlobal (_, a) => atom a
+        | _ => true
+      fun go e =
+        case e of
+          Let (_, _, r, b) => rhs r andalso go b
+        | Fun (fs, b) => List.all (fn f => go (#body f)) fs andalso go b
+        | Join (_, _, jb, sc) => go jb andalso go sc
+        | Jump (_, xs) => List.all atom xs
+        | If (a, t, f) => atom a andalso go t andalso go f
+        | Handle (a, _, h) => go a andalso go h
+        | Raise a => atom a
+        | Return r => rhs r
+        | Mark (_, a) => go a
+    in go e end
+
   (* Whether a jump in e, not in a handler's region, gives j a nullary
      constructor. *)
   and constantOutside (j : label, e : exp) : bool =
@@ -1298,7 +1823,7 @@ struct
     else
       let
         val c = census e
-        val () = changed := false
+        val () = (changed := false; roundInput := e; roundTypes := NONE)
         val e' = simp (c, {subst = IntTable.table 64, known = IntTable.table 64}, e)
       in
         if !changed then rounds (n - 1, e') else e'
@@ -1391,7 +1916,7 @@ struct
         else
           List.app (fn Funs fs =>
                          List.app (fn f =>
-                                     if size (#body f) <= inlineSize andalso not (names (#name f, #body f))
+                                     if size (#body f) <= inlineLimit f andalso not (names (#name f, #body f))
                                         andalso not (raises (#body f))
                                      then IntTable.insert (!inlinable, #name f, f) else ()) fs
                      | _ => ()) p
@@ -1411,25 +1936,36 @@ struct
       val () = specialisable := IntTable.table 64
       val () = copies := StringMap.empty
       val () = pendingCopies := []
+      val () = (localFuns := IntTable.table 256; liftedFuns := IntTable.table 64;
+                closureDepth := IntTable.table 64; currentDepth := 0; wrapperFuns := IntTable.table 16)
       val () = globalFuns := IntTable.table 1024
       val () = List.app (fn Funs fs => List.app (fn f => IntTable.insert (!globalFuns, #name f, ())) fs | _ => ()) p
       (* each definition may grow by about its size by inlining: twice that
          runs the compiler no faster, in more code *)
       fun simplify e = (budget := size e + 32; here := (Source.noSpan, []); inHandler := 0; rounds (3, e))
+      fun simplifyDef e = (roundParams := []; simplify e)
       (* a function is put where it is called as it is simplified, where it
          still may be, and specialised as it is, where it may be *)
       fun fundef ({name, tyvars, params, result, body} : fundef) =
         let
+          val () = roundParams := params
+          val () = currentDepth := (case IntTable.find (!closureDepth, name) of SOME d => d | NONE => 0)
           val f' = {name = name, tyvars = tyvars, params = params, result = result, body = simplify body}
+          val () = currentDepth := 0
         in
           if isSome (onceOf name) then IntTable.insert (!once, name, SOME f') else ();
-          if isSome (IntTable.find (!inlinable, name)) andalso size (#body f') <= inlineSize
-             andalso not (names (name, #body f'))
+          (* small once simplified, whatever it was before (performance
+             M8: a worker's body shrinks by the copies of its parameters;
+             the measure of three sizes for the functions that call something
+             found the compiler compiling itself 2% slower for this, in 5%
+             more code, and MLton's programs allocating 3 to 7% less) *)
+          if inline andalso size (#body f') <= inlineLimit f' andalso not (names (name, #body f'))
+             andalso (isSome (IntTable.find (!inlinable, name)) orelse not (raises (#body f')))
           then IntTable.insert (!inlinable, name, f') else ();
           if specialise andalso size (#body f') <= specialiseSize then
             (case staticParams f' of
                [] => ()
-             | is => IntTable.insert (!specialisable, name, (f', is)))
+             | is => IntTable.insert (!specialisable, name, (f', is, names (name, #body f'))))
           else ();
           f'
         end
@@ -1449,8 +1985,8 @@ struct
     in
       List.concat
         (List.map (fn d => withCopies (case d of
-                                         Val (g, s, e) => Val (g, s, simplify e)
+                                         Val (g, s, e) => Val (g, s, simplifyDef e)
                                        | Funs fs => Funs (List.map fundef fs)
-                                       | Do (gs, e) => Do (gs, simplify e))) p)
+                                       | Do (gs, e) => Do (gs, simplifyDef e))) p)
     end
 end

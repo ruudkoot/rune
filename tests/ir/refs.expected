@@ -1,0 +1,39 @@
+(* after refs *)
+(funs
+  (fn g1 ((v1 : int ref) (v2 : int) (v3 : int ref)) : unit
+    (let (v4 : int) (prim ref_get v1 : int ref -> int)
+    (let (v5 : bool) (prim int_ge v4 v2 : (int * int) -> bool)
+    (if v5
+      (return ())
+      (let (v6 : int) (prim ref_get v3 : int ref -> int)
+      (let (v7 : int) (prim ref_get v1 : int ref -> int)
+      (let (v8 : int) (prim int_add v6 v7 : (int * int) -> int)
+      (let (v9 : unit) (prim ref_set v3 v8 : (int ref * int) -> unit)
+      (let (v10 : int) (prim ref_get v1 : int ref -> int)
+      (let (v11 : int) (prim int_add v10 1 : (int * int) -> int)
+      (let (v12 : unit) (prim ref_set v1 v11 : (int ref * int) -> unit)
+      (return (app g1 v1 v2 v3))))))))))))))
+(funs
+  (fn g2 ((v13 : int) (v14 : int ref)) : unit
+    (return (app g3 0 v13 v14))))
+(funs
+  (fn g4 ((v15 : int)) : int
+    (let (v16 : int ref) (prim ref_new 0 : int -> int ref)
+    (let (v17 : unit) (app g2 v15 v16)
+    (return (prim ref_get v16 : int ref -> int))))))
+(val g5 : int
+  (return (app g4 10)))
+(funs
+  (fn g3 ((v18 : int) (v19 : int) (v20 : int ref)) : unit
+    (let (v21 : int) v18
+    (let (v22 : bool) (prim int_ge v21 v19 : (int * int) -> bool)
+    (if v22
+      (return ())
+      (let (v23 : int) (prim ref_get v20 : int ref -> int)
+      (let (v24 : int) v18
+      (let (v25 : int) (prim int_add v23 v24 : (int * int) -> int)
+      (let (v26 : unit) (prim ref_set v20 v25 : (int ref * int) -> unit)
+      (let (v27 : int) v18
+      (let (v28 : int) (prim int_add v27 1 : (int * int) -> int)
+      (let (v29 : unit) ()
+      (return (app g3 v28 v19 v20))))))))))))))

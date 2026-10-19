@@ -51,7 +51,7 @@ is the page of timings, stale until M1.
 | M5 | Runtime calls in line: equality, `ptr_eq`, strings, handlers, raise | D7 B done (2026-10-12, "Compare by type in the middle end, and match strings by their length"); D7 C benchmarked and kept, opt-in under `-O2` (2026-10-12, "Compare closed datatypes by equality functions of their own at -O2"): *M5*, as built; A and `TextIO` not yet |
 | M6 | The call made lean | not started; prototypes E9 |
 | M7 | Pointers in registers | not started; prototype E12 |
-| M8 | Allocation in the middle end | not started |
+| M8 | Allocation in the middle end | done (2026-10-19, "Remove allocation in the middle end"): steps 1 to 6; `fft`, `barnes-hut`, `peek`, `imp-for` met, the bootstrap, `raytrace` and MLton's set not; *M8*, as built |
 | M9 | Native frames: a gate, then a roadmap of its own | roadmap written: [native-frames.md](native-frames.md) (2026-10-12); its gate follows M5 to M7 |
 | M10 | Measure again, and retire this plan | not started |
 
@@ -2107,6 +2107,89 @@ D8 A, in this order:
 * `peek` and `imp-for` near nothing;
 * on MLton's set, what E15 projects: no more than MLton but for IntInf,
   `tensor`, `knuth-bendix`, `ray` and `hamlet`.
+
+**As built (2026-10-19).**
+
+* Step 1: `Simplify` gives a join point the fields of a tuple parameter
+  its body only takes apart, where some jump gives it a tuple made there.
+* Step 2: a function small once simplified is put where it is called,
+  whatever it was before; `Workers` flattens a tuple parameter's fields
+  that are tuples too, through the variables bound to them; and `Lower`
+  returns results in globals (the optional pass `results`, the whole
+  program only): a function of the top level, never a value, that returns
+  a tuple made there, or a tail call of another such, to calls that take
+  its fields returns the first and leaves the rest in globals each call
+  reads at once (`Slot`, an operation of Low that is never read again
+  where it is used) -- a call that needs the tuple whole makes it where it
+  needs it, at most once on a way, and a function is left as it is where
+  more than a quarter of its calls would make the tuple at once, or where
+  that has more than four fields. A function of a datatype that returns a
+  constructor made there to calls that only ask the constructor and take
+  its argument returns the tag, and the argument in the datatype's
+  globals. `Simplify` makes what a function returns in its returns (a
+  tuple or a constructor bound and returned at once; a join point that
+  only returns its parameter).
+* Step 3, by the other steps rather than by contification: `peek`'s loop
+  returns `SOME x` through a closure the program takes from a record that
+  `addPeek` makes. A function that makes functions and returns them is
+  inlined up to 24 nodes, so the closures are known where the record is
+  taken apart; the loop given them is copied for them (step 5), and the
+  copy gives them on to a function that does not call itself, which is
+  copied from the copy; the loop's `SOME x` then goes to calls that only
+  take it apart, and is returned in globals (step 2). Contification as
+  MLton has it, a loop made a join point, needs join points that jump to
+  themselves, which Mid does not have.
+* Step 4: the pass `refs` gives a copy of a function the value of a ref
+  parameter it only reads, sets and gives on to its calls of itself in
+  tail position, and a call that gives it a ref made for it alone calls
+  the copy with the value.
+* Step 5: `specialise` copies a function for a local function given too,
+  made a function of the top level of what it captured and its parameter
+  (its tuple parameter's fields, where it only takes them apart), two
+  copies deep at most; a copy may give it on to a function copied for it
+  in turn, and from a copy a function that does not call itself is
+  copied too.
+* Step 6: `Vector.tabulate`, `mapi`, `map`, `concat`, `update`,
+  `Array.tabulate` and `Array.vector` fill an array in place and copy it
+  (`array_to_vector`, a new primitive) instead of making a list.
+* Measured (`--count`, MLton's programs at tests/perf/mlton-bench.txt's
+  sizes, bytes, before → after; MLton's from E15): `fft` 536.9M →
+  134.2M (−75.0%; MLton 134.2M), `barnes-hut` 143.3M → 48.0M (−66.5%;
+  MLton 39.6M), `raytrace` 837.5M → 299.5M (−64.2%; MLton 210.5M),
+  `peek` 1.28G → 1,048 bytes (MLton 1,096), `imp-for` 266.7M → 408 bytes
+  (MLton 728); `ratio-regions` −92.8%, `zern` −71.4%, `tensor` −69.9%,
+  `simple` −68.2%, `hamlet` −22.7%, `fxp` −19.7%, `wc-input1` −19.7%,
+  `nucleic` −16.6%, `ray` −16.8%, `vliw` −13.4%, `mlyacc` −9.0%,
+  `lexgen` −2.6%; `vector-rev` −71%, `vector32-concat` and
+  `vector64-concat` −77% (step 6); `boyer`, `logic`,
+  `tailmerge`, `merge` the same. No more than MLton: `checksum`, `fft`,
+  `imp-for`, `merge`, `mlyacc`, `peek`, `simple`, `tsp`, `zern`.
+* The bootstrap: the base's sources compiled by the new compiler, compiling
+  those sources, allocate 1,468.2M → 1,213.4M bytes (−17.4%) in 4.9% fewer
+  bytecode instructions. The compiler compiling its own sources (the
+  budget), 1,503.7M → 1,477.0M bytes (−1.8%; −2.0% of it step 6), in
+  15.9% more bytecode instructions (1,049.3M → 1,216.5M) and as many
+  machine instructions
+  (19.040G → 19.054G, +0.07%): the sources grew by 6%, its own code by
+  12%, most of it copies of `map`, `app` and `foldl` for the local
+  functions given to them, and it compiles what it makes -- `specialise`
+  costs 7% of its instructions where it cost 2%. Compiling other programs
+  is cheaper: the compile programs of tests/perf 2 to 5% fewer
+  instructions (`compile-expo` +1.3%, `compile-sigs` +0.4%) and 2 to 10%
+  fewer bytes.
+* Not met: the bootstrap's 1.10 GB; `raytrace` (−70%); MLton's set but
+  for those above. What is left is out of the middle end's reach: the
+  bootstrap's bytes are lists (42%), balanced trees and the buckets of
+  `IntTable`, and `raytrace`'s the tuples of its interval lists, which
+  MLton, whole-program and monomorphic, flattens into the list's cells;
+  `lexgen` (65% the tuple a call of `leq`, a function taken from a
+  record, is given), `fxp`, `logic` and `wc-input1` (a record of the
+  stream per character, in `TextIO`'s functional streams) make what they
+  give to calls of unknown functions or keep. Copying functions that do
+  not call themselves from anywhere, not only from copies, takes
+  `barnes-hut` to 41.6M and `hamlet` to 677.1M, and the base's sources to
+  1.4% fewer bytes, but grows the compiler's code by 4% and its own
+  bootstrap's bytes by 0.9%: not taken.
 
 ### M9. Native frames: a gate, then a roadmap of its own (XL)
 

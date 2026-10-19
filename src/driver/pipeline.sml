@@ -39,6 +39,7 @@ struct
       val mid = optional ("lift", Lift.program) mid
       val mid = optional ("workers", Workers.program) mid
       val mid = optional ("simplify", Simplify.program) mid
+      val mid = optional ("refs", Refs.program) mid
       (* what the inliner left of the functions it put in place goes *)
       val mid =
         if Pass.enabled ("simplify", 1) andalso Pass.enabled ("inline", 1) then optional ("shake", Shake.program) mid

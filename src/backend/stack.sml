@@ -241,6 +241,7 @@ struct
         | L.Unit => op' (Opcodes.UNIT, [])
         | L.Con0 t => op' (Opcodes.CON0, [t])
         | L.Global g => op' (Opcodes.GLOBAL, [C.globalIdx g])
+        | L.Slot g => op' (Opcodes.GLOBAL, [C.globalIdx g])
         | L.SetGlobal (g, v) => (load v; op' (Opcodes.SETGLOBAL, [C.globalIdx g]))
         | L.Env i => op' (Opcodes.ENV, [i])
         | L.Self => op' (Opcodes.SELF, [])

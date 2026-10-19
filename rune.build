@@ -64,6 +64,7 @@ files
   src/core/lift.sml
   src/core/simplify.sml
   src/core/workers.sml
+  src/core/refs.sml
   src/backend/code.sml
   src/backend/low.sml
   src/backend/target.sml

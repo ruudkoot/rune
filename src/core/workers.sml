@@ -8,7 +8,10 @@
    * Flattened: a function with a parameter that is a tuple it only takes
      apart. Every call of it calls the worker with the fields of that
      argument (Select), which the simplifier then finds where the tuple was
-     made -- so that it is not made.
+     made -- so that it is not made. A field that is a tuple the function
+     only takes apart is flattened too, and so on (performance M8: a
+     function of two vectors of three reals takes six reals); a variable
+     bound to the parameter, or to such a field, is the same.
    * Curried: a function whose body only makes a function and returns it,
      and so on, n deep, of which the innermost's body is the worker's. A
      call of it that is given every level's arguments -- each partial application
@@ -57,6 +60,88 @@ struct
         | Return r => rhs r
         | Mark (_, a) => exp a
     in exp e end
+
+  (* How a flattened parameter's fields are passed: each one as it is, or,
+     where it is a tuple that is only taken apart, its own fields. *)
+  datatype field = Leaf of Ty.ty | Nest of field list
+
+  fun leaves (fs : field list) : Ty.ty list =
+    List.concat (List.map (fn Leaf t => [t] | Nest fs => leaves fs) fs)
+
+  (* The variables of e bound to x itself (Atom) or to a field of it
+     (Select), x's names and fields, and whether x and its names have no
+     other use. *)
+  fun fieldsOf (x : var, e : exp) : (int * var * Ty.ty) list option =
+    let
+      val names = ref [x]
+      val fields = ref []
+      fun isName y = List.exists (fn n => n = y) (!names)
+      fun ok a = case a of Var (y, _) => not (isName y) | _ => true
+      fun oks xs = List.all ok xs
+      fun rhs (v, t) r =
+        case r of
+          Atom (Var (y, [])) => if isName y then (names := v :: !names; true) else true
+        | Atom a => ok a
+        | App (f, xs) => oks (f :: xs)
+        | Prim (_, _, xs) => oks xs
+        | Tuple xs => oks xs
+        | Select (i, Var (y, _)) => (if isName y then fields := (i, v, t) :: !fields else (); true)
+        | Select (_, a) => ok a
+        | Con (_, _, a) => ok a
+        | Decon (_, _, a) => ok a
+        | ConTag a => ok a
+        | MkExn (c, a) => oks [c, a]
+        | ExnCon a => ok a
+        | ExnArg (_, a) => ok a
+        | SetGlobal (_, a) => ok a
+        | _ => true
+      (* a field returned is taken whole: ~1 for its variable *)
+      fun ret r =
+        case r of
+          Select (i, Var (y, _)) => (if isName y then fields := (i, ~1, Ty.unit) :: !fields else (); true)
+        | Select _ => true
+        | Atom a => ok a
+        | _ => rhs (0, Ty.unit) r
+      fun exp e =
+        case e of
+          Let (v, (_, t), r, b) => rhs (v, t) r andalso exp b
+        | Fun (fs, b) => List.all (fn f => exp (#body f)) fs andalso exp b
+        | Join (_, _, body, s) => exp body andalso exp s
+        | Jump (_, xs) => oks xs
+        | If (c, t, f) => ok c andalso exp t andalso exp f
+        | Handle (a, _, h) => exp a andalso exp h
+        | Raise a => ok a
+        | Return r => ret r
+        | Mark (_, a) => exp a
+    in
+      if exp e then SOME (List.rev (!fields)) else NONE
+    end
+
+  (* The fields of a tuple x of types ts that e only takes apart: a field
+     that is itself such a tuple, wherever it is taken, is nested; NONE
+     where x has another use. *)
+  fun flatFields (x : var, ts : Ty.ty list, e : exp) : field list option =
+    case fieldsOf (x, e) of
+      NONE => NONE
+    | SOME taken =>
+        SOME (List.tabulate (List.length ts, fn i =>
+                case (List.nth (ts, i), List.filter (fn (j, _, _) => j = i) taken) of
+                  (Ty.Tuple (us as _ :: _ :: _), vs as _ :: _) =>
+                    let
+                      val nested = List.map (fn (_, v, _) => if v < 0 then NONE else flatFields (v, us, e)) vs
+                    in
+                      if List.all isSome nested then
+                        (* nested as deep as every place it is taken asks *)
+                        Nest (List.foldl (fn (SOME fs, acc) => meet (fs, acc) | (NONE, acc) => acc)
+                                         (valOf (hd nested)) (tl nested))
+                      else Leaf (List.nth (ts, i))
+                    end
+                | (t, _) => Leaf t))
+
+  and meet (a : field list, b : field list) : field list =
+    ListPair.map (fn (Nest x, Nest y) => Nest (meet (x, y))
+                   | (Leaf t, _) => Leaf t
+                   | (Nest x, Leaf t) => Leaf t) (a, b)
 
   (* How often each variable is used in e, added to the table. *)
   fun count (uses : int IntTable.table) (e : exp) : unit =
@@ -116,7 +201,7 @@ struct
     end
 
   datatype shape =
-      Flat of Ty.ty list option list      (* for each parameter, its fields where it is flattened *)
+      Flat of field list option list      (* for each parameter, its fields where it is flattened *)
     | Curried of ((var * Ty.ty) list * Ty.ty) list * exp  (* the levels, and the innermost body *)
 
   type worker = {worker : var, tyvars : int list, shape : shape}
@@ -134,9 +219,9 @@ struct
         | _ =>
             let
               val specs =
-                List.map (fn (x, Ty.Tuple ts) => if List.length ts >= 2 andalso onlySelected (x, body) then SOME ts else NONE
+                List.map (fn (x, Ty.Tuple ts) => if List.length ts >= 2 then flatFields (x, ts, body) else NONE
                            | _ => NONE) params
-              val arity = List.foldl (fn (SOME ts, n) => n + List.length ts | (NONE, n) => n + 1) 0 specs
+              val arity = List.foldl (fn (SOME fs, n) => n + List.length (leaves fs) | (NONE, n) => n + 1) 0 specs
             in
               if List.exists isSome specs andalso fits arity andalso Pass.spend () then
                 IntMap.insert (m, name, {worker = freshStamp (), tyvars = tyvars, shape = Flat specs})
@@ -200,20 +285,40 @@ struct
                           | _ => ()) touched
       fun usedOnce x = IntTable.find (uses, x) = SOME 1
 
+      (* The arguments of a worker, from those of the function: each kept,
+         or the fields of one flattened, each in a variable -- and a nested
+         one's fields in turn -- in reverse; and the steps that take them,
+         to put before the call. *)
+      fun takeApart (s, argSpecs : (atom * field list option) list) : atom list * (exp -> exp) =
+        let
+          fun fields (a, fs, (args, lets)) =
+            #2 (List.foldl
+                  (fn (f, (i, (args, lets))) =>
+                     let
+                       val t = Ty.subst s (case f of Leaf t => t | Nest fs => Ty.Tuple (leavesTy fs))
+                       val x = freshStamp ()
+                       val lets' = fn e => lets (Let (x, ([], t), Select (i, a), e))
+                     in
+                       case f of
+                         Leaf _ => (i + 1, (Var (x, []) :: args, lets'))
+                       | Nest fs => (i + 1, fields (Var (x, []), fs, (args, lets')))
+                     end)
+                  (0, (args, lets)) fs)
+          fun each ((a, NONE), (args, lets)) = (a :: args, lets)
+            | each ((a, SOME fs), acc) = fields (a, fs, acc)
+        in
+          List.foldl each ([], fn e => e) argSpecs
+        end
+      (* A nested field's type, back from its fields. *)
+      and leavesTy (fs : field list) : Ty.ty list =
+        List.map (fn Leaf t => t | Nest fs => Ty.Tuple (leavesTy fs)) fs
+
       (* A call of a flattened function: the fields of each argument it
          flattens, each in a variable, and the worker's call in k. *)
       fun flat ({worker, tyvars, ...} : worker, specs, ts, args, k : rhs -> exp) : exp =
         let
           val s = ListPair.foldl (fn (v, t, s) => IntMap.insert (s, v, t)) IntMap.empty (tyvars, ts)
-          fun each ((a, NONE), (args, lets)) = (a :: args, lets)
-            | each ((a, SOME fields), (args, lets)) =
-                let
-                  val xs = List.map (fn t => (freshStamp (), Ty.subst s t)) fields
-                  val (_, lets) =
-                    List.foldl (fn ((x, t), (i, lets)) => (i + 1, fn e => lets (Let (x, ([], t), Select (i, a), e))))
-                               (0, lets) xs
-                in (List.revAppend (List.map (fn (x, _) => Var (x, [])) xs, args), lets) end
-          val (args', lets) = List.foldl each ([], fn e => e) (ListPair.zip (args, specs))
+          val (args', lets) = takeApart (s, ListPair.zip (args, specs))
         in
           lets (k (App (Global (worker, ts), List.rev args')))
         end
@@ -298,16 +403,27 @@ struct
               (* the worker's parameters: one kept as it is, and the fields
                  of one flattened where the function took it apart *)
               val ps = ListPair.zip (params, specs)
-              val fields : (var * var list) list =
-                List.mapPartial (fn ((x, _), SOME ts) => SOME (x, List.map (fn _ => renamed x) ts) | _ => NONE) ps
-              fun field (x, i) =
-                case List.find (fn (y, _) => y = x) fields of
-                  SOME (_, ys) => SOME (Var (List.nth (ys, i), []))
-                | NONE => NONE
+              (* each flattened parameter, and each variable that is it or a
+                 nested field of it: the worker's parameters it is made of *)
+              datatype part = PLeaf of var | PNest of part list
+              val parts : part IntTable.table = IntTable.table 16
+              fun partsOf (x, fs) = PNest (List.map (fn Leaf _ => PLeaf (renamed x) | Nest fs => partsOf (x, fs)) fs)
+              val () = List.app (fn ((x, _), SOME fs) => IntTable.insert (parts, x, partsOf (x, fs)) | _ => ()) ps
+              fun partLeaves (PLeaf v) = [v]
+                | partLeaves (PNest ps) = List.concat (List.map partLeaves ps)
               fun sel e =
                 case e of
                   Let (v, s, r as Select (i, Var (x', _)), b) =>
-                    (case field (x', i) of SOME a => Let (v, s, Atom a, sel b) | NONE => Let (v, s, r, sel b))
+                    (case IntTable.find (parts, x') of
+                       SOME (PNest ps) =>
+                         (case List.nth (ps, i) of
+                            PLeaf y => Let (v, s, Atom (Var (y, [])), sel b)
+                          | p => (IntTable.insert (parts, v, p); sel b))
+                     | _ => Let (v, s, r, sel b))
+                | Let (v, s, r as Atom (Var (x', [])), b) =>
+                    (case IntTable.find (parts, x') of
+                       SOME p => (IntTable.insert (parts, v, p); sel b)
+                     | NONE => Let (v, s, r, sel b))
                 | Let (v, s, r, b) => Let (v, s, r, sel b)
                 | Fun (fs, b) =>
                     Fun (List.map (fn {name, tyvars, params, result, body} =>
@@ -316,28 +432,22 @@ struct
                 | Join (j, ps, jb, sc) => Join (j, ps, sel jb, sel sc)
                 | If (c, t, e) => If (c, sel t, sel e)
                 | Handle (a, v, h) => Handle (sel a, v, sel h)
-                | Return (Select (i, Var (x', _))) => (case field (x', i) of SOME a => Return (Atom a) | NONE => e)
+                | Return (Select (i, Var (x', _))) =>
+                    (case IntTable.find (parts, x') of
+                       SOME (PNest ps) => (case List.nth (ps, i) of PLeaf y => Return (Atom (Var (y, []))) | _ => e)
+                     | _ => e)
                 | Mark (sp, a) => Mark (sp, sel a)
                 | _ => e
               val workerParams =
                 List.concat (List.map (fn ((x, t), NONE) => [(x, t)]
-                                        | ((x, _), SOME ts) => ListPair.zip (#2 (valOf (List.find (fn (y, _) => y = x) fields)), ts))
+                                        | ((x, _), SOME fs) => ListPair.zip (partLeaves (valOf (IntTable.find (parts, x))), leaves fs))
                                       ps)
               val workerDef = {name = worker, tyvars = tyvars, params = workerParams, result = result, body = sel (exp body)}
               (* the wrapper: a kept parameter renamed and passed on, a
                  flattened one taken apart *)
               val wrapperParams = List.map (fn ((x, t), NONE) => (renamed x, t) | ((x, t), SOME _) => (x, t)) ps
               val (args, lets) =
-                ListPair.foldl
-                  (fn (((x, _), NONE), _, (args, lets)) => (Var (x, []) :: args, lets)
-                    | (((x, _), SOME ts), _, (args, lets)) =>
-                        let
-                          val zs = List.map (fn t => (freshStamp (), t)) ts
-                          val (_, lets) =
-                            List.foldl (fn ((z, t), (i, lets)) => (i + 1, fn e => lets (Let (z, ([], t), Select (i, Var (x, [])), e))))
-                                       (0, lets) zs
-                        in (List.revAppend (List.map (fn (z, _) => Var (z, [])) zs, args), lets) end)
-                  ([], fn e => e) (ListPair.zip (wrapperParams, specs), ps)
+                takeApart (IntMap.empty, ListPair.map (fn ((x, _), spec) => (Var (x, []), spec)) (wrapperParams, specs))
               val call = App (Global (worker, List.map Ty.Gen tyvars), List.rev args)
             in
               [workerDef, {name = name, tyvars = tyvars, params = wrapperParams, result = result, body = lets (Return call)}]

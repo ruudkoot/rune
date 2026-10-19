@@ -45,20 +45,53 @@ struct
   val selectUses : int IntTable.table ref = ref (IntTable.table 16)
   val binderFn : int IntTable.table ref = ref (IntTable.table 16)
   val nextFn = ref 0
+  (* and the fields each takes (results in globals, below) *)
+  val selectFields : int list IntTable.table ref = ref (IntTable.table 16)
+  (* and, of a variable bound to a call, the uses that only ask its
+     constructor or take its argument: ConTag, Decon, ptr_eq with a nullary
+     constructor (datatypes returned in globals, below) *)
+  val sumUses : int IntTable.table ref = ref (IntTable.table 16)
+  (* and how many of its globals the deconstructions of it read *)
+  val sumRead : int IntTable.table ref = ref (IntTable.table 16)
   fun countSelects (e : M.exp) : unit =
     let
       val f = !nextFn
       val () = nextFn := f + 1
+      (* binderFn: the function's number, twice, and one more for a
+         variable bound to a call, whose fields are kept too *)
       fun sel r =
         case r of
-          M.Select (_, M.Var (y, _)) =>
-            if IntTable.find (!binderFn, y) = SOME f then
-              IntTable.bump (!selectUses, y)
-            else ()
+          M.Select (i, M.Var (y, _)) =>
+            (case IntTable.find (!binderFn, y) of
+               SOME k =>
+                 if k div 2 <> f then ()
+                 else
+                   (IntTable.bump (!selectUses, y);
+                    if k mod 2 = 0 then ()
+                    else
+                      case IntTable.find (!selectFields, y) of
+                        SOME is => if List.exists (fn j => j = i) is then () else IntTable.insert (!selectFields, y, i :: is)
+                      | NONE => IntTable.insert (!selectFields, y, [i]))
+             | NONE => ())
+        | M.ConTag (M.Var (y, _)) => sum y
+        | M.Decon (tag, t, M.Var (y, _)) =>
+            (sum y;
+             let val n = case Rep.fields (t, tag) of SOME n => n | NONE => 1
+             in case IntTable.find (!sumRead, y) of
+                  SOME m => if m >= n then () else IntTable.insert (!sumRead, y, n)
+                | NONE => IntTable.insert (!sumRead, y, n)
+             end)
+        | M.Prim ("ptr_eq", _, [M.Var (y, _), M.Con0 _]) => sum y
+        | M.Prim ("ptr_eq", _, [M.Con0 _, M.Var (y, _)]) => sum y
         | _ => ()
+      and sum y =
+        case IntTable.find (!binderFn, y) of
+          SOME k => if k = 2 * f + 1 then IntTable.bump (!sumUses, y) else ()
+        | NONE => ()
       fun go e =
         case e of
-          M.Let (x, _, r, b) => (sel r; IntTable.insert (!binderFn, x, f); go b)
+          M.Let (x, _, r, b) =>
+            (sel r; IntTable.insert (!binderFn, x, 2 * f + (case r of M.App _ => 1 | _ => 0)); go b)
         | M.Fun (fs, b) => (List.app (countSelects o #body) fs; go b)
         | M.Join (_, _, jb, sc) => (go jb; go sc)
         | M.If (_, t, e) => (go t; go e)
@@ -77,7 +110,7 @@ struct
      it there (var). Its parts are variables of the function that binds it,
      whose id it is kept with: a function that captures it reads it whole
      from its closure, made where the closure is. *)
-  datatype virt = Parts of L.var list | Fields of int * int * L.var
+  datatype virt = Parts of L.var list | Fields of int * int * L.var | Sum of L.var * L.var list
   val virtuals : (int * virt) IntTable.table ref = ref (IntTable.table 16)
 
   fun count x = IntTable.bump (!useCounts, x)
@@ -404,6 +437,347 @@ struct
         | _ => false
     in tail (#body f) end
 
+  (* ---- results in globals (performance M8, D8 A, step 2) ---- *)
+
+  (* A function of the top level that returns a tuple of n fields, each of
+     its returns one made there (Return (Tuple xs)) or a tail call of
+     another such function of n, and that is only called -- never used as a
+     value -- returns the first field and leaves the others in globals, the
+     same n - 1 for every such function of n results, which a call reads at
+     once: the tuple is not made, where the caller only takes its fields.
+     An optional pass of its own name ("results", from -O1), for the whole
+     program only (Pass.whole: a unit after this one would call it the
+     usual way), and not where the debugger reads the program (-g), whose
+     stops could come between a return and the reads. *)
+  val slotFuns : int IntMap.map ref = ref IntMap.empty
+  val slotGlobals : int list IntMap.map ref = ref IntMap.empty
+  (* the fields of n results some call reads: the others are not set *)
+  val slotNeeded : int list IntMap.map ref = ref IntMap.empty
+  fun needed (n : int, i : int) : bool =
+    case IntMap.find (!slotNeeded, n) of SOME is => List.exists (fn j => j = i) is | NONE => false
+  (* the fields a call's result has taken, where it is only taken apart *)
+  fun takenOnly (x : int) : int list option =
+    if usesOf x = selectsOf x then SOME (case IntTable.find (!selectFields, x) of SOME is => is | NONE => []) else NONE
+  (* the n of the function being made, where it returns so *)
+  val currentSlots : int option ref = ref NONE
+
+  (* The same for a datatype (performance M8): a function each of whose
+     returns is a constructor made there, or a tail call of another such
+     function of its datatype, every call of which only asks the
+     constructor and takes its argument, returns the constructor's tag as a
+     nullary constructor's, and the argument in globals -- the fields of a
+     constructor made of its fields, each in one -- as many as the
+     datatype's widest constructor has, the same for every function of the
+     datatype. A call reads all of them at once, of any representation,
+     since they may hold what an earlier return left; they are set to ()
+     when the program starts, so that none is read unset. *)
+  val sumFuns : int IntMap.map ref = ref IntMap.empty            (* the function's global -> its datatype *)
+  val sumGlobals : int list IntMap.map ref = ref IntMap.empty    (* the datatype -> its globals *)
+  val currentSum : int option ref = ref NONE
+
+  fun sumWidth (t : Ty.ty) : int option =
+    case t of
+      Ty.Con (stamp, _, _) =>
+        (case Ty.datatypeOf stamp of
+           SOME {cons, ...} =>
+             if List.exists (fn (_, _, a) => isSome a) cons then
+               SOME (List.foldl (fn ((tag, _, SOME _), w) => Int.max (w, case Rep.fields (t, tag) of SOME n => n | NONE => 1)
+                                  | (_, w) => w) 0 cons)
+             else NONE
+         | NONE => NONE)
+    | _ => NONE
+
+  fun sumsOf (stamp : int) : int list = case IntMap.find (!sumGlobals, stamp) of SOME gs => gs | NONE => []
+
+  fun takenSum (x : int) : bool =
+    usesOf x = (case IntTable.find (!sumUses, x) of SOME n => n | NONE => 0)
+
+  fun slotsOf (n : int) : int list =
+    case IntMap.find (!slotGlobals, n) of
+      SOME gs => gs
+    | NONE =>
+        let val gs = List.tabulate (n - 1, fn _ => Elaborate.freshStamp ())
+        in slotGlobals := IntMap.insert (!slotGlobals, n, gs); gs end
+
+  fun slotCall (r : M.rhs) : (int * int * M.atom list) option =
+    case r of
+      M.App (M.Global (g, _), xs) => Option.map (fn n => (g, n, xs)) (IntMap.find (!slotFuns, g))
+    | _ => NONE
+
+  (* The most uses of x on any way through e that need it whole, not a
+     field of it: where that is one, a tuple returned in globals is made
+     where it is needed, after the call, as rarely as it was before. *)
+  fun wholeOnEachPath (x : int, e : M.exp) : int =
+    let
+      fun a (M.Var (y, _)) = if y = x then 1 else 0
+        | a _ = 0
+      fun atoms xs = List.foldl (fn (v, n) => n + a v) 0 xs
+      fun rhs r =
+        case r of
+          M.Select (_, M.Var _) => 0
+        | M.Atom v => a v
+        | M.App (f, xs) => atoms (f :: xs)
+        | M.Prim (_, _, xs) => atoms xs
+        | M.Tuple xs => atoms xs
+        | M.Select (_, v) => a v
+        | M.Con (_, _, v) => a v
+        | M.Decon (_, _, v) => a v
+        | M.ConTag v => a v
+        | M.MkExn (c, v) => atoms [c, v]
+        | M.ExnCon v => a v
+        | M.ExnArg (_, v) => a v
+        | M.SetGlobal (_, v) => a v
+        | _ => 0
+      fun mentions e = go e > 0
+      and go e =
+        case e of
+          M.Let (_, _, r, b) => rhs r + go b
+        | M.Fun (fs, b) => List.foldl (fn (f, n) => n + (if mentions (#body f) then 1 else 0)) 0 fs + go b
+        | M.Join (_, _, jb, sc) => go sc + go jb
+        | M.Jump (_, xs) => atoms xs
+        | M.If (c, t, f) => a c + Int.max (go t, go f)
+        | M.Handle (h, _, k) => go h + go k
+        | M.Raise v => a v
+        | M.Return r => rhs r
+        | M.Mark (_, b) => go b
+    in go e end
+
+  (* the calls whose tuple is made where it is needed (above) *)
+  val lazyCalls : unit IntTable.table ref = ref (IntTable.table 16)
+
+  fun findSumFuns (p : M.program, asValue : unit IntTable.table) : unit =
+    let
+      (* the candidates: functions of a datatype with a constructor of an
+         argument, never used as a value, nor returning a tuple in globals *)
+      val cands : (int * int) IntTable.table = IntTable.table 256    (* the function -> its datatype, its width *)
+      val () =
+        List.app (fn M.Funs fs =>
+                       List.app (fn f =>
+                                   case (#result f, IntTable.find (asValue, #name f), IntMap.member (!slotFuns, #name f)) of
+                                     (t as Ty.Con (stamp, _, _), NONE, false) =>
+                                       (case sumWidth t of
+                                          SOME w => IntTable.insert (cands, #name f, (stamp, w))
+                                        | NONE => ())
+                                   | _ => ()) fs
+                   | _ => ()) p
+      fun stampOf g = Option.map #1 (IntTable.find (cands, g))
+      (* one walk of the program: the candidates that cannot be, and which
+         candidate's returns are another's tail calls (both ways) *)
+      val bad : unit IntTable.table = IntTable.table 256
+      val tails : int list IntTable.table = IntTable.table 256       (* g -> the candidates whose tail calls call it *)
+      val tailsOf : int list IntTable.table = IntTable.table 256     (* f -> the candidates it tail calls *)
+      fun push (t, k, v) = IntTable.insert (t, k, v :: (case IntTable.find (t, k) of SOME vs => vs | NONE => []))
+      fun no g = IntTable.insert (bad, g, ())
+      fun visit (own : int option) e =
+        case e of
+          M.Let (x, _, M.App (M.Global (g, _), _), b) =>
+            ((if isSome (stampOf g) andalso not (takenSum x) then no g else ()); visit own b)
+        | M.Let (_, _, _, b) => visit own b
+        | M.Fun (fs, b) => (List.app (fn f => visit NONE (#body f)) fs; visit own b)
+        | M.Join (_, _, jb, sc) => (visit own jb; visit own sc)
+        | M.If (_, a, c) => (visit own a; visit own c)
+        | M.Handle (a, _, h) => (visit own a; visit own h)
+        | M.Return r =>
+            (case (own, r) of
+               (SOME f, M.Con _) => ()
+             | (SOME f, M.Atom (M.Con0 _)) => ()
+             | (SOME f, M.App (M.Global (g, _), _)) =>
+                 if isSome (stampOf g) andalso stampOf g = stampOf f then (push (tails, g, f); push (tailsOf, f, g))
+                 else (no f; if isSome (stampOf g) then no g else ())
+             | (SOME f, _) => no f
+             | (NONE, M.App (M.Global (g, _), _)) => if isSome (stampOf g) then no g else ()
+             | (NONE, _) => ())
+        | M.Mark (_, a) => visit own a
+        | _ => ()
+      val () =
+        List.app (fn M.Val (_, _, e) => visit NONE e
+                   | M.Funs fs => List.app (fn f => visit (if isSome (stampOf (#name f)) then SOME (#name f) else NONE) (#body f)) fs
+                   | M.Do (_, e) => visit NONE e) p
+      (* a candidate that cannot be makes none of those it tail calls, nor
+         of those that tail call it *)
+      fun spread [] = ()
+        | spread (g :: rest) =
+            let
+              val next = (case IntTable.find (tails, g) of SOME fs => fs | NONE => [])
+                         @ (case IntTable.find (tailsOf, g) of SOME hs => hs | NONE => [])
+              val fresh = List.filter (fn h => not (isSome (IntTable.find (bad, h)))) next
+            in
+              List.app no fresh; spread (fresh @ rest)
+            end
+      val badNow = ref []
+      val () = List.app (fn M.Funs fs => List.app (fn f => if isSome (IntTable.find (bad, #name f)) then badNow := #name f :: !badNow else ()) fs
+                          | _ => ()) p
+      val () = spread (!badNow)
+      val found =
+        List.foldl (fn (M.Funs fs, acc) =>
+                         List.foldl (fn (f, acc) =>
+                                       case IntTable.find (cands, #name f) of
+                                         SOME (stamp, w) => if isSome (IntTable.find (bad, #name f)) then acc else (#name f, stamp, w) :: acc
+                                       | NONE => acc) acc fs
+                     | (_, acc) => acc) [] p
+    in
+      sumFuns := List.foldl (fn ((g, stamp, _), m) => IntMap.insert (m, g, stamp)) IntMap.empty found;
+      sumGlobals :=
+        List.foldl (fn ((_, stamp, w), m) =>
+                      if IntMap.member (m, stamp) then m
+                      else IntMap.insert (m, stamp, List.tabulate (w, fn _ => Elaborate.freshStamp ()))) IntMap.empty (List.rev found)
+    end
+
+  fun findSlotFuns (p : M.program) : unit =
+    let
+      (* the candidates, each with its n *)
+      val cands0 =
+        List.foldl (fn (M.Funs fs, m) =>
+                         List.foldl (fn (f, m) =>
+                                       case #result f of
+                                         Ty.Tuple (ts as _ :: _ :: _) => IntMap.insert (m, #name f, (List.length ts, #body f))
+                                       | _ => m) m fs
+                     | (_, m) => m) IntMap.empty p
+      (* the globals used other than as the function a call calls *)
+      val asValue : unit IntTable.table = IntTable.table 256
+      fun atom a = case a of M.Global (g, _) => IntTable.insert (asValue, g, ()) | _ => ()
+      fun rhs r =
+        case r of
+          M.Atom a => atom a
+        | M.App (M.Global _, xs) => List.app atom xs
+        | M.App (f, xs) => List.app atom (f :: xs)
+        | M.Prim (_, _, xs) => List.app atom xs
+        | M.Tuple xs => List.app atom xs
+        | M.Select (_, a) => atom a
+        | M.Con (_, _, a) => atom a
+        | M.Decon (_, _, a) => atom a
+        | M.ConTag a => atom a
+        | M.MkExn (c, a) => (atom c; atom a)
+        | M.ExnCon a => atom a
+        | M.ExnArg (_, a) => atom a
+        | M.SetGlobal (_, a) => atom a
+        | _ => ()
+      fun exp e =
+        case e of
+          M.Let (_, _, r, b) => (rhs r; exp b)
+        | M.Fun (fs, b) => (List.app (exp o #body) fs; exp b)
+        | M.Join (_, _, jb, sc) => (exp jb; exp sc)
+        | M.Jump (_, xs) => List.app atom xs
+        | M.If (a, t, f) => (atom a; exp t; exp f)
+        | M.Handle (a, _, h) => (exp a; exp h)
+        | M.Raise a => atom a
+        | M.Return r => rhs r
+        | M.Mark (_, a) => exp a
+      val () = List.app (fn M.Val (_, _, e) => exp e | M.Funs fs => List.app (exp o #body) fs | M.Do (_, e) => exp e) p
+      val cands1 = IntMap.filteri (fn (g, _) => not (isSome (IntTable.find (asValue, g)))) cands0
+      (* whether every return of a function's own code is a tuple of n
+         made there, or a tail call of a candidate of n *)
+      fun returns (cands, n) e =
+        case e of
+          M.Let (_, _, _, b) => returns (cands, n) b
+        | M.Fun (_, b) => returns (cands, n) b
+        | M.Join (_, _, jb, sc) => returns (cands, n) jb andalso returns (cands, n) sc
+        | M.If (_, t, f) => returns (cands, n) t andalso returns (cands, n) f
+        | M.Handle (a, _, h) => returns (cands, n) a andalso returns (cands, n) h
+        | M.Return (M.Tuple xs) => List.length xs = n
+        | M.Return (M.App (M.Global (g, _), _)) =>
+            (case IntMap.find (cands, g) of SOME (m, _) => m = n | NONE => false)
+        | M.Return _ => false
+        | M.Mark (_, a) => returns (cands, n) a
+        | _ => true
+      (* the candidates that cannot be: some call of them needs the tuple
+         whole -- its value used other than by taking its fields, or
+         returned by a function that does not return as it does -- where
+         the tuple would be made after all, and the globals set and read for
+         nothing; and, both ways, the candidates one of them tail calls or
+         that tail call one of them, which then return otherwise *)
+      fun found cands =
+        let
+          val bad : unit IntTable.table = IntTable.table 64
+          fun no g = IntTable.insert (bad, g, ())
+          (* of each candidate, the calls and those that need the tuple more
+             than once on a way, where it is made at once: a tuple of four
+             fields at most, made so by no more than a quarter of its calls,
+             else the globals cost more than they save *)
+          val calls : (int * int) IntMap.map ref = ref IntMap.empty
+          fun count (g, eager) =
+            let val (n, e) = case IntMap.find (!calls, g) of SOME c => c | NONE => (0, 0)
+            in calls := IntMap.insert (!calls, g, (n + 1, if eager then e + 1 else e)) end
+          fun small g = case IntMap.find (cands, g) of SOME (n, _) => n <= 4 | NONE => false
+          (* a use of x that needs it whole on each way after it, at most *)
+          fun lazy (x, b) = usesOf x - selectsOf x <= 1 orelse wholeOnEachPath (x, b) <= 1
+          (* the tail calls between candidates, both ways *)
+          val tails : int list IntTable.table = IntTable.table 64
+          fun push (k, v) = IntTable.insert (tails, k, v :: (case IntTable.find (tails, k) of SOME vs => vs | NONE => []))
+          fun ownOf f = Option.map (fn (n, _) => (f, n)) (IntMap.find (cands, f))
+          fun visit (own : (int * int) option) e =
+            case e of
+              M.Let (x, _, M.App (M.Global (g, _), _), b) =>
+                ((if IntMap.member (cands, g) then
+                    if isSome (takenOnly x) then count (g, false)
+                    else if small g andalso lazy (x, b) then (IntTable.insert (!lazyCalls, x, ()); count (g, false))
+                    else if small g then count (g, true)
+                    else no g
+                  else ());
+                 visit own b)
+            | M.Let (_, _, _, b) => visit own b
+            | M.Fun (fs, b) => (List.app (fn f => visit (ownOf (#name f)) (#body f)) fs; visit own b)
+            | M.Join (_, _, jb, sc) => (visit own jb; visit own sc)
+            | M.If (_, t, f) => (visit own t; visit own f)
+            | M.Handle (a, _, h) => (visit own a; visit own h)
+            | M.Return (M.App (M.Global (g, _), _)) =>
+                (case (IntMap.find (cands, g), own) of
+                   (SOME (n, _), SOME (f, m)) => if m = n then (push (f, g); push (g, f)) else no g
+                 | (SOME _, NONE) => no g
+                 | (NONE, _) => ())
+            | M.Mark (_, a) => visit own a
+            | _ => ()
+          val () =
+            List.app (fn M.Val (_, _, e) => visit NONE e
+                       | M.Funs fs => List.app (fn f => visit (ownOf (#name f)) (#body f)) fs
+                       | M.Do (_, e) => visit NONE e) p
+          val () = IntMap.appi (fn (g, (n, e)) => if 4 * e > n then no g else ()) (!calls)
+          val () = IntMap.appi (fn (g, (n, body)) => if returns (cands, n) body then () else no g) cands
+          fun spread [] = ()
+            | spread (g :: rest) =
+                let val fresh = List.filter (fn h => not (isSome (IntTable.find (bad, h))))
+                                            (case IntTable.find (tails, g) of SOME hs => hs | NONE => [])
+                in List.app no fresh; spread (fresh @ rest) end
+          val () = spread (IntMap.foldli (fn (g, _, acc) => if isSome (IntTable.find (bad, g)) then g :: acc else acc) [] cands)
+        in
+          IntMap.filteri (fn (g, _) => not (isSome (IntTable.find (bad, g)))) cands
+        end
+      val () = slotFuns := (if Pass.enabled ("results", 1) andalso !Pass.whole andalso not (!debugInfo)
+                            then IntMap.map #1 (found cands1) else IntMap.empty)
+      (* what each call reads: the fields it takes, where it only takes
+         them, all of them where it needs the tuple, none where it passes
+         them on (a tail call of one of n from one of n) *)
+      fun need (n, is) =
+        let val old = case IntMap.find (!slotNeeded, n) of SOME js => js | NONE => []
+        in slotNeeded := IntMap.insert (!slotNeeded, n, List.foldl (fn (i, acc) => if List.exists (fn j => j = i) acc then acc else i :: acc) old is) end
+      fun all n = List.tabulate (n, fn i => i)
+      fun callIn (own : int option) e =
+        case e of
+          M.Let (x, _, M.App (M.Global (g, _), _), b) =>
+            ((case IntMap.find (!slotFuns, g) of
+                SOME n => need (n, case takenOnly x of SOME is => is | NONE => all n)
+              | NONE => ());
+             callIn own b)
+        | M.Let (_, _, _, b) => callIn own b
+        | M.Fun (fs, b) => (List.app (fn f => callIn (IntMap.find (!slotFuns, #name f)) (#body f)) fs; callIn own b)
+        | M.Join (_, _, jb, sc) => (callIn own jb; callIn own sc)
+        | M.If (_, t, f) => (callIn own t; callIn own f)
+        | M.Handle (a, _, h) => (callIn own a; callIn own h)
+        | M.Return (M.App (M.Global (g, _), _)) =>
+            (case IntMap.find (!slotFuns, g) of
+               SOME n => if own = SOME n then () else need (n, all n)
+             | NONE => ())
+        | M.Mark (_, a) => callIn own a
+        | _ => ()
+    in
+      sumFuns := IntMap.empty; sumGlobals := IntMap.empty;
+      if Pass.enabled ("results", 1) andalso !Pass.whole andalso not (!debugInfo) then findSumFuns (p, asValue) else ();
+      slotNeeded := IntMap.empty;
+      List.app (fn M.Val (_, _, e) => callIn NONE e
+                 | M.Funs fs => List.app (fn f => callIn (IntMap.find (!slotFuns, #name f)) (#body f)) fs
+                 | M.Do (_, e) => callIn NONE e) p
+    end
+
   (* ---- lowering ---- *)
 
   fun function (f : M.fundef, pos : Source.span option, group : int) : int =
@@ -437,9 +811,14 @@ struct
         else ps
       val outer = !binds
       val () = binds := (if !debugInfo then List.rev bound else [])
+      val outerSlots = !currentSlots
+      val outerSum = !currentSum
+      val () = currentSlots := IntMap.find (!slotFuns, #name f)
+      val () = currentSum := IntMap.find (!sumFuns, #name f)
       val () = exp (b, #body f, {ret = FunRet, depth = 0, labels = IntMap.empty,
                                  subst = let val t = IntTable.table 64
                                          in List.app (fn (x, v) => IntTable.insert (t, x, v)) bound; t end})
+      val () = (currentSlots := outerSlots; currentSum := outerSum)
       val () =
         if !debugInfo then
           debugVars := {id = id, vars = !binds, env = #2 (List.foldl (fn (c, (i, acc)) => (i + 1, (c, i) :: acc)) (0, []) cs)}
@@ -475,6 +854,7 @@ struct
             else
               case virtualVar (b, x) of
                 SOME (Parts vs) => def (b, L.Tuple vs)
+              | SOME (Sum (v, _)) => v
               | SOME (Fields (tag, n, v)) => def (b, L.Tuple (List.tabulate (n, fn i => def (b, L.Field (tag, i, v)))))
               | NONE => bug ("v" ^ Int.toString x ^ " is not in scope")
 
@@ -491,6 +871,7 @@ struct
           (case virtualOf (b, a) of
              SOME (Fields (tag, _, v)) => L.Field (tag, i, v)
            | SOME (Parts vs) => bug "a field of a tuple not made, as an operation"
+           | SOME (Sum _) => bug "a field of a constructor returned in globals"
            | NONE => L.Select (i, at a))
       | M.Con (tag, t, a) =>
           (case Rep.fields (t, tag) of
@@ -500,6 +881,7 @@ struct
                (case virtualOf (b, a) of
                   SOME (Parts vs) => L.Con (tag, vs)
                 | SOME (Fields (tag', _, v)) => L.Con (tag, List.tabulate (n, fn i => def (b, L.Field (tag', i, v))))
+                | SOME (Sum _) => bug "a constructor returned in globals, as an argument"
                 | NONE => let val v = at a in L.Con (tag, List.tabulate (n, fn i => def (b, L.Select (i, v)))) end))
       | M.Decon (tag, t, a) =>
           (case Rep.fields (t, tag) of
@@ -522,13 +904,38 @@ struct
       M.App (f, [a]) => let val f = atom (b, cx, f) in L.Call (f, atom (b, cx, a)) end
     | _ => bug "a call of other than one argument through a closure"
 
+  (* a call of a function that returns in globals: its first field and
+     the others, read at once, each of the representation of its type *)
+  and slotParts (b, cx, g : int, n : int, xs : M.atom list, ts : Ty.ty list, taken : int list option) : L.var list =
+    let
+      val v0 = defAs (b, L.CallK (g, List.map (fn a => atom (b, cx, a)) xs), repOfTy (hd ts))
+      fun read (i, s, t) =
+        case taken of
+          SOME is => if List.exists (fn j => j = i) is then defAs (b, L.Slot s, repOfTy t) else v0
+        | NONE => defAs (b, L.Slot s, repOfTy t)
+    in
+      v0 :: ListPair.map (fn ((i, s), t) => read (i, s, t))
+                         (ListPair.zip (List.tabulate (n - 1, fn i => i + 1), slotsOf n), tl ts)
+    end
+
   and value (b, cx, r : M.rhs) : L.var =
     case r of
       M.Atom a => atom (b, cx, a)
+    | M.App (M.Global (g, _), xs) =>
+        (case IntMap.find (!slotFuns, g) of
+           SOME n => def (b, L.Tuple (slotParts (b, cx, g, n, xs, List.tabulate (n, fn _ => Ty.Var 0), NONE)))
+         | NONE => defAs (b, oper (b, cx, r), repOfRhs r))
     | M.Select (i, a) =>
         (case virtualOf (b, a) of
            SOME (Parts vs) => List.nth (vs, i)
          | _ => def (b, oper (b, cx, r)))
+    | M.Decon (tag, t, a) =>
+        (case virtualOf (b, a) of
+           SOME (Sum (_, vs)) =>
+             (case Rep.fields (t, tag) of
+                NONE => hd vs
+              | SOME n => def (b, L.Tuple (List.take (vs, n))))
+         | _ => defAs (b, oper (b, cx, r), repOfRhs r))
     | _ => defAs (b, oper (b, cx, r), repOfRhs r)
 
   (* what an operation makes, where its shape says: a primitive's result
@@ -565,6 +972,7 @@ struct
         (case virtualOf (b, a) of
            SOME (v as Parts _) => usesOf x = 1 andalso (setVirtual (b, x, v); true)
          | SOME (v as Fields _) => usesOf x = selectsOf x andalso (setVirtual (b, x, v); true)
+         | SOME (v as Sum _) => (setVirtual (b, x, v); true)
          | NONE => false)
     | _ => false
 
@@ -600,12 +1008,84 @@ struct
                     start (b, lf, []); (case sp of SOME s => emit (b, L.At s) | NONE => ()); exp (b, f, cx)
                   end)
          | NONE =>
-             if virtualised (b, cx, x, r) then exp (b, body, cx)
+             case (r, case r of M.App (M.Global (g, _), _) => IntMap.find (!sumFuns, g) | _ => NONE) of
+               (M.App (M.Global (g, _), xs), SOME stamp) =>
+                 (* its tag, and what each global holds, read at once *)
+                 let
+                   val v0 = defAs (b, L.CallK (g, List.map (fn a => atom (b, cx, a)) xs), L.RCon0)
+                   val read = case IntTable.find (!sumRead, x) of SOME n => n | NONE => 0
+                   val vs = List.tabulate (List.length (sumsOf stamp),
+                                           fn i => if i < read then def (b, L.Slot (List.nth (sumsOf stamp, i))) else v0)
+                 in setVirtual (b, x, Sum (v0, vs)); exp (b, body, cx) end
+             | (M.Decon (tag, t, a), _) =>
+                 (case virtualOf (b, a) of
+                    SOME (Sum (_, vs)) =>
+                      (case Rep.fields (t, tag) of
+                         NONE => exp (b, body, bindAs (cx, x, hd vs))
+                       | SOME n => (setVirtual (b, x, Parts (List.take (vs, n))); exp (b, body, cx)))
+                  | _ => letRest (b, cx, x, scheme, r, body))
+             | _ => letRest (b, cx, x, scheme, r, body))
+    | M.Fun (fs, body) => exp (b, body, closures (b, cx, fs))
+    | M.Join (j, ps, jbody, scope) => joinOf (b, cx, j, ps, jbody, scope)
+    | M.Jump (j, xs) => jumpOf (b, cx, j, xs)
+    | M.If (c, t, f) => ifOf (b, cx, c, t, f)
+    | M.Handle (a, x, h) => handleOf (b, cx, a, x, h)
+    | M.Raise a => let val v = atom (b, cx, a) in finish (b, L.Raise v) end
+    | M.Return r => returnSum (b, cx, r)
+    | M.Mark (sp, a) => (emit (b, L.At sp); #span b := SOME (#1 sp); exp (b, a, cx))
+
+  (* a return of a function that returns its datatype in globals: the
+     constructor's tag, its argument in the globals *)
+  and returnSum (b, cx, r : M.rhs) =
+    case (r, !currentSum, #ret cx) of
+      (M.Con (tag, t, a), SOME stamp, FunRet) =>
+        let
+          val parts =
+            case Rep.fields (t, tag) of
+              NONE => [atom (b, cx, a)]
+            | SOME n =>
+                (case virtualOf (b, a) of
+                   SOME (Parts vs) => vs
+                 | SOME (Fields (tag', _, v)) => List.tabulate (n, fn i => def (b, L.Field (tag', i, v)))
+                 | _ => let val v = atom (b, cx, a) in List.tabulate (n, fn i => def (b, L.Select (i, v))) end)
+          val v0 = defAs (b, L.Con0 tag, L.RCon0)
+        in
+          ListPair.app (fn (s, v) => ignore (def (b, L.SetGlobal (s, v)))) (sumsOf stamp, parts);
+          pops (b, #depth cx); finish (b, L.Return v0)
+        end
+    | (M.App (M.Global (g, _), xs), SOME stamp, FunRet) =>
+        (* a call of one of the same datatype: its globals set by it *)
+        if #depth cx = 0 then
+          (case !(#head b) of
+             SOME l => if #self b = SOME g then finish (b, L.Goto (l, List.map (fn a => atom (b, cx, a)) xs))
+                       else knownTail (b, cx, r)
+           | NONE => knownTail (b, cx, r))
+        else
+          let val v = defAs (b, L.CallK (g, List.map (fn a => atom (b, cx, a)) xs), L.RCon0)
+          in pops (b, #depth cx); finish (b, L.Return v) end
+    | _ => returnTuple (b, cx, r)
+
+  and letRest (b, cx, x, scheme, r, body) =
+             case (slotCall r, #2 scheme) of
+               (SOME (g, n, xs), Ty.Tuple ts) =>
+                 (case takenOnly x of
+                    SOME is => (setVirtual (b, x, Parts (slotParts (b, cx, g, n, xs, ts, SOME is))); exp (b, body, cx))
+                  | NONE =>
+                      if isSome (IntTable.find (!lazyCalls, x)) then
+                        (setVirtual (b, x, Parts (slotParts (b, cx, g, n, xs, ts, NONE))); exp (b, body, cx))
+                      else
+                      let val vs = slotParts (b, cx, g, n, xs, ts, NONE)
+                      in exp (b, body, bindAs (cx, x, defAs (b, L.Tuple vs, L.RPtr))) end)
+             | _ =>
+             (* a tuple or a constructor nothing uses, which a rewrite of
+                Simplify's last round left: not made *)
+             if usesOf x = 0 andalso (case r of M.Tuple (_ :: _) => true | M.Con _ => true | _ => false) then exp (b, body, cx)
+             else if virtualised (b, cx, x, r) then exp (b, body, cx)
              else
                let val v = value (b, cx, r)
-               in setRep (b, v, repOfTy (#2 scheme)); exp (b, body, bindAs (cx, x, v)) end)
-    | M.Fun (fs, body) => exp (b, body, closures (b, cx, fs))
-    | M.Join (j, ps, jbody, scope) =>
+               in setRep (b, v, repOfTy (#2 scheme)); exp (b, body, bindAs (cx, x, v)) end
+
+  and joinOf (b, cx, j, ps, jbody, scope) =
         let val l = newLabel b
         in
           exp (b, scope, {ret = #ret cx, depth = #depth cx, labels = IntMap.insert (#labels cx, j, (l, #depth cx)),
@@ -616,13 +1096,15 @@ struct
             exp (b, jbody, ListPair.foldl (fn ((x, _), v, cx) => bindAs (cx, x, v)) cx (ps, vs))
           end
         end
-    | M.Jump (j, xs) =>
+
+  and jumpOf (b, cx, j, xs) =
         (case IntMap.find (#labels cx, j) of
            SOME (l, d) =>
              let val vs = List.map (fn a => atom (b, cx, a)) xs
              in pops (b, #depth cx - d); finish (b, L.Goto (l, vs)) end
          | NONE => bug "a jump to a join point not in scope")
-    | M.If (c, t, f) =>
+
+  and ifOf (b, cx, c, t, f) =
         let
           val v = atom (b, cx, c)
           val lt = newLabel b
@@ -632,7 +1114,8 @@ struct
           start (b, lt, []); exp (b, t, cx);
           start (b, lf, []); exp (b, f, cx)
         end
-    | M.Handle (a, x, h) =>
+
+  and handleOf (b, cx, a, x, h) =
         let val lh = newLabel b
         in
           emit (b, L.Push lh);
@@ -640,8 +1123,38 @@ struct
           let val v = newVar b
           in start (b, lh, [v]); exp (b, h, bindAs (cx, x, v)) end
         end
-    | M.Raise a => let val v = atom (b, cx, a) in finish (b, L.Raise v) end
-    | M.Return r =>
+
+  (* a return of a function that returns its tuple in globals: the first
+     field, the others in the globals some call reads *)
+  and returnTuple (b, cx, r : M.rhs) =
+        (case (#ret cx, r, !currentSlots) of
+           (FunRet, M.Tuple (x0 :: rest), SOME n) =>
+             let
+               val v0 = atom (b, cx, x0)
+               val vs = List.map (fn a => atom (b, cx, a)) rest
+             in
+               ListPair.app (fn ((i, s), v) => if needed (n, i) then ignore (def (b, L.SetGlobal (s, v))) else ())
+                            (ListPair.zip (List.tabulate (n - 1, fn i => i + 1), slotsOf n), vs);
+               pops (b, #depth cx); finish (b, L.Return v0)
+             end
+         | (FunRet, M.App (M.Global (g, _), xs), SOME n) =>
+             (* a call of one that returns as this one does: its globals are
+                this one's, set by it *)
+             if #depth cx = 0 then
+               (case !(#head b) of
+                  SOME l => if #self b = SOME g then finish (b, L.Goto (l, List.map (fn a => atom (b, cx, a)) xs))
+                            else knownTail (b, cx, r)
+                | NONE => knownTail (b, cx, r))
+             else
+               let val v = defAs (b, L.CallK (g, List.map (fn a => atom (b, cx, a)) xs), L.RAny)
+               in pops (b, #depth cx); finish (b, L.Return v) end
+         | (FunRet, M.App (M.Global (g, _), xs), NONE) =>
+             (case IntMap.find (!slotFuns, g) of
+                SOME _ => let val v = value (b, cx, r) in pops (b, #depth cx); finish (b, L.Return v) end
+              | NONE => returnOf (b, cx, r))
+         | _ => returnOf (b, cx, r))
+
+  and returnOf (b, cx, r : M.rhs) =
         (case (#ret cx, r) of
            (FunRet, M.App (f, xs)) =>
              (case (#depth cx, !(#head b), f) of
@@ -656,7 +1169,6 @@ struct
          | (FunRet, _) => let val v = value (b, cx, r) in pops (b, #depth cx); finish (b, L.Return v) end
          | (ToBlock (l, d), _) => let val v = value (b, cx, r) in pops (b, #depth cx - d); finish (b, L.Goto (l, [v])) end
          | (Cont k, _) => k (value (b, cx, r)))
-    | M.Mark (sp, a) => (emit (b, L.At sp); #span b := SOME (#1 sp); exp (b, a, cx))
 
   (* a call in tail position of the function: a known tail call, where no
      handler is pushed, of a function of the top level *)
@@ -730,7 +1242,7 @@ struct
   fun program (p : M.program, names : string IntMap.map) : L.program =
     let
       val () = (useCounts := IntTable.table 4096; captures := IntMap.empty; selfRefs := IntMap.empty; funcs := [];
-                selectUses := IntTable.table 1024; binderFn := IntTable.table 4096; nextFn := 0; virtuals := IntTable.table 1024;
+                selectUses := IntTable.table 1024; selectFields := IntTable.table 1024; sumUses := IntTable.table 1024; sumRead := IntTable.table 1024; binderFn := IntTable.table 4096; nextFn := 0; virtuals := IntTable.table 1024;
                 nextFuncId := 0; funNames := names; globalFids := IntMap.empty; imported := IntMap.empty;
                 debugVars := []; binds := [];
                 knownFuns := List.foldl (fn (M.Funs fs, m) => List.foldl (fn (f, m) => IntMap.insert (m, #name f, ())) m fs
@@ -742,6 +1254,7 @@ struct
       val () = List.app (fn M.Val (_, _, e) => countSelects e
                           | M.Funs fs => List.app (countSelects o #body) fs
                           | M.Do (_, e) => countSelects e) p
+      val () = (slotGlobals := IntMap.empty; currentSlots := NONE; lazyCalls := IntTable.table 64; findSlotFuns p)
       val id = !nextFuncId
       val () = nextFuncId := id + 1
       val b : builder = {fid = id, blocks = ref [], label = ref 0, params = ref [], instrs = ref [], open' = ref false,
@@ -749,6 +1262,12 @@ struct
                          head = ref NONE, reps = IntTable.table 64}
       val param = newVar b
       val () = start (b, newLabel b, [])
+      (* the globals a datatype is returned in, set before any is read *)
+      val () =
+        case IntMap.listItems (!sumGlobals) of
+          [] => ()
+        | gss => let val u = defAs (b, L.Unit, L.RUnit)
+                 in List.app (fn gs => List.app (fn g => ignore (def (b, L.SetGlobal (g, u)))) gs) gss end
       val topSubst : L.var IntTable.table = IntTable.table 1024
       val top : cx = {ret = FunRet, depth = 0, labels = IntMap.empty, subst = topSubst}
       (* a definition's expression, whose value then goes to k *)

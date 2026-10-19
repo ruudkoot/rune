@@ -43,6 +43,8 @@ struct
     | Unit
     | Con0 of int                         (* a nullary constructor, by its tag *)
     | Global of int
+    | Slot of int                         (* a global read here, not again where it is used: a result a
+                                             known call left there (Lower, performance M8) *)
     | SetGlobal of int * var              (* unit *)
     | Env of int                          (* a value the running closure captured *)
     | Self                                (* the running closure *)
@@ -163,6 +165,7 @@ struct
         | Unit => "()"
         | Con0 t => "con0 " ^ Int.toString t
         | Global x => "global " ^ g x
+        | Slot x => "slot " ^ g x
         | SetGlobal (y, x) => let val y = g y in "setglobal " ^ y ^ " " ^ v x end
         | Env i => "env " ^ Int.toString i
         | Self => "self"

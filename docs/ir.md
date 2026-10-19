@@ -15,6 +15,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `lift` | `Mid` | `Mid`, local functions that never escape made functions of the top level (`src/core/lift.sml`), from `-O1` | `MidLint` |
 | `workers` | `Mid` | `Mid`, tupled and curried functions split into workers and wrappers (`src/core/workers.sml`), from `-O1` | `MidLint` |
 | `simplify` | `Mid` | `Mid`, shrunk (`src/core/simplify.sml`), from `-O1` | `MidLint` |
+| `refs` | `Mid` | `Mid`, a loop's local refs as values (`src/core/refs.sml`), from `-O1` | `MidLint` |
 | `lower` | `Mid` | `Low` (`src/backend/low.sml`, by `Lower`) | `LowLint` |
 | `stack` | `Low` | instruction lists (`src/backend/stack.sml`), with `--target=stack` | none yet |
 | `registers` | `Low` | instruction lists of the register bytecode (`src/backend/regs.sml`), the default target | none yet |
@@ -31,10 +32,11 @@ what it is given or makes when asked, checks it with the lint of its
 representation, and says what it cost. An optional pass, one that only
 optimises, says from which level it runs (`Pass.enabled`): `trees`, which
 is how `translate` compiles a match (see *Matches*), then `shake`, `lift`,
-`workers` and `simplify`, in that order, and `shake` again where `simplify`
+`workers`, `simplify` and `refs`, in that order, and `shake` again where `simplify`
 inlined (see *The optimisations of Mid*); `inline` and `specialise` are
 what `simplify` does besides shrinking, each of which may be left out, as
-is `equality`, which only `-O2` runs.
+is `equality`, which only `-O2` runs; and `results` is what `lower` does
+of results in globals (see *Low*).
 
 ## Options
 
@@ -351,7 +353,12 @@ does.
   tuple was made; a call of a curried one given all its arguments, each
   partial application used once, by the next, down the same straight line,
   calls the worker, and the partial applications, which only made
-  closures, go. A worker is named as its function, for traces.
+  closures, go. A worker is named as its function, for traces. A field of
+  a flattened parameter that is itself a tuple the function only takes
+  apart, wherever it takes it, is flattened too, and so on, and a variable
+  bound to the parameter or to such a field is the same
+  ([plans/performance.md](plans/performance.md), M8): a function of two
+  vectors of three reals takes six reals.
 * **`simplify`** (shrinking, after Appel and Jim): three rounds over each
   definition, each after a census of the uses of every variable and jumps
   to every join point. A variable bound to an atom is the atom, unless it
@@ -378,7 +385,15 @@ does.
   it a nullary constructor, is copied there, where its tests of the tag
   then fold (a case of an inlined `compare`); a raise in a handler's
   region, in the region's own code, is a jump to the handler, made a join
-  point. What a rewrite makes is added to the round's census, rather than
+  point. A join point of a parameter that is a tuple its body only takes
+  apart, where some jump gives it a tuple made there, has the tuple's
+  fields as its parameters instead: each jump gives the parts, or the
+  fields of what it gives, and the tuple goes
+  ([plans/performance.md](plans/performance.md), M8). A tuple or a
+  constructor bound to a variable that is returned at once is made in the
+  return, and a join point that only returns its parameter is a return at
+  each jump to it, so that what a function returns is made in its returns
+  (`lower`'s results in globals, below). What a rewrite makes is added to the round's census, rather than
   a census taken again of all around it -- a use counted more than there
   is only keeps what could go. Stamps being unique, the census and what a
   round knows are tables (`IntTable`), which forget nothing, and a round
@@ -392,6 +407,18 @@ does.
   `imm_eq`, `ptr_eq`, `string_eq`, the function of its type, or `poly_eq`
   where the type is not known. Such a comparison is compiled code: the
   limit of `--equality-work` on the runtime's walk does not stop it.
+* **`refs`** ([plans/performance.md](plans/performance.md), M8): a
+  parameter of a function of the top level that is a ref the function only
+  reads and sets, and gives on as it is to its own calls of itself in tail
+  position -- a loop's counter -- is its value in a copy of the function: a
+  read is the value it holds there, a set the value from there on, a join
+  point is given it as a parameter, and the call of itself gives what it
+  holds then. A call that gives such parameters refs made for it alone --
+  made in its function, not in a function inside, and used by that call
+  only -- calls the copy for those parameters with what each was made of,
+  and the refs are not made; the copies' own calls are rewritten so in
+  turn. A ref used under a handler is left, since a raise would leave its
+  value where the handler cannot see it.
 * **`inline`** (in `simplify`, M10): a call of a function of the top level
   of no more than 12 nodes that does not call itself, and does not always
   raise -- a call on the way to an error costs nothing worth saving -- is
@@ -405,7 +432,13 @@ does.
   -- and the place of the call elsewhere, where the calls in tail position
   of the body are then marked as made from that place, since their frames
   would have taken the place of the function's. Bodies are taken as they
-  are once simplified, where the definition came first. A local function
+  are once simplified, where the definition came first; a function that is
+  small once simplified may be put where it is called too, whatever it was
+  before (M8: a worker's body shrinks by the copies of its parameters).
+  A function that makes functions and returns them, alone or in a tuple
+  -- a record of closures made at each call -- may be of 24 nodes (M8):
+  put where it is called, the functions it makes are known there. A local
+  function
   small enough is put where it is called too, in the scope of its `Fun`,
   where what it names is in scope (M12).
 * **`specialise`** (in `simplify`, M10): a function of the top level of no
@@ -415,8 +448,23 @@ does.
   in the copy they are known, so their calls are known calls, or inlined
   (item 6 of [plans/performance.md](plans/performance.md)). One copy for
   each function, types and functions given, made where the first such call
-  is, simplified after the definition it is in and put before it. A
-  closure given is left as it is.
+  is, simplified after the definition it is in and put before it. A local
+  function given, alone in its group, of closed types, that does not name
+  itself, where the copy only calls it, is given too (M8): its code becomes
+  a function of the top level of what it captured and its parameter, the
+  copy calls that, given what it captured as parameters after its own, and
+  the call gives them, so that the closure is not made; such copies are
+  made two deep at most, since two functions that give each other local
+  functions of their own would make copies for ever. A copy may give such
+  a function on, to a function that may be copied for it in turn and only
+  calls it: there it is a local function again, of one line that calls
+  the code made of it, which the copy made from the copy takes, whatever
+  the budget, so that the copy never makes a closure the call did not. From a copy, a function that does not call
+  itself is copied too, for all its parameters of function type (M8: the
+  loop of MLton's `peek` calls a function with the closures it was given,
+  and takes apart what it returns). A copy for local functions grows the
+  definition the call is in, within the budget of `inline`; a call that
+  finds its copy made already costs nothing.
 
 ## Low
 
@@ -466,6 +514,23 @@ leaves implicit is explicit.
   parameters and no closure: such a function captures nothing and names
   itself as its global. A function has a list of parameters; one of other
   than one parameter is only ever called so, and is made no closure.
+* **Results in globals** (the optional pass `results`, from `-O1`, for the
+  whole program and not where the debugger reads it;
+  [plans/performance.md](plans/performance.md), M8): a function of the top
+  level never used as a value, each of whose returns is a tuple made there
+  or a tail call of another such function of as many fields, every call of
+  which only takes its fields, returns the first field and sets a global
+  to each of the others some call takes -- the same globals for every such
+  function of as many fields -- which the call reads at once (`Slot`, an
+  operation of Low that is read where it is, never again where it is
+  used): the tuple is not made. Likewise a function of a datatype each of
+  whose returns is a constructor made there or a tail call of another such
+  function of the datatype, every call of which only asks the constructor
+  (`ConTag`, `ptr_eq` with a nullary one) and takes its argument: it
+  returns the constructor's tag as a nullary constructor's, and the
+  argument, or its fields, in the datatype's globals, which the program
+  sets to () before anything runs, since a call reads them whatever the
+  constructor.
 
 ### What a `Low` keeps
 

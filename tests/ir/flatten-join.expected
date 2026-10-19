@@ -1,0 +1,16 @@
+(* after simplify *)
+(funs
+  (fn g1 ((v1 : int * int * int * int)) : int
+    (let (v2 : int) (select 0 v1)
+    (let (v3 : int) (select 1 v1)
+    (let (v4 : int) (select 2 v1)
+    (let (v5 : int) (select 3 v1)
+    (let (v6 : bool) (prim int_lt v2 v4 : (int * int) -> bool)
+    (join j1 ((v7 : int) (v8 : int))
+      (return (prim int_add v7 v8 : (int * int) -> int))
+    (if v6
+      (jump j1 v4 v5)
+      (jump j1 v2 v3))))))))))
+(val g2 : int
+  (let (v9 : int * int * int * int) (tuple 1 2 3 4)
+  (return (app g1 v9))))

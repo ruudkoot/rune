@@ -1,6 +1,6 @@
 generate funsig 200 40
 compile --typecheck-only @gen
 nostack the front end's cost on the module language, the same on both VMs: measured on Rune as shipped alone
-instructions 26678329
-bytes 26922482
-objects 910684
+instructions 26204241
+bytes 24612060
+objects 825168

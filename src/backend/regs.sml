@@ -191,6 +191,7 @@ struct
           | L.Unit => op' (R.UNIT, [d])
           | L.Con0 t => op' (R.CON0, [d, t])
           | L.Global g => op' (R.GLOBAL, [d, C.globalIdx g])
+          | L.Slot g => op' (R.GLOBAL, [d, C.globalIdx g])
           | L.SetGlobal (g, v) => (op' (R.SETGLOBAL, [C.globalIdx g, reg v]); if usesOf x > 0 then op' (R.UNIT, [d]) else ())
           | L.Env i => op' (R.ENV, [d, i])
           | L.Self => op' (R.SELF, [d])
