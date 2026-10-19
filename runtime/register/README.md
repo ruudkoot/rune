@@ -240,12 +240,17 @@ since M10) at tier 2 (M9);
 
 **Tiering (M6).** Tier 0 counts, per function, its calls (in
 `HANDOVER`, at every call) and its work -- the iterations of its loops
-(in `BACKWARD`, at every `JUMP` back) and the calls it makes (in
-`HANDOVER` too, for the caller) -- and compiles the function at the
-threshold (`--jit-calls=N`, `--jit-work=N`; the defaults are the
-sweep's, docs/plans/jit.md M6). The work counts for a function called
-once that runs long: the compiler's top level, or a driver loop; its
-code is entered when its next callee returns. The counters are instruction-based, so
+(in `BACKWARD`, at every `JUMP` back), and its calls again (in
+`HANDOVER`, whose frame on top is the function called) -- and compiles
+the function at the threshold (`--jit-calls=N`, `--jit-work=N`; the
+defaults are the sweep's, docs/plans/jit.md M6). The work counts for a
+function called once that runs long in a loop: a driver loop, or the
+compiler's passes; its code is entered at the loop's head. (This said
+before that the work counted the calls a function makes, for the caller,
+as the code's comment meant; counting the caller's work so was measured
+in native-frames.md, *M8*: more functions compiled, 0.6% more
+instructions on the bootstrap and 0.2% on HOL's kernel work, and the
+code kept as it is.) The counters are instruction-based, so
 which functions are compiled, and when, is the same on every run of a
 program, and `--count` is the same in every mode. The interpreter goes
 on in a function's code wherever a run of instructions begins: the

@@ -27,8 +27,9 @@
         if (jit) { \
             CodeObject *co_ = &jit->codes[(f)]; \
             if (JIT_TIERS(vm->jit.mode)) { \
-                /* the caller's work too: called once but calling for ever, it \
-                   is compiled here and entered when this callee returns */ \
+                /* the work of the frame on top too, the function called: \
+                   counting its caller's here instead was measured worse \
+                   (native-frames.md, M8; runtime/register/README.md, Tiering) */ \
                 CodeObject *me_ = &jit->codes[vm->func]; \
                 if (!me_->entry && ++me_->work >= jit->work_threshold) jit_tier_up(vm, jit, vm->func); \
                 if (!co_->entry && ++co_->calls >= jit->calls_threshold) jit_tier_up(vm, jit, (f)); \

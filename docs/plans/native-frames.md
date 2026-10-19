@@ -1665,6 +1665,20 @@ objects per run, `--gc-stress` through the limit.
   `--count`'s bytes and objects the same at every tier, under
   `--gc-stress` and `--gc-verify`, and under both returns of M7.
 
+**The tiering's count of a caller's work** (2026-10-19, after M8; the
+lead's experiment). `HANDOVER` (`runtime/register/interp.c`) meant to
+count a call as work of the caller, so that a function called once that
+only calls would be compiled and entered when a callee returns; but its
+frame on top is the callee's there, so it counted the callee's work, as
+it does its calls, and `runtime/register/README.md` said what was meant.
+Counting the caller's (the function the call is made from, passed to
+`HANDOVER`): `--count` the same on `check-jit`'s programs, as tiering
+must; the bootstrap 13.6045G to 13.6845G instructions (+0.59%), HOL's
+kernel work 39.759G to 39.845G (+0.22%), MLton's seven programs within
+0.9% either way (`tyan` +0.9%, `model-elimination` −0.65%) -- more
+functions compiled, at the cost of compiling them. So the code stays as
+it was, and the README says what it does.
+
 ### M9. Measure again: the owner's goal (S)
 
 *Where we are* measured again: F1 with the real code beside the variants,
