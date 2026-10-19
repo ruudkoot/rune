@@ -1,0 +1,54 @@
+[
+  {
+    "check": "coverage",
+    "command": [
+      "sh",
+      "tests/benchmarks/check-coverage.sh"
+    ],
+    "exit": 0,
+    "elapsed_seconds": 37.75297218399646
+  },
+  {
+    "check": "provenance",
+    "command": [
+      "sh",
+      "tests/benchmarks/check-provenance.sh"
+    ],
+    "exit": 0,
+    "elapsed_seconds": 0.265912169998046
+  },
+  {
+    "check": "latency-oracle",
+    "command": [
+      "python3",
+      "tests/benchmarks/latency-oracle.py",
+      "--check"
+    ],
+    "exit": 0,
+    "elapsed_seconds": 52.84277406000183
+  },
+  {
+    "check": "latency-smoke",
+    "command": [
+      "make",
+      "bench-check",
+      "BENCH_CONFIGS=rune",
+      "BENCH_FILTER=latency-",
+      "BENCH_PROFILE=smoke"
+    ],
+    "exit": 0,
+    "elapsed_seconds": 7.138855843004421
+  },
+  {
+    "check": "latency-normal",
+    "command": [
+      "make",
+      "bench-check",
+      "BENCH_CONFIGS=rune",
+      "BENCH_FILTER=latency-",
+      "BENCH_PROFILE=normal"
+    ],
+    "exit": 0,
+    "elapsed_seconds": 38.89747400498891
+  }
+]

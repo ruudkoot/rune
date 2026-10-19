@@ -1,0 +1,155 @@
+python3 scripts/configure-gmp.py --mode 'auto' --prefix '' --cc 'cc' --cflags '-std=c17 -O2 -Wall -Wextra -pedantic' --out build/gmp/1974834050
+GMP: enabled: checked system installation; source and build options not supplied
+sh scripts/gen-build-files.sh "/home/ruud/rune/.worktrees/benchmarks"
+generated build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime  -include build/gmp/1974834050/config.h -c -o build/gmp/1974834050/intinf.o runtime/intinf.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/intinf.o runtime/intinf.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/runtime.o runtime/runtime.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/heap.o runtime/heap.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/gc/chunk.o runtime/gc/chunk.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/gc/copy.o runtime/gc/copy.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/gc/minor.o runtime/gc/minor.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/gc/los.o runtime/gc/los.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/gc/mark.o runtime/gc/mark.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/gc/immix.o runtime/gc/immix.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/gc/segfit.o runtime/gc/segfit.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/gc/compact.o runtime/gc/compact.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/gc/cycle.o runtime/gc/cycle.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/gc/check.o runtime/gc/check.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/gc/log.o runtime/gc/log.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/gc/share.o runtime/gc/share.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/loader.o runtime/loader.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/debug.o runtime/debug.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/stack/isa_stack.o runtime/stack/isa_stack.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/prims.o runtime/prims.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/image.o runtime/image.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/sys/sys_posix.o runtime/sys/sys_posix.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -c -o build/librune/native/native.o runtime/native/native.c
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -o build/librune/native-offsets runtime/native/native_offsets.c
+build/librune/native-offsets > build/rune-offsets.s
+/home/ruud/.local/rune-hosts/mlton/bin/mlton -output bin/rune-mlton.bin build/rune.mlb
+rm -f build/librune.a
+ar rcs build/librune.a build/librune/intinf.o build/librune/runtime.o build/librune/heap.o build/librune/gc/chunk.o build/librune/gc/copy.o build/librune/gc/minor.o build/librune/gc/los.o build/librune/gc/mark.o build/librune/gc/immix.o build/librune/gc/segfit.o build/librune/gc/compact.o build/librune/gc/cycle.o build/librune/gc/check.o build/librune/gc/log.o build/librune/gc/share.o build/librune/loader.o build/librune/debug.o build/librune/stack/isa_stack.o build/librune/prims.o build/librune/image.o build/librune/sys/sys_posix.o build/librune/native/native.o
+rm -rf tests/out/opt-cache
+cc -std=c17 -O2 -Wall -Wextra -pedantic -DRUNE_JIT=1 -Iruntime -o bin/runevm runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c build/gmp/1974834050/intinf.o build/librune.a -lgmp -lm 
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -o bin/runevm-stack runtime/main.c runtime/stack/interp.c build/librune.a -lm 
+python3 scripts/record-vm-build.py --vm bin/runevm --cc 'cc' --cflags='-std=c17 -O2 -Wall -Wextra -pedantic -DRUNE_JIT=1' \
+  --ldlibs='-lm ' --config build/gmp/1974834050 --out build/gmp/native-build.json --sources runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/prims.c runtime/image.c runtime/sys/sys_posix.c --headers runtime/intinf.h runtime/vm.h runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h runtime/isa.h runtime/stack/opcodes.h runtime/prims_table.h runtime/stack/interp_cases.h runtime/stack/interp_labels.h runtime/stack/ops.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/regvm.h runtime/register/live.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/reg_labels.h runtime/register/reg_loop.h runtime/register/reg_words.h runtime/register/fastprim.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/asm.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
+printf '#!/bin/sh\nd=$(dirname "$0")\n[ "$1" = -i ] && shift && exec "$d/rune-repl" "$@"\nexec "$d/rune-mlton.bin" --lib "$d/../lib" "$@"\n' > bin/rune-mlton
+chmod +x bin/rune-mlton
+bin/rune-mlton --basis-index lib/basis
+bin/rune-mlton --lint --mid-roundtrip -o bin/rune.rbc build/config.sml src/util/scon.sml src/util/ordmap.sml src/util/inttable.sml lib/unicode/utf8_sig.sml lib/unicode/utf8.sml lib/unicode/width_data.sml lib/unicode/display_width_sig.sml lib/unicode/display_width.sml lib/unicode/grapheme_data.sml lib/unicode/grapheme_sig.sml lib/unicode/grapheme.sml lib/unicode/normalize_data.sml lib/unicode/normalize_sig.sml lib/unicode/normalize.sml lib/unicode/identifier_data.sml lib/unicode/identifier_sig.sml lib/unicode/identifier.sml lib/unicode/security_data.sml lib/unicode/security_sig.sml lib/unicode/security.sml src/util/ident.sml src/util/source.sml src/util/error.sml lib/json/json_sig.sml lib/json/json.sml src/util/color.sml src/util/diagnostic.sml src/util/pass.sml src/util/usage.sml src/util/pickle.sml src/frontend/token.sml src/frontend/lexer.sml src/elab/types.sml src/core/ty.sml src/elab/overload.sml src/frontend/ast.sml src/frontend/fixity.sml src/frontend/parser.sml src/elab/unify.sml src/elab/env.sml src/elab/sigmatch.sml src/elab/exhaust.sml src/backend/opcodes.sml src/backend/prims.sml src/elab/elaborate.sml src/core/lambda.sml src/core/lambdalint.sml src/core/matchcomp.sml src/core/translate.sml src/core/mid.sml src/core/midlint.sml src/core/midtext.sml src/core/tomid.sml src/core/midcanon.sml src/core/target.sml src/core/shake.sml src/core/lift.sml src/core/simplify.sml src/core/workers.sml src/backend/code.sml src/backend/low.sml src/backend/target.sml src/backend/lowlint.sml src/backend/rep.sml src/backend/lower.sml src/backend/stack.sml src/backend/regcodes.sml src/backend/regs.sml src/backend/emit.sml src/backend/link.sml src/backend/unitfile.sml src/driver/basismanifest.sml src/driver/buildfile.sml src/driver/options.sml src/driver/unitbasis.sml src/driver/pipeline.sml src/driver/unitmid.sml src/driver/unitcache.sml src/driver/deps.sml src/driver/parallel.sml src/driver/main.sml src/driver/serve.sml src/main/rune-main.sml
+printf '#!/bin/sh\nd=$(dirname "$0")\n[ "$1" = -i ] && shift && exec "$d/rune-repl" "$@"\nexec "$d/runevm" --heap-size 67108864 "$d/rune.rbc" --lib "$d/../lib" "$@"\n' > bin/rune-boot
+chmod +x bin/rune-boot
+ln -sf rune-boot bin/rune
+bin/rune-stack --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml -o build/bench-catalog.rbc
+bin/rune-stack --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml -o build/bench-report.rbc
+bin/rune --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/coverage.sml examples/benchmarks/shared/coverage-main.sml -o build/bench-coverage.rbc
+bin/runevm-stack build/bench-catalog.rbc --check
+bench-catalog: OK (1482 profiles)
+sh tests/benchmarks/check-catalog.sh
+bench-catalog: unknown/duplicate routine entries, missing reason, duplicate profiles, missing sources of Rune programs and missing fixtures rejected
+bin/runevm build/bench-coverage.rbc --check
+bench-coverage: OK (861 primary entries, 38 companions, 510 programs)
+sh tests/benchmarks/check-matrix-status.sh
+bench-matrix: native compiler errors and compile timeouts retain their actual status and phase (/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/matrix-status.Yg1gqC)
+sh tests/benchmarks/check-measurement-status.sh
+bench-measurement: compiler exits, deadlines and missing exports remain distinct (/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement-status.NtxGJF)
+RUNE_BENCH_COMPILE_OPTIONS=-O2 sh scripts/run-benchmarks.sh --routine --configs rune
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.aS7wyG
+BENCH tak smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 7
+PASS tak
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH kittmergesort smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 100 98940 43BE5438
+PASS kittmergesort
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH primes-lazy smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 31
+PASS primes-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH primes-strict smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 31
+PASS primes-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH bdd smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 8 382 100
+PASS bdd
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH md5 smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT b2d3f56bc197fd985d5965079b5e7148
+PASS md5
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH fft smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1
+PASS fft
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH binary-trees smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 255 4016 127
+PASS binary-trees
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH smith-normal-form smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1 ~1 1 ~7506
+PASS smith-normal-form
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH nqueens smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 2
+PASS nqueens
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH kahan smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 4 100
+PASS kahan
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH wheel-sieve2-lazy smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 137
+PASS wheel-sieve2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH sequence_cps smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1160
+PASS sequence_cps
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH maillist smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 630:0
+PASS maillist
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH floyd_warshall smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 64:6016:83290D80
+PASS floyd_warshall
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH grep-lazy smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1:32:3544485218340229504
+PASS grep-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune

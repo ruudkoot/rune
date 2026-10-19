@@ -41,7 +41,8 @@ struct
         then raise Fail ("unimplemented import: " ^ #upstream row ^ ":" ^ #path row)
         else ()
       fun entry (row:BenchCatalog.entry) =
-        case List.find (fn (source:source) => #upstream source = #upstream row andalso #path source = #sourcePath row) sources of
+        if #upstream row = "rune" then BenchCatalog.localFile (#sourcePath row)
+        else case List.find (fn (source:source) => #upstream source = #upstream row andalso #path source = #sourcePath row) sources of
           NONE => raise Fail "unknown coverage source"
         | SOME source => if #disposition source = "import" then ()
                          else raise Fail "non-import source appears as runnable"

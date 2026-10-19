@@ -3458,3 +3458,16 @@ original whitespace.
 are complete. This publishes recorded coverage and method evidence, not an
 all-program compiler ranking or an unrecorded large-host sweep. Future
 parallel/runtime-specific workloads remain deferred under the agreed policy.
+
+## Rebase onto current master, 2026-10-19
+
+[The integration record](validation/rebase-2026-10-19.md) preserves all 93
+benchmark commits and the existing archived result bytes while retaining
+master's three latency workloads, current VM commands, count budgets and
+source-encoding adaptations. The catalogue now has 510 programs and 1482
+profiles. The full suite records 16521 passes, two expected skips and one stale generated
+bytecode failure; the affected optimizer gate and its 560-job dependency
+rerun pass after preserving and isolating that obsolete output. Routine
+smoke, seven coverage assertions on four SML implementations, provenance
+regressions, the latency oracle and all three latency smoke/normal profiles
+pass on the recorded rebased subject.

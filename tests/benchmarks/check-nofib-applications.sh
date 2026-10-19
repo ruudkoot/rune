@@ -9,7 +9,7 @@ catalog=$root/build/bench-catalog.rbc
 [ -f "$catalog" ] || { echo "build the catalogue with make bench-check first" >&2; exit 2; }
 mkdir -p "$root/tests/out/benchmarks"
 out=$(mktemp -d "$root/tests/out/benchmarks/nofib-$family-checks.XXXXXX")
-"$root/bin/runevm" "$catalog" --list smoke "=$family-lazy" > "$out/catalogue.tsv"
+"$root/bin/runevm-stack" "$catalog" --list smoke "=$family-lazy" > "$out/catalogue.tsv"
 [ "$(wc -l < "$out/catalogue.tsv")" = 1 ] || { echo "expected one checked source-order entry" >&2; exit 2; }
 sources=$(cut -f 4 "$out/catalogue.tsv")
 {

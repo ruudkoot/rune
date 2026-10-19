@@ -1,0 +1,3002 @@
+printf '@echo off\r\n"%%~dp0runevm.exe" --heap-size 67108864 --restore "%%~dp0rune-repl.img" -- %%*\r\n' > bin/rune-repl.cmd
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -o bin/heapsim tools/heapsim/sim.c -lm
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -o bin/heapsim-gen tools/heapsim/gen.c -lm
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime -o bin/gcsim tools/heapsim/gcsim.c -lm
+/home/ruud/.local/rune-hosts/mlton/bin/mlton -output bin/runeisa-mlton.bin build/runeisa.mlb
+cp scripts/runevm-native.sh bin/runevm-native
+chmod +x bin/runevm-native
+cc -std=c17 -O2 -Wall -Wextra -pedantic -DRUNE_ASM_TEXT -DRUNE_JIT=1 -Iruntime -o bin/runeopt-templates runtime/register/jit/templates.c runtime/register/jit/masm.c runtime/register/jit/asm_text.c
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/ml-build build/rune.cm Main.main bin/rune-smlnj-legacy.heap
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[scanning build/rune.cm]
+[parsing build/(rune.cm):config.sml]
+[parsing build/(rune.cm):../src/util/ordmap.sml]
+[parsing build/(rune.cm):../src/util/inttable.sml]
+[parsing build/(rune.cm):../lib/unicode/utf8_sig.sml]
+[creating directory lib/unicode/.cm/SKEL]
+[parsing build/(rune.cm):../lib/unicode/utf8.sml]
+[parsing build/(rune.cm):../lib/unicode/width_data.sml]
+[parsing build/(rune.cm):../lib/unicode/display_width_sig.sml]
+[parsing build/(rune.cm):../lib/unicode/display_width.sml]
+[parsing build/(rune.cm):../lib/unicode/grapheme_data.sml]
+[parsing build/(rune.cm):../lib/unicode/grapheme_sig.sml]
+[parsing build/(rune.cm):../lib/unicode/grapheme.sml]
+[parsing build/(rune.cm):../lib/unicode/normalize_data.sml]
+[parsing build/(rune.cm):../lib/unicode/normalize_sig.sml]
+[parsing build/(rune.cm):../lib/unicode/normalize.sml]
+[parsing build/(rune.cm):../lib/unicode/identifier_data.sml]
+[parsing build/(rune.cm):../lib/unicode/identifier_sig.sml]
+[parsing build/(rune.cm):../lib/unicode/identifier.sml]
+[parsing build/(rune.cm):../lib/unicode/security_data.sml]
+[parsing build/(rune.cm):../lib/unicode/security_sig.sml]
+[parsing build/(rune.cm):../lib/unicode/security.sml]
+[parsing build/(rune.cm):../src/util/ident.sml]
+[parsing build/(rune.cm):../src/util/source.sml]
+[parsing build/(rune.cm):../src/util/error.sml]
+[parsing build/(rune.cm):../lib/json/json_sig.sml]
+[creating directory lib/json/.cm/SKEL]
+[parsing build/(rune.cm):../lib/json/json.sml]
+[parsing build/(rune.cm):../src/util/color.sml]
+[parsing build/(rune.cm):../src/util/diagnostic.sml]
+[parsing build/(rune.cm):../src/util/pass.sml]
+[parsing build/(rune.cm):../src/util/usage.sml]
+[parsing build/(rune.cm):../src/util/pickle.sml]
+[parsing build/(rune.cm):../src/frontend/token.sml]
+[parsing build/(rune.cm):../src/frontend/lexer.sml]
+[parsing build/(rune.cm):../src/elab/types.sml]
+[parsing build/(rune.cm):../src/core/ty.sml]
+[parsing build/(rune.cm):../src/elab/overload.sml]
+[parsing build/(rune.cm):../src/frontend/ast.sml]
+[parsing build/(rune.cm):../src/frontend/fixity.sml]
+[parsing build/(rune.cm):../src/frontend/parser.sml]
+[parsing build/(rune.cm):../src/elab/unify.sml]
+[parsing build/(rune.cm):../src/elab/env.sml]
+[parsing build/(rune.cm):../src/elab/sigmatch.sml]
+[parsing build/(rune.cm):../src/elab/exhaust.sml]
+[parsing build/(rune.cm):../src/backend/opcodes.sml]
+[parsing build/(rune.cm):../src/backend/prims.sml]
+[parsing build/(rune.cm):../src/elab/elaborate.sml]
+[parsing build/(rune.cm):../src/core/lambda.sml]
+[parsing build/(rune.cm):../src/core/matchcomp.sml]
+[parsing build/(rune.cm):../src/core/translate.sml]
+[parsing build/(rune.cm):../src/core/midlint.sml]
+[parsing build/(rune.cm):../src/core/midtext.sml]
+[parsing build/(rune.cm):../src/core/midcanon.sml]
+[parsing build/(rune.cm):../src/core/target.sml]
+[parsing build/(rune.cm):../src/core/simplify.sml]
+[parsing build/(rune.cm):../src/core/workers.sml]
+[parsing build/(rune.cm):../src/backend/code.sml]
+[parsing build/(rune.cm):../src/backend/low.sml]
+[parsing build/(rune.cm):../src/backend/lowlint.sml]
+[parsing build/(rune.cm):../src/backend/lower.sml]
+cm=$(sh scripts/smlnj-dev-root.sh build/rune.cm); \
+  /home/ruud/.local/rune-hosts/smlnj-dev/bin/ml-build "$cm" Main.main bin/rune-smlnj-dev.heap
+[parsing build/(rune.cm):../src/backend/stack.sml]
+[parsing build/(rune.cm):../src/backend/regcodes.sml]
+[parsing build/(rune.cm):../src/backend/regs.sml]
+[parsing build/(rune.cm):../src/backend/emit.sml]
+[parsing build/(rune.cm):../src/backend/link.sml]
+[parsing build/(rune.cm):../src/backend/unitfile.sml]
+[parsing build/(rune.cm):../src/driver/basismanifest.sml]
+[parsing build/(rune.cm):../src/driver/buildfile.sml]
+[parsing build/(rune.cm):../src/driver/options.sml]
+[parsing build/(rune.cm):../src/driver/unitbasis.sml]
+[parsing build/(rune.cm):../src/driver/pipeline.sml]
+[parsing build/(rune.cm):../src/driver/unitmid.sml]
+[parsing build/(rune.cm):../src/driver/unitcache.sml]
+[parsing build/(rune.cm):../src/driver/deps.sml]
+[parsing build/(rune.cm):../src/driver/parallel.sml]
+[parsing build/(rune.cm):../src/driver/main.sml]
+[parsing build/(rune.cm):../src/driver/serve.sml]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[compiling build/(rune.cm):../src/core/target.sml]
+[code: 160, data: 32, env: 393 bytes]
+[loading build/(rune.cm):../src/util/scon.sml]
+[compiling build/(rune.cm):../lib/unicode/utf8_sig.sml]
+[creating directory lib/unicode/.cm/GUID]
+[creating directory lib/unicode/.cm/amd64-unix]
+[code: 81, data: 1, env: 411 bytes]
+[compiling build/(rune.cm):../lib/unicode/utf8.sml]
+/home/ruud/.local/rune-hosts/polyml/bin/polyc -o bin/rune-polyml.bin build/polyml-build.sml
+[code: 7475, data: 243, env: 69 bytes]
+[compiling build/(rune.cm):../src/util/ordmap.sml]
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[code: 20552, data: 104, env: 1909 bytes]
+[compiling build/(rune.cm):../lib/unicode/identifier_data.sml]
+[code: 24253, data: 19917, env: 460 bytes]
+[compiling build/(rune.cm):../lib/unicode/identifier_sig.sml]
+[code: 81, data: 1, env: 474 bytes]
+[compiling build/(rune.cm):../lib/unicode/identifier.sml]
+[code: 8045, data: 357, env: 173 bytes]
+[compiling build/(rune.cm):../src/util/source.sml]
+[code: 30805, data: 565, env: 1847 bytes]
+[compiling build/(rune.cm):../src/util/error.sml]
+[code: 5336, data: 176, env: 705 bytes]
+[compiling build/(rune.cm):../src/elab/types.sml]
+[code: 40297, data: 561, env: 3717 bytes]
+[compiling build/(rune.cm):../src/frontend/ast.sml]
+[code: 88038, data: 574, env: 9392 bytes]
+[compiling build/(rune.cm):../src/elab/exhaust.sml]
+[code: 38603, data: 515, env: 8659 bytes]
+[compiling build/(rune.cm):../src/util/inttable.sml]
+[code: 9027, data: 467, env: 558 bytes]
+[compiling build/(rune.cm):../src/core/ty.sml]
+[code: 49305, data: 337, env: 2102 bytes]
+[compiling build/(rune.cm):../src/core/lambda.sml]
+[code: 46759, data: 575, env: 2607 bytes]
+[compiling build/(rune.cm):../src/elab/overload.sml]
+[code: 8911, data: 487, env: 1109 bytes]
+[compiling build/(rune.cm):../src/backend/prims.sml]
+[code: 15450, data: 12738, env: 480 bytes]
+[compiling build/(rune.cm):../src/util/usage.sml]
+[code: 2161, data: 49, env: 287 bytes]
+[compiling build/(rune.cm):../src/elab/env.sml]
+[code: 58775, data: 519, env: 6139 bytes]
+[compiling build/(rune.cm):../src/elab/unify.sml]
+[code: 35709, data: 2069, env: 3768 bytes]
+[compiling build/(rune.cm):../src/elab/sigmatch.sml]
+[code: 74300, data: 1236, env: 6729 bytes]
+[compiling build/(rune.cm):../src/frontend/token.sml]
+[code: 4113, data: 801, env: 2901 bytes]
+[compiling build/(rune.cm):../src/util/ident.sml]
+[code: 5662, data: 198, env: 424 bytes]
+[compiling build/(rune.cm):../lib/unicode/normalize_data.sml]
+[code: 21677, data: 15989, env: 524 bytes]
+[compiling build/(rune.cm):../lib/unicode/normalize_sig.sml]
+[code: 81, data: 1, env: 490 bytes]
+[compiling build/(rune.cm):../lib/unicode/normalize.sml]
+[code: 21759, data: 703, env: 165 bytes]
+[compiling build/(rune.cm):../lib/unicode/security_data.sml]
+[code: 70985, data: 66409, env: 481 bytes]
+[compiling build/(rune.cm):../lib/unicode/security_sig.sml]
+[code: 81, data: 1, env: 1367 bytes]
+[compiling build/(rune.cm):../lib/unicode/security.sml]
+lib/unicode/security.sml:129.46 Warning: calling polyEqual
+[code: 22960, data: 832, env: 630 bytes]
+[compiling build/(rune.cm):../src/frontend/lexer.sml]
+[code: 109005, data: 2661, env: 4169 bytes]
+[compiling build/(rune.cm):../src/frontend/fixity.sml]
+[code: 4099, data: 187, env: 612 bytes]
+[compiling build/(rune.cm):../src/frontend/parser.sml]
+[code: 220741, data: 2941, env: 9873 bytes]
+[compiling build/(rune.cm):../src/elab/elaborate.sml]
+src/elab/elaborate.sml:292.82 Warning: calling polyEqual
+src/elab/elaborate.sml:282.53 Warning: calling polyEqual
+SML_LIB=/home/ruud/.local/rune-hosts/mlkit/lib/mlkit /home/ruud/.local/rune-hosts/mlkit/bin/mlkit -j 4 -o bin/rune-mlkit.bin build/rune-mlkit.mlb
+[code: 301699, data: 3011, env: 16514 bytes]
+[compiling build/(rune.cm):../src/util/pass.sml]
+[code: 7637, data: 157, env: 694 bytes]
+[reading source file:	build/config.sml[compiling build/(rune.cm):../src/core/matchcomp.sml]
+]
+[wrote X64 code file:	build/MLB/RI_GC/config.sml.s]
+[reading source file:	build/../src/util/scon.sml][code: 92313, data: 897, env: 10490 bytes]
+[compiling build/(rune.cm):../src/core/translate.sml]
+
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/scon.sml.s]
+[reading source file:	build/../src/util/ordmap.sml][code: 91037, data: 901, env: 10665 bytes]
+[compiling build/(rune.cm):../lib/unicode/width_data.sml]
+[code: 8998, data: 6198, env: 313 bytes]
+[compiling build/(rune.cm):../lib/unicode/display_width_sig.sml]
+[code: 89, data: 1, env: 197 bytes]
+[compiling build/(rune.cm):../lib/unicode/display_width.sml]
+[code: 3774, data: 110, env: 61 bytes]
+[compiling build/(rune.cm):../lib/unicode/grapheme_data.sml]
+[code: 38522, data: 35722, env: 334 bytes]
+[compiling build/(rune.cm):../src/backend/opcodes.sml]
+[code: 3007, data: 895, env: 2384 bytes]
+[compiling build/(rune.cm):../src/backend/code.sml]
+[code: 21589, data: 325, env: 3860 bytes]
+[compiling build/(rune.cm):../src/backend/rep.sml]
+[code: 3001, data: 25, env: 251 bytes]
+[compiling build/(rune.cm):../src/core/mid.sml]
+[code: 3571, data: 27, env: 2777 bytes]
+[compiling build/(rune.cm):../src/backend/low.sml]
+
+[compiling body of functor OrdMapFn (from source rune-mlkit.mlb->ordmap.sml) begin]
+[code: 34930, data: 498, env: 3238 bytes]
+[compiling build/(rune.cm):../src/backend/lower.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/ordmap.sml.code1.s]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/ordmap.sml.code2.s]
+[compiling body of functor OrdMapFn end]
+[compiling body of functor OrdMapFn (from source rune-mlkit.mlb->ordmap.sml) begin]
+/home/ruud/.local/rune-hosts/mlton/bin/mlton -output bin/runedoc-mlton.bin build/runedoc.mlb
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/ordmap.sml.code3.s]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/ordmap.sml.code4.s]
+[compiling body of functor OrdMapFn end]
+[code: 114768, data: 448, env: 3969 bytes]
+[compiling build/(rune.cm):../src/backend/regcodes.sml]
+[code: 2644, data: 908, env: 1138 bytes]
+[compiling build/(rune.cm):../src/backend/target.sml]
+[code: 73, data: 1, env: 750 bytes]
+[compiling build/(rune.cm):../src/backend/regs.sml]
+[reading source file:	build/../src/util/inttable.sml][code: 77109, data: 1437, env: 1173 bytes]
+[compiling build/(rune.cm):../src/core/midcanon.sml]
+
+[code: 34976, data: 40, env: 2593 bytes]
+[compiling build/(rune.cm):../src/driver/buildfile.sml]
+[code: 21345, data: 1481, env: 1204 bytes]
+[compiling build/(rune.cm):../src/util/pickle.sml]
+[code: 11699, data: 435, env: 894 bytes]
+[compiling build/(rune.cm):../src/backend/emit.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/inttable.sml.s]
+[reading source file:	build/../lib/unicode/utf8_sig.sml][code: 50849, data: 601, env: 4299 bytes]
+[compiling build/(rune.cm):../src/backend/link.sml]
+[code: 41143, data: 615, env: 4443 bytes]
+[compiling build/(rune.cm):../src/backend/unitfile.sml]
+
+[reading source file:	build/../lib/unicode/utf8.sml][code: 75241, data: 2249, env: 4736 bytes]
+[compiling build/(rune.cm):../src/driver/unitbasis.sml]
+src/driver/unitbasis.sml:861.72 Warning: calling polyEqual
+
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/utf8.sml.s]
+[reading source file:	build/../lib/unicode/width_data.smlbuild/smlnj-dev-root/lib/unicode/security.sml:129.46 Warning: calling polyEqual
+]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/width_data.sml.s]
+[reading source file:	build/../lib/unicode/display_width_sig.sml]
+[reading source file:	build/../lib/unicode/display_width.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/display_width.sml.s]
+[reading source file:	build/../lib/unicode/grapheme_data.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/grapheme_data.sml.s]
+[reading source file:	build/../lib/unicode/grapheme_sig.sml][code: 376599, data: 6223, env: 6852 bytes]
+[compiling build/(rune.cm):../src/driver/unitmid.sml]
+
+[reading source file:	build/../lib/unicode/grapheme.sml[code: 65725, data: 1581, env: 3296 bytes]
+[compiling build/(rune.cm):../src/core/tomid.sml]
+][code: 51277, data: 389, env: 1657 bytes]
+[compiling build/(rune.cm):../src/backend/stack.sml]
+
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/grapheme.sml.s]
+[reading source file:	build/../lib/unicode/normalize_data.sml[code: 71281, data: 1345, env: 1174 bytes]
+[compiling build/(rune.cm):../src/driver/basismanifest.sml]
+[code: 25425, data: 737, env: 1039 bytes]
+[compiling build/(rune.cm):../src/core/workers.sml]
+][code: 68043, data: 51, env: 2634 bytes]
+[compiling build/(rune.cm):../src/core/shake.sml]
+[code: 28411, data: 35, env: 2263 bytes]
+[compiling build/(rune.cm):../src/core/lift.sml]
+
+[code: 67579, data: 43, env: 2677 bytes]
+[compiling build/(rune.cm):../lib/json/json_sig.sml]
+[creating directory lib/json/.cm/GUID]
+[creating directory lib/json/.cm/amd64-unix]
+[code: 73, data: 1, env: 672 bytes]
+[compiling build/(rune.cm):../lib/json/json.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/normalize_data.sml.s]
+[reading source file:	build/../lib/unicode/normalize_sig.sml[code: 24305, data: 761, env: 260 bytes]
+[compiling build/(rune.cm):../src/util/color.sml]
+][code: 45152, data: 3104, env: 1723 bytes]
+[compiling build/(rune.cm):../src/driver/options.sml]
+[code: 39654, data: 8406, env: 1399 bytes]
+[compiling build/(rune.cm):../src/core/midtext.sml]
+
+[reading source file:	build/../lib/unicode/normalize.sml]
+[code: 134122, data: 1666, env: 3086 bytes]
+[compiling build/(rune.cm):../src/core/lambdalint.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/normalize.sml.s]
+[code: 37157, data: 1077, env: 2180 bytes]
+[compiling build/(rune.cm):../src/backend/lowlint.sml]
+[reading source file:	build/../lib/unicode/identifier_data.sml[code: 63084, data: 1500, env: 2653 bytes]
+[compiling build/(rune.cm):../src/core/simplify.sml]
+]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/identifier_data.sml.s]
+[reading source file:	build/../lib/unicode/identifier_sig.sml]
+[reading source file:	build/../lib/unicode/identifier.sml[code: 187319, data: 463, env: 4902 bytes]
+[compiling build/(rune.cm):../src/core/midlint.sml]
+][code: 42720, data: 984, env: 2221 bytes]
+[compiling build/(rune.cm):../src/driver/pipeline.sml]
+
+[code: 17106, data: 178, env: 3235 bytes]
+[compiling build/(rune.cm):../src/driver/parallel.sml]
+src/driver/parallel.sml:153.65 Warning: calling polyEqual
+src/driver/parallel.sml:105.66 Warning: calling polyEqual
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/identifier.sml.s]
+[reading source file:	build/../lib/unicode/security_data.sml[code: 36719, data: 1039, env: 1825 bytes]
+[compiling build/(rune.cm):config.sml]
+[code: 143, data: 71, env: 80 bytes]
+[compiling build/(rune.cm):../src/driver/unitcache.sml]
+]build/smlnj-dev-root/src/elab/elaborate.sml:292.82 Warning: calling polyEqual
+build/smlnj-dev-root/src/elab/elaborate.sml:282.53 Warning: calling polyEqual
+[code: 47559, data: 1247, env: 1485 bytes]
+[compiling build/(rune.cm):../lib/unicode/grapheme_sig.sml]
+[code: 81, data: 1, env: 354 bytes]
+[compiling build/(rune.cm):../lib/unicode/grapheme.sml]
+[code: 10028, data: 220, env: 151 bytes]
+[compiling build/(rune.cm):../src/util/diagnostic.sml]
+[code: 28001, data: 497, env: 1312 bytes]
+[compiling build/(rune.cm):../src/driver/deps.sml]
+
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/security_data.sml.s]
+[reading source file:	build/../lib/unicode/security_sig.sml[code: 74887, data: 855, env: 7768 bytes]
+[compiling build/(rune.cm):../src/driver/main.sml]
+src/driver/main.sml:1087.73 Warning: calling polyEqual
+src/driver/main.sml:1086.44-1086.46 Warning: calling polyEqual
+]
+[reading source file:	build/../lib/unicode/security.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/security.sml.s]
+[code: 267300, data: 4332, env: 3653 bytes]
+[compiling build/(rune.cm):../src/driver/serve.sml]
+[reading source file:	build/../src/util/ident.sml][code: 47269, data: 1125, env: 1316 bytes]
+[scanning 4092356-export.cm]
+[scanning (4092356-export.cm):build/rune.cm]
+[parsing (4092356-export.cm):4092356-export.sml]
+[compiling (4092356-export.cm):4092356-export.sml]
+[code: 256, data: 48, env: 39 bytes]
+printf '#!/bin/sh\nd=$(dirname "$0")\n[ "$1" = -i ] && shift && exec "$d/rune-repl" "$@"\nexec "%s" @SMLload="$d/rune-smlnj-legacy.heap" --lib "$d/../lib" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml" > bin/rune-smlnj-legacy
+chmod +x bin/rune-smlnj-legacy
+/home/ruud/.local/rune-hosts/polyml/bin/polyc -o bin/runedoc-polyml.bin build/runedoc-polyml-build.sml
+
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/ident.sml.s]
+[reading source file:	build/../src/util/source.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/source.sml.s]
+[reading source file:	build/../src/util/error.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/error.sml.s]
+[reading source file:	build/../lib/json/json_sig.sml]
+[reading source file:	build/../lib/json/json.sml]
+[wrote X64 code file:	build/../lib/json/MLB/RI_GC/json.sml.s]
+[reading source file:	build/../src/util/color.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/color.sml.s]
+[reading source file:	build/../src/util/diagnostic.sml]/home/ruud/.local/rune-hosts/mlton/bin/mlton -output bin/runeopt-mlton.bin build/runeopt.mlb
+
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/diagnostic.sml.s]
+[reading source file:	build/../src/util/pass.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/pass.sml.s]
+[reading source file:	build/../src/util/usage.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/usage.sml.s]
+[reading source file:	build/../src/util/pickle.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/pickle.sml.s]
+[reading source file:	build/../src/frontend/token.sml]
+[wrote X64 code file:	build/../src/frontend/MLB/RI_GC/token.sml.s]
+[reading source file:	build/../src/frontend/lexer.sml]
+[wrote X64 code file:	build/../src/frontend/MLB/RI_GC/lexer.sml.s]
+[reading source file:	build/../src/elab/types.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/types.sml.s]
+[reading source file:	build/../src/core/ty.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/ty.sml.s]
+[reading source file:	build/../src/elab/overload.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/overload.sml.s]
+[reading source file:	build/../src/frontend/ast.sml]build/smlnj-dev-root/src/driver/unitbasis.sml:861.72 Warning: calling polyEqual
+
+[wrote X64 code file:	build/../src/frontend/MLB/RI_GC/ast.sml.s]
+[reading source file:	build/../src/frontend/fixity.sml]
+[wrote X64 code file:	build/../src/frontend/MLB/RI_GC/fixity.sml.s]
+[reading source file:	build/../src/frontend/parser.sml]
+rm -rf tests/out/opt-cache tests/out/opt-cache-asan
+/home/ruud/.local/rune-hosts/polyml/bin/polyc -o bin/runeopt-polyml.bin build/runeopt-polyml-build.sml
+bin/rune -o bin/runedoc.rbc build/config.sml src/util/scon.sml src/util/ordmap.sml src/util/inttable.sml lib/unicode/utf8_sig.sml lib/unicode/utf8.sml lib/unicode/width_data.sml lib/unicode/display_width_sig.sml lib/unicode/display_width.sml lib/unicode/grapheme_data.sml lib/unicode/grapheme_sig.sml lib/unicode/grapheme.sml lib/unicode/normalize_data.sml lib/unicode/normalize_sig.sml lib/unicode/normalize.sml lib/unicode/identifier_data.sml lib/unicode/identifier_sig.sml lib/unicode/identifier.sml lib/unicode/security_data.sml lib/unicode/security_sig.sml lib/unicode/security.sml src/util/ident.sml src/util/source.sml src/util/error.sml lib/json/json_sig.sml lib/json/json.sml src/util/color.sml src/util/diagnostic.sml src/util/usage.sml src/frontend/token.sml src/frontend/lexer.sml src/elab/types.sml src/core/ty.sml src/elab/overload.sml src/frontend/ast.sml src/frontend/fixity.sml src/frontend/parser.sml src/elab/unify.sml src/elab/env.sml src/elab/sigmatch.sml src/elab/exhaust.sml src/backend/prims.sml src/elab/elaborate.sml src/driver/basismanifest.sml src/doc/docsource.sml src/doc/docdiag.sml src/doc/doccomments.sml src/doc/doctext.sml src/doc/dochead.sml src/doc/docir.sml src/doc/docextract.sml src/doc/docanchor.sml src/doc/docmarkdown.sml src/doc/docclaims.sml src/doc/docelab.sml src/doc/doctests.sml src/doc/docnotes.sml src/doc/docannot.sml src/doc/docresolve.sml src/doc/docpage.sml src/doc/docexamples.sml src/doc/doclaws.sml src/doc/docsite.sml src/doc/docmain.sml src/main/runedoc-rune-main.sml
+bin/rune -o bin/runeopt.rbc build/config.sml src/util/ordmap.sml src/isa/isa.sml src/isa/stack.sml src/isa/prims.sml src/backend/opcodes.sml src/backend/prims.sml src/opt/rbc.sml src/opt/x64_layout.sml src/opt/rbcimage.sml src/opt/rbccheck.sml src/opt/rbcdisasm.sml src/opt/x64.sml src/opt/optmain.sml src/main/runeopt-rune-main.sml
+[wrote X64 code file:	build/../src/frontend/MLB/RI_GC/parser.sml.s]
+[reading source file:	build/../src/elab/unify.sml]bin/rune-mlton --basis-index lib/random
+bin/rune-mlton --basis-index lib/unicode
+bin/rune-mlton --basis-index lib/digest
+bin/rune-mlton --basis-index lib/pretty
+bin/rune-mlton --basis-index lib/zmtp
+rm -rf lib/cache
+bin/rune --units --basis all --cache-dir lib/cache examples/hello.sml -o build/basis-cache.rbc
+
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/unify.sml.s]
+[reading source file:	build/../src/elab/env.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/env.sml.s]
+[reading source file:	build/../src/elab/sigmatch.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/sigmatch.sml.s]
+[reading source file:	build/../src/elab/exhaust.sml]
+bin/rune --units --basis all --target=stack --cache-dir lib/cache examples/hello.sml -o build/basis-cache.stack.rbc
+rm -rf bin/rune-repl.units
+bin/rune-boot --units --basis all --emit-units bin/rune-repl.units -o bin/rune-repl.rbc build/config.sml src/util/scon.sml src/util/ordmap.sml src/util/inttable.sml lib/unicode/utf8_sig.sml lib/unicode/utf8.sml lib/unicode/width_data.sml lib/unicode/display_width_sig.sml lib/unicode/display_width.sml lib/unicode/grapheme_data.sml lib/unicode/grapheme_sig.sml lib/unicode/grapheme.sml lib/unicode/normalize_data.sml lib/unicode/normalize_sig.sml lib/unicode/normalize.sml lib/unicode/identifier_data.sml lib/unicode/identifier_sig.sml lib/unicode/identifier.sml lib/unicode/security_data.sml lib/unicode/security_sig.sml lib/unicode/security.sml src/util/ident.sml src/util/source.sml src/util/error.sml lib/json/json_sig.sml lib/json/json.sml src/util/color.sml src/util/diagnostic.sml src/util/pass.sml src/util/usage.sml src/util/pickle.sml src/frontend/token.sml src/frontend/lexer.sml src/elab/types.sml src/core/ty.sml src/elab/overload.sml src/frontend/ast.sml src/frontend/fixity.sml src/frontend/parser.sml src/elab/unify.sml src/elab/env.sml src/elab/sigmatch.sml src/elab/exhaust.sml src/backend/opcodes.sml src/backend/prims.sml src/elab/elaborate.sml src/core/lambda.sml src/core/lambdalint.sml src/core/matchcomp.sml src/core/translate.sml src/core/mid.sml src/core/midlint.sml src/core/midtext.sml src/core/tomid.sml src/core/midcanon.sml src/core/target.sml src/core/shake.sml src/core/lift.sml src/core/simplify.sml src/core/workers.sml src/backend/code.sml src/backend/low.sml src/backend/target.sml src/backend/lowlint.sml src/backend/rep.sml src/backend/lower.sml src/backend/stack.sml src/backend/regcodes.sml src/backend/regs.sml src/backend/emit.sml src/backend/link.sml src/backend/unitfile.sml src/driver/basismanifest.sml src/driver/buildfile.sml src/driver/options.sml src/driver/unitbasis.sml src/driver/pipeline.sml src/driver/unitmid.sml src/driver/unitcache.sml src/driver/deps.sml src/driver/parallel.sml src/driver/main.sml src/driver/serve.sml lib/terminal/style_sig.sml lib/terminal/style.sml lib/terminal/key_sig.sml lib/terminal/key.sml lib/terminal/device_sig.sml lib/terminal/device.sml lib/terminal/history_sig.sml lib/terminal/history.sml lib/terminal/line_edit_sig.sml lib/terminal/line_edit_fn.sml lib/terminal/line_edit.sml lib/pretty/pretty_sig.sml lib/pretty/pretty.sml lib/markdown/entities.sml lib/markdown/markdown_sig.sml lib/markdown/markdown.sml lib/jsonrpc/framing_sig.sml lib/jsonrpc/framing.sml lib/jsonrpc/jsonrpc_sig.sml lib/jsonrpc/jsonrpc.sml src/repl/show.sml src/repl/session.sml src/repl/scan.sml src/repl/highlight.sml src/repl/complete.sml src/repl/front.sml src/repl/doc.sml src/repl/search.sml src/repl/repl.sml src/repl/debug.sml src/repl/commands.sml src/repl/engine.sml src/repl/protocol.sml src/main/repl-main.sml
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/exhaust.sml.s]
+[reading source file:	build/../src/backend/opcodes.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/opcodes.sml.s]
+[reading source file:	build/../src/backend/prims.sml]build/smlnj-dev-root/src/driver/parallel.sml:153.65 Warning: calling polyEqual
+build/smlnj-dev-root/src/driver/parallel.sml:105.66 Warning: calling polyEqual
+
+build/smlnj-dev-root/src/driver/main.sml:1087.73 Warning: calling polyEqual
+build/smlnj-dev-root/src/driver/main.sml:1086.44-1086.46 Warning: calling polyEqual
+touch lib/cache/made
+bin/rune-boot -o bin/rune-repl.load.rbc src/repl/load.sml
+bin/rune-mlton --target=stack --lint --mid-roundtrip -o bin/rune.stack.rbc build/config.sml src/util/scon.sml src/util/ordmap.sml src/util/inttable.sml lib/unicode/utf8_sig.sml lib/unicode/utf8.sml lib/unicode/width_data.sml lib/unicode/display_width_sig.sml lib/unicode/display_width.sml lib/unicode/grapheme_data.sml lib/unicode/grapheme_sig.sml lib/unicode/grapheme.sml lib/unicode/normalize_data.sml lib/unicode/normalize_sig.sml lib/unicode/normalize.sml lib/unicode/identifier_data.sml lib/unicode/identifier_sig.sml lib/unicode/identifier.sml lib/unicode/security_data.sml lib/unicode/security_sig.sml lib/unicode/security.sml src/util/ident.sml src/util/source.sml src/util/error.sml lib/json/json_sig.sml lib/json/json.sml src/util/color.sml src/util/diagnostic.sml src/util/pass.sml src/util/usage.sml src/util/pickle.sml src/frontend/token.sml src/frontend/lexer.sml src/elab/types.sml src/core/ty.sml src/elab/overload.sml src/frontend/ast.sml src/frontend/fixity.sml src/frontend/parser.sml src/elab/unify.sml src/elab/env.sml src/elab/sigmatch.sml src/elab/exhaust.sml src/backend/opcodes.sml src/backend/prims.sml src/elab/elaborate.sml src/core/lambda.sml src/core/lambdalint.sml src/core/matchcomp.sml src/core/translate.sml src/core/mid.sml src/core/midlint.sml src/core/midtext.sml src/core/tomid.sml src/core/midcanon.sml src/core/target.sml src/core/shake.sml src/core/lift.sml src/core/simplify.sml src/core/workers.sml src/backend/code.sml src/backend/low.sml src/backend/target.sml src/backend/lowlint.sml src/backend/rep.sml src/backend/lower.sml src/backend/stack.sml src/backend/regcodes.sml src/backend/regs.sml src/backend/emit.sml src/backend/link.sml src/backend/unitfile.sml src/driver/basismanifest.sml src/driver/buildfile.sml src/driver/options.sml src/driver/unitbasis.sml src/driver/pipeline.sml src/driver/unitmid.sml src/driver/unitcache.sml src/driver/deps.sml src/driver/parallel.sml src/driver/main.sml src/driver/serve.sml src/main/rune-main.sml
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/prims.sml.s]
+[reading source file:	build/../src/elab/elaborate.sml]printf '#!/bin/sh\nd=$(dirname "$0")\n[ "$1" = -i ] && shift && exec "$d/rune-repl" "$@"\nexec "%s" @SMLload="$d/rune-smlnj-dev.heap" --lib "$d/../lib" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj-dev/bin/sml" > bin/rune-smlnj-dev
+chmod +x bin/rune-smlnj-dev
+bin/rune --target=stack -o bin/runedoc.stack.rbc build/config.sml src/util/scon.sml src/util/ordmap.sml src/util/inttable.sml lib/unicode/utf8_sig.sml lib/unicode/utf8.sml lib/unicode/width_data.sml lib/unicode/display_width_sig.sml lib/unicode/display_width.sml lib/unicode/grapheme_data.sml lib/unicode/grapheme_sig.sml lib/unicode/grapheme.sml lib/unicode/normalize_data.sml lib/unicode/normalize_sig.sml lib/unicode/normalize.sml lib/unicode/identifier_data.sml lib/unicode/identifier_sig.sml lib/unicode/identifier.sml lib/unicode/security_data.sml lib/unicode/security_sig.sml lib/unicode/security.sml src/util/ident.sml src/util/source.sml src/util/error.sml lib/json/json_sig.sml lib/json/json.sml src/util/color.sml src/util/diagnostic.sml src/util/usage.sml src/frontend/token.sml src/frontend/lexer.sml src/elab/types.sml src/core/ty.sml src/elab/overload.sml src/frontend/ast.sml src/frontend/fixity.sml src/frontend/parser.sml src/elab/unify.sml src/elab/env.sml src/elab/sigmatch.sml src/elab/exhaust.sml src/backend/prims.sml src/elab/elaborate.sml src/driver/basismanifest.sml src/doc/docsource.sml src/doc/docdiag.sml src/doc/doccomments.sml src/doc/doctext.sml src/doc/dochead.sml src/doc/docir.sml src/doc/docextract.sml src/doc/docanchor.sml src/doc/docmarkdown.sml src/doc/docclaims.sml src/doc/docelab.sml src/doc/doctests.sml src/doc/docnotes.sml src/doc/docannot.sml src/doc/docresolve.sml src/doc/docpage.sml src/doc/docexamples.sml src/doc/doclaws.sml src/doc/docsite.sml src/doc/docmain.sml src/main/runedoc-rune-main.sml
+
+bin/rune --target=stack -o bin/runeopt.stack.rbc build/config.sml src/util/ordmap.sml src/isa/isa.sml src/isa/stack.sml src/isa/prims.sml src/backend/opcodes.sml src/backend/prims.sml src/opt/rbc.sml src/opt/x64_layout.sml src/opt/rbcimage.sml src/opt/rbccheck.sml src/opt/rbcdisasm.sml src/opt/x64.sml src/opt/optmain.sml src/main/runeopt-rune-main.sml
+cc -std=c17 -O2 -Wall -Wextra -pedantic -DRUNE_JIT=1 -DRUNE_GC_BITS -Iruntime  -include build/gmp/1974834050/config.h -o bin/runevm-gcbits runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/prims.c runtime/image.c runtime/sys/sys_posix.c -lgmp -lm 
+cc -std=c17 -O2 -Wall -Wextra -pedantic -DRUNE_JIT=1 -DRUNE_BARRIER_CARDS -Iruntime  -include build/gmp/1974834050/config.h -o bin/runevm-cards runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/prims.c runtime/image.c runtime/sys/sys_posix.c -lgmp -lm 
+cc -std=c17 -O2 -Wall -Wextra -pedantic -DRUNE_JIT=1 -DRUNE_CENSUS -Iruntime  -include build/gmp/1974834050/config.h -o bin/runevm-census runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/prims.c runtime/image.c runtime/sys/sys_posix.c runtime/census/census.c runtime/census/census_static.c -lgmp -lm 
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/elaborate.sml.s]
+[reading source file:	build/../src/core/lambda.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/lambda.sml.s]
+[reading source file:	build/../src/core/lambdalint.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/lambdalint.sml.s]
+[reading source file:	build/../src/core/matchcomp.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/matchcomp.sml.s]
+[reading source file:	build/../src/core/translate.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/translate.sml.s]
+[reading source file:	build/../src/core/mid.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/mid.sml.s]
+[reading source file:	build/../src/core/midlint.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/midlint.sml.s]
+[reading source file:	build/../src/core/midtext.smlprintf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runeisa-mlton.bin" "$@"\n' > bin/runeisa-mlton
+chmod +x bin/runeisa-mlton
+bin/rune-stack -o bin/runeisa.rbc build/config.sml src/util/ordmap.sml src/isa/isa.sml src/isa/stack.sml src/isa/prims.sml src/isa/regs.sml src/isa/isagen.sml src/isa/reggen.sml src/isa/isamain.sml src/main/runeisa-rune-main.sml
+]cc -std=c17 -O2 -Wall -Wextra -pedantic -DRUNE_JIT=1 -Iruntime -o bin/runevm-sml runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c build/librune.a -lm 
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Iruntime  -include build/gmp/1974834050/config.h -o build/intinf-alloc-test tests/intinf/alloc-failure.c build/librune.a -lgmp -lm
+/home/ruud/.local/rune-hosts/smlnj32/bin/ml-build build/rune.cm Main.main bin/rune-smlnj32.heap
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[scanning build/rune.cm]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[compiling build/(rune.cm):../src/util/ordmap.sml]
+
+[code: 16253, data: 173, env: 1909 bytes]
+[compiling build/(rune.cm):../lib/unicode/utf8_sig.sml]
+[creating directory lib/unicode/.cm/x86-unix]
+[code: 68, env: 411 bytes]
+[compiling build/(rune.cm):../lib/unicode/utf8.sml]
+[code: 6831, data: 511, env: 68 bytes]
+[compiling build/(rune.cm):../lib/unicode/identifier_data.sml]
+[code: 23827, data: 20007, env: 460 bytes]
+[compiling build/(rune.cm):../lib/unicode/identifier_sig.sml]
+[code: 72, env: 474 bytes]
+[compiling build/(rune.cm):../lib/unicode/identifier.sml]
+[code: 7037, data: 493, env: 173 bytes]
+[compiling build/(rune.cm):../src/util/source.sml]
+[code: 27116, data: 1384, env: 1847 bytes]
+[compiling build/(rune.cm):../src/util/error.sml]
+[code: 4689, data: 265, env: 705 bytes]
+[compiling build/(rune.cm):../src/elab/types.sml]
+[code: 34885, data: 1917, env: 3717 bytes]
+[compiling build/(rune.cm):../src/util/inttable.sml]
+[code: 8108, data: 740, env: 558 bytes]
+[compiling build/(rune.cm):../src/core/ty.sml]
+[code: 44786, data: 1586, env: 2102 bytes]
+[compiling build/(rune.cm):../src/core/lambda.sml]
+[code: 39045, data: 1137, env: 2609 bytes]
+[compiling build/(rune.cm):../src/backend/opcodes.sml]
+[code: 6011, data: 4231, env: 2384 bytes]
+[compiling build/(rune.cm):../src/backend/prims.sml]
+[code: 57353, data: 55121, env: 480 bytes]
+[compiling build/(rune.cm):../src/backend/code.sml]
+[code: 18697, data: 805, env: 3862 bytes]
+[compiling build/(rune.cm):../src/backend/low.sml]
+[code: 27459, data: 1051, env: 3238 bytes]
+[compiling build/(rune.cm):../src/util/pass.sml]
+[code: 6076, data: 224, env: 694 bytes]
+[compiling build/(rune.cm):../src/backend/rep.sml]
+[code: 2481, data: 109, env: 252 bytes]
+[compiling build/(rune.cm):../src/core/mid.sml]
+[code: 2714, data: 74, env: 2778 bytes]
+[compiling build/(rune.cm):../src/backend/lower.sml]
+[code: 106171, data: 1959, env: 3971 bytes]
+[compiling build/(rune.cm):../src/backend/link.sml]
+[code: 38785, data: 1945, env: 4444 bytes]
+[compiling build/(rune.cm):../src/core/target.sml]
+[code: 171, data: 59, env: 393 bytes]
+[loading build/(rune.cm):../src/util/scon.sml]
+[compiling build/(rune.cm):../src/frontend/ast.sml]
+printf '#!/bin/sh\nd=$(dirname "$0")\n[ "$1" = -i ] && shift && exec "$d/rune-repl" "$@"\nexec "$d/rune-polyml.bin" --lib "$d/../lib" "$@"\n' > bin/rune-polyml
+chmod +x bin/rune-polyml
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runedoc-mlton.bin" --lib "$d/../lib" "$@"\n' > bin/runedoc-mlton
+chmod +x bin/runedoc-mlton
+cm=$(sh scripts/smlnj-dev-root.sh build/runedoc.cm); \
+  /home/ruud/.local/rune-hosts/smlnj-dev/bin/ml-build "$cm" DocMain.main bin/runedoc-smlnj-dev.heap
+[code: 71668, data: 1680, env: 9393 bytes]
+[compiling build/(rune.cm):../src/elab/overload.sml]
+[code: 9872, data: 1972, env: 1109 bytes]
+[compiling build/(rune.cm):../src/util/usage.sml]
+[code: 1732, data: 104, env: 287 bytes]
+[compiling build/(rune.cm):../src/elab/env.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/midtext.sml.s]
+[code: 54218, data: 2166, env: 6139 bytes]
+[compiling build/(rune.cm):../src/elab/unify.sml]
+[reading source file:	build/../src/core/tomid.smlStandard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[code: 31101, data: 2837, env: 3768 bytes]
+[compiling build/(rune.cm):../src/frontend/token.sml]
+[code: 5369, data: 2305, env: 2902 bytes]
+[compiling build/(rune.cm):../src/util/ident.sml]
+[code: 4476, data: 300, env: 424 bytes]
+[compiling build/(rune.cm):../lib/unicode/normalize_data.sml]
+[code: 21165, data: 16121, env: 524 bytes]
+[compiling build/(rune.cm):../lib/unicode/normalize_sig.sml]
+[code: 72, env: 490 bytes]
+[compiling build/(rune.cm):../lib/unicode/normalize.sml]
+][code: 18978, data: 1138, env: 165 bytes]
+[compiling build/(rune.cm):../lib/unicode/security_data.sml]
+[code: 70970, data: 66998, env: 481 bytes]
+[compiling build/(rune.cm):../lib/unicode/security_sig.sml]
+[code: 72, env: 1367 bytes]
+[compiling build/(rune.cm):../lib/unicode/security.sml]
+lib/unicode/security.sml:129.46 Warning: calling polyEqual
+[code: 19925, data: 1565, env: 630 bytes]
+[compiling build/(rune.cm):../src/frontend/lexer.sml]
+build/smlnj-dev-root/src/doc/docdiag.sml:39.49 Warning: calling polyEqual
+[code: 97348, data: 4408, env: 4170 bytes]
+[compiling build/(rune.cm):../src/frontend/fixity.sml]
+[code: 4097, data: 989, env: 612 bytes]
+[compiling build/(rune.cm):../src/frontend/parser.sml]
+
+build/smlnj-dev-root/src/doc/dochead.sml:116.74 Warning: calling polyEqual
+[code: 191131, data: 4763, env: 9875 bytes]
+[compiling build/(rune.cm):../src/elab/exhaust.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/tomid.sml.s]
+[reading source file:	build/../src/core/midcanon.sml[code: 32668, data: 1444, env: 8660 bytes]
+[compiling build/(rune.cm):../src/elab/sigmatch.sml]
+][code: 65283, data: 2399, env: 6728 bytes]
+[compiling build/(rune.cm):../src/elab/elaborate.sml]
+src/elab/elaborate.sml:292.82 Warning: calling polyEqual
+src/elab/elaborate.sml:282.53 Warning: calling polyEqual
+
+[code: 303707, data: 7019, env: 16513 bytes]
+[compiling build/(rune.cm):../src/core/matchcomp.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/midcanon.sml.s]
+[reading source file:	build/../src/core/target.sml[code: 83161, data: 2445, env: 10492 bytes]
+[compiling build/(rune.cm):../src/core/translate.sml]
+]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/target.sml.s]
+[reading source file:	build/../src/core/shake.sml][code: 77362, data: 2022, env: 10667 bytes]
+[compiling build/(rune.cm):../src/core/lift.sml]
+[code: 58645, data: 1029, env: 2678 bytes]
+[compiling build/(rune.cm):config.sml]
+[code: 151, data: 91, env: 80 bytes]
+[compiling build/(rune.cm):../src/driver/basismanifest.sml]
+[code: 22152, data: 1268, env: 1039 bytes]
+[compiling build/(rune.cm):../src/core/tomid.sml]
+
+[code: 43529, data: 1029, env: 1658 bytes]
+[compiling build/(rune.cm):../lib/json/json_sig.sml]
+[creating directory lib/json/.cm/x86-unix]
+[code: 64, env: 672 bytes]
+[compiling build/(rune.cm):../lib/json/json.sml]
+[code: 20457, data: 1189, env: 260 bytes]
+[compiling build/(rune.cm):../src/util/color.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/shake.sml.s]
+[reading source file:	build/../src/core/lift.sml[code: 41458, data: 7030, env: 1723 bytes]
+[compiling build/(rune.cm):../src/driver/buildfile.sml]
+][code: 18817, data: 2225, env: 1204 bytes]
+[compiling build/(rune.cm):../src/driver/options.sml]
+[code: 36856, data: 9060, env: 1399 bytes]
+[compiling build/(rune.cm):../src/core/lambdalint.sml]
+[code: 31289, data: 1777, env: 2182 bytes]
+[compiling build/(rune.cm):../src/backend/regcodes.sml]
+[code: 6248, data: 4848, env: 1138 bytes]
+[compiling build/(rune.cm):../src/backend/emit.sml]
+[code: 42611, data: 1487, env: 4300 bytes]
+[compiling build/(rune.cm):../src/backend/unitfile.sml]
+[code: 75163, data: 4251, env: 4737 bytes]
+[compiling build/(rune.cm):../src/util/pickle.sml]
+[code: 9700, data: 664, env: 894 bytes]
+[compiling build/(rune.cm):../src/driver/unitbasis.sml]
+src/driver/unitbasis.sml:861.72 Warning: calling polyEqual
+
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runedoc-polyml.bin" --lib "$d/../lib" "$@"\n' > bin/runedoc-polyml
+chmod +x bin/runedoc-polyml
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runeopt-mlton.bin" --runtime "$d/../build" "$@"\n' > bin/runeopt-mlton
+chmod +x bin/runeopt-mlton
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runeopt-polyml.bin" --runtime "$d/../build" "$@"\n' > bin/runeopt-polyml
+chmod +x bin/runeopt-polyml
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size 67108864 "$d/runedoc.rbc" --lib "$d/../lib" "$@"\n' > bin/runedoc-boot
+chmod +x bin/runedoc-boot
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size 67108864 "$d/runeopt.rbc" --runtime "$d/../build" "$@"\n' > bin/runeopt-boot
+chmod +x bin/runeopt-boot
+rm -rf tests/out/opt-cache tests/out/opt-cache-asan
+bin/rune-mlton --basis-index lib/test/property
+bin/rune-mlton --basis-index lib/terminal
+bin/rune-mlton --basis-index lib/json
+bin/rune-mlton --basis-index lib/markdown
+bin/rune-mlton --basis-index lib/jupyter
+bin/runevm --heap-size 67108864 bin/rune-repl.load.rbc bin/rune-repl.units/units --make-image bin/rune-repl.img < /dev/null
+ln -sf runedoc-boot bin/runedoc
+ln -sf runeopt-boot bin/runeopt
+bin/rune-mlton --basis-index lib/test/property/basis
+bin/rune-mlton --basis-index lib/test/unit
+bin/rune-mlton --basis-index lib/jsonrpc
+printf '#!/bin/sh\nd=$(dirname "$0")\nif [ "$1" = --dap ]; then shift; exec "$d/rune-dap" "$@"; fi\nexec "$d/runevm" --heap-size 67108864 --restore "$d/rune-repl.img" -- "$@"\n' > bin/rune-repl
+chmod +x bin/rune-repl
+rm -rf build/basis-examples && mkdir -p build/basis-examples
+bin/runedoc --lib lib --library basis --examples build/basis-examples > build/basis-examples.log 2>&1 \
+  || { cat build/basis-examples.log; exit 1; }
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/lift.sml.s]
+[reading source file:	build/../src/core/simplify.sml]touch build/basis-examples/.done
+rm -rf build/laws && mkdir -p build/laws
+bin/runedoc --lib lib --library basis --laws build/laws > build/laws.log 2>&1 || { cat build/laws.log; exit 1; }
+[code: 383210, data: 12554, env: 6850 bytes]
+[compiling build/(rune.cm):../src/core/midcanon.sml]
+[code: 28017, data: 569, env: 2594 bytes]
+[compiling build/(rune.cm):../src/driver/unitmid.sml]
+[code: 55256, data: 2824, env: 3296 bytes]
+[compiling build/(rune.cm):../src/backend/target.sml]
+[code: 64, env: 748 bytes]
+[compiling build/(rune.cm):../src/backend/stack.sml]
+[code: 65891, data: 2663, env: 1172 bytes]
+[compiling build/(rune.cm):../src/backend/regs.sml]
+[code: 70593, data: 3161, env: 1171 bytes]
+[compiling build/(rune.cm):../lib/unicode/grapheme_data.sml]
+[code: 38032, data: 35748, env: 334 bytes]
+[compiling build/(rune.cm):../lib/unicode/width_data.sml]
+[code: 8511, data: 6231, env: 313 bytes]
+[compiling build/(rune.cm):../lib/unicode/display_width_sig.sml]
+[code: 76, env: 197 bytes]
+[compiling build/(rune.cm):../lib/unicode/display_width.sml]
+[code: 2999, data: 151, env: 61 bytes]
+[compiling build/(rune.cm):../lib/unicode/grapheme_sig.sml]
+[code: 72, env: 354 bytes]
+[compiling build/(rune.cm):../lib/unicode/grapheme.sml]
+[code: 8113, data: 309, env: 151 bytes]
+[compiling build/(rune.cm):../src/util/diagnostic.sml]
+[code: 22970, data: 790, env: 1311 bytes]
+[compiling build/(rune.cm):../src/driver/deps.sml]
+[code: 67715, data: 2359, env: 7769 bytes]
+[compiling build/(rune.cm):../src/core/workers.sml]
+
+[code: 59340, data: 1224, env: 2635 bytes]
+[compiling build/(rune.cm):../src/core/shake.sml]
+[code: 23693, data: 569, env: 2264 bytes]
+[compiling build/(rune.cm):../src/core/simplify.sml]
+build/smlnj-dev-root/src/doc/docsite.sml:1950.82 Warning: calling polyEqual
+build/smlnj-dev-root/src/doc/docsite.sml:1939.53 Warning: calling polyEqual
+build/smlnj-dev-root/src/doc/docsite.sml:1938.44 Warning: calling polyEqual
+build/smlnj-dev-root/src/doc/docsite.sml:1871.87 Warning: calling polyEqual
+build/smlnj-dev-root/src/doc/docsite.sml:1369.78 Warning: calling polyEqual
+build/smlnj-dev-root/src/doc/docsite.sml:991.18 Warning: calling polyEqual
+build/smlnj-dev-root/src/doc/docsite.sml:590.82 Warning: calling polyEqual
+[code: 165605, data: 2093, env: 4904 bytes]
+[compiling build/(rune.cm):../src/backend/lowlint.sml]
+[code: 53865, data: 2745, env: 2653 bytes]
+[compiling build/(rune.cm):../src/core/midlint.sml]
+[code: 36671, data: 1667, env: 2222 bytes]
+[compiling build/(rune.cm):../src/core/midtext.sml]
+[code: 113365, data: 3413, env: 3087 bytes]
+[compiling build/(rune.cm):../src/driver/pipeline.sml]
+[code: 14499, data: 463, env: 3232 bytes]
+[compiling build/(rune.cm):../src/driver/parallel.sml]
+src/driver/parallel.sml:153.65 Warning: calling polyEqual
+src/driver/parallel.sml:105.66 Warning: calling polyEqual
+[code: 32572, data: 1996, env: 1828 bytes]
+[compiling build/(rune.cm):../src/driver/unitcache.sml]
+[code: 38375, data: 1799, env: 1485 bytes]
+[compiling build/(rune.cm):../src/driver/main.sml]
+src/driver/main.sml:1087.73 Warning: calling polyEqual
+src/driver/main.sml:1086.44-1086.46 Warning: calling polyEqual
+touch build/laws/.done
+bin/rune-mlton --basis-index lib/test/runner
+bin/rune-mlton --basis-index lib/dap
+bin/rune --library dap --library jsonrpc src/front/engine.sml src/dap/translate.sml src/dap/adapter.sml -o bin/rune-dap.rbc
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/simplify.sml.s]
+[reading source file:	build/../src/core/workers.smlbin/rune --library jupyter --library jsonrpc --library digest --library unicode src/front/engine.sml src/dap/translate.sml \
+  src/util/ident.sml src/kernel/kernel.sml -o bin/rune-kernel.rbc
+][code: 265085, data: 8137, env: 3654 bytes]
+[compiling build/(rune.cm):../src/driver/serve.sml]
+[code: 40219, data: 2263, env: 1317 bytes]
+[scanning 4124689-export.cm]
+[scanning (4124689-export.cm):build/rune.cm]
+[parsing (4124689-export.cm):4124689-export.sml]
+[compiling (4124689-export.cm):4124689-export.sml]
+[code: 245, data: 65, env: 39 bytes]
+printf '#!/bin/sh\nd=$(dirname "$0")\n[ "$1" = -i ] && shift && exec "$d/rune-repl" "$@"\nexec "%s" @SMLload="$d/rune-smlnj32.heap" --lib "$d/../lib" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj32/bin/sml" > bin/rune-smlnj32
+chmod +x bin/rune-smlnj32
+bin/rune --library test/runner --library json tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/sh.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/portability.sml tests/runner/main.sml -o bin/rune-test.rbc
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/ml-build build/runedoc.cm DocMain.main bin/runedoc-smlnj-legacy.heap
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[scanning build/runedoc.cm]
+[parsing build/(runedoc.cm):../src/doc/docsource.sml]
+[parsing build/(runedoc.cm):../src/doc/docdiag.sml]
+[parsing build/(runedoc.cm):../src/doc/doctext.sml]
+[parsing build/(runedoc.cm):../src/doc/docextract.sml]
+[parsing build/(runedoc.cm):../src/doc/docanchor.sml]
+[parsing build/(runedoc.cm):../src/doc/docclaims.sml]
+[parsing build/(runedoc.cm):../src/doc/docelab.sml]
+[parsing build/(runedoc.cm):../src/doc/doctests.sml]
+[parsing build/(runedoc.cm):../src/doc/docannot.sml]
+[parsing build/(runedoc.cm):../src/doc/docresolve.sml]
+[parsing build/(runedoc.cm):../src/doc/docpage.sml]
+
+[parsing build/(runedoc.cm):../src/doc/doclaws.sml]
+[parsing build/(runedoc.cm):../src/doc/docsite.sml]
+[parsing build/(runedoc.cm):../src/doc/docmain.sml]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[loading build/(runedoc.cm):../src/util/scon.sml]
+[loading build/(runedoc.cm):../lib/unicode/utf8_sig.sml]
+[loading build/(runedoc.cm):../lib/unicode/utf8.sml]
+[loading build/(runedoc.cm):../src/util/ordmap.sml]
+[loading build/(runedoc.cm):../lib/unicode/identifier_data.sml]
+[loading build/(runedoc.cm):../lib/unicode/identifier_sig.sml]
+[loading build/(runedoc.cm):../lib/unicode/identifier.sml]
+[loading build/(runedoc.cm):../src/util/source.sml]
+[loading build/(runedoc.cm):../src/util/error.sml]
+[loading build/(runedoc.cm):../src/elab/types.sml]
+[loading build/(runedoc.cm):../src/frontend/ast.sml]
+[loading build/(runedoc.cm):../src/elab/exhaust.sml]
+[loading build/(runedoc.cm):../lib/unicode/width_data.sml]
+[loading build/(runedoc.cm):../lib/unicode/display_width_sig.sml]
+[loading build/(runedoc.cm):../lib/unicode/display_width.sml]
+[loading build/(runedoc.cm):../src/util/inttable.sml]
+[compiling build/(runedoc.cm):../src/doc/docdiag.sml]
+src/doc/docdiag.sml:39.49 Warning: calling polyEqual
+[code: 4607, data: 39, env: 690 bytes]
+[loading build/(runedoc.cm):../src/frontend/token.sml]
+[loading build/(runedoc.cm):../src/util/ident.sml]
+[loading build/(runedoc.cm):../lib/unicode/normalize_data.sml]
+[loading build/(runedoc.cm):../lib/unicode/normalize_sig.sml]
+[loading build/(runedoc.cm):../lib/unicode/normalize.sml]
+[loading build/(runedoc.cm):../lib/unicode/security_data.sml]
+[loading build/(runedoc.cm):../lib/unicode/security_sig.sml]
+[loading build/(runedoc.cm):../lib/unicode/security.sml]
+[loading build/(runedoc.cm):../src/frontend/lexer.sml]
+[compiling build/(runedoc.cm):../src/doc/docsource.sml]
+[code: 21072, data: 496, env: 1120 bytes]
+[loading build/(runedoc.cm):../src/util/usage.sml]
+[loading build/(runedoc.cm):../src/frontend/fixity.sml]
+[loading build/(runedoc.cm):../src/frontend/parser.sml]
+[compiling build/(runedoc.cm):../src/doc/doctests.sml]
+[code: 39665, data: 417, env: 1039 bytes]
+[compiling build/(runedoc.cm):../src/doc/doctext.sml]
+[code: 39942, data: 1166, env: 1729 bytes]
+[compiling build/(runedoc.cm):../src/doc/dochead.sml]
+src/doc/dochead.sml:116.74 Warning: calling polyEqual
+[code: 18832, data: 408, env: 534 bytes]
+[compiling build/(runedoc.cm):../src/doc/docir.sml]
+[code: 39678, data: 502, env: 3473 bytes]
+[compiling build/(runedoc.cm):../src/doc/docnotes.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/workers.sml.s]
+[code: 28456, data: 376, env: 1366 bytes]
+[loading build/(runedoc.cm):../src/driver/basismanifest.sml]
+[loading build/(runedoc.cm):../src/elab/env.sml]
+[loading build/(runedoc.cm):../src/core/ty.sml]
+[loading build/(runedoc.cm):../src/elab/overload.sml]
+[loading build/(runedoc.cm):../src/elab/unify.sml]
+[loading build/(runedoc.cm):../src/elab/sigmatch.sml]
+[loading build/(runedoc.cm):../src/backend/prims.sml]
+[loading build/(runedoc.cm):../src/elab/elaborate.sml]
+[compiling build/(runedoc.cm):../src/doc/docclaims.sml]
+[reading source file:	build/../src/backend/code.sml[code: 17142, data: 390, env: 1160 bytes]
+[compiling build/(runedoc.cm):../src/doc/docelab.sml]
+]printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" "$d/rune-dap.rbc" --vm "$d/runevm" --image "$d/rune-repl.img" "$@"\n' > bin/rune-dap
+chmod +x bin/rune-dap
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" "$d/rune-kernel.rbc" --vm "$d/runevm" --image "$d/rune-repl.img" --program "$d/rune-kernel.rbc" "$@"\n' > bin/rune-kernel
+chmod +x bin/rune-kernel
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" "$d/rune-test.rbc" "$@"\n' > bin/rune-test
+chmod +x bin/rune-test
+[code: 135632, data: 3776, env: 3330 bytes]
+[loading build/(runedoc.cm):../src/doc/docmarkdown.sml]
+[compiling build/(runedoc.cm):../src/doc/docanchor.sml]
+[code: 5219, data: 315, env: 503 bytes]
+[compiling build/(runedoc.cm):../src/doc/docresolve.sml]
+[code: 32678, data: 166, env: 1613 bytes]
+[compiling build/(runedoc.cm):../src/doc/docpage.sml]
+
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/code.sml.s]
+[reading source file:	build/../src/backend/low.sml[code: 161548, data: 1812, env: 3591 bytes]
+[compiling build/(runedoc.cm):../src/doc/docexamples.sml]
+][code: 17398, data: 1158, env: 1327 bytes]
+[compiling build/(runedoc.cm):../src/doc/doccomments.sml]
+[code: 22061, data: 517, env: 1109 bytes]
+[compiling build/(runedoc.cm):../src/doc/docextract.sml]
+[code: 79804, data: 476, env: 3313 bytes]
+[loading build/(runedoc.cm):../lib/json/json_sig.sml]
+[loading build/(runedoc.cm):../lib/json/json.sml]
+[compiling build/(runedoc.cm):../src/doc/doclaws.sml]
+
+[code: 70803, data: 1603, env: 1951 bytes]
+[compiling build/(runedoc.cm):../src/doc/docannot.sml]
+[code: 40567, data: 591, env: 760 bytes]
+[compiling build/(runedoc.cm):../src/doc/docsite.sml]
+src/doc/docsite.sml:1950.82 Warning: calling polyEqual
+src/doc/docsite.sml:1938.44 Warning: calling polyEqual
+src/doc/docsite.sml:1939.53 Warning: calling polyEqual
+src/doc/docsite.sml:1871.87 Warning: calling polyEqual
+src/doc/docsite.sml:1369.78 Warning: calling polyEqual
+src/doc/docsite.sml:991.18 Warning: calling polyEqual
+src/doc/docsite.sml:590.82 Warning: calling polyEqual
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/low.sml.s]
+[reading source file:	build/../src/backend/target.sml]
+[reading source file:	build/../src/backend/lowlint.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/lowlint.sml.s]
+[reading source file:	build/../src/backend/rep.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/rep.sml.s]
+[reading source file:	build/../src/backend/lower.sml][code: 604821, data: 15485, env: 5573 bytes]
+[loading build/(runedoc.cm):../lib/unicode/grapheme_data.sml]
+[loading build/(runedoc.cm):../src/util/color.sml]
+[loading build/(runedoc.cm):../lib/unicode/grapheme_sig.sml]
+[loading build/(runedoc.cm):../lib/unicode/grapheme.sml]
+[loading build/(runedoc.cm):config.sml]
+[loading build/(runedoc.cm):../src/util/diagnostic.sml]
+[compiling build/(runedoc.cm):../src/doc/docmain.sml]
+[code: 62658, data: 7322, env: 1506 bytes]
+[scanning 4139302-export.cm]
+[scanning (4139302-export.cm):build/runedoc.cm]
+[parsing (4139302-export.cm):4139302-export.sml]
+[compiling (4139302-export.cm):4139302-export.sml]
+[code: 259, data: 51, env: 39 bytes]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/runedoc-smlnj-legacy.heap" --lib "$d/../lib" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml" > bin/runedoc-smlnj-legacy
+chmod +x bin/runedoc-smlnj-legacy
+/home/ruud/.local/rune-hosts/smlnj32/bin/ml-build build/runedoc.cm DocMain.main bin/runedoc-smlnj32.heap
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[scanning build/runedoc.cm]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[loading build/(runedoc.cm):../src/util/ordmap.sml]
+[loading build/(runedoc.cm):../src/backend/prims.sml]
+[compiling build/(runedoc.cm):../src/doc/doctext.sml]
+[code: 33665, data: 2045, env: 1729 bytes]
+[loading build/(runedoc.cm):../lib/unicode/utf8_sig.sml]
+[loading build/(runedoc.cm):../lib/unicode/utf8.sml]
+[loading build/(runedoc.cm):../lib/unicode/identifier_data.sml]
+[loading build/(runedoc.cm):../lib/unicode/identifier_sig.sml]
+[loading build/(runedoc.cm):../lib/unicode/identifier.sml]
+[loading build/(runedoc.cm):../src/util/source.sml]
+[loading build/(runedoc.cm):../src/util/scon.sml]
+[loading build/(runedoc.cm):../src/frontend/token.sml]
+[loading build/(runedoc.cm):../src/util/error.sml]
+[loading build/(runedoc.cm):../src/elab/types.sml]
+[loading build/(runedoc.cm):../src/frontend/ast.sml]
+[loading build/(runedoc.cm):../src/util/ident.sml]
+[loading build/(runedoc.cm):../lib/unicode/normalize_data.sml]
+[loading build/(runedoc.cm):../lib/unicode/normalize_sig.sml]
+[loading build/(runedoc.cm):../lib/unicode/normalize.sml]
+[loading build/(runedoc.cm):../src/util/inttable.sml]
+[loading build/(runedoc.cm):../lib/unicode/security_data.sml]
+[loading build/(runedoc.cm):../lib/unicode/security_sig.sml]
+[loading build/(runedoc.cm):../lib/unicode/security.sml]
+[loading build/(runedoc.cm):../src/frontend/lexer.sml]
+[loading build/(runedoc.cm):../src/util/usage.sml]
+[loading build/(runedoc.cm):../src/frontend/fixity.sml]
+[loading build/(runedoc.cm):../src/frontend/parser.sml]
+[compiling build/(runedoc.cm):../src/doc/dochead.sml]
+src/doc/dochead.sml:116.74 Warning: calling polyEqual
+[code: 15154, data: 754, env: 534 bytes]
+[compiling build/(runedoc.cm):../src/doc/docir.sml]
+
+[code: 30888, data: 912, env: 3473 bytes]
+[compiling build/(runedoc.cm):../src/doc/docsource.sml]
+[code: 17499, data: 811, env: 1120 bytes]
+[compiling build/(runedoc.cm):../src/doc/doctests.sml]
+[code: 33966, data: 1170, env: 1039 bytes]
+[compiling build/(runedoc.cm):../src/doc/docanchor.sml]
+[code: 4911, data: 923, env: 504 bytes]
+[loading build/(runedoc.cm):../src/driver/basismanifest.sml]
+[loading build/(runedoc.cm):../src/elab/env.sml]
+[loading build/(runedoc.cm):../src/elab/overload.sml]
+[loading build/(runedoc.cm):../src/elab/unify.sml]
+[loading build/(runedoc.cm):../src/core/ty.sml]
+[loading build/(runedoc.cm):../src/elab/exhaust.sml]
+[loading build/(runedoc.cm):../src/elab/sigmatch.sml]
+[loading build/(runedoc.cm):../src/elab/elaborate.sml]
+[compiling build/(runedoc.cm):../src/doc/docdiag.sml]
+src/doc/docdiag.sml:39.49 Warning: calling polyEqual
+[code: 3783, data: 131, env: 690 bytes]
+[compiling build/(runedoc.cm):../src/doc/docclaims.sml]
+[code: 14254, data: 754, env: 1161 bytes]
+[compiling build/(runedoc.cm):../src/doc/docelab.sml]
+[code: 130762, data: 7934, env: 3328 bytes]
+[loading build/(runedoc.cm):../src/doc/docmarkdown.sml]
+[compiling build/(runedoc.cm):../src/doc/docresolve.sml]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/runedoc-smlnj-dev.heap" --lib "$d/../lib" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj-dev/bin/sml" > bin/runedoc-smlnj-dev
+chmod +x bin/runedoc-smlnj-dev
+cm=$(sh scripts/smlnj-dev-root.sh build/runeopt.cm); \
+  /home/ruud/.local/rune-hosts/smlnj-dev/bin/ml-build "$cm" OptMain.main bin/runeopt-smlnj-dev.heap
+[code: 28415, data: 823, env: 1614 bytes]
+[compiling build/(runedoc.cm):../src/doc/docpage.sml]
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[code: 143945, data: 4117, env: 3594 bytes]
+[compiling build/(runedoc.cm):../src/doc/doclaws.sml]
+[code: 61562, data: 2814, env: 1954 bytes]
+[loading build/(runedoc.cm):../lib/json/json_sig.sml]
+[compiling build/(runedoc.cm):../src/doc/doccomments.sml]
+[code: 18332, data: 964, env: 1111 bytes]
+[loading build/(runedoc.cm):../lib/json/json.sml]
+[loading build/(runedoc.cm):../src/util/color.sml]
+[loading build/(runedoc.cm):config.sml]
+[compiling build/(runedoc.cm):../src/doc/docextract.sml]
+[code: 68386, data: 1498, env: 3315 bytes]
+[loading build/(runedoc.cm):../lib/unicode/grapheme_data.sml]
+[loading build/(runedoc.cm):../lib/unicode/width_data.sml]
+[loading build/(runedoc.cm):../lib/unicode/display_width_sig.sml]
+[loading build/(runedoc.cm):../lib/unicode/display_width.sml]
+[loading build/(runedoc.cm):../lib/unicode/grapheme_sig.sml]
+[loading build/(runedoc.cm):../lib/unicode/grapheme.sml]
+[loading build/(runedoc.cm):../src/util/diagnostic.sml]
+[compiling build/(runedoc.cm):../src/doc/docnotes.sml]
+[code: 23343, data: 915, env: 1368 bytes]
+[compiling build/(runedoc.cm):../src/doc/docannot.sml]
+[code: 33544, data: 1488, env: 761 bytes]
+[compiling build/(runedoc.cm):../src/doc/docexamples.sml]
+[code: 14748, data: 1460, env: 1328 bytes]
+[compiling build/(runedoc.cm):../src/doc/docsite.sml]
+src/doc/docsite.sml:1950.82 Warning: calling polyEqual
+src/doc/docsite.sml:1938.44 Warning: calling polyEqual
+src/doc/docsite.sml:1939.53 Warning: calling polyEqual
+src/doc/docsite.sml:1871.87 Warning: calling polyEqual
+src/doc/docsite.sml:1369.78 Warning: calling polyEqual
+src/doc/docsite.sml:991.18 Warning: calling polyEqual
+src/doc/docsite.sml:590.82 Warning: calling polyEqual
+build/smlnj-dev-root/src/opt/rbc.sml:498.39 Warning: calling polyEqual
+build/smlnj-dev-root/src/opt/rbc.sml:500.47 Warning: calling polyEqual
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/lower.sml.s]
+[reading source file:	build/../src/backend/stack.sml]
+[code: 651358, data: 23082, env: 5577 bytes]
+[compiling build/(runedoc.cm):../src/doc/docmain.sml]
+[code: 53074, data: 8286, env: 1509 bytes]
+[scanning 4148666-export.cm]
+[scanning (4148666-export.cm):build/runedoc.cm]
+[parsing (4148666-export.cm):4148666-export.sml]
+[compiling (4148666-export.cm):4148666-export.sml]
+[code: 248, data: 68, env: 39 bytes]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/stack.sml.s]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/runedoc-smlnj32.heap" --lib "$d/../lib" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj32/bin/sml" > bin/runedoc-smlnj32
+chmod +x bin/runedoc-smlnj32
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/ml-build build/runeopt.cm OptMain.main bin/runeopt-smlnj-legacy.heap
+[reading source file:	build/../src/backend/regcodes.smlStandard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[scanning build/runeopt.cm]
+[parsing build/(runeopt.cm):../src/isa/isa.sml]
+[parsing build/(runeopt.cm):../src/isa/stack.sml]
+[parsing build/(runeopt.cm):../src/isa/prims.sml]
+[parsing build/(runeopt.cm):../src/opt/rbc.sml]
+[parsing build/(runeopt.cm):../src/opt/x64_layout.sml]
+[parsing build/(runeopt.cm):../src/opt/rbcimage.sml]
+][parsing build/(runeopt.cm):../src/opt/rbccheck.sml]
+[parsing build/(runeopt.cm):../src/opt/rbcdisasm.sml]
+[parsing build/(runeopt.cm):../src/opt/x64.sml]
+[parsing build/(runeopt.cm):../src/opt/optmain.sml]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[loading build/(runeopt.cm):../src/util/ordmap.sml]
+[loading build/(runeopt.cm):../src/backend/prims.sml]
+[loading build/(runeopt.cm):config.sml]
+[loading build/(runeopt.cm):../src/backend/opcodes.sml]
+[compiling build/(runeopt.cm):../src/opt/x64_layout.sml]
+
+[code: 80935, data: 2295, env: 2789 bytes]
+[compiling build/(runeopt.cm):../src/isa/isa.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/regcodes.sml.s]
+[code: 11171, data: 715, env: 2602 bytes]
+[compiling build/(runeopt.cm):../src/isa/stack.sml]
+[reading source file:	build/../src/backend/regs.sml[code: 29680, data: 8928, env: 2308 bytes]
+[compiling build/(runeopt.cm):../src/opt/rbc.sml]
+src/opt/rbc.sml:500.47 Warning: calling polyEqual
+src/opt/rbc.sml:498.39 Warning: calling polyEqual
+][code: 76477, data: 1525, env: 2385 bytes]
+[compiling build/(runeopt.cm):../src/opt/rbccheck.sml]
+[code: 26420, data: 1876, env: 1122 bytes]
+[compiling build/(runeopt.cm):../src/isa/prims.sml]
+[code: 69788, data: 37852, env: 2195 bytes]
+[compiling build/(runeopt.cm):../src/opt/x64.sml]
+
+[code: 207392, data: 4840, env: 1871 bytes]
+[compiling build/(runeopt.cm):../src/opt/rbcdisasm.sml]
+[code: 9262, data: 286, env: 531 bytes]
+[compiling build/(runeopt.cm):../src/opt/rbcimage.sml]
+[code: 30212, data: 572, env: 1038 bytes]
+[compiling build/(runeopt.cm):../src/opt/optmain.sml]
+[code: 32137, data: 3049, env: 1782 bytes]
+[scanning 4152112-export.cm]
+[scanning (4152112-export.cm):build/runeopt.cm]
+[parsing (4152112-export.cm):4152112-export.sml]
+[compiling (4152112-export.cm):4152112-export.sml]
+[code: 259, data: 51, env: 39 bytes]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/runeopt-smlnj-legacy.heap" --runtime "$d/../build" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml" > bin/runeopt-smlnj-legacy
+chmod +x bin/runeopt-smlnj-legacy
+/home/ruud/.local/rune-hosts/smlnj32/bin/ml-build build/runeopt.cm OptMain.main bin/runeopt-smlnj32.heap
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[scanning build/runeopt.cm]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[loading build/(runeopt.cm):../src/backend/opcodes.sml]
+[loading build/(runeopt.cm):../src/util/ordmap.sml]
+[compiling build/(runeopt.cm):../src/isa/isa.sml]
+[code: 9697, data: 1365, env: 2602 bytes]
+[compiling build/(runeopt.cm):../src/isa/stack.sml]
+[code: 46071, data: 14731, env: 2308 bytes]
+[loading build/(runeopt.cm):../src/backend/prims.sml]
+[compiling build/(runeopt.cm):../src/opt/rbc.sml]
+src/opt/rbc.sml:500.47 Warning: calling polyEqual
+src/opt/rbc.sml:498.39 Warning: calling polyEqual
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/runeopt-smlnj-dev.heap" --runtime "$d/../build" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj-dev/bin/sml" > bin/runeopt-smlnj-dev
+chmod +x bin/runeopt-smlnj-dev
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/regs.sml.s]
+[code: 63028, data: 2536, env: 2386 bytes]
+[compiling build/(runeopt.cm):../src/opt/rbccheck.sml]
+[reading source file:	build/../src/backend/emit.sml[code: 24336, data: 2836, env: 1122 bytes]
+[loading build/(runeopt.cm):config.sml]
+[compiling build/(runeopt.cm):../src/isa/prims.sml]
+][code: 77570, data: 50734, env: 2195 bytes]
+[compiling build/(runeopt.cm):../src/opt/x64_layout.sml]
+[code: 60770, data: 3118, env: 2790 bytes]
+[compiling build/(runeopt.cm):../src/opt/x64.sml]
+
+[code: 186637, data: 8097, env: 1871 bytes]
+[compiling build/(runeopt.cm):../src/opt/rbcimage.sml]
+[code: 22817, data: 1149, env: 1039 bytes]
+[compiling build/(runeopt.cm):../src/opt/rbcdisasm.sml]
+[code: 7313, data: 429, env: 531 bytes]
+[compiling build/(runeopt.cm):../src/opt/optmain.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/emit.sml.s]
+[reading source file:	build/../src/backend/link.sml[code: 26636, data: 3548, env: 1783 bytes]
+[scanning 4152279-export.cm]
+[scanning (4152279-export.cm):build/runeopt.cm]
+[parsing (4152279-export.cm):4152279-export.sml]
+[compiling (4152279-export.cm):4152279-export.sml]
+[code: 248, data: 68, env: 39 bytes]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/runeopt-smlnj32.heap" --runtime "$d/../build" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj32/bin/sml" > bin/runeopt-smlnj32
+chmod +x bin/runeopt-smlnj32
+]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/link.sml.s]
+[reading source file:	build/../src/backend/unitfile.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/unitfile.sml.s]
+[reading source file:	build/../src/driver/basismanifest.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/basismanifest.sml.s]
+[reading source file:	build/../src/driver/buildfile.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/buildfile.sml.s]
+[reading source file:	build/../src/driver/options.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/options.sml.s]
+[reading source file:	build/../src/driver/unitbasis.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/unitbasis.sml.s]
+[reading source file:	build/../src/driver/pipeline.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/pipeline.sml.s]
+[reading source file:	build/../src/driver/unitmid.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/unitmid.sml.s]
+[reading source file:	build/../src/driver/unitcache.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/unitcache.sml.s]
+[reading source file:	build/../src/driver/deps.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/deps.sml.s]
+[reading source file:	build/../src/driver/parallel.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/parallel.sml.s]
+[reading source file:	build/../src/driver/main.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/main.sml.s]
+[reading source file:	build/../src/driver/serve.sml]
+oh-oh ... cannot subtract effects
+mulef1: 
+
+{e8:1,put(r1):1,put(r2):1,put(r3):1,put(r4):1,put(r5):1,put(r6):1,put(r7):1,put(r805):1,put(r807):1,
+ put(r809):1,put(r831):1}
+mulef2: 
+
+{put(r1):1,put(r3):1,put(r805):1,put(r807):1,put(r809):1,put(r831):1}Mul: diffef failed
+Impossible: Mul: diffef failed
+
+
+instantiate.doSubst or diffef failed
+
+eps0 is 
+
+e658eps0' is 
+
+e4420
+items[at r831,at r809,at r807,at r805]
+WHOLE EXPRESSION:
+
+
+let fun eq_json at r1 [r29:1, r27:1, r25:1, r23:1] (v2457, v2458) = 
+        case v2457 = v2458 of 
+          true => true
+        | _ => 
+          case v2457 of 
+            Str => case v2458 of Str => decon_Str v2457 = decon_Str v2458 | _ => false
+          | Obj => 
+            case v2458 of 
+              Obj => 
+              let val v1147 = decon_Obj v2457; 
+                  val v1148 = decon_Obj v2458; 
+                  region r155:1; 
+                  fun eq_list 
+                      at r155 
+                      [r195:1, r193:1, r189:1, r187:1, r191:1, r185:1, r183:1, r179:1, r177:1, r181:1] 
+                      (v2459, v2460) = 
+                      case v2459 = v2460 of 
+                        true => true
+                      | _ => 
+                        case v2459 of 
+                          :: => 
+                          case v2460 of 
+                            :: => 
+                            let val v1119 = decon_:: v2459; val v1120 = decon_:: v2460
+                            in  case let val v1999 = #0 v1119; val v2000 = #0 v1120
+                                     in  case #0 v1999 = #0 v2000 of 
+                                         true => eq_json[at r189,at r187,at r179,at r177] (#1 v1999, #1 v2000) | _ => false
+                                     end
+                                of 
+                                  true => 
+                                  eq_list[at r195,at r193,at r189,at r187,at r191,at r185,at r183,at r179,at r177,at r181] 
+                                  (#1 v1119, #1 v1120)
+                                | _ => false
+                            end
+                          | _ => false
+                        | _ => false
+              in  eq_list[at r29,at r29,at r29,at r27,at r27,at r25,at r25,at r25,at r23,at r23] (v1147, v1148)
+              end
+            | _ => false
+          | Num => case v2458 of Num => decon_Num v2457 = decon_Num v2458 | _ => false
+          | Bool => case v2458 of Bool => decon_Bool v2457 = decon_Bool v2458 | _ => false
+          | Arr => 
+            case v2458 of 
+              Arr => 
+              let val v1157 = decon_Arr v2457; 
+                  val v1158 = decon_Arr v2458; 
+                  region r47:1; 
+                  fun eq_list at r47 [r71:1, r69:1, r67:1, r65:1, r63:1, r61:1] (v2464, v2465) = 
+                      case v2464 = v2465 of 
+                        true => true
+                      | _ => 
+                        case v2464 of 
+                          :: => 
+                          case v2465 of 
+                            :: => 
+                            let val v1119 = decon_:: v2464; val v1120 = decon_:: v2465
+                            in  case eq_json[at r69,at r67,at r63,at r61] (#0 v1119, #0 v1120) of 
+                                true => eq_list[at r71,at r69,at r67,at r65,at r63,at r61] (#1 v1119, #1 v1120) | _ => false
+                            end
+                          | _ => false
+                        | _ => false
+              in  eq_list[at r29,at r29,at r27,at r25,at r25,at r23] (v1157, v1158)
+              end
+            | _ => false
+          | _ => false; 
+    exception Bad : ((string,r3)->(exn,r1),r1) (* exn value or name at r1 *); 
+    fun parse at r1 [r1115:1, r1113:1, r311:1] s = 
+        let val n = String.size s; 
+            region r317:1; 
+            fun skip at r317 i = 
+                case case i < n of 
+                       true => 
+                       let val c = 
+                             case i < n of 
+                               true => 
+                               case case i < 0 of true => true | _ => i >= String.size s of 
+                               true => raise Subscript | _ => String.sub (s, i)
+                             | _ => 0x0
+                       in  case case 0x9 <= c of true => c <= 0xd | _ => false of true => true | _ => c = 0x20
+                       end
+                     | _ => false
+                of 
+                true => skip (i + 1) | _ => i; 
+            region r329:1; 
+            fun escape at r329 [r509:1] i = 
+                let val c = 
+                      let region r349:1; 
+                          val v126 = 
+                            let region r407:1
+                            in  let region r333:1, r335:1, r337:1, r339:1, r341:1, r343:1, r345:1, r347:1
+                                in  scanString[at r349,at r347,at r345,at r343,at r341,at r339,at r337,at r335,at r333] 
+                                    (fn at r345 v2370 => 
+                                     fn at r343 v2371 => scan[at r341,at r339,at r337,at r335,at r333] (HEX, v2370, v2371), 
+                                     let val newvec = 
+                                           case case i < 0 of 
+                                                true => true | _ => case i > String.size s of true => true | _ => i + 4 > String.size s
+                                           of 
+                                           true => raise Subscript | _ => String.alloc [at r347] 4; 
+                                         val _ = 
+                                           let region r385:1; 
+                                               fun blit at r385 (v2469, v2470) = 
+                                                   case v2470 >= 4 of 
+                                                     true => String.update (newvec, 4, 0)
+                                                   | _ => 
+                                                     let val e = String.sub (s, v2469); val _ = String.update (newvec, v2470, e)
+                                                     in  blit (v2469 + 1, v2470 + 1)
+                                                     end
+                                           in  blit (i, 0)
+                                           end
+                                     in  newvec
+                                     end
+                                    )
+                                end handle 
+                                fn at r407 Subscript => case Subscript of Subscript => NONE at r349 | _ => raise Subscript
+                            end
+                      in  case v126 of SOME => decon_SOME v126 | _ => raise Bad at r1 "a \\u escape"
+                      end
+                in  case case c >= 55296 of true => c < 56320 | _ => false of 
+                      true => 
+                      case case let val i = i + 4
+                                in  case i < n of 
+                                      true => 
+                                      case case i < 0 of true => true | _ => i >= String.size s of 
+                                      true => raise Subscript | _ => String.sub (s, i)
+                                    | _ => 0x0
+                                end = 
+                                0x5c
+                           of 
+                             true => 
+                             let val i = i + 5
+                             in  case i < n of 
+                                   true => 
+                                   case case i < 0 of true => true | _ => i >= String.size s of 
+                                   true => raise Subscript | _ => String.sub (s, i)
+                                 | _ => 0x0
+                             end = 
+                             0x75
+                           | _ => false
+                      of 
+                        true => 
+                        let val d = 
+                              let val i = i + 6; 
+                                  region r445:1; 
+                                  val v126 = 
+                                    let region r503:1
+                                    in  let region r429:1, r431:1, r433:1, r435:1, r437:1, r439:1, r441:1, r443:1
+                                        in  scanString[at r445,at r443,at r441,at r439,at r437,at r435,at r433,at r431,at r429] 
+                                            (fn at r441 v2375 => 
+                                             fn at r439 v2376 => scan[at r437,at r435,at r433,at r431,at r429] (HEX, v2375, v2376), 
+                                             let val newvec = 
+                                                   case case i < 0 of 
+                                                        true => true | _ => case i > String.size s of true => true | _ => i + 4 > String.size s
+                                                   of 
+                                                   true => raise Subscript | _ => String.alloc [at r443] 4; 
+                                                 val _ = 
+                                                   let region r481:1; 
+                                                       fun blit at r481 (v2473, v2474) = 
+                                                           case v2474 >= 4 of 
+                                                             true => String.update (newvec, 4, 0)
+                                                           | _ => 
+                                                             let val e = String.sub (s, v2473); val _ = String.update (newvec, v2474, e)
+                                                             in  blit (v2473 + 1, v2474 + 1)
+                                                             end
+                                                   in  blit (i, 0)
+                                                   end
+                                             in  newvec
+                                             end
+                                            )
+                                        end handle 
+                                        fn at r503 Subscript => case Subscript of Subscript => NONE at r445 | _ => raise Subscript
+                                    end
+                              in  case v126 of SOME => decon_SOME v126 | _ => raise Bad at r1 "a \\u escape"
+                              end
+                        in  case case d >= 56320 of true => d < 57344 | _ => false of 
+                              true => (65536 + (c - 55296) * 1024 + (d - 56320), i + 10)at r509
+                            | _ => raise Bad at r1 "a lone surrogate in a \\u escape"
+                        end
+                      | _ => raise Bad at r1 "a lone surrogate in a \\u escape"
+                    | _ => 
+                      case case c >= 56320 of true => c < 57344 | _ => false of 
+                      true => raise Bad at r1 "a lone surrogate in a \\u escape" | _ => (c, i + 4)at r509
+                end; 
+            region r527:1; 
+            fun str at r527 [r551:1, r549:1, r539:1, r537:1] (v2477, v2478) = 
+                let val v186 = 
+                      case v2477 < n of 
+                        true => 
+                        case case v2477 < 0 of true => true | _ => v2477 >= String.size s of 
+                        true => raise Subscript | _ => String.sub (s, v2477)
+                      | _ => 0x0
+                in  case v186 of 
+                      0x22 => 
+                      (let region r697:1 in String.implode [at r549] (rev[at r697,at r539] v2478) end, v2477 + 1)at r551
+                    | 0x5c => 
+                      let val v201 = 
+                            let val i = v2477 + 1
+                            in  case i < n of 
+                                  true => 
+                                  case case i < 0 of true => true | _ => i >= String.size s of 
+                                  true => raise Subscript | _ => String.sub (s, i)
+                                | _ => 0x0
+                            end
+                      in  case v201 of 
+                            0x6e => str[at r551,at r549,at r539,at r537] (v2477 + 2, :: ("\n", v2478)at r539)
+                          | 0x74 => str[at r551,at r549,at r539,at r537] (v2477 + 2, :: ("\t", v2478)at r539)
+                          | 0x72 => str[at r551,at r549,at r539,at r537] (v2477 + 2, :: ("\r", v2478)at r539)
+                          | 0x62 => str[at r551,at r549,at r539,at r537] (v2477 + 2, :: ("\b", v2478)at r539)
+                          | 0x66 => str[at r551,at r549,at r539,at r537] (v2477 + 2, :: ("\f", v2478)at r539)
+                          | 0x75 => 
+                            let region r563:1; val v205 = escape[at r563] (v2477 + 2)
+                            in  str[at r551,at r549,at r539,at r537] (#1 v205, :: (encode[at r537] #0 v205, v2478)at r539)
+                            end
+                          | _ => 
+                            str[at r551,at r549,at r539,at r537] 
+                            (v2477 + 2, :: (let region r677:1 in String.implode [at r537] [v201] at r677 end, v2478)at r539)
+                      end
+                    | 0x0 => raise Bad at r1 "a string that does not end"
+                    | _ => 
+                      str[at r551,at r549,at r539,at r537] 
+                      (v2477 + 1, :: (let region r725:1 in String.implode [at r537] [v186] at r725 end, v2478)at r539)
+                end; 
+            region r739:1; 
+            fun value at r739 [r759:1, r757:1, r755:1] i = 
+                let val i = skip i
+                in  case case i < n of 
+                           true => 
+                           case case i < 0 of true => true | _ => i >= String.size s of 
+                           true => raise Subscript | _ => String.sub (s, i)
+                         | _ => 0x0
+                    of 
+                      0x7b => 
+                      let region r883:1; 
+                          fun fields at r883 [r935:1, r909:1, r903:1, r901:1] (v2487, v2488) = 
+                              let val i = skip v2487
+                              in  case (case i < n of 
+                                          true => 
+                                          case case i < 0 of true => true | _ => i >= String.size s of 
+                                          true => raise Subscript | _ => String.sub (s, i)
+                                        | _ => 0x0
+                                       ) = 
+                                       0x7d
+                                  of 
+                                    true => (Obj (rev[at r903,at r909] v2488), i + 1)at r935
+                                  | _ => 
+                                    let val i = 
+                                          case (case i < n of 
+                                                  true => 
+                                                  case case i < 0 of true => true | _ => i >= String.size s of 
+                                                  true => raise Subscript | _ => String.sub (s, i)
+                                                | _ => 0x0
+                                               ) = 
+                                               0x2c
+                                          of 
+                                          true => skip (i + 1) | _ => i; 
+                                        region r959:1; 
+                                        val v288 = 
+                                          case (case i < n of 
+                                                  true => 
+                                                  case case i < 0 of true => true | _ => i >= String.size s of 
+                                                  true => raise Subscript | _ => String.sub (s, i)
+                                                | _ => 0x0
+                                               ) = 
+                                               0x22
+                                          of 
+                                            true => let region r953:1, r955:1 in str[at r959,at r901,at r955,at r953] (i + 1, nil) end
+                                          | _ => raise Bad at r1 "a key"; 
+                                        val v289 = #0 v288; 
+                                        val v290 = #1 v288; 
+                                        val i = skip v290; 
+                                        val i = 
+                                          case (case i < n of 
+                                                  true => 
+                                                  case case i < 0 of true => true | _ => i >= String.size s of 
+                                                  true => raise Subscript | _ => String.sub (s, i)
+                                                | _ => 0x0
+                                               ) = 
+                                               0x3a
+                                          of 
+                                          true => i + 1 | _ => raise Bad at r1 "a colon"; 
+                                        region r985:1; 
+                                        val v285 = value[at r985,at r903,at r901] i
+                                    in  fields[at r935,at r909,at r903,at r901] (#1 v285, :: ((v289, #0 v285)at r903, v2488)at r909)
+                                    end
+                              end; 
+                          region r1023:1
+                      in  fields[at r759,at r1023,at r757,at r755] (i + 1, nil)
+                      end
+                    | 0x5b => 
+                      let region r791:1; 
+                          fun items at r791 [r831:1, r809:1, r807:1, r805:1] (v2492, v2493) = 
+                              let val i = skip v2492
+                              in  case (case i < n of 
+                                          true => 
+                                          case case i < 0 of true => true | _ => i >= String.size s of 
+                                          true => raise Subscript | _ => String.sub (s, i)
+                                        | _ => 0x0
+                                       ) = 
+                                       0x5d
+                                  of 
+                                    true => (Arr (rev[at r807,at r809] v2493), i + 1)at r831
+                                  | _ => 
+                                    let val i = 
+                                          case (case i < n of 
+                                                  true => 
+                                                  case case i < 0 of true => true | _ => i >= String.size s of 
+                                                  true => raise Subscript | _ => String.sub (s, i)
+                                                | _ => 0x0
+                                               ) = 
+                                               0x2c
+                                          of 
+                                          true => i + 1 | _ => i; 
+                                        region r845:1; 
+                                        val v253 = value[at r845,at r807,at r805] i
+                                    in  items[at r831,at r809,at r807,at r805] (#1 v253, :: (#0 v253, v2493)at r809)
+                                    end
+                              end; 
+                          region r873:1
+                      in  items[at r759,at r873,at r757,at r755] (i + 1, nil)
+                      end
+                    | 0x22 => 
+                      let region r779:1; 
+                          val v232 = let region r773:1, r775:1 in str[at r779,at r755,at r775,at r773] (i + 1, nil) end
+                      in  (Str (#0 v232), #1 v232)at r759
+                      end
+                    | 0x74 => (Bool true, i + 4)at r759
+                    | 0x66 => (Bool false, i + 5)at r759
+                    | 0x6e => (Null, i + 4)at r759
+                    | _ => 
+                      let val j = 
+                            let region r1037:1; 
+                                fun num at r1037 j = 
+                                    case case j < n of 
+                                           true => 
+                                           case let val c = 
+                                                      case j < n of 
+                                                        true => 
+                                                        case case j < 0 of true => true | _ => j >= String.size s of 
+                                                        true => raise Subscript | _ => String.sub (s, j)
+                                                      | _ => 0x0
+                                                in  case 0x30 <= c of true => c <= 0x39 | _ => false
+                                                end
+                                           of 
+                                             true => true
+                                           | _ => 
+                                             let val c = 
+                                                   case j < n of 
+                                                     true => 
+                                                     case case j < 0 of true => true | _ => j >= String.size s of 
+                                                     true => raise Subscript | _ => String.sub (s, j)
+                                                   | _ => 0x0; 
+                                                 region r1055:1; 
+                                                 fun loop at r1055 j = 
+                                                     case j >= 5 of 
+                                                       true => false
+                                                     | _ => case let region r1059:1 in String.sub ("+-.eE", j) end = c of true => true | _ => loop (j + 1)
+                                             in  loop 0
+                                             end
+                                         | _ => false
+                                    of 
+                                    true => num (j + 1) | _ => j
+                            in  num i
+                            end
+                      in  case j = i of 
+                            true => raise Bad at r1 "a value"
+                          | _ => 
+                            (Num 
+                             let val v2027 = j - i; 
+                                 val newvec = 
+                                   case case i < 0 of 
+                                          true => true
+                                        | _ => 
+                                          case v2027 < 0 of 
+                                            true => true
+                                          | _ => 
+                                            case v2027 > 274877906944 of 
+                                            true => true | _ => case i > String.size s of true => true | _ => i + v2027 > String.size s
+                                   of 
+                                   true => raise Subscript | _ => String.alloc [at r755] v2027; 
+                                 val _ = 
+                                   let region r1093:1; 
+                                       fun blit at r1093 (v2497, v2498) = 
+                                           case v2498 >= v2027 of 
+                                             true => String.update (newvec, v2027, 0)
+                                           | _ => 
+                                             let val e = String.sub (s, v2497); val _ = String.update (newvec, v2498, e)
+                                             in  blit (v2497 + 1, v2498 + 1)
+                                             end
+                                   in  blit (i, 0)
+                                   end
+                             in  newvec
+                             end, 
+                             j
+                            )at r759
+                      end
+                end; 
+            region r1117:1
+        in  #0 (value[at r1117,at r1115,at r1113] 0)
+        end; 
+    fun quote at r1 [r1139:1, r1127:1] s = 
+        let region r1135:1, r1137:1
+        in  let region r1149:1, r1151:1
+            in  "\"" ^[at r1135] 
+                let region r1155:1, r1157:1
+                in  translate[at r1151,at r1127,at r1157,at r1155] 
+                    (fn at r1157 v338 => 
+                     case v338 of 
+                       0x22 => "\\\""
+                     | 0x5c => "\\\\"
+                     | 0xa => "\\n"
+                     | 0xd => "\\r"
+                     | 0x9 => "\\t"
+                     | _ => 
+                       case Char.ord v338 < 32 of 
+                         true => 
+                         let region r1179:1, r1181:1
+                         in  "\\u" ^[at r1155] 
+                             let val s = let region r1187:1 in fmt[at r1187,at r1181] HEX (Char.ord v338) end; 
+                                 val ssize = String.size s; 
+                                 region r1193:1; 
+                                 fun f at r1193 [r1197:1] var5 = 
+                                     case var5 of 0 => nil | _ => :: (0x30, f[at r1197] (var5 - 1))at r1197
+                             in  case 4 <= ssize of 
+                                   true => s
+                                 | _ => 
+                                   let region r1215:1
+                                   in  String.implode 
+                                         [at r1181] 
+                                         [let region r1237:1 in String.implode [at r1181] (f[at r1237] (4 - ssize)) end,s] at r1215
+                                   end
+                             end
+                         end
+                       | _ => let region r1251:1 in String.implode [at r1155] [v338] at r1251 end, 
+                     s
+                    )
+                end
+            end ^[at r1139] 
+            "\""
+        end; 
+    fun show at r1 [r1277:1, r1275:1] j = 
+        case j of 
+          Null => "null"
+        | Bool => case decon_Bool j of true => "true" | _ => "false"
+        | Num => decon_Num j
+        | Str => 
+          let region r1387:1, r1389:1
+          in  let region r1401:1, r1403:1
+              in  "\"" ^[at r1387] 
+                  let region r1407:1, r1409:1
+                  in  translate[at r1403,at r1275,at r1409,at r1407] 
+                      (fn at r1409 v338 => 
+                       case v338 of 
+                         0x22 => "\\\""
+                       | 0x5c => "\\\\"
+                       | 0xa => "\\n"
+                       | 0xd => "\\r"
+                       | 0x9 => "\\t"
+                       | _ => 
+                         case Char.ord v338 < 32 of 
+                           true => 
+                           let region r1431:1, r1433:1
+                           in  "\\u" ^[at r1407] 
+                               let val s = let region r1439:1 in fmt[at r1439,at r1433] HEX (Char.ord v338) end; 
+                                   val ssize = String.size s; 
+                                   region r1445:1; 
+                                   fun f at r1445 [r1449:1] var5 = 
+                                       case var5 of 0 => nil | _ => :: (0x30, f[at r1449] (var5 - 1))at r1449
+                               in  case 4 <= ssize of 
+                                     true => s
+                                   | _ => 
+                                     let region r1467:1
+                                     in  String.implode 
+                                           [at r1433] 
+                                           [let region r1489:1 in String.implode [at r1433] (f[at r1489] (4 - ssize)) end,s] at r1467
+                                     end
+                               end
+                           end
+                         | _ => let region r1503:1 in String.implode [at r1407] [v338] at r1503 end, 
+                       decon_Str j
+                      )
+                  end
+              end ^[at r1275] 
+              "\""
+          end
+        | Arr v365 => 
+          let region r1289:1, r1291:1
+          in  let region r1303:1, r1305:1
+              in  "[" ^[at r1289] 
+                  let region r1311:1
+                  in  concatWith[at r1305,at r1311,at r1275] 
+                      (",", 
+                       let region r1317:1; 
+                           fun map at r1317 [r1337:1, r1333:1, r1331:1, r1329:1] var20 = 
+                               case var20 of 
+                                 nil => nil
+                               | :: v369 => 
+                                 let val v370 = #0 v369; val v371 = #1 v369
+                                 in  :: (show[at r1331,at r1329] v370, map[at r1337,at r1333,at r1331,at r1329] v371)at r1337
+                                 end
+                       in  map[at r1311,at r1277,at r1277,at r1275] v365
+                       end
+                      )
+                  end
+              end ^[at r1275] 
+              "]"
+          end
+        | Obj v382 => 
+          let region r1545:1, r1547:1
+          in  let region r1559:1, r1561:1
+              in  "{" ^[at r1545] 
+                  let region r1565:1, r1567:1
+                  in  concatWith[at r1561,at r1567,at r1565] 
+                      (",", 
+                       let region r1573:1; 
+                           fun map at r1573 [r1601:1, r1599:1, r1597:1, r1595:1, r1591:1, r1589:1, r1593:1] var20 = 
+                               case var20 of 
+                                 nil => nil
+                               | :: v369 => 
+                                 let val v370 = #0 v369; val v371 = #1 v369
+                                 in  :: 
+                                     (let val v380 = #0 v370; val v381 = #1 v370; region r1637:1
+                                      in  let region r1655:1, r1657:1
+                                          in  let region r1669:1, r1671:1
+                                              in  let region r1683:1, r1685:1
+                                                  in  "\"" ^[at r1669] 
+                                                      let region r1689:1, r1691:1
+                                                      in  translate[at r1685,at r1593,at r1691,at r1689] 
+                                                          (fn at r1691 v338 => 
+                                                           case v338 of 
+                                                             0x22 => "\\\""
+                                                           | 0x5c => "\\\\"
+                                                           | 0xa => "\\n"
+                                                           | 0xd => "\\r"
+                                                           | 0x9 => "\\t"
+                                                           | _ => 
+                                                             case Char.ord v338 < 32 of 
+                                                               true => 
+                                                               let region r1713:1, r1715:1
+                                                               in  "\\u" ^[at r1689] 
+b64   let val s = let region r1721:1 in fmt[at r1721,at r1715] HEX (Char.ord v338) end; 
+b64       val ssize = String.size s; 
+b64       region r1727:1; 
+b64       fun f at r1727 [r1731:1] var5 = 
+b64           case var5 of 0 => nil | _ => :: (0x30, f[at r1731] (var5 - 1))at r1731
+b64   in  case 4 <= ssize of 
+b64         true => s
+b64       | _ => 
+b64         let region r1749:1
+b64         in  String.implode 
+b64               [at r1715] 
+b64               [let region r1771:1 in String.implode [at r1715] (f[at r1771] (4 - ssize)) end,s] at r1749
+b64         end
+b64   end
+                                                               end
+                                                             | _ => let region r1785:1 in String.implode [at r1689] [v338] at r1785 end, 
+                                                           v380
+                                                          )
+                                                      end
+                                                  end ^[at r1655] 
+                                                  "\""
+                                              end ^[at r1637] 
+                                              ":"
+                                          end ^[at r1599] 
+                                          show[at r1591,at r1589] v381
+                                      end, 
+                                      map[at r1601,at r1599,at r1597,at r1595,at r1591,at r1589,at r1593] v371
+                                     )at r1601
+                                 end
+                       in  map[at r1567,at r1565,at r1277,at r1277,at r1277,at r1275,at r1275] v382
+                       end
+                      )
+                  end
+              end ^[at r1275] 
+              "}"
+          end; 
+    fun field at r1 [r1837:1, r1835:1, r1833:1] (v2501, v2502) = 
+        case v2501 of 
+          Obj v407 => 
+          let region r1855:1; 
+              val v399 = 
+                let region r1851:1
+                in  find[at r1855,at r1835,at r1851] (fn at r1851 v405 => #0 v405 = v2502, v407)
+                end
+          in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+          end
+        | _ => Null; 
+    fun int at r1 [r1895:1, r1893:1] n = 
+        Num 
+        (case n < 0 of 
+           true => let region r1903:1, r1905:1 in "-" ^[at r1893] toString[at r1905] $__neg_int63 n end
+         | _ => toString[at r1893] n
+        ); 
+    fun strings at r1 [r1943:1, r1929:1, r1927:1] j = 
+        case j of 
+          Arr => 
+          let region r1937:1, r1939:1
+          in  mapPartial[at r1943,at r1929,at r1939,at r1937] 
+              (fn at r1939 v431 => case v431 of Str v433 => SOME at r1937 v433 | _ => NONE at r1937, decon_Arr j)
+          end
+        | _ => nil; 
+    fun check at r1 [r1989:1, r1985:1] (v2503, v2504) = 
+        let region r2051:1; 
+            val files = 
+              let val j = 
+                    case v2504 of 
+                      Obj v407 => 
+                      let region r2007:1; 
+                          val v399 = 
+                            let region r2003:1
+                            in  find[at r2007,at r1989,at r2003] 
+                                (fn at r2003 v405 => let region r2017:1 in #0 v405 = "files" end, v407)
+                            end
+                      in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+                      end
+                    | _ => Null
+              in  case j of 
+                    Arr => 
+                    let region r2045:1, r2047:1
+                    in  mapPartial[at r2051,at r1989,at r2047,at r2045] 
+                        (fn at r2047 v431 => case v431 of Str v433 => SOME at r2045 v433 | _ => NONE at r2045, decon_Arr j)
+                    end
+                  | _ => nil
+              end; 
+            val _ = 
+              let val v2068 = 
+                    case v2504 of 
+                      Obj v407 => 
+                      let region r2095:1; 
+                          val v399 = 
+                            let region r2091:1
+                            in  find[at r2095,at r1989,at r2091] 
+                                (fn at r2091 v405 => let region r2105:1 in #0 v405 = "path" end, v407)
+                            end
+                      in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+                      end
+                    | _ => Null; 
+                  val v2069 = 
+                    case v2504 of 
+                      Obj v407 => 
+                      let region r2143:1; 
+                          val v399 = 
+                            let region r2139:1
+                            in  find[at r2143,at r1989,at r2139] 
+                                (fn at r2139 v405 => let region r2153:1 in #0 v405 = "text" end, v407)
+                            end
+                      in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+                      end
+                    | _ => Null
+              in  case v2068 of 
+                    Str => 
+                    case v2069 of 
+                      Str => 
+                      let val v458 = decon_Str v2068; val v459 = decon_Str v2069
+                      in  overlays := insert[at r1,at r3] (!overlays, v458, v459)
+                      end
+                    | _ => ()
+                  | _ => ()
+              end; 
+            val _ = keep := true; 
+            val _ = keepSyntax := true; 
+            val _ = 
+              main[at r2051] 
+              @[at r2051,at r1985] 
+              (v2503, 
+               let region r2199:1 in @[at r2051,at r2199] (["--units","--typecheck-only"] at r2199, files) end
+              )
+        in  ()
+        end; 
+    fun position at r1 [r2259:1, r2257:1, r2253:1, r2251:1, r2255:1] (v2505, v2506) = 
+        let region r2241:1, r2243:1; val v472 = lineColOf[at r2243,at r2241] (v2505, v2506)
+        in  case v472 of 
+              SOME v474 => 
+              let val v475 = #1 v474; val v476 = #2 v474
+              in  [("line", 
+                    Num 
+                    (case v475 < 0 of 
+                       true => let region r2319:1, r2321:1 in "-" ^[at r2251] toString[at r2321] $__neg_int63 v475 end
+                     | _ => toString[at r2251] v475
+                    )
+                   )at r2257,
+                   ("column", 
+                    Num 
+                    (case v476 < 0 of 
+                       true => let region r2291:1, r2293:1 in "-" ^[at r2251] toString[at r2293] $__neg_int63 v476 end
+                     | _ => toString[at r2251] v476
+                    )
+                   )at r2257
+                  ] 
+                  at r2259
+              end
+            | _ => nil
+        end; 
+    fun diagnostics at r1 [r2357:1] () = 
+        Obj 
+        [("diagnostics", 
+          Arr 
+          let region r2387:1
+          in  rev[at r2357,at r2387] 
+              let region r2391:1; 
+                  fun map at r2391 [r2427:1, r2425:1, r2421:1, r2419:1, r2415:1] var20 = 
+                      case var20 of 
+                        nil => nil
+                      | :: v369 => 
+                        let val v370 = #0 v369; val v371 = #1 v369
+                        in  :: 
+                            (let val v497 = #0 v370; val v498 = #1 v370; val v499 = #2 v370
+                             in  Obj 
+                                 let region r2477:1
+                                 in  @[at r2425,at r2477] 
+                                     ([("severity", Str v497)at r2425,
+                                       ("path", Str (#0 v498))at r2425,
+                                       ("start", 
+                                        let val n = #1 v498
+                                        in  Num 
+                                            (case n < 0 of 
+                                               true => let region r2569:1, r2571:1 in "-" ^[at r3] toString[at r2571] $__neg_int63 n end
+                                             | _ => toString[at r3] n
+                                            )
+                                        end
+                                       )at r2425,
+                                       ("stop", 
+                                        let val n = #2 v498
+                                        in  Num 
+                                            (case n < 0 of 
+                                               true => let region r2541:1, r2543:1 in "-" ^[at r3] toString[at r2543] $__neg_int63 n end
+                                             | _ => toString[at r3] n
+                                            )
+                                        end
+                                       )at r2425
+                                      ] 
+                                      at r2477, 
+                                      let region r2615:1
+                                      in  @[at r2425,at r2615] 
+                                          (let region r2619:1, r2621:1; val v472 = lineColOf[at r2621,at r2619] (#0 v498, #1 v498)
+                                           in  case v472 of 
+                                                 SOME v474 => 
+                                                 let val v475 = #1 v474; val v476 = #2 v474
+                                                 in  [("line", 
+                                                       Num 
+                                                       (case v475 < 0 of 
+                                                          true => let region r2697:1, r2699:1 in "-" ^[at r3] toString[at r2699] $__neg_int63 v475 end
+                                                        | _ => toString[at r3] v475
+                                                       )
+                                                      )at r2425,
+                                                      ("column", 
+                                                       Num 
+                                                       (case v476 < 0 of 
+                                                          true => let region r2669:1, r2671:1 in "-" ^[at r3] toString[at r2671] $__neg_int63 v476 end
+                                                        | _ => toString[at r3] v476
+                                                       )
+                                                      )at r2425
+                                                     ] 
+                                                     at r2615
+                                                 end
+                                               | _ => nil
+                                           end, 
+                                           [("message", Str v499)at r2425] at r2425
+                                          )
+                                      end
+                                     )
+                                 end
+                             end, 
+                             map[at r2427,at r2425,at r2421,at r2419,at r2415] v371
+                            )at r2427
+                        end
+              in  map[at r2387,at r2357,at r4,at r7,at r7] !kept
+              end
+          end
+         )at r2357
+        ] 
+        at r2357; 
+    fun variableAt 
+        at r1 
+        [r2861:1, r2859:1, r2857:1, r2841:1, r2839:1, r2837:1, r2833:1, r2831:1, r2829:1, r2827:1, r2825:1, r2823:1, r2821:1, r2835:1] 
+        (v2507, v2508, v2509) = 
+        let region r2863:1; 
+            val best = ref at r2863 NONE at r2861; 
+            region r2865:1; 
+            fun exp at r2865 [r2907:1] e = 
+                case e of 
+                  EVar v771 => 
+                  let val v772 = #1 v771
+                  in  case !v772 of 
+                        SOME => 
+                        let val v774 = #0 v771; 
+                            val v775 = #0 v774; 
+                            val v776 = #1 v774; 
+                            val v777 = decon_SOME (!v772); 
+                            val v778 = #2 v771; 
+                            val v2100 = 
+                              let region r4229:1
+                              in  concatWith[at r2857,at r4229,at r2821] (".", @[at r4229,at r2823] (v775, [v776] at r4229))
+                              end; 
+                            val v2101 = 
+                              case v777 of 
+                                VLocal => #1 (decon_VLocal v777)
+                              | VGlobal => #1 (decon_VGlobal v777)
+                              | VCon => #1 (decon_VCon v777)
+                              | VExn => #1 (decon_VExn v777)
+                              | VBuiltin => #1 (decon_VBuiltin v777)
+                              | VConVal => #1 (decon_VConVal v777)
+                              | _ => #1 (decon_VExnVal v777)
+                        in  case case #0 v778 = v2508 of 
+                                 true => case #1 v778 <= v2509 of true => v2509 < #2 v778 | _ => false | _ => false
+                            of 
+                              true => 
+                              let val v521 = !best
+                              in  case v521 of 
+                                    SOME v543 => 
+                                    let val v544 = #2 v543
+                                    in  case #2 v778 - #1 v778 < #2 v544 - #1 v544 of 
+                                        true => best := SOME at r2861 (v2100, v2101, v778)at r2859 | _ => ()
+                                    end
+                                  | _ => best := SOME at r2861 (v2100, v2101, v778)at r2859
+                              end
+                            | _ => ()
+                        end
+                      | _ => ()
+                  end
+                | ERecord v768 => 
+                  let val v769 = #0 v768; 
+                      region r4099:1; 
+                      fun app at r4099 [r4135:1, r4133:1, r4123:1, r4131:1] var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; val v350 = #1 v348; val _ = exp[at r4123] #1 v349
+                            in  app[at r4135,at r4133,at r4123,at r4131] v350
+                            end
+                  in  app[at r2823,at r2823,at r2907,at r2821] v769
+                  end
+                | ETuple v761 => 
+                  let val v762 = #0 v761; 
+                      region r4001:1; 
+                      fun app at r4001 [r4029:1, r4021:1] var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; val v350 = #1 v348; val _ = exp[at r4021] v349
+                            in  app[at r4029,at r4021] v350
+                            end
+                  in  app[at r2823,at r2907] v762
+                  end
+                | EList v758 => 
+                  let val v759 = #0 v758; 
+                      region r3903:1; 
+                      fun app at r3903 [r3931:1, r3923:1] var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; val v350 = #1 v348; val _ = exp[at r3923] v349
+                            in  app[at r3931,at r3923] v350
+                            end
+                  in  app[at r2823,at r2907] v759
+                  end
+                | ESeq v755 => 
+                  let val v756 = #0 v755; 
+                      region r3805:1; 
+                      fun app at r3805 [r3833:1, r3825:1] var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; val v350 = #1 v348; val _ = exp[at r3825] v349
+                            in  app[at r3833,at r3825] v350
+                            end
+                  in  app[at r2823,at r2907] v756
+                  end
+                | ELet v751 => 
+                  let val v752 = #0 v751; 
+                      val v753 = #1 v751; 
+                      val _ = 
+                        let region r3695:1; 
+                            fun app at r3695 [r3723:1, r3715:1] var18 = 
+                                case var18 of 
+                                  nil => ()
+                                | :: v348 => 
+                                  let val v349 = #0 v348; val v350 = #1 v348; val _ = dec[at r3715] v349
+                                  in  app[at r3723,at r3715] v350
+                                  end
+                        in  app[at r2823,at r2907] v752
+                        end
+                  in  exp[at r2907] v753
+                  end
+                | EApp v745 => 
+                  let val v746 = #0 v745; val v747 = #1 v745; val _ = exp[at r2907] v746 in exp[at r2907] v747 end
+                | ETyped => exp[at r2907] #0 (decon_ETyped e)
+                | EAndalso v736 => 
+                  let val v737 = #0 v736; val v738 = #1 v736; val _ = exp[at r2907] v737 in exp[at r2907] v738 end
+                | EOrelse v730 => 
+                  let val v731 = #0 v730; val v732 = #1 v730; val _ = exp[at r2907] v731 in exp[at r2907] v732 end
+                | EHandle v724 => 
+                  let val v725 = #0 v724; 
+                      val v726 = #1 v724; 
+                      val _ = exp[at r2907] v725; 
+                      region r3395:1; 
+                      fun app 
+                          at r3395 
+                          [r3451:1, r3449:1, r3429:1, r3447:1, r3445:1, r3443:1, r3441:1, r3439:1, r3437:1] 
+                          var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; val v350 = #1 v348; val _ = exp[at r3429] #1 v349
+                            in  app[at r3451,at r3449,at r3429,at r3447,at r3445,at r3443,at r3441,at r3439,at r3437] v350
+                            end
+                  in  app[at r2823,at r2823,at r2907,at r2831,at r2829,at r2827,at r2907,at r2823,at r2821] v726
+                  end
+                | ERaise => exp[at r2907] #0 (decon_ERaise e)
+                | EIf v710 => 
+                  let val v711 = #0 v710; 
+                      val v712 = #1 v710; 
+                      val v713 = #2 v710; 
+                      val _ = exp[at r2907] v711; 
+                      val _ = exp[at r2907] v712
+                  in  exp[at r2907] v713
+                  end
+                | EWhile v702 => 
+                  let val v703 = #0 v702; val v704 = #1 v702; val _ = exp[at r2907] v703 in exp[at r2907] v704 end
+                | ECase v696 => 
+                  let val v697 = #0 v696; 
+                      val v698 = #1 v696; 
+                      val _ = exp[at r2907] v697; 
+                      region r3107:1; 
+                      fun app 
+                          at r3107 
+                          [r3163:1, r3161:1, r3141:1, r3159:1, r3157:1, r3155:1, r3153:1, r3151:1, r3149:1] 
+                          var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; val v350 = #1 v348; val _ = exp[at r3141] #1 v349
+                            in  app[at r3163,at r3161,at r3141,at r3159,at r3157,at r3155,at r3153,at r3151,at r3149] v350
+                            end
+                  in  app[at r2823,at r2823,at r2907,at r2831,at r2829,at r2827,at r2907,at r2823,at r2821] v698
+                  end
+                | EFn v687 => 
+                  let val v688 = #0 v687; 
+                      region r2927:1; 
+                      fun app 
+                          at r2927 
+                          [r2983:1, r2981:1, r2961:1, r2979:1, r2977:1, r2975:1, r2973:1, r2971:1, r2969:1] 
+                          var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; val v350 = #1 v348; val _ = exp[at r2961] #1 v349
+                            in  app[at r2983,at r2981,at r2961,at r2979,at r2977,at r2975,at r2973,at r2971,at r2969] v350
+                            end
+                  in  app[at r2823,at r2823,at r2907,at r2831,at r2829,at r2827,at r2907,at r2823,at r2821] v688
+                  end
+                | _ => ()
+            and dec at r2865 [r4377:1] d = 
+                case d of 
+                  DVal v856 => 
+                  let val v857 = #1 v856; 
+                      region r5785:1; 
+                      fun app 
+                          at r5785 
+                          [r5841:1, r5839:1, r5819:1, r5837:1, r5835:1, r5833:1, r5831:1, r5829:1, r5827:1] 
+                          var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; val v350 = #1 v348; val _ = exp[at r5819] #1 v349
+                            in  app[at r5841,at r5839,at r5819,at r5837,at r5835,at r5833,at r5831,at r5829,at r5827] v350
+                            end
+                  in  app[at r2823,at r2823,at r4377,at r2831,at r2829,at r2827,at r4377,at r2823,at r2821] v857
+                  end
+                | DValRec v849 => 
+                  let val v850 = #1 v849; 
+                      region r5617:1; 
+                      fun app 
+                          at r5617 
+                          [r5673:1, r5671:1, r5651:1, r5669:1, r5667:1, r5665:1, r5663:1, r5661:1, r5659:1] 
+                          var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; val v350 = #1 v348; val _ = exp[at r5651] #1 v349
+                            in  app[at r5673,at r5671,at r5651,at r5669,at r5667,at r5665,at r5663,at r5661,at r5659] v350
+                            end
+                  in  app[at r2823,at r2823,at r4377,at r2831,at r2829,at r2827,at r4377,at r2823,at r2821] v850
+                  end
+                | DFun v842 => 
+                  let val v843 = #1 v842; 
+                      region r5035:1; 
+                      fun app 
+                          at r5035 
+                          [r5167:1, r5165:1, r5105:1, r5103:1, r5107:1, r5119:1, r5117:1, r5115:1, r5113:1, r5111:1, r5109:1, r5163:1, r5161:1, r5133:1, r5131:1, r5129:1, r5127:1, r5125:1, r5123:1, r5121:1, r5147:1, r5145:1, r5143:1, r5141:1, r5139:1, r5137:1, r5135:1, r5153:1] 
+                          var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; 
+                                val v350 = #1 v348; 
+                                val _ = 
+                                  let region r5235:1; 
+                                      fun app 
+                                          at r5235 
+                                          [r5323:1, r5321:1, r5293:1, r5291:1, r5289:1, r5287:1, r5285:1, r5283:1, r5281:1, r5307:1, r5305:1, r5303:1, r5301:1, r5299:1, r5297:1, r5295:1, r5313:1] 
+                                          var18 = 
+                                          case var18 of 
+                                            nil => ()
+                                          | :: v348 => 
+                                            let val v349 = #0 v348; val v350 = #1 v348; val _ = exp[at r5313] #0 v349
+                                            in  app
+                                                 [at r5323,at r5321,at r5293,at r5291,at r5289,at r5287,at r5285,at r5283,at r5281,at r5307,at r5305,
+                                                  at r5303,at r5301,at r5299,at r5297,at r5295,at r5313] 
+                                                v350
+                                            end
+                                  in  app
+                                       [at r5163,at r5161,at r5133,at r5131,at r5129,at r5127,at r5125,at r5123,at r5121,at r5147,at r5145,
+                                        at r5143,at r5141,at r5139,at r5137,at r5135,at r5153] 
+                                      #0 v349
+                                  end
+                            in  app
+                                 [at r5167,at r5165,at r5105,at r5103,at r5107,at r5119,at r5117,at r5115,at r5113,at r5111,at r5109,
+                                  at r5163,at r5161,at r5133,at r5131,at r5129,at r5127,at r5125,at r5123,at r5121,at r5147,at r5145,
+                                  at r5143,at r5141,at r5139,at r5137,at r5135,at r5153] 
+                                v350
+                            end
+                  in  app
+                       [at r2823,at r2831,at r2829,at r2821,at r2821,at r2827,at r2831,at r2831,at r2827,at r2823,at r2821,
+                        at r2823,at r2829,at r2831,at r2831,at r2829,at r2827,at r4377,at r2823,at r2821,at r2823,at r2831,
+                        at r2829,at r2827,at r4377,at r2823,at r2821,at r4377] 
+                      v843
+                  end
+                | DAbstype v828 => 
+                  let val v829 = #2 v828; 
+                      region r4937:1; 
+                      fun app at r4937 [r4965:1, r4957:1] var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; val v350 = #1 v348; val _ = dec[at r4957] v349
+                            in  app[at r4965,at r4957] v350
+                            end
+                  in  app[at r2823,at r4377] v829
+                  end
+                | DLocal v824 => 
+                  let val v825 = #0 v824; 
+                      val v826 = #1 v824; 
+                      val _ = 
+                        let region r4753:1; 
+                            fun app at r4753 [r4781:1, r4773:1] var18 = 
+                                case var18 of 
+                                  nil => ()
+                                | :: v348 => 
+                                  let val v349 = #0 v348; val v350 = #1 v348; val _ = dec[at r4773] v349
+                                  in  app[at r4781,at r4773] v350
+                                  end
+                        in  app[at r2823,at r4377] v825
+                        end; 
+                      region r4839:1; 
+                      fun app at r4839 [r4867:1, r4859:1] var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; val v350 = #1 v348; val _ = dec[at r4859] v349
+                            in  app[at r4867,at r4859] v350
+                            end
+                  in  app[at r2823,at r4377] v826
+                  end
+                | DStructure v819 => 
+                  let val v820 = #0 v819; 
+                      region r4615:1; 
+                      fun app at r4615 [r4659:1, r4657:1, r4643:1, r4653:1, r4651:1, r4655:1] var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; val v350 = #1 v348; val _ = strexp[at r4643] #2 v349
+                            in  app[at r4659,at r4657,at r4643,at r4653,at r4651,at r4655] v350
+                            end
+                  in  app[at r2823,at r2829,at r4377,at r2829,at r2821,at r2821] v820
+                  end
+                | DFunctor v812 => 
+                  let val v813 = #0 v812; 
+                      region r4397:1; 
+                      fun app 
+                          at r4397 
+                          [r4473:1, r4471:1, r4439:1, r4437:1, r4451:1, r4449:1, r4447:1, r4445:1, r4443:1, r4441:1, r4455:1, r4453:1, r4457:1, r4463:1] 
+                          var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; val v350 = #1 v348; val _ = strexp[at r4463] #0 v349
+                            in  app
+                                 [at r4473,at r4471,at r4439,at r4437,at r4451,at r4449,at r4447,at r4445,at r4443,at r4441,at r4455,
+                                  at r4453,at r4457,at r4463] 
+                                v350
+                            end
+                  in  app
+                       [at r2823,at r2831,at r2829,at r2821,at r2831,at r2829,at r2827,at r4377,at r2823,at r2821,at r2831,
+                        at r2821,at r2821,at r4377] 
+                      v813
+                  end
+                | _ => ()
+            and strexp at r2865 [r5947:1] s = 
+                case s of 
+                  StrStruct v889 => 
+                  let val v890 = #0 v889; 
+                      region r6125:1; 
+                      fun app at r6125 [r6153:1, r6145:1] var18 = 
+                          case var18 of 
+                            nil => ()
+                          | :: v348 => 
+                            let val v349 = #0 v348; 
+                                val v350 = #1 v348; 
+                                val _ = let region r12761:1, r12763:1, r12767:1, r12769:1, r12771:1 in dec[at r6145] v349 end
+                            in  app[at r6153,at r6145] v350
+                            end
+                  in  app[at r2823,at r5947] v890
+                  end
+                | StrAscribe => strexp[at r5947] #0 (decon_StrAscribe s)
+                | StrLet v882 => 
+                  let val v883 = #0 v882; 
+                      val v884 = #1 v882; 
+                      val _ = 
+                        let region r5991:1; 
+                            fun app at r5991 [r6019:1, r6011:1] var18 = 
+                                case var18 of 
+                                  nil => ()
+                                | :: v348 => 
+                                  let val v349 = #0 v348; 
+                                      val v350 = #1 v348; 
+                                      val _ = let region r12823:1, r12825:1, r12829:1, r12831:1, r12833:1 in dec[at r6011] v349 end
+                                  in  app[at r6019,at r6011] v350
+                                  end
+                        in  app[at r2823,at r5947] v883
+                        end
+                  in  strexp[at r5947] v884
+                  end
+                | StrExport => strexp[at r5947] #2 (decon_StrExport s)
+                | _ => (); 
+            val _ = 
+              let region r6213:1; 
+                  fun app at r6213 [r6253:1, r6251:1, r6247:1, r6239:1, r6249:1] var18 = 
+                      case var18 of 
+                        nil => ()
+                      | :: v348 => 
+                        let val v349 = #0 v348; 
+                            val v350 = #1 v348; 
+                            val _ = 
+                              let val v901 = #0 v349; val v902 = #1 v349
+                              in  case v901 = v2508 of 
+                                    true => 
+                                    let region r6275:1; 
+                                        fun app at r6275 [r6303:1, r6295:1] var18 = 
+                                            case var18 of 
+                                              nil => ()
+                                            | :: v348 => 
+                                              let val v349 = #0 v348; val v350 = #1 v348; val _ = dec[at r6295] v349
+                                              in  app[at r6303,at r6295] v350
+                                              end
+                                    in  app[at r6247,at r6239] v902
+                                    end
+                                  | _ => ()
+                              end
+                        in  app[at r6253,at r6251,at r6247,at r6239,at r6249] v350
+                        end
+              in  app[at r2839,at r2837,at r2833,at r2825,at r2835] v2507
+              end
+        in  !best
+        end; 
+    fun hover at r1 [r6475:1, r6413:1] (v2510, v2511) = 
+        let region r6449:1, r6451:1; 
+            val v917 = 
+              variableAt
+               [at r6451,at r6449,at r3,at r6413,at r4,at r4,at r4,at r1,at r7,at r6,at r4,at r4,at r3,at r3] 
+              (!keptSyntax, v2510, v2511)
+        in  case v917 of 
+              SOME v927 => 
+              let val v928 = #0 v927; val v929 = #1 v927; val v930 = #2 v927
+              in  Obj 
+                  [("name", Str v928)at r6475,
+                   ("type", 
+                    Str 
+                    let region r6593:1, r6595:1, r6597:1, r6599:1, r6601:1, r6603:1, r6605:1
+                    in  toStringNamed
+                         [at r1,at r6,at r4,at r6605,at r6603,at r6601,at r6599,at r6597,at r6595,at r6593,at r1,at r1,at r3] 
+                        (fn at r6593 v2688 => !qualifier v2688, ref at r6599 nil, ref at r6605 nil, v929)
+                    end
+                   )at r6475,
+                   ("start", 
+                    let val n = #1 v930
+                    in  Num 
+                        (case n < 0 of 
+                           true => let region r6565:1, r6567:1 in "-" ^[at r3] toString[at r6567] $__neg_int63 n end
+                         | _ => toString[at r3] n
+                        )
+                    end
+                   )at r6475,
+                   ("stop", 
+                    let val n = #2 v930
+                    in  Num 
+                        (case n < 0 of 
+                           true => let region r6537:1, r6539:1 in "-" ^[at r3] toString[at r6539] $__neg_int63 n end
+                         | _ => toString[at r3] n
+                        )
+                    end
+                   )at r6475
+                  ] 
+                  at r6475
+              end
+            | _ => Null
+        end; 
+    fun answer at r1 [r7091:1, r6681:1, r6677:1, r6675:1] (v2513, v2514, v2515) = 
+        case v2514 of 
+          "initialize" => 
+          Obj 
+          [("name", Str "rune")at r7091,
+           ("version", Str "86a8ccfba-dirty")at r7091,
+           ("methods", 
+            Arr 
+            let region r7983:1; 
+                fun map at r7983 [r8003:1, r8001:1, r7997:1, r7995:1] var20 = 
+                    case var20 of 
+                    nil => nil | :: v369 => :: (Str (#0 v369), map[at r8003,at r8001,at r7997,at r7995] #1 v369)at r8003; 
+                region r8035:1
+            in  map[at r7091,at r7091,at r8035,at r3] ["diagnostics","hover","shutdown"] at r8035
+            end
+           )at r7091
+          ] 
+          at r7091
+        | "diagnostics" => 
+          let val _ = 
+                let region r7343:1; 
+                    val files = 
+                      let val j = 
+                            case v2515 of 
+                              Obj v407 => 
+                              let region r7299:1; 
+                                  val v399 = 
+                                    let region r7295:1
+                                    in  find[at r7299,at r6681,at r7295] 
+                                        (fn at r7295 v405 => let region r7309:1 in #0 v405 = "files" end, v407)
+                                    end
+                              in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+                              end
+                            | _ => Null
+                      in  case j of 
+                            Arr => 
+                            let region r7337:1, r7339:1
+                            in  mapPartial[at r7343,at r6681,at r7339,at r7337] 
+                                (fn at r7339 v431 => case v431 of Str v433 => SOME at r7337 v433 | _ => NONE at r7337, decon_Arr j)
+                            end
+                          | _ => nil
+                      end; 
+                    val _ = 
+                      let val v2068 = 
+                            case v2515 of 
+                              Obj v407 => 
+                              let region r7387:1; 
+                                  val v399 = 
+                                    let region r7383:1
+                                    in  find[at r7387,at r6681,at r7383] 
+                                        (fn at r7383 v405 => let region r7397:1 in #0 v405 = "path" end, v407)
+                                    end
+                              in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+                              end
+                            | _ => Null; 
+                          val v2069 = 
+                            case v2515 of 
+                              Obj v407 => 
+                              let region r7435:1; 
+                                  val v399 = 
+                                    let region r7431:1
+                                    in  find[at r7435,at r6681,at r7431] 
+                                        (fn at r7431 v405 => let region r7445:1 in #0 v405 = "text" end, v407)
+                                    end
+                              in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+                              end
+                            | _ => Null
+                      in  case v2068 of 
+                            Str => 
+                            case v2069 of 
+                              Str => 
+                              let val v458 = decon_Str v2068; val v459 = decon_Str v2069
+                              in  overlays := insert[at r1,at r3] (!overlays, v458, v459)
+                              end
+                            | _ => ()
+                          | _ => ()
+                      end; 
+                    val _ = keep := true; 
+                    val _ = keepSyntax := true; 
+                    val _ = 
+                      main[at r7343] 
+                      @[at r7343,at r6675] 
+                      (v2513, 
+                       let region r7491:1 in @[at r7343,at r7491] (["--units","--typecheck-only"] at r7491, files) end
+                      )
+                in  ()
+                end
+          in  Obj 
+              [("diagnostics", 
+                Arr 
+                let region r7547:1
+                in  rev[at r7091,at r7547] 
+                    let region r7551:1; 
+                        fun map at r7551 [r7587:1, r7585:1, r7581:1, r7579:1, r7575:1] var20 = 
+                            case var20 of 
+                              nil => nil
+                            | :: v369 => 
+                              let val v370 = #0 v369; val v371 = #1 v369
+                              in  :: 
+                                  (let val v497 = #0 v370; val v498 = #1 v370; val v499 = #2 v370
+                                   in  Obj 
+                                       let region r7637:1
+                                       in  @[at r7585,at r7637] 
+                                           ([("severity", Str v497)at r7585,
+                                             ("path", Str (#0 v498))at r7585,
+                                             ("start", 
+                                              let val n = #1 v498
+                                              in  Num 
+                                                  (case n < 0 of 
+                                                     true => let region r7729:1, r7731:1 in "-" ^[at r3] toString[at r7731] $__neg_int63 n end
+                                                   | _ => toString[at r3] n
+                                                  )
+                                              end
+                                             )at r7585,
+                                             ("stop", 
+                                              let val n = #2 v498
+                                              in  Num 
+                                                  (case n < 0 of 
+                                                     true => let region r7701:1, r7703:1 in "-" ^[at r3] toString[at r7703] $__neg_int63 n end
+                                                   | _ => toString[at r3] n
+                                                  )
+                                              end
+                                             )at r7585
+                                            ] 
+                                            at r7637, 
+                                            let region r7775:1
+                                            in  @[at r7585,at r7775] 
+                                                (let region r7779:1, r7781:1; val v472 = lineColOf[at r7781,at r7779] (#0 v498, #1 v498)
+                                                 in  case v472 of 
+                                                       SOME v474 => 
+                                                       let val v475 = #1 v474; val v476 = #2 v474
+                                                       in  [("line", 
+                                                             Num 
+                                                             (case v475 < 0 of 
+                                                                true => let region r7857:1, r7859:1 in "-" ^[at r3] toString[at r7859] $__neg_int63 v475 end
+                                                              | _ => toString[at r3] v475
+                                                             )
+                                                            )at r7585,
+                                                            ("column", 
+                                                             Num 
+                                                             (case v476 < 0 of 
+                                                                true => let region r7829:1, r7831:1 in "-" ^[at r3] toString[at r7831] $__neg_int63 v476 end
+                                                              | _ => toString[at r3] v476
+                                                             )
+                                                            )at r7585
+                                                           ] 
+                                                           at r7775
+                                                       end
+                                                     | _ => nil
+                                                 end, 
+                                                 [("message", Str v499)at r7585] at r7585
+                                                )
+                                            end
+                                           )
+                                       end
+                                   end, 
+                                   map[at r7587,at r7585,at r7581,at r7579,at r7575] v371
+                                  )at r7587
+                              end
+                    in  map[at r7547,at r7091,at r4,at r7,at r7] !kept
+                    end
+                end
+               )at r7091
+              ] 
+              at r7091
+          end
+        | "hover" => 
+          let val _ = 
+                let region r6743:1; 
+                    val files = 
+                      let val j = 
+                            case v2515 of 
+                              Obj v407 => 
+                              let region r6699:1; 
+                                  val v399 = 
+                                    let region r6695:1
+                                    in  find[at r6699,at r6681,at r6695] 
+                                        (fn at r6695 v405 => let region r6709:1 in #0 v405 = "files" end, v407)
+                                    end
+                              in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+                              end
+                            | _ => Null
+                      in  case j of 
+                            Arr => 
+                            let region r6737:1, r6739:1
+                            in  mapPartial[at r6743,at r6681,at r6739,at r6737] 
+                                (fn at r6739 v431 => case v431 of Str v433 => SOME at r6737 v433 | _ => NONE at r6737, decon_Arr j)
+                            end
+                          | _ => nil
+                      end; 
+                    val _ = 
+                      let val v2068 = 
+                            case v2515 of 
+                              Obj v407 => 
+                              let region r6787:1; 
+                                  val v399 = 
+                                    let region r6783:1
+                                    in  find[at r6787,at r6681,at r6783] 
+                                        (fn at r6783 v405 => let region r6797:1 in #0 v405 = "path" end, v407)
+                                    end
+                              in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+                              end
+                            | _ => Null; 
+                          val v2069 = 
+                            case v2515 of 
+                              Obj v407 => 
+                              let region r6835:1; 
+                                  val v399 = 
+                                    let region r6831:1
+                                    in  find[at r6835,at r6681,at r6831] 
+                                        (fn at r6831 v405 => let region r6845:1 in #0 v405 = "text" end, v407)
+                                    end
+                              in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+                              end
+                            | _ => Null
+                      in  case v2068 of 
+                            Str => 
+                            case v2069 of 
+                              Str => 
+                              let val v458 = decon_Str v2068; val v459 = decon_Str v2069
+                              in  overlays := insert[at r1,at r3] (!overlays, v458, v459)
+                              end
+                            | _ => ()
+                          | _ => ()
+                      end; 
+                    val _ = keep := true; 
+                    val _ = keepSyntax := true; 
+                    val _ = 
+                      main[at r6743] 
+                      @[at r6743,at r6675] 
+                      (v2513, 
+                       let region r6891:1 in @[at r6743,at r6891] (["--units","--typecheck-only"] at r6891, files) end
+                      )
+                in  ()
+                end; 
+              val v2145 = 
+                case v2515 of 
+                  Obj v407 => 
+                  let region r6931:1; 
+                      val v399 = 
+                        let region r6927:1
+                        in  find[at r6931,at r6681,at r6927] 
+                            (fn at r6927 v405 => let region r6941:1 in #0 v405 = "path" end, v407)
+                        end
+                  in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+                  end
+                | _ => Null; 
+              val v2146 = 
+                case v2515 of 
+                  Obj v407 => 
+                  let region r6979:1; 
+                      val v399 = 
+                        let region r6975:1
+                        in  find[at r6979,at r6681,at r6975] 
+                            (fn at r6975 v405 => let region r6989:1 in #0 v405 = "offset" end, v407)
+                        end
+                  in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+                  end
+                | _ => Null
+          in  case v2145 of 
+                Str => 
+                case v2146 of 
+                  Num => 
+                  let val v964 = decon_Str v2145; 
+                      val v965 = decon_Num v2146; 
+                      val v2160 = 
+                        let region r7029:1
+                        in  let region r7019:1 in valOf[at r7019] fromString[at r7019,at r3] v965 end handle 
+                            fn at r7029 Option => case Option of Option => raise Bad at r1 "an offset" | _ => raise Option
+                        end; 
+                      region r7065:1, r7067:1; 
+                      val v917 = 
+                        variableAt
+                         [at r7067,at r7065,at r3,at r3,at r4,at r4,at r4,at r1,at r7,at r6,at r4,at r4,at r3,at r3] 
+                        (!keptSyntax, v964, v2160)
+                  in  case v917 of 
+                        SOME v927 => 
+                        let val v928 = #0 v927; val v929 = #1 v927; val v930 = #2 v927
+                        in  Obj 
+                            [("name", Str v928)at r7091,
+                             ("type", 
+                              Str 
+                              let region r7209:1, r7211:1, r7213:1, r7215:1, r7217:1, r7219:1, r7221:1
+                              in  toStringNamed
+                                   [at r1,at r6,at r4,at r7221,at r7219,at r7217,at r7215,at r7213,at r7211,at r7209,at r1,at r1,at r3] 
+                                  (fn at r7209 v2689 => !qualifier v2689, ref at r7215 nil, ref at r7221 nil, v929)
+                              end
+                             )at r7091,
+                             ("start", 
+                              let val n = #1 v930
+                              in  Num 
+                                  (case n < 0 of 
+                                     true => let region r7181:1, r7183:1 in "-" ^[at r3] toString[at r7183] $__neg_int63 n end
+                                   | _ => toString[at r3] n
+                                  )
+                              end
+                             )at r7091,
+                             ("stop", 
+                              let val n = #2 v930
+                              in  Num 
+                                  (case n < 0 of 
+                                     true => let region r7153:1, r7155:1 in "-" ^[at r3] toString[at r7155] $__neg_int63 n end
+                                   | _ => toString[at r3] n
+                                  )
+                              end
+                             )at r7091
+                            ] 
+                            at r7091
+                        end
+                      | _ => Null
+                  end
+                | _ => raise Bad at r1 "hover wants a path and an offset"
+              | _ => raise Bad at r1 "hover wants a path and an offset"
+          end
+        | _ => raise Bad at r1 let region r8109:1 in "no method " ^[at r3] v2514 end; 
+    fun reply at r1 [r8131:1, r8129:1] (v2517, v2518) = 
+        let region r8137:1
+        in  print[at r8137] 
+            let region r8147:1
+            in  show[at r8131,at r8129] 
+                Obj [("jsonrpc", Str "2.0")at r8131,("id", v2517)at r8131,("result", v2518)at r8131] at r8131 ^[at r8137] 
+                "\n"
+            end
+        end; 
+    fun failure at r1 [r8237:1, r8235:1] (v2519, v2520, v2521) = 
+        let region r8241:1
+        in  print[at r8241] 
+            let region r8251:1
+            in  show[at r8237,at r8235] 
+                Obj 
+                [("jsonrpc", Str "2.0")at r8237,
+                 ("id", v2519)at r8237,
+                 ("error", 
+                  Obj 
+                  [("code", 
+                    Num 
+                    (case v2520 < 0 of 
+                       true => let region r8359:1, r8361:1 in "-" ^[at r8235] toString[at r8361] $__neg_int63 v2520 end
+                     | _ => toString[at r8235] v2520
+                    )
+                   )at r8237,
+                   ("message", Str v2521)at r8237
+                  ] 
+                  at r8237
+                 )at r8237
+                ] 
+                at r8237 ^[at r8241] 
+                "\n"
+            end
+        end; 
+    fun request at r1 [r8415:1, r8413:1] (v2522, v2523) = 
+        let region r8421:1; 
+            val msg = 
+              let region r8619:1
+              in  parse[at r8421,at r3,at r8415] v2523 handle 
+                  fn at r8619 v998 => 
+                  case v998 of 
+                    Bad => 
+                    let val why = deexcon_Bad v998; 
+                        val _ = 
+                          let region r8425:1, r8427:1; 
+                              val v2173 = Null; 
+                              val v2175 = let region r8435:1 in "not JSON: " ^[at r8425] why end; 
+                              region r8443:1
+                          in  print[at r8443] 
+                              let region r8453:1
+                              in  show[at r8427,at r8425] 
+                                  Obj 
+                                  [("jsonrpc", Str "2.0")at r8427,
+                                   ("id", v2173)at r8427,
+                                   ("error", 
+                                    Obj 
+                                    [("code", 
+                                      Num let region r8561:1, r8563:1 in "-" ^[at r8425] toString[at r8563] $__neg_int63 ~32700 end
+                                     )at r8427,
+                                     ("message", Str v2175)at r8427
+                                    ] 
+                                    at r8427
+                                   )at r8427
+                                  ] 
+                                  at r8427 ^[at r8443] 
+                                  "\n"
+                              end
+                          end
+                    in  Obj nil
+                    end
+                  | _ => raise v998
+              end; 
+            val id = 
+              case msg of 
+                Obj v407 => 
+                let region r8637:1; 
+                    val v399 = 
+                      let region r8633:1
+                      in  find[at r8637,at r8421,at r8633] 
+                          (fn at r8633 v405 => let region r8647:1 in #0 v405 = "id" end, v407)
+                      end
+                in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+                end
+              | _ => Null; 
+            val method = 
+              let val v1007 = 
+                    case msg of 
+                      Obj v407 => 
+                      let region r8685:1; 
+                          val v399 = 
+                            let region r8681:1
+                            in  find[at r8685,at r8421,at r8681] 
+                                (fn at r8681 v405 => let region r8695:1 in #0 v405 = "method" end, v407)
+                            end
+                      in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+                      end
+                    | _ => Null
+              in  case v1007 of Str => decon_Str v1007 | _ => ""
+              end
+        in  case let region r8723:1 in method = "" end of 
+              true => 
+              let val _ = 
+                    case let region r8729:1, r8731:1 in eq_json[at r8731,at r8729,at r8421,at r3] (msg, Obj nil) end of 
+                      true => ()
+                    | _ => 
+                      let region r8747:1
+                      in  print[at r8747] 
+                          let region r8757:1
+                          in  show[at r8421,at r3] 
+                              Obj 
+                              [("jsonrpc", Str "2.0")at r8421,
+                               ("id", id)at r8421,
+                               ("error", 
+                                Obj 
+                                [("code", 
+                                  Num let region r8867:1, r8869:1 in "-" ^[at r3] toString[at r8869] $__neg_int63 ~32600 end
+                                 )at r8421,
+                                 ("message", Str "no method")at r8421
+                                ] 
+                                at r8421
+                               )at r8421
+                              ] 
+                              at r8421 ^[at r8747] 
+                              "\n"
+                          end
+                      end
+              in  true
+              end
+            | _ => 
+              case let region r8907:1 in method = "shutdown" end of 
+                true => 
+                let val _ = 
+                      let region r8909:1
+                      in  print[at r8909] 
+                          let region r8919:1
+                          in  show[at r8421,at r3] 
+                              Obj [("jsonrpc", Str "2.0")at r8421,("id", id)at r8421,("result", Null)at r8421] at r8421 ^[at r8909] 
+                              "\n"
+                          end
+                      end
+                in  false
+                end
+              | _ => 
+                case case let region r9001:1; 
+                              fun exists at r9001 [r9009:1, r9007:1] var37 = 
+                                  case var37 of 
+                                    nil => false
+                                  | :: v566 => 
+                                    let val v567 = #0 v566; val v568 = #1 v566
+                                    in  case v567 = method of true => true | _ => exists[at r9009,at r9007] v568
+                                    end; 
+                              region r9021:1, r9023:1
+                          in  exists[at r9023,at r9021] ["initialize","diagnostics","hover"] at r9023
+                          end
+                     of 
+                     true => false | _ => true
+                of 
+                  true => 
+                  let val _ = 
+                        let val v2217 = let region r9059:1 in "no method " ^[at r3] method end; region r9067:1
+                        in  print[at r9067] 
+                            let region r9077:1
+                            in  show[at r8421,at r3] 
+                                Obj 
+                                [("jsonrpc", Str "2.0")at r8421,
+                                 ("id", id)at r8421,
+                                 ("error", 
+                                  Obj 
+                                  [("code", 
+                                    Num let region r9185:1, r9187:1 in "-" ^[at r3] toString[at r9187] $__neg_int63 ~32601 end
+                                   )at r8421,
+                                   ("message", Str v2217)at r8421
+                                  ] 
+                                  at r8421
+                                 )at r8421
+                                ] 
+                                at r8421 ^[at r9067] 
+                                "\n"
+                            end
+                        end
+                  in  true
+                  end
+                | _ => 
+                  let val _ = flushOut[at r1,at r7,at r6,at r4] stdOut; 
+                      val _ = flushOut[at r1,at r7,at r6,at r4] stdErr; 
+                      val _ = 
+                        let region r9241:1; val v1042 = fork[at r9241] ()
+                        in  case v1042 of 
+                              NONE => 
+                              let val _ = 
+                                    let region r9727:1
+                                    in  let region r9243:1
+                                        in  print[at r9243] 
+                                            let region r9253:1
+                                            in  show[at r8421,at r3] 
+                                                Obj 
+                                                [("jsonrpc", Str "2.0")at r8421,
+                                                 ("id", id)at r8421,
+                                                 ("result", 
+                                                  answer[at r8421,at r8421,at r3,at r8413] 
+                                                  (v2522, 
+                                                   method, 
+                                                   case msg of 
+                                                     Obj v407 => 
+                                                     let region r9331:1; 
+                                                         val v399 = 
+                                                           let region r9327:1
+                                                           in  find[at r9331,at r8421,at r9327] 
+                                                               (fn at r9327 v405 => let region r9341:1 in #0 v405 = "params" end, v407)
+                                                           end
+                                                     in  case v399 of SOME => #1 (decon_SOME v399) | _ => Null
+                                                     end
+                                                   | _ => Null
+                                                  )
+                                                 )at r8421
+                                                ] 
+                                                at r8421 ^[at r9243] 
+                                                "\n"
+                                            end
+                                        end handle 
+                                        fn at r9727 v1054 => 
+                                        case v1054 of 
+                                          Bad => 
+                                          let val v2236 = deexcon_Bad v1054; region r9389:1
+                                          in  print[at r9389] 
+                                              let region r9399:1
+                                              in  show[at r8421,at r3] 
+                                                  Obj 
+                                                  [("jsonrpc", Str "2.0")at r8421,
+                                                   ("id", id)at r8421,
+                                                   ("error", 
+                                                    Obj 
+                                                    [("code", 
+                                                      Num let region r9507:1, r9509:1 in "-" ^[at r3] toString[at r9509] $__neg_int63 ~32602 end
+                                                     )at r8421,
+                                                     ("message", Str v2236)at r8421
+                                                    ] 
+                                                    at r8421
+                                                   )at r8421
+                                                  ] 
+                                                  at r8421 ^[at r9389] 
+                                                  "\n"
+                                              end
+                                          end
+                                        | _ => 
+                                          let val v2243 = 
+                                              let region r9553:1, r9555:1 in "the compiler failed: " ^[at r3] $exnNameML [at r9555] v1054 end; 
+                                              region r9569:1
+                                          in  print[at r9569] 
+                                              let region r9579:1
+                                              in  show[at r8421,at r3] 
+                                                  Obj 
+                                                  [("jsonrpc", Str "2.0")at r8421,
+                                                   ("id", id)at r8421,
+                                                   ("error", 
+                                                    Obj 
+                                                    [("code", 
+                                                      Num let region r9687:1, r9689:1 in "-" ^[at r3] toString[at r9689] $__neg_int63 ~32603 end
+                                                     )at r8421,
+                                                     ("message", Str v2243)at r8421
+                                                    ] 
+                                                    at r8421
+                                                   )at r8421
+                                                  ] 
+                                                  at r8421 ^[at r9569] 
+                                                  "\n"
+                                              end
+                                          end
+                                    end; 
+                                  val _ = flushOut[at r1,at r7,at r6,at r4] stdOut; 
+                                  val _ = flushOut[at r1,at r7,at r6,at r4] stdErr
+                              in  exit 0x0
+                              end
+                            | SOME v1060 => 
+                              let region r9751:1, r9753:1; 
+                                  val v1058 = 
+                                    let region r9747:1, r9749:1
+                                    in  waitpid[at r9753,at r9751,at r9749,at r9747] (W_CHILD at r9747 v1060, nil)
+                                    end
+                              in  case #1 v1058 of 
+                                    W_EXITED => ()
+                                  | _ => 
+                                    let region r9759:1
+                                    in  print[at r9759] 
+                                        let region r9769:1
+                                        in  show[at r8421,at r3] 
+                                            Obj 
+                                            [("jsonrpc", Str "2.0")at r8421,
+                                             ("id", id)at r8421,
+                                             ("error", 
+                                              Obj 
+                                              [("code", 
+                                                Num let region r9879:1, r9881:1 in "-" ^[at r3] toString[at r9881] $__neg_int63 ~32603 end
+                                               )at r8421,
+                                               ("message", Str "the compiler ended without an answer")at r8421
+                                              ] 
+                                              at r8421
+                                             )at r8421
+                                            ] 
+                                            at r8421 ^[at r9759] 
+                                            "\n"
+                                        end
+                                    end
+                              end
+                        end
+                  in  true
+                  end
+        end; 
+    fun serve at r1 [r9929:1] options = 
+        let region r9931:1; 
+            fun loop at r9931 () = 
+                let val v1077 = inputLine stdIn
+                in  case v1077 of 
+                      NONE => 0
+                    | SOME v1096 => 
+                      let region r9943:1; 
+                          val l = 
+                            let region r9937:1, r9939:1
+                            in  translate[at r9943,at r3,at r9939,at r9937] 
+                                (fn at r9939 v1085 => 
+                                 case v1085 of 
+                                 0xd => "" | 0xa => "" | _ => let region r9953:1 in String.implode [at r9937] [v1085] at r9953 end, 
+                                 v1096
+                                )
+                            end
+                      in  case String.size l = 0 of 
+                            true => loop ()
+                          | _ => 
+                            case request[at r9943,at r9929] (options, l) of 
+                            true => let val _ = flushOut[at r1,at r7,at r6,at r4] stdOut in loop () end | _ => 0
+                      end
+                end
+        in  loop ()
+        end; 
+    fun main at r1 [r9993:1] v2528 = 
+        case let region r9995:1; 
+                 fun exists at r9995 [r10003:1, r10001:1] var37 = 
+                     case var37 of 
+                       nil => false
+                     | :: v566 => 
+                       let val v567 = #0 v566; val v568 = #1 v566
+                       in  case let region r10009:1 in v567 = "--serve" end of 
+                           true => true | _ => exists[at r10003,at r10001] v568
+                       end
+             in  exists[at r9993,at r3] v2528
+             end
+        of 
+          true => 
+          let region r10073:1; 
+              val options = 
+                let region r10021:1; 
+                    fun filter at r10021 [r10037:1, r10033:1, r10031:1] var26 = 
+                        case var26 of 
+                          nil => nil
+                        | :: v446 => 
+                          let val v447 = #0 v446; val v448 = #1 v446
+                          in  case case let region r10043:1 in v447 = "--serve" end of true => false | _ => true of 
+                                true => :: (v447, filter[at r10037,at r10033,at r10031] v448)at r10037
+                              | _ => filter[at r10037,at r10033,at r10031] v448
+                          end
+                in  filter[at r10073,at r9993,at r3] v2528
+                end; 
+              region r10075:1; 
+              fun loop at r10075 () = 
+                  let val v1077 = inputLine stdIn
+                  in  case v1077 of 
+                        NONE => 0
+                      | SOME v1096 => 
+                        let region r10087:1; 
+                            val l = 
+                              let region r10081:1, r10083:1
+                              in  translate[at r10087,at r3,at r10083,at r10081] 
+                                  (fn at r10083 v1085 => 
+                                   case v1085 of 
+                                   0xd => "" | 0xa => "" | _ => let region r10097:1 in String.implode [at r10081] [v1085] at r10097 end, 
+                                   v1096
+                                  )
+                              end
+                        in  case String.size l = 0 of 
+                              true => loop ()
+                            | _ => 
+                              case request[at r10087,at r10073] (options, l) of 
+                              true => let val _ = flushOut[at r1,at r7,at r6,at r4] stdOut in loop () end | _ => 0
+                        end
+                  end
+          in  loop ()
+          end
+        | _ => main[at r9993] v2528
+in  {|
+    parse: (_,r1), 
+    quote: (_,r1), 
+    show: (_,r1), 
+    field: (_,r1), 
+    int: (_,r1), 
+    strings: (_,r1), 
+    check: (_,r1), 
+    position: (_,r1), 
+    diagnostics: (_,r1), 
+    variableAt: (_,r1), 
+    hover: (_,r1), 
+    answer: (_,r1), 
+    reply: (_,r1), 
+    failure: (_,r1), 
+    request: (_,r1), 
+    serve: (_,r1), 
+    main: (_,r1), 
+    eq_json: (_,r1), 
+    Bad
+    |}
+end[[ERR in sub process:
+  CRASH]]
+Stopping compilation of MLB-file due to error (code 1).
+make: *** [Makefile:385: bin/rune-mlkit.bin] Error 255

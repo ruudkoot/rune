@@ -3,7 +3,7 @@
 Portable SML97 benchmark programs, implemented from the
 [roadmap](../../docs/plans/benchmarks.md). The runnable catalogue covers the classic SML collection and staged nofib/Sandmark
 ports, with fixed profiles and result checks. The initial roadmap is complete
-with 507 programs and 1473 profiles. Recorded coverage is in
+with 510 programs and 1482 profiles. Recorded coverage is in
 [validation.md](validation.md). The source
 [inventory](inventory.tsv) records every pinned disposition; it is not a list of
 passing programs. See the [source audit](audit.md) and [literature map](literature.md).

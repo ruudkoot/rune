@@ -1,0 +1,376 @@
+SML_LIB=/home/ruud/.local/rune-hosts/mlkit-4.7.25/lib/mlkit /home/ruud/.local/rune-hosts/mlkit-4.7.25/bin/mlkit -j 4 -o bin/rune-mlkit.bin build/rune-mlkit.mlb
+bin/rune --library dap --library jsonrpc src/front/engine.sml src/dap/translate.sml src/dap/adapter.sml -o bin/rune-dap.rbc
+bin/rune --library jupyter --library jsonrpc --library digest --library unicode src/front/engine.sml src/dap/translate.sml \
+  src/util/ident.sml src/kernel/kernel.sml -o bin/rune-kernel.rbc
+bin/rune --library test/runner --library json tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/sh.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/portability.sml tests/runner/main.sml -o bin/rune-test.rbc
+[reading source file:	build/config.sml]
+[wrote X64 code file:	build/MLB/RI_GC/config.sml.s]
+[reading source file:	build/../src/util/scon.sml]printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" "$d/rune-dap.rbc" --vm "$d/runevm" --image "$d/rune-repl.img" "$@"\n' > bin/rune-dap
+chmod +x bin/rune-dap
+
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/scon.sml.s]
+[reading source file:	build/../src/util/ordmap.smlprintf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" "$d/rune-kernel.rbc" --vm "$d/runevm" --image "$d/rune-repl.img" --program "$d/rune-kernel.rbc" "$@"\n' > bin/rune-kernel
+chmod +x bin/rune-kernel
+]
+[compiling body of functor OrdMapFn (from source rune-mlkit.mlb->ordmap.sml) begin]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/ordmap.sml.code1.s]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/ordmap.sml.code2.s]
+[compiling body of functor OrdMapFn end]
+[compiling body of functor OrdMapFn (from source rune-mlkit.mlb->ordmap.sml) begin]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/ordmap.sml.code3.s]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/ordmap.sml.code4.s]
+[compiling body of functor OrdMapFn end]
+[reading source file:	build/../src/util/inttable.smlprintf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" "$d/rune-test.rbc" "$@"\n' > bin/rune-test
+chmod +x bin/rune-test
+]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/inttable.sml.s]
+[reading source file:	build/../lib/unicode/utf8_sig.sml]
+[reading source file:	build/../lib/unicode/utf8.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/utf8.sml.s]
+[reading source file:	build/../lib/unicode/width_data.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/width_data.sml.s]
+[reading source file:	build/../lib/unicode/display_width_sig.sml]
+[reading source file:	build/../lib/unicode/display_width.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/display_width.sml.s]
+[reading source file:	build/../lib/unicode/grapheme_data.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/grapheme_data.sml.s]
+[reading source file:	build/../lib/unicode/grapheme_sig.sml]
+[reading source file:	build/../lib/unicode/grapheme.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/grapheme.sml.s]
+[reading source file:	build/../lib/unicode/normalize_data.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/normalize_data.sml.s]
+[reading source file:	build/../lib/unicode/normalize_sig.sml]
+[reading source file:	build/../lib/unicode/normalize.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/normalize.sml.s]
+[reading source file:	build/../lib/unicode/identifier_data.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/identifier_data.sml.s]
+[reading source file:	build/../lib/unicode/identifier_sig.sml]
+[reading source file:	build/../lib/unicode/identifier.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/identifier.sml.s]
+[reading source file:	build/../lib/unicode/security_data.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/security_data.sml.s]
+[reading source file:	build/../lib/unicode/security_sig.sml]
+[reading source file:	build/../lib/unicode/security.sml]
+[wrote X64 code file:	build/../lib/unicode/MLB/RI_GC/security.sml.s]
+[reading source file:	build/../src/util/ident.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/ident.sml.s]
+[reading source file:	build/../src/util/source.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/source.sml.s]
+[reading source file:	build/../src/util/error.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/error.sml.s]
+[reading source file:	build/../lib/json/json_sig.sml]
+[reading source file:	build/../lib/json/json.sml]
+[wrote X64 code file:	build/../lib/json/MLB/RI_GC/json.sml.s]
+[reading source file:	build/../src/util/color.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/color.sml.s]
+[reading source file:	build/../src/util/diagnostic.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/diagnostic.sml.s]
+[reading source file:	build/../src/util/pass.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/pass.sml.s]
+[reading source file:	build/../src/util/usage.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/usage.sml.s]
+[reading source file:	build/../src/util/pickle.sml]
+[wrote X64 code file:	build/../src/util/MLB/RI_GC/pickle.sml.s]
+[reading source file:	build/../src/frontend/token.sml]
+[wrote X64 code file:	build/../src/frontend/MLB/RI_GC/token.sml.s]
+[reading source file:	build/../src/frontend/lexer.sml]
+[wrote X64 code file:	build/../src/frontend/MLB/RI_GC/lexer.sml.s]
+[reading source file:	build/../src/elab/types.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/types.sml.s]
+[reading source file:	build/../src/core/ty.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/ty.sml.s]
+[reading source file:	build/../src/elab/overload.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/overload.sml.s]
+[reading source file:	build/../src/frontend/ast.sml]
+[wrote X64 code file:	build/../src/frontend/MLB/RI_GC/ast.sml.s]
+[reading source file:	build/../src/frontend/fixity.sml]
+[wrote X64 code file:	build/../src/frontend/MLB/RI_GC/fixity.sml.s]
+[reading source file:	build/../src/frontend/parser.sml]
+[wrote X64 code file:	build/../src/frontend/MLB/RI_GC/parser.sml.s]
+[reading source file:	build/../src/elab/unify.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/unify.sml.s]
+[reading source file:	build/../src/elab/env.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/env.sml.s]
+[reading source file:	build/../src/elab/sigmatch.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/sigmatch.sml.s]
+[reading source file:	build/../src/elab/exhaust.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/exhaust.sml.s]
+[reading source file:	build/../src/backend/opcodes.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/opcodes.sml.s]
+[reading source file:	build/../src/backend/prims.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/prims.sml.s]
+[reading source file:	build/../src/elab/elaborate.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/elaborate.sml.s]
+[reading source file:	build/../src/core/lambda.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/lambda.sml.s]
+[reading source file:	build/../src/core/lambdalint.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/lambdalint.sml.s]
+[reading source file:	build/../src/core/matchcomp.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/matchcomp.sml.s]
+[reading source file:	build/../src/core/translate.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/translate.sml.s]
+[reading source file:	build/../src/core/mid.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/mid.sml.s]
+[reading source file:	build/../src/core/midlint.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/midlint.sml.s]
+[reading source file:	build/../src/core/midtext.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/midtext.sml.s]
+[reading source file:	build/../src/core/tomid.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/tomid.sml.s]
+[reading source file:	build/../src/core/midcanon.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/midcanon.sml.s]
+[reading source file:	build/../src/core/target.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/target.sml.s]
+[reading source file:	build/../src/core/shake.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/shake.sml.s]
+[reading source file:	build/../src/core/lift.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/lift.sml.s]
+[reading source file:	build/../src/core/simplify.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/simplify.sml.s]
+[reading source file:	build/../src/core/workers.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/workers.sml.s]
+[reading source file:	build/../src/backend/code.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/code.sml.s]
+[reading source file:	build/../src/backend/low.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/low.sml.s]
+[reading source file:	build/../src/backend/target.sml]
+[reading source file:	build/../src/backend/lowlint.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/lowlint.sml.s]
+[reading source file:	build/../src/backend/rep.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/rep.sml.s]
+[reading source file:	build/../src/backend/lower.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/lower.sml.s]
+[reading source file:	build/../src/backend/stack.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/stack.sml.s]
+[reading source file:	build/../src/backend/regcodes.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/regcodes.sml.s]
+[reading source file:	build/../src/backend/regs.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/regs.sml.s]
+[reading source file:	build/../src/backend/emit.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/emit.sml.s]
+[reading source file:	build/../src/backend/link.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/link.sml.s]
+[reading source file:	build/../src/backend/unitfile.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/unitfile.sml.s]
+[reading source file:	build/../src/driver/basismanifest.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/basismanifest.sml.s]
+[reading source file:	build/../src/driver/buildfile.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/buildfile.sml.s]
+[reading source file:	build/../src/driver/options.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/options.sml.s]
+[reading source file:	build/../src/driver/unitbasis.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/unitbasis.sml.s]
+[reading source file:	build/../src/driver/pipeline.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/pipeline.sml.s]
+[reading source file:	build/../src/driver/unitmid.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/unitmid.sml.s]
+[reading source file:	build/../src/driver/unitcache.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/unitcache.sml.s]
+[reading source file:	build/../src/driver/deps.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/deps.sml.s]
+[reading source file:	build/../src/driver/parallel.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/parallel.sml.s]
+[reading source file:	build/../src/driver/main.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/main.sml.s]
+[reading source file:	build/../src/driver/serve.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/serve.sml.s]
+[reading source file:	build/../src/main/mlkit-main.sml]
+[wrote X64 code file:	build/../src/main/MLB/RI_GC/mlkit-main.sml.s]
+[wrote X64 code file:	MLB/RI_GC/base-link_objects.s]
+[wrote executable file:	bin/rune-mlkit.bin]
+printf '#!/bin/sh\nd=$(dirname "$0")\n[ "$1" = -i ] && shift && exec "$d/rune-repl" "$@"\nexec "$d/rune-mlkit.bin" --lib "$d/../lib" "$@"\n' > bin/rune-mlkit
+chmod +x bin/rune-mlkit
+SML_LIB=/home/ruud/.local/rune-hosts/mlkit-4.7.25/lib/mlkit /home/ruud/.local/rune-hosts/mlkit-4.7.25/bin/mlkit -j 4 -o bin/runedoc-mlkit.bin build/runedoc-mlkit.mlb
+[reading source file:	build/../src/doc/docsource.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docsource.sml.s]
+[reading source file:	build/../src/doc/docdiag.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docdiag.sml.s]
+[reading source file:	build/../src/doc/doccomments.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/doccomments.sml.s]
+[reading source file:	build/../src/doc/doctext.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/doctext.sml.s]
+[reading source file:	build/../src/doc/dochead.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/dochead.sml.s]
+[reading source file:	build/../src/doc/docir.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docir.sml.s]
+[reading source file:	build/../src/doc/docextract.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docextract.sml.s]
+[reading source file:	build/../src/doc/docanchor.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docanchor.sml.s]
+[reading source file:	build/../src/doc/docmarkdown.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docmarkdown.sml.s]
+[reading source file:	build/../src/doc/docclaims.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docclaims.sml.s]
+[reading source file:	build/../src/doc/docelab.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docelab.sml.s]
+[reading source file:	build/../src/doc/doctests.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/doctests.sml.s]
+[reading source file:	build/../src/doc/docnotes.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docnotes.sml.s]
+[reading source file:	build/../src/doc/docannot.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docannot.sml.s]
+[reading source file:	build/../src/doc/docresolve.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docresolve.sml.s]
+[reading source file:	build/../src/doc/docpage.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docpage.sml.s]
+[reading source file:	build/../src/doc/docexamples.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docexamples.sml.s]
+[reading source file:	build/../src/doc/doclaws.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/doclaws.sml.s]
+[reading source file:	build/../src/doc/docsite.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docsite.sml.s]
+[reading source file:	build/../src/doc/docmain.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docmain.sml.s]
+[reading source file:	build/../src/main/runedoc-mlkit-main.sml]
+[wrote X64 code file:	build/../src/main/MLB/RI_GC/runedoc-mlkit-main.sml.s]
+[wrote X64 code file:	MLB/RI_GC/base-link_objects.s]
+[wrote executable file:	bin/runedoc-mlkit.bin]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runedoc-mlkit.bin" --lib "$d/../lib" "$@"\n' > bin/runedoc-mlkit
+chmod +x bin/runedoc-mlkit
+SML_LIB=/home/ruud/.local/rune-hosts/mlkit-4.7.25/lib/mlkit /home/ruud/.local/rune-hosts/mlkit-4.7.25/bin/mlkit -j 4 -o bin/runeopt-mlkit.bin build/runeopt-mlkit.mlb
+[reading source file:	build/../src/isa/isa.sml]
+[wrote X64 code file:	build/../src/isa/MLB/RI_GC/isa.sml.s]
+[reading source file:	build/../src/isa/stack.sml]
+[wrote X64 code file:	build/../src/isa/MLB/RI_GC/stack.sml.s]
+[reading source file:	build/../src/isa/prims.sml]
+[wrote X64 code file:	build/../src/isa/MLB/RI_GC/prims.sml.s]
+[reading source file:	build/../src/opt/rbc.sml]
+[wrote X64 code file:	build/../src/opt/MLB/RI_GC/rbc.sml.s]
+[reading source file:	build/../src/opt/x64_layout.sml]
+[wrote X64 code file:	build/../src/opt/MLB/RI_GC/x64_layout.sml.s]
+[reading source file:	build/../src/opt/rbcimage.sml]
+[wrote X64 code file:	build/../src/opt/MLB/RI_GC/rbcimage.sml.s]
+[reading source file:	build/../src/opt/rbccheck.sml]
+[wrote X64 code file:	build/../src/opt/MLB/RI_GC/rbccheck.sml.s]
+[reading source file:	build/../src/opt/rbcdisasm.sml]
+[wrote X64 code file:	build/../src/opt/MLB/RI_GC/rbcdisasm.sml.s]
+[reading source file:	build/../src/opt/x64.sml]
+[wrote X64 code file:	build/../src/opt/MLB/RI_GC/x64.sml.s]
+[reading source file:	build/../src/opt/optmain.sml]
+[wrote X64 code file:	build/../src/opt/MLB/RI_GC/optmain.sml.s]
+[reading source file:	build/../src/main/runeopt-mlkit-main.sml]
+[wrote X64 code file:	build/../src/main/MLB/RI_GC/runeopt-mlkit-main.sml.s]
+[wrote X64 code file:	MLB/RI_GC/base-link_objects.s]
+[wrote executable file:	bin/runeopt-mlkit.bin]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runeopt-mlkit.bin" --runtime "$d/../build" "$@"\n' > bin/runeopt-mlkit
+chmod +x bin/runeopt-mlkit
+GC_STRESS=101  NATIVE_HOST=yes MAKE='make' bin/rune-test run -j 4 --tier check
+SKIP lang/native/rt.interrupt_self: UNSUPPORTED: interrupt: native code does not poll for the user's interrupt (docs/native.md, Interrupts)
+SKIP lang/native-cycles/rt.interrupt_self: UNSUPPORTED: interrupt: native code does not poll for the user's interrupt (docs/native.md, Interrupts)
+... 143/16524 done, 0 failed, 4 running, 30.0 s
+... 313/16524 done, 0 failed, 4 running, 60.0 s
+... 392/16524 done, 0 failed, 4 running, 90.0 s
+... 433/16524 done, 0 failed, 4 running, 120.0 s
+... 498/16524 done, 0 failed, 4 running, 150.0 s
+... 566/16524 done, 0 failed, 4 running, 180.0 s
+... 640/16524 done, 0 failed, 4 running, 210.0 s
+... 685/16524 done, 0 failed, 4 running, 240.0 s
+... 745/16524 done, 0 failed, 4 running, 270.0 s
+... 811/16524 done, 0 failed, 4 running, 300.0 s
+... 992/16524 done, 0 failed, 4 running, 330.0 s
+... 1461/16524 done, 0 failed, 4 running, 360.0 s
+... 2086/16524 done, 0 failed, 4 running, 390.0 s
+... 2641/16524 done, 0 failed, 4 running, 420.0 s
+... 3423/16524 done, 0 failed, 4 running, 450.0 s
+... 3821/16524 done, 0 failed, 4 running, 480.0 s
+... 4128/16524 done, 0 failed, 4 running, 510.0 s
+... 4218/16524 done, 0 failed, 4 running, 540.0 s
+... 4310/16524 done, 0 failed, 4 running, 570.0 s
+... 4431/16524 done, 0 failed, 4 running, 600.0 s
+... 4573/16524 done, 0 failed, 4 running, 630.0 s
+... 4649/16524 done, 0 failed, 4 running, 660.0 s
+... 4661/16524 done, 0 failed, 4 running, 690.0 s
+... 4668/16524 done, 0 failed, 4 running, 720.0 s
+... 4671/16524 done, 0 failed, 4 running, 750.0 s
+... 5806/16524 done, 0 failed, 4 running, 780.0 s
+... 6160/16524 done, 0 failed, 4 running, 810.0 s
+... 6648/16524 done, 0 failed, 4 running, 840.1 s
+... 7370/16524 done, 0 failed, 4 running, 870.1 s
+... 7481/16524 done, 0 failed, 4 running, 900.1 s
+... 7727/16524 done, 0 failed, 4 running, 930.1 s
+... 8005/16524 done, 0 failed, 4 running, 960.1 s
+... 8510/16524 done, 0 failed, 4 running, 990.1 s
+... 8959/16524 done, 0 failed, 4 running, 1020.1 s
+... 9273/16524 done, 0 failed, 4 running, 1050.1 s
+... 9383/16524 done, 0 failed, 4 running, 1080.1 s
+... 9616/16524 done, 0 failed, 4 running, 1110.1 s
+... 9629/16524 done, 0 failed, 4 running, 1140.1 s
+... 10181/16524 done, 0 failed, 4 running, 1170.1 s
+... 10509/16524 done, 0 failed, 4 running, 1200.1 s
+... 13184/16524 done, 0 failed, 4 running, 1230.1 s
+... 13466/16524 done, 0 failed, 4 running, 1260.1 s
+... 13894/16524 done, 0 failed, 4 running, 1290.1 s
+... 13943/16524 done, 0 failed, 4 running, 1320.1 s
+... 13973/16524 done, 0 failed, 4 running, 1350.1 s
+... 14034/16524 done, 0 failed, 4 running, 1380.1 s
+... 14059/16524 done, 0 failed, 4 running, 1410.1 s
+... 14080/16524 done, 0 failed, 4 running, 1440.1 s
+... 14128/16524 done, 0 failed, 4 running, 1470.1 s
+... 14186/16524 done, 0 failed, 4 running, 1500.1 s
+... 14238/16524 done, 0 failed, 4 running, 1530.1 s
+... 14297/16524 done, 0 failed, 4 running, 1560.1 s
+... 14323/16524 done, 0 failed, 4 running, 1590.1 s
+... 14365/16524 done, 0 failed, 4 running, 1620.1 s
+... 14521/16524 done, 0 failed, 4 running, 1650.1 s
+... 14677/16524 done, 0 failed, 4 running, 1680.1 s
+... 14719/16524 done, 0 failed, 4 running, 1710.1 s
+... 14741/16524 done, 0 failed, 4 running, 1740.1 s
+... 14795/16524 done, 0 failed, 4 running, 1770.1 s
+... 14857/16524 done, 0 failed, 4 running, 1800.1 s
+... 14927/16524 done, 0 failed, 4 running, 1830.1 s
+... 14979/16524 done, 0 failed, 4 running, 1860.1 s
+... 15008/16524 done, 0 failed, 4 running, 1890.1 s
+... 15045/16524 done, 0 failed, 4 running, 1920.1 s
+... 15068/16524 done, 0 failed, 4 running, 1950.1 s
+... 15128/16524 done, 0 failed, 4 running, 1980.1 s
+... 15192/16524 done, 0 failed, 4 running, 2010.1 s
+... 15258/16524 done, 0 failed, 4 running, 2040.1 s
+... 15305/16524 done, 0 failed, 4 running, 2070.1 s
+... 15332/16524 done, 0 failed, 4 running, 2100.1 s
+... 15417/16524 done, 0 failed, 4 running, 2130.1 s
+... 15575/16524 done, 0 failed, 4 running, 2160.1 s
+... 15673/16524 done, 0 failed, 4 running, 2190.1 s
+... 15675/16524 done, 0 failed, 4 running, 2220.1 s
+... 15705/16524 done, 0 failed, 4 running, 2250.1 s
+... 15767/16524 done, 0 failed, 4 running, 2280.1 s
+... 15878/16524 done, 0 failed, 4 running, 2310.1 s
+... 15966/16524 done, 0 failed, 4 running, 2340.1 s
+... 16012/16524 done, 0 failed, 4 running, 2370.1 s
+... 16050/16524 done, 0 failed, 4 running, 2400.1 s
+... 16087/16524 done, 0 failed, 4 running, 2430.1 s
+... 16101/16524 done, 0 failed, 4 running, 2460.1 s
+... 16114/16524 done, 0 failed, 4 running, 2490.1 s
+... 16143/16524 done, 0 failed, 4 running, 2520.1 s
+... 16175/16524 done, 0 failed, 4 running, 2550.1 s
+... 16211/16524 done, 0 failed, 4 running, 2580.1 s
+... 16243/16524 done, 0 failed, 4 running, 2610.1 s
+... 16314/16524 done, 0 failed, 4 running, 2640.1 s
+... 16391/16524 done, 0 failed, 4 running, 2670.1 s
+... 16429/16524 done, 0 failed, 4 running, 2700.1 s
+... 16472/16524 done, 0 failed, 4 running, 2730.2 s
+... 16512/16524 done, 0 failed, 3 running, 2760.2 s
+... 16512/16524 done, 0 failed, 3 running, 2790.2 s
+... 16514/16524 done, 0 failed, 1 running, 2820.2 s
+... 16514/16524 done, 0 failed, 1 running, 2850.2 s
+... 16514/16524 done, 0 failed, 1 running, 2880.2 s
+... 16514/16524 done, 0 failed, 1 running, 2910.2 s
+... 16514/16524 done, 0 failed, 1 running, 2940.2 s
+... 16515/16524 done, 0 failed, 1 running, 2970.2 s
+... 16517/16524 done, 0 failed, 1 running, 3000.2 s
+... 16520/16524 done, 0 failed, 1 running, 3030.2 s
+... 16520/16524 done, 0 failed, 1 running, 3060.2 s
+FAIL make/test-opt: exit 2
+FAIL opt.check tests/out/exp.record_captured_virtual.rbc: runeopt: tests/out/exp.record_captured_virtual.rbc: unsupported bytecode version
+make: *** [Makefile:1305: test-opt] Error 1
+  kept:    tests/out/r/20261019-080844-107915/failed/make__test-opt
+  command: cd /home/ruud/rune/.worktrees/benchmarks && RUNE_TEST_ROOT=/home/ruud/rune/.worktrees/benchmarks RUNE_TEST_RUN=/home/ruud/rune/.worktrees/benchmarks/tests/out/r/20261019-080844-107915 sh -c 'exec "${MAKE:-make}" --no-print-directory test-opt JOBS="$RUNE_TEST_CPUS"'
+  rerun:   bin/rune-test run 'make/test-opt'
+... 16521/16524 done, 1 failed, 1 running, 3090.2 s
+... 16521/16524 done, 1 failed, 1 running, 3120.2 s
+... 16522/16524 done, 1 failed, 1 running, 3150.2 s
+... 16522/16524 done, 1 failed, 1 running, 3180.2 s
+... 16522/16524 done, 1 failed, 1 running, 3210.2 s
+slowest: make/check-layouts 213.2 s, errors/smlnj-legacy/err.ty_astra-inference-limit 188.8 s, errors/smlnj-dev/err.ty_astra-inference-limit 169.1 s, laws/MONO_ARRAY2@LargeIntArray2 108.1 s, lang/register-gc-low-pause-cycles/rt.gc_stress 99.7 s
+output: kept 350 bytes, freed 190594042; events in tests/out/r/20261019-080844-107915/events.jsonl, summary in tests/out/r/20261019-080844-107915/summary.md
+RESULT: FAIL 16524 of 16524 tests (2 SKIP, 16521 PASS, 1 FAIL), 3225.5 s wall, 11069.3 s CPU (86% of 4)
+make: *** [Makefile:1575: check] Error 1

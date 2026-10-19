@@ -10,6 +10,7 @@ done > "$out/sources.txt"
 {
   printf '%s\n' examples/benchmarks/manifest.tsv examples/benchmarks/inventory.tsv examples/benchmarks/source-variants.tsv examples/benchmarks/README.md
   awk -F '\t' 'NR>1 && !seen[$1]++ { print "examples/benchmarks/" $1 "/PROVENANCE.md" }' examples/benchmarks/manifest.tsv
+  awk -F '\t' 'NR>1 && $3=="rune" && !seen[$4]++ { print "examples/benchmarks/" $4 }' examples/benchmarks/manifest.tsv
 } > "$out/data.txt"
 RUNE_MATRIX_RUN="$out/worker" sh tests/basis/run-matrix.sh \
   --configs rune,native:mlton,native:smlnj-legacy,native:polyml \
