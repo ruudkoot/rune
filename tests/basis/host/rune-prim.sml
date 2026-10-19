@@ -463,6 +463,7 @@ struct
     if not (runOk (si, n, Array.length src)) orelse not (runOk (di, n, Array.length dst)) then raise Subscript
     else ArraySlice.copy {src = ArraySlice.slice (src, si, SOME n), dst = dst, di = di}
   fun vector_from_list l = if longer (l, maxLen) then raise Size else Vector.fromList l
+  fun array_to_vector a = Array.vector a
   val vector_length = Vector.length
   val vector_sub = Vector.sub
   fun vector_concat (a, b) =

@@ -855,5 +855,8 @@ struct
           doc = "The code points of the UTF-8 of a string from byte i, at most n of them, n capped at 100000000 (string, i, n): (vector, j, status), j the byte after the last decoded, status 0 when it stopped at n or at the end, 1 when a sequence that is not UTF-8 (the Unicode Standard's Table 3-7) begins at j, 2 when the bytes from j to the end begin a sequence the end cuts short; raises Subscript when i is outside 0..size or n < 0."}],
        group "equality by type, of strings (performance M5, D7 B)"
         [{name = "string_eq", arity = 2, ty = "string * string -> bool", effects = [],
-          doc = "Whether two strings are the same: their lengths, then their bytes. `=` where the compiler knows the type is string; it walks nothing else, so it never stops at the work limit of structural equality."}]]
+          doc = "Whether two strings are the same: their lengths, then their bytes. `=` where the compiler knows the type is string; it walks nothing else, so it never stops at the work limit of structural equality."}],
+       group "vectors made without a list (performance M8, D8 A)"
+        [{name = "array_to_vector", arity = 1, ty = "'a array -> 'a vector", effects = [ReadsHeap, Allocates],
+          doc = "A vector of the elements of an array, copied: what Vector.tabulate and Array.vector make, the array filled in place first."}]]
 end

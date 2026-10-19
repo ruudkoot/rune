@@ -457,3 +457,6 @@ utf8_decode      3  string * int * int -> int vector * int * int   The code poin
 
 # --- equality by type, of strings (performance M5, D7 B) ---
 string_eq        2  string * string -> bool   Whether two strings are the same: their lengths, then their bytes. `=` where the compiler knows the type is string; it walks nothing else, so it never stops at the work limit of structural equality.
+
+# --- vectors made without a list (performance M8, D8 A) ---
+array_to_vector  1  'a array -> 'a vector    A vector of the elements of an array, copied: what Vector.tabulate and Array.vector make, the array filled in place first.

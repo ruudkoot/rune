@@ -409,7 +409,8 @@ struct
     ("vector_concat_list", 403, 1),
     ("vector_extract", 404, 3),
     ("utf8_decode", 405, 3),
-    ("string_eq", 406, 2)
+    ("string_eq", 406, 2),
+    ("array_to_vector", 407, 1)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -547,7 +548,8 @@ struct
     "reals_length",
     "intinf_gmp_available",
     "intinf_max_bits",
-    "string_eq"
+    "string_eq",
+    "array_to_vector"
   ])
   fun removable name = StringMap.member (removables, name)
   (* what each primitive takes and gives, from the type of its
@@ -966,7 +968,8 @@ struct
            ("vector_concat_list", ([7], 6)),
            ("vector_extract", ([6, 1, 1], 6)),
            ("utf8_decode", ([6, 1, 1], 0)),
-           ("string_eq", ([6, 6], 5))
+           ("string_eq", ([6, 6], 5)),
+           ("array_to_vector", ([6], 6))
          ]);
          repsOf name)
 end

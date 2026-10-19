@@ -16,8 +16,21 @@ struct
   val append = _prim "vector_concat" : 'a vector * 'a vector -> 'a vector
   val extract = _prim "vector_extract" : 'a vector * int * int -> 'a vector
 
-  (* "If n < 0 or maxLen < n, then the Size exception is raised": before f is applied *)
-  fun tabulate (n, f) = if n > maxLen then raise Size else fromList (List.tabulate (n, f))
+  (* a vector is made as an array, filled in place and then copied: no list *)
+  val newArray = _prim "array_new" : int * 'a -> 'a array
+  val setArray = _prim "array_update" : 'a array * int * 'a -> unit
+  val frozen = _prim "array_to_vector" : 'a array -> 'a vector
+
+  (* "If n < 0 or maxLen < n, then the Size exception is raised": before f
+     is applied; then f of 0 to n - 1 in turn *)
+  fun tabulate (n, f) =
+    if n < 0 orelse n > maxLen then raise Size
+    else if n = 0 then fromList []
+    else
+      let
+        val a = newArray (n, f 0)
+        fun go i = if i < n then (setArray (a, i, f i); go (i + 1)) else ()
+      in go 1; frozen a end
 
   fun foldli f init v =
     let val n = length v
@@ -34,7 +47,7 @@ struct
   fun toList v = foldr (op ::) [] v
   fun appi f v = foldli (fn (i, x, ()) => f (i, x)) () v
   fun app f v = appi (fn (_, x) => f x) v
-  fun mapi f v = fromList (List.rev (foldli (fn (i, x, acc) => f (i, x) :: acc) [] v))
+  fun mapi f v = tabulate (length v, fn i => f (i, sub (v, i)))
   fun map f v = mapi (fn (_, x) => f x) v
   val concat = _prim "vector_concat_list" : 'a vector list -> 'a vector
   fun update (v, i, x) =

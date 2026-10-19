@@ -1765,6 +1765,15 @@ static int from_list(VM *vm, int kind, const char *name) {
 }
 static int p_array_from_list(VM *vm) { return from_list(vm, K_ARRAY, "array_from_list"); }
 static int p_vector_from_list(VM *vm) { return from_list(vm, K_TUPLE, "vector_from_list"); }
+/* a vector of an array's elements, copied (performance M8: the Basis's
+   vectors made without a list) */
+static int p_array_to_vector(VM *vm) {
+    uint32_t n = obj_len(check_obj(vm, ARG(0), K_ARRAY, "array_to_vector"));
+    Obj *v = vm_alloc_fields(vm, K_TUPLE, 0, n);
+    Obj *a = val_ptr(ARG(0));   /* may have moved */
+    for (uint32_t i = 0; i < n; i++) obj_fill_field(v, i, obj_field(a, i));
+    return ret(vm, 1, mk_ptr(v));
+}
 static int p_vector_length(VM *vm) { Obj *a = check_obj(vm, ARG(0), K_TUPLE, "vector_length"); return ret(vm, 1, mk_int(obj_len(a))); }
 static int p_vector_sub(VM *vm) {
     Obj *a = check_obj(vm, ARG(1), K_TUPLE, "vector_sub");

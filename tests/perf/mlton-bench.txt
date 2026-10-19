@@ -18,7 +18,7 @@ fft 1 536878624 16777712
 fft-realarray 1 536878768 16777721 # fft with its two arrays as RealArray (tests/external/mlton-bench/fft-realarray.sed; heap-layout M8)
 fib 2 344 21 # allocates under 1 MB per iteration: N by time, at most MLton's own
 flat-array - - - # WIDTH: checks a sum that only MLton's 32-bit int overflows into (tests/external/mlton-skip.txt)
-fxp 1 831451592 26160998 # its input is tests/external/mlton-bench/gen-fxp-input.sh (2 MB, no DOCTYPE); no Main.doit: the program runs at top level
+fxp 1 831424184 26159745 # its input is tests/external/mlton-bench/gen-fxp-input.sh (2 MB, no DOCTYPE); no Main.doit: the program runs at top level
 hamlet 1 1035585648 42429734
 imp-for 6 266667080 13333359
 knuth-bendix 1 131283944 4716214
@@ -37,12 +37,12 @@ output1 1 144000017384 4000000429 # 144 GB at n=1: --all runs it
 peek 1 1280001528 80000075
 pidigits 1 1211024 40014
 psdes-random 1 97200006360 2250000167 # 97 GB at n=1: --all runs it
-ratio-regions 64 342494192 4674242
+ratio-regions 64 342380576 4669508
 ray 1 199301352 7605474
-raytrace 1 837480808 23314869
-raytrace-realarray 1 837480952 23314878 # raytrace with its matrices as RealArray (raytrace-realarray.sed; heap-layout M8)
+raytrace 1 837479416 23314811
+raytrace-realarray 1 837479560 23314820 # raytrace with its matrices as RealArray (raytrace-realarray.sed; heap-layout M8)
 simple 1 219639456 8526406
-smith-normal-form 1 9560720 315990 # dim 26 for MLton's 35 (smith-normal-form.sed): dim 35 allocates over 2 TB
+smith-normal-form 1 9512048 313962 # dim 26 for MLton's 35 (smith-normal-form.sed): dim 35 allocates over 2 TB
 string-concat 1 3451149584 60568128 # 3 GB at n=1: --all runs it
 tailfib 21 328 20 # allocates under 1 MB per iteration: N by time, at most MLton's own
 tailmerge 17 167999528 6999987
@@ -50,9 +50,9 @@ tak 1 328 20 # allocates under 1 MB per iteration: N by time, at most MLton's ow
 tensor 1 47685832 1870203 # tensor sizes [40] for MLton's [100,200,300,400,500] (tensor.sed): one iteration at MLton's sizes allocates 787 GB
 tsp 1 204609968 6406427
 tyan 1 304863688 13373316
-vector-rev 1 22433728616 400604025 # 22 GB at n=1: --all runs it
-vector32-concat 1 83211840904 1600260035 # 83 GB at n=1: --all runs it
-vector64-concat 1 83211840880 1600260034 # 83 GB at n=1: --all runs it
+vector-rev 1 6409696440 6028 # 22 GB at n=1: --all runs it
+vector32-concat 1 16002640520 400080031 # 83 GB at n=1: --all runs it
+vector64-concat 1 16002640504 400080030 # 83 GB at n=1: --all runs it
 vliw 1 144433736 6421872
 wc-input1 3 244109376 10005022
 wc-scanStream 3 244150072 10006472

@@ -13,8 +13,17 @@ struct
   val sub = _prim "array_sub" : 'a array * int -> 'a
   val update = _prim "array_update" : 'a array * int * 'a -> unit
 
-  (* "If n < 0 or maxLen < n, then the Size exception is raised": before f is applied *)
-  fun tabulate (n, f) = if n > maxLen then raise Size else fromList (List.tabulate (n, f))
+  (* "If n < 0 or maxLen < n, then the Size exception is raised": before f
+     is applied; then f of 0 to n - 1 in turn, into the array in place: no
+     list (performance M8) *)
+  fun tabulate (n, f) =
+    if n < 0 orelse n > maxLen then raise Size
+    else if n = 0 then fromList []
+    else
+      let
+        val a = array (n, f 0)
+        fun go i = if i < n then (update (a, i, f i); go (i + 1)) else ()
+      in go 1; a end
 
   fun appi f a =
     let val n = length a
@@ -43,7 +52,7 @@ struct
   fun foldr f init a = foldri (fn (_, x, acc) => f (x, acc)) init a
 
   fun toList a = foldr (op ::) [] a
-  fun vector a = (_prim "vector_from_list" : 'a list -> 'a vector) (toList a)
+  fun vector a = (_prim "array_to_vector" : 'a array -> 'a vector) a
 
   fun findi p a =
     let val n = length a
