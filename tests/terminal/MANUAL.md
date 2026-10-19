@@ -103,7 +103,7 @@ the scripts of `tests/terminal` on tmux (Linux, `make test-terminal`) and on
 ConPTY through WSL interop (Windows, `make test-windows`, the scripts whose
 first line is `# windows`), the bytes of `*.pty` as VS Code's terminal is
 given them, and the colours measured on the palettes of
-`tests/color/contrast.py`. The first run by hand is the owner's, and its
+`tests/color/contrast.sml`. The first run by hand is the owner's, and its
 row goes below.
 
 | Date | Terminal | Version | Steps that failed | Notes |

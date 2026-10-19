@@ -16,10 +16,12 @@ cd "$root"
 mkdir -p build
 
 # put FILE: the standard input into FILE, which is written only when it
-# changes, so that what depends on it is made again only then
+# changes, so that what depends on it is made again only then. Separate
+# makes can run this at once: each invocation owns its temporary file.
 put() {
-  cat > "$1.new"
-  if cmp -s "$1.new" "$1"; then rm -f "$1.new"; else mv "$1.new" "$1"; fi
+  build_tmp=$(mktemp "$1.new.XXXXXXXX")
+  cat > "$build_tmp"
+  if cmp -s "$build_tmp" "$1"; then rm -f "$build_tmp"; else mv "$build_tmp" "$1"; fi
 }
 
 # gen PROG LIST MAINPREFIX POLYSCRIPT

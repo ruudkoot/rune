@@ -48,7 +48,8 @@ and can be done first.
 
 ## What is left, and how to go on
 
-As of 2026-10-18, at master `b11a1737`. Every script below still runs, as a
+As of 2026-10-19, after the follow-up ports below, from the handover
+baseline `b11a1737`. Every script below still runs, as a
 make target that the runner runs as a step (`make/*`), or as a job of a
 profile or of the tier `nightly`. The Done notes of M10 to M14 say why each
 stayed.
@@ -57,8 +58,8 @@ stayed.
 * **M13, the matrix and Windows,** the largest part, and the one with the most knowledge of the hosts:
   - `tests/basis/run-matrix.sh` (1,698 lines): its configurations as ways, its probes, its halving of a program into sections, and its heap images. `test-windows`, `test-stress`, `matrix-quick`, `matrix` and portability's job `portability/matrix` call it.
   - The Windows runner: `tests/run-windows.sh` and `tests/windows-dir.sh`.
-  - The hosts' runs of the libraries and the laws: `tests/lib/run-hosts.sh` and `tests/basis/run-laws-hosts.py`.
-* **M14, the other suites** (26 scripts):
+  - The hosts' runs of the laws: `tests/basis/run-laws-hosts.py`.
+* **M14, the other suites** (25 scripts):
   - native code: `tests/opt/run-opt-tests.sh`, `run-counts.sh`, `run-debug.sh` and `run-bootstrap.sh`;
   - the budgets: `tests/perf/run-perf.sh`;
   - the census: `scripts/check-census.sh`;
@@ -67,10 +68,22 @@ stayed.
   - the benchmarks: `scripts/run-benchmarks.sh` and the six `tests/benchmarks/check-*.sh`;
   - the documentation's checks: `scripts/check-docs.sh`, `tests/basis/check-claims.sh` and `check-notes.sh`;
   - the mutants: `tests/basis/run-mutants.sh`;
-  - the external corpora: `tests/external/run-mlton.sh`, `run-mlton-bench.sh` and `tests/incremental/mlton.sh`;
-  - `tests/color/contrast.py`.
+  - the external corpora: `tests/external/run-mlton.sh`, `run-mlton-bench.sh` and `tests/incremental/mlton.sh`.
 * **M14, stress and the sanitizers as ways.** `test-stress`, `test-native-stress`, `test-register-asan` and `test-native-asan` still call `tests/run-tests.sh`. It goes when they and the Windows runner have moved. `tests/runtime/run-vm-tests.sh` goes with the Windows runner, since it and portability's jobs call it.
 * **M14, the timing jobs in the exclusive pool.** `make check` has none.
+
+**The follow-up ports (2026-10-19):**
+* `tests/lib/run-hosts.sh` is replaced by `tests/runner/hosts.sml` and `libhosts.sml`: the same twenty programs on six hosts, each a job, with the C known-answer reference shared and a stale-deviation check per host. `make test-lib-hosts` selects the tier `test-lib-hosts`; `lib-hosts/HOST/PROGRAM` selects one program. Builds have private directories; programs run in the root for their fixtures. Each child has a time and memory limit, and the native host executables are capabilities of their own, including the environment overrides.
+* `tests/color/contrast.py` is replaced by `tests/color/contrast.sml`, compiled with the actual `Color` structure. The six terminal palettes, four themes, four vision modes, floors and measured VS Code exception stay the same. `colour/contrast` is a job of `check` and `test-diagnostics`; `colour/planted-fault` holds black text on black to failing. The host adapter's planted errors, crashes, timeout, wrong known answers and stale deviations are checked by `runner/host-adapter` in `check` and `quick`.
+
+**Validation of these ports:**
+* The old and new native drivers ran all 120 host/program pairs, with the same verdicts apart from the already declared `HOST-FLAKY` case `smlnj-legacy/property.shrink` (the old run passed; the new one hit the host's bogus overflow fault). All six old host runs and both selections of the new runner pass; every host's stale-deviation check passes. The new selections are 111 jobs for the five other hosts and 27 for MLKit, including their shared references and the canaries.
+* The bounded runs exposed MLKit 4.7.25's excessive memory use in `unicode.utf8`. The unchanged program exhausts both 2 GiB and 8 GiB address-space limits; compiling fresh source copies has the same outcome, while a diagnostic build with `-no_ri` passes all five checks with 7,620 KiB peak RSS. This is a new `HOST-BUG` entry with the measurements in `docs/bugreport/mlkit/region-inference`; the normal suite keeps the default compiler flags.
+* Poly/ML needs a virtual-memory reservation larger than its heap. Its jobs allow 4 GiB of address space and cap the heap at 2 GiB. The adapter's planted-fault regression passes six jobs with the canaries. Rune and MLton produce identical runner bytecode.
+* The colour check's complete verbose output matches the Python implementation on all 1,892 ratios. The black-on-black planted fault makes both exit 1, with the same 40 failures. `make test-diagnostics` passes 19 jobs.
+* The first full `make check` completed with 14,475 passes, two documented skips, and one generator race: concurrent makes shared `gen-build-files.sh`'s `.new` file. The generator now publishes through a unique temporary file. `compiler/build-generators`, in `check` and `quick`, runs four rounds of eight concurrent invocations: the old generator fails this regression and the fix passes. The failed backend job also passes on retry.
+* The fresh full `make check JOBS=8` passes: 14,477 passes and two documented native-interrupt skips, 14,479 jobs in total. Its prerequisites use the already installed MLKit 4.7.25 through `MLKIT` and `MLKIT_LIB`; the default host symlink still points to 4.7.23. Switching versions required clearing the generated project `MLB` caches. Validation output is kept under `tests/out/validation-20261019`.
+* Test-selection checks confirm that changes to `rune.build`, the build generator, and `src/util/color.sml` still select the complete check tier through `--affected`/`--changed`; the new tests do not narrow the acceptance coverage of compiler or build changes.
 
 **Kept on purpose, to port when they change:**
 * the scenario scripts of `tests/deps`, `tests/dynamic`, `tests/buildfile` and `tests/units` (M10; D6's cram transcripts are their better next form);
@@ -1825,7 +1838,8 @@ M1 and M2 are independent of each other and of the rest.
 
 * **Done** (2026-10-12), for the machines; the matrix's port is still to come:
   - **Portability** (`tests/runner/portability.sml`): tests/lang on the 32-bit, PowerPC and aarch64 VMs and their variants under incremental marking are ten more ways of M4 (`lang/port-*`), compiled once; the counts of --count on every VM and this one, the image of each VM read by every other, the bytecode each VM must refuse (`run-vm-tests.sh`, a job a VM), the JIT's checks on the aarch64 (the oracle of M9 on another VM, `port-jit/*`), and the matrix's configuration `portability`, as jobs of the tier `test-portability`, outside `check`. The capability `qemu` probes the kernel's registration of qemu as well, which run-portability.sh checked before it started. `run-portability.sh` is gone.
-  - **Not yet:** the matrix's configurations as ways (`run-matrix.sh`, its probes, sections and images), the Windows runner (`run-windows.sh`, `windows-dir.sh`, and so `run-tests.sh` and `run-vm-tests.sh`), and the hosts' runs of the libraries and the laws (`run-hosts.sh`, `run-laws-hosts.py`). They hold most of the knowledge of the hosts and of Windows; each still runs, as a make target and as a profile's job. Their port is the next work of this roadmap (*What is left, and how to go on*).
+  - **Follow-up (2026-10-19):** the native library suites are jobs of `lib-hosts/*`, on the shared adapter `tests/runner/hosts.sml`; `tests/lib/run-hosts.sh` is retired. See *What is left, and how to go on* for the checks and validation.
+  - **Not yet:** the matrix's configurations as ways (`run-matrix.sh`, its probes, sections and images), the Windows runner (`run-windows.sh`, `windows-dir.sh`, and so `run-tests.sh` and `run-vm-tests.sh`), and the hosts' runs of the laws (`run-laws-hosts.py`). They hold most of the knowledge of the hosts and of Windows; each still runs, as a make target and as a profile's job. Their port is the next work of this roadmap (*What is left, and how to go on*).
 
 ### M14. The rest, and the tools for flaky tests (L, about 1,500)
 
@@ -1858,6 +1872,7 @@ M1 and M2 are independent of each other and of the rest.
   | `contrast.py` | 192 |
 
 * **Done** (2026-10-12), the tools for flaky tests; the scripts are still to come:
+  - **Follow-up (2026-10-19):** the colour-contrast check is Standard ML in `tests/color/contrast.sml`, run by `colour/*`; its Python driver is retired.
   - **In the runner:** `--repeat N`, `--until-fail` and `--under-load` (a busy process on every processor beside the runs); the tag `flaky`, a retry of the failure (`Scheduler.retry`, and the supervisor's verdict `Again`) whose pass is `FLAKY`; the quarantine (`tests/runner/quarantine.txt`, read by the engine of M6, its lines held to parse in `make check`), a failure `QUARANTINED` until the line's date and a failure again after it; `stats` already lists the flakiest tests. Each was shown on a program of tests that fail as they should: a test that fails once, one quarantined, one quarantined in the past.
   - **Not yet:** the port of `tests/opt`, the census, the simulators, the layouts, gcbench, the budgets, the benchmarks, the documentation's checks, the mutants and the external corpora (the eighteen scripts above); stress and the sanitizer as ways (they are the profile `vm`'s jobs); and the timing jobs in the exclusive pool, of which `make check` has none (the budgets count instructions). Each runs as its make step, a job of the runner.
 

@@ -10,7 +10,7 @@ with lib/random, lib/test/property and lib/test/property/basis, and run with
 the settings of `make check`, $LAWS_HOST_JOBS hosts at once (default 3). A law
 is held at a structure only where the host has what it names: a probe asks
 each host which of the structures the programs name it has, and a file of the
-libraries that tests/lib/run-hosts.sh leaves out (host column no) is built
+libraries that the native library suite leaves out (host column no) is built
 where the structures it requires are there, and left out where an error points
 into it. Each host builds a program of its own: a law's entry, or where the
 host lacks what that names or it does not build there, the law's alternative

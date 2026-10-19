@@ -47,3 +47,49 @@ random documents. Each of them passes when built with `-no_ri`. The
 libraries are not changed for it (AGENTS.md). `markdown.spec` has passed
 since, with MLKit 4.7.23 and 4.7.25 alike, and its line is gone
 (2026-10-14).
+
+## UTF-8 round trip: excessive memory use
+
+Observed on 2026-10-19 with the installed binary release of MLKit 4.7.25,
+while comparing the old native library driver with its Rune replacement.
+`tests/lib/unicode/utf8.sml` compiles, then its scalar round trip exhausts
+the address-space limit before printing a verdict. The program tests every
+Unicode scalar by encoding it, decoding it, and checking that the encoded
+string is valid. It does not need to retain the strings between iterations.
+Both drivers encounter the failure; it also occurs when all source files
+are copied into a fresh directory before compiling.
+
+The same source files and `.mlb`, compiled with `-no_ri`, pass all five
+tests. No library or test source was changed. These are `/usr/bin/time -v`
+measurements from the comparison, with an address-space limit on each run:
+
+| Build | Address-space limit | Exit | Peak RSS, KiB |
+|---|---:|---:|---:|
+| default, original paths | 2 GiB | 255 | 1,060,812 |
+| default, original paths | 8 GiB | 255 | 4,236,236 |
+| default, fresh source copies | 2 GiB | 255 | 1,060,848 |
+| `-no_ri`, fresh source copies | 2 GiB | 0 | 7,620 |
+
+The default builds stop with:
+
+```
+I could not allocate more memory; either no more memory is
+available or the memory subsystem is detectively corrupted
+: Cannot allocate memory
+```
+
+This comparison isolates the space growth to the region-inference
+configuration. The reduced case in
+[preserve-tail-calls](../preserve-tail-calls/BUGREPORT.md) identifies a tail
+call that keeps its region and frame. The current
+`native:mlkit | unicode.utf8 | HOST-FLAKY` entry in
+`tests/lib/deviations.txt` records that it passes where enough memory is
+available. The ordinary suite continues to compile with region inference
+enabled and bounded memory.
+
+To reproduce, run `bin/rune-test run 'lib-hosts/mlkit/unicode.utf8' --keep`
+with `MLKIT` and `MLKIT_LIB` selecting 4.7.25. The run keeps the generated
+`lib-hosts/mlkit/unicode.utf8/unicode.utf8.mlb`, compiler log, executable,
+and program output. Rebuild that `.mlb` with the same compiler and
+`SML_LIB`, adding `-no_ri`, to compare the collector-only configuration.
+Keep the address-space limit when running either executable.

@@ -107,7 +107,6 @@ struct
                   "scripts/dist-uninstall.bat", "scripts/dist-register.ps1",
                   "scripts/dist-rune.cmd", "scripts/dist-rune-repl.cmd", "tests/dist/*"])),
        Test.requires ["tmux", "python3"] (alone ("test-terminal", [], ["tests/terminal/*"])),
-       Test.requires ["python3"] (alone ("test-diagnostics-steps", ["test-diagnostics"], ["tests/color/*"])),
        alone ("test-census", [], perfFiles @ ["tools/heapsim/*"]),
        alone ("check-heapsim", [], ["tools/heapsim/*"]),
        alone ("check-gcsim", [], ["tools/heapsim/*"]),
@@ -143,7 +142,6 @@ struct
        extra ("test-stress", ["vm"]),
        Test.requires ["windows"] (extra ("test-windows", ["vm", "windows"])),
        Test.requires Lang.hosts (extra ("matrix-quick", ["library"])),
-       Test.requires Lang.hosts (extra ("test-lib-hosts", ["library"])),
        (* the nightly's own (docs/testing.md, Tiers, profiles and what changed):
           every configuration of the matrix, and the native code under stress *)
        Test.requires Lang.hosts (extraFor ("matrix", [], 7200)),
@@ -163,6 +161,7 @@ struct
      {name = "windows", probe = "sh tests/windows-dir.sh && command -v x86_64-w64-mingw32-gcc",
       hint = "Windows under WSL with interop (RUNE_WINDOWS_DIR names a directory there) and mingw-w64 (apt: gcc-mingw-w64-x86-64 gcc-mingw-w64-i686)"}]
     @ List.map (fn h => {name = h, probe = "test -x bin/rune-" ^ h, hint = "run: make hosts, then make " ^ h}) Lang.hosts
+    @ Hosts.capabilities
 
   (* each file of expectations read by the one engine (docs/testing.md,
      Expectations): it parses, and its skips name programs that are there.
@@ -196,7 +195,7 @@ struct
        expectations ("lib-deviations", "tests/lib/deviations.txt", NONE),
        expectations ("quarantine", "tests/runner/quarantine.txt", NONE)]
 
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws
@@ -205,6 +204,12 @@ val () =
   case CommandLine.arguments () of
     ["laws-one", rbc, st] => Laws.one (rbc, st)
   | args =>
+      case HostChecks.command args of
+        SOME f => f ()
+      | NONE =>
+      case LibHosts.command args of
+        SOME f => f ()
+      | NONE =>
       case Oracles.command args of
         SOME f => f ()
       | NONE =>

@@ -32,6 +32,25 @@ goes on after a test, and `--events FILE` writes a JSON line as each test
 starts and ends. The library builds on every host compiler, so the same
 suite runs in `make test-lib` and `make test-lib-hosts`.
 
+`make test-lib-hosts` runs the tier `test-lib-hosts`: twenty-four programs on
+each of six native hosts (`lib-hosts/HOST/PROGRAM`), a shared C known-answer
+reference, and a stale-deviation check per host. Filter a single host with
+`bin/rune-test run 'lib-hosts/mlton/*'`, or a program with
+`bin/rune-test run 'lib-hosts/*/random.kat'`. The native compilers come
+from `RUNE_HOSTS` and the `MLTON`, `SMLNJ`, `SMLNJ32`, `SMLNJ_DEV`, `POLY`
+and `MLKIT` overrides, with `MLKIT_LIB` for its Basis. The doctor probes
+these executables separately from Rune's host builds. A program has 600
+seconds per build or run (`LIB_HOST_TIMEOUT`), 2 GiB per child and 64 MiB per output file; the
+scheduler budgets 2 GiB per job. Build directories are private, while
+programs run in the repository root to read their fixtures. The same
+`tests/lib/deviations.txt` explains host failures and rejects stale lines.
+MLKit writes its cache beside the sources, so its builds share the
+`matrix` pool with the Basis matrix; other native hosts can run beside it.
+A child that leaves a process group behind is killed and fails, even if
+it printed `PASS` before it exited.
+Poly/ML uses a 2 GiB heap limit and 4 GiB of address space, since its
+virtual-memory reservation prevents startup under the smaller bound.
+
 ## Running the tests
 
 `make check` is `make check-tools`, which builds every tool a test needs,
@@ -112,7 +131,7 @@ that compares what it compiles and runs across levels, engines, builds and
 hosts (`levels/*`, `register/*`, `jit/*`, `units/*`, `units-stack/*`,
 `positions/*`, `cross/*`, `reproducible/*`, `bootstrap/*`;
 `tests/runner/oracles.sml`), and the tools' suites (`ir/*`, `doc/*`, `lib/*`,
-`flexrec/*`, `compiler/*`, `limits/*`, `gc-log/*`, and the scenarios of
+`flexrec/*`, `compiler/*`, `limits/*`, `gc-log/*`, `colour/*`, and the scenarios of
 `tests/deps`, `tests/dynamic`, `tests/buildfile` and `tests/units` as
 `scenario/*`; `tests/runner/tools.sml`), and the protocol suites (`repl/*`,
 `diagnostics/*`, `serve/*` in SML; `repl-protocol/*`, `dap/*`, `kernel/*`,

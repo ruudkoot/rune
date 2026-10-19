@@ -739,6 +739,77 @@ struct
       check () handle Bad m => fail ("gc-log " ^ vm ^ ": " ^ m)
     end
 
+  (* ---- the palette: compile the test with the palette it measures *)
+  fun contrast planted =
+    let
+      val dir = run ^ (if planted then "/colour/fault" else "/colour/contrast")
+      val () = mkdirs dir
+      val log = dir ^ "/compile.err"
+      val fault = dir ^ "/fault.sml"
+      val () = if planted then write (fault,
+        "structure Color = struct\n  open Color\n"
+        ^ "  val table = map (fn (\"error\", _, d, l) => (\"error\", \"30\", d, l) | row => row) table\nend\n") else ()
+      val sources = ["src/util/color.sml"] @ (if planted then [fault] else []) @ ["tests/color/contrast.sml"]
+    in
+      if exec {cmd = ["bin/rune", "--library", "json"] @ sources @ ["-o", dir ^ "/contrast.rbc"],
+               dir = NONE, stdin = "", stdout = log, stderr = log, timeout = 120} <> 0
+      then fail ("colour: does not compile: " ^ firstLine log)
+      else
+        let val status = exec {cmd = ["bin/runevm", dir ^ "/contrast.rbc"], dir = NONE, stdin = "", stdout = dir ^ "/output",
+                               stderr = dir ^ "/error", timeout = 120}
+        in
+          if planted then
+            if status = 1 andalso String.isSubstring "FAIL auto" (read (dir ^ "/output")) then ()
+            else fail "colour: black text on a black background did not fail its contrast check"
+          else if status = 0 then ()
+          else fail ("colour: " ^ read (dir ^ "/output") ^ read (dir ^ "/error"))
+        end
+    end
+
+  (* The foundational build-file generator is called by separate makes.
+     They must be able to publish identical files at once. Each round
+     starts eight generators before waiting for any of them. *)
+  fun generators script =
+    let
+      val dir = run ^ "/generators"
+      val () = (rmTree dir; mkdirs (dir ^ "/scripts"))
+      val () = List.app (fn n => write (dir ^ "/" ^ n, read (fromRoot n)))
+                         ["rune.build", "runedoc.build", "runeopt.build", "runeisa.build"]
+      val () = write (dir ^ "/scripts/build-files.sh", read (fromRoot "scripts/build-files.sh"))
+      val script = fromRoot script
+      val log = dir ^ "/reference.log"
+      val reference = exec {cmd = ["/bin/sh", script, dir], dir = SOME dir, stdin = "", stdout = log, stderr = log, timeout = 60}
+      val expected = List.map (fn n => (n, read (dir ^ "/build/" ^ n))) (sort (entries (dir ^ "/build")))
+      val null = Posix.FileSys.openf ("/dev/null", Posix.FileSys.O_RDONLY, Posix.FileSys.O.flags [])
+      fun number fd = SysWord.toInt (Posix.FileSys.fdToWord fd)
+      fun round r =
+        let
+          fun start i =
+            let
+              val log = dir ^ "/" ^ Int.toString r ^ "-" ^ Int.toString i ^ ".log"
+              val out = Posix.FileSys.creat (log, Posix.FileSys.S.flags [Posix.FileSys.S.irusr, Posix.FileSys.S.iwusr])
+              val pid = Subprocess.spawn {program = "/bin/sh", args = ["sh", script, dir], env = NONE, search = false,
+                (* Keep writers in the job's group so the supervisor can
+                   stop every writer if this regression times out. *)
+                dir = SOME dir, stdin = SOME (number null), stdout = SOME (number out), stderr = SOME (number out), group = false,
+                limits = {addressSpace = SOME (64 * 1024 * 1024), cpuTime = SOME 30, fileSize = SOME (1024 * 1024), core = SOME 0}}
+              val () = Posix.IO.close out
+            in (pid, log) end
+          val children = List.tabulate (8, start)
+          val () = List.app (fn (pid, log) =>
+            case #status (Subprocess.wait (SOME pid)) of
+              Posix.Process.W_EXITED => ()
+            | _ => fail ("build generators: concurrent invocation failed: " ^ firstLine log)) children
+        in
+          List.app (fn (n, text) => if exists (dir ^ "/build/" ^ n) andalso read (dir ^ "/build/" ^ n) = text then ()
+                    else fail ("build generators: changed " ^ n)) expected
+        end
+    in
+      if reference <> 0 orelse length expected <> 16 then fail ("build generators: reference generation: " ^ firstLine log)
+      else List.app round [1, 2, 3, 4];
+      Posix.IO.close null
+    end
+
   (* ---- the tree *)
   fun job (path, args, after, memory, timeout) =
     Test.it path
@@ -773,6 +844,10 @@ struct
     | ["compiler", rune] => SOME (fn () => compilerProtection rune)
     | ["limits", rune, vm] => SOME (fn () => limits (rune, vm))
     | ["gc-log", rune, vm] => SOME (fn () => gcLog (rune, vm))
+    | ["colour-contrast"] => SOME (fn () => contrast false)
+    | ["colour-contrast-fault"] => SOME (fn () => contrast true)
+    | ["build-generators"] => SOME (fn () => generators "scripts/gen-build-files.sh")
+    | ["build-generators", script] => SOME (fn () => generators script)
     | _ => NONE
 
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
@@ -782,7 +857,12 @@ struct
 
   val tree =
     Test.describe ""
-      [tagged ["check", "test-ir", "covers:tests/ir/*"]
+      [tagged ["check", "quick"]
+         (Test.resources {cpus = 2, memory = 256} (job ("compiler/build-generators", ["build-generators"], [], 256, 120))),
+       tagged ["check", "test-diagnostics", "covers:tests/color/*"]
+         (Test.describe "colour" [job ("contrast", ["colour-contrast"], [], 300, 300),
+                                  job ("planted-fault", ["colour-contrast-fault"], [], 300, 300)]),
+       tagged ["check", "test-ir", "covers:tests/ir/*"]
          (Test.describe "ir" (List.map (fn s => job (basename s, ["ir-one", s], [], 300, 600))
                                        (glob ("tests/ir", ".sml") @ glob ("tests/ir", ".mid")))),
        tagged ["check", "test-doc", "quick", "docs", "covers:tests/doc/*"]
