@@ -167,7 +167,10 @@ lib/terminal ([plans/repl.md](plans/repl.md), M5 and M6):
   Code's, WezTerm, iTerm2, kitty, Ghostty -- the prompt, the output and
   the end of each entry with whether it failed are marked for the terminal
   (OSC 133), which can then go from entry to entry and mark the ones that
-  failed.
+  failed. The prompt's mark goes out once the editor has the terminal raw,
+  just before it draws the prompt: a key typed as soon as the terminal sees
+  the mark is the editor's, where a cooked terminal would echo it and make
+  its return a newline.
 
 `tests/terminal/MANUAL.md` lists what is checked by hand, terminal by
 terminal.
@@ -607,9 +610,10 @@ mode under Emacs, and the marks of OSC 133 byte for byte on a pty; on
 Windows, the scripts whose first line is `# windows`, and `rune-repl.cmd`
 from `cmd.exe`. lib/terminal's own tests (`tests/lib/terminal`) give the
 editor keys and look at its state: Vi's commands and counts, the menu and
-its order, and the answers to what the terminal is asked, the kitty
-protocol's keys among them. `tests/terminal/MANUAL.md` is the list checked
-by hand.
+its order, the answers to what the terminal is asked, the kitty
+protocol's keys among them, and what the terminal is -- raw, quiet or put
+back -- when the prompt is announced and after an entry.
+`tests/terminal/MANUAL.md` is the list checked by hand.
 
 ## Not yet
 
