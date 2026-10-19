@@ -163,7 +163,7 @@ void jit_landing_here(Jit *j, uint32_t pc) {
     j->nlands++;
 }
 
-void jit_pending(Jit *j, size_t off, uint32_t f) {
+void jit_pending(Jit *j, size_t off, uint32_t f, int call) {
     if (j->npending == j->pending_cap) {
         uint32_t cap = j->pending_cap ? 2 * j->pending_cap : 16;
         void *p = realloc(j->pending, cap * sizeof *j->pending);
@@ -173,21 +173,26 @@ void jit_pending(Jit *j, size_t off, uint32_t f) {
     }
     j->pending[j->npending].off = (uint32_t)off;
     j->pending[j->npending].f = f;
+    j->pending[j->npending].call = call;
     j->npending++;
 }
 #if JIT_TARGET
-/* function f has code at entry: the known calls compiled while it had none
-   made jumps into it, where their callers' code is the same (M6) */
-static void patch_pending(JitProgram *jit, uint32_t f, const void *entry) {
+/* function f has code: the known calls compiled while it had none made
+   jumps into it -- or calls, under --jit-returns=call, into the entry of
+   calls, where a jump pushed the return address first (M7) -- where their
+   callers' code is the same (M6) */
+static void patch_pending(JitProgram *jit, uint32_t f, int callret) {
     CodeObject *co = &jit->codes[f];
+    const void *entry = callret ? (const void *)co->code : co->entry;
     size_t page = sys_code_page();
     for (uint32_t i = 0; i < co->npending; i++) {
         struct PendingCall *pc = &co->pending[i];
-        if (jit->codes[pc->caller].entry != pc->caller_entry) continue;   /* compiled again, or gone */
+        if (jit->codes[pc->caller].code != pc->caller_entry) continue;   /* compiled again, or gone */
         uint8_t *lo = (uint8_t *)((uintptr_t)pc->site & ~(uintptr_t)(page - 1));
         size_t len = (uintptr_t)pc->site + 4 > (uintptr_t)lo + page ? 2 * page : page;
         if (!sys_code_protect(lo, len, 0)) continue;
-        as_patch_jmp(pc->site, entry);
+        if (pc->call) as_patch_call(pc->site, entry);
+        else as_patch_jmp(pc->site, entry);
         sys_code_protect(lo, len, 1);
         sys_code_flush(pc->site, 4);
         jit_depend(jit, f, pc->caller);
@@ -959,7 +964,7 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     size_t ret_at = a.n;
     ms_emit_ret_tramp(&a, JIT_WIN, (MsHelper)jit_h_return, &leave);
     size_t call_interp_at = a.n;
-    ms_emit_call_interp(&a, JIT_WIN, (MsHelper)jit_h_enter_interp, &leave);
+    ms_emit_call_interp(&a, JIT_WIN, (MsHelper)jit_h_enter_interp, &leave, JIT_CALLS_RET(vm));
     as_label_free(&leave);
     as_ret_align(&a);   /* a return word too (native-frames.md, M5) */
     size_t barrier_at = a.n;
@@ -1042,6 +1047,9 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     j.flags_for = j.flags_prev = -1;
     j.cc_for = j.cc_prev = -1;
     j.tier = tier;
+    j.callret = JIT_CALLS_RET(vm);
+    as_label_init(&j.call_entry);
+    as_label_init(&j.reg_call_entry);
     /* where the code will be placed: a known call jumps to its callee's
        code by a rel32 from there */
     j.m.a.base = (uintptr_t)(jit->code_mem + jit->code_used);
@@ -1067,7 +1075,13 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
        as they are; one without an arity in the section has its callers
        fill for it (M10) */
     as_label_init(&j.entry);
-    as_bind(&j.m.a, &j.entry);
+    /* Under --jit-returns=call (native-frames.md, M7) the code begins with
+       a call's entry: the parameters' homes loaded from their slots, then
+       -- where a call with its arguments in registers comes in (M6) -- the
+       return address stored as the frame's return word, and on at the
+       first instruction; the driver's entry, which has no return address
+       to store, loads the homes after the code and jumps there. */
+    as_bind(&j.m.a, j.callret ? &j.call_entry : &j.entry);
     /* tier 2: the representations trusted for the shapes of values (M10),
        and the homes, where the function has registers a machine register
        can hold */
@@ -1086,14 +1100,24 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
                 j.m.live = j.live_in;
                 j.m.from = j.from;
                 /* the entry: the parameters' homes loaded */
-                as_bind(&j.m.a, &j.landings[0]);
+                if (!j.callret) as_bind(&j.m.a, &j.landings[0]);
                 ms_role(&j.m, MR_LAND);
                 land(&j, j.from);
                 ms_role(&j.m, MR_BODY);
+                /* the register entry (M6): the first instruction's label, past
+                   the loads (under --jit-returns=call, past the store of the
+                   return address after them) */
+                param_homes(&j);
             }
         } else { free(j.live_in); j.live_in = NULL; }
     }
-    if (ok) param_homes(&j);
+    if (j.callret) {
+        as_bind(&j.m.a, &j.reg_call_entry);
+        ms_role(&j.m, MR_FRAME);
+        as_pop_ret(&j.m.a, BASER, -(int32_t)sizeof(Value));
+        ms_role(&j.m, MR_BODY);
+        if (!j.landings) as_bind(&j.m.a, &j.entry);   /* nothing to load: the driver's entry is here */
+    }
     /* at both tiers: what is live at each instruction, for a collection
        that comes while the frame runs (VM.top_live, M6) */
     uint64_t *sync_live = j.live_in;
@@ -1118,6 +1142,19 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
                 land(&j, j.from + i);
                 as_jmp(&j.m.a, &j.labels[i]);
             }
+        ok = !j.m.a.failed;
+    }
+    /* under --jit-returns=call, the driver's entry where there are homes
+       to load (M7): the entry's landing, which jit_osr gives for the first
+       instruction too */
+    if (ok && j.callret && j.landings) {
+        as_bind(&j.m.a, &j.entry);
+        as_bind(&j.m.a, &j.landings[0]);
+        ms_begin(&j.m, j.from);
+        ms_role(&j.m, MR_LAND);
+        ms_mark_pc(&j.m, j.from);
+        land(&j, j.from);
+        as_jmp(&j.m.a, &j.labels[0]);
         ok = !j.m.a.failed;
     }
     if (ok) {
@@ -1170,12 +1207,14 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
                     memcpy(co->param_home, j.param_home, j.nparams);
                     co->nparams = j.nparams;
                     co->reg_entry = (int32_t)j.labels[0].at;
+                    co->reg_call = j.callret ? (int32_t)j.reg_call_entry.at : co->reg_entry;
                 }
                 jit_code_placed(jit, f, at, j.m.a.n);
                 co->tier = (uint32_t)j.tier;
                 co->size = (uint32_t)j.m.a.n;
-                co->entry = at;   /* published last */
-                jit->calls[f].entry = at;   /* where calls go (M6) */
+                co->code = at;
+                co->entry = at + j.entry.at;   /* published last */
+                jit->calls[f].entry = at;   /* where calls go (M6): the code's start, a call's entry under --jit-returns=call (M7) */
                 /* this code's known calls to functions with no code, to be
                    patched when each is compiled; and those to this one */
                 for (uint32_t i = 0; i < j.npending; i++) {
@@ -1190,9 +1229,10 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
                     callee->pending[callee->npending].site = at + j.pending[i].off;
                     callee->pending[callee->npending].caller = f;
                     callee->pending[callee->npending].caller_entry = at;
+                    callee->pending[callee->npending].call = j.pending[i].call;
                     callee->npending++;
                 }
-                if (co->npending) patch_pending(jit, f, at);
+                if (co->npending) patch_pending(jit, f, j.callret);
                 jit->compiled++;
                 if (j.tier == 2) jit->compiled_opt++;
                 if (j.m.marks) jit_dump_function(&j, at);
@@ -1202,6 +1242,8 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     if (j.labels) { for (uint32_t i = 0; i <= len; i++) as_label_free(&j.labels[i]); free(j.labels); }
     if (j.landings) { for (uint32_t i = 0; i <= len; i++) as_label_free(&j.landings[i]); free(j.landings); }
     as_label_free(&j.entry);
+    as_label_free(&j.call_entry);
+    as_label_free(&j.reg_call_entry);
     if (sync_live != j.live_in) free(sync_live);
     free(j.live_in); free(j.homes);
     free(j.sites);

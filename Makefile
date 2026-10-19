@@ -1493,6 +1493,8 @@ test-register-jit-steps: bin/runevm $(RUNE)
 	  cmp tests/out/register-jit/deeprec.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: the driver never nests"
 	(ulimit -s 1024 && bin/runevm --jit=baseline --jit-calls=1 --jit-work=1 --jit-stress=3 tests/out/register-jit/deeprec.rbc > tests/out/register-jit/deeprec-tiered.out) && \
 	  cmp tests/out/register-jit/deeprec-tiered.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: nor while tiering up and invalidating"
+	(ulimit -s 1024 && bin/runevm --jit=all --jit-returns=call tests/out/register-jit/deeprec.rbc > tests/out/register-jit/deeprec-callret.out) && \
+	  cmp tests/out/register-jit/deeprec-callret.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: nor where compiled code returns by ret"
 	bin/rune tests/perf/fib.sml -o tests/out/register-jit/fib.rbc
 	python3 tests/register/jit-dump.py bin/runevm tests/out/register-jit/fib.rbc tests/out/register-jit/dump
 

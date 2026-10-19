@@ -293,6 +293,19 @@ void x64_jcc(X64 *a, int cc, X64Label *l) { x64_byte(a, 0x0F); x64_byte(a, (uint
 void x64_jmp_r(X64 *a, int r) { rex(a, 0, 0, -1, r); x64_byte(a, 0xFF); modrm_rr(a, 4, r); }
 void x64_jmp_m(X64 *a, int base, int index, int scale, int32_t disp) { op_rm(a, 0, 0xFF, -1, 4, base, index, scale, disp); }
 void x64_call_r(X64 *a, int r) { rex(a, 0, 0, -1, r); x64_byte(a, 0xFF); modrm_rr(a, 2, r); }
+void x64_call(X64 *a, X64Label *l) { x64_byte(a, 0xE8); rel32(a, l); }
+void x64_push_m(X64 *a, int base, int32_t disp) { op_rm(a, 0, 0xFF, -1, 6, base, -1, 1, disp); }
+void x64_pop_m(X64 *a, int base, int32_t disp) { op_rm(a, 0, 0x8F, -1, 0, base, -1, 1, disp); }
+void x64_lea_disp(X64 *a, int rd, int base, int32_t disp, int sib) {
+    int small = disp >= -128 && disp <= 127;
+    if ((base & 7) == 4 || (base & 7) == 5) { a->failed = 1; return; }
+    x64_byte(a, (uint8_t)(0x48 | (rd >= 8 ? 4 : 0) | (base >= 8 ? 1 : 0)));
+    x64_byte(a, 0x8D);
+    x64_byte(a, (uint8_t)((small ? 0x40 : 0x80) | (rd & 7) << 3 | (sib ? 4 : (base & 7))));
+    if (sib) x64_byte(a, (uint8_t)(0x20 | (base & 7)));   /* no index */
+    if (small) x64_byte(a, (uint8_t)(int8_t)disp);
+    else x64_u32(a, (uint32_t)disp);
+}
 void x64_ret(X64 *a) { x64_byte(a, 0xC3); }
 void x64_push_r(X64 *a, int r) { rex(a, 0, 0, -1, r); x64_byte(a, (uint8_t)(0x50 + (r & 7))); }
 void x64_pop_r(X64 *a, int r) { rex(a, 0, 0, -1, r); x64_byte(a, (uint8_t)(0x58 + (r & 7))); }

@@ -1021,6 +1021,10 @@ static void to_callee(Jit *j, uint32_t f, const Function *fn) {
         as_jmp_to(A, entry);
         return;
     }
+    /* under --jit-returns=call the table's entries store the return
+       address as the frame's word (native-frames.md, M7): a jump there
+       pushes the word first */
+    if (j->callret) as_push_ret(A, BASER, HEADER_AT(0, 1));
     /* else a jump to where the table of calls says (M6), out of line --
        its code, once it has some, or the stub that hands the frame to the
        interpreter, whose registers are the stack's clean part's, values
@@ -1031,7 +1035,25 @@ static void to_callee(Jit *j, uint32_t f, const Function *fn) {
     Slow *s = ms_slow(M, SLOW_CALL_TABLE, j->next);
     if (!s) return;
     s->a = (int32_t)f;
-    jit_pending(j, as_jmp_site(A, &s->here), f);
+    jit_pending(j, as_jmp_site(A, &s->here), f, 0);
+}
+/* The same for a known call under --jit-returns=call (M7): a `call` into
+   the callee's entry for calls, which stores the return address as the
+   frame's return word -- its register entry's where the arguments are in
+   registers (reg) -- or into the slow path of the table of calls, whose
+   entries do so too */
+static void call_callee(Jit *j, uint32_t f, int reg) {
+    if (f == j->f) { as_call_ret(A, reg ? &j->reg_call_entry : &j->call_entry); return; }
+    const CodeObject *co = &j->jit->codes[f];
+    if (co->entry) {
+        jit_depend(j->jit, f, j->f);
+        as_call_ret_to(A, co->code + (reg ? co->reg_call : 0));
+        return;
+    }
+    Slow *s = ms_slow(M, SLOW_CALL_TABLE, j->next);
+    if (!s) return;
+    s->a = (int32_t)f;
+    jit_pending(j, as_call_site(A, &s->here), f, 1);
 }
 /* room on the stack for need values above the frame's base, in the
    stack's clean part (VM.stack_clean, M6), or the slow path that claims
@@ -1062,6 +1084,7 @@ static void call_header(Jit *j, int closure, int unit_closure, AsmLabel *after, 
     uint32_t above = j->m.nlocals + MS_HEADER;
     if (closure >= 0) as_st64(A, BASER, HEADER_AT(above, 2), closure);
     else if (unit_closure) as_st64i(A, BASER, HEADER_AT(above, 2), (int32_t)mk_unit());
+    if (j->callret) return;   /* the callee's entry stores the return address (M7) */
     as_ret_addr(A, r, after);
     as_st64(A, BASER, HEADER_AT(above, 1), r);
 }
@@ -1078,7 +1101,7 @@ static void call_header(Jit *j, int closure, int unit_closure, AsmLabel *after, 
 static void call_landing(Jit *j, AsmLabel *l) {
     uint32_t after = j->next + 5;
     int32_t d = result_at(j, j->next);
-    as_ret_align(A);
+    if (!j->callret) as_ret_align(A);   /* (a `call` is padded before it: M7) */
     as_bind(A, l);
     jit_landing_here(j, j->next);
     ms_role(M, MR_LAND);
@@ -1175,16 +1198,21 @@ void emit_CALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uin
         const CodeObject *co = &j->jit->codes[a];
         if (co->entry && co->param_home && co->nparams == n && n) {
             ph = co->param_home;
-            reg_entry = (const char *)co->entry + co->reg_entry;
+            reg_entry = (const char *)co->code + co->reg_entry;
         }
     }
     if (ph) args_in_registers(j, n, L, ph);
     else make_registers(j, n, L, (uint32_t)a, fn);
     ms_role(M, MR_FRAME);
     call_header(j, -1, fn->reads_closure, &after, R_S3);
-    as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER));   /* the callee's registers the code's */
+    /* the callee's registers the code's: under --jit-returns=call so that
+       the call after ends at an odd address, its return address a return
+       word (M7) */
+    if (j->callret) as_add_before_call(A, BASER, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER), as_call_len(-1));
+    else as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER));
     ms_role(M, MR_JUMP);
-    if (!ph) to_callee(j, (uint32_t)a, fn);
+    if (j->callret) call_callee(j, (uint32_t)a, ph != NULL);
+    else if (!ph) to_callee(j, (uint32_t)a, fn);
     else if (!reg_entry) as_jmp(A, &j->labels[0]);   /* itself, past its entry's landing */
     else {
         jit_depend(j->jit, (uint32_t)a, j->f);
@@ -1214,7 +1242,7 @@ void emit_TAILCALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L,
             const CodeObject *co = &j->jit->codes[a];
             if (co->entry && co->param_home && co->nparams == n && n) {
                 ph = co->param_home;
-                reg_entry = (const char *)co->entry + co->reg_entry;
+                reg_entry = (const char *)co->code + co->reg_entry;
             }
         }
         for (uint32_t i = 0; ph && i < n; i++) if (ph[i] == REG_ARG_SLOT) ph = NULL;
@@ -1418,9 +1446,11 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     /* the callee's frame's header (native-frames.md, M4): its closure,
        rdx, and its return word, the landing after */
     call_header(j, R_S2, 0, &after, R_H2);
-    as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER));
+    if (j->callret) as_add_before_call(A, BASER, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER), as_call_len(R_S5));
+    else as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER));
     ms_role(M, MR_JUMP);
-    as_jmp_r(A, R_S5);   /* its code, or the interpreter (the table of calls, M6) */
+    if (j->callret) as_call_ret_r(A, R_S5);   /* (M7) */
+    else as_jmp_r(A, R_S5);   /* its code, or the interpreter (the table of calls, M6) */
     call_landing(j, &after);
     as_label_free(&after);
 }
@@ -1455,6 +1485,7 @@ void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
        caller (native-frames.md, M4) */
     as_st64(A, BASER, HEADER_AT(0, 2), R_S2);
     ms_role(M, MR_JUMP);
+    if (j->callret) as_push_ret(A, BASER, HEADER_AT(0, 1));   /* the entry stores it again (M7) */
     as_jmp_r(A, R_S5);   /* its code, or the interpreter (the table of calls, M6) */
     ms_role(M, MR_BODY);
 }
@@ -1475,7 +1506,8 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     ms_role(M, MR_RET);
     ms_need_word(M, a);
     ms_load_bits(M, R_S0, a);
-    as_jmp_ret(A, BASER, HEADER_AT(0, 1));
+    if (j->callret) as_ret_word(A, BASER, HEADER_AT(0, 1));   /* push and ret: predicted (M7) */
+    else as_jmp_ret(A, BASER, HEADER_AT(0, 1));
     ms_role(M, MR_BODY);
 }
 void emit_PRIMPUSH(Jit *j, uint32_t pc, int32_t a, const uint8_t *L, uint32_t n) {

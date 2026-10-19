@@ -218,6 +218,16 @@ void as_call_r(Asm *a, int r) { emit(a, "call *%s", r64(a, r)); }
 void as_ret_align(Asm *a) { (void)a; }
 void as_ret_addr(Asm *a, int rd, AsmLabel *l) { as_lea_label(a, rd, l); }
 void as_jmp_ret(Asm *a, int base, int32_t disp) { emit(a, "jmp *%s", mem(a, base, disp)); }
+int as_call_len(int r) { (void)r; return 0; }
+void as_add_before_call(Asm *a, int rd, int32_t v, int call_len) { (void)call_len; as_add_ri(a, rd, v); }
+void as_call_ret(Asm *a, AsmLabel *l) { emit(a, "call %s", label(a, l)); }
+void as_call_ret_to(Asm *a, const void *at) { (void)at; fail(a, "a call of an address"); }
+void as_call_ret_r(Asm *a, int r) { emit(a, "call *%s", r64(a, r)); }
+size_t as_call_site(Asm *a, AsmLabel *l) { as_call_ret(a, l); return 0; }
+void as_patch_call(uint8_t *site, const void *to) { (void)site; (void)to; }
+void as_pop_ret(Asm *a, int base, int32_t disp) { emit(a, "popq %s", mem(a, base, disp)); }
+void as_push_ret(Asm *a, int base, int32_t disp) { emit(a, "pushq %s", mem(a, base, disp)); }
+void as_ret_word(Asm *a, int base, int32_t disp) { emit(a, "pushq %s", mem(a, base, disp)); emit(a, "ret"); }
 void as_ret(Asm *a) { emit(a, "ret"); }
 void as_trap(Asm *a) { emit(a, "ud2"); }
 void as_setcc(Asm *a, int rd, int cc) {

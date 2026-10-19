@@ -40,7 +40,7 @@ plan's.
 | M4 | Frames in the value stack | done (2026-10-19): a header of three words below each frame's registers, `vm->frames` gone from `runevm`, returns by `jmp [r14-8]`, the watermark compared at the landing; a `fib` call 39.0 to 29.0 instructions and 11.0 to 8.3 cycles (MLton 8.7), a `tak` call 47.3 to 37.3 and 13.1 to 11.0; HOL's kernel work 49.98G to 43.95G instructions (−12.1%), the bootstrap's compiled code −10.3% and the whole −2.9%; the targets of instructions short (*M4*); `--count`, every output and the images' format unchanged |
 | M5 | The watermark by a return barrier | done (2026-10-19): the frame at the watermark returns through a stub that lowers it and moves itself to the caller; no other return compares anything; a `fib` call 29.0 to 27.0 instructions, a `tak` call 37.3 to 35.3 (targets 24 and 32 short); the bootstrap −1.1% instructions, HOL's kernel work −2.6%; 64,033 returns through the barrier in the bootstrap's 72M; `--count` and every output unchanged (*M5*) |
 | M6 | Arguments in registers | done (2026-10-19), kept: a known call, and a tail call, puts its arguments in the homes the callee's tier-2 code takes them in, at its register entry; the bootstrap −0.93% instructions (the gate 0.5%), HOL's kernel work −1.06%; a `fib` call 27.0 to 26.0 instructions, a `tak` call 35.3 to 31.7 (target for `fib` 23.5 short); `--count` and every output unchanged (*M6*) |
-| M7 | Returns the processor predicts | not started; prototype F1 |
+| M7 | Returns the processor predicts | done (2026-10-19) behind `--jit-returns=call`, the default staying `jmp`: a call by `call`, a return by `push [r14-8]; ret`; a `fib` call 8.05 to 7.62 cycles, a `tak` call 10.08 to 8.65, the instructions the same; on the whole programs 0.1% and 0.6% more instructions and the cycles not shown better on a loaded machine (the gate 1%); M9 measures again (*M7*) |
 | M8 | The allocation pointer in a register | not started |
 | M9 | Measure again: the owner's goal | not started |
 
@@ -1577,6 +1577,39 @@ as the default if the bootstrap's and HOL's cycles drop by at least 1%
 (the best of ten runs, interleaved), otherwise the flag's default is `jmp`
 and the measurement is recorded here.
 
+**Done** (2026-10-19; the JIT's `emit.c`, `compile.c`, `masm.c`, the
+assemblers; `--jit-returns=jmp|call`, `JitOptions.returns`), the default
+`jmp`:
+
+* **Under `call`** a known call is `call` to the callee's *call entry*,
+  which stores the return address as the frame's return word (`pop
+  [r14-8]`; on aarch64 `bl`, and the link register and 1 stored), a call
+  through a closure `call` through the table of calls, whose entries are
+  call entries (the interpreter's stub stores the address too), and a
+  return `push [r14-8]; ret` (aarch64: `ldr`, `sub`, `ret`). The return
+  address is the landing, made odd with no padding run: the `lea` that
+  moves `r14` before the call takes a SIB byte or not to set the call's
+  end. A function's code begins with its call entry -- the parameters'
+  homes loaded, then the return address stored, where a call with its
+  arguments in registers enters (M6) -- and the driver's entry, with no
+  address to store, loads the homes after the code and jumps to the first
+  instruction. A jump to a call entry (a tail call through a closure, or
+  through the table) pushes the return word first; a pending call is
+  patched as a call (`as_patch_call`). The return barrier, the
+  interpreter's return stub and the landings are as under `jmp`.
+* **Checked:** the suites, `check-jit` and `check-register` under both,
+  aarch64 and Windows.
+* **Measured** (one VM under both options): a `fib` call 26.0
+  instructions under both and 8.05 to 7.62 cycles, a `tak` call 31.67
+  under both and 10.08 to 8.65 cycles (targets 7 and 9; the least of five
+  pinned runs); the bootstrap 13.824G to 13.840G instructions (+0.12%) and
+  HOL's kernel work 42.367G to 42.610G (+0.58%) -- the pushes of tail
+  calls through closures and the table, and the jump of the driver's entry
+  -- and their cycles, the least of ten interleaved runs, 9.75G to 10.03G
+  (+2.9%) and 24.24G to 23.57G (−2.8%), on a machine shared with two
+  other agents' verifications whose runs varied by half: not the 1% on
+  both that would make `call` the default. M9 measures again, quiet.
+
 ### M8. The allocation pointer in a register (M)
 
 D7 B: the pointer in `rbp` (`x21`), the bytes from its progress, the
@@ -1734,7 +1767,14 @@ on: `results/M9/`, `scripts/M9/`).
   and its built library in `results/M9/bootwl` so that it stays the same
   while the tree changes (`scripts/M9/boot.sh VM OUT`; 1.217G bytecode
   instructions); MLton's build is `bin/rune-mlton` on the same sources.
-  The compile's output is the same on every VM, byte for byte.
+  The compile's output is the same on every VM, byte for byte; its
+  `--count` is not a number to compare between runs, though: the compiler
+  reads the processor's clock (`Pass.stage` times every stage,
+  `src/driver/unitcache.sml` names files by `Time.now`), so the count
+  moves by thousands of instructions, bytes and objects with the time a
+  run took -- the same VM in another mode, or a minute later. `--count`'s
+  identity between engines and tiers is `scripts/check-jit.sh`'s programs'
+  (and `make test-register-jit`'s), which read no clock.
 * **HOL's kernel work:** `scripts/hol-kernel.sh` in a restored `hol.state`:
   of HOL-perf (built by `921af2cc`) until M1, of HOL-midM8 (built by
   performance M8's compiler, the instruction set of `db0fba57a`) from M1,

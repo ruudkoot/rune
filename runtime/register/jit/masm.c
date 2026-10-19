@@ -1740,10 +1740,11 @@ void ms_emit_barrier(Asm *a, int win, MsHelper helper) {
     as_jmp_r(&m.a, R_S1);
     *a = m.a;
 }
-void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave) {
+void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave, int callret) {
     Masm m;
     memset(&m, 0, sizeof m);
     m.a = *a; m.win = win; m.nfields = UINT32_MAX;
+    if (callret) as_pop_ret(&m.a, BASER, -(int32_t)sizeof(Value));   /* a call's entry stores the return address (M7) */
     as_st64(&m.a, VMR, OFF(instructions), COUNTR);
     stub_fp(&m);   /* the callee's frame */
     as_shr_ri(&m.a, R_S6, 1);   /* its function, from the word (2f + 1) the call has */

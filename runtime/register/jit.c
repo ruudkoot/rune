@@ -177,7 +177,7 @@ static void perf_map(VM *vm, JitProgram *jit, uint32_t f) {
         map = fopen(name, "w");
         if (!map) return;
     }
-    fprintf(map, "%llx %x jit%u:%s\n", (unsigned long long)(uintptr_t)jit->codes[f].entry, (unsigned)jit->codes[f].size, (unsigned)jit->codes[f].tier, vm->prog.funcs[f].name);
+    fprintf(map, "%llx %x jit%u:%s\n", (unsigned long long)(uintptr_t)jit->codes[f].code, (unsigned)jit->codes[f].size, (unsigned)jit->codes[f].tier, vm->prog.funcs[f].name);
     fflush(map);
 }
 
@@ -201,7 +201,7 @@ const void *jit_osr(const CodeObject *co, uint32_t pc) {
         uint32_t mid = lo + (hi - lo) / 2;
         if (co->osr_pcs[mid] < pc) lo = mid + 1;
         else if (co->osr_pcs[mid] > pc) hi = mid;
-        else return (const char *)co->entry + co->osr_offs[mid];
+        else return co->code + co->osr_offs[mid];
     }
     return NULL;
 }
@@ -251,7 +251,7 @@ int jit_landing_info(VM *vm, Value w, uint32_t *func, uint32_t *pc) {
     const struct CodeRange *r = &jit->ranges[a - 1];
     if (at >= r->hi || r->func == UINT32_MAX || r->func >= jit->nfuncs) return 0;
     const CodeObject *co = &jit->codes[r->func];
-    if ((uintptr_t)co->entry != r->lo) return 0;
+    if (!co->entry || (uintptr_t)co->code != r->lo) return 0;
     uint32_t off = (uint32_t)(at - r->lo), x = 0, y = co->nlands;
     while (x < y) {
         uint32_t mid = x + (y - x) / 2;
@@ -269,7 +269,7 @@ int jit_landing_info(VM *vm, Value w, uint32_t *func, uint32_t *pc) {
 void jit_invalidate(VM *vm, JitProgram *jit, uint32_t f) {
     CodeObject *co = &jit->codes[f];
     if (!co->entry) return;
-    uintptr_t lo = (uintptr_t)co->entry, hi = lo + co->size;
+    uintptr_t lo = (uintptr_t)co->code, hi = lo + co->size;
     /* the frames that return into the code return to the interpreter, told
        where by the code's landings (native-frames.md, M4) */
     if (vm->frames_active) reg_frames_to_interpreter(vm, lo, hi);
@@ -286,6 +286,7 @@ void jit_invalidate(VM *vm, JitProgram *jit, uint32_t f) {
         if (r >= lo && r < hi) vm->handlers[i].native = NULL;
     }
     co->entry = NULL;
+    co->code = NULL;
     jit->calls[f].entry = jit->call_interp;   /* calls go to the interpreter (M6) */
     co->tier = 0;
     co->calls = co->work = 0;

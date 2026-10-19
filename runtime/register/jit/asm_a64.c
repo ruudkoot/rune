@@ -128,6 +128,21 @@ void as_jmp_ret(Asm *a, int base, int32_t disp) {
     a64_sub_ri(a, R_T, R_T, 1);
     a64_br(a, R_T);
 }
+/* bl and blr leave the return address in x30, a word's; the entry stores
+   it and 1 */
+int as_call_len(int r) { (void)r; return 4; }
+void as_add_before_call(Asm *a, int rd, int32_t v, int call_len) { (void)call_len; a64_add_ri(a, rd, rd, v); }
+void as_call_ret(Asm *a, AsmLabel *l) { size_t at = a->n; a64_word(a, 0x94000000); if (!a->failed) a64_refer_b26(a, l, at); }
+void as_call_ret_to(Asm *a, const void *at) { a64_bl_to(a, at); }
+void as_call_ret_r(Asm *a, int r) { a64_blr(a, r); }
+size_t as_call_site(Asm *a, AsmLabel *l) { size_t at = a->n; as_call_ret(a, l); return at; }   /* bl: the instruction */
+void as_patch_call(uint8_t *site, const void *to) {
+    uint32_t w = 0x94000000u | ((uint32_t)(((intptr_t)to - (intptr_t)site) >> 2) & 0x3FFFFFFu);
+    memcpy(site, &w, 4);
+}
+void as_pop_ret(Asm *a, int base, int32_t disp) { a64_add_ri(a, R_T, X30, 1); a64_str(a, R_T, base, disp); }
+void as_push_ret(Asm *a, int base, int32_t disp) { a64_ldr(a, X30, base, disp); a64_sub_ri(a, X30, X30, 1); }
+void as_ret_word(Asm *a, int base, int32_t disp) { as_push_ret(a, base, disp); a64_ret(a); }
 void as_ret(Asm *a) { a64_ret(a); }
 void as_trap(Asm *a) { a64_brk(a); }
 void as_setcc(Asm *a, int rd, int cc) { a64_cset(a, rd, cond(cc)); }

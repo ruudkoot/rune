@@ -185,6 +185,7 @@ void a64_push(A64 *a, int rt) { a64_word(a, 0xF81F0C00 | R(XSP) << 5 | R(rt)); }
 void a64_pop(A64 *a, int rt) { a64_word(a, 0xF8410400 | R(XSP) << 5 | R(rt)); }
 
 void a64_b(A64 *a, A64Label *l) { size_t at = a->n; a64_word(a, 0x14000000); if (!a->failed) refer(a, l, at, FIX_B26, 0); }
+void a64_refer_b26(A64 *a, A64Label *l, size_t at) { refer(a, l, at, FIX_B26, 0); }
 void a64_bcond(A64 *a, int cond, A64Label *l) { size_t at = a->n; a64_word(a, 0x54000000 | (uint32_t)(cond & 15)); if (!a->failed) refer(a, l, at, FIX_B19, 0); }
 void a64_br(A64 *a, int rn) { a64_word(a, 0xD61F0000 | R(rn) << 5); }
 void a64_blr(A64 *a, int rn) { a64_word(a, 0xD63F0000 | R(rn) << 5); }

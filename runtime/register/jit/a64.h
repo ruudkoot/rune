@@ -122,6 +122,7 @@ void a64_push(A64 *a, int rt);                           /* str rt, [sp, #-16]! 
 void a64_pop(A64 *a, int rt);                            /* ldr rt, [sp], #16 */
 /* branches */
 void a64_b(A64 *a, A64Label *l);
+void a64_refer_b26(A64 *a, A64Label *l, size_t at);      /* the branch word at at refers to l: its 26 bits (bl) */
 void a64_bcond(A64 *a, int cond, A64Label *l);
 void a64_br(A64 *a, int rn);
 void a64_blr(A64 *a, int rn);

@@ -135,6 +135,12 @@ void x64_jmp_to(X64 *a, const void *target);   /* jmp rel32 to an address, from 
 void x64_call_to(X64 *a, const void *target);  /* call rel32 to an address, the same */
 void x64_jmp_m(X64 *a, int base, int index, int scale, int32_t disp);   /* jmp [base + index*scale + disp] */
 void x64_call_r(X64 *a, int r);
+void x64_call(X64 *a, X64Label *l);                /* call rel32 to a label */
+void x64_push_m(X64 *a, int base, int32_t disp);   /* push qword [base + disp] */
+/* lea rd, [base + disp], with a SIB byte it needs not where sib (a byte
+   longer: the length an emitter chooses); base not rsp, r12, rbp or r13 */
+void x64_lea_disp(X64 *a, int rd, int base, int32_t disp, int sib);
+void x64_pop_m(X64 *a, int base, int32_t disp);    /* pop qword [base + disp] */
 void x64_ret(X64 *a);
 void x64_push_r(X64 *a, int r);
 void x64_pop_r(X64 *a, int r);

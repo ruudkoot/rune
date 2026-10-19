@@ -508,7 +508,21 @@ which pops the frame as its info word says; the top level's has no
 caller). The interpreter's `RET` into a frame whose return word is a
 landing hands the VM to the driver, which enters the landing with the
 value (`VM.ret_value`, which the enter stub loads into `rax`) and the
-frame that returns still the VM's. **The stack's watermark**, below
+frame that returns still the VM's. **Under `--jit-returns=call`**
+(native-frames.md, M7) a call is a `call` and a return `push [r14-8];
+ret`, so that the processor predicts the return: the call's landing is
+its return address, made odd by the length of the `lea` that moves `r14`
+before it (a byte of SIB more or not), and the callee's *call entry*
+stores it as the return word (`pop [r14-8]`; on aarch64 `bl`, the link
+register and 1 stored, and `ldr`, `sub` and `ret` to return). A
+function's code then begins with its call entry -- the parameters' homes
+loaded, the return address stored, and on at the first instruction, where
+a call with its arguments in registers enters past the loads -- and the
+driver's entry, which has nothing to store, loads them after the code and
+jumps there; the table of calls gives call entries, the stub of the
+interpreter stores the address too, and a jump to such an entry (a tail
+call through a closure, or through the table) pushes the return word
+first. **The stack's watermark**, below
 which a minor collection does not scan, is kept by a *return barrier*
 (native-frames.md, M5; `isa_regs.c`): the frame at the watermark -- the
 frame that ran when the last collection ended, or the lowest a return

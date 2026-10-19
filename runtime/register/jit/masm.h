@@ -433,7 +433,7 @@ void ms_emit_ret_tramp(Asm *a, int win, MsHelper helper, AsmLabel *leave);
    R_S6 its function's word (2f + 1, as a closure holds it): the count,
    the frame and the function to the VM,
    helper(vm), and the VM handed back with its answer */
-void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave);
+void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave, int callret);   /* callret: --jit-returns=call, the return address stored first (M7) */
 /* the stack's return barrier (native-frames.md, M5): where a RET of the
    frame at the watermark goes, the value in R_S0 and r14 the frame:
    helper(vm, its registers), which lowers the watermark and gives back

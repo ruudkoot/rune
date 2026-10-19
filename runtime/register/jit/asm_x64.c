@@ -103,6 +103,21 @@ void as_call_r(Asm *a, int r) { x64_call_r(a, r); }
 void as_ret_align(Asm *a) { if (!(a->n & 1)) x64_byte(a, 0x90); }   /* nop: the landing at an odd offset */
 void as_ret_addr(Asm *a, int rd, AsmLabel *l) { x64_lea_rip(a, rd, l); }
 void as_jmp_ret(Asm *a, int base, int32_t disp) { x64_jmp_m(a, base, -1, 1, disp); }
+/* a call of len bytes padded so that it ends at an odd offset, its return address a return word */
+static void call_pad(Asm *a, size_t len) { if (!((a->n + len) & 1)) x64_byte(a, 0x90); }
+int as_call_len(int r) { return r < 0 ? 5 : r >= 8 ? 3 : 2; }
+void as_add_before_call(Asm *a, int rd, int32_t v, int call_len) {
+    size_t lea = 3 + (v >= -128 && v <= 127 ? 1 : 4);   /* REX, 8D, ModRM, disp: without a SIB */
+    x64_lea_disp(a, rd, rd, v, !((a->n + lea + (size_t)call_len) & 1));
+}
+void as_call_ret(Asm *a, AsmLabel *l) { call_pad(a, 5); x64_call(a, l); }
+void as_call_ret_to(Asm *a, const void *at) { call_pad(a, 5); x64_call_to(a, at); }
+void as_call_ret_r(Asm *a, int r) { call_pad(a, r >= 8 ? 3 : 2); x64_call_r(a, r); }
+size_t as_call_site(Asm *a, AsmLabel *l) { call_pad(a, 5); size_t at = a->n + 1; x64_call(a, l); return at; }   /* call rel32: the rel32 */
+void as_patch_call(uint8_t *site, const void *to) { as_patch_jmp(site, to); }
+void as_pop_ret(Asm *a, int base, int32_t disp) { x64_pop_m(a, base, disp); }
+void as_push_ret(Asm *a, int base, int32_t disp) { x64_push_m(a, base, disp); }
+void as_ret_word(Asm *a, int base, int32_t disp) { x64_push_m(a, base, disp); x64_ret(a); }
 void as_ret(Asm *a) { x64_ret(a); }
 void as_trap(Asm *a) { x64_int3(a); }
 void as_setcc(Asm *a, int rd, int cc) {

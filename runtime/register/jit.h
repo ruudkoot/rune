@@ -41,6 +41,14 @@ enum RunResult {
                            returns into it, the value in VM.ret_value) */
 };
 
+/* How compiled code returns (--jit-returns, native-frames.md, M7): by a
+   jump through the frame's return word, which the caller writes
+   (JIT_RET_JMP, as M4 built it), or by `call` and `ret`, the callee's
+   entry storing the return address as the word and its return pushing it
+   again, so that the processor predicts the return (JIT_RET_CALL). */
+enum { JIT_RET_DEFAULT = 0, JIT_RET_JMP, JIT_RET_CALL };
+#define JIT_RETURNS_DEFAULT JIT_RET_JMP
+#define JIT_CALLS_RET(vm) (((vm)->jit.returns ? (vm)->jit.returns : JIT_RETURNS_DEFAULT) == JIT_RET_CALL)
 /* A frame's return word (vm.h, isa_frame_header; native-frames.md, M4):
    where compiled code's RET goes, an odd number, which the collector takes
    for an immediate -- the interpreter's return stub (VM.ret_word) or a
@@ -65,6 +73,11 @@ enum RunResult {
    store, so that a compiling thread could publish it too (D13). */
 typedef struct CodeObject {
     const void *entry;
+    /* where the code begins: the entry of a call under --jit-returns=call,
+       which stores the return address as the frame's return word and goes
+       on at entry (native-frames.md, M7); entry itself else. The offsets
+       of the tables below are from here. */
+    const uint8_t *code;
     uint32_t tier;
     uint32_t size;          /* bytes of code */
     uint32_t calls;
@@ -82,7 +95,7 @@ typedef struct CodeObject {
        patch goes, and the caller and its code then (a caller compiled
        again since is not patched) */
     uint32_t npending, pending_cap;
-    struct PendingCall { uint8_t *site; uint32_t caller; const void *caller_entry; } *pending;
+    struct PendingCall { uint8_t *site; uint32_t caller; const void *caller_entry; int call; } *pending;   /* call: the site is a call's (M7), else a jump's */
     /* the profile of the code, under --jit-profile (M8): a site per call
        through a closure, per branch and per jump back, in the order the
        code was emitted; NULL otherwise */
@@ -104,6 +117,7 @@ typedef struct CodeObject {
        known call puts it in, or REG_ARG_SLOT (into its slot) or
        REG_ARG_DEAD (nowhere: the callee never reads it) */
     int32_t reg_entry;
+    int32_t reg_call;   /* under --jit-returns=call, the same entry for a call: the return address stored first (M7) */
     uint32_t nparams;
     int8_t *param_home;
 } CodeObject;

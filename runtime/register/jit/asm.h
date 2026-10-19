@@ -230,6 +230,28 @@ void as_call_r(Asm *a, int r);
 void as_ret_align(Asm *a);
 void as_ret_addr(Asm *a, int rd, AsmLabel *l);
 void as_jmp_ret(Asm *a, int base, int32_t disp);
+/* Returns the processor predicts (native-frames.md, M7; --jit-returns=call):
+   a call -- to a label, to an address in reach, through a register -- whose
+   return address is the landing after it, at an odd address (x86-64:
+   padded before), which the callee's entry stores as its return word
+   (as_pop_ret); the return through that word (as_ret_word: on x86-64
+   `push [m]; ret`); and a return address made from the word, for a jump
+   to an entry that stores it again (as_push_ret). as_call_site is a call
+   to l that as_patch_call may make a call elsewhere: the offset of what
+   the patch writes. */
+/* rd += v before such a call of call_len bytes (as_call_len): on x86-64
+   an lea whose length makes the call end at an odd offset, so that no
+   padding runs */
+void as_add_before_call(Asm *a, int rd, int32_t v, int call_len);
+int as_call_len(int r);   /* the bytes of a call to a label or an address (r -1), or through register r */
+void as_call_ret(Asm *a, AsmLabel *l);
+void as_call_ret_to(Asm *a, const void *at);
+void as_call_ret_r(Asm *a, int r);
+size_t as_call_site(Asm *a, AsmLabel *l);
+void as_patch_call(uint8_t *site, const void *to);
+void as_pop_ret(Asm *a, int base, int32_t disp);
+void as_push_ret(Asm *a, int base, int32_t disp);
+void as_ret_word(Asm *a, int base, int32_t disp);
 void as_ret(Asm *a);
 void as_trap(Asm *a);
 void as_setcc(Asm *a, int rd, int cc);

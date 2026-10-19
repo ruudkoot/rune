@@ -246,6 +246,8 @@ int vm_jit_arg(const char *arg, JitOptions *jit, int *check) {
         return 0;
     }
     if (strcmp(arg, "--jit-check") == 0) { *check = 1; return 1; }
+    if (strcmp(arg, "--jit-returns=jmp") == 0) { jit->returns = JIT_RET_JMP; return 1; }
+    if (strcmp(arg, "--jit-returns=call") == 0) { jit->returns = JIT_RET_CALL; return 1; }
     if (strcmp(arg, "--jit=off") == 0) { jit->mode = JIT_OFF; return 1; }
     if (strcmp(arg, "--jit=baseline") == 0) { jit->mode = JIT_BASELINE; return 1; }
     if (strcmp(arg, "--jit=opt") == 0) { jit->mode = JIT_OPT; return 1; }

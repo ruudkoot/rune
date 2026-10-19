@@ -66,6 +66,7 @@ static void usage(void) {
         "                  of it is for, and perf's jitdump of it (runtime/register/jit/dump.c)\n"
         "  --jit-profile   register VM: count what compiled code calls, branches and loops on (--jit-stats shows them)\n"
         "  --jit-check     register VM: run a few bytes of code from executable memory and exit\n"
+        "  --jit-returns=R register VM: jmp or call, how compiled code returns (docs/plans/native-frames.md, M7)\n"
         "  --intinf=MODE   auto (default), gmp or sml; explicit GMP requires a supported library\n"
         "  --intinf-max-bits N  magnitude budget, 64..1073741822 (default 134217728)\n"
         "  --intinf-gmp-memory N  tracked GMP allocation budget in bytes (default 268435456)\n"

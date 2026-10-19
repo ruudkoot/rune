@@ -113,7 +113,9 @@ struct
      way ("register-gc-low-pause-compact", "register", "bin/runevm --gc low-pause --gc-compact" ^ small, "test-gc"),
      way ("register", "register", "bin/runevm", "test-register"),
      way ("register-jit", "register", "bin/runevm --jit=all", "test-register-jit"),
-     way ("register-opt", "register", "bin/runevm --jit=all --jit-tier=2", "test-register-jit")]
+     way ("register-opt", "register", "bin/runevm --jit=all --jit-tier=2", "test-register-jit"),
+     (* returning by ret (docs/plans/native-frames.md, M7) *)
+     way ("register-callret", "register", "bin/runevm --jit=all --jit-tier=2 --jit-returns=call", "test-register-jit")]
     @ List.map (fn h => way ("host-" ^ h, h, "bin/runevm-stack", "test-all")) hosts
     @ (if native then
          [{name = "native", compiler = stackCompiler, vm = "bin/runevm-native", tag = "test-native", skip = SOME "tests/opt-skip.txt"},

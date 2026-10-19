@@ -405,7 +405,11 @@ refuses the other's file and image.
   `--deopt-stress=N` makes compiled code leave for the interpreter at
   every Nth instruction boundary (plans/jit.md M11; runtime/register/README.md,
   Deoptimisation), a test that the frame is exact everywhere, which the
-  oracle runs at N = 1. `--jit-perf-map` writes `/tmp/perf-PID.map`, so that `perf record`
+  oracle runs at N = 1. `--jit-returns=call` makes compiled code call by
+  `call` and return by `ret`, the callee storing the return address as
+  its frame's return word, so that the processor predicts returns;
+  `--jit-returns=jmp`, the default, returns by a jump through the word
+  the caller wrote (plans/native-frames.md, M7). `--jit-perf-map` writes `/tmp/perf-PID.map`, so that `perf record`
   names compiled functions (`jit1:NAME`, `jit2:NAME` by tier). `--jit-dump=DIR`
   writes the code of every function compiled into DIR, each part with
   the bytecode instruction it does and its role (the instruction's own

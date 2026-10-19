@@ -50,7 +50,7 @@ typedef struct Jit {
     AsmLabel *landings;
     /* the known calls to functions without code, jumps to patch (M6): the
        offset of each patch in this function's code, and the callee */
-    struct { uint32_t off, f; } *pending;
+    struct { uint32_t off, f; int call; } *pending;   /* call: a call's site (M7), else a jump's */
     uint32_t npending, pending_cap;
     /* the landings of the calls (native-frames.md, M4): each one's offset
        in the code and the pc of the call's RESULT, in the order of the
@@ -63,6 +63,13 @@ typedef struct Jit {
        not so) -- for its own calls of itself, and its code object */
     uint32_t nparams;
     int8_t param_home[64];
+    /* --jit-returns=call (native-frames.md, M7): calls by `call`, returns
+       by `ret`; the entries a call goes to, which store the return
+       address as the frame's return word first -- the code's start, and
+       the register entry's -- before the entry and the register entry
+       that the driver and the jumps take */
+    int callret;
+    AsmLabel call_entry, reg_call_entry;
 } Jit;
 /* a landing of a call bound here, returning to the RESULT at pc */
 void jit_landing_here(Jit *j, uint32_t pc);
@@ -77,7 +84,7 @@ enum JitFatal {
 
 /* a known call to function f, which has no code yet: its jump at off in
    the code, patched when f is compiled (M6) */
-void jit_pending(Jit *j, size_t off, uint32_t f);
+void jit_pending(Jit *j, size_t off, uint32_t f, int call);
 /* the label of the instruction at pc, for a jump */
 AsmLabel *jit_label(Jit *j, uint32_t pc);
 /* a fatal error at the instruction being emitted, out of line: the label to
