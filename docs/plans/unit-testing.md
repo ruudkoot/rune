@@ -23,6 +23,11 @@ What it rests on:
 
 ## Status
 
+The continuation is [unit-testing-part2.md](unit-testing-part2.md): it maps
+the remaining scripts at `f1b8fb9a` to migration milestones, with dependencies,
+retirement checks and explicit bootstrap/oracle exceptions. The status and
+script census below retain this roadmap's implementation history.
+
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done 2026-10-11 |

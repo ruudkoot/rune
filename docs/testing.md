@@ -145,6 +145,14 @@ a crash, a flood of output and a leaked process), pass only when the
 runner sees each fault for what it is; they run in every `make check`,
 since the runner is built by the compiler it tests.
 
+The remaining script migrations are tracked by
+[the part-two roadmap](plans/unit-testing-part2.md) and
+`tests/runner/migration.tsv`. `runner/migration-inventory` rejects unassigned
+shell/Python/AWK files and invalid retirements; `runner/migration-faults`
+plants omissions, duplicates and missing replacements. Both run in `check`
+and `quick`. `bin/rune-test migration-baseline DIR` records the source state,
+tool identities, callers and tier/profile selections before a migration.
+
 ### Before and after
 
 `make check` before the runner was 32 steps run one after another
