@@ -6,8 +6,13 @@
 # tier; the collector is the generational one of runtime/gc (minor.c, the
 # nursery's collections; the rest the old generation's: marking, sweeping
 # Immix's lines, segregated fits and the large-object space, the
-# low-pause cycle, compaction, and the copier's full collection).
+# low-pause cycle, compaction, and the copier's full collection). The
+# frames are runevm's in the value stack (native-frames.md, M3 to M5): their
+# walk, which the collector asks of each frame above the watermark, a
+# frame's live registers, the return barrier's pass, and the stack's clean
+# room claimed as it deepens.
 function group2(s) {
+  if (s ~ /^(vm_frames?_[a-z_]+|reg_frames?_[a-z_]+|reg_barrier_[a-z]+|step_down|read_header|frame_at|barrier_arm|frames_lower|vm_claim_stack|vm_clean_stack)$/) return "frames: walks, liveness, the barrier"
   if (s ~ /^(collect_minor|minor_(pass|into|stack)|promote|promote_(obj|value|global)|copy_small|scan_(card|dirty|object|range)|gc_(born|queue|write)|nursery_(start|adapt))$/) return "collector: minor"
   if (s ~ /^(mark_[a-z_]+|at_limit|bits_clear|chunk_bits_next|chunk_object_covering|old_place|immix_[a-z_]+|by_free|first_line|free_block|free_lines|list_blocks|next_hole|reset_holes|next|segfit_[a-z_]+|block_first|cells_of|classes|descriptor|forget_blocks|marked|push|new_chunk|los_[a-z_]+|take_run|units?_of|first_in|cycle_[a-z_]+|gc_shade_old|gray_left|mark_some|push_gray|shade|shade_(obj|value)|slice_point|compact_[a-z_]+|forward_(fields|obj|value)|fwd_(after|next)|collect_(into|pass)|copy_(next|obj|value)|fill_of|gc_after_cycle|gc_stack_roots|grown|vm_collect|vm_gc|chunk_(append|give|give_later|layout|take)|heap_chunks_release|pool_(keep|trim)|heap_check|heap_verify|check_(fail|marked|old|parse|ptr|value)|out_of_memory|heap_init)$/) return "collector: major"
   if (s ~ /^(vm_alloc|vm_alloc_fields|vm_alloc_string|vm_string_from|vm_cons|jit_h_alloc|jit_alloc_slow|payload_size|alloc_young|alloc_next|alloc_view|raw_array|los_alloc)$/) return "allocation"
@@ -19,7 +24,7 @@ function group2(s) {
   if (s ~ /^(p_|jit_h_prim$|jit_h_primpush$|real_|decimal_|int_list$|from_list$|mk_some$|push_|put$|c_string|string_array|get_string$|prim_fast|list_length$|length_at$)/) return "primitives"
   if (s ~ /^(vm_loop|loop_fast|loop_traced|loop_debug|vm_run$|vm_start$|check_tag|expect_obj|op_[A-Z]|closure_function)/) return "interpreter"
   if (s ~ /^(jit_run$|jit_h_(call|called|ret|tailcall|grow|grow_frames|setenv|interrupt|fatal|fatal_at)$|vm_grow_|jit_landing$|jit_osr$|jit_site$|stack_overflow|make_room$|poll_slow$|vm_interrupt$|native_)/) return "JIT stubs and calls"
-  if (s ~ /^(jit_compile|jit_tier_up$|jit_make$|jit_fill|jit_depend$|jit_label$|jit_program$|jit_region_init$|jit_invalidate$|jit_unsupported$|jit_print_stats$|jit_check$|perf_map$|ms_|x64_|a64_|asm_|emit_|modrm_mem$|rex$|rel32$|sse_|op_rr|alloc$|branch$|called$|closure$|equal$|set_order$|floor_div$|index_of$|checked_tag$|to_callee|room$|room_dynamic$|frame_room$|ref_room$|home_to_slot$|slot_to_home$|result_at|uses_defs|fill_unit_dynamic$|count_arg$|bug$|live_|choose_homes|reg_(uses_defs|liveness|frame_live)$|as_|writeback|rd_svar$|jit_fatal$)/) return "JIT compiler"
+  if (s ~ /^(jit_compile|jit_tier_up$|jit_make$|jit_fill|jit_depend$|jit_label$|jit_program$|jit_region_init$|jit_invalidate$|jit_unsupported$|jit_print_stats$|jit_check$|perf_map$|ms_|x64_|a64_|asm_|emit_|modrm_mem$|rex$|rel32$|sse_|op_rr|alloc$|branch$|called$|closure$|equal$|set_order$|floor_div$|index_of$|checked_tag$|to_callee|room$|room_dynamic$|frame_room$|ref_room$|home_to_slot$|slot_to_home$|result_at|uses_defs|fill_unit_dynamic$|count_arg$|bug$|live_|choose_homes|reg_(uses_defs|liveness)$|as_|writeback|rd_svar$|jit_fatal$)/) return "JIT compiler"
   if (s ~ /^(_int_malloc|malloc|malloc_consolidate|cfree|_int_free|realloc|__libc_calloc|__libc_malloc|unlink_chunk|free@plt|malloc@plt|__printf_buffer|__vsnprintf|__snprintf|_itoa_word)/) return "libc: malloc and printf"
   if (s ~ /^(image_|loader_|load_|validate_program|heap_relocate$|heap_read_|relocate_(fields|obj|value)$|read_segment$|heap_number$|heap_offset_of$|number_lines$)/) return "image and loader"
   return "other"
@@ -55,7 +60,7 @@ function flush(   g) {
 END {
   flush()
   if (total == 0) { print "total 0"; exit }
-  n = split("tier 2 code|tier 1 code|JIT code, other tiers|native code|interpreter|JIT stubs and calls|collector: minor|collector: major|allocation|boxes (64-bit numbers, reals)|equality (runtime)|string order (runtime)|exceptions (runtime)|IntInf primitives|primitives|JIT compiler|image and loader|libc: malloc and printf|memmove/memcpy (other callers)|kernel|other", order, "|")
+  n = split("tier 2 code|tier 1 code|JIT code, other tiers|native code|interpreter|JIT stubs and calls|frames: walks, liveness, the barrier|collector: minor|collector: major|allocation|boxes (64-bit numbers, reals)|equality (runtime)|string order (runtime)|exceptions (runtime)|IntInf primitives|primitives|JIT compiler|image and loader|libc: malloc and printf|memmove/memcpy (other callers)|kernel|other", order, "|")
   printf "total %d\n", total
   for (i = 1; i <= n; i++) printf "group\t%s\t%.2f\n", order[i], 100 * grp[order[i]] / total
   for (g in grp) { seen = 0; for (i = 1; i <= n; i++) if (order[i] == g) seen = 1; if (!seen) printf "group\t%s\t%.2f\n", g, 100 * grp[g] / total }
