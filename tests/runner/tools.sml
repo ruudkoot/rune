@@ -511,11 +511,20 @@ struct
          `total: T s processor time, S s in the stages (P%)`, the process's
          processor time from its start and the sum of the outermost stages.
          The stages must add up to the total, to within the rounding of the
-         lines and 2%, and the process must have taken no more than the
-         total, but for what the VM does after the last line (it exits). A
-         piece of the compile that no stage times shows here. (SML/NJ's
-         processor time counts the collector's twice, so a total may be
-         more than what the process took.) *)
+         lines and a share of the total that the host's clock needs, and the
+         process must have taken no more than the total, but for what the VM
+         does after the last line (it exits). A piece of the compile that no
+         stage times shows here. The share is 2%, and 15% on SML/NJ's
+         builds, whose processor time counts the collector's twice (its
+         Timer.checkCPUTimer adds the collector's time to a user time that
+         holds it already): a total may be more than what the process took,
+         and a minor collection in the driver's code, between two stages, is
+         a gap -- on SML/NJ 110.99.9 1 to 5% of this compile on a quiet
+         machine and up to 10% at a load of 30 to 40, under 1% with an
+         allocation area of 4 MB. A gap cannot be more than the time counted
+         twice, the collector's, 14 to 17% of SML/NJ's total here; the other
+         hosts, which compile the same code, hold every stage to 2%. A share,
+         not a fixed margin: a loaded machine makes the compile longer. *)
       fun children () = let val {cutime, cstime, ...} = Posix.ProcEnv.times () in Time.toReal (Time.+ (cutime, cstime)) end
       fun split sep s =
         let val (a, b) = Substring.position sep (Substring.full s)
@@ -554,7 +563,8 @@ struct
       case (total, inside) of
         (SOME total, SOME inside) =>
           (check ("pass-stats: the stages add up to the line", Real.abs (added - inside) <= 0.0005 * n + 0.001);
-           check ("pass-stats: the stages add up to the compile", total - added <= 0.001 * n + 0.02 * total);
+           check ("pass-stats: the stages add up to the compile",
+                  total - added <= 0.001 * n + (if String.isSubstring "smlnj" rune then 0.15 else 0.02) * total);
            check ("pass-stats: the process took no more than the total", process <= 1.10 * total + 0.05))
       | _ => check ("pass-stats: the last line is the total", false)
     end

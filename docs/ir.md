@@ -55,7 +55,8 @@ of results in globals (see *Low*).
 
 **What `--pass-stats` shows** is the whole compile: the stages add up to
 the process's processor time from its start, which `tests/compiler` holds
-them to (within 2%), so that no part of a compile goes untimed. Beside the
+them to (within 2%, and 15% on SML/NJ's builds, whose processor time counts
+the collector's twice), so that no part of a compile goes untimed. Beside the
 stages of the pipeline above, the compile's stages are:
 
 * `startup`, what the process took before the compiler's own code ran:
