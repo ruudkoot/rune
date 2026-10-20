@@ -39,6 +39,14 @@ Which of them this is, if either, has not been found.
 
 ## What it breaks
 
+`tests/lib/unit/core.sml` stops the same way. One of 30 runs with
+`@SMLalloc=512k` died at a pc ending in `0659`, and the GitHub-hosted
+nightly of 2026-10-20 (run 39394299943) failed `smlnj-legacy unit.core`.
+The nightly of 2026-10-19 passed that test, and on the failing run
+MLton, SML/NJ 110.99.9 for 32 bits, SML/NJ 2026.2, Poly/ML and MLKit
+passed it. The test draws its two properties through `lib/test/property`.
+
 `tests/lib/deviations.txt` has a `HOST-FLAKY` line for
-`unicode.normalize-props` on `native:smlnj-legacy`, as it has for
-`property.shrink`. The library is not changed for it (AGENTS.md).
+`unicode.normalize-props` and for `unit.core` on `native:smlnj-legacy`,
+as it has for `property.shrink`. The library is not changed for it
+(AGENTS.md).
