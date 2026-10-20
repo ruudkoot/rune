@@ -157,9 +157,10 @@ lib/terminal ([plans/repl.md](plans/repl.md), M5 and M6):
   `TERM_PROGRAM`, as before.
 * **While a declaration runs** the terminal is quiet (`Terminal.quiet`):
   keys typed ahead are neither echoed into what it writes nor lost, and
-  are the editor's at the next prompt; Ctrl-C is the interrupt. A program
-  that reads `TextIO.stdIn` gets each read as at a shell, echoed and
-  edited by lines.
+  are the editor's at the next prompt, also those that reach the REPL in
+  one burst with the Enter of the entry before them; Ctrl-C is the
+  interrupt. A program that reads `TextIO.stdIn` gets each read as at a
+  shell, echoed and edited by lines.
 * **A line left unfinished** by the program -- `print "abc"` -- is marked
   `%` (zsh's way) and what the REPL writes next starts on a line of its
   own.
@@ -606,13 +607,15 @@ history, an entry of several lines, errors with their lines, an open
 string, keys typed ahead while code runs, a program that reads a line,
 Ctrl-C, the debugger's stop and its prompt and Ctrl-C pausing a loop
 (`repl-debug`), Vi's modes and the history's menu (`repl-vi`), the basic
-mode under Emacs, and the marks of OSC 133 byte for byte on a pty; on
+mode under Emacs, and on a pty the marks of OSC 133 byte for byte and
+two entries typed at once; on
 Windows, the scripts whose first line is `# windows`, and `rune-repl.cmd`
 from `cmd.exe`. lib/terminal's own tests (`tests/lib/terminal`) give the
 editor keys and look at its state: Vi's commands and counts, the menu and
 its order, the answers to what the terminal is asked, the kitty
-protocol's keys among them, and what the terminal is -- raw, quiet or put
-back -- when the prompt is announced and after an entry.
+protocol's keys among them, what the terminal is -- raw, quiet or put
+back -- when the prompt is announced and after an entry, and keys typed
+ahead in one read with the end of a line.
 `tests/terminal/MANUAL.md` is the list checked by hand.
 
 ## Not yet

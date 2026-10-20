@@ -1,0 +1,12 @@
+# Keys typed ahead with the Enter before them (docs/repl.md, While a
+# declaration runs): two entries written at once, as a terminal gives a
+# REPL that was busy what was typed meanwhile, reach the editor in one
+# read. The second is the editor's at the next prompt and runs; it was
+# lost when the editor dropped what a read held after the end of a line
+# (tests/lib/terminal/ahead.sml). Read by tests/terminal/ptyraw.py, which
+# writes the two in one write.
+until \x1b\[\?2004h.*\x1b\]133;A\x1b\\ 20
+write 1;\r2;\r
+until val.*it.* = 1 : int.*\x1b\]133;D;0\x1b\\.*val.*it.* = 2 : int.*\x1b\]133;D;0\x1b\\ 20
+write \x04
+quiet 300

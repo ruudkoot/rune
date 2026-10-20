@@ -1185,6 +1185,14 @@ struct
 
   fun terminal () = {policy = !measured, kitty = !kitty}
 
+  (* ---- keys typed ahead ----
+     A read gives whatever was typed since the last one, and a burst can
+     hold the key that ends the line and the keys typed after it: the next
+     line, typed while the program was busy. Those keys, and the decoder
+     holding the beginning of a key not complete, are kept for the next
+     readLine, which takes them before it reads. *)
+  val ahead : (Key.event list * Key.decoder) ref = ref ([], Key.empty)
+
   fun withPolicy ({prompt, continuation, isComplete, complete, hint, highlight, styles, bindings, escapeTimeout,
                    basic, keys, ...} : config, policy) : config =
     {prompt = prompt, continuation = continuation, isComplete = isComplete, complete = complete, hint = hint,
@@ -1287,27 +1295,35 @@ struct
                 let
                   val (events, d) = if bytes = "" then (if Key.pending d then Key.flush d else ([], d))
                                     else Key.feed (d, bytes)
-                  fun run (s, []) = (s, NONE)
-                    | run (s, e :: es) =
-                        if answered e then run (s, es) else
-                        case step (c, s, e) of
-                          (s, Continue) => run (s, es)
-                        | (s, Clear) => (Device.write "\027[H\027[2J"; shown := NONE; drawn := 1; top := 0; run (s, es))
-                        | (s, Stop) =>
-                            if not (canStop ()) then run (s, es) else
-                            (finish (s, ""); Device.leave (); suspend ();
-                             Device.enter {undo = pasteOff ^ (if kittyOn then "\027[<u" else "")};
-                             Device.write (pasteOn ^ (if kittyOn then "\027[>1u" else ""));
-                             size := Device.size (); seen := Device.resizes ();
-                             shown := NONE; drawn := 1; top := 0; run (s, es))
-                        | (s, outcome) => (s, SOME outcome)
                 in
-                  case run (s, events) of
-                    (s, NONE) => (if bytes <> "" orelse not (null events) then (shape s; draw (s, true)) else (); loop (s, d))
-                  | (s, SOME (Accept t)) => (finish (s, ""); Line t)
-                  | (s, SOME Cancelled) => (finish (s, "^C"); Interrupted)
-                  | (s, SOME _) => (finish (s, ""); End)
+                  keys (s, d, events, bytes <> "" orelse not (null events))
                 end
+          end
+        (* the keys of a read, one by one; fresh says whether there is
+           anything new to draw. The keys after the one that ends the line
+           were typed ahead, for the next readLine (ahead). *)
+        and keys (s, d, events, fresh) =
+          let
+            fun run (s, []) = (s, NONE)
+              | run (s, e :: es) =
+                  if answered e then run (s, es) else
+                  case step (c, s, e) of
+                    (s, Continue) => run (s, es)
+                  | (s, Clear) => (Device.write "\027[H\027[2J"; shown := NONE; drawn := 1; top := 0; run (s, es))
+                  | (s, Stop) =>
+                      if not (canStop ()) then run (s, es) else
+                      (finish (s, ""); Device.leave (); suspend ();
+                       Device.enter {undo = pasteOff ^ (if kittyOn then "\027[<u" else "")};
+                       Device.write (pasteOn ^ (if kittyOn then "\027[>1u" else ""));
+                       size := Device.size (); seen := Device.resizes ();
+                       shown := NONE; drawn := 1; top := 0; run (s, es))
+                  | (s, outcome) => (ahead := (es, d); (s, SOME outcome))
+          in
+            case run (s, events) of
+              (s, NONE) => (if fresh then (shape s; draw (s, true)) else (); loop (s, d))
+            | (s, SOME (Accept t)) => (finish (s, ""); Line t)
+            | (s, SOME Cancelled) => (finish (s, "^C"); Interrupted)
+            | (s, SOME _) => (finish (s, ""); End)
           end
         val () = Device.enter {undo = pasteOff ^ (if kittyOn then "\027[<u" else "")}
         (* a failure here, including an interrupt at the prompt's
@@ -1323,8 +1339,12 @@ struct
                the terminal is still cooked *)
             val () = !beforePrompt ()
             val s = start (history, "")
+            (* the keys the last read typed ahead come first *)
+            val (early, d) = !ahead
+            val () = ahead := ([], Key.empty)
           in
-            shape s; draw (s, true); loop (s, Key.empty)
+            shape s; draw (s, true);
+            if null early then loop (s, d) else keys (s, d, early, true)
           end
           handle x => (unshape (); Device.leave (); raise x)
         (* an accepted line goes quiet, not back and not full raw. Back

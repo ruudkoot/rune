@@ -460,10 +460,13 @@ going back through the history `h` and adding the input to it.
 It puts the terminal back before it returns, unless [`keepRaw`](#val-keepraw) is set
 and it read a line, when the terminal stays quiet. Where [`beforePrompt`](#val-beforeprompt)
 is set, it is called once the terminal is raw and just before the
-prompt is drawn. It is the basic mode when `#basic c`, when the
-standard input or output is not a terminal, when `TERM` is `dumb`,
-`unknown`, `cons25` or [`emacs`](#val-emacs), when `INSIDE_EMACS` names comint, or
-when `RUNE_BASIC_REPL` is set.
+prompt is drawn. The keys a read gave after the one that ended the
+input -- typed ahead in the same burst, while the program was busy --
+are not lost: the next [`readLine`](#val-readline) takes them before it reads. It is
+the basic mode when `#basic c`, when the standard input or output is
+not a terminal, when `TERM` is `dumb`, `unknown`, `cons25` or
+[`emacs`](#val-emacs), when `INSIDE_EMACS` names comint, or when `RUNE_BASIC_REPL`
+is set.
 
 ### <a name="val-terminal"></a>`terminal`
 

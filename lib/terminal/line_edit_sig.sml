@@ -177,10 +177,13 @@ sig
      It puts the terminal back before it returns, unless `keepRaw` is set
      and it read a line, when the terminal stays quiet. Where `beforePrompt`
      is set, it is called once the terminal is raw and just before the
-     prompt is drawn. It is the basic mode when `#basic c`, when the
-     standard input or output is not a terminal, when `TERM` is `dumb`,
-     `unknown`, `cons25` or `emacs`, when `INSIDE_EMACS` names comint, or
-     when `RUNE_BASIC_REPL` is set. *)
+     prompt is drawn. The keys a read gave after the one that ended the
+     input -- typed ahead in the same burst, while the program was busy --
+     are not lost: the next `readLine` takes them before it reads. It is
+     the basic mode when `#basic c`, when the standard input or output is
+     not a terminal, when `TERM` is `dumb`, `unknown`, `cons25` or
+     `emacs`, when `INSIDE_EMACS` names comint, or when `RUNE_BASIC_REPL`
+     is set. *)
   val readLine : config * History.history option -> result
 
   (* `terminal ()` is what the terminal said of itself at the first

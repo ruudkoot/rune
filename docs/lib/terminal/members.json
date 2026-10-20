@@ -431,7 +431,7 @@
      "kind": "val",
      "name": "readLine",
      "spec": "val readLine : config * History.history option -> result",
-     "doc": "`readLine (c, h)` reads an input at the terminal with the editor,\ngoing back through the history `h` and adding the input to it.\n\nIt puts the terminal back before it returns, unless `keepRaw` is set\nand it read a line, when the terminal stays quiet. Where `beforePrompt`\nis set, it is called once the terminal is raw and just before the\nprompt is drawn. It is the basic mode when `#basic c`, when the\nstandard input or output is not a terminal, when `TERM` is `dumb`,\n`unknown`, `cons25` or `emacs`, when `INSIDE_EMACS` names comint, or\nwhen `RUNE_BASIC_REPL` is set.\n\n",
+     "doc": "`readLine (c, h)` reads an input at the terminal with the editor,\ngoing back through the history `h` and adding the input to it.\n\nIt puts the terminal back before it returns, unless `keepRaw` is set\nand it read a line, when the terminal stays quiet. Where `beforePrompt`\nis set, it is called once the terminal is raw and just before the\nprompt is drawn. The keys a read gave after the one that ended the\ninput -- typed ahead in the same burst, while the program was busy --\nare not lost: the next `readLine` takes them before it reads. It is\nthe basic mode when `#basic c`, when the standard input or output is\nnot a terminal, when `TERM` is `dumb`, `unknown`, `cons25` or\n`emacs`, when `INSIDE_EMACS` names comint, or when `RUNE_BASIC_REPL`\nis set.\n\n",
      "page": "sig/LINE_EDIT.md#val-readline"
     },
     {
