@@ -3,9 +3,7 @@
    M4. Under --jit=all every function tier 1 can compile is compiled when
    the program is first seen; the rest stay interpreted. */
 #include "jit.h"
-#ifdef RUNE_JIT_CONV
 #include "regvm.h"
-#endif
 #include "sys/sys.h"
 
 #include <stdio.h>
@@ -23,7 +21,10 @@
 static void free_tables(JitProgram *jit) {
     for (uint32_t i = 0; jit->codes && i < jit->nfuncs; i++) {
         free(jit->codes[i].osr_pcs); free(jit->codes[i].osr_offs); free(jit->codes[i].callers);
+        free(jit->codes[i].pending);
         free(jit->codes[i].sites);
+        free(jit->codes[i].land_offs); free(jit->codes[i].land_pcs);
+        free(jit->codes[i].param_home);
         if (jit->names) free(jit->names[i]);
     }
     free(jit->names);
@@ -86,10 +87,20 @@ void jit_depend(JitProgram *jit, uint32_t callee, uint32_t caller) {
 }
 
 static JitProgram *the_program;   /* one VM per process, for --jit-stats */
+struct LandingSeen *jit_landing_seen;
 static VM *the_vm;
 
 static void jit_make(VM *vm, JitProgram *jit) {
     Program *p = &vm->prog;
+    /* a world Runtime.restore made has a VM of its own, which the region's
+       return trampoline is given again, and its frames with it (M6) */
+    if (jit->ret_tramp && vm->ret_tramp != jit->ret_tramp) {
+        vm->ret_tramp = jit->ret_tramp;
+        vm->ret_word = (Value)(uintptr_t)jit->ret_tramp + JIT_RET_BIAS;   /* (native-frames.md, M4) */
+        reg_frames_ret_word(vm);
+        vm->barrier_stub = (Value)(uintptr_t)jit->barrier + JIT_RET_BIAS;   /* (M5) */
+        reg_barrier_arm(vm);
+    }
     /* the code made for the program before goes first: its frames return
        into the interpreter (jit_invalidate), since that code names the
        tables made again here. After Runtime.restore no frame returns into
@@ -107,8 +118,18 @@ static void jit_make(VM *vm, JitProgram *jit) {
     jit->code = p->code;
     jit->nfuncs = p->nfuncs;
     jit->compiled = 0;
+    /* where calls go (M6): every function interpreted, its room */
+    free(jit->calls);
+    jit->calls = malloc((p->nfuncs ? p->nfuncs : 1) * sizeof *jit->calls);
+    if (!jit->calls) { fprintf(stderr, "runevm: out of memory (code objects)\n"); exit(2); }
+    for (uint32_t i = 0; i < p->nfuncs; i++) {
+        jit->calls[i].entry = jit->call_interp;
+        jit->calls[i].need = (uint64_t)p->funcs[i].nlocals + p->funcs[i].maxstack;
+    }
+    vm->jit_calls = jit->calls;
     /* the code of the program before is left where it is: a frame of an
-       image never returns into it, since native_ret is not carried */
+       image never returns into it, since its return word is not carried */
+    memset(jit->seen, 0, sizeof jit->seen);
     jit->code_used = jit->code_mem ? jit->code_used : 0;
     /* what each function's calls must fill: worked out for all now, since
        a call through a closure reads it from the table at run time */
@@ -157,7 +178,7 @@ static void perf_map(VM *vm, JitProgram *jit, uint32_t f) {
         map = fopen(name, "w");
         if (!map) return;
     }
-    fprintf(map, "%llx %x jit%u:%s\n", (unsigned long long)(uintptr_t)jit->codes[f].entry, (unsigned)jit->codes[f].size, (unsigned)jit->codes[f].tier, vm->prog.funcs[f].name);
+    fprintf(map, "%llx %x jit%u:%s\n", (unsigned long long)(uintptr_t)jit->codes[f].code, (unsigned)jit->codes[f].size, (unsigned)jit->codes[f].tier, vm->prog.funcs[f].name);
     fflush(map);
 }
 
@@ -181,24 +202,93 @@ const void *jit_osr(const CodeObject *co, uint32_t pc) {
         uint32_t mid = lo + (hi - lo) / 2;
         if (co->osr_pcs[mid] < pc) lo = mid + 1;
         else if (co->osr_pcs[mid] > pc) hi = mid;
-        else return (const char *)co->entry + co->osr_offs[mid];
+        else return co->code + co->osr_offs[mid];
     }
     return NULL;
+}
+
+/* the range of the code of function f, at lo: of no function (lo is the
+   region's, and rises with the order of the compiles) */
+static void range_dies(JitProgram *jit, uintptr_t lo) {
+    uint32_t a = 0, b = jit->nranges;
+    while (a < b) {
+        uint32_t mid = a + (b - a) / 2;
+        if (jit->ranges[mid].lo < lo) a = mid + 1;
+        else b = mid;
+    }
+    if (a < jit->nranges && jit->ranges[a].lo == lo) jit->ranges[a].func = UINT32_MAX;
+    memset(jit->seen, 0, sizeof jit->seen);
+}
+void jit_code_placed(JitProgram *jit, uint32_t f, const void *at, size_t size) {
+    if (jit->nranges == jit->ranges_cap) {
+        uint32_t cap = jit->ranges_cap ? 2 * jit->ranges_cap : 256;
+        struct CodeRange *r = realloc(jit->ranges, cap * sizeof *r);
+        if (!r) { fprintf(stderr, "runevm: out of memory (code objects)\n"); exit(2); }
+        jit->ranges = r;
+        jit->ranges_cap = cap;
+    }
+    jit->ranges[jit->nranges].lo = (uintptr_t)at;
+    jit->ranges[jit->nranges].hi = (uintptr_t)at + size;
+    jit->ranges[jit->nranges].func = f;
+    jit->nranges++;
+}
+
+/* A return word that is a landing: the code it is in by the ranges, and
+   the call by the code's landings; the last 256 asked kept */
+int jit_landing_info(VM *vm, Value w, uint32_t *func, uint32_t *pc) {
+    JitProgram *jit = the_program;
+    if (!jit || !jit->nranges) return 0;
+    struct LandingSeen *seen = &jit->seen[jit_seen_slot(w)];
+    if (seen->word == w) { *func = seen->func; *pc = seen->pc; return 1; }
+    uintptr_t at = (uintptr_t)w - JIT_RET_BIAS;
+    uint32_t a = 0, b = jit->nranges;
+    while (a < b) {   /* the last range at or below at */
+        uint32_t mid = a + (b - a) / 2;
+        if (jit->ranges[mid].lo <= at) a = mid + 1;
+        else b = mid;
+    }
+    if (a == 0) return 0;
+    const struct CodeRange *r = &jit->ranges[a - 1];
+    if (at >= r->hi || r->func == UINT32_MAX || r->func >= jit->nfuncs) return 0;
+    const CodeObject *co = &jit->codes[r->func];
+    if (!co->entry || (uintptr_t)co->code != r->lo) return 0;
+    uint32_t off = (uint32_t)(at - r->lo), x = 0, y = co->nlands;
+    while (x < y) {
+        uint32_t mid = x + (y - x) / 2;
+        if (co->land_offs[mid] < off) x = mid + 1;
+        else y = mid;
+    }
+    if (x == co->nlands || co->land_offs[x] != off) return 0;
+    *func = r->func;
+    *pc = co->land_pcs[x];
+    seen->word = w; seen->func = *func; seen->pc = *pc;
+    seen->below = REG_HEADER + vm->prog.funcs[*func].nlocals;
+    jit->walked_landings++;
+    return 1;
 }
 
 void jit_invalidate(VM *vm, JitProgram *jit, uint32_t f) {
     CodeObject *co = &jit->codes[f];
     if (!co->entry) return;
-    uintptr_t lo = (uintptr_t)co->entry, hi = lo + co->size;
-    for (size_t i = 0; i <= vm->fp; i++) {
-        uintptr_t r = (uintptr_t)vm->frames[i].native_ret;
-        if (r >= lo && r < hi) vm->frames[i].native_ret = NULL;
-    }
+    uintptr_t lo = (uintptr_t)co->code, hi = lo + co->size;
+    /* the frames that return into the code return to the interpreter, told
+       where by the code's landings (native-frames.md, M4) */
+    if (vm->frames_active) reg_frames_to_interpreter(vm, lo, hi);
+    range_dies(jit, lo);
+    free(co->land_offs); free(co->land_pcs);
+    co->land_offs = co->land_pcs = NULL;
+    co->nlands = 0;
+    free(co->param_home);
+    co->param_home = NULL;
+    co->nparams = 0;
+    co->reg_entry = -1;
     for (size_t i = 0; i < vm->hp; i++) {
         uintptr_t r = (uintptr_t)vm->handlers[i].native;
         if (r >= lo && r < hi) vm->handlers[i].native = NULL;
     }
     co->entry = NULL;
+    co->code = NULL;
+    jit->calls[f].entry = jit->call_interp;   /* calls go to the interpreter (M6) */
     co->tier = 0;
     co->calls = co->work = 0;
     free(co->osr_pcs); free(co->osr_offs);
@@ -228,6 +318,14 @@ static void jit_grow(VM *vm, JitProgram *jit) {
     if (!codes) { fprintf(stderr, "runevm: out of memory (code objects)\n"); exit(2); }
     jit->codes = codes;
     memset(codes + old, 0, (n - old) * sizeof(CodeObject));
+    CallInfo *calls = realloc(jit->calls, n * sizeof(CallInfo));
+    if (!calls) { fprintf(stderr, "runevm: out of memory (code objects)\n"); exit(2); }
+    jit->calls = calls;
+    for (uint32_t i = old; i < n; i++) {
+        calls[i].entry = jit->call_interp;
+        calls[i].need = (uint64_t)p->funcs[i].nlocals + p->funcs[i].maxstack;
+    }
+    vm->jit_calls = calls;
     if (jit->fill_from) {
         uint32_t *fill = realloc(jit->fill_from, n * sizeof *fill);
         if (!fill) { fprintf(stderr, "runevm: out of memory (code objects)\n"); exit(2); }
@@ -258,6 +356,7 @@ JitProgram *jit_program(VM *vm) {
     if (!the_program) {
         the_program = calloc(1, sizeof(JitProgram));
         if (!the_program) { fprintf(stderr, "runevm: out of memory (JIT)\n"); exit(2); }
+        jit_landing_seen = the_program->seen;
         if (vm->jit.stats) the_program->prim_calls = calloc(PRIM__COUNT, sizeof(uint64_t));
         the_vm = vm;
         if (vm->jit.stats) atexit(jit_print_stats);
@@ -275,6 +374,7 @@ int jit_run(VM *vm, JitProgram *jit, const void *at) {
     int (*enter)(VM *, const void *);
     memcpy(&enter, &jit->enter_at, sizeof enter);
     int r = enter(vm, at);
+    vm->top_frame = NULL;   /* what compiled code said is live is of no frame the interpreter runs (VM.top_live, M6) */
     if (r == RUN_INTERP) jit->handed_interp++;
     return r;
 }
@@ -309,6 +409,15 @@ void jit_print_stats(void) {
             (unsigned long long)jit->compiled, jit->nfuncs, (unsigned long long)jit->compiled_opt, jit->compile_seconds, (unsigned long long)jit->code_used,
             (unsigned long long)jit->dead_bytes, (unsigned long long)jit->handed_native, (unsigned long long)jit->handed_interp,
             (unsigned long long)jit->osr_entries, (unsigned long long)jit->deopts, (unsigned long long)jit->invalidated);
+#ifdef RUNE_ALLOC_RUNS
+    {
+        extern uint64_t jit_alloc_runs[2];
+        fprintf(stderr, "runevm: jit: %llu inline allocations in %llu runs that allocate\n",
+                (unsigned long long)jit_alloc_runs[0], (unsigned long long)jit_alloc_runs[1]);
+    }
+#endif
+    if (the_vm && the_vm->barrier_runs)
+        fprintf(stderr, "runevm: jit: the stack's return barrier: %llu returns through it\n", (unsigned long long)the_vm->barrier_runs);
     if (jit->homes_wanted[0] | jit->homes_wanted[1] | jit->homes_too_large) {
         static const char *const kinds[2] = { "general", "real" };
         for (int k = 0; k < 2; k++)
@@ -328,6 +437,13 @@ void jit_print_stats(void) {
             fprintf(stderr, "runevm: jit: tier 2's homes: %llu functions of more than 64 registers have none\n", (unsigned long long)jit->homes_too_large);
     }
     if (jit->profile) print_profile(jit);
+    if (jit->eq_calls)
+        fprintf(stderr, "runevm: jit: poly_eq: %llu calls from code, %llu walked by values_equal in C (%.2f%%)\n",
+                (unsigned long long)jit->eq_calls, (unsigned long long)jit->eq_walked, 100.0 * (double)jit->eq_walked / (double)jit->eq_calls);
+    if (jit->pushes || jit->raises)
+        fprintf(stderr, "runevm: jit: %llu handlers pushed by code, %llu of them in C; %llu raises, %llu of them in C\n",
+                (unsigned long long)jit->pushes, (unsigned long long)jit->pushes_c, (unsigned long long)jit->raises,
+                (unsigned long long)jit->raises_c);
     /* the primitives called from code, most called first: what is not in
        line yet, or in line and out of its fast case */
     if (jit->prim_calls) {

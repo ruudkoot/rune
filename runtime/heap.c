@@ -33,6 +33,7 @@ static void real_boxes_make(VM *vm) {
     vm->gc_stress = 0;
     for (int k = 0; k < REAL_BOXES; k++) vm->real_boxes[k] = val_ptr(alloc_box(vm, K_REAL, bits[k]));
     vm->gc_stress = stress;
+    vm_alloc_limit(vm);
     vm->boxes_allocated = 0;
     vm->box_bytes_allocated = 0;
 #endif
@@ -133,7 +134,7 @@ static Obj *alloc_young(VM *vm, size_t size, int stress, int *large) {
         else if (USED_STOCK(vm) > vm->gc.size) vm_gc(vm, 0);
         else collect_minor(vm);
         /* the next slice point nearer than the object's end: moved past it */
-        if (size > vm->alloc.size - vm->alloc.used) vm->alloc.size = vm->alloc.used + size;
+        if (size > vm->alloc.size - vm->alloc.used) { vm->alloc.size = vm->alloc.used + size; vm_alloc_limit(vm); }
     }
     Obj *o = (Obj *)(vm->alloc.from + vm->alloc.used);
     vm->alloc.used += size;

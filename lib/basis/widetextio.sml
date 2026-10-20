@@ -223,7 +223,11 @@ struct
                             writeVecNB = NONE, writeArrNB = NONE, block = NONE, canOutput = NONE,
                             getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
                             close = fn () => TextIO.closeOut outs, ioDesc = NONE},
-         {write = fn v => TextIO.output (outs, encodeString (name, v)), flush = fn () => TextIO.flushOut outs})
+         (* what TextIO.output raises is an Io already, and so is what
+            notUtf8 raises; a vector too long to encode is the cause of one
+            (streamio_fn.sml, the device) *)
+         {write = fn v => (TextIO.output (outs, encodeString (name, v)); NONE) handle Size => SOME Size,
+          flush = fn () => TextIO.flushOut outs})
       end
     fun instreamOf (ins, name) = mkInstream (StreamIO.mkInstream (reader (ins, name), empty))
     fun outstreamOf (outs, name) =

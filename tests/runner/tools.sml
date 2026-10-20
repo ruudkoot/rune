@@ -429,13 +429,144 @@ struct
                                         andalso tc "--match-work=1000" = 0)
       val () = check ("budgets: type", tc "--type-work=1" <> 0 andalso contains (f "err", "type inference exceeds 1 steps")
                                        andalso tc "--type-work=10000" = 0)
-      val () = write (f "input.sml", "fun f x = x\nfun g y = f f f f f f f f f f f f y\nval _ = g 3")
+      (* f applied n times: MLton's regression exponential, a type of 2^n
+         nodes as a tree *)
+      fun applied n = "fun f x = x\nfun g y = " ^ String.concat (List.tabulate (n, fn _ => "f ")) ^ "y\nval _ = g 3\n"
+      (* types shared while inferred and, hash-consed, once translated: at
+         32 applications some 300 steps of inference and 6400 of
+         translation *)
+      val () = write (f "input.sml", applied 32)
+      val () =
+        check ("budgets: shared types",
+               r (["--no-prelude", "--typecheck-only", "--type-work=1000", "input.sml"], NONE) = 0
+               andalso r (["--no-prelude", "--type-work=20000", "-o", "output.rbc", "input.sml"], NONE) = 0)
+      (* the translation has a budget of its own, a step for each node of
+         each type it converts, and of a big type each shared node once: at
+         128 applications some 1200 steps of inference and 32000 of
+         translation *)
+      val () = write (f "input.sml", applied 128)
+      val () =
+        check ("budgets: translation",
+               r (["--no-prelude", "--type-work=4000", "-o", "output.rbc", "input.sml"], NONE) <> 0
+               andalso contains (f "err", "type translation exceeds 4000 steps")
+               andalso r (["--no-prelude", "--type-work=100000", "-o", "output.rbc", "input.sml"], NONE) = 0)
+      (* --pass-stats=elab: a line for each top-level declaration, its time by
+         context and operation adding up to its total, and its counters, which
+         do not depend on the machine (docs/ir.md, The elaborator's counters) *)
+      val () = write (f "input.sml", "signature A = sig type t val x : t end\n"
+                                     ^ "signature B = sig structure P : A structure Q : A sharing P = Q\n"
+                                     ^ "  type u sharing type u = P.t end where type u = int\n"
+                                     ^ "functor F (X : A) = struct val y = X.x datatype d = D of X.t end\n"
+                                     ^ "functor G (Y : A) = struct structure S = F (Y) val z = S.y end\n"
+                                     ^ "structure M = struct type t = int val x = 3 end\n"
+                                     ^ "structure N = G (M)\n"
+                                     ^ "val v = N.z + 1\n")
+      val () = check ("pass-stats=elab: compiled",
+                      r (["--no-prelude", "--typecheck-only", "--pass-stats=elab", "input.sml"], NONE) = 0)
+      val elab = List.map (String.tokens Char.isSpace) (List.filter (String.isPrefix "elab ") (lines (read (f "err"))))
+      fun fieldsOf l = List.mapPartial (fn w => case String.fields (fn c => c = #"=") w of [k, v] => SOME (k, v) | _ => NONE)
+                                       (if length l > 4 then List.drop (l, 4) else [])
+      (* input.sml's declarations, each by its first line and with the
+         counters of its last *)
+      val mine = List.mapPartial (fn _ :: at :: kind :: name :: _ =>
+                                       if String.isPrefix "input.sml:" at then SOME (kind ^ " " ^ name) else NONE
+                                   | _ => NONE) elab
+      val names = List.foldl (fn (n, ns) => if List.exists (fn x => x = n) ns then ns else ns @ [n]) [] mine
+      fun counters name =
+        case List.filter (fn _ :: at :: kind :: n :: _ => String.isPrefix "input.sml:" at andalso kind ^ " " ^ n = name
+                           | _ => false) elab of
+          [] => []
+        | ls => fieldsOf (List.last ls)
+      fun get name k = Option.map #2 (List.find (fn (k', _) => k' = k) (counters name))
+      fun number v = getOpt (IntInf.fromString v, ~1)
+      fun adds l =
+        let
+          val fs = fieldsOf l
+          val cells = List.foldl (fn ((k, v), s) =>
+                                     case String.fields (fn c => c = #".") k of
+                                       context :: _ :: _ =>
+                                         if List.exists (fn c => c = context) ["top", "fundecl", "appcode", "appcheck"]
+                                         then s + number v else s
+                                     | _ => s) 0 fs
+        in
+          case List.find (fn (k, _) => k = "total") fs of SOME (_, t) => number t = cells | NONE => false
+        end
+      val () = check ("pass-stats=elab: the declarations",
+                      names = ["signature A", "signature B", "functor F", "functor G", "structure M", "structure N", "core -"])
+      val () = check ("pass-stats=elab: the deferred line last",
+                      case List.rev elab of (_ :: a :: b :: c :: _) :: _ => [a, b, c] = ["-", "deferred", "-"] | _ => false)
+      val () = check ("pass-stats=elab: the times add up", List.all adds elab)
+      val () = check ("pass-stats=elab: signature B",
+                      List.map (get "signature B") ["share.types", "share.structures", "where", "inst"]
+                      = [SOME "2", SOME "1", SOME "1", SOME "2"])
+      val () = check ("pass-stats=elab: functor G",
+                      List.map (get "functor G") ["fundecl", "app.check", "app.code", "match"] = [SOME "1", SOME "1", NONE, SOME "1"])
+      val () = check ("pass-stats=elab: structure N",
+                      List.map (get "structure N") ["app.code", "app.depth", "app.check"] = [SOME "2", SOME "2", NONE])
+      val () = check ("pass-stats=elab: another kind refused",
+                      r (["--no-prelude", "--typecheck-only", "--pass-stats=types", "input.sml"], NONE) <> 0
+                      andalso contains (f "err", "--pass-stats= requires elab"))
+      (* --pass-stats accounts for the whole compile (docs/plans/performance.md, M1):
+         a line `pass NAME: N nodes, T s` per stage, then
+         `total: T s processor time, S s in the stages (P%)`, the process's
+         processor time from its start and the sum of the outermost stages.
+         The stages must add up to the total, to within the rounding of the
+         lines and a share of the total that the host's clock needs, and the
+         process must have taken no more than the total, but for what the VM
+         does after the last line (it exits). A piece of the compile that no
+         stage times shows here. The share is 2%, and 15% on SML/NJ's
+         builds, whose processor time counts the collector's twice (its
+         Timer.checkCPUTimer adds the collector's time to a user time that
+         holds it already): a total may be more than what the process took,
+         and a minor collection in the driver's code, between two stages, is
+         a gap -- on SML/NJ 110.99.9 1 to 5% of this compile on a quiet
+         machine and up to 10% at a load of 30 to 40, under 1% with an
+         allocation area of 4 MB. A gap cannot be more than the time counted
+         twice, the collector's, 14 to 17% of SML/NJ's total here; the other
+         hosts, which compile the same code, hold every stage to 2%. A share,
+         not a fixed margin: a loaded machine makes the compile longer. *)
+      fun children () = let val {cutime, cstime, ...} = Posix.ProcEnv.times () in Time.toReal (Time.+ (cutime, cstime)) end
+      fun split sep s =
+        let val (a, b) = Substring.position sep (Substring.full s)
+        in if Substring.isEmpty b then NONE else SOME (Substring.string a, Substring.string (Substring.triml (size sep) b)) end
+      fun stage l =
+        case split ": " l of
+          SOME (name, rest) =>
+            (case split ", " rest of
+               SOME (nodes, secs) =>
+                 if String.isPrefix "pass " name andalso String.isSuffix " nodes" nodes andalso String.isSuffix " s" secs
+                    andalso not (String.isSubstring ", " secs)
+                 then Option.map (fn t => (String.extract (name, 5, NONE), t)) (Real.fromString (String.substring (secs, 0, size secs - 2)))
+                 else NONE
+             | NONE => NONE)
+        | NONE => NONE
+      val start = children ()
+      val code = r (["--target=stack", "--pass-stats", "-o", "sigs.rbc", fromRoot "tests/perf/compile-sigs.sml"], NONE)
+      val process = children () - start
+      val ls = lines (read (f "err"))
+      val stages = List.mapPartial stage (if null ls then [] else List.take (ls, length ls - 1))
+      val names = List.map #1 stages
+      val added = List.foldl (fn ((_, t), s) => s + t) 0.0 stages
+      val n = real (length stages)
+      val (total, inside) =
+        case (if null ls then [] else String.tokens Char.isSpace (List.last ls)) of
+          "total:" :: t :: "s" :: "processor" :: "time," :: i :: _ => (Real.fromString t, Real.fromString i)
+        | _ => (NONE, NONE)
     in
-      check ("budgets: translation",
-             r (["--no-prelude", "--typecheck-only", "--type-work=2000", "input.sml"], NONE) = 0
-             andalso r (["--no-prelude", "--type-work=2000", "-o", "output.rbc", "input.sml"], NONE) <> 0
-             andalso contains (f "err", "type translation exceeds 2000 steps")
-             andalso r (["--type-work=1000000", "-o", "output.rbc", "input.sml"], NONE) = 0)
+      check ("pass-stats: compiled", code = 0);
+      check ("pass-stats: a stage per line", length stages = length ls - 1);
+      check ("pass-stats: the stages",
+             List.all (fn w => List.exists (fn x => x = w) names)
+                      ["startup", "lex", "select", "parse", "elaborate", "translate", "mid", "midcanon", "lower", "stack", "emit",
+                       "stats"]);
+      check ("pass-stats: no stage below zero", List.all (fn (_, t) => t >= 0.0) stages);
+      case (total, inside) of
+        (SOME total, SOME inside) =>
+          (check ("pass-stats: the stages add up to the line", Real.abs (added - inside) <= 0.0005 * n + 0.001);
+           check ("pass-stats: the stages add up to the compile",
+                  total - added <= 0.001 * n + (if String.isSubstring "smlnj" rune then 0.15 else 0.02) * total);
+           check ("pass-stats: the process took no more than the total", process <= 1.10 * total + 0.05))
+      | _ => check ("pass-stats: the last line is the total", false)
     end
 
   (* ---- tests/runtime: limits saved with an image and stricter on restore *)

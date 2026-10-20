@@ -75,6 +75,7 @@ void a64_lsl_ri(A64 *a, int rd, int rn, int shift);      /* 0 to 63 */
 void a64_lsr_ri(A64 *a, int rd, int rn, int shift);
 void a64_asr_ri(A64 *a, int rd, int rn, int shift);
 void a64_ror_ri(A64 *a, int rd, int rn, int shift);
+void a64_rev(A64 *a, int rd, int rn);                   /* rd := the bytes of rn in the other order */
 void a64_ubfx(A64 *a, int rd, int rn, int lsb, int width);
 void a64_sxtw(A64 *a, int rd, int rn);
 void a64_and_mask(A64 *a, int rd, int rn, int bits);     /* rd := rn & ((1 << bits) - 1), bits 1 to 63 */
@@ -121,6 +122,7 @@ void a64_push(A64 *a, int rt);                           /* str rt, [sp, #-16]! 
 void a64_pop(A64 *a, int rt);                            /* ldr rt, [sp], #16 */
 /* branches */
 void a64_b(A64 *a, A64Label *l);
+void a64_refer_b26(A64 *a, A64Label *l, size_t at);      /* the branch word at at refers to l: its 26 bits (bl) */
 void a64_bcond(A64 *a, int cond, A64Label *l);
 void a64_br(A64 *a, int rn);
 void a64_blr(A64 *a, int rn);

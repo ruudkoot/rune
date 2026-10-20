@@ -247,11 +247,14 @@ struct
 
   (* ---- output ---- *)
   datatype status = Active | Terminated | Closed
-  (* device: the file of the VM of a stream of mkOutstreamOver, or NONE *)
+  (* device: the file of the VM of a stream of mkOutstreamOver, or NONE.
+     Its write answers what the writer would raise, as the cause of the Io
+     that output raises, rather than raising it, so that an output pushes
+     no handler (docs/plans/performance.md, M5: output1 was 37 times MLton) *)
   datatype outstream =
     Out of {writer : writer, augmented : writer, mode : IO.buffer_mode ref,
             buffer : vector list ref, buffered : int ref, status : status ref,
-            device : {write : vector -> unit, flush : unit -> unit} option,
+            device : {write : vector -> exn option, flush : unit -> unit} option,
             held : int option ref}
   type out_pos = {stream : outstream, position : pos}
 
@@ -302,7 +305,7 @@ struct
     else
       case device of
         SOME {write, flush} =>
-          (guarded (writerName writer, function) write v;
+          ((case write v of NONE => () | SOME cause => ioError (writerName writer, function, cause));
            case !mode of
              IO.NO_BUF => guarded (writerName writer, function) flush ()
            | IO.LINE_BUF => if hasNewline v then guarded (writerName writer, function) flush () else ()

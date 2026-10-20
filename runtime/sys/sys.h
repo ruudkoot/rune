@@ -300,6 +300,12 @@ size_t sys_code_page(void);
 int sys_code_protect(void *code, size_t size, int executable);
 void sys_code_flush(void *code, size_t size);
 void sys_code_free(void *code, size_t size);
+/* A profiler's marker (runevm --jit-dump; perf's jitdump): the first page
+   of the file at path mapped executable and left so, which a profiler
+   that watches the process's mappings (perf record) sees, and so learns
+   of the file. 0, or -1 and the error (ENOSYS where there are no such
+   mappings to watch: Windows and sys_none). */
+int sys_code_marker(const char *path);
 
 /* Interrupts (docs/runtime.md, Interrupts; the incremental roadmap's D11):
    from now on, the user's interrupt -- SIGINT, Ctrl-C at a console -- sets
@@ -308,6 +314,12 @@ void sys_code_free(void *code, size_t size);
    EINTR (sys_read_fd). NULL: the interrupt ends the process again. 0, or
    -1 and the error (ENOSYS in sys_none, which has no interrupt). */
 int sys_interrupt_catch(volatile int *flag);
+/* where the interrupt is caught, it also makes *limit 0, after the flag
+   (NULL: nothing): a word that code compares with on its way, which then
+   finds the interrupt where it would otherwise poll for it (runtime/register's
+   compiled code: the limit of its room checks, VM.stack_room;
+   performance M6) */
+void sys_interrupt_limit(volatile uintptr_t *limit);
 /* An interrupt from another process on Windows, which has no SIGINT to
    send one (docs/repl.md; the REPL roadmap's M13): sys_event_new makes an
    event a child inherits, by its handle's number, and sys_event_set sets

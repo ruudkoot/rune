@@ -34,10 +34,18 @@
 #define PUSH(v) (*sp++ = (v))
 #define POP() (*--sp)
 #define SYNC() (vm->sp = (size_t)(sp - vm->stack), vm->pc = pc, vm->instructions = count)
-#define RELOAD() (code = p->code, pc = vm->pc, fr = &vm->frames[vm->fp], base = vm->stack + fr->base, \
-                  sp = vm->stack + vm->sp)
-#define ENTER(slot, fn) (fr = &vm->frames[vm->fp], base = (slot), sp = (slot) + (fn)->nlocals, \
-                         pc = (fn)->code_offset)
+#define RELOAD() (code = p->code, pc = vm->pc, base = vm->stack + vm->fp, sp = vm->stack + vm->sp)
+#define ENTER(slot, fn) (base = (slot), sp = (slot) + (fn)->nlocals, pc = (fn)->code_offset)
+/* A frame's header in the value stack, below its registers (regvm.h;
+   docs/plans/native-frames.md, M4): written for a frame whose registers
+   begin at top, its caller the frame that runs, returning to the RESULT
+   at at_pc, the closure (unit for none), and the interpreter's return
+   word; and the running frame's closure in its own */
+#define FRAME_HEADER REG_HEADER
+#define HEADER(top, at_pc, closure) \
+    (vm->stack[(top) - 3] = reg_info(vm->func, (at_pc), REG_INFO_CALLER), vm->stack[(top) - 2] = (closure), \
+     vm->stack[(top) - 1] = vm->ret_word)
+#define CLOSURE() (base[-2])
 /* room on the stack for a frame of fn whose registers begin at top: its
    registers and its deepest stack above them; growing the stack moves it */
 #define ROOM(top, fn) \
@@ -45,16 +53,12 @@
         if ((top) + (fn)->nlocals + (fn)->maxstack > vm->stack_cap) { \
             SYNC(); \
             vm_grow_stack(vm, (top) + (fn)->nlocals + (fn)->maxstack); \
-            base = vm->stack + fr->base; \
+            base = vm->stack + vm->fp; \
             sp = vm->stack + vm->sp; \
         } \
     } while (0)
 #define FATAL(...) (SYNC(), vm_fatal(vm, __VA_ARGS__))
 #define EXPECT(v, kind, what) expect_obj(vm, (v), (kind), (what), sp, pc, count)
-/* the frame just pushed records where its return goes: the register of
-   the RESULT at pc, the caller's next instruction, if that is one (M7) */
-#define RESULT_OF(at_pc) \
-    (vm->frames[vm->fp].result = code[(at_pc)] == ROP_RESULT ? (uint32_t)read_i32(code + (at_pc) + 1) : UINT32_MAX)
 /* The object v points to, which must be of that kind; the program stops
    with "expected <what>" where it is not, the VM told where it is. */
 static inline Obj *expect_obj(VM *vm, Value v, int kind, const char *what, Value *sp, uint32_t pc, uint64_t count) {

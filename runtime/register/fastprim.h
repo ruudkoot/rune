@@ -25,6 +25,30 @@ void census_store_fast(Obj *o, uint32_t i, Value v, int32_t reg);
 
 /* LESS, EQUAL or GREATER, the nullary constructors 0, 1 and 2 */
 static inline Value fast_order(int lt, int gt) { return mk_con0(1 + gt - lt); }
+/* the order of two strings, str_cmp's (runtime/prims.c): their bytes as
+   unsigned, then their lengths */
+static inline int fast_str_cmp(const Obj *a, const Obj *b) {
+    uint32_t la = obj_len(a), lb = obj_len(b);
+    int c = memcmp(obj_bytes_c(a), obj_bytes_c(b), la < lb ? la : lb);
+    return c ? c : la < lb ? -1 : la > lb;
+}
+/* `=` where values_equal (runtime/runtime.c) need not walk (performance
+   M5, as the JIT's code has it: masm.c, ms_equal_heap): 1 or 0, or -1 for
+   the primitive -- a tuple, a constructor, an exception, a real's box
+   against itself (a NaN) */
+static inline int fast_equal(Value a, Value b) {
+    if (val_is_imm(a) && val_is_imm(b)) return a == b;   /* val_same_imm of two immediates */
+    if (val_is_imm(a) || val_is_imm(b)) return 0;        /* an immediate is never a box's number, nor an object */
+    if (a == b) return obj_kind(val_ptr(a)) == K_REAL ? -1 : 1;
+    const Obj *x = val_ptr(a), *y = val_ptr(b);
+    if (obj_kind(x) != obj_kind(y)) return 0;
+    switch (obj_kind(x)) {
+    case K_STRING: return obj_len(x) == obj_len(y) && memcmp(obj_bytes_c(x), obj_bytes_c(y), obj_len(x)) == 0;
+    case K_REF: case K_ARRAY: case K_BYTES: case K_REALS: case K_CLOSURE: case K_EXNCON: return 0;   /* their identity */
+    case K_BOX: return box_bits(a) == box_bits(b);
+    default: return -1;
+    }
+}
 /* the word (heap-layout M5): a fast path never allocates, so a result the
    word cannot hold -- an int beyond 63 bits (Overflow, or a box under
    RUNE_INT64), an Int64.int or a Word64.word beyond them (a box), a real
@@ -97,10 +121,14 @@ static inline int prim_fast(VM *vm, int prim, uint32_t n, const Value *base, con
 #define CHAR2 if (!val_is(*x, T_CHAR) || !val_is(*y, T_CHAR)) return 0
 #define OBJ(v, k) if (!val_is(*(v), T_PTR) || obj_kind(val_ptr(*(v))) != (k)) return 0
     switch (prim) {
-    /* `=` on two values that are neither pointers nor reals: tags and bits */
-    case PRIM_poly_eq:
-        if (val_is(*x, T_PTR) || val_is(*y, T_PTR) || val_is(*x, T_REAL) || val_is(*y, T_REAL)) return 0;
-        r = mk_bool(val_same_imm(*x, *y)); break;
+    /* `=` where values_equal need not walk: immediates, identity, kinds,
+       refs and arrays, boxes of numbers, strings (performance M5) */
+    case PRIM_poly_eq: { int e = fast_equal(*x, *y); if (e < 0) return 0; r = mk_bool(e); break; }
+    /* the identity of two values (p_ptr_eq): their words, or two boxes' bits */
+    case PRIM_ptr_eq:
+        r = mk_bool(*x == *y || (val_is_ptr(*x) && val_is_ptr(*y) && obj_kind(val_ptr(*x)) == K_BOX
+                                 && obj_kind(val_ptr(*y)) == K_BOX && box_bits(*x) == box_bits(*y)));
+        break;
     case PRIM_imm_eq:
         if (val_is(*x, T_PTR) || val_is(*y, T_PTR)) return 0;
         r = mk_bool(val_same_imm(*x, *y)); break;
@@ -237,6 +265,19 @@ static inline int prim_fast(VM *vm, int prim, uint32_t n, const Value *base, con
     case PRIM_char_order: CHAR2; r = fast_order(val_imm(*x) < val_imm(*y), val_imm(*x) > val_imm(*y)); break;
 
     case PRIM_string_size: OBJ(x, K_STRING); FAST_INT(obj_len(val_ptr(*x))); break;
+    /* the compiler's `=` at string (performance M5): the lengths, then the bytes */
+    case PRIM_string_eq: {
+        OBJ(x, K_STRING); OBJ(y, K_STRING);
+        Obj *a = val_ptr(*x), *b = val_ptr(*y);
+        r = mk_bool(a == b || (obj_len(a) == obj_len(b) && memcmp(obj_bytes(a), obj_bytes(b), obj_len(a)) == 0));
+        break;
+    }
+    /* the order of two strings (performance M5) */
+    case PRIM_string_order: OBJ(x, K_STRING); OBJ(y, K_STRING); { int c = fast_str_cmp(val_ptr(*x), val_ptr(*y)); r = fast_order(c < 0, c > 0); } break;
+    case PRIM_string_lt: OBJ(x, K_STRING); OBJ(y, K_STRING); r = mk_bool(fast_str_cmp(val_ptr(*x), val_ptr(*y)) < 0); break;
+    case PRIM_string_le: OBJ(x, K_STRING); OBJ(y, K_STRING); r = mk_bool(fast_str_cmp(val_ptr(*x), val_ptr(*y)) <= 0); break;
+    case PRIM_string_gt: OBJ(x, K_STRING); OBJ(y, K_STRING); r = mk_bool(fast_str_cmp(val_ptr(*x), val_ptr(*y)) > 0); break;
+    case PRIM_string_ge: OBJ(x, K_STRING); OBJ(y, K_STRING); r = mk_bool(fast_str_cmp(val_ptr(*x), val_ptr(*y)) >= 0); break;
     case PRIM_string_sub:
         OBJ(x, K_STRING); if (!val_is(*y, T_INT) || val_imm(*y) < 0 || (uint64_t)val_imm(*y) >= obj_len(val_ptr(*x))) return 0;
         r = mk_char((unsigned char)obj_bytes(val_ptr(*x))[val_imm(*y)]); break;

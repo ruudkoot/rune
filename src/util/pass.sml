@@ -48,6 +48,28 @@ struct
 
   fun eprint s = TextIO.output (TextIO.stdErr, s)
 
+  (* --pass-stats accounts for the whole compile: how deep the stages are
+     nested where the compile is (a unit's stages run inside the stage that
+     makes its code, with --units), and the processor time of the outermost
+     ones, which `finish` shows beside the process's total *)
+  val depth = ref 0
+  val outer = ref Time.zeroTime
+  (* what the outermost stages spent apart from their own time: counting
+     the size of what they made (--pass-stats), and printing (--dump-before,
+     --dump-after) and checking it (--lint) *)
+  val sizes = ref Time.zeroTime
+  val checks = ref Time.zeroTime
+
+  (* the processor time the process has taken: from its start, with the
+     collector's. Every stage is timed by it, so that the stages and the time
+     between them add up to the total *)
+  fun used () : Time.time =
+    let val {usr, sys} = Timer.checkCPUTimer (Timer.totalCPUTimer ())
+    in Time.+ (usr, sys) end
+
+  fun line (name : string, size : int, t : Time.time) : unit =
+    eprint ("pass " ^ name ^ ": " ^ Int.toString size ^ " nodes, " ^ Time.toString t ^ " s\n")
+
   (* Run a stage of the pipeline: `name` for the options, `show` to print
      what it made, `check` its lint (raising Error.Bug), `size` a count of
      what it made for --pass-stats. The input is printed with --dump-before
@@ -56,23 +78,71 @@ struct
              size : 'b -> int}
             (f : 'a -> 'b) (x : 'a) : 'b =
     let
+      fun since t0 = Time.- (used (), t0)
+      val start = used ()
       val () =
         case showIn of
           SOME s => if asked (dumpBefore, name) then print ("(* before " ^ name ^ " *)\n" ^ s x ^ "\n") else ()
         | NONE => ()
-      val timer = Timer.startCPUTimer ()
-      val y = f x
-      val {usr, sys} = Timer.checkCPUTimer timer
-      val () =
-        if !stats then
-          eprint ("pass " ^ name ^ ": " ^ Int.toString (size y) ^ " nodes, "
-                  ^ Time.toString (Time.+ (usr, sys)) ^ " s\n")
-        else ()
+      val dumped = since start
+      val t0 = used ()
+      val () = depth := !depth + 1
+      val y = f x handle e => (depth := !depth - 1; raise e)
+      val () = depth := !depth - 1
+      val t = since t0
+      val counted = used ()
+      val () = if !stats then line (name, size y, t) else ()
+      val after = used ()
       val () = if asked (dumpAfter, name) then print ("(* after " ^ name ^ " *)\n" ^ show y ^ "\n") else ()
       val () =
         if !lint then (check y handle Error.Bug msg => raise Error.Bug ("lint after " ^ name ^ ": " ^ msg))
         else ()
+      val () =
+        if !depth = 0
+        then (outer := Time.+ (!outer, t);
+              sizes := Time.+ (!sizes, Time.- (after, counted));
+              checks := Time.+ (!checks, Time.+ (dumped, since after)))
+        else ()
     in
       y
     end
+
+  (* A stage that makes nothing to print or check: its size is 0. *)
+  fun timed (name : string) (f : unit -> 'a) : 'a =
+    stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn _ => 0} f ()
+
+  (* --pass-stats, first and last: the processor time the process took before
+     the compiler's own code (loading it, and its top-level declarations),
+     shown as the stage `startup`; and at the end the time of the sizes it
+     counted as the stage `stats`, that of --lint and the dumps as `checks`,
+     then the total beside the sum of the outermost stages, which
+     tests/compiler holds to it *)
+  (* where the process's processor time starts: 0, or below it where a host
+     counts from before the process (SML/NJ's exported heap may), so that no
+     stage is negative *)
+  val origin = ref Time.zeroTime
+
+  fun startup () : unit =
+    if !stats then
+      let
+        val t = used ()
+        val () = if Time.< (t, Time.zeroTime) then origin := t else ()
+        val t = Time.- (t, !origin)
+      in outer := Time.+ (!outer, t); line ("startup", 0, t) end
+    else ()
+
+  fun finish () : unit =
+    if !stats then
+      let
+        val () = (outer := Time.+ (!outer, !sizes); line ("stats", 0, !sizes))
+        val () = if !lint orelse not (List.null (!dumpBefore)) orelse not (List.null (!dumpAfter))
+                 then (outer := Time.+ (!outer, !checks); line ("checks", 0, !checks))
+                 else ()
+        val total = Time.- (used (), !origin)
+        val share = if Time.toReal total > 0.0 then 100.0 * Time.toReal (!outer) / Time.toReal total else 100.0
+      in
+        eprint ("total: " ^ Time.toString total ^ " s processor time, " ^ Time.toString (!outer)
+                ^ " s in the stages (" ^ Real.fmt (StringCvt.FIX (SOME 1)) share ^ "%)\n")
+      end
+    else ()
 end

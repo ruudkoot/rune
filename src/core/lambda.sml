@@ -70,7 +70,7 @@ struct
      the 64-bit constant, which is another representation where int and word
      are the VM's 63 bits. *)
   fun constAt (c : const, t : Ty.ty) : const =
-    case (c, t) of
+    case (c, Ty.view t) of
       (CInt i, Ty.Con (stamp, _, _)) => if stamp = #stamp Types.int64Tycon then CInt64 i else c
     | (CWord w, Ty.Con (stamp, _, _)) => if stamp = #stamp Types.word64Tycon then CWord64 w else c
     | _ => c
@@ -198,7 +198,7 @@ struct
                   if isAtom a then [indent n ^ "(inst " ^ valOf (atom a) ^ " : " ^ ty t ^ ")"]
                   else node (fn () => "inst : " ^ ty t, [a])
               | Fn (x, t, b) =>
-                  node (fn () => case t of
+                  node (fn () => case Ty.view t of
                                    Ty.Arrow (d, r) => let val x = v x val d = ty d in "fn (" ^ x ^ " : " ^ d ^ ") : " ^ ty r end
                                  | _ => "fn " ^ v x ^ " : " ^ ty t,
                         [b])

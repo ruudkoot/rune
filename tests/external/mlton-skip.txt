@@ -28,7 +28,6 @@
 * | eq | UNSUPPORTED | EXTENSION: MLton.eq
 * | exn-history | UNSUPPORTED | EXTENSION: SMLofNJ.exnHistory
 * | exn-history3 | UNSUPPORTED | EXTENSION: SMLofNJ.exnHistory
-* | exponential | UNSUPPORTED | LIMIT: f applied 32 times has a type of 2^32 nodes once unshared; type translation exceeds --type-work (docs/plans/type-checker.md)
 * | fast | UNSUPPORTED | SLOW: too slow on the interpreter
 * | filesys | UNSUPPORTED | HARNESS: needs the file README and the links testlink, testcycl and testbadl where it runs
 * | finalize | UNSUPPORTED | EXTENSION: MLton.Finalizable

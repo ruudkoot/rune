@@ -136,7 +136,9 @@ struct
     \  --dump-after=P    print what the pass P makes (all: every pass)\n\
     \  --lint            check what every pass makes (docs/ir.md)\n\
     \  --fuel=N          make no more than N rewrites (scripts/bisect-fuel.sh)\n\
-    \  --pass-stats      print the size and the time of every pass\n\
+    \  --pass-stats      print the size and the time of every stage, and the total\n\
+    \  --pass-stats=elab  and of each top-level declaration's elaboration: its\n\
+    \                    time by context and operation, and its counters\n\
     \  --read-mid FILE   read a Mid program as --dump-after=mid prints it, and\n\
     \                    make and check it as the pass mid would, but no bytecode\n\
     \  --mid-roundtrip   check that Mid printed, read and printed again is the same\n\
@@ -242,7 +244,7 @@ struct
     | "-O0" :: rest => (Pass.level := 0; parse rest)
     | "-O1" :: rest => (Pass.level := 1; parse rest)
     | "-O2" :: rest => (Pass.level := 2; parse rest)
-    | "--lint" :: rest => (Pass.lint := true; parse rest)
+    | "--lint" :: rest => (Pass.lint := true; Elaborate.lintSummaries := true; parse rest)
     | "--read-mid" :: f :: rest => (readMid := SOME f; parse rest)
     | ["--read-mid"] => raise Usage "--read-mid requires a file"
     | "--mid-roundtrip" :: rest => (midRoundTrip := true; parse rest)
@@ -253,6 +255,8 @@ struct
     | a :: rest =>
         (case valued a of
            SOME ("--passes", v) => (Pass.only := SOME (String.fields (fn c => c = #",") v); parse rest)
+         | SOME ("--pass-stats", "elab") => (Pass.stats := true; ElabStats.enable (); parse rest)
+         | SOME ("--pass-stats", _) => raise Usage "--pass-stats= requires elab"
          | SOME ("--dump-before", v) => (Pass.dumpBefore := !Pass.dumpBefore @ [v]; parse rest)
          | SOME ("--dump-after", v) => (Pass.dumpAfter := !Pass.dumpAfter @ [v]; parse rest)
          | SOME ("--target", v) =>

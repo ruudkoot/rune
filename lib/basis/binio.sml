@@ -78,9 +78,11 @@ struct
       let
         val closed = ref false
         val ({getPos, setPos, endPos, verifyPos}, remember) = positions (fd, name, closed)
-        fun put v = if !closed then closedIo (name, "writeVec") else ignore (RuneFile.writeString (fd, name) (Word8Vector.toString v))
+        (* what writeString would raise, as the answer (the stream's device) *)
+        fun write v = if !closed then closedIo (name, "writeVec") else RuneFile.write (fd, Word8Vector.toString v)
         fun writeVec sl =
-          let val v = Word8VectorSlice.vector sl in put v; RuneFile.flush fd (); Word8Vector.length v end
+          let val v = Word8VectorSlice.vector sl
+          in (case write v of NONE => () | SOME e => raise e); RuneFile.flush fd (); Word8Vector.length v end
       in
         (BinPrimIO.WR {name = name, chunkSize = RuneFile.chunkSize,
                        writeVec = SOME writeVec, writeArr = NONE, writeVecNB = NONE, writeArrNB = NONE,
@@ -88,7 +90,7 @@ struct
                        getPos = getPos, setPos = setPos, endPos = endPos, verifyPos = verifyPos,
                        close = fn () => if !closed then () else (remember (); closed := true; RuneFile.close fd ()),
                        ioDesc = SOME (RuneIODesc.FD (RuneFile.descriptor fd))},
-         {write = put, flush = RuneFile.flush fd})
+         {write = write, flush = RuneFile.flush fd})
       end
     fun outstreamOf (fd, name) =
       let val (w, device) = writer (fd, name)

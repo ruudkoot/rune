@@ -7,6 +7,7 @@
 #include <string.h>
 
 #define OFF(field) ((int32_t)offsetof(VM, field))
+static void store_top_live(Masm *m);
 #define SLOT(k) slot(m, k)
 
 /* The layout as the code here writes it (runtime/value.h has it in C; this
@@ -122,6 +123,32 @@ void ms_free(Masm *m) {
 
 int ms_arg(const Masm *m, int i) { return as_arg(m->win, i); }
 
+/* ---- the roles of the code, for --jit-dump (masm.h) ---- */
+const char *const ms_role_names[MR__COUNT] = { "body", "count", "poll", "writeback", "args", "room", "frameroom", "frame", "jump",
+    "fill", "land", "ret", "slow", "sync", "closure", "ptrload", "tag", "alloc" };
+static void mark(Masm *m, int32_t role, uint32_t pc) {
+    MsMarks *mk = m->marks;
+    if (mk->n == mk->cap) {
+        size_t cap = mk->cap ? 2 * mk->cap : 1024;
+        MsMark *at = realloc(mk->at, cap * sizeof *at);
+        if (!at) { m->a.failed = 1; return; }
+        mk->at = at;
+        mk->cap = cap;
+    }
+    mk->at[mk->n].off = (uint32_t)m->a.n;
+    mk->at[mk->n].role = role;
+    mk->at[mk->n].pc = pc;
+    mk->n++;
+}
+int ms_role(Masm *m, int role) {
+    int old = m->role;
+    if (m->in_slow) return old;   /* a slow path's sync, reload and all are the slow path's */
+    if (m->marks && role != old) mark(m, role, m->cur_pc);
+    m->role = role;
+    return old;
+}
+void ms_mark_pc(Masm *m, uint32_t pc) { if (m->marks) mark(m, -1, pc); }
+
 /* ---- values ---- */
 
 static int is_xmm(const Home *h) { return h && h->kind == HOME_XMM; }
@@ -146,6 +173,9 @@ static int is_raw_gpr(const Home *h) {
 #endif
 }
 static int is_raw(const Home *h) { return is_xmm(h) || is_raw_gpr(h); }
+/* a home of any word (M7): a pointer's, a constructor's, or one the section
+   says nothing of -- the word as the slot has it */
+static int is_any_word(const Home *h) { return h && h->kind == HOME_GPR && h->tag == T_PTR; }
 const Home *ms_word_home(const Masm *m, int32_t s) {
     const Home *h = ms_home(m, s);
     return h && !is_raw(h) ? h : NULL;
@@ -315,28 +345,32 @@ void ms_copy(Masm *m, int32_t d, int32_t s) {
     if (d == s) return;
     if (is_xmm(hd)) {
         if (is_xmm(hs)) as_fmov(&m->a, hd->reg, hs->reg);
+        else if (is_any_word(hs)) { as_mov_rr(&m->a, R_S2, hs->reg); decode_real(m, hd->reg, NULL); }   /* a real's word (M7) */
         else if (hs) bug("a real's home given what is in a general register", d, s);
         else { as_ld64(&m->a, R_S2, BASER, SLOT(s)); decode_real(m, hd->reg, NULL); }
         real_behind(m, d);
         return;
     }
     if (is_xmm(hs)) {
+        want_current(m, s);   /* its slot has its word: the real's box where it has no immediate (M7) */
+        if (is_any_word(hd)) { as_ld64(&m->a, hd->reg, BASER, SLOT(s)); return; }
         if (hd) bug("a general register given a real's home", d, s);
-        want_current(m, s);   /* its slot has its word */
         as_fld(&m->a, F_S0, BASER, SLOT(s));
         as_fst(&m->a, BASER, SLOT(d), F_S0);
         return;
     }
     if (is_raw_gpr(hd)) {   /* a number's 64 bits */
         if (is_raw_gpr(hs)) as_mov_rr(&m->a, hd->reg, hs->reg);
+        else if (is_any_word(hs)) { as_mov_rr(&m->a, R_S2, hs->reg); decode_num(m, hd->reg, hd->tag, NULL); }   /* a number's word (M7) */
         else if (hs) { as_mov_rr(&m->a, hd->reg, hs->reg); as_sar_ri(&m->a, hd->reg, 1); }   /* a char's or a tag's word */
         else { as_ld64(&m->a, R_S2, BASER, SLOT(s)); decode_num(m, hd->reg, hd->tag, NULL); }
         real_behind(m, d);
         return;
     }
     if (is_raw_gpr(hs)) {
+        want_current(m, s);   /* its slot has its word, or its box (M7) */
+        if (is_any_word(hd)) { as_ld64(&m->a, hd->reg, BASER, SLOT(s)); return; }
         if (hd) bug("a home of words given an int's 64 bits", d, s);
-        want_current(m, s);
         as_fld(&m->a, F_S0, BASER, SLOT(s));
         as_fst(&m->a, BASER, SLOT(d), F_S0);
         return;
@@ -440,6 +474,12 @@ void ms_cmp_bits(Masm *m, int r, int32_t s) {
     if (h && !is_raw(h)) as_cmp_rr(&m->a, r, h->reg);
     else as_cmp_rm(&m->a, r, BASER, SLOT(s));
 }
+void ms_cmp_words(Masm *m, int32_t x, int32_t y) {
+    const Home *hx = ms_home(m, x);
+    if (hx && !is_raw(hx)) { ms_cmp_bits(m, hx->reg, y); return; }
+    ms_load_bits(m, R_S0, x);
+    ms_cmp_bits(m, R_S0, y);
+}
 void ms_test_false(Masm *m, int32_t s) {
     const Home *h = ms_home(m, s);
     if (is_raw(h)) bug("a real or a number tested as a bool", s, 0);
@@ -461,7 +501,7 @@ void ms_next_value(Masm *m, int r) { as_add_ri(&m->a, r, VALUE_SIZE); }
    a slot's always; a home's holds what its representation says, which
    under RUNE_INT64 is, for an int or a word, an immediate or its box */
 static int imm_tested(const Masm *m, int32_t s, int tag) {
-    if (!ms_home(m, s)) return 1;
+    if (!ms_home(m, s) || is_any_word(ms_home(m, s))) return 1;
 #ifdef RUNE_INT64
     return tag == T_INT || tag == T_WORD;
 #else
@@ -469,12 +509,17 @@ static int imm_tested(const Masm *m, int32_t s, int tag) {
     return 0;
 #endif
 }
+int ms_imm_trusted(const Masm *m, int32_t s, int tag) {
+    const Home *h = ms_home(m, s);
+    return h && !is_raw(h) && !imm_tested(m, s, tag);
+}
 void ms_check_tag(Masm *m, int32_t s, int tag, AsmLabel *unless) {
     const Home *h = ms_home(m, s);
     if (is_xmm(h)) { if (tag != T_REAL) as_jmp(&m->a, unless); return; }
     if (is_raw_gpr(h)) { if (tag == T_PTR || tag == T_REAL) as_jmp(&m->a, unless); return; }   /* a number, whatever its size */
     if (tag == T_PTR) {
-        if (h) { as_jmp(&m->a, unless); return; }   /* a home holds no object the program sees */
+        if (is_any_word(h)) { as_test_ri(&m->a, h->reg, 1); as_jcc(&m->a, CC_NE, unless); return; }
+        if (h) { as_jmp(&m->a, unless); return; }   /* a home of numbers holds no object the program sees */
         as_test8_mi(&m->a, BASER, SLOT(s), 1);
         as_jcc(&m->a, CC_NE, unless);
         return;
@@ -519,8 +564,8 @@ static void load_num(Masm *m, int reg, int32_t s, int tag, AsmLabel *slow) {
     const Home *h = ms_home(m, s);
     if (is_xmm(h)) bug("a real read as a number", s, tag);
     if (is_raw_gpr(h)) { as_mov_rr(&m->a, reg, h->reg); return; }
-    if (h) { as_mov_rr(&m->a, reg, h->reg); as_sar_ri(&m->a, reg, 1); return; }   /* a char or a tag: its word */
-    as_ld64(&m->a, R_S2, BASER, SLOT(s));
+    if (h && !is_any_word(h)) { as_mov_rr(&m->a, reg, h->reg); as_sar_ri(&m->a, reg, 1); return; }   /* a char or a tag: its word */
+    if (h) as_mov_rr(&m->a, R_S2, h->reg); else as_ld64(&m->a, R_S2, BASER, SLOT(s));   /* any word: tested as a slot's (M7) */
     if (tag == T_CHAR || tag == T_CON0) {   /* never a box */
         as_test_ri(&m->a, R_S2, 1);
         as_jcc(&m->a, CC_E, slow);
@@ -572,14 +617,15 @@ void ms_set_num64(Masm *m, int32_t d, int tag, int r, AsmLabel *slow) {
         if (h) as_mov_rr(&m->a, h->reg, R_S2); else as_st64(&m->a, BASER, SLOT(d), R_S2);
         return;
     }
-    if (h) bug("an int or a word into a home of words", d, tag);
+    if (h && !is_any_word(h)) bug("an int or a word into a home of words", d, tag);
     /* into a slot: its word, or where it has none its box, which a helper
        makes from the bits (the primitive need not be done again in C);
        where there is no such helper (runeopt's templates) the slow path is
-       the primitive's */
+       the primitive's. A home of any word takes it from there (M7). */
     if (!m->box_num) {
         encode_num(m, r, tag, slow);
         as_st64(&m->a, BASER, SLOT(d), R_S2);
+        if (h) as_mov_rr(&m->a, h->reg, R_S2);
         return;
     }
     Slow *sl = ms_slow(m, SLOW_BOXNUM, m->cur_pc);
@@ -589,6 +635,7 @@ void ms_set_num64(Masm *m, int32_t d, int tag, int r, AsmLabel *slow) {
     encode_num(m, r, tag, &m->slow[which]->here);
     as_st64(&m->a, BASER, SLOT(d), R_S2);
     as_bind(&m->a, &m->slow[which]->back);
+    if (h) as_ld64(&m->a, h->reg, BASER, SLOT(d));
 }
 /* R_S1 := the count of a shift, the payload of the word in R(y); to slow
    where it is no immediate */
@@ -683,6 +730,26 @@ void ms_int_arith(Masm *m, int op, AsmLabel *slow) {
         as_lea(&m->a, R_S0, R_S0, -1, 1, 1);
         break;
     default: bug("an operation ints do not have", op, MS_MUL);
+    }
+}
+/* 2a+1 + 2b+1 - 1 and 2a+1 - (2b+1) + 1, as ms_int_arith, with the second
+   operand from its home (or its slot, its word loaded) and the result into
+   d's home (or its slot) */
+void ms_int_addsub_homes(Masm *m, int op, int32_t d, int32_t x, int32_t y, AsmLabel *slow) {
+    const Home *hx = ms_word_home(m, x), *hy = ms_word_home(m, y), *hd = ms_word_home(m, d);
+    int ry = hy ? hy->reg : R_S1;
+    if (!hy) ms_load_bits(m, R_S1, y);
+    if (op == MS_ADD) {
+        as_lea(&m->a, R_S0, hx->reg, -1, 1, -1);
+        as_add_rr(&m->a, R_S0, ry);
+        as_jcc(&m->a, CC_O, slow);
+        if (hd) as_mov_rr(&m->a, hd->reg, R_S0); else ms_set_bits(m, d, R_S0);
+    } else {
+        as_mov_rr(&m->a, R_S0, hx->reg);
+        as_sub_rr(&m->a, R_S0, ry);
+        as_jcc(&m->a, CC_O, slow);
+        if (hd) as_lea(&m->a, hd->reg, R_S0, -1, 1, 1);
+        else { as_lea(&m->a, R_S0, R_S0, -1, 1, 1); ms_set_bits(m, d, R_S0); }
     }
 }
 void ms_int_neg(Masm *m, AsmLabel *slow) {
@@ -821,12 +888,36 @@ static int kept(const Masm *m, const Home *h) {
    that boxes it waits in that slot, not in the VM's cell, which the
    collector does not see. */
 static int may_move(const Home *h) {
+    if (is_any_word(h)) return 1;   /* a pointer's (M7) */
 #if defined(RUNE_INT64) && !defined(RUNE_RAW_NUMS)
     return h->kind == HOME_GPR && (h->tag == T_INT || h->tag == T_WORD);
 #else
-    (void)h;
     return 0;
 #endif
+}
+/* the count to the VM: what the instructions so far make, the rest of the
+   run, counted where it began, less (Masm.ahead; R_S0 clobbered) */
+/* the allocation pointer (Masm.alloc_reg; native-frames.md, M8) written
+   back where C can look -- alloc.used, and the bytes allocated since it
+   was last, which are what compiled code's bump moved it by -- and taken
+   again after; R_S0 clobbered */
+static void store_alloc(Masm *m) {
+    if (!m->alloc_reg) return;
+    as_mov_rr(&m->a, R_S0, BASEI);
+    as_sub_rm(&m->a, R_S0, VMR, OFF(alloc.from));
+    as_sub_rm(&m->a, R_S0, VMR, OFF(alloc.used));
+    as_add_rm_to_mem(&m->a, VMR, OFF(bytes_allocated), R_S0);
+    as_add_rm_to_mem(&m->a, VMR, OFF(alloc.used), R_S0);
+}
+static void reload_alloc(Masm *m) {
+    if (!m->alloc_reg) return;
+    as_ld64(&m->a, BASEI, VMR, OFF(alloc.from));
+    as_add_rm(&m->a, BASEI, VMR, OFF(alloc.used));
+}
+static void store_count(Masm *m) {
+    if (!m->ahead) { as_st64(&m->a, VMR, OFF(instructions), COUNTR); return; }
+    as_lea(&m->a, R_S0, COUNTR, -1, 1, -(int32_t)m->ahead);
+    as_st64(&m->a, VMR, OFF(instructions), R_S0);
 }
 static void writeback(Masm *m, uint32_t pc, int pushed) {
     if (!m->homes) return;
@@ -907,12 +998,14 @@ void ms_emit_box(Masm *m, Slow *sp) {
     /* the one to box, live or not: the helper takes it from there */
     if (real) as_fst(&m->a, VMR, at, s.b); else as_st64(&m->a, VMR, at, s.b);
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)s.pc);
-    as_lea(&m->a, R_S0, BASEI, -1, 1, (int32_t)(m->nlocals + (uint32_t)s.c));
-    as_st64(&m->a, VMR, OFF(sp), R_S0);
-    as_st64(&m->a, VMR, OFF(instructions), COUNTR);
+    ms_store_fp(m, m->nlocals + (uint32_t)s.c);
+    store_count(m);
+    store_top_live(m);
+    store_alloc(m);
     as_mov_ri(&m->a, ms_arg(m, 1), s.a);
     as_ld64(&m->a, ms_arg(m, 2), VMR, at);
     ms_call(m, (MsHelper)(real ? m->box_real : m->box_num));
+    reload_alloc(m);   /* the box allocated, and may have collected */
     for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
         const Home *h = &m->homes[r];
         if (h->kind == HOME_SLOT || !live_at(m, live, r)) continue;
@@ -935,20 +1028,32 @@ void ms_emit_box(Masm *m, Slow *sp) {
    for the primitive's C to read). d's does not: the result goes there.
    The call is through the function's trampoline, whose move of the VM
    into the first general argument the function never reads. */
-void ms_call_pure(Masm *m, MsHelper f, uint32_t after, int32_t d) {
+/* a home that waits in its cell around a lean call: live at the start or
+   at after, not d, and in a register C does not keep */
+static int waits(const Masm *m, uint32_t r, uint32_t after, int32_t d) {
+    const Home *h = &m->homes[r];
+    return h->kind != HOME_SLOT && (int32_t)r != d && !kept(m, h) && (live_at(m, m->cur_pc, r) || live_at(m, after, r));
+}
+void ms_save_volatile(Masm *m, uint32_t after, int32_t d) {
     for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
+        if (!waits(m, r, after, d)) continue;
         const Home *h = &m->homes[r];
-        if (h->kind == HOME_SLOT || (int32_t)r == d || kept(m, h) || !(live_at(m, m->cur_pc, r) || live_at(m, after, r))) continue;
         if (h->kind == HOME_GPR) as_st64(&m->a, VMR, gspill(h->reg), h->reg);
         else as_fst(&m->a, VMR, fspill(h->reg), h->reg);
     }
-    ms_call(m, f);
+}
+void ms_restore_volatile(Masm *m, uint32_t after, int32_t d) {
     for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
+        if (!waits(m, r, after, d)) continue;
         const Home *h = &m->homes[r];
-        if (h->kind == HOME_SLOT || (int32_t)r == d || kept(m, h) || !(live_at(m, m->cur_pc, r) || live_at(m, after, r))) continue;
         if (h->kind == HOME_GPR) as_ld64(&m->a, h->reg, VMR, gspill(h->reg));
         else as_fld(&m->a, h->reg, VMR, fspill(h->reg));
     }
+}
+void ms_call_pure(Masm *m, MsHelper f, uint32_t after, int32_t d) {
+    ms_save_volatile(m, after, d);
+    ms_call(m, f);
+    ms_restore_volatile(m, after, d);
 }
 void ms_reload_clobbered(Masm *m, uint32_t pc) {
     if (!m->homes) return;
@@ -961,6 +1066,40 @@ void ms_reload_clobbered(Masm *m, uint32_t pc) {
 #ifdef RUNE_JIT_CONV
     m->conv_ctx = ctx;
 #endif
+}
+void ms_reload_homes_but(Masm *m, uint32_t pc, int32_t d) {
+    if (!m->homes) return;
+    for (uint32_t r = 0; r < m->nlocals; r++)
+        if (m->homes[r].kind != HOME_SLOT && (int32_t)r != d && live_at(m, pc, r)) slot_to_home(m, (int32_t)r, &m->homes[r]);
+}
+void ms_frame_back(Masm *m) {
+    as_sub_ri(&m->a, BASER, VALUE_SIZE * (int32_t)(m->nlocals + MS_HEADER));
+}
+/* VM.stack_room is the clean part's end less ROOM_SLACK values: a frame
+   that wants no more compares its base, r14, with it (native-frames.md,
+   M4), one that wants more its base plus the rest */
+void ms_room(Masm *m, uint32_t need, AsmLabel *slow) {
+    if (need <= ROOM_SLACK) as_cmp_rm(&m->a, BASER, VMR, OFF(stack_room));
+    else {
+        as_lea(&m->a, R_S0, BASER, -1, 1, VALUE_SIZE * (int32_t)(need - ROOM_SLACK));
+        as_cmp_rm(&m->a, R_S0, VMR, OFF(stack_room));
+    }
+    as_jcc(&m->a, CC_A, slow);
+}
+void ms_room_dynamic(Masm *m, int r, uint32_t above, AsmLabel *slow) {
+    as_lea(&m->a, R_S0, BASER, r, VALUE_SIZE, VALUE_SIZE * ((int32_t)above - ROOM_SLACK));
+    as_cmp_rm(&m->a, R_S0, VMR, OFF(stack_room));
+    as_jcc(&m->a, CC_A, slow);
+}
+void ms_room_compared(Masm *m, int r, uint32_t need) {
+    as_lea(&m->a, r, BASER, -1, 1, need <= ROOM_SLACK ? 0 : VALUE_SIZE * (int32_t)(need - ROOM_SLACK));
+}
+void ms_slot_end(Masm *m, int r, uint32_t k) { as_lea(&m->a, r, BASER, -1, 1, VALUE_SIZE * (int32_t)k); }
+void ms_base_index(Masm *m, int r, uint32_t k) {
+    as_mov_rr(&m->a, r, BASER);
+    as_sub_rm(&m->a, r, VMR, OFF(stack));
+    as_shr_ri(&m->a, r, VALUE_SHIFT);
+    if (k) as_add_ri(&m->a, r, (int32_t)k);
 }
 void ms_reload_homes(Masm *m, uint32_t pc) {
     if (!m->homes) return;
@@ -1003,11 +1142,17 @@ int ms_trusts(const Masm *m, int32_t s, int kind) {
 }
 void ms_load_obj(Masm *m, int r, int32_t s, int kind, AsmLabel *unless) {
     m->nfields = UINT32_MAX;   /* an object of the program's, whose length the code tests */
-    as_ld64(&m->a, r, BASER, SLOT(s));
-    if (ms_trusts(m, s, kind)) return;   /* tier 2: the section says so (M10) */
-    as_test_ri(&m->a, r, 1);
-    as_jcc(&m->a, CC_NE, unless);
-    kind_is(m, r, kind, unless);
+    int role = ms_role(m, MR_PTRLD);
+    const Home *h = ms_home(m, s);
+    if (is_any_word(h)) as_mov_rr(&m->a, r, h->reg);   /* the home's (M7) */
+    else as_ld64(&m->a, r, BASER, SLOT(s));
+    if (!ms_trusts(m, s, kind)) {   /* tier 2: the section says so (M10) */
+        ms_role(m, MR_TAG);
+        as_test_ri(&m->a, r, 1);
+        as_jcc(&m->a, CC_NE, unless);
+        kind_is(m, r, kind, unless);
+    }
+    ms_role(m, role);
 }
 void ms_load_obj_tested(Masm *m, int r, int32_t s, int kind, AsmLabel *unless) {
     const uint8_t *reps = m->reps;
@@ -1015,14 +1160,144 @@ void ms_load_obj_tested(Masm *m, int r, int32_t s, int kind, AsmLabel *unless) {
     ms_load_obj(m, r, s, kind, unless);
     m->reps = reps;
 }
+void ms_load_kind(Masm *m, int r, int obj) {
+    as_ld8(&m->a, r, obj, (int32_t)offsetof(Obj, kind));
+#ifdef RUNE_GC_BITS
+    as_and_ri(&m->a, r, OBJ_KIND_MASK);
+#endif
+}
+/* `=` in line (masm.h): values_equal's answers that need no walk. A
+   string's bytes are compared a word at a time, its last word's bytes past
+   the length -- the high ones on the JIT's machines, which are
+   little-endian -- shifted out of the difference, since nothing says what
+   they hold; a string of n bytes has a payload of n rounded up to 8, so
+   that every word read is the string's own. */
+void ms_equal_heap(Masm *m, int a, int b, AsmLabel *yes, AsmLabel *no, AsmLabel *walk) {
+    enum { KA = R_S2, KB = R_S3 };
+    if (a != R_S0 || b != R_S1) bug("ms_equal_heap: the words are not in R_S0 and R_S1", a, b);
+    AsmLabel differ, strings;
+    as_label_init(&differ); as_label_init(&strings);
+    as_mov_rr(&m->a, KA, a);
+    as_xor_rr(&m->a, KA, b);
+    as_test_ri(&m->a, KA, 1);
+    as_jcc(&m->a, CC_NE, no);                    /* an immediate against a pointer */
+    as_cmp_rr(&m->a, a, b);
+    as_jcc(&m->a, CC_NE, &differ);
+    ms_load_kind(m, KA, a);                      /* a pointer against itself: equal, but for a real's box (a NaN) */
+    as_cmp_ri(&m->a, KA, K_REAL);
+    as_jcc(&m->a, CC_E, walk);
+    as_jmp(&m->a, yes);
+    as_bind(&m->a, &differ);
+    ms_load_kind(m, KA, a);
+    ms_load_kind(m, KB, b);
+    as_cmp_rr(&m->a, KA, KB);
+    as_jcc(&m->a, CC_NE, no);                    /* of different kinds */
+    as_cmp_ri(&m->a, KA, K_STRING);
+    as_jcc(&m->a, CC_E, &strings);
+    static const int identity[] = { K_REF, K_ARRAY, K_BYTES, K_REALS };   /* equal by their address alone */
+    for (size_t i = 0; i < sizeof identity / sizeof identity[0]; i++) {
+        as_cmp_ri(&m->a, KA, identity[i]);
+        as_jcc(&m->a, CC_E, no);
+    }
+    as_cmp_ri(&m->a, KA, K_BOX);
+    as_jcc(&m->a, CC_NE, walk);
+    as_ld64(&m->a, KA, a, (int32_t)sizeof(Obj));   /* two boxes of numbers: their bits */
+    as_cmp_rm(&m->a, KA, b, (int32_t)sizeof(Obj));
+    as_jcc(&m->a, CC_E, yes);
+    as_jmp(&m->a, no);
+    as_bind(&m->a, &strings);
+    ms_string_equal(m, a, b, yes, no);
+    as_label_free(&differ); as_label_free(&strings);
+}
+void ms_string_equal(Masm *m, int a, int b, AsmLabel *yes, AsmLabel *no) {
+    enum { KA = R_S2, KB = R_S3, T = R_S6 };
+    if (a != R_S0 || b != R_S1) bug("ms_string_equal: the strings are not in R_S0 and R_S1", a, b);
+    AsmLabel loop, last;
+    as_label_init(&loop); as_label_init(&last);
+    as_ld32(&m->a, KA, a, (int32_t)offsetof(Obj, len));
+    as_ld32(&m->a, KB, b, (int32_t)offsetof(Obj, len));
+    as_cmp_rr(&m->a, KA, KB);
+    as_jcc(&m->a, CC_NE, no);
+    as_test_rr(&m->a, KA, KA);
+    as_jcc(&m->a, CC_E, yes);                    /* two empty strings */
+    as_bind(&m->a, &loop);
+    as_ld64(&m->a, KB, a, (int32_t)sizeof(Obj));
+    as_ld64(&m->a, T, b, (int32_t)sizeof(Obj));
+    as_xor_rr(&m->a, KB, T);
+    as_cmp_ri(&m->a, KA, 8);
+    as_jcc(&m->a, CC_BE, &last);
+    as_test_rr(&m->a, KB, KB);
+    as_jcc(&m->a, CC_NE, no);
+    as_add_ri(&m->a, a, 8);
+    as_add_ri(&m->a, b, 8);
+    as_sub_ri(&m->a, KA, 8);
+    as_jmp(&m->a, &loop);
+    as_bind(&m->a, &last);
+    /* the difference of the last word, of which KA bytes (1 to 8) count:
+       the others shifted out, by 64 - 8 KA */
+    as_shl_ri(&m->a, KA, 3);
+    as_mov_ri(&m->a, R_S1, 64);
+    as_sub_rr(&m->a, R_S1, KA);
+    as_shl_rr(&m->a, KB);
+    as_test_rr(&m->a, KB, KB);
+    as_jcc(&m->a, CC_E, yes);
+    as_jmp(&m->a, no);
+    as_label_free(&loop); as_label_free(&last);
+}
+/* the order of two short strings in line (masm.h): str_cmp's, on the
+   bytes as unsigned (runtime/prims.c) */
+void ms_string_order_short(Masm *m, AsmLabel *longer) {
+    enum { SA = R_S0, SB = R_S2, LA = R_S3, LB = R_S6, N = R_S1 };
+    AsmLabel min, lengths, done;
+    as_label_init(&min); as_label_init(&lengths); as_label_init(&done);
+    as_ld32(&m->a, LA, SA, (int32_t)offsetof(Obj, len));
+    as_ld32(&m->a, LB, SB, (int32_t)offsetof(Obj, len));
+    as_mov_rr(&m->a, N, LA);
+    as_cmp_rr(&m->a, LA, LB);
+    as_jcc(&m->a, CC_BE, &min);
+    as_mov_rr(&m->a, N, LB);
+    as_bind(&m->a, &min);
+    as_cmp_ri(&m->a, N, 8);
+    as_jcc(&m->a, CC_A, longer);
+    as_test_rr(&m->a, N, N);
+    as_jcc(&m->a, CC_E, &lengths);               /* one is empty */
+    as_ld64(&m->a, SA, SA, (int32_t)sizeof(Obj));
+    as_ld64(&m->a, SB, SB, (int32_t)sizeof(Obj));
+    as_bswap(&m->a, SA);
+    as_bswap(&m->a, SB);
+    as_shl_ri(&m->a, N, 3);                      /* the bytes past the shorter's length shifted out: by 64 - 8 N */
+    as_neg(&m->a, N);
+    as_add_ri(&m->a, N, 64);
+    as_shr_rr(&m->a, SA);
+    as_shr_rr(&m->a, SB);
+    as_cmp_rr(&m->a, SA, SB);
+    as_jcc(&m->a, CC_NE, &done);
+    as_bind(&m->a, &lengths);
+    as_cmp_rr(&m->a, LA, LB);                    /* the same bytes: the shorter first */
+    as_bind(&m->a, &done);
+    as_label_free(&min); as_label_free(&lengths); as_label_free(&done);
+}
+
+/* what the section says register s holds, at tier 2 (M8 of
+   docs/plans/jit.md); REP_ANY at tier 1 and past the section */
+static int rep_of(const Masm *m, int32_t s) {
+    return m->reps && s >= 0 && (uint32_t)s < m->nlocals ? m->reps[s] : REP_ANY;
+}
+
 /* a nullary constructor's tag is its immediate; one with an argument's is
    in the object's header */
 void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless) {
     const Home *h = ms_home(m, s);
-    if (h) { as_mov_rr(&m->a, r, h->reg); as_sar_ri(&m->a, r, 1); return; }   /* a nullary constructor */
+    if (h && !is_any_word(h)) { as_mov_rr(&m->a, r, h->reg); as_sar_ri(&m->a, r, 1); return; }   /* a nullary constructor */
+    /* tier 2 (native-frames.md, M2): a datatype of nullary constructors
+       alone is its immediate wherever it is; one whose constructors all
+       carry a value is a pointer to a constructor, which the section
+       vouches for, so that its word need not be tested */
+    if (rep_of(m, s) == REP_CON0) { as_ld64(&m->a, r, BASER, SLOT(s)); as_sar_ri(&m->a, r, 1); return; }
+    if (rep_of(m, s) == REP_PTR) { as_ld16(&m->a, r, h ? h->reg : (as_ld64(&m->a, r, BASER, SLOT(s)), r), (int32_t)offsetof(Obj, contag)); return; }
     AsmLabel ptr, done;
     as_label_init(&ptr); as_label_init(&done);
-    as_ld64(&m->a, r, BASER, SLOT(s));
+    if (h) as_mov_rr(&m->a, r, h->reg); else as_ld64(&m->a, r, BASER, SLOT(s));
     as_test_ri(&m->a, r, 1);
     as_jcc(&m->a, CC_E, &ptr);
     as_sar_ri(&m->a, r, 1);
@@ -1037,31 +1312,118 @@ void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless) {
     as_label_free(&ptr); as_label_free(&done);
 }
 
+/* JUMPIFNOTTAG: to target unless R(s) is a value of the constructor of tag
+   c. At tier 2 by what the section says of s (native-frames.md, M2): a
+   nullary constructor's word compared with c's; a pointer's tag compared
+   without its word tested; a word that may be either tested for its low
+   bit and then compared, as the immediate it is or by its object's tag,
+   with no kind tested (the section vouches for a constructor). Else the
+   tag made as ms_load_tag_of_con makes it, and compared. R_S0 clobbered. */
+void ms_jump_unless_tag(Masm *m, int32_t s, int32_t c, AsmLabel *target, AsmLabel *unless) {
+    const Home *h = ms_home(m, s);
+    int rep = rep_of(m, s);
+    int64_t w = IMM(c);
+    int small = w <= INT32_MAX;   /* c's word an immediate of the compare (else the tag made, then compared) */
+    if (small && ((h && !is_any_word(h)) || rep == REP_CON0)) {
+        if (h) as_cmp_ri(&m->a, h->reg, (int32_t)w); else as_cmp_mi(&m->a, BASER, SLOT(s), (int32_t)w);
+        as_jcc(&m->a, CC_NE, target);
+        return;
+    }
+    if (small && rep == REP_CON) {
+        AsmLabel imm, done; as_label_init(&imm); as_label_init(&done);
+        int r = h ? h->reg : R_S0;
+        if (!h) as_ld64(&m->a, R_S0, BASER, SLOT(s));
+        as_test_ri(&m->a, r, 1);
+        as_jcc(&m->a, CC_NE, &imm);
+        as_ld16(&m->a, R_S0, r, (int32_t)offsetof(Obj, contag));
+        as_cmp_ri(&m->a, R_S0, c);
+        as_jcc(&m->a, CC_NE, target);
+        as_jmp(&m->a, &done);
+        as_bind(&m->a, &imm);
+        as_cmp_ri(&m->a, r, (int32_t)w);
+        as_jcc(&m->a, CC_NE, target);
+        as_bind(&m->a, &done);
+        as_label_free(&imm); as_label_free(&done);
+        return;
+    }
+    ms_load_tag_of_con(m, R_S0, s, unless);
+    as_cmp_ri(&m->a, R_S0, c);
+    as_jcc(&m->a, CC_NE, target);
+}
+
 /* ---- the VM ---- */
+/* Compiled code keeps its frame in r14 alone -- a call and a return
+   touch neither VM.fp nor VM.func -- and tells the VM at every sync, on
+   the way into the interpreter and in the stubs: C's VM.fp, the frame's
+   base as an index into the stack, and VM.func are the truth only there,
+   and after a call into C r14 is made from VM.fp again (ms_reload). */
+/* the registers live at the instruction's entry and the frame, for a
+   collection the call into C may make: VM.top_live (M6); R_S0 clobbered */
+static void store_top_live(Masm *m) {
+    if (!m->sync_live) return;
+    as_mov_ri(&m->a, R_S0, (int64_t)m->sync_live[m->cur_pc - m->from]);
+    as_st64(&m->a, VMR, OFF(top_live), R_S0);
+    as_st64(&m->a, VMR, OFF(top_frame), BASER);
+}
+/* vm->fp := r14's frame's base, vm->func := the function, and vm->sp :=
+   the base plus k; R_S0 clobbered */
+void ms_store_fp(Masm *m, uint32_t k) {
+    ms_base_index(m, R_S0, 0);
+    as_st64(&m->a, VMR, OFF(fp), R_S0);
+    if (k) as_add_ri(&m->a, R_S0, (int32_t)k);
+    as_st64(&m->a, VMR, OFF(sp), R_S0);
+    as_st32i(&m->a, VMR, OFF(func), (int32_t)m->func);
+}
 void ms_sync(Masm *m, uint32_t pc, int pushed) {
+    int role = ms_role(m, MR_SYNC);
     writeback(m, m->cur_pc, pushed);
     m->sync_pc = pc;
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)pc);
-    as_lea(&m->a, R_S0, BASEI, -1, 1, (int32_t)(m->nlocals + (uint32_t)pushed));
-    as_st64(&m->a, VMR, OFF(sp), R_S0);
-    as_st64(&m->a, VMR, OFF(instructions), COUNTR);
+    ms_store_fp(m, m->nlocals + (uint32_t)pushed);
+    store_count(m);
+    store_top_live(m);
+    store_alloc(m);
+    if (m->verify) {   /* for the check after the call (ms_reload, M7) */
+        as_ld64(&m->a, R_S0, VMR, OFF(gc_count));
+        as_st64(&m->a, VMR, OFF(verify_gc), R_S0);
+        as_st64(&m->a, VMR, OFF(verify_frame), BASER);
+    }
+    ms_role(m, role);
 }
-/* r := &vm->frames[vm->fp] */
-void ms_frame(Masm *m, int r) {
-    as_ld64(&m->a, r, VMR, OFF(fp));
-    as_mul_ri(&m->a, r, r, (int32_t)sizeof(Frame));
-    as_add_rm(&m->a, r, VMR, OFF(frames));
-}
+/* the frame's registers from the VM: after a call into C, which may have
+   moved the stack, or raised */
 void ms_reload(Masm *m) {
+    int role = ms_role(m, MR_SYNC);
     m->nfields = UINT32_MAX;
-    ms_frame(m, R_S1);
-    as_ld64(&m->a, BASEI, R_S1, (int32_t)offsetof(Frame, base));
-    as_mov_rr(&m->a, BASER, BASEI);
+    as_ld64(&m->a, BASER, VMR, OFF(fp));
     as_shl_ri(&m->a, BASER, VALUE_SHIFT);
-    as_add_rm(&m->a, BASER, VMR, OFF(stack));   /* the stack itself has no register: only this and a RET want it */
+    as_add_rm(&m->a, BASER, VMR, OFF(stack));   /* the stack itself has no register: only this wants it */
+    reload_alloc(m);
     /* the homes live at the instruction's entry (the call clobbered them)
        and at its end (the helper may have written the slot of the one it
        defines) */
+    /* --gc-verify and --gc-stress (M7): where the code synced before the call, its frame
+       is the VM's still and no collection ran, the homes C kept that are
+       live at the instruction's entry -- but the one it defines -- agree
+       with their slots: a pointer's home too, before it is loaded again
+       below. A home that does not is a fatal error. */
+    if (m->homes && m->verify && m->home_fails) {
+        AsmLabel skip; as_label_init(&skip);
+        as_ld64(&m->a, R_S2, VMR, OFF(gc_count));
+        as_cmp_rm(&m->a, R_S2, VMR, OFF(verify_gc));
+        as_jcc(&m->a, CC_NE, &skip);
+        as_cmp_rm(&m->a, BASER, VMR, OFF(verify_frame));
+        as_jcc(&m->a, CC_NE, &skip);
+        for (uint32_t r = 0; r < m->nlocals; r++) {
+            const Home *h = &m->homes[r];
+            if (h->kind != HOME_GPR || is_raw_gpr(h) || !live_at(m, m->cur_pc, r) || !kept(m, h) || ((m->cur_def >> r) & 1)) continue;
+            as_cmp_rm(&m->a, h->reg, BASER, SLOT(r));
+            as_jcc(&m->a, CC_NE, m->home_fails(m, r));
+        }
+        as_bind(&m->a, &skip);
+        as_label_free(&skip);
+        as_st64i(&m->a, VMR, OFF(verify_gc), -1);   /* until the next sync: a collection count never reached */
+    }
     if (m->homes) {
         /* Two registers that are never live together may have one home
            (compile.c): the ones live at the entry have theirs, and of the
@@ -1086,6 +1448,7 @@ void ms_reload(Masm *m) {
                 slot_to_home(m, (int32_t)r, &m->homes[r]);
             }
     }
+    ms_role(m, role);
 }
 void ms_call_lean(Masm *m, MsHelper helper) {
     ms_call(m, helper);
@@ -1112,12 +1475,20 @@ void ms_call(Masm *m, MsHelper helper) {
 }
 /* lea, not add: the flags of a comparison just made live through it to
    the branch after (emit.c, a fused compare and branch, M7) */
-void ms_count(Masm *m, uint32_t k) { if (k) as_lea(&m->a, COUNTR, COUNTR, -1, 1, (int32_t)k); }
+void ms_count(Masm *m, uint32_t k) {
+    if (!k) return;
+#ifdef RUNE_ALLOC_RUNS
+    m->run_seq++;
+#endif
+    int role = ms_role(m, MR_COUNT);
+    as_lea(&m->a, COUNTR, COUNTR, -1, 1, (int32_t)k);
+    ms_role(m, role);
+}
 void ms_exit(Masm *m, uint32_t pc, uint32_t remaining) {
     ms_writeback(m, pc);
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)pc);
-    as_lea(&m->a, R_S0, BASEI, -1, 1, (int32_t)m->nlocals);
-    as_st64(&m->a, VMR, OFF(sp), R_S0);
+    ms_store_fp(m, m->nlocals);
+    store_alloc(m);
     as_lea(&m->a, R_S0, COUNTR, -1, 1, -(int32_t)remaining);
     as_st64(&m->a, VMR, OFF(instructions), R_S0);
     ms_handback(m, RUN_INTERP);
@@ -1133,8 +1504,31 @@ void ms_handback_rax(Masm *m) {
 }
 
 /* ---- the heap ---- */
+#ifdef RUNE_ALLOC_RUNS
+uint64_t jit_alloc_runs[2];
+#endif
 void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow) {
     uint32_t size = (uint32_t)obj_size_of(kind, n);
+    int role = ms_role(m, MR_ALLOC);
+#ifdef RUNE_ALLOC_RUNS
+    /* a measuring build's (native-frames.md, M8): the inline allocations,
+       and the runs that make one -- counted at their first -- which a count
+       of objects per run would add to once */
+    as_count(&m->a, &jit_alloc_runs[0]);
+    if (m->alloc_seq != m->run_seq) { m->alloc_seq = m->run_seq; as_count(&m->a, &jit_alloc_runs[1]); }
+#endif
+    if (m->alloc_reg) {
+        as_mov_rr(&m->a, R_S0, BASEI);
+        as_add_ri(&m->a, BASEI, (int32_t)size);
+        as_cmp_rm(&m->a, BASEI, VMR, OFF(alloc_limit));
+        as_jcc(&m->a, CC_A, slow);
+        as_add_mi(&m->a, VMR, OFF(objects_allocated), 1);
+        as_st32i(&m->a, R_S0, 0, (int32_t)((uint32_t)kind | ((uint32_t)contag << 16)));
+        as_st32i(&m->a, R_S0, 4, (int32_t)n);
+        m->nfields = n;
+        ms_role(m, role);
+        return;
+    }
     as_cmp_mi(&m->a, VMR, OFF(gc_stress), 0);
     as_jcc(&m->a, CC_NE, slow);
     as_ld64(&m->a, R_S0, VMR, OFF(alloc.used));
@@ -1149,6 +1543,10 @@ void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow) {
     as_st32i(&m->a, R_S0, 0, (int32_t)((uint32_t)kind | ((uint32_t)contag << 16)));
     as_st32i(&m->a, R_S0, 4, (int32_t)n);
     m->nfields = n;
+    ms_role(m, role);
+}
+void ms_alloc_undo(Masm *m, int kind, uint32_t n) {
+    if (m->alloc_reg) as_sub_ri(&m->a, BASEI, (int32_t)obj_size_of(kind, n));
 }
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s) {
     if (i >= m->nfields) bug("a field the object does not have", i, m->nfields);
@@ -1259,6 +1657,7 @@ void ms_set_element(Masm *m, int obj, int index, int32_t s) {
 void ms_store_field_imm(Masm *m, int obj, uint32_t i, int tag, int32_t payload) {
     as_st64i(&m->a, obj, FIELD_OFF(i), (int32_t)word_of(tag, payload));
 }
+void ms_load_field_bits(Masm *m, int r, int obj, uint32_t i) { as_ld64(&m->a, r, obj, FIELD_OFF(i)); }
 void ms_load_field_payload(Masm *m, int r, int obj, uint32_t i) {
     as_ld64(&m->a, r, obj, FIELD_OFF(i));
     as_sar_ri(&m->a, r, 1);
@@ -1317,13 +1716,20 @@ Slow *ms_slow(Masm *m, int kind, uint32_t pc) {
     s->kind = kind;
     s->pc = pc;
     s->cur = m->cur_pc;
+    s->ahead = m->ahead;
     return s;
 }
 void ms_emit_slow_paths(Masm *m, void (*emit)(Masm *m, Slow *s)) {
+    ms_role(m, MR_SLOW);
+    m->in_slow = 1;
     for (int i = 0; i < m->nslow; i++) {
         as_bind(&m->a, &m->slow[i]->here);
+        m->cur_pc = m->slow[i]->cur;
+        m->ahead = m->slow[i]->ahead;
+        ms_mark_pc(m, m->slow[i]->cur);
         emit(m, m->slow[i]);
     }
+    m->in_slow = 0;
 }
 
 /* ---- the stubs ---- */
@@ -1333,23 +1739,78 @@ void ms_emit_enter(Asm *a, int win) {
     Masm m;
     memset(&m, 0, sizeof m);
     m.a = *a; m.win = win; m.nfields = UINT32_MAX;
+    m.alloc_reg = 1;   /* the allocation pointer taken too (M8) */
     as_stub_enter(&m.a, win);   /* the VM into VMR, where to go into R_GO */
     ms_reload(&m);
     as_ld64(&m.a, COUNTR, VMR, OFF(instructions));
+    as_ld64(&m.a, R_S0, VMR, OFF(ret_value));   /* for a landing: the value the interpreter returns (native-frames.md, M4) */
     as_jmp_r(&m.a, R_GO);
     *a = m.a;
 }
 /* the stub of the fatal errors (compile.c, jit_fatal): rax the number of
    the error's record, rcx the value its message may want, the machine
    stack as the code keeps it; the helper never returns */
+/* VM.fp := r14's frame's base, in R_S2 (the stubs) */
+static void stub_fp(Masm *m) {
+    as_mov_rr(&m->a, R_S2, BASER);
+    as_sub_rm(&m->a, R_S2, VMR, OFF(stack));
+    as_shr_ri(&m->a, R_S2, VALUE_SHIFT);
+    as_st64(&m->a, VMR, OFF(fp), R_S2);
+}
 void ms_emit_fatal(Asm *a, int win, MsHelper helper) {
     Masm m;
     memset(&m, 0, sizeof m);
     m.a = *a; m.win = win; m.nfields = UINT32_MAX;
+    stub_fp(&m);   /* the frame, for the error's report (rdx: neither argument yet); its function the helper's (the record) */
+    m.alloc_reg = 1;
+    as_mov_rr(&m.a, R_S3, R_S0);   /* (the record's number, which store_alloc's rax would lose) */
+    store_alloc(&m);
+    as_mov_rr(&m.a, R_S0, R_S3);
     as_mov_rr(&m.a, ms_arg(&m, 2), R_S1);   /* first: rcx is the first argument on Windows */
     as_mov_rr(&m.a, ms_arg(&m, 1), R_S0);
     ms_call(&m, helper);
     as_trap(&m.a);
+    *a = m.a;
+}
+void ms_emit_ret_tramp(Asm *a, int win, MsHelper helper, AsmLabel *leave) {
+    Masm m;
+    memset(&m, 0, sizeof m);
+    m.a = *a; m.win = win; m.nfields = UINT32_MAX;
+    as_st64(&m.a, VMR, OFF(instructions), COUNTR);
+    stub_fp(&m);   /* the frame that returns */
+    m.alloc_reg = 1;
+    as_mov_rr(&m.a, R_S3, R_S0);   /* (the value, which store_alloc's rax would lose) */
+    store_alloc(&m);
+    as_mov_rr(&m.a, ms_arg(&m, 1), R_S3);
+    ms_call(&m, helper);
+    as_jmp(&m.a, leave);   /* with the answer in R_S0 */
+    *a = m.a;
+}
+void ms_emit_barrier(Asm *a, int win, MsHelper helper) {
+    Masm m;
+    memset(&m, 0, sizeof m);
+    m.a = *a; m.win = win; m.nfields = UINT32_MAX;
+    as_st64(&m.a, VMR, OFF(ret_value), R_S0);   /* the value, kept across the call */
+    as_mov_rr(&m.a, ms_arg(&m, 1), BASER);      /* the frame that returns */
+    ms_call(&m, helper);
+    as_mov_rr(&m.a, R_S1, R_S0);
+    as_ld64(&m.a, R_S0, VMR, OFF(ret_value));
+    as_jmp_r(&m.a, R_S1);
+    *a = m.a;
+}
+void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave, int callret) {
+    Masm m;
+    memset(&m, 0, sizeof m);
+    m.a = *a; m.win = win; m.nfields = UINT32_MAX;
+    if (callret) as_pop_ret(&m.a, BASER, -(int32_t)sizeof(Value));   /* a call's entry stores the return address (M7) */
+    as_st64(&m.a, VMR, OFF(instructions), COUNTR);
+    stub_fp(&m);   /* the callee's frame */
+    m.alloc_reg = 1;
+    store_alloc(&m);
+    as_shr_ri(&m.a, R_S6, 1);   /* its function, from the word (2f + 1) the call has */
+    as_st32(&m.a, VMR, OFF(func), R_S6);
+    ms_call(&m, helper);
+    as_jmp(&m.a, leave);   /* with the answer in R_S0 */
     *a = m.a;
 }
 void ms_emit_leave(Asm *a, int win) {

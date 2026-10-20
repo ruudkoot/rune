@@ -1,6 +1,7 @@
 /* The portable assembler (asm.h) for aarch64, over the encoder (a64.h):
    x17 is the implementation's own register, x16 the encoder's. */
 #include "asm.h"
+#include <string.h>
 #if JIT_TARGET == 2
 
 void as_init(Asm *a) { a64_init(a); }
@@ -37,6 +38,11 @@ void as_lea(Asm *a, int rd, int base, int index, int scale, int32_t disp) {
     } else a64_add_ri(a, rd, base, disp);
 }
 void as_lea_label(Asm *a, int rd, AsmLabel *l) { a64_adr(a, rd, l); }
+void as_ld64x(Asm *a, int rd, int base, int index, int scale, int32_t disp) {
+    int shift = scale == 8 ? 3 : scale == 4 ? 2 : scale == 2 ? 1 : 0;
+    a64_add_rr_lsl(a, R_T, base, index, shift);   /* x17, the implementation's own */
+    a64_ldr(a, rd, R_T, disp);
+}
 void as_ld128(Asm *a, int f, int base, int32_t disp) { a64_ldrq(a, f, base, disp); }
 void as_st128(Asm *a, int base, int32_t disp, int f) { a64_strq(a, f, base, disp); }
 void as_ld128x(Asm *a, int f, int base, int index) { a64_ldrq_rr(a, f, base, index); }
@@ -79,6 +85,7 @@ void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow) {
 }
 void as_neg(Asm *a, int r) { a64_subs_rr(a, r, XZR, r); }
 void as_not(Asm *a, int r) { a64_orn_rr(a, r, XZR, r); }
+void as_bswap(Asm *a, int r) { a64_rev(a, r, r); }
 void as_shl_ri(Asm *a, int r, int n) { a64_lsl_ri(a, r, r, n); }
 void as_shr_ri(Asm *a, int r, int n) { a64_lsr_ri(a, r, r, n); }
 void as_sar_ri(Asm *a, int r, int n) { a64_asr_ri(a, r, r, n); }
@@ -96,6 +103,8 @@ void as_udivmod(Asm *a, int divisor) {
 }
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v) { a64_ldr(a, R_T, base, disp); a64_add_ri(a, R_T, R_T, v); a64_str(a, R_T, base, disp); }
 void as_add_rm(Asm *a, int rd, int base, int32_t disp) { a64_ldr(a, R_T, base, disp); a64_add_rr(a, rd, rd, R_T); }
+void as_add_rm_to_mem(Asm *a, int base, int32_t disp, int rs) { a64_ldr(a, R_T, base, disp); a64_add_rr(a, R_T, R_T, rs); a64_str(a, R_T, base, disp); }
+void as_sub_rm(Asm *a, int rd, int base, int32_t disp) { a64_ldr(a, R_T, base, disp); a64_sub_rr(a, rd, rd, R_T); }
 void as_cmp_rm(Asm *a, int r, int base, int32_t disp) { a64_ldr(a, R_T, base, disp); a64_cmp_rr(a, r, R_T); }
 void as_cmp_mi(Asm *a, int base, int32_t disp, int32_t v) { a64_ldr(a, R_T, base, disp); a64_cmp_ri(a, R_T, v); }
 void as_cmp8_mi(Asm *a, int base, int32_t disp, int v) { a64_ldrb(a, R_T, base, disp); a64_cmp_ri(a, R_T, v); }
@@ -106,8 +115,35 @@ void as_jmp(Asm *a, AsmLabel *l) { a64_b(a, l); }
 void as_jcc(Asm *a, int cc, AsmLabel *l) { a64_bcond(a, cond(cc), l); }
 void as_jmp_r(Asm *a, int r) { a64_br(a, r); }
 void as_jmp_to(Asm *a, const void *at) { a64_b_to(a, at); }
+size_t as_jmp_site(Asm *a, AsmLabel *l) { size_t at = a->n; a64_b(a, l); return at; }   /* b: the instruction */
+void as_patch_jmp(uint8_t *site, const void *to) {
+    uint32_t w = 0x14000000u | ((uint32_t)(((intptr_t)to - (intptr_t)site) >> 2) & 0x3FFFFFFu);
+    memcpy(site, &w, 4);
+}
 void as_call_to(Asm *a, const void *at) { a64_bl_to(a, at); }
 void as_call_r(Asm *a, int r) { a64_blr(a, r); }
+void as_ret_align(Asm *a) { (void)a; }   /* every instruction is a word: the return word is its address and 1 */
+void as_ret_addr(Asm *a, int rd, AsmLabel *l) { a64_adr(a, rd, l); a64_add_ri(a, rd, rd, 1); }
+void as_jmp_ret(Asm *a, int base, int32_t disp) {
+    a64_ldr(a, R_T, base, disp);   /* x17, the implementation's own */
+    a64_sub_ri(a, R_T, R_T, 1);
+    a64_br(a, R_T);
+}
+/* bl and blr leave the return address in x30, a word's; the entry stores
+   it and 1 */
+int as_call_len(int r) { (void)r; return 4; }
+void as_add_before_call(Asm *a, int rd, int32_t v, int call_len) { (void)call_len; a64_add_ri(a, rd, rd, v); }
+void as_call_ret(Asm *a, AsmLabel *l) { size_t at = a->n; a64_word(a, 0x94000000); if (!a->failed) a64_refer_b26(a, l, at); }
+void as_call_ret_to(Asm *a, const void *at) { a64_bl_to(a, at); }
+void as_call_ret_r(Asm *a, int r) { a64_blr(a, r); }
+size_t as_call_site(Asm *a, AsmLabel *l) { size_t at = a->n; as_call_ret(a, l); return at; }   /* bl: the instruction */
+void as_patch_call(uint8_t *site, const void *to) {
+    uint32_t w = 0x94000000u | ((uint32_t)(((intptr_t)to - (intptr_t)site) >> 2) & 0x3FFFFFFu);
+    memcpy(site, &w, 4);
+}
+void as_pop_ret(Asm *a, int base, int32_t disp) { a64_add_ri(a, R_T, X30, 1); a64_str(a, R_T, base, disp); }
+void as_push_ret(Asm *a, int base, int32_t disp) { a64_ldr(a, X30, base, disp); a64_sub_ri(a, X30, X30, 1); }
+void as_ret_word(Asm *a, int base, int32_t disp) { as_push_ret(a, base, disp); a64_ret(a); }
 void as_ret(Asm *a) { a64_ret(a); }
 void as_trap(Asm *a) { a64_brk(a); }
 void as_setcc(Asm *a, int rd, int cc) { a64_cset(a, rd, cond(cc)); }

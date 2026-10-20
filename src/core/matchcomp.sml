@@ -36,9 +36,9 @@ struct
     | NONE =>
         (case sc of
            SInt _ => Ty.int
-         | SWord _ => Ty.Con (#stamp Types.wordTycon, "word", [])
-         | SReal _ => Ty.Con (#stamp Types.realTycon, "real", [])
-         | SChar _ => Ty.Con (#stamp Types.charTycon, "char", [])
+         | SWord _ => Ty.con (#stamp Types.wordTycon, "word", [])
+         | SReal _ => Ty.con (#stamp Types.realTycon, "real", [])
+         | SChar _ => Ty.con (#stamp Types.charTycon, "char", [])
          | SString _ => Ty.string
          | SWideString _ => Ty.string)
 
@@ -63,7 +63,7 @@ struct
                rt as Types.TCon (c, _) =>
                  (case Overload.literalOf c of
                     SOME (Overload.Via f) =>
-                      let val make = App (Inst (Global f, Ty.Arrow (Ty.string, ty)), Const (CString digits, Ty.string))
+                      let val make = App (Inst (Global f, Ty.arrow (Ty.string, ty)), Const (CString digits, Ty.string))
                       in
                         if not once then SOME make
                         else
@@ -101,11 +101,11 @@ struct
          | _ => Error.bug ("flexible record pattern did not resolve to a record at " ^ Source.describe sp))
     | NONE => Error.bug "flexible record pattern not annotated"
 
-  fun eqTy t = Ty.Arrow (Ty.Tuple [t, t], Ty.bool)
+  fun eqTy t = Ty.arrow (Ty.tuple [t, t], Ty.bool)
   fun testEq (a, b, t, k) = If (Prim ("poly_eq", SOME (eqTy t), [a, b]), k, Fail)
   fun testTag (v, tag, k) =
     If (Prim ("poly_eq", SOME (eqTy Ty.int), [ConTag (Var v), Const (CInt (IntInf.fromInt tag), Ty.int)]), k, Fail)
-  fun testExn (v, exncon, k) = If (Prim ("ptr_eq", SOME (eqTy Ty.ExnCon), [ExnCon (Var v), exncon]), k, Fail)
+  fun testExn (v, exncon, k) = If (Prim ("ptr_eq", SOME (eqTy Ty.exnCon), [ExnCon (Var v), exncon]), k, Fail)
 
   (* The type of an exception's payload. *)
   fun exnArgTy (info : exninfo) : Ty.ty =
@@ -368,6 +368,78 @@ struct
   fun ifTag (v : int, tag : int, yes : lexp, no : lexp) : lexp =
     If (Prim ("poly_eq", SOME (eqTy Ty.int), [ConTag (Var v), Const (CInt (IntInf.fromInt tag), Ty.int)]), yes, no)
 
+  (* Which of the cases, each a string and its code, the string in v is,
+     where they are many (stringSwitchMin): found by the string's length --
+     tests of an int, which the code makes in line -- and then compared
+     with each of that length in turn, or, where they are many
+     (charSwitchMin), by a character where they differ most, and so on, and
+     compared with one; deflt where it is none of them, which is small (a
+     jump), since it is copied (performance M5, D7 B). Where there are many
+     lengths or characters, a test of `<` halves them. The two thresholds
+     are what the compiler compiling itself found best: a test of a
+     character saves a comparison of strings, but the code grows, and the
+     compiler takes longer over every node it makes. *)
+  val stringSwitchMin = 6
+  val charSwitchMin = 8
+
+  fun stringSwitch (v : int, cases : (string * lexp) list, deflt : lexp) : lexp =
+    let
+      val charTy = Ty.con (#stamp Types.charTycon, "char", [])
+      fun prim (p, dom, r, args) = Prim (p, SOME (Ty.arrow (dom, r)), args)
+      fun pair t = Ty.tuple [t, t]
+      fun sameString s = prim ("poly_eq", pair Ty.string, Ty.bool, [Var v, Const (CString s, Ty.string)])
+      (* the groups of xs by key, in the order of their keys *)
+      fun groupBy (key : 'a -> int) (xs : 'a list) : (int * 'a list) list =
+        let
+          fun insert (k, x, []) = [(k, [x])]
+            | insert (k, x, (g as (k', ys)) :: rest) =
+                if k = k' then (k', ys @ [x]) :: rest
+                else if k < k' then (k, [x]) :: g :: rest
+                else g :: insert (k, x, rest)
+        in List.foldl (fn (x, gs) => insert (key x, x, gs)) [] xs end
+      (* the code of each group by the key in w, of type ty: a test of
+         equality for each of a few, else a halving by lt *)
+      fun dispatch (w : int, ty : Ty.ty, lt : string, const : int -> lexp, groups : (int * lexp) list) : lexp =
+        if List.length groups <= 3 then
+          List.foldr (fn ((k, code), rest) => If (prim ("poly_eq", pair ty, Ty.bool, [Var w, const k]), code, rest))
+                     deflt groups
+        else
+          let
+            val half = List.length groups div 2
+            val (low, high) = (List.take (groups, half), List.drop (groups, half))
+          in
+            If (prim (lt, pair ty, Ty.bool, [Var w, const (#1 (hd high))]),
+                dispatch (w, ty, lt, const, low), dispatch (w, ty, lt, const, high))
+          end
+      (* the cases of one length: compared in turn, or, where they are
+         many, told apart by the character at the place where they have the
+         most different ones *)
+      fun byChars (len : int, cs : (string * lexp) list) : lexp =
+        if List.length cs < charSwitchMin then
+          List.foldr (fn ((s, code), rest) => If (sameString s, code, rest)) deflt cs
+        else
+          let
+            fun distinct i =
+              List.length (groupBy (fn (s, _) => Char.ord (String.sub (s, i))) cs)
+            fun best (i, (bi, bn)) =
+              if i = len then bi
+              else let val n = distinct i in best (i + 1, if n > bn then (i, n) else (bi, bn)) end
+            val i = best (0, (0, 0))
+            val w = freshVar ()
+            val groups = groupBy (fn (s, _) => Char.ord (String.sub (s, i))) cs
+          in
+            Let (w, prim ("string_sub", Ty.tuple [Ty.string, Ty.int], charTy, [Var v, Const (CInt (IntInf.fromInt i), Ty.int)]),
+                 dispatch (w, charTy, "char_lt", fn k => Const (CChar k, charTy),
+                           List.map (fn (_, g) => (Char.ord (String.sub (#1 (hd g), i)), byChars (len, g))) groups))
+          end
+      val n = freshVar ()
+      val groups = groupBy (fn (s, _) => String.size s) cases
+    in
+      Let (n, prim ("string_size", Ty.string, Ty.int, [Var v]),
+           dispatch (n, Ty.int, "int_lt", fn k => Const (CInt (IntInf.fromInt k), Ty.int),
+                     List.map (fn (len, g) => (len, byChars (len, g))) groups))
+    end
+
   (* limit: a tree too big for the rules raises TooBig, for them to be
      matched rule by rule instead (which a match with an or-pattern cannot
      be: a rule of one is a row for each of its alternatives, which all jump
@@ -495,7 +567,7 @@ struct
                 val yes = if hasArg then Let (w, ExnArg (exnArgTy e, Var v), yes) else yes
                 val no = tree (cols, List.filter (fn r => not (same (cell r))) rows)
               in
-                If (Prim ("ptr_eq", SOME (eqTy Ty.ExnCon), [ExnCon (Var v), exnConExp e]), yes, no)
+                If (Prim ("ptr_eq", SOME (eqTy Ty.exnCon), [ExnCon (Var v), exnConExp e]), yes, no)
               end
           | KConst =>
               let
@@ -511,16 +583,48 @@ struct
                   | _ => false
                 (* where the value is the constant, a row of another literal
                    cannot match; one of another constant is still tested *)
-                val yes = tree (cols, List.mapPartial (fn r => let val q = cell r
-                                                               in
-                                                                 if same q then SOME (put (r, [PWild sp]))
-                                                                 else if other q then NONE
-                                                                 else SOME r
-                                                               end) rows)
-                val no = tree (cols, List.filter (fn r => not (same (cell r))) rows)
-                val t = sconTy (sc, slot)
+                fun oneConstant () =
+                  let
+                    val yes = tree (cols, List.mapPartial (fn r => let val q = cell r
+                                                                   in
+                                                                     if same q then SOME (put (r, [PWild sp]))
+                                                                     else if other q then NONE
+                                                                     else SOME r
+                                                                   end) rows)
+                    val no = tree (cols, List.filter (fn r => not (same (cell r))) rows)
+                    val t = sconTy (sc, slot)
+                  in
+                    If (Prim ("poly_eq", SOME (eqTy t), [Var v, sconExp (sc, slot)]), yes, no)
+                  end
+                (* a column of strings written as constants, where it names
+                   many: split by every one at once, the value found among
+                   them by stringSwitch, and the rows of none a join point
+                   it jumps to (performance M5) *)
+                fun stringOf q =
+                  case q of
+                    PScon (sc' as SString s, slot', _) => if literal (sc', slot') then SOME s else NONE
+                  | _ => NONE
+                val strings =
+                  List.foldl (fn (r, acc) => case stringOf (cell r) of
+                                               SOME s => if List.exists (fn s' => s' = s) acc then acc else acc @ [s]
+                                             | NONE => acc) [] rows
+                fun everyString () =
+                  let
+                    val rest = replace (cols, c, [])
+                    fun branch s =
+                      tree (rest, List.mapPartial (fn r => case stringOf (cell r) of
+                                                             SOME s' => if s' = s then SOME (put (r, [])) else NONE
+                                                           | NONE => SOME (put (r, []))) rows)
+                    val none = tree (rest, List.mapPartial (fn r => if isWild (cell r) then SOME (put (r, [])) else NONE) rows)
+                    val j = freshVar ()
+                  in
+                    Join (j, [], none, stringSwitch (v, List.map (fn s => (s, branch s)) strings, Jump (j, [])))
+                  end
               in
-                If (Prim ("poly_eq", SOME (eqTy t), [Var v, sconExp (sc, slot)]), yes, no)
+                if List.length strings >= stringSwitchMin andalso Ty.equal (sconTy (sc, slot), Ty.string)
+                   andalso List.all (fn r => isWild (cell r) orelse isSome (stringOf (cell r))) rows
+                then everyString ()
+                else oneConstant ()
               end
         end
 

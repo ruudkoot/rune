@@ -17,6 +17,7 @@
 #define BACKWARD(t) ((void)(t))
 #define RESUME_NATIVE(f, at_pc) ((void)(f), (void)(at_pc))
 #define RETURN_NATIVE(at_) ((void)(at_))
+#define RETURN_LANDING(w, v) ((void)(w), (void)(v))
 #define RAISED() NEXT
 #define NEW_PROGRAM() ((void)jit)
 #define POLL(len) \
@@ -31,7 +32,7 @@
         Debugger *d_ = vm->dbg; \
         if (d_->check) { \
             if (!d_->on && !d_->in_hook) { SYNC(); return RUN_INTERP; } \
-            uint32_t k_ = dbg_key(vm, d_, fr->func, pc); \
+            uint32_t k_ = dbg_key(vm, d_, vm->func, pc); \
             if (vm->fp >= d_->nframe_keys || k_ != d_->frame_key[vm->fp] || vm->fp < d_->step_fp || d_->pending) { \
                 SYNC(); \
                 if (dbg_event(vm, pc, k_)) RELOAD(); \

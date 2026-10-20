@@ -304,22 +304,46 @@ static void write_image(VM *vm, Stream *s, int kind) {
        starts again catches it again (interrupt_again) */
     put_u32(s, (uint32_t)vm->interrupt_mask);
     put_obj(s, vm->interrupt_exn, vm);
-    put_u64(s, (uint64_t)vm->sp);
-    for (size_t i = 0; i < vm->sp; i++) put_value(s, vm->stack[i], vm);
-    put_u32(s, (uint32_t)vm->frames_active);
-    put_u64(s, (uint64_t)vm->fp);
-    if (vm->frames_active)
-        for (size_t i = 0; i <= vm->fp; i++) {
-            put_u32(s, vm->frames[i].func);
-            put_u32(s, vm->frames[i].ret_pc);
-            put_u64(s, (uint64_t)vm->frames[i].base);
-            put_obj(s, vm->frames[i].closure, vm);
+    {
+        /* The stack, the frames and the handlers as the runtime walks them
+           (vm.h; native-frames.md, M3), in the layout of every instruction
+           set: without the words of a frame's header that some keep in the
+           stack below its base (from FrameRef.head; native-frames.md, M4)
+           -- a frame's base and a handler's stack pointer less the header
+           words below them -- and a handler's frame by its index, the top
+           level's 0. An image of one engine is read by every other of its
+           instruction set, and by those before the header. */
+        FrameRef *fr;
+        size_t nf = vm->frames_active ? vm_frames_from(vm, 0, &fr) : 0;
+        size_t words = 0;   /* of the headers of all the frames */
+        for (size_t k = 0; k < nf; k++) words += fr[k].base - fr[k].head;
+        put_u64(s, (uint64_t)(vm->sp - words));
+        for (size_t i = 0, k = 0; i < vm->sp;) {
+            if (k < nf && i == fr[k].head) { i = fr[k].base; k++; continue; }
+            put_value(s, vm->stack[i++], vm);
         }
-    put_u64(s, (uint64_t)vm->hp);
-    for (size_t i = 0; i < vm->hp; i++) {
-        put_u32(s, vm->handlers[i].pc);
-        put_u64(s, (uint64_t)vm->handlers[i].sp);
-        put_u64(s, (uint64_t)vm->handlers[i].fp);
+        put_u32(s, (uint32_t)vm->frames_active);
+        put_u64(s, (uint64_t)(nf ? nf - 1 : 0));
+        words = 0;
+        for (size_t i = 0; i < nf; i++) {
+            words += fr[i].base - fr[i].head;
+            put_u32(s, fr[i].func);
+            put_u32(s, fr[i].ret_pc);
+            put_u64(s, (uint64_t)(fr[i].base - words));
+            put_obj(s, fr[i].closure, vm);
+        }
+        put_u64(s, (uint64_t)vm->hp);
+        /* a handler's frame by its id, the frames' rising (and the handlers'
+           with them), and the header words below that frame's base */
+        size_t k = 0, below = nf ? fr[0].base - fr[0].head : 0;
+        for (size_t i = 0; i < vm->hp; i++) {
+            size_t id = vm->handlers[i].fp;
+            if (nf && fr[k].id > id) { k = 0; below = fr[0].base - fr[0].head; }
+            while (k + 1 < nf && fr[k + 1].id <= id) { k++; below += fr[k].base - fr[k].head; }
+            put_u32(s, vm->handlers[i].pc);
+            put_u64(s, (uint64_t)(vm->handlers[i].sp - below));
+            put_u64(s, (uint64_t)(nf ? k : id));
+        }
     }
 
     /* Each file by its descriptor, -1 for a closed slot: handles are never
@@ -591,6 +615,7 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
        smaller current cap first makes the narrowing conversion safe. */
     if (intinf_memory < vm_intinf_gmp_memory(vm)) vm->intinf_gmp_memory = (size_t)intinf_memory;
     vm->gc_stress = (size_t)get_u64(&s);
+    vm_alloc_limit(vm);
     vm->gc_count = (size_t)get_u64(&s);
     vm->gc_user_us = (int64_t)get_u64(&s);
     vm->gc_sys_us = (int64_t)get_u64(&s);
@@ -763,19 +788,26 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     vm_grow_stack(vm, (size_t)sp + 1);
     vm->sp = (size_t)sp;
     for (size_t i = 0; i < vm->sp; i++) vm->stack[i] = get_value(&s);
+    vm->stack_clean = vm->sp;   /* nothing above it claimed (vm.h, M6) */
+    vm->stack_room = vm_room(vm, vm->sp);
 
-    vm->frames_active = (int)get_u32(&s);
-    vm->fp = (size_t)get_u64(&s);
-    if (vm->frames_active) {
-        if (!s.ok || !fits((uint64_t)vm->fp + 1, sizeof(Frame))) return failed(&s, err, errlen, "the image is cut short");
-        vm->frames_cap = vm->fp + 1 < 256 ? 256 : vm->fp + 1;
-        vm->frames = malloc(vm->frames_cap * sizeof(Frame));
-        if (!vm->frames) return failed(&s, err, errlen, "out of memory");
-        for (size_t i = 0; i <= vm->fp && s.ok; i++) {
-            vm->frames[i].func = get_u32(&s);
-            vm->frames[i].ret_pc = get_u32(&s);
-            vm->frames[i].base = (size_t)get_u64(&s);
-            vm->frames[i].closure = get_obj(&s);
+    /* the frames, the top level's first, which the instruction set makes
+       its own once the handlers are read too (vm_frames_install;
+       native-frames.md, M3) */
+    int frames_active = (int)get_u32(&s);
+    uint64_t top = get_u64(&s);
+    FrameRecord *records = NULL;
+    size_t nrecords = 0;
+    if (frames_active) {
+        if (!s.ok || !fits(top + 1, sizeof(FrameRecord))) return failed(&s, err, errlen, "the image is cut short");
+        nrecords = (size_t)top + 1;
+        records = malloc(nrecords * sizeof *records);
+        if (!records) return failed(&s, err, errlen, "out of memory");
+        for (size_t i = 0; i < nrecords && s.ok; i++) {
+            records[i].func = get_u32(&s);
+            records[i].ret_pc = get_u32(&s);
+            records[i].base = (size_t)get_u64(&s);
+            records[i].closure = get_obj(&s);
         }
     }
     vm->hp = (size_t)get_u64(&s);
@@ -788,6 +820,12 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
         vm->handlers[i].sp = (size_t)get_u64(&s);
         vm->handlers[i].fp = (size_t)get_u64(&s);
         vm->handlers[i].native = NULL;
+    }
+    {
+        const char *why = NULL;
+        int installed = vm_frames_install(vm, records, nrecords, &why);
+        free(records);
+        if (!installed) return failed(&s, err, errlen, why);
     }
 
     uint64_t nfiles = get_u64(&s);
@@ -848,16 +886,19 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
         if (!starts) return 0;
         int ok = vm->pc < p->code_len && starts[vm->pc];
         if (ok && vm->frames_active) {
-            if (vm->fp >= vm->frames_cap) ok = 0;
-            for (size_t i = 0; ok && i <= vm->fp; i++)
-                ok = vm->frames[i].func < p->nfuncs
-                     && vm->frames[i].base <= vm->sp
-                     && (i == 0 || (vm->frames[i].ret_pc < p->code_len && starts[vm->frames[i].ret_pc]));
+            FrameRef *fr;
+            size_t nf = vm_frames_from(vm, 0, &fr);
+            if (!nf) ok = 0;
+            for (size_t i = 0; ok && i < nf; i++)
+                ok = fr[i].func < p->nfuncs
+                     && fr[i].base <= vm->sp
+                     && (i == 0 || (fr[i].ret_pc < p->code_len && starts[fr[i].ret_pc]))
+                     && (!fr[i].closure || obj_kind(fr[i].closure) == K_CLOSURE);
         }
         for (size_t i = 0; ok && i < vm->hp; i++)
             ok = vm->handlers[i].pc < p->code_len && starts[vm->handlers[i].pc]
                  && vm->handlers[i].sp <= vm->sp
-                 && (!vm->frames_active || vm->handlers[i].fp <= vm->fp);
+                 && (!vm->frames_active || vm->handlers[i].fp <= vm_frame_id(vm));
         free(starts);
         if (!ok) {
             snprintf(err, errlen, "the image stopped somewhere its program does not go");
@@ -880,6 +921,7 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
    and given back to the system where it did not */
 static void interrupt_again(VM *vm) {
     vm->interrupt = 0;
+    sys_interrupt_limit(vm->interrupt_exn ? &vm->stack_room : NULL);   /* the calls' poll (vm.h, M6) */
     sys_interrupt_catch(vm->interrupt_exn ? &vm->interrupt : NULL);
 }
 
@@ -938,6 +980,12 @@ int vm_become(VM *vm, const char *path) {
     /* the JIT's options are this process's, not the image's (runtime/register),
        and so are the collector's log and its check (runtime/gc/) */
     next->jit = vm->jit;
+    /* and so is runtime/register's return trampoline, where the frames of
+       the image return when compiled code runs them (M6) */
+    next->ret_tramp = vm->ret_tramp;
+    next->ret_word = vm->ret_word;   /* (native-frames.md, M4) */
+    next->barrier_stub = vm->barrier_stub;   /* (M5: armed as the next collection begins the watermark) */
+    vm_frames_to_interpreter(next);
     next->gc_log = vm->gc_log;
     next->gc_log_t0 = vm->gc_log_t0;
     next->gc_verify = vm->gc_verify;

@@ -16,10 +16,12 @@
    - jit: every program, interpreted and under seven modes of the JIT, must
      print, count and err the same, as must every instruction, the fatal
      errors and the compiler compiling itself; and every instruction must
-     occur in some program (check-jit.sh);
+     occur in some program; a run that did not start, or a program that
+     prints nothing where it is expected to print, fails, and so does a
+     probe that does not print what it should (check-jit.sh);
    - units: whole, of units at -O0, -O1 and -O2, through the cache, from
-     it, relinked and loaded, the same bytes and the same runs
-     (check-units.sh);
+     it, relinked and loaded, the same bytes and the same runs, each
+     compiled with the program's .cargs after the level (check-units.sh);
    - positions: every instruction's position names a line that exists
      (check-positions.sh);
    - cross: every program, the compiler, runedoc and runeopt compiled by
@@ -242,20 +244,62 @@ struct
                           write (f ("count." ^ mode), countOf (f ("stderr." ^ mode)))
                         end)
                      jitModes
+          (* nothing ran is no pass: a run that could not start, or nothing
+             printed by a run that ends well where the program has an
+             expected output (but one whose output is the restored image's,
+             .restore; a program that writes files where it runs here stops,
+             the same in every mode) *)
+          fun exited (mode, k) = List.exists (fn l => l = "exit " ^ k) (lines (read (f ("stderr." ^ mode))))
+          val unstarted = List.find (fn (mode, _, _) => exited (mode, "126") orelse exited (mode, "127")) jitModes
+          val silent = size (read (b ^ ".expected")) > 0 andalso not (exists (b ^ ".restore"))
+                       andalso size (read (f "stdout.off")) = 0 andalso exited ("off", "0")
         in
-          List.app (fn (mode, _, what) =>
-                      if mode = "off" then ()
-                      else if not (same (f "stdout.off", f ("stdout." ^ mode))) then
-                        say ("FAIL jit." ^ n ^ ": prints differently with " ^ what ^ ": " ^ difference (f "stdout.off", f ("stdout." ^ mode)) ^ "\n")
-                      else if not (same (f "count.off", f ("count." ^ mode))) then
-                        say ("FAIL jit." ^ n ^ ": counts " ^ read (f "count.off") ^ " interpreted, " ^ read (f ("count." ^ mode))
-                             ^ " with " ^ what ^ "\n")
-                      else if not (same (f "stderr.off", f ("stderr." ^ mode))) then
-                        say ("FAIL jit." ^ n ^ ": standard error differs with " ^ what ^ ": "
-                             ^ difference (f "stderr.off", f ("stderr." ^ mode)) ^ "\n")
-                      else ())
-                   jitModes
+          case unstarted of
+            SOME (mode, _, _) =>
+              say ("FAIL jit." ^ n ^ ": the VM did not run with --jit=" ^ mode ^ ": " ^ firstLine (f ("stderr." ^ mode)) ^ "\n")
+          | NONE =>
+              if silent then say ("FAIL jit." ^ n ^ ": prints nothing interpreted, where " ^ b ^ ".expected is not empty\n")
+              else
+                List.app (fn (mode, _, what) =>
+                            if mode = "off" then ()
+                            else if not (same (f "stdout.off", f ("stdout." ^ mode))) then
+                              say ("FAIL jit." ^ n ^ ": prints differently with " ^ what ^ ": " ^ difference (f "stdout.off", f ("stdout." ^ mode)) ^ "\n")
+                            else if not (same (f "count.off", f ("count." ^ mode))) then
+                              say ("FAIL jit." ^ n ^ ": counts " ^ read (f "count.off") ^ " interpreted, " ^ read (f ("count." ^ mode))
+                                   ^ " with " ^ what ^ "\n")
+                            else if not (same (f "stderr.off", f ("stderr." ^ mode))) then
+                              say ("FAIL jit." ^ n ^ ": standard error differs with " ^ what ^ ": "
+                                   ^ difference (f "stderr.off", f ("stderr." ^ mode)) ^ "\n")
+                            else ())
+                         jitModes
         end
+    end
+
+  (* the probe: one program, run as each of the others is, interpreted and
+     at tier 2, prints what it is expected to, and the VM is one that can be
+     run, so that runs that compare equal because nothing ran pass nothing
+     (until performance M6 check-jit.sh took an absolute VM as relative, and
+     its runs started nothing and compared equal) *)
+  fun jitProbe () =
+    let
+      val probe = "tests/lang/basis.bool_ops"
+      val dir = jitDir () ^ "/@probe"
+      val () = mkdirs dir
+      fun f x = dir ^ "/" ^ x
+      val runnable = OS.FileSys.access (fromRoot (jitVm ()), [OS.FileSys.A_EXEC]) handle OS.SysErr _ => false
+    in
+      if not runnable then say ("FAIL jit.@probe: " ^ jitVm () ^ " is no VM that can be run\n")
+      else if exec {cmd = ["bin/rune", probe ^ ".sml", "-o", f "prog.rbc"], dir = NONE, stdin = "", stdout = "",
+                    stderr = f "cerr", timeout = 0} <> 0
+      then say ("FAIL jit.@probe: " ^ probe ^ ".sml does not compile: " ^ firstNonEmpty (f "cerr") ^ "\n")
+      else
+        List.app (fn (mode, jit) =>
+                    (ignore (exec {cmd = [jitVm ()] @ jit @ ["prog.rbc"], dir = SOME dir, stdin = "", stdout = f ("stdout." ^ mode),
+                                   stderr = f ("stderr." ^ mode), timeout = 600});
+                     if same (f ("stdout." ^ mode), probe ^ ".expected") then ()
+                     else say ("FAIL jit.@probe: " ^ probe ^ ".sml does not print " ^ probe ^ ".expected with "
+                               ^ String.concatWith " " jit ^ " under " ^ jitVm () ^ ": " ^ firstLine (f ("stderr." ^ mode)) ^ "\n")))
+                 [("off", ["--jit=off"]), ("opt", ["--jit=all", "--jit-tier=2"])]
     end
 
   (* a program of tests/register or tests/opt in the assembler's text, as
@@ -402,8 +446,10 @@ struct
       val b = base src and n = name src
       val out = run ^ "/" ^ variant
       fun f x = out ^ "/" ^ n ^ "." ^ x
-      fun c (k, flags) = exec {cmd = [rune] @ flags @ ["--lint", src, "-o", f (k ^ ".rbc")], dir = NONE, stdin = "", stdout = "",
-                               stderr = f (k ^ ".cerr"), timeout = 0} = 0
+      (* its .cargs for the compiler, after the level, as levels gives them *)
+      val cargs = sib (b, ".cargs")
+      fun c (k, flags) = exec {cmd = [rune] @ flags @ cargs @ ["--lint", src, "-o", f (k ^ ".rbc")], dir = NONE, stdin = "",
+                               stdout = "", stderr = f (k ^ ".cerr"), timeout = 0} = 0
       fun failed (flags, k) = (say ("FAIL units." ^ n ^ ": " ^ String.concatWith " " flags ^ ": " ^ firstLine (f (k ^ ".cerr")) ^ "\n"); false)
       val cache = out ^ "/cache"
       val builds =
@@ -779,6 +825,7 @@ struct
     | ["register-prims"] => SOME registerPrims
     | ["register-dead-roots"] => SOME registerDeadRoots
     | ["jit-one", src] => SOME (fn () => jitOne src)
+    | ["jit-probe"] => SOME jitProbe
     | ["jit-every-opcode"] => SOME jitEveryOpcode
     | ["jit-fatal", which] => SOME (fn () => jitFatal which)
     | ["jit-every-instruction"] => SOME jitEveryInstruction
@@ -815,7 +862,7 @@ struct
     in
       Test.describe nm
         (List.map (fn src => j (jitName src, ["jit-one", src], [], 600, 3600)) (langPerf @ ["tests/opt/prims.sml"])
-         @ [j ("@every-opcode", ["jit-every-opcode"], [], 500, 600)]
+         @ [j ("@probe", ["jit-probe"], [], 200, 600), j ("@every-opcode", ["jit-every-opcode"], [], 500, 600)]
          @ List.map (fn w => j ("@fatal-" ^ w, ["jit-fatal", w], [], 200, 600)) ["call", "decon", "global"]
          @ [j ("@every-instruction", ["jit-every-instruction"],
                (nm ^ "/@every-opcode") :: List.map (fn s => nm ^ "/" ^ jitName s) (langPerf @ ["tests/opt/prims.sml"]), 200, 600),

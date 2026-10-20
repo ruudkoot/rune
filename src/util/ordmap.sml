@@ -36,6 +36,11 @@ sig
   val appi : (key * 'a -> unit) -> 'a map -> unit
   val map : ('a -> 'b) -> 'a map -> 'b map
   val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+  (* mapKeep changes f m: map f m, where f counts what it changes by
+     changes, a count that only grows: a subtree in which f changed
+     nothing is given back as it was, so that a map f leaves alone is not
+     made again *)
+  val mapKeep : (unit -> word) -> ('a -> 'a) -> 'a map -> 'a map
   val filteri : (key * 'a -> bool) -> 'a map -> 'a map
   (* unionWith f (m1, m2): keys of m2 override m1 unless f is used to combine. *)
   val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
@@ -183,6 +188,22 @@ struct
       go m
     end
   fun map f m = mapi (fn (_, v) => f v) m
+
+  fun mapKeep changes f m =
+    let
+      fun go E = E
+        | go (t as T (h, l, k, v, r)) =
+          let
+            val n = changes ()
+            val l' = go l
+            val v' = f v
+            val r' = go r
+          in
+            if changes () = n then t else T (h, l', k, v', r')
+          end
+    in
+      go m
+    end
 
   fun filteri p m =
     foldli (fn (k, v, acc) => if p (k, v) then insert (acc, k, v) else acc) E m

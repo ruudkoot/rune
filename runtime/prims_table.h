@@ -409,6 +409,8 @@ enum Prim {
   PRIM_vector_concat_list = 403,
   PRIM_vector_extract = 404,
   PRIM_utf8_decode = 405,
+  PRIM_string_eq = 406,
+  PRIM_array_to_vector = 407,
   PRIM__COUNT
 };
 
@@ -819,6 +821,8 @@ static const char *const prim_names[] = {
   "vector_concat_list",
   "vector_extract",
   "utf8_decode",
+  "string_eq",
+  "array_to_vector",
 };
 
 static const unsigned char prim_arity[] = {
@@ -1228,6 +1232,8 @@ static const unsigned char prim_arity[] = {
   1,
   3,
   3,
+  2,
+  1,
 };
 
 /* what each primitive's result is (the representations of
@@ -1640,6 +1646,8 @@ static const unsigned char prim_result[] = {
   6,
   6,
   0,
+  5,
+  6,
 };
 
 #define RUNE_PRIM_LIST(X) \
@@ -2048,6 +2056,8 @@ static const unsigned char prim_result[] = {
   X(vector_concat) \
   X(vector_concat_list) \
   X(vector_extract) \
-  X(utf8_decode)
+  X(utf8_decode) \
+  X(string_eq) \
+  X(array_to_vector)
 
 #endif

@@ -118,7 +118,14 @@ source again for it, in the unit's mode (*Source modes*), with the fixity
 of the unit's start, and checks that the source is the one the basis was
 made from by its hash. A functor's
 basis -- the environment it was declared in -- is written as what the unit
-added to its start.
+added to its start. Its signature is written whole: its parameter's, and
+the summary its declaration's check left -- the environment the body gave,
+the type names it made, and how many names of each kind the check used --
+by which an application inside a functor's declaration is typed, and an
+application that makes code takes the equality of the types its copy
+made (rule 54; [plans/functors.md](plans/functors.md)). The summary's
+values and exceptions are named by placeholders, which are no names of the
+unit's.
 
 Then the unit's basis is *loaded* again in place of what its compile left
 (`UnitBasis.load`; `Pipeline.unitThrough`): the compiler's tables go back
@@ -286,14 +293,20 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   removed or moved; and a unit whose body changed and whose basis did not
   keeps its identity, and the units that used it keep their entries: the
   cut-off;
-* a functor's body is elaborated again at each application, in the basis
-  of its declaration, as it was parsed there: what its names were bound to
-  and the fixity it had are the functor's as much as its text is. So a
-  unit that declares a functor has in its basis, and so in its identity,
-  the unit that bound each name its compile looked up, and a unit that
-  applies one of its functors is compiled again where one of them changed,
-  though it names none of them and another unit may bind them where it is
-  (S49 to S51);
+* a functor's body is elaborated again at each application that makes
+  code, in the basis of its declaration, as it was parsed there: what its
+  names were bound to and the fixity it had are the functor's as much as
+  its text is. So a unit that declares a functor has in its basis, and so
+  in its identity, the unit that bound each name its compile looked up --
+  but of a functor its declaration applied, that functor's signature's
+  fingerprint, since an application inside a functor's declaration is
+  typed by the signature alone -- and a unit that applies one of its
+  functors is compiled again where one of them changed, though it names
+  none of them and another unit may bind them where it is (S49 to S51). A
+  unit that applies a functor to make code uses the unit the functor is
+  from as well (the usage `funat IDENTITY`), whose code its copy has, so
+  that the functors a body applies, wherever their names are bound, have
+  their units used where the code is (S66);
 * in the REPL, what a declaration of a file used echoes is compiled with
   it: two usages more say what that was compiled by, `echo on` whether it
   echoed at all (the print depth was above 0) and `p KEY` whether a printer
@@ -320,8 +333,10 @@ with every name in it written by its unit's name and the path that reaches
 it there (`a.sml:A.shape`, `a.sml:sig:SHAPE.area`), so that a change under
 a name changes every fingerprint that mentions it, and a change beside it
 none. A usage holds where its binder is the same unit, or where what the
-name names now has the same fingerprint. A functor, an overloading and the
-REPL's settings hold by their binder alone.
+name names now has the same fingerprint. A functor's fingerprint is its
+signature, its parameter's and its summary's (S65, S66); a functor with no
+summary, an overloading and the REPL's settings hold by their binder
+alone.
 
 So a unit whose usages hold may have been compiled against a unit that has
 changed since -- a value added to `a.sml` changes its identity, not what
@@ -338,8 +353,10 @@ used the changed type and those after it whose usages changed, and S4,
 a value added, the changed unit alone.
 
 The cost is precision, not correctness, where a usage holds only by its
-binder: every unit that applies a functor of a changed unit, or resolved an
-overloading one registered, is compiled again.
+binder: every unit that applies a functor of a changed unit to make code,
+or resolved an overloading one registered, is compiled again; its basis,
+typed by the functor's signature, is the same where the signature is, and
+the units after it are taken from the cache (S65).
 
 **One program of the units' Mid** (`--units --whole`; the incremental
 roadmap's M7 and D6). A compile in units links its units' code; with

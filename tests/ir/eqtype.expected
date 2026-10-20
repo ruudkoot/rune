@@ -1,0 +1,56 @@
+(* after simplify *)
+(datatype t () (0 "A") (1 "B" : int))
+(datatype u () (0 "X") (1 "Y"))
+(funs
+  (fn g1 ((v1 : int ref * int ref)) : bool
+    (let (v2 : int ref) (select 0 v1)
+    (let (v3 : int ref) (select 1 v1)
+    (return (prim ptr_eq v2 v3 : (int ref * int ref) -> bool))))))
+(funs
+  (fn g2 ((v4 : t)) : bool
+    (return (prim ptr_eq v4 (con0 0 : t) : (t * t) -> bool))))
+(funs
+  (fn g3 ((v5 : int list)) : bool
+    (return (prim ptr_eq v5 (con0 0 : int list) : (int list * int list) -> bool))))
+(funs
+  (fn g4 ((v6 : string * string)) : bool
+    (let (v7 : string) (select 0 v6)
+    (let (v8 : string) (select 1 v6)
+    (return (prim string_eq v7 v8 : (string * string) -> bool))))))
+(funs
+  (fn g5 ((v9 : int * int)) : bool
+    (let (v10 : int) (select 0 v9)
+    (let (v11 : int) (select 1 v9)
+    (return (prim imm_eq v10 v11 : (int * int) -> bool))))))
+(funs
+  (fn g6 ((v12 : u * u)) : bool
+    (let (v13 : u) (select 0 v12)
+    (let (v14 : u) (select 1 v12)
+    (return (prim imm_eq v13 v14 : (u * u) -> bool))))))
+(funs
+  (fn g7 ((v15 : (int * int) * (int * int))) : bool
+    (let (v16 : int * int) (select 0 v15)
+    (let (v17 : int * int) (select 1 v15)
+    (return (prim poly_eq v16 v17 : ((int * int) * (int * int)) -> bool))))))
+(val g8 : int ref
+  (return (prim ref_new 0 : int -> int ref)))
+(val g9 : bool * bool * bool * bool * bool * bool * bool * bool * bool * bool
+  (let (v18 : int ref) (prim ref_new 0 : int -> int ref)
+  (let (v19 : int ref * int ref) (tuple g8 v18)
+  (let (v20 : bool) (app g1 v19)
+  (let (v21 : t) (con 1 1 : t)
+  (let (v22 : bool) (app g2 v21)
+  (let (v23 : int * int list) (tuple 1 (con0 0 : int list))
+  (let (v24 : int list) (con 1 v23 : int list)
+  (let (v25 : bool) (app g3 v24)
+  (let (v26 : string * string) (tuple "a" "b")
+  (let (v27 : bool) (app g4 v26)
+  (let (v28 : int * int) (tuple 1 2)
+  (let (v29 : bool) (app g5 v28)
+  (let (v30 : u * u) (tuple (con0 0 : u) (con0 1 : u))
+  (let (v31 : bool) (app g6 v30)
+  (let (v32 : int * int) (tuple 1 2)
+  (let (v33 : int * int) (tuple 1 2)
+  (let (v34 : (int * int) * (int * int)) (tuple v32 v33)
+  (let (v35 : bool) (app g7 v34)
+  (return (tuple v20 v22 v25 v27 v29 v31 v35 (con0 1 : bool) (con0 0 : bool) (con0 1 : bool))))))))))))))))))))))

@@ -238,23 +238,65 @@ struct
   (* A realisation (Section 5.6) maps type names, by stamp, to type functions. *)
   type realisation = tyfcn IntMap.map
 
+  (* A realisation keeps what it does not change: `changes` counts what
+     the realisations made (it only grows, and wraps round), and a node
+     none of whose parts changed is given back as it was, with what it
+     shares; where a realisation changes nothing, nothing is allocated. *)
+  val changes = ref 0w0
+  fun changed () = changes := !changes + 0w1
+
   fun realize (phi : realisation, t : ty) : ty =
-    case prune t of
-      t as TVar _ => t
-    | TCon (c, args) =>
-        let val args' = List.map (fn a => realize (phi, a)) args
-        in
-          case IntMap.find (phi, #stamp c) of
-            SOME f => applyFcn (f, args')
-          | NONE => TCon (c, args')
-        end
-    | TRecord fields => TRecord (List.map (fn (l, a) => (l, realize (phi, a))) fields)
-    | TArrow (a, b) => TArrow (realize (phi, a), realize (phi, b))
+    (case prune t of
+       t' as TVar _ => t'
+     | t' as TCon (c, args) =>
+         let
+           val n = !changes
+           val args' = realizeList (phi, args)
+         in
+           case IntMap.find (phi, #stamp c) of
+             SOME f => (changed (); applyFcn (f, args'))
+           | NONE => if !changes = n then t' else TCon (c, args')
+         end
+     | t' as TRecord fields =>
+         let
+           val n = !changes
+           val fields' = realizeFields (phi, fields)
+         in if !changes = n then t' else TRecord fields' end
+     | t' as TArrow (a, b) =>
+         let
+           val n = !changes
+           val a' = realize (phi, a)
+           val b' = realize (phi, b)
+         in if !changes = n then t' else TArrow (a', b') end)
+
+  and realizeList (phi : realisation, l : ty list) : ty list =
+    case l of
+      [] => l
+    | a :: rest =>
+        let
+          val n = !changes
+          val a' = realize (phi, a)
+          val rest' = realizeList (phi, rest)
+        in if !changes = n then l else a' :: rest' end
+
+  and realizeFields (phi : realisation, l : (string * ty) list) : (string * ty) list =
+    case l of
+      [] => l
+    | (lab, a) :: rest =>
+        let
+          val n = !changes
+          val a' = realize (phi, a)
+          val rest' = realizeFields (phi, rest)
+        in if !changes = n then l else (lab, a') :: rest' end
 
   fun realizeFcn (phi : realisation, f : tyfcn) : tyfcn =
     case f of
-      TName c => (case IntMap.find (phi, #stamp c) of SOME f' => f' | NONE => f)
-    | TAbbrev (params, body) => TAbbrev (params, realize (phi, body))
+      TName c => (case IntMap.find (phi, #stamp c) of SOME f' => (changed (); f') | NONE => f)
+    | TAbbrev (params, body) =>
+        let
+          val n = !changes
+          val body' = realize (phi, body)
+        in if !changes = n then f else TAbbrev (params, body') end
 
   (* --- equality (Section 4.4) --- *)
   (* Does a type admit equality? Type variables count as admitting it: for

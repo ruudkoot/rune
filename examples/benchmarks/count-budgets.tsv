@@ -1,9 +1,9 @@
 benchmark	profile	config	level	instructions	bytes	objects
-primes-lazy	smoke	rune	O2	17528	24816	1109
-primes-lazy	smoke	rune:opt	O2	17528	24816	1109
-primes-lazy	smoke	rune:new	O2	10538	24816	1109
-primes-lazy	smoke	rune:jit	O2	10538	24816	1109
-primes-strict	smoke	rune	O2	22910	23328	984
-primes-strict	smoke	rune:opt	O2	22910	23328	984
-primes-strict	smoke	rune:new	O2	13776	23328	984
-primes-strict	smoke	rune:jit	O2	13776	23328	984
+primes-lazy	smoke	rune	O2	8175	20266	921
+primes-lazy	smoke	rune:jit	O2	8175	20266	921
+primes-lazy	smoke	rune:stack	O2	12948	20266	921
+primes-lazy	smoke	rune:opt	O2	12948	20266	921
+primes-strict	smoke	rune	O2	9909	18796	797
+primes-strict	smoke	rune:jit	O2	9909	18796	797
+primes-strict	smoke	rune:stack	O2	16710	18796	797
+primes-strict	smoke	rune:opt	O2	16710	18796	797

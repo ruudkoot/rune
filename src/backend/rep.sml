@@ -22,8 +22,11 @@ struct
           val cs =
             case Ty.datatypeOf stamp of
               SOME {cons, ...} =>
-                List.map (fn (tag, _, SOME (Ty.Tuple xs)) => (tag, if List.length xs >= 2 then SOME (List.length xs) else NONE)
-                           | (tag, _, _) => (tag, NONE)) cons
+                List.map (fn (tag, _, SOME a) =>
+                               (case Ty.view a of
+                                  Ty.Tuple xs => (tag, if List.length xs >= 2 then SOME (List.length xs) else NONE)
+                                | _ => (tag, NONE))
+                           | (tag, _, NONE) => (tag, NONE)) cons
             | NONE => []
         in
           IntTable.insert (known, stamp, cs); cs
@@ -32,7 +35,7 @@ struct
   (* SOME n where the constructor with the tag of the datatype t is made of
      the n fields of its argument; NONE where it boxes it. *)
   fun fields (t : Ty.ty, tag : int) : int option =
-    case t of
+    case Ty.view t of
       Ty.Con (stamp, _, _) =>
         (case List.find (fn (tag', _) => tag' = tag) (ofDatatype stamp) of
            SOME (_, n) => n

@@ -7,11 +7,19 @@
    The registers the code keeps, all preserved across a call into C by both
    conventions:
      r13  the VM (not r12, whose every memory operand is a byte longer)
-     rbp  the frame's base, as an index into the stack
-     r14  the frame's registers: vm->stack + 8 * rbp
+     r14  the frame's registers: vm->stack + 8 * the frame's base
      r15  the count of instructions executed
-   Register k of the frame is the word at [r14 + 8 k]. The frame's
-   stack pointer is rbp + nlocals, plus what a primitive's arguments push.
+     rbp  the allocation pointer, alloc.from + alloc.used (native-frames.md,
+          M8: Masm.alloc_reg; performance M6 kept the frame's record in it)
+   Register k of the frame is the word at
+   [r14 + 8 k]. The frame's stack pointer is its base + nlocals, plus what
+   a primitive's arguments push. The frame's header is below its
+   registers (vm.h, isa_frame_header; native-frames.md, M4): [r14 - 8]
+   the return word, [r14 - 16] the closure, [r14 - 24] the info word. A
+   call's frame begins past this frame's registers, a header and the
+   callee's registers, in the stack's clean part (VM.stack_clean); the
+   call writes the return word -- its landing's -- and the closure, and its
+   landing goes back by as much.
    rax, rcx, rdx, r8, r11 and xmm0, xmm1 are scratch; rbx, r12, rsi, rdi,
    r10 and r9 are tier 2's homes (asm.h), and scratch where there are
    none. The machine stack holds only the call into C in progress: the
@@ -32,13 +40,16 @@ enum { VMR = R_VM, BASEI = R_BASEI, BASER = R_BASER, COUNTR = R_COUNT };
 
 /* A slow path, emitted after the function's code: where it begins, where
    it goes back to, and what it is. */
-enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_FRAMES, SLOW_RET, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT, SLOW_BOXREAL, SLOW_BOXNUM, SLOW_SETENV, SLOW_INTERRUPT };
+enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT, SLOW_BOXREAL, SLOW_BOXNUM, SLOW_SETENV, SLOW_INTERRUPT, SLOW_CALL_TABLE };
+/* the words of a frame's header below its registers (vm.h, isa_frame_header) */
+#define MS_HEADER 3
 typedef struct Slow {
     AsmLabel here;
     AsmLabel back;
     int kind;
     uint32_t pc;          /* the pc after the instruction, for SYNC */
     uint32_t cur;         /* the instruction's own pc: what is live at its entry is written back (tier 2) */
+    uint32_t ahead;       /* the instructions of its run after it, counted already (Masm.ahead) */
     int32_t a, b, c, d, e, g;   /* what the kind needs */
     uint32_t n;
     const uint8_t *L;
@@ -53,6 +64,20 @@ typedef struct Slow {
    words. A home is written back to the slot at every safepoint (ms_sync)
    and loaded again after (ms_reload), so that C, the interpreter and an
    image see the slot, and the collector's roots are the slots as before.
+
+   A pointer's register has a general home too (performance M7, D6 A), and
+   so has one the section says may hold anything, or a constructor: the
+   home's tag is T_PTR, and it holds the word as the slot would, whatever
+   it is -- an object's address, an immediate, a box of a real or of a
+   number of 64 bits. Its tag, kind and length are tested as a slot's are
+   (where the section does not vouch for them), and since the collector
+   moves what it points to, it is loaded again from its slot after every
+   call into C that may collect (may_move), though C keeps its register. A
+   real or a number of 64 bits moved into it from a raw home goes through
+   its slot, boxed there where it has no immediate (ms_need_word). Under
+   --gc-verify and --gc-stress the code checks after every call into C,
+   where no collection ran, that the homes C kept -- the pointers' too,
+   before they are loaded again -- agree with their slots (ms_reload).
 
    A raw home holds the value itself and not its word: a real's is an xmm
    register with the double, and with RUNE_RAW_HOMES, where the VM keeps
@@ -72,20 +97,51 @@ typedef struct Slow {
    mistake, said at compile time. */
 #define MS_REAL_HOMES 1
 enum HomeKind { HOME_SLOT = 0, HOME_GPR, HOME_XMM };
+
+/* --jit-dump (performance M1): what each part of a function's code is
+   for, its role, as the code is made: a mark where an instruction of the
+   bytecode begins, and one where the role changes, each at its offset in
+   the function's code, which the dump writes beside the bytes (dump.c).
+   So every machine instruction has a role -- that of the last mark at or
+   before it -- and a bytecode instruction. MR_BODY is the instruction's
+   own work; the others are what the protocol around it costs: the count
+   of a run, the poll, the write-back of the homes at a call, a call's
+   arguments, its room check, the header of its callee's frame
+   (native-frames.md, M4; a record of the frames before), its jump; the
+   fill of registers with unit, a landing that loads
+   the homes, a return, the slow paths, the VM made exact for C and taken
+   back, the closure a call goes through, a pointer loaded from its slot,
+   a tag or kind test, an allocation in line. */
+enum MsRole { MR_BODY, MR_COUNT, MR_POLL, MR_WB, MR_ARGS, MR_ROOM, MR_FRAMEROOM, MR_FRAME, MR_JUMP,
+              MR_FILL, MR_LAND, MR_RET, MR_SLOW, MR_SYNC, MR_CLOS, MR_PTRLD, MR_TAG, MR_ALLOC, MR__COUNT };
+extern const char *const ms_role_names[MR__COUNT];
+typedef struct MsMark { uint32_t off; int32_t role; uint32_t pc; } MsMark;   /* role -1: the instruction at pc begins */
+typedef struct MsMarks { MsMark *at; size_t n, cap; } MsMarks;
 typedef struct Home {
     uint8_t kind;
     uint8_t reg;          /* the machine register */
-    uint8_t tag;          /* the tag the value has: T_INT, T_WORD, T_CHAR, T_CON0, T_REAL */
+    uint8_t tag;          /* the tag the value has: T_INT, T_WORD, T_CHAR, T_CON0, T_REAL; T_PTR any word (M7) */
 } Home;
 
 typedef struct Masm {
     Asm a;
     int win;              /* the Windows convention for calls into C */
+    uint32_t func;        /* the function, which a sync tells the VM (VM.func) */
+    /* the allocation pointer in R_BASEI (native-frames.md, M8): alloc's
+       next byte, alloc.from + alloc.used, which a sync writes back (and
+       the bytes allocated since with it) and a reload takes again; 0 for
+       the text backend's templates, whose code keeps its frame there */
+    int alloc_reg;
+#ifdef RUNE_ALLOC_RUNS
+    uint32_t run_seq, alloc_seq;   /* a measuring build's: the run being made, and the last that allocated (masm.c) */
+#endif
     uint32_t nlocals;     /* the function's registers */
     uint32_t nslots;      /* the registers and what a primitive's arguments push: the frame's slots */
     uint32_t nfields;     /* the fields of the object ms_alloc last made, or UINT32_MAX where the object in hand is another's */
     const void *leave;    /* the leave stub: where the code hands the VM back */
     int placed;           /* where the code will run is known (the Asm's base): the region's stubs and trampolines are in reach of a direct jump or call */
+    int verify;           /* --gc-verify or --gc-stress: the homes checked against their slots after a call into C (ms_reload, M7) */
+    AsmLabel *(*home_fails)(struct Masm *m, uint32_t r);   /* where register r's home and slot disagree: a fatal error (compile.c) */
     /* the trampolines of the calls into C (compile.c, jit_region_init):
        the helper's address to its trampoline's, by open addressing
        (ms_tramp_slot); NULL where there are none */
@@ -101,6 +157,7 @@ typedef struct Masm {
     const Home *homes;
     const uint64_t *live;
     uint32_t from;
+    const uint64_t *sync_live;   /* at both tiers: the registers live at each pc's entry (from `from`), told the VM at a sync (VM.top_live, M6); NULL: none told */
     uint32_t sync_pc;     /* the pc of the last ms_sync, for the reload after */
     uint32_t cur_pc;      /* the pc of the instruction being emitted: what is live at its entry is written back */
     uint64_t cur_def;     /* the register it defines, as a bit (compile.c says, after ms_begin; 0: none): a helper may have written its slot */
@@ -123,6 +180,17 @@ typedef struct Masm {
     uint64_t cur_reals;
     void (*box_real)(void);   /* the helper that boxes a real into a slot (compile.c, jit_h_box_real) */
     void (*box_num)(void);    /* and the one that boxes an int or a word of 64 bits (jit_h_box_num) */
+    /* --jit-dump: the marks of the code's roles (NULL: none kept), and
+       the role of the code being made */
+    MsMarks *marks;
+    int role;
+    int in_slow;          /* the slow paths are being made: all of their code is of MR_SLOW */
+    /* the instructions of the run after the one being made, which the
+       run's count, added where it begins, has counted already: a run ends
+       only where control goes elsewhere (performance M6, D9 B: counting
+       per extended block), so a sync in its middle -- where C may raise,
+       or read the count -- gives the VM the count less these */
+    uint32_t ahead;
 } Masm;
 /* whether the shape of R(s) is trusted for an object of kind (REP_PTR; a
    constructor with fields for K_CON from a datatype with nullary ones too) */
@@ -156,6 +224,7 @@ void ms_check_tag(Masm *m, int32_t s, int tag, AsmLabel *unless);  /* to unless 
 void ms_load_obj(Masm *m, int r, int32_t s, int kind, AsmLabel *unless);   /* r := the object R(s) points to, of that kind */
 void ms_load_obj_tested(Masm *m, int r, int32_t s, int kind, AsmLabel *unless);   /* the same, tested whatever the section says: a program's own error to report */
 void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless);      /* r := the tag of the constructor value in R(s) */
+void ms_jump_unless_tag(Masm *m, int32_t s, int32_t c, AsmLabel *target, AsmLabel *unless);   /* JUMPIFNOTTAG: to target unless R(s) has tag c (native-frames.md, M2) */
 /* the ones the emitters of M5 to M7 wrote against the slots directly,
    through here from M9, so that a register's home may be elsewhere */
 void ms_value_to(Masm *m, int base, int32_t disp, int32_t s);      /* [base + disp] := R(s), as a Value (16 bytes) */
@@ -163,6 +232,8 @@ void ms_value_from(Masm *m, int32_t d, int base, int32_t disp);    /* R(d) := th
 void ms_load_real(Masm *m, int xmm, int32_t s, AsmLabel *unless);  /* xmm := the real in R(s), an immediate decoded or a box read; to unless where it is neither; R_S2 and R_S3 clobbered */
 void ms_set_real(Masm *m, int32_t d, int xmm, AsmLabel *slow);     /* R(d) := the real in xmm as an immediate; to slow where it has none (the box is a helper's to make); R_S2 and R_S3 clobbered */
 void ms_cmp_bits(Masm *m, int r, int32_t s);                       /* flags := r against the word of R(s) */
+void ms_cmp_words(Masm *m, int32_t x, int32_t y);                  /* flags := the word of R(x) against that of R(y), from their homes where they have them; R_S0 clobbered */
+int ms_imm_trusted(const Masm *m, int32_t s, int tag);             /* R(s)'s word is an immediate of tag by the section, untested (tier 2's homes) */
 void ms_test_false(Masm *m, int32_t s);                            /* flags: ZF where the bool in R(s) is false */
 void ms_bool_flags(Masm *m, int r);                                /* flags: ZF where the bool whose word is in r is false */
 void ms_load_xmm(Masm *m, int xmm, int32_t s);                     /* xmm := R(s), the value whole */
@@ -180,6 +251,11 @@ void ms_one_imm(Masm *m, int32_t x, int tag, AsmLabel *slow);              /* R_
 void ms_two_imm(Masm *m, int32_t x, int32_t y, int tag, AsmLabel *slow);   /* R_S0, R_S1 := the words of R(x), R(y), immediates both */
 void ms_two_words(Masm *m, int32_t x, int32_t y, AsmLabel *heap);          /* R_S0, R_S1 := the words of R(x), R(y), whatever they hold; to heap where either is no immediate */
 void ms_int_arith(Masm *m, int op, AsmLabel *slow);                /* R_S0 := R_S0 op R_S1 (MS_ADD, MS_SUB, MS_MUL), to slow on overflow */
+/* R(d) := R(x) op R(y) for MS_ADD and MS_SUB of ints whose words the
+   section vouches for in their homes (ms_imm_trusted), to slow on overflow:
+   x and y read where they are and d written there, R_S0 the one scratch
+   (M6); x and y unchanged on the way to slow */
+void ms_int_addsub_homes(Masm *m, int op, int32_t d, int32_t x, int32_t y, AsmLabel *slow);
 void ms_int_neg(Masm *m, AsmLabel *slow);                          /* R_S0 := ~R_S0, to slow on overflow */
 void ms_int_to_char(Masm *m, AsmLabel *slow);                      /* the int in R_S0 as a char: to slow where it is not 0 to 255 */
 void ms_word_arith(Masm *m, int op, AsmLabel *slow);               /* R_S0 := R_S0 op R_S1 for words: modulo the word size, or to slow where the result is no immediate */
@@ -212,6 +288,26 @@ void ms_writeback(Masm *m, uint32_t pc);
 void ms_reload_homes(Masm *m, uint32_t pc);
 void ms_writeback_call(Masm *m, uint32_t pc, uint32_t after, int32_t result);   /* at a call of an SML function, the homes the frame needs after it (at after; result: the register it returns into, or -1) */
 void ms_reload_clobbered(Masm *m, uint32_t pc);   /* after a call into C that touched no slot: the homes live at pc that C does not keep */
+void ms_reload_homes_but(Masm *m, uint32_t pc, int32_t d);   /* the homes live at pc loaded again, but d's (a call's result, M6) */
+/* a call's landing (M6): r14 the caller's again, from the callee's, whose
+   registers began past the caller's and a header */
+void ms_frame_back(Masm *m);
+/* the room for a frame (M6): to slow unless the stack's clean part holds
+   need values past this frame's base (VM.stack_room, its end's address
+   less ROOM_SLACK values: native-frames.md, M4). And the same for a need
+   in values in r, past above, R_S0 := the address it compared, which the
+   slow path claims ROOM_SLACK values past (jit_h_grow); and r := the
+   address ms_room compared, for its slow path. */
+void ms_room(Masm *m, uint32_t need, AsmLabel *slow);
+void ms_room_dynamic(Masm *m, int r, uint32_t above, AsmLabel *slow);
+void ms_room_compared(Masm *m, int r, uint32_t need);
+/* r := the frame's base, an index into the stack, plus k */
+void ms_base_index(Masm *m, int r, uint32_t k);
+/* VM.fp and VM.func := the frame's, VM.sp := its base plus k (R_S0 clobbered) */
+void ms_store_fp(Masm *m, uint32_t k);
+/* r := the address k values past the frame's registers' start, past its
+   slots too (the room a call wants) */
+void ms_slot_end(Masm *m, int r, uint32_t k);
 /* the instruction at pc begins: what the masm remembers of the last is forgotten */
 void ms_begin(Masm *m, uint32_t pc);
 /* R(s)'s word will be stored by this instruction: where s is a real in its
@@ -232,7 +328,6 @@ static inline const Home *ms_home(const Masm *m, int32_t s) {
 /* the VM */
 void ms_sync(Masm *m, uint32_t pc, int pushed);
 void ms_reload(Masm *m);
-void ms_frame(Masm *m, int r);                                     /* r := &vm->frames[vm->fp] */
 /* a helper the code calls into: any function, cast to this type */
 typedef void (*MsHelper)(void);
 /* where a helper's address is looked for first in a table of trampolines of mask + 1 entries */
@@ -244,6 +339,13 @@ void ms_call(Masm *m, MsHelper helper);                            /* the VM as 
    it sets the arguments, and this loads them again after */
 void ms_call_lean(Masm *m, MsHelper helper);
 void ms_call_pure(Masm *m, MsHelper f, uint32_t after, int32_t d);  /* f of the C library on reals in F_S0 (and F_S1), its result in F_S0: the homes live here or at after that C clobbers kept around it raw, d's not */
+/* the homes live at the instruction's start or at after that a call into C
+   would clobber -- d's not, the result goes there -- waiting in the VM's
+   cells as they are around a call of a helper that touches nothing of the
+   VM (ms_call_pure's, and the lean helpers' of M5): saved before its
+   arguments are set, which may be homes, and loaded again after */
+void ms_save_volatile(Masm *m, uint32_t after, int32_t d);
+void ms_restore_volatile(Masm *m, uint32_t after, int32_t d);
 void ms_count(Masm *m, uint32_t k);
 void ms_handback(Masm *m, int code);                               /* the VM handed back with that answer */
 /* the code left at the boundary after an instruction, for the interpreter
@@ -254,8 +356,13 @@ void ms_exit(Masm *m, uint32_t pc, uint32_t remaining);
 void ms_handback_rax(Masm *m);                                     /* with the answer in rax */
 
 /* the heap: rax := an object of n fields, or to slow where it would not
-   fit or --gc-stress asks; the header written, the counts kept */
+   fit or --gc-stress asks; the header written, the counts kept. With the
+   allocation pointer in a register (Masm.alloc_reg; native-frames.md,
+   M8) a bump of it and a compare with VM.alloc_limit, the bytes counted
+   from its progress at the next sync, the object here; the slow path
+   takes the bump back first (ms_alloc_undo). */
 void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow);
+void ms_alloc_undo(Masm *m, int kind, uint32_t n);
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s);       /* field i of the object in obj := R(s) */
 void ms_need_unmarked(Masm *m, AsmLabel *slow);                     /* to slow while the low-pause collector's cycle marks (the barrier's flag; before a store) */
 void ms_set_field(Masm *m, int obj, uint32_t i, int32_t s);         /* a store into an object that exists, through the barrier: field i of the object in obj := R(s); obj is not kept; R_S2, R_S3 and R_S6 clobbered */
@@ -267,8 +374,39 @@ void ms_load_contag(Masm *m, int r, int obj);                       /* r := the 
 void ms_need_len(Masm *m, int obj, uint32_t n, AsmLabel *unless);   /* to unless where the object in obj has not more than n fields (an index n is out) */
 void ms_store_field_imm(Masm *m, int obj, uint32_t i, int tag, int32_t payload);   /* field i of the object in obj := the immediate value */
 void ms_load_field_payload(Masm *m, int r, int obj, uint32_t i);    /* r := the payload of field i of the object in obj */
+void ms_load_field_bits(Masm *m, int r, int obj, uint32_t i);       /* r := the word of field i of the object in obj */
 void ms_element(Masm *m, int obj, int index);                       /* obj := the address of element index of the object in obj (a vector or an array), index clobbered */
 void ms_string_byte(Masm *m, int r, int obj, int index);            /* r := byte index of the string in obj; obj clobbered */
+/* `=` and the order of strings in line (docs/plans/performance.md, M5;
+   D7 A), as values_equal and str_cmp have them (runtime/runtime.c,
+   runtime/prims.c): */
+/* `=` of two words in a and b of which one at least is a pointer (the
+   and of their low bits clear): to yes or no where it is decided without
+   walking them -- an immediate against a pointer, a pointer against
+   itself, two objects of different kinds, two refs or arrays (identity),
+   two boxes of numbers (their bits), two strings (their bytes, any length,
+   word by word) -- and to walk where only values_equal can say (a tuple,
+   a constructor, an exception, a real's box against itself: a NaN). a
+   and b are kept on the way to walk, not to yes or no; R_S2, R_S3 and
+   R_S6 are clobbered, and on a string's way R_S1 */
+void ms_equal_heap(Masm *m, int a, int b, AsmLabel *yes, AsmLabel *no, AsmLabel *walk);
+/* `=` of the strings at a and b (R_S0 and R_S1, clobbered): to yes or no;
+   their lengths, then their bytes a word at a time, any length; R_S2,
+   R_S3 and R_S6 are clobbered too (what ms_equal_heap does with two
+   strings, and string_eq's emitter, M5) */
+void ms_string_equal(Masm *m, int a, int b, AsmLabel *yes, AsmLabel *no);
+/* the order of the strings at R_S0 and R_S2, as the flags of an unsigned
+   compare -- below LESS, equal EQUAL, above GREATER -- where the shorter
+   is at most 8 bytes: its bytes against as many of the other's, a word of
+   each with its bytes in the other order (big-endian, so that the compare
+   of words is that of bytes) and the rest shifted out, then the lengths.
+   To longer, R_S0 and R_S2 kept, where both are longer. R_S1, R_S3 and
+   R_S6 are clobbered. */
+void ms_string_order_short(Masm *m, AsmLabel *longer);
+/* r := the kind of the object in obj (its header's byte, without the
+   collector's bits where they are set: RUNE_GC_BITS) */
+void ms_load_kind(Masm *m, int r, int obj);
+
 /* arrays of values outside the heap's objects: the constants, the globals,
    a frame's registers at an address */
 void ms_load_nth(Masm *m, int32_t d, int base, uint32_t i);         /* R(d) := the i-th value at base */
@@ -282,6 +420,12 @@ void ms_field_from_nth(Masm *m, int obj, uint32_t i, int base, uint32_t k);   /*
 void ms_slot_from_nth_raw(Masm *m, int32_t d, int base, uint32_t k);
 void ms_scale_index(Masm *m, int r);                               /* r := r * the size of a value: a count of values or registers as bytes */   /* the slot of R(d) := the k-th value at base, the slot itself whatever home d has (a callee's registers) */
 
+/* --jit-dump: the role of the code from here on, and the one it had (a
+   mark where it changes, where marks are kept); and a mark where the
+   instruction at pc begins */
+int ms_role(Masm *m, int role);
+void ms_mark_pc(Masm *m, uint32_t pc);
+
 /* slow paths */
 Slow *ms_slow(Masm *m, int kind, uint32_t pc);
 void ms_emit_slow_paths(Masm *m, void (*emit)(Masm *m, Slow *s));
@@ -291,5 +435,24 @@ void ms_emit_slow_paths(Masm *m, void (*emit)(Masm *m, Slow *s));
 void ms_emit_enter(Asm *a, int win);
 void ms_emit_leave(Asm *a, int win);
 void ms_emit_fatal(Asm *a, int win, MsHelper helper);              /* the stub of the fatal errors: helper(vm, rax, rcx), which never returns (compile.c, jit_fatal) */
+/* the return trampoline (VM.ret_tramp, performance M6): where compiled
+   code's RET goes for a caller that is not compiled code -- the return
+   word VM.ret_word of a frame's header (native-frames.md, M4) -- the value
+   in R_S0 and r14 the frame that returns: the count and the frame to the
+   VM, helper(vm, value), and the VM handed back with its answer through
+   the leave stub at leave. Its address is odd (as_ret_align). */
+void ms_emit_ret_tramp(Asm *a, int win, MsHelper helper, AsmLabel *leave);
+/* where compiled code's call goes to a function with no code (the table of
+   calls, M6), r14 the callee's frame, its header and registers made, and
+   R_S6 its function's word (2f + 1, as a closure holds it): the count,
+   the frame and the function to the VM,
+   helper(vm), and the VM handed back with its answer */
+void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave, int callret);   /* callret: --jit-returns=call, the return address stored first (M7) */
+/* the stack's return barrier (native-frames.md, M5): where a RET of the
+   frame at the watermark goes, the value in R_S0 and r14 the frame:
+   helper(vm, its registers), which lowers the watermark and gives back
+   where the frame's own return word goes, and on there with the value.
+   Its address is odd (as_ret_align): it is a return word. */
+void ms_emit_barrier(Asm *a, int win, MsHelper helper);
 
 #endif

@@ -2,6 +2,7 @@
 # Run the Basis Library suite (tests/basis/*.sml) on a matrix of configurations.
 #   tests/basis/run-matrix.sh [-j N] [--configs C1,C2,...] [FILTER]
 #   tests/basis/run-matrix.sh --perf [--configs C1,C2,...] [FILTER]
+#   tests/basis/run-matrix.sh --timing --configs C1,C2,... --resolve-out FILE
 #   tests/basis/run-matrix.sh --program-list FILE --program-input FILE
 #       --program-out tests/out/DIR [--configs C1,C2,...]
 # Standalone checked programs reuse host resolution and loaders. Source paths
@@ -10,7 +11,12 @@
 #
 # Configurations (default: rune):
 #   rune                   bin/rune-stack, the self-hosted compiler for the stack bytecode, + bin/runevm-stack
-#                          (override: RUNE=, RUNEVM=; both must be absolute)
+#                          (override: RUNE=, RUNEVM=; both must be absolute); in
+#                          a timing run (--perf, --timing) Rune as it is shipped
+#                          instead, the compiler and VM of rune:new
+#                          (docs/plans/performance.md, M1)
+#   rune:stack             the stack bytecode on bin/runevm-stack in every run,
+#                          what rune is in the suite (RUNE=, RUNEVM=)
 #   rune:windows  rune:windows32  rune:windows-new  rune:windows32-new
 #   rune:linux32  rune:ppc64   the same on a VM of another machine: a 32-bit
 #                          x86, and a big-endian 64-bit PowerPC under qemu
@@ -121,6 +127,12 @@
 # program apart and keeps what it compiled, compiles the library once, after
 # the probe, and the programs use that.
 #
+# --timing (and --perf) make `rune` the configuration that is shipped, the
+# register bytecode of bin/rune on bin/runevm at its default JIT level, for
+# scripts/measure-benchmarks.sh, which resolves its configurations here
+# (--resolve-out FILE writes them and runs nothing); the stack VM is then
+# rune:stack.
+#
 # --perf times the programs of tests/perf instead (`make perf`), one at a
 # time, in the same configurations. A program's top-level declarations become
 # the body of a function that is called R times, R from the `wall R` line of
@@ -141,6 +153,7 @@ unset FORCE_COLOR CLICOLOR_FORCE
 
 jobs=""
 perf=${RUNE_MATRIX_PERF:-0}
+timing=0
 refresh=${RUNE_MATRIX_REFRESH:-0}
 configs=rune
 program_data=""
@@ -158,6 +171,7 @@ while [ $# -gt 0 ]; do
     --configs) configs=$2; shift 2 ;;
     --one) one_config=$2; one_test=$3; shift 3 ;;
     --perf) perf=1; shift ;;
+    --timing) timing=1; shift ;;
     --refresh) refresh=1; shift ;;
     --program-list) program_list=$2; shift 2 ;;
     --program-input) program_input=$2; shift 2 ;;
@@ -165,10 +179,11 @@ while [ $# -gt 0 ]; do
     --program-data-list) program_data_list=$2; shift 2 ;;
     --program-out) program_out=$2; shift 2 ;;
     --resolve-out) resolve_out=$2; shift 2 ;;
-    -*) echo "usage: tests/basis/run-matrix.sh [-j N] [--perf] [--refresh] [--configs C1,C2,...] [FILTER]" >&2; exit 2 ;;
+    -*) echo "usage: tests/basis/run-matrix.sh [-j N] [--perf] [--timing] [--refresh] [--configs C1,C2,...] [FILTER]" >&2; exit 2 ;;
     *) filter=$1; shift ;;
   esac
 done
+[ "$perf" = 1 ] && timing=1
 
 self=$(cd "$(dirname "$0")" && pwd)/$(basename "$0")
 # Every program runs in the same time zone, whatever the machine's: a rule of
@@ -1125,9 +1140,22 @@ resolve() {
   extra=""
   case "$kind:$host" in
     rune:)
+      if [ "$timing" = 1 ]; then
+        # what is timed is what is shipped: the register bytecode of
+        # bin/rune on bin/runevm, as rune:new
+        cmd1=${RUNE_NEW:-$root/bin/rune}
+        cmd2=${RUNEVM_NEW:-$root/bin/runevm}
+      else
+        cmd1=${RUNE:-$root/bin/rune-stack}
+        cmd2=${RUNEVM:-$root/bin/runevm-stack}
+      fi
+      id=rune
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make)" >&2; return 1; }
+      ;;
+    rune:stack)
       cmd1=${RUNE:-$root/bin/rune-stack}
       cmd2=${RUNEVM:-$root/bin/runevm-stack}
-      id=rune
+      id=rune:stack
       [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make)" >&2; return 1; }
       ;;
     rune:windows|rune:windows32)

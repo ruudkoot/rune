@@ -1,6 +1,7 @@
 /* The portable assembler (asm.h) for x86-64: each operation is the
    encoder's, but for the few the conventions of asm.h shape. */
 #include "asm.h"
+#include <string.h>
 /* also the build of a machine the JIT does not run on (JIT_TARGET 0: a
    32-bit x86, PowerPC), where the emitters are compiled and never
    called, as x64.c always was */
@@ -33,6 +34,7 @@ void as_st64i(Asm *a, int base, int32_t disp, int32_t v) { x64_mov_mi(a, base, d
 void as_st32i(Asm *a, int base, int32_t disp, int32_t v) { x64_mov32_mi(a, base, disp, v); }
 void as_st8i(Asm *a, int base, int32_t disp, int v) { x64_mov8_mi(a, base, disp, v); }
 void as_lea(Asm *a, int rd, int base, int index, int scale, int32_t disp) { x64_lea(a, rd, base, index, scale, disp); }
+void as_ld64x(Asm *a, int rd, int base, int index, int scale, int32_t disp) { x64_mov_rmx(a, rd, base, index, scale, disp); }
 void as_lea_label(Asm *a, int rd, AsmLabel *l) { x64_lea_rip(a, rd, l); }
 void as_ld128(Asm *a, int f, int base, int32_t disp) { x64_movups_xm(a, f, base, disp); }
 void as_st128(Asm *a, int base, int32_t disp, int f) { x64_movups_mx(a, base, disp, f); }
@@ -61,6 +63,7 @@ void as_mul_ri(Asm *a, int rd, int rs, int32_t v) { x64_imul_rri(a, rd, rs, v); 
 void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow) { x64_imul_rr(a, rd, rs); x64_jcc(a, CC_O, overflow); }
 void as_neg(Asm *a, int r) { x64_neg_r(a, r); }
 void as_not(Asm *a, int r) { x64_not_r(a, r); }
+void as_bswap(Asm *a, int r) { x64_bswap_r(a, r); }
 void as_shl_ri(Asm *a, int r, int n) { x64_shl_ri(a, r, n); }
 void as_shr_ri(Asm *a, int r, int n) { x64_shr_ri(a, r, n); }
 void as_sar_ri(Asm *a, int r, int n) { x64_sar_ri(a, r, n); }
@@ -70,6 +73,8 @@ void as_divmod(Asm *a, int divisor) { x64_cqo(a); x64_idiv_r(a, divisor); }
 void as_udivmod(Asm *a, int divisor) { x64_xor_rr(a, RDX, RDX); x64_div_r(a, divisor); }
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v) { x64_add_mi(a, base, disp, v); }
 void as_add_rm(Asm *a, int rd, int base, int32_t disp) { x64_add_rm(a, rd, base, disp); }
+void as_add_rm_to_mem(Asm *a, int base, int32_t disp, int rs) { x64_add_mr(a, base, disp, rs); }
+void as_sub_rm(Asm *a, int rd, int base, int32_t disp) { x64_sub_rm(a, rd, base, disp); }
 void as_cmp_rm(Asm *a, int r, int base, int32_t disp) { x64_cmp_rm(a, r, base, disp); }
 void as_cmp_mi(Asm *a, int base, int32_t disp, int32_t v) { x64_cmp_mi(a, base, disp, v); }
 void as_cmp8_mi(Asm *a, int base, int32_t disp, int v) { x64_cmp8_mi(a, base, disp, v); }
@@ -89,8 +94,31 @@ void as_jcc(Asm *a, int cc, AsmLabel *l) {
 }
 void as_jmp_r(Asm *a, int r) { x64_jmp_r(a, r); }
 void as_jmp_to(Asm *a, const void *at) { x64_jmp_to(a, at); }
+size_t as_jmp_site(Asm *a, AsmLabel *l) { size_t at = a->n + 1; x64_jmp(a, l); return at; }   /* jmp rel32: the rel32 */
+void as_patch_jmp(uint8_t *site, const void *to) {
+    int32_t rel = (int32_t)((intptr_t)to - (intptr_t)(site + 4));
+    memcpy(site, &rel, 4);
+}
 void as_call_to(Asm *a, const void *at) { x64_call_to(a, at); }
 void as_call_r(Asm *a, int r) { x64_call_r(a, r); }
+void as_ret_align(Asm *a) { if (!(a->n & 1)) x64_byte(a, 0x90); }   /* nop: the landing at an odd offset */
+void as_ret_addr(Asm *a, int rd, AsmLabel *l) { x64_lea_rip(a, rd, l); }
+void as_jmp_ret(Asm *a, int base, int32_t disp) { x64_jmp_m(a, base, -1, 1, disp); }
+/* a call of len bytes padded so that it ends at an odd offset, its return address a return word */
+static void call_pad(Asm *a, size_t len) { if (!((a->n + len) & 1)) x64_byte(a, 0x90); }
+int as_call_len(int r) { return r < 0 ? 5 : r >= 8 ? 3 : 2; }
+void as_add_before_call(Asm *a, int rd, int32_t v, int call_len) {
+    size_t lea = 3 + (v >= -128 && v <= 127 ? 1 : 4);   /* REX, 8D, ModRM, disp: without a SIB */
+    x64_lea_disp(a, rd, rd, v, !((a->n + lea + (size_t)call_len) & 1));
+}
+void as_call_ret(Asm *a, AsmLabel *l) { call_pad(a, 5); x64_call(a, l); }
+void as_call_ret_to(Asm *a, const void *at) { call_pad(a, 5); x64_call_to(a, at); }
+void as_call_ret_r(Asm *a, int r) { call_pad(a, r >= 8 ? 3 : 2); x64_call_r(a, r); }
+size_t as_call_site(Asm *a, AsmLabel *l) { call_pad(a, 5); size_t at = a->n + 1; x64_call(a, l); return at; }   /* call rel32: the rel32 */
+void as_patch_call(uint8_t *site, const void *to) { as_patch_jmp(site, to); }
+void as_pop_ret(Asm *a, int base, int32_t disp) { x64_pop_m(a, base, disp); }
+void as_push_ret(Asm *a, int base, int32_t disp) { x64_push_m(a, base, disp); }
+void as_ret_word(Asm *a, int base, int32_t disp) { x64_push_m(a, base, disp); x64_ret(a); }
 void as_ret(Asm *a) { x64_ret(a); }
 void as_trap(Asm *a) { x64_int3(a); }
 void as_setcc(Asm *a, int rd, int cc) {
@@ -105,7 +133,7 @@ void as_setcc(Asm *a, int rd, int cc) {
     x64_setcc_r8(a, cc, rd);
     x64_movzx8_rr(a, rd, rd);
 }
-#ifdef RUNE_JIT_CONV
+#if defined(RUNE_JIT_CONV) || defined(RUNE_ALLOC_RUNS)
 void as_count(Asm *a, uint64_t *counter) {
     x64_push_r(a, RAX); x64_push_r(a, RCX);
     x64_mov_ri(a, RAX, (int64_t)(intptr_t)counter);

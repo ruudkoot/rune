@@ -18,10 +18,15 @@ make bench-stats BENCH_PROFILE=normal BENCH_FILTER=kittmergesort
 inputs, configurations and workloads. `BENCH_SAMPLES` changes the process
 count; `BENCH_LEVEL` selects Rune `-O0` or `-O2`. Other compilers use their
 recorded defaults, so the level column does not claim an equivalent option
-on each host. Use explicit matrix configuration names. Timing defaults to
+on each host. Use explicit matrix configuration names, resolved as a
+timing run resolves them (`tests/basis/run-matrix.sh --timing`): `rune` is
+Rune as shipped, the register bytecode of `bin/rune` on `bin/runevm` at its
+default JIT level (tier 2), and `rune:stack` the stack bytecode on
+`bin/runevm-stack`; `rune:new` is `rune` by its older name, and the
+interpreter alone is `rune` with `RUNEVM_JIT=off` in the environment. Timing defaults to
 the four primary systems; counts and runtime statistics default to Rune's
-four engines. `rune:new` explicitly disables the JIT here; `rune:jit` uses
-the matrix's all-functions tier-2 wrapper. Standalone `xc1` measurements
+four engines, `rune`, `rune:jit` (the matrix's all-functions tier-2
+wrapper), `rune:stack` and `rune:opt`. Standalone `xc1` measurements
 remain unavailable pending an export adapter for its generated library;
 requests are recorded as missing configurations.
 

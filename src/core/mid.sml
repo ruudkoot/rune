@@ -82,8 +82,8 @@ struct
   (* The type of a function. *)
   fun funTy ({params, result, ...} : fundef) : Ty.ty =
     case params of
-      [(_, t)] => Ty.Arrow (t, result)
-    | _ => Ty.Arrow (Ty.Tuple (List.map #2 params), result)
+      [(_, t)] => Ty.arrow (t, result)
+    | _ => Ty.arrow (Ty.tuple (List.map #2 params), result)
 
   (* The nodes of a program, for --pass-stats. *)
   fun size (p : program) : int =

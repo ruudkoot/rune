@@ -26,6 +26,12 @@ typedef struct Jit {
        hold (ZF: it is false) after the instruction just emitted, or -1;
        and the same for the instruction before this one */
     int32_t flags_for, flags_prev;
+    /* the condition of the flags where they are a comparison's own, its
+       bool made for the branch alone and not into its register (M6), for
+       the instruction just emitted and the one before; -1: the flags are
+       the bool's (ZF: false) */
+    int cc_for, cc_prev;
+    const uint8_t *target;  /* the scan's: 1 where control arrives from elsewhere, by pc - from */
     /* the profile's sites (--jit-profile, M8): as many as the scan counted
        calls through a closure, branches and jumps back, filled as the
        code is emitted */
@@ -42,16 +48,43 @@ typedef struct Jit {
     Home *homes;
     uint64_t *live_in;
     AsmLabel *landings;
+    /* the known calls to functions without code, jumps to patch (M6): the
+       offset of each patch in this function's code, and the callee */
+    struct { uint32_t off, f; int call; } *pending;   /* call: a call's site (M7), else a jump's */
+    uint32_t npending, pending_cap;
+    /* the landings of the calls (native-frames.md, M4): each one's offset
+       in the code and the pc of the call's RESULT, in the order of the
+       code (CodeObject.land_offs) */
+    uint32_t *land_offs, *land_pcs;
+    uint32_t nlands, lands_cap;
+    /* this function's arguments in registers (native-frames.md, M6): per
+       parameter its home, REG_ARG_SLOT or REG_ARG_DEAD (jit.h), where its
+       code takes them so at its first instruction's label (nparams 0:
+       not so) -- for its own calls of itself, and its code object */
+    uint32_t nparams;
+    int8_t param_home[64];
+    /* --jit-returns=call (native-frames.md, M7): calls by `call`, returns
+       by `ret`; the entries a call goes to, which store the return
+       address as the frame's return word first -- the code's start, and
+       the register entry's -- before the entry and the register entry
+       that the driver and the jumps take */
+    int callret;
+    AsmLabel call_entry, reg_call_entry;
 } Jit;
+/* a landing of a call bound here, returning to the RESULT at pc */
+void jit_landing_here(Jit *j, uint32_t pc);
 
 /* what native code says on a fatal error: the message of the interpreter */
 enum JitFatal {
     FATAL_EXPECT_TUPLE, FATAL_EXPECT_CON, FATAL_EXPECT_CON_FIELDS, FATAL_EXPECT_CLOSURE, FATAL_EXPECT_EXN,
     FATAL_GLOBAL_UNSET, FATAL_ENV_RANGE, FATAL_SELF, FATAL_TUPLE_INDEX, FATAL_DECON_TAG, FATAL_CONTAG,
     FATAL_MKEXN, FATAL_JUMPIF, FATAL_JUMPIFNOT, FATAL_JUMPIFNOTTAG, FATAL_SWITCH, FATAL_FIELD_TAG, FATAL_FIELD_INDEX,
-    FATAL_POPHANDLER, FATAL_RAISE, FATAL_CALL, FATAL_FUNCTION, FATAL_NEW_WORLD
+    FATAL_POPHANDLER, FATAL_RAISE, FATAL_CALL, FATAL_FUNCTION, FATAL_NEW_WORLD, FATAL_HOME_SLOT
 };
 
+/* a known call to function f, which has no code yet: its jump at off in
+   the code, patched when f is compiled (M6) */
+void jit_pending(Jit *j, size_t off, uint32_t f, int call);
 /* the label of the instruction at pc, for a jump */
 AsmLabel *jit_label(Jit *j, uint32_t pc);
 /* a fatal error at the instruction being emitted, out of line: the label to
@@ -78,14 +111,13 @@ Site *jit_site(Jit *j, int kind, uint32_t pc);
 int jit_h_prim(VM *vm, int prim, int32_t d, uint32_t at);
 Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n);
 void jit_h_setenv(VM *vm, int32_t c, int32_t e, int32_t v);
-int jit_h_ret(VM *vm, int32_t s);
+int jit_h_return(VM *vm, uint64_t value);
+const void *jit_h_barrier(VM *vm, const Value *regs);
+int jit_h_enter_interp(VM *vm);
 void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b);
 void jit_h_fatal_at(VM *vm, uint32_t k, int64_t value);
 MsHelper jit_libm_of(int32_t prim);   /* emit.c: the C library's function a primitive on reals is, or NULL */
-void jit_h_grow(VM *vm, size_t need);
-void jit_h_grow_frames(VM *vm);
-const void *jit_h_call(VM *vm, int32_t a, int32_t b, const void *after);
-const void *jit_h_tailcall(VM *vm, int32_t a, int32_t b);
+void jit_h_grow(VM *vm, const Value *at);
 void jit_h_push_handler(VM *vm, int32_t pc, const void *native);
 const void *jit_h_raise(VM *vm, int32_t s);
 /* what jit_h_interrupt answers beside a handler's native code or NULL:
@@ -102,6 +134,10 @@ int64_t jit_h_string_order(VM *vm, const Obj *a, const Obj *b);
 int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y);
 void jit_h_box_real(VM *vm, int32_t slot, uint64_t bits);
 void jit_h_box_num(VM *vm, int32_t slot, uint64_t bits);
+
+/* --jit-dump: the code of the function just compiled, placed at at, and
+   its parts, written (dump.c) */
+void jit_dump_function(Jit *j, const uint8_t *at);
 
 /* the compiler: 1 when function f now has an entry, 0 when it stays interpreted */
 int jit_compile(VM *vm, JitProgram *jit, uint32_t f);

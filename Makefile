@@ -136,7 +136,7 @@ SYS ?= posix
 VM_LIBS  = -lm $(if $(MINGW),$(WIN_LIBS))
 RT_SRCS := runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
-VM_HDRS := runtime/intinf.h runtime/vm.h runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
+VM_HDRS := runtime/intinf.h runtime/vm.h runtime/frames_array.inc runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
 AR      ?= ar
 
@@ -367,12 +367,20 @@ bin/rune-smlnj-dev: $(BUILDGEN) $(SOURCES) $(GEN_SML) Makefile | build/.doctor-s
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "%s" @SMLload="$$d/rune-smlnj-dev.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ_DEV)" > $@
 	chmod +x $@
 
+# Poly/ML's programs start with a heap of POLYML_HEAP megabytes (-H): at
+# Poly/ML's own initial size its collector takes most of the compiler's time,
+# the more so the larger the program (the compiler compiling itself: 22G
+# instructions with one collector thread, 3.6G with -H 1024, as many as
+# MLton's build; docs/plans/performance.md, M1). The heap still grows
+# beyond it, and only what is used is resident.
+POLYML_HEAP ?= 1024
+
 bin/rune-polyml.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/polyml-main.sml | build/.doctor-polyml
 	@mkdir -p bin
 	$(POLYC) -o $@ build/polyml-build.sml
 
 bin/rune-polyml: bin/rune-polyml.bin Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/rune-polyml.bin" --lib "$$d/../lib" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/rune-polyml.bin" -H $(POLYML_HEAP) --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
 # MLKit finds its library through SML_LIB and keeps its object files in MLB/
@@ -427,7 +435,7 @@ bin/runedoc-polyml.bin: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) src/main/runedoc-p
 	$(POLYC) -o $@ build/runedoc-polyml-build.sml
 
 bin/runedoc-polyml: bin/runedoc-polyml.bin Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runedoc-polyml.bin" --lib "$$d/../lib" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runedoc-polyml.bin" -H $(POLYML_HEAP) --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
 bin/runedoc-mlkit.bin: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) src/main/runedoc-mlkit-main.sml | build/.doctor-mlkit bin/rune-mlkit.bin
@@ -483,7 +491,7 @@ bin/runeopt-polyml.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-p
 	$(POLYC) -o $@ build/runeopt-polyml-build.sml
 
 bin/runeopt-polyml: bin/runeopt-polyml.bin Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-polyml.bin" --runtime "$$d/../build" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-polyml.bin" -H $(POLYML_HEAP) --runtime "$$d/../build" "$$@"\n' > $@
 	chmod +x $@
 
 bin/runeopt-mlkit.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-mlkit-main.sml | build/.doctor-mlkit bin/runedoc-mlkit.bin
@@ -528,7 +536,7 @@ NEW_HDRS := runtime/register/regvm.h runtime/register/live.h runtime/register/re
 # RUNE_JIT=0 builds it without the JIT (docs/plans/jit.md): the
 # interpreter alone, which refuses --jit.
 RUNE_JIT ?= 1
-JIT_SRCS := runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
+JIT_SRCS := runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c runtime/register/jit/dump.c
 JIT_HDRS := runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/asm.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
 NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS)
 bin/runevm: $(NEW_LOOP) $(GMP_DIR)/intinf.o build/gmp/selected build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) scripts/record-vm-build.py scripts/runtime_inputs.py | build/.doctor-vm
@@ -843,7 +851,7 @@ DIST_A64FLAGS ?= --target=aarch64-linux-gnu -B$(A64ROOT)/bin -L$(A64ROOT)/lib -I
 DIST_PPCFLAGS ?= --target=powerpc64-linux-gnu -B$(PPCROOT)/bin -L$(PPCROOT)/lib -I$(PPCROOT)/include \
               -Wl,-dynamic-linker,/lib64/ld64.so.1
 QEMUA64    ?= qemu-aarch64
-JIT_SRCS_A64 := runtime/register/jit.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
+JIT_SRCS_A64 := runtime/register/jit.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c runtime/register/jit/dump.c
 NEW_SRCS_A64 := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS_A64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
 PORT_TIMEOUT ?= 900
 GMP_LINUX32_PREFIX ?= $(GMP_CROSS_PREFIX)/linux32
@@ -1260,9 +1268,6 @@ build/basis-examples/.done: $(RUNEDOC) $(wildcard lib/basis/*.sml)
 	  || { cat build/basis-examples.log; exit 1; }
 	touch $@
 
-# Deterministic budgets on what `runevm-stack --count` reports, for benchmark
-# programs, the hello compile and the bootstrap (tests/perf/run-perf.sh;
-# --update after a deliberate change). About 10 seconds.
 # The tests of the documentation generator (tests/doc), with bin/runedoc;
 # `make test-doc RUNEDOC=bin/runedoc-mlton` is the faster loop.
 test-doc: $(RUNEDOC) vm manifests bin/rune-test
@@ -1304,9 +1309,14 @@ test-laws-hosts: $(RUNEDOC) manifests
 test-opt: $(RUNEOPT) $(RUNE) vm build/librune.a bin/rune.stack.rbc bin/runedoc.stack.rbc
 	sh tests/opt/run-opt-tests.sh -j $(JOBS) --runeopt $(RUNEOPT) --rune $(RUNE_STACK) --vm $(RUNEVM)
 
+# Deterministic budgets on what `runevm --count` reports, for benchmark
+# programs, the compiler's compiles (hello, the bootstrap, programs that
+# scale the module language) and runedoc (tests/perf/run-perf.sh; --update
+# after a deliberate change): Rune as shipped, bin/rune and bin/runevm, then
+# the stack bytecode on runevm-stack against tests/perf/stack. About a minute.
 perf-check: $(RUNE) bin/runedoc vm bin/rune.rbc bin/runedoc.rbc bin/rune.stack.rbc bin/runedoc.stack.rbc | build/.doctor-check
-	RUNE=$(RUNE_STACK) RUNEVM=$(RUNEVM) sh tests/perf/run-perf.sh
-	RUNE=$(RUNE_STACK) sh tests/perf/run-perf.sh --new
+	RUNE=$(RUNE) RUNEVM=$(RUNEVM_REGISTER) sh tests/perf/run-perf.sh
+	RUNE=$(RUNE_STACK) RUNEVM=$(RUNEVM) sh tests/perf/run-perf.sh --stack
 
 # Not part of `make check`: a collection before every allocation makes a few
 # tests quadratic. For VM changes, next to `make vm-asan`.
@@ -1418,10 +1428,14 @@ matrix: $(RUNE) vm | $(MATRIX_DOCTOR)
 	RUNE=$(abspath $(RUNE_STACK)) RUNEVM=$(abspath $(RUNEVM)) \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs all
 
+# The wall-clock times of tests/perf (tests/out/perf/wall.md): `rune` is Rune
+# as shipped, bin/rune and bin/runevm at its default JIT level; the stack VM
+# is the configuration rune:stack (PERF_CONFIGS=rune,rune:stack,hosts).
 PERF_CONFIGS ?= all
 
 perf: $(RUNE) vm | $(MATRIX_DOCTOR)
 	RUNE=$(abspath $(RUNE_STACK)) RUNEVM=$(abspath $(RUNEVM)) \
+	  RUNE_NEW=$(abspath $(RUNE)) RUNEVM_NEW=$(abspath $(RUNEVM_REGISTER)) \
 	  sh tests/basis/run-matrix.sh --perf --configs $(PERF_CONFIGS)
 
 # ---------------------------------------------------------------- bootstrap
@@ -1462,7 +1476,7 @@ test-register-jit-steps: bin/runevm $(RUNE)
 	chmod +x bin/runevm-jit
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-opt
 	chmod +x bin/runevm-opt
-	@! grep -n "\bx64_\|\ba64_\|\bX64\|\bA64" runtime/register/jit/emit.c runtime/register/jit/masm.c runtime/register/jit/masm.h runtime/register/jit/compile.c runtime/register/jit/compile.h runtime/register/jit.c \
+	@! grep -n "\bx64_\|\ba64_\|\bX64\|\bA64" runtime/register/jit/emit.c runtime/register/jit/masm.c runtime/register/jit/masm.h runtime/register/jit/compile.c runtime/register/jit/compile.h runtime/register/jit/dump.c runtime/register/jit.c \
 	  || { echo "check-asm: the emitters, the macro-assembler and the compiler name an encoder: they are written over runtime/register/jit/asm.h alone (M12)"; false; }
 	@echo "check-asm: the emitters name no encoder"
 	bin/runevm --jit-check
@@ -1479,6 +1493,10 @@ test-register-jit-steps: bin/runevm $(RUNE)
 	  cmp tests/out/register-jit/deeprec.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: the driver never nests"
 	(ulimit -s 1024 && bin/runevm --jit=baseline --jit-calls=1 --jit-work=1 --jit-stress=3 tests/out/register-jit/deeprec.rbc > tests/out/register-jit/deeprec-tiered.out) && \
 	  cmp tests/out/register-jit/deeprec-tiered.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: nor while tiering up and invalidating"
+	(ulimit -s 1024 && bin/runevm --jit=all --jit-returns=call tests/out/register-jit/deeprec.rbc > tests/out/register-jit/deeprec-callret.out) && \
+	  cmp tests/out/register-jit/deeprec-callret.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: nor where compiled code returns by ret"
+	bin/rune tests/perf/fib.sml -o tests/out/register-jit/fib.rbc
+	python3 tests/register/jit-dump.py bin/runevm tests/out/register-jit/fib.rbc tests/out/register-jit/dump
 
 bin/rune-boot: bin/rune.rbc Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/rune.rbc" --lib "$$d/../lib" "$$@"\n' > $@
@@ -1496,7 +1514,7 @@ bin/runedoc.rbc: bin/rune bin/rune.rbc $(DOC_SRCS)
 	bin/rune -o $@ $(DOC_SRCS)
 
 # runedoc in the stack bytecode, which the budgets of runevm-stack measure
-# (tests/perf/run-perf.sh) and runeopt translates (tests/opt).
+# (tests/perf/run-perf.sh --stack) and runeopt translates (tests/opt).
 bin/runedoc.stack.rbc: bin/rune bin/rune.rbc $(DOC_SRCS)
 	bin/rune --target=stack -o $@ $(DOC_SRCS)
 
@@ -1622,8 +1640,10 @@ dist: runtime/version.h manifests bin/rune.rbc bin/rune-repl.img \
 # Portable suite correctness, serial measurements and deterministic counts
 # (docs/plans/benchmarks.md). Timing thresholds stay outside make check.
 BENCH_PROFILE ?= $(if $(filter bench bench-count bench-stats,$(MAKECMDGOALS)),normal,smoke)
+# timed: `rune` is Rune as shipped (scripts/measure-benchmarks.sh); the stack
+# VM is rune:stack
 BENCH_TIMING_CONFIGS = rune,native:mlton,native:smlnj-legacy,native:polyml
-BENCH_COUNT_CONFIGS = rune,rune:opt,rune:new,rune:jit
+BENCH_COUNT_CONFIGS = rune,rune:jit,rune:stack,rune:opt
 BENCH_CHECK_CONFIGS = rune,hosts
 BENCH_CONFIGS ?= $(if $(filter bench-count bench-stats,$(MAKECMDGOALS)),$(BENCH_COUNT_CONFIGS),$(if $(filter bench,$(MAKECMDGOALS)),$(BENCH_TIMING_CONFIGS),$(BENCH_CHECK_CONFIGS)))
 BENCH_FILTER ?=

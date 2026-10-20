@@ -195,17 +195,26 @@ const char *heap_check(VM *vm, const void **at) {
             a += obj_size(o);
         }
     for (size_t i = 0; i < vm->sp && !c.failed; i++) check_value(&c, &vm->stack[i], "a slot of the stack that is no object's");
+    /* compiled code's limit of allocation where alloc's room ends (vm.h, vm_alloc_limit; native-frames.md, M8) */
+    if (!c.failed && vm->alloc_limit != (vm->gc_stress || !vm->alloc.from ? 0 : (uintptr_t)(vm->alloc.from + vm->alloc.size)))
+        check_fail(&c, "the limit of compiled code's allocation not where the allocation's room ends", NULL);
     /* below the stack's watermark (minor.c), nothing young: a pop of a frame
        that did not lower it would leave a frame unscanned */
     if (vm->gc.nursery && vm->frames_active && !c.failed) {
-        if (vm->fp_low > vm->fp) check_fail(&c, "the stack's watermark above the frame that runs", NULL);
-        size_t below = vm->fp_low && vm->fp_low <= vm->fp ? vm->frames[vm->fp_low].base : 0;
+        size_t low = vm_frames_low(vm), top = vm_frame_id(vm);
+        if (low > top) check_fail(&c, "the stack's watermark above the frame that runs", NULL);
+        FrameRef w;
+        size_t below = low && low <= top && vm_frame_find(vm, low, &w) ? w.head : 0;
         for (size_t i = 0; i < below && i < vm->sp && !c.failed; i++)
             if (val_is_ptr(vm->stack[i]) && gc_in_nursery(vm, val_ptr(vm->stack[i])))
                 check_fail(&c, "a slot below the stack's watermark that holds a young pointer", &vm->stack[i]);
-        for (size_t k = 0; k < vm->fp_low && k <= vm->fp && !c.failed; k++)
-            if (vm->frames[k].closure && gc_in_nursery(vm, vm->frames[k].closure))
-                check_fail(&c, "a frame below the stack's watermark whose closure is young", &vm->frames[k]);
+        FrameRef *fr;
+        size_t nf = vm_frames_from(vm, 0, &fr);
+        for (size_t k = 0; k < nf && fr[k].id < low && !c.failed; k++)
+            if (fr[k].closure_root && *fr[k].closure_root && gc_in_nursery(vm, *fr[k].closure_root))
+                check_fail(&c, "a frame below the stack's watermark whose closure is young", fr[k].closure_root);
+        const char *why = c.failed ? NULL : vm_frames_check(vm);   /* runtime/register's barrier at it (native-frames.md, M5) */
+        if (why) check_fail(&c, why, NULL);
     }
 #define CHECK_VALUE(v) check_value(&c, (v), "a root that is no object's")
 #define CHECK_OBJ(o) check_ptr(&c, *(o), "a root that is no object")

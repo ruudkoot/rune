@@ -152,6 +152,7 @@ void heap_chunks_release(VM *vm) {
     vm->gc.sf_bump = vm->gc.sf_bump_limit = NULL;
     vm->alloc.from = NULL;
     vm->alloc.size = vm->alloc.used = 0;
+    vm_alloc_limit(vm);
 }
 
 /* The fast paths bump alloc.used against alloc.size. With a nursery, its
@@ -165,6 +166,7 @@ void alloc_view(VM *vm) {
     if (vm->gc.nursery) {
         vm->alloc.from = chunk_payload(vm->gc.nursery);
         vm->alloc.size = vm->gc.nursery_size;
+        vm_alloc_limit(vm);
         return;
     }
     Chunk *c = vm->gc.last;
@@ -176,6 +178,7 @@ void alloc_view(VM *vm) {
     if (left < room) room = left < c->used ? c->used : left;
 #endif
     vm->alloc.size = room;
+    vm_alloc_limit(vm);
 }
 
 Obj *alloc_next(VM *vm, size_t size) {
@@ -268,7 +271,7 @@ void heap_read_begin(VM *vm, size_t size) {
     vm->gc.size = size;
     vm->gc.closed = 0;
     vm->gc.los_bytes = 0;
-    vm->fp_low = 0;   /* the frames read after it are scanned whole by the first minor collection */
+    vm_frames_mark_low(vm, 0);   /* the frames read after it are scanned whole by the first minor collection */
     chunk_append(vm, chunk_take(vm, 0, CHUNK_OLD));
     nursery_start(vm, nursery);
     vm->alloc.used = 0;

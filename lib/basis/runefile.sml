@@ -63,6 +63,9 @@ struct
      writes through print and through a stream stays in order. *)
   fun writeString (fd, name) s =
     if fileWrite (fd, s) then size s else raise sysError ()
+  (* write (fd, s): s to the file, and NONE; or what writeString would
+     raise, as SOME: a stream's write that needs no handler (streamio_fn.sml) *)
+  fun write (fd, s) = if fileWrite (fd, s) then NONE else SOME (sysError ())
   fun close (fd : int) () = fileClose fd
   fun closeNothing () = ()
   fun flush (fd : int) () = fileFlush fd

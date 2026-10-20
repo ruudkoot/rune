@@ -2574,6 +2574,65 @@ becomes critical:
   tagging of the STG kind (Marlow, Yakushev and Peyton Jones 2007)
   would want item 19.
 
+## Left by the performance plan
+
+[performance.md](performance.md) and [native-frames.md](native-frames.md)
+went on from this roadmap: runtime calls in line (performance M5), the
+lean call and pointers in tier 2's homes (M6, M7), and frames in the value
+stack, a return barrier, arguments in registers and the allocation pointer
+in `rbp` (native frames M1 to M8). performance.md was retired on
+2026-10-20; what it left that is the JIT's, each with what was measured:
+
+* **Constant operands in tier 2's body.** `int_mod` by a power of two is
+  an `and` (native frames M2), but whether the divisor is one is tested
+  at run time, since the body does not know that the operand is a
+  constant: E9's `selftail`, a `mod 3` a call, took 8.0% more instructions
+  and 12% more cycles at native frames M9 than at its M1. Folding an
+  `INT` into the instruction that reads it removes the test and the load.
+* **Division by a constant** by a multiplication and shifts, with the same
+  results and the same raise: the bootstrap executes 10.5M `idiv`s, 7.1M
+  of them `IntTable`'s; 2.5M are by constants the JIT does not track
+  (native frames M2). `Pickle.hash` takes four `mod`s by constants a byte,
+  some 170 cycles: 36% of the cycles of MLton's compiler built in units at
+  tier 2 ([incremental-compilation.md](incremental-compilation.md), *After
+  M12: what is left*).
+* **`ENV`'s and `SELF`'s tests** of a null closure and of its length,
+  about 0.6% of the bootstrap's instructions and 1% of HOL's: they can go
+  only where the loader holds every closure of a function to its `ENV`s,
+  across the units loaded later, and keeps known calls out of the
+  functions that have them (performance M6, native frames M2).
+* **A constructor's tag tested by its kind.** `JUMPIFNOTTAG` takes 5.7
+  instructions an execution and `SWITCH` 9.4, short of native frames M2's
+  targets, which a test of the tag's kind would meet if the bytecode said
+  whether a constructor is nullary.
+* **A call through a closure with its argument in a register.** Native
+  frames M6 gives a known call's arguments to the homes its callee's
+  tier-2 code takes them in; a call through a closure (`CALL`) still
+  passes them in the frame: E9's `closure` fell 20.7% in instructions
+  from native frames M1 to M9, against `fib`'s 33.3%.
+* **`--jit-returns=call` as the default.** A call by `call` and a return
+  by `ret` (native frames M7) take a `fib` call from 8.1 to 6.9 cycles and
+  a `tak` call from 10.2 to 9.1, beneath MLton's, for the same
+  instructions; on whole programs they took 1.5% (the bootstrap) and 2.7%
+  (HOL's kernel work) more cycles at native frames M9, and on performance
+  M10's tip 0.8% fewer and 1.9% more (the least of three runs one at a
+  time; at a load of 11, 0.4% fewer and 4.2% more), for 0.1% and 0.6% more
+  instructions. The default stays `jmp` until a whole program gains.
+* **Tiering's counter at a call.** `HANDOVER` counts the callee's work,
+  as it does its calls; counting the caller's, as its comment once meant,
+  compiled more functions at the cost of compiling them: the bootstrap
+  0.59% more instructions and HOL's kernel work 0.22% after native frames
+  M8 (native-frames.md, *M8*), so it stays as it is. What to count at a
+  call is M6's question asked again, with whole programs to measure it on.
+
+Where the time went on performance M10's tip (performance.md, *Where we
+ended*): the compiler compiling itself spent 54% of its cycles in tier 2's
+code and 34% in the collector, at 2.7 times the instructions of MLton's
+build of it; HOL4's kernel work 77% in the code and 10% in the collector,
+at 3.5 times Poly/ML's instructions -- the code's own instructions,
+which the middle end makes ([middle-end.md](middle-end.md), *Left by the
+performance plan*).
+
 ## Relation to the other plans
 
 | Elsewhere | Here |

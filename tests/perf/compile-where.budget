@@ -1,0 +1,6 @@
+generate where 1000 400
+compile --typecheck-only @gen
+nostack the front end's cost on the module language, the same on both VMs: measured on Rune as shipped alone
+instructions 17376800
+bytes 24997702
+objects 862827

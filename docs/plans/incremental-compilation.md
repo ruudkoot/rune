@@ -3311,6 +3311,43 @@ What this roadmap did not finish, and where each is written down:
   the old one only when the list was rebuilt a second time -- which may be
   a dead register of the measuring frame or something of the collector's;
   it was not looked into.
+* **MLton's compiler in units costs five times its whole compile**
+  (performance.md's M10, 2026-10-20, at `a6a024ab1`; the raw numbers with
+  the drafts, `results/M10/units/`). At tier 2, `--units --no-cache` takes
+  433 s against 84 s whole, and the units' interfaces take 367 s of it:
+  `unit-usages` 174 s, `unit-export` 148 s, `unit-load` 29 s, `link` 15 s,
+  with elaboration 56 s. MLton's build of the same compiler: 263 s, of
+  which usages 98 s and export 110 s, against 60 s whole. What the time is:
+  * **Hashing fingerprints' text.** `P.hash`'s loop is 36% of the
+    cycles of the build at tier 2 (`perf record` over `--jit-perf-map`),
+    the collector 25%, string concatenation and its copies 8%; building
+    the text (`fpEnv`, `fpTy` and the rest) is 1.3%, `fpTy` 0.8% of it, so
+    its list of type variables costs nothing that shows. The build hashes
+    2,136 MB (counted by call site in a build with counters, which counts
+    the same on every engine): a signature's fingerprint (`fpSigma`, the
+    usages `sig`) 818 MB in 710 hashes, a functor's (`fpFunctor`, since
+    performance M3 its signature) 430 MB in the usages and the same 432 MB
+    again in `export`, whose `binding` asks `fingerprint` directly and not
+    `fingerprintAt`, so the memo does not see it; the basis's pickle 220
+    MB for the unit's identity in `export`, and the same 220 MB again in
+    `load`; the rest 27 MB. `amd64-codegen.fun` alone hashes 190 MB: 12
+    functors' fingerprints of 7.3 MB of text each, twice, and 11 MB of
+    signatures. At tier 2 a byte costs about 170 cycles -- four `mod`s by
+    constants per character, which tier 2 does with `idiv`
+    ([jit.md](jit.md), *Left by the performance plan*).
+  * **The memo is not the leak.** One process compiles every unit and
+    `startSession` empties `fpMemo` once: 61,550 lookups hit and 23,096
+    miss. What misses it is `export`'s path above.
+  * **What M3 added.** On MLton's build, `921af2cc` takes 281 s in units:
+    elaboration 139 s, usages 55 s, export 55 s; the tip 263 s: 20 s, 98 s
+    and 110 s. Typing functors by their signature took 119 s out of
+    elaboration and put 98 s into the interfaces.
+  * **What would take it back:** the export's functor fingerprints through
+    the memo (−432 MB); the identity `export` worked out given to `load`
+    (−220 MB); fingerprints as hashes of their parts' hashes, kept per
+    structure and signature, so that no text grows to megabytes; and a
+    hash that costs less a byte on every host. These are the fixes of
+    [units-fixes.md](units-fixes.md), with their order and measure of done.
 
 ### Why this order
 

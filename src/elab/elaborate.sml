@@ -13,11 +13,35 @@ struct
      environments (Section 5.1); both are declared at top level only. *)
   val sigs : SigMatch.sigma StringMap.map ref = ref StringMap.empty
 
+  (* A functor's signature (Section 5.1, (T)(E, (T')E')): its parameter's,
+     and the summary of its body that its declaration's check left -- the
+     environment E' the body gave against the parameter, the type names T'
+     the body made that E' names, and what the check used of the counters
+     of stamps, type names and type variables. The values and exceptions
+     of E' are named by placeholders (placeholder), which name nothing of
+     a unit. Every application is typed by it (rule 54): one inside a
+     functor's declaration by the summary alone, one whose code is made by
+     the summary realised with the names of a copy of the body elaborated
+     for its code (signatureTyped). NONE where E' is not closed (a type
+     variable not generalised, or a flexible record): every application
+     elaborates a copy then, and is typed by it. *)
+  type summary = {generated : tycon list, result : env, counts : int * int * int}
+
   datatype funinfo =
       FunInfo of {param : string option, paramSig : SigMatch.sigma, body : strexp, defEnv : env, allowPrim : bool,
                   defSigs : SigMatch.sigma StringMap.map, defFuns : funinfo StringMap.map,
+                  summary : summary option,
                   origin : string}   (* the identity of the unit it was loaded from; "" where elaborated *)
   val funs : funinfo StringMap.map ref = ref StringMap.empty
+
+  (* Whether what is elaborated is only checked: a functor's body at its
+     declaration, or a copy of a body applied there; a functor application
+     makes code where it is not *)
+  val checking = ref 0
+
+  (* --lint: each application whose code is made checks that its copy
+     agrees with the functor's summary but for the names the copy made *)
+  val lintSummaries = ref false
 
   (* Dynamic modules (docs/units.md, Dynamic modules; the incremental
      roadmap's M9, D17 and D18): the fingerprint of a signature's ABI, which
@@ -206,9 +230,15 @@ struct
      pendingFlex := [])
 
   fun finish () =
-    (settleFlex ();
-     List.app (fn f => f ()) (List.rev (!pendingChecks));
-     pendingChecks := [])
+    let
+      val () = ElabStats.reset ()
+      val () = settleFlex ()
+      val () = List.app (fn f => f ()) (List.rev (!pendingChecks))
+      val () = pendingChecks := []
+    in
+      (* --pass-stats=elab: the checks deferred to here, a line of their own *)
+      if !ElabStats.on then ElabStats.emit ("-", "deferred", "", 0) else ()
+    end
 
   (* A binding's type generalised (rule 15's Clos): under
      --flex-records=binding a flexible record it would generalise is an
@@ -398,6 +428,267 @@ struct
   fun specScope (t : Ast.ty, level) : scope =
     ref (List.foldl (fn (v, m) => StringMap.insert (m, v, freshTvar (level, KPlain, String.isPrefix "''" v)))
                     StringMap.empty (tyvarsOfTy (t, [])))
+
+  (* ------------------------------------------------------------------ *)
+  (* Functors' summaries (rule 54)                                        *)
+
+  (* the types an environment holds, each given to f *)
+  fun appEnvTypes (f : ty -> unit) (Env {vals, tys, strs}) : unit =
+    let
+      fun value v =
+        case v of
+          Val {scheme, ...} => f scheme | Con {scheme, ...} => f scheme | Prim {scheme, ...} => f scheme
+        | ConAsVal {scheme, ...} => f scheme | Exn {ty = t, ...} => f t | ExnAsVal {ty = t, ...} => f t
+      fun tystr (TyStr {fcn, cons}) =
+        ((case fcn of TName c => f (TCon (c, [])) | TAbbrev (_, t) => f t); List.app (fn (_, v) => value v) cons)
+    in
+      StringMap.app value vals; StringMap.app tystr tys; StringMap.app (appEnvTypes f) strs
+    end
+
+  (* Whether a summary may stand for every application: no type variable of
+     it that unification may still bind -- one not generalised, or a
+     flexible record -- which each copy would have of its own *)
+  fun closedEnv (e : env) : bool =
+    let
+      exception Open
+      fun ty t =
+        case prune t of
+          TVar (ref (Unbound {level, kind, ...})) =>
+            (case kind of KFlex _ => raise Open | _ => if level <> genericLevel then raise Open else ())
+        | TVar _ => ()
+        | TCon (_, args) => List.app ty args
+        | TRecord fields => List.app (fn (_, a) => ty a) fields
+        | TArrow (a, b) => (ty a; ty b)
+    in (appEnvTypes ty e; true) handle Open => false end
+
+  (* The type names made from lo on that an environment names, by stamp *)
+  fun generatedIn (lo : int, e : env) : tycon list =
+    let
+      val seen : tycon IntMap.map ref = ref IntMap.empty
+      fun ty t =
+        case prune t of
+          TVar _ => ()
+        | TCon (c, args) => ((if #stamp c >= lo then seen := IntMap.insert (!seen, #stamp c, c) else ()); List.app ty args)
+        | TRecord fields => List.app (fn (_, a) => ty a) fields
+        | TArrow (a, b) => (ty a; ty b)
+    in appEnvTypes ty e; IntMap.listItems (!seen) end
+
+  (* The values and exceptions of an environment renamed by f, a stamp to
+     a stamp, each once *)
+  fun restamp (f : int -> int) (Env {vals, tys, strs}) : env =
+    let
+      fun exn (info : exninfo) : exninfo =
+        {name = #name info, stamp = f (#stamp info), isGlobal = #isGlobal info, hasArg = #hasArg info,
+         builtin = #builtin info}
+      fun value v =
+        case v of
+          Val {scheme, stamp, global} => Val {scheme = scheme, stamp = f stamp, global = global}
+        | Exn {ty, info} => if isSome (#builtin info) then v else Exn {ty = ty, info = exn info}
+        | ExnAsVal {ty, info} => if isSome (#builtin info) then v else ExnAsVal {ty = ty, info = exn info}
+        | other => other
+    in Env {vals = StringMap.map value vals, tys = tys, strs = StringMap.map (restamp f) strs} end
+
+  (* The placeholders a summary names its values and exceptions by: one
+     for each, in the order of the environment, under every stamp a unit
+     can have, so that writing a summary into a unit's basis adds no name
+     of the unit's own (src/driver/unitbasis.sml) *)
+  val placeholderBase = ~1000000
+  fun placeholders (e : env) : env =
+    let
+      val given : int IntMap.map ref = ref IntMap.empty
+      val next = ref placeholderBase
+      fun f s =
+        case IntMap.find (!given, s) of
+          SOME p => p
+        | NONE => let val p = !next in next := p - 1; given := IntMap.insert (!given, s, p); p end
+    in restamp f e end
+
+  (* What an application typed from a summary gives in place of the
+     placeholders: a fresh stamp for each exception, which each
+     application makes anew (rule 154), and the placeholders of values as
+     they are, which name nothing that is translated *)
+  fun freshExceptions (e : env) : env =
+    let
+      val given : int IntMap.map ref = ref IntMap.empty
+      val exns : unit IntMap.map ref = ref IntMap.empty
+      fun note (Env {vals, strs, ...}) =
+        (StringMap.app (fn Exn {info, ...} => exns := IntMap.insert (!exns, #stamp info, ())
+                         | ExnAsVal {info, ...} => exns := IntMap.insert (!exns, #stamp info, ())
+                         | _ => ()) vals;
+         StringMap.app note strs)
+      val () = note e
+      fun f s =
+        if not (IntMap.member (!exns, s)) then s
+        else
+          case IntMap.find (!given, s) of
+            SOME p => p
+          | NONE => let val p = freshStamp () in given := IntMap.insert (!given, s, p); p end
+    in restamp f e end
+
+  (* the counters of stamps, type names and type variables *)
+  fun counters () = (!stampCounter, !tyconCounter, !tvarCounter)
+
+  (* Where an application is typed from a summary, the counters moved on to
+     where the copy it stands for would have left them: a declaration's
+     check uses what a copy of the same body uses, so that every name made
+     after it is the one it was before summaries *)
+  fun replay ((s0, c0, v0) : int * int * int, (ds, dc, dv) : int * int * int) : unit =
+    (stampCounter := Int.max (!stampCounter, s0 + ds);
+     tyconCounter := Int.max (!tyconCounter, c0 + dc);
+     tvarCounter := Int.max (!tvarCounter, v0 + dv))
+
+  (* An application whose code is made, typed by the functor's signature
+     (Section 5.4, rule 54): the summary realised -- the parameter's names
+     by the argument's types (phi), the names the body made by those the
+     copy made in their place, with the equality the summary gives them --
+     with the copy's stamps and constructors, which are its code's. The
+     copy, elaborated with the actual argument, can find that a datatype of
+     the body admits equality where the body checked against the parameter
+     did not, or a value more polymorphic where a type of the argument
+     drops a parameter (`type 'a t = u`). The summary and the copy agree
+     but for the names each made and their type variables; NONE where they
+     do not, which lintSummaries makes an error. *)
+  fun signatureTyped ({generated, result, ...} : summary, phi : realisation, copy : env, where_ : string) : env option =
+    let
+      exception Disagree
+      val made = List.foldl (fn (c, m) => IntMap.insert (m, #stamp c, c)) IntMap.empty generated
+      (* each name the body made, by the copy's in its place, with the
+         equality the summary gives it; and the copy's names that admit
+         equality where the summary's do not *)
+      val psi : realisation ref = ref IntMap.empty
+      val fix : realisation ref = ref IntMap.empty
+      fun pair (c : tycon, c' : tycon) =
+        case IntMap.find (made, #stamp c) of
+          SOME d =>
+            (case IntMap.find (!psi, #stamp c) of
+               SOME (TName e) => if #stamp e = #stamp c' then () else raise Disagree
+             | SOME _ => raise Disagree
+             | NONE =>
+                 (psi := IntMap.insert (!psi, #stamp c, TName (withEq (c', #eq d)));
+                  if not (#eq d) andalso #eq c' then fix := IntMap.insert (!fix, #stamp c', TName (withEq (c', false)))
+                  else ()))
+        | NONE => if #stamp c = #stamp c' then () else raise Disagree
+      (* whether the copy's every type is the summary's but for its type
+         variables' names (renamed one to one, a scheme at a time): then
+         the copy with the summary's equality is the summary realised *)
+      val same = ref true
+      (* the summary's type (a), realised by phi as it is walked, and the
+         copy's (b), and the variables of the scheme paired so far *)
+      fun ty (a, b, vs : (tvar ref * tvar ref) list ref) =
+        case (prune a, prune b) of
+          (TCon (c, xs), b') =>
+            (case IntMap.find (phi, #stamp c) of
+               SOME f => ty (applyFcn (f, xs), b', vs)
+             | NONE =>
+                 (case b' of
+                    TCon (c', ys) => (pair (c, c'); tys (xs, ys, vs))
+                  | TVar (ref (Unbound {kind = KOverload _, ...})) => ()
+                  | TVar _ => same := false
+                  | _ => raise Disagree))
+        | (TVar r, TVar r') =>
+            (case (List.find (fn (x, _) => x = r) (!vs), List.find (fn (_, y) => y = r') (!vs)) of
+               (SOME (_, y), _) => if y = r' then () else same := false
+             | (NONE, SOME _) => same := false
+             | (NONE, NONE) => vs := (r, r') :: !vs)
+        | (TVar _, _) => raise Disagree
+        (* an overloaded constant or operator of the copy's, which the end
+           of the declaration settles as the declaration's check settled it *)
+        | (_, TVar (ref (Unbound {kind = KOverload _, ...}))) => ()
+        | (_, TVar _) => same := false
+        | (TRecord fs, TRecord gs) =>
+            if List.length fs <> List.length gs then raise Disagree
+            else ListPair.app (fn ((l, x), (l', y)) => if l = l' then ty (x, y, vs) else raise Disagree) (fs, gs)
+        | (TArrow (x1, y1), TArrow (x2, y2)) => (ty (x1, x2, vs); ty (y1, y2, vs))
+        | _ => raise Disagree
+      and tys (xs, ys, vs) = if List.length xs <> List.length ys then raise Disagree else ListPair.app (fn (x, y) => ty (x, y, vs)) (xs, ys)
+      fun scheme (a, b) = ty (a, b, ref [])
+      fun value (v, v') =
+        case (v, v') of
+          (Val {scheme = s, ...}, Val {scheme = s', ...}) => scheme (s, s')
+        | (Con {scheme = s, ...}, Con {scheme = s', ...}) => scheme (s, s')
+        | (Exn {ty = t, ...}, Exn {ty = t', ...}) => scheme (t, t')
+        | (Prim {scheme = s, ...}, Prim {scheme = s', ...}) => scheme (s, s')
+        | (ConAsVal {scheme = s, ...}, ConAsVal {scheme = s', ...}) => scheme (s, s')
+        | (ExnAsVal {ty = t, ...}, ExnAsVal {ty = t', ...}) => scheme (t, t')
+        | _ => raise Disagree
+      fun fcn (f, f') =
+        case (f, f') of
+          (TName c, _) =>
+            (case IntMap.find (phi, #stamp c) of
+               SOME g => fcn (g, f')
+             | NONE => (case f' of TName c' => pair (c, c') | _ => raise Disagree))
+        | (TAbbrev (ps, t), TAbbrev (ps', t')) => if List.length ps <> List.length ps' then raise Disagree else scheme (t, t')
+        | (TAbbrev (_, t), TName c') => scheme (t, TCon (c', []))
+      fun maps (f : 'a * 'a -> unit) (m : 'a StringMap.map, m' : 'a StringMap.map) : unit =
+        if StringMap.numItems m <> StringMap.numItems m' then raise Disagree
+        else StringMap.appi (fn (n, x) => case StringMap.find (m', n) of SOME y => f (x, y) | NONE => raise Disagree) m
+      fun walk (Env {vals, tys = ts, strs}, Env {vals = vals', tys = ts', strs = strs'}) =
+        (maps value (vals, vals');
+         maps (fn (TyStr {fcn = f, cons}, TyStr {fcn = f', cons = cons'}) =>
+                  (fcn (f, f');
+                   if List.length cons <> List.length cons' then raise Disagree
+                   else ListPair.app (fn ((n, v), (n', v')) => if n = n' then value (v, v') else raise Disagree) (cons, cons')))
+              (ts, ts');
+         maps walk (strs, strs'))
+      (* where the copy is more general: the summary's types, realised,
+         with the copy's stamps and constructors *)
+      fun merged () =
+        let
+          fun value (v, v') =
+            case (v, v') of
+              (Val {scheme, ...}, Val {stamp, global, ...}) => Val {scheme = scheme, stamp = stamp, global = global}
+            | (Con {scheme, ...}, Con {info, ...}) => Con {scheme = scheme, info = info}
+            | (Exn {ty = t, ...}, Exn {info, ...}) => Exn {ty = t, info = info}
+            | (Prim {scheme, ...}, Prim {name, ...}) => Prim {scheme = scheme, name = name}
+            | (ConAsVal {scheme, ...}, ConAsVal {info, ...}) => ConAsVal {scheme = scheme, info = info}
+            | (ExnAsVal {ty = t, ...}, ExnAsVal {info, ...}) => ExnAsVal {ty = t, info = info}
+            | _ => raise Disagree
+          fun get (m', n) = case StringMap.find (m', n) of SOME y => y | NONE => raise Disagree
+          fun env (Env {vals, tys = ts, strs}, Env {vals = vals', tys = ts', strs = strs'}) : env =
+            Env {vals = StringMap.mapi (fn (n, v) => value (v, get (vals', n))) vals,
+                 tys = StringMap.mapi (fn (n, TyStr {fcn = f, cons}) =>
+                                          let val TyStr {cons = cons', ...} = get (ts', n)
+                                          in TyStr {fcn = f, cons = ListPair.map (fn ((c, v), (_, v')) => (c, value (v, v'))) (cons, cons')} end)
+                                      ts,
+                 strs = StringMap.mapi (fn (n, e) => env (e, get (strs', n))) strs}
+          val typed = realizeEnv (IntMap.unionWith #2 (phi, !psi), env (result, copy))
+          (* no name of the body's left where the copy has none in its place *)
+          fun left t =
+            case prune t of
+              TVar _ => ()
+            | TCon (c, xs) => if IntMap.member (made, #stamp c) then raise Disagree else List.app left xs
+            | TRecord fs => List.app (fn (_, x) => left x) fs
+            | TArrow (x, y) => (left x; left y)
+        in appEnvTypes left typed; typed end
+      (* the copy can be more general only where the argument's type for a
+         parameter's drops a type variable of it, and differ in equality
+         only where a name the body made does not admit it *)
+      fun drops (TName _) = false
+        | drops (TAbbrev (ps, body)) =
+            let
+              val seen : int list ref = ref []
+              fun occurs t =
+                case prune t of
+                  TVar (ref (Unbound {id, ...})) => seen := id :: !seen
+                | TVar _ => ()
+                | TCon (_, xs) => List.app occurs xs
+                | TRecord fs => List.app (fn (_, x) => occurs x) fs
+                | TArrow (x, y) => (occurs x; occurs y)
+            in occurs body; not (List.all (fn p => List.exists (fn q => q = p) (!seen)) ps) end
+      val alike = not (List.exists (fn c => not (#eq c)) generated)
+                  andalso not (IntMap.foldl (fn (f, b) => b orelse drops f) false phi)
+    in
+      if alike andalso not (!lintSummaries) then SOME copy
+      else
+        (walk (result, copy);
+         (* --lint: where nothing can differ, nothing does *)
+         if alike andalso not (!same andalso IntMap.isEmpty (!fix)) then
+           Error.bug ("the copy of " ^ where_ ^ " is typed otherwise than its signature where nothing should differ"
+                      ^ (if !same then "" else " (more general)") ^ (if IntMap.isEmpty (!fix) then "" else " (equality)"))
+         else ();
+         SOME (if !same then (if IntMap.isEmpty (!fix) then copy else realizeEnv (!fix, copy)) else merged ()))
+        handle Disagree => NONE
+    end
 
   (* ------------------------------------------------------------------ *)
   (* Types                                                                *)
@@ -1057,14 +1348,29 @@ struct
                                            SOME x => bindStr (env, x, #env sigma)
                                          | NONE => plus (env, #env sigma)
                            (* the body is checked once against the parameter signature (rule 86);
-                              its annotations are discarded, each application elaborates a copy *)
-                           val _ = elabStrexp (bodyEnv, level, top, outerScope, #body b)
+                              its annotations are discarded, and what it gave is the functor's
+                              summary (rule 54); each application whose code is made
+                              elaborates a copy *)
+                           val () = if !ElabStats.on then ElabStats.count ElabStats.FunDecls else ()
+                           val lo = !tyconCounter
+                           val (s0, c0, v0) = counters ()
+                           val () = checking := !checking + 1
+                           val result = ElabStats.within ElabStats.FunDecl (fn () => elabStrexp (bodyEnv, level, top, outerScope, #body b))
+                                        handle e => (checking := !checking - 1; raise e)
+                           val () = checking := !checking - 1
+                           val (s1, c1, v1) = counters ()
                            val () = resolvePending ()
+                           val summary =
+                             if closedEnv result then
+                               SOME {generated = generatedIn (lo, result), result = placeholders result,
+                                     counts = (s1 - s0, c1 - c0, v1 - v0)}
+                             else NONE
                            val sigsNow = !sigs
                            val funsNow = !funs
                          in
                            (#name b, FunInfo {param = #param b, paramSig = sigma, body = #body b, defEnv = env, origin = "",
-                                              allowPrim = !allowPrim, defSigs = sigsNow, defFuns = funsNow})
+                                              allowPrim = !allowPrim, defSigs = sigsNow, defFuns = funsNow,
+                                              summary = summary})
                          end) binds
         in
           List.app (fn (n, f) => (funs := StringMap.insert (!funs, n, f); insertedFuns := n :: !insertedFuns)) elaborated;
@@ -1090,33 +1396,71 @@ struct
         let
           val e = elabStrexp (env, level, top, scope, se)
           val sigma = elabSigexp (env, sigexp)
-        in SigMatch.ascribe (sigma, e, opaque, sp) end
+        in ElabStats.during ElabStats.Match (fn () => SigMatch.ascribe (sigma, e, opaque, sp)) end
     | StrApp (funid, arg, slot, sp) =>
         (Usage.use ("fun", funid);
          case StringMap.find (!funs, funid) of
            NONE => err (sp, "unbound functor: " ^ funid)
-         | SOME (FunInfo {param, paramSig, body, defEnv, allowPrim = ap, defSigs, defFuns, ...}) =>
+         | SOME (FunInfo {param, paramSig, body, defEnv, allowPrim = ap, defSigs, defFuns, summary, origin}) =>
              let
-               (* rule 54: match the argument, then specialise a copy of the body to it,
-                  in the basis of the functor's definition *)
+               (* rule 54: match the argument, then type the application by
+                  the functor's signature *)
                val argEnv = elabStrexp (env, level, top, scope, arg)
-               val thinned = SigMatch.ascribe (paramSig, argEnv, false, sp)
-               val bodyEnv = case param of
-                               SOME x => bindStr (defEnv, x, thinned)
-                             | NONE => plus (defEnv, thinned)
-               val copy = copyStrexp body
-               val saved = (!allowPrim, !reportMatches, !sigs, !funs)
-               fun restore () =
-                 (allowPrim := #1 saved; reportMatches := #2 saved; sigs := #3 saved; funs := #4 saved)
-               val () = (allowPrim := ap; reportMatches := false; sigs := defSigs; funs := defFuns)
-               val result =
-                 elabStrexp (bodyEnv, level, top, scope, copy)
-                 handle Error.CompileError (sp', msg) =>
-                   (restore ();
-                    raise Error.CompileError (sp', "in the application of functor " ^ funid ^ " at "
-                                                   ^ Source.describe sp ^ ": " ^ msg))
-               val () = restore ()
-             in slot := SOME copy; result end)
+               (* only checked (inside a functor's declaration): the summary
+                  realised, the parameter's names by the argument's types and
+                  the names the body made by fresh ones *)
+               fun typed ({generated, result, counts} : summary) =
+                 let
+                   val (phi, _) = ElabStats.during ElabStats.Match (fn () => SigMatch.match (paramSig, argEnv, sp))
+                   val start = counters ()
+                   val phi = List.foldl (fn (c, m) => IntMap.insert (m, #stamp c, TName (freshTycon (#name c, #arity c, #eq c))))
+                                        phi generated
+                   val r = freshExceptions (realizeEnv (phi, result))
+                 in replay (start, counts); r end
+               (* a copy of the body specialised to the argument, in the
+                  basis of the functor's definition, for the application's
+                  code; its types the signature's where a summary gives them *)
+               fun copied () =
+                 let
+                   (* the code made of the copy is the body's, of the unit it is
+                      from, which this one depends on as such: "fun F" holds by
+                      the signature alone, and F may be another functor here *)
+                   val () = if !checking = 0 andalso origin <> "" then Usage.use ("funat", origin) else ()
+                   val (phi, specE) = ElabStats.during ElabStats.Match (fn () => SigMatch.match (paramSig, argEnv, sp))
+                   val thinned = SigMatch.mergeInfo (specE, argEnv)
+                   val bodyEnv = case param of
+                                   SOME x => bindStr (defEnv, x, thinned)
+                                 | NONE => plus (defEnv, thinned)
+                   val copy = ElabStats.during ElabStats.Copy (fn () => copyStrexp body)
+                   val saved = (!allowPrim, !reportMatches, !sigs, !funs)
+                   fun restore () =
+                     (allowPrim := #1 saved; reportMatches := #2 saved; sigs := #3 saved; funs := #4 saved)
+                   val () = (allowPrim := ap; reportMatches := false; sigs := defSigs; funs := defFuns)
+                   val result =
+                     elabStrexp (bodyEnv, level, top, scope, copy)
+                     handle Error.CompileError (sp', msg) =>
+                       (restore ();
+                        raise Error.CompileError (sp', "in the application of functor " ^ funid ^ " at "
+                                                       ^ Source.describe sp ^ ": " ^ msg))
+                   val () = restore ()
+                   val result =
+                     case summary of
+                       NONE => result
+                     | SOME s =>
+                         (case signatureTyped (s, phi, result, "functor " ^ funid ^ " at " ^ Source.describe sp) of
+                            SOME r => r
+                          | NONE =>
+                              if !lintSummaries then Error.bug ("the copy of functor " ^ funid ^ " at " ^ Source.describe sp
+                                                                ^ " disagrees with its summary")
+                              else result)
+                 in slot := SOME copy; result end
+               (* --pass-stats=elab: the match, the copy and its elaboration
+                  are the application's *)
+               fun apply () =
+                 case (!checking > 0, summary) of
+                   (true, SOME s) => typed s
+                 | _ => copied ()
+             in ElabStats.application apply end)
     | StrLet (decs, body, _) =>
         let val delta = elabDecs (env, level, top, scope, decs)
         in elabStrexp (plus (env, delta), level, top, scope, body) end
@@ -1226,7 +1570,7 @@ struct
           val () = exportTags := orders (#env sigma, StringMap.empty)
           val e = elabStrexp (env, level, top, scope, body) handle x => (exportTags := saved; raise x)
           val () = exportTags := saved
-          val ascribed = SigMatch.ascribe (sigma, e, true, sp)
+          val ascribed = ElabStats.during ElabStats.Match (fn () => SigMatch.ascribe (sigma, e, true, sp))
           val via = dynamicVia (env, "export", sp)
           val slots : (int * ty * bool) list ref = ref []
           fun collect (Env {vals, strs, ...}) =
@@ -1252,24 +1596,38 @@ struct
       SigId (n, sp) =>
         (Usage.use ("sig", n);
          case StringMap.find (!sigs, n) of
-           SOME sg => SigMatch.instantiate sg
+           SOME sg => ElabStats.during ElabStats.Inst (fn () => SigMatch.instantiate sg)
          | NONE => err (sp, "unbound signature: " ^ n))
     | SigSig (specs, sp) => elabSpecs (env, specs)
-    | SigWhere (se, clauses, _) =>
-        List.foldl (fn ((tvs, longid, ty, csp), sigma) =>
-                       let
-                         val params = List.map paramVar tvs
-                         val scope = ref (StringMap.fromList (ListPair.zip (tvs, List.map #2 params)))
-                         val body = elabTy (env, scope, 0, ty)
-                       in SigMatch.whereType (sigma, longid, TAbbrev (List.map #1 params, body), csp) end)
-                   (elabSigexp (env, se)) clauses
+    | SigWhere _ =>
+        (* the clauses of a chain of where's, the innermost first, realised
+           at once (SigMatch.whereStep) *)
+        let
+          fun chain (SigWhere (se, clauses, _), acc) = chain (se, clauses @ acc)
+            | chain (se, acc) = (se, acc)
+          val (base, clauses) = chain (se, [])
+          val sigma = elabSigexp (env, base)
+          fun clause ((tvs, longid, ty, csp), phi) =
+            let
+              val params = List.map paramVar tvs
+              val scope = ref (StringMap.fromList (ListPair.zip (tvs, List.map #2 params)))
+              val body = elabTy (env, scope, 0, ty)
+            in SigMatch.whereStep (sigma, phi, longid, TAbbrev (List.map #1 params, body), csp) end
+        in
+          ElabStats.during ElabStats.Where (fn () => SigMatch.whereFinish (sigma, List.foldl clause IntMap.empty clauses))
+        end
 
   and elabSpecs (env, specs : spec list) : SigMatch.sigma =
     let
+      (* rule 77: later specifications see the earlier ones, in env plus the
+         signature so far, which each specification extends by what it
+         specifies (which names nothing the signature has) and a run of
+         sharing realises *)
+      val current = ref env
       fun add (sigma : SigMatch.sigma, bound', delta, sp) : SigMatch.sigma =
-        {bound = #bound sigma @ bound', env = plusDisjoint (#env sigma, delta, sp)}
-      (* rule 77: later specifications see the earlier ones *)
-      fun cur (sigma : SigMatch.sigma) = plus (env, #env sigma)
+        let val sigma' = {bound = #bound sigma @ bound', env = plusDisjoint (#env sigma, delta, sp)}
+        in current := plus (!current, delta); sigma' end
+      fun cur (_ : SigMatch.sigma) = !current
       fun one (spec, sigma) =
         case spec of
           SpecVal (descs, _) =>
@@ -1319,10 +1677,27 @@ struct
         | SpecInclude (sg, sp) =>
             let val sg' = elabSigexp (cur sigma, sg)
             in add (sigma, #bound sg', #env sg', sp) end
-        | SpecSharingType (ids, sp) => SigMatch.shareTypes (sigma, ids, sp)
-        | SpecSharing (ids, sp) => SigMatch.shareStructures (sigma, ids, sp)
+        | SpecSharingType _ => Error.bug "elabSpecs: sharing outside a run"
+        | SpecSharing _ => Error.bug "elabSpecs: sharing outside a run"
+      fun equation (SpecSharingType (ids, sp)) = SOME (SigMatch.ShareTypes (ids, sp))
+        | equation (SpecSharing (ids, sp)) = SOME (SigMatch.ShareStructures (ids, sp))
+        | equation _ = NONE
+      (* a run of sharing specifications, realised at once (SigMatch.shareRun) *)
+      fun run (acc, rest) =
+        case rest of
+          spec :: more => (case equation spec of SOME e => run (e :: acc, more) | NONE => (List.rev acc, rest))
+        | [] => (List.rev acc, rest)
+      fun loop (sigma, []) = sigma
+        | loop (sigma, spec :: rest) =
+          case equation spec of
+            NONE => loop (one (spec, sigma), rest)
+          | SOME e =>
+              let
+                val (eqns, rest') = run ([e], rest)
+                val sigma' = ElabStats.during ElabStats.Share (fn () => SigMatch.shareRun (sigma, eqns))
+              in current := plus (env, #env sigma'); loop (sigma', rest') end
     in
-      List.foldl one {bound = [], env = Env.empty} specs
+      ElabStats.during ElabStats.Specs (fn () => loop ({bound = [], env = Env.empty}, specs))
     end
 
   (* ------------------------------------------------------------------ *)
@@ -1387,6 +1762,17 @@ struct
      one: what the REPL echoes of a declaration (src/repl/session.sml). *)
   val lastDelta : env ref = ref Env.empty
 
+  (* --pass-stats=elab: the line of a top-level declaration elaborated *)
+  fun stats (d : dec) : unit =
+    let
+      val (kind, name) =
+        case d of
+          DSignature ({name, ...} :: _, _) => ("signature", name)
+        | DFunctor ({name, ...} :: _, _) => ("functor", name)
+        | DStructure ({name, ...} :: _, _) => ("structure", name)
+        | _ => ("core", "")
+    in ElabStats.emit (Source.describe (spanOfDec d), kind, name, !Types.workLimit - !Types.workLeft) end
+
   fun elabTop (env : env ref, decs : dec list) : unit =
     (lastDelta := Env.empty;
      (* a type of a message is named as the top level names it *)
@@ -1394,6 +1780,7 @@ struct
      List.app (fn d =>
                 let
                   val saved = if !recover then SOME (snapshot ()) else NONE
+                  val () = ElabStats.reset ()
                   fun go () =
                     let
                       val () = Types.startWork (spanOfDec d)
@@ -1416,6 +1803,7 @@ struct
                           List.app checkClosed (List.rev (!pendingClosed));
                           pendingClosed := [])
                        else ();
+                       if !ElabStats.on then stats d else ();
                        Types.stopWork () end
                 in
                   case saved of

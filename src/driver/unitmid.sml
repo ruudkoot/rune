@@ -19,7 +19,7 @@ struct
   open Mid
 
   val magic = "RBM"
-  val version = 2
+  val version = 3
 
   exception Bad of string
 
@@ -71,14 +71,24 @@ struct
       val tycon = name B.kTycon
       val tvar = name B.kTvar
       fun list f l = P.list (fn (_, a) => f a) (w, l)
+      (* a type written once: again, the number of the type it is among
+         those written, each numbered as its writing ends (Ty is
+         hash-consed: a type of 2^n nodes as a tree is n here) *)
+      val written : int IntTable.table = IntTable.table 256
+      val nwritten = ref 0
       fun ty t =
-        case t of
-          Ty.Gen i => (P.byte (w, 0); tvar i)
-        | Ty.Var i => (P.byte (w, 1); tvar i)
-        | Ty.Con (s, n, args) => (P.byte (w, 2); tycon s; P.string (w, n); list ty args)
-        | Ty.Tuple ts => (P.byte (w, 3); list ty ts)
-        | Ty.Arrow (a, b) => (P.byte (w, 4); ty a; ty b)
-        | Ty.ExnCon => P.byte (w, 5)
+        case IntTable.find (written, Ty.id t) of
+          SOME k => (P.byte (w, 6); P.nat (w, k))
+        | NONE =>
+            ((case Ty.view t of
+                Ty.Gen i => (P.byte (w, 0); tvar i)
+              | Ty.Var i => (P.byte (w, 1); tvar i)
+              | Ty.Con (s, n, args) => (P.byte (w, 2); tycon s; P.string (w, n); list ty args)
+              | Ty.Tuple ts => (P.byte (w, 3); list ty ts)
+              | Ty.Arrow (a, b) => (P.byte (w, 4); ty a; ty b)
+              | Ty.ExnCon => P.byte (w, 5));
+             IntTable.insert (written, Ty.id t, !nwritten);
+             nwritten := !nwritten + 1)
       fun const (c : Lambda.const) =
         case c of
           Lambda.CInt i => (P.byte (w, 0); P.string (w, IntInf.toString i))
@@ -208,15 +218,26 @@ struct
       val tycon = name B.kTycon
       val tvar = name B.kTvar
       fun list f = P.rlist (fn _ => f ()) r
+      (* each type read numbered as its reading ends, as write numbers them *)
+      val read' : Ty.ty IntTable.table = IntTable.table 256
+      val nread = ref 0
       fun ty () : Ty.ty =
         case P.rbyte r of
-          0 => Ty.Gen (tvar ())
-        | 1 => Ty.Var (tvar ())
-        | 2 => let val s = tycon () val n = P.rstring r in Ty.Con (s, n, list ty) end
-        | 3 => Ty.Tuple (list ty)
-        | 4 => let val a = ty () in Ty.Arrow (a, ty ()) end
-        | 5 => Ty.ExnCon
-        | _ => raise Bad "not a type"
+          6 => (case IntTable.find (read', P.rnat r) of
+                  SOME t => t
+                | NONE => raise Bad "a type before it is written")
+        | b =>
+            let
+              val t =
+                case b of
+                  0 => Ty.gen (tvar ())
+                | 1 => Ty.var (tvar ())
+                | 2 => let val s = tycon () val n = P.rstring r in Ty.con (s, n, list ty) end
+                | 3 => Ty.tuple (list ty)
+                | 4 => let val a = ty () in Ty.arrow (a, ty ()) end
+                | 5 => Ty.exnCon
+                | _ => raise Bad "not a type"
+            in IntTable.insert (read', !nread, t); nread := !nread + 1; t end
       fun const () : Lambda.const =
         let fun big () = case IntInf.fromString (P.rstring r) of SOME i => i | NONE => raise Bad "not a number"
         in

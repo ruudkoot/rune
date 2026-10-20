@@ -365,7 +365,9 @@ being visited. A minor collection's roots are those, the fields of the
 cards the barrier marked and the large objects made since the last one,
 and of the stack only what is above its watermark: the lowest frame that
 has run since the last minor collection, which every return and every
-raise lowers to the frame it goes on in (`vm_frame_pop`). The frames below
+raise lowers to the frame it goes on in (`vm_frame_pop`; in `runevm`, a
+return barrier at the watermark's frame, whose return alone goes below
+it: docs/plans/native-frames.md, M5). The frames below
 it have not run since that collection left nothing young in them, so a
 deep recursion is not scanned again at every minor collection; a full
 collection scans the whole stack.
@@ -407,7 +409,12 @@ expects:
   primitive, done in the frame of the function that calls it: it does not
   drop what that function still has in a dead register (the one explained
   check of the Basis suite on the register VM,
-  `Runtime.collect/drops-what-is-unreachable`).
+  `Runtime.collect/drops-what-is-unreachable`). Where the frame runs in the
+  JIT's code it is told: compiled code says which registers are live where
+  it calls into C (`VM.top_live`), and the collector takes the frame as one
+  that waits -- since docs/plans/performance.md's M6, which leaves a
+  frame's registers as an earlier frame wrote them rather than filling them
+  with unit, a register not written yet may hold what is long dead.
 * **Registers past a function's 64th are roots.** The liveness follows 64
   registers a function. Two of the compiler's 2,263 functions have more;
   the top level of a program is one function and usually does (the
@@ -468,7 +475,8 @@ what `Runtime.stats` says is live.
   stack or among the other roots is to the start of an object in it, and
   that every field of an old object that holds a pointer into the nursery
   is in a card the barrier marked, and that no slot of the stack below its
-  watermark holds one; a failure is a message naming the
+  watermark holds one (and in `runevm` that the return barrier is at the
+  watermark); a failure is a message naming the
   collection and status 2. `make test-heap` runs the language's tests so,
   with a heap of 64 KiB and a nursery of 8 KiB.
 * An image (`Runtime.save`) carries the heap as it lies, the garbage since
@@ -618,7 +626,9 @@ were built apart.
 The value stack, the frames and the handlers are three arrays that start at
 1024 values, 256 frames and 64 handlers and double when they are full, so
 recursion is bounded by memory rather than by the C stack: the interpreter
-loop does not call itself. A call that cannot grow them ends the run with
+loop does not call itself. `runevm`'s frames are in the value stack itself,
+three words of each below its registers (docs/plans/native-frames.md, M4),
+so there it is two arrays. A call that cannot grow them ends the run with
 `runevm: out of memory (stack)`.
 
 Tail calls do not grow the frame stack, so a tail-recursive loop runs in

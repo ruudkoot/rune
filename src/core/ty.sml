@@ -6,19 +6,176 @@
    signature is what it stands for, so that the representation says what a
    value is and not what a signature lets a program see.
 
+   A type is hash-consed (performance M4, D4 A): each node is made once,
+   through a table, and has a number of its own, so that two types are equal
+   where their numbers are, and a walk over a type can be memoised on the
+   numbers of its nodes -- a type the elaborator shares, of 2^n nodes as a
+   tree, is n nodes here, and is walked as n (MLton's regression
+   exponential.sml; Shao, League and Monnier, ICFP 1998). A node is seen
+   through `view` and made by the functions named after its constructors:
+   gen, var, con, tuple, arrow and exnCon.
+
    The elaborator fills the tables below as it goes, so that a type can be
    found for what the translation meets: the scheme of every variable, the
    constructors of every datatype, the argument of every exception, and what
    each opaque type stands for. *)
 structure Ty =
 struct
-  datatype ty =
-      Gen of int                          (* a generic variable of a scheme, by the elaborator's id *)
-    | Var of int                          (* a variable no type was found for: equal to itself only *)
-    | Con of int * string * ty list       (* a type name, by stamp, and its arguments *)
-    | Tuple of ty list                    (* a record or tuple; unit is Tuple [] *)
-    | Arrow of ty * ty
-    | ExnCon                              (* an exception constructor *)
+  structure Node :>
+  sig
+    type ty
+    datatype view =
+        Gen of int                        (* a generic variable of a scheme, by the elaborator's id *)
+      | Var of int                        (* a variable no type was found for: equal to itself only *)
+      | Con of int * string * ty list     (* a type name, by stamp, and its arguments *)
+      | Tuple of ty list                  (* a record or tuple; unit is Tuple [] *)
+      | Arrow of ty * ty
+      | ExnCon                            (* an exception constructor *)
+    (* the node of each view, made where there is none yet *)
+    val gen : int -> ty
+    val var : int -> ty
+    val con : int * string * ty list -> ty
+    val tuple : ty list -> ty
+    val arrow : ty * ty -> ty
+    val exnCon : ty
+    val view : ty -> view
+    (* a node's number: two nodes are the same type where theirs are *)
+    val id : ty -> int
+    (* the number of nodes of a type as a tree, to sizeLimit *)
+    val size : ty -> int
+    val sizeLimit : int
+    (* the generic variables of a type, each once, in the order a walk from
+       the left meets them *)
+    val gens : ty -> int list
+  end =
+  struct
+    (* its number, its hash, its size, its generic variables and its view,
+       the third and fourth worked out as it is made *)
+    datatype ty = T of int * int * int * int list * view
+    and view =
+        Gen of int
+      | Var of int
+      | Con of int * string * ty list
+      | Tuple of ty list
+      | Arrow of ty * ty
+      | ExnCon
+
+    fun id (T (i, _, _, _, _)) = i
+    fun hashOf (T (_, h, _, _, _)) = h
+    fun size (T (_, _, n, _, _)) = n
+    fun gens (T (_, _, _, g, _)) = g
+    fun view (T (_, _, _, _, v)) = v
+    val sizeLimit = 1000000
+
+    (* the nodes by a hash of their view -- its constructor, its numbers and
+       its parts' numbers, in words, which wrap round -- in buckets, no
+       more nodes than buckets *)
+    val buckets : ty list array ref = ref (Array.array (1024, []))
+    val count = ref 0
+    val next = ref 0
+
+    (* a hash: the constructor's number, then the numbers of the view and
+       of its parts, in words, which wrap round, to 30 bits *)
+    fun mix (h : word, x : int) : word = h * 0w31 + Word.fromInt x
+    fun ids (h, []) = h
+      | ids (h, t :: ts) = ids (mix (h, id t), ts)
+    fun final (h : word) : int = Word.toInt (Word.andb (h, 0wx3FFFFFFF))
+
+    (* the same parts; a type name's name is not its identity, only its
+       stamp *)
+    fun sameIds (x :: xs, y :: ys) = id x = id y andalso sameIds (xs, ys)
+      | sameIds ([], []) = true
+      | sameIds _ = false
+
+    fun add (t, n) = Int.min (sizeLimit, n + size t)
+    fun sizes ts = List.foldl add 1 ts
+
+    (* the variables of acc, then those of t that are not among them *)
+    fun union (t, acc) =
+      case (gens t, acc) of
+        ([], _) => acc
+      | (xs, []) => xs
+      | (xs, _) => List.foldl (fn (x, acc) => if List.exists (fn y => y = x) acc then acc else acc @ [x]) acc xs
+    fun gensOf ts = List.foldl union [] ts
+
+    fun grow () =
+      let
+        val old = !buckets
+        val new = Array.array (2 * Array.length old, [])
+        fun put t = let val i = hashOf t mod Array.length new in Array.update (new, i, t :: Array.sub (new, i)) end
+      in
+        Array.app (List.app put) old; buckets := new
+      end
+
+    fun bucket h = let val a = !buckets in Array.sub (a, h mod Array.length a) end
+
+    (* a node not made yet, of its hash, its size, its variables and its
+       view *)
+    fun new (h, n, g, v) =
+      let
+        val a = !buckets
+        val i = h mod Array.length a
+        val t = T (!next, h, n, g, v)
+      in
+        next := !next + 1;
+        Array.update (a, i, t :: Array.sub (a, i));
+        count := !count + 1;
+        if !count > Array.length a then grow () else ();
+        t
+      end
+
+    (* each constructor's: the node in the bucket of its hash that has the
+       view, or a new one; a view made only for a new node *)
+    fun gen x =
+      let
+        val h = final (mix (0w1, x))
+        fun find [] = new (h, 1, [x], Gen x)
+          | find ((t as T (_, h', _, _, v)) :: rest) =
+              if h <> h' then find rest else case v of Gen x' => if x = x' then t else find rest | _ => find rest
+      in find (bucket h) end
+
+    fun var x =
+      let
+        val h = final (mix (0w2, x))
+        fun find [] = new (h, 1, [], Var x)
+          | find ((t as T (_, h', _, _, v)) :: rest) =
+              if h <> h' then find rest else case v of Var x' => if x = x' then t else find rest | _ => find rest
+      in find (bucket h) end
+
+    fun con (s, name, ts) =
+      let
+        val h = final (ids (mix (0w3, s), ts))
+        fun find [] = new (h, sizes ts, gensOf ts, Con (s, name, ts))
+          | find ((t as T (_, h', _, _, v)) :: rest) =
+              if h <> h' then find rest
+              else case v of Con (s', _, ts') => if s = s' andalso sameIds (ts, ts') then t else find rest | _ => find rest
+      in find (bucket h) end
+
+    fun tuple ts =
+      let
+        val h = final (ids (0w4, ts))
+        fun find [] = new (h, sizes ts, gensOf ts, Tuple ts)
+          | find ((t as T (_, h', _, _, v)) :: rest) =
+              if h <> h' then find rest else case v of Tuple ts' => if sameIds (ts, ts') then t else find rest | _ => find rest
+      in find (bucket h) end
+
+    fun arrow (a, b) =
+      let
+        val (i, j) = (id a, id b)
+        val h = final (mix (mix (0w5, i), j))
+        fun find [] = new (h, add (b, add (a, 1)), union (b, gens a), Arrow (a, b))
+          | find ((t as T (_, h', _, _, v)) :: rest) =
+              if h <> h' then find rest
+              else case v of Arrow (a', b') => if i = id a' andalso j = id b' then t else find rest | _ => find rest
+      in find (bucket h) end
+
+    val exnCon = new (final 0w6, 1, [], ExnCon)
+  end
+  open Node
+
+  (* A walk of a type of at most smallType nodes as a tree is one of the
+     tree, without a table: as quick, and making nothing *)
+  val smallType = 64
 
   (* ---- the tables ---- *)
 
@@ -170,24 +327,58 @@ struct
     | Extras m => (case IntMap.find (m, stamp) of SOME l => l | NONE => [])
     | Unknown => []
 
-  fun fromTypes (t : Types.ty) : ty =
-    case Types.prune t of
+  (* An elaborator's type as a type here. A type the elaborator shares is a
+     variable's cell bound to it, each named as often as the type is. A type
+     of at most smallType nodes is converted as a tree (tree); a bigger one
+     has each cell of more than smallType nodes converted once, for a
+     conversion (memoised: an association list, cells having an identity
+     and no order), so that a type of 2^n nodes as a tree is converted in
+     some n * smallType steps, and so is its budget of type work spent
+     (Types.prune). *)
+
+  (* a node, its parts converted by go *)
+  fun convert (go : Types.ty -> ty, t : Types.ty) : ty =
+    case t of
       Types.TVar (ref (Types.Unbound {id, level, ...})) =>
-        if level = Types.genericLevel then Gen id else Var id
-    | Types.TVar (ref (Types.Bound t)) => fromTypes t
+        if level = Types.genericLevel then gen id else var id
+    | Types.TVar (ref (Types.Bound t)) => go t
     | Types.TCon (c, args) =>
         (case IntTable.find (realizations, #stamp c) of
-           SOME (Types.TName c') => fromTypes (Types.TCon (c', args))
-         | SOME (Types.TAbbrev (params, body)) => fromTypes (Types.substitute (params, args, body))
+           SOME (Types.TName c') => convert (go, Types.TCon (c', args))
+         | SOME (Types.TAbbrev (params, body)) => go (Types.substitute (params, args, body))
          | NONE =>
              (case !extras of
-                NoExtras => Con (#stamp c, #name c, List.map fromTypes args)
+                NoExtras => con (#stamp c, #name c, List.map go args)
               | _ =>
                   (case extrasOf (#stamp c) of
-                     [] => Con (#stamp c, #name c, List.map fromTypes args)
-                   | extra => Con (#stamp c, #name c, List.map fromTypes args @ List.map Gen extra))))
-    | Types.TRecord fields => Tuple (List.map (fromTypes o #2) fields)
-    | Types.TArrow (a, b) => Arrow (fromTypes a, fromTypes b)
+                     [] => con (#stamp c, #name c, List.map go args)
+                   | extra => con (#stamp c, #name c, List.map go args @ List.map gen extra))))
+    | Types.TRecord fields => tuple (List.map (go o #2) fields)
+    | Types.TArrow (a, b) => arrow (go a, go b)
+
+  exception Big
+  val treeSteps = ref 0
+  fun tree (t : Types.ty) : ty =
+    let val n = !treeSteps + 1
+    in
+      if n > smallType then raise Big
+      else (treeSteps := n; convert (tree, Types.prune t))
+    end
+
+  fun memoised (t : Types.ty) : ty =
+    let
+      val memo : (Types.tvar ref * ty) list ref = ref []
+      fun go t =
+        case t of
+          Types.TVar (r as ref (Types.Bound t')) =>
+            (case List.find (fn (r', _) => r' = r) (!memo) of
+               SOME (_, x) => x
+             | NONE => let val x = go t' in if size x > smallType then memo := (r, x) :: !memo else (); x end)
+        | _ => convert (go, Types.prune t)
+    in go t end
+
+  fun fromTypes (t : Types.ty) : ty =
+    (treeSteps := 0; tree t) handle Big => memoised t
 
   fun argOf (FromElab t) = fromTypes t
     | argOf (Direct t) = t
@@ -206,57 +397,94 @@ struct
 
   (* ---- the types the translation makes ---- *)
 
-  val int = Con (#stamp Types.intTycon, "int", [])
-  val int64 = Con (#stamp Types.int64Tycon, #name Types.int64Tycon, [])
-  val word64 = Con (#stamp Types.word64Tycon, #name Types.word64Tycon, [])
-  val bool = Con (#stamp Types.boolTycon, "bool", [])
-  val string = Con (#stamp Types.stringTycon, "string", [])
-  val exn = Con (#stamp Types.exnTycon, "exn", [])
-  val unit = Tuple []
-  fun list t = Con (#stamp Types.listTycon, "list", [t])
-  fun refTy t = Con (#stamp Types.refTycon, "ref", [t])
+  val int = con (#stamp Types.intTycon, "int", [])
+  val int64 = con (#stamp Types.int64Tycon, #name Types.int64Tycon, [])
+  val word64 = con (#stamp Types.word64Tycon, #name Types.word64Tycon, [])
+  val bool = con (#stamp Types.boolTycon, "bool", [])
+  val string = con (#stamp Types.stringTycon, "string", [])
+  val exn = con (#stamp Types.exnTycon, "exn", [])
+  val unit = tuple []
+  fun list t = con (#stamp Types.listTycon, "list", [t])
+  fun refTy t = con (#stamp Types.refTycon, "ref", [t])
 
   (* ---- comparing and instantiating ---- *)
 
-  fun equal (a : ty, b : ty) : bool =
-    case (a, b) of
-      (Gen x, Gen y) => x = y
-    | (Var x, Var y) => x = y
-    | (Con (s, _, xs), Con (t, _, ys)) => s = t andalso ListPair.allEq equal (xs, ys)
-    | (Tuple xs, Tuple ys) => ListPair.allEq equal (xs, ys)
-    | (Arrow (x1, x2), Arrow (y1, y2)) => equal (x1, y1) andalso equal (x2, y2)
-    | (ExnCon, ExnCon) => true
-    | _ => false
+  (* the same type: the same node *)
+  fun equal (a : ty, b : ty) : bool = id a = id b
 
   (* The generic variables of a scheme made the types an instance gives
      them: SOME the substitution where the instance is one, NONE where it is
-     not. *)
+     not. A pair of nodes is matched once. *)
   fun match (scheme : ty, inst : ty) : ty IntMap.map option =
     let
       exception No
-      fun go (Gen x, t, s) =
-            (case IntMap.find (s, x) of
-               SOME t' => if equal (t, t') then s else raise No
-             | NONE => IntMap.insert (s, x, t))
-        | go (Con (a, _, xs), Con (b, _, ys), s) =
+      (* the pairs met, by the scheme's node, for a scheme too big to walk
+         as a tree *)
+      val seen : int list IntTable.table option =
+        if size scheme <= smallType then NONE else SOME (IntTable.table 64)
+      fun go (x, y, s) =
+        case seen of
+          NONE => step (x, y, s)
+        | SOME seen =>
+            let val (i, j) = (id x, id y)
+            in
+              if List.exists (fn k => k = j) (getOpt (IntTable.find (seen, i), [])) then s
+              else let val s = step (x, y, s) in IntTable.update (seen, i, fn l => j :: getOpt (l, [])); s end
+            end
+      and step (x, y, s) =
+        case (view x, view y) of
+          (Gen g, _) =>
+            (case IntMap.find (s, g) of
+               SOME t' => if equal (y, t') then s else raise No
+             | NONE => IntMap.insert (s, g, y))
+        | (Con (a, _, xs), Con (b, _, ys)) =>
             if a = b andalso List.length xs = List.length ys then ListPair.foldl (fn (x, y, s) => go (x, y, s)) s (xs, ys)
             else raise No
-        | go (Tuple xs, Tuple ys, s) =
+        | (Tuple xs, Tuple ys) =>
             if List.length xs = List.length ys then ListPair.foldl (fn (x, y, s) => go (x, y, s)) s (xs, ys)
             else raise No
-        | go (Arrow (x1, x2), Arrow (y1, y2), s) = go (x2, y2, go (x1, y1, s))
-        | go (x, y, s) = if equal (x, y) then s else raise No
+        | (Arrow (x1, x2), Arrow (y1, y2)) => go (x2, y2, go (x1, y1, s))
+        | _ => if equal (x, y) then s else raise No
     in
       SOME (go (scheme, inst, IntMap.empty)) handle No => NONE
     end
 
+  (* A type with its generic variables made what s says: each node once,
+     and a node that names none of s's as it is. *)
   fun subst (s : ty IntMap.map) (t : ty) : ty =
-    case t of
-      Gen x => (case IntMap.find (s, x) of SOME t' => t' | NONE => t)
-    | Con (a, n, xs) => Con (a, n, List.map (subst s) xs)
-    | Tuple xs => Tuple (List.map (subst s) xs)
-    | Arrow (a, b) => Arrow (subst s a, subst s b)
-    | _ => t
+    if IntMap.isEmpty s then t
+    else if size t <= smallType then
+      let
+        fun same (xs, ys) = ListPair.allEq (fn (x, y) => id x = id y) (xs, ys)
+        fun tree t =
+          case view t of
+            Gen x => (case IntMap.find (s, x) of SOME t' => t' | NONE => t)
+          | Con (a, n, xs) => let val ys = List.map tree xs in if same (xs, ys) then t else con (a, n, ys) end
+          | Tuple xs => let val ys = List.map tree xs in if same (xs, ys) then t else tuple ys end
+          | Arrow (a, b) =>
+              let val (a', b') = (tree a, tree b)
+              in if id a = id a' andalso id b = id b' then t else arrow (a', b') end
+          | _ => t
+      in tree t end
+    else
+      let
+        val done : ty IntTable.table = IntTable.table 64
+        fun go t =
+          if not (List.exists (fn g => IntMap.member (s, g)) (gens t)) then t
+          else
+            case IntTable.find (done, id t) of
+              SOME u => u
+            | NONE =>
+                let
+                  val u =
+                    case view t of
+                      Gen x => (case IntMap.find (s, x) of SOME t' => t' | NONE => t)
+                    | Con (a, n, xs) => con (a, n, List.map go xs)
+                    | Tuple xs => tuple (List.map go xs)
+                    | Arrow (a, b) => arrow (go a, go b)
+                    | _ => t
+                in IntTable.insert (done, id t, u); u end
+      in go t end
 
   (* The argument of the constructor with a tag, of a datatype at the
      arguments given, where the datatype is one and it has that constructor:
@@ -279,27 +507,48 @@ struct
                  end
              end)
 
-  (* A type as text, a variable written as the functions given say. *)
-  fun format (gen : int -> string, var : int -> string) (t : ty) : string =
+  (* A type as text, a variable written as the functions given say, a type
+     name as name says, and a part of it as abbrev says where it says (an
+     abbreviation, MidText): the type itself is written out where expand. *)
+  fun formatWith (gen : int -> string, var : int -> string, name : int * string -> string,
+                  abbrev : ty -> string option) (expand : bool) (t : ty) : string =
     let
-      fun go t =
-        case t of
+      fun go t = case abbrev t of SOME s => s | NONE => node t
+      and node t =
+        case view t of
           Gen x => gen x
         | Var x => var x
-        | Con (_, n, []) => n
-        | Con (_, n, [a]) => atomic a ^ " " ^ n
-        | Con (_, n, xs) => "(" ^ String.concatWith ", " (List.map go xs) ^ ") " ^ n
+        | Con (s, n, []) => name (s, n)
+        | Con (s, n, [a]) => atomic a ^ " " ^ name (s, n)
+        | Con (s, n, xs) => "(" ^ String.concatWith ", " (List.map go xs) ^ ") " ^ name (s, n)
         | Tuple [] => "unit"
         | Tuple [x] => "{" ^ go x ^ "}"         (* a record of one field *)
         | Tuple xs => String.concatWith " * " (List.map atomic xs)
         | Arrow (a, b) => atomic a ^ " -> " ^ go b
         | ExnCon => "exncon"
       and atomic t =
-        case t of
-          Tuple (_ :: _ :: _) => "(" ^ go t ^ ")"
-        | Arrow _ => "(" ^ go t ^ ")"
-        | _ => go t
-    in go t end
+        case abbrev t of
+          SOME s => s
+        | NONE =>
+            case view t of
+              Tuple (_ :: _ :: _) => "(" ^ node t ^ ")"
+            | Arrow _ => "(" ^ node t ^ ")"
+            | _ => node t
+    in if expand then node t else go t end
+
+  (* A type of more than printLimit nodes as a tree is written by its size
+     alone, so that a message or a dump of Lambda (whose text has no
+     abbreviations, as MidText's has) stays of some size: a type of 2^n
+     nodes as a tree is n nodes here, but not on paper *)
+  val printLimit = 100000
+  fun elided t =
+    if size t <= printLimit then NONE
+    else SOME ("<a type of " ^ (if size t >= sizeLimit then "a million nodes or more" else Int.toString (size t) ^ " nodes") ^ ">")
+
+  fun formatNamed (gen : int -> string, var : int -> string, name : int * string -> string) (t : ty) : string =
+    formatWith (gen, var, name, elided) false t
+
+  fun format (gen : int -> string, var : int -> string) (t : ty) : string = formatNamed (gen, var, #2) t
 
   (* by the elaborator's ids, for messages *)
   val toString = format (fn x => "'a" ^ Int.toString x, fn x => "'_" ^ Int.toString x)

@@ -151,7 +151,7 @@ SML rejects, or reject some that SML accepts.
 | mod.sharing.structure | `sharing A = B` (derived form: shares all common type constructors) | Supported | Common types whose type functions are already equal are skipped. |
 | mod.ascription | Transparent ascription `strexp : SIG`, `structure S : SIG = ...`, matching by instantiation and enrichment | Supported | Components not in the signature are hidden. A constructor or exception matched by a `val` specification becomes an ordinary value (5.9). |
 | mod.ascription.opaque | Opaque ascription `strexp :> SIG`, `structure S :> SIG = ...` | Supported | The signature's types become fresh abstract types; `eqtype` and `datatype` specifications keep equality. |
-| mod.functor | `functor F (X : SIG) = strexp`, `functor F (spec) = strexp`, application `F (strexp)` and `F (strdec)`, `and` | Supported | The body is type-checked once against the parameter signature; each application elaborates and compiles a copy of the body specialised to the argument (rule 54). |
+| mod.functor | `functor F (X : SIG) = strexp`, `functor F (spec) = strexp`, application `F (strexp)` and `F (strdec)`, `and` | Supported | The body is type-checked once against the parameter signature, which gives the functor's signature; an application is typed by that signature (rule 54): the argument matched, the parameter's types realised and the body's renamed apart. So a datatype declared in the body admits equality as the parameter's specification allows, whatever the argument (`tests/errors/err.functor_equality.sml`), and a value is as polymorphic as the body's check found it, though a type of the argument drops a parameter (`tests/errors/err.functor_signature_types.sml`). Each application whose code is made compiles a copy of the body specialised to the argument (static interpretation). |
 | mod.functor.result | Result ascription `functor F (X : S) : R = ...` and `:> R` | Supported | |
 | mod.functor.generative | Datatypes and exceptions declared in a functor body are fresh for every application | Supported | |
 | mod.functor.nested | Functor application inside functor bodies, functor results as arguments | Supported | |
@@ -192,6 +192,7 @@ Where each part of the Definition is exercised. The rows are the ids above.
 | ID | Feature | Status | Notes |
 |---|---|---|---|
 | rt.tailcall | Proper tail calls (constant stack for tail recursion) | Supported | Not in the body of a `handle`. |
+| rt.call | A call passes each argument to its parameter, whatever the order of the caller's values (compiled code passes them in the callee's registers: docs/plans/native-frames.md, M6) | Supported | |
 | rt.deeprec | Deep non-tail recursion (the VM stack grows on demand) | Supported | |
 | rt.stack | A recursion without end stops at the stack's limit (`runevm --stack-size N`, 1 GiB by default) with `stack overflow` and status 2, not with the machine's memory | Supported | |
 | rt.gc | Garbage collection (generational copying collector, heap grows as needed) | Supported | `runevm --heap-size N` sets the initial semispace, `--nursery N` the nursery. `--heap-limit N` caps one semispace (at least 4096 bytes); no cap by default. Collection may reach the cap even when the requested fill ratio cannot be met; a retained graph plus a new allocation that cannot fit fails with `heap limit exceeded` and status 2. Two semispaces and non-heap storage are outside the managed size of live objects. |
@@ -204,7 +205,7 @@ Where each part of the Definition is exercised. The rows are the ids above.
 | rt.overflow | `int` arithmetic raises `Overflow`; `word` arithmetic wraps | Supported | At 63 bits, the width of both. |
 | rt.int64 | `Int64.int` arithmetic raises `Overflow` at 64 bits and `Word64.word` arithmetic wraps there; a conversion to `int` raises `Overflow` for what 63 bits do not hold | Supported | |
 | rt.div | `div`/`mod` floor semantics, `quot`/`rem` truncate, `Div` on zero, IEEE reals | Supported | |
-| rt.equality | Structural equality on immutable data, identity on `ref`/`array` | Supported | Uses an explicit worklist with at most 65536 pending comparisons. `--equality-work N` sets the step budget (1000000 by default); exceeding either limit is a VM failure with status 2. |
+| rt.equality | Structural equality on immutable data, identity on `ref`/`array` | Supported | Uses an explicit worklist with at most 65536 pending comparisons. `--equality-work N` sets the step budget (1000000 by default); exceeding either limit is a VM failure with status 2. Under `-O2`, `=` at a datatype or tuple type with no type variable is compiled into an equality function of that type (docs/ir.md, `equality`), which neither limit stops: `rt.equality_work-limit` is compiled at `-O1`. |
 | rt.closure | Closures capture variables by value (refs for mutation), mutual recursion | Supported | |
 | rt.args | Command line arguments after the bytecode file | Supported | |
 | rt.stdin | Reading standard input | Supported | |
@@ -315,10 +316,11 @@ because VM primitives construct these values directly.
 
 Type traversal during elaboration is limited to 50000000 steps per top-level
 declaration (`--type-work=N`), and so, apart, is the translation of each
-top-level declaration's types, which the elaborator keeps shared and the
-intermediate representations do not (`type translation exceeds`; a type of
-2^n nodes, as `f f ... f` of n applications makes, needs about that many
-steps: docs/plans/type-checker.md); exhaustiveness and redundancy analysis is limited
+top-level declaration's types (`type translation exceeds`), which the
+elaborator keeps shared and the intermediate representations share too: a
+type of 2^n nodes as a tree, as `f f ... f` of n applications makes, is
+converted in steps that grow with n, not 2^n (about 6400 at 32
+applications; docs/plans/type-checker.md); exhaustiveness and redundancy analysis is limited
 to 1000000 steps per match (`--match-work=N`) and recursion depth 512. Both step
 budgets can be raised with a positive decimal integer at most 1000000000. Exhausting a budget is a
 source-located compile error, and preserves any previously generated bytecode.

@@ -91,7 +91,8 @@ keep these invariants:
   against the text backend of its assembler by `bin/runeopt-templates`):
   never write a layout fact into `x64.sml`; after a change to `masm.c` run
   `make templates`, since `check-templates` (in `make test-native`) refuses
-  a stale file. `make test-native` runs the suites as native code and wants
+  a stale file. (The JIT's allocation with its pointer in a register,
+  `Masm.alloc_reg`, is the JIT's alone: the templates keep `alloc.used`.) `make test-native` runs the suites as native code and wants
   `--count` to agree with `runevm-stack`. The primitives whose common case the
   code does itself (`runeopt --inlined`, `fastPrim` in `src/opt/x64.sml`)
   change with their C code in `runtime/prims.c`: `tests/opt/prims.sml` runs
@@ -131,7 +132,14 @@ keep these invariants:
   another folder by its path from `runtime/` (`sys/sys.h`,
   `register/jit.h`), which the one include path `-Iruntime` finds, so a
   dependency across folders shows in the include. The shared files include
-  nothing of `stack/`; keep it so.
+  nothing of `stack/`; keep it so. What is outside an engine -- the
+  collector, images, traces and raises, the debugger and its primitives,
+  the census -- reads frames only through the walk of `vm.h` (*The frames,
+  as the runtime reads them*: `vm_frame_top`, `vm_frame_down`,
+  `vm_frames_from` and the rest), which each instruction set gives
+  (`runtime/stack/isa_stack.c`, `runtime/register/isa_regs.c`), never
+  through `vm->frames`; a handler, the stack's watermark and the debugger
+  hold a frame's id, not its index (native-frames.md, M3).
 * **The stack VM's loop** (`runtime/stack/interp.c`, `runtime/stack/loop.h`) keeps its state in
   its own variables: a body of `src/isa/stack.sml` that is not shared is
   written in the loop's words (`PUSH`, `POP`, `TOP`, `LOCALV`, `JUMP_TO`,
@@ -195,22 +203,44 @@ keep these invariants:
   (`--jit-only=odd`) and under `--jit-stress`, and every instruction to
   occurring in them. A primitive done in line by the loop and by the
   code changes with its C in `runtime/prims.c`. A native address lives in a
-  frame's `native_ret`, a handler's `native` and the driver's `jit->at`
-  and nowhere else, so that invalidating a function's code is a walk
-  over the frames and handlers (`jit_invalidate`). **The homes** (tier 2,
+  frame's return word (its header in the value stack, native-frames.md
+  M4: an odd number, which the code objects' landings name), a handler's
+  `native`, the driver's `jit->at` and the table of calls
+  (`JitProgram.calls`) and nowhere else -- a known
+  call's jump into its callee's code, patched in when the callee is
+  compiled, makes the caller depend on it (`jit_depend`) -- so that
+  invalidating a function's code is a walk over the frames and handlers
+  and a store into the table (`jit_invalidate`). Compiled code keeps the
+  frame in `r14` alone: `VM.fp` and `VM.func` are right only where the
+  code has synced (`ms_sync`, `ms_exit`, the stubs), so a helper called
+  without a sync (a lean call) reads neither them nor the frames, and
+  `VM.fp_low` changes in C through the walk's functions alone
+  (`vm_frames_mark_low`, and in `isa_regs.c` the return barrier that
+  keeps it, native-frames.md M5: a reader of a frame's return word sees
+  through the barrier's; runeopt's code, which runs on the stack VM,
+  writes the field itself). Compiled code keeps the allocation pointer in
+  `rbp` and writes `alloc.used` and `bytes_allocated` back at its syncs
+  (native-frames.md, M8), so C that changes `alloc.from` or `alloc.size`
+  ends with `vm_alloc_limit`, the limit the code compares with, and C
+  that reads `alloc.used` does so where the code has synced. **The homes** (tier 2,
   README.md): an emitter reads and writes a register through the
   macro-assembler's accessors only, never `[r14 + 16 k]`; `rbx`, `rsi`,
   `rdi` and `xmm2` to `xmm15` are homes, so an emitter that uses one as
   scratch, or sets a call's arguments, writes the homes back first
   (`ms_writeback`) and loads them again after (`ms_reload`,
   `ms_reload_homes`, `ms_call_lean`); a place code is entered from
-  outside is a landing (`jit_landing`), never a label. Tier 2 trusts
+  outside is a landing (`jit_landing`), never a label. A home may hold a
+  pointer (M7): a call into C that may collect is made after `ms_sync`
+  and followed by `ms_reload`, never as a lean call, and a helper's
+  arguments come from scratch registers, never from homes. Tier 2 trusts
   the representations section for the shape of a value (`ms_trusts`):
   an emitter that tests a tag, a kind or a length asks it first, and
   the loop and tier 1 keep every test, so the oracle's interpreted run
-  is what a wrong program is held to. A function's code fills its own
-  registers with unit at its entry; a caller fills only for a callee
-  without an arity in the section, and for the interpreter. An
+  is what a wrong program is held to. A frame that compiled code makes
+  lies in the stack's clean part, whose slots hold unit or values
+  written since the last collection (`VM.stack_clean`): no code fills
+  its registers with unit, but a caller of a callee without an arity in
+  the section. An
   instruction's effects are complete at its end, and the code may
   leave for the interpreter at any boundary (`ms_exit`,
   `--deopt-stress`): an emitter that keeps anything outside the frame

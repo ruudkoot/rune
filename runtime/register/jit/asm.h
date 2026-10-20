@@ -150,6 +150,7 @@ size_t as_align4(Asm *a);                                   /* the buffer padded
 void as_mov_rr(Asm *a, int rd, int rs);
 void as_mov_ri(Asm *a, int rd, int64_t v);
 void as_ld64(Asm *a, int rd, int base, int32_t disp);
+void as_ld64x(Asm *a, int rd, int base, int index, int scale, int32_t disp);   /* rd := [base + index * scale + disp]; scale 1, 2, 4, 8 */
 void as_ld32(Asm *a, int rd, int base, int32_t disp);       /* zero-extended */
 void as_ld32s(Asm *a, int rd, int base, int32_t disp);      /* sign-extended */
 void as_ld32sx(Asm *a, int rd, int base, int index);        /* rd := [base + 4 * index], sign-extended: a table's entry */
@@ -190,6 +191,7 @@ void as_mul_ri(Asm *a, int rd, int rs, int32_t v);
 void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow);
 void as_neg(Asm *a, int r);
 void as_not(Asm *a, int r);
+void as_bswap(Asm *a, int r);                               /* the 8 bytes of r in the other order: bswap, rev */
 void as_shl_ri(Asm *a, int r, int n);
 void as_shr_ri(Asm *a, int r, int n);
 void as_sar_ri(Asm *a, int r, int n);
@@ -199,6 +201,8 @@ void as_divmod(Asm *a, int divisor);                        /* signed: R_S0 / di
 void as_udivmod(Asm *a, int divisor);
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v);
 void as_add_rm(Asm *a, int rd, int base, int32_t disp);
+void as_add_rm_to_mem(Asm *a, int base, int32_t disp, int rs);   /* [base + disp] += rs (64 bits) */
+void as_sub_rm(Asm *a, int rd, int base, int32_t disp);
 void as_cmp_rm(Asm *a, int r, int base, int32_t disp);
 void as_cmp_mi(Asm *a, int base, int32_t disp, int32_t v);
 void as_cmp8_mi(Asm *a, int base, int32_t disp, int v);
@@ -208,13 +212,51 @@ void as_jmp(Asm *a, AsmLabel *l);
 void as_jcc(Asm *a, int cc, AsmLabel *l);
 void as_jmp_r(Asm *a, int r);
 void as_jmp_to(Asm *a, const void *at);
+/* a jump to l that as_patch_jmp may make a jump elsewhere once the code is
+   placed (a known call to a function compiled after it, performance M6):
+   the offset of what the patch writes; and the patch, to an address in
+   reach (the region's) */
+size_t as_jmp_site(Asm *a, AsmLabel *l);
+void as_patch_jmp(uint8_t *site, const void *to);
 void as_call_to(Asm *a, const void *at);                    /* a call of code at an address the code reaches: its region's */
 size_t as_trampoline(Asm *a, int win, uint64_t addr);       /* here, aligned: code that a call of it makes a call of C's addr with R_VM its first argument, by the convention; its offset */
 void as_call_r(Asm *a, int r);
+/* The return word of a frame in the value stack (native-frames.md, M4):
+   the address of a landing in the code as an immediate to the collector,
+   an odd number -- on x86-64 the landing itself, placed at an odd offset
+   (as_ret_align, a nop before it), on aarch64, whose instructions are
+   words, the landing's address and 1 (JIT_RET_BIAS, jit.h). as_ret_addr
+   puts the word of the landing at l into rd; as_jmp_ret goes where the
+   word at [base + disp] says. */
+void as_ret_align(Asm *a);
+void as_ret_addr(Asm *a, int rd, AsmLabel *l);
+void as_jmp_ret(Asm *a, int base, int32_t disp);
+/* Returns the processor predicts (native-frames.md, M7; --jit-returns=call):
+   a call -- to a label, to an address in reach, through a register -- whose
+   return address is the landing after it, at an odd address (x86-64:
+   padded before), which the callee's entry stores as its return word
+   (as_pop_ret); the return through that word (as_ret_word: on x86-64
+   `push [m]; ret`); and a return address made from the word, for a jump
+   to an entry that stores it again (as_push_ret). as_call_site is a call
+   to l that as_patch_call may make a call elsewhere: the offset of what
+   the patch writes. */
+/* rd += v before such a call of call_len bytes (as_call_len): on x86-64
+   an lea whose length makes the call end at an odd offset, so that no
+   padding runs */
+void as_add_before_call(Asm *a, int rd, int32_t v, int call_len);
+int as_call_len(int r);   /* the bytes of a call to a label or an address (r -1), or through register r */
+void as_call_ret(Asm *a, AsmLabel *l);
+void as_call_ret_to(Asm *a, const void *at);
+void as_call_ret_r(Asm *a, int r);
+size_t as_call_site(Asm *a, AsmLabel *l);
+void as_patch_call(uint8_t *site, const void *to);
+void as_pop_ret(Asm *a, int base, int32_t disp);
+void as_push_ret(Asm *a, int base, int32_t disp);
+void as_ret_word(Asm *a, int base, int32_t disp);
 void as_ret(Asm *a);
 void as_trap(Asm *a);
 void as_setcc(Asm *a, int rd, int cc);
-#ifdef RUNE_JIT_CONV
+#if defined(RUNE_JIT_CONV) || defined(RUNE_ALLOC_RUNS)
 void as_count(Asm *a, uint64_t *counter);   /* *counter += 1; every register and the flags kept (a measuring build's; x86-64) */
 #endif
 void as_push(Asm *a, int r);

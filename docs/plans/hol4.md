@@ -244,13 +244,25 @@ In the order of what they would gain:
 * **The JIT's code**, three quarters of a script's time. Equality and
   string order are calls into the runtime where Poly/ML compares in line,
   and so are an exception handler's push and a raise; the rest is the
-  code's own quality ([jit.md](jit.md)).
+  code's own quality ([jit.md](jit.md)). Since then (2026-10-20,
+  [performance.md](performance.md), *Where we ended*): equality, string
+  order, handlers and raises in line, and the call native frames' -- HOL's
+  kernel work from 6.0 to 2.1 times Poly/ML's cycles, `logroot` and
+  `mergesort` from 4.1 and 3.9 to 1.7 and 1.6 times its time; what remains
+  is the code's instructions, 3.5 times Poly/ML's ([middle-end.md](middle-end.md),
+  *Left by the performance plan*).
 * **Child images.** A heap that is what was added to its parent would make
   `hol.state` what HOL added and restoring it a matter of that part; the
   base and the parents could then be mapped rather than read.
 * **The REPL's bookkeeping**, what is left of the 74 MB: the session's
   environment and the types of the names it binds, which the session
   needs, and the tables of `Elaborate`.
+* **`bin/buildheap` and `$RUNEVM`.** The `bin/buildheap` that
+  `tools-rune/configure.sh` writes runs the VM HOL was configured with,
+  and takes neither `$RUNEVM` nor `$RUNEVM_OPTS`, so Rune's
+  `scripts/hol-theory.py --vm` and `--vm-opts` (a VM to measure, `--jit-perf-map`)
+  do not reach a theory's rebuild. The copy performance.md's measurements
+  used ends `exec "${RUNEVM:-VM}" $RUNEVM_OPTS --name ...`.
 * **What HOL has and Rune has not:** threads (`--mt`, `Future` in
   parallel), the language server (`--lsp`), executables made of a heap
   (`--exe`), and the directories only Poly/ML builds (`tactictoe`,

@@ -1,0 +1,31 @@
+(* after midcanon *)
+(datatype tree ('a) (0 "Leaf") (1 "Node" : 'a tree * 'a * 'a tree))
+(funs
+  (fn g1 ['b] ((v1 : 'b tree)) : int
+    (join j1 ()
+      (join j2 ()
+        (let (v2 : exncon) (builtinexn 0)
+        (let (v3 : exn) (mkexn v2 ())
+        (raise v3)))
+      (let (v4 : int) (tag v1)
+      (let (v5 : bool) (prim poly_eq v4 1 : (int * int) -> bool)
+      (if v5
+        (let (v6 : 'b tree * 'b * 'b tree) (decon 1 v1 : 'b tree)
+        (let (v7 : 'b tree) (select 0 v6)
+        (let (v8 : 'b tree) v7
+        (let (v9 : 'b tree) (select 2 v6)
+        (let (v10 : 'b tree) v9
+        (let (v11 : int) (app g1['b] v8)
+        (let (v12 : int) (prim int_add v11 1 : (int * int) -> int)
+        (let (v13 : int) (app g1['b] v10)
+        (return (prim int_add v12 v13 : (int * int) -> int))))))))))
+        (jump j2)))))
+    (let (v14 : int) (tag v1)
+    (let (v15 : bool) (prim poly_eq v14 0 : (int * int) -> bool)
+    (if v15
+      (return 0)
+      (jump j1)))))))
+(val g2 : int
+  (let (v16 : string tree * string * string tree) (tuple (con0 0 : string tree) "x" (con0 0 : string tree))
+  (let (v17 : string tree) (con 1 v16 : string tree)
+  (return (app g1[string] v17)))))

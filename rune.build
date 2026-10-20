@@ -36,6 +36,7 @@ files
   src/util/pickle.sml
   src/frontend/token.sml
   src/frontend/lexer.sml
+  src/elab/elabstats.sml
   src/elab/types.sml
   src/core/ty.sml
   src/elab/overload.sml
@@ -63,6 +64,7 @@ files
   src/core/lift.sml
   src/core/simplify.sml
   src/core/workers.sml
+  src/core/refs.sml
   src/backend/code.sml
   src/backend/low.sml
   src/backend/target.sml

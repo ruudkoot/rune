@@ -149,6 +149,9 @@ void as_st8(Asm *a, int base, int32_t disp, int rs) { (void)rs; fail(a, "an 8-bi
 void as_st64i(Asm *a, int base, int32_t disp, int32_t v) { emit(a, "movq $%d, %s", (int)v, mem(a, base, disp)); }
 void as_st32i(Asm *a, int base, int32_t disp, int32_t v) { emit(a, "movl $%d, %s", (int)v, mem(a, base, disp)); }
 void as_st8i(Asm *a, int base, int32_t disp, int v) { emit(a, "movb $%d, %s", v, mem(a, base, disp)); }
+void as_ld64x(Asm *a, int rd, int base, int index, int scale, int32_t disp) {
+    emit(a, "mov %d(%s,%s,%d), %s", (int)disp, r64(a, base), r64(a, index), scale, r64(a, rd));
+}
 void as_lea(Asm *a, int rd, int base, int index, int scale, int32_t disp) {
     if (index < 0) emit(a, "lea %d(%s), %s", (int)disp, r64(a, base), r64(a, rd));
     else emit(a, "lea %d(%s,%s,%d), %s", (int)disp, r64(a, base), r64(a, index), scale, r64(a, rd));
@@ -181,6 +184,7 @@ void as_mul_ri(Asm *a, int rd, int rs, int32_t v) { emit(a, "imul $%d, %s, %s", 
 void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow) { as_mul_rr(a, rd, rs); as_jcc(a, CC_O, overflow); }
 void as_neg(Asm *a, int r) { emit(a, "neg %s", r64(a, r)); }
 void as_not(Asm *a, int r) { emit(a, "not %s", r64(a, r)); }
+void as_bswap(Asm *a, int r) { emit(a, "bswap %s", r64(a, r)); }
 void as_shl_ri(Asm *a, int r, int n) { emit(a, "shl $%d, %s", n, r64(a, r)); }
 void as_shr_ri(Asm *a, int r, int n) { emit(a, "shr $%d, %s", n, r64(a, r)); }
 void as_sar_ri(Asm *a, int r, int n) { emit(a, "sar $%d, %s", n, r64(a, r)); }
@@ -190,6 +194,8 @@ void as_divmod(Asm *a, int divisor) { emit(a, "cqo"); emit(a, "idiv %s", r64(a, 
 void as_udivmod(Asm *a, int divisor) { emit(a, "xor %%edx, %%edx"); emit(a, "div %s", r64(a, divisor)); }
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v) { emit(a, "addq $%d, %s", (int)v, mem(a, base, disp)); }
 void as_add_rm(Asm *a, int rd, int base, int32_t disp) { emit(a, "add %s, %s", mem(a, base, disp), r64(a, rd)); }
+void as_add_rm_to_mem(Asm *a, int base, int32_t disp, int rs) { emit(a, "addq %s, %s", r64(a, rs), mem(a, base, disp)); }
+void as_sub_rm(Asm *a, int rd, int base, int32_t disp) { emit(a, "sub %s, %s", mem(a, base, disp), r64(a, rd)); }
 void as_cmp_rm(Asm *a, int r, int base, int32_t disp) { emit(a, "cmp %s, %s", mem(a, base, disp), r64(a, r)); }
 void as_cmp_mi(Asm *a, int base, int32_t disp, int32_t v) { emit(a, "cmpq $%d, %s", (int)v, mem(a, base, disp)); }
 void as_cmp8_mi(Asm *a, int base, int32_t disp, int v) {
@@ -205,9 +211,24 @@ void as_jcc(Asm *a, int cc, AsmLabel *l) {
 }
 void as_jmp_r(Asm *a, int r) { emit(a, "jmp *%s", r64(a, r)); }
 void as_jmp_to(Asm *a, const void *at) { (void)at; fail(a, "a jump to an address"); }
+size_t as_jmp_site(Asm *a, AsmLabel *l) { as_jmp(a, l); return 0; }
+void as_patch_jmp(uint8_t *site, const void *to) { (void)site; (void)to; }
 void as_call_to(Asm *a, const void *at) { (void)at; fail(a, "a call of an address"); }
 size_t as_trampoline(Asm *a, int win, uint64_t addr) { (void)win; (void)addr; fail(a, "a trampoline"); return 0; }
 void as_call_r(Asm *a, int r) { emit(a, "call *%s", r64(a, r)); }
+void as_ret_align(Asm *a) { (void)a; }
+void as_ret_addr(Asm *a, int rd, AsmLabel *l) { as_lea_label(a, rd, l); }
+void as_jmp_ret(Asm *a, int base, int32_t disp) { emit(a, "jmp *%s", mem(a, base, disp)); }
+int as_call_len(int r) { (void)r; return 0; }
+void as_add_before_call(Asm *a, int rd, int32_t v, int call_len) { (void)call_len; as_add_ri(a, rd, v); }
+void as_call_ret(Asm *a, AsmLabel *l) { emit(a, "call %s", label(a, l)); }
+void as_call_ret_to(Asm *a, const void *at) { (void)at; fail(a, "a call of an address"); }
+void as_call_ret_r(Asm *a, int r) { emit(a, "call *%s", r64(a, r)); }
+size_t as_call_site(Asm *a, AsmLabel *l) { as_call_ret(a, l); return 0; }
+void as_patch_call(uint8_t *site, const void *to) { (void)site; (void)to; }
+void as_pop_ret(Asm *a, int base, int32_t disp) { emit(a, "popq %s", mem(a, base, disp)); }
+void as_push_ret(Asm *a, int base, int32_t disp) { emit(a, "pushq %s", mem(a, base, disp)); }
+void as_ret_word(Asm *a, int base, int32_t disp) { emit(a, "pushq %s", mem(a, base, disp)); emit(a, "ret"); }
 void as_ret(Asm *a) { emit(a, "ret"); }
 void as_trap(Asm *a) { emit(a, "ud2"); }
 void as_setcc(Asm *a, int rd, int cc) {

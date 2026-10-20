@@ -164,8 +164,10 @@ the live data and the interval), and the final one at exit.
                       an exception's unwinding), fp of the previous sample where none returned
                       below it, and from 0 for the first sample: frames 0..fp_low-1 were suspended
                       throughout
-    u32 base_low      frames[fp_low].base: the slots [0, base_low) belong to frames suspended since
-                      the previous sample (what a stack watermark lets a minor collection skip)
+    u32 base_low      the first slot of frame fp_low (its header's: the frames' headers are in the
+                      value stack, native-frames.md M4): the slots [0, base_low) belong to frames
+                      suspended since the previous sample (what a stack watermark lets a minor
+                      collection skip)
     u32 sp_ptrs       the slots of [0, sp) that held a pointer when the collection began
     u32 flags         bit 0 forced by --census-every; 1 the final collection at exit (the last
                       sample alone); 2 the heap grew at it

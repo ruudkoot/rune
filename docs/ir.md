@@ -10,14 +10,16 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 |---|---|---|---|
 | `translate` | the elaborated syntax | `Lambda` (`src/core/lambda.sml`) | `LambdaLint` |
 | `mid` | `Lambda` | `Mid` (`src/core/mid.sml`, by `ToMid`) | `MidLint` |
+| `midcanon` | `Mid` | `Mid` numbered canonically (`src/core/midcanon.sml`), as one made of its units' `Mid` is; a whole program only | `MidLint` |
 | `shake` | `Mid` | `Mid`, what nothing reaches gone (`src/core/shake.sml`), from `-O1` | `MidLint` |
 | `lift` | `Mid` | `Mid`, local functions that never escape made functions of the top level (`src/core/lift.sml`), from `-O1` | `MidLint` |
 | `workers` | `Mid` | `Mid`, tupled and curried functions split into workers and wrappers (`src/core/workers.sml`), from `-O1` | `MidLint` |
 | `simplify` | `Mid` | `Mid`, shrunk (`src/core/simplify.sml`), from `-O1` | `MidLint` |
+| `refs` | `Mid` | `Mid`, a loop's local refs as values (`src/core/refs.sml`), from `-O1` | `MidLint` |
 | `lower` | `Mid` | `Low` (`src/backend/low.sml`, by `Lower`) | `LowLint` |
 | `stack` | `Low` | instruction lists (`src/backend/stack.sml`), with `--target=stack` | none yet |
 | `registers` | `Low` | instruction lists of the register bytecode (`src/backend/regs.sml`), the default target | none yet |
-| emission | instruction lists | the `.rbc` | |
+| `emit` | instruction lists | the `.rbc` (`src/backend/emit.sml`) | |
 
 `-O0` is the same stages with no optional pass; `-O0` and `-O2` must give
 programs that print and exit the same, traces included (`make
@@ -30,28 +32,89 @@ what it is given or makes when asked, checks it with the lint of its
 representation, and says what it cost. An optional pass, one that only
 optimises, says from which level it runs (`Pass.enabled`): `trees`, which
 is how `translate` compiles a match (see *Matches*), then `shake`, `lift`,
-`workers` and `simplify`, in that order, and `shake` again where `simplify`
+`workers`, `simplify` and `refs`, in that order, and `shake` again where `simplify`
 inlined (see *The optimisations of Mid*); `inline` and `specialise` are
-what `simplify` does besides shrinking, each of which may be left out.
+what `simplify` does besides shrinking, each of which may be left out, as
+is `equality`, which only `-O2` runs; and `results` is what `lower` does
+of results in globals (see *Low*).
 
 ## Options
 
 | Option | What it does |
 |---|---|
-| `-O0`, `-O1`, `-O2` | the level; `-O1` when none is given |
+| `-O0`, `-O1`, `-O2` | the level; `-O1` when none is given; `-O2` adds `equality` (see *The optimisations of Mid*) |
 | `--passes=P,...` | run these optional passes, whatever the level |
 | `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=registers` (`stack` with `--target=stack`) |
 | `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach |
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
-| `--pass-stats` | the size of what every pass makes and its time, on standard error; `parse` and `elaborate` too, whose size is the top-level declarations |
+| `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then `total: T s processor time, S s in the stages (P%)` (below) |
+| `--pass-stats=elab` | `--pass-stats`, and a line for each top-level declaration elaborated: where its processor time went, by context and operation, and what the elaborator counted (*The elaborator's counters* below) |
 | `--units` | run the pipeline on one unit, a file, at a time, and link them ([units.md](units.md)): the passes see a unit, with `Pass.whole` false, and `--pass-stats` names each unit before its passes |
 | `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would (there is no bytecode from Mid yet) |
 | `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same |
+
+**What `--pass-stats` shows** is the whole compile: the stages add up to
+the process's processor time from its start, which `tests/compiler` holds
+them to (within 2%, and 15% on SML/NJ's builds, whose processor time counts
+the collector's twice), so that no part of a compile goes untimed. Beside the
+stages of the pipeline above, the compile's stages are:
+
+* `startup`, what the process took before the compiler's own code ran:
+  loading it, and on `runevm` the bytecode and the compiler's top-level
+  declarations;
+* `lex`, the input files read and lexed (their tokens), and `select`, the
+  files of the libraries they need chosen (those files);
+* `parse` and `elaborate`, whose size is the top-level declarations;
+* with `--units`, the work of the cache and of each unit (`cache-key`,
+  `cache-find`, `unit-begin`, `unit-passes`, `unit-export`, ..., and `link`);
+  the pipeline's stages of a unit run inside its `unit-passes`, and only
+  the outermost stages are added up;
+* `stats`, the sizes `--pass-stats` counted, and `checks`, what `--lint` and
+  the dumps took, apart from the stages they checked or printed.
 
 **A dump** (`Lambda.show`) prints one node to a line, its parts indented
 below it unless they are all atoms, and leaves positions out. Variables
 and globals are numbered afresh (`v1`, `g1`, ...) in the order they appear,
 so that an expected dump does not change with stamps made elsewhere.
+
+### The elaborator's counters
+
+`--pass-stats=elab` (`src/elab/elabstats.sml`) prints, for each top-level
+declaration, a line
+
+```
+elab FILE:LINE:COL KIND NAME total=US CONTEXT.OPERATION=US ... COUNTER=N ...
+```
+
+with `KIND` one of `signature`, `functor`, `structure` and `core`, and
+`NAME` the first name it binds (`-` for a core declaration). Times are
+microseconds of processor time; what is zero is left out. The
+declaration's time is split by:
+
+* **context:** `top`, the top level; `fundecl`, a functor's body checked at
+  its declaration; `appcode`, the copy of a body elaborated at an
+  application whose code is made; `appcheck`, a copy elaborated only to be
+  checked, at an application inside a declaration's check or such a copy;
+* **operation:** `inst`, a signature instantiated; `where`, `where type`;
+  `share`, sharing; `match`, a structure matched against a signature;
+  `specs`, a signature's specifications, without the operations before
+  inside them; `copy`, a body copied for an application; `core`, the rest.
+  Time goes to the innermost operation running.
+
+The counters: `realize`, the environments realised, and `nodes`, the type
+nodes they visited (the steps of type work they took, one a node); `inst` and `inst.names`, the signatures instantiated
+and the flexible names renamed; `where`, the clauses of `where type`;
+`share.types` and `share.structures`, the sharing equations (a structure's
+counting its types' among `share.types`); `match` and `match.paths`, the
+matches and the type paths of their signatures; `fundecl`, the functor
+bodies checked; `app.code` and `app.check`, the applications of each kind,
+and `app.depth` their deepest nesting; `unify`, the pairs of types
+unified; `steps`, the steps of type work that `--type-work` bounds. The
+counters do not depend on the machine. The checks deferred to the end of
+the program or of a unit -- whether matches are exhaustive, flexible
+records -- have a line of their own, `elab - deferred - ...`.
+`scripts/elab-stats.awk` adds the lines up into a table of contexts and
+operations, and names the declarations that took longest.
 
 ## What a `Lambda` keeps
 
@@ -95,9 +158,19 @@ compiler shows as a node whose parts do not fit. The types are `Ty.ty`
   themselves (`Ty.extrasOf`): those its constructors name, and those of the
   datatypes they name. An instance of the function -- inlined, specialised
   -- then gives its constructors' arguments the instance's types.
-* **Trees:** a type is a tree here, where the elaborator's was shared, so
-  one of n nodes there can be of 2^n here; the translation of each
-  top-level declaration's types spends `--type-work`
+* **Shared:** a type is hash-consed ([plans/performance.md](plans/performance.md),
+  M4): each node is made once, through a table, and has a number of its
+  own (`Ty.id`), so that two types are equal where their numbers are
+  (`Ty.equal`), and one the elaborator shares, of 2^n nodes as a tree, is
+  n nodes here too. A node is seen through `Ty.view` and made by `Ty.gen`,
+  `Ty.var`, `Ty.con`, `Ty.tuple`, `Ty.arrow` and `Ty.exnCon`; a node knows
+  its size as a tree (`Ty.size`) and its generic variables (`Ty.gens`).
+  Every walk over a type that could meet a big one is memoised on the
+  numbers of its nodes (`Ty.subst`, `Ty.match`, MidCanon's renaming,
+  MidText's printing), and walks one of at most `Ty.smallType` nodes as a
+  tree. Simplify's key of a type is its number. The translation of each
+  top-level declaration's types still spends `--type-work`, a step for a
+  node converted, a big type's shared node once
   ([plans/type-checker.md](plans/type-checker.md)).
 
 The elaborator fills four tables as it goes (`Ty.binders`, `Ty.exnArgs`,
@@ -212,6 +285,11 @@ program written by hand. The grammar is at the head of
   declared at the head.
 * A constant of the type its kind gives it is written bare; others as
   `(0w5 : word8)`.
+* A type of more than `MidText.bigType` (1000) nodes as a tree is declared
+  at the head as an abbreviation, `(type %N TYPE)`, after the
+  abbreviations of its parts, and written `%N` where it is: a type of 2^n
+  nodes as a tree, which the IR shares, is written in some n
+  abbreviations (performance M4).
 * Positions are written only with `--mid-roundtrip`, as `(at FILE START STOP
   FRAME ... EXP)`, where a frame is `(in "NAME" "FILE" START STOP)`, or `(in
   "NAME")` for one called in tail position; comments are SML's.
@@ -237,7 +315,14 @@ inlined function frames agree across optimization levels.
   -- and the first row whose patterns are all wild matches. No value is
   tested twice on a way through, and where the rows name every
   constructor of a datatype the last one is what is left, untested
-  (decision D14). Each rule's body is a `Join` whose parameters are its
+  (decision D14). A column of strings written as constants, where it
+  names six or more, is split by all of them at once: the value is found
+  by its length (`string_size`, tests of `imm_eq`, halved by `int_lt` where
+  there are many lengths), then compared with each string of that length,
+  or, where they are eight or more, told apart by the character at the
+  place they differ most (`string_sub`), and compared with the one left;
+  the rows that name none are a join point the misses jump to
+  ([plans/performance.md](plans/performance.md), M5). Each rule's body is a `Join` whose parameters are its
   variables, so that a body reached on several ways is not copied; the
   leaves `Jump` to it. An exception's constructor may be another's under
   another name, so a row of another constructor is still tested where
@@ -284,7 +369,12 @@ does.
   tuple was made; a call of a curried one given all its arguments, each
   partial application used once, by the next, down the same straight line,
   calls the worker, and the partial applications, which only made
-  closures, go. A worker is named as its function, for traces.
+  closures, go. A worker is named as its function, for traces. A field of
+  a flattened parameter that is itself a tuple the function only takes
+  apart, wherever it takes it, is flattened too, and so on, and a variable
+  bound to the parameter or to such a field is the same
+  ([plans/performance.md](plans/performance.md), M8): a function of two
+  vectors of three reals takes six reals.
 * **`simplify`** (shrinking, after Appel and Jim): three rounds over each
   definition, each after a census of the uses of every variable and jumps
   to every join point. A variable bound to an atom is the atom, unless it
@@ -295,7 +385,10 @@ does.
   (`Target.t`'s `intBits`), unless it would raise; `=` of a type whose
   values are never in the heap -- int, word, char, and a datatype whose
   constructors are all nullary -- is `imm_eq`, which compares tags and
-  bits (M11); a join point nothing
+  bits (M11); `=` of a ref or an array, or where one side is a nullary
+  constructor (`l = []`), which no value in the heap equals, is `ptr_eq`,
+  and `=` of strings `string_eq`, which compares lengths and bytes and
+  walks nothing else ([plans/performance.md](plans/performance.md), M5); a join point nothing
   jumps to goes, and one jumped to once is put where the jump is, unless
   the jump is in a handler's region the join point is not; a function
   nothing uses goes, and one called once, where it is made and not from a
@@ -308,11 +401,40 @@ does.
   it a nullary constructor, is copied there, where its tests of the tag
   then fold (a case of an inlined `compare`); a raise in a handler's
   region, in the region's own code, is a jump to the handler, made a join
-  point. What a rewrite makes is added to the round's census, rather than
+  point. A join point of a parameter that is a tuple its body only takes
+  apart, where some jump gives it a tuple made there, has the tuple's
+  fields as its parameters instead: each jump gives the parts, or the
+  fields of what it gives, and the tuple goes
+  ([plans/performance.md](plans/performance.md), M8). A tuple or a
+  constructor bound to a variable that is returned at once is made in the
+  return, and a join point that only returns its parameter is a return at
+  each jump to it, so that what a function returns is made in its returns
+  (`lower`'s results in globals, below). What a rewrite makes is added to the round's census, rather than
   a census taken again of all around it -- a use counted more than there
   is only keeps what could go. Stamps being unique, the census and what a
   round knows are tables (`IntTable`), which forget nothing, and a round
   that rewrites nothing is the last.
+* **`equality`** (in `simplify`, from `-O2`;
+  [plans/performance.md](plans/performance.md), M5, D7 C): `=` of a
+  datatype at a type with no type variable, or of a tuple of such parts, is
+  a call of a function made for that type, as MLton's poly-equal pass makes
+  them: identity first, in a wrapper small enough to be put where it is
+  called, then in a worker the tags, then each field by its own type --
+  `imm_eq`, `ptr_eq`, `string_eq`, the function of its type, or `poly_eq`
+  where the type is not known. Such a comparison is compiled code: the
+  limit of `--equality-work` on the runtime's walk does not stop it.
+* **`refs`** ([plans/performance.md](plans/performance.md), M8): a
+  parameter of a function of the top level that is a ref the function only
+  reads and sets, and gives on as it is to its own calls of itself in tail
+  position -- a loop's counter -- is its value in a copy of the function: a
+  read is the value it holds there, a set the value from there on, a join
+  point is given it as a parameter, and the call of itself gives what it
+  holds then. A call that gives such parameters refs made for it alone --
+  made in its function, not in a function inside, and used by that call
+  only -- calls the copy for those parameters with what each was made of,
+  and the refs are not made; the copies' own calls are rewritten so in
+  turn. A ref used under a handler is left, since a raise would leave its
+  value where the handler cannot see it.
 * **`inline`** (in `simplify`, M10): a call of a function of the top level
   of no more than 12 nodes that does not call itself, and does not always
   raise -- a call on the way to an error costs nothing worth saving -- is
@@ -326,7 +448,13 @@ does.
   -- and the place of the call elsewhere, where the calls in tail position
   of the body are then marked as made from that place, since their frames
   would have taken the place of the function's. Bodies are taken as they
-  are once simplified, where the definition came first. A local function
+  are once simplified, where the definition came first; a function that is
+  small once simplified may be put where it is called too, whatever it was
+  before (M8: a worker's body shrinks by the copies of its parameters).
+  A function that makes functions and returns them, alone or in a tuple
+  -- a record of closures made at each call -- may be of 24 nodes (M8):
+  put where it is called, the functions it makes are known there. A local
+  function
   small enough is put where it is called too, in the scope of its `Fun`,
   where what it names is in scope (M12).
 * **`specialise`** (in `simplify`, M10): a function of the top level of no
@@ -336,8 +464,23 @@ does.
   in the copy they are known, so their calls are known calls, or inlined
   (item 6 of [plans/performance.md](plans/performance.md)). One copy for
   each function, types and functions given, made where the first such call
-  is, simplified after the definition it is in and put before it. A
-  closure given is left as it is.
+  is, simplified after the definition it is in and put before it. A local
+  function given, alone in its group, of closed types, that does not name
+  itself, where the copy only calls it, is given too (M8): its code becomes
+  a function of the top level of what it captured and its parameter, the
+  copy calls that, given what it captured as parameters after its own, and
+  the call gives them, so that the closure is not made; such copies are
+  made two deep at most, since two functions that give each other local
+  functions of their own would make copies for ever. A copy may give such
+  a function on, to a function that may be copied for it in turn and only
+  calls it: there it is a local function again, of one line that calls
+  the code made of it, which the copy made from the copy takes, whatever
+  the budget, so that the copy never makes a closure the call did not. From a copy, a function that does not call
+  itself is copied too, for all its parameters of function type (M8: the
+  loop of MLton's `peek` calls a function with the closures it was given,
+  and takes apart what it returns). A copy for local functions grows the
+  definition the call is in, within the budget of `inline`; a call that
+  finds its copy made already costs nothing.
 
 ## Low
 
@@ -387,6 +530,23 @@ leaves implicit is explicit.
   parameters and no closure: such a function captures nothing and names
   itself as its global. A function has a list of parameters; one of other
   than one parameter is only ever called so, and is made no closure.
+* **Results in globals** (the optional pass `results`, from `-O1`, for the
+  whole program and not where the debugger reads it;
+  [plans/performance.md](plans/performance.md), M8): a function of the top
+  level never used as a value, each of whose returns is a tuple made there
+  or a tail call of another such function of as many fields, every call of
+  which only takes its fields, returns the first field and sets a global
+  to each of the others some call takes -- the same globals for every such
+  function of as many fields -- which the call reads at once (`Slot`, an
+  operation of Low that is read where it is, never again where it is
+  used): the tuple is not made. Likewise a function of a datatype each of
+  whose returns is a constructor made there or a tail call of another such
+  function of the datatype, every call of which only asks the constructor
+  (`ConTag`, `ptr_eq` with a nullary one) and takes its argument: it
+  returns the constructor's tag as a nullary constructor's, and the
+  argument, or its fields, in the datatype's globals, which the program
+  sets to () before anything runs, since a call reads them whatever the
+  constructor.
 
 ### What a `Low` keeps
 

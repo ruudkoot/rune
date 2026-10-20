@@ -22,16 +22,31 @@ struct
      for a variable, global or join point, tycon for a type name, tvar for a
      type variable -- called in the order the names appear, binders and uses
      alike, left to right *)
+  (* A renaming of types: each node once, which calls tycon and tvar as a
+     walk of the type as a tree would call them for the first time (a node
+     met again names nothing new) *)
+  fun renamer {tycon : int -> int, tvar : int -> int} : Ty.ty -> Ty.ty =
+    let
+      val done : Ty.ty IntTable.table = IntTable.table 256
+      fun ty t =
+        case IntTable.find (done, Ty.id t) of
+          SOME u => u
+        | NONE =>
+            let
+              val u =
+                case Ty.view t of
+                  Ty.Gen i => Ty.gen (tvar i)
+                | Ty.Var i => Ty.var (tvar i)
+                | Ty.Con (s, n, args) => let val s' = tycon s in Ty.con (s', n, List.map ty args) end
+                | Ty.Tuple ts => Ty.tuple (List.map ty ts)
+                | Ty.Arrow (a, b) => let val a' = ty a in Ty.arrow (a', ty b) end
+                | Ty.ExnCon => Ty.exnCon
+            in IntTable.insert (done, Ty.id t, u); u end
+    in ty end
+
   fun rename {stamp : int -> int, tycon : int -> int, tvar : int -> int} (p : program) : program =
     let
-      fun ty t =
-        case t of
-          Ty.Gen i => Ty.Gen (tvar i)
-        | Ty.Var i => Ty.Var (tvar i)
-        | Ty.Con (s, n, args) => let val s' = tycon s in Ty.Con (s', n, List.map ty args) end
-        | Ty.Tuple ts => Ty.Tuple (List.map ty ts)
-        | Ty.Arrow (a, b) => let val a' = ty a in Ty.Arrow (a', ty b) end
-        | Ty.ExnCon => Ty.ExnCon
+      val ty = renamer {tycon = tycon, tvar = tvar}
       fun tys ts = List.map ty ts
       fun scheme ((vs, t) : scheme) = let val vs' = List.map tvar vs in (vs', ty t) end
       fun atom a =
@@ -89,14 +104,7 @@ struct
     in List.map def p end
 
   (* a type renamed the same way *)
-  fun renameTy {tycon : int -> int, tvar : int -> int} (t : Ty.ty) : Ty.ty =
-    case t of
-      Ty.Gen i => Ty.Gen (tvar i)
-    | Ty.Var i => Ty.Var (tvar i)
-    | Ty.Con (s, n, args) => let val s' = tycon s in Ty.Con (s', n, List.map (renameTy {tycon = tycon, tvar = tvar}) args) end
-    | Ty.Tuple ts => Ty.Tuple (List.map (renameTy {tycon = tycon, tvar = tvar}) ts)
-    | Ty.Arrow (a, b) => let val a' = renameTy {tycon = tycon, tvar = tvar} a in Ty.Arrow (a', renameTy {tycon = tycon, tvar = tvar} b) end
-    | Ty.ExnCon => Ty.ExnCon
+  fun renameTy (fs : {tycon : int -> int, tvar : int -> int}) (t : Ty.ty) : Ty.ty = renamer fs t
 
   type datatypeInfo = {params : int list, cons : (int * string * Ty.ty option) list}
 
@@ -117,9 +125,10 @@ struct
           (IntTable.insert (seen, s, ());
            case Ty.datatypeOf s of
              SOME info => (found := (s, info) :: !found;
-                           List.app (fn (_, _, a) => Option.app (ignore o renameTy {tycon = fn c => (visit c; c), tvar = fn v => v}) a)
-                                    (#cons info))
+                           List.app (fn (_, _, a) => Option.app (ignore o visitTy) a) (#cons info))
            | NONE => ())
+      (* visit is called again for a node met again, and does nothing *)
+      and visitTy t = renameTy {tycon = fn c => (visit c; c), tvar = fn v => v} t
       val _ = rename {stamp = fn x => x, tycon = fn c => (visit c; c), tvar = fn v => v} p
     in
       {mid = p, datatypes = List.rev (!found), funNames = IntMap.listItemsi (!Translate.funNames)}
@@ -127,12 +136,15 @@ struct
 
   (* a unit's Mid with its names renamed, its tables' too *)
   fun renameUnit (names as {stamp, tycon, tvar}) ({mid, datatypes, funNames} : unitMid) : unitMid =
-    {mid = rename names mid,
-     datatypes = List.map (fn (s, {params, cons}) =>
-                             (tycon s, {params = List.map tvar params,
-                                        cons = List.map (fn (t, n, a) => (t, n, Option.map (renameTy {tycon = tycon, tvar = tvar}) a)) cons}))
-                          datatypes,
-     funNames = List.map (fn (s, n) => (stamp s, n)) funNames}
+    let val ty = renamer {tycon = tycon, tvar = tvar}
+    in
+      {mid = rename names mid,
+       datatypes = List.map (fn (s, {params, cons}) =>
+                               (tycon s, {params = List.map tvar params,
+                                          cons = List.map (fn (t, n, a) => (t, n, Option.map ty a)) cons}))
+                            datatypes,
+       funNames = List.map (fn (s, n) => (stamp s, n)) funNames}
+    end
 
   (* units' Mid made one program, their tables entered *)
   fun concat (us : unitMid list) : program =
@@ -165,10 +177,16 @@ struct
           | NONE =>
               let val y = base + !ntycons
               in IntTable.insert (tycons, s, y); ntycons := !ntycons + 1; met := (s, y) :: !met; y end
-      fun ty t = renameTy {tycon = tycon, tvar = tvar} t
       val p' = rename {stamp = stamp, tycon = tycon, tvar = tvar} p
+      (* after p's, which calls tycon first for what p names *)
+      val ty = renamer {tycon = tycon, tvar = tvar}
       (* each datatype met entered under its new name, its constructors'
-         types renamed too: which may meet more, until none comes *)
+         types renamed too: which may meet more, until none comes. They are
+         entered once all are met: entering one makes Ty work out the extra
+         parameters of every datatype again (Ty.extras) at the next
+         datatypeOf, which was quadratic in the datatypes (performance M3);
+         one entered under a name of its own changes no other's. *)
+      val entered = ref []
       fun enter () =
         case !met of
           [] => ()
@@ -179,10 +197,11 @@ struct
                  let
                    val ps' = List.map tvar ps
                    val cons' = List.map (fn (tag, n, a) => (tag, n, Option.map ty a)) cons
-                 in Ty.bindDatatypeDirect (y, {params = ps', cons = cons'}) end
+                 in entered := (y, {params = ps', cons = cons'}) :: !entered end
              | NONE => ();
              enter ())
       val () = enter ()
+      val () = List.app Ty.bindDatatypeDirect (List.rev (!entered))
       (* each function's name, under its new stamp *)
       val () =
         Translate.funNames :=

@@ -407,6 +407,7 @@ struct
   fun string_compare (a, b) =
     case String.compare (a, b) of LESS => ~1 | EQUAL => 0 | GREATER => 1
   val string_order = String.compare
+  fun string_eq (a : string, b) = a = b
   val string_from_char = String.str
   val string_implode = String.implode
   val string_explode = String.explode
@@ -462,6 +463,7 @@ struct
     if not (runOk (si, n, Array.length src)) orelse not (runOk (di, n, Array.length dst)) then raise Subscript
     else ArraySlice.copy {src = ArraySlice.slice (src, si, SOME n), dst = dst, di = di}
   fun vector_from_list l = if longer (l, maxLen) then raise Size else Vector.fromList l
+  fun array_to_vector a = Array.vector a
   val vector_length = Vector.length
   val vector_sub = Vector.sub
   fun vector_concat (a, b) =

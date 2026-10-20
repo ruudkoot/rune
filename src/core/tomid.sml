@@ -21,21 +21,10 @@ struct
   fun fresh () = Elaborate.freshStamp ()
 
   (* The generic variables of a type, each once, in the order they appear. *)
-  fun gens (t : Ty.ty) : int list =
-    let
-      fun go (t, acc) =
-        case t of
-          Ty.Gen x => if List.exists (fn y => y = x) acc then acc else x :: acc
-        | Ty.Con (_, _, ts) => List.foldl go acc ts
-        | Ty.Tuple ts => List.foldl go acc ts
-        | Ty.Arrow (a, b) => go (b, go (a, acc))
-        | _ => acc
-    in List.rev (go (t, [])) end
+  fun gens (t : Ty.ty) : int list = Ty.gens t
 
-  fun codomain (Ty.Arrow (_, r)) = r
-    | codomain t = bug ("a function of type " ^ Ty.toString t)
-  fun domain (Ty.Arrow (d, _)) = d
-    | domain t = bug ("a function of type " ^ Ty.toString t)
+  fun codomain t = case Ty.view t of Ty.Arrow (_, r) => r | _ => bug ("a function of type " ^ Ty.toString t)
+  fun domain t = case Ty.view t of Ty.Arrow (d, _) => d | _ => bug ("a function of type " ^ Ty.toString t)
 
   (* The schemes of the globals, from the elaborator's tables: at the top
      level every generic variable of a type is the global's own. *)
@@ -49,7 +38,7 @@ struct
             case IntTable.find (Ty.binders, g) of
               SOME t => let val t = Ty.fromTypes t in (gens t, t) end
             | NONE =>
-                if isSome (IntTable.find (Ty.exnArgs, g)) then ([], Ty.ExnCon)
+                if isSome (IntTable.find (Ty.exnArgs, g)) then ([], Ty.exnCon)
                 else bug ("global g" ^ Int.toString g ^ " has no type")
         in globalSchemes := IntMap.insert (!globalSchemes, g, s); s end
 
@@ -134,10 +123,10 @@ struct
       and use (make, x, (tyvars, t) : M.scheme, inst) : value =
         case (tyvars, inst) of
           ([], _) => A (make (x, []), t)
-        | (_, NONE) => A (make (x, List.map Ty.Gen tyvars), t)
+        | (_, NONE) => A (make (x, List.map Ty.gen tyvars), t)
         | (_, SOME i) =>
             (case Ty.match (t, i) of
-               SOME s => A (make (x, List.map (fn a => case IntMap.find (s, a) of SOME u => u | NONE => Ty.Gen a) tyvars), i)
+               SOME s => A (make (x, List.map (fn a => case IntMap.find (s, a) of SOME u => u | NONE => Ty.gen a) tyvars), i)
              | NONE => bug ("v" ^ Int.toString x ^ " of type " ^ Ty.toString t ^ " used at " ^ Ty.toString i))
 
       fun exp (e : L.lexp, st : state, ctx : ctx) : M.exp =
@@ -178,16 +167,16 @@ struct
                                   A _ => exp (b, st, ctx)
                                 | R (r, t) => M.Let (fresh (), ([], t), r, exp (b, st, ctx))))
         | L.SetGlobal (g, a) => atom (a, st, fn (aa, _) => deliver (ctx, st, R (M.SetGlobal (g, aa), Ty.unit)))
-        | L.Tuple es => atoms (es, st, fn (xs, ts) => deliver (ctx, st, R (M.Tuple xs, Ty.Tuple ts)))
+        | L.Tuple es => atoms (es, st, fn (xs, ts) => deliver (ctx, st, R (M.Tuple xs, Ty.tuple ts)))
         | L.Select (i, a) =>
             atom (a, st, fn (aa, t) =>
-                            case t of
+                            case Ty.view t of
                               Ty.Tuple ts => deliver (ctx, st, R (M.Select (i, aa), List.nth (ts, i)))
                             | _ => bug ("a field of what has type " ^ Ty.toString t))
         | L.Con (tag, t, a) => atom (a, st, fn (aa, _) => deliver (ctx, st, R (M.Con (tag, t, aa), t)))
         | L.Decon (tag, a) =>
             atom (a, st, fn (aa, t) =>
-                            case t of
+                            case Ty.view t of
                               Ty.Con (stamp, _, args) =>
                                 (case Ty.conArg (stamp, args, tag) of
                                    SOME (SOME arg) => deliver (ctx, st, R (M.Decon (tag, t, aa), arg))
@@ -213,21 +202,21 @@ struct
         | L.Handle (a, x, h) =>
             branch (ctx, fn ctx =>
                            M.Handle (exp (a, withFail (st, NONE), ctx), x, exp (h, bindLocal (st, x, ([], Ty.exn)), ctx)))
-        | L.NewExn n => deliver (ctx, st, R (M.NewExn n, Ty.ExnCon))
-        | L.BuiltinExn k => deliver (ctx, st, R (M.BuiltinExn k, Ty.ExnCon))
+        | L.NewExn n => deliver (ctx, st, R (M.NewExn n, Ty.exnCon))
+        | L.BuiltinExn k => deliver (ctx, st, R (M.BuiltinExn k, Ty.exnCon))
         | L.MkExn (c, p) =>
             atom (c, st, fn (ca, _) => atom (p, st, fn (pa, _) => deliver (ctx, st, R (M.MkExn (ca, pa), Ty.exn))))
-        | L.ExnCon a => atom (a, st, fn (aa, _) => deliver (ctx, st, R (M.ExnCon aa, Ty.ExnCon)))
+        | L.ExnCon a => atom (a, st, fn (aa, _) => deliver (ctx, st, R (M.ExnCon aa, Ty.exnCon)))
         | L.ExnArg (t, a) => atom (a, st, fn (aa, _) => deliver (ctx, st, R (M.ExnArg (t, aa), t)))
         | L.Prim (p, SOME t, args) => atoms (args, st, fn (xs, _) => deliver (ctx, st, R (M.Prim (p, t, xs), codomain t)))
         | L.Prim (p, NONE, args) =>
             atoms (args, st, fn (xs, ts) =>
                                let
                                  val t =
-                                   case (p, ts) of
-                                     ("ref_get", [r as Ty.Con (_, _, [a])]) => Ty.Arrow (r, a)
-                                   | ("poly_eq", [a, _]) => Ty.Arrow (Ty.Tuple [a, a], Ty.bool)
-                                   | ("ptr_eq", [a, _]) => Ty.Arrow (Ty.Tuple [a, a], Ty.bool)
+                                   case (p, List.map (fn t => (t, Ty.view t)) ts) of
+                                     ("ref_get", [(r, Ty.Con (_, _, [a]))]) => Ty.arrow (r, a)
+                                   | ("poly_eq", [(a, _), _]) => Ty.arrow (Ty.tuple [a, a], Ty.bool)
+                                   | ("ptr_eq", [(a, _), _]) => Ty.arrow (Ty.tuple [a, a], Ty.bool)
                                    | _ => bug ("primitive " ^ p ^ " without a type")
                                in deliver (ctx, st, R (M.Prim (p, t, xs), codomain t)) end)
         | L.Mark (sp, a) => mark (sp, exp (a, st, ctx))

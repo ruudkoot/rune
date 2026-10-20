@@ -249,7 +249,9 @@ size_t sys_code_page(void) { return 4096; }
 int sys_code_protect(void *code, size_t size, int executable) { (void)code; (void)size; (void)executable; fail(); return 0; }
 void sys_code_flush(void *code, size_t size) { (void)code; (void)size; }
 void sys_code_free(void *code, size_t size) { (void)code; (void)size; }
+int sys_code_marker(const char *path) { (void)path; last = ENOSYS; return -1; }
 int sys_interrupt_catch(volatile int *flag) { if (!flag) return 0; last = ENOSYS; return -1; }
+void sys_interrupt_limit(volatile uintptr_t *limit) { (void)limit; }
 int64_t sys_event_new(void) { last = ENOSYS; return -1; }
 int sys_event_set(int64_t handle) { (void)handle; last = ENOSYS; return -1; }
 int sys_random(void *out, size_t n) { (void)out; (void)n; last = ENOSYS; return -1; }

@@ -60,11 +60,13 @@ void emit_SETGLOBAL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     as_ld64(A, R_S0, VMR, OFF(global_set));
     as_st8i(A, R_S0, a, 1);
 }
-/* rax := the frame's closure, or the fatal error */
+/* rax := the frame's closure, or the fatal error: the header's word, a
+   closure where the frame was called through one and unit where it was
+   not, since a frame whose function reads its closure is given unit by
+   a known call (native-frames.md, M4) */
 static void closure(Jit *j, int what) {
-    ms_frame(M, R_S1);
-    as_ld64(A, R_S0, R_S1, (int32_t)offsetof(Frame, closure));
-    as_test_rr(A, R_S0, R_S0);
+    as_ld64(A, R_S0, BASER, -2 * (int32_t)sizeof(Value));
+    as_cmp_ri(A, R_S0, (int32_t)mk_unit());
     as_jcc(A, CC_E, jit_fatal(j, what, 0, 0, 0));
 }
 void emit_ENV(Jit *j, uint32_t pc, int32_t a, int32_t b) {
@@ -104,6 +106,44 @@ static void set_order(Jit *j, int32_t d, int cc_ge, int cc_g) {
 /* the two arguments, immediates of one tag, as their words in rax and rcx:
    what a comparison compares, and what the arithmetic of masm.h takes */
 static void two(Jit *j, int32_t x, int32_t y, int tag, AsmLabel *slow) { ms_two_imm(M, x, y, tag, slow); }
+/* the condition that is cc's negation (the integer ones) */
+static int cc_not(int cc) {
+    switch (cc) {
+    case CC_E: return CC_NE; case CC_NE: return CC_E;
+    case CC_L: return CC_GE; case CC_GE: return CC_L; case CC_LE: return CC_G; case CC_G: return CC_LE;
+    case CC_B: return CC_AE; case CC_AE: return CC_B; case CC_BE: return CC_A; case CC_A: return CC_BE;
+    default: return -1;
+    }
+}
+/* Whether the bool a comparison makes in d goes to the branch right after
+   it alone (M6, tier 2, where what is live is known): the branch on d,
+   reached from the comparison only, and d dead after it either way. Then
+   the branch takes the comparison's own flags, and no bool is made. */
+static int bool_for_branch_only(Jit *j, int32_t d) {
+    if (!j->live_in || !j->target || d < 0 || d >= 64) return 0;
+    uint32_t nx = j->next;
+    if (nx >= j->to || j->target[nx - j->from]) return 0;
+    const uint8_t *code = j->vm->prog.code;
+    if ((code[nx] != ROP_JUMPIF && code[nx] != ROP_JUMPIFNOT) || read_i32(code + nx + 1) != d) return 0;
+    uint32_t taken = (uint32_t)read_i32(code + nx + 5), fall = nx + rop_length(code + nx);
+    if (taken < j->from || taken >= j->to) return 0;
+    uint64_t after = j->live_in[taken - j->from] | (fall < j->to ? j->live_in[fall - j->from] : 0);
+    return !((after >> d) & 1);
+}
+/* A comparison of two immediates of one tag into d, the bool in the flags
+   for a branch fused onto it (M7): where the section vouches for both
+   words in their homes and the bool goes to the branch alone, the words
+   compared where they are and nothing more -- the branch reads cc (M6) */
+static void compare(Jit *j, int32_t d, int32_t x, int32_t y, int tag, int cc, AsmLabel *slow) {
+    if (cc_not(cc) >= 0 && ms_imm_trusted(M, x, tag) && ms_imm_trusted(M, y, tag) && bool_for_branch_only(j, d)) {
+        ms_cmp_words(M, x, y);
+        j->cc_for = cc;
+        return;
+    }
+    two(j, x, y, tag, slow);
+    as_cmp_rr(A, R_S0, R_S1);
+    set_bool(j, d, cc);
+}
 /* the same as their payloads: what a division divides */
 static void two_payloads(Jit *j, int32_t x, int32_t y, int tag, AsmLabel *slow) {
     ms_two_imm(M, x, y, tag, slow);
@@ -181,6 +221,11 @@ static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *s
     /* two values of one representation that is an immediate (tier 2,
        M10): the words alone */
     if (ms_immediate(M, x) && ms_immediate(M, y)) {
+        if (ms_word_home(M, x) && ms_word_home(M, y) && bool_for_branch_only(j, d)) {   /* the branch takes the flags (compare) */
+            ms_cmp_words(M, x, y);
+            j->cc_for = CC_E;
+            return;
+        }
         ms_load_bits(M, R_S0, x);
         ms_cmp_bits(M, R_S0, y);
         set_bool(j, d, CC_E);
@@ -197,14 +242,38 @@ static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *s
         return;
     }
     AsmLabel done, heap; as_label_init(&done); as_label_init(&heap);
-    /* Structural comparison may stop at its work limit, so its helper
-       needs the exact VM for the fatal error and its trace. */
+    if (poly && j->jit->prim_calls) {   /* --jit-stats: poly_eq's calls from code */
+        as_mov_ri(A, R_S2, (int64_t)(intptr_t)&j->jit->eq_calls);
+        as_add_mi(A, R_S2, 0, 1);
+    }
     ms_two_words(M, x, y, poly ? &heap : slow);
     as_cmp_rr(A, R_S0, R_S1);
     set_bool(j, d, CC_E);
     if (poly) {
+        /* one at least in the heap: decided in line where no walk is
+           needed (ms_equal_heap, M5) -- identity, kinds, refs and arrays,
+           boxes of numbers, strings -- else walked by values_equal, which
+           may stop at its work limit, and so needs the exact VM for the
+           fatal error and its trace */
+        AsmLabel yes, no, store, walk;
+        as_label_init(&yes); as_label_init(&no); as_label_init(&store); as_label_init(&walk);
         as_jmp(A, &done);
         as_bind(A, &heap);
+        ms_equal_heap(M, R_S0, R_S1, &yes, &no, &walk);
+        as_bind(A, &yes);
+        as_mov_ri(A, R_S0, 1);
+        as_jmp(A, &store);
+        as_bind(A, &no);
+        as_mov_ri(A, R_S0, 0);
+        as_bind(A, &store);
+        ms_set_reg(M, d, T_CON0, R_S0);
+        ms_bool_flags(M, R_S0);
+        as_jmp(A, &done);
+        as_bind(A, &walk);
+        if (j->jit->prim_calls) {   /* --jit-stats: and those walked in C */
+            as_mov_ri(A, R_S2, (int64_t)(intptr_t)&j->jit->eq_walked);
+            as_add_mi(A, R_S2, 0, 1);
+        }
         ms_sync(M, j->next, 0);
         ms_slot_addr(M, ms_arg(M, 1), x);
         ms_slot_addr(M, ms_arg(M, 2), y);
@@ -212,9 +281,84 @@ static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *s
         ms_reload(M);
         ms_set_reg(M, d, T_CON0, R_S0);
         ms_bool_flags(M, R_S0);
+        as_label_free(&yes); as_label_free(&no); as_label_free(&store); as_label_free(&walk);
     }
     as_bind(A, &done);
     as_label_free(&done); as_label_free(&heap);
+}
+/* ptr_eq: the identity of two values, the identity of their words -- but
+   for two boxes of one number (p_ptr_eq, runtime/prims.c), which the
+   helper does: the words' compare leaves its flags where the words are
+   the same or x is no box */
+static void identical(Jit *j, int32_t d, int32_t x, int32_t y, AsmLabel *slow) {
+    AsmLabel same; as_label_init(&same);
+    ms_need_word(M, x);
+    ms_need_word(M, y);
+    ms_load_bits(M, R_S0, x);
+    ms_cmp_bits(M, R_S0, y);
+    as_jcc(A, CC_E, &same);
+    as_test_ri(A, R_S0, 1);
+    as_jcc(A, CC_NE, &same);           /* an immediate: unequal, and the flags say so */
+    ms_load_kind(M, R_S1, R_S0);
+    as_cmp_ri(A, R_S1, K_BOX);
+    as_jcc(A, CC_E, slow);             /* else unequal, and the flags say so */
+    as_bind(A, &same);
+    set_bool(j, d, CC_E);
+    as_label_free(&same);
+}
+/* `=` of strings (string_eq, the compiler's `=` at string; performance M5):
+   in line whatever their lengths -- the same string, else the lengths,
+   then the bytes a word at a time (ms_string_equal) -- from scratch
+   registers, so no home is clobbered and nothing is called; the bool in
+   the flags too, for a branch fused onto it */
+static void string_equal(Jit *j, int32_t d, int32_t x, int32_t y, AsmLabel *slow) {
+    AsmLabel yes, no, done;
+    as_label_init(&yes); as_label_init(&no); as_label_init(&done);
+    ms_load_obj(M, R_S0, x, K_STRING, slow);
+    ms_load_obj(M, R_S1, y, K_STRING, slow);
+    as_cmp_rr(A, R_S0, R_S1);
+    as_jcc(A, CC_E, &yes);
+    ms_string_equal(M, R_S0, R_S1, &yes, &no);
+    as_bind(A, &yes);
+    as_mov_ri(A, R_S0, 1);
+    as_jmp(A, &done);
+    as_bind(A, &no);
+    as_mov_ri(A, R_S0, 0);
+    as_bind(A, &done);
+    ms_set_reg(M, d, T_CON0, R_S0);
+    ms_bool_flags(M, R_S0);
+    as_label_free(&yes); as_label_free(&no); as_label_free(&done);
+}
+/* the order of two strings (string_order, String.< and the others): in
+   line where the shorter is at most 8 bytes (ms_string_order_short, M5),
+   else the lean helper, which touches nothing of the VM: nothing synced,
+   the homes C clobbers waiting in the VM's cells around it, the arguments
+   from scratch registers, never from homes (the latent bug of E12: they
+   were loaded from their homes into the arguments' registers, which are
+   homes themselves). Either way the order as the flags of an unsigned
+   compare, then as the primitive's result. */
+static void string_compare(Jit *j, int32_t p, int32_t d, int32_t x, int32_t y, AsmLabel *slow) {
+    AsmLabel longer, done; as_label_init(&longer); as_label_init(&done);
+    ms_load_obj(M, R_S0, x, K_STRING, slow);
+    ms_load_obj(M, R_S2, y, K_STRING, slow);
+    ms_string_order_short(M, &longer);
+    as_jmp(A, &done);
+    as_bind(A, &longer);
+    ms_save_volatile(M, j->next, d);
+    as_mov_rr(A, ms_arg(M, 2), R_S2);   /* first: R_S2 is the first argument on Windows */
+    as_mov_rr(A, ms_arg(M, 1), R_S0);
+    ms_call(M, (MsHelper)jit_h_string_order);
+    ms_restore_volatile(M, j->next, d);
+    as_cmp_ri(A, R_S0, 1);              /* LESS, EQUAL, GREATER: 0, 1, 2 */
+    as_bind(A, &done);
+    switch (p) {
+    case PRIM_string_order: set_order(j, d, CC_AE, CC_A); break;
+    case PRIM_string_lt: set_bool(j, d, CC_B); break;
+    case PRIM_string_le: set_bool(j, d, CC_BE); break;
+    case PRIM_string_gt: set_bool(j, d, CC_A); break;
+    default: set_bool(j, d, CC_AE); break;
+    }
+    as_label_free(&longer); as_label_free(&done);
 }
 
 static void alloc(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L);
@@ -223,7 +367,8 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     if (n == 0 || n > 3) return 0;
     int32_t x = read_i32(L), y = n > 1 ? read_i32(L + 4) : x, z = n > 2 ? read_i32(L + 8) : x;
     switch (p) {
-    case PRIM_poly_eq: case PRIM_imm_eq: case PRIM_string_order: case PRIM_ref_new:
+    case PRIM_poly_eq: case PRIM_imm_eq: case PRIM_string_order: case PRIM_string_eq: case PRIM_ref_new:
+    case PRIM_ptr_eq: case PRIM_string_lt: case PRIM_string_le: case PRIM_string_gt: case PRIM_string_ge:
     case PRIM_int_add: case PRIM_int_sub: case PRIM_int_mul: case PRIM_int_div: case PRIM_int_mod:
     case PRIM_int_quot: case PRIM_int_rem: case PRIM_int_neg: case PRIM_int_lt: case PRIM_int_le:
     case PRIM_int_gt: case PRIM_int_ge: case PRIM_int_order: case PRIM_int_to_char:
@@ -268,21 +413,26 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     switch (p) {
     case PRIM_poly_eq: equal(j, d, x, y, 1, slow); break;
     case PRIM_imm_eq: equal(j, d, x, y, 0, slow); break;
-    case PRIM_string_order:
-        /* the two strings to the lean helper, which touches nothing of the
-           VM: no sync, no reload */
-        ms_writeback(M, M->cur_pc);
-        ms_load_obj(M, ms_arg(M, 1), x, K_STRING, slow);
-        ms_load_obj(M, ms_arg(M, 2), y, K_STRING, slow);
-        ms_call_lean(M, (MsHelper)jit_h_string_order);
-        ms_set_reg(M, d, T_CON0, R_S0);
+    case PRIM_ptr_eq: identical(j, d, x, y, slow); break;
+    case PRIM_string_order: case PRIM_string_lt: case PRIM_string_le: case PRIM_string_gt: case PRIM_string_ge:
+        string_compare(j, p, d, x, y, slow);
+        break;
+    case PRIM_string_eq:
+        string_equal(j, d, x, y, slow);
         break;
     case PRIM_ref_new:
         alloc(j, K_REF, 0, 1, FILL_ONE, d, x, 0, NULL);
         break;
 
-    case PRIM_int_add: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_ADD, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
-    case PRIM_int_sub: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_SUB, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_int_add: case PRIM_int_sub: {
+        int op = p == PRIM_int_add ? MS_ADD : MS_SUB;
+#ifndef RUNE_INT64
+        /* tier 2's homes vouched for: the words where they are (M6) */
+        if (ms_imm_trusted(M, x, T_INT) && ms_imm_trusted(M, y, T_INT)) { ms_int_addsub_homes(M, op, d, x, y, slow); break; }
+#endif
+        two(j, x, y, T_INT, slow); ms_int_arith(M, op, slow); ms_set_num(M, d, T_INT, R_S0, slow);
+        break;
+    }
     case PRIM_int_mul: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_MUL, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
     case PRIM_int_div: case PRIM_int_mod: case PRIM_int_quot: case PRIM_int_rem:
         two_payloads(j, x, y, T_INT, slow);
@@ -290,18 +440,38 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         as_jcc(A, CC_E, slow);
         as_cmp_ri(A, R_S1, -1);
         as_jcc(A, CC_E, slow);
+        if (p == PRIM_int_mod) {
+            /* by a power of two -- a hash table's size -- an and, where an
+               idiv is tens of cycles: the floor's remainder by a positive
+               power of two is the dividend's low bits, a negative one's
+               too, and no negative divisor passes the test, a payload
+               being 63 bits (native-frames.md, M2) */
+            AsmLabel general, done; as_label_init(&general); as_label_init(&done);
+            as_lea(A, R_S3, R_S1, -1, 1, -1);
+            as_test_rr(A, R_S3, R_S1);
+            as_jcc(A, CC_NE, &general);
+            as_and_rr(A, R_S0, R_S3);
+            as_jmp(A, &done);
+            as_bind(A, &general);
+            as_divmod(A, R_S1);
+            floor_div(j, 1);
+            as_mov_rr(A, R_S0, R_S2);   /* the remainder out of R_S2, which giving a slot its word uses */
+            as_bind(A, &done);
+            as_label_free(&general); as_label_free(&done);
+            ms_set_payload(M, d, T_INT, R_S0, slow);
+            break;
+        }
         as_divmod(A, R_S1);
         /* the remainder out of R_S2, which giving a slot its word uses */
         if (p == PRIM_int_div) { floor_div(j, 0); ms_set_payload(M, d, T_INT, R_S0, slow); }
-        else if (p == PRIM_int_mod) { floor_div(j, 1); as_mov_rr(A, R_S0, R_S2); ms_set_payload(M, d, T_INT, R_S0, slow); }
         else if (p == PRIM_int_quot) ms_set_payload(M, d, T_INT, R_S0, slow);
         else { as_mov_rr(A, R_S0, R_S2); ms_set_payload(M, d, T_INT, R_S0, slow); }
         break;
     case PRIM_int_neg: ms_one_imm(M, x, T_INT, slow); ms_int_neg(M, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
-    case PRIM_int_lt: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_L); break;
-    case PRIM_int_le: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_LE); break;
-    case PRIM_int_gt: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_G); break;
-    case PRIM_int_ge: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_GE); break;
+    case PRIM_int_lt: compare(j, d, x, y, T_INT, CC_L, slow); break;
+    case PRIM_int_le: compare(j, d, x, y, T_INT, CC_LE, slow); break;
+    case PRIM_int_gt: compare(j, d, x, y, T_INT, CC_G, slow); break;
+    case PRIM_int_ge: compare(j, d, x, y, T_INT, CC_GE, slow); break;
     case PRIM_int_order: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_GE, CC_G); break;
     case PRIM_int_to_char: ms_one_imm(M, x, T_INT, slow); ms_int_to_char(M, slow); ms_set_num(M, d, T_CHAR, R_S0, slow); break;
 
@@ -316,10 +486,10 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         if (p == PRIM_word_mod) as_mov_rr(A, R_S0, R_S2);
         ms_set_payload(M, d, T_WORD, R_S0, slow);
         break;
-    case PRIM_word_lt: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_B); break;
-    case PRIM_word_le: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_BE); break;
-    case PRIM_word_gt: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_A); break;
-    case PRIM_word_ge: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_AE); break;
+    case PRIM_word_lt: compare(j, d, x, y, T_WORD, CC_B, slow); break;
+    case PRIM_word_le: compare(j, d, x, y, T_WORD, CC_BE, slow); break;
+    case PRIM_word_gt: compare(j, d, x, y, T_WORD, CC_A, slow); break;
+    case PRIM_word_ge: compare(j, d, x, y, T_WORD, CC_AE, slow); break;
     case PRIM_word_order: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_AE, CC_A); break;
     case PRIM_word_andb: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_AND, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
     case PRIM_word_orb: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_OR, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
@@ -506,10 +676,10 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         break;
 
     case PRIM_char_ord: ms_one_imm(M, x, T_CHAR, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
-    case PRIM_char_lt: two(j, x, y, T_CHAR, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_L); break;
-    case PRIM_char_le: two(j, x, y, T_CHAR, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_LE); break;
-    case PRIM_char_gt: two(j, x, y, T_CHAR, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_G); break;
-    case PRIM_char_ge: two(j, x, y, T_CHAR, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_GE); break;
+    case PRIM_char_lt: compare(j, d, x, y, T_CHAR, CC_L, slow); break;
+    case PRIM_char_le: compare(j, d, x, y, T_CHAR, CC_LE, slow); break;
+    case PRIM_char_gt: compare(j, d, x, y, T_CHAR, CC_G, slow); break;
+    case PRIM_char_ge: compare(j, d, x, y, T_CHAR, CC_GE, slow); break;
     case PRIM_char_order: two(j, x, y, T_CHAR, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_GE, CC_G); break;
 
     case PRIM_string_size: length_of(j, d, x, K_STRING, slow); break;
@@ -589,7 +759,8 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     /* a comparison leaves its bool in the flags, for the branch after
        (M7): said to the walk, and to its slow path */
     switch (p) {
-    case PRIM_poly_eq: case PRIM_imm_eq:
+    case PRIM_poly_eq: case PRIM_imm_eq: case PRIM_string_eq: case PRIM_ptr_eq:
+    case PRIM_string_lt: case PRIM_string_le: case PRIM_string_gt: case PRIM_string_ge:
     case PRIM_int_lt: case PRIM_int_le: case PRIM_int_gt: case PRIM_int_ge:
     case PRIM_word_lt: case PRIM_word_le: case PRIM_word_gt: case PRIM_word_ge:
     case PRIM_real_lt: case PRIM_real_le: case PRIM_real_gt: case PRIM_real_ge: case PRIM_real_eq:
@@ -634,6 +805,7 @@ void emit_PRIM(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint
     as_ld64(A, R_S0, R_S1, (int32_t)offsetof(Handler, native));
     as_test_rr(A, R_S0, R_S0);
     as_jcc(A, CC_E, &hand);
+    as_ld64(A, COUNTR, VMR, OFF(instructions));   /* the count the sync gave, which the rest of the run is not in (D9 B) */
     as_jmp_r(A, R_S0);
     as_bind(A, &hand);
     ms_handback(M, RUN_INTERP);
@@ -684,16 +856,15 @@ void emit_CON(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     alloc(j, K_CON, b, 1, FILL_ONE, a, c, 0, NULL);
 }
 /* --checked: the tag of the constructor in rax against t */
+/* the constructor's tag tested where the VM runs under --checked (D14),
+   which is the command line's, set before any code is made: compiled in
+   there alone (native-frames.md, M2) */
 static void checked_tag(Jit *j, int32_t t, int what) {
-    AsmLabel skip; as_label_init(&skip);
-    as_cmp32_mi(A, VMR, OFF(checked), 0);
-    as_jcc(A, CC_E, &skip);
+    if (!j->vm->checked) return;
     ms_load_contag(M, R_S1, R_S0);
     as_cmp_ri(A, R_S1, t);
     /* the message names the tag found, which is in rcx */
     as_jcc(A, CC_NE, jit_fatal(j, what, 0, t, 1));
-    as_bind(A, &skip);
-    as_label_free(&skip);
 }
 void emit_DECON(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
@@ -763,7 +934,7 @@ static void branch(Jit *j, uint32_t pc, int32_t a, int32_t b, int cc, int what) 
         st->L = (const uint8_t *)s;
         st->a = b;
         int which = M->nslow - 1;
-        if (j->flags_prev == a) as_jcc(A, cc, &M->slow[which]->here);
+        if (j->flags_prev == a) as_jcc(A, j->cc_prev >= 0 ? (cc == CC_NE ? j->cc_prev : cc_not(j->cc_prev)) : cc, &M->slow[which]->here);
         else {
             ms_check_tag(M, a, T_CON0, jit_fatal(j, what, 0, 0, 0));
             ms_test_false(M, a);
@@ -772,7 +943,10 @@ static void branch(Jit *j, uint32_t pc, int32_t a, int32_t b, int cc, int what) 
         count_site(j, s, (int)offsetof(Site, n1));
         return;
     }
-    if (j->flags_prev == a) { as_jcc(A, cc, jit_label(j, (uint32_t)b)); return; }
+    if (j->flags_prev == a) {   /* the bool's flags (ZF: false), or the comparison's own (cc_prev, M6) */
+        as_jcc(A, j->cc_prev >= 0 ? (cc == CC_NE ? j->cc_prev : cc_not(j->cc_prev)) : cc, jit_label(j, (uint32_t)b));
+        return;
+    }
     ms_check_tag(M, a, T_CON0, jit_fatal(j, what, 0, 0, 0));
     ms_test_false(M, a);
     as_jcc(A, cc, jit_label(j, (uint32_t)b));
@@ -783,9 +957,7 @@ void emit_JUMPIF(Jit *j, uint32_t pc, int32_t a, int32_t b) { branch(j, pc, a, b
 void emit_JUMPIFNOT(Jit *j, uint32_t pc, int32_t a, int32_t b) { branch(j, pc, a, b, CC_E, FATAL_JUMPIFNOT); }
 void emit_JUMPIFNOTTAG(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
-    ms_load_tag_of_con(M, R_S0, a, jit_fatal(j, FATAL_JUMPIFNOTTAG, 0, 0, 0));
-    as_cmp_ri(A, R_S0, c);
-    as_jcc(A, CC_NE, jit_label(j, (uint32_t)b));
+    ms_jump_unless_tag(M, a, c, jit_label(j, (uint32_t)b), jit_fatal(j, FATAL_JUMPIFNOTTAG, 0, 0, 0));
 }
 /* the table of n JUMPs after the instruction is a table of offsets here:
    the tag's entry, from the table's start, added to it and jumped to */
@@ -827,21 +999,15 @@ void emit_FIELD(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, int32_t d)
 }
 /* ---- calls, returns, handlers, PRIMPUSH (M5) ---- */
 
-#define FRAME_SIZE ((int32_t)sizeof(Frame))
-#define FR(field) ((int32_t)offsetof(Frame, field))
+/* a frame's header, below its registers (vm.h, isa_frame_header;
+   native-frames.md, M4): the word k below the registers that begin
+   `above` values past this frame's base -- 1 the return word, 2 the
+   closure, 3 the info word */
+#define HEADER_AT(above, k) ((int32_t)sizeof(Value) * ((int32_t)(above) - (k)))
 
 static void fill_unit(Jit *j, int base_reg, uint32_t fill_from, uint32_t nlocals);
-/* rax := the entry of function f, read from its code object when the call
-   is made, since a function is compiled once and not before every caller;
-   the table read from the JitProgram too, since a unit loaded grows it
-   (jit.c, jit_grow) */
-static void entry_of(Jit *j, uint32_t f) {
-    as_mov_ri(A, R_S0, (int64_t)(intptr_t)&j->jit->codes);
-    as_ld64(A, R_S0, R_S0, 0);
-    as_ld64(A, R_S0, R_S0, (int32_t)((size_t)f * sizeof(CodeObject) + offsetof(CodeObject, entry)));
-}
-/* into the callee whose frame is on top and whose registers rbp and r14
-   now name: its code where it has some, else the interpreter, the VM made
+/* into the callee whose frame is on top and whose registers r14 now
+   names: its code where it has some, else the interpreter, the VM made
    exact for it */
 static void to_callee(Jit *j, uint32_t f, const Function *fn) {
     /* straight into the callee's code where it has some (M7): a call to
@@ -855,65 +1021,95 @@ static void to_callee(Jit *j, uint32_t f, const Function *fn) {
         as_jmp_to(A, entry);
         return;
     }
-    AsmLabel interp; as_label_init(&interp);
-    entry_of(j, f);
-    as_test_rr(A, R_S0, R_S0);
-    as_jcc(A, CC_E, &interp);
-    as_jmp_r(A, R_S0);
-    as_bind(A, &interp);
-    /* the interpreter runs it: the fill its code would have done */
-    if (fn->has_meta) {
-        uint32_t fill_from = jit_fill_from(j->vm, j->jit, f);
-        fill_unit(j, BASER, fill_from < fn->arity ? fn->arity : fill_from, fn->nlocals);
-    }
-    as_st32i(A, VMR, OFF(pc), (int32_t)fn->code_offset);
-    as_lea(A, R_S0, BASEI, -1, 1, (int32_t)fn->nlocals);
-    as_st64(A, VMR, OFF(sp), R_S0);
-    as_st64(A, VMR, OFF(instructions), COUNTR);
-    ms_handback(M, RUN_INTERP);
-    as_label_free(&interp);
+    /* under --jit-returns=call the table's entries store the return
+       address as the frame's word (native-frames.md, M7): a jump there
+       pushes the word first */
+    if (j->callret) as_push_ret(A, BASER, HEADER_AT(0, 1));
+    /* else a jump to where the table of calls says (M6), out of line --
+       its code, once it has some, or the stub that hands the frame to the
+       interpreter, whose registers are the stack's clean part's, values
+       every one (for a callee without an arity in the section the caller
+       filled them: make_registers) -- which becomes a jump into its code
+       when it is compiled (patch_pending) */
+    (void)fn;
+    Slow *s = ms_slow(M, SLOW_CALL_TABLE, j->next);
+    if (!s) return;
+    s->a = (int32_t)f;
+    jit_pending(j, as_jmp_site(A, &s->here), f, 0);
 }
-/* room on the stack for need values above the frame's base, or the slow
-   path that grows it */
+/* The same for a known call under --jit-returns=call (M7): a `call` into
+   the callee's entry for calls, which stores the return address as the
+   frame's return word -- its register entry's where the arguments are in
+   registers (reg) -- or into the slow path of the table of calls, whose
+   entries do so too */
+static void call_callee(Jit *j, uint32_t f, int reg) {
+    if (f == j->f) { as_call_ret(A, reg ? &j->reg_call_entry : &j->call_entry); return; }
+    const CodeObject *co = &j->jit->codes[f];
+    if (co->entry) {
+        jit_depend(j->jit, f, j->f);
+        as_call_ret_to(A, co->code + (reg ? co->reg_call : 0));
+        return;
+    }
+    Slow *s = ms_slow(M, SLOW_CALL_TABLE, j->next);
+    if (!s) return;
+    s->a = (int32_t)f;
+    jit_pending(j, as_call_site(A, &s->here), f, 1);
+}
+/* room on the stack for need values above the frame's base, in the
+   stack's clean part (VM.stack_clean, M6), or the slow path that claims
+   more: then the callee's registers need no unit, nor the closure of its
+   header */
 static void room(Jit *j, uint32_t need) {
     Slow *s = ms_slow(M, SLOW_GROW, j->next);
     if (!s) return;
     s->n = need;
-    as_lea(A, R_S0, BASEI, -1, 1, (int32_t)need);
-    as_cmp_rm(A, R_S0, VMR, OFF(stack_cap));
-    as_jcc(A, CC_A, &s->here);
+    s->d = (int32_t)(j->m.ahead + 1);   /* the call's poll: this instruction and the rest of its run, for a leave */
+    ms_room(M, need, &s->here);
     as_bind(A, &s->back);
 }
-/* rax := the index of a new frame, the array grown where it must be */
-static void frame_room(Jit *j) {
-    Slow *s = ms_slow(M, SLOW_FRAMES, j->next);
-    if (!s) return;
-    as_bind(A, &s->back);
-    as_ld64(A, R_S0, VMR, OFF(fp));
-    as_add_ri(A, R_S0, 1);
-    as_cmp_rm(A, R_S0, VMR, OFF(frames_cap));
-    as_jcc(A, CC_AE, &s->here);
-}
-/* a frame pushed: index rax, function f, base rdx, no closure, returning
-   to the code at after, the caller's pc that of the RESULT */
+
 /* the register of the RESULT at pc, if that is one: where a frame pushed
    by a call at that pc returns to (-1: none) */
 static int32_t result_at(Jit *j, uint32_t pc) {
     const uint8_t *code = j->vm->prog.code;
     return pc < j->vm->prog.code_len && code[pc] == ROP_RESULT ? read_i32(code + pc + 1) : -1;
 }
-static void push_frame(Jit *j, uint32_t f, int32_t ret_pc, AsmLabel *after) {
-    as_ld64(A, R_S1, VMR, OFF(frames));
-    as_mul_ri(A, R_S3, R_S0, FRAME_SIZE);
-    as_add_rr(A, R_S1, R_S3);
-    as_st32i(A, R_S1, FR(func), (int32_t)f);
-    as_st32i(A, R_S1, FR(ret_pc), ret_pc);
-    as_st32i(A, R_S1, FR(result), result_at(j, (uint32_t)ret_pc));
-    as_st64(A, R_S1, FR(base), R_S2);
-    as_st64i(A, R_S1, FR(closure), 0);
-    as_lea_label(A, R_S3, after);
-    as_st64(A, R_S1, FR(native_ret), R_S3);
-    as_st64(A, VMR, OFF(fp), R_S0);
+/* The header of a call's frame (native-frames.md, M4), past this frame's
+   registers: the return word, the landing after's, from r; and the
+   closure, from closure (a register; -1: unit, for a known callee that
+   reads its closure -- one that does not is left the word as it was, a
+   value of the stack's clean part, which the collector makes unit). The
+   info word is the interpreter's to write, and the frame's own. */
+static void call_header(Jit *j, int closure, int unit_closure, AsmLabel *after, int r) {
+    uint32_t above = j->m.nlocals + MS_HEADER;
+    if (closure >= 0) as_st64(A, BASER, HEADER_AT(above, 2), closure);
+    else if (unit_closure) as_st64i(A, BASER, HEADER_AT(above, 2), (int32_t)mk_unit());
+    if (j->callret) return;   /* the callee's entry stores the return address (M7) */
+    as_ret_addr(A, r, after);
+    as_st64(A, BASER, HEADER_AT(above, 1), r);
+}
+/* Where the callee's RET lands (M6), the frame's return word: in line,
+   after the jump into the callee, at an odd address (as_ret_align). The
+   callee left its value in R_S0 and r14 is still its own registers' base,
+   which began past this frame's and the header: this frame's again (the
+   stack's watermark is lowered by its return barrier, a callee at it
+   having the barrier's stub for its return word: native-frames.md, M5),
+   the homes needed after the call loaded from their slots (written
+   back before it), and the value into the register of the RESULT, which
+   every engine passes over. The landing's pc (that RESULT's) is the code
+   object's to say for the frames' walk (jit_landing_here). */
+static void call_landing(Jit *j, AsmLabel *l) {
+    uint32_t after = j->next + 5;
+    int32_t d = result_at(j, j->next);
+    if (!j->callret) as_ret_align(A);   /* (a `call` is padded before it: M7) */
+    as_bind(A, l);
+    jit_landing_here(j, j->next);
+    ms_role(M, MR_LAND);
+    ms_begin(M, after);
+    ms_frame_back(M);
+    ms_reload_homes_but(M, after, d);
+    ms_set_bits(M, d, R_S0);
+    ms_role(M, MR_BODY);
 }
 /* unit into the registers of the function at base_reg from fill_from
    (M7: the ones the callee does not write before anything could see
@@ -928,7 +1124,7 @@ static void fill_unit(Jit *j, int base_reg, uint32_t fill_from, uint32_t nlocals
    addressed from this frame's base, and no register holds where they
    are: an argument may be in any home (asm.h) */
 static void make_registers(Jit *j, uint32_t n, const uint8_t *L, uint32_t f, const Function *fn) {
-    uint32_t above = j->m.nlocals;
+    uint32_t above = j->m.nlocals + MS_HEADER;
     for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, above + i, read_i32(L + 4 * i));
     if (!fn->has_meta) {
         uint32_t fill_from = jit_fill_from(j->vm, j->jit, f);
@@ -936,39 +1132,171 @@ static void make_registers(Jit *j, uint32_t n, const uint8_t *L, uint32_t f, con
     }
 }
 
+/* The arguments of a known call in registers (native-frames.md, M6): the
+   callee's code takes them at its register entry, each parameter in its
+   home (ph: jit.h, CodeObject.param_home), or in its slot, or not at all.
+   The slots' first, read from where the arguments are; then the homes,
+   as a parallel move -- each argument's word from its home of words or
+   from its slot (a raw home's slot ms_need_word made current), the
+   caller's homes being free once written back for the call, rax the one
+   to break a cycle with. */
+static void args_in_registers(Jit *j, uint32_t n, const uint8_t *L, const int8_t *ph) {
+    uint32_t above = j->m.nlocals + MS_HEADER;
+    for (uint32_t i = 0; i < n; i++)
+        if (ph[i] == REG_ARG_SLOT) ms_store_nth(M, BASER, above + i, read_i32(L + 4 * i));
+    int dst[64], src[64];   /* src: a machine register, or -1 for the slot of slot_of */
+    int32_t slot_of[64];
+    uint32_t k = 0;
+    for (uint32_t i = 0; i < n; i++) {
+        if (ph[i] < 0) continue;
+        int32_t s = read_i32(L + 4 * i);
+        const Home *h = ms_word_home(M, s);
+        dst[k] = ph[i];
+        src[k] = h ? h->reg : -1;
+        slot_of[k] = s;
+        k++;
+    }
+    while (k) {
+        uint32_t pick = k;
+        for (uint32_t x = 0; x < k && pick == k; x++) {
+            int busy = 0;   /* is its destination a source still to be read? */
+            for (uint32_t y = 0; y < k && !busy; y++) busy = y != x && src[y] == dst[x];
+            if (!busy) pick = x;
+        }
+        if (pick == k) {
+            /* a cycle: the destination of the first kept in rax, its readers told */
+            int d = dst[0];
+            as_mov_rr(A, R_S0, d);
+            for (uint32_t y = 0; y < k; y++) if (src[y] == d) src[y] = R_S0;
+            pick = 0;
+        }
+        if (src[pick] >= 0) { if (src[pick] != dst[pick]) as_mov_rr(A, dst[pick], src[pick]); }
+        else ms_load_bits(M, dst[pick], slot_of[pick]);
+        dst[pick] = dst[k - 1]; src[pick] = src[k - 1]; slot_of[pick] = slot_of[k - 1];
+        k--;
+    }
+}
 void emit_CALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n) {
     (void)pc; (void)b;
     const Function *fn = &j->vm->prog.funcs[a];
-    AsmLabel *after = jit_landing(j, j->next + 5);   /* past the RESULT */
+    if (result_at(j, j->next) < 0) { jit_unsupported(j); return; }   /* a call the compiler follows by RESULT, always */
+    AsmLabel after; as_label_init(&after);   /* the landing (M6) */
+    ms_role(M, MR_WB);
     ms_writeback_call(M, pc, j->next + 5, result_at(j, j->next));   /* the homes needed after it to their slots: the callee has the registers, and after loads them again (M9) */
+    ms_role(M, MR_ARGS);
     for (uint32_t i = 0; i < n; i++) ms_need_word(M, read_i32(L + 4 * i));   /* an argument's word, before the frame is reserved (a box's slow path clobbers rax) */
-    room(j, j->m.nlocals + fn->nlocals + fn->maxstack);
-    frame_room(j);
-    make_registers(j, n, L, (uint32_t)a, fn);
-    as_lea(A, R_S2, BASEI, -1, 1, (int32_t)j->m.nlocals);
-    push_frame(j, (uint32_t)a, (int32_t)j->next, after);
-    as_mov_rr(A, BASEI, R_S2);
-    ms_slot_addr(M, BASER, (int32_t)j->m.nlocals);
-    to_callee(j, (uint32_t)a, fn);
+    ms_role(M, MR_ROOM);
+    room(j, j->m.nlocals + MS_HEADER + fn->nlocals + fn->maxstack);
+    ms_role(M, MR_ARGS);
+    /* the arguments in registers where the callee's code takes them so --
+       this very function, or one compiled already (native-frames.md, M6) --
+       else in the callee's slots */
+    const int8_t *ph = NULL;
+    const void *reg_entry = NULL;
+    if ((uint32_t)a == j->f) { if (j->nparams == n && n) ph = j->param_home; }
+    else {
+        const CodeObject *co = &j->jit->codes[a];
+        if (co->entry && co->param_home && co->nparams == n && n) {
+            ph = co->param_home;
+            reg_entry = (const char *)co->code + co->reg_entry;
+        }
+    }
+    if (ph) args_in_registers(j, n, L, ph);
+    else make_registers(j, n, L, (uint32_t)a, fn);
+    ms_role(M, MR_FRAME);
+    call_header(j, -1, fn->reads_closure, &after, R_S3);
+    /* the callee's registers the code's: under --jit-returns=call so that
+       the call after ends at an odd address, its return address a return
+       word (M7) */
+    if (j->callret) as_add_before_call(A, BASER, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER), as_call_len(-1));
+    else as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER));
+    ms_role(M, MR_JUMP);
+    if (j->callret) call_callee(j, (uint32_t)a, ph != NULL);
+    else if (!ph) to_callee(j, (uint32_t)a, fn);
+    else if (!reg_entry) as_jmp(A, &j->labels[0]);   /* itself, past its entry's landing */
+    else {
+        jit_depend(j->jit, (uint32_t)a, j->f);
+        as_jmp_to(A, reg_entry);
+    }
+    call_landing(j, &after);
+    as_label_free(&after);
 }
 void emit_TAILCALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n) {
     (void)pc; (void)b;
     const Function *fn = &j->vm->prog.funcs[a];
     uint32_t need = j->m.nlocals + n;
     if (fn->nlocals + fn->maxstack > need) need = fn->nlocals + fn->maxstack;
+    ms_role(M, MR_ARGS);
     for (uint32_t i = 0; i < n; i++) ms_need_word(M, read_i32(L + 4 * i));
+    ms_role(M, MR_ROOM);
     room(j, need);
-    /* the arguments above the frame first, since they are its registers */
-    for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, j->m.nlocals + i, read_i32(L + 4 * i));
-    for (uint32_t i = 0; i < n; i++) ms_slot_from_nth_raw(M, (int32_t)i, BASER, j->m.nlocals + i);   /* the slots: the callee's registers, not this function's homes */
+    ms_role(M, MR_ARGS);
+    /* the arguments in registers where the callee's code takes them so and
+       wants none in its slots, a parallel move into its homes -- a loop of
+       tail calls of itself, above all (native-frames.md, M6) */
+    {
+        const int8_t *ph = NULL;
+        const void *reg_entry = NULL;
+        if ((uint32_t)a == j->f) { if (j->nparams == n && n) ph = j->param_home; }
+        else {
+            const CodeObject *co = &j->jit->codes[a];
+            if (co->entry && co->param_home && co->nparams == n && n) {
+                ph = co->param_home;
+                reg_entry = (const char *)co->code + co->reg_entry;
+            }
+        }
+        for (uint32_t i = 0; ph && i < n; i++) if (ph[i] == REG_ARG_SLOT) ph = NULL;
+        if (ph) {
+            args_in_registers(j, n, L, ph);
+            if (fn->reads_closure) {
+                ms_role(M, MR_FRAME);
+                as_st64i(A, BASER, HEADER_AT(0, 2), (int32_t)mk_unit());
+            }
+            ms_role(M, MR_JUMP);
+            if (!reg_entry) as_jmp(A, &j->labels[0]);
+            else {
+                jit_depend(j->jit, (uint32_t)a, j->f);
+                as_jmp_to(A, reg_entry);
+            }
+            ms_role(M, MR_BODY);
+            return;
+        }
+    }
+    /* the arguments into the slots that are the callee's registers: in
+       place where no argument is read from a slot an earlier one has
+       written, else above the frame first, then moved down (M6). A
+       register in a home of words is read from its home, which the store
+       leaves as it was; one in a raw home from its slot, which
+       ms_need_word made its word -- as one with no home. An argument
+       already in its place is stored only from a home of words. */
+    int direct = 1;
+    for (uint32_t i = 0; i < n && direct; i++)
+        for (uint32_t k = i + 1; k < n; k++) {
+            int32_t src = read_i32(L + 4 * k);
+            if ((uint32_t)src == i && !ms_word_home(M, src)) { direct = 0; break; }
+        }
+    if (direct)
+        for (uint32_t i = 0; i < n; i++) {
+            int32_t src = read_i32(L + 4 * i);
+            if ((uint32_t)src != i || ms_word_home(M, src)) ms_store_nth(M, BASER, i, src);
+        }
+    else {
+        for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, j->m.nlocals + i, read_i32(L + 4 * i));
+        for (uint32_t i = 0; i < n; i++) ms_slot_from_nth_raw(M, (int32_t)i, BASER, j->m.nlocals + i);   /* the slots: the callee's registers, not this function's homes */
+    }
     if (!fn->has_meta) {
         uint32_t from = jit_fill_from(j->vm, j->jit, (uint32_t)a);
         fill_unit(j, BASER, from < n ? n : from, fn->nlocals);
     }
-    ms_frame(M, R_S1);
-    as_st32i(A, R_S1, FR(func), a);
-    as_st64i(A, R_S1, FR(closure), 0);
+    /* the frame's header stays its caller's, but its closure: unit, for a
+       callee that reads one (native-frames.md, M4) */
+    if (fn->reads_closure) {
+        ms_role(M, MR_FRAME);
+        as_st64i(A, BASER, HEADER_AT(0, 2), (int32_t)mk_unit());
+    }
+    ms_role(M, MR_JUMP);
     to_callee(j, (uint32_t)a, fn);
+    ms_role(M, MR_BODY);
 }
 /* ---- calls through a closure, in line (M7) ---- */
 
@@ -992,24 +1320,33 @@ static void called(Jit *j, uint32_t pc) {
     as_push(A, R_S1); as_push(A, R_S2); as_push(A, R_S6);
     as_mov_ri(A, ms_arg(M, 1), (int64_t)(intptr_t)s);
     as_mov_rr(A, ms_arg(M, 2), R_S6);
+    as_shr_ri(A, ms_arg(M, 2), 1);   /* the function's word (2f + 1) its number (M6) */
     ms_call(M, (MsHelper)jit_h_called);
     ms_reload_clobbered(M, pc);   /* written back at the instruction's start (M9) */
     as_pop(A, R_S6); as_pop(A, R_S2); as_pop(A, R_S1);
 }
 /* obj := the closure in register a; r11 := the index of its function,
    checked; rcx := that Function */
+/* obj := the closure in register a; r11 := the word of its function
+   (2f + 1), checked against the number of functions where the section
+   does not vouch for the closure; rcx := the table of calls (CallInfo,
+   M6), read from the VM, which a unit loaded grows and may move */
 static void closure_function(Jit *j, int32_t a, int obj) {
     ms_load_obj(M, obj, a, K_CLOSURE, jit_fatal(j, FATAL_CALL, 0, 0, 0));
-    ms_load_field_payload(M, R_S6, obj, 0);   /* field 0: the index */
-    /* the number of functions and their table read from the VM: a unit
-       loaded adds to them, and may move the table (runtime/loader.c) */
-    as_ld32(A, R_S3, VMR, OFF(prog.nfuncs));
-    as_cmp_rr(A, R_S6, R_S3);
-    as_jcc(A, CC_AE, jit_fatal(j, FATAL_FUNCTION, 0, 0, 0));   /* unsigned: negative too */
-    as_mul_ri(A, R_S1, R_S6, (int32_t)sizeof(Function));
-    as_ld64(A, R_S3, VMR, OFF(prog.funcs));
-    as_add_rr(A, R_S1, R_S3);
+    ms_load_field_bits(M, R_S6, obj, 0);   /* field 0: the function, its word */
+    if (!ms_trusts(M, a, K_CLOSURE)) {
+        as_ld32(A, R_S3, VMR, OFF(prog.nfuncs));
+        as_lea(A, R_S3, R_S3, R_S3, 1, 1);   /* the word of the number of functions */
+        as_cmp_rr(A, R_S6, R_S3);
+        as_jcc(A, CC_AE, jit_fatal(j, FATAL_FUNCTION, 0, 0, 0));   /* unsigned: negative too */
+    }
+    as_ld64(A, R_S1, VMR, OFF(jit_calls));
 }
+/* the callee's entry from the table (rcx) by its function's word (r11) */
+#if JIT_TARGET   /* (a VM with no JIT -- a 32-bit one -- has a smaller CallInfo and no code that reads it) */
+_Static_assert(sizeof(CallInfo) == 16, "a function's word times 8 is its entry in the table of calls, and 8 more");
+#endif
+static void callee_entry(Jit *j, int r) { as_ld64x(A, r, R_S1, R_S6, 8, (int32_t)offsetof(CallInfo, entry) - 8); }
 /* the slow path that grows the stack and starts the instruction over,
    made first: its back label is the instruction's start (after the run's
    count, which a restart must not add again), and nothing may be live
@@ -1017,6 +1354,7 @@ static void closure_function(Jit *j, int32_t a, int obj) {
 static int grow_slow(Jit *j) {
     Slow *s = ms_slow(M, SLOW_GROW_RAX, j->next);
     if (!s) return -1;
+    s->d = (int32_t)(j->m.ahead + 1);   /* the call's poll (room) */
     int which = M->nslow - 1;
     as_bind(A, &M->slow[which]->back);
     return which;
@@ -1025,12 +1363,15 @@ static int grow_slow(Jit *j) {
    above values over this frame's, or the slow path (which) that grows the
    stack, the need in rax */
 static void room_dynamic(Jit *j, int which, uint32_t above) {
-    as_ld32(A, R_S0, R_S1, (int32_t)offsetof(Function, nlocals));
-    as_ld32(A, R_S3, R_S1, (int32_t)offsetof(Function, maxstack));
-    as_add_rr(A, R_S0, R_S3);
-    as_lea(A, R_S0, R_S0, BASEI, 1, (int32_t)above);
-    as_cmp_rm(A, R_S0, VMR, OFF(stack_cap));
-    as_jcc(A, CC_A, &M->slow[which]->here);
+    as_ld64x(A, R_S3, R_S1, R_S6, 8, (int32_t)offsetof(CallInfo, need) - 8);   /* the table of calls (M6) */
+    ms_room_dynamic(M, R_S3, above, &M->slow[which]->here);   /* the clean part (room, M6); the address in rax */
+}
+/* r8 := the callee's registers, for a fill (the program without every
+   arity in the section), its number in r11 */
+static void callee_nlocals(Jit *j) {
+    as_mul_ri(A, R_S3, R_S6, (int32_t)sizeof(Function));
+    as_add_rm(A, R_S3, VMR, OFF(prog.funcs));
+    as_ld32(A, R_S3, R_S3, (int32_t)offsetof(Function, nlocals));
 }
 /* unit into the callee's registers at r9 (its nlocals in r8, its index in
    r11) from the first it does not write before anything could see it
@@ -1067,99 +1408,86 @@ static void fill_unit_dynamic(Jit *j) {
    argument, and until then keeps what it found in rax, rcx, rdx, r8 and
    r11 alone: every other general register may be a home (asm.h), and a
    slow path writes the homes back. After it they are free. */
-/* into the callee whose Function is in rcx and whose index is in r11, the
-   frame's rbp and r14 already its own (r9 too): its code where it has
-   some, else the interpreter, the VM made exact for it */
-static void to_callee_dynamic(Jit *j) {
-    AsmLabel interp; as_label_init(&interp);
-    as_mul_ri(A, R_S0, R_S6, (int32_t)sizeof(CodeObject));
-    as_mov_ri(A, R_S3, (int64_t)(intptr_t)&j->jit->codes);   /* the table, which a load grows */
-    as_ld64(A, R_S3, R_S3, 0);
-    as_add_rr(A, R_S0, R_S3);
-    as_ld64(A, R_S0, R_S0, (int32_t)offsetof(CodeObject, entry));
-    as_test_rr(A, R_S0, R_S0);
-    as_jcc(A, CC_E, &interp);
-    as_jmp_r(A, R_S0);
-    as_bind(A, &interp);
-    /* the interpreter runs it: the fill its code would have done (its
-       nlocals into r8 again, which the entry's address took) */
-    if (j->jit->all_meta) {
-        as_ld32(A, R_S3, R_S1, (int32_t)offsetof(Function, nlocals));
-        fill_unit_dynamic(j);
-    }
-    as_ld32(A, R_S0, R_S1, (int32_t)offsetof(Function, code_offset));
-    as_st32(A, VMR, OFF(pc), R_S0);
-    as_ld32(A, R_S0, R_S1, (int32_t)offsetof(Function, nlocals));
-    as_add_rr(A, R_S0, BASEI);
-    as_st64(A, VMR, OFF(sp), R_S0);
-    as_st64(A, VMR, OFF(instructions), COUNTR);
-    ms_handback(M, RUN_INTERP);
-    as_label_free(&interp);
-}
 void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
-    AsmLabel *after = jit_landing(j, j->next + 5);   /* past the RESULT */
+    if (result_at(j, j->next) < 0) { jit_unsupported(j); return; }   /* a call the compiler follows by RESULT, always */
+    AsmLabel after; as_label_init(&after);   /* the landing (M6) */
     /* before the restart label: the slots stay right across a restart (M9);
        under --jit-profile, every home live here, which the profile's helper
        loads again (called) */
+    ms_role(M, MR_WB);
     if (j->jit->profile) ms_writeback(M, pc);
     else ms_writeback_call(M, pc, j->next + 5, result_at(j, j->next));
+    ms_role(M, MR_ARGS);
     ms_need_word(M, b);
     int grow = grow_slow(j);
-    if (grow < 0) return;
-    /* the frames first: their slow path comes back to its check with the
-       registers clobbered, so nothing may be live across it */
-    frame_room(j);
+    if (grow < 0) { as_label_free(&after); return; }
+    ms_role(M, MR_CLOS);
     closure_function(j, a, R_S2);
     called(j, pc);
-    room_dynamic(j, grow, j->m.nlocals);
-    /* the callee's registers above the frame: register 0 from register b,
-       the rest unit where the callee's code will not do it (every
-       function of the program has its arity in the section: all_meta) */
-    ms_store_nth(M, BASER, j->m.nlocals, b);
-    as_mov_rr(A, R_S5, R_S2);                                 /* the closure */
-    as_lea(A, R_S2, BASEI, -1, 1, (int32_t)j->m.nlocals);   /* the callee's base */
-    as_ld32(A, R_S3, R_S1, (int32_t)offsetof(Function, nlocals));
-    ms_slot_addr(M, R_S4, (int32_t)j->m.nlocals);
-    if (!j->jit->all_meta) fill_unit_dynamic(j);
-    /* the frame: function r11, closure r10, base rdx, returning to after */
-    as_ld64(A, R_S0, VMR, OFF(fp));
-    as_add_ri(A, R_S0, 1);
-    as_ld64(A, R_H1, VMR, OFF(frames));
-    as_mul_ri(A, R_H2, R_S0, FRAME_SIZE);
-    as_add_rr(A, R_H1, R_H2);
-    as_st32(A, R_H1, (int32_t)offsetof(Frame, func), R_S6);
-    as_st32i(A, R_H1, (int32_t)offsetof(Frame, ret_pc), (int32_t)j->next);
-    as_st32i(A, R_H1, (int32_t)offsetof(Frame, result), result_at(j, j->next));
-    as_st64(A, R_H1, (int32_t)offsetof(Frame, base), R_S2);
-    as_st64(A, R_H1, (int32_t)offsetof(Frame, closure), R_S5);
-    as_lea_label(A, R_H2, after);
-    as_st64(A, R_H1, (int32_t)offsetof(Frame, native_ret), R_H2);
-    as_st64(A, VMR, OFF(fp), R_S0);
-    as_mov_rr(A, BASEI, R_S2);
-    as_mov_rr(A, BASER, R_S4);
-    to_callee_dynamic(j);
+    ms_role(M, MR_ROOM);
+    room_dynamic(j, grow, j->m.nlocals + MS_HEADER);
+    ms_role(M, MR_ARGS);
+    /* the callee's registers above the frame and the header: register 0
+       from register b (the last home read), the rest as the stack's clean
+       part has them (M6) or unit where not every function has its arity
+       in the section */
+    ms_store_nth(M, BASER, j->m.nlocals + MS_HEADER, b);
+    callee_entry(j, R_S5);
+    /* r11 stays the function's word, which the stub of the interpreter
+       wants (ms_emit_call_interp); the fill its number */
+    if (!j->jit->all_meta) {
+        as_shr_ri(A, R_S6, 1);
+        as_lea(A, R_S4, BASER, -1, 1, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER));
+        callee_nlocals(j);
+        fill_unit_dynamic(j);
+        as_lea(A, R_S6, R_S6, R_S6, 1, 1);
+    }
+    ms_role(M, MR_FRAME);
+    /* the callee's frame's header (native-frames.md, M4): its closure,
+       rdx, and its return word, the landing after */
+    call_header(j, R_S2, 0, &after, R_H2);
+    if (j->callret) as_add_before_call(A, BASER, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER), as_call_len(R_S5));
+    else as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER));
+    ms_role(M, MR_JUMP);
+    if (j->callret) as_call_ret_r(A, R_S5);   /* (M7) */
+    else as_jmp_r(A, R_S5);   /* its code, or the interpreter (the table of calls, M6) */
+    call_landing(j, &after);
+    as_label_free(&after);
 }
 void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     /* the frame is replaced: of its homes only the argument is wanted, and
        under --jit-profile every one, which the profile's helper (called)
        loads again (M9) */
+    ms_role(M, MR_ARGS);
     if (j->jit->profile) ms_writeback(M, pc);
     else ms_need_word(M, b);
     int grow = grow_slow(j);
     if (grow < 0) return;
+    ms_role(M, MR_CLOS);
     closure_function(j, a, R_S2);
     called(j, pc);
+    ms_role(M, MR_ROOM);
     room_dynamic(j, grow, 0);
-    /* the frame replaced: its function and closure; its return kept */
-    ms_frame(M, R_S0);
-    as_st32(A, R_S0, (int32_t)offsetof(Frame, func), R_S6);
-    as_st64(A, R_S0, (int32_t)offsetof(Frame, closure), R_S2);
-    /* the callee's registers are this frame's, from its base */
+    ms_role(M, MR_ARGS);
+    /* the callee's registers are this frame's, from its base: register 0
+       from register b, the last home read */
     ms_store_nth(M, BASER, 0, b);
-    as_ld32(A, R_S3, R_S1, (int32_t)offsetof(Function, nlocals));
-    as_mov_rr(A, R_S4, BASER);
-    if (!j->jit->all_meta) fill_unit_dynamic(j);
-    to_callee_dynamic(j);
+    callee_entry(j, R_S5);
+    if (!j->jit->all_meta) {   /* (r11 the function's word again after, as in CALL) */
+        as_shr_ri(A, R_S6, 1);
+        as_mov_rr(A, R_S4, BASER);
+        callee_nlocals(j);
+        fill_unit_dynamic(j);
+        as_lea(A, R_S6, R_S6, R_S6, 1, 1);
+    }
+    ms_role(M, MR_FRAME);
+    /* the frame replaced: its header's closure; its return kept, and its
+       caller (native-frames.md, M4) */
+    as_st64(A, BASER, HEADER_AT(0, 2), R_S2);
+    ms_role(M, MR_JUMP);
+    if (j->callret) as_push_ret(A, BASER, HEADER_AT(0, 1));   /* the entry stores it again (M7) */
+    as_jmp_r(A, R_S5);   /* its code, or the interpreter (the table of calls, M6) */
+    ms_role(M, MR_BODY);
 }
 /* after a CALL or CALLK a RESULT is the callee's RET's to do, and is passed
    over (compile.c, phantom); after a PRIMPUSH it takes what the primitive
@@ -1168,84 +1496,19 @@ void emit_RESULT(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
     ms_copy(M, a, (int32_t)j->m.nlocals);
 }
-/* RET: the value into the register of the caller's RESULT, then on into
-   the caller's code where it has some, else the VM made exact and handed
-   back; the frame of the top level through the helper */
+/* RET (M6): the value's word into R_S0 and on where the frame's return
+   word says (native-frames.md, M4), with nothing tested: the landing of
+   the caller's compiled call (call_landing), which takes the value, puts
+   r14 back and lowers the watermark, or VM.ret_tramp for any other caller
+   and for the top level (jit_h_return). */
 void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
-    AsmLabel no_result, go, interp; as_label_init(&no_result); as_label_init(&go); as_label_init(&interp);
+    ms_role(M, MR_RET);
     ms_need_word(M, a);
-    Slow *s = ms_slow(M, SLOW_RET, j->next);
-    if (!s) return;
-    s->a = a;
-    as_ld64(A, R_S2, VMR, OFF(fp));
-    as_test_rr(A, R_S2, R_S2);
-    as_jcc(A, CC_E, &s->here);
-    /* the frame: rcx; what it kept: where the caller's code goes on, the
-       register of its RESULT (M7), the callee's base (the caller's stack top) */
-    as_mul_ri(A, R_S1, R_S2, FRAME_SIZE);
-    as_add_rm(A, R_S1, VMR, OFF(frames));
-    /* the value, kept across the frame's popping: in xmm0, or in its home
-       (tier 2), which the popping leaves alone and which is stored whole
-       where it goes, rather than through its slot (a 16-byte load of two
-       8-byte stores stalls) */
-    /* (a real's home holds the double, not the word: its word is taken
-       from its slot, brought up to date above, before the frame goes) */
-    /* (so does an int's or a word's that holds its 64 bits: ms_word_home) */
-    /* (the value's home may be any of them, asm.h: nothing here but rax,
-       rcx, rdx, r8 and r11) */
-    const Home *h = ms_word_home(M, a);
-    if (!h) ms_load_xmm(M, F_S0, a);
-    as_ld32s(A, R_S3, R_S1, FR(result));
-    as_sub_ri(A, R_S2, 1);
-    as_st64(A, VMR, OFF(fp), R_S2);   /* the frame popped, and the watermark lowered to it (vm.h, vm_frame_pop) */
-    AsmLabel above; as_label_init(&above);
-    as_cmp_rm(A, R_S2, VMR, OFF(fp_low));
-    as_jcc(A, CC_AE, &above);
-    as_st64(A, VMR, OFF(fp_low), R_S2);
-    as_bind(A, &above);
-    as_label_free(&above);
-    as_sub_ri(A, R_S1, FRAME_SIZE);      /* the caller's frame: its registers are the code's now */
-    as_ld64(A, BASEI, R_S1, FR(base));
-    as_mov_rr(A, BASER, BASEI);
-    ms_scale_index(M, BASER);
-    as_add_rm(A, BASER, VMR, OFF(stack));
-    as_ld64(A, R_S2, R_S1, FRAME_SIZE + FR(native_ret));
-    as_test_rr(A, R_S2, R_S2);
-    as_jcc(A, CC_E, &interp);
-    /* into the caller's code, which has a RESULT (its phantom): the value
-       into its register, and on past it */
-    ms_scale_index(M, R_S3);
-    as_lea(A, R_S6, BASER, R_S3, 1, 0);
-    if (h) ms_value_to(M, R_S6, 0, a); else ms_xmm_to(M, R_S6, 0, F_S0);
-    as_jmp_r(A, R_S2);
-    as_bind(A, &interp);
-    /* the interpreter goes on: at the RESULT's register and past it, or
-       with the value on the stack, as an image resumed at RESULT takes it;
-       its stack's top is the callee's base, and the value where it is
-       pushed */
-    as_ld32(A, R_S0, R_S1, FRAME_SIZE + FR(ret_pc));
-    as_ld64(A, R_S2, R_S1, FRAME_SIZE + FR(base));
-    as_cmp_ri(A, R_S3, -1);
-    as_jcc(A, CC_E, &no_result);
-    ms_scale_index(M, R_S3);
-    as_lea(A, R_S6, BASER, R_S3, 1, 0);
-    if (h) ms_value_to(M, R_S6, 0, a); else ms_xmm_to(M, R_S6, 0, F_S0);
-    as_add_ri(A, R_S0, 5);
-    as_jmp(A, &go);
-    as_bind(A, &no_result);
-    as_mov_rr(A, R_S3, R_S2);
-    ms_scale_index(M, R_S3);
-    as_ld64(A, R_S6, VMR, OFF(stack));
-    as_add_rr(A, R_S6, R_S3);
-    if (h) ms_value_to(M, R_S6, 0, a); else ms_xmm_to(M, R_S6, 0, F_S0);
-    as_add_ri(A, R_S2, 1);
-    as_bind(A, &go);
-    as_st32(A, VMR, OFF(pc), R_S0);
-    as_st64(A, VMR, OFF(sp), R_S2);
-    as_st64(A, VMR, OFF(instructions), COUNTR);
-    ms_handback(M, RUN_INTERP);
-    as_label_free(&no_result); as_label_free(&go); as_label_free(&interp);
+    ms_load_bits(M, R_S0, a);
+    if (j->callret) as_ret_word(A, BASER, HEADER_AT(0, 1));   /* push and ret: predicted (M7) */
+    else as_jmp_ret(A, BASER, HEADER_AT(0, 1));
+    ms_role(M, MR_BODY);
 }
 void emit_PRIMPUSH(Jit *j, uint32_t pc, int32_t a, const uint8_t *L, uint32_t n) {
     (void)pc; (void)n;
@@ -1261,13 +1524,40 @@ void emit_PRIMPUSH(Jit *j, uint32_t pc, int32_t a, const uint8_t *L, uint32_t n)
     as_bind(A, &done);
     as_label_free(&done);
 }
+/* PUSHHANDLER in line where the table has room (M5): the handler written
+   as vm_push_handler writes it -- its pc, the VM's stack pointer (the
+   frame's registers' top), its frame, and the address of its code here --
+   else the helper, which grows the table */
 void emit_PUSHHANDLER(Jit *j, uint32_t pc, int32_t a) {
-    (void)pc;
+    AsmLabel full, pushed; as_label_init(&full); as_label_init(&pushed);
+    if (j->jit->prim_calls) {   /* --jit-stats */
+        as_mov_ri(A, R_S0, (int64_t)(intptr_t)&j->jit->pushes);
+        as_add_mi(A, R_S0, 0, 1);
+    }
+    as_ld64(A, R_S0, VMR, OFF(hp));
+    as_cmp_rm(A, R_S0, VMR, OFF(handlers_cap));
+    as_jcc(A, CC_AE, &full);
+    as_mul_ri(A, R_S1, R_S0, (int32_t)sizeof(Handler));
+    as_add_rm(A, R_S1, VMR, OFF(handlers));
+    as_st32i(A, R_S1, (int32_t)offsetof(Handler, pc), a);
+    as_st32i(A, R_S1, (int32_t)offsetof(Handler, func), (int32_t)j->f);
+    ms_base_index(M, R_S2, 0);   /* the frame: its base (native-frames.md, M4) */
+    as_st64(A, R_S1, (int32_t)offsetof(Handler, fp), R_S2);
+    as_add_ri(A, R_S2, (int32_t)j->m.nlocals);
+    as_st64(A, R_S1, (int32_t)offsetof(Handler, sp), R_S2);
+    as_lea_label(A, R_S2, jit_landing(j, (uint32_t)a));
+    as_st64(A, R_S1, (int32_t)offsetof(Handler, native), R_S2);
+    as_add_ri(A, R_S0, 1);
+    as_st64(A, VMR, OFF(hp), R_S0);
+    as_jmp(A, &pushed);
+    as_bind(A, &full);
     ms_sync(M, j->next, 0);
     as_mov_ri(A, ms_arg(M, 1), a);
     as_lea_label(A, ms_arg(M, 2), jit_landing(j, (uint32_t)a));
     ms_call(M, (MsHelper)jit_h_push_handler);
     ms_reload_clobbered(M, pc);   /* the stack did not move; the homes the call clobbered (M9) */
+    as_bind(A, &pushed);
+    as_label_free(&full); as_label_free(&pushed);
 }
 void emit_POPHANDLER(Jit *j, uint32_t pc) {
     (void)pc;
@@ -1279,16 +1569,72 @@ void emit_CATCH(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
     ms_copy(M, a, (int32_t)j->m.nlocals);
 }
+/* RAISE: in line where nothing but the unwinding is to be done (M5) --
+   no debugger watching raises, a handler there, not the REPL's (whose
+   raise records the frames it leaves: vm_raise), and its code compiled --
+   as vm_raise unwinds: the handler popped, its frame the VM's (the
+   watermark lowered to it), the exception pushed at its stack pointer,
+   and on into its code, which loads the homes it needs from their slots
+   (written back first where the handler may be this function's). Else
+   the helper. */
 void emit_RAISE(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
     AsmLabel hand; as_label_init(&hand);
+    if (j->jit->prim_calls) {   /* --jit-stats */
+        as_mov_ri(A, R_S0, (int64_t)(intptr_t)&j->jit->raises);
+        as_add_mi(A, R_S0, 0, 1);
+    }
+    /* the homes written back first: a raw one's word may be a box, whose
+       helper clobbers rax */
+    if (j->m.has_handlers) ms_writeback(M, M->cur_pc);
     ms_load_obj(M, R_S0, a, K_EXN, jit_fatal(j, FATAL_RAISE, 0, 0, 0));
+    {
+        AsmLabel slow, nodbg;
+        as_label_init(&slow); as_label_init(&nodbg);
+        as_ld64(A, R_S1, VMR, OFF(dbg));
+        as_test_rr(A, R_S1, R_S1);
+        as_jcc(A, CC_E, &nodbg);
+        as_cmp32_mi(A, R_S1, (int32_t)offsetof(Debugger, raise_mode), 0);
+        as_jcc(A, CC_NE, &slow);
+        as_bind(A, &nodbg);
+        as_ld64(A, R_S1, VMR, OFF(hp));
+        as_test_rr(A, R_S1, R_S1);
+        as_jcc(A, CC_E, &slow);                       /* uncaught */
+        as_cmp_rm(A, R_S1, VMR, OFF(raise_mark));
+        as_jcc(A, CC_E, &slow);                       /* the REPL's handler */
+        as_sub_ri(A, R_S1, 1);
+        as_mul_ri(A, R_S2, R_S1, (int32_t)sizeof(Handler));
+        as_add_rm(A, R_S2, VMR, OFF(handlers));
+        as_ld64(A, R_S6, R_S2, (int32_t)offsetof(Handler, native));
+        as_test_rr(A, R_S6, R_S6);
+        as_jcc(A, CC_E, &slow);                       /* the interpreter's */
+        as_ld64(A, R_S3, R_S2, (int32_t)offsetof(Handler, fp));
+        as_cmp_rm(A, R_S3, VMR, OFF(fp_low));
+        as_jcc(A, CC_B, &slow);                       /* below the stack's watermark: its barrier moves (native-frames.md, M5) */
+        as_st64(A, VMR, OFF(hp), R_S1);
+        as_st64(A, VMR, OFF(fp), R_S3);
+        as_ld32(A, R_S1, R_S2, (int32_t)offsetof(Handler, func));
+        as_st32(A, VMR, OFF(func), R_S1);
+        /* the handler's frame's registers the code's (its base: native-frames.md, M4) */
+        as_mov_rr(A, BASER, R_S3);
+        ms_scale_index(M, BASER);
+        as_add_rm(A, BASER, VMR, OFF(stack));
+        /* the exception at its stack pointer, its code */
+        as_ld64(A, R_S1, R_S2, (int32_t)offsetof(Handler, sp));
+        ms_scale_index(M, R_S1);
+        as_add_rm(A, R_S1, VMR, OFF(stack));
+        as_st64(A, R_S1, 0, R_S0);
+        as_jmp_r(A, R_S6);
+        as_bind(A, &slow);
+        as_label_free(&slow); as_label_free(&nodbg);
+    }
     ms_sync(M, j->next, 0);
     as_mov_ri(A, ms_arg(M, 1), a);
     ms_call(M, (MsHelper)jit_h_raise);
     ms_reload(M);
     as_test_rr(A, R_S0, R_S0);
     as_jcc(A, CC_E, &hand);
+    as_ld64(A, COUNTR, VMR, OFF(instructions));   /* the count the sync gave (D9 B) */
     as_jmp_r(A, R_S0);
     as_bind(A, &hand);
     ms_handback(M, RUN_INTERP);

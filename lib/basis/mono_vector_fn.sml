@@ -9,7 +9,9 @@ struct
   val maxLen = String.maxSize
   val length = size
   fun sub (v : vector, i) = fromChar (String.sub (v, i))
-  fun fromList l = implode (map toChar l)
+  (* one element, as output1 makes: a string of it, with no list *)
+  fun fromList [x] = String.str (toChar x)
+    | fromList l = implode (map toChar l)
   fun tabulate (n, f) =
     if n < 0 orelse n > maxLen then raise Size
     else implode (List.tabulate (n, fn i => toChar (f i)))

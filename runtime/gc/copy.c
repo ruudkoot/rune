@@ -85,16 +85,23 @@ static void copy_value(VM *vm, Value *v) {
    and a dead one that holds a pointer is made unit: it is not copied, and it
    must not stay behind pointing into the space that is left, since the frame
    becomes the one that runs again, whose registers are all roots (what it is
-   doing when a collection comes is not known here). */
+   doing when a collection comes is not known here). Of a frame's header in
+   the stack (runtime/register: native-frames.md, M4) only the closure is
+   visited, made unit where the frame does not read one, and a stale word
+   is made unit where it is a pointer (FrameRef.closure_slot, stale_slot;
+   GC_BELOW_FRAME, gc.h); the other slots between frames are visited. Above
+   sp the stack's clean part is made unit (vm_clean_stack, performance M6):
+   a frame made there later takes its slots as they are. */
 void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
     size_t at = 0, dead = 0;
-    if (vm->frame_live && vm->frames_active)
-        for (size_t k = 0; k < vm->fp; k++) {
-            const Frame *f = &vm->frames[k];
-            size_t end = vm->frames[k + 1].base < vm->sp ? vm->frames[k + 1].base : vm->sp;
+    FrameRef *fr = NULL;
+    size_t nf = vm->frame_live ? vm_frames_from(vm, 0, &fr) : 0;   /* the frames, the top level's first (native-frames.md, M3) */
+    for (size_t k = 0; k + 1 < nf; k++) {
+            const FrameRef *f = &fr[k];
+            size_t end = fr[k + 1].base < vm->sp ? fr[k + 1].base : vm->sp;
             uint32_t n = vm->prog.funcs[f->func].nlocals;
-            uint64_t live = vm->frame_live(vm, f->func, vm->frames[k + 1].ret_pc);
-            for (; at < f->base && at < end; at++) visit(vm, &vm->stack[at]);
+            uint64_t live = vm->frame_live(vm, f->func, f->pc);
+            GC_BELOW_FRAME(vm, f, at, end, visit);
             for (uint32_t r = 0; r < n && at < end; r++, at++) {
                 if (r >= 64 || ((live >> r) & 1)) visit(vm, &vm->stack[at]);
                 else {
@@ -104,7 +111,24 @@ void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
             }
             vm->gc_counts.frames++;
         }
+    if (nf && vm_frame_top_live(vm, &fr[nf - 1])) {
+        /* the frame that runs, where runtime/register's compiled code said
+           what of it is live (VM.top_live, M6): as a frame that waits, since
+           a register it has not written may hold what an earlier frame there
+           wrote, and none is filled with unit */
+        const FrameRef *f = &fr[nf - 1];
+        uint32_t n = vm->prog.funcs[f->func].nlocals;
+        GC_BELOW_FRAME(vm, f, at, vm->sp, visit);
+        for (uint32_t r = 0; r < n && at < vm->sp; r++, at++) {
+            if (r >= 64 || ((vm->top_live >> r) & 1)) visit(vm, &vm->stack[at]);
+            else {
+                dead++;
+                if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
+            }
+        }
+    }
     for (; at < vm->sp; at++) visit(vm, &vm->stack[at]);
+    vm_clean_stack(vm);   /* above sp nothing is to point into what the collection leaves (M6) */
     vm->gc_counts.slots += vm->sp;
     vm->gc_counts.live_slots += vm->sp - dead;
 }
@@ -172,7 +196,7 @@ static void collect_into(VM *vm, size_t new_size) {
         vm->gc.nborn = 0;
         los_sweep(vm);
         vm->gc.old_boxes = vm->gc.to_boxes;
-        vm->fp_low = vm->fp;   /* nothing young is left on the stack */
+        vm_frames_mark_low(vm, vm_frame_id(vm));   /* nothing young is left on the stack */
         vm->gc.fulls++;
     } else vm->gc.closed = vm->gc.to_used - vm->gc.last->used;
     alloc_view(vm);

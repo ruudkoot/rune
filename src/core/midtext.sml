@@ -11,7 +11,7 @@
 
      (X ... : zero or more X; [X] : X or nothing)
      program := decl ... def ...
-     decl    := (datatype NAME (TYVAR ...) (TAG STRING [: TYPE]) ...) | (abstract NAME ARITY)
+     decl    := (type %N TYPE) | (datatype NAME (TYVAR ...) (TAG STRING [: TYPE]) ...) | (abstract NAME ARITY)
      def     := (val GLOBAL : SCHEME EXP) | (funs FUNDEF FUNDEF ...)
               | (do ((GLOBAL : SCHEME) ...) EXP)
      fundef  := (fn VAR [TYVARS] ((VAR : TYPE) ...) : TYPE EXP)
@@ -30,7 +30,8 @@
      scheme  := [TYVARS] TYPE
      tyvars  := [TYVAR TYVAR ...]      tyargs := [TYPE, TYPE, ...]
    A constant of the type its kind gives it (int, word, real, string, char)
-   is written bare; a record of one field, {TYPE}. Comments are SML's. *)
+   is written bare; a record of one field, {TYPE}; a type declared as an
+   abbreviation, %N (bigType). Comments are SML's. *)
 structure MidText =
 struct
   open Mid
@@ -44,14 +45,20 @@ struct
   fun defaultTy (c : Lambda.const) : Ty.ty =
     case c of
       Lambda.CInt _ => Ty.int
-    | Lambda.CWord _ => Ty.Con (#stamp Types.wordTycon, "word", [])
+    | Lambda.CWord _ => Ty.con (#stamp Types.wordTycon, "word", [])
     (* never the default: a 64-bit constant is written with its type, which
        is what tells it from the int or word of the same digits *)
     | Lambda.CInt64 _ => Ty.int
-    | Lambda.CWord64 _ => Ty.Con (#stamp Types.wordTycon, "word", [])
-    | Lambda.CReal _ => Ty.Con (#stamp Types.realTycon, "real", [])
+    | Lambda.CWord64 _ => Ty.con (#stamp Types.wordTycon, "word", [])
+    | Lambda.CReal _ => Ty.con (#stamp Types.realTycon, "real", [])
     | Lambda.CString _ => Ty.string
-    | Lambda.CChar _ => Ty.Con (#stamp Types.charTycon, "char", [])
+    | Lambda.CChar _ => Ty.con (#stamp Types.charTycon, "char", [])
+
+  (* A type of more nodes than bigType as a tree is written once, at the
+     head, as an abbreviation (type %N TYPE), and as %N where it is: a type
+     the IR shares, of 2^n nodes as a tree, is written in n abbreviations
+     (performance M4). *)
+  val bigType = 1000
 
   fun show' (marks : bool) (p : program) : string =
     let
@@ -95,20 +102,32 @@ struct
           if used = 0 andalso not (List.exists (fn r => r = base) reserved) then base
           else base ^ "/" ^ Int.toString (used + 1)
         end
+      (* each node once: a type of 2^n nodes as a tree is n here; and one
+         of more than bigType as a tree an abbreviation, numbered after its
+         parts' (%N) *)
+      val collected : unit IntTable.table = IntTable.table 256
+      val abbrevs : int IntTable.table = IntTable.table 16
+      val abbrevOrder : Ty.ty list ref = ref []
       fun collect (t : Ty.ty) : unit =
-        case t of
-          Ty.Con (stamp, name, args) =>
-            (List.app collect args;
-             if isBuiltin stamp orelse IntMap.member (!tycons, stamp) then ()
-             else
-               (tycons := IntMap.insert (!tycons, stamp, (nameFor (stamp, name), List.length args));
-                order := stamp :: !order;
-                case Ty.datatypeOf stamp of
-                  SOME {cons, ...} => List.app (fn (_, _, SOME a) => collect a | _ => ()) cons
-                | NONE => ()))
-        | Ty.Tuple ts => List.app collect ts
-        | Ty.Arrow (a, b) => (collect a; collect b)
-        | _ => ()
+        if isSome (IntTable.find (collected, Ty.id t)) then ()
+        else
+          (IntTable.insert (collected, Ty.id t, ());
+           case Ty.view t of
+             Ty.Con (stamp, name, args) =>
+               (List.app collect args;
+                if isBuiltin stamp orelse IntMap.member (!tycons, stamp) then ()
+                else
+                  (tycons := IntMap.insert (!tycons, stamp, (nameFor (stamp, name), List.length args));
+                   order := stamp :: !order;
+                   case Ty.datatypeOf stamp of
+                     SOME {cons, ...} => List.app (fn (_, _, SOME a) => collect a | _ => ()) cons
+                   | NONE => ()))
+           | Ty.Tuple ts => List.app collect ts
+           | Ty.Arrow (a, b) => (collect a; collect b)
+           | _ => ();
+           if Ty.size t > bigType then
+             (IntTable.insert (abbrevs, Ty.id t, List.length (!abbrevOrder) + 1); abbrevOrder := t :: !abbrevOrder)
+           else ())
       fun collectAtom a =
         case a of
           Var (_, ts) => List.app collect ts
@@ -149,18 +168,12 @@ struct
                    | Funs fs => List.app collectFun fs
                    | Do (gs, e) => (List.app (collect o #2 o #2) gs; collectExp e)) p
 
-      val ty =
-        Ty.format (gen, free)
-        o (let
-             fun rename t =
-               case t of
-                 Ty.Con (stamp, name, args) =>
-                   Ty.Con (stamp, case IntMap.find (!tycons, stamp) of SOME (n, _) => n | NONE => name,
-                           List.map rename args)
-               | Ty.Tuple ts => Ty.Tuple (List.map rename ts)
-               | Ty.Arrow (a, b) => Ty.Arrow (rename a, rename b)
-               | _ => t
-           in rename end)
+      fun tyName (stamp, name) = case IntMap.find (!tycons, stamp) of SOME (n, _) => n | NONE => name
+      fun abbrevOf t = Option.map (fn k => "%" ^ Int.toString k) (IntTable.find (abbrevs, Ty.id t))
+      val ty = Ty.formatWith (gen, free, tyName, abbrevOf) false
+      (* a type abbreviated, as its abbreviation says it *)
+      fun abbrev t =
+        (nl 0; emit ("(type " ^ valOf (abbrevOf t) ^ " " ^ Ty.formatWith (gen, free, tyName, abbrevOf) true t ^ ")"))
       fun tyvarList [] = ""
         | tyvarList tvs = "[" ^ String.concatWith " " (List.map gen tvs) ^ "] "
       fun scheme (tvs, t) = let val l = tyvarList tvs in l ^ ty t end
@@ -249,6 +262,7 @@ struct
           | NONE => (nl 0; emit ("(abstract " ^ name ^ " " ^ Int.toString arity ^ ")"))
         end
     in
+      List.app abbrev (List.rev (!abbrevOrder));
       List.app decl (List.rev (!order));
       List.app def p;
       case String.concat (List.rev (!out)) of
@@ -267,13 +281,13 @@ struct
 
   datatype token =
       LP | RP | LB | RB | LBRACE | RBRACE | COLON | COMMA | ARROW | STAR
-    | ID of string | TYVAR of string | NUM of string | STR of string | CHR of int
+    | ID of string | TYVAR of string | NUM of string | STR of string | CHR of int | ABBREV of string
 
   fun tokenText t =
     case t of
       LP => "(" | RP => ")" | LB => "[" | RB => "]" | LBRACE => "{" | RBRACE => "}"
     | COLON => ":" | COMMA => "," | ARROW => "->" | STAR => "*"
-    | ID s => s | TYVAR s => s | NUM s => s | STR s => "\"" ^ String.toString s ^ "\"" | CHR _ => "#\"...\""
+    | ID s => s | TYVAR s => s | NUM s => s | STR s => "\"" ^ String.toString s ^ "\"" | CHR _ => "#\"...\"" | ABBREV s => s
 
   (* The tokens of a text, each with the offset it starts at. *)
   fun tokens (text : string) : (token * int) list =
@@ -342,6 +356,8 @@ struct
                   else raise Syntax ("a stray # at " ^ Int.toString i)
               | #"'" => let val e = span (i + 1, fn c => Char.isAlphaNum c orelse c = #"_")
                         in go (e, (TYVAR (String.substring (text, i, e - i)), i) :: acc) end
+              | #"%" => let val e = span (i + 1, Char.isDigit)
+                        in go (e, (ABBREV (String.substring (text, i, e - i)), i) :: acc) end
               | _ =>
                   if Char.isDigit c orelse (c = #"~" andalso i + 1 < n andalso Char.isDigit (at (i + 1))) then
                     let val e = span (i + 1, fn c => Char.isAlphaNum c orelse c = #"." orelse c = #"~")
@@ -358,6 +374,8 @@ struct
   fun parse (text : string) : program =
     let
       val toks = ref (tokens text)
+      (* the abbreviations of types declared so far (type %N TYPE) *)
+      val abbrevs : Ty.ty StringMap.map ref = ref StringMap.empty
       fun peek () = case !toks of (t, _) :: _ => SOME t | [] => NONE
       fun peek2 () = case !toks of _ :: (t, _) :: _ => SOME t | _ => NONE
       fun where' () = case !toks of (_, i) :: _ => " at " ^ Int.toString i | [] => " at the end"
@@ -416,11 +434,11 @@ struct
 
       fun ty () : Ty.ty =
         let val t = tuple ()
-        in if peek () = SOME ARROW then (ignore (next ()); Ty.Arrow (t, ty ())) else t end
+        in if peek () = SOME ARROW then (ignore (next ()); Ty.arrow (t, ty ())) else t end
       and tuple () =
         let
           fun more acc = if peek () = SOME STAR then (ignore (next ()); more (app () :: acc)) else List.rev acc
-        in case more [app ()] of [t] => t | ts => Ty.Tuple ts end
+        in case more [app ()] of [t] => t | ts => Ty.tuple ts end
       and app () = postfix (atomic ())
       and postfix args =
         case peek () of
@@ -428,17 +446,21 @@ struct
         | _ => (case args of [t] => t | _ => fail "a type name after a list of types")
       and named (n, args) =
         case (n, args) of
-          ("unit", []) => Ty.Tuple []
-        | ("exncon", []) => Ty.ExnCon
+          ("unit", []) => Ty.tuple []
+        | ("exncon", []) => Ty.exnCon
         | _ =>
             (case StringMap.find (!tycons, n) of
-               SOME (stamp, b) => Ty.Con (stamp, b, args)
+               SOME (stamp, b) => Ty.con (stamp, b, args)
              | NONE => raise Syntax ("an undeclared type " ^ n ^ where' ()))
       and atomic () : Ty.ty list =
         case next () of
-          TYVAR s => [if String.isPrefix "'_" s then Ty.Var (tyvarId s) else Ty.Gen (tyvarId s)]
+          TYVAR s => [if String.isPrefix "'_" s then Ty.var (tyvarId s) else Ty.gen (tyvarId s)]
         | ID n => [named (n, [])]
-        | LBRACE => let val t = ty () in eat RBRACE; [Ty.Tuple [t]] end
+        | ABBREV n =>
+            (case StringMap.find (!abbrevs, n) of
+               SOME t => [t]
+             | NONE => raise Syntax ("an undefined abbreviation " ^ n ^ where' ()))
+        | LBRACE => let val t = ty () in eat RBRACE; [Ty.tuple [t]] end
         | LP =>
             let
               fun more acc =
@@ -623,6 +645,12 @@ struct
         | (SOME LP, SOME (ID "abstract")) =>
             let val () = (eat LP; ignore (next ())) val _ = id () val _ = int ()
             in eat RP; top acc end
+        | (SOME LP, SOME (ID "type")) =>
+            let
+              val () = (eat LP; ignore (next ()))
+              val n = case next () of ABBREV n => n | _ => fail "an abbreviation"
+              val t = ty ()
+            in eat RP; abbrevs := StringMap.insert (!abbrevs, n, t); top acc end
         | (SOME LP, SOME (ID "val")) =>
             let
               val () = (eat LP; ignore (next ()))

@@ -52,9 +52,9 @@ void dbg_set_on(VM *vm, int on) {
            runtime/register/interp.c, make_room), and compiled code leaves
            at its next poll; every register is a root (nothing dead points
            anywhere: the collector made what it found dead unit) */
-        if (vm->frames_active)
-            for (size_t i = 0; i <= vm->fp; i++) vm->frames[i].native_ret = NULL;
+        vm_frames_to_interpreter(vm);
         vm->interrupt |= 2;
+        vm_poll_soon(vm);   /* compiled code's calls see it too (vm.h, M6) */
         if (!was) { d->frame_live = vm->frame_live; vm->frame_live = NULL; }
     } else {
         vm->interrupt &= ~2;
@@ -68,7 +68,7 @@ void dbg_set_on(VM *vm, int on) {
 
 int dbg_in_user(const VM *vm) {
     return vm->raise_mark && vm->raise_mark <= vm->hp && vm->frames_active
-           && vm->fp > vm->handlers[vm->raise_mark - 1].fp;
+           && vm_frame_id(vm) > vm->handlers[vm->raise_mark - 1].fp;
 }
 
 int dbg_pause(VM *vm) {
@@ -77,6 +77,7 @@ int dbg_pause(VM *vm) {
     d->pending = 1;
     dbg_set_on(vm, 1);
     vm->interrupt = 2;   /* the user's taken */
+    vm_poll_soon(vm);
     return 1;
 }
 
@@ -94,7 +95,8 @@ static int frame_keys(Debugger *d, size_t fp) {
 
 void dbg_new_frame(VM *vm) {
     Debugger *d = vm->dbg;
-    if (frame_keys(d, vm->fp)) d->frame_key[vm->fp] = DBG_NOKEY;
+    size_t id = vm_frame_id(vm);
+    if (frame_keys(d, id)) d->frame_key[id] = DBG_NOKEY;
 }
 
 static uint32_t key_of(const LineEntry *e) { return ((e->file + 1) << 20) | (e->line & 0xFFFFF); }
@@ -146,9 +148,9 @@ static int stop(VM *vm, Debugger *d, int event, uint32_t at, Value exn) {
     if (!d->has_hook || d->func == UINT32_MAX) return 0;
     const Function *fn = &vm->prog.funcs[d->func];
     size_t top = vm->sp;
-    size_t need = top + fn->nlocals + fn->maxstack + 1;
+    size_t need = top + isa_frame_header + fn->nlocals + fn->maxstack + 1;
     if (need > vm->stack_cap) vm_grow_stack(vm, need);
-    d->stop_fp = vm->fp;
+    d->stop_fp = vm_frame_id(vm);
     d->stop_pc = at;
     /* the frames of the stop are the user's, above the REPL's handler as
        it is now: what the hook evaluates marks a handler of its own */
@@ -161,20 +163,20 @@ static int stop(VM *vm, Debugger *d, int event, uint32_t at, Value exn) {
     d->in_hook = 1;
     dbg_update(d);
     Value hook = vm_handle_get(vm, d->hook);
-    vm_push_frame(vm, d->func, NULL, at, top);
-    Value *slot = vm->stack + top;
+    size_t base = vm_frame_push(vm, d->func, NULL, at, top);
+    Value *slot = vm->stack + base;
     slot[0] = hook;
     slot[1] = mk_int(event);
     for (uint32_t i = 2; i < fn->nlocals; i++) slot[i] = mk_unit();
     slot[3] = exn;
-    vm->sp = top + fn->nlocals;
+    vm->sp = base + fn->nlocals;
     vm->pc = fn->code_offset;
     return 1;
 }
 
 int dbg_event(VM *vm, uint32_t pc, uint32_t key) {
     Debugger *d = vm->dbg;
-    size_t fp = vm->fp;
+    size_t fp = vm_frame_id(vm);
     if (!frame_keys(d, fp)) return 0;
     uint32_t old = d->frame_key[fp];
     d->frame_key[fp] = key;

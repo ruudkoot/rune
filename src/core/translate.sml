@@ -111,8 +111,7 @@ struct
       SOME t => Ty.fromTypes t
     | NONE => bug (sp, "expression without a type")
 
-  fun codomain (Ty.Arrow (_, b)) = b
-    | codomain _ = Error.bug "a function type that is no arrow"
+  fun codomain t = case Ty.view t of Ty.Arrow (_, b) => b | _ => Error.bug "a function type that is no arrow"
 
   (* Each variable's scheme, by its stamp, where it has a generic variable:
      a use of one says at which instance (Inst), unless it is the scheme
@@ -124,13 +123,7 @@ struct
       SOME s => s
     | NONE =>
         let
-          fun has t =
-            case t of
-              Ty.Gen _ => true
-            | Ty.Con (_, _, ts) => List.exists has ts
-            | Ty.Tuple ts => List.exists has ts
-            | Ty.Arrow (a, b) => has a orelse has b
-            | _ => false
+          fun has t = not (List.null (Ty.gens t))
           val s = case IntTable.find (Ty.binders, stamp) of
                     SOME t => let val t = Ty.fromTypes t in if has t then Poly t else Mono end
                   | NONE => Unknown
@@ -302,8 +295,8 @@ struct
           val x = MatchComp.freshVar ()
           val i = recordIndex (slot, lab, sp)
           val r = ty (slot, sp)
-          val field = case r of Ty.Tuple ts => List.nth (ts, i) | _ => bug (sp, "record selector of no record")
-        in Fn (x, Ty.Arrow (r, field), Select (i, Var x)) end
+          val field = case Ty.view r of Ty.Tuple ts => List.nth (ts, i) | _ => bug (sp, "record selector of no record")
+        in Fn (x, Ty.arrow (r, field), Select (i, Var x)) end
     | EList (es, slot, sp) =>
         let val t = ty (slot, sp)
         in List.foldr (fn (e, acc) => Con (1, t, Tuple [transExp e, acc])) (Con0 (0, t)) es end
@@ -330,7 +323,7 @@ struct
           (* the loop is a function of the translation, not of the source, so
              a trace calls it `while` rather than giving it a stamp *)
           val () = funNames := IntMap.insert (!funNames, u, "while")
-          val t = Ty.Arrow (Ty.unit, Ty.unit)
+          val t = Ty.arrow (Ty.unit, Ty.unit)
         in
           LetRec ([(loop, t, Fn (u, t, If (transExp c, Seq (transExp b, App (Var loop, Unit)), Unit)))],
                   App (Var loop, Unit))
@@ -565,10 +558,10 @@ struct
                val n = Int.max (List.length slots, 2)
                val tupleTy = Types.tupleTy (List.tabulate (n, fn _ => Types.unitTy))
                val str = Ty.fromTypes Types.stringTy
-               fun slotTy (t, isExn) = if isExn then Ty.ExnCon else Ty.fromTypes t
+               fun slotTy (t, isExn) = if isExn then Ty.exnCon else Ty.fromTypes t
                fun set (_, [], _, k) = k ()
                  | set (from, (s, t, isExn) :: rest, i, k) =
-                     Seq (SetGlobal (s, Prim ("unsafe_cast", SOME (Ty.Arrow (Ty.unit, slotTy (t, isExn))),
+                     Seq (SetGlobal (s, Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, slotTy (t, isExn))),
                                               [Select (i, from)])),
                           set (from, rest, i + 1, k))
              in
@@ -609,10 +602,10 @@ struct
                 val tupleTy = Types.tupleTy (List.tabulate (n, fn _ => Types.unitTy))
                 val exportTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy, tupleTy], Types.unitTy)
                 fun cast (s, t, isExn) =
-                  if isExn then Prim ("unsafe_cast", SOME (Ty.Arrow (Ty.ExnCon, Ty.unit)), [Global s])
+                  if isExn then Prim ("unsafe_cast", SOME (Ty.arrow (Ty.exnCon, Ty.unit)), [Global s])
                   else
                     let val m = monoOf t
-                    in Prim ("unsafe_cast", SOME (Ty.Arrow (Ty.fromTypes m, Ty.unit)), [useOf (Global s, s, m)]) end
+                    in Prim ("unsafe_cast", SOME (Ty.arrow (Ty.fromTypes m, Ty.unit)), [useOf (Global s, s, m)]) end
                 val elems = List.map cast slots @ List.tabulate (n - List.length slots, fn _ => Unit)
               in
                 Seq (App (useOf (Global via, via, exportTy),

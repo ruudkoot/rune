@@ -9,8 +9,7 @@ static int LOOP_NAME(VM *vm, JitProgram *jit) {
     const uint8_t *code = p->code;
     uint32_t pc = vm->pc;
     uint64_t count = vm->instructions;
-    Frame *fr = &vm->frames[vm->fp];
-    Value *base = vm->stack + fr->base;
+    Value *base = vm->stack + vm->fp;
     Value *sp = vm->stack + vm->sp;
 #if TRACED
 #define TRACE(op, a, b, c) \

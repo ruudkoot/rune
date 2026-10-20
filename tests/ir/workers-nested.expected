@@ -1,0 +1,36 @@
+(* after workers *)
+(funs
+  (fn g1 ((v1 : int) (v2 : int) (v3 : int) (v4 : int)) : int * int
+    (let (v5 : int) v1
+    (let (v6 : int) v5
+    (let (v7 : int) v2
+    (let (v8 : int) v7
+    (let (v9 : int) v3
+    (let (v10 : int) v9
+    (let (v11 : int) v4
+    (let (v12 : int) v11
+    (let (v13 : int) (prim int_sub v6 v10 : (int * int) -> int)
+    (let (v14 : int) (prim int_sub v8 v12 : (int * int) -> int)
+    (return (tuple v13 v14))))))))))))))
+(funs
+  (fn g2 ((v15 : int * int) (v16 : int * int)) : int * int
+    (let (v17 : int * int) v15
+    (let (v18 : int * int) v17
+    (let (v19 : int * int) v16
+    (let (v20 : int * int) v19
+    (let (v21 : int * int) v18
+    (let (v22 : (int * int) * (int * int)) (tuple v21 v20)
+    (let (v23 : int * int) (select 0 v22)
+    (let (v24 : int) (select 0 v23)
+    (let (v25 : int) (select 1 v23)
+    (let (v26 : int * int) (select 1 v22)
+    (let (v27 : int) (select 0 v26)
+    (let (v28 : int) (select 1 v26)
+    (return (app g1 v24 v25 v27 v28))))))))))))))))
+(val g3 : int * int
+  (let (v29 : int * int) (tuple 5 6)
+  (let (v30 : int * int) (tuple 1 2)
+  (let (v31 : (int * int) * (int * int)) (tuple v29 v30)
+  (let (v32 : int * int) (select 0 v31)
+  (let (v33 : int * int) (select 1 v31)
+  (return (app g2 v32 v33))))))))

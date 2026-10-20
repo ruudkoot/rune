@@ -313,6 +313,25 @@ void log_pass_end(VM *vm, const PassMark *m, const char *kind, int64_t pause);
    those below it have not changed since the last. */
 #define OTHER_ROOTS(vm, V, O) OTHER_ROOTS_FROM(vm, V, O, 0)
 
+/* The stack below a frame's registers, from at up to where they begin
+   (gc_stack_roots, minor.c's minor_stack): the slots below its header,
+   visited; and of a header (runtime/register's: FrameRef.closure_slot,
+   docs/plans/native-frames.md, M4) only the closure, visited where the
+   frame reads one and else made unit. Its other words are immediates --
+   the info word, the return word, a caller's base -- but for a stale one
+   (FrameRef.stale_slot), made unit where it is a pointer. */
+#define GC_BELOW_FRAME(vm, f, at, end, VISIT) \
+    do { \
+        if ((f)->closure_slot && !(f)->closure) *(f)->closure_slot = mk_unit(); \
+        if ((f)->stale_slot && val_is_ptr(*(f)->stale_slot)) *(f)->stale_slot = mk_unit(); \
+        size_t below_ = (f)->closure_slot ? (f)->head : (f)->base; \
+        for (; (at) < below_ && (at) < (end); (at)++) VISIT((vm), &(vm)->stack[(at)]); \
+        if ((f)->closure_slot && (at) == below_ && (f)->base <= (end)) { \
+            if ((f)->closure) VISIT((vm), (f)->closure_slot); \
+            (at) = (f)->base; \
+        } \
+    } while (0)
+
 /* The roots a minor collection takes (minor.c): the stack's from its
    watermark, as OTHER_ROOTS_FROM; and of the globals only those written
    since the last minor collection, and of the constants only those made
@@ -341,9 +360,10 @@ static inline void minor_globals(VM *vm, void (*take)(VM *, Value *)) {
         minor_globals((vm), (take_global)); \
         for (uint32_t i_ = (vm)->consts_minor; i_ < (vm)->prog.nconsts; i_++) V(&(vm)->prog.consts[i_]); \
         (vm)->consts_minor = (vm)->prog.nconsts; \
-        if ((vm)->frames_active) \
-            for (size_t i_ = (frame0); i_ <= (vm)->fp; i_++) \
-                if ((vm)->frames[i_].closure) O(&(vm)->frames[i_].closure); \
+        if (!isa_frame_header) { /* (runtime/register's closures are in the stack: native-frames.md, M4) */ \
+          FrameRef *f_; size_t n_ = vm_frames_from((vm), (frame0), &f_); \
+          for (size_t i_ = 0; i_ < n_; i_++) \
+              if (f_[i_].closure_root && *f_[i_].closure_root) O(f_[i_].closure_root); } \
         for (int i_ = 0; i_ < NUM_BUILTIN_EXNS; i_++) \
             if ((vm)->builtin_exns[i_]) O(&(vm)->builtin_exns[i_]); \
         for (int i_ = 0; i_ < REAL_BOXES; i_++) \
@@ -355,9 +375,10 @@ static inline void minor_globals(VM *vm, void (*take)(VM *, Value *)) {
     do { \
         for (uint32_t i_ = 0; i_ < (vm)->prog.nglobals; i_++) V(&(vm)->globals[i_]); \
         for (uint32_t i_ = 0; i_ < (vm)->prog.nconsts; i_++) V(&(vm)->prog.consts[i_]); \
-        if ((vm)->frames_active) \
-            for (size_t i_ = (frame0); i_ <= (vm)->fp; i_++) \
-                if ((vm)->frames[i_].closure) O(&(vm)->frames[i_].closure); \
+        if (!isa_frame_header) { /* (runtime/register's closures are in the stack: native-frames.md, M4) */ \
+          FrameRef *f_; size_t n_ = vm_frames_from((vm), (frame0), &f_); \
+          for (size_t i_ = 0; i_ < n_; i_++) \
+              if (f_[i_].closure_root && *f_[i_].closure_root) O(f_[i_].closure_root); } \
         for (int i_ = 0; i_ < NUM_BUILTIN_EXNS; i_++) \
             if ((vm)->builtin_exns[i_]) O(&(vm)->builtin_exns[i_]); \
         for (int i_ = 0; i_ < REAL_BOXES; i_++) \

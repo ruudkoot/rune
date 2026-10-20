@@ -12,9 +12,8 @@
    one, and the call it is waiting on in every other. A pc points past the
    instruction it is in, so one byte back is inside it, and an entry of the
    line table never begins in the middle of an instruction. */
-static uint32_t frame_pc(const VM *vm, size_t i) {
-    uint32_t pc = (i == vm->fp) ? vm->pc : vm->frames[i + 1].ret_pc;
-    return pc > 0 ? pc - 1 : 0;
+static uint32_t frame_pc(const FrameRef *f) {
+    return f->pc > 0 ? f->pc - 1 : 0;
 }
 
 /* The frames, innermost first, under a message that has already been
@@ -24,13 +23,12 @@ static uint32_t frame_pc(const VM *vm, size_t i) {
    in was inlined from other functions, each is a frame of its own, at the
    place the next called it from (the line table, docs/bytecode.md). */
 void vm_print_trace(VM *vm, FILE *out) {
-    if (!vm->frames_active) return;
     const Program *p = &vm->prog;
-    for (size_t k = vm->fp + 1; k > 0; k--) {
-        size_t i = k - 1;
-        uint32_t f = vm->frames[i].func;
+    FrameRef fr;
+    for (int more = vm_frame_top(vm, &fr); more; more = vm_frame_down(vm, &fr)) {
+        uint32_t f = fr.func;
         const char *name = f < p->nfuncs ? p->funcs[f].name : "?";
-        const LineEntry *e = line_at(p, frame_pc(vm, i));
+        const LineEntry *e = line_at(p, frame_pc(&fr));
         if (e && e->file < p->nfiles) {
             TraceFrame fs[64];
             uint32_t n = trace_frames(p, e, name, fs, 64);
@@ -42,17 +40,23 @@ void vm_print_trace(VM *vm, FILE *out) {
 }
 
 void vm_fatal(VM *vm, const char *fmt, ...) {
+    /* a fatal error met in telling of one -- frames found broken by the
+       walk that names the function and prints the trace -- is told
+       alone, without the frames */
+    static int telling;
+    int first = !telling++;
     va_list ap;
     fflush(stdout);
+    FrameRef top;
+    int named = first && vm_frame_top(vm, &top) && top.func < vm->prog.nfuncs;
     fprintf(stderr, "runevm: fatal error at pc %u", vm->pc);
-    if (vm->frames_active && vm->fp < vm->frames_cap)
-        fprintf(stderr, " in %s", vm->prog.funcs[vm->frames[vm->fp].func].name);
+    if (named) fprintf(stderr, " in %s", vm->prog.funcs[top.func].name);
     fprintf(stderr, ": ");
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     va_end(ap);
     fprintf(stderr, "\n");
-    vm_print_trace(vm, stderr);
+    if (first) vm_print_trace(vm, stderr);
     exit(2);
 }
 
@@ -81,15 +85,57 @@ void vm_grow_stack(VM *vm, size_t need) {
     if (!ns) { fprintf(stderr, "runevm: out of memory (stack)\n"); exit(2); }
     vm->stack = ns;
     vm->stack_cap = ncap;
+    if (vm->stack_room) vm->stack_room = vm_room(vm, vm->stack_clean);   /* where the clean part ends now */
 }
 
+/* (frames as many as the stack's slots may be: a frame has a slot at least,
+   and the frames keep pace with the stack's clean part, VM.stack_clean) */
 void vm_grow_frames(VM *vm) {
+    size_t most = stack_limit(vm) / sizeof(Value) + 256;
     size_t ncap = vm->frames_cap ? vm->frames_cap * 2 : 256;
-    if (ncap > stack_limit(vm) / sizeof(Frame)) stack_overflow(vm);
+    if (ncap > most) ncap = most;
+    if (ncap <= vm->frames_cap) stack_overflow(vm);
     Frame *nf = realloc(vm->frames, ncap * sizeof(Frame));
     if (!nf) { fprintf(stderr, "runevm: out of memory (frames)\n"); exit(2); }
     vm->frames = nf;
     vm->frames_cap = ncap;
+}
+
+/* The stack's clean part is the calls' poll too (vm.h): an interrupt that
+   comes as it is written (the system's handler makes it 0) is seen after
+   it, the flag read again once the write is done */
+static void clean_written(VM *vm) {
+#if defined(__GNUC__)
+    __atomic_thread_fence(__ATOMIC_SEQ_CST);
+#endif
+    if (vm->interrupt) vm_poll_soon(vm);
+}
+void vm_poll_soon(VM *vm) {
+    if (!(vm->interrupt & 2) && vm->interrupt_mask) return;   /* held by the mask, which raises it as it goes */
+    vm->stack_room = 0;
+}
+void vm_claim_stack(VM *vm, size_t need) {
+    vm_grow_stack(vm, need);
+    size_t to = need + CLEAN_AHEAD < vm->stack_cap ? need + CLEAN_AHEAD : vm->stack_cap;
+    if (to <= vm->stack_clean) {   /* claimed already, but for an interrupt's 0 */
+        vm->stack_room = vm_room(vm, vm->stack_clean);
+        clean_written(vm);
+        return;
+    }
+    /* from the clean part's end, which an interrupt may have made 0 */
+    for (size_t k = vm->stack_clean > vm->sp ? vm->stack_clean : vm->sp; k < to; k++) vm->stack[k] = mk_unit();
+    vm->stack_clean = to;
+    vm->stack_room = vm_room(vm, to);
+    clean_written(vm);
+}
+void vm_clean_stack(VM *vm) {
+    size_t to = vm->sp + CLEAN_AHEAD < vm->stack_clean ? vm->sp + CLEAN_AHEAD : vm->stack_clean;
+    for (size_t k = vm->sp; k < to; k++) vm->stack[k] = mk_unit();
+    if (to > vm->sp) {
+        vm->stack_clean = to;
+        if (vm->stack_room) vm->stack_room = vm_room(vm, to);
+        clean_written(vm);
+    }
 }
 
 void vm_push_handler(VM *vm, uint32_t pc) {
@@ -103,7 +149,8 @@ void vm_push_handler(VM *vm, uint32_t pc) {
     }
     vm->handlers[vm->hp].pc = pc;
     vm->handlers[vm->hp].sp = vm->sp;
-    vm->handlers[vm->hp].fp = vm->fp;
+    vm->handlers[vm->hp].fp = vm_frame_id(vm);
+    vm->handlers[vm->hp].func = vm->func;   /* runtime/register's; nothing's in runevm-stack */
     vm->handlers[vm->hp].native = NULL;
     vm->hp++;
 }
@@ -242,15 +289,15 @@ int vm_raise(VM *vm, Value exn) {
     if (vm->raise_mark && vm->hp == vm->raise_mark && vm->frames_active) {
         size_t base = vm->handlers[vm->hp - 1].fp;
         vm->raise_n = 0;
-        for (size_t i = vm->fp; i > base && vm->raise_n < 64; i--) {
-            vm->raise_frames[vm->raise_n].func = vm->frames[i].func;
-            vm->raise_frames[vm->raise_n].pc = (i == vm->fp) ? vm->pc : vm->frames[i + 1].ret_pc;
+        FrameRef fr;
+        for (int more = vm_frame_top(vm, &fr); more && fr.id > base && vm->raise_n < 64; more = vm_frame_down(vm, &fr)) {
+            vm->raise_frames[vm->raise_n].func = fr.func;
+            vm->raise_frames[vm->raise_n].pc = fr.pc;
             vm->raise_n++;
         }
     }
     Handler h = vm->handlers[--vm->hp];
-    vm->fp = h.fp;
-    if (vm->fp < vm->fp_low) vm->fp_low = vm->fp;
+    vm_frame_unwind(vm, h.fp, h.func);
     CENSUS_UNWIND(vm);
     vm->sp = h.sp;
     vm_push(vm, exn);
@@ -295,10 +342,7 @@ void vm_start(VM *vm) {
     }
 
     /* toplevel frame: function 0 applied to unit */
-    vm->sp = 0;
-    vm_push(vm, mk_unit());
-    for (uint32_t i = 1; i < p->funcs[0].nlocals; i++) vm_push(vm, mk_unit());
-    vm_push_frame(vm, 0, NULL, 0, 0);
+    vm_frame_top_level(vm);
     vm->pc = p->funcs[0].code_offset;
 }
 
@@ -343,6 +387,7 @@ void vm_release(VM *vm) {
     free(vm->unit_table);
     free(vm->stack);
     free(vm->frames);
+    free(vm->frame_buf);
     free(vm->handlers);
     free(vm->handles);
     heap_chunks_release(vm);

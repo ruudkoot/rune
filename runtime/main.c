@@ -62,8 +62,11 @@ static void usage(void) {
         "  --jit-stress=N  register VM: every Nth call into compiled code invalidates it (a test of invalidation)\n"
         "  --deopt-stress=N  register VM: compiled code leaves for the interpreter at every Nth instruction (a test of the frames' exactness)\n"
         "  --jit-perf-map  register VM: write /tmp/perf-PID.map, so that perf record names compiled functions\n"
+        "  --jit-dump=DIR  register VM: write the code of every function compiled into DIR, with what each part\n"
+        "                  of it is for, and perf's jitdump of it (runtime/register/jit/dump.c)\n"
         "  --jit-profile   register VM: count what compiled code calls, branches and loops on (--jit-stats shows them)\n"
         "  --jit-check     register VM: run a few bytes of code from executable memory and exit\n"
+        "  --jit-returns=R register VM: jmp or call, how compiled code returns (docs/plans/native-frames.md, M7)\n"
         "  --intinf=MODE   auto (default), gmp or sml; explicit GMP requires a supported library\n"
         "  --intinf-max-bits N  magnitude budget, 64..1073741822 (default 134217728)\n"
         "  --intinf-gmp-memory N  tracked GMP allocation budget in bytes (default 268435456)\n"
@@ -294,6 +297,7 @@ int main(int argc, char **argv) {
     vm->stats = stats;
     vm->count = count;
     vm->gc_stress = gc_stress;
+    vm_alloc_limit(vm);
     vm->gc_verify = gc_verify;
     vm->emulate_fork = emulate_fork;
     vm->checked = checked;

@@ -1556,6 +1556,40 @@ which its design has to start.
   * A target is a record and a module.
   * A new front end writes `Lambda`.
 
+## Left by the performance plan
+
+The performance plan of 2026-10-11 ([performance.md](performance.md),
+retired on 2026-10-20) added to this roadmap's middle end equality by type
+(its M5's D7 B, and C under `-O2`) and the removal of allocation (its M8:
+tuples flattened at joins and in known calls' results, small leaves
+inlined, local refs as variables, functions specialised on the closures
+they are given). What it left is the middle end's:
+
+* **HOL's code.** HOL4's kernel work executes 3.5 times Poly/ML's
+  instructions (39.2G against 11.1G) at an IPC of 2.1 against 1.3, so 2.1
+  times its cycles, and a theory's rebuild 2.5 times its instructions
+  (performance.md, *Where we ended*). Native frames M9 put what remains of
+  HOL's gap in the code, no longer in the call: the bytecode's
+  instructions and what the middle end leaves in them -- inlining across
+  HOL's functors and its higher-order kernel, and unboxing.
+* **The allocation M8 did not reach.** The compiler compiling its own
+  sources allocates 1.55 GB at performance's tip (`a6a024ab1`,
+  `runevm --count`) where M8's target was 1.10 GB, what MLton's build of the same
+  compiler allocates; `raytrace` 64% less where the target was 70%; and of
+  MLton's set only `checksum`, `fft`, `imp-for`, `merge`, `mlyacc`,
+  `peek`, `simple`, `tsp` and `zern` allocate no more than MLton. What is
+  left is out of a pass's reach: the bootstrap's bytes are lists (42%),
+  balanced trees and `IntTable`'s buckets, and `raytrace`'s the tuples in
+  its lists of intervals, which MLton, whole and monomorphic, flattens
+  into the lists' cells; `lexgen`, `fxp`, `logic` and `wc-input1` make
+  what they give to calls of unknown functions or keep (`TextIO`'s
+  functional streams make a record a character). Both want what M12 left
+  out, monomorphisation, "since `vm/new` does not unbox": tier 2 unboxes
+  now ([jit.md](jit.md), M9 and M10). Copying functions that do not call
+  themselves from anywhere, not only from copies, took `barnes-hut` to
+  41.6M bytes and `hamlet` to 677.1M but grew the compiler's code by 4%:
+  not taken (performance.md, *M8*).
+
 ## Relation to performance.md
 
 | Item of performance.md | Here |
