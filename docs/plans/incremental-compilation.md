@@ -3346,7 +3346,8 @@ What this roadmap did not finish, and where each is written down:
     the memo (−432 MB); the identity `export` worked out given to `load`
     (−220 MB); fingerprints as hashes of their parts' hashes, kept per
     structure and signature, so that no text grows to megabytes; and a
-    hash that costs less a byte on every host.
+    hash that costs less a byte on every host. These are the fixes of
+    [units-fixes.md](units-fixes.md), with their order and measure of done.
 
 ### Why this order
 
