@@ -52,7 +52,7 @@ is the page of timings, stale until M1.
 | M6 | The call made lean | done (2026-10-12, branch `perf-back`) but for the closure in a register: no fill (the stack kept clean above its pointer, `VM.stack_clean`), the poll in the room check, the frames grown with the stack, `lea` for the return address, the landing in line, `rbp` the frame's record, no frame index kept by the code (`VM.fp` made from `rbp` at a sync), a return through the frame's `native_ret` (the caller's landing, or a trampoline for the interpreter and the top level) with the value in `rax` and nothing tested but the watermark (2 instructions), a table of calls by function for closure calls and calls into functions without code, known calls patched when the callee is compiled, tail calls' arguments in place, counting per extended block, compare and branch fused; a frame's registers are not filled with unit, so compiled code tells the VM at every call into C which are live, and a collection takes the frame that runs as precise as one that waits (`VM.top_live`). A `fib` call 82.5 to 39 instructions and 16 to 6 stores; a closure call (`CALL`) 52 to 25; calls and returns 31% to 16.8% of the bootstrap's instructions (2.36G of 14.04G, callgrind with the dump); the bootstrap 17.06G to 13.28G instructions and HOL's kernel work 82.37G to 54.93G (−33%, `perf stat`); `--count` unchanged. `ENV` reads the closure through `rbp` (one load) but keeps its null and length tests (7 instructions with the copy): nothing checks an `ENV`'s index against the closures made of its function (the loader could), so the tests stay -- at most about 150M of the bootstrap's instructions (37.5M `ENV`s, four tests each) |
 | M7 | Pointers in registers | done (2026-10-12, branch `perf-back`): a pointer's, a constructor's and an unknown register's general home (tag `T_PTR`, the word as the slot has it), written back at every safepoint and loaded again after every call into C that may collect; tags, kinds and lengths tested as a slot's where the section does not vouch; a real or a 64-bit number moved into such a home boxed through its slot. Under `--gc-verify` and `--gc-stress` the code checks after every call into C, where no collection ran, that the homes C kept agree with their slots (a fatal error names the register), and `--gc-verify` fills the nursery with garbage after a minor collection; a home not reloaded and one not written back, put in on purpose, are both caught. E12's `string_order` bug has its test (`tests/lang/rt.gc_pointer-homes.sml`), which fails with the bug put back. The bootstrap's pointer loads from slots 743M to 262M and stores 447M to 121M (callgrind); the bootstrap 13.28G to 13.09G instructions and HOL's kernel 54.94G to 53.37G (`perf stat`); calls and returns 17.4% of the bootstrap (landings and write-backs carry the pointers now); `check-jit.sh` and the language suite green in every mode, under `--gc-stress` and `--gc-verify`; `--count` unchanged. Cycles, an indication on a loaded machine: the bootstrap about 10% fewer (median of five), a list walk 18% |
 | M8 | Allocation in the middle end | done (2026-10-19, "Remove allocation in the middle end"): steps 1 to 6; `fft`, `barnes-hut`, `peek`, `imp-for` met, the bootstrap, `raytrace` and MLton's set not; *M8*, as built |
-| M9 | Native frames: a gate, then a roadmap of its own | roadmap written: [native-frames.md](native-frames.md) (2026-10-12); its gate follows M5 to M7 |
+| M9 | Native frames: a gate, then a roadmap of its own | done (2026-10-20): [native-frames.md](native-frames.md)'s M1 to M9 -- frames in the value stack with a header of three words, returns through the header's return word, the watermark by a return barrier, arguments in registers, the allocation pointer in `rbp`, predicted returns behind `--jit-returns=call`. A `fib` call 39.0 to 26.0 instructions and 11.0 to 8.1 cycles (MLton 8.7), a `tak` call 47.3 to 31.7 and 13.2 to 10.2 (MLton 10.0); the bootstrap 1.64 to 1.43 times MLton's cycles, HOL's kernel work 3.10 to 2.20 times Poly/ML's, MLton's set 5.61 to 4.90 times MLton's in the geometric mean (WSL2, one session at a load of about 1); what is left is in M10 |
 | M10 | Measure again, and retire this plan | not started |
 
 ## The request
@@ -2245,7 +2245,23 @@ frames at 39.5 and 17 to 18.
 
 * *Where we are* measured again with M1's tools.
 * `docs/performance.md` rewritten.
-* What is left moved to the next plan.
+* What is left moved to the next plan. From M9 (native-frames.md, *M9*):
+  * constant operands in tier 2's body: `int_mod`'s test for a power of
+    two made at compile time (E9's `selftail` +8% instructions since M2),
+    an `INT` folded into the instruction that reads it;
+  * a call through a closure taking its argument in a register (native
+    frames M6 built known calls only);
+  * `--jit-returns=call` as the default: per call 15% and 11% fewer
+    cycles, on the bootstrap and HOL 1.5% and 2.7% more (one session);
+  * tiering's counter at a call: counting the caller's work (HANDOVER as
+    its comment said) measured worse after native frames M8;
+  * the cycles deep recursion lost though its instructions fell or held
+    (`merge` +17%, `wc-input1` +14%, `wc-scanStream` +22% against M1's
+    runtime);
+  * the bootstrap's collector, 38% of its cycles and more than its gap to
+    MLton; HOL's gap, the code's instructions (39.7G to Poly/ML's 11.3G).
+  D7's count of objects per run is not built: the owner's decision,
+  2026-10-19, on the lead's recommendation.
 
 ## Relation to the other plans
 

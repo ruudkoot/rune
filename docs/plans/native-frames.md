@@ -42,7 +42,7 @@ plan's.
 | M6 | Arguments in registers | done (2026-10-19), kept: a known call, and a tail call, puts its arguments in the homes the callee's tier-2 code takes them in, at its register entry; the bootstrap −0.93% instructions (the gate 0.5%), HOL's kernel work −1.06%; a `fib` call 27.0 to 26.0 instructions, a `tak` call 35.3 to 31.7 (target for `fib` 23.5 short); `--count` and every output unchanged (*M6*) |
 | M7 | Returns the processor predicts | done (2026-10-19) behind `--jit-returns=call`, the default staying `jmp`: a call by `call`, a return by `push [r14-8]; ret`; a `fib` call 8.05 to 7.62 cycles, a `tak` call 10.08 to 8.65, the instructions the same; on the whole programs 0.1% and 0.6% more instructions and the cycles not shown better on a loaded machine (the gate 1%); M9 measures again (*M7*) |
 | M8 | The allocation pointer in a register | done (2026-10-19): the pointer in `rbp` (`x21`), an object 5 instructions before its header (10), the bytes from the pointer's progress at the syncs, the objects by a counter per object -- D7's count per run not built, the owner's decision (*M8*); the bootstrap −1.59% instructions (target 2%), HOL's kernel work −6.15% (target 2.5%); `--count`'s bytes and objects unchanged everywhere |
-| M9 | Measure again: the owner's goal | in progress: the walks of deep recursions made cheaper after MLton's set showed four programs slower than at M1 (*M9*, found on the way) |
+| M9 | Measure again: the owner's goal | done (2026-10-20): MLton beaten on a `fib` call (8.1 cycles to its 8.7; M1 11.0) and 2% short of it on a `tak` call (10.2 to 10.0; M1 13.2), both under it with `--jit-returns=call` (6.9, 9.1); the bootstrap 1.43 times MLton's build (target 1.5; M1 1.64) and HOL's kernel work 2.20 times Poly/ML (target 2.2; M1 3.10); MLton's set 4.90 times MLton's cycles in the geometric mean (M1 5.61), three of the seven programs of calls within 1.5; OCaml not reached (1.65 times on both calls); the walks of deep recursions made cheaper on the way, after MLton's set showed four programs slower than at M1 (*M9*) |
 
 The owner took every decision as recommended on 2026-10-12 (*Decisions*).
 
@@ -1745,6 +1745,88 @@ bootstrap 13.604G to 13.246G (−2.6%), HOL's kernel work 40.54G to
 39.75G (−2.0%); `--count` and every output unchanged, the bootstrap's
 `--gc-verify` clean.
 
+**Done** (2026-10-20). One session, 2026-10-19 23:26 to 2026-10-20 01:44,
+on WSL2 (*Measuring*): every run pinned to a core of its own
+(`scripts/timed.sh`), the configurations interleaved, the cycles the least
+of N with the instructions of the same run beside them, the 1-minute load
+at each run's start recorded -- 0.3 to 1.4 for F1, E9, tests/perf and the
+whole programs; MLton's set's rows at 2 or less, the rows another agent's
+suites had raised above it taken again. *b0* is M1's runtime (`db0fba57a`),
+*final* the runtime of performance `b245b921c` (this plan's `10ed065da`),
+both on the same bytecode and images. The cycles are indications on a
+shared machine; the instructions are exact.
+
+* **Calls** (F1; per call, seven runs at two lengths):
+
+  | | `fib` instr. | cycles | `tak` instr. | cycles |
+  |---|---:|---:|---:|---:|
+  | Rune at M1 | 39.0 | 11.0 | 47.3 | 13.2 |
+  | Rune now | 26.0 | 8.1 | 31.7 | 10.2 |
+  | Rune now, `--jit-returns=call` | 26.0 | 6.9 | 31.7 | 9.1 |
+  | MLton | 17.0 | 8.7 | 23.3 | 10.0 |
+  | Poly/ML | 14.5 | 6.7 | 23.0 | 8.6 |
+  | OCaml | 10.0 | 4.9 | 19.7 | 6.2 |
+  | variant 9 (F1, by hand) | 21.0 | 6.2 | 30.0 | 8.0 |
+
+  A `fib` call in fewer cycles than MLton's -- the target met; a `tak`
+  call at 1.02 times MLton's -- short by 0.2 cycles; under
+  `--jit-returns=call` both beneath MLton's. tests/perf's `fib` and `tak`,
+  as `perf-cycles.sh` wraps them: 1.36 and 1.34 times MLton's cycles at
+  M1 to 1.01 and 1.07 (61.8M cycles against 61.2M, 20.8M against
+  19.5M) -- short.
+* **MLton's set**, the ratio to MLton's cycles, M1's runtime then this
+  one's, on the bytecode `perf-cycles.sh` compiled: the seven programs of
+  calls and closures `fib` 1.28 to 1.07, `tak` 1.67 to 1.20, `tyan` 1.81
+  to 1.45 -- within 1.5 -- and `logic` 2.38 to 1.63, `model-elimination`
+  2.41 to 1.80, `nucleic` 2.26 to 2.12, `barnes-hut` 3.26 to 2.91, which
+  spend most of their time outside calls (target 1.5 each: three met). The
+  38 that run: 5.61 to 4.90 times MLton's cycles in the geometric mean,
+  11.2% fewer instructions. Slower in cycles than at M1, though their
+  instructions fell or held: the programs of deep recursion -- `merge`
+  +17%, `wc-input1` +14%, `wc-scanStream` +22% -- and `tailfib` +3.5%;
+  a deep stack is longer by its headers, and the cause is not measured
+  further here (M10).
+* **The whole programs** (best of five): the bootstrap 9.14G to 7.95G
+  cycles (15.23G to 13.25G instructions; MLton's build 5.58G and 4.85G):
+  1.64 to 1.43 times MLton's -- the target 1.5 met. HOL's kernel work
+  24.60G to 17.47G cycles (53.02G to 39.74G instructions; Poly/ML 7.93G
+  and 11.0G to 11.8G): 3.10 to 2.20 times Poly/ML's -- the target 2.2 met,
+  at its edge. Under `--jit-returns=call` the bootstrap took 1.5% more
+  cycles (8.39G against 8.26G) and HOL 2.7% more (18.52G against 18.04G),
+  their instructions 0.1% and 0.6% more: the default stays `jmp`.
+* **What remains of the gaps** (`perf record` of the cycles, by part):
+  the bootstrap's compiled code 51% of its cycles (4.1G; 60% at M1) and
+  its collector 38% (3.0G; 30% at M1) -- the collector alone more than the
+  gap to MLton (2.4G), and the bytecode 2.7 times MLton's instructions.
+  HOL's compiled code 78% (13.6G) and its collector 9.5%: its gap is the
+  code -- 39.7G instructions to Poly/ML's 11.3G, at an IPC of 2.3 to 1.4
+  -- the bytecode's and the middle end's (inlining, unboxing), no longer
+  the call's.
+* **As fast as OCaml:** not reached. A `fib` and a `tak` call at 1.65
+  times OCaml's cycles (1.41 and 1.47 under `--jit-returns=call`; target
+  1.3), at 26.0 and 31.7 instructions (targets 22 and 31). What a `fib`
+  call keeps that variant 9 has not: the room's check at the call, the
+  homes' reload and the result's move at the landing, a body a little
+  longer; the count's 3 stay by D9.
+* **E9**, a repetition each, instructions: `fib` −33.3%, `tak` −33.1%,
+  `closure` −20.7%, `foldl` −17.8%, `nohandler` −12.4%, `handler`
+  −10.7%, `curried` and `small` −5.7%, `big` −1.7%, `mutual` 0; `selftail`
+  +8.0% (and +12% cycles): since M2, `int_mod` tests its divisor for a
+  power of two at run time, three instructions more for a `mod 3`, since
+  the body does not know the divisor is a constant. The cycles of the
+  short programs are noise.
+* **`runtime/register/README.md`** says what the code does (M4 to M8 and
+  the walk, the helpers' list since M5).
+* **Left for other plans** (performance.md's M10, which hands on what is
+  left): constant operands in the body (`int_mod`'s test made at compile
+  time; an `INT` folded into the instruction that reads it); a call
+  through a closure taking its argument in a register (M6 built known
+  calls only); `--jit-returns=call`'s default, which this session does not
+  show better on whole programs; tiering's counter at a call (the caller's
+  work, HANDOVER, measured worse after M8); the cycles that deep recursion
+  lost (above). D7's count of objects per run is not built: the owner's
+  decision, 2026-10-19, on the lead's recommendation.
+
 ### Why this order
 
 * **The gate first**, because performance M6 and M7 change the baseline
@@ -1835,6 +1917,25 @@ bootstrap 13.604G to 13.246G (−2.6%), HOL's kernel work 40.54G to
 11. **The count's price stays.** F1 puts it at 3 instructions a `fib`
     call; on whole programs it is 0.8% of cycles (performance.md E13), and
     performance D9 A keeps it. The owner's goal is met within it.
+12. **The REPL's start-up race** (found by the chains of M4 to M9's
+    commits, 2026-10-19). `tests/terminal`'s `repl-marks` and `repl-quiet`
+    fail now and then under load: the REPL prints OSC 133;A before its
+    line editor puts the terminal in raw mode, so input typed after the
+    mark is echoed in cooked mode, and the test waits for an answer that
+    does not come. The cause is the REPL's start, not this plan: the same
+    bytes fail on M1's runtime. But the tip may widen the window -- its
+    failures were the more frequent in every series, though no series
+    separates them for certain: 20 `make test-terminal` pairs at the
+    chains' load, interleaved, M1's build failing 2 and the tip's 5; an
+    earlier series with the REPL sharing a core with a busy loop, each
+    tree's image on its own VM, 0 of 20 against 6 of 20; and the same
+    with the VM swapped under the same image, every pairing about alike
+    (M1's image on M1's VM 4 of 15, on the tip's 3; the tip's image on
+    M1's VM 3, on the tip's 3). The tip runs fewer instructions to answer
+    (360.6M against 363.0M for `1;`), and the time from the mark to raw
+    mode is about 0.2 ms on both, with the same few spikes of milliseconds
+    on every pairing. The fix is the REPL's (a branch of its own from
+    master); the evidence is with the drafts (`results/M9/M9/terminal/`).
 
 ## Measuring
 
@@ -1876,7 +1977,19 @@ on: `results/M9/`, `scripts/M9/`).
   run on the VM measured (`scripts/M9/hol.sh`, or the tree's script with
   `$RUNEVM` since M1). Poly/ML: HOL-poly.
 * **MLton's set:** `scripts/perf-cycles.sh --mlton-bench`, MLton's own
-  `benchmark/tests` and `tests/perf/mlton-bench.txt`.
+  `benchmark/tests` and `tests/perf/mlton-bench.txt`. For M9's session its
+  bytecode and MLton's builds were frozen from a run of that script
+  (`results/M9/M9/session/set-bin`), every run of b0, final and MLton then
+  pinned on its own (`scripts/M9/set.sh`, `retake.sh`), three rounds and
+  `smith-normal-form` once, the 1-minute load at each run's
+  start kept with it (`scripts/M9/settable.py`).
+* **M9's session:** `scripts/M9/session.sh` (F1 with M1's runtime beside,
+  `run4.sh`; the whole programs; E9; tests/perf), `set.sh`, `retake.sh`,
+  `callmode.sh` (`--jit-returns=call` on the whole programs), and
+  `profile.sh` (cycles by part); results in `results/M9/M9/session/`, the
+  load of each part in its `uptime.txt`. Some counts move from run to run
+  and are no invariants: the bootstrap's (above), `model-elimination`'s
+  (±2%, with fixed heap sizes too) and `smith-normal-form`'s.
 * **Counts are the targets.** Cycles are indications, compared only within
   a session. A milestone that changes `--count` is a mistake: none here
   should.
