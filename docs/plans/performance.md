@@ -37,9 +37,18 @@ It was written on 2026-10-11 against master `921af2cc`, on branch
   DataCite).
 
 `performance.md` alone below means this plan. [docs/performance.md](../performance.md)
-is the page of timings, stale until M1.
+is the page of timings, re-timed at M1 under load and at M10.
 
 ## Status
+
+**Retired** (2026-10-20, M10): every milestone done, *Where we are*
+measured again beside its first measurement (*Where we ended*), and what is
+left moved into the plans that take it -- [jit.md](jit.md),
+[garbage-collector-v3.md](garbage-collector-v3.md),
+[middle-end.md](middle-end.md) and
+[incremental-compilation.md](incremental-compilation.md), each under *Left
+by the performance plan* or its own list of what is left -- or, where none
+does, listed under *Left for the next plan* below.
 
 | Milestone | What | State |
 |---|---|---|
@@ -53,7 +62,7 @@ is the page of timings, stale until M1.
 | M7 | Pointers in registers | done (2026-10-12, branch `perf-back`): a pointer's, a constructor's and an unknown register's general home (tag `T_PTR`, the word as the slot has it), written back at every safepoint and loaded again after every call into C that may collect; tags, kinds and lengths tested as a slot's where the section does not vouch; a real or a 64-bit number moved into such a home boxed through its slot. Under `--gc-verify` and `--gc-stress` the code checks after every call into C, where no collection ran, that the homes C kept agree with their slots (a fatal error names the register), and `--gc-verify` fills the nursery with garbage after a minor collection; a home not reloaded and one not written back, put in on purpose, are both caught. E12's `string_order` bug has its test (`tests/lang/rt.gc_pointer-homes.sml`), which fails with the bug put back. The bootstrap's pointer loads from slots 743M to 262M and stores 447M to 121M (callgrind); the bootstrap 13.28G to 13.09G instructions and HOL's kernel 54.94G to 53.37G (`perf stat`); calls and returns 17.4% of the bootstrap (landings and write-backs carry the pointers now); `check-jit.sh` and the language suite green in every mode, under `--gc-stress` and `--gc-verify`; `--count` unchanged. Cycles, an indication on a loaded machine: the bootstrap about 10% fewer (median of five), a list walk 18% |
 | M8 | Allocation in the middle end | done (2026-10-19, "Remove allocation in the middle end"): steps 1 to 6; `fft`, `barnes-hut`, `peek`, `imp-for` met, the bootstrap, `raytrace` and MLton's set not; *M8*, as built |
 | M9 | Native frames: a gate, then a roadmap of its own | done (2026-10-20): [native-frames.md](native-frames.md)'s M1 to M9 -- frames in the value stack with a header of three words, returns through the header's return word, the watermark by a return barrier, arguments in registers, the allocation pointer in `rbp`, predicted returns behind `--jit-returns=call`. A `fib` call 39.0 to 26.0 instructions and 11.0 to 8.1 cycles (MLton 8.7), a `tak` call 47.3 to 31.7 and 13.2 to 10.2 (MLton 10.0); the bootstrap 1.64 to 1.43 times MLton's cycles, HOL's kernel work 3.10 to 2.20 times Poly/ML's, MLton's set 5.61 to 4.90 times MLton's in the geometric mean (WSL2, one session at a load of about 1); what is left is in M10 |
-| M10 | Measure again, and retire this plan | not started |
+| M10 | Measure again, and retire this plan | done (2026-10-20, branch `perf-m10`): *Where we are* measured again with M1's tools, before (`921af2cc`) and after (`a6a024ab1`) in one session (*Where we ended*): the compiler compiling itself 2.39 to 1.38 times MLton's build's cycles (4.65 to 2.69 its instructions), HOL4's kernel work 5.96 to 2.14 times Poly/ML's (theories 4.1 and 3.9 to 1.7 and 1.6 by HOL's clock), MLton's set 9.7 to 3.7 times MLton's in the geometric mean, `examples/benchmarks` 5.05 to 2.34, Rune compiling MLton's compiler 984 s to 84 s (elaboration 953 s to 71 s), MLton built by Rune building MLton 9.2 to 4.6 times MLton built by MLton; [docs/performance.md](../performance.md) rewritten, the `xc1` hosts timed again; `--pass-stats`' check held to SML/NJ's clock (15% where 2%: it counts the collector twice); the frames' walk a group of `perf-groups.awk`; deep recursion's lost cycles found in the frames' walk, and MLton built in units found to be fingerprints hashed (*M10*); what is left moved to the plans that take it (*Left for the next plan*) |
 
 ## The request
 
@@ -328,6 +337,178 @@ of its kernel work).
 
 So for the compiler and for HOL, the code is where the time goes, and the
 call is most of that. For MLton's compiler, it is the elaborator.
+
+## Where we ended
+
+*Where we are* measured again for M10 on 2026-10-20, with M1's tools, the
+before and the after in one session:
+
+* **before** is master `921af2cc`'s compiler and VMs, with M1's tools
+  (`75d35ec8c`, the commit M1 re-timed docs/performance.md at), and the
+  HOL4 of E7 built by it;
+* **after** is `performance` at `a6a024ab1`: this plan's M1 to M9 and
+  [native-frames.md](native-frames.md)'s M1 to M9, on master `1dd139fee`,
+  and HOL4 `3d15b18a8` built again by it. Master's own changes since
+  `921af2cc` are in the after too; the one that shows is GMP under `IntInf`
+  ([gmp.md](gmp.md)): `intinf_fact`, `pidigits`, `smith-normal-form` and
+  HOL's `Arbnum` are GMP's gains, not this plan's.
+
+The before's instruction counts are E1 to E8's again, to within 3% where
+a host's collector or the compiler's clock moves them: the compiler
+compiling itself 17.37G (E4 17.32G), `logroot` 74.6G and `mergesort`
+91.2G (E7 72.3G and 91.2G), MLton's units type-checked 476.8G (476.0G);
+MLton built by MLton building MLton took 1,103.9G both times. Cycles and
+seconds are the least of N runs. The compiler compiling itself,
+`tests/perf` and HOL4 were taken one run at a time, at a load of 2 to 3
+(one other run on another core); MLton's set, `examples/benchmarks` and
+Rune compiling MLton up to six runs at once, at a load of 4 to 13; MLton
+building MLton at 3 to 7. Where each number came from: *Measuring*, and
+`results/M10/` with the drafts.
+
+**The headline**, Rune over the yardstick:
+
+| | Before | After |
+|---|---:|---:|
+| the compiler compiling itself, cycles over MLton's build's | 2.39 | 1.38 |
+| ... instructions | 4.65 | 2.69 |
+| HOL4's kernel work, cycles over Poly/ML's | 5.96 | 2.14 |
+| ... instructions | 7.9 | 3.5 |
+| HOL4's theories `logroot` and `mergesort` by HOL's clock, over Poly/ML | 4.1 and 3.9 | 1.7 and 1.6 |
+| MLton's benchmark set, the geometric mean of cycles over MLton's (37 programs) | 9.7 | 3.7 |
+| ... over Poly/ML's (35) | 3.6 | 1.5 |
+| `tests/perf`'s `fib` and `tak`, cycles over MLton's | 3.8 and 3.4 | 1.02 and 1.05 |
+| `examples/benchmarks`, the geometric mean of times over MLton's (the 152 of E3) | 5.05 | 2.34 |
+| ... over Poly/ML's; over SML/NJ 110.99.9's | 2.47; 2.01 | 1.19; 0.83 |
+| Rune compiling MLton's compiler, processor time (elaboration) | 984 s (953 s) | 84 s (71 s) |
+| ... over MLton's build of the same compiler | 5.5 | 1.4 |
+| MLton built by Rune building MLton, over MLton built by MLton: time (instructions) | 9.2 (13.3, E6) | 4.6 (7.1) |
+
+### Small programs, again
+
+`tests/perf` against MLton (`scripts/perf-cycles.sh`, the least cycles of
+five, one run at a time at a load of 3 to 6), Rune over MLton:
+
+| Program | before: instructions | after | before: cycles | after |
+|---|---:|---:|---:|---:|
+| `array_sieve` | 4.8 | 2.6 | 3.94 | 1.80 |
+| `fib` | 4.9 | 1.5 | 3.83 | 1.02 |
+| `tak` | 3.9 | 1.4 | 3.44 | 1.05 |
+| `word_bits` | 4.5 | 3.3 | 4.27 | 2.96 |
+| `string_ops` | 4.5 | 3.7 | 3.00 | 2.61 |
+| `list_ops` | 3.0 | 2.4 | 2.38 | 1.89 |
+| `real_nbody` | 4.1 | 3.2 | 0.94 | 0.94 |
+| `intinf_fact` (GMP since) | 328 | 30 | 211 | 15 |
+| `compile-sigs` | 6.6 | 6.4 | 4.02 | 3.46 |
+| `runedoc-page` | 2.5 | 2.0 | 2.04 | 1.67 |
+
+* **The call is MLton's now**: `fib` and `tak` from four times its cycles
+  to within 5%, with 1.4 to 1.5 times its instructions where it was four to
+  five times.
+* **Rune's engines**, on the compiler compiling itself (instructions, the
+  before's sources and the after's, at a load of 4 to 11): tier 2 17.37G
+  to 13.45G, tier 1 19.31G to 17.18G, the interpreter 49.21G to 60.68G and
+  `runevm-stack` 57.92G to 71.14G -- the compiler's own bytecode grew by a
+  sixth (M8's copies of functions, accepted) while its sources grew too,
+  and tier 2 executes fewer instructions on more work. `runeopt`'s native
+  code, level with tier 2 before (1.08 times), is 1.6 times it after.
+* **MLton's set** (`peek` and `vector64-concat` not on Poly/ML, `Int64`;
+  `smith-normal-form` apart, IntInf: 11,920 to 2.9 times MLton's cycles):
+  the programs of calls and closures `fib` 3.58 to 1.18, `tak` 3.42 to
+  1.25, `tyan` 2.66 to 1.40, `logic` 3.73 to 1.46, `model-elimination`
+  4.86 to 1.94, `nucleic` 3.67 to 2.39, `barnes-hut` 7.10 to 3.56; the
+  Basis's outliers `vector32-concat` 81.7 to 7.9, `vector-rev` 63 to 12,
+  `vector64-concat` 58 to 4.0, `string-concat` 27 to 3.6, `imp-for` 25 to
+  3.0, `peek` 17 to 4.1, `mpuz` 12.8 to 2.4, `output1` 41 to 22,
+  `checksum` 28 to 18, `md5` 23 to 12, `matrix-multiply` 17 to 11; IntInf's
+  `pidigits` 907 to 17. Slower than before: `merge`, 3.54 to 3.76
+  (M10, *As built*: deep recursion).
+* **`examples/benchmarks`** (the 152 programs E3 timed, of the 510 the
+  suite has now; a load of 4 to 12): the programs of at least 0.10 s on
+  Rune 319.6 s against MLton's 50.0 s before, 126.2 s against 51.8 s after;
+  the worst `mandelbrot-rat` 143 to 17 (GMP), `flat-array` 57 to 11, `id-ray`
+  24, `peek` 22 and `many_refs` 20 to under 6.
+
+### The compiler compiling itself, again
+
+Each tree's compiler compiling its own sources, the least cycles of five
+(`perf-cycles.sh`, one run at a time):
+
+| Build | Before: cycles | instructions | After: cycles | instructions |
+|---|---:|---:|---:|---:|
+| Rune, tier 2 (default) | 11.08G | 17.37G | 8.47G | 13.45G |
+| MLton's build | 4.63G | 3.74G | 6.13G | 4.99G |
+| Poly/ML's build | 4.94G | 3.70G | 7.06G | 5.70G |
+
+The after's sources are a third more work for MLton's build (4.99G
+instructions against 3.74G): Rune does more with fewer instructions and
+cycles. Five more runs of each, one after another, give 2.37 before and
+1.46 after (`results/M10/quiet`); [native-frames.md](native-frames.md)'s
+M9 measured 1.64 to 1.43 on a workload held fixed.
+
+### Large programs, again
+
+**MLton's compiler compiled by Rune** (E5; once each, a load of 7 to 11,
+the compiles in units at about 2):
+
+| | Before | After |
+|---|---:|---:|
+| the whole program on Rune at tier 2: processor time | 984 s | 84 s |
+| ... elaboration | 953 s | 71 s |
+| ... instructions | 3,436G | 304G |
+| ... the largest resident set | 6.6 GB | 5.9 GB |
+| ... minor collections; bytes promoted | 26,313; 112 GB | 2,750; 10 GB |
+| the same on MLton's build: processor time (elaboration) | 180 s (169 s) | 60 s (49 s) |
+| in units on MLton's build: processor time | 281 s | 263 s |
+| ... elaboration; the units' interfaces (`unit-usages`, `unit-export`) | 139 s; 110 s | 20 s; 208 s |
+| type-checked in units on MLton's build, instructions (M2's and M3's measure) | 476.8G | 93.7G |
+
+M3's target, elaboration under 250 s at tier 2, is met at 71 s. In units
+the compile is now the units' interfaces: fingerprints hashed, half of
+them twice ([incremental-compilation.md](incremental-compilation.md),
+*After M12: what is left*; M10 below).
+
+**MLton built by Rune** (E6): compiling MLton's programs 2.5 to 3.7 times
+MLton built by MLton, where it was 4.3 to 7.3 (`boyer` 5.2 to 2.8,
+`hamlet` 7.3 to 3.7; the before run again in this session); building MLton
+itself 1,952 s against 427 s, 4.6 times (E6: 3,658 s against 396 s, 9.2),
+7,798G instructions against 1,104G (E6: 14,677G).
+
+**HOL4** (E7; one run at a time, at a load of 2.1 to 2.5):
+
+| | Before | After | Poly/ML | Before / Poly/ML | After / Poly/ML |
+|---|---:|---:|---:|---:|---:|
+| theory `logroot`, HOL's clock | 16.5 s | 6.8 s | 4.0 s | 4.1 | 1.7 |
+| ... instructions | 74.5G | 35.4G | 14.1G | 5.3 | 2.5 |
+| theory `mergesort`, HOL's clock | 19.3 s | 7.9 s | 4.9 s | 3.9 | 1.6 |
+| ... instructions | 91.2G | 42.2G | 16.8G | 5.4 | 2.5 |
+| the kernel's work, cycles | 52.36G | 18.77G | 8.78G | 5.96 | 2.14 |
+| `EVAL ``FACT 60```, processor time | 1.16 s | 0.375 s | 0.204 s | 5.7 | 1.8 |
+| `EVAL ``FACT 150``` | 13.3 s | 4.39 s | 2.19 s | 6.1 | 2.0 |
+| `PROVE_TAC`, 20 times | 0.107 s | 0.073 s | 0.011 s | 9.7 | 6.6 |
+| `SIMP_CONV arith_ss`, 200 times | 0.543 s | 0.244 s | 0.085 s | 6.4 | 2.9 |
+| `DECIDE`, 200 times | 0.669 s | 0.290 s | 0.101 s | 6.6 | 2.9 |
+| `Arbnum` multiplication, 200,000 times (GMP since) | 0.546 s | 0.102 s | 0.011 s | 50 | 9.3 |
+
+### Where the time goes, again
+
+By `perf record` over `--jit-perf-map`, grouped by `scripts/perf-groups.awk`
+(E8; the compiler at a load of 8, HOL before at 11 and after at 2.3):
+
+| | The compiler compiling itself: before | after | HOL, `logroot`: before | after | HOL's kernel work: before | after |
+|---|---:|---:|---:|---:|---:|---:|
+| the JIT's code | 66.5% | 54.2% | 80.9% | 76.9% | 85.7% | 76.5% |
+| the collector | 23.1% | 34.0% | 2.5% | 4.9% | 5.0% | 9.7% |
+| equality, string order (runtime) | 2.4% | 1.3% | 5.4% | 2.5% | 3.5% | 1.3% |
+| exceptions (runtime) | 0.1% | 0.0% | 3.0% | 0.0% | 1.7% | 0.0% |
+| the JIT compiling | 2.3% | 3.5% | 1.7% | 3.6% | 0.7% | 1.8% |
+| the interpreter | 0.8% | 1.1% | 1.1% | 2.3% | 0.4% | 0.8% |
+| restoring the image, loading | 0.1% | 0.2% | 0.5% | 1.8% | 0.7% | 2.9% |
+
+So the code is still most of HOL's time, but no longer the call's
+([native-frames.md](native-frames.md), M9: 39.7G instructions to Poly/ML's
+11.3G, the bytecode's and the middle end's); the runtime's equality and
+exceptions are gone from both; and the collector is a third of the
+compiler's cycles, more than its whole gap to MLton's build.
 
 ## What became of the plan of 2026-09-24
 
@@ -2263,6 +2444,91 @@ frames at 39.5 and 17 to 18.
   D7's count of objects per run is not built: the owner's decision,
   2026-10-19, on the lead's recommendation.
 
+**As built (2026-10-20, branch `perf-m10` on `a6a024ab1`).**
+
+* **`--pass-stats`' check made to hold under load.** M1's check that the
+  stages add up to the compile (tests/runner's compiler job) failed once
+  in a full `make check` at a load of 30, on SML/NJ 110.99.9's build. Its
+  processor time counts the collector's twice (`Timer.checkCPUTimer` adds
+  the collector's time to a user time that holds it already), so a minor
+  collection in the driver's code between two stages is a gap: 1 to 5% of
+  the compile quietly, up to 10% at a load of 30 to 40, under 1% with an
+  allocation area of 4 MB. SML/NJ's builds are held to 15% of the total,
+  the collector's share of it, the others to 2% as before (200 runs at a
+  load of 25 to 38: the worst gap half the new bound; `rune-test run
+  compiler/ --repeat 20 --under-load` at a load of 29 to 55, 20 of 20).
+* **The session.** *Where we ended*: the before and the after built in
+  trees of their own (the after detached at `a6a024ab1`, so that its
+  version and builds stay put), timed through the drafts' `timed.sh` (six
+  pinned slots), the headline one run at a time. MLton's set was run from
+  binaries built once, three rounds; HOL4 was built again by the after's
+  Rune (`hol.state` in 1,054 s). Not all of `examples/benchmarks` was
+  timed: the suite has 510 programs now, and after the first 258 (the 152
+  E3 timed among them) a program took 760 s a run on SML/NJ; the first
+  pass of `make perf` with `xc1` took 50 minutes in the before's tree,
+  pinned to one core, its programs compiled and kept for the passes
+  after it.
+* **docs/performance.md rewritten** from the session, with the `xc1`
+  hosts timed again, MLton's set, MLton's compiler compiled by Rune, MLton
+  built by Rune and HOL4 added, and the load of every table.
+* **`scripts/perf-groups.awk`** groups the frames' walks, a frame's
+  liveness and the return barrier, which were "other", and `reg_frame_live`,
+  which it counted as the JIT compiling.
+* **Deep recursion's lost cycles, explained.** Against M1's runtime on
+  the same bytecode, `merge`, `wc-input1` and `wc-scanStream` take 14%, 16%
+  and 15% more cycles (the least of seven runs, at a load of 11), M9's own
+  runtime 10 to 13%; the frames' group grew from 11% to 37% of `merge`'s
+  cycles and from 9% to 30% of `wc-input1`'s, `vm_frames_from` alone 17 to
+  19%: about 170 cycles a frame walked where 40, with 12 slots a frame and
+  4 roots where 9 and 1 ([garbage-collector-v3.md](garbage-collector-v3.md),
+  *Left by the performance plan*).
+* **MLton's compiler in units** (the lead's question, 2026-10-20): 433 s
+  at tier 2 against 84 s whole, 367 s of it the units' interfaces. A
+  profile gives `P.hash`'s loop 36% of its cycles and the collector 25%;
+  a build that counts what it hashes, 2,136 MB: signatures' fingerprints
+  818 MB, functors' 430 MB in the usages and the same 432 MB again in
+  `export`, which does not ask the memo, the basis's pickle 220 MB at
+  `export` and again at `load`. On MLton's build the interfaces took 110 s
+  at `921af2cc` and 208 s at the tip, while elaboration fell from 139 s to
+  20 s: M3's functor fingerprints moved the cost there. The memo serves
+  the whole process (73% of its lookups hit); `export` goes around it
+  ([incremental-compilation.md](incremental-compilation.md), *After M12:
+  what is left*).
+* **What M9 left, and what M10 found, moved to the plans that take it:**
+  * [jit.md](jit.md), *Left by the performance plan*: constant operands in
+    tier 2's body, division by a constant (and `P.hash`'s), `ENV`'s
+    tests, a constructor's tag by its kind, a closure call's argument in a
+    register, `--jit-returns=call` as the default (measured again: the
+    bootstrap 0.8% fewer cycles, HOL's kernel work 1.9% more), tiering's
+    counter at a call;
+  * [garbage-collector-v3.md](garbage-collector-v3.md), *Left by the
+    performance plan*: the bootstrap's collector (34% of its cycles,
+    more than its gap to MLton's build) and deep stacks;
+  * [middle-end.md](middle-end.md), *Left by the performance plan*: HOL's
+    code (3.5 times Poly/ML's instructions) and the allocation M8 did not
+    reach;
+  * [incremental-compilation.md](incremental-compilation.md), *After M12:
+    what is left*: MLton's compiler in units;
+  * [functors.md](functors.md): B, functors as functions, not started, as
+    before;
+  * [hol4.md](hol4.md), *What is left*: a `bin/buildheap` that takes
+    `$RUNEVM`, so that a theory is measured on the VM asked for.
+
+### Left for the next plan
+
+What fits no plan above:
+
+* **The Basis's own code.** The farthest programs of MLton's set from
+  MLton are the Basis's: `output1` 22 and `psdes-random` (`Word32`'s
+  arithmetic) 5.3 times MLton's cycles, where MLton allocates nothing and
+  Rune 16 GB and 27 GB (`output1` an object a character, since M5); `checksum` 18, `md5` 12,
+  `vector-rev` 12, `matrix-multiply` 11; and of `tests/perf`,
+  `string_ops` 1.9 to 3.6 times every host's time. M5 and M8 took
+  `output1`, the vectors and `peek` from 19 to 89 times MLton's cycles to
+  4 to 22; what is left is per primitive and per structure of `lib/basis`,
+  measured by `scripts/perf-cycles.sh --mlton-bench`, and no plan holds
+  the Basis's speed.
+
 ## Relation to the other plans
 
 * **[gmp.md](gmp.md)** is the plan for `IntInf`. Master has its M0; branch
@@ -2271,13 +2537,18 @@ frames at 39.5 and 17 to 18.
   * `intinf_fact` at 36 times Poly/ML's;
   * `pidigits` allocating 264 times MLton's bytes, and `smith-normal-form`
     22 times (E15).
+
+  Master's GMP (since `921af2cc`) took them to 9.3, 2.9, 1.6 and 0.05
+  times (M10).
 * **[garbage-collector-v3.md](garbage-collector-v3.md)** holds what is left
   for the collector:
   * a survivor space;
   * Rune compiling MLton at 1.10 of the copier's time.
 
   The collector is 23% of the bootstrap's cycles and 2% of HOL's (E8).
-  This plan's M8 cuts what reaches it.
+  This plan's M8 cuts what reaches it. At M10 it is 34% of the
+  bootstrap's, and deep stacks' walks cost more since native frames: both
+  are there now, under *Left by the performance plan*.
 * **[jit.md](jit.md)** is done. This plan revisits three of its
   decisions and leaves a fourth:
   * D5, no allocation removed by the JIT: kept (D10);
@@ -2286,13 +2557,17 @@ frames at 39.5 and 17 to 18.
     map": kept for pointers in homes (D6);
   * D11, `runeopt` and images, whose option B (native code in images) is
     left where it is.
+
+  What M5 to M9 left of tier 2's code is there now, under *Left by the
+  performance plan*.
 * **[middle-end.md](middle-end.md)** left three things unbuilt:
   * escape analysis, as research;
   * 0CFA, measured;
   * monomorphisation, "since `vm/new` does not unbox".
 
   M8 takes what the census says the middle end could remove, without
-  needing the first.
+  needing the first. What it did not reach, and HOL's code, are there
+  now, under *Left by the performance plan*.
 * **[incremental-compilation.md](incremental-compilation.md)**:
   * its D1 (static interpretation) stands for code (D3). The functor's
     signature joins the export basis, and a use of a functor gets a
@@ -2302,14 +2577,17 @@ frames at 39.5 and 17 to 18.
   * its *Ready for, not built*, "the elaborator at the scale of MLton", is
     this plan's M2 and M3;
   * the 3.3 GB that building MLton in units keeps live is E22's open
-    question.
+    question;
+  * MLton's compiler in units, five times its whole compile since M3, is
+    in its *After M12: what is left* (M10).
 * **[type-checker.md](type-checker.md)** is M4's brief, and its measure of
   done is M4's.
 * **[hol4.md](hol4.md)**'s *What is left*: "the JIT's code" is M5 to M7 and
-  M9.
+  M9, measured there again at M10, with `bin/buildheap`'s `$RUNEVM`.
 * **[benchmarks.md](benchmarks.md)**: the suite is on master. Branch
   `benchmarks` adds more of nofib's and Sandmark's programs in 14 commits
-  from before heap-layout, not merged. M1 times what master has.
+  from before heap-layout, not merged. M1 times what master has. Master
+  took them in since: 510 programs at M10, of which it timed 258.
 * **[whole-program-optimization.md](whole-program-optimization.md)** (a note:
   native code, an optimising pipeline, profile-guided optimisation) is
   where M9 and anything beyond this plan's middle-end items would go.

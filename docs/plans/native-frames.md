@@ -46,6 +46,17 @@ plan's.
 
 The owner took every decision as recommended on 2026-10-12 (*Decisions*).
 
+**Done** (2026-10-20): M1 to M9, on branch `performance` and, since its
+rebase onto master `1dd139fee` that day, its commits `d79d9a1c3` to
+`417d27976`, with M9's record `a6a024ab1`. What M9 left was handed on by
+performance.md's M10 (2026-10-20), which measured it again on that tip:
+constant operands in the body, a closure call's argument in a register,
+`--jit-returns=call` as the default and tiering's counter at a call to
+[jit.md](jit.md); the bootstrap's collector and deep recursion's lost
+cycles, now measured, to [garbage-collector-v3.md](garbage-collector-v3.md);
+HOL's gap, the code's instructions, to [middle-end.md](middle-end.md) (each
+under *Left by the performance plan*).
+
 ## The request
 
 The owner, on 2026-10-12, starting this roadmap:
@@ -1864,7 +1875,8 @@ shared machine; the instructions are exact.
   (F1, F2). `runeopt` keeps its frames (performance D11 B).
 * **[garbage-collector-v3.md](garbage-collector-v3.md)** holds what is left
   of the collector, 23% of the bootstrap's cycles, which this plan does not
-  touch.
+  touch -- 34% after it (performance M10), and the walks of deep stacks
+  that M4's headers made dearer, under *Left by the performance plan*.
 * **[whole-program-optimization.md](whole-program-optimization.md)** is
   where inlining and the bytecode's volume would go (*What else stands
   between Rune and OCaml*).

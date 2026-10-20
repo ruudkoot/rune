@@ -15,8 +15,12 @@ performance.md's M3. B is to be revisited later; this file is where that
 starts.
 
 **Built:** A, extended, as M3 (`b168e117f`, merged into `performance` on
-2026-10-19). *What M3 built and found*, below, says what it gave and what
-building it taught.
+2026-10-19; `a6d3f8108` since `performance` was rebased onto master
+`1dd139fee` on 2026-10-20). *What M3 built and found*, below, says what it
+gave and what building it taught. performance.md was retired on 2026-10-20
+(its M10); B, functors compiled once as functions with a link-time
+expansion, was not started and stays here, with what to measure before it
+(*Before revisiting B*).
 
 ## What the Definition says
 
