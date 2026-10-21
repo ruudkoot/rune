@@ -2,11 +2,13 @@
 
 Written 2026-10-20 and reconciled after the rebase against
 `80694b6b7` on `origin/master` at `78192dfd9`, in `.worktrees/unit-testing`.
-The status table below records implementation progress. This continues
+All milestones P2.0–P2.17 are complete as of 2026-10-22: 281 scripts retired,
+nineteen explicit exceptions retained, and final acceptance recorded below.
+The status table records completion; the inventory and earlier checkpoints
+preserve the baseline and implementation history. This continues
 [unit-testing.md](unit-testing.md), particularly the
 unfinished parts of M13 and M14 and the drivers deferred by M10 and M11.
-Its inventory replaces the first roadmap's historical script counts as a
-description of what remains at this revision.
+Its ledger replaces the first roadmap's historical script counts.
 
 The result should be that SML owns test discovery, scheduling, scenarios,
 protocols, comparisons, expectations, limits and reporting. Calling an old
@@ -34,7 +36,7 @@ These are baseline results, not acceptance of ports implemented later.
 The native host inventory now contains 24 programs on each of six hosts;
 the first roadmap's 20-program shadow comparison remains historical evidence.
 
-The tracked inventory under `scripts/`, `tests/` and `tools/` contains
+The baseline tracked inventory under `scripts/`, `tests/` and `tools/` contained
 **288 files: 224 shell and 64 Python**, plus **12 AWK helpers**. The canonical
 per-file inventory is [migration.tsv](../../tests/runner/migration.tsv).
 It assigns every file a milestone, comparison contract and baseline Git blob;
@@ -111,10 +113,10 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | P2.0 | existing runner | Current inventory and reproducible comparison baseline | done 2026-10-20 |
 | P2.1 | P2.0 | Native-code checks and stress/sanitizer ways | done 2026-10-21 |
 | P2.2 | P2.0 | Census, simulator, layout and gcbench checks | done 2026-10-21 |
-| P2.3 | P2.0; P2.6 for host benchmark execution | Budgets and benchmark correctness | pending |
+| P2.3 | P2.0; P2.6 for host benchmark execution | Budgets and benchmark correctness | done 2026-10-21 |
 | P2.4 | P2.0 | Documentation consistency and law mutation checks | done 2026-10-21 |
-| P2.5 | P2.0 | Shared matrix model, probes and host laws | in progress: model and controller implemented |
-| P2.6 | P2.5 | Full Basis/benchmark matrix execution | pending |
+| P2.5 | P2.0 | Shared matrix model, probes and host laws | done 2026-10-21 |
+| P2.6 | P2.5 | Full Basis/benchmark matrix execution | done 2026-10-21 |
 | P2.7 | P2.1, P2.6 | Windows ways and final legacy VM/language runner retirement | done 2026-10-21 |
 | P2.8 | P2.0 | Build/dependency/unit/install/distribution scenarios | done 2026-10-21 |
 | P2.9 | P2.0; P2.6 where matrix execution is shared | Incremental edits and external corpora | done 2026-10-21 |
@@ -124,8 +126,8 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | P2.13 | P2.0; runtime pty support | Terminal scenarios and tester display checks | done 2026-10-21 |
 | P2.14 | relevant correctness ports and P2.6 | Measurement and analysis tools | done: 43 controllers retired; public SML measurement CLI |
 | P2.15 | P2.4, P2.6, P2.9 | Post-bootstrap generators | done: 25 producers retired; native/xc1/xc2 and full inventory agreement |
-| P2.16 | P2.8, P2.11; bootstrap design below | Build/provisioning/package tools | complete |
-| P2.17 | P2.1–P2.13; P2.14–P2.16 for extended completion | Retirement audit and final acceptance | pending |
+| P2.16 | P2.8, P2.11; bootstrap design below | Build/provisioning/package tools | done 2026-10-21 |
+| P2.17 | P2.1–P2.13; P2.14–P2.16 for extended completion | Retirement audit and final acceptance | done 2026-10-22 |
 
 ### P2.0 — Freeze the inventory and comparison baseline
 
@@ -408,7 +410,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
   files (or explicitly reviewed successors) remain in this inventory. Update
   both roadmaps and `docs/testing.md` with completed milestones and evidence.
 
-## Appendix A — Remaining tracked script inventory
+## Appendix A — Baseline tracked script inventory
 
 [migration.tsv](../../tests/runner/migration.tsv) is the complete, sorted
 per-file ledger. Its columns are path, language, owner, state, baseline blob,
@@ -1080,3 +1082,103 @@ payloads. The original full run records 19,237 PASS, two documented interrupt
 SKIP and that single failure. Supplying the missing payload makes the original
 compiler-error/timeout/missing-image status fixture pass unchanged. The complete
 default suite is repeated on the committed dependency correction.
+
+### P2.17 final acceptance, 2026-10-22
+
+Both completion boundaries are satisfied. The final 300-row ledger contains
+281 retired files and nineteen retained exceptions: nine bootstrap/setup
+helpers, two installers under test and eight independent Python oracles/peers.
+Every retirement names an existing SML implementation; there are no pending
+rows or unassigned new live scripts. The repository-wide audit separately
+accounts for 37 environment hooks, bug reproducers, upstream examples,
+independent example oracles and archived result/validation scripts outside
+the live inventory. Their provenance is preserved. No live Make, CI or
+controller caller executes a retired implementation. Remaining old command
+labels in captured reports and source/blob ledgers are historical evidence.
+
+SML owns the former Make-held assertions as well as script policy. Make retains
+build prerequisites and three compatibility adapters for generated docs,
+benchmark coverage and ISA checks, all invoking SML tools. OS launch, stack
+limits and native compilation remain thin adapters. Production bootstrap uses
+native MLton and the POSIX adapter before a Rune VM or target GMP configuration
+exists; the portable Rune adapter serves the post-bootstrap tool/SDK route.
+Native MSYS2-host bootstrap was not exercised.
+
+The accepted default check ran on clean commit `4f9065f5b`, in the separate
+`.worktrees/unit-testing-final` validation tree, with no `RUNE` override:
+
+```
+MLKIT=/home/ruud/.local/rune-hosts/mlkit-4.7.25/bin/mlkit \
+MLKIT_LIB=/home/ruud/.local/rune-hosts/mlkit-4.7.25/lib/mlkit \
+env --default-signal=PIPE make check JOBS=8
+```
+
+It passed 19,240/19,240 cases: 19,238 PASS and two documented native-interrupt
+SKIP results, zero failures, in 1488.6 s wall / 11416.6 s CPU. The skips are
+`lang/native/rt.interrupt_self` and `lang/native-cycles/rt.interrupt_self`;
+native code does not yet poll interrupts (`docs/native.md`). The fresh
+measurement target also rebuilt its deliberately removed report payload through
+the corrected prerequisite edge; all six focused status/canary cases pass.
+
+The matrix and runtime profiles ran on frozen `2dc91662d` in
+`.worktrees/unit-testing`. Its compiler, runtime, libraries, generator and
+production-tool sources are identical to `4f9065f5b`. The intervening commits
+only correct four test fixtures (JSON quoting, private cache-fault data and
+two terminal scripts' prompt synchronization), the measurement prerequisite
+and roadmap evidence. Terminal golden screens are unchanged. The branch was
+fast-forwarded to the exact accepted commit after every consumer finished;
+the final documentation commit is not claimed as another full test run.
+
+| Acceptance route | Result |
+| --- | --- |
+| `bin/rune-matrix -j 6 --configs all,xc2`, including Rune | 8574/8574: 7716 PASS, 858 named UNAVAILABLE skips; all eighteen strict stale audits and the aggregate report PASS; 8527.3 s wall |
+| Actual Windows language/runtime, four VMs / six execution ways and ConPTY | 2344 PASS and two WSL transport failures; exact failed selections and dependencies rerun 10/10 PASS |
+| `bin/rune-matrix --configs rune,windows -j 2`, JIT all | 2386/2386 PASS on Rune and all four Windows configurations |
+| Windows DAP and kernel protocol sessions | both commands exit 0; frame/exception/output/pause and execute/shutdown assertions PASS |
+| Portability, including 32-bit x86 and big-endian PowerPC plus image/count checks | 3959/3959 PASS |
+| Register ASan/UBSan, interpreter/JIT/optimized/deoptimization ways | 1826/1826 PASS |
+| Native ASan/UBSan, with native execution enabled | 847 PASS, one documented interrupt SKIP |
+| GC stress, original language interval 101 / Basis interval 1009 | 2994/2994 PASS |
+| Native GC stress, including native Basis | 847 PASS, one documented interrupt SKIP |
+| Library suites on all six actual native hosts | 156/156 suite verdicts PASS, preserving existing HOST-BUG deviations |
+
+The host versions are MLton 20241230, SML/NJ 110.99.9 in 64 and 32 bits,
+SML/NJ 2026.2, Poly/ML 5.9.2 and pinned MLKit 4.7.25. The matrix covers Rune,
+six native, six xc1 and five xc2 configurations. Named absent structures are
+reported as unavailable cases; they are not missing-compiler omissions.
+Native MLton and self-hosted compilation produce identical bytecode for all
+twelve controllers, also matching the public payloads after the final check.
+The runner SHA256 is
+`de81d66f3843806306280cce68f94f50d7e4dd5710af4c8361176b03a94a1820`.
+
+Coverage comparison preserves all 17,230 unchanged baseline leaf IDs. Only
+25 explicitly replaced opaque/scenario groups disappear; their replacements
+add 2010 individually reported jobs, taking the listed check tier from 17,255
+to 19,240. Nine representative compiler/runtime/Basis/runner/build input
+changes each select all 19,240 jobs. A recursion-fixture change selects all
+ten low-level JIT cases. Wrong Int64 expectations fail all eight execution
+cases; `--failed` reruns pass 14/14, explicit `--keep` checks pass 6/6, and
+verified SIGINT cancellation leaves no owned descendants. Controller faults,
+poisoned caches, failed producers, corrupt protocols and packaging records
+retain their milestone evidence; no assertion was weakened to obtain a pass.
+
+Two preliminary full runs are retained as failures: 19,234 PASS / two SKIP /
+four fixture failures before the fixture corrections, then 19,237 PASS / two
+SKIP / the missing measurement dependency before its correction. The early
+cancelled run remains INCOMPLETE. Windows' two original failures contain
+`WSL ERROR UtilAcceptVsock:273: accept4 failed 110`; their successful exact
+reruns are separate receipts. Sandbox-limited socket/PTY, Windows, 32-bit
+SML/NJ, debugger and cross-machine checks used the outside-sandbox route.
+Existing host deviations remain explicit. P2.14's live HOL benchmark remains
+unvalidated because its installed buildheap wrapper names a removed draft VM;
+its failed receipt is retained, alongside the accepted controller fixtures.
+No performance claim is inferred from these busy-machine acceptance timings.
+
+Raw results and bounded receipts are retained under
+`tests/out/unit-testing-part2/p2.17`: `accepted-matrix.json`,
+`matrix-all-receipt`, `matrix-all/matrix/report.md`, `retirement-audit.json`,
+`baseline-case-coverage.json`, profile logs/receipts and `final-validation`.
+The latter copies the final full-check receipt, controller byte identities and
+native library-host results from `.worktrees/unit-testing-final` without
+following fixture symlinks. The original validation tree also remains intact.
+These generated receipts are local evidence, not committed result archives.

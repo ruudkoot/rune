@@ -23,10 +23,14 @@ What it rests on:
 
 ## Status
 
-The continuation is [unit-testing-part2.md](unit-testing-part2.md): it maps
-the remaining scripts at `f1b8fb9a` to migration milestones, with dependencies,
-retirement checks and explicit bootstrap/oracle exceptions. The status and
-script census below retain this roadmap's implementation history.
+The continuation, [unit-testing-part2.md](unit-testing-part2.md), is complete
+through P2.17 as of 2026-10-22. It retires 281 shell/Python/AWK scripts and
+retains nineteen explicit bootstrap, installer and independent-oracle
+exceptions. Final acceptance passed 19,240 default-check cases (two documented
+skips) and 8574 full-matrix cases (858 named unavailable skips), with no
+failures. The continuation records exact source states, platform checks and
+validation limits. The status and script census below retain this roadmap's
+implementation history.
 
 | Milestone | What | State |
 |---|---|---|
@@ -2140,4 +2144,10 @@ production build/package scripts with the native/bootstrap and portable SML
 entrypoints of `bin/rune-build`. GMP-free/GMP bootstrap, all cross runtimes,
 relocated SML SDK relinking and exact archive-member comparisons pass. The
 baseline ledger now has 281 retired targets and nineteen retained exceptions;
-P2.17 records the final whole-project acceptance.
+P2.17 records the final whole-project acceptance, now complete. The accepted
+default check ran on `4f9065f5b`; the frozen matrix/platform source differs only
+in the subsequently corrected test fixtures and measurement build dependency.
+All twelve native/self-hosted controller payloads agree byte for byte. Actual
+Windows, portability, sanitizer, stress and native library-host checks are
+recorded with their skips, existing deviations and WSL transport reruns in the
+continuation. The earlier deferred/remaining descriptions are historical.

@@ -135,20 +135,23 @@ hosts (`levels/*`, `register/*`, `jit/*`, `units/*`, `units-stack/*`,
 `flexrec/*`, `compiler/*`, `limits/*`, `gc-log/*`, `colour/*`, and the scenarios of
 `tests/deps`, `tests/dynamic`, `tests/buildfile` and `tests/units` as
 `scenario/*`; `tests/runner/tools.sml`), and the protocol suites (`repl/*`,
-`diagnostics/*`, `serve/*` in SML; `repl-protocol/*`, `dap/*`, `kernel/*`,
-`incremental/*` running their drivers a case at a time;
-`tests/runner/protocols.sml`); the rest of `make check` is a step each, an
-opaque `make` of its target (`tests/runner/main.sml`): the steps that run
-the programs of `tests/lang` from the root of the tree share the pool
-`lang` and run one at a time, and the others run beside them. Five
+`diagnostics/*`, `serve/*`, `repl-protocol/*`, `dap/*`, `kernel/*`,
+`incremental/*`; `tests/runner/protocols.sml`). Scenario and protocol policy
+is Standard ML. Heap, benchmark, native, terminal and low-level checks also
+have individual SML jobs. Make builds prerequisites; the three retained
+compatibility jobs for generated docs, benchmark coverage and ISA checks
+invoke SML tools. Jobs declare shared resources and producer dependencies
+to the same scheduler. Five
 canaries, tests that fail on purpose (an exit with 1, a run past its time,
 a crash, a flood of output and a leaked process), pass only when the
 runner sees each fault for what it is; they run in every `make check`,
 since the runner is built by the compiler it tests.
 
-The remaining script migrations are tracked by
+The completed script migration is recorded by
 [the part-two roadmap](plans/unit-testing-part2.md) and
-`tests/runner/migration.tsv`. `runner/migration-inventory` rejects unassigned
+`tests/runner/migration.tsv`: 281 retired files and nineteen retained
+bootstrap/setup, installer and independent-oracle/peer exceptions.
+`runner/migration-inventory` rejects unassigned
 shell/Python/AWK files and invalid retirements; `runner/migration-faults`
 plants omissions, duplicates and missing replacements. Both run in `check`
 and `quick`. `bin/rune-test migration-baseline DIR` records the source state,
@@ -161,8 +164,7 @@ and cache policy in `tests/runner/nativevm.sml`. DWARF, binutils, gdb and lldb
 requirements are recorded separately. Stack, register, JIT and native stress
 and sanitizer runs use the language suite's way model; select them with
 `--tier test-stress`, `test-register-asan`, `test-native-stress` or
-`test-native-asan`. The Basis stress selections still call the matrix driver
-until its P2.6 replacement.
+`test-native-asan`. The Basis stress selections use the SML matrix controller.
 
 Census, simulator, layout, gcbench and JIT-dump checks are `heap/*` cases
 (`tests/runner/heap.sml`). Trace producers publish a successful recipe before
@@ -628,7 +630,7 @@ bytecode, controller crash or failure before the first law fails the job.
 The property seed and environment are inherited; the default law idle limit
 is 30 seconds and the sample count is 20 per file.
 
-The remaining benchmark correctness and deterministic-budget drivers use
+Benchmark correctness and deterministic-budget drivers use
 `bin/rune-bench-check` and `bin/rune-budget`. `suite NAME` selects the typed
 case contract, `catalogue` accepts the former profile/config/filter options,
 `smoke` runs routine correctness, `extra` includes the independent peers and
@@ -714,8 +716,8 @@ and `bench-stats` use the public SML tool. Timing selections are explicitly
 exclusive (`bin/rune-test --tier measurement-runs`) and stay outside `make check`.
 Independent MMU scan vectors and measurement fault assertions remain ordinary
 checks. Captured reports keep their historical measurement command labels;
-current CLI examples use the SML modes. The generator and build/package ports
-remain P2.15 and P2.16 until their recorded acceptance is complete.
+current CLI examples use the SML modes. Generator and build/package ports
+completed P2.15 and P2.16; their contracts and evidence are in the roadmap.
 
 Post-bootstrap generators use `bin/rune-generate`, with standalone inventory
 queries through `bin/rune-inventory`. Their modes and data/oracle contracts are
@@ -724,7 +726,7 @@ matrix selections when auditing unused deviations: its actual labels distinguish
 an unavailable host case from a stale expectation. The generator acceptance
 record retains full source/record comparisons, concurrent isolated runs, poisoned
 input refusal and all generated-library results. Build/package bootstrap conversion
-is P2.16; final whole-project acceptance is P2.17.
+and whole-project acceptance completed P2.16 and P2.17.
 
 Production build and packaging policy uses `bin/rune-build`, compiled by the
 native MLton before target GMP configuration or VM creation. Its shared models
@@ -745,3 +747,16 @@ modes. The recursion cases retain a 1 MiB OS stack through a thin `ulimit`
 adapter; SML owns arguments, deadlines and byte comparisons. The focused
 selection passes 20/20 including canaries and eight literal guard fault vectors.
 Make retains the C compilation graph and the compatibility target names.
+
+Final acceptance on 2026-10-22 passed the default `make check JOBS=8` on clean
+`4f9065f5b`, without a `RUNE` override: 19,238 PASS, two documented native
+interrupt skips and zero failures. The complete `all,xc2` matrix passed 7716
+cases with 858 explicit unavailable skips, including all eighteen strict
+stale-deviation audits and its report. Platform acceptance covers actual
+Windows/ConPTY/DAP/kernel, portability, register/native sanitizers, GC stress
+and all six native library hosts. All twelve public controller payloads match
+native MLton and self-hosted compilation byte for byte. The
+[P2.17 acceptance record](plans/unit-testing-part2.md#p217-final-acceptance-2026-10-22)
+identifies exact tested states, retained failures and receipts, Windows
+transport reruns, existing host deviations and the unvalidated live HOL
+benchmark. The historical timing comparison above is a separate experiment.
