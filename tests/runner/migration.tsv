@@ -41,7 +41,7 @@ scripts/perf-repl.sh	shell	P2.14	pending	a343ba5b3dfcddba4d598f321fa976860212ed6
 scripts/perf-units.sh	shell	P2.14	pending	e95807fa1a9bdd05ee1b8f077501eb9f070d8e23	-	captured-measurements-and-report-schemas
 scripts/record-vm-build.py	python	P2.16	pending	3c0bf10b05101ebfd15e951c8b4d4b6c49cd8b43	-	clean-bootstrap-configs-and-package-members
 scripts/run-benchmarks.sh	shell	P2.3	pending	7d58f16b0efb6dfb02fe129cdce63c3f5ab27e84	-	budget-catalogue-and-fault-verdicts
-scripts/runevm-native.sh	shell	P2.1	pending	a6e57a7ba108a2408c1c1467cabb1055a3958d7c	-	native-verdicts-and-bytes
+scripts/runevm-native.sh	shell	P2.1	retired	a6e57a7ba108a2408c1c1467cabb1055a3958d7c	tests/runner/nativevm.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
 scripts/runtime_inputs.py	python	P2.16	pending	cd7e27c4e1228916a9b14b96bf6a42424f045c70	-	clean-bootstrap-configs-and-package-members
 scripts/setup-mlton.sh	shell	P2.16	pending	cb9b96789797186182ddff8c391beb939f5e6523	-	clean-bootstrap-configs-and-package-members
 scripts/smlnj-dev-root.sh	shell	Retain: bootstrap/setup	retained	b2e448f48ad14282f1c65077e21192c04c3337ff	-	bootstrap/setup
@@ -265,12 +265,12 @@ tests/lib/jupyter/interop.sh	shell	P2.12	pending	7d9b70aa15ed2a98baf0b900a40f8d0
 tests/lib/jupyter/interop/client.py	python	Retain: independent oracles/peers	retained	ac40165b11ea2b033bdd40a8bd8bd1d0f97eeaff	-	independent oracles/peers
 tests/lib/zmtp/interop.sh	shell	P2.12	pending	1a5b3e8fe95ce694de03c59e03da088877325f38	-	protocol-transcripts-and-peer-verdicts
 tests/lib/zmtp/interop/peer.py	python	Retain: independent oracles/peers	retained	6b7878b38144398b68557d7dc66bd40aec9b6a56	-	independent oracles/peers
-tests/opt/rbcasm.awk	awk	P2.1	pending	144862d76485522be00270aeb46eaed01feecad4	-	native-verdicts-and-bytes
-tests/opt/real-g.awk	awk	P2.1	pending	ed5408a3cf34ce36787112ef67e3d8478770765f	-	native-verdicts-and-bytes
-tests/opt/run-bootstrap.sh	shell	P2.1	pending	dd10a7cf51c3c348e81092cb6b98ead14830f7f5	-	native-verdicts-and-bytes
-tests/opt/run-counts.sh	shell	P2.1	pending	99ceceeab49af9327187f1409c339bdaca761ab4	-	native-verdicts-and-bytes
-tests/opt/run-debug.sh	shell	P2.1	pending	c776b2e9d2267cdf73cab59ca58b9ecab160b902	-	native-verdicts-and-bytes
-tests/opt/run-opt-tests.sh	shell	P2.1	pending	976c36abe50cda8f70f4fedd297967463d3b6819	-	native-verdicts-and-bytes
+tests/opt/rbcasm.awk	awk	P2.1	retired	144862d76485522be00270aeb46eaed01feecad4	tests/runner/bytecode.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
+tests/opt/real-g.awk	awk	P2.1	retired	ed5408a3cf34ce36787112ef67e3d8478770765f	tests/runner/bytecode.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
+tests/opt/run-bootstrap.sh	shell	P2.1	retired	dd10a7cf51c3c348e81092cb6b98ead14830f7f5	tests/runner/nativechecks.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
+tests/opt/run-counts.sh	shell	P2.1	retired	99ceceeab49af9327187f1409c339bdaca761ab4	tests/runner/nativechecks.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
+tests/opt/run-debug.sh	shell	P2.1	retired	c776b2e9d2267cdf73cab59ca58b9ecab160b902	tests/runner/nativechecks.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
+tests/opt/run-opt-tests.sh	shell	P2.1	retired	976c36abe50cda8f70f4fedd297967463d3b6819	tests/runner/nativechecks.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
 tests/perf/gen.py	python	P2.15	pending	7922ecf640ba37065daa9b8ef01b3c0c88796624	-	generated-bytes-and-source-order
 tests/perf/run-perf.sh	shell	P2.3	pending	09065e7aced24596615dc8005eaa742ecb978742	-	budget-catalogue-and-fault-verdicts
 tests/register/jit-dump.py	python	P2.2	pending	49148a32f0199e5a275547acb1681daa1400d7d5	-	trace-records-and-verdicts

@@ -302,12 +302,10 @@ struct
                  [("off", ["--jit=off"]), ("opt", ["--jit=all", "--jit-tier=2"])]
     end
 
-  (* a program of tests/register or tests/opt in the assembler's text, as
-     bytecode (tests/opt/rbcasm.awk) *)
+  (* A register program in the independent fixture assembler's text. *)
   fun assemble (rasm, rbc) =
-    exec {cmd = ["/bin/sh", "-c", "printf \"$(awk -v opdefs=runtime/register/regs.def -v primdefs=runtime/prims.def "
-                                  ^ "-f tests/opt/rbcasm.awk " ^ rasm ^ ")\" > " ^ rbc],
-          dir = NONE, stdin = "", stdout = "", stderr = "", timeout = 0} = 0
+    ((write (rbc, BytecodeFixture.assemble {opdefs = "runtime/register/regs.def", primdefs = "runtime/prims.def", listing = rasm}); true)
+     handle BytecodeFixture.Bad message => (say ("FAIL assembler: " ^ message ^ "\n"); false))
 
   fun jitEveryOpcode () =
     let
@@ -693,12 +691,11 @@ struct
                   (builds "runeopt"))
       val () = runAll ("facts", ["--facts", "bin/rune.stack.rbc", "bin/runedoc.stack.rbc"])
       val () = runAll ("disasm-rune", ["--disasm", "bin/rune.stack.rbc"])
-      val _ = exec {cmd = ["/bin/sh", "-c", "printf \"$(sed -n 's/^# rbc header //p' runtime/stack/opcodes.def)\\001\\000\\000\\000\\003\\360\\377\\377\\377\" > "
-                                            ^ out ^ "/bad.rbc"], dir = NONE, stdin = "", stdout = "", stderr = "", timeout = 0}
+      val () = write (out ^ "/bad.rbc", BytecodeFixture.header "runtime/stack/opcodes.def"
+                         ^ BytecodeFixture.u32 1 ^ String.implode (List.map Char.chr [3, 240, 255, 255, 255]))
       val () = runAll ("refused", ["--check", out ^ "/bad.rbc"])
-      val _ = exec {cmd = ["/bin/sh", "-c", "printf \"$(awk -v opdefs=runtime/stack/opcodes.def -v primdefs=runtime/prims.def "
-                                            ^ "-f tests/opt/rbcasm.awk tests/opt/every-opcode.rasm)\" > " ^ out ^ "/every-opcode.rbc"],
-                    dir = NONE, stdin = "", stdout = "", stderr = "", timeout = 0}
+      val () = write (out ^ "/every-opcode.rbc", BytecodeFixture.assemble
+                     {opdefs = "runtime/stack/opcodes.def", primdefs = "runtime/prims.def", listing = "tests/opt/every-opcode.rasm"})
       fun translate (n, prog) =
         (List.app (fn c => if exec {cmd = ["bin/runeopt-" ^ c, "-S", prog, "-o", f (n, c, ".s")], dir = NONE, stdin = "",
                                     stdout = f (n, c, ".log"), stderr = f (n, c, ".log"), timeout = 0} <> 0

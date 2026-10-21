@@ -197,7 +197,7 @@ reader of the count. `vm_fatal` and running out of memory end the program
 without printing it. `r15` is reloaded after a primitive answers with a new
 world and when a program starts from an image.
 
-`tests/opt/run-counts.sh` holds `--count` to `runevm-stack`'s for every program of
+`tests/runner/nativechecks.sml` holds `--count` to `runevm-stack`'s for every program of
 `tests/lang`, and the Basis Library suite runs as `rune:opt`, so the bytes
 and objects agree only if every allocation is made as the interpreter makes
 it.
@@ -288,7 +288,7 @@ Its limits:
 * **Backtraces.** Since the frames are the VM's, `bt` shows only the
   innermost SML function.
 
-`tests/opt/run-debug.sh` checks the line table as `llvm-dwarfdump` and
+`tests/runner/nativechecks.sml` checks the line table as `llvm-dwarfdump` and
 `readelf` read it against the positions `runeopt --disasm` prints, checks
 `addr2line` on every function, and runs gdb and lldb.
 
@@ -311,7 +311,7 @@ Its limits:
 
 ## Tests
 
-* **`make test-opt`** (`tests/opt/run-opt-tests.sh`):
+* **`make test-opt`** (`tests/runner/nativechecks.sml`):
   * the loader's refusals with its messages, and the contract's with
     `runeopt`'s;
   * `--disasm` against `runevm-stack --disasm`;

@@ -25,11 +25,9 @@ def run(body, data=None, message=None, expected=b''):
     rbc = source.with_suffix('.rbc')
     header = '' if data is None else 'const mag string "'+'a'*len(data)+'"\n'
     source.write_text(header+'function main 1\n'+body+'\nHALT\n')
-    assembled = subprocess.check_output(['awk','-v','opdefs=runtime/stack/opcodes.def',
-        '-v','primdefs=runtime/prims.def','-f','tests/opt/rbcasm.awk',str(source)])
-    assert assembled.startswith(b'RUNE') and re.fullmatch(rb'(\\[0-7]{3})+',assembled[4:])
-    program = bytearray(b'RUNE')
-    program.extend(int(b,8) for b in re.findall(rb'\\([0-7]{3})',assembled[4:]))
+    subprocess.run(['bin/rune-native-check','native-assemble','runtime/stack/opcodes.def',
+        'runtime/prims.def',str(source),str(rbc)],check=True)
+    program = bytearray(rbc.read_bytes())
     if data is not None:
         # The assembler only quotes newlines. Replace the equally long ASCII
         # placeholder in its first constant with arbitrary binary bytes.

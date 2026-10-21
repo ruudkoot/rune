@@ -153,6 +153,16 @@ plants omissions, duplicates and missing replacements. Both run in `check`
 and `quick`. `bin/rune-test migration-baseline DIR` records the source state,
 tool identities, callers and tier/profile selections before a migration.
 
+Native generator checks are individual `native/opt/*` and `native/code/*`
+cases (`tests/runner/nativechecks.sml`), with producer edges for the programs
+they inspect. `bin/runevm-native` is a thin entrypoint to the SML translation
+and cache policy in `tests/runner/nativevm.sml`. DWARF, binutils, gdb and lldb
+requirements are recorded separately. Stack, register, JIT and native stress
+and sanitizer runs use the language suite's way model; select them with
+`--tier test-stress`, `test-register-asan`, `test-native-stress` or
+`test-native-asan`. The Basis stress selections still call the matrix driver
+until its P2.6 replacement.
+
 ### Before and after
 
 `make check` before the runner was 32 steps run one after another

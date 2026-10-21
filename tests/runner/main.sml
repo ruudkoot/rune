@@ -18,9 +18,8 @@
      paths (tests/out/rt.*.img, basis.*.tmp). They run one at a time, each
      on most of the machine;
    - the pool `heap_test`: the steps that build and run build/heap_test;
-   - test-opt reads the stack compiler's bytecode of tests/lang in tests/out
-     and of the Basis suite in tests/out/matrix/rune, and test-native-steps
-     the first: they wait for them.
+   Native checks are individual SML jobs with producer edges for the
+   bytecode of tests/lang and the Basis suite (tests/runner/native.sml).
 
    The profiles' extras that run tests/basis/run-matrix.sh share the pool
    `matrix`, for its report.
@@ -88,11 +87,7 @@ struct
 
   val make =
     Test.describe "make"
-      [lang ("test-opt", [], ["compile/stack-done", "basis-compile/stack-done"],
-             langFiles @ perfFiles @ ["tests/opt/*", "tests/runtime/*", "tests/basis/*", "examples/*"]),
-       alone ("check-units-steps", ["check-units"], ["tests/units/*"]),
-       lang ("test-native-steps", [], ["compile/stack-done"],
-             langFiles @ ["tests/opt/*", "tests/basis/*", "tests/runtime/*", "examples/nqueens.sml"]),
+      [alone ("check-units-steps", ["check-units"], ["tests/units/*"]),
        step ("test-register-jit-steps", {cpus = 1, memory = 1000, pools = [], after = []}, [],
              ["tests/register/*", "tests/lang/rt.deeprec_stack.*"]),
        step ("test-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, [],
@@ -138,15 +133,11 @@ struct
                             tags = "nightly" :: tags, covers = []})
   val extras =
     Test.describe "make"
-      [extra ("test-register-asan", ["vm"]),
-       extra ("test-stress", ["vm"]),
-       Test.requires ["windows"] (extra ("test-windows", ["vm", "windows"])),
+      [Test.requires ["windows"] (extra ("test-windows", ["vm", "windows"])),
        Test.requires Lang.hosts (extra ("matrix-quick", ["library"])),
        (* the nightly's own (docs/testing.md, Tiers, profiles and what changed):
           every configuration of the matrix, and the native code under stress *)
-       Test.requires Lang.hosts (extraFor ("matrix", [], 7200)),
-       extra ("test-native-stress", []),
-       extra ("test-native-asan", [])]
+       Test.requires Lang.hosts (extraFor ("matrix", [], 7200))]
 
   (* what tests require of the machine (D18; docs/testing.md, Requirements),
      with scripts/doctor.sh's hints *)
@@ -161,7 +152,7 @@ struct
      {name = "windows", probe = "sh tests/windows-dir.sh && command -v x86_64-w64-mingw32-gcc",
       hint = "Windows under WSL with interop (RUNE_WINDOWS_DIR names a directory there) and mingw-w64 (apt: gcc-mingw-w64-x86-64 gcc-mingw-w64-i686)"}]
     @ List.map (fn h => {name = h, probe = "test -x bin/rune-" ^ h, hint = "run: make hosts, then make " ^ h}) Lang.hosts
-    @ Hosts.capabilities
+    @ Hosts.capabilities @ Native.capabilities
 
   (* each file of expectations read by the one engine (docs/testing.md,
      Expectations): it parses, and its skips name programs that are there.
@@ -195,7 +186,7 @@ struct
        expectations ("lib-deviations", "tests/lib/deviations.txt", NONE),
        expectations ("quarantine", "tests/runner/quarantine.txt", NONE)]
 
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws
@@ -204,6 +195,9 @@ val () =
   case CommandLine.arguments () of
     ["laws-one", rbc, st] => Laws.one (rbc, st)
   | args =>
+      case Native.command args of
+        SOME f => f ()
+      | NONE =>
       case Migration.command args of
         SOME f => f ()
       | NONE =>

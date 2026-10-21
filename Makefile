@@ -552,15 +552,8 @@ vm-asan: bin/runevm-stack-asan bin/runevm-asan
 
 # The language suite on runtime/register built with the sanitizers (not part of make
 # check; run for every change to runtime/register, as the ASan runevm-stack is for the VM).
-test-register-asan: bin/runevm-asan $(RUNE)
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-asan --out tests/out/register-asan
-	RUNEVM_JIT=all sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-asan --out tests/out/register-asan-jit
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-asan" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-asan-opt
-	chmod +x bin/runevm-asan-opt
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-asan-opt --out tests/out/register-asan-opt
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-asan" --jit=all --jit-tier=2 --deopt-stress=1 "$$@"\n' > bin/runevm-asan-deopt
-	chmod +x bin/runevm-asan-deopt
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-asan-deopt --out tests/out/register-asan-deopt
+test-register-asan: bin/runevm-asan $(RUNE) bin/rune-test
+	$(RUNE_TEST) --tier test-register-asan
 
 bin/runevm-stack-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p bin
@@ -1308,8 +1301,8 @@ test-laws-hosts: $(RUNEDOC) manifests
 
 # The native code generator's own tests (tests/opt): after the suites, whose
 # programs it checks and disassembles.
-test-opt: $(RUNEOPT) $(RUNE) vm build/librune.a bin/rune.stack.rbc bin/runedoc.stack.rbc
-	sh tests/opt/run-opt-tests.sh -j $(JOBS) --runeopt $(RUNEOPT) --rune $(RUNE_STACK) --vm $(RUNEVM)
+test-opt: $(RUNEOPT) $(RUNE) vm build/librune.a bin/rune.stack.rbc bin/runedoc.stack.rbc bin/rune-native-check bin/rune-test
+	RUNEOPT=$(RUNEOPT) $(RUNE_TEST) --tier test-opt
 
 # Deterministic budgets on what `runevm --count` reports, for benchmark
 # programs, the compiler's compiles (hello, the bootstrap, programs that
@@ -1328,73 +1321,42 @@ perf-check: $(RUNE) bin/runedoc vm bin/rune.rbc bin/runedoc.rbc bin/rune.stack.r
 # (bin/rune names bin/runevm outright), or every compile would be quadratic too.
 GC_STRESS ?= 101
 GC_STRESS_BASIS ?= 1009
-test-stress: $(RUNE) vm | build/.doctor-check
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-stack" --nursery 0 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stack-stress
-	chmod +x bin/runevm-stack-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --nursery 0 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stress
-	chmod +x bin/runevm-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --nursery 4096 --nursery-max 0 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-jit-stress
-	chmod +x bin/runevm-jit-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 --nursery 4096 --nursery-max 0 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-opt-stress
-	chmod +x bin/runevm-opt-stress
-	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-stress
-	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-stress --out tests/out/register-stress
-	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-jit-stress --out tests/out/register-jit-stress
-	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-opt-stress --out tests/out/register-opt-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc low-pause --jit=all --nursery 4096 --gc-stress "$${RUNE_GC_STRESS:-1}" --gc-stress-cycles "$$@"\n' > bin/runevm-jit-cycles
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc low-pause --jit=all --jit-tier=2 --nursery 4096 --gc-stress "$${RUNE_GC_STRESS:-1}" --gc-stress-cycles "$$@"\n' > bin/runevm-opt-cycles
-	chmod +x bin/runevm-jit-cycles bin/runevm-opt-cycles
-	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-jit-cycles --out tests/out/register-jit-cycles
-	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-opt-cycles --out tests/out/register-opt-cycles
-	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 \
-	  RUNE=$(abspath $(RUNE_STACK)) RUNEVM="$(ROOT)/bin/runevm-stack-stress" \
-	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
+test-stress: $(RUNE) vm bin/rune-test | build/.doctor-check
+	GC_STRESS_BASIS=$(GC_STRESS_BASIS) $(RUNE_TEST) --tier test-stress
 
 # ------------------------------------------------------------- native code
 # The suites with every program translated by runeopt and run as native
 # code (docs/native.md, Tests). bin/runevm-native takes what runevm-stack takes and
-# does so (scripts/runevm-native.sh), keeping each translation by the checksum
+# does so (tests/runner/nativevm.sml), keeping each translation by the checksum
 # of its bytecode, so every runner takes it as --vm. test-native runs
 # tests/lang (tests/opt-skip.txt lists what native code does not do yet, and
 # why) and the Basis Library suite (the rune:opt configuration) that way,
 # checks that every program of tests/lang counts what runevm-stack counts, that
 # the compiler, translated, compiles itself to bin/rune.stack.rbc, and that the
 # debug information of those programs and the compiler is their line table
-# (tests/opt/run-debug.sh), and gdb and lldb stop where it says. Programs of
+# (tests/runner/nativechecks.sml), and gdb and lldb stop where it says. Programs of
 # runeopt are for Linux on x86-64: elsewhere it says so and does nothing.
 NATIVE_HOST := $(shell [ "$$(uname -s) $$(uname -m)" = "Linux x86_64" ] && echo yes)
 
-bin/runevm-native: scripts/runevm-native.sh
-	@mkdir -p bin
-	cp scripts/runevm-native.sh $@
+NATIVE_VM_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/nativevm.sml tests/runner/nativevm-main.sml
+bin/runevm-native.rbc: $(RUNE) $(NATIVE_VM_SRCS) manifests
+	$(RUNE) --library test/runner --library digest $(NATIVE_VM_SRCS) -o $@
+bin/runevm-native: bin/runevm-native.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/runevm-native.rbc" "$$d/.." "$$@"\n' > $@
 	chmod +x $@
 
 ifeq ($(NATIVE_HOST),yes)
 # test-native-steps reads the stack compiler's bytecode of every program of
 # tests/lang in tests/out, which the runner's tier makes first.
-test-native: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune.stack.rbc bin/rune-test | build/.doctor-native
-	$(RUNE_TEST) --tier test-native compile/stack-done
-	@$(MAKE) --no-print-directory test-native-steps
-test-native-steps: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune.stack.rbc | build/.doctor-native
-	@$(MAKE) --no-print-directory check-templates
-	skip=" $$(sh tests/skipped.sh tests/opt-skip.txt native | tr '\n' ' ') "; \
-	  sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do n=$$(basename $$t .sml); case $$skip in *" $$n "*) ;; *) echo tests/out/$$n.rbc ;; esac; done)
-	RUNE_HEAP=$(RUNE_HEAP) sh tests/opt/run-bootstrap.sh
-	@mkdir -p tests/out/opt-debug
-	$(RUNE_STACK) examples/nqueens.sml -o tests/out/opt-debug/nqueens.rbc
-	sh tests/opt/run-debug.sh -j $(JOBS) --debuggers tests/out/opt-debug/nqueens.rbc bin/rune.stack.rbc \
-	  $$(for t in tests/lang/*.sml; do echo tests/out/$$(basename $$t .sml).rbc; done)
+test-native: bin/runevm-native bin/runeopt-mlton bin/rune-native-check build/librune.a $(RUNE) vm bin/rune.stack.rbc bin/rune-test | build/.doctor-native
+	$(RUNE_TEST) --tier test-native
+# Compatibility entry point for the native generator's count/debug/bootstrap checks.
+test-native-steps: bin/runevm-native bin/runeopt-mlton bin/rune-native-check build/librune.a $(RUNE) vm bin/rune.stack.rbc bin/rune-test | build/.doctor-native
+	$(RUNE_TEST) 'native/code/*'
 
-# The native suite with a collection before every GC_STRESS-th allocation, which
-# is what finds an address of the heap that the code keeps across a call; and
-# with a runtime built with the address and undefined behaviour sanitizers.
-# Neither is part of make check.
-test-native-stress: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm | build/.doctor-native
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-native" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-native-stress
-	chmod +x bin/runevm-native-stress
-	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-native-stress --skip tests/opt-skip.txt
-	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 RUNE=$(abspath $(RUNE_STACK)) \
-	  RUNEVM_OPT="$(ROOT)/bin/runevm-native-stress" sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
+# Extra stress ways use the same cases and limits as the normal native way.
+test-native-stress: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune-test | build/.doctor-native
+	GC_STRESS_BASIS=$(GC_STRESS_BASIS) $(RUNE_TEST) --tier test-native-stress
 
 ASAN_CFLAGS := -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer
 
@@ -1407,11 +1369,9 @@ build/asan/librune.a: $(RT_SRCS) runtime/sys/sys_$(SYS).c runtime/native/native.
 	$(AR) rcs $@ build/asan/obj/*.o
 	rm -rf tests/out/opt-cache-asan
 
-test-native-asan: bin/runevm-native bin/runeopt-mlton build/asan/librune.a $(RUNE) vm | build/.doctor-native
-	printf '#!/bin/sh\nexec $(CC) -fsanitize=address,undefined "$$@"\n' > build/asan/cc
-	chmod +x build/asan/cc
-	RUNEOPT_RUNTIME="$(ROOT)/build/asan" RUNEOPT_CC="$(ROOT)/build/asan/cc" RUNEOPT_CACHE="$(ROOT)/tests/out/opt-cache-asan" \
-	  sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-native --skip tests/opt-skip.txt
+test-native-asan: bin/runevm-native bin/runeopt-mlton build/asan/librune.a $(RUNE) vm bin/rune-test | build/.doctor-native
+	$(RUNE_TEST) --tier test-native-asan
+
 else
 test-native test-native-steps test-native-stress test-native-asan:
 	@echo "$@: runeopt makes programs for Linux on x86-64, and this is not one: nothing to test"
@@ -1560,13 +1520,24 @@ check test test-all test-opt test-native test-register test-register-jit test-st
 RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/sh.sml \
                tests/runner/hosts.sml tests/runner/libhosts.sml tests/runner/hostchecks.sml \
                tests/runner/migration.sml \
+               tests/runner/children.sml tests/runner/bytecode.sml tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativefaults.sml tests/runner/native.sml \
                tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/portability.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
-                   $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml)
-	$(RUNE) --library test/runner --library json $(RUNNER_SRCS) -o $@
+                   $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
+	$(RUNE) --library test/runner --library json --library digest $(RUNNER_SRCS) -o $@
 bin/rune-test: bin/rune-test.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-test.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+# Individual SML native checks avoid rebuilding the complete test inventory
+# in every worker process. Scheduling and requirements remain in rune-test.
+NATIVE_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/bytecode.sml \
+                     tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativechecks-main.sml
+bin/rune-native-check.rbc: $(RUNE) $(NATIVE_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner --library digest $(NATIVE_CHECK_SRCS) -o $@
+bin/rune-native-check: bin/rune-native-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-native-check.rbc" "$$@"\n' > $@
 	chmod +x $@
 
 # Everything a step of make check needs, built before the runner starts, so
@@ -1579,7 +1550,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test
+check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what

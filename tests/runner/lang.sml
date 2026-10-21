@@ -123,6 +123,22 @@ struct
            vm = "bin/runevm-native --gc low-pause --nursery 4096 --gc-stress " ^ gcStress ^ " --gc-stress-cycles",
            tag = "test-native", skip = SOME "tests/opt-skip.txt"}]
        else [])
+    @ [way ("stress-stack", stackCompiler, "bin/runevm-stack --nursery 0 --gc-stress " ^ gcStress, "test-stress"),
+       way ("stress-register", "register", "bin/runevm --nursery 0 --gc-stress " ^ gcStress, "test-stress"),
+       way ("stress-jit", "register", "bin/runevm --jit=all --nursery 4096 --nursery-max 0 --gc-stress " ^ gcStress, "test-stress"),
+       way ("stress-opt", "register", "bin/runevm --jit=all --jit-tier=2 --nursery 4096 --nursery-max 0 --gc-stress " ^ gcStress, "test-stress"),
+       way ("stress-jit-cycles", "register", "bin/runevm --gc low-pause --jit=all --nursery 4096 --gc-stress " ^ gcStress ^ " --gc-stress-cycles", "test-stress"),
+       way ("stress-opt-cycles", "register", "bin/runevm --gc low-pause --jit=all --jit-tier=2 --nursery 4096 --gc-stress " ^ gcStress ^ " --gc-stress-cycles", "test-stress"),
+       way ("register-asan", "register", "bin/runevm-asan", "test-register-asan"),
+       way ("register-asan-jit", "register", "bin/runevm-asan --jit=all", "test-register-asan"),
+       way ("register-asan-opt", "register", "bin/runevm-asan --jit=all --jit-tier=2", "test-register-asan"),
+       way ("register-asan-deopt", "register", "bin/runevm-asan --jit=all --jit-tier=2 --deopt-stress=1", "test-register-asan")]
+    @ (if native then
+         [{name = "native-stress", compiler = stackCompiler, vm = "bin/runevm-native --gc-stress " ^ gcStress,
+           tag = "test-native-stress", skip = SOME "tests/opt-skip.txt"},
+          {name = "native-asan", compiler = stackCompiler, vm = "bin/runevm-native",
+           tag = "test-native-asan", skip = SOME "tests/opt-skip.txt"}]
+       else [])
     (* the VMs of other machines (make test-portability), which are not
        make check's: a 32-bit x86, a big-endian PowerPC and an aarch64 under
        qemu, each also with a cycle of incremental marking always under way *)
@@ -268,7 +284,10 @@ struct
           ^ (if exists ("tests/" ^ base ^ ".restoreargs") then " --" ^ words (base, ".restoreargs") else "")
           ^ " < /dev/null > restored 2> restored.err; echo $? > restored.code; fi; exit $code"
         else ""
-      val start = tz ^ "mkdir -p tests/out && ln -sfn \"$RUNE_TEST_ROOT\"/tests/lang tests/lang && "
+      val asanEnv = if #name w = "native-asan" then
+        "RUNEOPT_RUNTIME=\"$RUNE_TEST_ROOT/build/asan\"; RUNEOPT_CC=\"$RUNE_TEST_ROOT/build/asan/cc\"; "
+        ^ "RUNEOPT_CACHE=\"$RUNE_TEST_RUN/native-asan-cache\"; export RUNEOPT_RUNTIME RUNEOPT_CC RUNEOPT_CACHE; " else ""
+      val start = tz ^ asanEnv ^ "mkdir -p tests/out && ln -sfn \"$RUNE_TEST_ROOT\"/tests/lang tests/lang && "
       val isHost = List.exists (fn h => h = #compiler w) hosts
       (* the host compilers' bytes that are the stack compiler's: the stack
          way's run, which this one waits for *)
@@ -278,6 +297,8 @@ struct
       val stdin = if exists ("tests/" ^ base ^ ".stdin") then SOME ("tests/" ^ base ^ ".stdin") else NONE
       val after = ("compile/" ^ #compiler w ^ "/" ^ name)
                   :: (if isHost then ["compile/" ^ stackCompiler ^ "/" ^ name, "lang/test/" ^ name] else [])
+                  @ (if #tag w = "test-register-asan" then ["native/prepare/asan"]
+                     else if #tag w = "test-native-asan" then ["native/prepare/native-asan"] else [])
     in
       Test.it name
         ({program = "/bin/sh", args = ["sh", "-c", script], env = NONE, dir = NONE, stdin = stdin,
@@ -300,10 +321,15 @@ struct
   (* a host's compiler needs the host's build *)
   fun needs compiler t = if List.exists (fn h => h = compiler) hosts then Test.requires [compiler] t else t
   fun extraTags tag = (if tag = "test" then ["quick"] else []) @ (if tag = "test-heap" then ["layout"] else [])
-                      @ (if tag = "test-portability" then ["portability", "vm", "nightly"] else [])
+                      @ (if tag = "test-portability" then ["portability", "vm", "nightly"]
+                         else if tag = "test-stress" orelse tag = "test-register-asan" then ["vm", "nightly"]
+                         else if tag = "test-native-stress" orelse tag = "test-native-asan" then ["nightly"] else [])
   (* a way of another machine is not make check's, and one under qemu needs qemu *)
   fun portable (w : way) = #tag w = "test-portability"
-  fun wayTags (w : way) = (if portable w then [] else ["check"]) @ [#tag w] @ extraTags (#tag w)
+  fun wayTags (w : way) =
+    (if List.exists (fn tag => tag = #tag w)
+        ["test-portability", "test-stress", "test-register-asan", "test-native-stress", "test-native-asan"]
+     then [] else ["check"]) @ [#tag w] @ extraTags (#tag w)
   fun wayNeeds (w : way) t =
     if portable w andalso (String.isSubstring "ppc64" (#vm w) orelse String.isSubstring "aarch64" (#vm w))
     then Test.requires ["qemu"] t else t
@@ -318,7 +344,9 @@ struct
                   (shell ("true", SOME ".", 60, 10, List.map (fn n => "compile/" ^ stackCompiler ^ "/" ^ n) langPrograms,
                           Run.exitZero)))]),
        Test.describe "errors"
-         (List.map (fn (c, command, tag) => needs c (tagged (["check", tag] @ extraTags tag @ covers)
+         (List.map (fn (c, command, tag) => needs c (tagged (["check", tag]
+                      @ (if c = stackCompiler then ["test-stress", "test-native-stress", "test-native-asan", "nightly", "vm"]
+                         else if c = "register" then ["test-stress", "test-register-asan", "nightly", "vm"] else []) @ extraTags tag @ covers)
                                                        (Test.describe c (List.map (error (c, command)) errorPrograms))))
                    compilers),
        Test.describe "lang"

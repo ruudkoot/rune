@@ -109,7 +109,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | Milestone | Depends on | Delivers | State |
 | --- | --- | --- | --- |
 | P2.0 | existing runner | Current inventory and reproducible comparison baseline | done 2026-10-20 |
-| P2.1 | P2.0 | Native-code checks and stress/sanitizer ways | in progress |
+| P2.1 | P2.0 | Native-code checks and stress/sanitizer ways | done 2026-10-21 |
 | P2.2 | P2.0 | Census, simulator, layout and gcbench checks | pending |
 | P2.3 | P2.0; P2.6 for host benchmark execution | Budgets and benchmark correctness | pending |
 | P2.4 | P2.0 | Documentation consistency and law mutation checks | pending |
@@ -466,3 +466,34 @@ cross-implementation checks from becoming a library talking only to itself.
   build/test log is `tests/out/unit-testing-part2/p2.0-check.log`. Rune and
   MLton produced identical P2.0 runner bytecode. P2.1 draft modules were not
   wired into that validated runner and are validated separately.
+  The runner later pruned that raw run directory under its five-run retention
+  policy; the complete P2.0 build/test log remains. Subsequent milestone
+  receipts copy events and summaries outside the runner's rolling directory.
+* **P2.1 (2026-10-21):** retired all seven owned files. Native assertions,
+  independent bytecode assembly, translation/cache policy and stress/sanitizer
+  ways are SML. The remaining Basis stress selections explicitly bridge the
+  P2.6 matrix. Old/new proof under `tests/out/unit-testing-part2/p2.1` covers
+  6,192 language verdicts (including two native skips), another 2,064 GMP
+  sanitizer verdicts, 155 byte-identical assembly fixtures, 589 legacy native
+  assertions over 563 programs, 325 count comparisons and 328 debug tables.
+  The native bootstrap matched after refreshing the embedded Git version.
+  Faults cover corrupt assembly, missing executables, empty stale caches,
+  diagnostic preservation, wrong goldens/counts/locations, crash/timeout/flood/
+  leaked children and the hash adapter's failure/fallback paths. Both Basis
+  stress selections passed. The native cohort passed 2,144 cases; its two
+  sanitizer preparation failures were fixed and their rerun passed with the
+  canaries (7/7). Full acceptance then passed **18,827 results: 18,825 PASS,
+  two documented native-interrupt SKIP**, 1,446.6 s wall and 10,817.4 s CPU
+  with eight workers. The complete log is `p2.1-check.log`; events, summary and
+  command are copied under `p2.1/acceptance` outside rolling retention. Rune
+  and MLton produced identical final runner, launcher and native-check bytes.
+  The first two interrupted logs and the full pre-fix receipt are retained.
+  Validation found and fixed relative fixture paths, insufficient compiler
+  assembly limits and PWD/export-order differences in scratch directories.
+  The launcher retains the existing native SHA tool adapter, with a checked
+  result and portable SML fallback: large warm launches dropped from about
+  0.38 s to 0.04–0.06 s (old wrapper 0.03–0.06 s in the same comparison).
+  Command-line flags, names, inherited options, image paths and non-regular
+  input delegation were compared separately. The new checks intentionally
+  reject a successful compiler that produced no executable; scratch execution
+  isolates program-created files while normalizing both compared environments.
