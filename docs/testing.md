@@ -654,3 +654,10 @@ correctness, extra includes independent peers and negative scenarios, and
 inventory replays the preserved fixture contract. Original script names and
 blob IDs in benchmark-cases.json are provenance. Six baseline failures remain
 visible; the migration does not change expected numeric answers.
+
+
+bin/rune-scenarios selects deps, buildfile, dynamic, units, install or dist.
+Installation accepts repeated --host choices and keeps all stage prefixes
+private. Distribution checks read archive metadata in SML and compare
+independent ELF/PE fixtures; gzip/unzip are decoding adapters. The actual
+Windows installer case uses --no-register and requires Windows interop.

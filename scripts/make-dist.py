@@ -3,7 +3,7 @@
 
 make dist runs this. The archives hold every library under lib (the files
 install.sh installs), the compiler, the REPL image, and the register VM for
-each machine, under runtime/<arch>/. tests/dist/run.sh checks it with
+each machine, under runtime/<arch>/. bin/rune-scenarios dist checks it with
 stand-in binaries (--fixture); a real archive refuses a VM whose ELF or PE
 header is not that machine's.
 """

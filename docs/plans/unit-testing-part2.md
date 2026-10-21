@@ -116,7 +116,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | P2.5 | P2.0 | Shared matrix model, probes and host laws | in progress: model and controller implemented |
 | P2.6 | P2.5 | Full Basis/benchmark matrix execution | pending |
 | P2.7 | P2.1, P2.6 | Windows ways and final legacy VM/language runner retirement | pending |
-| P2.8 | P2.0 | Build/dependency/unit/install/distribution scenarios | pending |
+| P2.8 | P2.0 | Build/dependency/unit/install/distribution scenarios | done 2026-10-21 |
 | P2.9 | P2.0; P2.6 where matrix execution is shared | Incremental edits and external corpora | pending |
 | P2.10 | P2.0 | IntInf correctness and hardening drivers | pending |
 | P2.11 | P2.8, P2.10; P2.7 for Windows paths | GMP build/download/install/cross tests | pending |
@@ -639,3 +639,25 @@ failures after a version change invalidated build provenance during the
 run; the full failed receipt is retained. All failed paths and dependencies
 subsequently passed 34/34 with stable inputs. Rune and MLton produced
 identical runner bytecode. Final clean global acceptance is required by P2.17.
+
+### P2.8 acceptance, 2026-10-21
+
+All six scenario drivers are retired. The new dependency, build-file, dynamic,
+unit, staged-install and distribution routes passed 96/96 supervised cases,
+including actual Windows installer execution without registry registration.
+Unit scenarios retain whole/units, both bytecodes, warm recompilation,
+dynamic loading and eighteen loader/image refusal cases. All three install
+forms (bytecode, MLton and SML/NJ) run from private prefixes and cover library
+manifests, relocation, native translation, REPL/DAP/kernel entrypoints and
+uninstallation. The old installation route recorded 129 passes with no failures;
+the old distribution route also passed.
+
+Distribution checks independently manufacture ELF/PE metadata fixtures, read
+tar/zip headers in SML and inspect modes, ownership, timestamps, newlines and
+members. Corrupt checksum and missing/duplicate archive members are planted
+against an actual produced archive. Fixtures never execute synthetic binaries.
+Compression decoding remains a declared native adapter. The source packager's
+own self-test is not used as the oracle. Evidence is under
+tests/out/unit-testing-part2/p2.8. The combined integration's three install
+provenance failures were retained and subsequently passed in the stable
+34/34 rerun; final global acceptance remains P2.17's required check.

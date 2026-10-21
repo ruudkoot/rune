@@ -8,7 +8,7 @@
 #
 # With no --prefix, root installs in /usr/local and anyone else in ~/.local.
 # RUNE_DIST_EUID, when set, is the effective uid the prefix rule sees
-# (tests/dist/run.sh).
+# (bin/rune-scenarios dist).
 set -eu
 
 root=$(cd "$(dirname "$0")" && pwd)

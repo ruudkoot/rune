@@ -1,6 +1,6 @@
 (* The tools' suites on the runner (docs/plans/unit-testing.md, M10): what
    tests/ir/run-ir-tests.sh, tests/doc/run-doc-tests.sh,
-   tests/lib/run-lib-tests.sh, tests/flexrec/run.sh, tests/units/run.sh,
+   tests/lib/run-lib-tests.sh, tests/flexrec/run.sh, bin/rune-scenarios units,
    tests/compiler/run-tests.py, tests/runtime/run-limits.py and
    tests/runtime/run-gc-log.py did, a job for each case where the cases are
    apart, each a command of bin/rune-test that prints a line FAIL for what
@@ -818,13 +818,6 @@ struct
        env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds timeout, cap = 0, cpus = 1, memory = memory,
        pools = [], exclusive = false, after = after, judge = failLines} : Run.command Test.tree
 
-  (* a scenario: its script, which exits 0 when every step passed *)
-  fun scenario (path, script, args) =
-    Test.it path
-      {program = "/bin/sh", args = ["sh", script] @ args, env = NONE, dir = SOME ".", stdin = NONE,
-       timeout = Time.fromSeconds 3600, cap = 0, cpus = 1, memory = 1000, pools = [], exclusive = false, after = [],
-       judge = Run.exitZero} : Run.command Test.tree
-
   fun command args =
     case args of
       ["ir-one", src] => SOME (fn () => irOne src)
@@ -924,11 +917,5 @@ struct
             ([tagged ["test"] (job ("stack", ["gc-log", "bin/rune-stack", "bin/runevm-stack"], [], 300, 600)),
               tagged ["test-register"] (job ("register", ["gc-log", "bin/rune", "bin/runevm"], [], 300, 600))]
              @ (if native then [tagged ["test-native"] (job ("native", ["gc-log", "bin/rune-stack", "bin/runevm-native"], [], 500, 600))]
-                else []))),
-       tagged ["check"]
-         (Test.describe "scenario"
-            [tagged ["test-deps", "covers:tests/deps/*"] (scenario ("deps", "tests/deps/run.sh", ["--rune", "bin/rune"])),
-             tagged ["test-dynamic", "covers:tests/dynamic/*"] (scenario ("dynamic", "tests/dynamic/run.sh", ["--rune", "bin/rune"])),
-             tagged ["test-build", "covers:tests/buildfile/*"] (scenario ("buildfile", "tests/buildfile/run.sh", ["--rune", "bin/rune"])),
-             tagged ["check-units", "covers:tests/units/*"] (scenario ("units", "tests/units/run.sh", ["--rune", "bin/rune"]))])]
+                else [])))]
 end

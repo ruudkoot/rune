@@ -94,12 +94,6 @@ struct
              ["tests/compiler/*", "tests/runtime/*"]),
        step ("test-heap-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, ["layout"], ["tests/runtime/*"]),
        some ("check-docs-generated", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
-       alone ("test-install", [], ["tests/install/*", "examples/hello.sml"]),
-       Test.requires ["python3"]
-         (alone ("test-dist", [],
-                 ["scripts/make-dist.py", "scripts/dist-install.sh", "scripts/dist-install.bat",
-                  "scripts/dist-uninstall.bat", "scripts/dist-register.ps1",
-                  "scripts/dist-rune.cmd", "scripts/dist-rune-repl.cmd", "tests/dist/*"])),
        Test.requires ["tmux", "python3"] (alone ("test-terminal", [], ["tests/terminal/*"])),
        alone ("bench-coverage", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
        Test.requires ["python3"] (alone ("test-intinf", [], ["tests/intinf/*"])),
@@ -126,7 +120,7 @@ struct
      {name = "windows", probe = "sh tests/windows-dir.sh && command -v x86_64-w64-mingw32-gcc",
       hint = "Windows under WSL with interop (RUNE_WINDOWS_DIR names a directory there) and mingw-w64 (apt: gcc-mingw-w64-x86-64 gcc-mingw-w64-i686)"}]
     @ List.map (fn h => {name = h, probe = "test -x bin/rune-" ^ h, hint = "run: make hosts, then make " ^ h}) Lang.hosts
-    @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities
+    @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities @ ScenarioJobs.capabilities
     @ [{name = "grep-pcre", probe = "printf LIST | grep -P '^LIST$'", hint = "GNU grep with PCRE for LAWS_PROGRAMS"}]
 
   (* each file of expectations read by the one engine (docs/testing.md,
@@ -164,7 +158,7 @@ struct
   val matrixFaults = Test.tag "check" (Test.tag "quick" (Test.tag "covers:tests/runner/matrix*.sml"
     (Test.tag "covers:tests/runner/hostlaws.sml" (Test.tag "covers:tests/runner/smlscan.sml"
       (Test.requires ["grep-pcre"] (Test.describe "runner" [LibHosts.job ("matrix-controller-faults", ["matrix-controller-faults"], [], 300)]))))))
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws
@@ -175,6 +169,7 @@ val () =
   | ["matrix-controller-faults"] => MatrixFaults.one ()
   | args =>
       case Benchmarks.command args of SOME action => action () | NONE =>
+      case ScenarioJobs.command args of SOME action => action () | NONE =>
       case HostLaws.command args of
         SOME f => f ()
       | NONE =>

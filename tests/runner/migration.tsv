@@ -214,11 +214,11 @@ tests/benchmarks/life-oracle.py	python	Retain: independent oracles/peers	retaine
 tests/benchmarks/qsort-oracle.py	python	Retain: independent oracles/peers	retained	415d7428e91b330b3ec3c779c411beb5a48b10de	-	independent oracles/peers
 tests/benchmarks/smith-oracle.py	python	Retain: independent oracles/peers	retained	87bed100c7a9f4adbaf18a67ed175b022879a290	-	independent oracles/peers
 tests/benchmarks/test-inventory.py	python	P2.3	retired	0f3ee253c43db26b09b67b727d3076cd9b8781ab	tests/runner/inventorytests.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
-tests/buildfile/run.sh	shell	P2.8	pending	35fbdd7bc5e34af2f053cc4c76de44860915974e	-	scenario-transcripts-and-artifacts
+tests/buildfile/run.sh	shell	P2.8	retired	35fbdd7bc5e34af2f053cc4c76de44860915974e	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
 tests/dap/run.py	python	P2.12	pending	faea0dacabe20c1dbc9dda3abcff4e5f6a3c0711	-	protocol-transcripts-and-peer-verdicts
-tests/deps/run.sh	shell	P2.8	pending	bab704b294fe50b192be9eb1e03abbcbc6d8173d	-	scenario-transcripts-and-artifacts
-tests/dist/run.sh	shell	P2.8	pending	4318b951160e52bab975ba7bf0062c7b85b3f763	-	scenario-transcripts-and-artifacts
-tests/dynamic/run.sh	shell	P2.8	pending	942108eea8b84b1510f5795b36b1a33a8aa6e689	-	scenario-transcripts-and-artifacts
+tests/deps/run.sh	shell	P2.8	retired	bab704b294fe50b192be9eb1e03abbcbc6d8173d	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
+tests/dist/run.sh	shell	P2.8	retired	4318b951160e52bab975ba7bf0062c7b85b3f763	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
+tests/dynamic/run.sh	shell	P2.8	retired	942108eea8b84b1510f5795b36b1a33a8aa6e689	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
 tests/external/mlton-bench/gen-fxp-input.sh	shell	P2.15	pending	c6c2a2ed7165cabcbb0b8cd09f6fa73573fe8f9d	-	generated-bytes-and-source-order
 tests/external/probe-host-basis.sh	shell	P2.9	pending	069ac4cc16bd2485bff7bbf2a2a86fd907c47494	-	edit-traces-rebuild-sets-and-corpus-verdicts
 tests/external/run-mlton-bench.sh	shell	P2.9	pending	9215f583f3ea7b8d14fa8bd9cb3eff12263308cc	-	edit-traces-rebuild-sets-and-corpus-verdicts
@@ -232,7 +232,7 @@ tests/incremental/mlton.sh	shell	P2.9	pending	6466d1797b3fae07c19cd69d0f85f5d728
 tests/incremental/mutate.py	python	P2.9	pending	f1bededa518d65dbdfa8b77aa979979070a5f4fe	-	edit-traces-rebuild-sets-and-corpus-verdicts
 tests/incremental/plant.py	python	P2.9	pending	55a0a652da3cf5e92d98f875b5aa03e0fe633c33	-	edit-traces-rebuild-sets-and-corpus-verdicts
 tests/incremental/run.sh	shell	P2.9	pending	ea422def6f76cd30ee7e5b328d8d8f7069db6688	-	edit-traces-rebuild-sets-and-corpus-verdicts
-tests/install/run.sh	shell	P2.8	pending	aa997a5eaace6e45639e8d24673d8a2df3e0a373	-	scenario-transcripts-and-artifacts
+tests/install/run.sh	shell	P2.8	retired	aa997a5eaace6e45639e8d24673d8a2df3e0a373	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
 tests/intinf/backends.py	python	P2.10	pending	3033aa3986829072f969380357fc21c0db78522d	-	independent-arithmetic-vectors-and-statuses
 tests/intinf/build-config.py	python	P2.11	pending	1e0084aeec0f5903fc092fd4481343dbe7483417	-	offline-fixtures-build-records-and-images
 tests/intinf/build-modes.py	python	P2.11	pending	1d2d00be26c9c76bd435df4edb40334a95cb45c0	-	offline-fixtures-build-records-and-images
@@ -282,7 +282,7 @@ tests/skipped.sh	shell	P2.7	pending	df09933df148596359ac54f754dbd5f3b59dc0fb	-	v
 tests/terminal/ptyraw.py	python	P2.13	pending	e3bce902cd5935b02ba2570f98a41fd167469747	-	terminal-inputs-frames-and-cleanup
 tests/terminal/run.sh	shell	P2.13	pending	9742027349d05df05248161d3cd95703a14098a6	-	terminal-inputs-frames-and-cleanup
 tests/terminal/term.py	python	P2.13	pending	c6ffb886b0274b8e94b84b167f39c452cd13c367	-	terminal-inputs-frames-and-cleanup
-tests/units/run.sh	shell	P2.8	pending	8c5fdc4c587d0b80e3a471e4b88ad2394a844ebc	-	scenario-transcripts-and-artifacts
+tests/units/run.sh	shell	P2.8	retired	8c5fdc4c587d0b80e3a471e4b88ad2394a844ebc	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
 tests/windows-dir.sh	shell	P2.7	pending	8e79e29694197e7e58d68ea21d5921177e8e2acd	-	vm-case-verdicts-and-counts
 tools/heapsim/checkold.py	python	P2.14	pending	531e811551d0cece02dc0719afdbd3e769dcbd68	-	captured-measurements-and-report-schemas
 tools/heapsim/checktrace.py	python	P2.2	retired	ecb945e3b0c401989c3fa3e5b3355b12881a4fb1	tests/runner/tracecheck.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log

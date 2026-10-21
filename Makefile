@@ -1037,7 +1037,7 @@ check-levels: $(RUNE) $(RUNEVM) bin/rune-test
 # both bytecodes; the programs of several files of tests/units do what they
 # expect; and the compiler compiled in units compiles itself to bin/rune.rbc
 # (docs/units.md; docs/plans/incremental-compilation.md, M2).
-check-units: check-units-steps bin/rune-test
+check-units: check-units-steps bin/rune-test bin/rune-scenarios
 	$(RUNE_TEST) --tier check-units
 check-units-steps: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack
 	bin/rune-boot --units -o bin/rune.units.rbc $(BOOT_SRCS)
@@ -1125,24 +1125,24 @@ test-diagnostics: $(RUNE) bin/rune-test
 	$(RUNE_TEST) --tier test-diagnostics
 
 # the cache's scenarios (tests/incremental/SCENARIOS.md; docs/units.md, The cache)
-test-deps: $(RUNE) vm bin/rune-test
+test-deps: $(RUNE) vm bin/rune-test bin/rune-scenarios
 	$(RUNE_TEST) --tier test-deps
 
-test-dynamic: $(RUNE) vm bin/rune-test
+test-dynamic: $(RUNE) vm bin/rune-test bin/rune-scenarios
 	$(RUNE_TEST) --tier test-dynamic
 
 # build files (docs/build.md)
-test-build: $(RUNE) vm bin/rune-test
+test-build: $(RUNE) vm bin/rune-test bin/rune-scenarios
 	$(RUNE_TEST) --tier test-build
 
 # make install staged and checked (tests/install/run.sh): the bytecode
 # compiler's, and that of a host build of each kind, a program and a heap
-test-install: all repl dap kernel mlton smlnj-legacy bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy
-	RUNE_HEAP=$(RUNE_HEAP) SMLNJ=$(SMLNJ) sh tests/install/run.sh --host mlton --host smlnj-legacy
+test-install: all repl dap kernel mlton smlnj-legacy bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy bin/rune-scenarios bin/rune-test
+	RUNE_HEAP=$(RUNE_HEAP) SMLNJ=$(SMLNJ) $(RUNE_TEST) --tier test-install
 
 # the distribution archives, with stand-in binaries (tests/dist/run.sh)
-test-dist:
-	sh tests/dist/run.sh
+test-dist: bin/rune-scenarios bin/rune-test
+	$(RUNE_TEST) --tier test-dist
 
 # the compiler as a service, a prototype (src/driver/serve.sml)
 test-serve: $(RUNE) vm basis-cache bin/rune-test
@@ -1520,6 +1520,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
                     examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
                     tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml \
+               tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml \
                tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/portability.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
@@ -1586,7 +1587,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check build/bench-counts.rbc
+check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios build/bench-counts.rbc
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -1733,6 +1734,11 @@ BENCH_CHECK_SRCS := $(HOST_LAWS_SRCS) tests/runner/matrixload.sml tests/runner/m
 bin/rune-bench-check.rbc: $(RUNE) $(BENCH_CHECK_SRCS) tests/runner/benchmark-cases.json tests/runner/inventory-cases.json manifests
 	$(RUNE) --library test/runner --library json --library digest $(BENCH_CHECK_SRCS) -o $@
 
-bin/rune-budget bin/rune-bench-check: bin/%: bin/%.rbc bin/runevm Makefile
+bin/rune-budget bin/rune-bench-check bin/rune-scenarios: bin/%: bin/%.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/$(notdir $@).rbc" "$$@"\n' > $@
 	chmod +x $@
+
+SCENARIO_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/scenarios.sml tests/runner/installchecks.sml \
+                 tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml tests/runner/scenarios-main.sml
+bin/rune-scenarios.rbc: $(RUNE) $(SCENARIO_SRCS) manifests
+	$(RUNE) --library test/runner --library json $(SCENARIO_SRCS) -o $@
