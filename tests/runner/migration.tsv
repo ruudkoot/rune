@@ -8,7 +8,7 @@ scripts/build-files.sh	shell	Retain: bootstrap/setup	retained	c18b727ec7fab7fbe7
 scripts/build-gmp-vm.py	python	P2.16	pending	3369d018cfd306205f06fa4a28b2bb1895beee26	-	clean-bootstrap-configs-and-package-members
 scripts/build-gmp.py	python	P2.16	pending	131865ee41c4253f0370b843a34e8dbd9a3e62bc	-	clean-bootstrap-configs-and-package-members
 scripts/census.sh	shell	P2.14	pending	753b9f243a4e091324c5355abb5942e92946945d	-	captured-measurements-and-report-schemas
-scripts/check-census.sh	shell	P2.2	pending	6d085df3e9adf313849884fbd16f1ce72b553754	-	trace-records-and-verdicts
+scripts/check-census.sh	shell	P2.2	retired	6d085df3e9adf313849884fbd16f1ce72b553754	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
 scripts/check-docs.sh	shell	P2.4	pending	93625d9d7f88ed26c2f0b0f3913d5ebc90f3965a	-	documentation-and-mutant-verdicts
 scripts/cloud-cache.sh	shell	Retain: bootstrap/setup	retained	71e9c38d3b687efc8e3da4e163cb65ed4a98c9e2	-	bootstrap/setup
 scripts/configure-gmp.py	python	P2.16	pending	ae6fdba25144da63bbe6ef4198c1e822eebf8f1c	-	clean-bootstrap-configs-and-package-members
@@ -223,7 +223,7 @@ tests/external/mlton-bench/gen-fxp-input.sh	shell	P2.15	pending	c6c2a2ed7165cabc
 tests/external/probe-host-basis.sh	shell	P2.9	pending	069ac4cc16bd2485bff7bbf2a2a86fd907c47494	-	edit-traces-rebuild-sets-and-corpus-verdicts
 tests/external/run-mlton-bench.sh	shell	P2.9	pending	9215f583f3ea7b8d14fa8bd9cb3eff12263308cc	-	edit-traces-rebuild-sets-and-corpus-verdicts
 tests/external/run-mlton.sh	shell	P2.9	pending	fc5f9a52ef49546bd627e48ba99f63150d66bf8b	-	edit-traces-rebuild-sets-and-corpus-verdicts
-tests/gcbench/check.sh	shell	P2.2	pending	df8c1194519f5bc5e928cde3b5b1cbaa9e045877	-	trace-records-and-verdicts
+tests/gcbench/check.sh	shell	P2.2	retired	df8c1194519f5bc5e928cde3b5b1cbaa9e045877	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
 tests/gcbench/measure.sh	shell	P2.14	pending	e183052c374366c916c01c7b89dea2189cbb013d	-	captured-measurements-and-report-schemas
 tests/gcbench/report.py	python	P2.14	pending	5e57766fdac08a7ba5148bbb9226a7651454eefe	-	captured-measurements-and-report-schemas
 tests/gcbench/roadmap.sh	shell	P2.14	pending	7992b9f16e8438dcdfd1f68f441bf5cae0c24b79	-	captured-measurements-and-report-schemas
@@ -256,7 +256,7 @@ tests/kernel/client.py	python	P2.12	pending	bff733ac488496b531281119e161fcf4cc7e
 tests/kernel/notebook_client.py	python	Retain: independent oracles/peers	retained	d88232eb1781a97d12b54e7a3dfba5aba095ef47	-	independent oracles/peers
 tests/kernel/run.sh	shell	P2.12	pending	3ac8b66342ba0ece4aa207e7c96a4cf9d35de3eb	-	protocol-transcripts-and-peer-verdicts
 tests/kernel/windows.py	python	P2.12	pending	c2963aeea7c7972181fe2cc9637f98372e686092	-	protocol-transcripts-and-peer-verdicts
-tests/layouts/check.sh	shell	P2.2	pending	1ff9ade6a0b9802a2e7b510d3237929ff10799be	-	trace-records-and-verdicts
+tests/layouts/check.sh	shell	P2.2	retired	1ff9ade6a0b9802a2e7b510d3237929ff10799be	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
 tests/layouts/measure.sh	shell	P2.14	pending	0a254c27829e82f4352188c69be31c86d6b3a9b8	-	captured-measurements-and-report-schemas
 tests/layouts/micro.sh	shell	P2.14	pending	06d6818d1933e7dc92865d7cde1fce84b0f56e36	-	captured-measurements-and-report-schemas
 tests/layouts/tables.py	python	P2.14	pending	83f48bc289683fb39410d16bc5bf444efad83a56	-	captured-measurements-and-report-schemas
@@ -273,7 +273,7 @@ tests/opt/run-debug.sh	shell	P2.1	retired	c776b2e9d2267cdf73cab59ca58b9ecab160b9
 tests/opt/run-opt-tests.sh	shell	P2.1	retired	976c36abe50cda8f70f4fedd297967463d3b6819	tests/runner/nativechecks.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
 tests/perf/gen.py	python	P2.15	pending	7922ecf640ba37065daa9b8ef01b3c0c88796624	-	generated-bytes-and-source-order
 tests/perf/run-perf.sh	shell	P2.3	pending	09065e7aced24596615dc8005eaa742ecb978742	-	budget-catalogue-and-fault-verdicts
-tests/register/jit-dump.py	python	P2.2	pending	49148a32f0199e5a275547acb1681daa1400d7d5	-	trace-records-and-verdicts
+tests/register/jit-dump.py	python	P2.2	retired	49148a32f0199e5a275547acb1681daa1400d7d5	tests/runner/jitdumpcheck.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
 tests/repl-protocol/run.py	python	P2.12	pending	ac8065c9eeaa1bebd8ca6ee098a6d657a8b423a0	-	protocol-transcripts-and-peer-verdicts
 tests/run-tests.sh	shell	P2.7	pending	4c720038dfb7acdbc2cee3bcbb211eca06a5d9a1	-	vm-case-verdicts-and-counts
 tests/run-windows.sh	shell	P2.7	pending	50ce45d86563adbb98a07e030724f574d0a28e9f	-	vm-case-verdicts-and-counts
@@ -285,7 +285,7 @@ tests/terminal/term.py	python	P2.13	pending	c6ffb886b0274b8e94b84b167f39c452cd13
 tests/units/run.sh	shell	P2.8	pending	8c5fdc4c587d0b80e3a471e4b88ad2394a844ebc	-	scenario-transcripts-and-artifacts
 tests/windows-dir.sh	shell	P2.7	pending	8e79e29694197e7e58d68ea21d5921177e8e2acd	-	vm-case-verdicts-and-counts
 tools/heapsim/checkold.py	python	P2.14	pending	531e811551d0cece02dc0719afdbd3e769dcbd68	-	captured-measurements-and-report-schemas
-tools/heapsim/checktrace.py	python	P2.2	pending	ecb945e3b0c401989c3fa3e5b3355b12881a4fb1	-	trace-records-and-verdicts
+tools/heapsim/checktrace.py	python	P2.2	retired	ecb945e3b0c401989c3fa3e5b3355b12881a4fb1	tests/runner/tracecheck.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
 tools/heapsim/pauses.py	python	P2.14	pending	6db11dbb9314e18a848afa065e516a0afbcc4b95	-	captured-measurements-and-report-schemas
 tools/heapsim/pretenure.sh	shell	P2.14	pending	ac3ec7d5fa7769340d3789a82cbc8d6dbd492b9d	-	captured-measurements-and-report-schemas
 tools/heapsim/report.py	python	P2.14	pending	b156110bf746d893480254c5c947df170898b275	-	captured-measurements-and-report-schemas
@@ -293,10 +293,10 @@ tools/heapsim/report2.py	python	P2.14	pending	ea781e5e1184cbb60fae65467e71db38d8
 tools/heapsim/report3.py	python	P2.14	pending	a1830b3e71bf6158b8487fa756c7ed3885eb01f1	-	captured-measurements-and-report-schemas
 tools/heapsim/sweep.sh	shell	P2.14	pending	cf3ab8e1bcc5b05d28e471727e237f204fb14b8a	-	captured-measurements-and-report-schemas
 tools/heapsim/sweep2.sh	shell	P2.14	pending	cce87d36d43e8d8505ffbbcf7ae90edfa0e1b58e	-	captured-measurements-and-report-schemas
-tools/heapsim/test.sh	shell	P2.2	pending	e635dbbc246d26d719ef93b63571b317b9fceb1d	-	trace-records-and-verdicts
-tools/heapsim/test2.sh	shell	P2.2	pending	69454702a57ac8ba20876405b86907a932f8f181	-	trace-records-and-verdicts
+tools/heapsim/test.sh	shell	P2.2	retired	e635dbbc246d26d719ef93b63571b317b9fceb1d	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
+tools/heapsim/test2.sh	shell	P2.2	retired	69454702a57ac8ba20876405b86907a932f8f181	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
 tools/heapsim/timeline.py	python	P2.14	pending	c964b961dae3cc9da0b01294f98f8b793a7b8b13	-	captured-measurements-and-report-schemas
 tools/heapsim/validate-proto.sh	shell	P2.14	pending	4557b78e6bed91dfe915210947003bf6f40782e8	-	captured-measurements-and-report-schemas
-tools/heapsim/validate.sh	shell	P2.2	pending	6a19d04fbb9e444d45604b63288220de099c8fe1	-	trace-records-and-verdicts
+tools/heapsim/validate.sh	shell	P2.2	retired	6a19d04fbb9e444d45604b63288220de099c8fe1	tests/runner/censustrace.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
 tools/heapsim/validate2.sh	shell	P2.14	pending	3a20c8e4d1f93a16299acfd5f36ad2afa40008b7	-	captured-measurements-and-report-schemas
 tools/mmu.py	python	P2.14	pending	341f09e66c19c6d1cb82d894a8e6d6725e93cbaf	-	captured-measurements-and-report-schemas

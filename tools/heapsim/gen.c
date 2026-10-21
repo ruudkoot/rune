@@ -150,7 +150,7 @@ static void truth(size_t heap_size, size_t *ncoll, size_t *semispace, uint64_t *
 /* ---- --pattern: closed-form traces ----
    Every object's death window is chosen, and the samples fall where the
    pattern says, so each model's answer can be written down beforehand
-   (tools/heapsim/test2.sh holds them to it).
+   (tests/runner/heapchecks.sml holds them to it).
      alt   --size S --count M: M objects of S bytes; the odd ones (the first
            included) die before sample 1, the even ones never; then M/2 more
            of S bytes that never die (sample 2), then one more (sample 3).

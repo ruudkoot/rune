@@ -44,24 +44,26 @@ the census's live bytes at every sample.
 * `bin/heapsim-gen` (`gen.c`) writes a synthetic trace of format 2 with
   exact liveness and computes what the stock collector would do on it, so
   that the simulator can be checked against an independent implementation:
-  `test.sh` does, on three seeds and three sample intervals, and then runs
+  `make check-heapsim` does, on three seeds and three sample intervals, and then runs
   every collector and layout once. `--pattern alt|satb|line1|nurs` writes
   the traces of gcsim's closed-form tests. Part of `make check-heapsim`
   (7 seconds).
-* `validate.sh [--out DIR] WORKLOAD...` holds the copier model to the stock
+* `bin/rune-heap-check heap-validate [--out DIR] WORKLOAD...` holds the copier model to the stock
   VM with no nursery: the workload runs on `bin/runevm --jit=off --nursery 0
   --stats` at five heap
-  settings, exactly as `scripts/census.sh` ran it, and the lower band's
-  collections and semispace must equal the stock's, with the stock's bytes
+  settings, exactly as `scripts/census.sh` ran it, and the stock's
+  collections must lie between the two bands, the lower band's semispace
+  must equal the stock's, with the stock's bytes
   copied (with half the band's width as slack) and live data inside the
   band. The trace is made when it is missing or older than the bytecode or
   either VM; `CENSUS_TRACES` names the traces' directory and `CENSUS_EVERY`
   the interval of a census made here. `make check-heapsim` runs it on
   compile-sigs and intinf_fact; on the bootstrap at 32 KiB all five
   settings agree, the copied bytes within 0.1%.
-* `checktrace.py DIR` and `checkold.py DIR` (Python 3 with numpy) check a
-  trace's consistency and its stores' old values (`docs/census.md`,
-  *Checks*).
+* `bin/rune-heap-check heap-trace-check DIR` checks trace consistency in
+  Standard ML, without NumPy. `checkold.py DIR` still checks stores' old
+  values with Python 3/NumPy until the P2.14 analysis-tool port
+  (`docs/census.md`, *Checks*).
 * `sweep.sh WORKLOAD...` runs the heap-layout study's whole matrix on a
   trace (layouts, variants, collectors, sizes, bands) into
   `tests/out/heapsim/sweep-WORKLOAD.tsv`, `--reduced` the short matrix the

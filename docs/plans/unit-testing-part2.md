@@ -110,7 +110,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | --- | --- | --- | --- |
 | P2.0 | existing runner | Current inventory and reproducible comparison baseline | done 2026-10-20 |
 | P2.1 | P2.0 | Native-code checks and stress/sanitizer ways | done 2026-10-21 |
-| P2.2 | P2.0 | Census, simulator, layout and gcbench checks | pending |
+| P2.2 | P2.0 | Census, simulator, layout and gcbench checks | done 2026-10-21 |
 | P2.3 | P2.0; P2.6 for host benchmark execution | Budgets and benchmark correctness | pending |
 | P2.4 | P2.0 | Documentation consistency and law mutation checks | pending |
 | P2.5 | P2.0 | Shared matrix model, probes and host laws | pending |
@@ -497,3 +497,29 @@ cross-implementation checks from becoming a library talking only to itself.
   input delegation were compared separately. The new checks intentionally
   reject a successful compiler that produced no executable; scratch execution
   isolates program-created files while normalizing both compared environments.
+* **P2.2 (2026-10-21):** retired all eight owned files and replaced their
+  Make routes with `heap/*` cases. The SML binary reader checks unsigned
+  little-endian records, totals, sample clocks/liveness, pointer kinds and
+  store bounds without NumPy. Packed per-object tables use nine bytes plus
+  sample tables and bounded input buffers. Independent old/new captures under
+  `tests/out/unit-testing-part2/p2.2` matched all nine generated traces byte
+  for byte, SATB events, the gcbench operation stream, four JIT index/role
+  lists (excluding process addresses) and all ten copier replay rows (excluding
+  measured GC duration). Routine traces use SML producers with explicit DAG
+  dependencies and recipe publication; a failed producer invalidates its old
+  recipe and cancels its consumer. Compatibility replay still invokes the
+  P2.14 production census adapter when an archive is absent/stale, with the
+  assertions and five-setting report in SML. JIT analysis also remains a
+  P2.14 tool dependency, separately required from the binary checks.
+  Planted tests reject truncated/corrupt records, wrong totals and checksums,
+  invalid JIT code/locations, missing versus empty stores, and failures at the
+  inclusive numeric tolerance boundaries. The integrated focused run passed
+  **213/213**, followed by full acceptance of **19,028 results: 19,026 PASS,
+  two documented SKIP**, 2,369.8 s wall and 14,712.6 s CPU with eight workers.
+  Events, summary and command are archived under `p2.2/acceptance`, with the
+  complete log at `p2.2-check.log`. A follow-up thin entrypoint fix preserves
+  standalone replay from other directories; valid/corrupt trace and stale
+  archive replay probes from `/tmp` passed. Final Rune/MLton runner and heap
+  helper bytecode comparisons passed. Earlier standalone SML checks passed
+  211/211; the premature seven-case invocation before the integrated build
+  completed was only the inventory/canaries and is not acceptance evidence.

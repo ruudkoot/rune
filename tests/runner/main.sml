@@ -94,7 +94,6 @@ struct
              ["tests/compiler/*", "tests/runtime/*"]),
        step ("test-heap-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, ["layout"], ["tests/runtime/*"]),
        some ("check-docs", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
-       step ("check-layouts", {cpus = Int.min (2, few), memory = 500, pools = [], after = []}, ["layout"], ["tests/layouts/*"]),
        alone ("test-install", [], ["tests/install/*", "examples/hello.sml"]),
        Test.requires ["python3"]
          (alone ("test-dist", [],
@@ -102,10 +101,6 @@ struct
                   "scripts/dist-uninstall.bat", "scripts/dist-register.ps1",
                   "scripts/dist-rune.cmd", "scripts/dist-rune-repl.cmd", "tests/dist/*"])),
        Test.requires ["tmux", "python3"] (alone ("test-terminal", [], ["tests/terminal/*"])),
-       alone ("test-census", [], perfFiles @ ["tools/heapsim/*"]),
-       alone ("check-heapsim", [], ["tools/heapsim/*"]),
-       alone ("check-gcsim", [], ["tools/heapsim/*"]),
-       alone ("check-gcbench", [], ["tests/gcbench/*"]),
        alone ("perf-check", [], perfFiles),
        alone ("bench-smoke", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
        Test.requires ["python3"] (alone ("test-intinf", [], ["tests/intinf/*"])),
@@ -152,7 +147,7 @@ struct
      {name = "windows", probe = "sh tests/windows-dir.sh && command -v x86_64-w64-mingw32-gcc",
       hint = "Windows under WSL with interop (RUNE_WINDOWS_DIR names a directory there) and mingw-w64 (apt: gcc-mingw-w64-x86-64 gcc-mingw-w64-i686)"}]
     @ List.map (fn h => {name = h, probe = "test -x bin/rune-" ^ h, hint = "run: make hosts, then make " ^ h}) Lang.hosts
-    @ Hosts.capabilities @ Native.capabilities
+    @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities
 
   (* each file of expectations read by the one engine (docs/testing.md,
      Expectations): it parses, and its skips name programs that are there.
@@ -186,7 +181,7 @@ struct
        expectations ("lib-deviations", "tests/lib/deviations.txt", NONE),
        expectations ("quarantine", "tests/runner/quarantine.txt", NONE)]
 
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws
@@ -196,6 +191,9 @@ val () =
     ["laws-one", rbc, st] => Laws.one (rbc, st)
   | args =>
       case Native.command args of
+        SOME f => f ()
+      | NONE =>
+      case Heap.command args of
         SOME f => f ()
       | NONE =>
       case Migration.command args of

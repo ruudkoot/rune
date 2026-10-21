@@ -5,7 +5,7 @@ vm-census`): the same runtime and the same register-bytecode loop, with the
 hooks of `runtime/census/census.h` compiled in. It interprets everything (the JIT
 allocates in line with its own idea of the header, so `--jit` is ignored)
 and reports the stock VM's `--count` line, which is its correctness check
-(`scripts/check-census.sh`, `make test-census`, part of `make check`). What
+(`tests/runner/heapchecks.sml`, `make test-census`, part of `make check`). What
 it adds is a record of every allocation, every field written, every store
 into an existing object, every value a primitive produces or a call passes,
 how long every object lived, measured in bytes allocated, and at every
@@ -42,7 +42,7 @@ Its default semispace is 1 GiB; `--heap 268435456` gives the same samples
 for any workload whose live data stays under 100 MiB, in less memory. The
 bootstrap takes about 21 minutes at 32 KiB and writes 1.3 GB (34.2 million
 objects, 27,227 samples; 465 MB resident), `compile-sigs` 11 seconds.
-`tools/heapsim/checktrace.py DIR` checks a trace's consistency and
+`bin/rune-heap-check heap-trace-check DIR` checks a trace's consistency and
 `tools/heapsim/checkold.py DIR` its old values (*Checks*, below);
 `runtime/census/layouts.h` holds the size models: `w8_obj_size`, today's,
 and the heap-layout study's candidates for the first-order sizes of
@@ -193,7 +193,7 @@ the live data and the interval), and the final one at exit.
     census-heap N                    the census VM's --heap-size
     flags --census-every N ...       the census flags used
     mode summary                     where --census-summary was
-    cwd DIR, cmd FILE.rbc ARGS       how the stock VM ran, for tools/heapsim/validate.sh and
+    cwd DIR, cmd FILE.rbc ARGS       how the stock VM ran, for tests/runner/censustrace.sml and
                                      validate2.sh to run it again at other heap settings
     out FILE                         the file the compiler writes, if any (deleted before each run:
                                      the compiler looks at it first, docs/testing.md)
@@ -232,16 +232,15 @@ the live data and the interval), and the final one at exit.
   samples (a few kilobytes on the bootstrap).
 
 ### Checks
-- `tools/heapsim/checktrace.py DIR`: the file sizes against `meta.txt`;
+- `bin/rune-heap-check heap-trace-check DIR`: the file sizes against `meta.txt`;
   the clock (the sum of `w8_obj_size`) and the count totals; every sample's
   live bytes and objects recomputed from death.bin and the sizes; every
   sample's clock the prefix sum at its last_id, and the final flag on the
   last sample alone; the frames (fp_low <= fp, base_low <= sp); graph.bin
   against fields.bin (a pointer field, and only one, has an id, older than
   its object, of the kind fields.bin says); every store's ids allocated by
-  its clock, its src_kind, flags and field. Memory about 60 bytes an object
-  (2 GB on the bootstrap). `make test-census` runs it where python3 has
-  numpy.
+  its clock, its src_kind, flags and field. Memory includes nine packed bytes per object, the sample tables and
+  bounded input buffers. `make test-census` always runs the SML checker.
 - `tools/heapsim/checkold.py DIR` (a trace with graph.bin): each store's
   old_id is the previous store's new_id into that field, or the field's
   value in graph.bin.

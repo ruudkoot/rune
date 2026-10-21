@@ -616,7 +616,7 @@ bin/runevm-conv: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/confi
 # docs/plans/garbage-collector-v2.md, M1): runtime/register's loop on the runtime
 # with -DRUNE_CENSUS, which enables the hooks of runtime/census/census.h. It
 # interprets everything (the JIT allocates in line) and prints the stock VM's
-# --count line, which scripts/check-census.sh checks.
+# --count line, which tests/runner/heapchecks.sml checks.
 CENSUS_SRCS := $(NEW_SRCS) runtime/census/census.c runtime/census/census_static.c
 vm-census: bin/runevm-census
 bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/census/census.h runtime/census/layouts.h $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
@@ -625,10 +625,10 @@ bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/cen
 
 # The census VM against the stock one on a small program: the same --count
 # line, every byte and object in census.txt, the trace's own consistency
-# (tools/heapsim/checktrace.py, where python3 has numpy), the summary mode and
-# the static census (scripts/check-census.sh). Part of make check.
-test-census: bin/runevm-census bin/runevm $(RUNE)
-	sh scripts/check-census.sh
+# (the SML reader in tests/runner/tracecheck.sml), summary and static modes.
+# Part of make check, with no NumPy requirement.
+test-census: bin/runevm-census bin/runevm $(RUNE) bin/rune-test bin/rune-heap-check
+	$(RUNE_TEST) --tier test-census
 
 # The heap-layout tools (docs/plans/heap-layout.md, M2): the trace-driven
 # simulator bin/heapsim and its synthetic-trace generator bin/heapsim-gen
@@ -656,27 +656,23 @@ heapsim: bin/heapsim bin/heapsim-gen bin/gcsim
 # missed a collection that the stock VM made at 4 MiB, where the live data
 # crossed its trigger between two samples (2026-10-11, when Position and
 # SysWord became types of their own and the workload grew a little).
-check-heapsim: heapsim bin/runevm-census bin/runevm $(RUNE) bin/rune.rbc
-	sh tools/heapsim/test.sh
-	CENSUS_TRACES=tests/out/census-validate CENSUS_EVERY=8192 sh tools/heapsim/validate.sh compile-sigs intinf_fact
-check-gcsim: heapsim
-	sh tools/heapsim/test2.sh
-check-layouts:
-	$(MAKE) --no-print-directory -C tests/layouts CC=$(CC)
-	sh tests/layouts/check.sh $(notdir $(CC))
+check-heapsim: heapsim bin/runevm-census bin/runevm $(RUNE) bin/rune.rbc bin/rune-test bin/rune-heap-check
+	$(RUNE_TEST) --tier check-heapsim
+check-gcsim: heapsim bin/rune-test bin/rune-heap-check
+	$(RUNE_TEST) --tier check-gcsim
+check-layouts: bin/rune-test bin/rune-heap-check
+	$(RUNE_TEST) --tier check-layouts
 
 # The collector harness (docs/plans/garbage-collector-v2.md, *The harness*;
 # tests/gcbench/README.md): `make gcbench` builds tests/out/gcbench/gcbench
 # with $(CC). check-gcbench runs every experiment at tiny sizes with its
-# self-checks on (tests/gcbench/check.sh: a second or two, nothing timed,
+# self-checks on (tests/runner/heapchecks.sml: nothing timed,
 # no perf needed). The harness is for Linux on x86-64: elsewhere
 # check-gcbench says so and does nothing. Part of make check.
 gcbench:
 	$(MAKE) --no-print-directory -C tests/gcbench CC=$(CC)
-check-gcbench:
-	@if [ "$$(uname -s) $$(uname -m)" = "Linux x86_64" ]; then \
-	  $(MAKE) --no-print-directory gcbench && sh tests/gcbench/check.sh; \
-	else echo "check-gcbench: the harness is for Linux on x86-64; nothing done"; fi
+check-gcbench: bin/rune-test bin/rune-heap-check
+	$(RUNE_TEST) --tier check-gcbench
 
 # runeopt's templates for the layout of values and objects, generated from
 # the JIT's macro-assembler run against the text backend of its assembler
@@ -1457,8 +1453,6 @@ test-register-jit-steps: bin/runevm $(RUNE)
 	  cmp tests/out/register-jit/deeprec-tiered.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: nor while tiering up and invalidating"
 	(ulimit -s 1024 && bin/runevm --jit=all --jit-returns=call tests/out/register-jit/deeprec.rbc > tests/out/register-jit/deeprec-callret.out) && \
 	  cmp tests/out/register-jit/deeprec-callret.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: nor where compiled code returns by ret"
-	bin/rune tests/perf/fib.sml -o tests/out/register-jit/fib.rbc
-	python3 tests/register/jit-dump.py bin/runevm tests/out/register-jit/fib.rbc tests/out/register-jit/dump
 
 bin/rune-boot: bin/rune.rbc Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/rune.rbc" --lib "$$d/../lib" "$$@"\n' > $@
@@ -1521,6 +1515,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.
                tests/runner/hosts.sml tests/runner/libhosts.sml tests/runner/hostchecks.sml \
                tests/runner/migration.sml \
                tests/runner/children.sml tests/runner/bytecode.sml tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativefaults.sml tests/runner/native.sml \
+               tests/runner/tracecheck.sml tests/runner/heapchecks.sml tests/runner/censustrace.sml tests/runner/heapfaults.sml tests/runner/jitdumpcheck.sml tests/runner/heap.sml \
                tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/portability.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
@@ -1540,6 +1535,16 @@ bin/rune-native-check: bin/rune-native-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-native-check.rbc" "$$@"\n' > $@
 	chmod +x $@
 
+# Bounded heap/census actions share the same runner metadata and supervisor.
+HEAP_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/bytecode.sml \
+                   tests/runner/tracecheck.sml tests/runner/heapchecks.sml tests/runner/censustrace.sml \
+                   tests/runner/heapfaults.sml tests/runner/jitdumpcheck.sml tests/runner/heap.sml tests/runner/heapchecks-main.sml
+bin/rune-heap-check.rbc: $(RUNE) $(HEAP_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner $(HEAP_CHECK_SRCS) -o $@
+bin/rune-heap-check: bin/rune-heap-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-heap-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+
 # Everything a step of make check needs, built before the runner starts, so
 # that two steps that run at once never build one file (each step is a make
 # of its own).
@@ -1550,7 +1555,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check
+check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what

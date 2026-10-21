@@ -163,6 +163,20 @@ and sanitizer runs use the language suite's way model; select them with
 `test-native-asan`. The Basis stress selections still call the matrix driver
 until its P2.6 replacement.
 
+Census, simulator, layout, gcbench and JIT-dump checks are `heap/*` cases
+(`tests/runner/heap.sml`). Trace producers publish a successful recipe before
+consumers can run; failed producers cancel their consumers. Consistency checks
+use unsigned binary readers in SML, including malformed/truncated trace and
+JIT records, numeric boundary cases and wrong checksums. Run individual groups
+with `--tier test-census`, `check-heapsim`, `check-gcsim`, `check-layouts` or
+`check-gcbench`. The standalone commands are
+`bin/rune-heap-check heap-trace-check DIR` and
+`bin/rune-heap-check heap-validate [--out DIR] WORKLOAD...`; both fail with a
+nonzero status. Existing census archives retain their five-setting TSV reports.
+Absent/stale standalone archives still use the production census adapter until
+P2.14; the routine checks already use SML producers. The JIT analysis tool also
+remains a production Python adapter until P2.14, with an explicit requirement.
+
 ### Before and after
 
 `make check` before the runner was 32 steps run one after another
@@ -362,7 +376,7 @@ program, `runevm --jit=off --count`, one thing changed at a time):
    compiler compiling its own 50 files into a new file therefore counts 50
    objects, 1,600 bytes and 200 instructions more than into the file its
    last run left. A harness that compares two runs of the compiler removes
-   the output before each (`scripts/census.sh`, `tools/heapsim/validate.sh`).
+   the output before each (`scripts/census.sh`, `tests/runner/censustrace.sml`).
 
 What was measured and did **not** matter: address-space randomisation,
 the environment (an empty one gives the same numbers), whether the VM was
@@ -436,8 +450,8 @@ costs (`make check-gcbench`; [plans/garbage-collector-v2.md](plans/garbage-colle
 *The harness*). `make check` runs both but times neither: it holds them to
 oracles that do not depend on the machine's speed. Every kernel of the
 layout harness must give the same checksum under every layout and heap
-size (`tests/layouts/check.sh`); every experiment of gcbench runs at tiny
-sizes with its own checks on (`tests/gcbench/check.sh`, a second or two):
+size (`tests/runner/heapchecks.sml`); every experiment of gcbench runs at tiny
+sizes with its own checks on (`tests/runner/heapchecks.sml`, a second or two):
 the copies and marks reach every object, the barriers' remembered sets
 find every old-to-young pointer, the sweeps free the dead bytes, the stack
 scans agree, and the replay allocators keep every object whole and apart,
