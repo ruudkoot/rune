@@ -789,7 +789,7 @@ bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) build
 
 # The suites on the Windows VMs of both bytecodes: the stack one compiled
 # by bin/rune-stack, the register one by bin/rune, each on its two VMs
-# (tests/run-windows.sh), then the Basis Library suite on all four; then the
+# (bin/rune-windows), then the Basis Library suite on all four; then the
 # REPL on a console, its debug adapter, and its Jupyter kernel where Windows
 # has a Python.
 # The runtime/register VMs run with every function given to the JIT (RUNEVM_JIT,
@@ -979,12 +979,21 @@ test-portability: portability $(RUNE) vm bin/rune-test
 RUNE_TEST = GC_STRESS=$(GC_STRESS) $(if $(filter command line environment,$(origin RUNEVM)),RUNEVM=$(RUNEVM)) \
             NATIVE_HOST=$(NATIVE_HOST) MAKE='$(CHECK_MAKE)' \
             bin/rune-test run $(if $(filter command line environment,$(origin JOBS)),-j $(JOBS))
-test-steps: $(RUNE) vm bin/rune-windows | build/.doctor-check
-	bin/rune-windows vm --vm $(RUNEVM)
+LOW_LEVEL_BINS := build/heap_test build/heap_test-gcbits build/heap_test-cards \
+                  build/register/x64_test build/register/a64_test build/register/masm_test
+.PHONY: $(LOW_LEVEL_BINS)
+build/heap_test: tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile
 	@mkdir -p build
-	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_LIBS)
-	build/heap_test
-test: test-steps bin/rune-test
+	$(CC) $(CFLAGS) $(RT_INC) -o $@ tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_LIBS)
+build/heap_test-gcbits: tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile
+	@mkdir -p build
+	$(CC) $(CFLAGS) -DRUNE_GC_BITS $(RT_INC) -o $@ tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_LIBS)
+build/heap_test-cards: tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile
+	@mkdir -p build
+	$(CC) $(CFLAGS) -DRUNE_BARRIER_CARDS $(RT_INC) -o $@ tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_LIBS)
+test-steps: $(RUNE) vm bin/rune-windows bin/rune-test build/heap_test | build/.doctor-check
+	$(RUNE_TEST) --tier test-low-level
+test: $(RUNE) vm bin/rune-windows bin/rune-test build/heap_test | build/.doctor-check
 	$(RUNE_TEST) --tier test
 
 # The collector and its hooks (docs/plans/heap-layout.md, M7;
@@ -1000,15 +1009,9 @@ test: test-steps bin/rune-test
 # of the second; and on bin/runevm with the heap checked before and after
 # every collection of a heap of 64 KiB and a nursery of 8 KiB (--gc-verify),
 # the barrier's cards with it. Part of make check.
-test-heap-steps: | build/.doctor-check
-	@mkdir -p build
-	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_LIBS)
-	build/heap_test
-	$(CC) $(CFLAGS) -DRUNE_GC_BITS $(RT_INC) -o build/heap_test-gcbits tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_LIBS)
-	build/heap_test-gcbits
-	$(CC) $(CFLAGS) -DRUNE_BARRIER_CARDS $(RT_INC) -o build/heap_test-cards tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_LIBS)
-	build/heap_test-cards
-test-heap: test-heap-steps bin/runevm-gcbits bin/runevm-cards $(RUNE) vm bin/rune-test
+test-heap-steps: bin/rune-test build/heap_test build/heap_test-gcbits build/heap_test-cards | build/.doctor-check
+	$(RUNE_TEST) --tier test-heap-hooks
+test-heap: build/heap_test build/heap_test-gcbits build/heap_test-cards bin/runevm-gcbits bin/runevm-cards $(RUNE) vm bin/rune-test
 	$(RUNE_TEST) --tier test-heap
 
 # The two collectors (docs/runtime.md, *The garbage collector*;
@@ -1426,32 +1429,25 @@ test-register: bin/runevm $(RUNE) vm bin/rune.stack.rbc bin/rune-test
 # and a recursion 200,000 deep under a machine stack of 1 MB, which holds
 # the driver to never nesting, compiled at load and while tiering up and
 # invalidating (M6).
-test-register-jit: test-register-jit-steps bin/rune-test
-	$(RUNE_TEST) --tier test-register-jit
-test-register-jit-steps: bin/runevm $(RUNE)
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all "$$@"\n' > bin/runevm-jit
-	chmod +x bin/runevm-jit
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-opt
-	chmod +x bin/runevm-opt
-	@! grep -n "\bx64_\|\ba64_\|\bX64\|\bA64" runtime/register/jit/emit.c runtime/register/jit/masm.c runtime/register/jit/masm.h runtime/register/jit/compile.c runtime/register/jit/compile.h runtime/register/jit/dump.c runtime/register/jit.c \
-	  || { echo "check-asm: the emitters, the macro-assembler and the compiler name an encoder: they are written over runtime/register/jit/asm.h alone (M12)"; false; }
-	@echo "check-asm: the emitters name no encoder"
-	bin/runevm --jit-check
+build/register/x64_test: tests/register/x64_test.c runtime/register/jit/x64.c runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile
 	@mkdir -p build/register
-	$(CC) $(CFLAGS) $(RT_INC) -o build/register/x64_test tests/register/x64_test.c runtime/register/jit/x64.c runtime/sys/sys_$(SYS).c
-	build/register/x64_test
-	$(CC) $(CFLAGS) $(RT_INC) -o build/register/a64_test tests/register/a64_test.c runtime/register/jit/a64.c
-	build/register/a64_test
-	$(CC) $(CFLAGS) $(RT_INC) -o build/register/masm_test tests/register/masm_test.c runtime/register/jit/masm.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/sys/sys_$(SYS).c
-	build/register/masm_test
-	@mkdir -p tests/out/register-jit
-	bin/rune tests/lang/rt.deeprec_stack.sml -o tests/out/register-jit/deeprec.rbc
-	(ulimit -s 1024 && bin/runevm --jit=all tests/out/register-jit/deeprec.rbc > tests/out/register-jit/deeprec.out) && \
-	  cmp tests/out/register-jit/deeprec.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: the driver never nests"
-	(ulimit -s 1024 && bin/runevm --jit=baseline --jit-calls=1 --jit-work=1 --jit-stress=3 tests/out/register-jit/deeprec.rbc > tests/out/register-jit/deeprec-tiered.out) && \
-	  cmp tests/out/register-jit/deeprec-tiered.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: nor while tiering up and invalidating"
-	(ulimit -s 1024 && bin/runevm --jit=all --jit-returns=call tests/out/register-jit/deeprec.rbc > tests/out/register-jit/deeprec-callret.out) && \
-	  cmp tests/out/register-jit/deeprec-callret.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: nor where compiled code returns by ret"
+	$(CC) $(CFLAGS) $(RT_INC) -o $@ tests/register/x64_test.c runtime/register/jit/x64.c runtime/sys/sys_$(SYS).c
+build/register/a64_test: tests/register/a64_test.c runtime/register/jit/a64.c $(VM_HDRS) Makefile
+	@mkdir -p build/register
+	$(CC) $(CFLAGS) $(RT_INC) -o $@ tests/register/a64_test.c runtime/register/jit/a64.c
+build/register/masm_test: tests/register/masm_test.c runtime/register/jit/masm.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile
+	@mkdir -p build/register
+	$(CC) $(CFLAGS) $(RT_INC) -o $@ tests/register/masm_test.c runtime/register/jit/masm.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/sys/sys_$(SYS).c
+bin/runevm-jit: bin/runevm Makefile
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all "$$@"\n' > $@
+	chmod +x $@
+bin/runevm-opt: bin/runevm Makefile
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 "$$@"\n' > $@
+	chmod +x $@
+test-register-jit: bin/runevm-jit bin/runevm-opt $(LOW_LEVEL_BINS) $(RUNE) bin/rune-test
+	$(RUNE_TEST) --tier test-register-jit
+test-register-jit-steps: bin/runevm-jit bin/runevm-opt $(LOW_LEVEL_BINS) $(RUNE) bin/rune-test
+	$(RUNE_TEST) --tier test-register-jit-steps
 
 bin/rune-boot: bin/rune.rbc Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/rune.rbc" --lib "$$d/../lib" "$$@"\n' > $@
@@ -1513,7 +1509,7 @@ check test test-all test-opt test-native test-register test-register-jit test-st
 RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/sh.sml \
                tests/runner/hosts.sml tests/runner/libhosts.sml tests/runner/hostchecks.sml \
                tests/runner/migration.sml \
-               tests/runner/children.sml tests/runner/bytecode.sml tests/runner/windowsdir.sml tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativefaults.sml tests/runner/native.sml \
+               tests/runner/children.sml tests/runner/buildchecks.sml tests/runner/bytecode.sml tests/runner/windowsdir.sml tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativefaults.sml tests/runner/native.sml \
                tests/runner/matrixmodel.sml tests/runner/matrixprobe.sml tests/runner/matrixhost.sml tests/runner/smlscan.sml tests/runner/programselect.sml tests/runner/hostlaws.sml tests/runner/matrixfaults.sml \
                tests/runner/docchecks.sml tests/runner/mutants.sml tests/runner/docfaults.sml \
                tests/runner/matrixload.sml tests/runner/matrixprepare.sml tests/runner/matrixsuite.sml tests/runner/matrixprogram.sml tests/runner/matrixperf.sml tests/runner/matrixexecutionfaults.sml tests/runner/matrixcachefaults.sml tests/runner/matrix.sml \
@@ -1588,7 +1584,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: bin/rune-build bin/rune-build.rbc bin/rune-generate bin/rune-inventory bin/rune-measure $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal build/bench-counts.rbc
+check-tools: $(LOW_LEVEL_BINS) bin/runevm-jit bin/runevm-opt bin/rune-build bin/rune-build.rbc bin/rune-generate bin/rune-inventory bin/rune-measure $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal build/bench-counts.rbc
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what

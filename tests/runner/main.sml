@@ -1,32 +1,10 @@
-(* The inventory of bin/rune-test (docs/plans/unit-testing.md, M3 and M4):
-   every test the runner knows, as one tree. `make check` is `make
-   check-tools` and then `bin/rune-test run --tier check`.
+(* Repository test inventory over lib/test/runner. Standard ML owns cases,
+   dependencies, limits and verdicts, including independent C fixture runs.
+   make check-tools builds every shared subject before scheduling begins.
 
-   The programs of tests/lang and tests/errors are the runner's own tests,
-   in every way make check ran them (tests/runner/lang.sml), and so are the
-   Basis Library suite's in make check's four configurations of Rune
-   (tests/runner/basis.sml), and the laws of its documentation
-   (tests/runner/laws.sml). The rest of
-   what the old recipe of `make check` ran is a step each, an opaque `make`
-   of its target. make check-tools builds what any of them needs before the
-   runner starts, so that no two steps build one file at once; then the
-   edges and pools below keep apart the steps that share files (the audit
-   of M3):
-
-   - the pool `lang`: the steps that run the programs of tests/lang from the
-     root of the tree, and so write the files those programs write at fixed
-     paths (tests/out/rt.*.img, basis.*.tmp). They run one at a time, each
-     on most of the machine;
-   - the pool `heap_test`: the steps that build and run build/heap_test;
-   Native checks are individual SML jobs with producer edges for the
-   bytecode of tests/lang and the Basis suite (tests/runner/native.sml).
-
-   Matrix configurations are ordinary jobs; MLKit shares the matrix pool
-   because its compiler caches beside source files.
-
-   Every other step writes only a directory of its own under tests/out, and
-   runs beside the rest. A step is told its CPUs as JOBS, from
-   RUNE_TEST_CPUS. *)
+   The remaining Make adapters generate/check documentation, audit benchmark
+   coverage and verify ISA tables through their SML tools. Matrix MLKit jobs
+   retain their shared cache pool; each other worker owns its output tree. *)
 structure Inventory =
 struct
   val processors = Runtime.processors ()
@@ -87,18 +65,9 @@ struct
 
   val make =
     Test.describe "make"
-      [step ("test-register-jit-steps", {cpus = 1, memory = 1000, pools = [], after = []}, [],
-             ["tests/register/*", "tests/lang/rt.deeprec_stack.*"]),
-       step ("test-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, [],
-             ["tests/compiler/*", "tests/runtime/*"]),
-       step ("test-heap-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, ["layout"], ["tests/runtime/*"]),
-       some ("check-docs-generated", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
+      [some ("check-docs-generated", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
        alone ("bench-coverage", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
        alone ("check-isa", [], [])]
-
-  (* Matrix configurations are inventory ways. The remaining Windows make
-     adapter is retired with its platform controller in P2.7. *)
-  val extras=Test.describe "make" []
 
   (* what tests require of the machine (D18; docs/testing.md, Requirements),
      with scripts/doctor.sh's hints *)
@@ -157,7 +126,7 @@ struct
   val broadInputs = ["src/*", "runtime/*", "lib/basis/*", "lib/test/runner/*",
                      "Makefile", "tools/builder/*", "tools/generate/*", "scripts/*"]
   val tests = List.foldl (fn (path, tree) => Test.tag ("covers:" ^ path) tree)
-    (Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, Canary.tests]) broadInputs
+    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, Canary.tests]) broadInputs
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws
@@ -167,6 +136,7 @@ val () =
     ["laws-one", rbc, st] => Laws.one (rbc, st)
   | ["matrix-controller-faults"] => MatrixFaults.one ()
   | args =>
+      case BuildChecks.command args of SOME action => action () | NONE =>
       case WindowsJobs.command args of SOME action => action () | NONE =>
       case Benchmarks.command args of SOME action => action () | NONE =>
       case ScenarioJobs.command args of SOME action => action () | NONE =>

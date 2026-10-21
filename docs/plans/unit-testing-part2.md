@@ -1038,3 +1038,17 @@ text or a combined filename instead of an existing SML path. Those fields now
 point to the implementing modules; their CLI modes remain in the comparison
 contracts. The original failed receipts are retained. The final cold bootstrap
 also passes with all eight retired implementations physically absent.
+
+
+### P2.17 recipe audit checkpoint, 2026-10-21
+
+The final audit found and removed the remaining Make-held JIT encoder grep,
+three recursion comparisons and grouped C execution. Fifteen individual SML
+cases now preserve VM refusals, both original default heap executions, GC-bit
+and card variants, executable-memory admission, three independent C encoder/
+macro-assembler subjects, and all three recursion modes at the original 1 MiB
+stack limit. Eight literal encoder-guard vectors pass. The focused selection
+passes 20/20 including canaries. C fixtures retain their original compilation
+flags and remain independent subjects. Make builds them before scheduling;
+its remaining comparisons maintain build stamps, rather than test verdicts.
+Global acceptance below must use the resulting committed source state.

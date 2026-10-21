@@ -4,7 +4,7 @@
 # (kernels.c) over the layout headers (layouts/*.h) and the size models of
 # runtime/census/layouts.h. `make -C tests/layouts` with the tree's CC; `make -C
 # tests/layouts CC=clang-18` for a second compiler (CCNAME is the compiler's
-# basename). The top-level `make check-layouts` builds and runs check.sh.
+# basename). The top-level `make check-layouts` builds the subjects checked by bin/rune-heap-check.
 CC      ?= cc
 CCNAME  ?= $(notdir $(CC))
 CFLAGS  ?= -std=c17 -O2 -Wall -Wextra -pedantic

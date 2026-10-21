@@ -735,3 +735,13 @@ retired targets and nineteen explicit bootstrap/installer/oracle exceptions.
 Make's unit-bootstrap, template and Int64 comparisons also use SML jobs.
 `make test-int64` preserves both VMs and all four JIT modes. Final global
 acceptance is recorded by P2.17 of the continuation roadmap.
+
+The final recipe audit exposes C fixture execution under `low-level/*`.
+`low-level/basic` preserves VM refusals and the original heap test;
+`low-level/heap-hooks` preserves the default, GC-bit and card variants.
+`low-level/jit` checks encoder independence, executable memory, all three C
+encoder/macro-assembler subjects and deep recursion in all/tiered/call-return
+modes. The recursion cases retain a 1 MiB OS stack through a thin `ulimit`
+adapter; SML owns arguments, deadlines and byte comparisons. The focused
+selection passes 20/20 including canaries and eight literal guard fault vectors.
+Make retains the C compilation graph and the compatibility target names.
