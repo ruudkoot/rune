@@ -63,7 +63,8 @@ What it rests on:
 - **Five prototypes, thrown away:**
   - tier 2 dividing by a constant (E7);
   - fingerprints streamed, F1 and F2 (E5);
-  - rx2f, a hash for tier 2, in the compiler (E6);
+  - rx2fw, a hash for tier 2, in the compiler, with a probe of it in the
+    cache (E6);
   - a fix of a hole in the cache that E9 found;
   - a linear link (E3).
 
@@ -83,7 +84,7 @@ What it rests on:
 | M8 | Nested functors that do not blow up | F | not started |
 | M9 | Retire | | not started |
 
-The decisions D1 to D16 are not decided (*Decisions*).
+The decisions D1 to D17 are not decided (*Decisions*).
 
 The tracks do not wait for each other:
 - **H, hashing,** makes a build in units cost what a whole compile costs:
@@ -131,14 +132,15 @@ it is said to be outside this roadmap.
 
 **Outside this roadmap:**
 - **SML/NJ 110.99.9 on amd64 cannot compile a 63-bit word constant** (E6):
-  "MLRisc bug: AMD64MCEmitter: MOVABSQ unimplemented". rx2f builds its
+  "MLRisc bug: AMD64MCEmitter: MOVABSQ unimplemented". rx2fw builds its
   constants at start-up for it.
+- **`smlnj32`'s `Word64` is wrong** (E6): `fromInt`, shifts and `+` give
+  wrong results, and `0wx40000000 : Word64.word` prints 0.
 - **Rune's int64 VM has a 64-bit `Word` whatever the bytecode** (E6), so a
   program that relies on `Word`'s 63 bits computes otherwise there.
-- **`lib/random`'s `hashString` differs on `smlnj32`** (E6): SML/NJ
-  110.99.9's 32-bit `Word64` loses bits 30 and 31 of its low half, so the
-  library's promise of the same numbers on every compiler does not hold
-  there.
+- **`lib/random`'s `hashString` differs on `smlnj32`** (E6), for that
+  reason, so the library's promise of the same numbers on every compiler
+  does not hold there.
 - **MLKit 4.7.25 fails with an internal error** on a functor whose body has
   `val r = ref []` applied after a `;` ("Impossible:
   IntModules.reelaborate.ParseElab.FAILURE"; E1, program b6).
@@ -188,7 +190,13 @@ The owner's brief, as written:
 function is chosen for its speed and correctness on Rune at tier 2 alone.
 SML/NJ, a broken compiler, is not to constrain it. The other compilers are
 measured for information only. E6 was run again under that rule, and D11
-changed with it (rx2f, 126 bits, in place of four 30-bit lanes).
+changed with it (rx2fw, 126 bits, in place of four 30-bit lanes).
+
+**And (2026-10-21):** a hash that depends on the size of `Int` and `Word` is
+acceptable for its speed, if the cache records that dependence, so that
+compilers built by different hosts never mix entries: a probe, one quick hash
+whose value tells the hash apart (D11). The owner asked too whether MLton's
+build should use 64-bit default types anyway (D17).
 
 | The brief asks | Answered in |
 |---|---|
@@ -1523,23 +1531,130 @@ tier 2:
   234 MB/s. The rest is presumably building the texts and walking the
   environments, for S1 and S2.
 
-**On the other compilers, for information** (`results/E6b/hosts`):
-- **Same values as Rune:** SML/NJ 64-bit, Poly/ML and MLKit. Their `Word` is
-  63 bits.
-- **Other values:** MLton's build, whose `Word` is 32 bits; `smlnj32`; and
-  Rune's int64 VM.
-- Masking each `+` and `*` to 63 bits should make the int64 VM agree. So
-  should MLton's build with `-default-type word64`. Neither was tried.
-- In the first round, `Random.hashString` (`lib/random`) gave other values on
-  `smlnj32`: SML/NJ 110.99.9's 32-bit `Word64` loses bits 30 and 31 of its
-  low half (`0wx40000000 : Word64.word` prints 0).
-- SML/NJ 110.99.9 on amd64 cannot compile a 63-bit word constant ("MLRisc
-  bug: AMD64MCEmitter: MOVABSQ unimplemented"). So rx2f's constants are
-  built from 21-bit pieces at start-up, which costs Rune nothing.
+**The other hosts, and a probe in the cache** (E6c, `results/E6c/README.md`).
+The owner accepted that the hash depends on the size of `Int` and `Word`,
+for its speed. But the cache and the unit files must record that
+dependence, so that compilers built by different hosts never mix entries.
+The owner also asked whether MLton's build should use `-default-type int64
+-default-type word64`.
 
-**What it predicts (D11):** rx2f, for text and for combining, 126 bits, in
-M4. On every measure at tier 2 it is better than today's hash, with M1's
-division or without.
+- **Plain rx2f collapses on a narrow `Word`.**
+  - It does not merely give other values. On MLton's default build, whose
+    `Word` is 32 bits, the 33,639 pieces of the corpus get 32 distinct
+    digests; on `smlnj32`, 16. A rotation by 31 or 32 keeps one bit or none.
+  - Such a build of the compiler would take wrong entries from its own
+    cache.
+  - So the hash needs a path for a narrow `Word`.
+- **rx2fw is rx2f with that path.**
+  - Where `Word` is 63 bits or wider, the sum is masked to 63 bits before
+    each rotation, and the lane before each shift of the ending.
+  - Where `Word` is narrower, the same function runs in `Word64`, its
+    constants built from 21-bit pieces and its digits written a nibble at a
+    time.
+  - Against the C model, over the corpus, its pieces, the small corpus and
+    the combined streams:
+
+| Build | Plain rx2f | Masked | rx2fw |
+|---|---|---|---|
+| Rune: interpreter, tiers 1 and 2, stack VM, 32-bit VM, aarch64 | agrees | agrees | agrees |
+| Rune's int64 VM | differs | agrees | agrees |
+| MLton, `-default-type int64 -default-type word64` | differs | agrees | agrees |
+| MLton as built today (32-bit `Word`) | collapses | collapses | **agrees** |
+| SML/NJ 64-bit, Poly/ML, MLKit | agrees | agrees | agrees |
+| `smlnj32` | collapses (16 distinct) | collapses | differs, all distinct |
+
+  `smlnj32`'s own `Word64` computes `fromInt`, shifts and `+` wrongly, so it
+  can only have a hash of its own.
+- **What the masks cost at tier 2** (best of five; cycles within the noise):
+
+| | Instructions a byte | A 16-byte text | A value combined |
+|---|---:|---:|---:|
+| rx2f | 49.5 | 1,470 | 182 |
+| masked | 51.4 (+3.8%) | 1,608 (+9%) | 205 (+13%) |
+| rx2fw | 51.4 | 1,569 | |
+
+  Tier 2 keeps every mask, although each is all ones on a 63-bit `Word`:
+  six instructions each. The function does not change where `Word` is
+  exactly 63 bits, so rx2fw can take the unmasked loop there. Rune then
+  keeps rx2f's cost and every host's values agree (D11). That variant was
+  not measured; it is rx2f's loop.
+- **MLton's build with `-default-type int64 -default-type word64`** (D17):
+  - It builds cleanly, with no warning, for rune, runedoc, runeopt and
+    runeisa.
+  - The runner's `check-cross` against `bin/rune-boot` passes, 586 of 586.
+    That covers the compiler compiling itself, `rune-units` through a shared
+    cache, runedoc, runeopt, `--basis all`, `tests/lang`, the examples, every
+    Basis test, `@doc` and `@opt`.
+  - Caches filled by Rune's compiler are taken whole by that build, and the
+    other way round: 13 of 13 units of a project, 227 of 227 of the
+    compiler's sources, the same bytes. The same holds for MLton's default
+    build with rx2fw.
+  - It costs MLton's build speed:
+    - the bootstrap: 3.9% fewer instructions, 4.6% more cycles;
+    - MLton's 606 files in units: the same instructions but 24% to 32% more
+      cycles, 320 to 338 s against 259 s, with elaboration from 19 to 31 s.
+    - Both runs reached the 7 GB heap cap; the larger objects of 64-bit
+      integers are the suspicion, not profiled.
+
+    MLton's default build with rx2fw, S0, F1 and F2 takes those files in 163
+    s.
+- **The probe.** `Pickle.probe` is one digest of a fixed text:
+  - pieces of 0 to 15 bytes, which cover every number of pending bytes and
+    every tail;
+  - a piece of 1,000 bytes;
+  - the bytes 0x80 to 0xFF;
+  - seven bytes 0xFF, the largest word one step takes.
+
+  Once S1 combines, values with bit 62 set and the largest values join it.
+  - Rune, both MLton builds and the int64 VM give
+    `07facb226fa4fa4c4e2ecbda1627d2a3`; `smlnj32` gives another.
+  - It costs 45 to 48 µs at tier 2 once warm, 0.7 to 1 ms on its first call,
+    and is worked out once a run.
+  - **In the cache:** the cache's settings gain `("hash", probe)` beside
+    `Config.identity`. A cache whose configuration differs only in its hash
+    is reported once with `--explain-rebuild` ("the cache DIR holds entries
+    made by a compiler whose hash differs (its X, this compiler's Y): none
+    is taken"), and the frozen Basis likewise. The first entry of a
+    configuration writes `units/about`, a line per setting.
+  - **In the unit files:** a basis's header becomes "RBI", its version, the
+    probe and its name. `loadAgainst` refuses another probe with "a basis
+    made by a compiler whose hash differs": in the cache that is a miss, in
+    the REPL's units an error.
+  - `UnitBasis.version` goes from 7 to 8. `UnitCache`'s entries keep their
+    format, and `UnitFile` is untouched.
+  - **Without the probe,** no build took a wrong entry from another's cache,
+    but only by accident: the cache's configuration is itself a hash. A
+    foreign `.rbi` failed with "names a unit the session has not", and a
+    foreign `.rbu` failed to link.
+- **Tested.**
+  - From Rune to `smlnj32`, and back, nothing is taken; everything is
+    compiled again, and the build says why.
+  - Between Rune and either MLton build, everything is taken.
+  - `make test-incremental` passes with two new scenarios, 116 of 116:
+    - **S70:** `plant.py --basis-probe` rewrites an entry's probe, which is
+      then missed, with the message;
+    - **S71:** a cache's configuration with another hash; everything is
+      compiled again, and the build says why.
+  - `tests/incremental/run.sh` passes with both MLton builds, 168 of 168.
+- **`check-cross`'s `rune-units` needs `smlnj32` left out.** Rune's compiler
+  sources include `lib/basis/runtime.sml`, so the compiler built in units
+  keeps its units' identities. A host whose hash differs therefore builds
+  other bytes. `smlnj32`'s whole programs still agree. The alternative is
+  63-bit arithmetic in `Int` limbs for `smlnj32` alone.
+- **Earlier, for information:**
+  - `Random.hashString` (`lib/random`) gave other values on `smlnj32`.
+  - SML/NJ 110.99.9 on amd64 cannot compile a 63-bit word constant ("MLRisc
+    bug: AMD64MCEmitter: MOVABSQ unimplemented"), so rx2fw's constants are
+    built from 21-bit pieces at start-up, which costs Rune nothing.
+
+**What it predicts (D11, D17):**
+- rx2fw for text and for combining, 126 bits, with an unmasked loop where
+  `Word` is 63 bits. It is better than today's hash at tier 2 on every
+  measure, with M1's division or without.
+- The probe, in the cache and in the unit files.
+- `smlnj32` out of `check-cross`'s units comparison.
+- MLton's build left as it is: it agrees without 64-bit defaults, which would
+  cost it a quarter of its speed on large builds.
 
 ### E7. Tier 2 dividing by a constant, built
 
@@ -1880,10 +1995,14 @@ found. What it changed in this roadmap:
   compile a 63-bit word constant.
 - **The hash is chosen for Rune at tier 2** (the owner, 2026-10-21). Its
   speed and correctness there decide it. Whether another host's build of
-  the compiler computes the same values is for information (E6, D11). On
-  Rune, `Word` is 63 bits on every engine but the int64 VM; `Word64` costs
-  about twice as much a byte; `lib/digest` and `lib/random` are not in the
-  compiler's build file.
+  the compiler computes the same values is for information (E6, D11).
+  - A build whose hash differs must never mix its entries with another's.
+    The probe in the cache and in the unit files sees to that.
+  - Its own hash must not collapse: a 63-bit hash run on a 32-bit `Word`
+    needs a path of its own.
+  - On Rune, `Word` is 63 bits on every engine but the int64 VM, and
+    `Word64` costs about twice as much a byte.
+  - `lib/digest` and `lib/random` are not in the compiler's build file.
 - **S42.** A program compiled whole and the same program built from its
   units' Mid (`--units --whole`) are the same bytes (`check-units`,
   `check-cross`). Whatever makes whole programs' code from functors must make
@@ -1956,6 +2075,8 @@ a function from its argument to its result:
 - **The argument** is the argument structure's record, thinned to the
   parameter's signature where the match drops or reorders components (the
   coercion of F-ing modules and of OCaml's `Tcoerce_structure`).
+- **Dynamic modules** take the same nested records in M7 (D3), so that a
+  structure has one representation at run time.
 - **The result** is the body's record. An application `structure S = F (A)`
   binds `S` to it; a client selects from it.
 - **The parameter's types** are abstract in the body's code. Mid already
@@ -2084,16 +2205,16 @@ stamps or counters, and recursive groups (`datatype ... and ...`,
 
 ### The hash (D11)
 
-rx2f (E6). It is two lanes of 63 bits, in `Word`. Every operation is mod
-2^63, and `rotl (x, r)` is `x << r` or-ed with `x >> (63 - r)`.
+rx2fw (E6). It is two lanes of 63 bits, and every operation is mod 2^63.
+`rotl (x, r)` is `x << r` or-ed with `x >> (63 - r)`.
 - **Constants:** xxHash64's primes made odd 63-bit words, `(p >> 1) orb 1`:
   - P1 = `0x4F1BBCD8C2F5E543`;
   - P2 = `0x6159571E93EA75A7`;
   - P3 = `0x0B2B33D8CF1BBCFD`;
   - P4 = `0x42F5E53BE1595731`.
 
-  They are built from 21-bit pieces at start-up, since SML/NJ cannot compile
-  a 63-bit word constant.
+  They are built from 21-bit pieces at start-up, since SML/NJ cannot
+  compile a 63-bit word constant.
 - **Rounds:**
   - `A (a, x) = rotl (a + x * P2, 31) * P1`;
   - `B (b, x) = rotl (b + x * P4, 27) * P3`.
@@ -2110,6 +2231,20 @@ rx2f (E6). It is two lanes of 63 bits, in `Word`. Every operation is mod
   values. The number of values takes the place of `n`.
 - **Streaming:** the hasher keeps `a`, `b`, up to six pending bytes and the
   length. S0 feeds it; S1 and S2 combine with it.
+- **By `Word`'s width,** chosen once at start-up:
+  - where it is 63 bits, the loop as written. That is every Rune engine but
+    the int64 VM.
+  - where it is wider, every sum is masked to 63 bits before a rotation and
+    every lane before a shift of the ending;
+  - where it is narrower, the same function in `Word64`, its digits written
+    a nibble at a time. That is MLton's build.
+- **The probe:** `Pickle.probe` is the digest of a fixed text worked out once
+  a run. It is chosen to reach every tail, every byte value and the largest
+  word a step takes, and later the largest combined values. It goes:
+  - into the cache's settings beside `Config.identity`, so that a compiler
+    whose hash differs has a configuration of its own, and is told so;
+  - into a basis's header, so that a unit file made by such a compiler is
+    refused, not misread.
 
 The constants are read into locals before a loop. Tier 2 otherwise checks a
 global's initialisation, and a constant shift's range, at every use.
@@ -2148,7 +2283,7 @@ was written with. None is decided yet.
 |---|---|
 | D1. How a functor is compiled, in each mode | B: once, as a function, in every mode; whole programs' copies made by an expansion in the middle end |
 | D2. Expansion in a build in units | A: only of a functor declared in the same unit |
-| D3. The functor's run-time interface | A: a record per structure, made once and shared; parameter types opaque, polymorphic slots cast |
+| D3. The functor's run-time interface | A: a record per structure, made once and shared; parameter types opaque, polymorphic slots cast; dynamic modules on the same records in M7 |
 | D4. Datatypes a parameter specifies | A: a descriptor slot per specification |
 | D5. Datatypes a body declares | A: a layout fixed where the datatype or instance is made, and carried |
 | D6. Equality at a parameter's type | A: the generic walk; the expansion specialises |
@@ -2156,12 +2291,13 @@ was written with. None is decided yet.
 | D8. The four corners | A: tests now; (b) refused at the declaration after E2; (a), (c), (d) closed by D1 |
 | D9. How far fingerprints go | C: S0, then S1, then S2, each gated |
 | D10. Memo keys for structures and signatures | A: the binder's identity and the path |
-| D11. The hash | B: rx2f, two 63-bit xxHash-style lanes (126 bits), for text and combining, in M4 |
+| D11. The hash | B: rx2fw, two 63-bit xxHash-style lanes (126 bits), for text and combining, with a probe in the cache; in M4 |
 | D12. Division by a constant | A: tier 2 on both targets, every division, and `Simplify` folding constants |
 | D13. Nested functors in whole programs | A: an expansion budget, past which an application is a call |
 | D14. S42 and the cache's configuration | A: S42 by construction; the configuration unchanged; M7 gated by budgets |
 | D15. `--typecheck-only` and `--serve` | A: no copies, now |
 | D16. How it lands | A: every mode switched by one change, behind one flag until M7 |
+| D17. MLton's default types | A: as they are |
 
 ### D1. How a functor is compiled, in each mode
 
@@ -2234,14 +2370,53 @@ continues to make copies".
     cross by `unsafe_cast`.
   - **Recommended:** it reuses `StrDynamic`'s code. MLton's large parameters
     are passed by one pointer. The expansion undoes it.
+  - **Dynamic modules follow, in M7.** `_dynamic` and `_export` drop their
+    flattening for the same nested records, so that Rune has one
+    representation of a structure at run time, one coercion and one
+    fingerprint scheme. A module loaded by `_dynamic` can then be passed
+    straight to a functor's function, and a functor's result exported, with
+    no repacking.
+    - The cost: the ABI's fingerprint changes, so a module compiled before
+      fails to load with `Dynamic.Mismatch`, cleanly, and `tests/dynamic` is
+      updated. Nothing else uses dynamic modules today.
+    - It costs dynamic modules nothing at run time: `StrDynamic` copies the
+      slots into globals at load, so access afterwards is as before.
+    - Not before G2: on a no-go there are no functor records, and flattening
+      is fine for a module loaded once.
+    - `_export` keeps renumbering its datatypes' tags to the signature's
+      order. A module compiled for one signature can be renumbered, which an
+      existing functor argument cannot (D4).
 - **B. A flat tuple per application,** substructures flattened, as
   `_dynamic` does. MLton's parameters, a median of 2,993 value
   specifications through their substructures (E2), would be copied at every
   application.
-- **C. A new kind of type in Mid** for type constructors as parameters
-  (higher kinds, as F-ing modules would have it). No casts, and a larger
-  change to Mid's types and to every pass that reads them; it does not answer
-  the size of the records.
+- **C. Higher kinds and rank-2 fields in Mid.** Not recommended now;
+  *Later* at most.
+  - **What it would add.** Mid's types are System F at rank 1, and `Ty.Gen`
+    takes no arguments: a type variable stands for a type, not for a type
+    constructor. A body compiled once over a parameter `type 'a t` with `val
+    map : ('a -> 'b) -> 'a t -> 'b t` has, honestly, a type like `∀(t : * →
+    *). {map : ∀'a 'b. ...} → ...`. That needs type-constructor variables
+    applied to arguments, and record fields that are themselves polymorphic
+    (rank 2; 76% of MLton's functors have one, E2). F-ing modules notes that
+    only the core language's type constructors call for higher kinds.
+  - **What it buys.** A fully typed function, which MidLint checks with no
+    hole at the boundary, and an expansion that is type application rather
+    than substitution of stamps and cancellation of casts.
+  - **What it does not buy:** speed. An abstract type is a uniform value
+    (`RAny`) either way, and after the expansion both A and C are ground.
+  - **What it costs.** Kinds, applied type variables and polymorphic fields
+    in Ty, handled by every pass that reads Mid's types: `midcanon`, `lift`,
+    `workers`, `simplify` (its `eqByType` and `specialise`), `refs`, Lower's
+    `repOfTy`, Mid's text form and its pickling (`UnitMid`), and MidLint.
+    It does not answer the size of the records either.
+  - **A gets most of its safety for little.** A parameter type is already an
+    opaque `Ty.Con (stamp, name, args)` (E10), so MidLint checks a body
+    against those stamps. Casts sit only where a slot enters or leaves a
+    record, as in `StrDynamic`. After an expansion everything is ground and
+    checked, and M6 adds one rule: an `unsafe_cast` left between two
+    different ground types after an expansion is a bug.
+  - C comes back if the expansion's bugs show that the casts hide too much.
 
 ### D4. Datatypes a parameter specifies
 
@@ -2381,33 +2556,50 @@ w/o going via a pretty print."
 ### D11. The hash
 
 The brief: "you should also look at faster hash functions". The owner ruled
-on 2026-10-21 that speed and correctness on Rune at tier 2 decide it, and
-that the other compilers are for information (*The request*). E6 measured the
-candidates in two rounds; E7 measured today's hash with division by a
-constant.
+on 2026-10-21 that speed and correctness on Rune at tier 2 decide it, that
+the other compilers are for information, and that a hash whose values depend
+on the size of `Int` and `Word` is acceptable if the cache records that
+dependence (*The request*). E6 measured the candidates in three rounds; E7
+measured today's hash with division by a constant.
 
 - **A. Keep `P.hash`,** made faster by M1: 50 cycles a byte at tier 2, from
   171. No identity changes for it. Combining costs 693 instructions a value.
-- **B. rx2f, two 63-bit xxHash-style lanes, 126 bits, for text and for
-  combining, in M4** (*The architecture*). **Recommended.**
-  - 13.9 cycles a byte and 52 a value combined: 3.6 times as fast as A with
-    M1 by the byte, and 4 times by the value.
-  - It passed every check of E6: a model in C agrees, every engine of a build
-    agrees, and it is clean on the corpus and on structured inputs, with an
-    ideal bias matrix.
-  - In the compiler, on top of M2, it takes MLton's build in units from 770G
-    to 551G cycles.
-  - M4 changes every fingerprint anyway, so it costs no extra invalidation.
-- **C. rh2, two multiply-xorshift lanes.** About 11% cheaper a byte than B,
-  and fine for text; its lanes collide when whole 63-bit child hashes are
-  combined (E6). It could hash text if B's round did the combining, which
+- **B. rx2fw: two 63-bit xxHash-style lanes, 126 bits, for text and for
+  combining, with a probe of it in the cache; in M4** (*The architecture*).
+  **Recommended.**
+  - **Speed:** 13.9 cycles a byte and 52 a value combined at tier 2. That is
+    3.6 times as fast as A with M1 by the byte, and 4 times by the value.
+  - **The loop by `Word`'s width:**
+    - unmasked where `Word` is 63 bits, as on every Rune engine but one, so
+      tier 2 keeps rx2f's 49.5 instructions a byte;
+    - masked to 63 bits where `Word` is wider, which is Rune's int64 VM;
+    - in `Word64` where `Word` is narrower, as on MLton's build. There plain
+      rx2f would collapse (E6).
+  - **Correctness:** it passed every check of E6. A model in C agrees; every
+    engine and every host but `smlnj32` agrees; it is clean on the corpus
+    and on structured inputs, with an ideal bias matrix.
+  - **In the compiler,** on top of M2, it takes MLton's build in units from
+    770G to 551G cycles.
+  - **The probe** (`Pickle.probe`, one digest of a fixed text worked out once
+    a run, 45 µs) is put into the cache's configuration and into a basis's
+    header. A compiler whose hash differs never takes another's entries,
+    and says why.
+  - M4 changes every fingerprint anyway, so the change costs no extra
+    invalidation.
+- **C. rx2f without the width paths,** relying on the probe alone. Rune's
+  cost is the same, but MLton's build of the compiler would collapse its own
+  hashes and take wrong entries from its own cache. Rejected.
+- **D. rh2, two multiply-xorshift lanes.** About 11% cheaper a byte than B,
+  and fine for text, but its lanes collide when whole 63-bit child hashes
+  are combined (E6). It could hash text while B's round combines, which
   makes two functions for 11% of a cost that is no longer the larger part.
-- **D. The first round's four 30-bit lanes** (mix30w), 120 bits, the same
-  value on every host. About 4 times B's cost a byte at tier 2. It was
-  recommended before the owner's ruling; the ruling removes its reason.
-- **E. SHA-256** from `lib/digest`, 256 bits: strong against an adversary
-  (issue 7), at 6.9 MB/s at tier 2. For a cache shared between people who do
-  not trust each other, which Rune's is not. *Later*.
+- **E. The first round's four 30-bit lanes** (mix30w), 120 bits, the same
+  value on every host, `smlnj32` included. About 4 times B's cost a byte at
+  tier 2. It was recommended before the owner's ruling, which removes its
+  reason.
+- **F. SHA-256** from `lib/digest`, 256 bits: strong against an adversary
+  (issue 7), at 6.9 MB/s at tier 2. It is for a cache shared between people
+  who do not trust each other, which Rune's is not. *Later*.
 
 The width: two lanes cost about 10% more than one, cover each other's
 structural collisions, and put an accidental collision among a million
@@ -2415,27 +2607,43 @@ identities far below anything measurable. One lane, 63 bits, would be about 5
 × 10^-8.
 
 What B costs beyond its code:
-- `UnitBasis.version`, `UnitCache.version` and `UnitMid.version` bumped, but
-  not `UnitFile.version`, whose format does not change. Bumping it makes the
+- `UnitBasis.version` bumped (the probe in a basis's header), and
+  `UnitCache.version` and `UnitMid.version` with the new hash. Not
+  `UnitFile.version`, whose format does not change; bumping it makes the
   runtime refuse the REPL's units.
-- `tests/incremental/plant.py`'s copy of the hash rewritten: about 30 lines
-  of Python, in E6's patch.
+- `tests/incremental/plant.py`'s copy of the hash rewritten, about 30 lines
+  of Python, with `--basis-probe` for S70.
 - The instruction set's fingerprint keeps its own copy of today's first lane
   (`isagen.sml:51`, `reggen.sml:44`).
-- **Values depend on the host that built the compiler, for information:**
-  - The same as Rune's on SML/NJ 64-bit, Poly/ML and MLKit. MLton's build
-    (32-bit `Word`), `smlnj32` and Rune's int64 VM give others.
-  - `check-cross` still passes: the compiler's sources use no dynamic module,
-    so no program it compiles carries a unit's identity. But a compiler built
-    by MLton keeps a cache of its own, since the cache's configuration is a
-    hash; the check no longer tests that MLton's build shares Rune's cache.
-  - `plant.py`'s scenarios (S55, S67) would fail with MLton's build of the
-    compiler.
-  - A program that may load units, and so keeps its units' identities, is
-    other bytes when built by another host's build.
-  - If any of that matters, masking each `+` and `*` to 63 bits, and building
-    MLton's compiler with `-default-type word64`, should make those hosts
-    agree. That is untried.
+- **`smlnj32`** gets a hash of its own: its `Word64` is wrong. The probe
+  keeps its cache apart from everyone else's, so nothing is mixed.
+  - Rune's compiler sources include `lib/basis/runtime.sml`, so the compiler
+    built in units keeps its units' identities. `check-cross`'s `rune-units`
+    would differ for `smlnj32`, and leaves it out (E6's runner patch).
+  - `smlnj32`'s whole programs still agree.
+  - The alternative is 63-bit arithmetic in `Int` limbs for `smlnj32` alone.
+    That is the kind of compromise the ruling rejects.
+
+### D17. MLton's default types
+
+The owner asked whether MLton's build should use `-default-type int64
+-default-type word64` anyway (E6).
+
+- **A. Leave MLton's build as it is.** **Recommended.**
+  - With D11 B, its hash agrees with Rune's already, and its caches are
+    shared.
+  - It compiles every program of `check-cross` to Rune's bytes today.
+  - 64-bit defaults would cost it 24% to 32% of its cycles on MLton's 606
+    files in units, by more elaboration and a full 7 GB heap.
+- **B. Build it with `-default-type int64 -default-type word64`.**
+  - Its `Int` and `Word` would then be closer to Rune's 63 bits than to 32,
+    so an `Overflow` that Rune does not raise is less likely in MLton's
+    build. None has been found.
+  - It builds cleanly. `check-cross` passes, 586 of 586, and caches are
+    shared both ways.
+  - The cost is the 24% to 32% above, for nothing measured.
+  - It is the four MLton lines of the Makefile (rune, runedoc, runeopt,
+    runeisa), through an `MLTONFLAGS`, and a line in `docs/building.md`.
 
 ### D12. Division by a constant
 
@@ -2556,7 +2764,7 @@ M9 closes all three. The sizes are lines of code and tests.
     a row of `docs/performance.md`, so that it outlives F1 to F3.
 * **Why first:** the brief's reason. The test case is MLton's 606 files built
   in units, where `P.hash` was 36% of the cycles at performance M10's tip.
-  M2 and M4 take that away, and M4's rx2f takes the division out of hashing
+  M2 and M4 take that away, and M4's rx2fw takes the division out of hashing
   altogether. M1 is measured on the test case before M2 lands. It keeps its
   value for every other division by a constant: 2.5M in the bootstrap
   (E7).
@@ -2632,12 +2840,19 @@ M9 closes all three. The sizes are lines of code and tests.
 * **What:**
   - S1, then S2 (*The architecture*, D9), memoised by the binder's identity
     and path (D10);
-  - first, the hash of D11, rx2f (E6's patch), with
-    `tests/incremental/plant.py` following it, the instruction set's
-    fingerprint left as it is, and `UnitBasis`, `UnitCache` and `UnitMid`'s
-    versions bumped (not `UnitFile`'s). On top of M2 it takes MLton's build
-    in units at tier 2 from 770G to 551G cycles, and `unit-usages` from 89 s
-    to 40 s;
+  - first, the hash of D11, rx2fw, with its probe (E6's patches):
+    - the probe in the cache's settings and in a basis's header, with
+      `--explain-rebuild`'s message for a cache made by a compiler whose
+      hash differs;
+    - `tests/incremental/plant.py` following the hash, with
+      `--basis-probe`, and scenarios S70 and S71;
+    - `check-cross`'s `rune-units` without `smlnj32` (E6's runner patch);
+    - the instruction set's fingerprint left as it is;
+    - `UnitBasis`, `UnitCache` and `UnitMid`'s versions bumped, not
+      `UnitFile`'s.
+
+    On top of M2, rx2f took MLton's build in units at tier 2 from 770G to
+    551G cycles, and `unit-usages` from 89 s to 40 s;
   - a recursive group of datatypes (`datatype ... and ...`, `withtype`) given
     one canonical value, whichever member is worked out first (E5; GHC's
     #18733);
@@ -2701,7 +2916,9 @@ M9 closes all three. The sizes are lines of code and tests.
   - descriptors folded;
   - datatype instances registered again and laid out from their realised
     types (D5);
-  - D13's budget.
+  - D13's budget;
+  - a rule for MidLint after the expansion: no `unsafe_cast` left between two
+    different ground types (D3).
 * **Measures:** with the flag on and every application expanded, against
   today's static interpretation, machine and bytecode instructions of the
   bootstrap, HOL4's kernel work, MLton's benchmark set, the examples and E4's
@@ -2741,6 +2958,9 @@ removed.
   - removed from units: the re-parse of bodies, issue 1's binders, `funat`,
     issue 9's paths of functor sources, the source hash and mode in the
     pickle's prefix (E10 counted about 520 lines with the elaborator's);
+  - dynamic modules on the same nested records (D3): `_dynamic`, `_export`,
+    the ABI's fingerprint, `docs/units.md`'s *Dynamic modules*,
+    `tests/dynamic`;
   - the version keys bumped;
   - the scenarios' expectations changed: S8, S21, S48 to S51, S55, S61, S65
     and S66 (E10 says what each becomes);
@@ -2901,10 +3121,15 @@ removed.
 - **The cache:** the scenarios, with the changed expectations of M7;
   `mutate.py` with its history replay; the soundness checker of M4; MLton's
   S44 to S48; HOL4 with `RUNE_VERIFY_CACHE=1`.
-- **Hashing:** the hash's values against a model outside SML on a fixed
-  corpus, on every engine of a build (the interpreter, tiers 1 and 2, the
-  stack VM, the 32-bit VM, aarch64); the hosts' values reported, for
-  information; the bytes hashed by call site against E5's.
+- **Hashing:**
+  - the hash's values against a model outside SML on a fixed corpus, on every
+    engine of a build: the interpreter, tiers 1 and 2, the stack VM, the
+    32-bit VM, aarch64 and the int64 VM;
+  - the probe's value pinned;
+  - S70 and S71, for a basis and a cache made by a compiler whose hash
+    differs;
+  - the hosts' values reported, for information;
+  - the bytes hashed by call site, against E5's.
 - **Division:** M1's table of divisors on both targets, every `--jit`, both
   integer widths.
 
