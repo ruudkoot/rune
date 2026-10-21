@@ -65,7 +65,7 @@ def compile_program(name, source):
     return rbc
 
 
-code, _, err = run(['python3', 'tests/intinf/run.py', '--vm', 'bin/runevm-sml',
+code, _, err = run(['bin/rune-intinf', 'run', '--vm', 'bin/runevm-sml',
                     '--vm-options=--intinf=sml', '--out', out/'semantic'])
 assert code == 0, err.decode()
 semantic = out/'semantic/checks.rbc'

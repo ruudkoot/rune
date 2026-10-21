@@ -1,0 +1,16 @@
+structure IntInfWorkload = struct
+  structure I = IntInf
+  val a = valOf (I.fromString "105083864291165273159982881324522530839378669519642458845788260464577444045035730706499741665198856891321109299056296261704631538567919053968877994145271798807685694220038497786669330027149123749268988491270419074872176032684315469920481829674582302550020506111009816888008480075632850831633586457886514393718")
+  val b = valOf (I.fromString "13280099009364778862932882589688268840673582760474684458900905446842702147359873342003443043281457805443627851966660206263689974182515931468142103662464271")
+  val answer = ref (I.fromInt 0)
+  fun fact (0, acc) = acc
+    | fact (n, acc) = fact (n-1, I.* (acc,I.fromInt n))
+  fun loop 0 = ()
+    | loop i = let val x = I.+ (a,I.fromInt (i mod 17))
+               in answer := #1 (I.divMod (x,b)); loop (i-1) end
+  val started = Time.now ()
+  val () = loop 400
+  val elapsed = Time.- (Time.now (), started)
+  val () = print ("TIMING " ^ Time.fmt 6 elapsed ^ "\n")
+  val () = print (I.toString (!answer) ^ "\n")
+end

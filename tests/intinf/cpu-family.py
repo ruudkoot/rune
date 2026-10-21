@@ -21,7 +21,7 @@ env={k:v for k,v in os.environ.items() if not k.startswith('RUNEVM_') and k!='RU
 report={'vm_sha256':hashlib.sha256(Path(a.vm).read_bytes()).hexdigest(),
         'qemu':subprocess.check_output(['qemu-x86_64','--version'],text=True).splitlines()[0],
         'runs':{},'result':'running'}
-subprocess.run(['python3','tests/intinf/run.py','--vm','bin/runevm-sml','--vm-options=--intinf=sml',
+subprocess.run(['bin/rune-intinf','run','--vm','bin/runevm-sml','--vm-options=--intinf=sml',
                 '--out',str(out/'semantic')],check=True,env=env,timeout=180)
 program=out/'semantic/checks.rbc'
 counts=set()

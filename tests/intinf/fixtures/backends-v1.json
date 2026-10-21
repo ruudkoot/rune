@@ -1,0 +1,19 @@
+{
+  "format": 1,
+  "source_sha256": "0ba67cefc944d847d300af4450c3bf9af6c8bf5f994a4a1b62a5f1b8f79412f3",
+  "fragments": {
+    "rooted-pairs": "structure I = IntInf\nval one = I.fromInt 1\nval two = I.fromInt 2\nval p = I.pow(two,200)\nval a = I.+(I.*(p,p),one)\nval b = I.+(p,one)\nval q = I.-(p,one)\nval checks = [I.divMod(a,b)=(q,two), I.quotRem(I.~ a,b)=(I.~ q,I.~ two),\n I.divMod(I.~ a,b)=(I.~ p,q), I.divMod(a,I.~ b)=(I.~ p,I.~ q),\n I.divMod(I.~ a,I.~ b)=(q,I.~ two), I.+(I.*(q,b),two)=a]\nval () = if List.all (fn x => x) checks then print \"rooted pairs pass\\n\" else raise Fail \"rooted pairs\"\n",
+    "special": "structure I = IntInf\nval huge = Word.notb 0w0\nval top = valOf Int.maxInt\nval low = valOf Int.minInt\nval zero = I.fromInt 0\nval one = I.fromInt 1\nval minus = I.fromInt (~1)\nval checks = [I.<<(zero,huge)=zero, I.~>>(one,huge)=zero,\n I.~>>(minus,huge)=minus, I.pow(zero,top)=zero,\n I.pow(one,top)=one, I.pow(minus,top)=minus,\n I.pow(minus,low)=one, I.pow(I.fromInt 2,low)=zero,\n (I.pow(zero,low); false) handle Div => true]\nval () = if List.all (fn b => b) checks then print \"special cases pass\\n\" else raise Fail \"special cases\"\n",
+    "budget-paths": "structure I = IntInf\nval one = I.fromInt 1\nval a = valOf(I.fromString \"18446744073709551615\")\nval b = I.+(a,one)\nval top = valOf(I.fromString \"36893488147419103231\")\nval checks = [I.+(a,b)=top, I.*(a,I.fromInt 2)=I.-(top,one),\n I.andb(top,b)=b, I.orb(b,one)=I.+(b,one), I.xorb(b,one)=I.+(b,one),\n I.~>>(I.~ b,0w64)=I.fromInt (~1),\n I.~>>(I.~(I.+(b,one)),0w64)=I.fromInt (~2)]\nval () = if List.all (fn x => x) checks then print \"65-bit paths pass\\n\" else raise Fail \"65-bit paths\"\n",
+    "world": "structure I = IntInf\nval x = I.pow(I.fromInt 2,200)\nval () = case Runtime.save \"$IMAGE\" of\n Runtime.Saved => print \"saved\\n\"\n | Runtime.Restored => if I.*(x,x) = I.pow(I.fromInt 2,400)\n     then print \"restored\\n\" else raise Fail \"image arithmetic\"\n",
+    "format-world": "structure I = IntInf\nval x = I.pow(I.fromInt 2,200)\nval text = I.toString x\nval () = case Runtime.save \"$IMAGE\" of\n Runtime.Saved => print \"saved\\n\"\n | Runtime.Restored => if I.toString x=text then print \"formatted\\n\" else raise Fail \"image formatting\"\n",
+    "shift": "structure I = IntInf\nval answer = I.<<(I.fromInt 1,Word.notb 0w0)\nval () = print \"unexpected result\\n\"\n",
+    "power": "structure I = IntInf\nval answer = I.pow(I.fromInt 2,1000000000)\nval () = print \"unexpected result\\n\"\n",
+    "multiply": "structure I = IntInf\nval answer = I.*(I.pow(I.fromInt 2,100),I.pow(I.fromInt 2,100))\nval () = print \"unexpected result\\n\"\n",
+    "carry": "structure I = IntInf\nval answer = I.+(valOf(I.fromString \"340282366920938463463374607431768211455\"),I.fromInt 1)\nval () = print \"unexpected result\\n\"\n",
+    "parse": "structure I = IntInf\nval answer = valOf(I.fromString \"340282366920938463463374607431768211456\")\nval () = print \"unexpected result\\n\"\n",
+    "small-product": "structure I = IntInf\nval answer = I.*(I.fromInt(valOf Int.maxInt),I.fromInt(valOf Int.maxInt))\nval () = print \"unexpected result\\n\"\n",
+    "packed-carry": "structure I = IntInf\nval answer = I.+(valOf(I.fromString \"36893488147419103231\"),I.fromInt 1)\nval () = print \"unexpected result\\n\"\n",
+    "single-digit-product": "structure I = IntInf\nval answer = I.*(valOf(I.fromString \"18446744073709551615\"),I.fromInt 3)\nval () = print \"unexpected result\\n\"\n"
+  }
+}

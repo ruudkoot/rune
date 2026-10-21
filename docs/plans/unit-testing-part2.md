@@ -118,7 +118,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | P2.7 | P2.1, P2.6 | Windows ways and final legacy VM/language runner retirement | pending |
 | P2.8 | P2.0 | Build/dependency/unit/install/distribution scenarios | done 2026-10-21 |
 | P2.9 | P2.0; P2.6 where matrix execution is shared | Incremental edits and external corpora | done 2026-10-21 |
-| P2.10 | P2.0 | IntInf correctness and hardening drivers | pending |
+| P2.10 | P2.0 | IntInf correctness and hardening drivers | done 2026-10-21 |
 | P2.11 | P2.8, P2.10; P2.7 for Windows paths | GMP build/download/install/cross tests | pending |
 | P2.12 | P2.0; P2.7 for Windows paths | REPL protocol, DAP, kernel and interop orchestration | pending |
 | P2.13 | P2.0; runtime pty support | Terminal scenarios and tester display checks | pending |
@@ -691,3 +691,32 @@ through the actual public controllers. Evidence JSON files and logs are kept
 under `tests/out/unit-testing-part2/p2.9`; the original drivers also remain in
 Git and the ignored comparison baseline. The first regression attempt used
 mismatched register/stack tools; its logs are explicitly excluded from acceptance.
+
+### P2.10 acceptance, 2026-10-21
+
+All five correctness drivers are retired, including run.py's optional
+measurement path. The preserved Python corpus has 230 arithmetic pairs and
+1,154 checks per implementation. Expected answers remain independent: frozen
+Python integers plus the saved SML list oracle. All 150 packed-storage
+boundary payloads are byte-identical to the original controller. All thirty
+fixed/exploratory workload source/answer pairs agree byte for byte. The
+versioned fixtures record original generator identities and SHA256 hashes.
+
+The integrated tier passed 14/14; backend collection passed 108 bounded
+subprocesses (the former 107 plus an explicit semantic compilation), and
+hardening passed the same 57 subprocesses as the former driver. Native and
+GMP-free fork/image/limit cases run. Sanitizer backend tests with allocation
+stress also passed 108 subprocesses, and sanitizer hardening passed 57;
+their large shadow mappings retain the explicit address-space exception.
+Planted wrong answers on both GMP and SML, storage/limit false success,
+broken fork/allocation policy and wrong measurement answers are rejected.
+
+Both optional pairing routes ran all twelve workloads with warmups and
+separate instrumentation. The oracle route also ran all three compiler
+workloads: all three payload hashes agree after retaining the original
+library-path spelling. Reports use schema 2 for the SML controller and
+Subprocess wall/CPU/RSS metrics, retaining sources, answers, binary hashes,
+samples, pairing, affinity and libc metadata. These concurrent validation
+runs are not performance measurements. Evidence and the original driver
+copies are under tests/out/unit-testing-part2/p2.10. Final clean global
+acceptance remains P2.17's required check.

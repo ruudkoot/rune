@@ -680,3 +680,14 @@ updates, data staging and VM options. Results use the common SML supervisor
 and receipts, with original program verdict lines printed after collection.
 The pinned MLton compiler scenario remains an explicit expensive command,
 `bin/rune-incremental mlton CHECKOUT [OUT]`, with its memory availability guard.
+
+
+IntInf correctness and optional measurements use bin/rune-intinf. Its run,
+storage, backends, hardening and options routes retain the original modes
+and limits. Frozen Python integer answers and the saved list oracle remain
+independent of the backend under test. The workload query exposes preserved
+fixed/exploratory sources to later analysis tools. Optional --bench,
+--paired-oracle/--paired-sml and --compiler-workloads routes use shared SML
+process metrics; report schema 2 identifies the SML controller, sources and
+payloads, CPU/RSS, samples, pairing, affinity and libc. Timings are separate
+from deterministic verdicts and instrumentation.

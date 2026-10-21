@@ -233,7 +233,7 @@ tests/incremental/mutate.py	python	P2.9	retired	f1bededa518d65dbdfa8b77aa9799790
 tests/incremental/plant.py	python	P2.9	retired	55a0a652da3cf5e92d98f875b5aa03e0fe633c33	tests/runner/cacheplant.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
 tests/incremental/run.sh	shell	P2.9	retired	ea422def6f76cd30ee7e5b328d8d8f7069db6688	tests/runner/incremental.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
 tests/install/run.sh	shell	P2.8	retired	aa997a5eaace6e45639e8d24673d8a2df3e0a373	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
-tests/intinf/backends.py	python	P2.10	pending	3033aa3986829072f969380357fc21c0db78522d	-	independent-arithmetic-vectors-and-statuses
+tests/intinf/backends.py	python	P2.10	retired	3033aa3986829072f969380357fc21c0db78522d	tests/runner/intinfbackends.sml	p2.10/acceptance+storage-shadow.json+generator-shadow.json+measurement-final-shadow.json+asan logs
 tests/intinf/build-config.py	python	P2.11	pending	1e0084aeec0f5903fc092fd4481343dbe7483417	-	offline-fixtures-build-records-and-images
 tests/intinf/build-modes.py	python	P2.11	pending	1d2d00be26c9c76bd435df4edb40334a95cb45c0	-	offline-fixtures-build-records-and-images
 tests/intinf/compare-compilers.py	python	P2.14	pending	561fb8facc407d80d27d4b23b5770a4a5d84bcac	-	captured-measurements-and-report-schemas
@@ -246,12 +246,12 @@ tests/intinf/cross.py	python	P2.11	pending	82e62899c3a3db77ec81c889c5aa4be6a9589
 tests/intinf/dependency.py	python	P2.11	pending	6c261162a2d113550672fb184e07c40e891e1448	-	offline-fixtures-build-records-and-images
 tests/intinf/dispatch.py	python	P2.14	pending	b1bde5c1807e3f043356238a1884d72f6e8f58eb	-	captured-measurements-and-report-schemas
 tests/intinf/download.py	python	P2.11	pending	7e2765fe4896b1abc79b67dac4fd37af09602224	-	offline-fixtures-build-records-and-images
-tests/intinf/hardening.py	python	P2.10	pending	e5699f53befd9831be77312ca344b1ff0bd0949f	-	independent-arithmetic-vectors-and-statuses
+tests/intinf/hardening.py	python	P2.10	retired	e5699f53befd9831be77312ca344b1ff0bd0949f	tests/runner/intinfhardening.sml	p2.10/acceptance+storage-shadow.json+generator-shadow.json+measurement-final-shadow.json+asan logs
 tests/intinf/install.py	python	P2.11	pending	a0f5db300ba6cd344aff880d948a5edbabbee734	-	offline-fixtures-build-records-and-images
-tests/intinf/options.py	python	P2.10	pending	e714d4cb12fa13d2ee40422f579eae2a22b414e4	-	independent-arithmetic-vectors-and-statuses
+tests/intinf/options.py	python	P2.10	retired	e714d4cb12fa13d2ee40422f579eae2a22b414e4	tests/runner/intinfchecks.sml	p2.10/acceptance+storage-shadow.json+generator-shadow.json+measurement-final-shadow.json+asan logs
 tests/intinf/prepare-cross.py	python	P2.11	pending	bcfa6dc0274c04caab0325ba1bd2a09dc7dbe23f	-	offline-fixtures-build-records-and-images
-tests/intinf/run.py	python	P2.10	pending	34df67b65da83c4b601068bac0eacfc373229c94	-	independent-arithmetic-vectors-and-statuses
-tests/intinf/storage.py	python	P2.10	pending	e11d492847c5af0cfd9cc33b59d844895cbae5bb	-	independent-arithmetic-vectors-and-statuses
+tests/intinf/run.py	python	P2.10	retired	34df67b65da83c4b601068bac0eacfc373229c94	tests/runner/intinfchecks.sml	p2.10/acceptance+storage-shadow.json+generator-shadow.json+measurement-final-shadow.json+asan logs
+tests/intinf/storage.py	python	P2.10	retired	e11d492847c5af0cfd9cc33b59d844895cbae5bb	tests/runner/intinfstorage.sml	p2.10/acceptance+storage-shadow.json+generator-shadow.json+measurement-final-shadow.json+asan logs
 tests/kernel/client.py	python	P2.12	pending	bff733ac488496b531281119e161fcf4cc7e04a3	-	protocol-transcripts-and-peer-verdicts
 tests/kernel/notebook_client.py	python	Retain: independent oracles/peers	retained	d88232eb1781a97d12b54e7a3dfba5aba095ef47	-	independent oracles/peers
 tests/kernel/run.sh	shell	P2.12	pending	3ac8b66342ba0ece4aa207e7c96a4cf9d35de3eb	-	protocol-transcripts-and-peer-verdicts

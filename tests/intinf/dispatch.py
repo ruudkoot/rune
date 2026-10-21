@@ -9,7 +9,6 @@ import resource
 import signal
 import statistics
 import subprocess
-import run as corpus
 
 ROOT=Path(__file__).resolve().parents[2]
 p=argparse.ArgumentParser();p.add_argument('--samples',type=int,default=7);p.add_argument('--out',default='tests/out/intinf/dispatch')
@@ -67,7 +66,7 @@ for op,operands in shapes.items():
         name=f'{op}-{bits}-{other}'
         if a.workload and name not in a.workload:continue
         w={'bits':bits,'other_bits':other,'op':op,'iterations':n}
-        source,expected=corpus.workload(w)
+        source,expected=json.loads(subprocess.check_output(['bin/rune-intinf','workload','--spec',json.dumps(w)],text=True))
         path=(reuse or out)/(name+'.sml');rbc=path.with_suffix('.rbc')
         if reuse:
             assert hashlib.sha256(path.read_bytes()).hexdigest()==hashlib.sha256(source.encode()).hexdigest()

@@ -1,0 +1,37 @@
+{
+  "format": 1,
+  "source_sha256": "39e1393b79a93a5d6596d95bc5d881554bb76d012b4157c9fec77403fa24005e",
+  "fragments": {
+    "operation": "val f = _prim \"intinf_binary\" : int * bool * string * bool * string -> bool * string\nval _ = f(6,false,\"\",false,\"\")",
+    "boolean": "val f = _prim \"intinf_binary\" : int * int * string * bool * string -> bool * string\nval _ = f(0,2,\"\",false,\"\")",
+    "unit": "val f = _prim \"intinf_max_bits\" : int -> int\nval () = print(Int.toString(f 1))",
+    "bitcount": "val f = _prim \"intinf_check_bits\" : int -> unit\nval _ = f (~1)",
+    "string": "val f = _prim \"intinf_binary\" : int * bool * int ref * bool * string -> bool * string\nval _ = f(0,false,ref 1,false,\"\")",
+    "leading-zero": "val f = _prim \"intinf_binary\" : int * bool * string * bool * string -> bool * string\nval _ = f(0,false,\"\\001\\000\",false,\"\")",
+    "negative-zero": "val f = _prim \"intinf_binary\" : int * bool * string * bool * string -> bool * string\nval _ = f(0,true,\"\",false,\"\")",
+    "div-negative-zero": "val f = _prim \"intinf_divmod\" : bool * bool * string * bool * string -> (bool * string) * (bool * string)\nval _ = f(true,false,\"\\001\",true,\"\")",
+    "div-leading-zero": "val f = _prim \"intinf_divmod\" : bool * bool * string * bool * string -> (bool * string) * (bool * string)\nval _ = f(true,false,\"\\001\\000\",false,\"\")",
+    "exponent": "val f = _prim \"intinf_power\" : bool * string * int -> bool * string\nval _ = f(false,\"\\001\",~1)",
+    "decimal-type": "val f = _prim \"intinf_decimal\" : int ref -> string\nval _ = f(ref 1)",
+    "decimal-leading-zero": "val f = _prim \"intinf_decimal\" : string -> string\nval _ = f \"\\001\\000\"",
+    "fork": "val available = _prim \"intinf_gmp_available\" : unit -> bool\nval previous = available()\nval () = case Posix.Process.fork() of\n  NONE => (if available() = previous then print \"child policy preserved\\n\"\n           else print \"child policy changed\\n\"; TextIO.flushOut TextIO.stdOut;\n           Posix.Process.exit (if available() = previous then 0w0 else 0w3))\n| SOME pid => (case Posix.Process.waitpid(Posix.Process.W_CHILD pid,[]) of\n    (_,Posix.Process.W_EXITED) => print \"parent pass\\n\"\n  | _ => raise Fail \"child backend policy\")\n",
+    "div-zero": "val f = _prim \"intinf_divmod\" : bool * bool * string * bool * string -> (bool * string) * (bool * string)\nval () = (f(true,false,\"\\001\",false,\"\"); raise Fail \"missing Div\") handle Div => print \"Div before GMP\\n\"\n",
+    "decimal-primitive": "val f = _prim \"intinf_decimal\" : string -> string\nval () = print(f \"\" ^ \" \" ^ f \"\\255\\255\\255\\255\\255\\255\\255\\255\" ^ \"\\n\")\n",
+    "policy": "val () = case Runtime.save \"$IMAGE\" of Runtime.Saved => print \"saved\\n\" | Runtime.Restored => print \"restored\\n\"\n",
+    "decimal-limits": "val f = _prim \"intinf_decimal\" : string -> string\nval () = print(f (String.implode(List.tabulate(125,fn _ => #\"\\255\"))))\n"
+  },
+  "primitive_messages": {
+    "operation": "invalid operation",
+    "boolean": "invalid boolean",
+    "unit": "expected unit",
+    "bitcount": "negative bit count",
+    "string": "wrong magnitude type",
+    "leading-zero": "noncanonical magnitude",
+    "negative-zero": "negative zero",
+    "div-negative-zero": "negative zero",
+    "div-leading-zero": "noncanonical magnitude",
+    "exponent": "negative exponent",
+    "decimal-type": "wrong magnitude type",
+    "decimal-leading-zero": "noncanonical magnitude"
+  }
+}

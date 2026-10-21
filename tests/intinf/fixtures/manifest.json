@@ -1,0 +1,129 @@
+{
+  "format": 1,
+  "seed": 1380535878,
+  "checks": 1154,
+  "generator_blob_sha256": "bf4fd64c738304b527d6769dc1dd36db0dfd61eec2f2d559a91157ac836551ce",
+  "vectors_sha256": "b6480f1d6c20b9f6384366f98c85940388a91f155ea41e0264033e136e2913a7",
+  "workloads": [
+    {
+      "name": "small-add",
+      "group": "small",
+      "op": "add",
+      "bits": 18,
+      "other_bits": 12,
+      "iterations": 1500000,
+      "source_sha256": "71fe8228d0d1f21ef34972108aeec471fbdeb81b14f953c03a1f8a330ea8a77c",
+      "expected_sha256": "bc401001ac814655651913acf3f73bf70d6d6d4a512cd1c810f1204ed70259c6"
+    },
+    {
+      "name": "small-mul",
+      "group": "small",
+      "op": "mul",
+      "bits": 18,
+      "other_bits": 12,
+      "iterations": 1000000,
+      "source_sha256": "537af7a6f6ba1ca685196220366d92467f10d56df81919c5fd8dfcd760436005",
+      "expected_sha256": "37f248aeb27455d653ebe33ab33e774ef2f4ad744ba639286bef5316b1b0a82c"
+    },
+    {
+      "name": "mul-512",
+      "group": "muldiv",
+      "op": "mul",
+      "bits": 512,
+      "other_bits": 512,
+      "iterations": 7500,
+      "source_sha256": "02dc0bbdb48e9db56e784a2a0fc343442e64add13bd08a4bd1b3b1790518dfb8",
+      "expected_sha256": "ad203d69616169c0a870ba161aebdbb7c103df446b57cb5c67642a78cc42f810"
+    },
+    {
+      "name": "mul-4096",
+      "group": "muldiv",
+      "op": "mul",
+      "bits": 4096,
+      "other_bits": 4096,
+      "iterations": 320,
+      "source_sha256": "66c76bcd1ebb86fe57738e805bcfc1c72a5a8e9232552b2d127abc030a05bae9",
+      "expected_sha256": "9c2bec921cf9c1bf37666facfc4e5cb7310bbf8ebfa49df24300039325edd573"
+    },
+    {
+      "name": "mul-unbalanced",
+      "group": "muldiv",
+      "op": "mul",
+      "bits": 4096,
+      "other_bits": 128,
+      "iterations": 6000,
+      "source_sha256": "183943e65136c686087d416f3a97d4bbcb6e1bbd611fbdee342d1eaa65acaed1",
+      "expected_sha256": "2252c3ffeb4f05b9cbc6680096553fb96eaccf1b901ff5ae41276e8140a37bff"
+    },
+    {
+      "name": "div-1024",
+      "group": "muldiv",
+      "op": "div",
+      "bits": 1024,
+      "other_bits": 512,
+      "iterations": 400,
+      "source_sha256": "785c1afc3f20c5b9754adfda411ca786c25ce1da0f9520692194dea00378121d",
+      "expected_sha256": "e5f3d68b944be0b101d369d42a0f418771771b5c26a98de3c53272dc2257c3c5"
+    },
+    {
+      "name": "div-4096",
+      "group": "muldiv",
+      "op": "div",
+      "bits": 4096,
+      "other_bits": 2048,
+      "iterations": 40,
+      "source_sha256": "fb560f1ec3e161ca1c0d4a1d9e01122f0eab1b31851a37b6104ad4d1fa0252ea",
+      "expected_sha256": "62bef03d2070812fdddbe81e97367b3ca3ad59d6b2cd36c5f5da8ca8637641bf"
+    },
+    {
+      "name": "div-unbalanced",
+      "group": "muldiv",
+      "op": "div",
+      "bits": 4096,
+      "other_bits": 128,
+      "iterations": 400,
+      "source_sha256": "d7c26600c8b6b22d75859becd8e5fb95d9d1e7a4569233bf316103a4581e6294",
+      "expected_sha256": "25fde2168e88c59c50a7af379b934bb6f1bf5a2c7e3542fb986d9b436be598b0"
+    },
+    {
+      "name": "bits-4096",
+      "group": "large",
+      "op": "bits",
+      "bits": 4096,
+      "other_bits": 4096,
+      "iterations": 10000,
+      "source_sha256": "3df64993595c7837377a318f02274fed668c0acae7217e1b6d1ebad36b00fe86",
+      "expected_sha256": "b92db6d2dd7af6a1f197fbc2b71456d9e43f64e22887d94526a462e1d5178630"
+    },
+    {
+      "name": "convert-4096",
+      "group": "large",
+      "op": "convert",
+      "bits": 4096,
+      "other_bits": 1,
+      "iterations": 100,
+      "source_sha256": "3cd2a13f1624a5e0167f13e70249380bcecad4ef1d2691eea4bd6eb8886117fe",
+      "expected_sha256": "547ddf2a283a6ca24a662dc9b94ea2e61edf918b3efc48d90ee72724635e279f"
+    },
+    {
+      "name": "power-1024",
+      "group": "large",
+      "op": "pow",
+      "bits": 3,
+      "other_bits": 1,
+      "iterations": 300,
+      "source_sha256": "8b9079ca08ae8363ee514f0067dd5c1fe07a9dd202100cb5263b77499c21ba02",
+      "expected_sha256": "d60ab41b1a647a574ce427abc9c63fae211f2edd8a22ab4129ba3fb07e5bb7cf"
+    },
+    {
+      "name": "factorial-300",
+      "group": "large",
+      "op": "factorial",
+      "bits": 1,
+      "other_bits": 1,
+      "iterations": 300,
+      "source_sha256": "9118c00bdbce3ebf411aaeb8d420935809aae4d4f09356e687558204b9ead316",
+      "expected_sha256": "a2b182ed5cd7d21a64004d27ade9e65536db20207d61e545d15599b90c0d35c1"
+    }
+  ]
+}

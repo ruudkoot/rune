@@ -1521,7 +1521,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.
                     examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
                     tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml \
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml \
-               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml \
+               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml \
                tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/portability.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
@@ -1588,7 +1588,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external build/bench-counts.rbc
+check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf build/bench-counts.rbc
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -1610,9 +1610,8 @@ clean:
 	find . -type d \( -name .cm -o -name MLB \) -prune -exec rm -rf {} +
 
 .PHONY: test-intinf
-test-intinf: $(RUNE) bin/runevm bin/runevm-stack
-	python3 tests/intinf/run.py --rune $(RUNE)
-	python3 tests/intinf/storage.py
+test-intinf: $(RUNE) bin/runevm bin/runevm-stack bin/rune-intinf bin/rune-test
+	INTINF_RUNE=$(abspath $(RUNE)) $(RUNE_TEST) --tier test-intinf
 
 # ---------------------------------------------------------------- install
 # PREFIX defaults to /usr/local for root and ~/.local for anyone else;
@@ -1698,19 +1697,15 @@ bench bench-count bench-stats: build/bench-catalog.rbc build/bench-report.rbc bu
 	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' BENCH_LEVEL=$(BENCH_LEVEL) BENCH_MODE=$(BENCH_MODE) BENCH_SAMPLES=$(BENCH_SAMPLES) BENCH_REPETITIONS=$(BENCH_REPETITIONS) sh scripts/measure-benchmarks.sh $(if $(filter bench-count,$@),count,$(if $(filter bench-stats,$@),stats,time))
 
 .PHONY: test-intinf-backends
-test-intinf-backends: $(RUNE) bin/runevm bin/runevm-sml
-	python3 tests/intinf/backends.py --rune $(RUNE)
-	python3 tests/intinf/build-config.py
-	python3 tests/intinf/options.py --vm bin/runevm
-	python3 tests/intinf/options.py --vm bin/runevm-sml
+test-intinf-backends: $(RUNE) bin/runevm bin/runevm-sml bin/rune-intinf bin/rune-test
+	INTINF_RUNE=$(abspath $(RUNE)) $(RUNE_TEST) --tier test-intinf-backends
 
 build/intinf-alloc-test: tests/intinf/alloc-failure.c runtime/intinf.c build/librune.a $(VM_HDRS) $(GMP_DIR)/config.mk build/gmp/selected
 	$(CC) $(CFLAGS) $(RT_INC) $(GMP_FLAGS) -o $@ tests/intinf/alloc-failure.c build/librune.a $(GMP_LDLIBS) -lm
 
 .PHONY: test-intinf-hardening
-test-intinf-hardening: $(RUNE) $(RUNEOPT) vm bin/runevm-sml build/intinf-alloc-test
-	python3 tests/intinf/hardening.py $(if $(filter yes,$(NATIVE_HOST)),--native)
-	python3 tests/intinf/hardening.py --vm bin/runevm-sml --out tests/out/intinf/hardening-sml
+test-intinf-hardening: $(RUNE) $(RUNEOPT) vm bin/runevm-sml build/intinf-alloc-test bin/rune-intinf bin/rune-test
+	INTINF_RUNE=$(abspath $(RUNE)) NATIVE_HOST=$(NATIVE_HOST) $(RUNE_TEST) --tier test-intinf-hardening
 
 
 .PHONY: test-intinf-cross
@@ -1759,4 +1754,14 @@ bin/rune-external.rbc: $(RUNE) $(EXTERNAL_SRCS) manifests
 	$(RUNE) --library test/runner --library json $(EXTERNAL_SRCS) -o $@
 bin/rune-external: bin/rune-external.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-external.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+INTINF_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/bytecode.sml tests/runner/commandwords.sml \
+               tests/runner/intinfchecks.sml tests/runner/measured.sml tests/runner/intinfmeasurements.sml \
+               tests/runner/intinfbackends.sml tests/runner/intinfhardening.sml tests/runner/intinfstorage.sml \
+               tests/runner/gmpchecks.sml tests/runner/intinffaults.sml tests/runner/intinffixtures.sml tests/runner/intinf-main.sml
+bin/rune-intinf.rbc: $(RUNE) $(INTINF_SRCS) $(wildcard tests/intinf/fixtures/*) manifests
+	$(RUNE) --library test/runner --library json --library digest $(INTINF_SRCS) -o $@
+bin/rune-intinf: bin/rune-intinf.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-intinf.rbc" "$$@"\n' > $@
 	chmod +x $@
