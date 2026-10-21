@@ -220,18 +220,18 @@ tests/deps/run.sh	shell	P2.8	retired	bab704b294fe50b192be9eb1e03abbcbc6d8173d	te
 tests/dist/run.sh	shell	P2.8	retired	4318b951160e52bab975ba7bf0062c7b85b3f763	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
 tests/dynamic/run.sh	shell	P2.8	retired	942108eea8b84b1510f5795b36b1a33a8aa6e689	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
 tests/external/mlton-bench/gen-fxp-input.sh	shell	P2.15	pending	c6c2a2ed7165cabcbb0b8cd09f6fa73573fe8f9d	-	generated-bytes-and-source-order
-tests/external/probe-host-basis.sh	shell	P2.9	pending	069ac4cc16bd2485bff7bbf2a2a86fd907c47494	-	edit-traces-rebuild-sets-and-corpus-verdicts
-tests/external/run-mlton-bench.sh	shell	P2.9	pending	9215f583f3ea7b8d14fa8bd9cb3eff12263308cc	-	edit-traces-rebuild-sets-and-corpus-verdicts
-tests/external/run-mlton.sh	shell	P2.9	pending	fc5f9a52ef49546bd627e48ba99f63150d66bf8b	-	edit-traces-rebuild-sets-and-corpus-verdicts
+tests/external/probe-host-basis.sh	shell	P2.9	retired	069ac4cc16bd2485bff7bbf2a2a86fd907c47494	tests/runner/externalchecks.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
+tests/external/run-mlton-bench.sh	shell	P2.9	retired	9215f583f3ea7b8d14fa8bd9cb3eff12263308cc	tests/runner/externalchecks.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
+tests/external/run-mlton.sh	shell	P2.9	retired	fc5f9a52ef49546bd627e48ba99f63150d66bf8b	tests/runner/externalchecks.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
 tests/gcbench/check.sh	shell	P2.2	retired	df8c1194519f5bc5e928cde3b5b1cbaa9e045877	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
 tests/gcbench/measure.sh	shell	P2.14	pending	e183052c374366c916c01c7b89dea2189cbb013d	-	captured-measurements-and-report-schemas
 tests/gcbench/report.py	python	P2.14	pending	5e57766fdac08a7ba5148bbb9226a7651454eefe	-	captured-measurements-and-report-schemas
 tests/gcbench/roadmap.sh	shell	P2.14	pending	7992b9f16e8438dcdfd1f68f441bf5cae0c24b79	-	captured-measurements-and-report-schemas
 tests/gcbench/tables.py	python	P2.14	pending	445c6d1b1a3dc681d77bfc45d2029ebfdd520d37	-	captured-measurements-and-report-schemas
-tests/incremental/mlton.sh	shell	P2.9	pending	6466d1797b3fae07c19cd69d0f85f5d7288677ee	-	edit-traces-rebuild-sets-and-corpus-verdicts
-tests/incremental/mutate.py	python	P2.9	pending	f1bededa518d65dbdfa8b77aa979979070a5f4fe	-	edit-traces-rebuild-sets-and-corpus-verdicts
-tests/incremental/plant.py	python	P2.9	pending	55a0a652da3cf5e92d98f875b5aa03e0fe633c33	-	edit-traces-rebuild-sets-and-corpus-verdicts
-tests/incremental/run.sh	shell	P2.9	pending	ea422def6f76cd30ee7e5b328d8d8f7069db6688	-	edit-traces-rebuild-sets-and-corpus-verdicts
+tests/incremental/mlton.sh	shell	P2.9	retired	6466d1797b3fae07c19cd69d0f85f5d7288677ee	tests/runner/mltonincremental.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
+tests/incremental/mutate.py	python	P2.9	retired	f1bededa518d65dbdfa8b77aa979979070a5f4fe	tests/runner/mutationproject.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
+tests/incremental/plant.py	python	P2.9	retired	55a0a652da3cf5e92d98f875b5aa03e0fe633c33	tests/runner/cacheplant.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
+tests/incremental/run.sh	shell	P2.9	retired	ea422def6f76cd30ee7e5b328d8d8f7069db6688	tests/runner/incremental.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
 tests/install/run.sh	shell	P2.8	retired	aa997a5eaace6e45639e8d24673d8a2df3e0a373	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
 tests/intinf/backends.py	python	P2.10	pending	3033aa3986829072f969380357fc21c0db78522d	-	independent-arithmetic-vectors-and-statuses
 tests/intinf/build-config.py	python	P2.11	pending	1e0084aeec0f5903fc092fd4481343dbe7483417	-	offline-fixtures-build-records-and-images

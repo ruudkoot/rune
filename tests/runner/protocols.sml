@@ -13,8 +13,8 @@
    the Jupyter kernel each with the engine's channel a pipe and a
    connection (tests/dap/run.py; tests/kernel/run.sh, whose client speaks
    ZMTP, and whose two share tests/out/kernel), the incremental scenarios
-   one at a time (tests/incremental/run.sh) and the random edits
-   (tests/incremental/mutate.py, whose projects share one generator). *)
+   one at a time and the versioned random edits, whose projects share one
+   SML generator (IncrementalExtra and MutationChecks). *)
 structure Protocols =
 struct
   open Sh
@@ -372,7 +372,7 @@ struct
                      = [(SOME 2, SOME (index (accented, "alsoUndefined")))])
       (* a lone surrogate names no character, and has no UTF-8: the request
          is refused as text that is not JSON, and the service goes on *)
-      val r = request (20, "diagnostics", buffer ("\"val s = \\\"\\ud800\\\"\\n\"", ""))
+      val r = request (20, "diagnostics", buffer ("\"val s = \"\\ud800\"\\n\"", ""))
       val () = want ("lone-surrogate", r, num (field (r, ["error", "code"])) = SOME ~32700
                                           andalso (case str (field (r, ["error", "message"])) of
                                                      SOME m => String.isSubstring "lone surrogate" m
@@ -423,15 +423,8 @@ struct
 
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
 
-  (* the scenarios of tests/incremental/run.sh, by their labels *)
-  val scenarios =
-    List.foldl (fn (l, acc) =>
-                  if String.isPrefix "if run " l then
-                    case String.tokens (fn c => c = #" " orelse c = #";") l of
-                      _ :: _ :: s :: _ => if List.exists (fn x => x = s) acc then acc else acc @ [s]
-                    | _ => acc
-                  else acc)
-               [] (lines (read "tests/incremental/run.sh"))
+  (* Stable scenario labels are part of the SML inventory. *)
+  val scenarios = IncrementalExtra.cases
 
   val tree =
     Test.describe ""
@@ -463,6 +456,8 @@ struct
                                   driverIn ["kernel"] ("connection", "RUNE_ENGINE_CONNECT=1 exec sh tests/kernel/run.sh")])),
        tagged ["check", "test-incremental", "covers:tests/incremental/*", "covers:examples/hello.sml"]
          (Test.describe "incremental"
-            (List.map (fn s => driver (s, "INCREMENTAL_EXACT=1 exec sh tests/incremental/run.sh --rune bin/rune " ^ s)) scenarios
-             @ [Test.requires ["python3"] (driver ("@mutate", "exec python3 tests/incremental/mutate.py --rune bin/rune --steps 30 tests/incremental/functors tests/incremental/project"))]))]
+            (List.map (fn s => driver (s, "exec bin/rune-incremental one " ^ s ^ " bin/rune")) scenarios
+             @ [driver ("@mutate", "exec bin/rune-incremental mutate --rune bin/rune --steps 30 tests/incremental/functors tests/incremental/project"),
+                driver ("@mutate-v1", "exec bin/rune-incremental mutate --replay-v1 --out \"$RUNE_TEST_RUN/mutation-replay\""),
+                driver ("@faults", "exec bin/rune-incremental faults")]))]
 end

@@ -31,7 +31,7 @@
 # DIR/runs/NAME/{candidate,baseline}-R.*; without perf the task-clock is
 # user + system time. The programs come from the tree: bin/rune.rbc and
 # bin/runedoc.rbc (make), examples/benchmarks compiled by bin/rune -O2 --lint
-# into DIR/bench, MLton's benchmarks by tests/external/run-mlton-bench.sh
+# into DIR/bench, MLton's benchmarks by bin/rune-external benchmark
 # --prepare into tests/out/mlton-bench (skipped when MLTON_BENCH, its
 # benchmark/tests, is missing).
 #
@@ -242,7 +242,7 @@ done
 if [ -n "$mltons" ]; then
   echo "gc-eval: preparing $(echo $mltons | wc -w) of MLton's benchmarks in tests/out/mlton-bench"
   # shellcheck disable=SC2086
-  (ulimit -v 6291456; MLTON_BENCH=$mlton_bench sh tests/external/run-mlton-bench.sh --prepare --all -j "$jobs" $mltons) \
+  (ulimit -v 6291456; MLTON_BENCH=$mlton_bench bin/rune-external benchmark --prepare --all -j "$jobs" $mltons) \
     > "$out/mlton-prepare.log" 2>&1 || { grep -v '^PREPARED' "$out/mlton-prepare.log" >&2; status=1; }
 fi
 [ $mode = prepare ] && exit $status

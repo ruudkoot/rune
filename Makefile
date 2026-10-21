@@ -1152,7 +1152,7 @@ test-serve: $(RUNE) vm basis-cache bin/rune-test
 check-reproducible: $(RUNE) vm basis-cache bin/rune.rbc bin/rune-test
 	$(RUNE_TEST) --tier check-reproducible
 
-test-incremental: $(RUNE) vm basis-cache bin/rune-repl bin/rune-test
+test-incremental: $(RUNE) vm basis-cache bin/rune-repl bin/rune-test bin/rune-incremental bin/rune-external
 	$(RUNE_TEST) --tier test-incremental
 
 check-positions: $(RUNE) $(RUNEVM) bin/rune-test
@@ -1521,6 +1521,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.
                     examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
                     tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml \
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml \
+               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml \
                tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/portability.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
@@ -1587,7 +1588,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios build/bench-counts.rbc
+check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external build/bench-counts.rbc
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -1742,3 +1743,20 @@ SCENARIO_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/childre
                  tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml tests/runner/scenarios-main.sml
 bin/rune-scenarios.rbc: $(RUNE) $(SCENARIO_SRCS) manifests
 	$(RUNE) --library test/runner --library json $(SCENARIO_SRCS) -o $@
+
+INCREMENTAL_BASE_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/scenarios.sml \
+                         tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml
+INCREMENTAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/incrementalextra.sml tests/runner/smlscan.sml \
+                    tests/runner/mutationproject.sml tests/runner/mutationchecks.sml tests/runner/mutationhistory.sml \
+                    tests/runner/mltonincremental.sml tests/runner/incrementalfaults.sml tests/runner/incremental-main.sml
+bin/rune-incremental.rbc: $(RUNE) $(INCREMENTAL_SRCS) tests/runner/incremental-edits-v1.json manifests
+	$(RUNE) --library test/runner --library json $(INCREMENTAL_SRCS) -o $@
+bin/rune-incremental: bin/rune-incremental.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-incremental.rbc" "$$@"\n' > $@
+	chmod +x $@
+EXTERNAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/externalchecks.sml tests/runner/external-main.sml
+bin/rune-external.rbc: $(RUNE) $(EXTERNAL_SRCS) manifests
+	$(RUNE) --library test/runner --library json $(EXTERNAL_SRCS) -o $@
+bin/rune-external: bin/rune-external.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-external.rbc" "$$@"\n' > $@
+	chmod +x $@

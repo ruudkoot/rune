@@ -18,7 +18,7 @@
 # bin/runedoc.rbc), a program of tests/perf (compiled by bin/rune,
 # run with the args of its .budget), mlton-NAME (one of MLton's benchmarks
 # at the size of tests/perf/mlton-bench.txt, prepared by
-# tests/external/run-mlton-bench.sh --prepare), or a FILE.rbc of register
+# bin/rune-external benchmark --prepare), or a FILE.rbc of register
 # bytecode. --stdin FILE gives each run FILE as its standard input (a program
 # of examples/benchmarks reads its name and arguments there), and --cwd DIR
 # runs a FILE.rbc in DIR (where it finds its data). Exits 1 if a workload
@@ -97,7 +97,7 @@ for w in "$@"; do
       # --prepare --all, once), so that censuses run side by side do not
       # compile one another's programs again (its filters match substrings)
       if [ "${CENSUS_NO_PREPARE:-0}" = 1 ] && [ -f "$cwd/${w#mlton-}.rbc" ]; then echo "prepared before" > "$dir/prepare.out"
-      else sh tests/external/run-mlton-bench.sh --prepare --rune "$rune" "${w#mlton-}" > "$dir/prepare.out" 2>&1 || { echo "FAIL $w: $(tail -1 "$dir/prepare.out")"; status=1; continue; }; fi
+      else bin/rune-external benchmark --prepare --rune "$rune" "${w#mlton-}" > "$dir/prepare.out" 2>&1 || { echo "FAIL $w: $(tail -1 "$dir/prepare.out")"; status=1; continue; }; fi
       rbc=$cwd/${w#mlton-}.rbc
       [ -f "$cwd/${w#mlton-}.args" ] && args=$(cat "$cwd/${w#mlton-}.args") ;;
     *.rbc)

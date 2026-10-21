@@ -661,3 +661,22 @@ Installation accepts repeated --host choices and keeps all stage prefixes
 private. Distribution checks read archive metadata in SML and compare
 independent ELF/PE fixtures; gzip/unzip are decoding adapters. The actual
 Windows installer case uses --no-register and requires Windows interop.
+
+
+The incremental cache controller is `bin/rune-incremental`. `scenarios`
+accepts a scenario filter; `one LABEL COMPILER` is the inventory's isolated
+case action. `mutate` retains project, compiler, Basis-copy and repository
+history modes. The new generator is version 2, uses SplitMix64 and the same
+thirteen edit families, and deliberately starts a new deterministic sequence.
+`mutate --replay-v1` replays the frozen legacy Python seed-1 trace: all 70
+receipts preserve success, rebuild count and reuse across changed units.
+Failure snapshots keep source order, edits and both diagnostics. `plant`
+manufactures stale or old-version cache entries independently of Rune.
+
+`bin/rune-external regression DIR`, `benchmark [OPTIONS]`, and `probe DIR...`
+run externally provisioned corpora. The regression route preserves expected
+exception text and skips; benchmark mode retains prepare, explicit count
+updates, data staging and VM options. Results use the common SML supervisor
+and receipts, with original program verdict lines printed after collection.
+The pinned MLton compiler scenario remains an explicit expensive command,
+`bin/rune-incremental mlton CHECKOUT [OUT]`, with its memory availability guard.

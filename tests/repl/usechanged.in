@@ -2,7 +2,7 @@
    again is compiled again, and the program sees the change; and a file
    that uses a name of the session, used after the name is bound again, is
    compiled again where its usages do not hold. S40, across sessions, is in
-   tests/incremental/run.sh. *)
+   bin/rune-incremental scenarios. *)
 fun write (file, text) = let val out = TextIO.openOut file in TextIO.output (out, text); TextIO.closeOut out end;
 (* in the directory of the run's output, so that nothing shown names it *)
 OS.FileSys.chDir (valOf (OS.Process.getEnv "RUNE_REPL_OUT"));

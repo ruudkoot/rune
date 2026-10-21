@@ -436,11 +436,11 @@ defect of the shim or of Rune's compiler.
   change some 3,500 lines of 149 files of the hosts' libraries, of which
   2026.2's, 580 lines of 37 files, is 110.99.9's again: a change to one
   of SML/NJ's two patches is usually wanted in the other.
-* **Before it was built.** `tests/external/probe-host-basis.sh` gives every
+* **Before it was built.** `bin/rune-external probe` gives every
   file of a host's library to the compiler alone and counts how far each
   gets. On 2026-09-21, before `xc2` existed, 201 of MLton's 206 files
   already got past Rune's parser, and the 5 that did not were the ones a
   shim replaces: the measurement that showed the work was the shim and not
-  the frontend. `tests/external/run-mlton.sh`, MLton's regression programs
+  the frontend. `bin/rune-external regression`, MLton's regression programs
   compiled by Rune, is the other way the suite puts Rune's compiler in
   front of SML written for another compiler.

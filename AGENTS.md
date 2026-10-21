@@ -365,7 +365,7 @@ keep these invariants:
   when it was written: a `Value` of 12 bytes where the 32-bit System V ABI
   aligns an `int64_t` to four, and `realpath` undeclared under an older
   glibc's headers.
-* `tests/external/run-mlton.sh DIR` runs MLton's regression programs
+* `bin/rune-external regression DIR` runs MLton's regression programs
   (`regression/` of github.com/MLton/mlton, not part of this repository) as
   an external conformance corpus; `tests/external/mlton-skip.txt` lists the
   programs that need Basis Library parts Rune lacks or MLton-specific

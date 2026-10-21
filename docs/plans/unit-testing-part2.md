@@ -117,7 +117,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | P2.6 | P2.5 | Full Basis/benchmark matrix execution | pending |
 | P2.7 | P2.1, P2.6 | Windows ways and final legacy VM/language runner retirement | pending |
 | P2.8 | P2.0 | Build/dependency/unit/install/distribution scenarios | done 2026-10-21 |
-| P2.9 | P2.0; P2.6 where matrix execution is shared | Incremental edits and external corpora | pending |
+| P2.9 | P2.0; P2.6 where matrix execution is shared | Incremental edits and external corpora | done 2026-10-21 |
 | P2.10 | P2.0 | IntInf correctness and hardening drivers | pending |
 | P2.11 | P2.8, P2.10; P2.7 for Windows paths | GMP build/download/install/cross tests | pending |
 | P2.12 | P2.0; P2.7 for Windows paths | REPL protocol, DAP, kernel and interop orchestration | pending |
@@ -661,3 +661,33 @@ own self-test is not used as the oracle. Evidence is under
 tests/out/unit-testing-part2/p2.8. The combined integration's three install
 provenance failures were retained and subsequently passed in the stable
 34/34 rerun; final global acceptance remains P2.17's required check.
+
+### P2.9 acceptance, 2026-10-21
+
+All seven owned drivers are retired. The integrated SML tier passed 116/116
+checks (`tests/out/unit-testing-part2/p2.9/acceptance`). All 55 distinct legacy
+scenario labels passed in isolated old/new roots. The frozen Python seed-1
+trace matches all 70 success, rebuild-count and across-change reuse receipts;
+the version-2 SML generator completed 75 additional pairs without disagreement.
+Two actual repository commits preserve the old generated-input skip outcome;
+a two-commit controlled corpus positively replays with the same 3 then 1
+compiled units. Those skips are not claimed as historical compiler coverage.
+
+The pinned MLton compiler at `5fe943391e539a502699327a6266b6e8e97939e1`
+was prepared with 606 files. All eight S44-S48 phases agree in status and rebuild
+count (606, 0, 1, 1, 241, 6, 0, 0); all eight bytecode payloads are identical.
+The final warm and uncached builds also agree within each controller. Both
+retain the 14 GiB availability guard and 12 GiB per-build address-space cap.
+The SML copy guard accepts the corpus's legitimate parent-relative library
+paths while requiring every destination to remain inside its private work tree.
+
+All 246 external regression verdicts agree: 153 passes, 93 unchanged skips;
+the 153 passing stdout streams and bytecode payloads are identical. Four
+external benchmark counts match, including preparation and generated inputs.
+All 208 files of the external Basis source tree have the same diagnostic class
+(10 ok, 185 unbound, 8 fixity, 5 syntax). Planted cache disagreement, stale
+entry, wrong counts, explicit updates, timeout and missing-input cases fail
+through the actual public controllers. Evidence JSON files and logs are kept
+under `tests/out/unit-testing-part2/p2.9`; the original drivers also remain in
+Git and the ignored comparison baseline. The first regression attempt used
+mismatched register/stack tools; its logs are explicitly excluded from acceptance.
