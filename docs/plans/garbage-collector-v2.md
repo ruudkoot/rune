@@ -55,7 +55,7 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | Measure in the tree | done 2026-10-07: `--gc-log` and `RUNE_MEMSTAT` in the copier (`01bba940`); `tests/gcbench` and `check-gcbench` (`bb1b1152`); the latency workloads, `tools/mmu.py`, `scripts/gc-eval.sh` with the evaluation set, and the 32-bit probe (`4d88489a`); the census VM on the word layout and the simulators on its traces, `test-census`, the validation of `check-heapsim` and `check-gcsim` in `make check` (`5dad8248`). The traces of the bootstrap and of compile-sigs made in the tree pass `checktrace` and the validation against `runevm --stats`; `gc-eval.sh` gives the copier against itself T 1.01, M 1.00, P 0.99 and its bootstrap as *Where we are* has it. The harness's H5 numbers below were made with a nursery 8 times too small and are to be measured again (`tests/gcbench/README.md`) |
+| M1 | Measure in the tree | done 2026-10-07: `--gc-log` and `RUNE_MEMSTAT` in the copier (`01bba940`); `tests/gcbench` and `check-gcbench` (`bb1b1152`); the latency workloads, `bin/rune-measure mmu`, `bin/rune-measure gc-eval` with the evaluation set, and the 32-bit probe (`4d88489a`); the census VM on the word layout and the simulators on its traces, `test-census`, the validation of `check-heapsim` and `check-gcsim` in `make check` (`5dad8248`). The traces of the bootstrap and of compile-sigs made in the tree pass `checktrace` and the validation against `runevm --stats`; `gc-eval.sh` gives the copier against itself T 1.01, M 1.00, P 0.99 and its bootstrap as *Where we are* has it. The harness's H5 numbers below were made with a nursery 8 times too small and are to be measured again (`tests/gcbench/README.md`) |
 | M2 | The collector behind an interface | done 2026-10-07: the barrier with the object, the field and the value in every engine, `runeopt`'s `:=` and `Array.update` included, through `ms_set_field` and its template (`4cc8ae69`); `--gc-verify` and `make test-heap` in `make check` (`8fb0fc18`, `1065a541`); the heap of 2 MiB chunks over `sys_mem_reserve`, images and `heap_relocate` over them, the copier, the log and the check in `runtime/gc/` (`04cd4345`); the corrections of *Where the documents are wrong*. Output, `--count` and every collection as before on all 271 programs of `tests/lang` on both VMs, and every portability VM and image direction; the evaluation set T 1.011, M 0.841, P 1.030 against the copier of `1065a541`, the short programs' worst T within the noise on five rounds. The old-space interface's operations come with their first users: promotion with M3's nursery, marking and sweeping with M4's old spaces |
 | M3 | The nursery, its remembered set, the watermark, large objects | done 2026-10-07, its targets not met: the barrier with the VM, the field and the value in every engine (`233a8e6b`); the nursery of 1 MiB (`--nursery N`; 0 the copier as before) with promotion at the first survival, the cards and dirty bytes in the chunks' tables with a crossing map, the large-object space from 8 KiB with the large objects made since the last minor collection scanned whole, and `--gc-verify` of the remembered set (`d34ff907`); the watermark and the liveness by a hash of the return pc (`bdf2ed77`) -- the watermark an index of the lowest frame that ran since the last minor collection, which every pop lowers, rather than D9's bit in each frame record: the same frames scanned, a comparison a return, `Frame` unchanged; and what the evaluation found: a dirty card of a large array scanned from its first field, each minor collection logged as its own, the collector's calls per object made inline (`b1c9a930`). Correct: the whole chain, `--gc-verify` at 4 KiB, 64 KiB and 1 MiB on both interpreters, the JIT at both tiers and `runeopt`'s code, and `--nursery 0` as M2 in output, `--count` and every collection on all 271 programs of both VMs. Against M2's copier (`results/m3-eval.md`): T 1.011, M 0.685, P 1.010; the bootstrap 0.833 of the task-clock (target 0.85) and 0.648 of the peak (target 0.5), its 99th-percentile pause 1.1 ms against 67; `merge` 2.05 (target 1.0); Rune compiling MLton 1.33 (target 1.0). What misses is promotion at the first survival into a copying old space: where a program's short-lived data is as large as the nursery most of it is promoted, and the full collections copy it again (DLXSimulator promotes 81% of each nursery, Rune compiling MLton 52%). No nursery from 128 KiB to 16 MiB meets the targets (the sweep there: 16 MiB mends `merge` and DLXSimulator at M 0.94 and P 1.63); the gate decides D2 -- the size, and promotion at the second survival -- and D3, an old space that is marked, on M4's prototypes |
 | M4 | Two old spaces at full scale; the gate | done 2026-10-08: the frame of a non-moving old space (`d4015db0`), mark-region on `gc2-m4a` (`4cb0a4e8`) and segregated fits on `gc2-m4b` (`1b98f09f`), each passing M3's chain with its old space the default; the numbers in *Decisions*, *The gate of M4* (`652d7a09`). At the gate the owner kept both, as two collectors chosen on the command line -- mark-region the throughput collector and the default, segregated fits the low-pause collector -- and took the gate's other recommendations; M5 to M8 planned again |
@@ -2032,7 +2032,7 @@ segregated fits (`gc2-m4b`, `1b98f09f`: classes by eights to 128 bytes then
 an eighth apart, blocks of one class, cells found free by their bits,
 lazily). Both pass M3's whole chain and its `--gc-verify` matrix with
 their old space the default. Measured on the evaluation set against the
-copier (`scripts/gc-eval.sh`, three rounds; `results/m4-gate.md`, which
+copier (`bin/rune-measure gc-eval`, three rounds; `results/m4-gate.md`, which
 has every number here and more):
 
 | | M3 | A: mark-region | B: segregated fits |
@@ -2985,15 +2985,15 @@ on 2026-10-08, on its numbers and the owner's choice of two collectors
     lines), `check-gcsim`;
   - `tests/gcbench` (3,990 lines);
   - `--gc-log` in the stock collector and `RUNE_MEMSTAT`;
-  - `tools/mmu.py`;
+  - `bin/rune-measure mmu`;
   - the latency workloads into `examples/benchmarks`;
   - the evaluation set as a script that runs it and scores a VM against
-    a baseline (`scripts/gc-eval.sh`).
+    a baseline (`bin/rune-measure gc-eval`).
 * **Why now:** every later milestone is measured with these; the census
   has not built since heap-layout's M4.
 * **Done when:** the traces of the bootstrap and of `compile-sigs` are
   made in the tree and pass `checktrace`; the simulator's validation
-  against `runevm --stats` passes in `make check`; `scripts/gc-eval.sh`
+  against `runevm --stats` passes in `make check`; `bin/rune-measure gc-eval`
   reproduces *Where we are*'s baselines within the noise.
 * **Touches:** `runtime/census/*`, `tools/heapsim/*`, `tests/gcbench/`,
   `runtime/heap.c` (the log), `scripts/`, `examples/benchmarks/`,
@@ -3329,17 +3329,17 @@ to it.
 
 ## Measuring
 
-* **The evaluation set** (`scripts/gc-eval.sh`, M1): every workload of
+* **The evaluation set** (`bin/rune-measure gc-eval`, M1): every workload of
   *The experiments* run on a candidate VM and the baseline, interleaved,
   the least task-clock of three rounds, alone on the machine (the
   drafts' timed lock); the scores T, M and P and the worst cases.
-* **Pauses and MMU** from `--gc-log` by `tools/mmu.py`, on the wall
+* **Pauses and MMU** from `--gc-log` by `bin/rune-measure mmu`, on the wall
   clock (monotonic, never the program's `Time.now`, which WSL2 steps)
   and on the instruction clock.
 * **Memory**: peak resident (`/usr/bin/time %M`), VmPeak and VmHWM, and
   the chunks committed, from `--gc-log`.
-* **The census and the simulator** (`scripts/census.sh`, `bin/gcsim`,
-  `tools/heapsim/sweep2.sh`) for the questions of survival, footprint,
+* **The census and the simulator** (`bin/rune-measure census`, `bin/gcsim`,
+  `bin/rune-measure sweep2`) for the questions of survival, footprint,
   fragmentation and the remembered set; every new model checked against
   closed-form traces and against the real VM before its numbers are
   used.

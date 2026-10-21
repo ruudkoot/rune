@@ -2001,7 +2001,7 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
     with a message when `tmux` is missing, and `make doctor --scope
     terminal`, which says so. The same scripts against `runevm.exe`
     through WSL interop in `make test-windows`.
-  * `scripts/perf-repl.sh`: start to the first prompt, `1;`, pastes of
+  * `bin/rune-measure perf-repl`: start to the first prompt, `1;`, pastes of
     10 to 2,000 lines, and (from M5) the cost of a keystroke at 10, 100
     and 1,000 lines, run on a quiet machine (load under 2) and tabled in
     this file.
@@ -2015,7 +2015,7 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   `run.sh`, three scripts of today's REPL and one expected screen),
   `make test-terminal` in `make check`, the scripts again through interop
   in `make test-windows`, `make doctor --scope terminal`, and
-  `scripts/perf-repl.sh`. Two findings:
+  `bin/rune-measure perf-repl`. Two findings:
   * **The REPL could not read a line on a Windows console.**
     `file_read_vec` read a handle with a position through `fread`, which
     waits for all its bytes, and the C runtime of Windows gives a console
@@ -2233,7 +2233,7 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   replayed by the emulator showing the next frame) and `emulator.sml`;
   `edit-keys`, `edit-lines` and `edit-complete` in `tests/terminal`, on
   Linux and on Windows. Measured (`tests/terminal/keystroke.sml`, in
-  `scripts/perf-repl.sh`): a key at 1,000 lines costs 3.6 ms, the worst
+  `bin/rune-measure perf-repl`): a key at 1,000 lines costs 3.6 ms, the worst
   of thirty 10.4, at a load average of 13; a line is laid out again only
   when its text, prompt or styles change (418 ms before). Where it
   differs from the plan:
@@ -2334,7 +2334,7 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
     `repl-basic`, not run in Emacs. `tests/terminal/MANUAL.md` is written;
     going through it on the terminals it names is M13's, which records
     the results there.
-  * Measured (`scripts/perf-repl.sh`, the basic mode as M1 was, load 11
+  * Measured (`bin/rune-measure perf-repl`, the basic mode as M1 was, load 11
     to 13): a paste of 1,000 lines answered in 0.53 s and of 2,000 in
     0.91 s, linear but for a fixed 0.15 s (M1: 5.8 s and 33.1 s); an entry
     answered in 13 ms; a key at the end of 1,000 lines drawn in 4.8 ms
@@ -2743,7 +2743,7 @@ Windows, and any Rune program can read a line with them.
   | Features: the columns of *The REPLs* | commands (`:`, any unique prefix); `:type`, `:info`, `:browse`, `:doc`, `:search`, by type too; depth, length, string and width, `addPrettyPrinter`; the entry's line under an error with `^`; completeness by `;` and the scanner, the parser judging at Enter; `:reload`, `:reload!`, `watch`; a debugger at the prompt, the engine's protocol, a Jupyter kernel | yes; Enter by the parser alone, `:doc` beyond the Basis and patching in place are in *Ready for, not built* with their reasons |
   | Features: the columns of *The line editors* | Windows' console; drawing by a diff; widths by tables of Unicode 18 and asked of the terminal; several lines; Emacs's keys and Vi's, undo, a kill ring; bracketed paste; a history appended, shared and searched, with a menu; highlighting by the compiler's lexer; the basic mode | yes |
   | Features: the rest *What the table says* names | feedback modes, `:time`, `:save` and `:save-image`, documentation at the prompt, `:edit`, `:sh` | yes |
-  | Speed (`scripts/perf-repl.sh`, load 6.6) | start to the first prompt 55.5 ms, with the editor 55.7 (100); a keystroke at 1,000 lines 3.4 ms, the worst 9.1 (16); the completion menu over the Basis 3.9 ms (50); a paste of 2,000 lines 0.84 s against 0.48 s for 1,000 (linear) | yes, on a machine never quiet (another session's chains): as measured, every figure is within its bound |
+  | Speed (`bin/rune-measure perf-repl`, load 6.6) | start to the first prompt 55.5 ms, with the editor 55.7 (100); a keystroke at 1,000 lines 3.4 ms, the worst 9.1 (16); the completion menu over the Basis 3.9 ms (50); a paste of 2,000 lines 0.84 s against 0.48 s for 1,000 (linear) | yes, on a machine never quiet (another session's chains): as measured, every figure is within its bound |
   | Robustness | the terminal cooked after a return, an uncaught exception, `vm_fatal`, `SIGTERM` and `SIGHUP` (`term-restore`; Windows' console is put back at exit alike, with no `stty` to ask); the programs of `tests/lang` and `tests/errors` write what they wrote at incremental's `673729a3`, byte for byte; the same scripts on Linux and Windows: 11 of `tests/terminal`, the debug adapter, the kernel | yes; the REPL's own echoes changed where M7's printing meant them to (paths, `?.t`, the layout, `5.0`, exceptions' arguments), in `tests/repl`'s transcripts |
   | Access | no coloured role below 3:1 on the palettes of xterm, VTE, Windows Terminal, the legacy console and VS Code's dark and light themes, nor below 2.5:1 under the three deficiencies, the theme `wide` on all of them, dark and light (`tests/color/contrast.py`, 1,892 ratios), but one: VS Code's light theme draws bold in bright colours, and its bright magenta is 2.94:1 on white, which only asking the background mends; colour never the only cue; the basic mode where D24 lists, tested under comint (`repl-basic`) | yes, with the one exception written in the test; Terminal.app's and iTerm2's palettes were not measured (*Ready for, not built*) |
 
@@ -2952,13 +2952,13 @@ Windows, and any Rune program can read a line with them.
 
 ## Measuring
 
-`scripts/perf-repl.sh` (M1), on a quiet machine (load average under 2),
+`bin/rune-measure perf-repl` (M1), on a quiet machine (load average under 2),
 compared at every milestone with the table below, which M1 fills. The
 first column is what the experiments measured under a load of 30; the
 next, what each milestone measured, with the load it was measured at
 (another session's builds kept the machine busy throughout). None of
 the M1 column was measured on a quiet machine yet: before M6 compares
-with it, `scripts/perf-repl.sh` runs again on one, and the column takes
+with it, `bin/rune-measure perf-repl` runs again on one, and the column takes
 those numbers. M13's was measured when the load had fallen to 6.6 (log
 `m13-perf.log` with the drafts); the machine was never quiet while the
 milestones' checks ran.

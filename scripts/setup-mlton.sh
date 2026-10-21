@@ -11,8 +11,8 @@
 # order Rune compiles them, and the sources the build generates (the front
 # end's lexers and grammars, control/version.sml, pre-mlton.sml). It needs
 # MLton itself, from the hosts (`make hosts`; MLTON= overrides). Then
-#   scripts/perf-units.sh --mlton DIR          (or MLTON_SOURCES=DIR)
-#   scripts/gc-eval.sh --mlton-compile ...      (MLTON_SOURCES=DIR)
+#   bin/rune-measure perf-units --mlton DIR          (or MLTON_SOURCES=DIR)
+#   bin/rune-measure gc-eval --mlton-compile ...      (MLTON_SOURCES=DIR)
 # compile it: from DIR/mlton, `rune --type-work=1000000000 $(cat
 # mlton-rune.txt)`, some 198,000 lines.
 set -eu

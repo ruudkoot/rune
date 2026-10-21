@@ -33,7 +33,7 @@ the birth sample kept in each object's header. `--census-graph` adds
 `--census-static FILE.rbc` prints the static census of the program (below)
 and exits.
 
-`scripts/census.sh [--every N] [--graph] [--heap BYTES] [--name NAME]
+`bin/rune-measure census [--every N] [--graph] [--heap BYTES] [--name NAME]
 WORKLOAD...` runs a workload on both VMs, checks the two `--count` lines
 and outputs against each other and keeps the trace under
 `tests/out/census/WORKLOAD` (`--out DIR` elsewhere), with a `DONE` file
@@ -43,7 +43,7 @@ for any workload whose live data stays under 100 MiB, in less memory. The
 bootstrap takes about 21 minutes at 32 KiB and writes 1.3 GB (34.2 million
 objects, 27,227 samples; 465 MB resident), `compile-sigs` 11 seconds.
 `bin/rune-heap-check heap-trace-check DIR` checks a trace's consistency and
-`tools/heapsim/checkold.py DIR` its old values (*Checks*, below);
+`bin/rune-measure checkold DIR` its old values (*Checks*, below);
 `runtime/census/layouts.h` holds the size models: `w8_obj_size`, today's,
 and the heap-layout study's candidates for the first-order sizes of
 `census.txt`.
@@ -186,7 +186,7 @@ the live data and the interval), and the final one at exit.
     nglobals N, nconsts N            the roots besides the stack
     fields_bytes N                   the size of fields.bin
 
-### DONE -- written by scripts/census.sh when the two VMs agree
+### DONE -- written by bin/rune-measure census when the two VMs agree
     count runevm: count: I instructions, B bytes, O objects   the stock VM's, equal to the census's
     wall S s                         the census's run
     every N, layout W8, version 2
@@ -241,7 +241,7 @@ the live data and the interval), and the final one at exit.
   its object, of the kind fields.bin says); every store's ids allocated by
   its clock, its src_kind, flags and field. Memory includes nine packed bytes per object, the sample tables and
   bounded input buffers. `make test-census` always runs the SML checker.
-- `tools/heapsim/checkold.py DIR` (a trace with graph.bin): each store's
+- `bin/rune-measure checkold DIR` (a trace with graph.bin): each store's
   old_id is the previous store's new_id into that field, or the field's
   value in graph.bin.
 - `bin/gcsim --trace DIR --check` and `bin/heapsim --trace DIR --check`:

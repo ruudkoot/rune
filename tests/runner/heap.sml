@@ -78,8 +78,8 @@ struct
           @ List.map (fn (name, _) => job (name, ["heap-gcbench", name],
             ["heap/gcbench/prepare"] @ (if name = "h5-ops" then ["heap/gcbench/ops"]
                   else if List.exists (fn n => n = name) ["h1", "h5", "h5-immix"] then ["heap/gcbench/trace"] else []), 500)) HeapChecks.gcCases))),
-     Test.requires ["jit"] (tagged ["check", "test-register-jit", "covers:runtime/register/jit/*", "covers:tests/register/*", "covers:scripts/jit-dump.py"]
+     Test.requires ["jit"] (tagged ["check", "test-register-jit", "covers:runtime/register/jit/*", "covers:tests/register/*", "covers:tools/measure/jit-dump.sml"]
        (Test.describe "jitdump" [job ("binary", ["heap-jitdump"], [], 300),
-          Test.requires ["python3", "objdump"] (job ("analysis", ["heap-jitdump-analysis"], ["heap/jitdump/binary"], 300)),
+          Test.requires ["objdump"] (job ("analysis", ["heap-jitdump-analysis"], ["heap/jitdump/binary"], 300)),
           job ("faults", ["heap-jitdump-faults"], [], 300)]))]
 end

@@ -113,7 +113,7 @@ unified; `steps`, the steps of type work that `--type-work` bounds. The
 counters do not depend on the machine. The checks deferred to the end of
 the program or of a unit -- whether matches are exhaustive, flexible
 records -- have a line of their own, `elab - deferred - ...`.
-`scripts/elab-stats.awk` adds the lines up into a table of contexts and
+`bin/rune-measure elab-stats` adds the lines up into a table of contexts and
 operations, and names the declarations that took longest.
 
 ## What a `Lambda` keeps
@@ -653,7 +653,7 @@ stack target.
   function (`tests/lang/rt.trace_inlined.sml`).
 * **The bootstrap** is compiled with `--lint --mid-roundtrip` whenever it is
   built (`bin/rune.rbc`).
-* **`scripts/bisect-fuel.sh PROGRAM.sml`**: where a program runs otherwise
+* **`bin/rune-measure bisect-fuel PROGRAM.sml`**: where a program runs otherwise
   at `-O2` than at `-O0`, halving `--fuel` finds the first rewrite that
   breaks it (after Whalley, "Automatic isolation of compiler errors").
 

@@ -1,6 +1,6 @@
 # MLton's benchmark programs (benchmark/tests of github.com/MLton/mlton, read from
 # /home/ruud/reference) as a workload set: bin/rune-external benchmark, and
-# scripts/perf-cycles.sh --mlton-bench and scripts/census.sh mlton-NAME through it.
+# bin/rune-measure perf-cycles --mlton-bench and bin/rune-measure census mlton-NAME through it.
 #   NAME N BYTES OBJECTS  # note
 # N is the argument of Main.doit, chosen so that a program allocates 200 MB to
 # 2 GB where its size can be chosen (MLton's own N where it cannot); BYTES and

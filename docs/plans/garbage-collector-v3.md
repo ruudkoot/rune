@@ -74,7 +74,7 @@ on its last tip (*Where we ended* there):
     in the minor collections) and 4 of them roots where 1 -- the header of
     three words that native frames M4 put below each frame;
   * by `perf record`, the frames' walks, liveness and return barrier
-    (`scripts/perf-groups.awk`) take 37% of `merge`'s cycles where they
+    (`bin/rune-measure perf-groups`) take 37% of `merge`'s cycles where they
     took 11%, `vm_frames_from` alone 17%: about 170 cycles a frame walked
     where they were 40 (`wc-input1` 110 where 35). M1 indexed
     `vm->frames`; the walk steps through each frame's header to find the

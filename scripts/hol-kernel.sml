@@ -1,4 +1,4 @@
-(* HOL4's kernel at work (scripts/hol-kernel.sh; docs/plans/performance.md,
+(* HOL4's kernel at work (bin/rune-measure hol-kernel; docs/plans/performance.md,
    E7): the same file on Rune and on Poly/ML. Each workload prints a line
    `HOLBENCH NAME: SECONDS`, the processor time of the process while it ran,
    user and system. *)

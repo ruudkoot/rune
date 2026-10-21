@@ -2121,3 +2121,9 @@ scenario input, resize, screen/byte assertions and lifecycle. The original
 retention tables above are the historical inventory, superseded by the
 part-2 ledger and acceptance records. Protocol and incremental drivers named
 as deferred above were also retired in P2.9/P2.12.
+
+P2.14 of [the continuation](unit-testing-part2.md) now replaces the 43
+measurement/analysis controllers with `bin/rune-measure`. Its per-file ledger
+and acceptance record preserve the retired source identities and validation
+limits. Generator and production build/package conversion remain P2.15/P2.16;
+whole-project acceptance is P2.17.

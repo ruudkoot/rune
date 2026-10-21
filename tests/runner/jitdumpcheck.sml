@@ -157,7 +157,7 @@ struct
      keeps its current CLI covered while its implementation is still Python. *)
   fun analysis () =
     let val dir = directory "jitdump"
-        val output = command dir "analysis" ["python3", "scripts/jit-dump.py", dir ^ "/dump", "fib"]
+        val output = command dir "analysis" [fromRoot "bin/rune-measure", "jit-dump", dir ^ "/dump", "fib"]
         val rows = List.filter (fn line => not (String.isPrefix "#" line)) (lines output)
     in need (not (null rows) andalso List.all (fn line => case String.tokens Char.isSpace line of
              _ :: _ :: role :: _ :: _ => List.exists (fn r => role = r) roles | _ => false) rows,

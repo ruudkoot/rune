@@ -79,7 +79,7 @@ struct
     end
 
   (* --lex-count N: the inputs lexed N times, each in its mode, and how
-     many tokens and bytes they have; what scripts/lex-corpus.sh measures
+     many tokens and bytes they have; what bin/rune-measure lex-corpus measures
      the lexer by *)
   fun lexCount () : OS.Process.status =
     let

@@ -79,7 +79,7 @@ execution models, and compare allocation across applicable Rune engines.
 Review the reason for an intentional count change and retain old/new raw
 samples, source/options and allowance. After review, an explicit update uses:
 
-    sh scripts/measure-benchmarks.sh count --profile smoke --filter '=NAME' --update-budgets
+    bin/rune-measure benchmarks count --profile smoke --filter '=NAME' --update-budgets
 
 The adapter refuses baseline publication after failed comparisons. Re-run the
 ordinary count target against the proposed table before committing it.

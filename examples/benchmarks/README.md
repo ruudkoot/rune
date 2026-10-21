@@ -4584,9 +4584,9 @@ messages' definition without running the program (`--check` compares them).
 | normal | `10000 1000000 1024 0` | `10000 1000000 1024 14533307` |
 | large | `100000 3000000 1024 0` | `100000 3000000 1024 9991721` |
 
-The evaluation set (`scripts/gc-eval.sh`, [docs/testing.md](../../docs/testing.md))
+The evaluation set (`bin/rune-measure gc-eval`, [docs/testing.md](../../docs/testing.md))
 runs N = 10,000, 100,000 and 900,000 (about 10 MB, 100 MB and 0.93 GB live)
-for 3,000,000 steps with TIME 1, and `scripts/gc-probe32.sh` runs N = 50,000
+for 3,000,000 steps with TIME 1, and `bin/rune-measure gc-probe32` runs N = 50,000
 for 1,000,000 steps on the 32-bit VM. Today's copier pauses about 1.5 ms for
 every MB live here, and holds five to ten times the live data.
 

@@ -57,7 +57,7 @@ of 1 GB (`POLYML_HEAP`).
 `bin/runevm` runs at a JIT level chosen by `--jit=MODE` and `--jit-tier=N`,
 or by `RUNEVM_JIT` and `RUNEVM_JIT_TIER` where a runner starts it
 ([runtime/register/README.md](../runtime/register/README.md), Tier 1 and
-Tier 2); `scripts/perf-cycles.sh` names them `jit-MODE`:
+Tier 2); `bin/rune-measure perf-cycles` names them `jit-MODE`:
 
 | Level | Options | What is compiled |
 |---|---|---|
@@ -77,7 +77,7 @@ times, R from the `wall R` line of its `.budget`), and the compiler and
 bootstrap: for those, MLton and Poly/ML are their builds of the compiler
 and of `runedoc`. Machine instructions, and the ratios of instructions and
 of cycles, of the run with the least cycles of five
-(`scripts/perf-cycles.sh`; one run at a time, a load of 3 to 6):
+(`bin/rune-measure perf-cycles`; one run at a time, a load of 3 to 6):
 
 | Program | Rune, instructions | MLton | Poly/ML | Rune / MLton | Rune / Poly/ML | cycles: Rune / MLton | Rune / Poly/ML |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -115,7 +115,7 @@ of cycles, of the run with the least cycles of five
 
 The same programs on the JIT's levels, on `runevm-stack` and as native code
 (`runeopt`): instructions, then cycles, each with its ratio to tier 2
-(`scripts/perf-cycles.sh --runs 3`; a load of 4 to 11, `runedoc-page` taken
+(`bin/rune-measure perf-cycles --runs 3`; a load of 4 to 11, `runedoc-page` taken
 again alone).
 
 | Program | tier 2 (default) | tier 1 | interpreter | runevm-stack | runeopt |
@@ -203,7 +203,7 @@ table of its own, below the hosts' own.
 ### MLton's benchmark programs
 
 MLton's own benchmarks (`benchmark/tests` of MLton, at the sizes of
-`tests/perf/mlton-bench.txt`, built as `scripts/perf-cycles.sh
+`tests/perf/mlton-bench.txt`, built as `bin/rune-measure perf-cycles
 --mlton-bench` builds them): the 38 that run without MLton's input files,
 on Rune as shipped, MLton and Poly/ML (`peek` and `vector64-concat` use
 `Int64`, which Poly/ML lacks). Cycles, the least of three rounds
@@ -266,7 +266,7 @@ of 3.6 to 13.
 
 The compiler compiling itself (`bootstrap`) and HOL4's kernel work on Rune
 as shipped, by part of the runtime: samples of `perf record -e cycles:u`
-over `runevm --jit-perf-map`, grouped by `scripts/perf-groups.awk` (the
+over `runevm --jit-perf-map`, grouped by `bin/rune-measure perf-groups` (the
 compiler at a load of 8 among the session's runs, HOL alone at 2.3).
 
 | Part | The compiler compiling itself | HOL4's kernel work |
@@ -490,7 +490,7 @@ session's other runs beside it; the ratios are of the same session.
 Each build of the compiler compiling `examples/hello.sml`, the signatures
 of `tests/perf/compile-sigs.sml`, and itself (the bootstrap's input), every
 build making the register bytecode: machine instructions of the run with
-the least cycles of five (`scripts/perf-cycles.sh`; `compile-hello`,
+the least cycles of five (`bin/rune-measure perf-cycles`; `compile-hello`,
 `compile-sigs` and `bootstrap`; a load of 8 to 12, so the cycles are a
 quarter above a quiet machine's). The builds of the hosts are what `make
 host-builds` makes; the others run the compiler's own bytecode,
@@ -523,7 +523,7 @@ on `runevm-stack` and through `runeopt`.
   compiles, and 1.6 times tier 2's on the compiler.
 
 Where the compile of the compiler goes, by `--pass-stats`
-(`scripts/perf-units.sh`, the run of five with the least wall time; the stages add up to the
+(`bin/rune-measure perf-units`, the run of five with the least wall time; the stages add up to the
 compile's processor time, [ir.md](ir.md); a load of 8 to 12). A
 collection's time falls in the stage it happens in, so one stage of one
 run can carry a major collection (`lift` and `emit` on Poly/ML's build
@@ -654,16 +654,16 @@ scripts say in their heads what they do; `docs/plans/performance.md`
 | Table | Command |
 |---|---|
 | `tests/perf`, wall-clock time | `make perf PERF_CONFIGS=rune,rune:stack,rune:opt,hosts,xc1` (`tests/out/perf/wall.md`) |
-| `tests/perf`, cycles against MLton and Poly/ML | `scripts/perf-cycles.sh` |
-| Rune's engines | `scripts/perf-cycles.sh --runs 3 --configs rune,jit-baseline,jit-off,stack,opt` |
-| Where the time goes | `scripts/perf-cycles.sh --runs 1 --configs rune --profile rune bootstrap` (any program for `bootstrap`); for HOL4, `perf record` over `RUNEVM_OPTS=--jit-perf-map scripts/hol-kernel.sh HOL`, then `perf script -F period,ip,sym,dso \| awk -f scripts/perf-groups.awk` |
-| MLton's benchmark set | `scripts/perf-cycles.sh --mlton-bench DIR tests/perf/mlton-bench.txt`, DIR MLton's `benchmark/tests` |
+| `tests/perf`, cycles against MLton and Poly/ML | `bin/rune-measure perf-cycles` |
+| Rune's engines | `bin/rune-measure perf-cycles --runs 3 --configs rune,jit-baseline,jit-off,stack,opt` |
+| Where the time goes | `bin/rune-measure perf-cycles --runs 1 --configs rune --profile rune bootstrap` (any program for `bootstrap`); for HOL4, `perf record` over `RUNEVM_OPTS=--jit-perf-map bin/rune-measure hol-kernel HOL`, then `perf script -F period,ip,sym,dso \| bin/rune-measure perf-groups` |
+| MLton's benchmark set | `bin/rune-measure perf-cycles --mlton-bench DIR tests/perf/mlton-bench.txt`, DIR MLton's `benchmark/tests` |
 | `examples/benchmarks` | `make bench BENCH_SAMPLES=3` (the report's directory is printed) |
-| The compiler's builds | `scripts/perf-cycles.sh --configs rune,jit-baseline,jit-off,stack,opt,mlton,polyml,mlkit,smlnj-legacy,smlnj32,smlnj-dev bootstrap` (and `compile-hello`, `compile-sigs`) |
-| The compile by stage | `scripts/perf-units.sh --configs tier2,interp,baseline,stack,mlton,polyml,mlkit,smlnj-legacy,smlnj32,smlnj-dev phases` |
-| MLton's compiler compiled by Rune | `scripts/setup-mlton.sh DIR` once, then `scripts/perf-units.sh --mlton DIR --configs tier2,mlton phases` |
-| HOL4's theories | `scripts/hol-theory.py HOL logroot` (or `mergesort`, `string`, `toto`), HOL a built HOL4 tree, Poly/ML's or Rune's |
-| HOL4's kernel | `scripts/hol-kernel.sh HOL` |
+| The compiler's builds | `bin/rune-measure perf-cycles --configs rune,jit-baseline,jit-off,stack,opt,mlton,polyml,mlkit,smlnj-legacy,smlnj32,smlnj-dev bootstrap` (and `compile-hello`, `compile-sigs`) |
+| The compile by stage | `bin/rune-measure perf-units --configs tier2,interp,baseline,stack,mlton,polyml,mlkit,smlnj-legacy,smlnj32,smlnj-dev phases` |
+| MLton's compiler compiled by Rune | `scripts/setup-mlton.sh DIR` once, then `bin/rune-measure perf-units --mlton DIR --configs tier2,mlton phases` |
+| HOL4's theories | `bin/rune-measure hol-theory HOL logroot` (or `mergesort`, `string`, `toto`), HOL a built HOL4 tree, Poly/ML's or Rune's |
+| HOL4's kernel | `bin/rune-measure hol-kernel HOL` |
 | The counts | `make perf-check` (`tests/perf/run-perf.sh`), `make bench-count` |
 
 **The conventions.**
@@ -683,7 +683,7 @@ scripts say in their heads what they do; `docs/plans/performance.md`
 * **`--pass-stats`** times every stage of a compile; the stages add up to
   the process's processor time, which its last line gives (`total: ...`;
   [ir.md](ir.md)).
-* **`scripts/perf-groups.awk`** groups the samples of `perf record` by part
+* **`bin/rune-measure perf-groups`** groups the samples of `perf record` by part
   of the runtime (`perf-cycles.sh --profile` uses it): the JIT's code by
   tier, the interpreter, the frames' walks, liveness and return barrier,
   the collector's minor and major work, allocation, the runtime's

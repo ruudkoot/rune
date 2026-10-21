@@ -46,10 +46,10 @@ struct
         val routineFaults = List.map (fn (name, args, requires) => job name args [] 1000 requires NONE)
             [("catalogue-faults", ["bench-catalogue-faults"], []),
              ("matrix-status", ["bench-matrix-status"], []),
-             ("measurement-status", ["bench-measurement-status"], ["python3"])]
+             ("measurement-status", ["bench-measurement-status"], [])]
         val special = [job "provenance" ["bench-provenance-faults"] [] 1000 ["sha256sum"] NONE,
-                       job "measurement-faults" ["bench-measurement-faults"] [] 1000 ["python3"] NONE,
-                       job "measurement-integration" ["bench-measurement-integration"] [] 1000 ["python3"] NONE]
+                       job "measurement-faults" ["bench-measurement-faults"] [] 1000 [] NONE,
+                       job "measurement-integration" ["bench-measurement-integration"] [] 1000 [] NONE]
         val negative = List.map (fn name => job ("negative/" ^ name) ["bench-negative", name] [] 1000
                    (if name = "poly-memory" then ["host:polyml"] else []) NONE)
                       ["wrong-result", "wrong-name", "false-success", "timeout", "memory", "compile-error", "poly-memory"]

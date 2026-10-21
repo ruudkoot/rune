@@ -173,9 +173,9 @@ with `--tier test-census`, `check-heapsim`, `check-gcsim`, `check-layouts` or
 `bin/rune-heap-check heap-trace-check DIR` and
 `bin/rune-heap-check heap-validate [--out DIR] WORKLOAD...`; both fail with a
 nonzero status. Existing census archives retain their five-setting TSV reports.
-Absent/stale standalone archives still use the production census adapter until
-P2.14; the routine checks already use SML producers. The JIT analysis tool also
-remains a production Python adapter until P2.14, with an explicit requirement.
+Absent/stale standalone archives use `bin/rune-measure census`; the routine
+checks also use SML producers. The JIT analysis tool
+uses the SML measurement CLI; objdump is the instruction decoder capability.
 
 ### Before and after
 
@@ -375,7 +375,7 @@ program, `runevm --jit=off --count`, one thing changed at a time):
    compiler compiling its own 50 files into a new file therefore counts 50
    objects, 1,600 bytes and 200 instructions more than into the file its
    last run left. A harness that compares two runs of the compiler removes
-   the output before each (`scripts/census.sh`, `tests/runner/censustrace.sml`).
+   the output before each (`bin/rune-measure census`, `tests/runner/censustrace.sml`).
 
 What was measured and did **not** matter: address-space randomisation,
 the environment (an empty one gives the same numbers), whether the VM was
@@ -512,7 +512,7 @@ compiling MLton. Groups weighted 0 0 0 are extras: the compiler from the
 default 4 MiB heap, `compile-sigs --jit=off`, the strict twins of the lazy
 programs, the static map at 20 and 800 MB.
 
-`scripts/gc-eval.sh CANDIDATE BASELINE` runs the set on both VMs, which
+`bin/rune-measure gc-eval CANDIDATE BASELINE` runs the set on both VMs, which
 must take `--gc-log` ([runtime.md](runtime.md), *The collector's log*):
 round by round, each run on one VM and then on the other, in an order that
 alternates with the round, each under `ulimit -v` and `timeout`, `perf
@@ -525,7 +525,7 @@ pause under 1 ms counts as 1 ms) and 1 - MMU at 10 ms (at least 0.01). A
 group is the geometric mean of its runs, and each score the geometric mean
 of the groups weighted by the set; the M and P columns sum to 95, a slip
 found after the set was fixed, so the scores divide by the weight present,
-and the report says so. `scripts/gc-eval-score.py` prints the runs, the
+and the report says so. `bin/rune-measure gc-eval-score` prints the runs, the
 worst cases (the five highest ratios of each score, and every run more than
 1.10 in T or M, which D1 forbids) and the scores, and lists as problems
 every run that did not exit 0, a program of the catalogue that did not
@@ -535,11 +535,11 @@ line) differ from the others': a collector does not change what a program
 allocates.
 
 ```sh
-scripts/gc-eval.sh bin/runevm-new bin/runevm                 # the set, 3 rounds
-scripts/gc-eval.sh --only boot-default,latency --rounds 1 NEW OLD
-scripts/gc-eval.sh --candidate-opts '--heap-fill 75' bin/runevm bin/runevm
-GC_EVAL_LOCK='flock /tmp/rune-timed' scripts/gc-eval.sh NEW OLD
-scripts/gc-eval.sh --score --out tests/out/gc-eval           # score again
+bin/rune-measure gc-eval bin/runevm-new bin/runevm                 # the set, 3 rounds
+bin/rune-measure gc-eval --only boot-default,latency --rounds 1 NEW OLD
+bin/rune-measure gc-eval --candidate-opts '--heap-fill 75' bin/runevm bin/runevm
+GC_EVAL_LOCK='flock /tmp/rune-timed' bin/rune-measure gc-eval NEW OLD
+bin/rune-measure gc-eval --score --out tests/out/gc-eval           # score again
 ```
 
 The set takes about 30 minutes at three rounds on the reference machine
@@ -558,7 +558,7 @@ rounds so that others waiting for it have it, and a run waits until its
 ulimit and 8 GB more are free (`GC_EVAL_MARGIN`). After an interruption,
 `--resume` with the same options makes only the runs that are missing.
 
-**Pauses** come from the log by `tools/mmu.py LOG`: the pauses (a collection
+**Pauses** come from the log by `bin/rune-measure mmu LOG`: the pauses (a collection
 that grows the heap is two passes, one pause), their longest, mean and
 percentiles and a histogram, the collector's share, the heap and the peaks,
 and the minimum mutator utilisation (the least share of any window left to
@@ -570,7 +570,7 @@ and only the pauses are timed, which removes the mutator's own noise.
 `--json` and `--row` are for scripts; `--self-test` checks the MMU against
 closed forms and a brute-force scan.
 
-**The 32-bit address space**: `scripts/gc-probe32.sh` grows a program's live
+**The 32-bit address space**: `bin/rune-measure gc-probe32` grows a program's live
 data on `bin/runevm32` until the heap cannot grow, under a 2 GiB limit and
 without one, and reports the most live data a collection completed with
 (the copier: 255 and 512 MiB, where D1 asks for 768 MiB and 1.5 GiB);
@@ -705,3 +705,13 @@ Protocol assertions and Windows staging are SML. Python capabilities belong
 to the independent Jupyter/ZMTP peers and optional jupyter_client. Faults
 exercise malformed headers/signatures, wrong reply IDs, premature exit and
 lost interrupts, with kernel shutdown and leak detection during failures.
+
+The measurement and analysis controllers use `bin/rune-measure`; the modes and
+instrumentation contracts are listed in [tools/measure/README.md](../tools/measure/README.md).
+P2.14 retires 43 shell, Python and AWK controllers. `make bench`, `bench-count`
+and `bench-stats` use the public SML tool. Timing selections are explicitly
+exclusive (`bin/rune-test --tier measurement-runs`) and stay outside `make check`.
+Independent MMU scan vectors and measurement fault assertions remain ordinary
+checks. Captured reports keep their historical measurement command labels;
+current CLI examples use the SML modes. The generator and build/package ports
+remain P2.15 and P2.16 until their recorded acceptance is complete.

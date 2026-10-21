@@ -1,5 +1,4 @@
-(* Measurement correctness assertions. The production measurement/provenance
-   tools remain explicit producers until P2.14; they make no test verdicts. *)
+(* Independent assertions against the SML measurement producer. *)
 structure BenchmarkMeasurement =
 struct
   open Sh
@@ -20,7 +19,7 @@ struct
           ^ "timeout) printf 'planted deadline status\\n' >&2; exit 124 ;; no_image) exit 0 ;; esac\nexit 8")
         fun one (mode, expected, raw) =
           let val (status, output, errors) = invoke dir mode (setEnv ("MEASUREMENT_FAULT", mode) o setEnv ("SMLNJ", compiler))
-                 ["sh", fromRoot "scripts/measure-benchmarks.sh", "time", "--profile", "smoke", "--filter", "=tak",
+                 [fromRoot "bin/rune-measure", "benchmarks", "time", "--profile", "smoke", "--filter", "=tak",
                   "--configs", "native:smlnj-legacy", "--samples", "1"]
               val record = produced output
               val phase = record ^ "/tak/native-smlnj-legacy/build/compile"
@@ -37,11 +36,11 @@ struct
   fun classify dir exit rounds =
     let val () = need (exists (dir ^ "/stdout") andalso exists (dir ^ "/stderr"), "classification input is missing")
         val (status, output, errors) = invoke dir "classification" (fn e => e)
-          ["/bin/sh", "-c", ". \"$1\"; phase_dir=$2; phase_exit=$3; rounds=$4; status=0; validate; printf '%s\\t%s\\n' \"$category\" \"$status\"",
-           "benchmark-result", fromRoot "scripts/benchmark-result.sh", dir, Int.toString exit, Int.toString rounds]
-    in need (status = 0, "result classification producer failed: " ^ errors);
-       case String.fields (fn c => c = #"\t") (Hosts.trim output) of [category, state] => (category, state)
-        | _ => raise Failed "malformed result classification record" end
+          [fromRoot "bin/rune-measure", "validate", Int.toString exit, dir, Int.toString rounds]
+        val category=Hosts.trim output
+    in need (status=0 andalso category<>"", "result classification producer failed: " ^ errors);
+       (category,if category="pass" then "0" else "1") end
+
   fun measuredFailures () =
     let val dir = run ^ "/measurement-failures"
         val () = mkdirs dir
@@ -93,14 +92,14 @@ struct
     let val dir = run ^ "/measurement-integration"
         val () = mkdirs dir
         val (status, output, errors) = invoke dir "instrumented" (setEnv ("RUNEVM_OPTIONS", "--count"))
-                         ["sh", "scripts/measure-benchmarks.sh", "time", "--filter", "tak"]
+                         [fromRoot "bin/rune-measure", "benchmarks", "time", "--filter", "tak"]
         val () = need (status <> 0 andalso String.isSubstring "instrumented VM options" (output ^ errors),
                        "instrumented run was accepted as headline timing")
         val shared = dir ^ "/shared-run"
         val () = mkdirs shared
         val () = write (shared ^ "/keep", "keep this matrix worker\n")
         val (status, output, errors) = invoke dir "isolated" (setEnv ("RUNE_MATRIX_RUN", shared))
-             ["sh", "scripts/measure-benchmarks.sh", "count", "--profile", "smoke",
+             [fromRoot "bin/rune-measure", "benchmarks", "count", "--profile", "smoke",
               "--filter", "primes-strict", "--configs", "rune"]
         val () = need (status = 0, "isolated measurement failed: " ^ errors)
         val () = need (read (shared ^ "/keep") = "keep this matrix worker\n", "measurement removed another matrix worker")

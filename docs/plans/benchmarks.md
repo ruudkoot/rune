@@ -25,7 +25,7 @@ Rune already has useful starting points:
   references from the heap-layout branch, not files in this `origin/master`
   baseline. Their allocation table does not supply a general result check:
   each imported program also needs an independent correctness oracle.
-* `scripts/perf-cycles.sh` supports cycle measurements and profiling.
+* `bin/rune-measure perf-cycles` supports cycle measurements and profiling.
   [runtime.md](../runtime.md) describes the counts, and
   [performance.md](../performance.md) records the existing timing method.
   The new suite must control inputs and its execution environment for

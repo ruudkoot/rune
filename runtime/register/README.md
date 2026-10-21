@@ -1017,7 +1017,7 @@ interpreter's output and counts.
 
 `runevm --count` counts instructions executed and bytes and objects
 allocated, and `make perf-check` holds them to `tests/perf/*.budget`.
-Cycles are `scripts/perf-cycles.sh`, whose configuration `rune` is this VM
+Cycles are `bin/rune-measure perf-cycles`, whose configuration `rune` is this VM
 as shipped (docs/plans/jit.md, *Measuring*; docs/performance.md).
 `--jit-dump=DIR` (docs/plans/performance.md, M1; `jit/dump.c`) writes the
 code of every function compiled, as placed, and what each part of it is
@@ -1030,7 +1030,7 @@ from its slot, a tag test, an allocation (`MsRole`, `masm.h`). The
 macro-assembler keeps the marks where the role changes (`ms_role`,
 `ms_mark_pc`) when the dump asks for them, and nothing else; an emitter
 that adds a part of the protocol says its role, so that the dump keeps
-telling what a call, a return or a primitive costs. `scripts/jit-dump.py`
+telling what a call, a return or a primitive costs. `bin/rune-measure jit-dump`
 disassembles the code with each machine instruction's role, and counts
 the instructions callgrind saw by role (the cost of a call is the
 difference of two runs, per call); the same directory holds perf's

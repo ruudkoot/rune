@@ -1,44 +1,44 @@
 # path	kind	milestone	state	baseline-blob	replacement	comparison
 # baseline 80694b6b7; retained categories are the original D23 exceptions.
 scripts/benchmark-inventory.py	python	P2.15	pending	47905cad71530f5284dd9df26ac5db2b16f238c2	-	generated-bytes-and-source-order
-scripts/benchmark-provenance.sh	shell	P2.14	pending	e53a16aca070fc7cfb65858cfbd2396838271f87	-	captured-measurements-and-report-schemas
-scripts/benchmark-result.sh	shell	P2.14	pending	ee2bc4a115ff1b3e74f9cc34ea968d730c8f6cbb	-	captured-measurements-and-report-schemas
-scripts/bisect-fuel.sh	shell	P2.14	pending	17ccadd553085766765df4c7a7d2c1000eba015b	-	captured-measurements-and-report-schemas
+scripts/benchmark-provenance.sh	shell	P2.14	retired	e53a16aca070fc7cfb65858cfbd2396838271f87	bin/rune-measure provenance	P2.14-shadow-live-faults-and-reports
+scripts/benchmark-result.sh	shell	P2.14	retired	ee2bc4a115ff1b3e74f9cc34ea968d730c8f6cbb	bin/rune-measure classify	P2.14-shadow-live-faults-and-reports
+scripts/bisect-fuel.sh	shell	P2.14	retired	17ccadd553085766765df4c7a7d2c1000eba015b	bin/rune-measure bisect-fuel	P2.14-shadow-live-faults-and-reports
 scripts/build-files.sh	shell	Retain: bootstrap/setup	retained	c18b727ec7fab7fbe785a83d5d62fb291c91d343	-	bootstrap/setup
 scripts/build-gmp-vm.py	python	P2.16	pending	3369d018cfd306205f06fa4a28b2bb1895beee26	-	clean-bootstrap-configs-and-package-members
 scripts/build-gmp.py	python	P2.16	pending	131865ee41c4253f0370b843a34e8dbd9a3e62bc	-	clean-bootstrap-configs-and-package-members
-scripts/census.sh	shell	P2.14	pending	753b9f243a4e091324c5355abb5942e92946945d	-	captured-measurements-and-report-schemas
+scripts/census.sh	shell	P2.14	retired	753b9f243a4e091324c5355abb5942e92946945d	bin/rune-measure census	P2.14-shadow-live-faults-and-reports
 scripts/check-census.sh	shell	P2.2	retired	6d085df3e9adf313849884fbd16f1ce72b553754	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
 scripts/check-docs.sh	shell	P2.4	retired	93625d9d7f88ed26c2f0b0f3913d5ebc90f3965a	tests/runner/docchecks.sml	p2.4/focused.log+mutants.old.log+mutants-list.old.log+mutants-list.new.log
 scripts/cloud-cache.sh	shell	Retain: bootstrap/setup	retained	71e9c38d3b687efc8e3da4e163cb65ed4a98c9e2	-	bootstrap/setup
 scripts/configure-gmp.py	python	P2.16	pending	ae6fdba25144da63bbe6ef4198c1e822eebf8f1c	-	clean-bootstrap-configs-and-package-members
 scripts/dist-install.sh	shell	Retain: installers under test	retained	28b3ef9db4e3fd52ca0979008cc07127565b3212	-	installers under test
 scripts/doctor.sh	shell	Retain: bootstrap/setup	retained	c7da3c2788b58f8509970ec9e1e772504b4eaadc	-	bootstrap/setup
-scripts/elab-stats.awk	awk	P2.14	pending	097003416be632f24b93c5593d2ed800ffc765a0	-	captured-measurements-and-report-schemas
+scripts/elab-stats.awk	awk	P2.14	retired	097003416be632f24b93c5593d2ed800ffc765a0	bin/rune-measure elab-stats	P2.14-shadow-live-faults-and-reports
 scripts/envcheck.sh	shell	Retain: bootstrap/setup	retained	db7283fde7a21c7ca785f7a9a27e85917b47e952	-	bootstrap/setup
 scripts/fetch-hosts.sh	shell	Retain: bootstrap/setup	retained	76762674e87c351d4c4a775f7894dc361ecd5b2d	-	bootstrap/setup
-scripts/gc-eval-score.py	python	P2.14	pending	f148229992e1c03ce0800a6ad7cd0fbec580bf75	-	captured-measurements-and-report-schemas
-scripts/gc-eval.sh	shell	P2.14	pending	4a57e9180ea4e79956dc0b119533e5b148faf361	-	captured-measurements-and-report-schemas
-scripts/gc-probe32.sh	shell	P2.14	pending	529fea8814b60b3c99f11a6bf6f0e351ed3397f0	-	captured-measurements-and-report-schemas
+scripts/gc-eval-score.py	python	P2.14	retired	f148229992e1c03ce0800a6ad7cd0fbec580bf75	bin/rune-measure gc-eval-score	P2.14-shadow-live-faults-and-reports
+scripts/gc-eval.sh	shell	P2.14	retired	4a57e9180ea4e79956dc0b119533e5b148faf361	bin/rune-measure gc-eval	P2.14-shadow-live-faults-and-reports
+scripts/gc-probe32.sh	shell	P2.14	retired	529fea8814b60b3c99f11a6bf6f0e351ed3397f0	bin/rune-measure gc-probe32	P2.14-shadow-live-faults-and-reports
 scripts/gen-basis-sigs.sh	shell	P2.15	pending	b29c7ee75aa0add90e1859b9edb8860d68bca8bf	-	generated-bytes-and-source-order
 scripts/gen-build-files.sh	shell	Retain: bootstrap/setup	retained	563a65951fbe2887f74eb3a1d155e6113f05a148	-	bootstrap/setup
 scripts/gen-entities.py	python	P2.15	pending	aea691b9bfdebcf098a29670e2c4fea9ebe79904	-	generated-bytes-and-source-order
 scripts/gen-unicode-tables.py	python	P2.15	pending	5d60d55f593b53b0bf3f810aede95edde2ee5321	-	generated-bytes-and-source-order
 scripts/gen-version.sh	shell	Retain: bootstrap/setup	retained	64ffca12082ccf3f834718128e900b4b501cbb7e	-	bootstrap/setup
-scripts/hol-kernel.sh	shell	P2.14	pending	7649594a5ec0faa66a6a1d548cd96f8c599a1aca	-	captured-measurements-and-report-schemas
-scripts/hol-theory.py	python	P2.14	pending	8852f2c75a29ff4c8bdd9e2af355ea01155a782c	-	captured-measurements-and-report-schemas
+scripts/hol-kernel.sh	shell	P2.14	retired	7649594a5ec0faa66a6a1d548cd96f8c599a1aca	bin/rune-measure hol-kernel	P2.14-shadow-live-faults-and-reports
+scripts/hol-theory.py	python	P2.14	retired	8852f2c75a29ff4c8bdd9e2af355ea01155a782c	bin/rune-measure hol-theory	P2.14-shadow-live-faults-and-reports
 scripts/install.sh	shell	Retain: installers under test	retained	de0b223e10e184d030b840cae5e77873fd50005e	-	installers under test
-scripts/jit-dump.py	python	P2.14	pending	b6a1116c1cf7aa8e5a6ab81739da94ae871ea782	-	captured-measurements-and-report-schemas
-scripts/lex-corpus.sh	shell	P2.14	pending	8208cb9e3679108cce562e40aba5a59335781d1b	-	captured-measurements-and-report-schemas
+scripts/jit-dump.py	python	P2.14	retired	b6a1116c1cf7aa8e5a6ab81739da94ae871ea782	bin/rune-measure jit-dump	P2.14-shadow-live-faults-and-reports
+scripts/lex-corpus.sh	shell	P2.14	retired	8208cb9e3679108cce562e40aba5a59335781d1b	bin/rune-measure lex-corpus	P2.14-shadow-live-faults-and-reports
 scripts/make-dist.py	python	P2.16	pending	f8606fa790caf68c02f0744d81ef4d0fd7e3e718	-	clean-bootstrap-configs-and-package-members
-scripts/measure-benchmarks.sh	shell	P2.14	pending	f79574567fa02872e8252b240663b736a208b194	-	captured-measurements-and-report-schemas
+scripts/measure-benchmarks.sh	shell	P2.14	retired	f79574567fa02872e8252b240663b736a208b194	bin/rune-measure benchmarks	P2.14-shadow-live-faults-and-reports
 scripts/ncpus.sh	shell	Retain: bootstrap/setup	retained	bf17a4157092e825df8513890d9af3852bf34517	-	bootstrap/setup
-scripts/opt.sh	shell	P2.14	pending	37fcb0eb343e8fd2c51d27193f5f23a5e00151da	-	captured-measurements-and-report-schemas
+scripts/opt.sh	shell	P2.14	retired	37fcb0eb343e8fd2c51d27193f5f23a5e00151da	bin/rune-measure opt	P2.14-shadow-live-faults-and-reports
 scripts/package-runtime.py	python	P2.16	pending	26df2e153d91f71c5a325e0d33ea3d178511d921	-	clean-bootstrap-configs-and-package-members
-scripts/perf-cycles.sh	shell	P2.14	pending	b91b4649089159045c5e8729964a944b95335486	-	captured-measurements-and-report-schemas
-scripts/perf-groups.awk	awk	P2.14	pending	5facfd5f9321719512d07fda83ae4893a2382be2	-	captured-measurements-and-report-schemas
-scripts/perf-repl.sh	shell	P2.14	pending	a343ba5b3dfcddba4d598f321fa976860212ed64	-	captured-measurements-and-report-schemas
-scripts/perf-units.sh	shell	P2.14	pending	e95807fa1a9bdd05ee1b8f077501eb9f070d8e23	-	captured-measurements-and-report-schemas
+scripts/perf-cycles.sh	shell	P2.14	retired	b91b4649089159045c5e8729964a944b95335486	bin/rune-measure perf-cycles	P2.14-shadow-live-faults-and-reports
+scripts/perf-groups.awk	awk	P2.14	retired	5facfd5f9321719512d07fda83ae4893a2382be2	bin/rune-measure perf-groups	P2.14-shadow-live-faults-and-reports
+scripts/perf-repl.sh	shell	P2.14	retired	a343ba5b3dfcddba4d598f321fa976860212ed64	bin/rune-measure perf-repl	P2.14-shadow-live-faults-and-reports
+scripts/perf-units.sh	shell	P2.14	retired	e95807fa1a9bdd05ee1b8f077501eb9f070d8e23	bin/rune-measure perf-units	P2.14-shadow-live-faults-and-reports
 scripts/record-vm-build.py	python	P2.16	pending	3c0bf10b05101ebfd15e951c8b4d4b6c49cd8b43	-	clean-bootstrap-configs-and-package-members
 scripts/run-benchmarks.sh	shell	P2.3	retired	7d58f16b0efb6dfb02fe129cdce63c3f5ab27e84	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
 scripts/runevm-native.sh	shell	P2.1	retired	a6e57a7ba108a2408c1c1467cabb1055a3958d7c	tests/runner/nativevm.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
@@ -224,10 +224,10 @@ tests/external/probe-host-basis.sh	shell	P2.9	retired	069ac4cc16bd2485bff7bbf2a2
 tests/external/run-mlton-bench.sh	shell	P2.9	retired	9215f583f3ea7b8d14fa8bd9cb3eff12263308cc	tests/runner/externalchecks.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
 tests/external/run-mlton.sh	shell	P2.9	retired	fc5f9a52ef49546bd627e48ba99f63150d66bf8b	tests/runner/externalchecks.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
 tests/gcbench/check.sh	shell	P2.2	retired	df8c1194519f5bc5e928cde3b5b1cbaa9e045877	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
-tests/gcbench/measure.sh	shell	P2.14	pending	e183052c374366c916c01c7b89dea2189cbb013d	-	captured-measurements-and-report-schemas
-tests/gcbench/report.py	python	P2.14	pending	5e57766fdac08a7ba5148bbb9226a7651454eefe	-	captured-measurements-and-report-schemas
-tests/gcbench/roadmap.sh	shell	P2.14	pending	7992b9f16e8438dcdfd1f68f441bf5cae0c24b79	-	captured-measurements-and-report-schemas
-tests/gcbench/tables.py	python	P2.14	pending	445c6d1b1a3dc681d77bfc45d2029ebfdd520d37	-	captured-measurements-and-report-schemas
+tests/gcbench/measure.sh	shell	P2.14	retired	e183052c374366c916c01c7b89dea2189cbb013d	bin/rune-measure gcbench-measure	P2.14-shadow-live-faults-and-reports
+tests/gcbench/report.py	python	P2.14	retired	5e57766fdac08a7ba5148bbb9226a7651454eefe	bin/rune-measure gcbench-report	P2.14-shadow-live-faults-and-reports
+tests/gcbench/roadmap.sh	shell	P2.14	retired	7992b9f16e8438dcdfd1f68f441bf5cae0c24b79	bin/rune-measure gcbench-roadmap	P2.14-shadow-live-faults-and-reports
+tests/gcbench/tables.py	python	P2.14	retired	445c6d1b1a3dc681d77bfc45d2029ebfdd520d37	bin/rune-measure gcbench-tables	P2.14-shadow-live-faults-and-reports
 tests/incremental/mlton.sh	shell	P2.9	retired	6466d1797b3fae07c19cd69d0f85f5d7288677ee	tests/runner/mltonincremental.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
 tests/incremental/mutate.py	python	P2.9	retired	f1bededa518d65dbdfa8b77aa979979070a5f4fe	tests/runner/mutationproject.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
 tests/incremental/plant.py	python	P2.9	retired	55a0a652da3cf5e92d98f875b5aa03e0fe633c33	tests/runner/cacheplant.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
@@ -236,15 +236,15 @@ tests/install/run.sh	shell	P2.8	retired	aa997a5eaace6e45639e8d24673d8a2df3e0a373
 tests/intinf/backends.py	python	P2.10	retired	3033aa3986829072f969380357fc21c0db78522d	tests/runner/intinfbackends.sml	p2.10/acceptance+storage-shadow.json+generator-shadow.json+measurement-final-shadow.json+asan logs
 tests/intinf/build-config.py	python	P2.11	retired	1e0084aeec0f5903fc092fd4481343dbe7483417	tests/runner/gmpchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
 tests/intinf/build-modes.py	python	P2.11	retired	1d2d00be26c9c76bd435df4edb40334a95cb45c0	tests/runner/gmpchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
-tests/intinf/compare-compilers.py	python	P2.14	pending	561fb8facc407d80d27d4b23b5770a4a5d84bcac	-	captured-measurements-and-report-schemas
-tests/intinf/compare-design.py	python	P2.14	pending	ccd04840a9c19e26fba7d1f9f8648d3ec697b019	-	captured-measurements-and-report-schemas
-tests/intinf/compare-kernels.py	python	P2.14	pending	90d458e07c634e343c1a741b69f3f3ffa6040eec	-	captured-measurements-and-report-schemas
-tests/intinf/compare-paths.py	python	P2.14	pending	32a83439aafeaae7ccc4addbc474903999d82b4d	-	captured-measurements-and-report-schemas
-tests/intinf/conversion.py	python	P2.14	pending	5650c8ef6cc9b101967bd739900febd6b27734da	-	captured-measurements-and-report-schemas
+tests/intinf/compare-compilers.py	python	P2.14	retired	561fb8facc407d80d27d4b23b5770a4a5d84bcac	bin/rune-measure intinf-compilers	P2.14-shadow-live-faults-and-reports
+tests/intinf/compare-design.py	python	P2.14	retired	ccd04840a9c19e26fba7d1f9f8648d3ec697b019	bin/rune-measure intinf-design	P2.14-shadow-live-faults-and-reports
+tests/intinf/compare-kernels.py	python	P2.14	retired	90d458e07c634e343c1a741b69f3f3ffa6040eec	bin/rune-measure intinf-kernels	P2.14-shadow-live-faults-and-reports
+tests/intinf/compare-paths.py	python	P2.14	retired	32a83439aafeaae7ccc4addbc474903999d82b4d	bin/rune-measure intinf-paths	P2.14-shadow-live-faults-and-reports
+tests/intinf/conversion.py	python	P2.14	retired	5650c8ef6cc9b101967bd739900febd6b27734da	bin/rune-measure intinf-conversion	P2.14-shadow-live-faults-and-reports
 tests/intinf/cpu-family.py	python	P2.11	retired	7c0a7327982f2a283974e2225ad1a99f4f1b1309	tests/runner/gmpchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
 tests/intinf/cross.py	python	P2.11	retired	82e62899c3a3db77ec81c889c5aa4be6a9589cde	tests/runner/gmpplatformchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
 tests/intinf/dependency.py	python	P2.11	retired	6c261162a2d113550672fb184e07c40e891e1448	tests/runner/gmpchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
-tests/intinf/dispatch.py	python	P2.14	pending	b1bde5c1807e3f043356238a1884d72f6e8f58eb	-	captured-measurements-and-report-schemas
+tests/intinf/dispatch.py	python	P2.14	retired	b1bde5c1807e3f043356238a1884d72f6e8f58eb	bin/rune-measure intinf-dispatch	P2.14-shadow-live-faults-and-reports
 tests/intinf/download.py	python	P2.11	retired	7e2765fe4896b1abc79b67dac4fd37af09602224	tests/runner/gmpdownloadchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
 tests/intinf/hardening.py	python	P2.10	retired	e5699f53befd9831be77312ca344b1ff0bd0949f	tests/runner/intinfhardening.sml	p2.10/acceptance+storage-shadow.json+generator-shadow.json+measurement-final-shadow.json+asan logs
 tests/intinf/install.py	python	P2.11	retired	a0f5db300ba6cd344aff880d948a5edbabbee734	tests/runner/gmpinstallchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
@@ -257,9 +257,9 @@ tests/kernel/notebook_client.py	python	Retain: independent oracles/peers	retaine
 tests/kernel/run.sh	shell	P2.12	retired	3ac8b66342ba0ece4aa207e7c96a4cf9d35de3eb	tests/runner/protocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
 tests/kernel/windows.py	python	P2.12	retired	c2963aeea7c7972181fe2cc9637f98372e686092	tests/runner/protocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
 tests/layouts/check.sh	shell	P2.2	retired	1ff9ade6a0b9802a2e7b510d3237929ff10799be	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
-tests/layouts/measure.sh	shell	P2.14	pending	0a254c27829e82f4352188c69be31c86d6b3a9b8	-	captured-measurements-and-report-schemas
-tests/layouts/micro.sh	shell	P2.14	pending	06d6818d1933e7dc92865d7cde1fce84b0f56e36	-	captured-measurements-and-report-schemas
-tests/layouts/tables.py	python	P2.14	pending	83f48bc289683fb39410d16bc5bf444efad83a56	-	captured-measurements-and-report-schemas
+tests/layouts/measure.sh	shell	P2.14	retired	0a254c27829e82f4352188c69be31c86d6b3a9b8	bin/rune-measure layout-measure	P2.14-shadow-live-faults-and-reports
+tests/layouts/micro.sh	shell	P2.14	retired	06d6818d1933e7dc92865d7cde1fce84b0f56e36	bin/rune-measure layout-micro	P2.14-shadow-live-faults-and-reports
+tests/layouts/tables.py	python	P2.14	retired	83f48bc289683fb39410d16bc5bf444efad83a56	bin/rune-measure layout-tables	P2.14-shadow-live-faults-and-reports
 tests/lib/digest/gen-vectors.py	python	P2.15	pending	a80fe5f2b55adc0af85e58b5ccc96701a5827696	-	generated-bytes-and-source-order
 tests/lib/jupyter/interop.sh	shell	P2.12	retired	7d9b70aa15ed2a98baf0b900a40f8d015823779b	tests/runner/protocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
 tests/lib/jupyter/interop/client.py	python	Retain: independent oracles/peers	retained	ac40165b11ea2b033bdd40a8bd8bd1d0f97eeaff	-	independent oracles/peers
@@ -284,19 +284,19 @@ tests/terminal/run.sh	shell	P2.13	retired	9742027349d05df05248161d3cd95703a14098
 tests/terminal/term.py	python	P2.13	retired	c6ffb886b0274b8e94b84b167f39c452cd13c367	tests/runner/terminalchecks.sml	p2.13/nonblock-posix.log+nonblock-windows.log+pattern-shadow.json+api-acceptance
 tests/units/run.sh	shell	P2.8	retired	8c5fdc4c587d0b80e3a471e4b88ad2394a844ebc	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
 tests/windows-dir.sh	shell	P2.7	retired	8e79e29694197e7e58d68ea21d5921177e8e2acd	tests/runner/windowsdir.sml	p2.7/windows-shadow.json+portability-new-acceptance+count-rerun.log+stress-asan.log+faults.log
-tools/heapsim/checkold.py	python	P2.14	pending	531e811551d0cece02dc0719afdbd3e769dcbd68	-	captured-measurements-and-report-schemas
+tools/heapsim/checkold.py	python	P2.14	retired	531e811551d0cece02dc0719afdbd3e769dcbd68	bin/rune-measure checkold	P2.14-shadow-live-faults-and-reports
 tools/heapsim/checktrace.py	python	P2.2	retired	ecb945e3b0c401989c3fa3e5b3355b12881a4fb1	tests/runner/tracecheck.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
-tools/heapsim/pauses.py	python	P2.14	pending	6db11dbb9314e18a848afa065e516a0afbcc4b95	-	captured-measurements-and-report-schemas
-tools/heapsim/pretenure.sh	shell	P2.14	pending	ac3ec7d5fa7769340d3789a82cbc8d6dbd492b9d	-	captured-measurements-and-report-schemas
-tools/heapsim/report.py	python	P2.14	pending	b156110bf746d893480254c5c947df170898b275	-	captured-measurements-and-report-schemas
-tools/heapsim/report2.py	python	P2.14	pending	ea781e5e1184cbb60fae65467e71db38d8fd36b1	-	captured-measurements-and-report-schemas
-tools/heapsim/report3.py	python	P2.14	pending	a1830b3e71bf6158b8487fa756c7ed3885eb01f1	-	captured-measurements-and-report-schemas
-tools/heapsim/sweep.sh	shell	P2.14	pending	cf3ab8e1bcc5b05d28e471727e237f204fb14b8a	-	captured-measurements-and-report-schemas
-tools/heapsim/sweep2.sh	shell	P2.14	pending	cce87d36d43e8d8505ffbbcf7ae90edfa0e1b58e	-	captured-measurements-and-report-schemas
+tools/heapsim/pauses.py	python	P2.14	retired	6db11dbb9314e18a848afa065e516a0afbcc4b95	bin/rune-measure pauses	P2.14-shadow-live-faults-and-reports
+tools/heapsim/pretenure.sh	shell	P2.14	retired	ac3ec7d5fa7769340d3789a82cbc8d6dbd492b9d	bin/rune-measure pretenure	P2.14-shadow-live-faults-and-reports
+tools/heapsim/report.py	python	P2.14	retired	b156110bf746d893480254c5c947df170898b275	bin/rune-measure sim-report	P2.14-shadow-live-faults-and-reports
+tools/heapsim/report2.py	python	P2.14	retired	ea781e5e1184cbb60fae65467e71db38d8fd36b1	bin/rune-measure sim-report2	P2.14-shadow-live-faults-and-reports
+tools/heapsim/report3.py	python	P2.14	retired	a1830b3e71bf6158b8487fa756c7ed3885eb01f1	bin/rune-measure sim-report3	P2.14-shadow-live-faults-and-reports
+tools/heapsim/sweep.sh	shell	P2.14	retired	cf3ab8e1bcc5b05d28e471727e237f204fb14b8a	bin/rune-measure sweep	P2.14-shadow-live-faults-and-reports
+tools/heapsim/sweep2.sh	shell	P2.14	retired	cce87d36d43e8d8505ffbbcf7ae90edfa0e1b58e	bin/rune-measure sweep2	P2.14-shadow-live-faults-and-reports
 tools/heapsim/test.sh	shell	P2.2	retired	e635dbbc246d26d719ef93b63571b317b9fceb1d	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
 tools/heapsim/test2.sh	shell	P2.2	retired	69454702a57ac8ba20876405b86907a932f8f181	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
-tools/heapsim/timeline.py	python	P2.14	pending	c964b961dae3cc9da0b01294f98f8b793a7b8b13	-	captured-measurements-and-report-schemas
-tools/heapsim/validate-proto.sh	shell	P2.14	pending	4557b78e6bed91dfe915210947003bf6f40782e8	-	captured-measurements-and-report-schemas
+tools/heapsim/timeline.py	python	P2.14	retired	c964b961dae3cc9da0b01294f98f8b793a7b8b13	bin/rune-measure timeline	P2.14-shadow-live-faults-and-reports
+tools/heapsim/validate-proto.sh	shell	P2.14	retired	4557b78e6bed91dfe915210947003bf6f40782e8	bin/rune-measure validate-proto	P2.14-shadow-live-faults-and-reports
 tools/heapsim/validate.sh	shell	P2.2	retired	6a19d04fbb9e444d45604b63288220de099c8fe1	tests/runner/censustrace.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
-tools/heapsim/validate2.sh	shell	P2.14	pending	3a20c8e4d1f93a16299acfd5f36ad2afa40008b7	-	captured-measurements-and-report-schemas
-tools/mmu.py	python	P2.14	pending	341f09e66c19c6d1cb82d894a8e6d6725e93cbaf	-	captured-measurements-and-report-schemas
+tools/heapsim/validate2.sh	shell	P2.14	retired	3a20c8e4d1f93a16299acfd5f36ad2afa40008b7	bin/rune-measure validate2	P2.14-shadow-live-faults-and-reports
+tools/mmu.py	python	P2.14	retired	341f09e66c19c6d1cb82d894a8e6d6725e93cbaf	bin/rune-measure mmu	P2.14-shadow-live-faults-and-reports

@@ -37,7 +37,7 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | Measure | done 2026-10-09, `0bc5bd38`: `scripts/perf-units.sh`, the table in *What a compile costs* (*Measured again*), HOL4 on Poly/ML in *HOL4 today*, `tests/incremental/SCENARIOS.md`; D6 settled (Mid binary), D9 measured (4%), the globals given a barrier in M3 |
+| M1 | Measure | done 2026-10-09, `0bc5bd38`: `bin/rune-measure perf-units`, the table in *What a compile costs* (*Measured again*), HOL4 on Poly/ML in *HOL4 today*, `tests/incremental/SCENARIOS.md`; D6 settled (Mid binary), D9 measured (4%), the globals given a barrier in M3 |
 | M2 | Units in memory: the basis as a value, the front end resumable, a back end per unit | done 2026-10-09, `79e0598b`: `rune --units`, the linker, `Pass.whole`, errors recovered per declaration, `make check-units` (*M2, as built*); one question for the owner (flexible records) |
 | M3 | Unit bytecode, the static linker, and the VM loads units | done 2026-10-09, `9d97b311`: `.rbu`, `--emit-units`, linking unit files, `rt_link`/`Runtime.link`/`Runtime.load`, the dynamic path in `check-units` (*M3, as built*); the globals' barrier moved to M4 |
 | M4 | The resident compiler, `use` and the REPL | done 2026-10-09, `71f1916e`: `bin/rune-repl` and `rune -i`, Chapter 8, `use`, printing, the globals' barrier, the JIT across loads, the boot image, interrupts, a session saved and restored (*M4, as built*) |
@@ -401,7 +401,7 @@ of three rounds) and [weak-points.md](weak-points.md) (2026-09-24):
 
 #### Measured again: M1, 2026-10-09
 
-`scripts/perf-units.sh` on `incremental` at M0 (master `b9506382`: the
+`bin/rune-measure perf-units` on `incremental` at M0 (master `b9506382`: the
 JIT, the word layout and the second collector all in), on an idle
 machine, the least wall time of five runs (one for MLton). The compiler
 runs on `bin/runevm` tiering up to tier 2 (*tier2*), interpreted
@@ -444,7 +444,7 @@ those of every file the compile reads, the Basis Library's included.
 MLton's compiler is MLton at `5fe943391` (MLton PR #660, the first
 commit Rune builds: 606 files, 198,458 lines, in the order of its
 `mlton-rune.txt`), compiled under `ulimit -v 12582912` with `--heap-limit
-5368709120`, as `scripts/gc-eval.sh` compiles it.
+5368709120`, as `bin/rune-measure gc-eval` compiles it.
 
 What the numbers say:
 
@@ -2108,7 +2108,7 @@ M7.
 
 ### M1. Measure (S, about 200)
 
-* **What:** a script, `scripts/perf-units.sh`, and a table in this
+* **What:** a script, `bin/rune-measure perf-units`, and a table in this
   file:
   * where a compile's time goes, by phase (`--pass-stats`), for
     `hello`, the two-line program of `weak-points.md`, the Basis whole

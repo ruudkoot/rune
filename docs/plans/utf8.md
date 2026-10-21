@@ -161,7 +161,7 @@ build of MLton compiles; Rune refuses it rightly.
 - **D2's check as a test.** *Testing the modes* asks that every accept test
   of the default also run under `--unicode` with the same output. It ran
   once (*The last checks*); no tier runs it.
-- **The corpora as a test.** `scripts/lex-corpus.sh` against a recorded
+- **The corpora as a test.** `bin/rune-measure lex-corpus` against a recorded
   expectation, in the runner's nightly tier (*Testing the modes*): the
   script is there, the expectation and the tier are not.
 - **`WideStringCvt`'s `skipWS` law**, to be restated for both widths
@@ -2902,7 +2902,7 @@ corpus run:
 - a file that passed before passes still, or the change of the default says
   why not.
 
-E9's scripts become `scripts/lex-corpus.sh` for this.
+E9's scripts become `bin/rune-measure lex-corpus` for this.
 
 The sizes are lines of code and tests, not counting generated tables.
 
@@ -3030,7 +3030,7 @@ The sizes are lines of code and tests, not counting generated tables.
     `tests/external/mlton-skip.txt` now gives that reason (READING) instead
     of SCOPE. Whether `fromCString` should take more is the Basis track's
     question.
-  - **The corpus run.** `scripts/lex-corpus.sh` comes in M3, so this used
+  - **The corpus run.** `bin/rune-measure lex-corpus` comes in M3, so this used
     E9's acceptance check, with `--dump-tokens`:
 
     | Corpus | Files | Lexed before | Lexed now |
@@ -3242,7 +3242,7 @@ The sizes are lines of code and tests, not counting generated tables.
     - New rows `lex.space`, `lex.bom`, `lex.bidi` and `lex.encoding`.
     - `lex.comments` and `lex.string` say what they refuse.
     - `docs/units.md` and the man page say what the modes share.
-  - **`scripts/lex-corpus.sh`**, from E9's `lexable.sh` and `count.sh`.
+  - **`bin/rune-measure lex-corpus`**, from E9's `lexable.sh` and `count.sh`.
     - It lexes each file of a corpus by itself (`rune --lex-count 1`) in
       the default, `--unicode`, `--unicode=latin1`, and the default under
       `--ascii-rule`. `--ascii-rule` is M4's refusal of a character above
@@ -3358,7 +3358,7 @@ The sizes are lines of code and tests, not counting generated tables.
     `\U0001F600` under `--unicode`. Between tokens such a character was
     refused already, and comments keep D4's text. `--ascii-rule`, M3's
     measuring flag, is gone: the default is now the rule, and
-    `scripts/lex-corpus.sh` has the three modes.
+    `bin/rune-measure lex-corpus` has the three modes.
   - **Under `--unicode`** a raw character above 127 is decoded and means its
     code point.
     - The lexer marks the literal with its first raw character
@@ -3426,7 +3426,7 @@ The sizes are lines of code and tests, not counting generated tables.
       once), *Source text*, `lex.char`, `lex.string` and `lex.encoding`.
     - `docs/units.md`, *Source modes*, and the man page say how the modes
       differ.
-  - **The corpus run** (`scripts/lex-corpus.sh`; the script lexes a file
+  - **The corpus run** (`bin/rune-measure lex-corpus`; the script lexes a file
     without its `.cargs`):
 
     | Corpus | Files | default | `--unicode` | `--unicode=latin1` |
@@ -3735,7 +3735,7 @@ lookalikes, and the lints' data goes into the compiler (*The request*).
     `lib/` exports stay ASCII** (X11) is in `docs/build.md`, *A library's
     build file*, and in `AGENTS.md`, where a library's author reads.
   - **The cost of lexing**, measured as E9 measured the prototype's
-    (`scripts/lex-corpus.sh --cost 2`, the instructions to lex each corpus
+    (`bin/rune-measure lex-corpus --cost 2`, the instructions to lex each corpus
     once, against the compiler of `4b9e954b`, on the files both take):
 
     | Corpus | Before | Default | `--unicode` |
@@ -4139,7 +4139,7 @@ was passed on 2026-10-18 with D20.
     `unquote`, HOL4's non-ASCII is in its comments.
   - **MLton's compiler compiles under the default.** The 606 files of
     MLton at `5fe943391`, in the order of its `mlton-rune.txt`, as
-    `scripts/perf-units.sh` compiles them (`ulimit -v 12582912`,
+    `bin/rune-measure perf-units` compiles them (`ulimit -v 12582912`,
     `--heap-limit 5368709120`): 739 s, 5.7 GB at the peak. The MLton it
     makes, run by MLton's own `build/bin/mlton.rune`, compiles a hello
     world in 21 s, and the program runs.
@@ -4288,7 +4288,7 @@ existing generator. The hosts are those of `make hosts`.
   - The Kuhn and Table 3-8 cases for `Utf8` and `WideTextIO`.
   - On Rune and on the hosts.
 - **The corpora.** Rune's tree, HOL4 after `unquote`, and MLton, lexed in
-  every mode by `scripts/lex-corpus.sh`, against a recorded expectation:
+  every mode by `bin/rune-measure lex-corpus`, against a recorded expectation:
   which files each mode refuses, and the instructions to lex them.
 - **The Basis.**
   - Every configuration of the suite (rune, xc1, xc2:mlton, native) after M8

@@ -122,7 +122,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | P2.11 | P2.8, P2.10; P2.7 for Windows paths | GMP build/download/install/cross tests | done 2026-10-21 |
 | P2.12 | P2.0; P2.7 for Windows paths | REPL protocol, DAP, kernel and interop orchestration | done 2026-10-21 |
 | P2.13 | P2.0; runtime pty support | Terminal scenarios and tester display checks | done 2026-10-21 |
-| P2.14 | relevant correctness ports and P2.6 | Measurement and analysis tools | pending |
+| P2.14 | relevant correctness ports and P2.6 | Measurement and analysis tools | done: 43 controllers retired; public SML measurement CLI |
 | P2.15 | P2.4, P2.6, P2.9 | Post-bootstrap generators | pending |
 | P2.16 | P2.8, P2.11; bootstrap design below | Build/provisioning/package tools | pending |
 | P2.17 | P2.1–P2.13; P2.14–P2.16 for extended completion | Retirement audit and final acceptance | pending |
@@ -856,3 +856,57 @@ drivers are retired; their measurement caller uses the SML raw route. Rune
 and MLton produce identical terminal and root worker bytecode. The public
 filtered CLI and raw measurement route are also exercised. Final
 whole-project frozen-source acceptance remains P2.17's required step.
+
+### P2.14 acceptance, 2026-10-21
+
+All 43 measurement/analysis controllers are retired. `bin/rune-measure`
+provides their public modes; Make and the runner call it directly. Weighted
+counters, allocation counts and recorded nanoseconds use exact integers.
+`perf`, GNU time, taskset, flock and objdump remain external instruments.
+Timing jobs are explicit exclusive selections outside `make check`; mathematical
+MMU vectors and fault assertions remain deterministic checks. Current commands
+are documented in tools/measure/README.md, and immutable archived results keep
+their original command/source provenance.
+
+Independent shadow checks cover 70 result categories, both repository identity
+modes, fuel bisection, elaborator/perf grouping, 309 MMU vectors, all GC JSON
+schemas and twenty text/row modes, three collector scoring outcomes, census
+summary/graph streams, and eight actual runs per paired evaluation controller.
+Exact benchmark rows agree in count, stats, fresh and repeated modes, including
+Rune, native MLton, Poly/ML and SML/NJ. Configuration resolution stays private;
+source snapshots and controller/VM/helper payload hashes identify the actual
+measurement. Native and AArch64 JIT dumps, role tables and twelve literal
+instruction/counter/diff fixtures agree with the original analysis.
+
+Simulator/layout coverage includes all twenty configuration matrices, actual
+small-trace sweeps and replay, old-field provenance, timeline/MMU models, six
+layout reports, twelve first-generation reports, ten second-generation reports,
+validation/pretenure reports and all ten GC harness report families. Additional
+fixtures exercise nonempty bootstrap/compile-sigs answers, MLton aggregation and
+both measured-pause calibration heaps. GC sample selection/spread/event schemas
+and its locked route pass. Counter, heap sweep, profiling and layout fixtures
+match exact deterministic tables; actual host perf counters also measure Rune
+and MLton successfully. Phase measurements retain identical source-line counts.
+Old/new REPL scripts agree byte for byte, including the 2000-line paste, and both
+live drivers complete with private history/state.
+
+All six IntInf experiments pass with two measured pairs and their original
+warmups and alternating order. Fixed arithmetic answers, eight conversion-input
+hashes, specialized library/bytecode/disassembly hashes and compiler output
+hashes agree. Normal code has eight capability queries; specialized code has
+zero. Verified dispatch reuse passes and poisoned bytecode is rejected. Timings
+are independent observations, not exact-equality results or speed claims.
+Timeout, crash-after-output and descendant faults are rejected and cleaned up.
+The public measurement/JIT/MMU selection passes 12/12 after retirement. Rune and
+the native MLton compiler produce identical final measurement worker bytecode.
+
+HOL kernel/theory command, fresh-copy, cache and nanosecond-mtime contracts pass
+against independent controlled peers. The installed live HOL tree could not run:
+its buildheap wrapper names a removed VM under `.cache/claude-rune-drafts`.
+The failed live receipt is retained; this is not a successful HOL benchmark.
+The first JIT selection used an old worker of another ISA and is preserved
+(9 PASS, 2 FAIL, 1 dependent SKIP); refreshing the worker gives 12/12. An IntInf
+bootstrap validation also caught concurrent source-comment edits; that attempt
+is retained, and the complete frozen-input comparison passes. Raw fixtures,
+logs, old/new reports, retired source snapshots and root receipts are under
+tests/out/unit-testing-part2/p2.14. P2.15, P2.16 and full P2.17 acceptance remain.

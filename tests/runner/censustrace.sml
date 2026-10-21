@@ -119,7 +119,7 @@ struct
     in replayWith {name = name, dir = dir, trace = dir ^ "/trace", report = dir ^ "/" ^ name ^ ".validate",
                    recipe = readRecipe (dir ^ "/recipe.tsv")} end
   (* Keep the standalone replay interface for existing census archives.
-     P2.14 owns scripts/census.sh's production CLI; until then it may make
+     The SML census producer may make
      an absent/stale archive, while all replay assertions live here. *)
   fun validate out names =
     let
@@ -147,7 +147,7 @@ struct
           val () = if fresh then () else
             let val () = rmTree done
                 val every = env ("CENSUS_EVERY", "")
-                val args = ["sh", "scripts/census.sh", "--out", traces]
+                val args = [fromRoot "bin/rune-measure", "census", "--out", traces]
                            @ (if every = "" then [] else ["--every", every]) @ [name]
             in ignore (command dir "produce" args);
                need (exists done andalso value "cmd" <> "", "census producer published no successful recipe") end

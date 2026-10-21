@@ -652,7 +652,7 @@ bin/gcsim: tools/heapsim/gcsim.c runtime/census/layouts.h | build/.doctor-vm
 	$(CC) $(CFLAGS) $(RT_INC) -o $@ tools/heapsim/gcsim.c -lm
 heapsim: bin/heapsim bin/heapsim-gen bin/gcsim
 # The census of the validation is taken every 8192 instructions, in traces
-# of its own: at scripts/census.sh's 32768 the lower band of compile-sigs
+# of its own: at bin/rune-measure census's 32768 the lower band of compile-sigs
 # missed a collection that the stock VM made at 4 MiB, where the live data
 # crossed its trigger between two samples (2026-10-11, when Position and
 # SysWord became types of their own and the workload grew a little).
@@ -1514,7 +1514,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml \
-               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/gmpjobs.sml \
+               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
                tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
@@ -1581,7 +1581,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal build/bench-counts.rbc
+check-tools: bin/rune-measure $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal build/bench-counts.rbc
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -1645,7 +1645,7 @@ dist: runtime/version.h manifests bin/rune.rbc bin/rune-repl.img \
 # Portable suite correctness, serial measurements and deterministic counts
 # (docs/plans/benchmarks.md). Timing thresholds stay outside make check.
 BENCH_PROFILE ?= $(if $(filter bench bench-count bench-stats,$(MAKECMDGOALS)),normal,smoke)
-# timed: `rune` is Rune as shipped (scripts/measure-benchmarks.sh); the stack
+# timed: `rune` is Rune as shipped (bin/rune-measure benchmarks); the stack
 # VM is rune:stack
 BENCH_TIMING_CONFIGS = rune,native:mlton,native:smlnj-legacy,native:polyml
 BENCH_COUNT_CONFIGS = rune,rune:jit,rune:stack,rune:opt
@@ -1685,9 +1685,9 @@ build/bench-report.rbc: examples/benchmarks/shared/catalog.sml examples/benchmar
 build/bench-counts.rbc: examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml $(RUNE)
 	$(RUNE_STACK) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml -o $@
 
-bench bench-count bench-stats: build/bench-catalog.rbc build/bench-report.rbc build/bench-counts.rbc vm
+bench bench-count bench-stats: bin/rune-measure build/bench-catalog.rbc build/bench-report.rbc build/bench-counts.rbc vm
 	bin/runevm-stack build/bench-catalog.rbc --check
-	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' BENCH_LEVEL=$(BENCH_LEVEL) BENCH_MODE=$(BENCH_MODE) BENCH_SAMPLES=$(BENCH_SAMPLES) BENCH_REPETITIONS=$(BENCH_REPETITIONS) sh scripts/measure-benchmarks.sh $(if $(filter bench-count,$@),count,$(if $(filter bench-stats,$@),stats,time))
+	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' BENCH_LEVEL=$(BENCH_LEVEL) BENCH_MODE=$(BENCH_MODE) BENCH_SAMPLES=$(BENCH_SAMPLES) BENCH_REPETITIONS=$(BENCH_REPETITIONS) bin/rune-measure benchmarks $(if $(filter bench-count,$@),count,$(if $(filter bench-stats,$@),stats,time))
 
 .PHONY: test-intinf-backends
 test-intinf-backends: $(RUNE) bin/runevm bin/runevm-sml bin/rune-intinf bin/rune-test
@@ -1787,4 +1787,28 @@ bin/rune-terminal.rbc: $(RUNE) $(TERMINAL_SRCS) manifests
 	$(RUNE) --library test/runner $(TERMINAL_SRCS) -o $@
 bin/rune-terminal: bin/rune-terminal.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-terminal.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+# Development measurements and captured-report readers (P2.14).
+MEASURE_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/commandwords.sml \
+                tests/runner/terminalpattern.sml examples/benchmarks/shared/catalog.sml tools/measure/common.sml \
+                tools/measure/basics.sml tools/measure/group-rules.sml tools/measure/profile.sml tools/measure/mmu.sml \
+                tools/measure/mmu-cli.sml tools/measure/format.sml tools/measure/score-text.sml \
+                tools/measure/gc-score.sml tools/measure/census.sml tools/measure/gc-eval.sml tools/measure/jit-dump.sml \
+                tools/measure/perf-repl.sml tools/measure/hol.sml tools/measure/lex-corpus.sml \
+                tools/measure/gc-tables.sml tools/measure/check-old.sml tools/measure/timeline-data.sml \
+                tools/measure/timeline.sml tools/measure/pause-text.sml tools/measure/pauses.sml \
+                tools/measure/sim-sweeps.sml tools/measure/sim-validate.sml tools/measure/tabular.sml \
+                tools/measure/layout-text.sml tools/measure/layout-tables.sml tools/measure/validation-text.sml \
+                tools/measure/sim-report3.sml tools/measure/sim-report-data.sml tools/measure/sim-report2.sml \
+                tools/measure/sim-report1-data.sml tools/measure/sim-report1.sml tools/measure/gc-report-data.sml \
+                tools/measure/gc-report.sml tools/measure/gc-measure.sml tools/measure/benchmarks.sml \
+                tools/measure/layout-measure.sml tools/measure/gc-roadmap.sml tools/measure/gc-probe.sml \
+                tools/measure/perf-units.sml tools/measure/perf-cycles.sml tools/measure/intinf-common.sml \
+                tools/measure/intinf-compare.sml tools/measure/intinf-dispatch.sml tools/measure/intinf-conversion.sml \
+                tools/measure/intinf-design.sml tools/measure/main.sml
+bin/rune-measure.rbc: $(RUNE) $(MEASURE_SRCS) $(wildcard tools/measure/fixtures/*) manifests
+	$(RUNE) --library test/runner --library json --library digest $(MEASURE_SRCS) -o $@
+bin/rune-measure: bin/rune-measure.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-measure.rbc" "$$@"\n' > $@
 	chmod +x $@

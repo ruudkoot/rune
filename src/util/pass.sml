@@ -5,7 +5,7 @@
    it made (--lint), and says what it cost (--pass-stats). A pass that
    rewrites asks `spend` before each rewrite, so that --fuel can stop the
    rewriting after N of them: halving N finds the one rewrite that breaks a
-   program (scripts/bisect-fuel.sh). *)
+   program (bin/rune-measure bisect-fuel). *)
 structure Pass =
 struct
   (* The optimisation level, -O0 to -O2, and the options of the passes. *)

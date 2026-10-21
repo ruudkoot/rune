@@ -100,8 +100,7 @@ struct
         val () = write (foreign ^ "/lib/basis/fixture.sml", "val basisFixture = 2\n")
         fun record tool destination label =
           let val (status, _, errors) = execute dir label root (fn e => e)
-                ["/bin/sh", "-c", ". \"$1\"; shift; bench_tool_repository \"$@\"", "benchmark-provenance",
-                  fromRoot "scripts/benchmark-provenance.sh", "compiler", tool, destination]
+                [fromRoot "bin/rune-measure", "provenance", "compiler", tool, destination]
           in if status = 0 then () else raise Fail ("provenance producer failed: " ^ errors) end
         val () = record (foreign ^ "/bin/rune") (dir ^ "/record") "foreign"
         val identity = lines (read (dir ^ "/record/compiler-repository.tsv"))

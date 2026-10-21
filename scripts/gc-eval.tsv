@@ -1,4 +1,4 @@
-# The evaluation set of the second-generation collector, as scripts/gc-eval.sh
+# The evaluation set of the second-generation collector, as bin/rune-measure gc-eval
 # runs it (docs/plans/garbage-collector-v2.md, The workloads; fixed with its
 # weights on 2026-10-05, before any result, and not to be changed). One run per
 # line, tab-separated:
