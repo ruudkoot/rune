@@ -96,7 +96,6 @@ struct
        some ("check-docs-generated", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
        Test.requires ["tmux", "python3"] (alone ("test-terminal", [], ["tests/terminal/*"])),
        alone ("bench-coverage", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
-       Test.requires ["python3"] (alone ("test-intinf-dependency", [], ["tests/intinf/*", "scripts/*gmp*", "build/deps/gmp/*"])),
        alone ("check-isa", [], [])]
 
   (* Matrix configurations are inventory ways. The remaining Windows make
@@ -116,7 +115,7 @@ struct
      {name = "windows", probe = "bin/rune-windows directory && command -v x86_64-w64-mingw32-gcc",
       hint = "Windows under WSL with interop (RUNE_WINDOWS_DIR names a directory there) and mingw-w64 (apt: gcc-mingw-w64-x86-64 gcc-mingw-w64-i686)"}]
     @ List.map (fn h => {name = h, probe = "test -x bin/rune-" ^ h, hint = "run: make hosts, then make " ^ h}) Lang.hosts
-    @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities @ ScenarioJobs.capabilities
+    @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities @ ScenarioJobs.capabilities @ GMPJobs.capabilities
     @ [{name = "grep-pcre", probe = "printf LIST | grep -P '^LIST$'", hint = "GNU grep with PCRE for LAWS_PROGRAMS"}]
 
   (* each file of expectations read by the one engine (docs/testing.md,
@@ -154,7 +153,7 @@ struct
   val matrixFaults = Test.tag "check" (Test.tag "quick" (Test.tag "covers:tests/runner/matrix*.sml"
     (Test.tag "covers:tests/runner/hostlaws.sml" (Test.tag "covers:tests/runner/smlscan.sml"
       (Test.requires ["grep-pcre"] (Test.describe "runner" [LibHosts.job ("matrix-controller-faults", ["matrix-controller-faults"], [], 300)]))))))
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws

@@ -17,10 +17,24 @@ struct
         val pairedSML=ref false
         val compilerWorkloads=ref false
         val samples=ref 5
+        val prefix=ref "build/deps/gmp/native"
+        val jobs=ref 4
+        val platforms=ref []
+        val cpus=ref []
+        val requireAll=ref false
+        val freeVMs=ref ""
+        val installMode=ref ""
         val forkOnly=ref false
         val native=ref false
         val allocation=ref (fromRoot "build/intinf-alloc-test")
         fun parse []=()
+          | parse ("--prefix" :: value :: rest)=(prefix:=value;parse rest)
+          | parse ("--jobs" :: value :: rest)=(jobs:=(case Int.fromString value of SOME n => n | NONE => raise Usage "invalid job count");parse rest)
+          | parse ("--platform" :: value :: rest)=(platforms:= !platforms @ [value];parse rest)
+          | parse ("--cpu" :: value :: rest)=(cpus:= !cpus @ [value];parse rest)
+          | parse ("--require-all" :: rest)=(requireAll:=true;parse rest)
+          | parse ("--sml-vms" :: value :: rest)=(freeVMs:=value;parse rest)
+          | parse ("--mode" :: value :: rest)=(installMode:=value;parse rest)
           | parse ("--rune" :: value :: rest)=(compiler:=fromRoot value;parse rest)
           | parse ("--vm" :: value :: rest)=(vm:=fromRoot value;parse rest)
           | parse ("--sml-vm" :: value :: rest)=(smlVM:=fromRoot value;parse rest)
@@ -42,7 +56,8 @@ struct
         val ()=if !samples>=2 andalso not (!pairedOracle andalso !pairedSML) then () else raise Usage "at least two samples and at most one paired reference are required"
         val ()=if !target="registers" orelse !target="stack" then () else raise Usage "target must be registers or stack"
         val output=if !directory<>"" then !directory else fromRoot ("tests/out/intinf/" ^
-                     (if suite="run" orelse suite="measure" then "current" else if suite="storage" then "storage-" ^ OS.Path.file (!vm) else suite))
+                     (if suite="run" orelse suite="measure" then "current" else if suite="prepare-cross" then "cross-builds" else if suite="storage" then "storage-" ^ OS.Path.file (!vm) else suite))
+        val ()=if suite="install" andalso (!directory="" orelse !installMode="") then raise Usage "install requires --mode and --out" else ()
         val c={directory=output,compiler= !compiler,vm= !vm,smlVM= !smlVM,target= !target,vmOptions= !vmOptions,stress= !stress,sequence=ref 0} : IntInfChecks.context
     in case suite of
         "run" => if !bench then IntInfMeasurements.one c {samples= !samples,pairedOracle= !pairedOracle,pairedSML= !pairedSML,compilerWorkloads= !compilerWorkloads} ()
@@ -53,6 +68,14 @@ struct
       | "hardening" => IntInfHardening.one c (!forkOnly) (!native) (!allocation) ()
       | "options" => IntInfChecks.options c ()
       | "build-config" => GMPChecks.config c ()
+      | "downloads" => GMPDownloadChecks.one c ()
+      | "dependency" => GMPChecks.dependency c (!platforms) (!requireAll) ()
+      | "cpu-family" => GMPChecks.cpuFamily c (!cpus) ()
+      | "build-modes" => GMPChecks.buildModes c (!prefix) ()
+      | "install" => GMPInstallChecks.one c (!installMode) ()
+      | "prepare-cross" => GMPPlatformChecks.prepare c (!prefix) (!jobs) ()
+      | "cross" => if !freeVMs="" then raise Usage "cross requires --sml-vms"
+                   else GMPPlatformChecks.cross c (!freeVMs) (!platforms) ()
       | "faults" => IntInfFaults.one c ()
       | _ => raise Usage "run [--bench] | storage | backends | hardening | options"
     end

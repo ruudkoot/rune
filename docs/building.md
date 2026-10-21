@@ -538,7 +538,7 @@ the `.exe` file produced for a make target named without that suffix.
 The installer verifies that the VM, runtime source and dependency artifacts
 match their build records before packaging them; build again if they differ.
 Staged installation, relocation to a path containing spaces, native output,
-source relinking and removal are checked by `tests/intinf/install.py` in the
+source relinking and removal are checked by `bin/rune-intinf install --mode sml` and `--mode gmp` in the
 release acceptance sequence. Release builds must use the pinned provisioning
 commands above; installing a checked system build does not turn it into a
 pinned release.

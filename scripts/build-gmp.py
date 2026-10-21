@@ -31,10 +31,12 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def download_archive(archive, run):
+def download_archive(archive, run, *, checksum=None, urls=None, curl="curl"):
     """Return the download URL, or None for a checksum-verified cached file."""
+    checksum = SHA256 if checksum is None else checksum
+    urls = DOWNLOAD_URLS if urls is None else urls
     if archive.exists():
-        if digest(archive) != SHA256:
+        if digest(archive) != checksum:
             raise RuntimeError('GMP cached source checksum mismatch')
         return None
     archive.parent.mkdir(parents=True, exist_ok=True)
@@ -43,10 +45,10 @@ def download_archive(archive, run):
     # the same archive without overwriting each other's incomplete transfers.
     with tempfile.TemporaryDirectory(prefix=archive.name+'.', dir=archive.parent) as temporary:
         part = Path(temporary)/archive.name
-        for index, url in enumerate(DOWNLOAD_URLS, 1):
+        for index, url in enumerate(urls, 1):
             part.unlink(missing_ok=True)
             try:
-                run(['curl', '--fail', '--location', '--silent', '--show-error',
+                run([curl, '--fail', '--location', '--silent', '--show-error',
                      '--connect-timeout', '15', '--max-time', '60',
                      '--retry', '2', '--retry-delay', '2', '--retry-max-time', '180',
                      '--retry-connrefused', url, '-o', part], f'download-{index}')
@@ -56,12 +58,64 @@ def download_archive(archive, run):
                 continue
             # A successful HTTP response is not enough. A mismatch is fatal,
             # including on mirrors, and never publishes anything to the cache.
-            if digest(part) != SHA256:
+            if digest(part) != checksum:
                 raise RuntimeError(f'GMP source checksum mismatch from {url}')
             part.replace(archive)
             print(f'GMP source verified: {url}', flush=True)
             return url
     raise RuntimeError('GMP download failed from all release sites:\n'+'\n'.join(failures))
+
+
+
+def download_cli(argv):
+    """Populate a verified archive cache without configuring or building GMP."""
+    parser = argparse.ArgumentParser(description=download_cli.__doc__)
+    parser.add_argument('--archive', required=True)
+    parser.add_argument('--out', required=True, help='attempt logs and machine-readable result')
+    parser.add_argument('--checksum', default=SHA256)
+    parser.add_argument('--url', action='append')
+    parser.add_argument('--curl', default='curl')
+    parser.add_argument('--timeout', type=float, default=1800)
+    args = parser.parse_args(argv)
+    if args.timeout <= 0 or not re.fullmatch('[0-9a-fA-F]{64}', args.checksum):
+        parser.error('timeout must be positive and checksum must be SHA256')
+    output = Path(args.out).resolve()
+    output.mkdir(parents=True, exist_ok=True)
+    commands = []
+    (output/'commands.json').write_text('[]\n')
+
+    def run(argv, name):
+        argv = list(map(str, argv))
+        commands.append({'name': name, 'argv': argv, 'cwd': str(output)})
+        (output/'commands.json').write_text(json.dumps(commands, indent=2)+'\n')
+        with (output/(name+'.log')).open('wb') as log:
+            process = subprocess.Popen(argv, cwd=output, stdout=log,
+                                       stderr=subprocess.STDOUT, start_new_session=True)
+            try:
+                code = process.wait(timeout=args.timeout)
+            except BaseException:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+                (output/(name+'.status')).write_text('interrupted or timed out\n')
+                raise
+        (output/(name+'.status')).write_text(f'exit:{code}\n')
+        if code:
+            data = (output/(name+'.log')).read_bytes()[-4096:]
+            print(data.decode(errors='replace'), file=sys.stderr, flush=True)
+            raise CommandFailed(f'GMP {name} failed ({code}); see {output/(name+".log")}')
+
+    try:
+        archive = Path(args.archive).resolve()
+        url = download_archive(archive, run, checksum=args.checksum.lower(),
+                               urls=args.url, curl=args.curl)
+        result = {'state': 'verified', 'url': url, 'archive': str(archive),
+                  'sha256': digest(archive)}
+    except BaseException as error:
+        (output/'result.json').write_text(json.dumps(
+            {'state': 'failed', 'error': type(error).__name__, 'message': str(error)},
+            indent=2)+'\n')
+        raise
+    (output/'result.json').write_text(json.dumps(result, indent=2)+'\n')
 
 
 def main():
@@ -199,4 +253,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == 'download':
+        download_cli(sys.argv[2:])
+    else:
+        main()

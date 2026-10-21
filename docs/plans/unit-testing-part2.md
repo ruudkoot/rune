@@ -119,7 +119,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | P2.8 | P2.0 | Build/dependency/unit/install/distribution scenarios | done 2026-10-21 |
 | P2.9 | P2.0; P2.6 where matrix execution is shared | Incremental edits and external corpora | done 2026-10-21 |
 | P2.10 | P2.0 | IntInf correctness and hardening drivers | done 2026-10-21 |
-| P2.11 | P2.8, P2.10; P2.7 for Windows paths | GMP build/download/install/cross tests | pending |
+| P2.11 | P2.8, P2.10; P2.7 for Windows paths | GMP build/download/install/cross tests | done 2026-10-21 |
 | P2.12 | P2.0; P2.7 for Windows paths | REPL protocol, DAP, kernel and interop orchestration | pending |
 | P2.13 | P2.0; runtime pty support | Terminal scenarios and tester display checks | pending |
 | P2.14 | relevant correctness ports and P2.6 | Measurement and analysis tools | pending |
@@ -752,3 +752,29 @@ register/native sanitizers pass 4625 cases with one documented native-interrupt
 skip (4626 total). Rune and MLton produce identical root worker bytecode.
 Raw logs, comparisons and copied acceptance receipts are under
  tests/out/unit-testing-part2/p2.7; final clean global acceptance remains P2.17.
+
+### P2.11 acceptance, 2026-10-21
+
+The eight GMP test controllers are SML. Configuration covers eight policy
+cases; isolated Make switches preserve pinned/disabled/pinned-again artifact
+identity and both missing-prefix policies. All twelve legacy download tests
+pass against the public download-only production seam; thirteen SML scenarios
+also exercise the real child timeout, SIGINT cleanup and retained diagnostics.
+Failed or partial downloads never become trusted cache entries.
+
+The division regression passes on native, Linux32, big-endian PPC64,
+AArch64, Windows64 and Windows32. Four CPU families and all three JIT tiers
+have identical legacy/SML statuses, output, backend statistics and instruction
+counts. Both preparation controllers preserve eight hashed disabled payloads
+and five disabled platform configurations before enabling GMP. Both staged
+install modes pass relocation, native output, relinking and uninstall checks.
+
+The complete old/new cross runs each pass 557 bounded subprocesses, including
+216 producer/consumer image pairs under both stricter saved/current limits.
+All arithmetic counts, disabled payload hashes, forks and unavailable-backend
+refusals agree. The enabled subject was rebuilt between runs to refresh its
+production recipe identity; that recorded artifact change is not byte equality.
+The SML root dependency/download selection passes 7/7 including canaries;
+Rune and MLton compile identical worker bytecode. Raw logs and comparisons
+are under tests/out/unit-testing-part2/p2.11. The Python production tools
+remain pending P2.16; their CLI seams are the subjects, not imported test mocks.

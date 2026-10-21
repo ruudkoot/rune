@@ -1515,7 +1515,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml \
-               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml \
+               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/gmpjobs.sml \
                tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
@@ -1703,15 +1703,14 @@ test-intinf-hardening: $(RUNE) $(RUNEOPT) vm bin/runevm-sml build/intinf-alloc-t
 
 
 .PHONY: test-intinf-cross
-test-intinf-cross:
-	python3 tests/intinf/prepare-cross.py --jobs $(JOBS) --prefix '$(if $(GMP_PREFIX),$(GMP_PREFIX),build/deps/gmp/native)'
-	python3 tests/intinf/dependency.py --require-all
-	python3 tests/intinf/cross.py --sml-vms tests/out/intinf/cross-builds/sml-vms
+test-intinf-cross: bin/rune-intinf
+	bin/rune-intinf prepare-cross --jobs $(JOBS) --prefix '$(if $(GMP_PREFIX),$(GMP_PREFIX),build/deps/gmp/native)'
+	bin/rune-intinf dependency --require-all
+	bin/rune-intinf cross --sml-vms tests/out/intinf/cross-builds/sml-vms
 
 .PHONY: test-intinf-dependency
-test-intinf-dependency:
-	python3 tests/intinf/download.py
-	python3 tests/intinf/dependency.py
+test-intinf-dependency: bin/rune-intinf bin/rune-test
+	$(RUNE_TEST) --tier test-intinf-dependency
 
 # SML benchmark/scenario workers. Entry scripts only locate their payloads.
 BUDGET_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/budgets.sml tests/runner/budgets-main.sml
@@ -1752,7 +1751,7 @@ bin/rune-external: bin/rune-external.rbc bin/runevm Makefile
 INTINF_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/bytecode.sml tests/runner/commandwords.sml \
                tests/runner/intinfchecks.sml tests/runner/measured.sml tests/runner/intinfmeasurements.sml \
                tests/runner/intinfbackends.sml tests/runner/intinfhardening.sml tests/runner/intinfstorage.sml \
-               tests/runner/gmpchecks.sml tests/runner/intinffaults.sml tests/runner/intinffixtures.sml tests/runner/intinf-main.sml
+               tests/runner/windowsdir.sml tests/runner/gmpchecks.sml tests/runner/gmpdownloadchecks.sml tests/runner/gmpinstallchecks.sml tests/runner/gmpplatformchecks.sml tests/runner/intinffaults.sml tests/runner/intinffixtures.sml tests/runner/intinf-main.sml
 bin/rune-intinf.rbc: $(RUNE) $(INTINF_SRCS) $(wildcard tests/intinf/fixtures/*) manifests
 	$(RUNE) --library test/runner --library json --library digest $(INTINF_SRCS) -o $@
 bin/rune-intinf: bin/rune-intinf.rbc bin/runevm Makefile

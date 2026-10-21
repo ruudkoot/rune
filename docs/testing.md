@@ -699,3 +699,14 @@ directory, vm --vm BIN --def FILE and the Windows language selection.
 Windows ways share local fixture judges, strict refusal cases and cross-VM
 count/image oracles. Build preparation and consumers have explicit dependencies;
 unavailable selected targets fail, while capabilities retain their named skips.
+
+
+GMP configuration, dependency, CPU-family, build-mode, download, installation
+and cross-platform controllers are routes of bin/rune-intinf. The root
+check runs the bounded offline download and native dependency cases.
+Binary-mutating build-modes and prepare-cross are explicitly selected,
+exclusive jobs. prepare-cross preserves hashed GMP-free payloads and platform
+configurations before rebuilding enabled VMs; cross --sml-vms DIR tests every
+required platform, arithmetic backend and saved-image consumer/limit pair.
+Production download policy has an offline CLI seam; SML drives actual child
+processes and corrupt/partial archive fixtures without importing Python mocks.
