@@ -2882,6 +2882,19 @@ M9 closes all three. The sizes are lines of code and tests.
   - S1, then S2 (*The architecture*, D9), memoised by the binder's identity
     and path (D10);
   - first, the hash of D11, rx2fw, with its probe (E6's patches):
+    - three loops chosen once at start-up by `Word.wordSize`, not E6's two:
+      - exactly 63 bits (Rune): the loop without masks. The masks are all
+        ones there, so the function is the same, but tier 2 keeps them, at
+        3.8% a byte and 13% a value combined (E6). E6's prototype masked on
+        Rune too;
+      - wider (Rune's int64 VM, MLton with `-default-type word64`): masked
+        to 63 bits before each right shift;
+      - narrower (MLton's default build): the same function in `Word64`;
+    - the narrow path for combining as well as for text. E6's prototype has
+      `Word64` only for text, so S1 and S2's combining needs it before they
+      land. Without it, MLton's default build would give other values, or
+      collapse as plain rx2f does on a narrow `Word`. A test compares the
+      combine digests of MLton's default build with Rune's;
     - the probe in the cache's settings and in a basis's header, with
       `--explain-rebuild`'s message for a cache made by a compiler whose
       hash differs;
