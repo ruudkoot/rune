@@ -1618,7 +1618,8 @@ The owner also asked whether MLton's build should use `-default-type int64
 
   Once S1 combines, values with bit 62 set and the largest values join it.
   - Rune, both MLton builds and the int64 VM give
-    `07facb226fa4fa4c4e2ecbda1627d2a3`; `smlnj32` gives another.
+    `07facb226fa4fa4c4e2ecbda1627d2a3` with E6c's constants, and
+    `089e9c1f195c88743551d55e9a2eb6d5` with E6d's; `smlnj32` gives another.
   - It costs 45 to 48 µs at tier 2 once warm, 0.7 to 1 ms on its first call,
     and is worked out once a run.
   - **In the cache:** the cache's settings gain `("hash", probe)` beside
@@ -1658,6 +1659,32 @@ The owner also asked whether MLton's build should use `-default-type int64
     2^30 or more ("MLRisc bug: AMD64MCEmitter: MOVABSQ unimplemented";
     *Found while writing this roadmap*), so rx2fw's constants are built
     from 21-bit pieces at start-up, which costs Rune nothing.
+
+**The constants** (E6d, `results/E6d/README.md`). E6b to E6c made 63-bit
+constants of xxHash64's primes by shifting them, `(p >> 1) orb 1`. The owner
+asked whether clearing bit 63 would not be better. It is the more principled
+choice: mod 2^63 a prime and the prime with bit 63 cleared are the same
+number, so every product is the low 63 bits of xxHash64's own, and the
+primes, already odd, need no `orb 1`. Shifting replaces every low bit, which
+are the bits that matter mod 2^k. The cleared P1 and P4 have sparse top bits
+(`001` and `0000`), which was the risk. E6d ran the whole suite on both:
+- **Agreement:** the cleared function matches its C model on the corpus,
+  its pieces and the small corpus, on Rune's engines, the int64 VM and both
+  MLton builds. The compiler's prototype passes `make test-incremental`, 116
+  of 116.
+- **Collisions per lane at 16, 20, 24 and 28 bits:** shifted 17,234, 1,041,
+  60 and 3; cleared 17,178, 1,079, 60 and 2; the birthday bound 17,266,
+  1,079, 67.4 and 4.2. No whole digest collides for either.
+- **The bias matrix:** cells beyond 4.5 standard deviations, at 8, 16, 32 and
+  64 bytes: 0, 0, 0 and 1 shifted; 0, 0, 1 and 0 cleared. The worst cell is
+  0.0231 from a half shifted, 0.0251 cleared.
+- **Structured inputs, Thue-Morse and the combine chains:** no whole
+  collision for either; every lane count within the noise of the other's
+  and of the bound.
+- **Speed:** the same instructions, 51.4 a byte and 205.1 a value combined
+  with the masks of E6c.
+
+The cleared constants are as good on every test, and simpler to state.
 
 **What it predicts (D11, D17):**
 - rx2fw for text and for combining, 126 bits, with an unmasked loop where
@@ -2219,11 +2246,13 @@ stamps or counters, and recursive groups (`datatype ... and ...`,
 
 rx2fw (E6). It is two lanes of 63 bits, and every operation is mod 2^63.
 `rotl (x, r)` is `x << r` or-ed with `x >> (63 - r)`.
-- **Constants:** xxHash64's primes made odd 63-bit words, `(p >> 1) orb 1`:
-  - P1 = `0x4F1BBCD8C2F5E543`;
-  - P2 = `0x6159571E93EA75A7`;
-  - P3 = `0x0B2B33D8CF1BBCFD`;
-  - P4 = `0x42F5E53BE1595731`.
+- **Constants:** xxHash64's primes with bit 63 cleared. Mod 2^63 they are
+  the same numbers, so each product is the low 63 bits of xxHash64's (the
+  owner's suggestion, checked by E6):
+  - P1 = `0x1E3779B185EBCA87`;
+  - P2 = `0x42B2AE3D27D4EB4F`;
+  - P3 = `0x165667B19E3779F9`;
+  - P4 = `0x05EBCA77C2B2AE63`.
 
   They are built from 21-bit pieces at start-up, since SML/NJ 110.99.9
   crashes on some uses of a word constant of 2^30 or more.
