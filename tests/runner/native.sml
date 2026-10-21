@@ -115,7 +115,7 @@ struct
           job ("bootstrap", ["native-bootstrap"], []),
           Test.describe "debuggers" (List.map (fn name => Test.requires [name]
             (job (name, ["native-debugger", name], []))) ["gdb", "lldb"]),
-          job ("templates", ["native-templates"], [])]),
+          Test.tag "check-templates" (job ("templates", ["native-templates"], []))]),
      tagged ("check" :: "quick" :: covers)
        (Test.describe "launcher" [Test.requires ["native-host", "readelf", "nm"]
          (LibHosts.job ("faults", ["native-launcher-faults"], ["compile/stack/dec.val_simple"], 200))]),

@@ -2134,3 +2134,10 @@ post-bootstrap generators and AWK helpers with `bin/rune-generate` and
 Unicode tables and independent vectors retain their recorded agreements.
 Production build/package conversion and final frozen-source acceptance remain
 P2.16/P2.17.
+
+P2.16 of [the continuation](unit-testing-part2.md) replaces the last eight
+production build/package scripts with the native/bootstrap and portable SML
+entrypoints of `bin/rune-build`. GMP-free/GMP bootstrap, all cross runtimes,
+relocated SML SDK relinking and exact archive-member comparisons pass. The
+baseline ledger now has 281 retired targets and nineteen retained exceptions;
+P2.17 records the final whole-project acceptance.

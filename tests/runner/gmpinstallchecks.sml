@@ -41,7 +41,9 @@ struct
               val _=run "native-compile" (#directory c) 0 [bin ^ "/runeopt",stack,"-o",native]
           in output (run "native-run" (#directory c) 0 [native]) expected end
         val relinked=path c "runevm-relinked"
-        fun relink name target expected=run name (#directory c) expected (GMPChecks.tool "GMP_RELINKER" "python3" @ [rebuild ^ "/rebuild.py",target])
+        val relinker=case OS.Process.getEnv "GMP_RELINKER" of
+              SOME command => CommandWords.split command | NONE => [rebuild ^ "/rebuild"]
+        fun relink name target expected=run name (#directory c) expected (relinker @ [target])
         val _=relink "relink" relinked 0
         val ()=output (run "relinked-run" (#directory c) 0 [relinked,"--intinf=" ^ mode,program]) expected
         val ()=if mode<>"gmp" then () else

@@ -19,6 +19,6 @@ struct
        one "hardening/runtime" ["test-intinf-hardening"] (["hardening"] @ (if native then ["--native"] else [])),
        one "hardening/gmp-free" ["test-intinf-hardening"] ["hardening","--vm","bin/runevm-sml"],
        one "faults" ["test-intinf"] ["faults"],
-       Test.requires ["python3"] (one "build-config" ["test-intinf-backends"] ["build-config"]),
+       Test.requires [] (one "build-config" ["test-intinf-backends"] ["build-config"]),
        tagged ["intinf-measurements"] (job "measurements" ["measure","--paired-sml"] true)]
 end

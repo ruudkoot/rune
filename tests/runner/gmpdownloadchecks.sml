@@ -6,7 +6,7 @@ struct
   val content="a deterministic stand-in for the pinned archive\n"
   val checksum="8f575c6c250ad327f05fb52ed8f171eefe343904668abf03a85916357e87bd33"
   val urls=["https://first.invalid/gmp.tar.xz","https://second.invalid/gmp.tar.xz"]
-  fun args archive logs curl timeout=GMPChecks.tool "GMP_BUILDER" "python3 scripts/build-gmp.py" @
+  fun args archive logs curl timeout=GMPChecks.tool "GMP_BUILDER" "bin/rune-build build-gmp" @
        ["download","--archive",archive,"--out",logs,"--checksum",checksum,"--url",hd urls,"--url",List.nth (urls,1),"--curl",curl,"--timeout",timeout]
   fun executable file text=(write (file,"#!/bin/sh\n" ^ text ^ "\n");Posix.FileSys.chmod (file,
          Posix.FileSys.S.flags [Posix.FileSys.S.irusr,Posix.FileSys.S.iwusr,Posix.FileSys.S.ixusr]))

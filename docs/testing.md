@@ -112,11 +112,12 @@ others are parts of it, to run alone while iterating.
 
 `--affected` keeps the tests that cover what changed since `HEAD`
 (`--since REV`, `--changed FILE`): each group of tests names the paths it
-covers (`covers:GLOB`, in `tests/runner/*.sml`), and a changed path that no
-group covers (the compiler, the runtime, the Basis Library, the Makefile,
-the scripts) keeps every test. Of the 156 commits before 2026-10-12, 97 select
-every test, 48 (documentation) `make check-docs` alone and 11 a few hundred
-tests.
+covers (`covers:GLOB`, in `tests/runner/*.sml`). Compiler, runtime, Basis,
+runner-library, Makefile, build/generation-tool and script changes select every
+test in the requested tier. These broad inputs remain broad even where another
+group also names a narrower path. An unclassified path also keeps every test;
+documentation and individual fixture changes use their explicit coverage.
+
 
 The programs of `tests/lang` and `tests/errors` are the runner's own tests
 (`compile/COMPILER/NAME`, `lang/WAY/NAME`, `errors/COMPILER/NAME`;
@@ -552,7 +553,7 @@ minutes. Rune compiling MLton is part of the set but runs only with
 `--mlton-compile`: about 10 minutes a VM, 12 GiB of address space (the heap
 capped at 5 GiB), so 20 GB of free memory, from MLton's sources at
 `5fe943391` in `MLTON_SOURCES` with the order of its files in
-`mlton-rune.txt` (`scripts/setup-mlton.sh DIR` makes them). Times need the machine to themselves: `GC_EVAL_LOCK` is a
+`mlton-rune.txt` (`bin/rune-build setup-mlton DIR` makes them). Times need the machine to themselves: `GC_EVAL_LOCK` is a
 command prefix under which each round is made, let go for a minute between
 rounds so that others waiting for it have it, and a run waits until its
 ulimit and 8 GB more are free (`GC_EVAL_MARGIN`). After an interruption,
@@ -724,3 +725,13 @@ an unavailable host case from a stale expectation. The generator acceptance
 record retains full source/record comparisons, concurrent isolated runs, poisoned
 input refusal and all generated-library results. Build/package bootstrap conversion
 is P2.16; final whole-project acceptance is P2.17.
+
+Production build and packaging policy uses `bin/rune-build`, compiled by the
+native MLton before target GMP configuration or VM creation. Its shared models
+also build as Rune bytecode for the retained runtime SDK. See
+[tools/builder/README.md](../tools/builder/README.md) for modes and bootstrap
+requirements. P2.16 retires all eight production scripts; the ledger has 281
+retired targets and nineteen explicit bootstrap/installer/oracle exceptions.
+Make's unit-bootstrap, template and Int64 comparisons also use SML jobs.
+`make test-int64` preserves both VMs and all four JIT modes. Final global
+acceptance is recorded by P2.17 of the continuation roadmap.

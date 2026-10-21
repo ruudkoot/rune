@@ -87,8 +87,7 @@ struct
 
   val make =
     Test.describe "make"
-      [alone ("check-units-steps", ["check-units"], ["tests/units/*"]),
-       step ("test-register-jit-steps", {cpus = 1, memory = 1000, pools = [], after = []}, [],
+      [step ("test-register-jit-steps", {cpus = 1, memory = 1000, pools = [], after = []}, [],
              ["tests/register/*", "tests/lang/rt.deeprec_stack.*"]),
        step ("test-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, [],
              ["tests/compiler/*", "tests/runtime/*"]),
@@ -152,7 +151,13 @@ struct
   val matrixFaults = Test.tag "check" (Test.tag "quick" (Test.tag "covers:tests/runner/matrix*.sml"
     (Test.tag "covers:tests/runner/hostlaws.sml" (Test.tag "covers:tests/runner/smlscan.sml"
       (Test.requires ["grep-pcre"] (Test.describe "runner" [LibHosts.job ("matrix-controller-faults", ["matrix-controller-faults"], [], 300)]))))))
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, Canary.tests]
+  (* These inputs can change every produced program or the machinery that
+     judges it. Give every leaf their coverage, even when a narrower group
+     also names the same file (for example Basis docs or JIT dump checks). *)
+  val broadInputs = ["src/*", "runtime/*", "lib/basis/*", "lib/test/runner/*",
+                     "Makefile", "tools/builder/*", "tools/generate/*", "scripts/*"]
+  val tests = List.foldl (fn (path, tree) => Test.tag ("covers:" ^ path) tree)
+    (Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, Canary.tests]) broadInputs
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws

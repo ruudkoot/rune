@@ -32,9 +32,8 @@ jobs:
       - name: Packages
         run: |
           sudo apt-get update -q
-          # python3-pil: make test-dist converts share/rune.png into the Windows icon.
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
-            libgmp-dev gcc-multilib cmake g++ python3 python3-pil gdb lldb dwarfdump valgrind
+            libgmp-dev gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind
 
       - name: Host SML systems (cache)
         uses: actions/cache@v4
@@ -42,14 +41,14 @@ jobs:
           path: ~/.local/rune-hosts
           key: rune-hosts-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/fetch-hosts.sh') }}
 
-      - name: Pinned GMP (build and upstream checks)
-        run: python3 scripts/build-gmp.py --enable-fat --jobs 4
-
       # fetch-hosts.sh puts SIGPIPE back at its default before SML/NJ
       # links its heap. The heap records that disposition and restores it
       # on startup; the nightly matrix runs the pipe check on that heap.
       - name: make hosts
         run: make hosts
+
+      - name: Pinned GMP (native SML build and upstream checks)
+        run: make gmp-dep JOBS=4
 
       - name: make doctor
         run: make doctor

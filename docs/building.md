@@ -49,7 +49,8 @@ register VM useful for checking the same bytecode on both builds.
 CI and release builds use the pinned recipe rather than the system package:
 
 ```
-python3 scripts/build-gmp.py --enable-fat --jobs 4
+make bin/rune-build
+bin/rune-build build-gmp --enable-fat --jobs 4
 make GMP=yes GMP_PREFIX=build/deps/gmp/native
 ```
 
@@ -58,7 +59,9 @@ runtime. The recipe also selects a generic compiler target triple: fat
 assembly dispatch alone does not remove CPU-specific inline helpers from C. This follows
 [GMP's package-build guidance](https://gmplib.org/manual/Notes-for-Package-Builds).
 On non-x86 native machines omit that flag and select the intended target.
-The provisioning recipe needs Python 3.12 or newer.
+The provisioning recipe is Standard ML, built by the pinned native MLton before
+GMP configuration or VM creation. Its pure models also build as Rune bytecode
+after bootstrapping; see [the build tool](../tools/builder/README.md).
 
 The recipe verifies GMP 6.3.0's source archive SHA-256
 `a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898`,
@@ -126,12 +129,12 @@ rebuilding the enabled ones.
 
 ## Prerequisites
 
-The acceptance tests also need Python 3. The compiler-driver tests use its
-POSIX resource controls to interrupt a bytecode write and check that the previous
-artifact survives, and the VM tests check saved limits and stricter restore
-policies (`compiler/*` and `limits/*` of `tests/runner/tools.sml`).
-`make test-dist`, part of `make check`, also needs Pillow (`python3-pil`)
-to convert `share/rune.png` into the Windows icon.
+The build/configuration/package tool requires the pinned native MLton, even
+when another host builds the compiler. It builds without a Rune VM or target
+GMP dependency. Python 3 remains necessary for independent arithmetic oracles,
+Jupyter/ZMTP peers and host provisioning. Standard ML owns compiler interruption,
+VM limits and distribution assertions. The Windows icon is a checked canonical
+asset paired with its PNG source digest; packaging needs no Pillow.
 
 * A C compiler (`cc`; gcc 13 and clang 18 are tested), GNU make 4.3 or later, POSIX `sh`, `awk`. The VMs are built as C17 (`-std=c17`), and what they take from it beyond C99 is behind a test of `__STDC_VERSION__` (the header word of a `Value`, `runtime/vm.h`), so `make CFLAGS='-std=c99 -O2'` builds them too, a little slower. Where the compiler is gcc or clang the VM's loop goes from instruction to instruction by computed goto, a GNU extension; `make CFLAGS='-std=c99 -O2 -DRUNE_SWITCH'` builds the switch every C compiler has.
 * The SML systems that build the compiler, which `make hosts`
@@ -523,8 +526,9 @@ starts ([repl.md](repl.md)).
 
 An install also retains `lib/rune/rebuild`: the register VM's source and
 transitive headers, compiler/link flags, binary and source hashes, and a
-`rebuild.py` script. Copy that directory to a writable location and run
-`python3 rebuild.py` to relink the VM. A pinned GMP install includes the
+Standard ML relinking tool. Copy that directory to a writable location and run
+`./rebuild` to relink the VM using its retained bytecode and matching VM. The
+README also documents the independent native MLton build from retained sources. A pinned GMP install includes the
 verified source archive, installed header/static library, license notices,
 provisioning record and exact build recipe. The accompanying README describes
 rebuilding GMP with the recorded target and options. Checked system builds
@@ -572,9 +576,9 @@ install for everyone (`/usr/local`, `%ProgramFiles%\Rune`); otherwise for
 the current user (`~/.local`, `%LOCALAPPDATA%\Rune`). On Windows the
 installer adds a Start menu entry named Rune that starts the REPL, and an
 entry in Apps and Features that runs `uninstall.bat`. The entry's icon is
-`share/rune.png`, converted to a Windows icon (`share/rune.ico`, at 16, 32,
-48 and 256 pixels) when the archive is built, and linked into the Windows
-`runevm.exe`. That conversion needs Pillow (`python3-pil`). `install.bat`
+the canonical `share/rune.ico` (16, 32, 48 and 256 pixels), whose digest is
+paired with `share/rune.png` and checked before packaging. The icon is also
+linked into the Windows `runevm.exe`. `install.bat`
 waits for a key after it finishes.
 
 `:doc` reads the Basis documentation out of the REPL image, which was

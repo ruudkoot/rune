@@ -72,7 +72,7 @@ struct
         val install = group "install" "test-install" "tests/install/*"
           (List.map (fn name => Test.requires (["native-host"] @ (if name = "rbc" then [] else [name]))
                  (job name ["scenario-install", name] [] [])) installHosts)
-        val dist = Test.requires ["python3", "gzip", "unzip", "tar"] (group "dist" "test-dist" "tests/dist/*"
+        val dist = Test.requires ["gzip", "unzip", "tar"] (group "dist" "test-dist" "tests/dist/*"
           [job "prepare" ["scenario-dist-prepare"] [] [],
            job "archives" ["scenario-dist-archives"] ["scenarios/dist/prepare"] [],
            job "metadata" ["scenario-dist-metadata"] ["scenarios/dist/prepare"] [],

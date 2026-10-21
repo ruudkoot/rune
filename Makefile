@@ -140,15 +140,37 @@ VM_HDRS := runtime/intinf.h runtime/vm.h runtime/frames_array.inc runtime/value.
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
 AR      ?= ar
 
+# Bootstrap build policy is Standard ML, compiled by the installed native host.
+# This graph is deliberately independent of every Rune VM/compiler/GMP target.
+BUILDER_LIB_SRCS := lib/unicode/utf8_sig.sml lib/unicode/utf8.sml lib/json/json_sig.sml lib/json/json.sml \
+                    lib/digest/digest_sig.sml lib/digest/sha256.sml lib/digest/hex_sig.sml lib/digest/hex.sml
+BUILDER_MODEL_SRCS := tools/builder/common.sml tools/builder/options.sml tools/builder/runtime-inputs.sml \
+                    tools/builder/gmp-config.sml tools/builder/runtime-record.sml tools/builder/cross-vm.sml \
+                    tools/builder/formats.sml tools/builder/archive.sml tools/builder/dist.sml \
+                    tools/builder/gmp-build.sml tools/builder/relink.sml tools/builder/package-runtime.sml \
+                    tools/builder/setup-mlton.sml
+BUILDER_NATIVE_SRCS := $(BUILDER_LIB_SRCS) tools/builder/io.sig tools/builder/native-io.sml $(BUILDER_MODEL_SRCS) tools/builder/main.sml
+bin/rune-build.bin: $(BUILDER_NATIVE_SRCS) tools/builder/native.mlb | build/.doctor-mlton
+	@mkdir -p bin
+	$(MLTON) -output $@ tools/builder/native.mlb
+bin/rune-build: bin/rune-build.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_BUILD_ROOT:-}" ]; then RUNE_BUILD_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_BUILD_ROOT; fi\nexec "$$d/rune-build.bin" "$$@"\n' > $@
+	chmod +x $@
+
 # Optional arithmetic is linked ahead of the GMP-free archive. Stack/native
 # programs keep the archive's SML-only implementation and the same primitives.
 GMP ?= auto
 GMP_PREFIX ?=
 GMP_KEY := $(shell printf '%s\n' '$(GMP)' '$(GMP_PREFIX)' '$(CC)' '$(CFLAGS)' | cksum | cut -d' ' -f1)
 GMP_DIR := build/gmp/$(GMP_KEY)
-$(GMP_DIR)/config.mk: scripts/configure-gmp.py $(if $(GMP_PREFIX),$(wildcard $(GMP_PREFIX)/include/gmp.h $(GMP_PREFIX)/lib/libgmp.a $(GMP_PREFIX)/rune-gmp.json))
-	python3 scripts/configure-gmp.py --mode '$(GMP)' --prefix '$(GMP_PREFIX)' --cc '$(CC)' --cflags '$(CFLAGS)' --out $(GMP_DIR)
+$(GMP_DIR)/config.mk: bin/rune-build $(if $(GMP_PREFIX),$(wildcard $(GMP_PREFIX)/include/gmp.h $(GMP_PREFIX)/lib/libgmp.a $(GMP_PREFIX)/rune-gmp.json))
+	bin/rune-build configure-gmp --mode '$(GMP)' --prefix '$(GMP_PREFIX)' --cc '$(CC)' --cflags '$(CFLAGS)' --out $(GMP_DIR)
+# Pre-host provisioning and the independent native tool cannot depend on
+# target configuration. Explicit dependency provisioning likewise precedes it.
+GMP_CONFIG_GOALS := $(if $(MAKECMDGOALS),$(filter-out hosts doctor envcheck clean gmp-dep gmp-dep-windows gmp-dep-portability gmp-dep-dist-native bin/rune-build bin/rune-build.bin,$(MAKECMDGOALS)),all)
+ifneq ($(strip $(GMP_CONFIG_GOALS)),)
 include $(GMP_DIR)/config.mk
+endif
 GMP_FLAGS = $(GMP_CPPFLAGS) -include $(GMP_DIR)/config.h
 .PHONY: gmp-force gmp-dep
 gmp-force:
@@ -158,8 +180,8 @@ gmp-force:
 build/gmp/selected: gmp-force
 	@mkdir -p build/gmp
 	@t=$@.tmp.$$$$; printf '%s\n' '$(GMP_KEY)' > $$t && { cmp -s $$t $@ && rm -f $$t || mv -f $$t $@; }
-gmp-dep:
-	python3 scripts/build-gmp.py $(if $(filter x86_64 i686 i386,$(shell uname -m)),--enable-fat) --jobs $(JOBS)
+gmp-dep: bin/rune-build
+	bin/rune-build build-gmp $(if $(filter x86_64 i686 i386,$(shell uname -m)),--enable-fat) --jobs $(JOBS)
 $(GMP_DIR)/intinf.o: runtime/intinf.c $(VM_HDRS) $(GMP_DIR)/config.mk
 	$(CC) $(CFLAGS) $(RT_INC) $(GMP_FLAGS) -c -o $@ runtime/intinf.c
 
@@ -539,10 +561,10 @@ RUNE_JIT ?= 1
 JIT_SRCS := runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c runtime/register/jit/dump.c
 JIT_HDRS := runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/asm.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
 NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS)
-bin/runevm: $(NEW_LOOP) $(GMP_DIR)/intinf.o build/gmp/selected build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) scripts/record-vm-build.py scripts/runtime_inputs.py | build/.doctor-vm
+bin/runevm: $(NEW_LOOP) $(GMP_DIR)/intinf.o build/gmp/selected build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) bin/rune-build | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) $(GMP_DIR)/intinf.o build/librune.a $(GMP_LDLIBS) $(VM_LIBS)
-	python3 scripts/record-vm-build.py --vm $@ --cc '$(CC)' --cflags='$(CFLAGS) -DRUNE_JIT=$(RUNE_JIT)' \
+	bin/rune-build record-vm-build --vm $@ --cc '$(CC)' --cflags='$(CFLAGS) -DRUNE_JIT=$(RUNE_JIT)' \
 	  --ldlibs='$(VM_LIBS)' --config $(GMP_DIR) --out build/gmp/native-build.json --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS)
 
 bin/runevm-sml: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
@@ -576,15 +598,8 @@ bin/runevm-int64: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/conf
 # The JIT on the first (tests/register/int64-box-home.sml), at every tier,
 # and with raw homes: a word past 63 bits is a box, which a home that holds
 # the word must not keep across a collection. Not part of make check.
-test-int64: bin/runevm-int64 bin/runevm-rawhomes $(RUNE)
-	@mkdir -p tests/out/int64
-	bin/rune --int-bits=64 tests/register/int64-box-home.sml -o tests/out/int64/box-home.rbc
-	@for vm in runevm-int64 runevm-rawhomes; do for mode in off baseline opt all; do \
-	  bin/$$vm --jit=$$mode tests/out/int64/box-home.rbc > tests/out/int64/box-home.$$vm.$$mode.out 2>&1; \
-	  cmp -s tests/out/int64/box-home.$$vm.$$mode.out tests/register/int64-box-home.expected \
-	    || { echo "test-int64: $$vm --jit=$$mode: $$(head -1 tests/out/int64/box-home.$$vm.$$mode.out)"; exit 1; }; \
-	done; done
-	@echo "test-int64: a word's box in a home survives the collection"
+test-int64: bin/runevm-int64 bin/runevm-rawhomes $(RUNE) bin/rune-test
+	$(RUNE_TEST) --tier test-int64
 bin/runevm-realboxed: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_REAL_BOXED $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
@@ -685,10 +700,8 @@ bin/runeopt-templates: $(TEMPLATES_SRCS) runtime/register/jit/masm.h runtime/reg
 	$(CC) $(CFLAGS) -DRUNE_ASM_TEXT -DRUNE_JIT=1 $(RT_INC) -o $@ $(TEMPLATES_SRCS)
 templates: bin/runeopt-templates
 	bin/runeopt-templates > src/opt/x64_layout.sml
-check-templates: bin/runeopt-templates
-	@bin/runeopt-templates > build/x64_layout.sml.new && \
-	if cmp -s build/x64_layout.sml.new src/opt/x64_layout.sml; then echo "check-templates: src/opt/x64_layout.sml is what masm.c gives"; \
-	else echo "check-templates: src/opt/x64_layout.sml is not what runtime/register/jit/masm.c gives; run make templates"; exit 1; fi
+check-templates: bin/runeopt-templates bin/rune-test bin/rune-native-check
+	$(RUNE_TEST) --tier check-templates
 
 # ---------------------------------------------------------- Windows (apart)
 # `make windows` builds the VM for Windows with mingw-w64, for 64 bits
@@ -723,38 +736,35 @@ WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32 -lpsapi
 GMP_CROSS_PREFIX ?= build/deps/gmp
 GMP_WIN64_PREFIX ?= $(GMP_CROSS_PREFIX)/windows64
 GMP_WIN32_PREFIX ?= $(GMP_CROSS_PREFIX)/windows32
-GMP_CROSS_TOOL := scripts/build-gmp-vm.py scripts/configure-gmp.py scripts/runtime_inputs.py
+GMP_CROSS_TOOL := bin/rune-build $(BUILDER_NATIVE_SRCS)
 
 .PHONY: gmp-dep-windows
-gmp-dep-windows:
-	python3 scripts/build-gmp.py --prefix '$(GMP_WIN64_PREFIX)' --cc '$(WINCC)' --host x86_64-w64-mingw32 --enable-fat --jobs $(JOBS)
-	python3 scripts/build-gmp.py --prefix '$(GMP_WIN32_PREFIX)' --cc '$(WINCC32)' --host i686-w64-mingw32 --enable-fat --abi 32 --jobs $(JOBS)
+gmp-dep-windows: bin/rune-build
+	bin/rune-build build-gmp --prefix '$(GMP_WIN64_PREFIX)' --cc '$(WINCC)' --host x86_64-w64-mingw32 --enable-fat --jobs $(JOBS)
+	bin/rune-build build-gmp --prefix '$(GMP_WIN32_PREFIX)' --cc '$(WINCC32)' --host i686-w64-mingw32 --enable-fat --abi 32 --jobs $(JOBS)
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
 define windows_dlls
-	@for d in $$($$($(1) -print-prog-name=objdump) -p $@ | sed -n 's/^[[:space:]]*DLL Name: //p'); do \
-	  case $$d in [Ll][Ii][Bb]*) echo "make windows: $@ imports $$d, which is not part of Windows"; \
-	    rm -f $@; exit 1 ;; esac; \
-	done
+	bin/rune-build check-windows-imports --cc '$(1)' --vm '$@'
 endef
 
 windows: bin/runevm-stack.exe bin/runevm-stack32.exe bin/runevm.exe bin/runevm32.exe
 
-bin/runevm-stack.exe: $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c | build/.doctor-windows
+bin/runevm-stack.exe: $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c bin/rune-build | build/.doctor-windows
 	@mkdir -p bin
 	$(WINCC) $(WINCFLAGS) -o $@ $(WIN_SRCS) $(RT_INC) $(WIN_LIBS)
 	$(call windows_dlls,$(WINCC))
 
-bin/runevm-stack32.exe: $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c | build/.doctor-windows
+bin/runevm-stack32.exe: $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c bin/rune-build | build/.doctor-windows
 	@mkdir -p bin
 	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) -o $@ $(WIN_SRCS) $(RT_INC) $(WIN_LIBS)
 	$(call windows_dlls,$(WINCC32))
 
 # share/rune.png, as a resource, so Explorer shows it on the executable.
 # windres writes a COFF object of one machine, so the two widths differ.
-build/rune.ico: share/rune.png scripts/make-dist.py
+build/rune.ico: share/rune.png share/rune.ico tools/builder/data/branding.json bin/rune-build
 	@mkdir -p build
-	python3 scripts/make-dist.py --write-ico $@
+	bin/rune-build make-dist --write-ico $@
 
 build/runevm.rc: build/rune.ico
 	printf '%s\n' '1 ICON "rune.ico"' > $@
@@ -766,13 +776,13 @@ build/runevm-x86.o: build/runevm.rc build/rune.ico | build/.doctor-windows
 	cd build && $(patsubst %gcc,%windres,$(WINCC32)) -O coff -i runevm.rc -o runevm-x86.o
 
 bin/runevm.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) build/runevm-x64.o gmp-force | build/.doctor-windows
-	python3 scripts/build-gmp-vm.py --mode '$(GMP)' --prefix '$(GMP_WIN64_PREFIX)' --cc '$(WINCC)' \
+	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_WIN64_PREFIX)' --cc '$(WINCC)' \
 	  --cflags='$(WINCFLAGS)' --ldlibs='$(WIN_LIBS)' --config build/gmp/windows64 --out $@ --windows \
 	  --objects build/runevm-x64.o \
 	  --sources $(WIN_NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
 bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) build/runevm-x86.o gmp-force | build/.doctor-windows
-	python3 scripts/build-gmp-vm.py --mode '$(GMP)' --prefix '$(GMP_WIN32_PREFIX)' --cc '$(WINCC32)' \
+	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_WIN32_PREFIX)' --cc '$(WINCC32)' \
 	  --cflags='$(WINCFLAGS) $(WINCFLAGS32)' --ldlibs='$(WIN_LIBS)' --config build/gmp/windows32 --out $@ --windows \
 	  --objects build/runevm-x86.o \
 	  --sources $(WIN_NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
@@ -849,10 +859,10 @@ GMP_PPC64_FLAGS ?= --disable-assembly
 GMP_AARCH64_PREFIX ?= $(GMP_CROSS_PREFIX)/aarch64
 
 .PHONY: gmp-dep-portability
-gmp-dep-portability:
-	python3 scripts/build-gmp.py --prefix '$(GMP_LINUX32_PREFIX)' --cc '$(PORTCC32)' --cflags='-O2 $(PORTFLAGS32)' --host i686-pc-linux-gnu --abi 32 --enable-fat --with-pic --jobs $(JOBS)
-	python3 scripts/build-gmp.py --prefix '$(GMP_PPC64_PREFIX)' --cc '$(PPCCC)' --cflags='-O2 $(PPCFLAGS)' --host powerpc64-linux-gnu --runner '$(QEMUPPC) -L $(PPCROOT)' $(GMP_PPC64_FLAGS) --with-pic --jobs $(JOBS)
-	python3 scripts/build-gmp.py --prefix '$(GMP_AARCH64_PREFIX)' --cc '$(A64CC)' --cflags='-O2 $(A64FLAGS)' --host aarch64-linux-gnu --runner '$(QEMUA64) -L $(A64ROOT)' --with-pic --jobs $(JOBS)
+gmp-dep-portability: bin/rune-build
+	bin/rune-build build-gmp --prefix '$(GMP_LINUX32_PREFIX)' --cc '$(PORTCC32)' --cflags='-O2 $(PORTFLAGS32)' --host i686-pc-linux-gnu --abi 32 --enable-fat --with-pic --jobs $(JOBS)
+	bin/rune-build build-gmp --prefix '$(GMP_PPC64_PREFIX)' --cc '$(PPCCC)' --cflags='-O2 $(PPCFLAGS)' --host powerpc64-linux-gnu --runner '$(QEMUPPC) -L $(PPCROOT)' $(GMP_PPC64_FLAGS) --with-pic --jobs $(JOBS)
+	bin/rune-build build-gmp --prefix '$(GMP_AARCH64_PREFIX)' --cc '$(A64CC)' --cflags='-O2 $(A64FLAGS)' --host aarch64-linux-gnu --runner '$(QEMUA64) -L $(A64ROOT)' --with-pic --jobs $(JOBS)
 
 portability: bin/runevm-stack32 bin/runevm-stack-ppc64 bin/runevm32 bin/runevm-ppc64 bin/runevm-aarch64
 
@@ -874,12 +884,12 @@ bin/runevm-stack-ppc64: bin/runevm-stack-ppc64.bin Makefile
 # runtime/register for the same two machines, from the sources bin/runevm-asan is
 # built from (its instruction set's part in place of the stack bytecode's)
 bin/runevm32: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
-	python3 scripts/build-gmp-vm.py --mode '$(GMP)' --prefix '$(GMP_LINUX32_PREFIX)' --cc '$(PORTCC32)' \
+	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_LINUX32_PREFIX)' --cc '$(PORTCC32)' \
 	  --cflags='$(CFLAGS) $(PORTFLAGS32)' --runner '' --config build/gmp/linux32 --out $@ \
 	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
 bin/runevm-ppc64.bin: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
-	python3 scripts/build-gmp-vm.py --mode '$(GMP)' --prefix '$(GMP_PPC64_PREFIX)' --cc '$(PPCCC)' \
+	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_PPC64_PREFIX)' --cc '$(PPCCC)' \
 	  --cflags='$(CFLAGS) $(PPCFLAGS)' --runner '$(QEMUPPC) -L $(PPCROOT)' --config build/gmp/ppc64 --out $@ \
 	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
@@ -890,7 +900,7 @@ bin/runevm-ppc64: bin/runevm-ppc64.bin Makefile
 # the register VM for aarch64, its JIT included (M12): the encoder a64.c
 # and the portable assembler's aarch64 side in place of x64.c's
 bin/runevm-aarch64.bin: $(NEW_SRCS_A64) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/register/jit/a64.h runtime/register/jit/asm.h Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
-	python3 scripts/build-gmp-vm.py --mode '$(GMP)' --prefix '$(GMP_AARCH64_PREFIX)' --cc '$(A64CC)' \
+	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_AARCH64_PREFIX)' --cc '$(A64CC)' \
 	  --cflags='$(CFLAGS) $(A64FLAGS) -DRUNE_JIT=1' --runner '$(QEMUA64) -L $(A64ROOT)' --config build/gmp/aarch64 --out $@ \
 	  --sources $(NEW_SRCS_A64) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/register/jit/a64.h runtime/register/jit/asm.h Makefile
 
@@ -907,47 +917,47 @@ bin/runevm-aarch64: bin/runevm-aarch64.bin Makefile
 # need text relocations (docs/building.md).
 GMP_DIST_NATIVE_PREFIX ?= $(GMP_CROSS_PREFIX)/native-dist
 .PHONY: gmp-dep-dist-native
-gmp-dep-dist-native:
-	python3 scripts/build-gmp.py --prefix '$(GMP_DIST_NATIVE_PREFIX)' \
+gmp-dep-dist-native: bin/rune-build
+	bin/rune-build build-gmp --prefix '$(GMP_DIST_NATIVE_PREFIX)' \
 	  $(if $(filter x86_64 i686 i386,$(shell uname -m)),--enable-fat) \
 	  --with-pic --jobs $(JOBS)
 
 bin/dist/runevm: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force gmp-dep-dist-native | build/.doctor-vm
 	@mkdir -p bin/dist
-	python3 scripts/build-gmp-vm.py --mode yes --prefix '$(GMP_DIST_NATIVE_PREFIX)' --cc '$(CC)' \
+	bin/rune-build build-gmp-vm --mode yes --prefix '$(GMP_DIST_NATIVE_PREFIX)' --cc '$(CC)' \
 	  --cflags='$(CFLAGS) -DRUNE_JIT=$(RUNE_JIT)' --ldlibs='$(VM_LIBS)' \
 	  --config build/gmp/native-dist --out $@ \
 	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) Makefile
 
 bin/dist/runevm32: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force gmp-dep-portability | build/.doctor-portability
 	@mkdir -p bin/dist
-	python3 scripts/build-gmp-vm.py --mode yes --prefix '$(GMP_LINUX32_PREFIX)' --cc '$(PORTCC32)' \
+	bin/rune-build build-gmp-vm --mode yes --prefix '$(GMP_LINUX32_PREFIX)' --cc '$(PORTCC32)' \
 	  --cflags='$(CFLAGS) $(PORTFLAGS32)' --runner '' --config build/gmp/linux32-dist --out $@ \
 	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
 bin/dist/runevm.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) build/runevm-x64.o gmp-force gmp-dep-windows | build/.doctor-windows
 	@mkdir -p bin/dist
-	python3 scripts/build-gmp-vm.py --mode yes --prefix '$(GMP_WIN64_PREFIX)' --cc '$(WINCC)' \
+	bin/rune-build build-gmp-vm --mode yes --prefix '$(GMP_WIN64_PREFIX)' --cc '$(WINCC)' \
 	  --cflags='$(WINCFLAGS)' --ldlibs='$(WIN_LIBS)' --config build/gmp/windows64-dist --out $@ --windows \
 	  --objects build/runevm-x64.o \
 	  --sources $(WIN_NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
 bin/dist/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) build/runevm-x86.o gmp-force gmp-dep-windows | build/.doctor-windows
 	@mkdir -p bin/dist
-	python3 scripts/build-gmp-vm.py --mode yes --prefix '$(GMP_WIN32_PREFIX)' --cc '$(WINCC32)' \
+	bin/rune-build build-gmp-vm --mode yes --prefix '$(GMP_WIN32_PREFIX)' --cc '$(WINCC32)' \
 	  --cflags='$(WINCFLAGS) $(WINCFLAGS32)' --ldlibs='$(WIN_LIBS)' --config build/gmp/windows32-dist --out $@ --windows \
 	  --objects build/runevm-x86.o \
 	  --sources $(WIN_NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
 bin/dist/runevm-aarch64: $(NEW_SRCS_A64) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/register/jit/a64.h runtime/register/jit/asm.h Makefile $(GMP_CROSS_TOOL) gmp-force gmp-dep-portability | build/.doctor-portability
 	@mkdir -p bin/dist
-	python3 scripts/build-gmp-vm.py --mode yes --prefix '$(GMP_AARCH64_PREFIX)' --cc '$(A64CC)' \
+	bin/rune-build build-gmp-vm --mode yes --prefix '$(GMP_AARCH64_PREFIX)' --cc '$(A64CC)' \
 	  --cflags='$(CFLAGS) $(DIST_A64FLAGS) -DRUNE_JIT=1' --runner '$(QEMUA64) -L $(A64ROOT)' --config build/gmp/aarch64-dist --out $@ \
 	  --sources $(NEW_SRCS_A64) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/register/jit/a64.h runtime/register/jit/asm.h Makefile
 
 bin/dist/runevm-ppc64: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force gmp-dep-portability | build/.doctor-portability
 	@mkdir -p bin/dist
-	python3 scripts/build-gmp-vm.py --mode yes --prefix '$(GMP_PPC64_PREFIX)' --cc '$(PPCCC)' \
+	bin/rune-build build-gmp-vm --mode yes --prefix '$(GMP_PPC64_PREFIX)' --cc '$(PPCCC)' \
 	  --cflags='$(CFLAGS) $(DIST_PPCFLAGS)' --runner '$(QEMUPPC) -L $(PPCROOT)' --config build/gmp/ppc64-dist --out $@ \
 	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
@@ -1032,13 +1042,10 @@ check-levels: $(RUNE) $(RUNEVM) bin/rune-test
 # both bytecodes; the programs of several files of tests/units do what they
 # expect; and the compiler compiled in units compiles itself to bin/rune.rbc
 # (docs/units.md; docs/plans/incremental-compilation.md, M2).
-check-units: check-units-steps bin/rune-test bin/rune-scenarios
+check-units: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack bin/rune-test bin/rune-scenarios
 	$(RUNE_TEST) --tier check-units
-check-units-steps: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack
-	bin/rune-boot --units -o bin/rune.units.rbc $(BOOT_SRCS)
-	bin/runevm --heap-size $(RUNE_HEAP) bin/rune.units.rbc --lib bin/../lib -o bin/rune.stage2.units.rbc $(BOOT_SRCS)
-	cmp bin/rune.rbc bin/rune.stage2.units.rbc
-	@echo "check-units: the compiler compiled in units compiles itself to bin/rune.rbc"
+check-units-steps: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack bin/rune-test
+	$(RUNE_TEST) --tier check-units-bootstrap
 
 # rune-repl (docs/repl.md): the compiler and the REPL, compiled a unit per
 # file into bin/rune-repl.units (their units in order, and the sources they
@@ -1110,8 +1117,8 @@ test-repl-protocol: bin/rune-repl bin/runevm bin/rune-test
 	$(RUNE_TEST) --tier test-repl-protocol
 
 # Programs on a terminal (docs/plans/repl.md, M1): each script of
-# tests/terminal starts a program in a tmux pane, types at it and waits for
-# the screen; skipped where tmux is missing (make doctor --scope terminal).
+# tests/terminal starts a program through the runtime PTY and checks its
+# terminal model; its capability probe exercises that PTY boundary.
 test-terminal: bin/rune-repl bin/runevm $(RUNE) bin/rune-terminal bin/rune-test
 	$(RUNE_TEST) --tier test-terminal
 
@@ -1581,7 +1588,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: bin/rune-generate bin/rune-inventory bin/rune-measure $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal build/bench-counts.rbc
+check-tools: bin/rune-build bin/rune-build.rbc bin/rune-generate bin/rune-inventory bin/rune-measure $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal build/bench-counts.rbc
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -1621,7 +1628,7 @@ install:
 	@if [ "$$(id -u)" -eq 0 ]; then \
 	  echo "install: running as root, installing what is in bin/ as it stands"; \
 	else \
-	  $(MAKE) --no-print-directory $(if $(HOST),vm $(HOST) $(if $(filter smlnj-legacy,$(HOST)),bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy,bin/runedoc-$(HOST) bin/runeopt-$(HOST)) build/librune.a,all repl); \
+	  $(MAKE) --no-print-directory $(if $(HOST),vm $(HOST) $(if $(filter smlnj-legacy,$(HOST)),bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy,bin/runedoc-$(HOST) bin/runeopt-$(HOST)) build/librune.a,all repl bin/rune-build bin/rune-build.rbc); \
 	fi
 	RUNE_HEAP=$(RUNE_HEAP) SMLNJ=$(SMLNJ) sh scripts/install.sh $(INSTALL_FLAGS)
 
@@ -1631,11 +1638,11 @@ uninstall:
 # Distribution archives (docs/building.md, Distribution). The version is
 # git's, the one runtime/version.h already carries. Phony: the archives
 # land in the dist/ directory, whose stamp is not the archives'.
-dist: runtime/version.h manifests bin/rune.rbc bin/rune-repl.img \
+dist: bin/rune-build runtime/version.h manifests bin/rune.rbc bin/rune-repl.img \
       bin/dist/runevm bin/dist/runevm32 bin/dist/runevm-aarch64 bin/dist/runevm-ppc64 \
       bin/dist/runevm.exe bin/dist/runevm32.exe
 	@mkdir -p dist
-	python3 scripts/make-dist.py --out dist \
+	bin/rune-build make-dist --out dist \
 	  --version "$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h)" \
 	  --lib lib --compiler bin/rune.rbc --repl bin/rune-repl.img \
 	  --linux x86_64=bin/dist/runevm --linux i686=bin/dist/runevm32 \
@@ -1831,4 +1838,12 @@ bin/rune-generate.rbc: $(RUNE) $(GENERATE_SRCS) $(wildcard tools/generate/data/*
 	$(RUNE) --library test/runner --library json --library digest $(GENERATE_SRCS) -o $@
 bin/rune-generate bin/rune-inventory: bin/rune-generate.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-generate.rbc" $(if $(filter bin/rune-inventory,$@),inventory )"$$@"\n' > $@
+	chmod +x $@
+
+# Portable relinking controller: post-bootstrap only, never a GMP/VM prerequisite.
+BUILDER_RUNE_SRCS := tools/builder/io.sig tools/builder/rune-io.sml $(BUILDER_MODEL_SRCS) tools/builder/main.sml
+bin/rune-build.rbc: $(RUNE) $(BUILDER_RUNE_SRCS) manifests
+	$(RUNE) --library json --library digest $(BUILDER_RUNE_SRCS) -o $@
+bin/rune-build-rune: bin/rune-build.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_BUILD_ROOT:-}" ]; then RUNE_BUILD_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_BUILD_ROOT; fi\nexec "$$d/runevm" "$$d/rune-build.rbc" "$$@"\n' > $@
 	chmod +x $@

@@ -47,7 +47,7 @@ struct
         val flags = List.concat (List.map (fn (arch, file) => ["--linux", arch ^ "=" ^ file]) linux)
                     @ List.concat (List.map (fn (arch, file) => ["--windows", arch ^ "=" ^ file]) windows)
     in InstallChecks.execute dir label root ""
-       (["python3", "scripts/make-dist.py", "--version", version, "--out", dir ^ (if fixture then "/archives" else "/checked-" ^ label), "--lib", library,
+       ([fromRoot "bin/rune-build", "make-dist", "--version", version, "--out", dir ^ (if fixture then "/archives" else "/checked-" ^ label), "--lib", library,
           "--license", fromRoot "LICENSE", "--compiler", dir ^ "/rune.rbc", "--repl", dir ^ "/rune-repl.img"]
           @ (if fixture then ["--fixture"] else []) @ flags) end
   fun maps good =

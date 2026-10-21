@@ -19,7 +19,7 @@ struct
         val count=ref 0
         fun check name mode location enabled succeeded=
           let val directory=path c name
-              val result=process c ("configure-" ^ name) root 90 [] (tool "GMP_CONFIGURATOR" "python3 scripts/configure-gmp.py"
+              val result=process c ("configure-" ^ name) root 90 [] (tool "GMP_CONFIGURATOR" "bin/rune-build configure-gmp"
                    @ ["--mode",mode,"--prefix",location,"--out",directory])
               val ()=need ((#status result=0)=succeeded,"GMP configuration outcome differs: " ^ name ^ ": " ^ #errors result)
               val ()=if not succeeded then () else

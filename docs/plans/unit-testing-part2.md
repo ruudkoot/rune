@@ -124,7 +124,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | P2.13 | P2.0; runtime pty support | Terminal scenarios and tester display checks | done 2026-10-21 |
 | P2.14 | relevant correctness ports and P2.6 | Measurement and analysis tools | done: 43 controllers retired; public SML measurement CLI |
 | P2.15 | P2.4, P2.6, P2.9 | Post-bootstrap generators | done: 25 producers retired; native/xc1/xc2 and full inventory agreement |
-| P2.16 | P2.8, P2.11; bootstrap design below | Build/provisioning/package tools | pending |
+| P2.16 | P2.8, P2.11; bootstrap design below | Build/provisioning/package tools | complete |
 | P2.17 | P2.1–P2.13; P2.14–P2.16 for extended completion | Retirement audit and final acceptance | pending |
 
 ### P2.0 — Freeze the inventory and comparison baseline
@@ -974,3 +974,67 @@ was stopped and its generated duplicate removed; bounded receipts preserve the
 originals. Raw comparisons, source snapshots, corrected/failure logs and bounded
 root receipts remain in tests/out/unit-testing-part2/p2.15. P2.16 and P2.17 remain
 required; the final full matrix/check accepts the final frozen source state.
+
+
+### P2.16 acceptance, 2026-10-21
+
+All eight production build/package scripts are retired. The native MLton build
+of `bin/rune-build` needs no Rune VM, compiler or target GMP configuration. Make
+keeps the dependency graph; pre-host provisioning, the native tool and explicit
+GMP provisioning bypass target configuration. CI provisions hosts before GMP.
+The same Standard ML models build as portable Rune bytecode after bootstrap.
+The copied relinking material contains SML sources, bytecode, a matching VM and
+thin launchers. It generates no Python policy. The native host requirement and
+bootstrap graph are documented in tools/builder/README.md and building.md.
+
+Six configuration fixtures preserve all JSON fields and exact C/Make outputs.
+Both adapters pass all thirteen download/cache/timeout/interrupt scenarios.
+Pinned GMP 6.3.0 builds, all upstream checks and installation pass natively and
+for all five cross targets. Source SHA256, ABI/options, static/PIC/fat choices,
+notices and provisioning records are retained. Altered pinned source bytes are
+rejected before configuration; independent USTAR fixtures check valid and
+poisoned symlinks on both adapters. Changed VM/source/dependency records are
+refused before packaging. Verified cross reuse preserves the existing binary;
+changed source bytes force relinking.
+
+A cold Make bootstrap starts with empty bin/build directories, builds the native
+SML tool and a complete GMP-free register VM without a Rune compiler or VM.
+Required/automatic/disabled mode switches pass in an isolated source tree.
+GMP-free and pinned-GMP staged installs pass relocation through a path containing
+spaces, arithmetic, native output, source relinking, poison refusal and uninstall.
+The six-platform enabled/disabled arithmetic, limits, JIT, fork and image matrix
+passes all 557 bounded subprocesses, including 216 image producer/consumer pairs.
+
+Both SML entrypoints build byte-identical real Linux and Windows archives.
+Against the former producer, all 24,135,680 uncompressed USTAR bytes agree, as do
+all 533 ZIP members, payloads and metadata. All six extracted runtime payloads
+pass 1154 independent arithmetic checks each; the extracted Linux distribution
+also installs, relocates, compiles, runs and uninstalls successfully. Thirteen
+handwritten ELF/PE admission fixtures and poisoned header/asset records retain
+their refusals. The four-size canonical ICO exactly matches the former producer;
+its PNG/ICO digest pair replaces the Pillow dependency. The shared SML Windows
+import guard rejects a planted non-system DLL and removes its owned candidate.
+The actual MLton source preparation preserves all 606 source-list entries.
+
+The audit also closes three embedded Make test recipes: unit-bootstrap byte
+comparison, native template comparison and eight Int64 VM/JIT checks now run as
+bounded SML jobs. The focused selections pass 7/7 and 14/14 including canaries;
+a wrong golden fails every one of the eight Int64 cases. Broad source/build
+coverage is explicit on every inventory leaf, so narrower documentation or JIT
+coverage cannot suppress required suites. Compiler, runtime, Basis, runner,
+Makefile and generation/build-tool probes each retain the full 19,228-test tier.
+
+Validation caught Windows CRLF probe metadata and a relocated relinker path
+being split into arguments; both are corrected, with original failed receipts
+retained. Native Windows execution requires the outside-sandbox WSL route.
+Raw comparisons, snapshots and receipts are under tests/out/unit-testing-part2/
+p2.16 and p2.17. The ledger now records 281 retired targets and nineteen retained
+exceptions. Final frozen-source global acceptance remains P2.17.
+
+The post-retirement public selection passes 23/23 (migration/fault census,
+configuration/dependency/download, documentation and distribution cases).
+The strict census first exposed 69 older replacement fields containing CLI
+text or a combined filename instead of an existing SML path. Those fields now
+point to the implementing modules; their CLI modes remain in the comparison
+contracts. The original failed receipts are retained. The final cold bootstrap
+also passes with all eight retired implementations physically absent.

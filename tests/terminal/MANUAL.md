@@ -99,7 +99,7 @@ own takes part.
 
 M13 (2026-10-10) did not run this list: it was built by an agent, with no
 terminal of the list to type into. What runs without a person instead:
-the scripts of `tests/terminal` on tmux (Linux, `make test-terminal`) and on
+the scripts of `tests/terminal` through a runtime PTY (Linux, `make test-terminal`) and on
 ConPTY through WSL interop (Windows, `make test-windows`, the scripts whose
 first line is `# windows`), the bytes of `*.pty` as VS Code's terminal is
 given them, and the colours measured on the palettes of

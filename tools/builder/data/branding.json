@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "source": "share/rune.png",
+  "source_sha256": "0990b3defec71a1f67c7c5e0bc4ac5ffe780afce683853918d45a79c48aa0fe0",
+  "icon": "share/rune.ico",
+  "icon_sha256": "daa2f2a83219c7c71067687007ae395b8076b3e97febef3a01d9f94320efb23b",
+  "sizes": [
+    [
+      16,
+      16
+    ],
+    [
+      32,
+      32
+    ],
+    [
+      48,
+      48
+    ],
+    [
+      256,
+      256
+    ]
+  ],
+  "provenance": "Canonical ICO reproduced byte-for-byte from the former Pillow producer; source/icon pair is hash-verified before packaging."
+}

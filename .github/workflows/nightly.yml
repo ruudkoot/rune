@@ -29,11 +29,10 @@ jobs:
           # libgcc-N follows this gcc. The full gcc-*-linux-gnu cross
           # compilers are not installed: gcc-powerpc64-linux-gnu conflicts
           # with gcc-multilib, which the 32-bit VM needs.
-          # python3-pil matches check.yml: make test-dist converts share/rune.png.
           v=$(gcc -dumpversion | cut -d. -f1)
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
-            libgmp-dev gcc-multilib cmake g++ python3 python3-pil gdb lldb dwarfdump valgrind \
-            qemu-user clang tmux \
+            libgmp-dev gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind \
+            qemu-user clang \
             libc6-dev-ppc64-cross binutils-powerpc64-linux-gnu \
             libgcc-${v:-13}-dev-ppc64-cross \
             libc6-dev-arm64-cross binutils-aarch64-linux-gnu \
