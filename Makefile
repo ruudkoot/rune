@@ -1812,7 +1812,7 @@ MEASURE_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/comma
                 tools/measure/intinf-design.sml tools/measure/main.sml
 bin/rune-measure.rbc: $(RUNE) $(MEASURE_SRCS) $(wildcard tools/measure/fixtures/*) manifests
 	$(RUNE) --library test/runner --library json --library digest $(MEASURE_SRCS) -o $@
-bin/rune-measure: bin/rune-measure.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
+bin/rune-measure: bin/rune-measure.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory bin/rune-matrix build/bench-report.rbc build/bench-counts.rbc
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-measure.rbc" "$$@"\n' > $@
 	chmod +x $@
 

@@ -1070,3 +1070,13 @@ retained. Corrected focused checks pass 22/22, failed Int64 cases rerun and pass
 Native MLton/self-hosted bytecode agrees for all twelve controllers on the first
 frozen state; the final runner and payload identities must be rechecked after
 the coverage correction, before completing global acceptance.
+
+
+Clean validation also exposed a missing measurement-tool build dependency.
+The controller hashes its benchmark-report payload before compiling a subject;
+the previous worktree already had that file, while a fresh tree did not.
+The public measurement target now depends on its matrix CLI and report/count
+payloads. The original full run records 19,237 PASS, two documented interrupt
+SKIP and that single failure. Supplying the missing payload makes the original
+compiler-error/timeout/missing-image status fixture pass unchanged. The complete
+default suite is repeated on the committed dependency correction.
