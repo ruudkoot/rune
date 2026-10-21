@@ -880,16 +880,17 @@ as a function.
 
 Rune is the one that flattens by a constructor's declared argument type,
 which is what Appel's critique says fails at functor boundaries.
-- **Sorting by name, Rune's way,** would move `list`'s tags (`::` sorts before
-  `nil`) and `order`'s, which the VM's C depends on (D4 D). SML/NJ's
-  numbering by kind keeps `list` and `bool`, but Rune numbers in one
-  sequence.
+- **Sorting by name, Rune's way,** moves `list`'s tags (`::` sorts before
+  `nil`) and `order`'s, which the VM's C depends on. SML/NJ's numbering by
+  kind keeps `list` and `bool`, but Rune numbers in one sequence. D4 takes
+  sorting all the same, and changes the C.
 - **Sorting removes the permutation, not the layout.** A flexible argument
   realised as a pair is still flat in the argument and boxed by the
   specification.
-- **Hence the descriptor (D4 A).** It is smaller than Poly/ML's constructor
-  functions, a match on it is still a switch without inlining, and the
-  expansion folds it.
+- **Hence a descriptor, for the layout alone (D4).** It holds field counts
+  where a specification leaves the layout open. It is smaller than Poly/ML's
+  constructor functions, a match on it is still a switch without inlining,
+  and the expansion folds it.
 
 ### What a unit that applies a functor depends on
 
@@ -1132,8 +1133,9 @@ the Basis 4, the libraries 1. None was settled other than as its class's
 default.
 
 **What it predicts:**
-- **D4's permutation is needed by real code;** the layout part only by
-  HaMLet's grammar functors. Both stay in the descriptor.
+- **Tags in another order are everyday code,** which D4's sorted numbering
+  answers. A layout the specification leaves open is rare (HaMLet's grammar
+  functors), which D4's descriptor answers.
 - **D3's flat tuples do not scale to MLton:** an application would copy
   thousands of slots. A structure needs a record of its own at run time, made
   once and shared by every application that takes it (D3, revised).
@@ -2012,7 +2014,8 @@ found. What it changed in this roadmap:
   untyped, and they leave generic equality and array accesses behind
   (OCaml's code; Tokuda, Sumii and Abe).
 - **Two other compilers sort tags by name**, SML/NJ and Poly/ML. In Rune's
-  single sequence, sorting would move `list` and `order` (D4 D).
+  single sequence, sorting moves `list` and `order`; D4 takes it, and changes
+  the VM's C.
 - **Corner (b) has a published alternative:** Dreyer and Blume's generalised
   functor signatures (D8 C).
 - **Every compiler studied hashes data, not text,** and all but OCaml make
@@ -2066,8 +2069,8 @@ found. What it changed in this roadmap:
   in units does with the Basis's.
 - **The VM's datatypes.** The C of the VM makes and takes apart `::` as two
   fields with nil's and `::`'s tags, `bool`, and `order` (`set_order`,
-  `emit.c:100`, used at `:355` and `:475`) by declaration order. A scheme that renumbers constructors
-  must leave these alone.
+  `emit.c:100`, used at `:355` and `:475`), by today's tags. A scheme that
+  renumbers constructors changes that C with them (D4).
 - **`make check` is green at every commit**, with `test-incremental` for
   anything that touches the cache.
 - **Budgets.** `tests/perf/*.budget` count bytecode instructions and cannot
@@ -2145,12 +2148,16 @@ name, `sigmatch.sml:271`, `:301`):
    constructors in another order, and a constructor whose argument is a type
    the spec leaves abstract may be flat in the argument (a pair) and boxed by
    the spec's reading.
-   - **The descriptor (D4).** The argument carries, for each datatype
-     specification, a slot that says, for each constructor in the spec's
-     order, its tag in the argument and -- only where the spec leaves the
-     layout open -- its field count. The body's matches test the tag through
-     the descriptor's permutation (a load and a compare), and build or take
-     apart a constructor by the layout it says.
+   - **Tags by sorted name (D4).** Every datatype numbers its constructors
+     by their names in sorted order, so a specification and its argument
+     agree on every tag. `list` becomes `::` = 0, `nil` = 1, and `order`
+     `EQUAL`, `GREATER`, `LESS`; the VM's C changes with them.
+   - **A descriptor where the layout is open (D4).** For each constructor
+     whose argument names an abstract type of the parameter, the argument
+     carries its field count. It is a constant, which the elaborator works
+     out when it matches the argument, emitted in the applying unit. The
+     body builds and takes apart such a constructor by it. Specifications
+     without such a constructor have no descriptor.
    - The expansion folds a known descriptor to constants, which gives back
      today's code exactly.
    - E2 counted both cases. Constructors in another order: 170 of MLton's
@@ -2170,10 +2177,6 @@ name, `sigmatch.sml:271`, `:301`):
      out from its realised types. That keeps today's flat layouts in whole
      programs and within a unit (D2), and the layout is recorded with the
      instance for its clients.
-
-The VM's own datatypes keep their tags, since the descriptor renumbers
-nothing: `list` and `bool`, which the compiler makes (`ty.sml:233-235`), and
-`order`.
 
 ### Copies: an expansion in the middle end (D1, D2, D13)
 
@@ -2325,7 +2328,7 @@ was written with. None is decided yet.
 | D1. How a functor is compiled, in each mode | B: once, as a function, in every mode; whole programs' copies made by an expansion in the middle end |
 | D2. Expansion in a build in units | A: only of a functor declared in the same unit |
 | D3. The functor's run-time interface | A: a record per structure, made once and shared; parameter types opaque, polymorphic slots cast; dynamic modules on the same records in M7 |
-| D4. Datatypes a parameter specifies | A: a descriptor slot per specification |
+| D4. Datatypes a parameter specifies | A and D, without exceptions (the owner's direction): tags by sorted name; a descriptor only where a layout is open; M5 measures every option |
 | D5. Datatypes a body declares | A: a layout fixed where the datatype or instance is made, and carried |
 | D6. Equality at a parameter's type | A: the generic walk; the expansion specialises |
 | D7. MLton's typing as an option | A: no |
@@ -2424,9 +2427,9 @@ continues to make copies".
       slots into globals at load, so access afterwards is as before.
     - Not before G2: on a no-go there are no functor records, and flattening
       is fine for a module loaded once.
-    - `_export` keeps renumbering its datatypes' tags to the signature's
-      order. A module compiled for one signature can be renumbered, which an
-      existing functor argument cannot (D4).
+    - `_export` stops renumbering its datatypes' tags to the signature's
+      order: with D4's sorted numbering, a module and its signature number
+      alike.
 - **B. A flat tuple per application,** substructures flattened, as
   `_dynamic` does. MLton's parameters, a median of 2,993 value
   specifications through their substructures (E2), would be copied at every
@@ -2461,30 +2464,91 @@ continues to make copies".
 
 ### D4. Datatypes a parameter specifies
 
-The argument's tags and layout are the argument's, unknown when the body is
-compiled (*The architecture*). E2 counted both cases:
-- constructors in another order: 170 of MLton's 356 applications that match a
-  datatype specification, and 10 in ML-Yacc;
-- a flat layout where the specification's is boxed: 8, all in HaMLet's
-  grammar functors.
+A body compiled once sees a datatype its parameter specifies only through
+the specification. Two things about the argument's datatype are decided by
+its declaration, which the body does not see (*The architecture*):
+- **its tags.** Rune numbers constructors in declaration order, in one
+  sequence for nullary and non-nullary alike, and matching compares
+  constructors by name (`sigmatch.sml:271`, `:301`). So a specification
+  `datatype t = A | B of int * int` matched by `datatype t = B of int * int |
+  A` has `A` at 0 by the specification and at 1 in the argument.
+- **its layout.** A constructor whose argument is a tuple of two or more is
+  flat, any other boxed, decided from the declared argument type
+  (`rep.sml`). A specification `C of info`, with `info` abstract, reads as
+  boxed. An argument with `type info = int * int` lays `C` out flat.
 
-- **A. A descriptor slot per datatype specification:** tags in the spec's
-  order, and field counts where the spec leaves the layout open. A match is a
-  load and a compare more; the expansion folds it. **Recommended.**
+E2 counted both. Constructors in another order: 170 of MLton's 356
+applications that match a datatype specification, and 10 in ML-Yacc. A flat
+layout where the specification's is boxed: 8, all in HaMLet's grammar
+functors.
+
+- **A. A descriptor slot per datatype specification:** for each
+  constructor in the specification's order, its tag in the argument, and its
+  field count where the specification leaves the layout open. A constant,
+  worked out by the elaborator when it matches the argument, emitted in the
+  applying unit. A match on a parameter's datatype costs a load and a
+  compare more, or one indexed load through the inverse table; the expansion
+  folds it.
 - **B. Constructor functions in the argument** (Poly/ML's way: a test, an
   injection and a projection for each constructor). General; every match on
   a parameter's datatype becomes calls.
 - **C. Static interpretation for such functors.** Functors whose parameter
-  specifies a datatype stay copies in every mode. Keeps all the machinery
-  this roadmap removes, for the functors that need it most.
-- **D. Tags by sorted name for every datatype** (SML/NJ's and Poly/ML's
-  way). Rune numbers constructors in one sequence, so sorting moves `list`'s
-  tags (`::` before `nil`) and `order`'s, which the VM's C depends on;
-  exhaustiveness messages follow the order too. It removes the permutation,
-  not the layout.
-- **E. Coercions at the boundary** (Shao's representation analysis): a
-  value is converted between the argument's layout and the body's. Deep
-  values make it a copy of the data.
+  specifies a datatype stay copies in every mode: 172 of MLton's 254. Keeps
+  the machinery this roadmap removes, for the functors that need it most.
+- **D. Tags by sorted name for every datatype** (SML/NJ's and Poly/ML's way).
+  A specification and its argument have the same constructors' names, so
+  the same tags. It solves the tag order, not the layout: alone, it is not
+  enough.
+- **E. Coercions at the boundary** (Shao's representation analysis): a value
+  is converted between the argument's layout and the body's. Deep values
+  make it a copy of the data.
+- **A and D together, without exceptions. The owner's direction
+  (2026-10-21); recommended.**
+  - **Tags:** every datatype's constructors are numbered by their names in
+    sorted order, in one sequence as now, with no exception: a body compiled
+    once knows an argument's tags from the specification alone.
+  - **The descriptor** holds field counts only, and only for the
+    constructors whose layout the specification leaves open (an argument
+    that names an abstract type of the parameter). A specification with none
+    has no descriptor, and its matches cost what they cost today, in a build
+    in units as in a whole program. In the corpora that leaves HaMLet's 8.
+  - **The built-in datatypes:**
+    - `list` becomes `::` = 0, `nil` = 1;
+    - `order` becomes `EQUAL` = 0, `GREATER` = 1, `LESS` = 2;
+    - `bool` (`false`, `true`) and `option` (`NONE`, `SOME`) keep theirs.
+
+    The VM's C changes with them: its list operations (`vm_cons`,
+    `list_head`, `list_tail`), the JIT's `set_order` (`emit.c:100`), and every
+    place the runtime makes or reads a list or an `order`.
+  - **What else follows:**
+    - every compiled unit's constants change, so the version keys are bumped
+      and the frozen Basis is rebuilt;
+    - the instruction budgets are measured again;
+    - `_export` no longer renumbers a module's tags to its signature's order
+      (`exportTags`, `elaborate.sml:1174-1185`), since both sides number
+      alike;
+    - exhaustiveness and redundancy messages keep listing constructors in
+      declaration order, which the elaborator still has.
+  - **Cost:** a sort of each datatype's names when it is declared or
+    specified. That is microseconds against seconds of elaboration, and the
+    descriptors' work mostly goes. At run time a tag's number should not
+    matter: a switch is a jump table in any order, `nil` is told apart as an
+    immediate, and `set_order`'s new mapping takes about as many
+    instructions. M5 measures it.
+
+M5 measures every option, with and without D, together with orderings that
+make exceptions:
+- declaration order;
+- sorted;
+- sorted with exceptions decided by constructor names, such as `nil, ::`
+  and `LESS, EQUAL, GREATER` for any datatype with exactly those names.
+
+The measures are compile time, run time at tier 2, and the cost of matches
+on parameter datatypes in builds in units. If an exceptional ordering
+proves faster, the owner decides again. Any such exception must be a rule on
+constructor names, never on a type's identity. An argument that replicates a
+datatype (`datatype 'a t = datatype list`) would otherwise carry tags the
+specification's reading does not predict.
 
 ### D5. Datatypes a body declares
 
@@ -2941,8 +3005,12 @@ M9 closes all three. The sizes are lines of code and tests.
 * **What:** behind `--functors=functions` (D16), in every mode:
   - the body elaborated once and its annotations kept; every application
     typed by `typed`;
-  - the functor compiled to a function with D3's interface, D4's
-    descriptors and D5's layouts;
+  - the functor compiled to a function with D3's interface, D4's tags by
+    sorted name and descriptors, and D5's layouts;
+  - D4's numbering behind its own flag: declaration order, sorted, and
+    sorted with exceptions decided by constructor names (`nil, ::` and
+    `LESS, EQUAL, GREATER`), with the VM's C for `list` and `order`
+    following the numbering chosen;
   - applications as calls; no expansion yet, so a whole compile calls too;
   - units that declare a functor export its function and no body; units
     that apply one depend on its signature;
@@ -2955,6 +3023,17 @@ M9 closes all three. The sizes are lines of code and tests.
   - the run-time cost of calling: the compiler built in units, MLton's
     benchmark set, E4's Word benchmark, and HOL4's kernel work built in units
     as HOL4 on Rune builds it (its `Table`s), against today's units;
+  - **every option of D4:**
+    - A alone, A and D, and D's three orderings;
+    - for each: compile time (MLton's files, whole and in units, and the
+      bootstrap);
+    - run time at tier 2 (the bootstrap, MLton's benchmark set, HOL4's
+      kernel work);
+    - the cost of matches on parameter datatypes in builds in units
+      (MLton's AST functors);
+    - for the orderings, whether `list`'s and `order`'s numbering moves
+      anything. If an exceptional ordering is faster, the owner decides
+      D4's numbering again;
   - the lines it adds, and the lines M7 would remove.
 * **Done when:** the measures are written down; `make check` passes with the
   flag off, and the suites pass with it on except where the expansion is
@@ -3015,6 +3094,9 @@ removed.
   - dynamic modules on the same nested records (D3): `_dynamic`, `_export`,
     the ABI's fingerprint, `docs/units.md`'s *Dynamic modules*,
     `tests/dynamic`;
+  - D4's numbering landed for every datatype, the VM's C for `list` and
+    `order` with it, and `_export`'s renumbering of tags (`exportTags`)
+    removed;
   - the version keys bumped;
   - the scenarios' expectations changed: S8, S21, S48 to S51, S55, S61, S65
     and S66 (E10 says what each becomes);
@@ -3143,10 +3225,12 @@ removed.
   only past the budget, so that nested functors still do not blow up. The
   prototype milestones exist so that this is found before anything is
   removed.
-- **Descriptors cost more than predicted** in builds in units: a match on a
-  parameter's datatype is a load and a compare more. E2 found such
-  datatypes in 172 of MLton's 254 functors, and 170 applications whose tags
-  differ from the specification's.
+- **Renumbering every datatype** (D4) changes every compiled constant and
+  the VM's C for `list` and `order`; a place in the C that assumed today's
+  tags and is missed would be a wrong result. M5 runs every suite under each
+  numbering, which finds such a place where a test exercises it. The
+  descriptors that remain are for HaMLet's 8 constructors, so their cost is
+  no longer a risk.
 - **Run time in units** (X2). The Basis's functors and HOL4's `Table` are
   called across units. If G2 finds that cost too high, D2 C (stable units'
   functors expanded across units) comes back.
