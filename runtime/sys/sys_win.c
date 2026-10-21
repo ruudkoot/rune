@@ -2846,6 +2846,45 @@ static int find_program(const char *path, int search, char **out) {
     }
     free(exts); free(dirs); last = error; return -1;
 }
+/* CreateProcessW expects names in case-insensitive ordinal UTF-16 order.
+   Compare names, not values, and keep the caller's order for duplicate names.
+   The =C: drive entries, when explicitly supplied, sort with their names. */
+typedef struct { WCHAR *text; int name_units; size_t index; } EnvEntry;
+__attribute__((force_align_arg_pointer))
+static int environment_compare(const void *left, const void *right) {
+    const EnvEntry *a = left, *b = right;
+    int order = CompareStringOrdinal(a->text, a->name_units, b->text, b->name_units, TRUE);
+    if (order != CSTR_EQUAL) return order == CSTR_LESS_THAN ? -1 : 1;
+    return a->index < b->index ? -1 : a->index != b->index;
+}
+static WCHAR *environment_order(WCHAR *block, size_t units) {
+    size_t count = 0;
+    for (WCHAR *p = block; *p; p += wcslen(p) + 1) count++;
+    if (count < 2) return block;
+    if (count > SIZE_MAX / sizeof(EnvEntry)) {
+        free(block); last = ENOMEM; SetLastError(ERROR_NOT_ENOUGH_MEMORY); return NULL;
+    }
+    EnvEntry *entries = text_alloc(count * sizeof *entries);
+    WCHAR *out = entries ? text_alloc(units * sizeof *out) : NULL;
+    if (!entries || !out) { free(block); free(entries); return NULL; }
+    WCHAR *p = block;
+    for (size_t i = 0; i < count; i++) {
+        WCHAR *equals = wcschr(p + (*p == L'='), L'=');
+        size_t n = equals ? (size_t)(equals - p) : wcslen(p);
+        if (n > INT_MAX) { free(block); free(entries); free(out); last = E2BIG; return NULL; }
+        entries[i] = (EnvEntry){p, (int)n, i};
+        p += wcslen(p) + 1;
+    }
+    qsort(entries, count, sizeof *entries, environment_compare);
+    p = out;
+    for (size_t i = 0; i < count; i++) {
+        size_t n = wcslen(entries[i].text) + 1;
+        memcpy(p, entries[i].text, n * sizeof *p); p += n;
+    }
+    *p = 0;
+    free(entries); free(block); return out;
+}
+
 /* the handle a descriptor of the library stands for */
 static HANDLE handle_of(int fd) {
     Sock *s = sock_of(fd);
@@ -2902,7 +2941,9 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
         for (char *const *e = envp; *e; e++) { strcpy(o, *e); o += strlen(*e) + 1; }
         *o++ = 0;
         if (o == bytes + 1) *o++ = 0;
-        block = text16(bytes, (size_t)(o - bytes), NULL);
+        size_t block_units;
+        block = text16(bytes, (size_t)(o - bytes), &block_units);
+        if (block) block = environment_order(block, block_units);
         free(bytes);
         if (!block) { free(app); free(directory); free(wline); return -1; }
     }

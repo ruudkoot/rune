@@ -20,7 +20,9 @@ The Unicode library and source-text decoder still require strict UTF-8.
 * Files, directories, links, temporary files, executable discovery, process
   creation and environment blocks use wide APIs. So do the registry,
   configuration and account names, volume information, Shell and DDE text.
-  The remaining A APIs take only Rune's own ASCII names or no name.
+  Explicit child environments are sorted by Windows' case-insensitive
+  ordinal UTF-16 name order. The remaining A APIs take only Rune's own
+  ASCII names or no name.
 * Ordinary long filesystem paths are made absolute and their separators and
   dot components normalized before adding `\\?\` or `\\?\UNC\`. Returned
   paths keep Rune's `/C:/...` and forward-slash conventions. Short paths
@@ -63,3 +65,32 @@ directory; this is the selected native limit, not an emulated capability.
 Portable language fixtures pin UTF-8 filenames, directory listings and
 arguments with hand-reviewed expected output. The full Windows, native,
 documentation, host-matrix and sanitizer/stress checks form final acceptance.
+
+## Acceptance (2026-10-21)
+
+* `make windows` and `make test-windows JOBS=8` passed on the final Windows
+  implementation. The focused text suite reported 224 passes, with two
+  native deep-current-directory limit skips. Every language/runtime run
+  (both widths and bytecodes, plus register tier 2) passed 328 and 30 cases;
+  layout counts and cross-platform images agreed. Each Windows Basis
+  configuration ran 139,593 checks with zero unexplained failures: 194
+  explained deviations (195 on the 32-bit register VM) and six skips.
+  Terminal tests passed 13 cases; DAP and kernel passed.
+* `make check JOBS=8` passed 17,332 tests: 17,330 passes and the two documented
+  native-interrupt skips. This includes documentation and ISA consistency.
+  `make matrix-quick JOBS=8` passed Rune and all six host configurations with
+  zero unexplained failures; existing host deviations and absent features
+  remain recorded by the matrix.
+* `make vm-asan test-register-asan test-stress JOBS=8` passed, including the
+  register sanitizer/deoptimization and Basis runs and the interpreter/JIT
+  GC-stress modes. The stack ASan/UBSan suite separately passed 518 cases.
+  A C99 stack VM linked with `SYS=none` and answered `--version` successfully.
+* The existing getenv equivalence law passed 100 generated cases on Windows;
+  its equality runner already compares exceptions. An independent native
+  environment-order probe failed on the unsorted implementation and passed
+  after the UTF-16 ordering fix, on both widths. The final Windows suite
+  includes that regression. The Windows-only follow-up changes no native
+  Linux source.
+
+Validation ran outside the restricted sandbox for Windows interop, native
+socket tests and 32-bit SML/NJ execution. No machine-wide settings were changed.

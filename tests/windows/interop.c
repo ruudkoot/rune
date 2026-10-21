@@ -188,6 +188,17 @@ static int child(int argc, WCHAR **argv) {
              wcslen(argv[7]) == 11000;
     if (argc == 8) for (int i = 0; i < 11000; i++) if (argv[7][i] != 0x4e00) ok = 0;
     ok &= GetEnvironmentVariableW(L"RuneChild\x3bb", env, 64) > 0 && !wcscmp(env, isolated16);
+    WCHAR marker[16];
+    if (GetEnvironmentVariableW(L"RuneTextOrderFixture", marker, 16)) {
+        const WCHAR *names[] = {L"alpha=", L"RuneChild\x3bb=", L"zebra=", L"\xd83d\xde80=", L"\xe000="};
+        WCHAR *block = GetEnvironmentStringsW();
+        size_t seen = 0;
+        for (WCHAR *p = block; *p; p += wcslen(p) + 1)
+            for (size_t i = 0; i < 5; i++)
+                if (!wcsncmp(p, names[i], wcslen(names[i]))) { if (seen != i) ok = 0; seen++; }
+        FreeEnvironmentStringsW(block);
+        ok &= seen == 5;
+    }
     return ok ? 0 : 17;
 }
 static void processes(void) {
@@ -200,10 +211,12 @@ static void processes(void) {
     large[33000] = 0;
     char *args[] = {(char *)program, "--child", (char *)isolated, "", "a b", "quote\"x", "tail\\", large, NULL};
     int fds[3] = {-1, -1, -1}; int64_t status[3];
+    SetEnvironmentVariableW(L"RuneTextOrderFixture", NULL);
     SetEnvironmentVariableW(L"RuneChild\x3bb", isolated16);
     int64_t pid = sys_spawn(program, args, NULL, 0, fds);
     check("spawn-inherited-wide-env-and-arguments", pid >= 0 && sys_waitpid(pid, 0, status) == 0 && status[1] == 0 && status[2] == 0);
-    char *env[] = {"RuneChild\xce\xbb=\xed\xa0\x80-x-\xed\xbf\xbf", NULL};
+    char *env[] = {"\xee\x80\x80=private", "zebra=z", "\xf0\x9f\x9a\x80=rocket",
+                   "RuneChild\xce\xbb=\xed\xa0\x80-x-\xed\xbf\xbf", "alpha=first", "RuneTextOrderFixture=1", NULL};
     pid = sys_spawn(program, args, env, 0, fds);
     check("spawn-explicit-wide-env", pid >= 0 && sys_waitpid(pid, 0, status) == 0 && status[1] == 0 && status[2] == 0);
     WCHAR cwd[32768], path[32768]; GetCurrentDirectoryW(32768, cwd);
