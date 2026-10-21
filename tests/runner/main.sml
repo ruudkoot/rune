@@ -101,8 +101,7 @@ struct
                   "scripts/dist-uninstall.bat", "scripts/dist-register.ps1",
                   "scripts/dist-rune.cmd", "scripts/dist-rune-repl.cmd", "tests/dist/*"])),
        Test.requires ["tmux", "python3"] (alone ("test-terminal", [], ["tests/terminal/*"])),
-       alone ("perf-check", [], perfFiles),
-       alone ("bench-smoke", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
+       alone ("bench-coverage", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
        Test.requires ["python3"] (alone ("test-intinf", [], ["tests/intinf/*"])),
        Test.requires ["python3"] (alone ("test-intinf-backends", [], ["tests/intinf/*"])),
        Test.requires ["python3"] (alone ("test-intinf-hardening", [], ["tests/intinf/*"])),
@@ -165,7 +164,7 @@ struct
   val matrixFaults = Test.tag "check" (Test.tag "quick" (Test.tag "covers:tests/runner/matrix*.sml"
     (Test.tag "covers:tests/runner/hostlaws.sml" (Test.tag "covers:tests/runner/smlscan.sml"
       (Test.requires ["grep-pcre"] (Test.describe "runner" [LibHosts.job ("matrix-controller-faults", ["matrix-controller-faults"], [], 300)]))))))
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws
@@ -175,6 +174,7 @@ val () =
     ["laws-one", rbc, st] => Laws.one (rbc, st)
   | ["matrix-controller-faults"] => MatrixFaults.one ()
   | args =>
+      case Benchmarks.command args of SOME action => action () | NONE =>
       case HostLaws.command args of
         SOME f => f ()
       | NONE =>

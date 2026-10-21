@@ -614,3 +614,28 @@ invalidate it; changing only the execution VM retains bytecode reuse.
 A fresh 32-bit preparation preserves accepted/dropped source decisions and
 records the first real diagnostic. Main reports, timing sidecars and dropped
 source tables remain available. Evidence is under tests/out/unit-testing-part2/p2.6.
+
+### P2.3 acceptance, 2026-10-21
+
+All 143 owned drivers are retired. All 267 benchmark output streams agree
+with the old routes, including the six existing fluid/pidigits5/zarith
+failures at O0/O2; no expected answers were changed. The 125 primary
+wrappers and six actual nofib delegates are recorded separately. Both
+register and stack instruction budgets agree, including byte-identical
+regular-file and piped stdin reports and artifacts.
+
+The preserved inventory contract has 163 original cases and 261 hand
+assertions, replayed through the production catalogue query seam. All
+169 inventory runner cases passed, including wrong-expectation and added-row
+property canaries. Routine correctness passed 25/25 and extended checks
+38/38, including the independent peers. Budget faults passed 6/6 and cover
+wrong counts, stale/failed producers, timeout, crash, flood, leaks and
+explicit update margins. Measurement probes cover false success, exit7,
+timeout124 and wrong numeric results before sample publication. Evidence
+is in tests/out/unit-testing-part2/p2.3.
+
+The combined integration collected 19,162 passes, four skips and nine
+failures after a version change invalidated build provenance during the
+run; the full failed receipt is retained. All failed paths and dependencies
+subsequently passed 34/34 with stable inputs. Rune and MLton produced
+identical runner bytecode. Final clean global acceptance is required by P2.17.

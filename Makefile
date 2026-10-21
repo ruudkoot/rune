@@ -1300,12 +1300,11 @@ test-opt: $(RUNEOPT) $(RUNE) vm build/librune.a bin/rune.stack.rbc bin/runedoc.s
 
 # Deterministic budgets on what `runevm --count` reports, for benchmark
 # programs, the compiler's compiles (hello, the bootstrap, programs that
-# scale the module language) and runedoc (tests/perf/run-perf.sh; --update
+# scale the module language) and runedoc (bin/rune-budget; --update
 # after a deliberate change): Rune as shipped, bin/rune and bin/runevm, then
 # the stack bytecode on runevm-stack against tests/perf/stack. About a minute.
-perf-check: $(RUNE) bin/runedoc vm bin/rune.rbc bin/runedoc.rbc bin/rune.stack.rbc bin/runedoc.stack.rbc | build/.doctor-check
-	RUNE=$(RUNE) RUNEVM=$(RUNEVM_REGISTER) sh tests/perf/run-perf.sh
-	RUNE=$(RUNE_STACK) RUNEVM=$(RUNEVM) sh tests/perf/run-perf.sh --stack
+perf-check: $(RUNE) bin/runedoc vm bin/rune.rbc bin/runedoc.rbc bin/rune.stack.rbc bin/runedoc.stack.rbc bin/rune-test bin/rune-budget bin/rune-bench-check | build/.doctor-check
+	$(RUNE_TEST) --tier perf-check
 
 # Not part of `make check`: a collection before every allocation makes a few
 # tests quadratic. For VM changes, next to `make vm-asan`.
@@ -1468,7 +1467,7 @@ bin/runedoc.rbc: bin/rune bin/rune.rbc $(DOC_SRCS)
 	bin/rune -o $@ $(DOC_SRCS)
 
 # runedoc in the stack bytecode, which the budgets of runevm-stack measure
-# (tests/perf/run-perf.sh --stack) and runeopt translates (tests/opt).
+# (bin/rune-budget --stack) and runeopt translates (tests/opt).
 bin/runedoc.stack.rbc: bin/rune bin/rune.rbc $(DOC_SRCS)
 	bin/rune --target=stack -o $@ $(DOC_SRCS)
 
@@ -1517,6 +1516,10 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.
                tests/runner/docchecks.sml tests/runner/mutants.sml tests/runner/docfaults.sml \
                tests/runner/matrixload.sml tests/runner/matrixprepare.sml tests/runner/matrixsuite.sml tests/runner/matrixprogram.sml tests/runner/matrixperf.sml tests/runner/matrixexecutionfaults.sml tests/runner/matrixcachefaults.sml tests/runner/matrix.sml \
                tests/runner/tracecheck.sml tests/runner/heapchecks.sml tests/runner/censustrace.sml tests/runner/heapfaults.sml tests/runner/jitdumpcheck.sml tests/runner/heap.sml \
+               examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
+               tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
+                    examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
+                    tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml \
                tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/portability.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
@@ -1583,7 +1586,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix
+check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check build/bench-counts.rbc
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -1666,25 +1669,21 @@ build/bench-coverage.rbc: examples/benchmarks/shared/catalog.sml examples/benchm
 bench-coverage: build/bench-coverage.rbc vm
 	bin/runevm build/bench-coverage.rbc --check
 
-bench-check: build/bench-catalog.rbc vm
+bench-check: build/bench-catalog.rbc vm bin/rune-test bin/rune-bench-check
 	bin/runevm-stack build/bench-catalog.rbc --check
-	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' sh scripts/run-benchmarks.sh
+	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' bin/rune-bench-check catalogue
 
 # Bounded correctness/metadata only; wall-clock thresholds stay outside check.
-bench-smoke: build/bench-catalog.rbc build/bench-report.rbc build/bench-coverage.rbc vm
-	bin/runevm-stack build/bench-catalog.rbc --check
-	sh tests/benchmarks/check-catalog.sh
+bench-smoke: build/bench-catalog.rbc build/bench-report.rbc build/bench-counts.rbc build/bench-coverage.rbc vm bin/rune-test bin/rune-bench-check
 	bin/runevm build/bench-coverage.rbc --check
-	sh tests/benchmarks/check-matrix-status.sh
-	sh tests/benchmarks/check-measurement-status.sh
-	RUNE_BENCH_COMPILE_OPTIONS=-O2 sh scripts/run-benchmarks.sh --routine --configs rune
+	$(RUNE_TEST) --tier bench-smoke
 
 # Every imported program has a smoke and normal profile. This explicit target
 # covers the complete catalogue; request extra hosts/engines through filters.
-bench-check-all: build/bench-catalog.rbc vm
+bench-check-all: build/bench-catalog.rbc vm bin/rune-test bin/rune-bench-check
 	bin/runevm-stack build/bench-catalog.rbc --check
-	sh scripts/run-benchmarks.sh --profile smoke --configs '$(BENCH_CONFIGS)' --filter '$(BENCH_FILTER)'
-	sh scripts/run-benchmarks.sh --profile normal --configs '$(BENCH_CONFIGS)' --filter '$(BENCH_FILTER)'
+	bin/rune-bench-check catalogue --profile smoke --configs '$(BENCH_CONFIGS)' --filter '$(BENCH_FILTER)'
+	bin/rune-bench-check catalogue --profile normal --configs '$(BENCH_CONFIGS)' --filter '$(BENCH_FILTER)'
 
 build/bench-report.rbc: examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml $(RUNE)
 	$(RUNE_STACK) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml -o $@
@@ -1722,3 +1721,18 @@ test-intinf-cross:
 test-intinf-dependency:
 	python3 tests/intinf/download.py
 	python3 tests/intinf/dependency.py
+
+# SML deterministic budget and benchmark controllers.
+BUDGET_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/budgets.sml tests/runner/budgets-main.sml
+bin/rune-budget.rbc: $(RUNE) $(BUDGET_SRCS) manifests
+	$(RUNE) --library test/runner $(BUDGET_SRCS) -o $@
+BENCH_CHECK_SRCS := $(HOST_LAWS_SRCS) tests/runner/matrixload.sml tests/runner/matrixprepare.sml tests/runner/matrixsuite.sml tests/runner/matrixprogram.sml \
+                    examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
+                    tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml \
+                    tests/runner/inventorytests.sml tests/runner/benchmarks.sml tests/runner/benchmarks-main.sml
+bin/rune-bench-check.rbc: $(RUNE) $(BENCH_CHECK_SRCS) tests/runner/benchmark-cases.json tests/runner/inventory-cases.json manifests
+	$(RUNE) --library test/runner --library json --library digest $(BENCH_CHECK_SRCS) -o $@
+
+bin/rune-budget bin/rune-bench-check: bin/%: bin/%.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/$(notdir $@).rbc" "$$@"\n' > $@
+	chmod +x $@

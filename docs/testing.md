@@ -286,7 +286,7 @@ big-endian VM agree with this machine's to the byte
 (`tests/run-windows.sh:184-191`), that native code does (`AGENTS.md`, the
 native rule), and that the compiler, `runedoc` and the benchmark programs
 stay within their budgets (`tests/perf/*.budget`, `make perf-check`,
-`tests/perf/run-perf.sh`). Where cycles and seconds are noisy by percents,
+`bin/rune-budget`). Where cycles and seconds are noisy by percents,
 a count is a number that either matches or is a bug.
 
 **Byte-identical artefacts.** `make bootstrap` checks that the compiler
@@ -645,3 +645,12 @@ named skips; an explicit CLI selection fails if its compiler cannot start.
 Interactive sessions are distinguished by compiler identity. Reports include
 dropped sources, timing phases and timings.tsv. Cache imports accept legacy
 CRC and version-2 keys and preserve reuse when only the execution VM changes.
+
+
+Benchmark correctness and deterministic budgets use bin/rune-bench-check
+and bin/rune-budget. The catalogue accepts profile/config/filter options;
+suite NAME selects the typed benchmark contract, smoke selects routine
+correctness, extra includes independent peers and negative scenarios, and
+inventory replays the preserved fixture contract. Original script names and
+blob IDs in benchmark-cases.json are provenance. Six baseline failures remain
+visible; the migration does not change expected numeric answers.

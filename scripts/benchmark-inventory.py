@@ -16,6 +16,7 @@ import json
 import re
 import shlex
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -970,6 +971,36 @@ def names(rows):
 
 
 def main():
+    # Deterministic CLI seam for SML callers. Classification and validation
+    # remain production operations; this adapter contains no test assertions.
+    if sys.argv[1:] == ["--query"]:
+        request = json.load(sys.stdin)
+        operation, arguments = request["operation"], request["arguments"]
+        try:
+            if operation == "build":
+                result = build(arguments["source"], Path(arguments["root"]), arguments["lock"])
+            elif operation == "family":
+                result = family(arguments["name"], arguments["text"])
+            elif operation in ("related", "names"):
+                result = arguments["rows"]
+                (related if operation == "related" else names)(result)
+            elif operation == "digest":
+                result = digest(Path(arguments["root"]), [Path(p) for p in arguments["files"]])
+            elif operation == "source_files":
+                result = [str(p) for p in source_files(Path(arguments["root"]), arguments["entry"])]
+            elif operation == "validate":
+                validate(arguments["rows"], arguments["locks"])
+                result = None
+            elif operation == "table":
+                result = table(Path(arguments["path"]))
+            else:
+                raise ValueError("unknown inventory query operation")
+            json.dump({"value": result}, sys.stdout, sort_keys=True)
+            sys.stdout.write("\n")
+        except ValueError as error:
+            json.dump({"error": str(error)}, sys.stdout, sort_keys=True)
+            sys.stdout.write("\n")
+        return
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", action="append", default=[], metavar="ID=DIR")
     mode = parser.add_mutually_exclusive_group()
