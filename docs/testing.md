@@ -596,3 +596,22 @@ stream recovery under a long path, and native compilation of `λ.sml`.
 Logs are in `tests/out/windows-text`. Each worktree stages its own fixtures
 on NTFS using `tests/windows-dir.sh`; a WSL sandbox that blocks interop must
 run this target outside that sandbox.
+
+Native host laws use `bin/rune-laws-hosts [--compare] [HOST...]` and the
+`test-laws-hosts` runner tier. The shared `MatrixModel`, `MatrixProbe`,
+`MatrixHost` and `SmlScan` modules own configuration identities, capability
+probes, compiler diagnostics and source dependencies. Every selected host has
+collection and comparison jobs; MLKit jobs share the matrix pool.
+
+`LAWS_HOST_TIMEOUT` bounds program execution (default 600 s). Linked
+compilation has its own `LAWS_HOST_COMPILE_TIMEOUT` (default 600 s); the
+former driver left these compiler calls unbounded. The default memory cap
+is 8192 MiB. `LAWS_PROGRAMS` selects generated ASCII program names through a
+bounded GNU grep PCRE adapter and must be a single-line expression. Empty
+selection uses every program. The adapter is required only for that option.
+The source scanner handles strings and nested comments independently of Rune.
+
+The official SML/NJ32 110.99.9 Word64 startup defect is recorded as property
+framework unavailability, with a result for every selected law and a named
+skip. The Python host-law driver remains during full shadow reconciliation;
+the part-two roadmap records the remaining validation.

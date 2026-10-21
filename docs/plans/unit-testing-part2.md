@@ -113,7 +113,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | P2.2 | P2.0 | Census, simulator, layout and gcbench checks | done 2026-10-21 |
 | P2.3 | P2.0; P2.6 for host benchmark execution | Budgets and benchmark correctness | pending |
 | P2.4 | P2.0 | Documentation consistency and law mutation checks | pending |
-| P2.5 | P2.0 | Shared matrix model, probes and host laws | pending |
+| P2.5 | P2.0 | Shared matrix model, probes and host laws | in progress: model and controller implemented |
 | P2.6 | P2.5 | Full Basis/benchmark matrix execution | pending |
 | P2.7 | P2.1, P2.6 | Windows ways and final legacy VM/language runner retirement | pending |
 | P2.8 | P2.0 | Build/dependency/unit/install/distribution scenarios | pending |
@@ -523,3 +523,17 @@ cross-implementation checks from becoming a library talking only to itself.
   helper bytecode comparisons passed. Earlier standalone SML checks passed
   211/211; the premature seven-case invocation before the integrated build
   completed was only the inventory/canaries and is not acceptance evidence.
+
+### P2.5 implementation checkpoint, 2026-10-21
+
+The shared matrix model, native capability/diagnostic probes, independent
+source scanner and host-law controller are now SML. All 18 resolved rows,
+six native name probes and 2,178 dependency sets agree with the old route.
+Controller faults cover zero-exit static errors, bad probes, stale executable
+output, alternative law entries, regex errors and PASS followed by failure.
+The canonical integrated working-tree check passed 19,036 results (19,034
+PASS and two native-interrupt SKIP); its receipt is archived in
+`tests/out/unit-testing-part2/p2.4/acceptance`. That snapshot includes other
+in-progress ports. This checkpoint does not retire the Python driver or
+claim full host-law acceptance: full shadows exposed host GC instability
+and a short-deadline startup failure that are still being reconciled.

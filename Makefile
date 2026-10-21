@@ -1292,8 +1292,8 @@ test-lib-hosts: manifests bin/rune-test
 # (docs/plans/quickcheck.md, D10): the differences from Rune's last run of
 # test-laws that tests/basis/law-deviations.txt does not explain. Not part of
 # `make check`.
-test-laws-hosts: $(RUNEDOC) manifests
-	RUNEDOC=$(RUNEDOC) python3 tests/basis/run-laws-hosts.py
+test-laws-hosts: $(RUNEDOC) manifests bin/rune-test bin/rune-laws-hosts
+	RUNEDOC=$(RUNEDOC) bin/rune-laws-hosts
 
 # The native code generator's own tests (tests/opt): after the suites, whose
 # programs it checks and disassembles.
@@ -1515,6 +1515,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.
                tests/runner/hosts.sml tests/runner/libhosts.sml tests/runner/hostchecks.sml \
                tests/runner/migration.sml \
                tests/runner/children.sml tests/runner/bytecode.sml tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativefaults.sml tests/runner/native.sml \
+               tests/runner/matrixmodel.sml tests/runner/matrixprobe.sml tests/runner/matrixhost.sml tests/runner/smlscan.sml tests/runner/programselect.sml tests/runner/hostlaws.sml tests/runner/matrixfaults.sml \
                tests/runner/tracecheck.sml tests/runner/heapchecks.sml tests/runner/censustrace.sml tests/runner/heapfaults.sml tests/runner/jitdumpcheck.sml tests/runner/heap.sml \
                tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/portability.sml \
                tests/runner/main.sml
@@ -1545,6 +1546,15 @@ bin/rune-heap-check: bin/rune-heap-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-heap-check.rbc" "$$@"\n' > $@
 	chmod +x $@
 
+HOST_LAWS_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml \
+                  tests/runner/matrixmodel.sml tests/runner/matrixprobe.sml tests/runner/matrixhost.sml \
+                  tests/runner/smlscan.sml tests/runner/programselect.sml tests/runner/hostlaws.sml
+bin/rune-laws-hosts.rbc: $(RUNE) $(HOST_LAWS_SRCS) tests/runner/hostlaws-main.sml manifests
+	$(RUNE) --library test/runner $(HOST_LAWS_SRCS) tests/runner/hostlaws-main.sml -o $@
+bin/rune-laws-hosts: bin/rune-laws-hosts.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-laws-hosts.rbc" "$$@"\n' > $@
+	chmod +x $@
+
 # Everything a step of make check needs, built before the runner starts, so
 # that two steps that run at once never build one file (each step is a make
 # of its own).
@@ -1555,7 +1565,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check
+check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what

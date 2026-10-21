@@ -148,6 +148,7 @@ struct
       hint = "Windows under WSL with interop (RUNE_WINDOWS_DIR names a directory there) and mingw-w64 (apt: gcc-mingw-w64-x86-64 gcc-mingw-w64-i686)"}]
     @ List.map (fn h => {name = h, probe = "test -x bin/rune-" ^ h, hint = "run: make hosts, then make " ^ h}) Lang.hosts
     @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities
+    @ [{name = "grep-pcre", probe = "printf LIST | grep -P '^LIST$'", hint = "GNU grep with PCRE for LAWS_PROGRAMS"}]
 
   (* each file of expectations read by the one engine (docs/testing.md,
      Expectations): it parses, and its skips name programs that are there.
@@ -181,7 +182,10 @@ struct
        expectations ("lib-deviations", "tests/lib/deviations.txt", NONE),
        expectations ("quarantine", "tests/runner/quarantine.txt", NONE)]
 
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
+  val matrixFaults = Test.tag "check" (Test.tag "quick" (Test.tag "covers:tests/runner/matrix*.sml"
+    (Test.tag "covers:tests/runner/hostlaws.sml" (Test.tag "covers:tests/runner/smlscan.sml"
+      (Test.requires ["grep-pcre"] (Test.describe "runner" [LibHosts.job ("matrix-controller-faults", ["matrix-controller-faults"], [], 300)]))))))
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws
@@ -189,7 +193,11 @@ end
 val () =
   case CommandLine.arguments () of
     ["laws-one", rbc, st] => Laws.one (rbc, st)
+  | ["matrix-controller-faults"] => MatrixFaults.one ()
   | args =>
+      case HostLaws.command args of
+        SOME f => f ()
+      | NONE =>
       case Native.command args of
         SOME f => f ()
       | NONE =>

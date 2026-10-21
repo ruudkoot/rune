@@ -10,6 +10,7 @@ struct
       val mode = Posix.FileSys.S.flags [Posix.FileSys.S.irusr, Posix.FileSys.S.iwusr,
                                       Posix.FileSys.S.irgrp, Posix.FileSys.S.iroth]
       fun input "" = Posix.FileSys.openf ("/dev/null", Posix.FileSys.O_RDONLY, Posix.FileSys.O.flags [])
+        | input "-" = Posix.IO.dup Posix.FileSys.stdin
         | input file = Posix.FileSys.openf (file, Posix.FileSys.O_RDONLY, Posix.FileSys.O.flags [])
       fun output "" = Posix.FileSys.openf ("/dev/null", Posix.FileSys.O_WRONLY, Posix.FileSys.O.flags [])
         | output file = Posix.FileSys.creat (file, mode)
