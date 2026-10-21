@@ -9,7 +9,7 @@ scripts/build-gmp-vm.py	python	P2.16	pending	3369d018cfd306205f06fa4a28b2bb1895b
 scripts/build-gmp.py	python	P2.16	pending	131865ee41c4253f0370b843a34e8dbd9a3e62bc	-	clean-bootstrap-configs-and-package-members
 scripts/census.sh	shell	P2.14	pending	753b9f243a4e091324c5355abb5942e92946945d	-	captured-measurements-and-report-schemas
 scripts/check-census.sh	shell	P2.2	retired	6d085df3e9adf313849884fbd16f1ce72b553754	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
-scripts/check-docs.sh	shell	P2.4	pending	93625d9d7f88ed26c2f0b0f3913d5ebc90f3965a	-	documentation-and-mutant-verdicts
+scripts/check-docs.sh	shell	P2.4	retired	93625d9d7f88ed26c2f0b0f3913d5ebc90f3965a	tests/runner/docchecks.sml	p2.4/focused.log+mutants.old.log+mutants-list.old.log+mutants-list.new.log
 scripts/cloud-cache.sh	shell	Retain: bootstrap/setup	retained	71e9c38d3b687efc8e3da4e163cb65ed4a98c9e2	-	bootstrap/setup
 scripts/configure-gmp.py	python	P2.16	pending	ae6fdba25144da63bbe6ef4198c1e822eebf8f1c	-	clean-bootstrap-configs-and-package-members
 scripts/dist-install.sh	shell	Retain: installers under test	retained	28b3ef9db4e3fd52ca0979008cc07127565b3212	-	installers under test
@@ -45,13 +45,13 @@ scripts/runevm-native.sh	shell	P2.1	retired	a6e57a7ba108a2408c1c1467cabb1055a395
 scripts/runtime_inputs.py	python	P2.16	pending	cd7e27c4e1228916a9b14b96bf6a42424f045c70	-	clean-bootstrap-configs-and-package-members
 scripts/setup-mlton.sh	shell	P2.16	pending	cb9b96789797186182ddff8c391beb939f5e6523	-	clean-bootstrap-configs-and-package-members
 scripts/smlnj-dev-root.sh	shell	Retain: bootstrap/setup	retained	b2e448f48ad14282f1c65077e21192c04c3337ff	-	bootstrap/setup
-tests/basis/check-claims.sh	shell	P2.4	pending	fc25f07650a44704250214e7b760f585a90278f8	-	documentation-and-mutant-verdicts
-tests/basis/check-notes.sh	shell	P2.4	pending	d1564a01e1e90de654ecf6029744c841f26cb858	-	documentation-and-mutant-verdicts
+tests/basis/check-claims.sh	shell	P2.4	retired	fc25f07650a44704250214e7b760f585a90278f8	tests/runner/docchecks.sml	p2.4/focused.log+mutants.old.log+mutants-list.old.log+mutants-list.new.log
+tests/basis/check-notes.sh	shell	P2.4	retired	d1564a01e1e90de654ecf6029744c841f26cb858	tests/runner/docchecks.sml	p2.4/focused.log+mutants.old.log+mutants-list.old.log+mutants-list.new.log
 tests/basis/gen-annotations.sh	shell	P2.15	pending	43be8504b4e79d5f7aa9b2dc7c615d3d67331a13	-	generated-bytes-and-source-order
 tests/basis/host/gen-host-basis.sh	shell	P2.15	pending	98caf1a2fc07f94ddfa554c7388d48172ee1074e	-	generated-bytes-and-source-order
 tests/basis/run-laws-hosts.py	python	P2.5	pending	d4e55a1f7e5c97fd8b866ad2e220a45b5de55a60	-	host-law-case-verdicts
 tests/basis/run-matrix.sh	shell	P2.6	pending	8b5529a95de5db6ac132756830c8fdff65276ac5	-	matrix-case-verdicts-and-images
-tests/basis/run-mutants.sh	shell	P2.4	pending	37ff16f0d92e93674ac48907556cf166ae2eadcc	-	documentation-and-mutant-verdicts
+tests/basis/run-mutants.sh	shell	P2.4	retired	37ff16f0d92e93674ac48907556cf166ae2eadcc	tests/runner/mutants.sml	p2.4/focused.log+mutants.old.log+mutants-list.old.log+mutants-list.new.log
 tests/basis/structures.sh	shell	P2.15	pending	8018735b277e8a775ba224ee8d29925cb4c90cef	-	generated-bytes-and-source-order
 tests/basis/xc2/flatten.sh	shell	P2.15	pending	5185c5767c52df7e608d8fa8b00b2240cd5e26bd	-	generated-bytes-and-source-order
 tests/basis/xc2/mlb-flatten.awk	awk	P2.15	pending	ddccb2d3c761a8a1a73f616fb81a3c5a5785ea99	-	generated-bytes-and-source-order

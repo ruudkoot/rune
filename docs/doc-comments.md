@@ -121,7 +121,7 @@ structure Int = struct ... end
 ```
 
 The claim puts `Int` on the page of `INTEGER`, sends `Int.toString` there, and
-is written to `docs/lib/basis/claims.tsv`. `tests/basis/check-claims.sh`
+is written to `docs/lib/basis/claims.tsv`. `bin/rune-doc-check docs-claims`
 (part of `make check-docs`) wants every claim to be backed by a line
 `structure C : SPEC_INTEGER = Int` of a `tests/basis/*_sig.sml`, and every such
 line to be claimed. `runedoc` also elaborates the library and checks every
@@ -142,7 +142,7 @@ id is `scope/slug` (`Char.fromString/unescaped-double-quote`,
 otherwise `Pinned by:` lists the labels, which must exist in the suite. An id
 names one note. The notes are collected in
 `docs/lib/basis/readings.md` and exported as `notes.tsv`, which
-`tests/basis/check-notes.sh` (part of `make check-docs`) holds against
+`bin/rune-doc-check docs-notes` (part of `make check-docs`) holds against
 `tests/basis/deviations.txt`: a check that fails on Rune because Rune reads
 the specification differently needs a `Reading (the suite differs):` that the
 check pins (and the other way round), and what a host reads differently in a

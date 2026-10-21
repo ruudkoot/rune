@@ -615,3 +615,21 @@ The official SML/NJ32 110.99.9 Word64 startup defect is recorded as property
 framework unavailability, with a result for every selected law and a named
 skip. The Python host-law driver remains during full shadow reconciliation;
 the part-two roadmap records the remaining validation.
+
+The documentation consistency checks use `bin/rune-doc-check` and are named
+`documentation/{features,signatures,claims,notes,annotations,faults}` in the
+runner. `make check-docs` also checks generated pages and lint with runedoc.
+Signature and annotation generators write private output; SML compares it
+with the committed files. Generation remains a separate Make operation.
+
+`bin/rune-doc-check mutants [-j N] [-n PER_FILE] [FILTER]` samples the same
+14 Basis sources and evenly spaced mutation sites as the former driver.
+Each target has a baseline dependency, each mutant has a collection and a
+verdict case, and the final report depends on collection. `SURVIVED` fails its
+named verdict case while the complete results and summary remain available
+in `tests/out/mutants`. The former script exited successfully for survivors;
+this stricter exit behavior makes the adequacy result usable in automation.
+`STILLBORN` means an ordinary compiler diagnostic; a failed producer, missing
+bytecode, controller crash or failure before the first law fails the job.
+The property seed and environment are inherited; the default law idle limit
+is 30 seconds and the sample count is 20 per file.

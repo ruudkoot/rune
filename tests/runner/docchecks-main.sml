@@ -1,0 +1,5 @@
+val () = case DocChecks.command (CommandLine.arguments ()) of SOME f => f ()
+| NONE => case Mutants.command (CommandLine.arguments ()) of SOME f => f ()
+| NONE => (case CommandLine.arguments () of ["docs-faults"] => DocFaults.one ()
+         | "mutants" :: args => Mutants.protect (fn () => Mutants.main args) ()
+         | _ => Posix.Process.exit 0w2)

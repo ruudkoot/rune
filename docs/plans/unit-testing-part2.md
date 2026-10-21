@@ -112,7 +112,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | P2.1 | P2.0 | Native-code checks and stress/sanitizer ways | done 2026-10-21 |
 | P2.2 | P2.0 | Census, simulator, layout and gcbench checks | done 2026-10-21 |
 | P2.3 | P2.0; P2.6 for host benchmark execution | Budgets and benchmark correctness | pending |
-| P2.4 | P2.0 | Documentation consistency and law mutation checks | pending |
+| P2.4 | P2.0 | Documentation consistency and law mutation checks | done 2026-10-21 |
 | P2.5 | P2.0 | Shared matrix model, probes and host laws | in progress: model and controller implemented |
 | P2.6 | P2.5 | Full Basis/benchmark matrix execution | pending |
 | P2.7 | P2.1, P2.6 | Windows ways and final legacy VM/language runner retirement | pending |
@@ -537,3 +537,29 @@ PASS and two native-interrupt SKIP); its receipt is archived in
 in-progress ports. This checkpoint does not retire the Python driver or
 claim full host-law acceptance: full shadows exposed host GC instability
 and a short-deadline startup failure that are still being reconciled.
+
+### P2.4 acceptance, 2026-10-21
+
+Four shell drivers are retired: feature consistency, documentation claims,
+notes and law mutation control. `DocChecks` verifies features, all 205 claim
+pairs, 65 independent signature token streams, notes, annotations and
+private signature-generator output. The feature census is unchanged at 197
+features, 326 language tests and 235 Basis files. `make check-docs` passed
+all generated-page/lint checks and 11/11 runner cases.
+
+`Mutants` preserves the 14 sources, evenly spaced sites, property seed,
+watchdog and KILLED/SURVIVED/STILLBORN distinction. Char's two sampled sites
+agree on SURVIVED/STILLBORN; List and ListPair agree on SURVIVED/KILLED with
+the same killer law. Survivors now fail named adequacy verdicts, while the
+final report still publishes all collected outcomes. Missing/duplicate
+metadata, signature drift, stale annotations/notes, failed
+producers, loops, crashes, floods and leaked descendants are covered.
+
+The canonical `make check JOBS=8`, outside the sandbox with MLKit 4.7.25
+pinned, passed 19,034 cases and two documented native-interrupt skips
+(2,418.6 s wall). Its per-case receipt is preserved in
+`tests/out/unit-testing-part2/p2.4/acceptance`, beyond rolling-run retention.
+`p2.4/final-compilers/agreement.json` records matching Rune/MLton
+bytecode for the final integrated runner, documentation checker, host-law
+helper and matrix helper. The old mutation driver returned success
+for survivors; its stricter replacement CLI is documented in testing.md.

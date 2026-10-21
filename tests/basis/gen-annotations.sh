@@ -3,6 +3,7 @@
 # annotations for the documentation (docs/plans/docgen.md, D5):
 #   tests/basis/gen-annotations.sh           write tests/basis/annotations.txt
 #   tests/basis/gen-annotations.sh --check   fail if it is not what would be written
+#   tests/basis/gen-annotations.sh --out FILE  write private output for SML comparison
 # The documentation generator reads annotations.txt (`runedoc --annotations`)
 # and never deviations.txt: that file is the business of the suite, and this
 # script is the one place that knows its format. annotations.txt is committed,
@@ -23,10 +24,12 @@
 set -eu
 cd "$(dirname "$0")"
 check=0
+destination=annotations.txt
 case "${1:-}" in
   --check) check=1 ;;
+  --out) [ $# -eq 2 ] || exit 2; destination=$2 ;;
   "") ;;
-  *) echo "usage: tests/basis/gen-annotations.sh [--check]" >&2; exit 2 ;;
+  *) echo "usage: tests/basis/gen-annotations.sh [--check | --out FILE]" >&2; exit 2 ;;
 esac
 
 tmp=$(mktemp)
@@ -96,6 +99,6 @@ if [ $check = 1 ]; then
     exit 1
   fi
 else
-  cp "$tmp" annotations.txt
-  echo "gen-annotations: wrote annotations.txt ($(grep -c -v '^[#@]' annotations.txt) annotations)"
+  cp "$tmp" "$destination"
+  echo "gen-annotations: wrote $destination ($(grep -c -v '^[#@]' annotations.txt) annotations)"
 fi

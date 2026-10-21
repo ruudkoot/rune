@@ -8,7 +8,7 @@
    into another.
      mutate FILE        the sites: one line `k line:column token -> replacement`
      mutate FILE k      the file with site k changed, on standard output
-   tests/basis/run-mutants.sh runs the laws against each. *)
+   bin/rune-doc-check mutants runs the laws against each. *)
 
 (* the file's tokens that are code, as (offset, text) *)
 fun tokens (s : string) : (int * string) list =

@@ -34,7 +34,7 @@ keep these invariants:
 * A basis structure says which signature it implements in the comment above
   it (`Implements: SIG where type ...`, `docs/doc-comments.md`), and
   `tests/basis/<name>_sig.sml` matches it against the transcription;
-  `make check-docs` (`tests/basis/check-claims.sh`) wants both.
+  `make check-docs` (`bin/rune-doc-check docs-claims`) wants both.
 * When adding a basis structure, add a `basis.<name>` row listing its members
   and add the file to `lib/basis/library.build` in a block of its class
   (`docs/build.md`). What it provides and requires is worked out from the
@@ -54,7 +54,7 @@ keep these invariants:
   reading of the specification, a deviation from it or a choice it leaves
   open is written down once, as a note in the doc comment of the member
   (`docs/doc-comments.md`); a `rune` line of `deviations.txt` needs such a
-  note (`tests/basis/check-notes.sh`). After changing a line of
+  note (`bin/rune-doc-check docs-notes`). After changing a line of
   `deviations.txt` about a host, run `sh tests/basis/gen-annotations.sh` and
   `make docs`: the documentation shows those lines under the members, from
   the committed `tests/basis/annotations.txt`.
