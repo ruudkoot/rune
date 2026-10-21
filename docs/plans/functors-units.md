@@ -24,7 +24,7 @@ This roadmap plans four things:
   - fingerprints fed to the hasher rather than built as text;
   - fingerprints as hashes of their parts' hashes;
   - the data hashed directly;
-  - and a hash chosen for the hosts.
+  - and a hash chosen for Rune's tier 2, 18 times as fast as today's there.
 - **Typing that follows the Definition** in the corners that are left.
 - **Functors compiled once, as functions, in every mode.** Whole programs get
   their copies back from an expansion in the middle end, the same in a whole
@@ -53,16 +53,17 @@ What it rests on:
     SML/NJ (E2);
   - what the copies cost (E3), and how much run time sits in functor bodies
     (E4);
-  - where a build in units spends its time (E5), and hash functions on every
-    host (E6);
+  - where a build in units spends its time (E5), and hash functions for
+    Rune's tier 2 (E6);
   - what an edit of a body compiles again (E8), and whether fingerprints keep
     the equality of type variables (E9);
   - how much of units exists for functors (E10);
   - the literature, and the code of SML/NJ, Poly/ML, MLKit, MLton, OCaml,
     GHC, rustc and Go (E11).
-- **Four prototypes, thrown away:**
+- **Five prototypes, thrown away:**
   - tier 2 dividing by a constant (E7);
   - fingerprints streamed, F1 and F2 (E5);
+  - rx2f, a hash for tier 2, in the compiler (E6);
   - a fix of a hole in the cache that E9 found;
   - a linear link (E3).
 
@@ -129,6 +130,11 @@ it is said to be outside this roadmap.
   since abstract parameter types reach Lower there.
 
 **Outside this roadmap:**
+- **SML/NJ 110.99.9 on amd64 cannot compile a 63-bit word constant** (E6):
+  "MLRisc bug: AMD64MCEmitter: MOVABSQ unimplemented". rx2f builds its
+  constants at start-up for it.
+- **Rune's int64 VM has a 64-bit `Word` whatever the bytecode** (E6), so a
+  program that relies on `Word`'s 63 bits computes otherwise there.
 - **`lib/random`'s `hashString` differs on `smlnj32`** (E6): SML/NJ
   110.99.9's 32-bit `Word64` loses bits 30 and 31 of its low half, so the
   library's promise of the same numbers on every compiler does not hold
@@ -177,6 +183,12 @@ The owner's brief, as written:
   owner's.
 - **Form:** that of `docs/plans/utf8.md`.
 - **Heavy runs** (MLton's compiler, HOL4) were allowed, one at a time.
+
+**The owner's ruling after M0 was first written (2026-10-21):** the hash
+function is chosen for its speed and correctness on Rune at tier 2 alone.
+SML/NJ, a broken compiler, is not to constrain it. The other compilers are
+measured for information only. E6 was run again under that rule, and D11
+changed with it (rx2f, 126 bits, in place of four 30-bit lanes).
 
 | The brief asks | Answered in |
 |---|---|
@@ -259,8 +271,8 @@ milestone that answers it.
   interface for it (D3 to D6).
 - **A3. "Faster hash functions."** Faster per byte matters less once no text
   is hashed (S0 to S2), and more what a hash costs per combine; the cache
-  trusts its hashes, so quality and width matter as much as speed. The
-  hosts constrain all three (*Constraints*, D11).
+  trusts its hashes, so quality and width matter as much as speed. The owner
+  ruled that Rune's tier 2 alone decides (*The request*, D11).
 
 ### Dangerous
 
@@ -962,7 +974,7 @@ there.
 | E3 | What the copies cost after performance M3 | assumption 2, D13, X6 |
 | E4 | How much run time sits in functor bodies | assumption 1, D2, X2 |
 | E5 | Where a build in units spends its time, and F1, F2 and S0 built | D9, M2, M4 |
-| E6 | Hash functions on every host | D11 |
+| E6 | Hash functions for Rune's tier 2, and on the other hosts for information | D11 |
 | E7 | Tier 2 dividing by a constant, built | D12, M1 |
 | E8 | What an edit of a functor's body compiles again | assumptions 2 and 3, D1 |
 | E9 | Whether fingerprints keep the equality of type variables | X4, M2 |
@@ -1390,78 +1402,144 @@ F2:
 **What it predicts:**
 - M2 can land with no output changed but issue 16's fix and F1's edge case.
   It is worth 38% of the instructions of MLton's build in units.
-- M1 (division) and M4 (S1 and S2) take the rest of the hashing.
+- M1 (division) and M4 (rx2f, S1 and S2) take the rest of the hashing.
 - `export`'s pickling needs its own look before G1. M4 has it.
 
-### E6. Hash functions on every host
+### E6. Hash functions for Rune's tier 2
 
-One program (`results/E6/hashbench.sml`) runs eight candidate hashes on MLton,
-SML/NJ, `smlnj32`, Poly/ML, MLKit, and Rune at tier 2 and interpreted:
+**The owner's ruling (2026-10-21):** the hash is chosen for its speed and
+correctness on Rune at tier 2, and on nothing else. SML/NJ, `smlnj32`
+included, constrains nothing. The other compilers were measured too, but
+for information only.
 
-| | What | Bits |
-|---|---|---:|
-| polymod | today's `P.hash`: four `(h*k + c) mod p` lanes, `p` primes below 2^24 | 96 |
-| polymask | the same lanes with a mask for the `mod`, in `Word` | 96 |
-| ma30 | four 30-bit multiply-add lanes, with a finaliser | 120 |
-| mix30 | four 30-bit lanes, mixed at every byte (`y = ((h xor c) * K) andb M; y xor (y >> 15)`), with a finaliser | 120 |
-| mix30w | mix30 taking three bytes a step | 120 |
-| random | `Random.hashString` (`lib/random`), `Word64` | 64 |
-| murmur2 | `lib/digest`'s Murmur2 | 32 |
-| sha256 | `lib/digest`'s SHA-256 | 256 |
+E6 ran in two rounds. The first, before the ruling, asked every candidate
+to give the same value on every host, `smlnj32` included. That limited the
+candidates to 30-bit lanes, with right shifts only of masked values. The
+second, E6b (`results/E6b/README.md`), lifted that limit and designed for
+Rune's own arithmetic.
 
-Every `Word` value that reaches `*`, `+` or `xorb` is masked to 30 bits or
-fewer, and every right shift is of a masked value.
+**What Rune's arithmetic is** (`results/E6b/wordcheck.txt`):
+- `Word` is 63 bits, and wraps mod 2^63. That holds on every engine of a
+  build: the interpreter, tier 1, tier 2, the stack VM, the 32-bit VM, and
+  aarch64 under qemu.
+- The VM built with 64-bit integers (`runevm-int64`) has a 64-bit `Word`,
+  whatever the bytecode says.
+- `Word64` costs about twice `Word` per byte at tier 2. Its loops do not
+  allocate, but its operations cost more.
 
-**Hosts agree** on every candidate but `random`:
-- MLton, SML/NJ, Poly/ML, MLKit, and Rune at tier 2 and interpreted give the
-  same digests.
-- On `smlnj32` every `random` line differs. SML/NJ 110.99.9's 32-bit `Word64`
-  loses bits 30 and 31 of its low half (`0wx40000000 : Word64.word` prints 0).
-- So `Word64` is out, and `lib/random`'s promise of the same numbers on every
-  compiler does not hold on `smlnj32` (*Found while writing this roadmap*).
+**What a hash costs at tier 2 is reading the bytes.**
+- `String.sub` is the only byte read every host has for the compiler's
+  sources. A loop that only sums bytes takes 30 instructions a byte.
+- Packing seven bytes into one 56-bit word adds 2.
+- A 63-bit multiply-and-xorshift lane adds 4, and a second lane 4.4.
+- So about 80% of a good hash is the read, and a second lane is cheap.
+- Tier 2 checks the range of a constant shift and whether a global
+  constant is initialised at every use, so constants are read into locals
+  first (3 instructions a byte).
+- A call costs about 250 instructions before the first byte.
+- The packing is done in `Word`. In `Int`, it would raise `Overflow` on a
+  host whose `Int` is 32 bits.
 
-**Speed,** in MB/s (best of three, pinned, at a load of 11 to 20):
+**The candidates** (`results/E6b/tables.md`), at tier 2, the harness
+subtracted, best of three:
 
-| | MLton | SML/NJ | smlnj32 | Poly/ML | MLKit | Rune tier 2 | Rune interpreted |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| polymod | 29.2 | 14.7 | 30.1 | 15.2 | 11.0 | 12.5 | 4.5 |
-| polymask | 184.2 | 83.4 | 83.9 | 114.0 | 64.5 | 42.9 | 6.2 |
-| ma30 | 190.9 | 89.9 | 79.3 | 122.6 | 65.0 | 31.8 | 6.1 |
-| mix30 | 151.3 | 61.0 | 51.7 | 79.7 | 39.7 | 26.7 | 4.6 |
-| mix30w | 428.6 | 126.3 | 105.9 | 170.3 | 134.7 | 54.7 | 8.5 |
-| murmur2 | 663.9 | 55.1 | 116.6 | 289.5 | 51.5 | 96.3 | 11.2 |
-| sha256 | 37.4 | 5.7 | 19.4 | 18.0 | 6.0 | 6.9 | 0.89 |
+| | Instructions a byte | Cycles a byte | MB/s | A 16-byte text, instructions / ns | Combining, instructions / cycles a value |
+|---|---:|---:|---:|---:|---:|
+| polymod, today's `P.hash` | 178 | 171 | 13.1 | 2,926 / 943 | 778 / 781 |
+| polymod, with E7's division | 158 | 50 | 64.4 | 2,596 / 296 | 693 / 205 |
+| rh2: two multiply-xorshift lanes | 44.1 | 13.4 | 242.5 | 1,078 / 101 | 117 / 31 |
+| **rx2f: two xxHash-style lanes** | **49.5** | **13.9** | **234.0** | **1,470 / 129** | **182 / 52** |
+| xx63: one xxHash-style lane, 63 bits | 40.5 | 11.4 | 286 | 1,188 / 101 | 172 / 46 |
+| mx2w64: rh2's design in `Word64` | 79.2 | 27.6 | 117 | 2,148 / 259 | 328 / 107 |
+| xx64: xxHash64 itself, in `Word64` | 67.3 | 27.7 | 114 | 1,710 / 194 | |
 
-- At tier 2, polymod takes 183 instructions a byte and mix30w 116.
-- The `mod`'s cost is its latency more than its instructions: polymask runs
-  3.4 times as fast with only 1.3 times fewer instructions.
-- E7's division makes polymod about 47 cycles a byte at tier 2. Mix30w's
-  cycles were not measured; its 54.7 MB/s makes it some 40 to 60 cycles a
-  byte at this machine's clock, on a par.
+The other candidates of both rounds -- the first round's masked 30-bit
+lanes and mix30w, Murmur2, FNV at 63 bits, and one-lane and `Word64`
+variants -- are in the same table of the drafts. None comes near rx2f at
+tier 2.
 
-**Quality,** on what the build hashes:
-- MLton's whole build in units hashes only 2,776 distinct fingerprint texts.
-  2,604 of them (67 MB) are the corpus, with 33,639 distinct pieces.
-- Every lane of every candidate collides as the birthday bound predicts
-  (0.99 to 1.01 of it, at 16 bits), and no whole digest collides.
-- **Thue-Morse strings make polymask collide in all four lanes at once from
-  64 bytes, and ma30 from 256 bytes.** Polymod, mix30, mix30w and the
-  references do not, up to 2^14 bytes. Masked linear lanes are structurally
-  weak.
-- Polymod has no finaliser, so a change of the last byte flips about 8% of
-  the output's bits. A prefix of `P.hash` must never be used as a shorter
-  hash.
+**Correctness** (`results/E6b/check`, `quality`):
+- **The SML is the function meant.** An independent model in C gives the
+  same digests as the SML at tier 2 for all 14 candidates. It was checked on
+  the 67 MB corpus of fingerprint texts, its 33,639 pieces, the small corpus
+  and the streams of values combined. xx64 gives XXH64's published values.
+  The compiler's prototype of `Pickle.hash` streaming rx2f, whole or fed in
+  pieces of 1 to 13 bytes, matches the model.
+- **Every engine of a build gives the same values:** the interpreter, tier
+  1, tier 2, `--jit=all`, the stack VM, the 32-bit VM with and without the
+  JIT, and aarch64 under qemu. Only the int64 VM differs, for every 63-bit
+  design.
+- **Quality:**
+  - On the corpus, every candidate collides at the birthday bound, and no
+    whole digest collides.
+  - On structured inputs, rx2f is clean: sparse keys, runs of zeros, cyclic
+    texts, one or two bytes changed anywhere, a million counters, and no
+    Thue-Morse collision up to 2^16 bytes.
+  - Its full bias matrix (inputs of 8 to 64 bytes, 10,000 samples) is ideal:
+    no more than one cell beyond 4.5 standard deviations.
+  - Combining, it is at the bound on chains of child hashes that differ in
+    one lane, in one bit of two values, in small values, and on parents of
+    hashed children.
 
-**Width.** 96 bits already put an accidental collision among 10^6 identities
-at about 6 × 10^-18. 120 or 128 bits buy nothing measurable against accidents;
-structure matters more.
+**Weaknesses found in the obvious designs:**
+- **Multiply-xorshift is weak when a whole 63-bit word goes in.** A
+  difference in a value's top bits stays in the lane's top bits, and the next
+  value can cancel it.
+  - rh2's first lane collides about 48 times where 1.4 are expected.
+  - The one-lane design has 46 collisions of the whole digest.
+  - Text, packed seven bytes at a time, never reaches the top bits.
+  - Child hashes, which a combine feeds, do. Hence rx2f's xxHash round:
+    rh2 is safe for text and not for combining.
+- **rx2f needs its full ending.** Without one, or with only a fold, the bias
+  matrix is far off (the worst cell at 0.44); with one multiply, borderline.
+- **FNV at 63 bits** collides on Thue-Morse strings from 4,096 bytes, and
+  fails as a combine.
+- **The first round's masked polynomial lanes** collide in all four lanes at
+  once on Thue-Morse strings: masked polynomials from 64 bytes, multiply-add
+  lanes from 256.
 
-**What it predicts (D11):**
-- Never masked linear lanes.
-- If the hash changes, four 30-bit mixing lanes like mix30w: 120 bits, no
-  division, with a finaliser, and the same value on every host.
-- M4 changes every fingerprint's value anyway (S1), so the change costs no
-  extra invalidation.
+**The width.**
+- One 63-bit lane puts an accidental collision among a million identities
+  at about 5 × 10^-8.
+- Two lanes, 126 bits, cost about 4 instructions a byte more (about 10%).
+- The second lane also covers the structural collisions of a single lane.
+
+**In the compiler.** `Pickle.hash` and S0's streaming hasher were switched
+to rx2f on top of E5's S0, F1 and F2 (`patches/E6b-rx2f-only.patch`).
+`make test-incremental` passes, 114 of 114. MLton's 606 files in units at
+tier 2:
+
+| | Instructions | Cycles | Seconds | `unit-usages` | `unit-export` |
+|---|---:|---:|---:|---:|---:|
+| base | 1,629G | 1,038G | 331.3 | 137.4 | 115.3 |
+| S0, F1 and F2 (M2) | 1,165G | 770G | 235.4 | 89.1 | 73.8 |
+| **and rx2f** | **1,030G** | **551G** | **177.8** | **39.8** | **64.3** |
+| the whole compile | 303G | 167G | 60.9 | | |
+
+- A build in units goes from 6.2 times the whole compile's cycles, to 4.6
+  after M2, to 3.3 with rx2f.
+- It still hashes 1,571 MB, more than M2's 1,494: a fingerprint that names a
+  hash now names 32 digits. That is about 5 s of the 40 of `unit-usages`, at
+  234 MB/s. The rest is presumably building the texts and walking the
+  environments, for S1 and S2.
+
+**On the other compilers, for information** (`results/E6b/hosts`):
+- **Same values as Rune:** SML/NJ 64-bit, Poly/ML and MLKit. Their `Word` is
+  63 bits.
+- **Other values:** MLton's build, whose `Word` is 32 bits; `smlnj32`; and
+  Rune's int64 VM.
+- Masking each `+` and `*` to 63 bits should make the int64 VM agree. So
+  should MLton's build with `-default-type word64`. Neither was tried.
+- In the first round, `Random.hashString` (`lib/random`) gave other values on
+  `smlnj32`: SML/NJ 110.99.9's 32-bit `Word64` loses bits 30 and 31 of its
+  low half (`0wx40000000 : Word64.word` prints 0).
+- SML/NJ 110.99.9 on amd64 cannot compile a 63-bit word constant ("MLRisc
+  bug: AMD64MCEmitter: MOVABSQ unimplemented"). So rx2f's constants are
+  built from 21-bit pieces at start-up, which costs Rune nothing.
+
+**What it predicts (D11):** rx2f, for text and for combining, 126 bits, in
+M4. On every measure at tier 2 it is better than today's hash, with M1's
+division or without.
 
 ### E7. Tier 2 dividing by a constant, built
 
@@ -1793,18 +1871,19 @@ found. What it changed in this roadmap:
 
 ## Constraints
 
-- **Six compilers build the compiler, and agree.** MLton, SML/NJ 110.99.9,
-  `smlnj32` (31-bit `Int` and `Word`), SML/NJ's development release, Poly/ML
-  and MLKit build Rune, and Rune builds itself; `make check-cross` wants the
-  same bytes from all of them. So the compiler's own code can use only what
-  every host has and computes alike:
-  - a hash must give the same value on a 31-bit host as on a 63-bit one:
-    `Int` arithmetic that overflows raises on 32-bit hosts; `Word`'s low bits
-    of `+`, `*`, `xorb`, `andb` and `orb` agree across widths, and a right
-    shift agrees only on a value already masked to 30 bits or fewer;
-  - on Rune `Word64` boxes a value that needs bit 63, so a 64-bit hash
-    allocates; `Word32` is made by a functor (`lib/basis/word32.sml:6`);
-  - `lib/digest` and `lib/random` are not in the compiler's build file.
+- **Six compilers build the compiler.** MLton, SML/NJ 110.99.9, `smlnj32`
+  (31-bit `Int` and `Word`), SML/NJ's development release, Poly/ML and MLKit
+  build Rune, and Rune builds itself; `make check-cross` wants the same bytes
+  from all of them for every program it compiles. So the compiler's own code
+  must compile on every host, and must not raise there: `Int` arithmetic
+  that overflows raises on a host whose `Int` is 32 bits, and SML/NJ cannot
+  compile a 63-bit word constant.
+- **The hash is chosen for Rune at tier 2** (the owner, 2026-10-21). Its
+  speed and correctness there decide it. Whether another host's build of
+  the compiler computes the same values is for information (E6, D11). On
+  Rune, `Word` is 63 bits on every engine but the int64 VM; `Word64` costs
+  about twice as much a byte; `lib/digest` and `lib/random` are not in the
+  compiler's build file.
 - **S42.** A program compiled whole and the same program built from its
   units' Mid (`--units --whole`) are the same bytes (`check-units`,
   `check-cross`). Whatever makes whole programs' code from functors must make
@@ -2005,24 +2084,38 @@ stamps or counters, and recursive groups (`datatype ... and ...`,
 
 ### The hash (D11)
 
-Four lanes of 30 bits, in `Word`, each mixed at every step: `y = ((h xorb c)
-* K) andb M`, then `y xorb (y >> 15)` on the masked value. Each step takes
-three bytes of text or one value of a stream of small numbers (S1's and S2's
-tags and child hashes). A finaliser per lane at the end. That makes 120
-bits.
-- It is E6's mix30w. On every host it gives the same value. Of the
-  candidates that agree on every host, are 96 bits or more, and did not
-  collide on E6's structured inputs -- polymod, mix30, mix30w and SHA-256 --
-  it is the fastest on every host, but for Rune's tier 2 after M1, where
-  polymod is on a par.
-- It has no division, and its finaliser is the non-linear step Broder asks
-  for between levels of fingerprints.
-- It replaces `P.hash` in M4, when S1 changes every fingerprint's value
-  anyway.
-- The instruction set's fingerprint keeps its own copy of `P.hash`'s first
-  lane (`reggen.sml`, `isagen.sml`), and `plant.py` keeps a copy of `P.hash`
-  for the scenarios that need it.
-- The old algorithm stays as M1's benchmark.
+rx2f (E6). It is two lanes of 63 bits, in `Word`. Every operation is mod
+2^63, and `rotl (x, r)` is `x << r` or-ed with `x >> (63 - r)`.
+- **Constants:** xxHash64's primes made odd 63-bit words, `(p >> 1) orb 1`:
+  - P1 = `0x4F1BBCD8C2F5E543`;
+  - P2 = `0x6159571E93EA75A7`;
+  - P3 = `0x0B2B33D8CF1BBCFD`;
+  - P4 = `0x42F5E53BE1595731`.
+
+  They are built from 21-bit pieces at start-up, since SML/NJ cannot compile
+  a 63-bit word constant.
+- **Rounds:**
+  - `A (a, x) = rotl (a + x * P2, 31) * P1`;
+  - `B (b, x) = rotl (b + x * P4, 27) * P3`.
+- **The ending, of each lane:** `h := h xorb (h >> 33); h := h * P2; h := h
+  xorb (h >> 29); h := h * P3; h := h xorb (h >> 32)`.
+- **Text of `n` bytes:**
+  1. Start with `a = P1` and `b = P3`.
+  2. For each whole group of seven bytes, take `x` as its little-endian
+     56-bit value, packed in `Word`: `a := A (a, x)` and `b := B (b, x)`.
+  3. If one to six bytes are left, do the same with their value.
+  4. Then `a := A (a, n)` and `b := B (b, n)`.
+  5. The digest is the two endings, 126 bits, written as 32 hex digits.
+- **Combining:** the same rounds, with each value as `x`. A child hash is two
+  values. The number of values takes the place of `n`.
+- **Streaming:** the hasher keeps `a`, `b`, up to six pending bytes and the
+  length. S0 feeds it; S1 and S2 combine with it.
+
+The constants are read into locals before a loop. Tier 2 otherwise checks a
+global's initialisation, and a constant shift's range, at every use.
+`P.hash`'s old algorithm stays in two places: in the instruction set's
+fingerprint, which keeps its own copy of the first lane, and in M1's
+benchmark.
 
 ### Division by a constant (D12)
 
@@ -2063,7 +2156,7 @@ was written with. None is decided yet.
 | D8. The four corners | A: tests now; (b) refused at the declaration after E2; (a), (c), (d) closed by D1 |
 | D9. How far fingerprints go | C: S0, then S1, then S2, each gated |
 | D10. Memo keys for structures and signatures | A: the binder's identity and the path |
-| D11. The hash | B: four mixing 30-bit lanes (120 bits), in M4 |
+| D11. The hash | B: rx2f, two 63-bit xxHash-style lanes (126 bits), for text and combining, in M4 |
 | D12. Division by a constant | A: tier 2 on both targets, every division, and `Simplify` folding constants |
 | D13. Nested functors in whole programs | A: an expansion budget, past which an application is a call |
 | D14. S42 and the cache's configuration | A: S42 by construction; the configuration unchanged; M7 gated by budgets |
@@ -2287,36 +2380,62 @@ w/o going via a pretty print."
 
 ### D11. The hash
 
-The brief: "you should also look at faster hash functions". E6 measured eight
-candidates on every host, and E7 measured today's hash with division by a
+The brief: "you should also look at faster hash functions". The owner ruled
+on 2026-10-21 that speed and correctness on Rune at tier 2 decide it, and
+that the other compilers are for information (*The request*). E6 measured the
+candidates in two rounds; E7 measured today's hash with division by a
 constant.
 
-- **A. Keep `P.hash`,** made fast by M1 (about 47 cycles a byte at tier 2,
-  from about 180). No identity changes for it. It stays slow on the hosts
-  (29 MB/s by MLton's build, 11 to 30 elsewhere). It has no finaliser, and
-  hashes of hashes made of linear lanes need a non-linear step between levels
-  (Broder).
-- **B. Four mixing 30-bit lanes** (E6's mix30w; *The architecture*), 120 bits,
-  in M4. **Recommended.**
-  - It agrees across every host.
-  - Of the candidates that agree on every host, are 96 bits or more, and did
-    not collide on structured inputs (polymod, mix30, mix30w, SHA-256), it is
-    the fastest on every host but Rune's tier 2, where it is on a par with A
-    after M1. Murmur2 is faster still, and 32 bits wide.
-  - It needs no division.
-  - Its finaliser mixes; it did not collide on structured inputs.
+- **A. Keep `P.hash`,** made faster by M1: 50 cycles a byte at tier 2, from
+  171. No identity changes for it. Combining costs 693 instructions a value.
+- **B. rx2f, two 63-bit xxHash-style lanes, 126 bits, for text and for
+  combining, in M4** (*The architecture*). **Recommended.**
+  - 13.9 cycles a byte and 52 a value combined: 3.6 times as fast as A with
+    M1 by the byte, and 4 times by the value.
+  - It passed every check of E6: a model in C agrees, every engine of a build
+    agrees, and it is clean on the corpus and on structured inputs, with an
+    ideal bias matrix.
+  - In the compiler, on top of M2, it takes MLton's build in units from 770G
+    to 551G cycles.
   - M4 changes every fingerprint anyway, so it costs no extra invalidation.
-- **C. Masked polynomial lanes** (A without the `mod`). Fast, and
-  structurally weak: Thue-Morse strings collide in all four lanes at once
-  (E6). Rejected.
-- **D. SHA-256** from `lib/digest`, 256 bits. Strong against an adversary
-  (issue 7), 7 MB/s at tier 2 and 0.9 interpreted: for a cache shared
-  between people who do not trust each other, which Rune's is not. *Later*.
+- **C. rh2, two multiply-xorshift lanes.** About 11% cheaper a byte than B,
+  and fine for text; its lanes collide when whole 63-bit child hashes are
+  combined (E6). It could hash text if B's round did the combining, which
+  makes two functions for 11% of a cost that is no longer the larger part.
+- **D. The first round's four 30-bit lanes** (mix30w), 120 bits, the same
+  value on every host. About 4 times B's cost a byte at tier 2. It was
+  recommended before the owner's ruling; the ruling removes its reason.
+- **E. SHA-256** from `lib/digest`, 256 bits: strong against an adversary
+  (issue 7), at 6.9 MB/s at tier 2. For a cache shared between people who do
+  not trust each other, which Rune's is not. *Later*.
 
-The width: 96 bits already put an accidental collision among a million
-identities near 6 × 10^-18. B's 120 bits come at no cost, and are Go's choice
-for the same decision. `Word64` and `Int` are ruled out by the hosts
-(*Constraints*, E6).
+The width: two lanes cost about 10% more than one, cover each other's
+structural collisions, and put an accidental collision among a million
+identities far below anything measurable. One lane, 63 bits, would be about 5
+× 10^-8.
+
+What B costs beyond its code:
+- `UnitBasis.version`, `UnitCache.version` and `UnitMid.version` bumped, but
+  not `UnitFile.version`, whose format does not change. Bumping it makes the
+  runtime refuse the REPL's units.
+- `tests/incremental/plant.py`'s copy of the hash rewritten: about 30 lines
+  of Python, in E6's patch.
+- The instruction set's fingerprint keeps its own copy of today's first lane
+  (`isagen.sml:51`, `reggen.sml:44`).
+- **Values depend on the host that built the compiler, for information:**
+  - The same as Rune's on SML/NJ 64-bit, Poly/ML and MLKit. MLton's build
+    (32-bit `Word`), `smlnj32` and Rune's int64 VM give others.
+  - `check-cross` still passes: the compiler's sources use no dynamic module,
+    so no program it compiles carries a unit's identity. But a compiler built
+    by MLton keeps a cache of its own, since the cache's configuration is a
+    hash; the check no longer tests that MLton's build shares Rune's cache.
+  - `plant.py`'s scenarios (S55, S67) would fail with MLton's build of the
+    compiler.
+  - A program that may load units, and so keeps its units' identities, is
+    other bytes when built by another host's build.
+  - If any of that matters, masking each `+` and `*` to 63 bits, and building
+    MLton's compiler with `-default-type word64`, should make those hosts
+    agree. That is untried.
 
 ### D12. Division by a constant
 
@@ -2436,9 +2555,11 @@ M9 closes all three. The sizes are lines of code and tests.
     a large string, in the cycles benchmarks (`scripts/perf-cycles.sh`) with
     a row of `docs/performance.md`, so that it outlives F1 to F3.
 * **Why first:** the brief's reason. The test case is MLton's 606 files built
-  in units, where `P.hash` was 36% of the cycles at performance M10's tip;
-  M2 and M4 take that away.
-  M1 is measured on it before M2 lands.
+  in units, where `P.hash` was 36% of the cycles at performance M10's tip.
+  M2 and M4 take that away, and M4's rx2f takes the division out of hashing
+  altogether. M1 is measured on the test case before M2 lands. It keeps its
+  value for every other division by a constant: 2.5M in the bootstrap
+  (E7).
 * **Done when:**
   - E7's measures hold or are beaten: MLton's 606 files in units at tier 2
     in at most 0.72 times the base's cycles, and `Pickle.hash` in at most 50
@@ -2511,8 +2632,12 @@ M9 closes all three. The sizes are lines of code and tests.
 * **What:**
   - S1, then S2 (*The architecture*, D9), memoised by the binder's identity
     and path (D10);
-  - the hash of D11, with `tests/incremental/plant.py` following it, and the
-    instruction set's fingerprint left as it is;
+  - first, the hash of D11, rx2f (E6's patch), with
+    `tests/incremental/plant.py` following it, the instruction set's
+    fingerprint left as it is, and `UnitBasis`, `UnitCache` and `UnitMid`'s
+    versions bumped (not `UnitFile`'s). On top of M2 it takes MLton's build
+    in units at tier 2 from 770G to 551G cycles, and `unit-usages` from 89 s
+    to 40 s;
   - a recursive group of datatypes (`datatype ... and ...`, `withtype`) given
     one canonical value, whichever member is worked out first (E5; GHC's
     #18733);
@@ -2776,8 +2901,10 @@ removed.
 - **The cache:** the scenarios, with the changed expectations of M7;
   `mutate.py` with its history replay; the soundness checker of M4; MLton's
   S44 to S48; HOL4 with `RUNE_VERIFY_CACHE=1`.
-- **Hashing:** values equal across the six hosts (`check-cross`); the
-  bytes hashed by call site against E5's.
+- **Hashing:** the hash's values against a model outside SML on a fixed
+  corpus, on every engine of a build (the interpreter, tiers 1 and 2, the
+  stack VM, the 32-bit VM, aarch64); the hosts' values reported, for
+  information; the bytes hashed by call site against E5's.
 - **Division:** M1's table of divisors on both targets, every `--jit`, both
   integer widths.
 
