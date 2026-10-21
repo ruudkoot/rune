@@ -694,7 +694,7 @@ check-templates: bin/runeopt-templates
 # `make windows` builds the VM for Windows with mingw-w64, for 64 bits
 # (bin/runevm-stack.exe) and for 32 bits (bin/runevm-stack32.exe), and `make
 # test-windows` runs the language suite, tests/runtime and the Basis Library
-# suite (the rune:windows configurations of tests/basis/run-matrix.sh) on
+# suite (the rune:windows configurations of bin/rune-matrix) on
 # both. Neither is part of any other target, and nothing else in the tree
 # depends on runtime/sys/sys_win.c: the toolchain is only on a machine that has it,
 # and running the result needs Windows, or WSL, which starts an .exe for
@@ -789,12 +789,8 @@ bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) build
 test-windows-text: windows $(RUNE) bin/rune.rbc bin/rune.stack.rbc
 	RUNE=$(RUNE) WINCC='$(WINCC)' WINCC32='$(WINCC32)' sh tests/windows/run.sh
 
-test-windows: bin/rune-matrix bin/rune-test windows $(RUNE) bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel test-windows-text
-	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack.exe --vm bin/runevm-stack32.exe
-	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
-	  --vm bin/runevm.exe --vm bin/runevm32.exe
-	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:RUNEVM_JIT_TIER:$$WSLENV RUNEVM_JIT=all RUNEVM_JIT_TIER=2 sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
-	  --vm bin/runevm.exe
+test-windows: bin/rune-matrix bin/rune-test bin/rune-windows windows $(RUNE) bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel test-windows-text
+	$(RUNE_TEST) --tier test-windows
 	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE_STACK)) bin/rune-matrix -j $(JOBS) --configs windows
 	sh tests/terminal/run.sh --windows
 	python3 tests/dap/run.py --windows
@@ -974,8 +970,8 @@ test-portability: portability $(RUNE) vm bin/rune-test
 RUNE_TEST = GC_STRESS=$(GC_STRESS) $(if $(filter command line environment,$(origin RUNEVM)),RUNEVM=$(RUNEVM)) \
             NATIVE_HOST=$(NATIVE_HOST) MAKE='$(CHECK_MAKE)' \
             bin/rune-test run $(if $(filter command line environment,$(origin JOBS)),-j $(JOBS))
-test-steps: $(RUNE) vm | build/.doctor-check
-	sh tests/runtime/run-vm-tests.sh --vm $(RUNEVM)
+test-steps: $(RUNE) vm bin/rune-windows | build/.doctor-check
+	bin/rune-windows vm --vm $(RUNEVM)
 	@mkdir -p build
 	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_LIBS)
 	build/heap_test
@@ -1135,12 +1131,12 @@ test-dynamic: $(RUNE) vm bin/rune-test bin/rune-scenarios
 test-build: $(RUNE) vm bin/rune-test bin/rune-scenarios
 	$(RUNE_TEST) --tier test-build
 
-# make install staged and checked (tests/install/run.sh): the bytecode
+# make install staged and checked (bin/rune-scenarios install): the bytecode
 # compiler's, and that of a host build of each kind, a program and a heap
 test-install: all repl dap kernel mlton smlnj-legacy bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy bin/rune-scenarios bin/rune-test
 	RUNE_HEAP=$(RUNE_HEAP) SMLNJ=$(SMLNJ) $(RUNE_TEST) --tier test-install
 
-# the distribution archives, with stand-in binaries (tests/dist/run.sh)
+# the distribution archives, with stand-in binaries (bin/rune-scenarios dist)
 test-dist: bin/rune-scenarios bin/rune-test
 	$(RUNE_TEST) --tier test-dist
 
@@ -1243,7 +1239,7 @@ docs: $(RUNEDOC) manifests
 # tests/basis/README.md. make test-basis is the suite in the configuration
 # rune on the runner, and the examples of the documentation that are
 # equations (tests/runner/basis.sml). The matrix targets compare Rune with
-# other systems and are not part of `make check`; run-matrix.sh runs each
+# other systems and are not part of `make check`; rune-matrix runs each
 # program in its own directory, so $(RUNE) goes in absolute.
 test-basis: $(RUNE) $(RUNEDOC) vm build/basis-examples/.done bin/rune-test | build/.doctor-check
 	$(RUNE_TEST) --tier test-basis
@@ -1508,21 +1504,19 @@ check test test-all test-opt test-native test-register test-register-jit test-st
 # The test runner (docs/plans/unit-testing.md, M3; docs/testing.md, Running
 # the tests): the inventory of tests/runner over lib/test/runner, compiled
 # by $(RUNE) and run on the register VM with its JIT.
-RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/sh.sml \
+RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/sh.sml \
                tests/runner/hosts.sml tests/runner/libhosts.sml tests/runner/hostchecks.sml \
                tests/runner/migration.sml \
-               tests/runner/children.sml tests/runner/bytecode.sml tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativefaults.sml tests/runner/native.sml \
+               tests/runner/children.sml tests/runner/bytecode.sml tests/runner/windowsdir.sml tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativefaults.sml tests/runner/native.sml \
                tests/runner/matrixmodel.sml tests/runner/matrixprobe.sml tests/runner/matrixhost.sml tests/runner/smlscan.sml tests/runner/programselect.sml tests/runner/hostlaws.sml tests/runner/matrixfaults.sml \
                tests/runner/docchecks.sml tests/runner/mutants.sml tests/runner/docfaults.sml \
                tests/runner/matrixload.sml tests/runner/matrixprepare.sml tests/runner/matrixsuite.sml tests/runner/matrixprogram.sml tests/runner/matrixperf.sml tests/runner/matrixexecutionfaults.sml tests/runner/matrixcachefaults.sml tests/runner/matrix.sml \
                tests/runner/tracecheck.sml tests/runner/heapchecks.sml tests/runner/censustrace.sml tests/runner/heapfaults.sml tests/runner/jitdumpcheck.sml tests/runner/heap.sml \
                examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
-                    examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
-                    tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml \
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml \
                tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml \
-               tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/portability.sml \
+               tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
@@ -1588,7 +1582,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf build/bench-counts.rbc
+check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite build/bench-counts.rbc
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -1719,7 +1713,7 @@ test-intinf-dependency:
 	python3 tests/intinf/download.py
 	python3 tests/intinf/dependency.py
 
-# SML deterministic budget and benchmark controllers.
+# SML benchmark/scenario workers. Entry scripts only locate their payloads.
 BUDGET_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/budgets.sml tests/runner/budgets-main.sml
 bin/rune-budget.rbc: $(RUNE) $(BUDGET_SRCS) manifests
 	$(RUNE) --library test/runner $(BUDGET_SRCS) -o $@
@@ -1729,16 +1723,15 @@ BENCH_CHECK_SRCS := $(HOST_LAWS_SRCS) tests/runner/matrixload.sml tests/runner/m
                     tests/runner/inventorytests.sml tests/runner/benchmarks.sml tests/runner/benchmarks-main.sml
 bin/rune-bench-check.rbc: $(RUNE) $(BENCH_CHECK_SRCS) tests/runner/benchmark-cases.json tests/runner/inventory-cases.json manifests
 	$(RUNE) --library test/runner --library json --library digest $(BENCH_CHECK_SRCS) -o $@
-
+SCENARIO_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/scenarios.sml tests/runner/windowsdir.sml tests/runner/installchecks.sml \
+                 tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml tests/runner/scenarios-main.sml
+bin/rune-scenarios.rbc: $(RUNE) $(SCENARIO_SRCS) manifests
+	$(RUNE) --library test/runner --library json $(SCENARIO_SRCS) -o $@
 bin/rune-budget bin/rune-bench-check bin/rune-scenarios: bin/%: bin/%.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/$(notdir $@).rbc" "$$@"\n' > $@
 	chmod +x $@
 
-SCENARIO_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/scenarios.sml tests/runner/installchecks.sml \
-                 tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml tests/runner/scenarios-main.sml
-bin/rune-scenarios.rbc: $(RUNE) $(SCENARIO_SRCS) manifests
-	$(RUNE) --library test/runner --library json $(SCENARIO_SRCS) -o $@
-
+# Incremental edits, cache corruption and externally provisioned corpora.
 INCREMENTAL_BASE_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/scenarios.sml \
                          tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml
 INCREMENTAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/incrementalextra.sml tests/runner/smlscan.sml \
@@ -1764,4 +1757,18 @@ bin/rune-intinf.rbc: $(RUNE) $(INTINF_SRCS) $(wildcard tests/intinf/fixtures/*) 
 	$(RUNE) --library test/runner --library json --library digest $(INTINF_SRCS) -o $@
 bin/rune-intinf: bin/rune-intinf.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-intinf.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+WINDOWS_SRCS := tests/runner/langchecks.sml $(HOST_LAWS_SRCS) tests/runner/bytecode.sml \
+                tests/runner/matrixload.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml \
+                tests/runner/windowsdir.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/windows-main.sml
+bin/rune-windows.rbc: $(RUNE) $(WINDOWS_SRCS) manifests
+	$(RUNE) --library test/runner --library digest $(WINDOWS_SRCS) -o $@
+bin/rune-suite.rbc: $(RUNE) tests/runner/sh.sml tests/runner/suite-main.sml manifests
+	$(RUNE) --library test/runner tests/runner/sh.sml tests/runner/suite-main.sml -o $@
+bin/rune-windows: bin/rune-windows.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-windows.rbc" "$$@"\n' > $@
+	chmod +x $@
+bin/rune-suite: bin/rune-suite.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-suite.rbc" "$$@"\n' > $@
 	chmod +x $@

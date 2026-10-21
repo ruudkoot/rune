@@ -7,7 +7,7 @@
 # (tests/kernel/notebook_client.py).
 #   tests/kernel/run.sh [--windows]
 # With --windows, the kernel and its engine are runevm.exe's, staged in the
-# directory tests/windows-dir.sh names, and a Python of Windows drives them
+# directory bin/rune-windows directory names, and a Python of Windows drives them
 # (tests/kernel/windows.py), interrupting by JPY_INTERRUPT_EVENT.
 set -u
 cd "$(dirname "$0")/../.."
@@ -16,8 +16,8 @@ if [ "${1:-}" = --windows ]; then
     echo "kernel (Windows): skipped, no Python of Windows (python.exe)"
     exit 0
   fi
-  if ! windir=$(sh tests/windows-dir.sh); then
-    echo "kernel (Windows): no Windows to run on (tests/windows-dir.sh)" >&2
+  if ! windir=$(bin/rune-windows directory); then
+    echo "kernel (Windows): no Windows to run on (bin/rune-windows directory)" >&2
     exit 1
   fi
   stage=$windir/kernel

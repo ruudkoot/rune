@@ -85,6 +85,6 @@ struct
     [{name = "gzip", probe = "command -v gzip", hint = "install gzip for distribution decoding"},
      {name = "unzip", probe = "command -v unzip", hint = "install unzip for distribution decoding"},
      {name = "tar", probe = "command -v tar", hint = "install tar for distribution extraction"},
-     {name = "windows-installer", probe = "command -v cmd.exe && sh tests/windows-dir.sh",
+     {name = "windows-installer", probe = "command -v cmd.exe && bin/rune-windows directory",
       hint = "Windows interop and a staging directory from RUNE_WINDOWS_DIR"}]
 end

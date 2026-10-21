@@ -9,7 +9,7 @@
 # editor), and its expected screens with @DIR@ (tests/terminal).
 # With --windows, the scripts whose first line is `# windows` run again on
 # bin/runevm.exe, staged with the REPL's image and the probe in the directory of Windows
-# that tests/windows-dir.sh names: WSL interop gives a program started in a
+# that bin/rune-windows directory names: WSL interop gives a program started in a
 # pane a console of the pane's size, so the same script drives it.
 # Without tmux the scripts are skipped, and say so (make doctor --scope
 # terminal).
@@ -49,8 +49,8 @@ if ! bin/rune --library terminal examples/readline.sml -o "$out/readline.rbc"; t
 fi
 probe="--stack-size 1048576"
 if [ $windows = 1 ]; then
-  if ! windir=$(sh tests/windows-dir.sh); then
-    echo "terminal: no Windows to run on (tests/windows-dir.sh)" >&2
+  if ! windir=$(bin/rune-windows directory); then
+    echo "terminal: no Windows to run on (bin/rune-windows directory)" >&2
     exit 1
   fi
   stage=$windir/terminal

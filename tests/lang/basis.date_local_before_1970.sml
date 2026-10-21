@@ -1,6 +1,6 @@
 (* Local time before 1970, which msvcrt refuses: a moment of 1969 and a date
    of 1960 through the local zone and back. The runners set TZ to 3:30 west
-   of UTC with summer time from March to November (tests/run-tests.sh); both
+   of UTC with summer time from March to November (bin/rune-suite); both
    are in winter, since glibc keeps no summer time before 1970 and the layer
    of Windows follows the rule of TZ in every year. *)
 val t = Time.fromSeconds ~30000000

@@ -530,7 +530,7 @@ needs, a declaration at a time (Chapter 8 of the Definition).
 
 `make check-units` (the oracle `units` of `tests/runner/oracles.sml`) compiles every program of
 `tests/lang` and `tests/perf` whole and with `--units` at `-O0`, `-O1` and
-`-O2`, the lint of every pass on, runs them as `tests/run-tests.sh` does,
+`-O2`, the lint of every pass on, runs them as `bin/rune-suite` does,
 and wants the same output on both streams, traces included, and the same
 exit status. It is to separate compilation what `make check-levels` is to
 the optimisations. Those programs are of one file; `tests/units`

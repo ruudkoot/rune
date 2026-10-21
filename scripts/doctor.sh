@@ -7,7 +7,7 @@
 #   mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit   the SML system behind
 #           bin/rune-<scope>: the release that scripts/fetch-hosts.sh
 #           installed (`make hosts`)
-#   check   the test runners (tests/run-tests.sh, scripts/check-*.sh),
+#   check   the test runners (bin/rune-suite, scripts/check-*.sh),
 #           and Pillow, which make test-dist uses to convert share/rune.png
 #   asan    make vm-asan
 #   sys     POSIX headers of the VM's system layer (runtime/sys/sys_posix.c)

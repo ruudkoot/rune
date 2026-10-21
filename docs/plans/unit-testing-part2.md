@@ -115,7 +115,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | P2.4 | P2.0 | Documentation consistency and law mutation checks | done 2026-10-21 |
 | P2.5 | P2.0 | Shared matrix model, probes and host laws | in progress: model and controller implemented |
 | P2.6 | P2.5 | Full Basis/benchmark matrix execution | pending |
-| P2.7 | P2.1, P2.6 | Windows ways and final legacy VM/language runner retirement | pending |
+| P2.7 | P2.1, P2.6 | Windows ways and final legacy VM/language runner retirement | done 2026-10-21 |
 | P2.8 | P2.0 | Build/dependency/unit/install/distribution scenarios | done 2026-10-21 |
 | P2.9 | P2.0; P2.6 where matrix execution is shared | Incremental edits and external corpora | done 2026-10-21 |
 | P2.10 | P2.0 | IntInf correctness and hardening drivers | done 2026-10-21 |
@@ -720,3 +720,35 @@ samples, pairing, affinity and libc metadata. These concurrent validation
 runs are not performance measurements. Evidence and the original driver
 copies are under tests/out/unit-testing-part2/p2.10. Final clean global
 acceptance remains P2.17's required check.
+
+### P2.7 acceptance, 2026-10-21
+
+The five legacy language/runtime/Windows/skip scripts are retired. Local and
+Windows ways share LangChecks; VM refusal fixtures and count/image oracles
+are SML modules shared by Windows and portability. Windows staging uses a
+per-worktree path and private per-run directories. The root inventory names
+preparation, compilation, execution and oracle dependencies individually.
+The suite and skip CLIs are bin/rune-suite; Windows paths/refusals use
+bin/rune-windows. Existing flags and explicit golden updates remain available;
+outputs use the common runner receipt layout.
+
+The actual Windows selection passes 2318/2318. All 1630 legacy/new language
+verdicts and streams agree across stack/register, 32/64-bit and tier-2 ways,
+with only three explained absolute source-path spellings in interrupt traces.
+All refusal and count/image checks pass. Native refusal checks agree on all
+30 cases for both instruction sets. Legacy/new skip-reader output agrees on
+all three actual expectation files, with and without reasons. Six planted
+faults cover false success, crash after correct output, an unavailable VM,
+paths with spaces and skip categories/way selection.
+
+The full portability run records 3953 PASS and six failures: three obsolete
+count-source names in each instruction set, which the old implementation
+silently omitted. Actual arithmetic, GC-allocation and array fixtures replace
+those names and absent selected sources now fail. The complete count rerun
+passes 15/15 including canaries. The original receipt is preserved, not relabeled
+as a passing full run. All cross-width/endian language, refusal, image, JIT
+bootstrap and Basis matrix checks passed in that full run. Stress plus
+register/native sanitizers pass 4625 cases with one documented native-interrupt
+skip (4626 total). Rune and MLton produce identical root worker bytecode.
+Raw logs, comparisons and copied acceptance receipts are under
+ tests/out/unit-testing-part2/p2.7; final clean global acceptance remains P2.17.

@@ -516,7 +516,7 @@ raised as noted.
   stop the program where the value has another. A match that names every
   constructor of a datatype leaves the last untested (decision D14 of
   plans/middle-end.md), so a wrong tag would otherwise go unseen; the test
-  suites run so (`tests/run-tests.sh`, `make check-levels`);
+  suites run so (`bin/rune-suite`, `make check-levels`);
 * `runevm-stack --heap-size N file.rbc` sets the heap's first size in bytes;
 * `runevm-stack --stack-size N file.rbc` sets the most bytes the stack (its
   values, frames or handlers) may grow to, 1 GiB by default: a recursion

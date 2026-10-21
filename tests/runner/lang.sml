@@ -77,9 +77,11 @@ struct
   (* a compiler: its name, the command that compiles, from the root, and
      the tag of its programs of tests/errors *)
   val hosts = ["mlton", "smlnj-legacy", "smlnj32", "smlnj-dev", "polyml", "mlkit"]
+  val selectedCompiler=env ("RUNE_SUITE_COMPILER","")
   val compilers =
     [(stackCompiler, "bin/rune-stack", "test"), ("register", "bin/rune", "test-register")]
     @ List.map (fn h => (h, "bin/rune-" ^ h ^ " --target=stack", "test-all")) hosts
+    @ (if selectedCompiler="" then [] else [("suite","\"$RUNE_SUITE_COMPILER\"","suite-selected")])
 
   (* a way: its name, its compiler, its VM with the options before the
      program's, the tag of the make target it comes from, and the file of
@@ -154,6 +156,10 @@ struct
                             [("stack32", stackCompiler, "bin/runevm-stack32"), ("stack-ppc64", stackCompiler, "bin/runevm-stack-ppc64"),
                              ("32", "register", "bin/runevm32"), ("ppc64", "register", "bin/runevm-ppc64"),
                              ("aarch64", "register", "bin/runevm-aarch64")])
+    @ (if selectedCompiler="" then [] else
+         [{name="suite",compiler="suite",vm="",tag="suite-selected",
+           skip=case OS.Process.getEnv "RUNE_SUITE_SKIP" of SOME path => if path="" then NONE else SOME path | NONE => NONE}])
+
 
   (* ---- the commands *)
   val tz = "TZ='NST3:30NDT,M3.2.0,M11.1.0'; export TZ; "
@@ -169,112 +175,30 @@ struct
      timeout = Time.fromSeconds timeout, cap = 0, cpus = 1, memory = memory, pools = [], exclusive = false,
      after = after, judge = judge} : Run.command
 
-  fun compileJudge (writes, name) (r : Supervisor.result, files as {stderr, ...}) =
-    case #outcome r of
-      Supervisor.Exited 0 =>
-        let
-          val cerr = read stderr
-          val cwarn = "tests/lang/" ^ name ^ ".cwarn"
-        in
-          if exists cwarn then
-            if cerr = read cwarn then NONE
-            else case accept (writes, cwarn, cerr) of
-                   SOME a => SOME a
-                 | NONE => SOME ("FAIL", "compiler warnings differ from " ^ cwarn ^ firstDifference (read cwarn, cerr))
-          else if cerr = "" then NONE
-          else SOME ("FAIL", "unexpected compiler output: " ^ firstLine cerr)
-        end
-    | Supervisor.Exited _ => SOME ("FAIL", "compile error: " ^ firstLine (read stderr))
-    | _ => Run.exitZero (r, files)
+  val compileJudge = LangChecks.compileJudge
 
   fun compile (compiler, command) name =
     Test.it name
       (shell (tz ^ "mkdir -p " ^ rbcDir compiler ^ " && exec " ^ command ^ words ("lang/" ^ name, ".cargs")
               ^ " tests/lang/" ^ name ^ ".sml -o " ^ rbc (compiler, name),
-              SOME ".", 600, 300, [], compileJudge (compiler = stackCompiler, name)))
+              SOME ".", 600, 300, [], compileJudge (compiler = stackCompiler orelse (compiler="suite" andalso env ("RUNE_SUITE_UPDATE","0")="1"), name)))
 
-  fun errorJudge (writes, name) (r : Supervisor.result, files as {stderr, ...}) =
-    case #outcome r of
-      Supervisor.Exited 0 => SOME ("FAIL", "expected a compile error but compilation succeeded")
-    | Supervisor.Exited _ =>
-        let
-          val expected = "tests/errors/" ^ name ^ ".expected"
-          (* as $(cat FILE) gives it: without the newlines at its end *)
-          val text = let fun drop (#"\n" :: cs) = drop cs | drop cs = cs
-                     in String.implode (rev (drop (rev (String.explode (read expected))))) end
-          val line = firstLine (read stderr)
-          (* what --accept writes: the line without its place and "error: " *)
-          fun message l =
-            case CharVector.findi (fn (_, c) => c = #" ") l of
-              SOME (i, _) => if String.isPrefix " error: " (String.extract (l, i, NONE))
-                             then String.extract (l, i + size " error: ", NONE) else l
-            | NONE => l
-        in
-          if exists expected andalso String.isSubstring text line then NONE
-          else case accept (writes, expected, message line ^ "\n") of
-                 SOME a => SOME a
-               | NONE => if not (exists expected) then SOME ("FAIL", "missing " ^ expected)
-                         else SOME ("FAIL", "error message mismatch: " ^ line ^ "\n  expected it to contain: " ^ text)
-        end
-    | _ => Run.exitZero (r, files)
+  val errorJudge = LangChecks.errorJudge
 
   fun error (compiler, command) name =
     Test.it name
       (shell (tz ^ "mkdir -p \"$RUNE_TEST_RUN\"/e/" ^ compiler ^ " && exec " ^ command ^ words ("errors/" ^ name, ".cargs")
               ^ " tests/errors/" ^ name ^ ".sml -o \"$RUNE_TEST_RUN\"/e/" ^ compiler ^ "/" ^ name ^ ".rbc",
-              SOME ".", 600, 300, [], errorJudge (compiler = stackCompiler, name)))
+              SOME ".", 600, 300, [], errorJudge (compiler = stackCompiler orelse (compiler="suite" andalso env ("RUNE_SUITE_UPDATE","0")="1"), name)))
 
   (* the expected exit status of a program *)
-  fun expectedCode name =
-    let val f = "tests/lang/" ^ name ^ ".exitcode"
-    in if exists f then getOpt (Int.fromString (read f), ~1) else 0 end
-
-  fun runJudge (writes, name) (r : Supervisor.result, files as {stdout, stderr}) =
-    let
-      val base = "tests/lang/" ^ name
-      val dir = OS.Path.dir stdout
-      (* the first of the checks that fails, in run-tests.sh's order *)
-      fun first [] = NONE
-        | first ((fails, why) :: rest) = if fails () then SOME ("FAIL", why ()) else first rest
-    in
-      case #outcome r of
-        Supervisor.Exited code =>
-          (* the same in a run of the host compilers' bytes: the stack way's run *)
-          if exists (dir ^ "/same") then NONE
-          else
-            let
-              val err = read stderr
-              val out = read stdout
-              val expected = read (base ^ ".expected")
-              val restoring = exists (base ^ ".restore")
-              val img = dir ^ "/tests/out/" ^ name ^ ".img"
-              fun rcode () = getOpt (Int.fromString (read (dir ^ "/restored.code")), ~1)
-            in
-              first
-                [(fn () => code <> expectedCode name,
-                  fn () => "exit code " ^ Int.toString code ^ ", expected " ^ Int.toString (expectedCode name) ^ ": "
-                           ^ firstLine err),
-                 (fn () => not (exists (base ^ ".expected")), fn () => "missing " ^ base ^ ".expected"),
-                 (fn () => out <> expected andalso not (isSome (accept (writes, base ^ ".expected", out))),
-                  fn () => "stdout differs from " ^ base ^ ".expected" ^ firstDifference (expected, out)),
-                 (fn () => exists (base ^ ".stderr") andalso err <> read (base ^ ".stderr"),
-                  fn () => "stderr differs from " ^ base ^ ".stderr" ^ firstDifference (read (base ^ ".stderr"), err)),
-                 (fn () => exists (base ^ ".stderr-head") andalso headLine err <> read (base ^ ".stderr-head"),
-                  fn () => "runtime error differs from " ^ base ^ ".stderr-head: " ^ firstLine err),
-                 (fn () => restoring andalso not (exists img), fn () => "no tests/out/" ^ name ^ ".img to restore"),
-                 (fn () => restoring andalso rcode () <> 0,
-                  fn () => "--restore exited " ^ Int.toString (rcode ()) ^ ": " ^ firstLine (read (dir ^ "/restored.err"))),
-                 (fn () => restoring andalso read (dir ^ "/restored") <> read (base ^ ".restore"),
-                  fn () => "restored stdout differs from " ^ base ^ ".restore"
-                           ^ firstDifference (read (base ^ ".restore"), read (dir ^ "/restored")))]
-            end
-      | _ => Run.exitZero (r, files)
-    end
+  val expectedCode = LangChecks.expectedCode
+  val runJudge = LangChecks.runJudge
 
   fun run (w : way) name =
     let
       val base = "lang/" ^ name
-      val vm = "\"$RUNE_TEST_ROOT\"/" ^ #vm w
+      val vm = if #name w="suite" then "\"$RUNE_SUITE_VM\"" else "\"$RUNE_TEST_ROOT\"/" ^ #vm w
       val program = rbc (#compiler w, name)
       val runIt = vm ^ " --checked" ^ words (base, ".vmargs") ^ " " ^ program ^ words (base, ".args")
       val restore =
@@ -303,16 +227,24 @@ struct
       Test.it name
         ({program = "/bin/sh", args = ["sh", "-c", script], env = NONE, dir = NONE, stdin = stdin,
           timeout = Time.fromSeconds 900, cap = 0, cpus = 1, memory = if isSome (#skip w) then 300 else 100, pools = [],
-          exclusive = false, after = after, judge = runJudge (#name w = "test", name)} : Run.command)
+          exclusive = false, after = after, judge = runJudge (#name w = "test" orelse (#name w="suite" andalso env ("RUNE_SUITE_UPDATE","0")="1"), name)} : Run.command)
     end
 
   (* ---- the tree *)
-  val langPrograms = programs "tests/lang"
-  val errorPrograms = programs "tests/errors"
+  fun selectedName kind name = if selectedCompiler="" then true else
+       let val one=env ("RUNE_SUITE_ONE","")
+           val category=env ("RUNE_SUITE_KIND","")
+       in String.isSubstring (env ("RUNE_SUITE_FILTER","")) name
+            andalso (one="" orelse (one=name andalso (category="" orelse category=kind))) end
+  val langPrograms = List.filter (selectedName "lang") (programs "tests/lang")
+  val errorPrograms = List.filter (selectedName "errors") (programs "tests/errors")
   (* the programs native code does not run (docs/testing.md, Expectations) *)
   val optSkip = Expectations.read "tests/opt-skip.txt"
   val portabilitySkip = Expectations.read "tests/portability-skip.txt"
-  fun expectationsOf file = if file = "tests/opt-skip.txt" then optSkip else portabilitySkip
+  fun expectationsOf file = if file = "tests/opt-skip.txt" then optSkip else if file="tests/portability-skip.txt" then portabilitySkip else Expectations.read file
+  fun selectedSkip name = case OS.Process.getEnv "RUNE_SUITE_SKIP" of NONE => NONE | SOME file =>
+        List.find (fn row : Expectations.line => List.exists (fn kind => kind= #category row)
+                      ["HOST-ABSENT","XC1-NA","XC2-NA","UNTESTED","UNSUPPORTED"] andalso Expectations.glob (#path row,name)) (Expectations.read file)
 
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
   (* what the programs cover, for --affected; the tier quick has the
@@ -347,14 +279,15 @@ struct
          (List.map (fn (c, command, tag) => needs c (tagged (["check", tag]
                       @ (if c = stackCompiler then ["test-stress", "test-native-stress", "test-native-asan", "nightly", "vm"]
                          else if c = "register" then ["test-stress", "test-register-asan", "nightly", "vm"] else []) @ extraTags tag @ covers)
-                                                       (Test.describe c (List.map (error (c, command)) errorPrograms))))
+                                                       (Test.describe c (List.map (fn name => if c<>"suite" then error (c,command) name else
+                       case selectedSkip name of SOME row => Test.pending (Expectations.describe row) (error (c,command) name)
+                          | NONE => error (c,command) name) errorPrograms))))
                    compilers),
        Test.describe "lang"
          (List.map (fn w => wayNeeds w (needs (#compiler w) (tagged (wayTags w @ covers)
                               (Test.describe (#name w)
                                  (List.map (fn n =>
-                                              case Option.mapPartial (fn f => Expectations.skipped (expectationsOf f, {way = #name w, path = n}))
-                                                                     (#skip w) of
+                                              case (if #name w="suite" then selectedSkip n else Option.mapPartial (fn f => Expectations.skipped (expectationsOf f, {way = #name w, path = n})) (#skip w)) of
                                                 SOME l => Test.pending (#category l ^ ": " ^ #reason l) (run w n)
                                               | NONE => run w n)
                                            langPrograms)))))

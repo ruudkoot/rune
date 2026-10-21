@@ -21,8 +21,8 @@
    Native checks are individual SML jobs with producer edges for the
    bytecode of tests/lang and the Basis suite (tests/runner/native.sml).
 
-   The profiles' extras that run tests/basis/run-matrix.sh share the pool
-   `matrix`, for its report.
+   Matrix configurations are ordinary jobs; MLKit shares the matrix pool
+   because its compiler caches beside source files.
 
    Every other step writes only a directory of its own under tests/out, and
    runs beside the rest. A step is told its CPUs as JOBS, from
@@ -101,8 +101,7 @@ struct
 
   (* Matrix configurations are inventory ways. The remaining Windows make
      adapter is retired with its platform controller in P2.7. *)
-  fun extra (name,tags)=target (name,3600,{cpus=processors,memory=4000,pools=["lang","matrix"],after=[],tags="nightly" :: tags,covers=[]})
-  val extras=Test.describe "make" [Test.requires ["windows"] (extra ("test-windows",["vm","windows"]))]
+  val extras=Test.describe "make" []
 
   (* what tests require of the machine (D18; docs/testing.md, Requirements),
      with scripts/doctor.sh's hints *)
@@ -114,7 +113,7 @@ struct
         of its own binary, which hangs where the kernel cannot start it *)
      {name = "qemu", probe = "{ command -v qemu-ppc64 || command -v qemu-ppc64-static; } && [ -e /proc/sys/fs/binfmt_misc/qemu-ppc64 ] && [ -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]",
       hint = "install qemu-user (apt, dnf: qemu-user) and register it: sudo sh -c 'cat /usr/lib/binfmt.d/qemu-ppc64.conf > /proc/sys/fs/binfmt_misc/register' (and qemu-aarch64.conf)"},
-     {name = "windows", probe = "sh tests/windows-dir.sh && command -v x86_64-w64-mingw32-gcc",
+     {name = "windows", probe = "bin/rune-windows directory && command -v x86_64-w64-mingw32-gcc",
       hint = "Windows under WSL with interop (RUNE_WINDOWS_DIR names a directory there) and mingw-w64 (apt: gcc-mingw-w64-x86-64 gcc-mingw-w64-i686)"}]
     @ List.map (fn h => {name = h, probe = "test -x bin/rune-" ^ h, hint = "run: make hosts, then make " ^ h}) Lang.hosts
     @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities @ ScenarioJobs.capabilities
@@ -155,7 +154,7 @@ struct
   val matrixFaults = Test.tag "check" (Test.tag "quick" (Test.tag "covers:tests/runner/matrix*.sml"
     (Test.tag "covers:tests/runner/hostlaws.sml" (Test.tag "covers:tests/runner/smlscan.sml"
       (Test.requires ["grep-pcre"] (Test.describe "runner" [LibHosts.job ("matrix-controller-faults", ["matrix-controller-faults"], [], 300)]))))))
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws
@@ -165,6 +164,7 @@ val () =
     ["laws-one", rbc, st] => Laws.one (rbc, st)
   | ["matrix-controller-faults"] => MatrixFaults.one ()
   | args =>
+      case WindowsJobs.command args of SOME action => action () | NONE =>
       case Benchmarks.command args of SOME action => action () | NONE =>
       case ScenarioJobs.command args of SOME action => action () | NONE =>
       case HostLaws.command args of

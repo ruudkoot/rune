@@ -238,8 +238,8 @@ runner gives three ways to find one and two to live with it:
 
 What a suite expects of its tests in some ways (a host's bug, a program
 that native code does not run) is a file of expectations, in one format,
-read by one engine (`Expectations` in `lib/test/runner`, and
-`tests/skipped.sh` for the shell runners):
+read by `Expectations` in `lib/test/runner`;
+`bin/rune-suite skip [--reasons] FILE [WAY]` exposes the skip-only view:
 
     WAY-GLOB | PATH-GLOB[::LABEL-GLOB] | CATEGORY | reason
 
@@ -268,8 +268,7 @@ three fields, of every way) by the engine for the laws
 **The output.** A program under `tests/` runs with `--checked` and its
 standard output is compared with its `.expected` sibling; `.args`,
 `.vmargs`, `.stdin` and `.exitcode` siblings fix the rest of the run
-(`tests/runner/lang.sml`, and `tests/run-tests.sh:6-7,66-74` for the runners
-of other machines). This is the ordinary test. Each program is compiled
+(`tests/runner/langchecks.sml`, shared by local and Windows ways). This is the ordinary test. Each program is compiled
 once by each compiler and run in every way (a VM and its options) that
 `make check` has, each run in a directory of its own; `bin/rune-test run
 --accept FILTER` writes what the selected tests printed into their
@@ -283,7 +282,7 @@ the two compilers' bytecodes allocate the same bytes and objects
 identical counts (the oracle `jit` of `tests/runner/oracles.sml`), that the 32-bit and the
 big-endian VM agree with this machine's to the byte
 (`portability/count/*`, `tests/runner/portability.sml`), that the three Windows VMs do
-(`tests/run-windows.sh:184-191`), that native code does (`AGENTS.md`, the
+(`tests/runner/windowschecks.sml`), that native code does (`AGENTS.md`, the
 native rule), and that the compiler, `runedoc` and the benchmark programs
 stay within their budgets (`tests/perf/*.budget`, `make perf-check`,
 `bin/rune-budget`). Where cycles and seconds are noisy by percents,
@@ -341,8 +340,8 @@ program, `runevm --jit=off --count`, one thing changed at a time):
    from a terminal, or with its output through `tee`, does not count the
    same as in a harness. The harnesses fix all three: standard input from
    `/dev/null` unless the test has a `.stdin` sibling, standard output and
-   error to files (`tests/run-tests.sh:69-74`, the oracle `register` of `tests/runner/oracles.sml`,
-   the oracle `jit` of `tests/runner/oracles.sml`, `tests/run-windows.sh:88-91`). The
+   error to files (`tests/runner/langchecks.sml`, the oracle `register` of `tests/runner/oracles.sml`,
+   the oracle `jit` of `tests/runner/oracles.sml`, `tests/runner/windowschecks.sml`). The
    portability runner lets the VMs inherit its own standard input
    (`tests/runner/portability.sml`), which is fine because every VM in
    the comparison gets the same one; that is the rule: both sides of a
@@ -691,3 +690,12 @@ fixed/exploratory sources to later analysis tools. Optional --bench,
 process metrics; report schema 2 identifies the SML controller, sources and
 payloads, CPU/RSS, samples, pairing, affinity and libc. Timings are separate
 from deterministic verdicts and instrumentation.
+
+
+Language/runtime platform workers are bin/rune-suite and bin/rune-windows.
+The former retains --rune/--vm/--out/--skip/--one/--update/-j and filtering;
+skip [--reasons] FILE [WAY] exposes Expectations. The latter provides
+directory, vm --vm BIN --def FILE and the Windows language selection.
+Windows ways share local fixture judges, strict refusal cases and cross-VM
+count/image oracles. Build preparation and consumers have explicit dependencies;
+unavailable selected targets fail, while capabilities retain their named skips.

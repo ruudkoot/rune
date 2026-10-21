@@ -187,7 +187,7 @@ struct
        say "PASS distribution/installer\n" end
   fun windows () =
     let val dir = directory ()
-        val choice = InstallChecks.execute dir "windows-directory" root "" ["sh", "tests/windows-dir.sh"]
+        val choice = {status=0,output=WindowsDir.directory () ^ "\n",errors=""} : Scenarios.result
         val () = Scenarios.success choice
         val windowsRoot = Hosts.trim (#output choice)
         val () = need (windowsRoot <> "" andalso isDir windowsRoot, "Windows staging directory is unavailable")

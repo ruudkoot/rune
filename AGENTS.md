@@ -316,7 +316,7 @@ keep these invariants:
   every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
   same suite with the MLton build and is the faster loop while iterating. For
   VM changes also run the suite with the
-  sanitizer build, `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-stack-asan`,
+  sanitizer build, `make vm-asan && bin/rune-suite --vm bin/runevm-stack-asan`,
   and with a collection at (nearly) every allocation, `make test-stress`.
   A read of an object's kind is `obj_kind` in C and `kind_is` in the
   macro-assembler, and a store into an object that exists is `obj_set_field`
@@ -414,7 +414,7 @@ keep these invariants:
   reviewed line by line like any `.expected` file.
 * `.expected` files are written by hand or reviewed line by line after
   `bin/rune-test run --accept 'lang/test/<name>'` (or
-  `tests/run-tests.sh --update <filter>`); never accept generated output
+  `bin/rune-suite --update <filter>`); never accept generated output
   blindly.
 
 ## Conventions

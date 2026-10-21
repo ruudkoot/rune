@@ -7,7 +7,7 @@ standard input and output.
   tests/dap/run.py [--windows]
 
 With --windows, the adapter and its engine are runevm.exe's, staged in the
-directory tests/windows-dir.sh names (make test-windows): the engine on a
+directory bin/rune-windows directory names (make test-windows): the engine on a
 connection of the loopback, as on Windows it always is.
 
 Two sessions: prog.sml stopped at a breakpoint -- its frames, scopes,
@@ -28,9 +28,9 @@ WHERE = ""
 if sys.argv[1:] == ["--windows"]:
     import shutil
     try:
-        windir = subprocess.check_output(["sh", os.path.join(ROOT, "tests", "windows-dir.sh")]).decode().strip()
+        windir = subprocess.check_output([os.path.join(ROOT, "bin", "rune-windows"), "directory"]).decode().strip()
     except subprocess.CalledProcessError:
-        print("dap (Windows): no Windows to run on (tests/windows-dir.sh)")
+        print("dap (Windows): no Windows to run on (bin/rune-windows directory)")
         sys.exit(1)
     stage = os.path.join(windir, "dap")
     os.makedirs(os.path.join(stage, "tests", "dap"), exist_ok=True)
