@@ -57,7 +57,8 @@ struct
      tagged ["check","layout","test-heap","test-heap-hooks","covers:tests/runtime/*"]
        (Test.describe "heap-hooks" (List.map (fn (name,binary) => executable name binary [])
           [("default","build/heap_test"),("gc-bits","build/heap_test-gcbits"),("cards","build/heap_test-cards")])),
-     tagged ["check","test-register-jit","test-register-jit-steps","covers:tests/register/*"]
+     tagged ["check","test-register-jit","test-register-jit-steps","covers:tests/register/*",
+             "covers:tests/lang/rt.deeprec_stack.*"]
        (Test.describe "jit"
          [job "encoder-independence" ["build-asm-check"] [],
           tagged ["quick"] (job "encoder-faults" ["build-asm-faults"] []),

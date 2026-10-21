@@ -1052,3 +1052,21 @@ passes 20/20 including canaries. C fixtures retain their original compilation
 flags and remain independent subjects. Make builds them before scheduling;
 its remaining comparisons maintain build stamps, rather than test verdicts.
 Global acceptance below must use the resulting committed source state.
+
+
+The affected-selection audit preserves all 17,230 unchanged baseline leaf IDs;
+only the 25 explicitly replaced opaque/scenario groups disappear. Their
+replacements add 2010 individually reported cases, for 19,240 check-tier jobs.
+Nine critical compiler/runtime/Basis/build input probes select that whole tier.
+A missing recursion-fixture coverage tag was detected and restored: changing
+`tests/lang/rt.deeprec_stack.*` now selects all ten low-level JIT cases.
+
+The first full run was cancelled for that correction, after 118 PASS and two
+documented native-interrupt SKIP results, with no failures. Its result is
+INCOMPLETE, not acceptance. The verified coordinator received SIGINT; no process
+with its owned run identity remained afterward. Bounded original receipts are
+retained. Corrected focused checks pass 22/22, failed Int64 cases rerun and pass
+14/14, and explicit output retention passes 6/6 with the expected output kept.
+Native MLton/self-hosted bytecode agrees for all twelve controllers on the first
+frozen state; the final runner and payload identities must be rechecked after
+the coverage correction, before completing global acceptance.
