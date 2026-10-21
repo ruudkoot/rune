@@ -1,5 +1,5 @@
 # What the other compilers do differently from Rune with the laws of the Basis
-# Library's documentation (tests/basis/run-laws-hosts.py; docs/plans/quickcheck.md,
+# Library's documentation (bin/rune-laws-hosts; docs/plans/quickcheck.md,
 # D10; docs/plans/quickcheck-hunt.md), in the form of tests/basis/deviations.txt:
 #
 #   config-glob | label-glob | CATEGORY | reason

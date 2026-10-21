@@ -4,6 +4,11 @@ structure HostLaws =
 struct
   open Sh
   exception Failed of string
+  fun failureMessage (Failed text) = text
+    | failureMessage (MatrixModel.Invalid text) = text
+    | failureMessage (MatrixProbe.Failed text) = text
+    | failureMessage (ProgramSelect.Invalid text) = text
+    | failureMessage e = General.exnMessage e
   type entry = {label : string, body : string}
   type program = {name : string, head : string, entries : entry list, tail : string}
   type deviation = {config : string, label : string, category : string, reason : string}
@@ -153,12 +158,12 @@ struct
             | _ => false) (lines output)
       fun loop (attempt, status, output, outputs, stopped) =
         if List.exists (String.isPrefix "laws: ") (lines output) then
-          (need (status = 0 orelse ordinaryFailure status output, "law program failed after printing its final verdicts");
+          (need (status = 0 orelse ordinaryFailure status output, "law program failed after printing its final verdicts (exit " ^ Int.toString status ^ ")");
            (String.concatWith "\n" (List.rev (output :: outputs)), List.rev stopped))
         else if attempt >= 50 then (String.concatWith "\n" (List.rev (output :: outputs)), List.rev stopped)
         else
           case List.rev (List.filter (String.isPrefix "LAW ") (lines output)) of
-            [] => (need (status = 0, "law program failed before its first law");
+            [] => (need (status = 0, "law program failed before its first law (exit " ^ Int.toString status ^ ")");
                    (String.concatWith "\n" (List.rev (output :: outputs)), List.rev stopped))
           | line :: _ =>
               let val label = case String.tokens Char.isSpace line of _ :: label :: _ => label | _ => raise Failed "malformed LAW marker"
@@ -269,6 +274,8 @@ struct
       val (keep, output, stopped, again) = attempt (initial, 0, "")
       val () = write (directory ^ "/" ^ #name p ^ ".out", output)
       val got = verdicts output
+      val () = need (List.all (fn (label, _) => List.exists (fn c : choice => #label c = label) keep) got,
+                     "law program reported an unselected label")
       fun primary label = #body (valOf (List.find (fn e : entry => #label e = label) (#entries p)))
       val () = onAlternative := List.map #label (List.filter (fn c : choice => #body c <> primary (#label c)) keep)
       fun result (c : choice) =
@@ -342,8 +349,17 @@ struct
       fun lackOf (label, body) = unique (List.concat (List.map
             (fn path => if List.exists (fn opened => opened <> path andalso null (lacks (opened ^ "." ^ path))) (SmlScan.opens body)
                         then [] else lacks path) (unique (structureOf label :: dependencies body))))
-      val results = List.map (fn p => runProgram {host = name, program = p, alternatives = #alternatives ctx,
-              lacks = lackOf, directory = directory, library = ["lib/random/random_sig.sml", "lib/random/random.sml"] @ chosen, build = build}) (#programs ctx)
+      val controllerErrors = ref [] : string list ref
+      fun run (p : program) =
+        (runProgram {host = name, program = p, alternatives = #alternatives ctx,
+              lacks = lackOf, directory = directory, library = ["lib/random/random_sig.sml", "lib/random/random.sml"] @ chosen, build = build}
+         handle e =>
+           let val why = #name p ^ ": " ^ String.concatWith " " (String.tokens Char.isSpace (failureMessage e))
+               val () = controllerErrors := why :: !controllerErrors
+           in {results = List.map (fn entry : entry => "NOT RUN " ^ #label entry ^ ": controller failure: " ^ why) (#entries p),
+               alternatives = []} end)
+      val results = List.map run (#programs ctx)
+      val () = write (directory ^ "/controller-errors.txt", String.concat (List.map (fn why => why ^ "\n") (List.rev (!controllerErrors))))
       val output = String.concat (List.map (fn result => String.concat (List.map (fn line => line ^ "\n") (#results result))) results)
       val alternatives = List.concat (List.map #alternatives results)
       val () = write (#out ctx ^ "/" ^ name ^ ".results", output)
@@ -362,9 +378,13 @@ struct
     in names end
   fun prepareAction () =
     let val out = outputDirectory ()
+        val () = rmTree (out ^ "/selected.txt")
+        val () = rmTree (out ^ "/selected.pending")
+        val () = rmTree (out ^ "/programs")
         val () = generate out
         val names = List.map (OS.Path.base o OS.Path.file) (glob (out ^ "/programs", ".sml"))
         val selected = ProgramSelect.filter {pattern = env ("LAWS_PROGRAMS", ""), names = names, directory = out ^ "/selection"}
+        val () = need (not (null selected), "LAWS_PROGRAMS matches no generated law program")
         val () = write (out ^ "/selected.pending", String.concat (List.map (fn name => name ^ "\n") selected))
     in OS.FileSys.rename {old = out ^ "/selected.pending", new = out ^ "/selected.txt"} end
   fun context () =
@@ -374,7 +394,16 @@ struct
     in load out (fn name => member (name, selected)) end
   fun collectAction host () =
     let val ctx = context ()
-        val result = oneHost ctx host
+        val errorFile = #out ctx ^ "/" ^ host ^ "/controller-errors.txt"
+        val () = rmTree errorFile
+        val result = oneHost ctx host handle e =>
+          let val why = "library producer: " ^ String.concatWith " " (String.tokens Char.isSpace (failureMessage e))
+              val () = mkdirs (OS.Path.dir errorFile)
+              val () = write (errorFile, why ^ "\n")
+              val output = String.concat (List.map (fn p : program => String.concat (List.map
+                     (fn entry : entry => "NOT BUILT " ^ #label entry ^ ": " ^ why ^ "\n") (#entries p))) (#programs ctx))
+              val () = write (#out ctx ^ "/" ^ host ^ ".results", output)
+          in {output = output, explained = [], unexplained = [], alternatives = [], unavailable = NONE} end
         val output = #output result
         fun count prefix = length (List.filter (String.isPrefix prefix) (lines output))
     in case #unavailable result of SOME reason => say (host ^ ": framework unavailable: " ^ reason ^ "\n")
@@ -388,6 +417,8 @@ struct
     in if exists unavailable then say ("UNAVAILABLE " ^ read unavailable) else
       let val file = out ^ "/" ^ host ^ ".results"
           val () = need (exists file, "native law collector published no results for " ^ host)
+          val errors = read (out ^ "/" ^ host ^ "/controller-errors.txt")
+          val () = need (errors = "", host ^ ": " ^ errors)
           val (explained, unexplained) = compare host (#skips ctx) (#reference ctx) (#deviations ctx) (read file)
           val () = List.app (fn text => say (text ^ "\n")) unexplained
       in need (null unexplained, host ^ ": " ^ Int.toString (length unexplained) ^ " unexplained differences from Rune");
@@ -405,6 +436,9 @@ struct
         let val (explained, unexplained) = compare host skips reference devs output
             val () = write (out ^ "/" ^ host ^ ".differences", String.concatWith "\n" (explained @ unexplained) ^ "\n")
         in unexplained end) results)
+      val errors = List.mapPartial (fn host => let val text = read (out ^ "/" ^ host ^ "/controller-errors.txt")
+                    in if text = "" then NONE else SOME (host ^ ": controller errors: " ^ text) end) hosts
+      val differences = differences @ errors
       val old = stale results devs
       val () = write (out ^ "/differences.txt", String.concat (List.map (fn text => text ^ "\n") (differences @ old)))
       val () = List.app (fn text => say (text ^ "\n")) (differences @ old)
@@ -415,6 +449,7 @@ struct
         (* Keep --compare's historical entrypoint usable after a runner run.
            Copy small result records, not the large compiler workspaces. *)
         val public = fromRoot "tests/out/laws-hosts"
+        val () = if public = out then () else rmTree public
         val () = mkdirs public
         val () = List.app (fn host =>
             List.app (fn suffix => if exists (out ^ "/" ^ host ^ suffix) then
@@ -424,6 +459,8 @@ struct
           let val file = public ^ "/" ^ host ^ "/unavailable.txt"
               val () = mkdirs (OS.Path.dir file)
               val () = rmTree file
+              val errors = public ^ "/" ^ host ^ "/controller-errors.txt"
+              val () = write (errors, read (out ^ "/" ^ host ^ "/controller-errors.txt"))
           in if exists (out ^ "/" ^ host ^ "/unavailable.txt") then
                write (file, read (out ^ "/" ^ host ^ "/unavailable.txt")) else () end) hosts
         val () = compareFiles out hosts

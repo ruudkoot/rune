@@ -613,8 +613,10 @@ The source scanner handles strings and nested comments independently of Rune.
 
 The official SML/NJ32 110.99.9 Word64 startup defect is recorded as property
 framework unavailability, with a result for every selected law and a named
-skip. The Python host-law driver remains during full shadow reconciliation;
-the part-two roadmap records the remaining validation.
+skip. The legacy Python host-law driver is retired. The part-two roadmap records
+full comparisons, controlled host configurations and the observed native GC
+failures separately. A failed law program is recorded and collection continues
+with later programs; controller errors fail comparison and cannot become passes.
 
 The documentation consistency checks use `bin/rune-doc-check` and are named
 `documentation/{features,signatures,claims,notes,annotations,faults}` in the

@@ -31,11 +31,7 @@ struct
       fun static output =
         let val (prior, _) = Substring.position "\nLAW " (Substring.full output)
             val text = Substring.string prior
-        in if String.isPrefix "smlnj" host then
-             List.exists (fn line => String.isSubstring " Error:" line andalso
-                List.exists (fn path => not (null (MatrixProbe.errorLines host line path))) sourcePaths) (lines text)
-           else if host = "polyml" then String.isSubstring ": error:" text orelse String.isSubstring "Static Errors" text
-           else MatrixProbe.staticError host text end
+        in MatrixProbe.sessionError host sourcePaths text end
       fun executable path = OS.FileSys.access (path, [OS.FileSys.A_EXEC]) andalso OS.FileSys.fileSize path > 0
                             handle OS.SysErr _ => false
     in

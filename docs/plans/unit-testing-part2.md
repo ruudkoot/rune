@@ -563,3 +563,25 @@ pinned, passed 19,034 cases and two documented native-interrupt skips
 bytecode for the final integrated runner, documentation checker, host-law
 helper and matrix helper. The old mutation driver returned success
 for survivors; its stricter replacement CLI is documented in testing.md.
+
+### P2.5 acceptance, 2026-10-21
+
+All 1,756 selected law verdicts agree with the former driver on each of MLton,
+Poly/ML, pinned MLKit 4.7.25 and both runnable 64-bit SML/NJ releases. Evidence
+is in `tests/out/unit-testing-part2/p2.5/full-host-shadow.json` and its referenced
+result files. Both native SML/NJ releases showed moving fatal GC failures with
+the default process layout. Their accepted shadow comparisons use the same
+validation-only fixed-address wrapper, 64 MB initial allocation and 120-second
+idle limit on both drivers; production defaults are unchanged. The 32-bit
+release's Word64 startup defect remains an explicit unavailable framework.
+
+The final controller rejects unknown PASS labels, accounts for every law after
+library or program failure, continues collecting later programs and fails the
+comparison on controller errors. Empty regex selections and stale selection
+files cannot masquerade as success. Planted failed-library, failed-program,
+unknown-label and diagnostic probes passed, including ordinary `Posix.Error:`
+check labels. The integrated controller/section/image fault tier passed 7/7
+(`p2.6/fixed-faults.log`). The canonical integration before retirement passed
+19,034 tests with the two documented native interrupt skips; a fresh integrated
+check also runs after the retirement and other completed ports. The original
+Python source is retained only in the ignored acceptance baseline and Git.

@@ -35,6 +35,15 @@ struct
       (if host = "polyml" then [": error:", "Static Errors", "Exception-"]
        else if host = "mlkit" then ["Error:", "error:", "Compilation failed", "Stopping compilation of MLB-file due to error"]
        else ["Error:", "uncaught exception"])
+  fun sessionError host sources text =
+    let fun located line = List.exists (fn source => not (null (errorLines host line source))) sources
+    in if String.isPrefix "smlnj" host then
+         List.exists (fn line => String.isSubstring " Error:" line andalso located line) (lines text)
+       else if host = "polyml" then
+         List.exists (fn line => (String.isSubstring ": error:" line andalso located line)
+                      orelse Hosts.trim line = "Static Errors"
+                      orelse String.isPrefix "Exception- Static Errors" (Hosts.trim line)) (lines text)
+       else staticError host text end
   fun probe {host = h : Hosts.host, names, directory, signatureProbe} =
     let
       val names = sort names

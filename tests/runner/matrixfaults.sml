@@ -25,6 +25,8 @@ struct
       val () = need ("checker lexical error is explicit", rejected)
       val () = need ("warnings do not drop a library file", null (MatrixProbe.errorLines "smlnj-legacy"
                     "source with spaces.sml:7.3-7.9 Warning: nonexhaustive match\n" "source with spaces.sml"))
+      val () = need ("Posix.Error check labels are not compiler diagnostics", not (MatrixProbe.sessionError "smlnj-legacy"
+                   ["source.sml"] "PASS Posix.Error:POSIX_ERROR/matches\nSUMMARY 1 checks, 0 failed\n"))
       val decoded = MatrixModel.parseRow false "native:mlkit@4.7.25\tnative\tmlkit\t/compiler\t/library\t"
       val () = need ("resolved configuration protocol", #id decoded = "native:mlkit@4.7.25" andalso #vm decoded = "/library"
                  andalso MatrixModel.row decoded = "native:mlkit@4.7.25\tnative\tmlkit\t/compiler\t/library\t\n")
@@ -85,5 +87,44 @@ struct
       val result = MatrixHost.build {host = {name = "mlton", program = missing, library = ""}, name = "program", sources = [source],
             directory = binary, runDirectory = dir, input = "", timeout = 5, memory = 100, int64 = false}
       val () = need ("stale executable does not repair failed producer", not (#built result) andalso #status result <> 0 andalso #output result = "")
+      val fixture = dir ^ "/collector"
+      val out = fixture ^ "/host-laws"
+      val () = mkdirs (out ^ "/programs")
+      val () = List.app (fn (name, label) => write (out ^ "/programs/" ^ name ^ ".sml",
+          "val () = Check.laws [\n  (\"" ^ label ^ "\", fn () => Prop.assert true)\n]\n"))
+              [("A", "P.one/law-1@Int"), ("B", "P.two/law-1@Int")]
+      val () = write (out ^ "/selected.txt", "A\nB\n")
+      val fake = fixture ^ "/sml"
+      fun compiler failedLibrary otherLabel =
+        "for file in \"$@\"; do case $file in\n"
+        ^ "*/library.sml) " ^ (if failedLibrary then "exit 9" else "printf 'library built\\n'; exit 0") ^ " ;;\n"
+        ^ "*/A.sml) exit 7 ;;\n"
+        ^ "*/B.sml) printf 'LAW P.two/law-1@Int\\nPASS " ^ otherLabel
+        ^ ": good\\nlaws: 1 pass, 0 fail\\n'; exit 0 ;;\nesac; done\nexit 0"
+      fun collect label =
+        let val status = Children.exec {addressSpace = SOME (1024 * 1024 * 1024), cpuTime = SOME 60,
+                                        fileSize = SOME (1024 * 1024), core = SOME 0}
+              (setEnv ("RUNE_TEST_RUN", fixture) o setEnv ("SMLNJ", fake))
+            {cmd = [fromRoot "bin/rune-laws-hosts", "host-laws-collect", "smlnj-legacy"], dir = SOME root,
+             stdin = "", stdout = fixture ^ "/" ^ label ^ ".out", stderr = fixture ^ "/" ^ label ^ ".err", timeout = 60}
+        in need (label ^ " collector completed", status = 0);
+           (read (out ^ "/smlnj-legacy.results"), read (out ^ "/smlnj-legacy/controller-errors.txt")) end
+      val () = script (fake, compiler false "P.two/law-1@Int")
+      val (output, errors) = collect "early-program-failure"
+      val () = need ("failed law program preserves later programs", length (lines output) = 2
+                      andalso String.isSubstring "NOT RUN P.one/law-1@Int" output
+                      andalso String.isSubstring "PASS P.two/law-1@Int" output
+                      andalso String.isSubstring "exit 7" errors)
+      val () = need ("collector error cannot compare successfully", ((HostLaws.compareFiles out ["smlnj-legacy"]; false)
+                                                             handle HostLaws.Failed _ => true))
+      val () = script (fake, compiler false "P.unselected/law-1@Int")
+      val (output, errors) = collect "unselected-verdict"
+      val () = need ("unselected PASS label rejected", length (lines output) = 2
+                   andalso not (String.isSubstring "PASS " output) andalso String.isSubstring "unselected label" errors)
+      val () = script (fake, compiler true "P.two/law-1@Int")
+      val (output, errors) = collect "library-producer-failure"
+      val () = need ("failed library accounts for every selected law", length (lines output) = 2
+                    andalso List.all (String.isPrefix "NOT BUILT ") (lines output)
+                    andalso String.isSubstring "library producer" errors)
     in () end
 end
