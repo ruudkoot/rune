@@ -109,30 +109,10 @@ struct
        Test.requires ["python3"] (alone ("test-intinf-dependency", [], ["tests/intinf/*", "scripts/*gmp*", "build/deps/gmp/*"])),
        alone ("check-isa", [], [])]
 
-  (* the profiles' extras (docs/testing.md, Profiles): AGENTS.md's targets
-     for a kind of change, beyond make check. Each runs alone, as it always
-     has: they run tests/lang from the root and the matrix *)
-  (* seconds is the whole make, not one basis program (that limit is
-     RUNE_MATRIX_TIMEOUT, 120s). The other extras finish inside an hour.
-     make matrix does not: a quiet 2-CPU runner takes about 50 minutes
-     (3028s on 2026-10-16) and a busy one was still in xc1:mlkit when the
-     hour ran out (run 39015037450; matrix-quick 2375s, against 1652s the
-     day before). That kill is SIGTERM to the group. The hosts' processes
-     then die with SIGSEGV and SIGFPE, which the shell reports as
-     "Segmentation fault" and "Floating point exception", and rm cannot
-     remove a directory MLKit's chmod has set to 01001. Two hours covers
-     that runner, inside the workflow's six-hour cap. *)
-  fun extra (name, tags) = extraFor (name, tags, 3600)
-  and extraFor (name, tags, seconds) =
-    target (name, seconds, {cpus = processors, memory = 4000, pools = ["lang", "matrix"], after = [],
-                            tags = "nightly" :: tags, covers = []})
-  val extras =
-    Test.describe "make"
-      [Test.requires ["windows"] (extra ("test-windows", ["vm", "windows"])),
-       Test.requires Lang.hosts (extra ("matrix-quick", ["library"])),
-       (* the nightly's own (docs/testing.md, Tiers, profiles and what changed):
-          every configuration of the matrix, and the native code under stress *)
-       Test.requires Lang.hosts (extraFor ("matrix", [], 7200))]
+  (* Matrix configurations are inventory ways. The remaining Windows make
+     adapter is retired with its platform controller in P2.7. *)
+  fun extra (name,tags)=target (name,3600,{cpus=processors,memory=4000,pools=["lang","matrix"],after=[],tags="nightly" :: tags,covers=[]})
+  val extras=Test.describe "make" [Test.requires ["windows"] (extra ("test-windows",["vm","windows"]))]
 
   (* what tests require of the machine (D18; docs/testing.md, Requirements),
      with scripts/doctor.sh's hints *)
@@ -185,7 +165,7 @@ struct
   val matrixFaults = Test.tag "check" (Test.tag "quick" (Test.tag "covers:tests/runner/matrix*.sml"
     (Test.tag "covers:tests/runner/hostlaws.sml" (Test.tag "covers:tests/runner/smlscan.sml"
       (Test.requires ["grep-pcre"] (Test.describe "runner" [LibHosts.job ("matrix-controller-faults", ["matrix-controller-faults"], [], 300)]))))))
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws

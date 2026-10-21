@@ -31,7 +31,7 @@ many places where the library or a test depended on their width.
 make hosts                             # install the host systems, once
 make matrix-quick                      # rune and Rune's library compiled by each host (xc1)
 make matrix                            # and the suite on each host's own library
-sh tests/basis/run-matrix.sh --configs all real   # tests whose name contains "real"
+bin/rune-matrix --configs all real   # tests whose name contains "real"
 sh tests/basis/structures.sh           # which structures each system has
 make perf                              # wall-clock times of tests/perf, one at a time (performance.md)
 ```

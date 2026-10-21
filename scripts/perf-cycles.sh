@@ -17,7 +17,7 @@
 # alone), -baseline and -opt; jit-baseline+c10+w100 is --jit=baseline
 # --jit-calls=10 --jit-work=100 (M6, the sweep), and +t2 adds --jit-tier=2
 # (M9: jit-all+t2 is every function at tier 2). Each program is wrapped as `make perf` wraps it
-# (tests/basis/run-matrix.sh, wall_program): its body as a function called R
+# (bin/rune-matrix, wall_program): its body as a function called R
 # times, R from the `wall R` line of its .budget, so that a run is long
 # enough to measure and the numbers stand beside docs/performance.md's (for
 # polyml the same body and loop, inside a `local` whose body is `main`, since

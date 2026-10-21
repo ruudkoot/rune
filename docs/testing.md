@@ -635,3 +635,13 @@ this stricter exit behavior makes the adequacy result usable in automation.
 bytecode, controller crash or failure before the first law fails the job.
 The property seed and environment are inherited; the default law idle limit
 is 30 seconds and the sample count is 20 per file.
+
+
+The full Basis controller is bin/rune-matrix: configurations, standalone
+program/input/data modes, timing, refresh and resolution output are retained.
+The --one route selects an exact name. Collection, comparison, stale
+deviations and reports are separate inventory cases. Missing structures are
+named skips; an explicit CLI selection fails if its compiler cannot start.
+Interactive sessions are distinguished by compiler identity. Reports include
+dropped sources, timing phases and timings.tsv. Cache imports accept legacy
+CRC and version-2 keys and preserve reuse when only the execution VM changes.

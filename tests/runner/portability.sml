@@ -149,7 +149,7 @@ struct
                                       @ [Test.requires ["qemu"] (job ("image/" ^ family, ["port-image", family], 300))])
                                    families)
              @ [Test.requires ["qemu"] (script ("matrix", "RUNE=\"$RUNE_TEST_ROOT\"/bin/rune-stack RUNE_MATRIX_TIMEOUT=" ^ env ("PORT_TIMEOUT", "900")
-                                                         ^ " exec sh tests/basis/run-matrix.sh -j \"$RUNE_TEST_CPUS\" --configs portability",
+                                                         ^ " RUNE_MATRIX_RUN=\"$RUNE_TEST_RUN/portability/matrix\" exec bin/rune-matrix -j \"$RUNE_TEST_CPUS\" --configs portability",
                                                          Int.max (1, Runtime.processors () div 2), 2000, ["matrix"]))]),
           Test.requires ["qemu"] (Oracles.jitTree ("bin/runevm-aarch64", "port-jit"))]))))
 end

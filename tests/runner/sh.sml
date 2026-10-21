@@ -7,7 +7,7 @@ struct
   fun env (name, default) = case OS.Process.getEnv name of SOME v => if v = "" then default else v | NONE => default
   (* the tree's directory and the run's, as the runner gives them *)
   val root = env ("RUNE_TEST_ROOT", OS.FileSys.getDir ())
-  val run = env ("RUNE_TEST_RUN", OS.FileSys.getDir ())
+  val run = env ("RUNE_TEST_RUN", root ^ "/tests/out/manual")
   fun fromRoot p = if String.isPrefix "/" p then p else root ^ "/" ^ p
 
   (* a word as the shell reads it back *)

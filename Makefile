@@ -789,13 +789,13 @@ bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) build
 test-windows-text: windows $(RUNE) bin/rune.rbc bin/rune.stack.rbc
 	RUNE=$(RUNE) WINCC='$(WINCC)' WINCC32='$(WINCC32)' sh tests/windows/run.sh
 
-test-windows: windows $(RUNE) bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel test-windows-text
+test-windows: bin/rune-matrix bin/rune-test windows $(RUNE) bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel test-windows-text
 	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack.exe --vm bin/runevm-stack32.exe
 	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
 	  --vm bin/runevm.exe --vm bin/runevm32.exe
 	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:RUNEVM_JIT_TIER:$$WSLENV RUNEVM_JIT=all RUNEVM_JIT_TIER=2 sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
 	  --vm bin/runevm.exe
-	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE_STACK)) sh tests/basis/run-matrix.sh -j $(JOBS) --configs windows
+	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE_STACK)) bin/rune-matrix -j $(JOBS) --configs windows
 	sh tests/terminal/run.sh --windows
 	python3 tests/dap/run.py --windows
 	sh tests/kernel/run.sh --windows
@@ -1376,23 +1376,23 @@ hosts: | build/.doctor-matrix
 
 MATRIX_DOCTOR := build/.doctor-mlton build/.doctor-smlnj-legacy build/.doctor-smlnj32 build/.doctor-smlnj-dev build/.doctor-polyml build/.doctor-mlkit build/.doctor-check
 
-matrix-quick: $(RUNE) vm | $(MATRIX_DOCTOR)
+matrix-quick: $(RUNE) vm bin/rune-matrix bin/rune-test | $(MATRIX_DOCTOR)
 	RUNE=$(abspath $(RUNE_STACK)) RUNEVM=$(abspath $(RUNEVM)) \
-	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune,xc1
+	  bin/rune-matrix -j $(JOBS) --configs rune,xc1
 
-matrix: $(RUNE) vm | $(MATRIX_DOCTOR)
+matrix: $(RUNE) vm bin/rune-matrix bin/rune-test | $(MATRIX_DOCTOR)
 	RUNE=$(abspath $(RUNE_STACK)) RUNEVM=$(abspath $(RUNEVM)) \
-	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs all
+	  bin/rune-matrix -j $(JOBS) --configs all
 
 # The wall-clock times of tests/perf (tests/out/perf/wall.md): `rune` is Rune
 # as shipped, bin/rune and bin/runevm at its default JIT level; the stack VM
 # is the configuration rune:stack (PERF_CONFIGS=rune,rune:stack,hosts).
 PERF_CONFIGS ?= all
 
-perf: $(RUNE) vm | $(MATRIX_DOCTOR)
+perf: $(RUNE) vm bin/rune-matrix bin/rune-test | $(MATRIX_DOCTOR)
 	RUNE=$(abspath $(RUNE_STACK)) RUNEVM=$(abspath $(RUNEVM)) \
 	  RUNE_NEW=$(abspath $(RUNE)) RUNEVM_NEW=$(abspath $(RUNEVM_REGISTER)) \
-	  sh tests/basis/run-matrix.sh --perf --configs $(PERF_CONFIGS)
+	  bin/rune-matrix --perf --configs $(PERF_CONFIGS)
 
 # ---------------------------------------------------------------- bootstrap
 # Stage 1: a host build compiles the compiler to bytecode. bin/rune-boot runs
@@ -1515,6 +1515,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.
                tests/runner/children.sml tests/runner/bytecode.sml tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativefaults.sml tests/runner/native.sml \
                tests/runner/matrixmodel.sml tests/runner/matrixprobe.sml tests/runner/matrixhost.sml tests/runner/smlscan.sml tests/runner/programselect.sml tests/runner/hostlaws.sml tests/runner/matrixfaults.sml \
                tests/runner/docchecks.sml tests/runner/mutants.sml tests/runner/docfaults.sml \
+               tests/runner/matrixload.sml tests/runner/matrixprepare.sml tests/runner/matrixsuite.sml tests/runner/matrixprogram.sml tests/runner/matrixperf.sml tests/runner/matrixexecutionfaults.sml tests/runner/matrixcachefaults.sml tests/runner/matrix.sml \
                tests/runner/tracecheck.sml tests/runner/heapchecks.sml tests/runner/censustrace.sml tests/runner/heapfaults.sml tests/runner/jitdumpcheck.sml tests/runner/heap.sml \
                tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/portability.sml \
                tests/runner/main.sml
@@ -1564,6 +1565,14 @@ bin/rune-doc-check: bin/rune-doc-check.rbc bin/runevm Makefile
 test-mutants: $(RUNEDOC) vm manifests bin/rune-test bin/rune-doc-check
 	bin/rune-doc-check mutants $(if $(filter command line environment,$(origin JOBS)),-j $(JOBS))
 
+MATRIX_SRCS := $(HOST_LAWS_SRCS) tests/runner/matrixload.sml tests/runner/matrixprepare.sml \
+               tests/runner/matrixsuite.sml tests/runner/matrixprogram.sml tests/runner/matrixperf.sml tests/runner/matrixexecutionfaults.sml tests/runner/matrixcachefaults.sml tests/runner/matrix.sml
+bin/rune-matrix.rbc: $(RUNE) $(MATRIX_SRCS) tests/runner/matrix-main.sml manifests
+	$(RUNE) --library test/runner --library digest $(MATRIX_SRCS) tests/runner/matrix-main.sml -o $@
+bin/rune-matrix: bin/rune-matrix.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-matrix.rbc" "$$@"\n' > $@
+	chmod +x $@
+
 # Everything a step of make check needs, built before the runner starts, so
 # that two steps that run at once never build one file (each step is a make
 # of its own).
@@ -1574,7 +1583,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check
+check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what

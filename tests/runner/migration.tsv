@@ -50,7 +50,7 @@ tests/basis/check-notes.sh	shell	P2.4	retired	d1564a01e1e90de654ecf6029744c841f2
 tests/basis/gen-annotations.sh	shell	P2.15	pending	43be8504b4e79d5f7aa9b2dc7c615d3d67331a13	-	generated-bytes-and-source-order
 tests/basis/host/gen-host-basis.sh	shell	P2.15	pending	98caf1a2fc07f94ddfa554c7388d48172ee1074e	-	generated-bytes-and-source-order
 tests/basis/run-laws-hosts.py	python	P2.5	retired	d4e55a1f7e5c97fd8b866ad2e220a45b5de55a60	tests/runner/hostlaws.sml	p2.5/full-host-shadow.json+stable-legacy-shadow.json+hardened-faults.log
-tests/basis/run-matrix.sh	shell	P2.6	pending	8b5529a95de5db6ac132756830c8fdff65276ac5	-	matrix-case-verdicts-and-images
+tests/basis/run-matrix.sh	shell	P2.6	retired	8b5529a95de5db6ac132756830c8fdff65276ac5	tests/runner/matrix.sml	p2.6/acceptance+full-shadow.json+xc2-shadow.json+final-faults.log
 tests/basis/run-mutants.sh	shell	P2.4	retired	37ff16f0d92e93674ac48907556cf166ae2eadcc	tests/runner/mutants.sml	p2.4/focused.log+mutants.old.log+mutants-list.old.log+mutants-list.new.log
 tests/basis/structures.sh	shell	P2.15	pending	8018735b277e8a775ba224ee8d29925cb4c90cef	-	generated-bytes-and-source-order
 tests/basis/xc2/flatten.sh	shell	P2.15	pending	5185c5767c52df7e608d8fa8b00b2240cd5e26bd	-	generated-bytes-and-source-order

@@ -39,8 +39,7 @@ struct
                                                           Posix.FileSys.S.ixusr, Posix.FileSys.S.irgrp,
                                                           Posix.FileSys.S.ixgrp, Posix.FileSys.S.iroth, Posix.FileSys.S.ixoth]) end
     end
-  (* The Basis matrix remains owned by P2.6. Keep its stress selections
-     explicit while the language cases already use the SML way model. *)
+  (* Stress only the tested VM; compilation uses the ordinary compiler. *)
   fun stressBasis native =
     let
       val dir = NativeChecks.directory (if native then "basis-native-stress" else "basis-stress")
@@ -55,9 +54,9 @@ struct
           o setEnv ("RUNE_MATRIX_RUN", dir ^ "/work")
           o setEnv (if native then "RUNEVM_OPT" else "RUNEVM", wrapper)
       val status = Children.exec {addressSpace = NONE, cpuTime = NONE, fileSize = SOME (128 * 1024 * 1024), core = SOME 0} envf
-        {cmd = ["sh", "tests/basis/run-matrix.sh", "-j", env ("RUNE_TEST_CPUS", "1"), "--configs", if native then "rune:opt" else "rune"],
+        {cmd = [fromRoot "bin/rune-matrix", "-j", env ("RUNE_TEST_CPUS", "1"), "--configs", if native then "rune:opt" else "rune"],
          dir = SOME root, stdin = "", stdout = dir ^ "/matrix.out", stderr = dir ^ "/matrix.err", timeout = 0}
-    in NativeChecks.require (status = 0, "legacy Basis stress bridge failed; see " ^ dir) end
+    in NativeChecks.require (status = 0, "Basis stress selection failed; see " ^ dir) end
   fun basisJob native =
     let val name = if native then "native" else "stack"
     in Test.resources {cpus = Runtime.processors (), memory = 4000}

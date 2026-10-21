@@ -585,3 +585,32 @@ check labels. The integrated controller/section/image fault tier passed 7/7
 19,034 tests with the two documented native interrupt skips; a fresh integrated
 check also runs after the retirement and other completed ports. The original
 Python source is retained only in the ignored acceptance baseline and Git.
+
+### P2.6 acceptance, 2026-10-21
+
+The shell matrix is retired. The standard full selection passed 6,142 runner
+cases (5,620 passes, 522 explicit unavailable-structure skips), with all 3,055
+program/configuration results shadowed. Three floating-point program changes
+match existing HOST-FLAKY rules; the fourth difference is a baseline native
+SML/NJ32 timeout whose later checks completed in the new run. No expectations
+or library implementations were changed to obtain agreement.
+
+All 1,175 host-library-on-Rune results also agree with the legacy driver.
+The initial comparison exposed eighteen section-recovery failures: a Rune
+type check was incorrectly treated as an interactive SML/NJ/Poly session
+because of the library's name. Compiler identity now decides that behavior;
+all affected programs were recollected and the complete comparison has zero
+differences. Initial failed receipts remain under before-xc2-session-fix.
+
+Public program/input/data mode agrees byte for byte on Rune and native Poly/ML,
+including data paths with spaces. Calendar/compress2 shadows cover two
+optimization levels. Four timing configurations preserve output/repetition
+contracts; busy-machine timings are validation, not a performance claim.
+Exact --one selection and missing-compiler failure were exercised. The final
+fault tier passed 8/8, covering section recovery, images, failed preparation,
+stale deviations and actual legacy/version-2 cache imports. Counter wrappers
+prove hits avoid compilation and changed source, compiler or library inputs
+invalidate it; changing only the execution VM retains bytecode reuse.
+A fresh 32-bit preparation preserves accepted/dropped source decisions and
+records the first real diagnostic. Main reports, timing sidecars and dropped
+source tables remain available. Evidence is under tests/out/unit-testing-part2/p2.6.

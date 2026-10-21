@@ -1,7 +1,7 @@
 #!/bin/sh
 # Serial process/OS adapter. Manifest checks, workload validation and reports
 # are SML97. No instrumented run supplies a headline timing sample.
-# Configurations are resolved by tests/basis/run-matrix.sh --timing: `rune` is
+# Configurations are resolved by bin/rune-matrix --timing: `rune` is
 # Rune as shipped, bin/rune's register bytecode on bin/runevm at its default
 # JIT level, and rune:stack the stack bytecode on bin/runevm-stack.
 set -eu
@@ -76,7 +76,7 @@ git diff --binary HEAD > "$out/worktree.patch"
 git status --porcelain > "$out/worktree-status.txt"
 cp examples/benchmarks/manifest.tsv examples/benchmarks/upstreams.tsv "$out/"
 mkdir -p "$out/tool-sources"
-for path in scripts/measure-benchmarks.sh scripts/benchmark-result.sh scripts/benchmark-provenance.sh tests/basis/run-matrix.sh examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml; do
+for path in scripts/measure-benchmarks.sh scripts/benchmark-result.sh scripts/benchmark-provenance.sh tests/runner/matrixmodel.sml tests/runner/matrixprobe.sml tests/runner/matrix-main.sml tests/runner/matrixload.sml tests/runner/matrixprepare.sml tests/runner/matrixsuite.sml tests/runner/matrixprogram.sml tests/runner/matrixperf.sml examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml; do
   destination=$out/tool-sources/$path
   mkdir -p "$(dirname "$destination")"
   cp "$path" "$destination"
@@ -130,7 +130,7 @@ while IFS="$(printf '\t')" read -r name seconds memory sources args expected inp
     config_dir=$out/$name/$(printf '%s' "$spec" | tr ':/' '--')
     mkdir -p "$config_dir"
     id=$spec; counters=$(printf '%s\t%s\t%s' - - -)
-    if ! RUNE_MATRIX_RUN="$config_dir/resolve-work" sh tests/basis/run-matrix.sh --timing --configs "$spec" --resolve-out "$config_dir/config.tsv" < /dev/null > "$config_dir/resolve.log" 2>&1; then
+    if ! RUNE_MATRIX_RUN="$config_dir/resolve-work" bin/rune-matrix --timing --configs "$spec" --resolve-out "$config_dir/config.tsv" < /dev/null > "$config_dir/resolve.log" 2>&1; then
       phase_dir=$config_dir; record configuration 0 0 missing-configuration 0; status=1; continue
     fi
     # Alias groups are expanded by the caller into one row per configuration.
