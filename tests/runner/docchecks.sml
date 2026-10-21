@@ -243,7 +243,7 @@ struct
                  (List.filter (fn file => not (isDir (fromRoot ("lib/basis/" ^ file)))) (entries (fromRoot "lib/basis")))
       (* Generation in a private tree is only a producer. Assertions compare its
          result here; the generator's former --check path is never called. *)
-      val () = execute dir "generate" ["sh", "scripts/gen-basis-sigs.sh", dir ^ "/lib"]
+      val () = execute dir "generate" [fromRoot "bin/rune-generate", "basis-signatures", dir ^ "/lib"]
       val () = require (same (dir ^ "/lib/basis/library.build", fromRoot "lib/basis/library.build"), "stale signature build block")
       val () = List.app (fn file => require (exists (fromRoot ("lib/basis/" ^ file)), "missing signature file " ^ file))
                   (List.filter (String.isSuffix ".sml") (entries (dir ^ "/lib/basis")))
@@ -257,7 +257,7 @@ struct
         val () = mkdirs dir
         val output = dir ^ "/annotations.txt"
         val () = rmTree output
-        val () = execute dir "generate" ["sh", "tests/basis/gen-annotations.sh", "--out", output]
+        val () = execute dir "generate" [fromRoot "bin/rune-generate", "annotations", "--out", output]
         val () = require (same (output, fromRoot "tests/basis/annotations.txt"), "stale documentation annotations")
     in say "gen-annotations: annotations.txt is up to date\n" end
   fun protect name f () = f () handle Failed message =>

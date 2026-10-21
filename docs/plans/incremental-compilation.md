@@ -3026,7 +3026,7 @@ What M6 and M7 measured changes the plan below in three places:
   --basis-index DIR` derives it -- the declarations, and `Deps`'s uses --
   and writes `DIR/MANIFEST`, which `make manifests` makes and git does not
   keep. The seals stay files of their own and the epilogue a `final` file,
-  as they were; `scripts/gen-basis-sigs.sh` writes its block into the
+  as they were; `bin/rune-generate basis-signatures` writes its block into the
   Basis's build file.
 * **Virtual modules**: `structure X = _virtual : SIG` at a structure
   binding, `StrDynamic` with `DynamicVirtual X`; the build file's

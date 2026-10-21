@@ -75,7 +75,7 @@ count includes regression and support files so exclusions are explicit.
 Bytecode and native executions of one Sandmark executable share an entry;
 different executable implementations remain separate.
 
-Discovery rules are implemented in `scripts/benchmark-inventory.py`:
+Discovery rules are implemented in `bin/rune-generate inventory`:
 
 * **MLton:** every SML program in `benchmark/tests`.
 * **SML/NJ:** every `programs` directory, plus programs advertised by the
@@ -200,7 +200,7 @@ program results, so it cannot supply the sole oracle for imports.
   alternative and multiple Haskell entrypoints, nested aggregates, literate
   code, language-specific comments, effect syntax, foreign dependencies,
   runplan aliases, source identities, name collisions, and invalid metadata.
-* `python3 scripts/benchmark-inventory.py --check`: validates schema,
+* `bin/rune-generate inventory --check`: validates schema,
   pinned entry counts, identities, dispositions and name collisions.
 * The same command with all five `--source` arguments reproduces discovery
   and classification against the pinned trees; no upstream scripts run.

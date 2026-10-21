@@ -43,7 +43,7 @@ keep these invariants:
   check-docs`, verifies that a file loaded on demand declares modules and
   types only). A signature of the
   specification is transcribed in `tests/basis/spec-sigs` first;
-  `scripts/gen-basis-sigs.sh` then makes `lib/basis/sig_<sig>.sml` and its
+  `bin/rune-generate basis-signatures` then makes `lib/basis/sig_<sig>.sml` and its
   line in the build file, and from there on the library's file is edited by hand
   (`make check-docs` wants the same tokens in both). Its test belongs to the Basis
   Library suite: `tests/basis/<name>.sml` and `tests/basis/<name>_sig.sml`,
@@ -55,7 +55,7 @@ keep these invariants:
   open is written down once, as a note in the doc comment of the member
   (`docs/doc-comments.md`); a `rune` line of `deviations.txt` needs such a
   note (`bin/rune-doc-check docs-notes`). After changing a line of
-  `deviations.txt` about a host, run `sh tests/basis/gen-annotations.sh` and
+  `deviations.txt` about a host, run `bin/rune-generate annotations` and
   `make docs`: the documentation shows those lines under the members, from
   the committed `tests/basis/annotations.txt`.
   After a library change run `make matrix-quick` as well: it runs the suite

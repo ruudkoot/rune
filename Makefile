@@ -1172,7 +1172,7 @@ check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 # The generated documentation (docs/plans/docgen.md): `make docs` writes it,
 # and it is committed; check-docs fails when it is not what the sources give.
 # tests/basis/annotations.txt is what the suite knows about other implementations,
-# made from deviations.txt by tests/basis/gen-annotations.sh and committed.
+# made from deviations.txt by bin/rune-generate annotations and committed.
 DOCS_BASIS := --lib lib --library basis --tests tests/basis --annotations tests/basis/annotations.txt \
               --law-skips tests/basis/law-skips.txt \
               --out docs/lib/basis \
@@ -1520,7 +1520,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
 	$(RUNE) --library test/runner --library json --library digest $(RUNNER_SRCS) -o $@
-bin/rune-test: bin/rune-test.rbc bin/runevm Makefile
+bin/rune-test: bin/rune-test.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-test.rbc" "$$@"\n' > $@
 	chmod +x $@
 
@@ -1557,7 +1557,7 @@ DOC_CHECK_SRCS := $(HOST_LAWS_SRCS) tests/runner/bytecode.sml tests/runner/docch
                   tests/runner/mutants.sml tests/runner/docfaults.sml tests/runner/docchecks-main.sml
 bin/rune-doc-check.rbc: $(RUNE) $(DOC_CHECK_SRCS) manifests
 	$(RUNE) --library test/runner $(DOC_CHECK_SRCS) -o $@
-bin/rune-doc-check: bin/rune-doc-check.rbc bin/runevm Makefile
+bin/rune-doc-check: bin/rune-doc-check.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-doc-check.rbc" "$$@"\n' > $@
 	chmod +x $@
 test-mutants: $(RUNEDOC) vm manifests bin/rune-test bin/rune-doc-check
@@ -1567,7 +1567,7 @@ MATRIX_SRCS := $(HOST_LAWS_SRCS) tests/runner/matrixload.sml tests/runner/matrix
                tests/runner/matrixsuite.sml tests/runner/matrixprogram.sml tests/runner/matrixperf.sml tests/runner/matrixexecutionfaults.sml tests/runner/matrixcachefaults.sml tests/runner/matrix.sml
 bin/rune-matrix.rbc: $(RUNE) $(MATRIX_SRCS) tests/runner/matrix-main.sml manifests
 	$(RUNE) --library test/runner --library digest $(MATRIX_SRCS) tests/runner/matrix-main.sml -o $@
-bin/rune-matrix: bin/rune-matrix.rbc bin/runevm Makefile
+bin/rune-matrix: bin/rune-matrix.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-matrix.rbc" "$$@"\n' > $@
 	chmod +x $@
 
@@ -1581,7 +1581,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: bin/rune-measure $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal build/bench-counts.rbc
+check-tools: bin/rune-generate bin/rune-inventory bin/rune-measure $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal build/bench-counts.rbc
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -1743,7 +1743,7 @@ bin/rune-incremental: bin/rune-incremental.rbc bin/runevm Makefile
 EXTERNAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/externalchecks.sml tests/runner/external-main.sml
 bin/rune-external.rbc: $(RUNE) $(EXTERNAL_SRCS) manifests
 	$(RUNE) --library test/runner --library json $(EXTERNAL_SRCS) -o $@
-bin/rune-external: bin/rune-external.rbc bin/runevm Makefile
+bin/rune-external: bin/rune-external.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-external.rbc" "$$@"\n' > $@
 	chmod +x $@
 
@@ -1809,6 +1809,26 @@ MEASURE_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/comma
                 tools/measure/intinf-design.sml tools/measure/main.sml
 bin/rune-measure.rbc: $(RUNE) $(MEASURE_SRCS) $(wildcard tools/measure/fixtures/*) manifests
 	$(RUNE) --library test/runner --library json --library digest $(MEASURE_SRCS) -o $@
-bin/rune-measure: bin/rune-measure.rbc bin/runevm Makefile
+bin/rune-measure: bin/rune-measure.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-measure.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+# Post-bootstrap generators (P2.15); pre-host build-list/version adapters stay independent.
+GENERATE_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/commandwords.sml \
+                 tests/runner/terminalpattern.sml tests/runner/smlscan.sml tools/measure/common.sml \
+                 tools/generate/text.sml tools/generate/perf.sml tools/generate/fxp.sml tools/generate/fixtures.sml \
+                 tools/generate/annotations.sml tools/generate/host-basis.sml tools/generate/mlb.sml \
+                 tools/generate/flatten.sml tools/generate/toposort.sml tools/generate/signatures.sml \
+                 tools/generate/unicode-base.sml tools/generate/unicode-normal.sml tools/generate/unicode-render.sml \
+                 tools/generate/unicode-profile.sml tools/generate/unicode-security.sml tools/generate/unicode.sml \
+                 tools/generate/rewrites.sml tools/generate/rewrite-poly.sml tools/generate/rewrite-nj.sml \
+                 tools/generate/mlton-prims.sml tools/generate/xc2.sml tools/generate/xc2-poly.sml \
+                 tools/generate/xc2-nj.sml tools/generate/structures.sml tools/generate/inventory-base.sml \
+                 tools/generate/inventory-discover.sml tools/generate/inventory-classify.sml \
+                 tools/generate/inventory-credits.sml tools/generate/inventory-build.sml tools/generate/inventory.sml \
+                 tools/generate/main.sml
+bin/rune-generate.rbc: $(RUNE) $(GENERATE_SRCS) $(wildcard tools/generate/data/*) manifests
+	$(RUNE) --library test/runner --library json --library digest $(GENERATE_SRCS) -o $@
+bin/rune-generate bin/rune-inventory: bin/rune-generate.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-generate.rbc" $(if $(filter bin/rune-inventory,$@),inventory )"$$@"\n' > $@
 	chmod +x $@

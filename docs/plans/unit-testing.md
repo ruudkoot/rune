@@ -2127,3 +2127,10 @@ measurement/analysis controllers with `bin/rune-measure`. Its per-file ledger
 and acceptance record preserve the retired source identities and validation
 limits. Generator and production build/package conversion remain P2.15/P2.16;
 whole-project acceptance is P2.17.
+
+P2.15 of [the continuation](unit-testing-part2.md) now replaces the 25
+post-bootstrap generators and AWK helpers with `bin/rune-generate` and
+`bin/rune-inventory`. Complete upstream inventories, source preparations,
+Unicode tables and independent vectors retain their recorded agreements.
+Production build/package conversion and final frozen-source acceptance remain
+P2.16/P2.17.

@@ -513,7 +513,7 @@ struct
         fun loop 0 = false
           | loop n = (let val count = PIO.writeVec (outfd, bytes)
                       in count > 0 andalso loop (n - 1) end)
-              handle OS.SysErr (_, SOME code) => OS.syserror "again" = SOME code orelse OS.syserror "wouldblock" = SOME code
+              handle OS.SysErr (_, SOME code) => code = Posix.Error.again orelse OS.syserror "wouldblock" = SOME code
         val result = (loop 1024 handle e => (PIO.close infd; PIO.close outfd; raise e))
     in PIO.close infd; PIO.close outfd; result end)
 

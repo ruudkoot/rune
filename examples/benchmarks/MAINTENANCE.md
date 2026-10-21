@@ -48,7 +48,7 @@ revisit duplicates/deferrals and preserve previous identities.
 
 Supply all five clean pinned roots to the existing audit command, for example:
 
-    python3 scripts/benchmark-inventory.py --source mlton=PATH --source smlnj=PATH --source mlkit=PATH --source nofib=PATH --source sandmark=PATH --check
+    bin/rune-generate inventory --source mlton=PATH --source smlnj=PATH --source mlkit=PATH --source nofib=PATH --source sandmark=PATH --check
 
 The command rejects a wrong revision or modified/untracked upstream source.
 Review intentional changes before updating locks and invoking --write.

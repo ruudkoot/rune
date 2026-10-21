@@ -68,7 +68,7 @@ struct
                 val ()=write (source,text)
             in build config name source end
           else let val generated=MeasureCensus.budget name "generate" val file=output ^ "/" ^ name ^ ".gen.sml"
-                   val ()=if null generated then () else write (file,successful (execute (name ^ ".generate") (["python3",fromRoot "tests/perf/gen.py"] @ generated)))
+                   val ()=if null generated then () else write (file,successful (execute (name ^ ".generate") ([fromRoot "bin/rune-generate","perf"] @ generated)))
                    val files=MeasureCensus.budget name "compile" val doc=MeasureCensus.budget name "runedoc"
                    fun expand "@boot"=boot | expand "@gen"=[file] | expand other=[other]
                in if not (null doc) then runtime config "runedoc" @ ["--lib","lib"] @ doc

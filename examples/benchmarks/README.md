@@ -668,14 +668,14 @@ sh bin/rune-bench-check suite infer
 sh bin/rune-bench-check suite cichelli
 sh bin/rune-bench-check suite scs
 python3 bin/rune-bench-check inventory
-python3 scripts/benchmark-inventory.py --check
+bin/rune-generate inventory --check
 python3 tests/benchmarks/latency-oracle.py --check
 ```
 
 The source audit can additionally be reproduced with all five pinned trees:
 
 ```sh
-python3 scripts/benchmark-inventory.py --check \
+bin/rune-generate inventory --check \
   --source mlton=/path/to/mlton \
   --source smlnj=/path/to/smlnj-benchmarks \
   --source mlkit=/path/to/mlkit \

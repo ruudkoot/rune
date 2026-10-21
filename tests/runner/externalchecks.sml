@@ -67,7 +67,7 @@ struct
         val () = if isDir (out ^ "/DATA") then () else
                        (need (isDir (dir ^ "/DATA"), "missing external corpus DATA directory"); Incremental.copyTree (dir ^ "/DATA") (out ^ "/DATA"))
         val () = if exists (out ^ "/fxp-input.xml") andalso OS.FileSys.fileSize (out ^ "/fxp-input.xml") > 0 then () else
-          let val input = invoke "fxp-input" root "" ["sh", fromRoot "tests/external/mlton-bench/gen-fxp-input.sh"] 30
+          let val input = invoke "fxp-input" root "" [fromRoot "bin/rune-generate", "fxp"] 30
           in need (#status input = 0 andalso #output input <> "", "external input producer failed");
              write (out ^ "/fxp-input.xml", #output input) end
     in () end

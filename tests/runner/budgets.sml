@@ -54,7 +54,7 @@ struct
       val () = List.app (fn suffix => rmTree (fromRoot (prefix ^ suffix))) [".stdout", ".stderr", ".out.rbc", ".rbc"]
       val generated = args name "generate"
       val () = if null generated then () else
-        (execute name (["python3", "tests/perf/gen.py"] @ generated) (prefix ^ ".gen.sml") (prefix ^ ".generate.err");
+        (execute name ([fromRoot "bin/rune-generate", "perf"] @ generated) (prefix ^ ".gen.sml") (prefix ^ ".generate.err");
          need (exists (fromRoot (prefix ^ ".gen.sml")) andalso OS.FileSys.fileSize (fromRoot (prefix ^ ".gen.sml")) > 0,
                name ^ ": generator produced no program"))
       val doc = args name "runedoc"
@@ -170,7 +170,7 @@ struct
     in if !failed then Posix.Process.exit 0w1 else say "perf-check: within budget\n" end
   fun job (way, name) =
     let val vm = if way = "stack" then "${RUNEVM:-bin/runevm-stack}" else "${RUNEVM_REGISTER:-bin/runevm}"
-        val needs = if null (args name "generate") then [] else ["python3"]
+        val needs : string list = []
     in Test.requires needs (Test.it name {program = "/bin/sh", args = ["sh", "-c", "RUNEVM=\"" ^ vm
           ^ "\" exec \"$RUNE_TEST_ROOT\"/bin/rune-budget budget-one " ^ way ^ " " ^ quote name],
         env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds 1800,

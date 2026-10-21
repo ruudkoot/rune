@@ -32,7 +32,7 @@ make hosts                             # install the host systems, once
 make matrix-quick                      # rune and Rune's library compiled by each host (xc1)
 make matrix                            # and the suite on each host's own library
 bin/rune-matrix --configs all real   # tests whose name contains "real"
-sh tests/basis/structures.sh           # which structures each system has
+bin/rune-generate structures           # which structures each system has
 make perf                              # wall-clock times of tests/perf, one at a time (performance.md)
 ```
 
@@ -49,7 +49,7 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
   and VM. A host's overloading is closed, so `Position` and `SysWord`, which
   `_overload` gives constants on Rune, are sealed transparently there: their
   constants and operators are those of the host's `IntInf.int` and
-  `Word64.word` behind them (`tests/basis/host/gen-host-basis.sh`).
+  `Word64.word` behind them (`bin/rune-generate host-basis`).
 * `xc2:mlton`, `xc2:mlkit`, `xc2:smlnj-legacy`, `xc2:smlnj-dev` and
   `xc2:polyml`: the suite
   on the host's own library compiled by Rune, with the host's primitives
@@ -117,7 +117,7 @@ counts microseconds since 1970).
 
 ## Structures each system provides
 
-`tests/basis/structures.sh` probes `structure Probe = NAME` for every
+`bin/rune-generate structures` probes `structure Probe = NAME` for every
 structure of the specification on each system (the 32-bit SML/NJ has the
 library of the 64-bit one, and SML/NJ 2026.2 provides the same structures
 as 110.99.9):
@@ -310,7 +310,7 @@ The `HOST-BUG`, `HOST-ABSENT` and `HOST-FLAKY` lines; the counts in the
 summary above also include the `WIDTH` and `SPEC-AMBIGUOUS` lines of the
 hosts. What follows names the themes, not every line; the library's
 documentation has every line under the member it is about, in a block
-"Other implementations" (`tests/basis/gen-annotations.sh` makes
+"Other implementations" (`bin/rune-generate annotations` makes
 `tests/basis/annotations.txt` from `deviations.txt` for it).
 
 * **MLton 20241230** (72 lines). `Bool.scan` and `fromString` are

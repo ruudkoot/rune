@@ -196,7 +196,7 @@ it. That it agrees with the type the instruction set's description gives
 it (`src/isa/prims.sml`) is checked by the `xc1` configurations of the
 Basis Library suite, which compile `lib/basis` on the hosts with each
 `_prim` replaced by a value of the description's type
-(`tests/basis/host/gen-host-basis.sh`). A
+(`bin/rune-generate host-basis`). A
 `Raise` or a `Fail` never returns, and fits wherever a type is wanted. A
 `Let` binds its variable at the type of what it binds; the variables of a
 function, a letrec and a handler have the types their binders give them.

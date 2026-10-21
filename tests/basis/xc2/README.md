@@ -124,10 +124,10 @@ to how a value is represented, which the shims depend on.
 `--allow-prim` (`OUTDIR/flags`):
 
 1. **The sources.** The host's `basis.patch` is applied to a copy of its
-   library. `mlb-flatten.awk` and `flatten.sh` flatten its `basis.mlb` into
+   library. `rune-generate mlb-flatten` and `rune-generate flatten` flatten its `basis.mlb` into
    the SML files it loads, in order. The scoping of `local A in B end` is
    kept by saving the structures `A` rebinds before `A` and restoring them
-   after `B` (`toplevel.awk` finds the names). The fixity the `.mlb` files
+   after `B` (`rune-generate top-structures` finds the names). The fixity the `.mlb` files
    give is kept too: MLton compiles parts of its library with `<` and `>`
    not infix (`fun > (a, b) = < (b, a)` in `util/real-comparisons.sml`), so
    its sources start where nothing is infix (the end of `stubs.sml`) and
@@ -143,7 +143,7 @@ to how a value is represented, which the shims depend on.
    `HOST/prologue.sml` (the host's primitive types as Rune's) and
    `HOST/shim.sml` (the primitives). A primitive the shim does not make
    raises `XC2.Unimplemented` when it is called (the generated `stubs.sml`).
-4. **Rune's library**, cut down (`trim-lib.sh`) to the files the shim needs
+4. **Rune's library**, cut down (`rune-generate trim-lib`) to the files the shim needs
    (`OUTDIR/lib`): a program that names a structure the host lacks finds
    none, as on the host. So the shared `xc2.sml` names no structure that
    MLKit lacks (`WideChar`, `Real32`, `PackWord16Big`, ...).
@@ -415,7 +415,7 @@ defect of the shim or of Rune's compiler.
   the names and types of the primitives (`runtime/prims.def`), the
   representation of `int`, `word`, `Int64.int`, `Word64.word` and
   `LargeWord.word`, the names of the structures of `lib/basis` that
-  `trim-lib.sh` keeps, and the compiler's options. A change there can break
+  `rune-generate trim-lib` keeps, and the compiler's options. A change there can break
   all five: making `int` and `word` 63 bits, with `Int64.int`, `Word64.word`
   and `LargeWord.word` types of their own (heap-layout M5), took some 250
   changed lines across the shims and patches. A change to Rune's Basis

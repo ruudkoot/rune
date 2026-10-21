@@ -63,13 +63,13 @@ struct
                      @ extra ("measurement", "rune,native:mlton,native:smlnj-legacy,native:polyml")
                      @ extra ("semantics", "rune,hosts")
         val inventory = List.map (fn row => let val name = InventoryTests.string (InventoryTests.field "name" row)
-                 in job name ["inventory-one", name] [] 300 ["python3"] NONE end) (InventoryTests.cases ())
+                 in job name ["inventory-one", name] [] 300 [] NONE end) (InventoryTests.cases ())
     in Test.describe ""
        [Budgets.tree (), BenchChecks.tree (), catalogueTree (),
         tagged ["check", "bench-smoke", "covers:tests/benchmarks/*"] (Test.describe "benchmark-controller" (validation :: routineFaults)),
         tagged ["benchmark-extra-checks", "covers:tests/benchmarks/*"] (Test.describe "benchmark-controller" (special @ negative @ states @ oracles @ extras)),
-        tagged ["benchmark-inventory-tests", "covers:scripts/benchmark-inventory.py", "covers:tests/runner/inventory-cases.json"]
-             (Test.describe "benchmark-inventory" (job "controller-faults" ["inventory-faults"] [] 500 ["python3"] NONE :: inventory)),
+        tagged ["benchmark-inventory-tests", "covers:tools/generate/inventory*.sml", "covers:tests/runner/inventory-cases.json"]
+             (Test.describe "benchmark-inventory" (job "controller-faults" ["inventory-faults"] [] 500 [] NONE :: inventory)),
         tagged ["check", "quick", "covers:tests/perf/*"] (Test.describe "benchmark-controller" [job "budget-faults" ["bench-budget-faults"] [] 300 [] NONE])]
     end
 end

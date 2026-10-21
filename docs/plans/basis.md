@@ -67,7 +67,7 @@ SML/NJ, which on a loaded machine sometimes gets a floating-point result
 wrong (such a line need not match). `real.sml` and `unix.sml` became
 portable enough for a host with a 31-bit `int` to load them, so the `Real`
 and `Math` tests run in `xc1` there too.
-`tests/basis/structures.sh` makes the table of the structures each system
+`bin/rune-generate structures` makes the table of the structures each system
 provides, and `make perf` (`run-matrix.sh --perf`) the table of wall-clock
 times; the first is in `docs/basis-compat.md`, the second in
 `docs/performance.md`.
@@ -96,7 +96,7 @@ everything M5 to M7 added. The signatures of `TIME`, `TIMER`, `DATE`, the
 `BIT_FLAGS`, `UNIX` and the sockets and databases were transcribed from
 the pages, and every value and exception they specify got a check (1,481 in
 all, from 690); the suite has 135 files and 42,239 checks on Rune. The
-transcriptions are also the library's signatures now: `scripts/gen-basis-sigs.sh`
+transcriptions are also the library's signatures now: `bin/rune-generate basis-signatures`
 makes `lib/basis/sig_*.sml` from them, loaded on demand, and `make check-docs`
 checks that they agree. The loader lets a name have several files (`IO`
 and `OS` are a structure and a signature). The tests found some sixty bugs
@@ -322,7 +322,7 @@ line that no longer matches one.
   checks the tests: an expectation that three independent implementations
   reject is probably a misreading of the specification.
 * **XC1, `xc1:HOST`:** the suite against Rune's library compiled by the host.
-  `tests/basis/host/gen-host-basis.sh` turns `_prim "x"` into `RunePrim.x` and
+  `bin/rune-generate host-basis` turns `_prim "x"` into `RunePrim.x` and
   generates `signature RUNE_PRIM` from `vm/prims.def`;
   `tests/basis/host/rune-prim.sml` implements it on the host's library. So the
   host type-checks every `_prim` annotation, which Rune takes on trust, and

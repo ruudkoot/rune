@@ -66,12 +66,12 @@ struct
     let val count=length values div 2
         fun merge ([],ys)=ys | merge (xs,[])=xs | merge (xs as x::xr,ys as y::yr)=if x>=y then x::merge (xr,ys) else y::merge (xs,yr)
     in merge (descending (List.take (values,count)),descending (List.drop (values,count))) end
-  fun find expression text from =
+  fun findMode wholeEnd expression text from =
     let val length=size text
         fun ends Empty i=[i]
           | ends (Byte accepts) i=if i<length andalso accepts (String.sub (text,i)) then [i+1] else []
           | ends Start i=if i=0 orelse String.sub (text,i-1) = #"\n" then [i] else []
-          | ends End i=if i=length orelse String.sub (text,i) = #"\n" then [i] else []
+          | ends End i=if i=length orelse (not wholeEnd andalso String.sub (text,i) = #"\n") then [i] else []
           | ends (Sequence xs) i=List.foldl (fn (x,positions) => unique (List.concat (List.map (ends x) positions))) [i] xs
           | ends (Alternative xs) i=unique (List.concat (List.map (fn x => ends x i) xs))
           | ends (Optional x) i=unique (ends x i @ [i])
@@ -84,4 +84,7 @@ struct
         fun search i=if i>length then NONE else
               case ends expression i of [] => search (i+1) | last::_ => SOME (i,last)
     in search (Int.max (0,from)) end
+  fun find expression text from=findMode false expression text from
+  fun findWholeEnd expression text from=findMode true expression text from
+
 end

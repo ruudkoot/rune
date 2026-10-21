@@ -2038,7 +2038,7 @@ M1)"):
   `5fe943391` ready for `bin/rune-measure perf-units --mlton` and
   `bin/rune-measure gc-eval`.
 * **The module language's budgets** (`tests/perf/compile-*.budget`, made
-  by `tests/perf/gen.py`, on Rune as shipped). Today's counts, the same
+  by `bin/rune-generate perf`, on Rune as shipped). Today's counts, the same
   as E19's; the budgets are 10% above them:
 
   | Budget | Program | Instructions |

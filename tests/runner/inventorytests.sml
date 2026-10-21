@@ -117,7 +117,7 @@ struct
               val output = dir ^ "/answer-" ^ Int.toString i ^ ".json"
               val () = write (input, Json.encode request)
               val tool = env ("RUNE_INVENTORY_TOOL", "")
-              val command = if tool = "" then ["python3", fromRoot "scripts/benchmark-inventory.py", "--query"]
+              val command = if tool = "" then [fromRoot "bin/rune-inventory", "--query"]
                             else [fromRoot tool, "--query"]
               val status = Children.exec {addressSpace = SOME (1024 * 1024 * 1024), cpuTime = SOME 60,
                                           fileSize = SOME (16 * 1024 * 1024), core = SOME 0} (fn e => e)

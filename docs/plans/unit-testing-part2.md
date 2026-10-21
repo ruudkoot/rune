@@ -123,7 +123,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | P2.12 | P2.0; P2.7 for Windows paths | REPL protocol, DAP, kernel and interop orchestration | done 2026-10-21 |
 | P2.13 | P2.0; runtime pty support | Terminal scenarios and tester display checks | done 2026-10-21 |
 | P2.14 | relevant correctness ports and P2.6 | Measurement and analysis tools | done: 43 controllers retired; public SML measurement CLI |
-| P2.15 | P2.4, P2.6, P2.9 | Post-bootstrap generators | pending |
+| P2.15 | P2.4, P2.6, P2.9 | Post-bootstrap generators | done: 25 producers retired; native/xc1/xc2 and full inventory agreement |
 | P2.16 | P2.8, P2.11; bootstrap design below | Build/provisioning/package tools | pending |
 | P2.17 | P2.1–P2.13; P2.14–P2.16 for extended completion | Retirement audit and final acceptance | pending |
 
@@ -910,3 +910,67 @@ bootstrap validation also caught concurrent source-comment edits; that attempt
 is retained, and the complete frozen-input comparison passes. Raw fixtures,
 logs, old/new reports, retired source snapshots and root receipts are under
 tests/out/unit-testing-part2/p2.14. P2.15, P2.16 and full P2.17 acceptance remain.
+
+### P2.15 acceptance, 2026-10-21
+
+All 25 generator/helper producers are retired. `bin/rune-generate` provides the
+public modes and `bin/rune-inventory` its JSON/CLI inventory entrypoint. Make,
+Budget, documentation, external-input and matrix callers use the SML producers.
+Generator payload and data identities participate in host-library cache keys.
+The pre-host build-list/version/provisioning adapters remain independent.
+
+The generated 2125-entity table, 134 independent digest vectors, 2450939-byte
+FXP XML input and fifteen module-language input cases agree byte for byte with
+the former producers. FXP retains the original binary64 arithmetic and recursive
+length text. Digest answers remain frozen independent Python hashlib/HMAC
+oracles. Annotations and every host Basis source, signature and file/prelude
+record agree. Stable SML topology reproduces signature source ordering; all 65
+transcriptions pass token comparisons. Comments survive regeneration, an existing
+handwritten signature is preserved, a missing skeleton is recreated, and changed
+tokens/orphan signatures fail. Concurrent isolated annotation/signature runs pass.
+
+All five Unicode tables and nine conformance datasets agree byte for byte.
+A raw-UCD reference normalizer passes all 20,171 normalization records before
+publication. Frozen identifier exclusions, all 220 profile blocks and the security
+script/type/confusable invariants agree. Two concurrent isolated regenerations
+reproduce all fourteen files. A poisoned source digest is rejected before any
+output tree is created. All sixteen source digests are pinned; missing inputs
+were verified before atomic cache publication.
+
+The complete five xc2 preparations agree across 3111 generated/input files,
+including final rewritten sources, primitive families, stubs, source order,
+scoping and prefixes. MLton's intermediate C-type map alone uses canonical name
+order instead of AWK hash iteration; its entries and all final files agree.
+All six native structure probes agree on 1032 verdicts and the complete Markdown.
+The inventory agrees on all 861 pinned-source records and all fifteen fields,
+the full five-source CLI check and 164 complete query reply envelopes. Its 169
+handwritten regression/fault jobs pass through the public tool after retirement.
+Existing FEM/text-variable effects are preserved explicitly to avoid changing the
+committed inventory during the port. No algorithm or credit is inferred from a
+filename alone. Rune and native MLton compile identical generator bytecode.
+
+The broad generated-library run recorded 4771 PASS, 468 named unavailable SKIP
+and three failed jobs among 5242 results. Two failures were the stale/report
+checks because the selection omitted the Rune reference; the third exposed a
+new terminal-milestone test assuming a portable OS error-name spelling. The
+complete Rune reference passes 482/482, and using its actual producer records
+makes the strict stale audit and twelve-configuration aggregate report pass.
+The test now checks the portable Posix.Error.again value; native Poly/ML reports
+EAGAIN rather than the assumed lowercase name. Focused Rune/native Poly/ML/xc2
+Poly/ML checks pass 24/24. Existing expected deviations remain intact. The
+fifteen generated compiler-budget jobs also pass.
+
+These checks additionally exposed missing PTY host primitive definitions and
+feature/bytecode documentation from P2.13. The host boundary now supplies the
+correct ENOSYS sentinels; the extension and all three primitives are documented.
+Old/new host generation still agrees after that closure, and documentation
+checks pass 11/11. The new whole-string-end regex entrypoint retains all 3208
+independent byte-offset vectors for the existing terminal matcher.
+
+The initial sandbox host build hit SIGSYS in the installed 32-bit SML/NJ runtime;
+the complete outside-sandbox rebuild passes. The first matrix with missing PTY
+host definitions was cancelled and retained. A fixture-symlink archival mistake
+was stopped and its generated duplicate removed; bounded receipts preserve the
+originals. Raw comparisons, source snapshots, corrected/failure logs and bounded
+root receipts remain in tests/out/unit-testing-part2/p2.15. P2.16 and P2.17 remain
+required; the final full matrix/check accepts the final frozen source state.

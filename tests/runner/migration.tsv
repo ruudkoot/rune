@@ -1,6 +1,6 @@
 # path	kind	milestone	state	baseline-blob	replacement	comparison
 # baseline 80694b6b7; retained categories are the original D23 exceptions.
-scripts/benchmark-inventory.py	python	P2.15	pending	47905cad71530f5284dd9df26ac5db2b16f238c2	-	generated-bytes-and-source-order
+scripts/benchmark-inventory.py	python	P2.15	retired	47905cad71530f5284dd9df26ac5db2b16f238c2	bin/rune-generate inventory	P2.15-full-shadow-pins-hosts-and-faults
 scripts/benchmark-provenance.sh	shell	P2.14	retired	e53a16aca070fc7cfb65858cfbd2396838271f87	bin/rune-measure provenance	P2.14-shadow-live-faults-and-reports
 scripts/benchmark-result.sh	shell	P2.14	retired	ee2bc4a115ff1b3e74f9cc34ea968d730c8f6cbb	bin/rune-measure classify	P2.14-shadow-live-faults-and-reports
 scripts/bisect-fuel.sh	shell	P2.14	retired	17ccadd553085766765df4c7a7d2c1000eba015b	bin/rune-measure bisect-fuel	P2.14-shadow-live-faults-and-reports
@@ -20,10 +20,10 @@ scripts/fetch-hosts.sh	shell	Retain: bootstrap/setup	retained	76762674e87c351d4c
 scripts/gc-eval-score.py	python	P2.14	retired	f148229992e1c03ce0800a6ad7cd0fbec580bf75	bin/rune-measure gc-eval-score	P2.14-shadow-live-faults-and-reports
 scripts/gc-eval.sh	shell	P2.14	retired	4a57e9180ea4e79956dc0b119533e5b148faf361	bin/rune-measure gc-eval	P2.14-shadow-live-faults-and-reports
 scripts/gc-probe32.sh	shell	P2.14	retired	529fea8814b60b3c99f11a6bf6f0e351ed3397f0	bin/rune-measure gc-probe32	P2.14-shadow-live-faults-and-reports
-scripts/gen-basis-sigs.sh	shell	P2.15	pending	b29c7ee75aa0add90e1859b9edb8860d68bca8bf	-	generated-bytes-and-source-order
+scripts/gen-basis-sigs.sh	shell	P2.15	retired	b29c7ee75aa0add90e1859b9edb8860d68bca8bf	bin/rune-generate basis-signatures	P2.15-full-shadow-pins-hosts-and-faults
 scripts/gen-build-files.sh	shell	Retain: bootstrap/setup	retained	563a65951fbe2887f74eb3a1d155e6113f05a148	-	bootstrap/setup
-scripts/gen-entities.py	python	P2.15	pending	aea691b9bfdebcf098a29670e2c4fea9ebe79904	-	generated-bytes-and-source-order
-scripts/gen-unicode-tables.py	python	P2.15	pending	5d60d55f593b53b0bf3f810aede95edde2ee5321	-	generated-bytes-and-source-order
+scripts/gen-entities.py	python	P2.15	retired	aea691b9bfdebcf098a29670e2c4fea9ebe79904	bin/rune-generate entities	P2.15-full-shadow-pins-hosts-and-faults
+scripts/gen-unicode-tables.py	python	P2.15	retired	5d60d55f593b53b0bf3f810aede95edde2ee5321	bin/rune-generate unicode	P2.15-full-shadow-pins-hosts-and-faults
 scripts/gen-version.sh	shell	Retain: bootstrap/setup	retained	64ffca12082ccf3f834718128e900b4b501cbb7e	-	bootstrap/setup
 scripts/hol-kernel.sh	shell	P2.14	retired	7649594a5ec0faa66a6a1d548cd96f8c599a1aca	bin/rune-measure hol-kernel	P2.14-shadow-live-faults-and-reports
 scripts/hol-theory.py	python	P2.14	retired	8852f2c75a29ff4c8bdd9e2af355ea01155a782c	bin/rune-measure hol-theory	P2.14-shadow-live-faults-and-reports
@@ -47,27 +47,27 @@ scripts/setup-mlton.sh	shell	P2.16	pending	cb9b96789797186182ddff8c391beb939f5e6
 scripts/smlnj-dev-root.sh	shell	Retain: bootstrap/setup	retained	b2e448f48ad14282f1c65077e21192c04c3337ff	-	bootstrap/setup
 tests/basis/check-claims.sh	shell	P2.4	retired	fc25f07650a44704250214e7b760f585a90278f8	tests/runner/docchecks.sml	p2.4/focused.log+mutants.old.log+mutants-list.old.log+mutants-list.new.log
 tests/basis/check-notes.sh	shell	P2.4	retired	d1564a01e1e90de654ecf6029744c841f26cb858	tests/runner/docchecks.sml	p2.4/focused.log+mutants.old.log+mutants-list.old.log+mutants-list.new.log
-tests/basis/gen-annotations.sh	shell	P2.15	pending	43be8504b4e79d5f7aa9b2dc7c615d3d67331a13	-	generated-bytes-and-source-order
-tests/basis/host/gen-host-basis.sh	shell	P2.15	pending	98caf1a2fc07f94ddfa554c7388d48172ee1074e	-	generated-bytes-and-source-order
+tests/basis/gen-annotations.sh	shell	P2.15	retired	43be8504b4e79d5f7aa9b2dc7c615d3d67331a13	bin/rune-generate annotations	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/host/gen-host-basis.sh	shell	P2.15	retired	98caf1a2fc07f94ddfa554c7388d48172ee1074e	bin/rune-generate host-basis	P2.15-full-shadow-pins-hosts-and-faults
 tests/basis/run-laws-hosts.py	python	P2.5	retired	d4e55a1f7e5c97fd8b866ad2e220a45b5de55a60	tests/runner/hostlaws.sml	p2.5/full-host-shadow.json+stable-legacy-shadow.json+hardened-faults.log
 tests/basis/run-matrix.sh	shell	P2.6	retired	8b5529a95de5db6ac132756830c8fdff65276ac5	tests/runner/matrix.sml	p2.6/acceptance+full-shadow.json+xc2-shadow.json+final-faults.log
 tests/basis/run-mutants.sh	shell	P2.4	retired	37ff16f0d92e93674ac48907556cf166ae2eadcc	tests/runner/mutants.sml	p2.4/focused.log+mutants.old.log+mutants-list.old.log+mutants-list.new.log
-tests/basis/structures.sh	shell	P2.15	pending	8018735b277e8a775ba224ee8d29925cb4c90cef	-	generated-bytes-and-source-order
-tests/basis/xc2/flatten.sh	shell	P2.15	pending	5185c5767c52df7e608d8fa8b00b2240cd5e26bd	-	generated-bytes-and-source-order
-tests/basis/xc2/mlb-flatten.awk	awk	P2.15	pending	ddccb2d3c761a8a1a73f616fb81a3c5a5785ea99	-	generated-bytes-and-source-order
-tests/basis/xc2/mlkit/gen.sh	shell	P2.15	pending	8005aca3dca34033d26e17d4fe9f4135a3f0fa62	-	generated-bytes-and-source-order
-tests/basis/xc2/mlkit/rewrite.awk	awk	P2.15	pending	a90dd7dd3db6dff44aa135f2d87ca039befe9634	-	generated-bytes-and-source-order
-tests/basis/xc2/mlton/gen.sh	shell	P2.15	pending	9ef2429db51a7844f0e5261005ea83683e388871	-	generated-bytes-and-source-order
-tests/basis/xc2/mlton/prims.awk	awk	P2.15	pending	7dbf33e9d8e7dd8bbe43cf9d3574ead5e9cc1569	-	generated-bytes-and-source-order
-tests/basis/xc2/mlton/rewrite.awk	awk	P2.15	pending	d559129549de2f5c4d3f3dce873c2635aff7071e	-	generated-bytes-and-source-order
-tests/basis/xc2/polyml/gen.sh	shell	P2.15	pending	d1251bcf68d5e6caeb10140918098c7a328f1ead	-	generated-bytes-and-source-order
-tests/basis/xc2/polyml/order.awk	awk	P2.15	pending	fa6fbfded09c91f98d4e0aa4d41c6c989e54ad2d	-	generated-bytes-and-source-order
-tests/basis/xc2/polyml/rewrite.awk	awk	P2.15	pending	60860e9ab1cf5ed9ad57748090c35b27f4568f86	-	generated-bytes-and-source-order
-tests/basis/xc2/smlnj-dev/gen.sh	shell	P2.15	pending	0c074f2c162853fc6d0dcf89890804c862e79c7f	-	generated-bytes-and-source-order
-tests/basis/xc2/smlnj-legacy/gen.sh	shell	P2.15	pending	e857352b723dd4cbf61a251b39e24793c0499af1	-	generated-bytes-and-source-order
-tests/basis/xc2/smlnj-legacy/rewrite.awk	awk	P2.15	pending	22d612a63e0d7f078b0525e9719d634ca3ac8e4e	-	generated-bytes-and-source-order
-tests/basis/xc2/toplevel.awk	awk	P2.15	pending	3c069f15274e4be3f15373a0407f6af9546b7b2a	-	generated-bytes-and-source-order
-tests/basis/xc2/trim-lib.sh	shell	P2.15	pending	155c6e00bd206320804d7139e2f560ef75200336	-	generated-bytes-and-source-order
+tests/basis/structures.sh	shell	P2.15	retired	8018735b277e8a775ba224ee8d29925cb4c90cef	bin/rune-generate structures	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/flatten.sh	shell	P2.15	retired	5185c5767c52df7e608d8fa8b00b2240cd5e26bd	bin/rune-generate flatten	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/mlb-flatten.awk	awk	P2.15	retired	ddccb2d3c761a8a1a73f616fb81a3c5a5785ea99	bin/rune-generate mlb-flatten	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/mlkit/gen.sh	shell	P2.15	retired	8005aca3dca34033d26e17d4fe9f4135a3f0fa62	bin/rune-generate xc2-mlkit	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/mlkit/rewrite.awk	awk	P2.15	retired	a90dd7dd3db6dff44aa135f2d87ca039befe9634	bin/rune-generate rewrite-mlkit	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/mlton/gen.sh	shell	P2.15	retired	9ef2429db51a7844f0e5261005ea83683e388871	bin/rune-generate xc2-mlton	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/mlton/prims.awk	awk	P2.15	retired	7dbf33e9d8e7dd8bbe43cf9d3574ead5e9cc1569	bin/rune-generate mlton-prims	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/mlton/rewrite.awk	awk	P2.15	retired	d559129549de2f5c4d3f3dce873c2635aff7071e	bin/rune-generate rewrite-mlton	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/polyml/gen.sh	shell	P2.15	retired	d1251bcf68d5e6caeb10140918098c7a328f1ead	bin/rune-generate xc2-polyml	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/polyml/order.awk	awk	P2.15	retired	fa6fbfded09c91f98d4e0aa4d41c6c989e54ad2d	bin/rune-generate polyml-order	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/polyml/rewrite.awk	awk	P2.15	retired	60860e9ab1cf5ed9ad57748090c35b27f4568f86	bin/rune-generate rewrite-polyml	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/smlnj-dev/gen.sh	shell	P2.15	retired	0c074f2c162853fc6d0dcf89890804c862e79c7f	bin/rune-generate xc2-smlnj-dev	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/smlnj-legacy/gen.sh	shell	P2.15	retired	e857352b723dd4cbf61a251b39e24793c0499af1	bin/rune-generate xc2-smlnj-legacy	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/smlnj-legacy/rewrite.awk	awk	P2.15	retired	22d612a63e0d7f078b0525e9719d634ca3ac8e4e	bin/rune-generate rewrite-smlnj	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/toplevel.awk	awk	P2.15	retired	3c069f15274e4be3f15373a0407f6af9546b7b2a	bin/rune-generate top-structures	P2.15-full-shadow-pins-hosts-and-faults
+tests/basis/xc2/trim-lib.sh	shell	P2.15	retired	155c6e00bd206320804d7139e2f560ef75200336	bin/rune-generate trim-lib	P2.15-full-shadow-pins-hosts-and-faults
 tests/benchmarks/check-almabench.sh	shell	P2.3	retired	83eab7eb7b0642ec1e9144b65d5e3175abb4dc03	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
 tests/benchmarks/check-ansi.sh	shell	P2.3	retired	2412fccb0d0c13fb12f19a8f6453e1a967675832	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
 tests/benchmarks/check-atom.sh	shell	P2.3	retired	c57755bc2caa199af134144a1fdb40694d620934	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
@@ -219,7 +219,7 @@ tests/dap/run.py	python	P2.12	retired	faea0dacabe20c1dbc9dda3abcff4e5f6a3c0711	t
 tests/deps/run.sh	shell	P2.8	retired	bab704b294fe50b192be9eb1e03abbcbc6d8173d	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
 tests/dist/run.sh	shell	P2.8	retired	4318b951160e52bab975ba7bf0062c7b85b3f763	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
 tests/dynamic/run.sh	shell	P2.8	retired	942108eea8b84b1510f5795b36b1a33a8aa6e689	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
-tests/external/mlton-bench/gen-fxp-input.sh	shell	P2.15	pending	c6c2a2ed7165cabcbb0b8cd09f6fa73573fe8f9d	-	generated-bytes-and-source-order
+tests/external/mlton-bench/gen-fxp-input.sh	shell	P2.15	retired	c6c2a2ed7165cabcbb0b8cd09f6fa73573fe8f9d	bin/rune-generate fxp	P2.15-full-shadow-pins-hosts-and-faults
 tests/external/probe-host-basis.sh	shell	P2.9	retired	069ac4cc16bd2485bff7bbf2a2a86fd907c47494	tests/runner/externalchecks.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
 tests/external/run-mlton-bench.sh	shell	P2.9	retired	9215f583f3ea7b8d14fa8bd9cb3eff12263308cc	tests/runner/externalchecks.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
 tests/external/run-mlton.sh	shell	P2.9	retired	fc5f9a52ef49546bd627e48ba99f63150d66bf8b	tests/runner/externalchecks.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
@@ -260,7 +260,7 @@ tests/layouts/check.sh	shell	P2.2	retired	1ff9ade6a0b9802a2e7b510d3237929ff10799
 tests/layouts/measure.sh	shell	P2.14	retired	0a254c27829e82f4352188c69be31c86d6b3a9b8	bin/rune-measure layout-measure	P2.14-shadow-live-faults-and-reports
 tests/layouts/micro.sh	shell	P2.14	retired	06d6818d1933e7dc92865d7cde1fce84b0f56e36	bin/rune-measure layout-micro	P2.14-shadow-live-faults-and-reports
 tests/layouts/tables.py	python	P2.14	retired	83f48bc289683fb39410d16bc5bf444efad83a56	bin/rune-measure layout-tables	P2.14-shadow-live-faults-and-reports
-tests/lib/digest/gen-vectors.py	python	P2.15	pending	a80fe5f2b55adc0af85e58b5ccc96701a5827696	-	generated-bytes-and-source-order
+tests/lib/digest/gen-vectors.py	python	P2.15	retired	a80fe5f2b55adc0af85e58b5ccc96701a5827696	bin/rune-generate digest-vectors	P2.15-full-shadow-pins-hosts-and-faults
 tests/lib/jupyter/interop.sh	shell	P2.12	retired	7d9b70aa15ed2a98baf0b900a40f8d015823779b	tests/runner/protocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
 tests/lib/jupyter/interop/client.py	python	Retain: independent oracles/peers	retained	ac40165b11ea2b033bdd40a8bd8bd1d0f97eeaff	-	independent oracles/peers
 tests/lib/zmtp/interop.sh	shell	P2.12	retired	1a5b3e8fe95ce694de03c59e03da088877325f38	tests/runner/protocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
@@ -271,7 +271,7 @@ tests/opt/run-bootstrap.sh	shell	P2.1	retired	dd10a7cf51c3c348e81092cb6b98ead148
 tests/opt/run-counts.sh	shell	P2.1	retired	99ceceeab49af9327187f1409c339bdaca761ab4	tests/runner/nativechecks.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
 tests/opt/run-debug.sh	shell	P2.1	retired	c776b2e9d2267cdf73cab59ca58b9ecab160b902	tests/runner/nativechecks.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
 tests/opt/run-opt-tests.sh	shell	P2.1	retired	976c36abe50cda8f70f4fedd297967463d3b6819	tests/runner/nativechecks.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
-tests/perf/gen.py	python	P2.15	pending	7922ecf640ba37065daa9b8ef01b3c0c88796624	-	generated-bytes-and-source-order
+tests/perf/gen.py	python	P2.15	retired	7922ecf640ba37065daa9b8ef01b3c0c88796624	bin/rune-generate perf	P2.15-full-shadow-pins-hosts-and-faults
 tests/perf/run-perf.sh	shell	P2.3	retired	09065e7aced24596615dc8005eaa742ecb978742	tests/runner/budgets.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
 tests/register/jit-dump.py	python	P2.2	retired	49148a32f0199e5a275547acb1681daa1400d7d5	tests/runner/jitdumpcheck.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
 tests/repl-protocol/run.py	python	P2.12	retired	ac8065c9eeaa1bebd8ca6ee098a6d657a8b423a0	tests/runner/replprotocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log

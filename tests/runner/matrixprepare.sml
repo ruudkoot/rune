@@ -12,6 +12,8 @@ struct
         List.concat (List.map (fn name => treeFiles (path ^ "/" ^ name)) (sort (entries path))) else [path]
   fun key (config : MatrixModel.config) =
     let val sourceFiles = glob (fromRoot "lib/basis", ".sml") @ [fromRoot "lib/basis/MANIFEST", fromRoot "runtime/prims.def"]
+        val generator = List.filter exists [fromRoot "bin/rune-generate", fromRoot "bin/rune-generate.rbc"]
+        val generatorData = treeFiles (fromRoot "tools/generate/data")
         val helpers = List.filter (fn path => not (String.isSubstring "/MLB/" path))
                          (treeFiles (fromRoot "tests/basis/host") @ treeFiles (fromRoot "tests/basis/xc2"))
         val tools = [OS.FileSys.realPath (#command config)]
@@ -21,7 +23,7 @@ struct
               List.filter exists [OS.FileSys.realPath (#vm config), fromRoot "bin/runevm-native.rbc", fromRoot "build/librune.a"]
         val controller = List.map fromRoot ["tests/runner/matrixmodel.sml", "tests/runner/matrixprobe.sml",
                  "tests/runner/matrixload.sml", "tests/runner/matrixprepare.sml", "tests/runner/matrixsuite.sml"]
-    in "matrix-controller-2:" ^ MatrixLoad.hash (sourceFiles @ helpers @ tools @ rune @ engines @ controller)
+    in "matrix-controller-2:" ^ MatrixLoad.hash (sourceFiles @ helpers @ generator @ generatorData @ tools @ rune @ engines @ controller)
           ^ ":" ^ #id config ^ ":" ^ #extra config end
   fun context config directory prefix image : MatrixLoad.context =
     {config = config, directory = directory, prefix = prefix, image = image, standalone = false, input = "", data = [],
@@ -100,7 +102,7 @@ struct
     let val ctx = context config dir [] MatrixLoad.NoImage
         val gen = dir ^ "/basis"
         val () = MatrixLoad.remove gen
-        val (status, output) = run ctx dir "generate-basis" ["sh", fromRoot "tests/basis/host/gen-host-basis.sh", gen] (#timeout ctx * 8)
+        val (status, output) = run ctx dir "generate-basis" [fromRoot "bin/rune-generate", "host-basis", gen] (#timeout ctx * 8)
         val () = need (status = 0, "host library generation failed: " ^ firstError output)
         val prelude = words (gen ^ "/prelude")
         val () = need (not (null prelude) andalso List.all exists prelude, "host generator published an invalid prelude")
@@ -139,7 +141,7 @@ struct
         val log = dir ^ "/generate-xc2.log"
         val status = Children.exec {addressSpace = NONE, cpuTime = SOME (#timeout ctx * 8),
                                     fileSize = SOME (64 * 1024 * 1024), core = SOME 0} (setEnv ("RUNE", #command config))
-             {cmd = ["sh", "tests/basis/xc2/" ^ MatrixLoad.host config ^ "/gen.sh", gen, #extra config], dir = SOME root,
+             {cmd = [fromRoot "bin/rune-generate", "xc2-" ^ MatrixLoad.host config, gen, #extra config], dir = SOME root,
               stdin = "", stdout = log, stderr = log, timeout = #timeout ctx * 8}
         val () = need (status = 0, "xc2 generation failed: " ^ firstError (read log))
         val prefix = words (gen ^ "/prefix")

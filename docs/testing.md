@@ -715,3 +715,12 @@ Independent MMU scan vectors and measurement fault assertions remain ordinary
 checks. Captured reports keep their historical measurement command labels;
 current CLI examples use the SML modes. The generator and build/package ports
 remain P2.15 and P2.16 until their recorded acceptance is complete.
+
+Post-bootstrap generators use `bin/rune-generate`, with standalone inventory
+queries through `bin/rune-inventory`. Their modes and data/oracle contracts are
+listed in [tools/generate/README.md](../tools/generate/README.md). Include Rune in
+matrix selections when auditing unused deviations: its actual labels distinguish
+an unavailable host case from a stale expectation. The generator acceptance
+record retains full source/record comparisons, concurrent isolated runs, poisoned
+input refusal and all generated-library results. Build/package bootstrap conversion
+is P2.16; final whole-project acceptance is P2.17.

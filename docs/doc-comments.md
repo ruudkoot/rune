@@ -320,7 +320,7 @@ member with a check whose label is computed in full, which may be any label. `@t
 and `@intro` describes it on the page "How to read these pages".
 
 For the Basis Library the file is `tests/basis/annotations.txt`, which
-`tests/basis/gen-annotations.sh` makes from the host lines of
+`bin/rune-generate annotations` makes from the host lines of
 `tests/basis/deviations.txt`. It is committed and `make check-docs` checks
 that it is up to date, so `runedoc` never reads `deviations.txt`.
 
