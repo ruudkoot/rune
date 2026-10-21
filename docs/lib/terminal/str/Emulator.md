@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`EMULATOR`](../sig/EMULATOR.md) |
 | Status | required |
-| Members | 9 |
+| Members | 10 |
 | Tests | not listed |
 | Source | [lib/terminal/emulator.sml](../../../../lib/terminal/emulator.sml) |
 
@@ -29,6 +29,7 @@ What each means is on [`EMULATOR`](../sig/EMULATOR.md); the types are this struc
 | val | [`cursor`](../sig/EMULATOR.md#val-cursor) | `screen -> int * int` |
 | val | [`modes`](../sig/EMULATOR.md#val-modes) | `screen -> {bracketedPaste : bool, cursorVisible : bool}` |
 | val | [`new`](../sig/EMULATOR.md#val-new) | `{columns : int, policy : Grapheme.policy, rows : int} -> screen` |
+| val | [`resize`](../sig/EMULATOR.md#val-resize) | `screen * {columns : int, rows : int} -> screen` |
 | val | [`row`](../sig/EMULATOR.md#val-row) | `screen * int -> cell list` |
 | val | [`scrolled`](../sig/EMULATOR.md#val-scrolled) | `screen -> int` |
 | val | [`text`](../sig/EMULATOR.md#val-text) | `screen -> string` |

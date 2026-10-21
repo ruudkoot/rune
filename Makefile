@@ -789,10 +789,9 @@ bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) build
 test-windows-text: windows $(RUNE) bin/rune.rbc bin/rune.stack.rbc
 	RUNE=$(RUNE) WINCC='$(WINCC)' WINCC32='$(WINCC32)' sh tests/windows/run.sh
 
-test-windows: bin/rune-matrix bin/rune-test bin/rune-windows bin/rune-protocol-check windows $(RUNE) bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel test-windows-text
+test-windows: bin/rune-matrix bin/rune-test bin/rune-windows bin/rune-protocol-check bin/rune-terminal windows $(RUNE) bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel test-windows-text
 	$(RUNE_TEST) --tier test-windows
 	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE_STACK)) bin/rune-matrix -j $(JOBS) --configs windows
-	sh tests/terminal/run.sh --windows
 	bin/rune-protocol-check dap --windows
 	bin/rune-protocol-check kernel --windows
 
@@ -1113,8 +1112,8 @@ test-repl-protocol: bin/rune-repl bin/runevm bin/rune-test
 # Programs on a terminal (docs/plans/repl.md, M1): each script of
 # tests/terminal starts a program in a tmux pane, types at it and waits for
 # the screen; skipped where tmux is missing (make doctor --scope terminal).
-test-terminal: bin/rune-repl bin/runevm $(RUNE)
-	sh tests/terminal/run.sh
+test-terminal: bin/rune-repl bin/runevm $(RUNE) bin/rune-terminal bin/rune-test
+	$(RUNE_TEST) --tier test-terminal
 
 # diagnostics rendered with colour, and the palette's contrast (docs/diagnostics.md)
 test-diagnostics: $(RUNE) bin/rune-test
@@ -1516,7 +1515,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml \
                tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/gmpjobs.sml \
-               tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
+               tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
@@ -1545,7 +1544,7 @@ bin/rune-heap-check: bin/rune-heap-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-heap-check.rbc" "$$@"\n' > $@
 	chmod +x $@
 
-HOST_LAWS_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml \
+HOST_LAWS_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/windowsdir.sml \
                   tests/runner/matrixmodel.sml tests/runner/matrixprobe.sml tests/runner/matrixhost.sml \
                   tests/runner/smlscan.sml tests/runner/programselect.sml tests/runner/hostlaws.sml
 bin/rune-laws-hosts.rbc: $(RUNE) $(HOST_LAWS_SRCS) tests/runner/hostlaws-main.sml manifests
@@ -1582,7 +1581,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check build/bench-counts.rbc
+check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal build/bench-counts.rbc
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -1760,7 +1759,7 @@ bin/rune-intinf: bin/rune-intinf.rbc bin/runevm Makefile
 
 WINDOWS_SRCS := tests/runner/langchecks.sml $(HOST_LAWS_SRCS) tests/runner/bytecode.sml \
                 tests/runner/matrixload.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml \
-                tests/runner/windowsdir.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/windows-main.sml
+                tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/windows-main.sml
 bin/rune-windows.rbc: $(RUNE) $(WINDOWS_SRCS) manifests
 	$(RUNE) --library test/runner --library digest $(WINDOWS_SRCS) -o $@
 bin/rune-suite.rbc: $(RUNE) tests/runner/sh.sml tests/runner/suite-main.sml manifests
@@ -1779,4 +1778,13 @@ bin/rune-protocol-check.rbc: $(RUNE) $(PROTOCOL_SRCS) manifests
 	$(RUNE) --library test/runner --library jupyter --library dap --library unicode $(PROTOCOL_SRCS) -o $@
 bin/rune-protocol-check: bin/rune-protocol-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-protocol-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+TERMINAL_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/commandwords.sml tests/runner/windowsdir.sml \
+                 tests/runner/terminalpattern.sml tests/runner/terminalio.sml tests/runner/terminalchecks.sml tests/runner/terminalraw.sml \
+                 tests/runner/terminaldisplay.sml tests/runner/terminalplatform.sml tests/runner/terminalfaults.sml tests/runner/terminal-main.sml
+bin/rune-terminal.rbc: $(RUNE) $(TERMINAL_SRCS) manifests
+	$(RUNE) --library test/runner $(TERMINAL_SRCS) -o $@
+bin/rune-terminal: bin/rune-terminal.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-terminal.rbc" "$$@"\n' > $@
 	chmod +x $@

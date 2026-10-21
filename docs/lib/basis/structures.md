@@ -152,6 +152,7 @@ the signature names and no others.
 | [`Posix.TTY.O`](str/Posix.TTY.O.md) | : | [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
 | [`Posix.TTY.TC`](str/Posix.TTY.TC.md) | *in* | [`POSIX_TTY`](sig/POSIX_TTY.md) |  | optional |  | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
 | [`Posix.TTY.V`](str/Posix.TTY.V.md) | *in* | [`POSIX_TTY`](sig/POSIX_TTY.md) |  | optional |  | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
+| [`Pty`](str/Pty.md) | : | [`PTY`](sig/PTY.md) |  | extension |  | [lib/basis/pty.sml](../../../lib/basis/pty.sml) |
 | [`Real`](str/Real.md) | : | [`REAL`](sig/REAL.md) | `where type real = real` | required |  | [lib/basis/real.sml](../../../lib/basis/real.sml) |
 | [`Real.Math`](str/Real.Math.md) | : | [`MATH`](sig/MATH.md) |  | required |  | [lib/basis/real.sml](../../../lib/basis/real.sml) |
 | [`Real32`](str/Real32.md) | :> | [`REAL`](sig/REAL.md) |  | optional | is `RuneReal32` | [lib/basis/real32.sml](../../../lib/basis/real32.sml) |

@@ -306,7 +306,7 @@ keep these invariants:
   portability), `--profile layout` (the heap and its headers),
   `--profile library` (the matrix and the hosts) and `--profile docs`
   (`docs/testing.md`, *Tiers, profiles and what changed*); CI runs the
-  tier `nightly` once a day. A test whose tool the machine lacks (tmux,
+  tier `nightly` once a day. A test whose tool the machine lacks (a PTY backend,
   qemu, Windows, a host) is skipped with how to install it, and is an error
   in `make check`; `bin/rune-test doctor` lists what a selection needs. A
   test that fails now and then: `bin/rune-test run FILTER --until-fail

@@ -255,6 +255,15 @@ int sys_interrupt_catch(volatile int *flag) { if (!flag) return 0; last = ENOSYS
 void sys_interrupt_limit(volatile uintptr_t *limit) { (void)limit; }
 int64_t sys_event_new(void) { last = ENOSYS; return -1; }
 int sys_event_set(int64_t handle) { (void)handle; last = ENOSYS; return -1; }
+int64_t sys_pty_spawn(const char *path, char *const argv[], char *const envp[], const char *dir,
+                      int columns, int rows, int out[3]) {
+    (void)path; (void)argv; (void)envp; (void)dir; (void)columns; (void)rows; (void)out;
+    last = ENOSYS; return -1;
+}
+int sys_pty_resize(int token, int columns, int rows) {
+    (void)token; (void)columns; (void)rows; last = ENOSYS; return -1;
+}
+int sys_pty_close(int token) { (void)token; last = ENOSYS; return -1; }
 int sys_random(void *out, size_t n) { (void)out; (void)n; last = ENOSYS; return -1; }
 int sys_term_size(int fd, int *cols, int *rows) { (void)fd; (void)cols; (void)rows; last = ENOSYS; return -1; }
 int64_t sys_term_resizes(void) { last = ENOSYS; return -1; }

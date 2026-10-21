@@ -1,21 +1,4 @@
-# Terminal: the terminal cooked again however the program ends --
-# returning, an uncaught exception, a fatal error, SIGTERM, SIGHUP -- as
-# stty sees it afterwards. Linux only: the console of Windows is put back
-# at exit alike, but there is no stty to ask.
-start 80 30 for k in q x f t h; do echo "run $k"; @KEYS@ 2>/dev/null; echo "status $?"; stty -a | grep -q ' icanon ' && stty -a | grep -q ' echo ' && echo cooked || echo raw; done; echo done
-wait run q\nsize
-send q
-wait status 0\ncooked
-wait run x\nsize
-send x
-wait status 1\ncooked
-wait run f\nsize
-send f
-wait status 2\ncooked
-wait run t\nsize
-send t
-wait status 143\ncooked
-wait run h\nsize
-send h
-wait status 129\ncooked
-wait ^done$
+# Terminal raw-mode restoration is a typed SML scenario. It runs the
+# Terminal probe for q/x/f/t/h, checks each exit status and reads the actual
+# master termios flags to require both canonical input and echo afterwards.
+restore @KEYS@

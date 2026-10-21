@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <fenv.h>
 #include <float.h>
+#include <limits.h>
 #include "sys/sys.h"
 
 /* an int of the language: 64 bits under RUNE_INT64, else the immediate's 63 */
@@ -3175,6 +3176,40 @@ static int p_intinf_power(VM *vm) {
 static int p_intinf_decimal(VM *vm) {
     Value v = vm_intinf_decimal(vm, ARG(0));
     return ret(vm, 1, v);
+}
+
+/* Pseudo-terminal ownership stays in the system layer; SML gets only a
+   session token and borrowed descriptors, and reaps its ordinary child. */
+static int p_pty_spawn(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "pty_spawn");
+    check_tag(vm, ARG(0), T_INT, "pty_spawn");
+    char *path = c_string(vm, ARG(5), "pty_spawn");
+    char **argv = string_array(vm, ARG(4), "pty_spawn", NULL);
+    char **envp = string_array(vm, ARG(3), "pty_spawn", NULL);
+    char *dir = c_string(vm, ARG(2), "pty_spawn");
+    int64_t columns = val_imm(ARG(1)), rows = val_imm(ARG(0));
+    int out[3];
+    int64_t pid = sys_pty_spawn(path, argv, envp, dir[0] ? dir : NULL,
+                              columns > 0 && columns <= 32767 ? (int)columns : 0,
+                              rows > 0 && rows <= 32767 ? (int)rows : 0, out);
+    free(path); free_array(argv); free_array(envp); free(dir);
+    int64_t values[4];
+    if (pid >= 0) { values[0] = pid; values[1] = out[2]; values[2] = out[0]; values[3] = out[1]; }
+    return push_int_list(vm, values, pid < 0 ? 0 : 4, 6);
+}
+static int p_pty_resize(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "pty_resize");
+    check_tag(vm, ARG(1), T_INT, "pty_resize");
+    check_tag(vm, ARG(0), T_INT, "pty_resize");
+    int64_t token = val_imm(ARG(2)), columns = val_imm(ARG(1)), rows = val_imm(ARG(0));
+    int ok = sys_pty_resize(token >= 0 && token <= INT_MAX ? (int)token : -1,
+                           columns > 0 && columns <= 32767 ? (int)columns : 0,
+                           rows > 0 && rows <= 32767 ? (int)rows : 0);
+    return ret(vm, 3, mk_int(ok));
+}
+static int p_pty_close(VM *vm) {
+    INT1("pty_close");
+    return ret(vm, 1, mk_int(sys_pty_close(x >= 0 && x <= INT_MAX ? (int)x : -1)));
 }
 
 const PrimFn prim_table[PRIM__COUNT] = {

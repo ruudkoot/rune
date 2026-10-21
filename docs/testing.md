@@ -203,14 +203,14 @@ the tools; the run before was on a build already made.
 ## Requirements
 
 A test names the capabilities it needs of the machine (`Test.requires`):
-`tmux`, `python3`, `cc`, `qemu`, `windows`, and each host
+`pty`, `python3`, `cc`, `qemu`, `windows`, and each host
 (`mlton`, `smlnj-legacy`, `smlnj32`, `smlnj-dev`, `polyml`, `mlkit`), each
 a probe and an install hint in `tests/runner/main.sml`, the hints
 `scripts/doctor.sh` gives. `bin/rune-test doctor [FILTER]` probes what the
 selected tests need and says how to get what is missing. A run skips a test
 whose capability is missing, with its hint; the tier `check` (and
 `--strict`) fails it instead, since `make check` must be complete.
-`RUNE_TEST_WITHOUT=tmux,qemu` takes those as missing, to see what a machine
+`RUNE_TEST_WITHOUT=pty,qemu` takes those as missing, to see what a machine
 without them gets. `scripts/doctor.sh` keeps its scopes for what must be
 there before anything is built.
 
@@ -406,39 +406,31 @@ JIT tier (the premise of the oracle `jit` of `tests/runner/oracles.sml`).
 ## Programs on a terminal
 
 What a program shows on a terminal -- the REPL, a line editor -- is tested
-by `tests/terminal` (`make test-terminal`, in `make check`; the plan is
-[plans/repl.md](plans/repl.md), D23). `tests/terminal/term.py` starts the
-program in a pane of a private tmux server at a given size, types keys
-and text at it, resizes it, and waits until the screen matches a pattern
-or equals an expected screen. The rules it keeps:
+by `tests/terminal` (`make test-terminal`, in `make check`; see
+[plans/repl.md](plans/repl.md), D23). The scripts run through bin/rune-terminal on the runtime's
+Pty interface. The SML interpreter supplies input, key and paste bytes, watches
+Emulator frames, resizes the terminal and checks child status. Each scenario
+owns its history/configuration directories, raw trace and final screen.
+The runtime capability pty is independent of an external terminal program.
+Windows scenarios run natively on ConPTY for both VM widths; rune-repl.cmd is
+also exercised. The raw-mode restoration scenario reads actual termios flags
+after normal return, exceptions, fatal errors, SIGTERM and SIGHUP.
 
-* Wait on the screen, never on time: every `wait` is a pattern with a
-  deadline, so a loaded machine makes a script slower and not wrong; a
-  `sleep` is only for giving a program the time to do something wrong.
-* Type bytes (tmux's `send-keys -H`): tmux takes a lone `;` among its
-  arguments for its own separator.
-* Compare screens with their trailing blanks dropped, against a file
-  reviewed line by line, as an `.expected` file is.
-* On Windows, through WSL interop, a program started in a pane gets a
-  console of the pane's size (a ConPTY), so `make test-windows` runs the
-  scripts marked `# windows` on `runevm.exe` too. Interop delivers no
-  console Ctrl-C there; an interrupt is tested on Linux.
-* Compare a screen while the program still runs: tmux scrolls the screen
-  by a line to say that a pane has died, so a program that ends at once
-  is started with something after it that keeps the pane alive.
-* After a narrowing resize compare only what the program draws anew:
-  terminals that reflow (Windows' console) and terminals that cut (tmux)
-  leave the old rows differently.
+The scenario language retains start, send, keys, paste, wait/waits/gone,
+resize, expect, capture, exited and sleep. Exact expect waits for the requested
+frame under a finite deadline, so a partial asynchronous redraw is not a
+wrong final screen. Styles are compared through canonical SGR captures of
+Emulator cells; OSC titles/marks are consumed without becoming screen text.
 
-What `lib/terminal`'s editor draws is also tested without a terminal:
-`tests/lib/terminal/edit.sml` gives the bytes its `diff` writes for random
-edits at random widths to `Emulator`, a terminal in SML, and checks that
-the screen is the next frame (D23's property); it runs on every compiler.
-
-`tests/terminal/ptyraw.py` is the other driver: a pty, exact bytes, and
-times to the microsecond, which `scripts/perf-repl.sh` uses for the REPL's
-latencies. Times taken on a loaded machine say little; the script prints
-the load average with them.
+The raw route is bin/rune-terminal raw COLS ROWS SCRIPT -- CMD...; it preserves
+write/until/quiet/winch/mark/report/dump and reports milliseconds separately
+from deterministic byte assertions. It drains output while sending bounded,
+nonblocking input chunks. The runner's own display is captured through a PTY
+and ordinary streams, including progress, failures, resize and the final frame.
+Human raw-event logs use SML string escapes; the REPORT label/number/ms fields
+retain their measurement grammar. Raw bytes are kept separately in artifacts.
+Faults exercise wrong frames, lost input, bad sizes, crashes after output,
+floods, background children, raw-mode restoration and closed sessions.
 
 ## Harnesses that measure
 

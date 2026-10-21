@@ -50,6 +50,7 @@ POSIX_SIGNAL	signature			optional	declared	lib/basis/sig_posix_signal.sml
 POSIX_SYS_DB	signature			optional	declared	lib/basis/sig_posix_sys_db.sml
 POSIX_TTY	signature			optional	declared	lib/basis/sig_posix_tty.sml
 PRIM_IO	signature			required	declared	lib/basis/primio_sig.sml
+PTY	signature			extension	declared	lib/basis/pty_sig.sml
 REAL	signature			required	declared	lib/basis/sig_real.sml
 REPL	signature			extension	declared	lib/basis/repl_sig.sml
 RUNTIME	signature			extension	declared	lib/basis/runtime_sig.sml
@@ -200,6 +201,7 @@ Posix.TTY.I	structure	BIT_FLAGS		optional	claimed	lib/basis/posix_tty.sml
 Posix.TTY.L	structure	BIT_FLAGS		optional	claimed	lib/basis/posix_tty.sml
 Posix.TTY.O	structure	BIT_FLAGS		optional	claimed	lib/basis/posix_tty.sml
 PrimIO	functor	PRIM_IO		optional	ascribed	lib/basis/io_functors.sml
+Pty	structure	PTY		extension	claimed	lib/basis/pty.sml
 Real	structure	REAL	where type real = real	required	claimed	lib/basis/real.sml
 Real.Math	structure	MATH		required	claimed	lib/basis/real.sml
 Real32	structure	REAL		optional	claimed	lib/basis/real32.sml

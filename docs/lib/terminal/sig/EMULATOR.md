@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 9 of 9 entries documented |
+| Documentation | 10 of 10 entries documented |
 | Tests | not listed |
 | Source | [lib/terminal/emulator\_sig.sml](../../../../lib/terminal/emulator_sig.sml) |
 
@@ -31,8 +31,9 @@ cursor movements (CUU, CUD, CUF, CUB, CHA, CUP), erasing in a line and
 in the display (EL, ED), and SGR; and xterm's pending wrap -- after a
 character in the last column the cursor stays there until the next
 character, which goes to the start of the next line. Modes are
-recorded (bracketed paste, a hidden cursor); other escapes are
-ignored.
+recorded (bracketed paste, a hidden cursor); OSC titles/marks and other
+control strings are consumed through their terminators across writes,
+without putting their payload on screen. Other escapes are ignored.
 
 ## Interface
 
@@ -42,6 +43,7 @@ sig
   type <a href="#type-cell">cell</a> = {<a href="#fld-cell.text">text</a> : string, <a href="#fld-cell.style">style</a> : Style.style}
   type <a href="#type-screen">screen</a>
   val <a href="#val-new">new</a> : {<a href="#fld-new.columns">columns</a> : int, <a href="#fld-new.rows">rows</a> : int, <a href="#fld-new.policy">policy</a> : Grapheme.policy} -&gt; screen
+  val <a href="#val-resize">resize</a> : screen * {<a href="#fld-resize.columns">columns</a> : int, <a href="#fld-resize.rows">rows</a> : int} -&gt; screen
   val <a href="#val-write">write</a> : screen * string -&gt; screen
   val <a href="#val-cursor">cursor</a> : screen -&gt; int * int
   val <a href="#val-row">row</a> : screen * int -&gt; cell list
@@ -89,6 +91,24 @@ cursor at its top left, measuring clusters by `policy`.
 | <a name="fld-new.columns"></a>`columns` | `int` |  |
 | <a name="fld-new.rows"></a>`rows` | `int` |  |
 | <a name="fld-new.policy"></a>`policy` | `Grapheme.policy` |  |
+
+### <a name="val-resize"></a>`resize`
+
+```sml
+val resize : screen * {columns : int, rows : int} -> screen
+```
+
+`resize (s, size)` preserves the top-left cells, styles and modes at the new dimensions.
+
+Cells past
+the new right/bottom edges are clipped; text does not reflow. The cursor
+is clamped and a wide cluster clipped in half is erased. Dimensions must
+be positive (otherwise Size). A program can redraw after its resize.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-resize.columns"></a>`columns` | `int` |  |
+| <a name="fld-resize.rows"></a>`rows` | `int` |  |
 
 ### <a name="val-write"></a>`write`
 

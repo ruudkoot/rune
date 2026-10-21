@@ -279,9 +279,9 @@ tests/run-tests.sh	shell	P2.7	retired	4c720038dfb7acdbc2cee3bcbb211eca06a5d9a1	t
 tests/run-windows.sh	shell	P2.7	retired	50ce45d86563adbb98a07e030724f574d0a28e9f	tests/runner/windowschecks.sml	p2.7/windows-shadow.json+portability-new-acceptance+count-rerun.log+stress-asan.log+faults.log
 tests/runtime/run-vm-tests.sh	shell	P2.7	retired	99586d739a2a8694a28c9928b690cd57887e3fef	tests/runner/vmchecks.sml	p2.7/windows-shadow.json+portability-new-acceptance+count-rerun.log+stress-asan.log+faults.log
 tests/skipped.sh	shell	P2.7	retired	df09933df148596359ac54f754dbd5f3b59dc0fb	tests/runner/suite-main.sml	p2.7/windows-shadow.json+portability-new-acceptance+count-rerun.log+stress-asan.log+faults.log
-tests/terminal/ptyraw.py	python	P2.13	pending	e3bce902cd5935b02ba2570f98a41fd167469747	-	terminal-inputs-frames-and-cleanup
-tests/terminal/run.sh	shell	P2.13	pending	9742027349d05df05248161d3cd95703a14098a6	-	terminal-inputs-frames-and-cleanup
-tests/terminal/term.py	python	P2.13	pending	c6ffb886b0274b8e94b84b167f39c452cd13c367	-	terminal-inputs-frames-and-cleanup
+tests/terminal/ptyraw.py	python	P2.13	retired	e3bce902cd5935b02ba2570f98a41fd167469747	tests/runner/terminalraw.sml	p2.13/nonblock-posix.log+nonblock-windows.log+pattern-shadow.json+api-acceptance
+tests/terminal/run.sh	shell	P2.13	retired	9742027349d05df05248161d3cd95703a14098a6	tests/runner/terminaljobs.sml	p2.13/nonblock-posix.log+nonblock-windows.log+pattern-shadow.json+api-acceptance
+tests/terminal/term.py	python	P2.13	retired	c6ffb886b0274b8e94b84b167f39c452cd13c367	tests/runner/terminalchecks.sml	p2.13/nonblock-posix.log+nonblock-windows.log+pattern-shadow.json+api-acceptance
 tests/units/run.sh	shell	P2.8	retired	8c5fdc4c587d0b80e3a471e4b88ad2394a844ebc	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
 tests/windows-dir.sh	shell	P2.7	retired	8e79e29694197e7e58d68ea21d5921177e8e2acd	tests/runner/windowsdir.sml	p2.7/windows-shadow.json+portability-new-acceptance+count-rerun.log+stress-asan.log+faults.log
 tools/heapsim/checkold.py	python	P2.14	pending	531e811551d0cece02dc0719afdbd3e769dcbd68	-	captured-measurements-and-report-schemas

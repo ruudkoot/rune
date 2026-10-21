@@ -1113,10 +1113,11 @@ not have or cannot reach (*Where we are*, *What the Basis offers*).
 | G5 | ending a process and everything it started | `Posix.Process.kill` with `K_GROUP`; Windows has no groups and kills one process | `Subprocess.kill` on G4's group or job | the group on POSIX; on Windows the process alone |
 | G6 | waiting for a child with a deadline | `waitpid_nh` and polling | optional: a pidfd with `OS.IO.poll`, `WaitForMultipleObjects` | a poll loop that sleeps 1-20 ms |
 | G7 | the machine's load and free memory | none | none needed on Linux: `/proc/loadavg` and `/proc/meminfo` are files | the files |
-| G8 | a pseudo-terminal | none | `openpty`, and ConPTY on Windows; it lets the terminal tests leave tmux | `tests/terminal/term.py` as a step |
+| G8 | a pseudo-terminal | implemented in part 2: `Pty` (POSIX controlling terminal, Windows ConPTY; unsupported system-layer result) | `lib/basis/pty_sig.sml`, `docs/runtime.md`; SML terminal scenarios and tester-display checks | completed by P2.13 of `unit-testing-part2.md` |
 | G9 | a deadline for in-process code | none | a VM budget of instructions per call (quickcheck.md's D9, option C, "left for later") | the worker's restart (D9) |
 
-M2 does G1 to G5. G6 to G9 are left for when they are wanted.
+M2 does G1 to G5. G8 was completed by P2.13 of the second roadmap;
+the other optional gaps retain their recorded alternatives.
 
 ## Decisions
 
@@ -2110,3 +2111,13 @@ Read as of 2026-10-11, from documentation and, where behaviour mattered, source.
 * Vitest 4.1 agent reporter: https://vitest.dev/blog/vitest-4-1.html; Jest 30.3; Bun; V8's `tools/testrunner/base_runner.py`
 * Anthropic. Building a C compiler with a team of parallel Claudes. 5 February 2026, https://www.anthropic.com/engineering/building-c-compiler
 
+
+
+### Part 2 terminal completion
+
+P2.13 completes G8 and retires the terminal shell/Python drivers. The runtime
+Pty API has POSIX, ConPTY and unsupported-system implementations; SML owns
+scenario input, resize, screen/byte assertions and lifecycle. The original
+retention tables above are the historical inventory, superseded by the
+part-2 ledger and acceptance records. Protocol and incremental drivers named
+as deferred above were also retired in P2.9/P2.12.

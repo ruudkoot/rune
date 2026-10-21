@@ -35,13 +35,17 @@ struct
                                               "a\027["), "1Gb\226\130")
       val s = Emulator.write (s, "\172c")
     in
-      check ("an escape and a character across writes", Emulator.text s = "b\226\130\172c")
+      check ("an escape and a character across writes", Emulator.text s = "b\226\130\172c");
+      check ("OSC title is not screen text", Emulator.text (screen (20, 2, "a\027]0;window title\007b")) = "ab");
+      check ("OSC split across writes", Emulator.text (Emulator.write (screen (20, 2, "a\027]133;A\027"), "\\b")) = "ab")
     end
 
   fun styles () =
     let val s = screen (10, 2, "\027[1;31mab\027[0mc")
     in
-      check ("styles", map #style (Emulator.row (s, 0)) = [Style.parameters "1;31", Style.parameters "1;31", Style.plain])
+      check ("styles", map #style (Emulator.row (s, 0)) = [Style.parameters "1;31", Style.parameters "1;31", Style.plain]);
+      check ("selective style reset preserves colour", Style.parameters "1;2;3;4;7;9;31;22;23;24;27;29" = Style.parameters "31");
+      check ("ConPTY bold reset", map #style (Emulator.row (screen (10, 2, "\027[1ma\027[22mb"), 0)) = [Style.parameters "1", Style.plain])
     end
 
   fun cursor () =
@@ -53,10 +57,21 @@ struct
   fun modes () =
     check ("modes", Emulator.modes (screen (5, 2, "\027[?2004h\027[?25l")) = {bracketedPaste = true, cursorVisible = false})
 
+  fun resize () =
+    let val s = screen (5, 3, "a\228\184\173b\r\n\027[1mstyled\027[?2004h")
+        val small = Emulator.resize (s, {columns = 2, rows = 2})
+        val large = Emulator.resize (small, {columns = 8, rows = 4})
+    in check ("resize clips a wide cell whole", Emulator.text small = "a\nst");
+       check ("resize preserves modes", #bracketedPaste (Emulator.modes large));
+       check ("resize preserves styles", #bold (#style (hd (Emulator.row (large, 1)))));
+       check ("resize grows with blank cells", Emulator.text large = Emulator.text small);
+       check ("resize clamps the cursor", #2 (Emulator.cursor small) < 2)
+    end
+
   val tests =
     Test.describe "terminal/emulator"
       [Test.it "screens" screens, Test.it "across-writes" acrossWrites, Test.it "styles" styles,
-       Test.it "cursor" cursor, Test.it "scrolled" scrolled, Test.it "modes" modes]
+       Test.it "cursor" cursor, Test.it "scrolled" scrolled, Test.it "modes" modes, Test.it "resize" resize]
 end
 
 structure EmulatorMain = Main (struct val name = "terminal/emulator" val tests = EmulatorTest.tests end)

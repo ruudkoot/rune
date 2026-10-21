@@ -7,7 +7,7 @@
 | Status | optional |
 | Implementations | 1 |
 | Documentation | 41 of 41 entries documented |
-| Tests | 85 checks of 32 entries |
+| Tests | 86 checks of 32 entries |
 | Source | [lib/basis/sig\_posix\_io.sml](../../../../lib/basis/sig_posix_io.sml) |
 
 ## Synopsis
@@ -285,9 +285,9 @@ val writeVec : file_desc * Word8VectorSlice.slice -> int
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the write fails.
 
-<details><summary>Tests (5)</summary>
+<details><summary>Tests (6)</summary>
 
-For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `slice` &middot; `empty-slice` &middot; `twice` &middot; `closed` (raises) &middot; `read-only` (raises)
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `slice` &middot; `empty-slice` &middot; `twice` &middot; `closed` (raises) &middot; `read-only` (raises) &middot; `nonblocking-full-pipe`
 
 </details>
 

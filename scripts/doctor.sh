@@ -20,9 +20,9 @@
 #   windows mingw-w64 for both Windows VMs (make windows), and whether an
 #           .exe runs here (make test-windows); not part of all, since
 #           nothing else needs it
-#   terminal  tmux and python3, which drive programs on a terminal
-#           (tests/terminal, make test-terminal); without tmux its scripts
-#           are skipped, so tmux is only a warning
+#   terminal  runtime pseudo-terminal support (make test-terminal); the
+#           compiled SML runner probes this at execution, with no external
+#           terminal program required during bootstrap
 #   portability  a 32-bit x86 compiler and a big-endian 64-bit PowerPC one,
 #           with qemu to run the latter (make portability,
 #           make test-portability); not part of all either
@@ -454,12 +454,7 @@ fi
 # ---------------------------------------------------------------- windows
 if in_scope terminal; then
   section "programs on a terminal (make test-terminal)"
-  if command -v tmux > /dev/null 2>&1; then ok tmux "$(tmux -V 2> /dev/null)"
-  else warn tmux "not found: the scripts of tests/terminal are skipped" tmux
-  fi
-  if command -v python3 > /dev/null 2>&1; then ok python3 "$(python3 --version 2>&1)"
-  else bad python3 "not found: tests/terminal/term.py needs it" python3
-  fi
+  printf '%s\n' '  The VM supplies the pseudo-terminal; bin/rune-terminal probe verifies it at execution.'
 fi
 if in_scope windows; then
   section "mingw-w64 (make windows, make test-windows)"

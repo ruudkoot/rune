@@ -2,7 +2,7 @@
 # What the REPL costs a person at a terminal (docs/plans/repl.md, M1 and
 # Measuring): the start to the first prompt, an entry to its answer, and a
 # paste of 10, 100, 1,000 and 2,000 declarations to the answer of the last,
-# each measured on a pty by tests/terminal/ptyraw.py, best of RUNS runs; and
+# each measured on a pty by bin/rune-terminal raw, best of RUNS runs; and
 # what lib/terminal's editor does for a key at 10 to 1,000 lines
 # (tests/terminal/keystroke.sml, M5). The entries and the pastes are typed to
 # the basic mode (--basic), which M1's baselines measured and which reads a
@@ -23,7 +23,7 @@ measure() {
   i=0
   while [ $i -lt "$runs" ]; do
     # shellcheck disable=SC2086
-    python3 tests/terminal/ptyraw.py 80 24 "$1" -- $repl ${3---basic} | sed -n "s/^REPORT $2 \([0-9.]*\) ms$/\1/p"
+    bin/rune-terminal raw 80 24 "$1" -- $repl ${3---basic} | sed -n "s/^REPORT $2 \([0-9.]*\) ms$/\1/p"
     i=$((i + 1))
   done | best
 }

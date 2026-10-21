@@ -1055,3 +1055,32 @@ What differs:
   own program alone.
 * The program carries its line table as DWARF: a debugger stops at a line of
   an SML source, and names a function by its name and its number.
+
+
+## Owned pseudo-terminals
+
+Pty (signature PTY, lib/basis/pty_sig.sml) starts a child on a fresh terminal
+with an initial size, explicit arguments, environment and working directory.
+Its abstract session owns borrowed numeric input/output descriptors; convert
+these with Posix.FileSys.wordToFD o SysWord.fromInt for ordinary I/O and polling.
+The child remains a Subprocess.pid and its caller waits or polls for it.
+Resize changes the terminal dimensions and notifies its foreground program.
+Close is idempotent, disconnects the terminal and discards unread output; the
+caller still reaps the child. Closed descriptors cannot be borrowed again.
+Dimensions outside 1..32767 raise Domain. Sessions are external resources:
+close them explicitly and do not carry them across saved-image restoration.
+
+POSIX uses a master/slave terminal and gives the child a controlling session.
+Windows resolves ConPTY dynamically, so older Windows and sys_none report
+ENOSYS rather than making the VM itself unavailable. Its binary communication
+pipes integrate with ordinary descriptor I/O. The terminal controller uses
+nonblocking input/output and finite deadlines; a full nonblocking Windows pipe
+reports EAGAIN, including the zero-byte-success form of PIPE_NOWAIT.
+
+The Windows backend sets STARTF_USESTDHANDLES with null standard handles for
+ConPTY children. Without this, a redirected parent can pass its streams into
+the child despite attaching it to a new console. The native probe and regression
+follow the [Windows console maintainers' explanation](https://github.com/microsoft/terminal/discussions/15814).
+The backend closes its output reader before pseudoconsole teardown, which
+permits discarding final updates without a synchronous close deadlock; see
+[Microsoft's ConPTY lifecycle documentation](https://learn.microsoft.com/en-us/windows/console/creating-a-pseudoconsole-session).

@@ -121,7 +121,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | P2.10 | P2.0 | IntInf correctness and hardening drivers | done 2026-10-21 |
 | P2.11 | P2.8, P2.10; P2.7 for Windows paths | GMP build/download/install/cross tests | done 2026-10-21 |
 | P2.12 | P2.0; P2.7 for Windows paths | REPL protocol, DAP, kernel and interop orchestration | done 2026-10-21 |
-| P2.13 | P2.0; runtime pty support | Terminal scenarios and tester display checks | pending |
+| P2.13 | P2.0; runtime pty support | Terminal scenarios and tester display checks | done 2026-10-21 |
 | P2.14 | relevant correctness ports and P2.6 | Measurement and analysis tools | pending |
 | P2.15 | P2.4, P2.6, P2.9 | Post-bootstrap generators | pending |
 | P2.16 | P2.8, P2.11; bootstrap design below | Build/provisioning/package tools | pending |
@@ -808,3 +808,51 @@ without leaks. The old unsupervised exploratory engine was separately removed.
 Rune and MLton compile identical final protocol bytecode. Receipts and raw
 comparisons remain under tests/out/unit-testing-part2/p2.12. Final global
 acceptance and the runtime-change platform reruns remain required by P2.17.
+
+### P2.13 acceptance, 2026-10-21
+
+G8 is implemented as Pty: owned sessions, numeric borrowed descriptors, an
+ordinary child pid, resize and explicit close. POSIX creates a controlling
+terminal/session; Windows resolves ConPTY dynamically; sys_none and Windows
+without the API return ENOSYS. Three appended primitives change the ISA
+fingerprint, so compiler, VMs, images and workers were rebuilt consistently.
+The Basis API/signature and real nonblocking-full-pipe contract pass on native
+stack/register, all four Windows configurations, Linux32, big-endian PPC64
+and AArch64 (42/42 and 36/36 root selections for each focused matrix).
+
+The old POSIX controller passes all twenty scenarios on the fresh REPL image;
+its first stale-image run (sixteen passes, four version mismatches) is preserved.
+The old Windows controller passes thirteen checks. SML matches all twenty
+POSIX scenarios, all thirteen Windows64 checks and adds the thirteen Windows32
+checks. Integrated selections pass 28/28 on POSIX and 33/33 on Windows,
+including canaries, typed raw-mode restoration and runner-display capture.
+Independent Python comparisons of 3208 captured-screen/raw-pattern vectors
+agree exactly in byte offsets. Timing output is separate from byte verdicts.
+
+Actual ConPTY validation exposed redirected-parent standard-handle inheritance,
+OSC titles leaking into Emulator cells, and missing selective SGR resets.
+The backend explicitly requests fresh console handles; Emulator consumes
+control strings across writes and preserves style resets. Its resize clips
+cells/styles/modes and erases partial wide clusters. Seven emulator test groups
+pass. A native probe confirms that every ConPTY child's standard handle is a
+console handle and output goes through the PTY, including under redirected
+parent I/O. Nonblocking Windows pipe writes now expose EAGAIN for the
+zero-byte PIPE_NOWAIT form, allowing finite SML input deadlines.
+
+Faults reject wrong frames, dropped input, bad dimensions, a crash after
+correct output, floods and closed sessions, and detect a deliberately bad
+raw-mode restoration. Cleanup terminates background programs even when the
+PTY leader exited first. The runner's real progress/failure output, styles,
+resize, final frame and non-TTY output are checked through Emulator. All
+scenario state and history are private. The restore scenario no longer embeds
+shell assertions; its five status/termios checks are SML.
+
+The additional API matrix exposed a missing default Windows directory in the
+full Basis controller. It now shares WindowsDir and includes the run identity
+in staging paths; the original failure receipt is preserved. Focused matrices
+pass without an explicit RUNE_WINDOWS_DIR. Source, raw logs and archived root
+receipts are in tests/out/unit-testing-part2/p2.13. The three legacy terminal
+drivers are retired; their measurement caller uses the SML raw route. Rune
+and MLton produce identical terminal and root worker bytecode. The public
+filtered CLI and raw measurement route are also exercised. Final
+whole-project frozen-source acceptance remains P2.17's required step.

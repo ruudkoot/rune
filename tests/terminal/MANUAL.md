@@ -2,8 +2,8 @@
 
 What the scripts of `tests/terminal` cannot see: the terminals people use,
 each with its own way of drawing, of measuring characters and of taking
-keys (docs/plans/repl.md, D23). The scripts drive tmux, and on Windows
-ConPTY through WSL interop; everything below is checked by a person, on
+keys (docs/plans/repl.md, D23). The SML scenarios drive the runtime pseudo-terminal, and on Windows
+ConPTY natively; everything below is checked by a person, on
 each terminal of the list, when the REPL's terminal front or the runtime's
 console changes, and at M13, which records the results at the end of this
 file.

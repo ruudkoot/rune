@@ -411,6 +411,9 @@ enum Prim {
   PRIM_utf8_decode = 405,
   PRIM_string_eq = 406,
   PRIM_array_to_vector = 407,
+  PRIM_pty_spawn = 408,
+  PRIM_pty_resize = 409,
+  PRIM_pty_close = 410,
   PRIM__COUNT
 };
 
@@ -823,6 +826,9 @@ static const char *const prim_names[] = {
   "utf8_decode",
   "string_eq",
   "array_to_vector",
+  "pty_spawn",
+  "pty_resize",
+  "pty_close",
 };
 
 static const unsigned char prim_arity[] = {
@@ -1233,6 +1239,9 @@ static const unsigned char prim_arity[] = {
   3,
   3,
   2,
+  1,
+  6,
+  3,
   1,
 };
 
@@ -1648,6 +1657,9 @@ static const unsigned char prim_result[] = {
   0,
   5,
   6,
+  7,
+  1,
+  1,
 };
 
 #define RUNE_PRIM_LIST(X) \
@@ -2058,6 +2070,9 @@ static const unsigned char prim_result[] = {
   X(vector_extract) \
   X(utf8_decode) \
   X(string_eq) \
-  X(array_to_vector)
+  X(array_to_vector) \
+  X(pty_spawn) \
+  X(pty_resize) \
+  X(pty_close)
 
 #endif

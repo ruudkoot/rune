@@ -152,9 +152,8 @@ struct
              else
                let val () = write (work ^ "/prog.key", key)
                    val runDirectory = case #target config of MatrixModel.Windows _ =>
-                     let val windows = env ("RUNE_WINDOWS_DIR", "")
-                         val () = need (windows <> "", "RUNE_WINDOWS_DIR is required for Windows staging")
-                         val dir = windows ^ "/matrix/" ^ OS.Path.file (#directory ctx) ^ "/" ^ OS.Path.file work
+                     let val windows = WindowsDir.directory () handle WindowsDir.Unavailable why => raise Failed why
+                         val dir = windows ^ "/matrix/" ^ OS.Path.file run ^ "/" ^ OS.Path.file (#directory ctx) ^ "/" ^ OS.Path.file work
                          val () = remove dir
                          val () = mkdirs dir
                          val () = copy (output, dir ^ "/prog.rbc")

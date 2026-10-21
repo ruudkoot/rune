@@ -7,7 +7,7 @@
 | Signature | [`POSIX_IO`](../sig/POSIX_IO.md) |
 | Status | optional |
 | Members | 30 |
-| Tests | 83 checks |
+| Tests | 84 checks |
 | Source | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 ## Synopsis
