@@ -28,6 +28,7 @@ struct
     val isatty' = _prim "posix_isatty" : int -> int
     val sysconf' = _prim "posix_sysconf" : string -> int
     val getenv' = _prim "os_getenv" : string -> string option
+    val errno = _prim "sys_errno" : unit -> int
     fun check r = if r < 0 then raise RuneError.lastError () else r
     fun checkString s = if s = "" then raise RuneError.lastError () else s
   in
@@ -70,7 +71,11 @@ struct
            cutime = Time.ofMicros childUser, cstime = Time.ofMicros childSystem}
       | _ => raise RuneError.lastError ()
 
-    fun getenv name = getenv' name
+    (* Windows uses WTF-8 for operating-system strings, as OS.Process.getEnv does. *)
+    fun getenv name =
+      case getenv' name of
+        NONE => if errno () = 0 then NONE else raise RuneError.lastError ()
+      | value => value
     fun environ () = environ' ()
     fun ctermid () = checkString (ctermid' ())
     fun ttyname (fd : file_desc) = checkString (ttyname' fd)

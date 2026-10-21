@@ -22,6 +22,10 @@ primitives win\_\* of runtime/prims.def. On a system other than Windows every
 call of the system raises OS.SysErr with ENOSYS; the constants (the flags
 of Key, the codes of Status) are there everywhere.
 
+Names and text use WTF-8 at the Windows boundary, preserving lone
+UTF-16 surrogates; other malformed input raises OS.SysErr with ilseq.
+Registry BINARY and DWORD payloads are bytes, without text conversion.
+
 ## Members
 
 What each means is on [`WINDOWS`](../sig/WINDOWS.md); the types are this structure's own.

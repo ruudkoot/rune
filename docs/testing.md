@@ -534,3 +534,14 @@ without one, and reports the most live data a collection completed with
 (the copier: 255 and 512 MiB, where D1 asks for 768 MiB and 1.5 GiB);
 `--latency` adds the latency window at its 32-bit size, 50,000 messages.
 About half a minute.
+
+## Windows text boundaries
+
+`make test-windows-text` is the focused Unicode and long-path suite, included
+in `make test-windows`. It needs both MinGW toolchains and Windows execution.
+The native helper creates and inspects fixtures with wide APIs; SML probes
+exercise each VM, including fork from a Unicode executable, directory and
+stream recovery under a long path, and native compilation of `λ.sml`.
+Logs are in `tests/out/windows-text`. Each worktree stages its own fixtures
+on NTFS using `tests/windows-dir.sh`; a WSL sandbox that blocks interop must
+run this target outside that sandbox.

@@ -13,6 +13,7 @@ static int last = 0;
 static int fail(void) { last = ENOSYS; return -1; }
 
 int sys_errno(void) { return last; }
+int sys_init_args(int *argc, char ***argv) { (void)argc; (void)argv; return 0; }
 void sys_set_errno(int e) { last = e; }
 const char *sys_error_msg(int e) { return strerror(e); }
 const char *sys_error_name(int e) { return e == ENOSYS ? "ENOSYS" : ""; }
@@ -47,7 +48,7 @@ int sys_date_format(const char *format, const int32_t parts[9], int local, char 
 }
 
 int sys_system(const char *command) { (void)command; return fail(); }
-const char *sys_getenv(const char *name) { (void)name; return NULL; }
+const char *sys_getenv(const char *name) { (void)name; last = 0; return NULL; }
 
 int sys_mkdir(const char *path) { (void)path; return fail(); }
 int sys_rmdir(const char *path) { (void)path; return fail(); }

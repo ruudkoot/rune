@@ -2,6 +2,7 @@
 #include "version.h"
 #include "vm.h"
 #include "intinf.h"
+#include "sys/sys.h"
 #ifdef RUNE_CENSUS
 #include "register/jit.h"
 #endif
@@ -96,6 +97,10 @@ static int size_arg(const char *text, size_t *out) {
 }
 
 int main(int argc, char **argv) {
+    if (sys_init_args(&argc, &argv) < 0) {
+        fprintf(stderr, "runevm: arguments: %s\n", sys_error_msg(sys_errno()));
+        return 2;
+    }
     size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50, stack = (size_t)1 << 30;
     size_t heap_limit = 0, equality_work = 0, nursery = (size_t)1 << 20, nursery_max = (size_t)8 << 20;
     int old_kind = OLD_IMMIX, gc_compact = 0, gc_stress_cycles = 0, low_pause = 0, nursery_max_set = 0;   /* --gc throughput, the default (docs/plans/garbage-collector-v2.md, D3) */
@@ -199,16 +204,16 @@ int main(int argc, char **argv) {
     }
     /* RUNEVM_JIT names the mode where no --jit= does: for the test runners,
        which start a VM they cannot give options (runtime/register; docs/bytecode.md) */
-    if (!jit_given && getenv("RUNEVM_JIT") && !vm_jit_env(getenv("RUNEVM_JIT"), &jit.mode)) return 2;
+    if (!jit_given && sys_getenv("RUNEVM_JIT") && !vm_jit_env(sys_getenv("RUNEVM_JIT"), &jit.mode)) return 2;
     /* and RUNEVM_JIT_TIER the tier, where no --jit-tier= does (M9) */
-    if (!jit.tier && getenv("RUNEVM_JIT_TIER")) {
-        const char *t = getenv("RUNEVM_JIT_TIER");
+    if (!jit.tier && sys_getenv("RUNEVM_JIT_TIER")) {
+        const char *t = sys_getenv("RUNEVM_JIT_TIER");
         if (strcmp(t, "1") == 0) jit.tier = 1;
         else if (strcmp(t, "2") == 0) jit.tier = 2;
         else { fprintf(stderr, "runevm: RUNEVM_JIT_TIER=%s: 1 or 2\n", t); return 2; }
     }
-    if (!resume && !intinf_given && getenv("RUNEVM_INTINF") &&
-        !vm_intinf_mode(getenv("RUNEVM_INTINF"), &intinf_mode)) {
+    if (!resume && !intinf_given && sys_getenv("RUNEVM_INTINF") &&
+        !vm_intinf_mode(sys_getenv("RUNEVM_INTINF"), &intinf_mode)) {
         fputs("runevm: RUNEVM_INTINF must be auto, gmp or sml\n", stderr);
         return 2;
     }

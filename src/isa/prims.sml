@@ -321,7 +321,7 @@ struct
          {name = "os_system", arity = 1, ty = "string -> int", effects = anything,
           doc = "Run a command with the shell and wait; what it exited with, or 256 plus the signal that ended it, or ~1."},
          {name = "os_getenv", arity = 1, ty = "string -> string option", effects = anything,
-          doc = "The value of an environment variable."},
+          doc = "The value of an environment variable; NONE with sys_errno cleared when absent, or with an error on failure."},
          {name = "file_errno", arity = 1, ty = "unit -> int", effects = anything,
           doc = "The errno of the last file_open or file_write that failed."},
          {name = "os_mkdir", arity = 1, ty = "string -> int", effects = anything,

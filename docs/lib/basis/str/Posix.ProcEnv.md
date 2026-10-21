@@ -7,7 +7,7 @@
 | Signature | [`POSIX_PROC_ENV`](../sig/POSIX_PROC_ENV.md) |
 | Status | optional |
 | Members | 30 |
-| Tests | 65 checks |
+| Tests | 66 checks |
 | Source | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 ## Synopsis

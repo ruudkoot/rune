@@ -980,7 +980,7 @@
      "kind": "val",
      "name": "arguments",
      "spec": "val arguments : unit -> string list",
-     "doc": "`arguments ()` is the list of the arguments that follow the name, in order.\n\nThe name is not among them: a command of `n` words, the name included,\ngives `n - 1` arguments.\n\n> **Reading** `CommandLine.arguments/none-under-the-runner`. Which arguments\na program sees is \"operating system and implementation-specific\": what\nthe system passes after the name, with nothing taken away, and the empty\nlist when it passes none.\n\n",
+     "doc": "`arguments ()` is the list of the arguments that follow the name, in order.\n\nThe name is not among them: a command of `n` words, the name included,\ngives `n - 1` arguments.\n\nWindows decodes its wide command line as WTF-8, preserving lone\nUTF-16 surrogates. Unicode arguments have their UTF-8 bytes.\n\n> **Reading** `CommandLine.arguments/none-under-the-runner`. Which arguments\na program sees is \"operating system and implementation-specific\": what\nthe system passes after the name, with nothing taken away, and the empty\nlist when it passes none.\n\n",
      "page": "sig/COMMAND_LINE.md#val-arguments"
     }
    ]
@@ -4103,7 +4103,7 @@
    ]
   },
   "OS_FILE_SYS": {
-   "doc": "The file system: reading directories, moving about in them, and asking\nwhat a file is and when it changed.\n\nWhere `OS_PATH` works on the text of a path alone, everything here touches\nthe file system, and everything here reports a refusal the same way:\n`OS.SysErr` with the message and the condition the system gave. A path\nthat names nothing, a directory that may not be read, a file that may not\nbe removed -- all of them arrive as that one exception.\n\nA directory is read as a stream: `openDir`, then `readDir` until it gives\n`NONE`, then `closeDir`. The names it gives are arcs, not paths, and\n`\".\"` and `\"..\"` are not among them.\n\n**See also** `OS_PATH`, `OS`, `OS_IO`, `POSIX_FILE_SYS`, `TIME`\n\n> **Implementation** `OS.FileSys/errors-are-SysErr`. Every failure raises\n`OS.SysErr` carrying the reason the system gave; no operation here has an\nexception of its own.\n\n",
+   "doc": "The file system: reading directories, moving about in them, and asking\nwhat a file is and when it changed.\n\nWhere `OS_PATH` works on the text of a path alone, everything here touches\nthe file system, and everything here reports a refusal the same way:\n`OS.SysErr` with the message and the condition the system gave. A path\nthat names nothing, a directory that may not be read, a file that may not\nbe removed -- all of them arrive as that one exception.\n\nWindows paths and names use WTF-8, which preserves lone UTF-16\nsurrogates and is UTF-8 for Unicode text. Other malformed byte sequences\nraise `OS.SysErr` with `ilseq`. Extended paths remove the 260-character\nfilesystem limit; native process, Shell and socket limits still apply.\n\nA directory is read as a stream: `openDir`, then `readDir` until it gives\n`NONE`, then `closeDir`. The names it gives are arcs, not paths, and\n`\".\"` and `\"..\"` are not among them.\n\n**See also** `OS_PATH`, `OS`, `OS_IO`, `POSIX_FILE_SYS`, `TIME`\n\n> **Implementation** `OS.FileSys/errors-are-SysErr`. Every failure raises\n`OS.SysErr` carrying the reason the system gave; no operation here has an\nexception of its own.\n\n",
    "page": "sig/OS_FILE_SYS.md",
    "members": [
     {
@@ -4737,7 +4737,7 @@
      "kind": "val",
      "name": "getEnv",
      "spec": "val getEnv : string -> string option",
-     "doc": "`getEnv name` is `SOME` of the value of the environment variable `name`, or `NONE`.\n\n> **Reading** `OS.Process.getEnv/the-whole-name`. The whole name must match:\na name that merely begins with one that is set does not, and neither\ndoes a name with `\"=value\"` attached. A command run by `system` inherits\nthis environment and cannot change it.\n\n**Example** `getEnv \"A_VARIABLE_THAT_NOBODY_SETS\" = NONE`\n\n",
+     "doc": "`getEnv name` is `SOME` of the value of the environment variable `name`, or `NONE`.\n\nOn Windows names and values use WTF-8: Unicode is UTF-8, and lone\nUTF-16 surrogates round-trip as three bytes. Other malformed input\nraises `OS.SysErr` with `ilseq`; an absent variable is `NONE`.\n\n> **Reading** `OS.Process.getEnv/the-whole-name`. The whole name must match:\na name that merely begins with one that is set does not, and neither\ndoes a name with `\"=value\"` attached. A command run by `system` inherits\nthis environment and cannot change it.\n\n**Example** `getEnv \"A_VARIABLE_THAT_NOBODY_SETS\" = NONE`\n\n",
      "page": "sig/OS_PROCESS.md#val-getenv"
     },
     {
@@ -6584,7 +6584,7 @@
      "kind": "val",
      "name": "getenv",
      "spec": "val getenv : string -> string option",
-     "doc": "`getenv name` is `SOME` of the value of the environment variable `name`, or `NONE`.\n\n**Law** `getenv name = OS.Process.getEnv name`\n\n**Example** `getenv \"A_VARIABLE_THAT_NOBODY_SETS\" = NONE`\n\n",
+     "doc": "`getenv name` is `SOME` of the value of the environment variable `name`, or `NONE`.\n\nThe Windows encoding and errors are those of `OS.Process.getEnv`.\n\n**Law** `getenv name = OS.Process.getEnv name`\n\n**Example** `getenv \"A_VARIABLE_THAT_NOBODY_SETS\" = NONE`\n\n",
      "page": "sig/POSIX_PROC_ENV.md#val-getenv"
     },
     {

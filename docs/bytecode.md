@@ -603,3 +603,9 @@ each constant of the program with what the bytecode said it is (an int, a
 word, a real, a string, a char) and its 64 bits as the bytecode has them,
 beside the value as the VM lays it out: a value that is one word does not
 say which it is, and `runeopt --from-image` and `--disasm` need to know.
+
+`os_getenv` keeps its `string -> string option` type: `NONE` with `sys_errno`
+cleared means that the variable is absent, while `NONE` with an error means
+that the operating-system conversion or lookup failed. The Basis wrappers
+raise `OS.SysErr` in the latter case. On Windows operating-system text uses
+WTF-8 and wide APIs; binary registry payloads and file contents remain bytes.

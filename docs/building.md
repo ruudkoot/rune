@@ -288,6 +288,15 @@ goes in as `/C:/...` is given to Windows as `C:/...`; `/dev/null` is `NUL`
 and `/dev/tty` the console. The standard streams are put in binary mode before
 `main` runs, since a Rune string is bytes and a `\n` must stay one.
 
+Paths, arguments, environment variables and the text of the `Windows`
+structure use wide APIs, converted as WTF-8: UTF-8 for Unicode, with lone
+UTF-16 surrogates preserved. Other malformed input raises `OS.SysErr` with
+`ilseq`. Long filesystem paths use extended prefixes and growing buffers;
+Rune needs no UTF-8 manifest or machine-wide long-path setting. Native
+process and Shell limits remain. `make test-windows-text` runs the native
+wide-API oracle and compiler/fork probes on all four VMs, and is included in
+`make test-windows` ([the Windows plan](plans/windows.md)).
+
 Windows has no `fork`. `Posix.Process.fork` starts a second VM instead and
 hands it everything of this one: the heap, the stacks, the program, and the
 descriptors, sockets and directory streams (`runtime/image.c`); the child carries

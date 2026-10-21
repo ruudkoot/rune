@@ -30,6 +30,11 @@ the file system, and everything here reports a refusal the same way:
 that names nothing, a directory that may not be read, a file that may not
 be removed -- all of them arrive as that one exception.
 
+Windows paths and names use WTF-8, which preserves lone UTF-16
+surrogates and is UTF-8 for Unicode text. Other malformed byte sequences
+raise [`OS.SysErr`](../sig/OS.md#exn-syserr) with `ilseq`. Extended paths remove the 260-character
+filesystem limit; native process, Shell and socket limits still apply.
+
 A directory is read as a stream: [`openDir`](#val-opendir), then [`readDir`](#val-readdir) until it gives
 `NONE`, then [`closeDir`](#val-closedir). The names it gives are arcs, not paths, and
 `"."` and `".."` are not among them.

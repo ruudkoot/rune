@@ -40,8 +40,106 @@
 #include <shellapi.h>
 #include <psapi.h>
 #include <ddeml.h>
+#include <wchar.h>
 
 static int last = 0;
+
+/* WTF-8 is UTF-8 with isolated surrogate code points. A pair is encoded as
+   one scalar, never as two surrogate sequences (canonical WTF-8). These
+   length-aware conversions also serve registry strings with embedded NULs.
+   No replacement, best-fit mapping, locale or Unicode normalization occurs. */
+static void *text_alloc(size_t n) {
+    void *p = malloc(n ? n : 1);
+    if (!p) { last = ENOMEM; SetLastError(ERROR_NOT_ENOUGH_MEMORY); }
+    return p;
+}
+static WCHAR *text16(const char *s, size_t n, size_t *length) {
+    if (n > SIZE_MAX / sizeof(WCHAR) - 1) {
+        last = ENOMEM; SetLastError(ERROR_NOT_ENOUGH_MEMORY); return NULL;
+    }
+    WCHAR *out = text_alloc((n + 1) * sizeof *out);
+    if (!out) return NULL;
+    size_t at = 0, used = 0;
+    int high = 0;
+    while (at < n) {
+        unsigned char a = (unsigned char)s[at++];
+        uint32_t c;
+        unsigned more;
+        if (a < 0x80) { c = a; more = 0; }
+        else if (a >= 0xc2 && a <= 0xdf) { c = a & 31; more = 1; }
+        else if (a >= 0xe0 && a <= 0xef) { c = a & 15; more = 2; }
+        else if (a >= 0xf0 && a <= 0xf4) { c = a & 7; more = 3; }
+        else goto invalid;
+        if (more > n - at) goto invalid;
+        for (unsigned i = 0; i < more; i++) {
+            unsigned char b = (unsigned char)s[at++];
+            if ((b & 0xc0) != 0x80) goto invalid;
+            c = (c << 6) | (b & 63);
+        }
+        if ((more == 1 && c < 0x80) || (more == 2 && c < 0x800) ||
+            (more == 3 && c < 0x10000) || c > 0x10ffff) goto invalid;
+        if (high && c >= 0xdc00 && c <= 0xdfff) goto invalid;
+        high = c >= 0xd800 && c <= 0xdbff;
+        if (c >= 0x10000) {
+            c -= 0x10000;
+            out[used++] = (WCHAR)(0xd800 + (c >> 10));
+            out[used++] = (WCHAR)(0xdc00 + (c & 1023));
+        } else out[used++] = (WCHAR)c;
+    }
+    out[used] = 0;
+    if (length) *length = used;
+    return out;
+invalid:
+    free(out); last = EILSEQ; SetLastError(ERROR_NO_UNICODE_TRANSLATION); return NULL;
+}
+static char *text8(const WCHAR *s, size_t n, size_t *length) {
+    if (n > (SIZE_MAX - 1) / 3) {
+        last = ENOMEM; SetLastError(ERROR_NOT_ENOUGH_MEMORY); return NULL;
+    }
+    char *out = text_alloc(n * 3 + 1);
+    if (!out) return NULL;
+    size_t used = 0;
+    for (size_t i = 0; i < n; i++) {
+        uint32_t c = s[i];
+        if (c >= 0xd800 && c <= 0xdbff && i + 1 < n && s[i + 1] >= 0xdc00 && s[i + 1] <= 0xdfff)
+            c = 0x10000 + ((c - 0xd800) << 10) + (s[++i] - 0xdc00);
+        if (c < 0x80) out[used++] = (char)c;
+        else if (c < 0x800) {
+            out[used++] = (char)(0xc0 | (c >> 6)); out[used++] = (char)(0x80 | (c & 63));
+        } else if (c < 0x10000) {
+            out[used++] = (char)(0xe0 | (c >> 12)); out[used++] = (char)(0x80 | ((c >> 6) & 63));
+            out[used++] = (char)(0x80 | (c & 63));
+        } else {
+            out[used++] = (char)(0xf0 | (c >> 18)); out[used++] = (char)(0x80 | ((c >> 12) & 63));
+            out[used++] = (char)(0x80 | ((c >> 6) & 63)); out[used++] = (char)(0x80 | (c & 63));
+        }
+    }
+    out[used] = 0;
+    if (length) *length = used;
+    return out;
+}
+static char **wide_args;
+static void free_args(void) {
+    if (wide_args) {
+        for (char **p = wide_args; *p; p++) free(*p);
+        free(wide_args);
+    }
+}
+int sys_init_args(int *argc, char ***argv) {
+    int count;
+    WCHAR **args = CommandLineToArgvW(GetCommandLineW(), &count);
+    if (!args) { last = ENOMEM; return -1; }
+    wide_args = calloc((size_t)count + 1, sizeof *wide_args);
+    if (!wide_args) { LocalFree(args); last = ENOMEM; return -1; }
+    for (int i = 0; i < count; i++) {
+        wide_args[i] = text8(args[i], wcslen(args[i]), NULL);
+        if (!wide_args[i]) { LocalFree(args); free_args(); wide_args = NULL; return -1; }
+    }
+    LocalFree(args);
+    atexit(free_args);
+    *argc = count; *argv = wide_args;
+    return 0;
+}
 /* Rune's strings are bytes, and a program that writes "\n" means one byte:
    the C runtime of Windows would turn it into two on a stream opened in text
    mode, so every standard stream is put in binary mode before main runs. The
@@ -89,14 +187,12 @@ static void rune_console_vt(void) {
         vt_code_page = cp;
         vt_code_page_set = 1;
     }
-    if (refused && !getenv("TERM")) {
-        _putenv("TERM=dumb");
-        SetEnvironmentVariableA("TERM", "dumb");
+    if (refused && !sys_getenv("TERM")) {
+        SetEnvironmentVariableW(L"TERM", L"dumb");
     }
     atexit(vt_restore);
 }
 
-static char path_buffer[MAX_PATH * 4];
 /* Rune's OS.Path is the one of POSIX: it separates with "/" and knows no
    drive letter. Windows takes "/" everywhere the CRT is used, so every path
    this layer hands back is written that way and the library's own path
@@ -389,7 +485,38 @@ int sys_date_format(const char *format, const int32_t parts[9], int local, char 
 }
 
 int sys_system(const char *command);   /* with the processes, below */
-const char *sys_getenv(const char *name) { return getenv(name); }
+const char *sys_getenv(const char *name) {
+    static char *value;
+    WCHAR *key = text16(name, strlen(name), NULL);
+    if (!key) return NULL;
+    SetLastError(ERROR_SUCCESS);
+    DWORD cap = GetEnvironmentVariableW(key, NULL, 0);
+    if (!cap) {
+        DWORD error = GetLastError();
+        free(key);
+        if (error == ERROR_ENVVAR_NOT_FOUND) { last = 0; return NULL; }
+        if (error == ERROR_SUCCESS) { last = 0; return ""; }
+        last = error == ERROR_NOT_ENOUGH_MEMORY ? ENOMEM : EINVAL;
+        return NULL;
+    }
+    for (;;) {
+        WCHAR *wide = text_alloc((size_t)cap * sizeof *wide);
+        if (!wide) { free(key); return NULL; }
+        SetLastError(ERROR_SUCCESS);
+        DWORD n = GetEnvironmentVariableW(key, wide, cap), error = GetLastError();
+        if (n >= cap) { free(wide); cap = n; continue; }
+        if (!n && error != ERROR_SUCCESS) {
+            free(key); free(wide);
+            last = error == ERROR_ENVVAR_NOT_FOUND ? 0 : EIO;
+            return NULL;
+        }
+        char *bytes = text8(wide, n, NULL);
+        free(key); free(wide);
+        if (!bytes) return NULL;
+        free(value); value = bytes; last = 0;
+        return value;
+    }
+}
 
 /* ---------------------------------------------------------------- paths */
 /* Windows writes a path as C:\Users\me, and Rune's OS.Path is POSIX's, to
@@ -398,8 +525,6 @@ const char *sys_getenv(const char *name) { return getenv(name); }
    has a colon in its name, so no other path reads so -- and a path that
    comes in as /C:/... is given to Windows as C:/.... /dev/null is NUL, and
    everything else goes as it came; Windows takes "/" for "\" everywhere. */
-static char native_buffers[4][MAX_PATH * 4];
-static int native_next = 0;
 static int is_drive(const char *p) {
     return ((p[0] >= 'A' && p[0] <= 'Z') || (p[0] >= 'a' && p[0] <= 'z')) && p[1] == ':';
 }
@@ -407,10 +532,15 @@ static const char *native(const char *path) {
     if (!path) return path;
     if (strcmp(path, "/dev/null") == 0) return "NUL";
     if (strcmp(path, "/dev/tty") == 0) return "CON";
-    if (path[0] == '/' && is_drive(path + 1) && (path[3] == '/' || path[3] == 0)) {
-        char *b = native_buffers[native_next++ % 4];
-        snprintf(b, sizeof native_buffers[0], "%c:%s", path[1], path[3] ? path + 3 : "/");
-        return b;
+    if (path[0] == '/' && is_drive(path + 1)) {
+        if (path[3] == '/') return path + 1;
+        if (path[3] == 0) {
+            static char roots[4][4];
+            static unsigned next;
+            char *r = roots[next++ % 4];
+            r[0] = path[1]; r[1] = ':'; r[2] = '/'; r[3] = 0;
+            return r;
+        }
     }
     return path;
 }
@@ -424,6 +554,133 @@ static const char *posix_path(char *p) {
         if (p[3] == 0) { p[3] = '/'; p[4] = 0; }
     }
     return p;
+}
+
+/* Only filesystem paths gain an extended prefix. Relative link targets,
+   command lines, registry names and other text use text16 directly. Short
+   paths retain Windows' DOS-device and trailing-dot/space interpretation. */
+static int errno_of_win(DWORD e);
+static WCHAR *full_path16(const WCHAR *path) {
+    DWORD cap = GetFullPathNameW(path, 0, NULL, NULL);
+    if (!cap) { last = errno_of_win(GetLastError()); return NULL; }
+    for (;;) {
+        WCHAR *out = text_alloc((size_t)cap * sizeof *out);
+        if (!out) return NULL;
+        DWORD n = GetFullPathNameW(path, cap, out, NULL);
+        if (!n) { DWORD e = GetLastError(); free(out); last = errno_of_win(e); SetLastError(e); return NULL; }
+        if (n < cap) return out;
+        free(out); cap = n;
+    }
+}
+static WCHAR *path16(const char *path) {
+    path = native(path);
+    size_t n;
+    WCHAR *w = text16(path, strlen(path), &n);
+    if (!w) return NULL;
+    if (_wcsicmp(w, L"NUL") == 0 || _wcsicmp(w, L"CON") == 0) return w;
+    for (size_t i = 0; i < n; i++) if (w[i] == L'/') w[i] = L'\\';
+    if (n >= 4 && w[0] == L'\\' && w[1] == L'\\' &&
+        (w[2] == L'?' || w[2] == L'.') && w[3] == L'\\') return w;
+    WCHAR *full = full_path16(w);
+    if (!full) { free(w); return NULL; }
+    n = wcslen(full);
+    if (n < MAX_PATH - 12) { free(full); return w; }
+    free(w);
+    int unc = full[0] == L'\\' && full[1] == L'\\';
+    size_t extra = unc ? 6 : 4;
+    if (n + extra >= 32767) {
+        free(full); last = ENAMETOOLONG; SetLastError(ERROR_FILENAME_EXCED_RANGE); return NULL;
+    }
+    w = text_alloc((n + extra + 1) * sizeof *w);
+    if (!w) { free(full); return NULL; }
+    wcscpy(w, unc ? L"\\\\?\\UNC\\" : L"\\\\?\\");
+    wcscat(w, full + (unc ? 2 : 0));
+    free(full);
+    return w;
+}
+static const char *store_path(char **slot, const WCHAR *wide, size_t n) {
+    const WCHAR *p = wide;
+    int unc = n >= 8 && wcsncmp(p, L"\\\\?\\UNC\\", 8) == 0;
+    if (unc) { p += 6; n -= 6; } /* replace UNC's last two letters by slashes below */
+    else if (n >= 4 && wcsncmp(p, L"\\\\?\\", 4) == 0) { p += 4; n -= 4; }
+    char *bytes = text8(p, n, NULL);
+    if (!bytes) return NULL;
+    if (unc) bytes[0] = bytes[1] = '\\';
+    size_t size = strlen(bytes);
+    char *out = text_alloc(size + 4);
+    if (!out) { free(bytes); return NULL; }
+    memcpy(out, bytes, size + 1); free(bytes);
+    posix_path(out);
+    free(*slot); *slot = out;
+    return out;
+}
+/* The narrow side of these small adapters is always WTF-8, never ACP. The
+   owned wide arguments last through the call, including two-path calls. */
+static DWORD path_attributes(const char *path) {
+    WCHAR *w = path16(path);
+    if (!w) return INVALID_FILE_ATTRIBUTES;
+    DWORD r = GetFileAttributesW(w), e = GetLastError();
+    free(w); SetLastError(e); return r;
+}
+#define PATH_BOOL(name, call) \
+    static BOOL name(const char *path) { \
+        WCHAR *w = path16(path); if (!w) return FALSE; \
+        BOOL r = (call); DWORD e = GetLastError(); free(w); SetLastError(e); return r; \
+    }
+PATH_BOOL(path_mkdir, CreateDirectoryW(w, NULL))
+PATH_BOOL(path_rmdir, RemoveDirectoryW(w))
+PATH_BOOL(path_delete, DeleteFileW(w))
+PATH_BOOL(path_chdir, SetCurrentDirectoryW(w))
+#undef PATH_BOOL
+static BOOL path_set_attributes(const char *path, DWORD attributes) {
+    WCHAR *w = path16(path); if (!w) return FALSE;
+    BOOL r = SetFileAttributesW(w, attributes); DWORD e = GetLastError();
+    free(w); SetLastError(e); return r;
+}
+static HANDLE path_create_file(const char *path, DWORD access, DWORD share, LPSECURITY_ATTRIBUTES sa,
+                               DWORD disposition, DWORD flags, HANDLE template) {
+    WCHAR *w = path16(path); if (!w) return INVALID_HANDLE_VALUE;
+    HANDLE r = CreateFileW(w, access, share, sa, disposition, flags, template);
+    DWORD e = GetLastError(); free(w); SetLastError(e); return r;
+}
+static HANDLE path_find_first(const char *path, WIN32_FIND_DATAW *data) {
+    WCHAR *w = path16(path); if (!w) return INVALID_HANDLE_VALUE;
+    HANDLE r = FindFirstFileW(w, data); DWORD e = GetLastError();
+    free(w); SetLastError(e); return r;
+}
+static BOOL path_move(const char *from, const char *to) {
+    WCHAR *a = path16(from), *b = a ? path16(to) : NULL;
+    if (!a || !b) { free(a); return FALSE; }
+    BOOL r = MoveFileExW(a, b, MOVEFILE_REPLACE_EXISTING); DWORD e = GetLastError();
+    free(a); free(b); SetLastError(e); return r;
+}
+static BOOL path_link(const char *from, const char *to) {
+    WCHAR *a = path16(from), *b = a ? path16(to) : NULL;
+    if (!a || !b) { free(a); return FALSE; }
+    BOOL r = CreateHardLinkW(b, a, NULL); DWORD e = GetLastError();
+    free(a); free(b); SetLastError(e); return r;
+}
+static WCHAR *final_path16(HANDLE h) {
+    DWORD cap = 256;
+    for (;;) {
+        WCHAR *w = text_alloc((size_t)cap * sizeof *w);
+        if (!w) return NULL;
+        DWORD n = GetFinalPathNameByHandleW(h, w, cap, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+        if (!n) { DWORD e = GetLastError(); free(w); SetLastError(e); return NULL; }
+        if (n < cap) return w;
+        free(w); cap = n + 1;
+    }
+}
+static WCHAR *temp_path16(void) {
+    DWORD cap = 256;
+    for (;;) {
+        WCHAR *w = text_alloc((size_t)cap * sizeof *w);
+        if (!w) return NULL;
+        DWORD n = GetTempPathW(cap, w);
+        if (!n) { DWORD e = GetLastError(); free(w); SetLastError(e); return NULL; }
+        if (n < cap) return w;
+        free(w); cap = n + 1;
+    }
 }
 
 /* The error of the last call of Windows as the errno of POSIX. */
@@ -448,6 +705,7 @@ static int errno_of_win(DWORD e) {
     case ERROR_NOT_ENOUGH_MEMORY: case ERROR_OUTOFMEMORY: return ENOMEM;
     case ERROR_NOT_A_REPARSE_POINT: case ERROR_INVALID_PARAMETER: return EINVAL;
     case ERROR_NEGATIVE_SEEK: return EINVAL;
+    case ERROR_NO_UNICODE_TRANSLATION: return EILSEQ;
     default: return EIO;
     }
 }
@@ -456,20 +714,21 @@ static int errno_of_win(DWORD e) {
    (ENAMETOOLONG). The path is the native one. */
 static int path_error(const char *path, int e) {
     if (e != ENOENT) return e;
-    size_t n = strlen(path), start = 0;
-    if (n >= MAX_PATH) return ENAMETOOLONG;
-    char prefix[MAX_PATH * 4];
+    WCHAR *wide = path16(path);
+    if (!wide) return last;
+    size_t n = wcslen(wide), start = 0;
     for (size_t i = 0; i <= n; i++) {
-        if (i < n && path[i] != '/' && path[i] != '\\') continue;
-        if (i - start > 255) return ENAMETOOLONG;
+        if (i < n && wide[i] != L'\\') continue;
+        if (i - start > 255) { free(wide); return ENAMETOOLONG; }
         if (i < n && i > 0 && i > start) {
-            memcpy(prefix, path, i);
-            prefix[i] = 0;
-            DWORD a = GetFileAttributesA(prefix);
-            if (a != INVALID_FILE_ATTRIBUTES && !(a & FILE_ATTRIBUTE_DIRECTORY)) return ENOTDIR;
+            WCHAR saved = wide[i]; wide[i] = 0;
+            DWORD a = GetFileAttributesW(wide);
+            wide[i] = saved;
+            if (a != INVALID_FILE_ATTRIBUTES && !(a & FILE_ATTRIBUTE_DIRECTORY)) { free(wide); return ENOTDIR; }
         }
         start = i + 1;
     }
+    free(wide);
     return ENOENT;
 }
 static int win_failed(const char *path) {
@@ -484,11 +743,11 @@ static int win_failed(const char *path) {
    when it is a directory, which POSIX lets a program open for reading. */
 #define SHARE_ALL (FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE)
 static HANDLE open_existing(const char *path, DWORD access, int follow) {
-    return CreateFileA(path, access, SHARE_ALL, NULL, OPEN_EXISTING,
+    return path_create_file(path, access, SHARE_ALL, NULL, OPEN_EXISTING,
                        FILE_FLAG_BACKUP_SEMANTICS | (follow ? 0 : FILE_FLAG_OPEN_REPARSE_POINT), NULL);
 }
 static int is_directory(const char *path) {
-    DWORD a = GetFileAttributesA(path);
+    DWORD a = path_attributes(path);
     return a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_DIRECTORY);
 }
 
@@ -512,43 +771,57 @@ int sys_umask(int mask) {
 
 int sys_mkdir(const char *path) {
     path = native(path);
-    return CreateDirectoryA(path, NULL) ? 0 : win_failed(path);
+    return path_mkdir(path) ? 0 : win_failed(path);
 }
 /* A symbolic link to a directory is not a directory to rmdir, as on POSIX. */
 int sys_rmdir(const char *path) {
     path = native(path);
-    DWORD a = GetFileAttributesA(path);
+    DWORD a = path_attributes(path);
     if (a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_REPARSE_POINT)) { last = ENOTDIR; return -1; }
-    return RemoveDirectoryA(path) ? 0 : win_failed(path);
+    return path_rmdir(path) ? 0 : win_failed(path);
 }
 int sys_chdir(const char *path) {
     path = native(path);
-    return SetCurrentDirectoryA(path) ? 0 : win_failed(path);
+    return path_chdir(path) ? 0 : win_failed(path);
 }
 /* The directory as POSIX's getcwd gives it, with the links on the way to
    it followed: Windows keeps the path it was changed to. */
 const char *sys_getcwd(void) {
+    static char *cwd;
     const char *real = sys_real_path(".");
-    if (real) return real;
-    DWORD n = GetCurrentDirectoryA(MAX_PATH * 4 - 2, path_buffer);
-    if (n == 0 || n >= MAX_PATH * 4 - 2) { win_failed(NULL); return NULL; }
-    return posix_path(path_buffer);
+    if (real) {
+        char *copy = text_alloc(strlen(real) + 1);
+        if (!copy) return NULL;
+        strcpy(copy, real); free(cwd); cwd = copy; return copy;
+    }
+    DWORD cap = GetCurrentDirectoryW(0, NULL);
+    if (!cap) { win_failed(NULL); return NULL; }
+    for (;;) {
+        WCHAR *w = text_alloc((size_t)cap * sizeof *w);
+        if (!w) return NULL;
+        DWORD n = GetCurrentDirectoryW(cap, w);
+        if (!n) { free(w); win_failed(NULL); return NULL; }
+        if (n < cap) {
+            const char *out = store_path(&cwd, w, n); free(w); return out;
+        }
+        free(w); cap = n;
+    }
 }
 /* unlink: POSIX removes a file whatever its mode, and a symbolic link to a
    directory as a link; a directory itself it will not. */
 int sys_remove(const char *path) {
     path = native(path);
-    DWORD a = GetFileAttributesA(path);
+    DWORD a = path_attributes(path);
     if (a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_DIRECTORY)) {
-        if (a & FILE_ATTRIBUTE_REPARSE_POINT) return RemoveDirectoryA(path) ? 0 : win_failed(path);
+        if (a & FILE_ATTRIBUTE_REPARSE_POINT) return path_rmdir(path) ? 0 : win_failed(path);
         last = EISDIR;
         return -1;
     }
     if (a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_READONLY))
-        SetFileAttributesA(path, a & ~(DWORD)FILE_ATTRIBUTE_READONLY);
-    if (DeleteFileA(path)) return 0;
+        path_set_attributes(path, a & ~(DWORD)FILE_ATTRIBUTE_READONLY);
+    if (path_delete(path)) return 0;
     int e = win_failed(path);
-    if (a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_READONLY)) SetFileAttributesA(path, a);
+    if (a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_READONLY)) path_set_attributes(path, a);
     return e;
 }
 /* rename as POSIX has it: a file replaces a file, a directory an empty
@@ -556,8 +829,9 @@ int sys_remove(const char *path) {
 int sys_rename(const char *from, const char *to) {
     from = native(from);
     to = native(to);
-    DWORD fa = GetFileAttributesA(from), ta = GetFileAttributesA(to);
+    DWORD fa = path_attributes(from);
     if (fa == INVALID_FILE_ATTRIBUTES) return win_failed(from);
+    DWORD ta = path_attributes(to);
     if (ta != INVALID_FILE_ATTRIBUTES) {
         /* two names of one file: POSIX leaves both */
         FileInfo a, b;
@@ -566,18 +840,20 @@ int sys_rename(const char *from, const char *to) {
         int from_dir = (fa & FILE_ATTRIBUTE_DIRECTORY) != 0, to_dir = (ta & FILE_ATTRIBUTE_DIRECTORY) != 0;
         if (from_dir && !to_dir) { last = ENOTDIR; return -1; }
         if (!from_dir && to_dir) { last = EISDIR; return -1; }
-        if (to_dir && !RemoveDirectoryA(to)) return win_failed(to);
-        if (!to_dir && (ta & FILE_ATTRIBUTE_READONLY)) SetFileAttributesA(to, ta & ~(DWORD)FILE_ATTRIBUTE_READONLY);
+        if (to_dir && !path_rmdir(to)) return win_failed(to);
+        if (!to_dir && (ta & FILE_ATTRIBUTE_READONLY)) path_set_attributes(to, ta & ~(DWORD)FILE_ATTRIBUTE_READONLY);
     }
     if (fa & FILE_ATTRIBUTE_DIRECTORY) {
-        char a[MAX_PATH * 4], b[MAX_PATH * 4];
-        if (GetFullPathNameA(from, sizeof a, a, NULL) && GetFullPathNameA(to, sizeof b, b, NULL)) {
-            size_t n = strlen(forward(a));
-            forward(b);
-            if (_strnicmp(a, b, n) == 0 && b[n] == '/') { last = EINVAL; return -1; }
-        }
+        WCHAR *fw = path16(from), *tw = fw ? path16(to) : NULL;
+        WCHAR *a = fw ? full_path16(fw) : NULL, *b = tw ? full_path16(tw) : NULL;
+        free(fw); free(tw);
+        if (!a || !b) { free(a); free(b); return win_failed(NULL); }
+        size_t n = wcslen(a);
+        int inside = _wcsnicmp(a, b, n) == 0 && b[n] == L'\\';
+        free(a); free(b);
+        if (inside) { last = EINVAL; return -1; }
     }
-    return MoveFileExA(from, to, MOVEFILE_REPLACE_EXISTING) ? 0 : win_failed(to);
+    return path_move(from, to) ? 0 : win_failed(to);
 }
 
 /* Windows has no execute permission: a file is executable when its
@@ -586,7 +862,7 @@ int sys_rename(const char *from, const char *to) {
 static int executable(const char *path) {
     const char *dot = strrchr(path, '.'), *slash = strrchr(path, '/'), *back = strrchr(path, '\\');
     if (!dot || (slash && slash > dot) || (back && back > dot)) return 0;
-    const char *list = getenv("PATHEXT");
+    const char *list = sys_getenv("PATHEXT");
     if (!list) list = ".COM;.EXE;.BAT;.CMD";
     size_t n = strlen(dot);
     for (const char *p = list; *p; ) {
@@ -601,8 +877,11 @@ static int executable(const char *path) {
 int sys_access(const char *path, int read, int write, int exec) {
     (void)read;
     path = native(path);
-    DWORD a = GetFileAttributesA(path);
-    if (a == INVALID_FILE_ATTRIBUTES) { win_failed(path); return 0; }
+    DWORD a = path_attributes(path);
+    if (a == INVALID_FILE_ATTRIBUTES) {
+        win_failed(path);
+        return last == EILSEQ || last == ENOMEM ? -1 : 0;
+    }
     /* through a link to what it names, which may not be there */
     if ((a & FILE_ATTRIBUTE_REPARSE_POINT) && is_symlink(path)) {
         HANDLE h = open_existing(path, FILE_READ_ATTRIBUTES, 1);
@@ -632,8 +911,11 @@ static int info_of(HANDLE h, const char *path, int link, FileInfo *fi) {
     BY_HANDLE_FILE_INFORMATION info;
     if (!GetFileInformationByHandle(h, &info)) return win_failed(NULL);
     int dir = (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-    char name[MAX_PATH * 4];
-    if (!path && GetFinalPathNameByHandleA(h, name, sizeof name, FILE_NAME_NORMALIZED) > 0) path = name;
+    char *name = NULL;
+    if (!path) {
+        WCHAR *wide = final_path16(h);
+        if (wide) { name = text8(wide, wcslen(wide), NULL); free(wide); path = name; }
+    }
     if (link) { fi->kind = 2; fi->mode = 0777; }
     else if (dir) { fi->kind = 1; fi->mode = 0700; }
     else {
@@ -641,6 +923,7 @@ static int info_of(HANDLE h, const char *path, int link, FileInfo *fi) {
         fi->mode = 0400 | ((info.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? 0 : 0200)
                  | (path && executable(path) ? 0100 : 0);
     }
+    free(name);
     fi->ino = (int64_t)(((uint64_t)info.nFileIndexHigh << 32) | info.nFileIndexLow);
     fi->dev = (int64_t)info.dwVolumeSerialNumber;
     fi->nlink = (int64_t)info.nNumberOfLinks;
@@ -735,7 +1018,7 @@ typedef struct {
     /* symbolic links only: ULONG flags, then the names */
     UCHAR rest[1];
 } ReparseData;
-static char link_text[MAX_PATH * 4];
+static char *link_text;
 /* The target of the link at the native path, as the library reads it, or
    NULL with EINVAL when the file is no link. */
 static const char *read_link_text(const char *path) {
@@ -754,12 +1037,18 @@ static const char *read_link_text(const char *path) {
     USHORT offset = r->print_length ? r->print_offset : r->substitute_offset;
     USHORT length = r->print_length ? r->print_length : r->substitute_length;
     const WCHAR *w = (const WCHAR *)(names + offset);
-    int n = WideCharToMultiByte(CP_ACP, 0, w, length / (int)sizeof(WCHAR), link_text, (int)sizeof link_text - 2, NULL, NULL);
-    if (n <= 0) { last = EINVAL; return NULL; }
-    link_text[n] = 0;
-    /* a substitute name is \??\C:\...: the prefix is Windows' own */
-    if (strncmp(link_text, "\\??\\", 4) == 0) memmove(link_text, link_text + 4, strlen(link_text + 4) + 1);
-    return posix_path(link_text);
+    size_t n = length / sizeof(WCHAR);
+    if (n >= 4 && wcsncmp(w, L"\\??\\", 4) == 0) {
+        w += 4; n -= 4;
+        if (n >= 4 && wcsncmp(w, L"UNC\\", 4) == 0) {
+            /* store_path knows how to remove the extended UNC spelling. */
+            WCHAR *u = text_alloc((n + 5) * sizeof *u);
+            if (!u) return NULL;
+            wcscpy(u, L"\\\\?\\"); memcpy(u + 4, w, n * sizeof *u); u[n + 4] = 0;
+            const char *out = store_path(&link_text, u, n + 4); free(u); return out;
+        }
+    }
+    return store_path(&link_text, w, n);
 }
 /* The tag of a reparse point, 0 for a file that is none. A link is a
    symbolic link or a junction; a socket of the Unix domain is a reparse
@@ -768,8 +1057,8 @@ static const char *read_link_text(const char *path) {
 #define IO_REPARSE_TAG_AF_UNIX 0x80000023L
 #endif
 static DWORD reparse_tag(const char *path) {
-    WIN32_FIND_DATAA d;
-    HANDLE f = FindFirstFileA(path, &d);
+    WIN32_FIND_DATAW d;
+    HANDLE f = path_find_first(path, &d);
     if (f == INVALID_HANDLE_VALUE) return 0;
     FindClose(f);
     return (d.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) ? d.dwReserved0 : 0;
@@ -789,48 +1078,55 @@ const char *sys_read_link(const char *path) { return read_link_text(native(path)
    dangling link is made to a file); without the privilege it needs, which
    Developer Mode waives, Windows refuses it with EPERM. */
 int sys_symlink(const char *from, const char *to) {
-    char target[MAX_PATH * 4];
-    snprintf(target, sizeof target, "%s", native(from));
-    to = native(to);
-    for (char *c = target; *c; c++) if (*c == '/') *c = '\\';
-    /* where the target is, from the directory of the link */
-    char where[MAX_PATH * 8];
-    if (target[0] == '\\' || is_drive(target)) snprintf(where, sizeof where, "%s", target);
-    else {
-        const char *slash = strrchr(to, '/'), *back = strrchr(to, '\\');
-        const char *sep = slash > back ? slash : back;
-        if (sep) snprintf(where, sizeof where, "%.*s\\%s", (int)(sep - to), to, target);
-        else snprintf(where, sizeof where, "%s", target);
+    const char *source = native(from), *dest = native(to);
+    WCHAR *target = text16(source, strlen(source), NULL), *link = target ? path16(dest) : NULL;
+    if (!target || !link) { free(target); return -1; }
+    for (WCHAR *p = target; *p; p++) if (*p == L'/') *p = L'\\';
+    /* Test a relative target from the link's directory without changing the
+       target stored in the link. Absolute targets may use an extended path. */
+    char *where = NULL;
+    if (source[0] == '/' || source[0] == '\\' || is_drive(source)) {
+        WCHAR *absolute = path16(source);
+        if (!absolute) { free(target); free(link); return -1; }
+        free(target); target = absolute;
+        where = _strdup(source);
+    } else {
+        const char *sep = NULL;
+        for (const char *p = dest; *p; p++) if (*p == '/' || *p == '\\') sep = p;
+        size_t prefix = sep ? (size_t)(sep - dest + 1) : 0, n = strlen(source);
+        where = text_alloc(prefix + n + 1);
+        if (where) { memcpy(where, dest, prefix); memcpy(where + prefix, source, n + 1); }
     }
-    DWORD flags = 0x2;   /* SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE */
+    if (!where) { free(target); free(link); last = ENOMEM; return -1; }
+    DWORD flags = 0x2;
     if (is_directory(where)) flags |= SYMBOLIC_LINK_FLAG_DIRECTORY;
-    if (CreateSymbolicLinkA(to, target, flags)) return 0;
-    if (GetLastError() == ERROR_INVALID_PARAMETER && CreateSymbolicLinkA(to, target, flags & ~(DWORD)0x2)) return 0;
-    return win_failed(to);
+    BOOL ok = CreateSymbolicLinkW(link, target, flags);
+    if (!ok && GetLastError() == ERROR_INVALID_PARAMETER) ok = CreateSymbolicLinkW(link, target, flags & ~(DWORD)0x2);
+    DWORD error = GetLastError();
+    free(where); free(target); free(link); SetLastError(error);
+    return ok ? 0 : win_failed(dest);
 }
 /* link: a hard link, which Windows makes to files only, as POSIX may */
 int sys_link(const char *from, const char *to) {
     from = native(from);
     to = native(to);
     if (is_directory(from)) { last = EPERM; return -1; }
-    return CreateHardLinkA(to, from, NULL) ? 0 : win_failed(to);
+    return path_link(from, to) ? 0 : win_failed(to);
 }
 int sys_mkfifo(const char *path, int mode) { (void)path; (void)mode; return fail(); }
 
 /* realpath: the path Windows opens the file by, links followed, as
    GetFinalPathNameByHandle gives it (\\?\C:\... or \\?\UNC\server\...). */
 const char *sys_real_path(const char *path) {
+    static char *resolved;
     path = native(path);
     HANDLE h = open_existing(path, FILE_READ_ATTRIBUTES, 1);
     if (h == INVALID_HANDLE_VALUE) { win_failed(path); return NULL; }
-    char full[MAX_PATH * 4];
-    DWORD n = GetFinalPathNameByHandleA(h, full, sizeof full, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
-    CloseHandle(h);
-    if (n == 0 || n >= sizeof full) { win_failed(NULL); return NULL; }
-    const char *p = full;
-    if (strncmp(p, "\\\\?\\UNC\\", 8) == 0) { snprintf(path_buffer, sizeof path_buffer, "\\\\%s", p + 8); }
-    else { if (strncmp(p, "\\\\?\\", 4) == 0) p += 4; snprintf(path_buffer, sizeof path_buffer, "%s", p); }
-    return posix_path(path_buffer);
+    WCHAR *full = final_path16(h);
+    DWORD error = GetLastError(); CloseHandle(h); SetLastError(error);
+    if (!full) { win_failed(NULL); return NULL; }
+    const char *out = store_path(&resolved, full, wcslen(full));
+    free(full); return out;
 }
 /* As mkstemp does for POSIX: a name in the directory Windows keeps for
    temporary files, and the file made so that the name is taken. The name
@@ -839,17 +1135,26 @@ const char *sys_real_path(const char *path) {
    suite does, a program started at the same time is given it again. */
 const char *sys_tmp_name(void) {
     static uint32_t x = 0;
-    char dir[MAX_PATH + 1];
-    DWORD n = GetTempPathA(sizeof dir, dir);
-    if (n == 0 || n > MAX_PATH) { last = ENOENT; return NULL; }
+    static char *previous;
+    WCHAR *wide = temp_path16();
+    if (!wide) { win_failed(NULL); return NULL; }
+    char *dir = text8(wide, wcslen(wide), NULL); free(wide);
+    if (!dir) return NULL;
+    size_t cap = strlen(dir) + 32;
+    char *name = text_alloc(cap);
+    if (!name) { free(dir); return NULL; }
     if (x == 0) x = (uint32_t)GetTickCount64() ^ ((uint32_t)GetCurrentProcessId() << 12) ^ 0x2545f491u;
     for (int tries = 0; tries < 100; tries++) {
         x ^= x << 13; x ^= x >> 17; x ^= x << 5;
-        snprintf(path_buffer, sizeof path_buffer, "%srune%08lx.tmp", dir, (unsigned long)x);
-        HANDLE h = CreateFileA(path_buffer, GENERIC_WRITE, SHARE_ALL, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (h != INVALID_HANDLE_VALUE) { CloseHandle(h); return posix_path(path_buffer); }
-        if (GetLastError() != ERROR_FILE_EXISTS) { win_failed(dir); return NULL; }
+        snprintf(name, cap, "%srune%08lx.tmp", dir, (unsigned long)x);
+        HANDLE h = path_create_file(name, GENERIC_WRITE, SHARE_ALL, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (h != INVALID_HANDLE_VALUE) {
+            CloseHandle(h); free(dir);
+            free(previous); previous = name; posix_path(name); return name;
+        }
+        if (GetLastError() != ERROR_FILE_EXISTS) { win_failed(dir); free(dir); free(name); return NULL; }
     }
+    free(dir); free(name);
     last = EEXIST;
     return NULL;
 }
@@ -868,11 +1173,11 @@ int sys_file_id(const char *path, int64_t *device, int64_t *inode) {
    child makes again. */
 #define DIRS 64
 static struct {
-    int used; HANDLE find; WIN32_FIND_DATAA data; int pending; int64_t reads; char pattern[MAX_PATH * 4];
+    int used; HANDLE find; WIN32_FIND_DATAW data; int pending; int64_t reads; char *pattern;
 } dirs[DIRS];
 
 static int dir_start(int i) {
-    dirs[i].find = FindFirstFileA(dirs[i].pattern, &dirs[i].data);
+    dirs[i].find = path_find_first(dirs[i].pattern, &dirs[i].data);
     if (dirs[i].find == INVALID_HANDLE_VALUE) return win_failed(NULL);
     dirs[i].pending = 1;
     dirs[i].reads = 0;
@@ -883,11 +1188,13 @@ int sys_open_dir(const char *path) {
     path = native(path);
     for (i = 0; i < DIRS; i++) if (!dirs[i].used) break;
     if (i == DIRS) { last = EMFILE; return -1; }
-    DWORD a = GetFileAttributesA(path);
+    DWORD a = path_attributes(path);
     if (a == INVALID_FILE_ATTRIBUTES) return win_failed(path);
     if (!(a & FILE_ATTRIBUTE_DIRECTORY)) { last = ENOTDIR; return -1; }
-    snprintf(dirs[i].pattern, sizeof dirs[i].pattern, "%s\\*", path);
-    if (dir_start(i) != 0) return -1;
+    dirs[i].pattern = text_alloc(strlen(path) + 3);
+    if (!dirs[i].pattern) return -1;
+    sprintf(dirs[i].pattern, "%s\\*", path);
+    if (dir_start(i) != 0) { free(dirs[i].pattern); dirs[i].pattern = NULL; return -1; }
     dirs[i].used = 1;
     return i;
 }
@@ -899,22 +1206,31 @@ const char *sys_read_dir(int dir) {
     if (dir < 0 || dir >= DIRS || !dirs[dir].used) { errno = EBADF; failed(); return NULL; }
     for (;;) {
         if (!dirs[dir].pending) {
-            if (!FindNextFileA(dirs[dir].find, &dirs[dir].data)) return NULL;
+            if (!FindNextFileW(dirs[dir].find, &dirs[dir].data)) {
+                if (GetLastError() != ERROR_NO_MORE_FILES) win_failed(NULL);
+                return NULL;
+            }
             dirs[dir].reads++;
         }
         dirs[dir].pending = 0;
-        const char *name = dirs[dir].data.cFileName;
-        if (strcmp(name, ".") != 0 && strcmp(name, "..") != 0) return name;
+        const WCHAR *name = dirs[dir].data.cFileName;
+        if (wcscmp(name, L".") != 0 && wcscmp(name, L"..") != 0) {
+            static char *entry;
+            char *out = text8(name, wcslen(name), NULL);
+            if (!out) return NULL;
+            free(entry); entry = out; return entry;
+        }
     }
 }
 int sys_rewind_dir(int dir) {
     if (dir < 0 || dir >= DIRS || !dirs[dir].used) { errno = EBADF; return failed(); }
     FindClose(dirs[dir].find);
-    return dir_start(dir) == 0 ? 0 : failed();
+    return dir_start(dir);
 }
 int sys_close_dir(int dir) {
     if (dir < 0 || dir >= DIRS || !dirs[dir].used) { errno = EBADF; return failed(); }
     FindClose(dirs[dir].find);
+    free(dirs[dir].pattern); dirs[dir].pattern = NULL;
     dirs[dir].used = 0;
     return 0;
 }
@@ -1200,11 +1516,37 @@ int sys_getgroups(int64_t *out, int n) {
     if (n > 0 && k > n) { last = EINVAL; return -1; }
     return k;
 }
-static char user_name[256];
+/* 0/1 directories, 2 NetBIOS computer name, 3 user, 4 DNS hostname. */
+static WCHAR *config16(int what) {
+    DWORD cap = 256;
+    for (;;) {
+        WCHAR *w = text_alloc((size_t)cap * sizeof *w);
+        if (!w) return NULL;
+        DWORD n = cap;
+        BOOL ok = FALSE;
+        switch (what) {
+        case 0: n = GetWindowsDirectoryW(w, cap); ok = n > 0 && n < cap; break;
+        case 1: n = GetSystemDirectoryW(w, cap); ok = n > 0 && n < cap; break;
+        case 2: ok = GetComputerNameW(w, &n); break;
+        case 3: ok = GetUserNameW(w, &n); break;
+        case 4: ok = GetComputerNameExW(ComputerNameDnsHostname, w, &n); break;
+        default: free(w); last = EINVAL; return NULL;
+        }
+        if (ok) return w;
+        DWORD e = GetLastError(); free(w);
+        if (n >= cap && (what < 2 || e == ERROR_MORE_DATA || e == ERROR_BUFFER_OVERFLOW || e == ERROR_INSUFFICIENT_BUFFER)) {
+            cap = n + 1; continue;
+        }
+        SetLastError(e); win_failed(NULL); return NULL;
+    }
+}
+static char *user_name;
 static const char *current_user(void) {
-    DWORD n = sizeof user_name;
-    if (!GetUserNameA(user_name, &n)) { last = ENOENT; return NULL; }
-    return user_name;
+    WCHAR *w = config16(3);
+    if (!w) return NULL;
+    char *bytes = text8(w, wcslen(w), NULL); free(w);
+    if (!bytes) return NULL;
+    free(user_name); user_name = bytes; return bytes;
 }
 const char *sys_getlogin(void) { return current_user(); }
 int64_t sys_getpgrp(void) { return fail(); }
@@ -1215,11 +1557,12 @@ int sys_setpgid(int64_t pid, int64_t pgid) { (void)pid; (void)pgid; return fail(
    manifest asks for), its version the build, and the machine that of the
    processor, not of this process: a 32-bit VM on 64-bit Windows says x86_64,
    as a 32-bit program does on Linux. */
-static char uname_strings[1024];
+static char *uname_strings;
 const char *sys_uname(void) {
-    char node[256] = "";
-    DWORD n = sizeof node;
-    GetComputerNameExA(ComputerNameDnsHostname, node, &n);
+    WCHAR *wide_node = config16(4);
+    if (!wide_node) return NULL;
+    char *node = text8(wide_node, wcslen(wide_node), NULL); free(wide_node);
+    if (!node) return NULL;
     typedef LONG (WINAPI *RtlGetVersionFn)(PRTL_OSVERSIONINFOW);
     RtlGetVersionFn get = (RtlGetVersionFn)(void (*)(void))GetProcAddress(GetModuleHandleA("ntdll.dll"), "RtlGetVersion");
     RTL_OSVERSIONINFOW v;
@@ -1235,15 +1578,20 @@ const char *sys_uname(void) {
                         : si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64 ? "aarch64"
                         : si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL ? "i686" : "unknown";
     const char *parts[5] = { "Windows", node, release, version, machine };
+    size_t size = 1;
+    for (int i = 0; i < 5; i++) size += strlen(parts[i]) + 1;
+    char *packed = text_alloc(size);
+    if (!packed) { free(node); return NULL; }
+    free(uname_strings); uname_strings = packed;
     size_t at = 0;
     for (int i = 0; i < 5; i++) {
         size_t k = strlen(parts[i]);
-        if (at + k + 2 >= sizeof uname_strings) break;
         memcpy(uname_strings + at, parts[i], k);
         at += k;
         uname_strings[at++] = 0;
     }
     uname_strings[at] = 0;
+    free(node);
     return uname_strings;
 }
 /* The processor time of the children the process has waited for, which
@@ -1260,23 +1608,27 @@ int sys_times(int64_t out[5]) {
     return 0;
 }
 /* the variables, each NUL-terminated, then an empty one */
-static char environ_buffer[64 * 1024];
+static char *environ_buffer;
 const char *sys_environ(void) {
-    char *block = GetEnvironmentStringsA();
-    if (!block) { errno = ENOMEM; failed(); return NULL; }
+    WCHAR *block = GetEnvironmentStringsW();
+    if (!block) { last = ENOMEM; return NULL; }
+    size_t units = 1;
+    for (WCHAR *v = block; *v; v += wcslen(v) + 1) units += wcslen(v) + 1;
+    char *out = units <= (SIZE_MAX - 2) / 3 ? text_alloc(units * 3 + 2) : NULL;
+    if (!out) { FreeEnvironmentStringsW(block); last = ENOMEM; return NULL; }
     size_t at = 0;
-    for (char *v = block; *v; v += strlen(v) + 1) {
-        size_t n = strlen(v);
-        /* Windows keeps "=C:" and the like at the front: they are not variables */
-        if (v[0] == '=') continue;
-        if (at + n + 2 >= sizeof environ_buffer) break;
-        memcpy(environ_buffer + at, v, n);
-        at += n;
-        environ_buffer[at++] = 0;
+    for (WCHAR *v = block; *v; v += wcslen(v) + 1) {
+        if (*v == L'=') continue;
+        size_t n;
+        char *part = text8(v, wcslen(v), &n);
+        if (!part) { free(out); FreeEnvironmentStringsW(block); return NULL; }
+        memcpy(out + at, part, n + 1); at += n + 1; free(part);
     }
-    environ_buffer[at] = 0;
-    FreeEnvironmentStringsA(block);
-    return environ_buffer;
+    out[at] = out[at + 1] = 0;
+    FreeEnvironmentStringsW(block);
+    free(environ_buffer); environ_buffer = out;
+    last = 0;
+    return out;
 }
 /* A terminal is a console of Windows: msvcrt's _isatty says so of NUL too,
    and of every other character device. */
@@ -1360,7 +1712,7 @@ static int open_fd(const char *path, int flags, int mode, int crt_append) {
     path = native(path);
     int access = flags & 3, create = (flags & 0100) != 0, exclusive = (flags & 0200) != 0;
     int truncate = (flags & 01000) != 0, append = (flags & 02000) != 0;
-    DWORD a = GetFileAttributesA(path);
+    DWORD a = path_attributes(path);
     HANDLE h;
     if (a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_DIRECTORY)) {
         if (create && exclusive) { last = EEXIST; return -1; }
@@ -1373,11 +1725,11 @@ static int open_fd(const char *path, int flags, int mode, int crt_append) {
             if (create && exclusive) { last = EEXIST; return -1; }
             disposition = truncate ? TRUNCATE_EXISTING : OPEN_EXISTING;
         } else {
-            if (!create) { last = path_error(path, ENOENT); return -1; }
+            if (!create) return win_failed(path);
             disposition = CREATE_NEW;
             if (!((mode & ~creation_mask) & 0200)) attributes = FILE_ATTRIBUTE_READONLY;
         }
-        h = CreateFileA(path, want, SHARE_ALL, NULL, disposition, attributes, NULL);
+        h = path_create_file(path, want, SHARE_ALL, NULL, disposition, attributes, NULL);
     }
     if (h == INVALID_HANDLE_VALUE) return win_failed(path);
     int fd = _open_osfhandle((intptr_t)h, _O_BINARY | (crt_append ? _O_APPEND : 0) |
@@ -1645,14 +1997,14 @@ int sys_lock(int fd, int command, int type, int whence, int64_t start, int64_t l
 int sys_pathconf(const char *path, int fd, const char *name, int64_t *out) {
     last = 0;
     path = native(path);
-    if (path ? GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES
+    if (path ? path_attributes(path) == INVALID_FILE_ATTRIBUTES
              : (!sock_of(fd) && (HANDLE)_get_osfhandle(fd) == INVALID_HANDLE_VALUE)) {
-        last = path ? ENOENT : EBADF;
-        return -1;
+        if (path) return win_failed(path);
+        last = EBADF; return -1;
     }
     static const struct { const char *name; int64_t value; } limits[] = {
         { "LINK_MAX", 1024 }, { "MAX_CANON", 255 }, { "MAX_INPUT", 255 }, { "NAME_MAX", 255 },
-        { "PATH_MAX", MAX_PATH }, { "PIPE_BUF", 4096 }, { "CHOWN_RESTRICTED", 1 }, { "NO_TRUNC", 1 },
+        { "PATH_MAX", -1 }, { "PIPE_BUF", 4096 }, { "CHOWN_RESTRICTED", 1 }, { "NO_TRUNC", 1 },
         { "VDISABLE", 0 }, { "SYNC_IO", -1 }, { "ASYNC_IO", -1 }, { "PRIO_IO", -1 }, { "FILESIZEBITS", 64 },
     };
     for (size_t i = 0; i < sizeof limits / sizeof limits[0]; i++)
@@ -1813,35 +2165,43 @@ int sys_chown(const char *path, int fd, int64_t uid, int64_t gid) {
 /* The user of the process, and no other: its name, its home (USERPROFILE)
    and its shell (COMSPEC), with the numbers of sys_getuid and sys_getgid.
    Another user is not found, with the error cleared, as getpwnam leaves it. */
-static char pw_strings[3 * (MAX_PATH * 4)];
+static char *pw_strings;
 const char *sys_getpw(const char *name, int64_t uid, int64_t out[2]) {
     const char *me = current_user();
     int64_t my_uid = sys_getuid(), my_gid = sys_getgid();
     if (!me || my_uid < 0 || my_gid < 0) return NULL;
-    last = 0;
-    if (name ? _stricmp(name, me) != 0 : uid != my_uid) return NULL;
-    const char *home = getenv("USERPROFILE"), *shell = getenv("COMSPEC");
-    const char *parts[3] = { me, home ? home : "", shell ? shell : "" };
+    if (name) {
+        WCHAR *wanted = text16(name, strlen(name), NULL), *actual = wanted ? text16(me, strlen(me), NULL) : NULL;
+        if (!wanted || !actual) { free(wanted); return NULL; }
+        int different = _wcsicmp(wanted, actual); free(wanted); free(actual);
+        if (different) { last = 0; return NULL; }
+    } else if (uid != my_uid) { last = 0; return NULL; }
+    const char *h = sys_getenv("USERPROFILE");
+    if (!h && last) return NULL;
+    char *home = text_alloc(strlen(h ? h : "") + 4);
+    if (!home) return NULL;
+    strcpy(home, h ? h : ""); posix_path(home);
+    const char *c = sys_getenv("COMSPEC");
+    if (!c && last) { free(home); return NULL; }
+    char *shell = text_alloc(strlen(c ? c : "") + 4);
+    if (!shell) { free(home); return NULL; }
+    strcpy(shell, c ? c : ""); posix_path(shell);
+    const char *parts[3] = { me, home, shell };
+    size_t size = strlen(me) + strlen(home) + strlen(shell) + 4;
+    char *packed = text_alloc(size);
+    if (!packed) { free(home); free(shell); return NULL; }
     size_t at = 0;
     for (int i = 0; i < 3; i++) {
-        size_t k = strlen(parts[i]);
-        if (at + k + 2 >= sizeof pw_strings) break;
-        memcpy(pw_strings + at, parts[i], k);
-        pw_strings[at + k] = 0;
-        if (i > 0) posix_path(pw_strings + at);   /* the home and the shell */
-        k = strlen(pw_strings + at);
-        at += k;
-        pw_strings[at++] = 0;
+        size_t k = strlen(parts[i]) + 1; memcpy(packed + at, parts[i], k); at += k;
     }
-    pw_strings[at] = 0;
-    out[0] = my_uid;
-    out[1] = my_gid;
-    return pw_strings;
+    packed[at] = 0;
+    free(home); free(shell); free(pw_strings); pw_strings = packed;
+    out[0] = my_uid; out[1] = my_gid; last = 0; return packed;
 }
 /* A group of the process's token, by name or by number: its name and
    number, and as its members the user of the process, the one member this
    layer knows. Another group is not found, with the error cleared. */
-static char gr_name[256], gr_members[256];
+static char *gr_name, *gr_members;
 const char *sys_getgr(const char *name, int64_t gid, int64_t *id) {
     TOKEN_GROUPS *g = token_info(TokenGroups);
     TOKEN_PRIMARY_GROUP *primary = token_info(TokenPrimaryGroup);
@@ -1851,15 +2211,27 @@ const char *sys_getgr(const char *name, int64_t gid, int64_t *id) {
     if (g && primary && me) {
         for (DWORD i = 0; i <= g->GroupCount && !found; i++) {
             PSID sid = i == 0 ? primary->PrimaryGroup : g->Groups[i - 1].Sid;
-            char account[256], domain[256];
-            DWORD an = sizeof account, dn = sizeof domain;
+            DWORD an = 0, dn = 0;
             SID_NAME_USE use;
-            if (!LookupAccountSidA(NULL, sid, account, &an, domain, &dn, &use)) continue;
-            if (name ? _stricmp(name, account) != 0 : gid != rid_of(sid)) continue;
-            snprintf(gr_name, sizeof gr_name, "%s", account);
-            gr_name[strlen(gr_name) + 1] = 0;
-            snprintf(gr_members, sizeof gr_members, "%s", me);
-            gr_members[strlen(gr_members) + 1] = 0;
+            LookupAccountSidW(NULL, sid, NULL, &an, NULL, &dn, &use);
+            WCHAR *account = text_alloc((size_t)an * sizeof *account), *domain = text_alloc((size_t)dn * sizeof *domain);
+            if (!account || !domain) { free(account); free(domain); break; }
+            if (!LookupAccountSidW(NULL, sid, account, &an, domain, &dn, &use)) { free(account); free(domain); continue; }
+            free(domain);
+            WCHAR *wanted = name ? text16(name, strlen(name), NULL) : NULL;
+            if (name && !wanted) { free(account); break; }
+            int match = name ? _wcsicmp(wanted, account) == 0 : gid == rid_of(sid);
+            free(wanted);
+            char *bytes = match ? text8(account, wcslen(account), NULL) : NULL;
+            free(account);
+            if (!match) continue;
+            if (!bytes) break;
+            size_t len = strlen(bytes);
+            char *gn = text_alloc(len + 2), *gm = text_alloc(strlen(me) + 2);
+            if (!gn || !gm) { free(gn); free(gm); free(bytes); break; }
+            memcpy(gn, bytes, len + 1); gn[len + 1] = 0; free(bytes);
+            strcpy(gm, me); gm[strlen(me) + 1] = 0;
+            free(gr_name); free(gr_members); gr_name = gn; gr_members = gm;
             *id = rid_of(sid);
             found = gr_name;
         }
@@ -1913,22 +2285,25 @@ int sys_socketpair(int domain, int type, int protocol, int out[2]) {
     struct sockaddr_un name;
     memset(&name, 0, sizeof name);
     name.sun_family = AF_UNIX;
-    char dir[MAX_PATH + 1];
-    DWORD n = GetTempPathA(sizeof dir, dir);
-    if (n == 0 || n > MAX_PATH) { last = ENOENT; return -1; }
-    snprintf(name.sun_path, sizeof name.sun_path, "%srune-pair-%lu-%u", dir,
-             (unsigned long)GetCurrentProcessId(), serial++);
+    WCHAR *temp = temp_path16();
+    if (!temp) return win_failed(NULL);
+    char *dir = text8(temp, wcslen(temp), NULL); free(temp);
+    if (!dir) return -1;
+    int length = snprintf(name.sun_path, sizeof name.sun_path, "%srune-pair-%lu-%u", dir,
+                          (unsigned long)GetCurrentProcessId(), serial++);
+    free(dir);
+    if (length < 0 || (size_t)length >= sizeof name.sun_path) { last = ENAMETOOLONG; return -1; }
     SOCKET listener = WSASocketW(AF_UNIX, SOCK_STREAM, protocol, NULL, 0, WSA_FLAG_OVERLAPPED | WSA_FLAG_NO_HANDLE_INHERIT);
     if (listener == INVALID_SOCKET) return wsa_failed();
     SOCKET a = INVALID_SOCKET, b = INVALID_SOCKET;
-    DeleteFileA(name.sun_path);
+    path_delete(name.sun_path);
     if (bind(listener, (struct sockaddr *)&name, sizeof name) != 0 || listen(listener, 1) != 0) goto failed;
     a = WSASocketW(AF_UNIX, SOCK_STREAM, protocol, NULL, 0, WSA_FLAG_OVERLAPPED | WSA_FLAG_NO_HANDLE_INHERIT);
     if (a == INVALID_SOCKET || connect(a, (struct sockaddr *)&name, sizeof name) != 0) goto failed;
     b = accept(listener, NULL, NULL);
     if (b == INVALID_SOCKET) goto failed;
     closesocket(listener);
-    DeleteFileA(name.sun_path);
+    path_delete(name.sun_path);
     out[0] = new_sock(a);
     out[1] = new_sock(b);
     if (out[0] < 0 || out[1] < 0) return -1;
@@ -1944,7 +2319,7 @@ failed:
     wsa_failed();
     if (a != INVALID_SOCKET) closesocket(a);
     closesocket(listener);
-    DeleteFileA(name.sun_path);
+    path_delete(name.sun_path);
     return -1;
 }
 
@@ -2237,31 +2612,34 @@ int sys_addr_family(const char *addr, int n) {
     return family;
 }
 const char *sys_inet_parts(const char *addr, int n, int *port) {
+    static char result[INET_ADDRSTRLEN];
     struct sockaddr_in in;
     if (n < (int)sizeof in || winsock() != 0) return NULL;
     memcpy(&in, addr, sizeof in);
     if (in.sin_family != AF_INET) return NULL;
-    if (!inet_ntop(AF_INET, &in.sin_addr, path_buffer, sizeof path_buffer)) return NULL;
+    if (!inet_ntop(AF_INET, &in.sin_addr, result, sizeof result)) return NULL;
     *port = ntohs(in.sin_port);
-    return path_buffer;
+    return result;
 }
 const char *sys_inet6_parts(const char *addr, int n, int *port) {
+    static char result[INET6_ADDRSTRLEN];
     struct sockaddr_in6 in6;
     if (n < (int)sizeof in6 || winsock() != 0) return NULL;
     memcpy(&in6, addr, sizeof in6);
     if (in6.sin6_family != AF_INET6) return NULL;
-    if (!inet_ntop(AF_INET6, &in6.sin6_addr, path_buffer, sizeof path_buffer)) return NULL;
+    if (!inet_ntop(AF_INET6, &in6.sin6_addr, result, sizeof result)) return NULL;
     *port = ntohs(in6.sin6_port);
-    return path_buffer;
+    return result;
 }
 const char *sys_unix_path(const char *addr, int n) {
     struct sockaddr_un un;
+    static char result[sizeof un.sun_path + 4];
     if (n < (int)offsetof(struct sockaddr_un, sun_path)) return NULL;
     memset(&un, 0, sizeof un);
     memcpy(&un, addr, (size_t)n < sizeof un ? (size_t)n : sizeof un);
     if (un.sun_family != AF_UNIX) return NULL;
-    snprintf(path_buffer, sizeof path_buffer, "%s", un.sun_path);
-    return posix_path(path_buffer);
+    snprintf(result, sizeof result, "%s", un.sun_path);
+    return posix_path(result);
 }
 /* The databases of hosts, protocols and services are Winsock's, which reads
    the files POSIX has under %SystemRoot%\System32\drivers\etc. An entry is
@@ -2311,9 +2689,12 @@ const char *sys_host_byaddr(const char *dotted) {
     return pack_host(gethostbyaddr((const char *)&in, sizeof in, AF_INET));
 }
 const char *sys_hostname(void) {
-    if (winsock() != 0) return NULL;
-    if (gethostname(path_buffer, (int)sizeof path_buffer) != 0) { wsa_failed(); return NULL; }
-    return path_buffer;
+    static char *name;
+    WCHAR *w = config16(4);
+    if (!w) return NULL;
+    char *out = text8(w, wcslen(w), NULL); free(w);
+    if (!out) return NULL;
+    free(name); name = out; return out;
 }
 static const char *pack_proto(struct protoent *p) {
     if (!p) return NULL;
@@ -2385,7 +2766,11 @@ static int add_child(DWORD pid, HANDLE process) {
    quotes, a run of backslashes doubled before a quote. */
 static char *command_line(char *const argv[]) {
     size_t cap = 16;
-    for (char *const *a = argv; *a; a++) cap += 2 * strlen(*a) + 3;
+    for (char *const *a = argv; *a; a++) {
+        size_t n = strlen(*a);
+        if (n > (SIZE_MAX - cap - 3) / 2) { last = E2BIG; return NULL; }
+        cap += 2 * n + 3;
+    }
     char *line = malloc(cap), *o = line;
     if (!line) return NULL;
     for (char *const *a = argv; *a; a++) {
@@ -2409,40 +2794,97 @@ static char *command_line(char *const argv[]) {
 /* the file a program is: the path, or with an extension of PATHEXT when it
    has none; searched for on PATH when search is set and it has no
    directory. out gets it; 0, or -1 with ENOENT. */
-static int find_program(const char *path, int search, char *out, size_t n) {
-    const char *exts = getenv("PATHEXT");
-    if (!exts) exts = ".COM;.EXE;.BAT;.CMD";
+static char *env_copy(const char *key, const char *fallback) {
+    const char *v = sys_getenv(key);
+    if (!v && last) return NULL;
+    if (!v) v = fallback;
+    if (!v) return NULL;
+    char *out = text_alloc(strlen(v) + 1);
+    if (out) strcpy(out, v);
+    return out;
+}
+static int find_program(const char *path, int search, char **out) {
+    char *exts = env_copy("PATHEXT", ".COM;.EXE;.BAT;.CMD");
+    if (!exts) return -1;
     const char *slash = strpbrk(path, "/\\"), *dot = strrchr(path, '.');
     int has_ext = dot && (!slash || dot > strrchr(path, slash[0]));
-    const char *dirs = search && !slash && !is_drive(path) ? getenv("PATH") : NULL;
+    char *dirs = search && !slash && !is_drive(path) ? env_copy("PATH", "") : NULL;
+    if (search && !slash && !is_drive(path) && !dirs) { free(exts); return -1; }
     const char *d = dirs ? dirs : "";
+    int error = ENOENT;
     for (;;) {
         const char *end = dirs ? strchr(d, ';') : NULL;
         size_t k = dirs ? (end ? (size_t)(end - d) : strlen(d)) : 0;
-        char base[MAX_PATH * 4];
-        if (dirs) snprintf(base, sizeof base, "%.*s\\%s", (int)k, d, path);
-        else snprintf(base, sizeof base, "%s", path);
-        DWORD a = GetFileAttributesA(base);
+        size_t cap = k + strlen(path) + strlen(exts) + 3;
+        char *base = text_alloc(cap), *candidate = base ? text_alloc(cap) : NULL;
+        if (!base || !candidate) { free(base); free(candidate); error = ENOMEM; break; }
+        if (dirs && k) { memcpy(base, d, k); base[k] = '\\'; strcpy(base + k + 1, path); }
+        else strcpy(base, path);
+        DWORD a = path_attributes(base);
+        if (a == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_NO_UNICODE_TRANSLATION) {
+            free(base); free(candidate); error = EILSEQ; break;
+        }
         if (a != INVALID_FILE_ATTRIBUTES && !(a & FILE_ATTRIBUTE_DIRECTORY) && (has_ext || !dirs)) {
-            snprintf(out, n, "%s", base);
-            return 0;
+            free(candidate); *out = base; free(exts); free(dirs); return 0;
         }
         if (!has_ext)
             for (const char *e = exts; *e; ) {
                 const char *eend = strchr(e, ';');
                 size_t ek = eend ? (size_t)(eend - e) : strlen(e);
-                snprintf(out, n, "%s%.*s", base, (int)ek, e);
-                a = GetFileAttributesA(out);
-                if (a != INVALID_FILE_ATTRIBUTES && !(a & FILE_ATTRIBUTE_DIRECTORY)) return 0;
+                size_t len = strlen(base);
+                memcpy(candidate, base, len); memcpy(candidate + len, e, ek); candidate[len + ek] = 0;
+                a = path_attributes(candidate);
+                if (a != INVALID_FILE_ATTRIBUTES && !(a & FILE_ATTRIBUTE_DIRECTORY)) {
+                    free(base); *out = candidate; free(exts); free(dirs); return 0;
+                }
                 if (!eend) break;
                 e = eend + 1;
             }
+        free(base); free(candidate);
         if (!dirs || !end) break;
         d = end + 1;
     }
-    last = ENOENT;
-    return -1;
+    free(exts); free(dirs); last = error; return -1;
 }
+/* CreateProcessW expects names in case-insensitive ordinal UTF-16 order.
+   Compare names, not values, and keep the caller's order for duplicate names.
+   The =C: drive entries, when explicitly supplied, sort with their names. */
+typedef struct { WCHAR *text; int name_units; size_t index; } EnvEntry;
+__attribute__((force_align_arg_pointer))
+static int environment_compare(const void *left, const void *right) {
+    const EnvEntry *a = left, *b = right;
+    int order = CompareStringOrdinal(a->text, a->name_units, b->text, b->name_units, TRUE);
+    if (order != CSTR_EQUAL) return order == CSTR_LESS_THAN ? -1 : 1;
+    return a->index < b->index ? -1 : a->index != b->index;
+}
+static WCHAR *environment_order(WCHAR *block, size_t units) {
+    size_t count = 0;
+    for (WCHAR *p = block; *p; p += wcslen(p) + 1) count++;
+    if (count < 2) return block;
+    if (count > SIZE_MAX / sizeof(EnvEntry)) {
+        free(block); last = ENOMEM; SetLastError(ERROR_NOT_ENOUGH_MEMORY); return NULL;
+    }
+    EnvEntry *entries = text_alloc(count * sizeof *entries);
+    WCHAR *out = entries ? text_alloc(units * sizeof *out) : NULL;
+    if (!entries || !out) { free(block); free(entries); return NULL; }
+    WCHAR *p = block;
+    for (size_t i = 0; i < count; i++) {
+        WCHAR *equals = wcschr(p + (*p == L'='), L'=');
+        size_t n = equals ? (size_t)(equals - p) : wcslen(p);
+        if (n > INT_MAX) { free(block); free(entries); free(out); last = E2BIG; return NULL; }
+        entries[i] = (EnvEntry){p, (int)n, i};
+        p += wcslen(p) + 1;
+    }
+    qsort(entries, count, sizeof *entries, environment_compare);
+    p = out;
+    for (size_t i = 0; i < count; i++) {
+        size_t n = wcslen(entries[i].text) + 1;
+        memcpy(p, entries[i].text, n * sizeof *p); p += n;
+    }
+    *p = 0;
+    free(entries); free(block); return out;
+}
+
 /* the handle a descriptor of the library stands for */
 static HANDLE handle_of(int fd) {
     Sock *s = sock_of(fd);
@@ -2459,35 +2901,51 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
        arguments before it opens the file. */
     char *line = raw ? _strdup(raw) : command_line(argv);
     if (!line) { last = ENOMEM; return -1; }
-    if (strlen(line) > 32766) { free(line); last = E2BIG; return -1; }
-    char program[MAX_PATH * 4];
-    if (find_program(native(path), search, program, sizeof program) != 0) { free(line); return -1; }
-    /* a batch file is run by the command interpreter */
+    size_t units;
+    WCHAR *wline = text16(line, strlen(line), &units);
+    if (!wline) { free(line); return -1; }
+    if (units > 32766) { free(wline); free(line); last = E2BIG; return -1; }
+    char *program = NULL;
+    if (find_program(native(path), search, &program) != 0) { free(wline); free(line); return -1; }
     const char *dot = strrchr(program, '.');
     int batch = !raw && dot && (_stricmp(dot, ".bat") == 0 || _stricmp(dot, ".cmd") == 0);
-    char *app = program;
-    char comspec[MAX_PATH * 4];
+    char *comspec = NULL;
     if (batch) {
-        const char *c = getenv("COMSPEC");
-        snprintf(comspec, sizeof comspec, "%s", c ? c : "C:\\Windows\\System32\\cmd.exe");
-        char *wrapped = malloc(strlen(line) + strlen(program) + 32);
-        if (!wrapped) { free(line); last = ENOMEM; return -1; }
+        comspec = env_copy("COMSPEC", "C:\\Windows\\System32\\cmd.exe");
+        char *wrapped = comspec ? text_alloc(strlen(line) + strlen(program) + 32) : NULL;
+        if (!wrapped) { free(program); free(comspec); free(wline); free(line); return -1; }
         sprintf(wrapped, "cmd /d /s /c \"\"%s\" %s\"", program, strchr(line, ' ') ? strchr(line, ' ') + 1 : "");
-        free(line);
-        line = wrapped;
-        app = comspec;
+        free(line); line = wrapped; free(wline);
+        wline = text16(line, strlen(line), &units);
+        if (!wline || units > 32766) {
+            free(program); free(comspec); free(wline); free(line);
+            if (wline) last = E2BIG;
+            return -1;
+        }
     }
-    /* the environment: the variables, each NUL-terminated, then an empty one */
-    char *block = NULL;
+    WCHAR *app = path16(comspec ? comspec : program);
+    WCHAR *directory = app && dir ? path16(dir) : NULL;
+    free(program); free(comspec); free(line);
+    if (!app || (dir && !directory)) { free(app); free(directory); free(wline); return -1; }
+    WCHAR *block = NULL;
     if (envp) {
         size_t size = 2;
-        for (char *const *e = envp; *e; e++) size += strlen(*e) + 1;
-        block = malloc(size);
-        if (!block) { free(line); last = ENOMEM; return -1; }
-        char *o = block;
+        for (char *const *e = envp; *e; e++) {
+            size_t n = strlen(*e) + 1;
+            if (n > SIZE_MAX - size) { free(app); free(directory); free(wline); last = E2BIG; return -1; }
+            size += n;
+        }
+        char *bytes = text_alloc(size);
+        if (!bytes) { free(app); free(directory); free(wline); return -1; }
+        char *o = bytes;
         for (char *const *e = envp; *e; e++) { strcpy(o, *e); o += strlen(*e) + 1; }
         *o++ = 0;
-        if (o == block + 1) *o = 0;
+        if (o == bytes + 1) *o++ = 0;
+        size_t block_units;
+        block = text16(bytes, (size_t)(o - bytes), &block_units);
+        if (block) block = environment_order(block, block_units);
+        free(bytes);
+        if (!block) { free(app); free(directory); free(wline); return -1; }
     }
     /* the three handles, as inheritable copies, and only they inherited --
        with the interrupt's event the child's environment names (sys.h,
@@ -2513,7 +2971,7 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
     SIZE_T size = 0;
     InitializeProcThreadAttributeList(NULL, 1, 0, &size);
     LPPROC_THREAD_ATTRIBUTE_LIST attributes = malloc(size);
-    STARTUPINFOEXA si;
+    STARTUPINFOEXW si;
     memset(&si, 0, sizeof si);
     si.StartupInfo.cb = sizeof si;
     si.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
@@ -2526,14 +2984,13 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
                                        (SIZE_T)nlist * sizeof(HANDLE), NULL, NULL);
     si.lpAttributeList = attributes;
     PROCESS_INFORMATION pi;
-    DWORD flags = EXTENDED_STARTUPINFO_PRESENT | (job ? CREATE_SUSPENDED : 0) | more;
-    if (ok) ok = CreateProcessA(app, line, NULL, NULL, nlist > 0, flags, block, dir ? native(dir) : NULL,
+    DWORD flags = EXTENDED_STARTUPINFO_PRESENT | CREATE_UNICODE_ENVIRONMENT | (job ? CREATE_SUSPENDED : 0) | more;
+    if (ok) ok = CreateProcessW(app, wline, NULL, NULL, nlist > 0, flags, block, directory,
                                 &si.StartupInfo, &pi);
     DWORD error = GetLastError();
     for (int i = 0; i < 3; i++) if (std[i] != INVALID_HANDLE_VALUE) CloseHandle(std[i]);
     if (attributes) { DeleteProcThreadAttributeList(attributes); free(attributes); }
-    free(line);
-    free(block);
+    free(app); free(directory); free(wline); free(block);
     if (!ok) {
         last = error == ERROR_BAD_EXE_FORMAT ? ENOEXEC : errno_of_win(error);
         return -1;
@@ -2791,15 +3248,15 @@ int sys_exec(const char *path, char *const argv[], char *const envp[], int searc
    that ended it. msvcrt's own system would hand the command every
    descriptor of msvcrt this process has open. */
 int sys_system(const char *command) {
-    const char *comspec = getenv("COMSPEC");
-    if (!comspec) comspec = "C:\\Windows\\System32\\cmd.exe";
+    char *comspec = env_copy("COMSPEC", "C:\\Windows\\System32\\cmd.exe");
+    if (!comspec) return -1;
     char *line = malloc(strlen(command) + 32);
-    if (!line) { last = ENOMEM; return -1; }
+    if (!line) { free(comspec); last = ENOMEM; return -1; }
     sprintf(line, "cmd /d /s /c \"%s\"", command);
     char *argv[] = { (char *)comspec, NULL };
     int fds[3] = { -1, -1, -1 };
     int64_t pid = spawn(comspec, argv, NULL, 0, fds, NULL, line, NULL, NULL, 0);
-    free(line);
+    free(line); free(comspec);
     if (pid < 0) return -1;
     int64_t out[3];
     if (sys_waitpid(pid, 0, out) != 0) return -1;
@@ -2826,24 +3283,36 @@ FILE *sys_fdopen(int fd, const char *mode) { return _fdopen(fd, mode); }
 
 typedef struct { int fd; uint64_t handle; FdFlags flags; } ForkFd;
 typedef struct { int slot; WSAPROTOCOL_INFOW info; Sock sock; } ForkSock;
-typedef struct { int slot, pending; int64_t reads; char pattern[MAX_PATH * 4]; } ForkDir;
+typedef struct { int slot, pending; int64_t reads; uint32_t length; } ForkDir;
 static int64_t fork_child = -1;
 
 FILE *sys_fork_start(void) {
-    char self[MAX_PATH * 4];
-    DWORD length = GetModuleFileNameA(NULL, self, sizeof self);
-    if (length == 0 || length >= sizeof self) { win_failed(NULL); return NULL; }
+    DWORD cap = 256;
+    WCHAR *module;
+    for (;;) {
+        module = text_alloc((size_t)cap * sizeof *module);
+        if (!module) return NULL;
+        DWORD n = GetModuleFileNameW(NULL, module, cap);
+        if (!n) { free(module); win_failed(NULL); return NULL; }
+        if (n < cap) break;
+        free(module);
+        if (cap > 32768) { last = ENAMETOOLONG; return NULL; }
+        cap *= 2;
+    }
+    char *self = text8(module, wcslen(module), NULL); free(module);
+    if (!self) return NULL;
     HANDLE rd, wr, inherited;
-    if (!CreatePipe(&rd, &wr, NULL, 1 << 16)) { win_failed(NULL); return NULL; }
+    if (!CreatePipe(&rd, &wr, NULL, 1 << 16)) { free(self); win_failed(NULL); return NULL; }
     int ok = DuplicateHandle(GetCurrentProcess(), rd, GetCurrentProcess(), &inherited, 0, TRUE, DUPLICATE_SAME_ACCESS);
     CloseHandle(rd);
-    if (!ok) { win_failed(NULL); CloseHandle(wr); return NULL; }
+    if (!ok) { free(self); win_failed(NULL); CloseHandle(wr); return NULL; }
     char token[32];
     snprintf(token, sizeof token, "%llu", (unsigned long long)(uintptr_t)inherited);
     char resume[] = "--resume";
     char *argv[] = { self, resume, token, NULL };
     int fds[3] = { -1, -1, -1 };
     int64_t pid = spawn(self, argv, NULL, 0, fds, NULL, NULL, inherited, NULL, 0);
+    free(self);
     CloseHandle(inherited);
     if (pid < 0) { CloseHandle(wr); return NULL; }
     HANDLE child = children[nchildren - 1].process;
@@ -2892,12 +3361,13 @@ FILE *sys_fork_start(void) {
     fwrite(&ndirs, sizeof ndirs, 1, out);
     for (int i = 0; i < DIRS; i++) {
         if (!dirs[i].used) continue;
-        ForkDir d;
+        ForkDir d = {0};
         d.slot = i;
         d.pending = dirs[i].pending;
         d.reads = dirs[i].reads;
-        memcpy(d.pattern, dirs[i].pattern, sizeof d.pattern);
+        d.length = (uint32_t)strlen(dirs[i].pattern);
         fwrite(&d, sizeof d, 1, out);
+        fwrite(dirs[i].pattern, 1, d.length, out);
     }
     fwrite(&creation_mask, sizeof creation_mask, 1, out);
     return out;
@@ -2981,12 +3451,14 @@ FILE *sys_resume(const char *token) {
     for (uint32_t k = 0; k < ndirs; k++) {
         ForkDir d;
         if (!read_exactly(h, &d, sizeof d)) { last = EIO; return NULL; }
-        if (d.slot < 0 || d.slot >= DIRS) continue;
+        if (d.slot < 0 || d.slot >= DIRS || d.length > 3 * 32768u) { last = EIO; return NULL; }
         int i = d.slot;
-        memcpy(dirs[i].pattern, d.pattern, sizeof d.pattern);
-        dirs[i].pattern[sizeof dirs[i].pattern - 1] = 0;
+        dirs[i].pattern = text_alloc((size_t)d.length + 1);
+        if (!dirs[i].pattern) return NULL;
+        if (!read_exactly(h, dirs[i].pattern, d.length)) { free(dirs[i].pattern); dirs[i].pattern = NULL; last = EIO; return NULL; }
+        dirs[i].pattern[d.length] = 0;
         if (dir_start(i) != 0) continue;
-        for (int64_t r = 0; r < d.reads && FindNextFileA(dirs[i].find, &dirs[i].data); r++) dirs[i].reads++;
+        for (int64_t r = 0; r < d.reads && FindNextFileW(dirs[i].find, &dirs[i].data); r++) dirs[i].reads++;
         dirs[i].pending = d.pending;
         dirs[i].used = 1;
     }
@@ -3006,8 +3478,8 @@ FILE *sys_resume(const char *token) {
    A key of the registry is a number of this table; the seven keys at the
    roots are 0 to 6, in the order of the specification (classesRoot,
    currentUser, localMachine, users, performanceData, currentConfig,
-   dynData), and are never closed. Names and strings go through the code
-   page of Windows (the A calls), as the rest of this file does. */
+   dynData), and are never closed. Names and text values cross this boundary
+   as WTF-8; binary and numeric values remain bytes. */
 #define WIN_KEYS 256
 static HKEY win_keys[WIN_KEYS];
 static int win_key_used[WIN_KEYS];
@@ -3031,8 +3503,11 @@ int sys_win_reg_open(int key, const char *name, int access, int create, int64_t 
     for (k = 7; k < WIN_KEYS; k++) if (!win_key_used[k]) break;
     if (k == WIN_KEYS) { last = EMFILE; return -1; }
     DWORD disposition = REG_OPENED_EXISTING_KEY;
-    LONG r = create ? RegCreateKeyExA(parent, name, 0, NULL, REG_OPTION_NON_VOLATILE, (REGSAM)access, NULL, &made, &disposition)
-                    : RegOpenKeyExA(parent, name, 0, (REGSAM)access, &made);
+    WCHAR *wide = text16(name, strlen(name), NULL);
+    if (!wide) return -1;
+    LONG r = create ? RegCreateKeyExW(parent, wide, 0, NULL, REG_OPTION_NON_VOLATILE, (REGSAM)access, NULL, &made, &disposition)
+                    : RegOpenKeyExW(parent, wide, 0, (REGSAM)access, &made);
+    free(wide);
     if (r != ERROR_SUCCESS) return reg_failed(r);
     win_keys[k] = made;
     win_key_used[k] = 1;
@@ -3051,22 +3526,35 @@ int sys_win_reg_close(int key) {
 int sys_win_reg_delete(int key, const char *name, int value) {
     HKEY h = key_of(key);
     if (!h) { last = EBADF; return -1; }
-    LONG r = value ? RegDeleteValueA(h, name) : RegDeleteKeyA(h, name);
+    WCHAR *wide = text16(name, strlen(name), NULL);
+    if (!wide) return -1;
+    LONG r = value ? RegDeleteValueW(h, wide) : RegDeleteKeyW(h, wide);
+    free(wide);
     return r == ERROR_SUCCESS ? 0 : reg_failed(r);
 }
 /* The name of the index-th subkey (or value): NULL with the error cleared
    when there are no more, NULL with an error on failure. */
-static char reg_name[16384 + 1];
+static char *reg_name;
 const char *sys_win_reg_enum(int key, int index, int value) {
     HKEY h = key_of(key);
     if (!h) { last = EBADF; return NULL; }
-    DWORD n = sizeof reg_name;
-    LONG r = value ? RegEnumValueA(h, (DWORD)index, reg_name, &n, NULL, NULL, NULL, NULL)
-                   : RegEnumKeyExA(h, (DWORD)index, reg_name, &n, NULL, NULL, NULL, NULL);
-    if (r == ERROR_NO_MORE_ITEMS) { last = 0; return NULL; }
-    if (r != ERROR_SUCCESS) { reg_failed(r); return NULL; }
-    reg_name[n] = 0;
-    return reg_name;
+    DWORD cap = 256;
+    for (;;) {
+        WCHAR *wide = text_alloc((size_t)cap * sizeof *wide);
+        if (!wide) return NULL;
+        DWORD n = cap;
+        LONG r = value ? RegEnumValueW(h, (DWORD)index, wide, &n, NULL, NULL, NULL, NULL)
+                       : RegEnumKeyExW(h, (DWORD)index, wide, &n, NULL, NULL, NULL, NULL);
+        if (r == ERROR_MORE_DATA && cap <= 32768) { free(wide); cap *= 2; continue; }
+        if (r != ERROR_SUCCESS) {
+            free(wide);
+            if (r == ERROR_NO_MORE_ITEMS) last = 0; else reg_failed(r);
+            return NULL;
+        }
+        char *bytes = text8(wide, n, NULL); free(wide);
+        if (!bytes) return NULL;
+        free(reg_name); reg_name = bytes; last = 0; return bytes;
+    }
 }
 /* The value named: its type of the registry and its bytes, as the registry
    keeps them (a string with its NUL). *length is -1 with the error cleared
@@ -3075,42 +3563,61 @@ static char *reg_data = NULL;
 const char *sys_win_reg_query(int key, const char *name, int *type, int64_t *length) {
     HKEY h = key_of(key);
     if (!h) { last = EBADF; return NULL; }
-    DWORD t = 0, n = 0;
-    LONG r = RegQueryValueExA(h, name, NULL, &t, NULL, &n);
-    if (r == ERROR_FILE_NOT_FOUND) { last = 0; *length = -1; return ""; }
-    if (r != ERROR_SUCCESS) { reg_failed(r); return NULL; }
-    free(reg_data);
-    reg_data = malloc(n + 2);
-    if (!reg_data) { last = ENOMEM; return NULL; }
-    r = RegQueryValueExA(h, name, NULL, &t, (BYTE *)reg_data, &n);
-    if (r != ERROR_SUCCESS) { reg_failed(r); return NULL; }
-    *type = (int)t;
-    *length = (int64_t)n;
-    return reg_data;
+    WCHAR *wide = text16(name, strlen(name), NULL);
+    if (!wide) return NULL;
+    DWORD t = 0, cap = 0;
+    LONG r = RegQueryValueExW(h, wide, NULL, &t, NULL, &cap);
+    for (;;) {
+        if (r == ERROR_FILE_NOT_FOUND) { free(wide); last = 0; *length = -1; return ""; }
+        if (r != ERROR_SUCCESS && r != ERROR_MORE_DATA) { free(wide); reg_failed(r); return NULL; }
+        if ((uint64_t)cap + 2 > SIZE_MAX) { free(wide); last = ENOMEM; return NULL; }
+        char *data = text_alloc((size_t)cap + 2);
+        if (!data) { free(wide); return NULL; }
+        DWORD n = cap;
+        r = RegQueryValueExW(h, wide, NULL, &t, (BYTE *)data, &n);
+        if (r == ERROR_MORE_DATA) { free(data); cap = n > cap ? n : cap * 2 + 2; continue; }
+        if (r != ERROR_SUCCESS) { free(data); continue; }
+        free(wide);
+        size_t bytes = n;
+        if (t == REG_SZ || t == REG_EXPAND_SZ || t == REG_MULTI_SZ) {
+            if (n % sizeof(WCHAR)) { free(data); last = EILSEQ; return NULL; }
+            char *converted = text8((const WCHAR *)data, n / sizeof(WCHAR), &bytes);
+            free(data); data = converted;
+            if (!data) return NULL;
+        }
+        free(reg_data); reg_data = data;
+        *type = (int)t; *length = (int64_t)bytes; last = 0; return data;
+    }
 }
 int sys_win_reg_set(int key, const char *name, int type, const char *data, int64_t length) {
     HKEY h = key_of(key);
     if (!h) { last = EBADF; return -1; }
-    LONG r = RegSetValueExA(h, name, 0, (DWORD)type, (const BYTE *)data, (DWORD)length);
+    if (length < 0 || (uint64_t)length > UINT32_MAX) { last = E2BIG; return -1; }
+    WCHAR *wide = text16(name, strlen(name), NULL), *converted = NULL;
+    if (!wide) return -1;
+    size_t bytes = (size_t)length;
+    if (type == REG_SZ || type == REG_EXPAND_SZ || type == REG_MULTI_SZ) {
+        size_t units;
+        converted = text16(data, bytes, &units);
+        if (!converted) { free(wide); return -1; }
+        if (units > UINT32_MAX / sizeof(WCHAR)) { free(wide); free(converted); last = E2BIG; return -1; }
+        bytes = units * sizeof(WCHAR); data = (const char *)converted;
+    }
+    LONG r = RegSetValueExW(h, wide, 0, (DWORD)type, (const BYTE *)data, (DWORD)bytes);
+    free(wide); free(converted);
     return r == ERROR_SUCCESS ? 0 : reg_failed(r);
 }
 
 /* Config: 0 the directory of Windows, 1 its system directory, 2 the name of
    the computer, 3 the name of the user; written as Windows writes them
    (C:\Windows), as the specification has it. */
-static char win_string[MAX_PATH * 4];
+static char *win_string;
 const char *sys_win_config(int what) {
-    DWORD n = sizeof win_string;
-    BOOL ok;
-    switch (what) {
-    case 0: n = GetWindowsDirectoryA(win_string, sizeof win_string); ok = n > 0 && n < sizeof win_string; break;
-    case 1: n = GetSystemDirectoryA(win_string, sizeof win_string); ok = n > 0 && n < sizeof win_string; break;
-    case 2: ok = GetComputerNameA(win_string, &n); break;
-    case 3: ok = GetUserNameA(win_string, &n); break;
-    default: last = EINVAL; return NULL;
-    }
-    if (!ok) { win_failed(NULL); return NULL; }
-    return win_string;
+    WCHAR *wide = config16(what);
+    if (!wide) return NULL;
+    char *bytes = text8(wide, wcslen(wide), NULL); free(wide);
+    if (!bytes) return NULL;
+    free(win_string); win_string = bytes; return bytes;
 }
 /* the version, as RtlGetVersion gives it (GetVersionEx gives what the
    program's manifest asks for): major, minor, build, platform; and the
@@ -3123,34 +3630,47 @@ const char *sys_win_version(int64_t out[4]) {
     v.dwOSVersionInfoSize = sizeof v;
     if (!get || get(&v) != 0) { last = ENOSYS; return NULL; }
     out[0] = v.dwMajorVersion; out[1] = v.dwMinorVersion; out[2] = v.dwBuildNumber; out[3] = v.dwPlatformId;
-    int n = WideCharToMultiByte(CP_ACP, 0, v.szCSDVersion, -1, win_string, (int)sizeof win_string, NULL, NULL);
-    if (n <= 0) win_string[0] = 0;
-    return win_string;
+    static char *service_pack;
+    char *bytes = text8(v.szCSDVersion, wcslen(v.szCSDVersion), NULL);
+    if (!bytes) return NULL;
+    free(service_pack); service_pack = bytes; return bytes;
 }
 /* the volume whose root is given: its name and the name of its file system,
    one after the other; out[0] the serial, out[1] the longest name */
-static char volume_strings[2 * (MAX_PATH + 1)];
+static char *volume_strings;
 const char *sys_win_volume(const char *root, int64_t out[2]) {
-    char path[MAX_PATH * 4];
-    snprintf(path, sizeof path - 1, "%s", native(root));
-    size_t k = strlen(path);
-    if (k > 0 && path[k - 1] != '\\' && path[k - 1] != '/') { path[k] = '\\'; path[k + 1] = 0; }
-    char name[MAX_PATH + 1], system[MAX_PATH + 1];
+    WCHAR *path = path16(root);
+    if (!path) return NULL;
+    size_t len = wcslen(path);
+    WCHAR *with_slash = text_alloc((len + 2) * sizeof *with_slash);
+    if (!with_slash) { free(path); return NULL; }
+    wcscpy(with_slash, path); free(path);
+    if (len && with_slash[len - 1] != L'\\') { with_slash[len++] = L'\\'; with_slash[len] = 0; }
+    /* The API bounds volume labels and filesystem names to MAX_PATH units. */
+    WCHAR name[MAX_PATH + 1], system[MAX_PATH + 1];
     DWORD serial = 0, longest = 0, flags = 0;
-    if (!GetVolumeInformationA(path, name, sizeof name, &serial, &longest, &flags, system, sizeof system))
-        { win_failed(path); return NULL; }
-    size_t a = strlen(name);
-    memcpy(volume_strings, name, a + 1);
-    memcpy(volume_strings + a + 1, system, strlen(system) + 1);
-    out[0] = (int64_t)serial;
-    out[1] = (int64_t)longest;
-    return volume_strings;
+    BOOL ok = GetVolumeInformationW(with_slash, name, MAX_PATH + 1, &serial, &longest, &flags, system, MAX_PATH + 1);
+    DWORD error = GetLastError(); free(with_slash); SetLastError(error);
+    if (!ok) { win_failed(NULL); return NULL; }
+    char *a = text8(name, wcslen(name), NULL), *b = a ? text8(system, wcslen(system), NULL) : NULL;
+    if (!a || !b) { free(a); return NULL; }
+    size_t an = strlen(a) + 1, bn = strlen(b) + 1;
+    char *packed = text_alloc(an + bn);
+    if (!packed) { free(a); free(b); return NULL; }
+    memcpy(packed, a, an); memcpy(packed + an, b, bn); free(a); free(b);
+    free(volume_strings); volume_strings = packed;
+    out[0] = (int64_t)serial; out[1] = (int64_t)longest; return packed;
 }
 /* the program Windows would open the file with (FindExecutable); NULL with
    the error cleared when there is none */
 const char *sys_win_find_executable(const char *name) {
-    HINSTANCE r = FindExecutableA(native(name), NULL, win_string);
-    if ((INT_PTR)r > 32) return posix_path(win_string);
+    static char *found;
+    WCHAR *path = path16(name);
+    if (!path) return NULL;
+    /* FindExecutable itself has a MAX_PATH output contract. */
+    WCHAR executable[MAX_PATH];
+    HINSTANCE r = FindExecutableW(path, NULL, executable); free(path);
+    if ((INT_PTR)r > 32) return store_path(&found, executable, wcslen(executable));
     last = (INT_PTR)r == SE_ERR_NOASSOC || (INT_PTR)r == ERROR_FILE_NOT_FOUND || (INT_PTR)r == ERROR_PATH_NOT_FOUND ? 0 : EIO;
     return NULL;
 }
@@ -3158,8 +3678,11 @@ const char *sys_win_find_executable(const char *name) {
    a document with the program that opens it (openDocument) */
 int sys_win_shell_execute(const char *file, const char *arg, int document) {
     const char *f = native(file);
-    if (!document && !executable(f)) { last = ENOEXEC; return -1; }
-    HINSTANCE r = ShellExecuteA(NULL, "open", f, document ? NULL : arg, NULL, SW_SHOWNORMAL);
+    WCHAR *path = path16(f), *arguments = path && !document ? text16(arg, strlen(arg), NULL) : NULL;
+    if (!path || (!document && !arguments)) { free(path); return -1; }
+    if (!document && !executable(f)) { free(path); free(arguments); last = ENOEXEC; return -1; }
+    HINSTANCE r = ShellExecuteW(NULL, L"open", path, arguments, NULL, SW_SHOWNORMAL);
+    free(path); free(arguments);
     if ((INT_PTR)r > 32) return 0;
     switch ((INT_PTR)r) {
     case ERROR_FILE_NOT_FOUND: case ERROR_PATH_NOT_FOUND: last = ENOENT; break;
@@ -3227,9 +3750,14 @@ int sys_win_dde_start(const char *service, const char *topic) {
     for (i = 0; i < DDE_CONVERSATIONS; i++) if (!dde[i].used) break;
     if (i == DDE_CONVERSATIONS) { last = EMFILE; return -1; }
     DWORD instance = 0;
-    if (DdeInitializeA(&instance, dde_callback, APPCMD_CLIENTONLY, 0) != DMLERR_NO_ERROR) { last = EIO; return -1; }
-    HSZ s = DdeCreateStringHandleA(instance, service, CP_WINANSI);
-    HSZ t = DdeCreateStringHandleA(instance, topic, CP_WINANSI);
+    WCHAR *ws = text16(service, strlen(service), NULL), *wt = ws ? text16(topic, strlen(topic), NULL) : NULL;
+    if (!ws || !wt) { free(ws); return -1; }
+    if (DdeInitializeW(&instance, dde_callback, APPCMD_CLIENTONLY, 0) != DMLERR_NO_ERROR) {
+        free(ws); free(wt); last = EIO; return -1;
+    }
+    HSZ s = DdeCreateStringHandleW(instance, ws, CP_WINUNICODE);
+    HSZ t = DdeCreateStringHandleW(instance, wt, CP_WINUNICODE);
+    free(ws); free(wt);
     HCONV c = DdeConnect(instance, s, t, NULL);
     int r = c ? 0 : dde_failed(instance);
     DdeFreeStringHandle(instance, s);
@@ -3243,14 +3771,18 @@ int sys_win_dde_start(const char *service, const char *topic) {
 int sys_win_dde_execute(int info, const char *command, int retries, int64_t delay_ms) {
     if (info < 0 || info >= DDE_CONVERSATIONS || !dde[info].used) { last = EBADF; return -1; }
     DWORD timeout = delay_ms <= 0 ? 1 : delay_ms > 0x7fffffff ? 0x7fffffff : (DWORD)delay_ms;
+    size_t units;
+    WCHAR *wide = text16(command, strlen(command), &units);
+    if (!wide) return -1;
+    if (units >= UINT32_MAX / sizeof(WCHAR)) { free(wide); last = E2BIG; return -1; }
     for (int attempt = 0; ; attempt++) {
         DWORD result = 0;
-        HDDEDATA r = DdeClientTransaction((LPBYTE)command, (DWORD)strlen(command) + 1, dde[info].conversation,
+        HDDEDATA r = DdeClientTransaction((LPBYTE)wide, (DWORD)((units + 1) * sizeof(WCHAR)), dde[info].conversation,
                                           NULL, 0, XTYP_EXECUTE, timeout, &result);
-        if (r) return 0;
+        if (r) { free(wide); return 0; }
         UINT e = DdeGetLastError(dde[info].instance);
         if ((e == DMLERR_BUSY || (result & DDE_FBUSY)) && attempt < retries) { Sleep(timeout); continue; }
-        return dde_failed(dde[info].instance);
+        free(wide); return dde_failed(dde[info].instance);
     }
 }
 int sys_win_dde_stop(int info) {
@@ -3302,10 +3834,17 @@ static BOOL WINAPI on_interrupt(DWORD event) {
    watched on a thread of their own from the first catch: each set is the
    user's interrupt, as the console's handler's Ctrl-C is, and is reset */
 static HANDLE event_of(const char *name) {
-    const char *v = getenv(name);
-    if (!v || !*v) return NULL;
-    char *end;
-    unsigned long long h = strtoull(v, &end, 10);
+    /* The watcher runs on another thread: do not use sys_getenv's borrowed
+       result or the layer's last-error slot here. These names and values
+       are Rune's own ASCII handle protocol. */
+    WCHAR key[32], value[32];
+    size_t n = strlen(name);
+    if (n >= sizeof key / sizeof *key) return NULL;
+    for (size_t i = 0; i <= n; i++) key[i] = (WCHAR)(unsigned char)name[i];
+    DWORD got = GetEnvironmentVariableW(key, value, 32);
+    if (!got || got >= 32) return NULL;
+    WCHAR *end;
+    unsigned long long h = wcstoull(value, &end, 10);
     return *end || h == 0 ? NULL : (HANDLE)(uintptr_t)h;
 }
 static DWORD WINAPI watch_events(LPVOID unused) {

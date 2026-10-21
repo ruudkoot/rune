@@ -170,6 +170,9 @@ struct
   val () = T.eq (T.option T.string) ("OS.Process.getEnv/not-set-by-a-command", NONE,
                 fn () => (ignore (OS.Process.system "RUNE_BASIS_SUITE_SET_BY_COMMAND=1; export RUNE_BASIS_SUITE_SET_BY_COMMAND");
                           OS.Process.getEnv "RUNE_BASIS_SUITE_SET_BY_COMMAND"))
+  val () = T.eq (T.option T.string) ("OS.Process.getEnv/absent-after-file-error", NONE,
+                fn () => ((OS.FileSys.remove "RuneBasisEnvMissingDirectory/no-file" handle OS.SysErr _ => ());
+                          OS.Process.getEnv "RUNE_BASIS_SUITE_SURELY_UNSET_VARIABLE"))
   (*>> getEnv-system *)
 
   (*<< sleep *)

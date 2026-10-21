@@ -182,6 +182,8 @@ sig
 
   (* `getenv name` is `SOME` of the value of the environment variable `name`, or `NONE`.
 
+     The Windows encoding and errors are those of `OS.Process.getEnv`.
+
      Law: `getenv name = OS.Process.getEnv name`
 
      Example: `getenv "A_VARIABLE_THAT_NOBODY_SETS" = NONE` *)

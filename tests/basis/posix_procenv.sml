@@ -219,6 +219,9 @@ struct
                 fn () => isSome (E.getenv "PATH") andalso E.getenv "PATH" = OS.Process.getEnv "PATH")
   val () = T.eq (T.option T.string) ("Posix.ProcEnv.getenv/unset", NONE,
                                      fn () => E.getenv "RUNE_BASIS_SUITE_SURELY_UNSET_VARIABLE")
+  val () = T.eq (T.option T.string) ("Posix.ProcEnv.getenv/absent-after-file-error", NONE,
+                fn () => ((OS.FileSys.remove "RuneBasisEnvMissingDirectory/no-file" handle OS.SysErr _ => ());
+                          E.getenv "RUNE_BASIS_SUITE_SURELY_UNSET_VARIABLE"))
   val () = eqB ("Posix.ProcEnv.getenv/shell", true,
                 fn () => E.getenv "PATH" = SOME (C.shell "printf '%s\\n' \"$PATH\""))
   fun split (s : string) : string * string =

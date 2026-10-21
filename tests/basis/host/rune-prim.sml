@@ -915,7 +915,9 @@ struct
     | Posix.Process.W_EXITSTATUS w => Word8.toInt w
     | Posix.Process.W_SIGNALED sg => 256 + SysWord.toInt (Posix.Signal.toWord sg)
     | Posix.Process.W_STOPPED sg => 512 + SysWord.toInt (Posix.Signal.toWord sg)
-  fun os_getenv name = OS.Process.getEnv name
+  fun os_getenv name =
+    (lastErrno := 0; OS.Process.getEnv name)
+    handle OS.SysErr (_, e) => (noteError e; NONE)
 
   (* ---- the file system, on the host's Posix ---- *)
   fun noted f = (f (); 0) handle OS.SysErr (_, e) => (noteError e; ~1)
