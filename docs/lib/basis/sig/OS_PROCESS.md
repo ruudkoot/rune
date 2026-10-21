@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 10 of 10 entries documented |
-| Tests | 39 checks of 10 entries |
+| Tests | 40 checks of 10 entries |
 | Source | [lib/basis/sig\_os\_process.sml](../../../../lib/basis/sig_os_process.sml) |
 
 ## Synopsis
@@ -220,6 +220,10 @@ val getEnv : string -> string option
 
 `getEnv name` is `SOME` of the value of the environment variable `name`, or `NONE`.
 
+On Windows names and values use WTF-8: Unicode is UTF-8, and lone
+UTF-16 surrogates round-trip as three bytes. Other malformed input
+raises [`OS.SysErr`](../sig/OS.md#exn-syserr) with `ilseq`; an absent variable is `NONE`.
+
 > **Reading** `OS.Process.getEnv/the-whole-name`. The whole name must match:
 > a name that merely begins with one that is set does not, and neither
 > does a name with `"=value"` attached. A command run by [`system`](#val-system) inherits
@@ -227,9 +231,9 @@ val getEnv : string -> string option
 
 **Example** `getEnv "A_VARIABLE_THAT_NOBODY_SETS" = NONE`
 
-<details><summary>Tests (7)</summary>
+<details><summary>Tests (8)</summary>
 
-For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `unset` &middot; `PATH-is-set` &middot; `stable` &middot; `name-that-extends-a-set-name` &middot; `name-with-value-attached` &middot; `agrees-with-the-shell` &middot; `not-set-by-a-command`
+For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `unset` &middot; `PATH-is-set` &middot; `stable` &middot; `name-that-extends-a-set-name` &middot; `name-with-value-attached` &middot; `agrees-with-the-shell` &middot; `not-set-by-a-command` &middot; `absent-after-file-error`
 
 </details>
 

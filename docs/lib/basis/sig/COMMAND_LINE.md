@@ -63,6 +63,9 @@ val arguments : unit -> string list
 The name is not among them: a command of `n` words, the name included,
 gives `n - 1` arguments.
 
+Windows decodes its wide command line as WTF-8, preserving lone
+UTF-16 surrogates. Unicode arguments have their UTF-8 bytes.
+
 > **Reading** `CommandLine.arguments/none-under-the-runner`. Which arguments
 > a program sees is "operating system and implementation-specific": what
 > the system passes after the name, with nothing taken away, and the empty

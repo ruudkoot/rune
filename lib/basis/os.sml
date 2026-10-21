@@ -35,6 +35,7 @@ struct
     local
       val system' = _prim "os_system" : string -> int
       val getenv' = _prim "os_getenv" : string -> string option
+      val errno = _prim "sys_errno" : unit -> int
       val sleep' = _prim "time_sleep" : int -> unit
       val exit' = _prim "exit" : int -> 'a
       (* "If the argument to exit comes from system ... the implementation
@@ -52,7 +53,12 @@ struct
           ~1 => raise RuneError.lastError ()
         | status => RuneStatus.fromInt status
 
-      fun getEnv name = getenv' name
+      (* On Windows names and values use WTF-8, preserving lone UTF-16
+         surrogates. Other malformed byte sequences raise OS.SysErr. *)
+      fun getEnv name =
+        case getenv' name of
+          NONE => if errno () = 0 then NONE else raise RuneError.lastError ()
+        | value => value
 
       (* "If t is zero or negative, then the calling process does not sleep,
          but returns immediately. No exception is raised." *)

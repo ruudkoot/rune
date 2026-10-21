@@ -87,6 +87,10 @@ sig
 
   (* `getEnv name` is `SOME` of the value of the environment variable `name`, or `NONE`.
 
+     On Windows names and values use WTF-8: Unicode is UTF-8, and lone
+     UTF-16 surrogates round-trip as three bytes. Other malformed input
+     raises `OS.SysErr` with `ilseq`; an absent variable is `NONE`.
+
      Reading: `OS.Process.getEnv/the-whole-name`. The whole name must match:
      a name that merely begins with one that is set does not, and neither
      does a name with `"=value"` attached. A command run by `system` inherits

@@ -13,6 +13,10 @@
 #include <stddef.h>
 #include <stdio.h>
 
+/* Recover the operating system's arguments before option parsing. The layer
+   owns any replacement storage until exit; 0, or -1 with sys_errno(). */
+int sys_init_args(int *argc, char ***argv);
+
 /* The last failure, as an errno value, and its text and name. */
 int sys_errno(void);
 void sys_set_errno(int e);
@@ -284,7 +288,8 @@ int sys_win_dde_stop(int info);
 
 /* Processes. */
 int sys_system(const char *command);            /* the exit status, or -1 */
-const char *sys_getenv(const char *name);       /* NULL when it is not set */
+/* NULL with sys_errno() cleared when absent, NULL with an error on failure. */
+const char *sys_getenv(const char *name);
 
 /* Executable memory, for the code a JIT makes (runtime/register; docs/plans/jit.md).
    sys_code_alloc gives size bytes, page-aligned, readable and writable, or

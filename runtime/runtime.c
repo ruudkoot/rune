@@ -436,7 +436,7 @@ void vm_exit(VM *vm, int status) {
                 (unsigned long long)vm->boxes_allocated, (unsigned long long)vm->box_bytes_allocated);
     /* for measuring the collector: the process's peaks, and the
        collector's time on the monotonic clock (docs/runtime.md) */
-    const char *memstat = getenv("RUNE_MEMSTAT");
+    const char *memstat = sys_getenv("RUNE_MEMSTAT");
     if (vm->stats && memstat && strcmp(memstat, "1") == 0) {
         uint64_t resident, peak_resident, peak_virtual;
         sys_mem_usage(&resident, &peak_resident, &peak_virtual);

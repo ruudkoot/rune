@@ -44,6 +44,7 @@ extern char **environ;
 #include <sys/ioctl.h>
 
 int sys_errno(void) { return errno; }
+int sys_init_args(int *argc, char ***argv) { (void)argc; (void)argv; return 0; }
 void sys_set_errno(int e) { errno = e; }
 const char *sys_error_msg(int e) { return strerror(e); }
 
@@ -241,7 +242,7 @@ int sys_system(const char *command) {
     return status;
 }
 
-const char *sys_getenv(const char *name) { return getenv(name); }
+const char *sys_getenv(const char *name) { errno = 0; return getenv(name); }
 
 /* ---------------------------------------------------------------- files */
 int sys_mkdir(const char *path) { return mkdir(path, 0777); }

@@ -169,7 +169,7 @@ date_seconds     2  int list * int -> int list   The reverse: the seconds, follo
 date_offset      1  int -> int               Seconds by which local time is ahead of UTC at that time; raises Domain on failure.
 date_format      3  string * int list * int -> string   strftime of the parts.
 os_system        1  string -> int            Run a command with the shell and wait; what it exited with, or 256 plus the signal that ended it, or ~1.
-os_getenv        1  string -> string option   The value of an environment variable.
+os_getenv        1  string -> string option   The value of an environment variable; NONE with sys_errno cleared when absent, or with an error on failure.
 file_errno       1  unit -> int              The errno of the last file_open or file_write that failed.
 os_mkdir         1  string -> int            Make a directory; 0, or ~1 with the reason in sys_errno.
 os_rmdir         1  string -> int            Remove an empty directory.

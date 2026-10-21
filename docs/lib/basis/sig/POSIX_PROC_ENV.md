@@ -7,7 +7,7 @@
 | Status | optional |
 | Implementations | 1 |
 | Documentation | 30 of 30 entries documented |
-| Tests | 65 checks of 26 entries |
+| Tests | 66 checks of 26 entries |
 | Source | [lib/basis/sig\_posix\_proc\_env.sml](../../../../lib/basis/sig_posix_proc_env.sml) |
 
 ## Synopsis
@@ -489,13 +489,15 @@ val getenv : string -> string option
 
 `getenv name` is `SOME` of the value of the environment variable `name`, or `NONE`.
 
+The Windows encoding and errors are those of [`OS.Process.getEnv`](../sig/OS_PROCESS.md#val-getenv).
+
 **Law** `getenv name = OS.Process.getEnv name` (for every `name : string`)
 
 **Example** `getenv "A_VARIABLE_THAT_NOBODY_SETS" = NONE`
 
-<details><summary>Tests (3)</summary>
+<details><summary>Tests (4)</summary>
 
-For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `PATH` &middot; `unset` &middot; `shell`
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `PATH` &middot; `unset` &middot; `absent-after-file-error` &middot; `shell`
 
 </details>
 

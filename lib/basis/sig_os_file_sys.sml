@@ -7,6 +7,11 @@
    that names nothing, a directory that may not be read, a file that may not
    be removed -- all of them arrive as that one exception.
 
+   Windows paths and names use WTF-8, which preserves lone UTF-16
+   surrogates and is UTF-8 for Unicode text. Other malformed byte sequences
+   raise `OS.SysErr` with `ilseq`. Extended paths remove the 260-character
+   filesystem limit; native process, Shell and socket limits still apply.
+
    A directory is read as a stream: `openDir`, then `readDir` until it gives
    `NONE`, then `closeDir`. The names it gives are arcs, not paths, and
    `"."` and `".."` are not among them.

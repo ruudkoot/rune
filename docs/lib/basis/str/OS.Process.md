@@ -7,7 +7,7 @@
 | Signature | [`OS_PROCESS`](../sig/OS_PROCESS.md) |
 | Status | required |
 | Members | 10 |
-| Tests | 39 checks |
+| Tests | 40 checks |
 | Source | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 ## Synopsis
