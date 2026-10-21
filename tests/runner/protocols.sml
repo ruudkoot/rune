@@ -368,7 +368,7 @@ struct
                      = [(SOME 2, SOME (index (accented, "alsoUndefined")))])
       (* a lone surrogate names no character, and has no UTF-8: the request
          is refused as text that is not JSON, and the service goes on *)
-      val r = request (20, "diagnostics", buffer ("\"val s = \"\\ud800\"\\n\"", ""))
+      val r = request (20, "diagnostics", buffer ("\"val s = \\\"\\ud800\\\"\\n\"", ""))
       val () = want ("lone-surrogate", r, num (field (r, ["error", "code"])) = SOME ~32700
                                           andalso (case str (field (r, ["error", "message"])) of
                                                      SOME m => String.isSubstring "lone surrogate" m

@@ -27,7 +27,7 @@ struct
         val privateRoot=dir ^ "/root with spaces"
         val ()=(MatrixLoad.remove dir;mkdirs (privateRoot ^ "/bin"))
         val ()=copyTree (fromRoot "lib/basis") (privateRoot ^ "/lib/basis")
-        val ()=List.app (fn dir => copyTree (fromRoot dir) (privateRoot ^ "/" ^ dir)) ["tests/basis/host","tests/basis/xc2"]
+        val ()=List.app (fn dir => copyTree (fromRoot dir) (privateRoot ^ "/" ^ dir)) ["tests/basis/host","tests/basis/xc2","tools/generate/data"]
         val ()=List.app (fn file => MatrixLoad.copy (fromRoot file,privateRoot ^ "/" ^ file))
              ["runtime/prims.def","tests/runner/matrixmodel.sml","tests/runner/matrixprobe.sml",
               "tests/runner/matrixload.sml","tests/runner/matrixprepare.sml","tests/runner/matrixsuite.sml"]
