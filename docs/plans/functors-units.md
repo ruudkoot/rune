@@ -84,7 +84,9 @@ What it rests on:
 | M8 | Nested functors that do not blow up | F | not started |
 | M9 | Retire | | not started |
 
-The decisions D1 to D17 are not decided (*Decisions*).
+The owner decided D1 to D17 on 2026-10-21, each as recommended
+(*Decisions*). D1's functors compiled once wait on gate G2, which stays the
+owner's.
 
 The tracks do not wait for each other:
 - **H, hashing,** makes a build in units cost what a whole compile costs:
@@ -208,6 +210,14 @@ acceptable for its speed, if the cache records that dependence, so that
 compilers built by different hosts never mix entries: a probe, one quick hash
 whose value tells the hash apart (D11). The owner asked too whether MLton's
 build should use 64-bit default types anyway (D17).
+
+**And (2026-10-21):** D11's constants are xxHash64's primes with bit 63
+cleared, the owner's suggestion, which E6 checked; D3 moves dynamic modules
+to the same records; D4 numbers every datatype's tags by sorted name, without
+exceptions, the owner's direction, and M5 measures every ordering.
+
+**The decisions (2026-10-21):** the owner took every recommendation, D1 to
+D17.
 
 | The brief asks | Answered in |
 |---|---|
@@ -2321,9 +2331,12 @@ benchmark.
 ## Decisions
 
 Each decision gives the options, what favours each, and the recommendation it
-was written with. None is decided yet.
+was written with. The owner took every recommendation on 2026-10-21. D1 B
+holds subject to gate G2, the owner's go or no-go after M5 and M6. On a no-go,
+D8's and D13's fallbacks apply (M3 closes the corners one by one, and M8 is
+D13 D).
 
-| Decision | Recommended |
+| Decision | Decided (2026-10-21, as recommended) |
 |---|---|
 | D1. How a functor is compiled, in each mode | B: once, as a function, in every mode; whole programs' copies made by an expansion in the middle end |
 | D2. Expansion in a build in units | A: only of a functor declared in the same unit |
@@ -2344,6 +2357,8 @@ was written with. None is decided yet.
 | D17. MLton's default types | A: as they are |
 
 ### D1. How a functor is compiled, in each mode
+
+**Decided: B** (2026-10-21), as recommended.
 
 The brief: "when doing separate/incremental compilation rune should elaborate
 the body of the functor once. when doing whole program compilation [it]
@@ -2377,6 +2392,8 @@ continues to make copies".
 
 ### D2. Expansion in a build in units
 
+**Decided: A** (2026-10-21), as recommended.
+
 - **A. Only of a functor declared in the same unit.** An application whose
   functor the same unit declares is expanded; any other is a call.
   **Recommended.**
@@ -2403,6 +2420,8 @@ continues to make copies".
     it.
 
 ### D3. The functor's run-time interface
+
+**Decided: A, with dynamic modules on the same records in M7** (2026-10-21), as recommended.
 
 - **A. A record per structure, made once and shared.**
   - A structure that reaches a functor is a tuple of its slots by name, as
@@ -2463,6 +2482,8 @@ continues to make copies".
   - C comes back if the expansion's bugs show that the casts hide too much.
 
 ### D4. Datatypes a parameter specifies
+
+**Decided: A and D together, without exceptions** (2026-10-21), as recommended.
 
 A body compiled once sees a datatype its parameter specifies only through
 the specification. Two things about the argument's datatype are decided by
@@ -2552,6 +2573,8 @@ specification's reading does not predict.
 
 ### D5. Datatypes a body declares
 
+**Decided: A** (2026-10-21), as recommended.
+
 - **A. Fixed where it is made, and carried.** A layout is decided once, and
   recorded with the datatype in Ty and in the unit's basis, for every client
   to use:
@@ -2568,6 +2591,8 @@ specification's reading does not predict.
 
 ### D6. Equality at a parameter's type
 
+**Decided: A** (2026-10-21), as recommended.
+
 - **A. The generic walk** in the function; ground equality after the
   expansion. **Recommended:** it is what an abstract type gets everywhere
   else.
@@ -2576,6 +2601,8 @@ specification's reading does not predict.
   and nothing a whole program needs.
 
 ### D7. MLton's typing as an option
+
+**Decided: A** (2026-10-21), as recommended.
 
 The brief allows "mlton's more leninet typing as an option", "if it is
 possible to retain leniency when elaborating functors only once w/o
@@ -2603,6 +2630,8 @@ introducing new complexity".
 
 ### D8. The four corners
 
+**Decided: A** (2026-10-21), as recommended.
+
 - **A. Tests now; each closed where it is cheapest.** **Recommended.**
   - M3 adds a test for each, (a) to (d), holding today's behaviour and
     marked with what the Definition wants.
@@ -2622,6 +2651,8 @@ introducing new complexity".
   refuses and MLton accepts.
 
 ### D9. How far fingerprints go
+
+**Decided: C** (2026-10-21), as recommended.
 
 The brief: "i wonder if we can instead directly hash the underlying datatype
 w/o going via a pretty print."
@@ -2651,6 +2682,8 @@ w/o going via a pretty print."
 
 ### D10. Memo keys for structures and signatures
 
+**Decided: A** (2026-10-21), as recommended.
+
 - **A. The binder's identity and the path,** as a usage's key already is
   (`fingerprintAt`, `unitbasis.sml:398-404`). **Recommended.** Stable across
   the units of a session and across sessions.
@@ -2659,6 +2692,8 @@ w/o going via a pretty print."
   change for the same keys; rustc's `DefPathHash` is the same idea as A.
 
 ### D11. The hash
+
+**Decided: B, rx2fw with its probe** (2026-10-21), as recommended.
 
 The brief: "you should also look at faster hash functions". The owner ruled
 on 2026-10-21 that speed and correctness on Rune at tier 2 decide it, that
@@ -2729,28 +2764,9 @@ What B costs beyond its code:
   - The alternative is 63-bit arithmetic in `Int` limbs for `smlnj32` alone.
     That is the kind of compromise the ruling rejects.
 
-### D17. MLton's default types
-
-The owner asked whether MLton's build should use `-default-type int64
--default-type word64` anyway (E6).
-
-- **A. Leave MLton's build as it is.** **Recommended.**
-  - With D11 B, its hash agrees with Rune's already, and its caches are
-    shared.
-  - It compiles every program of `check-cross` to Rune's bytes today.
-  - 64-bit defaults would cost it 24% to 32% of its cycles on MLton's 606
-    files in units, by more elaboration and a full 7 GB heap.
-- **B. Build it with `-default-type int64 -default-type word64`.**
-  - Its `Int` and `Word` would then be closer to Rune's 63 bits than to 32,
-    so an `Overflow` that Rune does not raise is less likely in MLton's
-    build. None has been found.
-  - It builds cleanly. `check-cross` passes, 586 of 586, and caches are
-    shared both ways.
-  - The cost is the 24% to 32% above, for nothing measured.
-  - It is the four MLton lines of the Makefile (rune, runedoc, runeopt,
-    runeisa), through an `MLTONFLAGS`, and a line in `docs/building.md`.
-
 ### D12. Division by a constant
+
+**Decided: A** (2026-10-21), as recommended.
 
 - **A. Tier 2 on x86-64 and aarch64, for every division by a constant, and
   `Simplify` folding a constant divided by a constant.** `div`, `mod`,
@@ -2768,6 +2784,8 @@ The owner asked whether MLton's build should use `-default-type int64
   more for three operations than for one.
 
 ### D13. Nested functors in whole programs
+
+**Decided: A** (2026-10-21), as recommended.
 
 - **A. An expansion budget.** An application is expanded while the copies
   made below it stay within a budget of Mid nodes (and a depth); past it, it
@@ -2787,6 +2805,8 @@ The owner asked whether MLton's build should use `-default-type int64
 
 ### D14. S42 and the cache's configuration
 
+**Decided: A** (2026-10-21), as recommended.
+
 - **A. S42 by construction; the configuration unchanged; M7 gated by budgets.**
   With D1 B, a whole compile and `--units --whole` run the same expansion on
   the same Mid. M7 cannot keep performance M3's gate that the whole
@@ -2797,6 +2817,8 @@ The owner asked whether MLton's build should use `-default-type int64
   with D1 A.
 
 ### D15. `--typecheck-only` and `--serve`
+
+**Decided: A** (2026-10-21), as recommended.
 
 - **A. No copies, now.** Typing comes from the summary; a copy only feeds code,
   which these modes do not make. `apply` takes `typed` whenever no code is
@@ -2817,11 +2839,36 @@ The owner asked whether MLton's build should use `-default-type int64
 
 ### D16. How it lands
 
+**Decided: A** (2026-10-21), as recommended.
+
 - **A. One change, behind one flag until M7.** M5's and M6's prototypes run
   behind `--functors=functions`, which switches whole compiles, builds in
   units and `--units --whole` together; M7 makes it the only way and removes
   the flag. **Recommended:** a flag per mode would break S42 between them.
 - **B. Units first, whole programs later.** S42 broken in between.
+
+### D17. MLton's default types
+
+**Decided: A** (2026-10-21), as recommended.
+
+The owner asked whether MLton's build should use `-default-type int64
+-default-type word64` anyway (E6).
+
+- **A. Leave MLton's build as it is.** **Recommended.**
+  - With D11 B, its hash agrees with Rune's already, and its caches are
+    shared.
+  - It compiles every program of `check-cross` to Rune's bytes today.
+  - 64-bit defaults would cost it 24% to 32% of its cycles on MLton's 606
+    files in units, by more elaboration and a full 7 GB heap.
+- **B. Build it with `-default-type int64 -default-type word64`.**
+  - Its `Int` and `Word` would then be closer to Rune's 63 bits than to 32,
+    so an `Overflow` that Rune does not raise is less likely in MLton's
+    build. None has been found.
+  - It builds cleanly. `check-cross` passes, 586 of 586, and caches are
+    shared both ways.
+  - The cost is the 24% to 32% above, for nothing measured.
+  - It is the four MLton lines of the Makefile (rune, runedoc, runeopt,
+    runeisa), through an `MLTONFLAGS`, and a line in `docs/building.md`.
 
 ## The milestones
 
