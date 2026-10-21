@@ -1,4 +1,4 @@
-(* The kernel of tests/lib/jupyter/interop.sh: Jupyter.serve with a
+(* The kernel of bin/rune-protocol-check interop jupyter: Jupyter.serve with a
    language that echoes. Executing code publishes it on stdout and gives
    it reversed as the result; code is complete when it ends with ";". *)
 val c = case CommandLine.arguments () of

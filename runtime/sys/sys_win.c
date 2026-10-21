@@ -2950,7 +2950,7 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
     /* the three handles, as inheritable copies, and only they inherited --
        with the interrupt's event the child's environment names (sys.h,
        sys_event_new), which it is to watch */
-    HANDLE std[3], list[5];
+    HANDLE std[3], list[6];
     int nlist = 0;
     for (int i = 0; i < 3; i++) {
         HANDLE h = handle_of(fds[i] >= 0 ? fds[i] : i);
@@ -2961,13 +2961,19 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
     }
     if (extra) list[nlist++] = extra;
     if (envp)
-        for (char *const *e = envp; *e; e++)
-            if (strncmp(*e, "RUNE_INTERRUPT_EVENT=", 21) == 0) {
+        for (char *const *e = envp; *e; e++) {
+            const char *value = NULL;
+            if (strncmp(*e, "RUNE_INTERRUPT_EVENT=", 21) == 0) value = *e + 21;
+            if (strncmp(*e, "JPY_INTERRUPT_EVENT=", 20) == 0) value = *e + 20;
+            if (value) {
                 char *end;
-                unsigned long long h = strtoull(*e + 21, &end, 10);
-                if (!*end && h != 0) list[nlist++] = (HANDLE)(uintptr_t)h;
-                break;
+                unsigned long long h = strtoull(value, &end, 10);
+                HANDLE event = (HANDLE)(uintptr_t)h;
+                int duplicate = 0;
+                for (int i = 0; i < nlist; i++) if (list[i] == event) duplicate = 1;
+                if (!*end && h != 0 && !duplicate && nlist < 6) list[nlist++] = event;
             }
+        }
     SIZE_T size = 0;
     InitializeProcThreadAttributeList(NULL, 1, 0, &size);
     LPPROC_THREAD_ATTRIBUTE_LIST attributes = malloc(size);

@@ -1,7 +1,7 @@
 (* libraries: test/unit *)
 (* Zmtp: the greeting and frames as ZMTP 3.1 writes them, read back in
    every split; then the kinds of socket talking to each other over the
-   loopback interface in one process. tests/lib/zmtp/interop.sh talks to
+   loopback interface in one process. bin/rune-protocol-check interop zmtp talks to
    a peer written from the specification in Python. *)
 structure ZmtpTest =
 struct

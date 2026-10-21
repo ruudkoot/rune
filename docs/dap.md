@@ -52,8 +52,8 @@ as the adapter of the type `rune`:
 
 ## Tests
 
-`tests/dap/run.py` (`make test-dap`) drives the adapter as an editor does,
-with Python's standard library: `prog.sml` stopped at a breakpoint, its
+`bin/rune-protocol-check dap` (`make test-dap`) drives the adapter as an editor does,
+with lib/dap and the shared SML transport: `prog.sml` stopped at a breakpoint, its
 frames, its variables, an expression in its frame and one that does not
 elaborate, a step, a stop at a raise its own handler takes, its output and
 its end; and `loop.sml` paused while it runs, in compiled code, and its

@@ -8,13 +8,9 @@
    and as JSON (tests/diagnostics/run.sh); and `rune --serve`, spoken to in
    JSON-RPC over its standard streams (tests/serve/run.py).
 
-   Run as jobs of their drivers, which stay: the REPL's protocol a script
-   at a time (tests/repl-protocol/run.py), the Debug Adapter Protocol and
-   the Jupyter kernel each with the engine's channel a pipe and a
-   connection (tests/dap/run.py; tests/kernel/run.sh, whose client speaks
-   ZMTP, and whose two share tests/out/kernel), the incremental scenarios
-   one at a time and the versioned random edits, whose projects share one
-   SML generator (IncrementalExtra and MutationChecks). *)
+   Framed REPL, DAP and notebook drivers are SML workers of
+   bin/rune-protocol-check. Their pipe/connection ways remain distinct;
+   Python is retained only for independent Jupyter/ZMTP peers. *)
 structure Protocols =
 struct
   open Sh
@@ -443,17 +439,19 @@ struct
                                        @ [job ("latin1-name", ["diagnostics-latin1"], [], 300, 600),
                                           job ("escaped-names", ["diagnostics-names"], [], 300, 600)])),
        tagged ["check", "test-serve", "covers:tests/serve/*"] (Test.describe "serve" [job ("rune", ["serve"], [], 500, 600)]),
-       Test.requires ["python3"] (tagged ["check", "test-repl-protocol", "covers:tests/repl-protocol/*"]
+       tagged ["check", "test-repl-protocol", "covers:tests/repl-protocol/*", "covers:tests/runner/protocol*.sml", "covers:tests/runner/replprotocolchecks.sml"]
          (Test.describe "repl-protocol"
-            (List.map (fn f => let val n = basename (String.substring (f, 0, size f - 7) ^ ".sml")
-                               in driver (n, "exec python3 tests/repl-protocol/run.py " ^ quote n) end)
-                      (glob ("tests/repl-protocol", ".script"))))),
-       Test.requires ["python3"] (tagged ["check", "test-dap", "covers:tests/dap/*"]
-         (Test.describe "dap" [driver ("pipe", "exec python3 tests/dap/run.py"),
-                               driver ("connection", "RUNE_ENGINE_CONNECT=1 exec python3 tests/dap/run.py")])),
-       Test.requires ["python3"] (tagged ["check", "test-kernel", "covers:tests/kernel/*"]
-         (Test.describe "kernel" [driverIn ["kernel"] ("pipe", "exec sh tests/kernel/run.sh"),
-                                  driverIn ["kernel"] ("connection", "RUNE_ENGINE_CONNECT=1 exec sh tests/kernel/run.sh")])),
+            (driver ("@faults", "exec bin/rune-protocol-check faults") :: List.map (fn f => let val n = basename (String.substring (f, 0, size f - 7) ^ ".sml")
+                               in driver (n, "exec bin/rune-protocol-check repl " ^ quote n) end)
+                      (glob ("tests/repl-protocol", ".script")))),
+       tagged ["check", "test-dap", "covers:tests/dap/*", "covers:tests/runner/protocol*.sml", "covers:tests/runner/dapchecks.sml"]
+         (Test.describe "dap" [driver ("pipe", "exec bin/rune-protocol-check dap"),
+                               driver ("connection", "RUNE_ENGINE_CONNECT=1 exec bin/rune-protocol-check dap")]),
+       tagged ["check", "test-kernel", "covers:tests/kernel/*", "covers:tests/runner/protocol*.sml", "covers:tests/runner/kernelchecks.sml"]
+         (Test.describe "kernel" [driverIn ["kernel"] ("pipe", "exec bin/rune-protocol-check kernel"),
+                                  driverIn ["kernel"] ("connection", "RUNE_ENGINE_CONNECT=1 exec bin/rune-protocol-check kernel"),
+             Test.requires ["jupyter-client"] (driverIn ["kernel"] ("notebook-pipe", "exec bin/rune-protocol-check notebook")),
+             Test.requires ["jupyter-client"] (driverIn ["kernel"] ("notebook-connection", "RUNE_ENGINE_CONNECT=1 exec bin/rune-protocol-check notebook"))]),
        tagged ["check", "test-incremental", "covers:tests/incremental/*", "covers:examples/hello.sml"]
          (Test.describe "incremental"
             (List.map (fn s => driver (s, "exec bin/rune-incremental one " ^ s ^ " bin/rune")) scenarios

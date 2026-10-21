@@ -86,9 +86,8 @@ stopped at a breakpoint can be looked into and sent on.
 
 ## Tests
 
-`tests/kernel/run.sh` (`make test-kernel`) drives the kernel with a client
-written from Jupyter's messaging specification with Python's standard
-library: the heartbeat, `kernel_info`, executions with their results as
+`bin/rune-protocol-check kernel` (`make test-kernel`) drives the kernel with a client
+written on lib/jupyter and lib/zmtp: the heartbeat, `kernel_info`, executions with their results as
 text and HTML, streams, a compile error, an uncaught exception,
 `is_complete`, `complete`, `inspect`, input from the notebook, the
 debugger -- `debugInfo`, a cell dumped under the name its hash gives,
@@ -97,6 +96,6 @@ frames, variables and an expression in the frame, `continue` -- an
 interrupt, and a shutdown. Where Python's `jupyter_client` is installed,
 `tests/kernel/notebook_client.py` does the same through it. `make
 test-kernel` runs both again with the engine on a connection, and `make
-test-windows` runs the client on Windows, where Windows has a Python, against
+test-windows` runs the SML client on Windows against
 `runevm.exe`'s kernel, interrupting it by its event
-(`tests/kernel/windows.py`).
+(`tests/runner/protocolchecks.sml`).

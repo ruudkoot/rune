@@ -224,7 +224,7 @@ change them.
   two whose names are escaped in the first line, one with its column
   after a character above ASCII (`escaped-names`).
 * `tests/repl/unicode`: the REPL's traces and frames in characters;
-  `tests/dap/run.py`: a frame's column in UTF-16 units.
+  `bin/rune-protocol-check dap`: a frame's column in UTF-16 units.
 * `tests/color/contrast.sml` (`colour/contrast` in `make test-diagnostics`): the contrast of every role's colour against
   the backgrounds of the reference palettes, and under simulated
   deficient colour vision (above).

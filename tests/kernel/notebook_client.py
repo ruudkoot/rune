@@ -3,7 +3,7 @@
 is installed: the kernelspec installed in a directory of the test's own and
 found through JUPYTER_PATH, a kernel started as a notebook starts one, code
 executed with its output collected, an interrupt by interrupt_kernel, and a
-shutdown. tests/kernel/run.sh runs it after its own client. (Not named jupyter_client.py,
+shutdown. bin/rune-protocol-check kernel runs it after its own client. (Not named jupyter_client.py,
 which would import itself.)"""
 import os
 import subprocess

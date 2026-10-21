@@ -215,7 +215,7 @@ tests/benchmarks/qsort-oracle.py	python	Retain: independent oracles/peers	retain
 tests/benchmarks/smith-oracle.py	python	Retain: independent oracles/peers	retained	87bed100c7a9f4adbaf18a67ed175b022879a290	-	independent oracles/peers
 tests/benchmarks/test-inventory.py	python	P2.3	retired	0f3ee253c43db26b09b67b727d3076cd9b8781ab	tests/runner/inventorytests.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
 tests/buildfile/run.sh	shell	P2.8	retired	35fbdd7bc5e34af2f053cc4c76de44860915974e	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
-tests/dap/run.py	python	P2.12	pending	faea0dacabe20c1dbc9dda3abcff4e5f6a3c0711	-	protocol-transcripts-and-peer-verdicts
+tests/dap/run.py	python	P2.12	retired	faea0dacabe20c1dbc9dda3abcff4e5f6a3c0711	tests/runner/dapchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
 tests/deps/run.sh	shell	P2.8	retired	bab704b294fe50b192be9eb1e03abbcbc6d8173d	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
 tests/dist/run.sh	shell	P2.8	retired	4318b951160e52bab975ba7bf0062c7b85b3f763	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
 tests/dynamic/run.sh	shell	P2.8	retired	942108eea8b84b1510f5795b36b1a33a8aa6e689	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
@@ -252,18 +252,18 @@ tests/intinf/options.py	python	P2.10	retired	e714d4cb12fa13d2ee40422f579eae2a22b
 tests/intinf/prepare-cross.py	python	P2.11	retired	bcfa6dc0274c04caab0325ba1bd2a09dc7dbe23f	tests/runner/gmpplatformchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
 tests/intinf/run.py	python	P2.10	retired	34df67b65da83c4b601068bac0eacfc373229c94	tests/runner/intinfchecks.sml	p2.10/acceptance+storage-shadow.json+generator-shadow.json+measurement-final-shadow.json+asan logs
 tests/intinf/storage.py	python	P2.10	retired	e11d492847c5af0cfd9cc33b59d844895cbae5bb	tests/runner/intinfstorage.sml	p2.10/acceptance+storage-shadow.json+generator-shadow.json+measurement-final-shadow.json+asan logs
-tests/kernel/client.py	python	P2.12	pending	bff733ac488496b531281119e161fcf4cc7e04a3	-	protocol-transcripts-and-peer-verdicts
+tests/kernel/client.py	python	P2.12	retired	bff733ac488496b531281119e161fcf4cc7e04a3	tests/runner/kernelchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
 tests/kernel/notebook_client.py	python	Retain: independent oracles/peers	retained	d88232eb1781a97d12b54e7a3dfba5aba095ef47	-	independent oracles/peers
-tests/kernel/run.sh	shell	P2.12	pending	3ac8b66342ba0ece4aa207e7c96a4cf9d35de3eb	-	protocol-transcripts-and-peer-verdicts
-tests/kernel/windows.py	python	P2.12	pending	c2963aeea7c7972181fe2cc9637f98372e686092	-	protocol-transcripts-and-peer-verdicts
+tests/kernel/run.sh	shell	P2.12	retired	3ac8b66342ba0ece4aa207e7c96a4cf9d35de3eb	tests/runner/protocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
+tests/kernel/windows.py	python	P2.12	retired	c2963aeea7c7972181fe2cc9637f98372e686092	tests/runner/protocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
 tests/layouts/check.sh	shell	P2.2	retired	1ff9ade6a0b9802a2e7b510d3237929ff10799be	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
 tests/layouts/measure.sh	shell	P2.14	pending	0a254c27829e82f4352188c69be31c86d6b3a9b8	-	captured-measurements-and-report-schemas
 tests/layouts/micro.sh	shell	P2.14	pending	06d6818d1933e7dc92865d7cde1fce84b0f56e36	-	captured-measurements-and-report-schemas
 tests/layouts/tables.py	python	P2.14	pending	83f48bc289683fb39410d16bc5bf444efad83a56	-	captured-measurements-and-report-schemas
 tests/lib/digest/gen-vectors.py	python	P2.15	pending	a80fe5f2b55adc0af85e58b5ccc96701a5827696	-	generated-bytes-and-source-order
-tests/lib/jupyter/interop.sh	shell	P2.12	pending	7d9b70aa15ed2a98baf0b900a40f8d015823779b	-	protocol-transcripts-and-peer-verdicts
+tests/lib/jupyter/interop.sh	shell	P2.12	retired	7d9b70aa15ed2a98baf0b900a40f8d015823779b	tests/runner/protocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
 tests/lib/jupyter/interop/client.py	python	Retain: independent oracles/peers	retained	ac40165b11ea2b033bdd40a8bd8bd1d0f97eeaff	-	independent oracles/peers
-tests/lib/zmtp/interop.sh	shell	P2.12	pending	1a5b3e8fe95ce694de03c59e03da088877325f38	-	protocol-transcripts-and-peer-verdicts
+tests/lib/zmtp/interop.sh	shell	P2.12	retired	1a5b3e8fe95ce694de03c59e03da088877325f38	tests/runner/protocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
 tests/lib/zmtp/interop/peer.py	python	Retain: independent oracles/peers	retained	6b7878b38144398b68557d7dc66bd40aec9b6a56	-	independent oracles/peers
 tests/opt/rbcasm.awk	awk	P2.1	retired	144862d76485522be00270aeb46eaed01feecad4	tests/runner/bytecode.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
 tests/opt/real-g.awk	awk	P2.1	retired	ed5408a3cf34ce36787112ef67e3d8478770765f	tests/runner/bytecode.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
@@ -274,7 +274,7 @@ tests/opt/run-opt-tests.sh	shell	P2.1	retired	976c36abe50cda8f70f4fedd297967463d
 tests/perf/gen.py	python	P2.15	pending	7922ecf640ba37065daa9b8ef01b3c0c88796624	-	generated-bytes-and-source-order
 tests/perf/run-perf.sh	shell	P2.3	retired	09065e7aced24596615dc8005eaa742ecb978742	tests/runner/budgets.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
 tests/register/jit-dump.py	python	P2.2	retired	49148a32f0199e5a275547acb1681daa1400d7d5	tests/runner/jitdumpcheck.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
-tests/repl-protocol/run.py	python	P2.12	pending	ac8065c9eeaa1bebd8ca6ee098a6d657a8b423a0	-	protocol-transcripts-and-peer-verdicts
+tests/repl-protocol/run.py	python	P2.12	retired	ac8065c9eeaa1bebd8ca6ee098a6d657a8b423a0	tests/runner/replprotocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
 tests/run-tests.sh	shell	P2.7	retired	4c720038dfb7acdbc2cee3bcbb211eca06a5d9a1	tests/runner/langchecks.sml+suite-main.sml	p2.7/windows-shadow.json+portability-new-acceptance+count-rerun.log+stress-asan.log+faults.log
 tests/run-windows.sh	shell	P2.7	retired	50ce45d86563adbb98a07e030724f574d0a28e9f	tests/runner/windowschecks.sml	p2.7/windows-shadow.json+portability-new-acceptance+count-rerun.log+stress-asan.log+faults.log
 tests/runtime/run-vm-tests.sh	shell	P2.7	retired	99586d739a2a8694a28c9928b690cd57887e3fef	tests/runner/vmchecks.sml	p2.7/windows-shadow.json+portability-new-acceptance+count-rerun.log+stress-asan.log+faults.log

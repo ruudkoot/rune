@@ -789,12 +789,12 @@ bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) build
 test-windows-text: windows $(RUNE) bin/rune.rbc bin/rune.stack.rbc
 	RUNE=$(RUNE) WINCC='$(WINCC)' WINCC32='$(WINCC32)' sh tests/windows/run.sh
 
-test-windows: bin/rune-matrix bin/rune-test bin/rune-windows windows $(RUNE) bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel test-windows-text
+test-windows: bin/rune-matrix bin/rune-test bin/rune-windows bin/rune-protocol-check windows $(RUNE) bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel test-windows-text
 	$(RUNE_TEST) --tier test-windows
 	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE_STACK)) bin/rune-matrix -j $(JOBS) --configs windows
 	sh tests/terminal/run.sh --windows
-	python3 tests/dap/run.py --windows
-	sh tests/kernel/run.sh --windows
+	bin/rune-protocol-check dap --windows
+	bin/rune-protocol-check kernel --windows
 
 # ------------------------------------------------------------- portability
 # The VM on machines this one is not: a 32-bit x86, where a pointer is four
@@ -1582,7 +1582,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite build/bench-counts.rbc
+check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check build/bench-counts.rbc
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -1770,4 +1770,13 @@ bin/rune-windows: bin/rune-windows.rbc bin/runevm Makefile
 	chmod +x $@
 bin/rune-suite: bin/rune-suite.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-suite.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+PROTOCOL_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/windowsdir.sml \
+                 tests/runner/protocolio.sml tests/runner/protocoljson.sml tests/runner/replprotocolchecks.sml \
+                 tests/runner/dapchecks.sml tests/runner/kernelchecks.sml tests/runner/protocolchecks.sml tests/runner/protocolfaults.sml tests/runner/protocol-main.sml
+bin/rune-protocol-check.rbc: $(RUNE) $(PROTOCOL_SRCS) manifests
+	$(RUNE) --library test/runner --library jupyter --library dap --library unicode $(PROTOCOL_SRCS) -o $@
+bin/rune-protocol-check: bin/rune-protocol-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-protocol-check.rbc" "$$@"\n' > $@
 	chmod +x $@

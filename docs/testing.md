@@ -259,7 +259,7 @@ to parse and to name programs that exist (`expectations/*`).
 `tests/basis/deviations.txt` is read by the engine for the Basis suite in
 Rune's configurations (`tests/runner/basis.sml`, with run-matrix.sh's rule
 that any line explains a failure and a line that explains none is stale),
-and by `run-matrix.sh` for the hosts; `tests/basis/law-skips.txt` (lines of
+and by `bin/rune-matrix` for the hosts; `tests/basis/law-skips.txt` (lines of
 three fields, of every way) by the engine for the laws
 (`tests/runner/laws.sml`).
 
@@ -554,7 +554,7 @@ The set takes about 30 minutes at three rounds on the reference machine
 (15 a VM, half of it the GC-stress tier and the 1 GB runs, which are run
 once), and the preparation a few more: the catalogue's programs compiled by
 `bin/rune -O2 --lint` into the output directory (`tests/out/gc-eval`),
-MLton's by `tests/external/run-mlton-bench.sh --prepare` from `MLTON_BENCH`
+MLton's by `bin/rune-external benchmark --prepare` from `MLTON_BENCH`
 (their runs are left out where it is missing). `--extras` adds about three
 minutes. Rune compiling MLton is part of the set but runs only with
 `--mlton-compile`: about 10 minutes a VM, 12 GiB of address space (the heap
@@ -635,31 +635,23 @@ bytecode, controller crash or failure before the first law fails the job.
 The property seed and environment are inherited; the default law idle limit
 is 30 seconds and the sample count is 20 per file.
 
+The remaining benchmark correctness and deterministic-budget drivers use
+`bin/rune-bench-check` and `bin/rune-budget`. `suite NAME` selects the typed
+case contract, `catalogue` accepts the former profile/config/filter options,
+`smoke` runs routine correctness, `extra` includes the independent peers and
+negative scenarios, and `inventory` runs the preserved upstream fixtures.
+Console output now uses the common runner's per-case report and events.
+Original script names and blob IDs in benchmark-cases.json are provenance.
+The three baseline failures (fluid float formatting, pidigits5 and zarith
+27-digit layout) remain failures; all 267 old/new output streams match.
 
-The full Basis controller is bin/rune-matrix: configurations, standalone
-program/input/data modes, timing, refresh and resolution output are retained.
-The --one route selects an exact name. Collection, comparison, stale
-deviations and reports are separate inventory cases. Missing structures are
-named skips; an explicit CLI selection fails if its compiler cannot start.
-Interactive sessions are distinguished by compiler identity. Reports include
-dropped sources, timing phases and timings.tsv. Cache imports accept legacy
-CRC and version-2 keys and preserve reuse when only the execution VM changes.
-
-
-Benchmark correctness and deterministic budgets use bin/rune-bench-check
-and bin/rune-budget. The catalogue accepts profile/config/filter options;
-suite NAME selects the typed benchmark contract, smoke selects routine
-correctness, extra includes independent peers and negative scenarios, and
-inventory replays the preserved fixture contract. Original script names and
-blob IDs in benchmark-cases.json are provenance. Six baseline failures remain
-visible; the migration does not change expected numeric answers.
-
-
-bin/rune-scenarios selects deps, buildfile, dynamic, units, install or dist.
-Installation accepts repeated --host choices and keeps all stage prefixes
-private. Distribution checks read archive metadata in SML and compare
-independent ELF/PE fixtures; gzip/unzip are decoding adapters. The actual
-Windows installer case uses --no-register and requires Windows interop.
+`bin/rune-scenarios SUITE [--rune BIN]` selects deps, buildfile, dynamic, units,
+install or dist. Installation also accepts repeated `--host NAME`; Make's
+install tier retains bytecode, MLton and SML/NJ. All stage prefixes are private.
+Distribution assertions read archive metadata in SML and use independent
+ELF/PE fixture bytes. Compression decoding uses gzip/unzip, declared as
+capabilities. The Windows installer case uses `--no-register` and is gated
+on Windows interop.
 
 
 The incremental cache controller is `bin/rune-incremental`. `scenarios`
@@ -681,15 +673,16 @@ The pinned MLton compiler scenario remains an explicit expensive command,
 `bin/rune-incremental mlton CHECKOUT [OUT]`, with its memory availability guard.
 
 
-IntInf correctness and optional measurements use bin/rune-intinf. Its run,
-storage, backends, hardening and options routes retain the original modes
-and limits. Frozen Python integer answers and the saved list oracle remain
-independent of the backend under test. The workload query exposes preserved
-fixed/exploratory sources to later analysis tools. Optional --bench,
---paired-oracle/--paired-sml and --compiler-workloads routes use shared SML
-process metrics; report schema 2 identifies the SML controller, sources and
-payloads, CPU/RSS, samples, pairing, affinity and libc. Timings are separate
-from deterministic verdicts and instrumentation.
+The full Basis controller is SML: bin/rune-matrix retains configurations,
+standalone program/input/data modes, timing, refresh and resolution output.
+The --one CONFIG TEST route selects an exact name. Explicit CLI selections
+fail when a required compiler cannot start. Collection, comparison, stale
+deviations and reports are separate inventory cases; missing structures are
+recorded as skips. Interactive sessions are distinguished by the actual
+compiler, so Rune compiling a host library still has compile-only type checks.
+Reports include dropped sources, timing phases and compatible timings.tsv
+records. Bytecode imports accept legacy CRC and version-2 keys, invalidate
+changed inputs and preserve reuse when only the execution VM changes.
 
 
 Language/runtime platform workers are bin/rune-suite and bin/rune-windows.
@@ -710,3 +703,13 @@ configurations before rebuilding enabled VMs; cross --sml-vms DIR tests every
 required platform, arithmetic backend and saved-image consumer/limit pair.
 Production download policy has an offline CLI seam; SML drives actual child
 processes and corrupt/partial archive fixtures without importing Python mocks.
+
+
+
+Protocol drivers use bin/rune-protocol-check: repl NAME [--update], dap,
+kernel, notebook and interop LIB COMPILER VM OUT. DAP and kernel accept
+--windows; the root inventory retains separate pipe and connection ways.
+Protocol assertions and Windows staging are SML. Python capabilities belong
+to the independent Jupyter/ZMTP peers and optional jupyter_client. Faults
+exercise malformed headers/signatures, wrong reply IDs, premature exit and
+lost interrupts, with kernel shutdown and leak detection during failures.

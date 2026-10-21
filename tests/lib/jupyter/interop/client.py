@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The client of tests/lib/jupyter/interop.sh, written from Jupyter's
+"""The client of bin/rune-protocol-check interop jupyter, written from Jupyter's
 messaging specification (5.4) on the ZMTP peer of tests/lib/zmtp, with the
 standard library alone: it asks the kernel for its info, executes code and
 checks what iopub says around it (busy, the input, a stream, the result,

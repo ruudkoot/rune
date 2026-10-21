@@ -120,7 +120,7 @@ owner; a shared helper can remain until that milestone's last dependent lands.
 | P2.9 | P2.0; P2.6 where matrix execution is shared | Incremental edits and external corpora | done 2026-10-21 |
 | P2.10 | P2.0 | IntInf correctness and hardening drivers | done 2026-10-21 |
 | P2.11 | P2.8, P2.10; P2.7 for Windows paths | GMP build/download/install/cross tests | done 2026-10-21 |
-| P2.12 | P2.0; P2.7 for Windows paths | REPL protocol, DAP, kernel and interop orchestration | pending |
+| P2.12 | P2.0; P2.7 for Windows paths | REPL protocol, DAP, kernel and interop orchestration | done 2026-10-21 |
 | P2.13 | P2.0; runtime pty support | Terminal scenarios and tester display checks | pending |
 | P2.14 | relevant correctness ports and P2.6 | Measurement and analysis tools | pending |
 | P2.15 | P2.4, P2.6, P2.9 | Post-bootstrap generators | pending |
@@ -778,3 +778,33 @@ The SML root dependency/download selection passes 7/7 including canaries;
 Rune and MLton compile identical worker bytecode. Raw logs and comparisons
 are under tests/out/unit-testing-part2/p2.11. The Python production tools
 remain pending P2.16; their CLI seams are the subjects, not imported test mocks.
+
+### P2.12 acceptance, 2026-10-21
+
+Seven legacy protocol controllers are retired. bin/rune-protocol-check uses
+lib/jsonrpc, lib/dap, lib/jupyter and lib/zmtp, with bounded duplex reads,
+framing, asynchronous stream draining, authentication and reply correlation.
+All seven REPL transcripts retain their exact expected bytes, including JSON
+spelling, Unicode and interrupts. DAP covers both editor sessions, frame
+variables/evaluation, exceptions, UTF-16 columns, output, pause and shutdown.
+The notebook client retains all executions, input, display and debugger checks;
+its cell filename hash is frozen from the independent Python calculation.
+
+Both engine ways pass against the old and new POSIX drivers. Independent
+Jupyter/ZMTP peers pass under the SML launchers; third-party jupyter_client
+passes both ways and remains an optional, explicitly named peer capability.
+Native Windows SML DAP and notebook drivers pass alongside the legacy drivers,
+including JPY_INTERRUPT_EVENT. The existing runtime event primitives cover all
+system layers (ENOSYS where unsupported); Windows spawning now inherits the
+Jupyter event as well as the Rune event, deduplicating equal handles. No Python
+or ctypes launcher holds the Windows process or protocol policy.
+
+Seven planted faults cover invalid signatures, response parents, malformed
+headers, wrong response IDs, early exits and a lost interrupt. The first root
+run exposed an engine leak on failure (20 PASS, 1 LEAK); its receipt is kept
+in p2.12/before-cleanup-fix. Cleanup now interrupts and requests shutdown before
+waiting for the kernel, and the complete integrated selection passes 21/21
+without leaks. The old unsupervised exploratory engine was separately removed.
+Rune and MLton compile identical final protocol bytecode. Receipts and raw
+comparisons remain under tests/out/unit-testing-part2/p2.12. Final global
+acceptance and the runtime-change platform reruns remain required by P2.17.

@@ -330,7 +330,7 @@ struct
     let val log = libOut ^ "/" ^ lib ^ "-interop.txt"
     in
       mkdirs libOut;
-      if exec {cmd = ["/bin/sh", "tests/lib/" ^ lib ^ "/interop.sh", fromRoot "bin/rune", fromRoot "bin/runevm", libOut], dir = NONE,
+      if exec {cmd = [fromRoot "bin/rune-protocol-check", "interop", lib, fromRoot "bin/rune", fromRoot "bin/runevm", libOut ^ "/" ^ lib ^ "-interop"], dir = NONE,
                stdin = "", stdout = log, stderr = log, timeout = 0} = 0
       then () else fail ("lib." ^ lib ^ ": the interop (see " ^ log ^ ")")
     end
@@ -886,7 +886,7 @@ struct
              @ List.concat (List.map (fn lib =>
                                         List.map (fn s => job (lib ^ "/" ^ basename s, ["lib-suite", lib, s], [], 500, 600))
                                                  (glob ("tests/lib/" ^ lib, ".sml"))
-                                        @ (if exists ("tests/lib/" ^ lib ^ "/interop.sh")
+                                        @ (if lib="zmtp" orelse lib="jupyter"
                                            then [Test.requires ["python3"] (job (lib ^ "/@interop", ["lib-interop", lib], [], 500, 600))]
                                            else [])
                                         @ [job (lib ^ "/@check", ["lib-basis-check", lib], [], 300, 600),
