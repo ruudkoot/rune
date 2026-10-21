@@ -352,3 +352,14 @@ still have the illegal `chunkSize` 0.
 reproduces wrong external pattern values on the managed 64-/32-bit 110.99.9 and
 2026.2 hosts, while their internal accessor passes. It is recorded separately
 from the arithmetic/GC reports above; no fix or upstream posting is claimed.
+
+## The amd64 code generator, 2026-10-21
+
+| Report | 110.99.9, 64-bit | 2026.2 | Upstream |
+|---|---|---|---|
+| [MLRISC/movabsq-spilled](MLRISC/movabsq-spilled/BUGREPORT.md): "MLRisc bug: AMD64MCEmitter: MOVABSQ unimplemented" when a word constant of 2^30 or more (`Word64`: 2^31) goes to a spilled loop parameter | 3 of 6 cases do not compile | 0 (the compiler no longer uses MLRISC's amd64 back end) | not reported; draft in `upstream.md`; no fix written |
+
+The spill rewrite (`MLRISC/amd64/ra/amd64SpillInstr.sml`) moves a 64-bit
+immediate straight into the spill slot, which x86-64 cannot encode. Found
+choosing a hash for Rune's unit cache ([functors-units.md](../../plans/functors-units.md),
+E6); that hash builds its constants at start-up to avoid it.

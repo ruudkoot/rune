@@ -131,9 +131,20 @@ it is said to be outside this roadmap.
   since abstract parameter types reach Lower there.
 
 **Outside this roadmap:**
-- **SML/NJ 110.99.9 on amd64 cannot compile a 63-bit word constant** (E6):
-  "MLRisc bug: AMD64MCEmitter: MOVABSQ unimplemented". rx2fw builds its
-  constants at start-up for it.
+- **SML/NJ 110.99.9 on amd64 crashes on some uses of a large word
+  constant** (E6): "MLRisc bug: AMD64MCEmitter: MOVABSQ unimplemented".
+  - The smallest case is a word constant of 2^30 or more passed as the
+    accumulator of a recursive function over a list that adds to it:
+    `fun go ([], a) = a | go (v :: r, a : word) = go (r, a + v)` applied to
+    `0wx40000000`.
+  - `0wx3FFFFFFF` compiles; so does `Word64`'s case with a constant of
+    2^31. A plain literal, or a multiplication by one, compiles too.
+  - SML/NJ 2026.2 compiles them all.
+  - The cause is MLRISC's spill rewrite, which moves a 64-bit immediate
+    straight into a spill slot, where x86-64 cannot encode it.
+  - rx2fw builds its constants at start-up for it.
+  - Reported in `docs/bugreport/smlnj/MLRISC/movabsq-spilled`; not sent
+    upstream, and no fix written.
 - **`smlnj32`'s `Word64` is wrong** (E6): `fromInt`, shifts and `+` give
   wrong results, and `0wx40000000 : Word64.word` prints 0.
 - **Rune's int64 VM has a 64-bit `Word` whatever the bytecode** (E6), so a
@@ -1643,9 +1654,10 @@ The owner also asked whether MLton's build should use `-default-type int64
   63-bit arithmetic in `Int` limbs for `smlnj32` alone.
 - **Earlier, for information:**
   - `Random.hashString` (`lib/random`) gave other values on `smlnj32`.
-  - SML/NJ 110.99.9 on amd64 cannot compile a 63-bit word constant ("MLRisc
-    bug: AMD64MCEmitter: MOVABSQ unimplemented"), so rx2fw's constants are
-    built from 21-bit pieces at start-up, which costs Rune nothing.
+  - SML/NJ 110.99.9 on amd64 crashes on some uses of a word constant of
+    2^30 or more ("MLRisc bug: AMD64MCEmitter: MOVABSQ unimplemented";
+    *Found while writing this roadmap*), so rx2fw's constants are built
+    from 21-bit pieces at start-up, which costs Rune nothing.
 
 **What it predicts (D11, D17):**
 - rx2fw for text and for combining, 126 bits, with an unmasked loop where
@@ -1991,8 +2003,8 @@ found. What it changed in this roadmap:
   build Rune, and Rune builds itself; `make check-cross` wants the same bytes
   from all of them for every program it compiles. So the compiler's own code
   must compile on every host, and must not raise there: `Int` arithmetic
-  that overflows raises on a host whose `Int` is 32 bits, and SML/NJ cannot
-  compile a 63-bit word constant.
+  that overflows raises on a host whose `Int` is 32 bits, and SML/NJ
+  110.99.9 crashes on some uses of a word constant of 2^30 or more.
 - **The hash is chosen for Rune at tier 2** (the owner, 2026-10-21). Its
   speed and correctness there decide it. Whether another host's build of
   the compiler computes the same values is for information (E6, D11).
@@ -2213,8 +2225,8 @@ rx2fw (E6). It is two lanes of 63 bits, and every operation is mod 2^63.
   - P3 = `0x0B2B33D8CF1BBCFD`;
   - P4 = `0x42F5E53BE1595731`.
 
-  They are built from 21-bit pieces at start-up, since SML/NJ cannot
-  compile a 63-bit word constant.
+  They are built from 21-bit pieces at start-up, since SML/NJ 110.99.9
+  crashes on some uses of a word constant of 2^30 or more.
 - **Rounds:**
   - `A (a, x) = rotl (a + x * P2, 31) * P1`;
   - `B (b, x) = rotl (b + x * P4, 27) * P3`.
