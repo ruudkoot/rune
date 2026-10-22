@@ -24,13 +24,20 @@ it.
 | Milestone | What | State |
 |---|---|---|
 | M0 | The REPL's branch and `incremental` merged; this plan's numbers measured again | done 2026-10-13: both on `master` since 2026-10-11 (#38, #39), the numbers measured again at `2e2351ba` |
-| M1 | The compiler moved to `lib/compiler`, the driver left in `src` | planned |
+| M1 | The compiler moved to `lib/compiler`, the driver left in `src` | in progress: extraction implemented; acceptance corrections and a clean full check remain |
 | M2 | A library's names: export lists for `rune --library` | planned |
 | M3 | The compiler's state: a session that starts from nothing | planned |
 | M4 | `RuneCompiler`: the API, its tests, its frozen cache | planned |
 | M5 | The clients: the REPL's engine, `rune --serve`, the Basis's `Compiler` | planned |
 
 Size: L, about 2,000 lines of SML beside the move of about 19,000.
+
+Implementation is part of the owner's language-server work as explicitly
+requested on 2026-10-22. It is on the `language-server` branch, in the
+separate worktree created from `origin/master` at
+`c3e713891e6ea9f32770371427fdfa5f76369255`. The measurements below remain
+the historical M0 baseline; implementation evidence is recorded with each
+milestone. Public sessions remain a prerequisite of language-server M5.
 
 ## Before it starts: the REPL's work merged
 
@@ -238,6 +245,42 @@ session is the REPL engine's, made a library's.
   sources' paths are in it.
 * **Touches:** every path in `docs/architecture.md`; `AGENTS.md`;
   rune-ide's generated MLB, which reads Rune's sources.
+
+Implementation checkpoint (2026-10-22):
+
+* Moved 61 compiler files under `lib/compiler`, retaining their directory
+  structure. The driver and executable entrypoints remain in `src`.
+  `util.build`, `frontend.build` and `internal.build` describe the shared
+  implementation subsets; `library.build` is the future public library's
+  build. The seven settings read by library passes now belong to
+  `CompilerSettings`; command-line `Options` aliases them.
+* The bootstrap build walker follows relative, nested `use` declarations,
+  accepts nested comments, includes an imported build once and rejects
+  cycles. Library indexing follows annotated imports too. The compiler's
+  build-list command now agrees with its existing once-only elaboration of
+  repeated imports. Regression coverage is `low-level/compiler-layout`.
+* Version/identity configuration remains generated outside hashed source
+  blocks. A generated copy in `lib/compiler/config.sml` lets an installed
+  library use its own sources without reaching outside its directory.
+  Generated configuration and MANIFEST files are ignored.
+* Native MLton and self-hosted builds, the compiler-library manifest check
+  (358 files including its dependencies), moved-compiler smoke test,
+  layout regression, and documentation generation passed. The first full
+  check (`tests/out/r/20261022-055115-2191344`) recorded 19,328 passes,
+  five failures and four skips. The failures exposed missing imported build
+  files in two copy fixtures, an outdated host-suite count, scratch register
+  bytecode picked up by the stack disassembly sweep, and an absent-GMP
+  report-directory bug. The copied-build failure also caused two dependent
+  reproducibility skips, alongside the two documented native interrupt
+  skips. After correction, rerunning all affected cases and their
+  dependencies passed 588 tests with the intended pinned-GMP absence skip
+  (`tests/out/r/20261022-061408-2371193`, 34.7 seconds). All 427 cross-host
+  comparison cases had passed in the full run. A clean combined full check
+  remains required before marking M1 complete.
+
+The IDE migration is separate work. Its generated build inputs will need
+to follow the new compiler paths when that roadmap consumes this branch;
+changing the IDE checkout is not a prerequisite for the standalone server.
 
 ### M2. A library's names (M, about 300 SML)
 

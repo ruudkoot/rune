@@ -13,7 +13,7 @@
         {"start": 0, "stop": 2, "text": "", "accepted": true}
       ]},
     {"name": "large-generated", "mode": "ascii", "generate": 10000, "accepted": true},
-    {"name": "compiler-parser", "mode": "ascii", "files": ["../../../src/frontend/parser.sml"], "accepted": true},
-    {"name": "compiler-ordered", "mode": "ascii", "files": ["../../../src/frontend/token.sml", "../../../src/frontend/lexer.sml", "../../../src/frontend/fixity.sml", "../../../src/frontend/parser.sml"], "accepted": true}
+    {"name": "compiler-parser", "mode": "ascii", "files": ["../../../lib/compiler/frontend/parser.sml"], "accepted": true},
+    {"name": "compiler-ordered", "mode": "ascii", "files": ["../../../lib/compiler/frontend/token.sml", "../../../lib/compiler/frontend/lexer.sml", "../../../lib/compiler/frontend/fixity.sml", "../../../lib/compiler/frontend/parser.sml"], "accepted": true}
   ]
 }

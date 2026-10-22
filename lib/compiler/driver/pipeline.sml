@@ -7,7 +7,7 @@ struct
   (* The stage that makes Mid, from Lambda or from its text. *)
   fun midStage (showIn : ('a -> string) option) (f : 'a -> Mid.program) : 'a -> Mid.program =
     Pass.stage {name = "mid", showIn = showIn, show = MidText.show,
-                check = fn p => (MidLint.check p; if !Options.midRoundTrip then MidText.roundTrip p else ()),
+                check = fn p => (MidLint.check p; if !CompilerSettings.midRoundTrip then MidText.roundTrip p else ()),
                 size = Mid.size}
                f
 
@@ -59,7 +59,7 @@ struct
 
   (* Low to the code of the target --target names *)
   fun targetStage (low : Low.program) : Code.program =
-    if !Options.target = "registers" then
+    if !CompilerSettings.target = "registers" then
       Pass.stage {name = "registers", showIn = SOME Low.show, show = Code.dump, check = fn _ => (), size = Code.size}
                  Regs.program low
     else
@@ -67,7 +67,7 @@ struct
                  Stack.program low
 
   (* the fingerprint of the bytecode --target names *)
-  fun fingerprint () : int = if !Options.target = "registers" then RegCodes.fingerprint else Opcodes.fingerprint
+  fun fingerprint () : int = if !CompilerSettings.target = "registers" then RegCodes.fingerprint else Opcodes.fingerprint
 
   (* A unit, elaborated, made into its code and what the linker needs of it
      (Link.sessionCode), with Pass.whole false; the units after it may call

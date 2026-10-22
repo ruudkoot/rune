@@ -8,18 +8,18 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 
 | Stage | From | To | Lint |
 |---|---|---|---|
-| `translate` | the elaborated syntax | `Lambda` (`src/core/lambda.sml`) | `LambdaLint` |
-| `mid` | `Lambda` | `Mid` (`src/core/mid.sml`, by `ToMid`) | `MidLint` |
-| `midcanon` | `Mid` | `Mid` numbered canonically (`src/core/midcanon.sml`), as one made of its units' `Mid` is; a whole program only | `MidLint` |
-| `shake` | `Mid` | `Mid`, what nothing reaches gone (`src/core/shake.sml`), from `-O1` | `MidLint` |
-| `lift` | `Mid` | `Mid`, local functions that never escape made functions of the top level (`src/core/lift.sml`), from `-O1` | `MidLint` |
-| `workers` | `Mid` | `Mid`, tupled and curried functions split into workers and wrappers (`src/core/workers.sml`), from `-O1` | `MidLint` |
-| `simplify` | `Mid` | `Mid`, shrunk (`src/core/simplify.sml`), from `-O1` | `MidLint` |
-| `refs` | `Mid` | `Mid`, a loop's local refs as values (`src/core/refs.sml`), from `-O1` | `MidLint` |
-| `lower` | `Mid` | `Low` (`src/backend/low.sml`, by `Lower`) | `LowLint` |
-| `stack` | `Low` | instruction lists (`src/backend/stack.sml`), with `--target=stack` | none yet |
-| `registers` | `Low` | instruction lists of the register bytecode (`src/backend/regs.sml`), the default target | none yet |
-| `emit` | instruction lists | the `.rbc` (`src/backend/emit.sml`) | |
+| `translate` | the elaborated syntax | `Lambda` (`lib/compiler/core/lambda.sml`) | `LambdaLint` |
+| `mid` | `Lambda` | `Mid` (`lib/compiler/core/mid.sml`, by `ToMid`) | `MidLint` |
+| `midcanon` | `Mid` | `Mid` numbered canonically (`lib/compiler/core/midcanon.sml`), as one made of its units' `Mid` is; a whole program only | `MidLint` |
+| `shake` | `Mid` | `Mid`, what nothing reaches gone (`lib/compiler/core/shake.sml`), from `-O1` | `MidLint` |
+| `lift` | `Mid` | `Mid`, local functions that never escape made functions of the top level (`lib/compiler/core/lift.sml`), from `-O1` | `MidLint` |
+| `workers` | `Mid` | `Mid`, tupled and curried functions split into workers and wrappers (`lib/compiler/core/workers.sml`), from `-O1` | `MidLint` |
+| `simplify` | `Mid` | `Mid`, shrunk (`lib/compiler/core/simplify.sml`), from `-O1` | `MidLint` |
+| `refs` | `Mid` | `Mid`, a loop's local refs as values (`lib/compiler/core/refs.sml`), from `-O1` | `MidLint` |
+| `lower` | `Mid` | `Low` (`lib/compiler/backend/low.sml`, by `Lower`) | `LowLint` |
+| `stack` | `Low` | instruction lists (`lib/compiler/backend/stack.sml`), with `--target=stack` | none yet |
+| `registers` | `Low` | instruction lists of the register bytecode (`lib/compiler/backend/regs.sml`), the default target | none yet |
+| `emit` | instruction lists | the `.rbc` (`lib/compiler/backend/emit.sml`) | |
 
 `-O0` is the same stages with no optional pass; `-O0` and `-O2` must give
 programs that print and exit the same, traces included (`make
@@ -27,7 +27,7 @@ check-levels`). The first code generator, of `Lambda`, was `-O0` and the
 reference the new back end was compared with until M10 (decision D10 of
 the plan).
 
-Each stage runs through `Pass.stage` (`src/util/pass.sml`), which prints
+Each stage runs through `Pass.stage` (`lib/compiler/util/pass.sml`), which prints
 what it is given or makes when asked, checks it with the lint of its
 representation, and says what it cost. An optional pass, one that only
 optimises, says from which level it runs (`Pass.enabled`): `trees`, which
@@ -79,7 +79,7 @@ so that an expected dump does not change with stamps made elsewhere.
 
 ### The elaborator's counters
 
-`--pass-stats=elab` (`src/elab/elabstats.sml`) prints, for each top-level
+`--pass-stats=elab` (`lib/compiler/elab/elabstats.sml`) prints, for each top-level
 declaration, a line
 
 ```
@@ -143,7 +143,7 @@ A breach is a bug of the compiler, never of the program.
 `Lambda` is typed (decision D3 of the plan): the lint finds the type of
 every node from its parts, and a mistake of the translation or the match
 compiler shows as a node whose parts do not fit. The types are `Ty.ty`
-(`src/core/ty.sml`), made from the elaborator's once it has finished:
+(`lib/compiler/core/ty.sml`), made from the elaborator's once it has finished:
 
 * **Generic and free variables:** `Gen` is a variable of a scheme; `Var` one
   no type was ever found for, equal only to itself.
@@ -208,7 +208,7 @@ are numbered afresh as `'a`, `'b`, ... like the program's.
 
 ## Mid
 
-Mid (`src/core/mid.sml`) is the representation the optimisations will work
+Mid (`lib/compiler/core/mid.sml`) is the representation the optimisations will work
 on: A-normal form with join points, typed in the manner of System F, its
 top level a list of definitions (decision D1 of the plan).
 
@@ -273,7 +273,7 @@ have generalised them: a variable of the program or a function; a variable
 `MidText.show` prints a program (`--dump-after=mid`), and `MidText.parse`
 reads it back (`--read-mid`), so that a pass can be tested on a small
 program written by hand. The grammar is at the head of
-`src/core/midtext.sml`:
+`lib/compiler/core/midtext.sml`:
 
 * S-expressions, with types written as in SML; a record of one field is
   `{int}`.
@@ -484,7 +484,7 @@ does.
 
 ## Low
 
-Low (`src/backend/low.sml`) is what the targets are made from: each
+Low (`lib/compiler/backend/low.sml`) is what the targets are made from: each
 function is blocks with parameters in SSA form (decision D2), and what Mid
 leaves implicit is explicit.
 
@@ -494,7 +494,7 @@ leaves implicit is explicit.
   itself, which it reads as `Self`; captured values are read with `Env i`.
   The functions of a group capture each other, and those not made yet are
   set after (`SetEnv`): flat closures.
-* **Constructors** (`Rep`, `src/backend/rep.sml`, M11): one whose declared
+* **Constructors** (`Rep`, `lib/compiler/backend/rep.sml`, M11): one whose declared
   argument is a tuple of two or more is one object of those fields, its
   tag in the header -- `Con` of the fields, and `Field (tag, i, v)` to take
   field `i` -- and one of any other argument boxes it, `Con` of one and

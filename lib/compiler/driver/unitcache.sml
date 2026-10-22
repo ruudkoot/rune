@@ -45,7 +45,7 @@ struct
      that takes no flags, the REPL's use): each unit found is compiled all
      the same, and must be what its entry holds *)
   fun verifying () : bool =
-    !Options.verifyCache orelse (case OS.Process.getEnv "RUNE_VERIFY_CACHE" of SOME s => s <> "" | NONE => false)
+    !CompilerSettings.verifyCache orelse (case OS.Process.getEnv "RUNE_VERIFY_CACHE" of SOME s => s <> "" | NONE => false)
 
   (* whether an entry found for the unit now named name holds the basis and
      the code that compiling it gave: the code by the bytes, where none of
@@ -106,15 +106,15 @@ struct
   (* The directory of the cache: --cache-dir, else RUNE_CACHE, else .rune in
      the directory of the first input; NONE with --no-cache *)
   fun directory () : string option =
-    if !Options.noCache then NONE
+    if !CompilerSettings.noCache then NONE
     else
-      case !Options.cacheDir of
+      case !CompilerSettings.cacheDir of
         SOME d => SOME d
       | NONE =>
           case OS.Process.getEnv "RUNE_CACHE" of
             SOME d => if d = "" then NONE else SOME d
           | NONE =>
-              case !Options.inputs of
+              case !CompilerSettings.inputs of
                 first :: _ => SOME (OS.Path.joinDirFile {dir = OS.Path.dir first, file = ".rune"})
               | [] => SOME ".rune"
 
@@ -124,9 +124,9 @@ struct
      compile reads after its own cache and never writes; NONE with
      --no-cache or where there is none *)
   fun frozen () : string option =
-    if !Options.noCache then NONE
+    if !CompilerSettings.noCache then NONE
     else
-      case !Options.libDir of
+      case !CompilerSettings.libDir of
         NONE => NONE
       | SOME lib =>
           let val d = OS.Path.joinDirFile {dir = lib, file = "cache"}

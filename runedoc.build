@@ -1,13 +1,6 @@
-(* The build file of the sources of runedoc, the documentation generator
-  (docs/plans/docgen.md): the compiler's utilities, frontend and elaborator,
-  which it shares with rune.build in the same order, and src/doc.
-  scripts/gen-build-files.sh makes the build files of every host from this
-  file -- edit only this file. The rules of rune.build hold here too. *)
+(* Documentation generation reuses the compiler frontend. *)
 build/config.sml
 files
-  src/util/scon.sml
-  src/util/ordmap.sml
-  src/util/inttable.sml
   lib/unicode/utf8_sig.sml
   lib/unicode/utf8.sml
   lib/unicode/width_data.sml
@@ -25,30 +18,11 @@ files
   lib/unicode/security_data.sml
   lib/unicode/security_sig.sml
   lib/unicode/security.sml
-  src/util/ident.sml
-  src/util/source.sml
-  src/util/error.sml
   lib/json/json_sig.sml
   lib/json/json.sml
-  src/util/color.sml
-  src/util/diagnostic.sml
-  src/util/usage.sml
-  src/frontend/token.sml
-  src/frontend/lexer.sml
-  src/elab/elabstats.sml
-  src/elab/types.sml
-  src/core/ty.sml
-  src/elab/overload.sml
-  src/frontend/ast.sml
-  src/frontend/fixity.sml
-  src/frontend/parser.sml
-  src/elab/unify.sml
-  src/elab/env.sml
-  src/elab/sigmatch.sml
-  src/elab/exhaust.sml
-  src/backend/prims.sml
-  src/elab/elaborate.sml
-  src/driver/basismanifest.sml
+end
+use lib/compiler/frontend.build
+files
   src/doc/docsource.sml
   src/doc/docdiag.sml
   src/doc/doccomments.sml

@@ -1,0 +1,37 @@
+(* Compiler internals for drivers and the public session facade. *)
+use frontend.build
+files
+  settings.sml
+  core/lambda.sml
+  core/lambdalint.sml
+  core/matchcomp.sml
+  core/translate.sml
+  core/mid.sml
+  core/midlint.sml
+  core/midtext.sml
+  core/tomid.sml
+  core/midcanon.sml
+  core/target.sml
+  core/shake.sml
+  core/lift.sml
+  core/simplify.sml
+  core/workers.sml
+  core/refs.sml
+  backend/code.sml
+  backend/low.sml
+  backend/target.sml
+  backend/lowlint.sml
+  backend/rep.sml
+  backend/lower.sml
+  backend/stack.sml
+  backend/regcodes.sml
+  backend/regs.sml
+  backend/emit.sml
+  backend/link.sml
+  backend/unitfile.sml
+  driver/unitbasis.sml
+  driver/pipeline.sml
+  driver/unitmid.sml
+  driver/unitcache.sml
+  driver/deps.sml
+end

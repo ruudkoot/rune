@@ -318,7 +318,7 @@ struct
   fun regcodesSml (instrs : rinstruction list, fp : int) : file =
     let val is = numbered instrs
     in
-      {path = "src/backend/regcodes.sml",
+      {path = "lib/compiler/backend/regcodes.sml",
        text =
          lines
            (["(* " ^ generated ^ " *)",

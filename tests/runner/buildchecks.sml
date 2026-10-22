@@ -43,16 +43,44 @@ struct
         val status=execute name (["/bin/sh","-c","ulimit -s 1024 && exec \"$@\"","jit-stack",fromRoot "bin/runevm"] @ flags @ [directory () ^ "/deeprec.rbc"]) 300
     in if status=0 andalso same (directory () ^ "/" ^ name ^ ".out","tests/lang/rt.deeprec_stack.expected") then ()
        else say ("FAIL JIT deep recursion: " ^ name ^ " differs or exits unsuccessfully\n") end
+  fun compilerLayout () =
+    let
+      val dir = run ^ "/compiler-layout"
+      val () = mkdirs (dir ^ "/nested")
+      val () = write (dir ^ "/root.build", "(* outer (* nested *) comment *)\nuse nested/part.build\nfiles second.sml end\nuse nested/part.build\n")
+      val () = write (dir ^ "/nested/part.build", "files first.sml end\n")
+      val () = write (dir ^ "/nested/first.sml", "structure First = struct end\n")
+      val () = write (dir ^ "/second.sml", "structure Second = struct end\n")
+      fun invoke name args =
+        let val output = dir ^ "/" ^ name ^ ".out"
+            val errors = dir ^ "/" ^ name ^ ".err"
+            val status = exec {cmd = args, dir = SOME root, stdin = "", stdout = output, stderr = errors, timeout = 60}
+        in (status, read output, read errors) end
+      val (status, listed, _) = invoke "bootstrap" ["sh", fromRoot "scripts/build-files.sh", dir ^ "/root.build"]
+      val expected = [dir ^ "/nested/first.sml", dir ^ "/second.sml"]
+      val () = if status = 0 andalso lines listed = expected then () else say "FAIL compiler layout: bootstrap use/order differs\n"
+      val (status, compiled, _) = invoke "compiler" [fromRoot (env ("RUNE", "bin/rune")), "--build-list", dir ^ "/root.build"]
+      val () = if status = 0 andalso lines compiled = expected then () else say "FAIL compiler layout: compiler build-list differs\n"
+      val () = write (dir ^ "/library.build", "annotate \"demand\" in use nested/part.build end\n")
+      val (status, _, _) = invoke "library" [fromRoot (env ("RUNE", "bin/rune")), "--basis-index", dir]
+      val () = if status = 0 andalso String.isSubstring "nested/first.sml | demand" (read (dir ^ "/MANIFEST")) then ()
+               else say "FAIL compiler layout: library index did not follow annotated use\n"
+      val () = write (dir ^ "/cycle.build", "use cycle.build\n")
+      val (status, _, errors) = invoke "cycle" ["sh", fromRoot "scripts/build-files.sh", dir ^ "/cycle.build"]
+    in if status <> 0 andalso String.isSubstring "cyclic" errors then () else say "FAIL compiler layout: cyclic use was accepted\n" end
   fun command ["build-asm-check"]=SOME asmCheck
     | command ["build-asm-faults"]=SOME asmFaults
     | command ["build-jit-compile"]=SOME compile
     | command ["build-jit-deep",name]=SOME (fn () => deep name)
+    | command ["build-compiler-layout"]=SOME compilerLayout
     | command _=NONE
   val vm=Test.it "vm-refusals"
     {program="/bin/sh",args=["sh","-c","exec \"$RUNE_TEST_ROOT\"/bin/rune-windows vm --vm \"${RUNEVM:-bin/runevm-stack}\" --out \"$RUNE_TEST_RUN/low-level/vm\""],
      env=NONE,dir=SOME ".",stdin=NONE,timeout=Time.fromSeconds 900,cap=0,cpus=1,memory=500,pools=[],exclusive=false,after=[],judge=failLines} : Run.command Test.tree
   val tree=Test.describe "low-level"
-    [tagged ["check","test","test-low-level","covers:tests/compiler/*","covers:tests/runtime/*"]
+    [tagged ["check","test-build","covers:lib/compiler/*","covers:*.build","covers:scripts/build-files.sh"]
+       (job "compiler-layout" ["build-compiler-layout"] []),
+     tagged ["check","test","test-low-level","covers:tests/compiler/*","covers:tests/runtime/*"]
        (Test.describe "basic" [vm,executable "heap" "build/heap_test" []]),
      tagged ["check","layout","test-heap","test-heap-hooks","covers:tests/runtime/*"]
        (Test.describe "heap-hooks" (List.map (fn (name,binary) => executable name binary [])

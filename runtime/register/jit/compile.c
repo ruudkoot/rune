@@ -68,7 +68,7 @@ static uint32_t fatal_record(JitProgram *jit, uint32_t func, uint32_t pc, int32_
    read there before it is written needs the fill (unit is what the loop
    would read). The answer is the lowest register needing it: the calls
    fill from there up, since the compiler numbers registers by first use
-   (src/backend/regs.sml), which keeps the answer tight. */
+   (lib/compiler/backend/regs.sml), which keeps the answer tight. */
 uint32_t jit_fill_from(VM *vm, JitProgram *jit, uint32_t f) {
     if (jit->fill_from[f] != UINT32_MAX) return jit->fill_from[f];
     const Program *p = &vm->prog;

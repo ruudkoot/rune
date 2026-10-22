@@ -106,7 +106,7 @@ ASCII, and a unit in any mode can name it (*A library's build file* of
 
 Once a unit is compiled, what the units after it need of it -- its
 *export basis* (the incremental roadmap's D4) -- is written as bytes
-(`UnitBasis.export`, `src/driver/unitbasis.sml`; [bytecode.md](bytecode.md),
+(`UnitBasis.export`, `lib/compiler/driver/unitbasis.sml`; [bytecode.md](bytecode.md),
 *A unit's basis*): the environment it declared, its fixity directives,
 signatures, functors and overloading, and the compiler's tables of what it
 declared: each value's scheme, each exception's argument, each datatype's
@@ -236,7 +236,7 @@ per declaration pays for its compiler and not for the JIT again
 A compile in units keeps what it made of each unit -- its basis and its
 code -- in a cache, and a compile after it takes a unit from there rather
 than compiling it again where nothing it depends on changed (`UnitCache`,
-`src/driver/unitcache.sml`; the incremental roadmap's D14):
+`lib/compiler/driver/unitcache.sml`; the incremental roadmap's D14):
 
 * the cache is a directory: `--cache-dir DIR`, else `$RUNE_CACHE` (empty:
   none), else `.rune` beside the first input; `--no-cache` compiles every
@@ -397,7 +397,7 @@ runs the scenarios of `tests/incremental/SCENARIOS.md` it can be held to.
 ## The graph
 
 `rune --deps FILE...` puts files in an order where each comes after the
-files that declare the modules it uses (`Deps`, `src/driver/deps.sml`; the
+files that declare the modules it uses (`Deps`, `lib/compiler/driver/deps.sml`; the
 incremental roadmap's M8 and D15), and `--deps-dot` gives the graph in DOT,
 each file to the files it needs. A file declares the structures,
 signatures, functors and top-level type abbreviations of its top level;

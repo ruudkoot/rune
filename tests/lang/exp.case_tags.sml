@@ -1,5 +1,5 @@
 (* Matches on a constructor's tag in every representation the compiler
-   gives a datatype (src/backend/lower.sml): nullary constructors alone
+   gives a datatype (lib/compiler/backend/lower.sml): nullary constructors alone
    (an immediate), constructors that all carry a value (a pointer), the two
    mixed, and many constructors (a SWITCH) -- each value in a register and
    live across calls (in its slot), so that compiled code tests each the way

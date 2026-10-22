@@ -1,0 +1,6 @@
+(* The compiler library; its public export facade follows the extraction. *)
+libraries unicode json end
+annotate "demand" in
+  config.sml
+  use internal.build
+end

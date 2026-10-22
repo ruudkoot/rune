@@ -206,7 +206,7 @@ name the tools to check.
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot`; `bin/rune.stack.rbc` is the same compiler in the stack bytecode |
 | `make test` | the programs of `tests/lang` and `tests/errors` compiled by `bin/rune-stack` (`bin/rune --target=stack`, written by every `make`, for `RUNE=` if you give one) and run on `bin/runevm-stack`, on the runner (`bin/rune-test run --tier test`; `tests/runner/lang.sml`), and `make test-steps`: the compiler's own tests, the runtime's limits and collector log, `bin/rune-windows vm` (bytecode files and options the VM must refuse with a message) and the C test of the heap. `make test-heap`, `test-gc`, `test-all`, `test-native`, `test-register` and `test-register-jit` run `tests/lang` in their ways the same way, each by its tag, and the rest of what they run as `make TARGET-steps` |
 | `make test-all` | run the suite with each of the six host builds |
-| `make isa` | write the tables of the instruction set and the primitives again from their descriptions in `src/isa`, with `runeisa` built by MLton: `runtime/stack/opcodes.def`, `runtime/prims.def`, `runtime/isa.h`, `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `src/backend/opcodes.sml`, `src/backend/prims.sml`; they are committed |
+| `make isa` | write the tables of the instruction set and the primitives again from their descriptions in `src/isa`, with `runeisa` built by MLton: `runtime/stack/opcodes.def`, `runtime/prims.def`, `runtime/isa.h`, `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `lib/compiler/backend/opcodes.sml`, `lib/compiler/backend/prims.sml`; they are committed |
 | `make check-isa` | fail when one of those files is not what `src/isa` gives, with `runeisa` built by MLton and by the self-hosted compiler; part of `make check` |
 | `make test-ir` | the tests of the intermediate representations (`tests/ir`, [ir.md](ir.md)): the dumps of small programs compiled with the lint of every pass on |
 | `make check-levels` | every program of `tests/lang` and `tests/perf` compiled at `-O0` and `-O2` with the lint on; where the bytecode differs, both runs must print and exit the same |
@@ -645,8 +645,8 @@ toolchains.
   ML: `src/isa/stack.sml` and `src/isa/prims.sml`, in the language of
   `src/isa/isa.sml`. `runeisa` (`runeisa.build`, `src/isa`) writes from
   them `runtime/isa.h` (what the two instruction sets share: the `.rbc` version and
-  each set's fingerprint), `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `src/backend/opcodes.sml`,
-  `src/backend/prims.sml`, and `runtime/stack/opcodes.def` and `runtime/prims.def`, which the
+  each set's fingerprint), `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `lib/compiler/backend/opcodes.sml`,
+  `lib/compiler/backend/prims.sml`, and `runtime/stack/opcodes.def` and `runtime/prims.def`, which the
   scripts read. All of them are committed, so that the VM builds with a C
   compiler alone: `make isa` writes them again, and `make check-isa`, part of
   `make check`, fails when one is not what the descriptions give. The C
@@ -696,7 +696,7 @@ counter-generated stamps, rule 5 below) and on its sources staying inside the
 language Rune accepts (rule 6). If stage 2 ever differs from stage 1, diff the
 `runevm-stack --disasm` output of the two files, then the `--dump-lambda` /
 `--dump-code` output of `bin/rune-mlton` and `bin/rune` on the first
-differing input. `src/util/ordmap.sml` (a functor applied twice) is the
+differing input. `lib/compiler/util/ordmap.sml` (a functor applied twice) is the
 module-system acceptance test of the bootstrap.
 
 ## Portability rules for compiler sources
@@ -718,9 +718,9 @@ rules so that one source tree builds everywhere and emits identical output:
 4. Reals are never converted to binary by the compiler; they travel to the VM
    as their literal text.
 5. All iteration over maps uses the ordered `StringMap`/`IntMap` from
-   `src/util/ordmap.sml`, and every generated name/stamp comes from a counter,
+   `lib/compiler/util/ordmap.sml`, and every generated name/stamp comes from a counter,
    so output is deterministic across hosts. A hash table (`IntTable`,
-   `src/util/inttable.sml`) is only set and asked by key, never listed.
+   `lib/compiler/util/inttable.sml`) is only set and asked by key, never listed.
 6. The compiler must be compilable by Rune itself, so its sources stay inside
    the language described in `docs/language.md`: in particular no literal or
    operator overloading at `IntInf.int` (write `IntInf.fromInt n` and

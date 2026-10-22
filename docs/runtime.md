@@ -107,7 +107,7 @@ real has elsewhere). Both are laid out as C has them, and the collector
 copies them without looking inside.
 
 A constructor whose argument is a tuple is one object of the tuple's
-fields, its tag in the header (`CONN`; `src/backend/rep.sml`); one of any
+fields, its tag in the header (`CONN`; `lib/compiler/backend/rep.sml`); one of any
 other argument is an object of one field around it, 16 bytes. So a list
 cell, `::` of head and tail, is one object of 24 bytes. `runevm --stats`
 and `--count` report what a program really allocates; `--count` leaves

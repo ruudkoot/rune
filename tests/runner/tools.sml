@@ -750,7 +750,7 @@ struct
       val () = if planted then write (fault,
         "structure Color = struct\n  open Color\n"
         ^ "  val table = map (fn (\"error\", _, d, l) => (\"error\", \"30\", d, l) | row => row) table\nend\n") else ()
-      val sources = ["src/util/color.sml"] @ (if planted then [fault] else []) @ ["tests/color/contrast.sml"]
+      val sources = ["lib/compiler/util/color.sml"] @ (if planted then [fault] else []) @ ["tests/color/contrast.sml"]
     in
       if exec {cmd = ["bin/rune", "--library", "json"] @ sources @ ["-o", dir ^ "/contrast.rbc"],
                dir = NONE, stdin = "", stdout = log, stderr = log, timeout = 120} <> 0
@@ -777,8 +777,10 @@ struct
       val programs = [("rune", "polyml-build.sml"), ("runedoc", "runedoc-polyml-build.sml"),
                       ("runeopt", "runeopt-polyml-build.sml"), ("runeisa", "runeisa-polyml-build.sml"),
                       ("runeffi", "runeffi-polyml-build.sml")]
-      val () = List.app (fn n => write (dir ^ "/" ^ n, read (fromRoot n)))
-                         (List.map (fn (name, _) => name ^ ".build") programs)
+      val () = List.app (fn n => (mkdirs (OS.Path.dir (dir ^ "/" ^ n));
+                                  write (dir ^ "/" ^ n, read (fromRoot n))))
+                         (List.map (fn (name, _) => name ^ ".build") programs @
+                          ["lib/compiler/internal.build", "lib/compiler/frontend.build", "lib/compiler/util.build"])
       val () = write (dir ^ "/scripts/build-files.sh", read (fromRoot "scripts/build-files.sh"))
       val script = fromRoot script
       val log = dir ^ "/reference.log"

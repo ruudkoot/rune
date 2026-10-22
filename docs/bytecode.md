@@ -62,7 +62,7 @@ either a nullary constructor or a value in the heap (a list), `8` unit,
 `9` an `Int64.int` and `10` a `Word64.word` (64 bits where an int and a
 word are the VM's 63: an immediate, or a small object for a number past
 them) -- a register being shared only among values of one representation
-(`src/backend/regs.sml`); its blocks, each by the `pc` it begins at and
+(`lib/compiler/backend/regs.sml`); its blocks, each by the `pc` it begins at and
 the registers of its parameters, so that the SSA form the compiler had
 can be had again; and the `pc`s of its loop heads. The register bytecode
 carries the section (`nmeta` is `nfuncs`); the stack bytecode none
@@ -320,7 +320,7 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `SELECT i` | index | Pop a tuple, push field `i`. |
 | `CON t` | tag | Pop a value, push `t` applied to it. |
 | `DECON t` | tag | Pop a constructor value, of tag `t`, push its argument. The tag is tested only under `runevm-stack --checked`. |
-| `CONN t, n` | tag, count | Pop `n` values (first pushed is field 0) and push `t` made of them: one object of `n` fields, the tag in its header -- how a constructor whose argument is a tuple of `n` is made (`src/backend/rep.sml`). |
+| `CONN t, n` | tag, count | Pop `n` values (first pushed is field 0) and push `t` made of them: one object of `n` fields, the tag in its header -- how a constructor whose argument is a tuple of `n` is made (`lib/compiler/backend/rep.sml`). |
 | `FIELD t, i` | tag, index | Pop a constructor value that `CONN` made, of tag `t`, push its field `i`. The tag is tested only under `runevm-stack --checked`. |
 | `CONTAG` | | Pop a constructor value (nullary or not), push its tag as an int. |
 | `CLOSURE f, n` | function, count | Pop `n` values into the environment of a new closure of function `f`. |

@@ -11,7 +11,7 @@
                  the header). str = obj (a K_STRING).
      A "position" is a field, a local or an argument. MONO positions are
      those whose type the compiler knows to be int/real (rep INT/REAL in
-     src/backend/rep.sml); POLY positions have a type variable ('a) there.
+     lib/compiler/backend/rep.sml); POLY positions have a type variable ('a) there.
      Only L4 tells them apart; in L0-L3 both are the same tagged val.
 
    IMMEDIATES (never allocate in L0; may allocate in L1-L4 as noted)

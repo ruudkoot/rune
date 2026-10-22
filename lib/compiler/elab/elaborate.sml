@@ -57,7 +57,7 @@ struct
   val dynamicAt : Source.span option ref = ref NONE
 
   (* The signatures and functors declared since UnitBasis.begin, newest
-     first: what a unit's basis holds of them (src/driver/unitbasis.sml) *)
+     first: what a unit's basis holds of them (lib/compiler/driver/unitbasis.sml) *)
   val insertedSigs : string list ref = ref []
   val insertedFuns : string list ref = ref []
 
@@ -491,7 +491,7 @@ struct
   (* The placeholders a summary names its values and exceptions by: one
      for each, in the order of the environment, under every stamp a unit
      can have, so that writing a summary into a unit's basis adds no name
-     of the unit's own (src/driver/unitbasis.sml) *)
+     of the unit's own (lib/compiler/driver/unitbasis.sml) *)
   val placeholderBase = ~1000000
   fun placeholders (e : env) : env =
     let

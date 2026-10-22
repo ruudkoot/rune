@@ -315,15 +315,26 @@ struct
       val text = readText file handle IO.Io _ => raise Options.Usage ("cannot read the build file " ^ file)
       val decs = BuildFile.parse (file, text) handle BuildFile.Error m => raise Options.Usage m
       val libs : string list ref = ref []
-      fun entries (anns, ds) = List.concat (List.map (fn d => entry (anns, d)) ds)
-      and entry (anns, d) =
+      val used = ref [] : string list ref
+      fun relative (base, p) = OS.Path.mkCanonical (OS.Path.concat (base, p))
+      fun entries (base, stack, anns, ds) = List.concat (List.map (fn d => entry (base, stack, anns, d)) ds)
+      and entry (base, stack, anns, d) =
         case d of
-          BuildFile.File p => [(p, anns)]
-        | BuildFile.Files ps => List.map (fn p => (p, anns)) ps
-        | BuildFile.Annotate (a, ds) => entries (anns @ a, ds)
+          BuildFile.File p => [(relative (base, p), anns)]
+        | BuildFile.Files ps => List.map (fn p => (relative (base, p), anns)) ps
+        | BuildFile.Annotate (a, ds) => entries (base, stack, anns @ a, ds)
+        | BuildFile.Use p =>
+            let val path = relative (base, p)
+                val () = if List.exists (fn q => q = path) stack then raise Options.Usage (file ^ ": cyclic use of " ^ path) else ()
+            in if List.exists (fn q => q = path) (!used) then []
+               else let val () = used := path :: !used
+                        val source = readText (OS.Path.concat (dir, path))
+                          handle IO.Io _ => raise Options.Usage (file ^ ": cannot read " ^ path)
+                        val included = BuildFile.parse (path, source) handle BuildFile.Error m => raise Options.Usage m
+                    in entries (OS.Path.dir path, path :: stack, anns, included) end end
         | BuildFile.Libraries ns => (libs := !libs @ ns; [])
         | _ => raise Options.Usage (file ^ ": a library's build file lists its files, annotated; no more")
-      val listed = entries ([], decs)
+      val listed = entries (".", ["library.build"], [], decs)
       fun classOf anns =
         case List.filter (fn a => List.exists (fn c => c = a) ["always", "demand", "seal", "final"]) anns of
           [] => "demand" | cs => List.last cs
@@ -376,11 +387,17 @@ struct
   (* the files of a plan, in the order they are compiled, with their
      annotations *)
   fun unitsOf (steps : step list) : (string * string list) list =
-    List.concat (List.map (fn SUnit (p, anns) => [(p, anns)]
-                            | SLocal (a, b) => unitsOf a @ unitsOf b
-                            | SLibrary (_, ds) => unitsOf ds
-                            | SUse (_, ds) => unitsOf ds
-                            | SImplements (_, ds) => unitsOf ds) steps)
+    let
+      val used = ref [] : string list ref
+      fun units ds = List.concat (List.map one ds)
+      and one (SUnit (p, anns)) = [(p, anns)]
+        | one (SLocal (a, b)) = units a @ units b
+        | one (SLibrary (_, ds)) = units ds
+        | one (SUse (path, ds)) =
+            if List.exists (fn p => p = path) (!used) then []
+            else (used := path :: !used; units ds)
+        | one (SImplements (_, ds)) = units ds
+    in units steps end
   fun filesOf (steps : step list) : string list = List.map #1 (unitsOf steps)
 
   fun compile () : OS.Process.status =

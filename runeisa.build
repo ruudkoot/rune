@@ -6,7 +6,7 @@
   hold here too. *)
 build/config.sml
 files
-  src/util/ordmap.sml
+  lib/compiler/util/ordmap.sml
   src/isa/isa.sml
   src/isa/stack.sml
   src/isa/prims.sml

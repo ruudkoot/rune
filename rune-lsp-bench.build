@@ -1,9 +1,9 @@
 (* The compiler frontend and the runelsp measurement harness. *)
 files
   build/config.sml
-  src/util/scon.sml
-  src/util/ordmap.sml
-  src/util/inttable.sml
+  lib/compiler/util/scon.sml
+  lib/compiler/util/ordmap.sml
+  lib/compiler/util/inttable.sml
   lib/unicode/utf8_sig.sml
   lib/unicode/utf8.sml
   lib/unicode/width_data.sml
@@ -21,25 +21,25 @@ files
   lib/unicode/security_data.sml
   lib/unicode/security_sig.sml
   lib/unicode/security.sml
-  src/util/ident.sml
-  src/util/source.sml
-  src/util/error.sml
+  lib/compiler/util/ident.sml
+  lib/compiler/util/source.sml
+  lib/compiler/util/error.sml
   lib/json/json_sig.sml
   lib/json/json.sml
-  src/util/color.sml
-  src/util/diagnostic.sml
-  src/util/pass.sml
-  src/util/usage.sml
-  src/util/pickle.sml
-  src/frontend/token.sml
-  src/frontend/lexer.sml
-  src/elab/elabstats.sml
-  src/elab/types.sml
-  src/core/ty.sml
-  src/elab/overload.sml
-  src/frontend/ast.sml
-  src/frontend/fixity.sml
-  src/frontend/parser.sml
+  lib/compiler/util/color.sml
+  lib/compiler/util/diagnostic.sml
+  lib/compiler/util/pass.sml
+  lib/compiler/util/usage.sml
+  lib/compiler/util/pickle.sml
+  lib/compiler/frontend/token.sml
+  lib/compiler/frontend/lexer.sml
+  lib/compiler/elab/elabstats.sml
+  lib/compiler/elab/types.sml
+  lib/compiler/core/ty.sml
+  lib/compiler/elab/overload.sml
+  lib/compiler/frontend/ast.sml
+  lib/compiler/frontend/fixity.sml
+  lib/compiler/frontend/parser.sml
   lib/digest/digest_sig.sml
   lib/digest/sha256.sml
   lib/digest/hex_sig.sml

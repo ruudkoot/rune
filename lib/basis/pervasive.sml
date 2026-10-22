@@ -69,7 +69,7 @@ fun foldr f init [] = init
 (* ---- strings and characters ---- *)
 (* `^`, `size`, `concat` and `substring` are the compiler's, overloaded over
    the class String as the comparisons are, `string` by default
-   (src/elab/env.sml; docs/language.md, Deviations, Overloading) *)
+   (lib/compiler/elab/env.sml; docs/language.md, Deviations, Overloading) *)
 val str = _prim "string_from_char" : char -> string
 val implode = _prim "string_implode" : char list -> string
 val explode = _prim "string_explode" : string -> char list

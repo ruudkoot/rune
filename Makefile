@@ -104,14 +104,14 @@ RUNEDOC ?= bin/runedoc
 RUNEOPT ?= bin/runeopt
 
 SOURCES  := $(shell sh scripts/build-files.sh rune.build)
-GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml src/backend/regcodes.sml
+GEN_SML  := lib/compiler/backend/opcodes.sml lib/compiler/backend/prims.sml lib/compiler/backend/regcodes.sml
 GEN_C    := runtime/isa.h runtime/stack/opcodes.h runtime/prims_table.h runtime/stack/interp_cases.h runtime/stack/interp_labels.h runtime/stack/ops.h runtime/register/regops.h runtime/register/reg_cases.h
 SOURCES_DOC := $(shell sh scripts/build-files.sh runedoc.build)
 SOURCES_OPT := $(shell sh scripts/build-files.sh runeopt.build)
 SOURCES_ISA := $(shell sh scripts/build-files.sh runeisa.build)
 SOURCES_FFI := $(shell sh scripts/build-files.sh runeffi.build)
 BUILDFILES := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb build/runeffi.mlb build/runeffi.cm build/runeffi-polyml-build.sml build/runeffi-mlkit.mlb
-VERSIONGEN := build/config.sml runtime/version.h
+VERSIONGEN := build/config.sml runtime/version.h lib/compiler/config.sml
 BUILDGEN := $(BUILDFILES) $(VERSIONGEN)
 
 # The core VM is ISO C99; what needs the operating system is in runtime/sys/sys.h and
@@ -400,7 +400,7 @@ build/.doctor-%: scripts/doctor.sh
 # ---------------------------------------------------------------- generated
 gen: $(BUILDGEN)
 
-$(BUILDFILES) &: rune.build runedoc.build runeopt.build runeisa.build runeffi.build scripts/build-files.sh scripts/gen-build-files.sh
+$(BUILDFILES) &: rune.build runedoc.build runeopt.build runeisa.build runeffi.build lib/compiler/internal.build lib/compiler/frontend.build lib/compiler/util.build scripts/build-files.sh scripts/gen-build-files.sh
 	sh scripts/gen-build-files.sh "$(ROOT)"
 
 # The version is git's (scripts/gen-version.sh): asked on every make, and
@@ -1312,10 +1312,10 @@ test-repl: bin/rune-repl bin/runevm bin/rune-test
 
 # rune-kernel, a Jupyter kernel for Standard ML (docs/kernel.md): a bridge
 # in SML over lib/jupyter that drives the REPL's engine as its child
-bin/rune-kernel.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml src/util/ident.sml src/kernel/kernel.sml manifests \
+bin/rune-kernel.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml lib/compiler/util/ident.sml src/kernel/kernel.sml manifests \
                      $(wildcard lib/jupyter/*.sml lib/zmtp/*.sml lib/digest/*.sml lib/json/*.sml lib/jsonrpc/*.sml lib/unicode/*.sml)
 	$(RUNE) --library jupyter --library jsonrpc --library digest --library unicode src/front/engine.sml src/dap/translate.sml \
-	  src/util/ident.sml src/kernel/kernel.sml -o $@
+	  lib/compiler/util/ident.sml src/kernel/kernel.sml -o $@
 bin/rune-kernel: bin/rune-kernel.rbc bin/rune-repl.img bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-kernel.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" --program "$$d/rune-kernel.rbc" "$$@"\n' > $@
 	chmod +x $@
@@ -1391,7 +1391,7 @@ check-docs: check-docs-generated bin/rune-test bin/rune-doc-check
 
 check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/sdl/*.sml lib/ffi/win32/common/*.sml lib/ffi/win32/native/*.sml lib/ffi/win32/sdldriver/*.sml lib/ffi/win32/model/*.sml lib/ffi/win32/mock/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/sdl/*.sml lib/ffi/win32/common/*.sml lib/ffi/win32/native/*.sml lib/ffi/win32/sdldriver/*.sml lib/ffi/win32/model/*.sml lib/ffi/win32/mock/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) lib/compiler/*.sml lib/compiler/*/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
