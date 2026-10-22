@@ -77,6 +77,14 @@ returned context identifier can also select one. Dismissal or unsupported
 client UI leaves the context unresolved. Document synchronization remains
 available while semantic analysis awaits an explicit selection.
 
+## Editor syntax
+
+The compiler library also provides `RuneCompiler.Syntax`, a separate SML
+editor parser with immutable snapshots, lossless source pieces, recovery,
+cross-file fixity environments and lexical/declaration reuse. It is tested
+against the batch parser. Server analysis integration remains in progress;
+the server does not yet advertise syntax or semantic editing providers.
+
 ## Protocol and acceptance
 
 [The protocol contract](lsp-protocol.md) records implemented behavior and

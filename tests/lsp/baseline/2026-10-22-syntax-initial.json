@@ -1,0 +1,271 @@
+{
+  "schema": 1,
+  "date": "2026-10-22",
+  "base_commit": "3760da885",
+  "metadata": {
+    "schema": "runelsp-syntax-bench-v1",
+    "compiler_version": "3760da885-dirty",
+    "compiler_identity": "165116b22370148b49c648954da28740",
+    "machine": "Intel Xeon E5-1680 v3 3.20GHz; WSL2 Linux 6.18.33.2; 16 processors; idle host runner",
+    "repetitions": 20,
+    "warmup": 3,
+    "fixtures": [
+      {
+        "name": "small",
+        "bytes": 94,
+        "sha256": "eb25bdb6b5471cffdd62057ab3d2943bb4e894bad3f3c670c4c3b64faf1a8428"
+      },
+      {
+        "name": "fixity",
+        "bytes": 35,
+        "sha256": "39b662a3867b00737e9914b8b4571e8b35c5f07796c83ba9fce9d86557c1581f"
+      },
+      {
+        "name": "compiler-parser",
+        "bytes": 61154,
+        "sha256": "195f52a42b72644f86d42b5c60b5931d92a8302cdcf983130757288546b2a10e"
+      },
+      {
+        "name": "generated-1000",
+        "bytes": 14780,
+        "sha256": "9c6d5f2503e2c660d988a8b96ae598a0afb533546ceb50edd4b04665ae6a0192"
+      },
+      {
+        "name": "generated-10000",
+        "bytes": 167780,
+        "sha256": "334a0f6c35000ccd249fd35cd2c041428d70a8a576a4e70014611e749472ac1a"
+      }
+    ],
+    "scope": "source/index construction, lexing, parsing and required compiler AST bridge; fresh compiler owner for every phase",
+    "edit": "append one newline at EOF; same original snapshot for every measured edit",
+    "oracle": "full constructor/scalar/span traversal compared with fresh batch parse, outside timing"
+  },
+  "command": "bin/runevm --jit=off --heap-limit 536870912 bin/rune-lsp-syntax-bench.rbc --out /tmp/rune-lsp-syntax-measured-20261022 --repetitions 20 --warmup 3 --machine 'Intel Xeon E5-1680 v3 3.20GHz; WSL2 Linux 6.18.33.2; 16 processors; idle host runner'",
+  "source_sha256": {
+    "lib/compiler/syntax/ast.sml": "68671ef293e4f9ee01a192659960e8725796f04e99c5c309393a25eb927927e1",
+    "lib/compiler/syntax/parser.sml": "232d485df6ef941158103902421ea19101fcafca387894f9b81c839bf680a622",
+    "lib/compiler/syntax/incremental.sml": "24fe4671d033ba577487f9fc84d0357a862ca5b07a3c62a47414dcd7f3156697",
+    "tools/lsp/syntax-bench.sml": "05e3e7feb1ccb49397791d612ca75b64d88cecd45d6e0b0e3233c643c4f547be",
+    "rune-lsp-syntax-bench.build": "caf19a0d82d1d99dceccde403ae3cc124d3a73c0a0b47d0e18ca8eb3b7ce9f88",
+    "src/main/lsp-syntax-bench-main.sml": "8292465117b23ae0f75f263b25f38fee0e92d3aac559fa4b6ff09594a92744dd",
+    "lib/compiler/frontend/parser.sml": "195f52a42b72644f86d42b5c60b5931d92a8302cdcf983130757288546b2a10e",
+    "lib/compiler/frontend/lexer.sml": "897c685cadc12a6293b29f04e4abc7cac0bf72e5e025d30313636d5af7a225b1",
+    "lib/compiler/frontend/ast.sml": "6e2c06d789a57970f463c3444aa5650872f58077e956bb63c518b17dfa72b22d"
+  },
+  "archive": "rune-benchmark-results/lsp/2026-10-22-m4-syntax-initial",
+  "artifacts": {
+    "complete.json": {
+      "bytes": 1346,
+      "sha256": "4d30b1f082b0fdc7a3b2fb8aeed3971a4cf524c7c5af5239fbc5499abbbe9499"
+    },
+    "rune-lsp-syntax-bench.rbc": {
+      "bytes": 4013009,
+      "sha256": "6d506f994c1a4afd926bd317e46544219e9ad191ffd38670e0ae7f77169bfaf7"
+    },
+    "runevm": {
+      "bytes": 716344,
+      "sha256": "dfa975ba3ef812817a545d099bc89523a126a23847f28ae408f163a847afa234"
+    },
+    "samples.jsonl": {
+      "bytes": 42459,
+      "sha256": "f28c36aa7791fb7535d8f68d01d178731ea7de25ab695ca0db34be3426e99d5c"
+    },
+    "source/lib/compiler/frontend/ast.sml": {
+      "bytes": 25705,
+      "sha256": "6e2c06d789a57970f463c3444aa5650872f58077e956bb63c518b17dfa72b22d"
+    },
+    "source/lib/compiler/frontend/lexer.sml": {
+      "bytes": 39999,
+      "sha256": "897c685cadc12a6293b29f04e4abc7cac0bf72e5e025d30313636d5af7a225b1"
+    },
+    "source/lib/compiler/frontend/parser.sml": {
+      "bytes": 61154,
+      "sha256": "195f52a42b72644f86d42b5c60b5931d92a8302cdcf983130757288546b2a10e"
+    },
+    "source/lib/compiler/syntax/ast.sml": {
+      "bytes": 11249,
+      "sha256": "68671ef293e4f9ee01a192659960e8725796f04e99c5c309393a25eb927927e1"
+    },
+    "source/lib/compiler/syntax/incremental.sml": {
+      "bytes": 13467,
+      "sha256": "24fe4671d033ba577487f9fc84d0357a862ca5b07a3c62a47414dcd7f3156697"
+    },
+    "source/lib/compiler/syntax/parser.sml": {
+      "bytes": 62028,
+      "sha256": "232d485df6ef941158103902421ea19101fcafca387894f9b81c839bf680a622"
+    },
+    "source/rune-lsp-syntax-bench.build": {
+      "bytes": 164,
+      "sha256": "caf19a0d82d1d99dceccde403ae3cc124d3a73c0a0b47d0e18ca8eb3b7ce9f88"
+    },
+    "source/src/main/lsp-syntax-bench-main.sml": {
+      "bytes": 72,
+      "sha256": "8292465117b23ae0f75f263b25f38fee0e92d3aac559fa4b6ff09594a92744dd"
+    },
+    "source/tools/lsp/syntax-bench.sml": {
+      "bytes": 5690,
+      "sha256": "05e3e7feb1ccb49397791d612ca75b64d88cecd45d6e0b0e3233c643c4f547be"
+    }
+  },
+  "summary": [
+    {
+      "fixture": "compiler-parser",
+      "phase": "batch",
+      "samples": 20,
+      "p50_us": 27626,
+      "p95_us": 45496,
+      "p99_us": 54741,
+      "mean_allocated_bytes": 4753160,
+      "mean_instructions": 6026165
+    },
+    {
+      "fixture": "compiler-parser",
+      "phase": "editor-edit",
+      "samples": 20,
+      "p50_us": 67924,
+      "p95_us": 92885,
+      "p99_us": 100591,
+      "mean_allocated_bytes": 23528680,
+      "mean_instructions": 10518425
+    },
+    {
+      "fixture": "compiler-parser",
+      "phase": "editor-full",
+      "samples": 20,
+      "p50_us": 108523,
+      "p95_us": 145349,
+      "p99_us": 213795,
+      "mean_allocated_bytes": 26656528,
+      "mean_instructions": 15513899
+    },
+    {
+      "fixture": "fixity",
+      "phase": "batch",
+      "samples": 20,
+      "p50_us": 1665,
+      "p95_us": 4227,
+      "p99_us": 6151,
+      "mean_allocated_bytes": 463888,
+      "mean_instructions": 302869
+    },
+    {
+      "fixture": "fixity",
+      "phase": "editor-edit",
+      "samples": 20,
+      "p50_us": 1779,
+      "p95_us": 4417,
+      "p99_us": 4778,
+      "mean_allocated_bytes": 488448,
+      "mean_instructions": 308762
+    },
+    {
+      "fixture": "fixity",
+      "phase": "editor-full",
+      "samples": 20,
+      "p50_us": 1873,
+      "p95_us": 4709,
+      "p99_us": 4732,
+      "mean_allocated_bytes": 492488,
+      "mean_instructions": 311912
+    },
+    {
+      "fixture": "generated-1000",
+      "phase": "batch",
+      "samples": 20,
+      "p50_us": 14557,
+      "p95_us": 19556,
+      "p99_us": 23180,
+      "mean_allocated_bytes": 3743192,
+      "mean_instructions": 3122667
+    },
+    {
+      "fixture": "generated-1000",
+      "phase": "editor-edit",
+      "samples": 20,
+      "p50_us": 32698,
+      "p95_us": 58712,
+      "p99_us": 59329,
+      "mean_allocated_bytes": 13698864,
+      "mean_instructions": 6099632
+    },
+    {
+      "fixture": "generated-1000",
+      "phase": "editor-full",
+      "samples": 20,
+      "p50_us": 68305,
+      "p95_us": 104115,
+      "p99_us": 104864,
+      "mean_allocated_bytes": 22570088,
+      "mean_instructions": 10268127
+    },
+    {
+      "fixture": "generated-10000",
+      "phase": "batch",
+      "samples": 20,
+      "p50_us": 185974,
+      "p95_us": 211641,
+      "p99_us": 228726,
+      "mean_allocated_bytes": 34271192,
+      "mean_instructions": 29816667
+    },
+    {
+      "fixture": "generated-10000",
+      "phase": "editor-edit",
+      "samples": 20,
+      "p50_us": 474503,
+      "p95_us": 567285,
+      "p99_us": 580839,
+      "mean_allocated_bytes": 145530024,
+      "mean_instructions": 67337472
+    },
+    {
+      "fixture": "generated-10000",
+      "phase": "editor-full",
+      "samples": 20,
+      "p50_us": 836642,
+      "p95_us": 1067560,
+      "p99_us": 1073255,
+      "mean_allocated_bytes": 233615768,
+      "mean_instructions": 109074981
+    },
+    {
+      "fixture": "small",
+      "phase": "batch",
+      "samples": 20,
+      "p50_us": 1652,
+      "p95_us": 4043,
+      "p99_us": 4083,
+      "mean_allocated_bytes": 461024,
+      "mean_instructions": 302498
+    },
+    {
+      "fixture": "small",
+      "phase": "editor-edit",
+      "samples": 20,
+      "p50_us": 1708,
+      "p95_us": 4140,
+      "p99_us": 4402,
+      "mean_allocated_bytes": 477456,
+      "mean_instructions": 304776
+    },
+    {
+      "fixture": "small",
+      "phase": "editor-full",
+      "samples": 20,
+      "p50_us": 1653,
+      "p95_us": 4348,
+      "p99_us": 4368,
+      "mean_allocated_bytes": 475128,
+      "mean_instructions": 306134
+    }
+  ],
+  "decision": "Keep the separate editor parser. This implementation does not pass the less-than-10-percent sharing threshold.",
+  "limitations": [
+    "Initial EOF-newline edit samples only; this is not a representative interactive edit-trace acceptance run.",
+    "Twenty paired samples per fixture, without confidence intervals.",
+    "Linux WSL2 only; Windows and native/JIT performance remain unrecorded.",
+    "The large-fixture editor timings exceed the proposed local-syntax budget; M14 performance acceptance is pending.",
+    "Includes a fresh isolated owner per phase, lexical work and the complete compiler AST bridge.",
+    "No claim that the current batch parser has been changed or that sharing would be safe."
+  ]
+}

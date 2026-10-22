@@ -68,7 +68,7 @@ for evidence and outstanding gates. Internal modules are implementation
 interfaces. `config.sml` is a generated copy of the build's version and
 identity, installed with the sources and never committed.
 
-[How to read these pages](../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [c](index/c.md) [d](index/d.md) [f](index/f.md) [i](index/i.md) [l](index/l.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [v](index/v.md) [w](index/w.md)
+[How to read these pages](../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [i](index/i.md) [l](index/l.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [v](index/v.md) [w](index/w.md)
 
 ## Not yet assigned to an area
 

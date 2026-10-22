@@ -1,9 +1,11 @@
 # Index: F
 
-[Overview](../README.md) &middot; [c](c.md) [d](d.md) **f** [i](i.md) [l](l.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [c](c.md) [d](d.md) [e](e.md) **f** [i](i.md) [l](l.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
 
 - `Failed` (exn): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#exn-failed)
 - `Project.fingerprint` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.fingerprint)
+- `Syntax.fixities` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-syntax.fixities)
+- `Syntax.fixities` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.fixities)
 
 ---
 

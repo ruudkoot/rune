@@ -51,6 +51,32 @@ struct
   fun typeAt (Session {compiler,...},position as {file,...}) =
     guard file (fn () => CompilerQuery.typeAt (compiler,position))
 
+  structure Syntax =
+  struct
+    type t=CompilerSyntax.t
+    type fixities=Fixity.env
+    type piece={kind:string,start:int,stop:int,text:string}
+    type event={kind:string,start:int,stop:int,values:string list}
+    type work=CompilerSyntax.work
+    val initial=Fixity.initial
+    fun parse {file,text,mode,orPatterns,fixity} = guard file (fn () => C.owned (fn () =>
+      case Source.modeNamed mode of NONE => invalid "unknown source mode" | SOME mode =>
+        CompilerSyntax.parse {file=file,text=text,mode=mode,orPatterns=orPatterns,fixity=fixity}))
+    fun edit (snapshot,change)=C.owned (fn () => CompilerSyntax.edit (snapshot,change))
+    val text=CompilerSyntax.text
+    val fixities=CompilerSyntax.fixity
+    val pieces=CompilerSyntax.pieces
+    val work=CompilerSyntax.work
+    fun events snapshot=List.map (fn (kind,span:Source.span,values) =>
+      {kind=kind,start= #start span,stop= #stop span,values=values}) (SyntaxAst.shape (CompilerSyntax.bridge snapshot))
+    fun diagnostics (snapshot as CompilerSyntax.Syntax {file,text,mode,...}) =
+      let val source=Source.fromStringIn (mode,file,text)
+      in List.map (fn (span:Source.span,message) =>
+        let val (line,column)=Source.lineCol (source,#start span)
+        in {severity="error",file=file,start= #start span,stop= #stop span,line=line,column=column,message=message} end)
+        (CompilerSyntax.problems snapshot) end
+  end
+
   structure Project =
   struct
     structure P=CompilerProject

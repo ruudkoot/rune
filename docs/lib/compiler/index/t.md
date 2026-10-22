@@ -1,8 +1,10 @@
 # Index: T
 
-[Overview](../README.md) &middot; [c](c.md) [d](d.md) [f](f.md) [i](i.md) [l](l.md) [p](p.md) [r](r.md) [s](s.md) **t** [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [p](p.md) [r](r.md) [s](s.md) **t** [v](v.md) [w](w.md)
 
 - `Project.t` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-project.t)
+- `Syntax.t` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-syntax.t)
+- `Syntax.text` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.text)
 - `typeAt` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-typeat)
 
 ---

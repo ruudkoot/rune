@@ -1,7 +1,9 @@
 # Index: W
 
-[Overview](../README.md) &middot; [c](c.md) [d](d.md) [f](f.md) [i](i.md) [l](l.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) **w**
+[Overview](../README.md) &middot; [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) **w**
 
+- `Syntax.work` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-syntax.work)
+- `Syntax.work` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.work)
 - `writeMid` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-writemid)
 - `writeProgram` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-writeprogram)
 - `writeUnit` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-writeunit)

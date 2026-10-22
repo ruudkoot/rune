@@ -125,6 +125,111 @@
     },
     {
      "kind": "structure",
+     "name": "Syntax",
+     "spec": "structure Syntax : sig ... end",
+     "doc": "Lossless editor syntax, separate from the compiler's batch parser.\n\n",
+     "page": "sig/RUNE_COMPILER.md#str-syntax"
+    },
+    {
+     "kind": "type",
+     "name": "Syntax.t",
+     "spec": "type t",
+     "doc": "An immutable syntax snapshot. No mutable compiler annotations escape.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-syntax.t"
+    },
+    {
+     "kind": "type",
+     "name": "Syntax.fixities",
+     "spec": "type fixities",
+     "doc": "An immutable lexical fixity environment, transferable between files.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-syntax.fixities"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.initial",
+     "spec": "val initial : fixities",
+     "doc": "Standard ML's initial fixities.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.initial"
+    },
+    {
+     "kind": "type",
+     "name": "Syntax.piece",
+     "spec": "type piece = {kind:string,start:int,stop:int,text:string}",
+     "doc": "A lossless source piece. start/stop are half-open decoded byte offsets.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-syntax.piece"
+    },
+    {
+     "kind": "type",
+     "name": "Syntax.event",
+     "spec": "type event = {kind:string,start:int,stop:int,values:string list}",
+     "doc": "A structural syntax event. Constructor tags, spans, scalar fields and\nlist lengths distinguish full syntax, including signature constraints.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-syntax.event"
+    },
+    {
+     "kind": "type",
+     "name": "Syntax.work",
+     "spec": "type work = {lexedBytes:int,reusedTokens:int,parsedDeclarations:int,reusedDeclarations:int}",
+     "doc": "Measured work counters for this parse/edit, not elapsed-time estimates.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-syntax.work"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.parse",
+     "spec": "val parse : {file:string,text:string,mode:string,orPatterns:bool,fixity:fixities} -> t",
+     "doc": "`parse request` parses decoded text with the selected mode and incoming\nfixities. orPatterns enables Rune's optional pattern extension.\n\nMalformed syntax is retained with diagnostics and bounded recovery.\nIt does not execute or elaborate declarations. Unknown modes raise Failed.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.parse"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.edit",
+     "spec": "val edit : t * {start:int,stop:int,text:string,fixity:fixities} -> t",
+     "doc": "`edit (snapshot, change)` applies one byte-range replacement and updates\nsyntax. Incoming fixities can change after an earlier file is edited.\n\nIt reuses unchanged lexical suffixes and declarations only with matching\ntoken boundaries and incoming fixities. Invalid byte ranges raise Subscript.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.edit"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.text",
+     "spec": "val text : t -> string",
+     "doc": "`text snapshot` returns exactly its decoded source bytes.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.text"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.fixities",
+     "spec": "val fixities : t -> fixities",
+     "doc": "`fixities snapshot` returns the environment exported to the next file.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.fixities"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.pieces",
+     "spec": "val pieces : t -> piece list",
+     "doc": "`pieces snapshot` returns nonoverlapping pieces whose concatenation is\nthe entire original text, including comments and malformed tokens.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.pieces"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.events",
+     "spec": "val events : t -> event list",
+     "doc": "`events snapshot` returns structural syntax events without annotation refs.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.events"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.diagnostics",
+     "spec": "val diagnostics : t -> diagnostic list",
+     "doc": "`diagnostics snapshot` returns parse/lexical errors in its own source.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.diagnostics"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.work",
+     "spec": "val work : t -> work",
+     "doc": "`work snapshot` reports lexical and declaration reuse for this operation.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.work"
+    },
+    {
+     "kind": "structure",
      "name": "Project",
      "spec": "structure Project : sig ... end",
      "doc": "The compiler's immutable project model, shared with the CLI.\n\n",

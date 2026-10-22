@@ -19,7 +19,7 @@ documentation and its evidence beside the tests before this plan is retired.
 | M1 | Reference study, fixtures and performance baselines | M0 | in progress: SML harness and Linux baseline recorded; native Windows measurement remains |
 | M2 | Protocol libraries, transport, lifecycle and harness | M0 | in progress: protocol foundation and focused Linux checks implemented; final profile/platform acceptance remains |
 | M3 | Documents, positions, workspaces and build contexts | M2 | in progress: synchronization, reusable codecs, shared project planning and workspace requests implemented; combined/platform acceptance pending |
-| M4 | Incremental syntax, recovery and the parser decision | M1, M3 | planned |
+| M4 | Incremental syntax, recovery and the parser decision | M1, M3 | in progress: separate SML parser, lossless pieces, lexical/declaration reuse, AST bridge and differential checks implemented; performance/platform acceptance pending |
 | M5 | Compiler sessions, semantic snapshots and invalidation | M3, M4; compiler-library M1-M4 and the analysis contract below | planned |
 | M6 | Document and workspace diagnostics | M5 | planned |
 | M7 | Hover, navigation and symbols | M5 | planned |
@@ -838,6 +838,50 @@ do not establish resident semantic reuse or parser correctness.
   trees equal fresh full trees after every trace step; malformed input
   preserves bytes and later recoverable syntax. Publish paired timings
   and keep parsers separate unless the strict less-than-10% gate passes.
+
+M4 initial implementation checkpoint (2026-10-22):
+
+* `RuneCompiler.Syntax` exposes immutable syntax snapshots and fixity
+  environments. Its separate SML recursive-descent parser starts from
+  the batch grammar at `3760da885`; the batch parser remains unchanged.
+  Complete token boundaries allow suffix reuse across nested comments and
+  string gaps. Declaration caches cover top level, structures and local
+  scopes, and validate token lookahead and incoming fixities before reuse.
+  Changed fixities from earlier files invalidate affected cached parses.
+* Lossless pieces cover every source byte, including malformed lexemes.
+  Recovery retains later declarations where a lexical scope can be
+  established, without treating unterminated comment contents as code.
+  Unmatched openers can conservatively consume through EOF. The compiler
+  bridge copies every annotation slot, including functor bodies. Published
+  syntax events contain no elaborator refs.
+* Differential tests compare constructor tags, scalar fields, list lengths
+  and spans, rather than the debugging AST printer. The 328 language
+  fixtures run in ASCII and Unicode modes, five frontend/parser sources
+  and systematic deletion probes match the batch parser's acceptance or
+  rejection. Public tests perform 400 randomized edits; the private suite
+  also checks 500 edit/undo pairs for full structure, diagnostics,
+  topdec boundaries, lossless pieces and outgoing fixities. These suites
+  pass in the interpreter and JIT.
+* The focused native-host run recorded 12 passes and one sandbox SIGSYS
+  (`smlnj32`, exit 159) at `tests/out/r/20261022-160428-202`. The unrestricted
+  32-bit retry passed all seven selected runner cases at
+  `tests/out/r/20261022-160856-3106277` (25.8 seconds); all six native
+  compiler hosts pass the four public syntax tests. Compiler ownership
+  tests still pass with 206 roots, byte agreement and restoration checks.
+  `make test-lsp docs check-docs` passes; documentation consistency recorded
+  11 passes at `tests/out/r/20261022-161023-392` (8.1 seconds).
+* The [initial syntax ledger](../../tests/lsp/baseline/2026-10-22-syntax-initial.json)
+  archives 300 measurements with lexing, owner setup and required AST
+  conversion included. Full editor parsing and EOF edits on the larger
+  fixtures exceed batch timings and the proposed local-syntax budget.
+  **Keep the parsers separate:** the less-than-10% sharing gate has not
+  passed. These initial EOF edits do not establish representative edit-trace
+  performance, confidence intervals, memory-retention or Windows acceptance.
+
+M4 remains in progress. Required follow-ups include bounded lexical
+checkpoints within long constructs, broader recovery/locality evidence,
+representative edit traces and resource/platform acceptance. The existing
+compiler lexer is a shared lexical kernel; the editor parser is separate.
 
 ### M5. Compiler-backed semantic snapshots (XL)
 

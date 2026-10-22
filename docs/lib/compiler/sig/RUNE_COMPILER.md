@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 27 of 27 entries documented |
+| Documentation | 42 of 42 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -47,6 +47,23 @@ sig
   val <a href="#val-writemid">writeMid</a> : compiled * string -&gt; unit
   val <a href="#val-writeprogram">writeProgram</a> : compiled list * string -&gt; unit
   val <a href="#val-typeat">typeAt</a> : session * {<a href="#fld-typeat.file">file</a> : string, <a href="#fld-typeat.offset">offset</a> : int} -&gt; string option
+  structure <a href="#str-syntax">Syntax</a> :
+  sig
+    type <a href="#type-syntax.t">t</a>
+    type <a href="#type-syntax.fixities">fixities</a>
+    val <a href="#val-syntax.initial">initial</a> : fixities
+    type <a href="#type-syntax.piece">piece</a> = {<a href="#fld-syntax.piece.kind">kind</a>:string,<a href="#fld-syntax.piece.start">start</a>:int,<a href="#fld-syntax.piece.stop">stop</a>:int,<a href="#fld-syntax.piece.text">text</a>:string}
+    type <a href="#type-syntax.event">event</a> = {<a href="#fld-syntax.event.kind">kind</a>:string,<a href="#fld-syntax.event.start">start</a>:int,<a href="#fld-syntax.event.stop">stop</a>:int,<a href="#fld-syntax.event.values">values</a>:string list}
+    type <a href="#type-syntax.work">work</a> = {<a href="#fld-syntax.work.lexedbytes">lexedBytes</a>:int,<a href="#fld-syntax.work.reusedtokens">reusedTokens</a>:int,<a href="#fld-syntax.work.parseddeclarations">parsedDeclarations</a>:int,<a href="#fld-syntax.work.reuseddeclarations">reusedDeclarations</a>:int}
+    val <a href="#val-syntax.parse">parse</a> : {<a href="#fld-syntax.parse.file">file</a>:string,<a href="#fld-syntax.parse.text">text</a>:string,<a href="#fld-syntax.parse.mode">mode</a>:string,<a href="#fld-syntax.parse.orpatterns">orPatterns</a>:bool,<a href="#fld-syntax.parse.fixity">fixity</a>:fixities} -&gt; t
+    val <a href="#val-syntax.edit">edit</a> : t * {<a href="#fld-syntax.edit.start">start</a>:int,<a href="#fld-syntax.edit.stop">stop</a>:int,<a href="#fld-syntax.edit.text">text</a>:string,<a href="#fld-syntax.edit.fixity">fixity</a>:fixities} -&gt; t
+    val <a href="#val-syntax.text">text</a> : t -&gt; string
+    val <a href="#val-syntax.fixities">fixities</a> : t -&gt; fixities
+    val <a href="#val-syntax.pieces">pieces</a> : t -&gt; piece list
+    val <a href="#val-syntax.events">events</a> : t -&gt; event list
+    val <a href="#val-syntax.diagnostics">diagnostics</a> : t -&gt; diagnostic list
+    val <a href="#val-syntax.work">work</a> : t -&gt; work
+  end
   structure <a href="#str-project">Project</a> :
   sig
     type <a href="#type-project.t">t</a>
@@ -294,6 +311,168 @@ does not retain a resident semantic snapshot or execute user code.
 | --- | --- | --- |
 | <a name="fld-typeat.file"></a>`file` | `string` |  |
 | <a name="fld-typeat.offset"></a>`offset` | `int` |  |
+
+### <a name="str-syntax"></a>`Syntax`
+
+Lossless editor syntax, separate from the compiler's batch parser.
+
+#### <a name="type-syntax.t"></a>`t`
+
+```sml
+type t
+```
+
+An immutable syntax snapshot. No mutable compiler annotations escape.
+
+#### <a name="type-syntax.fixities"></a>`fixities`
+
+```sml
+type fixities
+```
+
+An immutable lexical fixity environment, transferable between files.
+
+#### <a name="val-syntax.initial"></a>`initial`
+
+```sml
+val initial : fixities
+```
+
+Standard ML's initial fixities.
+
+#### <a name="type-syntax.piece"></a>`piece`
+
+```sml
+type piece = {kind:string,start:int,stop:int,text:string}
+```
+
+A lossless source piece. start/stop are half-open decoded byte offsets.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-syntax.piece.kind"></a>`kind` | `string` |  |
+| <a name="fld-syntax.piece.start"></a>`start` | `int` |  |
+| <a name="fld-syntax.piece.stop"></a>`stop` | `int` |  |
+| <a name="fld-syntax.piece.text"></a>`text` | `string` |  |
+
+#### <a name="type-syntax.event"></a>`event`
+
+```sml
+type event = {kind:string,start:int,stop:int,values:string list}
+```
+
+A structural syntax event. Constructor tags, spans, scalar fields and
+list lengths distinguish full syntax, including signature constraints.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-syntax.event.kind"></a>`kind` | `string` |  |
+| <a name="fld-syntax.event.start"></a>`start` | `int` |  |
+| <a name="fld-syntax.event.stop"></a>`stop` | `int` |  |
+| <a name="fld-syntax.event.values"></a>`values` | `string list` |  |
+
+#### <a name="type-syntax.work"></a>`work`
+
+```sml
+type work = {lexedBytes:int,reusedTokens:int,parsedDeclarations:int,reusedDeclarations:int}
+```
+
+Measured work counters for this parse/edit, not elapsed-time estimates.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-syntax.work.lexedbytes"></a>`lexedBytes` | `int` |  |
+| <a name="fld-syntax.work.reusedtokens"></a>`reusedTokens` | `int` |  |
+| <a name="fld-syntax.work.parseddeclarations"></a>`parsedDeclarations` | `int` |  |
+| <a name="fld-syntax.work.reuseddeclarations"></a>`reusedDeclarations` | `int` |  |
+
+#### <a name="val-syntax.parse"></a>`parse`
+
+```sml
+val parse : {file:string,text:string,mode:string,orPatterns:bool,fixity:fixities} -> t
+```
+
+`parse request` parses decoded text with the selected mode and incoming
+fixities. orPatterns enables Rune's optional pattern extension.
+
+Malformed syntax is retained with diagnostics and bounded recovery.
+It does not execute or elaborate declarations. Unknown modes raise Failed.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-syntax.parse.file"></a>`file` | `string` |  |
+| <a name="fld-syntax.parse.text"></a>`text` | `string` |  |
+| <a name="fld-syntax.parse.mode"></a>`mode` | `string` |  |
+| <a name="fld-syntax.parse.orpatterns"></a>`orPatterns` | `bool` |  |
+| <a name="fld-syntax.parse.fixity"></a>`fixity` | `fixities` |  |
+
+#### <a name="val-syntax.edit"></a>`edit`
+
+```sml
+val edit : t * {start:int,stop:int,text:string,fixity:fixities} -> t
+```
+
+`edit (snapshot, change)` applies one byte-range replacement and updates
+syntax. Incoming fixities can change after an earlier file is edited.
+
+It reuses unchanged lexical suffixes and declarations only with matching
+token boundaries and incoming fixities. Invalid byte ranges raise Subscript.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-syntax.edit.start"></a>`start` | `int` |  |
+| <a name="fld-syntax.edit.stop"></a>`stop` | `int` |  |
+| <a name="fld-syntax.edit.text"></a>`text` | `string` |  |
+| <a name="fld-syntax.edit.fixity"></a>`fixity` | `fixities` |  |
+
+#### <a name="val-syntax.text"></a>`text`
+
+```sml
+val text : t -> string
+```
+
+`text snapshot` returns exactly its decoded source bytes.
+
+#### <a name="val-syntax.fixities"></a>`fixities`
+
+```sml
+val fixities : t -> fixities
+```
+
+`fixities snapshot` returns the environment exported to the next file.
+
+#### <a name="val-syntax.pieces"></a>`pieces`
+
+```sml
+val pieces : t -> piece list
+```
+
+`pieces snapshot` returns nonoverlapping pieces whose concatenation is
+the entire original text, including comments and malformed tokens.
+
+#### <a name="val-syntax.events"></a>`events`
+
+```sml
+val events : t -> event list
+```
+
+`events snapshot` returns structural syntax events without annotation refs.
+
+#### <a name="val-syntax.diagnostics"></a>`diagnostics`
+
+```sml
+val diagnostics : t -> diagnostic list
+```
+
+`diagnostics snapshot` returns parse/lexical errors in its own source.
+
+#### <a name="val-syntax.work"></a>`work`
+
+```sml
+val work : t -> work
+```
+
+`work snapshot` reports lexical and declaration reuse for this operation.
 
 ### <a name="str-project"></a>`Project`
 

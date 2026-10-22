@@ -2,6 +2,9 @@
    Rune builds include the annotated runtime adapter before the facade. *)
 use internal.build
 files
+  syntax/ast.sml
+  syntax/parser.sml
+  syntax/incremental.sml
   api/prelude.sml
   api/session.sml
   api/query.sml

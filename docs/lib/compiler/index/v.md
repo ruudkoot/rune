@@ -1,6 +1,6 @@
 # Index: V
 
-[Overview](../README.md) &middot; [c](c.md) [d](d.md) [f](f.md) [i](i.md) [l](l.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) **v** [w](w.md)
+[Overview](../README.md) &middot; [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) **v** [w](w.md)
 
 - `version` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-version)
 

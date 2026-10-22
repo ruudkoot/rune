@@ -103,6 +103,49 @@ sig
      does not retain a resident semantic snapshot or execute user code. *)
   val typeAt : session * {file : string, offset : int} -> string option
 
+  (* Lossless editor syntax, separate from the compiler's batch parser. *)
+  structure Syntax :
+  sig
+    (* An immutable syntax snapshot. No mutable compiler annotations escape. *)
+    type t
+    (* An immutable lexical fixity environment, transferable between files. *)
+    type fixities
+    (* Standard ML's initial fixities. *)
+    val initial : fixities
+    (* A lossless source piece. start/stop are half-open decoded byte offsets. *)
+    type piece = {kind:string,start:int,stop:int,text:string}
+    (* A structural syntax event. Constructor tags, spans, scalar fields and
+       list lengths distinguish full syntax, including signature constraints. *)
+    type event = {kind:string,start:int,stop:int,values:string list}
+    (* Measured work counters for this parse/edit, not elapsed-time estimates. *)
+    type work = {lexedBytes:int,reusedTokens:int,parsedDeclarations:int,reusedDeclarations:int}
+    (* `parse request` parses decoded text with the selected mode and incoming
+       fixities. orPatterns enables Rune's optional pattern extension.
+
+       Malformed syntax is retained with diagnostics and bounded recovery.
+       It does not execute or elaborate declarations. Unknown modes raise Failed. *)
+    val parse : {file:string,text:string,mode:string,orPatterns:bool,fixity:fixities} -> t
+    (* `edit (snapshot, change)` applies one byte-range replacement and updates
+       syntax. Incoming fixities can change after an earlier file is edited.
+
+       It reuses unchanged lexical suffixes and declarations only with matching
+       token boundaries and incoming fixities. Invalid byte ranges raise Subscript. *)
+    val edit : t * {start:int,stop:int,text:string,fixity:fixities} -> t
+    (* `text snapshot` returns exactly its decoded source bytes. *)
+    val text : t -> string
+    (* `fixities snapshot` returns the environment exported to the next file. *)
+    val fixities : t -> fixities
+    (* `pieces snapshot` returns nonoverlapping pieces whose concatenation is
+       the entire original text, including comments and malformed tokens. *)
+    val pieces : t -> piece list
+    (* `events snapshot` returns structural syntax events without annotation refs. *)
+    val events : t -> event list
+    (* `diagnostics snapshot` returns parse/lexical errors in its own source. *)
+    val diagnostics : t -> diagnostic list
+    (* `work snapshot` reports lexical and declaration reuse for this operation. *)
+    val work : t -> work
+  end
+
   (* The compiler's immutable project model, shared with the CLI. *)
   structure Project :
   sig

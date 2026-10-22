@@ -39,6 +39,28 @@ measure document indexing, not incremental parsing or resident semantics.
 The [M3 ledger](baseline/2026-10-22-documents.json) records the initial Linux
 distribution, source/observer hashes and archived raw samples.
 
+## Separate editor syntax (M4)
+
+```
+make test-lsp-syntax
+make bin/rune-lsp-syntax-bench.rbc
+bin/runevm --jit=off --heap-limit 536870912 bin/rune-lsp-syntax-bench.rbc \
+  --out /tmp/runelsp-syntax-results --repetitions 20 --warmup 3 \
+  --machine "record CPU, operating system and available processors"
+```
+
+The public `RuneCompiler.Syntax` tests also run on native compiler hosts.
+The private differential suite compares full constructor/scalar/span
+structure with fresh batch parsing, using accepted and rejected language
+fixtures, frontend sources, deletions and randomized edit/undo sequences.
+It checks fixities, lossless bytes and topdec boundaries separately.
+
+The [initial syntax ledger](baseline/2026-10-22-syntax-initial.json) includes
+lexing, compiler ownership setup and complete AST conversion. Larger
+fixtures do not pass the sharing threshold: keep the parser separate.
+These EOF-newline samples are an initial comparison, not representative
+edit-trace or release performance acceptance.
+
 ## Frontend baseline (M1)
 
 ```

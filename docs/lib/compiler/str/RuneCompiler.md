@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md) |
 | Status | required |
-| Members | 18 |
+| Members | 19 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -42,6 +42,7 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 | val | [`writeProgram`](../sig/RUNE_COMPILER.md#val-writeprogram) | `compiled list * string -> unit` |
 | val | [`writeUnit`](../sig/RUNE_COMPILER.md#val-writeunit) | `compiled * string -> unit` |
 | structure | [`Project`](../str/RuneCompiler.Project.md) |  |
+| structure | [`Syntax`](../str/RuneCompiler.Syntax.md) |  |
 
 ---
 
