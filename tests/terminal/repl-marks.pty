@@ -2,7 +2,7 @@
 # a terminal that takes them (VS Code's, by TERM_PROGRAM) is given them: A
 # before the prompt, C before the output, D and the entry's status after it
 # -- 0 where everything ran, 1 where something failed. tmux does not pass
-# them on, so this is read by tests/terminal/ptyraw.py. A comes only once
+# them on, so this is read by bin/rune-terminal raw. A comes only once
 # the editor has the terminal raw, after the bracketed paste it turns on
 # there: this script types at A, and a key typed while the terminal is
 # still cooked is echoed, its return made a newline that continues the

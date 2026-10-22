@@ -396,7 +396,7 @@ none ([diagnostics.md](diagnostics.md), *Columns*).
 ## The Unicode specifications Rune follows
 
 Rune's tables come from the Unicode Character Database 18.0.0, by
-`scripts/gen-unicode-tables.py`, each file pinned by its SHA-256, into
+`bin/rune-generate unicode`, each file pinned by its SHA-256, into
 `lib/unicode` ([docs/lib/unicode](lib/unicode/README.md)), which the
 compiler is built with.
 

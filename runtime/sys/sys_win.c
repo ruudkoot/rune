@@ -1839,6 +1839,19 @@ int64_t sys_read_fd(int fd, char *buf, int64_t n) {
 int64_t sys_write_fd(int fd, const char *buf, int64_t n) {
     if (sock_of(fd)) return sys_send(fd, buf, n, 0);
     FdFlags *f = flags_of(fd);
+    HANDLE h = (HANDLE)_get_osfhandle(fd);
+    if (f && f->nonblocking && h != INVALID_HANDLE_VALUE && GetFileType(h) == FILE_TYPE_PIPE) {
+        DWORD written = 0;
+        if (!WriteFile(h, buf, (DWORD)(n > 0x7fffffff ? 0x7fffffff : n), &written, NULL)) {
+            DWORD error = GetLastError();
+            last = error == ERROR_NO_DATA ? EAGAIN : errno_of_win(error);
+            return -1;
+        }
+        /* PIPE_NOWAIT byte pipes may succeed with zero bytes when the
+           requested write cannot fit. That is backpressure, not EOF. */
+        if (n > 0 && written == 0) { last = EAGAIN; return -1; }
+        return written;
+    }
     if (f && f->append) _lseeki64(fd, 0, SEEK_END);
     int r = _write(fd, buf, (unsigned)(n > 0x7fffffff ? 0x7fffffff : n));
     /* msvcrt has no errno for a pipe whose reader is gone (ERROR_NO_DATA) */
@@ -1879,6 +1892,10 @@ static int fcntl_fd(int fd, int command, int argument) {
     case 3:                                                      /* F_GETFL */
         return access_of(h) | (f->append ? 02000 : 0) | (f->nonblocking ? 04000 : 0) | (f->sync ? 04010000 : 0);
     case 4:                                                      /* F_SETFL */
+        if (GetFileType(h) == FILE_TYPE_PIPE && access_of(h) != 0) {
+            DWORD mode = (argument & 04000) ? PIPE_NOWAIT : PIPE_WAIT;
+            if (!SetNamedPipeHandleState(h, &mode, NULL, NULL)) return win_failed(NULL);
+        }
         f->append = (argument & 02000) != 0;
         f->nonblocking = (argument & 04000) != 0;
         return 0;
@@ -2894,7 +2911,7 @@ static HANDLE handle_of(int fd) {
    when one is given, gets it before it runs. extra, when given, is an
    inheritable handle the program inherits besides its standard ones. */
 static int64_t spawn(const char *path, char *const argv[], char *const envp[], int search,
-                     const int fds[3], HANDLE job, const char *raw, HANDLE extra, const char *dir, DWORD more) {
+                     const int fds[3], HANDLE job, const char *raw, HANDLE extra, const char *dir, DWORD more, HANDLE pseudoconsole) {
     /* raw: a command line given whole, for a program that reads it its own
        way (cmd.exe). Windows takes 32767 characters at most, which is
        E2BIG before the program is looked for, as execve counts the
@@ -2950,38 +2967,52 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
     /* the three handles, as inheritable copies, and only they inherited --
        with the interrupt's event the child's environment names (sys.h,
        sys_event_new), which it is to watch */
-    HANDLE std[3], list[5];
+    HANDLE std[3], list[6];
     int nlist = 0;
     for (int i = 0; i < 3; i++) {
         HANDLE h = handle_of(fds[i] >= 0 ? fds[i] : i);
         std[i] = INVALID_HANDLE_VALUE;
-        if (h != INVALID_HANDLE_VALUE && h != NULL &&
+        if (!pseudoconsole && h != INVALID_HANDLE_VALUE && h != NULL &&
             DuplicateHandle(GetCurrentProcess(), h, GetCurrentProcess(), &std[i], 0, TRUE, DUPLICATE_SAME_ACCESS))
             list[nlist++] = std[i];
     }
     if (extra) list[nlist++] = extra;
     if (envp)
-        for (char *const *e = envp; *e; e++)
-            if (strncmp(*e, "RUNE_INTERRUPT_EVENT=", 21) == 0) {
+        for (char *const *e = envp; *e; e++) {
+            const char *value = NULL;
+            if (strncmp(*e, "RUNE_INTERRUPT_EVENT=", 21) == 0) value = *e + 21;
+            if (strncmp(*e, "JPY_INTERRUPT_EVENT=", 20) == 0) value = *e + 20;
+            if (value) {
                 char *end;
-                unsigned long long h = strtoull(*e + 21, &end, 10);
-                if (!*end && h != 0) list[nlist++] = (HANDLE)(uintptr_t)h;
-                break;
+                unsigned long long h = strtoull(value, &end, 10);
+                HANDLE event = (HANDLE)(uintptr_t)h;
+                int duplicate = 0;
+                for (int i = 0; i < nlist; i++) if (list[i] == event) duplicate = 1;
+                if (!*end && h != 0 && !duplicate && nlist < 6) list[nlist++] = event;
             }
+        }
     SIZE_T size = 0;
-    InitializeProcThreadAttributeList(NULL, 1, 0, &size);
+    DWORD attribute_count = pseudoconsole ? 2 : 1;
+    InitializeProcThreadAttributeList(NULL, attribute_count, 0, &size);
     LPPROC_THREAD_ATTRIBUTE_LIST attributes = malloc(size);
     STARTUPINFOEXW si;
     memset(&si, 0, sizeof si);
     si.StartupInfo.cb = sizeof si;
+    /* ConPTY must explicitly suppress redirected parent standard handles.
+       Leaving this flag clear duplicates those handles even when normal
+       inheritance is disabled. NULL requests the new console's handles:
+       microsoft/terminal discussion 15814 (Windows console maintainers). */
     si.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
-    si.StartupInfo.hStdInput = std[0];
-    si.StartupInfo.hStdOutput = std[1];
-    si.StartupInfo.hStdError = std[2];
-    int ok = attributes && InitializeProcThreadAttributeList(attributes, 1, 0, &size);
+    si.StartupInfo.hStdInput = pseudoconsole ? NULL : std[0];
+    si.StartupInfo.hStdOutput = pseudoconsole ? NULL : std[1];
+    si.StartupInfo.hStdError = pseudoconsole ? NULL : std[2];
+    int ok = attributes && InitializeProcThreadAttributeList(attributes, attribute_count, 0, &size);
     if (ok && nlist > 0)
         ok = UpdateProcThreadAttribute(attributes, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, list,
                                        (SIZE_T)nlist * sizeof(HANDLE), NULL, NULL);
+    if (ok && pseudoconsole)
+        ok = UpdateProcThreadAttribute(attributes, 0, 0x00020016 /* PSEUDOCONSOLE */,
+                                       pseudoconsole, sizeof pseudoconsole, NULL, NULL);
     si.lpAttributeList = attributes;
     PROCESS_INFORMATION pi;
     DWORD flags = EXTENDED_STARTUPINFO_PRESENT | CREATE_UNICODE_ENVIRONMENT | (job ? CREATE_SUSPENDED : 0) | more;
@@ -3004,7 +3035,7 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
     return (int64_t)pi.dwProcessId;
 }
 int64_t sys_spawn(const char *path, char *const argv[], char *const envp[], int search, const int fds[3]) {
-    return spawn(path, argv, envp, search, fds, NULL, NULL, NULL, NULL, 0);
+    return spawn(path, argv, envp, search, fds, NULL, NULL, NULL, NULL, 0, NULL);
 }
 
 /* How a process ended, as waitpid tells it: 0 exited with a status, or 1
@@ -3105,11 +3136,99 @@ int64_t sys_spawn_with(const char *path, char *const argv[], char *const envp[],
             return win_failed(NULL);
         }
     }
-    int64_t pid = spawn(path, argv, envp, search, fds, job, NULL, NULL, dir, group ? CREATE_NEW_PROCESS_GROUP : 0);
+    int64_t pid = spawn(path, argv, envp, search, fds, job, NULL, NULL, dir, group ? CREATE_NEW_PROCESS_GROUP : 0, NULL);
     if (pid < 0) { if (job) CloseHandle(job); return -1; }
     for (int i = 0; i < nchildren; i++) if ((int64_t)children[i].pid == pid) { children[i].job = job; job = NULL; break; }
     if (job) CloseHandle(job);
     return pid;
+}
+
+/* ConPTY is resolved dynamically, so Windows without it still starts Rune
+   and reports ENOSYS for Pty. Communication descriptors are binary pipes.
+   Close discards pending output by closing its reader before ConPTY teardown;
+   this also prevents the final-frame deadlock documented by Microsoft. */
+typedef HRESULT (WINAPI *PtyCreate)(COORD, HANDLE, HANDLE, DWORD, HANDLE *);
+typedef HRESULT (WINAPI *PtyResize)(HANDLE, COORD);
+typedef void (WINAPI *PtyClose)(HANDLE);
+static PtyCreate pty_create;
+static PtyResize pty_resize;
+static PtyClose pty_close;
+typedef struct { HANDLE console; int reader, writer; } PtySession;
+static PtySession *pty_sessions;
+static int pty_length;
+static int pty_functions(void) {
+    HMODULE kernel = GetModuleHandleA("kernel32.dll");
+    pty_create = (PtyCreate)(void *)GetProcAddress(kernel, "CreatePseudoConsole");
+    pty_resize = (PtyResize)(void *)GetProcAddress(kernel, "ResizePseudoConsole");
+    pty_close = (PtyClose)(void *)GetProcAddress(kernel, "ClosePseudoConsole");
+    if (!pty_create || !pty_resize || !pty_close) { last = ENOSYS; return -1; }
+    return 0;
+}
+static int pty_slot(void) {
+    for (int i = 0; i < pty_length; i++) if (!pty_sessions[i].console) return i;
+    if (pty_length == INT_MAX) { last = EMFILE; return -1; }
+    PtySession *next = realloc(pty_sessions, (size_t)(pty_length + 1) * sizeof *next);
+    if (!next) { last = ENOMEM; return -1; }
+    pty_sessions = next;
+    memset(&pty_sessions[pty_length], 0, sizeof *next);
+    return pty_length++;
+}
+int64_t sys_pty_spawn(const char *path, char *const argv[], char *const envp[], const char *dir,
+                      int columns, int rows, int out[3]) {
+    if (columns < 1 || columns > 32767 || rows < 1 || rows > 32767) { last = EINVAL; return -1; }
+    if (pty_functions() != 0) return -1;
+    int slot = pty_slot();
+    if (slot < 0) return -1;
+    HANDLE input_read = NULL, input_write = NULL, output_read = NULL, output_write = NULL;
+    if (!CreatePipe(&input_read, &input_write, NULL, 65536) ||
+        !CreatePipe(&output_read, &output_write, NULL, 65536)) {
+        DWORD error = GetLastError();
+        if (input_read) CloseHandle(input_read);
+        if (input_write) CloseHandle(input_write);
+        if (output_read) CloseHandle(output_read);
+        if (output_write) CloseHandle(output_write);
+        last = errno_of_win(error); return -1;
+    }
+    COORD size = { (SHORT)columns, (SHORT)rows };
+    HANDLE console = NULL;
+    HRESULT hr = pty_create(size, input_read, output_write, 0, &console);
+    if (FAILED(hr)) {
+        CloseHandle(input_read); CloseHandle(input_write); CloseHandle(output_read); CloseHandle(output_write);
+        last = EIO; return -1;
+    }
+    int reader = _open_osfhandle((intptr_t)output_read, _O_BINARY | _O_RDONLY);
+    int writer = _open_osfhandle((intptr_t)input_write, _O_BINARY | _O_WRONLY);
+    if (reader < 0 || writer < 0) {
+        if (reader < 0) CloseHandle(output_read); else _close(reader);
+        if (writer < 0) CloseHandle(input_write); else _close(writer);
+        CloseHandle(input_read); CloseHandle(output_write); pty_close(console);
+        last = EMFILE; return -1;
+    }
+    set_flags(reader, 0, 0, 0);
+    set_flags(writer, 0, 0, 0);
+    int fds[3] = { -1, -1, -1 };
+    int64_t pid = spawn(path, argv, envp, 0, fds, NULL, NULL, NULL, dir, 0, console);
+    CloseHandle(input_read); CloseHandle(output_write);
+    if (pid < 0) { _close(reader); _close(writer); pty_close(console); return -1; }
+    pty_sessions[slot].console = console;
+    pty_sessions[slot].reader = reader; pty_sessions[slot].writer = writer;
+    out[0] = reader; out[1] = writer; out[2] = slot;
+    return pid;
+}
+int sys_pty_resize(int token, int columns, int rows) {
+    if (token < 0 || token >= pty_length || !pty_sessions[token].console) { last = EBADF; return -1; }
+    if (columns < 1 || columns > 32767 || rows < 1 || rows > 32767) { last = EINVAL; return -1; }
+    COORD size = { (SHORT)columns, (SHORT)rows };
+    if (FAILED(pty_resize(pty_sessions[token].console, size))) { last = EIO; return -1; }
+    return 0;
+}
+int sys_pty_close(int token) {
+    if (token < 0 || token >= pty_length || !pty_sessions[token].console) { last = EBADF; return -1; }
+    PtySession *session = &pty_sessions[token];
+    _close(session->reader); _close(session->writer);
+    pty_close(session->console);
+    session->console = NULL;
+    return 0;
 }
 
 int sys_wait_usage(int64_t pid, int flags, int64_t out[6]) {
@@ -3230,7 +3349,7 @@ int sys_exec(const char *path, char *const argv[], char *const envp[], int searc
         SetInformationJobObject(job, JobObjectExtendedLimitInformation, &limits, sizeof limits);
     }
     int fds[3] = { -1, -1, -1 };
-    int64_t pid = spawn(path, argv, envp, search, fds, job, NULL, NULL, NULL, 0);
+    int64_t pid = spawn(path, argv, envp, search, fds, job, NULL, NULL, NULL, 0, NULL);
     if (pid < 0) { if (job) CloseHandle(job); return -1; }
     HANDLE process = children[nchildren - 1].process;
     for (int fd = 3; fd < FD_TABLE; fd++) if (_get_osfhandle(fd) != -1) _close(fd);
@@ -3255,7 +3374,7 @@ int sys_system(const char *command) {
     sprintf(line, "cmd /d /s /c \"%s\"", command);
     char *argv[] = { (char *)comspec, NULL };
     int fds[3] = { -1, -1, -1 };
-    int64_t pid = spawn(comspec, argv, NULL, 0, fds, NULL, line, NULL, NULL, 0);
+    int64_t pid = spawn(comspec, argv, NULL, 0, fds, NULL, line, NULL, NULL, 0, NULL);
     free(line); free(comspec);
     if (pid < 0) return -1;
     int64_t out[3];
@@ -3311,7 +3430,7 @@ FILE *sys_fork_start(void) {
     char resume[] = "--resume";
     char *argv[] = { self, resume, token, NULL };
     int fds[3] = { -1, -1, -1 };
-    int64_t pid = spawn(self, argv, NULL, 0, fds, NULL, NULL, inherited, NULL, 0);
+    int64_t pid = spawn(self, argv, NULL, 0, fds, NULL, NULL, inherited, NULL, 0, NULL);
     free(self);
     CloseHandle(inherited);
     if (pid < 0) { CloseHandle(wr); return NULL; }
@@ -3700,7 +3819,7 @@ int64_t sys_win_spawn(const char *command, const char *arg, const int fds[3]) {
     if (!line) { last = ENOMEM; return -1; }
     sprintf(line, "\"%s\"%s%s", command, *arg ? " " : "", arg);
     char *argv[] = { (char *)command, NULL };
-    int64_t pid = spawn(command, argv, NULL, 0, fds, NULL, line, NULL, NULL, 0);
+    int64_t pid = spawn(command, argv, NULL, 0, fds, NULL, line, NULL, NULL, 0, NULL);
     free(line);
     return pid;
 }

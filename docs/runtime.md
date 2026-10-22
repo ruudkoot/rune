@@ -502,8 +502,8 @@ one, and a full collection that grows the heap two, one into a space of
 the same size and one into a larger -- and some lines at exit. The run is the same with it, `--count`
 included (`gc-log/*` of `tests/runner/tools.sml`). The first line names the format
 and the heap's settings (`# rune-gc-log 1 nursery=N heap=H fill=P limit=L`)
-and the second the columns, by which a script reads them (`tools/mmu.py`,
-`scripts/gc-eval.sh`; [testing.md](testing.md), *Measuring a collector*):
+and the second the columns, by which a script reads them (`bin/rune-measure mmu`,
+`bin/rune-measure gc-eval`; [testing.md](testing.md), *Measuring a collector*):
 
 | Column | What |
 |---|---|
@@ -902,7 +902,7 @@ The Basis Library suite records such a difference as a `WIDTH` line of
 | An array or a vector | 100,000,000 elements | `Array.maxLen`, `Vector.maxLen` |
 | A file position | 64 bits | on every platform, including 32-bit Windows |
 | Live data, 64-bit VM | the machine's memory | a collection holds the heap's chunks and its own at once |
-| Live data, 32-bit VM | about 3 GiB; 1 to 1.25 GiB under a 2 GiB limit | `bin/runevm32.exe` is linked large-address-aware, which gives it 4 GiB of address space; without that it would be about half. Measured by `scripts/gc-probe32.sh` on Linux: under either collector the most live data a full collection completed with was 3079 MiB of small objects with the whole address space, and 1023 MiB of small objects and 1278 MiB of arrays of 1 MiB under a 2 GiB limit |
+| Live data, 32-bit VM | about 3 GiB; 1 to 1.25 GiB under a 2 GiB limit | `bin/runevm32.exe` is linked large-address-aware, which gives it 4 GiB of address space; without that it would be about half. Measured by `bin/rune-measure gc-probe32` on Linux: under either collector the most live data a full collection completed with was 3079 MiB of small objects with the whole address space, and 1023 MiB of small objects and 1278 MiB of arrays of 1 MiB under a 2 GiB limit |
 
 The two collectors hold the old space once and need no block larger than
 2 MiB, so a 32-bit VM's live data reaches most of its address space; the
@@ -1055,3 +1055,32 @@ What differs:
   own program alone.
 * The program carries its line table as DWARF: a debugger stops at a line of
   an SML source, and names a function by its name and its number.
+
+
+## Owned pseudo-terminals
+
+Pty (signature PTY, lib/basis/pty_sig.sml) starts a child on a fresh terminal
+with an initial size, explicit arguments, environment and working directory.
+Its abstract session owns borrowed numeric input/output descriptors; convert
+these with Posix.FileSys.wordToFD o SysWord.fromInt for ordinary I/O and polling.
+The child remains a Subprocess.pid and its caller waits or polls for it.
+Resize changes the terminal dimensions and notifies its foreground program.
+Close is idempotent, disconnects the terminal and discards unread output; the
+caller still reaps the child. Closed descriptors cannot be borrowed again.
+Dimensions outside 1..32767 raise Domain. Sessions are external resources:
+close them explicitly and do not carry them across saved-image restoration.
+
+POSIX uses a master/slave terminal and gives the child a controlling session.
+Windows resolves ConPTY dynamically, so older Windows and sys_none report
+ENOSYS rather than making the VM itself unavailable. Its binary communication
+pipes integrate with ordinary descriptor I/O. The terminal controller uses
+nonblocking input/output and finite deadlines; a full nonblocking Windows pipe
+reports EAGAIN, including the zero-byte-success form of PIPE_NOWAIT.
+
+The Windows backend sets STARTF_USESTDHANDLES with null standard handles for
+ConPTY children. Without this, a redirected parent can pass its streams into
+the child despite attaching it to a new console. The native probe and regression
+follow the [Windows console maintainers' explanation](https://github.com/microsoft/terminal/discussions/15814).
+The backend closes its output reader before pseudoconsole teardown, which
+permits discarding final updates without a synchronous close deadlock; see
+[Microsoft's ConPTY lifecycle documentation](https://learn.microsoft.com/en-us/windows/console/creating-a-pseudoconsole-session).

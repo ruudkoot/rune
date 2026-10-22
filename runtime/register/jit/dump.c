@@ -2,7 +2,7 @@
    function the JIT compiles, as it is placed, with what each part of it
    is for -- the bytecode instruction it does and its role (masm.h,
    MsRole) -- so that the code can be read, and counted by role under
-   callgrind (scripts/jit-dump.py), and perf's jitdump of the same code,
+   callgrind (bin/rune-measure jit-dump), and perf's jitdump of the same code,
    so that `perf inject --jit` and `perf annotate` see it.
 
    In DIR, per function compiled, in the order compiled (NNNNN from 0):

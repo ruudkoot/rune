@@ -7,7 +7,7 @@ struct
   fun env (name, default) = case OS.Process.getEnv name of SOME v => if v = "" then default else v | NONE => default
   (* the tree's directory and the run's, as the runner gives them *)
   val root = env ("RUNE_TEST_ROOT", OS.FileSys.getDir ())
-  val run = env ("RUNE_TEST_RUN", OS.FileSys.getDir ())
+  val run = env ("RUNE_TEST_RUN", root ^ "/tests/out/manual")
   fun fromRoot p = if String.isPrefix "/" p then p else root ^ "/" ^ p
 
   (* a word as the shell reads it back *)
@@ -78,7 +78,7 @@ struct
      the file of stdout), for at most TIMEOUT seconds (0 for no limit); its
      exit status as the shell gives it: 128 and the signal for a signal,
      and 124 for the time *)
-  fun execEnv envf {cmd, dir, stdin, stdout, stderr, timeout} =
+  fun execProcess checkLeaks limits envf {cmd, dir, stdin, stdout, stderr, timeout} =
     let
       val mode = Posix.FileSys.S.flags [Posix.FileSys.S.irusr, Posix.FileSys.S.iwusr, Posix.FileSys.S.irgrp,
                                         Posix.FileSys.S.iroth]
@@ -97,7 +97,7 @@ struct
       val program = if search orelse not (isSome dir) then hd cmd else fromRoot (hd cmd)
       val pid =
         Subprocess.spawn {program = program, args = cmd, env = SOME (envf (Posix.ProcEnv.environ ())), search = search, dir = dir, stdin = SOME (n i),
-                          stdout = SOME (n out), stderr = SOME (n err), group = true, limits = Subprocess.unlimited}
+                          stdout = SOME (n out), stderr = SOME (n err), group = true, limits = limits}
       val () = (Posix.IO.close i; Posix.IO.close out; if stderr = stdout andalso stdout <> "" then () else Posix.IO.close err)
       fun code status =
         case status of
@@ -105,19 +105,27 @@ struct
         | Posix.Process.W_EXITSTATUS w => Word8.toInt w
         | Posix.Process.W_SIGNALED s => 128 + SysWord.toInt (Posix.Signal.toWord s)
         | Posix.Process.W_STOPPED s => 128 + SysWord.toInt (Posix.Signal.toWord s)
+      fun ended status =
+        if checkLeaks andalso ((Subprocess.kill (pid, Posix.Signal.fromWord 0w0); true) handle OS.SysErr _ => false) then
+          ((Subprocess.kill (pid, Posix.Signal.kill) handle OS.SysErr _ => ()); 125)
+        else code status
       val start = Runtime.clock ()
       fun waitFor () =
         case Subprocess.poll (SOME pid) of
-          SOME {status, ...} => code status
+          SOME {status, ...} => ended status
         | NONE =>
             if Time.toSeconds (Time.- (Runtime.clock (), start)) >= LargeInt.fromInt timeout then
               ((Subprocess.kill (pid, Posix.Signal.kill) handle OS.SysErr _ => ());
                ignore (Subprocess.wait (SOME pid)); 124)
             else (OS.Process.sleep (Time.fromMilliseconds 20); waitFor ())
     in
-      if timeout <= 0 then code (#status (Subprocess.wait (SOME pid))) else waitFor ()
+      if timeout <= 0 then ended (#status (Subprocess.wait (SOME pid))) else waitFor ()
     end
 
+  (* Limited children also reject (and kill) a group left behind by its
+     leader: status 125, distinct from the timeout's 124. *)
+  fun execLimited limits envf x = execProcess true limits envf x
+  fun execEnv envf x = execProcess false Subprocess.unlimited envf x
   fun exec x = execEnv (fn e => e) x
 
   (* an environment with a variable set, and without some *)

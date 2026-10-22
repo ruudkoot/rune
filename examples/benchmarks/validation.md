@@ -25,7 +25,7 @@ GHC 9.4.7 and OCaml 4.14.1 supplied the original-language references.
 Reproduction commands:
 
 ```sh
-python3 scripts/benchmark-inventory.py --check
+bin/rune-generate inventory --check
 python3 tests/benchmarks/test-inventory.py
 make JOBS=4 bench-check
 make JOBS=4 bench-check BENCH_PROFILE=normal

@@ -601,7 +601,7 @@ function, one a later binding hides, and a stop at a raise ended with
 `:abort` -- the same frames and values on every mode of the JIT.
 
 `tests/terminal` (`make test-terminal`, and on Windows through WSL interop
-in `make test-windows`) drives the REPL in a tmux pane and waits for the
+in `make test-windows`) drives the REPL through a runtime PTY or ConPTY and waits for the
 screen: the prompt and the banner, colours as typed, completion, the
 history, an entry of several lines, errors with their lines, an open
 string, keys typed ahead while code runs, a program that reads a line,

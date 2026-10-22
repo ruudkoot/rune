@@ -12,8 +12,8 @@ inside the process.
     make gcbench              # tests/out/gcbench/gcbench, with the tree's CC
     make check-gcbench        # every experiment at tiny sizes, its self-checks on; part of make check
     tests/out/gcbench/gcbench SUBCOMMAND [NAME=VALUE ...] [check=1]     # one untimed run
-    tests/gcbench/measure.sh NAME [-n RUNS] [-e "mem l2"] [-c CPU] [-m KiB] -- SUBCOMMAND [NAME=VALUE ...]
-    tests/gcbench/roadmap.sh  # the runs that made the roadmap's tables; report.py writes them
+    bin/rune-measure gcbench-measure NAME [-n RUNS] [-e "mem l2"] [-c CPU] [-m KiB] -- SUBCOMMAND [NAME=VALUE ...]
+    bin/rune-measure gcbench-roadmap  # the runs that made the roadmap's tables; bin/rune-measure gcbench-report writes them
 
 It is for Linux on x86-64 (`perf_event_open`, `rdpmc`, `rdtscp`), built
 with gcc or clang as one translation unit: `-std=c17 -O2 -Wall -Wextra
@@ -88,7 +88,7 @@ H1 and H5 read the census's traces of the word layout (format 2,
   small one runs several rounds a repetition (8-16 MiB of work, or 16M
   loads) and counts only the timed phases (not the rebuild of a heap
   between copies, say).
-* **`measure.sh`** makes a measurement: it waits for a 1-minute load
+* **`bin/rune-measure gcbench-measure`** makes a measurement: it waits for a 1-minute load
   below `LOADMAX` (1.5) and for `MemAvailable` of at least the `ulimit -v`
   (`-m`, 4 GiB) plus `SPARE` (8 GiB), pins the process to one core
   (`taskset -c 5`, `-c`), runs RUNS processes (`-n`, 5) for each event set
@@ -100,10 +100,10 @@ H1 and H5 read the census's traces of the word layout (format 2,
   set of each process). It runs a copy of the binary (`NAME.bin`). On a
   machine shared with other timed work, `GCB_LOCK` names a command that
   holds the machine's exclusive lock while it runs its arguments, and
-  measure.sh runs itself under it (the roadmap's drafts had one:
+  bin/rune-measure gcbench-measure runs itself under it (the roadmap's drafts had one:
   `GCB_LOCK="DRAFTS/lock.sh timed gcbench"`).
 * **A row** is `exp case unit n cyc ins EV0..EV3 tsc ns cyc_med reps
-  evset` (measure.sh adds `run` and `spread`): the counters per unit, of
+  evset` (bin/rune-measure gcbench-measure adds `run` and `spread`): the counters per unit, of
   `n` units; `ns` is the TSC's time.
 
 ## The self-checks
@@ -155,15 +155,15 @@ The numbers of the roadmap's *The harness* are the drafts'
 `results/coefficients.md` (where they are kept: the roadmap's *The
 experiments*), made between 2026-10-05 19:30 and 2026-10-06 18:45 with
 this harness before it came into the tree, built by gcc 13.3 with `-std=gnu17 -O2
--march=haswell`. `roadmap.sh` runs the same measurements under the same
+-march=haswell`. `bin/rune-measure gcbench-roadmap` runs the same measurements under the same
 names, in the same order: each table names its command, and every one ran
-by `measure.sh`'s rules on the reference machine, at a 1-minute load of
+by `bin/rune-measure gcbench-measure`'s rules on the reference machine, at a 1-minute load of
 0.7-1.4 at its start, the least of 3-5 processes, each the least of 3-5
 repetitions. H1 and H5 replayed the census's traces (the bootstrap
 sampled every 32 KiB, `compile-sigs`, `runedoc-page` and six of MLton's
 benchmarks); H5's ops replay took the simulator's stream for the
 bootstrap (`gcsim --nursery 1M --old segfit --major-every 16M --ops`).
-`report.py [OUTDIR [RESULTSDIR]]` (Python 3) writes the tables from
+`bin/rune-measure gcbench-report [OUTDIR [RESULTSDIR]]` (Standard ML) writes the tables from
 `tests/out/gcbench/*.tsv` and the logs; the comparison with the simulator
 in `gcbench-fragmentation.md`, and `coefficients.md`, were written by hand
 from them, with the prototype's fitted coefficients beside them.

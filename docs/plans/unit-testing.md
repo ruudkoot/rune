@@ -11,8 +11,9 @@ This roadmap plans three things:
 - **Tests chosen for the occasion.** The Makefile's targets and the agents' instructions say which tests a kind of change runs. The aim is less time spent testing, with the same coverage or more.
 
 It was written on 2026-10-11 against `34b2b4c5`, the merge of the
-install-test branch into master. It lives in a worktree, on branch
-`unit-testing`.
+install-test branch into master, and carried out on branch `unit-testing`,
+which pull request #42 merged into master on 2026-10-13. What is left is in
+*What is left, and how to go on*.
 
 What it rests on:
 * **The code.** A census of the scripts (152 files under `tests/`, `scripts/` and `tools/`), the Makefile's test targets, the SML harnesses there are (`lib/test/property`, the Basis suite's `T`, the libraries' tests), and what the Basis offers a runner (*Where we are*, *What is different for SML, and for Rune*).
@@ -21,6 +22,19 @@ What it rests on:
 * **The literature and the implementations.** About forty frameworks and runners in Standard ML, Haskell, OCaml and other languages, compilers' own harnesses included. Papers on test design, test dependence, flaky tests, test selection, scheduling, build systems and compiler testing (*What the literature says*, *What the implementations do*, *References*).
 
 ## Status
+
+The continuation, [unit-testing-part2.md](unit-testing-part2.md), is complete
+through P2.17 as of 2026-10-22. It retires 282 shell/Python/AWK scripts and
+retains nineteen explicit bootstrap, installer and independent-oracle
+exceptions. Pre-rebase acceptance passed 19,240 default-check cases (two documented
+skips) and 8574 full-matrix cases (858 named unavailable skips), with no
+failures. The rebase onto `05ecacb9c` adds the upstream Windows Unicode driver
+to the SML inventory. Its full check records 19,328 PASS, two documented SKIP
+and one intermittent terminal resize failure; exact and repeated reruns retain
+that limitation. The Windows runner passes 2367/2367, and recovered WSL
+transport failures, complete Basis audits and Windows protocols are recorded
+in the continuation. The status and script census below retain this roadmap's
+implementation history.
 
 | Milestone | What | State |
 |---|---|---|
@@ -31,19 +45,99 @@ What it rests on:
 | M4 | `tests/lang` and `tests/errors` in ways, compiled once | done 2026-10-12 |
 | M5 | The first calibration: tiers, profiles, `--affected` | done 2026-10-12 |
 | M6 | One engine for expectations | done 2026-10-12 |
-| M7 | The Basis suite on the runner || done 2026-10-12 |
-| M8 | Laws on the runner || done 2026-10-12 |
-| M9 | The differential checks as oracles || done 2026-10-12 |
-| M10 | The tools' suites || done 2026-10-12 |
-| M11 | The protocol suites in SML || done 2026-10-12 |
-| M12 | Requirements and the doctor || done 2026-10-12 |
-| M13 | The matrix, and the other machines || done 2026-10-12 |
-| M14 | The rest, and the tools for flaky tests || done 2026-10-12, in part |
-| M15 | The final calibration || done 2026-10-12 |
+| M7 | The Basis suite on the runner | done 2026-10-12 |
+| M8 | Laws on the runner | done 2026-10-12 |
+| M9 | The differential checks as oracles | done 2026-10-12 |
+| M10 | The tools' suites | done 2026-10-12 |
+| M11 | The protocol suites in SML | done 2026-10-12 |
+| M12 | Requirements and the doctor | done 2026-10-12 |
+| M13 | The matrix, and the other machines | done 2026-10-12, in part |
+| M14 | The rest, and the tools for flaky tests | done 2026-10-12, in part |
+| M15 | The final calibration | done 2026-10-12 |
 
 The owner decided D1 to D24 on 2026-10-12, every one as recommended
 (*Decisions*). M1 and M2 do not depend on each other or on anything else,
 and can be done first.
+
+## What is left, and how to go on
+
+As of 2026-10-19, after the follow-up ports below, from the handover
+baseline `b11a1737`. Every script below still runs, as a
+make target that the runner runs as a step (`make/*`), or as a job of a
+profile or of the tier `nightly`. The Done notes of M10 to M14 say why each
+stayed.
+
+**The ports still to do:**
+* **M13, the matrix and Windows,** the largest part, and the one with the most knowledge of the hosts:
+  - `tests/basis/run-matrix.sh` (1,698 lines): its configurations as ways, its probes, its halving of a program into sections, and its heap images. `test-windows`, `test-stress`, `matrix-quick`, `matrix` and portability's job `portability/matrix` call it.
+  - The Windows runner: `tests/run-windows.sh` and `tests/windows-dir.sh`.
+  - The hosts' runs of the laws: `tests/basis/run-laws-hosts.py`.
+* **M14, the other suites** (25 scripts):
+  - native code: `tests/opt/run-opt-tests.sh`, `run-counts.sh`, `run-debug.sh` and `run-bootstrap.sh`;
+  - the budgets: `tests/perf/run-perf.sh`;
+  - the census: `scripts/check-census.sh`;
+  - the heap simulator: `tools/heapsim/test.sh`, `test2.sh` and `validate.sh`;
+  - the layouts and gcbench: `tests/layouts/check.sh` and `tests/gcbench/check.sh`;
+  - the benchmarks: `scripts/run-benchmarks.sh` and the six `tests/benchmarks/check-*.sh`;
+  - the documentation's checks: `scripts/check-docs.sh`, `tests/basis/check-claims.sh` and `check-notes.sh`;
+  - the mutants: `tests/basis/run-mutants.sh`;
+  - the external corpora: `tests/external/run-mlton.sh`, `run-mlton-bench.sh` and `tests/incremental/mlton.sh`.
+* **M14, stress and the sanitizers as ways.** `test-stress`, `test-native-stress`, `test-register-asan` and `test-native-asan` still call `tests/run-tests.sh`. It goes when they and the Windows runner have moved. `tests/runtime/run-vm-tests.sh` goes with the Windows runner, since it and portability's jobs call it.
+* **M14, the timing jobs in the exclusive pool.** `make check` has none.
+
+**The follow-up ports (2026-10-19):**
+* `tests/lib/run-hosts.sh` is replaced by `tests/runner/hosts.sml` and `libhosts.sml`: the same twenty programs on six hosts, each a job, with the C known-answer reference shared and a stale-deviation check per host. `make test-lib-hosts` selects the tier `test-lib-hosts`; `lib-hosts/HOST/PROGRAM` selects one program. Builds have private directories; programs run in the root for their fixtures. Each child has a time and memory limit, and the native host executables are capabilities of their own, including the environment overrides.
+* `tests/color/contrast.py` is replaced by `tests/color/contrast.sml`, compiled with the actual `Color` structure. The six terminal palettes, four themes, four vision modes, floors and measured VS Code exception stay the same. `colour/contrast` is a job of `check` and `test-diagnostics`; `colour/planted-fault` holds black text on black to failing. The host adapter's planted errors, crashes, timeout, wrong known answers and stale deviations are checked by `runner/host-adapter` in `check` and `quick`.
+
+**Validation of these ports:**
+* The old and new native drivers ran all 120 host/program pairs, with the same verdicts apart from the already declared `HOST-FLAKY` case `smlnj-legacy/property.shrink` (the old run passed; the new one hit the host's bogus overflow fault). All six old host runs and both selections of the new runner pass; every host's stale-deviation check passes. The new selections are 111 jobs for the five other hosts and 27 for MLKit, including their shared references and the canaries.
+* The bounded runs exposed MLKit 4.7.25's excessive memory use in `unicode.utf8`. The unchanged program exhausts both 2 GiB and 8 GiB address-space limits; compiling fresh source copies has the same outcome, while a diagnostic build with `-no_ri` passes all five checks with 7,620 KiB peak RSS. This is a new `HOST-BUG` entry with the measurements in `docs/bugreport/mlkit/region-inference`; the normal suite keeps the default compiler flags.
+* Poly/ML needs a virtual-memory reservation larger than its heap. Its jobs allow 4 GiB of address space and cap the heap at 2 GiB. The adapter's planted-fault regression passes six jobs with the canaries. Rune and MLton produce identical runner bytecode.
+* The colour check's complete verbose output matches the Python implementation on all 1,892 ratios. The black-on-black planted fault makes both exit 1, with the same 40 failures. `make test-diagnostics` passes 19 jobs.
+* The first full `make check` completed with 14,475 passes, two documented skips, and one generator race: concurrent makes shared `gen-build-files.sh`'s `.new` file. The generator now publishes through a unique temporary file. `compiler/build-generators`, in `check` and `quick`, runs four rounds of eight concurrent invocations: the old generator fails this regression and the fix passes. The failed backend job also passes on retry.
+* The fresh full `make check JOBS=8` passes: 14,477 passes and two documented native-interrupt skips, 14,479 jobs in total. Its prerequisites use the already installed MLKit 4.7.25 through `MLKIT` and `MLKIT_LIB`; the default host symlink still points to 4.7.23. Switching versions required clearing the generated project `MLB` caches. Validation output is kept under `tests/out/validation-20261019`.
+* Test-selection checks confirm that changes to `rune.build`, the build generator, and `src/util/color.sml` still select the complete check tier through `--affected`/`--changed`; the new tests do not narrow the acceptance coverage of compiler or build changes.
+
+**Kept on purpose, to port when they change:**
+* the scenario scripts of `tests/deps`, `tests/dynamic`, `tests/buildfile` and `tests/units` (M10; D6's cram transcripts are their better next form);
+* `tests/install/run.sh`, a make step, for `SMLNJ` (M10);
+* the interop scripts of `tests/lib/zmtp` and `tests/lib/jupyter` (M10);
+* the protocol drivers (M11): `tests/repl-protocol/run.py`, `tests/dap/run.py`, `tests/kernel/run.sh` with its client, and `tests/incremental/run.sh` with `mutate.py`;
+* `tests/terminal/run.sh`, until the runtime has a pty (G8);
+* `scripts/doctor.sh`'s build scopes (M12).
+
+**Not built from *Testing the tester*:** the display drawn through `Emulator` (item 4). The rest is in place:
+* the canaries;
+* the properties of the scheduler and the expectation engine (`tests/lib/runner/props.sml`);
+* `lib/test/unit`'s own harness (`tests/lib/unit/core.sml`);
+* a planted fault for each port.
+
+*Later* lists what comes after the ports.
+
+**How the work was checked:**
+* **`make check` green before every commit,** in a fresh detached worktree. A commit changes the version compiled into the tools, so the first `make` after a checkout rebuilds them all: about 8 minutes on 16 processors.
+* **A port is done** when the runner gives the script's verdicts on the same tree (a shadow run), and a planted fault fails it (D23).
+  - To plant a fault in an oracle without touching the tree, make a scratch root of symbolic links to the tree, put faulty wrappers in its `bin/`, and run `bin/rune-test run --root SCRATCH`.
+  - A symlinked root changes the compiler's bytes, so there `reproducible/*` fails its comparison with `bin/rune.rbc` for that reason alone.
+* **A change to `lib/basis`** changes `docs/generated/basis`: regenerate it with `make docs`, which `check-docs` compares against. It can also push past `perf-check`'s budgets, which count the compiler's instructions, bytes and objects; measure them again (`tests/perf/run-perf.sh --new --update`) and give the reason in the commit.
+
+**What the full runs taught.** Each lesson comes from a failure of the first full `make check` on the runner (2026-10-12) or of a run since, fixed in the milestone it came from:
+* **Run where the bytes do not depend on it.** A job runs in a directory of its own, or in the root with `dir = SOME "."`. A program that writes into its output where it ran must run in the root, by a relative name:
+  - `bin/rune`'s wrappers find the library through `$0`, and an absolute `$0` puts absolute paths into the bytecode (`bootstrap/*`, `reproducible/*`). So `Sh.exec` keeps a relative name in the root.
+  - The assembler writes its directory into the debug information, so `bin/runevm-native` translates in the root, whichever directory the program runs in. Its cache is keyed by the bytecode alone.
+* **A pool for a script's fixed paths.** Two jobs of one script share what it writes at fixed paths under `tests/out`. So `kernel/pipe` and `kernel/connection` share the pool `kernel`.
+* **An edge for every file a job reads from another.** `jit/@every-instruction` reads `@every-opcode`'s disassembly, and waits for it.
+* **Make's variables stay out of the runner's environment.** A relative `RUNEVM=bin/runevm-stack` reached scripts that run elsewhere, so `RUNE_TEST` passes `RUNEVM` only when it is overridden.
+* **Directories made at once.** `mkdirs` accepts a directory that another job made between its check and its `mkdir` (`45269c34`).
+* **Counts the same on every run.** `check-jit` compares modes, and `IntInf`'s cost depends on its values, so `Subprocess` and `Runtime.clock` use `Time.ofMicros`.
+* **A shared machine.** By default a run takes the processors less the load, but at least half of them. The load is a minute's mean, which still counts the tools just built.
+
+**After the merge,** pull requests fixed the nightly workflow's first runs:
+* #44: the PowerPC and ARM sysroots;
+* #50: SML/NJ's heaps built with `SIGPIPE` at its default;
+* #51: each host's install shown while the others build;
+* #58: two hours for the full matrix, and the deletion of directories that MLKit's `chmod` locks;
+* #60: a flake of native SML/NJ's `setpgid`, recorded as `HOST-FLAKY`.
 
 ## The request
 
@@ -1027,10 +1121,11 @@ not have or cannot reach (*Where we are*, *What the Basis offers*).
 | G5 | ending a process and everything it started | `Posix.Process.kill` with `K_GROUP`; Windows has no groups and kills one process | `Subprocess.kill` on G4's group or job | the group on POSIX; on Windows the process alone |
 | G6 | waiting for a child with a deadline | `waitpid_nh` and polling | optional: a pidfd with `OS.IO.poll`, `WaitForMultipleObjects` | a poll loop that sleeps 1-20 ms |
 | G7 | the machine's load and free memory | none | none needed on Linux: `/proc/loadavg` and `/proc/meminfo` are files | the files |
-| G8 | a pseudo-terminal | none | `openpty`, and ConPTY on Windows; it lets the terminal tests leave tmux | `tests/terminal/term.py` as a step |
+| G8 | a pseudo-terminal | implemented in part 2: `Pty` (POSIX controlling terminal, Windows ConPTY; unsupported system-layer result) | `lib/basis/pty_sig.sml`, `docs/runtime.md`; SML terminal scenarios and tester-display checks | completed by P2.13 of `unit-testing-part2.md` |
 | G9 | a deadline for in-process code | none | a VM budget of instructions per call (quickcheck.md's D9, option C, "left for later") | the worker's restart (D9) |
 
-M2 does G1 to G5. G6 to G9 are left for when they are wanted.
+M2 does G1 to G5. G8 was completed by P2.13 of the second roadmap;
+the other optional gaps retain their recorded alternatives.
 
 ## Decisions
 
@@ -1757,7 +1852,8 @@ M1 and M2 are independent of each other and of the rest.
 
 * **Done** (2026-10-12), for the machines; the matrix's port is still to come:
   - **Portability** (`tests/runner/portability.sml`): tests/lang on the 32-bit, PowerPC and aarch64 VMs and their variants under incremental marking are ten more ways of M4 (`lang/port-*`), compiled once; the counts of --count on every VM and this one, the image of each VM read by every other, the bytecode each VM must refuse (`run-vm-tests.sh`, a job a VM), the JIT's checks on the aarch64 (the oracle of M9 on another VM, `port-jit/*`), and the matrix's configuration `portability`, as jobs of the tier `test-portability`, outside `check`. The capability `qemu` probes the kernel's registration of qemu as well, which run-portability.sh checked before it started. `run-portability.sh` is gone.
-  - **Not yet:** the matrix's configurations as ways (`run-matrix.sh`, its probes, sections and images), the Windows runner (`run-windows.sh`, `windows-dir.sh`, and so `run-tests.sh` and `run-vm-tests.sh`), and the hosts' runs of the libraries and the laws (`run-hosts.sh`, `run-laws-hosts.py`). They hold most of the knowledge of the hosts and of Windows; each still runs, as a make target and as a profile's job. Their port is the next work of this roadmap (*Later*).
+  - **Follow-up (2026-10-19):** the native library suites are jobs of `lib-hosts/*`, on the shared adapter `tests/runner/hosts.sml`; `tests/lib/run-hosts.sh` is retired. See *What is left, and how to go on* for the checks and validation.
+  - **Not yet:** the matrix's configurations as ways (`run-matrix.sh`, its probes, sections and images), the Windows runner (`run-windows.sh`, `windows-dir.sh`, and so `run-tests.sh` and `run-vm-tests.sh`), and the hosts' runs of the laws (`run-laws-hosts.py`). They hold most of the knowledge of the hosts and of Windows; each still runs, as a make target and as a profile's job. Their port is the next work of this roadmap (*What is left, and how to go on*).
 
 ### M14. The rest, and the tools for flaky tests (L, about 1,500)
 
@@ -1790,6 +1886,7 @@ M1 and M2 are independent of each other and of the rest.
   | `contrast.py` | 192 |
 
 * **Done** (2026-10-12), the tools for flaky tests; the scripts are still to come:
+  - **Follow-up (2026-10-19):** the colour-contrast check is Standard ML in `tests/color/contrast.sml`, run by `colour/*`; its Python driver is retired.
   - **In the runner:** `--repeat N`, `--until-fail` and `--under-load` (a busy process on every processor beside the runs); the tag `flaky`, a retry of the failure (`Scheduler.retry`, and the supervisor's verdict `Again`) whose pass is `FLAKY`; the quarantine (`tests/runner/quarantine.txt`, read by the engine of M6, its lines held to parse in `make check`), a failure `QUARANTINED` until the line's date and a failure again after it; `stats` already lists the flakiest tests. Each was shown on a program of tests that fail as they should: a test that fails once, one quarantined, one quarantined in the past.
   - **Not yet:** the port of `tests/opt`, the census, the simulators, the layouts, gcbench, the budgets, the benchmarks, the documentation's checks, the mutants and the external corpora (the eighteen scripts above); stress and the sanitizer as ways (they are the profile `vm`'s jobs); and the timing jobs in the exclusive pool, of which `make check` has none (the budgets count instructions). Each runs as its make step, a job of the runner.
 
@@ -1895,7 +1992,7 @@ An agent that reads a log reads the failure blocks and the `RESULT:` line
 
 ## Appendix A: the scripts, and what becomes of them
 
-Every script under `tests/`, `scripts/` and `tools/` at `34b2b4c5` (E10's census: 152 files, 14,321 lines of shell, 6,873 of Python and 727 of awk), with the milestone that retires it, or why it stays.
+Every script under `tests/`, `scripts/` and `tools/` at `34b2b4c5` (E10's census: 152 files, 14,321 lines of shell, 6,873 of Python and 727 of awk), with the milestone that retires it, or why it stays. This is the plan as written. The scripts still in the tree after M15, and why, are in *What is left, and how to go on*.
 
 | Fate | Scripts | Lines |
 |---|---|---|
@@ -2022,3 +2119,39 @@ Read as of 2026-10-11, from documentation and, where behaviour mattered, source.
 * Vitest 4.1 agent reporter: https://vitest.dev/blog/vitest-4-1.html; Jest 30.3; Bun; V8's `tools/testrunner/base_runner.py`
 * Anthropic. Building a C compiler with a team of parallel Claudes. 5 February 2026, https://www.anthropic.com/engineering/building-c-compiler
 
+
+
+### Part 2 terminal completion
+
+P2.13 completes G8 and retires the terminal shell/Python drivers. The runtime
+Pty API has POSIX, ConPTY and unsupported-system implementations; SML owns
+scenario input, resize, screen/byte assertions and lifecycle. The original
+retention tables above are the historical inventory, superseded by the
+part-2 ledger and acceptance records. Protocol and incremental drivers named
+as deferred above were also retired in P2.9/P2.12.
+
+P2.14 of [the continuation](unit-testing-part2.md) now replaces the 43
+measurement/analysis controllers with `bin/rune-measure`. Its per-file ledger
+and acceptance record preserve the retired source identities and validation
+limits. Generator and production build/package conversion remain P2.15/P2.16;
+whole-project acceptance is P2.17.
+
+P2.15 of [the continuation](unit-testing-part2.md) now replaces the 25
+post-bootstrap generators and AWK helpers with `bin/rune-generate` and
+`bin/rune-inventory`. Complete upstream inventories, source preparations,
+Unicode tables and independent vectors retain their recorded agreements.
+Production build/package conversion and final frozen-source acceptance remain
+P2.16/P2.17.
+
+P2.16 of [the continuation](unit-testing-part2.md) replaces the last eight
+production build/package scripts with the native/bootstrap and portable SML
+entrypoints of `bin/rune-build`. GMP-free/GMP bootstrap, all cross runtimes,
+relocated SML SDK relinking and exact archive-member comparisons pass. The
+baseline ledger now has 281 retired targets and nineteen retained exceptions;
+P2.17 records the final whole-project acceptance, now complete. The accepted
+default check ran on `4f9065f5b`; the frozen matrix/platform source differs only
+in the subsequently corrected test fixtures and measurement build dependency.
+All twelve native/self-hosted controller payloads agree byte for byte. Actual
+Windows, portability, sanitizer, stress and native library-host checks are
+recorded with their skips, existing deviations and WSL transport reruns in the
+continuation. The earlier deferred/remaining descriptions are historical.

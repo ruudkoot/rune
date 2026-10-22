@@ -6,6 +6,7 @@
 - `readLine` (val): [LINE_EDIT](../sig/LINE_EDIT.md#val-readline)
 - `refresh` (val): [HISTORY](../sig/HISTORY.md#val-refresh)
 - `Reply` (con): [KEY](../sig/KEY.md#con-reply)
+- `resize` (val): [EMULATOR](../sig/EMULATOR.md#val-resize)
 - `resizes` (val): [DEVICE](../sig/DEVICE.md#val-resizes)
 - `result` (type): [LINE_EDIT](../sig/LINE_EDIT.md#type-result)
 - `ReverseSearch` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-reversesearch)

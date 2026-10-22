@@ -260,7 +260,7 @@ In the order of what they would gain:
 * **`bin/buildheap` and `$RUNEVM`.** The `bin/buildheap` that
   `tools-rune/configure.sh` writes runs the VM HOL was configured with,
   and takes neither `$RUNEVM` nor `$RUNEVM_OPTS`, so Rune's
-  `scripts/hol-theory.py --vm` and `--vm-opts` (a VM to measure, `--jit-perf-map`)
+  `bin/rune-measure hol-theory --vm` and `--vm-opts` (a VM to measure, `--jit-perf-map`)
   do not reach a theory's rebuild. The copy performance.md's measurements
   used ends `exec "${RUNEVM:-VM}" $RUNEVM_OPTS --name ...`.
 * **What HOL has and Rune has not:** threads (`--mt`, `Future` in

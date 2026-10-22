@@ -34,7 +34,7 @@ plan's.
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done (2026-10-12); every decision taken as recommended the same day |
-| M1 | The gate: the call measured after performance M5 to M7 | done (2026-10-19, on `db0fba57a`): the gate open; *Where we are* and the baselines measured again, the decisions' premises restated, `scripts/hol-kernel.sh` made to run on `$RUNEVM` |
+| M1 | The gate: the call measured after performance M5 to M7 | done (2026-10-19, on `db0fba57a`): the gate open; *Where we are* and the baselines measured again, the decisions' premises restated, `bin/rune-measure hol-kernel` made to run on `$RUNEVM` |
 | M2 | The body: tier 2's code for an instruction | done (2026-10-19): a constructor's tag tested by its representation, `SWITCH`'s tag likewise, the `--checked` test compiled in only under `--checked`, `int_mod` by a power of two an `and`; the bootstrap 15.230G to 14.516G instructions (−4.7%), HOL's kernel work 53.016G to 49.953G (−5.8%); cycles, an indication, −7% and −11%; `--count` and every output unchanged; `ENV`'s tests and division by a constant not built (*M2*) |
 | M3 | Frames walked, not indexed | done (2026-10-19): the walk of `vm.h`, given by each instruction set over the array, and every reader of frames outside the engines on it; the bootstrap 14.516G to 14.519G instructions (+0.02%), every output and count unchanged (*M3*) |
 | M4 | Frames in the value stack | done (2026-10-19): a header of three words below each frame's registers, `vm->frames` gone from `runevm`, returns by `jmp [r14-8]`, the watermark compared at the landing; a `fib` call 39.0 to 29.0 instructions and 11.0 to 8.3 cycles (MLton 8.7), a `tak` call 47.3 to 37.3 and 13.1 to 11.0; HOL's kernel work 49.98G to 43.95G instructions (−12.1%), the bootstrap's compiled code −10.3% and the whole −2.9%; the targets of instructions short (*M4*); `--count`, every output and the images' format unchanged |
@@ -122,7 +122,7 @@ watermark, a table of calls, known calls patched, the result in `rax`
 `fib` call is now 1.26 times MLton's cycles, a `tak` call 1.31 times.
 
 Where `fib`'s 39 go, by the role the emitters gave each machine instruction
-(callgrind with the JIT's dump at two run lengths, `scripts/jit-dump.py
+(callgrind with the JIT's dump at two run lengths, `bin/rune-measure jit-dump
 --diff`):
 
 | Role | Instructions |
@@ -176,15 +176,15 @@ The bytecode's six instructions of calls and closures are 29% and 45%.
   same compiler doing the same compile: 1.72 times the cycles and 3.1
   times the instructions (2.46 and 4.6 on 2026-10-12, with that day's
   compiler). Tier 2's code is 60% of its cycles and the collector 30%
-  (`perf record` over `--jit-perf-map`, `scripts/perf-groups.awk`).
-* **HOL's kernel work** (`scripts/hol-kernel.sh` on HOL4 built by M8's
+  (`perf record` over `--jit-perf-map`, `bin/rune-measure perf-groups`).
+* **HOL's kernel work** (`bin/rune-measure hol-kernel` on HOL4 built by M8's
   compiler, the drafts' `hol/HOL-midM8`) takes 53.0G instructions and 25.2G to
   25.9G cycles, against 11.3G to 11.5G and 8.5G to 8.6G on Poly/ML: 2.98
   times the cycles and 4.6 times the instructions (5.9 and 7.7 on
   2026-10-12). Tier 2's code is 84% of its cycles, the collector 7%. Its
   bytecode executes 15.8G instructions, still more than Poly/ML's whole
   run executes machine instructions.
-* **MLton's set** (`scripts/perf-cycles.sh --mlton-bench`, the least of
+* **MLton's set** (`bin/rune-measure perf-cycles --mlton-bench`, the least of
   three runs): on the 37 programs both ran, the geometric mean of Rune's
   cycles over MLton's is 4.58 and the median 3.40 (10.3 and 8.0 on
   2026-10-12). The seven programs of calls and closures run at 1.32 to
@@ -1212,7 +1212,7 @@ milestones below:
 | HOL's kernel work (HOL-midM8): instructions, cycles | 53.0G, 25.2G (Poly/ML 11.4G, 8.5G) |
 | MLton's set against MLton, cycles | geometric mean 4.58 (37 programs); the seven of calls and closures 1.32 to 3.16; tests/perf's `fib` and `tak` 1.36, 1.35 |
 
-Found on the way: `scripts/hol-kernel.sh` ran a HOL built by Rune on the
+Found on the way: `bin/rune-measure hol-kernel` ran a HOL built by Rune on the
 VM it was built with even where `$RUNEVM` named another, as HOL's
 `buildheap` execs its own; it now runs that HOL's state on `$RUNEVM`, with
 `$RUNEVM_OPTS`.
@@ -1967,7 +1967,7 @@ on: `results/M9/`, `scripts/M9/`).
   code with a role per machine instruction (performance.md's B1-jit-dump,
   performance M1's `--jit-dump`), the counts matched to the roles and
   patterns by script (`scripts/B1/cgjit.py`, `scripts/M9/f5patterns.py`;
-  from M1 on the tree's `scripts/jit-dump.py --callgrind` and `--diff`,
+  from M1 on the tree's `bin/rune-measure jit-dump --callgrind` and `--diff`,
   and `scripts/M9/f5patterns2.py`, `callcost.sh`).
 * **The bootstrap:** until M1, `bin/rune.rbc` of `921af2cc` compiling its
   own sources with `--heap-size 67108864` (`scripts/B1/boot.sh`). From M1,
@@ -1983,12 +1983,12 @@ on: `results/M9/`, `scripts/M9/`).
   run took -- the same VM in another mode, or a minute later. `--count`'s
   identity between engines and tiers is `scripts/check-jit.sh`'s programs'
   (and `make test-register-jit`'s), which read no clock.
-* **HOL's kernel work:** `scripts/hol-kernel.sh` in a restored `hol.state`:
+* **HOL's kernel work:** `bin/rune-measure hol-kernel` in a restored `hol.state`:
   of HOL-perf (built by `921af2cc`) until M1, of HOL-midM8 (built by
   performance M8's compiler, the instruction set of `db0fba57a`) from M1,
   run on the VM measured (`scripts/M9/hol.sh`, or the tree's script with
   `$RUNEVM` since M1). Poly/ML: HOL-poly.
-* **MLton's set:** `scripts/perf-cycles.sh --mlton-bench`, MLton's own
+* **MLton's set:** `bin/rune-measure perf-cycles --mlton-bench`, MLton's own
   `benchmark/tests` and `tests/perf/mlton-bench.txt`. For M9's session its
   bytecode and MLton's builds were frozen from a run of that script
   (`results/M9/M9/session/set-bin`), every run of b0, final and MLton then

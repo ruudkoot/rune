@@ -7831,6 +7831,68 @@
     }
    ]
   },
+  "PTY": {
+   "doc": "A child attached to a new pseudo-terminal, independent of any terminal\nemulator program. POSIX supplies a controlling terminal and session;\nWindows supplies ConPTY. The session owns its descriptors; callers own\nwaiting for its child. This interface is Rune's extension.\n\n",
+   "page": "sig/PTY.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "session",
+     "spec": "type session",
+     "doc": "An owned terminal and the child attached to it.\n\n",
+     "page": "sig/PTY.md#type-session"
+    },
+    {
+     "kind": "exception",
+     "name": "Closed",
+     "spec": "exception Closed",
+     "doc": "What borrowing or resizing a closed session raises.\n\n",
+     "page": "sig/PTY.md#exn-closed"
+    },
+    {
+     "kind": "val",
+     "name": "spawn",
+     "spec": "val spawn : {program : string, args : string list, env : string list option,\n             dir : string option, columns : int, rows : int} -> session",
+     "doc": "`spawn settings` starts a child on the terminal that settings describes.\n\nargs includes argv\\[0\\].\nNONE environment or directory inherits the parent's. Dimensions outside\n1\\..32767 raise Domain. OS.SysErr reports an unavailable terminal backend\n(ENOSYS for sys\\_none and Windows without ConPTY). POSIX exec failure is\na child exiting with 126, as with Subprocess.spawn.\n\n",
+     "page": "sig/PTY.md#val-spawn"
+    },
+    {
+     "kind": "val",
+     "name": "input",
+     "spec": "val input : session -> int",
+     "doc": "`input s` is the borrowed numeric descriptor for reading terminal output.\n\nConvert with Posix.FileSys.wordToFD o SysWord.fromInt to read/write or\npoll them. They must not be closed independently. Numeric descriptors\nkeep this extension independent of Posix's abstract client types.\n\n",
+     "page": "sig/PTY.md#val-input"
+    },
+    {
+     "kind": "val",
+     "name": "output",
+     "spec": "val output : session -> int",
+     "doc": "`output s` is the borrowed descriptor that writes input to the terminal.\nConvert its number as for input; never close it independently.\n\n",
+     "page": "sig/PTY.md#val-output"
+    },
+    {
+     "kind": "val",
+     "name": "process",
+     "spec": "val process : session -> Subprocess.pid",
+     "doc": "`process s` is the child, waited for with Subprocess.wait/poll, including\nafter close.\n\n",
+     "page": "sig/PTY.md#val-process"
+    },
+    {
+     "kind": "val",
+     "name": "resize",
+     "spec": "val resize : session * {columns : int, rows : int} -> unit",
+     "doc": "`resize (s, size)` changes the terminal dimensions and notifies its foreground program.\n\nRaises Domain for\ndimensions outside 1..32767, Closed after close, OS.SysErr on failure.\n\n",
+     "page": "sig/PTY.md#val-resize"
+    },
+    {
+     "kind": "val",
+     "name": "close",
+     "spec": "val close : session -> unit",
+     "doc": "`close s` disconnects the terminal and discards unread output.\n\nAttached programs may end. Reap the child separately. Idempotent; input/output/resize then\nraise Closed. A session is an external resource: close it explicitly,\nand do not expect it to survive saved-image restoration.\n\n",
+     "page": "sig/PTY.md#val-close"
+    }
+   ]
+  },
   "REAL": {
    "doc": "Floating-point numbers: IEEE 754 arithmetic, the numbers that are not\nordinary (the infinities, the NaNs and the negative zero), and the\nconversions to and from integers and text.\n\n`Real` is the default structure, `LargeReal` the widest, and the sized\nones are `Real32` and `Real64`. A NaN, \"not a number\", is what an\noperation answers where there is no value to give: it is equal to nothing,\nitself included, so `==` is `false` for it and `compare` raises\n`IEEEReal.Unordered`. Because of that the equality of the language is not available\nat `real`; use `==` where equality is meant and `Real.compare` where an\norder is.\n\nThere are two zeros, which `==` says are equal and `signBit` tells apart;\na computation that underflows keeps the sign it came from.\n\nThe functions that round come in two kinds: `realFloor` and its like stay\nin `real`, `floor` and its like give an `int` and raise where the result\nwould not fit.\n\n**See also** `MATH`, `IEEE_REAL`, `INTEGER`, `STRING_CVT`, `PACK_REAL`\n\n> **Implementation** `Real.real/binary64`. `Real.real` is the top-level `real`,\nthe 64-bit IEEE double (`radix` 2, `precision` 53\\), and so are `LargeReal`\nand `Real64`; the optional `Real32` is binary32. The conversions to and\nfrom text are correctly rounded, through the C library.\n\n",
    "page": "sig/REAL.md",
@@ -12515,6 +12577,7 @@
   "Posix.TTY.L": "BIT_FLAGS",
   "Posix.TTY.O": "BIT_FLAGS",
   "PrimIO": "PRIM_IO",
+  "Pty": "PTY",
   "Real": "REAL",
   "Real.Math": "MATH",
   "Real32": "REAL",

@@ -1,5 +1,5 @@
 # Known failures of the libraries beside the basis library on the other
-# compilers (tests/lib/run-hosts.sh), in the form of tests/basis/deviations.txt:
+# compilers (tests/runner/libhosts.sml), in the form of tests/basis/deviations.txt:
 #
 #   config-glob | label-glob | CATEGORY | reason
 #
@@ -41,4 +41,4 @@ native:mlkit | unicode.utf8 | HOST-FLAKY | MLKit keeps a region and a frame for 
 # ---- Poly/ML 5.9.2: Socket.recvVecNB blocks on a socket that accept or
 # acceptNB returned, where it must return NONE
 # (docs/bugreport/polyml/recvVecNB-blocks-on-accepted).
-native:polyml | zmtp.zmtp | HOST-BUG | the first Zmtp.wait reads the connection the ROUTER accepted with recvVecNB, which waits for data that never comes, so the test hangs until run-hosts.sh's time limit; on the connecting socket the same call returns NONE, and MLton and Rune return NONE on both
+native:polyml | zmtp.zmtp | HOST-BUG | the first Zmtp.wait reads the connection the ROUTER accepted with recvVecNB, which waits for data that never comes, so the test hangs until the native library suite's time limit; on the connecting socket the same call returns NONE, and MLton and Rune return NONE on both

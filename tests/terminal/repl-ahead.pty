@@ -3,7 +3,7 @@
 # REPL that was busy what was typed meanwhile, reach the editor in one
 # read. The second is the editor's at the next prompt and runs; it was
 # lost when the editor dropped what a read held after the end of a line
-# (tests/lib/terminal/ahead.sml). Read by tests/terminal/ptyraw.py, which
+# (tests/lib/terminal/ahead.sml). Read by bin/rune-terminal raw, which
 # writes the two in one write.
 until \x1b\[\?2004h.*\x1b\]133;A\x1b\\ 20
 write 1;\r2;\r

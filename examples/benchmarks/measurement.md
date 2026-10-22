@@ -89,7 +89,7 @@ Unbudgeted entries are reported explicitly and still undergo correctness
 and engine comparisons. Deliberately update selected baselines with:
 
 ```sh
-sh scripts/measure-benchmarks.sh count --profile smoke --filter tak --update-budgets
+bin/rune-measure benchmarks count --profile smoke --filter tak --update-budgets
 ```
 
 Updates require all selected runs/comparisons to pass, preserve unrelated

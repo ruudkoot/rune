@@ -164,12 +164,12 @@ other.
   `bin/rune-mlton` in place of `bin/runevm bin/rune.rbc` for MLton's build.
   `--pass-stats` gives `unit-usages`, `unit-export` and `unit-load` for
   each unit. The whole compile to compare with is
-  `scripts/perf-units.sh --mlton DIR --configs tier2,mlton phases`.
+  `bin/rune-measure perf-units --mlton DIR --configs tier2,mlton phases`.
 * The bytes hashed by call site: a build with a counter in `P.hash`, per
   caller. Counts are the same on every engine, so MLton's build gives them
   in a few minutes.
 * Where the cycles go: `perf record` over `--jit-perf-map`, with
-  `scripts/perf-groups.awk`.
+  `bin/rune-measure perf-groups`.
 
 ## Where the evidence is
 

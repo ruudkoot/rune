@@ -49,6 +49,7 @@
 - `rem` (val): [INTEGER](../sig/INTEGER.md#val-rem), [REAL](../sig/REAL.md#val-rem)
 - `remove` (val): [OS_FILE_SYS](../sig/OS_FILE_SYS.md#val-remove)
 - `rename` (val): [OS_FILE_SYS](../sig/OS_FILE_SYS.md#val-rename), [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-rename)
+- `resize` (val): [PTY](../sig/PTY.md#val-resize)
 - `resizes` (val): [TERMINAL](../sig/TERMINAL.md#val-resizes)
 - `restore` (val): [RUNTIME](../sig/RUNTIME.md#val-restore)
 - `Restored` (con): [RUNTIME](../sig/RUNTIME.md#con-restored)

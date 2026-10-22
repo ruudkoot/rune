@@ -70,7 +70,7 @@
    ]
   },
   "EMULATOR": {
-   "doc": "A terminal emulated in memory: what a screen shows after a program has\nwritten to it, for testing what a program draws without a terminal.\n\nIt knows what a line editor writes: text, with grapheme clusters as wide\nas the width policy says and a wide one wrapped whole; carriage return,\nnewline (which scrolls at the bottom), backspace and tab; ECMA-48's\ncursor movements (CUU, CUD, CUF, CUB, CHA, CUP), erasing in a line and\nin the display (EL, ED), and SGR; and xterm's pending wrap -- after a\ncharacter in the last column the cursor stays there until the next\ncharacter, which goes to the start of the next line. Modes are\nrecorded (bracketed paste, a hidden cursor); other escapes are\nignored.\n\n",
+   "doc": "A terminal emulated in memory: what a screen shows after a program has\nwritten to it, for testing what a program draws without a terminal.\n\nIt knows what a line editor writes: text, with grapheme clusters as wide\nas the width policy says and a wide one wrapped whole; carriage return,\nnewline (which scrolls at the bottom), backspace and tab; ECMA-48's\ncursor movements (CUU, CUD, CUF, CUB, CHA, CUP), erasing in a line and\nin the display (EL, ED), and SGR; and xterm's pending wrap -- after a\ncharacter in the last column the cursor stays there until the next\ncharacter, which goes to the start of the next line. Modes are\nrecorded (bracketed paste, a hidden cursor); OSC titles/marks and other\ncontrol strings are consumed through their terminators across writes,\nwithout putting their payload on screen. Other escapes are ignored.\n\n",
    "page": "sig/EMULATOR.md",
    "members": [
     {
@@ -93,6 +93,13 @@
      "spec": "val new : {columns : int, rows : int, policy : Grapheme.policy} -> screen",
      "doc": "`new {columns, rows, policy}` is a blank screen of that size with the\ncursor at its top left, measuring clusters by `policy`.\n\n**Example** `cursor (new {columns = 80, rows = 24, policy = Grapheme.ByCluster}) = (0, 0)`\n\n",
      "page": "sig/EMULATOR.md#val-new"
+    },
+    {
+     "kind": "val",
+     "name": "resize",
+     "spec": "val resize : screen * {columns : int, rows : int} -> screen",
+     "doc": "`resize (s, size)` preserves the top-left cells, styles and modes at the new dimensions.\n\nCells past\nthe new right/bottom edges are clipped; text does not reflow. The cursor\nis clamped and a wide cluster clipped in half is erased. Dimensions must\nbe positive (otherwise Size). A program can redraw after its resize.\n\n",
+     "page": "sig/EMULATOR.md#val-resize"
     },
     {
      "kind": "val",

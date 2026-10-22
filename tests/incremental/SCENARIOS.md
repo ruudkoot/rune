@@ -9,15 +9,15 @@ output equals that of a build with `--no-cache`, byte for byte where the
 program is the same and in what it prints, exits with and traces where the
 build mode differs. A scenario's id is what the runner and a failure name.
 
-`tests/incremental/run.sh` (`make test-incremental`, in `make check`) runs
+`bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
 a file system without case), S28 to S36, S40, and S49 to S67. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
-`check-cross` (`rune-whole`). Beside them, `tests/incremental/mutate.py` edits projects
+`check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
 mechanically and wants each warm build to be what compiling everything
-gives (*Edits nobody wrote*, below), and `tests/incremental/mlton.sh` is
+gives (*Edits nobody wrote*, below), and `bin/rune-incremental mlton` is
 S44 to S48.
 
 Where the cache does less than a scenario asks, its runner holds it to
@@ -292,12 +292,12 @@ when the scenarios above were all green
   `mutate.py` on the compiler's sources.
 * **S55, verifying the cache.** A warm build with `--verify-cache` succeeds;
   an entry planted with usages that hold and the content of another compile
-  (`tests/incremental/plant.py`) is taken by a build and found by
+  (`bin/rune-incremental plant`) is taken by a build and found by
   `--verify-cache`, which fails.
 
 ## Edits nobody wrote
 
-`tests/incremental/mutate.py` edits a project as a person might -- a
+`bin/rune-incremental mutate` edits a project as a person might -- a
 fixity directive's precedence or side, two constructors of a datatype
 swapped, a numeral changed, a value added at top level or inside a
 structure, an earlier file declared again later in the order, two files

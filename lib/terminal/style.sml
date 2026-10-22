@@ -72,6 +72,21 @@ struct
               | 9 => set (fn {fg, bg, bold, faint, italic, underline, reverse, ...} =>
                             {fg = fg, bg = bg, bold = bold, faint = faint, italic = italic,
                              underline = underline, reverse = reverse, struck = true})
+              | 22 => set (fn {fg, bg, italic, underline, reverse, struck, ...} =>
+                             {fg = fg, bg = bg, bold = false, faint = false, italic = italic,
+                              underline = underline, reverse = reverse, struck = struck})
+              | 23 => set (fn {fg, bg, bold, faint, underline, reverse, struck, ...} =>
+                             {fg = fg, bg = bg, bold = bold, faint = faint, italic = false,
+                              underline = underline, reverse = reverse, struck = struck})
+              | 24 => set (fn {fg, bg, bold, faint, italic, reverse, struck, ...} =>
+                             {fg = fg, bg = bg, bold = bold, faint = faint, italic = italic,
+                              underline = false, reverse = reverse, struck = struck})
+              | 27 => set (fn {fg, bg, bold, faint, italic, underline, struck, ...} =>
+                             {fg = fg, bg = bg, bold = bold, faint = faint, italic = italic,
+                              underline = underline, reverse = false, struck = struck})
+              | 29 => set (fn {fg, bg, bold, faint, italic, underline, reverse, ...} =>
+                             {fg = fg, bg = bg, bold = bold, faint = faint, italic = italic,
+                              underline = underline, reverse = reverse, struck = false})
               | 38 => extended (rest, fg)
               | 48 => extended (rest, bg)
               | 39 => go (rest, fg Default)

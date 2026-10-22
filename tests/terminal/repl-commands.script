@@ -10,16 +10,20 @@ wait ^- :type$
 send  [1, 2]
 keys Enter
 wait ^\[1, 2\] : int list$
+wait ^-$
 send :doc Option.isSome
 keys Enter
 wait ^isSome opt is true when opt carries a value\.$
 waits \e\[1mExample\e\[0m
+wait ^-$
 send fun f 0 = raise Fail "zero" | f n = f (n - 1);
 keys Enter
 wait ^val f = fn
+wait ^-$
 send f 2 : int;
 keys Enter
 wait raised in f at stdIn#1:1:
+wait ^-$
 send :bt
 keys Enter
 wait ^  in <toplevel> at stdIn#2:1:1$

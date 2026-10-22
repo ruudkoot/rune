@@ -1,6 +1,6 @@
 # The structures the specification requires, one per line, transcribed from
 # the list of https://smlfamily.github.io/Basis/overview.html. Every other
-# structure of the specification is optional. tests/basis/check-claims.sh
+# structure of the specification is optional. bin/rune-doc-check docs-claims
 # compares the statuses of claims.tsv with this list.
 Array
 ArraySlice

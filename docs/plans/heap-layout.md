@@ -97,7 +97,7 @@ change does to it:
   | L1 + 16-byte alignment | 0.6961 | 0.7113 |
   | L4-mono, L4-uniform | 0.6319, 0.7067 | 0.6326, 0.7096 |
 
-  (`scripts/census.sh --summary bootstrap` on the rebased tree, 376 s;
+  (`bin/rune-measure census --summary bootstrap` on the rebased tree, 376 s;
   the left column is M1's census in the tree.) Two thirds of what was
   added are list cells, 5.9 million of them, and they die young: the
   live data grew by 5% where the allocation grew by 32%. So nothing
@@ -114,7 +114,7 @@ change does to it:
   an output that is one of its sources (`fd10179`), and the check costs
   one object and four instructions more per source when the output is
   not there yet, so the census's two runs of the compiler no longer
-  agreed until each started without the file (`scripts/census.sh`,
+  agreed until each started without the file (`bin/rune-measure census`,
   `tools/heapsim/validate.sh`). And where the tree is: MLton's `lexgen`,
   `mlyacc` and `vliw` build their inputs' names from the current
   directory, which the rebase's worktree showed; they get a relative
@@ -256,7 +256,7 @@ What building it found, that the plan did not have:
   anything. For the gate; the next stage builds the confined form.
 
 Cycles, of both prototypes and their switches, measured on an idle
-machine on 2026-10-04 (`scripts/perf-cycles.sh --configs jit-off,new
+machine on 2026-10-04 (`bin/rune-measure perf-cycles --configs jit-off,new
 --gc`, the least of five runs, a program at a time and only while the
 machine's load was below 1.5; an earlier table, taken beside another
 session's suites, is discarded: its cycles were up to a third too high
@@ -588,7 +588,7 @@ Cycles: in the first prototype's table above, its last two columns.
 **The lazy workloads** (2026-10-04). `examples/benchmarks` has six lazy
 programs over `shared/lazy.sml`, a suspension as a ref to a pending
 thunk or a value, and four strict twins; each at its `normal` profile,
-censused on the 16-byte layout (`scripts/census.sh --stdin --cwd`, its
+censused on the 16-byte layout (`bin/rune-measure census --stdin --cwd`, its
 traces under `tests/out/census-lazy`) and simulated (`bin/heapsim`).
 Bytes against the 16-byte layout, and the stores a nursery of 1 MB
 (and of 4 MB) with promotion at the first survival would have to
@@ -675,7 +675,7 @@ On 2026-10-04, after the three sections above, for the four choices
 the gate comes down to: 63 or 64 bits, the pairs, the reals, the third
 code.
 
-**The heap-size sweep** (`scripts/perf-cycles.sh --sweep`, an idle
+**The heap-size sweep** (`bin/rune-measure perf-cycles --sweep`, an idle
 machine, the default tiering). L is the most a collection keeps, found
 at `--heap-fill 99` from a 4 MiB heap; the cycles there are the first
 row, then at a semispace of k times each layout's own L:
@@ -769,7 +769,7 @@ more than that nothing here contradicts the VM's own number: 0.067% of
 the bootstrap's bytes and no cycles that show.
 
 **Where the reals' cost is.** The eight programs of reals censused
-(`scripts/census.sh --summary`, under `tests/out/census-reals`), their
+(`bin/rune-measure census --summary`, under `tests/out/census-reals`), their
 reals by where they arise:
 
 | Program | results of primitives | crossing a call | stored in a new object | stored later | zero among the results |
@@ -1231,7 +1231,7 @@ fail, 102 stopped, and the verdict of every one of the 1,733 is the
 a condition gave up: a generator draws from 63 bits now).
 
 **Cycles under every engine**, the eleven programs of
-`scripts/perf-cycles.sh`:
+`bin/rune-measure perf-cycles`:
 
 | Program | 16-byte, default tiering | stack VM | register interpreter | default tiering | native code |
 |---|---:|---:|---:|---:|---:|
@@ -2018,7 +2018,7 @@ holds.
 ### The measurements
 
 Taken for this roadmap on 2026-09-26 at `228b7b7` (*The experiments*,
-*Today's VM*): an idle machine under a lock, `scripts/perf-cycles.sh`
+*Today's VM*): an idle machine under a lock, `bin/rune-measure perf-cycles`
 with the additions M1 proposes (`--gc`, `--events`, `--vm-opts`,
 compile-sigs and runedoc as programs), the least cycles of five runs of
 `perf stat`, the profiles from a frame-pointer build of the same tree
@@ -3099,7 +3099,7 @@ objects, and its samples end in the objects alive at exit):
 | array_sieve | 1,844,333 | 1,881,600 | 18,208 | 8 | 0.0 s |
 | fib, tak, word_bits, real_nbody | | 584 to 4,624 | 23 to 126 | 1 | 0.0 s |
 
-M1 rebuilt the census from the tree (`make vm-census`, `scripts/census.sh
+M1 rebuilt the census from the tree (`make vm-census`, `bin/rune-measure census
 bootstrap`, 2026-09-27) and reproduced this table's first row to the
 object: 458,049,116 instructions, 1,087,242,872 bytes and 24,051,681
 objects in 4,136 samples, 321 s, the 12 instructions, 664 bytes and 17
@@ -3506,7 +3506,7 @@ Twenty configurations build with gcc 13 and clang 18 and every kernel
 gives one checksum under all of them, at a 64 MiB semispace and at small
 ones that force collections every few megabytes (`check.sh`). The timed
 tables are `harness-cycles.md`, `-instructions.md`, `-l1d.md`, `-gc.md`
-and `-counters.md`, made by `tests/layouts/tables.py` (least of five runs of `perf stat`
+and `-counters.md`, made by `bin/rune-measure layout-tables` (least of five runs of `perf stat`
 on one core, five more when the spread exceeds 5%, both compilers).
 Cycles as a ratio to L0 under the same compiler, gcc 13 first and clang
 18 in parentheses where the two differ by more than 10%; `~` marks a
@@ -4569,7 +4569,7 @@ about 2,000 and are planned again at the gate.
   static census over an `.rbc`'s representations section as a mode of
   `runeisa` or a small C tool; `--stats` extended with bytes copied,
   the collector's time and the largest live size, in both VMs and
-  native programs; `scripts/perf-cycles.sh` with `--events`,
+  native programs; `bin/rune-measure perf-cycles` with `--events`,
   `--vm-opts`, `--gc`, compile-sigs and runedoc as programs, `--profile`
   with call graphs, and `--mlton-bench`; `tests/external/run-mlton-bench.sh`
   and `tests/perf/mlton-bench.txt` (the input size per program) so that
@@ -5268,19 +5268,19 @@ output from every build).
   *The experiments* says how this roadmap's were. M1 put them in the
   tree: `make vm-census` builds the census VM (`docs/census.md`:
   `--census-dir`, `--census-every`, `--census-summary`,
-  `--census-static`), `scripts/census.sh WORKLOAD...` runs a workload on
+  `--census-static`), `bin/rune-measure census WORKLOAD...` runs a workload on
   the stock and the census VM and keeps the traces under
   `tests/out/census`, `scripts/check-census.sh` is its check in `make
   check`; `--stats` prints bytes copied, the largest live size and the
-  collector's time; `scripts/perf-cycles.sh` takes `--events`,
+  collector's time; `bin/rune-measure perf-cycles` takes `--events`,
   `--vm-opts`, `--gc` (the collector's table), `--profile CONFIG[:PROGRAM]`
-  (by symbol, then by group through `scripts/perf-groups.awk`),
+  (by symbol, then by group through `bin/rune-measure perf-groups`),
   `--mlton-bench DIR NFILE` and `--sweep` (the heap-size sweep), with
   compile-sigs and runedoc-page as programs;
   `tests/external/run-mlton-bench.sh` runs MLton's benchmarks from
   `/home/ruud/reference` at the sizes of `tests/perf/mlton-bench.txt`
   and checks their counts (the benchmark roadmap's
-  `scripts/measure-benchmarks.sh` times the catalogue of
+  `bin/rune-measure benchmarks` times the catalogue of
   `examples/benchmarks`, with result checks, since the rebase). M2 put the simulator in `tools/heapsim`
   (`bin/heapsim`, `bin/heapsim-gen`; `test.sh`, `validate.sh`, `sweep.sh`,
   `report.py`; `make check-heapsim` in `make check`) and the harness in

@@ -410,7 +410,10 @@ struct
     ("vector_extract", 404, 3),
     ("utf8_decode", 405, 3),
     ("string_eq", 406, 2),
-    ("array_to_vector", 407, 1)
+    ("array_to_vector", 407, 1),
+    ("pty_spawn", 408, 6),
+    ("pty_resize", 409, 3),
+    ("pty_close", 410, 1)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -969,7 +972,10 @@ struct
            ("vector_extract", ([6, 1, 1], 6)),
            ("utf8_decode", ([6, 1, 1], 0)),
            ("string_eq", ([6, 6], 5)),
-           ("array_to_vector", ([6], 6))
+           ("array_to_vector", ([6], 6)),
+           ("pty_spawn", ([6, 7, 7, 6, 1, 1], 7)),
+           ("pty_resize", ([1, 1, 1], 1)),
+           ("pty_close", ([1], 1))
          ]);
          repsOf name)
 end

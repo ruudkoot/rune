@@ -8,8 +8,9 @@
    in the display (EL, ED), and SGR; and xterm's pending wrap -- after a
    character in the last column the cursor stays there until the next
    character, which goes to the start of the next line. Modes are
-   recorded (bracketed paste, a hidden cursor); other escapes are
-   ignored.
+   recorded (bracketed paste, a hidden cursor); OSC titles/marks and other
+   control strings are consumed through their terminators across writes,
+   without putting their payload on screen. Other escapes are ignored.
 
    Area: Terminals *)
 signature EMULATOR =
@@ -26,6 +27,14 @@ sig
 
      Example: `cursor (new {columns = 80, rows = 24, policy = Grapheme.ByCluster}) = (0, 0)` *)
   val new : {columns : int, rows : int, policy : Grapheme.policy} -> screen
+
+  (* `resize (s, size)` preserves the top-left cells, styles and modes at the new dimensions.
+
+     Cells past
+     the new right/bottom edges are clipped; text does not reflow. The cursor
+     is clamped and a wide cluster clipped in half is erased. Dimensions must
+     be positive (otherwise Size). A program can redraw after its resize. *)
+  val resize : screen * {columns : int, rows : int} -> screen
 
   (* `write (s, bytes)` is the screen after `bytes` were written to `s`.
 

@@ -58,6 +58,7 @@
 - `proc` (type): [UNIX](../sig/UNIX.md#type-proc), [WINDOWS](../sig/WINDOWS.md#type-proc)
 - `ProcEnv` (str): [POSIX](../sig/POSIX.md#str-procenv)
 - `Process` (str): [OS](../sig/OS.md#str-process), [POSIX](../sig/POSIX.md#str-process)
+- `process` (val): [PTY](../sig/PTY.md#val-process)
 - `processors` (val): [RUNTIME](../sig/RUNTIME.md#val-processors)
 - `Prod` (exn): [SML90](../sig/SML90.md#exn-prod)
 - `profile` (val): [RUNTIME](../sig/RUNTIME.md#val-profile)

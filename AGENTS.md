@@ -34,7 +34,7 @@ keep these invariants:
 * A basis structure says which signature it implements in the comment above
   it (`Implements: SIG where type ...`, `docs/doc-comments.md`), and
   `tests/basis/<name>_sig.sml` matches it against the transcription;
-  `make check-docs` (`tests/basis/check-claims.sh`) wants both.
+  `make check-docs` (`bin/rune-doc-check docs-claims`) wants both.
 * When adding a basis structure, add a `basis.<name>` row listing its members
   and add the file to `lib/basis/library.build` in a block of its class
   (`docs/build.md`). What it provides and requires is worked out from the
@@ -43,7 +43,7 @@ keep these invariants:
   check-docs`, verifies that a file loaded on demand declares modules and
   types only). A signature of the
   specification is transcribed in `tests/basis/spec-sigs` first;
-  `scripts/gen-basis-sigs.sh` then makes `lib/basis/sig_<sig>.sml` and its
+  `bin/rune-generate basis-signatures` then makes `lib/basis/sig_<sig>.sml` and its
   line in the build file, and from there on the library's file is edited by hand
   (`make check-docs` wants the same tokens in both). Its test belongs to the Basis
   Library suite: `tests/basis/<name>.sml` and `tests/basis/<name>_sig.sml`,
@@ -54,8 +54,8 @@ keep these invariants:
   reading of the specification, a deviation from it or a choice it leaves
   open is written down once, as a note in the doc comment of the member
   (`docs/doc-comments.md`); a `rune` line of `deviations.txt` needs such a
-  note (`tests/basis/check-notes.sh`). After changing a line of
-  `deviations.txt` about a host, run `sh tests/basis/gen-annotations.sh` and
+  note (`bin/rune-doc-check docs-notes`). After changing a line of
+  `deviations.txt` about a host, run `bin/rune-generate annotations` and
   `make docs`: the documentation shows those lines under the members, from
   the committed `tests/basis/annotations.txt`.
   After a library change run `make matrix-quick` as well: it runs the suite
@@ -306,7 +306,7 @@ keep these invariants:
   portability), `--profile layout` (the heap and its headers),
   `--profile library` (the matrix and the hosts) and `--profile docs`
   (`docs/testing.md`, *Tiers, profiles and what changed*); CI runs the
-  tier `nightly` once a day. A test whose tool the machine lacks (tmux,
+  tier `nightly` once a day. A test whose tool the machine lacks (a PTY backend,
   qemu, Windows, a host) is skipped with how to install it, and is an error
   in `make check`; `bin/rune-test doctor` lists what a selection needs. A
   test that fails now and then: `bin/rune-test run FILTER --until-fail
@@ -316,7 +316,7 @@ keep these invariants:
   every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
   same suite with the MLton build and is the faster loop while iterating. For
   VM changes also run the suite with the
-  sanitizer build, `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-stack-asan`,
+  sanitizer build, `make vm-asan && bin/rune-suite --vm bin/runevm-stack-asan`,
   and with a collection at (nearly) every allocation, `make test-stress`.
   A read of an object's kind is `obj_kind` in C and `kind_is` in the
   macro-assembler, and a store into an object that exists is `obj_set_field`
@@ -365,7 +365,7 @@ keep these invariants:
   when it was written: a `Value` of 12 bytes where the 32-bit System V ABI
   aligns an `int64_t` to four, and `realpath` undeclared under an older
   glibc's headers.
-* `tests/external/run-mlton.sh DIR` runs MLton's regression programs
+* `bin/rune-external regression DIR` runs MLton's regression programs
   (`regression/` of github.com/MLton/mlton, not part of this repository) as
   an external conformance corpus; `tests/external/mlton-skip.txt` lists the
   programs that need Basis Library parts Rune lacks or MLton-specific
@@ -414,7 +414,7 @@ keep these invariants:
   reviewed line by line like any `.expected` file.
 * `.expected` files are written by hand or reviewed line by line after
   `bin/rune-test run --accept 'lang/test/<name>'` (or
-  `tests/run-tests.sh --update <filter>`); never accept generated output
+  `bin/rune-suite --update <filter>`); never accept generated output
   blindly.
 
 ## Conventions

@@ -21,6 +21,19 @@ struct
   fun scrolled (s : screen) = #scrolled s
   fun modes (s : screen) = {bracketedPaste = #bracketedPaste s, cursorVisible = #cursorVisible s}
 
+  fun resize (s : screen, {columns, rows}) =
+    if columns < 1 orelse rows < 1 then raise Size else
+    let fun cell (i, j) =
+          if i >= #height s orelse j >= #columns s then blank
+          else if j = columns - 1 andalso j + 1 < #columns s
+               andalso #text (Vector.sub (Vector.sub (#cells s, i), j + 1)) = "" then blank
+          else Vector.sub (Vector.sub (#cells s, i), j)
+    in {columns = columns, height = rows, policy = #policy s,
+        cells = Vector.tabulate (rows, fn i => Vector.tabulate (columns, fn j => cell (i, j))),
+        row = Int.min (#row s, rows - 1), col = Int.min (#col s, columns - 1), wrapPending = false,
+        style = #style s, scrolled = #scrolled s, pending = #pending s,
+        bracketedPaste = #bracketedPaste s, cursorVisible = #cursorVisible s} end
+
   fun row (s : screen, i) =
     let
       val r = Vector.sub (#cells s, i)
@@ -162,6 +175,14 @@ struct
                     NONE => String.extract (bytes, i, NONE)
                   | SOME j => (csi (String.substring (bytes, i + 2, j - i - 2), String.sub (bytes, j)); go (j + 1))
                 end
+              else if List.exists (fn c => c = String.sub (bytes, i + 1)) [#"]", #"P", #"^", #"_"] then
+                let val osc = String.sub (bytes, i + 1) = #"]"
+                    fun scan j =
+                      if j >= size bytes then NONE
+                      else if osc andalso String.sub (bytes, j) = #"\007" then SOME (j + 1)
+                      else if String.sub (bytes, j) = #"\027" andalso j + 1 < size bytes andalso String.sub (bytes, j + 1) = #"\\" then SOME (j + 2)
+                      else scan (j + 1)
+                in case scan (i + 2) of NONE => String.extract (bytes, i, NONE) | SOME j => go j end
               else go (i + 2)
             else if b = 13 then (c := 0; wrap := false; go (i + 1))
             else if b = 10 then (lineFeed (); go (i + 1))

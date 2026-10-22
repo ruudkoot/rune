@@ -27,39 +27,30 @@ struct
      ("register", "bin/rune", "bin/runevm", ["bin/runevm32", "bin/runevm-ppc64", "bin/runevm-aarch64"], "runtime/register/regs.def")]
 
   (* a few programs that allocate in different ways *)
-  val counted = ["exp.arith_ops", "basis.list_ops", "basis.string_ops", "rt.gc_pressure", "mono.word8array"]
+  (* Three historical names never existed in the rebased tree; the shell
+     loop silently omitted them. Keep their arithmetic, allocation and
+     mutable-array coverage with actual fixtures, and refuse future omissions. *)
+  val counted = ["exp.infix_astra-arithmetic", "basis.list_ops", "basis.string_ops", "rt.gc_stress", "basis.array_ops"]
 
   fun fail s = say ("FAIL " ^ s ^ "\n")
 
   (* the counts of one program: compiled once, counted on this machine and
      on each VM *)
-  fun countOne (family, name) =
-    case List.find (fn (f, _, _, _, _) => f = family) families of
-      NONE => fail ("count: no family " ^ family)
-    | SOME (_, rune, native, vms, _) =>
-        let
-          val dir = run ^ "/portability/count-" ^ family
-          val () = mkdirs dir
-          val rbc = dir ^ "/" ^ name ^ ".rbc"
-          fun counts vm =
-            let val err = dir ^ "/" ^ name ^ "." ^ OS.Path.file vm ^ ".err"
-            in ignore (exec {cmd = [vm, "--count", rbc], dir = NONE, stdin = "", stdout = "", stderr = err, timeout = 600});
-               countOf err
-            end
-        in
-          if not (exists ("tests/lang/" ^ name ^ ".sml")) then ()
-          else if exec {cmd = [rune, "tests/lang/" ^ name ^ ".sml", "-o", rbc], dir = NONE, stdin = "", stdout = "", stderr = "",
-                        timeout = 600} <> 0 then ()
-          else
-            let val want = counts native
-            in
-              List.app (fn vm => let val got = counts vm
-                                 in if got = want then ()
-                                    else fail ("count." ^ name ^ " on " ^ OS.Path.file vm ^ ": " ^ got ^ ", where this machine says " ^ want)
-                                 end)
-                       vms
-            end
-        end
+  fun countOne (family,name) =
+    (case List.find (fn (name,_,_,_,_) => name=family) families of
+       NONE => fail ("count: no family " ^ family)
+     | SOME (_,compiler,native,vms,_) =>
+       let val dir=run ^ "/portability/count-" ^ family ^ "/" ^ name
+           val ()=mkdirs dir
+           val source="tests/lang/" ^ name ^ ".sml"
+           val rbc=dir ^ "/count.rbc"
+           val ()=if exists source then () else raise VMOracles.Failed ("missing counted source " ^ source)
+           val status=Children.exec Subprocess.unlimited (fn e => e)
+                {cmd=[fromRoot compiler,source,"-o",rbc],dir=SOME root,stdin="",stdout=dir ^ "/compile.out",stderr=dir ^ "/compile.err",timeout=600}
+           val ()=if status=0 then () else raise VMOracles.Failed ("count oracle compile failed: " ^ read (dir ^ "/compile.err"))
+           val endpoints=List.map (fn vm => {name=OS.Path.file vm,program=fromRoot vm,directory=dir ^ "/" ^ OS.Path.file vm,windows=false,options=[],environment=fn e => e} : VMOracles.endpoint) (native :: vms)
+       in VMOracles.count dir rbc [] endpoints end)
+    handle VMOracles.Failed message => fail message
 
   (* an image of each VM, read by every other: a difference of width or of
      the order of bytes shows whichever way round it is *)
@@ -77,41 +68,18 @@ struct
      "  | Runtime.Restored => print (answer () ^ \"\\n\")", ""]
 
   fun imageCross family =
-    case List.find (fn (f, _, _, _, _) => f = family) families of
-      NONE => fail ("image: no family " ^ family)
-    | SOME (_, rune, native, vms, _) =>
-        let
-          val dir = run ^ "/portability/image-" ^ family
-          val () = (rmTree dir; mkdirs dir)
-          val () = write (dir ^ "/cross.sml", crossSource)
-          val all = native :: vms
-          fun output f = String.concatWith "\n" (lines (read f))
-        in
-          if exec {cmd = [rune, dir ^ "/cross.sml", "-o", dir ^ "/cross.rbc"], dir = NONE, stdin = "", stdout = "", stderr = "",
-                   timeout = 600} <> 0
-          then fail ("image: cross.sml does not compile")
-          else
-            List.app (fn writer =>
-                        List.app (fn reader =>
-                                    if writer = reader then ()
-                                    else
-                                      let
-                                        val () = (OS.FileSys.remove (dir ^ "/cross.img") handle OS.SysErr _ => ())
-                                        val _ = exec {cmd = [writer, "cross.rbc"], dir = SOME dir, stdin = "", stdout = dir ^ "/want",
-                                                      stderr = dir ^ "/want", timeout = 600}
-                                      in
-                                        if not (exists (dir ^ "/cross.img")) then
-                                          fail ("image: " ^ OS.Path.file writer ^ " wrote none: " ^ output (dir ^ "/want"))
-                                        else
-                                          (ignore (exec {cmd = [reader, "--restore", "cross.img"], dir = SOME dir, stdin = "",
-                                                         stdout = dir ^ "/got", stderr = dir ^ "/got", timeout = 600});
-                                           if output (dir ^ "/got") = output (dir ^ "/want") then ()
-                                           else fail ("image: " ^ OS.Path.file writer ^ " -> " ^ OS.Path.file reader ^ ": "
-                                                      ^ output (dir ^ "/got") ^ ", where it was saved as " ^ output (dir ^ "/want")))
-                                      end)
-                                 all)
-                     all
-        end
+    (case List.find (fn (name,_,_,_,_) => name=family) families of
+       NONE => fail ("image: no family " ^ family)
+     | SOME (_,compiler,native,vms,_) =>
+       let val dir=run ^ "/portability/image-" ^ family
+           val ()=(rmTree dir;mkdirs dir;write (dir ^ "/cross.sml",crossSource))
+           val rbc=dir ^ "/cross.rbc"
+           val status=Children.exec Subprocess.unlimited (fn e => e)
+                {cmd=[fromRoot compiler,dir ^ "/cross.sml","-o",rbc],dir=SOME root,stdin="",stdout=dir ^ "/compile.out",stderr=dir ^ "/compile.err",timeout=600}
+           val ()=if status=0 then () else raise VMOracles.Failed ("image oracle compile failed: " ^ read (dir ^ "/compile.err"))
+           val endpoints=List.map (fn vm => {name=OS.Path.file vm,program=fromRoot vm,directory=dir ^ "/" ^ OS.Path.file vm,windows=false,options=[],environment=fn e => e} : VMOracles.endpoint) (native :: vms)
+       in VMOracles.images dir rbc "cross.img" endpoints end)
+    handle VMOracles.Failed message => fail message
 
   fun command args =
     case args of
@@ -141,7 +109,7 @@ struct
          [Test.describe "portability"
             (List.concat (List.map (fn (family, _, _, vms, def) =>
                                       List.map (fn vm => needs vm (script ("vm/" ^ OS.Path.file vm,
-                                                                           "exec sh tests/runtime/run-vm-tests.sh --vm " ^ vm ^ " --out \"$RUNE_TEST_RUN\"/portability/vm-"
+                                                                           "exec bin/rune-windows vm --vm " ^ vm ^ " --out \"$RUNE_TEST_RUN\"/portability/vm-"
                                                                            ^ OS.Path.file vm ^ " --def " ^ def, 1, 100, [])))
                                                vms
                                       @ List.map (fn n => Test.requires ["qemu"] (job ("count/" ^ family ^ "/" ^ n, ["port-count", family, n], 300)))
@@ -149,7 +117,7 @@ struct
                                       @ [Test.requires ["qemu"] (job ("image/" ^ family, ["port-image", family], 300))])
                                    families)
              @ [Test.requires ["qemu"] (script ("matrix", "RUNE=\"$RUNE_TEST_ROOT\"/bin/rune-stack RUNE_MATRIX_TIMEOUT=" ^ env ("PORT_TIMEOUT", "900")
-                                                         ^ " exec sh tests/basis/run-matrix.sh -j \"$RUNE_TEST_CPUS\" --configs portability",
+                                                         ^ " RUNE_MATRIX_RUN=\"$RUNE_TEST_RUN/portability/matrix\" exec bin/rune-matrix -j \"$RUNE_TEST_CPUS\" --configs portability",
                                                          Int.max (1, Runtime.processors () div 2), 2000, ["matrix"]))]),
           Test.requires ["qemu"] (Oracles.jitTree ("bin/runevm-aarch64", "port-jit"))]))))
 end

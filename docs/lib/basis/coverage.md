@@ -57,6 +57,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) | 18 | 18 | 100% | 12 | 12 |
 | [`POSIX_TTY`](sig/POSIX_TTY.md) | 110 | 110 | 100% | 25 | 25 |
 | [`PRIM_IO`](sig/PRIM_IO.md) | 14 | 14 | 100% | 6 | 6 |
+| [`PTY`](sig/PTY.md) | 8 | 8 | 100% | 6 | 6 |
 | [`REAL`](sig/REAL.md) | 64 | 64 | 100% | 55 | 55 |
 | [`REPL`](sig/REPL.md) | 7 | 7 | 100% | 7 | 7 |
 | [`RUNTIME`](sig/RUNTIME.md) | 19 | 19 | 100% | 15 | 15 |
@@ -79,7 +80,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WINDOWS`](sig/WINDOWS.md) | 88 | 88 | 100% | 30 | 30 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1690 | 1690 | 100% | 1143 | 1143 |
+| **all** | 1698 | 1698 | 100% | 1149 | 1149 |
 
 ## Members a signature describes
 
@@ -88,7 +89,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-206 structures have a page, with 4423 members, of which 4423 (100%) are described by a signature.
+207 structures have a page, with 4431 members, of which 4431 (100%) are described by a signature.
 
 ## Examples that are run
 

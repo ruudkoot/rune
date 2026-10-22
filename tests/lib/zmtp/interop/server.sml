@@ -1,4 +1,4 @@
-(* The SML side of tests/lib/zmtp/interop.sh: a ROUTER that echoes each
+(* The SML side of bin/rune-protocol-check interop zmtp: a ROUTER that echoes each
    message reversed (and publishes when asked), a REP that answers
    "pong:" and the request, and a PUB; it writes their ports to the file
    its argument names, and ends when the ROUTER is told "quit" or after

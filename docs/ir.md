@@ -113,7 +113,7 @@ unified; `steps`, the steps of type work that `--type-work` bounds. The
 counters do not depend on the machine. The checks deferred to the end of
 the program or of a unit -- whether matches are exhaustive, flexible
 records -- have a line of their own, `elab - deferred - ...`.
-`scripts/elab-stats.awk` adds the lines up into a table of contexts and
+`bin/rune-measure elab-stats` adds the lines up into a table of contexts and
 operations, and names the declarations that took longest.
 
 ## What a `Lambda` keeps
@@ -196,7 +196,7 @@ it. That it agrees with the type the instruction set's description gives
 it (`src/isa/prims.sml`) is checked by the `xc1` configurations of the
 Basis Library suite, which compile `lib/basis` on the hosts with each
 `_prim` replaced by a value of the description's type
-(`tests/basis/host/gen-host-basis.sh`). A
+(`bin/rune-generate host-basis`). A
 `Raise` or a `Fail` never returns, and fits wherever a type is wanted. A
 `Let` binds its variable at the type of what it binds; the variables of a
 function, a letrec and a handler have the types their binders give them.
@@ -653,7 +653,7 @@ stack target.
   function (`tests/lang/rt.trace_inlined.sml`).
 * **The bootstrap** is compiled with `--lint --mid-roundtrip` whenever it is
   built (`bin/rune.rbc`).
-* **`scripts/bisect-fuel.sh PROGRAM.sml`**: where a program runs otherwise
+* **`bin/rune-measure bisect-fuel PROGRAM.sml`**: where a program runs otherwise
   at `-O2` than at `-O0`, halving `--fuel` finds the first rewrite that
   breaks it (after Whalley, "Automatic isolation of compiler errors").
 

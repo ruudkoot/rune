@@ -124,10 +124,10 @@ to how a value is represented, which the shims depend on.
 `--allow-prim` (`OUTDIR/flags`):
 
 1. **The sources.** The host's `basis.patch` is applied to a copy of its
-   library. `mlb-flatten.awk` and `flatten.sh` flatten its `basis.mlb` into
+   library. `rune-generate mlb-flatten` and `rune-generate flatten` flatten its `basis.mlb` into
    the SML files it loads, in order. The scoping of `local A in B end` is
    kept by saving the structures `A` rebinds before `A` and restoring them
-   after `B` (`toplevel.awk` finds the names). The fixity the `.mlb` files
+   after `B` (`rune-generate top-structures` finds the names). The fixity the `.mlb` files
    give is kept too: MLton compiles parts of its library with `<` and `>`
    not infix (`fun > (a, b) = < (b, a)` in `util/real-comparisons.sml`), so
    its sources start where nothing is infix (the end of `stubs.sml`) and
@@ -143,7 +143,7 @@ to how a value is represented, which the shims depend on.
    `HOST/prologue.sml` (the host's primitive types as Rune's) and
    `HOST/shim.sml` (the primitives). A primitive the shim does not make
    raises `XC2.Unimplemented` when it is called (the generated `stubs.sml`).
-4. **Rune's library**, cut down (`trim-lib.sh`) to the files the shim needs
+4. **Rune's library**, cut down (`rune-generate trim-lib`) to the files the shim needs
    (`OUTDIR/lib`): a program that names a structure the host lacks finds
    none, as on the host. So the shared `xc2.sml` names no structure that
    MLKit lacks (`WideChar`, `Real32`, `PackWord16Big`, ...).
@@ -415,7 +415,7 @@ defect of the shim or of Rune's compiler.
   the names and types of the primitives (`runtime/prims.def`), the
   representation of `int`, `word`, `Int64.int`, `Word64.word` and
   `LargeWord.word`, the names of the structures of `lib/basis` that
-  `trim-lib.sh` keeps, and the compiler's options. A change there can break
+  `rune-generate trim-lib` keeps, and the compiler's options. A change there can break
   all five: making `int` and `word` 63 bits, with `Int64.int`, `Word64.word`
   and `LargeWord.word` types of their own (heap-layout M5), took some 250
   changed lines across the shims and patches. A change to Rune's Basis
@@ -436,11 +436,11 @@ defect of the shim or of Rune's compiler.
   change some 3,500 lines of 149 files of the hosts' libraries, of which
   2026.2's, 580 lines of 37 files, is 110.99.9's again: a change to one
   of SML/NJ's two patches is usually wanted in the other.
-* **Before it was built.** `tests/external/probe-host-basis.sh` gives every
+* **Before it was built.** `bin/rune-external probe` gives every
   file of a host's library to the compiler alone and counts how far each
   gets. On 2026-09-21, before `xc2` existed, 201 of MLton's 206 files
   already got past Rune's parser, and the 5 that did not were the ones a
   shim replaces: the measurement that showed the work was the shim and not
-  the frontend. `tests/external/run-mlton.sh`, MLton's regression programs
+  the frontend. `bin/rune-external regression`, MLton's regression programs
   compiled by Rune, is the other way the suite puts Rune's compiler in
   front of SML written for another compiler.

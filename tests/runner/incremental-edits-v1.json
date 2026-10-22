@@ -1,0 +1,1263 @@
+{
+  "format": 1,
+  "generator": "Python random.Random, seed 1; legacy mutation driver",
+  "source_sha256": "0bfc83dab7a0fc4cc31b31cd417e3c60087d4b0384487fcaec112e9da5ceab0c",
+  "seed": 1,
+  "requested_steps": 30,
+  "projects": [
+    {
+      "name": "functors",
+      "initial": {
+        "ops.sml": "(* the operators the others use, and their fixity *)\nfun op++ (a, b) = a - b\nfun op** (a, b) = a * 10 + b\ninfix 6 ++\ninfixr 7 **\n",
+        "shapes.sml": "structure Shape = struct\n  datatype shape = Circle of int | Square of int | Line of int * int | Dot\n  type size = int\n  exception Bad of int\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n",
+        "functors.sml": "signature COUNT = sig val start : int end\nfunctor Measure (C : COUNT) = struct\n  val total = Shape.area (Shape.make C.start) ++ 2 ** 3\n  fun describe () = case Shape.make C.start of\n                      Shape.Circle r => \"circle \" ^ Int.toString r\n                    | Shape.Square s => \"square \" ^ Int.toString s\n                    | Shape.Line (a, b) => \"line \" ^ Int.toString (a ++ b)\n                    | Shape.Dot => \"dot\"\n  val big = (ignore (1000000000 * 1000000000 * 1000000000 * 1000000000 : Shape.size); true)\n            handle Overflow => false\nend\nfunctor Twice (C : COUNT) = struct\n  structure M = Measure (struct val start = C.start * 2 end)\n  val both = M.total ** 1\nend\n",
+        "other.sml": "structure Shape = struct val unrelated = 4 end\ninfix 5 ++\n",
+        "main.sml": "structure A = Measure (struct val start = 12 end)\nstructure B = Twice (struct val start = 3 end)\nstructure C = Measure (struct val start = 0 end)\nval () = print (Int.toString A.total ^ \" \" ^ A.describe () ^ \" \" ^ Int.toString B.both ^ \" \"\n                ^ C.describe () ^ \" \" ^ Bool.toString A.big ^ \" \" ^ Int.toString Shape.unrelated ^ \"\\n\")\n"
+      },
+      "steps": [
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "ops.sml": "(* the operators the others use, and their fixity *)\nfun op++ (a, b) = a - b\nfun op** (a, b) = a * 10 + b\ninfix 6 ++\ninfixr 7 **\n",
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Circle of int | Square of int | Line of int * int | Dot\n  type size = int\n  exception Bad of int\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n",
+            "functors.sml": "signature COUNT = sig val start : int end\nfunctor Measure (C : COUNT) = struct\n  val total = Shape.area (Shape.make C.start) ++ 2 ** 3\n  fun describe () = case Shape.make C.start of\n                      Shape.Circle r => \"circle \" ^ Int.toString r\n                    | Shape.Square s => \"square \" ^ Int.toString s\n                    | Shape.Line (a, b) => \"line \" ^ Int.toString (a ++ b)\n                    | Shape.Dot => \"dot\"\n  val big = (ignore (1000000000 * 1000000000 * 1000000000 * 1000000000 : Shape.size); true)\n            handle Overflow => false\nend\nfunctor Twice (C : COUNT) = struct\n  structure M = Measure (struct val start = C.start * 2 end)\n  val both = M.total ** 1\nend\n",
+            "other.sml": "structure Shape = struct val unrelated = 4 end\ninfix 5 ++\n",
+            "main.sml": "structure A = Measure (struct val start = 12 end)\nstructure B = Twice (struct val start = 3 end)\nstructure C = Measure (struct val start = 0 end)\nval () = print (Int.toString A.total ^ \" \" ^ A.describe () ^ \" \" ^ Int.toString B.both ^ \" \"\n                ^ C.describe () ^ \" \" ^ Bool.toString A.big ^ \" \" ^ Int.toString Shape.unrelated ^ \"\\n\")\n"
+          },
+          "description": "the project as it is",
+          "built": true,
+          "agreement": true,
+          "compiled": 5,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "other.sml": "structure Shape = struct val unrelated = 4 end\ninfix 6 ++\n"
+          },
+          "description": "numeral in other.sml: 5 -> 6",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 1
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "functors.sml": "signature COUNT = sig val start : int end\nfunctor Measure (C : COUNT) = struct val runeMutant1 = 1 \n  val total = Shape.area (Shape.make C.start) ++ 2 ** 3\n  fun describe () = case Shape.make C.start of\n                      Shape.Circle r => \"circle \" ^ Int.toString r\n                    | Shape.Square s => \"square \" ^ Int.toString s\n                    | Shape.Line (a, b) => \"line \" ^ Int.toString (a ++ b)\n                    | Shape.Dot => \"dot\"\n  val big = (ignore (1000000000 * 1000000000 * 1000000000 * 1000000000 : Shape.size); true)\n            handle Overflow => false\nend\nfunctor Twice (C : COUNT) = struct\n  structure M = Measure (struct val start = C.start * 2 end)\n  val both = M.total ** 1\nend\n"
+          },
+          "description": "value runeMutant1 added inside a structure of functors.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 2,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "renamed2_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "renamed2_other.sml": "structure Shape = struct val unrelated = 4 end\ninfix 6 ++\n"
+          },
+          "description": "other.sml renamed renamed2_other.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 2,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "main.sml"
+          ],
+          "writes": {},
+          "description": "renamed2_other.sml removed from the order",
+          "built": false,
+          "agreement": true,
+          "compiled": 1,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Square of int | Circle of int | Line of int * int | Dot\n  type size = int\n  exception Bad of int\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "constructors in shapes.sml: 'Circle' and 'Square' swapped",
+          "built": false,
+          "agreement": true,
+          "compiled": 3,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Circle of int | Square of int | Line of int * int | Dot\n  type size = int\n  exception Bad of int\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "shapes.sml put back",
+          "built": false,
+          "agreement": true,
+          "compiled": 1,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Circle of int | Square of int | Line of int * int | Dot\n  type size = int\n  exception Bad of int * unit\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "exception in shapes.sml: 'exception Bad of int' -> 'exception Bad of int * unit'",
+          "built": false,
+          "agreement": true,
+          "compiled": 2,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "functors.sml": "signature COUNT = sig val start : int end\nfunctor Measure (C : COUNT) = struct\n  val total = Shape.area (Shape.make C.start) ++ 2 ** 3\n  fun describe () = case Shape.make C.start of\n                      Shape.Circle r => \"circle \" ^ Int.toString r\n                    | Shape.Square s => \"square \" ^ Int.toString s\n                    | Shape.Line (a, b) => \"line \" ^ Int.toString (a ++ b)\n                    | Shape.Dot => \"dot\"\n  val big = (ignore (1000000000 * 1000000000 * 1000000000 * 1000000000 : Shape.size); true)\n            handle Overflow => false\nend\nfunctor Twice (C : COUNT) = struct\n  structure M = Measure (struct val start = C.start * 2 end)\n  val both = M.total ** 1\nend\n"
+          },
+          "description": "functors.sml put back",
+          "built": false,
+          "agreement": true,
+          "compiled": 1,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "ops.sml": "(* the operators the others use, and their fixity *)\nfun op++ (a, b) = a - b\nfun op** (a, b) = a * 10 + b\ninfix 5 ++\ninfixr 7 **\n"
+          },
+          "description": "fixity in ops.sml: 'infix 6' -> 'infix 5'",
+          "built": false,
+          "agreement": true,
+          "compiled": 4,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "ops.sml": "(* the operators the others use, and their fixity *)\nfun op++ (a, b) = a - b\nfun op** (a, b) = a * 10 + b\ninfix 6 ++\ninfixr 7 **\n"
+          },
+          "description": "ops.sml put back",
+          "built": false,
+          "agreement": true,
+          "compiled": 1,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Circle of int | Square of int | Line of int * int | Dot\n  type size = int * unit\n  exception Bad of int * unit\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "type in shapes.sml: 'int' -> 'int * unit'",
+          "built": false,
+          "agreement": true,
+          "compiled": 3,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "functors.sml": "signature COUNT = sig val start : int end\nfunctor Measure (C : COUNT) = struct\n  val total = Shape.area (Shape.make C.start) ++ 2 ** 3\n  fun describe () = case Shape.make C.start of\n                      Shape.Circle r => \"circle \" ^ Int.toString r\n                    | Shape.Square s => \"square \" ^ Int.toString s\n                    | Shape.Line (a, b) => \"line \" ^ Int.toString (a ++ b)\n                    | Shape.Dot => \"dot\"\n  val big = (ignore (1000000000 * 1000000000 * 1000000000 * 1000000000 : Shape.size); true)\n            handle Overflow => false\nend\nfunctor Twice (C : COUNT) = struct val runeMutant3 = 3 \n  structure M = Measure (struct val start = C.start * 2 end)\n  val both = M.total ** 1\nend\n"
+          },
+          "description": "value runeMutant3 added inside a structure of functors.sml",
+          "built": false,
+          "agreement": true,
+          "compiled": 2,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Circle of int | Square of int | Line of int * int | Dot\n  type size = int\n  exception Bad of int\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n",
+            "functors.sml": "signature COUNT = sig val start : int end\nfunctor Measure (C : COUNT) = struct\n  val total = Shape.area (Shape.make C.start) ++ 2 ** 3\n  fun describe () = case Shape.make C.start of\n                      Shape.Circle r => \"circle \" ^ Int.toString r\n                    | Shape.Square s => \"square \" ^ Int.toString s\n                    | Shape.Line (a, b) => \"line \" ^ Int.toString (a ++ b)\n                    | Shape.Dot => \"dot\"\n  val big = (ignore (1000000000 * 1000000000 * 1000000000 * 1000000000 : Shape.size); true)\n            handle Overflow => false\nend\nfunctor Twice (C : COUNT) = struct\n  structure M = Measure (struct val start = C.start * 2 end)\n  val both = M.total ** 1\nend\n",
+            "other.sml": "structure Shape = struct val unrelated = 4 end\ninfix 5 ++\n"
+          },
+          "description": "the whole project put back",
+          "built": true,
+          "agreement": true,
+          "compiled": 0,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Circle of int | Square of int | Line of int * int | Dot\n  type size = int\n  exception Bad of int * unit\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "exception in shapes.sml: 'exception Bad of int' -> 'exception Bad of int * unit'",
+          "built": true,
+          "agreement": true,
+          "compiled": 0,
+          "across": 1
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Circle of int | Square of int | Line of int * int | Dot\n  type size = IntInf.int\n  exception Bad of int * unit\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "type in shapes.sml: 'int' -> 'IntInf.int'",
+          "built": true,
+          "agreement": true,
+          "compiled": 3,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "again4_ops.sml": "(* the operators the others use, and their fixity *)\nfun op++ (a, b) = a - b\nfun op** (a, b) = a * 10 + b\ninfix 6 ++\ninfixr 7 **\n"
+          },
+          "description": "ops.sml declared again as again4_ops.sml, at 3 of 6",
+          "built": true,
+          "agreement": true,
+          "compiled": 2,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Circle of int | Square of int | Line of int * int | Dot\n  type size = (IntInf.int)\n  exception Bad of int * unit\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "type in shapes.sml: 'IntInf.int' -> '(IntInf.int)'",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "renamed5_other.sml": "structure Shape = struct val unrelated = 4 end\ninfix 5 ++\n"
+          },
+          "description": "other.sml renamed renamed5_other.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 2,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Circle of int | Square of int | Line of int * int | Dot\n  type size = ((IntInf.int))\n  exception Bad of int * unit\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "type in shapes.sml: '(IntInf.int)' -> '((IntInf.int))'",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Circle of int | Square of int | Line of int * int | Dot\n  type size = ((IntInf.int)) * unit\n  exception Bad of int * unit\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "type in shapes.sml: '((IntInf.int))' -> '((IntInf.int)) * unit'",
+          "built": false,
+          "agreement": true,
+          "compiled": 5,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Circle of int | Square of int | Line of int * int | Dot\n  type size = int\n  exception Bad of int\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "shapes.sml put back",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Dot | Square of int | Line of int * int | Circle of int type size = int\n  exception Bad of int\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "constructors in shapes.sml: 'Circle' and 'Dot' swapped",
+          "built": true,
+          "agreement": true,
+          "compiled": 3,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Dot | Square of int | Line of int * int | Circle of int type size = IntInf.int\n  exception Bad of int\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 10 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "type in shapes.sml: 'int' -> 'IntInf.int'",
+          "built": true,
+          "agreement": true,
+          "compiled": 3,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "again4_ops.sml": "(* the operators the others use, and their fixity *)\nfun op++ (a, b) = a - b\nfun op** (a, b) = a * 10 + b\ninfix 6 ++\ninfixr 4 **\n"
+          },
+          "description": "fixity in again4_ops.sml: 'infixr 7' -> 'infixr 4'",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct\n  datatype shape = Dot | Square of int | Line of int * int | Circle of int type size = IntInf.int\n  exception Bad of int\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 17 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "numeral in shapes.sml: 10 -> 17",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct val runeMutant6 = 6 \n  datatype shape = Dot | Square of int | Line of int * int | Circle of int type size = IntInf.int\n  exception Bad of int\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 17 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "value runeMutant6 added inside a structure of shapes.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 1
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "renamed5_other.sml": "structure Shape = struct val unrelated = 4 end\ninfix 5 ++\n\nval runeMutant7 = 7\n"
+          },
+          "description": "value runeMutant7 added at the end of renamed5_other.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 1
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "main.sml": "structure A = Measure (struct val start = 12 end)\nstructure B = Twice (struct val runeMutant8 = 8  val start = 3 end)\nstructure C = Measure (struct val start = 0 end)\nval () = print (Int.toString A.total ^ \" \" ^ A.describe () ^ \" \" ^ Int.toString B.both ^ \" \"\n                ^ C.describe () ^ \" \" ^ Bool.toString A.big ^ \" \" ^ Int.toString Shape.unrelated ^ \"\\n\")\n"
+          },
+          "description": "value runeMutant8 added inside a structure of main.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "main.sml": "structure A = Measure (struct val start = 12 end)\nstructure B = Twice (struct val start = 3 end)\nstructure C = Measure (struct val start = 0 end)\nval () = print (Int.toString A.total ^ \" \" ^ A.describe () ^ \" \" ^ Int.toString B.both ^ \" \"\n                ^ C.describe () ^ \" \" ^ Bool.toString A.big ^ \" \" ^ Int.toString Shape.unrelated ^ \"\\n\")\n"
+          },
+          "description": "main.sml put back",
+          "built": true,
+          "agreement": true,
+          "compiled": 0,
+          "across": 1
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct val runeMutant6 = 6 \n  datatype shape = Dot | Square of int | Line of int * int | Circle of int type size = IntInf.int\n  exception Bad of int * unit\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 17 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "exception in shapes.sml: 'exception Bad of int' -> 'exception Bad of int * unit'",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 1
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "again4_ops.sml": "(* the operators the others use, and their fixity *)\nfun op++ (a, b) = a - b\nfun op** (a, b) = a * 10 + b\ninfix 6 ++\ninfix 4 **\n"
+          },
+          "description": "fixity in again4_ops.sml: 'infixr 4' -> 'infix 4'",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 1
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "functors.sml": "signature COUNT = sig val start : int end\nfunctor Measure (C : COUNT) = struct\n  val total = Shape.area (Shape.make C.start) ++ 2 ** 3\n  fun describe () = case Shape.make C.start of\n                      Shape.Circle r => \"circle \" ^ Int.toString r\n                    | Shape.Square s => \"square \" ^ Int.toString s\n                    | Shape.Line (a, b) => \"line \" ^ Int.toString (a ++ b)\n                    | Shape.Dot => \"dot\"\n  val big = (ignore (1000000000 * 1000000000 * 1000000000 * 1000000000 : Shape.size); true)\n            handle Overflow => false\nend\nfunctor Twice (C : COUNT) = struct\n  structure M = Measure (struct val start = C.start * 9 end)\n  val both = M.total ** 1\nend\n"
+          },
+          "description": "numeral in functors.sml: 2 -> 9",
+          "built": true,
+          "agreement": true,
+          "compiled": 2,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "again4_ops.sml": "(* the operators the others use, and their fixity *)\nfun op++ (a, b) = a - b\nfun op** (a, b) = a * 10 + b\ninfix 6 ++\ninfix 4 **\n\nval runeMutant9 = 9\n"
+          },
+          "description": "value runeMutant9 added at the end of again4_ops.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "shapes.sml": "structure Shape = struct val runeMutant6 = 6 \n  datatype shape = Dot | Square of int | Circle of int | Line of int * int type size = IntInf.int\n  exception Bad of int * unit\n  fun area (Circle r) = 3 * r * r\n    | area (Square s) = s * s\n    | area (Line (a, b)) = a ++ b\n    | area Dot = 0\n  fun make n = if n > 17 then Circle n else if n > 5 then Square n else if n > 0 then Line (n, 1) else Dot\nend\n"
+          },
+          "description": "constructors in shapes.sml: 'Line' and 'Circle' swapped",
+          "built": true,
+          "agreement": true,
+          "compiled": 3,
+          "across": 0
+        },
+        {
+          "files": [
+            "ops.sml",
+            "shapes.sml",
+            "functors.sml",
+            "again4_ops.sml",
+            "renamed5_other.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "renamed5_other.sml": "structure Shape = struct val unrelated = 4 end\ninfix 5 ++\n\nval runeMutant7 = 7\n\nval runeMutant10 = 10\n"
+          },
+          "description": "value runeMutant10 added at the end of renamed5_other.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 1
+        }
+      ]
+    },
+    {
+      "name": "project",
+      "initial": {
+        "a.sml": "(* the project of the cache's scenarios (tests/incremental/SCENARIOS.md):\n   a signature, a structure with a datatype and an exception *)\nsignature SHAPE =\nsig\n  type t\n  val area : t -> int\nend\n\nstructure A =\nstruct\n  datatype shape = Square of int | Rect of int * int\n  exception Bad of string\n  fun area (Square n) = n * n\n    | area (Rect (w, h)) = w * h\n  val unused = 0\nend\n",
+        "b.sml": "(* uses a.sml *)\nstructure B : SHAPE =\nstruct\n  type t = A.shape\n  fun area s = A.area s + 1\nend\n",
+        "c.sml": "(* a functor *)\nfunctor Twice (S : SHAPE) =\nstruct\n  fun area2 x = 2 * S.area x\nend\n",
+        "d.sml": "(* applies c.sml's functor to b.sml's structure *)\nstructure D = Twice (B)\n",
+        "main.sml": "(* uses them all, and prints *)\nval () = print (Int.toString (D.area2 (A.Square 3)) ^ \"\\n\")\nval () = (raise A.Bad \"a\") handle A.Bad s => print (\"handled \" ^ s ^ \"\\n\")\n"
+      },
+      "steps": [
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "a.sml": "(* the project of the cache's scenarios (tests/incremental/SCENARIOS.md):\n   a signature, a structure with a datatype and an exception *)\nsignature SHAPE =\nsig\n  type t\n  val area : t -> int\nend\n\nstructure A =\nstruct\n  datatype shape = Square of int | Rect of int * int\n  exception Bad of string\n  fun area (Square n) = n * n\n    | area (Rect (w, h)) = w * h\n  val unused = 0\nend\n",
+            "b.sml": "(* uses a.sml *)\nstructure B : SHAPE =\nstruct\n  type t = A.shape\n  fun area s = A.area s + 1\nend\n",
+            "c.sml": "(* a functor *)\nfunctor Twice (S : SHAPE) =\nstruct\n  fun area2 x = 2 * S.area x\nend\n",
+            "d.sml": "(* applies c.sml's functor to b.sml's structure *)\nstructure D = Twice (B)\n",
+            "main.sml": "(* uses them all, and prints *)\nval () = print (Int.toString (D.area2 (A.Square 3)) ^ \"\\n\")\nval () = (raise A.Bad \"a\") handle A.Bad s => print (\"handled \" ^ s ^ \"\\n\")\n"
+          },
+          "description": "the project as it is",
+          "built": true,
+          "agreement": true,
+          "compiled": 5,
+          "across": 0
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "b.sml": "(* uses a.sml *)\nstructure B : SHAPE =\nstruct\n  type t = A.shape * unit\n  fun area s = A.area s + 1\nend\n"
+          },
+          "description": "type in b.sml: 'A.shape' -> 'A.shape * unit'",
+          "built": false,
+          "agreement": true,
+          "compiled": 4,
+          "across": 0
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "b.sml": "(* uses a.sml *)\nstructure B : SHAPE =\nstruct\n  type t = A.shape\n  fun area s = A.area s + 1\nend\n"
+          },
+          "description": "the whole project put back",
+          "built": true,
+          "agreement": true,
+          "compiled": 0,
+          "across": 0
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "c.sml": "(* a functor *)\nfunctor Twice (S : SHAPE) =\nstruct val runeMutant1 = 1 \n  fun area2 x = 2 * S.area x\nend\n"
+          },
+          "description": "value runeMutant1 added inside a structure of c.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 2,
+          "across": 1
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "main.sml": "(* uses them all, and prints *)\nval () = print (Int.toString (D.area2 (A.Square 10)) ^ \"\\n\")\nval () = (raise A.Bad \"a\") handle A.Bad s => print (\"handled \" ^ s ^ \"\\n\")\n"
+          },
+          "description": "numeral in main.sml: 3 -> 10",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 0
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "a.sml": "(* the project of the cache's scenarios (tests/incremental/SCENARIOS.md):\n   a signature, a structure with a datatype and an exception *)\nsignature SHAPE =\nsig\n  type t\n  val area : t -> int\nend\n\nstructure A =\nstruct\n  datatype shape = Square of int | Rect of int * int\n  exception Bad of string\n  fun area (Square n) = n * n\n    | area (Rect (w, h)) = w * h\n  val unused = 7\nend\n"
+          },
+          "description": "numeral in a.sml: 0 -> 7",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 0
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "a.sml": "(* the project of the cache's scenarios (tests/incremental/SCENARIOS.md):\n   a signature, a structure with a datatype and an exception *)\nsignature SHAPE =\nsig\n  type t\n  val area : t -> int\nend\n\nstructure A =\nstruct val runeMutant2 = 2 \n  datatype shape = Square of int | Rect of int * int\n  exception Bad of string\n  fun area (Square n) = n * n\n    | area (Rect (w, h)) = w * h\n  val unused = 7\nend\n"
+          },
+          "description": "value runeMutant2 added inside a structure of a.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 4
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "a.sml": "(* the project of the cache's scenarios (tests/incremental/SCENARIOS.md):\n   a signature, a structure with a datatype and an exception *)\nsignature SHAPE =\nsig\n  type t\n  val area : t -> int\nend\n\nstructure A =\nstruct val runeMutant2 = 2 \n  datatype shape = Rect of int * int | Square of int exception Bad of string\n  fun area (Square n) = n * n\n    | area (Rect (w, h)) = w * h\n  val unused = 7\nend\n"
+          },
+          "description": "constructors in a.sml: 'Square' and 'Rect' swapped",
+          "built": true,
+          "agreement": true,
+          "compiled": 4,
+          "across": 1
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "b.sml": "(* uses a.sml *)\nstructure B : SHAPE =\nstruct\n  type t = A.shape\n  fun area s = A.area s + 1\nend\n\n(* mutant 3 *)\n"
+          },
+          "description": "comment added to b.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 1
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "a.sml": "(* the project of the cache's scenarios (tests/incremental/SCENARIOS.md):\n   a signature, a structure with a datatype and an exception *)\nsignature SHAPE =\nsig\n  type t\n  val area : t -> int\nend\n\nstructure A =\nstruct val runeMutant2 = 2 \n  datatype shape = Rect of int * int | Square of int exception Bad of string\n  fun area (Square n) = n * n\n    | area (Rect (w, h)) = w * h\n  val unused = 7\nend\n\n(* mutant 4 *)\n"
+          },
+          "description": "comment added to a.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 1
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "b.sml": "(* uses a.sml *)\nstructure B : SHAPE =\nstruct\n  type t = A.shape\n  fun area s = A.area s + 3\nend\n\n(* mutant 3 *)\n"
+          },
+          "description": "numeral in b.sml: 1 -> 3",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 1
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "a.sml": "(* the project of the cache's scenarios (tests/incremental/SCENARIOS.md):\n   a signature, a structure with a datatype and an exception *)\nsignature SHAPE =\nsig\n  type t\n  val area : t -> int\nend\n\nstructure A =\nstruct val runeMutant2 = 2 \n  datatype shape = Square of int | Rect of int * int exception Bad of string\n  fun area (Square n) = n * n\n    | area (Rect (w, h)) = w * h\n  val unused = 7\nend\n\n(* mutant 4 *)\n"
+          },
+          "description": "constructors in a.sml: 'Rect' and 'Square' swapped",
+          "built": true,
+          "agreement": true,
+          "compiled": 2,
+          "across": 3
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "main.sml": "(* uses them all, and prints *)\nval () = print (Int.toString (D.area2 (A.Square 12)) ^ \"\\n\")\nval () = (raise A.Bad \"a\") handle A.Bad s => print (\"handled \" ^ s ^ \"\\n\")\n"
+          },
+          "description": "numeral in main.sml: 10 -> 12",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 2
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml",
+            "again5_d.sml"
+          ],
+          "writes": {
+            "again5_d.sml": "(* applies c.sml's functor to b.sml's structure *)\nstructure D = Twice (B)\n"
+          },
+          "description": "d.sml declared again as again5_d.sml, at 5 of 6",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 2
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "renamed6_d.sml",
+            "main.sml",
+            "again5_d.sml"
+          ],
+          "writes": {
+            "renamed6_d.sml": "(* applies c.sml's functor to b.sml's structure *)\nstructure D = Twice (B)\n"
+          },
+          "description": "d.sml renamed renamed6_d.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 2,
+          "across": 1
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "renamed6_d.sml",
+            "main.sml",
+            "again5_d.sml"
+          ],
+          "writes": {
+            "a.sml": "(* the project of the cache's scenarios (tests/incremental/SCENARIOS.md):\n   a signature, a structure with a datatype and an exception *)\nsignature SHAPE =\nsig\n  type t\n  val area : t -> int\nend\n\nstructure A =\nstruct val runeMutant2 = 4 \n  datatype shape = Square of int | Rect of int * int exception Bad of string\n  fun area (Square n) = n * n\n    | area (Rect (w, h)) = w * h\n  val unused = 7\nend\n\n(* mutant 4 *)\n"
+          },
+          "description": "numeral in a.sml: 2 -> 4",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 1
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "renamed6_d.sml",
+            "main.sml",
+            "again5_d.sml"
+          ],
+          "writes": {
+            "b.sml": "(* uses a.sml *)\nstructure B : SHAPE =\nstruct\n  type t = A.shape\n  fun area s = A.area s + 1\nend\n"
+          },
+          "description": "b.sml put back",
+          "built": true,
+          "agreement": true,
+          "compiled": 0,
+          "across": 4
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "renamed6_d.sml",
+            "main.sml",
+            "again5_d.sml"
+          ],
+          "writes": {
+            "a.sml": "(* the project of the cache's scenarios (tests/incremental/SCENARIOS.md):\n   a signature, a structure with a datatype and an exception *)\nsignature SHAPE =\nsig\n  type t\n  val area : t -> int\nend\n\nstructure A =\nstruct val runeMutant7 = 7  val runeMutant2 = 4 \n  datatype shape = Square of int | Rect of int * int exception Bad of string\n  fun area (Square n) = n * n\n    | area (Rect (w, h)) = w * h\n  val unused = 7\nend\n\n(* mutant 4 *)\n"
+          },
+          "description": "value runeMutant7 added inside a structure of a.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 5
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "renamed6_d.sml",
+            "main.sml",
+            "again5_d.sml"
+          ],
+          "writes": {
+            "c.sml": "(* a functor *)\nfunctor Twice (S : SHAPE) =\nstruct val runeMutant8 = 8  val runeMutant1 = 1 \n  fun area2 x = 2 * S.area x\nend\n"
+          },
+          "description": "value runeMutant8 added inside a structure of c.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 3,
+          "across": 2
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "renamed6_d.sml",
+            "main.sml",
+            "again5_d.sml"
+          ],
+          "writes": {
+            "main.sml": "(* uses them all, and prints *)\nval () = print (Int.toString (D.area2 (A.Square 12)) ^ \"\\n\")\nval () = (raise A.Bad \"a\") handle A.Bad s => print (\"handled \" ^ s ^ \"\\n\")\n\nval runeMutant9 = 9\n"
+          },
+          "description": "value runeMutant9 added at the end of main.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 1
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "renamed6_d.sml",
+            "main.sml",
+            "again5_d.sml"
+          ],
+          "writes": {
+            "b.sml": "(* uses a.sml *)\nstructure B : SHAPE =\nstruct\n  type t = (A.shape)\n  fun area s = A.area s + 1\nend\n"
+          },
+          "description": "type in b.sml: 'A.shape' -> '(A.shape)'",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 2
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "renamed6_d.sml",
+            "main.sml",
+            "again5_d.sml"
+          ],
+          "writes": {
+            "b.sml": "(* uses a.sml *)\nstructure B : SHAPE =\nstruct\n  type t = ((A.shape))\n  fun area s = A.area s + 1\nend\n"
+          },
+          "description": "type in b.sml: '(A.shape)' -> '((A.shape))'",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 2
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "renamed6_d.sml",
+            "main.sml",
+            "again5_d.sml"
+          ],
+          "writes": {
+            "main.sml": "(* uses them all, and prints *)\nval () = print (Int.toString (D.area2 (A.Square 19)) ^ \"\\n\")\nval () = (raise A.Bad \"a\") handle A.Bad s => print (\"handled \" ^ s ^ \"\\n\")\n\nval runeMutant9 = 9\n"
+          },
+          "description": "numeral in main.sml: 12 -> 19",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 2
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "renamed6_d.sml",
+            "main.sml",
+            "again5_d.sml"
+          ],
+          "writes": {
+            "b.sml": "(* uses a.sml *)\nstructure B : SHAPE =\nstruct\n  type t = ((A.shape)) * unit\n  fun area s = A.area s + 1\nend\n"
+          },
+          "description": "type in b.sml: '((A.shape))' -> '((A.shape)) * unit'",
+          "built": false,
+          "agreement": true,
+          "compiled": 5,
+          "across": 0
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "renamed6_d.sml",
+            "main.sml",
+            "again5_d.sml"
+          ],
+          "writes": {
+            "a.sml": "(* the project of the cache's scenarios (tests/incremental/SCENARIOS.md):\n   a signature, a structure with a datatype and an exception *)\nsignature SHAPE =\nsig\n  type t\n  val area : t -> int\nend\n\nstructure A =\nstruct val runeMutant7 = 7  val runeMutant2 = 4 \n  datatype shape = Square of int | Rect of int * int exception Bad of string * unit\n  fun area (Square n) = n * n\n    | area (Rect (w, h)) = w * h\n  val unused = 7\nend\n\n(* mutant 4 *)\n"
+          },
+          "description": "exception in a.sml: 'exception Bad of string' -> 'exception Bad of string * unit'",
+          "built": false,
+          "agreement": true,
+          "compiled": 6,
+          "across": 0
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "renamed6_d.sml",
+            "main.sml",
+            "again5_d.sml"
+          ],
+          "writes": {
+            "c.sml": "(* a functor *)\nfunctor Twice (S : SHAPE) =\nstruct\n  fun area2 x = 2 * S.area x\nend\n"
+          },
+          "description": "c.sml put back",
+          "built": false,
+          "agreement": true,
+          "compiled": 5,
+          "across": 0
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "renamed6_d.sml",
+            "main.sml",
+            "again5_d.sml"
+          ],
+          "writes": {
+            "b.sml": "(* uses a.sml *)\nstructure B : SHAPE =\nstruct\n  type t = ((A.shape)) * unit * unit\n  fun area s = A.area s + 1\nend\n"
+          },
+          "description": "type in b.sml: '((A.shape)) * unit' -> '((A.shape)) * unit * unit'",
+          "built": false,
+          "agreement": true,
+          "compiled": 5,
+          "across": 0
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "a.sml": "(* the project of the cache's scenarios (tests/incremental/SCENARIOS.md):\n   a signature, a structure with a datatype and an exception *)\nsignature SHAPE =\nsig\n  type t\n  val area : t -> int\nend\n\nstructure A =\nstruct\n  datatype shape = Square of int | Rect of int * int\n  exception Bad of string\n  fun area (Square n) = n * n\n    | area (Rect (w, h)) = w * h\n  val unused = 0\nend\n",
+            "b.sml": "(* uses a.sml *)\nstructure B : SHAPE =\nstruct\n  type t = A.shape\n  fun area s = A.area s + 1\nend\n",
+            "main.sml": "(* uses them all, and prints *)\nval () = print (Int.toString (D.area2 (A.Square 3)) ^ \"\\n\")\nval () = (raise A.Bad \"a\") handle A.Bad s => print (\"handled \" ^ s ^ \"\\n\")\n"
+          },
+          "description": "the whole project put back",
+          "built": true,
+          "agreement": true,
+          "compiled": 0,
+          "across": 0
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml"
+          ],
+          "writes": {
+            "a.sml": "(* the project of the cache's scenarios (tests/incremental/SCENARIOS.md):\n   a signature, a structure with a datatype and an exception *)\nsignature SHAPE =\nsig\n  type t\n  val area : t -> int\nend\n\nstructure A =\nstruct\n  datatype shape = Rect of int * int | Square of int exception Bad of string\n  fun area (Square n) = n * n\n    | area (Rect (w, h)) = w * h\n  val unused = 0\nend\n"
+          },
+          "description": "constructors in a.sml: 'Square' and 'Rect' swapped",
+          "built": true,
+          "agreement": true,
+          "compiled": 3,
+          "across": 2
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml",
+            "again10_c.sml"
+          ],
+          "writes": {
+            "again10_c.sml": "(* a functor *)\nfunctor Twice (S : SHAPE) =\nstruct\n  fun area2 x = 2 * S.area x\nend\n"
+          },
+          "description": "c.sml declared again as again10_c.sml, at 5 of 6",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 2
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml",
+            "again10_c.sml"
+          ],
+          "writes": {
+            "main.sml": "(* uses them all, and prints *)\nval () = print (Int.toString (D.area2 (A.Square 10)) ^ \"\\n\")\nval () = (raise A.Bad \"a\") handle A.Bad s => print (\"handled \" ^ s ^ \"\\n\")\n"
+          },
+          "description": "numeral in main.sml: 3 -> 10",
+          "built": true,
+          "agreement": true,
+          "compiled": 0,
+          "across": 3
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml",
+            "again10_c.sml"
+          ],
+          "writes": {
+            "b.sml": "(* uses a.sml *)\nstructure B : SHAPE =\nstruct val runeMutant11 = 11 \n  type t = A.shape\n  fun area s = A.area s + 1\nend\n"
+          },
+          "description": "value runeMutant11 added inside a structure of b.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 3
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml",
+            "again10_c.sml"
+          ],
+          "writes": {
+            "main.sml": "(* uses them all, and prints *)\nval () = print (Int.toString (D.area2 (A.Square 10)) ^ \"\\n\")\nval () = (raise A.Bad \"a\") handle A.Bad s => print (\"handled \" ^ s ^ \"\\n\")\n\nval runeMutant12 = 12\n"
+          },
+          "description": "value runeMutant12 added at the end of main.sml",
+          "built": true,
+          "agreement": true,
+          "compiled": 1,
+          "across": 2
+        },
+        {
+          "files": [
+            "a.sml",
+            "b.sml",
+            "c.sml",
+            "d.sml",
+            "main.sml",
+            "again10_c.sml"
+          ],
+          "writes": {
+            "a.sml": "(* the project of the cache's scenarios (tests/incremental/SCENARIOS.md):\n   a signature, a structure with a datatype and an exception *)\nsignature SHAPE =\nsig\n  type t\n  val area : t -> int\nend\n\nstructure A =\nstruct\n  datatype shape = Rect of int * int | Square of int exception Bad of string * unit\n  fun area (Square n) = n * n\n    | area (Rect (w, h)) = w * h\n  val unused = 0\nend\n"
+          },
+          "description": "exception in a.sml: 'exception Bad of string' -> 'exception Bad of string * unit'",
+          "built": false,
+          "agreement": true,
+          "compiled": 3,
+          "across": 3
+        }
+      ]
+    }
+  ]
+}

@@ -1284,7 +1284,7 @@ return directly without an intermediate packed string; overflowing machine
 products convert directly to digits. No runtime primitive or image layout
 change is needed.
 
-`tests/intinf/compare-paths.py` compiles the exact retained workload sources
+`bin/rune-measure intinf-paths` compiles the exact retained workload sources
 with normalized library paths, verifies expected answers, and compares both
 backends with the retained bytecodes. Every exploratory iteration is kept;
 its short measurements guided implementation and are not final acceptance.

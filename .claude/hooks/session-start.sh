@@ -53,7 +53,7 @@ fi
 #    gcc-powerpc64-linux-gnu, which conflicts with gcc-multilib.
 if command -v apt-get > /dev/null 2>&1; then
   v=$(gcc -dumpversion 2> /dev/null | cut -d . -f 1)
-  pkgs="libgmp-dev gcc-multilib python3-pil dwarfdump linux-tools-generic \
+  pkgs="libgmp-dev gcc-multilib dwarfdump linux-tools-generic \
         gcc-mingw-w64-x86-64 gcc-mingw-w64-i686 libc6-dev-ppc64-cross \
         binutils-powerpc64-linux-gnu libgcc-${v:-13}-dev-ppc64-cross \
         libc6-dev-arm64-cross binutils-aarch64-linux-gnu \

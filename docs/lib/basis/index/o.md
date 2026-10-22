@@ -31,7 +31,7 @@
 - `order` (type): [GENERAL](../sig/GENERAL.md#type-order)
 - `out_flags` (type): [SOCKET](../sig/SOCKET.md#type-out_flags)
 - `out_pos` (type): [STREAM_IO](../sig/STREAM_IO.md#type-out_pos)
-- `output` (val): [IMPERATIVE_IO](../sig/IMPERATIVE_IO.md#val-output), [SML90](../sig/SML90.md#val-output), [STREAM_IO](../sig/STREAM_IO.md#val-output), [TEXT_IO](../sig/TEXT_IO.md#val-output)
+- `output` (val): [IMPERATIVE_IO](../sig/IMPERATIVE_IO.md#val-output), [PTY](../sig/PTY.md#val-output), [SML90](../sig/SML90.md#val-output), [STREAM_IO](../sig/STREAM_IO.md#val-output), [TEXT_IO](../sig/TEXT_IO.md#val-output)
 - `output1` (val): [IMPERATIVE_IO](../sig/IMPERATIVE_IO.md#val-output1), [STREAM_IO](../sig/STREAM_IO.md#val-output1), [TEXT_IO](../sig/TEXT_IO.md#val-output1)
 - `outputSubstr` (val): [TEXT_IO](../sig/TEXT_IO.md#val-outputsubstr), [TEXT_STREAM_IO](../sig/TEXT_STREAM_IO.md#val-outputsubstr)
 - `outstream` (type): [IMPERATIVE_IO](../sig/IMPERATIVE_IO.md#type-outstream), [SML90](../sig/SML90.md#type-outstream), [STREAM_IO](../sig/STREAM_IO.md#type-outstream), [TEXT_IO](../sig/TEXT_IO.md#type-outstream)

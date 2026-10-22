@@ -334,6 +334,18 @@ void sys_interrupt_limit(volatile uintptr_t *limit);
    where there are none (POSIX has SIGINT). */
 int64_t sys_event_new(void);
 int sys_event_set(int64_t handle);
+/* A child attached to a fresh controlling pseudo-terminal (POSIX) or
+   pseudoconsole (Windows). Dimensions are 1..32767. On success return its
+   pid and out = {read descriptor, write descriptor, opaque session token}.
+   The descriptors belong to the session; close it with sys_pty_close.
+   Resize preserves the child and notifies its terminal. Close discards
+   unread bytes and disconnects the terminal; wait/reap the child separately.
+   No environment is inherited when envp is an explicit empty array.
+   sys_none and Windows without ConPTY return -1/ENOSYS. */
+int64_t sys_pty_spawn(const char *path, char *const argv[], char *const envp[], const char *dir,
+                      int columns, int rows, int out[3]);
+int sys_pty_resize(int token, int columns, int rows);
+int sys_pty_close(int token);
 /* n bytes of the system's randomness at out: 0, or -1 and the error */
 int sys_random(void *out, size_t n);
 

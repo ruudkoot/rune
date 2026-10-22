@@ -9,7 +9,7 @@ with the profile that Rune takes for Standard ML, and the security
 mechanisms of Unicode Technical Standard #39.
 
 The tables are made from the Unicode Character Database by
-`scripts/gen-unicode-tables.py`, all of one version. The profile of
+`bin/rune-generate unicode`, all of one version. The profile of
 `Identifier` leaves out two sets that the script writes down and freezes
 at Unicode 18.0.0, so that no later version of Unicode changes which names
 are valid; the data of `UnicodeSecurity` change with every version, and

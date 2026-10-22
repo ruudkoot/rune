@@ -1,4 +1,4 @@
-(* The address-space probe of scripts/gc-probe32.sh: live data grows by STEP
+(* The address-space probe of bin/rune-measure gc-probe32: live data grows by STEP
    MiB at a time, all of it kept to the end, until the heap cannot grow or
    MAX MiB are held. After every step it prints and flushes "live N MiB", so
    the last such line is the most the program held.

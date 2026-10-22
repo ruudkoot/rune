@@ -90,7 +90,7 @@ build file `library.build` that lists its files in load order, each in an
 | `demand` | it is compiled before the programs that name what it provides, and the files that need it |
 | `seal` | as `demand`, but for no file of the library: it binds a structure again as its signature shows it |
 | `final` | it is compiled after every program |
-| `host=swap`, `host=no` | how `tests/basis/host/gen-host-basis.sh` gives the file to the other SML systems |
+| `host=swap`, `host=no` | how `bin/rune-generate host-basis` gives the file to the other SML systems |
 
 `libraries random end` names the libraries it is written on. What each
 file provides and requires is not written down: `rune --basis-index DIR`

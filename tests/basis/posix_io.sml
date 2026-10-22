@@ -502,4 +502,19 @@ struct
                 fn () => withFd ("pio-lock", "locked", FS.O_RDWR, FS.O.flags [], fn fd =>
                            PIO.FLock.ltype (PIO.getlk (fd, whole PIO.F_RDLCK)) = PIO.F_UNLCK))
   (*>> flock *)
+  (* A full nonblocking pipe must return to the caller. In particular,
+     Windows PIPE_NOWAIT may report a successful zero-byte write, which
+     the runtime must expose as EAGAIN rather than loss of input. *)
+  val () = T.check ("Posix.IO.writeVec/nonblocking-full-pipe", fn () =>
+    let val {infd, outfd} = PIO.pipe ()
+        val (flags, _) = PIO.getfl outfd
+        val () = PIO.setfl (outfd, PIO.O.flags [flags, PIO.O.nonblock])
+        val bytes = Word8VectorSlice.full (Byte.stringToBytes (String.implode (List.tabulate (1024, fn _ => #"x"))))
+        fun loop 0 = false
+          | loop n = (let val count = PIO.writeVec (outfd, bytes)
+                      in count > 0 andalso loop (n - 1) end)
+              handle OS.SysErr (_, SOME code) => code = Posix.Error.again orelse OS.syserror "wouldblock" = SOME code
+        val result = (loop 1024 handle e => (PIO.close infd; PIO.close outfd; raise e))
+    in PIO.close infd; PIO.close outfd; result end)
+
 end

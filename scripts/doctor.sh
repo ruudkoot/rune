@@ -7,8 +7,7 @@
 #   mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit   the SML system behind
 #           bin/rune-<scope>: the release that scripts/fetch-hosts.sh
 #           installed (`make hosts`)
-#   check   the test runners (tests/run-tests.sh, scripts/check-*.sh),
-#           and Pillow, which make test-dist uses to convert share/rune.png
+#   check   the SML test runners and independent Python oracles/peers
 #   asan    make vm-asan
 #   sys     POSIX headers of the VM's system layer (runtime/sys/sys_posix.c)
 #   matrix  fetching and building the host compilers (scripts/fetch-hosts.sh)
@@ -20,9 +19,9 @@
 #   windows mingw-w64 for both Windows VMs (make windows), and whether an
 #           .exe runs here (make test-windows); not part of all, since
 #           nothing else needs it
-#   terminal  tmux and python3, which drive programs on a terminal
-#           (tests/terminal, make test-terminal); without tmux its scripts
-#           are skipped, so tmux is only a warning
+#   terminal  runtime pseudo-terminal support (make test-terminal); the
+#           compiled SML runner probes this at execution, with no external
+#           terminal program required during bootstrap
 #   portability  a 32-bit x86 compiler and a big-endian 64-bit PowerPC one,
 #           with qemu to run the latter (make portability,
 #           make test-portability); not part of all either
@@ -93,8 +92,6 @@ pkg() {
     pacman:cmake) echo cmake ;;           brew:cmake) echo cmake ;;
     apt:python3) echo python3 ;;          dnf:python3) echo python3 ;;
     pacman:python3) echo python ;;        brew:python3) echo python ;;
-    apt:pillow) echo python3-pil ;;       dnf:pillow) echo python3-pillow ;;
-    pacman:pillow) echo python-pillow ;;  brew:pillow) echo pillow ;;
     pacman:cxx) echo base-devel ;;        brew:cxx) echo gcc ;;
     apt:asan) echo libasan8 libubsan1 ;;  dnf:asan) echo libasan libubsan ;;
     apt:gmp) echo libgmp-dev ;;           dnf:gmp) echo gmp-devel ;;
@@ -310,14 +307,6 @@ fi
 if in_scope check; then
   section "test runners"
   have python3 python3
-  # make test-dist packs share/rune.ico from share/rune.png (scripts/make-dist.py).
-  if ! command -v python3 > /dev/null 2>&1; then
-    skipped pillow "python3 is missing, so the icon conversion was not checked"
-  elif python3 -c 'import PIL.Image' > /dev/null 2>&1; then
-    ok pillow "$(python3 -c 'import PIL; print(PIL.__version__)' 2> /dev/null)"
-  else
-    bad pillow "not installed: make test-dist converts share/rune.png" pillow
-  fi
   if [ "$(printf 'a\nb\n' | xargs -n 1 -P 2 echo 2> /dev/null | sort | tr -d '\n')" = ab ]; then ok xargs "supports -P"
   else bad xargs "xargs -n 1 -P N does not work" findutils
   fi
@@ -454,12 +443,7 @@ fi
 # ---------------------------------------------------------------- windows
 if in_scope terminal; then
   section "programs on a terminal (make test-terminal)"
-  if command -v tmux > /dev/null 2>&1; then ok tmux "$(tmux -V 2> /dev/null)"
-  else warn tmux "not found: the scripts of tests/terminal are skipped" tmux
-  fi
-  if command -v python3 > /dev/null 2>&1; then ok python3 "$(python3 --version 2>&1)"
-  else bad python3 "not found: tests/terminal/term.py needs it" python3
-  fi
+  printf '%s\n' '  The VM supplies the pseudo-terminal; bin/rune-terminal probe verifies it at execution.'
 fi
 if in_scope windows; then
   section "mingw-w64 (make windows, make test-windows)"

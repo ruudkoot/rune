@@ -1,0 +1,450 @@
+{
+  "VERSION": "18.0.0",
+  "FILES": {
+    "EastAsianWidth.txt": [
+      "ucd/EastAsianWidth.txt",
+      "a0cf29eacd00cfcaec4381c6b7c281685f18dbb4e7ff82b4076ccb342ca839aa"
+    ],
+    "DerivedGeneralCategory.txt": [
+      "ucd/extracted/DerivedGeneralCategory.txt",
+      "d6b151d2d40ee9b1876d26f417980f45ffae47b6055ccf7203cb31f07a030f94"
+    ],
+    "emoji-data.txt": [
+      "ucd/emoji/emoji-data.txt",
+      "80d00f8e616a0ef27fd6b8de3b758c06383b5d917e2977709578e68baf733bf1"
+    ],
+    "GraphemeBreakProperty.txt": [
+      "ucd/auxiliary/GraphemeBreakProperty.txt",
+      "0839dcb79e4ac639ecd538b1abf7c9d22e3f9dd265b7e182d33627aa4d75b45a"
+    ],
+    "DerivedCoreProperties.txt": [
+      "ucd/DerivedCoreProperties.txt",
+      "09c928886a178fcafd93c29e4bd59073a058e5a100b716d425cb563ab50f68c9"
+    ],
+    "GraphemeBreakTest.txt": [
+      "ucd/auxiliary/GraphemeBreakTest.txt",
+      "b0cf047ee94485bbdc846de2b902f5f8a815f6b674f9d04223cddadd91c9df31"
+    ],
+    "UnicodeData.txt": [
+      "ucd/UnicodeData.txt",
+      "0736451de439ae7baf1425136617da495e09ee5afbe6e394374db7009ea08950"
+    ],
+    "CompositionExclusions.txt": [
+      "ucd/CompositionExclusions.txt",
+      "c759b100e9ae8960ae6b50fc5765950a7581fd9f30d4ef95f68f25a6d97e818e"
+    ],
+    "DerivedNormalizationProps.txt": [
+      "ucd/DerivedNormalizationProps.txt",
+      "98ac7f67d985fe781e317f6182e885e94cabb0c314769e6dd73e48b226931ccd"
+    ],
+    "NormalizationTest.txt": [
+      "ucd/NormalizationTest.txt",
+      "25a50d816764b04abfb4a646d3eb2b2a803284c3873d9a06757b94fe4513dde3"
+    ],
+    "Scripts.txt": [
+      "ucd/Scripts.txt",
+      "0071fd81b6aeae25f6e8bce8efec3066a6476a91b49bdb2f52dc76e817862a6a"
+    ],
+    "ScriptExtensions.txt": [
+      "ucd/ScriptExtensions.txt",
+      "5c9d34a922f687726f2a8bcf57d49f905987e51f1b21b58c95a00fbe255cec23"
+    ],
+    "PropertyValueAliases.txt": [
+      "ucd/PropertyValueAliases.txt",
+      "06c4c8eaf7b0bf34abe73b113da1215bd784ac254d4c223600b90267caa4bbbd"
+    ],
+    "confusables.txt": [
+      "security/confusables.txt",
+      "6ed3ee967c9dfdf6677d563c9985182fbc50a2efb7d6059cd57b2e2ce18f5b92"
+    ],
+    "IdentifierStatus.txt": [
+      "security/IdentifierStatus.txt",
+      "5863c7d99ca18f213c41c7318aa5528bebfb6d32ec0f1d5944e37192c119aebd"
+    ],
+    "IdentifierType.txt": [
+      "security/IdentifierType.txt",
+      "fa24851acc669e58670e354e7b98a4ec8f52a809ec4f80524b6a60efdb868831"
+    ]
+  },
+  "TEST_DATA": [
+    "GraphemeBreakTest.txt",
+    "NormalizationTest.txt",
+    "DerivedCoreProperties.txt",
+    "confusables.txt",
+    "IdentifierStatus.txt",
+    "IdentifierType.txt",
+    "Scripts.txt",
+    "ScriptExtensions.txt",
+    "PropertyValueAliases.txt"
+  ],
+  "GCB": [
+    "Other",
+    "CR",
+    "LF",
+    "Control",
+    "Extend",
+    "ZWJ",
+    "Regional_Indicator",
+    "Prepend",
+    "SpacingMark",
+    "L",
+    "V",
+    "T",
+    "LV",
+    "LVT"
+  ],
+  "INCB": [
+    "None",
+    "Linker",
+    "Consonant",
+    "Extend"
+  ],
+  "ONCE": "  (* a table built at its first use: a program that never asks for it,\n     such as the compiler when it shows no excerpt, does not pay for it *)\n  fun once (build : unit -> int vector) : unit -> int vector =\n    let val made = ref NONE\n    in fn () => case !made of SOME v => v | NONE => let val v = build () in made := SOME v; v end end\n\n  (* the numbers of a string of six hexadecimal digits each *)\n  fun decode (s : string) () : int vector =\n    let\n      fun digit c = if c <= #\"9\" then Char.ord c - Char.ord #\"0\" else Char.ord c - Char.ord #\"A\" + 10\n      fun number i =\n        let fun go (k, n) = if k = 6 then n else go (k + 1, n * 16 + digit (String.sub (s, 6 * i + k)))\n        in go (0, 0) end\n    in\n      Vector.tabulate (String.size s div 6, number)\n    end\n",
+  "NUMBERS": "  (* a value built at its first use: a program that never asks for it,\n     such as the compiler when it reads no name outside ASCII, does not pay\n     for it *)\n  fun once (build : unit -> 'a) : unit -> 'a =\n    let val made = ref NONE\n    in fn () => case !made of SOME v => v | NONE => let val v = build () in made := SOME v; v end end\n\n  (* the numbers of a string, each in base 32, most significant digit\n     first: a character from \"]\" to \"|\" is a digit (0 to 31) with more of\n     its number after it, and one from \"0\" to \"O\" the last digit (0 to 31) *)\n  fun numbers (s : string) () : int vector =\n    let\n      val n = String.size s\n      fun go (i, v, acc) =\n        if i = n then Vector.fromList (rev acc)\n        else\n          let val c = Char.ord (String.sub (s, i))\n          in if c >= 93 then go (i + 1, 32 * v + c - 93, acc) else go (i + 1, 0, (32 * v + c - 48) :: acc) end\n    in\n      go (0, 0, [])\n    end\n\n  (* ranges, each written as three numbers: the distance of its first code\n     point from the end of the range before it, its length less one, and\n     its value; built as the triples lo, hi, value *)\n  fun ranges (s : string) () : int vector =\n    let\n      val v = numbers s ()\n      fun go (i, next, acc) =\n        if i >= Vector.length v then Vector.fromList (rev acc)\n        else\n          let\n            val lo = next + Vector.sub (v, i)\n            val hi = lo + Vector.sub (v, i + 1)\n          in\n            go (i + 3, hi + 1, Vector.sub (v, i + 2) :: hi :: lo :: acc)\n          end\n    in\n      go (0, 0, [])\n    end\n",
+  "FROZEN_IGNORABLE": [
+    [
+      847,
+      847
+    ],
+    [
+      4447,
+      4448
+    ],
+    [
+      6068,
+      6069
+    ],
+    [
+      6155,
+      6157
+    ],
+    [
+      6159,
+      6159
+    ],
+    [
+      8204,
+      8205
+    ],
+    [
+      12644,
+      12644
+    ],
+    [
+      65024,
+      65039
+    ],
+    [
+      65440,
+      65440
+    ],
+    [
+      917760,
+      917999
+    ]
+  ],
+  "SEED_VERSION": "18.0.0",
+  "SEEDED_PUNCTUATION": {
+    "451": "!",
+    "577": "?",
+    "660": "?",
+    "697": "'",
+    "699": "'",
+    "700": "'",
+    "701": "'",
+    "702": "'",
+    "710": "^",
+    "712": "'",
+    "714": "'",
+    "715": "'",
+    "720": ":",
+    "884": "'",
+    "1600": "_",
+    "2036": "'",
+    "2037": "'",
+    "2042": "_",
+    "2429": "?",
+    "5038": "?",
+    "5161": "+",
+    "5171": ">",
+    "5176": "<",
+    "5194": "'",
+    "5440": "+",
+    "5810": "<",
+    "5836": "'",
+    "5965": "-",
+    "6356": "^",
+    "7155": "-",
+    "7610": "^",
+    "11450": "-",
+    "11451": "-",
+    "11462": "/",
+    "11463": "/",
+    "11601": "!",
+    "11622": "<",
+    "12339": "/",
+    "42232": ".",
+    "42233": ",",
+    "42237": ":",
+    "42508": "=",
+    "42731": "?",
+    "42872": "&",
+    "42891": "'",
+    "42892": "'",
+    "43645": "-",
+    "44012": ".",
+    "65101": "_",
+    "65102": "_",
+    "65103": "_",
+    "65343": "_",
+    "65417": "/",
+    "65856": ")",
+    "65857": "(",
+    "65883": ":",
+    "66203": "+",
+    "66335": "*",
+    "66349": "<",
+    "69634": ":",
+    "69762": ":",
+    "70018": ":",
+    "71102": ":",
+    "71340": ":",
+    "71736": ":",
+    "73177": ":",
+    "83393": "_",
+    "92265": "+",
+    "92908": "<",
+    "94015": ">",
+    "94033": "'",
+    "94034": "'",
+    "94035": ",",
+    "119149": ".",
+    "124649": "+",
+    "125259": "'"
+  },
+  "SEEDED_DIGITS": {
+    "423": "2",
+    "444": "5",
+    "540": "3",
+    "546": "8",
+    "547": "8",
+    "1000": "2",
+    "1004": "6",
+    "2663": "9",
+    "2666": "8",
+    "2920": "9",
+    "3437": "9",
+    "5070": "4",
+    "5102": "6",
+    "5311": "2",
+    "5654": "2",
+    "5890": "3",
+    "5930": "7",
+    "7300": "7",
+    "11420": "3",
+    "11460": "3",
+    "11466": "9",
+    "11467": "9",
+    "11468": "3",
+    "11474": "6",
+    "11475": "6",
+    "11484": "6",
+    "42307": "6",
+    "42377": "8",
+    "42564": "2",
+    "42735": "2",
+    "42842": "2",
+    "42858": "3",
+    "42862": "9",
+    "42863": "9",
+    "42923": "3",
+    "43934": "4",
+    "43966": "6",
+    "65298": "2",
+    "65299": "3",
+    "65300": "4",
+    "65301": "5",
+    "65302": "6",
+    "65303": "7",
+    "65304": "8",
+    "65305": "9",
+    "66330": "8",
+    "66770": "7",
+    "70725": "8",
+    "71852": "9",
+    "71855": "4",
+    "71867": "5",
+    "71878": "7",
+    "71882": "3",
+    "71884": "9",
+    "71893": "6",
+    "71894": "9",
+    "92609": "9",
+    "92670": "8",
+    "94011": "3",
+    "118002": "2",
+    "118003": "3",
+    "118004": "4",
+    "118005": "5",
+    "118006": "6",
+    "118007": "7",
+    "118008": "8",
+    "118009": "9",
+    "120784": "2",
+    "120785": "3",
+    "120786": "4",
+    "120787": "5",
+    "120788": "6",
+    "120789": "7",
+    "120790": "8",
+    "120791": "9",
+    "120794": "2",
+    "120795": "3",
+    "120796": "4",
+    "120797": "5",
+    "120798": "6",
+    "120799": "7",
+    "120800": "8",
+    "120801": "9",
+    "120804": "2",
+    "120805": "3",
+    "120806": "4",
+    "120807": "5",
+    "120808": "6",
+    "120809": "7",
+    "120810": "8",
+    "120811": "9",
+    "120814": "2",
+    "120815": "3",
+    "120816": "4",
+    "120817": "5",
+    "120818": "6",
+    "120819": "7",
+    "120820": "8",
+    "120821": "9",
+    "120824": "2",
+    "120825": "3",
+    "120826": "4",
+    "120827": "5",
+    "120828": "6",
+    "120829": "7",
+    "120830": "8",
+    "120831": "9",
+    "123634": "9",
+    "130034": "2",
+    "130035": "3",
+    "130036": "4",
+    "130037": "5",
+    "130038": "6",
+    "130039": "7",
+    "130040": "8",
+    "130041": "9"
+  },
+  "ZEROS_AND_ONES": {
+    "1984": "0",
+    "65296": "0",
+    "65297": "1",
+    "71904": "0",
+    "73184": "0",
+    "118000": "0",
+    "118001": "1",
+    "120782": "0",
+    "120783": "1",
+    "120792": "0",
+    "120793": "1",
+    "120802": "0",
+    "120803": "1",
+    "120812": "0",
+    "120813": "1",
+    "120822": "0",
+    "120823": "1",
+    "123200": "0",
+    "123632": "0",
+    "130032": "0",
+    "130033": "1"
+  },
+  "BY_HAND": {
+    "183": ".",
+    "448": "|",
+    "1994": "|",
+    "5825": "|",
+    "8572": "|",
+    "11410": "|",
+    "11599": "|",
+    "42226": "|",
+    "43006": "|",
+    "65165": "|",
+    "66186": "|",
+    "66313": "|",
+    "66830": "|",
+    "67878": "|",
+    "68670": "|",
+    "68773": "|",
+    "73178": "|",
+    "73185": "|",
+    "93539": "|",
+    "93992": "|",
+    "120261": "|",
+    "120313": "|",
+    "120365": "|",
+    "120417": "|",
+    "123201": "|",
+    "126464": "|"
+  },
+  "SML_PUNCTUATION": "!%&$#+-/:<=>?@\\~`^|*()[]{},;.'\"_",
+  "TYPES": [
+    "Recommended",
+    "Inclusion",
+    "Limited_Use",
+    "Technical",
+    "Uncommon_Use",
+    "Obsolete",
+    "Exclusion",
+    "Not_XID",
+    "Not_NFKC",
+    "Default_Ignorable",
+    "Deprecated",
+    "Not_Character"
+  ],
+  "AUGMENT": [
+    [
+      "Hani",
+      [
+        "Hanb",
+        "Hntl",
+        "Jpan",
+        "Kore"
+      ]
+    ],
+    [
+      "Hira",
+      [
+        "Jpan"
+      ]
+    ],
+    [
+      "Kana",
+      [
+        "Jpan"
+      ]
+    ],
+    [
+      "Hang",
+      [
+        "Kore"
+      ]
+    ],
+    [
+      "Bopo",
+      [
+        "Hanb"
+      ]
+    ],
+    [
+      "Latn",
+      [
+        "Hntl"
+      ]
+    ]
+  ]
+}

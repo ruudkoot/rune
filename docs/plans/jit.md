@@ -297,7 +297,7 @@ take:
 ### The measurements
 
 M1 measured every configuration in cycles and machine instructions
-(`scripts/perf-cycles.sh`, 2026-09-25 at `b49a03a`, an idle machine, the
+(`bin/rune-measure perf-cycles`, 2026-09-25 at `b49a03a`, an idle machine, the
 least of five runs of `perf stat -e cycles:u,instructions:u`). Each
 program of `tests/perf` is wrapped as `make perf` wraps it, its body run
 R times; the bootstrap is the compiler compiling its own sources. Cycles
@@ -1364,7 +1364,7 @@ M8 to M12 about 6,000, and are planned again after M7.
 
 ### M1. Measure (S, about 100)
 
-* **What:** a script, `scripts/perf-cycles.sh`, that runs `perf stat -e
+* **What:** a script, `bin/rune-measure perf-cycles`, that runs `perf stat -e
   cycles:u,instructions:u` five times and keeps the least, for `runevm`
   (after M6), `runevm-new`, `runeopt`'s native code and MLton's build, on
   the bootstrap and every program of `tests/perf`; a `perf record` of
@@ -1374,7 +1374,7 @@ M8 to M12 about 6,000, and are planned again after M7.
 * **Why now:** every number this roadmap was written with predates
   `runevm`'s M6; nothing is estimated from them again.
 * **Done when:** the script is committed and the table is in this file.
-* **Done** (2026-09-25, at `b49a03a`): `scripts/perf-cycles.sh` (the four
+* **Done** (2026-09-25, at `b49a03a`): `bin/rune-measure perf-cycles` (the four
   configurations, `--runs`, `--configs`, a filter, and `--profile CONFIG`
   for the bootstrap under `perf record`); the table and the profile are
   in *The measurements*. The numbers to beat: `vm/new` spends 17.35G
@@ -1459,7 +1459,7 @@ M8 to M12 about 6,000, and are planned again after M7.
   * **Not done:** a call that writes its result without `RESULT` in the
     code, which would need a destination in `CALL`: the fold in `RET`
     takes the dispatch away already, and the instruction stays for images.
-* **Measured** (`scripts/perf-cycles.sh`, the same day; cycles, and the
+* **Measured** (`bin/rune-measure perf-cycles`, the same day; cycles, and the
   fraction of `runevm`'s):
 
   | Program | `runevm` | `vm/new` at M1 | `vm/new` at M2 |
@@ -1541,7 +1541,7 @@ M8 to M12 about 6,000, and are planned again after M7.
     `--jit=all`, `--jit-check`, and `rt.deeprec_stack` (200,000 deep) under
     a machine stack of 1 MB, which a nesting driver would blow.
   * **Windows and the other machines** build it (the null engine is C).
-* **Measured** (`scripts/perf-cycles.sh --configs new,jit`; the cost of
+* **Measured** (`bin/rune-measure perf-cycles --configs new,jit`; the cost of
   the protocol alone, every call crossing the driver twice with a stub):
   the bootstrap 12.0G to 13.6G cycles (+13%), `fib` +43%, `tak` +28%,
   `intinf_fact` +19%, `list_ops` +14%, `array_sieve` +11%, `string_ops`
@@ -1630,7 +1630,7 @@ M8 to M12 about 6,000, and are planned again after M7.
     the environment is the mode where no `--jit=` is given, so that the
     Windows VMs (`make test-windows`, through `WSLENV`) and the sanitiser
     and stress runs take the JIT too.
-* **Measured** (`scripts/perf-cycles.sh --configs new,jit`; cycles, and
+* **Measured** (`bin/rune-measure perf-cycles --configs new,jit`; cycles, and
   the fraction of the interpreter's):
 
   | Program | interpreter | `--jit=all` |
@@ -1739,7 +1739,7 @@ M8 to M12 about 6,000, and are planned again after M7.
     300 ms changed its answer. The compiler now protects the pages it
     wrote alone (`sys_code_page` in `vm/sys.h`), and the check's
     deviation line says the answer comes and goes (`HOST-FLAKY`).
-* **Measured** (`scripts/perf-cycles.sh --configs new,jit,opt`; cycles,
+* **Measured** (`bin/rune-measure perf-cycles --configs new,jit,opt`; cycles,
   and the fraction of the interpreter's):
 
   | Program | interpreter | `--jit=all` | `runeopt` |
@@ -1832,9 +1832,9 @@ M8 to M12 about 6,000, and are planned again after M7.
     baseline too; the `--jit` options are one record (`JitOptions`,
     `vm/vm.h`).
   * **`--jit-stats`** adds the time compiling, the dead bytes, the
-    entries mid-way and the invalidations; `scripts/perf-cycles.sh` takes
+    entries mid-way and the invalidations; `bin/rune-measure perf-cycles` takes
     `jit-baseline+c10+w100` for the sweep.
-* **The sweep** (`scripts/perf-cycles.sh --runs 3`; cycles, as a
+* **The sweep** (`bin/rune-measure perf-cycles --runs 3`; cycles, as a
   fraction of the interpreter's):
 
   | Program | `all` | c1 w1 | c2 w2 | c10 w10 | c100 w100 | c1000 w1000 | c2 w100 | c100 w2 |
@@ -1971,7 +1971,7 @@ M8 to M12 about 6,000, and are planned again after M7.
     that it would remove before tier 2's registers do, M9), `JUMPIFNOTTAG`
     and `SWITCH` without the kind test, helpers as `call rel32` (the
     region near the runtime).
-* **Measured** (`scripts/perf-cycles.sh --configs jit-off,jit-baseline,jit,opt`;
+* **Measured** (`bin/rune-measure perf-cycles --configs jit-off,jit-baseline,jit,opt`;
   cycles, as a fraction of the interpreter's):
 
   | Program | interpreter | default (`baseline`) | `--jit=all` | `runeopt` |
@@ -2223,7 +2223,7 @@ to come:
     and loaded it with one 16-byte load, a store-forwarding stall on
     every return: fib was 7% slower than tier 1 until the value was
     stored where it goes straight from its home (then 23% faster).
-* **Measured** (`scripts/perf-cycles.sh --configs new,jit,jit-all+t2,jit-opt`,
+* **Measured** (`bin/rune-measure perf-cycles --configs new,jit,jit-all+t2,jit-opt`,
   `--runs 5`, least cycles; `new` is the default, tier 1 by the
   counters; `jit` every function at tier 1; `jit-all+t2` every function
   at tier 2; `jit-opt` tier 2 by the counters):
@@ -2368,7 +2368,7 @@ Nothing here changes what `--count` counts (D5).
   counters, since the default is what is measured: the Basis matrix's
   `rune:jit` runs every function at tier 2 (`bin/runevm-new-opt`),
   `rune:new` the default.
-* **Measured** (`scripts/perf-cycles.sh --runs 3 --configs new,jit,jit-all+t2`;
+* **Measured** (`bin/rune-measure perf-cycles --runs 3 --configs new,jit,jit-all+t2`;
   `new` the default, now tier 2 by the counters; `jit` every function
   at tier 1; `jit-all+t2` every function at tier 2):
 

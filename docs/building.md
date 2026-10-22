@@ -49,7 +49,8 @@ register VM useful for checking the same bytecode on both builds.
 CI and release builds use the pinned recipe rather than the system package:
 
 ```
-python3 scripts/build-gmp.py --enable-fat --jobs 4
+make bin/rune-build
+bin/rune-build build-gmp --enable-fat --jobs 4
 make GMP=yes GMP_PREFIX=build/deps/gmp/native
 ```
 
@@ -58,7 +59,9 @@ runtime. The recipe also selects a generic compiler target triple: fat
 assembly dispatch alone does not remove CPU-specific inline helpers from C. This follows
 [GMP's package-build guidance](https://gmplib.org/manual/Notes-for-Package-Builds).
 On non-x86 native machines omit that flag and select the intended target.
-The provisioning recipe needs Python 3.12 or newer.
+The provisioning recipe is Standard ML, built by the pinned native MLton before
+GMP configuration or VM creation. Its pure models also build as Rune bytecode
+after bootstrapping; see [the build tool](../tools/builder/README.md).
 
 The recipe verifies GMP 6.3.0's source archive SHA-256
 `a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898`,
@@ -126,12 +129,12 @@ rebuilding the enabled ones.
 
 ## Prerequisites
 
-The acceptance tests also need Python 3. The compiler-driver tests use its
-POSIX resource controls to interrupt a bytecode write and check that the previous
-artifact survives, and the VM tests check saved limits and stricter restore
-policies (`compiler/*` and `limits/*` of `tests/runner/tools.sml`).
-`make test-dist`, part of `make check`, also needs Pillow (`python3-pil`)
-to convert `share/rune.png` into the Windows icon.
+The build/configuration/package tool requires the pinned native MLton, even
+when another host builds the compiler. It builds without a Rune VM or target
+GMP dependency. Python 3 remains necessary for independent arithmetic oracles,
+Jupyter/ZMTP peers and host provisioning. Standard ML owns compiler interruption,
+VM limits and distribution assertions. The Windows icon is a checked canonical
+asset paired with its PNG source digest; packaging needs no Pillow.
 
 * A C compiler (`cc`; gcc 13 and clang 18 are tested), GNU make 4.3 or later, POSIX `sh`, `awk`. The VMs are built as C17 (`-std=c17`), and what they take from it beyond C99 is behind a test of `__STDC_VERSION__` (the header word of a `Value`, `runtime/vm.h`), so `make CFLAGS='-std=c99 -O2'` builds them too, a little slower. Where the compiler is gcc or clang the VM's loop goes from instruction to instruction by computed goto, a GNU extension; `make CFLAGS='-std=c99 -O2 -DRUNE_SWITCH'` builds the switch every C compiler has.
 * The SML systems that build the compiler, which `make hosts`
@@ -183,41 +186,41 @@ name the tools to check.
 | `make mlton` / `make smlnj-legacy` / `make smlnj32` / `make smlnj-dev` / `make polyml` / `make mlkit` | `bin/rune-mlton`, `bin/rune-smlnj-legacy`, `bin/rune-smlnj32`, `bin/rune-smlnj-dev`, `bin/rune-polyml`, `bin/rune-mlkit`; none of them is `bin/rune` |
 | `make host-builds` | all six host builds, of the compiler, of `runedoc` and of `runeopt` |
 | `make runedoc` | `bin/runedoc`, the documentation generator ([docs/plans/docgen.md](plans/docgen.md)) compiled by `bin/rune`: `bin/runedoc.rbc` and the wrapper `bin/runedoc-boot`. `make runedoc-host-builds` makes `bin/runedoc-mlton`, `-smlnj-legacy`, `-smlnj32`, `-smlnj-dev`, `-polyml` and `-mlkit` |
-| `make runeopt` | `bin/runeopt`, the native code generator ([docs/native.md](native.md)) compiled by `bin/rune`: `bin/runeopt.rbc` and the wrapper `bin/runeopt-boot`. `make runeopt-host-builds` makes `bin/runeopt-mlton`, `-smlnj-legacy`, `-smlnj32`, `-smlnj-dev`, `-polyml` and `-mlkit`. `runeopt prog.rbc -o prog` makes an executable of a program compiled with `--target=stack`; `scripts/opt.sh prog.sml` does both steps |
+| `make runeopt` | `bin/runeopt`, the native code generator ([docs/native.md](native.md)) compiled by `bin/rune`: `bin/runeopt.rbc` and the wrapper `bin/runeopt-boot`. `make runeopt-host-builds` makes `bin/runeopt-mlton`, `-smlnj-legacy`, `-smlnj32`, `-smlnj-dev`, `-polyml` and `-mlkit`. `runeopt prog.rbc -o prog` makes an executable of a program compiled with `--target=stack`; `bin/rune-measure opt prog.sml` does both steps |
 | `make vm` | `bin/runevm-stack`, and `bin/runevm`, `runtime/register`'s loop for the register bytecode |
 | `make vm-asan` | `bin/runevm-stack-asan` and `bin/runevm-asan` with AddressSanitizer/UBSan; `make test-register-asan` runs `tests/lang` on the latter |
 | `make test-register-jit` | `runtime/register` with every function compiled (`--jit=all`): `tests/lang` (at tier 2 too, and returning by `ret`, `--jit-returns=call`: [plans/native-frames.md](plans/native-frames.md), M7) and the Basis Library suite (`rune:jit`), every program of `tests/lang` and `tests/perf`, `tests/opt/prims.sml` and the compiler compiling itself printing and counting the same interpreted, compiled, with every other function compiled (`--jit-only=odd`, so that calls, returns and raises cross between the tiers both ways) and under `--jit-stress` (tiered up at the lowest thresholds and invalidated every fifth call) and every instruction occurring in them (the oracle `jit` of `tests/runner/oracles.sml`), `runevm --jit-check`, and a recursion 200,000 deep under a machine stack of 1 MB, which holds the driver to never nesting ([plans/jit.md](plans/jit.md), M3-M5); part of `make check`. `make RUNE_JIT=0` builds `runtime/register` without the JIT. `RUNEVM_JIT=MODE` in the environment is the mode where no `--jit=` is given |
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot`; `bin/rune.stack.rbc` is the same compiler in the stack bytecode |
-| `make test` | the programs of `tests/lang` and `tests/errors` compiled by `bin/rune-stack` (`bin/rune --target=stack`, written by every `make`, for `RUNE=` if you give one) and run on `bin/runevm-stack`, on the runner (`bin/rune-test run --tier test`; `tests/runner/lang.sml`), and `make test-steps`: the compiler's own tests, the runtime's limits and collector log, `tests/runtime/run-vm-tests.sh` (bytecode files and options the VM must refuse with a message) and the C test of the heap. `make test-heap`, `test-gc`, `test-all`, `test-native`, `test-register` and `test-register-jit` run `tests/lang` in their ways the same way, each by its tag, and the rest of what they run as `make TARGET-steps` |
+| `make test` | the programs of `tests/lang` and `tests/errors` compiled by `bin/rune-stack` (`bin/rune --target=stack`, written by every `make`, for `RUNE=` if you give one) and run on `bin/runevm-stack`, on the runner (`bin/rune-test run --tier test`; `tests/runner/lang.sml`), and `make test-steps`: the compiler's own tests, the runtime's limits and collector log, `bin/rune-windows vm` (bytecode files and options the VM must refuse with a message) and the C test of the heap. `make test-heap`, `test-gc`, `test-all`, `test-native`, `test-register` and `test-register-jit` run `tests/lang` in their ways the same way, each by its tag, and the rest of what they run as `make TARGET-steps` |
 | `make test-all` | run the suite with each of the six host builds |
 | `make isa` | write the tables of the instruction set and the primitives again from their descriptions in `src/isa`, with `runeisa` built by MLton: `runtime/stack/opcodes.def`, `runtime/prims.def`, `runtime/isa.h`, `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `src/backend/opcodes.sml`, `src/backend/prims.sml`; they are committed |
 | `make check-isa` | fail when one of those files is not what `src/isa` gives, with `runeisa` built by MLton and by the self-hosted compiler; part of `make check` |
 | `make test-ir` | the tests of the intermediate representations (`tests/ir`, [ir.md](ir.md)): the dumps of small programs compiled with the lint of every pass on |
 | `make check-levels` | every program of `tests/lang` and `tests/perf` compiled at `-O0` and `-O2` with the lint on; where the bytecode differs, both runs must print and exit the same |
 | `make check-units` | every program of `tests/lang` and `tests/perf` compiled whole and a unit per file, at `-O0`, `-O1` and `-O2`, without the cache of units, through it and from it; all must print and exit the same, the builds through and from the cache be the bytes of the one without it, and the unit files linked or loaded do the same; and the compiler compiled in units compiling itself ([units.md](units.md)) |
-| `make test-deps` | the dependency graph: files ordered by the modules they declare and use, a cycle, a name declared twice and a file that breaks the discipline refused, the graph as DOT, and an entry point with `-I` compiling the files it needs and only those (`tests/deps/run.sh`; [units.md](units.md), *The graph*) |
-| `make test-dynamic` | dynamic modules: a module through `_dynamic`, with an abstract type, a datatype declared in another order, a polymorphic value and an exception across the boundary, under the interpreter and `--jit=all`; a module of another signature refused; a plugin through `Dynamic.load`; two modules sharing a library's types; a whole program refused (`tests/dynamic/run.sh`; [units.md](units.md), *Dynamic modules*) |
+| `make test-deps` | the dependency graph: files ordered by the modules they declare and use, a cycle, a name declared twice and a file that breaks the discipline refused, the graph as DOT, and an entry point with `-I` compiling the files it needs and only those (`bin/rune-scenarios deps`; [units.md](units.md), *The graph*) |
+| `make test-dynamic` | dynamic modules: a module through `_dynamic`, with an abstract type, a datatype declared in another order, a polymorphic value and an exception across the boundary, under the interpreter and `--jit=all`; a module of another signature refused; a plugin through `Dynamic.load`; two modules sharing a library's types; a whole program refused (`bin/rune-scenarios dynamic`; [units.md](units.md), *Dynamic modules*) |
 | `make test-serve` | the compiler as a service, a prototype: `rune --serve` driven over its standard streams -- the diagnostics of a buffer with errors and without, the type of a function and of a variable at an offset, an unknown method, shutdown -- and what a request takes (`serve/*` of `tests/runner/protocols.sml`; the incremental roadmap's M12) |
 | `make check-reproducible` | the compiler built from `rune.build` the same bytes in units and whole, without the cache, through a cold cache and warm, by one process and with `-j`, and from a copy of its sources elsewhere; the whole builds `bin/rune.rbc` (the oracle `reproducible` of `tests/runner/oracles.sml`; [units.md](units.md), *Parallel builds*) |
-| `make test-build` | build files: a list, `local`, a library's exports, a group put in order, a build file used twice and elaborated once, an annotation, a path variable, a virtual module with either implementation and the other's units from the cache, and the errors (`tests/buildfile/run.sh`; [build.md](build.md)) |
-| `make test-install` | `make install` staged with `DESTDIR` under another prefix, for the bytecode compiler and for the MLton and SML/NJ host builds: every file each library's `MANIFEST` names is installed, the man pages carry the version, the installed `rune`, `runevm`, `runevm-stack`, `runeopt`, `runedoc`, `rune-repl` (with `--dap`) and `rune-kernel --install` work from where they landed without naming the tree, and `make uninstall` with the same options leaves no file (`tests/install/run.sh`) |
-| `make test-incremental` | the cache's scenarios: a project edited, reverted, broken, built at two levels, its cache damaged or shared by two compiles, each build holding to what it must compile again (`tests/incremental/SCENARIOS.md`), and a project edited mechanically, each warm build the bytes of compiling everything (`tests/incremental/mutate.py`) |
+| `make test-build` | build files: a list, `local`, a library's exports, a group put in order, a build file used twice and elaborated once, an annotation, a path variable, a virtual module with either implementation and the other's units from the cache, and the errors (`bin/rune-scenarios buildfile`; [build.md](build.md)) |
+| `make test-install` | `make install` staged with `DESTDIR` under another prefix, for the bytecode compiler and for the MLton and SML/NJ host builds: every file each library's `MANIFEST` names is installed, the man pages carry the version, the installed `rune`, `runevm`, `runevm-stack`, `runeopt`, `runedoc`, `rune-repl` (with `--dap`) and `rune-kernel --install` work from where they landed without naming the tree, and `make uninstall` with the same options leaves no file (`bin/rune-scenarios install`) |
+| `make test-incremental` | the cache's scenarios: a project edited, reverted, broken, built at two levels, its cache damaged or shared by two compiles, each build holding to what it must compile again (`tests/incremental/SCENARIOS.md`), and a project edited mechanically, each warm build the bytes of compiling everything (`bin/rune-incremental mutate`) |
 | `make test-repl` | the REPL's transcripts on every mode of the JIT ([repl.md](repl.md)) |
-| `make test-terminal` | programs on a terminal: the scripts of `tests/terminal` in a tmux pane, skipped without tmux ([testing.md](testing.md), *Programs on a terminal*) |
+| `make test-terminal` | programs on a terminal: the scripts of `tests/terminal` on the runtime pseudo-terminal and SML screen emulator; native ConPTY on Windows ([testing.md](testing.md), *Programs on a terminal*) |
 | `make test-diagnostics` | diagnostics rendered with colour and excerpts (`tests/diagnostics`), and the contrast of the palette (`tests/color`) ([diagnostics.md](diagnostics.md)) |
 | `make docs` | write the documentation of the libraries, `docs/lib`, with `bin/runedoc`, including `docs/lib/README.md`, the overview of them; it is committed, and `make check-docs` fails when it is not what the sources give (`runedoc --check`) |
 | `make test-doc` | run the tests of the documentation generator with `bin/runedoc`, a test each on the runner (`doc/*`, `tests/runner/tools.sml`); `bin/rune-test run --accept 'doc/NAME'` rewrites what one expects |
-| `make test-native` | the suites with every program translated to native code by `runeopt` ([docs/native.md](native.md)): `tests/lang` through `bin/runevm-native` (a VM for the runners that translates and runs; `tests/opt-skip.txt` lists what native code does not do yet), the check that every program of `tests/lang` counts what `runevm-stack` counts (`tests/opt/run-counts.sh`), the Basis Library suite in the `rune:opt` configuration, and the compiler as native code compiling itself (`tests/opt/run-bootstrap.sh`); and `tests/lang` again under the low-pause collector with a cycle of incremental marking always under way (`--gc-stress-cycles`), for the barrier's flag in native code. Linux on x86-64 only; elsewhere it does nothing. `make test-native-stress` runs it with a collection before every `GC_STRESS`-th allocation and `make test-native-asan` with a runtime built with the sanitizers; neither is part of `make check` |
+| `make test-native` | the suites with every program translated to native code by `runeopt` ([docs/native.md](native.md)): `tests/lang` through `bin/runevm-native` (a VM for the runners that translates and runs; `tests/opt-skip.txt` lists what native code does not do yet), the check that every program of `tests/lang` counts what `runevm-stack` counts (`tests/runner/nativechecks.sml`), the Basis Library suite in the `rune:opt` configuration, and the compiler as native code compiling itself (`tests/runner/nativechecks.sml`); and `tests/lang` again under the low-pause collector with a cycle of incremental marking always under way (`--gc-stress-cycles`), for the barrier's flag in native code. Linux on x86-64 only; elsewhere it does nothing. `make test-native-stress` runs it with a collection before every `GC_STRESS`-th allocation and `make test-native-asan` with a runtime built with the sanitizers; neither is part of `make check` |
 | `make test-heap` | the collector and its hooks ([runtime.md](runtime.md), What is in place for the collector; [plans/heap-layout.md](plans/heap-layout.md), M7; [plans/garbage-collector-v2.md](plans/garbage-collector-v2.md), M2 and M3): the C test of them (`tests/runtime/heap_test.c`) on the runtime as built, with `-DRUNE_GC_BITS` and with `-DRUNE_BARRIER_CARDS`; `tests/lang` on `bin/runevm-gcbits`, whose collector sets the header's four bits on every object it copies, as it comes and with every function compiled and a collection at every 101st allocation; `tests/lang` on `bin/runevm-cards`, whose barrier also marks a card of the process's table; and `tests/lang` with the heap checked before and after every collection (`--gc-verify`), in a heap of 64 KiB with a nursery of 8 KiB. Part of `make check`; the C test on the runtime as built is part of `make test` too |
 | `make test-gc` | the two collectors ([runtime.md](runtime.md), *The garbage collector*): `tests/lang` under `--gc throughput` and `--gc low-pause` on both VMs with the heap checked before and after every collection of a heap of 64 KiB and a nursery of 8 KiB (`--gc-verify`), under the low-pause collector with every function compiled and a collection at every 101st allocation, under each with the old space compacted at every full collection (`--gc-compact`), and on both VMs under the low-pause collector with a cycle of incremental marking always under way and the heap checked at every minor collection (`--gc-stress-cycles`). Part of `make check` |
-| `make test-register` | the suites through `runtime/register`'s first loop ([bytecode.md](bytecode.md), The register bytecode; [plans/middle-end.md](plans/middle-end.md), M5): `tests/lang` compiled by `bin/rune` (`bin/rune --target=registers`) and run by `bin/runevm`, the check that every program of `tests/lang` and `tests/perf` allocates on `runtime/register` what it allocates on `runevm-stack` and that the compiler on `runtime/register` makes the bytecode it makes on `runevm-stack`, with the check that the collector drops a waiting frame's dead registers and keeps its live ones at every tier (the oracle `register` of `tests/runner/oracles.sml`; `tests/register/dead-roots.sml`), and the Basis Library suite in the `rune:new` configuration; part of `make check`. `make perf-check` holds `runtime/register` to the budgets of `tests/perf` and `runevm-stack` to those of `tests/perf/stack` (`tests/perf/run-perf.sh --stack`) |
-| `make vm-census` / `make test-census` | `bin/runevm-census`, the census VM ([census.md](census.md)): `runtime/register`'s loop with the hooks of `runtime/census/census.h`, which writes a trace of every allocation, field, store into an object and death, and at every sample the stack and the instruction count; `test-census` runs it beside `bin/runevm --jit=off` on a program of `tests/perf` and checks the same `--count` line and output, that the trace accounts for every byte and object the count reports, the trace's consistency (`tools/heapsim/checktrace.py`, where python3 has numpy), the summary mode and the static census (`scripts/check-census.sh`, under a second); part of `make check` |
-| `make heapsim` / `make check-heapsim` / `make check-gcsim` | `bin/heapsim`, `bin/heapsim-gen` and `bin/gcsim`, the simulators that replay a census trace under models of collectors ([tools/heapsim/README.md](../tools/heapsim/README.md)); `check-heapsim` holds heapsim's copier to an exact one on synthetic traces and to `bin/runevm --stats` at five heap settings on compile-sigs and intinf_fact, whose traces it makes (`tools/heapsim/test.sh`, `validate.sh`; about 25 seconds, half of it the census of compile-sigs), and `check-gcsim` holds gcsim's models to traces whose answers are known in closed form and to heapsim's models (`tools/heapsim/test2.sh`, 2 seconds); both part of `make check` |
-| `make test-opt` | run the tests of the native code generator (`tests/opt/run-opt-tests.sh`) with `bin/runeopt`: the files it refuses, `--check` and `--disasm` over the programs the other suites compiled (so it runs after them), and a few programs translated, among them `tests/opt/every-opcode.rasm`, which runs every instruction; `RUNEOPT=bin/runeopt-mlton` is the faster loop |
+| `make test-register` | the suites through `runtime/register`'s first loop ([bytecode.md](bytecode.md), The register bytecode; [plans/middle-end.md](plans/middle-end.md), M5): `tests/lang` compiled by `bin/rune` (`bin/rune --target=registers`) and run by `bin/runevm`, the check that every program of `tests/lang` and `tests/perf` allocates on `runtime/register` what it allocates on `runevm-stack` and that the compiler on `runtime/register` makes the bytecode it makes on `runevm-stack`, with the check that the collector drops a waiting frame's dead registers and keeps its live ones at every tier (the oracle `register` of `tests/runner/oracles.sml`; `tests/register/dead-roots.sml`), and the Basis Library suite in the `rune:new` configuration; part of `make check`. `make perf-check` holds `runtime/register` to the budgets of `tests/perf` and `runevm-stack` to those of `tests/perf/stack` (`bin/rune-budget --stack`) |
+| `make vm-census` / `make test-census` | `bin/runevm-census`, the census VM ([census.md](census.md)): `runtime/register`'s loop with the hooks of `runtime/census/census.h`, which writes a trace of every allocation, field, store into an object and death, and at every sample the stack and the instruction count; `test-census` runs it beside `bin/runevm --jit=off` on a program of `tests/perf` and checks the same `--count` line and output, that the trace accounts for every byte and object the count reports, the trace's consistency with the SML reader, summary mode and static census (`tests/runner/heapchecks.sml`); part of `make check` |
+| `make heapsim` / `make check-heapsim` / `make check-gcsim` | `bin/heapsim`, `bin/heapsim-gen` and `bin/gcsim`, the simulators that replay a census trace under models of collectors ([tools/heapsim/README.md](../tools/heapsim/README.md)); `check-heapsim` holds heapsim's copier to an exact one on synthetic traces and to `bin/runevm --stats` at five heap settings on compile-sigs and intinf_fact, whose traces it makes (`tests/runner/heapchecks.sml` and `censustrace.sml`), and `check-gcsim` holds gcsim's models to traces whose answers are known in closed form and to heapsim's models (`tests/runner/heapchecks.sml`); both part of `make check` |
+| `make test-opt` | run the tests of the native code generator (`tests/runner/nativechecks.sml`) with `bin/runeopt`: the files it refuses, `--check` and `--disasm` over the programs the other suites compiled (so it runs after them), and a few programs translated, among them `tests/opt/every-opcode.rasm`, which runs every instruction; `RUNEOPT=bin/runeopt-mlton` is the faster loop |
 | `make check-cross` | compile every test, example and Basis Library suite program, the compiler, `runedoc` and `runeopt` with all six builds and compare the bytecode; run the six builds of `runedoc` on the same input and compare what they write (the oracle `cross` of `tests/runner/oracles.sml`), and the same for `runeopt` (the oracle `cross` of `tests/runner/oracles.sml`) |
-| `make check-docs` | verify docs, tests and `.def` files are in sync, that the library's signatures have the tokens of their transcriptions, that the comments of `lib/basis` and `src` are in the language of doc comments (`runedoc --lint`, [doc-comments.md](doc-comments.md)), that `docs/lib` is up to date (which includes `docs/lib/README.md`, and that the Basis Library suite has a check for every specified member of every structure: `runedoc` reads the suite's labels), and that the structures the library says implement a signature are the ones the suite matches against it (`tests/basis/check-claims.sh`), and that the notes of the documentation and `tests/basis/deviations.txt` agree (`tests/basis/check-notes.sh`) |
+| `make check-docs` | verify docs, tests and `.def` files are in sync, that the library's signatures have the tokens of their transcriptions, that the comments of `lib/basis` and `src` are in the language of doc comments (`runedoc --lint`, [doc-comments.md](doc-comments.md)), that `docs/lib` is up to date (which includes `docs/lib/README.md`, and that the Basis Library suite has a check for every specified member of every structure: `runedoc` reads the suite's labels), and that the structures the library says implement a signature are the ones the suite matches against it (`bin/rune-doc-check docs-claims`), and that the notes of the documentation and `tests/basis/deviations.txt` agree (`bin/rune-doc-check docs-notes`) |
 | `make test-basis` | run the Basis Library suite (`tests/basis`) with `bin/rune` |
-| `make perf-check` | verify the performance budgets of `tests/perf`: instructions executed and bytes and objects allocated (`runevm --count`, Rune as shipped) by benchmark programs, by the compiler compiling `examples/hello.sml`, the bootstrap and programs that scale the module language, and by `runedoc`, each at most 10 % above the recorded value, and the growth of the instruction count from n to 4n; then the same on `runevm-stack` against `tests/perf/stack`. The numbers are the same on every machine. `sh tests/perf/run-perf.sh --update` (and `--stack --update`) records new values after a deliberate change |
+| `make perf-check` | verify the performance budgets of `tests/perf`: instructions executed and bytes and objects allocated (`runevm --count`, Rune as shipped) by benchmark programs, by the compiler compiling `examples/hello.sml`, the bootstrap and programs that scale the module language, and by `runedoc`, each at most 10 % above the recorded value, and the growth of the instruction count from n to 4n; then the same on `runevm-stack` against `tests/perf/stack`. The numbers are the same on every machine. `sh bin/rune-budget --update` (and `--stack --update`) records new values after a deliberate change |
 | `make bootstrap` | compile the compiler with `bin/rune` and check the result equals `bin/rune.rbc`, and again with `--target=stack` against `bin/rune.stack.rbc` |
 | `make check` | all of the above: `make check-tools` builds what they need, and `bin/rune-test run --tier check` runs each of them as a test of the runner, at once where they share no files ([testing.md](testing.md), *Running the tests*) |
 | `make doctor` | check that the tools of all targets are installed and work; print how to install missing ones |
@@ -238,7 +241,7 @@ is the loop to use while iterating. `RUNEVM=` selects the VM the same way.
 
 Make runs recipes, and the test scripts run test programs, in parallel on
 all available CPUs; `make JOBS=4 check` limits that to 4 (`bin/rune-test`,
-`tests/run-tests.sh` and the oracle `cross` of `tests/runner/oracles.sml` take `-j N`).
+`bin/rune-suite` and the oracle `cross` of `tests/runner/oracles.sml` take `-j N`).
 
 The matrix targets are described in [basis-compat.md](basis-compat.md) and
 `tests/basis/README.md`. `RUNE_HOSTS` (or `make HOSTS=...`) is where the hosts
@@ -253,7 +256,7 @@ host build that compiles stage 1 of the bootstrap.
 `make windows` builds the VMs for Windows with mingw-w64, for 64 bits,
 `bin/runevm-stack.exe` and `bin/runevm.exe`, and for 32 bits,
 `bin/runevm-stack32.exe` and `bin/runevm32.exe`. `make test-windows` runs the
-language suite and `tests/runtime` on all four (`tests/run-windows.sh`, once with
+language suite and `tests/runtime` on all four (`bin/rune-test run --tier test-windows`, with
 the stack bytecode of `bin/rune-stack` and once with the register bytecode of
 `bin/rune`), then the Basis Library suite on each.
 Neither is part of any other target: `make check` never compiles
@@ -275,7 +278,7 @@ rather than of Windows.
 The runner starts the VMs in a directory on the Windows side
 (`$RUNE_WINDOWS_DIR`, or one for each tree under `rune-test-windows` in the
 `TEMP` directory of Windows, so that two worktrees can run the tests at
-once; `tests/windows-dir.sh`), not in the tree, which WSL would hand them as
+once; `bin/rune-windows directory`), not in the tree, which WSL would hand them as
 a network path, and passes `TZ` to them through `WSLENV`. It also runs a few programs with
 `--count` on each VM and on `bin/runevm-stack`: the counts must agree.
 
@@ -523,8 +526,9 @@ starts ([repl.md](repl.md)).
 
 An install also retains `lib/rune/rebuild`: the register VM's source and
 transitive headers, compiler/link flags, binary and source hashes, and a
-`rebuild.py` script. Copy that directory to a writable location and run
-`python3 rebuild.py` to relink the VM. A pinned GMP install includes the
+Standard ML relinking tool. Copy that directory to a writable location and run
+`./rebuild` to relink the VM using its retained bytecode and matching VM. The
+README also documents the independent native MLton build from retained sources. A pinned GMP install includes the
 verified source archive, installed header/static library, license notices,
 provisioning record and exact build recipe. The accompanying README describes
 rebuilding GMP with the recorded target and options. Checked system builds
@@ -538,7 +542,7 @@ the `.exe` file produced for a make target named without that suffix.
 The installer verifies that the VM, runtime source and dependency artifacts
 match their build records before packaging them; build again if they differ.
 Staged installation, relocation to a path containing spaces, native output,
-source relinking and removal are checked by `tests/intinf/install.py` in the
+source relinking and removal are checked by `bin/rune-intinf install --mode sml` and `--mode gmp` in the
 release acceptance sequence. Release builds must use the pinned provisioning
 commands above; installing a checked system build does not turn it into a
 pinned release.
@@ -572,9 +576,9 @@ install for everyone (`/usr/local`, `%ProgramFiles%\Rune`); otherwise for
 the current user (`~/.local`, `%LOCALAPPDATA%\Rune`). On Windows the
 installer adds a Start menu entry named Rune that starts the REPL, and an
 entry in Apps and Features that runs `uninstall.bat`. The entry's icon is
-`share/rune.png`, converted to a Windows icon (`share/rune.ico`, at 16, 32,
-48 and 256 pixels) when the archive is built, and linked into the Windows
-`runevm.exe`. That conversion needs Pillow (`python3-pil`). `install.bat`
+the canonical `share/rune.ico` (16, 32, 48 and 256 pixels), whose digest is
+paired with `share/rune.png` and checked before packaging. The icon is also
+linked into the Windows `runevm.exe`. `install.bat`
 waits for a key after it finishes.
 
 `:doc` reads the Basis documentation out of the REPL image, which was

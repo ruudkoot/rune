@@ -1,33 +1,10 @@
-(* The inventory of bin/rune-test (docs/plans/unit-testing.md, M3 and M4):
-   every test the runner knows, as one tree. `make check` is `make
-   check-tools` and then `bin/rune-test run --tier check`.
+(* Repository test inventory over lib/test/runner. Standard ML owns cases,
+   dependencies, limits and verdicts, including independent C fixture runs.
+   make check-tools builds every shared subject before scheduling begins.
 
-   The programs of tests/lang and tests/errors are the runner's own tests,
-   in every way make check ran them (tests/runner/lang.sml), and so are the
-   Basis Library suite's in make check's four configurations of Rune
-   (tests/runner/basis.sml), and the laws of its documentation
-   (tests/runner/laws.sml). The rest of
-   what the old recipe of `make check` ran is a step each, an opaque `make`
-   of its target. make check-tools builds what any of them needs before the
-   runner starts, so that no two steps build one file at once; then the
-   edges and pools below keep apart the steps that share files (the audit
-   of M3):
-
-   - the pool `lang`: the steps that run the programs of tests/lang from the
-     root of the tree, and so write the files those programs write at fixed
-     paths (tests/out/rt.*.img, basis.*.tmp). They run one at a time, each
-     on most of the machine;
-   - the pool `heap_test`: the steps that build and run build/heap_test;
-   - test-opt reads the stack compiler's bytecode of tests/lang in tests/out
-     and of the Basis suite in tests/out/matrix/rune, and test-native-steps
-     the first: they wait for them.
-
-   The profiles' extras that run tests/basis/run-matrix.sh share the pool
-   `matrix`, for its report.
-
-   Every other step writes only a directory of its own under tests/out, and
-   runs beside the rest. A step is told its CPUs as JOBS, from
-   RUNE_TEST_CPUS. *)
+   The remaining Make adapters generate/check documentation, audit benchmark
+   coverage and verify ISA tables through their SML tools. Matrix MLKit jobs
+   retain their shared cache pool; each other worker owns its output tree. *)
 structure Inventory =
 struct
   val processors = Runtime.processors ()
@@ -88,81 +65,25 @@ struct
 
   val make =
     Test.describe "make"
-      [lang ("test-opt", [], ["compile/stack-done", "basis-compile/stack-done"],
-             langFiles @ perfFiles @ ["tests/opt/*", "tests/runtime/*", "tests/basis/*", "examples/*"]),
-       alone ("check-units-steps", ["check-units"], ["tests/units/*"]),
-       lang ("test-native-steps", [], ["compile/stack-done"],
-             langFiles @ ["tests/opt/*", "tests/basis/*", "tests/runtime/*", "examples/nqueens.sml"]),
-       step ("test-register-jit-steps", {cpus = 1, memory = 1000, pools = [], after = []}, [],
-             ["tests/register/*", "tests/lang/rt.deeprec_stack.*"]),
-       step ("test-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, [],
-             ["tests/compiler/*", "tests/runtime/*"]),
-       step ("test-heap-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, ["layout"], ["tests/runtime/*"]),
-       some ("check-docs", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
-       step ("check-layouts", {cpus = Int.min (2, few), memory = 500, pools = [], after = []}, ["layout"], ["tests/layouts/*"]),
-       alone ("test-install", [], ["tests/install/*", "examples/hello.sml"]),
-       Test.requires ["python3"]
-         (alone ("test-dist", [],
-                 ["scripts/make-dist.py", "scripts/dist-install.sh", "scripts/dist-install.bat",
-                  "scripts/dist-uninstall.bat", "scripts/dist-register.ps1",
-                  "scripts/dist-rune.cmd", "scripts/dist-rune-repl.cmd", "tests/dist/*"])),
-       Test.requires ["tmux", "python3"] (alone ("test-terminal", [], ["tests/terminal/*"])),
-       Test.requires ["python3"] (alone ("test-diagnostics-steps", ["test-diagnostics"], ["tests/color/*"])),
-       alone ("test-census", [], perfFiles @ ["tools/heapsim/*"]),
-       alone ("check-heapsim", [], ["tools/heapsim/*"]),
-       alone ("check-gcsim", [], ["tools/heapsim/*"]),
-       alone ("check-gcbench", [], ["tests/gcbench/*"]),
-       alone ("perf-check", [], perfFiles),
-       alone ("bench-smoke", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
-       Test.requires ["python3"] (alone ("test-intinf", [], ["tests/intinf/*"])),
-       Test.requires ["python3"] (alone ("test-intinf-backends", [], ["tests/intinf/*"])),
-       Test.requires ["python3"] (alone ("test-intinf-hardening", [], ["tests/intinf/*"])),
-       Test.requires ["python3"] (alone ("test-intinf-dependency", [], ["tests/intinf/*", "scripts/*gmp*", "build/deps/gmp/*"])),
+      [some ("check-docs-generated", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
+       alone ("bench-coverage", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
        alone ("check-isa", [], [])]
-
-  (* the profiles' extras (docs/testing.md, Profiles): AGENTS.md's targets
-     for a kind of change, beyond make check. Each runs alone, as it always
-     has: they run tests/lang from the root and the matrix *)
-  (* seconds is the whole make, not one basis program (that limit is
-     RUNE_MATRIX_TIMEOUT, 120s). The other extras finish inside an hour.
-     make matrix does not: a quiet 2-CPU runner takes about 50 minutes
-     (3028s on 2026-10-16) and a busy one was still in xc1:mlkit when the
-     hour ran out (run 39015037450; matrix-quick 2375s, against 1652s the
-     day before). That kill is SIGTERM to the group. The hosts' processes
-     then die with SIGSEGV and SIGFPE, which the shell reports as
-     "Segmentation fault" and "Floating point exception", and rm cannot
-     remove a directory MLKit's chmod has set to 01001. Two hours covers
-     that runner, inside the workflow's six-hour cap. *)
-  fun extra (name, tags) = extraFor (name, tags, 3600)
-  and extraFor (name, tags, seconds) =
-    target (name, seconds, {cpus = processors, memory = 4000, pools = ["lang", "matrix"], after = [],
-                            tags = "nightly" :: tags, covers = []})
-  val extras =
-    Test.describe "make"
-      [extra ("test-register-asan", ["vm"]),
-       extra ("test-stress", ["vm"]),
-       Test.requires ["windows"] (extra ("test-windows", ["vm", "windows"])),
-       Test.requires Lang.hosts (extra ("matrix-quick", ["library"])),
-       Test.requires Lang.hosts (extra ("test-lib-hosts", ["library"])),
-       (* the nightly's own (docs/testing.md, Tiers, profiles and what changed):
-          every configuration of the matrix, and the native code under stress *)
-       Test.requires Lang.hosts (extraFor ("matrix", [], 7200)),
-       extra ("test-native-stress", []),
-       extra ("test-native-asan", [])]
 
   (* what tests require of the machine (D18; docs/testing.md, Requirements),
      with scripts/doctor.sh's hints *)
   val capabilities =
-    [{name = "tmux", probe = "command -v tmux", hint = "install tmux (apt, dnf, pacman, brew: tmux)"},
-     {name = "python3", probe = "command -v python3", hint = "install python3 (apt, dnf: python3; pacman, brew: python)"},
+    [{name = "python3", probe = "command -v python3", hint = "install python3 (apt, dnf: python3; pacman, brew: python)"},
      {name = "cc", probe = "command -v ${CC:-cc}", hint = "install a C compiler (apt: build-essential; dnf: gcc; pacman: base-devel; brew: gcc)"},
      (* registered with the kernel too: a fork by a VM under qemu is an exec
         of its own binary, which hangs where the kernel cannot start it *)
      {name = "qemu", probe = "{ command -v qemu-ppc64 || command -v qemu-ppc64-static; } && [ -e /proc/sys/fs/binfmt_misc/qemu-ppc64 ] && [ -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]",
       hint = "install qemu-user (apt, dnf: qemu-user) and register it: sudo sh -c 'cat /usr/lib/binfmt.d/qemu-ppc64.conf > /proc/sys/fs/binfmt_misc/register' (and qemu-aarch64.conf)"},
-     {name = "windows", probe = "sh tests/windows-dir.sh && command -v x86_64-w64-mingw32-gcc",
+     {name = "windows", probe = "bin/rune-windows directory && command -v x86_64-w64-mingw32-gcc",
       hint = "Windows under WSL with interop (RUNE_WINDOWS_DIR names a directory there) and mingw-w64 (apt: gcc-mingw-w64-x86-64 gcc-mingw-w64-i686)"}]
     @ List.map (fn h => {name = h, probe = "test -x bin/rune-" ^ h, hint = "run: make hosts, then make " ^ h}) Lang.hosts
+    @ [{name="jupyter-client",probe="python3 -c 'import jupyter_client'",hint="install Python jupyter_client for its independent notebook peer"}]
+    @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities @ ScenarioJobs.capabilities @ GMPJobs.capabilities @ TerminalJobs.capabilities
+    @ [{name = "grep-pcre", probe = "printf LIST | grep -P '^LIST$'", hint = "GNU grep with PCRE for LAWS_PROGRAMS"}]
 
   (* each file of expectations read by the one engine (docs/testing.md,
      Expectations): it parses, and its skips name programs that are there.
@@ -196,7 +117,16 @@ struct
        expectations ("lib-deviations", "tests/lib/deviations.txt", NONE),
        expectations ("quarantine", "tests/runner/quarantine.txt", NONE)]
 
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
+  val matrixFaults = Test.tag "check" (Test.tag "quick" (Test.tag "covers:tests/runner/matrix*.sml"
+    (Test.tag "covers:tests/runner/hostlaws.sml" (Test.tag "covers:tests/runner/smlscan.sml"
+      (Test.requires ["grep-pcre"] (Test.describe "runner" [LibHosts.job ("matrix-controller-faults", ["matrix-controller-faults"], [], 300)]))))))
+  (* These inputs can change every produced program or the machinery that
+     judges it. Give every leaf their coverage, even when a narrower group
+     also names the same file (for example Basis docs or JIT dump checks). *)
+  val broadInputs = ["src/*", "runtime/*", "lib/basis/*", "lib/test/runner/*",
+                     "Makefile", "tools/builder/*", "tools/generate/*", "scripts/*"]
+  val tests = List.foldl (fn (path, tree) => Test.tag ("covers:" ^ path) tree)
+    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, Canary.tests]) broadInputs
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws
@@ -204,7 +134,30 @@ end
 val () =
   case CommandLine.arguments () of
     ["laws-one", rbc, st] => Laws.one (rbc, st)
+  | ["matrix-controller-faults"] => MatrixFaults.one ()
   | args =>
+      case BuildChecks.command args of SOME action => action () | NONE =>
+      case WindowsJobs.command args of SOME action => action () | NONE =>
+      case Benchmarks.command args of SOME action => action () | NONE =>
+      case ScenarioJobs.command args of SOME action => action () | NONE =>
+      case HostLaws.command args of
+        SOME f => f ()
+      | NONE =>
+      case Native.command args of
+        SOME f => f ()
+      | NONE =>
+      case Heap.command args of
+        SOME f => f ()
+      | NONE =>
+      case Migration.command args of
+        SOME f => f ()
+      | NONE =>
+      case HostChecks.command args of
+        SOME f => f ()
+      | NONE =>
+      case LibHosts.command args of
+        SOME f => f ()
+      | NONE =>
       case Oracles.command args of
         SOME f => f ()
       | NONE =>

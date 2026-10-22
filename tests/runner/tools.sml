@@ -1,6 +1,6 @@
 (* The tools' suites on the runner (docs/plans/unit-testing.md, M10): what
    tests/ir/run-ir-tests.sh, tests/doc/run-doc-tests.sh,
-   tests/lib/run-lib-tests.sh, tests/flexrec/run.sh, tests/units/run.sh,
+   tests/lib/run-lib-tests.sh, tests/flexrec/run.sh, bin/rune-scenarios units,
    tests/compiler/run-tests.py, tests/runtime/run-limits.py and
    tests/runtime/run-gc-log.py did, a job for each case where the cases are
    apart, each a command of bin/rune-test that prints a line FAIL for what
@@ -330,7 +330,7 @@ struct
     let val log = libOut ^ "/" ^ lib ^ "-interop.txt"
     in
       mkdirs libOut;
-      if exec {cmd = ["/bin/sh", "tests/lib/" ^ lib ^ "/interop.sh", fromRoot "bin/rune", fromRoot "bin/runevm", libOut], dir = NONE,
+      if exec {cmd = [fromRoot "bin/rune-protocol-check", "interop", lib, fromRoot "bin/rune", fromRoot "bin/runevm", libOut ^ "/" ^ lib ^ "-interop"], dir = NONE,
                stdin = "", stdout = log, stderr = log, timeout = 0} = 0
       then () else fail ("lib." ^ lib ^ ": the interop (see " ^ log ^ ")")
     end
@@ -739,6 +739,77 @@ struct
       check () handle Bad m => fail ("gc-log " ^ vm ^ ": " ^ m)
     end
 
+  (* ---- the palette: compile the test with the palette it measures *)
+  fun contrast planted =
+    let
+      val dir = run ^ (if planted then "/colour/fault" else "/colour/contrast")
+      val () = mkdirs dir
+      val log = dir ^ "/compile.err"
+      val fault = dir ^ "/fault.sml"
+      val () = if planted then write (fault,
+        "structure Color = struct\n  open Color\n"
+        ^ "  val table = map (fn (\"error\", _, d, l) => (\"error\", \"30\", d, l) | row => row) table\nend\n") else ()
+      val sources = ["src/util/color.sml"] @ (if planted then [fault] else []) @ ["tests/color/contrast.sml"]
+    in
+      if exec {cmd = ["bin/rune", "--library", "json"] @ sources @ ["-o", dir ^ "/contrast.rbc"],
+               dir = NONE, stdin = "", stdout = log, stderr = log, timeout = 120} <> 0
+      then fail ("colour: does not compile: " ^ firstLine log)
+      else
+        let val status = exec {cmd = ["bin/runevm", dir ^ "/contrast.rbc"], dir = NONE, stdin = "", stdout = dir ^ "/output",
+                               stderr = dir ^ "/error", timeout = 120}
+        in
+          if planted then
+            if status = 1 andalso String.isSubstring "FAIL auto" (read (dir ^ "/output")) then ()
+            else fail "colour: black text on a black background did not fail its contrast check"
+          else if status = 0 then ()
+          else fail ("colour: " ^ read (dir ^ "/output") ^ read (dir ^ "/error"))
+        end
+    end
+
+  (* The foundational build-file generator is called by separate makes.
+     They must be able to publish identical files at once. Each round
+     starts eight generators before waiting for any of them. *)
+  fun generators script =
+    let
+      val dir = run ^ "/generators"
+      val () = (rmTree dir; mkdirs (dir ^ "/scripts"))
+      val () = List.app (fn n => write (dir ^ "/" ^ n, read (fromRoot n)))
+                         ["rune.build", "runedoc.build", "runeopt.build", "runeisa.build"]
+      val () = write (dir ^ "/scripts/build-files.sh", read (fromRoot "scripts/build-files.sh"))
+      val script = fromRoot script
+      val log = dir ^ "/reference.log"
+      val reference = exec {cmd = ["/bin/sh", script, dir], dir = SOME dir, stdin = "", stdout = log, stderr = log, timeout = 60}
+      val expected = List.map (fn n => (n, read (dir ^ "/build/" ^ n))) (sort (entries (dir ^ "/build")))
+      val null = Posix.FileSys.openf ("/dev/null", Posix.FileSys.O_RDONLY, Posix.FileSys.O.flags [])
+      fun number fd = SysWord.toInt (Posix.FileSys.fdToWord fd)
+      fun round r =
+        let
+          fun start i =
+            let
+              val log = dir ^ "/" ^ Int.toString r ^ "-" ^ Int.toString i ^ ".log"
+              val out = Posix.FileSys.creat (log, Posix.FileSys.S.flags [Posix.FileSys.S.irusr, Posix.FileSys.S.iwusr])
+              val pid = Subprocess.spawn {program = "/bin/sh", args = ["sh", script, dir], env = NONE, search = false,
+                (* Keep writers in the job's group so the supervisor can
+                   stop every writer if this regression times out. *)
+                dir = SOME dir, stdin = SOME (number null), stdout = SOME (number out), stderr = SOME (number out), group = false,
+                limits = {addressSpace = SOME (64 * 1024 * 1024), cpuTime = SOME 30, fileSize = SOME (1024 * 1024), core = SOME 0}}
+              val () = Posix.IO.close out
+            in (pid, log) end
+          val children = List.tabulate (8, start)
+          val () = List.app (fn (pid, log) =>
+            case #status (Subprocess.wait (SOME pid)) of
+              Posix.Process.W_EXITED => ()
+            | _ => fail ("build generators: concurrent invocation failed: " ^ firstLine log)) children
+        in
+          List.app (fn (n, text) => if exists (dir ^ "/build/" ^ n) andalso read (dir ^ "/build/" ^ n) = text then ()
+                    else fail ("build generators: changed " ^ n)) expected
+        end
+    in
+      if reference <> 0 orelse length expected <> 16 then fail ("build generators: reference generation: " ^ firstLine log)
+      else List.app round [1, 2, 3, 4];
+      Posix.IO.close null
+    end
+
   (* ---- the tree *)
   fun job (path, args, after, memory, timeout) =
     Test.it path
@@ -746,13 +817,6 @@ struct
        args = ["sh", "-c", "exec \"$RUNE_TEST_ROOT\"/bin/rune-test " ^ String.concatWith " " (List.map quote args)],
        env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds timeout, cap = 0, cpus = 1, memory = memory,
        pools = [], exclusive = false, after = after, judge = failLines} : Run.command Test.tree
-
-  (* a scenario: its script, which exits 0 when every step passed *)
-  fun scenario (path, script, args) =
-    Test.it path
-      {program = "/bin/sh", args = ["sh", script] @ args, env = NONE, dir = SOME ".", stdin = NONE,
-       timeout = Time.fromSeconds 3600, cap = 0, cpus = 1, memory = 1000, pools = [], exclusive = false, after = [],
-       judge = Run.exitZero} : Run.command Test.tree
 
   fun command args =
     case args of
@@ -773,6 +837,10 @@ struct
     | ["compiler", rune] => SOME (fn () => compilerProtection rune)
     | ["limits", rune, vm] => SOME (fn () => limits (rune, vm))
     | ["gc-log", rune, vm] => SOME (fn () => gcLog (rune, vm))
+    | ["colour-contrast"] => SOME (fn () => contrast false)
+    | ["colour-contrast-fault"] => SOME (fn () => contrast true)
+    | ["build-generators"] => SOME (fn () => generators "scripts/gen-build-files.sh")
+    | ["build-generators", script] => SOME (fn () => generators script)
     | _ => NONE
 
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
@@ -782,7 +850,12 @@ struct
 
   val tree =
     Test.describe ""
-      [tagged ["check", "test-ir", "covers:tests/ir/*"]
+      [tagged ["check", "quick"]
+         (Test.resources {cpus = 2, memory = 256} (job ("compiler/build-generators", ["build-generators"], [], 256, 120))),
+       tagged ["check", "test-diagnostics", "covers:tests/color/*"]
+         (Test.describe "colour" [job ("contrast", ["colour-contrast"], [], 300, 300),
+                                  job ("planted-fault", ["colour-contrast-fault"], [], 300, 300)]),
+       tagged ["check", "test-ir", "covers:tests/ir/*"]
          (Test.describe "ir" (List.map (fn s => job (basename s, ["ir-one", s], [], 300, 600))
                                        (glob ("tests/ir", ".sml") @ glob ("tests/ir", ".mid")))),
        tagged ["check", "test-doc", "quick", "docs", "covers:tests/doc/*"]
@@ -813,7 +886,7 @@ struct
              @ List.concat (List.map (fn lib =>
                                         List.map (fn s => job (lib ^ "/" ^ basename s, ["lib-suite", lib, s], [], 500, 600))
                                                  (glob ("tests/lib/" ^ lib, ".sml"))
-                                        @ (if exists ("tests/lib/" ^ lib ^ "/interop.sh")
+                                        @ (if lib="zmtp" orelse lib="jupyter"
                                            then [Test.requires ["python3"] (job (lib ^ "/@interop", ["lib-interop", lib], [], 500, 600))]
                                            else [])
                                         @ [job (lib ^ "/@check", ["lib-basis-check", lib], [], 300, 600),
@@ -844,11 +917,5 @@ struct
             ([tagged ["test"] (job ("stack", ["gc-log", "bin/rune-stack", "bin/runevm-stack"], [], 300, 600)),
               tagged ["test-register"] (job ("register", ["gc-log", "bin/rune", "bin/runevm"], [], 300, 600))]
              @ (if native then [tagged ["test-native"] (job ("native", ["gc-log", "bin/rune-stack", "bin/runevm-native"], [], 500, 600))]
-                else []))),
-       tagged ["check"]
-         (Test.describe "scenario"
-            [tagged ["test-deps", "covers:tests/deps/*"] (scenario ("deps", "tests/deps/run.sh", ["--rune", "bin/rune"])),
-             tagged ["test-dynamic", "covers:tests/dynamic/*"] (scenario ("dynamic", "tests/dynamic/run.sh", ["--rune", "bin/rune"])),
-             tagged ["test-build", "covers:tests/buildfile/*"] (scenario ("buildfile", "tests/buildfile/run.sh", ["--rune", "bin/rune"])),
-             tagged ["check-units", "covers:tests/units/*"] (scenario ("units", "tests/units/run.sh", ["--rune", "bin/rune"]))])]
+                else [])))]
 end

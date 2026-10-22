@@ -1,0 +1,303 @@
+# path	kind	milestone	state	baseline-blob	replacement	comparison
+# baseline 80694b6b7; retained categories are the original D23 exceptions.
+scripts/benchmark-inventory.py	python	P2.15	retired	47905cad71530f5284dd9df26ac5db2b16f238c2	tools/generate/inventory.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate inventory
+scripts/benchmark-provenance.sh	shell	P2.14	retired	e53a16aca070fc7cfb65858cfbd2396838271f87	tools/measure/basics.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure provenance
+scripts/benchmark-result.sh	shell	P2.14	retired	ee2bc4a115ff1b3e74f9cc34ea968d730c8f6cbb	tools/measure/common.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure classify
+scripts/bisect-fuel.sh	shell	P2.14	retired	17ccadd553085766765df4c7a7d2c1000eba015b	tools/measure/basics.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure bisect-fuel
+scripts/build-files.sh	shell	Retain: bootstrap/setup	retained	c18b727ec7fab7fbe785a83d5d62fb291c91d343	-	bootstrap/setup
+scripts/build-gmp-vm.py	python	P2.16	retired	3369d018cfd306205f06fa4a28b2bb1895beee26	tools/builder/cross-vm.sml	clean-bootstrap-configs-and-package-members
+scripts/build-gmp.py	python	P2.16	retired	131865ee41c4253f0370b843a34e8dbd9a3e62bc	tools/builder/gmp-build.sml	clean-bootstrap-configs-and-package-members
+scripts/census.sh	shell	P2.14	retired	753b9f243a4e091324c5355abb5942e92946945d	tools/measure/census.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure census
+scripts/check-census.sh	shell	P2.2	retired	6d085df3e9adf313849884fbd16f1ce72b553754	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
+scripts/check-docs.sh	shell	P2.4	retired	93625d9d7f88ed26c2f0b0f3913d5ebc90f3965a	tests/runner/docchecks.sml	p2.4/focused.log+mutants.old.log+mutants-list.old.log+mutants-list.new.log
+scripts/cloud-cache.sh	shell	Retain: bootstrap/setup	retained	71e9c38d3b687efc8e3da4e163cb65ed4a98c9e2	-	bootstrap/setup
+scripts/configure-gmp.py	python	P2.16	retired	ae6fdba25144da63bbe6ef4198c1e822eebf8f1c	tools/builder/gmp-config.sml	clean-bootstrap-configs-and-package-members
+scripts/dist-install.sh	shell	Retain: installers under test	retained	28b3ef9db4e3fd52ca0979008cc07127565b3212	-	installers under test
+scripts/doctor.sh	shell	Retain: bootstrap/setup	retained	c7da3c2788b58f8509970ec9e1e772504b4eaadc	-	bootstrap/setup
+scripts/elab-stats.awk	awk	P2.14	retired	097003416be632f24b93c5593d2ed800ffc765a0	tools/measure/profile.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure elab-stats
+scripts/envcheck.sh	shell	Retain: bootstrap/setup	retained	db7283fde7a21c7ca785f7a9a27e85917b47e952	-	bootstrap/setup
+scripts/fetch-hosts.sh	shell	Retain: bootstrap/setup	retained	76762674e87c351d4c4a775f7894dc361ecd5b2d	-	bootstrap/setup
+scripts/gc-eval-score.py	python	P2.14	retired	f148229992e1c03ce0800a6ad7cd0fbec580bf75	tools/measure/gc-score.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure gc-eval-score
+scripts/gc-eval.sh	shell	P2.14	retired	4a57e9180ea4e79956dc0b119533e5b148faf361	tools/measure/gc-eval.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure gc-eval
+scripts/gc-probe32.sh	shell	P2.14	retired	529fea8814b60b3c99f11a6bf6f0e351ed3397f0	tools/measure/gc-probe.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure gc-probe32
+scripts/gen-basis-sigs.sh	shell	P2.15	retired	b29c7ee75aa0add90e1859b9edb8860d68bca8bf	tools/generate/signatures.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate basis-signatures
+scripts/gen-build-files.sh	shell	Retain: bootstrap/setup	retained	563a65951fbe2887f74eb3a1d155e6113f05a148	-	bootstrap/setup
+scripts/gen-entities.py	python	P2.15	retired	aea691b9bfdebcf098a29670e2c4fea9ebe79904	tools/generate/fixtures.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate entities
+scripts/gen-unicode-tables.py	python	P2.15	retired	5d60d55f593b53b0bf3f810aede95edde2ee5321	tools/generate/unicode.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate unicode
+scripts/gen-version.sh	shell	Retain: bootstrap/setup	retained	64ffca12082ccf3f834718128e900b4b501cbb7e	-	bootstrap/setup
+scripts/hol-kernel.sh	shell	P2.14	retired	7649594a5ec0faa66a6a1d548cd96f8c599a1aca	tools/measure/hol.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure hol-kernel
+scripts/hol-theory.py	python	P2.14	retired	8852f2c75a29ff4c8bdd9e2af355ea01155a782c	tools/measure/hol.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure hol-theory
+scripts/install.sh	shell	Retain: installers under test	retained	de0b223e10e184d030b840cae5e77873fd50005e	-	installers under test
+scripts/jit-dump.py	python	P2.14	retired	b6a1116c1cf7aa8e5a6ab81739da94ae871ea782	tools/measure/jit-dump.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure jit-dump
+scripts/lex-corpus.sh	shell	P2.14	retired	8208cb9e3679108cce562e40aba5a59335781d1b	tools/measure/lex-corpus.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure lex-corpus
+scripts/make-dist.py	python	P2.16	retired	f8606fa790caf68c02f0744d81ef4d0fd7e3e718	tools/builder/dist.sml	clean-bootstrap-configs-and-package-members
+scripts/measure-benchmarks.sh	shell	P2.14	retired	f79574567fa02872e8252b240663b736a208b194	tools/measure/benchmarks.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure benchmarks
+scripts/ncpus.sh	shell	Retain: bootstrap/setup	retained	bf17a4157092e825df8513890d9af3852bf34517	-	bootstrap/setup
+scripts/opt.sh	shell	P2.14	retired	37fcb0eb343e8fd2c51d27193f5f23a5e00151da	tools/measure/basics.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure opt
+scripts/package-runtime.py	python	P2.16	retired	26df2e153d91f71c5a325e0d33ea3d178511d921	tools/builder/package-runtime.sml	clean-bootstrap-configs-and-package-members
+scripts/perf-cycles.sh	shell	P2.14	retired	b91b4649089159045c5e8729964a944b95335486	tools/measure/perf-cycles.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure perf-cycles
+scripts/perf-groups.awk	awk	P2.14	retired	5facfd5f9321719512d07fda83ae4893a2382be2	tools/measure/profile.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure perf-groups
+scripts/perf-repl.sh	shell	P2.14	retired	a343ba5b3dfcddba4d598f321fa976860212ed64	tools/measure/perf-repl.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure perf-repl
+scripts/perf-units.sh	shell	P2.14	retired	e95807fa1a9bdd05ee1b8f077501eb9f070d8e23	tools/measure/perf-units.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure perf-units
+scripts/record-vm-build.py	python	P2.16	retired	3c0bf10b05101ebfd15e951c8b4d4b6c49cd8b43	tools/builder/runtime-record.sml	clean-bootstrap-configs-and-package-members
+scripts/run-benchmarks.sh	shell	P2.3	retired	7d58f16b0efb6dfb02fe129cdce63c3f5ab27e84	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+scripts/runevm-native.sh	shell	P2.1	retired	a6e57a7ba108a2408c1c1467cabb1055a3958d7c	tests/runner/nativevm.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
+scripts/runtime_inputs.py	python	P2.16	retired	cd7e27c4e1228916a9b14b96bf6a42424f045c70	tools/builder/runtime-inputs.sml	clean-bootstrap-configs-and-package-members
+scripts/setup-mlton.sh	shell	P2.16	retired	cb9b96789797186182ddff8c391beb939f5e6523	tools/builder/setup-mlton.sml	clean-bootstrap-configs-and-package-members
+scripts/smlnj-dev-root.sh	shell	Retain: bootstrap/setup	retained	b2e448f48ad14282f1c65077e21192c04c3337ff	-	bootstrap/setup
+tests/basis/check-claims.sh	shell	P2.4	retired	fc25f07650a44704250214e7b760f585a90278f8	tests/runner/docchecks.sml	p2.4/focused.log+mutants.old.log+mutants-list.old.log+mutants-list.new.log
+tests/basis/check-notes.sh	shell	P2.4	retired	d1564a01e1e90de654ecf6029744c841f26cb858	tests/runner/docchecks.sml	p2.4/focused.log+mutants.old.log+mutants-list.old.log+mutants-list.new.log
+tests/basis/gen-annotations.sh	shell	P2.15	retired	43be8504b4e79d5f7aa9b2dc7c615d3d67331a13	tools/generate/annotations.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate annotations
+tests/basis/host/gen-host-basis.sh	shell	P2.15	retired	98caf1a2fc07f94ddfa554c7388d48172ee1074e	tools/generate/host-basis.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate host-basis
+tests/basis/run-laws-hosts.py	python	P2.5	retired	d4e55a1f7e5c97fd8b866ad2e220a45b5de55a60	tests/runner/hostlaws.sml	p2.5/full-host-shadow.json+stable-legacy-shadow.json+hardened-faults.log
+tests/basis/run-matrix.sh	shell	P2.6	retired	8b5529a95de5db6ac132756830c8fdff65276ac5	tests/runner/matrix.sml	p2.6/acceptance+full-shadow.json+xc2-shadow.json+final-faults.log
+tests/basis/run-mutants.sh	shell	P2.4	retired	37ff16f0d92e93674ac48907556cf166ae2eadcc	tests/runner/mutants.sml	p2.4/focused.log+mutants.old.log+mutants-list.old.log+mutants-list.new.log
+tests/basis/structures.sh	shell	P2.15	retired	8018735b277e8a775ba224ee8d29925cb4c90cef	tools/generate/structures.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate structures
+tests/basis/xc2/flatten.sh	shell	P2.15	retired	5185c5767c52df7e608d8fa8b00b2240cd5e26bd	tools/generate/flatten.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate flatten
+tests/basis/xc2/mlb-flatten.awk	awk	P2.15	retired	ddccb2d3c761a8a1a73f616fb81a3c5a5785ea99	tools/generate/mlb.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate mlb-flatten
+tests/basis/xc2/mlkit/gen.sh	shell	P2.15	retired	8005aca3dca34033d26e17d4fe9f4135a3f0fa62	tools/generate/xc2.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate xc2-mlkit
+tests/basis/xc2/mlkit/rewrite.awk	awk	P2.15	retired	a90dd7dd3db6dff44aa135f2d87ca039befe9634	tools/generate/rewrites.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate rewrite-mlkit
+tests/basis/xc2/mlton/gen.sh	shell	P2.15	retired	9ef2429db51a7844f0e5261005ea83683e388871	tools/generate/xc2.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate xc2-mlton
+tests/basis/xc2/mlton/prims.awk	awk	P2.15	retired	7dbf33e9d8e7dd8bbe43cf9d3574ead5e9cc1569	tools/generate/mlton-prims.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate mlton-prims
+tests/basis/xc2/mlton/rewrite.awk	awk	P2.15	retired	d559129549de2f5c4d3f3dce873c2635aff7071e	tools/generate/rewrites.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate rewrite-mlton
+tests/basis/xc2/polyml/gen.sh	shell	P2.15	retired	d1251bcf68d5e6caeb10140918098c7a328f1ead	tools/generate/xc2-poly.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate xc2-polyml
+tests/basis/xc2/polyml/order.awk	awk	P2.15	retired	fa6fbfded09c91f98d4e0aa4d41c6c989e54ad2d	tools/generate/xc2-poly.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate polyml-order
+tests/basis/xc2/polyml/rewrite.awk	awk	P2.15	retired	60860e9ab1cf5ed9ad57748090c35b27f4568f86	tools/generate/rewrite-poly.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate rewrite-polyml
+tests/basis/xc2/smlnj-dev/gen.sh	shell	P2.15	retired	0c074f2c162853fc6d0dcf89890804c862e79c7f	tools/generate/xc2-nj.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate xc2-smlnj-dev
+tests/basis/xc2/smlnj-legacy/gen.sh	shell	P2.15	retired	e857352b723dd4cbf61a251b39e24793c0499af1	tools/generate/xc2-nj.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate xc2-smlnj-legacy
+tests/basis/xc2/smlnj-legacy/rewrite.awk	awk	P2.15	retired	22d612a63e0d7f078b0525e9719d634ca3ac8e4e	tools/generate/rewrite-nj.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate rewrite-smlnj
+tests/basis/xc2/toplevel.awk	awk	P2.15	retired	3c069f15274e4be3f15373a0407f6af9546b7b2a	tools/generate/flatten.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate top-structures
+tests/basis/xc2/trim-lib.sh	shell	P2.15	retired	155c6e00bd206320804d7139e2f560ef75200336	tools/generate/flatten.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate trim-lib
+tests/benchmarks/check-almabench.sh	shell	P2.3	retired	83eab7eb7b0642ec1e9144b65d5e3175abb4dc03	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-ansi.sh	shell	P2.3	retired	2412fccb0d0c13fb12f19a8f6453e1a967675832	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-atom.sh	shell	P2.3	retired	c57755bc2caa199af134144a1fdb40694d620934	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-banner.sh	shell	P2.3	retired	70d4fdee080a78dc61cc1c8dad557016b6836566	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-boyer2.sh	shell	P2.3	retired	25bcffaf4c12c83e06066e5867761e05b7ff52a0	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-bspt.sh	shell	P2.3	retired	d166debb5a2645e54e30d4e9ccc082729a34a044	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-cacheprof-large.sh	shell	P2.3	retired	988808a514247ff790b71adf0573ddb9df4cb37d	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-cacheprof.sh	shell	P2.3	retired	514a299f6454ca512f8245f49456fed520b6f103	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-calendar.sh	shell	P2.3	retired	4eaf39efb5529ed3186892f6b3d6fc87aca8b358	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-catalog.sh	shell	P2.3	retired	86c7074936fed33463825238a3b3194bee79cedd	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-cichelli.sh	shell	P2.3	retired	e66d2fd228095513096e0a8f22bb6e20b1924356	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-circsim.sh	shell	P2.3	retired	357e4f802f44b199d16214f0c6b6b387c82ac098	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-classic.sh	shell	P2.3	retired	c889cb39570fbdab051f3120bb33a72e3e2fe8d6	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-clausify.sh	shell	P2.3	retired	f7a82a89d191065cc6e8712616aa084c8083f6da	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-comp-lab.sh	shell	P2.3	retired	18d839570df8c74f090c698dcb44d1c4476f0da6	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-compress.sh	shell	P2.3	retired	76c5691a256d4bcee560a35d7886c9848521c847	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-compress2.sh	shell	P2.3	retired	4f6954a3809e856cff055f4585daaed3d0bc51e7	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-contrast.sh	shell	P2.3	retired	c5579d15b2520c5d9969e2bdc7609d30e8b92250	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-coverage.sh	shell	P2.3	retired	1f3e108536d2167d9dd5ee147c20d4c05a153ded	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-cryptarithm1-enumeration.sh	shell	P2.3	retired	1b18b85180982522523ba2206650face7798b499	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-cryptarithm1.sh	shell	P2.3	retired	2c4b29bf0b04c5a6425a754952c8d9eb255425bf	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-cryptarithm2.sh	shell	P2.3	retired	42caa065930cfd41fb26fc3e055e71cd80d69596	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-dom-lt.sh	shell	P2.3	retired	7dabf2b90d9346498bb5da2fe8d7e221fe1cc290	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-eff-state.sh	shell	P2.3	retired	9c25e944dc26fd8f4cbde458e5f7967dd9337a48	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-eliza.sh	shell	P2.3	retired	c35be2f504d3e8a592fb56eb2bc4b91f247c7ca1	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-event.sh	shell	P2.3	retired	6917097ea3d9b66c7416885d605b01a5f0cbfff6	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-evolutionary.sh	shell	P2.3	retired	b1c0e426d1f820c75e4c7d40f54ab19792ace984	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-exact-reals.sh	shell	P2.3	retired	238051c2b8765d018800b9ef09d095073a5edcc8	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-expert.sh	shell	P2.3	retired	7a05d325b297870badf34a552652a490b9c2fde6	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-extended-gcd.sh	shell	P2.3	retired	bf706d88e9659b044b95907bd2cedc754e9e3ddf	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-fem.sh	shell	P2.3	retired	f5e25080be5f24ffe42cdcbfcb66c6c13bc72d22	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-fft2.sh	shell	P2.3	retired	e6fc333137572e114825954afa0a03e2020cf7b9	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-fibheaps.sh	shell	P2.3	retired	8b002964f61cde1f6a283cce2a6d7e504a5772b7	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-fish.sh	shell	P2.3	retired	85249f912ab2b937fb0990f67ea713848d340755	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-fulsom.sh	shell	P2.3	retired	c39bf8cb9596484fe5cc214bb76345adef99cb12	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-game-numerical.sh	shell	P2.3	retired	708b223989f630c05bb3d8daa71072c599a4a729	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-gamteb.sh	shell	P2.3	retired	9984a5b0cf1d01a13e53a223774e89281f738439	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-gc-ports.sh	shell	P2.3	retired	37934aeefee6df002bdb4d39114e7ef3f012ceea	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-genfft.sh	shell	P2.3	retired	aad9973f77c119e34bdd4e9d32a97b842a8b1eae	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-gg.sh	shell	P2.3	retired	348301228a2feb4cef55c86bc4a5a76de1ec3054	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-graph500.sh	shell	P2.3	retired	ddef8c956e6b7310923aa84ed555c95da43d0f99	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-grep.sh	shell	P2.3	retired	77bfc53de863886384cbd0dda88264245c0c8005	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-hamming.sh	shell	P2.3	retired	06d6565f20ca0ed351639cddd6f3fb1002ba41f4	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-happy.sh	shell	P2.3	retired	53f8e69473f1a3db9abf09e039aaa473fd11ed3d	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-hartel-compr.sh	shell	P2.3	retired	3ffa6e8be752a869260f5fa720184b21af75f741	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-hartel-fft.sh	shell	P2.3	retired	7d959c8bf49c25fb52f847ed10a2933a41eeac12	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-hartel-typecheck.sh	shell	P2.3	retired	e584bf6c69b63039ab49b54b4f82b228af57ca55	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-hidden.sh	shell	P2.3	retired	fb95668110087ce55fecc48e94fad03b2fe835c1	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-ida.sh	shell	P2.3	retired	018f5d1069194cc709421b9e0fbeda2cbf6a8650	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-infer.sh	shell	P2.3	retired	db6f8ab7f0c21d994896a80254e6f77fc7ac9217	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-integer.sh	shell	P2.3	retired	56fd79b9af18b98ccc2d18b3e8cb4b03004649b7	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-knights-array.sh	shell	P2.3	retired	8dfc2761469660eafea17c14ccb83a4baad9272a	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-knights.sh	shell	P2.3	retired	a9fbe7639cccad671cb162864624b01fb2b8fe4b	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-knucleotide.sh	shell	P2.3	retired	67a8ba48a5cfae1478bf3f72cea58cc6657f5c62	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-lambda.sh	shell	P2.3	retired	1866525ccb4f832e274f2670327036bd15ac49e9	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-last-piece.sh	shell	P2.3	retired	b627ef947c326db8c57839a90701bacd409b178f	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-lexifi-g2pp.sh	shell	P2.3	retired	6bd06c9a0e3dcd393eb454c60da5ad1c5a5ff0ab	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-lift.sh	shell	P2.3	retired	295c19ca5e44bbf6ee210cf444f7d1d0482cdb60	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-linear.sh	shell	P2.3	retired	617307a97588263ad007a91eaac8df86cbc19d03	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-maillist.sh	shell	P2.3	retired	c57184f6ca1252c938240fe0d86f1162f806a6a2	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-mandel.sh	shell	P2.3	retired	806c00ef1f421def2a606dc51363e4f58d876b04	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-mandel2.sh	shell	P2.3	retired	aaf5254fa577ff5f8e9fc455f025449cd8c1acde	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-manybody.sh	shell	P2.3	retired	7f6a0a45ef45b09016e910d71efdc78b1876cb9c	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-mate.sh	shell	P2.3	retired	d5b252df52f8da77390bd1fc2588a33880847028	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-matrix-status.sh	shell	P2.3	retired	a1dbfec54736afde19a0fd0bf10ad73225804dac	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-measurement-status.sh	shell	P2.3	retired	bff1edecdc6446ce1a5c93680bda5fc8f49e8173	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-measurement.sh	shell	P2.3	retired	fedba580e4f8aefc1199c923aee66eafb8aa1b1a	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-minilight.sh	shell	P2.3	retired	623dd8c2967d584f33d8eae1fa9f921d631d2eea	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-minimax.sh	shell	P2.3	retired	c8a10f2d3c8753607f119cf6d9b8fec67c49ba9f	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-mkhprog.sh	shell	P2.3	retired	69e901d5d80560835de4d0e9e8dd770ee49671d9	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-multilayer.sh	shell	P2.3	retired	94f791484c33e589caa5c74ba3c8a50a6018a9a3	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-multiplier.sh	shell	P2.3	retired	6bb615fb62d84134b9dd0a20bee96999a51d36f1	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-nofib-anna.sh	shell	P2.3	retired	eaf3d2bf59380ca347a08fb485ee35fc8d8d0844	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-nofib-applications.sh	shell	P2.3	retired	15e327a3c158bbaa1ba643658172acfe971d7238	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-nofib-awards.sh	shell	P2.3	retired	e8969d15e9b5f9c6700b3d2f1fcff957e49bc236	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-nofib-constraints.sh	shell	P2.3	retired	a47146ecf38a61b14d5890c1c6d8fa3d03f51649	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-nofib-fluid.sh	shell	P2.3	retired	28d7d85d61e1b1b43e94154db9c35bba63fa2c46	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-nofib-hpg.sh	shell	P2.3	retired	092cbe5964bad588a32a88bac4475910819cf355	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-nofib-life.sh	shell	P2.3	retired	a7c95a31eb97ce9b473791ece72dbc08a5b1ad29	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-nofib-parser.sh	shell	P2.3	retired	8d8216058ee376dbe701778b186a3744b8486d3a	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-nofib-reptile.sh	shell	P2.3	retired	0013babd0e13a1da2adee76bbd94b4936c42a7dc	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-nofib-scc.sh	shell	P2.3	retired	a6514026ec266cd23cf2102ba71240075ac01809	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-nofib-veritas.sh	shell	P2.3	retired	dd41da6c35dd03e704e3f2650d9467af70fe1c1c	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-nucleic2.sh	shell	P2.3	retired	e45374ba4eba50d18c77977be4cc23e3ab07afbe	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-numeric-ports.sh	shell	P2.3	retired	f9c0452898fc127f518a82eb4bf5904556098731	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-ocaml-arrays.sh	shell	P2.3	retired	82bcc909b3a7f85b54fd91e3ec84500fec43a581	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-ocaml-lazy.sh	shell	P2.3	retired	0273a04bba86401f2c120567faa80597af1f6815	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-ocaml-stack.sh	shell	P2.3	retired	41f5b37ad3ece0583758c286b071587447a43f52	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-packed-nucleotide.sh	shell	P2.3	retired	77f6e0b0081d33086a96f281775da1e996d98794	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-para.sh	shell	P2.3	retired	31533a93cbfac5a01b5ec09a90937d85beefb7fa	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-parstof.sh	shell	P2.3	retired	02501f4df8aa11b1ad24e83250e98c7ded86f3e5	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-pic.sh	shell	P2.3	retired	c4d0b73df0fe62cd06f033fc7177f0121a019fa0	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-pidigits5.sh	shell	P2.3	retired	7a903d46318b3923b9f6fb80bbba8119e4e2f65a	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-pilots.sh	shell	P2.3	retired	24d19227b456e80103dae8ec144382877896b9b0	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-power-series.sh	shell	P2.3	retired	ba6cd4d74fb899100db8ca5fdf63af3bb1894f4c	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-pretty.sh	shell	P2.3	retired	73faf7355fa0bb0b804a89331c9cf84e8782a3fa	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-primetest.sh	shell	P2.3	retired	7d1518da64ab84d4873da320bd508380a55d0ff3	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-prolog.sh	shell	P2.3	retired	431f543876c0507badfad3f9a0cb9f8314155403	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-provenance.sh	shell	P2.3	retired	e53b9df9e5ee5ae2f6619cda123a220c669f3c3a	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-puzzle.sh	shell	P2.3	retired	8c9c70ac13623ec9e010f3a40c6b5f797b4a2de5	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-queens.sh	shell	P2.3	retired	f52fa3f44ca4591503aa6621b7fca4719534365a	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-regexredux2.sh	shell	P2.3	retired	ca067188361b0505bb0823cf240936aeae9919bf	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-revcomp2.sh	shell	P2.3	retired	e52247c182229bad9cdd75dd16ad27fe32e1523f	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-rewrite.sh	shell	P2.3	retired	ba5ab2b2c265648c6b97146d1891965a8f69a01a	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-rsa.sh	shell	P2.3	retired	739790dec53cb8321923dc70d45cb5306dd6c27b	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-sandmark-array-life.sh	shell	P2.3	retired	57ef8ca52f0a5cdb703c16d0349a1102344081cd	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-sandmark-binarytrees5.sh	shell	P2.3	retired	645ec23b5e0867d17d1c766e023708eddc38e724	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-sandmark-fannkuchredux.sh	shell	P2.3	retired	5537917e51052dae9cf95da0e050ead10b3b8bec	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-sandmark-fasta.sh	shell	P2.3	retired	41bd2712fd1a77f11a0d84d62aaca567536483af	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-sandmark-fft.sh	shell	P2.3	retired	cb5bc204c2ad7147eaf66b82d7851bbf9b239925	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-sandmark-kb.sh	shell	P2.3	retired	76e24458fc51170be4193618a0308fda2378eb82	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-sandmark-lu.sh	shell	P2.3	retired	aaf873af17b040b5aef16056a03394e0acf257d4	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-sandmark-numerical.sh	shell	P2.3	retired	94cd14eff5cd90ea001f1d782b6036620b8f63b6	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-sandmark-spectralnorm.sh	shell	P2.3	retired	482070fae5f644f9455009f479068607e4990b4c	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-sandmark-zarith.sh	shell	P2.3	retired	280318d896368342a3c98e3e0e1984dd2875438b	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-sched.sh	shell	P2.3	retired	e7a146f62f409d9840e8abab20cb462527598cbf	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-scs.sh	shell	P2.3	retired	49cce4dd345bd80c40b3261db372bf7f5bb44cc7	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-secretary.sh	shell	P2.3	retired	257413e77cda3361bbe656395402c2f6ef773cc8	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-sequence-cps.sh	shell	P2.3	retired	e515fbdac2567e5401da25d5ed2a95c639d36b34	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-shootout.sh	shell	P2.3	retired	c5b33ae7d4c94b38524679fff3c825c20bae2807	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-simple-nofib.sh	shell	P2.3	retired	38c6049ae7e44bd799db974df0fc9e4aecb402cd	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-smallpt.sh	shell	P2.3	retired	3f41df45588f2a3f816b65337e1a2643cb7ae983	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-solid.sh	shell	P2.3	retired	bc600eb39c61195992f403224195be17b7175179	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-sorting.sh	shell	P2.3	retired	8918436784d69bb1751abf71bfad9a73724a5f29	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-sphere.sh	shell	P2.3	retired	4ef7f07ef5be54d89393cb4266d71134a40d6336	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-state.sh	shell	P2.3	retired	0e64c6b8b2bfcde930098cf09f9db5518b8095fb	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-stdlib-hashtbl.sh	shell	P2.3	retired	cc856a820b6465a6d8cbf938642d125bba8d6707	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-stdlib-primitives.sh	shell	P2.3	retired	0b35e020d886a0f46d710e6e273ee909846551c9	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-stdlib-str.sh	shell	P2.3	retired	9ddb4eb906da6b7a3045b158239373562d98d758	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-stdlib-text.sh	shell	P2.3	retired	d6c4a695f62bf880ed18b027b1b6d4183374d847	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-stdlib-trees.sh	shell	P2.3	retired	167e2709e0e78528a9a28996ca8f62fc54f0e9ed	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-streams.sh	shell	P2.3	retired	c5f0872c3edbae91b0dbea3f9e8d0c828c47ed46	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-symalg.sh	shell	P2.3	retired	3e92ef1b5e7745265835e855f69cf02ba1eb0a46	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-symbolic-ports.sh	shell	P2.3	retired	bfa4d6cf78702757c19ea2c2bfa0dbf047d3ecc7	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-transform.sh	shell	P2.3	retired	29667083c9cda171646c71b793fc355ae6c19921	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-treejoin.sh	shell	P2.3	retired	80e95e534a9643901a7ccae7aec7617d6219cb06	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-typed-boyer.sh	shell	P2.3	retired	646a82722d1d2df0619776088c59feb21e051b0a	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-wang.sh	shell	P2.3	retired	458e4cb3f2a7d04675429ee91a7b03b5555686f5	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-wave4main.sh	shell	P2.3	retired	11d0f286144d84ef42080aa653b3f1eac8a25c9b	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/check-word-set.sh	shell	P2.3	retired	bc0edfbbc09ea69e4dad7aa0b6969f529ea2cc33	tests/runner/benchmarks.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/benchmarks/kb-oracle.py	python	Retain: independent oracles/peers	retained	192125fa11a07bb1d71686597f521e3df8fd9933	-	independent oracles/peers
+tests/benchmarks/latency-oracle.py	python	Retain: independent oracles/peers	retained	87f0265e66178eaade6021fd0455f1d8d8dec638	-	independent oracles/peers
+tests/benchmarks/life-oracle.py	python	Retain: independent oracles/peers	retained	82d056a8ed23476949e63c7c95c4109c3d847efb	-	independent oracles/peers
+tests/benchmarks/qsort-oracle.py	python	Retain: independent oracles/peers	retained	415d7428e91b330b3ec3c779c411beb5a48b10de	-	independent oracles/peers
+tests/benchmarks/smith-oracle.py	python	Retain: independent oracles/peers	retained	87bed100c7a9f4adbaf18a67ed175b022879a290	-	independent oracles/peers
+tests/benchmarks/test-inventory.py	python	P2.3	retired	0f3ee253c43db26b09b67b727d3076cd9b8781ab	tests/runner/inventorytests.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/buildfile/run.sh	shell	P2.8	retired	35fbdd7bc5e34af2f053cc4c76de44860915974e	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
+tests/dap/run.py	python	P2.12	retired	faea0dacabe20c1dbc9dda3abcff4e5f6a3c0711	tests/runner/dapchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
+tests/deps/run.sh	shell	P2.8	retired	bab704b294fe50b192be9eb1e03abbcbc6d8173d	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
+tests/dist/run.sh	shell	P2.8	retired	4318b951160e52bab975ba7bf0062c7b85b3f763	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
+tests/dynamic/run.sh	shell	P2.8	retired	942108eea8b84b1510f5795b36b1a33a8aa6e689	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
+tests/external/mlton-bench/gen-fxp-input.sh	shell	P2.15	retired	c6c2a2ed7165cabcbb0b8cd09f6fa73573fe8f9d	tools/generate/fxp.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate fxp
+tests/external/probe-host-basis.sh	shell	P2.9	retired	069ac4cc16bd2485bff7bbf2a2a86fd907c47494	tests/runner/externalchecks.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
+tests/external/run-mlton-bench.sh	shell	P2.9	retired	9215f583f3ea7b8d14fa8bd9cb3eff12263308cc	tests/runner/externalchecks.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
+tests/external/run-mlton.sh	shell	P2.9	retired	fc5f9a52ef49546bd627e48ba99f63150d66bf8b	tests/runner/externalchecks.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
+tests/gcbench/check.sh	shell	P2.2	retired	df8c1194519f5bc5e928cde3b5b1cbaa9e045877	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
+tests/gcbench/measure.sh	shell	P2.14	retired	e183052c374366c916c01c7b89dea2189cbb013d	tools/measure/gc-measure.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure gcbench-measure
+tests/gcbench/report.py	python	P2.14	retired	5e57766fdac08a7ba5148bbb9226a7651454eefe	tools/measure/gc-report.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure gcbench-report
+tests/gcbench/roadmap.sh	shell	P2.14	retired	7992b9f16e8438dcdfd1f68f441bf5cae0c24b79	tools/measure/gc-roadmap.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure gcbench-roadmap
+tests/gcbench/tables.py	python	P2.14	retired	445c6d1b1a3dc681d77bfc45d2029ebfdd520d37	tools/measure/gc-tables.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure gcbench-tables
+tests/incremental/mlton.sh	shell	P2.9	retired	6466d1797b3fae07c19cd69d0f85f5d7288677ee	tests/runner/mltonincremental.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
+tests/incremental/mutate.py	python	P2.9	retired	f1bededa518d65dbdfa8b77aa979979070a5f4fe	tests/runner/mutationproject.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
+tests/incremental/plant.py	python	P2.9	retired	55a0a652da3cf5e92d98f875b5aa03e0fe633c33	tests/runner/cacheplant.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
+tests/incremental/run.sh	shell	P2.9	retired	ea422def6f76cd30ee7e5b328d8d8f7069db6688	tests/runner/incremental.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
+tests/install/run.sh	shell	P2.8	retired	aa997a5eaace6e45639e8d24673d8a2df3e0a373	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
+tests/intinf/backends.py	python	P2.10	retired	3033aa3986829072f969380357fc21c0db78522d	tests/runner/intinfbackends.sml	p2.10/acceptance+storage-shadow.json+generator-shadow.json+measurement-final-shadow.json+asan logs
+tests/intinf/build-config.py	python	P2.11	retired	1e0084aeec0f5903fc092fd4481343dbe7483417	tests/runner/gmpchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
+tests/intinf/build-modes.py	python	P2.11	retired	1d2d00be26c9c76bd435df4edb40334a95cb45c0	tests/runner/gmpchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
+tests/intinf/compare-compilers.py	python	P2.14	retired	561fb8facc407d80d27d4b23b5770a4a5d84bcac	tools/measure/intinf-compare.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure intinf-compilers
+tests/intinf/compare-design.py	python	P2.14	retired	ccd04840a9c19e26fba7d1f9f8648d3ec697b019	tools/measure/intinf-design.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure intinf-design
+tests/intinf/compare-kernels.py	python	P2.14	retired	90d458e07c634e343c1a741b69f3f3ffa6040eec	tools/measure/intinf-compare.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure intinf-kernels
+tests/intinf/compare-paths.py	python	P2.14	retired	32a83439aafeaae7ccc4addbc474903999d82b4d	tools/measure/intinf-compare.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure intinf-paths
+tests/intinf/conversion.py	python	P2.14	retired	5650c8ef6cc9b101967bd739900febd6b27734da	tools/measure/intinf-conversion.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure intinf-conversion
+tests/intinf/cpu-family.py	python	P2.11	retired	7c0a7327982f2a283974e2225ad1a99f4f1b1309	tests/runner/gmpchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
+tests/intinf/cross.py	python	P2.11	retired	82e62899c3a3db77ec81c889c5aa4be6a9589cde	tests/runner/gmpplatformchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
+tests/intinf/dependency.py	python	P2.11	retired	6c261162a2d113550672fb184e07c40e891e1448	tests/runner/gmpchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
+tests/intinf/dispatch.py	python	P2.14	retired	b1bde5c1807e3f043356238a1884d72f6e8f58eb	tools/measure/intinf-dispatch.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure intinf-dispatch
+tests/intinf/download.py	python	P2.11	retired	7e2765fe4896b1abc79b67dac4fd37af09602224	tests/runner/gmpdownloadchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
+tests/intinf/hardening.py	python	P2.10	retired	e5699f53befd9831be77312ca344b1ff0bd0949f	tests/runner/intinfhardening.sml	p2.10/acceptance+storage-shadow.json+generator-shadow.json+measurement-final-shadow.json+asan logs
+tests/intinf/install.py	python	P2.11	retired	a0f5db300ba6cd344aff880d948a5edbabbee734	tests/runner/gmpinstallchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
+tests/intinf/options.py	python	P2.10	retired	e714d4cb12fa13d2ee40422f579eae2a22b414e4	tests/runner/intinfchecks.sml	p2.10/acceptance+storage-shadow.json+generator-shadow.json+measurement-final-shadow.json+asan logs
+tests/intinf/prepare-cross.py	python	P2.11	retired	bcfa6dc0274c04caab0325ba1bd2a09dc7dbe23f	tests/runner/gmpplatformchecks.sml	p2.11/cross-shadow.json+root-acceptance.log+download-new.log+prepare-cross-new.log
+tests/intinf/run.py	python	P2.10	retired	34df67b65da83c4b601068bac0eacfc373229c94	tests/runner/intinfchecks.sml	p2.10/acceptance+storage-shadow.json+generator-shadow.json+measurement-final-shadow.json+asan logs
+tests/intinf/storage.py	python	P2.10	retired	e11d492847c5af0cfd9cc33b59d844895cbae5bb	tests/runner/intinfstorage.sml	p2.10/acceptance+storage-shadow.json+generator-shadow.json+measurement-final-shadow.json+asan logs
+tests/kernel/client.py	python	P2.12	retired	bff733ac488496b531281119e161fcf4cc7e04a3	tests/runner/kernelchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
+tests/kernel/notebook_client.py	python	Retain: independent oracles/peers	retained	d88232eb1781a97d12b54e7a3dfba5aba095ef47	-	independent oracles/peers
+tests/kernel/run.sh	shell	P2.12	retired	3ac8b66342ba0ece4aa207e7c96a4cf9d35de3eb	tests/runner/protocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
+tests/kernel/windows.py	python	P2.12	retired	c2963aeea7c7972181fe2cc9637f98372e686092	tests/runner/protocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
+tests/layouts/check.sh	shell	P2.2	retired	1ff9ade6a0b9802a2e7b510d3237929ff10799be	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
+tests/layouts/measure.sh	shell	P2.14	retired	0a254c27829e82f4352188c69be31c86d6b3a9b8	tools/measure/layout-measure.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure layout-measure
+tests/layouts/micro.sh	shell	P2.14	retired	06d6818d1933e7dc92865d7cde1fce84b0f56e36	tools/measure/layout-measure.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure layout-micro
+tests/layouts/tables.py	python	P2.14	retired	83f48bc289683fb39410d16bc5bf444efad83a56	tools/measure/layout-tables.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure layout-tables
+tests/lib/digest/gen-vectors.py	python	P2.15	retired	a80fe5f2b55adc0af85e58b5ccc96701a5827696	tools/generate/fixtures.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate digest-vectors
+tests/lib/jupyter/interop.sh	shell	P2.12	retired	7d9b70aa15ed2a98baf0b900a40f8d015823779b	tests/runner/protocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
+tests/lib/jupyter/interop/client.py	python	Retain: independent oracles/peers	retained	ac40165b11ea2b033bdd40a8bd8bd1d0f97eeaff	-	independent oracles/peers
+tests/lib/zmtp/interop.sh	shell	P2.12	retired	1a5b3e8fe95ce694de03c59e03da088877325f38	tests/runner/protocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
+tests/lib/zmtp/interop/peer.py	python	Retain: independent oracles/peers	retained	6b7878b38144398b68557d7dc66bd40aec9b6a56	-	independent oracles/peers
+tests/opt/rbcasm.awk	awk	P2.1	retired	144862d76485522be00270aeb46eaed01feecad4	tests/runner/bytecode.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
+tests/opt/real-g.awk	awk	P2.1	retired	ed5408a3cf34ce36787112ef67e3d8478770765f	tests/runner/bytecode.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
+tests/opt/run-bootstrap.sh	shell	P2.1	retired	dd10a7cf51c3c348e81092cb6b98ead14830f7f5	tests/runner/nativechecks.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
+tests/opt/run-counts.sh	shell	P2.1	retired	99ceceeab49af9327187f1409c339bdaca761ab4	tests/runner/nativechecks.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
+tests/opt/run-debug.sh	shell	P2.1	retired	c776b2e9d2267cdf73cab59ca58b9ecab160b902	tests/runner/nativechecks.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
+tests/opt/run-opt-tests.sh	shell	P2.1	retired	976c36abe50cda8f70f4fedd297967463d3b6819	tests/runner/nativechecks.sml	p2.1/way-shadow.json+launcher-shadow.json+assembler-shadow+native-suites
+tests/perf/gen.py	python	P2.15	retired	7922ecf640ba37065daa9b8ef01b3c0c88796624	tools/generate/perf.sml	P2.15-full-shadow-pins-hosts-and-faults; CLI=bin/rune-generate perf
+tests/perf/run-perf.sh	shell	P2.3	retired	09065e7aced24596615dc8005eaa742ecb978742	tests/runner/budgets.sml	p2.3/semantic-shadow.json+inventory-runner.log+smoke-new.log+extras-runner.log
+tests/register/jit-dump.py	python	P2.2	retired	49148a32f0199e5a275547acb1681daa1400d7d5	tests/runner/jitdumpcheck.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
+tests/repl-protocol/run.py	python	P2.12	retired	ac8065c9eeaa1bebd8ca6ee098a6d657a8b423a0	tests/runner/replprotocolchecks.sml	p2.12/root-final.log+kernel-windows-new.log+dap-windows-new.log+faults.log
+tests/run-tests.sh	shell	P2.7	retired	4c720038dfb7acdbc2cee3bcbb211eca06a5d9a1	tests/runner/langchecks.sml	p2.7/windows-shadow.json+portability-new-acceptance+count-rerun.log+stress-asan.log+faults.log; CLI=tests/runner/langchecks.sml+suite-main.sml
+tests/run-windows.sh	shell	P2.7	retired	50ce45d86563adbb98a07e030724f574d0a28e9f	tests/runner/windowschecks.sml	p2.7/windows-shadow.json+portability-new-acceptance+count-rerun.log+stress-asan.log+faults.log
+tests/runtime/run-vm-tests.sh	shell	P2.7	retired	99586d739a2a8694a28c9928b690cd57887e3fef	tests/runner/vmchecks.sml	p2.7/windows-shadow.json+portability-new-acceptance+count-rerun.log+stress-asan.log+faults.log
+tests/skipped.sh	shell	P2.7	retired	df09933df148596359ac54f754dbd5f3b59dc0fb	tests/runner/suite-main.sml	p2.7/windows-shadow.json+portability-new-acceptance+count-rerun.log+stress-asan.log+faults.log
+tests/terminal/ptyraw.py	python	P2.13	retired	e3bce902cd5935b02ba2570f98a41fd167469747	tests/runner/terminalraw.sml	p2.13/nonblock-posix.log+nonblock-windows.log+pattern-shadow.json+api-acceptance
+tests/terminal/run.sh	shell	P2.13	retired	9742027349d05df05248161d3cd95703a14098a6	tests/runner/terminaljobs.sml	p2.13/nonblock-posix.log+nonblock-windows.log+pattern-shadow.json+api-acceptance
+tests/terminal/term.py	python	P2.13	retired	c6ffb886b0274b8e94b84b167f39c452cd13c367	tests/runner/terminalchecks.sml	p2.13/nonblock-posix.log+nonblock-windows.log+pattern-shadow.json+api-acceptance
+tests/units/run.sh	shell	P2.8	retired	8c5fdc4c587d0b80e3a471e4b88ad2394a844ebc	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
+tests/windows-dir.sh	shell	P2.7	retired	8e79e29694197e7e58d68ea21d5921177e8e2acd	tests/runner/windowsdir.sml	p2.7/windows-shadow.json+portability-new-acceptance+count-rerun.log+stress-asan.log+faults.log
+tests/windows/run.sh	shell	P2.7	retired	2ce4d5d5eb200f01ce0b677eb893983e5c3577f4	tests/runner/windowschecks.sml	P2.17-rebase-Windows-Unicode-native-oracles-and-four-VM-shadow; CLI=make test-windows-text
+tools/heapsim/checkold.py	python	P2.14	retired	531e811551d0cece02dc0719afdbd3e769dcbd68	tools/measure/check-old.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure checkold
+tools/heapsim/checktrace.py	python	P2.2	retired	ecb945e3b0c401989c3fa3e5b3355b12881a4fb1	tests/runner/tracecheck.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
+tools/heapsim/pauses.py	python	P2.14	retired	6db11dbb9314e18a848afa065e516a0afbcc4b95	tools/measure/pauses.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure pauses
+tools/heapsim/pretenure.sh	shell	P2.14	retired	ac3ec7d5fa7769340d3789a82cbc8d6dbd492b9d	tools/measure/sim-validate.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure pretenure
+tools/heapsim/report.py	python	P2.14	retired	b156110bf746d893480254c5c947df170898b275	tools/measure/sim-report1.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure sim-report
+tools/heapsim/report2.py	python	P2.14	retired	ea781e5e1184cbb60fae65467e71db38d8fd36b1	tools/measure/sim-report2.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure sim-report2
+tools/heapsim/report3.py	python	P2.14	retired	a1830b3e71bf6158b8487fa756c7ed3885eb01f1	tools/measure/sim-report3.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure sim-report3
+tools/heapsim/sweep.sh	shell	P2.14	retired	cf3ab8e1bcc5b05d28e471727e237f204fb14b8a	tools/measure/sim-sweeps.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure sweep
+tools/heapsim/sweep2.sh	shell	P2.14	retired	cce87d36d43e8d8505ffbbcf7ae90edfa0e1b58e	tools/measure/sim-sweeps.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure sweep2
+tools/heapsim/test.sh	shell	P2.2	retired	e635dbbc246d26d719ef93b63571b317b9fceb1d	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
+tools/heapsim/test2.sh	shell	P2.2	retired	69454702a57ac8ba20876405b86907a932f8f181	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
+tools/heapsim/timeline.py	python	P2.14	retired	c964b961dae3cc9da0b01294f98f8b793a7b8b13	tools/measure/timeline.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure timeline
+tools/heapsim/validate-proto.sh	shell	P2.14	retired	4557b78e6bed91dfe915210947003bf6f40782e8	tools/measure/sim-validate.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure validate-proto
+tools/heapsim/validate.sh	shell	P2.2	retired	6a19d04fbb9e444d45604b63288220de099c8fe1	tests/runner/censustrace.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
+tools/heapsim/validate2.sh	shell	P2.14	retired	3a20c8e4d1f93a16299acfd5f36ad2afa40008b7	tools/measure/sim-validate.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure validate2
+tools/mmu.py	python	P2.14	retired	341f09e66c19c6d1cb82d894a8e6d6725e93cbaf	tools/measure/mmu-cli.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure mmu

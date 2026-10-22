@@ -29,7 +29,7 @@
 - `ino` (type): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#type-ino)
 - `inoToWord` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-inotoword)
 - `inprogress` (val): [POSIX_ERROR](../sig/POSIX_ERROR.md#val-inprogress)
-- `input` (val): [IMPERATIVE_IO](../sig/IMPERATIVE_IO.md#val-input), [SML90](../sig/SML90.md#val-input), [STREAM_IO](../sig/STREAM_IO.md#val-input), [TEXT_IO](../sig/TEXT_IO.md#val-input)
+- `input` (val): [IMPERATIVE_IO](../sig/IMPERATIVE_IO.md#val-input), [PTY](../sig/PTY.md#val-input), [SML90](../sig/SML90.md#val-input), [STREAM_IO](../sig/STREAM_IO.md#val-input), [TEXT_IO](../sig/TEXT_IO.md#val-input)
 - `input1` (val): [IMPERATIVE_IO](../sig/IMPERATIVE_IO.md#val-input1), [STREAM_IO](../sig/STREAM_IO.md#val-input1), [TEXT_IO](../sig/TEXT_IO.md#val-input1)
 - `inputAll` (val): [IMPERATIVE_IO](../sig/IMPERATIVE_IO.md#val-inputall), [STREAM_IO](../sig/STREAM_IO.md#val-inputall), [TEXT_IO](../sig/TEXT_IO.md#val-inputall)
 - `inputLine` (val): [TEXT_IO](../sig/TEXT_IO.md#val-inputline), [TEXT_STREAM_IO](../sig/TEXT_STREAM_IO.md#val-inputline)

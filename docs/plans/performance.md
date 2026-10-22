@@ -53,7 +53,7 @@ does, listed under *Left for the next plan* below.
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done (2026-10-11); every decision taken on 2026-10-12, D7 with an addendum |
-| M1 | Measure: the JIT's code dumped, the elaborator's counters, the register VM in every timing target, HOL and MLton as scripts, new budgets | in part (2026-10-12, branch `perf-m1`): `--pass-stats` complete, the timing targets on Rune as shipped, Poly/ML in `perf-cycles.sh`, HOL's and MLton's measurements as scripts, the module language's budgets, Poly/ML's slowdown found and fixed, `docs/performance.md` re-timed in counts and ratios under load (its seconds again at M10) (*M1*, *Done so far*); the elaborator's counters (2026-10-12, branch `perf-front`): `--pass-stats=elab`, a line per top-level declaration (docs/ir.md); on MLton's 606 units, type-checked by MLton's build, the lines add up to 159.005 s against the elaborate stages' 158.991 s, with E18's counters (1.82G type nodes realised, 113M unifications, 400 applications that make code and 1,206 made to check); off, the counters cost 0.03% of those units' instructions (425.52G against 425.38G, fixed heap of 7 GB); the JIT's code dumped (2026-10-12, branch `perf-back`): `runevm --jit-dump=DIR` writes each function's code with the bytecode instruction and the role of every part, and perf's jitdump (`perf inject --jit` and `perf annotate` read it, checked by hand with perf 6.18); `scripts/jit-dump.py` disassembles it by role and counts callgrind's instructions by role; `tests/register/jit-dump.py` in `make test-register-jit`. It gives E9's 82.5 instructions per `fib` call again, role by role, and leaves `--count` and the code as they were |
+| M1 | Measure: the JIT's code dumped, the elaborator's counters, the register VM in every timing target, HOL and MLton as scripts, new budgets | in part (2026-10-12, branch `perf-m1`): `--pass-stats` complete, the timing targets on Rune as shipped, Poly/ML in `perf-cycles.sh`, HOL's and MLton's measurements as scripts, the module language's budgets, Poly/ML's slowdown found and fixed, `docs/performance.md` re-timed in counts and ratios under load (its seconds again at M10) (*M1*, *Done so far*); the elaborator's counters (2026-10-12, branch `perf-front`): `--pass-stats=elab`, a line per top-level declaration (docs/ir.md); on MLton's 606 units, type-checked by MLton's build, the lines add up to 159.005 s against the elaborate stages' 158.991 s, with E18's counters (1.82G type nodes realised, 113M unifications, 400 applications that make code and 1,206 made to check); off, the counters cost 0.03% of those units' instructions (425.52G against 425.38G, fixed heap of 7 GB); the JIT's code dumped (2026-10-12, branch `perf-back`): `runevm --jit-dump=DIR` writes each function's code with the bytecode instruction and the role of every part, and perf's jitdump (`perf inject --jit` and `perf annotate` read it, checked by hand with perf 6.18); `bin/rune-measure jit-dump` disassembles it by role and counts callgrind's instructions by role; `tests/register/jit-dump.py` in `make test-register-jit`. It gives E9's 82.5 instructions per `fib` call again, role by role, and leaves `--count` and the code as they were |
 | M2 | Signatures: sharing and `where` in one realisation | done (2026-10-12): a run of sharing by union-find, a chain of `where` at once, realisations that keep what they do not change (nothing allocated where nothing changes), matching's fast paths (equal schemes, its messages made only for an error, a merge sort, a set of the flexible names). MLton's 606 units type-checked by MLton's build: 476.0G to 153.0G instructions:u (`perf stat`, `max-heap 5g` as E20; repeatable only where the heap allows: with a fixed heap of 7 GB, 425.4G to 149.2G, E20's prototype 187.9G); `BASIS_EXTRA` 1.48-1.57 s to 0.016-0.024 s; type-checked by the compiler on `runevm --count`: 200 specs shared 16 ways 2,367M to 21.2M, nested 2,839M to 19.4M, `where` 1,000 by 400 317M to 13.3M, 2,000 specs 846M to 22.4M, one signature instantiated 256 times 90.6M to 75.4M (E20's regression gone); every output byte for byte the base's (bootstrap, Basis cache, suites, every error test's messages, xc2, MLton's 1,582 unit files); M1's budgets on the module language tightened to these counts (`compile-share`, `-sharenest`, `-where`, `-sig`, `-funsig`) |
 | M3 | Functors: typed from their signature, copies only for code (D3 decided), cheaper matching, MidCanon's quadratic | done (2026-10-12): every application typed by the functor's signature (rule 54) -- inside a functor's declaration by its summary, with the counters replayed; one that makes code by the summary realised with its copy's names -- the signature in the export basis (`UnitBasis.version` 6), a use of a functor holding by the signature's fingerprint and an application that makes code using the unit the functor is from, MidCanon's quadratic gone. MLton's 606 units type-checked by MLton's build: 476.0G to 89.1G instructions:u (`max-heap 5g`; 96.9G with a fixed heap of 7 GB, against 425.4G); Rune at tier 2 compiling MLton's compiler: elaboration 82.1 s, the compile 99 s and 5.8 GB (one run, load average 14 to 25); the compiler type-checking on `runevm --count`: a functor applied 80 times 193.9M to 44.9M, nested functors 785M to 137M (compiled), M1's budgets `compile-funapp` and `-funnest` tightened to these counts. Gate as [functors.md](functors.md)'s *A contradiction in M3*: the whole program's output the base's byte for byte (bootstrap, suites, error messages, xc2, MLton's 606 files compiled whole); every unit's code the same with identities masked, and the linked program too (it carries the identities, all new with the version); a build through the cache the same as a fresh one; `used` the base's in 780 of 791 units, 11 recording 14 to 84 fewer type variables (the base's copies, elaborated with arguments whose types drop a parameter, were more general than the signature); scenarios S65 to S67. The equality program rejected (`tests/errors/err.functor_equality.sml`), and an application that makes code no more polymorphic than its signature (`err.functor_signature_types.sml`). HOL4 built by this compiler in a fresh clone (`$D/hol` of the drafts): `hol.state` in 1,419 s (at a low priority, under load), then 210 targets more in the two hours given and none failing, as with M3's earlier builds (218 and 182) |
 | M4 | Types shared: `Ty.ty` hash-consed, `exponential.sml` compiled | done (2026-10-19, branch `perf-front`): `Ty.ty` abstract and hash-consed, each node numbered and knowing its size and generic variables; equality, Simplify's key, `subst`, `match`, `gens`, MidCanon's renaming, MidText's printing and `UnitMid`'s pickles by the numbers (version 3); MidText abbreviates a type of more than 1000 nodes (`(type %N TYPE)`); the translation's `--type-work` kept, set by what the conversion does (type-checker.md). `exponential.sml` passes `run-mlton.sh` at `-O0` to `-O2` with `--lint` and `--mid-roundtrip`, its line gone from `mlton-skip.txt`; flat from 16 to 128 applications (0.01 s, 10 to 13 MB, with the lint and the round trip), where 24 took 9.3 s and 2.8 GB; `compile-expo` at 20 applications 328.2M to 2.40M instructions on `runevm --count`. Ordinary programs pay a little for the table: the bootstrap +1.3% instructions and −1.8% bytes (+1.9% on the stack VM), a functor applied 80 times +7.1%, the others at most +3%; with MLton's build, the bootstrap 4.98G to 4.64G instructions:u and its live data 50 to 34 MB, MLton's compiler whole 119.6G to 119.1G and in units 1,161.7G to 1,162.4G (fixed heap of 7 GB). Gate: every output the base's byte for byte (bootstrap, Basis cache, suites, every error test's messages, xc2, MLton's 606 files whole and their 1,582 unit files, through the cache too); *M4*, as built |
@@ -168,7 +168,7 @@ instructions.
 
 **MLton's benchmark set** (E2): 38 of its programs ran on Rune and MLton, and 23 on Poly/ML as well.
 Twelve need the input files of MLton's own harness (`DATA/`), which
-`scripts/perf-cycles.sh --mlton-bench` does not give them.
+`bin/rune-measure perf-cycles --mlton-bench` does not give them.
 `smith-normal-form`, bound by IntInf, was stopped.
 
 | | Programs | Geometric mean of Rune's cycles over theirs | Median | Range |
@@ -385,7 +385,7 @@ building MLton at 3 to 7. Where each number came from: *Measuring*, and
 
 ### Small programs, again
 
-`tests/perf` against MLton (`scripts/perf-cycles.sh`, the least cycles of
+`tests/perf` against MLton (`bin/rune-measure perf-cycles`, the least cycles of
 five, one run at a time at a load of 3 to 6), Rune over MLton:
 
 | Program | before: instructions | after | before: cycles | after |
@@ -491,7 +491,7 @@ itself 1,952 s against 427 s, 4.6 times (E6: 3,658 s against 396 s, 9.2),
 
 ### Where the time goes, again
 
-By `perf record` over `--jit-perf-map`, grouped by `scripts/perf-groups.awk`
+By `perf record` over `--jit-perf-map`, grouped by `bin/rune-measure perf-groups`
 (E8; the compiler at a load of 8, HOL before at 11 and after at 2.3):
 
 | | The compiler compiling itself: before | after | HOL, `logroot`: before | after | HOL's kernel work: before | after |
@@ -1978,17 +1978,17 @@ M1's tools. The prototypes behind them are kept with the drafts (*Measuring*).
   * a test holds the stages' sum to the total, within a margin.
 * **The elaborator's time and counters per top-level declaration**
   (prototype A-e18-elab-stats), behind a flag of `--pass-stats`.
-* **`make perf`, `perf-check`, `bench` and `scripts/perf-cycles.sh` on the
+* **`make perf`, `perf-check`, `bench` and `bin/rune-measure perf-cycles` on the
   register VM by default**, with the stack VM a configuration of its own.
   Today `make bench`'s configuration `rune:new` passes `--jit=off`
-  (`scripts/measure-benchmarks.sh:252`), so it times the interpreter, not
+  (`bin/rune-measure benchmarks:252`), so it times the interpreter, not
   what Rune ships.
   `perf-cycles.sh` gets a configuration for Poly/ML.
-  `scripts/perf-groups.awk` learns the generational collector's functions
+  `bin/rune-measure perf-groups` learns the generational collector's functions
   and `jit1:`/`jit2:`.
 * **HOL's measurements as scripts in the tree** (from the drafts'
   `hol-theory.py` and `hol-kernel.sh`), and the setup of MLton's sources
-  for `scripts/perf-units.sh`.
+  for `bin/rune-measure perf-units`.
 * **New budgets in tests/perf** (E19's generated programs; the budgets are
   their counts plus 10%):
   * sharing: 200 specs shared 16 ways, and nested;
@@ -2025,20 +2025,20 @@ M1)"):
   * `make perf` and `make bench`: `rune` is Rune as shipped in a timing
     run (`run-matrix.sh --perf`, `--timing`), the stack VM `rune:stack`;
     `measure-benchmarks.sh` no longer passes `--jit=off`.
-  * `scripts/perf-cycles.sh`: `rune` is Rune as shipped, the stack VM
+  * `bin/rune-measure perf-cycles`: `rune` is Rune as shipped, the stack VM
     `stack`, and `polyml` is Poly/ML's build (the program run from
     `main`, its `CommandLine` shadowed inside a `local`). Every build of
     the compiler makes the register bytecode.
-  * `scripts/perf-groups.awk` knows the generational collector (its
+  * `bin/rune-measure perf-groups` knows the generational collector (its
     minor and major work apart) and the tiers of the JIT's code.
-* **HOL4 and MLton as scripts:** `scripts/hol-theory.py` and
-  `scripts/hol-kernel.sh` (with `hol-kernel.sml`) take a built HOL4 tree
+* **HOL4 and MLton as scripts:** `bin/rune-measure hol-theory` and
+  `bin/rune-measure hol-kernel` (with `hol-kernel.sml`) take a built HOL4 tree
   as argument, never write into it, and give a Rune-built one a cache of
   units of their own; `scripts/setup-mlton.sh` makes MLton's sources at
-  `5fe943391` ready for `scripts/perf-units.sh --mlton` and
-  `scripts/gc-eval.sh`.
+  `5fe943391` ready for `bin/rune-measure perf-units --mlton` and
+  `bin/rune-measure gc-eval`.
 * **The module language's budgets** (`tests/perf/compile-*.budget`, made
-  by `tests/perf/gen.py`, on Rune as shipped). Today's counts, the same
+  by `bin/rune-generate perf`, on Rune as shipped). Today's counts, the same
   as E19's; the budgets are 10% above them:
 
   | Budget | Program | Instructions |
@@ -2471,7 +2471,7 @@ frames at 39.5 and 17 to 18.
 * **docs/performance.md rewritten** from the session, with the `xc1`
   hosts timed again, MLton's set, MLton's compiler compiled by Rune, MLton
   built by Rune and HOL4 added, and the load of every table.
-* **`scripts/perf-groups.awk`** groups the frames' walks, a frame's
+* **`bin/rune-measure perf-groups`** groups the frames' walks, a frame's
   liveness and the return barrier, which were "other", and `reg_frame_live`,
   which it counted as the JIT compiling.
 * **Deep recursion's lost cycles, explained.** Against M1's runtime on
@@ -2526,7 +2526,7 @@ What fits no plan above:
   `string_ops` 1.9 to 3.6 times every host's time. M5 and M8 took
   `output1`, the vectors and `peek` from 19 to 89 times MLton's cycles to
   4 to 22; what is left is per primitive and per structure of `lib/basis`,
-  measured by `scripts/perf-cycles.sh --mlton-bench`, and no plan holds
+  measured by `bin/rune-measure perf-cycles --mlton-bench`, and no plan holds
   the Basis's speed.
 
 ## Relation to the other plans
@@ -2653,7 +2653,7 @@ brings the ones worth keeping into the tree.
   E6 are single runs.
 * **Profiles:** `perf record -e cpu-clock:u` over `runevm --jit-perf-map`,
   grouped by part (the drafts' `perf-group.py`; M1 teaches
-  `scripts/perf-groups.awk` the same), with roles within the JIT's code
+  `bin/rune-measure perf-groups` the same), with roles within the JIT's code
   from the dump.
 * **MLton's compiler:** MLton `5fe943391` (the merge of PR #660), whose
   `make -C mlton rune-mlton RUNE=true` writes `mlton-rune.txt` (606 files,

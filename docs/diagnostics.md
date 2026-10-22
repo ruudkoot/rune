@@ -152,7 +152,7 @@ also carries a word or a mark (`error:`, `^`), so colour is never the only
 cue.
 
 `auto` has so few colours because the others fail somewhere:
-`tests/color/contrast.py` draws each role on the default palettes of
+`tests/color/contrast.sml`, compiled with `src/util/color.sml`, draws each role on the default palettes of
 xterm, VTE, Windows Terminal, the legacy console and VS Code, on the
 backgrounds its theme is for, also as seen with protanopia, deuteranopia
 and tritanopia, and requires WCAG's 3:1 (2.5:1 with a deficiency). On
@@ -224,7 +224,7 @@ change them.
   two whose names are escaped in the first line, one with its column
   after a character above ASCII (`escaped-names`).
 * `tests/repl/unicode`: the REPL's traces and frames in characters;
-  `tests/dap/run.py`: a frame's column in UTF-16 units.
-* `tests/color/contrast.py`: the contrast of every role's colour against
+  `bin/rune-protocol-check dap`: a frame's column in UTF-16 units.
+* `tests/color/contrast.sml` (`colour/contrast` in `make test-diagnostics`): the contrast of every role's colour against
   the backgrounds of the reference palettes, and under simulated
   deficient colour vision (above).

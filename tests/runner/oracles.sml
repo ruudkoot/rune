@@ -302,12 +302,10 @@ struct
                  [("off", ["--jit=off"]), ("opt", ["--jit=all", "--jit-tier=2"])]
     end
 
-  (* a program of tests/register or tests/opt in the assembler's text, as
-     bytecode (tests/opt/rbcasm.awk) *)
+  (* A register program in the independent fixture assembler's text. *)
   fun assemble (rasm, rbc) =
-    exec {cmd = ["/bin/sh", "-c", "printf \"$(awk -v opdefs=runtime/register/regs.def -v primdefs=runtime/prims.def "
-                                  ^ "-f tests/opt/rbcasm.awk " ^ rasm ^ ")\" > " ^ rbc],
-          dir = NONE, stdin = "", stdout = "", stderr = "", timeout = 0} = 0
+    ((write (rbc, BytecodeFixture.assemble {opdefs = "runtime/register/regs.def", primdefs = "runtime/prims.def", listing = rasm}); true)
+     handle BytecodeFixture.Bad message => (say ("FAIL assembler: " ^ message ^ "\n"); false))
 
   fun jitEveryOpcode () =
     let
@@ -693,12 +691,11 @@ struct
                   (builds "runeopt"))
       val () = runAll ("facts", ["--facts", "bin/rune.stack.rbc", "bin/runedoc.stack.rbc"])
       val () = runAll ("disasm-rune", ["--disasm", "bin/rune.stack.rbc"])
-      val _ = exec {cmd = ["/bin/sh", "-c", "printf \"$(sed -n 's/^# rbc header //p' runtime/stack/opcodes.def)\\001\\000\\000\\000\\003\\360\\377\\377\\377\" > "
-                                            ^ out ^ "/bad.rbc"], dir = NONE, stdin = "", stdout = "", stderr = "", timeout = 0}
+      val () = write (out ^ "/bad.rbc", BytecodeFixture.header "runtime/stack/opcodes.def"
+                         ^ BytecodeFixture.u32 1 ^ String.implode (List.map Char.chr [3, 240, 255, 255, 255]))
       val () = runAll ("refused", ["--check", out ^ "/bad.rbc"])
-      val _ = exec {cmd = ["/bin/sh", "-c", "printf \"$(awk -v opdefs=runtime/stack/opcodes.def -v primdefs=runtime/prims.def "
-                                            ^ "-f tests/opt/rbcasm.awk tests/opt/every-opcode.rasm)\" > " ^ out ^ "/every-opcode.rbc"],
-                    dir = NONE, stdin = "", stdout = "", stderr = "", timeout = 0}
+      val () = write (out ^ "/every-opcode.rbc", BytecodeFixture.assemble
+                     {opdefs = "runtime/stack/opcodes.def", primdefs = "runtime/prims.def", listing = "tests/opt/every-opcode.rasm"})
       fun translate (n, prog) =
         (List.app (fn c => if exec {cmd = ["bin/runeopt-" ^ c, "-S", prog, "-o", f (n, c, ".s")], dir = NONE, stdin = "",
                                     stdout = f (n, c, ".log"), stderr = f (n, c, ".log"), timeout = 0} <> 0
@@ -816,10 +813,41 @@ struct
       else say ("FAIL bootstrap: " ^ reference ^ " does not reproduce itself\n")
     end
 
+  (* Former Make test recipes: private outputs, finite commands, ordinary
+     producer edges and the same independently reviewed expected bytes. *)
+  fun unitsBootstrap () =
+    let val out=run ^ "/bootstrap/units"
+        val ()=mkdirs out
+        val stage1=out ^ "/rune.units.rbc"
+        val stage2=out ^ "/rune.stage2.units.rbc"
+        fun command label args=exec {cmd=args,dir=NONE,stdin="",stdout=out ^ "/" ^ label ^ ".out",
+                                    stderr=out ^ "/" ^ label ^ ".err",timeout=1800}
+    in if command "stage1" (["bin/rune-boot","--units","-o",stage1] @ bootSrcs ())<>0
+       then say "FAIL units bootstrap: stage 1 failed\n"
+       else if command "stage2" (["bin/runevm","--heap-size",env ("RUNE_HEAP","67108864"),stage1,
+                                 "--lib","bin/../lib","-o",stage2] @ bootSrcs ())<>0
+       then say "FAIL units bootstrap: stage 2 failed\n"
+       else if same ("bin/rune.rbc",stage2) then ()
+       else say "FAIL units bootstrap: compiler bytecode differs\n" end
+  fun int64Compile () =
+    let val out=run ^ "/int64" val ()=mkdirs out
+    in if exec {cmd=["bin/rune","--int-bits=64","tests/register/int64-box-home.sml","-o",out ^ "/box-home.rbc"],
+                dir=NONE,stdin="",stdout=out ^ "/compile.out",stderr=out ^ "/compile.err",timeout=600}=0
+       then () else say "FAIL int64 home: compilation failed\n" end
+  fun int64Home vm mode =
+    let val out=run ^ "/int64" val file=out ^ "/" ^ vm ^ "." ^ mode ^ ".out"
+        val status=exec {cmd=["bin/" ^ vm,"--jit=" ^ mode,out ^ "/box-home.rbc"],dir=NONE,stdin="",
+                         stdout=file,stderr=file,timeout=120}
+    in if status=0 andalso same (file,"tests/register/int64-box-home.expected") then ()
+       else say ("FAIL int64 home: " ^ vm ^ "/" ^ mode ^ " differs or exits unsuccessfully\n") end
+
   (* the commands of bin/rune-test that are these checks *)
   fun command args =
     case args of
       ["levels-one", src] => SOME (fn () => levelsOne src)
+    | ["units-bootstrap"] => SOME unitsBootstrap
+    | ["int64-compile"] => SOME int64Compile
+    | ["int64-home",vm,mode] => SOME (fn () => int64Home vm mode)
     | ["register-one", src] => SOME (fn () => registerOne src)
     | ["register-bootstrap"] => SOME registerBootstrap
     | ["register-prims"] => SOME registerPrims
@@ -921,6 +949,14 @@ struct
                                  if List.exists (fn x => x = "J") flags then 4 else 1, 1500, 3600))
                          reproBuilds
              @ [job ("@compare", ["repro-compare"], List.map (fn (n, _, _, _) => "reproducible/" ^ n) reproBuilds, 1, 100, 600)])),
+       tagged ["check", "check-units", "check-units-bootstrap", "covers:tests/units/*"]
+         (Test.describe "bootstrap" [job ("units", ["units-bootstrap"], [], 1, 1500, 3600)]),
+       tagged ["test-int64", "covers:tests/register/int64-box-home.*"]
+         (Test.describe "int64"
+           (job ("compile", ["int64-compile"], [], 1, 600, 900) ::
+            List.concat (List.map (fn vm => List.map (fn mode =>
+              job (vm ^ "/" ^ mode,["int64-home",vm,mode],["int64/compile"],1,300,180))
+              ["off","baseline","opt","all"]) ["runevm-int64","runevm-rawhomes"]))),
        tagged ["check", "bootstrap"]
          (Test.describe "bootstrap" [job ("register", ["bootstrap", "register"], [], 1, 1500, 3600),
                                       job ("stack", ["bootstrap", "stack"], [], 1, 1500, 3600)])]

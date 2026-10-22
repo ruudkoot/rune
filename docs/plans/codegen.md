@@ -203,7 +203,7 @@ Every line is answered. The table of where is in `938b29a`.
 The owner's additions and decisions:
 * 2026-09-23:
   * arithmetic primitives inline (D12);
-  * a script from `.sml` to an executable (`scripts/opt.sh`);
+  * a script from `.sml` to an executable (`bin/rune-measure opt`);
   * D3 = B, with A maybe later;
   * D8 as proposed, to revisit;
   * D11 = option 1 with `--from-image`, and `OS.SysErr` for another
@@ -225,7 +225,7 @@ The gains are cycles, geometric means over the eight programs of
 | M0 | `fe759b8` | the roadmap | |
 | M1 | `51a80a6` | the runtime as a library, `build/librune.a` | `runevm` -15%, undone by `e656ead` |
 | M2 | `4084dae` | the `.rbc` reader, validator and disassembler in SML | |
-| M3 | `0c61f28` | every instruction translated, the glue, `scripts/opt.sh` | native 2.25x `runevm` |
+| M3 | `0c61f28` | every instruction translated, the glue, `bin/rune-measure opt` | native 2.25x `runevm` |
 | M4 | `a47b8d4` | the suites natively (`make test-native`), `--count` equal everywhere | |
 | M5 | `132daca` | 56 primitives inline | native +21% |
 | M6 | `0e97508` | debug information, checked by two DWARF readers and the debuggers | |
@@ -298,6 +298,6 @@ itself. `runevm` ends 1.12 times as fast as before M1, most of it M13.
   * writing ELF and DWARF directly, without the assembler;
   * a JIT;
   * an installed driver from `.sml` to an executable, or `rune --native`
-    (`scripts/opt.sh` is for trying things out);
+    (`bin/rune-measure opt` is for trying things out);
   * `--trace` in native code, for which the interpreter remains;
   * inlining primitives that allocate.

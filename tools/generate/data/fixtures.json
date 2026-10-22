@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "python_version": "3.12.3",
+  "entities": 2125,
+  "digest_vectors": 134,
+  "sha256": {
+    "digest-vectors-v1.tsv": "dcec1da96265f52b7c7aa753d830271245134e973b52b88ba2b56acc04f51169",
+    "html-entities-v1.tsv": "e446fed96d9813cdebdcd6ccde89d7287d428e70e4a544c00e6efe054c8bb202"
+  }
+}

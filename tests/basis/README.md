@@ -80,12 +80,12 @@ described in [docs/basis-compat.md](../../docs/basis-compat.md).
 | `host/` | what the `xc1` configurations need: `gen-host-basis.sh` and `rune-prim.sml`, the VM's primitives on a host's library |
 | `xc2/` | what the `xc2` configurations need: a generator, a shim and a patch of the host's sources per host (`xc2/mlton/`, `xc2/mlkit/`, `xc2/smlnj-legacy/`, `xc2/smlnj-dev/`, `xc2/polyml/`), and what they share ([xc2/README.md](xc2/README.md)) |
 | `deviations.txt` | every known failure, with its category and reason |
-| `annotations.txt` | what `deviations.txt` says about the hosts, in the format the documentation generator reads (`runedoc --annotations`); made by `gen-annotations.sh`, committed, and checked by `make check-docs`. After a change to a host line of `deviations.txt`: `sh tests/basis/gen-annotations.sh`, then `make docs` |
+| `annotations.txt` | what `deviations.txt` says about the hosts, in the format the documentation generator reads (`runedoc --annotations`); made by `gen-annotations.sh`, committed, and checked by `make check-docs`. After a change to a host line of `deviations.txt`: `bin/rune-generate annotations`, then `make docs` |
 
 ## Writing a test
 
 Every program runs in the same time zone, whatever the machine's:
-`run-matrix.sh` (and `tests/run-tests.sh`) set `TZ` to a POSIX rule, 3:30
+`run-matrix.sh` (and `bin/rune-suite`) set `TZ` to a POSIX rule, 3:30
 west of UTC with summer time, which the C library reads without a time zone
 database. A check of local time may rely on that zone being different from
 UTC, but not on any other property of it.

@@ -2,8 +2,8 @@
 
 What the scripts of `tests/terminal` cannot see: the terminals people use,
 each with its own way of drawing, of measuring characters and of taking
-keys (docs/plans/repl.md, D23). The scripts drive tmux, and on Windows
-ConPTY through WSL interop; everything below is checked by a person, on
+keys (docs/plans/repl.md, D23). The SML scenarios drive the runtime pseudo-terminal, and on Windows
+ConPTY natively; everything below is checked by a person, on
 each terminal of the list, when the REPL's terminal front or the runtime's
 console changes, and at M13, which records the results at the end of this
 file.
@@ -99,11 +99,11 @@ own takes part.
 
 M13 (2026-10-10) did not run this list: it was built by an agent, with no
 terminal of the list to type into. What runs without a person instead:
-the scripts of `tests/terminal` on tmux (Linux, `make test-terminal`) and on
+the scripts of `tests/terminal` through a runtime PTY (Linux, `make test-terminal`) and on
 ConPTY through WSL interop (Windows, `make test-windows`, the scripts whose
 first line is `# windows`), the bytes of `*.pty` as VS Code's terminal is
 given them, and the colours measured on the palettes of
-`tests/color/contrast.py`. The first run by hand is the owner's, and its
+`tests/color/contrast.sml`. The first run by hand is the owner's, and its
 row goes below.
 
 | Date | Terminal | Version | Steps that failed | Notes |

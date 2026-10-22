@@ -32,6 +32,25 @@ goes on after a test, and `--events FILE` writes a JSON line as each test
 starts and ends. The library builds on every host compiler, so the same
 suite runs in `make test-lib` and `make test-lib-hosts`.
 
+`make test-lib-hosts` runs the tier `test-lib-hosts`: twenty-four programs on
+each of six native hosts (`lib-hosts/HOST/PROGRAM`), a shared C known-answer
+reference, and a stale-deviation check per host. Filter a single host with
+`bin/rune-test run 'lib-hosts/mlton/*'`, or a program with
+`bin/rune-test run 'lib-hosts/*/random.kat'`. The native compilers come
+from `RUNE_HOSTS` and the `MLTON`, `SMLNJ`, `SMLNJ32`, `SMLNJ_DEV`, `POLY`
+and `MLKIT` overrides, with `MLKIT_LIB` for its Basis. The doctor probes
+these executables separately from Rune's host builds. A program has 600
+seconds per build or run (`LIB_HOST_TIMEOUT`), 2 GiB per child and 64 MiB per output file; the
+scheduler budgets 2 GiB per job. Build directories are private, while
+programs run in the repository root to read their fixtures. The same
+`tests/lib/deviations.txt` explains host failures and rejects stale lines.
+MLKit writes its cache beside the sources, so its builds share the
+`matrix` pool with the Basis matrix; other native hosts can run beside it.
+A child that leaves a process group behind is killed and fails, even if
+it printed `PASS` before it exited.
+Poly/ML uses a 2 GiB heap limit and 4 GiB of address space, since its
+virtual-memory reservation prevents startup under the smaller bound.
+
 ## Running the tests
 
 `make check` is `make check-tools`, which builds every tool a test needs,
@@ -93,11 +112,12 @@ others are parts of it, to run alone while iterating.
 
 `--affected` keeps the tests that cover what changed since `HEAD`
 (`--since REV`, `--changed FILE`): each group of tests names the paths it
-covers (`covers:GLOB`, in `tests/runner/*.sml`), and a changed path that no
-group covers (the compiler, the runtime, the Basis Library, the Makefile,
-the scripts) keeps every test. Of the 156 commits before 2026-10-12, 97 select
-every test, 48 (documentation) `make check-docs` alone and 11 a few hundred
-tests.
+covers (`covers:GLOB`, in `tests/runner/*.sml`). Compiler, runtime, Basis,
+runner-library, Makefile, build/generation-tool and script changes select every
+test in the requested tier. These broad inputs remain broad even where another
+group also names a narrower path. An unclassified path also keeps every test;
+documentation and individual fixture changes use their explicit coverage.
+
 
 The programs of `tests/lang` and `tests/errors` are the runner's own tests
 (`compile/COMPILER/NAME`, `lang/WAY/NAME`, `errors/COMPILER/NAME`;
@@ -112,19 +132,53 @@ that compares what it compiles and runs across levels, engines, builds and
 hosts (`levels/*`, `register/*`, `jit/*`, `units/*`, `units-stack/*`,
 `positions/*`, `cross/*`, `reproducible/*`, `bootstrap/*`;
 `tests/runner/oracles.sml`), and the tools' suites (`ir/*`, `doc/*`, `lib/*`,
-`flexrec/*`, `compiler/*`, `limits/*`, `gc-log/*`, and the scenarios of
+`flexrec/*`, `compiler/*`, `limits/*`, `gc-log/*`, `colour/*`, and the scenarios of
 `tests/deps`, `tests/dynamic`, `tests/buildfile` and `tests/units` as
 `scenario/*`; `tests/runner/tools.sml`), and the protocol suites (`repl/*`,
-`diagnostics/*`, `serve/*` in SML; `repl-protocol/*`, `dap/*`, `kernel/*`,
-`incremental/*` running their drivers a case at a time;
-`tests/runner/protocols.sml`); the rest of `make check` is a step each, an
-opaque `make` of its target (`tests/runner/main.sml`): the steps that run
-the programs of `tests/lang` from the root of the tree share the pool
-`lang` and run one at a time, and the others run beside them. Five
+`diagnostics/*`, `serve/*`, `repl-protocol/*`, `dap/*`, `kernel/*`,
+`incremental/*`; `tests/runner/protocols.sml`). Scenario and protocol policy
+is Standard ML. Heap, benchmark, native, terminal and low-level checks also
+have individual SML jobs. Make builds prerequisites; the three retained
+compatibility jobs for generated docs, benchmark coverage and ISA checks
+invoke SML tools. Jobs declare shared resources and producer dependencies
+to the same scheduler. Five
 canaries, tests that fail on purpose (an exit with 1, a run past its time,
 a crash, a flood of output and a leaked process), pass only when the
 runner sees each fault for what it is; they run in every `make check`,
 since the runner is built by the compiler it tests.
+
+The completed script migration is recorded by
+[the part-two roadmap](plans/unit-testing-part2.md) and
+`tests/runner/migration.tsv`: 282 retired files and nineteen retained
+bootstrap/setup, installer and independent-oracle/peer exceptions.
+`runner/migration-inventory` rejects unassigned
+shell/Python/AWK files and invalid retirements; `runner/migration-faults`
+plants omissions, duplicates and missing replacements. Both run in `check`
+and `quick`. `bin/rune-test migration-baseline DIR` records the source state,
+tool identities, callers and tier/profile selections before a migration.
+
+Native generator checks are individual `native/opt/*` and `native/code/*`
+cases (`tests/runner/nativechecks.sml`), with producer edges for the programs
+they inspect. `bin/runevm-native` is a thin entrypoint to the SML translation
+and cache policy in `tests/runner/nativevm.sml`. DWARF, binutils, gdb and lldb
+requirements are recorded separately. Stack, register, JIT and native stress
+and sanitizer runs use the language suite's way model; select them with
+`--tier test-stress`, `test-register-asan`, `test-native-stress` or
+`test-native-asan`. The Basis stress selections use the SML matrix controller.
+
+Census, simulator, layout, gcbench and JIT-dump checks are `heap/*` cases
+(`tests/runner/heap.sml`). Trace producers publish a successful recipe before
+consumers can run; failed producers cancel their consumers. Consistency checks
+use unsigned binary readers in SML, including malformed/truncated trace and
+JIT records, numeric boundary cases and wrong checksums. Run individual groups
+with `--tier test-census`, `check-heapsim`, `check-gcsim`, `check-layouts` or
+`check-gcbench`. The standalone commands are
+`bin/rune-heap-check heap-trace-check DIR` and
+`bin/rune-heap-check heap-validate [--out DIR] WORKLOAD...`; both fail with a
+nonzero status. Existing census archives retain their five-setting TSV reports.
+Absent/stale standalone archives use `bin/rune-measure census`; the routine
+checks also use SML producers. The JIT analysis tool
+uses the SML measurement CLI; objdump is the instruction decoder capability.
 
 ### Before and after
 
@@ -152,14 +206,14 @@ the tools; the run before was on a build already made.
 ## Requirements
 
 A test names the capabilities it needs of the machine (`Test.requires`):
-`tmux`, `python3`, `cc`, `qemu`, `windows`, and each host
+`pty`, `python3`, `cc`, `qemu`, `windows`, and each host
 (`mlton`, `smlnj-legacy`, `smlnj32`, `smlnj-dev`, `polyml`, `mlkit`), each
 a probe and an install hint in `tests/runner/main.sml`, the hints
 `scripts/doctor.sh` gives. `bin/rune-test doctor [FILTER]` probes what the
 selected tests need and says how to get what is missing. A run skips a test
 whose capability is missing, with its hint; the tier `check` (and
 `--strict`) fails it instead, since `make check` must be complete.
-`RUNE_TEST_WITHOUT=tmux,qemu` takes those as missing, to see what a machine
+`RUNE_TEST_WITHOUT=pty,qemu` takes those as missing, to see what a machine
 without them gets. `scripts/doctor.sh` keeps its scopes for what must be
 there before anything is built.
 
@@ -187,8 +241,8 @@ runner gives three ways to find one and two to live with it:
 
 What a suite expects of its tests in some ways (a host's bug, a program
 that native code does not run) is a file of expectations, in one format,
-read by one engine (`Expectations` in `lib/test/runner`, and
-`tests/skipped.sh` for the shell runners):
+read by `Expectations` in `lib/test/runner`;
+`bin/rune-suite skip [--reasons] FILE [WAY]` exposes the skip-only view:
 
     WAY-GLOB | PATH-GLOB[::LABEL-GLOB] | CATEGORY | reason
 
@@ -208,7 +262,7 @@ to parse and to name programs that exist (`expectations/*`).
 `tests/basis/deviations.txt` is read by the engine for the Basis suite in
 Rune's configurations (`tests/runner/basis.sml`, with run-matrix.sh's rule
 that any line explains a failure and a line that explains none is stale),
-and by `run-matrix.sh` for the hosts; `tests/basis/law-skips.txt` (lines of
+and by `bin/rune-matrix` for the hosts; `tests/basis/law-skips.txt` (lines of
 three fields, of every way) by the engine for the laws
 (`tests/runner/laws.sml`).
 
@@ -217,8 +271,7 @@ three fields, of every way) by the engine for the laws
 **The output.** A program under `tests/` runs with `--checked` and its
 standard output is compared with its `.expected` sibling; `.args`,
 `.vmargs`, `.stdin` and `.exitcode` siblings fix the rest of the run
-(`tests/runner/lang.sml`, and `tests/run-tests.sh:6-7,66-74` for the runners
-of other machines). This is the ordinary test. Each program is compiled
+(`tests/runner/langchecks.sml`, shared by local and Windows ways). This is the ordinary test. Each program is compiled
 once by each compiler and run in every way (a VM and its options) that
 `make check` has, each run in a directory of its own; `bin/rune-test run
 --accept FILTER` writes what the selected tests printed into their
@@ -232,10 +285,10 @@ the two compilers' bytecodes allocate the same bytes and objects
 identical counts (the oracle `jit` of `tests/runner/oracles.sml`), that the 32-bit and the
 big-endian VM agree with this machine's to the byte
 (`portability/count/*`, `tests/runner/portability.sml`), that the three Windows VMs do
-(`tests/run-windows.sh:184-191`), that native code does (`AGENTS.md`, the
+(`tests/runner/windowschecks.sml`), that native code does (`AGENTS.md`, the
 native rule), and that the compiler, `runedoc` and the benchmark programs
 stay within their budgets (`tests/perf/*.budget`, `make perf-check`,
-`tests/perf/run-perf.sh`). Where cycles and seconds are noisy by percents,
+`bin/rune-budget`). Where cycles and seconds are noisy by percents,
 a count is a number that either matches or is a bug.
 
 **Byte-identical artefacts.** `make bootstrap` checks that the compiler
@@ -290,8 +343,8 @@ program, `runevm --jit=off --count`, one thing changed at a time):
    from a terminal, or with its output through `tee`, does not count the
    same as in a harness. The harnesses fix all three: standard input from
    `/dev/null` unless the test has a `.stdin` sibling, standard output and
-   error to files (`tests/run-tests.sh:69-74`, the oracle `register` of `tests/runner/oracles.sml`,
-   the oracle `jit` of `tests/runner/oracles.sml`, `tests/run-windows.sh:88-91`). The
+   error to files (`tests/runner/langchecks.sml`, the oracle `register` of `tests/runner/oracles.sml`,
+   the oracle `jit` of `tests/runner/oracles.sml`, `tests/runner/windowschecks.sml`). The
    portability runner lets the VMs inherit its own standard input
    (`tests/runner/portability.sml`), which is fine because every VM in
    the comparison gets the same one; that is the rule: both sides of a
@@ -325,7 +378,7 @@ program, `runevm --jit=off --count`, one thing changed at a time):
    compiler compiling its own 50 files into a new file therefore counts 50
    objects, 1,600 bytes and 200 instructions more than into the file its
    last run left. A harness that compares two runs of the compiler removes
-   the output before each (`scripts/census.sh`, `tools/heapsim/validate.sh`).
+   the output before each (`bin/rune-measure census`, `tests/runner/censustrace.sml`).
 
 What was measured and did **not** matter: address-space randomisation,
 the environment (an empty one gives the same numbers), whether the VM was
@@ -356,39 +409,31 @@ JIT tier (the premise of the oracle `jit` of `tests/runner/oracles.sml`).
 ## Programs on a terminal
 
 What a program shows on a terminal -- the REPL, a line editor -- is tested
-by `tests/terminal` (`make test-terminal`, in `make check`; the plan is
-[plans/repl.md](plans/repl.md), D23). `tests/terminal/term.py` starts the
-program in a pane of a private tmux server at a given size, types keys
-and text at it, resizes it, and waits until the screen matches a pattern
-or equals an expected screen. The rules it keeps:
+by `tests/terminal` (`make test-terminal`, in `make check`; see
+[plans/repl.md](plans/repl.md), D23). The scripts run through bin/rune-terminal on the runtime's
+Pty interface. The SML interpreter supplies input, key and paste bytes, watches
+Emulator frames, resizes the terminal and checks child status. Each scenario
+owns its history/configuration directories, raw trace and final screen.
+The runtime capability pty is independent of an external terminal program.
+Windows scenarios run natively on ConPTY for both VM widths; rune-repl.cmd is
+also exercised. The raw-mode restoration scenario reads actual termios flags
+after normal return, exceptions, fatal errors, SIGTERM and SIGHUP.
 
-* Wait on the screen, never on time: every `wait` is a pattern with a
-  deadline, so a loaded machine makes a script slower and not wrong; a
-  `sleep` is only for giving a program the time to do something wrong.
-* Type bytes (tmux's `send-keys -H`): tmux takes a lone `;` among its
-  arguments for its own separator.
-* Compare screens with their trailing blanks dropped, against a file
-  reviewed line by line, as an `.expected` file is.
-* On Windows, through WSL interop, a program started in a pane gets a
-  console of the pane's size (a ConPTY), so `make test-windows` runs the
-  scripts marked `# windows` on `runevm.exe` too. Interop delivers no
-  console Ctrl-C there; an interrupt is tested on Linux.
-* Compare a screen while the program still runs: tmux scrolls the screen
-  by a line to say that a pane has died, so a program that ends at once
-  is started with something after it that keeps the pane alive.
-* After a narrowing resize compare only what the program draws anew:
-  terminals that reflow (Windows' console) and terminals that cut (tmux)
-  leave the old rows differently.
+The scenario language retains start, send, keys, paste, wait/waits/gone,
+resize, expect, capture, exited and sleep. Exact expect waits for the requested
+frame under a finite deadline, so a partial asynchronous redraw is not a
+wrong final screen. Styles are compared through canonical SGR captures of
+Emulator cells; OSC titles/marks are consumed without becoming screen text.
 
-What `lib/terminal`'s editor draws is also tested without a terminal:
-`tests/lib/terminal/edit.sml` gives the bytes its `diff` writes for random
-edits at random widths to `Emulator`, a terminal in SML, and checks that
-the screen is the next frame (D23's property); it runs on every compiler.
-
-`tests/terminal/ptyraw.py` is the other driver: a pty, exact bytes, and
-times to the microsecond, which `scripts/perf-repl.sh` uses for the REPL's
-latencies. Times taken on a loaded machine say little; the script prints
-the load average with them.
+The raw route is bin/rune-terminal raw COLS ROWS SCRIPT -- CMD...; it preserves
+write/until/quiet/winch/mark/report/dump and reports milliseconds separately
+from deterministic byte assertions. It drains output while sending bounded,
+nonblocking input chunks. The runner's own display is captured through a PTY
+and ordinary streams, including progress, failures, resize and the final frame.
+Human raw-event logs use SML string escapes; the REPORT label/number/ms fields
+retain their measurement grammar. Raw bytes are kept separately in artifacts.
+Faults exercise wrong frames, lost input, bad sizes, crashes after output,
+floods, background children, raw-mode restoration and closed sessions.
 
 ## Harnesses that measure
 
@@ -399,8 +444,8 @@ costs (`make check-gcbench`; [plans/garbage-collector-v2.md](plans/garbage-colle
 *The harness*). `make check` runs both but times neither: it holds them to
 oracles that do not depend on the machine's speed. Every kernel of the
 layout harness must give the same checksum under every layout and heap
-size (`tests/layouts/check.sh`); every experiment of gcbench runs at tiny
-sizes with its own checks on (`tests/gcbench/check.sh`, a second or two):
+size (`tests/runner/heapchecks.sml`); every experiment of gcbench runs at tiny
+sizes with its own checks on (`tests/runner/heapchecks.sml`, a second or two):
 the copies and marks reach every object, the barriers' remembered sets
 find every old-to-young pointer, the sweeps free the dead bytes, the stack
 scans agree, and the replay allocators keep every object whole and apart,
@@ -470,7 +515,7 @@ compiling MLton. Groups weighted 0 0 0 are extras: the compiler from the
 default 4 MiB heap, `compile-sigs --jit=off`, the strict twins of the lazy
 programs, the static map at 20 and 800 MB.
 
-`scripts/gc-eval.sh CANDIDATE BASELINE` runs the set on both VMs, which
+`bin/rune-measure gc-eval CANDIDATE BASELINE` runs the set on both VMs, which
 must take `--gc-log` ([runtime.md](runtime.md), *The collector's log*):
 round by round, each run on one VM and then on the other, in an order that
 alternates with the round, each under `ulimit -v` and `timeout`, `perf
@@ -483,7 +528,7 @@ pause under 1 ms counts as 1 ms) and 1 - MMU at 10 ms (at least 0.01). A
 group is the geometric mean of its runs, and each score the geometric mean
 of the groups weighted by the set; the M and P columns sum to 95, a slip
 found after the set was fixed, so the scores divide by the weight present,
-and the report says so. `scripts/gc-eval-score.py` prints the runs, the
+and the report says so. `bin/rune-measure gc-eval-score` prints the runs, the
 worst cases (the five highest ratios of each score, and every run more than
 1.10 in T or M, which D1 forbids) and the scores, and lists as problems
 every run that did not exit 0, a program of the catalogue that did not
@@ -493,30 +538,30 @@ line) differ from the others': a collector does not change what a program
 allocates.
 
 ```sh
-scripts/gc-eval.sh bin/runevm-new bin/runevm                 # the set, 3 rounds
-scripts/gc-eval.sh --only boot-default,latency --rounds 1 NEW OLD
-scripts/gc-eval.sh --candidate-opts '--heap-fill 75' bin/runevm bin/runevm
-GC_EVAL_LOCK='flock /tmp/rune-timed' scripts/gc-eval.sh NEW OLD
-scripts/gc-eval.sh --score --out tests/out/gc-eval           # score again
+bin/rune-measure gc-eval bin/runevm-new bin/runevm                 # the set, 3 rounds
+bin/rune-measure gc-eval --only boot-default,latency --rounds 1 NEW OLD
+bin/rune-measure gc-eval --candidate-opts '--heap-fill 75' bin/runevm bin/runevm
+GC_EVAL_LOCK='flock /tmp/rune-timed' bin/rune-measure gc-eval NEW OLD
+bin/rune-measure gc-eval --score --out tests/out/gc-eval           # score again
 ```
 
 The set takes about 30 minutes at three rounds on the reference machine
 (15 a VM, half of it the GC-stress tier and the 1 GB runs, which are run
 once), and the preparation a few more: the catalogue's programs compiled by
 `bin/rune -O2 --lint` into the output directory (`tests/out/gc-eval`),
-MLton's by `tests/external/run-mlton-bench.sh --prepare` from `MLTON_BENCH`
+MLton's by `bin/rune-external benchmark --prepare` from `MLTON_BENCH`
 (their runs are left out where it is missing). `--extras` adds about three
 minutes. Rune compiling MLton is part of the set but runs only with
 `--mlton-compile`: about 10 minutes a VM, 12 GiB of address space (the heap
 capped at 5 GiB), so 20 GB of free memory, from MLton's sources at
 `5fe943391` in `MLTON_SOURCES` with the order of its files in
-`mlton-rune.txt` (`scripts/setup-mlton.sh DIR` makes them). Times need the machine to themselves: `GC_EVAL_LOCK` is a
+`mlton-rune.txt` (`bin/rune-build setup-mlton DIR` makes them). Times need the machine to themselves: `GC_EVAL_LOCK` is a
 command prefix under which each round is made, let go for a minute between
 rounds so that others waiting for it have it, and a run waits until its
 ulimit and 8 GB more are free (`GC_EVAL_MARGIN`). After an interruption,
 `--resume` with the same options makes only the runs that are missing.
 
-**Pauses** come from the log by `tools/mmu.py LOG`: the pauses (a collection
+**Pauses** come from the log by `bin/rune-measure mmu LOG`: the pauses (a collection
 that grows the heap is two passes, one pause), their longest, mean and
 percentiles and a histogram, the collector's share, the heap and the peaks,
 and the minimum mutator utilisation (the least share of any window left to
@@ -528,7 +573,7 @@ and only the pauses are timed, which removes the mutator's own noise.
 `--json` and `--row` are for scripts; `--self-test` checks the MMU against
 closed forms and a brute-force scan.
 
-**The 32-bit address space**: `scripts/gc-probe32.sh` grows a program's live
+**The 32-bit address space**: `bin/rune-measure gc-probe32` grows a program's live
 data on `bin/runevm32` until the heap cannot grow, under a 2 GiB limit and
 without one, and reports the most live data a collection completed with
 (the copier: 255 and 512 MiB, where D1 asks for 768 MiB and 1.5 GiB);
@@ -542,6 +587,193 @@ in `make test-windows`. It needs both MinGW toolchains and Windows execution.
 The native helper creates and inspects fixtures with wide APIs; SML probes
 exercise each VM, including fork from a Unicode executable, directory and
 stream recovery under a long path, and native compilation of `λ.sml`.
-Logs are in `tests/out/windows-text`. Each worktree stages its own fixtures
-on NTFS using `tests/windows-dir.sh`; a WSL sandbox that blocks interop must
-run this target outside that sandbox.
+The `windows/text/*` SML jobs own compilation, staging and verdicts, with a
+shared preparation dependency and separate native-oracle/four-VM cases.
+Logs are in the run's `windows/text` directory. Each worktree stages private
+fixtures on NTFS using `bin/rune-windows directory`; a WSL sandbox that blocks
+interop must run this target outside that sandbox. `platform/windows-text-faults`
+rejects empty/mislabeled output, failure after PASS and nonzero/timeout exits.
+
+Native host laws use `bin/rune-laws-hosts [--compare] [HOST...]` and the
+`test-laws-hosts` runner tier. The shared `MatrixModel`, `MatrixProbe`,
+`MatrixHost` and `SmlScan` modules own configuration identities, capability
+probes, compiler diagnostics and source dependencies. Every selected host has
+collection and comparison jobs; MLKit jobs share the matrix pool.
+
+`LAWS_HOST_TIMEOUT` bounds program execution (default 600 s). Linked
+compilation has its own `LAWS_HOST_COMPILE_TIMEOUT` (default 600 s); the
+former driver left these compiler calls unbounded. The default memory cap
+is 8192 MiB. `LAWS_PROGRAMS` selects generated ASCII program names through a
+bounded GNU grep PCRE adapter and must be a single-line expression. Empty
+selection uses every program. The adapter is required only for that option.
+The source scanner handles strings and nested comments independently of Rune.
+
+The official SML/NJ32 110.99.9 Word64 startup defect is recorded as property
+framework unavailability, with a result for every selected law and a named
+skip. The legacy Python host-law driver is retired. The part-two roadmap records
+full comparisons, controlled host configurations and the observed native GC
+failures separately. A failed law program is recorded and collection continues
+with later programs; controller errors fail comparison and cannot become passes.
+
+The documentation consistency checks use `bin/rune-doc-check` and are named
+`documentation/{features,signatures,claims,notes,annotations,faults}` in the
+runner. `make check-docs` also checks generated pages and lint with runedoc.
+Signature and annotation generators write private output; SML compares it
+with the committed files. Generation remains a separate Make operation.
+
+`bin/rune-doc-check mutants [-j N] [-n PER_FILE] [FILTER]` samples the same
+14 Basis sources and evenly spaced mutation sites as the former driver.
+Each target has a baseline dependency, each mutant has a collection and a
+verdict case, and the final report depends on collection. `SURVIVED` fails its
+named verdict case while the complete results and summary remain available
+in `tests/out/mutants`. The former script exited successfully for survivors;
+this stricter exit behavior makes the adequacy result usable in automation.
+`STILLBORN` means an ordinary compiler diagnostic; a failed producer, missing
+bytecode, controller crash or failure before the first law fails the job.
+The property seed and environment are inherited; the default law idle limit
+is 30 seconds and the sample count is 20 per file.
+
+Benchmark correctness and deterministic-budget drivers use
+`bin/rune-bench-check` and `bin/rune-budget`. `suite NAME` selects the typed
+case contract, `catalogue` accepts the former profile/config/filter options,
+`smoke` runs routine correctness, `extra` includes the independent peers and
+negative scenarios, and `inventory` runs the preserved upstream fixtures.
+Console output now uses the common runner's per-case report and events.
+Original script names and blob IDs in benchmark-cases.json are provenance.
+The three baseline failures (fluid float formatting, pidigits5 and zarith
+27-digit layout) remain failures; all 267 old/new output streams match.
+
+`bin/rune-scenarios SUITE [--rune BIN]` selects deps, buildfile, dynamic, units,
+install or dist. Installation also accepts repeated `--host NAME`; Make's
+install tier retains bytecode, MLton and SML/NJ. All stage prefixes are private.
+Distribution assertions read archive metadata in SML and use independent
+ELF/PE fixture bytes. Compression decoding uses gzip/unzip, declared as
+capabilities. The Windows installer case uses `--no-register` and is gated
+on Windows interop.
+
+
+The incremental cache controller is `bin/rune-incremental`. `scenarios`
+accepts a scenario filter; `one LABEL COMPILER` is the inventory's isolated
+case action. `mutate` retains project, compiler, Basis-copy and repository
+history modes. The new generator is version 2, uses SplitMix64 and the same
+thirteen edit families, and deliberately starts a new deterministic sequence.
+`mutate --replay-v1` replays the frozen legacy Python seed-1 trace: all 70
+receipts preserve success, rebuild count and reuse across changed units.
+Failure snapshots keep source order, edits and both diagnostics. `plant`
+manufactures stale or old-version cache entries independently of Rune.
+
+`bin/rune-external regression DIR`, `benchmark [OPTIONS]`, and `probe DIR...`
+run externally provisioned corpora. The regression route preserves expected
+exception text and skips; benchmark mode retains prepare, explicit count
+updates, data staging and VM options. Results use the common SML supervisor
+and receipts, with original program verdict lines printed after collection.
+The pinned MLton compiler scenario remains an explicit expensive command,
+`bin/rune-incremental mlton CHECKOUT [OUT]`, with its memory availability guard.
+
+
+The full Basis controller is SML: bin/rune-matrix retains configurations,
+standalone program/input/data modes, timing, refresh and resolution output.
+The --one CONFIG TEST route selects an exact name. Explicit CLI selections
+fail when a required compiler cannot start. Collection, comparison, stale
+deviations and reports are separate inventory cases; missing structures are
+recorded as skips. Interactive sessions are distinguished by the actual
+compiler, so Rune compiling a host library still has compile-only type checks.
+Reports include dropped sources, timing phases and compatible timings.tsv
+records. Bytecode imports accept legacy CRC and version-2 keys, invalidate
+changed inputs and preserve reuse when only the execution VM changes.
+
+
+Language/runtime platform workers are bin/rune-suite and bin/rune-windows.
+The former retains --rune/--vm/--out/--skip/--one/--update/-j and filtering;
+skip [--reasons] FILE [WAY] exposes Expectations. The latter provides
+directory, vm --vm BIN --def FILE and the Windows language selection.
+Windows ways share local fixture judges, strict refusal cases and cross-VM
+count/image oracles. Build preparation and consumers have explicit dependencies;
+unavailable selected targets fail, while capabilities retain their named skips.
+
+
+GMP configuration, dependency, CPU-family, build-mode, download, installation
+and cross-platform controllers are routes of bin/rune-intinf. The root
+check runs the bounded offline download and native dependency cases.
+Binary-mutating build-modes and prepare-cross are explicitly selected,
+exclusive jobs. prepare-cross preserves hashed GMP-free payloads and platform
+configurations before rebuilding enabled VMs; cross --sml-vms DIR tests every
+required platform, arithmetic backend and saved-image consumer/limit pair.
+Production download policy has an offline CLI seam; SML drives actual child
+processes and corrupt/partial archive fixtures without importing Python mocks.
+
+
+
+Protocol drivers use bin/rune-protocol-check: repl NAME [--update], dap,
+kernel, notebook and interop LIB COMPILER VM OUT. DAP and kernel accept
+--windows; the root inventory retains separate pipe and connection ways.
+Protocol assertions and Windows staging are SML. Python capabilities belong
+to the independent Jupyter/ZMTP peers and optional jupyter_client. Faults
+exercise malformed headers/signatures, wrong reply IDs, premature exit and
+lost interrupts, with kernel shutdown and leak detection during failures.
+
+The measurement and analysis controllers use `bin/rune-measure`; the modes and
+instrumentation contracts are listed in [tools/measure/README.md](../tools/measure/README.md).
+P2.14 retires 43 shell, Python and AWK controllers. `make bench`, `bench-count`
+and `bench-stats` use the public SML tool. Timing selections are explicitly
+exclusive (`bin/rune-test --tier measurement-runs`) and stay outside `make check`.
+Independent MMU scan vectors and measurement fault assertions remain ordinary
+checks. Captured reports keep their historical measurement command labels;
+current CLI examples use the SML modes. Generator and build/package ports
+completed P2.15 and P2.16; their contracts and evidence are in the roadmap.
+
+Post-bootstrap generators use `bin/rune-generate`, with standalone inventory
+queries through `bin/rune-inventory`. Their modes and data/oracle contracts are
+listed in [tools/generate/README.md](../tools/generate/README.md). Include Rune in
+matrix selections when auditing unused deviations: its actual labels distinguish
+an unavailable host case from a stale expectation. The generator acceptance
+record retains full source/record comparisons, concurrent isolated runs, poisoned
+input refusal and all generated-library results. Build/package bootstrap conversion
+and whole-project acceptance completed P2.16 and P2.17.
+
+Production build and packaging policy uses `bin/rune-build`, compiled by the
+native MLton before target GMP configuration or VM creation. Its shared models
+also build as Rune bytecode for the retained runtime SDK. See
+[tools/builder/README.md](../tools/builder/README.md) for modes and bootstrap
+requirements. P2.16 retires all eight production scripts; the current ledger has 282
+retired targets and nineteen explicit bootstrap/installer/oracle exceptions.
+Make's unit-bootstrap, template and Int64 comparisons also use SML jobs.
+`make test-int64` preserves both VMs and all four JIT modes. Final global
+acceptance is recorded by P2.17 of the continuation roadmap.
+
+The final recipe audit exposes C fixture execution under `low-level/*`.
+`low-level/basic` preserves VM refusals and the original heap test;
+`low-level/heap-hooks` preserves the default, GC-bit and card variants.
+`low-level/jit` checks encoder independence, executable memory, all three C
+encoder/macro-assembler subjects and deep recursion in all/tiered/call-return
+modes. The recursion cases retain a 1 MiB OS stack through a thin `ulimit`
+adapter; SML owns arguments, deadlines and byte comparisons. The focused
+selection passes 20/20 including canaries and eight literal guard fault vectors.
+Make retains the C compilation graph and the compatibility target names.
+
+Final acceptance on 2026-10-22 passed the default `make check JOBS=8` on clean
+`4f9065f5b`, without a `RUNE` override: 19,238 PASS, two documented native
+interrupt skips and zero failures. The complete `all,xc2` matrix passed 7716
+cases with 858 explicit unavailable skips, including all eighteen strict
+stale-deviation audits and its report. Platform acceptance covers actual
+Windows/ConPTY/DAP/kernel, portability, register/native sanitizers, GC stress
+and all six native library hosts. All twelve public controller payloads match
+native MLton and self-hosted compilation byte for byte. The
+[P2.17 acceptance record](plans/unit-testing-part2.md#p217-final-acceptance-2026-10-22)
+identifies exact tested states, retained failures and receipts, Windows
+transport reruns, existing host deviations and the unvalidated live HOL
+benchmark. The historical timing comparison above is a separate experiment.
+
+The subsequent rebase onto `origin/master` at `05ecacb9c` retires the newly
+added Windows Unicode shell driver too. Combined source `77ad74a60` preserves
+all 19,240 previous check IDs and adds 91. Its default full check reports
+19,328 PASS, two native-interrupt SKIP and one intermittent
+`terminal/edit-complete` resize failure; an exact rerun passes, while one of
+ten further repetitions fails. The full result remains recorded as FAIL.
+Windows language/runtime/ConPTY/Unicode passes 2367/2367. Two Windows Basis
+collections hit WSL temporary-directory lookup timeouts; their collections
+and comparisons pass with the supported directory override, and all four
+strict audits plus the complete 948-result report pass with zero unexplained
+failures. Windows DAP and kernel sessions also pass. The
+[rebase record](plans/unit-testing-part2.md#rebase-onto-windows-unicode-master-2026-10-22)
+keeps the original failures and rerun receipts separate.

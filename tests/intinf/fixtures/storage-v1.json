@@ -1,0 +1,907 @@
+{
+  "format": 1,
+  "source_sha256": "50364abc9e92e1c2732c5fb4b031dab6813cf270d06ecb5016ce4e6114f380ca",
+  "seed": 1346454347,
+  "cases": [
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 0\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 0\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 0\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 1\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 0\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 1\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ff",
+      "message": null,
+      "expected": "ff"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 0\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ff",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 1\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "c7",
+      "message": null,
+      "expected": "c7"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 0\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "c7",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 2\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 1\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 2\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffff",
+      "message": null,
+      "expected": "ffff"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 1\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffff",
+      "message": null,
+      "expected": "ff7f"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 2\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "b3eb",
+      "message": null,
+      "expected": "b3eb"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 1\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "b3eb",
+      "message": null,
+      "expected": "b36b"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 2\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 1\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 2\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffff",
+      "message": null,
+      "expected": "ffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 1\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffff",
+      "message": null,
+      "expected": "ff7f"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 2\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ccc65b",
+      "message": null,
+      "expected": "ccc65b"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 1\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ccc65b",
+      "message": null,
+      "expected": "cc46"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 3\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 1\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 3\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffff",
+      "message": null,
+      "expected": "ffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 1\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffff",
+      "message": null,
+      "expected": "ff7f"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 3\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "1b89cdf0",
+      "message": null,
+      "expected": "1b89cdf0"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 1\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "1b89cdf0",
+      "message": null,
+      "expected": "1b09"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 4\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 2\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 4\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 2\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffff",
+      "message": null,
+      "expected": "ffffff3f"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 4\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "e4cddb497c2732",
+      "message": null,
+      "expected": "e4cddb497c2732"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 2\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "e4cddb497c2732",
+      "message": null,
+      "expected": "e4cddb09"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 5\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 2\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 5\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 2\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffff",
+      "message": null,
+      "expected": "ffffff3f"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 5\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "2b63475cbfd6dd53",
+      "message": null,
+      "expected": "2b63475cbfd6dd53"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 2\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "2b63475cbfd6dd53",
+      "message": null,
+      "expected": "2b63471c"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 8\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 4\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 8\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 4\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffff0f"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 8\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "b359b21c99b2c49b9d346511c70f74",
+      "message": null,
+      "expected": "b359b21c99b2c49b9d346511c70f74"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 4\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "b359b21c99b2c49b9d346511c70f74",
+      "message": null,
+      "expected": "b359b21c99b2c40b"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 9\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 4\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 9\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 4\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffff0f"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 9\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "e700fbd7a54d5d4d631d1e726d69c73c",
+      "message": null,
+      "expected": "e700fbd7a54d5d4d631d1e726d69c73c"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 4\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "e700fbd7a54d5d4d631d1e726d69c73c",
+      "message": null,
+      "expected": "e700fbd7a54d5d0d"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 17\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000000000000000000000000000000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 8\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000000000000000000000000000000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 17\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 8\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 17\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "a1ee4f93c24f3d0897f427e1135d8fe2b2653993fa79053d810af73c387d78",
+      "message": null,
+      "expected": "a1ee4f93c24f3d0897f427e1135d8fe2b2653993fa79053d810af73c387d78"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 8\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "a1ee4f93c24f3d0897f427e1135d8fe2b2653993fa79053d810af73c387d78",
+      "message": null,
+      "expected": "a1ee4f93c24f3d0897f427e1135d8f"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 18\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000000000000000000000000000000000000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 9\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000000000000000000000000000000000000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 18\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 9\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffffff7f"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 18\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ee8854c76935a0dff938b9d0c5146aea93b418582a0ed51ffa317a5c8198e521",
+      "message": null,
+      "expected": "ee8854c76935a0dff938b9d0c5146aea93b418582a0ed51ffa317a5c8198e521"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 9\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ee8854c76935a0dff938b9d0c5146aea93b418582a0ed51ffa317a5c8198e521",
+      "message": null,
+      "expected": "ee8854c76935a0dff938b9d0c5146aea13"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 35\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 17\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 35\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 17\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 35\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "a39c2bd7fae7b1a86f9f50f85a5e84fe9ca1f7c06558f46594cc8d53c34de43ef45672b22f2fb0d880df9223860cb995e19f59a9ad3e89bf9073d6427dd57f7c54",
+      "message": null,
+      "expected": "a39c2bd7fae7b1a86f9f50f85a5e84fe9ca1f7c06558f46594cc8d53c34de43ef45672b22f2fb0d880df9223860cb995e19f59a9ad3e89bf9073d6427dd57f7c54"
+    },
+    {
+      "body": "CONST %mag\nINT 15\nPRIM intinf_unpack\nINT 17\nINT 15\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "a39c2bd7fae7b1a86f9f50f85a5e84fe9ca1f7c06558f46594cc8d53c34de43ef45672b22f2fb0d880df9223860cb995e19f59a9ad3e89bf9073d6427dd57f7c54",
+      "message": null,
+      "expected": "a39c2bd7fae7b1a86f9f50f85a5e84fe9ca1f7c06558f46594cc8d53c34de43e"
+    },
+    {
+      "body": "CONST %mag\nINT 0\nPRIM intinf_unpack",
+      "data": "78",
+      "message": "invalid limb width",
+      "expected": ""
+    },
+    {
+      "body": "INT 1\nINT 0\nPRIM array_new\nINT -1\nINT 15\nPRIM intinf_pack",
+      "data": null,
+      "message": "invalid limb count",
+      "expected": ""
+    },
+    {
+      "body": "INT 1\nINT 0\nPRIM array_new\nINT 2\nINT 15\nPRIM intinf_pack",
+      "data": null,
+      "message": "invalid limb count",
+      "expected": ""
+    },
+    {
+      "body": "INT 1\nINT -1\nPRIM array_new\nINT 1\nINT 15\nPRIM intinf_pack",
+      "data": null,
+      "message": "invalid limb",
+      "expected": ""
+    },
+    {
+      "body": "INT 1\nINT 32768\nPRIM array_new\nINT 1\nINT 15\nPRIM intinf_pack",
+      "data": null,
+      "message": "invalid limb",
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 0\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 0\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 0\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 0\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ff",
+      "message": null,
+      "expected": "ff"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 0\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ff",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "26",
+      "message": null,
+      "expected": "26"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 0\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "26",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 0\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffff",
+      "message": null,
+      "expected": "ffff"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 0\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffff",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "21a6",
+      "message": null,
+      "expected": "21a6"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 0\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "21a6",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 0\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffff",
+      "message": null,
+      "expected": "ffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 0\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffff",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "465624",
+      "message": null,
+      "expected": "465624"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 0\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "465624",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 2\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 2\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffff",
+      "message": null,
+      "expected": "ffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffff",
+      "message": null,
+      "expected": "ffffff3f"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 2\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "3ec78615",
+      "message": null,
+      "expected": "3ec78615"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "3ec78615",
+      "message": null,
+      "expected": "3ec78615"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 2\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 2\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffff",
+      "message": null,
+      "expected": "ffffff3f"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 2\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "6c192f1820c86f",
+      "message": null,
+      "expected": "6c192f1820c86f"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "6c192f1820c86f",
+      "message": null,
+      "expected": "6c192f18"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 3\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 3\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffff",
+      "message": null,
+      "expected": "ffffff3f"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 3\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "14ea00fe77ac70fb",
+      "message": null,
+      "expected": "14ea00fe77ac70fb"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 1\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "14ea00fe77ac70fb",
+      "message": null,
+      "expected": "14ea003e"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 4\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 2\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 4\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 2\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffff0f"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 4\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "69cefa64d617b146aeb26f5e2ccc87",
+      "message": null,
+      "expected": "69cefa64d617b146aeb26f5e2ccc87"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 2\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "69cefa64d617b146aeb26f5e2ccc87",
+      "message": null,
+      "expected": "69cefa64d617b106"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 5\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 2\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 5\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 2\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffff0f"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 5\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "050dbd884899daaa24061d72c6a608e3",
+      "message": null,
+      "expected": "050dbd884899daaa24061d72c6a608e3"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 2\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "050dbd884899daaa24061d72c6a608e3",
+      "message": null,
+      "expected": "050dbd884899da0a"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 9\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000000000000000000000000000000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 4\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "00000000000000000000000000000000000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 9\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 4\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 9\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "db9f59d921b1dbb84abf7f73a99756a02fdd29dbabfdc30d3bf69fef8a6c09",
+      "message": null,
+      "expected": "db9f59d921b1dbb84abf7f73a99756a02fdd29dbabfdc30d3bf69fef8a6c09"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 4\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "db9f59d921b1dbb84abf7f73a99756a02fdd29dbabfdc30d3bf69fef8a6c09",
+      "message": null,
+      "expected": "db9f59d921b1dbb84abf7f73a99756"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 9\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000000000000000000000000000000000000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 4\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000000000000000000000000000000000000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 9\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 4\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 9\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "6ba6a566ba8d91b4a4b3d0d7724db2dbc07ee14c468c5d028b909da589d12eef",
+      "message": null,
+      "expected": "6ba6a566ba8d91b4a4b3d0d7724db2dbc07ee14c468c5d028b909da589d12eef"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 4\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "6ba6a566ba8d91b4a4b3d0d7724db2dbc07ee14c468c5d028b909da589d12eef",
+      "message": null,
+      "expected": "6ba6a566ba8d91b4a4b3d0d7724db2"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 18\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 9\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "message": null,
+      "expected": ""
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 18\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 9\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "message": null,
+      "expected": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3f"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 18\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "9f72bc257b8baa0e515dd7a7412a4e796a35b0c66b4214dadec166a5e9679e6afccd4618da7b2e6dd09b3848b6f2c2100bfe01f06758a3879b0f78ed00f084d705",
+      "message": null,
+      "expected": "9f72bc257b8baa0e515dd7a7412a4e796a35b0c66b4214dadec166a5e9679e6afccd4618da7b2e6dd09b3848b6f2c2100bfe01f06758a3879b0f78ed00f084d705"
+    },
+    {
+      "body": "CONST %mag\nINT 30\nPRIM intinf_unpack\nINT 9\nINT 30\nPRIM intinf_pack\nPRIM print\nPOP",
+      "data": "9f72bc257b8baa0e515dd7a7412a4e796a35b0c66b4214dadec166a5e9679e6afccd4618da7b2e6dd09b3848b6f2c2100bfe01f06758a3879b0f78ed00f084d705",
+      "message": null,
+      "expected": "9f72bc257b8baa0e515dd7a7412a4e796a35b0c66b4214dadec166a5e9679e6afc0d"
+    },
+    {
+      "body": "CONST %mag\nINT 0\nPRIM intinf_unpack",
+      "data": "78",
+      "message": "invalid limb width",
+      "expected": ""
+    },
+    {
+      "body": "INT 1\nINT 0\nPRIM array_new\nINT -1\nINT 30\nPRIM intinf_pack",
+      "data": null,
+      "message": "invalid limb count",
+      "expected": ""
+    },
+    {
+      "body": "INT 1\nINT 0\nPRIM array_new\nINT 2\nINT 30\nPRIM intinf_pack",
+      "data": null,
+      "message": "invalid limb count",
+      "expected": ""
+    },
+    {
+      "body": "INT 1\nINT -1\nPRIM array_new\nINT 1\nINT 30\nPRIM intinf_pack",
+      "data": null,
+      "message": "invalid limb",
+      "expected": ""
+    },
+    {
+      "body": "INT 1\nINT 1073741824\nPRIM array_new\nINT 1\nINT 30\nPRIM intinf_pack",
+      "data": null,
+      "message": "invalid limb",
+      "expected": ""
+    },
+    {
+      "body": "UNIT\nINT 15\nPRIM intinf_unpack",
+      "data": null,
+      "message": "wrong argument type",
+      "expected": ""
+    },
+    {
+      "body": "UNIT\nINT 0\nINT 15\nPRIM intinf_pack",
+      "data": null,
+      "message": "wrong argument type",
+      "expected": ""
+    }
+  ]
+}

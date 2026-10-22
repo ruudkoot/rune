@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 607 requirements between the 160 files become 267 arrows.
+library and not a wall of lines: the 610 requirements between the 162 files become 269 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -30,7 +30,7 @@ flowchart LR
   a4["Sequences<br>(37)"]
   a5["The operating system<br>(41)"]
   a6["Input and output<br>(14)"]
-  a7["The runtime<br>(14)"]
+  a7["The runtime<br>(16)"]
   a6 -- 3 --> a2
   a6 -- 5 --> a3
   a6 -- 3 --> a4
@@ -56,7 +56,7 @@ flowchart LR
   a7 -- 3 --> a4
   a7 -- 2 --> a1
   a7 -- 3 --> a0
-  a7 -- 4 --> a5
+  a7 -- 5 --> a5
 ```
 
 ## The language
@@ -65,8 +65,8 @@ flowchart LR
 flowchart TD
   n0["General"]
   n85(["SML90"])
-  n109(["GENERAL"])
-  n131(["SML90"])
+  n111(["GENERAL"])
+  n133(["SML90"])
 ```
 
 It also needs Input and output (1).
@@ -82,31 +82,31 @@ flowchart TD
   n30["Substring"]
   n59["Text"]
   n75["Byte"]
-  n104(["BOOL"])
-  n105(["BYTE"])
-  n106(["CHAR"])
-  n132(["STRING"])
-  n133(["STRING_CVT"])
-  n134(["SUBSTRING"])
-  n144(["TEXT"])
-  n156["Wide* (8)"]
-  n157["WideStringCvt"]
-  n158["WideText"]
+  n106(["BOOL"])
+  n107(["BYTE"])
+  n108(["CHAR"])
+  n134(["STRING"])
+  n135(["STRING_CVT"])
+  n136(["SUBSTRING"])
+  n146(["TEXT"])
+  n158["Wide* (8)"]
+  n159["WideStringCvt"]
+  n160["WideText"]
   n2 --> n1
   n21 --> n20
   n30 --> n21
-  n104 --> n1
-  n106 --> n21
-  n132 --> n21
-  n144 --> n106
-  n144 --> n132
-  n144 --> n134
-  n156 --> n106
-  n156 --> n132
-  n156 --> n134
-  n157 --> n133
-  n157 --> n156
-  n158 --> n156
+  n106 --> n1
+  n108 --> n21
+  n134 --> n21
+  n146 --> n108
+  n146 --> n134
+  n146 --> n136
+  n158 --> n108
+  n158 --> n134
+  n158 --> n136
+  n159 --> n135
+  n159 --> n158
+  n160 --> n158
 ```
 
 It also needs Numbers (1), Lists and options (1), Sequences (6).
@@ -118,9 +118,9 @@ flowchart TD
   n3["Option"]
   n4["List"]
   n5["ListPair"]
-  n115(["LIST"])
-  n116(["LIST_PAIR"])
-  n121(["OPTION"])
+  n117(["LIST"])
+  n118(["LIST_PAIR"])
+  n123(["OPTION"])
 ```
 
 ## Numbers
@@ -146,14 +146,14 @@ flowchart TD
   n35["PackWord* (6)"]
   n36["PackReal* (4)"]
   n60["Position"]
-  n111(["IEEE_REAL"])
-  n113(["INT_INF"])
-  n117(["MATH"])
-  n126(["PACK_REAL"])
-  n127(["PACK_WORD"])
-  n142(["REAL"])
-  n153["Real32"]
-  n154["PackReal32Big<br>PackReal32Little"]
+  n113(["IEEE_REAL"])
+  n115(["INT_INF"])
+  n119(["MATH"])
+  n128(["PACK_REAL"])
+  n129(["PACK_WORD"])
+  n144(["REAL"])
+  n155["Real32"]
+  n156["PackReal32Big<br>PackReal32Little"]
   n7 --> n6
   n8 --> n7
   n9 --> n8
@@ -173,14 +173,14 @@ flowchart TD
   n36 --> n35
   n60 --> n12
   n60 --> n16
-  n113 --> n12
-  n113 --> n8
-  n142 --> n23
-  n142 --> n117
-  n153 --> n142
-  n153 --> n8
-  n154 --> n153
-  n154 --> n35
+  n115 --> n12
+  n115 --> n8
+  n144 --> n23
+  n144 --> n119
+  n155 --> n144
+  n155 --> n8
+  n156 --> n155
+  n156 --> n35
 ```
 
 It also needs Text and characters (4), Lists and options (2), Sequences (3).
@@ -221,11 +221,11 @@ flowchart TD
   n56["LargeWord* (5)"]
   n57["LargeReal* (5)"]
   n58["Real64* (5)"]
-  n100(["ARRAY"])
-  n101(["ARRAY_SLICE"])
-  n138(["VECTOR"])
-  n139(["VECTOR_SLICE"])
-  n155["Real32* (5)"]
+  n102(["ARRAY"])
+  n103(["ARRAY_SLICE"])
+  n140(["VECTOR"])
+  n141(["VECTOR_SLICE"])
+  n157["Real32* (5)"]
   n25 --> n24
   n26 --> n24
   n27 --> n25
@@ -273,12 +273,12 @@ flowchart TD
   n56 --> n55
   n57 --> n53
   n58 --> n53
-  n100 --> n24
-  n101 --> n25
-  n101 --> n26
-  n139 --> n24
-  n155 --> n28
-  n155 --> n41
+  n102 --> n24
+  n103 --> n25
+  n103 --> n26
+  n141 --> n24
+  n157 --> n28
+  n157 --> n41
 ```
 
 It also needs Lists and options (2), Text and characters (3), Numbers (10).
@@ -301,33 +301,33 @@ flowchart TD
   n82["Unix"]
   n83["Windows"]
   n84["CommandLine"]
-  n103(["BIT_FLAGS"])
-  n107(["COMMAND_LINE"])
-  n108(["DATE"])
-  n110(["GENERIC_SOCK"])
-  n112(["INET_SOCK"])
-  n118(["NET_HOST_DB"])
-  n119(["NET_PROT_DB"])
-  n120(["NET_SERV_DB"])
-  n122(["OS_FILE_SYS"])
-  n123(["OS_IO"])
-  n124(["OS_PATH"])
-  n125(["OS_PROCESS"])
-  n128(["POSIX_PROC_ENV"])
-  n129(["POSIX_SIGNAL"])
-  n130(["POSIX_SYS_DB"])
-  n136(["TIMER"])
-  n137(["UNIX_SOCK"])
-  n140(["POSIX_TTY"])
-  n141(["POSIX_IO"])
-  n143(["OS"])
-  n146(["WINDOWS"])
-  n147(["UNIX"])
-  n148(["SOCKET"])
-  n149(["POSIX_PROCESS"])
-  n150(["POSIX_FILE_SYS"])
-  n151(["POSIX_ERROR"])
-  n152(["POSIX"])
+  n105(["BIT_FLAGS"])
+  n109(["COMMAND_LINE"])
+  n110(["DATE"])
+  n112(["GENERIC_SOCK"])
+  n114(["INET_SOCK"])
+  n120(["NET_HOST_DB"])
+  n121(["NET_PROT_DB"])
+  n122(["NET_SERV_DB"])
+  n124(["OS_FILE_SYS"])
+  n125(["OS_IO"])
+  n126(["OS_PATH"])
+  n127(["OS_PROCESS"])
+  n130(["POSIX_PROC_ENV"])
+  n131(["POSIX_SIGNAL"])
+  n132(["POSIX_SYS_DB"])
+  n138(["TIMER"])
+  n139(["UNIX_SOCK"])
+  n142(["POSIX_TTY"])
+  n143(["POSIX_IO"])
+  n145(["OS"])
+  n148(["WINDOWS"])
+  n149(["UNIX"])
+  n150(["SOCKET"])
+  n151(["POSIX_PROCESS"])
+  n152(["POSIX_FILE_SYS"])
+  n153(["POSIX_ERROR"])
+  n154(["POSIX"])
   n62 --> n61
   n63 --> n62
   n64 --> n62
@@ -337,52 +337,52 @@ flowchart TD
   n79 --> n77
   n80 --> n77
   n81 --> n77
-  n82 --> n143
+  n82 --> n145
   n82 --> n65
   n82 --> n71
-  n83 --> n143
+  n83 --> n145
   n83 --> n65
   n83 --> n71
-  n108 --> n62
-  n110 --> n77
-  n112 --> n78
+  n110 --> n62
   n112 --> n77
-  n122 --> n62
-  n123 --> n62
+  n114 --> n78
+  n114 --> n77
+  n124 --> n62
   n125 --> n62
-  n128 --> n62
-  n136 --> n62
-  n137 --> n77
-  n140 --> n103
-  n141 --> n103
-  n143 --> n122
-  n143 --> n123
-  n143 --> n124
-  n143 --> n125
-  n146 --> n103
-  n146 --> n143
-  n146 --> n65
-  n147 --> n143
-  n147 --> n65
-  n148 --> n78
-  n148 --> n143
+  n127 --> n62
+  n130 --> n62
+  n138 --> n62
+  n139 --> n77
+  n142 --> n105
+  n143 --> n105
+  n145 --> n124
+  n145 --> n125
+  n145 --> n126
+  n145 --> n127
+  n148 --> n105
+  n148 --> n145
   n148 --> n65
-  n149 --> n103
-  n149 --> n143
+  n149 --> n145
   n149 --> n65
-  n150 --> n103
-  n150 --> n143
+  n150 --> n78
+  n150 --> n145
   n150 --> n65
-  n151 --> n143
+  n151 --> n105
+  n151 --> n145
   n151 --> n65
-  n152 --> n151
-  n152 --> n150
-  n152 --> n141
-  n152 --> n149
-  n152 --> n128
-  n152 --> n129
-  n152 --> n130
-  n152 --> n140
+  n152 --> n105
+  n152 --> n145
+  n152 --> n65
+  n153 --> n145
+  n153 --> n65
+  n154 --> n153
+  n154 --> n152
+  n154 --> n143
+  n154 --> n151
+  n154 --> n130
+  n154 --> n131
+  n154 --> n132
+  n154 --> n142
 ```
 
 It also needs Numbers (10), Text and characters (4), Lists and options (2), Input and output (12), Sequences (2).
@@ -400,16 +400,16 @@ flowchart TD
   n73["PrimIO<br>StreamIO<br>ImperativeIO"]
   n74["TextIO"]
   n76["BinIO"]
-  n102(["BIN_IO"])
-  n114(["IO"])
-  n135(["TEXT_STREAM_IO"])
-  n145(["TEXT_IO"])
-  n159["WideTextPrimIO<br>WideTextIO"]
-  n68 --> n114
+  n104(["BIN_IO"])
+  n116(["IO"])
+  n137(["TEXT_STREAM_IO"])
+  n147(["TEXT_IO"])
+  n161["WideTextPrimIO<br>WideTextIO"]
+  n68 --> n116
   n68 --> n66
-  n69 --> n114
+  n69 --> n116
   n69 --> n66
-  n70 --> n114
+  n70 --> n116
   n70 --> n66
   n72 --> n68
   n73 --> n72
@@ -420,11 +420,11 @@ flowchart TD
   n76 --> n70
   n76 --> n68
   n76 --> n67
-  n102 --> n70
-  n102 --> n72
-  n135 --> n68
-  n145 --> n135
-  n159 --> n74
+  n104 --> n70
+  n104 --> n72
+  n137 --> n68
+  n147 --> n137
+  n161 --> n74
 ```
 
 It also needs The operating system (3), Numbers (5), Sequences (3), Lists and options (3), Text and characters (2).
@@ -442,16 +442,19 @@ flowchart TD
   n92["Terminal"]
   n93(["SUBPROCESS"])
   n94["Subprocess"]
-  n95["Compiler"]
-  n96(["REPL"])
-  n97["Repl"]
-  n98(["DISPLAY"])
-  n99["Display"]
+  n95(["PTY"])
+  n96["Pty"]
+  n97["Compiler"]
+  n98(["REPL"])
+  n99["Repl"]
+  n100(["DISPLAY"])
+  n101["Display"]
   n89 --> n88
   n89 --> n87
+  n95 --> n94
 ```
 
-It also needs Input and output (2), Sequences (3), Text and characters (2), The language (3), The operating system (4), Numbers (2).
+It also needs Input and output (2), Sequences (3), Text and characters (2), The language (3), The operating system (5), Numbers (2).
 
 ---
 

@@ -1,7 +1,7 @@
 # tools/heapsim: the trace-driven heap simulators
 
 Two simulators replay a census trace (`docs/census.md`, format 2;
-`scripts/census.sh WORKLOAD` makes one under `tests/out/census/WORKLOAD`):
+`bin/rune-measure census WORKLOAD` makes one under `tests/out/census/WORKLOAD`):
 `bin/heapsim`, the heap-layout roadmap's, and `bin/gcsim`, the
 second-generation collector's. Both place the objects, the samples and the
 stores by the trace's own sizes (`w8_obj_size` of
@@ -44,28 +44,30 @@ the census's live bytes at every sample.
 * `bin/heapsim-gen` (`gen.c`) writes a synthetic trace of format 2 with
   exact liveness and computes what the stock collector would do on it, so
   that the simulator can be checked against an independent implementation:
-  `test.sh` does, on three seeds and three sample intervals, and then runs
+  `make check-heapsim` does, on three seeds and three sample intervals, and then runs
   every collector and layout once. `--pattern alt|satb|line1|nurs` writes
   the traces of gcsim's closed-form tests. Part of `make check-heapsim`
   (7 seconds).
-* `validate.sh [--out DIR] WORKLOAD...` holds the copier model to the stock
+* `bin/rune-heap-check heap-validate [--out DIR] WORKLOAD...` holds the copier model to the stock
   VM with no nursery: the workload runs on `bin/runevm --jit=off --nursery 0
   --stats` at five heap
-  settings, exactly as `scripts/census.sh` ran it, and the lower band's
-  collections and semispace must equal the stock's, with the stock's bytes
+  settings, exactly as `bin/rune-measure census` ran it, and the stock's
+  collections must lie between the two bands, the lower band's semispace
+  must equal the stock's, with the stock's bytes
   copied (with half the band's width as slack) and live data inside the
   band. The trace is made when it is missing or older than the bytecode or
   either VM; `CENSUS_TRACES` names the traces' directory and `CENSUS_EVERY`
   the interval of a census made here. `make check-heapsim` runs it on
   compile-sigs and intinf_fact; on the bootstrap at 32 KiB all five
   settings agree, the copied bytes within 0.1%.
-* `checktrace.py DIR` and `checkold.py DIR` (Python 3 with numpy) check a
-  trace's consistency and its stores' old values (`docs/census.md`,
-  *Checks*).
-* `sweep.sh WORKLOAD...` runs the heap-layout study's whole matrix on a
+* `bin/rune-heap-check heap-trace-check DIR` checks trace consistency in
+  Standard ML, without NumPy. `bin/rune-measure checkold DIR` checks stores' old
+  values in Standard ML using bounded binary reads
+  (`docs/census.md`, *Checks*).
+* `bin/rune-measure sweep WORKLOAD...` runs the heap-layout study's whole matrix on a
   trace (layouts, variants, collectors, sizes, bands) into
   `tests/out/heapsim/sweep-WORKLOAD.tsv`, `--reduced` the short matrix the
-  large MLton traces got; `report.py [DIR]` turns the sweeps of a
+  large MLton traces got; `bin/rune-measure sim-report [DIR]` turns the sweeps of a
   directory into the Markdown tables of that roadmap, one file per question
   (`sim-heap-bytes.md`, `sim-copied-64M.md`, `sim-survival.md`,
   `sim-remset.md`, ...).
@@ -164,57 +166,57 @@ Its tests and the tools that made the roadmap's tables:
   that die during the cycle, promotion, the remembered set and the cards at
   real addresses) and the identities with `bin/heapsim`'s copier, nursery
   and sticky models on gen.c's random traces, in both bands.
-* `sweep2.sh [-P N] [--plan full|reduced] [--only Q] [--out DIR] TRACE...`:
+* `bin/rune-measure sweep2 [-P N] [--plan full|reduced] [--only Q] [--out DIR] TRACE...`:
   the sweeps, one question at a time (nursery, old spaces at equal memory,
   fragmentation, the mutable space, SATB, placement order, 32-bit,
   events) into `DIR/sweep/QUESTION/NAME.tsv` and the events into
   `DIR/events`; `--plan reduced` for large traces. On compile-sigs the
   reduced plan takes 6 seconds.
-* `report2.py SWEEPDIR OUTDIR [TRACE...]`: the Markdown tables of the
+* `bin/rune-measure sim-report2 SWEEPDIR OUTDIR [TRACE...]`: the Markdown tables of the
   sweeps, one file per question (`sim-survival.md`, `sim-nursery.md`,
   `sim-remset.md`, `sim-oldspaces.md`, `sim-fragmentation.md`,
   `sim-image.md`, `sim-mutable.md`, `sim-satb.md`, `sim-order.md`,
-  `sim-footprint.md`), with modelled GC times from `timeline.py`'s
+  `sim-footprint.md`), with modelled GC times from `bin/rune-measure timeline`'s
   coefficients.
-* `timeline.py [--coef FILE] [--tier T] [--lazy-sweep] [--watermark] EVENTS...`:
+* `bin/rune-measure timeline [--coef FILE] [--tier T] [--lazy-sweep] [--watermark] EVENTS...`:
   pauses, percentiles, a histogram, the minimum mutator utilisation at 1
   to 200 ms and the footprint from `--events`, with a linear cost model
   whose coefficients are the unit costs `tests/gcbench` measured where they
   apply and placeholders (named in `PLACEHOLDERS`) where not; `--gclog`
   reads a VM's `--gc-log` (`docs/runtime.md`) instead, its measured pauses
   on its instruction clock.
-* `pauses.py EVENTSDIR VALIDATEDIR OUT.md [TRACE...]`: the pause and MMU
+* `bin/rune-measure pauses EVENTSDIR VALIDATEDIR OUT.md [TRACE...]`: the pause and MMU
   table of the events question, at the default tier and the interpreter's,
-  and the stock copier's measured pauses from `validate2.sh`'s logs beside
+  and the stock copier's measured pauses from `bin/rune-measure validate2`'s logs beside
   the model's.
-* `validate2.sh [--vm VM] [--out DIR] [--settings "H:F ..."] TRACE...`:
+* `bin/rune-measure validate2 [--vm VM] [--out DIR] [--settings "H:F ..."] TRACE...`:
   `validate.sh` for gcsim's copier, with the clock of every collection:
   the stock VM (`bin/runevm --nursery 0`, its `--gc-log`) runs the trace's own command
   at five heap settings; ok when the lower band's collections and
   semispace are the stock's and the copied bytes lie in the band (half its
   width as slack), band when the stock lies between the bands.
-* `validate-proto.sh --vm VM [--out DIR] [--nurseries "N ..."] TRACE...`:
+* `bin/rune-measure validate-proto --vm VM [--out DIR] [--nurseries "N ..."] TRACE...`:
   gcsim's nursery and copying old space (`--full appel`) against a VM with
   a nursery that takes `--nursery N` and writes `--gc-log` with minor and
   full lines (the roadmap's prototype, until its M3 builds the nursery):
   the minors and full collections must agree and the promoted bytes lie in
   the band (above it is nepotism).
-* `pretenure.sh [--out DIR] LEARN-TRACE APPLY-TRACE [NURSERY] [OLD]`:
+* `bin/rune-measure pretenure [--out DIR] LEARN-TRACE APPLY-TRACE [NURSERY] [OLD]`:
   pretenuring by allocation site, learned on one run (or its first half)
   and applied to another (or the second half) at 50, 80 and 95% survival.
-* `report3.py LOGDIR OUTDIR`: `sim-validation.md` and `sim-pretenure.md`
-  from the outputs of `test2.sh`, `gcsim --check`, `validate2.sh`,
-  `validate-proto.sh` (kept as `*.log` or `*.txt` in LOGDIR) and
-  `pretenure.sh --out LOGDIR`.
+* `bin/rune-measure sim-report3 LOGDIR OUTDIR`: `sim-validation.md` and `sim-pretenure.md`
+  from the outputs of `test2.sh`, `gcsim --check`, `bin/rune-measure validate2`,
+  `bin/rune-measure validate-proto` (kept as `*.log` or `*.txt` in LOGDIR) and
+  `bin/rune-measure pretenure --out LOGDIR`.
 
-To reproduce the roadmap's simulator tables: `scripts/census.sh --graph`
+To reproduce the roadmap's simulator tables: `bin/rune-measure census --graph`
 on every workload of its *The workloads* (the bootstrap at 32 KiB,
 compile-sigs, runedoc-page, the programs of tests/perf, the lazy programs
 and `mlton-NAME` for MLton's benchmarks at the sizes of
 `tests/perf/mlton-bench.txt`), then on each trace `bin/gcsim --check`,
-`tools/heapsim/sweep2.sh` (`--plan reduced` for the MLton programs) and
-`validate2.sh`, `pretenure.sh` on the compiler's traces, and
-`report2.py tests/out/gcsim/sweep OUT`, `pauses.py tests/out/gcsim/events
-tests/out/gcsim/validate OUT/sim-pauses.md` and `report3.py
+`bin/rune-measure sweep2` (`--plan reduced` for the MLton programs) and
+`bin/rune-measure validate2`, `bin/rune-measure pretenure` on the compiler's traces, and
+`bin/rune-measure sim-report2 tests/out/gcsim/sweep OUT`, `bin/rune-measure pauses tests/out/gcsim/events
+tests/out/gcsim/validate OUT/sim-pauses.md` and `bin/rune-measure sim-report3
 tests/out/gcsim OUT`. The traces of the experiments (2026-10-05 and 06)
 are 20 GB.

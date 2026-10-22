@@ -14,7 +14,7 @@ stays on its standard output and error:
 
 * **`rune-repl --engine`** reads messages on the descriptor 3 and writes them
   on 4, which a front that starts the engine as its child gives it
-  (`tests/repl-protocol/run.py` does, with two pipes).
+  (`bin/rune-protocol-check repl NAME` does, with two pipes).
 * **`rune-repl --engine-connect PORT`** connects to `127.0.0.1:PORT` and
   writes the token in `RUNE_ENGINE_TOKEN` as its first line, then speaks
   the protocol on the connection: for a front that cannot pass
@@ -142,7 +142,7 @@ that is no JSON does not end the session.
 
 ## Tests
 
-`tests/repl-protocol/run.py` (`make test-repl-protocol`) plays each
+`bin/rune-protocol-check repl NAME` (`make test-repl-protocol`) plays each
 `NAME.script` to the engine and wants `NAME.expected`: evaluation, values
 opened and released, diagnostics, an exception's trace, completeness,
 completion, inspection, the type at a position, a check, a file used, the

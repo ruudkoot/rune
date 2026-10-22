@@ -49,12 +49,12 @@ one. Part of `make check`.
   collections took out and the bytes they held, the old-to-young updates,
   and under `BARRIER_CARD` the cards dirtied. The strict kernels under
   `L1+PAIRS2` against `L1+PAIRS` are what the reserved code costs SML.
-  `measure.sh -k "lazy_case_header0 lazy_case_code0 ..." L1+PAIRS2` measures
+  `bin/rune-measure layout-measure -k "lazy_case_header0 lazy_case_code0 ..." L1+PAIRS2` measures
   them; they are not in its default list.
-* `measure.sh` runs every configuration under `perf stat` (five runs, the
+* `bin/rune-measure layout-measure` runs every configuration under `perf stat` (five runs, the
   least cycles, reruns when the spread exceeds 5%, waits for an idle
-  machine) into `tests/out/layouts/harness-raw.tsv`; `micro.sh` the
-  primitive operations into `harness-micro.tsv`; `tables.py [DIR]`
+  machine) into `tests/out/layouts/harness-raw.tsv`; `bin/rune-measure layout-micro` the
+  primitive operations into `harness-micro.tsv`; `bin/rune-measure layout-tables [DIR]`
   (Python 3, for the tables only) makes the roadmap's tables from them:
   cycles, instructions and L1d misses relative to L0, the collector's
   share, the raw counters and the micro-benchmark.

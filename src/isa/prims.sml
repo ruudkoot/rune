@@ -858,5 +858,12 @@ struct
           doc = "Whether two strings are the same: their lengths, then their bytes. `=` where the compiler knows the type is string; it walks nothing else, so it never stops at the work limit of structural equality."}],
        group "vectors made without a list (performance M8, D8 A)"
         [{name = "array_to_vector", arity = 1, ty = "'a array -> 'a vector", effects = [ReadsHeap, Allocates],
-          doc = "A vector of the elements of an array, copied: what Vector.tabulate and Array.vector make, the array filled in place first."}]]
+          doc = "A vector of the elements of an array, copied: what Vector.tabulate and Array.vector make, the array filled in place first."}],
+       group "pseudo-terminals (test runner G8)"
+        [{name = "pty_spawn", arity = 6, ty = "string * string list * string list * string * int * int -> int list", effects = anything,
+          doc = "A child on a fresh terminal: program, argv, environment, directory, columns, rows; [pid, session, read descriptor, write descriptor], or [] and sys_errno on failure. Dimensions are 1..32767; POSIX children own a controlling session; Windows uses ConPTY."},
+         {name = "pty_resize", arity = 3, ty = "int * int * int -> int", effects = anything,
+          doc = "Resize a pseudo-terminal session to columns and rows; 0 or ~1 with sys_errno. Notifies its foreground program."},
+         {name = "pty_close", arity = 1, ty = "int -> int", effects = anything,
+          doc = "Close a pseudo-terminal session and its borrowed descriptors, discarding unread output and disconnecting attached programs; reap the child separately. 0 or ~1 with sys_errno."}]]
 end

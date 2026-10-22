@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The other side of tests/lib/zmtp/interop.sh: a peer written from ZMTP
+"""The other side of bin/rune-protocol-check interop zmtp: a peer written from ZMTP
 3.1 (rfc.zeromq.org/spec/37) with the standard library alone, which
 talks to lib/zmtp's ROUTER as a DEALER, to its REP as a REQ and to its PUB
 as a SUB, and pings the ROUTER's connection (PING and PONG).

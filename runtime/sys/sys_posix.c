@@ -722,6 +722,66 @@ int64_t sys_spawn_with(const char *path, char *const argv[], char *const envp[],
     _exit(126);
 }
 
+/* Pseudo-terminals: the master is owned by a slot, never by a borrowed
+   SML descriptor. The child owns a fresh session and controlling terminal. */
+typedef struct { int fd; } PtySession;
+static PtySession *pty_sessions;
+static int pty_length;
+static int pty_slot(void) {
+    for (int i = 0; i < pty_length; i++) if (pty_sessions[i].fd < 0) return i;
+    if (pty_length == INT_MAX) { errno = EMFILE; return -1; }
+    PtySession *next = realloc(pty_sessions, (size_t)(pty_length + 1) * sizeof *next);
+    if (!next) { errno = ENOMEM; return -1; }
+    pty_sessions = next;
+    pty_sessions[pty_length].fd = -1;
+    return pty_length++;
+}
+int64_t sys_pty_spawn(const char *path, char *const argv[], char *const envp[], const char *dir,
+                      int columns, int rows, int out[3]) {
+    if (columns < 1 || columns > 32767 || rows < 1 || rows > 32767) { errno = EINVAL; return -1; }
+    int slot = pty_slot();
+    if (slot < 0) return -1;
+    int master = posix_openpt(O_RDWR | O_NOCTTY | O_CLOEXEC);
+    if (master < 0) return -1;
+    if (grantpt(master) != 0 || unlockpt(master) != 0) { int e = errno; close(master); errno = e; return -1; }
+    char *name = ptsname(master);
+    if (!name) { int e = errno; close(master); errno = e; return -1; }
+    struct winsize size = { (unsigned short)rows, (unsigned short)columns, 0, 0 };
+    if (ioctl(master, TIOCSWINSZ, &size) != 0) { int e = errno; close(master); errno = e; return -1; }
+    fflush(stdout); fflush(stderr);
+    pid_t pid = fork();
+    if (pid < 0) { int e = errno; close(master); errno = e; return -1; }
+    if (pid == 0) {
+        if (setsid() < 0) _exit(126);
+        int slave = open(name, O_RDWR);
+        if (slave < 0 || ioctl(slave, TIOCSCTTY, 0) < 0) _exit(126);
+        if (dir && chdir(dir) < 0) _exit(126);
+        sigset_t empty;
+        sigemptyset(&empty); sigprocmask(SIG_SETMASK, &empty, NULL);
+        for (int sig = 1; sig < 65; sig++) signal(sig, SIG_DFL);
+        for (int fd = 0; fd < 3; fd++) if (dup2(slave, fd) < 0) _exit(126);
+        if (slave > 2) close(slave);
+        close(master);
+        sys_exec(path, argv, envp, 0);
+        _exit(126);
+    }
+    pty_sessions[slot].fd = master;
+    out[0] = out[1] = master; out[2] = slot;
+    return pid;
+}
+int sys_pty_resize(int token, int columns, int rows) {
+    if (token < 0 || token >= pty_length || pty_sessions[token].fd < 0) { errno = EBADF; return -1; }
+    if (columns < 1 || columns > 32767 || rows < 1 || rows > 32767) { errno = EINVAL; return -1; }
+    struct winsize size = { (unsigned short)rows, (unsigned short)columns, 0, 0 };
+    return ioctl(pty_sessions[token].fd, TIOCSWINSZ, &size);
+}
+int sys_pty_close(int token) {
+    if (token < 0 || token >= pty_length || pty_sessions[token].fd < 0) { errno = EBADF; return -1; }
+    int fd = pty_sessions[token].fd;
+    pty_sessions[token].fd = -1;
+    return close(fd);
+}
+
 int sys_wait_usage(int64_t pid, int flags, int64_t out[6]) {
     int status = 0;
     struct rusage u;

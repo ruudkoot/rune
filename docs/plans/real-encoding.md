@@ -74,8 +74,8 @@ stays on the prototype's branch for comparison, and every real boxed
 ## The experiments
 
 Each is small unless it says otherwise. The instruments exist: the
-census (`scripts/census.sh --summary`, its `## reals` table), the eight
-programs (`tests/external/run-mlton-bench.sh`), `scripts/perf-cycles.sh`,
+census (`bin/rune-measure census --summary`, its `## reals` table), the eight
+programs (`tests/external/run-mlton-bench.sh`), `bin/rune-measure perf-cycles`,
 and `perf stat` on an idle machine, the least of three runs.
 
 ### 1. Zero as a pointer

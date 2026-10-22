@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "cross_source_sha256": "522e792e5bbfec41e2363c40527b0ff3d90c1f09e728ab8aa00fea6a8185926e",
+  "fragments": {
+    "image": "structure I = IntInf\nval available = _prim \"intinf_gmp_available\" : unit -> bool\nval limit = _prim \"intinf_max_bits\" : unit -> int\nval x = I.+(I.pow(I.fromInt 2,500),I.fromInt 17)\nval values = [x,I.~ x,I.fromInt 0]\nval texts = List.map I.toString values\nval () = case Runtime.save \"saved.img\" of\n  Runtime.Saved => print \"saved\\n\"\n| Runtime.Restored =>\n    let val (q,r) = I.divMod(x,I.fromInt (~7))\n    in if values=[x,I.~ x,I.fromInt 0] andalso List.map I.toString values=texts andalso\n          I.+(I.*(q,I.fromInt (~7)),r)=x andalso\n          I.<=(I.fromInt (~6),r) andalso I.<=(r,I.fromInt 0)\n       then print(\"restored \" ^ Bool.toString(available()) ^ \" \" ^ Int.toString(limit()) ^ \"\\n\")\n       else raise Fail \"cross-image arithmetic\"\n    end\n",
+    "limit": "val () = print(IntInf.toString(IntInf.pow(IntInf.fromInt 2,4096)))\n",
+    "fork": "structure I = IntInf\nval available = _prim \"intinf_gmp_available\" : unit -> bool\nval previous = available()\nval x = I.+(I.pow(I.fromInt 2,200),I.fromInt 1)\nval () = case Posix.Process.fork() of\n  NONE => (if available()=previous andalso I.div(I.*(x,x),x)=x\n           then print \"child pass\\n\" else raise Fail \"fork arithmetic\";\n           TextIO.flushOut TextIO.stdOut; Posix.Process.exit 0w0)\n| SOME pid => (case Posix.Process.waitpid(Posix.Process.W_CHILD pid,[]) of\n    (_,Posix.Process.W_EXITED) => print \"parent pass\\n\"\n  | _ => raise Fail \"child failed\")\n",
+    "install-arithmetic": "fun fact (0,acc) = acc\n  | fact (n,acc) = fact(n-1,IntInf.*(IntInf.fromInt n,acc))\nval () = print(IntInf.toString(fact(75,IntInf.fromInt 1)) ^ \"\\n\")\n"
+  },
+  "factorial_75": "24809140811395398091946477116594033660926243886570122837795894512655842677572867409443815424000000000000000000\n"
+}

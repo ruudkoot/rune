@@ -165,6 +165,8 @@ annotate "demand" "host=no" in
   terminal.sml
   subprocess_sig.sml
   subprocess.sml
+  pty_sig.sml
+  pty.sml
   compiler.sml
   repl_sig.sml
   repl.sml
@@ -322,6 +324,7 @@ annotate "seal" "host=no" in
   seal_compiler.sml
   seal_terminal.sml
   seal_subprocess.sml
+  seal_pty.sml
   seal_repl.sml
   seal_display.sml
 end

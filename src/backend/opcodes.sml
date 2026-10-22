@@ -4,8 +4,8 @@ struct
   (* the version of the layout of an .rbc, and the fingerprint of the
      instruction set, which an .rbc and an image carry *)
   val rbcVersion = 6
-  val fingerprint = 8550015
-  val fingerprintHex = "0082767f"
+  val fingerprint = 14367066
+  val fingerprintHex = "00db395a"
   val HALT = 0
   val CONST = 1
   val INT = 2

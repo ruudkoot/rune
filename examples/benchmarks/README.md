@@ -627,55 +627,55 @@ the report and per-wave evidence.
 The independent and negative tests are:
 
 ```sh
-sh tests/benchmarks/check-pilots.sh
-sh tests/benchmarks/check-classic.sh
-sh tests/benchmarks/check-streams.sh
-sh tests/benchmarks/check-numeric-ports.sh
-sh tests/benchmarks/check-symbolic-ports.sh
-sh tests/benchmarks/check-gc-ports.sh
-sh tests/benchmarks/check-extended-gcd.sh
-sh tests/benchmarks/check-treejoin.sh
-sh tests/benchmarks/check-word-set.sh
-sh tests/benchmarks/check-power-series.sh
-sh tests/benchmarks/check-shootout.sh
-sh tests/benchmarks/check-ocaml-lazy.sh
-sh tests/benchmarks/check-sequence-cps.sh
-sh tests/benchmarks/check-compress.sh
-sh tests/benchmarks/check-rsa.sh
-sh tests/benchmarks/check-nofib-life.sh
-sh tests/benchmarks/check-clausify.sh
-sh tests/benchmarks/check-puzzle.sh
-sh tests/benchmarks/check-sandmark-fft.sh
-sh tests/benchmarks/check-sandmark-numerical.sh
-sh tests/benchmarks/check-multilayer.sh
-sh tests/benchmarks/check-game-numerical.sh
-sh tests/benchmarks/check-pidigits5.sh
-sh tests/benchmarks/check-evolutionary.sh
-sh tests/benchmarks/check-smallpt.sh
-sh tests/benchmarks/check-revcomp2.sh
-sh tests/benchmarks/check-knucleotide.sh
-sh tests/benchmarks/check-packed-nucleotide.sh
-sh tests/benchmarks/check-integer.sh
-sh tests/benchmarks/check-secretary.sh
-sh tests/benchmarks/check-mandel.sh
-sh tests/benchmarks/check-mandel2.sh
-sh tests/benchmarks/check-boyer2.sh
-sh tests/benchmarks/check-pretty.sh
-sh tests/benchmarks/check-last-piece.sh
-sh tests/benchmarks/check-typed-boyer.sh
-sh tests/benchmarks/check-eliza.sh
-sh tests/benchmarks/check-infer.sh
-sh tests/benchmarks/check-cichelli.sh
-sh tests/benchmarks/check-scs.sh
-python3 tests/benchmarks/test-inventory.py
-python3 scripts/benchmark-inventory.py --check
+sh bin/rune-bench-check extra
+sh bin/rune-bench-check extra
+sh bin/rune-bench-check suite streams
+sh bin/rune-bench-check suite numeric-ports
+sh bin/rune-bench-check suite symbolic-ports
+sh bin/rune-bench-check suite gc-ports
+sh bin/rune-bench-check suite extended-gcd
+sh bin/rune-bench-check suite treejoin
+sh bin/rune-bench-check suite word-set
+sh bin/rune-bench-check suite power-series
+sh bin/rune-bench-check suite shootout
+sh bin/rune-bench-check suite ocaml-lazy
+sh bin/rune-bench-check suite sequence-cps
+sh bin/rune-bench-check suite compress
+sh bin/rune-bench-check suite rsa
+sh bin/rune-bench-check suite nofib-life
+sh bin/rune-bench-check suite clausify
+sh bin/rune-bench-check suite puzzle
+sh bin/rune-bench-check suite sandmark-fft
+sh bin/rune-bench-check suite sandmark-numerical
+sh bin/rune-bench-check suite multilayer
+sh bin/rune-bench-check suite game-numerical
+sh bin/rune-bench-check suite pidigits5
+sh bin/rune-bench-check suite evolutionary
+sh bin/rune-bench-check suite smallpt
+sh bin/rune-bench-check suite revcomp2
+sh bin/rune-bench-check suite knucleotide
+sh bin/rune-bench-check suite packed-nucleotide
+sh bin/rune-bench-check suite integer
+sh bin/rune-bench-check suite secretary
+sh bin/rune-bench-check suite mandel
+sh bin/rune-bench-check suite mandel2
+sh bin/rune-bench-check suite boyer2
+sh bin/rune-bench-check suite pretty
+sh bin/rune-bench-check suite last-piece
+sh bin/rune-bench-check suite typed-boyer
+sh bin/rune-bench-check suite eliza
+sh bin/rune-bench-check suite infer
+sh bin/rune-bench-check suite cichelli
+sh bin/rune-bench-check suite scs
+python3 bin/rune-bench-check inventory
+bin/rune-generate inventory --check
 python3 tests/benchmarks/latency-oracle.py --check
 ```
 
 The source audit can additionally be reproduced with all five pinned trees:
 
 ```sh
-python3 scripts/benchmark-inventory.py --check \
+bin/rune-generate inventory --check \
   --source mlton=/path/to/mlton \
   --source smlnj=/path/to/smlnj-benchmarks \
   --source mlkit=/path/to/mlkit \
@@ -4584,9 +4584,9 @@ messages' definition without running the program (`--check` compares them).
 | normal | `10000 1000000 1024 0` | `10000 1000000 1024 14533307` |
 | large | `100000 3000000 1024 0` | `100000 3000000 1024 9991721` |
 
-The evaluation set (`scripts/gc-eval.sh`, [docs/testing.md](../../docs/testing.md))
+The evaluation set (`bin/rune-measure gc-eval`, [docs/testing.md](../../docs/testing.md))
 runs N = 10,000, 100,000 and 900,000 (about 10 MB, 100 MB and 0.93 GB live)
-for 3,000,000 steps with TIME 1, and `scripts/gc-probe32.sh` runs N = 50,000
+for 3,000,000 steps with TIME 1, and `bin/rune-measure gc-probe32` runs N = 50,000
 for 1,000,000 steps on the 32-bit VM. Today's copier pauses about 1.5 ms for
 every MB live here, and holds five to ten times the live data.
 
@@ -22414,7 +22414,7 @@ character counter uses IntInf solely for portable checking: the large total
 
 Unmodified GHC 9.4.7 agrees with every supplied FAST/NORM/SLOW hash fixture;
 export-only observers supply complete batch and eleven interactive command
-outputs plus rational arithmetic cases. Run sh tests/benchmarks/check-bspt.sh for the 89-check target. It exercises these
+outputs plus rational arithmetic cases. Run sh bin/rune-bench-check suite bspt for the 89-check target. It exercises these
 outputs, wrapped arithmetic, noncanonical ordering, ties, known areas,
 incorrect-result rejection, subtree demand and numeric sharing across calls.
 See the validation archive for actual host/configuration outcomes. Full SML
@@ -22506,7 +22506,7 @@ character counter uses IntInf solely for portable checking: the large total
 
 Unmodified GHC 9.4.7 agrees with every supplied FAST/NORM/SLOW hash fixture;
 export-only observers supply complete batch and eleven interactive command
-outputs plus rational arithmetic cases. Run sh tests/benchmarks/check-bspt.sh for the 89-check target. It exercises these
+outputs plus rational arithmetic cases. Run sh bin/rune-bench-check suite bspt for the 89-check target. It exercises these
 outputs, wrapped arithmetic, noncanonical ordering, ties, known areas,
 incorrect-result rejection, subtree demand and numeric sharing across calls.
 See the validation archive for actual host/configuration outcomes. Full SML

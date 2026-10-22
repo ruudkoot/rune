@@ -3,7 +3,7 @@
    step, the layout of the whole input at 80 columns, the 24 rows a
    terminal shows of it, and the diff from the frame before -- what
    LineEdit.readLine does for a key -- for keys typed at the end and in
-   the middle. scripts/perf-repl.sh runs it; it prints the median and the
+   the middle. bin/rune-measure perf-repl runs it; it prints the median and the
    worst in milliseconds. *)
 structure L = LineEditFn (structure Device = PosixDevice)
 

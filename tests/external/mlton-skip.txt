@@ -1,4 +1,4 @@
-# Programs of MLton's regression suite that tests/external/run-mlton.sh
+# Programs of MLton's regression suite that bin/rune-external regression
 # skips, an expectation to a line in the one format (docs/testing.md,
 # Expectations): `* | NAME | UNSUPPORTED | KIND: reason`, of the kinds below.
 #   EXTENSION   needs an extension of MLton or SML/NJ (MLton.*, SMLofNJ.*, a

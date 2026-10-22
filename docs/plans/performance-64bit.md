@@ -259,7 +259,7 @@ Each is small unless it says otherwise. The programs are at the end.
   fields of tuples and records, and how many of those are read by
   polymorphic code.
 * **How.** Experiment 1's counter for fields, and the census's field
-  table (`scripts/census.sh --summary`) extended to count loads by the
+  table (`bin/rune-measure census --summary`) extended to count loads by the
   reader's representation, on `tree`, `nucleic`, `raytrace` and
   `barnes-hut`. The same count is experiment 3 of `real-encoding.md`.
 * **What it changes.** The decision the gate of M4 left for after M5.
@@ -301,7 +301,7 @@ Each is small unless it says otherwise. The programs are at the end.
   `examples/benchmarks`, so no budget moves when 64-bit code gets
   slower or faster.
 * **How.** `stream`, `tree`, `fnv` and one of the programs of reals as
-  workloads of `scripts/perf-cycles.sh`, with count budgets, when M5
+  workloads of `bin/rune-measure perf-cycles`, with count budgets, when M5
   re-bases the budgets.
 
 ### 10. Arithmetic and allocation that still call C

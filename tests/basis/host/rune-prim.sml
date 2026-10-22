@@ -1571,6 +1571,12 @@ struct
   fun proc_wait (_ : int, _ : int) : int list = unsupported []
   fun proc_kill (_ : int, _ : int) = unsupported ~1
 
+  (* The host Basis shim has no PTY backend. As with Subprocess, the
+     primitive boundary records ENOSYS and returns its failure sentinel. *)
+  fun pty_spawn (_ : string, _ : string list, _ : string list, _ : string, _ : int, _ : int) : int list = unsupported []
+  fun pty_resize (_ : int, _ : int, _ : int) = unsupported ~1
+  fun pty_close (_ : int) = unsupported ~1
+
   fun posix_getgr (name, gid) =
     let
       val gr = if name = "" then Posix.SysDB.getgrgid (Posix.ProcEnv.wordToGid (SysWord.fromInt gid))
