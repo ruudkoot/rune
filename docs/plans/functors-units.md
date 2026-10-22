@@ -1,0 +1,21 @@
+- this is a draft roadmap to change/fix how functors and units are handled in rune.
+- relevant documents are:
+  - docs/plans/functors.md
+  - docs/plans/units-fixes.md
+  - docs/plans/build-cache-issues.md
+- the scope of this roadmap is:
+  - fix "F4. A hash that costs less a byte" by making div/mod with constants faster. not because it is very relevant for this roadmap - it is really for docs/plans/performance.md or docs/plans/jit.md - but because we may lose the testcase after this roadmap is done.
+  - when doing separate/incremental compilation rune should elaborate the body of the functor once. when doing whole program compilation is continues to make copies of the fuctor. the reason for this is based on the following assumptions:
+    - copying the functor generates faster code and whole program compilation is intended to generated the fastest code (e.g. via link-time expansion)
+    - elaborating once makes is faster and thus improves compile time - the incremental compilation modes are supposed to be fast
+    - elaborating once allows us to significantly simply how units are compiled as a lot of the complexity comes from how the units / build cache / pickling needs to handles the functors and a lot of this complexity goes away when functors only need to be elaborated once
+  - all the above assumptions need to be validated using prototypes and benchmarks as part of this roadmap
+  - improve the performance of incremental compilation (F1 F2 and F3 in units-fixes.md)
+    - we currently seem to be hashing strings. i.e. we pretty print data types then hash them. F3 suggest to use hashes of hashes. i wonder if we can instead directly hash the underlying datatype w/o going via a pretty print.
+    - check if this is feasible and if this indeed increases performance (w/o introducing correctness issues)
+    - you should also look at faster hash functions
+  - i believe rune is currently more lenients in the typing of fuctors applications than the sml definitions (like mlton is). we should follow the definition. it may be that the leniency is only possible because of copying the fuctors at each application. if it is possible to retain leniency when elaborating functors only once w/o introducing new complexity then you may consider making this into a language feature like we did for flex record typing. we default to the sml97 spec but then offer mlton's more leninet typing as an option.
+  - in functors.md it is noted that "SML/NJ, which never elaborates a body again, is the only one that does not blow up on nested functors." Rune should not blow up either.
+- useful things to study are
+  - the SMLSC (SML separate compilation) literature
+  - unit/build cache/pickling code in other compilers

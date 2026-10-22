@@ -110,6 +110,12 @@ A tier or a profile is a tag (`--tier T`, `--profile P`):
 The profiles `vm` and `library` hold what `make check` does not run; the
 others are parts of it, to run alone while iterating.
 
+`runner/check-requirements` guards the portable tier against native Windows
+requirements, retains the Windows installer's platform selections, and
+keeps the independent notebook peers in `check`. A private Python fixture
+also verifies that `doctor` rejects missing notebook modules before a suite
+starts.
+
 `--affected` keeps the tests that cover what changed since `HEAD`
 (`--since REV`, `--changed FILE`): each group of tests names the paths it
 covers (`covers:GLOB`, in `tests/runner/*.sml`). Compiler, runtime, Basis,
@@ -649,7 +655,10 @@ install tier retains bytecode, MLton and SML/NJ. All stage prefixes are private.
 Distribution assertions read archive metadata in SML and use independent
 ELF/PE fixture bytes. Compression decoding uses gzip/unzip, declared as
 capabilities. The Windows installer case uses `--no-register` and is gated
-on Windows interop.
+on Windows interop. It belongs to `test-windows`, the `windows`/`vm` profiles
+and `nightly`; it is also available through `test-dist`. The portable
+`check` tier retains the archive, metadata, binary-header, POSIX installer
+and archive-fault cases, without requiring Windows.
 
 
 The incremental cache controller is `bin/rune-incremental`. `scenarios`
@@ -708,7 +717,11 @@ Protocol drivers use bin/rune-protocol-check: repl NAME [--update], dap,
 kernel, notebook and interop LIB COMPILER VM OUT. DAP and kernel accept
 --windows; the root inventory retains separate pipe and connection ways.
 Protocol assertions and Windows staging are SML. Python capabilities belong
-to the independent Jupyter/ZMTP peers and optional jupyter_client. Faults
+to the independent Jupyter/ZMTP peers. The `check` tier requires
+`jupyter_client` and `zmq` for its independent notebook peer; on Ubuntu use
+`python3-jupyter-client` and `python3-zmq`. `make doctor` checks the imports
+with the same `python3` used by the peer. Direct controller use can still
+skip that peer when its modules are unavailable. Faults
 exercise malformed headers/signatures, wrong reply IDs, premature exit and
 lost interrupts, with kernel shutdown and leak detection during failures.
 

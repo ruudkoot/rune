@@ -72,14 +72,18 @@ struct
         val install = group "install" "test-install" "tests/install/*"
           (List.map (fn name => Test.requires (["native-host"] @ (if name = "rbc" then [] else [name]))
                  (job name ["scenario-install", name] [] [])) installHosts)
-        val dist = Test.requires ["gzip", "unzip", "tar"] (group "dist" "test-dist" "tests/dist/*"
+        val dist = Test.requires ["gzip", "unzip", "tar"]
+          (tagged ["test-dist", "scenarios-dist", "covers:tests/dist/*"] (Test.describe "dist"
+          [tagged ["check"] (Test.describe ""
           [job "prepare" ["scenario-dist-prepare"] [] [],
            job "archives" ["scenario-dist-archives"] ["scenarios/dist/prepare"] [],
            job "metadata" ["scenario-dist-metadata"] ["scenarios/dist/prepare"] [],
            job "installer" ["scenario-dist-installer"] ["scenarios/dist/archives"] [],
            job "binaries" ["scenario-dist-binaries"] ["scenarios/dist/prepare"] [],
-           job "faults" ["scenario-archive-faults"] [] [],
-           Test.requires ["windows-installer"] (job "windows" ["scenario-dist-windows"] ["scenarios/dist/archives"] [])])
+           job "faults" ["scenario-archive-faults"] [] []]),
+           tagged ["test-windows", "nightly", "windows", "vm"]
+             (Test.requires ["windows-installer"]
+               (job "windows" ["scenario-dist-windows"] ["scenarios/dist/archives"] []))]))
     in Test.describe "scenarios" [deps, builds, dynamic, units, install, dist] end
   val capabilities =
     [{name = "gzip", probe = "command -v gzip", hint = "install gzip for distribution decoding"},

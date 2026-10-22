@@ -39,8 +39,11 @@ struct
           let val status=Children.exec Subprocess.unlimited
                   (fn env => List.foldl (fn ((key,value),env) => setEnv (key,value) env) env changes)
                   {cmd=args,dir=SOME root,stdin="",stdout=directory ^ "/" ^ name ^ ".out",stderr=directory ^ "/" ^ name ^ ".err",timeout=30}
+              val ()=write (directory ^ "/" ^ name ^ ".status",Int.toString status ^ "\n")
               val out=read (directory ^ "/" ^ name ^ ".out")
-          in need (status<>0 andalso status<>124 andalso String.isSubstring expected out,"controller accepted " ^ name ^ ": " ^ out);say ("PASS protocol rejects " ^ name ^ "\n") end
+          in need (status<>0 andalso status<>124 andalso String.isSubstring expected out,
+                   "unexpected " ^ name ^ " result (exit " ^ Int.toString status ^ "): " ^ out ^ read (directory ^ "/" ^ name ^ ".err"));
+             say ("PASS protocol rejects " ^ name ^ "\n") end
         fun kernel mode =
           let val (file,_)=KernelChecks.connection (directory ^ "/" ^ mode) "fault-key"
               val child as (pid,_)=ProtocolChecks.launch directory ("peer-" ^ mode) [worker,"fault-peer",mode,file] (Posix.ProcEnv.environ ())
@@ -52,11 +55,14 @@ struct
         val fixture=directory ^ "/fixture"
         val ()=(mkdirs (fixture ^ "/bin");mkdirs (fixture ^ "/tests/repl-protocol"))
         fun repl (name,program,expected) =
-          let val ()=executable (fixture ^ "/bin/rune-repl") program
+          (* Read the request before the planted reply/exit: otherwise a
+             fast peer closes fd 3 while the controller is still writing,
+             testing SIGPIPE instead of the selected framing/lifecycle fault. *)
+          let val ()=executable (fixture ^ "/bin/rune-repl") ("IFS= read -r request <&3 || exit 2\n" ^ program)
               val ()=write (fixture ^ "/tests/repl-protocol/" ^ name ^ ".script","send {\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}\nuntil 1\nend\n")
           in rejected name [("RUNE_TEST_ROOT",fixture)] [worker,"repl",name] expected end
         val ()=List.app repl
-             [("bad-headers","printf 'Content-Length: invalid\\r\\n\\r\\n' >&4","FAIL protocol"),
+             [("bad-headers","printf 'Content-Length: invalid\\r\\n\\r\\n' >&4","a length that is no number"),
               ("wrong-id","printf '%s\\n' '{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{}}' >&4","engine closed its channel"),
               ("early-exit","exit 0","engine closed its channel")]
         val ()=rejected "lost-interrupt" [("PROTOCOL_TIMEOUT","3")] [worker,"fault-lost-interrupt"] "kernel reply timed out"

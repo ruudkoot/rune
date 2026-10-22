@@ -33,7 +33,9 @@ jobs:
         run: |
           sudo apt-get update -q
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
-            libgmp-dev gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind
+            libgmp-dev gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind \
+            python3-jupyter-client python3-zmq
+          python3 -c 'import jupyter_client, zmq'
 
       - name: Host SML systems (cache)
         uses: actions/cache@v4

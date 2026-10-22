@@ -81,7 +81,8 @@ struct
      {name = "windows", probe = "bin/rune-windows directory && command -v x86_64-w64-mingw32-gcc",
       hint = "Windows under WSL with interop (RUNE_WINDOWS_DIR names a directory there) and mingw-w64 (apt: gcc-mingw-w64-x86-64 gcc-mingw-w64-i686)"}]
     @ List.map (fn h => {name = h, probe = "test -x bin/rune-" ^ h, hint = "run: make hosts, then make " ^ h}) Lang.hosts
-    @ [{name="jupyter-client",probe="python3 -c 'import jupyter_client'",hint="install Python jupyter_client for its independent notebook peer"}]
+    @ [{name="jupyter-client",probe="python3 -c 'import jupyter_client, zmq'",
+        hint="install jupyter_client and pyzmq for python3 (Ubuntu: python3-jupyter-client python3-zmq)"}]
     @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities @ ScenarioJobs.capabilities @ GMPJobs.capabilities @ TerminalJobs.capabilities
     @ [{name = "grep-pcre", probe = "printf LIST | grep -P '^LIST$'", hint = "GNU grep with PCRE for LAWS_PROGRAMS"}]
 
@@ -120,13 +121,49 @@ struct
   val matrixFaults = Test.tag "check" (Test.tag "quick" (Test.tag "covers:tests/runner/matrix*.sml"
     (Test.tag "covers:tests/runner/hostlaws.sml" (Test.tag "covers:tests/runner/smlscan.sml"
       (Test.requires ["grep-pcre"] (Test.describe "runner" [LibHosts.job ("matrix-controller-faults", ["matrix-controller-faults"], [], 300)]))))))
+  val checkRequirements = List.foldl (fn (tag, tree) => Test.tag tag tree)
+    (Test.describe "runner" [LibHosts.job ("check-requirements", ["check-requirements"], [], 300)])
+    ["check", "quick", "covers:tests/runner/scenariojobs.sml", "covers:scripts/doctor.sh"]
   (* These inputs can change every produced program or the machinery that
      judges it. Give every leaf their coverage, even when a narrower group
      also names the same file (for example Basis docs or JIT dump checks). *)
   val broadInputs = ["src/*", "runtime/*", "lib/basis/*", "lib/test/runner/*",
                      "Makefile", "tools/builder/*", "tools/generate/*", "scripts/*"]
   val tests = List.foldl (fn (path, tree) => Test.tag ("covers:" ^ path) tree)
-    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, Canary.tests]) broadInputs
+    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, Canary.tests]) broadInputs
+
+  fun requirements () =
+    let val rows = Test.leaves tests
+        fun need (ok, why) = if ok then () else raise Fail ("check requirements: " ^ why)
+        fun meta name = case List.find (fn {path, ...} => path = name) rows of
+            SOME {meta, ...} => meta | NONE => raise Fail ("missing inventory case: " ^ name)
+        fun has tag (m : Test.meta) = List.exists (fn t => t = tag) (#tags m)
+        val check = TestFilter.parse "tag:check"
+        val checked = List.filter (fn {path, meta, ...} => TestFilter.matches check {path = path, tags = #tags meta}) rows
+        val nativeWindows = List.filter (fn {meta, ...} =>
+              List.exists (fn name => name = "windows" orelse name = "windows-installer") (#requires meta)) checked
+        val () = need (null nativeWindows, "portable tier selects native Windows: " ^ String.concatWith "," (List.map #path nativeWindows))
+        val windows = meta "scenarios/dist/windows"
+        val () = List.app (fn tag => need (has tag windows, "Windows installer lost its " ^ tag ^ " selection"))
+                   ["test-dist", "test-windows", "nightly", "windows", "vm"]
+        val () = need (List.exists (fn name => name = "windows-installer") (#requires windows), "Windows installer lost its capability")
+        val () = List.app (fn name => need (has "check" (meta ("scenarios/dist/" ^ name)), "portable distribution case left check: " ^ name))
+                   ["prepare", "archives", "metadata", "installer", "binaries", "faults"]
+        val () = List.app (fn name => let val m = meta ("kernel/" ^ name)
+                   in need (has "check" m andalso List.exists (fn name => name = "jupyter-client") (#requires m), "notebook peer lost its check requirement") end)
+                   ["notebook-pipe", "notebook-connection"]
+        val dir = Sh.run ^ "/check-requirements"
+        val () = Sh.mkdirs (dir ^ "/bin")
+        val python = dir ^ "/bin/python3"
+        val () = Sh.write (python, "#!/bin/sh\nexit 1\n")
+        val () = Posix.FileSys.chmod (python, Posix.FileSys.S.irwxu)
+        val status = Children.exec Subprocess.unlimited (Sh.setEnv ("PATH", dir ^ "/bin:" ^ Sh.env ("PATH", "")))
+             {cmd = ["sh", Sh.fromRoot "scripts/doctor.sh", "--quiet", "--scope", "check"], dir = SOME Sh.root,
+              stdin = "", stdout = dir ^ "/doctor.out", stderr = dir ^ "/doctor.err", timeout = 30}
+        val diagnostic = Sh.read (dir ^ "/doctor.out")
+        val () = need (status = 1 andalso String.isSubstring "jupyter-client" diagnostic andalso String.isSubstring "cannot import" diagnostic,
+                       "doctor accepted a Python without the independent notebook peer")
+    in Sh.say "PASS portable check inventory and missing notebook peer preflight\n" end
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws
@@ -135,6 +172,7 @@ val () =
   case CommandLine.arguments () of
     ["laws-one", rbc, st] => Laws.one (rbc, st)
   | ["matrix-controller-faults"] => MatrixFaults.one ()
+  | ["check-requirements"] => Inventory.requirements ()
   | args =>
       case BuildChecks.command args of SOME action => action () | NONE =>
       case WindowsJobs.command args of SOME action => action () | NONE =>

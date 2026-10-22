@@ -6,6 +6,8 @@ wait ^-$
 send val x = "two";
 keys Enter
 wait ^val x = "two" : string$
+# The result can arrive before the next prompt. This case is not type-ahead.
+wait ^-$
 send x;
 keys Enter
 wait ^val it = "two" : string$

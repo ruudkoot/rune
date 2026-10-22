@@ -58,6 +58,7 @@ struct
   fun dependency (c : context) requested requireAll () =
     let val selected=if null requested then (if requireAll then platforms else ["native"]) else requested
         val ()=need (List.all (fn name => List.exists (fn x => x=name) platforms) selected,"unknown GMP dependency platform")
+        val ()=mkdirs (#directory c)
         val records=ref [] : (string * Json.value) list ref
         fun platform name =
           let val prefix=fromRoot ("build/deps/gmp/" ^ name)

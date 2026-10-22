@@ -11,6 +11,22 @@ struct
     need (((action ();false) handle IntInfChecks.Failed _ => true | Measured.Failed _ => true),"IntInf controller accepted planted " ^ label)
   fun one (c : context) () =
     let val ()=mkdirs (#directory c)
+        (* A skipped optional dependency still writes its report. Use a
+           private empty root so the case is independent of installed pins
+           and no compilation happens to create the output directory. *)
+        val missing=path c "missing-dependency-output"
+        val emptyRoot=path c "empty-root"
+        val ()=(rmTree missing;mkdirs emptyRoot)
+        fun dependency label options=GMPChecks.process c label root 30 [("RUNE_TEST_ROOT",emptyRoot)]
+              ([fromRoot "bin/rune-intinf","dependency","--out",missing] @ options)
+        val optional=dependency "optional-dependency" []
+        val ()=success optional
+        val report=Json.decode (read (missing ^ "/report.json"))
+        val ()=need (field "result" (field "native" report)=Json.String "not installed",
+                     "missing optional dependency did not write its report")
+        val required=dependency "required-dependency" ["--require-all"]
+        val ()=need (#status required<>0 andalso String.isSubstring "missing pinned GMP dependency: native" (#output required),
+                     "missing required dependency was not rejected explicitly")
         val poisoned=path c "poisoned-vectors.sml"
         val ()=write (poisoned,Incremental.replace (read (fromRoot "tests/intinf/fixtures/vectors.sml")) "\"~16\"" "\"~15\"")
         val ()=expected "wrong arithmetic answer on GMP-free VM" (fn () =>
