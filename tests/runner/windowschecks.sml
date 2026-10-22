@@ -141,7 +141,7 @@ struct
         val bits=if String.isSuffix "32.exe" vm then "32" else "64"
         val stage=textStage vm bits
         val ()=List.app (fn (source,name) => MatrixLoad.copy (source,stage ^ "/" ^ name))
-          [(fromRoot ("bin/" ^ vm),"vm-λ.exe"),(textOutput ^ "/probe-" ^ target ^ ".rbc","probe.rbc"),
+          [(fromRoot ("bin/" ^ vm),"vm-\206\187.exe"),(textOutput ^ "/probe-" ^ target ^ ".rbc","probe.rbc"),
            (fromRoot ("bin/" ^ compiler),"compiler.rbc")]
         fun available name = List.exists (fn dir => OS.FileSys.access
             (OS.Path.concat (if dir="" then "." else dir,name),[OS.FileSys.A_EXEC]) handle OS.SysErr _ => false)
@@ -149,10 +149,10 @@ struct
         val converter=if available "wslpath" then SOME "wslpath" else if available "cygpath" then SOME "cygpath" else NONE
         val lib=case converter of NONE => fromRoot "lib" | SOME tool =>
           Hosts.trim (WindowsDir.command ("text-lib-" ^ vm) root "" [tool,"-w",fromRoot "lib"])
-        val ()=textExecute (vm ^ "/probe") stage [stage ^ "/interop.exe","--vm","./vm-λ.exe","probe.rbc"]
+        val ()=textExecute (vm ^ "/probe") stage [stage ^ "/interop.exe","--vm","./vm-\206\187.exe","probe.rbc"]
           ["vm-wide-arguments","vm-wide-environment","vm-fork-status","vm-current-directory"]
     in textExecute (vm ^ "/compile") stage
-         [stage ^ "/interop.exe","--compile","./vm-λ.exe","compiler.rbc",lib,target]
+         [stage ^ "/interop.exe","--compile","./vm-\206\187.exe","compiler.rbc",lib,target]
          ["native-source","windows-compiler-unicode-source","native-compile","windows-compiler-result"] end
   fun textFaults () =
     let val ok="PASS windows.text/probe\n"
