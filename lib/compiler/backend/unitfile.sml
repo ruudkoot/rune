@@ -36,6 +36,8 @@ struct
         List.rev (List.foldl (fn ({unit, ...} : Link.key, acc) =>
                                 if unit = self orelse unit = "" orelse List.exists (fn x => x = unit) acc then acc
                                 else unit :: acc) [] keys)
+      val named=case #provenance u of NONE => named
+        | SOME hash => named @ [Link.sourceName (self,hash)]
       fun place unit =
         if unit = self orelse unit = "" then 0
         else
@@ -142,8 +144,17 @@ struct
       val () = if i32 r = bytecode then () else raise Bad "a unit of another kind of code"
       val self = str r
       val named = Vector.fromList (list (r, str))
+      val metadata=Vector.foldr (fn (name,acc) => case Link.sourceOf (self,name) of
+        NONE => acc | SOME hash => hash :: acc) [] named
+      val provenance=case metadata of [] => NONE | [hash] =>
+        if CharVector.all (fn c => Char.isDigit c orelse (c>= #"a" andalso c<= #"f")) hash then SOME hash
+        else raise Bad "bad source provenance"
+        | _ => raise Bad "duplicate source provenance"
       fun unitAt i = if i = 0 then self else Vector.sub (named, i - 1) handle Subscript => raise Bad "a unit out of range"
-      fun key r = let val i = count r in {unit = unitAt i, number = i32 r} : Link.key end
+      fun key r = let val i = count r
+                      val unit=unitAt i
+                      val ()=if isSome (Link.sourceOf (self,unit)) then raise Bad "source provenance used as a dependency" else ()
+                  in {unit = unit, number = i32 r} : Link.key end
       val {kinds, listAt, listPrim, label, handler} = layout fingerprint
       val consts = list (r, const)
       val nglobals = count r
@@ -267,18 +278,18 @@ struct
                   nlabels = IntMap.numItems targets}
     in
       (fingerprint,
-       {code = code, identity = self, globals = ListPair.zip (globals, List.tabulate (nglobals, fn i => i)),
+       {code = code, identity = self,provenance=provenance, globals = ListPair.zip (globals, List.tabulate (nglobals, fn i => i)),
         imports = imports, exports = exports})
     end
     handle Subscript => raise Bad "the file is cut short"
 
   (* u with the source the files of its code name old named new: a unit
      from the cache whose source has moved *)
-  fun mapFiles ({code = {consts, nglobals, funcs, files, inlines, nlabels}, identity, globals, imports, exports}
+  fun mapFiles ({code = {consts, nglobals, funcs, files, inlines, nlabels}, identity, provenance, globals, imports, exports}
                 : Link.unitCode, f : string -> string) : Link.unitCode =
     {code = {consts = consts, nglobals = nglobals, funcs = funcs, files = List.map f files,
              inlines = inlines, nlabels = nlabels},
-     identity = identity, globals = globals, imports = imports, exports = exports}
+     identity = identity,provenance=provenance, globals = globals, imports = imports, exports = exports}
 
   fun renameFile (u : Link.unitCode, old : string, new : string) : Link.unitCode =
     mapFiles (u, fn f => if f = old then new else f)

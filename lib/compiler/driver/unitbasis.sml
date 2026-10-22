@@ -109,7 +109,7 @@ struct
   fun startSession () =
     (units := []; byIdentity := StringMap.empty; builtin := counters ();
      Array.modify (fn _ => Vector.fromList []) ranges; tvars := IntTable.table 1024; binders := StringMap.empty;
-     fpMemo := StringMap.empty; Link.sourceHashes := StringMap.empty)
+     fpMemo := StringMap.empty)
 
   fun binderOf (key : string) : string = case StringMap.find (!binders, key) of SOME i => i | NONE => ""
 
@@ -872,7 +872,8 @@ struct
 
   (* What export gives: the bytes, the unit's identity, and the number each
      of its own names was given, for the code of the unit (relative) *)
-  type exported = {pickle : string, identity : string, own : int IntTable.table vector, counts : int vector}
+  type exported = {pickle : string, identity : string, provenance : string,
+                   own : int IntTable.table vector, counts : int vector}
 
   (* export {start, name, file, text, mode, delta, fixity, used}: the basis
      of the unit compiled since start, which declared delta and left the
@@ -954,10 +955,9 @@ struct
       val () = P.string (u, sourceHash)
       val () = P.string (u, Source.modeName mode)
       val identity = uname ^ "@" ^ P.hash hashed
-      val () = Link.sourceHashes := StringMap.insert (!Link.sourceHashes,identity,
-        Link.provenance (!CompilerSettings.target,mode,sourceHash))
     in
-      {pickle = P.contents u ^ hashed, identity = identity, own = #own e, counts = counts}
+      {pickle = P.contents u ^ hashed, identity = identity,
+       provenance=Link.provenance (!CompilerSettings.target,mode,sourceHash),own = #own e, counts = counts}
     end
 
   (* ---- a unit's code, by keys ---- *)
@@ -1011,7 +1011,7 @@ struct
         let val sorted = IntMap.listItems (List.foldl (fn (x, m) => IntMap.insert (m, place x, x)) IntMap.empty l)
         in if List.length sorted = List.length l then sorted else bug "two names of a unit's code at one place" end
     in
-      {code = #code u, identity = #identity x,
+      {code = #code u, identity = #identity x,provenance=SOME (#provenance x),
        globals = byPlace #2 (List.map (fn (s, ix) => (key s, ix)) (#globals u)),
        imports = byPlace #1 (List.map (fn (ix, s) => (ix, key s)) (#imports u)),
        exports = byPlace #1 (List.map (fn (s, ix) => (#number (key s), ix)) (#exports u))}
@@ -1338,7 +1338,7 @@ struct
                  SOME s => {unit = #identity new, number = s - Vector.sub (#base new, kStamp)}
                | NONE => raise Missing (unit ^ " (a name no path of it reaches)"))
       in
-        {code = #code u, identity = #identity u, globals = List.map (fn (k, ix) => (key k, ix)) (#globals u),
+        {code = #code u, identity = #identity u,provenance= #provenance u, globals = List.map (fn (k, ix) => (key k, ix)) (#globals u),
          imports = List.map (fn (ix, k) => (ix, key k)) (#imports u), exports = #exports u}
       end
 
@@ -1537,8 +1537,6 @@ struct
                         count = counts, funs = !ownFuns}
     in
       register u;
-      Link.sourceHashes := StringMap.insert (!Link.sourceHashes,identity,
-        Link.provenance (!CompilerSettings.target,mode,sourceHash));
       notePaths (u, delta, sigs);
       {unit = u, delta = delta, directives = directives, sigs = List.map #1 sigs, funs = List.map #1 funs,
        overloads = List.map #1 overloads}

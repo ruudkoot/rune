@@ -224,9 +224,12 @@ and decoded-source hash from the checked basis, separated by colons. These
 are metadata, filtered from `Runtime.linkedUnits`. The compiler adapter
 uses them to check host-library source before sharing a unit: its
 interface identity alone can survive implementation-only changes.
-Raw unit linking without checked bases may lack provenance and is refused
-when the API would otherwise share such a host unit. The entry uses the
-existing units-section layout and is preserved by image serialization.
+New unit files preserve this record as an unreferenced entry in their
+named-units table. The SML reader retains it in the immutable unit record,
+so linking emitted unit files reproduces the original program's inventory
+without requiring checked-basis companions. Older units may lack it;
+sharing such a host unit through the API is refused. The entry uses the
+existing file layouts and is preserved by image serialization.
 The runtime ignores a provenance record after raw linking replaces the
 unit's reserved function export. The API checks current provenance before
 each run and namespaces its own execution units per session; portable

@@ -113,7 +113,8 @@ struct
                       val ()=List.app (fn i => IntTable.insert (table,Vector.sub (#base unit,k)+i,i))
                         (List.tabulate (Vector.sub (#count unit,k),fn i => i))
                   in table end)
-                val exported : UnitBasis.exported={pickle=pickle,identity= #identity unit,own=own,counts= #count unit}
+                val exported : UnitBasis.exported={pickle=pickle,identity= #identity unit,own=own,counts= #count unit,
+                  provenance=Link.provenance (#target config,mode,Pickle.hash text)}
                 val code=UnitBasis.relative (exported,sc)
                 val fingerprint=Pipeline.fingerprint ()
                 val artifact={identity= #identity code,fingerprint=fingerprint,code=code,bytes=String.concat (UnitFile.chunks (fingerprint,code)),
@@ -343,10 +344,6 @@ struct
       val artifacts = List.foldl add [] artifacts
       val roots=List.map (fn Compiled {artifact,...} => artifact) compiled @ finals
       val artifacts=runtimeUnits (roots,artifacts)
-      val ()=Link.sourceHashes:=List.foldl (fn (a : artifact,m) =>
-        StringMap.insert (m,#identity a,Link.provenance
-          (if #fingerprint a=RegCodes.fingerprint then "registers" else "stack",
-           #mode (#source a),Pickle.hash (#text (#source a))))) StringMap.empty artifacts
       val fingerprint = #fingerprint (hd artifacts)
       val () = if List.all (fn a : artifact => #fingerprint a=fingerprint) artifacts then () else raise Domain
       val code =
@@ -367,7 +364,7 @@ struct
       fun runtimeBytes (a : artifact) = owned (fn () =>
         let val code= #code a
             fun key ({unit,number} : Link.key) = {unit=runtimeIdentity unit,number=number}
-            val moved : Link.unitCode={identity=runtimeIdentity (#identity code),code= #code code,
+            val moved : Link.unitCode={identity=runtimeIdentity (#identity code),provenance= #provenance code,code= #code code,
               globals=List.map (fn (k,n) => (key k,n)) (#globals code),
               imports=List.map (fn (n,k) => (n,key k)) (#imports code),exports= #exports code}
             val ()=if #fingerprint a=RegCodes.fingerprint then Code.opcodeNames:=RegCodes.names else ()

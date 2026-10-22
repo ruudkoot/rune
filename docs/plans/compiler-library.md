@@ -504,6 +504,17 @@ API implementation checkpoint (2026-10-22):
   The root audit reports 207 roots, and all 39 performance cases passed
   at `tests/out/r/20261022-114723-2828420` (10.7 seconds).
 
+* Full acceptance at `tests/out/r/20261022-115602-2832609` exposed lost
+  provenance when emitted unit files were linked again. The run was
+  interrupted after 805 passes, 28 failures and two skips (656.4 seconds);
+  it is not a full acceptance result. Provenance now travels in each
+  immutable unit and its unreferenced named-unit metadata, rather than a
+  global table. This restores 206 registered roots. All 28 failures and
+  their dependencies passed on rerun: 35 cases at
+  `tests/out/r/20261022-121533-2872344` (22.7 seconds). Public compiler API
+  and unit-inventory checks passed 14 cases at
+  `tests/out/r/20261022-121556-2873132` (16.0 seconds).
+
 M4 remains in progress until the combined full check and required VM
 platform acceptance pass. M3's optional subprocess isolation and M5's
 REPL/service/Basis hook migrations remain outstanding.

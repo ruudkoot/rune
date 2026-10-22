@@ -45,6 +45,7 @@ struct
      whose key is the unit's own are those it sets. *)
   type unitCode = {code : Code.program,
                    identity : string,
+                   provenance : string option,
                    globals : (key * int) list,         (* key, index here *)
                    imports : (int * key) list,         (* index here, key *)
                    exports : (int * int) list}         (* number, index here *)
@@ -80,16 +81,23 @@ struct
   val lastExports : (string * (int * int * int) list) list ref = ref []
   val () = CompilerState.cellRoot ("Link.lastExports", lastExports)
   (* Interface identities deliberately survive implementation-only changes.
-     Keep source provenance separately for safe in-process library reuse. *)
-  val sourceHashes : string StringMap.map ref = ref StringMap.empty
-  val () = CompilerState.cellRoot ("Link.sourceHashes", sourceHashes)
+     Provenance travels with each immutable unit, including through files. *)
   fun provenance (target,mode,sourceHash) =
     Pickle.hash (Config.identity ^ ":" ^ target ^ ":" ^ Source.modeName mode ^ ":" ^ sourceHash)
+  val sourceMarker = "\001RuneSource:"
+  fun sourceName (identity,hash) = sourceMarker ^ hash ^ ":" ^ identity
+  fun sourceOf (identity,name) =
+    let val at=String.size sourceMarker
+    in if String.isPrefix sourceMarker name andalso String.size name=at+25+String.size identity andalso
+          String.sub (name,at+24)= #":" andalso String.extract (name,at+25,NONE)=identity
+       then SOME (String.substring (name,at,24)) else NONE end
 
   fun program (target : Low.program -> Code.program, linked : (int * int) list vector, units : unitCode list)
       : Code.program =
     let
-      val units = units @ [{code = endFunction target, identity = "", globals = [], imports = [], exports = []}]
+      val units = units @ [{code = endFunction target, identity = "", provenance=NONE, globals = [], imports = [], exports = []}]
+      val sourceHashes=List.foldl (fn (u : unitCode,m) => case #provenance u of NONE => m
+        | SOME hash => StringMap.insert (m,#identity u,hash)) StringMap.empty units
       (* every key a number of the link's own: next is next *)
       val keyIds : int StringMap.map ref = ref StringMap.empty
       fun keyId ({unit, number} : key) : int =
@@ -240,8 +248,8 @@ struct
             (ListPair.zip (List.tabulate (nunits, fn i => i), units))
       val () = lastExports := List.concat (List.map (fn (identity,exports) =>
         (identity,exports) ::
-          (case StringMap.find (!sourceHashes,identity) of NONE => [] | SOME hash =>
-            [("\001RuneSource:" ^ hash ^ ":" ^ identity,
+          (case StringMap.find (sourceHashes,identity) of NONE => [] | SOME hash =>
+            [(sourceName (identity,hash),
               List.filter (fn (kind,number,_) => kind=0 andalso number= ~1) exports)])) (!lastExports))
     in
       {consts = List.rev (!consts), nglobals = !nglobals, funcs = funcs, files = List.rev (!files),
