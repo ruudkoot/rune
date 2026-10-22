@@ -85,18 +85,20 @@ struct
           in mkdirs (dir ^ "/tests/out");MatrixLoad.copy (image,dir ^ "/tests/out/" ^ name ^ ".img") end
     in wanted (LangChecks.runJudge (false,name)) status (dir ^ "/stdout") (dir ^ "/stderr") end
   val layoutCases=["rt.gc_stress","rt.deeprec_stack","rt.closure_capture","rt.equality_structural"]
-  fun endpoint f vm suffix : VMOracles.endpoint =
-    {name=OS.Path.file vm ^ suffix,program=fromRoot vm,directory=directory () ^ "/oracle/" ^ #name (f : family) ^ "/" ^ OS.Path.file vm ^ suffix,
+  fun endpoint f vm suffix scope : VMOracles.endpoint =
+    {name=OS.Path.file vm ^ suffix,program=fromRoot vm,directory=directory () ^ "/oracle/" ^ #name (f : family) ^ "/" ^ scope ^ "/" ^ OS.Path.file vm ^ suffix,
      windows=String.isSuffix ".exe" vm,options= #options f,environment=environment}
   fun count familyName vm name () =
     let val f=family familyName
-        val endpoints=[endpoint f (#native f) "-native",endpoint f vm "-windows"]
+        val scope="count/" ^ OS.Path.file vm ^ "/" ^ name
+        val endpoints=[endpoint f (#native f) "-native" scope,endpoint f vm "-windows" scope]
         val options=words (fromRoot ("tests/lang/" ^ name ^ ".vmargs"))
     in VMOracles.count (logs ("count/" ^ familyName ^ "/" ^ OS.Path.file vm ^ "/" ^ name)) (rbc (#compilerID f) name) options endpoints end
   fun image familyName vm () =
     let val f=family familyName
     in VMOracles.images (logs ("image/" ^ familyName ^ "/" ^ OS.Path.file vm)) (rbc (#compilerID f) "rt.save_restore_cross")
-                "tests/out/rt.save_restore_cross.img" [endpoint f (#native f) "-native-image",endpoint f vm "-windows-image"] end
+                "tests/out/rt.save_restore_cross.img" [endpoint f (#native f) "-native-image" ("image/" ^ OS.Path.file vm),
+                  endpoint f vm "-windows-image" ("image/" ^ OS.Path.file vm)] end
   fun refusals familyName vm () =
     let val f=family familyName
     in VMChecks.run {vm=vm,defs= #defs f,directory=directory () ^ "/refusals/" ^ familyName ^ "/" ^ OS.Path.file vm,
