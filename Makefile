@@ -247,6 +247,7 @@ all: vm boot runedoc runeopt runeffi manifests basis-cache
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter lsp
+DOC_LIBS := $(REPL_LIBS) compiler
 
 # Compiler ownership audit and interleaved-session acceptance.
 COMPILER_STATE_AUDIT_SRCS := $(shell sh scripts/build-files.sh rune-compiler-state-audit.build)
@@ -264,7 +265,7 @@ bin/rune-compiler-state-duplicate.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/
 bin/rune-compiler-state-tests.rbc: $(RUNE) $(COMPILER_STATE_TEST_SRCS) rune-compiler-state-tests.build manifests
 	$(RUNE) --build rune-compiler-state-tests.build -o $@
 test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc
-	bin/rune-compiler-state-audit --self-test $(filter lib/compiler/%.sml,$(SOURCES))
+	bin/rune-compiler-state-audit --self-test $(wildcard lib/compiler/*.sml lib/compiler/*/*.sml)
 	bin/runevm bin/rune-compiler-state-model.rbc
 	bin/runevm --jit=all bin/rune-compiler-state-model.rbc
 	bin/runevm bin/rune-compiler-state-duplicate.rbc
@@ -391,15 +392,15 @@ $(FFI_GENERATED_MANIFESTS): %/MANIFEST: %/library.build $(foreach family,sdl win
 	bin/rune-$(BOOTHOST) --basis-index $(@D)
 endif
 
-# The frozen Basis Library (docs/units.md, The cache): every unit of
+# The frozen Basis and compiler libraries (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
 # compile in units reads after its own cache and never writes; made again,
 # empty first, when the compiler or the library changes
 basis-cache: lib/cache/made
-lib/cache/made: bin/rune bin/rune.rbc bin/runevm $(wildcard lib/basis/*.sml) lib/basis/MANIFEST
+lib/cache/made: bin/rune bin/rune.rbc bin/runevm $(wildcard lib/basis/*.sml lib/compiler/*.sml lib/compiler/*/*.sml lib/compiler/*.build) lib/basis/MANIFEST lib/compiler/MANIFEST
 	rm -rf lib/cache
-	bin/rune --units --basis all --cache-dir lib/cache examples/hello.sml -o build/basis-cache.rbc
-	bin/rune --units --basis all --target=stack --cache-dir lib/cache examples/hello.sml -o build/basis-cache.stack.rbc
+	bin/rune --units --basis all --library compiler --cache-dir lib/cache examples/hello.sml -o build/basis-cache.rbc
+	bin/rune --units --basis all --library compiler --target=stack --cache-dir lib/cache examples/hello.sml -o build/basis-cache.stack.rbc
 	touch $@
 
 # ---------------------------------------------------------------- environment
@@ -1434,7 +1435,7 @@ check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_SDL) --check
 	$(RUNEDOC) $(DOCS_WIN32_SDL_DRIVER) --check
 	$(RUNEDOC) $(DOCS_WIN32_NATIVE) --check
-	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
+	$(foreach l,$(DOC_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW) --check
 	$(RUNEDOC) --palette docs/lib/palette --check
 
@@ -1489,7 +1490,7 @@ DOCS_FFI_MODEL := --lib lib --library ffi/model --out docs/lib/ffi/model --basis
 DOCS_C := --lib lib --library language/c --out docs/lib/language/c --basis-docs ../../basis \
           --conventions ../../conventions.md
 # the libraries of docs/plans/repl.md (The libraries), each in
-# docs/lib/NAME (REPL_LIBS, with the manifests). The heading of the library's
+# docs/lib/NAME (DOC_LIBS, with the manifests). The heading of the library's
 # README.md is its name, on its pages and in the overview below.
 docs_lib = --lib lib --library $(1) --out docs/lib/$(1) --basis-docs ../basis \
            --conventions ../conventions.md
@@ -1512,6 +1513,7 @@ DOCS_OVERVIEW := --lib lib --overview docs/lib \
 	--library-page json \
 	--library-page jsonrpc \
 	--library-page lsp \
+	--library-page compiler \
 	--library-page dap \
 	--library-page zmtp \
 	--library-page jupyter \
@@ -1544,7 +1546,7 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_SDL)
 	$(RUNEDOC) $(DOCS_WIN32_SDL_DRIVER)
 	$(RUNEDOC) $(DOCS_WIN32_NATIVE)
-	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
+	$(foreach l,$(DOC_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW)
 	$(RUNEDOC) --palette docs/lib/palette
 
@@ -1575,6 +1577,10 @@ test-doc: $(RUNEDOC) vm manifests bin/rune-test
 # docs/plans/quickcheck.md, D1).
 test-lib: $(RUNE) $(RUNEDOC) vm manifests bin/rune-test
 	$(RUNE_TEST) --tier test-lib
+
+.PHONY: test-compiler-api
+test-compiler-api: $(RUNE) vm manifests bin/rune-test
+	$(RUNE_TEST) --tier test-compiler-api
 
 # The laws of the Basis Library's documentation, each at every structure that
 # implements its signature (docs/plans/quickcheck.md, M8): every law holds,

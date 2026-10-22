@@ -58,6 +58,8 @@ struct
       let val saved = Vector.map (tableSave copying) tables
       in fn () => Vector.app (fn put => put ()) saved end)
 
+  fun freshIdentity () = let val id = !next in next := id + 1; id end
+
   fun session () =
     let
       val () = seal ()
@@ -65,8 +67,7 @@ struct
       val saved = (restore (valOf (!baseline)); capture false)
                   handle e => (restore previous; raise e)
       val () = restore previous
-      val id = !next
-      val () = next := id + 1
+      val id = freshIdentity ()
     in Session {id = id, saved = ref (SOME saved)} end
 
   fun idOf (Session {id, ...}) = id

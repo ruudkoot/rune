@@ -54,3 +54,8 @@ val () = print ("profile returns the value: " ^ Bool.toString (answer = ()) ^ "\
 val () = print ("version is a word: "
                 ^ Bool.toString (Runtime.version <> ""
                                  andalso List.all Char.isGraph (String.explode Runtime.version)) ^ "\n")
+
+val units = Runtime.linkedUnits ()
+val () = print ("linked units have unique nonempty identities: "
+                ^ Bool.toString (List.all (fn u => u <> "") units
+                  andalso List.all (fn u => length (List.filter (fn v => v = u) units) = 1) units) ^ "\n")

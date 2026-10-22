@@ -41,6 +41,12 @@ Library is what every program starts with.
 | [ZMTP](zmtp/README.md) `zmtp` | ZeroMQ's sockets over ZMTP 3.1 with the NULL mechanism, on the Basis's TCP sockets, and the bytes of that protocol: the greeting, the frames and the commands. |
 | [Jupyter](jupyter/README.md) `jupyter` | Jupyter's messaging protocol for a kernel: the connection file, the signed messages of the wire, and a kernel's loop on its five channels, the language's part given as handlers. |
 
+## Compiler tools
+
+| Library |  |
+| --- | --- |
+| [Compiler](compiler/README.md) `compiler` | The reusable Rune compiler implementation: source positions and diagnostics, lexical/syntactic analysis, elaboration, intermediate passes, bytecode generation, units, caches and build/dependency parsing. |
+
 ## Digests
 
 | Library |  |

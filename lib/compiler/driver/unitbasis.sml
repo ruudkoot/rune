@@ -109,7 +109,7 @@ struct
   fun startSession () =
     (units := []; byIdentity := StringMap.empty; builtin := counters ();
      Array.modify (fn _ => Vector.fromList []) ranges; tvars := IntTable.table 1024; binders := StringMap.empty;
-     fpMemo := StringMap.empty)
+     fpMemo := StringMap.empty; Link.sourceHashes := StringMap.empty)
 
   fun binderOf (key : string) : string = case StringMap.find (!binders, key) of SOME i => i | NONE => ""
 
@@ -950,10 +950,14 @@ struct
       val used = Vector.tabulate (3, fn k => !(counter k) - Vector.sub (#counters start, k))
       val u = P.writer ()
       val () = Vector.app (fn c => P.nat (u, c)) used
-      val () = P.string (u, P.hash (text ()))
+      val sourceHash = P.hash (text ())
+      val () = P.string (u, sourceHash)
       val () = P.string (u, Source.modeName mode)
+      val identity = uname ^ "@" ^ P.hash hashed
+      val () = Link.sourceHashes := StringMap.insert (!Link.sourceHashes,identity,
+        Link.provenance (!CompilerSettings.target,mode,sourceHash))
     in
-      {pickle = P.contents u ^ hashed, identity = uname ^ "@" ^ P.hash hashed, own = #own e, counts = counts}
+      {pickle = P.contents u ^ hashed, identity = identity, own = #own e, counts = counts}
     end
 
   (* ---- a unit's code, by keys ---- *)
@@ -1533,6 +1537,8 @@ struct
                         count = counts, funs = !ownFuns}
     in
       register u;
+      Link.sourceHashes := StringMap.insert (!Link.sourceHashes,identity,
+        Link.provenance (!CompilerSettings.target,mode,sourceHash));
       notePaths (u, delta, sigs);
       {unit = u, delta = delta, directives = directives, sigs = List.map #1 sigs, funs = List.map #1 funs,
        overloads = List.map #1 overloads}

@@ -248,6 +248,16 @@ sig
      does. *)
   val load : string -> unit -> unit
 
+  (* `linkedUnits ()` is the identities of the units successfully linked
+     into this program, in first-link order, each listed once.
+
+     Linking does not execute a unit. This inventory does not say whether
+     its top-level declarations ran or completed. A failed link does not
+     add its identity. A whole-program compile has no unit inventory.
+     Programs made by older compilers may omit units without a reserved
+     top-level export. *)
+  val linkedUnits : unit -> string list
+
   (* `catchInterrupt ()` makes Ctrl-C, the user's interrupt, raise
      `SML90.Interrupt` in the program from now on rather than end it.
 

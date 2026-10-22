@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 19 of 19 entries documented |
-| Tests | 50 checks of 16 entries |
+| Documentation | 20 of 20 entries documented |
+| Tests | 51 checks of 17 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -63,6 +63,7 @@ sig
   val <a href="#val-restore">restore</a> : string -&gt; 'a
   val <a href="#val-link">link</a> : Word8Vector.vector -&gt; unit -&gt; unit
   val <a href="#val-load">load</a> : string -&gt; unit -&gt; unit
+  val <a href="#val-linkedunits">linkedUnits</a> : unit -&gt; string list
   val <a href="#val-catchinterrupt">catchInterrupt</a> : unit -&gt; bool
   val <a href="#val-maskinterrupt">maskInterrupt</a> : bool -&gt; bool
   val <a href="#val-version">version</a> : string
@@ -450,6 +451,27 @@ does.
 <details><summary>Tests (1)</summary>
 
 For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `a-file-that-is-not-there` (raises)
+
+</details>
+
+### <a name="val-linkedunits"></a>`linkedUnits`
+
+```sml
+val linkedUnits : unit -> string list
+```
+
+`linkedUnits ()` is the identities of the units successfully linked
+into this program, in first-link order, each listed once.
+
+Linking does not execute a unit. This inventory does not say whether
+its top-level declarations ran or completed. A failed link does not
+add its identity. A whole-program compile has no unit inventory.
+Programs made by older compilers may omit units without a reserved
+top-level export.
+
+<details><summary>Tests (1)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `unique-identities`
 
 </details>
 

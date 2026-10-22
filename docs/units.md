@@ -374,13 +374,30 @@ its Mid the same way, so the two are one program and the same bytes:
 ways, through the cache and from it, `check-levels` at both levels, and
 `check-cross` the compiler (S42 of `tests/incremental/SCENARIOS.md`).
 
-**The frozen Basis Library** (D8): `make basis-cache`, part of `make all`,
-compiles every unit of `lib/basis` once, for each bytecode, into
+**The frozen libraries** (D8): `make basis-cache`, part of `make all`,
+compiles every unit of `lib/basis` and `lib/compiler` once, with the
+compiler library's Unicode and JSON dependencies, for each bytecode, into
 `lib/cache`, which `make install` installs read-only beside the library. A
 compile reads it after its own cache and never writes it, so that a
 program's first compile takes the Basis Library's units from there where
 their usages hold, which they do but for the seals of structures the
 program does not name.
+
+The public [compiler library](lib/compiler/README.md) writes units with
+`.rbi` checked-basis, `.rbm` Mid and `.rbs` source companions. The source
+companion is a `Pickle` encoding: `RCS`, version 2, then strings containing
+the source filename, source-mode name, decoded source text, unit-code
+hash, basis hash and Mid hash, with no trailing data. Text is UTF-8 in
+Unicode modes. Readers check the artifact hashes, source hash and mode
+against the checked basis; this detects mismatched or partially published
+sets. Each file is replaced atomically and the source record is published
+last. This is not a multi-file filesystem transaction.
+
+The source companion is an API addition; ordinary CLI units remain
+compatible when their matching original source is available. A unit read
+without Mid can be compiled against and executed but cannot be exported
+through `writeMid`. The [compiler-library roadmap](plans/compiler-library.md) records the remaining
+session and client-migration acceptance gates.
 
 **`use`** in the REPL ([repl.md](repl.md)) takes a file's declarations
 from the cache the same way, each a unit named by the file and its place

@@ -1,0 +1,20 @@
+{
+ "signatures": {
+  "RUNE_API": {
+   "doc": "An explicitly exported Rune-prefixed interface.\n\n",
+   "page": "sig/RUNE_API.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "twice",
+     "spec": "val twice : int -> int",
+     "doc": "`twice n` doubles n.\n\n**Example** `twice 3 = 6`\n\n",
+     "page": "sig/RUNE_API.md#val-twice"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "RuneApi": "RUNE_API"
+ }
+}

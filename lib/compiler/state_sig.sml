@@ -33,6 +33,9 @@ sig
      compiler modules have loaded. Further calls preserve that baseline.
      Duplicate names and later registration raise Fail. *)
   val seal : unit -> unit
+  (* `freshIdentity ()` allocates a process-local identity outside owned
+     compiler roots, also suitable for an execution namespace. *)
+  val freshIdentity : unit -> int
   (* Make an owner from the sealed baseline, sealing it first if necessary. *)
   val session : unit -> session
   (* Release an owner's saved roots. Closing it again is harmless. *)

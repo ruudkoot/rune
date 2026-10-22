@@ -1,0 +1,2 @@
+# Hand-written fixture: explicit exports override the Rune-prefix convention.
+api.sml | demand | yes | RunePrivate RUNE_API RuneApi | | signature:RUNE_API structure:RuneApi

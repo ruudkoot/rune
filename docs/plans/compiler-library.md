@@ -25,9 +25,9 @@ it.
 |---|---|---|
 | M0 | The REPL's branch and `incremental` merged; this plan's numbers measured again | done 2026-10-13: both on `master` since 2026-10-11 (#38, #39), the numbers measured again at `2e2351ba` |
 | M1 | The compiler moved to `lib/compiler`, the driver left in `src` | done 2026-10-22: extraction, cross-host equality, reproducibility and full acceptance passed |
-| M2 | A library's names: export lists for `rune --library` | in progress: scoped manifests, compiler and documentation visibility implemented; public compiler facade and full acceptance remain |
+| M2 | A library's names: export lists for `rune --library` | in progress: scoped manifests, public compiler facade and namespace tests pass; final combined acceptance pending |
 | M3 | The compiler's state: a session that starts from nothing | in progress: registered roots and serialized ownership implemented; public API integration and acceptance remain |
-| M4 | `RuneCompiler`: the API, its tests, its frozen cache | planned |
+| M4 | `RuneCompiler`: the API, its tests, its frozen cache | in progress: public facade, static sessions, artifact I/O, explicit execution and frozen cache implemented; full/platform acceptance pending |
 | M5 | The clients: the REPL's engine, `rune --serve`, the Basis's `Compiler` | planned |
 
 Size: L, about 2,000 lines of SML beside the move of about 19,000.
@@ -179,7 +179,15 @@ Basis's `Compiler.use` and `Compiler.compile`, so `use` works in any
 program that has the library. (b) The library is a second `Compiler`.
 Recommended: (a).
 
-## The API (to be settled in M4)
+## The API
+
+The public signature and complete operation contracts are documented in
+[RUNE_COMPILER](../lib/compiler/sig/RUNE_COMPILER.md). Compilation and
+queries are static; execution with libraries requires a RuneVM host built
+with `--units`, so its library identities can be shared. Native hosts
+support compilation and artifact output. M4's initial implementation uses
+fresh owned compilers and replay of the successful history; resident
+incremental semantic snapshots are subsequent language-server work.
 
 ```sml
 signature RUNE_COMPILER =
@@ -189,8 +197,11 @@ sig
   type diagnostic = {severity : string, file : string, start : int, stop : int,
                      line : int, column : int, message : string}
   exception Failed of diagnostic list
+  exception Closed
 
+  val version : string
   val session : {lib : string option, flags : string list} -> session
+  val close : session -> unit
   val compileText : session * {file : string, text : string} -> compiled
   val compileFile : session * string -> compiled
   val readUnit : session * string -> compiled            (* a .rbu *)
@@ -327,8 +338,9 @@ Export-boundary checkpoint (2026-10-22):
   The compiler facade will apply its public export list in M4; its current
   implementation modules remain internal interfaces, as its README says.
 
-The combined full check passed as recorded under M1. The public compiler
-facade/namespace test remains an acceptance gate; M2 remains in progress.
+The earlier combined full check passed as recorded under M1. The public
+compiler facade/namespace test now passes as recorded under M4; final
+combined acceptance remains pending.
 
 ### M3. The compiler's state (M, about 400 SML)
 
@@ -405,8 +417,9 @@ Ownership checkpoint (2026-10-22):
 
 These are ownership saves. Mutable type variables and AST annotations
 within one owner require the analysis publication/rollback contract in the
-language-server roadmap. Public `RuneCompiler` sessions, subprocess
-isolation remain to be integrated; M3 remains in progress.
+language-server roadmap. Public `RuneCompiler` sessions are integrated in
+M4. Subprocess isolation and final combined acceptance remain pending;
+M3 remains in progress.
 
 ### M4. `RuneCompiler` (L, about 1,000 SML)
 
@@ -423,6 +436,77 @@ isolation remain to be integrated; M3 remains in progress.
   errors as data; on the hosts, the parts that need no `Runtime`
   (`test-lib-hosts`).
 * **Done when:** those pass under the interpreter and `--jit=all`.
+
+API implementation checkpoint (2026-10-22):
+
+* `api.build` packages `RuneCompiler :> RUNE_COMPILER`, exposing only the
+  facade and signature. Static compilation, checked unit/Mid imports,
+  source companions, program output, type queries and closed-session
+  behavior have public tests. Failed operations preserve the successful
+  history; published artifacts contain serialized compiler data and
+  source snapshots rather than mutable compiler annotations.
+* Explicit execution follows runtime dependencies, avoiding unrelated
+  earlier side effects. Unit initializers can be retried after exceptions;
+  user exceptions propagate unchanged. The Rune adapter captures its
+  host's linked units, sharing the already initialized Basis instead of
+  making a second set of process-exit hooks. Whole-program hosts refuse
+  library-backed execution before linking dependencies. Program output
+  places the latest snapshot's library finalizers after all selected units.
+  Sharing also checks recorded source provenance: interface identities can
+  survive implementation-only changes. The adapter refuses differing or
+  unavailable host-library provenance and colliding explicit imports
+  before executing dependencies. This adds one registered compiler root
+  for source hashes (207 in total).
+  Execution remaps session units into separate runtime namespaces while
+  preserving portable output identities. Current provenance is checked
+  before every run, so raw replacement of a shared host unit is detected.
+* `Runtime.linkedUnits` reports successful links, including empty units,
+  through the reserved top-level export. Failed links and merely interned
+  references do not appear. This is linkage information, not proof that
+  the caller ran an initializer. The inventory survives collection and
+  existing image serialization; those platform paths still require their
+  full acceptance runs.
+* `make basis-cache` now packages both targets of the compiler library and
+  its Unicode/JSON dependencies. The public client test verifies that a
+  new private cache takes compiler units from the frozen cache without
+  recompiling them. API source companions validate the code, basis, Mid,
+  source hash and mode; atomic individual writes publish the integrity
+  record last. This does not promise a multi-file filesystem transaction.
+* `tests/out/r/20261022-112002-2820414` passed 21 focused runner cases,
+  including all six native host configurations, public isolation and
+  artifact tests, interpreter/JIT execution, export privacy and both unit
+  inventories (185.2 seconds). An earlier restricted 32-bit run exited
+  with SIGSYS/status 159; its unrestricted retry passed at
+  `tests/out/r/20261022-111741-2819045` before the combined six-host run.
+* Documentation review caught the legacy Rune-prefix filter hiding the
+  explicitly exported API. Library export lists now override that naming
+  convention throughout page/index/example generation. The reviewed
+  `rune-exports.lib` fixture checks public Rune-prefixed names and hides
+  private modules and opaque helpers. Documentation and public API checks
+  passed 39 cases at `tests/out/r/20261022-112609-2822812` (10.3 seconds).
+  All 17 API entries are documented; all 11 functions have usage heads.
+* The expanded root audit, planted faults and interpreter/JIT ownership
+  tests passed. `make perf-check` passed all 39 cases without changing
+  thresholds: `tests/out/r/20261022-112702-215`, 11.6 seconds. A preceding
+  direct runner invocation encountered stale pre-change bytecode in its
+  budget helper; rebuilding through the Make target resolved that setup
+  failure. It was not a measured performance regression.
+
+* Follow-up execution acceptance passed ten runner cases at
+  `tests/out/r/20261022-115137-9` (15.3 seconds): independent runtime
+  globals for identical units, current host provenance, foreign-library
+  refusal, raw host-unit replacement, CLI imports without API source
+  companions, interpreter/JIT execution, public artifact operations and
+  Rune-prefixed documentation. The preceding six-host run passed its
+  other 23 cases at `tests/out/r/20261022-114736-2828680`; its one failing
+  execution fixture had assumed `Fail` belonged to the initial language
+  basis. Declaring the fixture's exception corrected that assumption.
+  The root audit reports 207 roots, and all 39 performance cases passed
+  at `tests/out/r/20261022-114723-2828420` (10.7 seconds).
+
+M4 remains in progress until the combined full check and required VM
+platform acceptance pass. M3's optional subprocess isolation and M5's
+REPL/service/Basis hook migrations remain outstanding.
 
 ### M5. The clients (M, about 500 SML)
 

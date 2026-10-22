@@ -1,0 +1,132 @@
+{
+ "signatures": {
+  "RUNE_COMPILER": {
+   "doc": "The reusable Rune compiler. Compilation and queries are static;\nexecution is an explicit operation on a compiled unit.\n\n",
+   "page": "sig/RUNE_COMPILER.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "session",
+     "spec": "type session",
+     "doc": "An independent ordered compilation context.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-session"
+    },
+    {
+     "kind": "type",
+     "name": "compiled",
+     "spec": "type compiled",
+     "doc": "A unit's checked basis, bytecode, Mid and source snapshot.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-compiled"
+    },
+    {
+     "kind": "type",
+     "name": "diagnostic",
+     "spec": "type diagnostic = {severity : string, file : string, start : int, stop : int,\n                   line : int, column : int, message : string}",
+     "doc": "A diagnostic uses UTF-8 byte offsets in its source snapshot; line and\ncolumn are one-based.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-diagnostic"
+    },
+    {
+     "kind": "exception",
+     "name": "Failed",
+     "spec": "exception Failed of diagnostic list",
+     "doc": "A compile or artifact operation failed with these diagnostics.\n\n",
+     "page": "sig/RUNE_COMPILER.md#exn-failed"
+    },
+    {
+     "kind": "exception",
+     "name": "Closed",
+     "spec": "exception Closed",
+     "doc": "An operation requires an open compiler context.\n\n",
+     "page": "sig/RUNE_COMPILER.md#exn-closed"
+    },
+    {
+     "kind": "val",
+     "name": "version",
+     "spec": "val version : string",
+     "doc": "The compiler implementation version.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-version"
+    },
+    {
+     "kind": "val",
+     "name": "session",
+     "spec": "val session : {lib : string option, flags : string list} -> session",
+     "doc": "`session {lib, flags}` constructs an independent ordered context.\n\n`NONE` selects the\nlanguage's initial basis; `SOME root` selects the Basis and requested\nlibraries under `root`. No absolute library path is built in.\n\nSupported flags are `--target=registers`, `--target=stack`,\n`--allow-prim`, `--unicode`, `--unicode=utf8`, `--unicode=latin1` and\n`--library NAME`. Unknown flags raise `Failed`. The defaults are\nregister bytecode, ASCII source and no additional libraries.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-session"
+    },
+    {
+     "kind": "val",
+     "name": "close",
+     "spec": "val close : session -> unit",
+     "doc": "`close session` releases its retained compilation history.\n\nRepeated\ncalls do nothing. Operations requiring the context then raise `Closed`;\nimmutable compiled artifacts can still be written to disk.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-close"
+    },
+    {
+     "kind": "val",
+     "name": "compileText",
+     "spec": "val compileText : session * {file : string, text : string} -> compiled",
+     "doc": "`compileText (session, {file, text})` compiles text and appends a unit\nto the context's ordered history on success.\n\nIt uses the context's source mode.\nText is already decoded: Unicode text is UTF-8, also when source\nfiles are Latin-1. Failure leaves the preceding history unchanged.\nNo user declarations, dynamic loads or compiler hooks are executed.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-compiletext"
+    },
+    {
+     "kind": "val",
+     "name": "compileFile",
+     "spec": "val compileFile : session * string -> compiled",
+     "doc": "`compileFile (session, file)` reads a file in the configured source\nmode and compiles it as `compileText` does.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-compilefile"
+    },
+    {
+     "kind": "val",
+     "name": "readUnit",
+     "spec": "val readUnit : session * string -> compiled",
+     "doc": "`readUnit (session, file)` imports a unit and its checked basis/source\ncompanions.\n\nIts required units must already be available in the\ncontext. For older CLI artifacts without a source companion, matching\noriginal source must be available; mismatched source is rejected.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-readunit"
+    },
+    {
+     "kind": "val",
+     "name": "readMid",
+     "spec": "val readMid : session * {basis : string, mid : string} -> compiled",
+     "doc": "`readMid (session, {basis, mid})` reads a checked basis and unit Mid,\nthen generates the context's selected bytecode target.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-readmid"
+    },
+    {
+     "kind": "val",
+     "name": "run",
+     "spec": "val run : compiled -> unit",
+     "doc": "`run unit` links and executes a unit with the runtime dependencies it\nneeds.\n\nUnrelated units are not executed. Dependencies run once per\ncontext; calling `run` again executes this unit again. User exceptions\npropagate unchanged, and a failed initializer can be retried.\n\nSession execution uses separate unit namespaces, including for\nidentical input units. Artifact output retains deterministic portable\nidentities. Use this API to import units that depend on session units;\nraw runtime loading does not rewrite their dependency identities.\n\nRuneVM is required, and execution with libraries requires a host\nprogram built with `--units` so its Basis identities can be shared.\nA whole-program host raises `Fail` before linking any dependencies.\nNative SML hosts support static compilation and\nartifact output but raise `Fail` for execution. Host library units\ncaptured when the adapter starts are reused; normal build order must\ninitialize those libraries before clients invoke the API. Their source\nprovenance must match the configured library; differing or unavailable\nprovenance raises `Fail` before dependencies execute. Explicit unit or\nMid imports cannot replace a colliding host library implicitly.\nReplacing a shared host unit through raw runtime linking invalidates\nits provenance; later runs needing it raise `Fail` before execution.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-run"
+    },
+    {
+     "kind": "val",
+     "name": "writeUnit",
+     "spec": "val writeUnit : compiled * string -> unit",
+     "doc": "`writeUnit (unit, file)` writes a unit and its companion basis, Mid\nand source metadata (`.rbi`, `.rbm`, `.rbs`).\n\nEach file is replaced\natomically; the source integrity record is published last. Readers\nreject a mismatched set.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-writeunit"
+    },
+    {
+     "kind": "val",
+     "name": "writeMid",
+     "spec": "val writeMid : compiled * string -> unit",
+     "doc": "`writeMid (unit, file)` writes the unit's Mid representation.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-writemid"
+    },
+    {
+     "kind": "val",
+     "name": "writeProgram",
+     "spec": "val writeProgram : compiled list * string -> unit",
+     "doc": "`writeProgram (units, file)` links selected units, library finalizers\nand required dependencies into a program file.\n\nUnits must belong to\none context. It does not execute the program.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-writeprogram"
+    },
+    {
+     "kind": "val",
+     "name": "typeAt",
+     "spec": "val typeAt : session * {file : string, offset : int} -> string option",
+     "doc": "`typeAt (session, {file, offset})` returns the checked type of an\nannotated value occurrence, or `NONE` where none exists.\n\nThe offset is a UTF-8 byte offset in the latest ordered history.\nThe innermost occurrence is selected.\nThis initial implementation performs fresh static elaboration; it\ndoes not retain a resident semantic snapshot or execute user code.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-typeat"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "RuneCompiler": "RUNE_COMPILER"
+ }
+}

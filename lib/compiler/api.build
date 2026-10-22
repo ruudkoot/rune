@@ -1,0 +1,16 @@
+(* Shared API graph. Bootstrap hosts use the portable platform module;
+   Rune builds include the annotated runtime adapter before the facade. *)
+use internal.build
+files
+  api/prelude.sml
+  api/session.sml
+  api/query.sml
+  api/compiler_sig.sml
+  api/platform.sml
+end
+annotate "host=no" in
+  api/platform-rune.sml
+end
+files
+  api/compiler.sml
+end

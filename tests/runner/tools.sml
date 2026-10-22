@@ -890,6 +890,9 @@ struct
               job ("property-laws", ["lib-laws"], [], 300, 600),
               job ("unit-core", ["lib-check", "passes", "unit-core", "test/unit", "tests/lib/unit/core.sml"], [], 300, 600),
               job ("runner-props", ["lib-check", "passes", "runner-props", "test/runner", "tests/lib/runner/props.sml"], [], 300, 600)]
+             @ [job ("compiler/api", ["lib-suite", "compiler", "tests/lib/compiler/api.sml"], [], 500, 600),
+                job ("compiler/@check", ["lib-basis-check", "compiler"], [], 500, 600),
+                job ("compiler/@examples", ["lib-examples", "compiler", "guarded"], [], 500, 600)]
              @ List.concat (List.map (fn lib => let val t = String.translate (fn #"/" => "-" | c => str c) lib
                                                 in [job (t ^ "-check", ["lib-basis-check", lib], [], 300, 600),
                                                     job (t ^ "-examples", ["lib-examples", lib, "guarded"], [], 300, 600)] end)

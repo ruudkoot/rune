@@ -8506,6 +8506,13 @@
     },
     {
      "kind": "val",
+     "name": "linkedUnits",
+     "spec": "val linkedUnits : unit -> string list",
+     "doc": "`linkedUnits ()` is the identities of the units successfully linked\ninto this program, in first-link order, each listed once.\n\nLinking does not execute a unit. This inventory does not say whether\nits top-level declarations ran or completed. A failed link does not\nadd its identity. A whole-program compile has no unit inventory.\nPrograms made by older compilers may omit units without a reserved\ntop-level export.\n\n",
+     "page": "sig/RUNTIME.md#val-linkedunits"
+    },
+    {
+     "kind": "val",
      "name": "catchInterrupt",
      "spec": "val catchInterrupt : unit -> bool",
      "doc": "`catchInterrupt ()` makes Ctrl-C, the user's interrupt, raise\n`SML90.Interrupt` in the program from now on rather than end it.\n\nIt is true; it is false where the system has no interrupt to catch,\nand the program goes on as before. The exception is raised where the\nprogram next jumps back, as a loop does, or calls a function, or in a\nread from a terminal that the interrupt cuts short, as a `raise` there\nwould raise it: the handlers, the frames and `trace` are what they\nwould be. A primitive that is running finishes first. The interrupt is\ncaught even where the program was started with it ignored, as a shell\nstarts one in the background, and a world started from an image that\n`save` wrote catches it as the program that saved it did.\n\n> **Implementation** `RUNTIME.catchInterrupt/polled`. The VM looks at the\ninterrupt at a jump back and at a call, in the interpreters and in the\ncode the JIT makes; the code of `runeopt` does not, and an interrupt\nnever comes to it.\n\n",

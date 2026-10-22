@@ -60,7 +60,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`PTY`](sig/PTY.md) | 8 | 8 | 100% | 6 | 6 |
 | [`REAL`](sig/REAL.md) | 64 | 64 | 100% | 55 | 55 |
 | [`REPL`](sig/REPL.md) | 7 | 7 | 100% | 7 | 7 |
-| [`RUNTIME`](sig/RUNTIME.md) | 19 | 19 | 100% | 15 | 15 |
+| [`RUNTIME`](sig/RUNTIME.md) | 20 | 20 | 100% | 16 | 16 |
 | [`SML90`](sig/SML90.md) | 36 | 36 | 100% | 18 | 18 |
 | [`SOCKET`](sig/SOCKET.md) | 93 | 93 | 100% | 76 | 76 |
 | [`STREAM_IO`](sig/STREAM_IO.md) | 29 | 29 | 100% | 21 | 21 |
@@ -80,7 +80,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WINDOWS`](sig/WINDOWS.md) | 88 | 88 | 100% | 30 | 30 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1698 | 1698 | 100% | 1149 | 1149 |
+| **all** | 1699 | 1699 | 100% | 1150 | 1150 |
 
 ## Members a signature describes
 
@@ -89,7 +89,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-207 structures have a page, with 4431 members, of which 4431 (100%) are described by a signature.
+207 structures have a page, with 4432 members, of which 4432 (100%) are described by a signature.
 
 ## Examples that are run
 

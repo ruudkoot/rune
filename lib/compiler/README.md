@@ -29,8 +29,43 @@ allocation forms and explicit mutable root types, including nested modules,
 local declarations and eager collection callbacks. New allocation helpers
 must extend the audit and its fault cases.
 
-The public export boundary and `RuneCompiler` facade remain upcoming
-compiler-library milestones. Internal module names are implementation
-interfaces and should not be used as a stable application API. `config.sml`
-is a generated copy of the build's version/identity, installed with the
-library sources and never committed.
+`RuneCompiler : RUNE_COMPILER` is the public API. Add `--library compiler`
+to a compile, or name `compiler` in a build's `libraries` declaration.
+Its export boundary hides the implementation modules, so clients can
+declare their own `Ast`, `Env` and `Types` structures. `api.build` adds the
+session facade to the internal graph; the native hosts use its portable
+adapter and Rune builds select the runtime adapter before the facade.
+
+A session holds an ordered compilation history. Compilation, artifact
+loading and queries are static; `run` explicitly executes a unit. Failed
+compiles leave the successful history intact. This first implementation
+replays that history in a fresh compiler owner for each attempt. Resident
+incremental analysis and immutable semantic snapshots remain separate
+language-server milestones.
+
+Native hosts support static compilation and artifact output. In-process
+execution requires RuneVM. When using libraries, build the host with
+`--units` so runtime dependencies share the host's Basis identities and
+process-exit hooks. A whole-program host rejects that execution before
+linking a second Basis. The runtime adapter captures the host's linked
+unit inventory when it starts; ordinary build order must initialize the
+library dependencies before client code calls the API.
+Interface identities can survive implementation changes, so the adapter
+also checks the host's recorded source hashes. Differing or unavailable
+library provenance is refused before dependencies execute.
+Execution gives session units separate namespaces, while written
+artifacts retain deterministic portable identities. Raw replacement of a
+shared host unit invalidates its provenance and prevents later reuse.
+
+`writeUnit` writes bytecode with checked-basis, Mid and source companions.
+`readUnit` can also import CLI units without a source companion when their
+matching original source remains available. `writeProgram` links selected
+units and required dependencies, placing library finalizers last. User
+programs are never executed by these output operations.
+
+Compiler-library M4 is in progress: the public API and frozen-cache
+packaging are implemented; full/platform acceptance and client migrations
+remain unfinished. See `docs/plans/compiler-library.md`
+for evidence and outstanding gates. Internal modules are implementation
+interfaces. `config.sml` is a generated copy of the build's version and
+identity, installed with the sources and never committed.

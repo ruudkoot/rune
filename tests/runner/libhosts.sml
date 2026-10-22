@@ -33,6 +33,7 @@ struct
        ("jsonrpc.jsonrpc", ["unicode", "json", "jsonrpc"], "jsonrpc/jsonrpc"),
        ("lsp.protocol", ["unicode", "json", "jsonrpc", "lsp"], "lsp/protocol"),
        ("compiler.state", ["compiler-state"], "compiler/state"),
+       ("compiler.api", ["unicode", "json", "compiler"], "compiler/api"),
        ("dap.dap", ["unicode", "json", "jsonrpc", "dap"], "dap/dap"),
        ("pretty.pretty", ["unicode", "pretty"], "pretty/pretty"),
        ("markdown.spec", ["unicode", "json", "pretty", "markdown"], "markdown/spec"),

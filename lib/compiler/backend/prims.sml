@@ -415,7 +415,8 @@ struct
     ("pty_resize", 409, 3),
     ("pty_close", 410, 1),
     ("foreign", 411, 5),
-    ("foreign_callback", 412, 3)
+    ("foreign_callback", 412, 3),
+    ("rt_linked_units", 413, 1)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -554,7 +555,8 @@ struct
     "intinf_gmp_available",
     "intinf_max_bits",
     "string_eq",
-    "array_to_vector"
+    "array_to_vector",
+    "rt_linked_units"
   ])
   fun removable name = StringMap.member (removables, name)
   (* what each primitive takes and gives, from the type of its
@@ -980,7 +982,8 @@ struct
            ("pty_resize", ([1, 1, 1], 1)),
            ("pty_close", ([1], 1)),
            ("foreign", ([1, 10, 10, 6, 6], 0)),
-           ("foreign_callback", ([6, 6, 0], 0))
+           ("foreign_callback", ([6, 6, 0], 0)),
+           ("rt_linked_units", ([8], 7))
          ]);
          repsOf name)
 end

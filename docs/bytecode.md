@@ -210,6 +210,28 @@ units       nunits × { identity: len u32, bytes;
             kind 0 a function, by its index in the program; 1 a global
 ```
 
+A function export numbered `~1` is reserved for the unit's top-level
+function. The linker emits it even for a unit with no public declarations;
+a successful runtime link publishes it after checking the code.
+`rt_linked_units` (the primitive behind `Runtime.linkedUnits`) lists these
+identities in first-link order. Referenced names from a failed link are not
+listed. The marker records linkage, not execution of the initializer.
+
+The compiler also emits internal source-provenance entries named
+`\001RuneSource:HASH:IDENTITY`, with the same reserved function export.
+`HASH` is the 24-digit hash of the compiler identity, target, source mode
+and decoded-source hash from the checked basis, separated by colons. These
+are metadata, filtered from `Runtime.linkedUnits`. The compiler adapter
+uses them to check host-library source before sharing a unit: its
+interface identity alone can survive implementation-only changes.
+Raw unit linking without checked bases may lack provenance and is refused
+when the API would otherwise share such a host unit. The entry uses the
+existing units-section layout and is preserved by image serialization.
+The runtime ignores a provenance record after raw linking replaces the
+unit's reserved function export. The API checks current provenance before
+each run and namespaces its own execution units per session; portable
+artifact identities are unaffected.
+
 ### A unit's basis (`.rbi`)
 
 Beside its code, `--emit-units` writes each unit's basis, what the

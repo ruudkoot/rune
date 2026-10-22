@@ -1,8 +1,8 @@
 (* The documentation of a library as a tree of files (docs/plans/docgen.md,
    D8): a page per signature, the overview, the index of identifiers, how to
    read a page, and what is documented so far. A library is a directory with
-   a MANIFEST; what it provides, without the names that begin with Rune, is
-   public. Everything is made in memory first: `write` puts it on disk and
+   a MANIFEST; explicit exports define its public names. Legacy libraries
+   hide names beginning with Rune. Everything is made in memory first: `write` puts it on disk and
    removes what it no longer makes, `check` only compares. `librariesPage`
    is the overview of every library, grouped by area, one page above those
    trees. *)
@@ -24,6 +24,13 @@ struct
      it is no part of what the library offers. *)
   fun isPublic (name : string) : bool =
     not (String.isPrefix "Rune" name orelse String.isPrefix "RUNE_" name)
+
+  (* Explicit export lists supersede the legacy Rune-prefix convention.
+     load has already removed the private top-level modules in this case. *)
+  fun publicOf dir =
+    case BasisManifest.scopeOf (BasisManifest.readManifest dir) of
+      NONE => isPublic
+    | SOME _ => (fn (_ : string) => true)
 
   (* The structure of a dotted name, as the sources declare it. *)
   fun structAt (ms : I.module list, names : string list) : I.structRecord option =
@@ -102,7 +109,7 @@ struct
         end
     in List.concat (List.map file entries) end
 
-  fun signaturesOf (modules : I.module list) : I.signatureRecord list =
+  fun signaturesOf isPublic (modules : I.module list) : I.signatureRecord list =
     List.mapPartial (fn I.Signature s => if isPublic (#name s) then SOME s else NONE | _ => NONE) modules
 
   (* The notes of the body of the structure at a path such as OS.Path, with
@@ -127,7 +134,7 @@ struct
     end
 
   (* An environment for pages in the directory that `root` leads out of. *)
-  fun envOf (modules : I.module list, out : string, own : string list, sites : DocTests.site list,
+  fun envOfUsing isPublic (modules : I.module list, out : string, own : string list, sites : DocTests.site list,
              annotations : DocAnnot.file option, outer : {index : R.index, root : string option} list) =
     let
       val tests = List.foldl (fn (s : DocTests.site, m) =>
@@ -300,6 +307,9 @@ struct
                    strPageOf = strPageOf,
                    links = links, anchors = anchors, outer = outer} : P.env)
     end
+
+  (* Individual source files retain the legacy visibility convention. *)
+  fun envOf args = envOfUsing isPublic args
 
   (* ---- pages other than those of signatures ---- *)
   fun percent (a : int, b : int) : string = if b = 0 then "-" else Int.toString (a * 100 div b) ^ "%"
@@ -664,7 +674,7 @@ struct
   (* ---- the top-level environment ---- *)
   (* The members of public structures that are a top-level name under another
      name: (top-level name, Structure.member, signature of the structure). *)
-  fun twinsOfTop (env : P.env, modules : I.module list) : (string * string * string option) list =
+  fun twinsOfTop isPublic (env : P.env, modules : I.module list) : (string * string * string option) list =
     List.concat
       (List.map (fn I.Struct {name, twins, ...} =>
                       if not (isPublic name) then []
@@ -675,10 +685,10 @@ struct
                   | _ => [])
                 modules)
 
-  fun topLevelPage (env : P.env, title : string, modules : I.module list) : string =
+  fun topLevelPage isPublic (env : P.env, title : string, modules : I.module list) : string =
     let
       val page = "top-level.md"
-      val twins = twinsOfTop (env, modules)
+      val twins = twinsOfTop isPublic (env, modules)
       val decls = List.mapPartial (fn I.Decl d => SOME d | _ => NONE) modules
       fun link c = case R.resolve (#index env, "", [], []) c of
                      R.Target t => SOME (P.href (env, page, t, Source.noSpan))
@@ -1059,7 +1069,7 @@ struct
      `Structure.member/`. A structure that is another structure by name
      (`structure LargeInt = IntInf`) is checked under either name. Returns the
      number of members that have checks; the missing ones are errors. *)
-  fun coverageOf (modules : I.module list, claims : DocClaims.claim list, index : R.index,
+  fun coverageOf isPublic (modules : I.module list, claims : DocClaims.claim list, index : R.index,
                   sites : DocTests.site list, tests : string) : int =
     let
       val scopes = List.foldl (fn (s : DocTests.site, m) => StringMap.insert (m, #scope s, ())) StringMap.empty sites
@@ -1110,7 +1120,7 @@ struct
      what it is made of. *)
   datatype reason = BySignature | ByTopLevel | ByChoice | Leak
 
-  fun typesPage (env : P.env, title : string, modules : I.module list, lib : DocElab.library,
+  fun typesPage isPublic (env : P.env, title : string, modules : I.module list, lib : DocElab.library,
                  names : (string * int * int) list) : string =
     let
       val page = "types.md"
@@ -1376,7 +1386,7 @@ struct
      transitive reduction of the graph, which the load order makes acyclic):
      that is what makes it readable, since it turns 560 requirements into 238
      edges. The areas are those of the signatures. *)
-  fun dependsPage (env : P.env, title : string, entries : BasisManifest.entry list,
+  fun dependsPage isPublic (env : P.env, title : string, entries : BasisManifest.entry list,
                    areaOfModule : string -> string option) : string =
     let
       val entries = List.filter (fn e : BasisManifest.entry => #when e <> BasisManifest.Seal) entries
@@ -1573,7 +1583,7 @@ struct
       String.concat (List.map one doc)
     end
 
-  fun membersIndex (sigs : I.signatureRecord list, claims : DocClaims.claim list) : string =
+  fun membersIndex isPublic (sigs : I.signatureRecord list, claims : DocClaims.claim list) : string =
     let
       fun entries (page : string, items : I.item list) : (I.entryRecord * string) list =
         List.concat (List.map (fn I.Item (I.Entry e) =>
@@ -1666,8 +1676,9 @@ struct
              shared : {href : string, emit : bool}} : file list =
     let
       val {title, overview} = pageTitle (dir, title)
+      val isPublic = publicOf dir
       val modules = load dir
-      val sigs = sort (fn (a : I.signatureRecord, b : I.signatureRecord) => String.compare (#name a, #name b) = LESS) (signaturesOf modules)
+      val sigs = sort (fn (a : I.signatureRecord, b : I.signatureRecord) => String.compare (#name a, #name b) = LESS) (signaturesOf isPublic modules)
       val own = List.map #name sigs
       val sites = case tests of SOME t => DocTests.suite t | NONE => []
       val annotated = Option.map DocAnnot.load annotations
@@ -1676,19 +1687,19 @@ struct
         (case #basis prelude of
            NONE => []
          | SOME basis =>
-             let val (_, index, _, _) = envOf (load basis, upFrom out, [], [], NONE, [])
+             let val (_, index, _, _) = envOfUsing (publicOf basis) (load basis, upFrom out, [], [], NONE, [])
              in [{index = index, root = Option.map (fn d => d ^ "/") basisDocs}] end)
         (* and the other libraries it is written on whose pages are given *)
         @ List.map (fn (library, docs) =>
-                      let val (_, index, _, _) = envOf (load library, upFrom out, [], [], NONE, [])
+                      let val (_, index, _, _) = envOfUsing (publicOf library) (load library, upFrom out, [], [], NONE, [])
                       in {index = index, root = SOME (docs ^ "/")} end)
                    libraryDocs
-      val (claims, index, paged, env) = envOf (modules, upFrom out, own, sites, annotated, outer)
+      val (claims, index, paged, env) = envOfUsing isPublic (modules, upFrom out, own, sites, annotated, outer)
       val () = DocClaims.checkNames (#signatures index) claims
       val () = checkDocumented sigs
       val () = case lawSkips of SOME file => setLawSkips (file, sigs, claims) | NONE => DocPage.lawSkips := (fn _ => [])
       (* with a suite: every specified member of a claimed structure has a check *)
-      val () = case tests of SOME t => ignore (coverageOf (modules, claims, index, sites, t)) | NONE => ()
+      val () = case tests of SOME t => ignore (coverageOf isPublic (modules, claims, index, sites, t)) | NONE => ()
       val notes = dedupNotes (DocNotes.ofModules (isPublic, fn name => StringMap.find (#structures index, name)) modules)
       val labels = case tests of SOME _ => SOME (DocNotes.labelsOf sites) | NONE => NONE
       val () = DocNotes.checkIds notes
@@ -2044,10 +2055,10 @@ struct
          link to it. *)
       val basisPages =
         if not basisLibrary then []
-        else ("top-level.md", topLevelPage (env "", title, modules))
+        else ("top-level.md", topLevelPage isPublic (env "", title, modules))
              :: ("readings.md", readingsPage (env "", title, notes, labels))
              :: (case elaborated of
-                   SOME lib => [("types.md", typesPage (env "", title, modules, lib, DocElab.typeNames (lib, isPublic)))]
+                   SOME lib => [("types.md", typesPage isPublic (env "", title, modules, lib, DocElab.typeNames (lib, isPublic)))]
                  | NONE => [])
       val files =
         ("README.md", readme (env "", title, overview, sigs, List.map (fn f => (#name f, #doc f)) functors, letters,
@@ -2064,10 +2075,10 @@ struct
         :: ("structures.md",
             structuresPage (env "", title, modules, sigStatus, indexRows,
                             Option.map DocElab.namesOf elaborated, basisLibrary))
-        :: ("depends.md", dependsPage (env "", title, BasisManifest.readManifest dir, areaOfModule))
+        :: ("depends.md", dependsPage isPublic (env "", title, BasisManifest.readManifest dir, areaOfModule))
         :: ("exceptions.md", exceptionsPage (env "", title, sigs))
         :: ("notes.tsv", DocNotes.tsv labels notes)
-        :: ("members.json", membersIndex (sigs, sort (fn (a : DocClaims.claim, b : DocClaims.claim) =>
+        :: ("members.json", membersIndex isPublic (sigs, sort (fn (a : DocClaims.claim, b : DocClaims.claim) =>
                                                         case String.compare (#name a, #name b) of
                                                           LESS => true | GREATER => false | EQUAL => #signat a < #signat b)
                                                      claims))
@@ -2105,8 +2116,9 @@ struct
      signature that has an example. *)
   fun examples {dir : string} : file list =
     let
+      val isPublic = publicOf dir
       val modules = load dir
-      val (claims, index, _, _) = envOf (modules, "", [], [], NONE, [])
+      val (claims, index, _, _) = envOfUsing isPublic (modules, "", [], [], NONE, [])
       fun sigStatus s = case StringMap.find (#signatures index, s) of
                           SOME (I.Signature {doc, ...}) => P.statusOf doc
                         | _ => "required"
@@ -2116,7 +2128,7 @@ struct
                          case DocExamples.ofSignature s of
                            [] => NONE
                          | es => SOME (#name s ^ ".sml", DocExamples.program (#name s, P.normalise (#file s), structureOf (#name s), es)))
-                      (sort (fn (a : I.signatureRecord, b : I.signatureRecord) => #name a < #name b) (signaturesOf modules))
+                      (sort (fn (a : I.signatureRecord, b : I.signatureRecord) => #name a < #name b) (signaturesOf isPublic modules))
     end
 
   (* The programs that hold the laws of the signatures at every structure
@@ -2128,8 +2140,9 @@ struct
       NONE => []
     | SOME lib =>
         let
+          val isPublic = publicOf dir
           val modules = load dir
-          val (claims, _, _, _) = envOf (modules, "", [], [], NONE, [])
+          val (claims, _, _, _) = envOfUsing isPublic (modules, "", [], [], NONE, [])
           val implementers = implementersOf claims
           (* the entry of a law at a structure, and its alternative where
              that draws a type by an arbitrary of the structure's own family
@@ -2166,15 +2179,16 @@ struct
                                             :: (if List.null alts then []
                                                 else [(#name s ^ ".alt", DocLaws.alternatives (#name s, file, alts))]))
                                     end)
-                             (sort (fn (a : I.signatureRecord, b : I.signatureRecord) => #name a < #name b) (signaturesOf modules)))
+                             (sort (fn (a : I.signatureRecord, b : I.signatureRecord) => #name a < #name b) (signaturesOf isPublic modules)))
         end
 
   fun checkCoverage {dir : string, tests : string} : int =
     let
+      val isPublic = publicOf dir
       val modules = load dir
-      val (claims, index, _, _) = envOf (modules, "", [], [], NONE, [])
+      val (claims, index, _, _) = envOfUsing isPublic (modules, "", [], [], NONE, [])
     in
-      coverageOf (modules, claims, index, DocTests.suite tests, tests)
+      coverageOf isPublic (modules, claims, index, DocTests.suite tests, tests)
     end
 
   (* ---- on disk ---- *)

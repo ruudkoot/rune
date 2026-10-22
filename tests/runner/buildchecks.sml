@@ -153,12 +153,70 @@ struct
               (flags @ ["--library","consumer",dir ^ "/consumer-use.sml","-o",dir ^ "/rejected.rbc"])
         in need (status<>0 andalso String.isSubstring "Hidden.value" log,"private dependency leaked into another library") end
     in List.app privateConsumer modes end
+  fun compilerApi () =
+    let
+      val dir=run ^ "/compiler-api"
+      val ()=(rmTree dir;mkdirs dir)
+      val foreign=dir ^ "/foreign"
+      val ()=mkdirs (foreign ^ "/basis")
+      val ()=List.app (fn name =>
+        if name="MANIFEST" orelse String.isSuffix ".sml" name then
+          write (foreign ^ "/basis/" ^ name,read ("lib/basis/" ^ name) ^
+            (if name="runeexit.sml" then "\n(* different source, same exported interface *)\n" else "")) else ())
+        (entries "lib/basis")
+      fun need (true,_) = () | need (false,message) = raise Fail ("compiler API: " ^ message)
+      fun invoke label args =
+        let val output=dir ^ "/" ^ label ^ ".out"
+            val errors=dir ^ "/" ^ label ^ ".err"
+            val status=exec {cmd=args,dir=SOME root,stdin="",stdout=output,stderr=errors,timeout=600}
+        in (status,read output,read errors) end
+      fun compile (label,flags,source) =
+        let val (status,_,errors)=invoke (label ^ "-compile")
+          ([fromRoot (env ("RUNE","bin/rune")),"--library","compiler"] @ flags @ [source,"-o",dir ^ "/" ^ label ^ ".rbc"])
+        in need (status=0,"compilation failed: " ^ errors) end
+      val ()=compile ("execute",["--units","--emit-units",dir ^ "/host-units"],"tests/compiler/api-execution.sml")
+      val hostUnit=case List.find (String.isSuffix "-runeexit.rbu") (entries (dir ^ "/host-units")) of
+        SOME file => dir ^ "/host-units/" ^ file | NONE => raise Fail "compiler API: host unit fixture missing"
+      val (status,_,errors)=invoke "frozen"
+        [fromRoot (env ("RUNE","bin/rune")),"--library","compiler","--units","--cache-dir",dir ^ "/cache",
+         "--explain-rebuild","tests/compiler/api-execution.sml","-o",dir ^ "/frozen.rbc"]
+      val ()=need (status=0 andalso not (List.exists
+        (String.isPrefix "rune: compiled lib/compiler/") (lines errors)),
+        "frozen compiler units were rebuilt: " ^ errors)
+      val expected="before explicit run\n2\n3\nPASS compiler API execution\ncompiled finalizer\nhost finalizer\n"
+      fun runMode (name,flags) =
+        let val (status,output,errors)=invoke name ([fromRoot "bin/runevm"] @ flags @ [dir ^ "/execute.rbc",dir,foreign,hostUnit])
+        in need (status=0 andalso output=expected andalso errors="",name ^ " execution differs: " ^ output ^ errors) end
+      val ()=List.app runMode [("interpreter",["--jit=off"]),("jit",["--jit=all"])]
+      val (status,output,errors)=invoke "program" [fromRoot "bin/runevm",dir ^ "/program.rbc"]
+      val ()=need (status=0 andalso output="compiled finalizer\n" andalso errors="","written program/finalizer order differs: " ^ output ^ errors)
+      val ()=compile ("whole",[],"tests/compiler/api-whole.sml")
+      val (status,output,errors)=invoke "whole" [fromRoot "bin/runevm",dir ^ "/whole.rbc"]
+      val ()=need (status=0 andalso output="PASS whole host execution refusal\n" andalso errors="","whole-host guard differs")
+      val (status,_,errors)=invoke "cli-unit"
+        [fromRoot (env ("RUNE","bin/rune")),"--units","--no-prelude","--no-cache","--emit-units",dir ^ "/cli-units",
+         "tests/compiler/api-cli-source.sml","-o",dir ^ "/cli.rbc"]
+      val ()=need (status=0,"CLI unit producer failed: " ^ errors)
+      val input=dir ^ "/cli-units/0000-api-cli-source.rbu"
+      val ()=need (exists input andalso not (exists (dir ^ "/cli-units/0000-api-cli-source.rbs")),"CLI compatibility fixture is not a plain unit")
+      val ()=compile ("import",[],"tests/compiler/api-import.sml")
+      val (status,output,errors)=invoke "import"
+        [fromRoot "bin/runevm",dir ^ "/import.rbc",input,dir ^ "/imported.rbc"]
+      val ()=need (status=0 andalso output="PASS CLI unit import\n" andalso errors="","CLI unit import failed: " ^ output ^ errors)
+      val (status,output,errors)=invoke "imported" [fromRoot "bin/runevm",dir ^ "/imported.rbc"]
+      val ()=need (status=0 andalso output="42 imported\n" andalso errors="","imported program differs: " ^ output ^ errors)
+      val private=dir ^ "/private.sml"
+      val ()=write (private,"val private=Ast.decToString\n")
+      val (status,_,errors)=invoke "private"
+        [fromRoot (env ("RUNE","bin/rune")),"--library","compiler",private,"-o",dir ^ "/private.rbc"]
+    in need (status<>0 andalso String.isSubstring "Ast.decToString" errors,"private compiler namespace leaked") end
   fun command ["build-asm-check"]=SOME asmCheck
     | command ["build-asm-faults"]=SOME asmFaults
     | command ["build-jit-compile"]=SOME compile
     | command ["build-jit-deep",name]=SOME (fn () => deep name)
     | command ["build-compiler-layout"]=SOME compilerLayout
     | command ["build-library-exports"]=SOME libraryExports
+    | command ["build-compiler-api"]=SOME compilerApi
     | command _=NONE
   val vm=Test.it "vm-refusals"
     {program="/bin/sh",args=["sh","-c","exec \"$RUNE_TEST_ROOT\"/bin/rune-windows vm --vm \"${RUNEVM:-bin/runevm-stack}\" --out \"$RUNE_TEST_RUN/low-level/vm\""],
@@ -168,6 +226,8 @@ struct
        (job "compiler-layout" ["build-compiler-layout"] []),
      tagged ["check","test-build","test-lib","covers:lib/compiler/*","covers:tests/lib/exports/*"]
        (job "library-exports" ["build-library-exports"] []),
+     tagged ["check","test-compiler-api","test-lib","covers:lib/compiler/*","covers:tests/compiler/api*.sml"]
+       (job "compiler-api" ["build-compiler-api"] []),
      tagged ["check","test","test-low-level","covers:tests/compiler/*","covers:tests/runtime/*"]
        (Test.describe "basic" [vm,executable "heap" "build/heap_test" []]),
      tagged ["check","layout","test-heap","test-heap-hooks","covers:tests/runtime/*"]

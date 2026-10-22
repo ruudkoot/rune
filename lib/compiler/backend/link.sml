@@ -79,6 +79,12 @@ struct
      later to name (docs/units.md, Dynamic modules) *)
   val lastExports : (string * (int * int * int) list) list ref = ref []
   val () = CompilerState.cellRoot ("Link.lastExports", lastExports)
+  (* Interface identities deliberately survive implementation-only changes.
+     Keep source provenance separately for safe in-process library reuse. *)
+  val sourceHashes : string StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Link.sourceHashes", sourceHashes)
+  fun provenance (target,mode,sourceHash) =
+    Pickle.hash (Config.identity ^ ":" ^ target ^ ":" ^ Source.modeName mode ^ ":" ^ sourceHash)
 
   fun program (target : Low.program -> Code.program, linked : (int * int) list vector, units : unitCode list)
       : Code.program =
@@ -224,13 +230,19 @@ struct
                                                else if k = k' andalso n = n' then y :: rest
                                                else y :: ins rest
                                      in ins acc end) []
-                                  (List.map (fn (n, f) => (0, n, Vector.sub (fbases, i) + f)) (#exports u)
+                                  ((0, ~1, Vector.sub (fbases, i)) ::
+                                   List.map (fn (n, f) => (0, n, Vector.sub (fbases, i) + f)) (#exports u)
                                    @ List.mapPartial (fn (k : key, _) =>
                                                         if #unit k = #identity u
                                                         then Option.map (fn g => (1, #number k, g)) (IntMap.find (!globalOf, keyId k))
                                                         else NONE)
                                                      (#globals u))))
             (ListPair.zip (List.tabulate (nunits, fn i => i), units))
+      val () = lastExports := List.concat (List.map (fn (identity,exports) =>
+        (identity,exports) ::
+          (case StringMap.find (!sourceHashes,identity) of NONE => [] | SOME hash =>
+            [("\001RuneSource:" ^ hash ^ ":" ^ identity,
+              List.filter (fn (kind,number,_) => kind=0 andalso number= ~1) exports)])) (!lastExports))
     in
       {consts = List.rev (!consts), nglobals = !nglobals, funcs = funcs, files = List.rev (!files),
        inlines = List.rev (!inlines), nlabels = !nlabels}

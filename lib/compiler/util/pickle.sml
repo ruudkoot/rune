@@ -57,16 +57,16 @@ struct
           else if k = 4 then raise Bad "a number out of range"
           else go (scale * 128, acc + scale * (b - 128), k + 1)
         end
-    in go (1, 0, 0) end
+    in go (1, 0, 0) handle Overflow => raise Bad "a number out of range" end
 
   fun rint (r : reader) : int =
-    let val n = rnat r in if n mod 2 = 0 then n div 2 else ~((n + 1) div 2) end
+    let val n = rnat r in if n mod 2 = 0 then n div 2 else ~(n div 2) - 1 end
 
   fun rbool (r : reader) : bool =
     case rbyte r of 0 => false | 1 => true | _ => raise Bad "not a bool"
 
   fun rbytes ({s, pos} : reader, n : int) : string =
-    if n < 0 orelse !pos + n > String.size s then raise Bad "cut short"
+    if n < 0 orelse n > String.size s - !pos then raise Bad "cut short"
     else String.substring (s, !pos, n) before pos := !pos + n
 
   fun rstring (r : reader) : string = rbytes (r, rnat r)
