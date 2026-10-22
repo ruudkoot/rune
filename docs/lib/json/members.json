@@ -1,7 +1,7 @@
 {
  "signatures": {
   "JSON": {
-   "doc": "JSON (RFC 8259): values read from text and written back.\n\nReading is strict: the grammar of RFC 8259 and nothing beside it -- no\ncomments, no trailing commas, no single quotes, no NaN -- in UTF-8, as the\nRFC requires of text exchanged between systems; a string's escapes must\nname scalar values, so a lone surrogate is an error. A number is kept as\nthe text it was written in, so that nothing is lost to a conversion that\nthe program did not ask for; `int` and `toInt` convert. An object keeps\nits members in the order they were written, a repeated name included.\nNesting deeper than `maxDepth` is refused rather than followed.\n\n",
+   "doc": "JSON (RFC 8259): values read from text and written back.\n\nReading is strict: the grammar of RFC 8259 and nothing beside it -- no\ncomments, no trailing commas, no single quotes, no NaN -- in UTF-8, as the\nRFC requires of text exchanged between systems; a string's escapes must\nname scalar values, so a lone surrogate is an error. A number is kept as\nthe text it was written in, so that nothing is lost to a conversion that\nthe program did not ask for; `int` and `toInt` convert host integers,\n`intInf` and `toIntInf` arbitrary-precision integers. An object keeps\nits members in the order they were written, a repeated name included.\nNesting deeper than `maxDepth` is refused rather than followed.\n\n",
    "page": "sig/JSON.md",
    "members": [
     {
@@ -55,10 +55,24 @@
     },
     {
      "kind": "val",
+     "name": "intInf",
+     "spec": "val intInf : IntInf.int -> value",
+     "doc": "`intInf i` is the integer i, without a host-width restriction.\n\n**Example** `intInf (IntInf.fromInt ~3) = Number \"-3\"`\n\n",
+     "page": "sig/JSON.md#val-intinf"
+    },
+    {
+     "kind": "val",
      "name": "toInt",
      "spec": "val toInt : value -> int option",
      "doc": "`toInt v` is the integer `v` is, when it is a `Number` with no\nfraction or exponent that fits an `int`; `NONE` otherwise.\n\n**Example** `toInt (Number \"-42\") = SOME ~42 andalso toInt (Number \"4.2\") = NONE`\n\n",
      "page": "sig/JSON.md#val-toint"
+    },
+    {
+     "kind": "val",
+     "name": "toIntInf",
+     "spec": "val toIntInf : value -> IntInf.int option",
+     "doc": "`toIntInf v` is the integer of a number with no fraction or exponent.\n\n**Example** `toIntInf (Number \"2147483647\") = IntInf.fromString \"2147483647\"`\n\n",
+     "page": "sig/JSON.md#val-tointinf"
     },
     {
      "kind": "val",

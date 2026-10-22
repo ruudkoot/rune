@@ -36,6 +36,7 @@ Library is what every program starts with.
 | --- | --- |
 | [JSON](json/README.md) `json` | JSON (RFC 8259): values read from text and written back. |
 | [JSON-RPC](jsonrpc/README.md) `jsonrpc` | JSON-RPC 2.0. Requests, notifications and responses are values, read from JSON and written to it, and a framing cuts them out of a byte stream: a line each, or a `Content-Length` header, as the Language Server Protocol and the Debug Adapter Protocol frame theirs. |
+| [Language Server Protocol](lsp/README.md) `lsp` | LSP 3.18 common wire values over `lib/jsonrpc`: one-message envelopes, portable signed/unsigned integer bounds, positions/ranges, UTF-8 text and capability-based position-encoding negotiation. Unknown extension fields remain permitted. Malformed responses are distinguished from invalid requests so callers do not answer a response with another response. |
 | [Debug Adapter Protocol](dap/README.md) `dap` | The Debug Adapter Protocol's messages. Requests, responses and events are values, read from JSON and written to it, framed as the protocol frames them. |
 | [ZMTP](zmtp/README.md) `zmtp` | ZeroMQ's sockets over ZMTP 3.1 with the NULL mechanism, on the Basis's TCP sockets, and the bytes of that protocol: the greeting, the frames and the commands. |
 | [Jupyter](jupyter/README.md) `jupyter` | Jupyter's messaging protocol for a kernel: the connection file, the signed messages of the wire, and a kernel's loop on its five channels, the language's part given as handlers. |

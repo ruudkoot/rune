@@ -246,7 +246,7 @@ all: vm boot runedoc runeopt runeffi manifests basis-cache
 # its sources by the first host's compiler, which builds before any rune
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
-REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
+REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter lsp
 
 # Frontend baselines and edit traces for the language-server roadmap.
 LSP_BENCH_SRCS := $(shell sh scripts/build-files.sh rune-lsp-bench.build)
@@ -262,6 +262,35 @@ bin/rune-lsp-bench-tests.rbc: $(RUNE) tests/runner/sh.sml tests/lsp/bench-tests.
 test-lsp-bench: bin/rune-lsp-bench bin/rune-lsp-bench-tests.rbc bin/rune
 	bin/rune-lsp-bench --self-test
 	bin/runevm bin/rune-lsp-bench-tests.rbc
+
+bin/rune-lsp-protocol.rbc: $(RUNE) tools/lsp/protocol-gen.sml manifests
+	$(RUNE) --library json --library digest tools/lsp/protocol-gen.sml -o $@
+bin/rune-lsp-protocol: bin/rune-lsp-protocol.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-lsp-protocol.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: lsp-protocol check-lsp-protocol
+lsp-protocol: bin/rune-lsp-protocol
+	bin/rune-lsp-protocol
+check-lsp-protocol: bin/rune-lsp-protocol
+	bin/rune-lsp-protocol --check
+
+LSP_SRCS := $(shell sh scripts/build-files.sh runelsp.build)
+.PHONY: lsp
+lsp: bin/runelsp
+bin/runelsp.rbc: $(RUNE) $(LSP_SRCS) runelsp.build manifests | check-lsp-protocol
+	$(RUNE) --build runelsp.build -o $@
+bin/runelsp: bin/runelsp.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/runelsp.rbc" --lib "$$d/../lib" "$$@"\n' > $@
+	chmod +x $@
+bin/rune-lsp-wire-tests.rbc: $(RUNE) tests/runner/sh.sml tests/lsp/protocol-tests.sml manifests
+	$(RUNE) --library test/runner --library json tests/runner/sh.sml tests/lsp/protocol-tests.sml -o $@
+bin/rune-lsp-tests.rbc: $(RUNE) tests/lib/lsp/protocol.sml manifests
+	$(RUNE) --library test/unit --library random --library lsp tests/lib/lsp/protocol.sml -o $@
+.PHONY: test-lsp test-lsp-protocol
+test-lsp: test-lsp-protocol
+test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc check-lsp-protocol
+	bin/runevm bin/rune-lsp-tests.rbc
+	bin/runevm bin/rune-lsp-wire-tests.rbc
 
 manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST lib/ffi/runtime/MANIFEST lib/ffi/win32/common/MANIFEST lib/ffi/win32/model/MANIFEST lib/ffi/win32/mock/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST) lib/sdl/MANIFEST lib/ffi/win32/sdldriver/MANIFEST
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
@@ -296,6 +325,8 @@ lib/digest/MANIFEST: lib/digest/library.build $(wildcard lib/digest/*.sml) lib/b
 	bin/rune-$(BOOTHOST) --basis-index lib/digest
 lib/jsonrpc/MANIFEST: lib/jsonrpc/library.build $(wildcard lib/jsonrpc/*.sml) lib/basis/MANIFEST lib/json/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/jsonrpc
+lib/lsp/MANIFEST: lib/lsp/library.build $(wildcard lib/lsp/*.sml) lib/jsonrpc/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/lsp
 lib/dap/MANIFEST: lib/dap/library.build $(wildcard lib/dap/*.sml) lib/basis/MANIFEST lib/jsonrpc/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/dap
 lib/zmtp/MANIFEST: lib/zmtp/library.build $(wildcard lib/zmtp/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -1291,7 +1322,7 @@ bin/rune-kernel: bin/rune-kernel.rbc bin/rune-repl.img bin/runevm Makefile
 kernel: bin/rune-kernel
 # and again with the engine's channel a connection, as on Windows
 # (src/front/engine.sml)
-test-kernel: bin/rune-kernel bin/rune-test
+test-kernel: bin/rune-kernel bin/rune-test bin/rune-protocol-check
 	$(RUNE_TEST) --tier test-kernel
 
 # rune-dap, the Debug Adapter Protocol for Standard ML (docs/dap.md): an
@@ -1303,12 +1334,12 @@ bin/rune-dap: bin/rune-dap.rbc bin/rune-repl.img bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-dap.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" "$$@"\n' > $@
 	chmod +x $@
 dap: bin/rune-dap
-test-dap: bin/rune-dap bin/rune-repl bin/rune-test
+test-dap: bin/rune-dap bin/rune-repl bin/rune-test bin/rune-protocol-check
 	$(RUNE_TEST) --tier test-dap
 
 # The REPL's engine and its protocol (docs/repl-protocol.md): each script
 # of tests/repl-protocol played to rune-repl --engine, as a front drives it
-test-repl-protocol: bin/rune-repl bin/runevm bin/rune-test
+test-repl-protocol: bin/rune-repl bin/runevm bin/rune-test bin/rune-protocol-check
 	$(RUNE_TEST) --tier test-repl-protocol
 
 # Programs on a terminal (docs/plans/repl.md, M1): each script of
@@ -1454,6 +1485,7 @@ DOCS_OVERVIEW := --lib lib --overview docs/lib \
 	--library-page terminal \
 	--library-page json \
 	--library-page jsonrpc \
+	--library-page lsp \
 	--library-page dap \
 	--library-page zmtp \
 	--library-page jupyter \
@@ -1825,6 +1857,7 @@ bin/rune-matrix: bin/rune-matrix.rbc bin/runevm Makefile bin/rune-generate bin/r
 # that two steps that run at once never build one file (each step is a make
 # of its own).
 CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all repl dap kernel mlton smlnj-legacy \
+               bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-bench bin/rune-lsp-bench-tests.rbc \
                bin/rune-boot bin/rune.rbc bin/rune.stack.rbc bin/runedoc.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc \
                bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy \
                build/librune.a bin/runevm-gcbits bin/runevm-cards \

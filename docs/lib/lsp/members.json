@@ -1,0 +1,370 @@
+{
+ "signatures": {
+  "LSP_METHODS": {
+   "doc": "The pinned Language Server Protocol method and property inventory.\n\n",
+   "page": "sig/LSP_METHODS.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "direction",
+     "spec": "datatype direction = ClientToServer | ServerToClient | Both",
+     "doc": "Which peer sends a protocol message.\n\n",
+     "page": "sig/LSP_METHODS.md#type-direction"
+    },
+    {
+     "kind": "datatype",
+     "name": "kind",
+     "spec": "datatype kind = Request | Notification",
+     "doc": "A request expects a response; a notification does not.\n\n",
+     "page": "sig/LSP_METHODS.md#type-kind"
+    },
+    {
+     "kind": "type",
+     "name": "method",
+     "spec": "type method = {name : string, direction : direction, kind : kind,\n               clientCapability : string option, serverCapability : string option,\n               since : string option, proposed : bool}",
+     "doc": "A method's name, direction, kind and capability/version metadata.\n\n",
+     "page": "sig/LSP_METHODS.md#type-method"
+    },
+    {
+     "kind": "type",
+     "name": "property",
+     "spec": "type property = {owner : string, name : string, optional : bool,\n                 since : string option, proposed : bool}",
+     "doc": "A declared wire property, including properties of anonymous objects.\nIts owner names the declaring type or nested type path.\n\n",
+     "page": "sig/LSP_METHODS.md#type-property"
+    },
+    {
+     "kind": "type",
+     "name": "enumValue",
+     "spec": "type enumValue = {owner : string, name : string, value : string,\n                  since : string option, proposed : bool}",
+     "doc": "An enumeration member and its literal value, written as JSON.\n\n",
+     "page": "sig/LSP_METHODS.md#type-enumvalue"
+    },
+    {
+     "kind": "val",
+     "name": "version",
+     "spec": "val version : string",
+     "doc": "The metamodel's protocol version.\n\n**Example** `version = \"3.18.0\"`\n\n",
+     "page": "sig/LSP_METHODS.md#val-version"
+    },
+    {
+     "kind": "val",
+     "name": "sourceHash",
+     "spec": "val sourceHash : string",
+     "doc": "The SHA-256 of the unmodified upstream metamodel.\n\n",
+     "page": "sig/LSP_METHODS.md#val-sourcehash"
+    },
+    {
+     "kind": "val",
+     "name": "all",
+     "spec": "val all : method list",
+     "doc": "All methods, sorted by their names.\n\n",
+     "page": "sig/LSP_METHODS.md#val-all"
+    },
+    {
+     "kind": "val",
+     "name": "find",
+     "spec": "val find : string -> method option",
+     "doc": "`find name` is the declared method of that name, when it exists.\n\n**Example** `isSome (find \"initialize\") andalso not (isSome (find \"rune/unknown\"))`\n\n",
+     "page": "sig/LSP_METHODS.md#val-find"
+    },
+    {
+     "kind": "val",
+     "name": "properties",
+     "spec": "val properties : property list",
+     "doc": "All declared wire properties, including nested anonymous objects.\n\n",
+     "page": "sig/LSP_METHODS.md#val-properties"
+    },
+    {
+     "kind": "val",
+     "name": "enumValues",
+     "spec": "val enumValues : enumValue list",
+     "doc": "All declared enumeration members.\n\n",
+     "page": "sig/LSP_METHODS.md#val-enumvalues"
+    }
+   ]
+  },
+  "LSP_PROTOCOL": {
+   "doc": "LSP 3.18 wire values, integer bounds and capability negotiation.\n\n",
+   "page": "sig/LSP_PROTOCOL.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "integer",
+     "spec": "type integer = IntInf.int",
+     "doc": "An LSP integer, represented without dependence on the host's width.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#type-integer"
+    },
+    {
+     "kind": "type",
+     "name": "position",
+     "spec": "type position = {line : integer, character : integer}",
+     "doc": "Zero-based line and character coordinates in the negotiated encoding.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#type-position"
+    },
+    {
+     "kind": "type",
+     "name": "range",
+     "spec": "type range = {start : position, stop : position}",
+     "doc": "A half-open range, whose end is not before its start.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#type-range"
+    },
+    {
+     "kind": "datatype",
+     "name": "encoding",
+     "spec": "datatype encoding = Utf8 | Utf16 | Utf32",
+     "doc": "The position encodings supported by the protocol adapter.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#type-encoding"
+    },
+    {
+     "kind": "type",
+     "name": "capabilities",
+     "spec": "type capabilities",
+     "doc": "Validated capabilities and their selected position encoding.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#type-capabilities"
+    },
+    {
+     "kind": "datatype",
+     "name": "decoded",
+     "spec": "datatype decoded = Message of JsonRpc.message\n                 | Invalid of {error : JsonRpc.error, id : JsonRpc.id option, reply : bool}",
+     "doc": "A decoded message, or an error with its recoverable id.\n\nMalformed responses and recognizable notifications have reply false,\npreventing response loops and replies to notifications.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#type-decoded"
+    },
+    {
+     "kind": "val",
+     "name": "version",
+     "spec": "val version : string",
+     "doc": "The supported protocol version.\n\n**Example** `version = \"3.18.0\"`\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-version"
+    },
+    {
+     "kind": "val",
+     "name": "minInteger",
+     "spec": "val minInteger : integer",
+     "doc": "The smallest signed LSP integer.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-mininteger"
+    },
+    {
+     "kind": "val",
+     "name": "maxInteger",
+     "spec": "val maxInteger : integer",
+     "doc": "The largest signed or unsigned LSP integer.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-maxinteger"
+    },
+    {
+     "kind": "val",
+     "name": "integer",
+     "spec": "val integer : Json.value -> integer option",
+     "doc": "`integer v` is the signed 32-bit integer represented by v.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-integer"
+    },
+    {
+     "kind": "val",
+     "name": "uinteger",
+     "spec": "val uinteger : Json.value -> integer option",
+     "doc": "`uinteger v` is the nonnegative LSP integer represented by v.\n\n**Example** `uinteger (Json.int ~1) = NONE`\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-uinteger"
+    },
+    {
+     "kind": "val",
+     "name": "integerToJson",
+     "spec": "val integerToJson : integer -> Json.value",
+     "doc": "`integerToJson n` is n as a signed LSP JSON integer.\n\n**Raises** `Domain` when n is outside the signed 32-bit range.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-integertojson"
+    },
+    {
+     "kind": "val",
+     "name": "idFromJson",
+     "spec": "val idFromJson : Json.value -> JsonRpc.id option",
+     "doc": "`idFromJson v` reads a string id or signed LSP integer id.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-idfromjson"
+    },
+    {
+     "kind": "val",
+     "name": "idToJson",
+     "spec": "val idToJson : JsonRpc.id -> Json.value",
+     "doc": "`idToJson id` writes an id or progress token.\n\n**Raises** `Domain` for an out-of-range number or ill-formed UTF-8.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-idtojson"
+    },
+    {
+     "kind": "val",
+     "name": "positionFromJson",
+     "spec": "val positionFromJson : Json.value -> position option",
+     "doc": "`positionFromJson v` reads a position with nonnegative coordinates.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-positionfromjson"
+    },
+    {
+     "kind": "val",
+     "name": "positionToJson",
+     "spec": "val positionToJson : position -> Json.value",
+     "doc": "`positionToJson p` writes a position.\n\n**Raises** `Domain` when a coordinate is not an LSP unsigned integer.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-positiontojson"
+    },
+    {
+     "kind": "val",
+     "name": "rangeFromJson",
+     "spec": "val rangeFromJson : Json.value -> range option",
+     "doc": "`rangeFromJson v` reads a well-ordered half-open range.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-rangefromjson"
+    },
+    {
+     "kind": "val",
+     "name": "rangeToJson",
+     "spec": "val rangeToJson : range -> Json.value",
+     "doc": "`rangeToJson r` writes a range, using the wire member end for stop.\n\n**Raises** `Domain` when the range is reversed or a coordinate invalid.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-rangetojson"
+    },
+    {
+     "kind": "val",
+     "name": "decode",
+     "spec": "val decode : string -> decoded",
+     "doc": "`decode text` reads one JSON-RPC message under LSP's rules.\n\nBatches, ambiguous envelope members and out-of-range ids/codes are\ninvalid. Unknown extension members remain permitted.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-decode"
+    },
+    {
+     "kind": "val",
+     "name": "encode",
+     "spec": "val encode : JsonRpc.message -> string",
+     "doc": "`encode message` writes one LSP message, without transport framing.\n\n**Raises** `Domain` for invalid integer ranges, params or UTF-8 text.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-encode"
+    },
+    {
+     "kind": "val",
+     "name": "capabilities",
+     "spec": "val capabilities : Json.value -> capabilities option",
+     "doc": "`capabilities v` validates the capability object and encoding list.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-capabilities"
+    },
+    {
+     "kind": "val",
+     "name": "supports",
+     "spec": "val supports : capabilities * string list -> bool",
+     "doc": "`supports (caps, path)` is whether that capability is true.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-supports"
+    },
+    {
+     "kind": "val",
+     "name": "positionEncoding",
+     "spec": "val positionEncoding : capabilities -> encoding",
+     "doc": "`positionEncoding caps` is the selected encoding: UTF-8 when offered,\nthen UTF-16 or UTF-32, with UTF-16 as the mandatory fallback.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-positionencoding"
+    },
+    {
+     "kind": "val",
+     "name": "encodingName",
+     "spec": "val encodingName : encoding -> string",
+     "doc": "`encodingName encoding` is its protocol spelling.\n\n**Example** `encodingName Utf16 = \"utf-16\"`\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-encodingname"
+    },
+    {
+     "kind": "val",
+     "name": "rawCapabilities",
+     "spec": "val rawCapabilities : capabilities -> Json.value",
+     "doc": "`rawCapabilities caps` is the original capability object.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-rawcapabilities"
+    },
+    {
+     "kind": "val",
+     "name": "serverNotInitialized",
+     "spec": "val serverNotInitialized : integer",
+     "doc": "The error code for a request before initialization.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-servernotinitialized"
+    },
+    {
+     "kind": "val",
+     "name": "contentModified",
+     "spec": "val contentModified : integer",
+     "doc": "The error code for a result invalidated by a changed context.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-contentmodified"
+    },
+    {
+     "kind": "val",
+     "name": "serverCancelled",
+     "spec": "val serverCancelled : integer",
+     "doc": "The error code for server cancellation where the method permits it.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-servercancelled"
+    },
+    {
+     "kind": "val",
+     "name": "requestFailed",
+     "spec": "val requestFailed : integer",
+     "doc": "The error code for a request that could not be completed.\n\n",
+     "page": "sig/LSP_PROTOCOL.md#val-requestfailed"
+    }
+   ]
+  },
+  "LSP_REQUESTS": {
+   "doc": "Bounded request ownership for an LSP connection.\n\n",
+   "page": "sig/LSP_REQUESTS.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "t",
+     "spec": "type 'a t",
+     "doc": "Pending requests, each owning caller-supplied data.\n\n",
+     "page": "sig/LSP_REQUESTS.md#type-t"
+    },
+    {
+     "kind": "exception",
+     "name": "Full",
+     "spec": "exception Full",
+     "doc": "A request would exceed the configured number of pending requests.\n\n",
+     "page": "sig/LSP_REQUESTS.md#exn-full"
+    },
+    {
+     "kind": "val",
+     "name": "new",
+     "spec": "val new : {prefix : string, maxPending : int} -> 'a t",
+     "doc": "`new {prefix, maxPending}` is an empty connection's request table.\n\n**Raises** `Domain` for an invalid prefix or nonpositive bound.\n\n",
+     "page": "sig/LSP_REQUESTS.md#val-new"
+    },
+    {
+     "kind": "val",
+     "name": "reserve",
+     "spec": "val reserve : 'a t * JsonRpc.id * 'a -> bool",
+     "doc": "`reserve (table, id, data)` registers a peer-supplied id; false when\nthat id is already pending, leaving its existing data intact.\n\n**Raises** `Full` when the bound is reached.\n\n**Raises** `Domain` for an invalid LSP id.\n\n",
+     "page": "sig/LSP_REQUESTS.md#val-reserve"
+    },
+    {
+     "kind": "val",
+     "name": "issue",
+     "spec": "val issue : 'a t * {method : string, params : Json.value option, data : 'a} -> JsonRpc.message",
+     "doc": "`issue (table, request)` registers data and returns a validated\nrequest with a fresh string id derived from the table's prefix.\n\n**Raises** `Full` when the bound is reached.\n\n**Raises** `Domain` for invalid message data.\n\n",
+     "page": "sig/LSP_REQUESTS.md#val-issue"
+    },
+    {
+     "kind": "val",
+     "name": "resolve",
+     "spec": "val resolve : 'a t * JsonRpc.message -> ('a * JsonRpc.outcome) option",
+     "doc": "`resolve (table, response)` consumes the matching request once.\nStray responses and messages that are not responses give NONE.\n\n",
+     "page": "sig/LSP_REQUESTS.md#val-resolve"
+    },
+    {
+     "kind": "val",
+     "name": "cancel",
+     "spec": "val cancel : 'a t * JsonRpc.id -> (JsonRpc.message * 'a) option",
+     "doc": "`cancel (table, id)` consumes the request and returns its cancellation\nnotification and owned data, when the id was pending.\n\n",
+     "page": "sig/LSP_REQUESTS.md#val-cancel"
+    },
+    {
+     "kind": "val",
+     "name": "clear",
+     "spec": "val clear : 'a t -> 'a list",
+     "doc": "`clear table` releases all pending entries and returns their data.\n\n",
+     "page": "sig/LSP_REQUESTS.md#val-clear"
+    },
+    {
+     "kind": "val",
+     "name": "size",
+     "spec": "val size : 'a t -> int",
+     "doc": "`size table` is the number of pending requests.\n\n",
+     "page": "sig/LSP_REQUESTS.md#val-size"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "LspMethods": "LSP_METHODS",
+  "LspProtocol": "LSP_PROTOCOL",
+  "LspRequests": "LSP_REQUESTS"
+ }
+}

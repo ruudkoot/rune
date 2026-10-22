@@ -66,6 +66,8 @@ struct
   val make =
     Test.describe "make"
       [some ("check-docs-generated", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
+       alone ("test-lsp-protocol", [], ["src/lsp/*", "lib/lsp/*", "lib/jsonrpc/*", "tests/lsp/*", "tools/lsp/*", "runelsp.build"]),
+       alone ("test-lsp-bench", [], ["tools/lsp/*", "tests/lsp/*", "rune-lsp-bench.build"]),
        alone ("bench-coverage", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
        alone ("check-isa", [], [])]
 

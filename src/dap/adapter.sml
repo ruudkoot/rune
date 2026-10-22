@@ -39,7 +39,7 @@ struct
   val fromEngine = ref (Framing.reader Framing.Lines)
   val fromClient = ref (Framing.reader Framing.ContentLength)
   (* the engine's answers awaited, by the number of the request *)
-  val awaited : (int * (R.outcome -> unit)) list ref = ref []
+  val awaited : (R.id * (R.outcome -> unit)) list ref = ref []
   val serial = ref 0
   (* the program is running: a `use` awaited; stopped: at a stop of it *)
   val running = ref false
@@ -81,8 +81,8 @@ struct
   fun send (method : string, params : Json.value, k : R.outcome -> unit) : unit =
     let
       val () = serial := !serial + 1
-      val id = !serial
-      val m = R.Request {id = R.Number id, method = method, params = SOME params}
+      val id = R.Number (IntInf.fromInt (!serial))
+      val m = R.Request {id = id, method = method, params = SOME params}
     in
       awaited := !awaited @ [(id, k)];
       #write (theEngine ()) (Framing.frame (Framing.Lines, Json.encode (R.toJson m)))
@@ -194,7 +194,7 @@ struct
 
   fun fromTheEngine (text : string) : unit =
     case R.decode text of
-      [R.Message (R.Response {id = SOME (R.Number id), outcome})] =>
+      [R.Message (R.Response {id = SOME id, outcome})] =>
         (case List.find (fn (i, _) => i = id) (!awaited) of
            SOME (_, k) => (awaited := List.filter (fn (i, _) => i <> id) (!awaited); k outcome)
          | NONE => ())

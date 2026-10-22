@@ -31,6 +31,7 @@ struct
        ("terminal.edit", ["unicode", "terminal"], "terminal/edit"),
        ("digest.digest", ["digest"], "digest/digest"),
        ("jsonrpc.jsonrpc", ["unicode", "json", "jsonrpc"], "jsonrpc/jsonrpc"),
+       ("lsp.protocol", ["unicode", "json", "jsonrpc", "lsp"], "lsp/protocol"),
        ("dap.dap", ["unicode", "json", "jsonrpc", "dap"], "dap/dap"),
        ("pretty.pretty", ["unicode", "pretty"], "pretty/pretty"),
        ("markdown.spec", ["unicode", "json", "pretty", "markdown"], "markdown/spec"),

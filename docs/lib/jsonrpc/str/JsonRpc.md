@@ -24,7 +24,7 @@ What each means is on [`JSON_RPC`](../sig/JSON_RPC.md); the types are this struc
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`error`](../sig/JSON_RPC.md#type-error) | `{code : int, data : Json.value option, message : string}` |
+| type | [`error`](../sig/JSON_RPC.md#type-error) | `{code : IntInf.int, data : Json.value option, message : string}` |
 | datatype | [`id`](../sig/JSON_RPC.md#type-id) | `Number` &#124; `String` |
 | datatype | [`message`](../sig/JSON_RPC.md#type-message) | `Request` &#124; `Notification` &#124; `Response` |
 | datatype | [`outcome`](../sig/JSON_RPC.md#type-outcome) | `Result` &#124; `Error` |
@@ -37,12 +37,12 @@ What each means is on [`JSON_RPC`](../sig/JSON_RPC.md); the types are this struc
 | val | [`decode`](../sig/JSON_RPC.md#val-decode) | `string -> read list` |
 | val | [`encode`](../sig/JSON_RPC.md#val-encode) | `message list -> string` |
 | val | [`fromJson`](../sig/JSON_RPC.md#val-fromjson) | `Json.value -> read` |
-| val | [`internalError`](../sig/JSON_RPC.md#val-internalerror) | `int` |
-| val | [`invalidParams`](../sig/JSON_RPC.md#val-invalidparams) | `int` |
-| val | [`invalidRequest`](../sig/JSON_RPC.md#val-invalidrequest) | `int` |
-| val | [`methodNotFound`](../sig/JSON_RPC.md#val-methodnotfound) | `int` |
-| val | [`parseError`](../sig/JSON_RPC.md#val-parseerror) | `int` |
-| val | [`requestCancelled`](../sig/JSON_RPC.md#val-requestcancelled) | `int` |
+| val | [`internalError`](../sig/JSON_RPC.md#val-internalerror) | `IntInf.int` |
+| val | [`invalidParams`](../sig/JSON_RPC.md#val-invalidparams) | `IntInf.int` |
+| val | [`invalidRequest`](../sig/JSON_RPC.md#val-invalidrequest) | `IntInf.int` |
+| val | [`methodNotFound`](../sig/JSON_RPC.md#val-methodnotfound) | `IntInf.int` |
+| val | [`parseError`](../sig/JSON_RPC.md#val-parseerror) | `IntInf.int` |
+| val | [`requestCancelled`](../sig/JSON_RPC.md#val-requestcancelled) | `IntInf.int` |
 | val | [`toJson`](../sig/JSON_RPC.md#val-tojson) | `message -> Json.value` |
 
 ---

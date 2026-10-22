@@ -4,7 +4,9 @@
 
 From the **Raises** paragraphs of the documented entries.
 
+- `Domain`: [`bounded`](sig/FRAMING.md#val-bounded) of FRAMING
 - `Header`: [`feed`](sig/FRAMING.md#val-feed) of FRAMING
+- `Limit`: [`feed`](sig/FRAMING.md#val-feed) of FRAMING
 
 ---
 

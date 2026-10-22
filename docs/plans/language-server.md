@@ -17,7 +17,7 @@ documentation and its evidence beside the tests before this plan is retired.
 |---|---|---|---|
 | M0 | This roadmap, baseline and protocol inventory | none | done 2026-10-22; verification below; measurements remain M1 |
 | M1 | Reference study, fixtures and performance baselines | M0 | in progress: SML harness and Linux baseline recorded; native Windows measurement remains |
-| M2 | Protocol libraries, transport, lifecycle and harness | M0 | planned |
+| M2 | Protocol libraries, transport, lifecycle and harness | M0 | in progress: protocol foundation and focused Linux checks implemented; final profile/platform acceptance remains |
 | M3 | Documents, positions, workspaces and build contexts | M2 | planned |
 | M4 | Incremental syntax, recovery and the parser decision | M1, M3 | planned |
 | M5 | Compiler sessions, semantic snapshots and invalidation | M3, M4; compiler-library M1-M4 and the analysis contract below | planned |
@@ -737,6 +737,44 @@ those platform measurements are completed.
   and the generic libraries pass their host suites including 31-bit
   integer boundary probes. Library changes include signature docs and
   generated library documentation as the repository requires.
+
+#### M2, implemented so far (2026-10-22)
+
+`lib/lsp` supplies portable wire integers, positions/ranges, envelopes,
+capability negotiation and bounded request ownership. The generated
+inventory has 95 methods, 814 declared wire properties and 250 enum
+members; its source, hash and CC BY 4.0 attribution are preserved in
+`tools/lsp/protocol`. Generation and a planted stale-output rejection are
+tested by `make test-lsp-protocol` and `make check-lsp-protocol`.
+
+`make lsp` builds `bin/runelsp`. Independent transcripts validate its
+stdio lifecycle, full-width ids, encoding negotiation, initialization
+progress, tracing, malformed notification/response handling, bounds and
+interactive reads without EOF. It advertises no editing providers yet.
+The [permanent user manual](../language-server.md) and
+[wire contract](../lsp-protocol.md) describe the implemented behavior.
+
+Shared changes include `Json.intInf`/`toIntInf`, exact JSON-RPC ids/error
+codes and a persistent bounded framing reader. The
+[paired framing ledger](../../tests/lsp/baseline/2026-10-22-framing.json)
+records the original/candidate payload oracle, timings and allocations.
+Repository adapters were updated for the new id type. Clean-worktree
+protocol-test targets now depend explicitly on their migrated helper;
+the new LSP acceptance targets are registered in the normal check tier.
+
+Focused validation passed: five portable LSP groups, independent wire
+transcripts, baseline-producer/fault checks, generated inventory/fault
+checks, all 11 documentation-consistency tests, REPL protocol (13), DAP
+(7) and kernel (9). The protocol integrations were run serially after a
+concurrent invocation exposed the runner's shared history-tempfile race.
+
+The six-host library run exposed an obsolete MLKit JSON-RPC deviation, an
+intermittent SML/NJ 2026.2 shrink failure, and a new MLKit LSP capability
+lookup failure. The first was removed, the second classified HOST-FLAKY,
+and the third recorded HOST-BUG after the identical suite passed the
+diagnostic `-no_ri` build. Default library/compiler flags remain unchanged.
+Fresh classified host/profile acceptance and native Windows acceptance
+remain pending; failed exploratory invocations are not counted as passes.
 
 ### M3. Documents and projects (L)
 

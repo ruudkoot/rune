@@ -5,7 +5,19 @@ JSON and written to it, and a framing cuts them out of a byte stream: a
 line each, or a `Content-Length` header, as the Language Server Protocol
 and the Debug Adapter Protocol frame theirs.
 
-[How to read these pages](../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [h](index/h.md) [i](index/i.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md)
+Request IDs and error codes use `IntInf.int`, retaining their wire values
+on 31-bit hosts. Callers with ordinary integer counters convert with
+`IntInf.fromInt` when constructing a numeric ID. JSON-RPC batches remain
+supported; a protocol such as LSP can impose its narrower single-message
+and 32-bit integer requirements in its own adapter.
+
+[`Framing.bounded`](sig/FRAMING.md#val-bounded) sets independent header and body byte limits. It refuses
+repeated lengths, malformed decimal lengths and unsupported charsets;
+received chunks are concatenated once per completed message. Reader values
+can be reused to decode independent continuations. A transport must also
+check [`Framing.pending`](sig/FRAMING.md#val-pending) at EOF to diagnose a truncated message.
+
+[How to read these pages](../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [h](index/h.md) [i](index/i.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md)
 
 ## Data formats
 

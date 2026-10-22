@@ -15,8 +15,15 @@
      "kind": "exception",
      "name": "Header",
      "spec": "exception Header of string",
-     "doc": "What `feed` raises for a header it cannot read: a header without\n`Content-Length`, or one whose length is no number.\n\n",
+     "doc": "What `feed` raises for a malformed header, a repeated length or an\nunsupported character encoding.\n\n",
      "page": "sig/FRAMING.md#exn-header"
+    },
+    {
+     "kind": "exception",
+     "name": "Limit",
+     "spec": "exception Limit of string",
+     "doc": "What `feed` raises when a bounded reader's header or body is too\nlarge. The reader does not retain data beyond that limit.\n\n",
+     "page": "sig/FRAMING.md#exn-limit"
     },
     {
      "kind": "type",
@@ -34,9 +41,16 @@
     },
     {
      "kind": "val",
+     "name": "bounded",
+     "spec": "val bounded : {framing : framing, maxHeaderBytes : int, maxBodyBytes : int} -> reader",
+     "doc": "`bounded {framing, maxHeaderBytes, maxBodyBytes}` is a new reader\nwith those byte limits.\n\nA header's limit includes its final blank line; a line-framed body's\nlimit includes its optional carriage\nreturn but excludes the newline. Limits must be positive.\n\n**Raises** `Domain` when either limit is not positive.\n\n**Example** `not (pending (bounded {framing = ContentLength, maxHeaderBytes = 1024, maxBodyBytes = 4096}))`\n\n",
+     "page": "sig/FRAMING.md#val-bounded"
+    },
+    {
+     "kind": "val",
      "name": "feed",
      "spec": "val feed : reader * string -> string list * reader",
-     "doc": "`feed (r, s)` is the messages that `r`'s bytes and `s` complete, in\norder, and the reader that holds the rest. Empty lines are not\nmessages.\n\n**Raises** `Header` when a header cannot be read.\n\n**Example** `#1 (feed (reader Lines, \"a\\r\\nb\\nc\")) = [\"a\", \"b\"]`\n\n",
+     "doc": "`feed (r, s)` is the messages that `r`'s bytes and `s` complete, in\norder, and the reader that holds the rest. Empty lines are not\nmessages.\n\n**Raises** `Header` when a header cannot be read.\n\n**Raises** `Limit` when the header or body exceeds its reader's bound.\n\n**Example** `#1 (feed (reader Lines, \"a\\r\\nb\\nc\")) = [\"a\", \"b\"]`\n\n",
      "page": "sig/FRAMING.md#val-feed"
     },
     {
@@ -62,14 +76,14 @@
     {
      "kind": "datatype",
      "name": "id",
-     "spec": "datatype id = Number of int | String of string",
-     "doc": "A request's id: a number or a string.\n\n",
+     "spec": "datatype id = Number of IntInf.int | String of string",
+     "doc": "A request's id: an integer number or a string. Numbers retain their\nfull precision on hosts whose default integer has only 31 bits.\n\n",
      "page": "sig/JSON_RPC.md#type-id"
     },
     {
      "kind": "type",
      "name": "error",
-     "spec": "type error = {code : int, message : string, data : Json.value option}",
+     "spec": "type error = {code : IntInf.int, message : string, data : Json.value option}",
      "doc": "An error's code and message, and anything more about it.\n\n",
      "page": "sig/JSON_RPC.md#type-error"
     },
@@ -97,42 +111,42 @@
     {
      "kind": "val",
      "name": "parseError",
-     "spec": "val parseError : int",
+     "spec": "val parseError : IntInf.int",
      "doc": "The code of an error: the text is no JSON.\n\n**Example** `parseError = ~32700`\n\n",
      "page": "sig/JSON_RPC.md#val-parseerror"
     },
     {
      "kind": "val",
      "name": "invalidRequest",
-     "spec": "val invalidRequest : int",
+     "spec": "val invalidRequest : IntInf.int",
      "doc": "The code of an error: the JSON is no request.\n\n**Example** `invalidRequest = ~32600`\n\n",
      "page": "sig/JSON_RPC.md#val-invalidrequest"
     },
     {
      "kind": "val",
      "name": "methodNotFound",
-     "spec": "val methodNotFound : int",
+     "spec": "val methodNotFound : IntInf.int",
      "doc": "The code of an error: the server has no such method.\n\n**Example** `methodNotFound = ~32601`\n\n",
      "page": "sig/JSON_RPC.md#val-methodnotfound"
     },
     {
      "kind": "val",
      "name": "invalidParams",
-     "spec": "val invalidParams : int",
+     "spec": "val invalidParams : IntInf.int",
      "doc": "The code of an error: the parameters are not what the method takes.\n\n**Example** `invalidParams = ~32602`\n\n",
      "page": "sig/JSON_RPC.md#val-invalidparams"
     },
     {
      "kind": "val",
      "name": "internalError",
-     "spec": "val internalError : int",
+     "spec": "val internalError : IntInf.int",
      "doc": "The code of an error: the server failed.\n\n**Example** `internalError = ~32603`\n\n",
      "page": "sig/JSON_RPC.md#val-internalerror"
     },
     {
      "kind": "val",
      "name": "requestCancelled",
-     "spec": "val requestCancelled : int",
+     "spec": "val requestCancelled : IntInf.int",
      "doc": "The code of an error, the Language Server Protocol's: the request was\ncancelled.\n\n**Example** `requestCancelled = ~32800`\n\n",
      "page": "sig/JSON_RPC.md#val-requestcancelled"
     },

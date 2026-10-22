@@ -5,11 +5,12 @@
    Area: Data formats *)
 signature JSON_RPC =
 sig
-  (* A request's id: a number or a string. *)
-  datatype id = Number of int | String of string
+  (* A request's id: an integer number or a string. Numbers retain their
+     full precision on hosts whose default integer has only 31 bits. *)
+  datatype id = Number of IntInf.int | String of string
 
   (* An error's code and message, and anything more about it. *)
-  type error = {code : int, message : string, data : Json.value option}
+  type error = {code : IntInf.int, message : string, data : Json.value option}
 
   (* What a request came to: its result, or an error. *)
   datatype outcome = Result of Json.value | Error of error
@@ -31,33 +32,33 @@ sig
   (* The code of an error: the text is no JSON.
 
      Example: `parseError = ~32700` *)
-  val parseError : int
+  val parseError : IntInf.int
 
   (* The code of an error: the JSON is no request.
 
      Example: `invalidRequest = ~32600` *)
-  val invalidRequest : int
+  val invalidRequest : IntInf.int
 
   (* The code of an error: the server has no such method.
 
      Example: `methodNotFound = ~32601` *)
-  val methodNotFound : int
+  val methodNotFound : IntInf.int
 
   (* The code of an error: the parameters are not what the method takes.
 
      Example: `invalidParams = ~32602` *)
-  val invalidParams : int
+  val invalidParams : IntInf.int
 
   (* The code of an error: the server failed.
 
      Example: `internalError = ~32603` *)
-  val internalError : int
+  val internalError : IntInf.int
 
   (* The code of an error, the Language Server Protocol's: the request was
      cancelled.
 
      Example: `requestCancelled = ~32800` *)
-  val requestCancelled : int
+  val requestCancelled : IntInf.int
 
   (* `toJson m` is `m` as a JSON object, with `"jsonrpc": "2.0"`. *)
   val toJson : message -> Json.value

@@ -1,0 +1,10 @@
+(* LSP protocol values and the pinned method/property inventory. *)
+libraries jsonrpc unicode end
+annotate "demand" in
+  methods_sig.sml
+  methods.sml
+  protocol_sig.sml
+  protocol.sml
+  requests_sig.sml
+  requests.sml
+end

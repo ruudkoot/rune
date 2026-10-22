@@ -6,8 +6,8 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
-| [`JSON`](sig/JSON.md) | 9 | 9 | 100% | 6 | 6 |
-| **all** | 9 | 9 | 100% | 6 | 6 |
+| [`JSON`](sig/JSON.md) | 11 | 11 | 100% | 8 | 8 |
+| **all** | 11 | 11 | 100% | 8 | 8 |
 
 ## Members a signature describes
 
@@ -16,12 +16,12 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-1 structures have a page, with 9 members, of which 9 (100%) are described by a signature.
+1 structures have a page, with 11 members, of which 11 (100%) are described by a signature.
 
 ## Examples that are run
 
 Every example is a closed expression of type `bool` that is true, and every counterexample a closed claim
-that does not hold: each is elaborated when these pages are made and tried by the test suite: 8 of them, in [`JSON`](sig/JSON.md) (8).
+that does not hold: each is elaborated when these pages are made and tried by the test suite: 10 of them, in [`JSON`](sig/JSON.md) (10).
 
 ---
 

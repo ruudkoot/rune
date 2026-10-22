@@ -72,3 +72,39 @@ native Windows behavior or the less-than-10% parser-sharing condition.
 
 The initial Linux measurements, source hashes, observer hashes and proposed
 release budgets are in [the initial ledger](baseline/2026-10-22-initial.json).
+
+## Protocol acceptance (M2)
+
+```
+make test-lsp-protocol
+make check-lsp-protocol
+```
+
+The wire client in `protocol-tests.sml` assembles and reads its own frames,
+independently of the production framing/envelope codecs. It tests minimal
+and modern capabilities, progress, lifecycle, IDs across the full signed
+32-bit range, malformed requests/notifications/responses, size limits,
+truncation, tracing and interactive stdio without EOF. Portable value,
+capability and request-ownership cases also run as `tests/lib/lsp` on the
+native hosts. Both protocol acceptance and baseline-producer acceptance
+are registered in the repository's normal check tier.
+
+The [framing ledger](baseline/2026-10-22-framing.json) records paired
+comparisons with the earlier decoder in the same VM. Its archive contains
+the original signature/implementation with only their names changed, the
+observer bytecode and VM, and all raw samples. To rerun from that archive:
+
+```
+bin/rune --library jsonrpc PATH/old-framing.sml tests/lsp/framing-performance.sml -o tests/out/framing-performance.rbc
+bin/runevm tests/out/framing-performance.rbc
+```
+
+The observer alternates candidate order, performs collection outside timed
+work, and verifies decoded message bytes after each measurement. Its byte,
+64-byte and 4096-byte chunks exercise the actual framing path; these are
+not compiler/query or parser-sharing measurements.
+
+Separate repository test-runner invocations share a history file by
+default. Run those invocations serially, or supply different `--history`
+paths; simultaneous default-history writes can race on its temporary
+file. The standalone LSP transcript programs do not write that history.

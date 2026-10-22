@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 7 of 7 entries documented |
+| Documentation | 9 of 9 entries documented |
 | Tests | not listed |
 | Source | [lib/jsonrpc/framing\_sig.sml](../../../../lib/jsonrpc/framing_sig.sml) |
 
@@ -19,7 +19,7 @@ structure Framing :> FRAMING
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Framing`](../str/Framing.md) | Framing: messages to a line, or behind Content-Length. | [lib/jsonrpc/framing.sml](../../../../lib/jsonrpc/framing.sml) |
+| [`Framing`](../str/Framing.md) | Framing: persistent streaming readers. Received chunks are retained until one message is complete, and concatenated once for that message. | [lib/jsonrpc/framing.sml](../../../../lib/jsonrpc/framing.sml) |
 
 Messages cut out of a stream of bytes and put into one: a line each,
 or a header `Content-Length: N` and a blank line before N bytes, as the
@@ -36,8 +36,10 @@ signature FRAMING =
 sig
   datatype <a href="#type-framing">framing</a> = <a href="#con-lines">Lines</a> | <a href="#con-contentlength">ContentLength</a>
   exception <a href="#exn-header">Header</a> of string
+  exception <a href="#exn-limit">Limit</a> of string
   type <a href="#type-reader">reader</a>
   val <a href="#val-reader">reader</a> : framing -&gt; reader
+  val <a href="#val-bounded">bounded</a> : {<a href="#fld-bounded.framing">framing</a> : framing, <a href="#fld-bounded.maxheaderbytes">maxHeaderBytes</a> : int, <a href="#fld-bounded.maxbodybytes">maxBodyBytes</a> : int} -&gt; reader
   val <a href="#val-feed">feed</a> : reader * string -&gt; string list * reader
   val <a href="#val-pending">pending</a> : reader -&gt; bool
   val <a href="#val-frame">frame</a> : framing * string -&gt; string
@@ -65,8 +67,17 @@ header.
 exception Header of string
 ```
 
-What [`feed`](#val-feed) raises for a header it cannot read: a header without
-`Content-Length`, or one whose length is no number.
+What [`feed`](#val-feed) raises for a malformed header, a repeated length or an
+unsupported character encoding.
+
+### <a name="exn-limit"></a>`Limit`
+
+```sml
+exception Limit of string
+```
+
+What [`feed`](#val-feed) raises when a bounded reader's header or body is too
+large. The reader does not retain data beyond that limit.
 
 ### <a name="type-reader"></a>`reader`
 
@@ -84,6 +95,29 @@ val reader : framing -> reader
 
 `reader f` is a reader of `f` that has read nothing.
 
+### <a name="val-bounded"></a>`bounded`
+
+```sml
+val bounded : {framing : framing, maxHeaderBytes : int, maxBodyBytes : int} -> reader
+```
+
+`bounded {framing, maxHeaderBytes, maxBodyBytes}` is a new reader
+with those byte limits.
+
+A header's limit includes its final blank line; a line-framed body's
+limit includes its optional carriage
+return but excludes the newline. Limits must be positive.
+
+**Raises** [`Domain`](../../basis/sig/GENERAL.md#exn-domain) when either limit is not positive.
+
+**Example** `not (pending (bounded {framing = ContentLength, maxHeaderBytes = 1024, maxBodyBytes = 4096}))`
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-bounded.framing"></a>`framing` | `framing` |  |
+| <a name="fld-bounded.maxheaderbytes"></a>`maxHeaderBytes` | `int` |  |
+| <a name="fld-bounded.maxbodybytes"></a>`maxBodyBytes` | `int` |  |
+
 ### <a name="val-feed"></a>`feed`
 
 ```sml
@@ -95,6 +129,8 @@ order, and the reader that holds the rest. Empty lines are not
 messages.
 
 **Raises** [`Header`](#exn-header) when a header cannot be read.
+
+**Raises** [`Limit`](#exn-limit) when the header or body exceeds its reader's bound.
 
 **Example** `#1 (feed (reader Lines, "a\r\nb\nc")) = ["a", "b"]`
 

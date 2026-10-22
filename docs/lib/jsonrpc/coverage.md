@@ -6,9 +6,9 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
-| [`FRAMING`](sig/FRAMING.md) | 7 | 7 | 100% | 4 | 4 |
+| [`FRAMING`](sig/FRAMING.md) | 9 | 9 | 100% | 5 | 5 |
 | [`JSON_RPC`](sig/JSON_RPC.md) | 20 | 20 | 100% | 7 | 7 |
-| **all** | 27 | 27 | 100% | 11 | 11 |
+| **all** | 29 | 29 | 100% | 12 | 12 |
 
 ## Members a signature describes
 
@@ -17,12 +17,12 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-2 structures have a page, with 27 members, of which 27 (100%) are described by a signature.
+2 structures have a page, with 29 members, of which 29 (100%) are described by a signature.
 
 ## Examples that are run
 
 Every example is a closed expression of type `bool` that is true, and every counterexample a closed claim
-that does not hold: each is elaborated when these pages are made and tried by the test suite: 11 of them, in [`FRAMING`](sig/FRAMING.md) (2), [`JSON_RPC`](sig/JSON_RPC.md) (9).
+that does not hold: each is elaborated when these pages are made and tried by the test suite: 12 of them, in [`FRAMING`](sig/FRAMING.md) (3), [`JSON_RPC`](sig/JSON_RPC.md) (9).
 
 ---
 

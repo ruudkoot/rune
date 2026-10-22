@@ -1,0 +1,21 @@
+(* The standalone LSP adapter, built from the reusable protocol libraries.
+   Only Utf8 is needed here from the Unicode library. *)
+files
+  build/config.sml
+  lib/unicode/utf8_sig.sml
+  lib/unicode/utf8.sml
+  lib/json/json_sig.sml
+  lib/json/json.sml
+  lib/jsonrpc/framing_sig.sml
+  lib/jsonrpc/framing.sml
+  lib/jsonrpc/jsonrpc_sig.sml
+  lib/jsonrpc/jsonrpc.sml
+  lib/lsp/methods_sig.sml
+  lib/lsp/methods.sml
+  lib/lsp/protocol_sig.sml
+  lib/lsp/protocol.sml
+  lib/lsp/requests_sig.sml
+  lib/lsp/requests.sml
+  src/lsp/server.sml
+end
+src/main/runelsp-main.sml

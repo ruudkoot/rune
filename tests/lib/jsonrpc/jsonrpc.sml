@@ -75,6 +75,22 @@ struct
       check ("cancel", cancelled (cancel (String "r")) = SOME (String "r") andalso cancelled (req ("x", NONE)) = NONE)
     end
 
+  fun integerWidth () =
+    let
+      val numbers = List.map (valOf o IntInf.fromString)
+        ["2147483647", "-2147483648", "18446744073709551616", "-18446744073709551616"]
+      fun one n =
+        let val request = Request {id = Number n, method = "width", params = NONE}
+            val response = Response {id = SOME (Number n), outcome = Error {code = n, message = "wide", data = NONE}}
+        in check ("wide request id", decode (encode [request]) = [Message request]);
+           check ("wide response/error code", decode (encode [response]) = [Message response]);
+           check ("wide cancellation", cancelled (cancel (Number n)) = SOME (Number n)) end
+    in
+      List.app one numbers;
+      check ("fractional id refused", codes "{\"jsonrpc\":\"2.0\",\"id\":1.5,\"method\":\"m\"}" = [invalidRequest]);
+      check ("exponent id refused", codes "{\"jsonrpc\":\"2.0\",\"id\":1e2,\"method\":\"m\"}" = [invalidRequest])
+    end
+
   fun framing () =
     let
       fun all (f, s) =
@@ -104,10 +120,47 @@ struct
              handle Framing.Header _ => true)
     end
 
+  fun boundedFraming () =
+    let
+      fun reader () = Framing.bounded {framing = Framing.ContentLength, maxHeaderBytes = 256, maxBodyBytes = 16}
+      fun header text = (ignore (Framing.feed (reader (), text)); false) handle Framing.Header _ => true
+      fun limit text = (ignore (Framing.feed (reader (), text)); false) handle Framing.Limit _ => true
+      val () = List.app (fn input => check ("malformed header", header input))
+        ["Content-Length: -1\r\n\r\n", "Content-Length: +1\r\n\r\n", "Content-Length: 1 2\r\n\r\n",
+         "Content-Length: 1\r\nContent-Length: 1\r\n\r\na",
+         "Content-Length: 1\r\ncontent-length: 2\r\n\r\nab",
+         "Content-Type: application/json; charset=utf-16\r\nContent-Length: 1\r\n\r\na",
+         "Content-Type: application/json; charset = utf-16\r\nContent-Length: 1\r\n\r\na",
+         "Content-Type: application/json; charset\r\nContent-Length: 1\r\n\r\na",
+         "Content-Length: 1\nX: v\r\n\r\na", "Content-Length: 1\r\nX: \001\r\n\r\na"]
+      val () = check ("advertised body bound", limit "Content-Length: 17\r\n\r\n")
+      val () = check ("length above 32 bits is bounded before host conversion", limit "Content-Length: 4294967296\r\n\r\n")
+      val () = check ("header bound", limit (String.implode (List.tabulate (257, fn _ => #"A"))))
+      val short = Framing.bounded {framing = Framing.ContentLength, maxHeaderBytes = 21, maxBodyBytes = 3}
+      val (messages, pending) = Framing.feed (short, "Content-Length: 3\r\n\r\n")
+      val () = check ("header alone awaits its body", messages = [] andalso Framing.pending pending)
+      val (a, ra) = Framing.feed (pending, "abc")
+      val (b, rb) = Framing.feed (pending, "xyz")
+      val () = check ("reader snapshots are independent", a = ["abc"] andalso b = ["xyz"]
+                     andalso not (Framing.pending ra) andalso not (Framing.pending rb) andalso Framing.pending pending)
+      val wire = Framing.frame (Framing.ContentLength, "\226\130\172")
+      val (bytes, final) = List.foldl (fn (c, (messages, state)) =>
+        let val (more, state) = Framing.feed (state, str c) in (messages @ more, state) end) ([], short) (explode wire)
+      val () = check ("every byte split with exact bounds", bytes = ["\226\130\172"] andalso not (Framing.pending final))
+      val () = check ("quoted legacy UTF8 charset", #1 (Framing.feed (reader (),
+        "Content-Type: application/json; charset=\"UTF8\"\r\nContent-Length: 2\r\n\r\n{}")) = ["{}"])
+      val line = Framing.bounded {framing = Framing.Lines, maxHeaderBytes = 1, maxBodyBytes = 3}
+      val () = check ("line exact bound", #1 (Framing.feed (line, "abc\n")) = ["abc"])
+      val () = check ("line overflow", (ignore (Framing.feed (line, "abcd")); false) handle Framing.Limit _ => true)
+    in
+      check ("invalid configured bound", (ignore (Framing.bounded {framing = Framing.Lines,
+        maxHeaderBytes = 0, maxBodyBytes = 1}); false) handle Domain => true)
+    end
+
   val tests =
     Test.describe "jsonrpc"
       [Test.it "specification" specification, Test.it "round-trip" roundTrip, Test.it "serving" serving,
-       Test.it "framing" framing]
+       Test.it "framing" framing, Test.it "integer-width" integerWidth, Test.it "bounded-framing" boundedFraming]
 end
 
 structure JsonRpcMain = Main (struct val name = "jsonrpc" val tests = JsonRpcTest.tests end)
