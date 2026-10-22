@@ -796,11 +796,11 @@ bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) build
 # which WSLENV passes to a program of Windows), so that the JIT's Windows
 # convention is what the suites test there.
 .PHONY: test-windows-text
-test-windows-text: windows $(RUNE) bin/rune.rbc bin/rune.stack.rbc
-	RUNE=$(RUNE) WINCC='$(WINCC)' WINCC32='$(WINCC32)' sh tests/windows/run.sh
+test-windows-text: bin/rune-test bin/rune-windows windows $(RUNE) bin/rune.rbc bin/rune.stack.rbc
+	RUNE=$(RUNE) WINCC='$(WINCC)' WINCC32='$(WINCC32)' $(RUNE_TEST) --tier test-windows-text
 
-test-windows: bin/rune-matrix bin/rune-test bin/rune-windows bin/rune-protocol-check bin/rune-terminal windows $(RUNE) bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel test-windows-text
-	$(RUNE_TEST) --tier test-windows
+test-windows: bin/rune-matrix bin/rune-test bin/rune-windows bin/rune-protocol-check bin/rune-terminal windows $(RUNE) bin/rune.rbc bin/rune.stack.rbc bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel
+	RUNE=$(RUNE) WINCC='$(WINCC)' WINCC32='$(WINCC32)' $(RUNE_TEST) --tier test-windows
 	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE_STACK)) bin/rune-matrix -j $(JOBS) --configs windows
 	bin/rune-protocol-check dap --windows
 	bin/rune-protocol-check kernel --windows

@@ -284,6 +284,7 @@ tests/terminal/run.sh	shell	P2.13	retired	9742027349d05df05248161d3cd95703a14098
 tests/terminal/term.py	python	P2.13	retired	c6ffb886b0274b8e94b84b167f39c452cd13c367	tests/runner/terminalchecks.sml	p2.13/nonblock-posix.log+nonblock-windows.log+pattern-shadow.json+api-acceptance
 tests/units/run.sh	shell	P2.8	retired	8c5fdc4c587d0b80e3a471e4b88ad2394a844ebc	tests/runner/scenariojobs.sml	p2.8/acceptance/checks.json+events.jsonl+install.old.log+dist.old.log
 tests/windows-dir.sh	shell	P2.7	retired	8e79e29694197e7e58d68ea21d5921177e8e2acd	tests/runner/windowsdir.sml	p2.7/windows-shadow.json+portability-new-acceptance+count-rerun.log+stress-asan.log+faults.log
+tests/windows/run.sh	shell	P2.7	retired	2ce4d5d5eb200f01ce0b677eb893983e5c3577f4	tests/runner/windowschecks.sml	P2.17-rebase-Windows-Unicode-native-oracles-and-four-VM-shadow; CLI=make test-windows-text
 tools/heapsim/checkold.py	python	P2.14	retired	531e811551d0cece02dc0719afdbd3e769dcbd68	tools/measure/check-old.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure checkold
 tools/heapsim/checktrace.py	python	P2.2	retired	ecb945e3b0c401989c3fa3e5b3355b12881a4fb1	tests/runner/tracecheck.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
 tools/heapsim/pauses.py	python	P2.14	retired	6db11dbb9314e18a848afa065e516a0afbcc4b95	tools/measure/pauses.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure pauses

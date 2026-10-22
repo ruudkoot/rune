@@ -1182,3 +1182,22 @@ The latter copies the final full-check receipt, controller byte identities and
 native library-host results from `.worktrees/unit-testing-final` without
 following fixture symlinks. The original validation tree also remains intact.
 These generated receipts are local evidence, not committed result archives.
+
+### Rebase onto Windows Unicode master, 2026-10-22
+
+The branch is rebased onto `origin/master` at `05ecacb9c`. All 25 migration
+commits are preserved. Conflict resolutions retain upstream's wide Windows
+process boundary and cleanup together with the ConPTY spawn parameter, all
+Make prerequisites, and both sets of testing documentation. The acceptance
+above identifies the pre-rebase source states; it is not a result for this
+new combined tree.
+
+Upstream added `tests/windows/run.sh`, which called the already retired
+Windows-directory adapter. Its native wide-API C oracle and SML probes remain
+unchanged; `WindowsChecks`/`WindowsJobs` now own the driver as seven dependency-
+ordered jobs, also selected by `test-windows`. The focused compatibility target
+retains compiler overrides. The ledger adds this source blob and retirement:
+301 rows, 282 retired and the same nineteen exceptions. The original driver
+and an adapter-only shadow copy are retained under
+`tests/out/unit-testing-rebase-20261022`; focused shadow/platform checks and
+the required full check validate the combined tree separately.

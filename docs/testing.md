@@ -587,9 +587,12 @@ in `make test-windows`. It needs both MinGW toolchains and Windows execution.
 The native helper creates and inspects fixtures with wide APIs; SML probes
 exercise each VM, including fork from a Unicode executable, directory and
 stream recovery under a long path, and native compilation of `λ.sml`.
-Logs are in `tests/out/windows-text`. Each worktree stages its own fixtures
-on NTFS using `tests/windows-dir.sh`; a WSL sandbox that blocks interop must
-run this target outside that sandbox.
+The `windows/text/*` SML jobs own compilation, staging and verdicts, with a
+shared preparation dependency and separate native-oracle/four-VM cases.
+Logs are in the run's `windows/text` directory. Each worktree stages private
+fixtures on NTFS using `bin/rune-windows directory`; a WSL sandbox that blocks
+interop must run this target outside that sandbox. `platform/windows-text-faults`
+rejects empty/mislabeled output, failure after PASS and nonzero/timeout exits.
 
 Native host laws use `bin/rune-laws-hosts [--compare] [HOST...]` and the
 `test-laws-hosts` runner tier. The shared `MatrixModel`, `MatrixProbe`,

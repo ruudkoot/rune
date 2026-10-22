@@ -101,4 +101,64 @@ struct
     let val f=family familyName
     in VMChecks.run {vm=vm,defs= #defs f,directory=directory () ^ "/refusals/" ^ familyName ^ "/" ^ OS.Path.file vm,
                      logs=logs ("refusals/" ^ familyName ^ "/" ^ OS.Path.file vm)} end
+  (* The wide-API C helper remains an independent oracle. SML owns its
+     build/staging, VM matrix, deadlines and verdicts. *)
+  val textOutput=run ^ "/windows-text"
+  fun textAccepted status output required =
+    status=0 andalso not (List.exists (String.isPrefix "FAIL ") (lines output))
+    andalso List.all (fn name => List.exists (fn line => Hosts.trim line="PASS windows.text/" ^ name) (lines output)) required
+  fun textExecute name working args required =
+    let val (status,dir)=execute ("text/" ^ name) working "" args
+        val output=read (dir ^ "/stdout")
+    in need (textAccepted status output required,
+             "Windows text " ^ name ^ ": exit " ^ Int.toString status ^ "\n" ^ output ^ read (dir ^ "/stderr")) end
+  fun textPrepare () =
+    let val ()=mkdirs textOutput
+        fun helper bits = textExecute ("build-" ^ bits) root
+          [env (if bits="64" then "WINCC" else "WINCC32",
+                if bits="64" then "x86_64-w64-mingw32-gcc" else "i686-w64-mingw32-gcc"),
+           "-std=c17","-O2","-Wall","-Wextra","-Werror","-D__USE_MINGW_ANSI_STDIO=1","-municode","-Iruntime",
+           "-o",textOutput ^ "/interop" ^ bits ^ ".exe","tests/windows/interop.c",
+           "-lws2_32","-ladvapi32","-lshell32","-luser32","-lpsapi"] []
+        fun probe target = textExecute ("compile-" ^ target) root
+          [fromRoot (env ("RUNE","bin/rune")),"--target=" ^ target,"tests/windows/probe.sml",
+           "-o",textOutput ^ "/probe-" ^ target ^ ".rbc"] []
+    in List.app helper ["64","32"];List.app probe ["stack","registers"] end
+  fun textStage name bits =
+    let val stage=WindowsDir.directory () ^ "/text-sml-" ^ OS.Path.file run ^ "/" ^ name
+        val ()=(rmTree stage;mkdirs stage)
+        val ()=MatrixLoad.copy (textOutput ^ "/interop" ^ bits ^ ".exe",stage ^ "/interop.exe")
+    in stage end
+  fun textOracle bits () =
+    let val stage=textStage ("oracle" ^ bits) bits
+    in textExecute ("oracle" ^ bits) stage [stage ^ "/interop.exe"]
+         ["utf16-to-utf8","reject-malformed-and-cesu8","environment-over-64k",
+          "root-rmdir","registry-cleanup","spawn-explicit-wide-env","unicode-program-remove"] end
+  fun textVM vm () =
+    let val stack=String.isPrefix "runevm-stack" vm
+        val target=if stack then "stack" else "registers"
+        val compiler=if stack then "rune.stack.rbc" else "rune.rbc"
+        val bits=if String.isSuffix "32.exe" vm then "32" else "64"
+        val stage=textStage vm bits
+        val ()=List.app (fn (source,name) => MatrixLoad.copy (source,stage ^ "/" ^ name))
+          [(fromRoot ("bin/" ^ vm),"vm-λ.exe"),(textOutput ^ "/probe-" ^ target ^ ".rbc","probe.rbc"),
+           (fromRoot ("bin/" ^ compiler),"compiler.rbc")]
+        fun available name = List.exists (fn dir => OS.FileSys.access
+            (OS.Path.concat (if dir="" then "." else dir,name),[OS.FileSys.A_EXEC]) handle OS.SysErr _ => false)
+            (String.fields (fn ch => ch = #":") (env ("PATH","")))
+        val converter=if available "wslpath" then SOME "wslpath" else if available "cygpath" then SOME "cygpath" else NONE
+        val lib=case converter of NONE => fromRoot "lib" | SOME tool =>
+          Hosts.trim (WindowsDir.command ("text-lib-" ^ vm) root "" [tool,"-w",fromRoot "lib"])
+        val ()=textExecute (vm ^ "/probe") stage [stage ^ "/interop.exe","--vm","./vm-λ.exe","probe.rbc"]
+          ["vm-wide-arguments","vm-wide-environment","vm-fork-status","vm-current-directory"]
+    in textExecute (vm ^ "/compile") stage
+         [stage ^ "/interop.exe","--compile","./vm-λ.exe","compiler.rbc",lib,target]
+         ["native-source","windows-compiler-unicode-source","native-compile","windows-compiler-result"] end
+  fun textFaults () =
+    let val ok="PASS windows.text/probe\n"
+        fun reject (name,status,output)=need (not (textAccepted status output ["probe"]),"text verdict accepted " ^ name)
+    in need (textAccepted 0 ok ["probe"],"text verdict rejected success");
+       List.app reject [("empty output",0,""),("wrong label",0,"PASS windows.text/other\n"),
+         ("nonzero after PASS",7,ok),("FAIL after PASS",0,ok ^ "FAIL windows.text/later\n"),
+         ("timeout",124,ok)] end
 end

@@ -14,6 +14,10 @@ struct
     | command ["windows-count",family,vm,name]=SOME (protect (WindowsChecks.count family vm name))
     | command ["windows-image",family,vm]=SOME (protect (WindowsChecks.image family vm))
     | command ["windows-refusals",family,vm]=SOME (protect (WindowsChecks.refusals family vm))
+    | command ["windows-text-prepare"]=SOME (protect WindowsChecks.textPrepare)
+    | command ["windows-text-oracle",bits]=SOME (protect (WindowsChecks.textOracle bits))
+    | command ["windows-text-vm",vm]=SOME (protect (WindowsChecks.textVM vm))
+    | command ["windows-text-faults"]=SOME (protect WindowsChecks.textFaults)
     | command ["vm-refusals",vm,defs,directory]=SOME (protect (fn () => VMChecks.run {vm=vm,defs=defs,directory=fromRoot directory,logs=fromRoot directory}))
     | command _=NONE
   fun tags names tree=List.foldl (fn (tag,tree) => Test.tag tag tree) tree names
@@ -21,7 +25,8 @@ struct
     Test.it name {program="/bin/sh",args=["sh","-c","exec \"$RUNE_TEST_ROOT\"/bin/rune-windows " ^ String.concatWith " " (List.map quote args)],
        env=NONE,dir=SOME ".",stdin=NONE,timeout=Time.fromSeconds 1800,cap=0,cpus=1,memory=500,pools=[],exclusive=false,after=after,judge=failLines} : Run.command Test.tree
   val faults=tags ["check","covers:tests/runner/windows*.sml","covers:tests/runner/langchecks.sml"]
-       (Test.describe "platform" [job "faults" ["platform-faults"] []])
+       (Test.describe "platform" [job "faults" ["platform-faults"] [],
+          job "windows-text-faults" ["windows-text-faults"] []])
   fun tree () =
     let val selected=env ("WINDOWS_SELECTED","0")="1"
         val names=WindowsChecks.names ()
@@ -44,7 +49,13 @@ struct
                           ["windows/prepare","windows/compile/" ^ #compilerID f ^ "/" ^ name]) WindowsChecks.layoutCases
                      @ [job "image" ["windows-image",#name f,vm] ["windows/prepare","windows/compile/" ^ #compilerID f ^ "/rt.save_restore_cross"]]
             in Test.describe vmName (List.map run names @ [job "refusals" ["windows-refusals",#name f,vm] ["windows/prepare"]] @ oracles) end) (#vms f))
-        val tree=Test.describe "windows" (job "prepare" ["windows-prepare"] [] :: compile :: List.map one families)
+        val text=tags ["test-windows-text","covers:tests/windows/*"] (Test.describe "text"
+          (job "prepare" ["windows-text-prepare"] []
+           :: List.map (fn bits => job ("native-" ^ bits) ["windows-text-oracle",bits] ["windows/text/prepare"]) ["64","32"]
+           @ List.map (fn vm => job vm ["windows-text-vm",vm] ["windows/text/prepare"])
+             ["runevm-stack.exe","runevm-stack32.exe","runevm.exe","runevm32.exe"]))
+        val tree=Test.describe "windows" (job "prepare" ["windows-prepare"] [] :: compile :: List.map one families
+                   @ (if selected then [] else [text]))
     in Test.requires ["windows"] (tags ((if selected then ["windows-selected"] else ["test-windows","nightly","windows","vm"])
                    @ ["covers:tests/lang/*","covers:tests/runtime/*","covers:tests/runner/windows*.sml"]) tree) end
 end
