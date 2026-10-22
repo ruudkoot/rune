@@ -24,12 +24,16 @@ What it rests on:
 ## Status
 
 The continuation, [unit-testing-part2.md](unit-testing-part2.md), is complete
-through P2.17 as of 2026-10-22. It retires 281 shell/Python/AWK scripts and
+through P2.17 as of 2026-10-22. It retires 282 shell/Python/AWK scripts and
 retains nineteen explicit bootstrap, installer and independent-oracle
-exceptions. Final acceptance passed 19,240 default-check cases (two documented
+exceptions. Pre-rebase acceptance passed 19,240 default-check cases (two documented
 skips) and 8574 full-matrix cases (858 named unavailable skips), with no
-failures. The continuation records exact source states, platform checks and
-validation limits. The status and script census below retain this roadmap's
+failures. The rebase onto `05ecacb9c` adds the upstream Windows Unicode driver
+to the SML inventory. Its full check records 19,328 PASS, two documented SKIP
+and one intermittent terminal resize failure; exact and repeated reruns retain
+that limitation. The Windows runner passes 2367/2367, and recovered WSL
+transport failures, complete Basis audits and Windows protocols are recorded
+in the continuation. The status and script census below retain this roadmap's
 implementation history.
 
 | Milestone | What | State |

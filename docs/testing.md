@@ -149,7 +149,7 @@ since the runner is built by the compiler it tests.
 
 The completed script migration is recorded by
 [the part-two roadmap](plans/unit-testing-part2.md) and
-`tests/runner/migration.tsv`: 281 retired files and nineteen retained
+`tests/runner/migration.tsv`: 282 retired files and nineteen retained
 bootstrap/setup, installer and independent-oracle/peer exceptions.
 `runner/migration-inventory` rejects unassigned
 shell/Python/AWK files and invalid retirements; `runner/migration-faults`
@@ -735,7 +735,7 @@ Production build and packaging policy uses `bin/rune-build`, compiled by the
 native MLton before target GMP configuration or VM creation. Its shared models
 also build as Rune bytecode for the retained runtime SDK. See
 [tools/builder/README.md](../tools/builder/README.md) for modes and bootstrap
-requirements. P2.16 retires all eight production scripts; the ledger has 281
+requirements. P2.16 retires all eight production scripts; the current ledger has 282
 retired targets and nineteen explicit bootstrap/installer/oracle exceptions.
 Make's unit-bootstrap, template and Int64 comparisons also use SML jobs.
 `make test-int64` preserves both VMs and all four JIT modes. Final global
@@ -763,3 +763,17 @@ native MLton and self-hosted compilation byte for byte. The
 identifies exact tested states, retained failures and receipts, Windows
 transport reruns, existing host deviations and the unvalidated live HOL
 benchmark. The historical timing comparison above is a separate experiment.
+
+The subsequent rebase onto `origin/master` at `05ecacb9c` retires the newly
+added Windows Unicode shell driver too. Combined source `77ad74a60` preserves
+all 19,240 previous check IDs and adds 91. Its default full check reports
+19,328 PASS, two native-interrupt SKIP and one intermittent
+`terminal/edit-complete` resize failure; an exact rerun passes, while one of
+ten further repetitions fails. The full result remains recorded as FAIL.
+Windows language/runtime/ConPTY/Unicode passes 2367/2367. Two Windows Basis
+collections hit WSL temporary-directory lookup timeouts; their collections
+and comparisons pass with the supported directory override, and all four
+strict audits plus the complete 948-result report pass with zero unexplained
+failures. Windows DAP and kernel sessions also pass. The
+[rebase record](plans/unit-testing-part2.md#rebase-onto-windows-unicode-master-2026-10-22)
+keeps the original failures and rerun receipts separate.

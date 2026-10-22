@@ -2,8 +2,11 @@
 
 Written 2026-10-20 and reconciled after the rebase against
 `80694b6b7` on `origin/master` at `78192dfd9`, in `.worktrees/unit-testing`.
-All milestones P2.0–P2.17 are complete as of 2026-10-22: 281 scripts retired,
-nineteen explicit exceptions retained, and final acceptance recorded below.
+Rebased again on 2026-10-22 onto `origin/master` at `05ecacb9c`.
+All implementation milestones P2.0–P2.17 are complete: the current ledger has
+282 scripts retired and nineteen explicit exceptions retained. The initial
+clean acceptance and subsequent rebase checks, including an intermittent
+terminal failure, are recorded below.
 The status table records completion; the inventory and earlier checkpoints
 preserve the baseline and implementation history. This continues
 [unit-testing.md](unit-testing.md), particularly the
@@ -1200,4 +1203,63 @@ retains compiler overrides. The ledger adds this source blob and retirement:
 301 rows, 282 retired and the same nineteen exceptions. The original driver
 and an adapter-only shadow copy are retained under
 `tests/out/unit-testing-rebase-20261022`; focused shadow/platform checks and
-the required full check validate the combined tree separately.
+the required full check validate the combined tree separately, as follows.
+
+The combined source tested is clean commit `77ad74a60`. The pinned MLKit 4.7.25
+environment is unchanged. A complete `make -j 8 check-tools windows
+bin/rune.stack.rbc` passes, and both MinGW widths compile the native oracle
+with its original warning/error flags. The first build's rejected raw Unicode
+literal is preserved in `build-before-literal-fix.log`; the controller now uses
+ASCII SML escapes for the same UTF-8 executable name. The recorded Windows
+subjects and two changed controller payloads remain byte-identical throughout testing.
+
+| Post-rebase check | Result |
+| --- | --- |
+| Preserved shell driver versus SML Unicode jobs | All six output streams byte-identical: 224 checks pass and the same two native deep-current-directory limits are skipped; same arithmetic, timezone and Windows environment forwarding |
+| Focused Unicode selection | 12/12 PASS: seven jobs plus five runner canaries |
+| Default `make check JOBS=8`, no `RUNE` override | 19,328 PASS, two documented native-interrupt SKIP, one FAIL; 1809.3 s wall / 13091.1 s CPU |
+| Exact isolated `terminal/edit-complete` rerun | 7/7 PASS including preparation and canaries |
+| Ten further isolated terminal repetitions | Nine passing runs and one failing run, all using the unchanged expectation |
+| Full Windows language/runtime/ConPTY/Unicode runner | 2367/2367 PASS; 2171.2 s wall |
+| Four-configuration Windows Basis runner | 1904 PASS, two WSL transport FAIL, four dependent SKIP among 1910 jobs; 1710.5 s wall |
+| Recovery of the two Windows Basis collections and comparisons | 4/4 commands PASS with the documented `RUNE_WINDOWS_DIR` override and the original source, model and output root |
+| Regenerated strict Windows audits and aggregate report | All four stale audits and the report PASS; all 948 program/configuration results have zero unexplained failures |
+| Actual Windows DAP and kernel sessions | Both exit 0; frame/exception/output/pause and execute/session/shutdown checks PASS |
+| Native MLton / self-hosted / public controller bytecode | Exact equality for both `rune-test` and `rune-windows` |
+
+The default check's failure is `terminal/edit-complete`: its resized screen
+occasionally omits the middle row. The retained raw transcript shows the
+40-column drawing without the subsequent resized drawing; the fixture, terminal
+runner and terminal library are unchanged across the rebase. The isolated
+repetitions confirm intermittency. This full run remains a failed result;
+successful reruns do not replace its receipt or establish a clean full check.
+
+The two Basis failures are `rune:windows` collection of `pack_word32` and
+`pack_word32_sig`. Both fail before collection because `%TEMP%` lookup reports
+`WSL ERROR UtilAcceptVsock:273: accept4 failed 110`. Their successful reruns use
+the same Windows directory through its supported override, avoiding another
+lookup. The original event stream remains unchanged. The public
+`make test-windows` exits unsuccessfully at that matrix stage, so Windows DAP
+and kernel acceptance was completed separately in private staging directories.
+Strict stale auditing and the full aggregate report run after all collections
+finish; recovery does not narrow the selected library cases.
+
+All 19,240 prior default-check IDs remain; 91 new jobs bring the tier to 19,331.
+A change to `runtime/sys/sys_win.c` selects that whole tier; a Unicode-probe
+change selects all seven focused jobs, with the five canaries added when run.
+The new default-check verdict faults reject empty output, wrong labels, a
+nonzero exit after PASS, FAIL after PASS and a timeout. The current census
+confirms 301 unique rows, 282 retirements with existing SML replacements, the
+same nineteen retained exceptions and no unassigned live scripts.
+
+Evidence under `tests/out/unit-testing-rebase-20261022` includes
+`windows-text-shadow-agreement.json`, `case-coverage.json`,
+`affected-selection.json`, `controller-equality-relative/report.json`,
+`full-check-result.json`, bounded `full-check-receipt` including the failed
+terminal's raw bytes/screen, `terminal-repeat-summary.json`,
+`windows-runner-receipt`, `windows-matrix-original-receipt`,
+`windows-wsl-errors`, `windows-matrix-recovery`,
+`windows-matrix-recovered-result.json`, and Windows protocol logs/statuses.
+These receipts identify the tested code commit; the subsequent documentation
+closure is not another full test run. The pre-rebase branch remains available
+as `backup/unit-testing-before-rebase-20261022-52a10dda0`.
