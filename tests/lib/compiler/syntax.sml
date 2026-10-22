@@ -18,6 +18,13 @@ struct
         val ()=check ("bad lexemes and syntax have diagnostics",List.all (not o null o S.diagnostics) (List.drop (snapshots,3)))
         val unterminated=List.nth (snapshots,4)
         val ()=check ("comment contents do not become declarations",null (S.events unterminated))
+        val latin1=S.parse {file="latin1.sml",text="\239\187\191val x=1\n",mode="unicode=latin1",orPatterns=false,fixity=S.initial}
+        val ()=check ("Latin-1 overlays cannot silently discard a Unicode BOM",lossless latin1 andalso not (null (S.diagnostics latin1)))
+        fun latin1 text=S.parse {file="latin1.sml",text=text,mode="unicode=latin1",orPatterns=false,fixity=S.initial}
+        val ()=check ("Latin-1 raw characters must be representable",List.all (not o null o S.diagnostics o latin1)
+          ["val \206\187=1\n","val x=\"\206\187\"\n","(* \206\187 *)\n"])
+        val ()=check ("Latin-1 decoded bytes and escaped wide characters remain valid",null (S.diagnostics
+          (latin1 "val x=\"\195\169\"\nval y= #\"\\u03BB\"\n")))
     in check ("later declaration survives recovery",List.exists (fn event:S.event =>
       #kind event="PVar" andalso List.exists (fn value => value="later") (#values event)) (S.events (List.nth (snapshots,5)))) end
   fun reuse () =

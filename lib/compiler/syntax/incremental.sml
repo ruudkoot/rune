@@ -35,7 +35,8 @@ struct
           | #"\\" => if Char.isSpace (ch (i+1)) then stringEnd (i+1,true) else stringEnd (Int.min (n,i+2),false)
           | _ => stringEnd (i+1,false)
       fun one from : lexeme =
-        let val beginning=if from=0 andalso String.isPrefix "\239\187\191" text then 3 else from
+        let val beginning=if from=0 andalso mode<>Source.Unicode Source.Latin1
+              andalso String.isPrefix "\239\187\191" text then 3 else from
         in
           (let val (token,span,_) = next beginning
            in {gap=String.substring (text,from,#start span-from),raw=String.substring (text,#start span,#stop span- #start span),

@@ -22,7 +22,8 @@ struct
           files (if String.isSuffix ".sml" name then ("tests/lang/" ^ name)::acc else acc)
         val files=files [] before OS.FileSys.closeDir stream
         fun test file=let val text=read file in compare (file,text,Source.Ascii,false);
-          compare (file,text,Source.Unicode Source.Utf8,true) end
+          compare (file,text,Source.Unicode Source.Utf8,true);
+          compare (file,Source.latin1ToUtf8 text,Source.Unicode Source.Latin1,false) end
     in List.app test files end
   fun frontend () = List.app (fn file => compare (file,read file,Source.Ascii,false))
     ["lib/compiler/frontend/parser.sml","lib/compiler/frontend/lexer.sml","lib/compiler/frontend/ast.sml",

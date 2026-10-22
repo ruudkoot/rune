@@ -184,6 +184,11 @@ struct
           | NONE => ()
         end
 
+      fun checkLatin1 (i,c,k) =
+        if not latin1 then ()
+        else if c>255 then err (i,i+k,"character " ^ codePoint c ^ " cannot be represented in Latin-1 source")
+        else if c>=0xC2 then looksUtf8 i else ()
+
       (* The character whose bytes begin at i, a byte above 127, by the
          mode's encoding: its code point and how many bytes it has, once
          the rules every context shares are checked; context says where it
@@ -192,10 +197,10 @@ struct
         case Utf8.decode (text, i) of
           NONE => err (i, i + 1, "invalid UTF-8 (byte 0x" ^ Int.fmt StringCvt.HEX (Char.ord (ch i)) ^ ") " ^ context)
         | SOME (c, k) =>
-            case refusedAbove127 c of
+            (checkLatin1 (i,c,k);case refusedAbove127 c of
               SOME what => err (i, i + k, what ^ " " ^ codePoint c ^ " " ^ context
                                           ^ (if context = "in a comment" then "" else " (write it as " ^ escapeOf c ^ ")"))
-            | NONE => ((if latin1 andalso c >= 0xC2 then looksUtf8 i else ()); (c, k))
+            | NONE => (c, k))
 
       (* UTS #55's lookalike of a comment's end (D13): the character at i,
          of k bytes, and the one before or after it, where their skeleton
@@ -405,7 +410,7 @@ struct
                          ^ (if ch i = #"\r" then " (a carriage return not before a line feed)" else ""))
         else
           case Utf8.decode (text, i) of
-            SOME (c, k) => ((if latin1 andalso c >= 0xC2 then looksUtf8 i else ());
+            SOME (c, k) => (checkLatin1 (i,c,k);
                             err (i, i + k,
                                  case (refusedAbove127 c, Ident.refusal c) of
                                    (SOME what, _) => "unexpected character " ^ codePoint c ^ " (a " ^ what ^ ")"
@@ -432,7 +437,7 @@ struct
             else
               case Utf8.decode (text, i) of
                 SOME (cp, k) =>
-                  ((if latin1 andalso cp >= 0xC2 then looksUtf8 i else ());
+                  (checkLatin1 (i,cp,k);
                    if Ident.isContinue cp then identEnd (i + k, true)
                    else (case Ident.refusal cp of
                            SOME why => err (i, i + k, "the character " ^ codePoint cp ^ " in a name is " ^ why)

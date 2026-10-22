@@ -883,6 +883,17 @@ checkpoints within long constructs, broader recovery/locality evidence,
 representative edit traces and resource/platform acceptance. The existing
 compiler lexer is a shared lexical kernel; the editor parser is separate.
 
+Encoding follow-up (2026-10-22): editor lexing now applies the batch
+parser's BOM rule to Latin-1 overlays, and the shared lexer rejects raw
+overlay characters above U+00FF in that mode. ASCII escapes for wider
+literals remain valid. The differential corpus now checks 329 language
+fixtures in ASCII, Unicode and decoded Latin-1 modes. Interpreter/JIT
+syntax checks and documentation checks pass. The new escaped-character
+fixture passed all 82 selected compiler, VM, sanitizer, Windows and
+portability cases at `tests/out/r/20261022-174957-3683526` (20.0 seconds).
+Earlier exploratory runs exposed restricted 32-bit/LeakSanitizer execution
+and unbuilt VM prerequisites; those runs are not counted as passes.
+
 ### M5. Compiler-backed semantic snapshots (XL)
 
 * **Depends on:** M3, M4; compiler-library M1-M4 plus the required analysis
