@@ -560,6 +560,16 @@ Shared project-model checkpoint (2026-10-22):
 
 ### M5. The clients (M, about 500 SML)
 
+Combined M3/M4 follow-up (2026-10-22): the run at
+`tests/out/r/20261022-161924-3118918` completed 19,346 passes, three
+documented skips and one failure (1,992.5 seconds). The sole failure was
+the migration inventory missing `scripts/mlkit-build-root.sh`; its native
+bootstrap role is now recorded with the original committed blob. Inventory
+and planted-fault checks then passed all seven selected runner cases at
+`tests/out/r/20261022-165548-8` (1.1 seconds). This records the failure and
+focused correction; a clean combined run and remaining platform/profile
+acceptance are still required for the final implementation.
+
 * **What:** the REPL's engine and session written on `RuneCompiler`;
   `rune --serve` on it and on `lib/json` and `lib/jsonrpc` (its own codec
   removed); the Basis's `Compiler.use` and `compile` filled by the library
