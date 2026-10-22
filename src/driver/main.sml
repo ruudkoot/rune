@@ -1168,7 +1168,7 @@ struct
                in libraryContexts := (#dir (hd es),raw) :: !libraryContexts;
                   restore (LibraryScope.restrict (prior,raw,exports)) end
         end
-      fun elabFinal (es,ds) =
+      fun elabFinal (es : entry list,ds) =
         case List.find (fn (dir,_) => dir = #dir (hd es)) (!libraryContexts) of
           NONE => Elaborate.elabTop (env,ds)
         | SOME (_,raw) =>
