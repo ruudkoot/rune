@@ -38,6 +38,13 @@ driver. The usable preview is after M8 and its prerequisite checks: a
 standalone server with project analysis, diagnostics, navigation and
 completion. M9-M13 remain required for full acceptance at M14.
 
+Implementation began on 2026-10-22 in the isolated `language-server`
+worktree, branched from refreshed `origin/master` at
+`c3e713891e6ea9f32770371427fdfa5f76369255`. The M0 checks below describe
+the earlier documentation baseline; they are not acceptance results for
+this new branch. M1 remeasures the current compiler and records its own
+fixture and tool identities.
+
 ## The request and the decisions
 
 The original draft asks for a language server named `runelsp`, all useful
