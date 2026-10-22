@@ -1,0 +1,3 @@
+annotate "always" in private.sml end
+annotate "demand" in signature.sml public.sml functor.sml type.sml end
+annotate "final" in final.sml end

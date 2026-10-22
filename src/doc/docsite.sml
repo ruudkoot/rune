@@ -78,14 +78,29 @@ struct
 
   (* The modules of the files of the MANIFEST, in its order. *)
   fun load (dir : string) : I.module list =
-    List.concat (List.map (fn e : BasisManifest.entry =>
-                             let val ms = List.filter (not o isSeal) (DocExtract.file (dir ^ "/" ^ #file e))
-                             in
-                               (* only a file that every program loads declares the top-level environment *)
-                               if #when e = BasisManifest.Always then ms
-                               else List.filter (fn I.Decl _ => false | _ => true) ms
-                             end)
-                          (BasisManifest.readManifest dir))
+    let
+      val entries = BasisManifest.readManifest dir
+      val scope = BasisManifest.scopeOf entries
+      fun visible key = case scope of NONE => true | SOME exports => List.exists (fn exported => exported = key) exports
+      fun exported m =
+        case m of
+          I.Signature r => if visible ("signature", #name r) then SOME m else NONE
+        | I.Struct r => if visible ("structure", #name r) then SOME m else NONE
+        | I.Functor r => if visible ("functor", #name r) then SOME m else NONE
+        | I.Decl {kind, names, file, span, doc} =>
+            let val names = if kind = "type" then List.filter (fn n => visible ("type", n)) names else []
+            in if null names then NONE else SOME (I.Decl {kind = kind, names = names, file = file, span = span, doc = doc}) end
+      fun file (e : BasisManifest.entry) =
+        let val ms = List.filter (not o isSeal) (DocExtract.file (dir ^ "/" ^ #file e))
+        in
+          case scope of
+            SOME _ => List.mapPartial exported ms
+          | NONE =>
+              (* only a file that every program loads declares the top-level environment *)
+              if #when e = BasisManifest.Always then ms
+              else List.filter (fn I.Decl _ => false | _ => true) ms
+        end
+    in List.concat (List.map file entries) end
 
   fun signaturesOf (modules : I.module list) : I.signatureRecord list =
     List.mapPartial (fn I.Signature s => if isPublic (#name s) then SOME s else NONE | _ => NONE) modules
@@ -1377,7 +1392,7 @@ struct
                    StringMap.empty entries
       val publicOf =
         List.foldl (fn (e : BasisManifest.entry, m) =>
-                      StringMap.insert (m, #file e, List.filter (fn p => isModule p andalso isPublic p) (#provides e)))
+                      StringMap.insert (m, #file e, List.filter (fn p => isModule p andalso isPublic p) (BasisManifest.public e)))
                    StringMap.empty entries
       fun modulesOf (f : string) = Option.getOpt (StringMap.find (publicOf, f), [])
       val needs =

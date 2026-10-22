@@ -27,15 +27,28 @@ struct
       fun parse d (e : BasisManifest.entry) =
         let val (prog, fx) = Parser.parseTokensWith (Lexer.tokenize (Source.load (!DocSource.mode, d ^ "/" ^ #file e)), !fixity)
         in fixity := fx; prog end
-      fun programOf d = List.concat (List.map (parse d) (BasisManifest.readManifest d))
-      val basisProg = case #basis prelude of SOME d => programOf d | NONE => []
-      val prog = List.concat (List.map programOf (#libraries prelude)) @ programOf dir
       val env = ref Env.initial
+      fun namespace () : LibraryScope.basis = {env = !env, sigs = !Elaborate.sigs, funs = !Elaborate.funs}
+      fun restore (basis : LibraryScope.basis) =
+        (env := #env basis; Elaborate.sigs := #sigs basis; Elaborate.funs := #funs basis)
+      fun elaborate d =
+        let
+          val entries = BasisManifest.readManifest d
+          val incoming = !fixity
+          val prior = namespace ()
+          val prog = List.concat (List.map (parse d) entries)
+          val () = Elaborate.elabTop (env, prog)
+        in
+          case BasisManifest.scopeOf entries of
+            NONE => ()
+          | SOME exports => (restore (LibraryScope.restrict (prior, namespace (), exports)); fixity := incoming)
+        end
     in
       Elaborate.allowPrim := true;
-      Elaborate.elabTop (env, basisProg);
+      Option.app elaborate (#basis prelude);
       Elaborate.allowPrim := not (isSome (#basis prelude));
-      Elaborate.elabTop (env, prog);
+      List.app elaborate (#libraries prelude);
+      elaborate dir;
       Elaborate.allowPrim := true;
       Elaborate.finish ();
       Error.warnings := [];

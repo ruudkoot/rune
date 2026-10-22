@@ -1,0 +1,1 @@
+type exposed = int

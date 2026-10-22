@@ -1,0 +1,27 @@
+{
+ "signatures": {
+  "API": {
+   "doc": "The public interface.\n\n",
+   "page": "sig/API.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "t",
+     "spec": "type t",
+     "doc": "An abstract value type.\n\n",
+     "page": "sig/API.md#type-t"
+    },
+    {
+     "kind": "val",
+     "name": "value",
+     "spec": "val value : t",
+     "doc": "The published value.\n\n",
+     "page": "sig/API.md#val-value"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Api": "API"
+ }
+}

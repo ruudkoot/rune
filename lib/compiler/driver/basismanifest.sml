@@ -21,7 +21,19 @@ struct
   datatype when = Always | Demand | Seal | Final
   (* requires is read from the text when it is asked for: most programs need
      it of few files. dir is the directory of the library the file is in. *)
-  type entry = {dir : string, file : string, when : when, provides : string list, requires : unit -> string list}
+  type entry = {dir : string, file : string, when : when, provides : string list,
+                requires : unit -> string list, scope : (string * string) list option}
+
+  (* A sixth MANIFEST field carries a library's complete export boundary.
+     Five-field manifests retain their historical visibility. *)
+  fun public (e : entry) =
+    case #scope e of NONE => #provides e
+    | SOME es => List.filter (fn n => List.exists (fn (_, exported) => exported = n) es) (#provides e)
+
+  fun scopeOf (es : entry list) =
+    case es of [] => NONE | e :: rest =>
+      if List.all (fn other : entry => #scope other = #scope e) rest then #scope e
+      else raise Usage ("inconsistent export boundary in " ^ #dir e ^ "/MANIFEST")
 
   (* The file of an entry, as a path. *)
   fun path (e : entry) : string = #dir e ^ "/" ^ #file e
@@ -59,20 +71,30 @@ struct
       fun bad (i, e) = raise Usage ("malformed line in " ^ manifest ^ ": " ^ String.substring (text, i, e - i))
       (* the one word of text[i, j), or NONE *)
       fun one (i, j) = case words (i, j) of [w] => SOME w | _ => NONE
-      (* a line text[i, e) of five fields *)
+      (* A line of five fields, optionally followed by the library's scope. *)
       fun entry (i, e) =
         let
           fun bars (k, acc) = if k >= e then List.rev acc else bars (k + 1, if at k = #"|" then k :: acc else acc)
+          fun exports (a,b) =
+            case words (a,b) of
+              ["-"] => []
+            | ws => List.map (fn word =>
+                case String.fields (fn c => c = #":") word of
+                  [kind,n] => if n <> "" andalso List.exists (fn x => kind=x) ["structure","signature","functor","type"]
+                              then (kind,n) else bad (i,e)
+                | _ => bad (i,e)) ws
+          fun make (b1,b2,b3,b4,last,scope) =
+            case (one (i,b1),one (b1+1,b2)) of
+              (SOME file,SOME mode) =>
+                {dir=dir,file=file,
+                 when=(case mode of "always" => Always | "demand" => Demand | "seal" => Seal | "final" => Final | _ => bad (i,e)),
+                 provides=words (b3+1,b4),requires=fn () => words (b4+1,last),scope=scope}
+            | _ => bad (i,e)
         in
-          case bars (i, []) of
-            [b1, b2, b3, b4] =>
-              (case (one (i, b1), one (b1 + 1, b2)) of
-                 (SOME file, SOME mode) =>
-                   {dir = dir, file = file,
-                    when = (case mode of "always" => Always | "demand" => Demand | "seal" => Seal | "final" => Final | _ => bad (i, e)),
-                    provides = words (b3 + 1, b4), requires = fn () => words (b4 + 1, e)}
-               | _ => bad (i, e))
-          | _ => bad (i, e)
+          case bars (i,[]) of
+            [b1,b2,b3,b4] => make (b1,b2,b3,b4,e,NONE)
+          | [b1,b2,b3,b4,b5] => make (b1,b2,b3,b4,b5,SOME (exports (b5+1,e)))
+          | _ => bad (i,e)
         end
       fun go (i, acc) =
         if i >= n then List.rev acc
@@ -85,7 +107,7 @@ struct
           in
             if f >= e orelse at f = #"#" then go (e + 1, acc) else go (e + 1, entry (i, e) :: acc)
           end
-    in go (0, []) end
+    in let val entries = go (0, []) val _ = scopeOf entries in entries end end
 
   type names = unit StringMap.map
 
@@ -119,19 +141,21 @@ struct
       (* A seal file binds a structure again, as its signature shows it: that
          is for the program that mentions the structure. The files of the
          library that need it have it whole, from the file that declares it. *)
-      fun providersOf n = List.filter (fn e : entry => #when e <> Seal andalso List.exists (fn p => p = n) (#provides e)) entries
+      fun providersOf (from : entry, n) =
+        List.filter (fn e : entry => #when e <> Seal andalso
+          List.exists (fn p => p=n) (if #dir from = #dir e then #provides e else public e)) entries
       fun required (e : entry) = List.filter (fn n => not (String.isPrefix "-" n)) (#requires e ())
       fun add (e : entry, chosen : names) : names =
         if StringMap.member (chosen, path e) then chosen
         else
           List.foldl (fn (n, chosen) =>
-                         case providersOf n of
+                         case providersOf (e,n) of
                            [] => raise Usage ("basis manifest: " ^ #file e ^ " requires " ^ n ^
                                                       ", which no file provides")
                          | es => List.foldl add chosen es)
                      (StringMap.insert (chosen, path e, ()))
                      (required e)
-      val wanted = fn e : entry => #when e = Always orelse List.exists (fn n => StringMap.member (mentioned, n)) (#provides e)
+      val wanted = fn e : entry => #when e = Always orelse List.exists (fn n => StringMap.member (mentioned, n)) (public e)
       val chosen = List.foldl (fn (e, chosen) => if wanted e then add (e, chosen) else chosen) StringMap.empty entries
       (* A file compiled after the program joins it only when what it needs is
          there anyway: a program that never mentions OS has nothing to do when
@@ -140,7 +164,7 @@ struct
         List.foldl (fn (e : entry, chosen) =>
                        if #when e = Final
                           andalso List.all (fn n => List.exists (fn e' : entry => StringMap.member (chosen, path e'))
-                                                                (providersOf n))
+                                                                (providersOf (e,n)))
                                            (required e)
                        then add (e, chosen) else chosen)
                    chosen entries

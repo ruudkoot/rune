@@ -25,7 +25,7 @@ it.
 |---|---|---|
 | M0 | The REPL's branch and `incremental` merged; this plan's numbers measured again | done 2026-10-13: both on `master` since 2026-10-11 (#38, #39), the numbers measured again at `2e2351ba` |
 | M1 | The compiler moved to `lib/compiler`, the driver left in `src` | in progress: extraction implemented; acceptance corrections and a clean full check remain |
-| M2 | A library's names: export lists for `rune --library` | planned |
+| M2 | A library's names: export lists for `rune --library` | in progress: scoped manifests, compiler and documentation visibility implemented; public compiler facade and full acceptance remain |
 | M3 | The compiler's state: a session that starts from nothing | in progress: registered roots and serialized ownership implemented; public API integration and acceptance remain |
 | M4 | `RuneCompiler`: the API, its tests, its frozen cache | planned |
 | M5 | The clients: the REPL's engine, `rune --serve`, the Basis's `Compiler` | planned |
@@ -293,6 +293,37 @@ changing the IDE checkout is not a prerequisite for the standalone server.
 * **Done when:** those pass, and the libraries of the REPL's branch that
   want one have an export list.
 
+Export-boundary checkpoint (2026-10-22):
+
+* Library indexing follows one outer `library (...) = ... end` boundary,
+  including nested build imports, and records it in an optional sixth
+  MANIFEST column. Legacy manifests retain their existing visibility.
+  Selection uses public providers for clients and dependencies, while files
+  of the library can use private providers. Missing exports, wrong kinds
+  and inconsistent scope metadata are rejected; failed indexing preserves
+  a previous valid manifest.
+* The compiler restores public visibility at each library boundary in
+  whole-program and unit compilation. Its final units retain their private
+  context, and private fixity changes do not affect clients. `LibraryScope`
+  shares the namespace filtering rules with runedoc; generated library
+  pages and dependency graphs show public names.
+* `low-level/library-exports` covers whole-program, unit and whole-from-unit
+  modes; private structures, signatures and types; a public functor using
+  a private generative functor; verified cold/warm byte agreement; demand
+  selection; invalid export metadata; dependent libraries; and library
+  roots containing spaces. The focused run passed six runner cases at
+  `tests/out/r/20261022-065433-2387565` (7.4 seconds). The combined existing
+  documentation/toy-library suite and new fixtures passed 32 cases at
+  `tests/out/r/20261022-065730-2387877` (7.2 seconds). The new documentation
+  fixture's IR, Markdown, member index and public file list were reviewed.
+* `make manifests` now keeps the extracted compiler's manifest current too,
+  so source installation does not copy an old partial compiler inventory.
+  The compiler facade will apply its public export list in M4; its current
+  implementation modules remain internal interfaces, as its README says.
+
+The public compiler facade/namespace test and combined full check remain
+acceptance gates; M2 remains in progress.
+
 ### M3. The compiler's state (M, about 400 SML)
 
 * **What:** D2's (a): `CompilerState` in the library, where each of the
@@ -338,6 +369,13 @@ Ownership checkpoint (2026-10-22):
   (64-bit and 32-bit), SML/NJ 2026.2, Poly/ML and MLKit 4.7.25:
   `tests/out/r/20261022-062900-2380279`, 13 passes, 8.1 seconds, including
   host-adapter and runner acceptance.
+* A fresh complete `make test-lib-hosts JOBS=8` profile passed all 168 runner
+  cases under the repository's recorded host deviations:
+  `tests/out/r/20261022-063449-2382187`, 601.9 seconds. This includes the
+  protocol libraries and their revised deviation classifications. It is
+  classified acceptance, not a claim that every host program passed
+  without a deviation; Poly/ML's documented ZMTP timeout remains covered
+  by its `HOST-FLAKY` entry.
 
 These are ownership saves. Mutable type variables and AST annotations
 within one owner require the analysis publication/rollback contract in the

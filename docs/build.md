@@ -98,6 +98,31 @@ works it out from the sources (`Deps`, docs/units.md, The graph) and writes
 `DIR/MANIFEST`, which is what the compiler reads (`BasisManifest`). `make
 manifests` makes them all, and they are not committed.
 
+A library can put all its sources inside one explicit export boundary:
+
+```sml
+libraries json end
+library (structure Api, signature API, functor Make, type item) =
+  use implementation.build
+end
+```
+
+Files inside that boundary can use each other's private declarations. A
+program or another library sees the listed exports. This applies to
+whole-program compilation, compilation in units and cache reuse. Private
+fixity declarations stay inside the library, and its final files are
+elaborated in its private context. An export must be declared before the
+program; `--basis-index` and `--basis-check` reject missing exports or the
+wrong kind of declaration. An invalid index leaves the existing manifest
+intact.
+
+The generated manifest records the complete boundary in an optional sixth
+column, using words such as `structure:Api signature:API`. Every row of
+one library has the same boundary. Existing five-column manifests keep
+their existing visibility. `runedoc` uses the boundary when selecting
+public pages and elaborating dependencies. A library without an explicit
+boundary retains its existing names.
+
 **What a library exports is ASCII.** Standard ML has no escape for a
 name, so a program read in the default mode could not name `Foo.λ`:
 the structures, signatures and functors of a library, and their

@@ -68,11 +68,97 @@ struct
       val () = write (dir ^ "/cycle.build", "use cycle.build\n")
       val (status, _, errors) = invoke "cycle" ["sh", fromRoot "scripts/build-files.sh", dir ^ "/cycle.build"]
     in if status <> 0 andalso String.isSubstring "cyclic" errors then () else say "FAIL compiler layout: cyclic use was accepted\n" end
+  fun libraryExports () =
+    let
+      val dir = run ^ "/library-exports"
+      val lib = dir ^ "/lib with spaces"
+      val scoped = lib ^ "/scoped"
+      val () = (rmTree dir; mkdirs scoped)
+      val () = Posix.FileSys.symlink {old = fromRoot "lib/basis", new = lib ^ "/basis"}
+      val fixture = "tests/lib/exports"
+      val () = List.app (fn file => write (scoped ^ "/" ^ file, read (fixture ^ "/" ^ file)))
+                       (entries fixture)
+      fun need (ok,message) = if ok then () else raise Fail ("library exports: " ^ message)
+      fun invoke label args =
+        let val log = dir ^ "/" ^ label ^ ".log"
+            val status = exec {cmd = [fromRoot (env ("RUNE","bin/rune")),"--lib",lib] @ args,
+                              dir = SOME root, stdin = "", stdout = log, stderr = log, timeout = 120}
+        in (status,read log) end
+      fun compile label flags source =
+        invoke label (flags @ ["--library","scoped",source,"-o",dir ^ "/" ^ label ^ ".rbc"])
+      fun result label =
+        let val output = dir ^ "/" ^ label ^ ".out"
+            val status = exec {cmd = [fromRoot "bin/runevm",dir ^ "/" ^ label ^ ".rbc"],
+                              dir = SOME root, stdin = "", stdout = output, stderr = output, timeout = 30}
+        in need (status=0 andalso read output="87\n",label ^ " has wrong output") end
+      val (status,log) = invoke "index" ["--basis-index",scoped]
+      val () = need (status=0,"cannot index scoped library: " ^ log)
+      val manifest = read (scoped ^ "/MANIFEST")
+      val () = need (String.isSubstring "structure:Api signature:API functor:Make type:exposed" manifest,"missing export metadata")
+      val (status,log) = invoke "check" ["--library","scoped","--basis-check"]
+      val () = need (status=0,"scoped manifest check: " ^ log)
+      val modes = [("whole",["--no-cache"]),("units",["--units","--no-cache"]),
+                   ("whole-units",["--units","--whole","--no-cache"])]
+      fun mode (label,flags) =
+        let val (status,log) = compile label flags (fixture ^ "/use.sml")
+            val () = need (status=0,label ^ " does not compile: " ^ log)
+            val () = result label
+            fun rejected (file,reason) =
+              let val (status,log) = compile (label ^ "-" ^ basename file) flags (fixture ^ "/" ^ file)
+              in need (status<>0 andalso String.isSubstring reason log,label ^ " accepted " ^ file ^ ": " ^ log) end
+        in List.app rejected [("private-use.sml","Hidden.value"),("private-signature.sml","unbound signature: PRIVATE"),
+                              ("private-type.sml","unbound type constructor: private"),
+                              ("generative-reject.sml","type constructor mismatch")] end
+      val () = List.app mode modes
+      val cache = ["--units","--cache-dir",dir ^ "/cache"]
+      val (status,log) = compile "cold" cache (fixture ^ "/use.sml")
+      val () = need (status=0,"cold cache: " ^ log)
+      val (status,log) = compile "warm" ("--verify-cache" :: cache) (fixture ^ "/use.sml")
+      val () = need (status=0 andalso same (dir ^ "/cold.rbc",dir ^ "/warm.rbc"),"verified cache differs: " ^ log)
+      val () = result "warm"
+      val () = write (dir ^ "/type-only.sml","val x : exposed = 3\n")
+      val (status,log) = invoke "type-deps" ["--library","scoped","--basis-deps",dir ^ "/type-only.sml"]
+      val () = need (status=0 andalso String.isSubstring "/type.sml" log andalso
+                     not (String.isSubstring "/public.sml" log) andalso not (String.isSubstring "/functor.sml" log),
+                     "selection ignored public demand boundaries")
+      fun scopeLine line =
+        if String.isPrefix "#" line orelse line="" then line
+        else String.concatWith "|" (List.take (String.fields (fn c => c = #"|") line,5) @ [" structure:Missing"])
+      val () = write (scoped ^ "/MANIFEST",String.concatWith "\n" (List.map scopeLine (String.fields (fn c => c = #"\n") manifest)))
+      val (status,log) = invoke "missing-export" ["--library","scoped","--basis-check"]
+      val () = need (status<>0 andalso String.isSubstring "exports structure Missing" log,"undeclared manifest export accepted")
+      val () = write (scoped ^ "/MANIFEST",manifest)
+      val build = read (scoped ^ "/library.build")
+      val () = write (scoped ^ "/library.build","library (structure Missing) = use entries.build end\n")
+      val (status,log) = invoke "bad-index" ["--basis-index",scoped]
+      val () = need (status<>0 andalso String.isSubstring "exports structure Missing" log andalso
+                     read (scoped ^ "/MANIFEST")=manifest,"invalid index replaced a valid manifest")
+      val () = write (scoped ^ "/library.build",build)
+      val consumer = lib ^ "/consumer"
+      val () = mkdirs consumer
+      val () = write (consumer ^ "/library.build","libraries scoped end\nlibrary (structure Consumer) = consumer.sml end\n")
+      val () = write (consumer ^ "/consumer.sml","structure Consumer = struct val value = Api.value end\n")
+      val (status,log) = invoke "consumer-index" ["--basis-index",consumer]
+      val () = need (status=0,"consumer index: " ^ log)
+      val () = write (dir ^ "/consumer-use.sml","val value = Consumer.value\n")
+      fun consumerMode (label,flags) =
+        let val (status,log) = invoke (label ^ "-consumer") (flags @ ["--library","consumer",dir ^ "/consumer-use.sml","-o",dir ^ "/" ^ label ^ "-consumer.rbc"])
+        in need (status=0,"public dependency cannot be used: " ^ log) end
+      val () = List.app consumerMode modes
+      val () = write (consumer ^ "/consumer.sml","structure Consumer = struct val public = Api.value val private = Hidden.value end\n")
+      val (status,_) = invoke "private-consumer-index" ["--basis-index",consumer]
+      val () = need (status=0,"cannot index private-reference rejection fixture")
+      fun privateConsumer (label,flags) =
+        let val (status,log) = invoke (label ^ "-private-consumer")
+              (flags @ ["--library","consumer",dir ^ "/consumer-use.sml","-o",dir ^ "/rejected.rbc"])
+        in need (status<>0 andalso String.isSubstring "Hidden.value" log,"private dependency leaked into another library") end
+    in List.app privateConsumer modes end
   fun command ["build-asm-check"]=SOME asmCheck
     | command ["build-asm-faults"]=SOME asmFaults
     | command ["build-jit-compile"]=SOME compile
     | command ["build-jit-deep",name]=SOME (fn () => deep name)
     | command ["build-compiler-layout"]=SOME compilerLayout
+    | command ["build-library-exports"]=SOME libraryExports
     | command _=NONE
   val vm=Test.it "vm-refusals"
     {program="/bin/sh",args=["sh","-c","exec \"$RUNE_TEST_ROOT\"/bin/rune-windows vm --vm \"${RUNEVM:-bin/runevm-stack}\" --out \"$RUNE_TEST_RUN/low-level/vm\""],
@@ -80,6 +166,8 @@ struct
   val tree=Test.describe "low-level"
     [tagged ["check","test-build","covers:lib/compiler/*","covers:*.build","covers:scripts/build-files.sh"]
        (job "compiler-layout" ["build-compiler-layout"] []),
+     tagged ["check","test-build","test-lib","covers:lib/compiler/*","covers:tests/lib/exports/*"]
+       (job "library-exports" ["build-library-exports"] []),
      tagged ["check","test","test-low-level","covers:tests/compiler/*","covers:tests/runtime/*"]
        (Test.describe "basic" [vm,executable "heap" "build/heap_test" []]),
      tagged ["check","layout","test-heap","test-heap-hooks","covers:tests/runtime/*"]

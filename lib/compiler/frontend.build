@@ -26,5 +26,6 @@ files
   backend/prims.sml
   elab/elaborate.sml
   driver/basismanifest.sml
+  driver/libraryscope.sml
   driver/buildfile.sml
 end
