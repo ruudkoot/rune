@@ -9,14 +9,15 @@ SML over another library, or a deterministic mock, selected by `.build`.
 Written on 2026-10-22 against
 `c3e713891e6ea9f32770371427fdfa5f76369255`. This document records the agreed
 design and the work still to do. It does not establish that an FFI, C
-frontend, or binding described below has been implemented. All milestones,
-including M0's executable contracts and baseline fixtures, start **planned**.
+frontend, or binding described below has been implemented. All milestones
+started **planned**; the status table and dated acceptance evidence record
+implementation progress separately from this original design baseline.
 
 ## Status and requirements
 
 | Milestone | Depends on | State |
 |---|---|---|
-| M0: contracts, inventories and baseline | none | planned |
+| M0: contracts, inventories and baseline | none | complete |
 | M1: reusable C frontend | M0 | planned |
 | M2: binding model and sidecars | M1 | planned |
 | M3: generic dynamic calls | M0 | planned |
@@ -589,7 +590,13 @@ turn agreement among other implementations into the specification.
 
 ### M0: contracts, inventories and baseline
 
-**Depends on:** none. **State:** planned.
+**Depends on:** none. **State:** complete.
+
+Delivered the [pinned inputs and inventories](../../ffi/README.md),
+[public contracts](../ffi/contracts.md), independent native subjects and
+SML test coordination. [M0 evidence](../../tests/ffi/evidence/m0.md)
+records the actual implementation baseline, platform probes, regression
+repairs and outstanding checks belonging to subsequent milestones.
 
 Record the starting revision, clean/dirty context, host/compiler/VM versions,
 selected SDL3/SDK/libffi sources and acquisition recipes. Turn the above

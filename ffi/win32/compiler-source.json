@@ -1,0 +1,622 @@
+{
+  "schema": 1,
+  "project": "Microsoft Visual C++ compiler headers",
+  "version": "14.40.33807",
+  "distribution": "external-installed-toolchain",
+  "acquisition": "https://visualstudio.microsoft.com/downloads/",
+  "license": "Microsoft Visual Studio licence; not redistributed",
+  "files": [
+    {
+      "path": "CodeAnalysis/ConcurrencyCheck/warnings.h",
+      "sha256": "8e2de1a38a38b6d6c6ec5e99e05f1a291ab8bbf36496ccee4dbea78293a98132"
+    },
+    {
+      "path": "CodeAnalysis/CppCoreCheck/warnings.h",
+      "sha256": "0832492c0907a0e8bdb1fa3d429c0449d4dc22ad6fd91d67762b436f26dce025"
+    },
+    {
+      "path": "CodeAnalysis/EnumIndex/warnings.h",
+      "sha256": "e91528c57ea68e324f55dc78e28b563c47b72b400d8d88ca10ece39db553f936"
+    },
+    {
+      "path": "CodeAnalysis/HResultCheck/warnings.h",
+      "sha256": "f935fe4117243f6f37364a224aa4af37c6cd52a0ac3897fa20ffd52f68fb0271"
+    },
+    {
+      "path": "CodeAnalysis/VariantClear/warnings.h",
+      "sha256": "d99d939af2fcebe5bc7e51335124f5a75571e042d13e6f52195cdeda05d1a372"
+    },
+    {
+      "path": "CodeAnalysis/Warnings.h",
+      "sha256": "a62ada90d085eac027a4671ecac6333846a2ada5f0a15464fa785c714760a32d"
+    },
+    {
+      "path": "CodeAnalysis/sourceannotations.h",
+      "sha256": "ccd2530db7ba3afe03e5e6c9e6ede5d8551786014f35b91a98bc9c3d3d3a6a3f"
+    },
+    {
+      "path": "agents.h",
+      "sha256": "5442f0bff49adca2c13fff34d6bcdccb80adb0e3d02c7ec968602343dc4d5a61"
+    },
+    {
+      "path": "agile.h",
+      "sha256": "34ceca432848538ba0f3f8f9924459216f808e248cf7d2fe5a103a9300ff1894"
+    },
+    {
+      "path": "ammintrin.h",
+      "sha256": "8fdc728020ac539843eecdc2434136757b2a5e0a2c5bafb2180b694a10290511"
+    },
+    {
+      "path": "amp.h",
+      "sha256": "abeb05ebb8525533f5073c1d373ca2413588125817dd5c5a8ade4d510c118225"
+    },
+    {
+      "path": "amp_graphics.h",
+      "sha256": "7117103f775014d7c23cbf6dd47609c57807028b887abefa6d09d2d262ca158c"
+    },
+    {
+      "path": "amp_math.h",
+      "sha256": "8ff0490c6868a8765cfd547c9e2bff9e33d199ccef53a84adf8b0ba79f014fbf"
+    },
+    {
+      "path": "amp_short_vectors.h",
+      "sha256": "f5131f5480362329cf53b3ae9be63bc07060933d8398853550cabf5e354d083a"
+    },
+    {
+      "path": "amprt.h",
+      "sha256": "40007a1bd78401ef42bcb896657a5d6197ee17db76423e4d6575038c150f1e4f"
+    },
+    {
+      "path": "amprt_exceptions.h",
+      "sha256": "441f29297bb51e228739f57cf5f5d0586e36afc20ab7cea0783ea3d5e8fc9864"
+    },
+    {
+      "path": "arm64_neon.h",
+      "sha256": "35f251636b9bdb42f0522e652bd985f1ddbc5857bae544558ea9379a49d2c8b3"
+    },
+    {
+      "path": "arm64intr.h",
+      "sha256": "f9bbf9f018c68e79a258a314c034a48f2b4d98feb905b55dde342184f970bc55"
+    },
+    {
+      "path": "arm_neon.h",
+      "sha256": "0436544f64871eeb04474d07de5d7996140630455d0d5a65039590c90ce4e0a7"
+    },
+    {
+      "path": "armintr.h",
+      "sha256": "6b55ff41b63c9b5bae2bb277076657cc568959f88dfea493783bc02773343b8a"
+    },
+    {
+      "path": "castguard.h",
+      "sha256": "dc96fdfebaf7d65d6739d489876ad8ff5cee3c9a2c7b15de6e1e5f8cee00284b"
+    },
+    {
+      "path": "cfguard.h",
+      "sha256": "30c6c91c85f6d54c7019e314c9bd3f4cb742611c29a5d91eeabffceba9ae68ae"
+    },
+    {
+      "path": "collection.h",
+      "sha256": "86a79767319150d00dd3ea928d2f70ed79bda1e23ce28d7c8c7743cb995177bb"
+    },
+    {
+      "path": "comdef.h",
+      "sha256": "5e446c982c061c59436ef4047debd2bc65bc69936699b51b34036f478fb0b467"
+    },
+    {
+      "path": "comdefsp.h",
+      "sha256": "cbef3955cde258f6042d1036c18b2d7378ea5dd10cee0f7511f37934c573a4d6"
+    },
+    {
+      "path": "comip.h",
+      "sha256": "f66871009dc3cadbeeb6444a94112c503bc902beac27c43a17b2b90c318270ce"
+    },
+    {
+      "path": "comutil.h",
+      "sha256": "74a007b4f7ccd93beaa680676b5c4b4c7a321b5fa621a5b2eed8cdaaa053f29f"
+    },
+    {
+      "path": "concrt.h",
+      "sha256": "05502a745d8728d10fe12b925872c2590acc390514680d392eadfd0a4f8103b2"
+    },
+    {
+      "path": "concrtrm.h",
+      "sha256": "7d20a9a4945ca13a905ac46d0a3098403d6d0a8aa924ad2fd6a4e3a47516bf5d"
+    },
+    {
+      "path": "concurrencysal.h",
+      "sha256": "1ea9a2e32a6ff298ad7904610cc71028caa9b172399a579ca90a120d1b1aec12"
+    },
+    {
+      "path": "concurrent_priority_queue.h",
+      "sha256": "798466425b2dff6423188ad4dbfc03141e0608840dde03bc7aa74271c627ec64"
+    },
+    {
+      "path": "concurrent_queue.h",
+      "sha256": "abad8d642f5e2316889cfeb7eb1a162c23312c4d4d5e2272b68c7de8643914ad"
+    },
+    {
+      "path": "concurrent_unordered_map.h",
+      "sha256": "8c8fe708a25175d20a0e08ef289bc269f7ef36d09a0878235b60e96f2b55b743"
+    },
+    {
+      "path": "concurrent_unordered_set.h",
+      "sha256": "aed2a8d4e34e79a4a411a281db5ebb5f3fea1afb68f8dddd069c1bebd1d68cfc"
+    },
+    {
+      "path": "concurrent_vector.h",
+      "sha256": "0d483926393ee2644b6939c784d2a5d8e368a8bd029b567e55b20cea07dc4c60"
+    },
+    {
+      "path": "crtdefs.h",
+      "sha256": "82bdcc78bdab153e2a41a72a3860201b33aab6e46d207194caf09326f47b298f"
+    },
+    {
+      "path": "crtversion.h",
+      "sha256": "071350d2cc782e69439483d418158b1ad04b6f0973c3c3b48a6a809b30cdc0b0"
+    },
+    {
+      "path": "delayimp.h",
+      "sha256": "a59ce9773dc029de9300db01a93fb6eb88de8e7d395ad1af6e6dab95367588c0"
+    },
+    {
+      "path": "dloadsup.h",
+      "sha256": "39ef4b281e16f941da4231c5b8adbc65c0d4323c8c1768d22b2791e29a1f27a1"
+    },
+    {
+      "path": "dvec.h",
+      "sha256": "eea54ab746a9707951be3d6904cec5e5c98fbbbd2c3d343ffe0aa5e92ae4e311"
+    },
+    {
+      "path": "eh.h",
+      "sha256": "67e5ba79623102a96336cbf38554147c5ee51f7de16938424b58907396ee7476"
+    },
+    {
+      "path": "ehdata.h",
+      "sha256": "37b1c2d60a92226a948fd6bc04db2d868266d11b266023e236d13031e6b5df83"
+    },
+    {
+      "path": "ehdata4.h",
+      "sha256": "c3e0b3f4345688c8f2b1fedae0731ddd5d0bb1f022d06c5d163a0f468f1c4fc8"
+    },
+    {
+      "path": "ehdata4_export.h",
+      "sha256": "b997c3f00192bb8c138532795d24b64c9b0f2ae4c4ee46af214b22bc7d88f447"
+    },
+    {
+      "path": "ehdata_forceinclude.h",
+      "sha256": "52804f83f5fff12d5f6ea0af0b48cef5ab72b305ff78cfacc3a65fd903163442"
+    },
+    {
+      "path": "ehdata_values.h",
+      "sha256": "26e176066e47d4710577054d7bd9fb44ff287ae84dd72ff46331bb199579e866"
+    },
+    {
+      "path": "emmintrin.h",
+      "sha256": "0088e279e28e47717d37096a52a328c6068ef41a33b8f8804e463e1e2984017e"
+    },
+    {
+      "path": "excpt.h",
+      "sha256": "191ab83e320a5e9712fe483257fecae14cb0c158a4517b620f3fddb1aa6ef23b"
+    },
+    {
+      "path": "fuzzer/FuzzedDataProvider.h",
+      "sha256": "dd839c46aca990b33f9961ce16ad4969ea7955421834b24b170a4cbe3a4a53d9"
+    },
+    {
+      "path": "fvec.h",
+      "sha256": "a6ed290cd97daca0227ce3b3feb5ab94844e1b96e062ac5d1ccb6cce8975c6e5"
+    },
+    {
+      "path": "gcroot.h",
+      "sha256": "0d6504316406a91a84b9ec73dc304fd96e7876716adb58c7a18a5d5e03cd83f4"
+    },
+    {
+      "path": "immintrin.h",
+      "sha256": "75a95e121131598e047ae40c35eba7863db8332999de2b54a05b8ba4851befc2"
+    },
+    {
+      "path": "internal_concurrent_hash.h",
+      "sha256": "72ee37471a26e24c766a31df204536fdadfbe08479a0f43bfe845e62b79affc4"
+    },
+    {
+      "path": "internal_split_ordered_list.h",
+      "sha256": "92219624136a06225435b00a10edfe9cd7e24b3f9f0524806402bcdbbc7850f9"
+    },
+    {
+      "path": "intrin.h",
+      "sha256": "e79158ae2e24ecb2333c307adf80e62ae01d9837b20b065e7633405dca2d83d6"
+    },
+    {
+      "path": "intrin0.h",
+      "sha256": "bdbbcc2c993b2b90ea601cb033701c9ed6b66f65a39e031d65207464d7095e2c"
+    },
+    {
+      "path": "intrin0.inl.h",
+      "sha256": "121ce0a6b8bc72d5c38d00a0bf9d5e9bcfa4ad848181824583ea8334701512f9"
+    },
+    {
+      "path": "invkprxy.h",
+      "sha256": "d1af4ae60065889a47361bfd46907f8da7da113edcb0dcf4d0a0357bd72b5ef7"
+    },
+    {
+      "path": "isa_availability.h",
+      "sha256": "88b31144ca59d40ccb551c9296e11d0913a1a55b7efee1acc3e539405d688188"
+    },
+    {
+      "path": "iso646.h",
+      "sha256": "b4599f76063c756ef9c8b763d48565f0763806bcfbd2ab08a120ca11209a9b13"
+    },
+    {
+      "path": "ivec.h",
+      "sha256": "10c579e4d572cb304d3bf0397d808b9e018bbed3f4248267db19cb637fd55d32"
+    },
+    {
+      "path": "limits.h",
+      "sha256": "2b97d79074cd0d170919231947d453af2f47baf2054d63018008caf19fa31d2d"
+    },
+    {
+      "path": "mm3dnow.h",
+      "sha256": "da11304a505d7a70dacacba6dfa22be8d4dbcf44736682899ca8551eb03de4d1"
+    },
+    {
+      "path": "mmintrin.h",
+      "sha256": "d2dce9191fbdd235a94fc1af6bd163119dbcdfeadfb50f777b2d75b12ca1f028"
+    },
+    {
+      "path": "msclr/all.h",
+      "sha256": "16160a315220d59982f34175dd7b6d9742c70300d12059f4a1ecbffce3aa06fa"
+    },
+    {
+      "path": "msclr/appdomain.h",
+      "sha256": "e60785a8b16643a33626548557ff5d1df5ff947b0c10a5e6c28b2afbe139d766"
+    },
+    {
+      "path": "msclr/auto_gcroot.h",
+      "sha256": "f09b3aac96ff07c76bce4ad3ee12d049dde6401aae8e19ffcba23a6debc54d14"
+    },
+    {
+      "path": "msclr/auto_handle.h",
+      "sha256": "c20a5c820d8f672e6e0a79925cb9e2729a2d1022da8f19c922cfe0af854ecba3"
+    },
+    {
+      "path": "msclr/com/ptr.h",
+      "sha256": "24f3bec855da2d34967045b6a1f541282ad600be08db0a976eea2429560da424"
+    },
+    {
+      "path": "msclr/event.h",
+      "sha256": "4e4cc13874bb687465de890bd826eaec2c922e4df8528b9054c7ebdff59af085"
+    },
+    {
+      "path": "msclr/gcroot.h",
+      "sha256": "9fac416bc4c85057d6e4252d3e9a44e54b0d9c10e3cb41829300462ff35be631"
+    },
+    {
+      "path": "msclr/lock.h",
+      "sha256": "d8a9d44beb4f60fe7f8cffa24caf65f5f293be6fda7c7e4ff4070e676b1cb352"
+    },
+    {
+      "path": "msclr/marshal.h",
+      "sha256": "3a42b2e2113ac5b94eb8eaf27dd69b0d482c80f88f71e8023d33b3c1b9707cd3"
+    },
+    {
+      "path": "msclr/marshal_atl.h",
+      "sha256": "bbc220ec9ed429b92e632012a22e6510fea12afe0d23940181cf3785cb467c56"
+    },
+    {
+      "path": "msclr/marshal_cppstd.h",
+      "sha256": "e328d59604d47ba3c9d147e4abea2ea6c63f54e6d89a9cb031ad258bf2568444"
+    },
+    {
+      "path": "msclr/marshal_windows.h",
+      "sha256": "9bdfc355c0a13ae53e134b2b59d7e03b34a1d1d12e2582547b12eec3893f10a6"
+    },
+    {
+      "path": "msclr/safebool.h",
+      "sha256": "834d7b2e331b2bde8acf061f8131fe15a60ceb32f6484db9f410262603f4e9e5"
+    },
+    {
+      "path": "nmmintrin.h",
+      "sha256": "69ecf104338622b7f1e44b0d99469adb95c46dd9e5858f5dc8279c3ef3b99421"
+    },
+    {
+      "path": "omp.h",
+      "sha256": "08fc1072186cd748ec22f00b6f205a212e8bfeae21c4056c32c623c1118896e1"
+    },
+    {
+      "path": "omp_llvm.h",
+      "sha256": "0724c7bfc456763a780db0d75c18ee036bb2c8c5fdfeae7692d8ce63cf846db3"
+    },
+    {
+      "path": "pgobootrun.h",
+      "sha256": "b0329d524f5eaec0558c172e41bed45b55fdf2adf18d0d7f6d1319bb93cd8d68"
+    },
+    {
+      "path": "pmmintrin.h",
+      "sha256": "2fb7131f91e5e300a7d9f2f148b6fe79a9775d06c3f1be26908e138ac6f9fbc5"
+    },
+    {
+      "path": "ppl.h",
+      "sha256": "cae0d571a082b3ba6da7166134f45883e4a657b52f49eb51aa0d852495c4553e"
+    },
+    {
+      "path": "pplawait.h",
+      "sha256": "ff91804cbd859962afc8aa580c361495e63875b67cbb1db89ed231f21d97e0f8"
+    },
+    {
+      "path": "pplcancellation_token.h",
+      "sha256": "96d80acdfd872ca88b2376e5f2ff44a9bcb63678a2964e8996effa7552dfe6ca"
+    },
+    {
+      "path": "pplinterface.h",
+      "sha256": "b7a3697e1285cc03cddacf25dccbe1aa444e194b397adba823615000cb592b60"
+    },
+    {
+      "path": "ppltasks.h",
+      "sha256": "5e1941c099319da644d2316236a6ad0c9b4ae55b4da2bf13b13f46f32a153973"
+    },
+    {
+      "path": "ppltaskscheduler.h",
+      "sha256": "e26280040ae00860751c5f172fd47ccdb96fed29124a4d9d9f96a3feca05524c"
+    },
+    {
+      "path": "pplwin.h",
+      "sha256": "eb3f5c27df26b1da805be45a248a4e89e6befadbc4e4cacb67b1eee9f19391bf"
+    },
+    {
+      "path": "rtcapi.h",
+      "sha256": "4d0c6548d252cdcbcc22f6cf39b836fde518a9c222333495b85b581e6555f7ec"
+    },
+    {
+      "path": "rttidata.h",
+      "sha256": "6e7747830b1aa3dc72a79fcc2951828a7546ffaa85fa50260ca7fe92bb62d1f4"
+    },
+    {
+      "path": "sal.h",
+      "sha256": "cda06459ca38681800ce5e98703c66534c74a803aa652bd4bc2b3407dd45ed46"
+    },
+    {
+      "path": "sanitizer/allocator_interface.h",
+      "sha256": "86beb23061d8584df85fa96f8839c1d02b4d4bd8be4a01052b5c30c4029d69ca"
+    },
+    {
+      "path": "sanitizer/asan_interface.h",
+      "sha256": "a1e72207140b6ef1f9da0d66a07ee8ca1aa507fcddb9e54be997af595d7bd8ad"
+    },
+    {
+      "path": "sanitizer/common_interface_defs.h",
+      "sha256": "102a3c8dbd9a01e888642c8a86e9912c4d51e30b0cfb3f715111ef8eb888fd4a"
+    },
+    {
+      "path": "sanitizer/coverage_interface.h",
+      "sha256": "10783a4d080894a6777709c59e423a35f1140b539e2f6c6949913966c87f0503"
+    },
+    {
+      "path": "sanitizer/dfsan_interface.h",
+      "sha256": "ac604c507f20214b5f4205f970a3c75d8c01e8ef213888630579b38b51c344a2"
+    },
+    {
+      "path": "sanitizer/hwasan_interface.h",
+      "sha256": "f28013bb404c50412a198a517c46bb23f2b32ea0da39afbab58a3e5e0f236d3b"
+    },
+    {
+      "path": "sanitizer/linux_syscall_hooks.h",
+      "sha256": "025b4f595924dbf187810b8f53083a976e29ced85c594033b505b41102bf83c2"
+    },
+    {
+      "path": "sanitizer/lsan_interface.h",
+      "sha256": "008a613bec732b199ad1ea962bee489b918be3867bef22ea46b24b318666e3d7"
+    },
+    {
+      "path": "sanitizer/msan_interface.h",
+      "sha256": "08b35ec7c9439a5dd814d8c5f4f0c0789558f973756527c8f3e918750de6a469"
+    },
+    {
+      "path": "sanitizer/netbsd_syscall_hooks.h",
+      "sha256": "475efd20b51d155ce68341f286261a4589e23d9cfe43e39fa1dbda933d74d5dc"
+    },
+    {
+      "path": "sanitizer/scudo_interface.h",
+      "sha256": "171c280ee629cdcddb563466b6296c5fc84e4239d9aa24239240a89979c63e80"
+    },
+    {
+      "path": "sanitizer/tsan_interface.h",
+      "sha256": "c6f0551e4ac60614ea8b4e30a862840ebbd2f71c2fb2080b9db2077f9b093714"
+    },
+    {
+      "path": "sanitizer/tsan_interface_atomic.h",
+      "sha256": "607ed326e73e04a6afae259eaa3614a715546c20e329a76c766c974d666ebc66"
+    },
+    {
+      "path": "setjmp.h",
+      "sha256": "529dce71c496d77b104b85876c65d8d6e61d7aed2d9e4b64c1011491fd566f10"
+    },
+    {
+      "path": "setjmpex.h",
+      "sha256": "7c77b5e2862aef815885082ad9633f380f7a42cec9fcd3e29d39472a9135a80e"
+    },
+    {
+      "path": "smmintrin.h",
+      "sha256": "2f773512dac1c4515c13cb9173a2c852d8c884b0cedc5814cff3956b742a1071"
+    },
+    {
+      "path": "srv.h",
+      "sha256": "8375557a7876c42eed4a9637bf88edc9d38a89174b2ba4aa40382d847dc26d30"
+    },
+    {
+      "path": "stdarg.h",
+      "sha256": "5d61d0b6734ef0832c30064800e8d01b3f12d29d24c8b1bd07b3ece3b72a9330"
+    },
+    {
+      "path": "stdatomic.h",
+      "sha256": "4eb860407f94d34d7e1a8e0c1684a283d3445f29d64aad1ab6b405579d1d8072"
+    },
+    {
+      "path": "stdbool.h",
+      "sha256": "78fd5b71a4a0cc9c1c115e6bf282b63a1eb3a5483718a14799c26d3aaf2ff20d"
+    },
+    {
+      "path": "stdint.h",
+      "sha256": "29fb6d4ba5e311e06877609c20a1bc49c6cdfb730f56dd0f9c53a6241c40ab5c"
+    },
+    {
+      "path": "threads.h",
+      "sha256": "c5ff7e0ef7b0edb042e24a87a71216cbeceaa99e2d366cebac36d2f970a212d5"
+    },
+    {
+      "path": "tmmintrin.h",
+      "sha256": "e5981ed52590bbcd7cad7d84e7ab3b47b81837136138854de0ee807332f95dab"
+    },
+    {
+      "path": "use_ansi.h",
+      "sha256": "f3133ce73105aa38ea2fa0ee1495c8620b2d7dc0ab00dd980d9325ac38c7d443"
+    },
+    {
+      "path": "vadefs.h",
+      "sha256": "200b49c2efd26bc7a92e9dfa3b847cc612b237dff5c7291d9f901d39b4a5e52e"
+    },
+    {
+      "path": "varargs.h",
+      "sha256": "6cb3893643fca6634723a0a074a6f23d05fbac0c3cadf3af22818e63f75e84e6"
+    },
+    {
+      "path": "vcclr.h",
+      "sha256": "29e56e32efc4546c7e2b31c3114908dc01fb1aeb551396ccd5ee4d2297766b38"
+    },
+    {
+      "path": "vccorlib.h",
+      "sha256": "a6d8fd0b0b2ad20b0cc3123e8498bc9bdb44d436d6645e6483145713ddee635a"
+    },
+    {
+      "path": "vcruntime.h",
+      "sha256": "c91d0fea907236fe8f1cab5a9c01d4d542b03529039705521feef775e0f59a7d"
+    },
+    {
+      "path": "vcruntime_c11_atomic_support.h",
+      "sha256": "da7e4f95f60b49b5181d7c93aa5476beb0be6e4eb13c489f0dfa2bec55441045"
+    },
+    {
+      "path": "vcruntime_c11_stdatomic.h",
+      "sha256": "56996e5a080b077f88f5ff6986dcc28b5cfc8eba75151fa79575726763f680a1"
+    },
+    {
+      "path": "vcruntime_exception.h",
+      "sha256": "6497e3f93d21e5aae97146dd14db1b86f19dde065a561c11f3482ba47b527b97"
+    },
+    {
+      "path": "vcruntime_new.h",
+      "sha256": "8ee45e7db7f08475d1ddf33d493fd7cb5cd10b54b4756b39156c8548281b3e63"
+    },
+    {
+      "path": "vcruntime_new_debug.h",
+      "sha256": "c3f552f0f27600ad991ad4b8b39d2204b65b4afcf0123504f03e781546f0f010"
+    },
+    {
+      "path": "vcruntime_startup.h",
+      "sha256": "fb0bcd4cc6af20cedc3ddc02bdddd7e95cde5ede5c5c4aefa720702a2a75557a"
+    },
+    {
+      "path": "vcruntime_string.h",
+      "sha256": "b05204f6814d1d7b7ca729b41d4192d0e47722f162c0b1d322f994bf9650af63"
+    },
+    {
+      "path": "vcruntime_typeinfo.h",
+      "sha256": "a5a21fff9b071cc58db99e5f8edc59fb8b2d51f28068b7e61c3083ae98dcd38f"
+    },
+    {
+      "path": "wmmintrin.h",
+      "sha256": "ccee1d63e178b3dcff1625817c2a0722fbb2966956d3cbe5531feecb6afd5a9b"
+    },
+    {
+      "path": "xatomic.h",
+      "sha256": "c979c0cbdc25c01bfc7c7ef2ef76016577548234181117d1b4ac3d0408feb1ec"
+    },
+    {
+      "path": "xatomic_wait.h",
+      "sha256": "9048eb4c65793df84d037413206471c41859cb02e12c95816dc1e77fdbad4e0b"
+    },
+    {
+      "path": "xbit_ops.h",
+      "sha256": "5852060c06a3c7fc51f6af2a67b83c8c0dfa37d9ff53316404aa38009f491c18"
+    },
+    {
+      "path": "xcall_once.h",
+      "sha256": "b6707bf4ca6bdce2028682652c2167eb79cd8b6dc247194e50c352baa2f9b734"
+    },
+    {
+      "path": "xcharconv.h",
+      "sha256": "b91cb0922a8bde3b915671ae3e0c31b2849a164353e5e9536412aa065f9c75a0"
+    },
+    {
+      "path": "xcharconv_ryu.h",
+      "sha256": "265b74f46e8815f6e2eb4868cd0e5f4b5a28a52d68411805249c991062980090"
+    },
+    {
+      "path": "xcharconv_ryu_tables.h",
+      "sha256": "2fc3ee8534ec08adedd1c8e5d49c7e5b7eb6d610d9ab3eec8a9dea193cd3f4ce"
+    },
+    {
+      "path": "xcharconv_tables.h",
+      "sha256": "291ec21d518f16a3c1399ae4bd269fa25d5288c4b71597fde600b476e2d170e8"
+    },
+    {
+      "path": "xerrc.h",
+      "sha256": "41bf5400ac3bc3e6f1d738089a77b3112d988bff89b31ef15bf532922d52b04d"
+    },
+    {
+      "path": "xfilesystem_abi.h",
+      "sha256": "c9b584ee323e4206bbeb9a51174883ec0d2a756897aff7f2b334974f6ea23ce0"
+    },
+    {
+      "path": "xkeycheck.h",
+      "sha256": "d84e2b8f0106068147754a6f36f4ce18132740c5efc75a76b613679ac1b1bf43"
+    },
+    {
+      "path": "xmmintrin.h",
+      "sha256": "1f2376321c0f53c06cca13a354a519e2870b7cb1e6e0f223c242390b9114dd48"
+    },
+    {
+      "path": "xnode_handle.h",
+      "sha256": "559b99d9f52414b17923f7f791028ad50e310ebbcfb4ef4bee9d7c5d930c4935"
+    },
+    {
+      "path": "xpolymorphic_allocator.h",
+      "sha256": "61c9612bc797fd2ddb3b292773108ac5acbfbb8d78046e41f4ba8877a4969090"
+    },
+    {
+      "path": "xsmf_control.h",
+      "sha256": "cb718ea6b75ea75375bb40d1932cabd9b4cc0e38d620e76a79b9519c0a3fc994"
+    },
+    {
+      "path": "xthreads.h",
+      "sha256": "97bd294f6d8557e28734ad665d57de9e2161d7b21935ba0c37e086e52b7784ba"
+    },
+    {
+      "path": "xtimec.h",
+      "sha256": "d6a25d6dfaf39141a7bfb86b296eb54c0b76aa29fc54a7c2a52c7bc17014d958"
+    },
+    {
+      "path": "xxamp.h",
+      "sha256": "36625cd7a8680dfcfde1d0cdfd17b3874213414775fa2f9dc705d093cb5456b5"
+    },
+    {
+      "path": "xxamp_inl.h",
+      "sha256": "672bc2ff75448d71bd09d9753c23ceb0a86946c353227917a7cd5c1a8ddbdb5f"
+    },
+    {
+      "path": "ymath.h",
+      "sha256": "bee0ca00435e7f6060937131533c660275006617d5ee1383e837ecd1221a06ee"
+    },
+    {
+      "path": "yvals.h",
+      "sha256": "c35953d095c5be0cb54ab94cb17edc1b1faf4b2cc215d2436d3dd9bcbc912b47"
+    },
+    {
+      "path": "yvals_core.h",
+      "sha256": "7c47d1903bf1d75cae06f99066a7dd8ac148b4955e3a31716c534aa542f5fada"
+    },
+    {
+      "path": "zmmintrin.h",
+      "sha256": "bd6fef92357d4a307666535db09d396619f0c88394ce69c9ab2ff169dd83735d"
+    }
+  ]
+}

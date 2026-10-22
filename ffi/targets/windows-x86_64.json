@@ -1,0 +1,114 @@
+{
+  "schema": 1,
+  "name": "windows-x86_64",
+  "triple": "x86_64-windows-msvc",
+  "abi": "win64",
+  "byteOrder": "little",
+  "charSigned": true,
+  "widths": {
+    "char": 1,
+    "short": 2,
+    "int": 4,
+    "long": 4,
+    "longLong": 8,
+    "pointer": 8,
+    "size": 8,
+    "wchar": 2
+  },
+  "alignments": {
+    "char": 1,
+    "short": 2,
+    "int": 4,
+    "long": 4,
+    "longLong": 8,
+    "pointer": 8,
+    "double": 8
+  },
+  "verifiedBy": "tests/ffi/oracle.c",
+  "predefined": [
+    [
+      "_WIN32",
+      "1"
+    ],
+    [
+      "_WIN64",
+      "1"
+    ],
+    [
+      "_M_AMD64",
+      "100"
+    ],
+    [
+      "_M_X64",
+      "100"
+    ],
+    [
+      "_MSC_VER",
+      "1940"
+    ],
+    [
+      "_MSC_FULL_VER",
+      "194033807"
+    ],
+    [
+      "_MSC_EXTENSIONS",
+      "1"
+    ],
+    [
+      "__STDC__",
+      "1"
+    ],
+    [
+      "__STDC_VERSION__",
+      "201112L"
+    ],
+    [
+      "__STDC_HOSTED__",
+      "1"
+    ],
+    [
+      "WIN32_LEAN_AND_MEAN",
+      "1"
+    ],
+    [
+      "NOMINMAX",
+      "1"
+    ],
+    [
+      "UNICODE",
+      "1"
+    ],
+    [
+      "_UNICODE",
+      "1"
+    ],
+    [
+      "WINVER",
+      "0x0A00"
+    ],
+    [
+      "_WIN32_WINNT",
+      "0x0A00"
+    ],
+    [
+      "NTDDI_VERSION",
+      "0x0A000000"
+    ],
+    [
+      "__has_builtin(x)",
+      "0"
+    ],
+    [
+      "__has_attribute(x)",
+      "0"
+    ],
+    [
+      "__has_feature(x)",
+      "0"
+    ],
+    [
+      "__has_extension(x)",
+      "0"
+    ]
+  ]
+}

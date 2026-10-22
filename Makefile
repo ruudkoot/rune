@@ -1519,7 +1519,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml \
                tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
                tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
-               tests/runner/main.sml
+               tests/runner/ffijobs.sml tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
 	$(RUNE) --library test/runner --library json --library digest $(RUNNER_SRCS) -o $@
@@ -1584,7 +1584,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(LOW_LEVEL_BINS) bin/runevm-jit bin/runevm-opt bin/rune-build bin/rune-build.rbc bin/rune-generate bin/rune-inventory bin/rune-measure $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal build/bench-counts.rbc
+check-tools: $(LOW_LEVEL_BINS) bin/runevm-jit bin/runevm-opt bin/rune-build bin/rune-build.rbc bin/rune-generate bin/rune-inventory bin/rune-measure $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal bin/rune-ffi-check build/bench-counts.rbc
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -1759,6 +1759,20 @@ bin/rune-intinf.rbc: $(RUNE) $(INTINF_SRCS) $(wildcard tests/intinf/fixtures/*) 
 bin/rune-intinf: bin/rune-intinf.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-intinf.rbc" "$$@"\n' > $@
 	chmod +x $@
+
+FFI_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/check.sml
+bin/rune-ffi-check.rbc: $(RUNE) $(FFI_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner --library json --library digest $(FFI_CHECK_SRCS) -o $@
+bin/rune-ffi-check: bin/rune-ffi-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-ffi-contracts test-ffi-windows test-ffi-libffi
+test-ffi-contracts: $(RUNE) vm bin/rune-ffi-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-contracts
+test-ffi-windows: $(RUNE) vm bin/rune-ffi-check bin/rune-test bin/rune-windows
+	$(RUNE_TEST) --tier test-ffi-windows
+test-ffi-libffi: $(RUNE) vm bin/rune-ffi-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-libffi
 
 WINDOWS_SRCS := tests/runner/langchecks.sml $(HOST_LAWS_SRCS) tests/runner/bytecode.sml \
                 tests/runner/matrixload.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml \

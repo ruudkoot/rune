@@ -74,6 +74,7 @@ struct
   val capabilities =
     [{name = "python3", probe = "command -v python3", hint = "install python3 (apt, dnf: python3; pacman, brew: python)"},
      {name = "cc", probe = "command -v ${CC:-cc}", hint = "install a C compiler (apt: build-essential; dnf: gcc; pacman: base-devel; brew: gcc)"},
+     {name = "libffi", probe = "pkg-config --exists libffi", hint = "install libffi headers and pkg-config for the independent FFI oracle"},
      (* registered with the kernel too: a fork by a VM under qemu is an exec
         of its own binary, which hangs where the kernel cannot start it *)
      {name = "qemu", probe = "{ command -v qemu-ppc64 || command -v qemu-ppc64-static; } && [ -e /proc/sys/fs/binfmt_misc/qemu-ppc64 ] && [ -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]",
@@ -130,7 +131,7 @@ struct
   val broadInputs = ["src/*", "runtime/*", "lib/basis/*", "lib/test/runner/*",
                      "Makefile", "tools/builder/*", "tools/generate/*", "scripts/*"]
   val tests = List.foldl (fn (path, tree) => Test.tag ("covers:" ^ path) tree)
-    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, Canary.tests]) broadInputs
+    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, FfiJobs.tree, Canary.tests]) broadInputs
 
   fun requirements () =
     let val rows = Test.leaves tests

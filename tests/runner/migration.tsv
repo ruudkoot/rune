@@ -223,6 +223,7 @@ tests/external/mlton-bench/gen-fxp-input.sh	shell	P2.15	retired	c6c2a2ed7165cabc
 tests/external/probe-host-basis.sh	shell	P2.9	retired	069ac4cc16bd2485bff7bbf2a2a86fd907c47494	tests/runner/externalchecks.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
 tests/external/run-mlton-bench.sh	shell	P2.9	retired	9215f583f3ea7b8d14fa8bd9cb3eff12263308cc	tests/runner/externalchecks.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
 tests/external/run-mlton.sh	shell	P2.9	retired	fc5f9a52ef49546bd627e48ba99f63150d66bf8b	tests/runner/externalchecks.sml	p2.9/acceptance+mlton-shadow.json+regression-shadow.json+generator replay+probe-shadow.json
+tests/ffi/research/python_ctypes.py	python	Retain: independent oracles/peers	retained	2536ca134b308314e3a09403d10075172b991a3a	-	independent ctypes scalar-aggregate-ownership-callback oracle; M0
 tests/gcbench/check.sh	shell	P2.2	retired	df8c1194519f5bc5e928cde3b5b1cbaa9e045877	tests/runner/heapchecks.sml	p2.2/shadow.json+replay-shadow.json+runner-check.log
 tests/gcbench/measure.sh	shell	P2.14	retired	e183052c374366c916c01c7b89dea2189cbb013d	tools/measure/gc-measure.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure gcbench-measure
 tests/gcbench/report.py	python	P2.14	retired	5e57766fdac08a7ba5148bbb9226a7651454eefe	tools/measure/gc-report.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure gcbench-report
