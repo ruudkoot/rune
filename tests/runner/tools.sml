@@ -174,6 +174,7 @@ struct
     let
       val () = mkdirs libOut
       fun f ext = libOut ^ "/" ^ n ^ ext
+      val () = mkdirs (OS.Path.dir (f ".rbc"))
     in
       if exec {cmd = ["bin/rune"] @ flags @ [src, "-o", f ".rbc"], dir = NONE, stdin = "", stdout = f ".cerr", stderr = f ".cerr",
                timeout = 0} <> 0
@@ -845,7 +846,7 @@ struct
 
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
 
-  val replLibs = ["unicode", "json", "terminal", "digest", "jsonrpc", "dap", "pretty", "markdown", "zmtp", "jupyter"]
+  val replLibs = ["unicode", "json", "terminal", "digest", "jsonrpc", "dap", "pretty", "markdown", "zmtp", "jupyter", "language/c"]
   val native = case OS.Process.getEnv "NATIVE_HOST" of SOME v => v = "yes" | NONE => exists "bin/runevm-native"
 
   val tree =

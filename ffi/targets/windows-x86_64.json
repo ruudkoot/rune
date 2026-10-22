@@ -109,6 +109,10 @@
     [
       "__has_extension(x)",
       "0"
+    ],
+    [
+      "_INTEGRAL_MAX_BITS",
+      "64"
     ]
   ]
 }

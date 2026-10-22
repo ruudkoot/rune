@@ -18,7 +18,7 @@ implementation progress separately from this original design baseline.
 | Milestone | Depends on | State |
 |---|---|---|
 | M0: contracts, inventories and baseline | none | complete |
-| M1: reusable C frontend | M0 | planned |
+| M1: reusable C frontend | M0 | complete |
 | M2: binding model and sidecars | M1 | planned |
 | M3: generic dynamic calls | M0 | planned |
 | M4: layout, marshalling and generated shims | M2, M3 | planned |
@@ -617,7 +617,13 @@ does not complete M0.
 
 ### M1: reusable C frontend
 
-**Depends on:** M0. **State:** planned.
+**Depends on:** M0. **State:** complete.
+
+Delivered [the reusable library](../../lib/language/c/README.md), its
+[documented interfaces](../lib/language/c/README.md), development driver,
+negative fixtures and original-header compiler comparisons.
+[M1 evidence](../../tests/ffi/evidence/m1.md) records source profiles,
+constant/declaration checks, host agreement and repository acceptance.
 
 Implement the C translation phases needed for real headers: line splicing,
 comments/literals/tokens, includes/guards, object/function/variadic macros,

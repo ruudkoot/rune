@@ -75,6 +75,9 @@ struct
     [{name = "python3", probe = "command -v python3", hint = "install python3 (apt, dnf: python3; pacman, brew: python)"},
      {name = "cc", probe = "command -v ${CC:-cc}", hint = "install a C compiler (apt: build-essential; dnf: gcc; pacman: base-devel; brew: gcc)"},
      {name = "libffi", probe = "pkg-config --exists libffi", hint = "install libffi headers and pkg-config for the independent FFI oracle"},
+     {name = "clang", probe = "command -v ${CLANG:-clang}", hint = "install Clang for independent C frontend comparisons"},
+     {name = "windows-sdk", probe = "test -d \"$RUNEFFI_WINDOWS_SDK/um\" && test -d \"$RUNEFFI_MSVC_INCLUDE\"",
+      hint = "set RUNEFFI_WINDOWS_SDK and RUNEFFI_MSVC_INCLUDE as described in ffi/win32/README.md"},
      (* registered with the kernel too: a fork by a VM under qemu is an exec
         of its own binary, which hangs where the kernel cannot start it *)
      {name = "qemu", probe = "{ command -v qemu-ppc64 || command -v qemu-ppc64-static; } && [ -e /proc/sys/fs/binfmt_misc/qemu-ppc64 ] && [ -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]",

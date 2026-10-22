@@ -35,7 +35,8 @@ struct
        ("pretty.pretty", ["unicode", "pretty"], "pretty/pretty"),
        ("markdown.spec", ["unicode", "json", "pretty", "markdown"], "markdown/spec"),
        ("zmtp.zmtp", ["zmtp"], "zmtp/zmtp"),
-       ("jupyter.jupyter", ["unicode", "json", "digest", "zmtp", "jupyter"], "jupyter/jupyter")]
+       ("jupyter.jupyter", ["unicode", "json", "digest", "zmtp", "jupyter"], "jupyter/jupyter"),
+       ("language.c.frontend", ["language/c"], "language/c/frontend")]
   fun files libraries =
     let fun one "unit" = unit ()
           | one "property" = random @ Hosts.portable "test/property" @ Hosts.portable "test/property/basis"

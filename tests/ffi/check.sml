@@ -41,7 +41,10 @@ struct
         val () = List.app (fn n => need (List.exists (fn r => List.exists
           (fn m => string m = "M" ^ Int.toString n) (array (field "milestones" r))) requirements,
           "milestone has no requirement owner")) (List.tabulate (11, fn n => n))
-    in one ("sdl", 54); one ("win32", 38);
+        val sdl = array (field "entries" (json "ffi/sdl/inventory.json"))
+        val () = need (not (List.exists (fn entry => string (field "foreign" entry) = "SDL_RunApp") sdl),
+          "deferred SDL application-entry integration was selected")
+    in one ("sdl", 53); one ("win32", 38);
        say ("PASS ffi/requirements: " ^ Int.toString (length ids) ^ " delivery/test owners\n") end
   val directory = run ^ "/ffi/" ^ SysWord.toString (Posix.Process.pidToWord (Posix.ProcEnv.getpid ()))
   fun command name args =

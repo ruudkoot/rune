@@ -803,21 +803,6 @@
       "unresolved": [
         "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
       ]
-    },
-    {
-      "foreign": "SDL_RunApp",
-      "source": {
-        "file": "SDL3/SDL_main.h",
-        "line": 582
-      },
-      "public": "runApp",
-      "raw": "SDL_RunApp",
-      "implementation": "planned",
-      "gate": "M7",
-      "test": "sdl-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
     }
   ],
   "requiredTypes": [
@@ -916,6 +901,12 @@
       "gate": "M4",
       "state": "planned",
       "policy": "preserve aliases and unknown bits; evaluate for target"
+    }
+  ],
+  "deferred": [
+    {
+      "foreign": "SDL_RunApp",
+      "reason": "application-entry integration is explicitly outside the first delivery"
     }
   ]
 }

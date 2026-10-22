@@ -1,0 +1,15 @@
+(* Reusable C declaration frontend; no FFI ownership or SML naming policy. *)
+annotate "demand" in
+  lex_sig.sml
+  lex.sml
+  const_sig.sml
+  const.sml
+  preprocess_sig.sml
+  preprocess.sml
+  parse_sig.sml
+  parse.sml
+  enum_const_sig.sml
+  enum_const.sml
+  files_sig.sml
+  files.sml
+end

@@ -225,7 +225,7 @@ all: vm boot runedoc runeopt manifests basis-cache
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
-manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
+manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
 lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -246,6 +246,8 @@ lib/unicode/MANIFEST: lib/unicode/library.build $(wildcard lib/unicode/*.sml) li
 	bin/rune-$(BOOTHOST) --basis-index lib/unicode
 lib/json/MANIFEST: lib/json/library.build $(wildcard lib/json/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/json
+lib/language/c/MANIFEST: lib/language/c/library.build $(wildcard lib/language/c/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/language/c
 lib/terminal/MANIFEST: lib/terminal/library.build $(wildcard lib/terminal/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/terminal
 lib/pretty/MANIFEST: lib/pretty/library.build $(wildcard lib/pretty/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
@@ -1168,13 +1170,14 @@ check-docs: check-docs-generated bin/rune-test bin/rune-doc-check
 
 check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
 	$(RUNEDOC) $(DOCS_PROPERTY_BASIS) --check
 	$(RUNEDOC) $(DOCS_UNIT) --check
 	$(RUNEDOC) $(DOCS_RUNNER) --check
+	$(RUNEDOC) $(DOCS_C) --check
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW) --check
 	$(RUNEDOC) --palette docs/lib/palette --check
@@ -1205,6 +1208,8 @@ DOCS_UNIT := --lib lib --library test/unit --out docs/lib/test/unit --basis-docs
 DOCS_RUNNER := --lib lib --library test/runner --out docs/lib/test/runner --basis-docs ../../basis \
                --library-docs test/unit ../unit --library-docs terminal ../../terminal \
                --conventions ../../conventions.md
+DOCS_C := --lib lib --library language/c --out docs/lib/language/c --basis-docs ../../basis \
+          --conventions ../../conventions.md
 # the libraries of docs/plans/repl.md (The libraries), each in
 # docs/lib/NAME (REPL_LIBS, with the manifests). The heading of the library's
 # README.md is its name, on its pages and in the overview below.
@@ -1231,7 +1236,8 @@ DOCS_OVERVIEW := --lib lib --overview docs/lib \
 	--library-page dap \
 	--library-page zmtp \
 	--library-page jupyter \
-	--library-page digest
+	--library-page digest \
+	--library-page language/c
 
 docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_BASIS)
@@ -1240,6 +1246,7 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_PROPERTY_BASIS)
 	$(RUNEDOC) $(DOCS_UNIT)
 	$(RUNEDOC) $(DOCS_RUNNER)
+	$(RUNEDOC) $(DOCS_C)
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW)
 	$(RUNEDOC) --palette docs/lib/palette
@@ -1766,6 +1773,23 @@ bin/rune-ffi-check.rbc: $(RUNE) $(FFI_CHECK_SRCS) manifests
 bin/rune-ffi-check: bin/rune-ffi-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-check.rbc" "$$@"\n' > $@
 	chmod +x $@
+bin/rune-cfrontend.rbc: $(RUNE) tools/cfrontend/main.sml $(wildcard lib/language/c/*.sml) manifests
+	$(RUNE) --library json --library language/c tools/cfrontend/main.sml -o $@
+bin/rune-cfrontend: bin/rune-cfrontend.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-cfrontend.rbc" "$$@"\n' > $@
+	chmod +x $@
+C_FRONTEND_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/frontend-check.sml
+check-tools: bin/rune-c-check
+bin/rune-c-check.rbc: $(RUNE) $(C_FRONTEND_CHECK_SRCS) $(wildcard lib/language/c/*.sml) manifests
+	$(RUNE) --library test/runner --library json --library language/c $(C_FRONTEND_CHECK_SRCS) -o $@
+bin/rune-c-check: bin/rune-c-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-c-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-c-frontend test-c-frontend-windows
+test-c-frontend: $(RUNE) vm bin/rune-c-check bin/rune-test
+	$(RUNE_TEST) --tier test-c-frontend
+test-c-frontend-windows: $(RUNE) vm bin/rune-c-check bin/rune-test
+	$(RUNE_TEST) --tier test-c-frontend-windows
 .PHONY: test-ffi-contracts test-ffi-windows test-ffi-libffi
 test-ffi-contracts: $(RUNE) vm bin/rune-ffi-check bin/rune-test
 	$(RUNE_TEST) --tier test-ffi-contracts
