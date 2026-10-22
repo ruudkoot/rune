@@ -247,6 +247,22 @@ all: vm boot runedoc runeopt runeffi manifests basis-cache
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
+
+# Frontend baselines and edit traces for the language-server roadmap.
+LSP_BENCH_SRCS := $(shell sh scripts/build-files.sh rune-lsp-bench.build)
+.PHONY: lsp-bench test-lsp-bench
+lsp-bench: bin/rune-lsp-bench
+bin/rune-lsp-bench.rbc: $(RUNE) $(LSP_BENCH_SRCS) rune-lsp-bench.build manifests
+	$(RUNE) --build rune-lsp-bench.build -o $@
+bin/rune-lsp-bench: bin/rune-lsp-bench.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-lsp-bench.rbc" "$$@"\n' > $@
+	chmod +x $@
+bin/rune-lsp-bench-tests.rbc: $(RUNE) tests/runner/sh.sml tests/lsp/bench-tests.sml manifests
+	$(RUNE) --library test/runner --library json tests/runner/sh.sml tests/lsp/bench-tests.sml -o $@
+test-lsp-bench: bin/rune-lsp-bench bin/rune-lsp-bench-tests.rbc bin/rune
+	bin/rune-lsp-bench --self-test
+	bin/runevm bin/rune-lsp-bench-tests.rbc
+
 manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST lib/ffi/runtime/MANIFEST lib/ffi/win32/common/MANIFEST lib/ffi/win32/model/MANIFEST lib/ffi/win32/mock/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST) lib/sdl/MANIFEST lib/ffi/win32/sdldriver/MANIFEST
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis

@@ -16,7 +16,7 @@ documentation and its evidence beside the tests before this plan is retired.
 | Milestone | What | Depends on | State |
 |---|---|---|---|
 | M0 | This roadmap, baseline and protocol inventory | none | done 2026-10-22; verification below; measurements remain M1 |
-| M1 | Reference study, fixtures and performance baselines | M0 | planned |
+| M1 | Reference study, fixtures and performance baselines | M0 | in progress: SML harness and Linux baseline recorded; native Windows measurement remains |
 | M2 | Protocol libraries, transport, lifecycle and harness | M0 | planned |
 | M3 | Documents, positions, workspaces and build contexts | M2 | planned |
 | M4 | Incremental syntax, recovery and the parser decision | M1, M3 | planned |
@@ -44,6 +44,12 @@ worktree, branched from refreshed `origin/master` at
 the earlier documentation baseline; they are not acceptance results for
 this new branch. M1 remeasures the current compiler and records its own
 fixture and tool identities.
+
+The owner also explicitly requested the compiler-library refactor as part
+of this work on 2026-10-22. This branch therefore owns the prerequisites
+in [compiler-library.md](compiler-library.md), including extraction,
+exports, session isolation, the public API and client migration; it will
+not leave M5 waiting for an unspecified external implementation.
 
 ## The request and the decisions
 
@@ -666,6 +672,52 @@ by editing this document.
   faults, and a baseline ledger sets fixture-specific release budgets.
   Parser sharing already has the stricter fixed gate above. Other initial
   latency targets remain labelled proposals until this measurement.
+
+#### M1, implemented so far (2026-10-22)
+
+`make lsp-bench` builds the SML measurement program from
+`rune-lsp-bench.build`; `make test-lsp-bench` runs arithmetic/fault oracles
+and independent command-level acceptance. [The fixture and command
+contract](../../tests/lsp/README.md) documents strict result-directory
+ownership, fixture verdicts, source identities, separate timed phases,
+warmup exclusion, retention passes and prototype-service measurements.
+
+The [initial ledger](../../tests/lsp/baseline/2026-10-22-initial.json)
+records 700 frontend/edit phase samples, 20 independent prototype startup
+and query runs, raw-artifact hashes, source hashes and proposed budgets.
+The machine was an Intel Xeon E5-1680 v3 at 3.20 GHz under WSL2, with 16
+available processors. The Linux run used 20 repetitions, three warmups
+and three separate retention cycles. The raw measurements and observer
+binaries are archived under
+`rune-benchmark-results/lsp/2026-10-22-language-server-m1`.
+
+| Existing newline service, microseconds | p50 | p95 | p99 |
+|---|---|---|---|
+| Process startup and initialize | 32415 | 45889 | 49826 |
+| First diagnostics in a private unit cache | 31871 | 58698 | 59438 |
+| Repeated diagnostics | 24395 | 43749 | 50108 |
+| Repeated hover | 30963 | 44580 | 51358 |
+
+The prototype starts a fresh child for each analysis request; these are
+not resident runelsp query results. Its self-hosted entry implements
+`--serve`, while current native-host entries call the batch driver.
+Private cache/process runs do not flush the operating-system disk cache.
+After three separately collected fixture replays, live data was 439344,
+439320 and 439296 bytes: this small observed run is not the future
+100-cycle project-retention acceptance test.
+
+The current lexer already has `Lexer.scan`, a tolerant line scanner with
+comment/gap state used for presentation. M4 should reuse that knowledge
+and `lexerOf`'s token rules where appropriate; neither is a complete
+incremental syntax tree or a replacement for the parser-sharing gate.
+
+Validated here: fixture classification, ordered fixity, the independently
+interpreted stale-fixity fault, edit/undo replay, sample/warmup counts,
+prototype diagnostics/hover, refusal to overwrite evidence, and refusal
+to publish successful timing summaries after planted verdict/service
+failures. Native Windows measurements and unavailable future query/
+cancellation paths remain unrecorded. M2 can proceed independently while
+those platform measurements are completed.
 
 ### M2. Protocol and harness (L)
 
