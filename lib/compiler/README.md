@@ -14,7 +14,8 @@ the command-line parser and executable entrypoints remain under `src`.
 those refs instead of being a library dependency.
 
 `CompilerState` registers persistent compiler roots and switches them
-between owners for serialized operations. Its baseline is sealed after
+between owners for serialized operations. Duplicate-name validation is
+deferred to sealing, keeping batch startup linear. Its baseline is sealed after
 module initialization, preserving initialized builtin identities. Mutable
 container cells, arrays and integer-table buckets are copied for each
 owner; persistent maps and that owner's type and AST graphs retain their

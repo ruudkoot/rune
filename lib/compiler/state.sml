@@ -17,14 +17,23 @@ struct
 
   fun root (name, capture) =
     if isSome (!baseline) then raise Fail ("compiler root registered after sealing: " ^ name)
-    else if List.exists (fn r : root => #name r = name) (!roots)
-    then raise Fail ("duplicate compiler root: " ^ name)
     else roots := {name = name, capture = capture} :: !roots
 
   fun names () = List.map #name (List.rev (!roots))
   fun capture copying = List.map (fn r : root => #capture r copying) (List.rev (!roots))
   fun restore saved = List.app (fn put => put ()) saved
-  fun seal () = if isSome (!baseline) then () else baseline := SOME (capture true)
+  (* Batch clients register roots but never switch owners. Validate the
+     names once, when ownership is first requested, rather than scanning
+     all previous names at every module's initialization. *)
+  fun seal () =
+    if isSome (!baseline) then ()
+    else
+      let
+        fun check ({name, ...} : root, seen) =
+          if StringMap.member (seen, name) then raise Fail ("duplicate compiler root: " ^ name)
+          else StringMap.insert (seen, name, ())
+        val _ = List.foldl check StringMap.empty (!roots)
+      in baseline := SOME (capture true) end
 
   fun refRoot (name, cell, clone) =
     root (name, fn copying =>

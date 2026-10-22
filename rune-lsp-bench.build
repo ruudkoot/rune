@@ -1,9 +1,9 @@
 (* The compiler frontend and the runelsp measurement harness. *)
 files
   build/config.sml
-  lib/compiler/util/scon.sml
-  lib/compiler/util/ordmap.sml
-  lib/compiler/util/inttable.sml
+end
+use lib/compiler/util.build
+files
   lib/unicode/utf8_sig.sml
   lib/unicode/utf8.sml
   lib/unicode/width_data.sml

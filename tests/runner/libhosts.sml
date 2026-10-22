@@ -51,7 +51,7 @@ struct
   fun files libraries =
     let fun one "unit" = unit ()
           | one "property" = random @ Hosts.portable "test/property" @ Hosts.portable "test/property/basis"
-          | one "compiler-state" = ["lib/compiler/util/inttable.sml", "lib/compiler/state_sig.sml", "lib/compiler/state.sml"]
+          | one "compiler-state" = ["lib/compiler/util/ordmap.sml", "lib/compiler/util/inttable.sml", "lib/compiler/state_sig.sml", "lib/compiler/state.sml"]
           | one lib = Hosts.portable lib
     in if null libraries then random else List.concat (List.map one libraries) end
 

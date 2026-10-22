@@ -29,8 +29,9 @@ sig
   (* The registered root names, in initialization order. *)
   val names : unit -> string list
 
-  (* Seal the initialized baseline once all compiler modules have loaded.
-     Further calls preserve that baseline. Later registration raises Fail. *)
+  (* Validate unique root names and seal the initialized baseline once all
+     compiler modules have loaded. Further calls preserve that baseline.
+     Duplicate names and later registration raise Fail. *)
   val seal : unit -> unit
   (* Make an owner from the sealed baseline, sealing it first if necessary. *)
   val session : unit -> session

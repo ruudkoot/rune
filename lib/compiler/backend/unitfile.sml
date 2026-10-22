@@ -122,10 +122,12 @@ struct
        label = RegCodes.kindLabel, handler = RegCodes.kindHandlerLabel}
     else raise Bad "the code of another instruction set"
 
-  val primArity : int vector =
+  (* Build and freeze the lookup once; its scratch array does not escape. *)
+  fun primitiveArities () : int vector =
     let val n = List.foldl (fn ((_, i, _), m) => Int.max (m, i + 1)) 0 Prims.table
-    in Vector.tabulate (n, fn i =>
-         List.foldl (fn ((_, k, arity), found) => if k = i then arity else found) 0 Prims.table) end
+        val a = Array.array (n, 0)
+    in List.app (fn (_, i, ar) => Array.update (a, i, ar)) Prims.table; Array.vector a end
+  val primArity = primitiveArities ()
 
   (* A unit's file read back: the instruction set it is of, and the unit, its
      code as the target made it -- every instruction an Ops of its operands,

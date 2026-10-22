@@ -365,6 +365,21 @@ Ownership checkpoint (2026-10-22):
   separate alias regression first reproduced the loss of a live array
   alias; baseline cloning was separated from switching and that case,
   table callbacks and owner-stack re-entry now pass.
+* Full-check follow-up: the combined run at
+  `tests/out/r/20261022-075421-2401107` passed 19,333 cases, skipped the two
+  documented native interrupt cases and absent pinned-GMP dependency, and
+  failed five existing compiler instruction budgets. The dominant cost was
+  a quadratic primitive-arity initializer introduced during extraction;
+  linear construction through a private scratch array restored it. Root
+  registration now appends in constant time and validates unique names
+  once at sealing. A separate interpreter/JIT test rejects duplicates then.
+  All 12 compiler budgets passed without changing thresholds (17 runner
+  passes at `tests/out/r/20261022-083744-2585502`); register hello fell from
+  4,008,186 to 1,974,930 instructions and stack hello from 7,000,728 to
+  3,489,021. The ledger and raw-artifact hashes are in
+  [2026-10-22-compiler-startup.json](../../tests/lsp/baseline/2026-10-22-compiler-startup.json).
+  Portable ownership, exports, nested builds and the benchmark harness
+  passed 15 focused cases at `tests/out/r/20261022-084745-2586788`.
 * The final portable ownership model passed on MLton, SML/NJ 110.99.9
   (64-bit and 32-bit), SML/NJ 2026.2, Poly/ML and MLKit 4.7.25:
   `tests/out/r/20261022-062900-2380279`, 13 passes, 8.1 seconds, including
