@@ -24,7 +24,7 @@ it.
 | Milestone | What | State |
 |---|---|---|
 | M0 | The REPL's branch and `incremental` merged; this plan's numbers measured again | done 2026-10-13: both on `master` since 2026-10-11 (#38, #39), the numbers measured again at `2e2351ba` |
-| M1 | The compiler moved to `lib/compiler`, the driver left in `src` | in progress: extraction implemented; acceptance corrections and a clean full check remain |
+| M1 | The compiler moved to `lib/compiler`, the driver left in `src` | done 2026-10-22: extraction, cross-host equality, reproducibility and full acceptance passed |
 | M2 | A library's names: export lists for `rune --library` | in progress: scoped manifests, compiler and documentation visibility implemented; public compiler facade and full acceptance remain |
 | M3 | The compiler's state: a session that starts from nothing | in progress: registered roots and serialized ownership implemented; public API integration and acceptance remain |
 | M4 | `RuneCompiler`: the API, its tests, its frozen cache | planned |
@@ -275,8 +275,14 @@ Implementation checkpoint (2026-10-22):
   skips. After correction, rerunning all affected cases and their
   dependencies passed 588 tests with the intended pinned-GMP absence skip
   (`tests/out/r/20261022-061408-2371193`, 34.7 seconds). All 427 cross-host
-  comparison cases had passed in the full run. A clean combined full check
-  remains required before marking M1 complete.
+  comparison cases had passed in the full run.
+* Clean combined acceptance passed after the portability and startup-cost
+  corrections described below: `make check JOBS=8`,
+  `tests/out/r/20261022-101701-2630163`, 19,338 passes and three skips,
+  1,213.5 seconds wall time. The skips are the two documented native
+  interrupt cases and the absent pinned-GMP dependency. Cross-host
+  bytecode equality and reproducibility are included in this run. M1 is
+  complete; this does not complete the public API or client migrations.
 
 The IDE migration is separate work. Its generated build inputs will need
 to follow the new compiler paths when that roadmap consumes this branch;
@@ -321,8 +327,8 @@ Export-boundary checkpoint (2026-10-22):
   The compiler facade will apply its public export list in M4; its current
   implementation modules remain internal interfaces, as its README says.
 
-The public compiler facade/namespace test and combined full check remain
-acceptance gates; M2 remains in progress.
+The combined full check passed as recorded under M1. The public compiler
+facade/namespace test remains an acceptance gate; M2 remains in progress.
 
 ### M3. The compiler's state (M, about 400 SML)
 
@@ -391,12 +397,16 @@ Ownership checkpoint (2026-10-22):
   classified acceptance, not a claim that every host program passed
   without a deviation; Poly/ML's documented ZMTP timeout remains covered
   by its `HOST-FLAKY` entry.
+* The final `make matrix-quick JOBS=8` passed at
+  `tests/out/r/20261022-085654-2589280`: 3,182 passes and 156 classified
+  skips, 4,302.5 seconds wall time. This compares Rune's Basis on all six
+  installed host configurations. The subsequent clean full check passed
+  as recorded under M1.
 
 These are ownership saves. Mutable type variables and AST annotations
 within one owner require the analysis publication/rollback contract in the
 language-server roadmap. Public `RuneCompiler` sessions, subprocess
-isolation and the combined full acceptance check remain to be integrated;
-M3 remains in progress.
+isolation remain to be integrated; M3 remains in progress.
 
 ### M4. `RuneCompiler` (L, about 1,000 SML)
 
