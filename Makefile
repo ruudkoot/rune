@@ -539,9 +539,9 @@ bin/rune-polyml: bin/rune-polyml.bin Makefile
 # compiler, runedoc and runeopt come one after another, as SML/NJ's do.
 MLKIT_BUILD = SML_LIB=$(MLKIT_LIB) $(MLKIT) -j $(JOBS)
 
-bin/rune-mlkit.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/mlkit-main.sml | build/.doctor-mlkit
+bin/rune-mlkit.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/mlkit-main.sml scripts/mlkit-build-root.sh | build/.doctor-mlkit
 	@mkdir -p bin
-	$(MLKIT_BUILD) -o $@ build/rune-mlkit.mlb
+	mlb=$$(sh scripts/mlkit-build-root.sh build/rune-mlkit.mlb); $(MLKIT_BUILD) -o $@ "$$mlb"
 
 bin/rune-mlkit: bin/rune-mlkit.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/rune-mlkit.bin" --lib "$$d/../lib" "$$@"\n' > $@
@@ -655,9 +655,9 @@ bin/runedoc-polyml: bin/runedoc-polyml.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runedoc-polyml.bin" -H $(POLYML_HEAP) --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
-bin/runedoc-mlkit.bin: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) src/main/runedoc-mlkit-main.sml | build/.doctor-mlkit bin/rune-mlkit.bin
+bin/runedoc-mlkit.bin: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) src/main/runedoc-mlkit-main.sml scripts/mlkit-build-root.sh | build/.doctor-mlkit bin/rune-mlkit.bin
 	@mkdir -p bin
-	$(MLKIT_BUILD) -o $@ build/runedoc-mlkit.mlb
+	mlb=$$(sh scripts/mlkit-build-root.sh build/runedoc-mlkit.mlb); $(MLKIT_BUILD) -o $@ "$$mlb"
 
 bin/runedoc-mlkit: bin/runedoc-mlkit.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runedoc-mlkit.bin" --lib "$$d/../lib" "$$@"\n' > $@
@@ -711,9 +711,9 @@ bin/runeopt-polyml: bin/runeopt-polyml.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-polyml.bin" -H $(POLYML_HEAP) --runtime "$$d/../build" "$$@"\n' > $@
 	chmod +x $@
 
-bin/runeopt-mlkit.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-mlkit-main.sml | build/.doctor-mlkit bin/runedoc-mlkit.bin
+bin/runeopt-mlkit.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-mlkit-main.sml scripts/mlkit-build-root.sh | build/.doctor-mlkit bin/runedoc-mlkit.bin
 	@mkdir -p bin
-	$(MLKIT_BUILD) -o $@ build/runeopt-mlkit.mlb
+	mlb=$$(sh scripts/mlkit-build-root.sh build/runeopt-mlkit.mlb); $(MLKIT_BUILD) -o $@ "$$mlb"
 
 bin/runeopt-mlkit: bin/runeopt-mlkit.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-mlkit.bin" --runtime "$$d/../build" "$$@"\n' > $@

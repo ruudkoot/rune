@@ -82,7 +82,20 @@ struct
     in
       if host = "mlton" orelse host = "mlkit" then
         let
-          val () = write (f ".mlb", "$(SML_LIB)/basis/basis.mlb\n" ^ String.concat (List.map (fn p => p ^ "\n") sources))
+          (* MLKit writes beside its inputs. Each library subject owns an
+             immutable input view, separate from native compiler/tool
+             builds and from other subjects' elaboration contexts. *)
+          val sources = if host<>"mlkit" then sources else
+            let val inputs=dir ^ "/inputs"
+                val ()=(rmTree inputs;mkdirs inputs)
+            in List.map (fn (i,source) =>
+                 let val target=inputs ^ "/" ^ Int.toString i ^ "-" ^ OS.Path.file source
+                     val input=BinIO.openIn source
+                     val text=(Byte.bytesToString (BinIO.inputAll input) before BinIO.closeIn input)
+                       handle e => (BinIO.closeIn input handle _ => ();raise e)
+                 in write (target,text);target end)
+                 (ListPair.zip (List.tabulate (length sources,fn i => i),sources)) end
+          val () = write (f ".mlb", "$(SML_LIB)/basis/basis.mlb\n" ^ String.concat (List.map (fn p => "\"" ^ String.toString p ^ "\"\n") sources))
           val changes = if host = "mlkit" then [("SML_LIB", library)] else []
           val (code, msgs) = execute dir ([program, if host = "mlton" then "-output" else "-o", name, name ^ ".mlb"], "", changes, f ".err")
           fun again changes = run [f ""] "" changes

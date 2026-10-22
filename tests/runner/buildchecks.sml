@@ -67,7 +67,31 @@ struct
                else say "FAIL compiler layout: library index did not follow annotated use\n"
       val () = write (dir ^ "/cycle.build", "use cycle.build\n")
       val (status, _, errors) = invoke "cycle" ["sh", fromRoot "scripts/build-files.sh", dir ^ "/cycle.build"]
-    in if status <> 0 andalso String.isSubstring "cyclic" errors then () else say "FAIL compiler layout: cyclic use was accepted\n" end
+      val ()=if status <> 0 andalso String.isSubstring "cyclic" errors then () else say "FAIL compiler layout: cyclic use was accepted\n"
+      val view=dir ^ "/native-view"
+      val ()=List.app mkdirs [view ^ "/scripts",view ^ "/build",view ^ "/lib/MLB"]
+      val ()=write (view ^ "/scripts/mlkit-build-root.sh",read "scripts/mlkit-build-root.sh")
+      val ()=write (view ^ "/build/config.sml","structure Config = struct val identity=\"first\" end\n")
+      val ()=write (view ^ "/lib/example.sml","structure Example = struct val answer=42 end\n")
+      val ()=write (view ^ "/lib/MLB/protected","original cache\n")
+      val ()=write (view ^ "/build/probe-mlkit.mlb","$(SML_LIB)/basis/basis.mlb\nconfig.sml\n../lib/example.sml\n")
+      fun mirror label =
+        let val (status,output,errors)=invoke label ["sh",view ^ "/scripts/mlkit-build-root.sh","build/probe-mlkit.mlb"]
+        in if status=0 andalso output="build/mlkit-root/build/probe-mlkit.mlb\n" then () else raise Fail ("MLKit source view: " ^ errors) end
+      val ()=mirror "mirror-first"
+      val private=view ^ "/build/mlkit-root"
+      val ()=mkdirs (private ^ "/lib/MLB")
+      val ()=write (private ^ "/lib/MLB/cached","compiled with first configuration\n")
+      val ()=write (view ^ "/lib/example.sml","structure Example = struct val answer=43 end\n")
+      val ()=mirror "mirror-source-edit"
+      val ()=if exists (private ^ "/lib/MLB/cached") andalso
+        same (private ^ "/lib/example.sml",view ^ "/lib/example.sml") then () else raise Fail "MLKit view lost unchanged-configuration reuse"
+      val ()=write (view ^ "/build/config.sml","structure Config = struct val identity=\"second\" end\n")
+      val ()=mirror "mirror-configuration-edit"
+    in if not (exists (private ^ "/lib/MLB/cached")) andalso
+        read (view ^ "/lib/MLB/protected")="original cache\n" andalso
+        same (private ^ "/build/config.sml",view ^ "/build/config.sml")
+       then () else raise Fail "MLKit view reused stale configuration or changed original caches" end
   fun libraryExports () =
     let
       val dir = run ^ "/library-exports"
@@ -222,7 +246,7 @@ struct
     {program="/bin/sh",args=["sh","-c","exec \"$RUNE_TEST_ROOT\"/bin/rune-windows vm --vm \"${RUNEVM:-bin/runevm-stack}\" --out \"$RUNE_TEST_RUN/low-level/vm\""],
      env=NONE,dir=SOME ".",stdin=NONE,timeout=Time.fromSeconds 900,cap=0,cpus=1,memory=500,pools=[],exclusive=false,after=[],judge=failLines} : Run.command Test.tree
   val tree=Test.describe "low-level"
-    [tagged ["check","test-build","covers:lib/compiler/*","covers:*.build","covers:scripts/build-files.sh"]
+    [tagged ["check","test-build","covers:lib/compiler/*","covers:*.build","covers:scripts/build-files.sh","covers:scripts/mlkit-build-root.sh"]
        (job "compiler-layout" ["build-compiler-layout"] []),
      tagged ["check","test-build","test-lib","covers:lib/compiler/*","covers:tests/lib/exports/*"]
        (job "library-exports" ["build-library-exports"] []),

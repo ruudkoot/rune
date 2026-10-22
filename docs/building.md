@@ -11,6 +11,14 @@ The compiler Rune ships is the one it compiled itself: **`bin/rune`** is
 bootstrap that one, and to check it (`make check-cross`, `make test-all`). Everything that runs,
 tests or measures the compiler goes through `bin/rune`.
 
+Native MLKit builds use a private source view under `build/mlkit-root`.
+It separates compiler/tool caches from library-test compilation contexts;
+a changed generated configuration discards that view before rebuilding.
+The installed MLKit Basis cache is shared and the original source caches
+are untouched. MLKit library subjects likewise compile private input
+copies in their test directories. This prevents an older inlined compiler
+identity from contaminating provenance after a warm rebuild.
+
 The compiler knows no library location of its own: it takes the basis library
 from `--lib DIR` (which it reads from `DIR/basis`) and refuses to compile
 without it. Each of the `bin/rune*` is therefore a small wrapper script

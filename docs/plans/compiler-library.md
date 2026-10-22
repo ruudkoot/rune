@@ -519,6 +519,29 @@ M4 remains in progress until the combined full check and required VM
 platform acceptance pass. M3's optional subprocess isolation and M5's
 REPL/service/Basis hook migrations remain outstanding.
 
+Native-cache follow-up (2026-10-22):
+
+* The next full run completed 19,344 passes, three documented skips and
+  one failure: `cross/rune-units`, at
+  `tests/out/r/20261022-122208-2877037` (1,240.4 seconds). The MLKit
+  executable had retained an older inlined `Config.identity` in its native
+  source cache. Code sections matched; 230 provenance records used the
+  older identity. A fresh native compilation emitted the expected identity
+  and the same probe unit bytes as MLton. Small standalone configuration
+  probes did not reproduce the full repository's cache-context history.
+* Native MLKit compiler/tool builds now use a private copied source view
+  under `build/mlkit-root`, invalidated when the generated configuration
+  changes. Library-test subjects own separate input copies, with quoted
+  MLB paths. Original source caches and the installed Basis cache are not
+  removed. No SML library workaround was introduced.
+* Focused acceptance passed 11 cases at
+  `tests/out/r/20261022-132403-3064280` (298.6 seconds), including the
+  failing cross-host comparison, source-view invalidation and preservation
+  of original caches, host-adapter behavior and the MLKit compiler API.
+  The MLKit LSP test still reproduces its recorded capability-lookup
+  `HOST-BUG`; that runner pass is classified acceptance, not five literal
+  passing checks. Final combined and platform acceptance remain pending.
+
 ### M5. The clients (M, about 500 SML)
 
 * **What:** the REPL's engine and session written on `RuneCompiler`;
