@@ -132,8 +132,16 @@ that have no immediate (*Values and objects*). It is made of chunks of 2
 MiB, each aligned to its size, with the objects side by side after the
 chunk's header and tables (the barrier's cards, below); a large object of
 more than half a chunk has a mapping of its own, as large as it needs, so
-that the rest of a chunk is not left unused (`runtime/gc/`). It has three
-spaces:
+that the rest of a chunk is not left unused (`runtime/gc/`).
+
+An object's header stays within the first 2 MiB of its mapping, so masking
+its address finds the chunk header. When a very large mapping's tables
+would push the object beyond that boundary, its cards and dirty bytes stay
+in front and the other tables follow the usable payload. The allocation
+limit excludes those trailing tables; compiled write barriers keep the
+same card offset.
+
+It has three spaces:
 
 * **The nursery,** 1 to 8 MiB as the heap's room allows, where every
   object but a large one is made.
