@@ -124,8 +124,8 @@ struct
 
   val primArity : int vector =
     let val n = List.foldl (fn ((_, i, _), m) => Int.max (m, i + 1)) 0 Prims.table
-        val a = Array.array (n, 0)
-    in List.app (fn (_, i, ar) => Array.update (a, i, ar)) Prims.table; Array.vector a end
+    in Vector.tabulate (n, fn i =>
+         List.foldl (fn ((_, k, arity), found) => if k = i then arity else found) 0 Prims.table) end
 
   (* A unit's file read back: the instruction set it is of, and the unit, its
      code as the target made it -- every instruction an Ops of its operands,

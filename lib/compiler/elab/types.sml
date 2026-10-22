@@ -42,10 +42,15 @@ struct
      unshares them (docs/plans/type-checker.md). Outside these the backend
      may read types without spending work. *)
   val workLimit = ref 50000000
+  val () = CompilerState.cellRoot ("Types.workLimit", workLimit)
   val workLeft = ref 1000000000
+  val () = CompilerState.cellRoot ("Types.workLeft", workLeft)
   val working = ref false
+  val () = CompilerState.cellRoot ("Types.working", working)
   val workSpan = ref Source.noSpan
+  val () = CompilerState.cellRoot ("Types.workSpan", workSpan)
   val workWhat = ref "type inference"
+  val () = CompilerState.cellRoot ("Types.workWhat", workWhat)
   fun startWorkOn (what, sp) = (workWhat := what; workSpan := sp; workLeft := !workLimit; working := true)
   fun startWork sp = startWorkOn ("type inference", sp)
   fun stopWork () = (working := false; workLeft := 1000000000)
@@ -106,6 +111,7 @@ struct
   fun vectorTy t = TCon (vectorTycon, [t])
 
   val tyconCounter = ref 100
+  val () = CompilerState.cellRoot ("Types.tyconCounter", tyconCounter)
   fun freshTycon (name, arity, eq) : tycon =
     let val s = !tyconCounter in tyconCounter := s + 1; mk (name, s, arity, eq) end
 
@@ -113,6 +119,7 @@ struct
   fun withEq (c : tycon, eq) : tycon = mk (#name c, #stamp c, #arity c, eq)
 
   val tvarCounter = ref 0
+  val () = CompilerState.cellRoot ("Types.tvarCounter", tvarCounter)
   fun freshTvar (level, kind, eq) =
     let val id = !tvarCounter
     in tvarCounter := id + 1; TVar (ref (Unbound {id = id, level = level, kind = kind, eq = eq})) end
@@ -243,6 +250,7 @@ struct
      none of whose parts changed is given back as it was, with what it
      shares; where a realisation changes nothing, nothing is allocated. *)
   val changes = ref 0w0
+  val () = CompilerState.cellRoot ("Types.changes", changes)
   fun changed () = changes := !changes + 0w1
 
   fun realize (phi : realisation, t : ty) : ty =
@@ -394,6 +402,7 @@ struct
      from the program's top level (Env.qualifiedName), so that a message says
      `WideString.string` and not `string`. NONE keeps the declared name. *)
   val qualifier : (tycon -> string option) ref = ref (fn _ => NONE)
+  val () = CompilerState.cellRoot ("Types.qualifier", qualifier)
   fun tyconName (c : tycon) = case !qualifier c of SOME p => p | NONE => #name c
 
   fun toStringWith (p : printer) t = toStringNamed (fn c => !qualifier c, p) t

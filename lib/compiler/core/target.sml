@@ -20,6 +20,7 @@ struct
      (docs/plans/heap-layout.md, D2 B), or 64 for a VM built with
      -DRUNE_INT64 (D2 A), which --int-bits=64 says. *)
   val intBits : int ref = ref 63
+  val () = CompilerState.cellRoot ("Target.intBits", intBits)
 
   (* runevm-stack's bytecode: known calls of up to 64 arguments (CALLK), no
      switch yet, and a collector that needs neither barriers nor

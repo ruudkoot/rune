@@ -12,9 +12,13 @@ struct
 
   (* what the program decided for its standard error *)
   val theme : Color.theme option ref = ref NONE
+  val () = CompilerState.cellRoot ("Diagnostic.theme", theme)
   val mode = ref Short
+  val () = CompilerState.cellRoot ("Diagnostic.mode", mode)
   val jsonFile : string option ref = ref NONE
+  val () = CompilerState.cellRoot ("Diagnostic.jsonFile", jsonFile)
   val collected : (string * Source.span * string) list ref = ref []
+  val () = CompilerState.cellRoot ("Diagnostic.collected", collected)
 
   fun paint role s = case !theme of NONE => s | SOME t => Color.paintIn t role s
 

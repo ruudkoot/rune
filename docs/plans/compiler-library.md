@@ -26,7 +26,7 @@ it.
 | M0 | The REPL's branch and `incremental` merged; this plan's numbers measured again | done 2026-10-13: both on `master` since 2026-10-11 (#38, #39), the numbers measured again at `2e2351ba` |
 | M1 | The compiler moved to `lib/compiler`, the driver left in `src` | in progress: extraction implemented; acceptance corrections and a clean full check remain |
 | M2 | A library's names: export lists for `rune --library` | planned |
-| M3 | The compiler's state: a session that starts from nothing | planned |
+| M3 | The compiler's state: a session that starts from nothing | in progress: registered roots and serialized ownership implemented; public API integration and acceptance remain |
 | M4 | `RuneCompiler`: the API, its tests, its frozen cache | planned |
 | M5 | The clients: the REPL's engine, `rune --serve`, the Basis's `Compiler` | planned |
 
@@ -304,6 +304,46 @@ changing the IDE checkout is not a prerequisite for the standalone server.
 * **Done when:** a program that compiles the same text in two sessions
   one after the other gets the same bytes both times (a test), and the
   script passes.
+
+Ownership checkpoint (2026-10-22):
+
+* `CompilerState : COMPILER_STATE` registers 206 persistent roots. The
+  baseline is sealed after compiler module initialization, so builtins
+  initialized after a counter's declaration retain their identities.
+  New owners clone mutable containers from that baseline. Ordinary
+  switches preserve each owner's live ref-held objects and integer-table
+  binding cells; fixed arrays and tables retain their global handles.
+* One owner is active at a time. Owners can be interleaved and calls can
+  nest or re-enter a paused owner. Updates made by re-entry remain visible
+  when its caller resumes. Return and exception restore the caller; owner
+  creation also restores it if a copy fails. Closing an owner on the call
+  stack is rejected, and closed handles cannot be entered again.
+* `tools/compiler/state-audit.sml` parses source with Rune's frontend. It
+  checks registration names and copy adapters for known allocations and
+  explicit mutable root types, including nested/local modules, functor
+  bodies and eager collection callbacks. Four lifecycle roots of the
+  ownership mechanism itself are explicitly classified there. Its planted
+  faults cover missing/false registrations, wrong adapters and variables,
+  custom typed factories, callback allocations and deferred scratch cells.
+  New allocation helpers must extend this audit; it is not an alias
+  analysis of arbitrary SML functions.
+* `make test-compiler-state` audits the compiler, runs the ownership model
+  and compiles opaque signatures, generative functors and exception
+  replication in independent owners, checking identical unit bytes and
+  overlay/table isolation. The interpreter and `--jit=all` passed. A
+  separate alias regression first reproduced the loss of a live array
+  alias; baseline cloning was separated from switching and that case,
+  table callbacks and owner-stack re-entry now pass.
+* The final portable ownership model passed on MLton, SML/NJ 110.99.9
+  (64-bit and 32-bit), SML/NJ 2026.2, Poly/ML and MLKit 4.7.25:
+  `tests/out/r/20261022-062900-2380279`, 13 passes, 8.1 seconds, including
+  host-adapter and runner acceptance.
+
+These are ownership saves. Mutable type variables and AST annotations
+within one owner require the analysis publication/rollback contract in the
+language-server roadmap. Public `RuneCompiler` sessions, subprocess
+isolation and the combined full acceptance check remain to be integrated;
+M3 remains in progress.
 
 ### M4. `RuneCompiler` (L, about 1,000 SML)
 

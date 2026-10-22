@@ -13,6 +13,7 @@ struct
   (* the number of fields of each constructor of a datatype, by its stamp:
      NONE for one that boxes its argument or has none *)
   val known : (int * int option) list IntTable.table = IntTable.table 64
+  val () = CompilerState.tableRoot ("Rep.known", known)
 
   fun ofDatatype (stamp : int) : (int * int option) list =
     case IntTable.find (known, stamp) of

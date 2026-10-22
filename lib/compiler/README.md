@@ -13,9 +13,23 @@ the command-line parser and executable entrypoints remain under `src`.
 `CompilerSettings` owns settings used by library passes; the CLI aliases
 those refs instead of being a library dependency.
 
-The current extraction retains the compiler's existing mutable state.
-The public export boundary, isolated sessions and `RuneCompiler` facade
-are the following compiler-library milestones. Internal module names are
-implementation interfaces and should not be used as a stable application
-API. `config.sml` is a generated copy of the build's version/identity,
-installed with the library sources and never committed.
+`CompilerState` registers persistent compiler roots and switches them
+between owners for serialized operations. Its baseline is sealed after
+module initialization, preserving initialized builtin identities. Mutable
+container cells, arrays and integer-table buckets are copied for each
+owner; persistent maps and that owner's type and AST graphs retain their
+identities. Nested calls restore the caller's roots on return or exception.
+Publication of immutable semantic results is a separate analysis contract.
+
+`make test-compiler-state` checks registrations with the compiler's SML
+parser, tests planted audit faults, interleaves compiler owners, and checks
+unit-byte agreement under the interpreter and JIT. The audit covers known
+allocation forms and explicit mutable root types, including nested modules,
+local declarations and eager collection callbacks. New allocation helpers
+must extend the audit and its fault cases.
+
+The public export boundary and `RuneCompiler` facade remain upcoming
+compiler-library milestones. Internal module names are implementation
+interfaces and should not be used as a stable application API. `config.sml`
+is a generated copy of the build's version/identity, installed with the
+library sources and never committed.

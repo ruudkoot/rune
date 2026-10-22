@@ -62,18 +62,24 @@ struct
                  funs : Elaborate.funinfo IntMap.map}
 
   val units : loaded list ref = ref []                        (* newest first *)
+  val () = CompilerState.cellRoot ("UnitBasis.units", units)
   val byIdentity : loaded StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.byIdentity", byIdentity)
   (* every name below these is built in *)
   val builtin : int vector ref = ref (Vector.fromList [0, 0, 0])
+  val () = CompilerState.cellRoot ("UnitBasis.builtin", builtin)
   (* per kind, the ranges of the units by base, for writing: (base, count, unit) *)
   val ranges : (int * int * loaded) vector array = Array.array (3, Vector.fromList [])
+  val () = CompilerState.arrayRoot ("UnitBasis.ranges", ranges)
   (* the type variables of the units loaded, by their ids: one cell for each *)
   val tvars : T.tvar ref IntTable.table ref = ref (IntTable.table 1024)
+  val () = CompilerState.refRoot ("UnitBasis.tvars", tvars, IntTable.copy)
 
   (* Who bound each name of the top level the session has, by its kind and
      name as Usage records them ("v x", "s A", "fix ++", ...): the identity of
      the unit; a name not here is the initial basis's *)
   val binders : string StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.binders", binders)
 
   (* The name of a stamp of kind k that is the same from session to
      session, and in a unit taken from the cache: built in, or the unit's
@@ -98,6 +104,7 @@ struct
   (* each usage's fingerprint, by its binder and key, once worked out
      (fingerprintAt) *)
   val fpMemo : string option StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.fpMemo", fpMemo)
 
   fun startSession () =
     (units := []; byIdentity := StringMap.empty; builtin := counters ();
@@ -138,6 +145,7 @@ struct
      (Env.session): what a usage of an identifier's fixity is checked
      against *)
   val sessionFixity : Fixity.env ref = ref Fixity.initial
+  val () = CompilerState.cellRoot ("UnitBasis.sessionFixity", sessionFixity)
 
   (* The place of the unit about to be looked for in the cache or compiled:
      its environment and fixity, which usages are checked against *)
@@ -146,9 +154,11 @@ struct
   (* The path that reaches each name of a loaded unit in what it declared,
      by kind and stamp: the first, in the order of the names *)
   val paths : string IntTable.table vector = Vector.tabulate (3, fn _ => IntTable.table 64)
+  val () = CompilerState.tableVectorRoot ("UnitBasis.paths", paths)
   (* and the other way: the name of each kind that a path reaches in a
      loaded unit, by its identity, kind and path *)
   val byPath : int StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.byPath", byPath)
   fun pathKey (identity : string, k : int, p : string) = identity ^ "\000" ^ Int.toString k ^ "\000" ^ p
   fun notePaths (u : loaded, delta : Env.env, sigs : (string * SigMatch.sigma) list) : unit =
     let
@@ -203,10 +213,13 @@ struct
      defines it, so that a change of the definition shows in every
      fingerprint that names it *)
   val tyconFps : string IntTable.table = IntTable.table 64
+  val () = CompilerState.tableRoot ("UnitBasis.tyconFps", tyconFps)
   (* whether a value's fingerprint names the value (not for a signature's
      ABI: sigFingerprint) *)
   val anchorValues = ref true
+  val () = CompilerState.cellRoot ("UnitBasis.anchorValues", anchorValues)
   val inProgress : unit IntTable.table = IntTable.table 16
+  val () = CompilerState.tableRoot ("UnitBasis.inProgress", inProgress)
 
   (* the text a fingerprint hashes, of a type: its generic variables
      numbered by first occurrence (tvs), and the type names local to a
@@ -306,6 +319,7 @@ struct
      Mid -- loads no module and is none, and its _export's fingerprint is a
      constant, the same both ways (Main sets wholeFingerprints) *)
   val wholeFingerprints = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.wholeFingerprints", wholeFingerprints)
   val () = Elaborate.sigFingerprint :=
              (* a usage too: a unit made with one is not the other's *)
              (fn sg => if (Usage.use ("whole", "on"); !wholeFingerprints) then "whole"
@@ -366,6 +380,7 @@ struct
      holds where the REPL decides the same now
      (docs/plans/build-cache-issues.md, issue 3). Off outside the REPL. *)
   val replSetting : (string -> bool) ref = ref (fn _ => false)
+  val () = CompilerState.cellRoot ("UnitBasis.replSetting", replSetting)
 
   (* The unit that bound a usage's name: of a long name, its first
      structure's; of a setting of the REPL's, "on" where it is on *)
@@ -1216,6 +1231,7 @@ struct
   (* the keys of binders each bind sets, in order: what a scope of a build
      file added (Main, --build) *)
   val bindLog : string list ref = ref []
+  val () = CompilerState.cellRoot ("UnitBasis.bindLog", bindLog)
 
   fun bind ({unit, delta, directives, sigs, funs, overloads} : result) : unit =
     let
@@ -1279,6 +1295,7 @@ struct
      its units in its file as a build from source does, for a unit loaded
      into it -- compiled from source -- to find them by *)
   val remapAllowed = ref true
+  val () = CompilerState.cellRoot ("UnitBasis.remapAllowed", remapAllowed)
 
   (* the remapping that loads an entry -- its basis pickle, its code u -- in
      the session, or Missing: of every unit either names *)

@@ -22,6 +22,7 @@ struct
      and does not define (not Pass.whole); set by the driver, since it is
      ToMid's to say. *)
   val importedScheme : (int -> scheme option) ref = ref (fn _ => NONE)
+  val () = CompilerState.cellRoot ("MidLint.importedScheme", importedScheme)
 
   fun check (p : program) : unit =
     let

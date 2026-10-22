@@ -44,27 +44,41 @@ struct
   (* The tables of the program being made.                              *)
 
   val consts : const list ref = ref []
+  val () = CompilerState.cellRoot ("Code.consts", consts)
   val nconsts = ref 0
+  val () = CompilerState.cellRoot ("Code.nconsts", nconsts)
   val constIndex : int StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Code.constIndex", constIndex)
   val globals : int IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Code.globals", globals)
   val nglobals = ref 0
+  val () = CompilerState.cellRoot ("Code.nglobals", nglobals)
   val nextLabel = ref 0
+  val () = CompilerState.cellRoot ("Code.nextLabel", nextLabel)
   (* The source files positions refer to, in the order they were first seen;
      an index into this is what the line table holds. *)
   val files : string list ref = ref []
+  val () = CompilerState.cellRoot ("Code.files", files)
   val nfiles = ref 0
+  val () = CompilerState.cellRoot ("Code.nfiles", nfiles)
   val fileIndex : int StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Code.fileIndex", fileIndex)
   (* The file numbered last, since positions come file by file. *)
   val lastFile : (string * int) option ref = ref NONE
+  val () = CompilerState.cellRoot ("Code.lastFile", lastFile)
 
   (* The inlined frames the positions name (Low.pos), each once, numbered
      from 1: a function's name, the file, line and column it was called
      from -- 0, 0, 0 where it was called in tail position -- and the frame
      that call is in (0: none). Latest first. *)
   val inlines : (string * int * int * int * int) list ref = ref []
+  val () = CompilerState.cellRoot ("Code.inlines", inlines)
   val ninlines = ref 0
+  val () = CompilerState.cellRoot ("Code.ninlines", ninlines)
   val inlineIndex : int StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Code.inlineIndex", inlineIndex)
   val lastInline : ({name : string, site : Source.span option} list * int) ref = ref ([], 0)
+  val () = CompilerState.cellRoot ("Code.lastInline", lastInline)
 
   fun reset () =
     (consts := []; nconsts := 0; constIndex := StringMap.empty;
@@ -161,6 +175,7 @@ struct
   (* The names of the opcodes a dump shows: the stack bytecode's, or the
      register bytecode's where the program is of that (Regs). *)
   val opcodeNames = ref Opcodes.names
+  val () = CompilerState.cellRoot ("Code.opcodeNames", opcodeNames)
 
   fun itemToString it =
     case it of

@@ -11,6 +11,7 @@ struct
      (--flex-records=topdec), and the REPL compiles a topdec as one unit.
      The file's parsed last are its own. *)
   val topdecEnds : unit IntTable.table StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.refRoot ("Parser.topdecEnds", topdecEnds, StringMap.map IntTable.copy)
   fun endsTopdec ({file, stop, ...} : Source.span) : bool =
     case StringMap.find (!topdecEnds, file) of
       SOME t => isSome (IntTable.find (t, stop))
@@ -27,6 +28,7 @@ struct
   (* The extension of or-patterns, (p1 | ... | pn): off (Standard ML '97)
      unless the driver sets it (--or-patterns). *)
   val orPatterns = ref false
+  val () = CompilerState.cellRoot ("Parser.orPatterns", orPatterns)
 
   (* Parse a file starting from the given fixity environment; returns the
      program and the fixity environment in effect at the end (so that infix

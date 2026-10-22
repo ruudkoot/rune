@@ -7,6 +7,7 @@
 structure ElabStats =
 struct
   val on = ref false
+  val () = CompilerState.cellRoot ("ElabStats.on", on)
 
   (* The contexts: the top level; a functor's body checked at its
      declaration (rule 86); the copy of a body elaborated at an application
@@ -60,18 +61,25 @@ struct
   fun cell (c, opn) = contextIndex c * nOps + operationIndex opn
 
   val times = Array.array (List.length contexts * nOps, Time.zeroTime)
+  val () = CompilerState.arrayRoot ("ElabStats.times", times)
   val counts = Array.array (List.length counters, 0)
+  val () = CompilerState.arrayRoot ("ElabStats.counts", counts)
 
   val timer : Timer.cpu_timer option ref = ref NONE
+  val () = CompilerState.cellRoot ("ElabStats.timer", timer)
   fun now () =
     case !timer of
       SOME t => let val {usr, sys} = Timer.checkCPUTimer t in Time.+ (usr, sys) end
     | NONE => Time.zeroTime
 
   val context = ref Top
+  val () = CompilerState.cellRoot ("ElabStats.context", context)
   val operation = ref Core
+  val () = CompilerState.cellRoot ("ElabStats.operation", operation)
   val last = ref Time.zeroTime
+  val () = CompilerState.cellRoot ("ElabStats.last", last)
   val depth = ref 0
+  val () = CompilerState.cellRoot ("ElabStats.depth", depth)
 
   fun enable () = (on := true; timer := SOME (Timer.startCPUTimer ()))
 

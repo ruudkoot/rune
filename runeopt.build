@@ -7,7 +7,11 @@
   hold here too. *)
 build/config.sml
 files
+  lib/compiler/util/scon.sml
   lib/compiler/util/ordmap.sml
+  lib/compiler/util/inttable.sml
+  lib/compiler/state_sig.sml
+  lib/compiler/state.sml
   src/isa/isa.sml
   src/isa/stack.sml
   src/isa/prims.sml

@@ -92,7 +92,9 @@ struct
      tokenize found of them in a source, by its name, until the compile of
      the source reports them (report) *)
   val lints = ref true
+  val () = CompilerState.cellRoot ("Lexer.lints", lints)
   val pending : (Source.span * string) list StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Lexer.pending", pending)
   fun report (name : string) : unit =
     case StringMap.find (!pending, name) of
       NONE => ()
@@ -111,6 +113,7 @@ struct
      each looked up once a run: the parts of a lookalike of a comment's
      end *)
   val starOrParen : bool IntTable.table = IntTable.table 64
+  val () = CompilerState.tableRoot ("Lexer.starOrParen", starOrParen)
   fun isStarOrParen (c : int) : bool =
     case IntTable.find (starOrParen, c) of
       SOME b => b

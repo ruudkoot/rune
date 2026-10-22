@@ -23,6 +23,7 @@ struct
   type entry = {kind : string, ops : impl StringMap.map, literal : literal}
 
   val table : entry IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Overload.table", table)
 
   fun register (tycon : Types.tycon, kind : string, ops : (string * impl) list, literal : literal) : unit =
     table := IntMap.insert (!table, #stamp tycon,
@@ -34,6 +35,7 @@ struct
   (* what a lookup tells the cache: that the unit being compiled used the
      type's overloading (UnitBasis sets it) *)
   val used : (Types.tycon -> unit) ref = ref (fn _ => ())
+  val () = CompilerState.cellRoot ("Overload.used", used)
 
   fun find (tycon : Types.tycon) : entry option = (!used tycon; IntMap.find (!table, #stamp tycon))
 

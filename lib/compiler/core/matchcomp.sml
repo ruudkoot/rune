@@ -47,6 +47,7 @@ struct
      (Translate.transProgram), so that a constant is made once and not where
      it is evaluated (the utf8 roadmap's M4, E8) *)
   val hoisted : (int * lexp) list ref = ref []
+  val () = CompilerState.cellRoot ("MatchComp.hoisted", hoisted)
 
   (* A special constant at the type elaboration found for it: a constant, or
      for a type registered with `_overload ... via f` the application of f to

@@ -36,23 +36,32 @@ struct
   (* How many times each variable is used, and what each function captures,
      by its name. *)
   val useCounts : int IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Lower.useCounts", useCounts, IntTable.copy)
   val captures : int list IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Lower.captures", captures)
   val selfRefs : bool IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Lower.selfRefs", selfRefs)
 
   (* How many uses of each variable take a field of it (Select) in the
      function it is bound in: where that is all its uses, the argument of a
      constructor made of its fields is never made whole (Rep, M11). *)
   val selectUses : int IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Lower.selectUses", selectUses, IntTable.copy)
   val binderFn : int IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Lower.binderFn", binderFn, IntTable.copy)
   val nextFn = ref 0
+  val () = CompilerState.cellRoot ("Lower.nextFn", nextFn)
   (* and the fields each takes (results in globals, below) *)
   val selectFields : int list IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Lower.selectFields", selectFields, IntTable.copy)
   (* and, of a variable bound to a call, the uses that only ask its
      constructor or take its argument: ConTag, Decon, ptr_eq with a nullary
      constructor (datatypes returned in globals, below) *)
   val sumUses : int IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Lower.sumUses", sumUses, IntTable.copy)
   (* and how many of its globals the deconstructions of it read *)
   val sumRead : int IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Lower.sumRead", sumRead, IntTable.copy)
   fun countSelects (e : M.exp) : unit =
     let
       val f = !nextFn
@@ -112,6 +121,7 @@ struct
      from its closure, made where the closure is. *)
   datatype virt = Parts of L.var list | Fields of int * int * L.var | Sum of L.var * L.var list
   val virtuals : (int * virt) IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Lower.virtuals", virtuals, IntTable.copy)
 
   fun count x = IntTable.bump (!useCounts, x)
   fun usesOf x = case IntTable.find (!useCounts, x) of SOME n => n | NONE => 0
@@ -278,14 +288,19 @@ struct
   (* ---- the functions being made ---- *)
 
   val funcs : L.func list ref = ref []
+  val () = CompilerState.cellRoot ("Lower.funcs", funcs)
   val nextFuncId = ref 0
+  val () = CompilerState.cellRoot ("Lower.nextFuncId", nextFuncId)
   val funNames : string IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Lower.funNames", funNames)
 
   (* The functions of the top level, by their globals: known ones, and the
      id each is made with, which a known call made before it is given at
      the end (resolve). *)
   val knownFuns : unit IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Lower.knownFuns", knownFuns)
   val globalFids : int IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Lower.globalFids", globalFids)
   fun isKnown g = IntMap.member (!knownFuns, g)
 
   (* A unit (not Pass.whole; docs/plans/incremental-compilation.md, M2):
@@ -295,7 +310,9 @@ struct
      linker replaces (Link). A unit's top level ends in a tail call of the
      next unit's, by the stamp nextUnit. *)
   val knownBefore : unit IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Lower.knownBefore", knownBefore)
   val imported : int IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Lower.imported", imported)
   val nextUnit = ~1
 
   (* A function being made: its id, its blocks so far, the block being
@@ -396,12 +413,16 @@ struct
      Kept for the function being lowered in binds, and the functions it is
      in on a stack. *)
   val debugInfo = ref false
+  val () = CompilerState.cellRoot ("Lower.debugInfo", debugInfo)
   val debugVars : {id : int, vars : (int * L.var) list, env : (int * int) list} list ref = ref []
+  val () = CompilerState.cellRoot ("Lower.debugVars", debugVars)
   (* and, from the register target, the register of each variable of Low
      and the byte of the function's code where it has been set, ~1 for
      none, by the function's id (Regs, whose signature has no room) *)
   val debugRegs : (int * int vector * int vector) list ref = ref []
+  val () = CompilerState.cellRoot ("Lower.debugRegs", debugRegs)
   val binds : (int * L.var) list ref = ref []
+  val () = CompilerState.cellRoot ("Lower.binds", binds)
 
   (* x is v from here on: in one table for the function, since each variable
      of Mid is bound once *)
@@ -450,9 +471,12 @@ struct
      usual way), and not where the debugger reads the program (-g), whose
      stops could come between a return and the reads. *)
   val slotFuns : int IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Lower.slotFuns", slotFuns)
   val slotGlobals : int list IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Lower.slotGlobals", slotGlobals)
   (* the fields of n results some call reads: the others are not set *)
   val slotNeeded : int list IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Lower.slotNeeded", slotNeeded)
   fun needed (n : int, i : int) : bool =
     case IntMap.find (!slotNeeded, n) of SOME is => List.exists (fn j => j = i) is | NONE => false
   (* the fields a call's result has taken, where it is only taken apart *)
@@ -460,6 +484,7 @@ struct
     if usesOf x = selectsOf x then SOME (case IntTable.find (!selectFields, x) of SOME is => is | NONE => []) else NONE
   (* the n of the function being made, where it returns so *)
   val currentSlots : int option ref = ref NONE
+  val () = CompilerState.cellRoot ("Lower.currentSlots", currentSlots)
 
   (* The same for a datatype (performance M8): a function each of whose
      returns is a constructor made there, or a tail call of another such
@@ -472,8 +497,11 @@ struct
      since they may hold what an earlier return left; they are set to ()
      when the program starts, so that none is read unset. *)
   val sumFuns : int IntMap.map ref = ref IntMap.empty            (* the function's global -> its datatype *)
+  val () = CompilerState.cellRoot ("Lower.sumFuns", sumFuns)
   val sumGlobals : int list IntMap.map ref = ref IntMap.empty    (* the datatype -> its globals *)
+  val () = CompilerState.cellRoot ("Lower.sumGlobals", sumGlobals)
   val currentSum : int option ref = ref NONE
+  val () = CompilerState.cellRoot ("Lower.currentSum", currentSum)
 
   fun sumWidth (t : Ty.ty) : int option =
     case Ty.view t of
@@ -544,6 +572,7 @@ struct
 
   (* the calls whose tuple is made where it is needed (above) *)
   val lazyCalls : unit IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Lower.lazyCalls", lazyCalls, IntTable.copy)
 
   fun findSumFuns (p : M.program, asValue : unit IntTable.table) : unit =
     let

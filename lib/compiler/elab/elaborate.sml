@@ -5,13 +5,16 @@ struct
   open Ast Types Env
 
   val stampCounter = ref 0
+  val () = CompilerState.cellRoot ("Elaborate.stampCounter", stampCounter)
   fun freshStamp () = let val s = !stampCounter in stampCounter := s + 1; s end
 
   val allowPrim = ref false
+  val () = CompilerState.cellRoot ("Elaborate.allowPrim", allowPrim)
 
   (* Signatures and functors are components of the basis, not of
      environments (Section 5.1); both are declared at top level only. *)
   val sigs : SigMatch.sigma StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Elaborate.sigs", sigs)
 
   (* A functor's signature (Section 5.1, (T)(E, (T')E')): its parameter's,
      and the summary of its body that its declaration's check left -- the
@@ -33,15 +36,18 @@ struct
                   summary : summary option,
                   origin : string}   (* the identity of the unit it was loaded from; "" where elaborated *)
   val funs : funinfo StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Elaborate.funs", funs)
 
   (* Whether what is elaborated is only checked: a functor's body at its
      declaration, or a copy of a body applied there; a functor application
      makes code where it is not *)
   val checking = ref 0
+  val () = CompilerState.cellRoot ("Elaborate.checking", checking)
 
   (* --lint: each application whose code is made checks that its copy
      agrees with the functor's summary but for the names the copy made *)
   val lintSummaries = ref false
+  val () = CompilerState.cellRoot ("Elaborate.lintSummaries", lintSummaries)
 
   (* Dynamic modules (docs/units.md, Dynamic modules; the incremental
      roadmap's M9, D17 and D18): the fingerprint of a signature's ABI, which
@@ -51,24 +57,32 @@ struct
      which a datatype of the body of that name and those constructors takes
      its tags in *)
   val sigFingerprint : (SigMatch.sigma -> string) ref = ref (fn _ => "")
+  val () = CompilerState.cellRoot ("Elaborate.sigFingerprint", sigFingerprint)
   val exportTags : string list StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Elaborate.exportTags", exportTags)
   (* where the program loads a dynamic module, which only a program built in
      units can (Main): the first such declaration *)
   val dynamicAt : Source.span option ref = ref NONE
+  val () = CompilerState.cellRoot ("Elaborate.dynamicAt", dynamicAt)
 
   (* The signatures and functors declared since UnitBasis.begin, newest
      first: what a unit's basis holds of them (lib/compiler/driver/unitbasis.sml) *)
   val insertedSigs : string list ref = ref []
+  val () = CompilerState.cellRoot ("Elaborate.insertedSigs", insertedSigs)
   val insertedFuns : string list ref = ref []
+  val () = CompilerState.cellRoot ("Elaborate.insertedFuns", insertedFuns)
 
   (* The constructors of every datatype declared so far, with their schemes,
      by the stamp of its type name, in or out of scope: what the REPL's
      printers match a value of the datatype with (src/repl/show.sml). *)
   val dataCons : (string * valstatus) list IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Elaborate.dataCons", dataCons)
 
   (* overloaded operator variables and flexible records awaiting resolution *)
   val pendingOverloads : tvar ref list ref = ref []
+  val () = CompilerState.cellRoot ("Elaborate.pendingOverloads", pendingOverloads)
   val pendingFlex : (tvar ref * span) list ref = ref []
+  val () = CompilerState.cellRoot ("Elaborate.pendingFlex", pendingFlex)
 
   (* How large the context is that must determine a flexible record's
      labels (Section 4.11 leaves it open; docs/language.md, --flex-records):
@@ -80,6 +94,7 @@ struct
      --units) *)
   datatype flexMode = FlexBinding | FlexDeclaration | FlexTopdecMono | FlexTopdec | FlexProgram
   val flexRecords = ref FlexTopdec
+  val () = CompilerState.cellRoot ("Elaborate.flexRecords", flexRecords)
   fun flexModeName m =
     case m of
       FlexBinding => "binding" | FlexDeclaration => "declaration" | FlexTopdecMono => "topdec-monomorphic"
@@ -92,7 +107,9 @@ struct
      They are switched off while a functor body is re-elaborated for an
      application, since the body was reported on when the functor was declared. *)
   val pendingChecks : (unit -> unit) list ref = ref []
+  val () = CompilerState.cellRoot ("Elaborate.pendingChecks", pendingChecks)
   val reportMatches = ref true
+  val () = CompilerState.cellRoot ("Elaborate.reportMatches", reportMatches)
   fun deferCheck (f : unit -> unit) = if !reportMatches then pendingChecks := f :: !pendingChecks else ()
 
   fun err (sp, msg) = Error.error (sp, msg)
@@ -111,6 +128,7 @@ struct
   (* int and word constants awaiting the resolution of their type, for the
      check that the type can represent them *)
   val pendingLiterals : (scon * ty * Source.span) list ref = ref []
+  val () = CompilerState.cellRoot ("Elaborate.pendingLiterals", pendingLiterals)
 
   fun power2 (n : int) : IntInf.int = IntInf.pow (IntInf.fromInt 2, n)
 
@@ -120,6 +138,7 @@ struct
     val one = IntInf.fromInt 1
     val zero = IntInf.fromInt 0
     val known : (IntInf.int * IntInf.int) option array = Array.array (130, NONE)
+    val () = CompilerState.arrayRoot ("Elaborate.known", known)
   in
     fun literalBounds (signed, n) =
       let
@@ -194,7 +213,9 @@ struct
      int and word (Appendix E), or Int64.int and Word64.word in the
      program's own files under --default-type (main.sml). *)
   val intDefault = ref intTy
+  val () = CompilerState.cellRoot ("Elaborate.intDefault", intDefault)
   val wordDefault = ref wordTy
+  val () = CompilerState.cellRoot ("Elaborate.wordDefault", wordDefault)
 
   fun resolvePending () =
     (List.app (fn r =>
@@ -1736,6 +1757,7 @@ struct
   (* the declarations of the topdec so far, whose free variables are checked
      where it ends *)
   val pendingClosed : (env * span) list ref = ref []
+  val () = CompilerState.cellRoot ("Elaborate.pendingClosed", pendingClosed)
 
   type snapshot = {sigs : SigMatch.sigma StringMap.map, funs : funinfo StringMap.map,
                    datatypes : Ty.datatypeInfo IntMap.map, overloads : Overload.entry IntMap.map,
@@ -1757,10 +1779,12 @@ struct
      that a compile reports every independent error before it fails; the
      driver turns it on for the program, and the REPL will. *)
   val recover = ref false
+  val () = CompilerState.cellRoot ("Elaborate.recover", recover)
 
   (* What the last elabTop added to the environment, its declarations' in
      one: what the REPL echoes of a declaration (src/repl/session.sml). *)
   val lastDelta : env ref = ref Env.empty
+  val () = CompilerState.cellRoot ("Elaborate.lastDelta", lastDelta)
 
   (* --pass-stats=elab: the line of a top-level declaration elaborated *)
   fun stats (d : dec) : unit =

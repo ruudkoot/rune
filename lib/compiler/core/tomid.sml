@@ -29,6 +29,7 @@ struct
   (* The schemes of the globals, from the elaborator's tables: at the top
      level every generic variable of a type is the global's own. *)
   val globalSchemes : M.scheme IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("ToMid.globalSchemes", globalSchemes)
   fun globalScheme (g : int) : M.scheme =
     case IntMap.find (!globalSchemes, g) of
       SOME s => s

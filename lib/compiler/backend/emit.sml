@@ -59,6 +59,7 @@ struct
      (Link.lastExports; docs/bytecode.md, The units section); "" where the
      program was not linked from units *)
   val trailer = ref ""
+  val () = CompilerState.cellRoot ("Emit.trailer", trailer)
   fun unitsSection (units : (string * (int * int * int) list) list) : string =
     u32 (List.length units)
     ^ String.concat (List.map (fn (identity, xs) =>

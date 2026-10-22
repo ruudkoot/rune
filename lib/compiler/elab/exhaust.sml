@@ -9,8 +9,11 @@ struct
   open Ast
 
   val workLimit = ref 1000000
+  val () = CompilerState.cellRoot ("Exhaust.workLimit", workLimit)
   val workLeft = ref 0
+  val () = CompilerState.cellRoot ("Exhaust.workLeft", workLeft)
   val workSpan = ref Source.noSpan
+  val () = CompilerState.cellRoot ("Exhaust.workSpan", workSpan)
   fun startWork sp = (workSpan := sp; workLeft := !workLimit)
   fun step () =
     if !workLeft = 0 then

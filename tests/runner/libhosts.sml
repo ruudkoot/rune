@@ -32,6 +32,7 @@ struct
        ("digest.digest", ["digest"], "digest/digest"),
        ("jsonrpc.jsonrpc", ["unicode", "json", "jsonrpc"], "jsonrpc/jsonrpc"),
        ("lsp.protocol", ["unicode", "json", "jsonrpc", "lsp"], "lsp/protocol"),
+       ("compiler.state", ["compiler-state"], "compiler/state"),
        ("dap.dap", ["unicode", "json", "jsonrpc", "dap"], "dap/dap"),
        ("pretty.pretty", ["unicode", "pretty"], "pretty/pretty"),
        ("markdown.spec", ["unicode", "json", "pretty", "markdown"], "markdown/spec"),
@@ -50,6 +51,7 @@ struct
   fun files libraries =
     let fun one "unit" = unit ()
           | one "property" = random @ Hosts.portable "test/property" @ Hosts.portable "test/property/basis"
+          | one "compiler-state" = ["lib/compiler/util/inttable.sml", "lib/compiler/state_sig.sml", "lib/compiler/state.sml"]
           | one lib = Hosts.portable lib
     in if null libraries then random else List.concat (List.map one libraries) end
 

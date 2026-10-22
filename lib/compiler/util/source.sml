@@ -69,6 +69,7 @@ struct
   (* the text of a file that is other than the file system's: an editor's
      buffer, which the compiler as a service compiles (Serve) *)
   val overlays : string StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Source.overlays", overlays)
 
   (* Latin-1 text made UTF-8, a byte above 127 the two bytes of the
      character of its number: how a file read under --unicode=latin1 is
@@ -114,14 +115,17 @@ struct
 
   (* Registry of loaded files so that spans can be rendered anywhere. *)
   val files : file StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Source.files", files)
 
   (* The file looked up last: positions come file by file, so most lookups
      are of the same file as the one before. *)
   val lastFile : (string * file) option ref = ref NONE
+  val () = CompilerState.cellRoot ("Source.lastFile", lastFile)
 
   (* of a file whose text keepLines let go, the lines that hold a byte
      above 127, by their index: what its columns are counted in *)
   val keptLines : string IntMap.map StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Source.keptLines", keptLines)
   fun forget (name : string) =
     if StringMap.member (!keptLines, name) then keptLines := StringMap.remove (!keptLines, name) else ()
 

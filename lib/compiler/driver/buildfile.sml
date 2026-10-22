@@ -132,6 +132,7 @@ struct
 
   (* the path variables (--path NAME=DIR) *)
   val variables : string StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("BuildFile.variables", variables)
 
   (* a path of a build file in dir, its variables given *)
   fun expand (dir : string, p : string) : string =

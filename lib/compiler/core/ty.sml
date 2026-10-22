@@ -71,8 +71,11 @@ struct
        its parts' numbers, in words, which wrap round -- in buckets, no
        more nodes than buckets *)
     val buckets : ty list array ref = ref (Array.array (1024, []))
+    val () = CompilerState.refRoot ("Ty.Node.buckets", buckets, CompilerState.copyArray)
     val count = ref 0
+    val () = CompilerState.cellRoot ("Ty.Node.count", count)
     val next = ref 0
+    val () = CompilerState.cellRoot ("Ty.Node.next", next)
 
     (* a hash: the constructor's number, then the numbers of the view and
        of its parts, in words, which wrap round, to 30 bits *)
@@ -181,17 +184,21 @@ struct
 
   (* the type, or scheme, each variable was bound with, by its stamp *)
   val binders : Types.ty IntTable.table = IntTable.table 8192
+  val () = CompilerState.tableRoot ("Ty.binders", binders)
   (* the argument of each exception, by its stamp *)
   val exnArgs : Types.ty option IntTable.table = IntTable.table 256
+  val () = CompilerState.tableRoot ("Ty.exnArgs", exnArgs)
   (* each datatype, by the stamp of its type name: the ids of its parameters,
      and each constructor's tag, name and argument, as the elaborator gave it
      or, for one Mid's text declares (MidText), as it is *)
   datatype argTy = FromElab of Types.ty | Direct of ty
   type datatypeInfo = {params : int list, cons : (int * string * argTy option) list}
   val datatypes : datatypeInfo IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Ty.datatypes", datatypes)
   (* what each type made abstract by an opaque signature stands for, by the
      stamp of its fresh name *)
   val realizations : Types.tyfcn IntTable.table = IntTable.table 256
+  val () = CompilerState.tableRoot ("Ty.realizations", realizations)
 
   (* A datatype declared in a function may name the function's type
      variables (`fun 'a f ... = let datatype t = T of 'a ...`): an instance
@@ -204,13 +211,16 @@ struct
      datatype (extrasOf); in most programs no datatype has any. *)
   datatype extras = Unknown | NoExtras | Extras of int list IntMap.map
   val extras = ref Unknown
+  val () = CompilerState.cellRoot ("Ty.extras", extras)
 
   fun bindVar (stamp : int, t : Types.ty) = IntTable.insert (binders, stamp, t)
   (* the names and types of the variables bound, kept where the REPL
      debugs (`-g`; the REPL roadmap's M12), which shows them: binders loses
      a unit's once it is compiled (UnitBasis.undo) *)
   val keepNames = ref false
+  val () = CompilerState.cellRoot ("Ty.keepNames", keepNames)
   val names : (string * Types.ty) IntTable.table = IntTable.table 64
+  val () = CompilerState.tableRoot ("Ty.names", names)
   fun nameVar (stamp : int, name : string, t : Types.ty) =
     if !keepNames then IntTable.insert (names, stamp, (name, t)) else ()
   fun bindExn (stamp : int, arg : Types.ty option) = IntTable.insert (exnArgs, stamp, arg)
@@ -358,6 +368,7 @@ struct
 
   exception Big
   val treeSteps = ref 0
+  val () = CompilerState.cellRoot ("Ty.treeSteps", treeSteps)
   fun tree (t : Types.ty) : ty =
     let val n = !treeSteps + 1
     in

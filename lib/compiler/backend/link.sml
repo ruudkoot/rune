@@ -78,6 +78,7 @@ struct
      unit, its index in the program -- for a unit loaded into the program
      later to name (docs/units.md, Dynamic modules) *)
   val lastExports : (string * (int * int * int) list) list ref = ref []
+  val () = CompilerState.cellRoot ("Link.lastExports", lastExports)
 
   fun program (target : Low.program -> Code.program, linked : (int * int) list vector, units : unitCode list)
       : Code.program =

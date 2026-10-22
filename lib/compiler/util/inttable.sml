@@ -6,8 +6,19 @@
 signature INT_TABLE =
 sig
   type 'a table
+  (* Backing storage at an ownership boundary. Capture again after mutations
+     before switching owners; this retains live binding-cell identities. *)
+  type 'a storage
   (* an empty table, for about this many keys *)
   val table : int -> 'a table
+  (* A copy owns its buckets and binding cells; stored values retain their identities. *)
+  val copy : 'a table -> 'a table
+  (* Restore dst from src without sharing buckets or binding cells. *)
+  val restore : 'a table * 'a table -> unit
+  (* Save backing storage without copying it. *)
+  val saveStorage : 'a table -> 'a storage
+  (* Restore an owner's backing storage and size. *)
+  val restoreStorage : 'a table * 'a storage -> unit
   val find : 'a table * int -> 'a option
   (* the key's value set, whether it had one or not *)
   val insert : 'a table * int * 'a -> unit
@@ -23,6 +34,7 @@ end
 structure IntTable :> INT_TABLE =
 struct
   type 'a table = {buckets : (int * 'a ref) list array ref, count : int ref}
+  type 'a storage = (int * 'a ref) list array * int
 
   fun table n =
     let
@@ -30,6 +42,18 @@ struct
     in
       {buckets = ref (Array.array (pow2 16, [])), count = ref 0}
     end
+
+  fun copy ({buckets, count} : 'a table) : 'a table =
+    {buckets = ref (Array.tabulate (Array.length (!buckets), fn i =>
+       List.map (fn (k, cell) => (k, ref (!cell))) (Array.sub (!buckets, i)))), count = ref (!count)}
+
+  fun restore ({buckets, count} : 'a table, source : 'a table) =
+    let val cloned = copy source
+    in buckets := !(#buckets cloned); count := !(#count cloned) end
+
+  fun saveStorage ({buckets, count} : 'a table) : 'a storage = (!buckets, !count)
+  fun restoreStorage ({buckets, count} : 'a table, (saved, size) : 'a storage) =
+    (buckets := saved; count := size)
 
   fun slot (buckets, k) = k mod Array.length buckets
 

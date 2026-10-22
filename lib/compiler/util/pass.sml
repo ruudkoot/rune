@@ -10,16 +10,24 @@ structure Pass =
 struct
   (* The optimisation level, -O0 to -O2, and the options of the passes. *)
   val level = ref 1
+  val () = CompilerState.cellRoot ("Pass.level", level)
   val only : string list option ref = ref NONE     (* --passes: the optional passes to run *)
+  val () = CompilerState.cellRoot ("Pass.only", only)
   val dumpBefore : string list ref = ref []
+  val () = CompilerState.cellRoot ("Pass.dumpBefore", dumpBefore)
   val dumpAfter : string list ref = ref []
+  val () = CompilerState.cellRoot ("Pass.dumpAfter", dumpAfter)
   val lint = ref false
+  val () = CompilerState.cellRoot ("Pass.lint", lint)
   val stats = ref false
+  val () = CompilerState.cellRoot ("Pass.stats", stats)
   (* the live heap's bytes after a full collection, where the program can
      ask its runtime (Rune's own main sets it; the hosts' builds cannot):
      --pass-stats with RUNE_MEM set prints it after each unit *)
   val liveBytes : (unit -> int) ref = ref (fn () => ~1)
+  val () = CompilerState.cellRoot ("Pass.liveBytes", liveBytes)
   val fuel : int option ref = ref NONE
+  val () = CompilerState.cellRoot ("Pass.fuel", fuel)
 
   (* Whether the passes see the whole program (docs/plans/incremental-
      compilation.md, M2). With --units they see one unit at a time, after
@@ -27,6 +35,7 @@ struct
      after it: Shake does not run, and neither Workers nor Simplify drops a
      function of the top level it no longer names. *)
   val whole = ref true
+  val () = CompilerState.cellRoot ("Pass.whole", whole)
 
   (* Whether an optional pass runs at the level given: --passes names the
      ones to run, whatever the level; otherwise a pass runs from its level
@@ -53,12 +62,16 @@ struct
      makes its code, with --units), and the processor time of the outermost
      ones, which `finish` shows beside the process's total *)
   val depth = ref 0
+  val () = CompilerState.cellRoot ("Pass.depth", depth)
   val outer = ref Time.zeroTime
+  val () = CompilerState.cellRoot ("Pass.outer", outer)
   (* what the outermost stages spent apart from their own time: counting
      the size of what they made (--pass-stats), and printing (--dump-before,
      --dump-after) and checking it (--lint) *)
   val sizes = ref Time.zeroTime
+  val () = CompilerState.cellRoot ("Pass.sizes", sizes)
   val checks = ref Time.zeroTime
+  val () = CompilerState.cellRoot ("Pass.checks", checks)
 
   (* the processor time the process has taken: from its start, with the
      collector's. Every stage is timed by it, so that the stages and the time
@@ -121,6 +134,7 @@ struct
      counts from before the process (SML/NJ's exported heap may), so that no
      stage is negative *)
   val origin = ref Time.zeroTime
+  val () = CompilerState.cellRoot ("Pass.origin", origin)
 
   fun startup () : unit =
     if !stats then

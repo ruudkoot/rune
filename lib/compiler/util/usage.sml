@@ -7,7 +7,9 @@
 structure Usage =
 struct
   val recording = ref false
+  val () = CompilerState.cellRoot ("Usage.recording", recording)
   val used : unit StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Usage.used", used)
 
   fun use (kind : string, name : string) : unit =
     if !recording then used := StringMap.insert (!used, kind ^ " " ^ name, ()) else ()

@@ -46,7 +46,9 @@ struct
      names, by its first member, worked out once: a group inside another is
      not walked again for the one around it. *)
   val groupFree : unit IntMap.map IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Lift.groupFree", groupFree, IntTable.copy)
   val groupGens : unit IntMap.map IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Lift.groupGens", groupGens, IntTable.copy)
 
   fun memo (t : unit IntMap.map IntTable.table ref, fs : fundef list, compute : unit -> unit IntMap.map) =
     case fs of

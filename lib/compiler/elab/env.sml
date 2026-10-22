@@ -71,6 +71,7 @@ struct
      the session's where one of its bindings, a witness, is the session
      structure's: cheap, and wrong only towards recording. *)
   val session : env option ref = ref NONE
+  val () = CompilerState.cellRoot ("Env.session", session)
 
   fun sameTy' (a : ty, b : ty) : bool =
     case (prune a, prune b) of

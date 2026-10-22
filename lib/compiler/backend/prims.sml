@@ -562,6 +562,7 @@ struct
      representations), 0 where the type says nothing; made when
      first asked, by LowLint *)
   val reps : (int list * int) StringMap.map option ref = ref NONE
+  val () = CompilerState.cellRoot ("Prims.reps", reps)
   fun repsOf name =
     case !reps of
       SOME m => StringMap.find (m, name)

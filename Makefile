@@ -248,6 +248,26 @@ all: vm boot runedoc runeopt runeffi manifests basis-cache
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter lsp
 
+# Compiler ownership audit and interleaved-session acceptance.
+COMPILER_STATE_AUDIT_SRCS := $(shell sh scripts/build-files.sh rune-compiler-state-audit.build)
+COMPILER_STATE_TEST_SRCS := $(shell sh scripts/build-files.sh rune-compiler-state-tests.build)
+.PHONY: test-compiler-state
+bin/rune-compiler-state-audit.rbc: $(RUNE) $(COMPILER_STATE_AUDIT_SRCS) rune-compiler-state-audit.build manifests
+	$(RUNE) --build rune-compiler-state-audit.build -o $@
+bin/rune-compiler-state-audit: bin/rune-compiler-state-audit.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-compiler-state-audit.rbc" "$$@"\n' > $@
+	chmod +x $@
+bin/rune-compiler-state-model.rbc: $(RUNE) lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/lib/compiler/state.sml manifests
+	$(RUNE) --library test/unit lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/lib/compiler/state.sml -o $@
+bin/rune-compiler-state-tests.rbc: $(RUNE) $(COMPILER_STATE_TEST_SRCS) rune-compiler-state-tests.build manifests
+	$(RUNE) --build rune-compiler-state-tests.build -o $@
+test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-tests.rbc
+	bin/rune-compiler-state-audit --self-test $(filter lib/compiler/%.sml,$(SOURCES))
+	bin/runevm bin/rune-compiler-state-model.rbc
+	bin/runevm --jit=all bin/rune-compiler-state-model.rbc
+	bin/runevm bin/rune-compiler-state-tests.rbc
+	bin/runevm --jit=all bin/rune-compiler-state-tests.rbc
+
 # Frontend baselines and edit traces for the language-server roadmap.
 LSP_BENCH_SRCS := $(shell sh scripts/build-files.sh rune-lsp-bench.build)
 .PHONY: lsp-bench test-lsp-bench
@@ -1858,6 +1878,7 @@ bin/rune-matrix: bin/rune-matrix.rbc bin/runevm Makefile bin/rune-generate bin/r
 # of its own).
 CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all repl dap kernel mlton smlnj-legacy \
                bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-bench bin/rune-lsp-bench-tests.rbc \
+               bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-tests.rbc \
                bin/rune-boot bin/rune.rbc bin/rune.stack.rbc bin/runedoc.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc \
                bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy \
                build/librune.a bin/runevm-gcbits bin/runevm-cards \

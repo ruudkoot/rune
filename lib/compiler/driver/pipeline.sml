@@ -15,7 +15,9 @@ struct
      where a whole program is to be made of its units' (--whole; the
      incremental roadmap's M7) *)
   val keepMid = ref false
+  val () = CompilerState.cellRoot ("Pipeline.keepMid", keepMid)
   val lastMid : MidCanon.unitMid option ref = ref NONE
+  val () = CompilerState.cellRoot ("Pipeline.lastMid", lastMid)
 
   (* Mid to Low: the optional passes, and Lower. Shake runs on a whole
      program only (Pass.whole), which is renumbered canonically first, as

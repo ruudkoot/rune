@@ -56,6 +56,7 @@ struct
      it gave, written to DIR, NAME.cached.{pickle,code,mid} and
      NAME.fresh.{pickle,code,mid}, to compare *)
   val dumped = ref 0
+  val () = CompilerState.cellRoot ("UnitCache.dumped", dumped)
   fun dump (name, (pickle, code, mid), (pickle', code', mid')) =
     case OS.Process.getEnv "RUNE_VERIFY_DUMP" of
       NONE => ()
@@ -266,6 +267,7 @@ struct
 
   (* a name of its own for what is being written *)
   val written = ref 0
+  val () = CompilerState.cellRoot ("UnitCache.written", written)
   fun unique () =
     (written := !written + 1;
      LargeInt.toString (Time.toMicroseconds (Time.now ()) mod 1000000000000) ^ "-"

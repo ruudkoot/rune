@@ -37,6 +37,7 @@ struct
   (* Pass.spend, and whether this round has rewritten anything: a round
      that has not is the last. *)
   val changed = ref false
+  val () = CompilerState.cellRoot ("Simplify.changed", changed)
   fun spend () = Pass.spend () andalso (changed := true; true)
 
   (* ---- the census ---- *)
@@ -119,6 +120,7 @@ struct
      of two are worked out once; the 64-bit types' primitives are not folded *)
   local
     val known = ref (0, IntInf.fromInt 0, IntInf.fromInt 0)   (* the bits, 2^(bits - 1), 2^bits *)
+    val () = CompilerState.cellRoot ("Simplify.known", known)
     fun powers () =
       let val bits = !Target.intBits
       in
@@ -268,9 +270,11 @@ struct
   fun tyKey (t : Ty.ty) : string = Int.toString (Ty.id t)
 
   val inlinable : fundef IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Simplify.inlinable", inlinable, IntTable.copy)
   (* whether inlining is on, for the local functions registered as they are
      met (keepFun) *)
   val inlining = ref false
+  val () = CompilerState.cellRoot ("Simplify.inlining", inlining)
 
   (* ---- equality functions (performance M5, D7 C) ---- *)
 
@@ -289,8 +293,11 @@ struct
      instructions, the compiler compiling itself 0.44% more, in 1% more
      code (docs/plans/performance.md, M5). *)
   val equalities = ref false
+  val () = CompilerState.cellRoot ("Simplify.equalities", equalities)
   val eqFuns : var StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Simplify.eqFuns", eqFuns)
   val pendingEqs : fundef list ref = ref []
+  val () = CompilerState.cellRoot ("Simplify.pendingEqs", pendingEqs)
 
   fun groundTy (t : Ty.ty) : bool =
     case Ty.view t of
@@ -729,12 +736,16 @@ struct
     | _ => false
 
   val once : fundef option IntTable.table ref = ref (IntTable.table 16)     (* NONE: put in place already *)
+  val () = CompilerState.refRoot ("Simplify.once", once, IntTable.copy)
   fun onceOf g = case IntTable.find (!once, g) of SOME (SOME f) => SOME f | _ => NONE
   val budget = ref 0
+  val () = CompilerState.cellRoot ("Simplify.budget", budget)
   val here : pos ref = ref (Source.noSpan, [])
+  val () = CompilerState.cellRoot ("Simplify.here", here)
   (* how many handlers' regions of its function the code being simplified
      is in: a call in tail position there is no tail call *)
   val inHandler = ref 0
+  val () = CompilerState.cellRoot ("Simplify.inHandler", inHandler)
 
   fun nameOf (f : fundef) : string =
     case #params f of
@@ -806,9 +817,13 @@ struct
      elsewhere, copies of every small function of functions grew the
      compiler by 4% and made it slower. *)
   val specialisable : (fundef * int list * bool) IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Simplify.specialisable", specialisable, IntTable.copy)
   val globalFuns : unit IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Simplify.globalFuns", globalFuns, IntTable.copy)
   val copies : var StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Simplify.copies", copies)
   val pendingCopies : fundef list ref = ref []
+  val () = CompilerState.cellRoot ("Simplify.pendingCopies", pendingCopies)
   val specialiseSize = 64
 
   (* The places of f's static parameters of function type: none where f
@@ -867,13 +882,18 @@ struct
      and each local function made a function of the top level for a copy,
      by its name, with what it captured *)
   val localFuns : fundef IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Simplify.localFuns", localFuns, IntTable.copy)
   val liftedFuns : (var * Ty.ty list option) IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Simplify.liftedFuns", liftedFuns, IntTable.copy)
   (* the types of the variables bound in the expression a round simplifies,
      and the parameters of its function, worked out where a local function
      given asks for them, once a round *)
   val roundInput : exp ref = ref (Return (Atom Unit))
+  val () = CompilerState.cellRoot ("Simplify.roundInput", roundInput)
   val roundParams : (var * Ty.ty) list ref = ref []
+  val () = CompilerState.cellRoot ("Simplify.roundParams", roundParams)
   val roundTypes : scheme IntTable.table option ref = ref NONE
+  val () = CompilerState.refRoot ("Simplify.roundTypes", roundTypes, Option.map IntTable.copy)
   fun typeOf (x : var) : scheme option =
     let
       val t =
@@ -904,10 +924,13 @@ struct
      local function of its own to another copy would go on for ever, where
      two functions give each other new ones *)
   val closureDepth : int IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Simplify.closureDepth", closureDepth, IntTable.copy)
   (* the local functions a copy made of a local function it gives on
      (makeCopy), which a copy for them is made for whatever the budget *)
   val wrapperFuns : unit IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Simplify.wrapperFuns", wrapperFuns, IntTable.copy)
   val currentDepth = ref 0
+  val () = CompilerState.cellRoot ("Simplify.currentDepth", currentDepth)
   val maxClosureDepth = 2
   (* The variables free in f, by stamp: f's own name among them where it
      calls itself. *)

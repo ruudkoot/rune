@@ -56,6 +56,7 @@ struct
      of one is translated like an application of the primitive itself; the
      variable still gets its closure, for the uses that are not applications. *)
   val primAliases : string IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Translate.primAliases", primAliases)
 
   (* Compiler.addPrettyPrinter (docs/repl.md, Printers of one's own): where
      the REPL compiles, the global of RuneShow.addPrinterAt, which an
@@ -63,7 +64,9 @@ struct
      prints; and that name of a type name's stamp, the same from session to
      session (UnitBasis.stableName). Elsewhere it does nothing. *)
   val printerTarget : int option ref = ref NONE
+  val () = CompilerState.cellRoot ("Translate.printerTarget", printerTarget)
   val printerKey : (int -> string option) ref = ref (fn _ => NONE)
+  val () = CompilerState.cellRoot ("Translate.printerKey", printerKey)
 
   (* the stamp of the type a printer of addPrettyPrinter's type prints *)
   fun printedTycon (t : Types.ty) : int option =
@@ -89,7 +92,9 @@ struct
      `structPath` is the structures being translated, innermost first, so that
      the name is the one a reader would write. *)
   val funNames : string IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Translate.funNames", funNames)
   val structPath : string list ref = ref []
+  val () = CompilerState.cellRoot ("Translate.structPath", structPath)
 
   fun qualified name = String.concatWith "." (List.rev (name :: !structPath))
 
@@ -118,6 +123,7 @@ struct
      itself, as a recursive call's is. *)
   datatype scheme = Mono | Poly of Ty.ty | Unknown
   val schemes : scheme IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Translate.schemes", schemes, IntTable.copy)
   fun schemeOf (stamp : int) : scheme =
     case IntTable.find (!schemes, stamp) of
       SOME s => s

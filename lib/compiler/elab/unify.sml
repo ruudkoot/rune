@@ -13,6 +13,7 @@ struct
   (* Flexible record variables created by instantiation are reported here so
      that the elaborator can check that they get resolved. *)
   val flexHook : (tvar ref -> unit) ref = ref (fn _ => ())
+  val () = CompilerState.cellRoot ("Unify.flexHook", flexHook)
 
   (* Occurs check and level adjustment before binding variable r (at level lvl) to t. *)
   fun occursAdjust (r : tvar ref, lvl : int, t : ty) : unit =
