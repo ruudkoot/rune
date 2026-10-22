@@ -1,7 +1,9 @@
 # Index: D
 
-[Overview](../README.md) &middot; [c](c.md) **d** [e](e.md) [f](f.md) [i](i.md) [l](l.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) **d** [e](e.md) [f](f.md) [i](i.md) [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
 
+- `Analysis.dependencies` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.dependencies)
+- `Analysis.diagnostics` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.diagnostics)
 - `diagnostic` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-diagnostic)
 - `Syntax.diagnostics` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.diagnostics)
 

@@ -1,0 +1,189 @@
+(* Static unit replay. A failed or cancelled attempt never publishes mutable
+   annotations. Cache reuse requires the exact unchanged input prefix. *)
+structure CompilerAnalysisEngine =
+struct
+  type source={file:string,text:string,mode:Source.mode}
+  type fact={file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}
+  type typeDefinition={id:string,origin:Env.origin}
+  type entry={key:string,name:string,allow:bool,mode:Source.mode,pickle:string,facts:fact list,types:typeDefinition list,syntax:CompilerSyntax.t,uses:(string*(string list*string)*Source.span*Env.origin*bool) list}
+  type snapshot={facts:fact list,diagnostics:CompilerSession.diagnostic list,reused:int,checked:int,types:typeDefinition list,dependencies:source list,uses:(string*(string list*string)*Source.span*Env.origin*bool) list}
+  datatype session=Session of {stored:entry list ref,plan:string ref,config:CompilerSession.config,closed:bool ref}
+  exception Cancelled
+  fun new config=Session {stored=ref [],plan=ref "",config=config,closed=ref false}
+  fun close (Session {closed,stored,...})=(closed:=true;stored:=[])
+  fun checkSteps (Session {stored,plan=savedPlan,config,closed},sources:source list,steps,extraLibraries,cancelled) : snapshot = CompilerSession.owned (fn () =>
+    let val {lib,libraries,target,allowPrim}=config
+        val ()=CompilerSettings.target:=target
+        val ()=CompilerSettings.libDir:=lib
+        val ()=UnitBasis.startSession ()
+        fun poll ()=if !closed then raise CompilerSession.Closed else if cancelled () then raise Cancelled else ()
+        val ()=poll ()
+        val ()=(Error.keep:=true;Error.silent:=true;Elaborate.recover:=false)
+        val env=ref Env.initial
+        val fixity=ref Fixity.initial
+        val scopes=CompilerBuildContext.new (env,fixity)
+        val staged=ref [] : entry list ref
+        val facts=ref [] : fact list list ref
+        val types=ref [] : typeDefinition list list ref
+        val uses=ref []
+        val unitUses=ref []
+        val ()=Env.tracking:=true
+        val ()=Env.observe:=(fn event => unitUses:=event :: !unitUses)
+        val reused=ref 0
+        val checked=ref 0
+        val planBytes=Pickle.writer ()
+        fun encode (w,item)=case item of
+          CompilerProject.SUnit (file,annotations) => (Pickle.byte (w,0);Pickle.string (w,file);Pickle.list Pickle.string (w,annotations))
+        | CompilerProject.SLocal (a,b) => (Pickle.byte (w,1);Pickle.list encode (w,a);Pickle.list encode (w,b))
+        | CompilerProject.SLibrary (exports,children) => (Pickle.byte (w,2);
+            Pickle.list (fn (w,(kind,name)) => (Pickle.byte (w,case kind of BuildFile.Str => 0 | BuildFile.Sig => 1 | BuildFile.Fun => 2 | BuildFile.Ty => 3);
+              Pickle.string (w,name))) (w,exports);Pickle.list encode (w,children))
+        | CompilerProject.SUse (file,children) => (Pickle.byte (w,3);Pickle.string (w,file);Pickle.list encode (w,children))
+        | CompilerProject.SImplements (name,children) => (Pickle.byte (w,4);Pickle.string (w,name);Pickle.list encode (w,children))
+        val ()=Pickle.list encode (planBytes,steps)
+        val ()=Pickle.list Pickle.string (planBytes,extraLibraries)
+        val planKey=Pickle.contents planBytes
+        val prefix=ref (!savedPlan=planKey)
+        val cursor=ref (!stored)
+        val oldSyntax=StringMap.fromList (List.map (fn entry:entry => (#name entry,entry)) (!stored))
+        val chain=ref (Config.identity ^ Pickle.hash planKey)
+        val ()=Source.overlays:=StringMap.fromList (List.map (fn source => (#file source,#text source)) sources)
+        fun replacement (beforeText,afterText) =
+          let val beforeSize=size beforeText
+              val afterSize=size afterText
+              fun prefix i=if i<beforeSize andalso i<afterSize andalso String.sub (beforeText,i)=String.sub (afterText,i) then prefix (i+1) else i
+              val start=prefix 0
+              fun suffix k=if k<beforeSize-start andalso k<afterSize-start andalso
+                String.sub (beforeText,beforeSize-k-1)=String.sub (afterText,afterSize-k-1) then suffix (k+1) else k
+              val suffix=suffix 0
+          in {start=start,stop=beforeSize-suffix,text=String.substring (afterText,start,afterSize-suffix-start)} end
+        fun unit (source:source,name,allow,keepFacts) =
+          let val {file,text,mode}=source
+              val ()=poll ()
+              val ()=(Env.currentUnit:=name;unitUses:=[])
+              val ()=Source.register (Source.fromStringIn (mode,file,text))
+              val key=Pickle.hash (!chain ^ ":" ^ name ^ ":" ^ Bool.toString allow ^ ":" ^ Source.modeName mode ^ ":" ^ text)
+              val start=UnitBasis.begin (!env,!fixity)
+              val previous=case !cursor of [] => NONE | entry :: rest => (cursor:=rest;SOME entry)
+              val cached=case previous of SOME entry =>
+                if !prefix andalso #name entry=name andalso #allow entry=allow andalso #mode entry=mode
+                  andalso CompilerSyntax.text (#syntax entry)=text then SOME entry else NONE | NONE => NONE
+              val entry=case cached of SOME entry => (reused:= !reused+1;entry)
+              | NONE => (prefix:=false;
+                let val ((syntaxTree,syntax,outgoing),usages)=Usage.record (fn () =>
+                    let val ()=List.app (fn name => Usage.use ("fix",name)) (StringMap.listKeys (#table (!fixity)))
+                      val syntaxTree=case StringMap.find (oldSyntax,name) of
+                      SOME entry =>
+                        let val CompilerSyntax.Syntax {mode=oldMode,...}= #syntax entry
+                            val change=replacement (CompilerSyntax.text (#syntax entry),text)
+                        in if mode=oldMode then CompilerSyntax.edit (#syntax entry,
+                             {start= #start change,stop= #stop change,text= #text change,fixity= !fixity})
+                           else CompilerSyntax.parse {file=file,text=text,mode=mode,orPatterns=false,fixity= !fixity} end
+                    | NONE => CompilerSyntax.parse {file=file,text=text,mode=mode,orPatterns=false,fixity= !fixity}
+                    val ()=case CompilerSyntax.problems syntaxTree of [] => () | problem :: _ => raise Error.CompileError problem
+                    val syntax=CompilerSyntax.bridge syntaxTree
+                    val outgoing=CompilerSyntax.fixity syntaxTree
+                    val ends=IntTable.table 16
+                    val ()=List.app (fn stop => IntTable.insert (ends,stop,())) (CompilerSyntax.ends syntaxTree)
+                    val ()=Parser.topdecEnds:=StringMap.insert (!Parser.topdecEnds,file,ends)
+                    val ()=poll ()
+                    val ()=Elaborate.allowPrim:=allow
+                    val ()=Elaborate.elabTop (env,syntax)
+                    val ()=Elaborate.finish ()
+                    val ()=poll ()
+                    in (syntaxTree,syntax,outgoing) end)
+                    val exported=UnitBasis.export {start=start,name=name,file=file,text=fn () => text,
+                      mode=mode,delta= !Elaborate.lastDelta,fixity=outgoing,used=usages}
+                    fun typeId stamp=case IntTable.find (Vector.sub (#own exported,UnitBasis.kTycon),stamp) of
+                      SOME index => #identity exported ^ "#" ^ Int.toString index
+                    | NONE => getOpt (UnitBasis.stableName (UnitBasis.kTycon,stamp),
+                        #identity exported ^ "/local/" ^ key ^ "/" ^ Int.toString (stamp-Vector.sub (#counters start,UnitBasis.kTycon)))
+                    fun frozenType (span:Source.span,ty,derived) =
+                      let val printer=Types.newPrinter ()
+                          fun show ty=Types.toStringNamed (fn c => Env.qualifiedName (!env,c),printer) ty
+                          fun domain ty=case Types.prune ty of Types.TRecord fields =>
+                            if List.map #1 fields=List.tabulate (length fields,fn i => Int.toString (i+1)) andalso length fields>=2
+                            then List.map (show o #2) fields else [show ty] | _ => [show ty]
+                          fun arguments ty=case Types.prune ty of Types.TArrow (a,b) => domain a :: arguments b | _ => []
+                          val constructors=ref StringMap.empty
+                          fun visit ty=case Types.prune ty of Types.TCon (c,args) =>
+                              (constructors:=StringMap.insert (!constructors,typeId (#stamp c),());List.app visit args)
+                            | Types.TRecord fields => List.app (visit o #2) fields
+                            | Types.TArrow (a,b) => (visit a;visit b) | _ => ()
+                          val shown=show ty
+                          val ()=visit ty
+                      in {file= #file span,start= #start span,stop= #stop span,ty=shown,derived=derived,
+                        constructors=StringMap.listKeys (!constructors),arguments=arguments ty}:fact end
+                    val frozen=List.map frozenType (CompilerFacts.collect syntax)
+                    val typeDefinitions=IntMap.foldli (fn (stamp,origin,all) =>
+                      if stamp<Vector.sub (#counters start,UnitBasis.kTycon) then all else
+                        {id=typeId stamp,origin=origin} :: all) [] (!Env.typeOrigins)
+                    val ()=UnitBasis.undo start
+                in checked:= !checked+1;{key=key,name=name,allow=allow,mode=mode,pickle= #pickle exported,facts=frozen,types=typeDefinitions,
+                  syntax=syntaxTree,uses=List.rev (!unitUses)}:entry end)
+              val loaded=UnitBasis.load {pickle= #pickle entry,file=file,at= #counters start,
+                env= #env start,fixity= #fixity start,text=fn () => text}
+              val ()=env:=Env.plus (#env start,#delta loaded)
+              val ()=fixity:=Fixity.extend (#fixity start,#directives loaded)
+              val ()=UnitBasis.bind loaded
+              val ()=CompilerBuildContext.note (scopes,loaded)
+          in poll ();chain:=key;staged:=entry :: !staged;types:= #types entry :: !types;
+             facts:= #facts entry :: !facts;uses:= #uses entry :: !uses end
+        fun names (source:source,mentioned)=
+          let val (lexemes,_,_)=CompilerSyntax.lexical {file= #file source,text= #text source,mode= #mode source,previous=NONE,change=NONE}
+          in BasisManifest.namesOf (CompilerSyntax.tokens lexemes (#file source),mentioned) end
+        val plan=CompilerPrelude.select {lib=lib,libraries=libraries @ extraLibraries,mentioned=List.foldl names StringMap.empty sources}
+        val librarySources=List.map (fn entry:BasisManifest.entry =>
+          (poll ();(entry,#text (Source.readFile (Source.Ascii,BasisManifest.path entry))))) (List.concat (#groups plan))
+        val ()=Source.overlays:=List.foldl (fn ((entry,text),overlays) => StringMap.insert
+          (overlays,BasisManifest.path entry,text)) (!Source.overlays) librarySources
+        fun library entries =
+          let val prior:LibraryScope.basis={env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs}
+              val incoming= !fixity
+              fun one (entry:BasisManifest.entry)=
+                unit ({file=BasisManifest.path entry,text=valOf (StringMap.find (!Source.overlays,BasisManifest.path entry)),mode=Source.Ascii},BasisManifest.path entry,
+                  case lib of SOME lib => #dir entry=lib ^ "/basis" | NONE => false,false)
+              val ()=List.app one entries
+          in case BasisManifest.scopeOf entries of NONE => () | SOME exports =>
+            let val current:LibraryScope.basis={env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs}
+                val visible=LibraryScope.restrict (prior,current,exports)
+            in env:= #env visible;fixity:=incoming;Elaborate.sigs:= #sigs visible;Elaborate.funs:= #funs visible end end
+        val used=ref [] : (string*CompilerBuildContext.delta) list ref
+        val implemented=ref [] : string list ref
+        val remaining=ref sources
+        val ordinal=ref 0
+        fun snap ()=CompilerBuildContext.snap scopes
+        fun delta (before',after)=CompilerBuildContext.delta (scopes,before',after)
+        fun apply (before',change,exports)=CompilerBuildContext.apply (scopes,before',change,exports)
+        fun walk steps=List.app step steps
+        and step item = case item of
+          CompilerProject.SUnit (file,annotations) =>
+            (case !remaining of [] => raise Fail "missing ordered project input" | source :: rest =>
+              if #file source<>file then raise Fail "project input order differs" else
+                (remaining:=rest;ordinal:= !ordinal+1;
+                 unit (source,file ^ "#" ^ Int.toString (!ordinal),allowPrim orelse List.exists (fn value => value="allowPrim") annotations,true)))
+        | CompilerProject.SLocal (a,b) =>
+            let val before'=snap ()
+                val ()=walk a
+                val hidden=snap ()
+                val ()=walk b
+            in apply (before',delta (hidden,snap ()),NONE) end
+        | CompilerProject.SLibrary (exports,children) =>
+            let val before'=snap () val ()=walk children in apply (before',delta (before',snap ()),SOME exports) end
+        | CompilerProject.SUse (file,children) =>
+            (case List.find (fn (name,_) => name=file) (!used) of SOME (_,change) => apply (snap (),change,NONE)
+             | NONE => let val before'=snap () val ()=walk children in used:=(file,delta (before',snap ())) :: !used end)
+        | CompilerProject.SImplements (name,children) =>
+            if List.exists (fn prior => prior=name) (!implemented) then raise Fail "duplicate virtual implementation" else
+              let val before'=snap () val ()=implemented:=name :: !implemented val ()=walk children
+              in apply (before',delta (before',snap ()),SOME []) end
+        val error=(List.app library (#groups plan);walk steps;
+          if null (!remaining) then () else raise Fail "extra ordered project input";NONE) handle Error.CompileError (span,message) =>
+          SOME (CompilerSession.sourceError ("error",span,message))
+        val ()=poll ()
+        val ()=(stored:=List.rev (!staged);savedPlan:=planKey)
+    in {facts=List.concat (List.rev (!facts)),diagnostics=case error of NONE => [] | SOME error => [error],
+      reused= !reused,checked= !checked,types=List.concat (List.rev (!types)),
+      dependencies=List.map (fn (entry,text) => {file=BasisManifest.path entry,text=text,mode=Source.Ascii}:source) librarySources,
+      uses=List.concat (List.rev (!uses))} end)
+end

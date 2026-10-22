@@ -297,6 +297,195 @@
      "spec": "val fingerprint : t -> string",
      "doc": "`fingerprint project` identifies the captured plan, configuration\nand discovery inputs. It is not a persisted analysis snapshot.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-project.fingerprint"
+    },
+    {
+     "kind": "structure",
+     "name": "Analysis",
+     "spec": "structure Analysis : sig ... end",
+     "doc": "Versioned static analysis with immutable query data and replay checkpoints.\n\n",
+     "page": "sig/RUNE_COMPILER.md#str-analysis"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.t",
+     "spec": "type t",
+     "doc": "An analysis context belonging to one compiler session.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.t"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.snapshot",
+     "spec": "type snapshot",
+     "doc": "A frozen result. It remains readable after either context is closed.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.snapshot"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.checkpoint",
+     "spec": "type checkpoint",
+     "doc": "A validated unit-cache checkpoint belonging to one analysis context.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.checkpoint"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.input",
+     "spec": "type input={file:string,text:string,mode:string,annotations:string list,revision:string}",
+     "doc": "An ordered decoded source occurrence.\n\nrevision is the caller's source\nidentity/version; an empty mode selects the compiler session's mode.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.input"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.location",
+     "spec": "type location={file:string,start:int,stop:int}",
+     "doc": "A half-open source byte range, before LSP position conversion.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.location"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.occurrence",
+     "spec": "type occurrence={file:string,start:int,stop:int,kind:string,name:string,path:string list,\n  binding:string option,definition:location option,declaration:location option,isDefinition:bool,derived:bool}",
+     "doc": "An actual compiler-resolved binding occurrence.\n\nThe range can cover\nits enclosing syntax, so editing clients must locate identifier tokens.\nderived marks a copied functor body rather than original source syntax.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.occurrence"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.fact",
+     "spec": "type fact={file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}",
+     "doc": "A frozen inferred type.\n\nconstructors are semantic type identities;\narguments contains curried domains, with tuple components grouped.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.fact"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.typeDefinition",
+     "spec": "type typeDefinition={id:string,definition:location option,declaration:location option,implementation:location option}",
+     "doc": "A named type's source relationships.\n\nAbstract types retain their\nspecification separately from the known implementation.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.typedefinition"
+    },
+    {
+     "kind": "exception",
+     "name": "Analysis.Cancelled",
+     "spec": "exception Cancelled",
+     "doc": "Cancellation discarded an attempt before publishing its cache.\n\n",
+     "page": "sig/RUNE_COMPILER.md#exn-analysis.cancelled"
+    },
+    {
+     "kind": "exception",
+     "name": "Analysis.Busy",
+     "spec": "exception Busy",
+     "doc": "An operation re-entered or closed a context during an active check.\n\n",
+     "page": "sig/RUNE_COMPILER.md#exn-analysis.busy"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.create",
+     "spec": "val create : session * {context:string} -> t",
+     "doc": "`create (compiler, {context})` creates an isolated analysis history.\n\ncontext identifies the caller's project/target. It does not append to\nthe compiler's executable history or execute user code.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.create"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.close",
+     "spec": "val close : t -> unit",
+     "doc": "`close context` releases its retained caches; repeated calls do nothing.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.close"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.check",
+     "spec": "val check : t * {project:Project.t option,inputs:input list,cancelled:unit->bool} -> snapshot",
+     "doc": "`check (context, request)` checks captured inputs in compiler order.\n\nA project must come from the same compiler session; inputs must match\nits ordered occurrences, modes, annotations and group-discovery text.\nWithout a project the inputs form an ordered loose-file context.\nNo files or artifacts are written, and user initializers never run.\n\nValid unchanged prefixes replay checked bases. Changed units receive\nfresh annotation slots in a fresh compiler owner. A failed unit returns\ndiagnostics and query data for its validated prefix; later units remain\nunavailable. Cancellation is polled between analysis phases and units;\na supervisor must bound phases that cannot yet be interrupted.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.check"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.checkpoint",
+     "spec": "val checkpoint : t -> checkpoint",
+     "doc": "`checkpoint context` captures only committed, validated unit entries.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.checkpoint"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.restore",
+     "spec": "val restore : t * checkpoint -> unit",
+     "doc": "`restore (context, checkpoint)` restores a cache from that same context.\nThe next check still validates its full configuration and inputs.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.restore"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.id",
+     "spec": "val id : snapshot -> string",
+     "doc": "`id snapshot` is unique within this analysis context's lifetime.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.id"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.context",
+     "spec": "val context : snapshot -> string",
+     "doc": "`context snapshot` returns the caller's project/target identity.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.context"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.project",
+     "spec": "val project : snapshot -> string option",
+     "doc": "`project snapshot` returns its captured project fingerprint, if any.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.project"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.inputs",
+     "spec": "val inputs : snapshot -> input list",
+     "doc": "`inputs snapshot` returns the exact captured user source occurrences.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.inputs"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.dependencies",
+     "spec": "val dependencies : snapshot -> input list",
+     "doc": "`dependencies snapshot` returns captured library source and identities.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.dependencies"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.diagnostics",
+     "spec": "val diagnostics : snapshot -> diagnostic list",
+     "doc": "`diagnostics snapshot` returns source-addressed analysis diagnostics.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.diagnostics"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.occurrences",
+     "spec": "val occurrences : snapshot -> occurrence list",
+     "doc": "`occurrences snapshot` returns frozen lexical binding relationships.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.occurrences"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.types",
+     "spec": "val types : snapshot -> typeDefinition list",
+     "doc": "`types snapshot` returns semantic constructor identities and sources.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.types"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.facts",
+     "spec": "val facts : snapshot -> fact list",
+     "doc": "`facts snapshot` returns inferred types without mutable compiler refs.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.facts"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.work",
+     "spec": "val work : snapshot -> {checked:int,reused:int}",
+     "doc": "`work snapshot` reports checked and replayed units, including libraries.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.work"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.typeAt",
+     "spec": "val typeAt : snapshot * {file:string,offset:int} -> string option",
+     "doc": "`typeAt (snapshot, position)` returns its innermost original-source type.\nCopied-body facts are used only where no original fact is available.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.typeat"
     }
    ]
   }

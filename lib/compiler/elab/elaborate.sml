@@ -34,7 +34,7 @@ struct
       FunInfo of {param : string option, paramSig : SigMatch.sigma, body : strexp, defEnv : env, allowPrim : bool,
                   defSigs : SigMatch.sigma StringMap.map, defFuns : funinfo StringMap.map,
                   summary : summary option,
-                  origin : string}   (* the identity of the unit it was loaded from; "" where elaborated *)
+                  origin : string,binding:Env.origin}   (* the identity of the unit it was loaded from; "" where elaborated *)
   val funs : funinfo StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("Elaborate.funs", funs)
 
@@ -454,7 +454,7 @@ struct
   (* Functors' summaries (rule 54)                                        *)
 
   (* the types an environment holds, each given to f *)
-  fun appEnvTypes (f : ty -> unit) (Env {vals, tys, strs}) : unit =
+  fun appEnvTypes (f : ty -> unit) (Env {vals, tys, strs,...}) : unit =
     let
       fun value v =
         case v of
@@ -496,7 +496,7 @@ struct
 
   (* The values and exceptions of an environment renamed by f, a stamp to
      a stamp, each once *)
-  fun restamp (f : int -> int) (Env {vals, tys, strs}) : env =
+  fun restamp (f : int -> int) (Env {vals, tys, strs,origins}) : env =
     let
       fun exn (info : exninfo) : exninfo =
         {name = #name info, stamp = f (#stamp info), isGlobal = #isGlobal info, hasArg = #hasArg info,
@@ -507,7 +507,7 @@ struct
         | Exn {ty, info} => if isSome (#builtin info) then v else Exn {ty = ty, info = exn info}
         | ExnAsVal {ty, info} => if isSome (#builtin info) then v else ExnAsVal {ty = ty, info = exn info}
         | other => other
-    in Env {vals = StringMap.map value vals, tys = tys, strs = StringMap.map (restamp f) strs} end
+    in Env {vals = StringMap.map value vals, tys = tys, strs = StringMap.map (restamp f) strs,origins=origins} end
 
   (* The placeholders a summary names its values and exceptions by: one
      for each, in the order of the environment, under every stamp a unit
@@ -643,7 +643,7 @@ struct
       fun maps (f : 'a * 'a -> unit) (m : 'a StringMap.map, m' : 'a StringMap.map) : unit =
         if StringMap.numItems m <> StringMap.numItems m' then raise Disagree
         else StringMap.appi (fn (n, x) => case StringMap.find (m', n) of SOME y => f (x, y) | NONE => raise Disagree) m
-      fun walk (Env {vals, tys = ts, strs}, Env {vals = vals', tys = ts', strs = strs'}) =
+      fun walk (Env {vals, tys = ts, strs,origins}, Env {vals = vals', tys = ts', strs = strs',origins=origins'}) =
         (maps value (vals, vals');
          maps (fn (TyStr {fcn = f, cons}, TyStr {fcn = f', cons = cons'}) =>
                   (fcn (f, f');
@@ -665,13 +665,13 @@ struct
             | (ExnAsVal {ty = t, ...}, ExnAsVal {info, ...}) => ExnAsVal {ty = t, info = info}
             | _ => raise Disagree
           fun get (m', n) = case StringMap.find (m', n) of SOME y => y | NONE => raise Disagree
-          fun env (Env {vals, tys = ts, strs}, Env {vals = vals', tys = ts', strs = strs'}) : env =
+          fun env (Env {vals, tys = ts, strs,origins}, Env {vals = vals', tys = ts', strs = strs',origins=origins'}) : env =
             Env {vals = StringMap.mapi (fn (n, v) => value (v, get (vals', n))) vals,
                  tys = StringMap.mapi (fn (n, TyStr {fcn = f, cons}) =>
                                           let val TyStr {cons = cons', ...} = get (ts', n)
                                           in TyStr {fcn = f, cons = ListPair.map (fn ((c, v), (_, v')) => (c, value (v, v'))) (cons, cons')} end)
                                       ts,
-                 strs = StringMap.mapi (fn (n, e) => env (e, get (strs', n))) strs}
+                 strs = StringMap.mapi (fn (n, e) => env (e, get (strs', n))) strs,origins=origins'}
           val typed = realizeEnv (IntMap.unionWith #2 (phi, !psi), env (result, copy))
           (* no name of the body's left where the copy has none in its place *)
           fun left t =
@@ -734,13 +734,13 @@ struct
                 else ()
             | _ => ()
         in
-          case findTy (env, longid) of
+          (Env.noteUse (env,"t",longid,sp);case findTy (env, longid) of
             NONE => err (sp, "unbound type constructor: " ^ longidToString longid)
           | SOME (TyStr {fcn, ...}) =>
               if List.length args' <> fcnArity fcn then
                 err (sp, "type constructor " ^ longidToString longid ^ " expects " ^ Int.toString (fcnArity fcn)
                          ^ " argument(s) but got " ^ Int.toString (List.length args'))
-              else applyFcn (fcn, args')
+              else applyFcn (fcn, args'))
         end
     | TyArrow (a, b, _) => TArrow (elabTy (env, scope, level, a), elabTy (env, scope, level, b))
 
@@ -760,8 +760,8 @@ struct
 
   fun lookupCon (env, longid, sp) =
     case findVal (env, longid) of
-      SOME (Con c) => SOME (Con c)
-    | SOME (Exn e) => SOME (Exn e)
+      SOME (Con c) => (Env.noteUse (env,"v",longid,sp);SOME (Con c))
+    | SOME (Exn e) => (Env.noteUse (env,"v",longid,sp);SOME (Exn e))
     | SOME _ => NONE                       (* values, including constructors that lost their status *)
     | NONE =>
         (case longid of
@@ -794,7 +794,7 @@ struct
                val stamp = freshStamp ()
                val t = fresh level
              in
-               Ty.bindVar (stamp, t); Ty.nameVar (stamp, name, t);
+               Ty.bindVar (stamp, t); Ty.nameVar (stamp, name, t); Env.noteStamp (stamp,name,sp);
                (stamp, t, (name, Val {scheme = t, stamp = stamp, global = isGlobal}))
              end)
       fun elab p =
@@ -920,7 +920,7 @@ struct
     case e of
       EScon (sc, slot, sp) => sconTy (level, sc, slot, sp)
     | EVar (longid, slot, sp) =>
-        (case findVal (env, longid) of
+        (Env.noteUse (env,"v",longid,sp);case findVal (env, longid) of
            NONE => err (sp, "unbound variable or constructor: " ^ longidToString longid)
          | SOME (Val {scheme, stamp, global}) =>
              let val t = Unify.instantiate (level, scheme)
@@ -1092,7 +1092,7 @@ struct
                                           in
                                             checkBindable (name, psp, true);
                                             Ty.bindVar (stamp, tv);
-                                            Ty.nameVar (stamp, name, tv);
+                                            Ty.nameVar (stamp, name, tv);Env.noteStamp (stamp,name,psp);
                                             slot := SOME (PIVar (stamp, top));
                                             (name, Val {scheme = tv, stamp = stamp, global = top})
                                           end) vars
@@ -1126,6 +1126,7 @@ struct
                            val tv = fresh (level + 1)
                            val () = Ty.bindVar (stamp, tv)
                            val () = Ty.nameVar (stamp, #name f, tv)
+                           val () = Env.noteStamp (stamp,#name f,#span f)
                            val () = #info f := SOME (PIVar (stamp, top))
                          in (#name f, Val {scheme = tv, stamp = stamp, global = top}, tv, f) end) fundefs
           fun checkDups [] = ()
@@ -1168,7 +1169,7 @@ struct
                          val scope = ref (List.foldl (fn ((v, t), m) => StringMap.insert (m, v, t)) (!outerScope)
                                                      (ListPair.zip (#tyvars tb, List.map #2 params)))
                          val body = elabTy (env, scope, level, #ty tb)
-                       in bindTy (delta, #name tb, TyStr {fcn = TAbbrev (List.map #1 params, body), cons = []}) end)
+                       in bindTyAt (delta, #name tb, TyStr {fcn = TAbbrev (List.map #1 params, body), cons = []},#span tb) end)
                    Env.empty typbinds
     | DDatatype (datbinds, typbinds, sp) =>
         let
@@ -1182,7 +1183,7 @@ struct
               else dupTycons rest
           val () = dupTycons datbinds
           val tycons = List.map (fn (db : datbind) => (db, freshTycon (#name db, List.length (#tyvars db), true))) datbinds
-          val env1 = List.foldl (fn ((db, tc), e) => bindTy (e, #name db, TyStr {fcn = TName tc, cons = []})) env tycons
+          val env1 = List.foldl (fn ((db, tc), e) => bindTyAt (e, #name db, TyStr {fcn = TName tc, cons = []},#span db)) env tycons
           val abbrevs = elabDec (env1, level, top, outerScope, DType (typbinds, sp))
           val env2 = plus (env1, abbrevs)
           fun elabDatbind ((db : datbind, tc), (delta, groups)) =
@@ -1231,8 +1232,9 @@ struct
                                              in ins acc end) [] (!conArgs)
               val () = Ty.bindDatatype (#stamp tc, {params = List.map #1 params, cons = sortedArgs})
               val () = dataCons := IntMap.insert (!dataCons, #stamp tc, cons)
-              val delta = bindTy (delta, #name db, TyStr {fcn = TName tc, cons = cons})
-            in (List.foldl (fn ((n, v), d) => bindVal (d, n, v)) delta cons, (tc, args) :: groups) end
+              val delta = bindTyAt (delta, #name db, TyStr {fcn = TName tc, cons = cons},#span db)
+            in (List.foldl (fn ((n, v), d) => if !Env.tracking then
+                bindValAt (d,n,v,#3 (valOf (List.find (fn (name,_,_) => name=n) (#cons db)))) else bindVal (d,n,v)) delta cons, (tc, args) :: groups) end
           val (delta, groups) = List.foldl elabDatbind (Env.empty, []) tycons
           (* Maximise equality: a datatype of the group admits equality iff
              every constructor argument does under the current assumption. *)
@@ -1264,7 +1266,8 @@ struct
     | DDatatypeRepl (name, longid, sp) =>
         (case findTy (env, longid) of
            SOME (ts as TyStr {cons, ...}) =>
-             List.foldl (fn ((n, v), d) => bindVal (d, n, v)) (bindTy (Env.empty, name, ts)) cons
+             List.foldl (fn ((n, v), d) => Env.putOrigin (bindVal (d,n,v),"v",n,
+               Env.originOf (env,"v",(#1 longid,n)))) (bindTyAt (Env.empty,name,ts,sp)) cons
          | NONE => err (sp, "unbound type constructor: " ^ longidToString longid))
     | DAbstype (datbinds, typbinds, decs, sp) =>
         let
@@ -1275,7 +1278,7 @@ struct
           val phi =
             StringMap.foldli (fn (_, TyStr {fcn = TName c, cons = _ :: _}, m) => IntMap.insert (m, #stamp c, TName (withEq (c, false)))
                                | (_, _, m) => m) IntMap.empty (tys delta1)
-          val absTys = Env {vals = StringMap.empty,
+          val absTys = Env {origins=Env.origins delta1,vals = StringMap.empty,
                             tys = StringMap.map (fn TyStr {fcn, ...} => TyStr {fcn = realizeFcn (phi, fcn), cons = []}) (tys delta1),
                             strs = StringMap.empty}
         in plus (absTys, realizeEnv (phi, delta2)) end
@@ -1295,13 +1298,13 @@ struct
                                       | SOME ta => TArrow (ta, exnTy)
                              val () = Ty.bindExn (stamp, arg)
                              val info = {name = name, stamp = stamp, isGlobal = top, hasArg = isSome tyopt, builtin = NONE}
-                           in slot := SOME (PIExn info); bindVal (delta, name, Exn {ty = ty, info = info}) end
+                           in slot := SOME (PIExn info); bindValAt (delta, name, Exn {ty = ty, info = info},sp) end
                        | ExnRepl (name, longid, slot, sp) =>
                            (checkBindable (name, sp, false);
                             if StringMap.member (vals delta, name) then
                               err (sp, "duplicate exception constructor '" ^ name ^ "' in one declaration") else ();
                             case findVal (env, longid) of
-                              SOME (Exn {ty, info}) => (slot := SOME (PIExn info); bindVal (delta, name, Exn {ty = ty, info = info}))
+                              SOME (Exn {ty, info}) => (slot := SOME (PIExn info); bindValAt (delta, name, Exn {ty = ty, info = info},sp))
                             | SOME _ => err (sp, longidToString longid ^ " is not an exception constructor")
                             | NONE => err (sp, "unbound exception constructor: " ^ longidToString longid)))
                    Env.empty exbinds
@@ -1350,13 +1353,16 @@ struct
         end
     | DStructure (binds, _) =>
         (* all bindings of one declaration are elaborated in the same environment (rule 61) *)
-        List.foldl (fn (b : strbind, delta) => bindStr (delta, #name b, elabStrexp (env, level, top, outerScope, #strexp b)))
+        List.foldl (fn (b : strbind, delta) => bindStrAt (delta, #name b, elabStrexp (env, level, top, outerScope, #strexp b),#span b))
                    Env.empty binds
     | DSignature (binds, _) =>
         (* all bindings are elaborated in the same basis (rule 67) *)
-        let val elaborated = List.map (fn (b : sigbind) => (#name b, elabSigexp (env, #sigexp b))) binds
+        let val elaborated = List.map (fn (b : sigbind) => (#name b, let val sg=elabSigexp (env,#sigexp b)
+          in {bound= #bound sg,env= #env sg,origin=Env.originAt ("signature",#name b,#span b)}:SigMatch.sigma end)) binds
         in
-          List.app (fn (n, sg) => (sigs := StringMap.insert (!sigs, n, sg); insertedSigs := n :: !insertedSigs)) elaborated;
+          List.app (fn (n, sg) => (sigs := StringMap.insert (!sigs, n, sg); insertedSigs := n :: !insertedSigs;
+            if !Env.tracking then (case Env.primary (#origin sg) of Env.Named {span,...} =>
+              Env.emit ("def-g",([],n),span,#origin sg) | _ => ()) else ())) elaborated;
           Env.empty
         end
     | DFunctor (binds, _) =>
@@ -1366,7 +1372,7 @@ struct
                          let
                            val sigma = elabSigexp (env, #paramSig b)
                            val bodyEnv = case #param b of
-                                           SOME x => bindStr (env, x, #env sigma)
+                                           SOME x => bindStrAt (env, x, #env sigma,#span b)
                                          | NONE => plus (env, #env sigma)
                            (* the body is checked once against the parameter signature (rule 86);
                               its annotations are discarded, and what it gave is the functor's
@@ -1389,12 +1395,14 @@ struct
                            val sigsNow = !sigs
                            val funsNow = !funs
                          in
-                           (#name b, FunInfo {param = #param b, paramSig = sigma, body = #body b, defEnv = env, origin = "",
+                           (#name b, FunInfo {param = #param b, paramSig = sigma, body = #body b, defEnv = env, origin = "",binding=Env.originAt ("functor",#name b,#span b),
                                               allowPrim = !allowPrim, defSigs = sigsNow, defFuns = funsNow,
                                               summary = summary})
                          end) binds
         in
-          List.app (fn (n, f) => (funs := StringMap.insert (!funs, n, f); insertedFuns := n :: !insertedFuns)) elaborated;
+          List.app (fn (n, f as FunInfo {binding,...}) => (funs := StringMap.insert (!funs, n, f); insertedFuns := n :: !insertedFuns;
+            if !Env.tracking then (case Env.primary binding of Env.Named {span,...} =>
+              Env.emit ("def-f",([],n),span,binding) | _ => ()) else ())) elaborated;
           Env.empty
         end
 
@@ -1410,9 +1418,9 @@ struct
     case se of
       StrStruct (decs, _) => elabDecs (env, level, top, scope, decs)
     | StrId ((path, sname), sp) =>
-        (case findStr (env, path @ [sname]) of
+        ((Env.noteUse (env,"s",(path,sname),sp);case findStr (env, path @ [sname]) of
            SOME e => e
-         | NONE => err (sp, "unbound structure: " ^ longidToString (path, sname)))
+         | NONE => err (sp, "unbound structure: " ^ longidToString (path, sname))))
     | StrAscribe (se, sigexp, opaque, sp) =>
         let
           val e = elabStrexp (env, level, top, scope, se)
@@ -1422,8 +1430,8 @@ struct
         (Usage.use ("fun", funid);
          case StringMap.find (!funs, funid) of
            NONE => err (sp, "unbound functor: " ^ funid)
-         | SOME (FunInfo {param, paramSig, body, defEnv, allowPrim = ap, defSigs, defFuns, summary, origin}) =>
-             let
+         | SOME (FunInfo {param, paramSig, body, defEnv, allowPrim = ap, defSigs, defFuns, summary, origin,binding}) =>
+             let val ()=if !Env.tracking then Env.emit ("f",([],funid),sp,binding) else ()
                (* rule 54: match the argument, then type the application by
                   the functor's signature *)
                val argEnv = elabStrexp (env, level, top, scope, arg)
@@ -1450,13 +1458,20 @@ struct
                    val (phi, specE) = ElabStats.during ElabStats.Match (fn () => SigMatch.match (paramSig, argEnv, sp))
                    val thinned = SigMatch.mergeInfo (specE, argEnv)
                    val bodyEnv = case param of
-                                   SOME x => bindStr (defEnv, x, thinned)
+                                   SOME x => (case Env.primary binding of Env.Named {span,...} =>
+                                     let val savedUnit= !Env.currentUnit
+                                         val ()=Env.currentUnit:=(case Env.primary binding of Env.Named {unit,...} => unit | _ => savedUnit)
+                                         val result=bindStrAt (defEnv,x,thinned,span)
+                                     in Env.currentUnit:=savedUnit;result end
+                                   | _ => bindStr (defEnv,x,thinned))
                                  | NONE => plus (defEnv, thinned)
                    val copy = ElabStats.during ElabStats.Copy (fn () => copyStrexp body)
-                   val saved = (!allowPrim, !reportMatches, !sigs, !funs)
+                   val saved = (!allowPrim, !reportMatches, !sigs, !funs, !Env.currentUnit, !Env.applicationDepth)
                    fun restore () =
-                     (allowPrim := #1 saved; reportMatches := #2 saved; sigs := #3 saved; funs := #4 saved)
-                   val () = (allowPrim := ap; reportMatches := false; sigs := defSigs; funs := defFuns)
+                     (allowPrim := #1 saved; reportMatches := #2 saved; sigs := #3 saved; funs := #4 saved;Env.currentUnit:= #5 saved;Env.applicationDepth:= #6 saved)
+                   val () = (allowPrim := ap; reportMatches := false; sigs := defSigs; funs := defFuns;
+                     Env.applicationDepth:= !Env.applicationDepth+1;
+                     case Env.primary binding of Env.Named {unit,...} => Env.currentUnit:=unit | _ => ())
                    val result =
                      elabStrexp (bodyEnv, level, top, scope, copy)
                      handle Error.CompileError (sp', msg) =>
@@ -1536,7 +1551,7 @@ struct
           val () = datatypes inst
           val via = dynamicVia (env, case from of DynamicFile _ => "load" | DynamicVirtual _ => "take", sp)
           val slots : (int * ty * bool) list ref = ref []
-          fun restamp (Env {vals, tys, strs}) : env =
+          fun restamp (Env {vals, tys, strs,origins}) : env =
             let
               fun slotOf v =
                 case v of
@@ -1558,7 +1573,7 @@ struct
                                      (StringMap.listItemsi vals)
               val strs' = List.foldl (fn ((n, e), m) => StringMap.insert (m, n, restamp e)) StringMap.empty
                                      (StringMap.listItemsi strs)
-            in Env {vals = vals', tys = tys, strs = strs'} end
+            in Env {vals = vals', tys = tys, strs = strs',origins=origins} end
           val e = restamp inst
           val slots = List.rev (!slots)
           val temp = freshStamp ()
@@ -1617,7 +1632,8 @@ struct
       SigId (n, sp) =>
         (Usage.use ("sig", n);
          case StringMap.find (!sigs, n) of
-           SOME sg => ElabStats.during ElabStats.Inst (fn () => SigMatch.instantiate sg)
+           SOME sg => (if !Env.tracking then Env.emit ("g",([],n),sp,#origin sg) else ();
+             ElabStats.during ElabStats.Inst (fn () => SigMatch.instantiate sg))
          | NONE => err (sp, "unbound signature: " ^ n))
     | SigSig (specs, sp) => elabSpecs (env, specs)
     | SigWhere _ =>
@@ -1646,7 +1662,7 @@ struct
          sharing realises *)
       val current = ref env
       fun add (sigma : SigMatch.sigma, bound', delta, sp) : SigMatch.sigma =
-        let val sigma' = {bound = #bound sigma @ bound', env = plusDisjoint (#env sigma, delta, sp)}
+        let val sigma' = {bound = #bound sigma @ bound', env = plusDisjoint (#env sigma, delta, sp),origin= #origin sigma}
         in current := plus (!current, delta); sigma' end
       fun cur (_ : SigMatch.sigma) = !current
       fun one (spec, sigma) =
@@ -1658,17 +1674,17 @@ struct
                              val scope = specScope (ty, 1)
                              val t = elabTy (cur sigma, scope, 1, ty)
                              val () = Unify.generalize (0, t)              (* rule 79: implicitly closed *)
-                           in add (sigma, [], bindVal (Env.empty, n, Val {scheme = t, stamp = freshStamp (), global = true}), dsp) end)
+                           in add (sigma, [], bindValAt (Env.empty, n, Val {scheme = t, stamp = freshStamp (), global = true},dsp), dsp) end)
                        sigma descs
         | SpecType (descs, _) =>
             List.foldl (fn ((tvs, n, dsp), sigma) =>
                            let val tc = freshTycon (n, List.length tvs, false)
-                           in add (sigma, [tc], bindTy (Env.empty, n, TyStr {fcn = TName tc, cons = []}), dsp) end)
+                           in add (sigma, [tc], bindTyAt (Env.empty, n, TyStr {fcn = TName tc, cons = []},dsp), dsp) end)
                        sigma descs
         | SpecEqtype (descs, _) =>
             List.foldl (fn ((tvs, n, dsp), sigma) =>
                            let val tc = freshTycon (n, List.length tvs, true)
-                           in add (sigma, [tc], bindTy (Env.empty, n, TyStr {fcn = TName tc, cons = []}), dsp) end)
+                           in add (sigma, [tc], bindTyAt (Env.empty, n, TyStr {fcn = TName tc, cons = []},dsp), dsp) end)
                        sigma descs
         | SpecDatatype (dbs, sp) =>
             let
@@ -1686,14 +1702,14 @@ struct
                                         NONE => exnTy
                                       | SOME t => TArrow (elabTy (cur sigma, scope, 0, t), exnTy)
                              val info = {name = n, stamp = freshStamp (), isGlobal = true, hasArg = isSome tyopt, builtin = NONE}
-                           in add (sigma, [], bindVal (Env.empty, n, Exn {ty = ty, info = info}), dsp) end)
+                           in add (sigma, [], bindValAt (Env.empty, n, Exn {ty = ty, info = info},dsp), dsp) end)
                        sigma descs
         | SpecStructure (descs, _) =>
             (* all descriptions of one specification are elaborated in the same basis (rule 84) *)
             let val elaborated = List.map (fn (n, sg, dsp) => (n, elabSigexp (cur sigma, sg), dsp)) descs
             in
               List.foldl (fn ((n, sg : SigMatch.sigma, dsp), sigma) =>
-                             add (sigma, #bound sg, bindStr (Env.empty, n, #env sg), dsp)) sigma elaborated
+                             add (sigma, #bound sg, bindStrAt (Env.empty, n, #env sg,dsp), dsp)) sigma elaborated
             end
         | SpecInclude (sg, sp) =>
             let val sg' = elabSigexp (cur sigma, sg)
@@ -1718,7 +1734,7 @@ struct
                 val sigma' = ElabStats.during ElabStats.Share (fn () => SigMatch.shareRun (sigma, eqns))
               in current := plus (env, #env sigma'); loop (sigma', rest') end
     in
-      ElabStats.during ElabStats.Specs (fn () => loop ({bound = [], env = Env.empty}, specs))
+      ElabStats.during ElabStats.Specs (fn () => loop ({bound = [], env = Env.empty,origin=Env.Unknown}, specs))
     end
 
   (* ------------------------------------------------------------------ *)

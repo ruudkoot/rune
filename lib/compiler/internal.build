@@ -35,4 +35,5 @@ files
   driver/unitcache.sml
   driver/deps.sml
   driver/project.sml
+  driver/context.sml
 end

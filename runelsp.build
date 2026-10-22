@@ -6,6 +6,8 @@ files
   src/lsp/sync.sml
   src/lsp/workspace.sml
   src/lsp/controller.sml
+  src/lsp/worker-wire.sml
+  src/lsp/worker-process.sml
   src/lsp/server.sml
 end
 src/main/runelsp-main.sml

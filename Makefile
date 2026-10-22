@@ -311,7 +311,22 @@ bin/rune-lsp-wire-tests.rbc: $(RUNE) tests/runner/sh.sml tests/lsp/protocol-test
 	$(RUNE) --library test/runner --library json tests/runner/sh.sml tests/lsp/protocol-tests.sml -o $@
 bin/rune-lsp-tests.rbc: $(RUNE) tests/lib/lsp/protocol.sml manifests
 	$(RUNE) --library test/unit --library random --library lsp tests/lib/lsp/protocol.sml -o $@
-.PHONY: test-lsp test-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax
+.PHONY: test-lsp test-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker
+bin/rune-lsp-worker-wire-tests.rbc: $(RUNE) src/lsp/worker-wire.sml tests/lsp/worker-wire-tests.sml manifests
+	$(RUNE) --library test/unit --library lsp src/lsp/worker-wire.sml tests/lsp/worker-wire-tests.sml -o $@
+bin/rune-lsp-worker-echo.rbc: $(RUNE) src/lsp/worker-wire.sml tests/lsp/worker-echo.sml manifests
+	$(RUNE) --library lsp src/lsp/worker-wire.sml tests/lsp/worker-echo.sml -o $@
+bin/rune-lsp-worker-process-tests.rbc: $(RUNE) src/lsp/worker-wire.sml src/lsp/worker-process.sml tests/lsp/worker-process-tests.sml manifests
+	$(RUNE) --library test/unit --library lsp src/lsp/worker-wire.sml src/lsp/worker-process.sml tests/lsp/worker-process-tests.sml -o $@
+test-lsp-worker: bin/rune-lsp-worker-wire-tests.rbc bin/rune-lsp-worker-process-tests.rbc bin/rune-lsp-worker-echo.rbc
+	bin/runevm bin/rune-lsp-worker-wire-tests.rbc
+	bin/runevm bin/rune-lsp-worker-process-tests.rbc bin/runevm bin/rune-lsp-worker-echo.rbc
+	bin/runevm --jit=all bin/rune-lsp-worker-process-tests.rbc bin/runevm bin/rune-lsp-worker-echo.rbc
+bin/rune-compiler-analysis-tests.rbc: $(RUNE) tests/lib/compiler/analysis.sml manifests
+	$(RUNE) --library test/unit --library compiler tests/lib/compiler/analysis.sml -o $@
+test-lsp-analysis: bin/rune-compiler-analysis-tests.rbc
+	bin/runevm bin/rune-compiler-analysis-tests.rbc
+	bin/runevm --jit=all bin/rune-compiler-analysis-tests.rbc
 bin/rune-lsp-syntax-bench.rbc: $(RUNE) rune-lsp-syntax-bench.build tools/lsp/syntax-bench.sml src/main/lsp-syntax-bench-main.sml $(wildcard lib/compiler/syntax/*.sml) manifests
 	$(RUNE) --build rune-lsp-syntax-bench.build -o $@
 bin/rune-compiler-syntax-tests.rbc: $(RUNE) tests/lib/compiler/syntax.sml manifests
@@ -340,7 +355,7 @@ test-lsp-workspace: bin/rune-lsp-workspace-tests.rbc bin/rune-lsp-controller-tes
 	bin/runevm --jit=all bin/rune-lsp-workspace-tests.rbc
 	bin/runevm bin/rune-lsp-controller-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-controller-tests.rbc
-test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc check-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax
+test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc check-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker
 	bin/runevm bin/rune-lsp-tests.rbc
 	bin/runevm bin/rune-lsp-wire-tests.rbc
 
@@ -1919,6 +1934,8 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-documents-tests.rbc \
                bin/rune-lsp-workspace-tests.rbc bin/rune-lsp-controller-tests.rbc bin/rune-lsp-bench bin/rune-lsp-bench-tests.rbc \
                bin/rune-compiler-syntax-tests.rbc bin/rune-lsp-syntax-tests.rbc \
+               bin/rune-compiler-analysis-tests.rbc \
+               bin/rune-lsp-worker-wire-tests.rbc bin/rune-lsp-worker-process-tests.rbc bin/rune-lsp-worker-echo.rbc \
                bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc \
                bin/rune-boot bin/rune.rbc bin/rune.stack.rbc bin/runedoc.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc \
                bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy \

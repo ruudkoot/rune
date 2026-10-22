@@ -1,7 +1,11 @@
 # Index: T
 
-[Overview](../README.md) &middot; [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [p](p.md) [r](r.md) [s](s.md) **t** [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) **t** [v](v.md) [w](w.md)
 
+- `Analysis.t` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.t)
+- `Analysis.typeAt` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.typeat)
+- `Analysis.typeDefinition` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.typedefinition)
+- `Analysis.types` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.types)
 - `Project.t` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-project.t)
 - `Syntax.t` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-syntax.t)
 - `Syntax.text` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.text)

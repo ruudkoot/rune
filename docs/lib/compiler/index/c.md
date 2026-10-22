@@ -1,7 +1,14 @@
 # Index: C
 
-[Overview](../README.md) &middot; **c** [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
 
+- `Analysis.Cancelled` (exn): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#exn-analysis.cancelled)
+- `Analysis.check` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.check)
+- `Analysis.checkpoint` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.checkpoint)
+- `Analysis.checkpoint` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.checkpoint)
+- `Analysis.close` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.close)
+- `Analysis.context` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.context)
+- `Analysis.create` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.create)
 - `close` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-close)
 - `Closed` (exn): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#exn-closed)
 - `compiled` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-compiled)

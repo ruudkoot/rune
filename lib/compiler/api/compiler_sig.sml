@@ -180,4 +180,91 @@ sig
        and discovery inputs. It is not a persisted analysis snapshot. *)
     val fingerprint : t -> string
   end
+
+  (* Versioned static analysis with immutable query data and replay checkpoints. *)
+  structure Analysis :
+  sig
+    (* An analysis context belonging to one compiler session. *)
+    type t
+    (* A frozen result. It remains readable after either context is closed. *)
+    type snapshot
+    (* A validated unit-cache checkpoint belonging to one analysis context. *)
+    type checkpoint
+    (* An ordered decoded source occurrence.
+
+       revision is the caller's source
+       identity/version; an empty mode selects the compiler session's mode. *)
+    type input={file:string,text:string,mode:string,annotations:string list,revision:string}
+    (* A half-open source byte range, before LSP position conversion. *)
+    type location={file:string,start:int,stop:int}
+    (* An actual compiler-resolved binding occurrence.
+
+       The range can cover
+       its enclosing syntax, so editing clients must locate identifier tokens.
+       derived marks a copied functor body rather than original source syntax. *)
+    type occurrence={file:string,start:int,stop:int,kind:string,name:string,path:string list,
+      binding:string option,definition:location option,declaration:location option,isDefinition:bool,derived:bool}
+    (* A frozen inferred type.
+
+       constructors are semantic type identities;
+       arguments contains curried domains, with tuple components grouped. *)
+    type fact={file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}
+    (* A named type's source relationships.
+
+       Abstract types retain their
+       specification separately from the known implementation. *)
+    type typeDefinition={id:string,definition:location option,declaration:location option,implementation:location option}
+    (* Cancellation discarded an attempt before publishing its cache. *)
+    exception Cancelled
+    (* An operation re-entered or closed a context during an active check. *)
+    exception Busy
+    (* `create (compiler, {context})` creates an isolated analysis history.
+
+       context identifies the caller's project/target. It does not append to
+       the compiler's executable history or execute user code. *)
+    val create : session * {context:string} -> t
+    (* `close context` releases its retained caches; repeated calls do nothing. *)
+    val close : t -> unit
+    (* `check (context, request)` checks captured inputs in compiler order.
+
+       A project must come from the same compiler session; inputs must match
+       its ordered occurrences, modes, annotations and group-discovery text.
+       Without a project the inputs form an ordered loose-file context.
+       No files or artifacts are written, and user initializers never run.
+
+       Valid unchanged prefixes replay checked bases. Changed units receive
+       fresh annotation slots in a fresh compiler owner. A failed unit returns
+       diagnostics and query data for its validated prefix; later units remain
+       unavailable. Cancellation is polled between analysis phases and units;
+       a supervisor must bound phases that cannot yet be interrupted. *)
+    val check : t * {project:Project.t option,inputs:input list,cancelled:unit->bool} -> snapshot
+    (* `checkpoint context` captures only committed, validated unit entries. *)
+    val checkpoint : t -> checkpoint
+    (* `restore (context, checkpoint)` restores a cache from that same context.
+       The next check still validates its full configuration and inputs. *)
+    val restore : t * checkpoint -> unit
+    (* `id snapshot` is unique within this analysis context's lifetime. *)
+    val id : snapshot -> string
+    (* `context snapshot` returns the caller's project/target identity. *)
+    val context : snapshot -> string
+    (* `project snapshot` returns its captured project fingerprint, if any. *)
+    val project : snapshot -> string option
+    (* `inputs snapshot` returns the exact captured user source occurrences. *)
+    val inputs : snapshot -> input list
+    (* `dependencies snapshot` returns captured library source and identities. *)
+    val dependencies : snapshot -> input list
+    (* `diagnostics snapshot` returns source-addressed analysis diagnostics. *)
+    val diagnostics : snapshot -> diagnostic list
+    (* `occurrences snapshot` returns frozen lexical binding relationships. *)
+    val occurrences : snapshot -> occurrence list
+    (* `types snapshot` returns semantic constructor identities and sources. *)
+    val types : snapshot -> typeDefinition list
+    (* `facts snapshot` returns inferred types without mutable compiler refs. *)
+    val facts : snapshot -> fact list
+    (* `work snapshot` reports checked and replayed units, including libraries. *)
+    val work : snapshot -> {checked:int,reused:int}
+    (* `typeAt (snapshot, position)` returns its innermost original-source type.
+       Copied-body facts are used only where no original fact is available. *)
+    val typeAt : snapshot * {file:string,offset:int} -> string option
+  end
 end

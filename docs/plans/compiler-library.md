@@ -558,8 +558,6 @@ Shared project-model checkpoint (2026-10-22):
   documented host deviations, including MLKit's LSP protocol bug. That
   profile precedes the new project API; it is not final combined acceptance.
 
-### M5. The clients (M, about 500 SML)
-
 Combined M3/M4 follow-up (2026-10-22): the run at
 `tests/out/r/20261022-161924-3118918` completed 19,346 passes, three
 documented skips and one failure (1,992.5 seconds). The sole failure was
@@ -569,6 +567,18 @@ and planted-fault checks then passed all seven selected runner cases at
 `tests/out/r/20261022-165548-8` (1.1 seconds). This records the failure and
 focused correction; a clean combined run and remaining platform/profile
 acceptance are still required for the final implementation.
+
+### M5. The clients (M, about 500 SML)
+
+The language-server analysis extension now exposes immutable snapshots,
+validated prefix replay, checkpoints and lexical provenance through
+`RuneCompiler.Analysis` ([contract](../compiler-analysis.md)). Its six
+public cases pass in the interpreter/JIT and on all six native hosts;
+selected native/API/layout acceptance passed 20 runner cases at
+`tests/out/r/20261022-182602-3732836` (500.8 seconds). The version-7 basis
+retains provenance independently of runtime exception/type identities.
+This extension does not complete the REPL/service/Basis hook migration
+listed below. Combined acceptance for the new format remains pending.
 
 * **What:** the REPL's engine and session written on `RuneCompiler`;
   `rune --serve` on it and on `lib/json` and `lib/jsonrpc` (its own codec

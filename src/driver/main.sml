@@ -539,11 +539,8 @@ struct
                                   (userToks, inputs)
       val finalPart = List.map (fn e => file (e, !Options.allowPrim)) final
       val sources = basisPart @ userPart @ finalPart
-      (* the signatures and functors the units declared, newest first: what a
-         scope of a build file added (elabSteps) *)
-      val declLog : (string * string) list ref = ref []
-      fun logDeclared (l : UnitBasis.result) =
-        declLog := List.map (fn n => ("fun", n)) (#funs l) @ List.map (fn n => ("sig", n)) (#sigs l) @ !declLog
+      val buildContext=CompilerBuildContext.new (env,fixity)
+      fun logDeclared result=CompilerBuildContext.note (buildContext,result)
       (* a program that may load units while it runs -- it has Runtime's
          loading or a dynamic module's: their files are among its units --
          keeps in its file what its units export, under the identities a
@@ -811,59 +808,11 @@ struct
          environment, the fixity, the signatures and functors, and the units
          that bound each name (UnitBasis.binders), which the usages of the
          units after it are of *)
-      type snapshot = {env : Env.env, fixity : Fixity.env, sigs : SigMatch.sigma StringMap.map,
-                       funs : Elaborate.funinfo StringMap.map, binders : string StringMap.map,
-                       declared : int, bound : int}
-      fun snap () : snapshot =
-        {env = !env, fixity = !fixity, sigs = !Elaborate.sigs, funs = !Elaborate.funs, binders = !UnitBasis.binders,
-         declared = List.length (!declLog), bound = List.length (!UnitBasis.bindLog)}
-      (* what the steps between two snapshots added *)
-      type delta = {env : Env.env, directives : (string * Fixity.fixity) list, declared : (string * string) list,
-                    bound : string list, sigs : SigMatch.sigma StringMap.map, funs : Elaborate.funinfo StringMap.map,
-                    binders : string StringMap.map}
-      fun deltaOf (b1 : snapshot, b2 : snapshot) : delta =
-        {env = UnitBasis.envDelta (#env b1, #env b2),
-         directives = List.take (#list (#fixity b2), List.length (#list (#fixity b2)) - List.length (#list (#fixity b1))),
-         declared = List.rev (List.take (!declLog, List.length (!declLog) - #declared b1)),
-         bound = List.rev (List.take (!UnitBasis.bindLog, List.length (!UnitBasis.bindLog) - #bound b1)),
-         sigs = #sigs b2, funs = #funs b2, binders = #binders b2}
-      (* b0's basis, and what a delta adds to it: all of it, or a library's
-         exports *)
-      fun apply (b0 : snapshot, d : delta, exports : (BuildFile.kind * string) list option) =
-        let
-          fun exported (k, n) = case exports of NONE => true | SOME es => List.exists (fn e => e = (k, n)) es
-          val Env.Env {vals, tys, strs} = #env d
-          val e = Env.Env {vals = if isSome exports then StringMap.empty else vals,
-                           tys = StringMap.filteri (fn (n, _) => exported (BuildFile.Ty, n)) tys,
-                           strs = StringMap.filteri (fn (n, _) => exported (BuildFile.Str, n)) strs}
-          fun keyVisible key =
-            case String.fields (fn c => c = #" ") key of
-              [kind, n] =>
-                (case kind of
-                   "s" => exported (BuildFile.Str, n) | "t" => exported (BuildFile.Ty, n)
-                 | "sig" => exported (BuildFile.Sig, n) | "fun" => exported (BuildFile.Fun, n)
-                 | _ => not (isSome exports))
-            | _ => not (isSome exports)
-        in
-          env := Env.plus (#env b0, e);
-          fixity := Fixity.extend (#fixity b0, if isSome exports then [] else #directives d);
-          Elaborate.sigs := List.foldl (fn (("sig", n), m) =>
-                                          if exported (BuildFile.Sig, n)
-                                          then (case StringMap.find (#sigs d, n) of SOME x => StringMap.insert (m, n, x) | NONE => m)
-                                          else m
-                                        | (_, m) => m) (#sigs b0) (#declared d);
-          Elaborate.funs := List.foldl (fn (("fun", n), m) =>
-                                          if exported (BuildFile.Fun, n)
-                                          then (case StringMap.find (#funs d, n) of SOME x => StringMap.insert (m, n, x) | NONE => m)
-                                          else m
-                                        | (_, m) => m) (#funs b0) (#declared d);
-          UnitBasis.binders := List.foldl (fn (key, m) =>
-                                             if keyVisible key
-                                             then (case StringMap.find (#binders d, key) of
-                                                     SOME i => StringMap.insert (m, key, i)
-                                                   | NONE => m)
-                                             else m) (#binders b0) (#bound d)
-        end
+      type snapshot=CompilerBuildContext.snapshot
+      type delta=CompilerBuildContext.delta
+      fun snap ()=CompilerBuildContext.snap buildContext
+      fun deltaOf (before',after)=CompilerBuildContext.delta (buildContext,before',after)
+      fun apply (before',change,exports)=CompilerBuildContext.apply (buildContext,before',change,exports)
       val libraryContexts : (string * snapshot) list ref = ref []
       fun restoreContext (b : snapshot) =
         (env := #env b; fixity := #fixity b; Elaborate.sigs := #sigs b;

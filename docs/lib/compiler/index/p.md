@@ -1,7 +1,8 @@
 # Index: P
 
-[Overview](../README.md) &middot; [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) **p** [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [o](o.md) **p** [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
 
+- `Analysis.project` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.project)
 - `Project` (str): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#str-project)
 - `Syntax.parse` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.parse)
 - `Syntax.piece` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-syntax.piece)

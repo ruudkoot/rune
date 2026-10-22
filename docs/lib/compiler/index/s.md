@@ -1,7 +1,8 @@
 # Index: S
 
-[Overview](../README.md) &middot; [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [p](p.md) [r](r.md) **s** [t](t.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [o](o.md) [p](p.md) [r](r.md) **s** [t](t.md) [v](v.md) [w](w.md)
 
+- `Analysis.snapshot` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.snapshot)
 - `Project.source` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-project.source)
 - `Project.sources` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.sources)
 - `session` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-session)

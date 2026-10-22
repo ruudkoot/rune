@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 42 of 42 entries documented |
+| Documentation | 69 of 69 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -76,6 +76,36 @@ sig
     val <a href="#val-project.libraries">libraries</a> : t -&gt; string list
     val <a href="#val-project.cachedirectories">cacheDirectories</a> : t -&gt; string list
     val <a href="#val-project.fingerprint">fingerprint</a> : t -&gt; string
+  end
+  structure <a href="#str-analysis">Analysis</a> :
+  sig
+    type <a href="#type-analysis.t">t</a>
+    type <a href="#type-analysis.snapshot">snapshot</a>
+    type <a href="#type-analysis.checkpoint">checkpoint</a>
+    type <a href="#type-analysis.input">input</a>={<a href="#fld-analysis.input.file">file</a>:string,<a href="#fld-analysis.input.text">text</a>:string,<a href="#fld-analysis.input.mode">mode</a>:string,<a href="#fld-analysis.input.annotations">annotations</a>:string list,<a href="#fld-analysis.input.revision">revision</a>:string}
+    type <a href="#type-analysis.location">location</a>={<a href="#fld-analysis.location.file">file</a>:string,<a href="#fld-analysis.location.start">start</a>:int,<a href="#fld-analysis.location.stop">stop</a>:int}
+    type <a href="#type-analysis.occurrence">occurrence</a>={<a href="#fld-analysis.occurrence.file">file</a>:string,<a href="#fld-analysis.occurrence.start">start</a>:int,<a href="#fld-analysis.occurrence.stop">stop</a>:int,<a href="#fld-analysis.occurrence.kind">kind</a>:string,<a href="#fld-analysis.occurrence.name">name</a>:string,<a href="#fld-analysis.occurrence.path">path</a>:string list,
+      <a href="#fld-analysis.occurrence.binding">binding</a>:string option,<a href="#fld-analysis.occurrence.definition">definition</a>:location option,<a href="#fld-analysis.occurrence.declaration">declaration</a>:location option,<a href="#fld-analysis.occurrence.isdefinition">isDefinition</a>:bool,<a href="#fld-analysis.occurrence.derived">derived</a>:bool}
+    type <a href="#type-analysis.fact">fact</a>={<a href="#fld-analysis.fact.file">file</a>:string,<a href="#fld-analysis.fact.start">start</a>:int,<a href="#fld-analysis.fact.stop">stop</a>:int,<a href="#fld-analysis.fact.ty">ty</a>:string,<a href="#fld-analysis.fact.derived">derived</a>:bool,<a href="#fld-analysis.fact.constructors">constructors</a>:string list,<a href="#fld-analysis.fact.arguments">arguments</a>:string list list}
+    type <a href="#type-analysis.typedefinition">typeDefinition</a>={<a href="#fld-analysis.typedefinition.id">id</a>:string,<a href="#fld-analysis.typedefinition.definition">definition</a>:location option,<a href="#fld-analysis.typedefinition.declaration">declaration</a>:location option,<a href="#fld-analysis.typedefinition.implementation">implementation</a>:location option}
+    exception <a href="#exn-analysis.cancelled">Cancelled</a>
+    exception <a href="#exn-analysis.busy">Busy</a>
+    val <a href="#val-analysis.create">create</a> : session * {<a href="#fld-analysis.create.context">context</a>:string} -&gt; t
+    val <a href="#val-analysis.close">close</a> : t -&gt; unit
+    val <a href="#val-analysis.check">check</a> : t * {<a href="#fld-analysis.check.project">project</a>:Project.t option,<a href="#fld-analysis.check.inputs">inputs</a>:input list,<a href="#fld-analysis.check.cancelled">cancelled</a>:unit-&gt;bool} -&gt; snapshot
+    val <a href="#val-analysis.checkpoint">checkpoint</a> : t -&gt; checkpoint
+    val <a href="#val-analysis.restore">restore</a> : t * checkpoint -&gt; unit
+    val <a href="#val-analysis.id">id</a> : snapshot -&gt; string
+    val <a href="#val-analysis.context">context</a> : snapshot -&gt; string
+    val <a href="#val-analysis.project">project</a> : snapshot -&gt; string option
+    val <a href="#val-analysis.inputs">inputs</a> : snapshot -&gt; input list
+    val <a href="#val-analysis.dependencies">dependencies</a> : snapshot -&gt; input list
+    val <a href="#val-analysis.diagnostics">diagnostics</a> : snapshot -&gt; diagnostic list
+    val <a href="#val-analysis.occurrences">occurrences</a> : snapshot -&gt; occurrence list
+    val <a href="#val-analysis.types">types</a> : snapshot -&gt; typeDefinition list
+    val <a href="#val-analysis.facts">facts</a> : snapshot -&gt; fact list
+    val <a href="#val-analysis.work">work</a> : snapshot -&gt; {<a href="#fld-analysis.work.checked">checked</a>:int,<a href="#fld-analysis.work.reused">reused</a>:int}
+    val <a href="#val-analysis.typeat">typeAt</a> : snapshot * {<a href="#fld-analysis.typeat.file">file</a>:string,<a href="#fld-analysis.typeat.offset">offset</a>:int} -&gt; string option
   end
 end
 </pre>
@@ -583,6 +613,313 @@ val fingerprint : t -> string
 
 `fingerprint project` identifies the captured plan, configuration
 and discovery inputs. It is not a persisted analysis snapshot.
+
+### <a name="str-analysis"></a>`Analysis`
+
+Versioned static analysis with immutable query data and replay checkpoints.
+
+#### <a name="type-analysis.t"></a>`t`
+
+```sml
+type t
+```
+
+An analysis context belonging to one compiler session.
+
+#### <a name="type-analysis.snapshot"></a>`snapshot`
+
+```sml
+type snapshot
+```
+
+A frozen result. It remains readable after either context is closed.
+
+#### <a name="type-analysis.checkpoint"></a>`checkpoint`
+
+```sml
+type checkpoint
+```
+
+A validated unit-cache checkpoint belonging to one analysis context.
+
+#### <a name="type-analysis.input"></a>`input`
+
+```sml
+type input={file:string,text:string,mode:string,annotations:string list,revision:string}
+```
+
+An ordered decoded source occurrence.
+
+revision is the caller's source
+identity/version; an empty mode selects the compiler session's mode.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.input.file"></a>`file` | `string` |  |
+| <a name="fld-analysis.input.text"></a>`text` | `string` |  |
+| <a name="fld-analysis.input.mode"></a>`mode` | `string` |  |
+| <a name="fld-analysis.input.annotations"></a>`annotations` | `string list` |  |
+| <a name="fld-analysis.input.revision"></a>`revision` | `string` |  |
+
+#### <a name="type-analysis.location"></a>`location`
+
+```sml
+type location={file:string,start:int,stop:int}
+```
+
+A half-open source byte range, before LSP position conversion.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.location.file"></a>`file` | `string` |  |
+| <a name="fld-analysis.location.start"></a>`start` | `int` |  |
+| <a name="fld-analysis.location.stop"></a>`stop` | `int` |  |
+
+#### <a name="type-analysis.occurrence"></a>`occurrence`
+
+```sml
+type occurrence={file:string,start:int,stop:int,kind:string,name:string,path:string list,
+  binding:string option,definition:location option,declaration:location option,isDefinition:bool,derived:bool}
+```
+
+An actual compiler-resolved binding occurrence.
+
+The range can cover
+its enclosing syntax, so editing clients must locate identifier tokens.
+derived marks a copied functor body rather than original source syntax.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.occurrence.file"></a>`file` | `string` |  |
+| <a name="fld-analysis.occurrence.start"></a>`start` | `int` |  |
+| <a name="fld-analysis.occurrence.stop"></a>`stop` | `int` |  |
+| <a name="fld-analysis.occurrence.kind"></a>`kind` | `string` |  |
+| <a name="fld-analysis.occurrence.name"></a>`name` | `string` |  |
+| <a name="fld-analysis.occurrence.path"></a>`path` | `string list` |  |
+| <a name="fld-analysis.occurrence.binding"></a>`binding` | `string option` |  |
+| <a name="fld-analysis.occurrence.definition"></a>`definition` | `location option` |  |
+| <a name="fld-analysis.occurrence.declaration"></a>`declaration` | `location option` |  |
+| <a name="fld-analysis.occurrence.isdefinition"></a>`isDefinition` | `bool` |  |
+| <a name="fld-analysis.occurrence.derived"></a>`derived` | `bool` |  |
+
+#### <a name="type-analysis.fact"></a>`fact`
+
+```sml
+type fact={file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}
+```
+
+A frozen inferred type.
+
+constructors are semantic type identities;
+arguments contains curried domains, with tuple components grouped.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.fact.file"></a>`file` | `string` |  |
+| <a name="fld-analysis.fact.start"></a>`start` | `int` |  |
+| <a name="fld-analysis.fact.stop"></a>`stop` | `int` |  |
+| <a name="fld-analysis.fact.ty"></a>`ty` | `string` |  |
+| <a name="fld-analysis.fact.derived"></a>`derived` | `bool` |  |
+| <a name="fld-analysis.fact.constructors"></a>`constructors` | `string list` |  |
+| <a name="fld-analysis.fact.arguments"></a>`arguments` | `string list list` |  |
+
+#### <a name="type-analysis.typedefinition"></a>`typeDefinition`
+
+```sml
+type typeDefinition={id:string,definition:location option,declaration:location option,implementation:location option}
+```
+
+A named type's source relationships.
+
+Abstract types retain their
+specification separately from the known implementation.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.typedefinition.id"></a>`id` | `string` |  |
+| <a name="fld-analysis.typedefinition.definition"></a>`definition` | `location option` |  |
+| <a name="fld-analysis.typedefinition.declaration"></a>`declaration` | `location option` |  |
+| <a name="fld-analysis.typedefinition.implementation"></a>`implementation` | `location option` |  |
+
+#### <a name="exn-analysis.cancelled"></a>`Cancelled`
+
+```sml
+exception Cancelled
+```
+
+Cancellation discarded an attempt before publishing its cache.
+
+#### <a name="exn-analysis.busy"></a>`Busy`
+
+```sml
+exception Busy
+```
+
+An operation re-entered or closed a context during an active check.
+
+#### <a name="val-analysis.create"></a>`create`
+
+```sml
+val create : session * {context:string} -> t
+```
+
+`create (compiler, {context})` creates an isolated analysis history.
+
+context identifies the caller's project/target. It does not append to
+the compiler's executable history or execute user code.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.create.context"></a>`context` | `string` |  |
+
+#### <a name="val-analysis.close"></a>`close`
+
+```sml
+val close : t -> unit
+```
+
+`close context` releases its retained caches; repeated calls do nothing.
+
+#### <a name="val-analysis.check"></a>`check`
+
+```sml
+val check : t * {project:Project.t option,inputs:input list,cancelled:unit->bool} -> snapshot
+```
+
+`check (context, request)` checks captured inputs in compiler order.
+
+A project must come from the same compiler session; inputs must match
+its ordered occurrences, modes, annotations and group-discovery text.
+Without a project the inputs form an ordered loose-file context.
+No files or artifacts are written, and user initializers never run.
+
+Valid unchanged prefixes replay checked bases. Changed units receive
+fresh annotation slots in a fresh compiler owner. A failed unit returns
+diagnostics and query data for its validated prefix; later units remain
+unavailable. Cancellation is polled between analysis phases and units;
+a supervisor must bound phases that cannot yet be interrupted.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.check.project"></a>`project` | `Project.t option` |  |
+| <a name="fld-analysis.check.inputs"></a>`inputs` | `input list` |  |
+| <a name="fld-analysis.check.cancelled"></a>`cancelled` | `unit->bool` |  |
+
+#### <a name="val-analysis.checkpoint"></a>`checkpoint`
+
+```sml
+val checkpoint : t -> checkpoint
+```
+
+`checkpoint context` captures only committed, validated unit entries.
+
+#### <a name="val-analysis.restore"></a>`restore`
+
+```sml
+val restore : t * checkpoint -> unit
+```
+
+`restore (context, checkpoint)` restores a cache from that same context.
+The next check still validates its full configuration and inputs.
+
+#### <a name="val-analysis.id"></a>`id`
+
+```sml
+val id : snapshot -> string
+```
+
+`id snapshot` is unique within this analysis context's lifetime.
+
+#### <a name="val-analysis.context"></a>`context`
+
+```sml
+val context : snapshot -> string
+```
+
+`context snapshot` returns the caller's project/target identity.
+
+#### <a name="val-analysis.project"></a>`project`
+
+```sml
+val project : snapshot -> string option
+```
+
+`project snapshot` returns its captured project fingerprint, if any.
+
+#### <a name="val-analysis.inputs"></a>`inputs`
+
+```sml
+val inputs : snapshot -> input list
+```
+
+`inputs snapshot` returns the exact captured user source occurrences.
+
+#### <a name="val-analysis.dependencies"></a>`dependencies`
+
+```sml
+val dependencies : snapshot -> input list
+```
+
+`dependencies snapshot` returns captured library source and identities.
+
+#### <a name="val-analysis.diagnostics"></a>`diagnostics`
+
+```sml
+val diagnostics : snapshot -> diagnostic list
+```
+
+`diagnostics snapshot` returns source-addressed analysis diagnostics.
+
+#### <a name="val-analysis.occurrences"></a>`occurrences`
+
+```sml
+val occurrences : snapshot -> occurrence list
+```
+
+`occurrences snapshot` returns frozen lexical binding relationships.
+
+#### <a name="val-analysis.types"></a>`types`
+
+```sml
+val types : snapshot -> typeDefinition list
+```
+
+`types snapshot` returns semantic constructor identities and sources.
+
+#### <a name="val-analysis.facts"></a>`facts`
+
+```sml
+val facts : snapshot -> fact list
+```
+
+`facts snapshot` returns inferred types without mutable compiler refs.
+
+#### <a name="val-analysis.work"></a>`work`
+
+```sml
+val work : snapshot -> {checked:int,reused:int}
+```
+
+`work snapshot` reports checked and replayed units, including libraries.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.work.checked"></a>`checked` | `int` |  |
+| <a name="fld-analysis.work.reused"></a>`reused` | `int` |  |
+
+#### <a name="val-analysis.typeat"></a>`typeAt`
+
+```sml
+val typeAt : snapshot * {file:string,offset:int} -> string option
+```
+
+`typeAt (snapshot, position)` returns its innermost original-source type.
+Copied-body facts are used only where no original fact is available.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.typeat.file"></a>`file` | `string` |  |
+| <a name="fld-analysis.typeat.offset"></a>`offset` | `int` |  |
 
 ---
 

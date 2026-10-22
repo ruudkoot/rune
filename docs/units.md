@@ -127,6 +127,16 @@ made (rule 54; [plans/functors.md](plans/functors.md)). The summary's
 values and exceptions are named by placeholders, which are no names of the
 unit's.
 
+Static analysis can also record lexical origins in a version-7 basis:
+source ranges for bindings and the specification/implementation relation
+introduced by signature matching. These origins are separate from value,
+exception and generative type stamps. Exception replication shares a
+runtime exception identity while introducing a distinct lexical name.
+Copied functor bodies retain their definition's lexical owner. Analysis
+freezes query data before replacing a unit's mutable annotations; replay
+restores origins together with its checked basis. The batch driver and
+analysis share build-scope visibility through `CompilerBuildContext`.
+
 Then the unit's basis is *loaded* again in place of what its compile left
 (`UnitBasis.load`; `Pipeline.unitThrough`): the compiler's tables go back
 to the unit's start, the bytes are read, their names given names of the

@@ -39,7 +39,7 @@ struct
   (* a pickle that names a unit the session has not loaded *)
   exception Missing of string
 
-  val version = 6
+  val version = 7
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -168,7 +168,7 @@ struct
         else
           (byPath := StringMap.insert (!byPath, pathKey (#identity u, k, p), s);
            if isSome (IntTable.find (Vector.sub (paths, k), s)) then () else IntTable.insert (Vector.sub (paths, k), s, p))
-      fun walk (prefix, Env.Env {vals, tys, strs}) =
+      fun walk (prefix, Env.Env {vals, tys, strs,...}) =
         (StringMap.appi (fn (n, v) =>
                            case v of
                              Env.Val {stamp, ...} => put (kStamp, stamp, prefix ^ n)
@@ -302,12 +302,12 @@ struct
   fun fpTyStr (local' : int IntMap.map, Env.TyStr {fcn, cons}) : string =
     fpFcn (local', fcn) ^ String.concat (List.map (fn (n, v) => "|" ^ n ^ " " ^ fpVal (local', v)) cons)
 
-  fun fpEnv (local' : int IntMap.map, Env.Env {vals, tys, strs}) : string =
+  fun fpEnv (local' : int IntMap.map, Env.Env {vals, tys, strs,...}) : string =
     "{" ^ String.concat (StringMap.foldri (fn (n, v, acc) => ("v " ^ n ^ " " ^ fpVal (local', v) ^ ";") :: acc) [] vals)
     ^ String.concat (StringMap.foldri (fn (n, t, acc) => ("t " ^ n ^ " " ^ fpTyStr (local', t) ^ ";") :: acc) [] tys)
     ^ String.concat (StringMap.foldri (fn (n, e, acc) => ("s " ^ n ^ " " ^ fpEnv (local', e) ^ ";") :: acc) [] strs) ^ "}"
 
-  fun fpSigma ({bound, env = en} : SigMatch.sigma) : string =
+  fun fpSigma ({bound, env = en,...} : SigMatch.sigma) : string =
     let val local' = #2 (List.foldl (fn (c, (i, m)) => (i + 1, IntMap.insert (m, #stamp c, i))) (0, IntMap.empty) bound)
     in Int.toString (List.length bound) ^ fpEnv (local', en) end
 
@@ -331,7 +331,7 @@ struct
   (* the text a fingerprint hashes, of a functor: its signature, the
      parameter's names and those its body made local to it, its values
      specifications; nothing where it has no summary *)
-  fun fpFunctor (Elaborate.FunInfo {paramSig = {bound, env = pe}, summary, ...}) : string option =
+  fun fpFunctor (Elaborate.FunInfo {paramSig = {bound, env = pe,...}, summary, ...}) : string option =
     case summary of
       NONE => NONE
     | SOME {generated, result, ...} =>
@@ -516,7 +516,8 @@ struct
       Elaborate.restore (#snapshot s); Translate.primAliases := #primAliases s; Lower.knownBefore := #knownBefore s;
       IntTable.removeRange (Ty.binders, s0, s1);
       IntTable.removeRange (Ty.exnArgs, s0, s1);
-      IntTable.removeRange (Ty.realizations, t0, t1)
+      IntTable.removeRange (Ty.realizations, t0, t1);
+      Env.typeOrigins:=IntMap.filteri (fn (stamp,_) => stamp<t0 orelse stamp>=t1) (!Env.typeOrigins)
     end
 
   (* A load that failed part of the way undone: what it entered in the
@@ -532,6 +533,7 @@ struct
       IntTable.removeRange (Ty.exnArgs, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
       IntTable.removeRange (Ty.realizations, Vector.sub (at, kTycon), Vector.sub (now, kTycon));
       Ty.datatypes := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.datatypes);
+      Env.typeOrigins := IntMap.filteri (fn (s, _) => outside kTycon s) (!Env.typeOrigins);
       Elaborate.dataCons := IntMap.filteri (fn (s, _) => outside kTycon s) (!Elaborate.dataCons);
       Translate.primAliases := IntMap.filteri (fn (s, _) => outside kStamp s) (!Translate.primAliases);
       Lower.knownBefore := IntMap.filteri (fn (s, _) => outside kStamp s) (!Lower.knownBefore);
@@ -699,16 +701,22 @@ struct
   fun tystatus (e : enc, Env.TyStr {fcn, cons}) : unit =
     (tyfcn (e, fcn); P.list (fn (w, (n, v)) => (P.string (w, n); valstatus (e, v))) (#w e, cons))
 
-  fun env (e : enc, Env.Env {vals, tys, strs}) : unit =
+  fun writeOrigin (w,origin)=case origin of Env.Unknown => P.byte (w,0)
+    | Env.Named {unit,kind,name,span} => (P.byte (w,1);P.string (w,unit);P.string (w,kind);P.string (w,name);
+        P.string (w,#file span);P.nat (w,#start span);P.nat (w,#stop span))
+    | Env.Constrained (actual,spec) => (P.byte (w,2);writeOrigin (w,actual);writeOrigin (w,spec))
+
+  fun env (e : enc, Env.Env {vals, tys, strs,origins}) : unit =
     let val w = #w e
     in
       P.list (fn (w, (n, v)) => (P.string (w, n); valstatus (e, v))) (w, StringMap.listItemsi vals);
       P.list (fn (w, (n, t)) => (P.string (w, n); tystatus (e, t))) (w, StringMap.listItemsi tys);
-      P.list (fn (w, (n, s)) => (P.string (w, n); env (e, s))) (w, StringMap.listItemsi strs)
+      P.list (fn (w, (n, s)) => (P.string (w, n); env (e, s))) (w, StringMap.listItemsi strs);
+      P.list (fn (w,(key,origin)) => (P.string (w,key);writeOrigin (w,origin))) (w,StringMap.listItemsi origins)
     end
 
-  fun sigma (e : enc, {bound, env = en} : SigMatch.sigma) : unit =
-    (P.list (fn (_, c) => tycon (e, c)) (#w e, bound); env (e, en))
+  fun sigma (e : enc, {bound, env = en,origin} : SigMatch.sigma) : unit =
+    (P.list (fn (_, c) => tycon (e, c)) (#w e, bound); env (e, en);writeOrigin (#w e,origin))
 
   (* ---- what of an environment is not the unit's start ---- *)
 
@@ -754,19 +762,22 @@ struct
         andalso StringMap.foldli (fn (n, x, ok) => ok andalso (case StringMap.find (m2, n) of
                                                                  SOME y => eq (x, y)
                                                                | NONE => false)) true m1
-    in same sameVal (#vals a, #vals b) andalso same sameTy (#tys a, #tys b) andalso same sameEnv (#strs a, #strs b) end
+    in (if StringMap.isEmpty (#origins a) andalso StringMap.isEmpty (#origins b) then true
+        else StringMap.listItemsi (#origins a)=StringMap.listItemsi (#origins b))
+       andalso same sameVal (#vals a, #vals b) andalso same sameTy (#tys a, #tys b) andalso same sameEnv (#strs a, #strs b) end
 
   (* What of x is not as it is in base: x holds every name of base (an
      environment only grows from the unit's start), and those it binds
      otherwise are the delta, which the start plus the delta gives back. *)
   fun envDelta (base : Env.env, x : Env.env) : Env.env =
     let
-      fun keep eq (bm, xm) = StringMap.filteri (fn (n, v) => case StringMap.find (bm, n) of
+      fun keep kind eq (bm, xm) = StringMap.filteri (fn (n, v) =>
+        Env.originOf (base,kind,([],n))<>Env.originOf (x,kind,([],n)) orelse (case StringMap.find (bm, n) of
                                                                SOME b => not (eq (b, v))
-                                                             | NONE => true) xm
+                                                             | NONE => true)) xm
     in
-      Env.Env {vals = keep sameVal (Env.vals base, Env.vals x), tys = keep sameTy (Env.tys base, Env.tys x),
-               strs = keep sameEnv (Env.strs base, Env.strs x)}
+      Env.make {origins=Env.origins x,vals = keep "v" sameVal (Env.vals base, Env.vals x), tys = keep "t" sameTy (Env.tys base, Env.tys x),
+               strs = keep "s" sameEnv (Env.strs base, Env.strs x)}
     end
 
   (* ---- functors ---- *)
@@ -789,7 +800,7 @@ struct
       else (P.byte (w, 1); P.nat (w, unitRef (e, origin)); P.nat (w, at))
     end
 
-  and funinfo (e : enc, Elaborate.FunInfo {param, paramSig, body, defEnv, allowPrim, defSigs, defFuns, summary, ...}) : unit =
+  and funinfo (e : enc, Elaborate.FunInfo {param, paramSig, body, defEnv, allowPrim, defSigs, defFuns, summary, binding,...}) : unit =
     let
       val w = #w e
       val {file, start = at, stop} = bodyAt body
@@ -814,8 +825,9 @@ struct
       (* its summary (Elaborate.summary): the names its body made as a
          signature's flexible names, what the body gave, its counts *)
       P.option (fn (w, {generated, result, counts = (a, b, c)} : Elaborate.summary) =>
-                  (sigma (e, {bound = generated, env = result}); P.nat (w, a); P.nat (w, b); P.nat (w, c)))
-               (w, summary)
+                  (sigma (e, {bound = generated, env = result,origin=Env.Unknown}); P.nat (w, a); P.nat (w, b); P.nat (w, c)))
+               (w, summary);
+      writeOrigin (w,binding)
     end
 
   (* ---- overloading ---- *)
@@ -864,7 +876,8 @@ struct
                                (w, cons)))
                     (w, IntMap.find (!Ty.datatypes, v));
            P.option (fn (_, f) => tyfcn (e, f)) (w, IntTable.find (Ty.realizations, v));
-           P.option (P.list (fn (w, (n, s)) => (P.string (w, n); valstatus (e, s)))) (w, IntMap.find (!Elaborate.dataCons, v)))
+           P.option (P.list (fn (w, (n, s)) => (P.string (w, n); valstatus (e, s)))) (w, IntMap.find (!Elaborate.dataCons, v));
+           writeOrigin (w,getOpt (IntMap.find (!Env.typeOrigins,v),Env.Unknown)))
         else ()
     in drain (); P.byte (w, 0) end
 
@@ -1200,15 +1213,28 @@ struct
     let val fcn = rtyfcn d
     in Env.TyStr {fcn = fcn, cons = P.rlist (fn r => let val n = P.rstring r in (n, rvalstatus d) end) (#r d)} end
 
+  fun readOrigin r = case P.rbyte r of 0 => Env.Unknown | 1 =>
+    let val unit=P.rstring r val kind=P.rstring r val name=P.rstring r
+        val file=P.rstring r val start=P.rnat r val stop=P.rnat r
+    in Env.Named {unit=unit,kind=kind,name=name,span={file=file,start=start,stop=stop}} end
+    | 2 => let val actual=readOrigin r val spec=readOrigin r in Env.Constrained (actual,spec) end
+    | _ => raise P.Bad "invalid binding origin"
+
   fun renv (d : dec) : Env.env =
     let
       val vals = rmap d rvalstatus
       val tys = rmap d rtystatus
       val strs = rmap d renv
-    in Env.Env {vals = vals, tys = tys, strs = strs} end
+      val origins=StringMap.fromList (P.rlist (fn r =>
+        let val key=P.rstring r
+            val origin=readOrigin r
+        in (key,origin) end) (#r d))
+    in Env.Env {vals = vals, tys = tys, strs = strs,origins=origins} end
 
   fun rsigma (d : dec) : SigMatch.sigma =
-    let val bound = P.rlist (fn _ => rtycon d) (#r d) in {bound = bound, env = renv d} end
+    let val bound = P.rlist (fn _ => rtycon d) (#r d)
+        val env=renv d val origin=readOrigin (#r d)
+    in {bound=bound,env=env,origin=origin} end
 
   (* ---- loading ---- *)
 
@@ -1450,15 +1476,16 @@ struct
           val summary =
             P.roption (fn r =>
                          let
-                           val {bound, env = result} = rsigma d
+                           val {bound, env = result,...} = rsigma d
                            val a = P.rnat r
                            val b = P.rnat r
                            val c = P.rnat r
                          in {generated = bound, result = result, counts = (a, b, c)} end) r
+          val binding=readOrigin r
           val f =
             Elaborate.FunInfo
               {param = param, paramSig = paramSig, body = bodyOf at, defEnv = Env.plus (startEnv, defDelta),
-               allowPrim = allowPrim, origin = identity, summary = summary,
+               allowPrim = allowPrim, origin = identity, summary = summary,binding=binding,
                defSigs = List.foldl (fn ((n, s), m) => StringMap.insert (m, n, s)) startSigs defSigs,
                defFuns = List.foldl (fn ((n, f), m) => StringMap.insert (m, n, f)) startFuns defFuns}
         in ownFuns := IntMap.insert (!ownFuns, at, f); f end
@@ -1520,10 +1547,12 @@ struct
                                     in {params = params, cons = cons} : Ty.datatypeInfo end) r
               val real = P.roption (fn _ => rtyfcn d) r
               val dcons = P.roption (P.rlist (fn r => let val n = P.rstring r in (n, rvalstatus d) end)) r
+              val origin=readOrigin r
             in
               Option.app (fn i => (Ty.extras := Ty.Unknown; Ty.datatypes := IntMap.insert (!Ty.datatypes, c, i))) dt;
               Option.app (fn f => IntTable.insert (Ty.realizations, c, f)) real;
               Option.app (fn l => Elaborate.dataCons := IntMap.insert (!Elaborate.dataCons, c, l)) dcons;
+              (case origin of Env.Unknown => () | _ => Env.typeOrigins:=IntMap.insert (!Env.typeOrigins,c,origin));
               entries ()
             end
         | _ => raise P.Bad "not a table's entry"

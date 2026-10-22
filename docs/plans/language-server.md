@@ -20,7 +20,7 @@ documentation and its evidence beside the tests before this plan is retired.
 | M2 | Protocol libraries, transport, lifecycle and harness | M0 | in progress: protocol foundation and focused Linux checks implemented; final profile/platform acceptance remains |
 | M3 | Documents, positions, workspaces and build contexts | M2 | in progress: synchronization, reusable codecs, shared project planning and workspace requests implemented; combined/platform acceptance pending |
 | M4 | Incremental syntax, recovery and the parser decision | M1, M3 | in progress: separate SML parser, lossless pieces, lexical/declaration reuse, AST bridge and differential checks implemented; performance/platform acceptance pending |
-| M5 | Compiler sessions, semantic snapshots and invalidation | M3, M4; compiler-library M1-M4 and the analysis contract below | planned |
+| M5 | Compiler sessions, semantic snapshots and invalidation | M3, M4; compiler-library M1-M4 and the analysis contract below | in progress: public immutable snapshots, scoped prefix replay, provenance and worker transport tested; scheduling/integration and full acceptance remain |
 | M6 | Document and workspace diagnostics | M5 | planned |
 | M7 | Hover, navigation and symbols | M5 | planned |
 | M8 | Completion, signature help and inline completion | M7 | planned |
@@ -911,6 +911,35 @@ and unbuilt VM prerequisites; those runs are not counted as passes.
   error/cancel recovery does not commit partial compiler mutations.
   Measure analysis, replay, worker startup and cancellation separately;
   retain exact cold-path fallback when reuse is unproven.
+
+M5 foundation checkpoint (2026-10-22):
+
+* [The public analysis API](../compiler-analysis.md) checks captured ordered
+  inputs, validates project ownership/group text and returns frozen inputs,
+  type facts, constructor identities and lexical source relationships.
+  Valid unchanged prefixes replay bases in a fresh owner; rejected units
+  expose only their validated prefix. Checkpoints retain unit entries,
+  rather than claiming to roll back mutable type cells.
+* Provenance distinguishes exception aliases from runtime exception stamps,
+  preserves signature declaration/implementation relationships and retains
+  a functor body's lexical owner across applications. The version-7 basis
+  carries this data through replay. CLI and analysis share scope visibility.
+* Six public analysis cases pass in the interpreter and JIT, including
+  comparison with fresh batch queries. All 20 selected native-host/API,
+  compiler-layout and host-adapter runner cases passed at
+  `tests/out/r/20261022-182602-3732836` (500.8 seconds). Ownership/audit
+  checks pass with 212 registered roots; documentation checks passed 11
+  cases at `tests/out/r/20261022-182347-298` (8.7 seconds).
+* Private worker framing and nonblocking pipes reuse the portable
+  `Subprocess` layer. Binary bytes, independent input readiness, process
+  cancellation and truncated frames pass Linux and native Windows probes.
+  These test the transport; the server's semantic job scheduler and
+  provider integration remain pending.
+
+M5 remains in progress. Compiler setting coverage, recovery within rejected
+units, worker scheduling, stale-publication checks, measurements and final
+combined/platform acceptance still need evidence. Editing providers remain
+unadvertised.
 
 ### M6. Diagnostics (M)
 

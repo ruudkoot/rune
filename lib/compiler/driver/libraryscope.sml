@@ -9,8 +9,8 @@ struct
     let
       fun visible key = List.exists (fn exported => exported = key) exports
       val Env.Env {tys, strs, ...} = #env current
-      val exported = Env.Env
-        {vals = StringMap.empty,
+      val exported = Env.make
+        {origins=Env.origins (#env current),vals = StringMap.empty,
          tys = StringMap.filteri (fn (n, _) => visible ("type", n)) tys,
          strs = StringMap.filteri (fn (n, _) => visible ("structure", n)) strs}
     in

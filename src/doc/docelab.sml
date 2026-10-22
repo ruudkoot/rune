@@ -99,7 +99,7 @@ struct
                                 ^ (if #realisations c = "" then "" else " " ^ #realisations c)
                                 ^ ", as its comment claims: " ^ msg)
 
-  fun namesIn (Env.Env {vals, tys, strs}) : string list =
+  fun namesIn (Env.Env {vals, tys, strs,...}) : string list =
     StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty
                                    (StringMap.listKeys vals @ StringMap.listKeys tys @ StringMap.listKeys strs))
 
@@ -232,7 +232,7 @@ struct
   fun membersOf (lib : library, public : string -> bool) (path : string list) : (string * member) list option =
     case Env.findStr (#env lib, path) of
       NONE => NONE
-    | SOME (structure' as Env.Env {vals, tys, strs}) =>
+    | SOME (structure' as Env.Env {vals, tys, strs,...}) =>
         let
           (* What a type is called on this page: a type that this structure
              names is that name, a type that a structure below it names is the
@@ -442,7 +442,7 @@ struct
     in
       case sigma of
         NONE => NONE
-      | SOME {bound, env = sigEnv} =>
+      | SOME {bound, env = sigEnv,...} =>
           (case Env.findStr (sigEnv, sub) of
              SOME (Env.Env {tys, ...}) =>
                (case StringMap.find (tys, ty) of
@@ -458,7 +458,7 @@ struct
   fun abstractTypesOf (lib : library) (sigexp : string) : (string list * string) list =
     (ignore (typeSpecOf lib (sigexp, [], ""));
      case StringMap.find (!probed, sigexp) of
-       SOME (SOME {bound, env = sigEnv}) =>
+       SOME (SOME {bound, env = sigEnv,...}) =>
          let
            fun walk (path, Env.Env {tys, strs, ...}) =
              List.mapPartial (fn (name, Env.TyStr {fcn = Types.TName c, ...}) =>

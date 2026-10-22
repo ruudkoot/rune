@@ -15,9 +15,38 @@ struct
      its constructors (in declaration order). *)
   datatype tystatus = TyStr of {fcn : tyfcn, cons : (string * valstatus) list}
 
-  datatype env = Env of {vals : valstatus StringMap.map, tys : tystatus StringMap.map, strs : env StringMap.map}
+  datatype origin = Unknown | Named of {unit:string,kind:string,name:string,span:Source.span}
+    | Constrained of origin * origin
+  fun primary (Constrained (actual,_))=primary actual | primary origin=origin
+  fun declaration (Constrained (_,spec))=declaration spec | declaration origin=origin
+  fun constrain (actual,Unknown)=actual
+    | constrain (actual,spec)=if actual=spec then actual else Constrained (actual,spec)
+  val tracking=ref false
+  val ()=CompilerState.cellRoot ("Env.tracking",tracking)
+  val currentUnit=ref ""
+  val ()=CompilerState.cellRoot ("Env.currentUnit",currentUnit)
+  val applicationDepth=ref 0
+  val ()=CompilerState.cellRoot ("Env.applicationDepth",applicationDepth)
+  val observe : (string * (string list * string) * Source.span * origin * bool -> unit) ref = ref (fn _ => ())
+  val ()=CompilerState.cellRoot ("Env.observe",observe)
+  fun emit (kind,id,span,origin)=(!observe) (kind,id,span,origin,!applicationDepth>0)
+  val stampOrigins : origin IntTable.table=IntTable.table 256
+  val ()=CompilerState.tableRoot ("Env.stampOrigins",stampOrigins)
+  val typeOrigins : origin IntMap.map ref=ref IntMap.empty
+  val ()=CompilerState.cellRoot ("Env.typeOrigins",typeOrigins)
+  fun noteType (constructor:Types.tycon,origin)=if !tracking then
+    typeOrigins:=IntMap.insert (!typeOrigins,#stamp constructor,origin) else ()
+  fun copyTypeOrigin (old:Types.tycon,fresh:Types.tycon)=if !tracking then
+    Option.app (fn origin => noteType (fresh,origin)) (IntMap.find (!typeOrigins,#stamp old)) else ()
+  fun originAt (kind,name,span)=if !tracking then Named {unit= !currentUnit,kind=kind,name=name,span=span} else Unknown
+  fun noteStamp (stamp,name,span)=if !tracking then
+    let val origin=originAt ("value",name,span)
+    in IntTable.insert (stampOrigins,stamp,origin);emit ("def-v",([],name),span,origin) end else ()
 
-  val empty = Env {vals = StringMap.empty, tys = StringMap.empty, strs = StringMap.empty}
+  datatype env = Env of {vals : valstatus StringMap.map, tys : tystatus StringMap.map, strs : env StringMap.map,
+                        origins:origin StringMap.map}
+
+  val empty = Env {vals = StringMap.empty, tys = StringMap.empty, strs = StringMap.empty,origins=StringMap.empty}
 
   fun vals (Env e) = #vals e
   fun tys (Env e) = #tys e
@@ -38,15 +67,47 @@ struct
       StringMap.app (fn e => noEscape (first, sp, e)) (strs env)
     end
 
-  fun bindVal (Env {vals, tys, strs}, name, v) = Env {vals = StringMap.insert (vals, name, v), tys = tys, strs = strs}
-  fun bindTy (Env {vals, tys, strs}, name, t) = Env {vals = vals, tys = StringMap.insert (tys, name, t), strs = strs}
-  fun bindStr (Env {vals, tys, strs}, name, s) = Env {vals = vals, tys = tys, strs = StringMap.insert (strs, name, s)}
-
-  (* e2 shadows e1 *)
-  fun plus (Env e1, Env e2) =
-    Env {vals = StringMap.unionWith #2 (#vals e1, #vals e2),
-         tys = StringMap.unionWith #2 (#tys e1, #tys e2),
-         strs = StringMap.unionWith #2 (#strs e1, #strs e2)}
+  fun origins (Env e)= #origins e
+  fun clearOrigin (origins,key)=if StringMap.isEmpty origins then origins else StringMap.remove (origins,key)
+  fun putOrigin (Env {vals,tys,strs,origins},kind,name,origin)=
+    Env {vals=vals,tys=tys,strs=strs,origins=case origin of Unknown => clearOrigin (origins,kind ^ " " ^ name)
+      | _ => StringMap.insert (origins,kind ^ " " ^ name,origin)}
+  fun make {vals,tys,strs,origins} =
+    Env {vals=vals,tys=tys,strs=strs,origins=if StringMap.isEmpty origins then origins else
+      StringMap.filteri (fn (key,_) => case String.fields (fn c => c= #" ") key of
+        ["v",name] => StringMap.member (vals,name) | ["t",name] => StringMap.member (tys,name)
+      | ["s",name] => StringMap.member (strs,name) | _ => false) origins}
+  fun bindVal (Env {vals,tys,strs,origins},name,value)=
+    let val origin=if not (!tracking) then Unknown else
+          case value of Val {stamp,...} => getOpt (IntTable.find (stampOrigins,stamp),Unknown) | _ => Unknown
+    in putOrigin (Env {vals=StringMap.insert (vals,name,value),tys=tys,strs=strs,origins=origins},"v",name,origin) end
+  fun bindTy (Env {vals,tys,strs,origins},name,value)=
+    Env {vals=vals,tys=StringMap.insert (tys,name,value),strs=strs,origins=clearOrigin (origins,"t " ^ name)}
+  fun bindStr (Env {vals,tys,strs,origins},name,value)=
+    Env {vals=vals,tys=tys,strs=StringMap.insert (strs,name,value),origins=clearOrigin (origins,"s " ^ name)}
+  fun bindValAt (env,name,value,span)=
+    let val origin=originAt ("value",name,span)
+        val ()=if !tracking then emit ("def-v",([],name),span,origin) else ()
+    in putOrigin (bindVal (env,name,value),"v",name,origin) end
+  fun bindTyAt (env,name,value,span)=
+    let val origin=originAt ("type",name,span)
+        val ()=if !tracking then emit ("def-t",([],name),span,origin) else ()
+        val ()=if !tracking then (case value of TyStr {fcn=Types.TName constructor,...} =>
+          if IntMap.member (!typeOrigins,#stamp constructor) then () else noteType (constructor,origin)
+          | _ => ()) else ()
+    in putOrigin (bindTy (env,name,value),"t",name,origin) end
+  fun bindStrAt (env,name,value,span)=
+    let val origin=originAt ("structure",name,span)
+        val ()=if !tracking then emit ("def-s",([],name),span,origin) else ()
+    in putOrigin (bindStr (env,name,value),"s",name,origin) end
+  fun plus (Env e1,Env e2)=
+    let val origins=if StringMap.isEmpty (#origins e1) andalso StringMap.isEmpty (#origins e2) then StringMap.empty else
+          StringMap.unionWith #2 (StringMap.filteri (fn (key,_) => case String.fields (fn c => c= #" ") key of
+            ["v",name] => not (StringMap.member (#vals e2,name))
+          | ["t",name] => not (StringMap.member (#tys e2,name))
+          | ["s",name] => not (StringMap.member (#strs e2,name)) | _ => true) (#origins e1),#origins e2)
+    in Env {vals=StringMap.unionWith #2 (#vals e1,#vals e2),tys=StringMap.unionWith #2 (#tys e1,#tys e2),
+      strs=StringMap.unionWith #2 (#strs e1,#strs e2),origins=origins} end
 
   (* Union of environments that must not overlap (rule 77: specifications). *)
   fun plusDisjoint (Env e1, Env e2, sp) =
@@ -144,6 +205,10 @@ struct
     else useIf (kind, String.concatWith "." (path @ [name]), sameStr, StringMap.find (strs env, s),
                 fn se => StringMap.find (strs se, s))
 
+  fun originOf (env,kind,(path,name))=case findStr' (env,path) of NONE => Unknown
+    | SOME env => getOpt (StringMap.find (origins env,kind ^ " " ^ name),Unknown)
+  fun noteUse (env,kind,id,span)=if !tracking then emit (kind,id,span,originOf (env,kind,id)) else ()
+
   fun findVal (env, (path, name)) =
     case path of
       [] =>
@@ -210,13 +275,13 @@ struct
 
   fun changeCount () = !changes
 
-  fun realizeEnv' (phi : realisation, e as Env {vals, tys, strs}) : env =
+  fun realizeEnv' (phi : realisation, e as Env {vals, tys, strs,origins}) : env =
     let
       val n = !changes
       val vals' = StringMap.mapKeep changeCount (fn v => realizeVal (phi, v)) vals
       val tys' = StringMap.mapKeep changeCount (fn t => realizeTyStr (phi, t)) tys
       val strs' = StringMap.mapKeep changeCount (fn s => realizeEnv' (phi, s)) strs
-    in if !changes = n then e else Env {vals = vals', tys = tys', strs = strs'} end
+    in if !changes = n then e else Env {vals = vals', tys = tys', strs = strs',origins=origins} end
 
   (* with --pass-stats=elab, counted, and the nodes visited by the steps of
      type work taken, one for each (a prune) *)
@@ -319,7 +384,7 @@ struct
      ("unit", TyStr {fcn = TAbbrev ([], unitTy), cons = []})]
 
   val initial =
-    Env {vals = StringMap.fromList builtinVals,
+    Env {origins=StringMap.empty,vals = StringMap.fromList builtinVals,
          tys = StringMap.fromList builtinTys,
          strs = StringMap.empty}
 

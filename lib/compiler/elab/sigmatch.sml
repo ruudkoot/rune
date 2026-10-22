@@ -6,7 +6,7 @@ structure SigMatch =
 struct
   open Types Env
 
-  type sigma = {bound : tycon list, env : env}
+  type sigma = {bound : tycon list, env : env,origin:Env.origin}
 
   fun err (sp, msg) = Error.error (sp, msg)
   fun pathString (path, name) = String.concatWith "." (path @ [name])
@@ -17,17 +17,19 @@ struct
     | fcnToString (TAbbrev (_, body)) = toString body
 
   (* Rule 65: every use of a signature gets fresh bound names. *)
-  fun instantiate ({bound, env} : sigma) : sigma =
+  fun instantiate ({bound, env,origin} : sigma) : sigma =
     let
       val () = if !ElabStats.on then (ElabStats.count ElabStats.InstSig; ElabStats.add (ElabStats.InstNames, List.length bound))
                else ()
-      val fresh = List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) bound
+      val fresh = List.map (fn c =>
+        let val fresh=freshTycon (#name c,#arity c,#eq c)
+        in Env.copyTypeOrigin (c,fresh);(c,fresh) end) bound
       val phi = List.foldl (fn ((c, c'), m) => IntMap.insert (m, #stamp c, TName c')) IntMap.empty fresh
-    in {bound = List.map #2 fresh, env = realizeEnv (phi, env)} end
+    in {bound = List.map #2 fresh, env = realizeEnv (phi, env),origin=origin} end
 
   (* Apply a realisation; realised names stop being flexible. *)
-  fun realizeSigma (phi : realisation, {bound, env} : sigma) : sigma =
-    {bound = List.filter (fn c => not (IntMap.member (phi, #stamp c))) bound, env = realizeEnv (phi, env)}
+  fun realizeSigma (phi : realisation, {bound, env,origin} : sigma) : sigma =
+    {bound = List.filter (fn c => not (IntMap.member (phi, #stamp c))) bound, env = realizeEnv (phi, env),origin=origin}
 
   (* All type components of an environment with their paths, in a fixed order. *)
   fun tyPaths (env : env) : (string list * string * tystatus) list =
@@ -45,7 +47,7 @@ struct
      what the clauses before it define of sigma, the signature the chain
      starts from, checking it as against the signature they realised; and
      whereFinish realises sigma by them all. *)
-  fun whereStep ({bound, env} : sigma, phi : realisation, longid, fcn : tyfcn, sp) : realisation =
+  fun whereStep ({bound, env,origin} : sigma, phi : realisation, longid, fcn : tyfcn, sp) : realisation =
     let
       val () = if !ElabStats.on then ElabStats.count ElabStats.WhereClause else ()
       val (c, cons) =
@@ -83,7 +85,7 @@ struct
      as against the signature the equations before it realised. *)
   datatype equation = ShareTypes of Ast.longid list * Source.span | ShareStructures of Ast.longid list * Source.span
 
-  fun shareRun ({bound, env} : sigma, eqns : equation list) : sigma =
+  fun shareRun ({bound, env,origin} : sigma, eqns : equation list) : sigma =
     let
       val boundSet = List.foldl (fn (c, m) => IntMap.insert (m, #stamp c, ())) IntMap.empty bound
       (* the name each name was merged into, and the name of each class, by
@@ -179,7 +181,7 @@ struct
                                in if #stamp c' = #stamp c andalso #eq c' = #eq c then m else IntMap.insert (m, #stamp c, TName c') end)
                            IntMap.empty bound
     in
-      {bound = bound', env = realizeEnv (phi, env)}
+      {bound = bound', env = realizeEnv (phi, env),origin=origin}
     end
 
   (* --- enrichment (Section 5.9) --- *)
@@ -347,12 +349,15 @@ struct
       val tys' = StringMap.map (fn TyStr {fcn, cons} =>
                                    TyStr {fcn = fcn, cons = List.map (fn (c, _) => (c, get (vals', c))) cons})
                                (tys specE)
-    in Env {vals = vals', tys = tys', strs = strs'} end
+      val origins=if not (!Env.tracking) then Env.origins actual else
+        StringMap.foldli (fn (key,spec,origins) => StringMap.insert (origins,key,
+          Env.constrain (getOpt (StringMap.find (origins,key),Env.Unknown),spec))) (Env.origins actual) (Env.origins specE)
+    in Env.make {vals = vals', tys = tys', strs = strs',origins=origins} end
 
   (* Signature matching (Section 5.10): find the realisation of the flexible
      names from the structure's type components, then check enrichment.
      Returns the realisation and the realised signature environment. *)
-  fun match ({bound, env = sigEnv} : sigma, actual : env, sp) : realisation * env =
+  fun match ({bound, env = sigEnv,...} : sigma, actual : env, sp) : realisation * env =
     let
       val boundSet = List.foldl (fn (c, m) => IntMap.insert (m, #stamp c, ())) IntMap.empty bound
       fun one ((path, n, TyStr {fcn, cons}), phi) =
@@ -384,7 +389,7 @@ struct
     end
 
   (* Rules 52 and 53. *)
-  fun ascribe (sigma as {bound, env} : sigma, actual : env, opaque : bool, sp) : env =
+  fun ascribe (sigma as {bound, env,origin} : sigma, actual : env, opaque : bool, sp) : env =
     let val (phi, specE) = match (sigma, actual, sp)
     in
       if not opaque then mergeInfo (specE, actual)
@@ -401,6 +406,14 @@ struct
               IntMap.insert (m, #stamp c, TName c')
             end
           val rho = List.foldl abstract IntMap.empty bound
-        in mergeInfo (realizeEnv (rho, env), actual) end
+          val result=mergeInfo (realizeEnv (rho,env),actual)
+          val generated=List.mapPartial (fn (_,fcn) => case fcn of TName c => SOME (#stamp c) | _ => NONE) (IntMap.listItemsi rho)
+          fun origins (env:Env.env) =
+            (StringMap.appi (fn (name,TyStr {fcn,...}) => case fcn of TName c =>
+               if List.exists (fn stamp => stamp= #stamp c) generated then
+                 Env.noteType (c,Env.originOf (env,"t",([],name))) else () | _ => ()) (Env.tys env);
+             StringMap.app origins (Env.strs env))
+          val ()=if !Env.tracking then origins result else ()
+        in result end
     end
 end

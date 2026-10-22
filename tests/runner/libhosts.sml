@@ -37,6 +37,7 @@ struct
        ("compiler.state", ["compiler-state"], "compiler/state"),
        ("compiler.api", ["unicode", "json", "compiler"], "compiler/api"),
        ("compiler.syntax", ["unicode", "json", "compiler"], "compiler/syntax"),
+       ("compiler.analysis", ["unicode", "json", "compiler"], "compiler/analysis"),
        ("dap.dap", ["unicode", "json", "jsonrpc", "dap"], "dap/dap"),
        ("pretty.pretty", ["unicode", "pretty"], "pretty/pretty"),
        ("markdown.spec", ["unicode", "json", "pretty", "markdown"], "markdown/spec"),

@@ -82,13 +82,13 @@ struct
     structure P=CompilerProject
     type source={file:string,annotations:string list,mode:string,ordinal:int}
     type input={file:string,text:string,mode:string,kind:string,revision:string}
-    datatype t=Project of {plan:P.plan,sources:source list,inputs:input list,fingerprint:string}
+    datatype t=Project of {owner:unit ref,plan:P.plan,sources:source list,inputs:input list,fingerprint:string}
     fun sources (Project {sources,...})=sources
     fun inputs (Project {inputs,...})=inputs
     fun libraries (Project {plan,...})= #libraries plan
     fun cacheDirectories (Project {plan,...})= #caches plan
     fun fingerprint (Project {fingerprint,...})=fingerprint
-    fun read (Session {compiler=compiler as C.Session {config,...},mode},{file,variables,overlays,windows}) =
+    fun read (Session {compiler=compiler as C.Session {config,token,...},mode},{file,variables,overlays,windows}) =
       guard file (fn () => C.owned (fn () =>
         let
           val ()=C.checked compiler
@@ -127,7 +127,7 @@ struct
           val writer=Pickle.writer ()
           fun text value=Pickle.string (writer,value)
           val ()=List.app text [Config.identity,#target config,Source.modeName mode,
-            getOpt (#lib config,""),Bool.toString windows]
+            getOpt (#lib config,""),Bool.toString windows,Bool.toString (#allowPrim config)]
           val ()=Pickle.list Pickle.string (writer,#libraries config)
           val ()=List.app (fn ({file,annotations,mode,...}:source) =>
             (text file;text mode;Pickle.list Pickle.string (writer,annotations))) sources
@@ -135,8 +135,60 @@ struct
             (text file;text mode;text kind;text body)) inputs
           val ()=Pickle.list Pickle.string (writer,#libraries plan)
           val ()=Pickle.list Pickle.string (writer,#caches plan)
-        in Project {plan=plan,sources=sources,inputs=inputs,fingerprint=Pickle.hash (Pickle.contents writer)} end
+        in Project {owner=token,plan=plan,sources=sources,inputs=inputs,fingerprint=Pickle.hash (Pickle.contents writer)} end
         handle CompilerProject.Invalid message => invalid message
              | Error.CompileError (span,message) => raise Failed [C.sourceError ("error",span,message)]))
+  end
+
+  structure Analysis =
+  struct
+    structure A=CompilerAnalysis
+    datatype t=Analysis of {analysis:A.t,mode:Source.mode,owner:unit ref}
+    type snapshot=A.snapshot
+    type checkpoint=A.checkpoint
+    type input=A.input
+    type location=A.location
+    type occurrence=A.occurrence
+    type fact=A.fact
+    type typeDefinition=A.typeDefinition
+    exception Cancelled=A.Cancelled
+    exception Busy=A.Busy
+    fun create (Session {compiler=compiler as C.Session {token,...},mode},{context}) =
+      Analysis {analysis=A.new (compiler,context),mode=mode,owner=token}
+    fun close (Analysis {analysis,...})=A.close analysis
+    fun checkpoint (Analysis {analysis,...})=A.checkpoint analysis
+    fun restore (Analysis {analysis,...},checkpoint)=guard "" (fn () => A.restore (analysis,checkpoint))
+    fun check (Analysis {analysis,mode,owner},{project,inputs,cancelled}) = guard "" (fn () =>
+      let fun normalize (input:input):input=
+            {file= #file input,text= #text input,mode=Source.modeName (CompilerProject.modeOf
+              (case Source.modeNamed (#mode input) of SOME mode => mode
+               | NONE => if #mode input="" then mode else invalid "unknown analysis source mode",#annotations input)),
+             annotations= #annotations input,revision= #revision input}
+          val inputs=List.map normalize inputs
+          val (steps,fingerprint,libraries)=case project of NONE =>
+              (List.map (fn input:input => CompilerProject.SUnit (#file input,#annotations input)) inputs,NONE,[])
+            | SOME (Project.Project {owner=projectOwner,plan,sources,inputs=captured,fingerprint}) =>
+                let val ()=if owner=projectOwner then () else invalid "project belongs to another compiler context"
+                    val ()=if length inputs=length sources then () else invalid "analysis input count differs from the project"
+                    val ()=ListPair.app (fn (input:input,source:Project.source) =>
+                      if #file input= #file source andalso #mode input= #mode source andalso #annotations input= #annotations source
+                      then () else invalid "analysis inputs differ from the project's ordered source occurrences") (inputs,sources)
+                    val ()=List.app (fn captured:Project.input => if #kind captured<>"source" then () else
+                      if List.exists (fn input:input => #file input= #file captured andalso #mode input= #mode captured
+                        andalso #text input= #text captured) inputs then () else invalid "group discovery input changed after project resolution") captured
+                in (#steps plan,SOME fingerprint,#libraries plan) end
+      in A.check (analysis,{inputs=inputs,steps=steps,project=fingerprint,libraries=libraries,cancelled=cancelled}) end)
+      handle Error.CompileError (span,message) => raise Failed [C.sourceError ("error",span,message)]
+    fun id (snapshot:snapshot)= #id snapshot
+    fun context (snapshot:snapshot)= #context snapshot
+    fun project (snapshot:snapshot)= #project snapshot
+    fun inputs (snapshot:snapshot)= #inputs snapshot
+    fun dependencies (snapshot:snapshot)= #dependencies snapshot
+    fun diagnostics (snapshot:snapshot)= #diagnostics snapshot
+    fun occurrences (snapshot:snapshot)= #occurrences snapshot
+    fun types (snapshot:snapshot)= #types snapshot
+    fun facts (snapshot:snapshot)= #facts snapshot
+    fun work (snapshot:snapshot)={checked= #checked snapshot,reused= #reused snapshot}
+    val typeAt=A.typeAt
   end
 end

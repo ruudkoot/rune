@@ -8,6 +8,9 @@ files
   api/prelude.sml
   api/session.sml
   api/query.sml
+  api/facts.sml
+  api/analysis-engine.sml
+  api/analysis.sml
   api/compiler_sig.sml
   api/platform.sml
 end

@@ -1,7 +1,8 @@
 # Index: L
 
-[Overview](../README.md) &middot; [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) **l** [p](p.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) **l** [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
 
+- `Analysis.location` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.location)
 - `Project.libraries` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.libraries)
 
 ---

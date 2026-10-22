@@ -61,6 +61,29 @@ fixtures do not pass the sharing threshold: keep the parser separate.
 These EOF-newline samples are an initial comparison, not representative
 edit-trace or release performance acceptance.
 
+## Analysis and worker foundations (M5)
+
+`make test-lsp-analysis` runs the public snapshot/checkpoint, cancellation,
+binding, generative-type, library and project-scope checks in the
+interpreter and JIT. It also compares inferred types with fresh batch
+compiler queries. The same public tests run on all native SML hosts.
+[The analysis contract](../../docs/compiler-analysis.md) describes current
+recovery limits and the source/context ownership rules.
+
+`make test-lsp-worker` tests private binary framing, arbitrary native
+filename bytes, backpressure, independent input readiness, process-group
+cancellation and truncated output. Its process test can also run under
+the native Windows VM:
+
+```
+bin/runevm.exe bin/rune-lsp-worker-process-tests.rbc \
+  bin/runevm.exe bin/rune-lsp-worker-echo.rbc
+```
+
+The worker transport is private and reuses Content-Length framing. LSP
+messages remain UTF-8 JSON. Internal byte strings preserve WTF-8 paths
+and malformed disk-source bytes until the compiler reports them.
+
 ## Frontend baseline (M1)
 
 ```
