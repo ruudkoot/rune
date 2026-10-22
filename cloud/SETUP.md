@@ -36,6 +36,15 @@ Required by `make hosts`:
 
     apt-get install -y libgmp-dev gcc-multilib cmake g++ python3
 
+Required by `make check` for the independent notebook peer:
+
+    apt-get install -y python3-jupyter-client python3-zmq
+
+`make doctor` checks that the `python3` on PATH can import `jupyter_client`
+and `zmq`. A virtual environment or another Python installation needs those
+modules in that interpreter too. The check and nightly workflows install
+the Ubuntu packages and verify the imports before building the hosts.
+
 Build configuration and packaging use `bin/rune-build`, compiled by the pinned
 native MLton before any Rune VM or GMP configuration. Run `make hosts` first.
 Distribution packaging verifies the canonical PNG/ICO pair and needs no Pillow.

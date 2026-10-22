@@ -23,6 +23,21 @@ struct
         val ()=execute "invalid-size" "start 0 4 /bin/sh -c 'exit 0'\n" "FAIL terminal" false
         val ()=execute "crash-after-answer" "start 20 4 /bin/sh -c 'printf done; kill -SEGV $$'\nwait done\nexited 0\n" "exit differs" false
         val ()=execute "flood" "start 20 4 /bin/sh -c 'yes X'\nwait impossible 1\n" "output exceeds" false
+        (* Replay the basic fixture with its result and next prompt apart.
+           Sending at the result races the terminal's echo, so the answer
+           then follows "- " instead of starting a line of its own. *)
+        val basic=directory ^ "/basic-peer"
+        val ()=write (basic,"#!/bin/sh\n" ^
+             "printf '%s' '- '\nIFS= read -r input || exit 2\n" ^
+             "printf '%s\\n' 'val x = \"two\" : string'\nsleep 1\n" ^
+             "printf '%s' '- '\nIFS= read -r input || exit 3\n" ^
+             "printf '%s\\n' 'val it = \"two\" : string'\nprintf '%s' '- '\n" ^
+             "IFS= read -r input || exit 4\n")
+        val ()=Posix.FileSys.chmod (basic,Posix.FileSys.S.irwxu)
+        val ()=TerminalPlatform.copy (fromRoot "tests/terminal/repl-basic.screen") (fixture ^ "/tests/terminal/repl-basic.screen")
+        val script=TerminalChecks.replace (read (fromRoot "tests/terminal/repl-basic.script")) "@REPL@" (quote basic)
+        val script=TerminalChecks.replace script "wait ^val it = \"two\" : string$" "wait ^val it = \"two\" : string$ 3"
+        val ()=execute "delayed-basic-prompt" script "PASS terminal/delayed-basic-prompt" true
         val pidfile=directory ^ "/descendant.pid"
         val background="(trap \"\" HUP; sleep 30) & echo $! > " ^ quote pidfile ^ "; printf done"
         val ()=execute "background-child" ("start 20 4 /bin/sh -c " ^ quote background ^ "\nwait done\n") "PASS terminal" true

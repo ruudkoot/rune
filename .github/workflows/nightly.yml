@@ -32,11 +32,13 @@ jobs:
           v=$(gcc -dumpversion | cut -d. -f1)
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
             libgmp-dev gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind \
+            python3-jupyter-client python3-zmq \
             qemu-user clang \
             libc6-dev-ppc64-cross binutils-powerpc64-linux-gnu \
             libgcc-${v:-13}-dev-ppc64-cross \
             libc6-dev-arm64-cross binutils-aarch64-linux-gnu \
             libgcc-${v:-13}-dev-arm64-cross
+          python3 -c 'import jupyter_client, zmq'
           sudo sh -c 'cat /usr/lib/binfmt.d/qemu-ppc64.conf > /proc/sys/fs/binfmt_misc/register' || true
           sudo sh -c 'cat /usr/lib/binfmt.d/qemu-aarch64.conf > /proc/sys/fs/binfmt_misc/register' || true
 

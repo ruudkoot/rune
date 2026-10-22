@@ -91,6 +91,7 @@ pkg() {
     apt:cmake) echo cmake ;;              dnf:cmake) echo cmake ;;
     pacman:cmake) echo cmake ;;           brew:cmake) echo cmake ;;
     apt:python3) echo python3 ;;          dnf:python3) echo python3 ;;
+    apt:jupyter-client) echo python3-jupyter-client python3-zmq ;;
     pacman:python3) echo python ;;        brew:python3) echo python ;;
     pacman:cxx) echo base-devel ;;        brew:cxx) echo gcc ;;
     apt:asan) echo libasan8 libubsan1 ;;  dnf:asan) echo libasan libubsan ;;
@@ -307,6 +308,10 @@ fi
 if in_scope check; then
   section "test runners"
   have python3 python3
+  if python3 -c 'import jupyter_client, zmq' > "$tmp/jupyter-client.log" 2>&1; then
+    ok jupyter-client "python3 imports jupyter_client and zmq"
+  else bad jupyter-client "python3 cannot import jupyter_client and zmq (independent notebook peer)" jupyter-client
+  fi
   if [ "$(printf 'a\nb\n' | xargs -n 1 -P 2 echo 2> /dev/null | sort | tr -d '\n')" = ab ]; then ok xargs "supports -P"
   else bad xargs "xargs -n 1 -P N does not work" findutils
   fi
