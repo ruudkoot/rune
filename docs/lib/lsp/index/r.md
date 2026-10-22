@@ -1,6 +1,6 @@
 # Index: R
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [k](k.md) [m](m.md) [n](n.md) [p](p.md) **r** [s](s.md) [t](t.md) [u](u.md) [v](v.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) **r** [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
 - `range` (type): [LSP_PROTOCOL](../sig/LSP_PROTOCOL.md#type-range)
 - `rangeFromJson` (val): [LSP_PROTOCOL](../sig/LSP_PROTOCOL.md#val-rangefromjson)

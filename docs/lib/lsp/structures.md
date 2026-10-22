@@ -15,8 +15,10 @@ the signature names and no others.
 | Structure |  | Signature | Realisations |  | Source |
 | --- | --- | --- | --- | --- | --- |
 | [`LspMethods`](str/LspMethods.md) | :> | [`LSP_METHODS`](sig/LSP_METHODS.md) |  |  | [lib/lsp/methods.sml](../../../lib/lsp/methods.sml) |
+| [`LspPosition`](str/LspPosition.md) | :> | [`LSP_POSITION`](sig/LSP_POSITION.md) |  |  | [lib/lsp/position.sml](../../../lib/lsp/position.sml) |
 | [`LspProtocol`](str/LspProtocol.md) | :> | [`LSP_PROTOCOL`](sig/LSP_PROTOCOL.md) |  |  | [lib/lsp/protocol.sml](../../../lib/lsp/protocol.sml) |
 | [`LspRequests`](str/LspRequests.md) | :> | [`LSP_REQUESTS`](sig/LSP_REQUESTS.md) |  |  | [lib/lsp/requests.sml](../../../lib/lsp/requests.sml) |
+| [`LspUri`](str/LspUri.md) | :> | [`LSP_URI`](sig/LSP_URI.md) |  |  | [lib/lsp/uri.sml](../../../lib/lsp/uri.sml) |
 
 ---
 

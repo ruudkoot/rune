@@ -1,6 +1,6 @@
 # Index: W
 
-[Overview](../README.md) &middot; [c](c.md) [d](d.md) [f](f.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) **w**
+[Overview](../README.md) &middot; [c](c.md) [d](d.md) [f](f.md) [i](i.md) [l](l.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) **w**
 
 - `writeMid` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-writemid)
 - `writeProgram` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-writeprogram)

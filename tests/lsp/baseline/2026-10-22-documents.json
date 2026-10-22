@@ -1,0 +1,202 @@
+{
+  "schema": 1,
+  "date": "2026-10-22",
+  "base_commit": "109357d64",
+  "metadata": {
+    "schema": "runelsp-document-bench-v1",
+    "compiler_version": "109357d64-dirty",
+    "compiler_identity": "165116b22370148b49c648954da28740",
+    "vm_version": "109357d64-dirty",
+    "machine": "Intel Xeon E5-1680 v3 3.20GHz; WSL2 Linux 6.18.33.2; 16 processors; idle native host runner",
+    "repetitions": 20,
+    "warmup": 3,
+    "fixtures": [
+      {
+        "name": "ascii-line-100k",
+        "bytes": 100000,
+        "sha256": "6d1cf22d7cc09b085dfc25ee1a1f3ae0265804c607bc2074ad253bcc82fd81ee"
+      },
+      {
+        "name": "ascii-lines-100k",
+        "bytes": 100000,
+        "sha256": "205b7eea24f84c7b86af905225235ce8a7699d211399d388b654bcdbfea9978c"
+      },
+      {
+        "name": "unicode-line-100k",
+        "bytes": 100000,
+        "sha256": "03d4d0e1fe779c7c0f882118a9a08418e9653238cdf373ae57886b7c0974d56f"
+      },
+      {
+        "name": "ascii-line-1m",
+        "bytes": 1048576,
+        "sha256": "9bc1b2a288b26af7257a36277ae3816a7d4f16e89c1e7e77d0a5c48bad62b360"
+      }
+    ],
+    "timing_scope": "text edit and position-index update; excludes validation/hashes"
+  },
+  "command": "bin/runevm --jit=off bin/rune-lsp-documents-bench.rbc --out /tmp/rune-lsp-documents-measured-20261022 --repetitions 20 --warmup 3 --machine 'Intel Xeon E5-1680 v3 3.20GHz; WSL2 Linux 6.18.33.2; 16 processors; idle native host runner'",
+  "source_sha256": {
+    "tools/lsp/documents-bench.sml": "76d3a73d359e1a778c3a13be3dbe3a0ba0df49b89a035b4fdf9ca1476f5e8175",
+    "rune-lsp-documents-bench.build": "13e08e2450957fc7f8776c1b1ac2858155a96b3f7281459fef93a8134b16632e",
+    "src/main/lsp-documents-bench-main.sml": "9c6e5e79f43edcb164e19f7caf213b3f914d0cb1d07ccd80a0d52ffb3e35d6d1",
+    "lib/lsp/position.sml": "b3368e572d54dc627f930286d36e207ee11b206d6dec4cd390de5c06a3267d16",
+    "lib/lsp/position_sig.sml": "c0fc6052b070ba423fa9e18438673291431615bba5435642c9d1ecdd61a5a5f2"
+  },
+  "archive": "rune-benchmark-results/lsp/2026-10-22-m3-documents",
+  "artifacts": {
+    "complete.json": {
+      "sha256": "5ac9ae2d63550faeadffd4ac7b129ca72ef53d7412d158ea4c777fc013a3eefb",
+      "bytes": 1038
+    },
+    "rune-lsp-documents-bench.rbc": {
+      "sha256": "9785da0c539d7ee910e91cda0a1064f19da549a194b8c32b8edda38ed6d9619b",
+      "bytes": 840112
+    },
+    "runevm": {
+      "sha256": "f47089778b82ca1537c25d18fd5c5fdc83ad18229425e7c2de6eb7992fd65c65",
+      "bytes": 716344
+    },
+    "samples.jsonl": {
+      "sha256": "15166e86bb4237ed3d082fe5032a5e74450242e02bb9e4197929f723c6e07a0b",
+      "bytes": 28573
+    },
+    "source/lib/lsp/position.sml": {
+      "sha256": "b3368e572d54dc627f930286d36e207ee11b206d6dec4cd390de5c06a3267d16",
+      "bytes": 10069
+    },
+    "source/lib/lsp/position_sig.sml": {
+      "sha256": "c0fc6052b070ba423fa9e18438673291431615bba5435642c9d1ecdd61a5a5f2",
+      "bytes": 2795
+    },
+    "source/rune-lsp-documents-bench.build": {
+      "sha256": "13e08e2450957fc7f8776c1b1ac2858155a96b3f7281459fef93a8134b16632e",
+      "bytes": 124
+    },
+    "source/src/main/lsp-documents-bench-main.sml": {
+      "sha256": "9c6e5e79f43edcb164e19f7caf213b3f914d0cb1d07ccd80a0d52ffb3e35d6d1",
+      "bytes": 75
+    },
+    "source/tools/lsp/documents-bench.sml": {
+      "sha256": "76d3a73d359e1a778c3a13be3dbe3a0ba0df49b89a035b4fdf9ca1476f5e8175",
+      "bytes": 5574
+    }
+  },
+  "summary": [
+    {
+      "fixture": "ascii-line-100k",
+      "phase": "cold-index",
+      "samples": 1,
+      "p50_us": 40910,
+      "p95_us": 40910,
+      "p99_us": 40910,
+      "mean_allocated_bytes": 12138072
+    },
+    {
+      "fixture": "ascii-line-100k",
+      "phase": "full-index",
+      "samples": 20,
+      "p50_us": 36000,
+      "p95_us": 44529,
+      "p99_us": 61669,
+      "mean_allocated_bytes": 12388144
+    },
+    {
+      "fixture": "ascii-line-100k",
+      "phase": "incremental-edit",
+      "samples": 20,
+      "p50_us": 763,
+      "p95_us": 1409,
+      "p99_us": 2399,
+      "mean_allocated_bytes": 612048
+    },
+    {
+      "fixture": "ascii-line-1m",
+      "phase": "cold-index",
+      "samples": 1,
+      "p50_us": 434658,
+      "p95_us": 434658,
+      "p99_us": 434658,
+      "mean_allocated_bytes": 127271528
+    },
+    {
+      "fixture": "ascii-line-1m",
+      "phase": "full-index",
+      "samples": 20,
+      "p50_us": 398154,
+      "p95_us": 434826,
+      "p99_us": 494041,
+      "mean_allocated_bytes": 129893040
+    },
+    {
+      "fixture": "ascii-line-1m",
+      "phase": "incremental-edit",
+      "samples": 20,
+      "p50_us": 8151,
+      "p95_us": 15472,
+      "p99_us": 19499,
+      "mean_allocated_bytes": 6359064
+    },
+    {
+      "fixture": "ascii-lines-100k",
+      "phase": "cold-index",
+      "samples": 1,
+      "p50_us": 31372,
+      "p95_us": 31372,
+      "p99_us": 31372,
+      "mean_allocated_bytes": 11968576
+    },
+    {
+      "fixture": "ascii-lines-100k",
+      "phase": "full-index",
+      "samples": 20,
+      "p50_us": 34496,
+      "p95_us": 49910,
+      "p99_us": 53280,
+      "mean_allocated_bytes": 12218648
+    },
+    {
+      "fixture": "ascii-lines-100k",
+      "phase": "incremental-edit",
+      "samples": 20,
+      "p50_us": 432,
+      "p95_us": 885,
+      "p99_us": 885,
+      "mean_allocated_bytes": 316152
+    },
+    {
+      "fixture": "unicode-line-100k",
+      "phase": "cold-index",
+      "samples": 1,
+      "p50_us": 24811,
+      "p95_us": 24811,
+      "p99_us": 24811,
+      "mean_allocated_bytes": 4855616
+    },
+    {
+      "fixture": "unicode-line-100k",
+      "phase": "full-index",
+      "samples": 20,
+      "p50_us": 24804,
+      "p95_us": 32777,
+      "p99_us": 34605,
+      "mean_allocated_bytes": 5105688
+    },
+    {
+      "fixture": "unicode-line-100k",
+      "phase": "incremental-edit",
+      "samples": 20,
+      "p50_us": 368,
+      "p95_us": 508,
+      "p99_us": 573,
+      "mean_allocated_bytes": 402240
+    }
+  ],
+  "limitations": [
+    "Linux WSL2 only; native Windows measurements remain pending.",
+    "One cold-index sample per fixture is not a latency distribution.",
+    "Twenty paired edit samples give an initial distribution, without confidence intervals.",
+    "ASCII edits replace one byte at the middle of the original snapshot; these are index measurements, not parser or resident semantic results.",
+    "Allocation counters include the small observer overhead.",
+    "Proposed M1 release budgets remain proposed; this ledger records measured results."
+  ]
+}

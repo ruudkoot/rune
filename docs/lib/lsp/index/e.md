@@ -1,7 +1,9 @@
 # Index: E
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) **e** [f](f.md) [i](i.md) [k](k.md) [m](m.md) [n](n.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) **e** [f](f.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
+- `edit` (val): [LSP_POSITION](../sig/LSP_POSITION.md#val-edit)
+- `editBounded` (val): [LSP_POSITION](../sig/LSP_POSITION.md#val-editbounded)
 - `encode` (val): [LSP_PROTOCOL](../sig/LSP_PROTOCOL.md#val-encode)
 - `encoding` (type): [LSP_PROTOCOL](../sig/LSP_PROTOCOL.md#type-encoding)
 - `encodingName` (val): [LSP_PROTOCOL](../sig/LSP_PROTOCOL.md#val-encodingname)

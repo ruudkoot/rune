@@ -54,8 +54,10 @@ struct
         val () = need (length rows = 3, "basic transcript response count differs")
         val result = field "result" (hd rows)
         val caps = field "capabilities" result
-        val () = need (field "positionEncoding" caps = Json.String "utf-16" andalso field "textDocumentSync" caps = Json.int 0,
-                       "minimal capability negotiation differs")
+        val () = need (field "positionEncoding" caps = Json.String "utf-16" andalso
+                       field "change" (field "textDocumentSync" caps) = Json.int 2 andalso
+                       field "openClose" (field "textDocumentSync" caps) = Json.Bool true,
+                       "document capability negotiation differs")
         val () = need (code (List.nth (rows, 1)) = SOME ~32601 andalso field "id" (List.nth (rows, 1)) = Json.String "query",
                        "unimplemented provider was advertised or its request id changed")
     in need (field "result" (List.nth (rows, 2)) = Json.Null, "shutdown did not return null") end
@@ -178,8 +180,64 @@ struct
             val () = ended := true
         in need (#status result = Posix.Process.W_EXITED, "interactive server did not exit normally") end
     in work () handle e => (cleanup (); raise e) end
+  fun synchronization () =
+    let
+      val start=request "1" "initialize" (SOME "{\"capabilities\":{},\"trace\":\"messages\"}")
+      fun doc method body=notify ("textDocument/" ^ method) (SOME body)
+      val openDocument=doc "didOpen"
+        "{\"textDocument\":{\"uri\":\"file:///a.sml\",\"languageId\":\"sml\",\"version\":1,\"text\":\"a\\ud801\\udc00b\\r\\n\"}}"
+      val sequential=doc "didChange"
+        "{\"textDocument\":{\"uri\":\"file:///a.sml\",\"version\":2},\"contentChanges\":[{\"range\":{\"start\":{\"line\":0,\"character\":1},\"end\":{\"line\":0,\"character\":3}},\"text\":\"x\"},{\"range\":{\"start\":{\"line\":0,\"character\":2},\"end\":{\"line\":0,\"character\":3}},\"text\":\"z\"}]}"
+      val malformed=doc "didChange"
+        "{\"textDocument\":{\"uri\":\"file:///a.sml\",\"version\":3},\"contentChanges\":[{\"text\":\"\\ud801\\udc00\"},{\"range\":{\"start\":{\"line\":0,\"character\":1},\"end\":{\"line\":0,\"character\":2}},\"text\":\"bad\"}]}"
+      val incremental=doc "didChange"
+        "{\"textDocument\":{\"uri\":\"file:///a.sml\",\"version\":4},\"contentChanges\":[{\"range\":{\"start\":{\"line\":0,\"character\":0},\"end\":{\"line\":0,\"character\":1}},\"text\":\"x\"}]}"
+      val replacement=doc "didChange"
+        "{\"textDocument\":{\"uri\":\"file:///a.sml\",\"version\":5},\"contentChanges\":[{\"text\":\"synchronized\"}]}"
+      val save=doc "didSave" "{\"textDocument\":{\"uri\":\"file:///a.sml\"},\"text\":\"older saved text\"}"
+      val willSave=doc "willSave" "{\"textDocument\":{\"uri\":\"file:///a.sml\"},\"reason\":1}"
+      val close=doc "didClose" "{\"textDocument\":{\"uri\":\"file:///a.sml\"}}"
+      val (rows,errors)=batch "synchronization"
+        [start,initialized,openDocument,sequential,malformed,incremental,replacement,
+         incremental,willSave,save,close,openDocument,close,shutdown,exit] true
+      val ()=need (length (responses rows)=2,"synchronization notifications received responses")
+      val logs=List.mapPartial (fn row =>
+        case Json.member ("method",row) of SOME (Json.String "$/logTrace") =>
+          (case Json.member ("message",field "params" row) of SOME (Json.String text) => SOME text | _ => NONE)
+        | _ => NONE) rows
+      val events=List.filter (fn text => List.exists (fn prefix => String.isPrefix prefix text)
+        ["opened ","changed ","closed ","will save ","saved "]) logs
+      val expected=["opened file:///a.sml (version 1)","changed file:///a.sml (version 2)",
+        "changed file:///a.sml (version 5)","will save file:///a.sml (version 5)",
+        "saved file:///a.sml (version 5)","closed file:///a.sml (version 5)",
+        "opened file:///a.sml (version 1)","closed file:///a.sml (version 1)"]
+    in need (events=expected,"document synchronization trace differs");
+       need (String.isSubstring "inside a character" errors andalso String.isSubstring "requires a full replacement" errors
+         andalso String.isSubstring "stale document version" errors,"synchronization errors were not diagnosed") end
+  fun workspaceRequests () =
+    let val start=request "1" "initialize" (SOME
+          "{\"workspaceFolders\":[{\"uri\":\"file:///rune-fixture\",\"name\":\"fixture\"}],\"capabilities\":{\"workspace\":{\"configuration\":true,\"didChangeWatchedFiles\":{\"dynamicRegistration\":true,\"relativePatternSupport\":true}}}}")
+        val configured="{\"jsonrpc\":\"2.0\",\"id\":\"runelsp-ws-0\",\"result\":[{}]}"
+        val registered="{\"jsonrpc\":\"2.0\",\"id\":\"runelsp-ws-1\",\"result\":null}"
+        val removed=notify "workspace/didChangeWorkspaceFolders" (SOME
+          "{\"event\":{\"added\":[],\"removed\":[{\"uri\":\"file:///rune-fixture\",\"name\":\"fixture\"}]}}")
+        val unregistered="{\"jsonrpc\":\"2.0\",\"id\":\"runelsp-ws-2\",\"result\":null}"
+        val (rows,errors)=batch "workspace-requests" [start,initialized,configured,registered,removed,unregistered,shutdown,exit] true
+        val requests=List.filter (fn value => isSome (Json.member ("method",value)) andalso isSome (Json.member ("id",value))) rows
+        val methods=List.map (field "method") requests
+        val ()=need (methods=List.map Json.String ["workspace/configuration","client/registerCapability","client/unregisterCapability"],
+          "workspace server requests differ")
+        val ()=need (length (responses rows)=2 andalso errors="","workspace replies or notification handling differs")
+        val configuration=field "params" (hd requests)
+        val ()=need (field "items" configuration=Json.Array [Json.Object [("scopeUri",Json.String "file:///rune-fixture"),("section",Json.String "runelsp")]],
+          "configuration scope was not preserved")
+        val registration=case field "registrations" (field "params" (List.nth (requests,1))) of Json.Array [value] => value
+          | _ => raise Failed "missing watch registration"
+        val unregistration=case field "unregisterations" (field "params" (List.nth (requests,2))) of Json.Array [value] => value
+          | _ => raise Failed "missing watch unregistration"
+    in need (field "id" registration=field "id" unregistration,"watch registration leaked after folder removal") end
   fun main () =
-    (basic (); lifecycle (); malformed (); transport (); tracing (); generatedInventory (); interactive ();
+    (basic (); lifecycle (); malformed (); transport (); tracing (); generatedInventory (); interactive ();synchronization ();workspaceRequests ();
      say "PASS lsp-wire: lifecycle, integer ids, progress, malformed input, bounds, tracing and interactive stdio\n")
 end
 val () = LspWireTests.main ()

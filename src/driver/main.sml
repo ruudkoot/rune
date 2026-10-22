@@ -77,7 +77,7 @@ struct
      else the command line's (modeOf; compile) *)
   val buildModes : Source.mode StringMap.map ref = ref StringMap.empty
   fun modeOf (anns : string list) : Source.mode =
-    List.foldl (fn (a, m) => case Source.modeNamed a of SOME m' => m' | NONE => m) (!Options.sourceMode) anns
+    CompilerProject.modeOf (!Options.sourceMode,anns)
   (* the mode of an input file: its build file's, else the command line's *)
   fun inputMode (path : string) : Source.mode =
     case StringMap.find (!buildModes, path) of
@@ -289,11 +289,7 @@ struct
   (* What a build file says, as the units driver follows it: a unit -- a
      file, with the annotations in force -- or a scope of units whose basis
      the build file says (compileUnits, elabSteps) *)
-  datatype step = SUnit of string * string list
-                | SLocal of step list * step list
-                | SLibrary of (BuildFile.kind * string) list * step list
-                | SUse of string * step list            (* a build file used, by its path: elaborated once *)
-                | SImplements of string * step list
+  datatype step = datatype CompilerProject.step
 
   val buildPlan : step list option ref = ref NONE
 
@@ -304,40 +300,17 @@ struct
      directory, the variables given), each build file it uses read in its
      place, each group put in the order its files' modules give (Deps), the
      annotations given to each unit; and the cache directories it names *)
-  fun planOf (file : string) : step list * string list =
+  fun projectOf (file : string) : CompilerProject.plan =
     let
-      val caches : string list ref = ref []
-      fun read (f : string, seen : string list) : step list =
-        let
-          val canonical = OS.Path.mkCanonical f
-          val () = if List.exists (fn s => s = canonical) seen then raise Options.Usage ("the build file " ^ f ^ " uses itself")
-                   else ()
-          val text = readText f handle IO.Io _ => raise Options.Usage ("cannot read the build file " ^ f)
-          val decs = BuildFile.parse (f, text) handle BuildFile.Error m => raise Options.Usage m
-          val dir = OS.Path.dir f
-          fun path p = BuildFile.expand (dir, p) handle BuildFile.Error m => raise Options.Usage (f ^ ": " ^ m)
-          fun steps (anns, ds) = List.concat (List.map (fn d => step (anns, d)) ds)
-          and step (anns, d) =
-            case d of
-              BuildFile.File p => [SUnit (path p, anns)]
-            | BuildFile.Files ps => List.map (fn p => SUnit (path p, anns)) ps
-            | BuildFile.Group ps =>
-                let
-                  val analysed = List.map (fn p => Deps.analyse (p, syntaxOf (modeOf anns, p))) (List.map path ps)
-                  val broken = List.concat (List.map breaksOf analysed)
-                  val () = case broken of [] => () | b :: _ => raise Options.Usage b
-                  val (ordered, _) = Deps.order analysed handle Deps.Graph m => raise Options.Usage (f ^ ": " ^ m)
-                in List.map (fn (g : Deps.file) => SUnit (#path g, anns)) ordered end
-            | BuildFile.Local (a, b) => [SLocal (steps (anns, a), steps (anns, b))]
-            | BuildFile.Library (es, ds) => [SLibrary (es, steps (anns, ds))]
-            | BuildFile.Use p => let val q = path p in [SUse (OS.Path.mkCanonical q, read (q, canonical :: seen))] end
-            | BuildFile.Implements (x, ds) => [SImplements (x, steps (anns, ds))]
-            | BuildFile.Annotate (a, ds) => steps (anns @ a, ds)
-            | BuildFile.Cache p => (caches := path p :: !caches; [])
-            | BuildFile.Libraries _ => []
-        in steps ([], decs) end
-      val plan = read (file, [])
-    in (plan, List.rev (!caches)) end
+      val windows=List.exists (fn (key,value) => key="sysname" andalso value="Windows")
+                    (Posix.ProcEnv.uname ()) handle OS.SysErr _ => false
+      fun read path =
+        let val text=readText path handle IO.Io _ => raise CompilerProject.Invalid ("cannot read the build file " ^ path)
+        in {text=text,revision=Pickle.hash text} end
+      val plan=CompilerProject.plan {file=file,defaultMode= !Options.sourceMode,windows=windows,readBuild=read,syntax=syntaxOf}
+        handle CompilerProject.Invalid message => raise Options.Usage message
+    in plan end
+  fun planOf file = let val plan=projectOf file in (#steps plan,#caches plan) end
 
   (* --basis-index DIR: DIR/MANIFEST, what each file of the library provides
      and requires (BasisManifest), from its build file DIR/library.build --
@@ -442,19 +415,8 @@ struct
 
   (* the files of a plan, in the order they are compiled, with their
      annotations *)
-  fun unitsOf (steps : step list) : (string * string list) list =
-    let
-      val used = ref [] : string list ref
-      fun units ds = List.concat (List.map one ds)
-      and one (SUnit (p, anns)) = [(p, anns)]
-        | one (SLocal (a, b)) = units a @ units b
-        | one (SLibrary (_, ds)) = units ds
-        | one (SUse (path, ds)) =
-            if List.exists (fn p => p = path) (!used) then []
-            else (used := path :: !used; units ds)
-        | one (SImplements (_, ds)) = units ds
-    in units steps end
-  fun filesOf (steps : step list) : string list = List.map #1 (unitsOf steps)
+  val unitsOf = CompilerProject.units
+  val filesOf = CompilerProject.files
 
   fun compile () : OS.Process.status =
     let
@@ -464,7 +426,12 @@ struct
         case !Options.build of
           NONE => ()
         | SOME f =>
-            let val (plan, caches) = planOf f
+            let val project=projectOf f
+                val plan= #steps project
+                val caches= #caches project
+                val ()=Options.libraries:=List.foldl (fn (library,all) =>
+                  if List.exists (fn present => present=library) all then all else all @ [library])
+                  (!Options.libraries) (#libraries project)
             in
               buildPlan := SOME plan;
               Options.inputs := filesOf plan;

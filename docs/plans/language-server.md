@@ -18,7 +18,7 @@ documentation and its evidence beside the tests before this plan is retired.
 | M0 | This roadmap, baseline and protocol inventory | none | done 2026-10-22; verification below; measurements remain M1 |
 | M1 | Reference study, fixtures and performance baselines | M0 | in progress: SML harness and Linux baseline recorded; native Windows measurement remains |
 | M2 | Protocol libraries, transport, lifecycle and harness | M0 | in progress: protocol foundation and focused Linux checks implemented; final profile/platform acceptance remains |
-| M3 | Documents, positions, workspaces and build contexts | M2 | planned |
+| M3 | Documents, positions, workspaces and build contexts | M2 | in progress: synchronization, reusable codecs, shared project planning and workspace requests implemented; combined/platform acceptance pending |
 | M4 | Incremental syntax, recovery and the parser decision | M1, M3 | planned |
 | M5 | Compiler sessions, semantic snapshots and invalidation | M3, M4; compiler-library M1-M4 and the analysis contract below | planned |
 | M6 | Document and workspace diagnostics | M5 | planned |
@@ -791,6 +791,36 @@ remain pending; failed exploratory invocations are not counted as passes.
   unsaved build edits select the corresponding new context, and malformed
   transitions preserve the last valid document state. Record text/index
   update latency and memory from M1 traces.
+
+M3 implementation checkpoint (2026-10-22):
+
+* `lib/lsp` provides strict UTF-8/16/32 position conversion, bounded sparse
+  indexes and POSIX/Windows URI conversion, including WTF-8 filename bytes.
+  Atomic sequential document changes preserve the preceding valid snapshot
+  on failure and quarantine malformed transitions until replacement/reopen.
+  Independent token-list edit oracles exercise 1,500 randomized edits.
+* `RuneCompiler.Project` and the CLI share scoped build planning, source
+  order, group discovery, library headers and inherited annotations.
+  Discovery reads captured overlays without executing declarations. The
+  server supports multiple roots, scoped settings, explicit ambiguous
+  context choices, configuration requests and balanced watcher registration.
+* Focused native-host acceptance passed 28 cases at
+  `tests/out/r/20261022-152747-3086877` (342.0 seconds), covering all six
+  hosts for both codecs and the public compiler API, compiler layout and
+  host adaptation. `make test-lsp docs check-docs` passed; documentation
+  consistency recorded 11 passes at `tests/out/r/20261022-153216-3089215`.
+  Interpreter/JIT workspace checks also pass after the scoped-choice and
+  watcher validation follow-up.
+* The [document-index ledger](../../tests/lsp/baseline/2026-10-22-documents.json)
+  records observer/source hashes and 20 paired edit samples per fixture.
+  On this Linux WSL2 host, the 100 KB ASCII multiline fixture measured
+  885 microseconds p95 for incremental index updates and 49,910 for fresh
+  indexes. A 1 MiB single line measured 15,472 and 434,826 respectively.
+  These include text replacement, not parsing or semantic analysis.
+
+M3 remains in progress pending combined acceptance, the full source-mode
+and file-operation race matrix, and native Windows evidence. These results
+do not establish resident semantic reuse or parser correctness.
 
 ### M4. Incremental syntax and recovery (XL)
 

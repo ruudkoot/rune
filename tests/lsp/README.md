@@ -5,6 +5,40 @@ policy are written in Standard ML; the executable wrappers only launch
 their bytecode. Run commands from the worktree root so fixture paths have
 their documented meaning.
 
+## Document and workspace foundations (M3)
+
+`make test-lsp` checks document lifetimes, atomic sequential edits,
+synchronization recovery, resource limits, save payloads, independent
+randomized edits, project discovery/context selection, scoped requests,
+watcher balance and stdio transcripts. Portable position/URI cases are
+also `tests/lib/lsp/position.sml` and `uri.sml`; native host entries run
+the same sources.
+
+The independent edit oracle treats UTF-8 scalar/newline atoms as a list;
+it computes positions and expected text without using the index under
+test. Tests distinguish scalar boundaries from grapheme clusters and
+exercise BOMs, mixed line endings, supplementary characters, parent arcs,
+Windows drives/UNC and percent-encoded WTF-8 filename bytes.
+
+The paired position-index benchmark includes text replacement and index
+work, with hashes/oracles outside timing:
+
+```
+make bin/rune-lsp-documents-bench.rbc
+bin/runevm --jit=off bin/rune-lsp-documents-bench.rbc \
+  --out /tmp/runelsp-document-results --repetitions 20 --warmup 3 \
+  --machine "record CPU, operating system and available processors"
+```
+
+Use a fresh output directory. `samples.jsonl` contains one cold-index
+sample per named fixture and paired full-index/incremental-edit samples;
+warmups are excluded and pair order alternates. `complete.json` is written
+only after validation succeeds and records fixture hashes, compiler/VM
+identities, commands' repetition settings and machine description. These
+measure document indexing, not incremental parsing or resident semantics.
+The [M3 ledger](baseline/2026-10-22-documents.json) records the initial Linux
+distribution, source/observer hashes and archived raw samples.
+
 ## Frontend baseline (M1)
 
 ```

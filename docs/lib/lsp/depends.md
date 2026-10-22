@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 4 requirements between the 6 files become 4 arrows.
+library and not a wall of lines: the 8 requirements between the 10 files become 7 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Protocols<br>(6)"]
+  a0["Protocols<br>(10)"]
 ```
 
 ## Protocols
@@ -36,10 +36,17 @@ flowchart TD
   n3["LspProtocol"]
   n4(["LSP_REQUESTS"])
   n5["LspRequests"]
+  n6(["LSP_POSITION"])
+  n7["LspPosition"]
+  n8(["LSP_URI"])
+  n9["LspUri"]
   n1 --> n0
   n3 --> n2
   n5 --> n4
   n5 --> n3
+  n6 --> n3
+  n7 --> n6
+  n9 --> n8
 ```
 
 ---

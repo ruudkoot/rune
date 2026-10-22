@@ -32,6 +32,8 @@ struct
        ("digest.digest", ["digest"], "digest/digest"),
        ("jsonrpc.jsonrpc", ["unicode", "json", "jsonrpc"], "jsonrpc/jsonrpc"),
        ("lsp.protocol", ["unicode", "json", "jsonrpc", "lsp"], "lsp/protocol"),
+       ("lsp.position", ["unicode", "json", "jsonrpc", "lsp"], "lsp/position"),
+       ("lsp.uri", ["unicode", "json", "jsonrpc", "lsp"], "lsp/uri"),
        ("compiler.state", ["compiler-state"], "compiler/state"),
        ("compiler.api", ["unicode", "json", "compiler"], "compiler/api"),
        ("dap.dap", ["unicode", "json", "jsonrpc", "dap"], "dap/dap"),

@@ -7,4 +7,8 @@ annotate "demand" in
   protocol.sml
   requests_sig.sml
   requests.sml
+  position_sig.sml
+  position.sml
+  uri_sig.sml
+  uri.sml
 end

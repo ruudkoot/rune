@@ -105,6 +105,39 @@ struct
           fails (fn () => ignore (C.readUnit (corrupt,dir ^ "/first.rbu"))))
         val _=text (corrupt,"after-corrupt.sml","val recovered=1\n")
     in List.app C.close [context,imported,midContext,corrupt,stack] end)
+  fun projects () = temporary (fn dir =>
+    let val context=session ()
+        val root=dir ^ "/root.build"
+        val child=dir ^ "/child.build"
+        val rootText="libraries json end\nannotate \"unicode\" \"allowPrim\" in use child.build end\nuse child.build\ncache $(ROOT)/cache\n"
+        val overlays=[{file=root,text=rootText},{file=child,text="files first.sml second.sml end\n"}]
+        fun plan overlays=C.Project.read (context,{file=root,variables=[("ROOT",dir)],overlays=overlays,windows=false})
+        val first=plan overlays
+        val second=plan overlays
+        val sources=C.Project.sources first
+        val ()=check ("project use/order",List.map #file sources=[dir ^ "/first.sml",dir ^ "/second.sml"])
+        val ()=check ("project annotations through use",List.all (fn s:C.Project.source =>
+          #mode s="unicode" andalso #annotations s=["unicode","allowPrim"]) sources)
+        val ()=check ("project inputs captured once",length (C.Project.inputs first)=2)
+        val ()=check ("project library/cache metadata",C.Project.libraries first=["json"] andalso
+          C.Project.cacheDirectories first=[dir ^ "/cache"])
+        val ()=check ("project fingerprint deterministic",C.Project.fingerprint first=C.Project.fingerprint second)
+        val changed=plan [{file=root,text="files another.sml end\n"}]
+        val ()=check ("project changes invalidate fingerprint",C.Project.fingerprint first<>C.Project.fingerprint changed)
+        val ()=check ("project path variables do not leak",fails (fn () => ignore (C.Project.read (context,
+          {file=root,variables=[],overlays=overlays,windows=false}))))
+        val grouped=C.Project.read (context,{file=root,variables=[],windows=false,overlays=
+          [{file=root,text="group second.sml first.sml end\n"},
+           {file=dir ^ "/second.sml",text="structure B=struct val x=A.x end\n"},
+           {file=dir ^ "/first.sml",text="structure A=struct val x=1 end\n"}]})
+        val ()=check ("group order uses compiler dependency rules",List.map #file (C.Project.sources grouped)=
+          [dir ^ "/first.sml",dir ^ "/second.sml"])
+        val ()=check ("group discovery inputs recorded",length (C.Project.inputs grouped)=3)
+        val windows=C.Project.read (context,{file="C:\\project\\root.build",variables=[("DEP","D:\\dependency")],
+          windows=true,overlays=[{file="C:/project/root.build",text="files $(DEP)/a.sml end\n"}]})
+        val ()=check ("Windows absolute path variables",List.map #file (C.Project.sources windows)=["D:/dependency/a.sml"])
+        val ()=C.close context
+    in check ("project value survives session close",length (C.Project.sources first)=2) end)
 end
 structure CompilerApiTestMain = Main (struct
   val name="compiler-api"
@@ -112,6 +145,7 @@ structure CompilerApiTestMain = Main (struct
     [Test.it "isolation" CompilerApiTests.isolation,
      Test.it "diagnostics" CompilerApiTests.diagnostics,
      Test.it "queries" CompilerApiTests.queries,
-     Test.it "artifacts" CompilerApiTests.artifacts]
+     Test.it "artifacts" CompilerApiTests.artifacts,
+     Test.it "projects" CompilerApiTests.projects]
 end)
 val ()=CompilerApiTestMain.main ()

@@ -102,4 +102,39 @@ sig
      This initial implementation performs fresh static elaboration; it
      does not retain a resident semantic snapshot or execute user code. *)
   val typeAt : session * {file : string, offset : int} -> string option
+
+  (* The compiler's immutable project model, shared with the CLI. *)
+  structure Project :
+  sig
+    (* A scoped plan and the inputs captured while discovering it. *)
+    type t
+    (* An ordered source occurrence; repeated paths retain their separate
+       occurrences and annotations. mode is ascii, unicode or unicode=latin1. *)
+    type source = {file : string, annotations : string list, mode : string, ordinal : int}
+    (* A captured build or group-analysis input. revision hashes decoded
+       text together with its source mode. *)
+    type input = {file : string, text : string, mode : string, kind : string, revision : string}
+    (* `read (session, request)` resolves a build through compiler rules,
+       preserving scopes, order, annotations, virtual implementations and use.
+
+       Variables are path-variable bindings. Overlays are already decoded
+       UTF-8, also for Latin-1 source files. windows selects native Windows
+       drive/UNC path handling. No user declarations execute and no cache
+       files are written. Failure is reported through Failed. *)
+    val read : session * {file : string, variables : (string * string) list,
+                          overlays : {file : string, text : string} list, windows : bool} -> t
+    (* `sources project` lists source occurrences in compiler order. *)
+    val sources : t -> source list
+    (* `inputs project` is the captured build and group-discovery text.
+       Normal ordered sources need not be parsed to discover membership. *)
+    val inputs : t -> input list
+    (* `libraries project` lists library-header dependencies in source order. *)
+    val libraries : t -> string list
+    (* `cacheDirectories project` lists declared cache paths. Reading a
+       project does not create or write these directories. *)
+    val cacheDirectories : t -> string list
+    (* `fingerprint project` identifies the captured plan, configuration
+       and discovery inputs. It is not a persisted analysis snapshot. *)
+    val fingerprint : t -> string
+  end
 end

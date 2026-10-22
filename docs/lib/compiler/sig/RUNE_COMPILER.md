@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 17 of 17 entries documented |
+| Documentation | 27 of 27 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -47,6 +47,19 @@ sig
   val <a href="#val-writemid">writeMid</a> : compiled * string -&gt; unit
   val <a href="#val-writeprogram">writeProgram</a> : compiled list * string -&gt; unit
   val <a href="#val-typeat">typeAt</a> : session * {<a href="#fld-typeat.file">file</a> : string, <a href="#fld-typeat.offset">offset</a> : int} -&gt; string option
+  structure <a href="#str-project">Project</a> :
+  sig
+    type <a href="#type-project.t">t</a>
+    type <a href="#type-project.source">source</a> = {<a href="#fld-project.source.file">file</a> : string, <a href="#fld-project.source.annotations">annotations</a> : string list, <a href="#fld-project.source.mode">mode</a> : string, <a href="#fld-project.source.ordinal">ordinal</a> : int}
+    type <a href="#type-project.input">input</a> = {<a href="#fld-project.input.file">file</a> : string, <a href="#fld-project.input.text">text</a> : string, <a href="#fld-project.input.mode">mode</a> : string, <a href="#fld-project.input.kind">kind</a> : string, <a href="#fld-project.input.revision">revision</a> : string}
+    val <a href="#val-project.read">read</a> : session * {<a href="#fld-project.read.file">file</a> : string, <a href="#fld-project.read.variables">variables</a> : (string * string) list,
+                          <a href="#fld-project.read.overlays">overlays</a> : {file : string, text : string} list, <a href="#fld-project.read.windows">windows</a> : bool} -&gt; t
+    val <a href="#val-project.sources">sources</a> : t -&gt; source list
+    val <a href="#val-project.inputs">inputs</a> : t -&gt; input list
+    val <a href="#val-project.libraries">libraries</a> : t -&gt; string list
+    val <a href="#val-project.cachedirectories">cacheDirectories</a> : t -&gt; string list
+    val <a href="#val-project.fingerprint">fingerprint</a> : t -&gt; string
+  end
 end
 </pre>
 
@@ -281,6 +294,116 @@ does not retain a resident semantic snapshot or execute user code.
 | --- | --- | --- |
 | <a name="fld-typeat.file"></a>`file` | `string` |  |
 | <a name="fld-typeat.offset"></a>`offset` | `int` |  |
+
+### <a name="str-project"></a>`Project`
+
+The compiler's immutable project model, shared with the CLI.
+
+#### <a name="type-project.t"></a>`t`
+
+```sml
+type t
+```
+
+A scoped plan and the inputs captured while discovering it.
+
+#### <a name="type-project.source"></a>`source`
+
+```sml
+type source = {file : string, annotations : string list, mode : string, ordinal : int}
+```
+
+An ordered source occurrence; repeated paths retain their separate
+occurrences and annotations. mode is ascii, unicode or unicode=latin1.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-project.source.file"></a>`file` | `string` |  |
+| <a name="fld-project.source.annotations"></a>`annotations` | `string list` |  |
+| <a name="fld-project.source.mode"></a>`mode` | `string` |  |
+| <a name="fld-project.source.ordinal"></a>`ordinal` | `int` |  |
+
+#### <a name="type-project.input"></a>`input`
+
+```sml
+type input = {file : string, text : string, mode : string, kind : string, revision : string}
+```
+
+A captured build or group-analysis input. revision hashes decoded
+text together with its source mode.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-project.input.file"></a>`file` | `string` |  |
+| <a name="fld-project.input.text"></a>`text` | `string` |  |
+| <a name="fld-project.input.mode"></a>`mode` | `string` |  |
+| <a name="fld-project.input.kind"></a>`kind` | `string` |  |
+| <a name="fld-project.input.revision"></a>`revision` | `string` |  |
+
+#### <a name="val-project.read"></a>`read`
+
+```sml
+val read : session * {file : string, variables : (string * string) list,
+                      overlays : {file : string, text : string} list, windows : bool} -> t
+```
+
+`read (session, request)` resolves a build through compiler rules,
+preserving scopes, order, annotations, virtual implementations and use.
+
+Variables are path-variable bindings. Overlays are already decoded
+UTF-8, also for Latin-1 source files. windows selects native Windows
+drive/UNC path handling. No user declarations execute and no cache
+files are written. Failure is reported through Failed.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-project.read.file"></a>`file` | `string` |  |
+| <a name="fld-project.read.variables"></a>`variables` | `(string * string) list` |  |
+| <a name="fld-project.read.overlays"></a>`overlays` | `{file : string, text : string} list` |  |
+| <a name="fld-project.read.windows"></a>`windows` | `bool` |  |
+
+#### <a name="val-project.sources"></a>`sources`
+
+```sml
+val sources : t -> source list
+```
+
+`sources project` lists source occurrences in compiler order.
+
+#### <a name="val-project.inputs"></a>`inputs`
+
+```sml
+val inputs : t -> input list
+```
+
+`inputs project` is the captured build and group-discovery text.
+Normal ordered sources need not be parsed to discover membership.
+
+#### <a name="val-project.libraries"></a>`libraries`
+
+```sml
+val libraries : t -> string list
+```
+
+`libraries project` lists library-header dependencies in source order.
+
+#### <a name="val-project.cachedirectories"></a>`cacheDirectories`
+
+```sml
+val cacheDirectories : t -> string list
+```
+
+`cacheDirectories project` lists declared cache paths. Reading a
+project does not create or write these directories.
+
+#### <a name="val-project.fingerprint"></a>`fingerprint`
+
+```sml
+val fingerprint : t -> string
+```
+
+`fingerprint project` identifies the captured plan, configuration
+and discovery inputs. It is not a persisted analysis snapshot.
 
 ---
 

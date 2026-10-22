@@ -7,9 +7,11 @@ documented when a comment describes it, alone or together with the entry before 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
 | [`LSP_METHODS`](sig/LSP_METHODS.md) | 11 | 11 | 100% | 1 | 1 |
+| [`LSP_POSITION`](sig/LSP_POSITION.md) | 11 | 11 | 100% | 8 | 8 |
 | [`LSP_PROTOCOL`](sig/LSP_PROTOCOL.md) | 29 | 29 | 100% | 16 | 16 |
 | [`LSP_REQUESTS`](sig/LSP_REQUESTS.md) | 9 | 9 | 100% | 7 | 7 |
-| **all** | 49 | 49 | 100% | 24 | 24 |
+| [`LSP_URI`](sig/LSP_URI.md) | 7 | 7 | 100% | 4 | 4 |
+| **all** | 67 | 67 | 100% | 36 | 36 |
 
 ## Members a signature describes
 
@@ -18,12 +20,12 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-3 structures have a page, with 49 members, of which 49 (100%) are described by a signature.
+5 structures have a page, with 67 members, of which 67 (100%) are described by a signature.
 
 ## Examples that are run
 
 Every example is a closed expression of type `bool` that is true, and every counterexample a closed claim
-that does not hold: each is elaborated when these pages are made and tried by the test suite: 5 of them, in [`LSP_METHODS`](sig/LSP_METHODS.md) (2), [`LSP_PROTOCOL`](sig/LSP_PROTOCOL.md) (3).
+that does not hold: each is elaborated when these pages are made and tried by the test suite: 7 of them, in [`LSP_METHODS`](sig/LSP_METHODS.md) (2), [`LSP_POSITION`](sig/LSP_POSITION.md) (1), [`LSP_PROTOCOL`](sig/LSP_PROTOCOL.md) (3), [`LSP_URI`](sig/LSP_URI.md) (1).
 
 ---
 

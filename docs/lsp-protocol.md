@@ -2,8 +2,8 @@
 
 The server uses [LSP 3.18](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/)
 over stdio and UTF-8 JSON-RPC. [The language-server manual](language-server.md)
-describes launching it. This document describes the implemented M2
-protocol foundation; feature milestones extend it together with their
+describes launching it. This document describes the protocol foundation
+and implemented document synchronization; feature milestones extend it with
 tests and negotiated capabilities.
 
 ## Transport and envelopes
@@ -28,9 +28,9 @@ permitted.
 `initialize` validates the client capability object and selects UTF-8 when
 offered, then UTF-16 or UTF-32, with mandatory UTF-16 as the fallback. Its
 result contains `serverInfo` and the implemented server capabilities.
-Currently `textDocumentSync` is None and no semantic providers are
-advertised. A specification entry in `LspMethods` does not activate a
-provider.
+`textDocumentSync` advertises open/close, incremental changes, will-save
+notifications and saves with included text. Semantic providers remain
+unadvertised. A specification entry in `LspMethods` does not activate a provider.
 
 `initialized` completes the handshake. Other ordinary requests before
 initialization receive `ServerNotInitialized`; duplicate initialization is
@@ -61,12 +61,60 @@ milestones create such work and the client supports them.
 sent as framed `$/logTrace` notifications; operational errors remain on
 stderr. Notifications never receive ordinary response messages.
 
+## Documents and positions
+
+`didOpen`, `didChange`, `didClose`, `willSave` and `didSave` operate only
+after `initialized`. Client versions are signed LSP integers and must
+increase within an open-document lifetime. Server revisions also
+distinguish closing and reopening the same URI at a reused client version.
+
+A change batch applies to successive intermediate texts and publishes
+only after every change succeeds. Invalid transitions quarantine the
+document for semantic use. Its last valid text/version remain available
+for recovery; the highest observed version prevents stale replacement.
+Ranged changes cannot repair a quarantined document: a later full
+replacement or reopen is required. No custom resynchronization request is
+sent. A save payload is observed without changing text or client version.
+
+Positions recognize LF, CRLF and CR, preserve a present BOM, and reject
+split UTF-8 characters or UTF-16 surrogate pairs. Characters beyond EOL
+clamp to EOL and lines beyond the document clamp to EOF. Offsets inside
+line-ending bytes map to EOL. Byte edits reuse sparse Unicode checkpoints;
+line-ending edits rebuild the affected line region.
+
+File URI decoding keeps client identities separate from native paths.
+POSIX filename bytes and Windows drive/UNC/WTF-8 paths are preserved.
+Native keys retain path-component case and parent arcs; they do not
+resolve symlinks. Project-context selection must account for aliases
+explicitly. Virtual and unsaved URIs remain valid document identities.
+
+## Workspace requests
+
+`workspace/configuration` is requested only when supported, with section
+`runelsp` and explicit folder/document scope URIs. Responses belong to a
+configuration epoch; stale responses cannot overwrite newer settings.
+Closed document scopes are not replaced by late replies. Startup options
+remain the fallback when the client refuses configuration.
+
+Workspace folders use initialization data or a negotiated
+`workspace/workspaceFolders` request. Folder and configuration changes
+invalidate context discovery. `didChangeWatchedFiles` invalidates
+closed-source/build metadata; a client refusal does not make disk state
+authoritative over an open overlay.
+
+When supported, watcher registrations use relative patterns. Registrations
+are balanced on root changes, and refusal falls back to revalidation on
+queries. Build ambiguity uses `window/showMessageRequest` actions tied to
+the current document revision and workspace generation; stale choices are
+discarded. Dismissed or unavailable UI never chooses an arbitrary target.
+
 ## Reusable wire values and inventory
 
 `lib/lsp` has portable integer, position/range, envelope, capability and
 request-ownership interfaces. Its coordinates are code-unit counts in the
-negotiated encoding; conversion to source offsets belongs to document
-storage. Reversed ranges and negative/out-of-range coordinates are refused.
+negotiated encoding. `LspPosition` converts them to immutable source
+indexes and `LspUri` handles native path conversion. Reversed ranges and
+negative/out-of-protocol coordinates are refused.
 
 `tools/lsp/protocol/metaModel-3.18.0.json` is the reviewed upstream data,
 with source hash and attribution. `make lsp-protocol` deterministically

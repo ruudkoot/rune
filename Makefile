@@ -311,9 +311,25 @@ bin/rune-lsp-wire-tests.rbc: $(RUNE) tests/runner/sh.sml tests/lsp/protocol-test
 	$(RUNE) --library test/runner --library json tests/runner/sh.sml tests/lsp/protocol-tests.sml -o $@
 bin/rune-lsp-tests.rbc: $(RUNE) tests/lib/lsp/protocol.sml manifests
 	$(RUNE) --library test/unit --library random --library lsp tests/lib/lsp/protocol.sml -o $@
-.PHONY: test-lsp test-lsp-protocol
+.PHONY: test-lsp test-lsp-protocol test-lsp-documents test-lsp-workspace
+bin/rune-lsp-documents-bench.rbc: $(RUNE) tools/lsp/documents-bench.sml src/main/lsp-documents-bench-main.sml rune-lsp-documents-bench.build manifests
+	$(RUNE) --build rune-lsp-documents-bench.build -o $@
 test-lsp: test-lsp-protocol
-test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc check-lsp-protocol
+bin/rune-lsp-documents-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml tests/lsp/edit-traces.sml tests/lsp/documents-tests.sml manifests
+	$(RUNE) --library test/unit --library lsp src/lsp/documents.sml src/lsp/sync.sml tests/lsp/edit-traces.sml tests/lsp/documents-tests.sml -o $@
+test-lsp-documents: bin/rune-lsp-documents-tests.rbc
+	bin/runevm bin/rune-lsp-documents-tests.rbc
+	bin/runevm --jit=all bin/rune-lsp-documents-tests.rbc
+bin/rune-lsp-workspace-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml tests/lsp/workspace-tests.sml manifests
+	$(RUNE) --library test/unit --library lsp --library compiler src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml tests/lsp/workspace-tests.sml -o $@
+bin/rune-lsp-controller-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/controller.sml tests/lsp/controller-tests.sml manifests
+	$(RUNE) --library test/unit --library lsp --library compiler src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/controller.sml tests/lsp/controller-tests.sml -o $@
+test-lsp-workspace: bin/rune-lsp-workspace-tests.rbc bin/rune-lsp-controller-tests.rbc
+	bin/runevm bin/rune-lsp-workspace-tests.rbc
+	bin/runevm --jit=all bin/rune-lsp-workspace-tests.rbc
+	bin/runevm bin/rune-lsp-controller-tests.rbc
+	bin/runevm --jit=all bin/rune-lsp-controller-tests.rbc
+test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc check-lsp-protocol test-lsp-documents test-lsp-workspace
 	bin/runevm bin/rune-lsp-tests.rbc
 	bin/runevm bin/rune-lsp-wire-tests.rbc
 
@@ -1889,7 +1905,8 @@ bin/rune-matrix: bin/rune-matrix.rbc bin/runevm Makefile bin/rune-generate bin/r
 # that two steps that run at once never build one file (each step is a make
 # of its own).
 CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all repl dap kernel mlton smlnj-legacy \
-               bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-bench bin/rune-lsp-bench-tests.rbc \
+               bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-documents-tests.rbc \
+               bin/rune-lsp-workspace-tests.rbc bin/rune-lsp-controller-tests.rbc bin/rune-lsp-bench bin/rune-lsp-bench-tests.rbc \
                bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc \
                bin/rune-boot bin/rune.rbc bin/rune.stack.rbc bin/runedoc.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc \
                bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy \

@@ -18,15 +18,17 @@ Each feature adds its parameter/result codecs and semantic tests as it is
 implemented. A server advertises a provider only after that behavior has
 passed acceptance, independently of its presence in the specification.
 
-[How to read these pages](../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [i](index/i.md) [k](index/k.md) [m](index/m.md) [n](index/n.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md)
+[How to read these pages](../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [i](index/i.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md)
 
 ## Protocols
 
 | Signature |  |
 | --- | --- |
 | [`LSP_METHODS`](sig/LSP_METHODS.md) | The pinned Language Server Protocol method and property inventory. |
+| [`LSP_POSITION`](sig/LSP_POSITION.md) | LSP positions over immutable UTF-8 document text. |
 | [`LSP_PROTOCOL`](sig/LSP_PROTOCOL.md) | LSP 3.18 wire values, integer bounds and capability negotiation. |
 | [`LSP_REQUESTS`](sig/LSP_REQUESTS.md) | Bounded request ownership for an LSP connection. |
+| [`LSP_URI`](sig/LSP_URI.md) | Client document URIs and native filesystem paths. |
 
 ---
 

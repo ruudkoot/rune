@@ -34,4 +34,5 @@ files
   driver/unitmid.sml
   driver/unitcache.sml
   driver/deps.sml
+  driver/project.sml
 end

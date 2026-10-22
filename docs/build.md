@@ -33,8 +33,8 @@ dec      ::= path                            a file, compiled in the basis befor
            | "annotate" string ... "in" dec ... "end"
                                              what the units inside may do (below)
            | "cache" path                    where the cache of the build is
-           | "libraries" name ... "end"      the libraries a library is written on
-                                             (a library's build file, below)
+           | "libraries" name ... "end"      libraries selected by this build,
+                                             or dependencies in library metadata
 exports  ::= "(" export "," ... ")"          export ::= kind id
 kind     ::= "structure" | "signature" | "functor" | "type"
 path     ::= a file's path, relative to the build file's directory, in which
@@ -74,6 +74,18 @@ hosts' build files are made from (`scripts/gen-build-files.sh`).
 | `noWarnings` | their warnings are not printed |
 | `ascii`, `unicode` (or `unicode=utf8`), `unicode=latin1` | the mode the units are read in, over the command line's `--unicode[=ENC]`; the last such annotation in force wins ([units.md](units.md), *Source modes*) |
 
+Annotations also apply through a `use` edge. For example,
+`annotate "unicode" "allowPrim" in use implementation.build end` gives
+those annotations to the included units; annotations inside the included
+build can override their source mode. Repeated `use` still elaborates
+the build once, in its first occurrence's context.
+
+The compiler library's `RuneCompiler.Project` API uses this same scoped
+planner. It can discover ordered files without parsing their programs;
+`group` uses the compiler's dependency discipline and records the source
+inputs needed to determine its order. Windows project resolution handles
+absolute drive and UNC paths explicitly, including expanded path variables.
+
 Levels per unit (`O0` ... `O2`) are not built: a build has the level of
 its command line.
 
@@ -92,7 +104,10 @@ build file `library.build` that lists its files in load order, each in an
 | `final` | it is compiled after every program |
 | `host=swap`, `host=no` | how `bin/rune-generate host-basis` gives the file to the other SML systems |
 
-`libraries random end` names the libraries it is written on. What each
+`libraries random end` names the libraries it is written on. In an
+ordinary program build, the declaration selects those libraries as
+`--library random` does; explicit command-line selections are retained.
+What each
 file provides and requires is not written down: `rune --basis-index DIR`
 works it out from the sources (`Deps`, docs/units.md, The graph) and writes
 `DIR/MANIFEST`, which is what the compiler reads (`BasisManifest`). `make

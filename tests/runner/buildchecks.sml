@@ -68,6 +68,15 @@ struct
       val () = write (dir ^ "/cycle.build", "use cycle.build\n")
       val (status, _, errors) = invoke "cycle" ["sh", fromRoot "scripts/build-files.sh", dir ^ "/cycle.build"]
       val ()=if status <> 0 andalso String.isSubstring "cyclic" errors then () else say "FAIL compiler layout: cyclic use was accepted\n"
+      val ()=write (dir ^ "/annotated.build","annotate \"unicode\" \"allowPrim\" in use nested/annotated.build end\n")
+      val ()=write (dir ^ "/nested/annotated.build","files ../unicode.sml end\n")
+      val ()=write (dir ^ "/unicode.sml","val p=_prim \"print\" : string -> unit\nval \206\187=42\nval ()=p \"annotations inherited\\n\"\n")
+      val (status,_,errors)=invoke "annotated-use" [fromRoot (env ("RUNE","bin/rune")),"--no-prelude",
+        "--build",dir ^ "/annotated.build","-o",dir ^ "/annotated.rbc"]
+      val ()=if status=0 then () else raise Fail ("build annotations lost through use: " ^ errors)
+      val (status,output,errors)=invoke "annotated-program" [fromRoot "bin/runevm",dir ^ "/annotated.rbc"]
+      val ()=if status=0 andalso output="annotations inherited\n" andalso errors="" then ()
+        else raise Fail "annotated build program differs"
       val view=dir ^ "/native-view"
       val ()=List.app mkdirs [view ^ "/scripts",view ^ "/build",view ^ "/lib/MLB"]
       val ()=write (view ^ "/scripts/mlkit-build-root.sh",read "scripts/mlkit-build-root.sh")

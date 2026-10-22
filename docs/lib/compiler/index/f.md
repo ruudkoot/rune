@@ -1,8 +1,9 @@
 # Index: F
 
-[Overview](../README.md) &middot; [c](c.md) [d](d.md) **f** [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [c](c.md) [d](d.md) **f** [i](i.md) [l](l.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
 
 - `Failed` (exn): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#exn-failed)
+- `Project.fingerprint` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.fingerprint)
 
 ---
 

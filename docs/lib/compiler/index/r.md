@@ -1,7 +1,8 @@
 # Index: R
 
-[Overview](../README.md) &middot; [c](c.md) [d](d.md) [f](f.md) **r** [s](s.md) [t](t.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [c](c.md) [d](d.md) [f](f.md) [i](i.md) [l](l.md) [p](p.md) **r** [s](s.md) [t](t.md) [v](v.md) [w](w.md)
 
+- `Project.read` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.read)
 - `readMid` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-readmid)
 - `readUnit` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-readunit)
 - `run` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-run)

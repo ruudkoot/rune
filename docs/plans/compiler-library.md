@@ -542,6 +542,22 @@ Native-cache follow-up (2026-10-22):
   `HOST-BUG`; that runner pass is classified acceptance, not five literal
   passing checks. Final combined and platform acceptance remain pending.
 
+Shared project-model checkpoint (2026-10-22):
+
+* `RuneCompiler.Project` exposes immutable scoped build plans and captured
+  discovery inputs, source occurrences/modes/annotations, libraries,
+  cache paths and a configuration-sensitive fingerprint. The CLI uses the
+  same planner. `use` annotations now propagate, and ordinary program builds
+  honor their declared library headers, with permanent acceptance probes.
+* Public API tests cover ordered/group sources, overlays, inherited
+  annotations, variable isolation, Windows drive paths and fingerprints.
+  The six-host API and position/URI focused run passed all 28 runner cases
+  at `tests/out/r/20261022-152747-3086877` (342.0 seconds).
+* The preceding complete native library profile passed 174 runner cases
+  at `tests/out/r/20261022-134545-3067536` (1,288.8 seconds), retaining
+  documented host deviations, including MLKit's LSP protocol bug. That
+  profile precedes the new project API; it is not final combined acceptance.
+
 ### M5. The clients (M, about 500 SML)
 
 * **What:** the REPL's engine and session written on `RuneCompiler`;

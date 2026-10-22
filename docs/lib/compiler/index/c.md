@@ -1,12 +1,13 @@
 # Index: C
 
-[Overview](../README.md) &middot; **c** [d](d.md) [f](f.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; **c** [d](d.md) [f](f.md) [i](i.md) [l](l.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
 
 - `close` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-close)
 - `Closed` (exn): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#exn-closed)
 - `compiled` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-compiled)
 - `compileFile` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-compilefile)
 - `compileText` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-compiletext)
+- `Project.cacheDirectories` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.cachedirectories)
 
 ---
 

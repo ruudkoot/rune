@@ -1,11 +1,11 @@
 # The Rune language server
 
 `runelsp` is the standalone LSP adapter for Rune. The current implementation
-provides the M2 protocol foundation: stdio transport, initialization,
-capability/position-encoding negotiation, progress tokens, tracing and
-shutdown. Compiler-backed editing features are the following milestones
-of [the roadmap](plans/language-server.md); the server currently advertises
-no text-document synchronization or semantic providers.
+provides stdio transport, initialization, capability/position-encoding
+negotiation, progress tokens, tracing, shutdown and versioned document
+synchronization. Compiler-backed editing features follow in
+[the roadmap](plans/language-server.md); semantic providers remain
+unadvertised until their acceptance checks pass.
 
 ## Build and launch
 
@@ -25,6 +25,57 @@ The incoming body limit is 16 MiB by default, configurable with
 Content-Length byte framing and UTF-8 JSON. Logs go to stderr; stdout
 contains protocol frames only. A truncated or malformed transport closes
 the connection with a failure status.
+
+Open documents retain the client's URI and decoded UTF-8 text. Incremental
+changes use the negotiated UTF-8, UTF-16 or UTF-32 coordinates. Changes in
+one notification apply in order, atomically; malformed transitions retain
+the last valid text and require a subsequent full replacement or reopen.
+Save notifications never replace a newer overlay.
+
+The current connection limits are 512 documents, 4 MiB per document
+(also bounded by the incoming-message limit), 64 MiB total document text,
+200,000 lines per document and 500,000 total indexed lines. Invalid or
+over-limit updates are rejected before publication. Source analysis and
+worker resource limits are separate later milestones.
+
+## Workspaces and build contexts
+
+The server accepts initial workspace folders, legacy root settings and
+folder changes. With client support it requests scoped `runelsp`
+configuration and dynamically registers file watchers; refusal retains
+startup settings. Closed-file contexts are revalidated when queried.
+
+Initialization options use the same settings object as `runelsp`:
+
+```json
+{
+  "target": "registers",
+  "sourceMode": "ascii",
+  "libraries": [],
+  "pathVariables": {},
+  "targets": [
+    {"name": "application", "build": "file:///project/application.build"}
+  ],
+  "activeContext": "application"
+}
+```
+
+`target` is `registers` or `stack`. Source modes are `ascii`, `unicode`
+(`unicode=utf8`) and `unicode=latin1`. `libraryRoot`, when supplied, is a
+file URI; path-variable values are directory file URIs. Targets may
+override compiler settings, libraries, path variables and the library root.
+
+Without explicit targets, discovery examines the document directory and
+its ancestors up to an owning workspace root, following build `use`
+edges. It does not recursively scan descendants. A loose file without a
+workspace checks its own directory. Project source order, scopes,
+annotations and group ordering come from `RuneCompiler.Project`.
+
+When several targets contain a file, the server requests a context choice;
+it does not select by enumeration order. A configured target name or the
+returned context identifier can also select one. Dismissal or unsupported
+client UI leaves the context unresolved. Document synchronization remains
+available while semantic analysis awaits an explicit selection.
 
 ## Protocol and acceptance
 
