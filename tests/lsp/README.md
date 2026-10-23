@@ -24,6 +24,16 @@ The unchanged installed `f4ee51368` release fails this replay at its existing
 source hashes are retained outside Git under `rune-benchmark-results/lsp`.
 Small protocol examples alone do not establish project-editing acceptance.
 
+Set `RUNE_LSP_PROFILE=/absolute/new/phases.jsonl` when launching the server
+to capture opt-in phase observations from its private worker. Each JSON line
+records the job, phase, unit, elapsed microseconds, cumulative allocated bytes,
+last collected live bytes, heap capacity, collections and work counts. This
+file is separate from protocol stdout. Keep profiles outside the workspace's
+source tree; source paths are included, but source contents are not.
+These counters include observer overhead; `live` is the collector's last
+measurement, not a collection forced at each phase. Record process RSS with
+an independent process measurement alongside these samples.
+
 ## Document and workspace foundations (M3)
 
 `make test-lsp` checks document lifetimes, atomic sequential edits,

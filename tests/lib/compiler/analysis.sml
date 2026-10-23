@@ -9,6 +9,26 @@ struct
   fun analyze (context,inputs)=A.check (context,{project=NONE,inputs=inputs,cancelled=fn () => false})
   fun same (left,right)=A.facts left=A.facts right andalso A.occurrences left=A.occurrences right
     andalso A.diagnostics left=A.diagnostics right andalso A.types left=A.types right
+  fun observations () =
+    let exception Stopped
+        val parent=compiler() val context=A.create(parent,{context="observations"})
+        val source=input("observed.sml","val answer=42\n","1")
+        val initial=analyze(context,[source])
+        val events=ref [] : A.observation list ref
+        val ()=A.observe(context,SOME(fn event=>events:=event:: !events))
+        val measured=analyze(context,[source])
+        val ()=check("observations preserve frozen semantic results",same(initial,measured))
+        val ()=check("observations include publication and cache reuse",List.exists(fn event=>
+          #phase event="snapshot-published" andalso #reused event>0)(!events))
+        val ()=A.observe(context,NONE)
+        val count=length(!events) val _=analyze(context,[source])
+        val ()=check("disabled observer receives no phases",length(!events)=count)
+        val ()=A.observe(context,SOME(fn _=>raise Stopped))
+        val stopped=(analyze(context,[source]);false)handle Stopped=>true
+        val ()=check("observer failure leaves earlier snapshots readable",stopped andalso same(initial,measured))
+        val ()=A.observe(context,NONE) val recovered=analyze(context,[source])
+        val ()=check("observer failure releases the busy context",same(initial,recovered))
+    in A.close context;C.close parent end
   fun snapshots () =
     let val parent=compiler ()
         val context=A.create (parent,{context="target-one"})
@@ -311,7 +331,8 @@ end
 structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
   val tests=Test.describe "compiler-analysis"
-    [Test.it "snapshots-checkpoints-cancellation" CompilerAnalysisTests.snapshots,
+    [Test.it "observations" CompilerAnalysisTests.observations,
+     Test.it "snapshots-checkpoints-cancellation" CompilerAnalysisTests.snapshots,
      Test.it "captured-syntax-snapshots" CompilerAnalysisTests.syntaxSnapshots,
      Test.it "inferred-pattern-type-hints" CompilerAnalysisTests.typeHints,
      Test.it "lexical-bindings" CompilerAnalysisTests.bindings,

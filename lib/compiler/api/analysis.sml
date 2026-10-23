@@ -22,6 +22,7 @@ struct
   datatype checkpoint=Checkpoint of {token:unit ref,entries:E.entry list,plan:string}
   exception Cancelled=E.Cancelled
   exception Busy
+  type observation=E.observation
   fun new (parent as C.Session {config,...},context) =
     (C.checked parent;Analysis {parent=parent,context=context,namespace="analysis-" ^ Int.toString (CompilerState.freshIdentity ()),
       engine=E.new config,token=ref (),serial=ref 0,busy=ref false,closed=ref false})
@@ -29,6 +30,8 @@ struct
     (C.checked parent;if !closed then raise C.Closed else if !busy then raise Busy else ())
   fun close (Analysis {engine,busy,closed,...}) =
     if !busy then raise Busy else (closed:=true;E.close engine)
+  fun observe (context as Analysis {engine=E.Session{observer,...},...},value)=
+    (checked context;observer:=value)
   fun checkpoint (context as Analysis {engine=E.Session {stored,plan,...},token,...}) =
     (checked context;Checkpoint {token=token,entries= !stored,plan= !plan})
   fun restore (context as Analysis {engine=E.Session {stored,plan,...},token,...},Checkpoint saved) =
@@ -69,6 +72,9 @@ struct
         val ()=busy:=true
         fun work () =
           let val result=E.checkSteps (engine,sources,steps,libraries,poll)
+              val E.Session{observer,...}=engine
+              fun phase name items=Option.app(fn f=>f {phase=name,file="",checked= #checked result,reused= #reused result,items=items})(!observer)
+              val ()=phase "occurrences-start" (length(#uses result))
               fun dependency (source:E.source):input={file= #file source,text= #text source,
                 mode=Source.modeName (#mode source),annotations=[],revision=Pickle.hash (#text source)}
               val types=List.map (fn {id,origin}:E.typeDefinition =>
@@ -80,6 +86,7 @@ struct
                 reused= #reused result,checked= #checked result,config=config,cache= #cache result,
                 syntaxes= #syntaxes result,plan= #plan result,
                 steps=steps,libraries=libraries,prelude= #prelude result}:snapshot
+              val ()=phase "snapshot-published" (length(#occurrences snapshot))
           in serial:=IntInf.+ (!serial,1);snapshot end
         val result=work () handle error => (busy:=false;raise error)
     in busy:=false;result end
@@ -163,7 +170,7 @@ struct
   fun queryAt (snapshot:snapshot,{ordinal,offset,path},accept:E.snapshot->bool) =
     if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
     let val input=List.nth (#inputs snapshot,ordinal)
-        val engine=E.Session {stored=ref (#cache snapshot),plan=ref (#plan snapshot),config= #config snapshot,closed=ref false}
+        val engine=E.Session {stored=ref (#cache snapshot),plan=ref (#plan snapshot),config= #config snapshot,closed=ref false,observer=ref NONE}
         fun source (input:input):E.source={file= #file input,text= #text input,mode=valOf (Source.modeNamed (#mode input))}
         fun query (sources,at)= E.checkWith
           (engine,sources,#steps snapshot,#libraries snapshot,fn () => false,

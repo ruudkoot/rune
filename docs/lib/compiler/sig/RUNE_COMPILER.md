@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 86 of 86 entries documented |
+| Documentation | 88 of 88 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -89,6 +89,7 @@ sig
     type <a href="#type-analysis.t">t</a>
     type <a href="#type-analysis.snapshot">snapshot</a>
     type <a href="#type-analysis.checkpoint">checkpoint</a>
+    type <a href="#type-analysis.observation">observation</a>={<a href="#fld-analysis.observation.phase">phase</a>:string,<a href="#fld-analysis.observation.file">file</a>:string,<a href="#fld-analysis.observation.checked">checked</a>:int,<a href="#fld-analysis.observation.reused">reused</a>:int,<a href="#fld-analysis.observation.items">items</a>:int}
     type <a href="#type-analysis.input">input</a>={<a href="#fld-analysis.input.file">file</a>:string,<a href="#fld-analysis.input.text">text</a>:string,<a href="#fld-analysis.input.mode">mode</a>:string,<a href="#fld-analysis.input.annotations">annotations</a>:string list,<a href="#fld-analysis.input.revision">revision</a>:string}
     type <a href="#type-analysis.location">location</a>={<a href="#fld-analysis.location.file">file</a>:string,<a href="#fld-analysis.location.start">start</a>:int,<a href="#fld-analysis.location.stop">stop</a>:int}
     type <a href="#type-analysis.occurrence">occurrence</a>={<a href="#fld-analysis.occurrence.unit">unit</a>:string,<a href="#fld-analysis.occurrence.file">file</a>:string,<a href="#fld-analysis.occurrence.start">start</a>:int,<a href="#fld-analysis.occurrence.stop">stop</a>:int,<a href="#fld-analysis.occurrence.kind">kind</a>:string,<a href="#fld-analysis.occurrence.name">name</a>:string,<a href="#fld-analysis.occurrence.path">path</a>:string list,
@@ -102,6 +103,7 @@ sig
     exception <a href="#exn-analysis.busy">Busy</a>
     val <a href="#val-analysis.create">create</a> : session * {<a href="#fld-analysis.create.context">context</a>:string} -&gt; t
     val <a href="#val-analysis.close">close</a> : t -&gt; unit
+    val <a href="#val-analysis.observe">observe</a> : t * (observation-&gt;unit) option -&gt; unit
     val <a href="#val-analysis.check">check</a> : t * {<a href="#fld-analysis.check.project">project</a>:Project.t option,<a href="#fld-analysis.check.inputs">inputs</a>:input list,<a href="#fld-analysis.check.cancelled">cancelled</a>:unit-&gt;bool} -&gt; snapshot
     val <a href="#val-analysis.checkpoint">checkpoint</a> : t -&gt; checkpoint
     val <a href="#val-analysis.restore">restore</a> : t * checkpoint -&gt; unit
@@ -771,6 +773,23 @@ type checkpoint
 
 A validated unit-cache checkpoint belonging to one analysis context.
 
+#### <a name="type-analysis.observation"></a>`observation`
+
+```sml
+type observation={phase:string,file:string,checked:int,reused:int,items:int}
+```
+
+A bounded phase observation. items counts bytes at source phases and
+entries at projection phases; checked/reused count completed units.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.observation.phase"></a>`phase` | `string` |  |
+| <a name="fld-analysis.observation.file"></a>`file` | `string` |  |
+| <a name="fld-analysis.observation.checked"></a>`checked` | `int` |  |
+| <a name="fld-analysis.observation.reused"></a>`reused` | `int` |  |
+| <a name="fld-analysis.observation.items"></a>`items` | `int` |  |
+
 #### <a name="type-analysis.input"></a>`input`
 
 ```sml
@@ -961,6 +980,19 @@ val close : t -> unit
 ```
 
 `close context` releases its retained caches; repeated calls do nothing.
+
+#### <a name="val-analysis.observe"></a>`observe`
+
+```sml
+val observe : t * (observation->unit) option -> unit
+```
+
+`observe (context, callback)` installs an optional synchronous phase
+observer between checks.
+
+NONE disables it. Observer exceptions abort
+the current attempt; observation never executes the checked program.
+Timing and host-specific memory counters belong to the callback.
 
 #### <a name="val-analysis.check"></a>`check`
 

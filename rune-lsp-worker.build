@@ -1,6 +1,7 @@
 (* The worker entry point is also exercised independently of the LSP loop. *)
 libraries compiler lsp digest end
 files
+  src/lsp/profile.sml
   src/lsp/documents.sml
   src/lsp/sync.sml
   src/lsp/workspace.sml

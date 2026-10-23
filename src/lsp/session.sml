@@ -163,7 +163,9 @@ struct
         case P.decode text of
           P.Invalid {error, id, reply} => if reply then send (R.Response {id = id, outcome = R.Error error})
                                          else stderr (#message error)
-        | P.Message (R.Request requestData) => (log ("request: " ^ #method requestData); request requestData)
+        | P.Message (R.Request requestData) =>
+            (RuneLspProfile.sample ("request:" ^ #method requestData) "" 0 0 0;
+             log ("request: " ^ #method requestData); request requestData)
         | P.Message (R.Notification data) => notification data
         | P.Message response => if (case !service of SOME service => RuneLspService.response (service,response) | NONE => false)
                                 then () else if (case !controller of SOME controller => RuneLspController.response (controller,response) | NONE => false)

@@ -43,6 +43,13 @@ unchanged tokens/declarations against the new incoming fixities. New
 elaboration always receives fresh annotation slots. No mutable compiler
 type or AST reference escapes in query results.
 
+`observe (context, SOME callback)` enables synchronous phase observations
+between checks. Events identify phases, source units and work counts; callers
+supply clocks and host allocation measurements. `NONE` disables observation.
+Callbacks receive no mutable compiler state. A callback exception aborts the
+attempt and releases the busy context; already published snapshots remain
+readable. Observation is disabled by default.
+
 Lexical bindings and runtime identities serve different purposes. An
 exception alias has its own lexical declaration while sharing the
 exception's runtime identity. Signature constraints retain declaration

@@ -14,11 +14,13 @@ struct
     uses:(string*(string*(string list*string)*Source.span*Env.origin*bool)) list,
     candidates:candidate list,role:string,fields:(string*string) list,application:application option,
     cache:entry list,syntaxes:(string*CompilerSyntax.t) list,plan:string,prelude:CompilerPrelude.plan}
-  datatype session=Session of {stored:entry list ref,plan:string ref,config:CompilerSession.config,closed:bool ref}
+  type observation={phase:string,file:string,checked:int,reused:int,items:int}
+  datatype session=Session of {stored:entry list ref,plan:string ref,config:CompilerSession.config,closed:bool ref,
+    observer:(observation->unit) option ref}
   exception Cancelled
-  fun new config=Session {stored=ref [],plan=ref "",config=config,closed=ref false}
+  fun new config=Session {stored=ref [],plan=ref "",config=config,closed=ref false,observer=ref NONE}
   fun close (Session {closed,stored,...})=(closed:=true;stored:=[])
-  fun checkWith (Session {stored,plan=savedPlan,config,closed},sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
+  fun checkWith (Session {stored,plan=savedPlan,config,closed,observer},sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
                  frozen:source list,frozenPlan:CompilerPrelude.plan option) : snapshot = CompilerSession.owned (fn () =>
     let val {lib,libraries,target,allowPrim}=config
         val ()=CompilerSettings.target:=target
@@ -81,6 +83,8 @@ struct
         val ()=Env.observe:=(fn event => unitUses:=event :: !unitUses)
         val reused=ref 0
         val checked=ref 0
+        fun observe phase file items=Option.app(fn f=>f {phase=phase,file=file,checked= !checked,reused= !reused,items=items})(!observer)
+        val ()=observe "analysis-start" "" (length sources)
         val planBytes=Pickle.writer ()
         fun encode (w,item)=case item of
           CompilerProject.SUnit (file,annotations) => (Pickle.byte (w,0);Pickle.string (w,file);Pickle.list Pickle.string (w,annotations))
@@ -110,6 +114,7 @@ struct
         fun unit (source:source,name,allow,keepFacts) =
           let val {file,text,mode}=source
               val ()=poll ()
+              val ()=observe "unit-start" file (size text)
               val ()=(Env.currentUnit:=name;unitUses:=[])
               val ()=Source.register (Source.fromStringIn (mode,file,text))
               val key=Pickle.hash (!chain ^ ":" ^ name ^ ":" ^ Bool.toString allow ^ ":" ^ Source.modeName mode ^ ":" ^ text)
@@ -131,6 +136,7 @@ struct
                              {start= #start change,stop= #stop change,text= #text change,fixity= !fixity})
                            else CompilerSyntax.parse {file=file,text=text,mode=mode,orPatterns=false,fixity= !fixity} end
                     | NONE => CompilerSyntax.parse {file=file,text=text,mode=mode,orPatterns=false,fixity= !fixity}
+                    val ()=observe "unit-parsed" file (size text)
                     val ()=remember syntaxTree
                     val ()=case CompilerSyntax.problems syntaxTree of [] => () | problem :: _ => raise Error.CompileError problem
                     val syntax=CompilerSyntax.bridge syntaxTree
@@ -144,6 +150,7 @@ struct
                     val ()=Elaborate.allowPrim:=allow
                     val ()=Elaborate.elabTop (env,syntax)
                     val ()=Elaborate.finish ()
+                    val ()=observe "unit-elaborated" file (length(!unitUses))
                     val ()=Env.noteScope ({file=file,start=0,stop=size text+1},!env)
                     val ()=poll ()
                     in (syntaxTree,syntax,outgoing) end)
@@ -182,15 +189,17 @@ struct
               val ()=fixity:=Fixity.extend (#fixity start,#directives loaded)
               val ()=UnitBasis.bind loaded
               val ()=CompilerBuildContext.note (scopes,loaded)
-          in poll ();chain:=key;staged:=entry :: !staged;types:= #types entry :: !types;
+          in observe "unit-frozen" file (length(#uses entry));poll ();chain:=key;staged:=entry :: !staged;types:= #types entry :: !types;
              facts:= #facts entry :: !facts;uses:=List.map (fn event => (name,event)) (#uses entry) :: !uses end
         fun names (source:source,mentioned)=
-          let val (lexemes,_,_)=CompilerSyntax.lexical {file= #file source,text= #text source,mode= #mode source,previous=NONE,change=NONE}
+          let val ()=observe "names-start" (#file source) (size(#text source))
+              val (lexemes,_,_)=CompilerSyntax.lexical {file= #file source,text= #text source,mode= #mode source,previous=NONE,change=NONE}
           in BasisManifest.namesOf (CompilerSyntax.tokens lexemes (#file source),mentioned) end
         val plan=case frozenPlan of SOME plan => plan | NONE =>
           CompilerPrelude.select {lib=lib,libraries=libraries @ extraLibraries,mentioned=List.foldl names StringMap.empty sources}
         val librarySources=List.map (fn entry:BasisManifest.entry =>
           (poll ();(entry,#text (Source.readFile (Source.Ascii,BasisManifest.path entry))))) (List.concat (#groups plan))
+        val ()=observe "prelude-selected" "" (length librarySources)
         val ()=Source.overlays:=List.foldl (fn ((entry,text),overlays) => StringMap.insert
           (overlays,BasisManifest.path entry,text)) (!Source.overlays) librarySources
         fun library entries =
@@ -237,6 +246,7 @@ struct
           if null (!remaining) then () else raise Fail "extra ordered project input";NONE) handle Error.CompileError (span,message) =>
           SOME (CompilerSession.sourceError ("error",span,message))
         val ()=poll ()
+        val ()=observe "analysis-frozen" "" (List.foldl(fn(xs,n)=>n+length xs)0(!uses))
         val ()=(stored:=List.rev (!staged);savedPlan:=planKey)
         fun candidates ()=case (!scopeEnv,query) of (SOME (_,env,sigs,funs),SOME query) =>
           let val selected=case Env.findStr' (env,#path query) of SOME selected => SOME selected | NONE => NONE

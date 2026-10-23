@@ -171,11 +171,13 @@ struct
     type candidate=A.candidate
     type call=A.call
     type typeHint=A.typeHint
+    type observation=A.observation
     exception Cancelled=A.Cancelled
     exception Busy=A.Busy
     fun create (Session {compiler=compiler as C.Session {token,...},mode},{context}) =
       Analysis {analysis=A.new (compiler,context),mode=mode,owner=token}
     fun close (Analysis {analysis,...})=A.close analysis
+    fun observe (Analysis {analysis,...},callback)=A.observe(analysis,callback)
     fun checkpoint (Analysis {analysis,...})=A.checkpoint analysis
     fun restore (Analysis {analysis,...},checkpoint)=guard "" (fn () => A.restore (analysis,checkpoint))
     fun check (Analysis {analysis,mode,owner},{project,inputs,cancelled}) = guard "" (fn () =>

@@ -20,7 +20,8 @@ struct
   datatype t=Worker of {contexts:context list ref,views:view list ref,tokens:RuneLspTokens.t,namespace:string ref}
   fun new ()=Worker {contexts=ref [],views=ref [],tokens=RuneLspTokens.new (),namespace=ref "local"}
   (* Job IDs belong to the supervisor and do not reset with this process. *)
-  fun commandId (Worker {namespace,...},id)=namespace:="worker-job-" ^ IntInf.toString id
+  fun commandId (Worker {namespace,...},id)=
+    (namespace:="worker-job-" ^ IntInf.toString id;RuneLspProfile.job:= !namespace)
   fun safe text =
     let fun loop i=if i=size text then [] else
           case Utf8.decode (text,i) of SOME (_,count) => String.substring (text,i,count) :: loop (i+count)
@@ -35,6 +36,7 @@ struct
     | NONE =>
       let val compiler=C.session {lib=SOME lib,flags=flags}
           val context={key=key,compiler=compiler,analysis=A.create (compiler,{context=key})}:context
+          val ()=case RuneLspProfile.path of NONE=>() | SOME _=>A.observe(#analysis context,SOME RuneLspProfile.observe)
           val all=context :: !contexts
           val ()=if length all<=4 then () else List.app (fn context:context =>
             (A.close (#analysis context);C.close (#compiler context))) (List.drop (all,4))

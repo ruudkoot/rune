@@ -20,5 +20,17 @@
     "textDocument/hover": 37411515,
     "textDocument/documentSymbol": 56761221,
     "textDocument/documentLink": 77181786
+  },
+  "profile": {
+    "raw_artifacts": "/home/ruud/rune-benchmark-results/lsp/2026-10-24-live-debug/profile",
+    "units": 231,
+    "occurrences": 141341,
+    "allocated_bytes_before_occurrence_projection": 11716565160,
+    "last_collected_live_bytes": 256656760,
+    "peak_observed_live_bytes": 265534528,
+    "collections_before_occurrence_projection": 1517,
+    "worker_elapsed_us_before_occurrence_projection": 14253966,
+    "process_tree_maximum_rss_kib": 405092,
+    "observer": "opt-in counters include observer overhead; live is the last collection measurement"
   }
 }

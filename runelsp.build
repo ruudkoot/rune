@@ -2,6 +2,7 @@
 libraries compiler lsp digest end
 files
   build/config.sml
+  src/lsp/profile.sml
   src/lsp/documents.sml
   src/lsp/sync.sml
   src/lsp/workspace.sml
