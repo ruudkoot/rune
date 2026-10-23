@@ -17,16 +17,16 @@ struct
     tokens:(C.Syntax.piece list * C.Syntax.piece vector) option ref}
   type view={id:string,snapshot:A.snapshot,sources:source list,encoding:LspProtocol.encoding,uri:string,ordinal:int option,
     capabilities:Json.value,activeUnit:string option}
-  datatype t=Worker of {contexts:context list ref,views:view list ref}
-  fun new ()=Worker {contexts=ref [],views=ref []}
+  datatype t=Worker of {contexts:context list ref,views:view list ref,tokens:RuneLspTokens.t}
+  fun new ()=Worker {contexts=ref [],views=ref [],tokens=RuneLspTokens.new ()}
   fun safe text =
     let fun loop i=if i=size text then [] else
           case Utf8.decode (text,i) of SOME (_,count) => String.substring (text,i,count) :: loop (i+count)
           | NONE => ("\\x" ^ StringCvt.padLeft #"0" 2 (Int.fmt StringCvt.HEX (Char.ord (String.sub (text,i))))) :: loop (i+1)
     in String.concat (loop 0) end
-  fun clear (Worker {contexts,views}) =
+  fun clear (Worker {contexts,views,tokens}) =
     (List.app (fn context:context => (A.close (#analysis context);C.close (#compiler context))) (!contexts);
-     contexts:=[];views:=[])
+     contexts:=[];views:=[];RuneLspTokens.clear tokens)
   fun context (Worker {contexts,...},{key,lib,flags}) =
     case List.find (fn context:context => #key context=key) (!contexts) of SOME context =>
       (contexts:=context :: List.filter (fn prior:context => #key prior<>key) (!contexts);context)
@@ -82,7 +82,7 @@ struct
           in if #start piece>=stop then List.rev kept else collect (at+1,piece::kept) end
     in collect (lower (0,count),[]) end
   fun identifier (piece:C.Syntax.piece)=List.exists (fn kind => kind= #kind piece) ["identifier","operator","typeVariable"]
-  fun selections (source:source,occurrence:A.occurrence) =
+  fun selectionCandidates (source:source,occurrence:A.occurrence) =
     let val wanted= #path occurrence @ [#name occurrence]
         fun prefix ([],_)=true | prefix (_,[])=false | prefix (a::rest,b::others)=a=b andalso prefix (rest,others)
         fun piece (piece:C.Syntax.piece) =
@@ -94,7 +94,9 @@ struct
           in if not matched orelse index<0 orelse index>=length parts then NONE else
                let val start= #start piece+List.foldl (fn (part,n) => n+size part+1) 0 (List.take (parts,index))
                in SOME (start,start+size (List.nth (parts,index))) end end
-        val ranges=List.mapPartial piece (piecesWithin (source,#start occurrence,#stop occurrence))
+    in List.mapPartial piece (piecesWithin (source,#start occurrence,#stop occurrence)) end
+  fun selections (source,occurrence:A.occurrence) =
+    let val ranges=selectionCandidates (source,occurrence)
     in if #kind occurrence="type" andalso not (#isDefinition occurrence) then
          (case List.rev ranges of [] => [] | last::_ => [last])
        else (case ranges of [] => [] | first::_ => [first]) end
@@ -343,7 +345,7 @@ struct
           val candidates=A.visibleAt (#snapshot view,{ordinal=ordinal,offset=offset,path=path})
       in case List.find (fn candidate:A.candidate => #name candidate=name andalso #kind candidate=kind) candidates of
            NONE => NONE | SOME candidate => Option.mapPartial (fn location => A.documentationAt (#snapshot view,location)) (#definition candidate) end
-  fun query (view:view,{method,params}) =
+  fun query (Worker {tokens=history,...},view:view,{method,params}) =
     let val resolving=method="completionItem/resolve"
         val document=J.object (J.required (J.object params,if resolving then "data" else "textDocument"))
         val uri=J.string (J.required (document,"uri"))
@@ -354,7 +356,18 @@ struct
         fun occurrence ()=Option.mapPartial (fn offset => at (view,source,offset)) (offset ())
         fun target choose=case occurrence () of NONE => Json.Array [] | SOME (occurrence,_) =>
           Json.Array (case Option.mapPartial (fn target => location (view,target)) (choose occurrence) of NONE => [] | SOME target => [target])
-    in case method of "textDocument/diagnostic" =>
+        fun semanticTokens () =
+          let val occurrences=List.filter (fn occurrence:A.occurrence => #file occurrence= #file source andalso
+                owned (view,occurrence) andalso not (#derived occurrence)) (A.occurrences (#snapshot view))
+              fun select occurrence=if #isDefinition (occurrence:A.occurrence) then selections (source,occurrence) else
+                (case selectionCandidates (source,occurrence) of [span] => [span] | _ => [])
+              val candidates=RuneLspTokens.lexical (tokens source) @ RuneLspTokens.semantic (occurrences,select)
+          in RuneLspTokens.reply (history,{uri=uri,text= #text source,index= #index source,encoding= #encoding view,
+            capabilities= #capabilities view,method=method,params=params,tokens=candidates}) end
+    in case method of "textDocument/semanticTokens/full" => semanticTokens ()
+       | "textDocument/semanticTokens/full/delta" => semanticTokens ()
+       | "textDocument/semanticTokens/range" => semanticTokens ()
+       | "textDocument/diagnostic" =>
          documentDiagnostics (view,{uri=uri,previous=case J.member (params,"previousResultId") of
            SOME (Json.String value) => SOME value | NONE => NONE | _ => raise J.Invalid "invalid diagnostic result id"})
        | "textDocument/completion" => Json.Object [("isIncomplete",Json.Bool true),

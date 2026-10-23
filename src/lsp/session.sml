@@ -62,6 +62,9 @@ struct
               caps=caps,send=send,log=log,error=stderr,initialize=raw,
               discover=fn uri => Option.app (fn service => RuneLspService.discover (service,uri)) (!service),
               selected=fn uri => Option.app (fn service => RuneLspService.check (service,uri,NONE)) (!service)})
+            val ()=RuneLspController.presentations (valOf (!controller),
+              case RuneLspTokens.legend (P.rawCapabilities caps) of NONE => [] | SOME _ =>
+                [("workspace/semanticTokens/refresh",["workspace","semanticTokens","refreshSupport"])])
             val ()=service:=SOME (RuneLspService.new {workspace=RuneLspController.workspace (valOf (!controller)),
               documents=valOf (!documents),caps=caps,command=workerCommand,args=workerArgs,send=send,log=stderr,
               discovered=fn (uri,value) => Option.app (fn controller => RuneLspController.contexts (controller,uri,value)) (!controller)})
@@ -85,7 +88,8 @@ struct
                  ("textDocumentSync", Json.Object [("openClose",Json.Bool true),("change",Json.int 2),
                    ("willSave",Json.Bool true),("save",Json.Object [("includeText",Json.Bool true)])]),
                  ("workspace",Json.Object [("workspaceFolders",Json.Object [("supported",Json.Bool true),("changeNotifications",Json.Bool true)])])] @
-                (if RuneLspService.inlineClient caps then [("inlineCompletionProvider",Json.Object [])] else []))),
+                (if RuneLspService.inlineClient caps then [("inlineCompletionProvider",Json.Object [])] else []) @
+                (case RuneLspTokens.provider (P.rawCapabilities caps) of NONE => [] | SOME provider => [("semanticTokensProvider",provider)]))),
               ("serverInfo", Json.Object [("name", Json.String "runelsp"), ("version", Json.String Config.version)])]
             val () = state := AwaitInitialized
             val () = Option.app (fn token => progress token [("kind", Json.String "end")]) token

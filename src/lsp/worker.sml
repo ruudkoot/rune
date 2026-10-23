@@ -54,7 +54,7 @@ struct
               | "query" =>
                   let val view=case E.find (engine,V.bytes (V.field (value,"snapshot"))) of SOME view => view
                         | NONE => raise E.Stale "analysis snapshot has been evicted"
-                  in V.json (E.query (view,{method=V.bytes (V.field (value,"method")),params=V.unjson (V.field (value,"params"))})) end
+                  in V.json (E.query (engine,view,{method=V.bytes (V.field (value,"method")),params=V.unjson (V.field (value,"params"))})) end
               | "build" =>
                   let val encoding=case V.bytes (V.field (value,"encoding")) of "utf-8" => LspProtocol.Utf8
                         | "utf-16" => LspProtocol.Utf16 | "utf-32" => LspProtocol.Utf32

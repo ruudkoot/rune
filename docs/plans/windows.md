@@ -123,6 +123,7 @@ image transfers between Linux and both Windows widths across both bytecode
 formats. The image fixture checks the restoring host's path syntax. The
 complete host-library matrix at `aace898fc` passed 3,196 runner jobs with 156
 skips (`20261023-094630-2323736`,
-`/tmp/rune-native-path-frozen-matrix.log`). Combined repository acceptance is
-still tracked by the language-server roadmap; interrupted and earlier failed
-runs are not clean acceptance results.
+`/tmp/rune-native-path-frozen-matrix.log`). The frozen full repository check
+also passed 19,445 jobs with three skips (`20261023-102438-2394411`,
+`/tmp/rune-native-path-frozen-full-check.log`). These receipts cover
+`aace898fc`; interrupted and earlier failed runs remain separate results.

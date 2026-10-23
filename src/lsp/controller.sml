@@ -17,6 +17,7 @@ struct
   datatype t=Controller of {workspace:W.t,documents:D.t,caps:P.capabilities,pending:request Q.t,
     epoch:IntInf.int ref,asked:string list ref,waiting:string list ref,registration:string option ref,
     refreshing:string list ref,refreshDenied:string list ref,
+    presentations:(string*string list) list ref,
     serial:IntInf.int ref,discover:string->unit,selected:string->unit,send:R.message->unit,log:string->unit,error:string->unit}
   fun workspace (Controller {workspace,...})=workspace
   fun issue (Controller {pending,send,error,...},method,params,data) =
@@ -27,8 +28,10 @@ struct
        List.exists (fn pending => pending=method) (!refreshing @ !refreshDenied) then () else
     if issue (controller,method,NONE,Refresh {method=method,capability=capability,generation=W.generation workspace})
     then refreshing:=method:: !refreshing else ()
-  fun refreshPresentations controller = refresh (controller,"workspace/foldingRange/refresh",
-    ["workspace","foldingRange","refreshSupport"])
+  fun presentations (Controller {presentations,...},providers)=presentations:=providers
+  fun refreshPresentations (controller as Controller {presentations,...}) =
+    (refresh (controller,"workspace/foldingRange/refresh",["workspace","foldingRange","refreshSupport"]);
+     List.app (fn (method,capability) => refresh (controller,method,capability)) (!presentations))
   fun scopes (Controller {workspace,documents,...}) =
     List.foldl (fn (uri,all) => if List.exists (fn prior => prior=uri) all then all else all @ [uri])
       (W.roots workspace) (List.map #uri (D.all documents))
@@ -80,7 +83,7 @@ struct
     let val workspace=W.new {platform=platform,lib=lib}
         val ()=W.initialize (workspace,initialize)
     in Controller {workspace=workspace,documents=documents,caps=caps,pending=Q.new {prefix="runelsp-ws-",maxPending=2048},
-      epoch=ref 0,asked=ref [],waiting=ref [],registration=ref NONE,refreshing=ref [],refreshDenied=ref [],
+      epoch=ref 0,asked=ref [],waiting=ref [],registration=ref NONE,refreshing=ref [],refreshDenied=ref [],presentations=ref [],
       serial=ref 0,discover=discover,selected=selected,send=send,log=log,error=error} end
   fun initialized (controller as Controller {workspace,caps,epoch,...}) =
     (if null (W.roots workspace) andalso P.supports (caps,["workspace","workspaceFolders"])
@@ -159,6 +162,6 @@ struct
        | Unregister => ());true)
       handle W.Invalid message => (error message;true) | J.Invalid message => (error message;true)
            | LspUri.Invalid => (error "invalid workspace URI";true)
-  fun clear (Controller {pending,refreshing,refreshDenied,...})=
-    (ignore (Q.clear pending);refreshing:=[];refreshDenied:=[])
+  fun clear (Controller {pending,refreshing,refreshDenied,presentations,...})=
+    (ignore (Q.clear pending);refreshing:=[];refreshDenied:=[];presentations:=[])
 end

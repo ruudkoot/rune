@@ -93,6 +93,20 @@ Only one request is outstanding; a changed generation is refreshed after the
 acknowledgement. A `MethodNotFound` refusal disables that refresh for the
 connection. Text edits do not emit global folding refreshes.
 
+Semantic-token capabilities appear only with a compatible client legend,
+`relative` format and supported full/range requests. Deltas require the client's
+full-delta option. Five-integer rows use negotiated position units; multiline
+spans always split and overlapping observations coalesce. Range replies include
+whole intersecting tokens. Full result IDs identify URI, legend and token data;
+raw-array deltas can edit inside a token tuple. An unavailable previous ID falls
+back to a full result. History belongs to the worker/connection and has count
+and estimated memory bounds. Build documents currently return null token results.
+
+`workspace.semanticTokens.refreshSupport` enables token refreshes using the same
+generation/coalescing/refusal rules as folding refresh. Unnegotiated token
+methods return `MethodNotFound`; malformed ranges retain `InvalidParams` and
+response-budget failures retain `RequestFailed`.
+
 `$/setTrace` accepts off, messages and verbose. Requested trace data is
 sent as framed `$/logTrace` notifications; operational errors remain on
 stderr. Notifications never receive ordinary response messages.

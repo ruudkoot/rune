@@ -4,21 +4,22 @@ struct
   val check=Expect.that
   fun object fields=Json.Object fields
   fun document uri=object [("uri",Json.String uri)]
-  fun fixtureInitialized initialization action =
+  fun fixtureInitializedResult initialization action =
     let val (program,args)=case CommandLine.arguments () of [vm,server,worker] => (vm,[server,vm,worker])
           | [vm,server] => (vm,[server]) | [program] => (program,[])
           | _ => raise Fail "semantic protocol tests require server launch arguments"
         val client=C.start (program,args)
         fun work () =
           let val ()=C.request (client,1,"initialize",initialization)
-              val _=C.result (C.response (client,1))
+              val initializationResult=C.result (C.response (client,1))
               val ()=C.notify (client,"initialized",object [])
-              val ()=action client
+              val ()=action (client,initializationResult)
               val ()=C.request (client,9000,"shutdown",Json.Null)
               val ()=check ("shutdown response",C.result (C.response (client,9000))=Json.Null)
               val ()=C.notify (client,"exit",Json.Null)
           in () end
     in (work () before C.close client) handle error => (C.close client;raise error) end
+  fun fixtureInitialized initialization action=fixtureInitializedResult initialization (fn (client,_) => action client)
   fun fixtureWith capabilities action=fixtureInitialized (object [("capabilities",capabilities)]) action
   fun fixture action=fixtureWith (object []) action
   fun openDocument (client,uri,text)=C.notify (client,"textDocument/didOpen",object [("textDocument",object
@@ -351,6 +352,193 @@ struct
           val ()=configure (client,"ascii")
           val ()=barrier (client,280,uri)
       in check ("an unsupported client refresh method is not requested again",not (pending client)) end) end
+  val tokenTypes=["string","namespace","number","type","variable","comment","keyword","interface","typeParameter"]
+  fun tokenCapabilities (encoding,requests,types,modifiers,formats) = object
+    [("general",object [("positionEncodings",Json.Array [Json.String encoding])]),
+     ("textDocument",object [("semanticTokens",object [("requests",requests),
+       ("tokenTypes",Json.Array (List.map Json.String types)),("tokenModifiers",Json.Array (List.map Json.String modifiers)),
+       ("formats",Json.Array (List.map Json.String formats)),("multilineTokenSupport",Json.Bool false),
+       ("overlappingTokenSupport",Json.Bool false)])])]
+  val tokenRequests=object [("full",object [("delta",Json.Bool true)]),("range",Json.Bool true)]
+  fun tokenFixture capabilities action=fixtureInitializedResult (object [("capabilities",capabilities),
+    ("initializationOptions",object [("sourceMode",Json.String "unicode")])]) action
+  fun tokenQuery (client,id,method,uri,extra)=
+    (C.request (client,id,method,object (("textDocument",document uri)::extra));C.response (client,id))
+  fun jsonStrings (Json.Array values)=List.map (fn Json.String value => value | _ => raise Fail "nonstring legend") values
+    | jsonStrings _=raise Fail "missing token legend array"
+  fun tokenData (Json.Array values)=Vector.fromList (List.map (fn value => case Json.toIntInf value of
+      SOME n => if n>=0 andalso n<=2147483647 then n else raise Fail "token integer outside LSP bounds"
+    | NONE => raise Fail "noninteger token") values)
+    | tokenData _=raise Fail "token data is not an array"
+  type tokenRow={line:IntInf.int,column:IntInf.int,length:IntInf.int,kind:string,bits:IntInf.int}
+  fun decodeTokens (response,legend) =
+    let val types=jsonStrings (C.field (legend,"tokenTypes"))
+        val modifiers=jsonStrings (C.field (legend,"tokenModifiers"))
+        val data=tokenData (C.field (response,"data"))
+        val ()=if Vector.length data mod 5=0 then () else raise Fail "token data lacks complete tuples"
+        fun power (0,n)=n | power (i,n)=power (i-1,n*2)
+        val bitLimit=power (length modifiers,1:IntInf.int)
+        fun loop (i,line,column,finish,rows)=if i=Vector.length data then List.rev rows else
+          let val dl=Vector.sub (data,i) val dc=Vector.sub (data,i+1)
+              val size=Vector.sub (data,i+2) val kind=Vector.sub (data,i+3) val bits=Vector.sub (data,i+4)
+              val nextLine=line+dl
+              val nextColumn=if dl=0 then column+dc else dc
+              val ()=if size>0 andalso kind<IntInf.fromInt (length types) andalso bits<bitLimit andalso
+                (dl<>0 orelse nextColumn>=finish) then () else raise Fail "invalid or overlapping semantic token"
+              val row={line=nextLine,column=nextColumn,length=size,kind=List.nth (types,IntInf.toInt kind),bits=bits}:tokenRow
+          in loop (i+5,nextLine,nextColumn,nextColumn+size,row::rows) end
+    in loop (0,0,0,0,[]) end
+  fun applyTokenDelta (original,delta) =
+    let val data=Vector.foldr (op ::) [] (tokenData (C.field (original,"data")))
+        val edits=case C.field (delta,"edits") of Json.Array edits => edits | _ => raise Fail "missing token edits"
+        fun start edit=valOf (Json.toInt (C.field (edit,"start")))
+        fun insert (edit,[])= [edit]
+          | insert (edit,first::rest)=if start edit>start first then edit::first::rest else first::insert (edit,rest)
+        val edits=List.foldl insert [] edits
+        fun apply (edit,data)=
+          let val at=start edit val count=valOf (Json.toInt (C.field (edit,"deleteCount")))
+              val added=case Json.member ("data",edit) of NONE => [] | SOME data => Vector.foldr (op ::) [] (tokenData data)
+          in List.take (data,at) @ added @ List.drop (data,at+count) end
+    in Json.Array (List.map Json.intInf (List.foldl apply data edits)) end
+  val semanticText="(* one\r\n   \240\159\154\128 two *)\r\nstructure S = struct\r\n  type t = int\r\n  val value : t = 42\r\n  val text=\"ok\"\r\nend\r\nval result = S.value\r\nsignature SIG = sig val v:int end\r\nval polymorphic : 'a list -> 'a list = fn x => x\r\n"
+  fun semanticTokens ()=tokenFixture (tokenCapabilities ("utf-16",tokenRequests,tokenTypes,["readonly","declaration"],["relative"]))
+    (fn (client,initialized) =>
+      let val provider=C.field (C.field (initialized,"capabilities"),"semanticTokensProvider")
+          val legend=C.field (provider,"legend")
+          val ()=check ("full/delta/range are negotiated",C.field (provider,"full")=object [("delta",Json.Bool true)] andalso C.field (provider,"range")=Json.Bool true)
+          val uri="untitled:semantic-tokens"
+          val ()=openDocument (client,uri,semanticText)
+          val original=C.result (tokenQuery (client,300,"textDocument/semanticTokens/full",uri,[]))
+          val rows=decodeTokens (original,legend)
+          fun has (line,column,size,kind)=List.exists (fn row:tokenRow => #line row=line andalso #column row=column andalso #length row=size andalso #kind row=kind) rows
+          val ()=check ("multiline CRLF comments are split into encoded line tokens",has (0,0,6,"comment") andalso has (1,0,12,"comment"))
+          val ()=check ("checked namespaces and literal classes are distinct",has (2,10,1,"namespace") andalso
+            has (3,7,1,"type") andalso has (8,10,3,"interface") andalso has (9,18,2,"typeParameter") andalso has (4,6,5,"variable") andalso has (4,18,2,"number") andalso has (5,11,4,"string"))
+          val ()=check ("modifier bits use the server legend rather than client ordering",
+            C.field (legend,"tokenModifiers")=Json.Array [Json.String "declaration",Json.String "readonly"] andalso
+            List.exists (fn row:tokenRow => #line row=4 andalso #column row=6 andalso #bits row=3) rows andalso
+            List.exists (fn row:tokenRow => #line row=7 andalso #column row=15 andalso #bits row=2) rows)
+          val unchanged=C.result (tokenQuery (client,301,"textDocument/semanticTokens/full/delta",uri,[("previousResultId",C.field (original,"resultId"))]))
+          val ()=check ("unchanged token arrays have no edits",C.field (unchanged,"edits")=Json.Array [])
+          val ()=C.notify (client,"textDocument/didChange",object [("textDocument",object [("uri",Json.String uri),("version",Json.int 2)]),
+            ("contentChanges",Json.Array [object [("text",Json.String ("\r\n" ^ semanticText))]])])
+          val changed=C.result (tokenQuery (client,302,"textDocument/semanticTokens/full/delta",uri,[("previousResultId",C.field (original,"resultId"))]))
+          val full=C.result (tokenQuery (client,303,"textDocument/semanticTokens/full",uri,[]))
+          val ()=check ("independent delta splicing equals a fresh full result",applyTokenDelta (original,changed)=C.field (full,"data"))
+          val ()=check ("the newline delta edits a uint rather than replacing a whole token",case C.field (changed,"edits") of
+            Json.Array [edit] => C.field (edit,"start")=Json.int 0 andalso C.field (edit,"deleteCount")=Json.int 1 andalso C.field (edit,"data")=Json.Array [Json.int 1] | _ => false)
+          val range=object [("start",object [("line",Json.int 8),("character",Json.int 16)]),("end",object [("line",Json.int 8),("character",Json.int 17)])]
+          val partial=C.result (tokenQuery (client,304,"textDocument/semanticTokens/range",uri,[("range",range)]))
+          val ()=check ("range replies retain whole intersecting tokens and document-relative positions",case decodeTokens (partial,legend) of
+            [row] => #line row=8 andalso #column row=15 andalso #length row=5 andalso #kind row="variable" | _ => false)
+          val missing=C.result (tokenQuery (client,305,"textDocument/semanticTokens/full/delta",uri,[("previousResultId",Json.String "missing")]))
+      in check ("unknown delta state returns a complete result",Json.member ("edits",missing)=NONE andalso C.field (missing,"data")=C.field (full,"data")) end)
+  fun semanticTokenEncodings () =
+    let fun one (encoding,commentLength)=tokenFixture (tokenCapabilities (encoding,tokenRequests,tokenTypes,[],["relative"]))
+          (fn (client,initialized) =>
+            let val uri="untitled:token-encoding"
+                val legend=C.field (C.field (C.field (initialized,"capabilities"),"semanticTokensProvider"),"legend")
+                val ()=openDocument (client,uri,semanticText)
+                val full=C.result (tokenQuery (client,310,"textDocument/semanticTokens/full",uri,[]))
+                val rows=decodeTokens (full,legend)
+            in check ("semantic token lengths use " ^ encoding,List.exists (fn row:tokenRow =>
+              #line row=1 andalso #column row=0 andalso #length row=commentLength andalso #kind row="comment") rows) end)
+    in List.app one [("utf-8",14),("utf-16",12),("utf-32",11)] end
+  fun semanticTokenNegotiation () =
+    let val ()=fixture (fn client =>
+          let val uri="untitled:legacy-tokens" val ()=openDocument (client,uri,"val x=1\n")
+              val response=tokenQuery (client,320,"textDocument/semanticTokens/full",uri,[])
+          in check ("legacy clients do not activate token requests",C.field (C.field (response,"error"),"code")=Json.int (~32601)) end)
+    in tokenFixture (tokenCapabilities ("utf-16",object [("full",Json.Bool true)], ["variable"],[],["relative"]))
+      (fn (client,initialized) =>
+        let val uri="untitled:restricted-tokens"
+            val provider=C.field (C.field (initialized,"capabilities"),"semanticTokensProvider")
+            val legend=C.field (provider,"legend")
+            val ()=check ("server legends contain only supported classes",C.field (legend,"tokenTypes")=Json.Array [Json.String "variable"] andalso C.field (legend,"tokenModifiers")=Json.Array [])
+            val ()=openDocument (client,uri,"val x=1\nval y=x\n")
+            val full=C.result (tokenQuery (client,321,"textDocument/semanticTokens/full",uri,[]))
+            val rows=decodeTokens (full,legend)
+            val ()=check ("unsupported classes and modifiers are omitted",length rows=3 andalso List.all (fn row:tokenRow => #kind row="variable" andalso #bits row=0) rows)
+            val unsupported=tokenQuery (client,322,"textDocument/semanticTokens/full/delta",uri,[("previousResultId",C.field (full,"resultId"))])
+        in check ("unnegotiated deltas stay unsupported",C.field (C.field (unsupported,"error"),"code")=Json.int (~32601)) end) end
+  fun semanticTokenHistory () =
+    let val capabilities=tokenCapabilities ("utf-16",tokenRequests,tokenTypes,[],["relative"])
+        val saved=ref NONE : Json.value option ref
+        val uri="untitled:token-history"
+        fun text count="val start=0\n" ^ String.concat (List.tabulate (count,fn i => "val x" ^ Int.toString i ^ "=" ^ Int.toString i ^ "\n"))
+        val ()=tokenFixture capabilities (fn (client,_) =>
+          let val ()=openDocument (client,uri,text 0)
+              val first=C.result (tokenQuery (client,330,"textDocument/semanticTokens/full",uri,[]))
+              fun change count=
+                (C.notify (client,"textDocument/didChange",object [("textDocument",object [("uri",Json.String uri),("version",Json.int (count+1))]),
+                   ("contentChanges",Json.Array [object [("text",Json.String (text count))]])]);
+                 ignore (C.result (tokenQuery (client,330+count,"textDocument/semanticTokens/full",uri,[]))))
+              val ()=List.app change (List.tabulate (10,fn i => i+1))
+              val evicted=C.result (tokenQuery (client,350,"textDocument/semanticTokens/full/delta",uri,[("previousResultId",C.field (first,"resultId"))]))
+              val ()=check ("evicted token arrays fall back to full responses",isSome (Json.member ("data",evicted)) andalso Json.member ("edits",evicted)=NONE)
+          in saved:=SOME evicted end)
+    in tokenFixture capabilities (fn (client,_) =>
+      let val ()=openDocument (client,uri,text 10)
+          val previous=valOf (!saved)
+          val restarted=C.result (tokenQuery (client,351,"textDocument/semanticTokens/full/delta",uri,[("previousResultId",C.field (previous,"resultId"))]))
+      in check ("a restarted server has no previous token cache",Json.member ("edits",restarted)=NONE andalso C.field (restarted,"data")=C.field (previous,"data")) end) end
+  fun semanticTokenRecovery ()=tokenFixture (tokenCapabilities ("utf-16",tokenRequests,tokenTypes,[],["relative"]))
+    (fn (client,initialized) =>
+      let val uri="untitled:token-recovery"
+          val legend=C.field (C.field (C.field (initialized,"capabilities"),"semanticTokensProvider"),"legend")
+          val ()=openDocument (client,uri,"val x=1\nval y=x\n")
+          val first=C.result (tokenQuery (client,360,"textDocument/semanticTokens/full",uri,[]))
+          val ()=C.notify (client,"textDocument/didChange",object [("textDocument",object [("uri",Json.String uri),("version",Json.int 2)]),
+            ("contentChanges",Json.Array [object [("text",Json.String "val broken=(\n")]])])
+          val change=C.result (tokenQuery (client,361,"textDocument/semanticTokens/full/delta",uri,[("previousResultId",C.field (first,"resultId"))]))
+          val full=C.result (tokenQuery (client,362,"textDocument/semanticTokens/full",uri,[]))
+          val rows=decodeTokens (full,legend)
+      in check ("recovery colors current lexical pieces without stale checked bindings",applyTokenDelta (first,change)=C.field (full,"data") andalso
+        not (null rows) andalso List.all (fn row:tokenRow => #kind row="keyword") rows) end)
+  fun semanticTokenRefresh () =
+    let val base=tokenCapabilities ("utf-16",tokenRequests,tokenTypes,[],["relative"])
+        val capabilities=case base of Json.Object fields => object (("workspace",object [("semanticTokens",object [("refreshSupport",Json.Bool true)])])::fields)
+          | _ => raise Fail "token capabilities must be an object"
+    in tokenFixture capabilities (fn (client,_) =>
+      let val uri="untitled:token-refresh"
+          val ()=openDocument (client,uri,"val x=1\n")
+          val ()=C.notify (client,"workspace/didChangeConfiguration",object [("settings",object [("sourceMode",Json.String "ascii")])])
+          val refresh=C.receive (client,fn value => Json.member ("method",value)=SOME (Json.String "workspace/semanticTokens/refresh"))
+          val ()=C.send (client,object [("jsonrpc",Json.String "2.0"),("id",C.field (refresh,"id")),("result",Json.Null)])
+          val full=C.result (tokenQuery (client,370,"textDocument/semanticTokens/full",uri,[]))
+      in check ("negotiated token refresh leaves the provider usable",isSome (Json.member ("data",full))) end) end
+  fun semanticTokenValidation () =
+    let val ()=tokenFixture (tokenCapabilities ("utf-16",tokenRequests,tokenTypes,[],["relative"]))
+          (fn (client,_) =>
+            let val uri="untitled:token-validation"
+                val ()=openDocument (client,uri,"(* \240\159\154\128 *)\n")
+                fun range (a,b)=object [("start",object [("line",Json.int 0),("character",Json.int a)]),
+                  ("end",object [("line",Json.int 0),("character",Json.int b)])]
+                val split=tokenQuery (client,380,"textDocument/semanticTokens/range",uri,[("range",range (4,5))])
+                val reversed=tokenQuery (client,381,"textDocument/semanticTokens/range",uri,[("range",range (5,1))])
+                val missing=tokenQuery (client,382,"textDocument/semanticTokens/full/delta",uri,[])
+            in check ("token ranges and delta state reject malformed parameters",List.all (fn response =>
+              C.field (C.field (response,"error"),"code")=Json.int (~32602)) [split,reversed,missing]) end)
+    in tokenFixture (tokenCapabilities ("utf-16",tokenRequests,tokenTypes,[],["absolute"]))
+      (fn (client,initialized) =>
+        let val uri="untitled:unsupported-token-format"
+            val ()=check ("unsupported token formats do not advertise a provider",Json.member ("semanticTokensProvider",C.field (initialized,"capabilities"))=NONE)
+            val ()=openDocument (client,uri,"val x=1\n")
+            val response=tokenQuery (client,383,"textDocument/semanticTokens/full",uri,[])
+        in check ("unsupported token formats do not activate requests",C.field (C.field (response,"error"),"code")=Json.int (~32601)) end) end
+  fun semanticTokenBudget ()=tokenFixture (tokenCapabilities ("utf-16",tokenRequests,tokenTypes,[],["relative"]))
+    (fn (client,initialized) =>
+      let val uri="untitled:token-budget"
+          val legend=C.field (C.field (C.field (initialized,"capabilities"),"semanticTokensProvider"),"legend")
+          val text="(*\n" ^ String.concat (List.tabulate (20001,fn _ => "x\n")) ^ "*)\n"
+          val ()=openDocument (client,uri,text)
+          val huge=tokenQuery (client,390,"textDocument/semanticTokens/full",uri,[])
+          val ()=check ("oversized token replies fail instead of truncating",C.field (C.field (huge,"error"),"code")=Json.int (~32803))
+          val range=object [("start",object [("line",Json.int 0),("character",Json.int 0)]),
+            ("end",object [("line",Json.int 2),("character",Json.int 1)])]
+          val visible=C.result (tokenQuery (client,391,"textDocument/semanticTokens/range",uri,[("range",range)]))
+          val rows=decodeTokens (visible,legend)
+      in check ("a bounded visible range remains available after full reply refusal",length rows=3 andalso List.all (fn row:tokenRow => #kind row="comment") rows) end)
   fun workspaceSymbols ()=fixtureWith (object [("workspace",object [("symbol",object
     [("resolveSupport",object [("properties",Json.Array [Json.String "location.range"])])])])]) (fn client =>
     let val uri="untitled:workspace-symbols"
@@ -576,6 +764,14 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "folding-client-limits" RuneLspSemanticProtocolTests.foldingLimits,
     Test.it "selection-validation" RuneLspSemanticProtocolTests.selectionValidation,
     Test.it "folding-refresh" RuneLspSemanticProtocolTests.foldingRefresh,
+    Test.it "semantic-tokens" RuneLspSemanticProtocolTests.semanticTokens,
+    Test.it "semantic-token-encodings" RuneLspSemanticProtocolTests.semanticTokenEncodings,
+    Test.it "semantic-token-negotiation" RuneLspSemanticProtocolTests.semanticTokenNegotiation,
+    Test.it "semantic-token-history" RuneLspSemanticProtocolTests.semanticTokenHistory,
+    Test.it "semantic-token-recovery" RuneLspSemanticProtocolTests.semanticTokenRecovery,
+    Test.it "semantic-token-refresh" RuneLspSemanticProtocolTests.semanticTokenRefresh,
+    Test.it "semantic-token-validation" RuneLspSemanticProtocolTests.semanticTokenValidation,
+    Test.it "semantic-token-response-budget" RuneLspSemanticProtocolTests.semanticTokenBudget,
     Test.it "completion" RuneLspSemanticProtocolTests.completion,
     Test.it "signature-help" RuneLspSemanticProtocolTests.signatureHelp,
     Test.it "completion-snippets" RuneLspSemanticProtocolTests.completionSnippets,

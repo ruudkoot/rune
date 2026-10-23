@@ -85,6 +85,21 @@ grammar's path spans. Split encoded characters and oversized requests fail
 explicitly. Negotiated folding refreshes follow workspace/configuration changes;
 pending refreshes coalesce and ordinary typing does not trigger a global refresh.
 
+Semantic tokens support full, range and delta requests negotiated with the
+client's legend and relative format. Lexical classes combine with checked
+value, type, structure and signature namespaces. SML value identifiers use
+the generic `variable` class; their immutable bindings can carry `readonly`,
+and declarations carry `declaration`. Identifier locations must be unambiguous.
+Multiline tokens split at line endings and results do not overlap. Ranges retain
+whole intersecting tokens and use the negotiated position encoding.
+
+Token history keeps at most eight results within a conservative 8 MiB estimate
+that includes integer storage and keys. Unknown, evicted or restarted histories
+produce a full response. Replies exceeding 20,000 candidate spans fail explicitly;
+a bounded range can remain available when a full response exceeds that budget.
+Negotiated token refreshes follow workspace changes. Other M9 providers and
+performance acceptance remain in progress.
+
 Clients with snippet support also receive invocation templates whose
 argument groups follow the checked callable type. Their default argument
 expressions use `raise op Match` where a nullary `Match` exception is visible,

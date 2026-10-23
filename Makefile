@@ -366,7 +366,13 @@ test-lsp-workspace: bin/rune-lsp-workspace-tests.rbc bin/rune-lsp-controller-tes
 	bin/runevm --jit=all bin/rune-lsp-workspace-tests.rbc
 	bin/runevm bin/rune-lsp-controller-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-controller-tests.rbc
-test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-semantic-tests.rbc check-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker
+bin/rune-lsp-service-tests.rbc: $(RUNE) $(LSP_SRCS) tests/lsp/service-tests.sml manifests
+	$(RUNE) --library test/unit --library compiler --library lsp --library digest $(filter-out src/main/runelsp-main.sml,$(LSP_SRCS)) tests/lsp/service-tests.sml -o $@
+.PHONY: test-lsp-service
+test-lsp-service: bin/rune-lsp-service-tests.rbc
+	bin/runevm bin/rune-lsp-service-tests.rbc
+	bin/runevm --jit=all bin/rune-lsp-service-tests.rbc
+test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-semantic-tests.rbc check-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker test-lsp-service
 	bin/runevm bin/rune-lsp-tests.rbc
 	bin/runevm bin/rune-lsp-wire-tests.rbc
 	bin/runevm bin/rune-lsp-semantic-tests.rbc bin/runevm bin/runelsp.rbc

@@ -24,7 +24,7 @@ documentation and its evidence beside the tests before this plan is retired.
 | M6 | Document and workspace diagnostics | M5 | in progress: push/pull/workspace reports, refresh, cancellation and partial progress implemented; full coverage/performance acceptance remains |
 | M7 | Hover, navigation and symbols | M5 | in progress: navigation, document/workspace symbols and stale resolve tests pass; documentation, broader module cases and measurements remain |
 | M8 | Completion, signature help and inline completion | M7 | in progress: lexical/qualified/record completion, documentation resolve, invocation snippets, signature help, negotiated inline patterns and build-file path completion implemented; broader recovery and full acceptance remain |
-| M9 | Highlighting, hints, structural editing, links and colours | M4, M7 | in progress: document highlights, captured syntax, folding/refresh and nested selection implemented; tokens, hints, links, colours and full acceptance remain |
+| M9 | Highlighting, hints, structural editing, links and colours | M4, M7 | in progress: document highlights, captured syntax, folding/selection and semantic tokens/full/range/delta/refresh implemented; hints, links, colours and full acceptance remain |
 | M10 | References, rename and workspace/file edits | M5-M7 | planned |
 | M11 | Formatting, code actions, refactorings and lenses | M4, M7-M10 | planned |
 | M12 | Call hierarchy, monikers and virtual source content | M7, M10 | planned |
@@ -520,7 +520,7 @@ must map to a transcript or semantic fixture, including exclusions.
 | `textDocument/inlineCompletion` | C>S R | P M8 | inlineCompletionProvider; textDocument.inlineCompletion | Deterministic syntactic/typed templates; no remote model dependency. Q1 |
 | `textDocument/semanticTokens/full` | C>S R | P M9 | semanticTokensProvider; textDocument.semanticTokens | Negotiated legend, real binding kinds and modifiers. Q2 |
 | `textDocument/semanticTokens/full/delta` | C>S R | P M9 | semanticTokensProvider.full.delta; requests.full.delta | Deltas only from matching retained result IDs; otherwise a full result. Q2 |
-| `textDocument/semanticTokens/range` | C>S R | P M9 | semanticTokensProvider.range; requests.range | Correct clipped token ranges in the negotiated encoding. Q2 |
+| `textDocument/semanticTokens/range` | C>S R | P M9 | semanticTokensProvider.range; requests.range | Whole intersecting tokens in the negotiated encoding. Q2 |
 | `workspace/semanticTokens/refresh` | S>C R | P M9 | workspace.semanticTokens.refreshSupport | Refresh when dependencies/configuration change classifications. Q2 |
 | `textDocument/documentHighlight` | C>S R | P M9 | documentHighlightProvider; textDocument.documentHighlight | Current-document occurrences by identity, with justified read/write kinds. Q2 |
 | `textDocument/inlayHint` | C>S R | P M9 | inlayHintProvider; textDocument.inlayHint | Inferred type/parameter hints with positions and bounded density. Q2 |
@@ -1055,6 +1055,17 @@ pass in `/tmp/rune-lsp-structure-cohort.log` and
 `/tmp/rune-lsp-structure-doc-check.log`; native receipts are
 `/tmp/rune-lsp-structure-final-windows.log` and
 `/tmp/rune-lsp-structure-analysis-windows{64,32}.log`.
+
+The token checkpoint implements negotiated full/range/delta/refresh with
+per-line nonoverlapping spans, complete edge tokens, bounded history and full
+fallback after eviction/restart. An independent decoder and delta splicer are
+part of 34 passing transcripts on Linux and both Windows widths. Four service
+race cases reject document/workspace-stale worker results and pass on the
+interpreter/JIT and both Windows widths; the original service fails the planted
+stale-query/check probes. The focused cohort, API checks and documentation pass
+in `/tmp/rune-lsp-tokens-race-final-cohort.log`; native receipts are
+`/tmp/rune-lsp-tokens-race-final-windows{64,32}.log` and
+`/tmp/rune-lsp-service-race-windows{64,32}.log`.
 
 M8 feature checkpoint (2026-10-23): the compiler now projects completion
 roles, concrete record labels, named applications and declaration comments

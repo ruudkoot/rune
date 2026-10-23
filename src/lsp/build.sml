@@ -82,7 +82,10 @@ struct
           in if previous=SOME id then Json.Object [("kind",Json.String "unchanged"),("resultId",Json.String id)] else
             Json.Object [("kind",Json.String "full"),("resultId",Json.String id),("items",Json.Array items)] end
     in case method of
-         "textDocument/selectionRange" =>
+         "textDocument/semanticTokens/full" => Json.Null
+       | "textDocument/semanticTokens/full/delta" => Json.Null
+       | "textDocument/semanticTokens/range" => Json.Null
+       | "textDocument/selectionRange" =>
            let val grammar=C.Project.buildSyntax {file=file,text=text}
                val pieces=List.map (fn reference:C.Project.buildReference =>
                  {kind="buildPath",start= #start reference,stop= #stop reference,
