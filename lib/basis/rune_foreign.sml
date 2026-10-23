@@ -39,6 +39,15 @@ struct
     in {pointerBytes = Word64.toInt(Word64.andb(bits,0w255)),
         littleEndian = Word64.andb(bits,0w256) <> 0w0,
         stdcall = Word64.andb(bits,0w512) <> 0w0} end
+  fun abiFacts () =
+    let val (_,bytes,_)=request(17,0w0,0w0,"","")
+        fun byte i=Char.ord(String.sub(bytes,i))
+        val ()=if size bytes=24 andalso byte 0=1 then () else failure "unsupported foreign ABI facts version"
+        val architecture=case byte 1 of 1=>"x86_64" | 2=>"x86" | 3=>"aarch64" | 4=>"powerpc64" | _=>"other"
+        val names=["char","short","int","long","longLong","pointer","wchar","float","double","bool"]
+        fun facts([],_,acc)=List.rev acc
+          | facts(name::rest,i,acc)=facts(rest,i+2,{name=name,size=byte i,alignment=byte(i+1)}::acc)
+    in {architecture=architecture,charBits=byte 2,charSigned=byte 3<>0,scalars=facts(names,4,[])} end
   fun openLibrary name = let val (id, _, _) = request (1, 0w0, 0w0, name, "") in resource Library id end
   fun symbol (owner, name) = let val (id, _, _) = request (2, identity owner, 0w0, name, "") in resource Symbol id end
   fun allocate length = let val (id, _, _) = request (3, 0w0, length, "", "") in resource Memory id end

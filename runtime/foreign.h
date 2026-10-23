@@ -38,6 +38,10 @@ Foreign *foreign_create(const ForeignSystem *system);
 int foreign_available(void);
 /* Pointer bytes, little-endian flag (bit 8), stdcall availability (bit 9). */
 uint64_t foreign_target(void);
+/* Version, compiler architecture, CHAR_BIT, char signedness, followed by
+   char/short/int/long/longLong/pointer/wchar/float/double/bool size/alignment. */
+#define FOREIGN_FACTS_BYTES 24
+void foreign_facts(unsigned char facts[FOREIGN_FACTS_BYTES]);
 void foreign_destroy(Foreign *foreign);
 const ForeignError *foreign_error(const Foreign *foreign);
 size_t foreign_live(const Foreign *foreign);

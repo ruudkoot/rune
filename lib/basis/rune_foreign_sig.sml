@@ -32,6 +32,14 @@ sig
      These are native ABI facts; SML's word size is independent of them.
      Target facts remain available when dynamic calls are disabled. *)
   val target : unit -> {pointerBytes : int, littleEndian : bool, stdcall : bool}
+  (* `abiFacts ()` measures the runtime compiler's scalar C representation.
+
+     Architecture, character width/signedness and scalar sizes/alignments
+     distinguish LP64, LLP64 and ILP32 profiles before libraries are opened.
+     Names are char, short, int, long, longLong, pointer, wchar, float, double
+     and bool. This query is available without libffi and creates no resources. *)
+  val abiFacts : unit -> {architecture : string, charBits : int, charSigned : bool,
+    scalars : {name : string, size : int, alignment : int} list}
   (* `openLibrary name` opens a native library lazily requested by a caller.
 
      Raises: `Error` for unavailable support or a loader failure. *)

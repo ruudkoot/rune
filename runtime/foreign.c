@@ -1,5 +1,6 @@
 #include "foreign.h"
 #include <errno.h>
+#include <limits.h>
 uint64_t foreign_target(void) {
     const uint16_t marker = 1;
     uint64_t value = sizeof(void *) | ((uint64_t)*(const unsigned char *)&marker << 8);
@@ -7,6 +8,34 @@ uint64_t foreign_target(void) {
     value |= UINT64_C(1) << 9;
 #endif
     return value;
+}
+void foreign_facts(unsigned char facts[FOREIGN_FACTS_BYTES]) {
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#define RF_ALIGN(type) _Alignof(type)
+#else
+#define RF_ALIGN(type) offsetof(struct { char prefix; type member; }, member)
+#endif
+#if defined(__x86_64__) || defined(_M_X64)
+    const unsigned architecture = 1;
+#elif defined(__i386__) || defined(_M_IX86)
+    const unsigned architecture = 2;
+#elif defined(__aarch64__) || defined(_M_ARM64)
+    const unsigned architecture = 3;
+#elif defined(__powerpc64__) || defined(__PPC64__) || defined(_ARCH_PPC64)
+    const unsigned architecture = 4;
+#else
+    const unsigned architecture = 0;
+#endif
+    const unsigned char measured[FOREIGN_FACTS_BYTES] = {
+        1, architecture, CHAR_BIT, (char)-1 < 0,
+        sizeof(char), RF_ALIGN(char), sizeof(short), RF_ALIGN(short),
+        sizeof(int), RF_ALIGN(int), sizeof(long), RF_ALIGN(long),
+        sizeof(long long), RF_ALIGN(long long), sizeof(void *), RF_ALIGN(void *),
+        sizeof(wchar_t), RF_ALIGN(wchar_t), sizeof(float), RF_ALIGN(float),
+        sizeof(double), RF_ALIGN(double), sizeof(_Bool), RF_ALIGN(_Bool)
+    };
+    for (size_t i = 0; i < FOREIGN_FACTS_BYTES; i++) facts[i] = measured[i];
+#undef RF_ALIGN
 }
 #if RUNE_FFI
 #include <ffi.h>

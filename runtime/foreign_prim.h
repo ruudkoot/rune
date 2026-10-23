@@ -95,12 +95,13 @@ static int p_foreign(VM *vm) {
     size_t nmeta = obj_len(meta), ninput = obj_len(input), noutput = 0;
     const unsigned char *metadata = (const unsigned char *)obj_bytes(meta);
     const unsigned char *data = (const unsigned char *)obj_bytes(input);
-    unsigned char scalar[8] = {0}, *output = scalar;
+    unsigned char scalar[FOREIGN_FACTS_BYTES] = {0}, *output = scalar;
     int ok = 1, own_output = 0;
     ForeignError error;
     memset(&error, 0, sizeof error);
     if (operation == 0) result_id = (uint64_t)foreign_available();
     else if (operation == 11) result_id = foreign_target();
+    else if (operation == 17) { foreign_facts(scalar); noutput = FOREIGN_FACTS_BYTES; }
     else {
         if (!vm->foreign) {
             ForeignSystem system = {sys_library_open, sys_library_symbol, sys_library_close,

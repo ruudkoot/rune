@@ -4,6 +4,11 @@ struct
   val enabled = RuneForeign.available ()
   val () = T.check ("RuneForeign.available/boolean", fn () => enabled orelse not enabled)
   val () = T.check ("RuneForeign.target/pointer-width", fn () => List.exists(fn n=>n= #pointerBytes(RuneForeign.target()))[4,8])
+  val facts=RuneForeign.abiFacts()
+  val ()=T.check("RuneForeign.abiFacts/complete-representation",fn()=> #charBits facts=8 andalso List.length(#scalars facts)=10 andalso
+    List.all(fn{name,size,alignment}=>name<>"" andalso size>0 andalso alignment>0 andalso size mod alignment=0)(#scalars facts))
+  val ()=T.check("RuneForeign.abiFacts/pointer-agreement",fn()=>List.exists(fn{name,size,...}=>
+    name="pointer" andalso size= #pointerBytes(RuneForeign.target()))(#scalars facts))
   val () = T.check ("RuneForeign.live/initially-empty", fn () => RuneForeign.live () = 0w0)
   val () = T.check ("RuneForeign.Error/missing-library", fn () =>
     (ignore (RuneForeign.openLibrary "runeffi-library-that-does-not-exist"); false) handle RuneForeign.Error _ => true)
