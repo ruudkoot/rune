@@ -82,8 +82,24 @@ val () = withCall "rf_copy" RuneForeign.Pointer [RuneForeign.Pointer] (fn copyCa
   let val copy=valOf(#pointer(RuneForeign.invoke(copyCall,[RuneForeign.Address(SOME memory)])))
       val ()=check("owned native bytes",RuneForeign.read(copy,0w0,6)="owned\000")
       val ()=check("native allocation count",word(RuneForeign.invoke(countCall,[]))=0w1)
-      val cleanup=RuneForeign.invoke(freeCall,[RuneForeign.Address(SOME copy)])
-      val ()=RuneForeign.release copy
+      val alias=RuneForeign.view(copy,0w0,0w6)
+      val ()=check("native address identity",RuneForeign.sameAddress(copy,alias) andalso not(RuneForeign.sameAddress(copy,memory)))
+      val ()=check("owned resource live",RuneForeign.isLive copy)
+      fun dispose failure=RuneForeign.dispose{resource=copy,call=freeCall,arguments=[RuneForeign.Address(SOME copy)],failure=failure}
+      val ()=check("destructor waits for views",rejected(fn()=>ignore(dispose RuneForeign.NoFailure)))
+      val ()=check("busy destructor did not run",word(RuneForeign.invoke(countCall,[]))=0w1)
+      val ()=RuneForeign.release alias
+      val ()=check("invalid failure predicate rejected before entry",rejected(fn()=>ignore(dispose RuneForeign.Zero)))
+      val ()=withCall "rf_i32" RuneForeign.SInt32 [RuneForeign.SInt32](fn failing=>
+        List.app(fn(predicate,n)=>let val outcome=RuneForeign.dispose{resource=copy,call=failing,
+            arguments=[RuneForeign.Signed(Int64.fromInt n)],failure=predicate}
+          in check("native destructor failure retains ownership",not(#disposed outcome) andalso RuneForeign.isLive copy andalso
+              Word64.toLargeIntX(word(#result outcome))=IntInf.fromInt n) end)
+          [(RuneForeign.Zero,0),(RuneForeign.Nonzero,1),(RuneForeign.Negative,~1)])
+      val outcome=dispose RuneForeign.NoFailure
+      val cleanup= #result outcome
+      val ()=check("native destructor commits identity",#disposed outcome andalso not(RuneForeign.isLive copy))
+      val ()=check("native destructor cannot run twice",rejected(fn()=>ignore(dispose RuneForeign.NoFailure)))
       val ()=check("cleanup clobbers error",#number(#error cleanup)<> #number savedError)
       val ()=check("captured error survives cleanup",#number savedError=12345)
       val ()=check("native allocation released",word(RuneForeign.invoke(countCall,[]))=0w0)

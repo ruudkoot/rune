@@ -23,11 +23,19 @@ struct
         val () = RuneForeign.write(memory,0w0,"test")
         val () = T.check ("RuneForeign.write/copy", fn () => RuneForeign.read(memory,0w0,4)="test")
         val view = RuneForeign.view(memory,0w1,0w2)
+        val same = RuneForeign.view(memory,0w0,0w4)
+        val () = T.check ("RuneForeign.sameAddress/views", fn () => RuneForeign.sameAddress(memory,same) andalso not(RuneForeign.sameAddress(memory,view)))
+        val () = T.check ("RuneForeign.isLive/registered", fn () => RuneForeign.isLive memory)
+        val () = T.check ("RuneForeign.dispose/ownership-checked", fn () =>
+          (ignore(RuneForeign.dispose{resource=memory,call=call,arguments=[RuneForeign.Signed 1],failure=RuneForeign.NoFailure});false)
+            handle RuneForeign.Error _=>true)
+        val () = RuneForeign.release same
         val () = T.check ("RuneForeign.view/aliases-parent", fn () => RuneForeign.read(view,0w0,2)="es")
         val () = T.check ("RuneForeign.read/bounds", fn () =>
           (ignore(RuneForeign.read(view,0w1,2));false) handle RuneForeign.Error _ => true)
         val () = RuneForeign.release view
         val () = RuneForeign.release memory
+        val () = T.check ("RuneForeign.isLive/released", fn () => not(RuneForeign.isLive memory))
         val () = T.check ("RuneForeign.release/tombstone", fn () =>
           (RuneForeign.release memory;false) handle RuneForeign.Error _ => true)
         val () = (RuneForeign.release call;RuneForeign.release symbol;RuneForeign.release library)

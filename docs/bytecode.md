@@ -623,7 +623,11 @@ addresses are held by a per-VM registry, never encoded as SML pointers.
 Operations 0 through 10 query availability, open a library, resolve a symbol,
 allocate storage, read, write, form a view, release, prepare a fixed call,
 invoke it, and count resources. Operation 11 reports native pointer bytes,
-byte order and stdcall support, including on disabled builds.
+byte order and stdcall support, including on disabled builds. Operation 12
+executes a guarded native destructor with a fixed integral failure predicate;
+its auxiliary identity is the owned pointer. Success retires that identity.
+Operations 13/14 compare pointer addresses and query identity liveness.
+Queries never expose an address or turn an old identity into a new resource.
 Metadata/result words use explicit
 little-endian 64-bit encoding; native calling conventions and scalar
 representations belong to libffi. Disabled builds preserve the primitive
