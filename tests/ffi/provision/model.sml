@@ -7,6 +7,11 @@ struct
   fun member name kind link : BuildArchive.member={name=name,kind=kind,link=link,data=""}
   fun run ()=
     let val top="libffi-3.4.6"
+        val ()=List.app(fn (name,width,order,runner)=>let val p=BuildFFIDeps.profile name
+          in check (name ^ " target identity") (#pointerBytes p=width andalso #byteOrder p=order andalso #runner p=runner) end)
+          [("linux32",4,"little",""),("aarch64",8,"little","qemu-aarch64 -L /usr/aarch64-linux-gnu"),
+           ("ppc64",8,"big","qemu-ppc64 -L /usr/powerpc64-linux-gnu")]
+        val ()=refuses "cross SDL delivery excluded" (fn()=>ignore(BuildFFIDeps.main["sdl","--target","ppc64"]))
         val ()=refuses "headless libffi rejected" (fn()=>ignore(BuildFFIDeps.main["libffi","--headless"]))
         val ()=refuses "headless cross target rejected" (fn()=>ignore(BuildFFIDeps.main["sdl","--headless","--target","windows32"]))
         val ()=List.app(fn name=>refuses("archive path " ^ name)(fn()=>BuildFFIDeps.admitted top(member name #"0" "")))

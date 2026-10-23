@@ -57,7 +57,7 @@ struct
                (target=top orelse String.isPrefix(top ^ "/")target),"unsafe dependency archive link " ^ name) end else ()
     in () end
   fun recipe ()=Hex.fromBytes(Sha256.digest(String.concat(List.map(fn name=>name ^ "\000" ^ hash(fromRoot name) ^ "\000")
-    ["tools/builder/ffi-deps.sml","tools/builder/common.sml","tools/builder/archive.sml","tools/builder/io.sig","tools/builder/native-io.sml","tools/builder/rune-io.sml"])))
+    ["tools/builder/ffi-deps.sml","tools/builder/ffi-probe.c","tools/builder/common.sml","tools/builder/archive.sml","tools/builder/io.sig","tools/builder/native-io.sml","tools/builder/rune-io.sml"])))
   fun download archive checksum urls offline run =
     if exists archive then (need(hash archive=checksum,"cached dependency archive checksum mismatch: " ^ archive);NONE) else
     let val ()=need(not offline,"offline dependency archive is missing: " ^ archive)
@@ -103,19 +103,48 @@ struct
     in remove backup end
   fun outputFiles prefix=List.filter(fn path=>not(isLink path) andalso not(isDir path) andalso
     OS.Path.file path<>"rune-ffi-dependency.json")(tree prefix)
+  type targetProfile={host:string option,cc:string,cxx:string,cflags:string,ldflags:string,ar:string,ranlib:string,runner:string,pointerBytes:int,byteOrder:string}
+  fun profile target : targetProfile =
+    let fun cross(triple,sysroot,loader,byteOrder)=
+          {host=SOME triple,cc="clang --target=" ^ triple ^ " -B" ^ sysroot ^ "/bin",
+           cxx="clang --target=" ^ triple ^ " -B" ^ sysroot ^ "/bin",cflags="-I" ^ sysroot ^ "/include",
+           ldflags="-L" ^ sysroot ^ "/lib -Wl,-rpath," ^ sysroot ^ "/lib -Wl,-dynamic-linker," ^ sysroot ^ "/lib/" ^ loader,
+           ar=triple ^ "-ar",ranlib=triple ^ "-ranlib",runner="qemu-" ^ (if target="ppc64" then "ppc64" else "aarch64") ^ " -L " ^ sysroot,
+           pointerBytes=8,byteOrder=byteOrder}
+        fun windows triple pointerBytes={host=SOME triple,cc=triple ^ "-gcc",cxx=triple ^ "-g++",cflags="",ldflags="",
+          ar=triple ^ "-ar",ranlib=triple ^ "-ranlib",runner="",pointerBytes=pointerBytes,byteOrder="little"}
+    in case target of
+        "native"=>{host=NONE,cc=env("CC","cc"),cxx=env("CXX","c++"),cflags="",ldflags="",ar=env("AR","ar"),ranlib=env("RANLIB","ranlib"),
+          runner="",pointerBytes=0,byteOrder="native"}
+      | "windows32"=>windows "i686-w64-mingw32" 4
+      | "windows64"=>windows "x86_64-w64-mingw32" 8
+      | "linux32"=>{host=SOME "i686-pc-linux-gnu",cc=env("CC","cc"),cxx=env("CXX","c++"),cflags="-m32 -msse2 -mfpmath=sse",ldflags="-m32",
+          ar="ar",ranlib="ranlib",runner="",pointerBytes=4,byteOrder="little"}
+      | "aarch64"=>cross("aarch64-linux-gnu","/usr/aarch64-linux-gnu","ld-linux-aarch64.so.1","little")
+      | "ppc64"=>cross("powerpc64-linux-gnu","/usr/powerpc64-linux-gnu","ld64.so.1","big")
+      | _=>raise Failed("unsupported dependency target " ^ target)
+    end
   fun main (project::args)=
     let val ()=need(project="libffi" orelse project="sdl","dependency must be libffi or sdl")
         val options=O.parse[("--target",O.Value),("--prefix",O.Value),("--archive",O.Value),("--jobs",O.Value),("--timeout",O.Value),
-          ("--cc",O.Value),("--cxx",O.Value),("--rc",O.Value),("--headless",O.Flag),("--offline",O.Flag),("--download-only",O.Flag),("--verify-only",O.Flag)][]args
+          ("--cc",O.Value),("--cxx",O.Value),("--rc",O.Value),("--cflags",O.Value),("--ldflags",O.Value),
+          ("--ar",O.Value),("--ranlib",O.Value),("--runner",O.Value),("--headless",O.Flag),("--offline",O.Flag),("--download-only",O.Flag),("--verify-only",O.Flag)][]args
         val target=O.get options "--target" "native"
-        val ()=need(List.exists(fn s=>s=target)["native","windows32","windows64"],"unsupported dependency target " ^ target)
+        val selected=profile target
+        val ()=need(project="libffi" orelse List.exists(fn s=>s=target)["native","windows32","windows64"],"cross SDL provisioning is outside this profile")
         val headless=O.flag options "--headless"
         val ()=need(not headless orelse (project="sdl" andalso target="native"),"headless provisioning requires native SDL")
-        val windows=target<>"native" val narrow=target="windows32"
-        val host=if narrow then "i686-w64-mingw32" else "x86_64-w64-mingw32"
-        val cc=O.get options "--cc" (if windows then host ^ "-gcc" else env("CC","cc"))
-        val cxx=O.get options "--cxx" (if windows then host ^ "-g++" else env("CXX","c++"))
+        val windows=String.isPrefix "windows" target val narrow=target="windows32"
+        val host=getOpt(#host selected,"")
+        val cc=O.get options "--cc" (#cc selected)
+        val cxx=O.get options "--cxx" (#cxx selected)
         val rc=O.get options "--rc" (host ^ "-windres")
+        fun combined original extra=String.concatWith " "(List.filter(fn text=>text<>"")[original,extra])
+        val cflags=O.get options "--cflags" (combined(env("CFLAGS",""))(#cflags selected))
+        val cxxflags=combined(env("CXXFLAGS",""))(#cflags selected)
+        val ldflags=O.get options "--ldflags" (combined(env("LDFLAGS",""))(#ldflags selected))
+        val ar=O.get options "--ar" (#ar selected) val ranlib=O.get options "--ranlib" (#ranlib selected)
+        val runner=O.get options "--runner" (#runner selected)
         val jobs=integer(O.get options "--jobs" "2") val timeout=real(O.get options "--timeout" "1800")
         val ()=need(jobs>0 andalso timeout>0.0,"jobs and timeout must be positive")
         val manifestFile=fromRoot("ffi/" ^ project ^ "/source.json") val manifest=readJson manifestFile
@@ -137,7 +166,8 @@ struct
               val ()=commands:= !commands @ [Json.Object[("label",str label),("argv",strings argv),("cwd",str cwd),("status",number(#status result)),("seconds",Json.Number(minus(Real.toString(#seconds result))))]]
               val ()=json(directory ^ "/commands.json")(Json.Array(!commands))
           in need(#status result=0,label ^ " failed; see " ^ log ^ ".stderr: " ^ #errors result);#output result end
-        val environment=unset "MAKEFLAGS" (unset "MFLAGS" (Posix.ProcEnv.environ()))
+        val environment=setEnv("AR",ar)(setEnv("RANLIB",ranlib)(setEnv("CFLAGS",cflags)(setEnv("CXXFLAGS",cxxflags)(setEnv("LDFLAGS",ldflags)
+          (unset "MAKEFLAGS" (unset "MFLAGS" (Posix.ProcEnv.environ())))))))
         fun run label argv=executeIn directory environment label argv
         val _=download archive checksum [url] (O.flag options "--offline") run
         val compiler=if O.flag options "--download-only" then "" else trim(run "compiler-version" (words cc @ ["--version"]))
@@ -147,7 +177,8 @@ struct
           (if windows then [("rc",str(trim(run "rc-version" (words rc @ ["--version"]))))] else [])
         val config=Json.Object[("schema",number 1),("project",str project),("version",str version),("target",str target),("prefix",str prefix),
           ("archive_sha256",str checksum),("manifest_sha256",str(hash manifestFile)),("recipe_sha256",str(recipe())),
-          ("cc",str cc),("cxx",str cxx),("rc",str rc),("compiler",str compiler),("tools",Json.Object tools),("headless",Json.Bool headless),
+          ("cc",str cc),("cxx",str cxx),("rc",str rc),("cflags",str cflags),("ldflags",str ldflags),("runner",str runner),
+          ("host",str host),("ar",str ar),("ranlib",str ranlib),("compiler",str compiler),("tools",Json.Object tools),("headless",Json.Bool headless),
           ("build_environment",environmentIdentity environment)]
         val metadata=prefix ^ "/rune-ffi-dependency.json"
         fun fresh ()=exists metadata andalso
@@ -171,8 +202,8 @@ struct
             val environment=setEnv("CC",cc)(setEnv("CXX",cxx)(setEnv("RC",rc)environment))
             fun work label argv=executeIn build environment label argv
             val ()=if project="libffi" then
-              (ignore(work "configure" ([source ^ "/configure","--prefix=" ^ prefix,"--disable-shared","--enable-static","--with-pic","--disable-docs"] @
-                 (if windows then ["--host=" ^ host] else [])));
+              (ignore(work "configure" ([source ^ "/configure","--prefix=" ^ prefix,"--disable-shared","--enable-static","--with-pic","--disable-docs","--disable-multi-os-directory"] @
+                 (case #host selected of NONE=>[] | SOME host=>["--host=" ^ host])));
                ignore(work "build" ["make","-j" ^ Int.toString jobs]);
                ignore(work "install" ["make","install","DESTDIR=" ^ stage]))
               else
@@ -192,13 +223,16 @@ struct
             val ()=copy(source ^ "/" ^ licenseFile)(license ^ "/" ^ licenseFile)
             val probe=directory ^ "/probe.c" val executable=directory ^ (if windows then "/probe.exe" else "/probe")
             val probeCode=if project="libffi" then
-              "#include <ffi.h>\nstatic int sum(int a,int b){return a+b;}\nint main(void){ffi_cif cif;ffi_type *types[]={&ffi_type_sint,&ffi_type_sint};int a=20,b=22;void *values[]={&a,&b};ffi_arg result=0;if(ffi_prep_cif(&cif,FFI_DEFAULT_ABI,2,&ffi_type_sint,types)!=FFI_OK)return 2;ffi_call(&cif,FFI_FN(sum),&result,values);return result==42?0:3;}\n"
+              read(fromRoot "tools/builder/ffi-probe.c")
               else "#define SDL_MAIN_HANDLED 1\n#include <SDL3/SDL.h>\n#include <SDL3/SDL_main.h>\nint main(void){SDL_SetMainReady();if(!SDL_Init(SDL_INIT_EVENTS))return 2;SDL_Surface *surface=SDL_CreateSurface(4,4,SDL_PIXELFORMAT_ARGB8888);if(!surface)return 3;SDL_Renderer *renderer=SDL_CreateSoftwareRenderer(surface);if(!renderer)return 4;if(!SDL_SetRenderDrawColor(renderer,1,2,3,255)||!SDL_RenderClear(renderer)||!SDL_RenderPresent(renderer))return 5;SDL_DestroyRenderer(renderer);SDL_DestroySurface(surface);SDL_Quit();return 0;}\n"
             val ()=write(probe,probeCode)
-            val _=run "compile-probe" (words cc @ ["-std=c99","-Wall","-Wextra","-Werror","-I" ^ staged ^ "/include",probe,"-o",executable] @
+            val _=run "compile-probe" (words cc @ words cflags @ ["-std=c99","-Wall","-Wextra","-Werror","-I" ^ staged ^ "/include",probe,"-o",executable] @
+              (if project="libffi" then ["-DRUNE_FFI_EXPECT_POINTER=" ^ Int.toString(#pointerBytes selected),
+                 "-DRUNE_FFI_EXPECT_BIG_ENDIAN=" ^ (case #byteOrder selected of "big"=>"1" | "little"=>"0" | _=>"-1")] else []) @ words ldflags @
               (if project="libffi" then [staged ^ "/lib/libffi.a"] else ["-L" ^ staged ^ "/lib","-lSDL3"] @
                 (if windows then [] else ["-Wl,-rpath," ^ staged ^ "/lib"])))
-            val validation=if windows then "cross-compiled; execution outstanding" else (ignore(run "run-probe"[executable]);"native call/render probe passed")
+            val validation=if windows andalso runner="" then "cross-compiled; execution outstanding" else
+              (ignore(run "run-probe"(words runner @ [executable]));if runner="" then "native call/render probe passed" else "explicit target runner call probe passed")
             val output=Json.Object(List.map(fn file=>(String.extract(file,size staged+1,NONE),str(hash file)))(outputFiles staged))
             val links=Json.Object(List.map(fn file=>(String.extract(file,size staged+1,NONE),str(OS.FileSys.readLink file)))(List.filter isLink(tree staged)))
             val directories=strings(List.map(fn file=>String.extract(file,size staged+1,NONE))(List.filter(fn file=>not(isLink file) andalso isDir file)(prefixEntries staged)))
@@ -208,5 +242,5 @@ struct
             val ()=mkdirs(OS.Path.dir prefix)
             val ()=publish{staged=staged,prefix=prefix,project=project,target=target}
         in say("provisioned pinned " ^ project ^ " in " ^ prefix ^ " (" ^ validation ^ ")\n");0 end end
-    | main _=raise Usage "build-ffi libffi|sdl [--target native|windows32|windows64] [--offline] [--verify-only]"
+    | main _=raise Usage "build-ffi libffi|sdl [--target native|windows32|windows64|linux32|aarch64|ppc64] [--offline] [--verify-only]"
 end
