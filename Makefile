@@ -144,7 +144,7 @@ $(error FFI must be auto, yes or no)
 endif
 FFI_FOUND := $(if $(FFI_PREFIX),$(if $(and $(wildcard $(FFI_PREFIX)/include/ffi.h),$(wildcard $(FFI_PREFIX)/lib/libffi.a)),yes),$(shell pkg-config --exists libffi 2>/dev/null && echo yes))
 FFI_ENABLED := $(if $(filter no,$(FFI)),0,$(if $(filter none,$(SYS)),0,$(if $(filter yes,$(FFI_FOUND)),1,0)))
-FFI_CONFIG_GOALS := $(if $(MAKECMDGOALS),$(filter-out hosts doctor envcheck clean gmp-dep gmp-dep-windows gmp-dep-portability gmp-dep-dist-native ffi-libffi ffi-sdl ffi-libffi-windows32 ffi-libffi-windows64 ffi-sdl-windows32 ffi-sdl-windows64 bin/rune-build bin/rune-build.bin,$(MAKECMDGOALS)),all)
+FFI_CONFIG_GOALS := $(if $(MAKECMDGOALS),$(filter-out hosts doctor envcheck clean gmp-dep gmp-dep-windows gmp-dep-portability gmp-dep-dist-native ffi-libffi ffi-sdl ffi-libffi-windows32 ffi-libffi-windows64 ffi-libffi-linux32 ffi-libffi-aarch64 ffi-libffi-ppc64 ffi-sdl-windows32 ffi-sdl-windows64 bin/rune-build bin/rune-build.bin,$(MAKECMDGOALS)),all)
 ifneq ($(strip $(FFI_CONFIG_GOALS)),)
 ifeq ($(FFI),yes)
 ifneq ($(FFI_ENABLED),1)
@@ -189,7 +189,7 @@ $(GMP_DIR)/config.mk: bin/rune-build $(if $(GMP_PREFIX),$(wildcard $(GMP_PREFIX)
 	bin/rune-build configure-gmp --mode '$(GMP)' --prefix '$(GMP_PREFIX)' --cc '$(CC)' --cflags '$(CFLAGS)' --out $(GMP_DIR)
 # Pre-host provisioning and the independent native tool cannot depend on
 # target configuration. Explicit dependency provisioning likewise precedes it.
-GMP_CONFIG_GOALS := $(if $(MAKECMDGOALS),$(filter-out hosts doctor envcheck clean gmp-dep gmp-dep-windows gmp-dep-portability gmp-dep-dist-native ffi-libffi ffi-sdl ffi-libffi-windows32 ffi-libffi-windows64 ffi-sdl-windows32 ffi-sdl-windows64 bin/rune-build bin/rune-build.bin,$(MAKECMDGOALS)),all)
+GMP_CONFIG_GOALS := $(if $(MAKECMDGOALS),$(filter-out hosts doctor envcheck clean gmp-dep gmp-dep-windows gmp-dep-portability gmp-dep-dist-native ffi-libffi ffi-sdl ffi-libffi-windows32 ffi-libffi-windows64 ffi-libffi-linux32 ffi-libffi-aarch64 ffi-libffi-ppc64 ffi-sdl-windows32 ffi-sdl-windows64 bin/rune-build bin/rune-build.bin,$(MAKECMDGOALS)),all)
 ifneq ($(strip $(GMP_CONFIG_GOALS)),)
 include $(GMP_DIR)/config.mk
 endif
@@ -1047,6 +1047,31 @@ bin/runevm-aarch64.bin: $(NEW_SRCS_A64) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runti
 bin/runevm-aarch64: bin/runevm-aarch64.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-aarch64.bin" "$$@"\n' '$(QEMUA64) -L $(A64ROOT)' > $@
 	chmod +x $@
+
+# Explicit FFI acceptance VMs have independent configurations. They always use
+# the pinned target library; ordinary portability and FFI=no builds stay usable
+# without provisioning it. CrossVM hashes both archive and ownership receipt.
+FFI_LINUX32_PREFIX ?= build/deps/libffi/linux32/install
+FFI_AARCH64_PREFIX ?= build/deps/libffi/aarch64/install
+FFI_PPC64_PREFIX ?= build/deps/libffi/ppc64/install
+.PHONY: ffi-portability
+ffi-portability: bin/runevm-ffi32 bin/runevm-stack-ffi32 bin/runevm-ffi-aarch64.bin bin/runevm-stack-ffi-aarch64.bin bin/runevm-ffi-ppc64.bin bin/runevm-stack-ffi-ppc64.bin
+
+define ffi-cross-vm
+bin/runevm$(1)-ffi$(2)$(3): $$(if $$(filter -stack,$(1)),$$(VM_SRCS),$(4)) $$(VM_HDRS) $$(NEW_HDRS) $$(JIT_HDRS) Makefile bin/rune-build gmp-force
+	bin/rune-build build-ffi libffi --target $(5) --prefix '$$($(6))' --verify-only
+	bin/rune-build build-gmp-vm --mode no --cc '$$($(7))' \
+	  --cflags='$$(CFLAGS) $$($(8)) $(9) -DRUNE_FFI=1 -I$$($(6))/include' \
+	  --runner '$(10)' --config build/ffi-vm/$(5)$(1) --out $$@ --ldlibs='-ldl -lm' \
+	  --sources $$(if $$(filter -stack,$(1)),$$(VM_SRCS),$(4)) \
+	  --objects $$($(6))/lib/libffi.a --headers $$(VM_HDRS) $$(NEW_HDRS) $$(JIT_HDRS) Makefile $$($(6))/rune-ffi-dependency.json
+endef
+$(eval $(call ffi-cross-vm,,32,,$(NEW_SRCS),linux32,FFI_LINUX32_PREFIX,PORTCC32,PORTFLAGS32,,))
+$(eval $(call ffi-cross-vm,,-aarch64,.bin,$(NEW_SRCS_A64),aarch64,FFI_AARCH64_PREFIX,A64CC,A64FLAGS,-DRUNE_JIT=1,$(QEMUA64) -L $(A64ROOT)))
+$(eval $(call ffi-cross-vm,,-ppc64,.bin,$(NEW_SRCS),ppc64,FFI_PPC64_PREFIX,PPCCC,PPCFLAGS,,$(QEMUPPC) -L $(PPCROOT)))
+$(eval $(call ffi-cross-vm,-stack,32,,$(NEW_SRCS),linux32,FFI_LINUX32_PREFIX,PORTCC32,PORTFLAGS32,,))
+$(eval $(call ffi-cross-vm,-stack,-aarch64,.bin,$(NEW_SRCS_A64),aarch64,FFI_AARCH64_PREFIX,A64CC,A64FLAGS,,$(QEMUA64) -L $(A64ROOT)))
+$(eval $(call ffi-cross-vm,-stack,-ppc64,.bin,$(NEW_SRCS),ppc64,FFI_PPC64_PREFIX,PPCCC,PPCFLAGS,,$(QEMUPPC) -L $(PPCROOT)))
 
 # The VMs make dist ships. The portability and Windows builds follow
 # GMP=auto, which uses the SML fallback when the pinned library is absent
@@ -2236,3 +2261,21 @@ bin/rune-ffi-repl-check.rbc: $(RUNE) $(FFI_REPL_CHECK_SRCS) tests/ffi/generator/
 	$(RUNE) --library test/runner --library json --library digest $(FFI_REPL_CHECK_SRCS) -o $@
 test-ffi-repl: $(RUNE) vm bin/runeffi.rbc bin/rune-repl.img bin/rune-ffi-repl-check.rbc
 	bin/runevm bin/rune-ffi-repl-check.rbc
+
+.PHONY: ffi-libffi-linux32 ffi-libffi-aarch64 ffi-libffi-ppc64 test-ffi-portability
+ffi-libffi-linux32: bin/rune-build
+	bin/rune-build build-ffi libffi --target linux32 --prefix '$(FFI_LINUX32_PREFIX)' --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+ffi-libffi-aarch64: bin/rune-build
+	bin/rune-build build-ffi libffi --target aarch64 --prefix '$(FFI_AARCH64_PREFIX)' --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+ffi-libffi-ppc64: bin/rune-build
+	bin/rune-build build-ffi libffi --target ppc64 --prefix '$(FFI_PPC64_PREFIX)' --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+
+FFI_CROSS_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/cross-check.sml
+check-tools: bin/rune-ffi-cross-check
+bin/rune-ffi-cross-check.rbc: $(RUNE) $(FFI_CROSS_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner --library json --library digest $(FFI_CROSS_CHECK_SRCS) -o $@
+bin/rune-ffi-cross-check: bin/rune-ffi-cross-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-cross-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+test-ffi-portability: $(RUNE) bin/runeffi vm ffi-portability bin/rune-ffi-cross-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-portability

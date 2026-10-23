@@ -6,6 +6,9 @@ struct
   val pair=CParse.Named "rf_pair"
   val bits=CParse.Named "rf_bits"
   val source=ForeignShim.preamble["shim.h"] ^
+    ForeignShim.call{name="runeffi_pointer_invoke",foreign="rf_pointer_invoke",result=CParse.Builtin "int",
+      parameters=[CParse.Pointer{target=CParse.Named "rf_pointer_record",qualifiers=[]},CParse.Pointer{target=CParse.Builtin "void",qualifiers=[]},CParse.Builtin "int"],
+      indirectResult=false,indirectArguments=[false,false,false]} ^
     ForeignShim.call{name="runeffi_pair_make",foreign="rf_make_pair",result=pair,parameters=[i,d],indirectResult=true,indirectArguments=[false,false]} ^
     ForeignShim.call{name="runeffi_pair_total",foreign="rf_pair_total",result=d,parameters=[pair],indirectResult=false,indirectArguments=[true]} ^
     ForeignShim.call{name="runeffi_low",foreign="RF_LOW",result=u,parameters=[u],indirectResult=false,indirectArguments=[false]} ^

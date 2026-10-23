@@ -50,5 +50,7 @@ double safe_variadic_real(int count, ...);
 static inline int safe_inline(int value) { return value*3; }
 #if defined(__x86_64__)
 __attribute__((ms_abi)) int safe_other_abi(int value);
+#else
+int safe_other_abi(int value);
 #endif
 #endif

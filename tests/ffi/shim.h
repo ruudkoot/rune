@@ -7,6 +7,8 @@ typedef struct rf_pointer_record { void *value; rf_callback callback; } rf_point
 #pragma pack(push,1)
 typedef struct rf_packed_bits { unsigned char prefix; unsigned low:3; unsigned high:5; unsigned char tail; } rf_packed_bits;
 #pragma pack(pop)
+static inline int rf_pointer_invoke(rf_pointer_record *record, void *context, int value) { return record->callback(context,value); }
+RF_EXPORT int runeffi_pointer_invoke(rf_pointer_record *, void *, int);
 RF_EXPORT void runeffi_pair_make(rf_pair *, int32_t, double);
 RF_EXPORT double runeffi_pair_total(rf_pair *);
 RF_EXPORT unsigned runeffi_low(unsigned);

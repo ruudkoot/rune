@@ -48,6 +48,8 @@ void safe_packet_out(safe_packet *value) { *value=(safe_packet){{8,1.5f},{7,8,9}
 void safe_packet_inout(safe_packet *value) { *value=safe_transform(*value,3); }
 #if defined(__x86_64__)
 __attribute__((ms_abi)) int safe_other_abi(int value) { return value+19; }
+#else
+int safe_other_abi(int value) { return value+19; }
 #endif
 
 struct safe_registration { safe_registered_callback callback; void *context; };

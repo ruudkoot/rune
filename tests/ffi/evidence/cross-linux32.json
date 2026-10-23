@@ -1,0 +1,36 @@
+{
+  "target": "linux32",
+  "profile_sha256": "2be2e99a7a99ef1a211a005773c31606445e203ee6c2ef96e94c975c8f15de3d",
+  "dependency_sha256": "6db7843368f7a4e69609c33f1e96362580eba65af87b6782069b8f486c50663c",
+  "static_library_sha256": "cfbf8c2c9961d3a1dabd8a46ed66b149901f2464b051c1b91e1f8e89fedc4fa5",
+  "source_archive_sha256": "b0dea9df23c863a7a50e825440f3ebffabd65df1497108e5d437747843895a4e",
+  "compiler": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "runner": "native Linux32 process",
+  "stack_vm_sha256": "27caeff25ad295ecfa0c40bbeff4e9a307edaa7e7a439e800bebfb42288fdb72",
+  "register_vm_sha256": "1d4d23c54c78bcad48ce48152dad25301f75422f00740bf13cc49847b8db0597",
+  "result": "all cross fixtures passed",
+  "date": "2026-10-23",
+  "runtime_components": [
+    "17c471463",
+    "3b0cb62fb",
+    "706c66cd2"
+  ],
+  "provision_components": [
+    "2f3e946a9",
+    "d6d147bed"
+  ],
+  "modes": [
+    "stack",
+    "registers-off"
+  ],
+  "c_oracle_checks": 46,
+  "shared_checks_per_mode": {
+    "memory": 23,
+    "owners": 26,
+    "typed_shims": 18,
+    "generated_public_contracts": 49
+  },
+  "gc_stress": 7,
+  "gc_verify": true,
+  "evidence_directory": "tests/out/runeffi-final-cross/ffi-cross/2DB4D3"
+}

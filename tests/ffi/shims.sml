@@ -53,6 +53,19 @@ struct
         val ()=RuneForeign.release pointer
         val ()=ignore(invoke "runeffi_pointer_callback_set" RuneForeign.Void [RuneForeign.Pointer,RuneForeign.Pointer][address record,RuneForeign.Address NONE])
         val ()=check("function pointer member null",not(isSome(#pointer(invoke "runeffi_pointer_callback_get" RuneForeign.Pointer [RuneForeign.Pointer][address record]))))
+        val callback=RuneForeign.callback{abi=0,result=RuneForeign.SInt32,arguments=[RuneForeign.Pointer,RuneForeign.SInt32],
+          function=fn [RuneForeign.Address(SOME p),RuneForeign.Signed n]=>
+            if RuneForeign.read(p,0w0,5)="jello" then RuneForeign.Signed(n+37) else raise Fail "callback context alias"
+            | _=>raise Fail "function pointer callback arguments",failure=RuneForeign.Default(RuneForeign.Signed ~1)}
+        val ()=ignore(ForeignScope.defer(scope,fn()=>RuneForeign.release callback))
+        val ()=ignore(invoke "runeffi_pointer_callback_set" RuneForeign.Void [RuneForeign.Pointer,RuneForeign.Pointer]
+          [address record,RuneForeign.Address(SOME callback)])
+        val callbackAlias=valOf(#pointer(invoke "runeffi_pointer_callback_get" RuneForeign.Pointer [RuneForeign.Pointer][address record]))
+        val ()=ignore(ForeignScope.defer(scope,fn()=>RuneForeign.release callbackAlias))
+        val ()=ignore(invoke "runeffi_pointer_callback_set" RuneForeign.Void [RuneForeign.Pointer,RuneForeign.Pointer]
+          [address record,RuneForeign.Address(SOME callbackAlias)])
+        val ()=check("function pointer member closure roundtrip",integer(invoke "runeffi_pointer_invoke" RuneForeign.SInt32
+          [RuneForeign.Pointer,RuneForeign.Pointer,RuneForeign.SInt32][address record,address data,RuneForeign.Signed 5])=42)
         val packed=owned scope packedSize
         val ()=List.app(fn(name,ty,n)=>ignore(invoke("runeffi_packed_" ^ name ^ "_set")RuneForeign.Void
           [RuneForeign.Pointer,ty][address packed,RuneForeign.Unsigned n]))

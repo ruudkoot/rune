@@ -29,6 +29,9 @@ struct
      Test.requires ["windows"] (Test.describe "windows"
        (List.map (fn bits => job bits ("windows " ^ bits) ["test-ffi-windows", "test-windows", "nightly"]) ["32", "64"] @
        List.map(fn bits=>job ("runtime" ^ bits) ("runtime windows" ^ bits) ["test-ffi-runtime-windows"]) ["32","64"])),
+     Test.describe "portability"
+       (List.map(fn target=>Test.requires(["cc", "ffi-" ^ target] @ (if target="linux32" then [] else ["clang"]))
+         (jobWith "rune-ffi-cross-check" target target ["test-ffi-portability", "nightly"]))["linux32","aarch64","ppc64"]),
      Test.describe "shims"
        (List.map(fn target=>jobWith "rune-ffi-shim-check" target target (if target="native" then ["check","test-ffi-shims"] else ["test-ffi-shims"]))
          ["native","linux32","windows32","windows64","aarch64","ppc64"] @

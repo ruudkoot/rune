@@ -47,8 +47,14 @@ still requires the platform's window system and supported video driver.
 
 Every prefix contains `rune-ffi-dependency.json`: source and recipe digests,
 toolchain identities, commands, installed-file hashes, symlinks and probe
-results. Native probes execute libffi scalar calls or SDL software rendering;
-cross probes are compiled and mark execution outstanding. Upstream test suites
+results. Libffi admission executes scalar calls, an aggregate result, and a
+closure invoked through a function pointer; SDL admission executes software
+rendering. The Linux32, AArch64 and big-endian PowerPC64 profiles execute their
+probes using native32 processes or explicit QEMU runners. Windows provisioning
+without an explicit runner records execution as outstanding; the separate
+Windows acceptance suites establish actual execution. See
+[Linux portability](portability.md) for target provisioning and generic SML
+acceptance commands. Upstream test suites
 are not implied by successful provisioning. Build, install and probe failures
 leave an existing prefix intact; `--verify-only` rejects stale or modified
 prefixes without replacing them.
