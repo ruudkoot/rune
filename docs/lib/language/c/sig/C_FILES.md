@@ -42,7 +42,7 @@ val read : string -> {file : string, text : string}
 `read path` reads original bytes without newline conversion and uses
 an absolute canonical file name as the source identity.
 
-**Raises** `IO.Io` or `OS.SysErr` for unreadable sources.
+**Raises** [`IO.Io`](../../../basis/sig/IO.md#exn-io) or [`OS.SysErr`](../../../basis/sig/OS.md#exn-syserr) for unreadable sources.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -63,7 +63,7 @@ Angle includes search roots.
 `include_next` continues after the root containing the source.
 A found but unreadable source reports its I/O error.
 
-**Raises** `OS.SysErr` for an invalid include root.
+**Raises** [`OS.SysErr`](../../../basis/sig/OS.md#exn-syserr) for an invalid include root.
 
 ---
 
