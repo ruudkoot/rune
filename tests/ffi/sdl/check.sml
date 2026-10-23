@@ -12,6 +12,7 @@ struct
     in path end
   fun command environment name args =
     let val ()=mkdirs directory val output=directory ^ "/" ^ name ^ ".out" val errors=output ^ ".err"
+        val ()=write(output ^ ".command.json",Json.encode(Json.Array(List.map Json.String args)) ^ "\n")
         val status=Children.exec Subprocess.unlimited environment
           {cmd=args,dir=SOME root,stdin="",stdout=output,stderr=errors,timeout=600}
     in need(status=0,name ^ " exited " ^ Int.toString status ^ ": " ^ read errors ^ read output);read output end
@@ -40,7 +41,14 @@ struct
         val sets=entries(output ^ "/sets")
         val ()=need(length sets=1,"generation must publish exactly one immutable set")
     in (output,output ^ "/sets/" ^ hd sets ^ "/shims.c") end
-  fun main [mode] =
+  fun hostProjects()=
+    let val (generated,_)=generate "linux-x86_64" false true
+        val ()=List.app(fn project=>ExampleProjects.agreement run (directory ^ "/hosts") project
+          ["--path","SDL_GENERATED=" ^ fromRoot generated])
+          (List.filter(fn p:ExampleProjects.project=> #gate p=ExampleProjects.Sdl)ExampleProjects.projects)
+    in say "PASS generated SDL example projects on all seven Rune compiler builds\n" end
+  fun main ["host-projects"]=hostProjects()
+    | main [mode] =
     let val windows=String.isPrefix "windows" mode
         val narrow=mode="windows32"
         val contract=mode="win32-contract" orelse mode="win32-contract-gui"

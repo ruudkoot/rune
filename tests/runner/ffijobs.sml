@@ -2,7 +2,7 @@ structure FfiJobs =
 struct
   fun jobWith program name args tags =
     let
-      val nativeCalls = program = "rune-sdl-check" orelse program = "rune-win32-check" orelse
+      val nativeCalls = ((program = "rune-sdl-check" orelse program = "rune-win32-check") andalso args<>"host-projects") orelse
         (program = "rune-ffi-shim-check" andalso
          List.exists (fn mode => mode = args) ["native", "asan", "windows32", "windows64"])
       val tags = if nativeCalls andalso not (RuneForeign.available ())
@@ -39,7 +39,8 @@ struct
         [Test.describe "hosts"(List.map(fn host=>Test.requires["host:" ^ host]
           (jobWith "rune-ffi-shim-check" host ("host " ^ host)["test-ffi-shims-hosts","library","nightly"]))Hosts.names)]),
      Test.describe "sdl"
-       [Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "win32-contract" "win32-contract" ["test-win32-sdl-contract"]),
+       [Test.requires ExampleProjects.requiredHosts (jobWith "rune-sdl-check" "host-projects" "host-projects" ["test-sdl-hosts"]),
+        Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "win32-contract" "win32-contract" ["test-win32-sdl-contract"]),
         Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "win32-contract-gui" "win32-contract-gui" ["test-win32-sdl-contract-gui"]),
         Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "win32-app" "win32-app" ["test-win32-app-sdl"]),
         Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "win32-app-gui" "win32-app-gui" ["test-win32-app-sdl-gui"]),
@@ -51,6 +52,8 @@ struct
         Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "asan" "asan" ["test-sdl-asan"]),
         Test.requires["windows","windows-sdk","sdl3-windows32"](jobWith "rune-sdl-check" "windows32" "windows32" ["test-sdl-windows"]),
         Test.requires["windows","windows-sdk","sdl3-windows64"](jobWith "rune-sdl-check" "windows64" "windows64" ["test-sdl-windows"])],
+     Test.requires ("windows-sdk" :: ExampleProjects.requiredHosts) (Test.describe "win32-hosts"
+       [jobWith "rune-win32-check" "host-projects" "host-projects" ["test-win32-hosts"]]),
      Test.requires ["windows", "windows-sdk", "clang"] (Test.describe "win32-native"
        (List.concat(List.map(fn bits=>
          [jobWith "rune-win32-check" ("contract" ^ bits) ("contract " ^ bits) ["test-win32-native","test-windows","nightly"],

@@ -5,7 +5,7 @@ struct
   fun main paths =
     let val ()=SDL.load paths
         val ()=SDL.init(Word32.fromLargeInt(SDL.constant "SDL_INIT_VIDEO"))
-        val window=SDL.createWindow{title="Runeffi — SDL3",width=640,height=360,
+        val window=SDL.createWindow{title="Runeffi \226\128\148 SDL3",width=640,height=360,
           flags=Word64.fromLargeInt(SDL.constant "SDL_WINDOW_RESIZABLE")}
         val renderer=SDL.createRenderer(window,SOME "software")
         fun draw ()=

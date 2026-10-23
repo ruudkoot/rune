@@ -56,3 +56,9 @@ with `make test-win32-sdl-contract` and its real GUI counterpart with
 `make test-win32-sdl-contract-gui`. `make test-win32-app-sdl` and
 `make test-win32-app-sdl-gui` regenerate, compile and run this application in
 both bytecodes with collection stress and both JIT tiers.
+
+`make check-cross` compares all seven compiler builds of the complete mock
+application. `make test-sdl-hosts` covers this application's SDL provider and
+the SDL hello project after generation; `make test-win32-hosts` compares both
+native Windows ABI variants. The application and provider fragments are
+compiled through these `.build` entrypoints, never as standalone sources.

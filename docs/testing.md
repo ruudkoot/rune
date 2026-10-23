@@ -316,6 +316,23 @@ test program (`building.md`, *Bootstrapping*). This rests on the compiler
 being deterministic: ordered maps, counter-generated stamps, reals passed
 through as text.
 
+The example inventory covers top-level sources and sources one directory
+below `examples`. `tests/runner/exampleprojects.sml` distinguishes standalone
+programs from `.build` applications and their shared fragments. Example job
+and artifact names include their directory, so root `hello.sml` and SDL's
+`hello.sml` cannot collide. Unknown build entrypoints or unclassified project
+members fail the inventory audit.
+
+`check-cross` and `check-positions` compile the Win32 mock application through
+`examples/win32/mock.build`. The generated providers have focused compilation
+gates: `make test-sdl-hosts` generates the complete SDL binding and compares
+bytecode for both SDL examples across all seven Rune compiler builds;
+`make test-win32-hosts` does the same for the native Win32 application using
+both Windows ABI profiles and the pinned original SDK headers. These gates
+compile the actual `.build` entrypoints without opening GUI libraries. Runtime
+and real-desktop acceptance remain the separate SDL/Windows suites. Project
+fragments are never advertised as standalone programs.
+
 The rest of this page is about the second oracle, because it is the one
 that is easy to break from outside the VM: a count that differs between
 two runs of the same program is either a bug in an engine or a difference

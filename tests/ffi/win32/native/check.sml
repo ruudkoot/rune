@@ -5,7 +5,10 @@ struct
   open Sh
   exception Failed of string
   fun need(ok,message)=if ok then () else raise Failed message
-  val directory=run ^ "/ffi-win32-native/" ^ SysWord.toString(Posix.Process.pidToWord(Posix.ProcEnv.getpid()))
+  val directory=let val reservation=OS.FileSys.tmpName()
+      val path=run ^ "/ffi-win32-native/" ^ OS.Path.file reservation
+      val ()=mkdirs path val ()=OS.FileSys.remove reservation
+    in path end
   fun command environment name args =
     let val ()=mkdirs directory val output=directory ^ "/" ^ name ^ ".out" val errors=output ^ ".err"
         val ()=write(output ^ ".command.json",Json.encode(Json.Array(List.map Json.String args)) ^ "\n")
@@ -143,7 +146,16 @@ struct
         val ()=one("stack",if bits="32" then "bin/runevm-stack32.exe" else "bin/runevm-stack.exe")
         val ()=one("registers",if bits="32" then "bin/runevm32.exe" else "bin/runevm.exe")
     in say("PASS generated native Win32 acceptance: " ^ bits ^ "\n") end
-  fun main ["generate",bits,output]=if bits="32" orelse bits="64" then ignore(generate bits output)
+  fun hostProjects()=
+    let fun width bits=
+          let val generated=directory ^ "/generated-" ^ bits
+              val _=generate bits generated
+          in List.app(fn project=>ExampleProjects.agreement run (directory ^ "/hosts-" ^ bits) project
+            ["--path","WIN32_GENERATED=" ^ fromRoot generated])
+            (List.filter(fn p:ExampleProjects.project=> #gate p=ExampleProjects.NativeWin32)ExampleProjects.projects) end
+    in List.app width["32","64"];say "PASS generated native Win32 example on both ABIs and all seven Rune compiler builds\n" end
+  fun main ["host-projects"]=hostProjects()
+    | main ["generate",bits,output]=if bits="32" orelse bits="64" then ignore(generate bits output)
     else raise Failed "expected Windows width 32 or 64"
     | main ["repl",bits]=if bits="32" orelse bits="64" then repl bits else raise Failed "expected repl 32 or 64"
     | main [mode,bits]=if (bits="32" orelse bits="64") andalso (mode="contract" orelse mode="app")
