@@ -31,6 +31,10 @@ layout and declaration-expression typing are explicit consumers of the
 syntax tree; FFI projection remains separate. Unknown active directives or unsupported declaration syntax
 produce source diagnostics. Original headers are never repaired in place.
 
+[`CDeclarator`](str/CDeclarator.md) renders referenced C types without changing original header
+bytes. It handles pointers, arrays and function declarators and requires
+an original name for anonymous aggregate types.
+
 [How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [i](index/i.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md)
 
 ## Languages
@@ -38,6 +42,7 @@ produce source diagnostics. Original headers are never repaired in place.
 | Signature |  |
 | --- | --- |
 | [`C_CONST`](sig/C_CONST.md) | Integer constant expressions for C preprocessing and declarations. |
+| [`C_DECLARATOR`](sig/C_DECLARATOR.md) | C declarator output for verified native adapters. |
 | [`C_ENUM_CONST`](sig/C_ENUM_CONST.md) | Integer folding of the expressions retained in enum declarations. |
 | [`C_EXPRESSION`](sig/C_EXPRESSION.md) | Typed C integer expressions for target declaration consumers. |
 | [`C_FILES`](sig/C_FILES.md) | File-system include resolution for a C translation unit. |

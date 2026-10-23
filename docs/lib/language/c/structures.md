@@ -15,6 +15,7 @@ the signature names and no others.
 | Structure |  | Signature | Realisations |  | Source |
 | --- | --- | --- | --- | --- | --- |
 | [`CConst`](str/CConst.md) | : | [`C_CONST`](sig/C_CONST.md) |  |  | [lib/language/c/const.sml](../../../../lib/language/c/const.sml) |
+| [`CDeclarator`](str/CDeclarator.md) | : | [`C_DECLARATOR`](sig/C_DECLARATOR.md) |  |  | [lib/language/c/declarator.sml](../../../../lib/language/c/declarator.sml) |
 | [`CEnumConst`](str/CEnumConst.md) | :> | [`C_ENUM_CONST`](sig/C_ENUM_CONST.md) |  |  | [lib/language/c/enum\_const.sml](../../../../lib/language/c/enum_const.sml) |
 | [`CExpression`](str/CExpression.md) | : | [`C_EXPRESSION`](sig/C_EXPRESSION.md) |  |  | [lib/language/c/expression.sml](../../../../lib/language/c/expression.sml) |
 | [`CFiles`](str/CFiles.md) | : | [`C_FILES`](sig/C_FILES.md) |  |  | [lib/language/c/files.sml](../../../../lib/language/c/files.sml) |

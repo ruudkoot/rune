@@ -240,7 +240,7 @@ all: vm boot runedoc runeopt manifests basis-cache
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
-manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
+manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST lib/ffi/runtime/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
 lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -284,6 +284,8 @@ lib/ffi/model/MANIFEST: lib/ffi/model/library.build $(wildcard lib/ffi/model/*.s
 	bin/rune-$(BOOTHOST) --basis-index lib/ffi/model
 lib/ffi/marshal/MANIFEST: lib/ffi/marshal/library.build $(wildcard lib/ffi/marshal/*.sml) lib/unicode/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/ffi/marshal
+lib/ffi/runtime/MANIFEST: lib/ffi/runtime/library.build $(wildcard lib/ffi/runtime/*.sml) lib/ffi/marshal/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/ffi/runtime
 
 # The frozen Basis Library (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
@@ -1220,7 +1222,7 @@ check-docs: check-docs-generated bin/rune-test bin/rune-doc-check
 
 check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
@@ -1230,6 +1232,7 @@ check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_C) --check
 	$(RUNEDOC) $(DOCS_FFI_MODEL) --check
 	$(RUNEDOC) $(DOCS_FFI_MARSHAL) --check
+	$(RUNEDOC) $(DOCS_FFI_RUNTIME) --check
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW) --check
 	$(RUNEDOC) --palette docs/lib/palette --check
@@ -1260,6 +1263,8 @@ DOCS_UNIT := --lib lib --library test/unit --out docs/lib/test/unit --basis-docs
 DOCS_RUNNER := --lib lib --library test/runner --out docs/lib/test/runner --basis-docs ../../basis \
                --library-docs test/unit ../unit --library-docs terminal ../../terminal \
                --conventions ../../conventions.md
+DOCS_FFI_RUNTIME := --lib lib --library ffi/runtime --out docs/lib/ffi/runtime --basis-docs ../../basis \
+                    --library-docs ffi/marshal ../marshal --conventions ../../conventions.md
 DOCS_FFI_MARSHAL := --lib lib --library ffi/marshal --out docs/lib/ffi/marshal --basis-docs ../../basis \
                     --library-docs unicode ../../unicode --conventions ../../conventions.md
 DOCS_FFI_MODEL := --lib lib --library ffi/model --out docs/lib/ffi/model --basis-docs ../../basis \
@@ -1296,7 +1301,8 @@ DOCS_OVERVIEW := --lib lib --overview docs/lib \
 	--library-page digest \
 	--library-page language/c \
 	--library-page ffi/model \
-	--library-page ffi/marshal
+	--library-page ffi/marshal \
+	--library-page ffi/runtime
 
 docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_BASIS)
@@ -1308,6 +1314,7 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_C)
 	$(RUNEDOC) $(DOCS_FFI_MODEL)
 	$(RUNEDOC) $(DOCS_FFI_MARSHAL)
+	$(RUNEDOC) $(DOCS_FFI_RUNTIME)
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW)
 	$(RUNEDOC) --palette docs/lib/palette
@@ -1860,6 +1867,19 @@ test-ffi-model-windows: $(RUNE) vm bin/rune-ffi-model bin/rune-ffi-model-check b
 	$(RUNE_TEST) --tier test-ffi-model-windows
 test-ffi-model-hosts: $(RUNE) vm bin/rune-ffi-model-check bin/rune-test bin/rune-generate
 	$(RUNE_TEST) --tier test-ffi-model-hosts
+
+FFI_SHIM_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/shim-check.sml
+check-tools: bin/rune-ffi-shim-check
+bin/rune-ffi-shim-check.rbc: $(RUNE) $(FFI_SHIM_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner $(FFI_SHIM_CHECK_SRCS) -o $@
+bin/rune-ffi-shim-check: bin/rune-ffi-shim-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-shim-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-ffi-shims test-ffi-shims-hosts
+test-ffi-shims: $(RUNE) vm bin/rune-ffi-shim-check bin/rune-test bin/rune-windows
+	$(RUNE_TEST) --tier test-ffi-shims
+test-ffi-shims-hosts: $(RUNE) vm bin/rune-ffi-shim-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-shims-hosts
 
 C_LAYOUT_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/layout-check.sml
 check-tools: bin/rune-c-layout-check

@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 45 requirements between the 20 files become 26 arrows.
+library and not a wall of lines: the 50 requirements between the 22 files become 29 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Languages<br>(20)"]
+  a0["Languages<br>(22)"]
 ```
 
 ## Languages
@@ -42,14 +42,16 @@ flowchart TD
   n9["CParse"]
   n10(["C_TYPE"])
   n11["CType"]
-  n12(["C_EXPRESSION"])
-  n13["CExpression"]
-  n14(["C_ENUM_CONST"])
-  n15["CEnumConst"]
-  n16(["C_LAYOUT"])
-  n17["CLayout"]
-  n18(["C_FILES"])
-  n19["CFiles"]
+  n12(["C_DECLARATOR"])
+  n13["CDeclarator"]
+  n14(["C_EXPRESSION"])
+  n15["CExpression"]
+  n16(["C_ENUM_CONST"])
+  n17["CEnumConst"]
+  n18(["C_LAYOUT"])
+  n19["CLayout"]
+  n20(["C_FILES"])
+  n21["CFiles"]
   n1 --> n0
   n2 --> n1
   n3 --> n2
@@ -64,18 +66,21 @@ flowchart TD
   n10 --> n5
   n10 --> n9
   n11 --> n10
-  n12 --> n5
   n12 --> n9
   n13 --> n11
   n13 --> n12
-  n14 --> n3
+  n14 --> n5
   n14 --> n9
+  n15 --> n11
   n15 --> n14
+  n16 --> n3
   n16 --> n9
-  n17 --> n11
   n17 --> n16
-  n18 --> n7
+  n18 --> n9
+  n19 --> n11
   n19 --> n18
+  n20 --> n7
+  n21 --> n20
 ```
 
 ---

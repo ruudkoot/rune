@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 22 requirements between the 12 files become 13 arrows.
+library and not a wall of lines: the 23 requirements between the 14 files become 14 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Foreign interfaces<br>(12)"]
+  a0["Foreign interfaces<br>(14)"]
 ```
 
 ## Foreign interfaces
@@ -40,8 +40,10 @@ flowchart TD
   n7["ForeignProjection"]
   n8(["FOREIGN_VALIDATE"])
   n9["ForeignValidate"]
-  n10(["FOREIGN_COVERAGE"])
-  n11["ForeignCoverage"]
+  n10(["FOREIGN_SHIM"])
+  n11["ForeignShim"]
+  n12(["FOREIGN_COVERAGE"])
+  n13["ForeignCoverage"]
   n1 --> n0
   n2 --> n1
   n3 --> n2
@@ -53,8 +55,9 @@ flowchart TD
   n8 --> n5
   n9 --> n8
   n9 --> n7
-  n10 --> n1
   n11 --> n10
+  n12 --> n1
+  n13 --> n12
 ```
 
 ---

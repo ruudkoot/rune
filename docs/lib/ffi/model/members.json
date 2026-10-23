@@ -457,6 +457,40 @@
     }
    ]
   },
+  "FOREIGN_SHIM": {
+   "doc": "Typed C adapters for declarations outside the dynamic scalar ABI.\n\n",
+   "page": "sig/FOREIGN_SHIM.md",
+   "members": [
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of string",
+     "doc": "Invalid adapter names, a missing prototype or unsupported type syntax.\n\n",
+     "page": "sig/FOREIGN_SHIM.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "preamble",
+     "spec": "val preamble : string list -> string",
+     "doc": "`preamble headers` includes original headers and defines adapter exports.\n\nHeader paths are validated; this emits source without running commands.\n\n",
+     "page": "sig/FOREIGN_SHIM.md#val-preamble"
+    },
+    {
+     "kind": "val",
+     "name": "call",
+     "spec": "val call : {name : string, foreign : string, result : CParse.ctype,\n  parameters : CParse.ctype list, indirectResult : bool,\n  indirectArguments : bool list} -> string",
+     "doc": "`call {name, foreign, result, parameters, indirectResult, indirectArguments}`\nemits one typed C wrapper over an original function, inline or macro.\n\nIndirect values cross libffi through pointers, with target C performing\naggregate copies. The original header supplies calling conventions.\nA macro's explicit C result/parameter types are annotation policy.\n\n**Raises** `Error` for a mismatched argument list or unsafe source name.\n\n",
+     "page": "sig/FOREIGN_SHIM.md#val-call"
+    },
+    {
+     "kind": "val",
+     "name": "field",
+     "spec": "val field : {name : string, aggregate : CParse.ctype, path : string list,\n  ty : CParse.ctype, writable : bool} -> string",
+     "doc": "`field {name, aggregate, path, ty, writable}` emits member accessors.\n\nNative C handles bitfields and compiler-specific packing. A writable\naccessor uses normal C assignment conversion, exposed through raw access.\nPublic policy performs any stronger bit-width/range validation.\n\n",
+     "page": "sig/FOREIGN_SHIM.md#val-field"
+    }
+   ]
+  },
   "FOREIGN_VALIDATE": {
    "doc": "Declaration-aware checks before safe binding generation.\n\n",
    "page": "sig/FOREIGN_VALIDATE.md",
@@ -491,6 +525,7 @@
   "ForeignModel": "FOREIGN_MODEL",
   "ForeignPolicy": "FOREIGN_POLICY",
   "ForeignProjection": "FOREIGN_PROJECTION",
+  "ForeignShim": "FOREIGN_SHIM",
   "ForeignValidate": "FOREIGN_VALIDATE"
  }
 }

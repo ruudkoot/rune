@@ -1,5 +1,6 @@
 name	kind	signature	realisations	status	origin	source
 C_CONST	signature			required	declared	lib/language/c/const_sig.sml
+C_DECLARATOR	signature			required	declared	lib/language/c/declarator_sig.sml
 C_ENUM_CONST	signature			required	declared	lib/language/c/enum_const_sig.sml
 C_EXPRESSION	signature			required	declared	lib/language/c/expression_sig.sml
 C_FILES	signature			required	declared	lib/language/c/files_sig.sml
@@ -10,6 +11,7 @@ C_PARSE	signature			required	declared	lib/language/c/parse_sig.sml
 C_PREPROCESS	signature			required	declared	lib/language/c/preprocess_sig.sml
 C_TYPE	signature			required	declared	lib/language/c/type_sig.sml
 CConst	structure	C_CONST		required	claimed	lib/language/c/const.sml
+CDeclarator	structure	C_DECLARATOR		required	claimed	lib/language/c/declarator.sml
 CEnumConst	structure	C_ENUM_CONST		required	claimed	lib/language/c/enum_const.sml
 CExpression	structure	C_EXPRESSION		required	claimed	lib/language/c/expression.sml
 CFiles	structure	C_FILES		required	claimed	lib/language/c/files.sml

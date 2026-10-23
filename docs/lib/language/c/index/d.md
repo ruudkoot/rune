@@ -4,6 +4,7 @@
 
 - `Declaration` (con): [C_PARSE](../sig/C_PARSE.md#con-declaration)
 - `declaration` (type): [C_PARSE](../sig/C_PARSE.md#type-declaration)
+- `declaration` (val): [C_DECLARATOR](../sig/C_DECLARATOR.md#val-declaration)
 - `diagnostic` (val): [C_LEX](../sig/C_LEX.md#val-diagnostic)
 
 ---
