@@ -1,0 +1,20 @@
+{
+ "signatures": {
+  "WIN32_MOCK": {
+   "doc": "Deterministic Win32 GUI implementation and explicit testing controls.\n\n",
+   "page": "sig/WIN32_MOCK.md",
+   "members": [
+    {
+     "kind": "include",
+     "name": "WIN32_MODEL",
+     "spec": "include WIN32_MODEL",
+     "doc": "",
+     "page": "sig/WIN32_MOCK.md#include-win32_model"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Win32Mock": "WIN32_MOCK"
+ }
+}

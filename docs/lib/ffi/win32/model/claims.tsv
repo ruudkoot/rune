@@ -1,0 +1,3 @@
+name	kind	signature	realisations	status	origin	source
+WIN32_MODEL	signature			required	declared	lib/ffi/win32/model/model_sig.sml
+Win32ModelFn	functor	WIN32_MODEL		required	claimed	lib/ffi/win32/model/model.sml

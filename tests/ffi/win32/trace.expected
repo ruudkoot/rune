@@ -1,0 +1,17 @@
+brush 112233
+register trace
+create 1 trace 0,0
+invalidate 1 false
+begin-paint 1 0,0,64,48
+fill 0,0,64,48 112233
+end-paint 1
+post 8001
+send 8002
+set-timer
+kill-timer
+title next
+show 1 1
+send 10
+destroy 1
+delete
+unregister trace
