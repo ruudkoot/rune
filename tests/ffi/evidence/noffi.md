@@ -1,5 +1,9 @@
 # Optional FFI-disabled build — 2026-10-23
 
+Final frozen-source acceptance, including the current API and freshly built
+artifacts, is recorded in [final-noffi.md](final-noffi.md). The older component
+receipt below is retained as historical evidence.
+
 At release worktree snapshot `5f616d0b0`, both `make FFI=no vm JOBS=4`
 and `make FFI=no all JOBS=4` pass. The snapshot includes the generic ABI
 query and image version 15 identity-floor protection. The recorded native

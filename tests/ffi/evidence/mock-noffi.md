@@ -1,5 +1,9 @@
 # Shared application without native FFI — 2026-10-23
 
+Final frozen-source acceptance, including the current API and freshly built
+artifacts, is recorded in [final-noffi.md](final-noffi.md). The older component
+receipt below is retained as historical evidence.
+
 The unchanged `examples/win32/app.sml` compiles against `Win32Mock` with the
 FFI-disabled release checkout's own compiler and runs on its FFI-disabled
 register VM under collection stress 101 and heap verification. It opens no

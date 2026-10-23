@@ -1,0 +1,1393 @@
+{
+  "schema": 1,
+  "date": "2026-10-23T12:16:04.306468+00:00",
+  "source_commit": "ddba4faad9fa5f8540367f1067be35d1b561936d",
+  "worktree": "/home/ruud/rune/.worktrees/runeffi-nofi-final",
+  "tracked_source_clean_before_receipt": true,
+  "configuration": {
+    "FFI": "no",
+    "build_jobs": 2,
+    "bootstrap_jobs": 2,
+    "SYS": "posix",
+    "register_gmp": "enabled system library",
+    "sysnone_vm": {
+      "FFI": "0",
+      "RUNE_JIT": "0",
+      "C_standard": "c99",
+      "GMP": "portable fallback"
+    }
+  },
+  "result": "PASS",
+  "unexpected_failed_attempts": [],
+  "builds": [
+    {
+      "argv": [
+        "make",
+        "-j2",
+        "FFI=no",
+        "all",
+        "JOBS=2"
+      ],
+      "status": 0,
+      "log": "/tmp/runeffi-final-noffi-all.log",
+      "sha256": "b66e8f11003a10df55c98674c6ece6d6ce4219418049f414b1ef26a895c32aa3"
+    },
+    {
+      "argv": [
+        "make",
+        "-j2",
+        "FFI=no",
+        "bootstrap",
+        "JOBS=2"
+      ],
+      "status": 0,
+      "log": "/tmp/runeffi-final-noffi-bootstrap.log",
+      "sha256": "de258a5ba5b11f52963f86444bee5eea57c06f64364aec87e249fd5c9b6d5ae3"
+    },
+    {
+      "argv": [
+        "make",
+        "-j2",
+        "FFI=no",
+        "repl",
+        "JOBS=2"
+      ],
+      "status": 0,
+      "log": "/tmp/runeffi-final-noffi-repl-build.log",
+      "sha256": "98490e3fa5424751b64a7549210fd63f3b88b4ba6892b446d6351f7ef5c9497b"
+    }
+  ],
+  "bootstrap": {
+    "passed": 7,
+    "failed": 0,
+    "events": "tests/out/r/20261023-130423-97/events.jsonl",
+    "events_sha256": "92b5532d7d3953e14f717a9cedb41524840cc89201e504db49e5c758b96e4ab7",
+    "summary": "# rune-test\n\nRESULT: PASS 7 of 7 tests (7 PASS), 5.0 s wall, 8.2 s CPU (82% of 2)\n\nSlowest: bootstrap/register 4.2 s, bootstrap/stack 4.0 s, runner/canary/runs-past-its-time 1.0 s, runner/canary/floods-its-output 0.0 s, runner/canary/crashes 0.0 s\n"
+  },
+  "toolchain": {
+    "CC": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+    "native_Rune_compiler": {
+      "path": "bin/rune-mlton.bin",
+      "sha256": "cba5d0d4f7262bdbbdf297427559d47597554668a1b0f6c251796e7fb595e97b"
+    },
+    "MLton_path": "/home/ruud/.local/rune-hosts/mlton-20241230/bin/mlton",
+    "MLton_sha256": "6ec522c7838d9ebd9e6349c9dc2616f29193390086822a9e026c507eeedca63e",
+    "uname": [
+      "Linux",
+      "ThinkStation",
+      "6.18.33.2-microsoft-standard-WSL2",
+      "#1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026",
+      "x86_64"
+    ]
+  },
+  "native_dynamic_dependencies": {
+    "bin/runevm": "Dynamic section at offset 0x9f628 contains 29 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libgmp.so.10]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0xf000\n 0x000000000000000d (FINI)               0x7d084\n 0x0000000000000019 (INIT_ARRAY)         0x9c0b0\n 0x000000000000001b (INIT_ARRAYSZ)       8 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x9c0b8\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x3b0\n 0x0000000000000005 (STRTAB)             0x1b90\n 0x0000000000000006 (SYMTAB)             0x468\n 0x000000000000000a (STRSZ)              2348 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0xa0838\n 0x0000000000000002 (PLTRELSZ)           5328 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0xd8d0\n 0x0000000000000007 (RELA)               0x27a0\n 0x0000000000000008 (RELASZ)             45360 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000000000001e (FLAGS)              BIND_NOW\n 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE\n 0x000000006ffffffe (VERNEED)            0x26b0\n 0x000000006fffffff (VERNEEDNUM)         2\n 0x000000006ffffff0 (VERSYM)             0x24bc\n 0x000000006ffffff9 (RELACOUNT)          1867\n 0x0000000000000000 (NULL)               0x0",
+    "bin/runevm-stack": "Dynamic section at offset 0x5d720 contains 28 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x9000\n 0x000000000000000d (FINI)               0x48f44\n 0x0000000000000019 (INIT_ARRAY)         0x5b130\n 0x000000000000001b (INIT_ARRAYSZ)       8 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x5b138\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x3b0\n 0x0000000000000005 (STRTAB)             0x1860\n 0x0000000000000006 (SYMTAB)             0x3f0\n 0x000000000000000a (STRSZ)              1972 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0x5d920\n 0x0000000000000002 (PLTRELSZ)           4944 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x76b8\n 0x0000000000000007 (RELA)               0x22b8\n 0x0000000000000008 (RELASZ)             21504 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000000000001e (FLAGS)              BIND_NOW\n 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE\n 0x000000006ffffffe (VERNEED)            0x21c8\n 0x000000006fffffff (VERNEEDNUM)         2\n 0x000000006ffffff0 (VERSYM)             0x2014\n 0x000000006ffffff9 (RELACOUNT)          886\n 0x0000000000000000 (NULL)               0x0",
+    "build/noffi-final/new-api-native": "Dynamic section at offset 0xdb700 contains 28 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x9000\n 0x000000000000000d (FINI)               0xb5814\n 0x0000000000000019 (INIT_ARRAY)         0xd9110\n 0x000000000000001b (INIT_ARRAYSZ)       8 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0xd9118\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x3a0\n 0x0000000000000005 (STRTAB)             0x1898\n 0x0000000000000006 (SYMTAB)             0x3e0\n 0x000000000000000a (STRSZ)              1991 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0xdb900\n 0x0000000000000002 (PLTRELSZ)           5016 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x7710\n 0x0000000000000007 (RELA)               0x2310\n 0x0000000000000008 (RELASZ)             21504 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000000000001e (FLAGS)              BIND_NOW\n 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE\n 0x000000006ffffffe (VERNEED)            0x2220\n 0x000000006fffffff (VERNEEDNUM)         2\n 0x000000006ffffff0 (VERSYM)             0x2060\n 0x000000006ffffff9 (RELACOUNT)          886\n 0x0000000000000000 (NULL)               0x0"
+  },
+  "artifacts": {
+    "bin/runevm": {
+      "sha256": "0d88bec3011df7ad5f08b053607930f10a33feb18945fa821826b81641be7e86",
+      "size": 726520
+    },
+    "bin/runevm-stack": {
+      "sha256": "8694a1c5cc1dbafadb5a91433ed3351db9c592b0346c659085936f65cf3d4529",
+      "size": 435248
+    },
+    "bin/rune.rbc": {
+      "sha256": "36225003fa50774cf84419b904d5c0e74de65bb97eddd7b7525c0ab704695be0",
+      "size": 2956473
+    },
+    "bin/rune.stack.rbc": {
+      "sha256": "98a2107eec9655be183ce2eddd2e2ec283e6773dda517952c62c36e5263593f3",
+      "size": 1956006
+    },
+    "bin/runeffi.rbc": {
+      "sha256": "9144040b994bba876d34a90c0ee905efa56a29bf6827f1b25cf6323fcb5641ba",
+      "size": 868680
+    },
+    "bin/rune-mlton.bin": {
+      "sha256": "cba5d0d4f7262bdbbdf297427559d47597554668a1b0f6c251796e7fb595e97b",
+      "size": 11455608
+    },
+    "bin/rune-repl.img": {
+      "sha256": "b803f0f441c3cebc7713a08fb6f95b5aac4330fe5a1e5fc299d31e8ea7306716",
+      "size": 14720041
+    },
+    "bin/rune-repl.rbc": {
+      "sha256": "7e2f5559e6e052666cbcc25c663fd5b7dfc6fe337946ff4624db70cfbdcf1591",
+      "size": 6105033
+    },
+    "bin/rune-repl.load.rbc": {
+      "sha256": "53fa084ca529039c34eda18c13bd7a69d4fdb3739f96b29206490ddb36d899eb",
+      "size": 64925
+    },
+    "build/librune.a": {
+      "sha256": "da349819d9e177e454859a4ecc6b70af1bafc0a681e23421c49f07e67059fb9f",
+      "size": 639360
+    },
+    "build/gmp/native-build.json": {
+      "sha256": "8fddb3c669fcf17329c0519d2d6a1823cd0def15106dd0ba18a5ab44990c2e03",
+      "size": 9099
+    },
+    "build/noffi-final/disabled-c99-generic": {
+      "sha256": "a8cd412e3f2d10fa6d75c7588bf06ee2a73af9294fd068b844ecee6645c6800a",
+      "size": 17416
+    },
+    "build/noffi-final/disabled-c99-sysnone": {
+      "sha256": "6e7ceac131b05e4ffbf42059d9514084a5ce73be3967a06da81142f6cfe4b79e",
+      "size": 41432
+    },
+    "build/noffi-final/vm-none-stack": {
+      "sha256": "c346dad0a54db64a7c3c63fd448fefa17b1e3498fdd22305dce9fc0d7653ff4b",
+      "size": 355184
+    },
+    "build/noffi-final/vm-none-registers": {
+      "sha256": "adca653d69c93d27c777cb8c9d4a0fe207713ec94682deb42b4c6a07122d36ec",
+      "size": 642160
+    },
+    "build/noffi-final/new-api-native": {
+      "sha256": "c0cae5ed93b4d4f792ce20d4f416f3b675b5518e15c082ecba8aa9e3952f4b4c",
+      "size": 979824
+    }
+  },
+  "source_hashes": {
+    "runtime/foreign.c": "b3b8db215e360c425347476f5d7ce7865f800a39f5d39b06ab229d60d6a0f303",
+    "runtime/foreign_prim.h": "4d5f8b302e367347136f3fda425d9f73f5e734a767610c951e6d9dbeb4306de0",
+    "runtime/sys/sys_none.c": "f9297f9a1b4324f9ccc0c3bdcd780318ac930a2fb688f9685254dfb6b7d463f7",
+    "lib/basis/rune_foreign.sml": "b3d10f2bf3f6234527a0e3be9939f81d29645e2cc83392753a2409ace67d0fdb",
+    "lib/basis/rune_foreign_sig.sml": "e4183fdca3ab2088a59555e47345592b4d8ba54a38801c79903ea0c69c413095",
+    "docs/lib/basis/members.json": "fdaafb1756573db2b908c564a18a6b0f67a2302071db9e721e39c06c9bea9717",
+    "tests/ffi/disabled.sml": "df0b5372ec68199c93e112ac078e9ceb501adde466512acbe370a372ecfacda9",
+    "tests/runtime/foreign_disabled.c": "a24d121044f4db3822d1c8c8f2b8936a3df7199d3f3717a8b2adb1c0951fa226",
+    "examples/win32/app.sml": "a59e868cd661b0f2751d24a028ed3af2eeca0772c73a0ba80af559b1714c6b17",
+    "examples/win32/mock.build": "e763429e0c2ff4d0f7334878e09d4b40f30443e4679b43a5735993b0f520b7b5"
+  },
+  "acceptance_witness_sources": {
+    "new-api.sml": "val noffiPrepareVariadic :\n  {symbol:RuneForeign.resource,abi:int,result:RuneForeign.scalar,\n   arguments:RuneForeign.scalar list,fixedCount:int}->RuneForeign.resource = RuneForeign.prepareVariadic\nval noffiCallbackStatus : {callback:RuneForeign.resource,reset:bool}->\n  {rejected:Word64.word,first:RuneForeign.callbackFault option}=RuneForeign.callbackStatus\nval noffiFaults : RuneForeign.callbackFault list =\n  [RuneForeign.WrongThread,RuneForeign.NoActivation,RuneForeign.EntryDisabled,RuneForeign.EntryFailure]\nfun noffiError action = (action();raise Fail \"native operation succeeded with FFI=no\")\n  handle RuneForeign.Error error=>error\nval noffiFirst=noffiError(fn()=>ignore(RuneForeign.openLibrary \"libc.so.6\"))\nval noffiSecond=noffiError(fn()=>ignore(RuneForeign.openLibrary \"libc.so.6\"))\nval noffiAllocation=noffiError(fn()=>ignore(RuneForeign.allocate 0w1))\nval noffiCallback=noffiError(fn()=>ignore(RuneForeign.callback{abi=0,result=RuneForeign.Void,arguments=[],\n  failure=RuneForeign.Default(RuneForeign.Signed 0),function=fn _=>RuneForeign.Signed 0}))\nval ()=if not(RuneForeign.available()) andalso noffiFirst=noffiSecond andalso noffiFirst=noffiAllocation\n  andalso noffiFirst=noffiCallback andalso #number noffiFirst<>0 andalso #native noffiFirst=0w0\n  andalso #message noffiFirst=\"runtime built without libffi support\" andalso RuneForeign.live()=0w0\n  then Runtime.collect() else raise Fail \"disabled operation is inconsistent or retains resources\"\nval ()=print \"PASS disabled current API: variadic/status types, exact errors, no resources\\n\"\n",
+    "sysnone.sml": "val _ : {symbol:RuneForeign.resource,abi:int,result:RuneForeign.scalar,\n  arguments:RuneForeign.scalar list,fixedCount:int}->RuneForeign.resource=RuneForeign.prepareVariadic\nval _ : {callback:RuneForeign.resource,reset:bool}->\n  {rejected:Word64.word,first:RuneForeign.callbackFault option}=RuneForeign.callbackStatus\nval ()=if RuneForeign.available() orelse RuneForeign.live()<>0w0 then raise Fail \"sys-none FFI configuration\" else ()\nval ()=if #charBits(RuneForeign.abiFacts())<>8 then raise Fail \"sys-none ABI facts\" else ()\nval ()=if (ignore(RuneForeign.openLibrary \"unused\");false)handle RuneForeign.Error{number,message,...}=>\n  number<>0 andalso message=\"runtime built without libffi support\" then () else raise Fail \"sys-none unsupported native operation\"\nval ()=Runtime.collect()\n",
+    "negative.sml": "val ()=raise Fail \"sysnone execution control\"\n"
+  },
+  "generation": {
+    "scalars": "(* Generated by runeffi. Immutable generation: df3959c0401ee061af5ecaa1a72e1679f8f910b469383a28507ebc902feabfb3 *)\napi/0382091bb4c360beaa012971f23909f305650a92242391a09dc51adb7af8801c/public_sig.sml\nuse sets/df3959c0401ee061af5ecaa1a72e1679f8f910b469383a28507ebc902feabfb3/native.build\napi/0382091bb4c360beaa012971f23909f305650a92242391a09dc51adb7af8801c/virtual.sml\n",
+    "safe": "(* Generated by runeffi. Immutable generation: 081e198f5104f1bcd954bec91e291a14629ac9166b0f7085efb81d2ade25d3d6 *)\napi/eb4a28a7951e7fcf10e728248e7979598f7e31841a376ca15f696cd89b7a8100/public_sig.sml\nuse sets/081e198f5104f1bcd954bec91e291a14629ac9166b0f7085efb81d2ade25d3d6/native.build\napi/eb4a28a7951e7fcf10e728248e7979598f7e31841a376ca15f696cd89b7a8100/virtual.sml\n"
+  },
+  "commands": [
+    {
+      "label": "compile-disabled-stack",
+      "argv": [
+        "./bin/rune",
+        "--target=stack",
+        "tests/ffi/disabled.sml",
+        "-o",
+        "build/noffi-final/disabled-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 1.3949754160130396,
+      "stdout": "build/noffi-final/0-compile-disabled-stack.out",
+      "stderr": "build/noffi-final/0-compile-disabled-stack.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "disabled-stack-0",
+      "argv": [
+        "./bin/runevm-stack",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/disabled-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.05060865302220918,
+      "stdout": "build/noffi-final/1-disabled-stack-0.out",
+      "stderr": "build/noffi-final/1-disabled-stack-0.err",
+      "stdout_text": "PASS foreign disabled: deterministic availability error\n",
+      "stderr_text": "",
+      "stdout_sha256": "8eed4b0252a122accadc6901b93471c97b83468b0f48db5091abe7991e49f08f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-new-api-stack",
+      "argv": [
+        "./bin/rune",
+        "--target=stack",
+        "build/noffi-final/new-api.sml",
+        "-o",
+        "build/noffi-final/new-api-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 1.533036394015653,
+      "stdout": "build/noffi-final/2-compile-new-api-stack.out",
+      "stderr": "build/noffi-final/2-compile-new-api-stack.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "new-api-stack-0",
+      "argv": [
+        "./bin/runevm-stack",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/new-api-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.037487549998331815,
+      "stdout": "build/noffi-final/3-new-api-stack-0.out",
+      "stderr": "build/noffi-final/3-new-api-stack-0.err",
+      "stdout_text": "PASS disabled current API: variadic/status types, exact errors, no resources\n",
+      "stderr_text": "",
+      "stdout_sha256": "dc446506256cbfc520908fc697ca7bbed6b3b602d7175914e288b21483015e18",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-abi-stack",
+      "argv": [
+        "./bin/rune",
+        "--target=stack",
+        "tests/lang/basis.runeforeign_abi-facts.sml",
+        "-o",
+        "build/noffi-final/abi-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.623525773989968,
+      "stdout": "build/noffi-final/4-compile-abi-stack.out",
+      "stderr": "build/noffi-final/4-compile-abi-stack.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "abi-stack-0",
+      "argv": [
+        "./bin/runevm-stack",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/abi-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.020646587014198303,
+      "stdout": "build/noffi-final/5-abi-stack-0.out",
+      "stderr": "build/noffi-final/5-abi-stack-0.err",
+      "stdout_text": "PASS native C ABI facts\n",
+      "stderr_text": "",
+      "stdout_sha256": "ea02825a310a904acbe21d2045e9360b0dac03d77d138e11840f6a35cb61ade2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-variadic-stack",
+      "argv": [
+        "./bin/rune",
+        "--target=stack",
+        "tests/lang/basis.runeforeign_variadic.sml",
+        "-o",
+        "build/noffi-final/variadic-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 1.531638832995668,
+      "stdout": "build/noffi-final/6-compile-variadic-stack.out",
+      "stderr": "build/noffi-final/6-compile-variadic-stack.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "variadic-stack-0",
+      "argv": [
+        "./bin/runevm-stack",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/variadic-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.0279980179911945,
+      "stdout": "build/noffi-final/7-variadic-stack-0.out",
+      "stderr": "build/noffi-final/7-variadic-stack-0.err",
+      "stdout_text": "promoted variadic signatures retain exact types and clean up\n",
+      "stderr_text": "",
+      "stdout_sha256": "3114070e1ee28341bebfa8e5ddd3a3b3edfa75fc9a5a13af0c79366e5bef4509",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-status-stack",
+      "argv": [
+        "./bin/rune",
+        "--target=stack",
+        "tests/lang/basis.runeforeign_callbackstatus.sml",
+        "-o",
+        "build/noffi-final/status-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 1.4293858050077688,
+      "stdout": "build/noffi-final/8-compile-status-stack.out",
+      "stderr": "build/noffi-final/8-compile-status-stack.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "status-stack-0",
+      "argv": [
+        "./bin/runevm-stack",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/status-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.009196838014759123,
+      "stdout": "build/noffi-final/9-status-stack-0.out",
+      "stderr": "build/noffi-final/9-status-stack-0.err",
+      "stdout_text": "callback fault snapshots reset atomically and retain resource guards\n",
+      "stderr_text": "",
+      "stdout_sha256": "05c1558d37c23742940fb6cadd4fa2db6576c02c337fbc97ba590b016f9a1083",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-disabled-registers",
+      "argv": [
+        "./bin/rune",
+        "--target=registers",
+        "tests/ffi/disabled.sml",
+        "-o",
+        "build/noffi-final/disabled-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 2.01286826498108,
+      "stdout": "build/noffi-final/10-compile-disabled-registers.out",
+      "stderr": "build/noffi-final/10-compile-disabled-registers.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "disabled-registers-0",
+      "argv": [
+        "./bin/runevm",
+        "--jit=off",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/disabled-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.03397295298054814,
+      "stdout": "build/noffi-final/11-disabled-registers-0.out",
+      "stderr": "build/noffi-final/11-disabled-registers-0.err",
+      "stdout_text": "PASS foreign disabled: deterministic availability error\n",
+      "stderr_text": "",
+      "stdout_sha256": "8eed4b0252a122accadc6901b93471c97b83468b0f48db5091abe7991e49f08f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "disabled-registers-1",
+      "argv": [
+        "./bin/runevm",
+        "--jit=baseline",
+        "--jit-calls=1",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/disabled-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.07006359100341797,
+      "stdout": "build/noffi-final/12-disabled-registers-1.out",
+      "stderr": "build/noffi-final/12-disabled-registers-1.err",
+      "stdout_text": "PASS foreign disabled: deterministic availability error\n",
+      "stderr_text": "",
+      "stdout_sha256": "8eed4b0252a122accadc6901b93471c97b83468b0f48db5091abe7991e49f08f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "disabled-registers-2",
+      "argv": [
+        "./bin/runevm",
+        "--jit=opt",
+        "--jit-calls=1",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/disabled-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.11860573798185214,
+      "stdout": "build/noffi-final/13-disabled-registers-2.out",
+      "stderr": "build/noffi-final/13-disabled-registers-2.err",
+      "stdout_text": "PASS foreign disabled: deterministic availability error\n",
+      "stderr_text": "",
+      "stdout_sha256": "8eed4b0252a122accadc6901b93471c97b83468b0f48db5091abe7991e49f08f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-new-api-registers",
+      "argv": [
+        "./bin/rune",
+        "--target=registers",
+        "build/noffi-final/new-api.sml",
+        "-o",
+        "build/noffi-final/new-api-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 1.1261002289829776,
+      "stdout": "build/noffi-final/14-compile-new-api-registers.out",
+      "stderr": "build/noffi-final/14-compile-new-api-registers.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "new-api-registers-0",
+      "argv": [
+        "./bin/runevm",
+        "--jit=off",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/new-api-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.06869996699970216,
+      "stdout": "build/noffi-final/15-new-api-registers-0.out",
+      "stderr": "build/noffi-final/15-new-api-registers-0.err",
+      "stdout_text": "PASS disabled current API: variadic/status types, exact errors, no resources\n",
+      "stderr_text": "",
+      "stdout_sha256": "dc446506256cbfc520908fc697ca7bbed6b3b602d7175914e288b21483015e18",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "new-api-registers-1",
+      "argv": [
+        "./bin/runevm",
+        "--jit=baseline",
+        "--jit-calls=1",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/new-api-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.04243296998902224,
+      "stdout": "build/noffi-final/16-new-api-registers-1.out",
+      "stderr": "build/noffi-final/16-new-api-registers-1.err",
+      "stdout_text": "PASS disabled current API: variadic/status types, exact errors, no resources\n",
+      "stderr_text": "",
+      "stdout_sha256": "dc446506256cbfc520908fc697ca7bbed6b3b602d7175914e288b21483015e18",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "new-api-registers-2",
+      "argv": [
+        "./bin/runevm",
+        "--jit=opt",
+        "--jit-calls=1",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/new-api-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.06681628100341186,
+      "stdout": "build/noffi-final/17-new-api-registers-2.out",
+      "stderr": "build/noffi-final/17-new-api-registers-2.err",
+      "stdout_text": "PASS disabled current API: variadic/status types, exact errors, no resources\n",
+      "stderr_text": "",
+      "stdout_sha256": "dc446506256cbfc520908fc697ca7bbed6b3b602d7175914e288b21483015e18",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-abi-registers",
+      "argv": [
+        "./bin/rune",
+        "--target=registers",
+        "tests/lang/basis.runeforeign_abi-facts.sml",
+        "-o",
+        "build/noffi-final/abi-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 1.0864129799883813,
+      "stdout": "build/noffi-final/18-compile-abi-registers.out",
+      "stderr": "build/noffi-final/18-compile-abi-registers.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "abi-registers-0",
+      "argv": [
+        "./bin/runevm",
+        "--jit=off",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/abi-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.011491320008644834,
+      "stdout": "build/noffi-final/19-abi-registers-0.out",
+      "stderr": "build/noffi-final/19-abi-registers-0.err",
+      "stdout_text": "PASS native C ABI facts\n",
+      "stderr_text": "",
+      "stdout_sha256": "ea02825a310a904acbe21d2045e9360b0dac03d77d138e11840f6a35cb61ade2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "abi-registers-1",
+      "argv": [
+        "./bin/runevm",
+        "--jit=baseline",
+        "--jit-calls=1",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/abi-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.023445140977855772,
+      "stdout": "build/noffi-final/20-abi-registers-1.out",
+      "stderr": "build/noffi-final/20-abi-registers-1.err",
+      "stdout_text": "PASS native C ABI facts\n",
+      "stderr_text": "",
+      "stdout_sha256": "ea02825a310a904acbe21d2045e9360b0dac03d77d138e11840f6a35cb61ade2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "abi-registers-2",
+      "argv": [
+        "./bin/runevm",
+        "--jit=opt",
+        "--jit-calls=1",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/abi-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.026600545999826863,
+      "stdout": "build/noffi-final/21-abi-registers-2.out",
+      "stderr": "build/noffi-final/21-abi-registers-2.err",
+      "stdout_text": "PASS native C ABI facts\n",
+      "stderr_text": "",
+      "stdout_sha256": "ea02825a310a904acbe21d2045e9360b0dac03d77d138e11840f6a35cb61ade2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-variadic-registers",
+      "argv": [
+        "./bin/rune",
+        "--target=registers",
+        "tests/lang/basis.runeforeign_variadic.sml",
+        "-o",
+        "build/noffi-final/variadic-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 1.1890088259824552,
+      "stdout": "build/noffi-final/22-compile-variadic-registers.out",
+      "stderr": "build/noffi-final/22-compile-variadic-registers.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "variadic-registers-0",
+      "argv": [
+        "./bin/runevm",
+        "--jit=off",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/variadic-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.06554999799118377,
+      "stdout": "build/noffi-final/23-variadic-registers-0.out",
+      "stderr": "build/noffi-final/23-variadic-registers-0.err",
+      "stdout_text": "promoted variadic signatures retain exact types and clean up\n",
+      "stderr_text": "",
+      "stdout_sha256": "3114070e1ee28341bebfa8e5ddd3a3b3edfa75fc9a5a13af0c79366e5bef4509",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "variadic-registers-1",
+      "argv": [
+        "./bin/runevm",
+        "--jit=baseline",
+        "--jit-calls=1",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/variadic-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.07058850600151345,
+      "stdout": "build/noffi-final/24-variadic-registers-1.out",
+      "stderr": "build/noffi-final/24-variadic-registers-1.err",
+      "stdout_text": "promoted variadic signatures retain exact types and clean up\n",
+      "stderr_text": "",
+      "stdout_sha256": "3114070e1ee28341bebfa8e5ddd3a3b3edfa75fc9a5a13af0c79366e5bef4509",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "variadic-registers-2",
+      "argv": [
+        "./bin/runevm",
+        "--jit=opt",
+        "--jit-calls=1",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/variadic-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.06728379998821765,
+      "stdout": "build/noffi-final/25-variadic-registers-2.out",
+      "stderr": "build/noffi-final/25-variadic-registers-2.err",
+      "stdout_text": "promoted variadic signatures retain exact types and clean up\n",
+      "stderr_text": "",
+      "stdout_sha256": "3114070e1ee28341bebfa8e5ddd3a3b3edfa75fc9a5a13af0c79366e5bef4509",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-status-registers",
+      "argv": [
+        "./bin/rune",
+        "--target=registers",
+        "tests/lang/basis.runeforeign_callbackstatus.sml",
+        "-o",
+        "build/noffi-final/status-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 1.2892920330050401,
+      "stdout": "build/noffi-final/26-compile-status-registers.out",
+      "stderr": "build/noffi-final/26-compile-status-registers.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "status-registers-0",
+      "argv": [
+        "./bin/runevm",
+        "--jit=off",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/status-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.011598512006457895,
+      "stdout": "build/noffi-final/27-status-registers-0.out",
+      "stderr": "build/noffi-final/27-status-registers-0.err",
+      "stdout_text": "callback fault snapshots reset atomically and retain resource guards\n",
+      "stderr_text": "",
+      "stdout_sha256": "05c1558d37c23742940fb6cadd4fa2db6576c02c337fbc97ba590b016f9a1083",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "status-registers-1",
+      "argv": [
+        "./bin/runevm",
+        "--jit=baseline",
+        "--jit-calls=1",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/status-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.02005421998910606,
+      "stdout": "build/noffi-final/28-status-registers-1.out",
+      "stderr": "build/noffi-final/28-status-registers-1.err",
+      "stdout_text": "callback fault snapshots reset atomically and retain resource guards\n",
+      "stderr_text": "",
+      "stdout_sha256": "05c1558d37c23742940fb6cadd4fa2db6576c02c337fbc97ba590b016f9a1083",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "status-registers-2",
+      "argv": [
+        "./bin/runevm",
+        "--jit=opt",
+        "--jit-calls=1",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/status-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.0233227240096312,
+      "stdout": "build/noffi-final/29-status-registers-2.out",
+      "stderr": "build/noffi-final/29-status-registers-2.err",
+      "stdout_text": "callback fault snapshots reset atomically and retain resource guards\n",
+      "stderr_text": "",
+      "stdout_sha256": "05c1558d37c23742940fb6cadd4fa2db6576c02c337fbc97ba590b016f9a1083",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-c99-generic",
+      "argv": [
+        "cc",
+        "-std=c99",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pedantic",
+        "-DRUNE_FFI=0",
+        "-Iruntime",
+        "tests/runtime/foreign_disabled.c",
+        "runtime/foreign.c",
+        "-o",
+        "build/noffi-final/disabled-c99-generic"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.7783986830036156,
+      "stdout": "build/noffi-final/30-compile-c99-generic.out",
+      "stderr": "build/noffi-final/30-compile-c99-generic.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "run-c99-generic",
+      "argv": [
+        "./build/noffi-final/disabled-c99-generic"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.0043213040044065565,
+      "stdout": "build/noffi-final/31-run-c99-generic.out",
+      "stderr": "build/noffi-final/31-run-c99-generic.err",
+      "stdout_text": "PASS foreign disabled C: no libffi dependency\n",
+      "stderr_text": "",
+      "stdout_sha256": "992d8d2c4952504a0cfa1577e156725819d7147c7f3fc4fc41bedc7e774f136e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-c99-sysnone",
+      "argv": [
+        "cc",
+        "-std=c99",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pedantic",
+        "-DRUNE_FFI=0",
+        "-Iruntime",
+        "tests/runtime/foreign_disabled.c",
+        "runtime/foreign.c",
+        "runtime/sys/sys_none.c",
+        "-o",
+        "build/noffi-final/disabled-c99-sysnone"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 1.248885009001242,
+      "stdout": "build/noffi-final/32-compile-c99-sysnone.out",
+      "stderr": "build/noffi-final/32-compile-c99-sysnone.err",
+      "stdout_text": "",
+      "stderr_text": "/usr/bin/ld: /tmp/ccHo3gj0.o: in function `sys_tmp_name':\nsys_none.c:(.text+0x4e5): warning: the use of `tmpnam' is dangerous, better use `mkstemp'\n",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "1f35f0d67822cb903580aa5204506bbe33c8a8bf860ce7fddca455d0b93235a9"
+    },
+    {
+      "label": "run-c99-sysnone",
+      "argv": [
+        "./build/noffi-final/disabled-c99-sysnone"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.006215203000465408,
+      "stdout": "build/noffi-final/33-run-c99-sysnone.out",
+      "stderr": "build/noffi-final/33-run-c99-sysnone.err",
+      "stdout_text": "PASS foreign disabled C: no libffi dependency\n",
+      "stderr_text": "",
+      "stdout_sha256": "992d8d2c4952504a0cfa1577e156725819d7147c7f3fc4fc41bedc7e774f136e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "generate-scalars",
+      "argv": [
+        "./bin/runeffi",
+        "generate",
+        "--config",
+        "tests/ffi/generator/scalars.ffi",
+        "--target",
+        "ffi/targets/linux-x86_64.json",
+        "--out",
+        "build/noffi-final/generated-scalars"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.1719908129889518,
+      "stdout": "build/noffi-final/34-generate-scalars.out",
+      "stderr": "build/noffi-final/34-generate-scalars.err",
+      "stdout_text": "PASS runeffi generate df3959c0401ee061af5ecaa1a72e1679f8f910b469383a28507ebc902feabfb3\n",
+      "stderr_text": "",
+      "stdout_sha256": "51798006ef535e9a8da0c65a05e254aaf09aa9de46b05c8f198cfddca0267d5c",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "regenerate-scalars",
+      "argv": [
+        "./bin/runeffi",
+        "generate",
+        "--config",
+        "tests/ffi/generator/scalars.ffi",
+        "--target",
+        "ffi/targets/linux-x86_64.json",
+        "--out",
+        "build/noffi-final/generated-scalars"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.16985149000538513,
+      "stdout": "build/noffi-final/35-regenerate-scalars.out",
+      "stderr": "build/noffi-final/35-regenerate-scalars.err",
+      "stdout_text": "PASS runeffi generate df3959c0401ee061af5ecaa1a72e1679f8f910b469383a28507ebc902feabfb3\n",
+      "stderr_text": "",
+      "stdout_sha256": "51798006ef535e9a8da0c65a05e254aaf09aa9de46b05c8f198cfddca0267d5c",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "check-scalars",
+      "argv": [
+        "./bin/runeffi",
+        "check",
+        "--config",
+        "tests/ffi/generator/scalars.ffi",
+        "--target",
+        "ffi/targets/linux-x86_64.json",
+        "--out",
+        "build/noffi-final/generated-scalars"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.16744530899450183,
+      "stdout": "build/noffi-final/36-check-scalars.out",
+      "stderr": "build/noffi-final/36-check-scalars.err",
+      "stdout_text": "PASS runeffi check df3959c0401ee061af5ecaa1a72e1679f8f910b469383a28507ebc902feabfb3\n",
+      "stderr_text": "",
+      "stdout_sha256": "27122e6abfae0a6c511b69d7481c55e18a6fd68ed0498a767135ad41aeaaf298",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "generate-safe",
+      "argv": [
+        "./bin/runeffi",
+        "generate",
+        "--config",
+        "tests/ffi/generator/safe.ffi",
+        "--target",
+        "ffi/targets/linux-x86_64.json",
+        "--out",
+        "build/noffi-final/generated-safe"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.47120671599986963,
+      "stdout": "build/noffi-final/37-generate-safe.out",
+      "stderr": "build/noffi-final/37-generate-safe.err",
+      "stdout_text": "PASS runeffi generate 081e198f5104f1bcd954bec91e291a14629ac9166b0f7085efb81d2ade25d3d6\n",
+      "stderr_text": "",
+      "stdout_sha256": "51b3dbee3051d88f0e53e2bdfb4e370efd7c8d9b1bb2932105e6a4dc2a13c767",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "regenerate-safe",
+      "argv": [
+        "./bin/runeffi",
+        "generate",
+        "--config",
+        "tests/ffi/generator/safe.ffi",
+        "--target",
+        "ffi/targets/linux-x86_64.json",
+        "--out",
+        "build/noffi-final/generated-safe"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.2235320219770074,
+      "stdout": "build/noffi-final/38-regenerate-safe.out",
+      "stderr": "build/noffi-final/38-regenerate-safe.err",
+      "stdout_text": "PASS runeffi generate 081e198f5104f1bcd954bec91e291a14629ac9166b0f7085efb81d2ade25d3d6\n",
+      "stderr_text": "",
+      "stdout_sha256": "51b3dbee3051d88f0e53e2bdfb4e370efd7c8d9b1bb2932105e6a4dc2a13c767",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "check-safe",
+      "argv": [
+        "./bin/runeffi",
+        "check",
+        "--config",
+        "tests/ffi/generator/safe.ffi",
+        "--target",
+        "ffi/targets/linux-x86_64.json",
+        "--out",
+        "build/noffi-final/generated-safe"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.3741406250046566,
+      "stdout": "build/noffi-final/39-check-safe.out",
+      "stderr": "build/noffi-final/39-check-safe.err",
+      "stdout_text": "PASS runeffi check 081e198f5104f1bcd954bec91e291a14629ac9166b0f7085efb81d2ade25d3d6\n",
+      "stderr_text": "",
+      "stdout_sha256": "37a7051372d60f0865ee0fde3d63638e9860341e982e6d421c3a52abe0ce134e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-mock-stack",
+      "argv": [
+        "./bin/rune",
+        "--target=stack",
+        "--library",
+        "ffi/win32/mock",
+        "--build",
+        "examples/win32/mock.build",
+        "-o",
+        "build/noffi-final/mock-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 2.8465020149888005,
+      "stdout": "build/noffi-final/40-compile-mock-stack.out",
+      "stderr": "build/noffi-final/40-compile-mock-stack.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "mock-stack",
+      "argv": [
+        "./bin/runevm-stack",
+        "--gc-stress",
+        "101",
+        "--gc-verify",
+        "build/noffi-final/mock-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.06582866900134832,
+      "stdout": "build/noffi-final/41-mock-stack.out",
+      "stderr": "build/noffi-final/41-mock-stack.err",
+      "stdout_text": "PASS shared Win32 application: 0\n",
+      "stderr_text": "",
+      "stdout_sha256": "23154e8c8bc37b3d80bbadac520bbace7557886647330c0c9d154f32aebdd992",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-mock-registers",
+      "argv": [
+        "./bin/rune",
+        "--target=registers",
+        "--library",
+        "ffi/win32/mock",
+        "--build",
+        "examples/win32/mock.build",
+        "-o",
+        "build/noffi-final/mock-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 2.4428587300062645,
+      "stdout": "build/noffi-final/42-compile-mock-registers.out",
+      "stderr": "build/noffi-final/42-compile-mock-registers.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "mock-registers",
+      "argv": [
+        "./bin/runevm",
+        "--gc-stress",
+        "101",
+        "--gc-verify",
+        "build/noffi-final/mock-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.1194084059970919,
+      "stdout": "build/noffi-final/43-mock-registers.out",
+      "stderr": "build/noffi-final/43-mock-registers.err",
+      "stdout_text": "PASS shared Win32 application: 0\n",
+      "stderr_text": "",
+      "stdout_sha256": "23154e8c8bc37b3d80bbadac520bbace7557886647330c0c9d154f32aebdd992",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "frozen-repl",
+      "argv": [
+        "./bin/rune-repl",
+        "--no-init",
+        "--basic",
+        "--color=never",
+        "-q",
+        "-e",
+        "val noffiPrepareVariadic :\n  {symbol:RuneForeign.resource,abi:int,result:RuneForeign.scalar,\n   arguments:RuneForeign.scalar list,fixedCount:int}->RuneForeign.resource = RuneForeign.prepareVariadic\nval noffiCallbackStatus : {callback:RuneForeign.resource,reset:bool}->\n  {rejected:Word64.word,first:RuneForeign.callbackFault option}=RuneForeign.callbackStatus\nval noffiFaults : RuneForeign.callbackFault list =\n  [RuneForeign.WrongThread,RuneForeign.NoActivation,RuneForeign.EntryDisabled,RuneForeign.EntryFailure]\nfun noffiError action = (action();raise Fail \"native operation succeeded with FFI=no\")\n  handle RuneForeign.Error error=>error\nval noffiFirst=noffiError(fn()=>ignore(RuneForeign.openLibrary \"libc.so.6\"))\nval noffiSecond=noffiError(fn()=>ignore(RuneForeign.openLibrary \"libc.so.6\"))\nval noffiAllocation=noffiError(fn()=>ignore(RuneForeign.allocate 0w1))\nval noffiCallback=noffiError(fn()=>ignore(RuneForeign.callback{abi=0,result=RuneForeign.Void,arguments=[],\n  failure=RuneForeign.Default(RuneForeign.Signed 0),function=fn _=>RuneForeign.Signed 0}))\nval ()=if not(RuneForeign.available()) andalso noffiFirst=noffiSecond andalso noffiFirst=noffiAllocation\n  andalso noffiFirst=noffiCallback andalso #number noffiFirst<>0 andalso #native noffiFirst=0w0\n  andalso #message noffiFirst=\"runtime built without libffi support\" andalso RuneForeign.live()=0w0\n  then Runtime.collect() else raise Fail \"disabled operation is inconsistent or retains resources\"\nval ()=print \"PASS disabled current API: variadic/status types, exact errors, no resources\\n\"\n\nval ()=if #charBits(RuneForeign.abiFacts())=8 then print \"PASS noffi REPL ABI facts\\n\" else raise Fail \"REPL ABI facts\";\n"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.48274228497757576,
+      "stdout": "build/noffi-final/44-frozen-repl.out",
+      "stderr": "build/noffi-final/44-frozen-repl.err",
+      "stdout_text": "PASS disabled current API: variadic/status types, exact errors, no resources\nPASS noffi REPL ABI facts\nval noffiAllocation = {message = \"runtime built without libffi support\",\n                       native = 0wx0,\n                       number = 38}\n  : {message : string, native : Word32.word, number : int}\nval noffiCallback = {message = \"runtime built without libffi support\",\n                     native = 0wx0,\n                     number = 38}\n  : {message : string, native : Word32.word, number : int}\nval noffiCallbackStatus = fn\n  : {callback : RuneForeign.resource, reset : bool} -> {first : RuneForeign.callbackFault option, rejected : _word64}\nval noffiError = fn\n  : (unit -> 'a) -> {message : string, native : Word32.word, number : int}\nval noffiFaults = [?, ?, ?, ?] : RuneForeign.callbackFault list\nval noffiFirst = {message = \"runtime built without libffi support\",\n                  native = 0wx0,\n                  number = 38}\n  : {message : string, native : Word32.word, number : int}\nval noffiPrepareVariadic = fn\n  : {abi : int, arguments : RuneForeign.scalar list, fixedCount : int, result : RuneForeign.scalar, symbol : RuneForeign.resource} -> RuneForeign.resource\nval noffiSecond = {message = \"runtime built without libffi support\",\n                   native = 0wx0,\n                   number = 38}\n  : {message : string, native : Word32.word, number : int}\n",
+      "stderr_text": "",
+      "stdout_sha256": "943f80af02c27886cb274f0e635ff04252a9adb067c60913d330d84f1aa6f814",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "sysnone-source-lists",
+      "argv": [
+        "make",
+        "-s",
+        "FFI=no",
+        "GMP=no",
+        "SYS=none",
+        "--eval=noffi-sources: ; @printf \"STACK:%s\\nREG:%s\\n\" \"$(VM_SRCS)\" \"$(NEW_SRCS)\"",
+        "noffi-sources"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.5716168300132267,
+      "stdout": "build/noffi-final/45-sysnone-source-lists.out",
+      "stderr": "build/noffi-final/45-sysnone-source-lists.err",
+      "stdout_text": "GMP: SML fallback: disabled by GMP=no\nSTACK:runtime/main.c runtime/stack/interp.c runtime/callback.c runtime/foreign.c runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c runtime/sys/sys_none.c\nREG:runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c runtime/register/jit/dump.c runtime/callback.c runtime/foreign.c runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/prims.c runtime/image.c runtime/sys/sys_none.c\n",
+      "stderr_text": "",
+      "stdout_sha256": "a74d7785d3e7bcb5d9bc4290d086680cb8933fe5eeedef9d16e29f6d52feded2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-vm-none-stack",
+      "argv": [
+        "cc",
+        "-std=c99",
+        "-O1",
+        "-Wall",
+        "-Wextra",
+        "-pedantic",
+        "-DRUNE_FFI=0",
+        "-DRUNE_JIT=0",
+        "-Iruntime",
+        "-o",
+        "build/noffi-final/vm-none-stack",
+        "runtime/main.c",
+        "runtime/stack/interp.c",
+        "runtime/callback.c",
+        "runtime/foreign.c",
+        "runtime/intinf.c",
+        "runtime/runtime.c",
+        "runtime/heap.c",
+        "runtime/gc/chunk.c",
+        "runtime/gc/copy.c",
+        "runtime/gc/minor.c",
+        "runtime/gc/los.c",
+        "runtime/gc/mark.c",
+        "runtime/gc/immix.c",
+        "runtime/gc/segfit.c",
+        "runtime/gc/compact.c",
+        "runtime/gc/cycle.c",
+        "runtime/gc/check.c",
+        "runtime/gc/log.c",
+        "runtime/gc/share.c",
+        "runtime/loader.c",
+        "runtime/debug.c",
+        "runtime/stack/isa_stack.c",
+        "runtime/prims.c",
+        "runtime/image.c",
+        "runtime/sys/sys_none.c",
+        "-lm"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 13.555877417995362,
+      "stdout": "build/noffi-final/46-compile-vm-none-stack.out",
+      "stderr": "build/noffi-final/46-compile-vm-none-stack.err",
+      "stdout_text": "",
+      "stderr_text": "/usr/bin/ld: /tmp/ccy38n3b.o: in function `sys_tmp_name':\nsys_none.c:(.text+0x356): warning: the use of `tmpnam' is dangerous, better use `mkstemp'\n",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "2ffddbf17190de10a7c4268d05b3cfaebc2e4bf6a99fa309d4095c2498fa58c1"
+    },
+    {
+      "label": "compile-sysnone-stack",
+      "argv": [
+        "./bin/rune",
+        "--target=stack",
+        "build/noffi-final/sysnone.sml",
+        "-o",
+        "build/noffi-final/sysnone-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.8228363110101782,
+      "stdout": "build/noffi-final/47-compile-sysnone-stack.out",
+      "stderr": "build/noffi-final/47-compile-sysnone-stack.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "run-vm-none-stack",
+      "argv": [
+        "./build/noffi-final/vm-none-stack",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/sysnone-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.07124748799833469,
+      "stdout": "build/noffi-final/48-run-vm-none-stack.out",
+      "stderr": "build/noffi-final/48-run-vm-none-stack.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-negative-stack",
+      "argv": [
+        "./bin/rune",
+        "--target=stack",
+        "build/noffi-final/negative.sml",
+        "-o",
+        "build/noffi-final/negative-stack.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.22300528699997813,
+      "stdout": "build/noffi-final/49-compile-negative-stack.out",
+      "stderr": "build/noffi-final/49-compile-negative-stack.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "reject-negative-stack",
+      "argv": [
+        "./build/noffi-final/vm-none-stack",
+        "build/noffi-final/negative-stack.rbc"
+      ],
+      "status": 1,
+      "expected": null,
+      "seconds": 0.005599258001893759,
+      "stdout": "build/noffi-final/50-reject-negative-stack.out",
+      "stderr": "build/noffi-final/50-reject-negative-stack.err",
+      "stdout_text": "",
+      "stderr_text": "runevm: uncaught exception Fail \"sysnone execution control\"\n  in <toplevel> at build/noffi-final/negative.sml:1:14\n",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "ac1df693389ba37acd3ccc1e1c7339ebeb4f9692a3915ffa0f83e077ae9e6a3a"
+    },
+    {
+      "label": "compile-vm-none-registers",
+      "argv": [
+        "cc",
+        "-std=c99",
+        "-O1",
+        "-Wall",
+        "-Wextra",
+        "-pedantic",
+        "-DRUNE_FFI=0",
+        "-DRUNE_JIT=0",
+        "-Iruntime",
+        "-o",
+        "build/noffi-final/vm-none-registers",
+        "runtime/main.c",
+        "runtime/register/interp.c",
+        "runtime/register/debug_loop.c",
+        "runtime/register/isa_regs.c",
+        "runtime/register/live.c",
+        "runtime/register/jit.c",
+        "runtime/register/jit/x64.c",
+        "runtime/register/jit/asm_x64.c",
+        "runtime/register/jit/masm.c",
+        "runtime/register/jit/compile.c",
+        "runtime/register/jit/emit.c",
+        "runtime/register/jit/dump.c",
+        "runtime/callback.c",
+        "runtime/foreign.c",
+        "runtime/intinf.c",
+        "runtime/runtime.c",
+        "runtime/heap.c",
+        "runtime/gc/chunk.c",
+        "runtime/gc/copy.c",
+        "runtime/gc/minor.c",
+        "runtime/gc/los.c",
+        "runtime/gc/mark.c",
+        "runtime/gc/immix.c",
+        "runtime/gc/segfit.c",
+        "runtime/gc/compact.c",
+        "runtime/gc/cycle.c",
+        "runtime/gc/check.c",
+        "runtime/gc/log.c",
+        "runtime/gc/share.c",
+        "runtime/loader.c",
+        "runtime/debug.c",
+        "runtime/prims.c",
+        "runtime/image.c",
+        "runtime/sys/sys_none.c",
+        "-lm"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 14.579235574987251,
+      "stdout": "build/noffi-final/51-compile-vm-none-registers.out",
+      "stderr": "build/noffi-final/51-compile-vm-none-registers.err",
+      "stdout_text": "",
+      "stderr_text": "In file included from runtime/register/jit/compile.c:5:\nruntime/register/jit_emit.h:7:20: warning: redefinition of typedef \u2018Jit\u2019 [-Wpedantic]\n    7 | typedef struct Jit Jit;\n      |                    ^~~\nIn file included from runtime/register/jit/compile.c:2:\nruntime/register/jit/compile.h:73:3: note: previous declaration of \u2018Jit\u2019 with type \u2018Jit\u2019\n   73 | } Jit;\n      |   ^~~\nIn file included from runtime/register/jit/emit.c:10:\nruntime/register/jit_emit.h:7:20: warning: redefinition of typedef \u2018Jit\u2019 [-Wpedantic]\n    7 | typedef struct Jit Jit;\n      |                    ^~~\nIn file included from runtime/register/jit/emit.c:9:\nruntime/register/jit/compile.h:73:3: note: previous declaration of \u2018Jit\u2019 with type \u2018Jit\u2019\n   73 | } Jit;\n      |   ^~~\n/usr/bin/ld: /tmp/ccQojJDQ.o: in function `sys_tmp_name':\nsys_none.c:(.text+0x356): warning: the use of `tmpnam' is dangerous, better use `mkstemp'\n",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "7bf786e5a0e655145febfcb96c3a4729b3c69859d321102b37c18be05944ee14"
+    },
+    {
+      "label": "compile-sysnone-registers",
+      "argv": [
+        "./bin/rune",
+        "--target=registers",
+        "build/noffi-final/sysnone.sml",
+        "-o",
+        "build/noffi-final/sysnone-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.36549570300849155,
+      "stdout": "build/noffi-final/52-compile-sysnone-registers.out",
+      "stderr": "build/noffi-final/52-compile-sysnone-registers.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "run-vm-none-registers",
+      "argv": [
+        "./build/noffi-final/vm-none-registers",
+        "--gc-stress",
+        "7",
+        "--gc-verify",
+        "build/noffi-final/sysnone-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.008167755993781611,
+      "stdout": "build/noffi-final/53-run-vm-none-registers.out",
+      "stderr": "build/noffi-final/53-run-vm-none-registers.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "compile-negative-registers",
+      "argv": [
+        "./bin/rune",
+        "--target=registers",
+        "build/noffi-final/negative.sml",
+        "-o",
+        "build/noffi-final/negative-registers.rbc"
+      ],
+      "status": 0,
+      "expected": 0,
+      "seconds": 0.06489994801813737,
+      "stdout": "build/noffi-final/54-compile-negative-registers.out",
+      "stderr": "build/noffi-final/54-compile-negative-registers.err",
+      "stdout_text": "",
+      "stderr_text": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "reject-negative-registers",
+      "argv": [
+        "./build/noffi-final/vm-none-registers",
+        "build/noffi-final/negative-registers.rbc"
+      ],
+      "status": 1,
+      "expected": null,
+      "seconds": 0.0019043129868805408,
+      "stdout": "build/noffi-final/55-reject-negative-registers.out",
+      "stderr": "build/noffi-final/55-reject-negative-registers.err",
+      "stdout_text": "",
+      "stderr_text": "runevm: uncaught exception Fail \"sysnone execution control\"\n  in <toplevel> at build/noffi-final/negative.sml:1:14\n",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "ac1df693389ba37acd3ccc1e1c7339ebeb4f9692a3915ffa0f83e077ae9e6a3a"
+    },
+    {
+      "label": "native-build",
+      "argv": [
+        "bin/runeopt",
+        "build/noffi-final/new-api-stack.rbc",
+        "-o",
+        "build/noffi-final/new-api-native"
+      ],
+      "status": 0,
+      "expected": 0,
+      "combined_log": "/tmp/runeffi-final-noffi-native-build.log",
+      "combined_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "combined_log_text": ""
+    },
+    {
+      "label": "native-run",
+      "argv": [
+        "build/noffi-final/new-api-native"
+      ],
+      "status": 0,
+      "expected": 0,
+      "combined_log": "/tmp/runeffi-final-noffi-native-run.log",
+      "combined_log_sha256": "dc446506256cbfc520908fc697ca7bbed6b3b602d7175914e288b21483015e18",
+      "combined_log_text": "PASS disabled current API: variadic/status types, exact errors, no resources\n"
+    }
+  ]
+}
