@@ -95,6 +95,8 @@ records the prior working layout. With the canonical library layout, pass
 `WIN32_GENERATED` as a relative path from the selected `ffi-assets/win32`
 build fragment to the installed `ffi/win32/generated/32` (or `64`) set.
 The application and provider build fragments remain ordinary unchanged sources.
+The [canonical-library acceptance](../../tests/ffi/evidence/win32-canonical.md)
+records the current installed paths and actual native execution at both widths.
 Windows launchers can run after moving an installation. Its legacy uninstall
 manifest records absolute installation-time filenames: restore the original
 prefix before uninstalling. Uninstall rejects a moved or out-of-prefix
