@@ -46,6 +46,53 @@ struct
       options "-I" includes))
   fun mingw bits=compiler(if bits="32" then "WINCC32" else "WINCC")
     (if bits="32" then "i686-w64-mingw32-gcc" else "x86_64-w64-mingw32-gcc")
+  fun repl bits =
+    let val generated=directory ^ "/generated"
+        val (set,shim)=generate bits generated
+        val object=directory ^ "/shims.obj"
+        val adapters=directory ^ "/runeffi-win32.dll"
+        val ()=nativeCompiler bits shim object
+        val ()=ignore(run "link-repl-adapters" (mingw bits @ ["-shared","-Wl,--kill-at",object,"-o",adapters]))
+        val dependencies=run "repl-library-dependencies"
+          [env("RUNE","bin/rune"),"--library","ffi/win32/native","--basis-deps",
+           "--build","tests/ffi/win32/native/repl.build","--path","WIN32_GENERATED=" ^ fromRoot generated]
+        (* --basis-deps prints bare filenames for the built-in Basis already
+           present in the REPL image, and paths for additional libraries. *)
+        val libraries=List.filter(fn file=>String.isSubstring "/" file)(lines dependencies)
+        val raw=List.map(fn file=>generated ^ "/sets/" ^ set ^ "/" ^ file)
+          ["raw_sig.sml","raw.sml","layout_sig.sml","layout.sml"]
+        val sources=libraries @ raw @ ["ffi/win32/native-config.sml","tests/ffi/win32/native/repl-setup.sml"]
+        val ()=write(directory ^ "/repl-sources",String.concat(List.map(fn file=>fromRoot file ^ "\n")sources))
+        val image=env("RUNE_WIN32_REPL_IMAGE","bin/rune-repl.img")
+        val ()=need(exists image,"build bin/rune-repl.img or set RUNE_WIN32_REPL_IMAGE")
+        val files=List.map windowsPath sources
+        val adapterPath=windowsPath adapters
+        val inherited=env("WSLENV","")
+        val shared=(if inherited="" then "" else inherited ^ ":") ^ "RUNE_WIN32_ADAPTER_LIBRARY/w"
+        val environment=fn values=>setEnv("WSLENV",shared)(setEnv("RUNE_WIN32_ADAPTER_LIBRARY",adapterPath)values)
+        val entries=[
+          "val firstReplWindow=Win32ReplTest.create \"first retained REPL window\";",
+          "fun lateReplHandler (_:Win32ReplTest.T.window) = let val nested=Win32ReplTest.create \"nested late REPL window\" val ()=Runtime.collect() val result=Win32Native.User.sendMessage(nested,Win32ReplTest.T.Application{code=0wx8002,w=0w0,l=0}) val ()=Win32Native.User.destroyWindow nested in result end;",
+          "val ()=Win32ReplTest.hook:=lateReplHandler; datatype lateReplDatatype=LateRepl of int; val lateReplPayload=List.tabulate(2000,fn n=>LateRepl n);",
+          "val ()=Runtime.collect();",
+          "val ()=Win32ReplTest.check(\"late nested callback\",Win32Native.User.sendMessage(firstReplWindow,Win32ReplTest.T.Application{code=0wx8001,w=0w0,l=0})=Int64.fromInt 43); val ()=Win32ReplTest.check(\"nested callback entered\", !(Win32ReplTest.innerCalls)=1);",
+          "val ()=Win32Native.User.destroyWindow firstReplWindow; val ()=List.app(fn n=>let val window=Win32ReplTest.create(Int.toString n) val ()=Runtime.collect() in Win32Native.User.destroyWindow window end)[1,2,3];",
+          "exception LateReplCallbackFailure; val ()=Win32ReplTest.hook:=(fn _=>raise LateReplCallbackFailure); val failedReplWindow=Win32ReplTest.create \"late callback exception\";",
+          "val ()=Runtime.collect(); val ()=Win32ReplTest.check(\"late callback exception\",(ignore(Win32Native.User.sendMessage(failedReplWindow,Win32ReplTest.T.Application{code=0wx8001,w=0w0,l=0}));false)handle LateReplCallbackFailure=>true); val ()=Win32Native.User.destroyWindow failedReplWindow;",
+          "val ()=Win32ReplTest.check(\"all six creation/destruction callbacks\", !(Win32ReplTest.created)=6 andalso !(Win32ReplTest.destroyed)=6); val ()=Win32Native.User.unregisterClass(Win32ReplTest.class,Win32ReplTest.instance); val ()=Win32Native.close(); val ()=Runtime.collect(); val ()=Win32ReplTest.check(\"native resources closed\",RuneForeign.live()=0w0); val ()=print \"PASS native Win32 retained REPL callbacks: six windows, zero resources\\n\";"
+          ]
+        val arguments=files @ options "-e" entries
+        fun execute(name,vm,flags)=
+          need(String.isSubstring "PASS native Win32 retained REPL callbacks: six windows, zero resources"
+            (command environment name([vm] @ flags @ ["--heap-size","67108864","--gc-stress","101","--gc-verify",
+             "--restore",windowsPath image,"--","--no-init","--basic","--color=never"] @ arguments)),
+            "native Win32 REPL session did not finish")
+        val vm=env(if bits="32" then "RUNE_WIN32_REPL_VM32" else "RUNE_WIN32_REPL_VM64",
+          if bits="32" then "bin/runevm32.exe" else "bin/runevm.exe")
+        val ()=execute("repl-interpreter",vm,["--jit=off"])
+    in if bits="32" then say "UNAVAILABLE native Win32 x86 REPL JIT backend; register interpretation is covered\n"
+       else (execute("repl-baseline",vm,["--jit=baseline","--jit-calls=1"]);
+             execute("repl-opt",vm,["--jit=opt","--jit-calls=1"])) end
   fun acceptance bits application =
     let val ()=ignore(run "clang-version" (compiler "CLANG" "clang" @ ["--version"]))
         val ()=ignore(run "mingw-version" (mingw bits @ ["--version"]))
@@ -98,9 +145,10 @@ struct
     in say("PASS generated native Win32 acceptance: " ^ bits ^ "\n") end
   fun main ["generate",bits,output]=if bits="32" orelse bits="64" then ignore(generate bits output)
     else raise Failed "expected Windows width 32 or 64"
+    | main ["repl",bits]=if bits="32" orelse bits="64" then repl bits else raise Failed "expected repl 32 or 64"
     | main [mode,bits]=if (bits="32" orelse bits="64") andalso (mode="contract" orelse mode="app")
         then acceptance bits (mode="app") else raise Failed "expected contract/app 32 or 64"
-    | main _=raise Failed "expected generate 32|64 OUTPUT, contract 32|64, or app 32|64"
+    | main _=raise Failed "expected generate 32|64 OUTPUT, contract 32|64, app 32|64, or repl 32|64"
 end
 val ()=NativeWin32Checks.main(CommandLine.arguments())handle e=>
   (TextIO.output(TextIO.stdErr,"FAIL native Win32 acceptance: " ^
