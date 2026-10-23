@@ -180,7 +180,7 @@ static void minor_stack(VM *vm, size_t low) {
             const FrameRef *f = &fr[k];
             size_t end = fr[k + 1].base < vm->sp ? fr[k + 1].base : vm->sp;
             uint32_t n = vm->prog.funcs[f->func].nlocals;
-            uint64_t live = vm->frame_live(vm, f->func, f->pc);
+            uint64_t live = vm_callback_live(vm, f);
             GC_BELOW_FRAME(vm, f, at, end, promote_value);
             for (uint32_t r = 0; r < n && at < end; r++, at++) {
                 if (r >= 64 || ((live >> r) & 1)) promote_value(vm, &vm->stack[at]);

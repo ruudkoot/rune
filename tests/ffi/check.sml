@@ -111,6 +111,9 @@ struct
         fun calls vm options output subject =
           need(String.isSubstring "PASS foreign calls:" (command (OS.Path.file vm ^ "-calls")
             (vm :: options @ [output,subject])),"foreign call fixture did not finish")
+        fun callbacks vm options output subject =
+          need(String.isSubstring "PASS foreign callbacks:" (command (OS.Path.file vm ^ "-callbacks")
+            (vm :: options @ [output,subject])),"foreign callback fixture did not finish")
         fun memory vm options output subject =
           need(String.isSubstring "PASS native memory marshalling:" (command (OS.Path.file vm ^ "-memory")
             (vm :: options @ [output,subject])),"native memory fixture did not finish")
@@ -133,7 +136,7 @@ struct
          let val bits=if mode="windows32" then "32" else "64"
              val cc=compiler(if bits="32" then "WINCC32" else "WINCC")
              val dll=directory ^ "/subject" ^ bits ^ ".dll"
-             val ()=ignore(command "compile-dll" (cc @ flags @ ["-shared","-Wl,--kill-at","tests/ffi/fixture.c","tests/ffi/ownership.c","-o",dll]))
+             val ()=ignore(command "compile-dll" (cc @ flags @ ["-shared","-Wl,--kill-at","tests/ffi/fixture.c","tests/ffi/ownership.c","tests/ffi/callback-fixture.c","-o",dll]))
              fun winpath path=String.translate (fn #"\r" => "" | #"\n" => "" | c => str c) (command "windows-path" ["wslpath","-w",fromRoot path])
              val subject=winpath dll
              fun one(target,vm)=
@@ -143,13 +146,16 @@ struct
                    val ()=compile target "tests/ffi/memory.sml" bufferOutput
                    val ownerOutput=bytecode ^ target ^ "-owner.rbc"
                    val ()=compile target "tests/ffi/owner.sml" ownerOutput
+                   val callbackOutput=bytecode ^ target ^ "-callbacks.rbc"
+                   val ()=compile target "tests/ffi/callbacks.sml" callbackOutput
                in owner vm ["--gc-stress","7","--gc-verify"] (winpath ownerOutput) subject;
+                  callbacks vm ["--gc-stress","7","--gc-verify"] (winpath callbackOutput) subject;
                   calls vm ["--gc-stress","7","--gc-verify"] (winpath output) subject;
                   memory vm ["--gc-stress","7","--gc-verify"] (winpath bufferOutput) subject end
          in one("stack",if bits="32" then "bin/runevm-stack32.exe" else "bin/runevm-stack.exe");
             one("registers",if bits="32" then "bin/runevm32.exe" else "bin/runevm.exe") end
        else
-         let val ()=ignore(command "compile-subject" (compiler "CC" @ flags @ ["-shared","-fPIC","tests/ffi/fixture.c","tests/ffi/ownership.c","-o",library]))
+         let val ()=ignore(command "compile-subject" (compiler "CC" @ flags @ ["-shared","-fPIC","tests/ffi/fixture.c","tests/ffi/ownership.c","tests/ffi/callback-fixture.c","-pthread","-o",library]))
              val ffiFlags=String.tokens Char.isSpace(command "runtime-pkg-config" ["pkg-config","--cflags","--libs","libffi"])
              val unit=directory ^ "/unit"
              val sanitize=if mode="asan" then ["-fsanitize=address,undefined","-fno-omit-frame-pointer"] else []
@@ -162,6 +168,11 @@ struct
                ["-DRUNE_FFI=1","-Iruntime","tests/runtime/foreign_dispose_test.c","runtime/foreign.c","runtime/sys/sys_posix.c",
                 "-Wl,--wrap=calloc","-Wl,--wrap=realloc","-o",disposal,"-ldl","-lm"] @ ffiFlags))
              val ()=ignore(command "disposal-unit" [disposal,library])
+             val callbackUnit=directory ^ "/callback-unit"
+             val ()=ignore(command "compile-callback-unit" (compiler "CC" @ flags @ sanitize @
+               ["-DRUNE_FFI=1","-Iruntime","tests/runtime/foreign_callback_test.c","runtime/foreign.c","runtime/sys/sys_posix.c",
+                "-Wl,--wrap=calloc","-o",callbackUnit,"-ldl","-lm"] @ ffiFlags))
+             val ()=ignore(command "callback-unit" [callbackUnit,library])
              fun one(target,vm,options)=
                let val output=bytecode ^ target ^ ".rbc"
                    val ()=compile target "tests/ffi/calls.sml" output
@@ -172,6 +183,9 @@ struct
                    val ownerOutput=bytecode ^ target ^ "-owner.rbc"
                    val ()=compile target "tests/ffi/owner.sml" ownerOutput
                    val ()=owner vm (options @ ["--gc-stress","7","--gc-verify"]) ownerOutput library
+                   val callbackOutput=bytecode ^ target ^ "-callbacks.rbc"
+                   val ()=compile target "tests/ffi/callbacks.sml" callbackOutput
+                   val ()=callbacks vm (options @ ["--gc-stress","7","--gc-verify"]) callbackOutput library
                    val life=bytecode ^ target ^ "-life.rbc"
                in if mode="asan" then () else
                     (compile target "tests/ffi/lifecycle.sml" life;lifecycle vm life) end
@@ -185,6 +199,10 @@ struct
                     (bytecode ^ "registers-memory.rbc") library) [["--jit=all"],["--jit=all","--jit-tier=2"]];
                   List.app(fn options=>owner "bin/runevm" (options @ ["--gc-stress","7","--gc-verify"])
                     (bytecode ^ "registers-owner.rbc") library) [["--jit=all"],["--jit=all","--jit-tier=2"]];
+                  List.app(fn options=>callbacks "bin/runevm" (options @ ["--gc-stress","7","--gc-verify"])
+                    (bytecode ^ "registers-callbacks.rbc") library) [["--jit=all"],["--jit=all","--jit-tier=2"]];
+                  ignore(command "compile-native-callbacks" ["bin/runeopt",bytecode ^ "stack-callbacks.rbc","-o",bytecode ^ "-native-callbacks"]);
+                  need(String.isSubstring "PASS foreign callbacks:" (command "native-callbacks" [bytecode ^ "-native-callbacks",library]),"native callback fixture");
                   ignore(command "compile-native-calls" ["bin/runeopt",bytecode ^ "stack.rbc","-o",bytecode ^ "-native"]);
                   need(String.isSubstring "PASS foreign calls:" (command "native-calls" [bytecode ^ "-native",library]),"native fixture");
                   ignore(command "compile-native-memory" ["bin/runeopt",bytecode ^ "stack-memory.rbc","-o",bytecode ^ "-native-memory"]);

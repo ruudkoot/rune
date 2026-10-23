@@ -26,6 +26,11 @@ typedef struct {
 } ForeignValue;
 typedef struct { int error_number; uint32_t native_error; char message[256]; } ForeignError;
 typedef enum { FOREIGN_FAIL_NEVER, FOREIGN_FAIL_ZERO, FOREIGN_FAIL_NONZERO, FOREIGN_FAIL_NEGATIVE } ForeignFailure;
+/* Hooks are called only on the context's creating thread, within a native
+   call. The opaque state is owned until the closure's explicit release. */
+typedef int (*ForeignCallback)(void *state, const ForeignValue *, size_t, ForeignValue *);
+typedef void (*ForeignCallbackFree)(void *state);
+typedef struct { size_t index; uint64_t key; ForeignValue value; } ForeignCallbackFailure;
 
 Foreign *foreign_create(const ForeignSystem *system);
 int foreign_available(void);
@@ -44,10 +49,16 @@ int foreign_read(Foreign *foreign, ForeignId memory, size_t offset, void *data, 
 int foreign_write(Foreign *foreign, ForeignId memory, size_t offset, const void *data, size_t length);
 ForeignId foreign_view(Foreign *foreign, ForeignId memory, size_t offset, size_t length);
 ForeignId foreign_prepare(Foreign *foreign, ForeignId symbol, int abi, ForeignType result, const ForeignType *arguments, size_t count);
+ForeignId foreign_callback(Foreign *foreign, int abi, ForeignType result, const ForeignType *arguments, size_t count,
+                          ForeignValue failure, const ForeignCallbackFailure *cases, size_t ncases, ForeignCallback callback, ForeignCallbackFree release, void *state);
 int foreign_call(Foreign *foreign, ForeignId call, const ForeignValue *arguments, size_t count, ForeignValue *result, ForeignError *captured);
 /* Atomically guard a native-owned pointer through its annotated destructor.
    A native failure preserves ownership; success also retires the identity. */
 int foreign_dispose(Foreign *foreign, ForeignId resource, ForeignId call, const ForeignValue *arguments,
                     size_t count, ForeignFailure failure, ForeignValue *result, ForeignError *captured, int *disposed);
+/* Canonical opaque identities cannot be dereferenced as memory. */
+ForeignId foreign_alias_handle(Foreign *foreign, ForeignId pointer);
+int foreign_consume_handle(Foreign *foreign, ForeignId resource, ForeignId call, const ForeignValue *arguments,
+                           size_t count, ForeignFailure failure, ForeignValue *result, ForeignError *captured, int *disposed);
 int foreign_release(Foreign *foreign, ForeignId resource);
 #endif

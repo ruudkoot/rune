@@ -791,6 +791,10 @@ void emit_PRIM(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint
     ms_sync(M, j->next, (int)n);
     ms_call(M, (MsHelper)prim_table[a]);
     ms_reload(M);
+    if (a == PRIM_foreign) {
+        as_ld64(A, COUNTR, VMR, OFF(instructions));
+        if (M->ahead) as_add_ri(A, COUNTR, (int32_t)M->ahead);
+    }
     as_cmp_ri(A, R_S0, 1);
     as_jcc(A, CC_E, &raised);
     as_test_rr(A, R_S0, R_S0);

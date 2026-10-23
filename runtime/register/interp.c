@@ -269,3 +269,11 @@ int vm_jit_env(const char *mode, int *out) {
     *out = jit.mode;
     return 1;
 }
+
+/* Foreign callbacks run only the plain interpreter. Passing no JitProgram
+   forbids tier-up, OSR, invalidation and executable-page changes while a
+   native foreign-call frame is parked below the callback delimiter. */
+int vm_callback_loop(VM *vm) {
+    make_room(vm);
+    return vm->trace ? loop_traced(vm, NULL) : loop_fast(vm, NULL);
+}

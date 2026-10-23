@@ -216,6 +216,11 @@ the two linked against it, `bin/runevm` is `runtime/register` linked against it,
 and a program made by the native code generator ([native.md](native.md))
 links it in place of them.
 
+Foreign callbacks use the bounded interpreter delimiter described in
+[ffi/callbacks.md](ffi/callbacks.md). They never enter `vm_loop`, the register
+JIT driver, or `rune_enter`; the ordinary driver remains nonrecursive.
+Parked native frames retain precise GC masks by stable frame identity.
+
 GC discipline in C: an allocation may move every heap object, so primitives
 read their arguments from the stack (not popped) until the result exists, and
 temporaries that must survive an allocation are pushed on the value stack

@@ -476,3 +476,8 @@ int main(int argc, char **argv) {
     rune_enter(vm, entry(0));
     return 0;
 }
+
+/* runeopt retains stack bytecode for the bounded callback interpreter.
+   This adds no nested native driver and never enters rune_enter. */
+#define RUNE_CALLBACK_ONLY 1
+#include "stack/interp.c"

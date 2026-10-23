@@ -2494,6 +2494,7 @@ static int dbg_flags(const Debugger *d) {
    the user's interrupt a pause (8); the mode it replaces */
 static int p_rt_debug_mode(VM *vm) {
     INT1("rt_debug_mode");
+    if (vm->callback_depth) return ret(vm, 1, mk_int(-1));
     Debugger *d = dbg_get(vm);
     if (!d) return ret(vm, 1, mk_int(0));
     int was = dbg_flags(d);

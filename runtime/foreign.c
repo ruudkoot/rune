@@ -29,7 +29,7 @@ static uint64_t next_identity = 1;
 #error "Enabled Runeffi requires C11 atomics or GCC-compatible atomic builtins"
 #endif
 
-typedef enum { FREE, RESERVED, LIBRARY, SYMBOL, MEMORY, VIEW, POINTER, CALL } Kind;
+typedef enum { FREE, RESERVED, LIBRARY, SYMBOL, MEMORY, VIEW, POINTER, CALL, CALLBACK, HANDLE, RETIRED } Kind;
 typedef struct {
     ffi_cif cif;
     ffi_type **types;
@@ -39,12 +39,33 @@ typedef struct {
     void *address;
     unsigned active;
 } Prepared;
+typedef struct Callback Callback;
+struct Callback {
+    Prepared signature;
+    Foreign *foreign;
+    ForeignId id;
+    ffi_closure *closure;
+    ForeignCallback enter;
+    ForeignCallbackFree release;
+    void *state;
+    ForeignValue failure;
+    ForeignCallbackFailure *failures;
+    size_t nfailures;
+};
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+static _Thread_local unsigned char thread_marker;
+#elif defined(__GNUC__) || defined(__clang__)
+static __thread unsigned char thread_marker;
+#else
+#error "Enabled callbacks require thread-local storage"
+#endif
 typedef struct {
     ForeignId id, parent;
     Kind kind;
     void *address;
     size_t length;
     Prepared *call;
+    Callback *callback;
     unsigned active, retiring;
 } Resource;
 struct Foreign {
@@ -52,6 +73,9 @@ struct Foreign {
     ForeignError error;
     Resource *resources;
     size_t count, capacity, live;
+    const void *owner_thread;
+    unsigned call_depth;
+    ForeignId active_library;
 };
 static ForeignId identity(void) {
     uint64_t value = ID_LOAD(&next_identity);
@@ -73,9 +97,18 @@ static void native_error(Foreign *f) {
 }
 static Resource *find(Foreign *f, ForeignId id) {
     for (size_t i = 0; i < f->count; i++)
-        if (f->resources[i].kind != FREE && f->resources[i].kind != RESERVED && f->resources[i].id == id) return &f->resources[i];
+        if (f->resources[i].kind != FREE && f->resources[i].kind != RESERVED && f->resources[i].kind != RETIRED && f->resources[i].id == id) return &f->resources[i];
     fail(f, EINVAL, "stale or foreign resource identity");
     return NULL;
+}
+static Resource *leased_resource(Foreign *f, ForeignId id) {
+    for (size_t i = 0; i < f->count; i++)
+        if (f->resources[i].kind != FREE && f->resources[i].id == id) return &f->resources[i];
+    return NULL;
+}
+static void unlease(Foreign *f, ForeignId id) {
+    Resource *r = leased_resource(f, id);
+    if (r && r->active) { r->active--; if (!r->active && r->kind == RETIRED) r->kind = FREE; }
 }
 static Resource *reserve(Foreign *f) {
     ForeignId id = identity();
@@ -118,7 +151,7 @@ static int string_ok(Foreign *f, const char *s, size_t n) {
 Foreign *foreign_create(const ForeignSystem *system) {
     if (!system || !system->open || !system->symbol || !system->close || !system->error || !system->capture) return NULL;
     Foreign *f = calloc(1, sizeof *f);
-    if (f) f->system = *system;
+    if (f) { f->system = *system; f->owner_thread = &thread_marker; }
     return f;
 }
 int foreign_available(void) { return 1; }
@@ -126,10 +159,10 @@ const ForeignError *foreign_error(const Foreign *f) { return &f->error; }
 size_t foreign_live(const Foreign *f) { return f ? f->live : 0; }
 int foreign_alive(const Foreign *f, ForeignId id) {
     for (size_t i = 0; f && i < f->count; i++)
-        if (f->resources[i].kind != FREE && f->resources[i].kind != RESERVED && f->resources[i].id == id) return 1;
+        if (f->resources[i].kind != FREE && f->resources[i].kind != RESERVED && f->resources[i].kind != RETIRED && f->resources[i].id == id) return 1;
     return 0;
 }
-static int pointer_kind(Kind kind) { return kind == MEMORY || kind == VIEW || kind == POINTER || kind == SYMBOL; }
+static int pointer_kind(Kind kind) { return kind == MEMORY || kind == VIEW || kind == POINTER || kind == SYMBOL || kind == CALLBACK || kind == HANDLE; }
 int foreign_same(Foreign *f, ForeignId left, ForeignId right) {
     Resource *a = find(f, left), *b = find(f, right);
     if (!a || !b || !pointer_kind(a->kind) || !pointer_kind(b->kind)) {
@@ -166,12 +199,17 @@ ForeignId foreign_memory(Foreign *f, size_t length) {
     r->kind = MEMORY; r->address = memory; r->length = length; f->live++;
     return r->id;
 }
+static int opaque_address(Foreign *f, const void *address) {
+    for (size_t i = 0; i < f->count; i++) if ((f->resources[i].kind == HANDLE || f->resources[i].kind == RETIRED) && f->resources[i].address == address) return 1;
+    return 0;
+}
 static int region(Foreign *f, ForeignId id, size_t offset, size_t length, void **address) {
     Resource *r = find(f, id);
     if (!r || (r->kind != MEMORY && r->kind != VIEW && r->kind != POINTER)) {
         fail(f, EINVAL, "resource is not foreign memory"); return 0;
     }
     if (r->retiring) { fail(f, EBUSY, "foreign resource is being destroyed"); return 0; }
+    if (r->kind == POINTER && opaque_address(f, r->address)) { fail(f, EINVAL, "opaque handle aliases are not foreign memory"); return 0; }
     if (offset > r->length || length > r->length - offset) {
         fail(f, ERANGE, "foreign memory range is out of bounds"); return 0;
     }
@@ -262,10 +300,10 @@ static int argument(Foreign *f, ForeignType expected, const ForeignValue *value,
         storage->pointer = NULL;
         if (value->value.pointer) {
             Resource *r = find(f, value->value.pointer);
-            if (!r || (r->kind != MEMORY && r->kind != VIEW && r->kind != POINTER && r->kind != SYMBOL)) {
+            if (!r || (r->kind != MEMORY && r->kind != VIEW && r->kind != POINTER && r->kind != SYMBOL && r->kind != CALLBACK && r->kind != HANDLE)) {
                 fail(f, EINVAL, "pointer argument is not a pointer resource"); return 0;
             }
-            if (r->retiring && r->id != permit_retiring) { fail(f, EBUSY, "foreign resource is being destroyed"); return 0; }
+            if (r->retiring && r->kind != HANDLE && r->id != permit_retiring) { fail(f, EBUSY, "foreign resource is being destroyed"); return 0; }
             storage->pointer = r->address;
         }
         *address = &storage->pointer; break;
@@ -275,6 +313,168 @@ static int argument(Foreign *f, ForeignType expected, const ForeignValue *value,
 range: fail(f, ERANGE, "foreign scalar argument is out of range"); return 0;
 #undef SIGNED
 #undef UNSIGNED
+}
+/* A closure owns its descriptor separately from the registry: nested SML
+   calls can grow the latter. Foreign-thread entry touches neither VM nor
+   mutable registry state, and deterministically returns the default. */
+static ForeignValue native_value(ForeignType t, const void *p) {
+    ForeignValue v; memset(&v, 0, sizeof v); v.type = t;
+    switch (t) {
+#define READ(k, member, native) case k: v.value.member = *(const native *)p; break
+    READ(FOREIGN_I8, integer, int8_t); READ(FOREIGN_U8, word, uint8_t);
+    READ(FOREIGN_I16, integer, int16_t); READ(FOREIGN_U16, word, uint16_t);
+    READ(FOREIGN_I32, integer, int32_t); READ(FOREIGN_U32, word, uint32_t);
+    READ(FOREIGN_I64, integer, int64_t); READ(FOREIGN_U64, word, uint64_t);
+    READ(FOREIGN_F32, real, float); READ(FOREIGN_F64, real, double);
+#undef READ
+    default: break;
+    }
+    return v;
+}
+static void callback_result(Foreign *f, ForeignType t, ForeignValue v, void *out) {
+    Storage storage; void *address = NULL;
+    if (t == FOREIGN_VOID) return;
+    if (!argument(f, t, &v, &storage, &address, 0)) memset(&storage, 0, sizeof storage);
+    /* libffi closures require ffi_arg-sized writes for narrow integers. */
+    switch (t) {
+    case FOREIGN_I8: *(ffi_sarg *)out = storage.i8; break;
+    case FOREIGN_U8: *(ffi_arg *)out = storage.u8; break;
+    case FOREIGN_I16: *(ffi_sarg *)out = storage.i16; break;
+    case FOREIGN_U16: *(ffi_arg *)out = storage.u16; break;
+    case FOREIGN_I32: *(ffi_sarg *)out = storage.i32; break;
+    case FOREIGN_U32: *(ffi_arg *)out = storage.u32; break;
+    case FOREIGN_I64: *(int64_t *)out = storage.i64; break;
+    case FOREIGN_U64: *(uint64_t *)out = storage.u64; break;
+    case FOREIGN_F32: *(float *)out = storage.f32; break;
+    case FOREIGN_F64: *(double *)out = storage.f64; break;
+    case FOREIGN_POINTER: *(void **)out = storage.pointer; break;
+    default: break;
+    }
+}
+static void callback_entry(ffi_cif *cif, void *out, void **input, void *opaque) {
+    (void)cif;
+    Callback *c = opaque;
+    Foreign *f = c->foreign;
+    ForeignValue failure = c->failure;
+    for (size_t i = 0; i < c->nfailures; i++) {
+        const ForeignCallbackFailure *rule = &c->failures[i];
+        ForeignValue key = native_value(c->signature.arguments[rule->index], input[rule->index]);
+        if (key.value.word == rule->key) { failure = rule->value; break; }
+    }
+    /* Failure defaults are restricted to scalar/null values at creation;
+       the rejected thread therefore never dereferences a resource. */
+    if (f->owner_thread != &thread_marker || !f->call_depth) {
+        Foreign local; memset(&local, 0, sizeof local);
+        callback_result(&local, c->signature.result, failure, out);
+        return;
+    }
+    Resource *self = find(f, c->id);
+    if (!self || self->active == UINT_MAX) { callback_result(f, c->signature.result, failure, out); return; }
+    self->active++;
+    size_t count = c->signature.count;
+    ForeignValue *values = calloc(count ? count : 1, sizeof *values), result = failure;
+    ForeignId *borrowed = calloc(count ? count : 1, sizeof *borrowed); size_t nborrowed = 0;
+    if (!values || !borrowed) {
+        free(values); free(borrowed);
+        find(f, c->id)->active--;
+        callback_result(f, c->signature.result, failure, out);
+        return;
+    }
+    int valid = 1;
+    for (size_t i = 0; i < count; i++) {
+        ForeignType t = c->signature.arguments[i];
+        values[i] = native_value(t, input[i]);
+        if (t == FOREIGN_POINTER && *(void **)input[i]) {
+            Resource *r = reserve(f);
+            if (!r) { valid = 0; break; }
+            r->kind = POINTER; r->parent = c->id; r->address = *(void **)input[i]; r->length = SIZE_MAX; r->active = 1;
+            values[i].value.pointer = r->id; borrowed[nborrowed++] = r->id; f->live++;
+        }
+    }
+    if (valid && c->enter(c->state, values, count, &result) != 0) result = failure;
+    callback_result(f, c->signature.result, result, out);
+    for (size_t i = 0; i < nborrowed; i++) {
+        /* Views and returned pointer aliases cannot outlive this borrowed
+           identity either. Mark the dependency tree before freeing slots. */
+        int changed;
+        do {
+            changed = 0;
+            for (size_t k = 0; k < f->count; k++) {
+                Resource *r = &f->resources[k];
+                Resource *parent = leased_resource(f, r->parent);
+                if (r->kind != FREE && r->kind != RESERVED && r->kind != RETIRED &&
+                    (r->parent == borrowed[i] || (parent && parent->kind == RETIRED))) {
+                    r->kind = RETIRED; f->live--; changed = 1;
+                }
+            }
+        } while (changed);
+        for (size_t k = 0; k < f->count; k++) if (f->resources[k].kind == RETIRED && !f->resources[k].active) f->resources[k].kind = FREE;
+        Resource *r = leased_resource(f, borrowed[i]);
+        if (r) { if (r->kind != RETIRED) f->live--; r->kind = FREE; }
+    }
+    find(f, c->id)->active--;
+    free(values); free(borrowed);
+}
+ForeignId foreign_callback(Foreign *f, int abi, ForeignType result, const ForeignType *arguments, size_t count,
+                          ForeignValue failure, const ForeignCallbackFailure *cases, size_t ncases, ForeignCallback enter, ForeignCallbackFree release, void *state) {
+    if (!type(result) || !enter || count > 1024 || ncases > 1024 || failure.type != result ||
+        (result == FOREIGN_POINTER && failure.value.pointer)) {
+        fail(f, EINVAL, "invalid callback specification or non-null failure pointer"); return 0;
+    }
+    ffi_abi convention = FFI_DEFAULT_ABI;
+    if (abi) {
+#if defined(_WIN32) && defined(__i386__)
+        if (abi == 1) convention = FFI_STDCALL; else
+#endif
+        { fail(f, ENOTSUP, "callback calling convention unavailable"); return 0; }
+    }
+    for (size_t i = 0; i < ncases; i++) {
+        ForeignType t = cases[i].index < count ? arguments[cases[i].index] : FOREIGN_VOID;
+        if (t < FOREIGN_I8 || t > FOREIGN_U64 || cases[i].value.type != result ||
+            (result == FOREIGN_POINTER && cases[i].value.value.pointer)) {
+            fail(f, EINVAL, "invalid callback failure selection"); return 0;
+        }
+    }
+    if (result != FOREIGN_VOID) {
+        Storage checked; void *at;
+        if (!argument(f, result, &failure, &checked, &at, 0)) return 0;
+        for (size_t i = 0; i < ncases; i++) if (!argument(f, result, &cases[i].value, &checked, &at, 0)) return 0;
+    }
+    Callback *c = calloc(1, sizeof *c);
+    if (!c) { fail(f, ENOMEM, "callback allocation failed"); return 0; }
+    c->failures = calloc(ncases ? ncases : 1, sizeof *c->failures);
+    c->signature.types = calloc(count ? count : 1, sizeof *c->signature.types);
+    c->signature.arguments = calloc(count ? count : 1, sizeof *arguments);
+    if (!c->failures || !c->signature.types || !c->signature.arguments) goto allocation;
+    if (ncases) memcpy(c->failures, cases, ncases * sizeof *cases);
+    c->nfailures = ncases;
+    for (size_t i = 0; i < count; i++) {
+        if (arguments[i] == FOREIGN_VOID || !(c->signature.types[i] = type(arguments[i]))) {
+            fail(f, EINVAL, "invalid callback argument type"); goto bad;
+        }
+        c->signature.arguments[i] = arguments[i];
+    }
+    if (ffi_prep_cif(&c->signature.cif, convention, (unsigned)count, type(result), c->signature.types) != FFI_OK) {
+        fail(f, ENOTSUP, "libffi rejected callback interface"); goto bad;
+    }
+    void *address;
+    c->closure = ffi_closure_alloc(sizeof *c->closure, &address);
+    if (!c->closure) goto allocation;
+    c->signature.count = count; c->signature.result = result;
+    c->foreign = f; c->enter = enter; c->release = release; c->state = state; c->failure = failure;
+    if (ffi_prep_closure_loc(c->closure, &c->signature.cif, callback_entry, c, address) != FFI_OK) {
+        fail(f, ENOTSUP, "libffi rejected executable callback"); goto bad;
+    }
+    Resource *r = reserve(f);
+    if (!r) goto bad;
+    r->kind = CALLBACK; r->callback = c; r->address = address;
+    c->id = r->id; f->live++;
+    return r->id;
+allocation: fail(f, ENOMEM, "callback allocation failed");
+bad:
+    if (c->closure) ffi_closure_free(c->closure);
+    free(c->failures); free(c->signature.types); free(c->signature.arguments); free(c);
+    return 0;
 }
 static int call_checked(Foreign *f, ForeignId call, const ForeignValue *arguments, size_t count, ForeignValue *result, ForeignError *captured, ForeignId permit_retiring) {
     Resource *r = find(f, call);
@@ -307,10 +507,12 @@ static int call_checked(Foreign *f, ForeignId call, const ForeignValue *argument
     }
     if (leased != count) {
         for (size_t i = 0; i < leased; i++) if (arguments[i].type == FOREIGN_POINTER && arguments[i].value.pointer)
-            find(f, arguments[i].value.pointer)->active--;
+            unlease(f, arguments[i].value.pointer);
         cancel(f, pointer_id); free(storage); free(addresses); fail(f, EBUSY, "foreign argument nesting limit exceeded"); return -1;
     }
-    p->active++;
+    ForeignId old_library = f->active_library;
+    f->active_library = library;
+    p->active++; f->call_depth++;
     ffi_call(&p->cif, entry, &output, addresses);
     /* Capture before arena cleanup, conversions or another native operation. */
     int saved_errno;
@@ -319,9 +521,9 @@ static int call_checked(Foreign *f, ForeignId call, const ForeignValue *argument
     memset(captured, 0, sizeof *captured);
     captured->error_number = saved_errno;
     captured->native_error = saved_native;
-    p->active--;
+    p->active--; f->call_depth--; f->active_library = old_library;
     for (size_t i = 0; i < count; i++) if (arguments[i].type == FOREIGN_POINTER && arguments[i].value.pointer)
-        find(f, arguments[i].value.pointer)->active--;
+        unlease(f, arguments[i].value.pointer);
     result->type = p->result;
     switch (p->result) {
     case FOREIGN_VOID: break;
@@ -347,6 +549,9 @@ static int call_checked(Foreign *f, ForeignId call, const ForeignValue *argument
             uintptr_t address = (uintptr_t)output.pointer;
             for (size_t i = 0; i < f->count; i++) {
                 Resource *owner = &f->resources[i];
+                if (owner->kind == POINTER && owner->active && owner->address == output.pointer) {
+                    pointer->parent = owner->id; pointer->length = owner->length; break;
+                }
                 if (owner->kind != MEMORY && owner->kind != VIEW) continue;
                 uintptr_t start = (uintptr_t)owner->address;
                 if (address >= start && address - start <= owner->length) {
@@ -372,6 +577,7 @@ int foreign_dispose(Foreign *f, ForeignId id, ForeignId call, const ForeignValue
     if (!r || !destructor || r->kind != POINTER || destructor->kind != CALL) {
         fail(f, EINVAL, "native disposal requires a pointer and prepared destructor"); return -1;
     }
+    if (opaque_address(f, r->address)) { fail(f, EINVAL, "opaque handle aliases require handle destruction"); return -1; }
     Resource *parent = find(f, r->parent);
     if (!parent || parent->kind != LIBRARY) { fail(f, EINVAL, "native disposal cannot free Rune-owned storage or views"); return -1; }
     if (r->retiring || r->active) { fail(f, EBUSY, "foreign resource is active or being destroyed"); return -1; }
@@ -395,6 +601,62 @@ int foreign_dispose(Foreign *f, ForeignId id, ForeignId call, const ForeignValue
     if (!failed) { r->kind = FREE; f->live--; *disposed = 1; }
     return 0;
 }
+ForeignId foreign_alias_handle(Foreign *f, ForeignId id) {
+    Resource *r = find(f, id);
+    if (!r || (r->kind != POINTER && r->kind != HANDLE) || r->retiring) {
+        fail(f, EINVAL, "opaque adoption requires a native pointer"); return 0;
+    }
+    if (r->kind == HANDLE) return id;
+    for (size_t i = 0; i < f->count; i++) if (f->resources[i].kind != FREE && f->resources[i].parent == id) {
+        fail(f, EBUSY, "opaque adoption requires no memory views"); return 0;
+    }
+    Resource *owner = find(f, r->parent);
+    ForeignId library = owner && owner->kind == LIBRARY ? owner->id :
+        owner && owner->kind == CALLBACK ? f->active_library : 0;
+    if (!library) { fail(f, EINVAL, "opaque adoption cannot alias Rune storage"); return 0; }
+    void *address = r->address;
+    for (size_t i = 0; i < f->count; i++) if (f->resources[i].kind == HANDLE && f->resources[i].address == address)
+        return f->resources[i].id;
+    Resource *alias = reserve(f);
+    if (!alias) return 0;
+    alias->kind = HANDLE; alias->parent = library; alias->address = address; f->live++;
+    return alias->id;
+}
+int foreign_consume_handle(Foreign *f, ForeignId id, ForeignId call, const ForeignValue *arguments, size_t count,
+                           ForeignFailure failure, ForeignValue *result, ForeignError *captured, int *disposed) {
+    *disposed = 0;
+    Resource *r = find(f, id), *destructor = find(f, call);
+    if (!r || !destructor || r->kind != HANDLE || destructor->kind != CALL) {
+        fail(f, EINVAL, "opaque destruction requires an adopted handle"); return -1;
+    }
+    if (r->retiring) { fail(f, EBUSY, "opaque handle destruction is already active"); return -1; }
+    ForeignType t = destructor->call->result;
+    int signed_type = t == FOREIGN_I8 || t == FOREIGN_I16 || t == FOREIGN_I32 || t == FOREIGN_I64;
+    if (t > FOREIGN_U64 || (unsigned)failure > FOREIGN_FAIL_NEGATIVE ||
+        (t == FOREIGN_VOID && failure != FOREIGN_FAIL_NEVER) || (failure == FOREIGN_FAIL_NEGATIVE && !signed_type)) {
+        fail(f, EINVAL, "unsupported opaque destructor result"); return -1;
+    }
+    void *address = r->address;
+    r->retiring = 1;
+    int status = call_checked(f, call, arguments, count, result, captured, id);
+    r = find(f, id); r->retiring = 0;
+    if (status) return status;
+    int failed = failure == FOREIGN_FAIL_ZERO ? result->value.word == 0 :
+                 failure == FOREIGN_FAIL_NONZERO ? result->value.word != 0 :
+                 failure == FOREIGN_FAIL_NEGATIVE ? result->value.integer < 0 : 0;
+    if (!failed) {
+        /* All aliases are tombstoned together. Suspended native callers
+           retain bookkeeping slots until their leases are surrendered. */
+        for (size_t i = 0; i < f->count; i++) {
+            Resource *a = &f->resources[i];
+            if ((a->kind == HANDLE || a->kind == POINTER) && a->address == address) {
+                a->kind = a->active ? RETIRED : FREE; f->live--;
+            }
+        }
+        *disposed = 1;
+    }
+    return 0;
+}
 int foreign_release(Foreign *f, ForeignId id) {
     Resource *r = find(f, id);
     if (!r) return -1;
@@ -406,6 +668,12 @@ int foreign_release(Foreign *f, ForeignId id) {
     if (r->kind == LIBRARY && f->system.close(r->address) != 0) { native_error(f); return -1; }
     if (r->kind == MEMORY) free(r->address);
     if (r->kind == CALL) { free(r->call->types); free(r->call->arguments); free(r->call); }
+    if (r->kind == CALLBACK) {
+        Callback *c = r->callback;
+        ffi_closure_free(c->closure);
+        if (c->release) c->release(c->state);
+        free(c->failures); free(c->signature.types); free(c->signature.arguments); free(c);
+    }
     r->kind = FREE; f->live--;
     return 0;
 }
@@ -443,7 +711,10 @@ int foreign_read(Foreign *f,ForeignId r,size_t o,void *p,size_t n) { (void)r;(vo
 int foreign_write(Foreign *f,ForeignId r,size_t o,const void *p,size_t n) { (void)r;(void)o;(void)p;(void)n;return unavailable(f); }
 ForeignId foreign_view(Foreign *f,ForeignId r,size_t o,size_t n) { (void)r;(void)o;(void)n;unavailable(f);return 0; }
 ForeignId foreign_prepare(Foreign *f,ForeignId r,int a,ForeignType t,const ForeignType *p,size_t n) { (void)r;(void)a;(void)t;(void)p;(void)n;unavailable(f);return 0; }
+ForeignId foreign_callback(Foreign *f,int a,ForeignType t,const ForeignType *p,size_t n,ForeignValue v,const ForeignCallbackFailure *r,size_t z,ForeignCallback c,ForeignCallbackFree d,void *s) { (void)a;(void)t;(void)p;(void)n;(void)v;(void)r;(void)z;(void)c;(void)d;(void)s;unavailable(f);return 0; }
 int foreign_call(Foreign *f,ForeignId r,const ForeignValue *p,size_t n,ForeignValue *v,ForeignError *e) { (void)r;(void)p;(void)n;(void)v;(void)e;return unavailable(f); }
 int foreign_dispose(Foreign *f,ForeignId r,ForeignId c,const ForeignValue *p,size_t n,ForeignFailure q,ForeignValue *v,ForeignError *e,int *d) { (void)r;(void)c;(void)p;(void)n;(void)q;(void)v;(void)e;*d=0;return unavailable(f); }
+ForeignId foreign_alias_handle(Foreign *f,ForeignId r) { (void)r;unavailable(f);return 0; }
+int foreign_consume_handle(Foreign *f,ForeignId r,ForeignId c,const ForeignValue *p,size_t n,ForeignFailure q,ForeignValue *v,ForeignError *e,int *d) { (void)r;(void)c;(void)p;(void)n;(void)q;(void)v;(void)e;*d=0;return unavailable(f); }
 int foreign_release(Foreign *f,ForeignId r) { (void)r;return unavailable(f); }
 #endif

@@ -551,6 +551,10 @@ typedef struct VM {
        until the REPL asks for it */
     struct Debugger *dbg;
     struct Foreign *foreign; /* process-local native resources; never part of an image */
+    struct CallbackScope *callback_scope; /* bounded foreign callback delimiter */
+    size_t callback_frame; /* frame whose RET returns to the delimiter */
+    Value callback_result;
+    unsigned callback_depth;
 } VM;
 
 /* Whether p points into the room objects are made in (alloc). Young and
@@ -882,6 +886,9 @@ uint32_t program_add_function(VM *vm, const char *name, const uint8_t *code, uin
 
 /* interp.c */
 int vm_run(VM *vm);                          /* vm_start, then the loop */
+int vm_callback_loop(VM *vm); /* interpreter only; never enters a driver or JIT */
+int vm_callback_apply(VM *vm, size_t closure, const char *input, size_t length, char *output, size_t capacity, size_t *written);
+uint64_t vm_callback_live(VM *vm, const FrameRef *frame);
 int vm_loop(VM *vm);                         /* the dispatch loop alone, from vm->pc */
 /* The options of the JIT (--jit=MODE, --jit-stats, --jit-check), which
    runtime/register takes and runevm-stack refuses: 1 when the option is taken, 0 when it is

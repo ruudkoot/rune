@@ -18,8 +18,20 @@ struct
         val () = T.check ("RuneForeign.prepare/prepared-call", fn () => RuneForeign.live () >= 0w3)
         val result = RuneForeign.invoke (call,[RuneForeign.Signed (Int64.fromInt ~42)])
         val () = T.check ("RuneForeign.invoke/native-scalar", fn () => PackWord64Little.subVec(Byte.stringToBytes(#bytes result),0)=0w42)
+        val callback = RuneForeign.callback {abi=0,result=RuneForeign.SInt32,arguments=[RuneForeign.SInt32],
+          function=fn _=>RuneForeign.Signed 1,failure=RuneForeign.Default(RuneForeign.Signed 0)}
+        val () = T.check ("RuneForeign.callback/rooted-resource",fn()=>RuneForeign.isLive callback)
+        val () = RuneForeign.release callback
+        val () = T.check ("RuneForeign.callbackFailure/argument-selection",fn()=>
+          case RuneForeign.ByArgument{index=0,cases=[(0w1,RuneForeign.Signed ~1)],default=RuneForeign.Signed 0} of
+            RuneForeign.ByArgument{index,cases,...}=>index=0 andalso List.length cases=1 | _=>false)
         val memory = RuneForeign.allocate 0w4
         val () = T.check ("RuneForeign.allocate/zeroed", fn () => RuneForeign.read(memory,0w0,4)="\000\000\000\000")
+        val () = T.check ("RuneForeign.aliasHandle/rejects-memory",fn()=>
+          (ignore(RuneForeign.aliasHandle memory);false)handle RuneForeign.Error _=>true)
+        val () = T.check ("RuneForeign.consumeHandle/rejects-memory",fn()=>
+          (ignore(RuneForeign.consumeHandle{resource=memory,call=call,arguments=[RuneForeign.Signed 1],failure=RuneForeign.NoFailure});false)
+            handle RuneForeign.Error _=>true)
         val () = RuneForeign.write(memory,0w0,"test")
         val () = T.check ("RuneForeign.write/copy", fn () => RuneForeign.read(memory,0w0,4)="test")
         val view = RuneForeign.view(memory,0w1,0w2)

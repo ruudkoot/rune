@@ -223,6 +223,7 @@ CASE(RET) {
     pc += 1;
     count++;
     Value v = POP();
+    if (vm->callback_depth && vm_frame_id(vm) == vm->callback_frame) { vm->callback_result = v; SYNC(); return 3; }
     size_t at = FRAME->base;
     uint32_t back = FRAME->ret_pc;
     if (vm->fp == 0) { sp = vm->stack + at; PUSH(v); JUMP_TO(back); SYNC(); return 0; }
@@ -344,6 +345,7 @@ CASE(PRIM) {
        here (Runtime.restore); RELOAD takes its code again, and the
        pc with it. */
     (void)prim_table[a](vm);
+    if (a == PRIM_foreign) count = vm->instructions; /* bounded callbacks executed instructions */
     RELOAD();
     NEXT;
 }

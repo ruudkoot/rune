@@ -14,6 +14,9 @@ sig
   (* Checked scalar arguments; addresses use resource identities. *)
   datatype argument = Signed of Int64.int | Unsigned of Word64.word
     | Real of real | Address of resource option
+  (* A callback's default or argument-dependent native failure result. *)
+  datatype callbackFailure = Default of argument | ByArgument of
+    {index : int, cases : (Word64.word * argument) list, default : argument}
   (* An integral destructor result's annotated failure condition. *)
   datatype failure = NoFailure | Zero | Nonzero | Negative
   (* Captured immediately after native execution, before cleanup. *)
@@ -63,6 +66,20 @@ sig
 
      Raises: `Error` for unsupported interfaces or invalid resources. *)
   val prepare : {symbol : resource, abi : int, result : scalar, arguments : scalar list} -> resource
+  (* `callback {abi, result, arguments, function, failure}` roots a closure.
+
+     Entry is synchronous on the creating VM thread while a native call is
+     active. Nested foreign calls are permitted; callbacks use a bounded
+     interpreter delimiter even when their caller uses JIT or native code.
+     Pointer arguments borrow identities valid for this callback only.
+     The native caller must unregister the closure before `release`.
+     An escaping SML exception returns the annotated failure value, then
+     `invoke` or `dispose` raises it after native control returns safely.
+     Foreign-thread entry returns the failure value without executing SML.
+
+     Raises: `Error` for unavailable callbacks or invalid scalar policies. *)
+  val callback : {abi : int, result : scalar, arguments : scalar list,
+    function : argument list -> argument, failure : callbackFailure} -> resource
   (* `invoke (call, arguments)` executes one prepared call.
 
      Signed, unsigned and real results use eight little-endian bytes.
@@ -80,6 +97,25 @@ sig
 
      Raises: `Error` before native entry for invalid ownership or busy state. *)
   val dispose : {resource : resource, call : resource, arguments : argument list,
+    failure : failure} -> {disposed : bool, result : result}
+  (* `aliasHandle pointer` adopts a canonical opaque native handle identity.
+
+     Native return values and callback-borrowed pointers can be adopted.
+     Equal live native addresses share one identity. Handles retain their
+     library and cannot be read, written or viewed as foreign storage.
+
+     Raises: `Error` for stale pointers or aliases of Rune-owned memory. *)
+  val aliasHandle : resource -> resource
+  (* `consumeHandle {resource, call, arguments, failure}` destroys a handle.
+
+     An active native caller may retain a handle while a nested callback
+     destroys it. Nested native handle uses remain valid during destruction;
+     recursive destruction fails. Native success retires all pointer aliases
+     together, including uses suspended in outer calls. A native failure
+     preserves ownership. Ordinary memory disposal retains its strict guards.
+
+     Raises: `Error` for invalid ownership or recursive destruction. *)
+  val consumeHandle : {resource : resource, call : resource, arguments : argument list,
     failure : failure} -> {disposed : bool, result : result}
   (* `sameAddress (left, right)` compares native pointer identities safely.
 
