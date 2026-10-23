@@ -3,8 +3,12 @@
    Area: Foreign interfaces *)
 signature FOREIGN_VALIDATE =
 sig
-  (* A uniquely resolved function and its separate projection policy. *)
-  type binding = {declaration : ForeignModel.declaration, policy : ForeignPolicy.functionPolicy}
+  (* A resolved function, separate projection policy and required C adapter.
+
+     A static or inline definition is callable only through a typed shim;
+     validation records this requirement without claiming code was emitted. *)
+  type binding = {declaration : ForeignModel.declaration, policy : ForeignPolicy.functionPolicy,
+    requiresShim : bool}
   (* A source-located ambiguity, contradiction or unsupported selection. *)
   exception Error of ForeignModel.source * string
   (* `resolve {declarations, policy}` resolves selected C functions and

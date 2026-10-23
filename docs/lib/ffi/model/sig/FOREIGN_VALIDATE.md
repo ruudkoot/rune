@@ -28,7 +28,8 @@ Declaration-aware checks before safe binding generation.
 <pre>
 signature FOREIGN_VALIDATE =
 sig
-  type <a href="#type-binding">binding</a> = {<a href="#fld-binding.declaration">declaration</a> : ForeignModel.declaration, <a href="#fld-binding.policy">policy</a> : ForeignPolicy.functionPolicy}
+  type <a href="#type-binding">binding</a> = {<a href="#fld-binding.declaration">declaration</a> : ForeignModel.declaration, <a href="#fld-binding.policy">policy</a> : ForeignPolicy.functionPolicy,
+    <a href="#fld-binding.requiresshim">requiresShim</a> : bool}
   exception <a href="#exn-error">Error</a> of ForeignModel.source * string
   val <a href="#val-resolve">resolve</a> : {<a href="#fld-resolve.declarations">declarations</a> : ForeignModel.declaration list, <a href="#fld-resolve.policy">policy</a> : ForeignPolicy.policy} -&gt; binding list
 end
@@ -37,15 +38,20 @@ end
 ### <a name="type-binding"></a>`binding`
 
 ```sml
-type binding = {declaration : ForeignModel.declaration, policy : ForeignPolicy.functionPolicy}
+type binding = {declaration : ForeignModel.declaration, policy : ForeignPolicy.functionPolicy,
+  requiresShim : bool}
 ```
 
-A uniquely resolved function and its separate projection policy.
+A resolved function, separate projection policy and required C adapter.
+
+A static or inline definition is callable only through a typed shim;
+validation records this requirement without claiming code was emitted.
 
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-binding.declaration"></a>`declaration` | `ForeignModel.declaration` |  |
 | <a name="fld-binding.policy"></a>`policy` | `ForeignPolicy.functionPolicy` |  |
+| <a name="fld-binding.requiresshim"></a>`requiresShim` | `bool` |  |
 
 ### <a name="exn-error"></a>`Error`
 

@@ -134,7 +134,10 @@ struct
           | NONE=>raise Failed "missing safe generation pointer"
         val selected=output ^ "/" ^ relative
         val subject=directory ^ "/safe.so"
-        val ()=ignore(command true[env("CC","cc"),"-std=c17","-Wall","-Wextra","-Werror","-shared","-fPIC","tests/ffi/generator/safe.c","-o",subject])
+        val shim=selected ^ "/shims.c"
+        val ()=ignore(command true([env("CC","cc"),"-std=c17","-Wall","-Wextra","-Werror","-shared","-fPIC","-Itests/ffi/generator",
+          "tests/ffi/generator/safe.c"] @ (if exists shim then [shim] else []) @
+          (if mode="asan" then ["-fsanitize=address,undefined","-fno-omit-frame-pointer"] else []) @ ["-o",subject]))
         val support=["lib/ffi/marshal/bytes_sig.sml","lib/ffi/marshal/bytes.sml","lib/ffi/runtime/owner_sig.sml","lib/ffi/runtime/owner.sml",
           "lib/ffi/runtime/generated_sig.sml","lib/ffi/runtime/generated.sml"]
         val sources=support @ List.map(fn file=>selected ^ "/" ^ file)["raw_sig.sml","raw.sml","public_sig.sml","public.sml"] @ ["tests/ffi/generator/safe-client.sml"]

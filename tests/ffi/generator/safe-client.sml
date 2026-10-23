@@ -48,6 +48,22 @@ struct
           handle CallbackStop=>Word8Array.sub(callbackBuffer,0)=0w91 andalso Word8Array.sub(callbackBuffer,1)=0w92))
         val ()=check("missing deallocator rejects before native ownership transfer",((ignore(GeneratedSafe.preflight session());false)handle RuneForeign.Error _=>
           GeneratedSafe.preflightCalls session()=0 andalso GeneratedSafe.allocations session()=0))
+        val packet={origin={x=3,y=1.25},codes=Vector.fromList[0w1,0w2,0w3]:Word32.word vector,scale=2.5}
+        val transformed=GeneratedSafe.transform session(packet,4)
+        val ()=check("by-value nested struct and fixed vector roundtrip",#x(#origin transformed)=7 andalso
+          Real.abs(#y(#origin transformed)-1.75)<0.00001 andalso Vector.sub(#codes transformed,1)=0w6 andalso Real.==(#scale transformed,5.0))
+        val {value=outputPacket}=GeneratedSafe.packetOut session()
+        val ()=check("returned struct output",#x(#origin outputPacket)=8 andalso Vector.sub(#codes outputPacket,2)=0w9)
+        val {value=inoutPacket}=GeneratedSafe.packetInout session packet
+        val ()=check("struct inout roundtrip",#x(#origin inoutPacket)=6 andalso Real.abs(#y(#origin inoutPacket)-1.75)<0.00001)
+        val ()=check("fixed native array member length checked",((ignore(GeneratedSafe.transform session({origin={x=0,y=0.0},codes=Vector.fromList[0w1],scale=0.0},1));false)handle ForeignMemory.Bounds=>true))
+        val ()=check("original inline definition called through typed shim",GeneratedSafe.inline session 7=21)
+        val ()=check("nonstandard native convention called through typed shim",GeneratedSafe.otherAbi session 7=26)
+        fun retire 0=() | retire n=
+          let val parent=GeneratedSafe.allocate session 4 val child=GeneratedSafe.borrow session parent
+          in GeneratedSafe.release_memory child;GeneratedSafe.release_memory parent;retire(n-1) end
+        val ()=retire 16
+        val ()=check("repeated resource registration and retirement",GeneratedSafe.allocations session()=0)
         val ()=GeneratedSafe.closeSession session
         val facts=RuneForeign.abiFacts()
         val mismatch={architecture= #architecture facts,charBits= #charBits facts,charSigned= #charSigned facts,

@@ -593,8 +593,8 @@
     {
      "kind": "type",
      "name": "binding",
-     "spec": "type binding = {declaration : ForeignModel.declaration, policy : ForeignPolicy.functionPolicy}",
-     "doc": "A uniquely resolved function and its separate projection policy.\n\n",
+     "spec": "type binding = {declaration : ForeignModel.declaration, policy : ForeignPolicy.functionPolicy,\n  requiresShim : bool}",
+     "doc": "A resolved function, separate projection policy and required C adapter.\n\nA static or inline definition is callable only through a typed shim;\nvalidation records this requirement without claiming code was emitted.\n\n",
      "page": "sig/FOREIGN_VALIDATE.md#type-binding"
     },
     {

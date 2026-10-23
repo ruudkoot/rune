@@ -38,3 +38,13 @@ char *safe_bad_utf8(void) { return safe_copy("\xff"); }
 
 const unsigned short *safe_utf16(void) { static const unsigned short value[]={0x41,0xd83d,0xde00,0}; return value; }
 int safe_utf16_input(const unsigned short *text) { return text[0]+text[3]; }
+
+safe_packet safe_transform(safe_packet value, int delta) {
+    value.origin.x+=delta; value.origin.y+=0.5f; value.codes[1]+=(unsigned int)delta; value.scale*=2;
+    return value;
+}
+void safe_packet_out(safe_packet *value) { *value=(safe_packet){{8,1.5f},{7,8,9},2.5}; }
+void safe_packet_inout(safe_packet *value) { *value=safe_transform(*value,3); }
+#if defined(__x86_64__)
+__attribute__((ms_abi)) int safe_other_abi(int value) { return value+19; }
+#endif

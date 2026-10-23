@@ -70,12 +70,31 @@ cleanup, and `ForeignFailure` retains the raw status and captured errors.
 Call-scoped callbacks support scalar and borrowed pointer arguments, scalar
 results, nested foreign calls and annotated failure values. A callback
 exception remains inside the native boundary until safe cleanup finishes.
-Registered callbacks, public aggregate values, retained input memory and
-more complex destructor protocols require explicit public adapters, recorded
+Registered callbacks, retained input memory and more complex destructor
+protocols require explicit public adapters, recorded
 by name in `ffi-manifest.json`. A selection without an implemented lowering
 or an explicit public adapter fails with a source diagnostic. Dynamic
 variadic calls and unprototyped C functions require fixed typed adapters.
 These remaining automatic projections and their tests keep M6 planned.
+
+Native struct arguments/results use generated typed C shims: arguments are
+passed to the shim by pointer, and an aggregate result adds an output pointer
+as its first argument and makes the raw result void. The original C compiler
+performs the by-value call and copy. Public structs become complete named
+SML records; nested structs and fixed array fields become nested records and
+vectors. Output and inout struct pointers use the same target layout codec.
+Every vector length and integer field range is checked before native entry.
+Unions require an explicit active-member policy; pointer fields, anonymous
+fields and representations for which layout requires a native adapter fail
+automatic public projection. Explicit raw adapters remain available.
+
+Static/inline functions and functions with nonstandard calling conventions
+also receive exported C shims. The original header supplies their semantics
+and calling convention; the shim uses the target default ABI. The manifest
+identifies the original declaration, exported shim symbol and `typed-c-shim`
+mechanism, and coverage marks these declarations `shimmed`. Compile emitted
+`shims.c` with the same pinned original headers and target compiler options.
+No build command is embedded in `.build` or executed by the generator.
 
 The output directory stores immutable `sets/<content-hash>` generations and
 stable public interfaces in `api/<signature-hash>`. Publication writes and
