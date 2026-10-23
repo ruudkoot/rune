@@ -28,6 +28,16 @@ struct
      Test.describe "layout"
        (List.map(fn target=>jobWith "rune-c-layout-check" target target ["test-c-layout"])
          ["native","linux32","windows32","windows64","aarch64","ppc64"]),
+     Test.describe "headers"
+       [jobWith "rune-header-layout-check" "sdl-linux" "headers sdl linux-x86_64" ["check","test-ffi-header-layout"],
+        Test.requires["windows-sdk","windows"](Test.describe "windows"
+          (List.concat(List.map(fn library=>List.map(fn target=>jobWith "rune-header-layout-check"
+            (library ^ "/" ^ target)("headers " ^ library ^ " " ^ target)["test-ffi-header-layout"])
+            ["windows-x86","windows-x86_64"])["sdl","win32"])))],
+     Test.describe "real32"
+       (List.map(fn target=>jobWith "rune-header-layout-check" target ("real32 " ^ target)
+         (if target="native" then ["check","test-ffi-real32"] else ["test-ffi-real32"]))
+         ["native","linux32","windows32","windows64","aarch64","ppc64"]),
      Test.describe "frontend"
        [Test.requires ["cc"] (frontendJob "fixture" "fixture" ["check", "test-c-frontend"]),
         Test.requires ["clang"] (frontendJob "sdl-linux" "headers sdl linux-x86_64" ["test-c-frontend"]),

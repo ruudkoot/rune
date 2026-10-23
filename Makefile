@@ -1892,6 +1892,23 @@ bin/rune-c-layout-check: bin/rune-c-layout-check.rbc bin/runevm Makefile
 test-c-layout: $(RUNE) vm bin/rune-c-layout-check bin/rune-test
 	$(RUNE_TEST) --tier test-c-layout
 
+HEADER_LAYOUT_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/header-layout-check.sml
+check-tools: bin/rune-header-layout-check
+bin/rune-header-layout-probe.rbc: $(RUNE) tests/ffi/header-layout.sml $(wildcard lib/ffi/model/*.sml) $(wildcard lib/language/c/*.sml) manifests
+	$(RUNE) --library ffi/model tests/ffi/header-layout.sml -o $@
+bin/rune-real32-probe.rbc: $(RUNE) tests/ffi/real32.sml $(wildcard lib/ffi/marshal/*.sml) manifests
+	$(RUNE) --library ffi/marshal tests/ffi/real32.sml -o $@
+bin/rune-header-layout-check.rbc: $(RUNE) $(HEADER_LAYOUT_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner --library ffi/model $(HEADER_LAYOUT_CHECK_SRCS) -o $@
+bin/rune-header-layout-check: bin/rune-header-layout-check.rbc bin/rune-header-layout-probe.rbc bin/rune-real32-probe.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-header-layout-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-ffi-header-layout test-ffi-real32
+test-ffi-header-layout: $(RUNE) vm bin/rune-header-layout-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-header-layout
+test-ffi-real32: $(RUNE) vm bin/rune-header-layout-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-real32
+
 C_FRONTEND_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/frontend-check.sml
 check-tools: bin/rune-c-check
 bin/rune-c-check.rbc: $(RUNE) $(C_FRONTEND_CHECK_SRCS) $(wildcard lib/language/c/*.sml) manifests
