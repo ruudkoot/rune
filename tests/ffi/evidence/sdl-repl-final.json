@@ -1,0 +1,173 @@
+{
+  "schema": 1,
+  "status": 0,
+  "wallSeconds": 45.279728,
+  "videoDriverOverride": null,
+  "generatedSet": "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/generated/sets/f83b5f519861f8d76eae6b99a3f655a6aa5022fbb0632ddc56a46bd8493e6f5e",
+  "sourceAndBinaryHashes": [
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/runevm",
+      "sha256": "b1556ea59a929cf5faa618bdb94b228450993215e6673ff4ed34ca3d96dd47c3"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/rune-repl.img",
+      "sha256": "cd30bec48f70c7251c70ca0b96f0fb1ad2edff177be454bc5f6d097cc223fc3c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/deps/sdl/native/install/lib/libSDL3.so.0.4.18",
+      "sha256": "4984737ef3e9a08328dab514342fd4fe6737c0d1a35062ba23b73f0e09d958f5"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/shims.so",
+      "sha256": "ebf11331130596fdfa0f925583ae8e6c6bdad67db60eec2806a263c04ba86b0d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/unicode/utf8_sig.sml",
+      "sha256": "15ca27fbb50018d58d834676cf3e64449b2eb232be65bb83fcbb7590079742ef"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/unicode/utf8.sml",
+      "sha256": "29b65c054ee852f9911557f2847111beef1a6cf9069e6cb5babdf3f882b5d58e"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/ffi/marshal/scope_sig.sml",
+      "sha256": "c8ae4a30191ba5673fae0cf69d454962a3c289bad51ae2a62b4d864ef595b545"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/ffi/marshal/scope.sml",
+      "sha256": "4aa007fbb0a6ca1bf6db1cb65119606b03f45b3d88a31ea4b4794a522c2075c4"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/ffi/marshal/bytes_sig.sml",
+      "sha256": "55ac5939196bd0344fa9e85587626a1d765db3e345fbfbb5a0adbdae06564698"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/ffi/marshal/bytes.sml",
+      "sha256": "88d9441877900a294a84f8856a9dde2beff681e2bc1cc4cb63a7653ba1cb6e73"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/ffi/marshal/text_sig.sml",
+      "sha256": "fc0654abf610ea95ef173d89508b22ac7bff86e731e87081a0ae9a94bc6a45cc"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/ffi/marshal/text.sml",
+      "sha256": "5da182356669e672102a0053615d594506b3f954de671e1d7209b2e19fbf3346"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/ffi/runtime/owner_sig.sml",
+      "sha256": "796222672aff5cd839714660a60f89e7041a6342de99c05e464806c46070da77"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/ffi/runtime/owner.sml",
+      "sha256": "27b4feebb68102d12250afc1cf983701e413669fb0903ccbaa04e3f8158535f7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/ffi/runtime/memory_sig.sml",
+      "sha256": "8f90d87bc4c673427128a095185c5b2f6f8ca0363778aeaff39c75b110543bc6"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/ffi/runtime/memory.sml",
+      "sha256": "ad6f7e520eecb9cc8e4643f7ee6bc0a4d90fc0df9481b59bc53aedf7f5036141"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/ffi/runtime/generated_sig.sml",
+      "sha256": "3a565405764c9892485d941098af014c942a8d2b5b600ed892b390c254457459"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/ffi/runtime/generated.sml",
+      "sha256": "30f1f48efe2006faef6370d81a880b140033641693703dd6e5743f708a433183"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/sdl/raw_sig.sml",
+      "sha256": "8d7d4556bd8767eea191a0c3c75d8416e8554a33b2465cd83644e579bffd2b57"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/sdl/layout_sig.sml",
+      "sha256": "6117681b7e21eaf46ae42366097443c40aa5b2bcaad455cd31b856d91abfa746"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/sdl/sdl_sig.sml",
+      "sha256": "3639e8d8a86b8af008592dde94ffd9b6a02dab210592ce65a30bf1ab1d913d55"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/lib/sdl/sdl.sml",
+      "sha256": "087e2d023abf1abe9e51338f88675a5a5bd046c508a9c324e4d811e5d0ad501c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/generated/sets/f83b5f519861f8d76eae6b99a3f655a6aa5022fbb0632ddc56a46bd8493e6f5e/raw_sig.sml",
+      "sha256": "a678bdc7c7272a4cd95309d14bea4db8d4ff57dee974ff0338b38bbc1c5478c1"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/generated/sets/f83b5f519861f8d76eae6b99a3f655a6aa5022fbb0632ddc56a46bd8493e6f5e/raw.sml",
+      "sha256": "ac401fadcb71913dd650303c52ace7fe8fd9603f0a770bd4894bfa063e58459c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/generated/sets/f83b5f519861f8d76eae6b99a3f655a6aa5022fbb0632ddc56a46bd8493e6f5e/layout_sig.sml",
+      "sha256": "7609248693ff047e0b9ff7a0990067cf9e1c9194c61ab8241b5adceb625ddb85"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/generated/sets/f83b5f519861f8d76eae6b99a3f655a6aa5022fbb0632ddc56a46bd8493e6f5e/layout.sml",
+      "sha256": "19985a66908f3a336f908c7daf80925f19a75896c8fe4b1a5dc528500c6f0e3f"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/ffi/sdl/instantiate.sml",
+      "sha256": "b626045e0bebc6cfcc7118967df2102af232e585bd0bad2a1b0580c86abd9078"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/ffi/sdl/repl-session.sml",
+      "sha256": "9bf6b1d21b544ea4a448902c52a706c57030935d4d50a7bb53133e468961b68f"
+    }
+  ],
+  "argv": [
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/runevm",
+    "--jit=off",
+    "--gc-verify",
+    "--restore",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/rune-repl.img",
+    "--",
+    "-q",
+    "--no-init",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-0.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-1.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-2.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-3.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-4.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-5.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-6.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-7.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-8.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-9.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-10.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-11.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-12.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-13.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-14.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-15.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-16.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-17.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-18.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-19.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-20.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-21.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-22.sml",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/tests/out/final-sdl-repl/sdl-repl/runeMyNoL5/source-23.sml",
+    "-e",
+    "SDLReplAcceptance.beginSession()",
+    "-e",
+    "val lateReplAllocation=List.tabulate(5000,fn n=>(n,Int.toString n)); fun lateReplIdentity x=x; val ()=Runtime.collect()",
+    "-e",
+    "SDLReplAcceptance.finishSession()",
+    "-e",
+    "SDLReplAcceptance.beginSession()",
+    "-e",
+    "datatype lateReplType=LateRepl of int list; val laterReplAllocation=LateRepl(List.tabulate(7000,fn n=>n+1)); val ()=Runtime.collect()",
+    "-e",
+    "SDLReplAcceptance.finishSession(); val ()=if !SDLReplAcceptance.sessions=2 then print \"PASS SDL REPL two complete sessions\\n\" else raise Fail \"REPL session count\""
+  ],
+  "observations": [
+    "PASS SDL REPL retained session 1: native resources restored",
+    "PASS SDL REPL retained session 2: native resources restored",
+    "PASS SDL REPL two complete sessions"
+  ],
+  "stderr": ""
+}

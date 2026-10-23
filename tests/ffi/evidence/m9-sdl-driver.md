@@ -149,3 +149,11 @@ The shared paint fixture now permits an empty visible/update intersection while
 checking ordered bounds inside the client rectangle, matching native Win32
 clipping. It retains body-exception cleanup, stale-scope and active-destruction
 guards; driver pixel probes still require nonempty clipped paint retention.
+
+Final production-artifact follow-up: the unchanged shared Win32 application
+passed on a real Linux desktop with `--jit=off --gc-stress 101 --gc-verify
+--stats`, completing 3,238 verified collections in 9.53 seconds wall time. This
+closes the GUI collection acceptance using an explicit bounded workload; the
+older stress-7 timeout receipts above remain timeouts and describe a much more
+expensive interval. Exact commands, hashes and GC statistics are retained in
+[the final GUI/REPL receipt](sdl-final-gui.md).

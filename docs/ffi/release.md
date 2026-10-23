@@ -123,3 +123,9 @@ The shared Win32 GUI example and separate provider entrypoints are documented in
 [examples/win32](../../examples/win32/README.md); SDL startup and generation
 commands are in [the SDL guide](sdl.md). Capability and platform acceptance must
 be read with their dated receipts; a cross build is not a native GUI test.
+
+The SDL guide also documents a [provider-specific REPL acceptance
+command](sdl.md#existing-repl-source-loading). It creates real windows in two
+sessions, retains each window/renderer across later declarations and full
+collection, draws afterward and releases every native resource. This exercises
+the generated SDL provider beyond the generic scalar REPL bridge.

@@ -45,7 +45,7 @@ commands:
 
 ```sh
 bin/rune --library sdl --build examples/sdl/hello.build \
-  --path SDL_GENERATED=build/ffi-generated/sdl -o build/sdl-hello.rbc
+  --path SDL_GENERATED="$PWD/build/ffi-generated/sdl" -o build/sdl-hello.rbc
 bin/runevm build/sdl-hello.rbc /absolute/path/libSDL3.so.0 /absolute/path/shims.so
 ```
 
@@ -110,3 +110,27 @@ That entrypoint exposes `Win32SdlDriver`, including `load` and `shutdown`
 controls, for the common Win32 model. The shared model owns classes, window
 procedures, timers, queue filtering and GDI object lifetime. This split keeps
 those semantics identical between SDL and mocks.
+
+## Existing REPL source loading
+
+After the explicit generation and shim compilation above, select the immutable
+set directory printed by `runeffi`. The SDL REPL acceptance helper loads the
+ordinary SML sources in dependency order through existing file arguments. It
+uses repeated `-e` declarations to retain a window and renderer while later
+declarations allocate and call `Runtime.collect ()`, then renders and closes
+them. It repeats the complete startup/shutdown session and requires zero native
+resources after each:
+
+```sh
+make bin/rune-sdl-repl-check.rbc
+RUNE_REPL_IMAGE="$PWD/bin/rune-repl.img" \
+  RUNE_SDL_NATIVE_LIBRARY=/absolute/path/libSDL3.so.0 \
+  bin/runevm bin/rune-sdl-repl-check.rbc \
+  "$PWD/build/ffi-generated/sdl/sets/SET_IDENTIFIER" /absolute/path/shims.so
+```
+
+This is a real desktop check and clears `SDL_VIDEODRIVER` overrides. `RUNEVM`
+and `RUNE_LIB` can select compatible frozen VM and source-library artifacts.
+The helper records source/binary hashes, the complete REPL argument vector,
+outputs and status under the runner output directory. It adds no REPL syntax.
+See [the final GUI/REPL receipt](../../tests/ffi/evidence/sdl-final-gui.md).

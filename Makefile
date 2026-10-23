@@ -2225,3 +2225,7 @@ bin/rune-win32-mutants.rbc: $(RUNE) $(WIN32_MUTANT_SRCS) tests/ffi/win32/contrac
 	$(RUNE) --library test/runner --library json --library digest $(WIN32_MUTANT_SRCS) -o $@
 test-win32-contract-mutants: $(RUNE) vm bin/rune-win32-mutants.rbc
 	bin/runevm bin/rune-win32-mutants.rbc
+
+SDL_REPL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/sdl/repl-check.sml
+bin/rune-sdl-repl-check.rbc: $(RUNE) $(SDL_REPL_CHECK_SRCS) tests/ffi/sdl/repl-session.sml manifests
+	$(RUNE) --library test/runner --library json --library digest $(SDL_REPL_CHECK_SRCS) -o $@
