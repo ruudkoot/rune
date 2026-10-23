@@ -18,5 +18,13 @@ that had not been built in this checkout: the first records 39 passes,
 10 missing-host skips and 12 missing-VM failures; the second records
 41 passes, 15 skips, seven missing-VM failures and four LeakSanitizer
 environment failures. These are failed runs, not portability acceptance.
-Portability, Windows and unrestricted sanitizer reruns remain outstanding
-for this addition.
+After building the missing VMs, the unrestricted focused selection passes
+**77/77** runner cases: **67 passes**, ten absent optional host-compiler
+skips, zero failures (100.8 seconds). This includes the ABI fixture across
+native/32-bit/emulated portability and sanitizer modes, Basis witnesses,
+native and sanitizer callback lifecycle gates, all generator host jobs and
+the separate MLKit no-region comparison. Run:
+`tests/out/r/20261023-085610-2100731`. `make portability DOCTOR=no` bypasses
+the optional binfmt registration diagnostic; it does not change the system
+registration. The focused emulated fixture uses the explicit QEMU wrappers.
+Windows ABI-facts acceptance remains outstanding for this addition.

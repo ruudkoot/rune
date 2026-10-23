@@ -20,7 +20,7 @@ implementation progress separately from this original design baseline.
 | M0: contracts, inventories and baseline | none | complete |
 | M1: reusable C frontend | M0 | complete |
 | M2: binding model and sidecars | M1 | complete |
-| M3: generic dynamic calls | M0 | planned |
+| M3: generic dynamic calls | M0 | complete |
 | M4: layout, marshalling and generated shims | M2, M3 | planned |
 | M5: callbacks and VM lifecycle | M3, M4 | planned |
 | M6: generator and build integration | M2, M3, M4, M5 | planned |
