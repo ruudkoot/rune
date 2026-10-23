@@ -107,6 +107,22 @@ generation/coalescing/refusal rules as folding refresh. Unnegotiated token
 methods return `MethodNotFound`; malformed ranges retain `InvalidParams` and
 response-budget failures retain `RequestFailed`.
 
+`textDocument.inlayHint` enables inferred pattern type hints. The provider
+advertises tooltip resolution only when `resolveSupport.properties` includes
+`tooltip`; other clients receive the tooltip eagerly. Labels carry kind `Type`
+and have no accepting text edits. Range endpoints follow the position mapper's
+EOL/EOF clamping and character-boundary rules. Limits are 2048 hints and 1 MiB
+per response; refusal is `RequestFailed` and leaves smaller ranges available.
+
+Hint metadata identifies its retained snapshot, binding, source revision and
+workspace generation. `inlayHint/resolve` selects that original snapshot, even
+after an equivalent recheck, and verifies the metadata against both current
+service state and the captured view. Label/position changes are invalid.
+Edits, changed contexts, eviction and worker restart return `ContentModified`
+without retrying stale hint metadata. Build documents return null hints.
+`workspace.inlayHint.refreshSupport` enables workspace refresh using the same
+generation, coalescing and refusal rules as folding; typing does not emit it.
+
 `$/setTrace` accepts off, messages and verbose. Requested trace data is
 sent as framed `$/logTrace` notifications; operational errors remain on
 stderr. Notifications never receive ordinary response messages.

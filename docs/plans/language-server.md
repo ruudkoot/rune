@@ -24,7 +24,7 @@ documentation and its evidence beside the tests before this plan is retired.
 | M6 | Document and workspace diagnostics | M5 | in progress: push/pull/workspace reports, refresh, cancellation and partial progress implemented; full coverage/performance acceptance remains |
 | M7 | Hover, navigation and symbols | M5 | in progress: navigation, document/workspace symbols and stale resolve tests pass; documentation, broader module cases and measurements remain |
 | M8 | Completion, signature help and inline completion | M7 | in progress: lexical/qualified/record completion, documentation resolve, invocation snippets, signature help, negotiated inline patterns and build-file path completion implemented; broader recovery and full acceptance remain |
-| M9 | Highlighting, hints, structural editing, links and colours | M4, M7 | in progress: document highlights, captured syntax, folding/selection and semantic tokens/full/range/delta/refresh implemented; hints, links, colours and full acceptance remain |
+| M9 | Highlighting, hints, structural editing, links and colours | M4, M7 | in progress: document highlights, captured syntax, folding/selection, semantic tokens and inferred pattern type hints implemented; links, colours, safe linked editing and full acceptance remain |
 | M10 | References, rename and workspace/file edits | M5-M7 | planned |
 | M11 | Formatting, code actions, refactorings and lenses | M4, M7-M10 | planned |
 | M12 | Call hierarchy, monikers and virtual source content | M7, M10 | planned |
@@ -1066,6 +1066,27 @@ stale-query/check probes. The focused cohort, API checks and documentation pass
 in `/tmp/rune-lsp-tokens-race-final-cohort.log`; native receipts are
 `/tmp/rune-lsp-tokens-race-final-windows{64,32}.log` and
 `/tmp/rune-lsp-service-race-windows{64,32}.log`.
+
+The inferred-pattern hint checkpoint adds pure `Analysis.typeHints`, negotiated
+type hints/tooltips, retained-view resolution and workspace refresh. Twelve
+public analysis cases pass on the interpreter/JIT, all six SML hosts and both
+Windows widths. Five deterministic service cases pass on the interpreter/JIT
+and both Windows widths. An actual child-process restart test proves private
+view IDs cannot repeat across worker lifetimes; the original worker fails both
+restart assertions. View IDs include the supervisor's monotonic job number.
+
+All 41 semantic transcripts pass Linux and native Windows with each width's
+front end and worker paired. The initial 8192-entry native 32-bit budget probe
+timed out and remains a failed receipt. The final visible-hint limit is 2048,
+with separate count and byte fixtures requiring successful typechecking and
+the specific budget error. Final native receipts are
+`/tmp/rune-lsp-hints-bounded-{protocol,worker}-windows{64,32}.log`;
+Linux and host receipts are `/tmp/rune-lsp-hints-bounded-protocol-tests.log`
+and `/tmp/rune-lsp-hints-host-analysis.log` (`20261023-144506-3494645`).
+The focused cohort and documentation checks pass in
+`/tmp/rune-lsp-hints-final-cohort.log` and
+`/tmp/rune-lsp-hints-final-doc-check.log`. Links, colours, safe linked editing,
+real-client coverage and performance acceptance remain.
 
 M8 feature checkpoint (2026-10-23): the compiler now projects completion
 roles, concrete record labels, named applications and declaration comments

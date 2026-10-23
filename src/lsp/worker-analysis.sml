@@ -13,18 +13,20 @@ struct
   exception Stale of string
   type context={key:string,compiler:C.session,analysis:A.t}
   type source={file:string,uri:string,text:string,mode:string,ordinal:int option,syntax:C.Syntax.t option,
-    version:IntInf.int option,index:L.t option,
+    version:IntInf.int option,revision:IntInf.int option,index:L.t option,
     tokens:(C.Syntax.piece list * C.Syntax.piece vector) option ref}
   type view={id:string,snapshot:A.snapshot,sources:source list,encoding:LspProtocol.encoding,uri:string,ordinal:int option,
-    capabilities:Json.value,activeUnit:string option}
-  datatype t=Worker of {contexts:context list ref,views:view list ref,tokens:RuneLspTokens.t}
-  fun new ()=Worker {contexts=ref [],views=ref [],tokens=RuneLspTokens.new ()}
+    capabilities:Json.value,activeUnit:string option,generation:IntInf.int}
+  datatype t=Worker of {contexts:context list ref,views:view list ref,tokens:RuneLspTokens.t,namespace:string ref}
+  fun new ()=Worker {contexts=ref [],views=ref [],tokens=RuneLspTokens.new (),namespace=ref "local"}
+  (* Job IDs belong to the supervisor and do not reset with this process. *)
+  fun commandId (Worker {namespace,...},id)=namespace:="worker-job-" ^ IntInf.toString id
   fun safe text =
     let fun loop i=if i=size text then [] else
           case Utf8.decode (text,i) of SOME (_,count) => String.substring (text,i,count) :: loop (i+count)
           | NONE => ("\\x" ^ StringCvt.padLeft #"0" 2 (Int.fmt StringCvt.HEX (Char.ord (String.sub (text,i))))) :: loop (i+1)
     in String.concat (loop 0) end
-  fun clear (Worker {contexts,views,tokens}) =
+  fun clear (Worker {contexts,views,tokens,...}) =
     (List.app (fn context:context => (A.close (#analysis context);C.close (#compiler context))) (!contexts);
      contexts:=[];views:=[];RuneLspTokens.clear tokens)
   fun context (Worker {contexts,...},{key,lib,flags}) =
@@ -57,10 +59,10 @@ struct
         in find (Int.max (0,Int.min (count,offset))) end
   fun range (source,encoding,start,stop)=LspProtocol.rangeToJson
     {start=position (source,encoding,start,false),stop=position (source,encoding,stop,true)}
-  fun makeView {id,snapshot,sources,encoding,uri,ordinal,capabilities} : view =
+  fun makeView {id,snapshot,sources,encoding,uri,ordinal,capabilities,generation} : view =
     let val activeUnit=A.unitAt (snapshot,{ordinal=getOpt (ordinal,0)})
     in {id=id,snapshot=snapshot,sources=sources,encoding=encoding,uri=uri,
-        ordinal=ordinal,capabilities=capabilities,activeUnit=activeUnit} end
+        ordinal=ordinal,capabilities=capabilities,activeUnit=activeUnit,generation=generation} end
   fun activeSource (view:view,uri) = List.find (fn source:source => #uri source=uri andalso
     (uri<> #uri view orelse #ordinal source=SOME (getOpt (#ordinal view,0)))) (#sources view)
   fun sourceFor (view:view,file)=List.find (fn source:source => #file source=file) (#sources view)
@@ -162,7 +164,7 @@ struct
                 then Json.Object [("kind",Json.String "plaintext"),("value",Json.String (safe (#message diagnostic)))]
                 else Json.String (safe (#message diagnostic)))])
     in List.mapPartial diagnostic (A.diagnostics (#snapshot view)) end
-  fun check (worker as Worker {views,...},{state,uri,encoding,capabilities,cancelled}) =
+  fun check (worker as Worker {views,namespace,...},{state,uri,encoding,capabilities,cancelled}) =
     let val (workspace as W.Workspace {platform,lib,...},documents)=M.restore state
         val _=RuneLspProjects.enrich (workspace,documents,cancelled)
         val configuration=W.configurationFor (workspace,uri)
@@ -205,20 +207,20 @@ struct
               val aliases=List.filter (fn snapshot => matches (#file input,snapshot)) (D.all documents)
               val aliases=case List.find (fn snapshot:D.snapshot => #uri snapshot=uri) aliases of NONE => aliases
                 | SOME current => current :: List.filter (fn snapshot:D.snapshot => #uri snapshot<>uri) aliases
-              val uris=if null aliases then [(U.original (U.fromPath (platform,OS.FileSys.fullPath (#file input))),NONE)]
-                else List.map (fn snapshot:D.snapshot => (#uri snapshot,SOME (#version snapshot))) aliases
+              val uris=if null aliases then [(U.original (U.fromPath (platform,OS.FileSys.fullPath (#file input))),NONE,NONE)]
+                else List.map (fn snapshot:D.snapshot => (#uri snapshot,SOME (#version snapshot),SOME (#revision snapshot))) aliases
               val index=(SOME (L.make (#text input)) handle L.Invalid => NONE)
               val pieces=ref NONE
               val syntax=Option.mapPartial (fn ordinal => A.syntaxAt (snapshot,{ordinal=ordinal})) ordinal
-          in List.map (fn (uri,version) => {file= #file input,uri=uri,text= #text input,mode= #mode input,ordinal=ordinal,
-            syntax=syntax,version=version,
+          in List.map (fn (uri,version,revision) => {file= #file input,uri=uri,text= #text input,mode= #mode input,ordinal=ordinal,
+            syntax=syntax,version=version,revision=revision,
             index=index,tokens=pieces}:source) uris end
         val primary=A.inputs snapshot
         val sources=List.concat (ListPair.map (fn (input,ordinal) => captured (input,SOME ordinal))
           (primary,List.tabulate (length primary,fn i => i)) @
           List.map (fn input => captured (input,NONE)) (A.dependencies snapshot))
-        val view=makeView {id=A.id snapshot,snapshot=snapshot,sources=sources,encoding=encoding,uri=uri,
-          ordinal=Option.map #ordinal selected,capabilities=capabilities}:view
+        val view=makeView {id= !namespace ^ ":" ^ A.id snapshot,snapshot=snapshot,sources=sources,encoding=encoding,uri=uri,
+          ordinal=Option.map #ordinal selected,capabilities=capabilities,generation=W.generation workspace}:view
         val all=view :: !views
         val ()=views:=List.take (all,Int.min (4,length all))
     in view end
@@ -269,7 +271,8 @@ struct
                 val view=case prior of SOME (_,view) => view
                   | NONE => check (worker,{state=captured,uri=uri,encoding=encoding,capabilities=capabilities,cancelled=cancelled})
                 val view=makeView {id= #id view,snapshot= #snapshot view,sources= #sources view,encoding= #encoding view,uri=uri,
-                  ordinal=case selected of W.Selected context => SOME (#ordinal context) | _ => NONE,capabilities=capabilities}:view
+                  ordinal=case selected of W.Selected context => SOME (#ordinal context) | _ => NONE,capabilities=capabilities,
+                  generation= #generation view}:view
                 val ()=if isSome prior then () else checked:=(key,view):: !checked
             in output:=view :: !output end
         val ()=List.app one uris
@@ -318,7 +321,7 @@ struct
         val uri=J.string (J.required (data,"uri"))
         val ordinal=case J.required (data,"ordinal") of Json.Null => NONE | value => Json.toInt value
         val view=makeView {id= #id view,snapshot= #snapshot view,sources= #sources view,encoding= #encoding view,uri=uri,
-          ordinal=ordinal,capabilities= #capabilities view}:view
+          ordinal=ordinal,capabilities= #capabilities view,generation= #generation view}:view
         val source=case activeSource (view,uri) of SOME source => source
           | NONE => raise Fail "symbol source is unavailable"
         val (_,documents)=M.restore state
@@ -346,7 +349,7 @@ struct
       in case List.find (fn candidate:A.candidate => #name candidate=name andalso #kind candidate=kind) candidates of
            NONE => NONE | SOME candidate => Option.mapPartial (fn location => A.documentationAt (#snapshot view,location)) (#definition candidate) end
   fun query (Worker {tokens=history,...},view:view,{method,params}) =
-    let val resolving=method="completionItem/resolve"
+    let val resolving=method="completionItem/resolve" orelse method="inlayHint/resolve"
         val document=J.object (J.required (J.object params,if resolving then "data" else "textDocument"))
         val uri=J.string (J.required (document,"uri"))
         val source=case activeSource (view,uri) of
@@ -367,6 +370,32 @@ struct
     in case method of "textDocument/semanticTokens/full" => semanticTokens ()
        | "textDocument/semanticTokens/full/delta" => semanticTokens ()
        | "textDocument/semanticTokens/range" => semanticTokens ()
+       | "textDocument/inlayHint" =>
+           (case (sourceOrdinal (view,source),RuneLspHints.bounds (params,#index source,#encoding view),#index source) of
+              (SOME ordinal,SOME (start,stop),SOME index) =>
+                let val hints=A.typeHints (#snapshot view,{ordinal=ordinal,start=start,stop=stop})
+                    val ()=if length hints>RuneLspHints.maximum then raise Fail "inlay hint count budget exceeded" else ()
+                in RuneLspHints.bounded (List.map (fn hint => RuneLspHints.render {uri=uri,snapshot= #id view,
+                  capabilities= #capabilities view,index=index,encoding= #encoding view,hint=hint,resolved=false,clean=safe,
+                  revision=getOpt (#revision source,~1),generation= #generation view}) hints) end
+            | _ => Json.Null)
+       | "inlayHint/resolve" =>
+           let val ()=if J.string (J.required (document,"snapshot"))= #id view then () else raise Stale "inlay hint is stale"
+               val ()=if uri= #uri view andalso Json.toIntInf (J.required (document,"revision"))= #revision source andalso
+                 Json.toIntInf (J.required (document,"generation"))=SOME (#generation view) then () else raise Stale "inlay hint context changed"
+               val binding=J.string (J.required (document,"binding"))
+               val at=case Json.toInt (J.required (document,"offset")) of SOME at => at | NONE => raise J.Invalid "invalid inlay hint offset"
+               val hints=case sourceOrdinal (view,source) of NONE => [] | SOME ordinal =>
+                 A.typeHints (#snapshot view,{ordinal=ordinal,start=at,stop=at})
+           in case (List.find (fn hint:A.typeHint => #binding hint=binding andalso #position hint=at) hints,#index source) of
+                (SOME hint,SOME index) =>
+                  let val result=RuneLspHints.render {uri=uri,snapshot= #id view,capabilities= #capabilities view,index=index,
+                        encoding= #encoding view,hint=hint,resolved=true,clean=safe,
+                        revision=getOpt (#revision source,~1),generation= #generation view}
+                      val ()=if Json.member ("position",params)=Json.member ("position",result) andalso
+                        Json.member ("label",params)=Json.member ("label",result) then () else raise J.Invalid "inlay hint identity was modified"
+                  in result end
+              | _ => raise J.Invalid "inlay hint is unavailable" end
        | "textDocument/diagnostic" =>
          documentDiagnostics (view,{uri=uri,previous=case J.member (params,"previousResultId") of
            SOME (Json.String value) => SOME value | NONE => NONE | _ => raise J.Invalid "invalid diagnostic result id"})

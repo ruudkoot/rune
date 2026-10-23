@@ -63,8 +63,10 @@ struct
               discover=fn uri => Option.app (fn service => RuneLspService.discover (service,uri)) (!service),
               selected=fn uri => Option.app (fn service => RuneLspService.check (service,uri,NONE)) (!service)})
             val ()=RuneLspController.presentations (valOf (!controller),
-              case RuneLspTokens.legend (P.rawCapabilities caps) of NONE => [] | SOME _ =>
-                [("workspace/semanticTokens/refresh",["workspace","semanticTokens","refreshSupport"])])
+              (case RuneLspTokens.legend (P.rawCapabilities caps) of NONE => [] | SOME _ =>
+                [("workspace/semanticTokens/refresh",["workspace","semanticTokens","refreshSupport"])]) @
+              (if RuneLspHints.enabled (P.rawCapabilities caps) then
+                [("workspace/inlayHint/refresh",["workspace","inlayHint","refreshSupport"])] else []))
             val ()=service:=SOME (RuneLspService.new {workspace=RuneLspController.workspace (valOf (!controller)),
               documents=valOf (!documents),caps=caps,command=workerCommand,args=workerArgs,send=send,log=stderr,
               discovered=fn (uri,value) => Option.app (fn controller => RuneLspController.contexts (controller,uri,value)) (!controller)})
@@ -89,6 +91,7 @@ struct
                    ("willSave",Json.Bool true),("save",Json.Object [("includeText",Json.Bool true)])]),
                  ("workspace",Json.Object [("workspaceFolders",Json.Object [("supported",Json.Bool true),("changeNotifications",Json.Bool true)])])] @
                 (if RuneLspService.inlineClient caps then [("inlineCompletionProvider",Json.Object [])] else []) @
+                (case RuneLspHints.provider (P.rawCapabilities caps) of NONE => [] | SOME provider => [("inlayHintProvider",provider)]) @
                 (case RuneLspTokens.provider (P.rawCapabilities caps) of NONE => [] | SOME provider => [("semanticTokensProvider",provider)]))),
               ("serverInfo", Json.Object [("name", Json.String "runelsp"), ("version", Json.String Config.version)])]
             val () = state := AwaitInitialized

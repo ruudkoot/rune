@@ -165,6 +165,7 @@ struct
     type typeDefinition=A.typeDefinition
     type candidate=A.candidate
     type call=A.call
+    type typeHint=A.typeHint
     exception Cancelled=A.Cancelled
     exception Busy=A.Busy
     fun create (Session {compiler=compiler as C.Session {token,...},mode},{context}) =
@@ -207,6 +208,7 @@ struct
     fun work (snapshot:snapshot)={checked= #checked snapshot,reused= #reused snapshot}
     val typeAt=A.typeAt
     val typeAtOccurrence=A.typeAtOccurrence
+    val typeHints=A.typeHints
     val visibleAt=A.visibleAt
     val signatureAt=A.signatureAt
     val completionAt=A.completionAt

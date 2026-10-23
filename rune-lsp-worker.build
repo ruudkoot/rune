@@ -9,6 +9,7 @@ files
   src/lsp/worker-model.sml
   src/lsp/structure.sml
   src/lsp/tokens.sml
+  src/lsp/hints.sml
   src/lsp/completion.sml
   src/lsp/worker-analysis.sml
   src/lsp/build.sml

@@ -100,6 +100,20 @@ a bounded range can remain available when a full response exceeds that budget.
 Negotiated token refreshes follow workspace changes. Other M9 providers and
 performance acceptance remain in progress.
 
+Clients supporting inlay hints receive inferred types beside unannotated
+variable and alias patterns, including function parameters and case bindings.
+The compiler supplies each type, lexical identity and exact name-token location.
+Explicitly typed patterns suppress their hints. These are display hints; accepting
+one does not insert a source annotation. Visible ranges and positions use the
+negotiated encoding, and responses have limits of 2048 hints and 1 MiB.
+
+Tooltip resolution is deferred only when the client supports resolving it.
+Resolution uses the original retained snapshot and validates its source revision,
+workspace generation and binding. An unchanged background recheck can publish a
+newer snapshot while the retained item remains valid; edits, context changes and
+eviction reject old items. Negotiated hint refreshes follow workspace changes,
+with the same coalescing rules as folding and semantic tokens.
+
 Clients with snippet support also receive invocation templates whose
 argument groups follow the checked callable type. Their default argument
 expressions use `raise op Match` where a nullary `Match` exception is visible,

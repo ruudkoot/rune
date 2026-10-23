@@ -192,6 +192,27 @@ capability and request-ownership cases also run as `tests/lib/lsp` on the
 native hosts. Both protocol acceptance and baseline-producer acceptance
 are registered in the repository's normal check tier.
 
+The semantic transcripts cover inferred pattern type hints, negotiated tooltip
+resolution, all position encodings, visible ranges, stale/forged metadata,
+refresh and explicit response limits. The large hint fixture is checked before
+testing its limit; it is never executed. `worker-analysis-tests.sml` terminates
+and starts an actual worker, checks that view IDs cannot repeat, and rejects an
+old view reference in the new process. The original worker fails both restart
+assertions. `service-tests.sml` also verifies that malformed hint metadata does
+not retain a completed request ID.
+
+The compiler-owned frozen queries run on the supported hosts with:
+
+```
+bin/rune-test run -j 2 'lib-hosts/*/compiler.analysis'
+```
+
+For native Windows transcripts, stage each width's VM beside `runelsp.rbc`
+under the filename `runevm.exe`, and launch the client with that VM and server
+path. The server derives its worker VM from this directory; a 32-bit front end
+alone does not establish 32-bit worker coverage. Keep server, worker and client
+payloads frozen while each native cohort runs.
+
 The [framing ledger](baseline/2026-10-22-framing.json) records paired
 comparisons with the earlier decoder in the same VM. Its archive contains
 the original signature/implementation with only their names changed, the

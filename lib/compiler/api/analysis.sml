@@ -12,6 +12,7 @@ struct
   type fact=E.fact
   type candidate={name:string,kind:string,detail:string option,arguments:string list list,definition:location option}
   type call={name:string,path:string list,detail:string,arguments:string list list,argument:int,parameter:int}
+  type typeHint={name:string,position:int,ty:string,binding:string,location:location}
   type snapshot={id:string,context:string,project:string option,inputs:input list,dependencies:input list,
     diagnostics:C.diagnostic list,occurrences:occurrence list,types:typeDefinition list,facts:fact list,reused:int,checked:int,
     config:C.config,cache:E.entry list,syntaxes:(string*CompilerSyntax.t) list,plan:string,
@@ -103,6 +104,62 @@ struct
     if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
       let val input=List.nth (#inputs snapshot,ordinal)
       in typeIn (snapshot,{file= #file input,unit=unitAt (snapshot,{ordinal=ordinal}),offset=offset}) end
+  (* Only checked variable patterns supply hints. Exact frozen facts and
+     lexical identities exclude constructors, copied bodies and guessed types. *)
+  fun typeHints (snapshot:snapshot,{ordinal,start,stop}) : typeHint list =
+    case (unitAt (snapshot,{ordinal=ordinal}),syntaxAt (snapshot,{ordinal=ordinal})) of
+      (SOME unit,SOME syntax) =>
+        let val input=List.nth (#inputs snapshot,ordinal)
+            fun localFact (fact:fact,map)=if #unit fact=unit andalso #file fact= #file input andalso not (#derived fact) then
+                  IntMap.insert (map,#start fact,fact::getOpt (IntMap.find (map,#start fact),[])) else map
+            val facts=List.foldl localFact IntMap.empty (#facts snapshot)
+            fun localDefinition (occurrence:occurrence,map)=
+              if #unit occurrence=unit andalso #file occurrence= #file input andalso #isDefinition occurrence andalso #kind occurrence="value"
+                andalso not (#derived occurrence) andalso isSome (#binding occurrence) then
+                IntMap.insert (map,#start occurrence,occurrence::getOpt (IntMap.find (map,#start occurrence),[])) else map
+            val definitions=List.foldl localDefinition IntMap.empty (#occurrences snapshot)
+            fun event ((kind,span:Source.span,values),(patterns,typed)) =
+              let val start= #start span val stop= #stop span
+              in if kind="PTyped" orelse kind="PLayered" andalso
+                 (case values of [_,"true"] => true | _ => false) then
+                (patterns,IntMap.insert (typed,start,Int.max (stop,getOpt (IntMap.find (typed,start),0))))
+              else case (kind,values) of ("PVar",["0",name]) =>
+                (IntMap.insert (patterns,start,(stop,name)),typed)
+              | ("PLayered",[name,"false"]) => (IntMap.insert (patterns,start,(stop,name)),typed)
+              | _ => (patterns,typed) end
+            val (patterns,typed)=List.foldl event (IntMap.empty,IntMap.empty) (SyntaxAst.shape (CompilerSyntax.bridge syntax))
+            val pieces=Vector.fromList (CompilerSyntax.pieces syntax)
+            val count=Vector.length pieces
+            fun lower (at,lo,hi)=if lo>=hi then lo else
+              let val mid=lo+(hi-lo) div 2
+              in if #start (Vector.sub (pieces,mid))<at then lower (at,mid+1,hi) else lower (at,lo,mid) end
+            fun token (from,until,name) =
+              let fun find (at,found)=if at=count then found else
+                    let val piece=Vector.sub (pieces,at)
+                    in if #start piece>=until then found else
+                       if #stop piece<=until andalso #text piece=name andalso
+                         (#kind piece="identifier" orelse #kind piece="operator") then
+                         (case found of NONE => find (at+1,SOME piece) | SOME _ => NONE)
+                       else find (at+1,found) end
+              in find (lower (from,0,count),NONE) end
+            fun advance (from,(at,until)::rest,covered)=if at<=from then advance (from,rest,Int.max (covered,until))
+                  else ((at,until)::rest,covered)
+              | advance (_,[],covered)=([],covered)
+            fun collect ([],_,_,kept)=List.rev kept
+              | collect ((from,(until,name))::rest,typed,covered,kept)=
+                let val (typed,covered)=advance (from,typed,covered)
+                    val definition=List.find (fn occurrence:occurrence => #stop occurrence=until andalso #name occurrence=name)
+                      (getOpt (IntMap.find (definitions,from),[]))
+                    val fact=List.find (fn fact:fact => #stop fact=until) (getOpt (IntMap.find (facts,from),[]))
+                    val hint=if covered>=until orelse until<start orelse from>stop then NONE else
+                      case (definition,fact,token (from,until,name)) of (SOME definition,SOME fact,SOME piece) =>
+                        if #stop piece<start orelse #stop piece>stop then NONE else
+                        SOME {name=name,position= #stop piece,ty= #ty fact,binding=valOf (#binding definition),
+                          location={file= #file input,start= #start piece,stop= #stop piece}}:typeHint option
+                      | _ => NONE
+                in collect (rest,typed,covered,case hint of NONE => kept | SOME hint => hint::kept) end
+        in if start<0 orelse stop<start then [] else collect (IntMap.listItemsi patterns,IntMap.listItemsi typed,~1,[]) end
+    | _ => []
   fun queryAt (snapshot:snapshot,{ordinal,offset,path},accept:E.snapshot->bool) =
     if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
     let val input=List.nth (#inputs snapshot,ordinal)

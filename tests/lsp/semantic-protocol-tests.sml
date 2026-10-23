@@ -701,6 +701,137 @@ struct
         val ()=C.request (client,168,"textDocument/diagnostic",object [("textDocument",document uri),("previousResultId",Json.int 7)])
         val malformed=C.response (client,168)
     in check ("malformed diagnostic parameters retain their error code",C.field (C.field (malformed,"error"),"code")=Json.int (~32602)) end)
+  fun hintCapabilities lazy=object [("textDocument",object [("inlayHint",if lazy then
+    object [("resolveSupport",object [("properties",Json.Array [Json.String "tooltip"])])] else object [])])]
+  fun hintRange (line,column,lastLine,lastColumn)=object
+    [("start",object [("line",Json.int line),("character",Json.int column)]),
+     ("end",object [("line",Json.int lastLine),("character",Json.int lastColumn)])]
+  fun hintQuery (client,id,uri,range)=
+    (C.request (client,id,"textDocument/inlayHint",object [("textDocument",document uri),("range",range)]);C.response (client,id))
+  fun hintItems response=case C.result response of Json.Array items => items | _ => raise Fail "inlay hint array missing"
+  fun hintOne response=case hintItems response of [item] => item | _ => raise Fail "expected one inlay hint"
+  fun inlayHints ()=fixtureWith (hintCapabilities true) (fn client =>
+    let val uri="untitled:inferred-hints"
+        val text="datatype choice=C | D of int\nval a=1\nval typed:int=2\nval (b,c)=(true,3)\nfun id x=x\nval y=fn z=>z\n"
+        val ()=openDocument (client,uri,text)
+        val hints=hintItems (hintQuery (client,500,uri,hintRange (0,0,6,0)))
+        fun line item=C.field (C.field (item,"position"),"line")
+        val first=hd hints
+        val ()=check ("hints come from inferred variable patterns",length hints=6 andalso
+          C.field (first,"position")=object [("line",Json.int 1),("character",Json.int 5)] andalso
+          C.field (first,"label")=Json.String ": int" andalso
+          List.all (fn item => C.field (item,"kind")=Json.int 1 andalso Json.member ("textEdits",item)=NONE andalso
+            Json.member ("tooltip",item)=NONE andalso line item<>Json.int 0 andalso line item<>Json.int 2) hints)
+        val ()=check ("visible hint ranges use insertion positions",
+          hintItems (hintQuery (client,501,uri,hintRange (1,0,1,5)))=[first] andalso
+          null (hintItems (hintQuery (client,502,uri,hintRange (1,0,1,4)))))
+        val ()=C.request (client,503,"inlayHint/resolve",first)
+        val resolved=C.result (C.response (client,503))
+    in check ("lazy hint resolution preserves presentation and adds the checked tooltip",
+      C.field (resolved,"position")=C.field (first,"position") andalso C.field (resolved,"label")=C.field (first,"label")
+      andalso C.field (resolved,"data")=C.field (first,"data") andalso C.field (resolved,"tooltip")=Json.String "a : int"
+      andalso Json.member ("textEdits",resolved)=NONE) end)
+  fun inlayNegotiation () =
+    let val ()=fixtureInitializedResult (object [("capabilities",object [])]) (fn (client,initialized) =>
+          let val uri="untitled:unnegotiated-hints" val ()=openDocument (client,uri,"val x=1\n")
+              val response=hintQuery (client,510,uri,hintRange (0,0,1,0))
+          in check ("hints require client support",Json.member ("inlayHintProvider",C.field (initialized,"capabilities"))=NONE
+            andalso C.field (C.field (response,"error"),"code")=Json.int (~32601)) end)
+    in fixtureInitializedResult (object [("capabilities",hintCapabilities false)]) (fn (client,initialized) =>
+      let val uri="untitled:eager-hints" val ()=openDocument (client,uri,"val x=1\n")
+          val item=hintOne (hintQuery (client,511,uri,hintRange (0,0,1,0)))
+          val ()=check ("clients without lazy tooltip support receive complete hints",
+            C.field (C.field (C.field (initialized,"capabilities"),"inlayHintProvider"),"resolveProvider")=Json.Bool false
+            andalso C.field (item,"tooltip")=Json.String "x : int" andalso Json.member ("data",item)=NONE)
+          val ()=C.request (client,512,"inlayHint/resolve",item)
+      in check ("unnegotiated hint resolution stays unsupported",C.field (C.field (C.response (client,512),"error"),"code")=Json.int (~32601)) end) end
+  fun inlayEncodings () =
+    let fun one (encoding,column)=fixtureInitialized (object [("capabilities",object
+          [("general",object [("positionEncodings",Json.Array [Json.String encoding])]),
+           ("textDocument",object [("inlayHint",object [])])]),
+          ("initializationOptions",object [("sourceMode",Json.String "unicode")])]) (fn client =>
+          let val uri="untitled:unicode-hints" val ()=openDocument (client,uri,"(* \240\159\154\128 *) val \206\187=1\n")
+              val item=hintOne (hintQuery (client,520,uri,hintRange (0,0,1,0)))
+          in check ("hint positions use negotiated " ^ encoding,
+            C.field (item,"position")=object [("line",Json.int 0),("character",Json.int column)]
+            andalso C.field (item,"tooltip")=Json.String "\206\187 : int") end)
+    in List.app one [("utf-8",17),("utf-16",14),("utf-32",13)] end
+  fun inlayValidation ()=fixtureInitialized (object [("capabilities",hintCapabilities true),
+      ("initializationOptions",object [("sourceMode",Json.String "unicode")])]) (fn client =>
+    let val uri="untitled:invalid-hints" val ()=openDocument (client,uri,"(* \240\159\154\128 *) val x=1\n")
+        val ranges=[hintRange (1,0,0,0),hintRange (0,~1,1,0),hintRange (0,4,0,5)]
+        val ()=List.app (fn range => check ("malformed hint ranges retain InvalidParams",
+          C.field (C.field (hintQuery (client,530,uri,range),"error"),"code")=Json.int (~32602))) ranges
+        val item=hintOne (hintQuery (client,531,uri,hintRange (0,0,1,0)))
+        val ()=check ("hint ranges beyond EOF are clamped",length (hintItems (hintQuery (client,533,uri,hintRange (0,0,2,0))))=1)
+        val forged=case item of Json.Object fields => object (("label",Json.String ": bool")::List.filter (fn (key,_) => key<>"label") fields)
+          | _ => raise Fail "inlay hint object missing"
+        val ()=C.request (client,532,"inlayHint/resolve",forged)
+    in check ("modified hint labels cannot change the inferred type",C.field (C.field (C.response (client,532),"error"),"code")=Json.int (~32602)) end)
+  fun inlayStale ()=fixtureWith (hintCapabilities true) (fn client =>
+    let val uri="untitled:stale-hints" val ()=openDocument (client,uri,"val x=1\n")
+        val old=hintOne (hintQuery (client,540,uri,hintRange (0,0,1,0)))
+        val others=List.tabulate (6,fn i => "untitled:evict-hint-" ^ Int.toString i)
+        val ()=List.app (fn uri => openDocument (client,uri,"val y=2\n")) others
+        val ()=List.app (fn uri => ignore (hintItems (hintQuery (client,541,uri,hintRange (0,0,1,0))))) others
+        val ()=C.request (client,542,"inlayHint/resolve",old)
+        val ()=check ("evicted hint resolution is rejected without retrying old metadata",
+          C.field (C.field (C.response (client,542),"error"),"code")=Json.int (~32801))
+        val current=hintOne (hintQuery (client,543,uri,hintRange (0,0,1,0)))
+        val ()=C.notify (client,"textDocument/didChange",object [("textDocument",object [("uri",Json.String uri),("version",Json.int 2)]),
+          ("contentChanges",Json.Array [object [("text",Json.String "val x=true\n")]])])
+        val updated=hintOne (hintQuery (client,544,uri,hintRange (0,0,1,0)))
+        val ()=check ("fresh hint queries recover views and use current types",C.field (updated,"label")=Json.String ": bool")
+        val ()=C.request (client,545,"inlayHint/resolve",current)
+        val ()=check ("source edits invalidate previously returned hints",C.field (C.field (C.response (client,545),"error"),"code")=Json.int (~32801))
+        val forged=case (current,C.field (current,"data"),C.field (updated,"data")) of
+          (Json.Object fields,Json.Object data,updatedData) =>
+            object (("data",object (("revision",C.field (updatedData,"revision"))::List.filter (fn (key,_) => key<>"revision") data))::
+              List.filter (fn (key,_) => key<>"data") fields)
+          | _ => raise Fail "inlay hint metadata missing"
+        val ()=C.request (client,546,"inlayHint/resolve",forged)
+        val ()=check ("client metadata cannot relabel an older captured revision",
+          C.field (C.field (C.response (client,546),"error"),"code")=Json.int (~32801))
+        val ()=C.notify (client,"workspace/didChangeConfiguration",object [("settings",object [("sourceMode",Json.String "unicode")])])
+        val ()=C.request (client,547,"inlayHint/resolve",updated)
+    in check ("workspace changes invalidate hints without text edits",C.field (C.field (C.response (client,547),"error"),"code")=Json.int (~32801)) end)
+  fun inlayRefresh () =
+    let val capabilities=object [("textDocument",object [("inlayHint",object [])]),
+          ("workspace",object [("inlayHint",object [("refreshSupport",Json.Bool true)])])]
+        fun isRefresh value=Json.member ("method",value)=SOME (Json.String "workspace/inlayHint/refresh")
+    in fixtureWith capabilities (fn client =>
+      let val uri="untitled:refresh-hints" val ()=openDocument (client,uri,"val x=1\n")
+          val ()=C.notify (client,"workspace/didChangeConfiguration",object [("settings",object [("sourceMode",Json.String "unicode")])])
+          val refresh=C.receive (client,isRefresh)
+          val ()=C.send (client,object [("jsonrpc",Json.String "2.0"),("id",C.field (refresh,"id")),("result",Json.Null)])
+          val ()=ignore (hintItems (hintQuery (client,550,uri,hintRange (0,0,1,0))))
+          val ()=C.notify (client,"textDocument/didChange",object [("textDocument",object [("uri",Json.String uri),("version",Json.int 2)]),
+            ("contentChanges",Json.Array [object [("text",Json.String "val x=2\n")]])])
+          val ()=ignore (hintItems (hintQuery (client,551,uri,hintRange (0,0,1,0))))
+          val C.Client {messages,...}=client
+      in check ("ordinary typing does not trigger a global inlay refresh",not (List.exists isRefresh (!messages))) end) end
+  fun inlayBudget ()=fixtureWith (hintCapabilities false) (fn client =>
+    let val uri="untitled:hint-budget"
+        val text="val [" ^ String.concatWith "," (List.tabulate (2050,fn i => "a" ^ Int.toString i)) ^ "]=[]\n"
+        val ()=openDocument (client,uri,text)
+        val ()=C.request (client,559,"textDocument/diagnostic",object [("textDocument",document uri)])
+        val ()=check ("hint budget fixture typechecks",C.field (C.result (C.response (client,559)),"items")=Json.Array [])
+        val response=hintQuery (client,560,uri,hintRange (0,0,1,0))
+        val error=C.field (response,"error")
+        val ()=check ("oversized hints fail at their count limit",C.field (error,"code")=Json.int (~32803) andalso
+          (case C.field (error,"message") of Json.String message => String.isSubstring "inlay hint count budget exceeded" message | _ => false))
+        val subset=hintItems (hintQuery (client,561,uri,hintRange (0,0,0,12)))
+        val ()=check ("a smaller hint range remains usable after refusal",not (null subset) andalso length subset<4)
+        val longName="long" ^ String.implode (List.tabulate (1200,fn _ => #"a"))
+        val text="datatype " ^ longName ^ "=C\nval [" ^
+          String.concatWith "," (List.tabulate (1000,fn i => "b" ^ Int.toString i)) ^ "]=[C]\n"
+        val ()=C.notify (client,"textDocument/didChange",object [("textDocument",object [("uri",Json.String uri),("version",Json.int 2)]),
+          ("contentChanges",Json.Array [object [("text",Json.String text)]])])
+        val ()=C.request (client,562,"textDocument/diagnostic",object [("textDocument",document uri)])
+        val ()=check ("hint byte-budget fixture typechecks",C.field (C.result (C.response (client,562)),"items")=Json.Array [])
+        val error=C.field (hintQuery (client,563,uri,hintRange (0,0,2,0)),"error")
+    in check ("fewer long hints fail at their byte limit",C.field (error,"code")=Json.int (~32803) andalso
+      (case C.field (error,"message") of Json.String message => String.isSubstring "inlay hint response budget exceeded" message | _ => false)) end)
   fun buildDocuments () =
     let val dir=OS.FileSys.tmpName ()
         val ()=(OS.FileSys.remove dir handle _ => ();OS.FileSys.mkDir dir)
@@ -711,7 +842,7 @@ struct
         val platform=if List.exists (fn (key,value) => key="sysname" andalso value="Windows") (Posix.ProcEnv.uname ()) then LspUri.Windows else LspUri.Posix
         val uri=LspUri.original (LspUri.fromPath (platform,OS.FileSys.fullPath (dir ^ "/main.build")))
         fun clean ()=(OS.FileSys.remove (dir ^ "/main.build");OS.FileSys.remove (dir ^ "/alpha space.sml");OS.FileSys.rmDir dir)
-        fun work ()=fixture (fn client =>
+        fun work ()=fixtureWith (hintCapabilities true) (fn client =>
           let val ()=openDocument (client,uri,"files \"alpha sp")
               val ()=C.request (client,180,"textDocument/diagnostic",object [("textDocument",document uri)])
               val diagnostic=C.result (C.response (client,180))
@@ -739,6 +870,8 @@ struct
               val ()=check ("build selections use actual grammar path spans",case selection of Json.Array [node] =>
                 (case LspProtocol.rangeFromJson (C.field (node,"range")) of SOME range =>
                   range={start={line=0,character=6},stop={line=0,character=23}} | _ => false) | _ => false)
+              val ()=check ("build paths do not fabricate SML type hints",
+                C.result (hintQuery (client,187,uri,hintRange (0,0,1,0)))=Json.Null)
               val ()=C.request (client,184,"completionItem/resolve",item)
               val stale=C.response (client,184)
           in check ("build path resolution rejects stale source revisions",C.field (C.field (stale,"error"),"code")=Json.int (~32801)) end)
@@ -772,6 +905,13 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "semantic-token-refresh" RuneLspSemanticProtocolTests.semanticTokenRefresh,
     Test.it "semantic-token-validation" RuneLspSemanticProtocolTests.semanticTokenValidation,
     Test.it "semantic-token-response-budget" RuneLspSemanticProtocolTests.semanticTokenBudget,
+    Test.it "inferred-type-hints" RuneLspSemanticProtocolTests.inlayHints,
+    Test.it "inlay-negotiation" RuneLspSemanticProtocolTests.inlayNegotiation,
+    Test.it "inlay-encodings" RuneLspSemanticProtocolTests.inlayEncodings,
+    Test.it "inlay-validation" RuneLspSemanticProtocolTests.inlayValidation,
+    Test.it "inlay-stale-and-eviction" RuneLspSemanticProtocolTests.inlayStale,
+    Test.it "inlay-refresh" RuneLspSemanticProtocolTests.inlayRefresh,
+    Test.it "inlay-response-budget" RuneLspSemanticProtocolTests.inlayBudget,
     Test.it "completion" RuneLspSemanticProtocolTests.completion,
     Test.it "signature-help" RuneLspSemanticProtocolTests.signatureHelp,
     Test.it "completion-snippets" RuneLspSemanticProtocolTests.completionSnippets,

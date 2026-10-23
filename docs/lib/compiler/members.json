@@ -404,6 +404,13 @@
      "page": "sig/RUNE_COMPILER.md#type-analysis.call"
     },
     {
+     "kind": "type",
+     "name": "Analysis.typeHint",
+     "spec": "type typeHint={name:string,position:int,ty:string,binding:string,location:location}",
+     "doc": "An inferred variable-pattern type at the end of its actual name token.\nbinding is an opaque lexical identity; location selects that token.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.typehint"
+    },
+    {
      "kind": "exception",
      "name": "Analysis.Cancelled",
      "spec": "exception Cancelled",
@@ -549,6 +556,13 @@
      "spec": "val typeAtOccurrence : snapshot * {ordinal:int,offset:int} -> string option",
      "doc": "`typeAtOccurrence (snapshot, {ordinal, offset})` queries one ordered\nsource occurrence, preserving its incoming build context.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-analysis.typeatoccurrence"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.typeHints",
+     "spec": "val typeHints : snapshot * {ordinal:int,start:int,stop:int} -> typeHint list",
+     "doc": "`typeHints (snapshot, range)` returns checked, unannotated variable\npatterns whose hint positions lie between start and stop, inclusively.\n\nOffsets address one ordered source occurrence. Explicitly typed\npatterns, constructors and copied bodies are excluded. Invalid ordinals\nor reversed/negative ranges return no hints. No source is rechecked;\nthe result remains readable after closing the context or session.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.typehints"
     },
     {
      "kind": "val",

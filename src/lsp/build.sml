@@ -23,7 +23,7 @@ struct
         val file=getOpt (native,uri)
         val text=L.text (#content snapshot)
         val source={file=file,uri=uri,text=text,mode="ascii",ordinal=NONE,syntax=NONE,version=SOME (#version snapshot),
-          index=SOME (#content snapshot),tokens=ref NONE}:E.source
+          revision=SOME (#revision snapshot),index=SOME (#content snapshot),tokens=ref NONE}:E.source
         val configuration=W.configurationFor (workspace,uri)
         fun matches (target:W.target)=case native of NONE => false | SOME path =>
           W.sameFile platform (path,W.filePath platform (#build target))
@@ -83,6 +83,8 @@ struct
             Json.Object [("kind",Json.String "full"),("resultId",Json.String id),("items",Json.Array items)] end
     in case method of
          "textDocument/semanticTokens/full" => Json.Null
+       | "textDocument/inlayHint" => Json.Null
+       | "inlayHint/resolve" => raise J.Invalid "build documents do not have inferred type hints"
        | "textDocument/semanticTokens/full/delta" => Json.Null
        | "textDocument/semanticTokens/range" => Json.Null
        | "textDocument/selectionRange" =>

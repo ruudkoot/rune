@@ -86,16 +86,19 @@ struct
     "textDocument/definition","textDocument/declaration","textDocument/typeDefinition","textDocument/implementation","textDocument/documentSymbol","textDocument/documentHighlight",
     "workspace/symbol","workspaceSymbol/resolve","textDocument/completion","completionItem/resolve","textDocument/signatureHelp",
     "textDocument/inlineCompletion","textDocument/foldingRange","textDocument/selectionRange",
-    "textDocument/semanticTokens/full","textDocument/semanticTokens/full/delta","textDocument/semanticTokens/range"]
+    "textDocument/semanticTokens/full","textDocument/semanticTokens/full/delta","textDocument/semanticTokens/range",
+    "textDocument/inlayHint","inlayHint/resolve"]
+  fun resolving method=method="completionItem/resolve" orelse method="inlayHint/resolve"
   fun inlineClient caps=case Json.member ("textDocument",P.rawCapabilities caps) of NONE => false | SOME value =>
     (case Json.member ("inlineCompletion",value) of SOME (Json.Object _) => true | _ => false)
   fun request (service as Service {workspace,documents,caps,jobs,requests,results,...},{id,method,params}) =
     if not (accepts method) orelse method="textDocument/inlineCompletion" andalso not (inlineClient caps) orelse
-       RuneLspTokens.method method andalso not (RuneLspTokens.enabled (P.rawCapabilities caps,method)) then false else
+       RuneLspTokens.method method andalso not (RuneLspTokens.enabled (P.rawCapabilities caps,method)) orelse
+       RuneLspHints.method method andalso not (RuneLspHints.supported (P.rawCapabilities caps,method)) then false else
     let val params=case params of SOME params => S.object params | NONE => raise S.Invalid "missing semantic parameters"
         val workspaceRequest=List.exists (fn candidate => candidate=method) ["workspace/diagnostic","workspace/symbol","workspaceSymbol/resolve"]
         val uri=if workspaceRequest then "" else S.string (S.required (S.object (S.required
-          (params,if method="completionItem/resolve" then "data" else "textDocument")),"uri"))
+          (params,if resolving method then "data" else "textDocument")),"uri"))
         val revision=if workspaceRequest then 0 else case D.snapshot (documents,uri) of SOME snapshot => #revision snapshot
           | NONE => raise S.Invalid "document is not open"
         val ()=if workspaceRequest orelse D.healthy (documents,uri) then () else raise S.Invalid "document synchronization requires a replacement"
@@ -103,6 +106,11 @@ struct
         fun token name=case Json.member (name,params) of NONE => () | SOME (Json.String _) => ()
           | SOME value => if isSome (P.integer value) then () else raise S.Invalid "invalid progress token"
         val ()=(token "workDoneToken";token "partialResultToken")
+        val hintResolution=if method<>"inlayHint/resolve" then NONE else
+          let val data=S.object (S.required (params,"data"))
+              fun number name=case Json.toIntInf (S.required (data,name)) of SOME value => value
+                | NONE => raise S.Invalid ("invalid inlay hint " ^ name)
+          in SOME {snapshot=S.string (S.required (data,"snapshot")),revision=number "revision",generation=number "generation"} end
         val request={id=id,method=method,params=params,uri=uri,revision=revision,generation=W.generation workspace,
           done=ref false,job=ref NONE,retried=ref false}:request
         val ()=requests:=request :: !requests
@@ -118,7 +126,11 @@ struct
              ("method",V.Bytes method),
              ("encoding",V.Bytes (P.encodingName (P.positionEncoding caps))),("capabilities",V.json (P.rawCapabilities caps))]}))
         else if buildDocument (service,uri) then buildJob (service,uri,SOME request)
-        else case prior of SOME result => query (service,request,#snapshot result) | NONE => check (service,uri,SOME request));true)
+        else case hintResolution of SOME item =>
+          if #revision item<>revision orelse #generation item<> #generation request then
+            failure (service,request,P.contentModified,"inlay hint context changed",NONE)
+          else query (service,request,#snapshot item)
+        | NONE => (case prior of SOME result => query (service,request,#snapshot result) | NONE => check (service,uri,SOME request)));true)
         handle J.Full => (failure (service,request,P.requestFailed,"analysis queue is full",NONE);true) end
     handle Duplicate =>
       let val Service {send,...}=service
@@ -199,7 +211,7 @@ struct
         let fun reject request=failure (service,request,#code error,#message error,Option.map V.unjson (#data error))
         in case task of Query request =>
              if #code error=P.contentModified andalso not (!(#done request)) andalso not (!(#retried request))
-               andalso not (List.exists (fn method => method= #method request) ["completionItem/resolve"])
+               andalso not (resolving (#method request))
                andalso current (service,{uri= #uri request,revision= #revision request,generation= #generation request}) then
                (#retried request:=true;results:=List.filter (fn result:result => #uri result<> #uri request) (!results);
                 check (service,#uri request,SOME request)) else reject request

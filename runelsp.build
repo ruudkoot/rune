@@ -10,6 +10,7 @@ files
   src/lsp/worker-model.sml
   src/lsp/structure.sml
   src/lsp/tokens.sml
+  src/lsp/hints.sml
   src/lsp/controller.sml
   src/lsp/worker-process.sml
   src/lsp/jobs.sml

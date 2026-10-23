@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 82 of 82 entries documented |
+| Documentation | 84 of 84 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -95,6 +95,7 @@ sig
     type <a href="#type-analysis.typedefinition">typeDefinition</a>={<a href="#fld-analysis.typedefinition.id">id</a>:string,<a href="#fld-analysis.typedefinition.definition">definition</a>:location option,<a href="#fld-analysis.typedefinition.declaration">declaration</a>:location option,<a href="#fld-analysis.typedefinition.implementation">implementation</a>:location option}
     type <a href="#type-analysis.candidate">candidate</a>={<a href="#fld-analysis.candidate.name">name</a>:string,<a href="#fld-analysis.candidate.kind">kind</a>:string,<a href="#fld-analysis.candidate.detail">detail</a>:string option,<a href="#fld-analysis.candidate.arguments">arguments</a>:string list list,<a href="#fld-analysis.candidate.definition">definition</a>:location option}
     type <a href="#type-analysis.call">call</a>={<a href="#fld-analysis.call.name">name</a>:string,<a href="#fld-analysis.call.path">path</a>:string list,<a href="#fld-analysis.call.detail">detail</a>:string,<a href="#fld-analysis.call.arguments">arguments</a>:string list list,<a href="#fld-analysis.call.argument">argument</a>:int,<a href="#fld-analysis.call.parameter">parameter</a>:int}
+    type <a href="#type-analysis.typehint">typeHint</a>={<a href="#fld-analysis.typehint.name">name</a>:string,<a href="#fld-analysis.typehint.position">position</a>:int,<a href="#fld-analysis.typehint.ty">ty</a>:string,<a href="#fld-analysis.typehint.binding">binding</a>:string,<a href="#fld-analysis.typehint.location">location</a>:location}
     exception <a href="#exn-analysis.cancelled">Cancelled</a>
     exception <a href="#exn-analysis.busy">Busy</a>
     val <a href="#val-analysis.create">create</a> : session * {<a href="#fld-analysis.create.context">context</a>:string} -&gt; t
@@ -116,6 +117,7 @@ sig
     val <a href="#val-analysis.work">work</a> : snapshot -&gt; {<a href="#fld-analysis.work.checked">checked</a>:int,<a href="#fld-analysis.work.reused">reused</a>:int}
     val <a href="#val-analysis.typeat">typeAt</a> : snapshot * {<a href="#fld-analysis.typeat.file">file</a>:string,<a href="#fld-analysis.typeat.offset">offset</a>:int} -&gt; string option
     val <a href="#val-analysis.typeatoccurrence">typeAtOccurrence</a> : snapshot * {<a href="#fld-analysis.typeatoccurrence.ordinal">ordinal</a>:int,<a href="#fld-analysis.typeatoccurrence.offset">offset</a>:int} -&gt; string option
+    val <a href="#val-analysis.typehints">typeHints</a> : snapshot * {<a href="#fld-analysis.typehints.ordinal">ordinal</a>:int,<a href="#fld-analysis.typehints.start">start</a>:int,<a href="#fld-analysis.typehints.stop">stop</a>:int} -&gt; typeHint list
     val <a href="#val-analysis.visibleat">visibleAt</a> : snapshot * {<a href="#fld-analysis.visibleat.ordinal">ordinal</a>:int,<a href="#fld-analysis.visibleat.offset">offset</a>:int,<a href="#fld-analysis.visibleat.path">path</a>:string list} -&gt; candidate list
     val <a href="#val-analysis.signatureat">signatureAt</a> : snapshot * {<a href="#fld-analysis.signatureat.ordinal">ordinal</a>:int,<a href="#fld-analysis.signatureat.offset">offset</a>:int} -&gt; call option
     val <a href="#val-analysis.completionat">completionAt</a> : snapshot * {<a href="#fld-analysis.completionat.ordinal">ordinal</a>:int,<a href="#fld-analysis.completionat.offset">offset</a>:int,<a href="#fld-analysis.completionat.path">path</a>:string list} -&gt;
@@ -866,6 +868,23 @@ curried domain; parameter selects a tuple component of that domain.
 | <a name="fld-analysis.call.argument"></a>`argument` | `int` |  |
 | <a name="fld-analysis.call.parameter"></a>`parameter` | `int` |  |
 
+#### <a name="type-analysis.typehint"></a>`typeHint`
+
+```sml
+type typeHint={name:string,position:int,ty:string,binding:string,location:location}
+```
+
+An inferred variable-pattern type at the end of its actual name token.
+binding is an opaque lexical identity; location selects that token.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.typehint.name"></a>`name` | `string` |  |
+| <a name="fld-analysis.typehint.position"></a>`position` | `int` |  |
+| <a name="fld-analysis.typehint.ty"></a>`ty` | `string` |  |
+| <a name="fld-analysis.typehint.binding"></a>`binding` | `string` |  |
+| <a name="fld-analysis.typehint.location"></a>`location` | `location` |  |
+
 #### <a name="exn-analysis.cancelled"></a>`Cancelled`
 
 ```sml
@@ -1095,6 +1114,26 @@ source occurrence, preserving its incoming build context.
 | --- | --- | --- |
 | <a name="fld-analysis.typeatoccurrence.ordinal"></a>`ordinal` | `int` |  |
 | <a name="fld-analysis.typeatoccurrence.offset"></a>`offset` | `int` |  |
+
+#### <a name="val-analysis.typehints"></a>`typeHints`
+
+```sml
+val typeHints : snapshot * {ordinal:int,start:int,stop:int} -> typeHint list
+```
+
+`typeHints (snapshot, range)` returns checked, unannotated variable
+patterns whose hint positions lie between start and stop, inclusively.
+
+Offsets address one ordered source occurrence. Explicitly typed
+patterns, constructors and copied bodies are excluded. Invalid ordinals
+or reversed/negative ranges return no hints. No source is rechecked;
+the result remains readable after closing the context or session.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.typehints.ordinal"></a>`ordinal` | `int` |  |
+| <a name="fld-analysis.typehints.start"></a>`start` | `int` |  |
+| <a name="fld-analysis.typehints.stop"></a>`stop` | `int` |  |
 
 #### <a name="val-analysis.visibleat"></a>`visibleAt`
 

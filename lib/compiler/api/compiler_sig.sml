@@ -240,6 +240,9 @@ sig
     (* A compiler-resolved application at the cursor. argument selects a
        curried domain; parameter selects a tuple component of that domain. *)
     type call={name:string,path:string list,detail:string,arguments:string list list,argument:int,parameter:int}
+    (* An inferred variable-pattern type at the end of its actual name token.
+       binding is an opaque lexical identity; location selects that token. *)
+    type typeHint={name:string,position:int,ty:string,binding:string,location:location}
     (* Cancellation discarded an attempt before publishing its cache. *)
     exception Cancelled
     (* An operation re-entered or closed a context during an active check. *)
@@ -311,6 +314,14 @@ sig
     (* `typeAtOccurrence (snapshot, {ordinal, offset})` queries one ordered
        source occurrence, preserving its incoming build context. *)
     val typeAtOccurrence : snapshot * {ordinal:int,offset:int} -> string option
+    (* `typeHints (snapshot, range)` returns checked, unannotated variable
+       patterns whose hint positions lie between start and stop, inclusively.
+
+       Offsets address one ordered source occurrence. Explicitly typed
+       patterns, constructors and copied bodies are excluded. Invalid ordinals
+       or reversed/negative ranges return no hints. No source is rechecked;
+       the result remains readable after closing the context or session. *)
+    val typeHints : snapshot * {ordinal:int,start:int,stop:int} -> typeHint list
     (* `visibleAt (snapshot, position)` returns actual lexical bindings at a
        source occurrence's byte offset, or members of path.
 

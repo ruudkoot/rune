@@ -38,6 +38,7 @@ struct
         fun command value =
           let val opName=V.bytes (V.field (value,"op"))
               val id=V.integer (V.field (value,"id"))
+              val ()=E.commandId (engine,id)
               fun work () = case opName of
                 "discover" =>
                   let val (workspace,documents)=RuneLspWorkerModel.restore (V.field (value,"state"))

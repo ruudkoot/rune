@@ -60,6 +60,14 @@ occurrence explicitly when a file appears several times in a build.
 including recovery diagnostics after a failed parse and its actual incoming
 project fixities. Inputs not reached after an earlier failure have no captured
 syntax. These trees remain readable after the owner closes.
+`typeHints` joins captured pattern syntax, lexical definitions and exact frozen
+type facts for one source ordinal. It returns the inferred types and name-token
+locations of unannotated variable and alias patterns, including parameters and
+case rules. Explicit pattern annotations suppress contained hints. Constructors,
+function declaration heads and copied functor bodies contribute no inferred
+pattern hints. Hint positions use decoded byte offsets and inclusive query
+bounds; this query neither rechecks source nor accesses disk or live compiler
+state, and it remains usable after its owner closes.
 `visibleAt` replays the captured
 prefix and asks the compiler for the lexical environment at a byte cursor,
 or for members of a qualified structure path. Its frozen names, kinds,

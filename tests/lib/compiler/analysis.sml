@@ -77,6 +77,44 @@ struct
         val ()=(A.close context;C.close parent)
     in check ("syntax snapshots survive closing and later failed attempts",C.Syntax.text syntax= #text second andalso
       C.Syntax.events syntax=C.Syntax.events oracle andalso C.Syntax.text broken=brokenText) end
+  fun typeHints () =
+    let val parent=compiler ()
+        val context=A.create (parent,{context="type-hints"})
+        val text="datatype choice=C | D of int\nval plain=1\nval typed:int=2\n"
+          ^ "val (left,right)=(3,true)\nval (a,b):(int*bool)=(4,false)\n"
+          ^ "fun id x=x\nval f=fn y=>y\nval nested=case D 1 of D z=>z | C=>0\n"
+          ^ "val C=C\nval op @@ = fn operand=>operand\nval whole as (u,v)=(1,false)\n"
+        val first=input ("hints.sml",text,"1")
+        val snapshot=analyze (context,[first])
+        fun hints snapshot=A.typeHints (snapshot,{ordinal=0,start=0,stop=size text})
+        val found=hints snapshot
+        fun named name=List.find (fn hint:A.typeHint => #name hint=name) found
+        val ()=check ("inferred variable patterns use checked types",null (A.diagnostics snapshot) andalso
+          List.all (fn (name,ty) => case named name of SOME hint => #ty hint=ty | NONE => false)
+            [("plain","int"),("left","int"),("right","bool"),("nested","int"),("z","int"),("whole","int * bool"),("u","int"),("v","bool")])
+        val ()=check ("explicit patterns and constructor occurrences have no hints",List.all
+          (fn name => not (isSome (named name))) ["typed","a","b","C","D","id"])
+        val ()=check ("function arguments and symbolic val bindings retain inferred types",
+          List.all (fn name => isSome (named name)) ["x","f","y","@@","operand"])
+        val ()=check ("hint locations select actual name tokens",List.all (fn hint:A.typeHint =>
+          let val location= #location hint
+          in #position hint= #stop location andalso String.substring (text,#start location,#stop location- #start location)= #name hint end) found)
+        val one=valOf (named "plain")
+        val ()=check ("hint ranges address their exact insertion position",
+          A.typeHints (snapshot,{ordinal=0,start= #position one,stop= #position one})=[one] andalso
+          null (A.typeHints (snapshot,{ordinal=0,start= ~1,stop=0})) andalso
+          null (A.typeHints (snapshot,{ordinal=0,start=5,stop=4})) andalso
+          null (A.typeHints (snapshot,{ordinal=1,start=0,stop=size text})))
+        val ()=check ("replayed hints keep their frozen relationships",hints (analyze (context,[first]))=found)
+        val failed=analyze (context,[input ("hints.sml","val broken:int=true\n","2")])
+        val ()=check ("failed units cannot publish old hints",not (null (A.diagnostics failed)) andalso null (hints failed))
+        val shared=input ("shared.sml","val item=seed\n","1")
+        val repeated=analyze (context,[input ("first.sml","val seed=1\n","1"),shared,
+          input ("second.sml","val seed=true\n","1"),shared])
+        fun sharedType ordinal=List.map #ty (A.typeHints (repeated,{ordinal=ordinal,start=0,stop=size (#text shared)}))
+        val ()=check ("source ordinals preserve different incoming types",sharedType 1=["int"] andalso sharedType 3=["bool"])
+        val ()=(A.close context;C.close parent)
+    in check ("hints remain readable after the owner closes",hints snapshot=found) end
   fun bindings () =
     let val parent=compiler ()
         val context=A.create (parent,{context="bindings"})
@@ -275,6 +313,7 @@ structure CompilerAnalysisTestMain=Main (struct
   val tests=Test.describe "compiler-analysis"
     [Test.it "snapshots-checkpoints-cancellation" CompilerAnalysisTests.snapshots,
      Test.it "captured-syntax-snapshots" CompilerAnalysisTests.syntaxSnapshots,
+     Test.it "inferred-pattern-type-hints" CompilerAnalysisTests.typeHints,
      Test.it "lexical-bindings" CompilerAnalysisTests.bindings,
      Test.it "generative-identities" CompilerAnalysisTests.generative,
      Test.it "static-library-replay" CompilerAnalysisTests.libraries,
