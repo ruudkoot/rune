@@ -42,14 +42,15 @@ struct
         val () = BinaryFixtures.write (dir ^ "/bad-ppc-loader")
                 (BinaryFixtures.elf "ppc64" "/usr/powerpc64-linux-gnu/lib/ld64.so.1" ["libc.so.6"])
     in () end
-  fun pack label fixture version library linux windows =
+  fun packWith extra label fixture version library linux windows =
     let val dir = directory ()
         val flags = List.concat (List.map (fn (arch, file) => ["--linux", arch ^ "=" ^ file]) linux)
                     @ List.concat (List.map (fn (arch, file) => ["--windows", arch ^ "=" ^ file]) windows)
     in InstallChecks.execute dir label root ""
        ([fromRoot "bin/rune-build", "make-dist", "--version", version, "--out", dir ^ (if fixture then "/archives" else "/checked-" ^ label), "--lib", library,
           "--license", fromRoot "LICENSE", "--compiler", dir ^ "/rune.rbc", "--repl", dir ^ "/rune-repl.img"]
-          @ (if fixture then ["--fixture"] else []) @ flags) end
+          @ (if fixture then ["--fixture"] else []) @ flags @ extra) end
+  fun pack label fixture version library linux windows=packWith [] label fixture version library linux windows
   fun maps good =
     let val dir = directory ()
     in (List.map (fn arch => (arch, dir ^ (if good then "/good-" else "/vm-") ^ arch)) linuxArchitectures,
@@ -57,6 +58,35 @@ struct
   val libraryMembers = ["LICENSE", "VERSION", "lib/rune/basis/MANIFEST", "lib/rune/basis/README.md", "lib/rune/basis/list.sml",
        "lib/rune/json/MANIFEST", "lib/rune/json/README.md", "lib/rune/json/json.sml", "lib/rune/json/pkg/extra.sml",
        "lib/rune/rune-repl.img", "lib/rune/rune.rbc"]
+  fun ffiArchives ()=
+    let val dir=directory() val assets=dir ^ "/ffi-assets"
+        val ()=put dir "ffi-assets/sdl/core.ffi" "original sidecar\n"
+        val ()=put dir "ffi-assets/sdl/upstream/original.h" "original header\n"
+        val(linux,windows)=maps false
+        val ()=Scenarios.success(packWith["--ffi",dir ^ "/rune.rbc","--ffi-assets",assets]
+          "ffi-pack" true "ffi1" (dir ^ "/lib") linux windows)
+        val tarfile=dir ^ "/archives/rune-ffi1-linux.tar.gz"
+        val tar=ArchiveCheck.tar(ArchiveCheck.decode dir "ffi.tar"["gzip","-dc",tarfile])
+        fun member name=case List.find(fn(m:ArchiveCheck.member)=> #name m="rune-ffi1-linux/" ^ name)tar of
+          SOME m=> #data m | NONE=>raise Failed("missing FFI archive member " ^ name)
+        val ()=need(member "lib/rune/runeffi.rbc"="compiler\n" andalso
+          member "lib/rune/ffi-assets/sdl/core.ffi"="original sidecar\n" andalso
+          member "lib/rune/ffi-assets/sdl/upstream/original.h"="original header\n","FFI archive bytes differ")
+        val zip=dir ^ "/archives/rune-ffi1-windows.zip"
+        val zipped=ArchiveCheck.zip(ArchiveCheck.binary zip)
+        val ()=need(List.exists(fn(m:ArchiveCheck.zipped)=> #name m="rune-ffi1-windows/wrappers/runeffi.cmd")zipped,"missing Windows runeffi launcher")
+        val out=dir ^ "/ffi-extracted" val ()=mkdirs out
+        val ()=Scenarios.success(InstallChecks.execute dir "ffi-extract" root ""["tar","-xzf",tarfile,"-C",out])
+        val prefix=dir ^ "/FFI relocated prefix" val script=out ^ "/rune-ffi1-linux/install.sh"
+        val ()=Scenarios.success(InstallChecks.execute dir "ffi-install" root ""["sh",script,"--prefix",prefix,"--arch","x86_64"])
+        val wrapper=read(prefix ^ "/bin/runeffi")
+        val ()=need(String.isSubstring "../lib/rune/runeffi.rbc" wrapper andalso not(String.isSubstring root wrapper),"runeffi launcher is not relocatable")
+        val ()=need(read(prefix ^ "/lib/rune/ffi-assets/sdl/upstream/original.h")="original header\n","installer omitted original header")
+        val ()=write(prefix ^ "/bin/unrelated","keep\n")
+        val ()=Scenarios.success(InstallChecks.execute dir "ffi-uninstall" root ""["sh",script,"--prefix",prefix,"--uninstall"])
+        val ()=need(not(exists(prefix ^ "/bin/runeffi")) andalso not(exists(prefix ^ "/lib/rune/ffi-assets")) andalso
+          read(prefix ^ "/bin/unrelated")="keep\n","FFI uninstall retained owned files or removed unrelated files")
+    in say "PASS distribution/ffi-generator-assets-install-uninstall\n" end
   fun archives () =
     let val dir = directory ()
         val (linux, windows) = maps false

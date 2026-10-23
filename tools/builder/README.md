@@ -64,3 +64,25 @@ source/build provenance and remains an external relinking requirement.
 Pre-host `make hosts`, doctor, and explicit dependency provisioning bypass target
 GMP configuration; `make bin/rune-build GMP=yes` also works before that prefix
 exists. A cold Make bootstrap was verified with empty build/bin directories.
+
+`build-ffi libffi|sdl` provisions the optional dynamic-call dependency or SDL3
+from `ffi/PROJECT/source.json`. It supports `--target native|windows32|windows64`,
+`--archive FILE`, `--prefix DIR`, `--offline`, `--download-only`, `--verify-only`,
+`--jobs N`, `--timeout SECONDS`, and explicit `--cc`, `--cxx`, `--rc` tools.
+The normal path verifies the pinned archive before extraction, admits only
+contained regular files/directories/links, compiles in an isolated directory,
+probes the installed ABI/rendering calls and atomically replaces the prefix.
+Cross targets compile the probe and record execution as outstanding. It does
+not run upstream test suites: Rune's ABI/behavior suites are separate gates.
+`rune-ffi-dependency.json` records every command, compiler identity, original
+source digest, recipe identity, installed output hashes and validation status.
+Reuse checks those identities and all installed files/links. Offline mode never
+launches a downloader. A failed build/probe preserves the previous prefix.
+
+`FFI_PREFIX` selects the static libffi archive for native Make builds; cross
+builds retain the existing `FFI_WIN32_PREFIX`/`FFI_WIN64_PREFIX` selection.
+Packaged relinking material retains a selected libffi prefix's two public
+headers, static archive, notices, provenance and pinned source archive. Its
+relinker validates those inputs and rewrites the old include/archive paths
+when the material moves. System libffi retains explicitly external provenance
+and requires the corresponding development library when relinking.

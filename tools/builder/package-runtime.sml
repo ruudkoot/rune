@@ -21,6 +21,13 @@ struct
         val archive=if enabled andalso dependency<>Json.Null then SOME (fromRoot ("build/deps/downloads/gmp-" ^ text (field "version" (field "config" dependency)) ^ ".tar.xz")) else NONE
         val ()=case archive of NONE => () | SOME archive =>
              (need (hash archive=text (field "sha256" (field "config" dependency)),"missing or modified pinned source archive");need (BuildGMP.recipe ()=text (field "recipe_sha256" (field "config" dependency)),"GMP recipe differs from its build record"))
+        val foreign=member "foreign" record
+        val ffiPrefix=if foreign=Json.Null orelse member "provider" foreign<>str "prefix" then "" else text(field "prefix" foreign)
+        val ()=if ffiPrefix="" then () else List.app(fn(key,path)=>need(hash(ffiPrefix ^ "/" ^ path)=text(field key foreign),"changed libffi " ^ path))
+          [("header_sha256","include/ffi.h"),("target_header_sha256","include/ffitarget.h"),("library_sha256","lib/libffi.a")]
+        val ffiDependency=if ffiPrefix="" then Json.Null else member "dependency" foreign
+        val ffiArchive=if ffiDependency=Json.Null then NONE else SOME(text(field "archive" ffiDependency))
+        val ()=case ffiArchive of NONE=>() | SOME path=>need(hash path=text(field "archive_sha256" (field "config" ffiDependency)),"missing or modified pinned libffi source archive")
         val out=resolved (O.require options "--out") val ()=need (out<>root andalso out<>"/","runtime material output must be a dedicated directory")
         val temporary=privateDirectory (OS.Path.dir out) ".rebuild"
         fun prepare () =
@@ -32,6 +39,12 @@ struct
                    (List.app (fn name => if exists (prefix ^ "/" ^ name) then copy (prefix ^ "/" ^ name) (temporary ^ "/gmp/" ^ name) else ()) ["include/gmp.h","lib/libgmp.a","rune-gmp.json"];
                     if isDir (prefix ^ "/share/licenses/gmp") then copyTree (prefix ^ "/share/licenses/gmp") (temporary ^ "/gmp/notices") else ()) else ()
               val ()=case archive of NONE => () | SOME archive => copy archive (temporary ^ "/build/deps/downloads/" ^ OS.Path.file archive)
+              val ()=if ffiPrefix="" then () else
+                (List.app(fn path=>copy(ffiPrefix ^ "/" ^ path)(temporary ^ "/libffi/" ^ path))["include/ffi.h","include/ffitarget.h","lib/libffi.a"];
+                 if exists(ffiPrefix ^ "/rune-ffi-dependency.json") then copy(ffiPrefix ^ "/rune-ffi-dependency.json")(temporary ^ "/libffi/rune-ffi-dependency.json") else ();
+                 if isDir(ffiPrefix ^ "/share/licenses/libffi") then copyTree(ffiPrefix ^ "/share/licenses/libffi")(temporary ^ "/libffi/notices") else ())
+              val ()=case ffiArchive of NONE=>() | SOME path=>copy path(temporary ^ "/build/deps/downloads/" ^ OS.Path.file path)
+              val ()=if not(isDir(fromRoot "ffi/libffi")) then () else copyTree(fromRoot "ffi/libffi")(temporary ^ "/ffi/libffi")
               val ()=json (temporary ^ "/build-info.json") (set "version" (str version) record)
               val bytecode=fromRoot "bin/rune-build.rbc"
               val ()=if not (exists bytecode) then () else

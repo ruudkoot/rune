@@ -20,7 +20,8 @@ and allocate no native registry resources.
 ## Builds and targets
 
 `make FFI=auto` uses the native target's `pkg-config libffi` installation
-when available. `FFI=yes` requires it; `FFI=no` selects deterministic
+when available, or an explicit static `FFI_PREFIX`. `FFI=yes` requires a complete
+prefix or the system development library; `FFI=no` selects deterministic
 unavailable operations and introduces no libffi dependency. `SYS=none`
 selects unavailable support. The feature selection stamp invalidates native
 archives and diagnostic VM variants. `build/foreign-libs` records the

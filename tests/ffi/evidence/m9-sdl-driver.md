@@ -132,3 +132,20 @@ and optimizing JIT. The final shared application also passed on a real Linux
 window with `--jit=off` and `--jit=opt` and ordinary collection. Final GUI
 collection-stress reruns are still being investigated for a CPU-bound delay;
 they are outstanding, distinct from the earlier successful GUI stress receipts.
+
+Final shared GUI contract rerun completed **11/11** on the real Linux window
+system with collection stress 7/heap verification. The application stress run
+was bounded after a long CPU delay. Paired dummy/GUI runs of the exact same RBC
+at a 60-second cap both returned timeout status 124; the GUI body eventually
+printed success and heap statistics after the signal (about 71 seconds), so
+that receipt remains a timeout. It reported 15,196 minor collections,
+2,214,632 allocated bytes, 567,560 live bytes and no full collections/large
+objects. The dummy run had approximately 19,000 minor collections at the cap.
+This does not establish a GUI-only failure or a resource leak. Ordinary GUI
+interpreter/optimizing-JIT runs and independent GUI driver/contract suites pass;
+the final application's GUI collection-stress acceptance remains outstanding.
+
+The shared paint fixture now permits an empty visible/update intersection while
+checking ordered bounds inside the client rectangle, matching native Win32
+clipping. It retains body-exception cleanup, stale-scope and active-destruction
+guards; driver pixel probes still require nonempty clipped paint retention.

@@ -133,6 +133,7 @@ if errorlevel 1 (
 )
 copy /Y "%~dp0wrappers\rune.cmd" "%PREFIX%\bin\rune.cmd" >nul
 copy /Y "%~dp0wrappers\rune-repl.cmd" "%PREFIX%\bin\rune-repl.cmd" >nul
+if exist "%~dp0wrappers\runeffi.cmd" copy /Y "%~dp0wrappers\runeffi.cmd" "%PREFIX%\bin\runeffi.cmd" >nul
 copy /Y "%~dp0uninstall.bat" "%PREFIX%\uninstall.bat" >nul
 copy /Y "%~dp0register.ps1" "%PREFIX%\register.ps1" >nul
 copy /Y "%~dp0LICENSE" "%PREFIX%\LICENSE" >nul

@@ -10,7 +10,8 @@ struct
   fun frontendJob name args tags = jobWith "rune-c-check" name args
     (tags @ ["covers:lib/language/c/*", "covers:tools/cfrontend/*", "covers:tests/lib/language/c/*"])
   val tree = Test.describe "ffi"
-    [job "sources" "sources" ["check", "test-ffi-contracts"],
+    [jobWith "rune-ffi-deps-check" "dependency-model" "" ["check", "test-ffi-deps"],
+     job "sources" "sources" ["check", "test-ffi-contracts"],
      job "contracts" "contracts" ["check", "test-ffi-contracts"],
      Test.requires ["cc"] (job "native" "native" ["check", "test-ffi-contracts"]),
      Test.requires ["cc"] (job "runtime" "runtime native" ["check", "test-ffi-runtime"]),
