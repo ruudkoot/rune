@@ -82,6 +82,26 @@ struct
         val ()=check ("library source captured",null (A.diagnostics result) andalso not (null (A.dependencies result)))
         val ()=check ("libraries replay statically",same (result,again) andalso #checked (A.work again)=0)
     in A.close context;C.close parent end
+  fun frozenLibrary () =
+    let val dir=OS.FileSys.tmpName ()
+        val ()=(OS.FileSys.remove dir handle _ => ();OS.FileSys.mkDir dir;OS.FileSys.mkDir (dir ^ "/basis"))
+        fun write (name,text)=let val output=TextIO.openOut (dir ^ "/basis/" ^ name)
+          in TextIO.output (output,text);TextIO.closeOut output end
+        val ()=write ("captured.sml","structure Captured=struct val member=1 end\n")
+        val ()=write ("MANIFEST","captured.sml | always | yes | Captured | \n")
+        fun clean ()=(List.app (fn path => OS.FileSys.remove path handle _ => ())
+          [dir ^ "/basis/captured.sml",dir ^ "/basis/MANIFEST"];
+          OS.FileSys.rmDir (dir ^ "/basis") handle _ => ();OS.FileSys.rmDir dir handle _ => ())
+        fun work () =
+          let val parent=C.session {lib=SOME dir,flags=[]}
+              val context=A.create (parent,{context="frozen-library"})
+              val snapshot=analyze (context,[input ("frozen.sml","val sample=Captured.member\n","1")])
+              val ()=check ("temporary library was checked",null (A.diagnostics snapshot))
+              val ()=(A.close context;C.close parent;clean ())
+              val names=A.visibleAt (snapshot,{ordinal=0,offset=20,path=["Captured"]})
+          in check ("lexical query uses captured library plan after library deletion",
+            List.exists (fn candidate:A.candidate => #name candidate="member" andalso #detail candidate=SOME "int") names) end
+    in (work () before clean ()) handle error => (clean ();raise error) end
   fun projects () =
     let val dir=OS.FileSys.tmpName ()
         val ()=(OS.FileSys.remove dir handle _ => ();OS.FileSys.mkDir dir)
@@ -133,6 +153,52 @@ struct
           check ("snapshot agrees with fresh batch compiler",A.typeAt (snapshot,{file="oracle.sml",offset= #start fact})=
             C.typeAt (parent,{file="oracle.sml",offset= #start fact}))) points
     in A.close context;C.close parent end
+  fun repeatedSources () =
+    let val parent=compiler ()
+        val context=A.create (parent,{context="repeated-source"})
+        val sources=[input ("before.sml","val input=1\n","1"),input ("same.sml","val result=input\n","1"),
+          input ("between.sml","val input=true\n","1"),input ("same.sml","val result=input\n","1")]
+        val snapshot=analyze (context,sources)
+        val ()=check ("ambiguous source query has no implicit context",A.typeAt (snapshot,{file="same.sml",offset=4})=NONE)
+        val ()=check ("repeated source occurrences keep incoming types",A.typeAtOccurrence (snapshot,{ordinal=1,offset=4})=SOME "int"
+          andalso A.typeAtOccurrence (snapshot,{ordinal=3,offset=4})=SOME "bool")
+    in A.close context;C.close parent end
+  fun lexicalVisibility () =
+    let val parent=compiler ()
+        val context=A.create (parent,{context="visibility"})
+        val text="val outer=1\nstructure S=struct val member=true end\nfun f outer=let val localName=true in outer end\n"
+        val snapshot=analyze (context,[input ("visible.sml",text,"1")])
+        val (prefix,_)=Substring.position "in outer" (Substring.full text)
+        val offset=Substring.size prefix+3
+        val names=A.visibleAt (snapshot,{ordinal=0,offset=offset,path=[]})
+        val ()=check ("lexical parameter shadows outer binding",List.exists (fn candidate:A.candidate =>
+          #name candidate="outer" andalso #detail candidate=SOME "'a") names)
+        val ()=check ("local declaration is visible",List.exists (fn candidate:A.candidate =>
+          #name candidate="localName" andalso #detail candidate=SOME "bool") names)
+        val members=A.visibleAt (snapshot,{ordinal=0,offset=offset,path=["S"]})
+        val ()=check ("qualified completion uses actual structure environment",List.exists (fn candidate:A.candidate =>
+          #name candidate="member" andalso #detail candidate=SOME "bool") members)
+        val gap=analyze (context,[input ("gap.sml","val earlier=1\n\nval later=true\n","2")])
+        val gapNames=A.visibleAt (gap,{ordinal=0,offset=14,path=[]})
+        val ()=check ("whitespace sees preceding declarations without forward names",
+          List.exists (fn candidate:A.candidate => #name candidate="earlier") gapNames andalso
+          not (List.exists (fn candidate:A.candidate => #name candidate="later") gapNames))
+        val unfinished="structure S : sig val visible:int end = struct val visible=1 val hidden=2 end\nval x=S."
+        val partial=analyze (context,[input ("partial.sml",unfinished,"3")])
+        val partialNames=A.visibleAt (partial,{ordinal=0,offset=size unfinished,path=["S"]})
+        val ()=check ("unfinished qualification observes the sealed structure",
+          List.exists (fn candidate:A.candidate => #name candidate="visible") partialNames andalso
+          not (List.exists (fn candidate:A.candidate => #name candidate="hidden") partialNames))
+        val localText="fun f parameter = let val localName=1 in "
+        val localSnapshot=analyze (context,[input ("local.sml",localText,"4")])
+        val localNames=A.visibleAt (localSnapshot,{ordinal=0,offset=size localText,path=[]})
+        val ()=check ("unfinished local expression retains lexical parameters and locals",
+          List.exists (fn candidate:A.candidate => #name candidate="parameter") localNames andalso
+          List.exists (fn candidate:A.candidate => #name candidate="localName") localNames)
+        val ()=(A.close context;C.close parent)
+        val closedNames=A.visibleAt (snapshot,{ordinal=0,offset=offset,path=["S"]})
+    in check ("closed context retains frozen lexical queries",List.exists (fn candidate:A.candidate =>
+      #name candidate="member" andalso #detail candidate=SOME "bool") closedNames) end
 end
 structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
@@ -141,7 +207,10 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "lexical-bindings" CompilerAnalysisTests.bindings,
      Test.it "generative-identities" CompilerAnalysisTests.generative,
      Test.it "static-library-replay" CompilerAnalysisTests.libraries,
+     Test.it "frozen-library-query" CompilerAnalysisTests.frozenLibrary,
      Test.it "project-scopes" CompilerAnalysisTests.projects,
-     Test.it "batch-compiler-oracle" CompilerAnalysisTests.batchOracle]
+     Test.it "batch-compiler-oracle" CompilerAnalysisTests.batchOracle,
+     Test.it "repeated-source-contexts" CompilerAnalysisTests.repeatedSources,
+     Test.it "lexical-visibility" CompilerAnalysisTests.lexicalVisibility]
 end)
 val ()=CompilerAnalysisTestMain.main ()

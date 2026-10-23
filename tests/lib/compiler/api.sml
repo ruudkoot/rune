@@ -136,6 +136,14 @@ struct
         val windows=C.Project.read (context,{file="C:\\project\\root.build",variables=[("DEP","D:\\dependency")],
           windows=true,overlays=[{file="C:/project/root.build",text="files $(DEP)/a.sml end\n"}]})
         val ()=check ("Windows absolute path variables",List.map #file (C.Project.sources windows)=["D:/dependency/a.sml"])
+        val unc=C.Project.read (context,{file="//SERVER/share/root.build",variables=[],windows=true,
+          overlays=[{file="//server/share/root.build",text="use sub/part.build\nfiles tail.sml end\n"},
+                    {file="//server/share/sub/part.build",text="files head.sml end\n"}]})
+        val ()=check ("UNC roots survive nested build resolution",List.map #file (C.Project.sources unc)=
+          ["//server/share/sub/head.sml","//server/share/tail.sml"])
+        val drive=C.Project.read (context,{file="C:/root.build",variables=[],windows=true,
+          overlays=[{file="C:/root.build",text="use sub/part.build\n"},{file="C:/sub/part.build",text="files head.sml end\n"}]})
+        val ()=check ("drive root survives nested build resolution",List.map #file (C.Project.sources drive)=["C:/sub/head.sml"])
         val ()=C.close context
     in check ("project value survives session close",length (C.Project.sources first)=2) end)
 end

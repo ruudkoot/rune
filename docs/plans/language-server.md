@@ -21,9 +21,9 @@ documentation and its evidence beside the tests before this plan is retired.
 | M3 | Documents, positions, workspaces and build contexts | M2 | in progress: synchronization, reusable codecs, shared project planning and workspace requests implemented; combined/platform acceptance pending |
 | M4 | Incremental syntax, recovery and the parser decision | M1, M3 | in progress: separate SML parser, lossless pieces, lexical/declaration reuse, AST bridge and differential checks implemented; performance/platform acceptance pending |
 | M5 | Compiler sessions, semantic snapshots and invalidation | M3, M4; compiler-library M1-M4 and the analysis contract below | in progress: public immutable snapshots, scoped prefix replay, provenance and worker transport tested; scheduling/integration and full acceptance remain |
-| M6 | Document and workspace diagnostics | M5 | planned |
-| M7 | Hover, navigation and symbols | M5 | planned |
-| M8 | Completion, signature help and inline completion | M7 | planned |
+| M6 | Document and workspace diagnostics | M5 | in progress: push/pull/workspace reports, refresh, cancellation and partial progress implemented; full coverage/performance acceptance remains |
+| M7 | Hover, navigation and symbols | M5 | in progress: navigation, document/workspace symbols and stale resolve tests pass; documentation, broader module cases and measurements remain |
+| M8 | Completion, signature help and inline completion | M7 | in progress: compiler lexical completion and stale item resolution implemented; signature help, snippets, fields and inline completion remain |
 | M9 | Highlighting, hints, structural editing, links and colours | M4, M7 | planned |
 | M10 | References, rename and workspace/file edits | M5-M7 | planned |
 | M11 | Formatting, code actions, refactorings and lenses | M4, M7-M10 | planned |
@@ -941,6 +941,15 @@ units, worker scheduling, stale-publication checks, measurements and final
 combined/platform acceptance still need evidence. Editing providers remain
 unadvertised.
 
+Resumed integration checkpoint (2026-10-23): the production server now
+uses supervised analysis jobs with foreground priority, background
+coalescing, cooperative cancellation and process-group termination. The
+public lexical query replays frozen inputs, preserves scope at whitespace
+and unfinished expressions, and remains usable after closing its context.
+Nine public analysis cases cover interpreter/JIT behavior, including
+queries after the captured library and manifest have been deleted. These
+results do not replace M5's remaining setting/recovery/performance gates.
+
 ### M6. Diagnostics (M)
 
 * **Depends on:** M5.
@@ -959,6 +968,21 @@ unadvertised.
   diagnostic latency including queue and serialization time.
 
 ### M7. Navigation and symbols (L)
+
+M6/M7 integration evidence (2026-10-23): eleven production stdio transcripts
+pass on Linux and native Windows, including push/pull diagnostics,
+request/progress cancellation, refresh, stale requests, markup negotiation, native project
+paths, closed-source/disk-change workspace diagnostics, partial progress,
+navigation, document symbols, workspace symbol resolution and lexical
+completion. Logs are `/tmp/rune-lsp-resumed-checkpoint-final.log` and
+`/tmp/rune-lsp-completion-windows-final.log`. Compiler ownership/audit checks
+pass with 213 registered roots. Documentation consistency passes 11 cases
+(`20261023-065129-253`), and public compiler API acceptance passes six runner
+cases (`20261023-065452-1420598`). The current full repository result
+remains the earlier committed checkpoint (19,392 PASS, three SKIP); these
+new changes still require combined acceptance. Initial exploratory runs
+with an incorrectly located standalone payload failed worker startup and
+are not counted as passing evidence.
 
 * **Depends on:** M5.
 * **Deliver:** hover/types/docs; declaration, definition, type and

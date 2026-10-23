@@ -3,9 +3,10 @@
 `runelsp` is the standalone LSP adapter for Rune. The current implementation
 provides stdio transport, initialization, capability/position-encoding
 negotiation, progress tokens, tracing, shutdown and versioned document
-synchronization. Compiler-backed editing features follow in
-[the roadmap](plans/language-server.md); semantic providers remain
-unadvertised until their acceptance checks pass.
+synchronization. Compiler-backed diagnostics, hover, navigation, symbols
+and lexical completion are implemented. The server remains under
+development: [the roadmap](plans/language-server.md) records outstanding
+feature, performance and platform acceptance.
 
 ## Build and launch
 
@@ -36,7 +37,35 @@ The current connection limits are 512 documents, 4 MiB per document
 (also bounded by the incoming-message limit), 64 MiB total document text,
 200,000 lines per document and 500,000 total indexed lines. Invalid or
 over-limit updates are rejected before publication. Source analysis and
-worker resource limits are separate later milestones.
+worker resource limits are separate.
+
+## Static analysis and queries
+
+A supervised child process owns compiler sessions. The connection continues
+reading requests while analysis runs; foreground queries precede queued
+background checks. Background checks coalesce per document. Cancellation
+receives one response and interrupts the child, with process termination as
+a fallback. Worker restart drops references to its old snapshots.
+
+The server supports push diagnostics and document/workspace pull reports,
+unchanged result IDs, refresh, work progress and workspace partial reports.
+Pull clients receive refresh instead of duplicate pushes. Publications must
+match the current source revision and workspace generation. Workspace
+queries check sources from configured or discovered build plans, including
+closed sources and disk-only changes.
+
+Hover and declaration/definition/type-definition/implementation navigation
+use compiler type and binding records. Document and workspace symbols use
+validated source tokens; workspace symbol resolution rejects stale source
+and context data. Source is checked statically and never executed.
+
+Completion returns compiler-visible lexical names, qualified members and
+keywords, with plain-text replacement edits. Signature restrictions apply
+to qualified completion. Item resolution requires its original snapshot;
+edits invalidate old items. Incomplete expression probes are private to the
+scope query and do not replace source or publish their diagnostic/type data.
+Signature help, snippets, record-field completion and inline completion
+remain pending; completion is not full M8 acceptance.
 
 ## Workspaces and build contexts
 
@@ -82,8 +111,9 @@ available while semantic analysis awaits an explicit selection.
 The compiler library also provides `RuneCompiler.Syntax`, a separate SML
 editor parser with immutable snapshots, lossless source pieces, recovery,
 cross-file fixity environments and lexical/declaration reuse. It is tested
-against the batch parser. Server analysis integration remains in progress;
-the server does not yet advertise syntax or semantic editing providers.
+against the batch parser and supplies server analysis. Performance and
+recovery acceptance remain in progress; source-editing providers such as
+rename and formatting remain unadvertised.
 
 ## Protocol and acceptance
 

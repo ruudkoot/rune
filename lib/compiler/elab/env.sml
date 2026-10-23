@@ -42,9 +42,32 @@ struct
   fun noteStamp (stamp,name,span)=if !tracking then
     let val origin=originAt ("value",name,span)
     in IntTable.insert (stampOrigins,stamp,origin);emit ("def-v",([],name),span,origin) end else ()
+  fun noteFunction (stamp,function:Ast.fundef) = if not (!tracking) then () else
+    case Source.findFile (#file (#span function)) of NONE => () | SOME source =>
+    let val {next,...}=Lexer.lexerOf (#mode source,#name source,#text source)
+        fun matches (start,stop) =
+          let fun loop offset=let val (token,span,after)=next offset
+                in if #start span>=stop orelse token=Token.EOF then [] else
+                     (case token of Token.ID name => if name= #name function andalso #stop span<=stop then [span] else [] | _ => []) @ loop after end
+          in if stop<=start then [] else loop start end
+        fun head (from,{pats,body,...}:Ast.clause) =
+          let val found=case pats of [] => [] | first::_ =>
+                (case matches (from,#start (Ast.spanOfPat first)) of [] =>
+                   (case first of Ast.PTuple ([left,right],_) => matches (#stop (Ast.spanOfPat left),#start (Ast.spanOfPat right)) | _ => [])
+                 | found => found)
+          in (case found of span::_ => SOME span | [] => NONE,#stop (Ast.spanOfExp body)) end
+        fun clauses (_,[])=[] | clauses (from,clause::rest)=
+          let val (span,next)=head (from,clause) in (case span of NONE => [] | SOME span => [span]) @ clauses (next,rest) end
+        val spans=clauses (#start (#span function),#clauses function)
+    in case spans of [] => () | first::_ =>
+      let val origin=originAt ("value",#name function,first)
+      in IntTable.insert (stampOrigins,stamp,origin);List.app (fn span => emit ("def-v",([],#name function),span,origin)) spans end end
 
   datatype env = Env of {vals : valstatus StringMap.map, tys : tystatus StringMap.map, strs : env StringMap.map,
                         origins:origin StringMap.map}
+  val observeScope : (Source.span * env -> unit) ref=ref (fn _ => ())
+  val ()=CompilerState.cellRoot ("Env.observeScope",observeScope)
+  fun noteScope (span,env)=if !tracking andalso !applicationDepth=0 then (!observeScope) (span,env) else ()
 
   val empty = Env {vals = StringMap.empty, tys = StringMap.empty, strs = StringMap.empty,origins=StringMap.empty}
 
@@ -207,7 +230,10 @@ struct
 
   fun originOf (env,kind,(path,name))=case findStr' (env,path) of NONE => Unknown
     | SOME env => getOpt (StringMap.find (origins env,kind ^ " " ^ name),Unknown)
-  fun noteUse (env,kind,id,span)=if !tracking then emit (kind,id,span,originOf (env,kind,id)) else ()
+  fun noteUse (env,kind,id as (path,_),span)=if not (!tracking) then () else
+    let fun prefixes (_,[])=() | prefixes (prefix,name::rest)=
+          (emit ("s",(prefix,name),span,originOf (env,"s",(prefix,name)));prefixes (prefix @ [name],rest))
+    in emit (kind,id,span,originOf (env,kind,id));prefixes ([],path) end
 
   fun findVal (env, (path, name)) =
     case path of

@@ -52,6 +52,18 @@ Generative and opaque type-constructor identities remain distinct through
 basis replay. This metadata is stored in the version-7 basis format;
 ordinary batch compilation leaves provenance tracking disabled.
 
+`typeAtOccurrence` selects an ordered source occurrence explicitly when a
+file appears several times in a build. `visibleAt` replays the captured
+prefix and asks the compiler for the lexical environment at a byte cursor,
+or for members of a qualified structure path. Its frozen names, kinds,
+types and definition locations remain queryable after the context closes.
+The selected library plan is captured too: later manifest changes or
+deletion of the original library cannot change an old snapshot's query.
+Whitespace between declarations sees only preceding bindings. An unfinished
+expression can use a bounded private syntax probe; probe facts and errors
+are never published as analysis of the original text. No mutable environment
+escapes, and a query never executes declarations or writes files.
+
 Checkpoints contain committed unit entries and visibility-plan metadata,
 rather than a rollback copy of mutable unification cells. They belong to
 one analysis context and never rewind its result-ID counter. Cancelled or

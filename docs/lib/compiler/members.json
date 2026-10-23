@@ -343,14 +343,14 @@
     {
      "kind": "type",
      "name": "Analysis.occurrence",
-     "spec": "type occurrence={file:string,start:int,stop:int,kind:string,name:string,path:string list,\n  binding:string option,definition:location option,declaration:location option,isDefinition:bool,derived:bool}",
+     "spec": "type occurrence={unit:string,file:string,start:int,stop:int,kind:string,name:string,path:string list,\n  binding:string option,definition:location option,declaration:location option,isDefinition:bool,derived:bool}",
      "doc": "An actual compiler-resolved binding occurrence.\n\nThe range can cover\nits enclosing syntax, so editing clients must locate identifier tokens.\nderived marks a copied functor body rather than original source syntax.\n\n",
      "page": "sig/RUNE_COMPILER.md#type-analysis.occurrence"
     },
     {
      "kind": "type",
      "name": "Analysis.fact",
-     "spec": "type fact={file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}",
+     "spec": "type fact={unit:string,file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}",
      "doc": "A frozen inferred type.\n\nconstructors are semantic type identities;\narguments contains curried domains, with tuple components grouped.\n\n",
      "page": "sig/RUNE_COMPILER.md#type-analysis.fact"
     },
@@ -360,6 +360,13 @@
      "spec": "type typeDefinition={id:string,definition:location option,declaration:location option,implementation:location option}",
      "doc": "A named type's source relationships.\n\nAbstract types retain their\nspecification separately from the known implementation.\n\n",
      "page": "sig/RUNE_COMPILER.md#type-analysis.typedefinition"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.candidate",
+     "spec": "type candidate={name:string,kind:string,detail:string option,definition:location option}",
+     "doc": "A compiler-visible name and its frozen completion detail.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.candidate"
     },
     {
      "kind": "exception",
@@ -484,8 +491,22 @@
      "kind": "val",
      "name": "Analysis.typeAt",
      "spec": "val typeAt : snapshot * {file:string,offset:int} -> string option",
-     "doc": "`typeAt (snapshot, position)` returns its innermost original-source type.\nCopied-body facts are used only where no original fact is available.\n\n",
+     "doc": "`typeAt (snapshot, position)` returns its innermost original-source type.\n\nCopied-body facts are used only where no original fact is available.\nA file with several source occurrences requires typeAtOccurrence.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-analysis.typeat"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.typeAtOccurrence",
+     "spec": "val typeAtOccurrence : snapshot * {ordinal:int,offset:int} -> string option",
+     "doc": "`typeAtOccurrence (snapshot, {ordinal, offset})` queries one ordered\nsource occurrence, preserving its incoming build context.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.typeatoccurrence"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.visibleAt",
+     "spec": "val visibleAt : snapshot * {ordinal:int,offset:int,path:string list} -> candidate list",
+     "doc": "`visibleAt (snapshot, position)` returns actual lexical bindings at a\nsource occurrence's byte offset, or members of path.\n\nIt replays validated prefixes and rechecks the requested unit. Only\nfrozen names/details escape; no mutable environment is published.\nIncomplete expressions can use bounded private syntax probes whose\nfacts and diagnostics are never published as original-source data.\nThe snapshot remains queryable after its context closes.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.visibleat"
     }
    ]
   }

@@ -4,6 +4,7 @@
 
 - `Analysis.t` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.t)
 - `Analysis.typeAt` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.typeat)
+- `Analysis.typeAtOccurrence` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.typeatoccurrence)
 - `Analysis.typeDefinition` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.typedefinition)
 - `Analysis.types` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.types)
 - `Project.t` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-project.t)

@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md) specifies it inside [`RuneCompiler`](../str/RuneCompiler.md) |
 | Status | required |
-| Members | 26 |
+| Members | 29 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -16,11 +16,12 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 
 |  | Member | Is |
 | --- | --- | --- |
+| type | [`candidate`](../sig/RUNE_COMPILER.md#type-analysis.candidate) | `{definition : location option, detail : string option, kind : string, name : string}` |
 | type | [`checkpoint`](../sig/RUNE_COMPILER.md#type-analysis.checkpoint) | *a type of its own* |
-| type | [`fact`](../sig/RUNE_COMPILER.md#type-analysis.fact) | `{arguments : string list list, constructors : string list, derived : bool, file : string, start : int, stop : int, ty : string}` |
+| type | [`fact`](../sig/RUNE_COMPILER.md#type-analysis.fact) | `{arguments : string list list, constructors : string list, derived : bool, file : string, start : int, stop : int, ty : string, unit : string}` |
 | type | [`input`](../sig/RUNE_COMPILER.md#type-analysis.input) | `{annotations : string list, file : string, mode : string, revision : string, text : string}` |
 | type | [`location`](../sig/RUNE_COMPILER.md#type-analysis.location) | `{file : string, start : int, stop : int}` |
-| type | [`occurrence`](../sig/RUNE_COMPILER.md#type-analysis.occurrence) | `{binding : string option, declaration : location option, definition : location option, derived : bool, file : string, isDefinition : bool, kind : string, name : string, path : string list, start : int, stop : int}` |
+| type | [`occurrence`](../sig/RUNE_COMPILER.md#type-analysis.occurrence) | `{binding : string option, declaration : location option, definition : location option, derived : bool, file : string, isDefinition : bool, kind : string, name : string, path : string list, start : int, stop : int, unit : string}` |
 | type | [`snapshot`](../sig/RUNE_COMPILER.md#type-analysis.snapshot) | *a type of its own* |
 | type | [`t`](../sig/RUNE_COMPILER.md#type-analysis.t) | *a type of its own* |
 | type | [`typeDefinition`](../sig/RUNE_COMPILER.md#type-analysis.typedefinition) | `{declaration : location option, definition : location option, id : string, implementation : location option}` |
@@ -40,7 +41,9 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 | val | [`project`](../sig/RUNE_COMPILER.md#val-analysis.project) | `snapshot -> string option` |
 | val | [`restore`](../sig/RUNE_COMPILER.md#val-analysis.restore) | `t * checkpoint -> unit` |
 | val | [`typeAt`](../sig/RUNE_COMPILER.md#val-analysis.typeat) | `snapshot * {file : string, offset : int} -> string option` |
+| val | [`typeAtOccurrence`](../sig/RUNE_COMPILER.md#val-analysis.typeatoccurrence) | `snapshot * {offset : int, ordinal : int} -> string option` |
 | val | [`types`](../sig/RUNE_COMPILER.md#val-analysis.types) | `snapshot -> typeDefinition list` |
+| val | [`visibleAt`](../sig/RUNE_COMPILER.md#val-analysis.visibleat) | `snapshot * {offset : int, ordinal : int, path : string list} -> candidate list` |
 | val | [`work`](../sig/RUNE_COMPILER.md#val-analysis.work) | `snapshot -> {checked : int, reused : int}` |
 
 ---

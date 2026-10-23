@@ -10,6 +10,7 @@ files
   api/query.sml
   api/facts.sml
   api/analysis-engine.sml
+  api/scope-probe.sml
   api/analysis.sml
   api/compiler_sig.sml
   api/platform.sml

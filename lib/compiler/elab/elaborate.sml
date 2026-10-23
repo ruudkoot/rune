@@ -917,7 +917,7 @@ struct
     | _ => false
 
   fun elabExp (env, level, scope : scope, e : exp) : ty =
-    case e of
+    (Env.noteScope (spanOfExp e,env);case e of
       EScon (sc, slot, sp) => sconTy (level, sc, slot, sp)
     | EVar (longid, slot, sp) =>
         (Env.noteUse (env,"v",longid,sp);case findVal (env, longid) of
@@ -1019,7 +1019,7 @@ struct
         else
           (case Prims.find name of
              NONE => err (sp, "unknown primitive '" ^ name ^ "'")
-           | SOME _ => let val ty = elabTy (env, scope, level, t) in slot := SOME ty; ty end)
+           | SOME _ => let val ty = elabTy (env, scope, level, t) in slot := SOME ty; ty end))
 
   (* Section 4.11: a fn match must be exhaustive, every match irredundant. *)
   and elabMatch (env, level, scope, rules : mrule list, argTy, resTy, exhaustive : bool, sp) =
@@ -1037,11 +1037,13 @@ struct
   (* Declarations. Return the environment delta.                          *)
   and elabDecs (env, level, top, scope, decs : dec list) : env =
     let
-      fun go ([], _, delta) = delta
-        | go (d :: rest, env, delta) =
-          let val d' = elabDec (env, level, top, scope, d)
-          in go (rest, plus (env, d'), plus (delta, d')) end
-    in go (decs, env, Env.empty) end
+      fun go ([], _, delta, _) = delta
+        | go (d :: rest, env, delta, from) =
+          let val span=spanOfDec d
+              val ()=Env.noteScope ({file= #file span,start=from,stop= #stop span},env)
+              val d' = elabDec (env, level, top, scope, d)
+          in go (rest, plus (env, d'), plus (delta, d'), #stop span) end
+    in go (decs, env, Env.empty,case decs of [] => 0 | d::_ => #start (spanOfDec d)) end
 
   and elabDec (env, level, top, outerScope : scope, d : dec) : env =
     case d of
@@ -1126,7 +1128,7 @@ struct
                            val tv = fresh (level + 1)
                            val () = Ty.bindVar (stamp, tv)
                            val () = Ty.nameVar (stamp, #name f, tv)
-                           val () = Env.noteStamp (stamp,#name f,#span f)
+                           val () = Env.noteFunction (stamp,f)
                            val () = #info f := SOME (PIVar (stamp, top))
                          in (#name f, Val {scheme = tv, stamp = stamp, global = top}, tv, f) end) fundefs
           fun checkDups [] = ()
@@ -1814,11 +1816,15 @@ struct
     in ElabStats.emit (Source.describe (spanOfDec d), kind, name, !Types.workLimit - !Types.workLeft) end
 
   fun elabTop (env : env ref, decs : dec list) : unit =
-    (lastDelta := Env.empty;
+    let val scopeEnd=ref 0
+    in (lastDelta := Env.empty;
      (* a type of a message is named as the top level names it *)
      Types.qualifier := (fn c => Env.qualifiedName (!env, c));
      List.app (fn d =>
                 let
+                  val span=spanOfDec d
+                  val ()=Env.noteScope ({file= #file span,start= !scopeEnd,stop= #stop span},!env)
+                  val ()=scopeEnd:= #stop span
                   val saved = if !recover then SOME (snapshot ()) else NONE
                   val () = ElabStats.reset ()
                   fun go () =
@@ -1857,7 +1863,7 @@ struct
                 end) decs;
      (* what is elaborated together ends a topdec (a file, a REPL's unit) *)
      List.app checkClosed (List.rev (!pendingClosed));
-     pendingClosed := [])
+     pendingClosed := []) end
 
   fun elabProgram (decs : dec list) : env =
     let val env = ref Env.initial

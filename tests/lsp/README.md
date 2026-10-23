@@ -84,6 +84,26 @@ The worker transport is private and reuses Content-Length framing. LSP
 messages remain UTF-8 JSON. Internal byte strings preserve WTF-8 paths
 and malformed disk-source bytes until the compiler reports them.
 
+## Semantic stdio transcripts (M5-M8)
+
+`make test-lsp` also runs the production server through an independent
+interactive client. The semantic cases cover push/pull/workspace reports,
+refresh and partial progress, cancellation, stale requests, native project
+paths, navigation, symbols and lexical completion/resolve. Compiler scope
+tests cover shadowing, hidden members, whitespace, unfinished local
+expressions and queries after closing their original contexts.
+
+After building the bytecode, run the same production transcripts natively
+on Windows from this directory:
+
+```
+bin/runevm.exe bin/rune-lsp-semantic-tests.rbc bin/runevm.exe bin/runelsp.rbc
+```
+
+Keep the server payload beside its VM: worker startup locates the VM in
+the payload directory. Passing tests record only this feature cohort;
+they do not stand in for full roadmap or performance acceptance.
+
 ## Frontend baseline (M1)
 
 ```

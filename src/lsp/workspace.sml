@@ -121,16 +121,26 @@ struct
     in setRoots (workspace,kept @ List.filter (fn uri => not (List.exists (fn root => root=uri) kept)) added) end
   fun below (root,path)=root=path orelse String.isPrefix (if String.isSuffix "/" root then root else root ^ "/") path
   fun pathKey platform path =
-    case U.native (platform,U.fromPath (platform,path)) of SOME {key,...} => key | NONE => path
+    let val uri=U.fromPath (platform,path) handle U.Invalid => U.fromPath (platform,OS.FileSys.fullPath path)
+    in case U.native (platform,uri) of SOME {key,...} => key | NONE => path end
+    handle OS.SysErr _ => path
   fun sameFile platform (left,right) =
     pathKey platform left=pathKey platform right orelse
       ((OS.FileSys.compare (OS.FileSys.fileId left,OS.FileSys.fileId right)=EQUAL) handle OS.SysErr _ => false)
-  fun parent path =
-    let val directory=OS.Path.dir path in if directory=path orelse directory="" then NONE else SOME directory end
-  fun buildFiles directory =
+  fun directory platform path = if platform<>U.Windows then OS.Path.dir path else
+    let val path=String.map (fn #"\\" => #"/" | c => c) path
+        fun last i=if i<0 then NONE else if String.sub (path,i)= #"/" then SOME i else last (i-1)
+    in case last (size path-1) of NONE => "." | SOME 0 => "/"
+      | SOME 2 => if String.sub (path,1)= #":" then String.substring (path,0,3) else String.substring (path,0,2)
+      | SOME at => String.substring (path,0,at) end
+  fun join platform (directory,path)=if platform=U.Windows then
+    directory ^ (if String.isSuffix "/" directory then "" else "/") ^ path else OS.Path.concat (directory,path)
+  fun parent platform path =
+    let val directory=directory platform path in if directory=path orelse directory="" then NONE else SOME directory end
+  fun buildFiles platform directory =
     let val stream=OS.FileSys.openDir directory
         fun read result=case OS.FileSys.readDir stream of NONE => result | SOME file =>
-          read (if String.isSuffix ".build" file then OS.Path.concat (directory,file) :: result else result)
+          read (if String.isSuffix ".build" file then join platform (directory,file) :: result else result)
         val files=(read [] before OS.FileSys.closeDir stream)
           handle e => (OS.FileSys.closeDir stream handle _ => ();raise e)
         fun insert (x,[])= [x] | insert (x,y::rest)=if x<y then x::y::rest else y::insert (x,rest)
@@ -140,11 +150,11 @@ struct
         val applicable=List.filter (fn root => case nativeKey platform root of SOME root => below (root,key) | NONE => false) (!roots)
         fun ancestors (directory,boundary,seen) =
           if List.exists (fn previous => previous=directory) seen then [] else
-          buildFiles directory @ (if pathKey platform directory=boundary then [] else
-            case parent directory of NONE => [] | SOME next =>
+          buildFiles platform directory @ (if pathKey platform directory=boundary then [] else
+            case parent platform directory of NONE => [] | SOME next =>
               if below (boundary,pathKey platform next) then ancestors (next,boundary,directory::seen) else [])
-        val directories=case applicable of [] => [(OS.Path.dir path,pathKey platform (OS.Path.dir path))]
-          | roots => List.map (fn root => (OS.Path.dir path,valOf (nativeKey platform root))) roots
+        val directories=case applicable of [] => [(directory platform path,pathKey platform (directory platform path))]
+          | roots => List.map (fn root => (directory platform path,valOf (nativeKey platform root))) roots
         val files=List.concat (List.map (fn (directory,boundary) => ancestors (directory,boundary,[])) directories)
     in List.foldl (fn (file,result) => if List.exists (fn prior => prior=file) result then result else result @ [file]) [] files end
   fun contexts (workspace as Workspace {platform,lib,settings=stored,...},documents,uri) =

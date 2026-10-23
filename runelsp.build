@@ -1,13 +1,21 @@
-(* Standalone protocol adapter using the public compiler project API. *)
-libraries compiler lsp end
+(* Standalone server, isolated compiler analysis and portable worker supervision. *)
+libraries compiler lsp digest end
 files
   build/config.sml
   src/lsp/documents.sml
   src/lsp/sync.sml
   src/lsp/workspace.sml
-  src/lsp/controller.sml
+  src/lsp/projects.sml
   src/lsp/worker-wire.sml
+  src/lsp/worker-model.sml
+  src/lsp/controller.sml
   src/lsp/worker-process.sml
+  src/lsp/jobs.sml
+  src/lsp/completion.sml
+  src/lsp/worker-analysis.sml
+  src/lsp/worker.sml
+  src/lsp/service.sml
+  src/lsp/session.sml
   src/lsp/server.sml
 end
 src/main/runelsp-main.sml

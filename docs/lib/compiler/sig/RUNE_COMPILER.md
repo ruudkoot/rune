@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 69 of 69 entries documented |
+| Documentation | 72 of 72 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -84,10 +84,11 @@ sig
     type <a href="#type-analysis.checkpoint">checkpoint</a>
     type <a href="#type-analysis.input">input</a>={<a href="#fld-analysis.input.file">file</a>:string,<a href="#fld-analysis.input.text">text</a>:string,<a href="#fld-analysis.input.mode">mode</a>:string,<a href="#fld-analysis.input.annotations">annotations</a>:string list,<a href="#fld-analysis.input.revision">revision</a>:string}
     type <a href="#type-analysis.location">location</a>={<a href="#fld-analysis.location.file">file</a>:string,<a href="#fld-analysis.location.start">start</a>:int,<a href="#fld-analysis.location.stop">stop</a>:int}
-    type <a href="#type-analysis.occurrence">occurrence</a>={<a href="#fld-analysis.occurrence.file">file</a>:string,<a href="#fld-analysis.occurrence.start">start</a>:int,<a href="#fld-analysis.occurrence.stop">stop</a>:int,<a href="#fld-analysis.occurrence.kind">kind</a>:string,<a href="#fld-analysis.occurrence.name">name</a>:string,<a href="#fld-analysis.occurrence.path">path</a>:string list,
+    type <a href="#type-analysis.occurrence">occurrence</a>={<a href="#fld-analysis.occurrence.unit">unit</a>:string,<a href="#fld-analysis.occurrence.file">file</a>:string,<a href="#fld-analysis.occurrence.start">start</a>:int,<a href="#fld-analysis.occurrence.stop">stop</a>:int,<a href="#fld-analysis.occurrence.kind">kind</a>:string,<a href="#fld-analysis.occurrence.name">name</a>:string,<a href="#fld-analysis.occurrence.path">path</a>:string list,
       <a href="#fld-analysis.occurrence.binding">binding</a>:string option,<a href="#fld-analysis.occurrence.definition">definition</a>:location option,<a href="#fld-analysis.occurrence.declaration">declaration</a>:location option,<a href="#fld-analysis.occurrence.isdefinition">isDefinition</a>:bool,<a href="#fld-analysis.occurrence.derived">derived</a>:bool}
-    type <a href="#type-analysis.fact">fact</a>={<a href="#fld-analysis.fact.file">file</a>:string,<a href="#fld-analysis.fact.start">start</a>:int,<a href="#fld-analysis.fact.stop">stop</a>:int,<a href="#fld-analysis.fact.ty">ty</a>:string,<a href="#fld-analysis.fact.derived">derived</a>:bool,<a href="#fld-analysis.fact.constructors">constructors</a>:string list,<a href="#fld-analysis.fact.arguments">arguments</a>:string list list}
+    type <a href="#type-analysis.fact">fact</a>={<a href="#fld-analysis.fact.unit">unit</a>:string,<a href="#fld-analysis.fact.file">file</a>:string,<a href="#fld-analysis.fact.start">start</a>:int,<a href="#fld-analysis.fact.stop">stop</a>:int,<a href="#fld-analysis.fact.ty">ty</a>:string,<a href="#fld-analysis.fact.derived">derived</a>:bool,<a href="#fld-analysis.fact.constructors">constructors</a>:string list,<a href="#fld-analysis.fact.arguments">arguments</a>:string list list}
     type <a href="#type-analysis.typedefinition">typeDefinition</a>={<a href="#fld-analysis.typedefinition.id">id</a>:string,<a href="#fld-analysis.typedefinition.definition">definition</a>:location option,<a href="#fld-analysis.typedefinition.declaration">declaration</a>:location option,<a href="#fld-analysis.typedefinition.implementation">implementation</a>:location option}
+    type <a href="#type-analysis.candidate">candidate</a>={<a href="#fld-analysis.candidate.name">name</a>:string,<a href="#fld-analysis.candidate.kind">kind</a>:string,<a href="#fld-analysis.candidate.detail">detail</a>:string option,<a href="#fld-analysis.candidate.definition">definition</a>:location option}
     exception <a href="#exn-analysis.cancelled">Cancelled</a>
     exception <a href="#exn-analysis.busy">Busy</a>
     val <a href="#val-analysis.create">create</a> : session * {<a href="#fld-analysis.create.context">context</a>:string} -&gt; t
@@ -106,6 +107,8 @@ sig
     val <a href="#val-analysis.facts">facts</a> : snapshot -&gt; fact list
     val <a href="#val-analysis.work">work</a> : snapshot -&gt; {<a href="#fld-analysis.work.checked">checked</a>:int,<a href="#fld-analysis.work.reused">reused</a>:int}
     val <a href="#val-analysis.typeat">typeAt</a> : snapshot * {<a href="#fld-analysis.typeat.file">file</a>:string,<a href="#fld-analysis.typeat.offset">offset</a>:int} -&gt; string option
+    val <a href="#val-analysis.typeatoccurrence">typeAtOccurrence</a> : snapshot * {<a href="#fld-analysis.typeatoccurrence.ordinal">ordinal</a>:int,<a href="#fld-analysis.typeatoccurrence.offset">offset</a>:int} -&gt; string option
+    val <a href="#val-analysis.visibleat">visibleAt</a> : snapshot * {<a href="#fld-analysis.visibleat.ordinal">ordinal</a>:int,<a href="#fld-analysis.visibleat.offset">offset</a>:int,<a href="#fld-analysis.visibleat.path">path</a>:string list} -&gt; candidate list
   end
 end
 </pre>
@@ -678,7 +681,7 @@ A half-open source byte range, before LSP position conversion.
 #### <a name="type-analysis.occurrence"></a>`occurrence`
 
 ```sml
-type occurrence={file:string,start:int,stop:int,kind:string,name:string,path:string list,
+type occurrence={unit:string,file:string,start:int,stop:int,kind:string,name:string,path:string list,
   binding:string option,definition:location option,declaration:location option,isDefinition:bool,derived:bool}
 ```
 
@@ -690,6 +693,7 @@ derived marks a copied functor body rather than original source syntax.
 
 | Field | Type | Description |
 | --- | --- | --- |
+| <a name="fld-analysis.occurrence.unit"></a>`unit` | `string` |  |
 | <a name="fld-analysis.occurrence.file"></a>`file` | `string` |  |
 | <a name="fld-analysis.occurrence.start"></a>`start` | `int` |  |
 | <a name="fld-analysis.occurrence.stop"></a>`stop` | `int` |  |
@@ -705,7 +709,7 @@ derived marks a copied functor body rather than original source syntax.
 #### <a name="type-analysis.fact"></a>`fact`
 
 ```sml
-type fact={file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}
+type fact={unit:string,file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}
 ```
 
 A frozen inferred type.
@@ -715,6 +719,7 @@ arguments contains curried domains, with tuple components grouped.
 
 | Field | Type | Description |
 | --- | --- | --- |
+| <a name="fld-analysis.fact.unit"></a>`unit` | `string` |  |
 | <a name="fld-analysis.fact.file"></a>`file` | `string` |  |
 | <a name="fld-analysis.fact.start"></a>`start` | `int` |  |
 | <a name="fld-analysis.fact.stop"></a>`stop` | `int` |  |
@@ -740,6 +745,21 @@ specification separately from the known implementation.
 | <a name="fld-analysis.typedefinition.definition"></a>`definition` | `location option` |  |
 | <a name="fld-analysis.typedefinition.declaration"></a>`declaration` | `location option` |  |
 | <a name="fld-analysis.typedefinition.implementation"></a>`implementation` | `location option` |  |
+
+#### <a name="type-analysis.candidate"></a>`candidate`
+
+```sml
+type candidate={name:string,kind:string,detail:string option,definition:location option}
+```
+
+A compiler-visible name and its frozen completion detail.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.candidate.name"></a>`name` | `string` |  |
+| <a name="fld-analysis.candidate.kind"></a>`kind` | `string` |  |
+| <a name="fld-analysis.candidate.detail"></a>`detail` | `string option` |  |
+| <a name="fld-analysis.candidate.definition"></a>`definition` | `location option` |  |
 
 #### <a name="exn-analysis.cancelled"></a>`Cancelled`
 
@@ -914,12 +934,49 @@ val typeAt : snapshot * {file:string,offset:int} -> string option
 ```
 
 `typeAt (snapshot, position)` returns its innermost original-source type.
+
 Copied-body facts are used only where no original fact is available.
+A file with several source occurrences requires typeAtOccurrence.
 
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-analysis.typeat.file"></a>`file` | `string` |  |
 | <a name="fld-analysis.typeat.offset"></a>`offset` | `int` |  |
+
+#### <a name="val-analysis.typeatoccurrence"></a>`typeAtOccurrence`
+
+```sml
+val typeAtOccurrence : snapshot * {ordinal:int,offset:int} -> string option
+```
+
+`typeAtOccurrence (snapshot, {ordinal, offset})` queries one ordered
+source occurrence, preserving its incoming build context.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.typeatoccurrence.ordinal"></a>`ordinal` | `int` |  |
+| <a name="fld-analysis.typeatoccurrence.offset"></a>`offset` | `int` |  |
+
+#### <a name="val-analysis.visibleat"></a>`visibleAt`
+
+```sml
+val visibleAt : snapshot * {ordinal:int,offset:int,path:string list} -> candidate list
+```
+
+`visibleAt (snapshot, position)` returns actual lexical bindings at a
+source occurrence's byte offset, or members of path.
+
+It replays validated prefixes and rechecks the requested unit. Only
+frozen names/details escape; no mutable environment is published.
+Incomplete expressions can use bounded private syntax probes whose
+facts and diagnostics are never published as original-source data.
+The snapshot remains queryable after its context closes.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.visibleat.ordinal"></a>`ordinal` | `int` |  |
+| <a name="fld-analysis.visibleat.offset"></a>`offset` | `int` |  |
+| <a name="fld-analysis.visibleat.path"></a>`path` | `string list` |  |
 
 ---
 

@@ -6,12 +6,14 @@ struct
   structure C=CompilerSession
   type input={file:string,text:string,mode:string,annotations:string list,revision:string}
   type location={file:string,start:int,stop:int}
-  type occurrence={file:string,start:int,stop:int,kind:string,name:string,path:string list,
+  type occurrence={unit:string,file:string,start:int,stop:int,kind:string,name:string,path:string list,
     binding:string option,definition:location option,declaration:location option,isDefinition:bool,derived:bool}
   type typeDefinition={id:string,definition:location option,declaration:location option,implementation:location option}
   type fact=E.fact
+  type candidate={name:string,kind:string,detail:string option,definition:location option}
   type snapshot={id:string,context:string,project:string option,inputs:input list,dependencies:input list,
-    diagnostics:C.diagnostic list,occurrences:occurrence list,types:typeDefinition list,facts:fact list,reused:int,checked:int}
+    diagnostics:C.diagnostic list,occurrences:occurrence list,types:typeDefinition list,facts:fact list,reused:int,checked:int,
+    config:C.config,cache:E.entry list,plan:string,steps:CompilerProject.step list,libraries:string list,prelude:CompilerPrelude.plan}
   datatype t=Analysis of {parent:C.session,context:string,namespace:string,engine:E.session,
     token:unit ref,serial:IntInf.int ref,busy:bool ref,closed:bool ref}
   datatype checkpoint=Checkpoint of {token:unit ref,entries:E.entry list,plan:string}
@@ -38,19 +40,20 @@ struct
           val ()=(Pickle.nat (writer,#start span);Pickle.nat (writer,#stop span))
       in SOME ("binding-" ^ Pickle.hash (Pickle.contents writer)) end
     | _ => NONE
-  fun freeze (role,(path,name),span:Source.span,origin,derived) : occurrence =
+  fun freeze (unit,(role,(path,name),span:Source.span,origin,derived)) : occurrence =
     let val definition=Env.primary origin
         val declaration=Env.declaration origin
         val isDefinition=String.isPrefix "def-" role
         val kind=if isDefinition then String.extract (role,4,NONE) else role
         val kind=case kind of "v" => "value" | "t" => "type" | "s" => "structure"
           | "g" => "signature" | "f" => "functor" | _ => kind
-    in {file= #file span,start= #start span,stop= #stop span,kind=kind,name=name,path=path,
+    in {unit=unit,file= #file span,start= #start span,stop= #stop span,kind=kind,name=name,path=path,
       binding=binding definition,definition=location definition,declaration=location declaration,
       isDefinition=isDefinition,derived=derived} end
   fun check (context as Analysis {parent,context=name,namespace,engine,serial,busy,...},
              {inputs:input list,steps,project,libraries,cancelled}) : snapshot =
     let val ()=checked context
+        val C.Session {config,...}=parent
         val ()=if length inputs>10000 then raise Fail "too many analysis inputs" else ()
         val _=List.foldl (fn (input:input,total) =>
           if size (#text input)>128*1024*1024-total then raise Fail "analysis input budget exceeded"
@@ -71,16 +74,49 @@ struct
               val snapshot={id=namespace ^ ":" ^ IntInf.toString (!serial),context=name,project=project,inputs=inputs,
                 dependencies=List.map dependency (#dependencies result),diagnostics= #diagnostics result,
                 occurrences=List.map freeze (#uses result),types=types,facts= #facts result,
-                reused= #reused result,checked= #checked result}:snapshot
+                reused= #reused result,checked= #checked result,config=config,cache= #cache result,plan= #plan result,
+                steps=steps,libraries=libraries,prelude= #prelude result}:snapshot
           in serial:=IntInf.+ (!serial,1);snapshot end
         val result=work () handle error => (busy:=false;raise error)
     in busy:=false;result end
-  fun typeAt (snapshot:snapshot,{file,offset}) =
-    let fun candidate (fact:fact)= #file fact=file andalso #start fact<=offset andalso offset< #stop fact
+  fun typeIn (snapshot:snapshot,{file,unit,offset}) =
+    let fun candidate (fact:fact)= #file fact=file andalso (case unit of NONE => true | SOME unit => #unit fact=unit)
+          andalso #start fact<=offset andalso offset< #stop fact
         fun best (fact:fact,NONE)=SOME fact
           | best (fact:fact,old as SOME previous)=
               if (#derived previous andalso not (#derived fact)) orelse
                  #derived previous= #derived fact andalso #stop fact- #start fact< #stop previous- #start previous
               then SOME fact else old
     in Option.map #ty (List.foldl best NONE (List.filter candidate (#facts snapshot))) end
+  fun typeAt (snapshot:snapshot,{file,offset}) =
+    if length (List.filter (fn input:input => #file input=file) (#inputs snapshot))>1 then NONE
+    else typeIn (snapshot,{file=file,unit=NONE,offset=offset})
+  fun typeAtOccurrence (snapshot:snapshot,{ordinal,offset}) =
+    if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
+      let val input=List.nth (#inputs snapshot,ordinal)
+      in typeIn (snapshot,{file= #file input,unit=SOME (#file input ^ "#" ^ Int.toString (ordinal+1)),offset=offset}) end
+  fun visibleAt (snapshot:snapshot,{ordinal,offset,path}) =
+    if ordinal<0 orelse ordinal>=length (#inputs snapshot) then [] else
+    let val input=List.nth (#inputs snapshot,ordinal)
+        val engine=E.Session {stored=ref (#cache snapshot),plan=ref (#plan snapshot),config= #config snapshot,closed=ref false}
+        fun source (input:input):E.source={file= #file input,text= #text input,mode=valOf (Source.modeNamed (#mode input))}
+        fun query (sources,at)= #candidates (E.checkWith
+          (engine,sources,#steps snapshot,#libraries snapshot,fn () => false,
+           SOME {unit= #file input ^ "#" ^ Int.toString (ordinal+1),file= #file input,offset=at,path=path},
+           List.map source (#dependencies snapshot),SOME (#prelude snapshot)))
+        val original=List.map source (#inputs snapshot)
+        fun retry []=[]
+          | retry ((text,at)::rest)=
+              let fun replace ([],_) = []
+                    | replace ((item:E.source)::rest,index)=
+                        (if index=ordinal then {file= #file item,text=text,mode= #mode item}:E.source else item)
+                        :: replace (rest,index+1)
+                  val sources=replace (original,0)
+              in case query (sources,at) of [] => retry rest | found => found end
+        val candidates=case query (original,offset) of [] =>
+              retry (CompilerScopeProbe.texts {file= #file input,text= #text input,
+                mode=valOf (Source.modeNamed (#mode input)),offset=offset})
+          | found => found
+    in List.map (fn candidate:E.candidate => {name= #name candidate,kind= #kind candidate,detail= #detail candidate,
+      definition=location (Env.primary (#origin candidate))}:candidate) candidates end
 end

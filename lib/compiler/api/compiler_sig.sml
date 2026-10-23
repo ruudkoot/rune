@@ -202,18 +202,20 @@ sig
        The range can cover
        its enclosing syntax, so editing clients must locate identifier tokens.
        derived marks a copied functor body rather than original source syntax. *)
-    type occurrence={file:string,start:int,stop:int,kind:string,name:string,path:string list,
+    type occurrence={unit:string,file:string,start:int,stop:int,kind:string,name:string,path:string list,
       binding:string option,definition:location option,declaration:location option,isDefinition:bool,derived:bool}
     (* A frozen inferred type.
 
        constructors are semantic type identities;
        arguments contains curried domains, with tuple components grouped. *)
-    type fact={file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}
+    type fact={unit:string,file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}
     (* A named type's source relationships.
 
        Abstract types retain their
        specification separately from the known implementation. *)
     type typeDefinition={id:string,definition:location option,declaration:location option,implementation:location option}
+    (* A compiler-visible name and its frozen completion detail. *)
+    type candidate={name:string,kind:string,detail:string option,definition:location option}
     (* Cancellation discarded an attempt before publishing its cache. *)
     exception Cancelled
     (* An operation re-entered or closed a context during an active check. *)
@@ -264,7 +266,21 @@ sig
     (* `work snapshot` reports checked and replayed units, including libraries. *)
     val work : snapshot -> {checked:int,reused:int}
     (* `typeAt (snapshot, position)` returns its innermost original-source type.
-       Copied-body facts are used only where no original fact is available. *)
+
+       Copied-body facts are used only where no original fact is available.
+       A file with several source occurrences requires typeAtOccurrence. *)
     val typeAt : snapshot * {file:string,offset:int} -> string option
+    (* `typeAtOccurrence (snapshot, {ordinal, offset})` queries one ordered
+       source occurrence, preserving its incoming build context. *)
+    val typeAtOccurrence : snapshot * {ordinal:int,offset:int} -> string option
+    (* `visibleAt (snapshot, position)` returns actual lexical bindings at a
+       source occurrence's byte offset, or members of path.
+
+       It replays validated prefixes and rechecks the requested unit. Only
+       frozen names/details escape; no mutable environment is published.
+       Incomplete expressions can use bounded private syntax probes whose
+       facts and diagnostics are never published as original-source data.
+       The snapshot remains queryable after its context closes. *)
+    val visibleAt : snapshot * {ordinal:int,offset:int,path:string list} -> candidate list
   end
 end

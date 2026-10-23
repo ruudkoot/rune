@@ -23,6 +23,18 @@ struct
         fun uri path=LspUri.original (LspUri.fromPath (LspUri.Posix,path))
         fun clean ()=(List.app (fn file => OS.FileSys.remove (dir ^ "/" ^ file)) ["one.build","two.build","a.sml"];OS.FileSys.rmDir dir)
     in (action (dir,uri) before clean ()) handle e => (clean () handle _ => ();raise e) end
+  fun create {platform,lib,documents,caps,send,log,error,initialize} =
+    let val current=ref NONE : C.t option ref
+        fun discover uri=case !current of NONE => () | SOME controller =>
+          let val value=case W.select (C.workspace controller,documents,uri) of W.Loose => RuneLspWorkerWire.Object [("kind",RuneLspWorkerWire.Bytes "loose")]
+                | W.Selected _ => RuneLspWorkerWire.Object [("kind",RuneLspWorkerWire.Bytes "selected")]
+                | W.Ambiguous contexts => RuneLspWorkerWire.Object [("kind",RuneLspWorkerWire.Bytes "ambiguous"),
+                    ("contexts",RuneLspWorkerWire.Array (List.map (fn context:W.context => RuneLspWorkerWire.Object
+                      [("id",RuneLspWorkerWire.Bytes (#id context)),("label",RuneLspWorkerWire.Bytes (#label context))]) contexts))]
+          in C.contexts (controller,uri,value) end
+        val controller=C.new {platform=platform,lib=lib,documents=documents,caps=caps,send=send,log=log,error=error,
+          initialize=initialize,discover=discover,selected=fn _ => ()}
+    in current:=SOME controller;controller end
   fun configuration () = fixture (fn (dir,uri) =>
     let val documents=D.new (LspProtocol.Utf16,{maxDocuments=3,maxDocumentBytes=1000,maxTotalBytes=3000,maxDocumentLines=100,maxTotalLines=300})
         val document=uri (dir ^ "/a.sml")
@@ -31,7 +43,7 @@ struct
         val errors=ref [] : string list ref
         val capabilities=caps (object [("workspace",object [("configuration",Json.Bool true)])])
         val initialize=object [("workspaceFolders",Json.Array [object [("uri",Json.String (uri dir)),("name",Json.String "fixture")]])]
-        val controller=C.new {platform=LspUri.Posix,lib="lib",documents=documents,caps=capabilities,
+        val controller=create {platform=LspUri.Posix,lib="lib",documents=documents,caps=capabilities,
           send=fn message => sent:=message :: !sent,log=fn _ => (),error=fn text => errors:=text :: !errors,initialize=initialize}
         val ()=C.initialized controller
         val query=hd (requests sent "workspace/configuration")
@@ -53,7 +65,7 @@ struct
         val capabilities=caps (object [("workspace",object [("didChangeWatchedFiles",object
           [("dynamicRegistration",Json.Bool true),("relativePatternSupport",Json.Bool true)])])])
         val initialize=object [("rootUri",Json.String (uri dir))]
-        val controller=C.new {platform=LspUri.Posix,lib="lib",documents=documents,caps=capabilities,
+        val controller=create {platform=LspUri.Posix,lib="lib",documents=documents,caps=capabilities,
           send=fn message => sent:=message :: !sent,log=fn _ => (),error=fn text => raise Fail text,initialize=initialize}
         val ()=C.initialized controller
         val registration=hd (requests sent "client/registerCapability")
@@ -69,7 +81,7 @@ struct
         val _=D.openDocument (documents,{uri=uri,languageId="sml",version=1,text="val x=1\n"})
         val sent=ref [] : R.message list ref
         val capabilities=caps (object [("workspace",object [("configuration",Json.Bool true)])])
-        val controller=C.new {platform=LspUri.Posix,lib="lib",documents=documents,caps=capabilities,
+        val controller=create {platform=LspUri.Posix,lib="lib",documents=documents,caps=capabilities,
           send=fn message => sent:=message :: !sent,log=fn _ => (),error=fn text => raise Fail text,initialize=object []}
         val ()=C.initialized controller
         val old=hd (requests sent "workspace/configuration")

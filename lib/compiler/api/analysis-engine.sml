@@ -3,19 +3,30 @@
 structure CompilerAnalysisEngine =
 struct
   type source={file:string,text:string,mode:Source.mode}
-  type fact={file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}
+  type candidate={name:string,kind:string,detail:string option,origin:Env.origin}
+  type scopeQuery={unit:string,file:string,offset:int,path:string list}
+  type fact={unit:string,file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}
   type typeDefinition={id:string,origin:Env.origin}
   type entry={key:string,name:string,allow:bool,mode:Source.mode,pickle:string,facts:fact list,types:typeDefinition list,syntax:CompilerSyntax.t,uses:(string*(string list*string)*Source.span*Env.origin*bool) list}
-  type snapshot={facts:fact list,diagnostics:CompilerSession.diagnostic list,reused:int,checked:int,types:typeDefinition list,dependencies:source list,uses:(string*(string list*string)*Source.span*Env.origin*bool) list}
+  type snapshot={facts:fact list,diagnostics:CompilerSession.diagnostic list,reused:int,checked:int,types:typeDefinition list,dependencies:source list,
+    uses:(string*(string*(string list*string)*Source.span*Env.origin*bool)) list,
+    candidates:candidate list,cache:entry list,plan:string,prelude:CompilerPrelude.plan}
   datatype session=Session of {stored:entry list ref,plan:string ref,config:CompilerSession.config,closed:bool ref}
   exception Cancelled
   fun new config=Session {stored=ref [],plan=ref "",config=config,closed=ref false}
   fun close (Session {closed,stored,...})=(closed:=true;stored:=[])
-  fun checkSteps (Session {stored,plan=savedPlan,config,closed},sources:source list,steps,extraLibraries,cancelled) : snapshot = CompilerSession.owned (fn () =>
+  fun checkWith (Session {stored,plan=savedPlan,config,closed},sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
+                 frozen:source list,frozenPlan:CompilerPrelude.plan option) : snapshot = CompilerSession.owned (fn () =>
     let val {lib,libraries,target,allowPrim}=config
         val ()=CompilerSettings.target:=target
         val ()=CompilerSettings.libDir:=lib
         val ()=UnitBasis.startSession ()
+        val scopeEnv=ref NONE : (int*Env.env*SigMatch.sigma StringMap.map*Elaborate.funinfo StringMap.map) option ref
+        val ()=Env.observeScope:=(fn (span:Source.span,env) => case query of NONE => () | SOME query =>
+          if !Env.currentUnit<> #unit query orelse #file span<> #file query orelse #start span> #offset query orelse #stop span< #offset query then () else
+            let val width= #stop span- #start span
+            in case !scopeEnv of SOME (old,_,_,_) => if old<=width then () else scopeEnv:=SOME (width,env,!Elaborate.sigs,!Elaborate.funs)
+             | NONE => scopeEnv:=SOME (width,env,!Elaborate.sigs,!Elaborate.funs) end)
         fun poll ()=if !closed then raise CompilerSession.Closed else if cancelled () then raise Cancelled else ()
         val ()=poll ()
         val ()=(Error.keep:=true;Error.silent:=true;Elaborate.recover:=false)
@@ -47,7 +58,7 @@ struct
         val cursor=ref (!stored)
         val oldSyntax=StringMap.fromList (List.map (fn entry:entry => (#name entry,entry)) (!stored))
         val chain=ref (Config.identity ^ Pickle.hash planKey)
-        val ()=Source.overlays:=StringMap.fromList (List.map (fn source => (#file source,#text source)) sources)
+        val ()=Source.overlays:=StringMap.fromList (List.map (fn source => (#file source,#text source)) (frozen @ sources))
         fun replacement (beforeText,afterText) =
           let val beforeSize=size beforeText
               val afterSize=size afterText
@@ -66,7 +77,7 @@ struct
               val start=UnitBasis.begin (!env,!fixity)
               val previous=case !cursor of [] => NONE | entry :: rest => (cursor:=rest;SOME entry)
               val cached=case previous of SOME entry =>
-                if !prefix andalso #name entry=name andalso #allow entry=allow andalso #mode entry=mode
+                if !prefix andalso not (case query of SOME query => #unit query=name | NONE => false) andalso #name entry=name andalso #allow entry=allow andalso #mode entry=mode
                   andalso CompilerSyntax.text (#syntax entry)=text then SOME entry else NONE | NONE => NONE
               val entry=case cached of SOME entry => (reused:= !reused+1;entry)
               | NONE => (prefix:=false;
@@ -90,6 +101,7 @@ struct
                     val ()=Elaborate.allowPrim:=allow
                     val ()=Elaborate.elabTop (env,syntax)
                     val ()=Elaborate.finish ()
+                    val ()=Env.noteScope ({file=file,start=0,stop=size text+1},!env)
                     val ()=poll ()
                     in (syntaxTree,syntax,outgoing) end)
                     val exported=UnitBasis.export {start=start,name=name,file=file,text=fn () => text,
@@ -112,7 +124,7 @@ struct
                             | Types.TArrow (a,b) => (visit a;visit b) | _ => ()
                           val shown=show ty
                           val ()=visit ty
-                      in {file= #file span,start= #start span,stop= #stop span,ty=shown,derived=derived,
+                      in {unit=name,file= #file span,start= #start span,stop= #stop span,ty=shown,derived=derived,
                         constructors=StringMap.listKeys (!constructors),arguments=arguments ty}:fact end
                     val frozen=List.map frozenType (CompilerFacts.collect syntax)
                     val typeDefinitions=IntMap.foldli (fn (stamp,origin,all) =>
@@ -128,11 +140,12 @@ struct
               val ()=UnitBasis.bind loaded
               val ()=CompilerBuildContext.note (scopes,loaded)
           in poll ();chain:=key;staged:=entry :: !staged;types:= #types entry :: !types;
-             facts:= #facts entry :: !facts;uses:= #uses entry :: !uses end
+             facts:= #facts entry :: !facts;uses:=List.map (fn event => (name,event)) (#uses entry) :: !uses end
         fun names (source:source,mentioned)=
           let val (lexemes,_,_)=CompilerSyntax.lexical {file= #file source,text= #text source,mode= #mode source,previous=NONE,change=NONE}
           in BasisManifest.namesOf (CompilerSyntax.tokens lexemes (#file source),mentioned) end
-        val plan=CompilerPrelude.select {lib=lib,libraries=libraries @ extraLibraries,mentioned=List.foldl names StringMap.empty sources}
+        val plan=case frozenPlan of SOME plan => plan | NONE =>
+          CompilerPrelude.select {lib=lib,libraries=libraries @ extraLibraries,mentioned=List.foldl names StringMap.empty sources}
         val librarySources=List.map (fn entry:BasisManifest.entry =>
           (poll ();(entry,#text (Source.readFile (Source.Ascii,BasisManifest.path entry))))) (List.concat (#groups plan))
         val ()=Source.overlays:=List.foldl (fn ((entry,text),overlays) => StringMap.insert
@@ -182,8 +195,29 @@ struct
           SOME (CompilerSession.sourceError ("error",span,message))
         val ()=poll ()
         val ()=(stored:=List.rev (!staged);savedPlan:=planKey)
+        fun candidates ()=case (!scopeEnv,query) of (SOME (_,env,sigs,funs),SOME query) =>
+          let val selected=case Env.findStr' (env,#path query) of SOME selected => SOME selected | NONE => NONE
+              fun show ty=Types.toStringNamed (fn c => Env.qualifiedName (env,c),Types.newPrinter ()) ty
+              fun value (name,status)=
+                let val ty=case status of Env.Val {scheme,...} => scheme | Env.Con {scheme,...} => scheme
+                      | Env.ConAsVal {scheme,...} => scheme | Env.Prim {scheme,...} => scheme
+                      | Env.Exn {ty,...} => ty | Env.ExnAsVal {ty,...} => ty
+                    val kind=case status of Env.Con _ => "constructor" | Env.Exn _ => "exception"
+                      | _ => (case Types.prune ty of Types.TArrow _ => "function" | _ => "value")
+                in {name=name,kind=kind,detail=SOME (show ty),origin=Env.originOf (env,"v",(#path query,name))}:candidate end
+              fun member (kind,name)={name=name,kind=kind,detail=NONE,
+                origin=Env.originOf (env,if kind="type" then "t" else "s",(#path query,name))}:candidate
+          in case selected of NONE => [] | SOME selected =>
+            List.map value (StringMap.listItemsi (Env.vals selected)) @
+            List.map (fn name => member ("type",name)) (StringMap.listKeys (Env.tys selected)) @
+            List.map (fn name => member ("structure",name)) (StringMap.listKeys (Env.strs selected)) @
+            (if not (null (#path query)) then [] else
+              List.map (fn (name,sigma) => {name=name,kind="signature",detail=NONE,origin= #origin sigma}:candidate) (StringMap.listItemsi sigs) @
+              List.map (fn (name,Elaborate.FunInfo {binding,...}) => {name=name,kind="functor",detail=NONE,origin=binding}:candidate) (StringMap.listItemsi funs)) end
+          | _ => []
     in {facts=List.concat (List.rev (!facts)),diagnostics=case error of NONE => [] | SOME error => [error],
       reused= !reused,checked= !checked,types=List.concat (List.rev (!types)),
       dependencies=List.map (fn (entry,text) => {file=BasisManifest.path entry,text=text,mode=Source.Ascii}:source) librarySources,
-      uses=List.concat (List.rev (!uses))} end)
+      uses=List.concat (List.rev (!uses)),candidates=candidates (),cache= !stored,plan=planKey,prelude=plan} end)
+  fun checkSteps (session,sources,steps,libraries,cancelled)=checkWith (session,sources,steps,libraries,cancelled,NONE,[],NONE)
 end

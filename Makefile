@@ -312,16 +312,27 @@ bin/rune-lsp-wire-tests.rbc: $(RUNE) tests/runner/sh.sml tests/lsp/protocol-test
 bin/rune-lsp-tests.rbc: $(RUNE) tests/lib/lsp/protocol.sml manifests
 	$(RUNE) --library test/unit --library random --library lsp tests/lib/lsp/protocol.sml -o $@
 .PHONY: test-lsp test-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker
+LSP_WORKER_TEST_SRCS := src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/worker-model.sml src/lsp/worker-process.sml
+bin/rune-lsp-analysis-worker.rbc: $(RUNE) rune-lsp-worker.build $(LSP_SRCS) tests/lsp/worker-main.sml manifests
+	$(RUNE) --build rune-lsp-worker.build -o $@
+bin/rune-lsp-worker-analysis-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml manifests
+	$(RUNE) --library test/unit --library compiler --library lsp $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml -o $@
+bin/rune-lsp-jobs-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) src/lsp/jobs.sml tests/lsp/jobs-tests.sml manifests
+	$(RUNE) --library test/unit --library compiler --library lsp $(LSP_WORKER_TEST_SRCS) src/lsp/jobs.sml tests/lsp/jobs-tests.sml -o $@
+bin/rune-lsp-semantic-tests.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/semantic-protocol-tests.sml manifests
+	$(RUNE) --library test/unit --library json --library lsp tests/lsp/client.sml tests/lsp/semantic-protocol-tests.sml -o $@
 bin/rune-lsp-worker-wire-tests.rbc: $(RUNE) src/lsp/worker-wire.sml tests/lsp/worker-wire-tests.sml manifests
 	$(RUNE) --library test/unit --library lsp src/lsp/worker-wire.sml tests/lsp/worker-wire-tests.sml -o $@
 bin/rune-lsp-worker-echo.rbc: $(RUNE) src/lsp/worker-wire.sml tests/lsp/worker-echo.sml manifests
 	$(RUNE) --library lsp src/lsp/worker-wire.sml tests/lsp/worker-echo.sml -o $@
 bin/rune-lsp-worker-process-tests.rbc: $(RUNE) src/lsp/worker-wire.sml src/lsp/worker-process.sml tests/lsp/worker-process-tests.sml manifests
 	$(RUNE) --library test/unit --library lsp src/lsp/worker-wire.sml src/lsp/worker-process.sml tests/lsp/worker-process-tests.sml -o $@
-test-lsp-worker: bin/rune-lsp-worker-wire-tests.rbc bin/rune-lsp-worker-process-tests.rbc bin/rune-lsp-worker-echo.rbc
+test-lsp-worker: bin/rune-lsp-worker-wire-tests.rbc bin/rune-lsp-worker-process-tests.rbc bin/rune-lsp-worker-echo.rbc bin/rune-lsp-worker-analysis-tests.rbc bin/rune-lsp-analysis-worker.rbc bin/rune-lsp-jobs-tests.rbc
 	bin/runevm bin/rune-lsp-worker-wire-tests.rbc
 	bin/runevm bin/rune-lsp-worker-process-tests.rbc bin/runevm bin/rune-lsp-worker-echo.rbc
 	bin/runevm --jit=all bin/rune-lsp-worker-process-tests.rbc bin/runevm bin/rune-lsp-worker-echo.rbc
+	bin/runevm bin/rune-lsp-worker-analysis-tests.rbc bin/runevm bin/rune-lsp-analysis-worker.rbc
+	bin/runevm bin/rune-lsp-jobs-tests.rbc bin/runevm bin/rune-lsp-analysis-worker.rbc
 bin/rune-compiler-analysis-tests.rbc: $(RUNE) tests/lib/compiler/analysis.sml manifests
 	$(RUNE) --library test/unit --library compiler tests/lib/compiler/analysis.sml -o $@
 test-lsp-analysis: bin/rune-compiler-analysis-tests.rbc
@@ -348,16 +359,17 @@ test-lsp-documents: bin/rune-lsp-documents-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-documents-tests.rbc
 bin/rune-lsp-workspace-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml tests/lsp/workspace-tests.sml manifests
 	$(RUNE) --library test/unit --library lsp --library compiler src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml tests/lsp/workspace-tests.sml -o $@
-bin/rune-lsp-controller-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/controller.sml tests/lsp/controller-tests.sml manifests
-	$(RUNE) --library test/unit --library lsp --library compiler src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/controller.sml tests/lsp/controller-tests.sml -o $@
+bin/rune-lsp-controller-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/controller.sml tests/lsp/controller-tests.sml manifests
+	$(RUNE) --library test/unit --library lsp --library compiler src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/controller.sml tests/lsp/controller-tests.sml -o $@
 test-lsp-workspace: bin/rune-lsp-workspace-tests.rbc bin/rune-lsp-controller-tests.rbc
 	bin/runevm bin/rune-lsp-workspace-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-workspace-tests.rbc
 	bin/runevm bin/rune-lsp-controller-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-controller-tests.rbc
-test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc check-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker
+test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-semantic-tests.rbc check-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker
 	bin/runevm bin/rune-lsp-tests.rbc
 	bin/runevm bin/rune-lsp-wire-tests.rbc
+	bin/runevm bin/rune-lsp-semantic-tests.rbc bin/runevm bin/runelsp.rbc
 
 manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/compiler/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST lib/ffi/runtime/MANIFEST lib/ffi/win32/common/MANIFEST lib/ffi/win32/model/MANIFEST lib/ffi/win32/mock/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST) lib/sdl/MANIFEST lib/ffi/win32/sdldriver/MANIFEST
 lib/compiler/MANIFEST: lib/compiler/library.build $(wildcard lib/compiler/*.build lib/compiler/*.sml lib/compiler/*/*.sml) lib/json/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
@@ -1936,6 +1948,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/rune-compiler-syntax-tests.rbc bin/rune-lsp-syntax-tests.rbc \
                bin/rune-compiler-analysis-tests.rbc \
                bin/rune-lsp-worker-wire-tests.rbc bin/rune-lsp-worker-process-tests.rbc bin/rune-lsp-worker-echo.rbc \
+               bin/rune-lsp-worker-analysis-tests.rbc bin/rune-lsp-analysis-worker.rbc bin/rune-lsp-jobs-tests.rbc bin/rune-lsp-semantic-tests.rbc \
                bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc \
                bin/rune-boot bin/rune.rbc bin/rune.stack.rbc bin/runedoc.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc \
                bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy \

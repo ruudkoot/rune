@@ -49,7 +49,7 @@ struct
     in (messages (read output), read errors) end
   fun batch name inputs expected = execute name [] (String.concat (List.map frame inputs)) expected
   fun basic () =
-    let val (output, _) = batch "basic" [init, initialized, request "\"query\"" "textDocument/hover" (SOME "{}"), shutdown, exit] true
+    let val (output, _) = batch "basic" [init, initialized, request "\"query\"" "textDocument/prepareTypeHierarchy" (SOME "{}"), shutdown, exit] true
         val rows = responses output
         val () = need (length rows = 3, "basic transcript response count differs")
         val result = field "result" (hd rows)

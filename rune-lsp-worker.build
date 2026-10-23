@@ -1,0 +1,14 @@
+(* The worker entry point is also exercised independently of the LSP loop. *)
+libraries compiler lsp digest end
+files
+  src/lsp/documents.sml
+  src/lsp/sync.sml
+  src/lsp/workspace.sml
+  src/lsp/projects.sml
+  src/lsp/worker-wire.sml
+  src/lsp/worker-model.sml
+  src/lsp/completion.sml
+  src/lsp/worker-analysis.sml
+  src/lsp/worker.sml
+end
+tests/lsp/worker-main.sml

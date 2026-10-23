@@ -151,6 +151,7 @@ struct
     type occurrence=A.occurrence
     type fact=A.fact
     type typeDefinition=A.typeDefinition
+    type candidate=A.candidate
     exception Cancelled=A.Cancelled
     exception Busy=A.Busy
     fun create (Session {compiler=compiler as C.Session {token,...},mode},{context}) =
@@ -190,5 +191,7 @@ struct
     fun facts (snapshot:snapshot)= #facts snapshot
     fun work (snapshot:snapshot)={checked= #checked snapshot,reused= #reused snapshot}
     val typeAt=A.typeAt
+    val typeAtOccurrence=A.typeAtOccurrence
+    val visibleAt=A.visibleAt
   end
 end

@@ -29,8 +29,10 @@ permitted.
 offered, then UTF-16 or UTF-32, with mandatory UTF-16 as the fallback. Its
 result contains `serverInfo` and the implemented server capabilities.
 `textDocumentSync` advertises open/close, incremental changes, will-save
-notifications and saves with included text. Semantic providers remain
-unadvertised. A specification entry in `LspMethods` does not activate a provider.
+notifications and saves with included text. Implemented semantic providers
+cover diagnostics, hover, navigation, symbols and lexical completion;
+source-editing providers remain unadvertised. A specification entry in
+`LspMethods` does not activate a provider.
 
 `initialized` completes the handshake. Other ordinary requests before
 initialization receive `ServerNotInitialized`; duplicate initialization is
@@ -46,16 +48,24 @@ state. Clean transport EOF also releases connection ownership.
 
 A client-supplied initialization `workDoneToken` receives paired begin/end
 progress notifications. Unknown or already completed cancellation/progress
-tokens need no reply. Current handlers complete synchronously; compiler
-job cancellation is added with supervised analysis, rather than claiming
-that a completed initialization can still be cancelled.
+tokens need no reply. Compiler jobs run in a supervised child while the
+connection polls input. Cancelling a queued or running request receives a
+single cancelled response. Running work gets a cooperative cancellation
+message, followed by process-group termination if its grace period expires.
 
 `LspRequests` supplies bounded, connection-owned pending request data,
 fresh string IDs, response matching, cancellation and cleanup for later
 server requests and analysis jobs. An entry is consumed once; duplicate,
 stray and late responses cannot replace another request's data. Dynamic
-registrations and server-initiated progress are used when their feature
-milestones create such work and the client supports them.
+registrations and server-initiated progress require client support.
+
+Diagnostics use current document revisions and workspace generations.
+Document pulls return full or unchanged reports. Workspace reports include
+closed build inputs and can use a partial-result token. Pull clients get a
+diagnostic refresh instead of duplicate pushes. A stale diagnostic request
+returns ServerCancelled with retriggerRequest, and completion edits for an
+obsolete source return ContentModified. Workspace symbol and completion
+resolution validate their original snapshot data before returning results.
 
 `$/setTrace` accepts off, messages and verbose. Requested trace data is
 sent as framed `$/logTrace` notifications; operational errors remain on

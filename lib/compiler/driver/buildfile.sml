@@ -135,7 +135,7 @@ struct
   val () = CompilerState.cellRoot ("BuildFile.variables", variables)
 
   (* a path of a build file in dir, its variables given *)
-  fun expandWith isAbsolute (dir : string, p : string) : string =
+  fun expandUsing {isAbsolute,concat} (dir : string, p : string) : string =
     let
       val n = String.size p
       fun scan (i, acc) =
@@ -153,7 +153,8 @@ struct
         else scan (i + 1, String.str (String.sub (p, i)) :: acc)
       val q = scan (0, [])
     in
-      if isAbsolute q orelse dir = "" orelse dir = "." then q else OS.Path.concat (dir, q)
+      if isAbsolute q orelse dir = "" orelse dir = "." then q else concat (dir, q)
     end
+  fun expandWith isAbsolute args=expandUsing {isAbsolute=isAbsolute,concat=OS.Path.concat} args
   fun expand args = expandWith OS.Path.isAbsolute args
 end

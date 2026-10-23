@@ -28,6 +28,14 @@ struct
     (windows andalso ((String.size path>0 andalso String.sub (path,0)= #"\\") orelse
       (String.size path>=3 andalso alpha (String.sub (path,0)) andalso
        String.sub (path,1)= #":" andalso Char.contains "/\\" (String.sub (path,2)))))
+  fun directory windows path = if not windows then OS.Path.dir path else
+    let val path=normalize true path
+        fun last i=if i<0 then NONE else if String.sub (path,i)= #"/" then SOME i else last (i-1)
+    in case last (size path-1) of NONE => "." | SOME 0 => "/"
+     | SOME 2 => if String.sub (path,1)= #":" then String.substring (path,0,3) else String.substring (path,0,2)
+     | SOME at => String.substring (path,0,at) end
+  fun concat windows (directory,path) = if not windows then OS.Path.concat (directory,path)
+    else directory ^ (if String.isSuffix "/" directory then "" else "/") ^ path
   fun pathKey windows path =
     if windows andalso String.isPrefix "//" path then
       "//" ^ OS.Path.mkCanonical (String.extract (path,2,NONE))
@@ -57,8 +65,8 @@ struct
           in case StringMap.find (!completed,key) of SOME steps => steps | NONE =>
           let
               val declarations=BuildFile.parse (file,capture file)
-              val directory=OS.Path.dir file
-              fun path name=normalize windows (BuildFile.expandWith (absolute windows) (directory,name))
+              val directory=directory windows file
+              fun path name=normalize windows (BuildFile.expandUsing {isAbsolute=absolute windows,concat=concat windows} (directory,name))
                 handle BuildFile.Error message => raise Invalid (file ^ ": " ^ message)
               fun steps (annotations,declarations)=List.concat (List.map (fn declaration => step (annotations,declaration)) declarations)
               and step (annotations,declaration)=
