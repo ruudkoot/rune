@@ -90,9 +90,16 @@ captured syntax/source, including dependencies whose disk files are gone.
 Build-document queries belong to `RuneCompiler.Project.buildSyntax` and
 `pathCompletions`. They share the batch build lexer/parser and preserve path
 roles, token ranges and required quoting. Strict parsing returns located
-diagnostics; recovery retains unfinished paths and variables. Path queries
+diagnostics; recovery retains unfinished paths and variables. Completion queries
 read directory metadata using the session's library root and supplied path
 variables, preserve native filename bytes, and never execute a project.
+
+`buildLinks` expands complete source, included-build and cache paths through
+the compiler's directory/variable expansion, and library targets use its actual
+library resolver. Unfinished quotes and unresolved variables are omitted.
+Returned targets retain read-path arcs and are not inspected on disk. The
+adapter resolves an existing target through `OS.FileSys.fullPath` when the link
+is followed, preserving native paths, object identity and symbolic-link rules.
 
 Checkpoints contain committed unit entries and visibility-plan metadata,
 rather than a rollback copy of mutable unification cells. They belong to

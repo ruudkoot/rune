@@ -84,6 +84,7 @@ struct
     type input={file:string,text:string,mode:string,kind:string,revision:string}
     type buildReference=CompilerBuildQuery.reference
     type pathCompletion=CompilerBuildQuery.completion
+    type buildLink=CompilerBuildQuery.link
     datatype t=Project of {owner:unit ref,plan:P.plan,sources:source list,inputs:input list,fingerprint:string}
     fun sources (Project {sources,...})=sources
     fun inputs (Project {inputs,...})=inputs
@@ -93,6 +94,10 @@ struct
     fun buildSyntax (request as {file,...})=guard file (fn () => C.owned (fn () =>
       let val result=CompilerBuildQuery.inspect request
       in {references= #references result,diagnostics= #diagnostics result} end))
+    fun buildLinks (Session {compiler=compiler as C.Session {config,...},...},{file,text,variables,windows})=
+      guard file (fn () => C.owned (fn () =>
+        (C.checked compiler;BuildFile.variables:=StringMap.fromList variables;
+         CompilerBuildQuery.links {file=file,text=text,windows=windows,lib= #lib config})))
     fun pathCompletions (Session {compiler=compiler as C.Session {config,...},...},
                          {file,text,offset,variables,windows})=guard file (fn () => C.owned (fn () =>
       let val ()=C.checked compiler

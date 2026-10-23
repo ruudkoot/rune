@@ -212,11 +212,26 @@ struct
               val ()=check ("build syntax keeps compiler path roles and source spans",null (#diagnostics syntax) andalso
                 List.map (fn item:C.Project.buildReference => (#kind item,#value item)) (#references syntax)=
                   [("source","a.sml"),("build","child.build"),("directory","$(ROOT)/x")])
+              val linkText="files \"alpha space.sml\" $(ROOT)/alpha.sml $(MISSING)/x end\nuse child.build\ncache sub\n"
+              val links=C.Project.buildLinks (context,{file=dir ^ "/main.build",text=linkText,variables=[("ROOT",dir)],windows=windows})
+              fun native path=if windows then String.map (fn #"\\" => #"/" | c => c) path else path
+              val ()=check ("build links expand actual roles and variables without reading target files",
+                List.map (fn item:C.Project.buildLink => (#kind item,#target item)) links=
+                  [("source",native (dir ^ "/alpha space.sml")),("source",native (dir ^ "/alpha.sml")),
+                   ("build",native (dir ^ "/child.build")),("directory",native (dir ^ "/sub"))])
+              val ()=check ("build link spans retain quotes",case links of first::_ =>
+                String.substring (linkText,#start first,#stop first- #start first)="\"alpha space.sml\"" | _ => false)
+              val ()=check ("unfinished path quotes have no links",null (C.Project.buildLinks (context,
+                {file=dir ^ "/main.build",text="files \"alpha",variables=[],windows=windows})))
               val bad=C.Project.buildSyntax {file="bad.build",text="files $ end\n"}
               val ()=check ("stray dollar is a bounded located build diagnostic",case #diagnostics bad of [diagnostic] =>
                 #start diagnostic=6 andalso #stop diagnostic=7 andalso #message diagnostic="unexpected '$'" | _ => false)
               val libraryContext=C.session {lib=SOME "lib",flags=[]}
               val libraries=C.Project.pathCompletions (libraryContext,{file=dir ^ "/main.build",text="libraries js",offset=12,variables=[],windows=windows})
+              val libraryLinks=C.Project.buildLinks (libraryContext,
+                {file=dir ^ "/main.build",text="libraries test/unit end\n",variables=[],windows=windows})
+              val ()=check ("library links use the shared installed-library resolver",case libraryLinks of [item] =>
+                #kind item="library" andalso #target item="lib/test/unit/library.build" | _ => false)
               val ()=check ("library completion uses installed library descriptors",List.exists
                 (fn item:C.Project.pathCompletion => #label item="json" andalso #kind item="library") (#items libraries))
           in C.close libraryContext;C.close context end

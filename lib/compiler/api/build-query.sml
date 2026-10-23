@@ -8,6 +8,7 @@ struct
   type expectation=string*Source.span
   type syntax={references:reference list,expected:expectation list,diagnostics:CompilerSession.diagnostic list}
   type completion={label:string,text:string,kind:string,start:int,stop:int}
+  type link={kind:string,target:string,start:int,stop:int}
   fun inspect {file,text} : syntax =
     let val references=ref [] : reference list ref
         val expected=ref [] : expectation list ref
@@ -23,6 +24,21 @@ struct
           let val (line,column)=Source.lineCol (source,#start span)
           in {severity="error",file=file,start= #start span,stop= #stop span,line=line,column=column,message=message} end
     in {references=List.rev (!references),expected=List.rev (!expected),diagnostics=case problem of NONE => [] | SOME error => [diagnostic error]} end
+  fun links {file,text,windows,lib} : link list =
+    let val references= #references (inspect {file=file,text=text})
+        fun one (reference:reference)=
+          if #quoted reference andalso (#stop reference<= #start reference+1 orelse
+             #stop reference>size text orelse String.sub (text,#stop reference-1)<> #"\"") then NONE else
+          let val value= #value reference
+              val target=if #kind reference="library" then
+                  case lib of NONE => if BasisManifest.isLibraryPath value then
+                      SOME (P.concat windows (value,"library.build")) else NONE
+                    | SOME root => SOME (P.concat windows (BasisManifest.libraryDir (root,value),"library.build"))
+                else SOME (B.expandUsing {isAbsolute=P.absolute windows,concat=P.concat windows} (P.directory windows file,value))
+          in Option.map (fn target => {kind= #kind reference,target=P.normalize windows target,
+            start= #start reference,stop= #stop reference}:link) target end
+          handle B.Error _ => NONE | P.Invalid _ => NONE
+    in List.mapPartial one references end
   fun serialize (value,quoted) =
     if Char.contains value #"\"" then NONE else
     let val plain=not (List.exists (fn keyword => keyword=value) B.keywords) andalso

@@ -61,7 +61,8 @@ struct
                         | "utf-16" => LspProtocol.Utf16 | "utf-32" => LspProtocol.Utf32
                         | _ => raise V.Invalid "invalid build position encoding"
                   in V.json (RuneLspBuild.query (engine,{state=V.field (value,"state"),uri=V.bytes (V.field (value,"uri")),
-                    method=V.bytes (V.field (value,"method")),params=V.unjson (V.field (value,"params")),encoding=encoding})) end
+                    method=V.bytes (V.field (value,"method")),params=V.unjson (V.field (value,"params")),encoding=encoding,
+                    capabilities=(V.unjson (V.field (value,"capabilities")) handle V.Invalid _ => Json.Object [])})) end
               | "workspace" =>
                   let val encoding=case V.bytes (V.field (value,"encoding")) of "utf-8" => LspProtocol.Utf8
                         | "utf-16" => LspProtocol.Utf16 | "utf-32" => LspProtocol.Utf32

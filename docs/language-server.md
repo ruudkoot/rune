@@ -138,6 +138,15 @@ Replacement edits supply the required quoting, and stale path-item resolves
 are rejected. Build requests do not execute the project or fabricate SML
 semantic snapshots. Other semantic providers currently apply to SML sources.
 
+Clients supporting document links receive links for complete build references:
+sources, included build files, cache directories and installed libraries. Path
+variables and library directories follow the compiler's rules. Targets resolve
+on demand to native file URIs; a missing target fails explicitly. Resolution
+checks the original document revision, workspace generation and range. Tooltips
+require client support. Unknown variables and unfinished quoted paths are
+omitted, and ordinary SML string literals remain ordinary source text.
+Responses have limits of 2048 links and 1 MiB, with explicit failures.
+
 The wire adapter offers filenames that can be written in UTF-8 build text;
 native filename bytes remain preserved in the public compiler API. Use a
 configured path variable for a native name that cannot be written in the

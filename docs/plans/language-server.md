@@ -24,7 +24,7 @@ documentation and its evidence beside the tests before this plan is retired.
 | M6 | Document and workspace diagnostics | M5 | in progress: push/pull/workspace reports, refresh, cancellation and partial progress implemented; full coverage/performance acceptance remains |
 | M7 | Hover, navigation and symbols | M5 | in progress: navigation, document/workspace symbols and stale resolve tests pass; documentation, broader module cases and measurements remain |
 | M8 | Completion, signature help and inline completion | M7 | in progress: lexical/qualified/record completion, documentation resolve, invocation snippets, signature help, negotiated inline patterns and build-file path completion implemented; broader recovery and full acceptance remain |
-| M9 | Highlighting, hints, structural editing, links and colours | M4, M7 | in progress: document highlights, captured syntax, folding/selection, semantic tokens and inferred pattern type hints implemented; links, colours, safe linked editing and full acceptance remain |
+| M9 | Highlighting, hints, structural editing, links and colours | M4, M7 | in progress: document highlights, captured syntax, folding/selection, semantic tokens, inferred pattern hints and compiler-resolved build links implemented; colours, safe linked editing and full acceptance remain |
 | M10 | References, rename and workspace/file edits | M5-M7 | planned |
 | M11 | Formatting, code actions, refactorings and lenses | M4, M7-M10 | planned |
 | M12 | Call hierarchy, monikers and virtual source content | M7, M10 | planned |
@@ -1087,6 +1087,18 @@ The focused cohort and documentation checks pass in
 `/tmp/rune-lsp-hints-final-cohort.log` and
 `/tmp/rune-lsp-hints-final-doc-check.log`. Links, colours, safe linked editing,
 real-client coverage and performance acceptance remain.
+
+The build-link checkpoint adds compiler-owned reference expansion and negotiated
+document-link resolution for build files, preserving actual source/build/cache
+and library path rules. Source revisions, workspace generations and typed ranges
+guard resolution; native file identity is checked in the transcripts. All 45
+semantic transcripts pass on Linux and paired 64/32-bit Windows workers,
+including independent count/byte refusals and reordered JSON fields. Seven
+public API cases pass on all six SML hosts (`20261023-163530-310074`,
+`/tmp/rune-lsp-build-links-host-api.log`) and both Windows widths. Focused checks
+and documentation pass in `/tmp/rune-lsp-build-links-final-cohort.log`; native
+receipts are `/tmp/rune-lsp-build-links-{protocol,api}-windows{64,32}.log`.
+Colour/linked-editing providers and complete M9 acceptance remain open.
 
 M8 feature checkpoint (2026-10-23): the compiler now projects completion
 roles, concrete record labels, named applications and declaration comments

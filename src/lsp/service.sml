@@ -54,6 +54,7 @@ struct
             priority=if isSome request then 0 else 100,
             data=Build {uri=uri,revision= #revision snapshot,generation=W.generation workspace,request=request},
             payload=V.Object [("op",V.Bytes "build"),("uri",V.Bytes uri),("method",V.Bytes method),("params",V.json params),
+              ("capabilities",V.json (P.rawCapabilities caps)),
               ("encoding",V.Bytes (P.encodingName (P.positionEncoding caps))),("state",capture service)]})
       in Option.app (fn request:request => #job request:=SOME id) request end
       handle J.Full => (case request of NONE => log "analysis queue is full"
@@ -87,14 +88,15 @@ struct
     "workspace/symbol","workspaceSymbol/resolve","textDocument/completion","completionItem/resolve","textDocument/signatureHelp",
     "textDocument/inlineCompletion","textDocument/foldingRange","textDocument/selectionRange",
     "textDocument/semanticTokens/full","textDocument/semanticTokens/full/delta","textDocument/semanticTokens/range",
-    "textDocument/inlayHint","inlayHint/resolve"]
-  fun resolving method=method="completionItem/resolve" orelse method="inlayHint/resolve"
+    "textDocument/inlayHint","inlayHint/resolve","textDocument/documentLink","documentLink/resolve"]
+  fun resolving method=method="completionItem/resolve" orelse method="inlayHint/resolve" orelse method="documentLink/resolve"
   fun inlineClient caps=case Json.member ("textDocument",P.rawCapabilities caps) of NONE => false | SOME value =>
     (case Json.member ("inlineCompletion",value) of SOME (Json.Object _) => true | _ => false)
   fun request (service as Service {workspace,documents,caps,jobs,requests,results,...},{id,method,params}) =
     if not (accepts method) orelse method="textDocument/inlineCompletion" andalso not (inlineClient caps) orelse
        RuneLspTokens.method method andalso not (RuneLspTokens.enabled (P.rawCapabilities caps,method)) orelse
-       RuneLspHints.method method andalso not (RuneLspHints.supported (P.rawCapabilities caps,method)) then false else
+       RuneLspHints.method method andalso not (RuneLspHints.supported (P.rawCapabilities caps,method)) orelse
+       RuneLspBuild.linkMethod method andalso not (RuneLspBuild.linkClient (P.rawCapabilities caps)) then false else
     let val params=case params of SOME params => S.object params | NONE => raise S.Invalid "missing semantic parameters"
         val workspaceRequest=List.exists (fn candidate => candidate=method) ["workspace/diagnostic","workspace/symbol","workspaceSymbol/resolve"]
         val uri=if workspaceRequest then "" else S.string (S.required (S.object (S.required

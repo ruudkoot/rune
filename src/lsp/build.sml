@@ -11,11 +11,14 @@ struct
   structure U=LspUri
   structure L=LspPosition
   structure E=RuneLspWorkerAnalysis
+  fun linkClient capabilities=case E.capability (capabilities,["textDocument","documentLink"]) of
+    SOME (Json.Object _) => true | _ => false
+  fun linkMethod method=method="textDocument/documentLink" orelse method="documentLink/resolve"
   fun isDocument (platform,snapshot:D.snapshot)=
     List.exists (fn name => name= #languageId snapshot) ["rune-build","runebuild"] orelse
     ((case U.native (platform,U.parse (#uri snapshot)) of NONE => false | SOME {path,...} =>
        String.isSuffix ".build" (String.map Char.toLower path)) handle U.Invalid => false)
-  fun query (worker,{state,uri,method,params,encoding}) =
+  fun query (worker,{state,uri,method,params,encoding,capabilities}) =
     let val (workspace as W.Workspace {platform,lib,...},documents)=M.restore state
         val snapshot=case D.snapshot (documents,uri) of SOME snapshot => snapshot | NONE => raise J.Invalid "build document is not open"
         val ()=if D.healthy (documents,uri) then () else raise J.Invalid "build document synchronization requires a replacement"
@@ -41,6 +44,37 @@ struct
         fun range (start,stop)=E.range (source,encoding,start,stop)
         fun position ()=case LspProtocol.positionFromJson (J.required (params,"position")) of NONE => raise J.Invalid "invalid build position"
           | SOME point => case L.offset (#content snapshot,encoding,point) of NONE => raise J.Invalid "invalid build position" | SOME at => at
+        fun linkCandidates () =
+          let val candidates=case native of NONE => [] | SOME file =>
+                C.Project.buildLinks (compiler (),{file=file,text=text,variables=variables,windows=platform=U.Windows})
+              val ()=if length candidates<=2048 then () else raise Fail "document link count budget exceeded"
+              fun token (candidate:C.Project.buildLink)=Hex.fromBytes (Sha256.digest (V.encode (V.Array
+                [V.Bytes (#kind candidate),V.Bytes (#target candidate),V.Integer (IntInf.fromInt (#start candidate)),
+                 V.Integer (IntInf.fromInt (#stop candidate))])))
+          in List.map (fn candidate => (candidate,token candidate)) candidates end
+        fun linkItem (candidate:C.Project.buildLink,token)=Json.Object [("range",range (#start candidate,#stop candidate)),
+          ("data",Json.Object [("kind",Json.String "buildLink"),("uri",Json.String uri),
+            ("revision",Json.intInf (#revision snapshot)),("generation",Json.intInf (W.generation workspace)),("token",Json.String token)])]
+        fun links () =
+          let val result=Json.Array (List.map linkItem (linkCandidates ()))
+          in if size (Json.encode result)>1024*1024 then raise Fail "document link response budget exceeded" else result end
+        fun resolveLink () =
+          let val data=J.object (J.required (params,"data"))
+              val ()=if J.string (J.required (data,"kind"))="buildLink" then () else raise J.Invalid "invalid document link kind"
+              val ()=if Json.toIntInf (J.required (data,"revision"))=SOME (#revision snapshot) andalso
+                Json.toIntInf (J.required (data,"generation"))=SOME (W.generation workspace) then () else raise E.Stale "document link is stale"
+              val token=J.string (J.required (data,"token"))
+              val (candidate,item)=case List.find (fn (_,key) => key=token) (linkCandidates ()) of
+                NONE => raise J.Invalid "document link is unavailable" | SOME pair => (#1 pair,linkItem pair)
+              val supplied=LspProtocol.rangeFromJson (J.required (params,"range"))
+              val expected=LspProtocol.rangeFromJson (J.required (item,"range"))
+              val ()=if isSome supplied andalso supplied=expected then () else raise J.Invalid "document link range was modified"
+              val path=OS.FileSys.fullPath (#target candidate) handle OS.SysErr _ => raise Fail "document link target is unavailable"
+              val target=U.original (U.fromPath (platform,path))
+              val tooltip=if E.capability (capabilities,["textDocument","documentLink","tooltipSupport"])=SOME (Json.Bool true)
+                then [("tooltip",Json.String (E.safe path))] else []
+              val fields=case item of Json.Object fields => fields | _ => raise Fail "invalid document link presentation"
+          in Json.Object (("target",Json.String target)::fields @ tooltip) end
         fun items at =
           case native of NONE => {items=[],isIncomplete=false} | SOME file =>
             let val result=C.Project.pathCompletions (compiler (),{file=file,text=text,offset=at,variables=variables,windows=platform=U.Windows})
@@ -82,7 +116,9 @@ struct
           in if previous=SOME id then Json.Object [("kind",Json.String "unchanged"),("resultId",Json.String id)] else
             Json.Object [("kind",Json.String "full"),("resultId",Json.String id),("items",Json.Array items)] end
     in case method of
-         "textDocument/semanticTokens/full" => Json.Null
+         "textDocument/documentLink" => links ()
+       | "documentLink/resolve" => resolveLink ()
+       | "textDocument/semanticTokens/full" => Json.Null
        | "textDocument/inlayHint" => Json.Null
        | "inlayHint/resolve" => raise J.Invalid "build documents do not have inferred type hints"
        | "textDocument/semanticTokens/full/delta" => Json.Null

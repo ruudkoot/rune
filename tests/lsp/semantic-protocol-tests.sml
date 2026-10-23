@@ -725,7 +725,10 @@ struct
         val ()=check ("visible hint ranges use insertion positions",
           hintItems (hintQuery (client,501,uri,hintRange (1,0,1,5)))=[first] andalso
           null (hintItems (hintQuery (client,502,uri,hintRange (1,0,1,4)))))
-        val ()=C.request (client,503,"inlayHint/resolve",first)
+        val reordered=case first of Json.Object fields =>
+              object (List.map (fn (name,Json.Object values) => (name,object (List.rev values)) | field => field) (List.rev fields))
+          | _ => raise Fail "inlay hint object missing"
+        val ()=C.request (client,503,"inlayHint/resolve",reordered)
         val resolved=C.result (C.response (client,503))
     in check ("lazy hint resolution preserves presentation and adds the checked tooltip",
       C.field (resolved,"position")=C.field (first,"position") andalso C.field (resolved,"label")=C.field (first,"label")
@@ -832,6 +835,87 @@ struct
         val error=C.field (hintQuery (client,563,uri,hintRange (0,0,2,0)),"error")
     in check ("fewer long hints fail at their byte limit",C.field (error,"code")=Json.int (~32803) andalso
       (case C.field (error,"message") of Json.String message => String.isSubstring "inlay hint response budget exceeded" message | _ => false)) end)
+  fun linkCapabilities tooltip=object [("textDocument",object [("documentLink",object [("tooltipSupport",Json.Bool tooltip)])])]
+  fun linkFixture action =
+    let val dir=OS.FileSys.tmpName ()
+        val ()=(OS.FileSys.remove dir;OS.FileSys.mkDir dir)
+        fun write (name,text)=let val out=TextIO.openOut (OS.Path.concat (dir,name)) in TextIO.output (out,text);TextIO.closeOut out end
+        val source="MiXeD Path \206\187.sml"
+        val ()=(write (source,"intentionally not Standard ML\n");write ("child.build","files end\n");write ("main.build",""))
+        val platform=if OS.Path.validVolume {isAbs=true,vol="C:"} then LspUri.Windows else LspUri.Posix
+        fun uri file=LspUri.original (LspUri.fromPath (platform,OS.FileSys.fullPath (OS.Path.concat (dir,file))))
+        fun clean ()=(List.app (fn name => OS.FileSys.remove (OS.Path.concat (dir,name))) [source,"child.build","main.build"];OS.FileSys.rmDir dir)
+    in (action {dir=dir,platform=platform,uri=uri "main.build",source=source} before clean ())
+       handle error => (clean () handle _ => ();raise error) end
+  fun linkQuery (client,id,uri)=
+    (C.request (client,id,"textDocument/documentLink",object [("textDocument",document uri)]);C.response (client,id))
+  fun linkItems response=case C.result response of Json.Array items => items | _ => raise Fail "document link array missing"
+  fun documentLinks ()=linkFixture (fn {dir,platform,uri,source} =>
+    fixtureInitializedResult (object [("capabilities",linkCapabilities true)]) (fn (client,initialized) =>
+      let val ()=check ("document link resolution is advertised only when supported",
+            C.field (C.field (C.field (initialized,"capabilities"),"documentLinkProvider"),"resolveProvider")=Json.Bool true)
+          val text="files \"" ^ source ^ "\" $(MISSING)/x end\nuse child.build\nlibraries json end\ncache .\n"
+          val ()=openDocument (client,uri,text)
+          val items=linkItems (linkQuery (client,600,uri))
+          val ()=check ("compiler path roles produce deferred links and omit unresolved variables",length items=4 andalso
+            List.all (fn item => Json.member ("target",item)=NONE andalso Json.member ("tooltip",item)=NONE) items)
+          val targets=[OS.Path.concat (dir,source),OS.Path.concat (dir,"child.build"),"lib/json/library.build",dir]
+          fun resolve (item,expected)=
+            let val reordered=case item of Json.Object fields => object (List.map
+                  (fn (name,Json.Object fields) => (name,object (List.rev fields)) | field => field) (List.rev fields))
+                  | _ => raise Fail "document link object missing"
+                val ()=C.request (client,601,"documentLink/resolve",reordered)
+                val resolved=C.result (C.response (client,601))
+                val parsed=LspUri.parse (case C.field (resolved,"target") of Json.String uri => uri | _ => raise Fail "link URI missing")
+                val path=case LspUri.native (platform,parsed) of SOME {path,...} => path | _ => raise Fail "link target is not a file URI"
+            in check ("resolved links identify the actual native object",OS.FileSys.fileId path=OS.FileSys.fileId expected andalso
+              isSome (Json.member ("tooltip",resolved)) andalso C.field (resolved,"data")=C.field (item,"data")) end
+          val ()=ListPair.app resolve (items,targets)
+          val first=hd items
+          val ()=C.notify (client,"textDocument/didChange",object [("textDocument",object [("uri",Json.String uri),("version",Json.int 2)]),
+            ("contentChanges",Json.Array [object [("text",Json.String "files child.build end\n")]])])
+          val ()=C.request (client,602,"documentLink/resolve",first)
+          val ()=check ("source edits invalidate old build links",C.field (C.field (C.response (client,602),"error"),"code")=Json.int (~32801))
+          val current=hd (linkItems (linkQuery (client,603,uri)))
+          val ()=C.notify (client,"workspace/didChangeConfiguration",object [("settings",object [("sourceMode",Json.String "unicode")])])
+          val ()=C.request (client,604,"documentLink/resolve",current)
+      in check ("workspace changes invalidate build links without text edits",C.field (C.field (C.response (client,604),"error"),"code")=Json.int (~32801)) end))
+  fun linkNegotiation () =
+    let val ()=fixtureInitializedResult (object [("capabilities",object [])]) (fn (client,initialized) =>
+          let val uri="untitled:unnegotiated-links" val ()=openDocument (client,uri,"val x=1\n")
+              val response=linkQuery (client,610,uri)
+          in check ("document links require client support",Json.member ("documentLinkProvider",C.field (initialized,"capabilities"))=NONE
+            andalso C.field (C.field (response,"error"),"code")=Json.int (~32601)) end)
+    in linkFixture (fn {uri,source,...} => fixtureWith (linkCapabilities false) (fn client =>
+      let val ()=openDocument (client,uri,"files \"" ^ source ^ "\" end\n")
+          val item=hd (linkItems (linkQuery (client,611,uri)))
+          val ()=C.request (client,612,"documentLink/resolve",item)
+          val resolved=C.result (C.response (client,612))
+          val ()=check ("link tooltips respect client support",Json.member ("tooltip",resolved)=NONE)
+          val sml="untitled:sml-links" val ()=openDocument (client,sml,"val path=\"child.build\"\n")
+      in check ("ordinary SML strings do not become guessed links",C.result (linkQuery (client,613,sml))=Json.Null) end)) end
+  fun linkValidation ()=linkFixture (fn {uri,source,...} => fixtureWith (linkCapabilities true) (fn client =>
+    let val ()=openDocument (client,uri,"files \"" ^ source ^ "\" missing.sml end\n")
+        val items=linkItems (linkQuery (client,620,uri))
+        val first=hd items
+        val forged=case first of Json.Object fields => object (("range",hintRange (0,0,0,1))::List.filter (fn (name,_) => name<>"range") fields)
+          | _ => raise Fail "document link object missing"
+        val ()=C.request (client,621,"documentLink/resolve",forged)
+        val ()=check ("modified document link ranges are rejected",C.field (C.field (C.response (client,621),"error"),"code")=Json.int (~32602))
+        val ()=C.request (client,622,"documentLink/resolve",List.nth (items,1))
+    in check ("missing file targets fail explicitly on resolve",C.field (C.field (C.response (client,622),"error"),"code")=Json.int (~32803)) end))
+  fun linkBudget ()=linkFixture (fn {dir,platform,uri,...} => fixtureWith (linkCapabilities false) (fn client =>
+    let val text="files " ^ String.concat (List.tabulate (2050,fn _ => "missing.sml ")) ^ "end\n"
+        val ()=openDocument (client,uri,text)
+        val error=C.field (linkQuery (client,630,uri),"error")
+        val ()=check ("link count budget refuses rather than truncates",C.field (error,"code")=Json.int (~32803) andalso
+          (case C.field (error,"message") of Json.String text => String.isSubstring "document link count budget exceeded" text | _ => false))
+        val leaf="L" ^ String.implode (List.tabulate (200,fn _ => #" ")) ^ "main.build"
+        val longUri=LspUri.original (LspUri.fromPath (platform,OS.Path.concat (dir,leaf)))
+        val ()=openDocument (client,longUri,"files " ^ String.concat (List.tabulate (1500,fn _ => "missing.sml ")) ^ "end\n")
+        val error=C.field (linkQuery (client,631,longUri),"error")
+    in check ("link byte budget is independent of its count budget",C.field (error,"code")=Json.int (~32803) andalso
+      (case C.field (error,"message") of Json.String text => String.isSubstring "document link response budget exceeded" text | _ => false)) end))
   fun buildDocuments () =
     let val dir=OS.FileSys.tmpName ()
         val ()=(OS.FileSys.remove dir handle _ => ();OS.FileSys.mkDir dir)
@@ -912,6 +996,10 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "inlay-stale-and-eviction" RuneLspSemanticProtocolTests.inlayStale,
     Test.it "inlay-refresh" RuneLspSemanticProtocolTests.inlayRefresh,
     Test.it "inlay-response-budget" RuneLspSemanticProtocolTests.inlayBudget,
+    Test.it "build-document-links" RuneLspSemanticProtocolTests.documentLinks,
+    Test.it "document-link-negotiation" RuneLspSemanticProtocolTests.linkNegotiation,
+    Test.it "document-link-validation" RuneLspSemanticProtocolTests.linkValidation,
+    Test.it "document-link-response-budgets" RuneLspSemanticProtocolTests.linkBudget,
     Test.it "completion" RuneLspSemanticProtocolTests.completion,
     Test.it "signature-help" RuneLspSemanticProtocolTests.signatureHelp,
     Test.it "completion-snippets" RuneLspSemanticProtocolTests.completionSnippets,

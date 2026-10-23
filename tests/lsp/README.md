@@ -213,6 +213,12 @@ path. The server derives its worker VM from this directory; a 32-bit front end
 alone does not establish 32-bit worker coverage. Keep server, worker and client
 payloads frozen while each native cohort runs.
 
+Build-link transcripts compare each resolved file URI's native file ID with the
+actual source/build/library/directory target. They cover Unicode and spaces,
+unknown variables, tooltip negotiation, missing targets, modified ranges,
+source/context changes and reordered JSON objects. Separate fixtures exceed the
+link count and byte limits; an ordinary SML string never creates a guessed link.
+
 The [framing ledger](baseline/2026-10-22-framing.json) records paired
 comparisons with the earlier decoder in the same VM. Its archive contains
 the original signature/implementation with only their names changed, the

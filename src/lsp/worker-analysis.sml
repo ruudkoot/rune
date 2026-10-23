@@ -349,7 +349,7 @@ struct
       in case List.find (fn candidate:A.candidate => #name candidate=name andalso #kind candidate=kind) candidates of
            NONE => NONE | SOME candidate => Option.mapPartial (fn location => A.documentationAt (#snapshot view,location)) (#definition candidate) end
   fun query (Worker {tokens=history,...},view:view,{method,params}) =
-    let val resolving=method="completionItem/resolve" orelse method="inlayHint/resolve"
+    let val resolving=method="completionItem/resolve" orelse method="inlayHint/resolve" orelse method="documentLink/resolve"
         val document=J.object (J.required (J.object params,if resolving then "data" else "textDocument"))
         val uri=J.string (J.required (document,"uri"))
         val source=case activeSource (view,uri) of
@@ -368,6 +368,8 @@ struct
           in RuneLspTokens.reply (history,{uri=uri,text= #text source,index= #index source,encoding= #encoding view,
             capabilities= #capabilities view,method=method,params=params,tokens=candidates}) end
     in case method of "textDocument/semanticTokens/full" => semanticTokens ()
+       | "textDocument/documentLink" => Json.Null
+       | "documentLink/resolve" => raise Stale "document link is not part of a build document"
        | "textDocument/semanticTokens/full/delta" => semanticTokens ()
        | "textDocument/semanticTokens/range" => semanticTokens ()
        | "textDocument/inlayHint" =>
@@ -392,7 +394,9 @@ struct
                   let val result=RuneLspHints.render {uri=uri,snapshot= #id view,capabilities= #capabilities view,index=index,
                         encoding= #encoding view,hint=hint,resolved=true,clean=safe,
                         revision=getOpt (#revision source,~1),generation= #generation view}
-                      val ()=if Json.member ("position",params)=Json.member ("position",result) andalso
+                      val supplied=LspProtocol.positionFromJson (J.required (params,"position"))
+                      val expected=LspProtocol.positionFromJson (J.required (result,"position"))
+                      val ()=if isSome supplied andalso supplied=expected andalso
                         Json.member ("label",params)=Json.member ("label",result) then () else raise J.Invalid "inlay hint identity was modified"
                   in result end
               | _ => raise J.Invalid "inlay hint is unavailable" end

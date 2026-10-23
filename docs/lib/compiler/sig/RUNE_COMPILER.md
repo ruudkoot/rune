@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 84 of 84 entries documented |
+| Documentation | 86 of 86 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -71,7 +71,9 @@ sig
     type <a href="#type-project.input">input</a> = {<a href="#fld-project.input.file">file</a> : string, <a href="#fld-project.input.text">text</a> : string, <a href="#fld-project.input.mode">mode</a> : string, <a href="#fld-project.input.kind">kind</a> : string, <a href="#fld-project.input.revision">revision</a> : string}
     type <a href="#type-project.buildreference">buildReference</a>={<a href="#fld-project.buildreference.kind">kind</a>:string,<a href="#fld-project.buildreference.value">value</a>:string,<a href="#fld-project.buildreference.start">start</a>:int,<a href="#fld-project.buildreference.stop">stop</a>:int,<a href="#fld-project.buildreference.quoted">quoted</a>:bool}
     type <a href="#type-project.pathcompletion">pathCompletion</a>={<a href="#fld-project.pathcompletion.label">label</a>:string,<a href="#fld-project.pathcompletion.text">text</a>:string,<a href="#fld-project.pathcompletion.kind">kind</a>:string,<a href="#fld-project.pathcompletion.start">start</a>:int,<a href="#fld-project.pathcompletion.stop">stop</a>:int}
+    type <a href="#type-project.buildlink">buildLink</a>={<a href="#fld-project.buildlink.kind">kind</a>:string,<a href="#fld-project.buildlink.target">target</a>:string,<a href="#fld-project.buildlink.start">start</a>:int,<a href="#fld-project.buildlink.stop">stop</a>:int}
     val <a href="#val-project.buildsyntax">buildSyntax</a> : {<a href="#fld-project.buildsyntax.file">file</a>:string,<a href="#fld-project.buildsyntax.text">text</a>:string} -&gt; {references:buildReference list,diagnostics:diagnostic list}
+    val <a href="#val-project.buildlinks">buildLinks</a> : session * {<a href="#fld-project.buildlinks.file">file</a>:string,<a href="#fld-project.buildlinks.text">text</a>:string,<a href="#fld-project.buildlinks.variables">variables</a>:(string*string) list,<a href="#fld-project.buildlinks.windows">windows</a>:bool} -&gt; buildLink list
     val <a href="#val-project.pathcompletions">pathCompletions</a> : session * {<a href="#fld-project.pathcompletions.file">file</a>:string,<a href="#fld-project.pathcompletions.text">text</a>:string,<a href="#fld-project.pathcompletions.offset">offset</a>:int,<a href="#fld-project.pathcompletions.variables">variables</a>:(string*string) list,<a href="#fld-project.pathcompletions.windows">windows</a>:bool} -&gt;
       {items:pathCompletion list,isIncomplete:bool}
     val <a href="#val-project.read">read</a> : session * {<a href="#fld-project.read.file">file</a> : string, <a href="#fld-project.read.variables">variables</a> : (string * string) list,
@@ -600,6 +602,22 @@ and text include required build-language quoting.
 | <a name="fld-project.pathcompletion.start"></a>`start` | `int` |  |
 | <a name="fld-project.pathcompletion.stop"></a>`stop` | `int` |  |
 
+#### <a name="type-project.buildlink"></a>`buildLink`
+
+```sml
+type buildLink={kind:string,target:string,start:int,stop:int}
+```
+
+A build reference expanded through the compiler's actual path rules.
+target preserves read-path arcs; its existence is not inspected.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-project.buildlink.kind"></a>`kind` | `string` |  |
+| <a name="fld-project.buildlink.target"></a>`target` | `string` |  |
+| <a name="fld-project.buildlink.start"></a>`start` | `int` |  |
+| <a name="fld-project.buildlink.stop"></a>`stop` | `int` |  |
+
 #### <a name="val-project.buildsyntax"></a>`buildSyntax`
 
 ```sml
@@ -616,6 +634,26 @@ read and no project declarations execute.
 | --- | --- | --- |
 | <a name="fld-project.buildsyntax.file"></a>`file` | `string` |  |
 | <a name="fld-project.buildsyntax.text"></a>`text` | `string` |  |
+
+#### <a name="val-project.buildlinks"></a>`buildLinks`
+
+```sml
+val buildLinks : session * {file:string,text:string,variables:(string*string) list,windows:bool} -> buildLink list
+```
+
+`buildLinks (session, request)` expands complete build path tokens.
+
+Source/build/cache paths use the build directory and configured path
+variables. Libraries use the same directory resolver as the compiler.
+Unfinished quotes and unresolved variables are omitted. This query
+performs no filesystem reads or execution; offsets include quotes.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-project.buildlinks.file"></a>`file` | `string` |  |
+| <a name="fld-project.buildlinks.text"></a>`text` | `string` |  |
+| <a name="fld-project.buildlinks.variables"></a>`variables` | `(string*string) list` |  |
+| <a name="fld-project.buildlinks.windows"></a>`windows` | `bool` |  |
 
 #### <a name="val-project.pathcompletions"></a>`pathCompletions`
 

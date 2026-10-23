@@ -271,11 +271,25 @@
      "page": "sig/RUNE_COMPILER.md#type-project.pathcompletion"
     },
     {
+     "kind": "type",
+     "name": "Project.buildLink",
+     "spec": "type buildLink={kind:string,target:string,start:int,stop:int}",
+     "doc": "A build reference expanded through the compiler's actual path rules.\ntarget preserves read-path arcs; its existence is not inspected.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-project.buildlink"
+    },
+    {
      "kind": "val",
      "name": "Project.buildSyntax",
      "spec": "val buildSyntax : {file:string,text:string} -> {references:buildReference list,diagnostics:diagnostic list}",
      "doc": "`buildSyntax request` returns observed path roles and structured build\ndiagnostics through the compiler's own lexer/parser.\n\nRecovery retains unfinished quoted paths and variables. No files are\nread and no project declarations execute.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-project.buildsyntax"
+    },
+    {
+     "kind": "val",
+     "name": "Project.buildLinks",
+     "spec": "val buildLinks : session * {file:string,text:string,variables:(string*string) list,windows:bool} -> buildLink list",
+     "doc": "`buildLinks (session, request)` expands complete build path tokens.\n\nSource/build/cache paths use the build directory and configured path\nvariables. Libraries use the same directory resolver as the compiler.\nUnfinished quotes and unresolved variables are omitted. This query\nperforms no filesystem reads or execution; offsets include quotes.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-project.buildlinks"
     },
     {
      "kind": "val",

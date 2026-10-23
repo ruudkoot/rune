@@ -123,6 +123,17 @@ without retrying stale hint metadata. Build documents return null hints.
 `workspace.inlayHint.refreshSupport` enables workspace refresh using the same
 generation, coalescing and refusal rules as folding; typing does not emit it.
 
+`textDocument.documentLink` enables build-document links and their resolve
+provider. Initial links carry the compiler token range and opaque metadata;
+`documentLink/resolve` recomputes the reference, validates its revision/context
+and range, and resolves the native object to a file URI. Tooltip output requires
+`tooltipSupport`. Missing targets return `RequestFailed`, modified ranges
+`InvalidParams`, and stale metadata `ContentModified` without retry. Resolved
+objects are rebuilt from compiler data rather than forwarding a client target.
+Range/position objects are compared by their typed coordinates, independently
+of JSON property order. Limits are 2048 links and 1 MiB; source SML returns null
+links when no compiler-known build reference applies.
+
 `$/setTrace` accepts off, messages and verbose. Requested trace data is
 sent as framed `$/logTrace` notifications; operational errors remain on
 stderr. Notifications never receive ordinary response messages.

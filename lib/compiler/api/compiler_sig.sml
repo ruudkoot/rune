@@ -163,12 +163,22 @@ sig
     (* A bounded filesystem/path-variable completion. Its replacement range
        and text include required build-language quoting. *)
     type pathCompletion={label:string,text:string,kind:string,start:int,stop:int}
+    (* A build reference expanded through the compiler's actual path rules.
+       target preserves read-path arcs; its existence is not inspected. *)
+    type buildLink={kind:string,target:string,start:int,stop:int}
     (* `buildSyntax request` returns observed path roles and structured build
        diagnostics through the compiler's own lexer/parser.
 
        Recovery retains unfinished quoted paths and variables. No files are
        read and no project declarations execute. *)
     val buildSyntax : {file:string,text:string} -> {references:buildReference list,diagnostics:diagnostic list}
+    (* `buildLinks (session, request)` expands complete build path tokens.
+
+       Source/build/cache paths use the build directory and configured path
+       variables. Libraries use the same directory resolver as the compiler.
+       Unfinished quotes and unresolved variables are omitted. This query
+       performs no filesystem reads or execution; offsets include quotes. *)
+    val buildLinks : session * {file:string,text:string,variables:(string*string) list,windows:bool} -> buildLink list
     (* `pathCompletions (session, request)` lists matching paths or variables
        at a build cursor without building or executing the project.
 

@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md) specifies it inside [`RuneCompiler`](../str/RuneCompiler.md) |
 | Status | required |
-| Members | 13 |
+| Members | 15 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -16,11 +16,13 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 
 |  | Member | Is |
 | --- | --- | --- |
+| type | [`buildLink`](../sig/RUNE_COMPILER.md#type-project.buildlink) | `{kind : string, start : int, stop : int, target : string}` |
 | type | [`buildReference`](../sig/RUNE_COMPILER.md#type-project.buildreference) | `{kind : string, quoted : bool, start : int, stop : int, value : string}` |
 | type | [`input`](../sig/RUNE_COMPILER.md#type-project.input) | `{file : string, kind : string, mode : string, revision : string, text : string}` |
 | type | [`pathCompletion`](../sig/RUNE_COMPILER.md#type-project.pathcompletion) | `{kind : string, label : string, start : int, stop : int, text : string}` |
 | type | [`source`](../sig/RUNE_COMPILER.md#type-project.source) | `{annotations : string list, file : string, mode : string, ordinal : int}` |
 | type | [`t`](../sig/RUNE_COMPILER.md#type-project.t) | *a type of its own* |
+| val | [`buildLinks`](../sig/RUNE_COMPILER.md#val-project.buildlinks) | `RuneCompiler.session * {file : string, text : string, variables : (string * string) list, windows : bool} -> buildLink list` |
 | val | [`buildSyntax`](../sig/RUNE_COMPILER.md#val-project.buildsyntax) | `{file : string, text : string} -> {diagnostics : {column : int, file : string, line : int, message : string, severity : string, start : int, stop : int} list, references : buildReference list}` |
 | val | [`cacheDirectories`](../sig/RUNE_COMPILER.md#val-project.cachedirectories) | `t -> string list` |
 | val | [`fingerprint`](../sig/RUNE_COMPILER.md#val-project.fingerprint) | `t -> string` |

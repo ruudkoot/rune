@@ -91,6 +91,8 @@ struct
                    ("willSave",Json.Bool true),("save",Json.Object [("includeText",Json.Bool true)])]),
                  ("workspace",Json.Object [("workspaceFolders",Json.Object [("supported",Json.Bool true),("changeNotifications",Json.Bool true)])])] @
                 (if RuneLspService.inlineClient caps then [("inlineCompletionProvider",Json.Object [])] else []) @
+                (if RuneLspBuild.linkClient (P.rawCapabilities caps) then
+                  [("documentLinkProvider",Json.Object [("resolveProvider",Json.Bool true)])] else []) @
                 (case RuneLspHints.provider (P.rawCapabilities caps) of NONE => [] | SOME provider => [("inlayHintProvider",provider)]) @
                 (case RuneLspTokens.provider (P.rawCapabilities caps) of NONE => [] | SOME provider => [("semanticTokensProvider",provider)]))),
               ("serverInfo", Json.Object [("name", Json.String "runelsp"), ("version", Json.String Config.version)])]
