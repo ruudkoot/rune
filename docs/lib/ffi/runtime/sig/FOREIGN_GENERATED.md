@@ -142,7 +142,7 @@ val prepare : session -> string -> RuneForeign.resource
 
 `prepare session name` returns the cached descriptor for a declared name.
 
-**Raises** [`Closed`](#exn-closed), `Fail` for an undeclared name, or a native bridge error.
+**Raises** [`Closed`](#exn-closed), [`Fail`](../../../basis/sig/GENERAL.md#exn-fail) for an undeclared name, or a native bridge error.
 The resource belongs to the session and must not be released separately.
 
 ### <a name="val-invoke"></a>`invoke`

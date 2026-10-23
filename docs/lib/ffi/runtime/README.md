@@ -36,7 +36,7 @@ symbol through the ordered library paths, and caches the prepared interface.
 Session close releases calls and symbols before attempting library unload;
 native dependent resources prevent premature unloading, and close can be retried.
 
-[How to read these pages](conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [f](index/f.md) [i](index/i.md) [l](index/l.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [w](index/w.md)
+[How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [f](index/f.md) [i](index/i.md) [l](index/l.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [w](index/w.md)
 
 ## Foreign interfaces
 
