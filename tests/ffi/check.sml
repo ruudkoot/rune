@@ -124,6 +124,11 @@ struct
           let val image=output ^ ".image"
           in need(String.isSubstring "saved closed state" (command "save-closed" [vm,output,library,image]),"save fixture");
              need(String.isSubstring "restored closed state" (command "restore-closed" [vm,"--restore",image]),"restore fixture") end
+        fun staleImage vm output subject image =
+          (need(String.isSubstring "PASS stale foreign image: saved" (command "save-stale"
+             (if output="" then [vm,subject,image] else [vm,output,subject,image])),"stale image producer");
+           need(String.isSubstring "PASS stale foreign image: restored" (command "restore-stale"
+             (if output="" then ["env","RUNEVM_OPTIONS=--restore " ^ image,vm] else [vm,"--restore",image])),"stale image consumer"))
         val disabled = directory ^ "/disabled-c"
         val () = ignore(command "compile-disabled-c" (compiler "CC" @ flags @ ["-Iruntime",
           "tests/runtime/foreign_disabled.c","runtime/foreign.c","-o",disabled]))
@@ -148,6 +153,9 @@ struct
                    val ()=compile target "tests/ffi/owner.sml" ownerOutput
                    val callbackOutput=bytecode ^ target ^ "-callbacks.rbc"
                    val ()=compile target "tests/ffi/callbacks.sml" callbackOutput
+                   val staleOutput=bytecode ^ target ^ "-stale.rbc"
+                   val ()=compile target "tests/ffi/stale-image.sml" staleOutput
+                   val ()=staleImage vm (winpath staleOutput) subject (winpath(staleOutput ^ ".image"))
                in owner vm ["--gc-stress","7","--gc-verify"] (winpath ownerOutput) subject;
                   callbacks vm ["--gc-stress","7","--gc-verify"] (winpath callbackOutput) subject;
                   calls vm ["--gc-stress","7","--gc-verify"] (winpath output) subject;
@@ -197,6 +205,8 @@ struct
                    val life=bytecode ^ target ^ "-life.rbc"
                in if mode="asan" then () else
                     (compile target "tests/ffi/lifecycle.sml" life;lifecycle vm life;
+                     compile target "tests/ffi/stale-image.sml" (bytecode ^ target ^ "-stale.rbc");
+                     staleImage vm (bytecode ^ target ^ "-stale.rbc") library (bytecode ^ target ^ "-stale.image");
                      compile target "tests/ffi/shutdown-exit.sml" (bytecode ^ target ^ "-shutdown.rbc");
                      ignore(command ("shutdown-exit-" ^ target) [vm,bytecode ^ target ^ "-shutdown.rbc",shutdownLibrary])) end
          in if mode="asan" then
@@ -214,6 +224,8 @@ struct
                   ignore(command "shutdown-exit-jit" ["bin/runevm","--jit=all","--jit-tier=2",bytecode ^ "registers-shutdown.rbc",shutdownLibrary]);
                   ignore(command "compile-native-shutdown" ["bin/runeopt",bytecode ^ "stack-shutdown.rbc","-o",bytecode ^ "-native-shutdown"]);
                   ignore(command "native-shutdown" [bytecode ^ "-native-shutdown",shutdownLibrary]);
+                  ignore(command "compile-native-stale" ["bin/runeopt",bytecode ^ "stack-stale.rbc","-o",bytecode ^ "-native-stale"]);
+                  staleImage (bytecode ^ "-native-stale") "" library (bytecode ^ "-native-stale.image");
                   ignore(command "compile-native-callbacks" ["bin/runeopt",bytecode ^ "stack-callbacks.rbc","-o",bytecode ^ "-native-callbacks"]);
                   need(String.isSubstring "PASS foreign callbacks:" (command "native-callbacks" [bytecode ^ "-native-callbacks",library]),"native callback fixture");
                   ignore(command "compile-native-calls" ["bin/runeopt",bytecode ^ "stack.rbc","-o",bytecode ^ "-native"]);

@@ -83,6 +83,14 @@ int main(int argc, char **argv) {
     pthread_t thread; void *thread_result = NULL;
     CHECK(pthread_create(&thread,NULL,late_thread,&escaped) == 0);
     CHECK(pthread_join(thread,&thread_result) == 0 && thread_result == NULL && entries == 1);
+    uint64_t floor = foreign_identity_floor();
+    CHECK(foreign_restore_identity_floor(0) == -1 && errno == EINVAL && foreign_identity_floor() == floor);
+    CHECK(foreign_restore_identity_floor(1) == 0 && foreign_identity_floor() == floor);
+    CHECK(foreign_restore_identity_floor(UINT64_MAX - 1) == 0);
+    context = foreign_create(&system);
+    CHECK(context && foreign_memory(context,1) == UINT64_MAX - 1 && foreign_identity_floor() == UINT64_MAX);
+    CHECK(foreign_memory(context,1) == 0 && foreign_error(context)->error_number == ENOSPC && foreign_identity_floor() == UINT64_MAX);
+    CHECK(foreign_destroy(context) == 0);
     printf("PASS foreign shutdown: %u unload, retained-memory, active-close and late-thread checks\n",checks);
     return 0;
 }

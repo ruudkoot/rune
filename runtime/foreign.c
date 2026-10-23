@@ -159,6 +159,13 @@ static ForeignId identity(void) {
     }
     return 0;
 }
+uint64_t foreign_identity_floor(void) { return ID_LOAD(&next_identity); }
+int foreign_restore_identity_floor(uint64_t floor) {
+    if (!floor) { errno = EINVAL; return -1; }
+    uint64_t old = ID_LOAD(&next_identity);
+    while (old < floor) if (ID_EXCHANGE(&next_identity, &old, floor)) break;
+    return 0;
+}
 static void fail(Foreign *f, int number, const char *message) {
     memset(&f->error, 0, sizeof f->error);
     f->error.error_number = number;
@@ -822,6 +829,13 @@ size_t foreign_quarantined(void) { return (size_t)ID_LOAD(&quarantine_count); }
 #include <stdlib.h>
 #include <string.h>
 struct Foreign { ForeignError error; };
+static uint64_t identity_floor = 1;
+uint64_t foreign_identity_floor(void) { return identity_floor; }
+int foreign_restore_identity_floor(uint64_t floor) {
+    if (!floor) { errno = EINVAL; return -1; }
+    if (floor > identity_floor) identity_floor = floor;
+    return 0;
+}
 static int unavailable(Foreign *f) {
     f->error.error_number = ENOSYS;
     f->error.native_error = 0;

@@ -179,6 +179,9 @@ static void write_image(VM *vm, Stream *s, int kind) {
     put(s, IMAGE_MAGIC, ISA_IMAGE_MAGIC_SIZE);
     /* what the world should do when it starts again (IMAGE_FORK, IMAGE_SAVE) */
     put_u32(s, (uint32_t)kind);
+    /* Escaped but expired SML wrappers may still contain old numeric IDs.
+       A fresh restoring process must never allocate those IDs again. */
+    put_u64(s, foreign_identity_floor());
 
     put_u32(s, (uint32_t)vm->trace);
     put_u32(s, (uint32_t)vm->stats);
@@ -569,7 +572,7 @@ static int failed(Stream *s, char *err, size_t errlen, const char *msg) {
     return 0;
 }
 
-static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
+static int read_image(VM *vm, FILE *in, int want, uint64_t *foreign_floor, char *err, size_t errlen) {
     Stream s = { in, 1, 0, 0, {0} };
     if (!s.f) return failed(&s, err, errlen, "no image to resume from");
     Program *p = &vm->prog;
@@ -583,6 +586,10 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
         return failed(&s, err, errlen,
                       want == IMAGE_FORK ? "the image was not made by fork"
                                          : "the image was not made by Runtime.save");
+
+    uint64_t floor = get_u64(&s);
+    if (!s.ok || !floor)
+        return failed(&s, err, errlen, "bad foreign identity floor in the image");
 
     vm->trace = (int)get_u32(&s);
     vm->stats = (int)get_u32(&s);
@@ -915,6 +922,7 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     if (vm->sp == 0) { snprintf(err, errlen, "the image has nothing on its stack"); return 0; }
     vm->sp--;
     vm_push(vm, mk_int(kind == IMAGE_FORK ? 0 : 1));
+    *foreign_floor = floor;
     return 1;
 }
 
@@ -929,13 +937,17 @@ static void interrupt_again(VM *vm) {
 }
 
 int vm_resume(VM *vm, const char *token, char *err, size_t errlen) {
-    if (!read_image(vm, sys_resume(token), IMAGE_FORK, err, errlen)) return 0;
+    uint64_t floor;
+    if (!read_image(vm, sys_resume(token), IMAGE_FORK, &floor, err, errlen)) return 0;
+    (void)foreign_restore_identity_floor(floor);
     interrupt_again(vm);
     return 1;
 }
 
 int vm_restore(VM *vm, const char *path, char *err, size_t errlen) {
-    if (!read_image(vm, sys_fopen(path, "rb"), IMAGE_SAVE, err, errlen)) return 0;
+    uint64_t floor;
+    if (!read_image(vm, sys_fopen(path, "rb"), IMAGE_SAVE, &floor, err, errlen)) return 0;
+    (void)foreign_restore_identity_floor(floor);
     interrupt_again(vm);
     return 1;
 }
@@ -949,6 +961,7 @@ int vm_restore(VM *vm, const char *path, char *err, size_t errlen) {
 int vm_become(VM *vm, const char *path) {
     if (foreign_live(vm->foreign)) { vm->io_errno = EBUSY; sys_set_errno(EBUSY); return 0; }
     VM *next = calloc(1, sizeof(VM));
+    uint64_t floor;
     char err[256];
     if (!next) { vm->io_errno = ENOMEM; return 0; }
     next->heap_limit = vm->heap_limit;
@@ -964,7 +977,7 @@ int vm_become(VM *vm, const char *path) {
     next->intinf_mode = vm->intinf_mode;
     next->intinf_stats = vm->intinf_stats;
     fflush(NULL);
-    if (!read_image(next, sys_fopen(path, "rb"), IMAGE_SAVE, err, sizeof err)) {
+    if (!read_image(next, sys_fopen(path, "rb"), IMAGE_SAVE, &floor, err, sizeof err)) {
         vm_release(next);
         free(next);
         vm->io_errno = EINVAL;
@@ -1002,6 +1015,7 @@ int vm_become(VM *vm, const char *path) {
         vm_destroy(next);
         return 0;
     }
+    (void)foreign_restore_identity_floor(floor);
     *vm = *next;
     free(next);
     interrupt_again(vm);

@@ -50,6 +50,10 @@ int foreign_destroy(Foreign *foreign);
 void foreign_abandon(Foreign *foreign);
 /* Disabled unproven registrations retained until process termination. */
 size_t foreign_quarantined(void);
+/* Images preserve the next unused identity, never native capabilities.
+   Restoring may only advance this process-wide floor; zero is invalid. */
+uint64_t foreign_identity_floor(void);
+int foreign_restore_identity_floor(uint64_t floor);
 const ForeignError *foreign_error(const Foreign *foreign);
 size_t foreign_live(const Foreign *foreign);
 int foreign_alive(const Foreign *foreign, ForeignId resource);

@@ -956,7 +956,7 @@ uint32_t return_function_code(uint8_t *out, uint32_t *nlocals);
 
 /* What each VM's instruction set gives (runtime/stack/isa_stack.c, runtime/register/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
-#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 14 isa 00000000")
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 15 isa 00000000")
 extern const uint32_t isa_fingerprint;
 extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);

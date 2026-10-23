@@ -113,3 +113,14 @@ native callers. The terminal exit path disables further SML entries and
 preserves their VM roots and foreign arenas through native exit handlers;
 process termination reclaims them. It does not return to a partly freed VM.
 This terminal path is distinct from reusable orderly VM destruction.
+
+Images contain no live native resources. An expired callback argument or
+view may nevertheless have escaped into an SML value whose cached liveness
+cell has not been checked. Image version 15 records the process-wide next
+unused foreign identity as a scalar high-water mark. A successful restore
+advances the current allocator to at least that mark before any foreign
+allocation; it never reuses an identity held by a stale wrapper in the saved
+heap. This also covers expired aliases and emulated fork. Zero is malformed;
+the maximum mark represents exhausted identity space, and new allocation
+then rejects instead of wrapping. Failed image validation does not advance
+the allocator. Older images must be recreated.

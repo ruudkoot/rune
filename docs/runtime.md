@@ -963,6 +963,14 @@ layer holds is handed to a fork's child and cannot go into a file, so a
 restored world has no sockets, directory streams or pipes; the files the
 program opened are opened again by name, where they were left.
 
+Version 15 also carries the next unused foreign resource identity. Live
+native resources still prevent save, restore and fork. The scalar allocator
+floor ensures expired callback arguments or aliases left in the SML heap
+cannot become live again when a fresh process allocates foreign resources.
+The floor only advances after successful validation; identity exhaustion
+rejects allocation without wrapping. Version 14 images must be recreated;
+the bytecode format is unchanged. `runeopt --from-image` reads the same field.
+
 ## Asking from inside
 
 Most of this page is visible to a program through `Runtime`, which is Rune's
