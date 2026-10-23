@@ -1,0 +1,8 @@
+- we should package the language server as a vs code extension via make dist
+  - i.e. should be generated along with rune-windows.zip and rune-linux.zip
+  - include both the windows and linux 64-bit vms so we can the lsp both on windows and linux (e.g. remote wsl sessions in vs code)
+  - no need to include more of rune than is needed to run the lsp in the vscode extension package
+- useful resources
+  - https://code.visualstudio.com/api/working-with-extensions/publishing-extension
+- once you are done give me the vsce command i can use to publish the vsix to the marketplace
+- the rune binaries that vs code uses to run the lsp should be kept separate from other rune binaries (either in the repo builds or via make dist installations) to avoid clashes and problems while using the lsp for developing rune itself
