@@ -78,6 +78,8 @@ struct
      {name = "sdl3-windows32", probe = "test -r \"${RUNE_SDL_WINDOWS32_LIBRARY:-build/deps/sdl/windows32/install/bin/SDL3.dll}\"", hint = "provision pinned Windows32 SDL3 or set RUNE_SDL_WINDOWS32_LIBRARY"},
      {name = "sdl3-windows64", probe = "test -r \"${RUNE_SDL_WINDOWS64_LIBRARY:-build/deps/sdl/windows64/install/bin/SDL3.dll}\"", hint = "provision pinned Windows64 SDL3 or set RUNE_SDL_WINDOWS64_LIBRARY"},
      {name = "libffi", probe = "pkg-config --exists libffi", hint = "install libffi headers and pkg-config for the independent FFI oracle"},
+     {name = "ffi-runtime", probe = if RuneForeign.available() then "true" else "false",
+      hint = "build the Rune VMs with FFI=yes for native foreign execution"},
      {name = "clang", probe = "command -v ${CLANG:-clang}", hint = "install Clang for independent C frontend comparisons"},
      {name = "windows-sdk", probe = "test -d \"$RUNEFFI_WINDOWS_SDK/um\" && test -d \"$RUNEFFI_MSVC_INCLUDE\"",
       hint = "set RUNEFFI_WINDOWS_SDK and RUNEFFI_MSVC_INCLUDE as described in ffi/win32/README.md"},

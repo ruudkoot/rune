@@ -99,13 +99,18 @@ struct
               val ()=Posix.FileSys.chmod(wrapper,Posix.FileSys.S.flags[Posix.FileSys.S.irusr,Posix.FileSys.S.iwusr,Posix.FileSys.S.ixusr])
           in {name="mlkit",program=wrapper,library= #library original} end
         val marker=directory ^ "/entry.sml"
-        val ()=write(marker,"val ()=let val ()=print \"RUNEFFI-BEGIN\\n\" val status=RuneffiMain.main(CommandLine.name(),[\"inspect\",\"--config\",\"tests/ffi/generator/scalars.ffi\",\"--target\",\"ffi/targets/linux-x86_64.json\",\"--layout\",\"gen_record\",\"--constant\",\"GEN_HIGH\"]) val ()=print \"RUNEFFI-END\\n\" in OS.Process.exit status end\n")
+        val inspectionArguments=["inspect","--config","tests/ffi/generator/scalars.ffi","--target","ffi/targets/linux-x86_64.json", "--layout","gen_record","--constant","GEN_HIGH"]
+        val safeArguments=["inspect","--config","tests/ffi/generator/safe.ffi","--target","ffi/targets/linux-x86_64.json"]
+        fun smlList values="[" ^ String.concatWith "," (List.map(fn text=>"\"" ^ String.toString text ^ "\"")values) ^ "]"
+        val ()=write(marker,"val ()=let val ()=print \"RUNEFFI-BEGIN\\n\" val first=RuneffiMain.main(CommandLine.name()," ^ smlList inspectionArguments ^ ") " ^
+          "val second=RuneffiMain.main(CommandLine.name()," ^ smlList safeArguments ^ ") val ()=print \"RUNEFFI-END\\n\" " ^
+          "in OS.Process.exit(if OS.Process.isSuccess first andalso OS.Process.isSuccess second then OS.Process.success else OS.Process.failure) end\n")
+
         val sources=List.filter(fn file=>String.isSuffix ".sml" file)(lines(command true["sh","scripts/build-files.sh","runeffi.build"]))
         val result=Hosts.build{host=selectedHost,name="runeffi-generator",sources=sources @ [marker],
           dir=directory ^ "/host",runDir=root,timeout=600,memory=2500}
         val ()=need(#built result,"generator host did not build: " ^ name ^ ": " ^ #messages result)
-        val expected=command true[generator,"inspect","--config","tests/ffi/generator/scalars.ffi","--target","ffi/targets/linux-x86_64.json",
-          "--layout","gen_record","--constant","GEN_HIGH"]
+        val expected=command true(generator::inspectionArguments) ^ command true(generator::safeArguments)
         val actual= #output result
         (* Native interpreters print elaboration chatter. Explicit markers
            delimit the complete payload, including every internal blank line. *)
@@ -126,6 +131,101 @@ struct
           say("EXPLAINED generator " ^ name ^ ": " ^ #category line ^ ": " ^ #reason line ^
             " (status " ^ Int.toString(#status result) ^ "; " ^ directory ^ "/host)\n"))
     end
+  fun publication ()=
+    let val ()=mkdirs directory
+        val output=directory ^ "/fault-publication"
+        fun arguments operation output constant=[generator,operation,"--config","tests/ffi/generator/scalars.ffi",
+          "--target","ffi/targets/linux-x86_64.json","--out",output,"--constant",constant]
+        fun generate output constant=ignore(command true(arguments "generate" output constant))
+        fun check output constant=ignore(command true(arguments "check" output constant))
+        val ()=generate output "GEN_HIGH"
+        val first=read(output ^ "/current.build")
+        val status=Children.exec{addressSpace=NONE,cpuTime=SOME 60,fileSize=SOME 512,core=SOME 0}(fn e=>e)
+          {cmd=arguments "generate" output "GEN_NEGATIVE",dir=SOME root,stdin="",stdout=directory ^ "/interrupted.out",
+           stderr=directory ^ "/interrupted.err",timeout=60}
+        val ()=need(status<>0,"file-size fault did not interrupt generation")
+        val ()=need(first=read(output ^ "/current.build"),"interrupted artifact write changed current.build")
+        val ()=check output "GEN_HIGH"
+        val ()=generate output "GEN_NEGATIVE"
+        val second=read(output ^ "/current.build")
+        val ()=need(first<>second,"fault fixture did not produce distinct complete generations")
+        val ()=check output "GEN_NEGATIVE"
+        fun start arguments name=
+          let val mode=Posix.FileSys.S.flags[Posix.FileSys.S.irusr,Posix.FileSys.S.iwusr]
+              val input=Posix.FileSys.openf("/dev/null",Posix.FileSys.O_RDONLY,Posix.FileSys.O.flags[])
+              val out=Posix.FileSys.creat(directory ^ "/" ^ name ^ ".out",mode)
+              val err=Posix.FileSys.creat(directory ^ "/" ^ name ^ ".err",mode)
+              fun close()=(Posix.IO.close input;Posix.IO.close out;Posix.IO.close err)
+              fun fd value=SysWord.toInt(Posix.FileSys.fdToWord value)
+              val pid=(Subprocess.spawn{program=generator,args=arguments,env=NONE,search=false,dir=SOME root,
+                stdin=SOME(fd input),stdout=SOME(fd out),stderr=SOME(fd err),group=false,limits=Subprocess.unlimited}
+                handle error=>(close();raise error))
+          in close();(pid,name) end
+        fun stop(pid,_)=(Posix.Process.kill(Posix.Process.K_PROC(Posix.Process.wordToPid(SysWord.fromInt pid)),Posix.Signal.kill)
+              handle OS.SysErr _=>();ignore(Subprocess.wait(SOME pid)) handle OS.SysErr _=>())
+        fun race name constants allowed=
+          let val output=directory ^ "/" ^ name
+              val children=ListPair.map(fn(i,constant)=>start(arguments "generate" output constant)(name ^ Int.toString i))
+                (List.tabulate(length constants,fn i=>i),constants)
+              val live=ref children
+              val started=Runtime.clock()
+              fun observe()=if exists(output ^ "/current.build") then
+                    let val current=read(output ^ "/current.build")
+                    in need(List.exists(fn pointer=>pointer=current)allowed,"concurrent publication exposed partial current.build") end else ()
+              fun wait [] failed=if null failed then () else raise Failed(String.concatWith "\n" failed)
+                | wait pending failed=
+                  let val ()=observe()
+                      val ()=if Time.>(Time.-(Runtime.clock(),started),Time.fromSeconds 120) then
+                        (List.app stop pending;live:=[];raise Failed "concurrent publication timed out") else ()
+                      fun poll([],remaining,failed)=(remaining,failed)
+                        | poll((entry as(pid,name))::rest,remaining,failed)=case Subprocess.poll(SOME pid) of
+                            NONE=>poll(rest,entry::remaining,failed)
+                          | SOME{status=Posix.Process.W_EXITED,...}=>poll(rest,remaining,failed)
+                          | SOME _=>poll(rest,remaining,("publication writer failed: " ^ name ^ ": " ^ read(directory ^ "/" ^ name ^ ".err"))::failed)
+                      val(remaining,failed)=poll(pending,[],failed)
+                      val ()=live:=remaining
+                  in if null remaining then wait [] failed else (OS.Process.sleep(Time.fromMilliseconds 1);wait remaining failed) end
+              val ()=(wait children [] handle error=>(List.app stop(!live);live:=[];raise error))
+              val current=read(output ^ "/current.build")
+              val ()=need(List.exists(fn pointer=>pointer=current)allowed,"concurrent writers did not publish a complete allowed generation")
+              val constant=if current=first then "GEN_HIGH" else "GEN_NEGATIVE"
+          in check output constant end
+        val ()=race "concurrent-same" ["GEN_HIGH","GEN_HIGH"] [first]
+        val ()=race "concurrent-different" ["GEN_HIGH","GEN_NEGATIVE"] [first,second]
+    in say "PASS interrupted write preserves complete publication; concurrent same/different writers publish complete immutable sets\n" end
+  fun windows bits=
+    let val ()=need(bits="32" orelse bits="64","Windows width must be 32 or 64")
+        val stage=WindowsDir.directory() ^ "/runeffi-generator-" ^ bits ^ "-" ^ SysWord.toString(Posix.Process.pidToWord(Posix.ProcEnv.getpid()))
+        val ()=mkdirs(stage ^ "/input")
+        fun copy source destination=
+          let val input=BinIO.openIn source val output=BinIO.openOut destination
+          in ((BinIO.output(output,BinIO.inputAll input);BinIO.closeIn input;BinIO.closeOut output)
+            handle error=>(BinIO.closeIn input handle _=>();BinIO.closeOut output handle _=>();raise error)) end
+        val ()=List.app(fn name=>copy("tests/ffi/generator/" ^ name)(stage ^ "/input/" ^ name))
+          ["scalars.ffi","scalars.h","transitive.h","safe.ffi","safe.h"]
+        val ()=List.app(fn target=>copy("ffi/targets/" ^ target ^ ".json")(stage ^ "/" ^ target ^ ".json"))
+          ["linux-x86_64","windows-x86","windows-x86_64"]
+        val bytecode=stage ^ "/runeffi.rbc"
+        val ()=copy(env("RUNEFFI_RBC","bin/runeffi.rbc"))bytecode
+        fun winpath path=Hosts.trim(String.translate(fn #"\r"=>"" | c=>str c)(command true["wslpath","-w",path]))
+        val vm=fromRoot(env(if bits="32" then "RUNEVM_WIN32" else "RUNEVM_WIN64",if bits="32" then "bin/runevm32.exe" else "bin/runevm.exe"))
+        fun native arguments=command true(vm::winpath bytecode::arguments)
+        val expected=command true[generator,"inspect","--config",stage ^ "/input/safe.ffi","--target",stage ^ "/linux-x86_64.json"]
+        val actual=native["inspect","--config",winpath(stage ^ "/input/safe.ffi"),"--target",winpath(stage ^ "/linux-x86_64.json")]
+        fun normalize text=String.translate(fn #"\r"=>"" | c=>str c)text
+        val ()=need(normalize actual=expected,"Windows " ^ bits ^ " complete generator inspection differs from Linux")
+        val target=if bits="32" then "windows-x86" else "windows-x86_64"
+        val config=stage ^ "/input/scalars.ffi" val profile=stage ^ "/" ^ target ^ ".json"
+        val output=stage ^ "/generated"
+        fun options path=["--config",path config,"--target",path profile,"--out",path output,
+          "--constant","GEN_HIGH","--constant","GEN_NEGATIVE","--layout","gen_record"]
+        val ()=ignore(native("generate"::options winpath))
+        val first=read(output ^ "/current.build")
+        val ()=ignore(native("generate"::options winpath))
+        val ()=need(first=read(output ^ "/current.build"),"Windows regeneration changed immutable generation")
+        val ()=ignore(native("check"::options winpath))
+        val ()=ignore(command true(generator::"check"::options(fn path=>path)))
+    in say("PASS Windows " ^ bits ^ " CLI full inspection agrees with Linux; native target generate/check/regeneration and cross-host artifact check\n") end
   fun safe mode=
     let val output=directory ^ "/safe"
         val ()=ignore(command true[generator,"generate","--config","tests/ffi/generator/safe.ffi","--target","ffi/targets/linux-x86_64.json","--out",output])
@@ -159,10 +259,12 @@ struct
             in say(command true[native,subject]) end
     end
   fun main["native"]=native()
+    | main["publication"]=publication()
+    | main["windows",bits]=windows bits
     | main["host",name]=host name
     | main["safe"]=safe "native"
     | main["safe-asan"]=safe "asan"
-    | main _=raise Failed "expected native, safe, safe-asan or host HOST"
+    | main _=raise Failed "expected native, publication, windows BITS, safe, safe-asan or host HOST"
 end
 val ()=ForeignGeneratorChecks.main(CommandLine.arguments()) handle e=>
   (TextIO.output(TextIO.stdErr,"FAIL foreign generator: " ^ (case e of ForeignGeneratorChecks.Failed s=>s | _=>General.exnMessage e) ^ "\n");

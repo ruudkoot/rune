@@ -494,16 +494,18 @@ ffi: bin/runeffi
 	bin/runeffi generate --config $(FFI_CONFIG) --target $(FFI_TARGET) --out $(FFI_OUT) $(FFI_OPTIONS)
 check-ffi-generated: bin/runeffi
 	bin/runeffi check --config $(FFI_CONFIG) --target $(FFI_TARGET) --out $(FFI_OUT) $(FFI_OPTIONS)
-FFI_GENERATOR_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/generator-check.sml
+FFI_GENERATOR_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/windowsdir.sml tests/ffi/generator-check.sml
 check-tools: bin/runeffi bin/rune-ffi-generator-check
 bin/rune-ffi-generator-check.rbc: $(RUNE) $(FFI_GENERATOR_CHECK_SRCS) manifests
 	$(RUNE) --library test/runner --library json $(FFI_GENERATOR_CHECK_SRCS) -o $@
 bin/rune-ffi-generator-check: bin/rune-ffi-generator-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-generator-check.rbc" "$$@"\n' > $@
 	chmod +x $@
-.PHONY: test-ffi-generator test-ffi-generator-hosts
+.PHONY: test-ffi-generator test-ffi-generator-hosts test-ffi-generator-windows
 test-ffi-generator: $(RUNE) vm $(RUNEOPT) bin/runeffi bin/rune-ffi-generator-check bin/rune-test
 	$(RUNE_TEST) --tier test-ffi-generator
+test-ffi-generator-windows: $(RUNE) windows bin/runeffi bin/rune-ffi-generator-check bin/rune-windows bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-generator-windows
 test-ffi-generator-hosts: $(RUNE) vm bin/runeffi bin/rune-ffi-generator-check bin/rune-test
 	$(RUNE_TEST) --tier test-ffi-generator-hosts
 

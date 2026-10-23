@@ -21,12 +21,16 @@ struct
         env=NONE,dir=SOME ".",stdin=NONE,timeout=Time.fromSeconds 1800,cap=0,cpus=1,memory=3000,
         pools=["matrix"],exclusive=false,after=[],judge=Sh.failLines}:Run.command Test.tree)
       (tags @ ["covers:src/ffi/*","covers:lib/ffi/model/*","covers:lib/ffi/runtime/*","covers:tests/ffi/generator/*"])
+  val executionCheck=if RuneForeign.available() then ["check"] else []
   val tree=Test.describe ""
     [tree,Test.describe "ffi/generator"
-      [Test.requires["cc"](generatorJob "native" "native" ["check","test-ffi-generator"]),
+      [Test.requires["cc","ffi-runtime"](generatorJob "native" "native" (executionCheck @ ["test-ffi-generator"])),
+       generatorJob "publication" "publication" ["check","test-ffi-generator"],
+       Test.requires["windows"](Test.describe "windows" (List.map(fn bits=>generatorJob bits ("windows " ^ bits)
+         ["test-ffi-generator-windows","windows","nightly"]) ["32","64"])),
        Test.requires["host:mlkit"](generatorJob "mlkit-no-ri" "host mlkit-no-ri" ["test-ffi-generator-hosts","library","nightly"]),
-       Test.requires["cc"](generatorJob "safe" "safe" ["check","test-ffi-generator"]),
-       Test.requires["cc"](generatorJob "safe-asan" "safe-asan" ["test-ffi-generator-asan","vm","nightly"]),
+       Test.requires["cc","ffi-runtime"](generatorJob "safe" "safe" (executionCheck @ ["test-ffi-generator"])),
+       Test.requires["cc","ffi-runtime"](generatorJob "safe-asan" "safe-asan" ["test-ffi-generator-asan","vm","nightly"]),
        Test.describe "hosts" (List.map(fn name=>Test.requires["host:" ^ name]
          (generatorJob name ("host " ^ name)["test-ffi-generator-hosts","library","nightly"]))Hosts.names)]]
 end
