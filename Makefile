@@ -307,6 +307,17 @@ lib/ffi/win32/native/MANIFEST: lib/ffi/win32/native/library.build $(wildcard lib
 	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/native
 manifests: lib/ffi/win32/native/MANIFEST
 
+# Immutable generated SDL sets are real source libraries. Their MANIFESTs
+# are derived locally; current.build/API pointers, C shims and provenance are
+# additional installed/distribution source assets, outside the SML index.
+SDL_GENERATED_LIBRARIES := $(patsubst %/library.build,%,$(wildcard lib/ffi/sdl/generated/*/sets/*/library.build))
+SDL_GENERATED_MANIFESTS := $(addsuffix /MANIFEST,$(SDL_GENERATED_LIBRARIES))
+manifests: $(SDL_GENERATED_MANIFESTS)
+ifneq ($(strip $(SDL_GENERATED_MANIFESTS)),)
+$(SDL_GENERATED_MANIFESTS): %/MANIFEST: %/library.build $(wildcard lib/ffi/sdl/generated/*/sets/*/*.sml) lib/ffi/runtime/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index $(@D)
+endif
+
 # The frozen Basis Library (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
 # compile in units reads after its own cache and never writes; made again,

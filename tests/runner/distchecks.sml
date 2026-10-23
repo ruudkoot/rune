@@ -62,9 +62,23 @@ struct
     let val dir=directory() val assets=dir ^ "/ffi-assets"
         val ()=put dir "ffi-assets/sdl/core.ffi" "original sidecar\n"
         val ()=put dir "ffi-assets/sdl/upstream/original.h" "original header\n"
+        val library=dir ^ "/ffi-library"
+        val ()=List.app(fn(path,text)=>put library path text)
+          [("basis/library.build","files list.sml end\n"),("basis/MANIFEST","list.sml | demand | yes | List | \n"),
+           ("basis/list.sml","structure List = struct end\n")]
+        val generated=List.concat(List.map(fn target=>
+          let val prefix="ffi/sdl/generated/" ^ target ^ "/"
+          in List.map(fn(name,text)=>(prefix ^ name,text))
+            [("current.build","use sets/identity/native.build\n"),("api/api/public_sig.sml","signature GENERATED = sig end\n"),
+             ("sets/identity/library.build","files raw.sml end\n"),("sets/identity/MANIFEST","raw.sml | demand | yes | Generated | \n"),
+             ("sets/identity/raw.sml","structure Generated = struct end\n"),("sets/identity/native.build","raw.sml\n"),
+             ("sets/identity/shims.c","/* generated typed C shim */\n"),("sets/identity/ffi-manifest.json","{\"declarations\":[]}\n"),
+             ("sets/identity/dependencies.json","{\"headers\":[]}\n")]
+          end)["native","windows32","windows64"])
+        val ()=List.app(fn(path,text)=>put library path text)generated
         val(linux,windows)=maps false
         val ()=Scenarios.success(packWith["--ffi",dir ^ "/rune.rbc","--ffi-assets",assets]
-          "ffi-pack" true "ffi1" (dir ^ "/lib") linux windows)
+          "ffi-pack" true "ffi1" library linux windows)
         val tarfile=dir ^ "/archives/rune-ffi1-linux.tar.gz"
         val tar=ArchiveCheck.tar(ArchiveCheck.decode dir "ffi.tar"["gzip","-dc",tarfile])
         fun member name=case List.find(fn(m:ArchiveCheck.member)=> #name m="rune-ffi1-linux/" ^ name)tar of
@@ -72,9 +86,12 @@ struct
         val ()=need(member "lib/rune/runeffi.rbc"="compiler\n" andalso
           member "lib/rune/ffi-assets/sdl/core.ffi"="original sidecar\n" andalso
           member "lib/rune/ffi-assets/sdl/upstream/original.h"="original header\n","FFI archive bytes differ")
+        val ()=List.app(fn(path,text)=>need(member("lib/rune/" ^ path)=text,"generated SDL source missing or changed: " ^ path))generated
         val zip=dir ^ "/archives/rune-ffi1-windows.zip"
         val zipped=ArchiveCheck.zip(ArchiveCheck.binary zip)
         val ()=need(List.exists(fn(m:ArchiveCheck.zipped)=> #name m="rune-ffi1-windows/wrappers/runeffi.cmd")zipped,"missing Windows runeffi launcher")
+        val ()=List.app(fn(path,_)=>need(List.exists(fn(m:ArchiveCheck.zipped)=>
+          #name m="rune-ffi1-windows/lib/rune/" ^ path)zipped,"generated SDL source missing from Windows archive: " ^ path))generated
         val out=dir ^ "/ffi-extracted" val ()=mkdirs out
         val ()=Scenarios.success(InstallChecks.execute dir "ffi-extract" root ""["tar","-xzf",tarfile,"-C",out])
         val prefix=dir ^ "/FFI relocated prefix" val script=out ^ "/rune-ffi1-linux/install.sh"
@@ -82,6 +99,7 @@ struct
         val wrapper=read(prefix ^ "/bin/runeffi")
         val ()=need(String.isSubstring "../lib/rune/runeffi.rbc" wrapper andalso not(String.isSubstring root wrapper),"runeffi launcher is not relocatable")
         val ()=need(read(prefix ^ "/lib/rune/ffi-assets/sdl/upstream/original.h")="original header\n","installer omitted original header")
+        val ()=List.app(fn(path,text)=>need(read(prefix ^ "/lib/rune/" ^ path)=text,"installed generated SDL source differs: " ^ path))generated
         val ()=write(prefix ^ "/bin/unrelated","keep\n")
         val ()=Scenarios.success(InstallChecks.execute dir "ffi-uninstall" root ""["sh",script,"--prefix",prefix,"--uninstall"])
         val ()=need(not(exists(prefix ^ "/bin/runeffi")) andalso not(exists(prefix ^ "/lib/rune/ffi-assets")) andalso

@@ -315,6 +315,13 @@ for manifest in $(cd "$root/lib" && find . -name MANIFEST | sort); do
   done
 done
 
+# The generated SDL sets also carry current/API pointers, .build files, C
+# shims and declaration provenance, which are not entries in an SML MANIFEST.
+if [ -d "$root/lib/ffi/sdl" ]; then
+  mkdir -p "$libdir/ffi"
+  cp -R "$root/lib/ffi/sdl" "$libdir/ffi/"
+fi
+
 # Original headers, target profiles, sidecars and implementation-selection build
 # entrypoints accompany runeffi. Generated/native resources remain application
 # dependencies and are never opened by installing the library sources.
