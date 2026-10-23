@@ -432,6 +432,7 @@ int main(int argc, char **argv) {
         }
         vm->gc_verify = o.gc_verify;
         if (o.gc_log && !child) heap_log_open(vm, o.gc_log);
+        vm->callback_loop = vm_callback_loop;
         rune_enter(vm, code);
     }
 
@@ -470,6 +471,7 @@ int main(int argc, char **argv) {
         vm_destroy(vm);
         return 2;
     }
+    vm->callback_loop = vm_callback_loop;
     vm_start(vm);
     size_t need = vm->sp + (size_t)rune_functions[2];
     if (need > vm->stack_cap) vm_grow_stack(vm, need);

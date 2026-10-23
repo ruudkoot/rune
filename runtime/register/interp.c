@@ -168,6 +168,7 @@ int vm_run(VM *vm) {
    VM resumed from an image (runtime/image.c) enters here too, its built-in
    exceptions and frames being those of the image. */
 int vm_loop(VM *vm) {
+    vm->callback_loop = vm_callback_loop;
     make_room(vm);
 #ifndef RUNE_ROOTS_ALL   /* the switch: every register a root, as before heap-layout M6 */
     vm->frame_live = reg_frame_live;

@@ -102,6 +102,7 @@ int vm_jit_env(const char *mode, int *out) { (void)mode; (void)out; return 1; }
 /* The loop alone: a VM resumed from an image (runtime/image.c) enters it here,
    its built-in exceptions and frames being those of the image. */
 int vm_loop(VM *vm) {
+    vm->callback_loop = vm_callback_loop;
     make_room(vm);
     return vm->trace ? loop_traced(vm) : loop_fast(vm);
 }

@@ -9,7 +9,7 @@ uint64_t vm_callback_live(VM *vm, const FrameRef *frame) {
 
 int vm_callback_apply(VM *vm, size_t handle, const char *input, size_t length,
                       char *output, size_t capacity, size_t *written) {
-    if (vm->callback_depth >= 64 || length > UINT32_MAX) return -1;
+    if (!vm->callback_loop || vm->callback_depth >= 64 || length > UINT32_MAX) return -1;
     Value cv = vm_handle_get(vm, handle);
     if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_CLOSURE) return -1;
     uint32_t f = (uint32_t)val_imm(obj_field(val_ptr(cv), 0));
@@ -39,7 +39,7 @@ int vm_callback_apply(VM *vm, size_t handle, const char *input, size_t length,
     vm->sp = base + fn->nlocals;
     vm->pc = fn->code_offset;
     vm->callback_frame = vm_frame_id(vm);
-    int status = vm_callback_loop(vm);
+    int status = vm->callback_loop(vm);
     Value result = vm->callback_result;
     int ok = status == 3 && vm->hp == old_hp && val_is_ptr(result) && obj_kind(val_ptr(result)) == K_STRING && obj_len(val_ptr(result)) <= capacity;
     if (ok) {

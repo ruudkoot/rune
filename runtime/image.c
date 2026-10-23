@@ -984,6 +984,7 @@ int vm_become(VM *vm, const char *path) {
     /* the JIT's options are this process's, not the image's (runtime/register),
        and so are the collector's log and its check (runtime/gc/) */
     next->jit = vm->jit;
+    next->callback_loop = vm->callback_loop; /* process-local engine entry */
     /* and so is runtime/register's return trampoline, where the frames of
        the image return when compiled code runs them (M6) */
     next->ret_tramp = vm->ret_tramp;

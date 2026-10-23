@@ -555,6 +555,7 @@ typedef struct VM {
     size_t callback_frame; /* frame whose RET returns to the delimiter */
     Value callback_result;
     unsigned callback_depth;
+    int (*callback_loop)(struct VM *); /* process-local engine entry, never serialized */
 } VM;
 
 /* Whether p points into the room objects are made in (alloc). Young and
