@@ -69,19 +69,21 @@ struct
         val ()=need(#built result andalso #status result=0,"projection signatures on " ^ name ^ ": " ^ #messages result ^ #output result)
         val ()=need(String.isSubstring "PASS foreign projection signatures" (#output result),"host did not finish projections")
     in say("PASS foreign projection signatures on " ^ name ^ " with Rune Basis\n") end
-  fun noRegionInference () =
+  fun noRegionInference subject =
     let val host=Hosts.get "mlkit"
         val wrapper=directory ^ "/mlkit-no-ri"
         val ()=mkdirs directory
         val ()=write(wrapper,"#!/bin/sh\nexec " ^ quote(#program host) ^ " -no_ri \"$@\"\n")
         val ()=Posix.FileSys.chmod(wrapper,Posix.FileSys.S.flags[Posix.FileSys.S.irusr,Posix.FileSys.S.iwusr,Posix.FileSys.S.ixusr])
         val sources=List.concat(List.map Hosts.portable["unicode","json","language/c","ffi/model"])
-          @ ["tests/lib/ffi/model/policy.sml"]
+          @ (if subject="target" then Hosts.portable "test/unit" else [])
+          @ ["tests/lib/ffi/model/" ^ subject ^ ".sml"]
         val result=Hosts.build{host={name="mlkit",program=fromRoot wrapper,library= #library host},name="policy-no-ri",
           sources=sources,dir=directory ^ "/no-ri",runDir=root,timeout=600,memory=2048}
         val ()=need(#built result andalso #status result=0,"MLKit -no_ri: " ^ #messages result ^ #output result)
-    in need(String.isSubstring "PASS foreign policy:" (#output result),"MLKit -no_ri did not finish");
-       say("PASS foreign policy on MLKit -no_ri; default region inference remains HOST-BUG\n") end
+        val marker=if subject="target" then "SUMMARY 19 tests, 19 passed" else "PASS foreign policy:"
+    in need(String.isSubstring marker (#output result),"MLKit -no_ri did not finish");
+       say("PASS foreign " ^ subject ^ " on MLKit -no_ri; default region inference remains HOST-BUG\n") end
   fun native ()=
     let val ()=inventory "linux-x86_64" "sdl"
         val output=directory ^ "/fixture.json"
@@ -99,7 +101,8 @@ struct
         in inventory target "win32";inventory target "sdl";
            say(command ("win32-policy-" ^ bits)(["bin/rune-ffi-model","policy","ffi/targets/" ^ target ^ ".json",
              "tests/ffi/model/win32.ffi",directory ^ "/win32-policy.json"] @ roots target)) end)
-    | main["model-nori"]=noRegionInference()
+    | main["model-nori"]=noRegionInference "policy"
+    | main["target-nori"]=noRegionInference "target"
     | main["goldens-prepare"]=prepare()
     | main["goldens",name]=host name
     | main _=raise Failed "expected native, windows 32|64, goldens-prepare, or goldens HOST"

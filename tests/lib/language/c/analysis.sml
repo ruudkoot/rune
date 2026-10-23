@@ -2,7 +2,7 @@
 structure CAnalysisTests =
 struct
   val integers={char=8,short=16,int=32,long=64,longLong=64}
-  fun scalar(size,alignment)={size=size,alignment=alignment,signed=NONE}
+  fun scalar(size,alignment):CLayout.scalar={size=size,alignment=alignment,signed=NONE}
   val objects={name="LP64-test",pointer=scalar(8,8),enumeration=scalar(4,4),maximumObject=valOf(IntInf.fromString "9223372036854775807"),
     scalars=[("char",scalar(1,1)),("signed char",scalar(1,1)),("unsigned char",scalar(1,1)),
       ("short",scalar(2,2)),("unsigned short",scalar(2,2)),("int",scalar(4,4)),("unsigned int",scalar(4,4)),

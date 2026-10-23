@@ -109,3 +109,10 @@ with `-no_ri`. Removing source-adjacent caches and rebuilding does not fix
 the default mode. The production libraries are unchanged for this compiler
 fault. The native library suite records `ffi.model.policy` as `HOST-BUG`;
 `ffi/model/mlkit-no-ri` retains the successful comparison as a separate job.
+
+The target profile decoder added on the same date reproduces this fault:
+`tests/lib/ffi/model/target.sml` stops with `alloc_lobjs: malloc returned
+NULL` in the default configuration, while the same sources pass all **19**
+checks with `-no_ri` under the same bounded host harness. The separate
+`ffi/model/target-mlkit-no-ri` job preserves that comparison. Production
+JSON and target decoding remain unchanged for MLKit.
