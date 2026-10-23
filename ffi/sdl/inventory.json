@@ -17,12 +17,10 @@
       },
       "public": "setMainReady",
       "raw": "SDL_SetMainReady",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -34,12 +32,10 @@
       },
       "public": "init",
       "raw": "SDL_Init",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -51,12 +47,10 @@
       },
       "public": "initSubSystem",
       "raw": "SDL_InitSubSystem",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -68,12 +62,10 @@
       },
       "public": "quitSubSystem",
       "raw": "SDL_QuitSubSystem",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -85,12 +77,10 @@
       },
       "public": "quit",
       "raw": "SDL_Quit",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -102,12 +92,10 @@
       },
       "public": "getError",
       "raw": "SDL_GetError",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -119,12 +107,10 @@
       },
       "public": "clearError",
       "raw": "SDL_ClearError",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -136,14 +122,13 @@
       },
       "public": "cleanup",
       "raw": "SDL_free",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
-      "projection": "lib/sdl/sdl.sml"
+      "projection": "lib/sdl/sdl.sml",
+      "projectionRole": "Internal ownership cleanup for getClipboardText; cleanup is not an exported SDL member. Raw SDL_free remains available."
     },
     {
       "foreign": "SDL_CreateWindow",
@@ -153,12 +138,10 @@
       },
       "public": "createWindow",
       "raw": "SDL_CreateWindow",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -170,12 +153,10 @@
       },
       "public": "destroyWindow",
       "raw": "SDL_DestroyWindow",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -187,12 +168,10 @@
       },
       "public": "getWindowID",
       "raw": "SDL_GetWindowID",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -204,12 +183,10 @@
       },
       "public": "setWindowTitle",
       "raw": "SDL_SetWindowTitle",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -221,12 +198,10 @@
       },
       "public": "getWindowSize",
       "raw": "SDL_GetWindowSize",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -238,12 +213,10 @@
       },
       "public": "setWindowSize",
       "raw": "SDL_SetWindowSize",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -255,12 +228,10 @@
       },
       "public": "showWindow",
       "raw": "SDL_ShowWindow",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -272,12 +243,10 @@
       },
       "public": "hideWindow",
       "raw": "SDL_HideWindow",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -289,12 +258,10 @@
       },
       "public": "pollEvent",
       "raw": "SDL_PollEvent",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -306,12 +273,10 @@
       },
       "public": "waitEvent",
       "raw": "SDL_WaitEvent",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -323,12 +288,10 @@
       },
       "public": "waitEventTimeout",
       "raw": "SDL_WaitEventTimeout",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -340,12 +303,10 @@
       },
       "public": "pushEvent",
       "raw": "SDL_PushEvent",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -357,12 +318,10 @@
       },
       "public": "getKeyboardState",
       "raw": "SDL_GetKeyboardState",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -374,12 +333,10 @@
       },
       "public": "getMouseState",
       "raw": "SDL_GetMouseState",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -391,12 +348,10 @@
       },
       "public": "startTextInput",
       "raw": "SDL_StartTextInput",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -408,12 +363,10 @@
       },
       "public": "stopTextInput",
       "raw": "SDL_StopTextInput",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -425,12 +378,10 @@
       },
       "public": "createSurface",
       "raw": "SDL_CreateSurface",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -442,12 +393,10 @@
       },
       "public": "destroySurface",
       "raw": "SDL_DestroySurface",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -459,12 +408,10 @@
       },
       "public": "lockSurface",
       "raw": "SDL_LockSurface",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -476,12 +423,10 @@
       },
       "public": "unlockSurface",
       "raw": "SDL_UnlockSurface",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -493,12 +438,10 @@
       },
       "public": "fillSurfaceRect",
       "raw": "SDL_FillSurfaceRect",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -510,12 +453,10 @@
       },
       "public": "blitSurface",
       "raw": "SDL_BlitSurface",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -527,12 +468,10 @@
       },
       "public": "createRenderer",
       "raw": "SDL_CreateRenderer",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -544,12 +483,10 @@
       },
       "public": "createSoftwareRenderer",
       "raw": "SDL_CreateSoftwareRenderer",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -561,12 +498,10 @@
       },
       "public": "destroyRenderer",
       "raw": "SDL_DestroyRenderer",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -578,12 +513,10 @@
       },
       "public": "setRenderDrawColor",
       "raw": "SDL_SetRenderDrawColor",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -595,12 +528,10 @@
       },
       "public": "renderClear",
       "raw": "SDL_RenderClear",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -612,12 +543,10 @@
       },
       "public": "renderPoint",
       "raw": "SDL_RenderPoint",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -629,12 +558,10 @@
       },
       "public": "renderLine",
       "raw": "SDL_RenderLine",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -646,12 +573,10 @@
       },
       "public": "renderRect",
       "raw": "SDL_RenderRect",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -663,12 +588,10 @@
       },
       "public": "renderFillRect",
       "raw": "SDL_RenderFillRect",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -680,12 +603,10 @@
       },
       "public": "renderPresent",
       "raw": "SDL_RenderPresent",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -697,12 +618,10 @@
       },
       "public": "renderReadPixels",
       "raw": "SDL_RenderReadPixels",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -714,12 +633,10 @@
       },
       "public": "createTextureFromSurface",
       "raw": "SDL_CreateTextureFromSurface",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -731,12 +648,10 @@
       },
       "public": "destroyTexture",
       "raw": "SDL_DestroyTexture",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -748,12 +663,10 @@
       },
       "public": "renderTexture",
       "raw": "SDL_RenderTexture",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -765,12 +678,10 @@
       },
       "public": "renderDebugText",
       "raw": "SDL_RenderDebugText",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -782,12 +693,10 @@
       },
       "public": "hasClipboardText",
       "raw": "SDL_HasClipboardText",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -799,12 +708,10 @@
       },
       "public": "getClipboardText",
       "raw": "SDL_GetClipboardText",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -816,12 +723,10 @@
       },
       "public": "setClipboardText",
       "raw": "SDL_SetClipboardText",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -833,12 +738,10 @@
       },
       "public": "getTicks",
       "raw": "SDL_GetTicks",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -850,12 +753,10 @@
       },
       "public": "getTicksNS",
       "raw": "SDL_GetTicksNS",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -867,12 +768,10 @@
       },
       "public": "getPerformanceCounter",
       "raw": "SDL_GetPerformanceCounter",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -884,12 +783,10 @@
       },
       "public": "getPerformanceFrequency",
       "raw": "SDL_GetPerformanceFrequency",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     },
@@ -901,12 +798,10 @@
       },
       "public": "delay",
       "raw": "SDL_Delay",
-      "implementation": "implemented",
+      "implementation": "complete",
       "gate": "M7",
       "test": "sdl-contract",
-      "unresolved": [
-        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
-      ],
+      "unresolved": [],
       "policy": "core.ffi",
       "projection": "lib/sdl/sdl.sml"
     }
@@ -921,91 +816,91 @@
     {
       "foreign": "SDL_INIT_VIDEO",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SDL_INIT_EVENTS",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SDL_WINDOW_RESIZABLE",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SDL_WINDOW_HIDDEN",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SDL_WINDOW_FULLSCREEN",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SDL_EVENT_QUIT",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SDL_EVENT_WINDOW_RESIZED",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SDL_EVENT_KEY_DOWN",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SDL_EVENT_KEY_UP",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SDL_EVENT_TEXT_INPUT",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SDL_EVENT_MOUSE_MOTION",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SDL_EVENT_MOUSE_BUTTON_DOWN",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SDL_EVENT_MOUSE_BUTTON_UP",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SDL_PIXELFORMAT_RGBA8888",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SDL_PIXELFORMAT_ARGB8888",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     }
   ],
@@ -1014,5 +909,6 @@
       "foreign": "SDL_RunApp",
       "reason": "application-entry integration is explicitly outside the first delivery"
     }
-  ]
+  ],
+  "completionEvidence": "../../tests/ffi/evidence/release.md"
 }

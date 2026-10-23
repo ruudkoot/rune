@@ -633,319 +633,319 @@
     {
       "foreign": "WM_NCCREATE",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_CREATE",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_SIZE",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_PAINT",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_CLOSE",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_DESTROY",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_NCDESTROY",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_QUIT",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_KEYDOWN",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_KEYUP",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_CHAR",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_MOUSEMOVE",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_LBUTTONDOWN",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_LBUTTONUP",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_RBUTTONDOWN",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_RBUTTONUP",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_MBUTTONDOWN",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_MBUTTONUP",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_TIMER",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WM_APP",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WS_OVERLAPPEDWINDOW",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WS_VISIBLE",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "CS_HREDRAW",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "CS_VREDRAW",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SW_HIDE",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SW_SHOW",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "SW_SHOWNORMAL",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "PM_NOREMOVE",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "PM_REMOVE",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WHITE_BRUSH",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "BLACK_BRUSH",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "NULL_BRUSH",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "BLACK_PEN",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "WHITE_PEN",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "NULL_PEN",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "PS_SOLID",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "OPAQUE",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "TRANSPARENT",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "VK_SHIFT",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "VK_CONTROL",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "VK_MENU",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "VK_ESCAPE",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "VK_SPACE",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "VK_LEFT",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "VK_RIGHT",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "VK_UP",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "VK_DOWN",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "VK_RETURN",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "MK_LBUTTON",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "MK_RBUTTON",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "MK_MBUTTON",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "MK_SHIFT",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     },
     {
       "foreign": "MK_CONTROL",
       "gate": "M4",
-      "state": "planned",
+      "state": "complete",
       "policy": "preserve aliases and unknown bits; evaluate for target"
     }
   ],
@@ -1085,5 +1085,6 @@
       "result": 0
     }
   ],
-  "otherCallbackFailureResult": 0
+  "otherCallbackFailureResult": 0,
+  "completionEvidence": "../../tests/ffi/evidence/release.md"
 }

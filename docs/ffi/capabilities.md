@@ -73,6 +73,19 @@ are an application-testing tool, not evidence that an OS event occurred.
 
 ## Acceptance and performance
 
+Native reference-host acceptance includes documented compiler defects. All
+three tested SML/NJ variants can miss duplicate unsigned callback selectors
+through polymorphic `IntInf` equality; their generator fixture has 31 passes
+and that one explained failure. With MLKit's default region inference, the
+native program crashes before the fixture's first verdict; the unchanged 32 checks pass with
+`-no_ri`. The [SML/NJ report](../bugreport/smlnj/IntInf/normalized-selector-equality/BUGREPORT.md)
+and [MLKit report](../bugreport/mlkit/region-inference/BUGREPORT.md) retain
+reproductions and exact failure shapes. Production libraries contain no
+host workaround. The shipped Rune bytecode generator uses Rune's runtime;
+the separately supplied native generator wrappers are MLton and Poly/ML.
+Positive reference-host inspection agreement does not erase these negative
+fixture failures.
+
 The evidence distinguishes native checks, emulator checks, known host
 deviations, missing tools, sandbox restrictions, failed initial runs and
 successful exact reruns. A later successful rerun does not turn an earlier

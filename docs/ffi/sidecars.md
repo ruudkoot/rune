@@ -38,8 +38,10 @@ array expressions or behavioral attributes. Use original typedefs and tags.
 The original macro must exist and its argument count must agree. Function
 shims retain the original result and fixed-prefix C declarator types; only
 the variadic tail can add typed arguments. The generated C compiler applies
-C default promotions to that tail. Dynamic open-ended variadic calls remain
-unsupported. The manifest records the explicit prototype, original namespace
+C default promotions to that tail. Automatic public projection requires a
+fixed typed tail; callers can use the raw
+[`RuneForeign.prepareVariadic` interface](runtime.md) for explicit promoted
+variadic calls. The manifest records the explicit prototype, original namespace
 and source, exported shim symbol and `typed-c-shim` mechanism.
 
 Selection is explicit. Unrelated, unselected header declarations can remain

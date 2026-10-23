@@ -43,3 +43,37 @@ The correction `49d5113a6` and an isolated-directory regression are recorded
 in [the focused receipt](example-cwd.md); the exact original law bytecode
 subsequently reports nine passes and no failures. A new cumulative check runs
 in the independent `runeffi-check-final` worktree after the SDL packaging fix.
+
+That complete pinned-static-libffi run, source `02360e6a9`, reports
+**19,699** cases: **19,021 PASS**, **3 SKIP**, **675 FAIL**, in 2,068.5 seconds
+(15,292.4 seconds CPU), run `20261023-134115-3192404`. All failures share one
+test-oracle cause: **337 GNU readelf** and **337 LLVM** comparisons consume
+the linked libffi C/assembly compilation units after the correct Rune table;
+the remaining launcher fault probe fails before reaching its planted
+`addr2line` error. No unrelated failed case occurs in that run.
+
+The [native debug repair](native-debug-static.md), delivery `9fc0c929c`,
+scopes rows by sized Rune function symbols and resets LLVM tables per unit.
+Both real readers pass for the compiler, hello and interrupt fixture; the
+complete launcher fault suite and 13 added external-unit/negative assertions
+pass. The original static library retains its debug information. A later
+complete run is required; this 675-failure receipt remains failed.
+
+The subsequent `303db25bc` run, `20261023-142919-3454924`, completes
+**19,699** cases: **19,694 PASS**, **4 SKIP**, **1 FAIL**, in 2,254.3 seconds
+(16,126.2 seconds CPU). All native debug checks now pass. The sole failure is
+`basis/rune-jit/posix_process`, whose
+`Posix.Process.W.untraced/waitpid-without-it` assertion raises an exception.
+Its dependent stale-deviation check adds the fourth skip. Exact frozen
+bytecode/VM repeats initially pass; the original exception identity is not
+retained by that assertion harness. Investigation and a subsequent fixture
+repair have separate causal probes; this full run remains failed.
+
+At `116109b1d`, run `20261023-151806-3816580` reports **19,695 PASS**,
+**3 SKIP**, **1 FAIL** of 19,699 cases, in 1,959.9 seconds (14,464.2 seconds
+CPU). The repaired POSIX fixture and all other functional checks pass.
+`make/check-docs-generated` alone fails because its two POSIX coverage pages
+still describe the preceding fixture. Regenerating the Basis documentation
+updates the recorded check count and adds the deliberate-resume test link;
+delivery `7997c95a4` contains those two generated pages. The following full
+snapshot includes both this correction and canonical Win32 source ownership.

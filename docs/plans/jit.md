@@ -994,6 +994,14 @@ of the VM's stack; OSR in and out as a jump; the deoptimisation of a
 tier-1 frame, which is the interpreter's frame already -- rests on this
 one rule, and it is the rule that cannot be retrofitted.
 
+Runeffi's delivered callback entry (2026-10-23) adds a bounded interpreter
+scope above a parked foreign caller. It never calls this driver or enters
+JIT code, and returns at its delimiter before reading the caller's native
+return word. Nested foreign calls may create another scope, up to the
+documented limit of 64. Suspended frames remain roots with their precise
+live masks; code replacement and unit loading are guarded while they are
+parked. See [the callback contract](../ffi/callbacks.md).
+
 **Into C, once.** Every call from compiled code into the runtime -- a
 helper, a primitive, the collector, and later a foreign function --
 goes through one sequence: `sp`, `fp`, `pc` and the count written to the
@@ -2556,9 +2564,11 @@ becomes critical:
   2. **At M9,** where a typed calling convention appears: unboxed
      arguments in machine registers are what a foreign call wants.
 
-  Callbacks from C into SML would break the no-nesting rule: decide
-  before M9 whether they exist and, if so, that they run a nested driver
-  of bounded depth, and that no continuation is captured across one.
+  Runeffi now implements owner-thread callbacks through bounded interpreter
+  delimiters, with no nested driver, JIT tiering or continuation capture
+  across foreign frames. The parked caller resumes after native return,
+  cleanup and saved-exception propagation; see
+  [the delivered protocol](../ffi/callbacks.md).
 * **Incremental compilation, the REPL, dynamic modules, hot reload.**
   Consumers of M3's entries, M6's and M11's invalidation, and M8's
   metadata per unit. What this roadmap gives beyond that: a JIT that

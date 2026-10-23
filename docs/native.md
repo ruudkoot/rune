@@ -41,6 +41,16 @@ may sit in registers between the points where it must be exact:
   the code reloads the base of the stack; the frames, the constants, the
   globals and the closure are loaded afresh where they are used.
 
+**Foreign callbacks have a delimiter.** An FFI-enabled native executable
+retains the stack-bytecode callback interpreter. An owning-thread callback
+enters that bounded interpreter above its parked native caller and returns
+at the callback root frame; it never reenters `rune_enter`. The suspended
+native frames remain GC roots, and stack/frame relocation restores their
+addresses from stable identities. Nested foreign calls use the same bounded
+scope protocol. Exceptions return an annotated foreign failure first, then
+propagate after native return and cleanup. Loading, image operations and
+other lifecycle changes obey [the callback guards](ffi/callbacks.md).
+
 **Three freedoms**, none of which changes what runs or what a counter says:
 
 * the count is added once for each straight run of instructions (see

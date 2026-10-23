@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "milestone": "M8",
-  "milestoneState": "planned",
+  "milestoneState": "complete",
   "implementation": "Win32NativeFn",
   "signature": "WIN32",
   "sharedTypes": "Win32Common.Types",
@@ -10,50 +10,159 @@
   "policy": "core.ffi",
   "provenance": "source.json",
   "integerHelpers": "helpers.json",
-  "targets": ["windows-x86", "windows-x86_64"],
-  "executionModes": {"windows-x86": ["stack interpreter", "register interpreter"], "windows-x86_64": ["stack interpreter", "register interpreter", "baseline JIT", "optimizing JIT"]},
-  "unavailableExecutionModes": {"windows-x86": ["native JIT backend"]},
+  "targets": [
+    "windows-x86",
+    "windows-x86_64"
+  ],
+  "executionModes": {
+    "windows-x86": [
+      "stack interpreter",
+      "register interpreter"
+    ],
+    "windows-x86_64": [
+      "stack interpreter",
+      "register interpreter",
+      "baseline JIT",
+      "optimizing JIT"
+    ]
+  },
+  "unavailableExecutionModes": {
+    "windows-x86": [
+      "native JIT backend"
+    ]
+  },
   "runtime": "generic libffi dynamic calls and owning-VM-thread callbacks",
-  "callbackFailure": {"WM_NCCREATE": 0, "WM_CREATE": -1, "default": 0},
+  "callbackFailure": {
+    "WM_NCCREATE": 0,
+    "WM_CREATE": -1,
+    "default": 0
+  },
   "messages": {
-    "incoming": ["WM_NCCREATE", "WM_CREATE", "WM_SIZE", "WM_PAINT", "WM_CLOSE", "WM_DESTROY", "WM_NCDESTROY", "WM_KEYDOWN", "WM_KEYUP", "WM_CHAR", "WM_MOUSEMOVE", "WM_LBUTTONDOWN", "WM_LBUTTONUP", "WM_MBUTTONDOWN", "WM_MBUTTONUP", "WM_RBUTTONDOWN", "WM_RBUTTONUP", "WM_TIMER", "WM_APP range", "unknown raw code"],
-    "syntheticRejected": ["WM_NCCREATE", "WM_CREATE", "WM_DESTROY", "WM_NCDESTROY", "unknown messages"],
+    "incoming": [
+      "WM_NCCREATE",
+      "WM_CREATE",
+      "WM_SIZE",
+      "WM_PAINT",
+      "WM_CLOSE",
+      "WM_DESTROY",
+      "WM_NCDESTROY",
+      "WM_KEYDOWN",
+      "WM_KEYUP",
+      "WM_CHAR",
+      "WM_MOUSEMOVE",
+      "WM_LBUTTONDOWN",
+      "WM_LBUTTONUP",
+      "WM_MBUTTONDOWN",
+      "WM_MBUTTONUP",
+      "WM_RBUTTONDOWN",
+      "WM_RBUTTONUP",
+      "WM_TIMER",
+      "WM_APP range",
+      "unknown raw code"
+    ],
+    "syntheticRejected": [
+      "WM_NCCREATE",
+      "WM_CREATE",
+      "WM_DESTROY",
+      "WM_NCDESTROY",
+      "unknown messages"
+    ],
     "unknownDefault": "only inside the original native callback; preserve exact raw payload",
     "defaultAfterSelfDestruction": "return message failure value without a stale-window native call",
-    "applicationRange": [32768, 49151],
-    "sizeRange": [0, 65535],
-    "mouseCoordinateRange": [-32768, 32767],
-    "mouseButtonIdentities": {"left": 1, "middle": 2, "right": 3},
+    "applicationRange": [
+      32768,
+      49151
+    ],
+    "sizeRange": [
+      0,
+      65535
+    ],
+    "mouseCoordinateRange": [
+      -32768,
+      32767
+    ],
+    "mouseButtonIdentities": {
+      "left": 1,
+      "middle": 2,
+      "right": 3
+    },
     "mouseMotionMask": "Win32 MK_* bits",
     "queuedCopyLifetime": "single-use dispatch or discard; provider shutdown releases unused copies"
   },
   "windows": {
     "parent": "NONE",
     "extendedStyle": 0,
-    "classStyles": ["CS_HREDRAW", "CS_VREDRAW"],
-    "windowStyles": ["WS_OVERLAPPEDWINDOW", "WS_VISIBLE"],
-    "showCommands": [0, 1, 5, 8, 9, 10],
+    "classStyles": [
+      "CS_HREDRAW",
+      "CS_VREDRAW"
+    ],
+    "windowStyles": [
+      "WS_OVERLAPPEDWINDOW",
+      "WS_VISIBLE"
+    ],
+    "showCommands": [
+      0,
+      1,
+      5,
+      8,
+      9,
+      10
+    ],
     "creationIdentity": "reserved before native creation and canonical across creation-time callbacks",
     "destruction": "nested use permitted; recursive destruction and active paint destruction reject"
   },
   "drawing": {
     "pens": "PS_SOLID; nonnegative width",
-    "stockBrushes": [0, 1, 2, 3, 4, 5],
-    "stockPens": [6, 7, 8],
+    "stockBrushes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "stockPens": [
+      6,
+      7,
+      8
+    ],
     "colour": "RGB only; palette and reserved high bits reject",
-    "backgroundModes": ["TRANSPARENT", "OPAQUE"],
+    "backgroundModes": [
+      "TRANSPARENT",
+      "OPAQUE"
+    ],
     "nativeText": "UTF-16 with WTF-8 preservation",
     "portableTextContract": "ASCII",
     "selectedObjectDeletion": "ERROR_BUSY",
     "paintLifetime": "BeginPaint/EndPaint bracket including exception paths"
   },
-  "unsupported": ["foreign-thread SML callbacks", "child windows", "menus", "dialogs", "palette colour flags", "explicit minimized/maximized requests", "arbitrary GDI object classes"],
+  "unsupported": [
+    "foreign-thread SML callbacks",
+    "child windows",
+    "menus",
+    "dialogs",
+    "palette colour flags",
+    "explicit minimized/maximized requests",
+    "arbitrary GDI object classes"
+  ],
   "acceptance": {
     "coordinator": "tests/ffi/win32/native/check.sml",
     "sharedContract": "tests/ffi/win32/contract.sml",
     "focusedContract": "tests/ffi/win32/native/suite.sml",
     "sameApplication": "examples/win32/app.sml",
-    "commands": ["bin/rune-win32-check contract 32", "bin/rune-win32-check contract 64", "bin/rune-win32-check app 32", "bin/rune-win32-check app 64"],
-    "requiredBeforeCompletion": ["dated component evidence", "repository integration checks", "Windows regression acceptance", "portability and host checks", "release acceptance"]
-  }
+    "commands": [
+      "bin/rune-win32-check contract 32",
+      "bin/rune-win32-check contract 64",
+      "bin/rune-win32-check app 32",
+      "bin/rune-win32-check app 64"
+    ],
+    "requiredBeforeCompletion": [
+      "dated component evidence",
+      "repository integration checks",
+      "Windows regression acceptance",
+      "portability and host checks",
+      "release acceptance"
+    ]
+  },
+  "completionEvidence": "../../tests/ffi/evidence/release.md"
 }

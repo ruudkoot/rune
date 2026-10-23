@@ -21,13 +21,13 @@ implementation progress separately from this original design baseline.
 | M1: reusable C frontend | M0 | complete |
 | M2: binding model and sidecars | M1 | complete |
 | M3: generic dynamic calls | M0 | complete |
-| M4: layout, marshalling and generated shims | M2, M3 | planned |
-| M5: callbacks and VM lifecycle | M3, M4 | planned |
-| M6: generator and build integration | M2, M3, M4, M5 | planned |
-| M7: core SDL3 bindings | M6 | planned |
-| M8: native Win32 GUI bindings | M6 | planned |
-| M9: Win32 over SDL3 and mocks | M7, M8 | planned |
-| M10: portability and release acceptance | M7, M8, M9 | planned |
+| M4: layout, marshalling and generated shims | M2, M3 | complete |
+| M5: callbacks and VM lifecycle | M3, M4 | complete |
+| M6: generator and build integration | M2, M3, M4, M5 | complete |
+| M7: core SDL3 bindings | M6 | complete |
+| M8: native Win32 GUI bindings | M6 | complete |
+| M9: Win32 over SDL3 and mocks | M7, M8 | complete |
+| M10: portability and release acceptance | M7, M8, M9 | complete |
 
 M1/M2 and M3 can progress independently after M0; M7 and M8 can progress
 independently after M6. Complete and commit each milestone with its evidence
@@ -35,8 +35,11 @@ before declaring it done. A failed or unavailable completion gate leaves
 that part outstanding. Additions to a delivered inventory are explicit
 roadmap changes, with their tests and dependencies.
 
-M2 completion evidence: [binding models and sidecars](../../tests/ffi/evidence/m2.md)
-(2026-10-23).
+Delivery acceptance on 2026-10-23 is recorded in the
+[integrated release evidence](../../tests/ffi/evidence/release.md). It links
+each milestone to its artifacts, commands and results, preserving earlier
+failed runs and known host/platform limitations. Remote CI and production
+binary-distribution checks keep their separately stated status.
 
 The original brief is accounted for as follows:
 
@@ -246,8 +249,11 @@ generated code, not runtime knowledge of SDL or Win32.
   each generator backend.
 * `lib/ffi` holds shared support; `lib/ffi/sdl` and `lib/ffi/win32` hold
   binding libraries. Separate generated native/raw code from handwritten
-  SML emulation and mocks. Every generated file names its inputs, generator
-  version and regeneration command, and says not to edit it.
+  SML emulation and mocks. Every generated file is marked with its
+  generator/schema and must not be edited by hand. Immutable output sets retain
+  input/target identities, per-member source maps and artifact hashes;
+  their documentation and generation targets give regeneration commands.
+  Shared signature text remains stable across implementation-only changes.
 * Check in reproducible binding SML and review its changes. Build optional
   shim binaries in target-specific build directories; do not commit them.
   Rune's ordinary library `MANIFEST` remains generated and uncommitted.
@@ -277,8 +283,10 @@ The native implementation maps logical resources to native handles; SDL
 and mocks map them to their own state. Pointers are not fabricated to make
 an emulator look native.
 
-For example, these are representative members of the planned `User`
-substructure, not the complete signature or an existing API:
+The original design sketch below illustrates SML projection choices. The
+delivered API uses the [WIN32 signature](../../lib/ffi/win32/common/win32_sig.sml)
+and [shared types](../../lib/ffi/win32/common/types_sig.sml), documented in
+[the implementation contract](../ffi/contracts.md):
 
 ```sml
 type window
@@ -297,7 +305,7 @@ determines a C layout. Scope paint contexts dynamically so escaped or
 already-ended contexts fail predictably. Preserve significant distinctions
 such as borrowed stock objects versus owned created objects.
 
-Provide separate `SDLRaw` and `Win32Raw` structures preserving foreign
+The separate `SDLGeneratedRaw` and `Win32GeneratedRaw` structures preserve foreign
 names wherever legal in SML, explicit buffers/pointers, sizes, status
 results and calling conventions. Use a documented, collision-checked escape
 for SML keywords, leading underscores and other names SML cannot spell;
@@ -353,10 +361,13 @@ tooling. Provide `make ffi`, `make check-ffi-generated`, and focused FFI test
 targets in M6. These targets now exist; their prerequisites and explicit
 regeneration commands are documented in [generation](../ffi/generation.md).
 Invoking `rune --build` compiles declared SML inputs; it does not launch a
-header parser or arbitrary shell hook. Release/install builds ship the
-generated SML and any required target shim binaries.
+header parser or arbitrary shell hook. Release/install builds ship generated
+SML, optional shim sources, provenance and build entrypoints. Applications
+compile and deploy target shim binaries and native libraries explicitly,
+using the documented dependencies and commands.
 
-Use the existing form, illustrated for a planned native example:
+Use the existing form, illustrated here for native selection; the delivered
+[shared example](../../examples/win32/README.md) supplies the concrete files:
 
 ```text
 win32_types.sml
@@ -370,8 +381,8 @@ main.sml
 
 `win32_virtual.sml` declares `structure Win32 = _virtual : WIN32`.
 The selected implementation exports `_export structure Win32 : WIN32 = ...`.
-Provide `native-windows.build`, `sdl-linux.build` and `mock.build` entrypoints
-with equivalent client inputs. The mock build needs neither DLLs nor SDL.
+The delivered `examples/win32/native.build`, `sdl.build` and `mock.build`
+entrypoints use equivalent client inputs. The mock build needs neither DLLs nor SDL.
 Selection is explicit; loading a native library must never silently choose
 an emulator after failure. REPL use follows Rune's existing build/library
 loading path, without restarting the VM to add a native symbol.
@@ -518,8 +529,8 @@ Nested SML-to-C-to-SML calls are supported within these delimiters. Check a
 finite documented foreign nesting limit before another native entry; pure
 SML recursion retains its existing stack behavior. Keep existing engine
 handover/no-accidental-nesting tests and add callback-specific tests. The
-[JIT roadmap](jit.md), runtime README and architecture contract must be
-updated with the narrow exception when M5 implements it.
+[JIT roadmap](jit.md), runtime README, native execution and architecture
+contracts now describe the delivered bounded interpreter entry.
 
 A callback catches an SML exception at its delimiter, stores it as a GC
 root in the enclosing foreign activation, and returns the sidecar-declared
@@ -693,7 +704,7 @@ pass. The primitive inventory is generic and fixed before adding bindings.
 
 ### M4: layout, marshalling and generated shims
 
-**Depends on:** M2, M3. **State:** planned.
+**Depends on:** M2, M3. **State:** complete.
 
 Implement target layouts, structured conversions, owned/borrowed buffers,
 alias tracking, text boundaries, native errors and variadic outbound calls.
@@ -711,7 +722,7 @@ fixtures prove capture timing. Unsupported layouts fail before native entry.
 
 ### M5: callbacks and VM lifecycle
 
-**Depends on:** M3, M4. **State:** planned.
+**Depends on:** M3, M4. **State:** complete.
 
 Implement the foreign activation/delimiter, callback registry, owner-thread
 checks, pending-exception policy, bounded reentry and engine-specific return
@@ -731,7 +742,7 @@ for this gate, including native callback support.
 
 ### M6: generator and build integration
 
-**Depends on:** M2, M3, M4, M5. **State:** planned.
+**Depends on:** M2, M3, M4, M5. **State:** complete.
 
 Deliver `runeffi.build`, the self-hosted executable/wrapper, CLI above,
 deterministic SML/raw/native generation, optional adapters, documentation,
@@ -750,7 +761,7 @@ cannot publish partial output. Mock builds do not open native libraries.
 
 ### M7: core SDL3 bindings
 
-**Depends on:** M6. **State:** planned.
+**Depends on:** M6. **State:** complete.
 
 Complete the SDL inventory, including ownership and event-union decoding,
 startup/main-thread rules and explicit resource sessions. Deliver the SDL
@@ -768,7 +779,7 @@ does not stand for a real desktop result.
 
 ### M8: native Win32 GUI bindings
 
-**Depends on:** M6. **State:** planned.
+**Depends on:** M6. **State:** complete.
 
 Complete the Win32 inventory, W-API text policy, native resource mappings,
 window-procedure adapter and error/status projections. Resolve kernel32,
@@ -786,7 +797,7 @@ runtime primitives are added.
 
 ### M9: Win32 over SDL3 and mocks
 
-**Depends on:** M7, M8. **State:** planned.
+**Depends on:** M7, M8. **State:** complete.
 
 Implement handwritten SML resource/message state machines over generated
 SDL3 calls, and a deterministic SML mock with injected input/time/failures
@@ -807,7 +818,7 @@ or a display server.
 
 ### M10: portability and release acceptance
 
-**Depends on:** M7, M8, M9. **State:** planned.
+**Depends on:** M7, M8, M9. **State:** complete.
 
 Finish the ABI/engine matrix, installation/provisioning and provenance
 documentation. Package generated sources, dependency notices and target

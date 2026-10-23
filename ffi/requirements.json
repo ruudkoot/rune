@@ -10,12 +10,14 @@
         "M6"
       ],
       "delivery": "projection rules and raw access; M0, M2, M6",
-      "roadmapLine": 41,
+      "roadmapLine": 48,
       "acceptanceOwners": [
         "tests/ffi/contracts.sml and source/oracle fixtures",
         "sidecar validation and projected signature goldens",
         "deterministic generation and build dependency tests"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-2",
@@ -26,12 +28,14 @@
         "M9"
       ],
       "delivery": "shared Win32 contract and native/SDL/mock builds; M0, M6, M9",
-      "roadmapLine": 42,
+      "roadmapLine": 49,
       "acceptanceOwners": [
         "tests/ffi/contracts.sml and source/oracle fixtures",
         "deterministic generation and build dependency tests",
         "shared native/SDL/mock contract suite"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-3",
@@ -42,12 +46,14 @@
         "M5"
       ],
       "delivery": "runtime boundary; M3, M4, M5",
-      "roadmapLine": 43,
+      "roadmapLine": 50,
       "acceptanceOwners": [
         "generic native-call and disabled-runtime fixtures",
         "native layout and marshalling probes",
         "GC/reentry/lifecycle stress tests"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-4",
@@ -57,11 +63,13 @@
         "M10"
       ],
       "delivery": "runtime boundary and regression checks; M3, M10",
-      "roadmapLine": 44,
+      "roadmapLine": 51,
       "acceptanceOwners": [
         "generic native-call and disabled-runtime fixtures",
         "release capability and performance matrix"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-5",
@@ -70,10 +78,12 @@
         "M2"
       ],
       "delivery": "extensible binding model; M2; future work below",
-      "roadmapLine": 45,
+      "roadmapLine": 52,
       "acceptanceOwners": [
         "sidecar validation and projected signature goldens"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-6",
@@ -84,12 +94,14 @@
         "M2"
       ],
       "delivery": "input provenance and sidecars; M0, M1, M2",
-      "roadmapLine": 46,
+      "roadmapLine": 53,
       "acceptanceOwners": [
         "tests/ffi/contracts.sml and source/oracle fixtures",
         "C frontend fixtures and independent header comparisons",
         "sidecar validation and projected signature goldens"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-7",
@@ -99,11 +111,13 @@
         "M10"
       ],
       "delivery": "`ffi/` source policy; M0, M10; pinned acquisition is the agreed fallback",
-      "roadmapLine": 47,
+      "roadmapLine": 54,
       "acceptanceOwners": [
         "tests/ffi/contracts.sml and source/oracle fixtures",
         "release capability and performance matrix"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-8",
@@ -112,10 +126,12 @@
         "M6"
       ],
       "delivery": "output ownership; M6",
-      "roadmapLine": 48,
+      "roadmapLine": 55,
       "acceptanceOwners": [
         "deterministic generation and build dependency tests"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-9",
@@ -124,10 +140,12 @@
         "M7"
       ],
       "delivery": "the core SDL3 inventory; M7",
-      "roadmapLine": 49,
+      "roadmapLine": 56,
       "acceptanceOwners": [
         "SDL events/rendering and interactive smoke tests"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-10",
@@ -136,10 +154,12 @@
         "M8"
       ],
       "delivery": "the Win32 inventory; M8",
-      "roadmapLine": 50,
+      "roadmapLine": 57,
       "acceptanceOwners": [
         "Win32 native 32/64-bit GUI tests"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-11",
@@ -148,10 +168,12 @@
         "M9"
       ],
       "delivery": "shared application and SDL implementation; M9",
-      "roadmapLine": 51,
+      "roadmapLine": 58,
       "acceptanceOwners": [
         "shared native/SDL/mock contract suite"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-12",
@@ -160,10 +182,12 @@
         "M9"
       ],
       "delivery": "deterministic SML implementation and shared contract tests; M9",
-      "roadmapLine": 52,
+      "roadmapLine": 59,
       "acceptanceOwners": [
         "shared native/SDL/mock contract suite"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-13",
@@ -172,10 +196,12 @@
         "M6"
       ],
       "delivery": "existing build syntax and generation dependencies; M6",
-      "roadmapLine": 53,
+      "roadmapLine": 60,
       "acceptanceOwners": [
         "deterministic generation and build dependency tests"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-14",
@@ -184,10 +210,12 @@
         "M0"
       ],
       "delivery": "research below; executable design comparisons in M0",
-      "roadmapLine": 54,
+      "roadmapLine": 61,
       "acceptanceOwners": [
         "tests/ffi/contracts.sml and source/oracle fixtures"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-15",
@@ -198,12 +226,14 @@
         "M4"
       ],
       "delivery": "architecture and library boundaries; M1, M2, M4",
-      "roadmapLine": 55,
+      "roadmapLine": 62,
       "acceptanceOwners": [
         "C frontend fixtures and independent header comparisons",
         "sidecar validation and projected signature goldens",
         "native layout and marshalling probes"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-16",
@@ -215,13 +245,15 @@
         "M10"
       ],
       "delivery": "dynamic calls and resource lifecycle; M3, M5, M8, M10",
-      "roadmapLine": 56,
+      "roadmapLine": 63,
       "acceptanceOwners": [
         "generic native-call and disabled-runtime fixtures",
         "GC/reentry/lifecycle stress tests",
         "Win32 native 32/64-bit GUI tests",
         "release capability and performance matrix"
-      ]
+      ],
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "brief-17",
@@ -232,11 +264,13 @@
         "M10"
       ],
       "delivery": "backend separation and future work below",
-      "roadmapLine": 57,
+      "roadmapLine": 64,
       "acceptanceOwners": [
         "reserved backend contracts and explicit release capability exclusions"
       ],
-      "implementationScope": "deferred"
+      "implementationScope": "deferred",
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "runtime-memory",
@@ -249,7 +283,8 @@
       "acceptanceOwners": [
         "native buffers plus collection and callback stress"
       ],
-      "state": "planned"
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "runtime-lifecycle",
@@ -262,7 +297,8 @@
       "acceptanceOwners": [
         "descriptor-only images and active-resource rejection"
       ],
-      "state": "planned"
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "runtime-errors",
@@ -275,7 +311,8 @@
       "acceptanceOwners": [
         "cleanup-clobbers-error fixture and native failures"
       ],
-      "state": "planned"
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "runtime-callbacks",
@@ -287,7 +324,8 @@
       "acceptanceOwners": [
         "nested C/SML callbacks, exceptions, foreign-thread refusal and release guards"
       ],
-      "state": "planned"
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "runtime-engines",
@@ -300,7 +338,8 @@
       "acceptanceOwners": [
         "engine matrix, moving stacks and suspended JIT/native frames"
       ],
-      "state": "planned"
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "runtime-constructs",
@@ -314,7 +353,8 @@
       "acceptanceOwners": [
         "positive/negative syntax, native ABI oracles and capability reports"
       ],
-      "state": "planned"
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "runtime-library-rules",
@@ -326,7 +366,8 @@
       "acceptanceOwners": [
         "ISA/doc checks, ordinary-library access and host agreement"
       ],
-      "state": "planned"
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "runtime-validation",
@@ -340,7 +381,8 @@
       "acceptanceOwners": [
         "dated commands, toolchains, limitations and milestone commits"
       ],
-      "state": "planned"
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     },
     {
       "id": "runtime-performance",
@@ -351,7 +393,13 @@
       "acceptanceOwners": [
         "paired phase measurements without machine-independent timing thresholds"
       ],
-      "state": "planned"
+      "state": "complete",
+      "completionEvidence": "tests/ffi/evidence/release.md"
     }
-  ]
+  ],
+  "completion": {
+    "date": "2026-10-23",
+    "evidence": "tests/ffi/evidence/release.md",
+    "scope": "Required C/SDL3/Win32 delivery and explicit extension-point reservations; deferred backend implementations remain outside delivery."
+  }
 }
