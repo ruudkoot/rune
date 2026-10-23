@@ -25,6 +25,10 @@ through pointers while C performs their copies. C handles bitfields and
 compiler packing. This source-generation component does not execute
 commands; the generator/build integration supplies provenance and rebuilds.
 
+[`ForeignTarget`](str/ForeignTarget.md) validates version-one target profiles before generation. Widths,
+alignments, size type, byte order, enum policy and preprocessing macros are data;
+the generator does not infer them from the host running Rune.
+
 [How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md)
 
 ## Foreign interfaces
@@ -37,6 +41,7 @@ commands; the generator/build integration supplies provenance and rebuilds.
 | [`FOREIGN_POLICY`](sig/FOREIGN_POLICY.md) | Declarative FFI policy; reading a sidecar never executes its adapters. |
 | [`FOREIGN_PROJECTION`](sig/FOREIGN_PROJECTION.md) | Structured public interfaces assembled from native values and outputs. |
 | [`FOREIGN_SHIM`](sig/FOREIGN_SHIM.md) | Typed C adapters for declarations outside the dynamic scalar ABI. |
+| [`FOREIGN_TARGET`](sig/FOREIGN_TARGET.md) | Explicit target ABI profiles for foreign layout and marshalling. |
 | [`FOREIGN_VALIDATE`](sig/FOREIGN_VALIDATE.md) | Declaration-aware checks before safe binding generation. |
 
 ---

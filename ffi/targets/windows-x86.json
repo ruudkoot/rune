@@ -13,7 +13,10 @@
     "longLong": 8,
     "pointer": 4,
     "size": 4,
-    "wchar": 2
+    "wchar": 2,
+    "float": 4,
+    "double": 8,
+    "bool": 1
   },
   "alignments": {
     "char": 1,
@@ -22,7 +25,10 @@
     "long": 4,
     "longLong": 8,
     "pointer": 4,
-    "double": 8
+    "double": 8,
+    "wchar": 2,
+    "float": 4,
+    "bool": 1
   },
   "verifiedBy": "tests/ffi/oracle.c",
   "predefined": [
@@ -110,5 +116,7 @@
       "_INTEGRAL_MAX_BITS",
       "64"
     ]
-  ]
+  ],
+  "enumRule": "signed",
+  "sizeType": "unsigned int"
 }

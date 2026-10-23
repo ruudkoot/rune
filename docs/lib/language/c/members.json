@@ -1,5 +1,88 @@
 {
  "signatures": {
+  "C_ANALYSIS": {
+   "doc": "Typed declaration analysis over explicit target C facts.\n\n",
+   "page": "sig/C_ANALYSIS.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "enumRule",
+     "spec": "datatype enumRule = SignedEnums | UnsignedNonnegative",
+     "doc": "Compiler enum policy for the supported full-int ABI profiles.\n\n",
+     "page": "sig/C_ANALYSIS.md#type-enumrule"
+    },
+    {
+     "kind": "type",
+     "name": "target",
+     "spec": "type target = {integers : CInteger.target, objects : CLayout.target,\n  charSigned : bool, sizeType : CInteger.integerType, enumRule : enumRule}",
+     "doc": "All integer, object-layout and size-type facts for one target.\n\n",
+     "page": "sig/C_ANALYSIS.md#type-target"
+    },
+    {
+     "kind": "type",
+     "name": "environment",
+     "spec": "type environment",
+     "doc": "Indexed original declarations and lazily evaluated constants.\n\n",
+     "page": "sig/C_ANALYSIS.md#type-environment"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of CLex.location * string",
+     "doc": "An ambiguous, missing, cyclic or unsupported selected declaration.\n\n",
+     "page": "sig/C_ANALYSIS.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "create",
+     "spec": "val create : {target : target, declarations : CParse.declaration list} -> environment",
+     "doc": "`create {target, declarations}` indexes a translation unit.\n\nPrivate unresolved declarations do not force evaluation. Duplicate\nincompatible definitions are diagnosed only when selected.\n\n",
+     "page": "sig/C_ANALYSIS.md#val-create"
+    },
+    {
+     "kind": "val",
+     "name": "lookup",
+     "spec": "val lookup : environment -> {namespace : string, name : string} -> CParse.ctype option",
+     "doc": "`lookup environment {namespace, name}` resolves an alias or tag.\n\nNamespaces are typedef, struct, union and enum. Definitions take\nprecedence over incomplete declarations; ambiguous definitions fail.\n\n",
+     "page": "sig/C_ANALYSIS.md#val-lookup"
+    },
+    {
+     "kind": "val",
+     "name": "resolve",
+     "spec": "val resolve : environment -> CParse.ctype -> CParse.ctype",
+     "doc": "`resolve environment ty` removes outer aliases and qualifiers.\n\nPointer targets and aggregate fields remain separate type references.\n\n",
+     "page": "sig/C_ANALYSIS.md#val-resolve"
+    },
+    {
+     "kind": "val",
+     "name": "integer",
+     "spec": "val integer : environment -> CParse.ctype -> CInteger.integerType option",
+     "doc": "`integer environment ty` classifies a resolved standard integer type.\n\nExtended enum representations require an explicit native adapter.\n\n",
+     "page": "sig/C_ANALYSIS.md#val-integer"
+    },
+    {
+     "kind": "val",
+     "name": "expression",
+     "spec": "val expression : environment -> CLex.token list -> CInteger.value",
+     "doc": "`expression environment tokens` evaluates a typed integer expression.\n\nTypedef casts, enumerators, object types and measurements use this\ntarget's declarations, never the SML host's C widths.\n\n",
+     "page": "sig/C_ANALYSIS.md#val-expression"
+    },
+    {
+     "kind": "val",
+     "name": "enumerator",
+     "spec": "val enumerator : environment -> string -> CInteger.value",
+     "doc": "`enumerator environment name` evaluates a declaration-order enum value.\n\nForward references and values outside the standard int range fail.\n\n",
+     "page": "sig/C_ANALYSIS.md#val-enumerator"
+    },
+    {
+     "kind": "val",
+     "name": "layout",
+     "spec": "val layout : environment -> {ty : CParse.ctype, source : CLex.location} -> CLayout.layout",
+     "doc": "`layout environment {ty, source}` computes a selected object's layout.\n\n**Raises** `Error`, or `CLayout.Shim` for a representation needing an adapter.\n\n",
+     "page": "sig/C_ANALYSIS.md#val-layout"
+    }
+   ]
+  },
   "C_CONST": {
    "doc": "Integer constant expressions for C preprocessing and declarations.\n\n",
    "page": "sig/C_CONST.md",
@@ -511,11 +594,19 @@
      "spec": "val spelling : CInteger.integerType -> string",
      "doc": "`spelling ty` returns a canonical builtin name for an integer type.\n\n",
      "page": "sig/C_TYPE.md#val-spelling"
+    },
+    {
+     "kind": "val",
+     "name": "layoutAttributes",
+     "spec": "val layoutAttributes : CParse.attribute list -> string list",
+     "doc": "`layoutAttributes attributes` lists tokens needing verified ABI handling.\n\nKnown qualifiers and linkage/diagnostic metadata are transparent.\nUnknown attribute identifiers remain explicit adapter requirements.\n\n",
+     "page": "sig/C_TYPE.md#val-layoutattributes"
     }
    ]
   }
  },
  "structures": {
+  "CAnalysis": "C_ANALYSIS",
   "CConst": "C_CONST",
   "CDeclarator": "C_DECLARATOR",
   "CEnumConst": "C_ENUM_CONST",

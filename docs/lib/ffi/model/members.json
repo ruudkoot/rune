@@ -491,6 +491,40 @@
     }
    ]
   },
+  "FOREIGN_TARGET": {
+   "doc": "Explicit target ABI profiles for foreign layout and marshalling.\n\n",
+   "page": "sig/FOREIGN_TARGET.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "profile",
+     "spec": "type profile = {name : string, triple : string, abi : string,\n  byteOrder : ForeignModel.byteOrder, analysis : CAnalysis.target,\n  predefined : (string * string) list}",
+     "doc": "One parsed profile, independent of the generator host.\n\n",
+     "page": "sig/FOREIGN_TARGET.md#type-profile"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of ForeignModel.source * string",
+     "doc": "A physical profile position and invalid target fact.\n\n",
+     "page": "sig/FOREIGN_TARGET.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "decode",
+     "spec": "val decode : {file : string, text : string} -> profile",
+     "doc": "`decode {file, text}` checks a version-one target profile.\n\nScalar widths, alignments, size type, enum policy and byte order are\nexplicit. Invalid or unsupported profiles fail before native generation.\n\n",
+     "page": "sig/FOREIGN_TARGET.md#val-decode"
+    },
+    {
+     "kind": "val",
+     "name": "model",
+     "spec": "val model : profile -> ForeignModel.target",
+     "doc": "`model profile` returns target facts in the neutral binding model.\n\n",
+     "page": "sig/FOREIGN_TARGET.md#val-model"
+    }
+   ]
+  },
   "FOREIGN_VALIDATE": {
    "doc": "Declaration-aware checks before safe binding generation.\n\n",
    "page": "sig/FOREIGN_VALIDATE.md",
@@ -526,6 +560,7 @@
   "ForeignPolicy": "FOREIGN_POLICY",
   "ForeignProjection": "FOREIGN_PROJECTION",
   "ForeignShim": "FOREIGN_SHIM",
+  "ForeignTarget": "FOREIGN_TARGET",
   "ForeignValidate": "FOREIGN_VALIDATE"
  }
 }

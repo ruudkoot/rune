@@ -6,7 +6,7 @@
 - `entry` (type): [FOREIGN_COVERAGE](../sig/FOREIGN_COVERAGE.md#type-entry)
 - `Enumeration` (con): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#con-enumeration)
 - `environment` (type): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#type-environment)
-- `Error` (exn): [FOREIGN_COVERAGE](../sig/FOREIGN_COVERAGE.md#exn-error), [FOREIGN_JSON](../sig/FOREIGN_JSON.md#exn-error), [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#exn-error), [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#exn-error), [FOREIGN_PROJECTION](../sig/FOREIGN_PROJECTION.md#exn-error), [FOREIGN_SHIM](../sig/FOREIGN_SHIM.md#exn-error), [FOREIGN_VALIDATE](../sig/FOREIGN_VALIDATE.md#exn-error)
+- `Error` (exn): [FOREIGN_COVERAGE](../sig/FOREIGN_COVERAGE.md#exn-error), [FOREIGN_JSON](../sig/FOREIGN_JSON.md#exn-error), [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#exn-error), [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#exn-error), [FOREIGN_PROJECTION](../sig/FOREIGN_PROJECTION.md#exn-error), [FOREIGN_SHIM](../sig/FOREIGN_SHIM.md#exn-error), [FOREIGN_TARGET](../sig/FOREIGN_TARGET.md#exn-error), [FOREIGN_VALIDATE](../sig/FOREIGN_VALIDATE.md#exn-error)
 - `error` (val): [FOREIGN_JSON](../sig/FOREIGN_JSON.md#val-error)
 - `errorPolicy` (type): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#type-errorpolicy)
 - `expression` (type): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#type-expression)

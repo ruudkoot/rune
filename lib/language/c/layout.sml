@@ -35,15 +35,15 @@ struct
               SOME(_,scalar)=>atom source scalar | NONE=>raise Shim(source,"unsupported C scalar layout: " ^ name))
         | CParse.Named name=>find source "typedef" name seen flexible
         | CParse.Pointer{qualifiers,...}=>
-            if List.exists(fn name=>name="__ptr32" orelse name="__ptr64" orelse name="__unaligned")qualifiers
+            if List.exists(fn name=>name="__ptr32" orelse name="__ptr64" orelse name="__unaligned" orelse name="_Atomic")qualifiers
             then raise Shim(source,"qualified pointer representation requires a verified adapter")
             else atom source (#pointer t)
         | CParse.Function _=>fail source "a function has no object layout"
         | CParse.Enum _=>atom source (#enumeration t)
         | CParse.Attributed(base,attributes)=>
-            let val words=List.concat(List.map(List.map #text)attributes)
-            in if List.exists(fn word=>word="packed" orelse word="aligned" orelse word="align")words
-               then raise Shim(source,"explicit aggregate attributes require a verified adapter")
+            let val words=CType.layoutAttributes attributes
+            in if not(null words)
+               then raise Shim(source,"C representation attributes require a verified adapter: " ^ String.concatWith ", " words)
                else walk source seen flexible base end
         | CParse.Array{element,bound}=>
             let val count=if null bound then if flexible then 0 else fail source "incomplete array layout" else constant bound

@@ -38,8 +38,10 @@ struct
        ("jupyter.jupyter", ["unicode", "json", "digest", "zmtp", "jupyter"], "jupyter/jupyter"),
        ("language.c.frontend", ["language/c"], "language/c/frontend"),
        ("language.c.target", ["language/c"], "language/c/target"),
+       ("language.c.analysis", ["language/c"], "language/c/analysis"),
        ("ffi.marshal.core", ["unicode", "ffi/marshal"], "ffi/marshal/core"),
        ("ffi.model.shim", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/shim"),
+       ("ffi.model.target", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/target"),
        ("ffi.model.policy", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/policy")]
   fun files libraries =
     let fun one "unit" = unit ()

@@ -12,8 +12,9 @@ documented when a comment describes it, alone or together with the entry before 
 | [`FOREIGN_POLICY`](sig/FOREIGN_POLICY.md) | 15 | 15 | 100% | 2 | 2 |
 | [`FOREIGN_PROJECTION`](sig/FOREIGN_PROJECTION.md) | 6 | 6 | 100% | 4 | 4 |
 | [`FOREIGN_SHIM`](sig/FOREIGN_SHIM.md) | 4 | 4 | 100% | 3 | 3 |
+| [`FOREIGN_TARGET`](sig/FOREIGN_TARGET.md) | 4 | 4 | 100% | 2 | 2 |
 | [`FOREIGN_VALIDATE`](sig/FOREIGN_VALIDATE.md) | 3 | 3 | 100% | 1 | 1 |
-| **all** | 68 | 68 | 100% | 30 | 30 |
+| **all** | 72 | 72 | 100% | 32 | 32 |
 
 ## Members a signature describes
 
@@ -22,7 +23,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-7 structures have a page, with 68 members, of which 68 (100%) are described by a signature.
+8 structures have a page, with 72 members, of which 72 (100%) are described by a signature.
 
 ---
 

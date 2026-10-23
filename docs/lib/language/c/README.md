@@ -35,12 +35,20 @@ produce source diagnostics. Original headers are never repaired in place.
 bytes. It handles pointers, arrays and function declarators and requires
 an original name for anonymous aggregate types.
 
+[`CAnalysis`](str/CAnalysis.md) indexes original declarations and resolves selected typedefs, tags,
+integer expressions and layouts using explicit target facts. Enum policy is
+explicit: the supported Microsoft ABI uses signed int for full-int enums;
+the supported System V ABI uses unsigned int for nonnegative full-int enums.
+Unknown representation attributes and extended enum representations require
+native adapters. Private unsupported declarations do not force evaluation.
+
 [How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [i](index/i.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md)
 
 ## Languages
 
 | Signature |  |
 | --- | --- |
+| [`C_ANALYSIS`](sig/C_ANALYSIS.md) | Typed declaration analysis over explicit target C facts. |
 | [`C_CONST`](sig/C_CONST.md) | Integer constant expressions for C preprocessing and declarations. |
 | [`C_DECLARATOR`](sig/C_DECLARATOR.md) | C declarator output for verified native adapters. |
 | [`C_ENUM_CONST`](sig/C_ENUM_CONST.md) | Integer folding of the expressions retained in enum declarations. |

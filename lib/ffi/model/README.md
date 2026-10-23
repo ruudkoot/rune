@@ -26,3 +26,7 @@ functions, macros and fields. Aggregate values can cross the dynamic ABI
 through pointers while C performs their copies. C handles bitfields and
 compiler packing. This source-generation component does not execute
 commands; the generator/build integration supplies provenance and rebuilds.
+
+`ForeignTarget` validates version-one target profiles before generation. Widths,
+alignments, size type, byte order, enum policy and preprocessing macros are data;
+the generator does not infer them from the host running Rune.

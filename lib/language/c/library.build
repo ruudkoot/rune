@@ -20,6 +20,8 @@ annotate "demand" in
   enum_const.sml
   layout_sig.sml
   layout.sml
+  analysis_sig.sml
+  analysis.sml
   files_sig.sml
   files.sml
 end

@@ -36,3 +36,10 @@ produce source diagnostics. Original headers are never repaired in place.
 `CDeclarator` renders referenced C types without changing original header
 bytes. It handles pointers, arrays and function declarators and requires
 an original name for anonymous aggregate types.
+
+`CAnalysis` indexes original declarations and resolves selected typedefs, tags,
+integer expressions and layouts using explicit target facts. Enum policy is
+explicit: the supported Microsoft ABI uses signed int for full-int enums;
+the supported System V ABI uses unsigned int for nonnegative full-int enums.
+Unknown representation attributes and extended enum representations require
+native adapters. Private unsupported declarations do not force evaluation.
