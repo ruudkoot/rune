@@ -514,7 +514,7 @@ FFI_PERF_OUT ?= tests/out/ffi-performance
 FFI_PERF_ITERATIONS ?= 10000
 FFI_PERF_SAMPLES ?= 5
 FFI_PERF_MODE ?= off
-FFI_PERF_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/performance-check.sml
+FFI_PERF_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/performance-model.sml tests/ffi/performance-check.sml
 bin/rune-ffi-performance.rbc: $(RUNE) $(FFI_PERF_SRCS) manifests
 	$(RUNE) --library test/runner --library json --library digest $(FFI_PERF_SRCS) -o $@
 bin/rune-ffi-performance: bin/rune-ffi-performance.rbc bin/runevm Makefile
@@ -523,6 +523,11 @@ bin/rune-ffi-performance: bin/rune-ffi-performance.rbc bin/runevm Makefile
 .PHONY: ffi-performance
 ffi-performance: $(RUNE) vm bin/rune-ffi-performance manifests
 	FFI_PERF_MODE='$(FFI_PERF_MODE)' bin/rune-ffi-performance '$(FFI_PERF_OUT)' '$(FFI_PERF_ITERATIONS)' '$(FFI_PERF_SAMPLES)'
+
+.PHONY: test-ffi-performance-model
+test-ffi-performance-model: $(RUNE) vm manifests
+	$(RUNE) --library json --library test/unit tests/ffi/performance-model.sml tests/ffi/performance-model-tests.sml -o build/ffi-performance-model.rbc
+	$(RUNEVM_REGISTER) build/ffi-performance-model.rbc
 
 # The documentation generator (docs/plans/docgen.md): the sources of
 # runedoc.build, built like the compiler by every host and by the compiler

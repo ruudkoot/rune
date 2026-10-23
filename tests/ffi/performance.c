@@ -24,30 +24,48 @@ extern uint64_t rfp_scalar(uint64_t);
 extern uint64_t rfp_buffer(unsigned char *,size_t);
 extern uint64_t rfp_callback(rfp_function,uint64_t);
 static uint64_t direct_callback(uint64_t value) { return value+1; }
-static void report(const char *phase, size_t iterations, clock_t start, uint64_t checksum) {
-    printf("{\"implementation\":\"direct-c\",\"phase\":\"%s\",\"iterations\":%zu,\"cpuSeconds\":%.9f,\"checksum\":\"%llu\"}\n",
-        phase,iterations,(double)(clock()-start)/CLOCKS_PER_SEC,(unsigned long long)checksum);
+static void report(const char *phase, size_t iterations, size_t warmup, clock_t start, uint64_t checksum, size_t payload) {
+    printf("{\"implementation\":\"direct-c\",\"phase\":\"%s\",\"iterations\":%zu,\"warmupIterations\":%zu,\"cpuSeconds\":%.9f,\"checksum\":\"%llu\",\"bufferPayloadAllocatedBytes\":%zu,\"peakBufferPayloadBytes\":%zu,\"nativeMetadataBytes\":null}\n",
+        phase,iterations,warmup,(double)(clock()-start)/CLOCKS_PER_SEC,(unsigned long long)checksum,iterations*payload,payload);
 }
 int main(int argc,char **argv) {
     if (argc!=2) return 2;
     size_t iterations=(size_t)strtoull(argv[1],NULL,10);
     if (!iterations || iterations>10000000) return 2;
-    uint64_t value=0; clock_t start=clock();
+    size_t warmup=iterations/10;
+    if(warmup<10) warmup=10;
+    if(warmup>1000) warmup=1000;
+    uint64_t value=0;
+    for(size_t i=0;i<warmup;i++) value=rfp_scalar(value);
+    if(value!=warmup) return 1;
+    value=0; clock_t start=clock();
     for(size_t i=0;i<iterations;i++) value=rfp_scalar(value);
-    report("scalar",iterations,start,value);
+    report("scalar",iterations,warmup,start,value,0);
     if(value!=iterations) return 1;
-    unsigned char array[256]={0}; start=clock();
+    unsigned char array[256]={0};
+    for(size_t i=0;i<warmup;i++) {
+        unsigned char *copy=malloc(sizeof array);
+        if(!copy) return 1;
+        memcpy(copy,array,sizeof array); value=rfp_buffer(copy,sizeof array);
+        memcpy(array,copy,sizeof array); free(copy);
+    }
+    if(value!=(warmup%256)) return 1;
+    memset(array,0,sizeof array); start=clock();
     for(size_t i=0;i<iterations;i++) {
         unsigned char *copy=malloc(sizeof array);
         if(!copy) return 1;
         memcpy(copy,array,sizeof array); value=rfp_buffer(copy,sizeof array);
         memcpy(array,copy,sizeof array); free(copy);
     }
-    report("marshal-256",iterations,start,value);
+    report("marshal-256",iterations,warmup,start,value,sizeof array);
     if(value!=(iterations%256)) return 1;
+    for(size_t i=0;i<sizeof array;i++) if(array[i]!=(iterations%256)) return 1;
+    value=0;
+    for(size_t i=0;i<warmup;i++) value=rfp_callback(direct_callback,value);
+    if(value!=warmup) return 1;
     value=0; start=clock();
     for(size_t i=0;i<iterations;i++) value=rfp_callback(direct_callback,value);
-    report("callback",iterations,start,value);
+    report("callback",iterations,warmup,start,value,0);
     return value!=iterations;
 }
 #endif
