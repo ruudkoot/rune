@@ -99,8 +99,8 @@ struct
         val hover=C.result (C.response (client,51))
     in check ("hover markup negotiated",C.field (C.field (hover,"contents"),"kind")=Json.String "markdown") end)
   fun fileProject () =
-    let val dir="tests/out/lsp-scratch/protocol-project-" ^ SysWord.toString (Posix.Process.pidToWord (Posix.ProcEnv.getpid ()))
-        val ()=OS.FileSys.mkDir dir
+    let val dir=OS.FileSys.tmpName ()
+        val ()=(OS.FileSys.remove dir handle _ => ();OS.FileSys.mkDir dir)
         fun write (name,text)=let val output=TextIO.openOut (dir ^ "/" ^ name)
           in TextIO.output (output,text);TextIO.closeOut output end
         val ()=write ("main.build","files main.sml end\n")
@@ -117,8 +117,8 @@ struct
           in check ("native build context resolves without path rewriting",C.field (C.field (hover,"contents"),"value")=Json.String "int") end)
     in (work () before clean ()) handle error => (clean () handle _ => ();raise error) end
   fun workspaceDiagnostics () =
-    let val dir="tests/out/lsp-scratch/workspace-diagnostics-" ^ SysWord.toString (Posix.Process.pidToWord (Posix.ProcEnv.getpid ()))
-        val ()=OS.FileSys.mkDir dir
+    let val dir=OS.FileSys.tmpName ()
+        val ()=(OS.FileSys.remove dir handle _ => ();OS.FileSys.mkDir dir)
         fun write (name,text)=let val output=TextIO.openOut (dir ^ "/" ^ name)
           in TextIO.output (output,text);TextIO.closeOut output end
         val ()=write ("project.build","files main.sml end\n")
@@ -240,15 +240,22 @@ struct
         val item=case List.find (fn item => C.field (item,"insertTextFormat")=Json.int 2) items of
           SOME item => item | NONE => raise Fail "typed invocation snippet missing"
         val ()=check ("snippet arguments follow the checked callable type",C.field (C.field (item,"textEdit"),"newText")=
-          Json.String "identity (${1:(raise Match)})$0")
+          Json.String "identity (${1:(raise op Match)})$0")
         val ()=C.request (client,121,"completionItem/resolve",item)
         val resolved=C.result (C.response (client,121))
         val ()=check ("snippet item resolves without becoming a plain item",C.field (resolved,"insertTextFormat")=Json.int 2)
         val ()=C.notify (client,"textDocument/didChange",object [("textDocument",object [("uri",Json.String uri),("version",Json.int 2)]),
-          ("contentChanges",Json.Array [object [("text",Json.String "fun identity (x:int)=x\nval result=identity ((raise Match))\n")]])])
+          ("contentChanges",Json.Array [object [("text",Json.String "fun identity (x:int)=x\nval result=identity ((raise op Match))\n")]])])
         val ()=C.request (client,122,"textDocument/diagnostic",object [("textDocument",document uri)])
         val checked=C.result (C.response (client,122))
-    in check ("expanded invocation template parses and typechecks without execution",C.field (checked,"items")=Json.Array []) end)
+        val ()=check ("expanded invocation template parses and typechecks without execution",C.field (checked,"items")=Json.Array [])
+        val ()=C.notify (client,"textDocument/didChange",object [("textDocument",object [("uri",Json.String uri),("version",Json.int 3)]),
+          ("contentChanges",Json.Array [object [("text",Json.String "fun Match (x:int)=x\nfun identity (x:int)=x\nval result=ide\n")]])])
+        val ()=C.request (client,123,"textDocument/completion",object [("textDocument",document uri),
+          ("position",object [("line",Json.int 2),("character",Json.int 14)])])
+        val shadowed=C.result (C.response (client,123))
+    in check ("shadowed placeholder exceptions suppress invalid snippets",case C.field (shadowed,"items") of Json.Array items =>
+      not (List.exists (fn item => C.field (item,"insertTextFormat")=Json.int 2) items) | _ => false) end)
   fun inlineCompletion ()=fixtureWith (object [("textDocument",object [("inlineCompletion",object [])])]) (fn client =>
     let val uri="untitled:inline-pattern"
         val ()=openDocument (client,uri,"datatype t=Some of int | None\nfun f (So)=1\n")
@@ -325,6 +332,42 @@ struct
         val ()=C.request (client,168,"textDocument/diagnostic",object [("textDocument",document uri),("previousResultId",Json.int 7)])
         val malformed=C.response (client,168)
     in check ("malformed diagnostic parameters retain their error code",C.field (C.field (malformed,"error"),"code")=Json.int (~32602)) end)
+  fun buildDocuments () =
+    let val dir=OS.FileSys.tmpName ()
+        val ()=(OS.FileSys.remove dir handle _ => ();OS.FileSys.mkDir dir)
+        fun write (name,text)=let val output=TextIO.openOut (dir ^ "/" ^ name)
+          in TextIO.output (output,text);TextIO.closeOut output end
+        val ()=write ("main.build","")
+        val ()=write ("alpha space.sml","val ()=print \"build requests must not execute this\\n\"\n")
+        val platform=if List.exists (fn (key,value) => key="sysname" andalso value="Windows") (Posix.ProcEnv.uname ()) then LspUri.Windows else LspUri.Posix
+        val uri=LspUri.original (LspUri.fromPath (platform,OS.FileSys.fullPath (dir ^ "/main.build")))
+        fun clean ()=(OS.FileSys.remove (dir ^ "/main.build");OS.FileSys.remove (dir ^ "/alpha space.sml");OS.FileSys.rmDir dir)
+        fun work ()=fixture (fn client =>
+          let val ()=openDocument (client,uri,"files \"alpha sp")
+              val ()=C.request (client,180,"textDocument/diagnostic",object [("textDocument",document uri)])
+              val diagnostic=C.result (C.response (client,180))
+              val ()=check ("build documents receive build grammar diagnostics",case C.field (diagnostic,"items") of Json.Array [item] =>
+                C.field (item,"source")=Json.String "rune-build" andalso
+                C.field (C.field (C.field (item,"range"),"start"),"character")=Json.int 6 | _ => false)
+              val ()=C.request (client,181,"textDocument/completion",object [("textDocument",document uri),
+                ("position",object [("line",Json.int 0),("character",Json.int 15)])])
+              val result=C.result (C.response (client,181))
+              val item=case C.field (result,"items") of Json.Array [item] => item | _ => raise Fail "quoted build path completion missing"
+              val ()=check ("build completion supplies valid quoting and the complete token range",
+                C.field (C.field (item,"textEdit"),"newText")=Json.String "\"alpha space.sml\"" andalso
+                C.field (C.field (C.field (item,"textEdit"),"range"),"start")=object [("line",Json.int 0),("character",Json.int 6)])
+              val ()=C.request (client,182,"completionItem/resolve",item)
+              val resolved=C.result (C.response (client,182))
+              val ()=check ("build completion resolves against its original revision",C.field (resolved,"label")=Json.String "alpha space.sml")
+              val ()=C.notify (client,"textDocument/didChange",object [("textDocument",object [("uri",Json.String uri),("version",Json.int 2)]),
+                ("contentChanges",Json.Array [object [("text",Json.String "files \"alpha space.sml\" end\n")]])])
+              val ()=C.request (client,183,"textDocument/diagnostic",object [("textDocument",document uri)])
+              val corrected=C.result (C.response (client,183))
+              val ()=check ("valid build overlays clear errors without SML parsing or execution",C.field (corrected,"items")=Json.Array [])
+              val ()=C.request (client,184,"completionItem/resolve",item)
+              val stale=C.response (client,184)
+          in check ("build path resolution rejects stale source revisions",C.field (C.field (stale,"error"),"code")=Json.int (~32801)) end)
+    in (work () before clean ()) handle error => (clean () handle _ => ();raise error) end
 end
 structure RuneLspSemanticProtocolTestMain=Main (struct
   val name="lsp-semantic-protocol"
@@ -344,6 +387,7 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "inline-completion" RuneLspSemanticProtocolTests.inlineCompletion,
     Test.it "completion-context-and-documentation" RuneLspSemanticProtocolTests.completionContextAndDocumentation,
     Test.it "legacy-completion-fallback" RuneLspSemanticProtocolTests.legacyCompletionFallback,
-    Test.it "semantic-errors-and-eviction" RuneLspSemanticProtocolTests.semanticErrorsAndEviction]
+    Test.it "semantic-errors-and-eviction" RuneLspSemanticProtocolTests.semanticErrorsAndEviction,
+    Test.it "build-documents" RuneLspSemanticProtocolTests.buildDocuments]
 end)
 val ()=RuneLspSemanticProtocolTestMain.main ()

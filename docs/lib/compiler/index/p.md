@@ -4,6 +4,8 @@
 
 - `Analysis.project` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.project)
 - `Project` (str): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#str-project)
+- `Project.pathCompletion` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-project.pathcompletion)
+- `Project.pathCompletions` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.pathcompletions)
 - `Syntax.parse` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.parse)
 - `Syntax.piece` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-syntax.piece)
 - `Syntax.pieces` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.pieces)

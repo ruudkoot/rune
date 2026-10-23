@@ -157,6 +157,27 @@ sig
     (* A captured build or group-analysis input. revision hashes decoded
        text together with its source mode. *)
     type input = {file : string, text : string, mode : string, kind : string, revision : string}
+    (* A build parser path occurrence. kind is source, build, directory or
+       library; the byte range includes any quotes and value excludes them. *)
+    type buildReference={kind:string,value:string,start:int,stop:int,quoted:bool}
+    (* A bounded filesystem/path-variable completion. Its replacement range
+       and text include required build-language quoting. *)
+    type pathCompletion={label:string,text:string,kind:string,start:int,stop:int}
+    (* `buildSyntax request` returns observed path roles and structured build
+       diagnostics through the compiler's own lexer/parser.
+
+       Recovery retains unfinished quoted paths and variables. No files are
+       read and no project declarations execute. *)
+    val buildSyntax : {file:string,text:string} -> {references:buildReference list,diagnostics:diagnostic list}
+    (* `pathCompletions (session, request)` lists matching paths or variables
+       at a build cursor without building or executing the project.
+
+       Byte ranges refer to captured text. Windows roots/UNC and configured
+       path variables follow the compiler project rules. Directory scanning
+       is bounded to 8192 entries and results to 512; isIncomplete reports
+       truncation. Native filename bytes are preserved in returned strings. *)
+    val pathCompletions : session * {file:string,text:string,offset:int,variables:(string*string) list,windows:bool} ->
+      {items:pathCompletion list,isIncomplete:bool}
     (* `read (session, request)` resolves a build through compiler rules,
        preserving scopes, order, annotations, virtual implementations and use.
 

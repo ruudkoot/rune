@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 76 of 76 entries documented |
+| Documentation | 80 of 80 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -69,6 +69,11 @@ sig
     type <a href="#type-project.t">t</a>
     type <a href="#type-project.source">source</a> = {<a href="#fld-project.source.file">file</a> : string, <a href="#fld-project.source.annotations">annotations</a> : string list, <a href="#fld-project.source.mode">mode</a> : string, <a href="#fld-project.source.ordinal">ordinal</a> : int}
     type <a href="#type-project.input">input</a> = {<a href="#fld-project.input.file">file</a> : string, <a href="#fld-project.input.text">text</a> : string, <a href="#fld-project.input.mode">mode</a> : string, <a href="#fld-project.input.kind">kind</a> : string, <a href="#fld-project.input.revision">revision</a> : string}
+    type <a href="#type-project.buildreference">buildReference</a>={<a href="#fld-project.buildreference.kind">kind</a>:string,<a href="#fld-project.buildreference.value">value</a>:string,<a href="#fld-project.buildreference.start">start</a>:int,<a href="#fld-project.buildreference.stop">stop</a>:int,<a href="#fld-project.buildreference.quoted">quoted</a>:bool}
+    type <a href="#type-project.pathcompletion">pathCompletion</a>={<a href="#fld-project.pathcompletion.label">label</a>:string,<a href="#fld-project.pathcompletion.text">text</a>:string,<a href="#fld-project.pathcompletion.kind">kind</a>:string,<a href="#fld-project.pathcompletion.start">start</a>:int,<a href="#fld-project.pathcompletion.stop">stop</a>:int}
+    val <a href="#val-project.buildsyntax">buildSyntax</a> : {<a href="#fld-project.buildsyntax.file">file</a>:string,<a href="#fld-project.buildsyntax.text">text</a>:string} -&gt; {references:buildReference list,diagnostics:diagnostic list}
+    val <a href="#val-project.pathcompletions">pathCompletions</a> : session * {<a href="#fld-project.pathcompletions.file">file</a>:string,<a href="#fld-project.pathcompletions.text">text</a>:string,<a href="#fld-project.pathcompletions.offset">offset</a>:int,<a href="#fld-project.pathcompletions.variables">variables</a>:(string*string) list,<a href="#fld-project.pathcompletions.windows">windows</a>:bool} -&gt;
+      {items:pathCompletion list,isIncomplete:bool}
     val <a href="#val-project.read">read</a> : session * {<a href="#fld-project.read.file">file</a> : string, <a href="#fld-project.read.variables">variables</a> : (string * string) list,
                           <a href="#fld-project.read.overlays">overlays</a> : {file : string, text : string} list, <a href="#fld-project.read.windows">windows</a> : bool} -&gt; t
     val <a href="#val-project.sources">sources</a> : t -&gt; source list
@@ -556,6 +561,80 @@ text together with its source mode.
 | <a name="fld-project.input.mode"></a>`mode` | `string` |  |
 | <a name="fld-project.input.kind"></a>`kind` | `string` |  |
 | <a name="fld-project.input.revision"></a>`revision` | `string` |  |
+
+#### <a name="type-project.buildreference"></a>`buildReference`
+
+```sml
+type buildReference={kind:string,value:string,start:int,stop:int,quoted:bool}
+```
+
+A build parser path occurrence. kind is source, build, directory or
+library; the byte range includes any quotes and value excludes them.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-project.buildreference.kind"></a>`kind` | `string` |  |
+| <a name="fld-project.buildreference.value"></a>`value` | `string` |  |
+| <a name="fld-project.buildreference.start"></a>`start` | `int` |  |
+| <a name="fld-project.buildreference.stop"></a>`stop` | `int` |  |
+| <a name="fld-project.buildreference.quoted"></a>`quoted` | `bool` |  |
+
+#### <a name="type-project.pathcompletion"></a>`pathCompletion`
+
+```sml
+type pathCompletion={label:string,text:string,kind:string,start:int,stop:int}
+```
+
+A bounded filesystem/path-variable completion. Its replacement range
+and text include required build-language quoting.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-project.pathcompletion.label"></a>`label` | `string` |  |
+| <a name="fld-project.pathcompletion.text"></a>`text` | `string` |  |
+| <a name="fld-project.pathcompletion.kind"></a>`kind` | `string` |  |
+| <a name="fld-project.pathcompletion.start"></a>`start` | `int` |  |
+| <a name="fld-project.pathcompletion.stop"></a>`stop` | `int` |  |
+
+#### <a name="val-project.buildsyntax"></a>`buildSyntax`
+
+```sml
+val buildSyntax : {file:string,text:string} -> {references:buildReference list,diagnostics:diagnostic list}
+```
+
+`buildSyntax request` returns observed path roles and structured build
+diagnostics through the compiler's own lexer/parser.
+
+Recovery retains unfinished quoted paths and variables. No files are
+read and no project declarations execute.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-project.buildsyntax.file"></a>`file` | `string` |  |
+| <a name="fld-project.buildsyntax.text"></a>`text` | `string` |  |
+
+#### <a name="val-project.pathcompletions"></a>`pathCompletions`
+
+```sml
+val pathCompletions : session * {file:string,text:string,offset:int,variables:(string*string) list,windows:bool} ->
+  {items:pathCompletion list,isIncomplete:bool}
+```
+
+`pathCompletions (session, request)` lists matching paths or variables
+at a build cursor without building or executing the project.
+
+Byte ranges refer to captured text. Windows roots/UNC and configured
+path variables follow the compiler project rules. Directory scanning
+is bounded to 8192 entries and results to 512; isIncomplete reports
+truncation. Native filename bytes are preserved in returned strings.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-project.pathcompletions.file"></a>`file` | `string` |  |
+| <a name="fld-project.pathcompletions.text"></a>`text` | `string` |  |
+| <a name="fld-project.pathcompletions.offset"></a>`offset` | `int` |  |
+| <a name="fld-project.pathcompletions.variables"></a>`variables` | `(string*string) list` |  |
+| <a name="fld-project.pathcompletions.windows"></a>`windows` | `bool` |  |
 
 #### <a name="val-project.read"></a>`read`
 

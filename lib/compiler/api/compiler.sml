@@ -82,12 +82,24 @@ struct
     structure P=CompilerProject
     type source={file:string,annotations:string list,mode:string,ordinal:int}
     type input={file:string,text:string,mode:string,kind:string,revision:string}
+    type buildReference=CompilerBuildQuery.reference
+    type pathCompletion=CompilerBuildQuery.completion
     datatype t=Project of {owner:unit ref,plan:P.plan,sources:source list,inputs:input list,fingerprint:string}
     fun sources (Project {sources,...})=sources
     fun inputs (Project {inputs,...})=inputs
     fun libraries (Project {plan,...})= #libraries plan
     fun cacheDirectories (Project {plan,...})= #caches plan
     fun fingerprint (Project {fingerprint,...})=fingerprint
+    fun buildSyntax (request as {file,...})=guard file (fn () => C.owned (fn () =>
+      let val result=CompilerBuildQuery.inspect request
+      in {references= #references result,diagnostics= #diagnostics result} end))
+    fun pathCompletions (Session {compiler=compiler as C.Session {config,...},...},
+                         {file,text,offset,variables,windows})=guard file (fn () => C.owned (fn () =>
+      let val ()=C.checked compiler
+          val bindings=StringMap.fromList variables
+          val ()=BuildFile.variables:=bindings
+      in CompilerBuildQuery.completions {file=file,text=text,offset=offset,variables=StringMap.listItemsi bindings,
+           windows=windows,lib= #lib config} end))
     fun read (Session {compiler=compiler as C.Session {config,token,...},mode},{file,variables,overlays,windows}) =
       guard file (fn () => C.owned (fn () =>
         let

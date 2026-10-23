@@ -13,6 +13,7 @@ struct
     done:bool ref,job:IntInf.int option ref,retried:bool ref}
   datatype task=Discover of {uri:string,revision:IntInf.int,generation:IntInf.int}
     | Check of {uri:string,revision:IntInf.int,generation:IntInf.int,request:request option}
+    | Build of {uri:string,revision:IntInf.int,generation:IntInf.int,request:request option}
     | Query of request | Workspace of request
   type result={uri:string,revision:IntInf.int,generation:IntInf.int,snapshot:string}
   exception Duplicate
@@ -42,13 +43,30 @@ struct
   fun failure (service,request,code,message,data)=finish (service,request,R.Error {code=code,message=message,data=data})
   fun submit (Service {jobs,...},parameters)=J.submit (jobs,parameters)
   fun capture (Service {workspace,documents,...})=RuneLspWorkerModel.capture (workspace,documents)
+  fun buildDocument (Service {workspace=W.Workspace {platform,...},documents,...},uri)=
+    case D.snapshot (documents,uri) of NONE => false | SOME snapshot => RuneLspBuild.isDocument (platform,snapshot)
+  fun buildJob (service as Service {workspace,documents,caps,log,...},uri,request) =
+    case D.snapshot (documents,uri) of NONE => () | SOME snapshot =>
+      let val method=case request of NONE => "textDocument/diagnostic" | SOME request => #method (request:request)
+          val params=case request of NONE => Json.Object [("textDocument",Json.Object [("uri",Json.String uri)])]
+            | SOME request => #params request
+          val id=submit (service,{key=case request of NONE => SOME ("check:" ^ uri) | SOME _ => NONE,
+            priority=if isSome request then 0 else 100,
+            data=Build {uri=uri,revision= #revision snapshot,generation=W.generation workspace,request=request},
+            payload=V.Object [("op",V.Bytes "build"),("uri",V.Bytes uri),("method",V.Bytes method),("params",V.json params),
+              ("encoding",V.Bytes (P.encodingName (P.positionEncoding caps))),("state",capture service)]})
+      in Option.app (fn request:request => #job request:=SOME id) request end
+      handle J.Full => (case request of NONE => log "analysis queue is full"
+        | SOME request => failure (service,request,P.requestFailed,"analysis queue is full",NONE))
   fun discover (service as Service {workspace,documents,log,...},uri) =
+    if buildDocument (service,uri) then buildJob (service,uri,NONE) else
     case D.snapshot (documents,uri) of NONE => () | SOME snapshot =>
       (ignore (submit (service,{key=SOME ("discover:" ^ uri),priority=50,
         data=Discover {uri=uri,revision= #revision snapshot,generation=W.generation workspace},
         payload=V.Object [("op",V.Bytes "discover"),("uri",V.Bytes uri),("state",capture service)]}))
        handle J.Full => log "analysis queue is full")
   fun check (service as Service {workspace,documents,caps,log,...},uri,request) =
+    if buildDocument (service,uri) then buildJob (service,uri,request) else
     case D.snapshot (documents,uri) of NONE => () | SOME snapshot =>
       let val id=submit (service,{key=case request of NONE => SOME ("check:" ^ uri) | SOME _ => NONE,
             priority=if isSome request then 0 else 100,
@@ -97,6 +115,7 @@ struct
             [("op",V.Bytes "workspace"),("state",capture service),("params",V.json params),
              ("method",V.Bytes method),
              ("encoding",V.Bytes (P.encodingName (P.positionEncoding caps))),("capabilities",V.json (P.rawCapabilities caps))]}))
+        else if buildDocument (service,uri) then buildJob (service,uri,SOME request)
         else case prior of SOME result => query (service,request,#snapshot result) | NONE => check (service,uri,SOME request));true)
         handle J.Full => (failure (service,request,P.requestFailed,"analysis queue is full",NONE);true) end
     handle Duplicate =>
@@ -140,6 +159,15 @@ struct
           val valid=case D.snapshot (documents,uri) of NONE => not (isSome version)
             | SOME snapshot => version=SOME (#version snapshot) andalso D.healthy (documents,uri)
       in if valid then send (R.Notification {method="textDocument/publishDiagnostics",params=SOME (Json.Object fields)}) else () end) reports
+  fun finishQuery (service,request:request,value) =
+    if List.exists (fn method => method= #method request)
+      ["textDocument/completion","completionItem/resolve","textDocument/inlineCompletion"] andalso not (current (service,
+      {uri= #uri request,revision= #revision request,generation= #generation request})) then
+      failure (service,request,P.contentModified,"completion source changed",NONE)
+    else if #method request="textDocument/diagnostic" andalso not (current (service,
+      {uri= #uri request,revision= #revision request,generation= #generation request})) then
+      failure (service,request,P.serverCancelled,"diagnostic source changed",SOME (Json.Object [("retriggerRequest",Json.Bool true)]))
+    else finish (service,request,R.Result (V.unjson value))
   fun handleEvent (service as Service {results,discovered,log,...},event) =
     case event of J.Restarted => results:=[]
     | J.Done (Discover ticket,value) => if current (service,ticket) then discovered (#uri ticket,value) else ()
@@ -154,15 +182,13 @@ struct
           if !(#done request) then () else if #method request="textDocument/diagnostic" andalso not valid then
             failure (service,request,P.serverCancelled,"diagnostic source changed",SOME (Json.Object [("retriggerRequest",Json.Bool true)]))
           else query (service,request,snapshot) end
-    | J.Done (Query request,value) =>
-        if List.exists (fn method => method= #method request)
-          ["textDocument/completion","completionItem/resolve","textDocument/inlineCompletion"] andalso not (current (service,
-          {uri= #uri request,revision= #revision request,generation= #generation request})) then
-          failure (service,request,P.contentModified,"completion source changed",NONE)
-        else if #method request="textDocument/diagnostic" andalso not (current (service,
-          {uri= #uri request,revision= #revision request,generation= #generation request})) then
-          failure (service,request,P.serverCancelled,"diagnostic source changed",SOME (Json.Object [("retriggerRequest",Json.Bool true)]))
-        else finish (service,request,R.Result (V.unjson value))
+    | J.Done (Query request,value) => finishQuery (service,request,value)
+    | J.Done (Build ticket,value) =>
+        (case #request ticket of SOME request => finishQuery (service,request,value) | NONE =>
+          if not (current (service,{uri= #uri ticket,revision= #revision ticket,generation= #generation ticket})) then () else
+            let val Service {documents,...}=service
+                val version=case D.snapshot (documents,#uri ticket) of NONE => V.Null | SOME snapshot => V.Integer (#version snapshot)
+            in publish (service,[V.Object [("uri",V.Bytes (#uri ticket)),("version",version),("report",value)]]) end)
     | J.Done (Workspace request,value) =>
         if #method request<>"workspace/diagnostic" orelse current (service,{uri="",revision=0,generation= #generation request}) then finish (service,request,R.Result (V.unjson value))
         else failure (service,request,P.serverCancelled,"workspace source changed",SOME (Json.Object [("retriggerRequest",Json.Bool true)]))
@@ -177,13 +203,16 @@ struct
                 check (service,#uri request,SOME request)) else reject request
            | Workspace request => reject request
            | Check {request=SOME request,...} => reject request
+           | Build {request=SOME request,...} => reject request
            | _ => log (#message error) end
     | J.Failed (Query request,message) => failure (service,request,P.requestFailed,message,NONE)
     | J.Failed (Check {request=SOME request,...},message) => failure (service,request,P.requestFailed,message,NONE)
+    | J.Failed (Build {request=SOME request,...},message) => failure (service,request,P.requestFailed,message,NONE)
     | J.Failed (_,message) => log message
     | J.Cancelled (Query request) => if !(#done request) then () else failure (service,request,R.requestCancelled,"request cancelled",NONE)
     | J.Cancelled (Workspace request) => if !(#done request) then () else failure (service,request,R.requestCancelled,"request cancelled",NONE)
     | J.Cancelled (Check {request=SOME request,...}) => if !(#done request) then () else failure (service,request,R.requestCancelled,"request cancelled",NONE)
+    | J.Cancelled (Build {request=SOME request,...}) => if !(#done request) then () else failure (service,request,R.requestCancelled,"request cancelled",NONE)
     | J.Cancelled _ => ()
   fun descriptors (Service {jobs,...})=J.descriptors jobs
   fun pump (service as Service {jobs,log,...},ready) =

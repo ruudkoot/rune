@@ -7,6 +7,7 @@ files
   syntax/incremental.sml
   api/prelude.sml
   api/session.sml
+  api/build-query.sml
   api/query.sml
   api/facts.sml
   api/analysis-engine.sml

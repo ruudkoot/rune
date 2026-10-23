@@ -40,7 +40,7 @@ struct
   fun template (name,arguments) =
     let fun fields ([],index)=([],index)
           | fields (_::rest,index)=let val (tail,next)=fields (rest,index+1)
-              in ("${" ^ Int.toString index ^ ":(raise Match)}" :: tail,next) end
+              in ("${" ^ Int.toString index ^ ":(raise op Match)}" :: tail,next) end
         fun groups ([],_)=""
           | groups (group::rest,index)=let val (values,next)=fields (group,index)
               in " (" ^ String.concatWith ", " values ^ ")" ^ groups (rest,next) end
@@ -50,6 +50,10 @@ struct
     let val {start,word,path}=prefix (text,offset)
         fun matching name=String.isPrefix word name
         val {role,candidates,fields}=query path
+        fun hasPlaceholder candidates=List.exists (fn candidate:A.candidate =>
+          #name candidate="Match" andalso #kind candidate="exception" andalso null (#arguments candidate)) candidates
+        val snippetAllowed=snippets andalso role="expression" andalso
+          hasPlaceholder (if null path then candidates else #candidates (query []))
         val candidates=if not (null fields) then [] else List.filter
           (fn candidate:A.candidate => matching (#name candidate) andalso allowed (role,#kind candidate)) candidates
         fun item (candidate:A.candidate,isTemplate)=
@@ -74,7 +78,7 @@ struct
             ("offset",Json.int offset),("name",Json.String name),("kind",Json.String "field")])])
           (List.filter (fn (name,_) => matching name) fields)
         val all=fieldItems @ List.concat (List.map (fn candidate:A.candidate => item (candidate,false) ::
-          (if snippets andalso role="expression" andalso not (null (#arguments candidate))
+          (if snippetAllowed andalso not (null (#arguments candidate))
             andalso nameByte (String.sub (#name candidate,0)) then [item (candidate,true)] else [])) candidates) @ lexical
     in List.take (all,Int.min (512,length all)) end
   fun inline {text,offset,pieces,query,range,selected} =

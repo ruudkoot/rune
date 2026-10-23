@@ -146,6 +146,48 @@ struct
         val ()=check ("drive root survives nested build resolution",List.map #file (C.Project.sources drive)=["C:/sub/head.sml"])
         val ()=C.close context
     in check ("project value survives session close",length (C.Project.sources first)=2) end)
+  fun buildQueries () = temporary (fn dir =>
+    let val context=session ()
+        val windows=(size dir>=2 andalso String.sub (dir,1)= #":") orelse String.isPrefix "\\\\" dir
+          orelse String.isPrefix "//" dir orelse (size dir>=4 andalso String.sub (dir,0)= #"/" andalso String.sub (dir,2)= #":")
+        fun write name=let val output=TextIO.openOut (dir ^ "/" ^ name)
+          in TextIO.output (output,"val answer=42\n");TextIO.closeOut output end
+        val ()=List.app write ["alpha.sml","alpha space.sml","end"]
+        val sub=dir ^ "/sub"
+        val ()=OS.FileSys.mkDir sub
+        fun work () =
+          let fun complete text=C.Project.pathCompletions (context,
+                {file=dir ^ "/main.build",text=text,offset=size text,variables=[("ROOT",dir)],windows=windows})
+              val plain=complete "files al"
+              val ()=check ("path completion lists real files and quotes spaces",List.exists
+                (fn item:C.Project.pathCompletion => #label item="alpha space.sml" andalso #text item="\"alpha space.sml\"") (#items plain))
+              val quoted=complete "files \"alpha sp"
+              val ()=check ("unfinished quote completion replaces the entire path token",case #items quoted of [item] =>
+                #start item=6 andalso #stop item=15 andalso #text item="\"alpha space.sml\"" | _ => false)
+              val variable=complete "files $(RO"
+              val ()=check ("unfinished variables complete from configured bindings",case #items variable of [item] =>
+                #text item="$(ROOT)" andalso #kind item="variable" | _ => false)
+              val expanded=complete "files $(ROOT)/al"
+              val ()=check ("path completion expands variables while preserving their spelling",List.exists
+                (fn item:C.Project.pathCompletion => #text item="$(ROOT)/alpha.sml") (#items expanded))
+              val directory=complete "cache su"
+              val ()=check ("cache path completion offers directories",case #items directory of [item] =>
+                #kind item="directory" andalso #text item="sub/" | _ => false)
+              val keyword=complete "files en"
+              val ()=check ("keyword filenames are quoted",case #items keyword of [item] => #text item="\"end\"" | _ => false)
+              val syntax=C.Project.buildSyntax {file="example.build",text="local files a.sml end in use \"child.build\" end\ncache $(ROOT)/x\n"}
+              val ()=check ("build syntax keeps compiler path roles and source spans",null (#diagnostics syntax) andalso
+                List.map (fn item:C.Project.buildReference => (#kind item,#value item)) (#references syntax)=
+                  [("source","a.sml"),("build","child.build"),("directory","$(ROOT)/x")])
+              val bad=C.Project.buildSyntax {file="bad.build",text="files $ end\n"}
+              val ()=check ("stray dollar is a bounded located build diagnostic",case #diagnostics bad of [diagnostic] =>
+                #start diagnostic=6 andalso #stop diagnostic=7 andalso #message diagnostic="unexpected '$'" | _ => false)
+              val libraryContext=C.session {lib=SOME "lib",flags=[]}
+              val libraries=C.Project.pathCompletions (libraryContext,{file=dir ^ "/main.build",text="libraries js",offset=12,variables=[],windows=windows})
+              val ()=check ("library completion uses installed library descriptors",List.exists
+                (fn item:C.Project.pathCompletion => #label item="json" andalso #kind item="library") (#items libraries))
+          in C.close libraryContext;C.close context end
+    in (work () before OS.FileSys.rmDir sub) handle error => (OS.FileSys.rmDir sub handle _ => ();raise error) end)
 end
 structure CompilerApiTestMain = Main (struct
   val name="compiler-api"
@@ -154,6 +196,7 @@ structure CompilerApiTestMain = Main (struct
      Test.it "diagnostics" CompilerApiTests.diagnostics,
      Test.it "queries" CompilerApiTests.queries,
      Test.it "artifacts" CompilerApiTests.artifacts,
-     Test.it "projects" CompilerApiTests.projects]
+     Test.it "projects" CompilerApiTests.projects,
+     Test.it "build-queries" CompilerApiTests.buildQueries]
 end)
 val ()=CompilerApiTestMain.main ()

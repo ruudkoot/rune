@@ -72,6 +72,13 @@ syntax, including infix desugaring; its domains and types are frozen data.
 `documentationAt` reads the leading comment of the owning declaration from
 captured syntax/source, including dependencies whose disk files are gone.
 
+Build-document queries belong to `RuneCompiler.Project.buildSyntax` and
+`pathCompletions`. They share the batch build lexer/parser and preserve path
+roles, token ranges and required quoting. Strict parsing returns located
+diagnostics; recovery retains unfinished paths and variables. Path queries
+read directory metadata using the session's library root and supplied path
+variables, preserve native filename bytes, and never execute a project.
+
 Checkpoints contain committed unit entries and visibility-plan metadata,
 rather than a rollback copy of mutable unification cells. They belong to
 one analysis context and never rewind its result-ID counter. Cancelled or

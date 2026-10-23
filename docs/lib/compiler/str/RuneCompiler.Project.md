@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md) specifies it inside [`RuneCompiler`](../str/RuneCompiler.md) |
 | Status | required |
-| Members | 9 |
+| Members | 13 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -16,13 +16,17 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 
 |  | Member | Is |
 | --- | --- | --- |
+| type | [`buildReference`](../sig/RUNE_COMPILER.md#type-project.buildreference) | `{kind : string, quoted : bool, start : int, stop : int, value : string}` |
 | type | [`input`](../sig/RUNE_COMPILER.md#type-project.input) | `{file : string, kind : string, mode : string, revision : string, text : string}` |
+| type | [`pathCompletion`](../sig/RUNE_COMPILER.md#type-project.pathcompletion) | `{kind : string, label : string, start : int, stop : int, text : string}` |
 | type | [`source`](../sig/RUNE_COMPILER.md#type-project.source) | `{annotations : string list, file : string, mode : string, ordinal : int}` |
 | type | [`t`](../sig/RUNE_COMPILER.md#type-project.t) | *a type of its own* |
+| val | [`buildSyntax`](../sig/RUNE_COMPILER.md#val-project.buildsyntax) | `{file : string, text : string} -> {diagnostics : {column : int, file : string, line : int, message : string, severity : string, start : int, stop : int} list, references : buildReference list}` |
 | val | [`cacheDirectories`](../sig/RUNE_COMPILER.md#val-project.cachedirectories) | `t -> string list` |
 | val | [`fingerprint`](../sig/RUNE_COMPILER.md#val-project.fingerprint) | `t -> string` |
 | val | [`inputs`](../sig/RUNE_COMPILER.md#val-project.inputs) | `t -> input list` |
 | val | [`libraries`](../sig/RUNE_COMPILER.md#val-project.libraries) | `t -> string list` |
+| val | [`pathCompletions`](../sig/RUNE_COMPILER.md#val-project.pathcompletions) | `RuneCompiler.session * {file : string, offset : int, text : string, variables : (string * string) list, windows : bool} -> {isIncomplete : bool, items : pathCompletion list}` |
 | val | [`read`](../sig/RUNE_COMPILER.md#val-project.read) | `RuneCompiler.session * {file : string, overlays : {file : string, text : string} list, variables : (string * string) list, windows : bool} -> t` |
 | val | [`sources`](../sig/RUNE_COMPILER.md#val-project.sources) | `t -> source list` |
 

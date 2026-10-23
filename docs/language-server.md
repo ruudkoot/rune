@@ -68,8 +68,9 @@ hover and resolved-item documentation from captured source.
 
 Clients with snippet support also receive invocation templates whose
 argument groups follow the checked callable type. Their default argument
-expressions raise `Match`, so a template can be checked without inventing
-values. No completion request executes it. Named-call signature help uses
+expressions use `raise op Match` where a nullary `Match` exception is visible,
+so a template can be checked without inventing values or depending on an
+infix setting. No completion request executes it. Named-call signature help uses
 compiler applications, including curried, tuple and infix forms; parameter
 label offsets count UTF-16 units independently of source-position encoding.
 
@@ -77,9 +78,23 @@ Clients negotiating inline completion can request bounded constructor
 patterns, using wildcards for constructor arguments. Suggestions must be
 compatible with selected-completion information. Other clients retain
 ordinary constructor completion. Private incomplete-expression probes do
-not replace source or publish their diagnostic/type data. Build-path
-completion, broader incomplete-pattern recovery, performance and real-client
-acceptance remain open; this is not full M8 acceptance.
+not replace source or publish their diagnostic/type data. Broader
+incomplete-pattern recovery, performance and real-client acceptance remain
+open; this is not full M8 acceptance.
+
+Build documents (`.build`, or language ID `rune-build`) use the compiler's
+build grammar and project planner. Their diagnostics respect unsaved
+overlays. Path completion offers files, directories, configured variables
+and installed libraries, including unfinished quoted paths and variables.
+Replacement edits supply the required quoting, and stale path-item resolves
+are rejected. Build requests do not execute the project or fabricate SML
+semantic snapshots. Other semantic providers currently apply to SML sources.
+
+The wire adapter offers filenames that can be written in UTF-8 build text;
+native filename bytes remain preserved in the public compiler API. Use a
+configured path variable for a native name that cannot be written in the
+source encoding. Directory/result scans and completion response sizes are
+bounded, with incomplete results reported to the client.
 
 ## Workspaces and build contexts
 

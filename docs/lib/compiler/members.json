@@ -257,6 +257,34 @@
      "page": "sig/RUNE_COMPILER.md#type-project.input"
     },
     {
+     "kind": "type",
+     "name": "Project.buildReference",
+     "spec": "type buildReference={kind:string,value:string,start:int,stop:int,quoted:bool}",
+     "doc": "A build parser path occurrence. kind is source, build, directory or\nlibrary; the byte range includes any quotes and value excludes them.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-project.buildreference"
+    },
+    {
+     "kind": "type",
+     "name": "Project.pathCompletion",
+     "spec": "type pathCompletion={label:string,text:string,kind:string,start:int,stop:int}",
+     "doc": "A bounded filesystem/path-variable completion. Its replacement range\nand text include required build-language quoting.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-project.pathcompletion"
+    },
+    {
+     "kind": "val",
+     "name": "Project.buildSyntax",
+     "spec": "val buildSyntax : {file:string,text:string} -> {references:buildReference list,diagnostics:diagnostic list}",
+     "doc": "`buildSyntax request` returns observed path roles and structured build\ndiagnostics through the compiler's own lexer/parser.\n\nRecovery retains unfinished quoted paths and variables. No files are\nread and no project declarations execute.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-project.buildsyntax"
+    },
+    {
+     "kind": "val",
+     "name": "Project.pathCompletions",
+     "spec": "val pathCompletions : session * {file:string,text:string,offset:int,variables:(string*string) list,windows:bool} ->\n  {items:pathCompletion list,isIncomplete:bool}",
+     "doc": "`pathCompletions (session, request)` lists matching paths or variables\nat a build cursor without building or executing the project.\n\nByte ranges refer to captured text. Windows roots/UNC and configured\npath variables follow the compiler project rules. Directory scanning\nis bounded to 8192 entries and results to 512; isIncomplete reports\ntruncation. Native filename bytes are preserved in returned strings.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-project.pathcompletions"
+    },
+    {
      "kind": "val",
      "name": "Project.read",
      "spec": "val read : session * {file : string, variables : (string * string) list,\n                      overlays : {file : string, text : string} list, windows : bool} -> t",
