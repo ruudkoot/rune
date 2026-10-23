@@ -29,14 +29,18 @@ struct
         SOME(Json.String name)=>name | _=>raise Failed "missing constant name")entries
     | _=>raise Failed "missing Win32 constant inventory"
   fun options flag values=List.concat(List.map(fn value=>[flag,value])values)
-  fun generate bits output =
+  fun bindingArguments bits output =
     let val ()=need(exists(sdk ^ "/um/Windows.h") andalso exists(sdk ^ "/shared/windowsx.h") andalso exists(msvc ^ "/vcruntime.h"),
           "provision the pinned original Windows SDK and MSVC include roots")
         val profile=if bits="32" then "windows-x86" else "windows-x86_64"
-        val ()=ignore(run("generate-" ^ bits)(["bin/runeffi","generate","--config","ffi/win32/core.ffi",
+    in ["--config","ffi/win32/core.ffi",
           "--target","ffi/targets/" ^ profile ^ ".json","--out",output] @ options "--include" includes @
           options "--layout" ["WNDCLASSEXW","MSG","PAINTSTRUCT","RECT","POINT"] @
-          options "--constant" (constants()) @ options "--field-set" fieldsSet @ options "--field-get" fieldsGet))
+          options "--constant" (constants()) @ options "--field-set" fieldsSet @ options "--field-get" fieldsGet end
+  fun binding operation bits output =ignore(run(operation ^ "-" ^ bits)
+      (["bin/runeffi",operation] @ bindingArguments bits output))
+  fun generate bits output =
+    let val ()=binding "generate" bits output
         val sets=entries(output ^ "/sets")
         val ()=need(length sets=1,"expected one immutable generated Win32 set")
     in (hd sets,output ^ "/sets/" ^ hd sets ^ "/shims.c") end
@@ -154,13 +158,18 @@ struct
             ["--path","WIN32_GENERATED=" ^ fromRoot generated])
             (List.filter(fn p:ExampleProjects.project=> #gate p=ExampleProjects.NativeWin32)ExampleProjects.projects) end
     in List.app width["32","64"];say "PASS generated native Win32 example on both ABIs and all seven Rune compiler builds\n" end
-  fun main ["host-projects"]=hostProjects()
+  fun canonical bits="lib/ffi/win32/generated/" ^ bits
+  fun main ["generate"]=List.app(fn bits=>ignore(generate bits(canonical bits)))["32","64"]
+    | main ["check"]=List.app(fn bits=>binding "check" bits(canonical bits))["32","64"]
+    | main ["host-projects"]=hostProjects()
     | main ["generate",bits,output]=if bits="32" orelse bits="64" then ignore(generate bits output)
+    else raise Failed "expected Windows width 32 or 64"
+    | main ["check",bits,output]=if bits="32" orelse bits="64" then binding "check" bits output
     else raise Failed "expected Windows width 32 or 64"
     | main ["repl",bits]=if bits="32" orelse bits="64" then repl bits else raise Failed "expected repl 32 or 64"
     | main [mode,bits]=if (bits="32" orelse bits="64") andalso (mode="contract" orelse mode="app")
         then acceptance bits (mode="app") else raise Failed "expected contract/app 32 or 64"
-    | main _=raise Failed "expected generate 32|64 OUTPUT, contract 32|64, app 32|64, or repl 32|64"
+    | main _=raise Failed "expected generate/check [32|64 OUTPUT], contract 32|64, app 32|64, or repl 32|64"
 end
 val ()=NativeWin32Checks.main(CommandLine.arguments())handle e=>
   (TextIO.output(TextIO.stdErr,"FAIL native Win32 acceptance: " ^

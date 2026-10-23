@@ -307,14 +307,14 @@ lib/ffi/win32/native/MANIFEST: lib/ffi/win32/native/library.build $(wildcard lib
 	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/native
 manifests: lib/ffi/win32/native/MANIFEST
 
-# Immutable generated SDL sets are real source libraries. Their MANIFESTs
+# Immutable generated FFI sets are real source libraries. Their MANIFESTs
 # are derived locally; current.build/API pointers, C shims and provenance are
 # additional installed/distribution source assets, outside the SML index.
-SDL_GENERATED_LIBRARIES := $(patsubst %/library.build,%,$(wildcard lib/ffi/sdl/generated/*/sets/*/library.build))
-SDL_GENERATED_MANIFESTS := $(addsuffix /MANIFEST,$(SDL_GENERATED_LIBRARIES))
-manifests: $(SDL_GENERATED_MANIFESTS)
-ifneq ($(strip $(SDL_GENERATED_MANIFESTS)),)
-$(SDL_GENERATED_MANIFESTS): %/MANIFEST: %/library.build $(wildcard lib/ffi/sdl/generated/*/sets/*/*.sml) lib/ffi/runtime/MANIFEST bin/rune-$(BOOTHOST)
+FFI_GENERATED_LIBRARIES := $(patsubst %/library.build,%,$(foreach family,sdl win32,$(wildcard lib/ffi/$(family)/generated/*/sets/*/library.build)))
+FFI_GENERATED_MANIFESTS := $(addsuffix /MANIFEST,$(FFI_GENERATED_LIBRARIES))
+manifests: $(FFI_GENERATED_MANIFESTS)
+ifneq ($(strip $(FFI_GENERATED_MANIFESTS)),)
+$(FFI_GENERATED_MANIFESTS): %/MANIFEST: %/library.build $(foreach family,sdl win32,$(wildcard lib/ffi/$(family)/generated/*/sets/*/*.sml)) lib/ffi/runtime/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index $(@D)
 endif
 
@@ -2248,6 +2248,11 @@ bin/rune-win32-check: bin/rune-win32-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-win32-check.rbc" "$$@"\n' > $@
 	chmod +x $@
 check-tools: bin/rune-win32-check
+.PHONY: win32-generated check-win32-generated
+win32-generated: $(RUNE) bin/runeffi bin/rune-win32-check
+	bin/rune-win32-check generate
+check-win32-generated: $(RUNE) bin/runeffi bin/rune-win32-check
+	bin/rune-win32-check check
 .PHONY: test-win32-native test-win32-app-native
 test-win32-native: $(RUNE) vm windows bin/runeffi bin/rune-win32-check bin/rune-test bin/rune-windows
 	$(RUNE_TEST) --tier test-win32-native

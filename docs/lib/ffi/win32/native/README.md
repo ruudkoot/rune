@@ -34,7 +34,7 @@ Native text uses UTF-16/WTF-8; the cross-provider drawing contract uses ASCII.
 
 Build the shared interactive example with the native provider:
 
-```sh bin/rune --library ffi/win32/native --build examples/win32/native.build \ --path "WIN32_GENERATED=$PWD/ffi/win32/generated/64" -o build/win32-example.rbc RUNE_WIN32_ADAPTER_LIBRARY='<Windows path to the generated 64-bit shim DLL>' \ WSLENV="${WSLENV:+$WSLENV:}RUNE_WIN32_ADAPTER_LIBRARY/w" \ bin/runevm.exe '<Windows path to build/win32-example.rbc>' --smoke```
+```sh bin/rune --library ffi/win32/native --build examples/win32/native.build \ --path "WIN32_GENERATED=$PWD/lib/ffi/win32/generated/64" -o build/win32-example.rbc RUNE_WIN32_ADAPTER_LIBRARY='<Windows path to the generated 64-bit shim DLL>' \ WSLENV="${WSLENV:+$WSLENV:}RUNE_WIN32_ADAPTER_LIBRARY/w" \ bin/runevm.exe '<Windows path to build/win32-example.rbc>' --smoke```
 
 Use `32` and `runevm32.exe` for x86. Remove `--smoke` for interactive use.
 The `WSLENV` bridge is needed when launching a Windows process from WSL;
@@ -49,7 +49,7 @@ commands; generation and adapter compilation are explicit steps.
 
 Reproducible generation and real GUI acceptance use the SML coordinator:
 
-```sh make bin/runeffi bin/rune-win32-check bin/rune-win32-check generate 64 ffi/win32/generated/64 bin/rune-win32-check generate 32 ffi/win32/generated/32 bin/rune-win32-check contract 64 bin/rune-win32-check contract 32 bin/rune-win32-check app 64 bin/rune-win32-check app 32```
+```sh make bin/runeffi bin/rune-win32-check make win32-generated make check-win32-generated bin/rune-win32-check contract 64 bin/rune-win32-check contract 32 bin/rune-win32-check app 64 bin/rune-win32-check app 32```
 
 Set `RUNEFFI_WINDOWS_SDK` and `RUNEFFI_MSVC_INCLUDE` to the pinned originals
 described in `ffi/win32/README.md`. The coordinator generates twice, compares

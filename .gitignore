@@ -44,5 +44,6 @@ __pycache__/
 /lib/ffi/win32/sdldriver/MANIFEST
 /lib/ffi/win32/native/MANIFEST
 
-# Derived indexes of immutable generated SDL source libraries.
+# Derived indexes of immutable generated FFI source libraries.
 /lib/ffi/sdl/generated/*/sets/*/MANIFEST
+/lib/ffi/win32/generated/*/sets/*/MANIFEST

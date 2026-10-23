@@ -315,12 +315,15 @@ for manifest in $(cd "$root/lib" && find . -name MANIFEST | sort); do
   done
 done
 
-# The generated SDL sets also carry current/API pointers, .build files, C
+# The generated FFI sets also carry current/API pointers, .build files, C
 # shims and declaration provenance, which are not entries in an SML MANIFEST.
-if [ -d "$root/lib/ffi/sdl" ]; then
-  mkdir -p "$libdir/ffi"
-  cp -R "$root/lib/ffi/sdl" "$libdir/ffi/"
-fi
+for generated in ffi/sdl ffi/win32/generated; do
+  if [ -d "$root/lib/$generated" ]; then
+    parent=$(dirname "$generated")
+    mkdir -p "$libdir/$parent"
+    cp -R "$root/lib/$generated" "$libdir/$parent/"
+  fi
+done
 
 # Original headers, target profiles, sidecars and implementation-selection build
 # entrypoints accompany runeffi. Generated/native resources remain application

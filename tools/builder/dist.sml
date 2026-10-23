@@ -18,12 +18,14 @@ struct
               val sources=List.map (fn name => let val source=parent ^ "/" ^ name
                    in need (exists source andalso not (isDir source),manifest ^ " names " ^ name ^ ", which is not there");relative source end) (manifestNames manifest)
           in relative manifest::sources @ (if exists (parent ^ "/README.md") then [relative (parent ^ "/README.md")] else []) end
-        (* Complete immutable SDL sets include non-SML outputs and pointers
+        (* Complete immutable FFI sets include non-SML outputs and pointers
            beside their derived MANIFESTs. Keep the same source tree as the
            source installer, including future regenerated set identities. *)
-        val generated=library ^ "/ffi/sdl"
-        val assets=if isDir generated then List.map relative
-          (List.filter(fn file=>not(isDir file) andalso not(isLink file))(tree generated)) else []
+        val assets=List.concat(List.map(fn name=>
+          let val generated=library ^ "/" ^ name
+          in if isDir generated then List.map relative
+            (List.filter(fn file=>not(isDir file) andalso not(isLink file))(tree generated)) else [] end)
+          ["ffi/sdl","ffi/win32/generated"])
     in sort pathLess(unique(List.concat(List.map one builds) @ assets)) end
   fun crlf data =
     let val n=size data

@@ -22,5 +22,7 @@ Fetch the source URLs in the manifests into `build/deps/downloads/`, verify
 SHA-256 before extraction, and preserve original include relationships.
 SDL headers can be reproduced by copying `include/SDL3/*.h` and `LICENSE.txt`
 from that release archive. Do not patch the headers to accommodate a parser.
-Generated SML will be committed under `lib/ffi`; native binaries stay in
-target-specific build directories. `.build` files never execute generation.
+Generated SML is committed under `lib/ffi/sdl/generated` and
+`lib/ffi/win32/generated`; `ffi` retains original inputs and binding policy.
+Native binaries stay in target-specific build directories. `.build` files
+never execute generation.

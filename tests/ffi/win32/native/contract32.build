@@ -1,2 +1,2 @@
-use ../../../../ffi/win32/generated/32/current.build
+use ../../../../lib/ffi/win32/generated/32/current.build
 files config.sml implementation.sml ../contract.sml contract-main.sml end

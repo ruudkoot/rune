@@ -73,6 +73,10 @@ launcher (`runeffi.cmd` on Windows). Paths are resolved relative to the launcher
 so an installation can move. Generation still takes explicit `--config`,
 `--target`, `--include` and output paths; installation never runs a generator,
 opens a native library or compiles an application shim automatically.
+Complete generated source sets, typed C shims and provenance are installed
+under `lib/rune/ffi/sdl/generated` and `lib/rune/ffi/win32/generated`.
+Win32 sets are not duplicated under `ffi-assets`; that directory contains
+the original-input manifests, policy and provider build fragments.
 
 The Windows archive installer requires PowerShell for a read-only path
 preflight, including with `--no-register`. Before creating the target prefix,
@@ -87,9 +91,10 @@ For the existing Windows compiler's `.build` handling, use relative paths with
 forward slashes and run from the example directory. Drive-qualified absolute
 project and virtual-module paths are not supported by that path resolver.
 The [installed-example receipt](../../tests/ffi/evidence/installed-examples.md)
-records a working unchanged Win32 example with
-`--build native.build --path WIN32_GENERATED=generated/32` (or `generated/64`),
-using copies of the installed `ffi-assets` fragments in the example tree.
+records the prior working layout. With the canonical library layout, pass
+`WIN32_GENERATED` as a relative path from the selected `ffi-assets/win32`
+build fragment to the installed `ffi/win32/generated/32` (or `64`) set.
+The application and provider build fragments remain ordinary unchanged sources.
 Windows launchers can run after moving an installation. Its legacy uninstall
 manifest records absolute installation-time filenames: restore the original
 prefix before uninstalling. Uninstall rejects a moved or out-of-prefix
