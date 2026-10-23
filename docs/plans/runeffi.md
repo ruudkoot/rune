@@ -19,7 +19,7 @@ implementation progress separately from this original design baseline.
 |---|---|---|
 | M0: contracts, inventories and baseline | none | complete |
 | M1: reusable C frontend | M0 | complete |
-| M2: binding model and sidecars | M1 | planned |
+| M2: binding model and sidecars | M1 | complete |
 | M3: generic dynamic calls | M0 | planned |
 | M4: layout, marshalling and generated shims | M2, M3 | planned |
 | M5: callbacks and VM lifecycle | M3, M4 | planned |
@@ -34,6 +34,9 @@ independently after M6. Complete and commit each milestone with its evidence
 before declaring it done. A failed or unavailable completion gate leaves
 that part outstanding. Additions to a delivered inventory are explicit
 roadmap changes, with their tests and dependencies.
+
+M2 completion evidence: [binding models and sidecars](../../tests/ffi/evidence/m2.md)
+(2026-10-23).
 
 The original brief is accounted for as follows:
 
