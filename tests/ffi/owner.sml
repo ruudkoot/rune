@@ -65,6 +65,22 @@ struct
   val ()=((ForeignOwner.withBorrow owner(fn _=>raise Fail "borrow"))handle Fail _=>())
   val ()=ForeignOwner.close owner
   val ()=check("exceptional borrow releases guard",count()=0)
+  val owner=adopt()
+  val releaseFirst=ForeignOwner.retain owner
+  val releaseSecond=ForeignOwner.retain owner
+  val ()=check("retained lease blocks destruction",busy(fn()=>ForeignOwner.close owner))
+  val ()=releaseFirst()
+  val ()=check("independent retained lease remains active",busy(fn()=>ForeignOwner.close owner))
+  val ()=releaseFirst()
+  val ()=check("repeated release does not consume another lease",busy(fn()=>ForeignOwner.close owner))
+  val ()=ForeignOwner.withBorrow owner(fn pointer=>check("retained owner supports nested synchronous use",RuneForeign.read(pointer,0w0,5)="owned"))
+  val ()=releaseSecond()
+  val ()=ForeignOwner.close owner
+  val ()=check("last release permits destruction",count()=0 andalso ForeignOwner.isClosed owner)
+  val ()=releaseFirst()
+  val ()=releaseSecond()
+  val ()=check("release remains harmless after native destruction",ForeignOwner.isClosed owner)
+  val ()=check("closed retained lease rejected",closed(fn()=>ignore(ForeignOwner.retain owner)))
   val ()=ForeignMemory.release input
   val ()=List.app(fn(call,symbol)=>(RuneForeign.release call;RuneForeign.release symbol))(!calls)
   val ()=RuneForeign.release library

@@ -8,8 +8,8 @@ documented when a comment describes it, alone or together with the entry before 
 | --- | --- | --- | --- | --- | --- |
 | [`FOREIGN_GENERATED`](sig/FOREIGN_GENERATED.md) | 7 | 7 | 100% | 4 | 4 |
 | [`FOREIGN_MEMORY`](sig/FOREIGN_MEMORY.md) | 16 | 16 | 100% | 12 | 12 |
-| [`FOREIGN_OWNER`](sig/FOREIGN_OWNER.md) | 11 | 11 | 100% | 5 | 5 |
-| **all** | 34 | 34 | 100% | 21 | 21 |
+| [`FOREIGN_OWNER`](sig/FOREIGN_OWNER.md) | 12 | 12 | 100% | 6 | 6 |
+| **all** | 35 | 35 | 100% | 22 | 22 |
 
 ## Members a signature describes
 
@@ -18,7 +18,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-3 structures have a page, with 34 members, of which 34 (100%) are described by a signature.
+3 structures have a page, with 35 members, of which 35 (100%) are described by a signature.
 
 ---
 

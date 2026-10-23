@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`FOREIGN_OWNER`](../sig/FOREIGN_OWNER.md) |
 | Status | required |
-| Members | 11 |
+| Members | 12 |
 | Tests | not listed |
 | Source | [lib/ffi/runtime/owner.sml](../../../../../lib/ffi/runtime/owner.sml) |
 
@@ -32,6 +32,7 @@ What each means is on [`FOREIGN_OWNER`](../sig/FOREIGN_OWNER.md); the types are 
 | val | [`close`](../sig/FOREIGN_OWNER.md#val-close) | `owner -> unit` |
 | val | [`inScope`](../sig/FOREIGN_OWNER.md#val-inscope) | `ForeignScope.scope * owner -> ForeignScope.ticket` |
 | val | [`isClosed`](../sig/FOREIGN_OWNER.md#val-isclosed) | `owner -> bool` |
+| val | [`retain`](../sig/FOREIGN_OWNER.md#val-retain) | `owner -> unit -> unit` |
 | val | [`withBorrow`](../sig/FOREIGN_OWNER.md#val-withborrow) | `owner -> (resource -> 'a) -> 'a` |
 
 ---

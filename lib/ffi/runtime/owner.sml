@@ -20,11 +20,15 @@ struct
         val ()=if List.exists(fn owner=>RuneForeign.sameAddress(pointer,raw owner))existing then raise AlreadyOwned else ()
         val owner=Owner{pointer=pointer,destructor=destructor,state=ref Open,borrows=ref 0}
     in owners:=owner:: !owners;owner end
-  fun withBorrow (owner as Owner{pointer,state,borrows,...}) body=
+  fun retain (owner as Owner{state,borrows,...})=
     if isClosed owner then raise Closed else case !state of Closing=>raise Busy | _=>
       let val ()=borrows:= !borrows+1
-          val answer=body pointer handle e=>(borrows:= !borrows-1;raise e)
-      in borrows:= !borrows-1;answer end
+          val released=ref false
+      in fn()=>if !released then () else (released:=true;borrows:= !borrows-1) end
+  fun withBorrow (owner as Owner{pointer,...}) body=
+    let val release=retain owner
+        val answer=body pointer handle e=>(release();raise e)
+    in release();answer end
   fun close(owner as Owner{pointer,destructor={call,arguments,failure},state,borrows})=
     if isClosed owner then raise Closed else if !state=Closing orelse !borrows>0 then raise Busy else
     let val ()=state:=Closing

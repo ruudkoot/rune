@@ -27,6 +27,9 @@ Closed owners leave the ownership index and cannot become live again when
 an allocator reuses their address. This is the strict memory contract;
 GUI handles permitting destruction during messages require their explicit
 callback protocol. Raw pointer escapes remain the caller's responsibility.
+`retain` extends the same borrow guard beyond a synchronous SML call and
+returns an idempotent release function. Callback and retained-buffer owners
+release that lease after native unregistration, before destroying storage.
 
 `ForeignGenerated` keeps immutable fixed call descriptors in explicit lazy
 sessions. Defining a generated structure opens no libraries. The first call

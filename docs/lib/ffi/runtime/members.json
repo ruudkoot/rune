@@ -242,6 +242,13 @@
     },
     {
      "kind": "val",
+     "name": "retain",
+     "spec": "val retain : owner -> (unit -> unit)",
+     "doc": "`retain owner` holds a borrow guard until its returned release function runs.\n\nThe release function is idempotent. Retained callback contexts and\nbuffers release their lease only after native code unregisters them.\nThis guards ownership; it never copies storage or creates a native view.\n\n**Raises** `Closed` or `Busy` before acquiring a lease.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#val-retain"
+    },
+    {
+     "kind": "val",
      "name": "close",
      "spec": "val close : owner -> unit",
      "doc": "`close owner` invokes its destructor and retires its native identity.\n\nA failed native destructor preserves ownership for retry and raises\n`Failed` with the raw status/error. Native bridge failures propagate.\n\n**Raises** `Closed`, `Busy` or `Failed`.\n\n",
