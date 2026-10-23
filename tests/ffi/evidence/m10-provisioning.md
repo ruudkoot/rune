@@ -1,5 +1,10 @@
 # M10 provisioning, packaging and interactive acceptance
 
+Final current-artifact source/archive installation, runtime relocation and
+actual Windows32/64 installer acceptance are recorded in
+[final-packaging.md](final-packaging.md). The historical component results
+and unavailable checks below describe their original runs.
+
 Date: 2026-10-23. This is component evidence, not completion of M10. Global
 regression, host/bootstrap/platform and performance gates remain separately
 owned and must be read with the final capability matrix.
