@@ -160,9 +160,16 @@ struct
                       SOME index => #identity exported ^ "#" ^ Int.toString index
                     | NONE => getOpt (UnitBasis.stableName (UnitBasis.kTycon,stamp),
                         #identity exported ^ "/local/" ^ key ^ "/" ^ Int.toString (stamp-Vector.sub (#counters start,UnitBasis.kTycon)))
+                    (* The outgoing environment is fixed while facts are printed.
+                       Resolving a tycon's qualified path once per unit avoids
+                       walking the entire environment for every occurrence. *)
+                    val qualified=IntTable.table 64
+                    fun qualifiedName (c:Types.tycon)=case IntTable.find(qualified,#stamp c) of
+                      SOME name=>name | NONE=>let val name=Env.qualifiedName(!env,c)
+                        in IntTable.insert(qualified,#stamp c,name);name end
                     fun frozenType (span:Source.span,ty,derived) =
                       let val printer=Types.newPrinter ()
-                          fun show ty=Types.toStringNamed (fn c => Env.qualifiedName (!env,c),printer) ty
+                          fun show ty=Types.toStringNamed (qualifiedName,printer) ty
                           fun domain ty=case Types.prune ty of Types.TRecord fields =>
                             if List.map #1 fields=List.tabulate (length fields,fn i => Int.toString (i+1)) andalso length fields>=2
                             then List.map (show o #2) fields else [show ty] | _ => [show ty]

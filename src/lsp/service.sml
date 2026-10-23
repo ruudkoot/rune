@@ -16,14 +16,17 @@ struct
     | Build of {uri:string,revision:IntInf.int,generation:IntInf.int,request:request option}
     | Query of request | Workspace of request
   type result={uri:string,revision:IntInf.int,generation:IntInf.int,snapshot:string}
+  type flight={uri:string,revision:IntInf.int,generation:IntInf.int,job:IntInf.int}
+  type failed={uri:string,revision:IntInf.int,generation:IntInf.int,message:string}
   exception Duplicate
   datatype t=Service of {workspace:W.t,documents:D.t,caps:P.capabilities,jobs:task J.t,
-    results:result list ref,requests:request list ref,refresh:unit Q.t,refreshPending:bool ref,send:R.message->unit,log:string->unit,
+    results:result list ref,requests:request list ref,flights:flight list ref,failures:failed list ref,
+    refresh:unit Q.t,refreshPending:bool ref,send:R.message->unit,log:string->unit,
     discovered:string*V.value->unit}
   fun new {workspace,documents,caps,command,args,send,log,discovered} =
     Service {workspace=workspace,documents=documents,caps=caps,jobs=J.new {command=command,args=args,
       timeout=Time.fromSeconds 30,cancelGrace=Time.fromMilliseconds 50,maxPending=128},results=ref [],requests=ref [],
-      refresh=Q.new {prefix="runelsp-diagnostics-",maxPending=1},refreshPending=ref false,
+      flights=ref [],failures=ref [],refresh=Q.new {prefix="runelsp-diagnostics-",maxPending=1},refreshPending=ref false,
       send=send,log=log,discovered=discovered}
   fun current (Service {workspace,documents,...},{uri,revision,generation}) =
     W.generation workspace=generation andalso (uri="" orelse (D.healthy (documents,uri) andalso
@@ -66,16 +69,24 @@ struct
         data=Discover {uri=uri,revision= #revision snapshot,generation=W.generation workspace},
         payload=V.Object [("op",V.Bytes "discover"),("uri",V.Bytes uri),("state",capture service)]}))
        handle J.Full => log "analysis queue is full")
-  fun check (service as Service {workspace,documents,caps,log,...},uri,request) =
+  fun check (service as Service {workspace,documents,caps,log,flights,failures,results,...},uri,request) =
     if buildDocument (service,uri) then buildJob (service,uri,request) else
     case D.snapshot (documents,uri) of NONE => () | SOME snapshot =>
-      let val id=submit (service,{key=case request of NONE => SOME ("check:" ^ uri) | SOME _ => NONE,
+      let val revision= #revision snapshot val generation=W.generation workspace
+          val blocked=List.find(fn item:failed=> #uri item=uri andalso #revision item=revision andalso #generation item=generation)(!failures)
+          val running=List.find(fn item:flight=> #uri item=uri andalso #revision item=revision andalso #generation item=generation)(!flights)
+          val ready=List.exists(fn item:result=> #uri item=uri andalso #revision item=revision andalso #generation item=generation)(!results)
+      in if not(isSome request) andalso ready then () else
+       case blocked of SOME item=>Option.app(fn request=>failure(service,request,P.requestFailed,#message item,NONE))request
+       | NONE=>let val id=case running of SOME item=> #job item | NONE=>
+          let val id=submit (service,{key=SOME ("check:" ^ uri),
             priority=if isSome request then 0 else 100,
             data=Check {uri=uri,revision= #revision snapshot,generation=W.generation workspace,request=request},
             payload=V.Object [("op",V.Bytes "check"),("uri",V.Bytes uri),
               ("encoding",V.Bytes (P.encodingName (P.positionEncoding caps))),
               ("capabilities",V.json (P.rawCapabilities caps)),("state",capture service)]})
-      in Option.app (fn request:request => #job request:=SOME id) request end
+          in flights:={uri=uri,revision=revision,generation=generation,job=id}:: !flights;id end
+        in Option.app (fn request:request => #job request:=SOME id) request end end
       handle J.Full => (case request of NONE => log "analysis queue is full"
         | SOME request => failure (service,request,P.requestFailed,"analysis queue is full",NONE))
   fun query (service as Service {jobs,...},request:request,snapshot) =
@@ -142,7 +153,9 @@ struct
       in send (R.Response {id=SOME id,outcome=R.Error {code=R.invalidParams,message=message,data=NONE}});true end
   fun cancel (service as Service {jobs,requests,...},id) =
     case List.find (fn request:request => #id request=id) (!requests) of NONE => () | SOME request =>
-      (failure (service,request,R.requestCancelled,"request cancelled",NONE);Option.app (fn id => J.cancel (jobs,id)) (!(#job request)))
+      (failure (service,request,R.requestCancelled,"request cancelled",NONE);Option.app (fn id =>
+        if List.exists(fn other:request=> !(#job other)=SOME id andalso not(!(#done other)))(!requests)
+        then () else J.cancel (jobs,id)) (!(#job request)))
   fun cancelProgress (service as Service {requests,...},token) =
     List.app (fn request:request => if Json.member ("workDoneToken",#params request)=SOME (P.idToJson token)
       then cancel (service,#id request) else ()) (!requests)
@@ -159,8 +172,9 @@ struct
       (refreshPending:=true;send (Q.issue (refresh,{method="workspace/diagnostic/refresh",params=NONE,data=()})))
   fun response (Service {refresh,refreshPending,...},message) =
     case Q.resolve (refresh,message) of NONE => false | SOME _ => (refreshPending:=false;true)
-  fun closeDocument (service as Service {results,send,...},uri) =
+  fun closeDocument (service as Service {results,failures,send,...},uri) =
     (results:=List.filter (fn result:result => #uri result<>uri) (!results);
+     failures:=List.filter(fn item:failed=> #uri item<>uri)(!failures);
      if pullClient service then refresh service else send (R.Notification {method="textDocument/publishDiagnostics",params=SOME (Json.Object
        [("uri",Json.String uri),("diagnostics",Json.Array [])])}))
   fun publish (service as Service {documents,caps,send,...},reports) =
@@ -182,6 +196,20 @@ struct
         failure (service,request,P.serverCancelled,"diagnostic source changed",SOME (Json.Object [("retriggerRequest",Json.Bool true)]))
       else failure (service,request,P.contentModified,"query source changed",NONE)
     else finish (service,request,R.Result (V.unjson value))
+  (* A check belongs to captured source, not to its first requesting provider.
+     Detach all waiters atomically before dispatching their independent queries. *)
+  fun waiters (Service {flights,requests,...},{uri,revision,generation,request}) =
+    let val matching=List.find(fn item:flight=> #uri item=uri andalso #revision item=revision andalso #generation item=generation)(!flights)
+        val ()=flights:=List.filter(fn item:flight=>not(#uri item=uri andalso #revision item=revision andalso #generation item=generation))(!flights)
+    in case matching of NONE=>(case request of NONE=>[] | SOME request=>[request])
+     | SOME item=>List.filter(fn request:request=> !(#job request)=SOME(#job item) andalso not(!(#done request)))(!requests) end
+  fun failedCheck (service as Service {failures,log,...},ticket,message) =
+    let val pending=waiters(service,ticket)
+        val item={uri= #uri ticket,revision= #revision ticket,generation= #generation ticket,message=message}:failed
+        val all=item::List.filter(fn prior:failed=> #uri prior<> #uri item)(!failures)
+        val ()=if current(service,{uri= #uri ticket,revision= #revision ticket,generation= #generation ticket})
+          then failures:=List.take(all,Int.min(64,length all)) else ()
+    in if null pending then log message else List.app(fn request=>failure(service,request,P.requestFailed,message,NONE))pending end
   fun handleEvent (service as Service {results,discovered,log,...},event) =
     case event of J.Restarted => results:=[]
     | J.Done (Discover ticket,value) => if current (service,ticket) then discovered (#uri ticket,value) else ()
@@ -192,12 +220,13 @@ struct
               (results:={uri= #uri ticket,revision= #revision ticket,generation= #generation ticket,snapshot=snapshot} ::
                 List.filter (fn result:result => #uri result<> #uri ticket) (!results);
                publish (service,V.array (V.field (value,"reports"))))
-        in case #request ticket of NONE => () | SOME request =>
+            val pending=waiters(service,ticket)
+        in List.app(fn request=>
           if !(#done request) then () else if not valid then
             if #method request="textDocument/diagnostic" then
               failure (service,request,P.serverCancelled,"diagnostic source changed",SOME (Json.Object [("retriggerRequest",Json.Bool true)]))
             else failure (service,request,P.contentModified,"query source changed",NONE)
-          else query (service,request,snapshot) end
+          else query (service,request,snapshot))pending end
     | J.Done (Query request,value) => finishQuery (service,request,value)
     | J.Done (Build ticket,value) =>
         (case #request ticket of SOME request => finishQuery (service,request,value) | NONE =>
@@ -218,16 +247,17 @@ struct
                (#retried request:=true;results:=List.filter (fn result:result => #uri result<> #uri request) (!results);
                 check (service,#uri request,SOME request)) else reject request
            | Workspace request => reject request
-           | Check {request=SOME request,...} => reject request
+           | Check ticket => List.app reject (waiters(service,ticket))
            | Build {request=SOME request,...} => reject request
            | _ => log (#message error) end
     | J.Failed (Query request,message) => failure (service,request,P.requestFailed,message,NONE)
-    | J.Failed (Check {request=SOME request,...},message) => failure (service,request,P.requestFailed,message,NONE)
+    | J.Failed (Check ticket,message) => failedCheck(service,ticket,message)
     | J.Failed (Build {request=SOME request,...},message) => failure (service,request,P.requestFailed,message,NONE)
     | J.Failed (_,message) => log message
     | J.Cancelled (Query request) => if !(#done request) then () else failure (service,request,R.requestCancelled,"request cancelled",NONE)
     | J.Cancelled (Workspace request) => if !(#done request) then () else failure (service,request,R.requestCancelled,"request cancelled",NONE)
-    | J.Cancelled (Check {request=SOME request,...}) => if !(#done request) then () else failure (service,request,R.requestCancelled,"request cancelled",NONE)
+    | J.Cancelled (Check ticket) => List.app(fn request=>if !(#done request) then () else
+        failure (service,request,R.requestCancelled,"request cancelled",NONE))(waiters(service,ticket))
     | J.Cancelled (Build {request=SOME request,...}) => if !(#done request) then () else failure (service,request,R.requestCancelled,"request cancelled",NONE)
     | J.Cancelled _ => ()
   fun descriptors (Service {jobs,...})=J.descriptors jobs

@@ -51,9 +51,26 @@ worker resource limits are separate.
 
 A supervised child process owns compiler sessions. The connection continues
 reading requests while analysis runs; foreground queries precede queued
-background checks. Background checks coalesce per document. Cancellation
+background checks. Concurrent providers for one document revision and
+workspace generation share a single check. Cancellation
 receives one response and interrupts the child, with process termination as
-a fallback. Worker restart drops references to its old snapshots.
+a fallback; cancelling one provider preserves a check with other waiters.
+Worker restart drops references to its old snapshots.
+
+The worker has a 512 MiB VM heap cap, a 1.5 GiB process address-space cap
+(including both copying spaces and native code), and a 30-second job deadline.
+Contexts and frozen views each retain at most four entries and charge at most
+2 MiB of source text across entries; a single larger entry can occupy the
+cache alone. Shared text is charged separately per view. These are retention
+budgets, separate from the document and process limits. Unchanged unit
+occurrence projections are reused with the compiler's validated unit keys.
+
+Worker stderr is captured privately: at most 4 KiB is retained, a 64 KiB
+stream terminates the worker, and heap exhaustion is classified immediately.
+Infrastructure failure completes all waiting providers once. Further checks
+of that failed document revision and workspace generation return the same
+failure until an edit, dependency/configuration change, close/reopen or
+`Rune: Restart language server` permits another attempt.
 
 The server supports push diagnostics and document/workspace pull reports,
 unchanged result IDs, refresh, work progress and workspace partial reports.

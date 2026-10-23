@@ -34,6 +34,13 @@ These counters include observer overhead; `live` is the collector's last
 measurement, not a collection forced at each phase. Record process RSS with
 an independent process measurement alongside these samples.
 
+`RUNE_LSP_REPLAY_CYCLES=100` extends the real-project replay with alternating
+leaf revisions, diagnostics and hover. Every tenth revision contains an
+explicit `int`/`bool` mismatch; the next revision repairs it. The replay also
+checks project navigation and completion. These are semantic/retention
+acceptance runs; record competing compiler or host-suite load before using
+their latencies as performance evidence.
+
 ## Document and workspace foundations (M3)
 
 `make test-lsp` checks document lifetimes, atomic sequential edits,

@@ -44,12 +44,21 @@ struct
     let val _=receive process
         val ()=P.enqueue (process,W.Bytes "truncate")
     in check ("truncated worker frames fail",case receive process of [P.Failed _] => true | _ => false) end)
+  fun stderrLimits ()=List.app(fn (command,expected)=>fixture(fn process=>
+    let val _=receive process
+        val ()=P.enqueue(process,W.Bytes command)
+        val timer=Timer.startRealTimer()
+        val events=receive process
+    in check("bounded classified stderr: " ^ command,case events of [P.Failed message]=>message=expected
+        andalso P.closed process andalso Time.<(Timer.checkRealTimer timer,Time.fromSeconds 3) | _=>false) end))
+    [("heap","analysis worker exhausted its heap budget"),("stderr-flood","analysis worker exceeded its stderr budget")]
 end
 structure RuneLspWorkerProcessTestMain=Main (struct
   val name="lsp-worker-process"
   val tests=Test.describe "lsp-worker-process"
     [Test.it "roundtrip-and-input" RuneLspWorkerProcessTests.roundtrip,
      Test.it "cancellation" RuneLspWorkerProcessTests.cancellation,
-     Test.it "truncated-output" RuneLspWorkerProcessTests.truncated]
+     Test.it "truncated-output" RuneLspWorkerProcessTests.truncated,
+     Test.it "bounded-stderr" RuneLspWorkerProcessTests.stderrLimits]
 end)
 val ()=RuneLspWorkerProcessTestMain.main ()

@@ -64,12 +64,43 @@ struct
     in check ("invalid metadata does not retain a completed request id",case !output of
       [R.Response {outcome=R.Error {code=first,...},...},R.Response {outcome=R.Error {code=second,...},...}] =>
         first=R.invalidParams andalso second=LspProtocol.contentModified | _ => false) end)
+  fun sharedChecks ()=fixture(fn {service,output,change,...}=>
+    let val S.Service{jobs=J.Jobs{queue,...},requests,...}=service
+        fun send id=ignore(S.request(service,{id=R.Number id,method="textDocument/hover",params=SOME(Json.Object
+          [("textDocument",Json.Object[("uri",Json.String "untitled:race")]),
+           ("position",Json.Object[("line",Json.int 0),("character",Json.int 4)])])}))
+        val ()=(send 1;send 2)
+        val ()=check("provider burst shares one check",length(!queue)=1 andalso length(!requests)=2)
+        val task= #data(hd(!queue))
+        val ()=S.cancel(service,R.Number 1)
+        val J.Jobs{events,...}=case service of S.Service{jobs,...}=>jobs
+        val ()=check("cancelling one waiter preserves the shared check",null(!events))
+        val ()=queue:=[]
+        val ()=S.handleEvent(service,J.Done(task,V.Object[("snapshot",V.Bytes "shared"),("reports",V.Array [])]))
+        val ()=check("only the remaining waiter is queried",case !queue of [job]=>
+          (case #data job of S.Query request=> #id request=R.Number 2 | _=>false) | _=>false)
+    in () end)
+  fun failedChecks ()=fixture(fn {service,output,change,...}=>
+    let val S.Service{jobs=J.Jobs{queue,...},...}=service
+        fun send id=ignore(S.request(service,{id=R.Number id,method="textDocument/hover",params=SOME(Json.Object
+          [("textDocument",Json.Object[("uri",Json.String "untitled:race")])])}))
+        val ()=(send 1;send 2)
+        val task= #data(hd(!queue)) val ()=queue:=[]
+        val ()=S.handleEvent(service,J.Failed(task,"analysis worker exhausted its heap budget"))
+        val ()=send 3
+        fun failed(R.Response{outcome=R.Error{message,...},...})=message="analysis worker exhausted its heap budget" | failed _=false
+        val ()=check("failure fans out once and unchanged source does not retry",length(!output)=3
+          andalso List.all failed(!output) andalso null(!queue))
+        val ()=change() val ()=send 4
+    in check("a new revision permits recovery",length(!queue)=1) end)
 end
 structure RuneLspServiceTestMain=Main (struct
   val name="lsp-service"
   val tests=Test.describe "lsp-service" [Test.it "stale-query-completions" RuneLspServiceTests.changed,
     Test.it "stale-check-completions" RuneLspServiceTests.checked,Test.it "current-completion-once" RuneLspServiceTests.unchanged,
     Test.it "workspace-generation-completions" RuneLspServiceTests.generation,
-    Test.it "invalid-hint-resolution" RuneLspServiceTests.invalidResolution]
+    Test.it "invalid-hint-resolution" RuneLspServiceTests.invalidResolution,
+    Test.it "shared-check-cancellation" RuneLspServiceTests.sharedChecks,
+    Test.it "failed-check-backoff" RuneLspServiceTests.failedChecks]
 end)
 val ()=RuneLspServiceTestMain.main ()

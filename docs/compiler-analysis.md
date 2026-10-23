@@ -43,6 +43,12 @@ unchanged tokens/declarations against the new incoming fixities. New
 elaboration always receives fresh annotation slots. No mutable compiler
 type or AST reference escapes in query results.
 
+Frozen occurrence projections share the same validated unit keys as the
+serialized bases. An unchanged prefix reuses those immutable lists; changed
+suffixes are projected again with bounded stack use. The projection cache
+retains only the current checked units and is released on close. Type-name
+qualification is memoized only within one unit's fixed outgoing environment.
+
 `observe (context, SOME callback)` enables synchronous phase observations
 between checks. Events identify phases, source units and work counts; callers
 supply clocks and host allocation measurements. `NONE` disables observation.

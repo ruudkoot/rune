@@ -10,6 +10,12 @@ struct
   fun handleValue value = case value of
     W.Bytes "hold" => (send (W.Bytes "holding");Posix.Process.sleep (Time.fromSeconds 10);())
   | W.Bytes "truncate" => (raw "Content-Length: 20\r\n\r\nx";OS.Process.exit OS.Process.success)
+  | W.Bytes "heap" => (TextIO.output(TextIO.stdErr,"runevm: heap limit exceeded\n");TextIO.flushOut TextIO.stdErr;
+      Posix.Process.sleep(Time.fromSeconds 10);())
+  | W.Bytes "stderr-flood" =>
+      let fun loop ()=(TextIO.output(TextIO.stdErr,String.implode(List.tabulate(4096,fn _=> #"x")));
+            TextIO.flushOut TextIO.stdErr;loop())
+      in loop() end
   | _ => send value
   fun loop reader =
     let val bytes=Posix.IO.readVec (Posix.FileSys.stdin,4096)

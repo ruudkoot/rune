@@ -11,7 +11,7 @@ struct
   structure L=LspPosition
   structure J=RuneLspSync
   exception Stale of string
-  type context={key:string,compiler:C.session,analysis:A.t}
+  type context={key:string,compiler:C.session,analysis:A.t,bytes:int ref}
   type source={file:string,uri:string,text:string,mode:string,ordinal:int option,syntax:C.Syntax.t option,
     version:IntInf.int option,revision:IntInf.int option,index:L.t option,
     tokens:(C.Syntax.piece list * C.Syntax.piece vector) option ref}
@@ -30,12 +30,24 @@ struct
   fun clear (Worker {contexts,views,tokens,...}) =
     (List.app (fn context:context => (A.close (#analysis context);C.close (#compiler context))) (!contexts);
      contexts:=[];views:=[];RuneLspTokens.clear tokens)
+  val retainedSourceBudget=2*1024*1024
+  fun inputBytes inputs=List.foldl(fn (input:A.input,n)=>size(#text input)+n)0 inputs
+  fun snapshotBytes snapshot=inputBytes(A.inputs snapshot)+inputBytes(A.dependencies snapshot)
+  (* Charge shared text on every retained view. This conservative source-byte
+     budget supplements the count, VM heap and process address-space limits. *)
+  fun retain weight entries=
+    let fun loop([],_,_,kept)=List.rev kept
+          | loop(entry::rest,n,bytes,kept)=
+              if n=4 orelse n>0 andalso weight entry>retainedSourceBudget-bytes then List.rev kept
+              else loop(rest,n+1,bytes+weight entry,entry::kept)
+    in loop(entries,0,0,[]) end
+  fun release (context:context)=(A.close(#analysis context);C.close(#compiler context))
   fun context (Worker {contexts,...},{key,lib,flags}) =
     case List.find (fn context:context => #key context=key) (!contexts) of SOME context =>
       (contexts:=context :: List.filter (fn prior:context => #key prior<>key) (!contexts);context)
     | NONE =>
       let val compiler=C.session {lib=SOME lib,flags=flags}
-          val context={key=key,compiler=compiler,analysis=A.create (compiler,{context=key})}:context
+          val context={key=key,compiler=compiler,analysis=A.create (compiler,{context=key}),bytes=ref 0}:context
           val ()=case RuneLspProfile.path of NONE=>() | SOME _=>A.observe(#analysis context,SOME RuneLspProfile.observe)
           val all=context :: !contexts
           val ()=if length all<=4 then () else List.app (fn context:context =>
@@ -166,7 +178,7 @@ struct
                 then Json.Object [("kind",Json.String "plaintext"),("value",Json.String (safe (#message diagnostic)))]
                 else Json.String (safe (#message diagnostic)))])
     in List.mapPartial diagnostic (A.diagnostics (#snapshot view)) end
-  fun check (worker as Worker {views,namespace,...},{state,uri,encoding,capabilities,cancelled}) =
+  fun check (worker as Worker {contexts,views,namespace,...},{state,uri,encoding,capabilities,cancelled}) =
     let val (workspace as W.Workspace {platform,lib,...},documents)=M.restore state
         val _=RuneLspProjects.enrich (workspace,documents,cancelled)
         val configuration=W.configurationFor (workspace,uri)
@@ -203,7 +215,15 @@ struct
               let val snapshot=case D.snapshot (documents,uri) of SOME snapshot => snapshot | NONE => raise Fail "document is not open"
                   val file=case native uri of NONE => uri | SOME {path,...} => path
               in [{file=file,text=L.text (#content snapshot),mode="",annotations=[],revision=IntInf.toString (#revision snapshot)}:A.input] end
+        val ()=if inputBytes inputs+List.foldl(fn (prior:context,n)=>
+              if #key prior=key then n else !(#bytes prior)+n)0(!contexts)<=retainedSourceBudget then () else
+          (List.app release (List.filter(fn prior:context=> #key prior<>key)(!contexts));
+           contexts:=[context];views:=List.filter(fn view:view=>A.context(#snapshot view)=key)(!views))
         val snapshot=A.check (#analysis context,{project=project,inputs=inputs,cancelled=cancelled})
+        val ()= #bytes context:=snapshotBytes snapshot
+        val kept=retain (fn context:context=> !(#bytes context)) (!contexts)
+        val ()=List.app release (List.filter(fn prior:context=>not(List.exists(fn context:context=> #key context= #key prior)kept))(!contexts))
+        val ()=contexts:=kept
         fun captured (input:A.input,ordinal):source list =
           let val opened=overlay (#file input)
               val aliases=List.filter (fn snapshot => matches (#file input,snapshot)) (D.all documents)
@@ -224,7 +244,7 @@ struct
         val view=makeView {id= !namespace ^ ":" ^ A.id snapshot,snapshot=snapshot,sources=sources,encoding=encoding,uri=uri,
           ordinal=Option.map #ordinal selected,capabilities=capabilities,generation=W.generation workspace}:view
         val all=view :: !views
-        val ()=views:=List.take (all,Int.min (4,length all))
+        val ()=views:=retain (fn view:view=>snapshotBytes(#snapshot view)) all
     in view end
   fun find (Worker {views,...},id)=List.find (fn view:view => #id view=id) (!views)
   fun documentDiagnostics (view:view,{uri,previous}) =

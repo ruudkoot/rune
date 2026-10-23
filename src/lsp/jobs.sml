@@ -52,7 +52,7 @@ struct
       case !worker of NONE =>
         let val ()=phase:=Starting (Time.+ (Time.now (),Time.fromSeconds 30))
             val process=P.start {command=command,args=args,
-              limits={addressSpace=SOME (768*1024*1024),cpuTime=NONE,fileSize=NONE,core=SOME 0}}
+              limits={addressSpace=SOME (1536*1024*1024),cpuTime=NONE,fileSize=NONE,core=SOME 0}}
         in worker:=SOME process end
       | SOME process => case (!phase,!queue) of (Idle,job::rest) =>
           (queue:=rest;active:=SOME job;phase:=Working (Time.+ (Time.now (),timeout));P.enqueue (process,#payload job))
