@@ -1,0 +1,3 @@
+(* Compile with --library ffi/win32/sdldriver and an explicit SDL_GENERATED path. *)
+use ../sdl/native.build
+sdl-driver.sml

@@ -1,0 +1,6 @@
+(* Shared semantics; drivers contain only rendering/event/clock operations. *)
+libraries unicode ffi/win32/common end
+annotate "demand" in
+  model_sig.sml
+  model.sml
+end

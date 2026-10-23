@@ -10,7 +10,9 @@
    into one. So the machine stack is one C frame deep whatever the program
    does (plus the call into C in progress), which is what lets frames be
    switched (green threads), copied (continuations) and rebuilt
-   (deoptimisation) later. */
+   (deoptimisation) later. Foreign callbacks alone may enter a bounded
+   plain-interpreter delimiter while native code is parked; they never
+   enter this driver or mutate its JitProgram (docs/ffi/callbacks.md). */
 #ifndef RUNE_JIT_H
 #define RUNE_JIT_H
 

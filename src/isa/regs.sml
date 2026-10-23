@@ -159,6 +159,7 @@ struct
         @ ["HANDOVER((uint32_t)fidx);"]),
      rinst ("RET", [("s", reg)], Return, "Return register s to the caller.")
        ["Value v = R(a);",
+        "if (vm->callback_depth && vm_frame_id(vm) == vm->callback_frame) { vm->callback_result = v; SYNC(); return 3; }",
         "CENSUS_CALL(4, v, CENSUS_REP(p, vm->func, a));",
         "/* the caller, as the frame's header says (native-frames.md, M4):",
         "   the interpreter's, whose info word names it, or compiled code,",
@@ -206,6 +207,7 @@ struct
            "for (uint32_t i = 0; i < n; i++) PUSH(R(LIST(i)));",
            "SYNC();",
            "int r = prim_table[a](vm);",
+           "if (a == PRIM_foreign) count = vm->instructions; /* bounded callbacks executed instructions */",
            "RELOAD();",
            "/* 1: it raised, and the handler has its exception (vm_raise) */",
            "if (r == 1) RAISED();",
@@ -220,6 +222,7 @@ struct
            "   (Runtime.restore): RELOAD takes its code again, and the pc with",
            "   it, and the JIT's view of the program is made again */",
            "int r = prim_table[a](vm);",
+           "if (a == PRIM_foreign) count = vm->instructions; /* bounded callbacks executed instructions */",
            "if (r == PRIM_NEW_WORLD) NEW_PROGRAM();",
            "RELOAD();",
            "if (r == PRIM_NEW_WORLD) DEBUG_BEGUN();",

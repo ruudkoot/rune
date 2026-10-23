@@ -4,6 +4,11 @@ struct
   val enabled = RuneForeign.available ()
   val () = T.check ("RuneForeign.available/boolean", fn () => enabled orelse not enabled)
   val () = T.check ("RuneForeign.target/pointer-width", fn () => List.exists(fn n=>n= #pointerBytes(RuneForeign.target()))[4,8])
+  val facts=RuneForeign.abiFacts()
+  val ()=T.check("RuneForeign.abiFacts/complete-representation",fn()=> #charBits facts=8 andalso List.length(#scalars facts)=10 andalso
+    List.all(fn{name,size,alignment}=>name<>"" andalso size>0 andalso alignment>0 andalso size mod alignment=0)(#scalars facts))
+  val ()=T.check("RuneForeign.abiFacts/pointer-agreement",fn()=>List.exists(fn{name,size,...}=>
+    name="pointer" andalso size= #pointerBytes(RuneForeign.target()))(#scalars facts))
   val () = T.check ("RuneForeign.live/initially-empty", fn () => RuneForeign.live () = 0w0)
   val () = T.check ("RuneForeign.Error/missing-library", fn () =>
     (ignore (RuneForeign.openLibrary "runeffi-library-that-does-not-exist"); false) handle RuneForeign.Error _ => true)
@@ -16,10 +21,24 @@ struct
           (RuneForeign.release library;false) handle RuneForeign.Error _ => true)
         val call = RuneForeign.prepare {symbol=symbol,abi=0,result=RuneForeign.SInt32,arguments=[RuneForeign.SInt32]}
         val () = T.check ("RuneForeign.prepare/prepared-call", fn () => RuneForeign.live () >= 0w3)
-        val result = RuneForeign.invoke (call,[RuneForeign.Signed (Int64.fromInt ~42)])
+        val deferred=RuneForeign.invokeDeferred(call,[RuneForeign.Signed(Int64.fromInt ~42)])
+        val ()=T.check("RuneForeign.invokeDeferred/ordinary-result",fn()=>not(Option.isSome(#callbackException deferred)))
+        val result = #result deferred
         val () = T.check ("RuneForeign.invoke/native-scalar", fn () => PackWord64Little.subVec(Byte.stringToBytes(#bytes result),0)=0w42)
+        val callback = RuneForeign.callback {abi=0,result=RuneForeign.SInt32,arguments=[RuneForeign.SInt32],
+          function=fn _=>RuneForeign.Signed 1,failure=RuneForeign.Default(RuneForeign.Signed 0)}
+        val () = T.check ("RuneForeign.callback/rooted-resource",fn()=>RuneForeign.isLive callback)
+        val () = RuneForeign.release callback
+        val () = T.check ("RuneForeign.callbackFailure/argument-selection",fn()=>
+          case RuneForeign.ByArgument{index=0,cases=[(0w1,RuneForeign.Signed ~1)],default=RuneForeign.Signed 0} of
+            RuneForeign.ByArgument{index,cases,...}=>index=0 andalso List.length cases=1 | _=>false)
         val memory = RuneForeign.allocate 0w4
         val () = T.check ("RuneForeign.allocate/zeroed", fn () => RuneForeign.read(memory,0w0,4)="\000\000\000\000")
+        val () = T.check ("RuneForeign.aliasHandle/rejects-memory",fn()=>
+          (ignore(RuneForeign.aliasHandle memory);false)handle RuneForeign.Error _=>true)
+        val () = T.check ("RuneForeign.consumeHandle/rejects-memory",fn()=>
+          (ignore(RuneForeign.consumeHandle{resource=memory,call=call,arguments=[RuneForeign.Signed 1],failure=RuneForeign.NoFailure});false)
+            handle RuneForeign.Error _=>true)
         val () = RuneForeign.write(memory,0w0,"test")
         val () = T.check ("RuneForeign.write/copy", fn () => RuneForeign.read(memory,0w0,4)="test")
         val view = RuneForeign.view(memory,0w1,0w2)

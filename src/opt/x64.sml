@@ -765,6 +765,7 @@ struct
                         line "mov %r12, %rdi";
                         line "lea prim_table(%rip), %rax";
                         line ("call *" ^ num (8 * a) ^ "(%rax)");
+                        if Vector.sub(primNames,a)="foreign" then line "mov VM_INSTRUCTIONS(%r12), %r15" else ();
                         line "test %eax, %eax";
                         line "jnz rune_unusual";
                         line reloadStack)

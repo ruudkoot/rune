@@ -14,6 +14,7 @@ the signature names and no others.
 
 | Structure |  | Signature | Realisations |  | Source |
 | --- | --- | --- | --- | --- | --- |
+| [`ForeignGenerated`](str/ForeignGenerated.md) | :> | [`FOREIGN_GENERATED`](sig/FOREIGN_GENERATED.md) |  |  | [lib/ffi/runtime/generated.sml](../../../../lib/ffi/runtime/generated.sml) |
 | [`ForeignMemory`](str/ForeignMemory.md) | :> | [`FOREIGN_MEMORY`](sig/FOREIGN_MEMORY.md) |  |  | [lib/ffi/runtime/memory.sml](../../../../lib/ffi/runtime/memory.sml) |
 | [`ForeignOwner`](str/ForeignOwner.md) | :> | [`FOREIGN_OWNER`](sig/FOREIGN_OWNER.md) |  |  | [lib/ffi/runtime/owner.sml](../../../../lib/ffi/runtime/owner.sml) |
 

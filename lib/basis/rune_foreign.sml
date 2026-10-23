@@ -3,15 +3,29 @@ structure RuneForeign :> RUNE_FOREIGN =
 struct
   datatype scalar = Void | SInt8 | UInt8 | SInt16 | UInt16 | SInt32 | UInt32
     | SInt64 | UInt64 | Float32 | Float64 | Pointer
-  datatype kind = Library | Symbol | Memory | View | Prepared of scalar list | DataPointer
+  datatype kind = Library | Symbol | Memory | View | Prepared of scalar list | DataPointer | Callback | Handle
   datatype resource = Resource of {id : Word64.word, live : bool ref, kind : kind}
   datatype argument = Signed of Int64.int | Unsigned of Word64.word | Real of real | Address of resource option
+  datatype callbackFailure = Default of argument | ByArgument of
+    {index : int, cases : (Word64.word * argument) list, default : argument}
   datatype failure = NoFailure | Zero | Nonzero | Negative
   type error = {number : int, native : Word32.word, message : string}
   type result = {bytes : string, pointer : resource option, error : error}
   exception Error of error
   val primitive = _prim "foreign" : int * Word64.word * Word64.word * string * string ->
     bool * Word64.word * string * string * int * Word32.word
+  val callbackPrimitive = _prim "foreign_callback" : string * string * (string -> string) ->
+    bool * Word64.word * string * int * Word32.word
+  val activations : exn option ref list ref = ref []
+  fun activation body =
+    let val pending : exn option ref = ref NONE
+        val previous = !activations
+        val ()=activations:=pending::previous
+    in let val result=body() val ()=activations:=previous in (result,!pending) end
+      handle error => (activations:=previous;case !pending of NONE=>raise error | SOME saved=>raise saved) end
+  fun pendingException () = case !activations of pending::_=> !pending | []=>NONE
+  fun saveException error = case !activations of []=>() | pending::_=>
+    (case !pending of NONE=>pending:=SOME error | SOME _=>())
   fun failure message = raise Error {number = 22, native = 0w0, message = message}
   fun identity (Resource {id, live, ...}) = if !live then id else failure "stale foreign resource"
   fun resource kind id = Resource {id = id, live = ref true, kind = kind}
@@ -25,6 +39,15 @@ struct
     in {pointerBytes = Word64.toInt(Word64.andb(bits,0w255)),
         littleEndian = Word64.andb(bits,0w256) <> 0w0,
         stdcall = Word64.andb(bits,0w512) <> 0w0} end
+  fun abiFacts () =
+    let val (_,bytes,_)=request(17,0w0,0w0,"","")
+        fun byte i=Char.ord(String.sub(bytes,i))
+        val ()=if size bytes=24 andalso byte 0=1 then () else failure "unsupported foreign ABI facts version"
+        val architecture=case byte 1 of 1=>"x86_64" | 2=>"x86" | 3=>"aarch64" | 4=>"powerpc64" | _=>"other"
+        val names=["char","short","int","long","longLong","pointer","wchar","float","double","bool"]
+        fun facts([],_,acc)=List.rev acc
+          | facts(name::rest,i,acc)=facts(rest,i+2,{name=name,size=byte i,alignment=byte(i+1)}::acc)
+    in {architecture=architecture,charBits=byte 2,charSigned=byte 3<>0,scalars=facts(names,4,[])} end
   fun openLibrary name = let val (id, _, _) = request (1, 0w0, 0w0, name, "") in resource Library id end
   fun symbol (owner, name) = let val (id, _, _) = request (2, identity owner, 0w0, name, "") in resource Symbol id end
   fun allocate length = let val (id, _, _) = request (3, 0w0, length, "", "") in resource Memory id end
@@ -62,17 +85,82 @@ struct
               | _ => failure "foreign argument kind mismatch"
           in str (Char.chr (code ty)) ^ bytes end
     in String.concat (ListPair.map encode (types, arguments)) end
-  fun invoke (call, arguments) =
+  fun callback {abi,result,arguments,function,failure=policy} =
+    let val ()=if abi<0 orelse abi>255 then failure "invalid callback ABI" else ()
+        val resultEncoder=Resource{id=0w0,live=ref true,kind=Prepared[result]}
+        fun encode value =
+          let fun signedRange n (lo,hi)=if Int64.toLarge n<lo orelse Int64.toLarge n>hi then failure "callback result is out of range" else ()
+              fun unsignedRange n hi=if n>hi then failure "callback result is out of range" else ()
+              val ()=case(result,value)of
+                  (SInt8,Signed n)=>signedRange n (~128,127)
+                | (SInt16,Signed n)=>signedRange n (~32768,32767)
+                | (SInt32,Signed n)=>signedRange n (~2147483648,2147483647)
+                | (UInt8,Unsigned n)=>unsignedRange n 0w255
+                | (UInt16,Unsigned n)=>unsignedRange n 0w65535
+                | (UInt32,Unsigned n)=>unsignedRange n 0wxFFFFFFFF
+                | (Pointer,Address(SOME(pointer as Resource{kind,...})))=>
+                    (case kind of Library=>failure "callback result is not a pointer" | Prepared _=>failure "callback result is not a pointer"
+                      | _=>let val(present,_,_)=request(14,identity pointer,0w0,"","")
+                           in if present<>0w0 then () else failure "stale callback pointer result" end)
+                | _=>()
+          in case result of Void=>str(Char.chr 0)^wordBytes 0w0
+            | _=>encodeArguments(resultEncoder,[value]) end
+        val default=case policy of Default value=>value | ByArgument{default,...}=>default
+        val defaultBytes=encode default
+        val cases=case policy of Default _=>"" | ByArgument{index,cases,...}=>
+          if index<0 orelse index>=List.length arguments then failure "callback failure argument is out of range"
+          else String.concat(List.map(fn(key,value)=>wordBytes(Word64.fromInt index)^wordBytes key^encode value)cases)
+        fun word bytes = PackWord64Little.subVec(Byte.stringToBytes bytes,0)
+        fun decode (ty,bytes) = case ty of
+            SInt8=>Signed(Int64.fromLarge(Word64.toLargeIntX(word bytes)))
+          | SInt16=>Signed(Int64.fromLarge(Word64.toLargeIntX(word bytes)))
+          | SInt32=>Signed(Int64.fromLarge(Word64.toLargeIntX(word bytes)))
+          | SInt64=>Signed(Int64.fromLarge(Word64.toLargeIntX(word bytes)))
+          | UInt8=>Unsigned(word bytes) | UInt16=>Unsigned(word bytes)
+          | UInt32=>Unsigned(word bytes) | UInt64=>Unsigned(word bytes)
+          | Float32=>Real(PackReal64Little.fromBytes(Byte.stringToBytes bytes))
+          | Float64=>Real(PackReal64Little.fromBytes(Byte.stringToBytes bytes))
+          | Pointer=>let val id=word bytes in Address(if id=0w0 then NONE else SOME(resource DataPointer id)) end
+          | Void=>failure "void callback parameter"
+        fun enter bytes =
+          let fun get([],_,values)=List.rev values
+                | get(ty::rest,i,values)=get(rest,i+9,decode(ty,String.substring(bytes,i+1,8))::values)
+              val values=get(arguments,0,[])
+              val fallback=case policy of Default _=>defaultBytes | ByArgument{index,cases,...}=>
+                let val key=word(String.substring(bytes,index*9+1,8))
+                in case List.find(fn(k,_)=>k=key)cases of NONE=>defaultBytes | SOME(_,value)=>encode value end
+          in case pendingException() of SOME _=>fallback ^ "\001"
+            | NONE=>(encode(function values) ^ "\000" handle error => (saveException error;fallback ^ "\001")) end
+          handle error => (saveException error;defaultBytes ^ "\001")
+        val metadata=String.implode(Char.chr abi::Char.chr(code result)::List.map(Char.chr o code)arguments)
+        val (ok,id,message,number,native)=callbackPrimitive(metadata,defaultBytes^cases,enter)
+    in if ok then resource Callback id else raise Error{message=message,number=number,native=native} end
+  fun invokeDeferred (call, arguments) =
     let val data=encodeArguments(call,arguments)
-        val (pointer, bytes, error) = request (9, identity call, 0w0, "", data)
-    in {bytes = bytes, pointer = if pointer = 0w0 then NONE else SOME (resource DataPointer pointer), error = error} end
-  fun dispose {resource=value as Resource{live,...},call,arguments,failure} =
+        val ((pointer,bytes,error),saved)=activation(fn()=>request(9,identity call,0w0,"",data))
+        val result={bytes=bytes,pointer=if pointer=0w0 then NONE else SOME(resource DataPointer pointer),error=error}
+    in {result=result,callbackException=saved} end
+  fun invoke requestValue =
+    let val {result,callbackException}=invokeDeferred requestValue
+    in case callbackException of NONE=>result | SOME error=>
+      ((case #pointer result of NONE=>() | SOME(value as Resource{live,...})=>
+          (ignore(request(7,identity value,0w0,"",""));live:=false));raise error) end
+  fun disposeWith operation {resource=value as Resource{live,...},call,arguments,failure} =
     let val data=encodeArguments(call,arguments)
         val predicate=case failure of NoFailure=>0 | Zero=>1 | Nonzero=>2 | Negative=>3
-        val (disposed,bytes,error)=request(12,identity call,identity value,str(Char.chr predicate),data)
+        val ((disposed,bytes,error),saved)=activation(fn()=>request(operation,identity call,identity value,str(Char.chr predicate),data))
         val disposed=disposed<>0w0
         val ()=if disposed then live:=false else ()
+        val ()=case saved of NONE=>() | SOME error=>raise error
     in {disposed=disposed,result={bytes=bytes,pointer=NONE,error=error}} end
+  val dispose=disposeWith 12
+  val consumeHandle=disposeWith 16
+  val handles : resource list ref = ref []
+  fun aliasHandle pointer =
+    let val(id,_,_)=request(15,identity pointer,0w0,"","")
+        val current=List.filter(fn Resource{live,...}=> !live)(!handles)
+    in case List.find(fn Resource{id=other,...}=>id=other)current of SOME handleValue=>handleValue
+      | NONE=>let val value=resource Handle id in handles:=value::current;value end end
   fun sameAddress(left,right)=
     let val (same,_,_)=request(13,identity left,identity right,"","") in same<>0w0 end
   fun isLive(Resource{id,live,...})=if not(!live) then false else

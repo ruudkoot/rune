@@ -62,6 +62,7 @@ sig
                        maximum : Word32.word, remove : bool} -> Types.queued option
     val translateMessage : Types.queued -> bool
     val dispatchMessage : Types.queued -> Int64.int
+    val discardMessage : Types.queued -> unit
     val postQuitMessage : Int32.int -> unit
     val postMessage : Types.window * Types.message -> unit
     val sendMessage : Types.window * Types.message -> Int64.int

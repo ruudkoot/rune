@@ -15,10 +15,12 @@ the signature names and no others.
 | Structure |  | Signature | Realisations |  | Source |
 | --- | --- | --- | --- | --- | --- |
 | [`ForeignCoverage`](str/ForeignCoverage.md) | : | [`FOREIGN_COVERAGE`](sig/FOREIGN_COVERAGE.md) |  |  | [lib/ffi/model/coverage.sml](../../../../lib/ffi/model/coverage.sml) |
+| [`ForeignGenerate`](str/ForeignGenerate.md) | : | [`FOREIGN_GENERATE`](sig/FOREIGN_GENERATE.md) |  |  | [lib/ffi/model/generate.sml](../../../../lib/ffi/model/generate.sml) |
 | [`ForeignJson`](str/ForeignJson.md) | :> | [`FOREIGN_JSON`](sig/FOREIGN_JSON.md) |  |  | [lib/ffi/model/located\_json.sml](../../../../lib/ffi/model/located_json.sml) |
 | [`ForeignModel`](str/ForeignModel.md) | : | [`FOREIGN_MODEL`](sig/FOREIGN_MODEL.md) |  |  | [lib/ffi/model/model.sml](../../../../lib/ffi/model/model.sml) |
 | [`ForeignPolicy`](str/ForeignPolicy.md) | : | [`FOREIGN_POLICY`](sig/FOREIGN_POLICY.md) |  |  | [lib/ffi/model/policy.sml](../../../../lib/ffi/model/policy.sml) |
 | [`ForeignProjection`](str/ForeignProjection.md) | : | [`FOREIGN_PROJECTION`](sig/FOREIGN_PROJECTION.md) |  |  | [lib/ffi/model/projection.sml](../../../../lib/ffi/model/projection.sml) |
+| [`ForeignPublic`](str/ForeignPublic.md) | : | [`FOREIGN_PUBLIC`](sig/FOREIGN_PUBLIC.md) |  |  | [lib/ffi/model/public.sml](../../../../lib/ffi/model/public.sml) |
 | [`ForeignShim`](str/ForeignShim.md) | : | [`FOREIGN_SHIM`](sig/FOREIGN_SHIM.md) |  |  | [lib/ffi/model/shim.sml](../../../../lib/ffi/model/shim.sml) |
 | [`ForeignTarget`](str/ForeignTarget.md) | : | [`FOREIGN_TARGET`](sig/FOREIGN_TARGET.md) |  |  | [lib/ffi/model/target.sml](../../../../lib/ffi/model/target.sml) |
 | [`ForeignValidate`](str/ForeignValidate.md) | : | [`FOREIGN_VALIDATE`](sig/FOREIGN_VALIDATE.md) |  |  | [lib/ffi/model/validate.sml](../../../../lib/ffi/model/validate.sml) |

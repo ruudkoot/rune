@@ -5,6 +5,7 @@
 - `raw` (val): [FOREIGN_MEMORY](../sig/FOREIGN_MEMORY.md#val-raw)
 - `read` (val): [FOREIGN_MEMORY](../sig/FOREIGN_MEMORY.md#val-read)
 - `release` (val): [FOREIGN_MEMORY](../sig/FOREIGN_MEMORY.md#val-release)
+- `retain` (val): [FOREIGN_OWNER](../sig/FOREIGN_OWNER.md#val-retain)
 
 ---
 

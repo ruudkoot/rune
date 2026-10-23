@@ -1,0 +1,2 @@
+use ../../../ffi/sdl/native.build
+smoke.sml

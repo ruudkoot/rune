@@ -1,0 +1,6 @@
+(* Deterministic in-memory GUI driver and shared semantics. *)
+libraries ffi/win32/model end
+annotate "demand" in
+  mock_sig.sml
+  mock.sml
+end

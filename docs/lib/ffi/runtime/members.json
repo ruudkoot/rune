@@ -1,5 +1,81 @@
 {
  "signatures": {
+  "FOREIGN_GENERATED": {
+   "doc": "Explicit sessions for generated dynamic foreign declarations.\n\n",
+   "page": "sig/FOREIGN_GENERATED.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "descriptor",
+     "spec": "type descriptor = {name : string, symbol : string, abi : int,\n  result : RuneForeign.scalar, arguments : RuneForeign.scalar list}",
+     "doc": "A fixed native descriptor; its spelling retains the original declaration.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#type-descriptor"
+    },
+    {
+     "kind": "type",
+     "name": "abiFacts",
+     "spec": "type abiFacts = {architecture : string, charBits : int, charSigned : bool,\n  scalars : {name : string, size : int, alignment : int} list}",
+     "doc": "Measured C object facts, in addition to pointer size and byte order.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#type-abifacts"
+    },
+    {
+     "kind": "type",
+     "name": "session",
+     "spec": "type session",
+     "doc": "A lazily opened collection of native libraries and prepared calls.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#type-session"
+    },
+    {
+     "kind": "exception",
+     "name": "Closed",
+     "spec": "exception Closed",
+     "doc": "Access after successful close.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#exn-closed"
+    },
+    {
+     "kind": "val",
+     "name": "create",
+     "spec": "val create : {libraries : string list, descriptors : descriptor list,\n  target : {pointerBytes : int, littleEndian : bool, stdcall : bool}} -> session",
+     "doc": "`create {libraries, descriptors, target}` creates a session without loading.\n\nTarget facts must agree with the executing VM before any native entry.\nLibrary names are searched in their declared order for each symbol.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-create"
+    },
+    {
+     "kind": "val",
+     "name": "createChecked",
+     "spec": "val createChecked : {libraries : string list, descriptors : descriptor list,\n  target : {pointerBytes : int, littleEndian : bool, stdcall : bool},\n  abiFacts : abiFacts} -> session",
+     "doc": "`createChecked {libraries, descriptors, target, abiFacts}` checks the full ABI.\n\nGenerated code uses this constructor. Every scalar size and alignment,\narchitecture and plain-char representation must match before loading.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-createchecked"
+    },
+    {
+     "kind": "val",
+     "name": "prepare",
+     "spec": "val prepare : session -> string -> RuneForeign.resource",
+     "doc": "`prepare session name` returns the cached descriptor for a declared name.\n\n**Raises** `Closed`, `Fail` for an undeclared name, or a native bridge error.\nThe resource belongs to the session and must not be released separately.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-prepare"
+    },
+    {
+     "kind": "val",
+     "name": "invoke",
+     "spec": "val invoke : session -> string -> RuneForeign.argument list -> RuneForeign.result",
+     "doc": "`invoke session name arguments` executes a declared, fixed native call.\n\nNative status bytes and immediately captured errors remain available.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-invoke"
+    },
+    {
+     "kind": "val",
+     "name": "invokeDeferred",
+     "spec": "val invokeDeferred : session -> string -> RuneForeign.argument list ->\n  {result : RuneForeign.result, callbackException : exn option}",
+     "doc": "`invokeDeferred session name arguments` exposes ownership before propagation.\n\nRegister cleanup for an owned pointer result, then propagate a saved\ncallback exception. The native result and its captured errors survive.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-invokedeferred"
+    },
+    {
+     "kind": "val",
+     "name": "close",
+     "spec": "val close : session -> unit",
+     "doc": "`close session` releases prepared calls, symbols and libraries in order.\n\nA live native dependent can prevent unloading. Successfully released\nentries are removed, so closing can be retried after dependents close.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-close"
+    }
+   ]
+  },
   "FOREIGN_MEMORY": {
    "doc": "Bounded native buffers and scoped borrowed SML array copies.\n\n",
    "page": "sig/FOREIGN_MEMORY.md",
@@ -187,6 +263,13 @@
     },
     {
      "kind": "val",
+     "name": "retain",
+     "spec": "val retain : owner -> (unit -> unit)",
+     "doc": "`retain owner` holds a borrow guard until its returned release function runs.\n\nThe release function is idempotent. Retained callback contexts and\nbuffers release their lease only after native code unregisters them.\nThis guards ownership; it never copies storage or creates a native view.\n\n**Raises** `Closed` or `Busy` before acquiring a lease.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#val-retain"
+    },
+    {
+     "kind": "val",
      "name": "close",
      "spec": "val close : owner -> unit",
      "doc": "`close owner` invokes its destructor and retires its native identity.\n\nA failed native destructor preserves ownership for retry and raises\n`Failed` with the raw status/error. Native bridge failures propagate.\n\n**Raises** `Closed`, `Busy` or `Failed`.\n\n",
@@ -203,6 +286,7 @@
   }
  },
  "structures": {
+  "ForeignGenerated": "FOREIGN_GENERATED",
   "ForeignMemory": "FOREIGN_MEMORY",
   "ForeignOwner": "FOREIGN_OWNER"
  }

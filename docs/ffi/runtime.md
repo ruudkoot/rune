@@ -1,10 +1,21 @@
 # Generic foreign-call runtime
 
 `RuneForeign : RUNE_FOREIGN` is a trusted Basis extension. Ordinary libraries
-use this interface without declaring primitives. One `foreign` primitive
-supplies operation families for availability, libraries, symbols, storage,
-views, preparation, invocation and release. Adding functions to a binding
-adds no primitive. GMP's existing primitives remain separate.
+use this interface without declaring primitives. The `foreign` primitive
+supplies operation families for ABI queries, availability, libraries,
+symbols, storage, views, preparation, invocation and release. One separate
+`foreign_callback` primitive roots closures and prepares callback thunks.
+This fixed pair is independent of the number of bound functions. GMP's
+existing primitives remain separate.
+
+`RuneForeign.abiFacts` measures architecture, CHAR_BIT, char signedness,
+and scalar C widths/alignments before loading native libraries. Together
+with `target`'s pointer size, byte order and calling-convention facts, this
+distinguishes LP64, LLP64 and ILP32 profiles. The version-one wire payload
+contains 24 bytes: version, architecture, character bits/signedness, then
+size/alignment pairs for char, short, int, long, longLong, pointer, wchar,
+float, double and bool. Both ABI queries remain available without libffi
+and allocate no native registry resources.
 
 ## Builds and targets
 

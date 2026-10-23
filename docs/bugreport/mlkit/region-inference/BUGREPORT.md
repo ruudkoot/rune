@@ -116,3 +116,14 @@ NULL` in the default configuration, while the same sources pass all **19**
 checks with `-no_ri` under the same bounded host harness. The separate
 `ffi/model/target-mlkit-no-ri` job preserves that comparison. Production
 JSON and target decoding remain unchanged for MLKit.
+
+The complete Runeffi generator reproduces the same failure (2026-10-23).
+The default MLKit build compiles successfully, prints the inspection start
+marker and exits with SIGSEGV (status 139) while decoding the original
+`tests/ffi/generator/scalars.ffi` sidecar and target profile. The same
+generator sources and inspection entrypoint compiled with `-no_ri` produce
+exactly the same JSON artifact report as Rune. The explicit
+`ffi/generator/mlkit-no-ri` job records that successful comparison;
+`tests/ffi/generator-deviations.txt` retains the default failure as a strict
+`HOST-BUG` expectation. A successful default run makes the expectation stale.
+No production generator or library source is changed for the compiler fault.

@@ -1,0 +1,34 @@
+{
+ "signatures": {
+  "WIN32_SDL_DRIVER": {
+   "doc": "SDL3 implementation of the shared Win32 GUI driver's drawing and input.\n\n",
+   "page": "sig/WIN32_SDL_DRIVER.md",
+   "members": [
+    {
+     "kind": "include",
+     "name": "WIN32_GUI_DRIVER",
+     "spec": "include WIN32_GUI_DRIVER",
+     "doc": "",
+     "page": "sig/WIN32_SDL_DRIVER.md#include-win32_gui_driver"
+    },
+    {
+     "kind": "val",
+     "name": "load",
+     "spec": "val load : string list -> unit",
+     "doc": "`load paths` loads generated SDL libraries and initializes owning-thread video.\n\nThe selected M9 support functions suppress automatic quit on window close.\n\n",
+     "page": "sig/WIN32_SDL_DRIVER.md#val-load"
+    },
+    {
+     "kind": "val",
+     "name": "shutdown",
+     "spec": "val shutdown : unit -> unit",
+     "doc": "`shutdown ()` quits and unloads SDL after every driver window closes.\n\n",
+     "page": "sig/WIN32_SDL_DRIVER.md#val-shutdown"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Win32SdlDriverFn": "WIN32_SDL_DRIVER"
+ }
+}

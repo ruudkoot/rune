@@ -1071,3 +1071,14 @@ format 14 keeps only canonical Rune values, finite arithmetic limits, and
 fork policy; a saved world's backend is selected by the restoring VM.
 The cross-platform arithmetic suite compares counts within each backend,
 with distinct records for GMP's native allocations and conversion costs.
+
+## Foreign callback delimiters
+
+A synchronous callback enters `vm_callback_loop`, the plain interpreter with
+no `JitProgram`. Its root frame's RET returns to an explicit delimiter before
+reading its parked caller's return word. No callback compiles, tiers up,
+invalidates code, changes executable pages, enters native code, or calls the
+ordinary `vm_loop` driver. Nested foreign calls may open another bounded
+callback scope. Suspended native frames retain exact GC live masks by frame
+identity; stack and frame relocation restore native safepoint addresses by
+index. See [the callback contract](../../docs/ffi/callbacks.md).

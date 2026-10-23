@@ -42,7 +42,10 @@ struct
        ("ffi.marshal.core", ["unicode", "ffi/marshal"], "ffi/marshal/core"),
        ("ffi.model.shim", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/shim"),
        ("ffi.model.target", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/target"),
-       ("ffi.model.policy", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/policy")]
+       ("ffi.model.generate", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/generate"),
+       ("ffi.model.policy", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/policy"),
+       ("ffi.win32.common", ["ffi/win32/common"], "ffi/win32/common/core"),
+       ("ffi.win32.values", ["ffi/win32/common"], "ffi/win32/common/values")]
   fun files libraries =
     let fun one "unit" = unit ()
           | one "property" = random @ Hosts.portable "test/property" @ Hosts.portable "test/property/basis"

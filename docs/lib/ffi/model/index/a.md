@@ -6,6 +6,7 @@
 - `ArgumentFailure` (con): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#con-argumentfailure)
 - `Array` (con): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#con-array), [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#con-array)
 - `array` (val): [FOREIGN_JSON](../sig/FOREIGN_JSON.md#val-array)
+- `artifact` (type): [FOREIGN_GENERATE](../sig/FOREIGN_GENERATE.md#type-artifact)
 - `Attributed` (con): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#con-attributed)
 
 ---

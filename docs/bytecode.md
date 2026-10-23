@@ -632,3 +632,10 @@ Metadata/result words use explicit
 little-endian 64-bit encoding; native calling conventions and scalar
 representations belong to libffi. Disabled builds preserve the primitive
 and report ENOSYS. Existing GMP primitives are unchanged.
+
+The trusted `foreign_callback` primitive roots an SML `string -> string`
+wrapper and prepares a scalar libffi closure from ABI and failure-policy
+metadata. Ordinary libraries use `RuneForeign.callback`; no bound function
+adds a primitive. Callback execution stops at an explicit interpreter RET
+delimiter and never reenters `vm_loop` or compiles JIT code. See
+[foreign callbacks](ffi/callbacks.md).

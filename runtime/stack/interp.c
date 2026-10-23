@@ -84,6 +84,7 @@ static void make_room(VM *vm) {
     if (need > vm->stack_cap) vm_grow_stack(vm, need);
 }
 
+#ifndef RUNE_CALLBACK_ONLY
 int vm_run(VM *vm) {
     vm_start(vm);
     return vm_loop(vm);
@@ -101,6 +102,15 @@ int vm_jit_env(const char *mode, int *out) { (void)mode; (void)out; return 1; }
 /* The loop alone: a VM resumed from an image (runtime/image.c) enters it here,
    its built-in exceptions and frames being those of the image. */
 int vm_loop(VM *vm) {
+    vm->callback_loop = vm_callback_loop;
+    make_room(vm);
+    return vm->trace ? loop_traced(vm) : loop_fast(vm);
+}
+
+#endif /* ordinary stack driver */
+/* This bounded entry is deliberately independent of vm_loop: the callback
+   RET returns 3 before touching the parked caller's return word. */
+int vm_callback_loop(VM *vm) {
     make_room(vm);
     return vm->trace ? loop_traced(vm) : loop_fast(vm);
 }

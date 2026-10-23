@@ -1,0 +1,48 @@
+{
+ "signatures": {
+  "WIN32_MODEL": {
+   "doc": "Shared Win32 GUI semantics with deterministic testing controls.\n\n",
+   "page": "sig/WIN32_MODEL.md",
+   "members": [
+    {
+     "kind": "include",
+     "name": "WIN32",
+     "spec": "include WIN32",
+     "doc": "",
+     "page": "sig/WIN32_MODEL.md#include-win32"
+    },
+    {
+     "kind": "val",
+     "name": "inject",
+     "spec": "val inject : Types.window * Types.message -> unit",
+     "doc": "`inject (window, message)` queues a copied supported input event.\n\n",
+     "page": "sig/WIN32_MODEL.md#val-inject"
+    },
+    {
+     "kind": "val",
+     "name": "advance",
+     "spec": "val advance : Word32.word -> unit",
+     "doc": "`advance milliseconds` advances mock time, or waits in a real driver.\n\n",
+     "page": "sig/WIN32_MODEL.md#val-advance"
+    },
+    {
+     "kind": "val",
+     "name": "trace",
+     "spec": "val trace : unit -> string list",
+     "doc": "`trace ()` returns the deterministic normalized operation trace.\n\n",
+     "page": "sig/WIN32_MODEL.md#val-trace"
+    },
+    {
+     "kind": "val",
+     "name": "reset",
+     "spec": "val reset : unit -> unit",
+     "doc": "`reset ()` clears observations after every owned resource has closed.\n\n**Raises** `Win32Common.Types.Error` while windows, classes, paints or owned GDI objects remain.\n\n",
+     "page": "sig/WIN32_MODEL.md#val-reset"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Win32ModelFn": "WIN32_MODEL"
+ }
+}

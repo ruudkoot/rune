@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 11 of 11 entries documented |
+| Documentation | 12 of 12 entries documented |
 | Tests | not listed |
 | Source | [lib/ffi/runtime/owner\_sig.sml](../../../../../lib/ffi/runtime/owner_sig.sml) |
 
@@ -38,6 +38,7 @@ sig
   val <a href="#val-adopt">adopt</a> : {<a href="#fld-adopt.pointer">pointer</a> : RuneForeign.resource, <a href="#fld-adopt.destructor">destructor</a> : destructor} -&gt; owner
   val <a href="#val-isclosed">isClosed</a> : owner -&gt; bool
   val <a href="#val-withborrow">withBorrow</a> : owner -&gt; (RuneForeign.resource -&gt; 'a) -&gt; 'a
+  val <a href="#val-retain">retain</a> : owner -&gt; (unit -&gt; unit)
   val <a href="#val-close">close</a> : owner -&gt; unit
   val <a href="#val-inscope">inScope</a> : ForeignScope.scope * owner -&gt; ForeignScope.ticket
 end
@@ -135,6 +136,20 @@ The borrowed identity must not outlive this use without an explicit raw
 retention contract. Native views additionally retain their source.
 
 **Raises** [`Closed`](#exn-closed) or [`Busy`](#exn-busy) when the owner cannot be borrowed.
+
+### <a name="val-retain"></a>`retain`
+
+```sml
+val retain : owner -> (unit -> unit)
+```
+
+`retain owner` holds a borrow guard until its returned release function runs.
+
+The release function is idempotent. Retained callback contexts and
+buffers release their lease only after native code unregisters them.
+This guards ownership; it never copies storage or creates a native view.
+
+**Raises** [`Closed`](#exn-closed) or [`Busy`](#exn-busy) before acquiring a lease.
 
 ### <a name="val-close"></a>`close`
 

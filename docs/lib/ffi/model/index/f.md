@@ -4,7 +4,7 @@
 
 - `failure` (type): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#type-failure)
 - `Field` (con): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#con-field)
-- `field` (type): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#type-field)
+- `field` (type): [FOREIGN_GENERATE](../sig/FOREIGN_GENERATE.md#type-field), [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#type-field)
 - `field` (val): [FOREIGN_SHIM](../sig/FOREIGN_SHIM.md#val-field)
 - `Fields` (con): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#con-fields)
 - `find` (val): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#val-find)

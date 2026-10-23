@@ -1,0 +1,8 @@
+name	kind	signature	realisations	status	origin	source
+WIN32	signature			required	declared	lib/ffi/win32/common/win32_sig.sml
+WIN32_COMMON	signature			required	declared	lib/ffi/win32/common/common_sig.sml
+WIN32_GUI_DRIVER	signature			required	declared	lib/ffi/win32/common/driver_sig.sml
+WIN32_TYPES	signature			required	declared	lib/ffi/win32/common/types_sig.sml
+WIN32_VALUES	signature			required	declared	lib/ffi/win32/common/values_sig.sml
+Win32Common	structure	WIN32_COMMON		required	claimed	lib/ffi/win32/common/common.sml
+Win32Values	structure	WIN32_VALUES		required	claimed	lib/ffi/win32/common/values.sml

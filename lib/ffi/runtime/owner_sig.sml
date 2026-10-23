@@ -31,6 +31,14 @@ sig
 
      Raises: `Closed` or `Busy` when the owner cannot be borrowed. *)
   val withBorrow : owner -> (RuneForeign.resource -> 'a) -> 'a
+  (* `retain owner` holds a borrow guard until its returned release function runs.
+
+     The release function is idempotent. Retained callback contexts and
+     buffers release their lease only after native code unregisters them.
+     This guards ownership; it never copies storage or creates a native view.
+
+     Raises: `Closed` or `Busy` before acquiring a lease. *)
+  val retain : owner -> (unit -> unit)
   (* `close owner` invokes its destructor and retires its native identity.
 
      A failed native destructor preserves ownership for retry and raises

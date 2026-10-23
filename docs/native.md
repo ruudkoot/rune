@@ -250,6 +250,8 @@ FILE"`, `Runtime.restore`, and the child of `--emulate-fork`.
   `OS.SysErr` with `ENOEXEC`, and `--restore` exits with a message.
 * **`runeopt --from-image`** makes the program of an image (`RbcImage`),
   writing each real constant as C's hexadecimal notation from its bits.
+  Image version 15 includes the foreign identity allocator floor; native
+  restore preserves the same stale-resource rejection as interpretation.
 
 Images cross between native programs and every VM, of every width and byte
 order.

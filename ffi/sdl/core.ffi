@@ -1,0 +1,1869 @@
+{
+  "version": 1,
+  "family": "c",
+  "structure": "SDLGenerated",
+  "headers": [
+    "SDL3/SDL.h",
+    "SDL3/SDL_main.h"
+  ],
+  "libraries": [
+    "SDL3"
+  ],
+  "resources": [
+    "window",
+    "surface",
+    "renderer",
+    "texture",
+    "allocation",
+    "eventBuffer",
+    "rectBuffer",
+    "frectBuffer"
+  ],
+  "callbacks": [],
+  "functions": [
+    {
+      "foreign": "SDL_SetMainReady",
+      "name": "setMainReady",
+      "raw": "SDL_SetMainReady",
+      "parameters": [],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_Init",
+      "name": "init",
+      "raw": "SDL_Init",
+      "parameters": [
+        {
+          "name": "flags",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_InitSubSystem",
+      "name": "initSubSystem",
+      "raw": "SDL_InitSubSystem",
+      "parameters": [
+        {
+          "name": "flags",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_QuitSubSystem",
+      "name": "quitSubSystem",
+      "raw": "SDL_QuitSubSystem",
+      "parameters": [
+        {
+          "name": "flags",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_Quit",
+      "name": "quit",
+      "raw": "SDL_Quit",
+      "parameters": [],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_GetError",
+      "name": "getError",
+      "raw": "SDL_GetError",
+      "parameters": [],
+      "result": {
+        "type": "string",
+        "ownership": {
+          "borrowed": "library"
+        },
+        "nullable": false,
+        "encoding": "utf8",
+        "terminator": true
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_ClearError",
+      "name": "clearError",
+      "raw": "SDL_ClearError",
+      "parameters": [],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_free",
+      "name": "freeAllocation",
+      "raw": "SDL_free",
+      "parameters": [
+        {
+          "name": "mem",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "allocation"
+          },
+          "consumes": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_CreateWindow",
+      "name": "createWindow",
+      "raw": "SDL_CreateWindow",
+      "parameters": [
+        {
+          "name": "title",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "string",
+          "encoding": "utf8",
+          "terminator": true
+        },
+        {
+          "name": "w",
+          "type": "int"
+        },
+        {
+          "name": "h",
+          "type": "int"
+        },
+        {
+          "name": "flags",
+          "type": "word64"
+        }
+      ],
+      "result": {
+        "type": {
+          "resource": "window"
+        },
+        "ownership": {
+          "owned": "SDL_DestroyWindow"
+        },
+        "nullable": false
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1",
+      "input": {
+        "record": {
+          "title": "title",
+          "width": "w",
+          "height": "h",
+          "flags": "flags"
+        }
+      }
+    },
+    {
+      "foreign": "SDL_DestroyWindow",
+      "name": "destroyWindow",
+      "raw": "SDL_DestroyWindow",
+      "parameters": [
+        {
+          "name": "window",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          },
+          "consumes": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_GetWindowID",
+      "name": "getWindowID",
+      "raw": "SDL_GetWindowID",
+      "parameters": [
+        {
+          "name": "window",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        }
+      ],
+      "result": {
+        "type": "word32"
+      },
+      "errors": {
+        "predicate": "zero",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_SetWindowTitle",
+      "name": "setWindowTitle",
+      "raw": "SDL_SetWindowTitle",
+      "parameters": [
+        {
+          "name": "window",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "title",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "string",
+          "encoding": "utf8",
+          "terminator": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_GetWindowSize",
+      "name": "getWindowSize",
+      "raw": "SDL_GetWindowSize",
+      "parameters": [
+        {
+          "name": "window",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "w",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "int",
+          "output": "width"
+        },
+        {
+          "name": "h",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "int",
+          "output": "height"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_SetWindowSize",
+      "name": "setWindowSize",
+      "raw": "SDL_SetWindowSize",
+      "parameters": [
+        {
+          "name": "window",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "w",
+          "type": "int"
+        },
+        {
+          "name": "h",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_ShowWindow",
+      "name": "showWindow",
+      "raw": "SDL_ShowWindow",
+      "parameters": [
+        {
+          "name": "window",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_HideWindow",
+      "name": "hideWindow",
+      "raw": "SDL_HideWindow",
+      "parameters": [
+        {
+          "name": "window",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_PollEvent",
+      "name": "pollEvent",
+      "raw": "SDL_PollEvent",
+      "parameters": [
+        {
+          "name": "event",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "eventBuffer"
+          },
+          "output": "event"
+        }
+      ],
+      "result": {
+        "type": "bool"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_WaitEvent",
+      "name": "waitEvent",
+      "raw": "SDL_WaitEvent",
+      "parameters": [
+        {
+          "name": "event",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "eventBuffer"
+          },
+          "output": "event"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_WaitEventTimeout",
+      "name": "waitEventTimeout",
+      "raw": "SDL_WaitEventTimeout",
+      "parameters": [
+        {
+          "name": "event",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "eventBuffer"
+          },
+          "output": "event"
+        },
+        {
+          "name": "timeoutMS",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "bool"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_PushEvent",
+      "name": "pushEvent",
+      "raw": "SDL_PushEvent",
+      "parameters": [
+        {
+          "name": "event",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "eventBuffer"
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_GetKeyboardState",
+      "name": "getKeyboardState",
+      "raw": "SDL_GetKeyboardState",
+      "parameters": [
+        {
+          "name": "numkeys",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "int",
+          "output": "count"
+        }
+      ],
+      "result": {
+        "type": {
+          "vector": "bool"
+        },
+        "ownership": {
+          "borrowed": "library"
+        },
+        "nullable": false,
+        "length": "numkeys"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1",
+      "returns": "$result"
+    },
+    {
+      "foreign": "SDL_GetMouseState",
+      "name": "getMouseState",
+      "raw": "SDL_GetMouseState",
+      "parameters": [
+        {
+          "name": "x",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "real",
+          "output": "x"
+        },
+        {
+          "name": "y",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "real",
+          "output": "y"
+        }
+      ],
+      "result": {
+        "type": "word32"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_StartTextInput",
+      "name": "startTextInput",
+      "raw": "SDL_StartTextInput",
+      "parameters": [
+        {
+          "name": "window",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_StopTextInput",
+      "name": "stopTextInput",
+      "raw": "SDL_StopTextInput",
+      "parameters": [
+        {
+          "name": "window",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_CreateSurface",
+      "name": "createSurface",
+      "raw": "SDL_CreateSurface",
+      "parameters": [
+        {
+          "name": "width",
+          "type": "int"
+        },
+        {
+          "name": "height",
+          "type": "int"
+        },
+        {
+          "name": "format",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "type": {
+          "resource": "surface"
+        },
+        "ownership": {
+          "owned": "SDL_DestroySurface"
+        },
+        "nullable": false
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1",
+      "input": {
+        "record": {
+          "width": "width",
+          "height": "height",
+          "format": "format"
+        }
+      }
+    },
+    {
+      "foreign": "SDL_DestroySurface",
+      "name": "destroySurface",
+      "raw": "SDL_DestroySurface",
+      "parameters": [
+        {
+          "name": "surface",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "surface"
+          },
+          "consumes": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_LockSurface",
+      "name": "lockSurface",
+      "raw": "SDL_LockSurface",
+      "parameters": [
+        {
+          "name": "surface",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "surface"
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_UnlockSurface",
+      "name": "unlockSurface",
+      "raw": "SDL_UnlockSurface",
+      "parameters": [
+        {
+          "name": "surface",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "surface"
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_FillSurfaceRect",
+      "name": "fillSurfaceRect",
+      "raw": "SDL_FillSurfaceRect",
+      "parameters": [
+        {
+          "name": "dst",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "surface"
+          }
+        },
+        {
+          "name": "rect",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "rectBuffer"
+            }
+          }
+        },
+        {
+          "name": "color",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_BlitSurface",
+      "name": "blitSurface",
+      "raw": "SDL_BlitSurface",
+      "parameters": [
+        {
+          "name": "src",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "surface"
+          }
+        },
+        {
+          "name": "srcrect",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "rectBuffer"
+            }
+          }
+        },
+        {
+          "name": "dst",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "surface"
+          }
+        },
+        {
+          "name": "dstrect",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "rectBuffer"
+            }
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_CreateRenderer",
+      "name": "createRenderer",
+      "raw": "SDL_CreateRenderer",
+      "parameters": [
+        {
+          "name": "window",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "name",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": "string"
+          },
+          "encoding": "utf8",
+          "terminator": true
+        }
+      ],
+      "result": {
+        "type": {
+          "resource": "renderer"
+        },
+        "ownership": {
+          "owned": "SDL_DestroyRenderer"
+        },
+        "nullable": false
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_CreateSoftwareRenderer",
+      "name": "createSoftwareRenderer",
+      "raw": "SDL_CreateSoftwareRenderer",
+      "parameters": [
+        {
+          "name": "surface",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "surface"
+          }
+        }
+      ],
+      "result": {
+        "type": {
+          "resource": "renderer"
+        },
+        "ownership": {
+          "owned": "SDL_DestroyRenderer"
+        },
+        "nullable": false
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_DestroyRenderer",
+      "name": "destroyRenderer",
+      "raw": "SDL_DestroyRenderer",
+      "parameters": [
+        {
+          "name": "renderer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "renderer"
+          },
+          "consumes": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_SetRenderDrawColor",
+      "name": "setRenderDrawColor",
+      "raw": "SDL_SetRenderDrawColor",
+      "parameters": [
+        {
+          "name": "renderer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "renderer"
+          }
+        },
+        {
+          "name": "r",
+          "type": "int"
+        },
+        {
+          "name": "g",
+          "type": "int"
+        },
+        {
+          "name": "b",
+          "type": "int"
+        },
+        {
+          "name": "a",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_RenderClear",
+      "name": "renderClear",
+      "raw": "SDL_RenderClear",
+      "parameters": [
+        {
+          "name": "renderer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "renderer"
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_RenderPoint",
+      "name": "renderPoint",
+      "raw": "SDL_RenderPoint",
+      "parameters": [
+        {
+          "name": "renderer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "renderer"
+          }
+        },
+        {
+          "name": "x",
+          "type": "real"
+        },
+        {
+          "name": "y",
+          "type": "real"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_RenderLine",
+      "name": "renderLine",
+      "raw": "SDL_RenderLine",
+      "parameters": [
+        {
+          "name": "renderer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "renderer"
+          }
+        },
+        {
+          "name": "x1",
+          "type": "real"
+        },
+        {
+          "name": "y1",
+          "type": "real"
+        },
+        {
+          "name": "x2",
+          "type": "real"
+        },
+        {
+          "name": "y2",
+          "type": "real"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_RenderRect",
+      "name": "renderRect",
+      "raw": "SDL_RenderRect",
+      "parameters": [
+        {
+          "name": "renderer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "renderer"
+          }
+        },
+        {
+          "name": "rect",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "frectBuffer"
+            }
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_RenderFillRect",
+      "name": "renderFillRect",
+      "raw": "SDL_RenderFillRect",
+      "parameters": [
+        {
+          "name": "renderer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "renderer"
+          }
+        },
+        {
+          "name": "rect",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "frectBuffer"
+            }
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_RenderPresent",
+      "name": "renderPresent",
+      "raw": "SDL_RenderPresent",
+      "parameters": [
+        {
+          "name": "renderer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "renderer"
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_RenderReadPixels",
+      "name": "renderReadPixels",
+      "raw": "SDL_RenderReadPixels",
+      "parameters": [
+        {
+          "name": "renderer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "renderer"
+          }
+        },
+        {
+          "name": "rect",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "rectBuffer"
+            }
+          }
+        }
+      ],
+      "result": {
+        "type": {
+          "resource": "surface"
+        },
+        "ownership": {
+          "owned": "SDL_DestroySurface"
+        },
+        "nullable": false
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_CreateTextureFromSurface",
+      "name": "createTextureFromSurface",
+      "raw": "SDL_CreateTextureFromSurface",
+      "parameters": [
+        {
+          "name": "renderer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "renderer"
+          }
+        },
+        {
+          "name": "surface",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "surface"
+          }
+        }
+      ],
+      "result": {
+        "type": {
+          "resource": "texture"
+        },
+        "ownership": {
+          "owned": "SDL_DestroyTexture"
+        },
+        "nullable": false
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_DestroyTexture",
+      "name": "destroyTexture",
+      "raw": "SDL_DestroyTexture",
+      "parameters": [
+        {
+          "name": "texture",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "texture"
+          },
+          "consumes": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_RenderTexture",
+      "name": "renderTexture",
+      "raw": "SDL_RenderTexture",
+      "parameters": [
+        {
+          "name": "renderer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "renderer"
+          }
+        },
+        {
+          "name": "texture",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "texture"
+          }
+        },
+        {
+          "name": "srcrect",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "frectBuffer"
+            }
+          }
+        },
+        {
+          "name": "dstrect",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "frectBuffer"
+            }
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_RenderDebugText",
+      "name": "renderDebugText",
+      "raw": "SDL_RenderDebugText",
+      "parameters": [
+        {
+          "name": "renderer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "renderer"
+          }
+        },
+        {
+          "name": "x",
+          "type": "real"
+        },
+        {
+          "name": "y",
+          "type": "real"
+        },
+        {
+          "name": "str",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "string",
+          "encoding": "utf8",
+          "terminator": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_HasClipboardText",
+      "name": "hasClipboardText",
+      "raw": "SDL_HasClipboardText",
+      "parameters": [],
+      "result": {
+        "type": "bool"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_GetClipboardText",
+      "name": "getClipboardText",
+      "raw": "SDL_GetClipboardText",
+      "parameters": [],
+      "result": {
+        "type": "string",
+        "ownership": {
+          "owned": "SDL_free"
+        },
+        "nullable": false,
+        "encoding": "utf8",
+        "terminator": true
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_SetClipboardText",
+      "name": "setClipboardText",
+      "raw": "SDL_SetClipboardText",
+      "parameters": [
+        {
+          "name": "text",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "string",
+          "encoding": "utf8",
+          "terminator": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_GetTicks",
+      "name": "getTicks",
+      "raw": "SDL_GetTicks",
+      "parameters": [],
+      "result": {
+        "type": "word64"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_GetTicksNS",
+      "name": "getTicksNS",
+      "raw": "SDL_GetTicksNS",
+      "parameters": [],
+      "result": {
+        "type": "word64"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_GetPerformanceCounter",
+      "name": "getPerformanceCounter",
+      "raw": "SDL_GetPerformanceCounter",
+      "parameters": [],
+      "result": {
+        "type": "word64"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_GetPerformanceFrequency",
+      "name": "getPerformanceFrequency",
+      "raw": "SDL_GetPerformanceFrequency",
+      "parameters": [],
+      "result": {
+        "type": "word64"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_Delay",
+      "name": "delay",
+      "raw": "SDL_Delay",
+      "parameters": [
+        {
+          "name": "ms",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_SetWindowPosition",
+      "name": "setWindowPosition",
+      "raw": "SDL_SetWindowPosition",
+      "parameters": [
+        {
+          "name": "window",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "x",
+          "type": "int"
+        },
+        {
+          "name": "y",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_SetHint",
+      "name": "setHint",
+      "raw": "SDL_SetHint",
+      "parameters": [
+        {
+          "name": "name",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "string",
+          "encoding": "utf8",
+          "terminator": true
+        },
+        {
+          "name": "value",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "string",
+          "encoding": "utf8",
+          "terminator": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_SetRenderClipRect",
+      "name": "setRenderClipRect",
+      "raw": "SDL_SetRenderClipRect",
+      "parameters": [
+        {
+          "name": "renderer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "renderer"
+          }
+        },
+        {
+          "name": "rect",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "rectBuffer"
+            }
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    }
+  ]
+}

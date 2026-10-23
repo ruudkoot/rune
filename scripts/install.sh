@@ -80,6 +80,7 @@ if [ "$uninstall" = 1 ]; then
         "$bindir/runedoc-smlnj-dev" "$bindir/runedoc-polyml" "$bindir/runedoc-mlkit" \
         "$bindir/runeopt" "$bindir/runeopt-mlton" "$bindir/runeopt-smlnj-legacy" \
         "$bindir/runeopt-smlnj-dev" "$bindir/runeopt-polyml" "$bindir/runeopt-mlkit" \
+        "$bindir/runeffi" "$bindir/runeffi-mlton" "$bindir/runeffi-polyml" \
         "$bindir/rune-repl" "$bindir/rune-dap" "$bindir/rune-kernel"
   [ -d "$libdir" ] && chmod -R u+w "$libdir"   # the frozen Basis is read-only
   rm -rf "$libdir"
@@ -202,6 +203,21 @@ if [ -e "$root/bin/rune-repl.img" ]; then
     repl="$repl, rune-kernel"
   fi
 fi
+
+# Runeffi, when built. It reads headers and writes ordinary SML sources;
+# no acquisition paths are baked into the installed generator.
+if [ -e "$root/bin/runeffi.rbc" ]; then
+  copy "$root/bin/runeffi.rbc" "$libdir/runeffi.rbc" 644
+  printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" "$d/../lib/rune/runeffi.rbc" "$@"\n' > "$bindir/runeffi"
+  chmod 755 "$bindir/runeffi"
+fi
+for ffi_host in mlton polyml; do
+  if [ -e "$root/bin/runeffi-$ffi_host.bin" ]; then
+    copy "$root/bin/runeffi-$ffi_host.bin" "$libdir/runeffi-$ffi_host.bin" 755
+    printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/../lib/rune/runeffi-%s.bin" "$@"\n' "$ffi_host" > "$bindir/runeffi-$ffi_host"
+    chmod 755 "$bindir/runeffi-$ffi_host"
+  fi
+done
 
 # runedoc, when it is built: the same kind of build as rune.
 doc=""

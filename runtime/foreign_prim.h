@@ -9,6 +9,81 @@ static uint64_t foreign_u64(const unsigned char *bytes) {
 static void foreign_bytes(unsigned char *bytes, uint64_t word) {
     for (unsigned i = 0; i < 8; i++) bytes[i] = (unsigned char)(word >> (8 * i));
 }
+typedef struct { VM *vm; size_t closure; } ForeignClosureRoot;
+static void foreign_closure_free(void *opaque) {
+    ForeignClosureRoot *root = opaque;
+    vm_handle_free(root->vm, root->closure);
+    free(root);
+}
+static ForeignValue foreign_wire_value(const unsigned char *data) {
+    ForeignValue v; memset(&v, 0, sizeof v);
+    v.type = (ForeignType)data[0];
+    uint64_t word = foreign_u64(data + 1);
+    if (v.type == FOREIGN_F32 || v.type == FOREIGN_F64) memcpy(&v.value.real, &word, sizeof word);
+    else v.value.word = word;
+    return v;
+}
+static int foreign_closure_enter(void *opaque, const ForeignValue *arguments, size_t count, ForeignValue *result) {
+    ForeignClosureRoot *root = opaque;
+    unsigned char *input = malloc(count ? count * 9 : 1), output[10]; size_t written = 0;
+    if (!input) return -1;
+    for (size_t i = 0; i < count; i++) {
+        input[i * 9] = (unsigned char)arguments[i].type;
+        uint64_t word;
+        if (arguments[i].type == FOREIGN_F32 || arguments[i].type == FOREIGN_F64) memcpy(&word, &arguments[i].value.real, sizeof word);
+        else word = arguments[i].value.word;
+        foreign_bytes(input + i * 9 + 1, word);
+    }
+    int status = vm_callback_apply(root->vm, root->closure, (const char *)input, count * 9, (char *)output, sizeof output, &written);
+    free(input);
+    if (status != 0 || written != 10 || output[9] > 1) return -1;
+    *result = foreign_wire_value(output);
+    return output[9];
+}
+static int p_foreign_callback(VM *vm) {
+    Obj *meta = check_obj(vm, ARG(2), K_STRING, "foreign_callback");
+    Obj *failures = check_obj(vm, ARG(1), K_STRING, "foreign_callback");
+    (void)check_obj(vm, ARG(0), K_CLOSURE, "foreign_callback");
+    size_t nmeta = obj_len(meta), nfailures = obj_len(failures);
+    const unsigned char *metadata = (const unsigned char *)obj_bytes(meta);
+    const unsigned char *data = (const unsigned char *)obj_bytes(failures);
+    ForeignId id = 0; ForeignError error; memset(&error, 0, sizeof error);
+    if (!vm->foreign) {
+        ForeignSystem system = {sys_library_open, sys_library_symbol, sys_library_close, sys_library_error, sys_foreign_capture};
+        vm->foreign = foreign_create(&system);
+    }
+    if (!vm->foreign) { error.error_number = ENOMEM; strcpy(error.message, "foreign context allocation failed"); }
+    else if (nmeta < 2 || nmeta - 2 > 1024 || nfailures < 9 || (nfailures - 9) % 25 || (nfailures - 9) / 25 > 1024) {
+        error.error_number = EINVAL; strcpy(error.message, "invalid callback bridge specification");
+    } else {
+        ForeignType arguments[1024]; ForeignCallbackFailure cases[1024];
+        for (size_t i = 2; i < nmeta; i++) arguments[i - 2] = (ForeignType)metadata[i];
+        size_t ncases = (nfailures - 9) / 25;
+        for (size_t i = 0; i < ncases; i++) {
+            const unsigned char *rule = data + 9 + i * 25;
+            uint64_t index = foreign_u64(rule);
+            cases[i].index = index > SIZE_MAX ? SIZE_MAX : (size_t)index;
+            cases[i].key = foreign_u64(rule + 8);
+            cases[i].value = foreign_wire_value(rule + 16);
+        }
+        ForeignClosureRoot *root = malloc(sizeof *root);
+        if (!root) { error.error_number = ENOMEM; strcpy(error.message, "callback root allocation failed"); }
+        else {
+            root->vm = vm; root->closure = vm_handle_new(vm, ARG(0));
+            id = foreign_callback(vm->foreign, metadata[0], (ForeignType)metadata[1], arguments, nmeta - 2,
+                                  foreign_wire_value(data), cases, ncases, foreign_closure_enter, foreign_closure_free, root);
+            if (!id) { error = *foreign_error(vm->foreign); foreign_closure_free(root); }
+        }
+    }
+    vm_push(vm, mk_bool(id != 0));
+    vm_push(vm, mk_word64(id));
+    vm_push(vm, mk_ptr(vm_string_from(vm, error.message, (uint32_t)strlen(error.message))));
+    vm_push(vm, mk_int(error.error_number));
+    vm_push(vm, mk_word(error.native_error));
+    Obj *result = vm_alloc_fields(vm, K_TUPLE, 0, 5);
+    for (int i = 4; i >= 0; i--) obj_fill_field(result, (uint32_t)i, vm_pop(vm));
+    return ret(vm, 3, mk_ptr(result));
+}
 static int p_foreign(VM *vm) {
     check_tag(vm, ARG(4), T_INT, "foreign");
     check_tag(vm, ARG(3), T_WORD64, "foreign");
@@ -20,12 +95,13 @@ static int p_foreign(VM *vm) {
     size_t nmeta = obj_len(meta), ninput = obj_len(input), noutput = 0;
     const unsigned char *metadata = (const unsigned char *)obj_bytes(meta);
     const unsigned char *data = (const unsigned char *)obj_bytes(input);
-    unsigned char scalar[8] = {0}, *output = scalar;
+    unsigned char scalar[FOREIGN_FACTS_BYTES] = {0}, *output = scalar;
     int ok = 1, own_output = 0;
     ForeignError error;
     memset(&error, 0, sizeof error);
     if (operation == 0) result_id = (uint64_t)foreign_available();
     else if (operation == 11) result_id = foreign_target();
+    else if (operation == 17) { foreign_facts(scalar); noutput = FOREIGN_FACTS_BYTES; }
     else {
         if (!vm->foreign) {
             ForeignSystem system = {sys_library_open, sys_library_symbol, sys_library_close,
@@ -63,11 +139,12 @@ static int p_foreign(VM *vm) {
             result_id = foreign_prepare(vm->foreign, id, metadata[0], (ForeignType)metadata[1], arguments, nmeta - 2);
             ok = result_id != 0; break;
         }
-        case 9: case 12: {
+        case 9: case 12: case 16: {
             if (ninput % 9 || ninput / 9 > 1024) { ok = 0; error.error_number = EINVAL; break; }
-            if (operation == 12 && nmeta != 1) { ok = 0; error.error_number = EINVAL; break; }
+            if (operation != 9 && nmeta != 1) { ok = 0; error.error_number = EINVAL; break; }
             size_t count = ninput / 9;
-            ForeignValue arguments[1024], result;
+            ForeignValue *arguments = calloc(count ? count : 1, sizeof *arguments), result;
+            if (!arguments) { ok = 0; error.error_number = ENOMEM; break; }
             for (size_t i = 0; i < count; i++) {
                 arguments[i].type = (ForeignType)data[i * 9];
                 uint64_t word = foreign_u64(data + i * 9 + 1);
@@ -76,11 +153,14 @@ static int p_foreign(VM *vm) {
                 else arguments[i].value.word = word;
             }
             int disposed = 0;
-            ok = operation == 12 ?
+            ok = operation == 16 ?
+                foreign_consume_handle(vm->foreign, auxiliary, id, arguments, count, (ForeignFailure)metadata[0], &result, &error, &disposed) == 0 :
+                operation == 12 ?
                 foreign_dispose(vm->foreign, auxiliary, id, arguments, count, (ForeignFailure)metadata[0], &result, &error, &disposed) == 0 :
                 foreign_call(vm->foreign, id, arguments, count, &result, &error) == 0;
+            free(arguments);
             if (ok) {
-                if (operation == 12) result_id = (uint64_t)disposed;
+                if (operation != 9) result_id = (uint64_t)disposed;
                 if (result.type == FOREIGN_POINTER) result_id = result.value.pointer;
                 else if (result.type != FOREIGN_VOID) {
                     uint64_t word;
@@ -96,6 +176,7 @@ static int p_foreign(VM *vm) {
             int same = foreign_same(vm->foreign, id, auxiliary);
             ok = same >= 0; if (ok) result_id = (uint64_t)same; break;
         }
+        case 15: result_id = foreign_alias_handle(vm->foreign, id); ok = result_id != 0; break;
         case 14: result_id = (uint64_t)foreign_alive(vm->foreign, id); break;
         default: ok = 0; error.error_number = EINVAL; strcpy(error.message, "unknown foreign operation"); break;
         }

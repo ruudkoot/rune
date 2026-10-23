@@ -168,6 +168,7 @@ int vm_run(VM *vm) {
    VM resumed from an image (runtime/image.c) enters here too, its built-in
    exceptions and frames being those of the image. */
 int vm_loop(VM *vm) {
+    vm->callback_loop = vm_callback_loop;
     make_room(vm);
 #ifndef RUNE_ROOTS_ALL   /* the switch: every register a root, as before heap-layout M6 */
     vm->frame_live = reg_frame_live;
@@ -268,4 +269,12 @@ int vm_jit_env(const char *mode, int *out) {
     if (!vm_jit_arg(arg, &jit, &check)) { fprintf(stderr, "runevm: RUNEVM_JIT=%s: not a mode\n", mode); return 0; }
     *out = jit.mode;
     return 1;
+}
+
+/* Foreign callbacks run only the plain interpreter. Passing no JitProgram
+   forbids tier-up, OSR, invalidation and executable-page changes while a
+   native foreign-call frame is parked below the callback delimiter. */
+int vm_callback_loop(VM *vm) {
+    make_room(vm);
+    return vm->trace ? loop_traced(vm, NULL) : loop_fast(vm, NULL);
 }

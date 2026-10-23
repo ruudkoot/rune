@@ -41,6 +41,40 @@
     }
    ]
   },
+  "FOREIGN_GENERATE": {
+   "doc": "Deterministic source generation from checked C declarations and policy.\n\n",
+   "page": "sig/FOREIGN_GENERATE.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "artifact",
+     "spec": "type artifact = {path : string, text : string}",
+     "doc": "An ordinary generated text artifact, relative to its immutable output set.\n\n",
+     "page": "sig/FOREIGN_GENERATE.md#type-artifact"
+    },
+    {
+     "kind": "type",
+     "name": "field",
+     "spec": "type field = {aggregate : string, path : string list, writable : bool}",
+     "doc": "An explicit native field adapter selection.\n\n",
+     "page": "sig/FOREIGN_GENERATE.md#type-field"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of ForeignModel.source * string",
+     "doc": "Source-located unsupported generation requests.\n\n",
+     "page": "sig/FOREIGN_GENERATE.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "emit",
+     "spec": "val emit : {policy : ForeignPolicy.policy, profile : ForeignTarget.profile,\n  declarations : CParse.declaration list, layouts : string list,\n  fields : field list, constants : (string * IntInf.int) list,\n  sourceName : string -> string} -> artifact list",
+     "doc": "`emit {policy, profile, declarations, layouts, fields, constants, sourceName}` produces sources.\n\nFixed raw calls always retain native statuses. Safe scalar projections\nare emitted where their complete policy can be implemented. An explicit\nadapter selection remains visible in the manifest rather than claiming\nan implemented public projection. Target layouts come from the reusable\nC analysis library; no compiler or native library is executed.\n\n",
+     "page": "sig/FOREIGN_GENERATE.md#val-emit"
+    }
+   ]
+  },
   "FOREIGN_JSON": {
    "doc": "JSON values with physical positions for declarative policy diagnostics.\n\n",
    "page": "sig/FOREIGN_JSON.md",
@@ -457,6 +491,33 @@
     }
    ]
   },
+  "FOREIGN_PUBLIC": {
+   "doc": "Checked idiomatic wrappers over generated fixed native declarations.\n\n",
+   "page": "sig/FOREIGN_PUBLIC.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "output",
+     "spec": "type output = {signatureText : string, structureText : string}",
+     "doc": "The emitted public signature and sealed implementation source.\n\n",
+     "page": "sig/FOREIGN_PUBLIC.md#type-output"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of ForeignModel.source * string",
+     "doc": "A source-located unsupported or contradictory public projection.\n\n",
+     "page": "sig/FOREIGN_PUBLIC.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "emit",
+     "spec": "val emit : {policy : ForeignPolicy.policy, profile : ForeignTarget.profile,\n  declarations : CParse.declaration list} -> output",
+     "doc": "`emit {policy, profile, declarations}` generates complete selected wrappers.\n\nExplicit adapters are recorded by the outer generator and excluded from\nthis automatic projection. Native ownership is established before a\ndeferred callback exception can escape. Unsupported policies fail here.\n\n",
+     "page": "sig/FOREIGN_PUBLIC.md#val-emit"
+    }
+   ]
+  },
   "FOREIGN_SHIM": {
    "doc": "Typed C adapters for declarations outside the dynamic scalar ABI.\n\n",
    "page": "sig/FOREIGN_SHIM.md",
@@ -555,10 +616,12 @@
  },
  "structures": {
   "ForeignCoverage": "FOREIGN_COVERAGE",
+  "ForeignGenerate": "FOREIGN_GENERATE",
   "ForeignJson": "FOREIGN_JSON",
   "ForeignModel": "FOREIGN_MODEL",
   "ForeignPolicy": "FOREIGN_POLICY",
   "ForeignProjection": "FOREIGN_PROJECTION",
+  "ForeignPublic": "FOREIGN_PUBLIC",
   "ForeignShim": "FOREIGN_SHIM",
   "ForeignTarget": "FOREIGN_TARGET",
   "ForeignValidate": "FOREIGN_VALIDATE"
