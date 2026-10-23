@@ -23,6 +23,13 @@ val ()=if not(RuneForeign.available()) then () else
         RuneForeign.Unsigned 0w1,RuneForeign.Address(SOME failing)])
       val ()=if !entries=1 andalso (case #callbackException deferred of SOME(Fail "qsort exception")=>true | _=>false)
         then () else raise Fail "callback exception activation"
-      val ()=List.app RuneForeign.release[memory,callback,failing,call,symbol,library]
+      val overflowing=RuneForeign.callback{abi=0,result=RuneForeign.SInt32,
+        arguments=[RuneForeign.Pointer,RuneForeign.Pointer],failure=RuneForeign.Default(RuneForeign.Signed 0),
+        function=fn _=>RuneForeign.Signed 2147483648}
+      val checked=RuneForeign.invokeDeferred(call,[RuneForeign.Address(SOME memory),RuneForeign.Unsigned 0w4,
+        RuneForeign.Unsigned 0w1,RuneForeign.Address(SOME overflowing)])
+      val ()=if (case #callbackException checked of SOME(RuneForeign.Error _)=>true | _=>false)
+        then () else raise Fail "callback result range"
+      val ()=List.app RuneForeign.release[memory,callback,failing,overflowing,call,symbol,library]
   in () end
 val ()=print "callbacks return through a bounded VM delimiter\n"

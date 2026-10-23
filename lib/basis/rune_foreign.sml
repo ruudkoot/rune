@@ -87,8 +87,24 @@ struct
     in String.concat (ListPair.map encode (types, arguments)) end
   fun callback {abi,result,arguments,function,failure=policy} =
     let val ()=if abi<0 orelse abi>255 then failure "invalid callback ABI" else ()
-        fun encode value = case result of Void=>str(Char.chr 0)^wordBytes 0w0
-          | _=>encodeArguments(Resource{id=0w0,live=ref true,kind=Prepared[result]},[value])
+        val resultEncoder=Resource{id=0w0,live=ref true,kind=Prepared[result]}
+        fun encode value =
+          let fun signedRange n (lo,hi)=if Int64.toLarge n<lo orelse Int64.toLarge n>hi then failure "callback result is out of range" else ()
+              fun unsignedRange n hi=if n>hi then failure "callback result is out of range" else ()
+              val ()=case(result,value)of
+                  (SInt8,Signed n)=>signedRange n (~128,127)
+                | (SInt16,Signed n)=>signedRange n (~32768,32767)
+                | (SInt32,Signed n)=>signedRange n (~2147483648,2147483647)
+                | (UInt8,Unsigned n)=>unsignedRange n 0w255
+                | (UInt16,Unsigned n)=>unsignedRange n 0w65535
+                | (UInt32,Unsigned n)=>unsignedRange n 0wxFFFFFFFF
+                | (Pointer,Address(SOME(pointer as Resource{kind,...})))=>
+                    (case kind of Library=>failure "callback result is not a pointer" | Prepared _=>failure "callback result is not a pointer"
+                      | _=>let val(present,_,_)=request(14,identity pointer,0w0,"","")
+                           in if present<>0w0 then () else failure "stale callback pointer result" end)
+                | _=>()
+          in case result of Void=>str(Char.chr 0)^wordBytes 0w0
+            | _=>encodeArguments(resultEncoder,[value]) end
         val default=case policy of Default value=>value | ByArgument{default,...}=>default
         val defaultBytes=encode default
         val cases=case policy of Default _=>"" | ByArgument{index,cases,...}=>

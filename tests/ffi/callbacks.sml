@@ -96,6 +96,25 @@ val narrowCall=callbackCall "rf_cb_narrow" RuneForeign.SInt8 [RuneForeign.Pointe
 val narrowCallback=RuneForeign.callback{abi=0,result=RuneForeign.SInt8,arguments=[RuneForeign.SInt8],
   failure=RuneForeign.Default(RuneForeign.Signed 0),function=fn [RuneForeign.Signed n]=>RuneForeign.Signed(Int64.+(n,1)) | _=>raise Fail "narrow argument"}
 val ()=callbackCheck("narrow signed callback",callbackSigned(RuneForeign.invoke(narrowCall,[RuneForeign.Address(SOME narrowCallback),RuneForeign.Signed ~128]))= ~127)
+val overflowCallback=RuneForeign.callback{abi=0,result=RuneForeign.SInt8,arguments=[RuneForeign.SInt8],
+  failure=RuneForeign.Default(RuneForeign.Signed ~7),function=fn _=>RuneForeign.Signed 128}
+val ()=callbackCheck("callback result overflow is contained",(ignore(RuneForeign.invoke(narrowCall,
+  [RuneForeign.Address(SOME overflowCallback),RuneForeign.Signed 0]));false)handle RuneForeign.Error _=>true)
+val pointerResultCall=callbackCall "rf_cb_pointer_result" RuneForeign.Pointer [RuneForeign.Pointer,RuneForeign.Pointer]
+val currentPointerCallback=RuneForeign.callback{abi=0,result=RuneForeign.Pointer,arguments=[RuneForeign.Pointer],
+  failure=RuneForeign.Default(RuneForeign.Address NONE),function=fn [value]=>value | _=>raise Fail "pointer result arguments"}
+val currentPointer=valOf(#pointer(RuneForeign.invoke(pointerResultCall,[RuneForeign.Address(SOME currentPointerCallback),RuneForeign.Address(SOME marker)])))
+val ()=callbackCheck("current borrowed callback pointer result",RuneForeign.sameAddress(marker,currentPointer))
+val ()=RuneForeign.release currentPointer
+val stalePointerCallback=RuneForeign.callback{abi=0,result=RuneForeign.Pointer,arguments=[RuneForeign.Pointer],
+  failure=RuneForeign.Default(RuneForeign.Address NONE),function=fn _=>RuneForeign.Address(SOME borrowed)}
+val ()=callbackCheck("stale callback pointer result is contained",(ignore(RuneForeign.invoke(pointerResultCall,
+  [RuneForeign.Address(SOME stalePointerCallback),RuneForeign.Address NONE]));false)handle RuneForeign.Error _=>true)
+val releasedPointerCallback=RuneForeign.callback{abi=0,result=RuneForeign.Pointer,arguments=[RuneForeign.Pointer],
+  failure=RuneForeign.Default(RuneForeign.Address NONE),function=fn _=>
+    let val pointer=RuneForeign.allocate 0w1 val ()=RuneForeign.release pointer in RuneForeign.Address(SOME pointer) end}
+val ()=callbackCheck("released callback pointer result is contained",(ignore(RuneForeign.invoke(pointerResultCall,
+  [RuneForeign.Address(SOME releasedPointerCallback),RuneForeign.Address NONE]));false)handle RuneForeign.Error _=>true)
 val callbackTarget=RuneForeign.target()
 val callbackIntPtr=if #pointerBytes callbackTarget=4 then RuneForeign.SInt32 else RuneForeign.SInt64
 val callbackUIntPtr=if #pointerBytes callbackTarget=4 then RuneForeign.UInt32 else RuneForeign.UInt64
@@ -114,6 +133,12 @@ val created=valOf(#pointer(RuneForeign.invoke(createHandle,[RuneForeign.Address(
 val opaque=valOf(!adopted)
 val alias=RuneForeign.aliasHandle created
 val ()=callbackCheck("creation-time stable identity",opaque=alias andalso RuneForeign.sameAddress(opaque,created))
+val handleResultCallback=RuneForeign.callback{abi=0,result=RuneForeign.Pointer,arguments=[RuneForeign.Pointer],
+  failure=RuneForeign.Default(RuneForeign.Address NONE),function=fn _=>RuneForeign.Address(SOME opaque)}
+val handleResult=valOf(#pointer(RuneForeign.invoke(pointerResultCall,[RuneForeign.Address(SOME handleResultCallback),RuneForeign.Address NONE])))
+val ()=callbackCheck("retained opaque callback pointer result",RuneForeign.sameAddress(opaque,handleResult))
+val ()=RuneForeign.release handleResult
+
 val ()=callbackCheck("opaque memory access rejected",callbackRejected(fn()=>ignore(RuneForeign.read(opaque,0w0,1))))
 val notifiedDestroy=callbackCall "rf_cb_destroy_notify" RuneForeign.Void [RuneForeign.Pointer,RuneForeign.Pointer]
 val handleUse=callbackCall "rf_cb_handle_use" RuneForeign.SInt32 [RuneForeign.Pointer]
@@ -128,7 +153,7 @@ val destroying=RuneForeign.callback{abi=0,result=RuneForeign.SInt32,arguments=[R
     in callbackCheck("destruction while native caller is suspended",#disposed result);RuneForeign.Signed 42 end}
 val ()=callbackCheck("nested opaque destruction",callbackSigned(RuneForeign.invoke(applyCallback,callbackArguments destroying(SOME opaque)2))=42)
 val ()=callbackCheck("all aliases retired",not(RuneForeign.isLive opaque) andalso not(RuneForeign.isLive alias) andalso not(RuneForeign.isLive created))
-val ()=List.app RuneForeign.release [callback,failingCallback,handledNested,depthCallback,realCallback,narrowCallback,messageCallback,createCallback,destroyNotification,destroying,marker]
+val ()=List.app RuneForeign.release [callback,failingCallback,handledNested,depthCallback,realCallback,narrowCallback,overflowCallback,currentPointerCallback,stalePointerCallback,releasedPointerCallback,handleResultCallback,messageCallback,createCallback,destroyNotification,destroying,marker]
 val ()=List.app RuneForeign.release(!callbackOwned)
 val ()=RuneForeign.release callbackLibrary
 val ()=callbackCheck("all callback resources released",RuneForeign.live()=0w0)

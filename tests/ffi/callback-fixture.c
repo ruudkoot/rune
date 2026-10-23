@@ -77,3 +77,7 @@ RF_EXPORT void *rf_cb_pointer(rf_callback callback, void *context) {
     (void)callback(context, 7);
     return context;
 }
+
+RF_EXPORT void *rf_cb_pointer_result(void *(*callback)(void *), void *context) {
+    return callback(context);
+}

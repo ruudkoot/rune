@@ -80,6 +80,7 @@ sig
      active. Nested foreign calls are permitted; callbacks use a bounded
      interpreter delimiter even when their caller uses JIT or native code.
      Pointer arguments borrow identities valid for this callback only.
+     Result ranges and pointer liveness are checked inside the exception boundary.
      The native caller must unregister the closure before `release`.
      An escaping SML exception returns the annotated failure value, then
      `invoke` or `dispose` raises it after native control returns safely.
