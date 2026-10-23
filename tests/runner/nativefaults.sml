@@ -8,6 +8,30 @@ struct
       val dir = run ^ "/native-faults"
       val () = mkdirs dir
       fun assert (name, ok) = if ok then () else say ("FAIL native fault: " ^ name ^ "\n")
+      val rune=NativeChecks.runeAddresses["0"]"00000010 00000010 t main#0\n00000080 00000020 t ffi_call\n"
+      val ()=assert("Rune address ranges are half-open",rune "0x10" andalso rune "0x1f" andalso not(rune "0xf") andalso not(rune "0x20") andalso not(rune "0x80"))
+      fun badSymbols text=(NativeChecks.runeAddresses["0"]text;false)handle NativeChecks.Check _=>true
+      val ()=assert("missing Rune symbol rejected",badSymbols "00000080 00000020 t ffi_call\n")
+      val ()=assert("duplicate Rune symbol rejected",badSymbols "00000010 00000010 t main#0\n00000030 00000010 t duplicate#0\n")
+      val ()=assert("empty Rune symbol rejected",badSymbols "00000010 00000000 t main#0\n")
+      val decoded="program.sml:\nprogram.sml 7 0x10 x\nprogram.sml 8 0x18 x\nprogram.sml - 0x20\n"
+      val external="prep_cif.c:\nprep_cif.c 39 0x80 x\nclosures.c 42 0x88 x\n"
+      val ()=assert("readelf external units excluded",NativeChecks.readelfLines rune(external ^ decoded ^ external)=["7","8"])
+      val ()=assert("readelf missing Rune entry detected",NativeChecks.readelfLines rune(external ^ "program.sml 7 0x10 x\n")<>["7","8"])
+      val ()=assert("readelf wrong Rune line retained",NativeChecks.readelfLines rune "wrong.c 99 0x10 x\nprogram.sml 8 0x18 x\n"=["99","8"])
+      fun table offset directory file rows="debug_line[" ^ offset ^ "]\n" ^
+        (if directory="" then "" else "include_directories[ 1] = \"" ^ directory ^ "\"\n") ^
+        "file_names[ 1]:\n name: \"" ^ file ^ "\"\n dir_index: " ^ (if directory="" then "0" else "1") ^ "\n" ^ rows
+      val own=table "0x10" "" "program.sml" "0x10 7 2 1 0 0 is_stmt\n0x18 8 3 1 0 0 is_stmt\n0x20 8 3 1 0 0 end_sequence\n"
+      val foreign=table "0x00" "/foreign" "prep_cif.c" "0x80 39 1 1 0 0 is_stmt\n"
+      val ()=assert("LLVM external units and reused file indexes",NativeChecks.dwarfLines rune(foreign ^ own ^ foreign)=["program.sml:7:2","program.sml:8:3"])
+      val noFile="debug_line[0x20]\n0x10 7 2 1 0 0 is_stmt\n"
+      val ()=assert("LLVM file table resets per unit",NativeChecks.dwarfLines rune(foreign ^ noFile)=[":7:2"])
+      val noDirectory="debug_line[0x30]\nfile_names[ 1]:\n name: \"program.sml\"\n dir_index: 1\n0x10 7 2 1 0 0 is_stmt\n"
+      val ()=assert("LLVM directory table resets per unit",NativeChecks.dwarfLines rune(foreign ^ noDirectory)=["program.sml:7:2"])
+      val ()=assert("LLVM wrong Rune file retained",NativeChecks.dwarfLines rune(table "0" "" "wrong.c" "0x10 7 2 1 0 0 is_stmt\n")=["wrong.c:7:2"])
+      val ()=assert("LLVM wrong Rune column retained",NativeChecks.dwarfLines rune(table "0" "" "program.sml" "0x10 7 99 1 0 0 is_stmt\n")=["program.sml:7:99"])
+      val ()=assert("LLVM missing Rune entry detected",NativeChecks.dwarfLines rune(table "0" "" "program.sml" "0x10 7 2 1 0 0 is_stmt\n")<>["program.sml:7:2","program.sml:8:3"])
       fun script (path, body) =
         (write (path, "#!/bin/sh\n" ^ body ^ "\n");
          Posix.FileSys.chmod (path, Posix.FileSys.S.flags [Posix.FileSys.S.irusr, Posix.FileSys.S.iwusr, Posix.FileSys.S.ixusr]))
