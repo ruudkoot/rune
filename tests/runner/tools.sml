@@ -774,13 +774,19 @@ struct
     let
       val dir = run ^ "/generators"
       val () = (rmTree dir; mkdirs (dir ^ "/scripts"))
+      val programs = [("rune", "polyml-build.sml"), ("runedoc", "runedoc-polyml-build.sml"),
+                      ("runeopt", "runeopt-polyml-build.sml"), ("runeisa", "runeisa-polyml-build.sml"),
+                      ("runeffi", "runeffi-polyml-build.sml")]
       val () = List.app (fn n => write (dir ^ "/" ^ n, read (fromRoot n)))
-                         ["rune.build", "runedoc.build", "runeopt.build", "runeisa.build"]
+                         (List.map (fn (name, _) => name ^ ".build") programs)
       val () = write (dir ^ "/scripts/build-files.sh", read (fromRoot "scripts/build-files.sh"))
       val script = fromRoot script
       val log = dir ^ "/reference.log"
       val reference = exec {cmd = ["/bin/sh", script, dir], dir = SOME dir, stdin = "", stdout = log, stderr = log, timeout = 60}
-      val expected = List.map (fn n => (n, read (dir ^ "/build/" ^ n))) (sort (entries (dir ^ "/build")))
+      val wanted = sort (List.concat (List.map (fn (name, polyml) =>
+        [name ^ ".mlb", name ^ ".cm", polyml, name ^ "-mlkit.mlb"]) programs))
+      val actual = sort (entries (dir ^ "/build"))
+      val expected = List.map (fn n => (n, read (dir ^ "/build/" ^ n))) wanted
       val null = Posix.FileSys.openf ("/dev/null", Posix.FileSys.O_RDONLY, Posix.FileSys.O.flags [])
       fun number fd = SysWord.toInt (Posix.FileSys.fdToWord fd)
       fun round r =
@@ -806,7 +812,9 @@ struct
                     else fail ("build generators: changed " ^ n)) expected
         end
     in
-      if reference <> 0 orelse length expected <> 16 then fail ("build generators: reference generation: " ^ firstLine log)
+      if reference <> 0 then fail ("build generators: reference generation: " ^ firstLine log)
+      else if actual <> wanted orelse List.exists (fn (_, text) => text = "") expected then
+        fail "build generators: incomplete program/host output matrix"
       else List.app round [1, 2, 3, 4];
       Posix.IO.close null
     end

@@ -4,7 +4,7 @@
 # (scripts/build-files.sh).
 # Usage: scripts/gen-build-files.sh [ROOT_DIR]
 # For every program (rune from rune.build, runedoc from runedoc.build,
-# runeopt from runeopt.build, runeisa from runeisa.build)
+# runeopt from runeopt.build, runeisa from runeisa.build, runeffi from runeffi.build)
 # produces build/PROG.mlb (MLton), build/PROG.cm (SML/NJ),
 # build/PROG-polyml-build.sml (Poly/ML, run from ROOT; polyml-build.sml for
 # rune) and build/PROG-mlkit.mlb (MLKit). Each loads build/config.sml first,
