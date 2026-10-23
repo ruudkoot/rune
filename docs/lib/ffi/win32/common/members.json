@@ -537,8 +537,8 @@
     {
      "kind": "val",
      "name": "begin",
-     "spec": "val begin : window -> drawing",
-     "doc": "`begin window` acquires a drawing scope.\n\n",
+     "spec": "val begin : {window:window,rectangle:Win32Common.Types.rect} -> drawing",
+     "doc": "`begin {window, rectangle}` acquires a drawing scope clipped to its paint region.\n\nPixels outside that region must survive later partial paints.\n\n",
      "page": "sig/WIN32_GUI_DRIVER.md#val-begin"
     },
     {

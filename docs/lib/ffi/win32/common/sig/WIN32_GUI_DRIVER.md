@@ -32,7 +32,7 @@ sig
   val <a href="#val-show">show</a> : window * int -&gt; unit
   val <a href="#val-title">title</a> : window * string -&gt; unit
   val <a href="#val-client">client</a> : window -&gt; {<a href="#fld-client.width">width</a>:int,<a href="#fld-client.height">height</a>:int}
-  val <a href="#val-begin">begin</a> : window -&gt; drawing
+  val <a href="#val-begin">begin</a> : {<a href="#fld-begin.window">window</a>:window,<a href="#fld-begin.rectangle">rectangle</a>:Win32Common.Types.rect} -&gt; drawing
   val <a href="#val-finish">finish</a> : drawing -&gt; unit
   val <a href="#val-fill">fill</a> : {<a href="#fld-fill.drawing">drawing</a>:drawing,<a href="#fld-fill.rectangle">rectangle</a>:Win32Common.Types.rect,<a href="#fld-fill.colour">colour</a>:Word32.word} -&gt; unit
   val <a href="#val-line">line</a> : {<a href="#fld-line.drawing">drawing</a>:drawing,<a href="#fld-line.x1">x1</a>:int,<a href="#fld-line.y1">y1</a>:int,<a href="#fld-line.x2">x2</a>:int,<a href="#fld-line.y2">y2</a>:int,<a href="#fld-line.width">width</a>:int,<a href="#fld-line.colour">colour</a>:Word32.word} -&gt; unit
@@ -140,10 +140,17 @@ val client : window -> {width:int,height:int}
 ### <a name="val-begin"></a>`begin`
 
 ```sml
-val begin : window -> drawing
+val begin : {window:window,rectangle:Win32Common.Types.rect} -> drawing
 ```
 
-`begin window` acquires a drawing scope.
+`begin {window, rectangle}` acquires a drawing scope clipped to its paint region.
+
+Pixels outside that region must survive later partial paints.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-begin.window"></a>`window` | `window` |  |
+| <a name="fld-begin.rectangle"></a>`rectangle` | `Win32Common.Types.rect` |  |
 
 ### <a name="val-finish"></a>`finish`
 

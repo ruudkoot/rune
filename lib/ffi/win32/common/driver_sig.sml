@@ -21,8 +21,10 @@ sig
   val title : window * string -> unit
   (* `client window` reads its current client dimensions. *)
   val client : window -> {width:int,height:int}
-  (* `begin window` acquires a drawing scope. *)
-  val begin : window -> drawing
+  (* `begin {window, rectangle}` acquires a drawing scope clipped to its paint region.
+
+     Pixels outside that region must survive later partial paints. *)
+  val begin : {window:window,rectangle:Win32Common.Types.rect} -> drawing
   (* `finish drawing` presents the completed drawing and releases its scope. *)
   val finish : drawing -> unit
   (* `fill specification` fills an exclusive-edge rectangle with RGB colour. *)
