@@ -4,7 +4,12 @@ struct
   open Sh
   exception Failed of string
   fun need(ok,message)=if ok then () else raise Failed message
-  val directory=run ^ "/ffi-sdl/" ^ SysWord.toString(Posix.Process.pidToWord(Posix.ProcEnv.getpid()))
+  val directory=
+    let val reservation=OS.FileSys.tmpName()
+        val path=run ^ "/ffi-sdl/" ^ OS.Path.file reservation
+        val ()=mkdirs path
+        val ()=OS.FileSys.remove reservation
+    in path end
   fun command environment name args =
     let val ()=mkdirs directory val output=directory ^ "/" ^ name ^ ".out" val errors=output ^ ".err"
         val status=Children.exec Subprocess.unlimited environment
@@ -38,13 +43,16 @@ struct
   fun main [mode] =
     let val windows=String.isPrefix "windows" mode
         val narrow=mode="windows32"
-        val gui=mode="gui-linux" orelse mode="win32-driver-gui"
+        val contract=mode="win32-contract" orelse mode="win32-contract-gui"
+        val application=mode="win32-app" orelse mode="win32-app-gui"
+        val model=contract orelse application
+        val gui=mode="gui-linux" orelse mode="win32-driver-gui" orelse mode="win32-contract-gui" orelse mode="win32-app-gui"
         val failure=mode="win32-driver-failed-init"
-        val driver=mode="win32-driver" orelse mode="win32-driver-gui" orelse failure
-        val ()=need(List.exists(fn n=>n=mode)["native","asan","gui-linux","windows32","windows64","win32-driver","win32-driver-gui","win32-driver-failed-init"],"unknown SDL acceptance mode")
+        val driver=mode="win32-driver" orelse mode="win32-driver-gui" orelse failure orelse model
+        val ()=need(List.exists(fn n=>n=mode)["native","asan","gui-linux","windows32","windows64","win32-driver","win32-driver-gui","win32-driver-failed-init","win32-contract","win32-contract-gui","win32-app","win32-app-gui"],"unknown SDL acceptance mode")
         val target=if narrow then "windows-x86" else if windows then "windows-x86_64" else "linux-x86_64"
         val (generated,shim)=generate target windows driver
-        val cFacts=if not driver orelse failure then [] else
+        val cFacts=if not driver orelse failure orelse model then [] else
           let val source=directory ^ "/constants.c" val executable=directory ^ "/constants"
               val names=constants @ supportConstants()
               fun valid name=size name>0 andalso not(Char.isDigit(String.sub(name,0))) andalso
@@ -69,12 +77,13 @@ struct
         fun path file=if not windows then fromRoot file else
           String.concat(String.tokens(fn c=>c= #"\r" orelse c= #"\n")(run "windows-path"["wslpath","-w",fromRoot file]))
         fun execute name vm options code =
-          need(String.isSubstring (if failure then "PASS SDL Win32 failed initialization:" else if driver then "PASS SDL Win32 driver:" else "PASS SDL core:")(command environment name
-            (vm::options @ [path code,path library,path adapters] @ cFacts)),"SDL semantic suite did not finish")
+          need(String.isSubstring (if contract then "SUMMARY 11 tests, 11 passed" else if application then "PASS shared Win32 application: 0" else if failure then "PASS SDL Win32 failed initialization:" else if driver then "PASS SDL Win32 driver:" else "PASS SDL core:")(command environment name
+            (vm::options @ [path code,path library,path adapters] @ cFacts @ (if application then ["--smoke"] else []))),"SDL semantic suite did not finish")
         fun one bytecode vm =
           let val code=directory ^ "/" ^ bytecode ^ ".rbc"
-              val ()=ignore(run ("compile-" ^ bytecode)[env("RUNE","bin/rune"),"--library",if driver then "ffi/win32/sdldriver" else "sdl","--target=" ^ bytecode,
-                "--build",if failure then "tests/ffi/win32/sdl-driver-failure.build" else if driver then "tests/ffi/win32/sdl-driver.build" else "tests/ffi/sdl/smoke.build","--path","SDL_GENERATED=" ^ fromRoot generated,"-o",code])
+              val ()=ignore(run ("compile-" ^ bytecode)([env("RUNE","bin/rune"),"--library",if driver then "ffi/win32/sdldriver" else "sdl"] @
+                (if model then ["--library","ffi/win32/model"] else []) @ (if contract then ["--library","test/unit"] else []) @ ["--target=" ^ bytecode,
+                "--build",if contract then "tests/ffi/win32/sdl-contract.build" else if application then "examples/win32/sdl.build" else if failure then "tests/ffi/win32/sdl-driver-failure.build" else if driver then "tests/ffi/win32/sdl-driver.build" else "tests/ffi/sdl/smoke.build","--path","SDL_GENERATED=" ^ fromRoot generated,"-o",code]))
               val ()=execute (bytecode ^ "-stress") vm ["--gc-stress","7","--gc-verify"] code
           in if windows orelse mode="asan" orelse bytecode="stack" then () else
             (execute "baseline" vm ["--jit=baseline"] code;execute "opt" vm ["--jit=opt"] code) end

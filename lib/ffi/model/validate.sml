@@ -1,7 +1,7 @@
 (* Implements: FOREIGN_VALIDATE *)
 structure ForeignValidate : FOREIGN_VALIDATE =
 struct
-  type binding = {declaration : ForeignModel.declaration, policy : ForeignPolicy.functionPolicy}
+  type binding = {declaration : ForeignModel.declaration, policy : ForeignPolicy.functionPolicy, requiresShim : bool}
   exception Error = ForeignModel.Error
   fun resolve {declarations, policy = p : ForeignPolicy.policy} =
     let
@@ -134,8 +134,8 @@ struct
       fun one (policy : ForeignPolicy.functionPolicy) : binding =
         let val declaration = case find (#namespace policy) (#foreign policy) of SOME d=>d
               | NONE=>fail (#source policy)("unknown selected " ^ #namespace policy ^ ": " ^ #foreign policy)
-            val ()=if List.exists(fn word=>word="static" orelse word="inline" orelse word="__forceinline") (#storage declaration)
-              andalso not(isSome(#adapter policy)) then fail (#source policy) "selected static/inline function requires a C shim" else ()
+            val requiresShim=List.exists(fn word=>List.exists(fn spelling=>word=spelling)
+              ["static","inline","__inline","__inline__","__forceinline"])(#storage declaration)
             val () = supported (#source policy) false [] (#ty declaration)
             val () = List.app validateProjection (#result policy :: #parameters policy)
             val f = case shape (#source policy) (#ty declaration) of ForeignModel.Callable f => f
@@ -238,6 +238,6 @@ struct
               | _ => fail (#source policy) "error getter must take no arguments" end
             val () = case #ownership (#result policy) of SOME (ForeignPolicy.Owned release) =>
                 ignore (function (#source policy) release) | _ => ()
-        in {declaration = declaration, policy = policy} end
+        in {declaration = declaration, policy = policy, requiresShim=requiresShim} end
     in List.map one (#functions p) end
 end

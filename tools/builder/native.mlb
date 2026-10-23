@@ -20,6 +20,7 @@ $(SML_LIB)/basis/mlton.mlb
 ../../tools/builder/archive.sml
 ../../tools/builder/dist.sml
 ../../tools/builder/gmp-build.sml
+../../tools/builder/ffi-deps.sml
 ../../tools/builder/relink.sml
 ../../tools/builder/package-runtime.sml
 ../../tools/builder/setup-mlton.sml

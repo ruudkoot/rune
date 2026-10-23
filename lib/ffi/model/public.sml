@@ -13,6 +13,20 @@ struct
       fun fail at message=raise Error(at,message)
       val analysis=CAnalysis.create{target= #analysis profile,declarations=declarations}
       val model=ForeignModel.index(ForeignModel.fromC declarations)
+      val callWords=["cdecl","__cdecl","stdcall","__stdcall","WINAPI","CALLBACK","__fastcall","fastcall",
+        "__vectorcall","vectorcall","__thiscall","thiscall","__regcall","regcall","ms_abi","sysv_abi",
+        "regparm","__regparm__","pcs","__pcs__","aarch64_vector_pcs","preserve_most","preserve_all"]
+      fun stripCallAttributes(CParse.Attributed(ty,attributes))=
+            let fun calling (tokens:CLex.token list)=let val words=List.filter(fn token=> #kind token=CLex.Identifier)tokens
+                  in List.exists(fn token=>List.exists(fn word=>word= #text token)callWords)words andalso
+                    List.all(fn token=>List.exists(fn word=>word= #text token)(callWords @ ["__attribute__","__attribute","__declspec"]))words end
+                val retained=List.filter(fn tokens=>not(calling tokens))attributes
+                val base=stripCallAttributes ty
+            in if null retained then base else CParse.Attributed(base,retained) end
+        | stripCallAttributes ty=ty
+      fun callFunction {result,parameters,variadic,prototype}=
+        {result=stripCallAttributes result,parameters=List.map(fn CParse.Parameter{name,ctype}=>
+          CParse.Parameter{name=name,ctype=stripCallAttributes ctype})parameters,variadic=variadic,prototype=prototype}
       fun resolve ty=CAnalysis.resolve analysis ty
       fun integer ty=CAnalysis.integer analysis ty
       fun native foreign =
@@ -23,12 +37,12 @@ struct
                   (case resolve ctype of CParse.Function _=>true | _=>false)
               | matches _=false
         in case List.find matches declarations of
-          SOME(CParse.Declaration{ctype,...})=>(case resolve ctype of CParse.Function f=>f | _=>fail source "expected C function")
+          SOME(CParse.Declaration{ctype,...})=>(case resolve ctype of CParse.Function f=>callFunction f | _=>fail source "expected C function")
         | _=>fail source("missing public C function: " ^ foreign) end
       fun scalar ty=case resolve ty of
           CParse.Builtin "void"=>"Void" | CParse.Builtin "_Bool"=>"UInt8"
         | CParse.Builtin "float"=>"Float32" | CParse.Builtin "double"=>"Float64"
-        | CParse.Pointer _=>"Pointer" | CParse.Array _=>"Pointer"
+        | CParse.Pointer _=>"Pointer" | CParse.Array _=>"Pointer" | CParse.Record _=>"Aggregate"
         | _=>(case integer ty of SOME{width,signed,...}=>(if signed then "SInt" else "UInt") ^ Int.toString width
           | NONE=>fail source "public aggregate value requires a typed adapter")
       fun scalarType scalar=case scalar of "Void"=>ForeignPolicy.Scalar "unit" | "Float32"=>ForeignPolicy.Scalar "real"
@@ -42,6 +56,9 @@ struct
             val function=case resolve original of CParse.Pointer{target,...}=>(case resolve target of CParse.Function f=>f
                   | _=>fail (#source cbPolicy) "callback target is not a function")
               | _=>fail (#source cbPolicy) "callback typedef is not a pointer"
+            val ()=if scalar(#result function)="Aggregate" orelse
+              List.exists(fn CParse.Parameter{ctype,...}=>scalar ctype="Aggregate")(#parameters function) then
+              fail (#source cbPolicy) "aggregate callback values require a typed adapter" else ()
             val ()=if scalar(#result function)="Pointer" then
               fail (#source cbPolicy) "callback pointer results require an explicit lifetime adapter" else ()
             fun callbackType c=case resolve c of CParse.Builtin "_Bool"=>ForeignPolicy.Scalar "bool"
@@ -60,7 +77,20 @@ struct
       fun annotation (p:ForeignPolicy.functionPolicy) name=List.find(fn a:ForeignPolicy.valuePolicy=> #name a=SOME name)(#parameters p)
       fun pointee ty=case resolve ty of CParse.Pointer{target,...}=>target | CParse.Array{element,...}=>element
         | _=>fail source "output projection requires a native pointer"
-      fun defaultType ty=case resolve ty of CParse.Builtin "_Bool"=>ForeignPolicy.Scalar "bool" | _=>scalarType(scalar ty)
+      fun objectType ty=case resolve ty of
+          CParse.Record {kind,tag=SOME tag,fields=NONE,...}=>
+            (case CAnalysis.lookup analysis{namespace=case kind of CParse.Struct=>"struct" | CParse.Union=>"union",name=tag} of
+              SOME ty=>objectType ty | NONE=>fail source "incomplete public aggregate")
+        | ty=>ty
+      fun defaultObject ty=case objectType ty of
+          CParse.Record {kind=CParse.Struct,fields=SOME fields,...}=>ForeignPolicy.Record(List.map(fn CParse.Field{name,ctype,...}=>
+            (case name of SOME name=>(name,defaultObject ctype) | NONE=>fail source "anonymous aggregate projection requires an adapter"))fields)
+        | CParse.Record _=>fail source "public union projection requires an explicit active-member adapter"
+        | CParse.Array{element,...}=>ForeignPolicy.Vector(defaultObject element)
+        | CParse.Builtin "_Bool"=>ForeignPolicy.Scalar "bool"
+        | ty=>scalarType(scalar ty)
+      fun defaultType ty=case resolve ty of CParse.Record _=>defaultObject ty
+        | CParse.Builtin "_Bool"=>ForeignPolicy.Scalar "bool" | _=>scalarType(scalar ty)
       fun baseType ty annotation=case annotation of SOME(a:ForeignPolicy.valuePolicy)=>
             (case #projection a of SOME t=>t | NONE=>(case #callback a of SOME name=>
                 let val base=ForeignPolicy.Resource(#name(callbackInfo name))
@@ -134,6 +164,54 @@ struct
               (case hd(#parameters f) of CParse.Parameter{ctype,...}=>scalar ctype="Pointer") then ()
               else fail source "automatic owned-pointer destructor requires one pointer argument and void result"
         in "{call=" ^ raw ^ ".prepare native " ^ q release ^ ", arguments=fn pointer=>[RuneForeign.Address(SOME pointer)], failure=RuneForeign.NoFailure}" end
+      fun objectLayout ty=CAnalysis.layout analysis{ty=ty,source=source}
+      fun objectSize ty=IntInf.toString(CLayout.size(objectLayout ty))
+      fun recordMembers ty projected=
+        let val fields=case objectType ty of CParse.Record{kind=CParse.Struct,fields=SOME fields,...}=>fields
+              | _=>fail source "public union or incomplete aggregate requires an adapter"
+            val layout=objectLayout ty
+            val selected=case projected of ForeignPolicy.Record fields=>fields
+              | _=>fail source "native struct requires a record projection"
+            fun member(label,projection)=case List.find(fn CParse.Field{name,...}=>name=SOME label)fields of
+                SOME(CParse.Field{ctype,...})=>(label,ctype,projection,IntInf.toString(#offset(CLayout.member(layout,[label]))))
+              | NONE=>fail source("record projection names no native member: " ^ label)
+            val names=List.map(fn CParse.Field{name,...}=>case name of SOME name=>name
+              | NONE=>fail source "anonymous aggregate projection requires an adapter")fields
+            val ()=if length names=length selected andalso List.all(fn name=>List.exists(fn(label,_)=>label=name)selected)names
+              then () else fail source "record projection must cover every named native field"
+        in List.map member selected end
+      fun arrayParts ty projected=case (objectType ty,projected,objectLayout ty) of
+          (CParse.Array{element,...},ForeignPolicy.Vector item,CLayout.Sequence{count,...})=>(element,item,IntInf.toString count)
+        | _=>fail source "native array member requires a fixed-length vector projection"
+      fun objectWrite ty projected buffer offset value depth=
+        case objectType ty of CParse.Record _=>
+          let val members=recordMembers ty projected
+              val writes=List.map(fn(label,ctype,projection,fieldOffset)=>objectWrite ctype projection buffer
+                ("(" ^ offset ^ "+" ^ fieldOffset ^ ")")("(#" ^ label ^ " (" ^ value ^ " : " ^ render projected ^ "))")(depth+1))members
+          in "(" ^ String.concatWith ";" (writes @ ["()"]) ^ ")" end
+        | CParse.Array _=>
+          let val(element,item,count)=arrayParts ty projected
+              val suffix=Int.toString depth val index="aggregateIndex" ^ suffix val entry="aggregateItem" ^ suffix
+              val offset="(" ^ offset ^ "+" ^ index ^ "*" ^ objectSize element ^ ")"
+          in "(if Vector.length(" ^ value ^ ")<>" ^ count ^ " then raise ForeignMemory.Bounds else " ^
+            "Vector.appi(fn(" ^ index ^ "," ^ entry ^ ")=>" ^ objectWrite element item buffer offset entry(depth+1) ^ ") (" ^ value ^ "))" end
+        | _=>let val c=scalar ty val ()=if c="Pointer" then fail source "aggregate pointer fields require a typed lifetime adapter" else ()
+                 val bytes=if c="Float32" orelse c="Float64" then
+                    if projected=ForeignPolicy.Scalar "real" then "ForeignBytes.real" ^ (if c="Float32" then "32" else "64") ^
+                      "{littleEndian=" ^ little ^ ",value=" ^ value ^ "}" else fail source "floating field requires real projection"
+                   else "ForeignBytes.integer{width=" ^ objectSize ty ^ ",signed=" ^ Bool.toString(String.isPrefix "SInt" c) ^
+                     ",littleEndian=" ^ little ^ ",value=" ^ number projected value ^ "}"
+             in "ForeignMemory.write(" ^ buffer ^ "," ^ offset ^ "," ^ bytes ^ ")" end
+      fun objectRead ty projected buffer offset depth=if projected=ForeignPolicy.Scalar "unit" then "()" else
+        case objectType ty of CParse.Record _=>
+          "{" ^ join(List.map(fn(label,ctype,projection,fieldOffset)=>label ^ "=" ^ objectRead ctype projection buffer
+            ("(" ^ offset ^ "+" ^ fieldOffset ^ ")")(depth+1))(recordMembers ty projected)) ^ "}"
+        | CParse.Array _=>
+          let val(element,item,count)=arrayParts ty projected val index="aggregateIndex" ^ Int.toString depth
+          in "Vector.tabulate(" ^ count ^ ",fn " ^ index ^ "=>" ^ objectRead element item buffer
+            ("(" ^ offset ^ "+" ^ index ^ "*" ^ objectSize element ^ ")")(depth+1) ^ ")" end
+        | _=>let val c=scalar ty val ()=if c="Pointer" then fail source "aggregate pointer fields require a typed lifetime adapter" else ()
+             in resultValue c projected ("ForeignMemory.read(" ^ buffer ^ "," ^ offset ^ "," ^ objectSize ty ^ ")")little false end
       fun one (p:ForeignPolicy.functionPolicy)=
         let val f=native(#foreign p) val ns=names(#parameters f)
             val ()=if String.isSubstring "."(#name p) then fail (#source p) "nested public SML members require an explicit adapter" else ()
@@ -142,6 +220,16 @@ struct
             val nativeTypes=List.map(fn CParse.Parameter{ctype,...}=>ctype)(#parameters f)
             val values=ListPair.map(fn(n,t)=>(n,baseType t (annotation p n)))(ns,nativeTypes)
             val resultType=baseType (#result f) (SOME(#result p))
+            val registered=List.mapPartial(fn n=>case annotation p n of SOME a=>(case #callback a of SOME name=>
+                let val cb= #policy(callbackInfo name) in if #lifetime cb="registered" then SOME cb else NONE end
+              | NONE=>NONE) | NONE=>NONE)ns
+            val ()=if null registered then () else case (resourceType resultType,#ownership(#result p)) of
+                (SOME(resource,_),SOME(ForeignPolicy.Owned _))=>List.app(fn cb:ForeignPolicy.callbackPolicy=>
+                  if #owner cb=SOME resource then () else fail (#source cb) "registered callback owner must name the owned result resource")registered
+              | _=>fail (#source p) "registered callbacks require an owned result resource with an unregistering destructor"
+            fun retainedLifetime a=case #ownership(a:ForeignPolicy.valuePolicy) of SOME(ForeignPolicy.Borrowed scope)=>
+                List.exists(fn cb:ForeignPolicy.callbackPolicy=> #owner cb=SOME scope)registered
+              | _=>false
             val ()=if scalar(#result f)="Void" andalso resultType<>ForeignPolicy.Scalar "unit" then
               fail (#source p) "void result projects only to unit" else ()
             val ()=ListPair.app(fn(n,ctype)=>case resolve ctype of CParse.Builtin "_Bool"=>
@@ -184,7 +272,10 @@ struct
               (case #getter(#errors p) of SOME getter=>[getter] | NONE=>[])
             val dependencyChecks=String.concat(List.map(fn helper=>"        val _=" ^ raw ^ ".prepare native " ^ q helper ^ "\n")dependencies)
             val prefix="  fun " ^ #name p ^ " session " ^ tree variable(inputTree p inputNames) ^ " =\n    let val native = nativeSession session\n" ^
-              "    in ForeignScope.withScope (fn scope =>\n      let val _=enterCall session scope\n" ^ derivedInputs ^ dependencyChecks
+              "    in ForeignScope.withScope (fn scope =>\n      let val _=enterCall session scope\n" ^
+              "          val retainedResult : (ForeignScope.ticket * (unit->unit)) list ref=ref []\n" ^
+              "          fun retainForResult release=let val ticket=ForeignScope.defer(scope,release) in retainedResult:=(ticket,release):: !retainedResult end\n" ^
+              derivedInputs ^ dependencyChecks
             val arrayNames=List.filter(fn n=>valueType n=ForeignPolicy.Array(ForeignPolicy.Scalar "word8"))ns
             val arrays=List.map(fn n=>
               let val a=policyFor n val direction=case #direction a of SOME ForeignPolicy.Out=>"Output" | SOME ForeignPolicy.InOut=>"InputOutput" | _=>"Input"
@@ -197,7 +288,6 @@ struct
               in find(0,arrayNames) end
             fun callback (a:ForeignPolicy.valuePolicy) id=
               let val info=callbackInfo(valOf(#callback a)) val cb= #policy info val function= #function info
-                  val ()=if #lifetime cb="call" then () else fail (#source cb) "registered callback projection requires an explicit unregistering adapter"
                   val cs=List.map(fn CParse.Parameter{ctype,...}=>scalar ctype)(#parameters function)
                   val callbackTypes=List.map(fn CParse.Parameter{ctype,...}=>ctype)(#parameters function)
                   val cn=names(#parameters function)
@@ -233,25 +323,32 @@ struct
                   val build="(fn function=>let val callback=RuneForeign.callback{abi=" ^ Int.toString(#abi info) ^ ",result=RuneForeign." ^ result ^
                     ",arguments=" ^ list(List.map(fn c=>"RuneForeign." ^ c)cs) ^ ",function=fn arguments=>case arguments of " ^
                     list variables ^ "=>" ^ answer ^ " | _=>raise Fail \"callback argument count\",failure=" ^ fallback ^ "} " ^
-                    "val _=ForeignScope.defer(scope,fn()=>RuneForeign.release callback) in callback end)"
+                    (if #lifetime cb="registered" then "val ()=retainForResult(fn()=>RuneForeign.release callback)"
+                     else "val _=ForeignScope.defer(scope,fn()=>RuneForeign.release callback)") ^ " in callback end)"
               in if #nullable a=SOME true then "Option.map " ^ build ^ " " ^ id else "SOME(" ^ build ^ " " ^ id ^ ")" end
             fun prepare n=
               let val a=annotation p n val ty=valueType n val ctype=nativeType n
                   val id=variable n val key=ForeignPolicy.rawName n
                   val ()=if scalar ctype="Pointer" then case a of SOME a=>if isSome(#callback a) then () else
                         (case #ownership a of SOME(ForeignPolicy.Borrowed "call")=>()
-                         | _=>fail (#source a) "retained input pointers require an explicit lifetime adapter")
+                         | _=>if retainedLifetime a then () else fail (#source a) "retained input pointers require an explicit lifetime adapter")
                     | NONE=>() else ()
-              in if scalar ctype<>"Pointer" then "" else
+              in if scalar ctype="Aggregate" then
+                  "        val aggregate_" ^ key ^ " = scopedBuffer scope " ^ objectSize ctype ^ "\n" ^
+                  "        val ()=" ^ objectWrite ctype ty ("aggregate_" ^ key) "0" id 0 ^ "\n"
+                else if scalar ctype<>"Pointer" then "" else
                 if List.exists(fn other=>other=n)arrayNames then "        val pointer_" ^ key ^ " = SOME(ForeignMemory.raw(List.nth(arrayBuffers," ^ Int.toString(arrayIndex n) ^ ")))\n"
                 else case a of NONE=>fail (#source p)("pointer policy missing: " ^ n) | SOME a=>
                   if isSome(#callback a) then "        val pointer_" ^ key ^ " = " ^ callback a id ^ "\n" else
-                  let val ()=case #ownership a of SOME(ForeignPolicy.Borrowed "call")=>()
-                        | _=>fail (#source a) "retained input pointers require an explicit lifetime adapter"
+                  let val retained=retainedLifetime a
                   in case resourceType ty of SOME(resource,optional)=>
-                    "        val pointer_" ^ key ^ " = " ^ (if optional then "Option.map (fn value=>borrowHandle scope (unpack_" ^ resource ^ " value)) " ^ id
-                      else "SOME(borrowHandle scope (unpack_" ^ resource ^ " " ^ id ^ "))") ^ "\n"
-                  | NONE=>(case stringType ty of SOME optional=>
+                    let val build=if retained then "(fn value=>let val state=unpack_" ^ resource ^ " value val release=retainHandle state " ^
+                          "val ()=retainForResult release in rawHandle state end)"
+                        else "(fn value=>borrowHandle scope (unpack_" ^ resource ^ " value))"
+                    in "        val pointer_" ^ key ^ " = " ^ (if optional then "Option.map " ^ build ^ " " ^ id
+                      else "SOME(" ^ build ^ " " ^ id ^ ")") ^ "\n" end
+                  | NONE=>if retained then fail (#source a) "registered retained memory requires a typed resource handle" else
+                    (case stringType ty of SOME optional=>
                       let val unitBytes=case #encoding a of SOME ForeignPolicy.Utf16=>2 | _=>1
                           val ()=if elementBytes n=IntInf.fromInt unitBytes then () else
                             fail (#source a) "string encoding disagrees with native element width"
@@ -259,21 +356,22 @@ struct
                       in "        val pointer_" ^ key ^ " = inputText scope " ^ encoding(#encoding a) ^ " " ^ Bool.toString(getOpt(#terminator a,false)) ^ " (" ^ extent ^ ") " ^
                         (if optional then id else "(SOME " ^ id ^ ")") ^ "\n" end
                     | NONE=>if #direction a=SOME ForeignPolicy.Out orelse #direction a=SOME ForeignPolicy.InOut then
-                        let val c=pointee ctype val size=IntInf.toString(CLayout.size(CAnalysis.layout analysis {ty=c,source= #source a}))
-                            val bytes=if scalar c="Float32" orelse scalar c="Float64" then
-                                "ForeignBytes.real" ^ (if scalar c="Float32" then "32" else "64") ^ "{littleEndian=" ^ little ^ ",value=" ^ id ^ "}"
-                              else "ForeignBytes.integer{width=" ^ size ^ ",signed=" ^ Bool.toString(String.isPrefix "SInt" (scalar c)) ^
-                                ",littleEndian=" ^ little ^ ",value=" ^ number ty id ^ "}"
+                        let val ()=case #extent a of NONE=>() | SOME(ForeignPolicy.FixedLength 1)=>()
+                              | _=>fail (#source a) "single output value requires a one-element extent"
+                            val c=pointee ctype val size=IntInf.toString(CLayout.size(CAnalysis.layout analysis {ty=c,source= #source a}))
                             val init=if #direction a=SOME ForeignPolicy.InOut then
-                              "        val ()=ForeignMemory.write(buffer_" ^ key ^ ",0," ^ bytes ^ ")\n" else ""
+                              "        val ()=" ^ objectWrite c ty ("buffer_" ^ key) "0" id 0 ^ "\n" else ""
                         in "        val buffer_" ^ key ^ " = scopedBuffer scope " ^ size ^ "\n" ^ init ^
                           "        val pointer_" ^ key ^ " = SOME(ForeignMemory.raw buffer_" ^ key ^ ")\n" end
                       else fail (#source a) "unsupported automatic pointer input projection") end
               end
             val preparations=String.concat(List.map prepare ns)
             fun nativeArgument n=let val c=nativeType n in if scalar c="Pointer" then "RuneForeign.Address pointer_" ^ ForeignPolicy.rawName n
+              else if scalar c="Aggregate" then "RuneForeign.Address(SOME(ForeignMemory.raw aggregate_" ^ ForeignPolicy.rawName n ^ "))"
               else argument(scalar c)(valueType n)(variable n) end
-            val args=list(List.map nativeArgument ns)
+            val resultScalar=scalar(#result f)
+            val resultBuffer=if resultScalar="Aggregate" then "        val aggregateResult = scopedBuffer scope " ^ objectSize(#result f) ^ "\n" else ""
+            val args=list((if resultScalar="Aggregate" then ["RuneForeign.Address(SOME(ForeignMemory.raw aggregateResult))"] else []) @ List.map nativeArgument ns)
             val consumed=List.filter(fn n=>case annotation p n of SOME a=> #consumes a | NONE=>false)ns
             val consumedBody=case consumed of []=>NONE | [n]=>
                   if resultType=ForeignPolicy.Scalar "unit" andalso length ns=1 then SOME
@@ -282,7 +380,8 @@ struct
                       | NONE=>fail (#source p) "consumed parameter requires a typed resource") ^ "\n")
                   else fail (#source p) "consumed resource projection requires a one-argument void destructor"
               | _=>fail (#source p) "multiple consumed resources require an explicit adapter"
-            val resultScalar=scalar(#result f)
+            val ()=if resultScalar="Aggregate" andalso #predicate(#errors p)<>"none" then
+              fail (#source p) "aggregate results require an explicit failure-status adapter" else ()
             val ()=if resultScalar="Pointer" andalso not(List.exists(fn predicate=>predicate= #predicate(#errors p))["none","null"])
               then fail (#source p) "pointer results require null or no failure predicate" else ()
             val ()=if (resultScalar="Float32" orelse resultScalar="Float64") andalso
@@ -316,9 +415,10 @@ struct
               "        val ()=if failed then raise ForeignFailure {foreign=" ^ q(#foreign p) ^ ",result=result,text=nativeText} else ()\n"
             fun output n=if List.exists(fn other=>other=n)arrayNames then variable n else
               let val a=policyFor n val c=pointee(nativeType n) val size=IntInf.toString(CLayout.size(CAnalysis.layout analysis{ty=c,source= #source a}))
-              in resultValue(scalar c)(valueType n)("ForeignMemory.read(buffer_" ^ ForeignPolicy.rawName n ^ ",0," ^ size ^ ")")little false end
+              in objectRead c (valueType n)("buffer_" ^ ForeignPolicy.rawName n) "0" 0 end
             val outputBindings=String.concat(List.map(fn n=>"        val output_" ^ ForeignPolicy.rawName n ^ " = " ^ output n ^ "\n")outputs)
-            val projectedResult=if resultScalar<>"Pointer" then resultValue resultScalar resultType "(#bytes result)" "true" true else
+            val projectedResult=if resultScalar="Aggregate" then objectRead (#result f) resultType "aggregateResult" "0" 0
+              else if resultScalar<>"Pointer" then resultValue resultScalar resultType "(#bytes result)" "true" true else
               case resourceType resultType of SOME(resource,optional)=>
                 let val parent=case #ownership(#result p) of SOME(ForeignPolicy.Borrowed lifetime)=>
                           if String.isPrefix "parameter:" lifetime then
@@ -327,7 +427,9 @@ struct
                               | _=>fail (#source p) "borrowed result parent requires a non-null typed resource" end
                           else "NONE"
                         | _=>"NONE"
-                    val build="(fn pointer=>Handle_" ^ resource ^ " (makeHandle session pointer owner (" ^ parent ^ ")))"
+                    val retained=if null registered then parent else
+                      "(SOME(fn()=>List.app(fn(_,release)=>release())(!retainedResult)))"
+                    val build="(fn pointer=>Handle_" ^ resource ^ " (makeHandle session pointer owner (" ^ retained ^ ")))"
                 in if optional then "Option.map " ^ build ^ " (#pointer result)" else
                   build ^ " (case #pointer result of SOME pointer=>pointer | NONE=>raise Fail \"unexpected native null\")" end
               | NONE=>(case stringType resultType of SOME optional=>
@@ -341,14 +443,15 @@ struct
                     build ^ " (case #pointer result of SOME pointer=>pointer | NONE=>raise Fail \"unexpected native null\")" end
                 | NONE=>fail (#source p) "unsupported automatic pointer result projection")
             val resultBinding="        val projectedResult = " ^ projectedResult ^ "\n"
-            val transfer=if isSome(resourceType resultType) then "        val ()=Option.app ForeignScope.cancel ownerTicket\n        val ()=Option.app ForeignScope.cancel pointerTicket\n" else ""
+            val transfer=if isSome(resourceType resultType) then "        val ()=Option.app ForeignScope.cancel ownerTicket\n        val ()=Option.app ForeignScope.cancel pointerTicket\n" ^
+                (if null registered then "" else "        val ()=if isSome(#pointer result) then List.app(fn(ticket,_)=>ForeignScope.cancel ticket)(!retainedResult) else ()\n") else ""
             fun outputValue "$result"="projectedResult" | outputValue n="output_" ^ ForeignPolicy.rawName n
             val returned=case #returns p of SOME projection=>tree outputValue projection
               | NONE=>if null outputs then "projectedResult" else
                   "{" ^ join((if resultType=ForeignPolicy.Scalar "unit" then [] else ["result=projectedResult"]) @
                     List.map(fn n=>getOpt(#output(policyFor n),ForeignPolicy.rawName n) ^ "=" ^ outputValue n)outputs) ^ "}"
             val arraysOpen="      in ForeignMemory.withArrays " ^ list arrays ^ " (fn arrayBuffers =>\n        let\n"
-            val ordinary=prefix ^ outArrays ^ arraysOpen ^ preparations ^ invocation ^ pointerCleanup ^ owner ^ errorCheck ^ outputBindings ^ resultBinding ^ transfer ^
+            val ordinary=prefix ^ outArrays ^ arraysOpen ^ preparations ^ resultBuffer ^ invocation ^ pointerCleanup ^ owner ^ errorCheck ^ outputBindings ^ resultBinding ^ transfer ^
               "        in " ^ returned ^ " end)\n      end)\n    end\n"
             val body=case consumedBody of NONE=>ordinary | SOME destroy=>
               "  fun " ^ #name p ^ " session " ^ tree variable(inputTree p inputNames) ^ " =\n    ForeignScope.withScope(fn scope=>let val _=enterCall session scope\n" ^ destroy ^ "    in () end)\n"
@@ -393,12 +496,14 @@ struct
         "    in fn()=>if !released then () else (released:=true;borrows:= !borrows-1;releaseOwner()) end\n" ^
         "  fun borrowHandle scope value=let val release=retainHandle value val _=ForeignScope.defer(scope,release) in rawHandle value end\n" ^
         "  fun makeHandle(Session{borrowed,owned,active,...}) pointer owner retained=\n" ^
-        "    let val value={pointer=pointer,owner=owner,closed=ref false,borrows=ref 0,retained=retained,active=active}\n" ^
+        "    let val ()=borrowed:=List.filter(fn value=>not(retired value))(!borrowed)\n" ^
+        "        val ()=owned:=List.filter(fn value=>not(retired value))(!owned)\n" ^
+        "        val value={pointer=pointer,owner=owner,closed=ref false,borrows=ref 0,retained=retained,active=active}\n" ^
         "    in (case owner of NONE=>borrowed:=value:: !borrowed | SOME _=>owned:=value:: !owned);value end\n" ^
         "  fun closeSession(Session{native,borrowed,owned,active})=\n" ^
         "    let val ()=if !active>0 orelse List.exists(fn value=>not(retired value))(!owned) then raise ForeignOwner.Busy else ()\n" ^
         "        fun close []=borrowed:=[] | close(value::rest)=(if retired value then () else closeHandle value;borrowed:=rest;close rest)\n" ^
-        "    in close(!borrowed);" ^ raw ^ ".closeSession native end\n" ^
+        "    in close(!borrowed);" ^ raw ^ ".closeSession native;owned:=[];borrowed:=[] end\n" ^
         "  fun scopedBuffer scope length=let val buffer=ForeignMemory.allocate length val _=ForeignScope.defer(scope,fn()=>ForeignMemory.release buffer) in buffer end\n" ^
         "  fun inputText scope encoding terminated extent NONE=NONE\n" ^
         "    | inputText scope encoding terminated extent(SOME text)=\n" ^

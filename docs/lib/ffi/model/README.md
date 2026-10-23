@@ -33,10 +33,22 @@ the generator does not infer them from the host running Rune.
 borrowed resource, native-error and call-scoped callback policies into checked
 SML wrappers. Cleanup surrounds native entry and result conversion; a deferred
 callback exception escapes only after a newly owned result is protected.
-Registered callbacks and public aggregate values require explicit adapters.
+Struct values use checked target layouts for complete records and fixed
+vectors, crossing the dynamic call boundary through generated typed C shims.
+Registered callbacks transfer roots and retained resource leases to their
+owned result handle, whose destructor must unregister before returning.
+Other registration protocols, union active members and pointer fields require
+explicit adapters.
+
+[`ForeignAdapter`](str/ForeignAdapter.md) resolves explicit fixed shim prototypes for selected macros
+and variadic functions. The sidecar supplies type data only; Rune rejects
+bodies and array expressions, checks original identities, macro arity and
+function fixed-prefix types, and retains original provenance separately.
 
 [`ForeignGenerate`](str/ForeignGenerate.md) produces documented, sealed raw and public bindings,
-selected object measurements, typed field adapters and an implementation manifest. Explicit public adapters remain named in that
+selected object measurements, typed field/call adapters and an implementation
+manifest. Static/inline selections record a required shim during validation;
+the generator emits that shim over the original definition. Explicit public adapters remain named in that
 manifest. An unsupported selected projection fails generation; it never
 quietly exports an unsafe public wrapper. `runeffi` supplies filesystem
 inputs and atomic publication around this reusable pure emitter.
@@ -47,6 +59,7 @@ inputs and atomic publication around this reusable pure emitter.
 
 | Signature |  |
 | --- | --- |
+| [`FOREIGN_ADAPTER`](sig/FOREIGN_ADAPTER.md) | Explicit fixed prototypes for macro and variadic C adapters. |
 | [`FOREIGN_COVERAGE`](sig/FOREIGN_COVERAGE.md) | Declaration coverage and implementation evidence stay separate. |
 | [`FOREIGN_GENERATE`](sig/FOREIGN_GENERATE.md) | Deterministic source generation from checked C declarations and policy. |
 | [`FOREIGN_JSON`](sig/FOREIGN_JSON.md) | JSON values with physical positions for declarative policy diagnostics. |

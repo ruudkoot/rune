@@ -14,6 +14,10 @@ val () = ContractMain.main ()
 ```
 
 The suite compares typed observations rather than OS event streams or pixels.
+Paint bounds are ordered and inside the client rectangle; an empty native
+update area is valid when another window occludes the fixture. Nonempty pixel
+coverage is checked by the driver-specific probes with their own surface.
+This follows the native [visible/update-region clipping rule](https://learn.microsoft.com/en-us/windows/win32/gdi/window-regions).
 It filters its own application messages, discards unused copies, consumes
 posted quit status while tolerating unrelated external events, and gives every
 class a unique name. Fixture cleanup attempts all registered object actions,

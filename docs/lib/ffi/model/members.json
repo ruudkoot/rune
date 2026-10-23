@@ -1,5 +1,32 @@
 {
  "signatures": {
+  "FOREIGN_ADAPTER": {
+   "doc": "Explicit fixed prototypes for macro and variadic C adapters.\n\n",
+   "page": "sig/FOREIGN_ADAPTER.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "prepared",
+     "spec": "type prepared = {policy : ForeignPolicy.policy, declarations : CParse.declaration list}",
+     "doc": "Declarations and policy ready for ordinary fixed-call validation.\n\n",
+     "page": "sig/FOREIGN_ADAPTER.md#type-prepared"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of ForeignModel.source * string",
+     "doc": "An invalid prototype or mismatch with the original declaration.\n\n",
+     "page": "sig/FOREIGN_ADAPTER.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "prepare",
+     "spec": "val prepare : {policy : ForeignPolicy.policy, declarations : CParse.declaration list,\n  macros : CPreprocess.macro list} -> prepared",
+     "doc": "`prepare {policy, declarations, macros}` resolves explicit shim prototypes.\n\nExactly one named, fixed function prototype is accepted. Macro origins\nremain in the caller's original model; function shims preserve original\nresult and fixed-prefix C types. No C statements or commands are accepted.\n\n",
+     "page": "sig/FOREIGN_ADAPTER.md#val-prepare"
+    }
+   ]
+  },
   "FOREIGN_COVERAGE": {
    "doc": "Declaration coverage and implementation evidence stay separate.\n\n",
    "page": "sig/FOREIGN_COVERAGE.md",
@@ -69,8 +96,8 @@
     {
      "kind": "val",
      "name": "emit",
-     "spec": "val emit : {policy : ForeignPolicy.policy, profile : ForeignTarget.profile,\n  declarations : CParse.declaration list, layouts : string list,\n  fields : field list, constants : (string * IntInf.int) list,\n  sourceName : string -> string} -> artifact list",
-     "doc": "`emit {policy, profile, declarations, layouts, fields, constants, sourceName}` produces sources.\n\nFixed raw calls always retain native statuses. Safe scalar projections\nare emitted where their complete policy can be implemented. An explicit\nadapter selection remains visible in the manifest rather than claiming\nan implemented public projection. Target layouts come from the reusable\nC analysis library; no compiler or native library is executed.\n\n",
+     "spec": "val emit : {policy : ForeignPolicy.policy, profile : ForeignTarget.profile,\n  declarations : CParse.declaration list, macros : CPreprocess.macro list, layouts : string list,\n  fields : field list, constants : (string * IntInf.int) list,\n  sourceName : string -> string} -> artifact list",
+     "doc": "`emit {policy, profile, declarations, macros, layouts, fields, constants, sourceName}` produces sources.\n\nFixed raw calls always retain native statuses. Checked public projections\nare emitted where their complete policy can be implemented. Retained\noriginal macros resolve explicitly typed native shim prototypes. An explicit\nadapter selection remains visible in the manifest rather than claiming\nan implemented public projection. Target layouts come from the reusable\nC analysis library; no compiler or native library is executed.\n\n",
      "page": "sig/FOREIGN_GENERATE.md#val-emit"
     }
    ]
@@ -395,8 +422,8 @@
     {
      "kind": "type",
      "name": "functionPolicy",
-     "spec": "type functionPolicy = {foreign : string, namespace : string, name : string, raw : string option,\n  parameters : valuePolicy list, result : valuePolicy, errors : errorPolicy,\n  variadic : string, unsafeRaw : bool, adapter : string option,\n  input : tree option, returns : tree option,\n  source : ForeignModel.source}",
-     "doc": "A selected function and its naming/marshalling policy.\n\n",
+     "spec": "type functionPolicy = {foreign : string, namespace : string, name : string, raw : string option,\n  parameters : valuePolicy list, result : valuePolicy, errors : errorPolicy,\n  variadic : string, unsafeRaw : bool, adapter : string option, shim : string option,\n  input : tree option, returns : tree option,\n  source : ForeignModel.source}",
+     "doc": "A selected function and its naming/marshalling policy.\n\nAn optional shim is one fixed C prototype, parsed as declaration data;\nit supplies a macro ABI or an explicit variadic tail.\n\n",
      "page": "sig/FOREIGN_POLICY.md#type-functionpolicy"
     },
     {
@@ -593,8 +620,8 @@
     {
      "kind": "type",
      "name": "binding",
-     "spec": "type binding = {declaration : ForeignModel.declaration, policy : ForeignPolicy.functionPolicy}",
-     "doc": "A uniquely resolved function and its separate projection policy.\n\n",
+     "spec": "type binding = {declaration : ForeignModel.declaration, policy : ForeignPolicy.functionPolicy,\n  requiresShim : bool}",
+     "doc": "A resolved function, separate projection policy and required C adapter.\n\nA static or inline definition is callable only through a typed shim;\nvalidation records this requirement without claiming code was emitted.\n\n",
      "page": "sig/FOREIGN_VALIDATE.md#type-binding"
     },
     {
@@ -615,6 +642,7 @@
   }
  },
  "structures": {
+  "ForeignAdapter": "FOREIGN_ADAPTER",
   "ForeignCoverage": "FOREIGN_COVERAGE",
   "ForeignGenerate": "FOREIGN_GENERATE",
   "ForeignJson": "FOREIGN_JSON",

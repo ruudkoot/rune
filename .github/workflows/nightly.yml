@@ -20,6 +20,8 @@ jobs:
   nightly:
     runs-on: ubuntu-24.04
     timeout-minutes: 360
+    env:
+      FFI: "yes"
     steps:
       - uses: actions/checkout@v4
 
@@ -31,7 +33,7 @@ jobs:
           # with gcc-multilib, which the 32-bit VM needs.
           v=$(gcc -dumpversion | cut -d. -f1)
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
-            libgmp-dev gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind \
+            libgmp-dev libffi-dev pkg-config gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind \
             python3-jupyter-client python3-zmq \
             qemu-user clang \
             libc6-dev-ppc64-cross binutils-powerpc64-linux-gnu \

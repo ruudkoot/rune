@@ -70,12 +70,55 @@ cleanup, and `ForeignFailure` retains the raw status and captured errors.
 Call-scoped callbacks support scalar and borrowed pointer arguments, scalar
 results, nested foreign calls and annotated failure values. A callback
 exception remains inside the native boundary until safe cleanup finishes.
-Registered callbacks, public aggregate values, retained input memory and
-more complex destructor protocols require explicit public adapters, recorded
+Registered callbacks whose native owner is not an owned returned handle,
+retained text/array inputs and more complex destructor protocols require
+explicit public adapters, recorded
 by name in `ffi-manifest.json`. A selection without an implemented lowering
 or an explicit public adapter fails with a source diagnostic. Dynamic
 variadic calls and unprototyped C functions require fixed typed adapters.
 These remaining automatic projections and their tests keep M6 planned.
+
+Registered callbacks can instead name an owned result resource in `owner`.
+That resource's single-pointer void destructor must synchronously unregister
+all callbacks before returning. The generated handle retains callback roots
+and any input resource annotated `borrowed: OWNER` until the destructor has
+returned. Such input resources cannot close while registration is live.
+Registration is established only by a nonnull returned owner; a null result
+releases the pending roots and leases. A callback exception while registering
+still destroys a newly returned owner before releasing its callback. A last
+callback during unregistration remains valid, and an exception from it is
+propagated after disposal and root cleanup. Registration APIs with another
+protocol need an explicit adapter rather than an inferred unregister call.
+
+Native struct arguments/results use generated typed C shims: arguments are
+passed to the shim by pointer, and an aggregate result adds an output pointer
+as its first argument and makes the raw result void. The original C compiler
+performs the by-value call and copy. Public structs become complete named
+SML records; nested structs and fixed array fields become nested records and
+vectors. Output and inout struct pointers use the same target layout codec.
+Every vector length and integer field range is checked before native entry.
+Unions require an explicit active-member policy; pointer fields, anonymous
+fields and representations for which layout requires a native adapter fail
+automatic public projection. Explicit raw adapters remain available.
+
+Static/inline functions and functions with nonstandard calling conventions
+also receive exported C shims. The original header supplies their semantics
+and calling convention; the shim uses the target default ABI. The manifest
+identifies the original declaration, exported shim symbol and `typed-c-shim`
+mechanism, and coverage marks these declarations `shimmed`. Compile emitted
+`shims.c` with the same pinned original headers and target compiler options.
+No build command is embedded in `.build` or executed by the generator.
+
+Selected macros and fixed variadic call sites use the sidecar's optional
+`shim` prototype. A macro remains a macro identity in provenance; its ABI
+comes from that explicit prototype. Variadic shims check the original return
+and fixed-prefix C types, then let C promote the explicitly typed tail.
+Integer and float promotion fixtures compare these calls with native C.
+Only one fixed declaration is accepted, with no bodies or initializer code.
+Original headers stay unmodified and shim compilation stays a separate
+build prerequisite. An untyped selected macro, mismatched declaration or
+open-ended variadic selection fails before executable binding emission.
+
 
 The output directory stores immutable `sets/<content-hash>` generations and
 stable public interfaces in `api/<signature-hash>`. Publication writes and

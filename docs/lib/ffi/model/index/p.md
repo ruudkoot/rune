@@ -8,6 +8,8 @@
 - `Pointer` (con): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#con-pointer)
 - `policy` (type): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#type-policy)
 - `preamble` (val): [FOREIGN_SHIM](../sig/FOREIGN_SHIM.md#val-preamble)
+- `prepare` (val): [FOREIGN_ADAPTER](../sig/FOREIGN_ADAPTER.md#val-prepare)
+- `prepared` (type): [FOREIGN_ADAPTER](../sig/FOREIGN_ADAPTER.md#type-prepared)
 - `Product` (con): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#con-product)
 - `profile` (type): [FOREIGN_TARGET](../sig/FOREIGN_TARGET.md#type-profile)
 

@@ -312,6 +312,14 @@ for manifest in $(cd "$root/lib" && find . -name MANIFEST | sort); do
   done
 done
 
+# Original headers, target profiles, sidecars and implementation-selection build
+# entrypoints accompany runeffi. Generated/native resources remain application
+# dependencies and are never opened by installing the library sources.
+if [ -e "$root/bin/runeffi.rbc" ]; then
+  rm -rf "$libdir/ffi-assets"
+  cp -R "$root/ffi" "$libdir/ffi-assets"
+fi
+
 manpage rune
 copy "$root/share/man/runevm-stack.1" "$mandir/runevm-stack.1" 644
 manpage runevm

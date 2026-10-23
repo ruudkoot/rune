@@ -38,6 +38,10 @@ hand.
 ## Foreign-call dependency
 
 `make FFI=auto|yes|no` controls the optional generic dynamic-call bridge.
+`make ffi-libffi` provisions the pinned static library without installing system
+packages; select it with `FFI_PREFIX=build/deps/libffi/native/install`. SDL3,
+cross-target provisioning, installation and REPL use are described in the
+[Runeffi release guide](ffi/release.md).
 The default uses the native target's libffi development installation through
 `pkg-config`; `yes` requires it and `no` preserves builds without it.
 `SYS=none` uses unavailable operations. Cross targets use their own prefixes

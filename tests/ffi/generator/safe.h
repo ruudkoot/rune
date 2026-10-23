@@ -27,4 +27,23 @@ double safe_float_fail(void);
 char *safe_bad_utf8(void);
 const unsigned short *safe_utf16(void);
 int safe_utf16_input(const unsigned short *text);
+typedef struct safe_registration safe_registration;
+typedef int (*safe_registered_callback)(int value, void *context);
+safe_registration *safe_register(safe_registered_callback callback, void *context);
+safe_registration *safe_register_none(safe_registered_callback callback, void *context);
+int safe_dispatch(safe_registration *registration, int value);
+void safe_unregister(safe_registration *registration);
+typedef struct safe_point { int x; float y; } safe_point;
+typedef struct safe_packet { safe_point origin; unsigned int codes[3]; double scale; } safe_packet;
+safe_packet safe_transform(safe_packet value, int delta);
+void safe_packet_out(safe_packet *value);
+void safe_packet_inout(safe_packet *value);
+#define SAFE_MACRO_ADD(first,second) ((first)+(second))
+#define SAFE_MACRO_PACKET(value) safe_transform((value),2)
+int safe_variadic_sum(int count, ...);
+double safe_variadic_real(int count, ...);
+static inline int safe_inline(int value) { return value*3; }
+#if defined(__x86_64__)
+__attribute__((ms_abi)) int safe_other_abi(int value);
+#endif
 #endif

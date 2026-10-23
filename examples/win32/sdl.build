@@ -1,0 +1,2 @@
+use ../../ffi/win32/sdl.build
+files app.sml sdl-main.sml end

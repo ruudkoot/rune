@@ -9,7 +9,8 @@
     "runeffi-safe-subject"
   ],
   "resources": [
-    "memory"
+    "memory",
+    "subscription"
   ],
   "callbacks": [
     {
@@ -23,6 +24,13 @@
       "lifetime": "call",
       "thread": "owner-vm-thread",
       "failure": 0
+    },
+    {
+      "foreign": "safe_registered_callback",
+      "lifetime": "registered",
+      "owner": "subscription",
+      "thread": "owner-vm-thread",
+      "failure": -1
     }
   ],
   "functions": [
@@ -640,6 +648,438 @@
       },
       "variadic": "reject",
       "unsafeRaw": false
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_transform",
+      "name": "transform",
+      "parameters": [
+        {
+          "name": "value",
+          "type": {
+            "record": {
+              "origin": {
+                "record": {
+                  "x": "int",
+                  "y": "real"
+                }
+              },
+              "codes": {
+                "vector": "word32"
+              },
+              "scale": "real"
+            }
+          }
+        },
+        {
+          "name": "delta",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": {
+          "record": {
+            "origin": {
+              "record": {
+                "x": "int",
+                "y": "real"
+              }
+            },
+            "codes": {
+              "vector": "word32"
+            },
+            "scale": "real"
+          }
+        }
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_packet_out",
+      "name": "packetOut",
+      "parameters": [
+        {
+          "name": "value",
+          "type": {
+            "record": {
+              "origin": {
+                "record": {
+                  "x": "int",
+                  "y": "real"
+                }
+              },
+              "codes": {
+                "vector": "word32"
+              },
+              "scale": "real"
+            }
+          },
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "length": 1
+        }
+      ],
+      "result": {
+        "type": "unit"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_packet_inout",
+      "name": "packetInout",
+      "parameters": [
+        {
+          "name": "value",
+          "type": {
+            "record": {
+              "origin": {
+                "record": {
+                  "x": "int",
+                  "y": "real"
+                }
+              },
+              "codes": {
+                "vector": "word32"
+              },
+              "scale": "real"
+            }
+          },
+          "direction": "inout",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "length": 1
+        }
+      ],
+      "result": {
+        "type": "unit"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_inline",
+      "name": "inline",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "int"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_other_abi",
+      "name": "otherAbi",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "int"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "null",
+        "capture": "errno"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_register",
+      "name": "register",
+      "parameters": [
+        {
+          "name": "callback",
+          "callback": "safe_registered_callback",
+          "ownership": {
+            "borrowed": "subscription"
+          },
+          "nullable": false,
+          "direction": "in"
+        },
+        {
+          "name": "context",
+          "type": {
+            "resource": "memory"
+          },
+          "ownership": {
+            "borrowed": "subscription"
+          },
+          "nullable": false,
+          "direction": "in"
+        }
+      ],
+      "result": {
+        "type": {
+          "resource": "subscription"
+        },
+        "ownership": {
+          "owned": "safe_unregister"
+        },
+        "nullable": false
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_register_none",
+      "name": "registerNone",
+      "parameters": [
+        {
+          "name": "callback",
+          "callback": "safe_registered_callback",
+          "ownership": {
+            "borrowed": "subscription"
+          },
+          "nullable": false,
+          "direction": "in"
+        },
+        {
+          "name": "context",
+          "type": {
+            "resource": "memory"
+          },
+          "ownership": {
+            "borrowed": "subscription"
+          },
+          "nullable": false,
+          "direction": "in"
+        }
+      ],
+      "result": {
+        "type": {
+          "option": {
+            "resource": "subscription"
+          }
+        },
+        "ownership": {
+          "owned": "safe_unregister"
+        },
+        "nullable": true
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_dispatch",
+      "name": "dispatch",
+      "parameters": [
+        {
+          "name": "registration",
+          "type": {
+            "resource": "subscription"
+          },
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "direction": "in"
+        },
+        {
+          "name": "value",
+          "type": "int32"
+        }
+      ],
+      "result": {
+        "type": "int32"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_unregister",
+      "name": "unregister",
+      "parameters": [
+        {
+          "name": "registration",
+          "type": {
+            "resource": "subscription"
+          },
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "consumes": true,
+          "direction": "in"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "SAFE_MACRO_ADD",
+      "namespace": "macro",
+      "name": "macroAdd",
+      "shim": "unsigned int SAFE_MACRO_ADD(unsigned int first, unsigned int second)",
+      "parameters": [
+        {
+          "name": "first",
+          "type": "word32"
+        },
+        {
+          "name": "second",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "type": "word32"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "SAFE_MACRO_PACKET",
+      "namespace": "macro",
+      "name": "macroPacket",
+      "shim": "safe_packet SAFE_MACRO_PACKET(safe_packet value)",
+      "parameters": [
+        {
+          "name": "value",
+          "type": {
+            "record": {
+              "origin": {
+                "record": {
+                  "x": "int",
+                  "y": "real"
+                }
+              },
+              "codes": {
+                "vector": "word32"
+              },
+              "scale": "real"
+            }
+          }
+        }
+      ],
+      "result": {
+        "type": {
+          "record": {
+            "origin": {
+              "record": {
+                "x": "int",
+                "y": "real"
+              }
+            },
+            "codes": {
+              "vector": "word32"
+            },
+            "scale": "real"
+          }
+        }
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_variadic_sum",
+      "name": "variadicSum",
+      "shim": "int safe_variadic_sum(int count, short first, unsigned char second)",
+      "parameters": [
+        {
+          "name": "count",
+          "type": "int"
+        },
+        {
+          "name": "first",
+          "type": "int"
+        },
+        {
+          "name": "second",
+          "type": "word8"
+        }
+      ],
+      "result": {
+        "type": "int"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_variadic_real",
+      "name": "variadicReal",
+      "shim": "double safe_variadic_real(int count, float first, float second)",
+      "parameters": [
+        {
+          "name": "count",
+          "type": "int"
+        },
+        {
+          "name": "first",
+          "type": "real"
+        },
+        {
+          "name": "second",
+          "type": "real"
+        }
+      ],
+      "result": {
+        "type": "real"
+      }
     }
   ]
 }

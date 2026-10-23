@@ -28,6 +28,20 @@ for duplicate foreign identities and public/raw name collisions. Optional
 `adapter` names an adapter capability, as data; the generator must resolve
 that capability rather than treating it as source or a shell command.
 
+Optional `shim` supplies one fixed C function prototype, for example
+`"unsigned int RF_MACRO(unsigned int first, unsigned int second)"` with
+`namespace: "macro"`, or `"int sum(int count, short first, unsigned char second)"`
+for an original variadic function. Rune parses it as declaration data. It
+must name the selected foreign identity and cannot contain storage classes,
+initializers, function bodies, additional declarations, aggregate definitions,
+array expressions or behavioral attributes. Use original typedefs and tags.
+The original macro must exist and its argument count must agree. Function
+shims retain the original result and fixed-prefix C declarator types; only
+the variadic tail can add typed arguments. The generated C compiler applies
+C default promotions to that tail. Dynamic open-ended variadic calls remain
+unsupported. The manifest records the explicit prototype, original namespace
+and source, exported shim symbol and `typed-c-shim` mechanism.
+
 Selection is explicit. Unrelated, unselected header declarations can remain
 unsupported. Selecting a missing, incompatible or ambiguous declaration
 fails. Repeated compatible declarations coalesce using canonical original
@@ -121,6 +135,14 @@ regardless of the public exception/result projection.
 Each callback requires `foreign` (a function-pointer typedef), `lifetime`
 (`call` or `registered`), `thread` (`owner-vm-thread` only), and `failure`.
 Registered lifetimes also require an `owner`. Variadic callbacks fail.
+Automatic public generation interprets that owner as the SML resource type
+of an owned result from the installing function. Its annotated destructor
+must synchronously unregister callbacks before returning. Input resource
+handles borrowed for that owner acquire retained leases; callback roots and
+leases transfer only to a nonnull result owner and release after native
+unregistration. Other registration protocols require an explicit adapter.
+Validation alone does not establish that a native destructor meets this
+behavioral contract.
 A callback failure is a native integer or a message-specific table:
 
 ```json

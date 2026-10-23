@@ -100,9 +100,13 @@ struct
          let val window=create "paint"
              val _=W.User.showWindow(window,8)
              val ()=W.User.invalidateRect(window,NONE,true)
+             val client=W.User.getClientRect window
              val saved=ref(NONE:T.paint option)
              val ()=(W.User.withPaint window(fn(paint,rectangle)=>
-               (saved:=SOME paint;assert "paint output rectangle"(#right rectangle> #left rectangle andalso #bottom rectangle> #top rectangle);raise BodyFailure));
+               (saved:=SOME paint;assert "ordered in-client paint rectangle"
+                 (#left rectangle>= #left client andalso #top rectangle>= #top client andalso
+                  #right rectangle>= #left rectangle andalso #bottom rectangle>= #top rectangle andalso
+                  #right rectangle<= #right client andalso #bottom rectangle<= #bottom client);raise BodyFailure));
                raise Fail "paint body exception was swallowed") handle BodyFailure=>()
              val ()=assert "exception ended paint scope"(errorCode 0w6(fn()=>ignore(W.Gdi.moveToEx(valOf(!saved),1,1))))
              val ()=W.User.invalidateRect(window,NONE,false)

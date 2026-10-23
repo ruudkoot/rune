@@ -1,0 +1,2 @@
+use ../../ffi/win32/mock.build
+files app.sml mock-main.sml end

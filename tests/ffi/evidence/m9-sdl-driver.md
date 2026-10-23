@@ -102,3 +102,50 @@ Receipts are `/tmp/runeffi-sdl-win32-canvas-{dummy,gui,stack,jit,asan}.log`.
 The earlier 17/18-check receipts remain distinct and are not relabeled as pixel
 acceptance. Shared-model-over-SDL and native Windows common-suite acceptance
 are still required before the full M9 gate closes.
+
+## Shared application and contract integration (2026-10-23)
+
+`tests/ffi/win32/sdl-contract.build` runs the same eleven-group `WIN32` contract
+functor used by native Windows and mocks. Direct register-VM runs with
+`--gc-stress 7 --gc-verify` passed **11/11** using both the dummy video driver
+and a real Linux GUI. Cleanup resets the common model, shuts down the SDL driver
+and checks that the native resource count returns to its initial value.
+
+`examples/win32/app.sml` is one application source using only virtual `Win32`.
+Separate native, SDL and mock `.build` files select providers. Initial mock,
+dummy-SDL and real Linux GUI smoke runs passed with exit status zero. Final
+cleanup refactoring defers every owned window, timer, class and GDI object in
+reverse acquisition order, and emits success only after cleanup completes.
+Native Windows smoke checks and the shared native suite belong to the native
+component's acceptance receipts; availability on Linux does not imply them.
+
+A first attempt to run the two manual acceptance helpers concurrently collided:
+separate sandbox PID namespaces reported the same PID and selected the same
+artifact directory. Those runs were stopped without an acceptance claim. The
+helper now reserves a filesystem-unique output directory before publishing
+artifacts; bounded runner jobs additionally retain separate per-test run roots.
+
+After the unique-directory repair, `bin/rune-sdl-check win32-contract` and
+`bin/rune-sdl-check win32-app` each passed their four invocations: stack and
+register bytecode with collection stress 7/heap verification, then baseline
+and optimizing JIT. The final shared application also passed on a real Linux
+window with `--jit=off` and `--jit=opt` and ordinary collection. Final GUI
+collection-stress reruns are still being investigated for a CPU-bound delay;
+they are outstanding, distinct from the earlier successful GUI stress receipts.
+
+Final shared GUI contract rerun completed **11/11** on the real Linux window
+system with collection stress 7/heap verification. The application stress run
+was bounded after a long CPU delay. Paired dummy/GUI runs of the exact same RBC
+at a 60-second cap both returned timeout status 124; the GUI body eventually
+printed success and heap statistics after the signal (about 71 seconds), so
+that receipt remains a timeout. It reported 15,196 minor collections,
+2,214,632 allocated bytes, 567,560 live bytes and no full collections/large
+objects. The dummy run had approximately 19,000 minor collections at the cap.
+This does not establish a GUI-only failure or a resource leak. Ordinary GUI
+interpreter/optimizing-JIT runs and independent GUI driver/contract suites pass;
+the final application's GUI collection-stress acceptance remains outstanding.
+
+The shared paint fixture now permits an empty visible/update intersection while
+checking ordered bounds inside the client rectangle, matching native Win32
+clipping. It retains body-exception cleanup, stale-scope and active-destruction
+guards; driver pixel probes still require nonempty clipped paint retention.

@@ -48,6 +48,49 @@ struct
           handle CallbackStop=>Word8Array.sub(callbackBuffer,0)=0w91 andalso Word8Array.sub(callbackBuffer,1)=0w92))
         val ()=check("missing deallocator rejects before native ownership transfer",((ignore(GeneratedSafe.preflight session());false)handle RuneForeign.Error _=>
           GeneratedSafe.preflightCalls session()=0 andalso GeneratedSafe.allocations session()=0))
+        val packet={origin={x=3,y=1.25},codes=Vector.fromList[0w1,0w2,0w3]:Word32.word vector,scale=2.5}
+        val transformed=GeneratedSafe.transform session(packet,4)
+        val ()=check("by-value nested struct and fixed vector roundtrip",#x(#origin transformed)=7 andalso
+          Real.abs(#y(#origin transformed)-1.75)<0.00001 andalso Vector.sub(#codes transformed,1)=0w6 andalso Real.==(#scale transformed,5.0))
+        val {value=outputPacket}=GeneratedSafe.packetOut session()
+        val ()=check("returned struct output",#x(#origin outputPacket)=8 andalso Vector.sub(#codes outputPacket,2)=0w9)
+        val {value=inoutPacket}=GeneratedSafe.packetInout session packet
+        val ()=check("struct inout roundtrip",#x(#origin inoutPacket)=6 andalso Real.abs(#y(#origin inoutPacket)-1.75)<0.00001)
+        val ()=check("fixed native array member length checked",((ignore(GeneratedSafe.transform session({origin={x=0,y=0.0},codes=Vector.fromList[0w1],scale=0.0},1));false)handle ForeignMemory.Bounds=>true))
+        val ()=check("original inline definition called through typed shim",GeneratedSafe.inline session 7=21)
+        val ()=check("nonstandard native convention called through typed shim",GeneratedSafe.otherAbi session 7=26)
+        val ()=check("selected macro keeps explicit fixed native types",GeneratedSafe.macroAdd session(0wxF0000000,0w17)=0wxF0000011)
+        val macroPacket=GeneratedSafe.macroPacket session packet
+        val ()=check("selected aggregate macro uses typed indirect shim",#x(#origin macroPacket)=5 andalso Vector.sub(#codes macroPacket,1)=0w4)
+        val ()=check("fixed variadic shim applies integer promotions",GeneratedSafe.variadicSum session(2,~7,0w250)=243)
+        val ()=check("fixed variadic shim applies floating promotions",Real.abs(GeneratedSafe.variadicReal session(2,1.25,2.5)-3.75)<0.00001)
+        val context=GeneratedSafe.allocate session 4
+        val ()=RuneForeign.write(GeneratedSafe.raw_memory context,0w0,"\037\000\000\000")
+        val destroyed=ref 0
+        fun registered(value,pointer)=if value=7 then raise CallbackStop else
+          let val ()=if value=91 then destroyed:= !destroyed+1 else ()
+              val byte=case pointer of SOME pointer=>Char.ord(String.sub(RuneForeign.read(pointer,0w0,1),0)) | NONE=>0
+          in value+Int32.fromInt byte end
+        val subscription=GeneratedSafe.register session(registered,context)
+        val ()=check("registered callback retains native context",((GeneratedSafe.release_memory context;false)handle ForeignOwner.Busy=>true))
+        val ()=check("registered callback remains rooted between native calls",GeneratedSafe.dispatch session(subscription,4)=41)
+        val ()=check("registered callback exception preserves live owner",((ignore(GeneratedSafe.dispatch session(subscription,7));false)handle CallbackStop=>
+          GeneratedSafe.dispatch session(subscription,4)=41))
+        val ()=GeneratedSafe.unregister session subscription
+        val ()=check("callback survives native unregistration until destructor returns",!destroyed=1)
+        val ()=check("failed registration releases closure and context lease",((ignore(GeneratedSafe.register session(fn _=>raise CallbackStop,context));false)
+          handle CallbackStop=>GeneratedSafe.allocations session()=1))
+        val ()=check("nullable failed registration releases retained contexts",not(isSome(GeneratedSafe.registerNone session(registered,context))))
+        val throwing=GeneratedSafe.register session((fn(value,_)=>if value=91 then raise CallbackStop else value),context)
+        val ()=check("unregister callback exception still releases roots and context",((GeneratedSafe.release_subscription throwing;false)handle CallbackStop=>
+          ((ignore(GeneratedSafe.raw_subscription throwing);false)handle ForeignOwner.Closed=>true)))
+        val ()=GeneratedSafe.release_memory context
+        val ()=check("registered callback native allocations released",GeneratedSafe.allocations session()=0)
+        fun retire 0=() | retire n=
+          let val parent=GeneratedSafe.allocate session 4 val child=GeneratedSafe.borrow session parent
+          in GeneratedSafe.release_memory child;GeneratedSafe.release_memory parent;retire(n-1) end
+        val ()=retire 16
+        val ()=check("repeated resource registration and retirement",GeneratedSafe.allocations session()=0)
         val ()=GeneratedSafe.closeSession session
         val facts=RuneForeign.abiFacts()
         val mismatch={architecture= #architecture facts,charBits= #charBits facts,charSigned= #charSigned facts,

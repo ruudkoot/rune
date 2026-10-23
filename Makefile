@@ -138,18 +138,24 @@ VM_LIBS  = -lm $(if $(MINGW),$(WIN_LIBS)) $(FFI_LIBS)
 # libffi is optional. Native flags never enter another target's compile.
 # Cross builds use explicit target prefixes or deterministic ENOSYS stubs.
 FFI ?= auto
+FFI_PREFIX ?=
 ifeq ($(filter $(FFI),auto yes no),)
 $(error FFI must be auto, yes or no)
 endif
-FFI_FOUND := $(shell pkg-config --exists libffi 2>/dev/null && echo yes)
+FFI_FOUND := $(if $(FFI_PREFIX),$(if $(and $(wildcard $(FFI_PREFIX)/include/ffi.h),$(wildcard $(FFI_PREFIX)/lib/libffi.a)),yes),$(shell pkg-config --exists libffi 2>/dev/null && echo yes))
 FFI_ENABLED := $(if $(filter no,$(FFI)),0,$(if $(filter none,$(SYS)),0,$(if $(filter yes,$(FFI_FOUND)),1,0)))
+FFI_CONFIG_GOALS := $(if $(MAKECMDGOALS),$(filter-out hosts doctor envcheck clean gmp-dep gmp-dep-windows gmp-dep-portability gmp-dep-dist-native ffi-libffi ffi-sdl ffi-libffi-windows32 ffi-libffi-windows64 ffi-sdl-windows32 ffi-sdl-windows64 bin/rune-build bin/rune-build.bin,$(MAKECMDGOALS)),all)
+ifneq ($(strip $(FFI_CONFIG_GOALS)),)
 ifeq ($(FFI),yes)
 ifneq ($(FFI_ENABLED),1)
-$(error FFI=yes requires libffi headers and pkg-config on this target)
+$(error FFI=yes requires a complete FFI_PREFIX or libffi headers and pkg-config on this target)
 endif
 endif
-FFI_FLAGS := -DRUNE_FFI=$(FFI_ENABLED) $(if $(filter 1,$(FFI_ENABLED)),$(shell pkg-config --cflags libffi))
-FFI_LIBS := $(if $(filter 1,$(FFI_ENABLED)),$(shell pkg-config --libs libffi) $(if $(filter posix,$(SYS)),-ldl))
+endif
+FFI_FLAGS := -DRUNE_FFI=$(FFI_ENABLED) $(if $(filter 1,$(FFI_ENABLED)),$(if $(FFI_PREFIX),-I$(FFI_PREFIX)/include,$(shell pkg-config --cflags libffi)))
+FFI_LIBS := $(if $(filter 1,$(FFI_ENABLED)),$(if $(FFI_PREFIX),$(FFI_PREFIX)/lib/libffi.a,$(shell pkg-config --libs libffi)) $(if $(filter posix,$(SYS)),-ldl))
+FFI_INPUTS := $(if $(and $(filter 1,$(FFI_ENABLED)),$(FFI_PREFIX)),$(wildcard $(FFI_PREFIX)/include/ffi.h $(FFI_PREFIX)/include/ffitarget.h $(FFI_PREFIX)/lib/libffi.a $(FFI_PREFIX)/rune-ffi-dependency.json))
+build/librune/foreign.o bin/runevm bin/runevm-stack bin/runevm-asan bin/runevm-stack-asan: $(FFI_INPUTS)
 RT_SRCS := runtime/callback.c runtime/foreign.c runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
 VM_HDRS := runtime/callback.h runtime/foreign.h runtime/foreign_prim.h runtime/intinf.h runtime/vm.h runtime/frames_array.inc runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
@@ -163,7 +169,7 @@ BUILDER_LIB_SRCS := lib/unicode/utf8_sig.sml lib/unicode/utf8.sml lib/json/json_
 BUILDER_MODEL_SRCS := tools/builder/common.sml tools/builder/options.sml tools/builder/runtime-inputs.sml \
                     tools/builder/gmp-config.sml tools/builder/runtime-record.sml tools/builder/cross-vm.sml \
                     tools/builder/formats.sml tools/builder/archive.sml tools/builder/dist.sml \
-                    tools/builder/gmp-build.sml tools/builder/relink.sml tools/builder/package-runtime.sml \
+                    tools/builder/gmp-build.sml tools/builder/ffi-deps.sml tools/builder/relink.sml tools/builder/package-runtime.sml \
                     tools/builder/setup-mlton.sml
 BUILDER_NATIVE_SRCS := $(BUILDER_LIB_SRCS) tools/builder/io.sig tools/builder/native-io.sml $(BUILDER_MODEL_SRCS) tools/builder/main.sml
 bin/rune-build.bin: $(BUILDER_NATIVE_SRCS) tools/builder/native.mlb | build/.doctor-mlton
@@ -183,7 +189,7 @@ $(GMP_DIR)/config.mk: bin/rune-build $(if $(GMP_PREFIX),$(wildcard $(GMP_PREFIX)
 	bin/rune-build configure-gmp --mode '$(GMP)' --prefix '$(GMP_PREFIX)' --cc '$(CC)' --cflags '$(CFLAGS)' --out $(GMP_DIR)
 # Pre-host provisioning and the independent native tool cannot depend on
 # target configuration. Explicit dependency provisioning likewise precedes it.
-GMP_CONFIG_GOALS := $(if $(MAKECMDGOALS),$(filter-out hosts doctor envcheck clean gmp-dep gmp-dep-windows gmp-dep-portability gmp-dep-dist-native bin/rune-build bin/rune-build.bin,$(MAKECMDGOALS)),all)
+GMP_CONFIG_GOALS := $(if $(MAKECMDGOALS),$(filter-out hosts doctor envcheck clean gmp-dep gmp-dep-windows gmp-dep-portability gmp-dep-dist-native ffi-libffi ffi-sdl ffi-libffi-windows32 ffi-libffi-windows64 ffi-sdl-windows32 ffi-sdl-windows64 bin/rune-build bin/rune-build.bin,$(MAKECMDGOALS)),all)
 ifneq ($(strip $(GMP_CONFIG_GOALS)),)
 include $(GMP_DIR)/config.mk
 endif
@@ -673,7 +679,7 @@ bin/runevm: $(NEW_LOOP) $(GMP_DIR)/intinf.o build/gmp/selected build/librune.a $
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) $(GMP_DIR)/intinf.o build/librune.a $(GMP_LDLIBS) $(VM_LIBS)
 	bin/rune-build record-vm-build --vm $@ --cc '$(CC)' --cflags='$(CFLAGS) $(FFI_FLAGS) -DRUNE_JIT=$(RUNE_JIT)' \
-	  --ldlibs='$(VM_LIBS)' --config $(GMP_DIR) --out build/gmp/native-build.json --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS)
+	  --ldlibs='$(VM_LIBS)' --ffi-prefix='$(FFI_PREFIX)' --config $(GMP_DIR) --out build/gmp/native-build.json --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS)
 
 bin/runevm-sml: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) build/librune.a $(VM_LIBS)
@@ -1807,13 +1813,14 @@ uninstall:
 # Distribution archives (docs/building.md, Distribution). The version is
 # git's, the one runtime/version.h already carries. Phony: the archives
 # land in the dist/ directory, whose stamp is not the archives'.
-dist: bin/rune-build runtime/version.h manifests bin/rune.rbc bin/rune-repl.img \
+dist: bin/rune-build runtime/version.h manifests bin/rune.rbc bin/rune-repl.img bin/runeffi.rbc \
       bin/dist/runevm bin/dist/runevm32 bin/dist/runevm-aarch64 bin/dist/runevm-ppc64 \
       bin/dist/runevm.exe bin/dist/runevm32.exe
 	@mkdir -p dist
 	bin/rune-build make-dist --out dist \
 	  --version "$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h)" \
 	  --lib lib --compiler bin/rune.rbc --repl bin/rune-repl.img \
+	  --ffi bin/runeffi.rbc --ffi-assets ffi \
 	  --linux x86_64=bin/dist/runevm --linux i686=bin/dist/runevm32 \
 	  --linux aarch64=bin/dist/runevm-aarch64 --linux ppc64=bin/dist/runevm-ppc64 \
 	  --windows x86_64=bin/dist/runevm.exe --windows i686=bin/dist/runevm32.exe
@@ -2141,3 +2148,42 @@ test-win32-sdl-driver: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
 	$(RUNE_TEST) --tier test-win32-sdl-driver
 test-win32-sdl-driver-gui: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
 	$(RUNE_TEST) --tier test-win32-sdl-driver-gui
+
+.PHONY: test-win32-sdl-contract test-win32-sdl-contract-gui test-win32-app-sdl test-win32-app-sdl-gui
+test-win32-sdl-contract: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-sdl-contract
+test-win32-sdl-contract-gui: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-sdl-contract-gui
+test-win32-app-sdl: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-app-sdl
+test-win32-app-sdl-gui: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-app-sdl-gui
+
+# Optional FFI dependencies are provisioned explicitly, before VM/binding builds.
+# Original source manifests are committed under ffi/{libffi,sdl}/source.json.
+FFI_DEPS_OPTIONS ?=
+.PHONY: ffi-libffi ffi-sdl ffi-libffi-windows32 ffi-libffi-windows64 ffi-sdl-windows32 ffi-sdl-windows64
+ffi-libffi: bin/rune-build
+	bin/rune-build build-ffi libffi --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+ffi-sdl: bin/rune-build
+	bin/rune-build build-ffi sdl --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+ffi-libffi-windows32: bin/rune-build
+	bin/rune-build build-ffi libffi --target windows32 --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+ffi-libffi-windows64: bin/rune-build
+	bin/rune-build build-ffi libffi --target windows64 --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+ffi-sdl-windows32: bin/rune-build
+	bin/rune-build build-ffi sdl --target windows32 --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+ffi-sdl-windows64: bin/rune-build
+	bin/rune-build build-ffi sdl --target windows64 --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+
+FFI_DEPS_MODEL_SRCS := tools/builder/io.sig tools/builder/rune-io.sml tools/builder/common.sml tools/builder/options.sml \
+                       tools/builder/archive.sml tools/builder/ffi-deps.sml tests/ffi/provision/model.sml
+check-tools: bin/rune-ffi-deps-check
+bin/rune-ffi-deps-check.rbc: $(RUNE) $(FFI_DEPS_MODEL_SRCS) manifests
+	$(RUNE) --library json --library digest $(FFI_DEPS_MODEL_SRCS) -o $@
+bin/rune-ffi-deps-check: bin/rune-ffi-deps-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_BUILD_ROOT:-}" ]; then RUNE_BUILD_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_BUILD_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-deps-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-ffi-deps
+test-ffi-deps: $(RUNE) vm bin/rune-ffi-deps-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-deps

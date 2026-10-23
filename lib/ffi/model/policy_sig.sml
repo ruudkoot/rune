@@ -26,10 +26,13 @@ sig
     output : string option, consumes : bool, source : ForeignModel.source}
   (* Native error predicates and capture mechanisms are independent. *)
   type errorPolicy = {predicate : string, capture : string, getter : string option}
-  (* A selected function and its naming/marshalling policy. *)
+  (* A selected function and its naming/marshalling policy.
+
+     An optional shim is one fixed C prototype, parsed as declaration data;
+     it supplies a macro ABI or an explicit variadic tail. *)
   type functionPolicy = {foreign : string, namespace : string, name : string, raw : string option,
     parameters : valuePolicy list, result : valuePolicy, errors : errorPolicy,
-    variadic : string, unsafeRaw : bool, adapter : string option,
+    variadic : string, unsafeRaw : bool, adapter : string option, shim : string option,
     input : tree option, returns : tree option,
     source : ForeignModel.source}
   (* A constant callback failure result, or a table keyed by one native

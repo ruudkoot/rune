@@ -40,6 +40,16 @@ Required by `make check` for the independent notebook peer:
 
     apt-get install -y python3-jupyter-client python3-zmq
 
+For the enabled dynamic-FFI checks:
+
+    apt-get install -y libffi-dev pkg-config clang
+
+The check and nightly workflows set `FFI=yes` and provision these packages,
+so their native-call gates exercise the enabled runtime. The check workflow
+then builds with `FFI=no`, checks both VMs' deterministic unavailable errors
+and ABI queries, and runs the pure generator's generation/staleness checks.
+Local `FFI=auto` builds continue to support an environment without libffi.
+
 `make doctor` checks that the `python3` on PATH can import `jupyter_client`
 and `zmq`. A virtual environment or another Python installation needs those
 modules in that interpreter too. The check and nightly workflows install
