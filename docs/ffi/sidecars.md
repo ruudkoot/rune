@@ -121,6 +121,14 @@ regardless of the public exception/result projection.
 Each callback requires `foreign` (a function-pointer typedef), `lifetime`
 (`call` or `registered`), `thread` (`owner-vm-thread` only), and `failure`.
 Registered lifetimes also require an `owner`. Variadic callbacks fail.
+Automatic public generation interprets that owner as the SML resource type
+of an owned result from the installing function. Its annotated destructor
+must synchronously unregister callbacks before returning. Input resource
+handles borrowed for that owner acquire retained leases; callback roots and
+leases transfer only to a nonnull result owner and release after native
+unregistration. Other registration protocols require an explicit adapter.
+Validation alone does not establish that a native destructor meets this
+behavioral contract.
 A callback failure is a native integer or a message-specific table:
 
 ```json

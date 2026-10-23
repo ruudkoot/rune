@@ -220,6 +220,16 @@ struct
             val nativeTypes=List.map(fn CParse.Parameter{ctype,...}=>ctype)(#parameters f)
             val values=ListPair.map(fn(n,t)=>(n,baseType t (annotation p n)))(ns,nativeTypes)
             val resultType=baseType (#result f) (SOME(#result p))
+            val registered=List.mapPartial(fn n=>case annotation p n of SOME a=>(case #callback a of SOME name=>
+                let val cb= #policy(callbackInfo name) in if #lifetime cb="registered" then SOME cb else NONE end
+              | NONE=>NONE) | NONE=>NONE)ns
+            val ()=if null registered then () else case (resourceType resultType,#ownership(#result p)) of
+                (SOME(resource,_),SOME(ForeignPolicy.Owned _))=>List.app(fn cb:ForeignPolicy.callbackPolicy=>
+                  if #owner cb=SOME resource then () else fail (#source cb) "registered callback owner must name the owned result resource")registered
+              | _=>fail (#source p) "registered callbacks require an owned result resource with an unregistering destructor"
+            fun retainedLifetime a=case #ownership(a:ForeignPolicy.valuePolicy) of SOME(ForeignPolicy.Borrowed scope)=>
+                List.exists(fn cb:ForeignPolicy.callbackPolicy=> #owner cb=SOME scope)registered
+              | _=>false
             val ()=if scalar(#result f)="Void" andalso resultType<>ForeignPolicy.Scalar "unit" then
               fail (#source p) "void result projects only to unit" else ()
             val ()=ListPair.app(fn(n,ctype)=>case resolve ctype of CParse.Builtin "_Bool"=>
@@ -262,7 +272,10 @@ struct
               (case #getter(#errors p) of SOME getter=>[getter] | NONE=>[])
             val dependencyChecks=String.concat(List.map(fn helper=>"        val _=" ^ raw ^ ".prepare native " ^ q helper ^ "\n")dependencies)
             val prefix="  fun " ^ #name p ^ " session " ^ tree variable(inputTree p inputNames) ^ " =\n    let val native = nativeSession session\n" ^
-              "    in ForeignScope.withScope (fn scope =>\n      let val _=enterCall session scope\n" ^ derivedInputs ^ dependencyChecks
+              "    in ForeignScope.withScope (fn scope =>\n      let val _=enterCall session scope\n" ^
+              "          val retainedResult : (ForeignScope.ticket * (unit->unit)) list ref=ref []\n" ^
+              "          fun retainForResult release=let val ticket=ForeignScope.defer(scope,release) in retainedResult:=(ticket,release):: !retainedResult end\n" ^
+              derivedInputs ^ dependencyChecks
             val arrayNames=List.filter(fn n=>valueType n=ForeignPolicy.Array(ForeignPolicy.Scalar "word8"))ns
             val arrays=List.map(fn n=>
               let val a=policyFor n val direction=case #direction a of SOME ForeignPolicy.Out=>"Output" | SOME ForeignPolicy.InOut=>"InputOutput" | _=>"Input"
@@ -275,7 +288,6 @@ struct
               in find(0,arrayNames) end
             fun callback (a:ForeignPolicy.valuePolicy) id=
               let val info=callbackInfo(valOf(#callback a)) val cb= #policy info val function= #function info
-                  val ()=if #lifetime cb="call" then () else fail (#source cb) "registered callback projection requires an explicit unregistering adapter"
                   val cs=List.map(fn CParse.Parameter{ctype,...}=>scalar ctype)(#parameters function)
                   val callbackTypes=List.map(fn CParse.Parameter{ctype,...}=>ctype)(#parameters function)
                   val cn=names(#parameters function)
@@ -311,14 +323,15 @@ struct
                   val build="(fn function=>let val callback=RuneForeign.callback{abi=" ^ Int.toString(#abi info) ^ ",result=RuneForeign." ^ result ^
                     ",arguments=" ^ list(List.map(fn c=>"RuneForeign." ^ c)cs) ^ ",function=fn arguments=>case arguments of " ^
                     list variables ^ "=>" ^ answer ^ " | _=>raise Fail \"callback argument count\",failure=" ^ fallback ^ "} " ^
-                    "val _=ForeignScope.defer(scope,fn()=>RuneForeign.release callback) in callback end)"
+                    (if #lifetime cb="registered" then "val ()=retainForResult(fn()=>RuneForeign.release callback)"
+                     else "val _=ForeignScope.defer(scope,fn()=>RuneForeign.release callback)") ^ " in callback end)"
               in if #nullable a=SOME true then "Option.map " ^ build ^ " " ^ id else "SOME(" ^ build ^ " " ^ id ^ ")" end
             fun prepare n=
               let val a=annotation p n val ty=valueType n val ctype=nativeType n
                   val id=variable n val key=ForeignPolicy.rawName n
                   val ()=if scalar ctype="Pointer" then case a of SOME a=>if isSome(#callback a) then () else
                         (case #ownership a of SOME(ForeignPolicy.Borrowed "call")=>()
-                         | _=>fail (#source a) "retained input pointers require an explicit lifetime adapter")
+                         | _=>if retainedLifetime a then () else fail (#source a) "retained input pointers require an explicit lifetime adapter")
                     | NONE=>() else ()
               in if scalar ctype="Aggregate" then
                   "        val aggregate_" ^ key ^ " = scopedBuffer scope " ^ objectSize ctype ^ "\n" ^
@@ -327,12 +340,15 @@ struct
                 if List.exists(fn other=>other=n)arrayNames then "        val pointer_" ^ key ^ " = SOME(ForeignMemory.raw(List.nth(arrayBuffers," ^ Int.toString(arrayIndex n) ^ ")))\n"
                 else case a of NONE=>fail (#source p)("pointer policy missing: " ^ n) | SOME a=>
                   if isSome(#callback a) then "        val pointer_" ^ key ^ " = " ^ callback a id ^ "\n" else
-                  let val ()=case #ownership a of SOME(ForeignPolicy.Borrowed "call")=>()
-                        | _=>fail (#source a) "retained input pointers require an explicit lifetime adapter"
+                  let val retained=retainedLifetime a
                   in case resourceType ty of SOME(resource,optional)=>
-                    "        val pointer_" ^ key ^ " = " ^ (if optional then "Option.map (fn value=>borrowHandle scope (unpack_" ^ resource ^ " value)) " ^ id
-                      else "SOME(borrowHandle scope (unpack_" ^ resource ^ " " ^ id ^ "))") ^ "\n"
-                  | NONE=>(case stringType ty of SOME optional=>
+                    let val build=if retained then "(fn value=>let val state=unpack_" ^ resource ^ " value val release=retainHandle state " ^
+                          "val ()=retainForResult release in rawHandle state end)"
+                        else "(fn value=>borrowHandle scope (unpack_" ^ resource ^ " value))"
+                    in "        val pointer_" ^ key ^ " = " ^ (if optional then "Option.map " ^ build ^ " " ^ id
+                      else "SOME(" ^ build ^ " " ^ id ^ ")") ^ "\n" end
+                  | NONE=>if retained then fail (#source a) "registered retained memory requires a typed resource handle" else
+                    (case stringType ty of SOME optional=>
                       let val unitBytes=case #encoding a of SOME ForeignPolicy.Utf16=>2 | _=>1
                           val ()=if elementBytes n=IntInf.fromInt unitBytes then () else
                             fail (#source a) "string encoding disagrees with native element width"
@@ -411,7 +427,9 @@ struct
                               | _=>fail (#source p) "borrowed result parent requires a non-null typed resource" end
                           else "NONE"
                         | _=>"NONE"
-                    val build="(fn pointer=>Handle_" ^ resource ^ " (makeHandle session pointer owner (" ^ parent ^ ")))"
+                    val retained=if null registered then parent else
+                      "(SOME(fn()=>List.app(fn(_,release)=>release())(!retainedResult)))"
+                    val build="(fn pointer=>Handle_" ^ resource ^ " (makeHandle session pointer owner (" ^ retained ^ ")))"
                 in if optional then "Option.map " ^ build ^ " (#pointer result)" else
                   build ^ " (case #pointer result of SOME pointer=>pointer | NONE=>raise Fail \"unexpected native null\")" end
               | NONE=>(case stringType resultType of SOME optional=>
@@ -425,7 +443,8 @@ struct
                     build ^ " (case #pointer result of SOME pointer=>pointer | NONE=>raise Fail \"unexpected native null\")" end
                 | NONE=>fail (#source p) "unsupported automatic pointer result projection")
             val resultBinding="        val projectedResult = " ^ projectedResult ^ "\n"
-            val transfer=if isSome(resourceType resultType) then "        val ()=Option.app ForeignScope.cancel ownerTicket\n        val ()=Option.app ForeignScope.cancel pointerTicket\n" else ""
+            val transfer=if isSome(resourceType resultType) then "        val ()=Option.app ForeignScope.cancel ownerTicket\n        val ()=Option.app ForeignScope.cancel pointerTicket\n" ^
+                (if null registered then "" else "        val ()=if isSome(#pointer result) then List.app(fn(ticket,_)=>ForeignScope.cancel ticket)(!retainedResult) else ()\n") else ""
             fun outputValue "$result"="projectedResult" | outputValue n="output_" ^ ForeignPolicy.rawName n
             val returned=case #returns p of SOME projection=>tree outputValue projection
               | NONE=>if null outputs then "projectedResult" else

@@ -9,7 +9,8 @@
     "runeffi-safe-subject"
   ],
   "resources": [
-    "memory"
+    "memory",
+    "subscription"
   ],
   "callbacks": [
     {
@@ -23,6 +24,13 @@
       "lifetime": "call",
       "thread": "owner-vm-thread",
       "failure": 0
+    },
+    {
+      "foreign": "safe_registered_callback",
+      "lifetime": "registered",
+      "owner": "subscription",
+      "thread": "owner-vm-thread",
+      "failure": -1
     }
   ],
   "functions": [
@@ -802,6 +810,147 @@
       ],
       "result": {
         "type": "int"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "null",
+        "capture": "errno"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_register",
+      "name": "register",
+      "parameters": [
+        {
+          "name": "callback",
+          "callback": "safe_registered_callback",
+          "ownership": {
+            "borrowed": "subscription"
+          },
+          "nullable": false,
+          "direction": "in"
+        },
+        {
+          "name": "context",
+          "type": {
+            "resource": "memory"
+          },
+          "ownership": {
+            "borrowed": "subscription"
+          },
+          "nullable": false,
+          "direction": "in"
+        }
+      ],
+      "result": {
+        "type": {
+          "resource": "subscription"
+        },
+        "ownership": {
+          "owned": "safe_unregister"
+        },
+        "nullable": false
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_register_none",
+      "name": "registerNone",
+      "parameters": [
+        {
+          "name": "callback",
+          "callback": "safe_registered_callback",
+          "ownership": {
+            "borrowed": "subscription"
+          },
+          "nullable": false,
+          "direction": "in"
+        },
+        {
+          "name": "context",
+          "type": {
+            "resource": "memory"
+          },
+          "ownership": {
+            "borrowed": "subscription"
+          },
+          "nullable": false,
+          "direction": "in"
+        }
+      ],
+      "result": {
+        "type": {
+          "option": {
+            "resource": "subscription"
+          }
+        },
+        "ownership": {
+          "owned": "safe_unregister"
+        },
+        "nullable": true
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_dispatch",
+      "name": "dispatch",
+      "parameters": [
+        {
+          "name": "registration",
+          "type": {
+            "resource": "subscription"
+          },
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "direction": "in"
+        },
+        {
+          "name": "value",
+          "type": "int32"
+        }
+      ],
+      "result": {
+        "type": "int32"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_unregister",
+      "name": "unregister",
+      "parameters": [
+        {
+          "name": "registration",
+          "type": {
+            "resource": "subscription"
+          },
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "consumes": true,
+          "direction": "in"
+        }
+      ],
+      "result": {
+        "type": "unit"
       }
     }
   ]

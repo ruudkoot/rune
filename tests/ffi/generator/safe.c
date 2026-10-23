@@ -48,3 +48,15 @@ void safe_packet_inout(safe_packet *value) { *value=safe_transform(*value,3); }
 #if defined(__x86_64__)
 __attribute__((ms_abi)) int safe_other_abi(int value) { return value+19; }
 #endif
+
+struct safe_registration { safe_registered_callback callback; void *context; };
+safe_registration *safe_register(safe_registered_callback callback, void *context) {
+    safe_registration *registration=safe_allocate(sizeof *registration);
+    if (registration) { registration->callback=callback; registration->context=context; (void)callback(3,context); }
+    return registration;
+}
+safe_registration *safe_register_none(safe_registered_callback callback, void *context) { (void)callback(3,context); return NULL; }
+int safe_dispatch(safe_registration *registration, int value) { return registration->callback(value,registration->context); }
+void safe_unregister(safe_registration *registration) {
+    if (registration) { (void)registration->callback(91,registration->context); safe_free(registration); }
+}

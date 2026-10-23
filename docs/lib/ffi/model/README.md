@@ -35,7 +35,9 @@ SML wrappers. Cleanup surrounds native entry and result conversion; a deferred
 callback exception escapes only after a newly owned result is protected.
 Struct values use checked target layouts for complete records and fixed
 vectors, crossing the dynamic call boundary through generated typed C shims.
-Registered callbacks, union active members and pointer fields require
+Registered callbacks transfer roots and retained resource leases to their
+owned result handle, whose destructor must unregister before returning.
+Other registration protocols, union active members and pointer fields require
 explicit adapters.
 
 [`ForeignGenerate`](str/ForeignGenerate.md) produces documented, sealed raw and public bindings,
