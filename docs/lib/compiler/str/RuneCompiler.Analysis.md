@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md) specifies it inside [`RuneCompiler`](../str/RuneCompiler.md) |
 | Status | required |
-| Members | 33 |
+| Members | 34 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -47,6 +47,7 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 | val | [`typeAt`](../sig/RUNE_COMPILER.md#val-analysis.typeat) | `snapshot * {file : string, offset : int} -> string option` |
 | val | [`typeAtOccurrence`](../sig/RUNE_COMPILER.md#val-analysis.typeatoccurrence) | `snapshot * {offset : int, ordinal : int} -> string option` |
 | val | [`types`](../sig/RUNE_COMPILER.md#val-analysis.types) | `snapshot -> typeDefinition list` |
+| val | [`unitAt`](../sig/RUNE_COMPILER.md#val-analysis.unitat) | `snapshot * {ordinal : int} -> string option` |
 | val | [`visibleAt`](../sig/RUNE_COMPILER.md#val-analysis.visibleat) | `snapshot * {offset : int, ordinal : int, path : string list} -> candidate list` |
 | val | [`work`](../sig/RUNE_COMPILER.md#val-analysis.work) | `snapshot -> {checked : int, reused : int}` |
 

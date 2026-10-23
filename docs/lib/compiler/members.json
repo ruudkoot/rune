@@ -482,6 +482,13 @@
     },
     {
      "kind": "val",
+     "name": "Analysis.unitAt",
+     "spec": "val unitAt : snapshot * {ordinal:int} -> string option",
+     "doc": "`unitAt (snapshot, position)` returns the opaque unit identity of a\nprimary source occurrence by its zero-based ordinal.\n\nCompare it with occurrence/fact unit fields within this snapshot;\ndo not interpret its spelling. An invalid ordinal returns NONE.\nIt remains readable after closing the analysis context or session.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.unitat"
+    },
+    {
+     "kind": "val",
      "name": "Analysis.dependencies",
      "spec": "val dependencies : snapshot -> input list",
      "doc": "`dependencies snapshot` returns captured library source and identities.\n\n",

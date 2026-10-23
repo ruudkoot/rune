@@ -1,6 +1,6 @@
 # Index: F
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) **f** [i](i.md) [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) **f** [i](i.md) [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
 - `Analysis.fact` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.fact)
 - `Analysis.facts` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.facts)

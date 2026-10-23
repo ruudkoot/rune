@@ -277,6 +277,13 @@ sig
     val project : snapshot -> string option
     (* `inputs snapshot` returns the exact captured user source occurrences. *)
     val inputs : snapshot -> input list
+    (* `unitAt (snapshot, position)` returns the opaque unit identity of a
+       primary source occurrence by its zero-based ordinal.
+
+       Compare it with occurrence/fact unit fields within this snapshot;
+       do not interpret its spelling. An invalid ordinal returns NONE.
+       It remains readable after closing the analysis context or session. *)
+    val unitAt : snapshot * {ordinal:int} -> string option
     (* `dependencies snapshot` returns captured library source and identities. *)
     val dependencies : snapshot -> input list
     (* `diagnostics snapshot` returns source-addressed analysis diagnostics. *)

@@ -83,7 +83,7 @@ struct
     in #job request:=SOME id end
     handle J.Full => failure (service,request,P.requestFailed,"analysis queue is full",NONE)
   fun accepts method=List.exists (fn candidate => candidate=method) ["textDocument/diagnostic","workspace/diagnostic","textDocument/hover",
-    "textDocument/definition","textDocument/declaration","textDocument/typeDefinition","textDocument/implementation","textDocument/documentSymbol",
+    "textDocument/definition","textDocument/declaration","textDocument/typeDefinition","textDocument/implementation","textDocument/documentSymbol","textDocument/documentHighlight",
     "workspace/symbol","workspaceSymbol/resolve","textDocument/completion","completionItem/resolve","textDocument/signatureHelp",
     "textDocument/inlineCompletion"]
   fun inlineClient caps=case Json.member ("textDocument",P.rawCapabilities caps) of NONE => false | SOME value =>

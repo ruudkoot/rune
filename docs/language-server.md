@@ -66,6 +66,15 @@ apply to qualified completion. Item resolution requires its original
 snapshot; edits invalidate old items. Leading declaration comments supply
 hover and resolved-item documentation from captured source.
 
+Document highlights follow checked binding identities within the current
+source occurrence, including a caret directly after the name. They distinguish
+shadowed names and qualified prefixes/members, and mark value uses as reads.
+An oversized result produces a request failure instead of a truncated set.
+Repeated inputs keep their selected occurrence even when they use different
+spellings of the same path; navigation uses the corresponding inferred type.
+The remaining presentation features and performance gates are still part of
+M9 acceptance.
+
 Clients with snippet support also receive invocation templates whose
 argument groups follow the checked callable type. Their default argument
 expressions use `raise op Match` where a nullary `Match` exception is visible,

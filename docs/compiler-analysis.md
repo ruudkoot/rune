@@ -52,8 +52,11 @@ Generative and opaque type-constructor identities remain distinct through
 basis replay. This metadata is stored in the version-7 basis format;
 ordinary batch compilation leaves provenance tracking disabled.
 
-`typeAtOccurrence` selects an ordered source occurrence explicitly when a
-file appears several times in a build. `visibleAt` replays the captured
+`unitAt` supplies an opaque identity for each primary source occurrence;
+clients compare it with fact/occurrence unit fields instead of constructing
+identities from filenames. `typeAtOccurrence` selects an ordered source
+occurrence explicitly when a file appears several times in a build.
+`visibleAt` replays the captured
 prefix and asks the compiler for the lexical environment at a byte cursor,
 or for members of a qualified structure path. Its frozen names, kinds,
 types and definition locations remain queryable after the context closes.

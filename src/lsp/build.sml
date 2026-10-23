@@ -22,7 +22,7 @@ struct
         val native=Option.map #path (U.native (platform,U.parse uri))
         val file=getOpt (native,uri)
         val text=L.text (#content snapshot)
-        val source={file=file,uri=uri,text=text,mode="ascii",version=SOME (#version snapshot),
+        val source={file=file,uri=uri,text=text,mode="ascii",ordinal=NONE,version=SOME (#version snapshot),
           index=SOME (#content snapshot),tokens=ref NONE}:E.source
         val configuration=W.configurationFor (workspace,uri)
         fun matches (target:W.target)=case native of NONE => false | SOME path =>

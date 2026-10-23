@@ -6,6 +6,7 @@ struct
   type candidate={name:string,kind:string,detail:string option,arguments:string list list,origin:Env.origin}
   type application={name:string,path:string list,argument:int,parameter:int}
   type scopeQuery={unit:string,file:string,offset:int,path:string list}
+  fun unitName (file,rank) = file ^ "#" ^ Int.toString rank
   type fact={unit:string,file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}
   type typeDefinition={id:string,origin:Env.origin}
   type entry={key:string,name:string,allow:bool,mode:Source.mode,pickle:string,facts:fact list,types:typeDefinition list,syntax:CompilerSyntax.t,uses:(string*(string list*string)*Source.span*Env.origin*bool) list}
@@ -213,7 +214,7 @@ struct
             (case !remaining of [] => raise Fail "missing ordered project input" | source :: rest =>
               if #file source<>file then raise Fail "project input order differs" else
                 (remaining:=rest;ordinal:= !ordinal+1;
-                 unit (source,file ^ "#" ^ Int.toString (!ordinal),allowPrim orelse List.exists (fn value => value="allowPrim") annotations,true)))
+                 unit (source,unitName (file,!ordinal),allowPrim orelse List.exists (fn value => value="allowPrim") annotations,true)))
         | CompilerProject.SLocal (a,b) =>
             let val before'=snap ()
                 val ()=walk a

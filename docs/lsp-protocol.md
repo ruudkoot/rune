@@ -30,7 +30,7 @@ offered, then UTF-16 or UTF-32, with mandatory UTF-16 as the fallback. Its
 result contains `serverInfo` and the implemented server capabilities.
 `textDocumentSync` advertises open/close, incremental changes, will-save
 notifications and saves with included text. Implemented semantic providers
-cover diagnostics, hover, navigation, symbols and lexical completion;
+cover diagnostics, hover, navigation, symbols, binding highlights and completion;
 source-editing providers remain unadvertised. A specification entry in
 `LspMethods` does not activate a provider.
 
@@ -71,6 +71,14 @@ worker protocol. A normal query whose immutable view was evicted retries
 one fresh check when its source revision/context is still current. Stale
 item resolution returns `ContentModified` instead; process startup, I/O and
 deadline failures remain request failures.
+
+`textDocument/documentHighlight` returns current-document occurrences of the
+selected checked binding. Qualified prefixes and members have separate token
+ranges; shadowed bindings, strings and comments are excluded. Value uses are
+`Read` highlights, while declarations and other namespaces use `Text` rather
+than inventing mutable writes. Ranges use the negotiated position encoding.
+Requests exceeding the 8192-range response budget fail explicitly without a
+partial highlight set, and leave the worker available for later queries.
 
 `$/setTrace` accepts off, messages and verbose. Requested trace data is
 sent as framed `$/logTrace` notifications; operational errors remain on

@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 80 of 80 entries documented |
+| Documentation | 81 of 81 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -106,6 +106,7 @@ sig
     val <a href="#val-analysis.context">context</a> : snapshot -&gt; string
     val <a href="#val-analysis.project">project</a> : snapshot -&gt; string option
     val <a href="#val-analysis.inputs">inputs</a> : snapshot -&gt; input list
+    val <a href="#val-analysis.unitat">unitAt</a> : snapshot * {<a href="#fld-analysis.unitat.ordinal">ordinal</a>:int} -&gt; string option
     val <a href="#val-analysis.dependencies">dependencies</a> : snapshot -&gt; input list
     val <a href="#val-analysis.diagnostics">diagnostics</a> : snapshot -&gt; diagnostic list
     val <a href="#val-analysis.occurrences">occurrences</a> : snapshot -&gt; occurrence list
@@ -976,6 +977,23 @@ val inputs : snapshot -> input list
 ```
 
 `inputs snapshot` returns the exact captured user source occurrences.
+
+#### <a name="val-analysis.unitat"></a>`unitAt`
+
+```sml
+val unitAt : snapshot * {ordinal:int} -> string option
+```
+
+`unitAt (snapshot, position)` returns the opaque unit identity of a
+primary source occurrence by its zero-based ordinal.
+
+Compare it with occurrence/fact unit fields within this snapshot;
+do not interpret its spelling. An invalid ordinal returns NONE.
+It remains readable after closing the analysis context or session.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.unitat.ordinal"></a>`ordinal` | `int` |  |
 
 #### <a name="val-analysis.dependencies"></a>`dependencies`
 

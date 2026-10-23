@@ -24,7 +24,7 @@ documentation and its evidence beside the tests before this plan is retired.
 | M6 | Document and workspace diagnostics | M5 | in progress: push/pull/workspace reports, refresh, cancellation and partial progress implemented; full coverage/performance acceptance remains |
 | M7 | Hover, navigation and symbols | M5 | in progress: navigation, document/workspace symbols and stale resolve tests pass; documentation, broader module cases and measurements remain |
 | M8 | Completion, signature help and inline completion | M7 | in progress: lexical/qualified/record completion, documentation resolve, invocation snippets, signature help, negotiated inline patterns and build-file path completion implemented; broader recovery and full acceptance remain |
-| M9 | Highlighting, hints, structural editing, links and colours | M4, M7 | planned |
+| M9 | Highlighting, hints, structural editing, links and colours | M4, M7 | in progress: binding-aware document highlights implemented; tokens, hints, structural features and full acceptance remain |
 | M10 | References, rename and workspace/file edits | M5-M7 | planned |
 | M11 | Formatting, code actions, refactorings and lenses | M4, M7-M10 | planned |
 | M12 | Call hierarchy, monikers and virtual source content | M7, M10 | planned |
@@ -1029,6 +1029,20 @@ It remains a preview until the remaining applicable protocol coverage is
 accepted at M14.
 
 ### M9. Presentation and structural features (L)
+
+The first M9 checkpoint provides binding-based document highlights, including
+shadowing, qualified components, prefix/infix clause heads, negotiated position
+encodings and an explicit oversized-response refusal. Twenty-two semantic
+transcripts pass on Linux and native Windows. Repeated-source probes select
+the second occurrence through the real context-choice exchange and check its
+inferred type across identical and aliased paths. The adapter obtains opaque
+unit identities from `Analysis.unitAt`; the ten public analysis cases also pass
+on both Windows widths. The focused cohort and eleven documentation checks
+pass in `/tmp/rune-lsp-m9-final-cohort.log` and
+`/tmp/rune-lsp-m9-final-doc-check.log`. Native receipts are
+`/tmp/rune-lsp-m9-final-highlights-windows.log` and
+`/tmp/rune-lsp-m9-final-analysis-windows{64,32}.log`.
+Other M9 providers, real-client coverage and performance acceptance remain.
 
 M8 feature checkpoint (2026-10-23): the compiler now projects completion
 roles, concrete record labels, named applications and declaration comments

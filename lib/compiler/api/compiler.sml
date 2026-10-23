@@ -197,6 +197,7 @@ struct
     fun context (snapshot:snapshot)= #context snapshot
     fun project (snapshot:snapshot)= #project snapshot
     fun inputs (snapshot:snapshot)= #inputs snapshot
+    val unitAt=A.unitAt
     fun dependencies (snapshot:snapshot)= #dependencies snapshot
     fun diagnostics (snapshot:snapshot)= #diagnostics snapshot
     fun occurrences (snapshot:snapshot)= #occurrences snapshot

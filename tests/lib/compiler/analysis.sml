@@ -15,6 +15,12 @@ struct
         val first=input ("one.sml","fun id x=x\nval answer=42\n","v1")
         val second=input ("two.sml","val copy=id answer\n","v1")
         val initial=analyze (context,[first,second])
+        val firstUnit=A.unitAt (initial,{ordinal=0})
+        val secondUnit=A.unitAt (initial,{ordinal=1})
+        val ()=check ("unit identities address source occurrences without interpreting their spelling",
+          isSome firstUnit andalso isSome secondUnit andalso firstUnit<>secondUnit andalso
+          List.exists (fn occurrence:A.occurrence => SOME (#unit occurrence)=firstUnit andalso #file occurrence="one.sml") (A.occurrences initial)
+          andalso A.unitAt (initial,{ordinal= ~1})=NONE andalso A.unitAt (initial,{ordinal=2})=NONE)
         val saved=A.checkpoint context
         val repeated=analyze (context,[first,second])
         val ()=check ("warm query facts equal original",same (initial,repeated) andalso #checked (A.work repeated)=0)
@@ -42,7 +48,8 @@ struct
         val ()=A.close context
         val ()=check ("closed analysis refused",(ignore (analyze (context,[]));false) handle C.Closed => true)
         val ()=C.close parent
-    in check ("frozen snapshot survives closing",A.inputs initial=[first,second] andalso not (null (A.facts initial))) end
+    in check ("frozen snapshot survives closing",A.inputs initial=[first,second] andalso not (null (A.facts initial))
+      andalso A.unitAt (initial,{ordinal=0})=firstUnit) end
   fun bindings () =
     let val parent=compiler ()
         val context=A.create (parent,{context="bindings"})

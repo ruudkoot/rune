@@ -76,6 +76,7 @@ struct
                    [Json.String "(",Json.String ",",Json.String " "]),("retriggerCharacters",Json.Array [Json.String ",",Json.String ")"])]),
                  ("definitionProvider",Json.Bool true),("declarationProvider",Json.Bool true),
                  ("typeDefinitionProvider",Json.Bool true),("implementationProvider",Json.Bool true),("documentSymbolProvider",Json.Bool true),
+                 ("documentHighlightProvider",Json.Bool true),
                  ("workspaceSymbolProvider",Json.Object [("resolveProvider",Json.Bool true)]),
                  ("diagnosticProvider",Json.Object [("identifier",Json.String "rune"),("interFileDependencies",Json.Bool true),
                    ("workspaceDiagnostics",Json.Bool true),("workDoneProgress",Json.Bool true)]),

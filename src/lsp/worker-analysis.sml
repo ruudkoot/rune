@@ -12,9 +12,10 @@ struct
   structure J=RuneLspSync
   exception Stale of string
   type context={key:string,compiler:C.session,analysis:A.t}
-  type source={file:string,uri:string,text:string,mode:string,version:IntInf.int option,index:L.t option,tokens:C.Syntax.piece list option ref}
+  type source={file:string,uri:string,text:string,mode:string,ordinal:int option,version:IntInf.int option,index:L.t option,
+    tokens:(C.Syntax.piece list * C.Syntax.piece vector) option ref}
   type view={id:string,snapshot:A.snapshot,sources:source list,encoding:LspProtocol.encoding,uri:string,ordinal:int option,
-    capabilities:Json.value}
+    capabilities:Json.value,activeUnit:string option}
   datatype t=Worker of {contexts:context list ref,views:view list ref}
   fun new ()=Worker {contexts=ref [],views=ref []}
   fun safe text =
@@ -55,11 +56,29 @@ struct
         in find (Int.max (0,Int.min (count,offset))) end
   fun range (source,encoding,start,stop)=LspProtocol.rangeToJson
     {start=position (source,encoding,start,false),stop=position (source,encoding,stop,true)}
+  fun makeView {id,snapshot,sources,encoding,uri,ordinal,capabilities} : view =
+    let val activeUnit=A.unitAt (snapshot,{ordinal=getOpt (ordinal,0)})
+    in {id=id,snapshot=snapshot,sources=sources,encoding=encoding,uri=uri,
+        ordinal=ordinal,capabilities=capabilities,activeUnit=activeUnit} end
+  fun activeSource (view:view,uri) = List.find (fn source:source => #uri source=uri andalso
+    (uri<> #uri view orelse #ordinal source=SOME (getOpt (#ordinal view,0)))) (#sources view)
   fun sourceFor (view:view,file)=List.find (fn source:source => #file source=file) (#sources view)
-  fun tokens (source:source) = case !(#tokens source) of SOME tokens => tokens | NONE =>
+  fun tokenData (source:source) = case !(#tokens source) of SOME tokens => tokens | NONE =>
     let val parsed=C.Syntax.parse {file= #file source,text= #text source,mode= #mode source,orPatterns=true,fixity=C.Syntax.initial}
-        val tokens=C.Syntax.pieces parsed
+        val pieces=C.Syntax.pieces parsed
+        val tokens=(pieces,Vector.fromList pieces)
     in #tokens source:=SOME tokens;tokens end
+  fun tokens source = #1 (tokenData source)
+  fun piecesWithin (source,start,stop) =
+    let val pieces= #2 (tokenData source)
+        val count=Vector.length pieces
+        fun lower (lo,hi)=if lo>=hi then lo else
+          let val mid=lo+(hi-lo) div 2
+          in if #start (Vector.sub (pieces,mid))<start then lower (mid+1,hi) else lower (lo,mid) end
+        fun collect (at,kept)=if at=count then List.rev kept else
+          let val piece=Vector.sub (pieces,at)
+          in if #start piece>=stop then List.rev kept else collect (at+1,piece::kept) end
+    in collect (lower (0,count),[]) end
   fun identifier (piece:C.Syntax.piece)=List.exists (fn kind => kind= #kind piece) ["identifier","operator","typeVariable"]
   fun selections (source:source,occurrence:A.occurrence) =
     let val wanted= #path occurrence @ [#name occurrence]
@@ -73,16 +92,16 @@ struct
           in if not matched orelse index<0 orelse index>=length parts then NONE else
                let val start= #start piece+List.foldl (fn (part,n) => n+size part+1) 0 (List.take (parts,index))
                in SOME (start,start+size (List.nth (parts,index))) end end
-        val ranges=List.mapPartial piece (tokens source)
+        val ranges=List.mapPartial piece (piecesWithin (source,#start occurrence,#stop occurrence))
     in if #kind occurrence="type" andalso not (#isDefinition occurrence) then
          (case List.rev ranges of [] => [] | last::_ => [last])
        else (case ranges of [] => [] | first::_ => [first]) end
-  fun owned (view:view,occurrence:A.occurrence) = case #ordinal view of NONE => true | SOME ordinal =>
-    case List.find (fn source:source => #uri source= #uri view) (#sources view) of NONE => false | SOME source =>
-      #unit occurrence= #file source ^ "#" ^ Int.toString (ordinal+1)
+  fun ownedUnit (view:view,unit) = #activeUnit view=SOME unit
+  fun owned (view,occurrence:A.occurrence) = ownedUnit (view,#unit occurrence)
   fun at (view:view,source:source,offset) =
     let val candidates=List.concat (List.map (fn occurrence:A.occurrence =>
-          if #file occurrence<> #file source orelse not (owned (view,occurrence)) then [] else
+          if #file occurrence<> #file source orelse not (owned (view,occurrence)) orelse
+             offset< #start occurrence orelse offset>= #stop occurrence then [] else
             List.mapPartial (fn (start,stop) => if start<=offset andalso offset<stop then SOME (occurrence,(start,stop)) else NONE)
               (selections (source,occurrence))) (A.occurrences (#snapshot view)))
         fun best (item,NONE)=SOME item
@@ -94,6 +113,30 @@ struct
     | SOME source => SOME (Json.Object [("uri",Json.String (#uri source)),
         ("range",range (source,#encoding view,#start location,#stop location))])
   fun unique values=List.foldl (fn (value,all) => if List.exists (fn prior => prior=value) all then all else all @ [value]) [] values
+  fun highlights (view:view,source:source,offset) =
+    case (case at (view,source,offset) of NONE => if offset>0 then at (view,source,offset-1) else NONE
+          | found => found) of NONE => Json.Array [] | SOME (selected,_) =>
+      case #binding selected of NONE => Json.Array [] | SOME binding =>
+        let
+          fun collect (occurrence:A.occurrence,(count,kept)) =
+            if #file occurrence<> #file source orelse not (owned (view,occurrence)) orelse
+               #derived occurrence orelse #binding occurrence<>SOME binding then (count,kept)
+            else List.foldl (fn ((start,stop),(count,kept)) =>
+              if count=8192 then raise Fail "document highlights exceed the supported response budget"
+              else (count+1,(start,stop,if #kind occurrence="value" andalso not (#isDefinition occurrence) then 2 else 1)::kept))
+              (count,kept) (selections (source,occurrence))
+          val (_,ranges)=List.foldl collect (0,[]) (A.occurrences (#snapshot view))
+          fun before' ((a,b,k),(c,d,l))=a<c orelse a=c andalso (b<d orelse b=d andalso k<=l)
+          fun merge ([],ys)=ys | merge (xs,[])=xs
+            | merge (xs as x::xt,ys as y::yt)=if before' (x,y) then x::merge (xt,ys) else y::merge (xs,yt)
+          fun split (x::y::rest)=let val (a,b)=split rest in (x::a,y::b) end | split xs=(xs,[])
+          fun sort []=[] | sort [x]=[x] | sort xs=let val (a,b)=split xs in merge (sort a,sort b) end
+          fun emit ([],_)=[]
+            | emit ((start,stop,kind)::rest,previous)=
+                if previous=SOME (start,stop) then emit (rest,previous) else
+                Json.Object [("range",range (source,#encoding view,start,stop)),("kind",Json.int kind)]::
+                  emit (rest,SOME (start,stop))
+        in Json.Array (emit (sort ranges,NONE)) end
   fun symbols (view:view,source:source) =
     let val definitions=List.filter (fn occurrence:A.occurrence => #file occurrence= #file source andalso #isDefinition occurrence
           andalso not (#derived occurrence) andalso owned (view,occurrence)) (A.occurrences (#snapshot view))
@@ -153,7 +196,7 @@ struct
                   val file=case native uri of NONE => uri | SOME {path,...} => path
               in [{file=file,text=L.text (#content snapshot),mode="",annotations=[],revision=IntInf.toString (#revision snapshot)}:A.input] end
         val snapshot=A.check (#analysis context,{project=project,inputs=inputs,cancelled=cancelled})
-        fun captured (input:A.input):source list =
+        fun captured (input:A.input,ordinal):source list =
           let val opened=overlay (#file input)
               val aliases=List.filter (fn snapshot => matches (#file input,snapshot)) (D.all documents)
               val aliases=case List.find (fn snapshot:D.snapshot => #uri snapshot=uri) aliases of NONE => aliases
@@ -162,10 +205,13 @@ struct
                 else List.map (fn snapshot:D.snapshot => (#uri snapshot,SOME (#version snapshot))) aliases
               val index=(SOME (L.make (#text input)) handle L.Invalid => NONE)
               val pieces=ref NONE
-          in List.map (fn (uri,version) => {file= #file input,uri=uri,text= #text input,mode= #mode input,version=version,
+          in List.map (fn (uri,version) => {file= #file input,uri=uri,text= #text input,mode= #mode input,ordinal=ordinal,version=version,
             index=index,tokens=pieces}:source) uris end
-        val sources=List.concat (List.map captured (A.inputs snapshot @ A.dependencies snapshot))
-        val view={id=A.id snapshot,snapshot=snapshot,sources=sources,encoding=encoding,uri=uri,
+        val primary=A.inputs snapshot
+        val sources=List.concat (ListPair.map (fn (input,ordinal) => captured (input,SOME ordinal))
+          (primary,List.tabulate (length primary,fn i => i)) @
+          List.map (fn input => captured (input,NONE)) (A.dependencies snapshot))
+        val view=makeView {id=A.id snapshot,snapshot=snapshot,sources=sources,encoding=encoding,uri=uri,
           ordinal=Option.map #ordinal selected,capabilities=capabilities}:view
         val all=view :: !views
         val ()=views:=List.take (all,Int.min (4,length all))
@@ -178,7 +224,7 @@ struct
         fun ordinal file =
           let fun find (_,[])=length inputs | find (n,(input:A.input)::rest)=if #file input=file then n else find (n+1,rest)
           in find (0,inputs) end
-        val active=case List.find (fn source:source => #uri source=uri) (#sources view) of NONE => length inputs
+        val active=case activeSource (view,uri) of NONE => length inputs
           | SOME source => getOpt (#ordinal view,ordinal (#file source))
         val earlierFailure=List.exists (fn diagnostic:C.diagnostic => ordinal (#file diagnostic)<active) (A.diagnostics (#snapshot view))
         val items=if not (null direct) orelse not earlierFailure then direct else
@@ -199,7 +245,7 @@ struct
     List.map (fn source:source => V.Object [("uri",V.Bytes (#uri source)),
       ("version",case #version source of NONE => V.Null | SOME version => V.Integer version),
       ("report",V.json (documentDiagnostics (view,{uri= #uri source,previous=NONE})))])
-      (List.filter (fn source:source => #uri source= #uri view) (#sources view))
+      (case activeSource (view,#uri view) of NONE => [] | SOME source => [source])
   fun workspaceViews (worker,{state,encoding,capabilities,cancelled}) =
     let val (workspace,documents)=M.restore state
         val {uris,problems}=RuneLspProjects.enrich (workspace,documents,cancelled)
@@ -216,7 +262,7 @@ struct
                 val prior=List.find (fn (old,_) => old=key) (!checked)
                 val view=case prior of SOME (_,view) => view
                   | NONE => check (worker,{state=captured,uri=uri,encoding=encoding,capabilities=capabilities,cancelled=cancelled})
-                val view={id= #id view,snapshot= #snapshot view,sources= #sources view,encoding= #encoding view,uri=uri,
+                val view=makeView {id= #id view,snapshot= #snapshot view,sources= #sources view,encoding= #encoding view,uri=uri,
                   ordinal=case selected of W.Selected context => SOME (#ordinal context) | _ => NONE,capabilities=capabilities}:view
                 val ()=if isSome prior then () else checked:=(key,view):: !checked
             in output:=view :: !output end
@@ -228,7 +274,7 @@ struct
           let val prior=case List.find (fn (uri,_) => uri= #uri view) previous of NONE => NONE | SOME (_,id) => SOME id
               val json=documentDiagnostics (view,{uri= #uri view,previous=prior})
               val fields=case json of Json.Object fields => fields | _ => []
-              val version=case List.find (fn source:source => #uri source= #uri view) (#sources view) of
+              val version=case activeSource (view,#uri view) of
                 SOME source => (case #version source of NONE => Json.Null | SOME version => Json.intInf version) | NONE => Json.Null
           in Json.Object (("uri",Json.String (#uri view)) :: ("version",version) :: fields) end
         fun problem ({uri,message}:RuneLspProjects.problem)=Json.Object [("uri",Json.String uri),("version",Json.Null),
@@ -243,7 +289,7 @@ struct
         val needle=String.map Char.toLower query
         val resolve=case capability (capabilities,["workspace","symbol","resolveSupport","properties"]) of
           SOME (Json.Array properties) => List.exists (fn value => value=Json.String "location.range") properties | _ => false
-        fun viewSymbols (view:view)=case List.find (fn source:source => #uri source= #uri view) (#sources view) of NONE => []
+        fun viewSymbols (view:view)=case activeSource (view,#uri view) of NONE => []
           | SOME source => List.mapPartial (fn symbol =>
               let val name=J.string (J.required (symbol,"name"))
                   val fields=case symbol of Json.Object fields => fields | _ => []
@@ -265,9 +311,9 @@ struct
         val view=case find (worker,J.string (J.required (data,"snapshot"))) of SOME view => view | NONE => raise Stale "symbol snapshot has been evicted"
         val uri=J.string (J.required (data,"uri"))
         val ordinal=case J.required (data,"ordinal") of Json.Null => NONE | value => Json.toInt value
-        val view={id= #id view,snapshot= #snapshot view,sources= #sources view,encoding= #encoding view,uri=uri,
+        val view=makeView {id= #id view,snapshot= #snapshot view,sources= #sources view,encoding= #encoding view,uri=uri,
           ordinal=ordinal,capabilities= #capabilities view}:view
-        val source=case List.find (fn source:source => #uri source=uri) (#sources view) of SOME source => source
+        val source=case activeSource (view,uri) of SOME source => source
           | NONE => raise Fail "symbol source is unavailable"
         val (_,documents)=M.restore state
         val text=case D.snapshot (documents,uri) of SOME snapshot => L.text (#content snapshot)
@@ -279,9 +325,7 @@ struct
         val fields=case symbol of Json.Object fields => fields | _ => []
     in Json.Object (("data",data)::fields) end
   fun sourceOrdinal (view:view,source:source) =
-    let fun ordinal ([],_)=NONE
-          | ordinal ((input:A.input)::rest,index)=if #file input= #file source then SOME index else ordinal (rest,index+1)
-    in case #ordinal view of SOME index => SOME index | NONE => ordinal (A.inputs (#snapshot view),0) end
+    #ordinal source
   fun completionItems (view:view,source:source,offset) =
     let val selected=sourceOrdinal (view,source)
         fun query path=case selected of NONE => {role="unknown",candidates=[],fields=[]} | SOME ordinal =>
@@ -299,7 +343,7 @@ struct
     let val resolving=method="completionItem/resolve"
         val document=J.object (J.required (J.object params,if resolving then "data" else "textDocument"))
         val uri=J.string (J.required (document,"uri"))
-        val source=case List.find (fn source:source => #uri source=uri) (#sources view) of
+        val source=case activeSource (view,uri) of
           SOME source => source | NONE => raise Fail "document is not part of this analysis snapshot"
         fun offset ()=case LspProtocol.positionFromJson (J.required (params,"position")) of NONE => raise J.Invalid "invalid semantic position"
           | SOME point => case #index source of NONE => NONE | SOME index => L.offset (index,#encoding view,point)
@@ -347,9 +391,11 @@ struct
                 | _ => raise J.Invalid "completion item is unavailable" end
        | "textDocument/definition" => target (fn occurrence:A.occurrence => #definition occurrence)
        | "textDocument/declaration" => target (fn occurrence:A.occurrence => #declaration occurrence)
+       | "textDocument/documentHighlight" => (case offset () of NONE => Json.Array []
+           | SOME offset => highlights (view,source,offset))
        | "textDocument/typeDefinition" =>
            let val constructors=case offset () of NONE => [] | SOME offset => List.concat (List.map #constructors
-                 (List.filter (fn fact:A.fact => #file fact= #file source andalso not (#derived fact)
+                 (List.filter (fn fact:A.fact => #file fact= #file source andalso ownedUnit (view,#unit fact) andalso not (#derived fact)
                    andalso #start fact<=offset andalso offset< #stop fact) (A.facts (#snapshot view))))
                val definitions=List.filter (fn definition:A.typeDefinition => List.exists (fn id => id= #id definition) constructors) (A.types (#snapshot view))
            in Json.Array (unique (List.mapPartial (fn definition:A.typeDefinition =>
@@ -370,9 +416,9 @@ struct
          let val point=case LspProtocol.positionFromJson (J.required (params,"position")) of
                SOME point => point | NONE => raise J.Invalid "invalid hover position"
              val offset=case #index source of NONE => NONE | SOME index => L.offset (index,#encoding view,point)
-             val ty=Option.mapPartial (fn offset => case #ordinal view of
+             val ty=Option.mapPartial (fn offset => case sourceOrdinal (view,source) of
                 SOME ordinal => A.typeAtOccurrence (#snapshot view,{ordinal=ordinal,offset=offset})
-              | NONE => A.typeAt (#snapshot view,{file= #file source,offset=offset})) offset
+              | NONE => NONE) offset
              val binding=Option.mapPartial (fn offset => at (view,source,offset)) offset
              val documentation=case binding of NONE => NONE | SOME (occurrence,_) =>
                Option.mapPartial (fn location => A.documentationAt (#snapshot view,location)) (#definition occurrence)

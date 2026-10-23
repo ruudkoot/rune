@@ -92,10 +92,13 @@ struct
   fun typeAt (snapshot:snapshot,{file,offset}) =
     if length (List.filter (fn input:input => #file input=file) (#inputs snapshot))>1 then NONE
     else typeIn (snapshot,{file=file,unit=NONE,offset=offset})
+  fun unitAt (snapshot:snapshot,{ordinal}) =
+    if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
+      SOME (E.unitName (#file (List.nth (#inputs snapshot,ordinal)),ordinal+1))
   fun typeAtOccurrence (snapshot:snapshot,{ordinal,offset}) =
     if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
       let val input=List.nth (#inputs snapshot,ordinal)
-      in typeIn (snapshot,{file= #file input,unit=SOME (#file input ^ "#" ^ Int.toString (ordinal+1)),offset=offset}) end
+      in typeIn (snapshot,{file= #file input,unit=unitAt (snapshot,{ordinal=ordinal}),offset=offset}) end
   fun queryAt (snapshot:snapshot,{ordinal,offset,path},accept:E.snapshot->bool) =
     if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
     let val input=List.nth (#inputs snapshot,ordinal)
@@ -103,7 +106,7 @@ struct
         fun source (input:input):E.source={file= #file input,text= #text input,mode=valOf (Source.modeNamed (#mode input))}
         fun query (sources,at)= E.checkWith
           (engine,sources,#steps snapshot,#libraries snapshot,fn () => false,
-           SOME {unit= #file input ^ "#" ^ Int.toString (ordinal+1),file= #file input,offset=at,path=path},
+           SOME {unit=E.unitName (#file input,ordinal+1),file= #file input,offset=at,path=path},
            List.map source (#dependencies snapshot),SOME (#prelude snapshot))
         val original=List.map source (#inputs snapshot)
         fun retry []=NONE

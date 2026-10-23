@@ -170,6 +170,95 @@ struct
         val symbols=C.result (C.response (client,82))
     in check ("document symbols reflect checked declarations",case symbols of Json.Array values =>
       List.exists (fn value => Json.member ("name",value)=SOME (Json.String "identity")) values | _ => false) end)
+  fun highlightPositions values = case values of Json.Array values => List.map (fn value =>
+      let val start=C.field (C.field (value,"range"),"start")
+      in (C.field (start,"line"),C.field (start,"character")) end) values
+    | _ => raise Fail "highlight result must be an array"
+  fun documentHighlights ()=fixture (fn client =>
+    let val uri="untitled:highlights"
+        val text="val x=1\nval result=x\nlocal val x=true in val inside=x end\nval after=x\nval text=\"x\" (* x *)\nstructure S=struct val x=2 end\nval member=S.x\nfun multi 0=0 | multi n=multi (n-1)\nval called=multi 2\ninfix 6 ++\nfun 0 ++ b=b | a ++ b=a+b\nval summed=1 ++ 2\n"
+        val ()=openDocument (client,uri,text)
+        val ()=C.request (client,199,"textDocument/diagnostic",object [("textDocument",document uri)])
+        val ()=check ("highlight fixture typechecks",C.field (C.result (C.response (client,199)),"items")=Json.Array [])
+        fun query (id,line,column)=
+          (C.request (client,id,"textDocument/documentHighlight",object [("textDocument",document uri),
+            ("position",object [("line",Json.int line),("character",Json.int column)])]);C.result (C.response (client,id)))
+        fun positions values=List.map (fn (line,column) => (Json.int line,Json.int column)) values
+        val outer=query (200,1,11)
+        val ()=check ("highlights follow the outer binding and exclude shadowing, comments and strings",
+          highlightPositions outer=positions [(0,4),(1,11),(3,10)])
+        val ()=check ("value uses are reads while a declaration is not a mutable write",case outer of Json.Array values =>
+          List.map (fn value => C.field (value,"kind")) values=[Json.int 1,Json.int 2,Json.int 2] | _ => false)
+        val ()=check ("local shadowed binding is distinct",highlightPositions (query (201,2,31))=positions [(2,10),(2,31)])
+        val ()=check ("qualified member selects only the member token",highlightPositions (query (202,6,13))=positions [(5,23),(6,13)])
+        val ()=check ("qualified prefix selects the structure binding",highlightPositions (query (203,6,11))=positions [(5,10),(6,11)])
+        val ()=check ("a caret directly after an identifier still highlights its binding",query (205,1,12)=outer)
+        val ()=check ("all function clause heads and recursive uses share the actual binding",
+          highlightPositions (query (206,8,12))=positions [(7,4),(7,16),(7,24),(8,11)])
+        val ()=check ("infix clause heads use their operator token ranges",
+          highlightPositions (query (207,11,13))=positions [(10,6),(10,17),(11,13)])
+    in check ("whitespace has no binding highlight",query (204,0,3)=Json.Array []) end)
+  fun highlightEncodings () =
+    let fun one (encoding,binder,use) = fixtureInitialized (object
+          [("capabilities",object [("general",object [("positionEncodings",Json.Array [Json.String encoding])])]),
+           ("initializationOptions",object [("sourceMode",Json.String "unicode")])]) (fn client =>
+          let val uri="untitled:unicode-highlights"
+              val ()=openDocument (client,uri,"(* \240\159\154\128 *) val x=1; val y=x\n")
+              val ()=C.request (client,209,"textDocument/diagnostic",object [("textDocument",document uri)])
+              val ()=check ("Unicode highlight fixture typechecks",C.field (C.result (C.response (client,209)),"items")=Json.Array [])
+              val ()=C.request (client,210,"textDocument/documentHighlight",object [("textDocument",document uri),
+                ("position",object [("line",Json.int 0),("character",Json.int use)])])
+              val values=C.result (C.response (client,210))
+          in check ("highlight offsets use negotiated " ^ encoding,
+               highlightPositions values=[(Json.int 0,Json.int binder),(Json.int 0,Json.int use)]) end)
+    in List.app one [("utf-8",15,26),("utf-16",13,24),("utf-32",12,23)] end
+  fun highlightBudget ()=fixture (fn client =>
+    let val uri="untitled:highlight-budget"
+        val text="val x=1\nval xs=[" ^ String.concatWith "," (List.tabulate (10000,fn _ => "x")) ^ "]\n"
+        val ()=openDocument (client,uri,text)
+        val ()=C.request (client,220,"textDocument/diagnostic",object [("textDocument",document uri)])
+        val ()=check ("large highlight fixture typechecks",C.field (C.result (C.response (client,220)),"items")=Json.Array [])
+        val params=object [("textDocument",document uri),("position",object [("line",Json.int 0),("character",Json.int 4)])]
+        val ()=C.request (client,221,"textDocument/documentHighlight",params)
+        val error=C.field (C.response (client,221),"error")
+        val ()=check ("oversized highlights fail explicitly rather than return a partial set",C.field (error,"code")=Json.int (~32803))
+        val ()=C.request (client,222,"textDocument/hover",params)
+        val hover=C.result (C.response (client,222))
+    in check ("the semantic worker remains usable after an oversized query",C.field (C.field (hover,"contents"),"value")=Json.String "int") end)
+  fun highlightOccurrence () =
+    let val dir=OS.FileSys.tmpName ()
+        val ()=(OS.FileSys.remove dir;OS.FileSys.mkDir dir)
+        fun write (name,text)=let val output=TextIO.openOut (dir ^ "/" ^ name)
+          in TextIO.output (output,text);TextIO.closeOut output end
+        val text="val x=Outer.value\nval y=x\n"
+        val ()=(write ("project.build","files a.sml shared.sml b.sml ./shared.sml end\n");write ("shared.sml",text);
+          write ("a.sml","structure Outer=struct datatype t=A val value=A end\n");
+          write ("b.sml","structure Outer=struct datatype t=B val value=B end\n"))
+        val platform=if OS.Path.validVolume {isAbs=true,vol="C:"} then LspUri.Windows else LspUri.Posix
+        fun uri path=LspUri.original (LspUri.fromPath (platform,OS.FileSys.fullPath path))
+        val root=uri dir
+        val source=uri (dir ^ "/shared.sml")
+        fun clean ()=(List.app (fn name => OS.FileSys.remove (dir ^ "/" ^ name))
+          ["project.build","shared.sml","a.sml","b.sml"];OS.FileSys.rmDir dir)
+        fun work spelling=(write ("project.build","files a.sml shared.sml b.sml " ^ spelling ^ " end\n");
+          fixtureInitialized (object [("capabilities",object []),
+          ("workspaceFolders",Json.Array [object [("uri",Json.String root),("name",Json.String "occurrences")]])]) (fn client =>
+          let val ()=openDocument (client,source,text)
+              val choice=C.receive (client,fn value => Json.member ("method",value)=SOME (Json.String "window/showMessageRequest"))
+              val action=case C.field (C.field (choice,"params"),"actions") of Json.Array [_,action] => action
+                | _ => raise Fail "expected two source occurrences"
+              val ()=C.send (client,object [("jsonrpc",Json.String "2.0"),("id",C.field (choice,"id")),("result",action)])
+              val ()=C.request (client,230,"textDocument/documentHighlight",object [("textDocument",document source),
+                ("position",object [("line",Json.int 1),("character",Json.int 6)])])
+              val result=C.result (C.response (client,230))
+              val ()=check ("the selected occurrence uses its own file alias and bindings",
+                highlightPositions result=[(Json.int 0,Json.int 4),(Json.int 1,Json.int 6)])
+              val ()=C.request (client,231,"textDocument/typeDefinition",object [("textDocument",document source),
+                ("position",object [("line",Json.int 1),("character",Json.int 6)])])
+              val definition=C.result (C.response (client,231))
+          in check ("type definition uses the selected occurrence's inferred type",case definition of
+            Json.Array [target] => C.field (target,"uri")=Json.String (uri (dir ^ "/b.sml")) | _ => false) end))
+    in (List.app work ["shared.sml","./shared.sml"] before clean ()) handle error => (clean () handle _ => ();raise error) end
   fun workspaceSymbols ()=fixtureWith (object [("workspace",object [("symbol",object
     [("resolveSupport",object [("properties",Json.Array [Json.String "location.range"])])])])]) (fn client =>
     let val uri="untitled:workspace-symbols"
@@ -381,6 +470,10 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "workspace-diagnostics" RuneLspSemanticProtocolTests.workspaceDiagnostics,
     Test.it "navigation-and-symbols" RuneLspSemanticProtocolTests.navigation,
     Test.it "workspace-symbols-resolve" RuneLspSemanticProtocolTests.workspaceSymbols,
+    Test.it "document-highlights" RuneLspSemanticProtocolTests.documentHighlights,
+    Test.it "highlight-position-encodings" RuneLspSemanticProtocolTests.highlightEncodings,
+    Test.it "highlight-response-budget" RuneLspSemanticProtocolTests.highlightBudget,
+    Test.it "highlight-source-occurrence" RuneLspSemanticProtocolTests.highlightOccurrence,
     Test.it "completion" RuneLspSemanticProtocolTests.completion,
     Test.it "signature-help" RuneLspSemanticProtocolTests.signatureHelp,
     Test.it "completion-snippets" RuneLspSemanticProtocolTests.completionSnippets,
