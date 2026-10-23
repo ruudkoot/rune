@@ -17,3 +17,13 @@ Native strings are read by code unit through their first NUL, bounded by
 policy, rather than reading an entire maximum extent beyond a terminator.
 `ForeignText` performs the subsequent encoding conversion. These operations
 remain available to generated raw bindings for explicit low-level access.
+
+`ForeignOwner` gives native-owned pointers shared closed state, synchronous
+borrow guards, duplicate-owner detection and scoped destruction. It uses
+native destructor transactions, preserving ownership on annotated failure
+and allowing retry with the captured raw status/error. It rejects a close
+while a borrow is active; native views also prevent premature destruction.
+Closed owners leave the ownership index and cannot become live again when
+an allocator reuses their address. This is the strict memory contract;
+GUI handles permitting destruction during messages require their explicit
+callback protocol. Raw pointer escapes remain the caller's responsibility.

@@ -1,9 +1,11 @@
 # Index: I
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [d](d.md) [f](f.md) **i** [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [f](f.md) **i** [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
 
 - `Input` (con): [FOREIGN_MEMORY](../sig/FOREIGN_MEMORY.md#con-input)
 - `InputOutput` (con): [FOREIGN_MEMORY](../sig/FOREIGN_MEMORY.md#con-inputoutput)
+- `inScope` (val): [FOREIGN_OWNER](../sig/FOREIGN_OWNER.md#val-inscope)
+- `isClosed` (val): [FOREIGN_OWNER](../sig/FOREIGN_OWNER.md#val-isclosed)
 
 ---
 

@@ -1,9 +1,10 @@
 # Index: B
 
-[Overview](../README.md) &middot; [a](a.md) **b** [d](d.md) [f](f.md) [i](i.md) [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) **b** [c](c.md) [d](d.md) [f](f.md) [i](i.md) [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
 
 - `Bounds` (exn): [FOREIGN_MEMORY](../sig/FOREIGN_MEMORY.md#exn-bounds)
 - `buffer` (type): [FOREIGN_MEMORY](../sig/FOREIGN_MEMORY.md#type-buffer)
+- `Busy` (exn): [FOREIGN_OWNER](../sig/FOREIGN_OWNER.md#exn-busy)
 
 ---
 

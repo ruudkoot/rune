@@ -16,13 +16,24 @@ policy, rather than reading an entire maximum extent beyond a terminator.
 `ForeignText` performs the subsequent encoding conversion. These operations
 remain available to generated raw bindings for explicit low-level access.
 
-[How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [d](index/d.md) [f](index/f.md) [i](index/i.md) [l](index/l.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [w](index/w.md)
+[`ForeignOwner`](str/ForeignOwner.md) gives native-owned pointers shared closed state, synchronous
+borrow guards, duplicate-owner detection and scoped destruction. It uses
+native destructor transactions, preserving ownership on annotated failure
+and allowing retry with the captured raw status/error. It rejects a close
+while a borrow is active; native views also prevent premature destruction.
+Closed owners leave the ownership index and cannot become live again when
+an allocator reuses their address. This is the strict memory contract;
+GUI handles permitting destruction during messages require their explicit
+callback protocol. Raw pointer escapes remain the caller's responsibility.
+
+[How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [f](index/f.md) [i](index/i.md) [l](index/l.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [w](index/w.md)
 
 ## Foreign interfaces
 
 | Signature |  |
 | --- | --- |
 | [`FOREIGN_MEMORY`](sig/FOREIGN_MEMORY.md) | Bounded native buffers and scoped borrowed SML array copies. |
+| [`FOREIGN_OWNER`](sig/FOREIGN_OWNER.md) | Explicit ownership and borrowed-use scopes for native pointers. |
 
 ---
 

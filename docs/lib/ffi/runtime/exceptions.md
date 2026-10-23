@@ -5,6 +5,7 @@
 From the **Raises** paragraphs of the documented entries.
 
 - `Bounds`: [`allocate`](sig/FOREIGN_MEMORY.md#val-allocate) of FOREIGN_MEMORY, [`slice`](sig/FOREIGN_MEMORY.md#val-slice) of FOREIGN_MEMORY, [`terminated`](sig/FOREIGN_MEMORY.md#val-terminated) of FOREIGN_MEMORY
+- `Closed`: [`withBorrow`](sig/FOREIGN_OWNER.md#val-withborrow) of FOREIGN_OWNER, [`close`](sig/FOREIGN_OWNER.md#val-close) of FOREIGN_OWNER
 
 ---
 
