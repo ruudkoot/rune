@@ -647,8 +647,8 @@ val read : session * {file : string, variables : (string * string) list,
 preserving scopes, order, annotations, virtual implementations and use.
 
 Variables are path-variable bindings. Overlays are already decoded
-UTF-8, also for Latin-1 source files. windows selects native Windows
-drive/UNC path handling. No user declarations execute and no cache
+UTF-8, also for Latin-1 source files. windows selects Windows drive/UNC
+syntax independently of the host operating system. No user declarations execute and no cache
 files are written. Failure is reported through Failed.
 
 | Field | Type | Description |

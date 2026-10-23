@@ -288,7 +288,7 @@
      "kind": "val",
      "name": "Project.read",
      "spec": "val read : session * {file : string, variables : (string * string) list,\n                      overlays : {file : string, text : string} list, windows : bool} -> t",
-     "doc": "`read (session, request)` resolves a build through compiler rules,\npreserving scopes, order, annotations, virtual implementations and use.\n\nVariables are path-variable bindings. Overlays are already decoded\nUTF-8, also for Latin-1 source files. windows selects native Windows\ndrive/UNC path handling. No user declarations execute and no cache\nfiles are written. Failure is reported through Failed.\n\n",
+     "doc": "`read (session, request)` resolves a build through compiler rules,\npreserving scopes, order, annotations, virtual implementations and use.\n\nVariables are path-variable bindings. Overlays are already decoded\nUTF-8, also for Latin-1 source files. windows selects Windows drive/UNC\nsyntax independently of the host operating system. No user declarations execute and no cache\nfiles are written. Failure is reported through Failed.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-project.read"
     },
     {

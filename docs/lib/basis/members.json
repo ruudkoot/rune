@@ -4103,7 +4103,7 @@
    ]
   },
   "OS_FILE_SYS": {
-   "doc": "The file system: reading directories, moving about in them, and asking\nwhat a file is and when it changed.\n\nWhere `OS_PATH` works on the text of a path alone, everything here touches\nthe file system, and everything here reports a refusal the same way:\n`OS.SysErr` with the message and the condition the system gave. A path\nthat names nothing, a directory that may not be read, a file that may not\nbe removed -- all of them arrive as that one exception.\n\nWindows paths and names use WTF-8, which preserves lone UTF-16\nsurrogates and is UTF-8 for Unicode text. Other malformed byte sequences\nraise `OS.SysErr` with `ilseq`. Extended paths remove the 260-character\nfilesystem limit; native process, Shell and socket limits still apply.\n\nA directory is read as a stream: `openDir`, then `readDir` until it gives\n`NONE`, then `closeDir`. The names it gives are arcs, not paths, and\n`\".\"` and `\"..\"` are not among them.\n\n**See also** `OS_PATH`, `OS`, `OS_IO`, `POSIX_FILE_SYS`, `TIME`\n\n> **Implementation** `OS.FileSys/errors-are-SysErr`. Every failure raises\n`OS.SysErr` carrying the reason the system gave; no operation here has an\nexception of its own.\n\n",
+   "doc": "The file system: reading directories, moving about in them, and asking\nwhat a file is and when it changed.\n\nWhere `OS_PATH` works on the text of a path alone, everything here touches\nthe file system, and everything here reports a refusal the same way:\n`OS.SysErr` with the message and the condition the system gave. A path\nthat names nothing, a directory that may not be read, a file that may not\nbe removed -- all of them arrive as that one exception.\n\nWindows paths use native drive and UNC syntax, with backslash separators,\nand names use WTF-8, which preserves lone UTF-16\nsurrogates and is UTF-8 for Unicode text. Other malformed byte sequences\nraise `OS.SysErr` with `ilseq`. Extended paths remove the 260-character\nfilesystem limit; native process, Shell and socket limits still apply.\n\nA directory is read as a stream: `openDir`, then `readDir` until it gives\n`NONE`, then `closeDir`. The names it gives are arcs, not paths, and\n`\".\"` and `\"..\"` are not among them.\n\n**See also** `OS_PATH`, `OS`, `OS_IO`, `POSIX_FILE_SYS`, `TIME`\n\n> **Implementation** `OS.FileSys/errors-are-SysErr`. Every failure raises\n`OS.SysErr` carrying the reason the system gave; no operation here has an\nexception of its own.\n\n",
    "page": "sig/OS_FILE_SYS.md",
    "members": [
     {
@@ -4201,7 +4201,7 @@
      "kind": "val",
      "name": "realPath",
      "spec": "val realPath : string -> string",
-     "doc": "`realPath p` is `fullPath p` when `p` is absolute, and the same made relative to the current directory when it is not.\n\n**Raises** `OS.SysErr` as `fullPath` does.\n\n",
+     "doc": "`realPath p` is `fullPath p` when `p` is absolute, and the same made relative to the current directory when it is not.\n\n**Raises** `OS.SysErr` as `fullPath` does, or `OS.Path.Path` for a relative\npath on a volume different from the current working directory.\n\n",
      "page": "sig/OS_FILE_SYS.md#val-realpath"
     },
     {
@@ -4479,7 +4479,7 @@
    ]
   },
   "OS_PATH": {
-   "doc": "Paths as text: taking them apart, putting them together, and nothing else.\n\nEvery function here works on the string alone. None of them touches the\nfile system, so a path may name nothing and still be split, joined and\ncanonicalised.\n\nA path is a volume, a flag saying whether it is absolute, and a list of\narcs -- the pieces between the separators. `fromString` and `toString`\nconvert between the string and that triple, and the rest is built on them.\nAn arc may be empty: `\"a/\"` has the arcs `[\"a\", \"\"]`, and that empty arc\nis kept, because dropping it would change what the path means to some\nsystems.\n\n**See also** `OS_FILE_SYS`, `OS`, `SUBSTRING`\n\n> **Implementation** `OS.Path/unix-syntax`. Rune's paths are Unix paths: the\nseparator is `/`, the only volume is the empty string, and\n`fromUnixPath` and `toUnixPath` are the identity. That holds on Windows\nas well, where the system layer of the VM hands the library a path of a\ndrive as `/C:/Users/...`, which is absolute by these rules since no name\nof Windows has a colon in it, and gives Windows back `C:/...`. The syntax\nthe specification describes for Windows, with the volume `C:` and `\\`\nbetween the arcs, is not implemented.\n\n",
+   "doc": "Paths as text: taking them apart, putting them together, and nothing else.\n\nEvery function here works on the string alone. None of them touches the\nfile system, so a path may name nothing and still be split, joined and\ncanonicalised.\n\nA path is a volume, a flag saying whether it is absolute, and a list of\narcs -- the pieces between the separators. `fromString` and `toString`\nconvert between the string and that triple, and the rest is built on them.\nAn arc may be empty: `\"a/\"` has the arcs `[\"a\", \"\"]`, and that empty arc\nis kept, because dropping it would change what the path means to some\nsystems.\n\n**See also** `OS_FILE_SYS`, `OS`, `SUBSTRING`\n\n> **Implementation** `OS.Path/host-syntax`. Unix uses `/` with no volume.\nWindows accepts `/` and `\\`, writes `\\`, and recognizes drive volumes\nsuch as `C:` and absolute UNC volumes such as `\\\\server\\share`. A drive\nwithout a root, such as `C:a`, is relative. Canonical Windows paths fold\nASCII letters to lowercase; other bytes, including WTF-8, are preserved.\n\n> **Reading** `OS.Path.validVolume/windows-root`. The specification lists\nroot-relative Windows paths such as `\\a` as absolute, although its\nvalidVolume paragraph excludes an empty absolute volume. Rune permits\nthat volume so these paths can be split and rebuilt. UNC server/share\nvolumes extend the drive-volume model. Separator spelling is normalized\nby toString on Windows, so the textual inverse law applies to paths\nalready written with backslashes.\n\n",
    "page": "sig/OS_PATH.md",
    "members": [
     {
@@ -4493,7 +4493,7 @@
      "kind": "exception",
      "name": "InvalidArc",
      "spec": "exception InvalidArc",
-     "doc": "Raised when an arc holds something no arc may hold.\n\n> **Implementation** `OS.Path.InvalidArc/what-is-invalid`. On Unix an arc is\ninvalid exactly when it contains a `/`.\n\n",
+     "doc": "Raised when an arc holds something no arc may hold.\n\n> **Implementation** `OS.Path.InvalidArc/what-is-invalid`. On Unix an arc is\ninvalid exactly when it contains a `/`. Windows also rejects `\\` and\narcs starting with a drive volume, such as `C:x`.\n\n",
      "page": "sig/OS_PATH.md#exn-invalidarc"
     },
     {
@@ -4528,7 +4528,7 @@
      "kind": "val",
      "name": "validVolume",
      "spec": "val validVolume : {isAbs : bool, vol : string} -> bool",
-     "doc": "`validVolume {isAbs, vol}` is `true` when `vol` is a volume a path of that kind may have.\n\nOn Unix the only volume is the empty one.\n\n**Example** `validVolume {isAbs = true, vol = \"\"} = true`\n\n**Example** `validVolume {isAbs = true, vol = \"C:\"} = false`\n\n",
+     "doc": "`validVolume {isAbs, vol}` is `true` when `vol` is a volume a path of that kind may have.\n\nOn Unix the only volume is the empty one. Windows also accepts ASCII\ndrive letters followed by `:`, and UNC server/share volumes for\nabsolute paths. An empty volume permits a current-drive rooted path.\n\n**Example** `validVolume {isAbs = true, vol = \"\"} = true`\n\n**Example** `validVolume {isAbs = true, vol = \"C:\"} = false`\n\n",
      "page": "sig/OS_PATH.md#val-validvolume"
     },
     {
@@ -4619,7 +4619,7 @@
      "kind": "val",
      "name": "mkAbsolute",
      "spec": "val mkAbsolute : {path : string, relativeTo : string} -> string",
-     "doc": "`mkAbsolute {path, relativeTo}` is `path` read as lying under `relativeTo`, canonicalised.\n\n`path` is given back canonicalised when it is already absolute.\n\n**Raises** `Path` if `relativeTo` is not absolute -- also when `path`\nalready is.\n\n**Example** `mkAbsolute {path = \"../b\", relativeTo = \"/a/c\"} = \"/a/b\"`\n\n",
+     "doc": "`mkAbsolute {path, relativeTo}` is `path` read as lying under `relativeTo`, canonicalised.\n\n`path` is given back unchanged when it is already absolute.\n\n**Raises** `Path` if `relativeTo` is not absolute -- also when `path`\nalready is.\n\n**Example** `mkAbsolute {path = \"../b\", relativeTo = \"/a/c\"} = \"/a/b\"`\n\n",
      "page": "sig/OS_PATH.md#val-mkabsolute"
     },
     {
@@ -4654,7 +4654,7 @@
      "kind": "val",
      "name": "concat",
      "spec": "val concat : string * string -> string",
-     "doc": "`concat (p, q)` is `q` read as lying under `p`.\n\n**Raises** `Path` if `q` is absolute, or if `q` is relative and `p` has a\nvolume that `q` does not.\n\n> **Reading** `OS.Path.concat/keeps-the-parent-arc`. The arcs of `q` are\nappended to those of `p` without cancelling: a `p` that ends in the\nparent arc keeps it. A trailing empty arc of `p` is absorbed by the\njoin.\n\n**Example** `concat (\"a/\", \"b\") = \"a/b\"`\n\n",
+     "doc": "`concat (p, q)` is `q` read as lying under `p`.\n\n**Raises** `Path` if `q` is absolute, or has a nonempty volume different\nfrom that of `p`. Windows drive and UNC volumes compare without ASCII\nletter case.\n\n> **Reading** `OS.Path.concat/keeps-the-parent-arc`. The arcs of `q` are\nappended to those of `p` without cancelling: a `p` that ends in the\nparent arc keeps it. A trailing empty arc of `p` is absorbed by the\njoin.\n\n**Example** `concat (\"a/\", \"b\") = \"a/b\"`\n\n",
      "page": "sig/OS_PATH.md#val-concat"
     },
     {
@@ -8480,7 +8480,7 @@
      "kind": "val",
      "name": "save",
      "spec": "val save : string -> world",
-     "doc": "`save file` writes the whole running program to `file` and is `Saved`.\n\nA VM started as `runevm --restore file` carries on from inside that same\ncall, where it is `Restored`: one call and two worlds, as\n`Posix.Process.fork` gives a pid to one process and 0 to another. The\nfile is not used up by being restored.\n\nWhat is written is everything the program is made of -- the heap,\ncollected first (`collect`) so that it is the live data and no more,\nthe stacks, the counters, and the files it has open, which are opened again\nby name and put back where they were left. What belongs to the process\nrather than to the program is not: a socket, a directory stream and a\npipe are the system's, and a restored world does not have them. Nor is\nwhat the program read ahead of its standard input and has not taken:\n`TextIO.stdIn` in the restored world reads that world's standard input\nfrom where it begins.\n\n**Raises** `OS.SysErr` if the image cannot be written.\n\n",
+     "doc": "`save file` writes the whole running program to `file` and is `Saved`.\n\nA VM started as `runevm --restore file` carries on from inside that same\ncall, where it is `Restored`: one call and two worlds, as\n`Posix.Process.fork` gives a pid to one process and 0 to another. The\nfile is not used up by being restored.\n\nWhat is written is everything the program is made of -- the heap,\ncollected first (`collect`) so that it is the live data and no more,\nthe stacks, the counters, and the files it has open, which are opened again\nby name and put back where they were left. What belongs to the process\nrather than to the program is not: a socket, a directory stream and a\npipe are the system's, and a restored world does not have them. Nor is\nwhat the program read ahead of its standard input and has not taken:\n`TextIO.stdIn` in the restored world reads that world's standard input\nfrom where it begins. `OS.Path` also refreshes its host syntax when an\nimage resumes on a different operating system.\n\n**Raises** `OS.SysErr` if the image cannot be written.\n\n",
      "page": "sig/RUNTIME.md#val-save"
     },
     {

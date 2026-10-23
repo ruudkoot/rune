@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 27 of 27 entries documented |
-| Tests | 104 checks of 27 entries |
+| Tests | 142 checks of 27 entries |
 | Source | [lib/basis/sig\_os\_path.sml](../../../../lib/basis/sig_os_path.sml) |
 
 ## Synopsis
@@ -34,14 +34,19 @@ An arc may be empty: `"a/"` has the arcs `["a", ""]`, and that empty arc
 is kept, because dropping it would change what the path means to some
 systems.
 
-> **Implementation** `OS.Path/unix-syntax`. Rune's paths are Unix paths: the
-> separator is `/`, the only volume is the empty string, and
-> [`fromUnixPath`](#val-fromunixpath) and [`toUnixPath`](#val-tounixpath) are the identity. That holds on Windows
-> as well, where the system layer of the VM hands the library a path of a
-> drive as `/C:/Users/...`, which is absolute by these rules since no name
-> of Windows has a colon in it, and gives Windows back `C:/...`. The syntax
-> the specification describes for Windows, with the volume `C:` and `\`
-> between the arcs, is not implemented.
+> **Implementation** `OS.Path/host-syntax`. Unix uses `/` with no volume.
+> Windows accepts `/` and `\`, writes `\`, and recognizes drive volumes
+> such as `C:` and absolute UNC volumes such as `\\server\share`. A drive
+> without a root, such as `C:a`, is relative. Canonical Windows paths fold
+> ASCII letters to lowercase; other bytes, including WTF-8, are preserved.
+
+> **Reading** `OS.Path.validVolume/windows-root`. The specification lists
+> root-relative Windows paths such as `\a` as absolute, although its
+> validVolume paragraph excludes an empty absolute volume. Rune permits
+> that volume so these paths can be split and rebuilt. UNC server/share
+> volumes extend the drive-volume model. Separator spelling is normalized
+> by toString on Windows, so the textual inverse law applies to paths
+> already written with backslashes.
 
 ## Interface
 
@@ -107,7 +112,8 @@ exception InvalidArc
 Raised when an arc holds something no arc may hold.
 
 > **Implementation** `OS.Path.InvalidArc/what-is-invalid`. On Unix an arc is
-> invalid exactly when it contains a `/`.
+> invalid exactly when it contains a `/`. Windows also rejects `\` and
+> arcs starting with a drive volume, such as `C:x`.
 
 <details><summary>Tests (2)</summary>
 
@@ -125,9 +131,11 @@ The arc that names the directory above: `".."`.
 
 **Example** `parentArc = ".."`
 
-<details><summary>Tests (1)</summary>
+<details><summary>Tests (2)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `unix`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows`
 
 </details>
 
@@ -141,9 +149,11 @@ The arc that names the directory itself: `"."`.
 
 **Example** `currentArc = "."`
 
-<details><summary>Tests (1)</summary>
+<details><summary>Tests (2)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `unix`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows`
 
 </details>
 
@@ -178,9 +188,11 @@ val fromString : string -> {isAbs : bool, vol : string, arcs : string list}
 
 </details>
 
-<details><summary>Tests (5)</summary>
+<details><summary>Tests (6)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `two-arcs` &middot; `backslash-is-not-a-separator` &middot; `special-arcs` &middot; `inverts-toString-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*`
 
 </details>
 
@@ -213,9 +225,11 @@ an arc is not a valid arc.
 
 </details>
 
-<details><summary>Tests (14)</summary>
+<details><summary>Tests (16)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `empty` &middot; `absolute` &middot; `special-arcs` &middot; `non-initial-empty-arcs` &middot; `invalid-volume-Path` (raises) &middot; `invalid-volume-relative-Path` (raises) &middot; `relative-initial-empty-arc-Path` (raises) &middot; `relative-only-empty-arc-Path` (raises) &middot; `separator-in-arc-InvalidArc` (raises) &middot; `separator-arc-InvalidArc` (raises) &middot; `relative-is-relative` &middot; `inverts-fromString-random` &middot; `relative-is-relative-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*` &middot; `windows-invalid-arc-*` (raises)
 
 </details>
 
@@ -227,7 +241,9 @@ val validVolume : {isAbs : bool, vol : string} -> bool
 
 `validVolume {isAbs, vol}` is `true` when `vol` is a volume a path of that kind may have.
 
-On Unix the only volume is the empty one.
+On Unix the only volume is the empty one. Windows also accepts ASCII
+drive letters followed by `:`, and UNC server/share volumes for
+absolute paths. An empty volume permits a current-drive rooted path.
 
 **Example** `validVolume {isAbs = true, vol = ""} = true`
 
@@ -238,9 +254,11 @@ On Unix the only volume is the empty one.
 | <a name="fld-validvolume.isabs"></a>`isAbs` | `bool` |  |
 | <a name="fld-validvolume.vol"></a>`vol` | `string` |  |
 
-<details><summary>Tests (5)</summary>
+<details><summary>Tests (8)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `empty-absolute` &middot; `empty-relative` &middot; `drive-absolute` &middot; `drive-relative` &middot; `separator`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*` &middot; `windows-invalid-*` &middot; `windows-UNC-relative`
 
 </details>
 
@@ -254,9 +272,11 @@ val getVolume : string -> string
 
 **Example** `getVolume "/a/b" = ""`
 
-<details><summary>Tests (1)</summary>
+<details><summary>Tests (2)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `*`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows`
 
 </details>
 
@@ -289,9 +309,11 @@ It is `p` itself exactly when `p` is a root.
 
 </details>
 
-<details><summary>Tests (4)</summary>
+<details><summary>Tests (5)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `*` &middot; `only-a-root-is-its-own-parent` &middot; `keeps-canonical-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*`
 
 </details>
 
@@ -318,9 +340,11 @@ before the last is lost.
 | <a name="fld-splitdirfile.dir"></a>`dir` | `string` |  |
 | <a name="fld-splitdirfile.file"></a>`file` | `string` |  |
 
-<details><summary>Tests (4)</summary>
+<details><summary>Tests (5)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `last-arc` &middot; `parent-arc` &middot; `file-is-last-arc-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*`
 
 </details>
 
@@ -345,9 +369,11 @@ val joinDirFile : {dir : string, file : string} -> string
 | <a name="fld-joindirfile.dir"></a>`dir` | `string` |  |
 | <a name="fld-joindirfile.file"></a>`file` | `string` |  |
 
-<details><summary>Tests (6)</summary>
+<details><summary>Tests (8)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `relative` &middot; `absolute` &middot; `parent-arc` &middot; `path-as-file-InvalidArc` (raises) &middot; `root-as-file-InvalidArc` (raises)
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*` &middot; `windows-volume-file` (raises)
 
 </details>
 
@@ -364,9 +390,11 @@ val dir : string -> string
 
 **Example** `dir "a/b/c" = "a/b"`
 
-<details><summary>Tests (2)</summary>
+<details><summary>Tests (3)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `is-splitDirFile-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*`
 
 </details>
 
@@ -380,9 +408,11 @@ val file : string -> string
 
 **Example** `file "a/b/c" = "c"`
 
-<details><summary>Tests (2)</summary>
+<details><summary>Tests (3)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `is-splitDirFile-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*`
 
 </details>
 
@@ -420,9 +450,11 @@ otherwise there is none.
 
 </details>
 
-<details><summary>Tests (10)</summary>
+<details><summary>Tests (11)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `only-the-last-arc` &middot; `dot-in-directory` &middot; `initial-dot-of-last-arc` &middot; `second-dot-of-last-arc` &middot; `parent-arc` &middot; `trailing-separator` &middot; `empty-arc` &middot; `root-empty-arc` &middot; `never-SOME-empty-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows`
 
 </details>
 
@@ -447,9 +479,11 @@ val joinBaseExt : {base : string, ext : string option} -> string
 
 </details>
 
-<details><summary>Tests (7)</summary>
+<details><summary>Tests (8)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `SOME` &middot; `NONE` &middot; `SOME-empty-is-NONE` &middot; `path-base` &middot; `not-a-right-inverse` &middot; `inverts-splitBaseExt-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows`
 
 </details>
 
@@ -463,9 +497,11 @@ val base : string -> string
 
 **Example** `base "a.tar.gz" = "a.tar"`
 
-<details><summary>Tests (2)</summary>
+<details><summary>Tests (3)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `is-splitBaseExt-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows`
 
 </details>
 
@@ -480,9 +516,11 @@ val ext : string -> string option
 **Example** `ext "a.b/c" = NONE`, for the extension is that of the last
 arc.
 
-<details><summary>Tests (2)</summary>
+<details><summary>Tests (3)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `is-splitBaseExt-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows`
 
 </details>
 
@@ -514,9 +552,11 @@ val mkCanonical : string -> string
 
 </details>
 
-<details><summary>Tests (5)</summary>
+<details><summary>Tests (7)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `*` &middot; `equality-of-paths` &middot; `is-canonical-random` &middot; `never-empty-random` &middot; `keeps-isAbsolute-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*` &middot; `windows-WTF8`
 
 </details>
 
@@ -539,9 +579,11 @@ val isCanonical : string -> bool
 
 </details>
 
-<details><summary>Tests (4)</summary>
+<details><summary>Tests (6)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `example-*` &middot; `example-root-current-arc` &middot; `not-*` &middot; `is-mkCanonical-equality-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*` &middot; `windows-case`
 
 </details>
 
@@ -553,7 +595,7 @@ val mkAbsolute : {path : string, relativeTo : string} -> string
 
 `mkAbsolute {path, relativeTo}` is `path` read as lying under `relativeTo`, canonicalised.
 
-`path` is given back canonicalised when it is already absolute.
+`path` is given back unchanged when it is already absolute.
 
 **Raises** [`Path`](#exn-path) if `relativeTo` is not absolute -- also when `path`
 already is.
@@ -571,9 +613,11 @@ already is.
 
 </details>
 
-<details><summary>Tests (5)</summary>
+<details><summary>Tests (7)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `*` &middot; `relativeTo-relative-Path` (raises) &middot; `relativeTo-empty-Path` (raises) &middot; `keeps-canonical-random` &middot; `inverts-mkRelative-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows` &middot; `windows-different-drive` (raises)
 
 </details>
 
@@ -605,9 +649,11 @@ back canonical (for every `p : string`, `q : string`)
 | <a name="fld-mkrelative.path"></a>`path` | `string` |  |
 | <a name="fld-mkrelative.relativeto"></a>`relativeTo` | `string` |  |
 
-<details><summary>Tests (10)</summary>
+<details><summary>Tests (13)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `relative-unchanged` &middot; `equal` &middot; `equal-to-canonical` &middot; `below` &middot; `above` &middot; `relativeTo-relative-Path` (raises) &middot; `relativeTo-empty-Path` (raises) &middot; `keeps-canonical-random` &middot; `is-relative-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-case` &middot; `windows-UNC-separator-case` &middot; `windows-different-drive` (raises)
 
 </details>
 
@@ -621,9 +667,11 @@ val isAbsolute : string -> bool
 
 **Example** `isAbsolute "/a" = true`
 
-<details><summary>Tests (2)</summary>
+<details><summary>Tests (3)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `*` &middot; `not-isRelative-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*`
 
 </details>
 
@@ -640,9 +688,11 @@ val isRelative : string -> bool
 
 **Example** `isRelative "a/b" = true`
 
-<details><summary>Tests (1)</summary>
+<details><summary>Tests (2)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `*`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*`
 
 </details>
 
@@ -659,9 +709,11 @@ val isRoot : string -> bool
 
 **Example** `isRoot "/" = true`
 
-<details><summary>Tests (1)</summary>
+<details><summary>Tests (2)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `*`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*`
 
 </details>
 
@@ -673,8 +725,9 @@ val concat : string * string -> string
 
 `concat (p, q)` is `q` read as lying under `p`.
 
-**Raises** [`Path`](#exn-path) if `q` is absolute, or if `q` is relative and `p` has a
-volume that `q` does not.
+**Raises** [`Path`](#exn-path) if `q` is absolute, or has a nonempty volume different
+from that of `p`. Windows drive and UNC volumes compare without ASCII
+letter case.
 
 > **Reading** `OS.Path.concat/keeps-the-parent-arc`. The arcs of `q` are
 > appended to those of `p` without cancelling: a `p` that ends in the
@@ -689,9 +742,11 @@ volume that `q` does not.
 
 </details>
 
-<details><summary>Tests (4)</summary>
+<details><summary>Tests (7)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `*` &middot; `absolute-second-Path` (raises) &middot; `root-second-Path` (raises) &middot; `arcs-random`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-matching-drive` &middot; `windows-different-drive` (raises) &middot; `windows-absolute` (raises)
 
 </details>
 
@@ -714,9 +769,11 @@ val fromUnixPath : string -> string
 
 </details>
 
-<details><summary>Tests (1)</summary>
+<details><summary>Tests (3)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `*`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows` &middot; `windows-backslash` (raises)
 
 </details>
 
@@ -738,9 +795,11 @@ val toUnixPath : string -> string
 
 </details>
 
-<details><summary>Tests (1)</summary>
+<details><summary>Tests (3)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `*`
+
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows` &middot; `windows-volume` (raises)
 
 </details>
 

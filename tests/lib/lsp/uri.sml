@@ -19,6 +19,7 @@ struct
      check ("POSIX filename bytes",path U.Posix "file:///tmp/%FF"=SOME "/tmp/\255");
      check ("lone surrogate preserved",path U.Windows "file:///C:/bad%ED%A0%80.sml"=SOME "C:/bad\237\160\128.sml");
      check ("WTF8 round trip",U.original (U.fromPath (U.Windows,"C:\\bad\237\160\128.sml"))="file:///C:/bad%ED%A0%80.sml");
+     check ("native Windows drive path",U.original (U.fromPath (U.Windows,"c:\\a b.sml"))="file:///c:/a%20b.sml");
      check ("POSIX URI round trip",path U.Posix (U.original (U.fromPath (U.Posix,"/tmp/a b#%+.sml")))=SOME "/tmp/a b#%+.sml"))
   fun virtualAndInvalid () =
     (check ("unsaved URI",path U.Posix "untitled:Untitled-1"=NONE);
@@ -30,7 +31,10 @@ struct
      check ("relative URI",invalid (fn () => ignore (U.parse "relative.sml")));
      check ("decoded NUL",invalid (fn () => ignore (U.native (U.Posix,U.parse "file:///a%00b"))));
      check ("bad Windows bytes",invalid (fn () => ignore (U.native (U.Windows,U.parse "file:///C:/bad%FF"))));
-     check ("relative native path",invalid (fn () => ignore (U.fromPath (U.Posix,"relative.sml")))))
+     check ("relative native path",invalid (fn () => ignore (U.fromPath (U.Posix,"relative.sml"))));
+     check ("old synthetic drive path is refused",invalid (fn () => ignore (U.fromPath (U.Windows,"/C:/a"))));
+     check ("drive relative alias is refused",invalid (fn () => ignore (U.fromPath (U.Windows,"/C:relative"))));
+     check ("ambiguous Windows rooted path is refused",invalid (fn () => ignore (U.fromPath (U.Windows,"/tmp/a")))) )
 end
 structure LspUriTestMain = Main (struct
   val name="lsp-uri"

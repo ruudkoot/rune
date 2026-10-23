@@ -3,14 +3,14 @@
    https://smlfamily.github.io/Basis/os-path.html: every row of its tables
    (fromString, getParent, splitDirFile, splitBaseExt, mkRelative), the
    examples of its text, and the laws it states, some of them on
-   pseudo-random paths. Every system of the matrix is a Unix, so the path
-   syntax is that of the Unix examples: the arc separator is #"/" and the only
-   volume is "". Nothing here touches the file system.
+   pseudo-random paths. These tables use Unix syntax; Windows has its own
+   cases in os.path_windows.sml. Nothing here touches the file system.
 
    A path in a label is written with "_" for "/", and the empty path as
    "empty": "OS.Path.getParent/row-a___" is the row for "a///". *)
 structure TestOSPath =
 struct
+  val () = if OS.Path.validVolume {isAbs=true,vol="C:"} then () else let
   val eqS = T.eq T.string
   val eqB = T.eq T.bool
   fun showParts {isAbs, vol, arcs} =
@@ -375,4 +375,5 @@ struct
   val () = eqB ("OS.Path.mkRelative/is-relative-random", true,
                 fn () => forAll (300, fn () => (rooted (), canonicalAbsolute ()),
                                  fn (p, r) => OS.Path.isRelative (relative (p, r))))
+  in () end
 end

@@ -7,7 +7,7 @@
 | Signature | [`OS_PATH`](../sig/OS_PATH.md) |
 | Status | required |
 | Members | 27 |
-| Tests | 104 checks |
+| Tests | 142 checks |
 | Source | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 ## Synopsis
@@ -57,19 +57,25 @@ What each means is on [`OS_PATH`](../sig/OS_PATH.md); the types are this structu
 
 ### 
 
-> **Implementation** `OS.Path/unix-syntax`. Rune's paths are Unix paths: the
-> separator is `/`, the only volume is the empty string, and
-> [`fromUnixPath`](../sig/OS_PATH.md#val-fromunixpath) and [`toUnixPath`](../sig/OS_PATH.md#val-tounixpath) are the identity. That holds on Windows
-> as well, where the system layer of the VM hands the library a path of a
-> drive as `/C:/Users/...`, which is absolute by these rules since no name
-> of Windows has a colon in it, and gives Windows back `C:/...`. The syntax
-> the specification describes for Windows, with the volume `C:` and `\`
-> between the arcs, is not implemented.
+> **Implementation** `OS.Path/host-syntax`. Unix uses `/` with no volume.
+> Windows accepts `/` and `\`, writes `\`, and recognizes drive volumes
+> such as `C:` and absolute UNC volumes such as `\\server\share`. A drive
+> without a root, such as `C:a`, is relative. Canonical Windows paths fold
+> ASCII letters to lowercase; other bytes, including WTF-8, are preserved.
+
+> **Reading** `OS.Path.validVolume/windows-root`. The specification lists
+> root-relative Windows paths such as `\a` as absolute, although its
+> validVolume paragraph excludes an empty absolute volume. Rune permits
+> that volume so these paths can be split and rebuilt. UNC server/share
+> volumes extend the drive-volume model. Separator spelling is normalized
+> by toString on Windows, so the textual inverse law applies to paths
+> already written with backslashes.
 
 ### InvalidArc
 
 > **Implementation** `OS.Path.InvalidArc/what-is-invalid`. On Unix an arc is
-> invalid exactly when it contains a `/`.
+> invalid exactly when it contains a `/`. Windows also rejects `\` and
+> arcs starting with a drive volume, such as `C:x`.
 
 ### concat
 

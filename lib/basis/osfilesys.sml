@@ -39,7 +39,7 @@ struct
       if !closed then () else (closed := true; checkUnit (closeDir' stream))
 
     fun chDir path = checkUnit (chdir path)
-    fun getDir () = checkString (getcwd ())
+    fun getDir () = RunePath.mkCanonical (checkString (getcwd ()))
     fun mkDir path = checkUnit (mkdir path)
     fun rmDir path = checkUnit (rmdir path)
 
@@ -49,7 +49,7 @@ struct
 
     (* "the canonical path, with no symbolic links"; "An empty path is treated
        as "."". realPath is the implementation note of the specification. *)
-    fun fullPath path = checkString (realPath' (if path = "" then RunePath.currentArc else path))
+    fun fullPath path = RunePath.mkCanonical (checkString (realPath' (if path = "" then RunePath.currentArc else path)))
     fun realPath path =
       if RunePath.isAbsolute path then fullPath path
       else RunePath.mkRelative {path = fullPath path, relativeTo = fullPath (getDir ())}

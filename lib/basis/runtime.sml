@@ -136,7 +136,7 @@ struct
     fun save file =
       case (collect' (); save' file) of
         0 => Saved
-      | 1 => (freshStdIn (); Restored)
+      | 1 => (RunePath.refresh (); freshStdIn (); Restored)
       | _ => raise RuneError.lastError ()
 
     (* The primitive comes back only when it could not read the image: on

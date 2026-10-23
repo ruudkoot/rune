@@ -305,11 +305,11 @@ a network path, and passes `TZ` to them through `WSLENV`. It also runs a few pro
 
 `runtime/sys/sys_win.c` gives what Windows has -- the clock, the calendar, files,
 directories, descriptors, the environment and running a command -- and
-answers `ENOSYS` for what it does not do. A path of a drive comes back as
-`/C:/Users/...`, because Rune's `OS.Path` is the one of POSIX, to which
-that is absolute (no name of Windows has a colon in it), and a path that
-goes in as `/C:/...` is given to Windows as `C:/...`; `/dev/null` is `NUL`
-and `/dev/tty` the console. The standard streams are put in binary mode before
+answers `ENOSYS` for what it does not do. Returned paths use native drive
+and UNC syntax, such as `C:\Users\...`; `OS.Path` recognizes both Windows
+separators and the volume. `OS.FileSys.getDir` and `fullPath` return
+canonical paths including the volume. `/dev/null` is `NUL` and `/dev/tty`
+the console. The standard streams are put in binary mode before
 `main` runs, since a Rune string is bytes and a `\n` must stay one.
 
 Paths, arguments, environment variables and the text of the `Windows`
@@ -358,10 +358,9 @@ and 195 on the register bytecode, every one of them explained by a
 `WINDOWS` line, and 6 are skipped as POSIX's alone. The tests of the
 terminal, the debug adapter and the Jupyter kernel pass too.
 
-What Windows does not get: `OS.Path` keeps the rules of POSIX rather than
-the drive letters and backslashes of Windows, which is why a path of a drive
-reaches a program as `/C:/...`; `bin/rune` itself is not run on the Windows
-VMs, only the VM is built and tested there; and nothing of this runs in
+Native Windows acceptance includes the compiler running on the Windows
+VMs with Unicode and WTF-8 filenames (`make test-windows-text`). The
+Windows suites require a native Windows host or WSL; they do not run in
 continuous integration.
 
 ## MSYS2

@@ -25,7 +25,8 @@ The Unicode library and source-text decoder still require strict UTF-8.
   ASCII names or no name.
 * Ordinary long filesystem paths are made absolute and their separators and
   dot components normalized before adding `\\?\` or `\\?\UNC\`. Returned
-  paths keep Rune's `/C:/...` and forward-slash conventions. Short paths
+  paths now use native Windows drive/UNC syntax and backslashes, with matching
+  host syntax in `OS.Path` (the language-server filesystem follow-up). Short paths
   retain DOS-device semantics, and relative symbolic-link targets stay
   relative. Directory patterns in the transient Windows fork transport are
   length-prefixed; the persistent image and bytecode formats are unchanged.
@@ -94,3 +95,32 @@ documentation, host-matrix and sanitizer/stress checks form final acceptance.
 
 Validation ran outside the restricted sandbox for Windows interop, native
 socket tests and 32-bit SML/NJ execution. No machine-wide settings were changed.
+
+## Native filesystem paths (2026-10-23)
+
+Filesystem results now use native Windows drive and UNC syntax with backslash
+separators. The `/C:/...` adaptation has been removed. `OS.Path` understands
+drives, drive-relative paths and UNC share roots; Unix/host conversion and
+incompatible-volume errors follow the host model in the
+[Basis specification](https://smlfamily.github.io/Basis/os-path.html).
+`getDir` and `fullPath` include their volume and return canonical paths as
+[OS.FileSys requires](https://smlfamily.github.io/Basis/os-file-sys.html).
+Canonical Windows paths fold ASCII case; other bytes, including WTF-8, stay
+intact. The empty-volume/root-relative reading and UNC extension are documented
+once in the `OS_PATH` signature.
+
+Rebuild bytecode and saved images that embed the earlier Unix-only `OS.Path`
+before using them with the updated Windows VM.
+
+Restoring a saved image refreshes the host path syntax. Compiler projects
+select their path grammar independently of the operating system running the
+compiler, so Windows can inspect POSIX overlays and vice versa.
+
+Focused acceptance passed the independent Windows text/oracle cohort (12
+runner jobs), native path and filesystem matrices (38 and 30 jobs on all four
+VMs), six compiler API cases on Linux and Windows, and all 12 directed saved
+image transfers between Linux and both Windows widths across both bytecode
+formats. The image fixture checks the restoring host's path syntax. The
+broader host-library matrix and combined language-server acceptance remain
+tracked by the language-server roadmap; interrupted and earlier failed runs
+are not clean acceptance results.

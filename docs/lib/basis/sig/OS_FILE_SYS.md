@@ -30,7 +30,8 @@ the file system, and everything here reports a refusal the same way:
 that names nothing, a directory that may not be read, a file that may not
 be removed -- all of them arrive as that one exception.
 
-Windows paths and names use WTF-8, which preserves lone UTF-16
+Windows paths use native drive and UNC syntax, with backslash separators,
+and names use WTF-8, which preserves lone UTF-16
 surrogates and is UTF-8 for Unicode text. Other malformed byte sequences
 raise [`OS.SysErr`](../sig/OS.md#exn-syserr) with `ilseq`. Extended paths remove the 260-character
 filesystem limit; native process, Shell and socket limits still apply.
@@ -313,7 +314,8 @@ val realPath : string -> string
 
 `realPath p` is `fullPath p` when `p` is absolute, and the same made relative to the current directory when it is not.
 
-**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) as [`fullPath`](#val-fullpath) does.
+**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) as [`fullPath`](#val-fullpath) does, or [`OS.Path.Path`](../sig/OS_PATH.md#exn-path) for a relative
+path on a volume different from the current working directory.
 
 <details><summary>Tests (10)</summary>
 

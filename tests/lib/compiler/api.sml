@@ -107,11 +107,13 @@ struct
     in List.app C.close [context,imported,midContext,corrupt,stack] end)
   fun projects () = temporary (fn dir =>
     let val context=session ()
+        val hostWindows=OS.Path.validVolume {isAbs=true,vol="C:"}
+        val dir=if hostWindows then String.map (fn #"\\" => #"/" | c => c) dir else dir
         val root=dir ^ "/root.build"
         val child=dir ^ "/child.build"
         val rootText="libraries json end\nannotate \"unicode\" \"allowPrim\" in use child.build end\nuse child.build\ncache $(ROOT)/cache\n"
         val overlays=[{file=root,text=rootText},{file=child,text="files first.sml second.sml end\n"}]
-        fun plan overlays=C.Project.read (context,{file=root,variables=[("ROOT",dir)],overlays=overlays,windows=false})
+        fun plan overlays=C.Project.read (context,{file=root,variables=[("ROOT",dir)],overlays=overlays,windows=hostWindows})
         val first=plan overlays
         val second=plan overlays
         val sources=C.Project.sources first
@@ -125,14 +127,19 @@ struct
         val changed=plan [{file=root,text="files another.sml end\n"}]
         val ()=check ("project changes invalidate fingerprint",C.Project.fingerprint first<>C.Project.fingerprint changed)
         val ()=check ("project path variables do not leak",fails (fn () => ignore (C.Project.read (context,
-          {file=root,variables=[],overlays=overlays,windows=false}))))
-        val grouped=C.Project.read (context,{file=root,variables=[],windows=false,overlays=
+          {file=root,variables=[],overlays=overlays,windows=hostWindows}))))
+        val grouped=C.Project.read (context,{file=root,variables=[],windows=hostWindows,overlays=
           [{file=root,text="group second.sml first.sml end\n"},
            {file=dir ^ "/second.sml",text="structure B=struct val x=A.x end\n"},
            {file=dir ^ "/first.sml",text="structure A=struct val x=1 end\n"}]})
         val ()=check ("group order uses compiler dependency rules",List.map #file (C.Project.sources grouped)=
           [dir ^ "/first.sml",dir ^ "/second.sml"])
         val ()=check ("group discovery inputs recorded",length (C.Project.inputs grouped)=3)
+        val posix=C.Project.read (context,{file="/Virtual/root.build",variables=[],windows=false,
+          overlays=[{file="/Virtual/root.build",text="use sub/part.build\n"},
+                    {file="/Virtual/sub/part.build",text="files ../Capital.sml end\n"}]})
+        val ()=check ("POSIX project syntax is independent of the host",List.map #file (C.Project.sources posix)=
+          ["/Virtual/sub/../Capital.sml"])
         val windows=C.Project.read (context,{file="C:\\project\\root.build",variables=[("DEP","D:\\dependency")],
           windows=true,overlays=[{file="C:/project/root.build",text="files $(DEP)/a.sml end\n"}]})
         val ()=check ("Windows absolute path variables",List.map #file (C.Project.sources windows)=["D:/dependency/a.sml"])
@@ -144,6 +151,9 @@ struct
         val drive=C.Project.read (context,{file="C:/root.build",variables=[],windows=true,
           overlays=[{file="C:/root.build",text="use sub/part.build\n"},{file="C:/sub/part.build",text="files head.sml end\n"}]})
         val ()=check ("drive root survives nested build resolution",List.map #file (C.Project.sources drive)=["C:/sub/head.sml"])
+        val rootCache=C.Project.read (context,{file="C:/root.build",variables=[],windows=true,
+          overlays=[{file="C:/root.build",text="cache \"\"\n"}]})
+        val ()=check ("empty root-relative cache keeps its drive root",C.Project.cacheDirectories rootCache=["C:/"])
         val ()=C.close context
     in check ("project value survives session close",length (C.Project.sources first)=2) end)
   fun buildQueries () = temporary (fn dir =>

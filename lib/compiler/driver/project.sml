@@ -24,24 +24,60 @@ struct
                val at=stop 2
            in "//" ^ lower (String.substring (path,2,at-2)) ^ String.extract (path,at,NONE) end
          else path end
-  fun absolute windows path = OS.Path.isAbsolute path orelse
-    (windows andalso ((String.size path>0 andalso String.sub (path,0)= #"\\") orelse
-      (String.size path>=3 andalso alpha (String.sub (path,0)) andalso
-       String.sub (path,1)= #":" andalso Char.contains "/\\" (String.sub (path,2)))))
-  fun directory windows path = if not windows then OS.Path.dir path else
-    let val path=normalize true path
+  (* The selected project syntax is independent of the host OS.Path. This
+     also lets a Windows server inspect a POSIX build using decoded overlays. *)
+  fun drive path = size path>=2 andalso alpha (String.sub (path,0)) andalso String.sub (path,1)= #":"
+  fun absolute windows path =
+    let val path=normalize windows path
+    in String.isPrefix "/" path orelse
+      (windows andalso drive path andalso size path>=3 andalso String.sub (path,2)= #"/") end
+  fun directory windows path =
+    let val path=normalize windows path
         fun last i=if i<0 then NONE else if String.sub (path,i)= #"/" then SOME i else last (i-1)
-    in case last (size path-1) of NONE => "." | SOME 0 => "/"
-     | SOME 2 => if String.sub (path,1)= #":" then String.substring (path,0,3) else String.substring (path,0,2)
+    in case last (size path-1) of
+       NONE => if windows then (if drive path then String.substring (path,0,2) else ".") else ""
+     | SOME 0 => "/"
+     | SOME 2 => if windows andalso drive path then String.substring (path,0,3) else String.substring (path,0,2)
      | SOME at => String.substring (path,0,at) end
-  fun concat windows (directory,path) = if not windows then OS.Path.concat (directory,path)
-    else directory ^ (if String.isSuffix "/" directory then "" else "/") ^ path
+  fun concat windows (directory,path) =
+    let val directory=normalize windows directory
+        val path=normalize windows path
+        val path=if windows andalso drive path then
+          if drive directory andalso lower (String.substring (directory,0,2))=lower (String.substring (path,0,2))
+          then String.extract (path,2,NONE) else raise Invalid "relative build path uses a different drive"
+          else path
+        val root=directory="/" orelse (windows andalso drive directory andalso size directory=3) orelse
+          (windows andalso String.isPrefix "//" directory andalso
+           (case String.fields (fn c => c = #"/") (String.extract (directory,2,NONE)) of
+              [server,share,""] => server<>"" andalso share<>"" | _ => false))
+    in if directory="" then path
+       else if path="" then
+         if not root andalso String.isSuffix "/" directory then String.substring (directory,0,size directory-1) else directory
+       else directory ^ (if String.isSuffix "/" directory orelse windows andalso drive directory andalso size directory=2 then "" else "/") ^ path
+    end
   fun pathKey windows path =
-    if windows andalso String.isPrefix "//" path then
-      "//" ^ OS.Path.mkCanonical (String.extract (path,2,NONE))
-    else if windows andalso String.size path>=3 andalso String.sub (path,1)= #":" andalso String.sub (path,2)= #"/" then
-      String.substring (path,0,2) ^ OS.Path.mkCanonical (String.extract (path,2,NONE))
-    else OS.Path.mkCanonical path
+    let val path=normalize windows path
+        val n=size path
+        fun next i=if i=n orelse String.sub (path,i)= #"/" then i else next (i+1)
+        val network=if windows andalso String.isPrefix "//" path then
+          let val server=next 2
+              val share=if server<n then next (server+1) else server
+          in if server>2 andalso server<n andalso share>server+1 then SOME share else NONE end else NONE
+        val (root,body,rooted)=case network of
+            SOME stop => (String.substring (path,0,stop) ^ "/",String.extract (path,Int.min (n,stop+1),NONE),true)
+          | NONE => if windows andalso drive path then
+              if n>2 andalso String.sub (path,2)= #"/" then (String.substring (path,0,3),String.extract (path,3,NONE),true)
+              else (String.substring (path,0,2),String.extract (path,2,NONE),false)
+            else if String.isPrefix "/" path then ("/",String.extract (path,1,NONE),true) else ("",path,false)
+        fun clean ([],kept)=List.rev kept
+          | clean (arc::rest,kept)=if arc="" orelse arc="." then clean (rest,kept)
+            else if arc=".." then (case kept of
+                [] => clean (rest,if rooted then [] else [".."])
+              | ".."::_ => clean (rest,".."::kept)
+              | _::above => clean (rest,above))
+            else clean (rest,arc::kept)
+        val arcs=clean (String.fields (fn c => c = #"/") body,[])
+    in root ^ (if null arcs andalso not rooted then "." else String.concatWith "/" arcs) end
   fun inputKey windows path =
     String.concatWith "/" (List.filter (fn arc => arc<>".")
       (String.fields (fn c => c = #"/") (normalize windows path)))

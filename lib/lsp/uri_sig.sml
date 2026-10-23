@@ -43,7 +43,8 @@ sig
   (* `fromPath (platform, path)` converts an absolute native path to a URI.
 
      Bytes outside the unreserved set are percent encoded; Windows
-     separators become slashes. Original client URIs should be retained
+     separators become slashes. Native drive and UNC paths are supported.
+     Original client URIs should be retained
      for existing documents instead of reconstructed with this function.
 
      Raises: `Invalid` for a relative path, NUL, or malformed Windows

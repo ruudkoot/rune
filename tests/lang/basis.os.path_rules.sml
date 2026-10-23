@@ -5,11 +5,16 @@
    the 8 of splitBaseExt, then the canonical forms, the two examples, the 12
    rows of the mkRelative table, Path for a relativeTo that is not
    absolute, and joinDirFile undoing splitDirFile on the rows of its table. *)
-fun show (p, f) = print (p ^ " -> " ^ f p ^ "\n")
+(* Render the Unix table with slashes on either host. Native Windows drive,
+   UNC, separator and volume behavior is checked by basis.os.path_windows. *)
+val output = print
+fun print text = output (String.map (fn #"\\" => #"/" | c => c) text)
+fun host p = OS.Path.fromUnixPath p
+fun show (p, f) = print (p ^ " -> " ^ f (host p) ^ "\n")
 val () = List.app (fn p => show (p, OS.Path.getParent)) ["/", "a", "a/", "a///", "a/b", "a/b/", "..", ".", ""]
-fun showSplit p = let val {dir, file} = OS.Path.splitDirFile p in print (p ^ " -> {" ^ dir ^ "|" ^ file ^ "}\n") end
+fun showSplit p = let val {dir, file} = OS.Path.splitDirFile (host p) in print (p ^ " -> {" ^ dir ^ "|" ^ file ^ "}\n") end
 val () = List.app showSplit ["", ".", "b", "b/", "a/b", "/a"]
-fun showExt p = let val {base, ext} = OS.Path.splitBaseExt p
+fun showExt p = let val {base, ext} = OS.Path.splitBaseExt (host p)
                 in print (p ^ " -> {" ^ base ^ "|" ^ (case ext of NONE => "NONE" | SOME e => e) ^ "}\n") end
 val () = List.app showExt ["", ".login", "/.login", "a", "a.", "a.b", "a.b.c", ".news/comp"]
 val () = List.app (fn p => show (p, OS.Path.mkCanonical)) ["", "a/../b", "/a/../..", "./a//b/", "../x"]
@@ -23,5 +28,5 @@ val () = List.app rel [("a/b", "/c/d"), ("/", "/a/b/c"), ("/a/", "/a/b/c"), ("/a
 fun path f = (ignore (f ()); "no exception") handle OS.Path.Path => "Path"
 val () = print ("mkAbsolute of /a relative to c/d: " ^ path (fn () => OS.Path.mkAbsolute {path = "/a", relativeTo = "c/d"}) ^ "\n")
 val () = print ("mkRelative of a relative to c/d: " ^ path (fn () => OS.Path.mkRelative {path = "a", relativeTo = "c/d"}) ^ "\n")
-val () = List.app (fn p => print ("join (split " ^ p ^ ") -> " ^ OS.Path.joinDirFile (OS.Path.splitDirFile p) ^ "\n"))
+val () = List.app (fn p => print ("join (split " ^ p ^ ") -> " ^ OS.Path.joinDirFile (OS.Path.splitDirFile (host p)) ^ "\n"))
                   ["", ".", "b", "b/", "a/b", "/a", "/"]

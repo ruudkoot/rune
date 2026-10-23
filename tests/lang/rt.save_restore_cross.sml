@@ -21,7 +21,14 @@ fun answer () =
   ^ " " ^ Int.toString (Word8Array.foldl (fn (b, h) => (h * 31 + Word8.toInt b) mod 1000003) 0 bytes)
   ^ " " ^ CharArray.vector chars
   ^ " " ^ String.concatWith "," (RealArray.foldr (fn (x, l) => Real.toString x :: l) [] reals)
+(* Host path syntax belongs to the restoring process, not the saved heap. *)
+fun checkPaths () =
+  let val windows=List.exists (fn (name,value) => name="sysname" andalso value="Windows") (Posix.ProcEnv.uname ())
+  in if OS.Path.validVolume {isAbs=true,vol="C:"}=windows andalso
+        (not windows orelse OS.Path.isAbsolute "C:\\folder") then ()
+     else raise Fail "restored OS.Path retained the writer's host syntax" end
+val () = checkPaths ()
 val () =
   case Runtime.save "tests/out/rt.save_restore_cross.img" of
-    Runtime.Saved => print (answer () ^ "\n")
-  | Runtime.Restored => print (answer () ^ "\n")
+    Runtime.Saved => (checkPaths (); print (answer () ^ "\n"))
+  | Runtime.Restored => (checkPaths (); print (answer () ^ "\n"))

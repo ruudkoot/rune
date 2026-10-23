@@ -870,7 +870,6 @@ rune:windows* | Socket.Ctl.getATMARK/before-and-at-the-mark | WINDOWS | stays: W
 rune:windows* | NetHostDB.name/localhost | WINDOWS | stays: the resolver of Windows answers localhost itself, with the name of the machine
 rune:windows* | NetHostDB.aliases/localhost | WINDOWS | stays: the resolver of Windows answers localhost itself, with the name of the machine
 rune:windows* | NetHostDB.getByAddr/loopback | WINDOWS | stays: the resolver of Windows answers localhost itself, with the name of the machine
-rune:windows* | OS.FileSys.fullPath/root | WINDOWS | stays: the root of Windows is that of a drive, /C:/
 rune:windows* | OS.FileSys.A_EXEC/with-execute-bit | WINDOWS | stays: Windows has no execute permission; a file is executable by its extension (PATHEXT)
 rune:windows* | OS.FileSys.A_READ/write-only | WINDOWS | stays: Windows cannot make a file unreadable to its owner
 rune:windows* | OS.Process.system/* | WINDOWS | stays: the command is run by cmd.exe, and the test's are sh's
@@ -879,7 +878,7 @@ rune:windows* | Posix.Error.acces/open-unreadable-file | WINDOWS | stays: Window
 rune:windows* | Posix.FileSys.mkfifo/* | WINDOWS | stays: Windows has no named pipes in the file system
 rune:windows* | Posix.FileSys.*/*fifo* | WINDOWS | stays: Windows has no named pipes in the file system
 rune:windows* | Posix.FileSys.ST.is*/none-of-the-others | WINDOWS | stays: the check makes a named pipe, which Windows does not have in the file system
-rune:windows* | Posix.FileSys.chdir/absolute | WINDOWS | stays: the root of Windows is that of a drive, /C:/
+rune:windows* | Posix.FileSys.chdir/absolute | WINDOWS | stays: the root of Windows includes its drive volume and backslash separator
 rune:windows* | Posix.FileSys.A_READ/not-readable | WINDOWS | stays: Windows cannot make a file unreadable to its owner
 rune:windows* | Posix.FileSys.* | WINDOWS | stays: a mode of Windows is whether the owner may write, and an extension that makes a file executable; the owner always reads, and a group or others have no bits
 rune:windows* | Posix.ProcEnv.getpid/PPID-of-shell | WINDOWS | stays: the test asks sh

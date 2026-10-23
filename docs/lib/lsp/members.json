@@ -494,7 +494,7 @@
      "kind": "val",
      "name": "fromPath",
      "spec": "val fromPath : platform * string -> t",
-     "doc": "`fromPath (platform, path)` converts an absolute native path to a URI.\n\nBytes outside the unreserved set are percent encoded; Windows\nseparators become slashes. Original client URIs should be retained\nfor existing documents instead of reconstructed with this function.\n\n**Raises** `Invalid` for a relative path, NUL, or malformed Windows\nWTF-8.\n\n",
+     "doc": "`fromPath (platform, path)` converts an absolute native path to a URI.\n\nBytes outside the unreserved set are percent encoded; Windows\nseparators become slashes. Native drive and UNC paths are supported.\nOriginal client URIs should be retained\nfor existing documents instead of reconstructed with this function.\n\n**Raises** `Invalid` for a relative path, NUL, or malformed Windows\nWTF-8.\n\n",
      "page": "sig/LSP_URI.md#val-frompath"
     }
    ]

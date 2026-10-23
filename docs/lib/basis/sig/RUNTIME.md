@@ -357,7 +357,8 @@ rather than to the program is not: a socket, a directory stream and a
 pipe are the system's, and a restored world does not have them. Nor is
 what the program read ahead of its standard input and has not taken:
 [`TextIO.stdIn`](../sig/TEXT_IO.md#val-stdin) in the restored world reads that world's standard input
-from where it begins.
+from where it begins. [`OS.Path`](../str/OS.Path.md) also refreshes its host syntax when an
+image resumes on a different operating system.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the image cannot be written.
 
