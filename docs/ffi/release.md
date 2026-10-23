@@ -86,7 +86,8 @@ Windows long-path registry settings. These bounds follow the legacy
 For the existing Windows compiler's `.build` handling, use relative paths with
 forward slashes and run from the example directory. Drive-qualified absolute
 project and virtual-module paths are not supported by that path resolver.
-The installed-example receipt records a working unchanged Win32 example with
+The [installed-example receipt](../../tests/ffi/evidence/installed-examples.md)
+records a working unchanged Win32 example with
 `--build native.build --path WIN32_GENERATED=generated/32` (or `generated/64`),
 using copies of the installed `ffi-assets` fragments in the example tree.
 Windows launchers can run after moving an installation. Its legacy uninstall

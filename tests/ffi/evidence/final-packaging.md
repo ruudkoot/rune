@@ -1,5 +1,10 @@
 # Final Runeffi installation and relocation acceptance — 2026-10-23
 
+The unchanged delivered GUI examples have a subsequent
+[installed-example acceptance record](installed-examples.md), including the
+Windows-only path/manifest safety follow-up. This earlier receipt retains
+its original frozen source and artifact identities.
+
 The frozen runtime/Basis source `ddba4faad9fa5f8540367f1067be35d1b561936d`
 passes enabled installation acceptance in the isolated
 `/home/ruud/rune/.worktrees/runeffi-package-final` worktree. The final checks
