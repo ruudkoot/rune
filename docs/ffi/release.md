@@ -99,13 +99,30 @@ val () = List.app RuneForeign.release [call,symbol,library];
 ```
 
 This uses `tests/ffi/generator/scalars.c`, compiled as a shared library. The
-generated scalar binding also works through existing source loading. After
-generating the scalar fixture as in [generation](generation.md), pass these
-files to `rune-repl --no-init` in order (or `use` each from the prompt):
+generated scalar binding also works through existing source loading. Generated
+public structures include ownership, scope, memory and text helpers even for
+scalar-only declarations. Derive the complete non-Basis dependency order with
+the compiler after [generation](generation.md):
 
-1. `lib/ffi/marshal/bytes_sig.sml`, then `bytes.sml`.
-2. `lib/ffi/runtime/generated_sig.sml`, then `generated.sml`.
-3. The immutable generated set's `raw_sig.sml`, `raw.sml`, `public_sig.sml`,
+```sh
+runeffi_set="$PWD/build/ffi-generated/scalars/sets/SET_IDENTIFIER"
+bin/rune --lib "$PWD/lib" --library ffi/runtime --basis-deps \
+  "$runeffi_set/raw_sig.sml" "$runeffi_set/raw.sml" \
+  "$runeffi_set/public_sig.sml" "$runeffi_set/public.sml"
+```
+
+With an absolute `--lib`, this prints Basis filenames followed by absolute
+non-Basis source paths in dependency order. The REPL image already provides
+the Basis. Pass the non-Basis paths, followed by the generated files, to
+`rune-repl --no-init` in that order (or `use` each from the prompt). The current
+scalar projection needs these 14 support files:
+
+1. `lib/unicode/utf8_sig.sml`, then `utf8.sml`.
+2. `lib/ffi/marshal/scope_sig.sml`, `scope.sml`, `bytes_sig.sml`, `bytes.sml`,
+   `text_sig.sml`, then `text.sml`.
+3. `lib/ffi/runtime/owner_sig.sml`, `owner.sml`, `memory_sig.sml`, `memory.sml`,
+   `generated_sig.sml`, then `generated.sml`.
+4. The immutable generated set's `raw_sig.sml`, `raw.sml`, `public_sig.sml`,
    and `public.sml`.
 
 Then `GeneratedScalars.openSession {libraries=[absoluteLibraryPath]}`,
@@ -118,6 +135,15 @@ prepared calls, buffers or callbacks are in use. Close public resources before
 unloading; reload the provider to resolve native libraries again. Native
 resources cannot be persisted in portable images. See [runtime lifecycle
 rules](runtime.md) for callbacks, image operations, unloading and VM-thread entry.
+
+`make test-ffi-repl` regenerates the current scalar fixture, compiles its C
+subject, obtains that dependency order through `--basis-deps`, and loads the
+ordinary source files into the existing REPL. Public and raw native sessions
+remain live across later declarations and full collection. Both return 42,
+raw status bytes remain available, and closing both sessions must leave zero
+native resources. `RUNE_REPL_IMAGE`, `RUNEVM`, `RUNE`, `RUNE_LIB` and
+`RUNEFFI_BYTECODE` can select compatible frozen artifacts; exact inputs and
+commands are retained with [the acceptance receipt](../../tests/ffi/evidence/scalar-repl.md).
 
 The shared Win32 GUI example and separate provider entrypoints are documented in
 [examples/win32](../../examples/win32/README.md); SDL startup and generation

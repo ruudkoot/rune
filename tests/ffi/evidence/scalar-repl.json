@@ -1,0 +1,326 @@
+{
+  "schema": 1,
+  "generatedSet": "7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0",
+  "compilerVersion": "rune 17c188d25\n",
+  "vmVersion": "runevm 17c471463\nGMP headers 6.3.0, library 6.3.0, 64-bit limbs, supported\nGMP target: x86_64-linux-gnu\nGMP provenance: checked system installation; source and build options not supplied\nGMP build: {\"unknown\": true}\n",
+  "cCompilerVersion": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "nonBasisLoadOrder": [
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib/unicode/utf8_sig.sml",
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib/unicode/utf8.sml",
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/marshal/scope_sig.sml",
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/marshal/scope.sml",
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/marshal/bytes_sig.sml",
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/marshal/bytes.sml",
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/marshal/text_sig.sml",
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/marshal/text.sml",
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/runtime/owner_sig.sml",
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/runtime/owner.sml",
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/runtime/memory_sig.sml",
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/runtime/memory.sml",
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/runtime/generated_sig.sml",
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/runtime/generated.sml"
+  ],
+  "commands": [
+    {
+      "name": "compiler-version",
+      "argv": [
+        "/home/ruud/rune/.worktrees/runeffi-layout/bin/rune-boot",
+        "--version"
+      ],
+      "status": 0,
+      "wallSeconds": 0.064698
+    },
+    {
+      "name": "vm-version",
+      "argv": [
+        "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/runevm",
+        "--version"
+      ],
+      "status": 0,
+      "wallSeconds": 0.011369
+    },
+    {
+      "name": "generate",
+      "argv": [
+        "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/runevm",
+        "--jit=off",
+        "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/runeffi.rbc",
+        "generate",
+        "--config",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/ffi/generator/scalars.ffi",
+        "--target",
+        "/home/ruud/rune/.worktrees/runeffi-repl/ffi/targets/linux-x86_64.json",
+        "--out",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/generated",
+        "--layout",
+        "gen_record",
+        "--constant",
+        "GEN_HIGH",
+        "--constant",
+        "GEN_NEGATIVE"
+      ],
+      "status": 0,
+      "wallSeconds": 0.544563
+    },
+    {
+      "name": "c-compiler-version",
+      "argv": [
+        "cc",
+        "--version"
+      ],
+      "status": 0,
+      "wallSeconds": 0.03365
+    },
+    {
+      "name": "compile-subject",
+      "argv": [
+        "cc",
+        "-std=c17",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-shared",
+        "-fPIC",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/ffi/generator/scalars.c",
+        "-o",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/scalars.so"
+      ],
+      "status": 0,
+      "wallSeconds": 1.406891
+    },
+    {
+      "name": "basis-deps",
+      "argv": [
+        "/home/ruud/rune/.worktrees/runeffi-layout/bin/rune-boot",
+        "--lib",
+        "/home/ruud/rune/.worktrees/runeffi-repl/lib",
+        "--library",
+        "ffi/runtime",
+        "--basis-deps",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/raw_sig.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/raw.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/public_sig.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/public.sml"
+      ],
+      "status": 0,
+      "wallSeconds": 0.257648
+    },
+    {
+      "name": "repl",
+      "argv": [
+        "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/runevm",
+        "--jit=off",
+        "--gc-verify",
+        "--restore",
+        "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/rune-repl.img",
+        "--",
+        "-q",
+        "--no-init",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-0.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-1.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-2.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-3.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-4.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-5.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-6.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-7.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-8.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-9.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-10.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-11.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-12.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-13.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-14.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-15.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-16.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-17.sml",
+        "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/source-18.sml",
+        "-e",
+        "GeneratedScalarRepl.beginSession()",
+        "-e",
+        "datatype laterScalarRepl=LaterScalarRepl of int list; val lateScalarAllocation=LaterScalarRepl(List.tabulate(7000,fn n=>n+1)); fun lateScalarIdentity x=x; val ()=Runtime.collect()",
+        "-e",
+        "GeneratedScalarRepl.finishSession()"
+      ],
+      "status": 0,
+      "wallSeconds": 6.054179
+    }
+  ],
+  "sourceAndBinaryHashes": [
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/bin/rune-boot",
+      "sha256": "1c4e391f65e782cee21be27fbd6fb24a6a5b01defd7afa0566d660279accda9e"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/runevm",
+      "sha256": "c8d25daa1abbb9098cfca34ad920df95c3d277b5355b2f166c81721c183ecaa5"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/rune-repl.img",
+      "sha256": "cd30bec48f70c7251c70ca0b96f0fb1ad2edff177be454bc5f6d097cc223fc3c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/runeffi.rbc",
+      "sha256": "3b894cb2052edff2bcb83954889c1a4b58e24e793ff29d80fd7351d7d7f046d0"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/scalars.so",
+      "sha256": "4780f6efad5bc532d3e2afea3f9f5deab0e2b07da0b02dd97d700794fb9ffa45"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/unicode/utf8_sig.sml",
+      "sha256": "15ca27fbb50018d58d834676cf3e64449b2eb232be65bb83fcbb7590079742ef"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/unicode/utf8.sml",
+      "sha256": "29b65c054ee852f9911557f2847111beef1a6cf9069e6cb5babdf3f882b5d58e"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/marshal/scope_sig.sml",
+      "sha256": "c8ae4a30191ba5673fae0cf69d454962a3c289bad51ae2a62b4d864ef595b545"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/marshal/scope.sml",
+      "sha256": "4aa007fbb0a6ca1bf6db1cb65119606b03f45b3d88a31ea4b4794a522c2075c4"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/marshal/bytes_sig.sml",
+      "sha256": "55ac5939196bd0344fa9e85587626a1d765db3e345fbfbb5a0adbdae06564698"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/marshal/bytes.sml",
+      "sha256": "88d9441877900a294a84f8856a9dde2beff681e2bc1cc4cb63a7653ba1cb6e73"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/marshal/text_sig.sml",
+      "sha256": "fc0654abf610ea95ef173d89508b22ac7bff86e731e87081a0ae9a94bc6a45cc"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/marshal/text.sml",
+      "sha256": "5da182356669e672102a0053615d594506b3f954de671e1d7209b2e19fbf3346"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/runtime/owner_sig.sml",
+      "sha256": "796222672aff5cd839714660a60f89e7041a6342de99c05e464806c46070da77"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/runtime/owner.sml",
+      "sha256": "27b4feebb68102d12250afc1cf983701e413669fb0903ccbaa04e3f8158535f7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/runtime/memory_sig.sml",
+      "sha256": "8f90d87bc4c673427128a095185c5b2f6f8ca0363778aeaff39c75b110543bc6"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/runtime/memory.sml",
+      "sha256": "ad6f7e520eecb9cc8e4643f7ee6bc0a4d90fc0df9481b59bc53aedf7f5036141"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/runtime/generated_sig.sml",
+      "sha256": "3a565405764c9892485d941098af014c942a8d2b5b600ed892b390c254457459"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/runtime/generated.sml",
+      "sha256": "30f1f48efe2006faef6370d81a880b140033641693703dd6e5743f708a433183"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/raw_sig.sml",
+      "sha256": "da1c2813b521028f108fce0b9aa0c15d38e01addaf94cca896127344ece76de8"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/raw.sml",
+      "sha256": "03dabb0e2a56df9facb1f438b5a323439d6849d9aeb0b4425be7baaa8de4cdb8"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/public_sig.sml",
+      "sha256": "0382091bb4c360beaa012971f23909f305650a92242391a09dc51adb7af8801c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/public.sml",
+      "sha256": "fa6bed50abc48af608812732790b2d03a5a72c41a936d3b0c03161602d042106"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/tests/ffi/generator/repl-session.sml",
+      "sha256": "d01cbf798639b15c81ffe7eef0ca370411281c388231fa76a14a130984b268e8"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-layout/bin/rune.rbc",
+      "sha256": "56866a438b66393a453c67e00a7e588f60132e3abab7ea50c3561d9481671a77"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/tests/ffi/generator/scalars.ffi",
+      "sha256": "e634e147a2157a01ff7cdea272daa66f4cb73d352e3ceb3c937a7c1947aba11c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/tests/ffi/generator/scalars.h",
+      "sha256": "6e9613301e956d6b88ad48acdda8349a1b1dd1a0285b3c5cd3ad7a5ab92d08e1"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/tests/ffi/generator/transitive.h",
+      "sha256": "6a5b0728f346db02ea532820b581014540520e369fd941dc2299138535361bca"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-final/ffi-scalar-repl/runeo7sWiM/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/ffi-manifest.json",
+      "sha256": "f55ff2b5c3f1610402dd9cd64923a0c0d4a0087cd2a6fba3f5d8610d877e74cf"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/model/public.sml",
+      "sha256": "9bfd7e9bba4576092361dd3432b1c19a6db2ab5c1c2c0c209edb8a47d5ce612c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/model/generate.sml",
+      "sha256": "691ea39a54ad51c8f91ae9e4b1e97d30a2b08e935da7e5004f8b08a8465891bb"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-repl/src/ffi/main.sml",
+      "sha256": "67465e6e15521aa0c4e67ffff0f62cc10d0bda38fd0895009f34b4f1c9c114c5"
+    }
+  ],
+  "stdout": "structure Utf8\nstructure ForeignScope\nstructure ForeignBytes\nstructure ForeignText\nstructure ForeignOwner\nstructure ForeignMemory\nstructure ForeignGenerated\nstructure GeneratedScalarsRaw\nstructure GeneratedScalars\nstructure GeneratedScalarRepl\nval it = () : unit\ndatatype laterScalarRepl = LaterScalarRepl of int list\nval lateScalarAllocation = LaterScalarRepl\n                             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,\n                              16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,\n                              28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,\n                              40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,\n                              52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,\n                              64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,\n                              76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,\n                              88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99,\n                              100, ...] : laterScalarRepl\nval lateScalarIdentity = fn : 'a -> 'a\nPASS current generated scalar REPL: public=42 raw-status=42 native-resources=0\nval it = () : unit\n",
+  "stderr": "",
+  "date": "2026-10-23",
+  "generatorSourceRevision": "17c471463",
+  "oldGuideReproduction": {
+    "argv": [
+      "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/runevm",
+      "--jit=off",
+      "--restore",
+      "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/rune-repl.img",
+      "--",
+      "-q",
+      "--no-init",
+      "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/marshal/bytes_sig.sml",
+      "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/marshal/bytes.sml",
+      "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/runtime/generated_sig.sml",
+      "/home/ruud/rune/.worktrees/runeffi-repl/lib/ffi/runtime/generated.sml",
+      "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/raw_sig.sml",
+      "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/raw.sml",
+      "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/public_sig.sml",
+      "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/public.sml",
+      "-e",
+      "val publicBindingAvailable = GeneratedScalars.openSession"
+    ],
+    "status": 1,
+    "wallSeconds": 0.7096775200043339,
+    "stdout": "structure ForeignBytes\nstructure ForeignGenerated\nstructure GeneratedScalarsRaw\n",
+    "stderr": "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/public.sml:5:56: error: unbound type constructor: ForeignOwner.owner\nuncaught exception Fail: use: /home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/generated/sets/7580e5ce5398c8af444beb5f8f5827a11ffc494e18be0f42156e11050eaf2cb0/public.sml has errors\nstdIn:1:30: error: unbound variable or constructor: GeneratedScalars.openSession\n"
+  },
+  "generatorBuildArgv": [
+    "/home/ruud/rune/.worktrees/runeffi-layout/bin/rune",
+    "--lib",
+    "/home/ruud/rune/.worktrees/runeffi-repl/lib",
+    "--build",
+    "runeffi.build",
+    "-o",
+    "/home/ruud/rune/.worktrees/runeffi-repl/build/scalar-repl/runeffi.rbc"
+  ],
+  "documentationValidation": {
+    "initialStatus": 1,
+    "initialCause": "fresh worktree had no default bin/rune compiler; signature generation lacked explicit RUNE override",
+    "initialRun": "tests/out/scalar-repl-docs/run/20261023-120629-14/",
+    "readyStatus": 0,
+    "readyRun": "tests/out/scalar-repl-docs/ready/20261023-120800-8/",
+    "output": "slowest: documentation/faults 13.3 s, documentation/features 5.2 s, documentation/signatures 5.0 s, runner/canary/runs-past-its-time 1.0 s, documentation/claims 0.1 s\noutput: kept 0 bytes, freed 1000433; events in /home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-docs/ready/20261023-120800-8/events.jsonl, summary in /home/ruud/rune/.worktrees/runeffi-repl/tests/out/scalar-repl-docs/ready/20261023-120800-8/summary.md\nRESULT: PASS 11 of 11 tests (11 PASS), 18.5 s wall, 22.9 s CPU (62% of 2)\n"
+  }
+}

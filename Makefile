@@ -2229,3 +2229,10 @@ test-win32-contract-mutants: $(RUNE) vm bin/rune-win32-mutants.rbc
 SDL_REPL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/sdl/repl-check.sml
 bin/rune-sdl-repl-check.rbc: $(RUNE) $(SDL_REPL_CHECK_SRCS) tests/ffi/sdl/repl-session.sml manifests
 	$(RUNE) --library test/runner --library json --library digest $(SDL_REPL_CHECK_SRCS) -o $@
+
+FFI_REPL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/generator/repl-check.sml
+.PHONY: test-ffi-repl
+bin/rune-ffi-repl-check.rbc: $(RUNE) $(FFI_REPL_CHECK_SRCS) tests/ffi/generator/repl-session.sml manifests
+	$(RUNE) --library test/runner --library json --library digest $(FFI_REPL_CHECK_SRCS) -o $@
+test-ffi-repl: $(RUNE) vm bin/runeffi.rbc bin/rune-repl.img bin/rune-ffi-repl-check.rbc
+	bin/runevm bin/rune-ffi-repl-check.rbc
