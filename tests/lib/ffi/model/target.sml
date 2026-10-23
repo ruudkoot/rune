@@ -1,3 +1,4 @@
+(* libraries: test/unit *)
 (* Explicit target data must be checked before selecting foreign declarations. *)
 structure ForeignTargetTests =
 struct
