@@ -59,6 +59,16 @@ jobs:
       - name: make check-tools portability
         run: make check-tools portability
 
+      - name: Pinned headless SDL3
+        run: make ffi-sdl FFI_DEPS_OPTIONS=--headless JOBS=2
+
+      - name: Headless SDL and shared Win32 behavior
+        env:
+          RUNE_SDL_NATIVE_LIBRARY: ${{ github.workspace }}/build/deps/sdl/headless/install/lib/libSDL3.so.0
+        run: |
+          env --default-signal=PIPE make test-sdl test-win32-sdl-driver \
+            test-win32-sdl-contract test-win32-app-sdl JOBS=2
+
       - name: bin/rune-test run --tier nightly
         run: env --default-signal=PIPE bin/rune-test run --tier nightly
 
