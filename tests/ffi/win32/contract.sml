@@ -98,6 +98,7 @@ struct
      test "paint-output-scopes-and-exception-cleanup"(fn()=>
        fixture "paint" (fn _=>T.Default)(fn{create,...}=>
          let val window=create "paint"
+             val _=W.User.showWindow(window,8)
              val ()=W.User.invalidateRect(window,NONE,true)
              val saved=ref(NONE:T.paint option)
              val ()=(W.User.withPaint window(fn(paint,rectangle)=>
