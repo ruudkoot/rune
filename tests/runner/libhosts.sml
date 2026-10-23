@@ -96,6 +96,7 @@ struct
       let fun verdict [] = ""
             | verdict (line :: rest) =
                 if String.isPrefix "PASS " line then String.concat (List.map (fn s => s ^ "\n") (line :: rest))
+                else if List.exists (fn prefix => String.isPrefix prefix line) ["FAIL ", "SKIP ", "SUMMARY ", "  - "] then ""
                 else verdict rest
       in built andalso status = 1 andalso verdict (lines output) = read "tests/lib/ffi/model/generate.smlnj.expected" end
     else if host = "mlkit" then built andalso status = 139 andalso output = ""

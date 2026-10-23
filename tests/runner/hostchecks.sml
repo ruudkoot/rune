@@ -65,6 +65,9 @@ struct
       fun known host built status output = LibHosts.generatorHostBug host "ffi.model.generate"
         {built = built, status = status, output = output}
       val () = check ("exact SML/NJ selector defect", known "smlnj-dev" true 1 selectors)
+      val () = check ("selector defect rejects leading failure", not (known "smlnj-dev" true 1 ("FAIL extra\n" ^ selectors)))
+      val () = check ("selector defect rejects leading skip", not (known "smlnj-dev" true 1 ("SKIP extra\n" ^ selectors)))
+      val () = check ("selector defect rejects leading summary", not (known "smlnj-dev" true 1 ("SUMMARY extra\n" ^ selectors)))
       val () = check ("selector defect rejects another failure", not (known "smlnj-dev" true 1 (selectors ^ "FAIL extra\n")))
       val () = check ("selector defect rejects crash", not (known "smlnj-dev" true 139 selectors))
       val () = check ("selector defect rejects build error", not (known "smlnj32" false 1 selectors))
