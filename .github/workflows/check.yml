@@ -26,6 +26,7 @@ jobs:
     env:
       GMP: "yes"
       GMP_PREFIX: build/deps/gmp/native
+      FFI: "yes"
     steps:
       - uses: actions/checkout@v4
 
@@ -33,7 +34,7 @@ jobs:
         run: |
           sudo apt-get update -q
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
-            libgmp-dev gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind \
+            libgmp-dev libffi-dev pkg-config clang gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind \
             python3-jupyter-client python3-zmq
           python3 -c 'import jupyter_client, zmq'
 
@@ -61,6 +62,18 @@ jobs:
       # the tests run with it back at its default action.
       - name: make check
         run: env --default-signal=PIPE make check
+
+      - name: Optional FFI-disabled build and generator
+        run: |
+          make FFI=no all JOBS=4
+          bin/rune tests/ffi/disabled.sml -o build/ffi-disabled.rbc
+          bin/runevm build/ffi-disabled.rbc
+          bin/rune --target=stack tests/ffi/disabled.sml -o build/ffi-disabled.stack.rbc
+          bin/runevm-stack build/ffi-disabled.stack.rbc
+          bin/runeffi generate --config tests/ffi/generator/scalars.ffi \
+            --target ffi/targets/linux-x86_64.json --out build/ffi-disabled-generated
+          bin/runeffi check --config tests/ffi/generator/scalars.ffi \
+            --target ffi/targets/linux-x86_64.json --out build/ffi-disabled-generated
 
       - name: Keep the reports of a failed run
         if: failure()
