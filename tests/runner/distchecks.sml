@@ -250,11 +250,20 @@ struct
                   andalso not (String.isSubstring "/../" (#name m))) entries, "unsafe Windows archive member")
         val extracted = InstallChecks.execute dir "windows-extract" root "" ["unzip", "-q", zip, "-d", stage]
         val () = Scenarios.success extracted
-        val installed = InstallChecks.execute dir "windows-install" (stage ^ "/rune-test1-windows") ""
-            ["cmd.exe", "/c", "install.bat --prefix ..\\prefix --arch x86_64 --no-register"]
+        (* Parse options from outside the archive: SHIFT must not replace %0,
+           which the installer uses to find VERSION, runtimes and libraries. *)
+        val installed = InstallChecks.execute dir "windows-install" stage ""
+            ["cmd.exe", "/c", "set RUNE_INSTALL_PAUSE=1&& call rune-test1-windows\\install.bat --prefix prefix --arch x86_64 --no-register"]
         val () = Scenarios.success installed
         val () = need (same (dir ^ "/exe-x86_64", stage ^ "/prefix/bin/runevm.exe"), "Windows installer chose wrong runtime bytes")
         val () = need (exists (stage ^ "/prefix/share/rune.ico"), "Windows installer omitted the icon")
+        (* The fixture VM is inert; a neighbouring stub observes -i forwarding. *)
+        val () = write (stage ^ "/prefix/bin/rune-repl.cmd", "@echo off\r\necho FORWARDED %*\r\n")
+        val interactive = InstallChecks.execute dir "windows-interactive" stage ""
+            ["cmd.exe", "/c", "prefix\\bin\\rune.cmd -i one two"]
+        val () = Scenarios.success interactive
+        val () = need (Hosts.trim (#output interactive) = "FORWARDED \"one\" \"two\""
+                       andalso #errors interactive = "", "Windows -i forwarding lost its neighbouring launcher or arguments")
         val uninstalled = InstallChecks.execute dir "windows-uninstall" (stage ^ "/prefix") "" ["cmd.exe", "/c", "uninstall.bat"]
         val () = Scenarios.success uninstalled
         val () = need (not (exists (stage ^ "/prefix")), "Windows uninstall left its prefix")

@@ -20,6 +20,7 @@ set "ARCH="
 set "STARTMENU="
 set "NOREG=0"
 
+rem Keep the original script path in %0 for archive-relative inputs.
 :parse
 if "%~1"=="" goto parsed
 if /I "%~1"=="--help" goto help
@@ -27,27 +28,27 @@ if /I "%~1"=="-h" goto help
 if /I "%~1"=="--prefix" (
   if "%~2"=="" goto badarg
   set "PREFIX=%~2"
-  shift
-  shift
+  shift /1
+  shift /1
   goto parse
 )
 if /I "%~1"=="--arch" (
   if "%~2"=="" goto badarg
   set "ARCH=%~2"
-  shift
-  shift
+  shift /1
+  shift /1
   goto parse
 )
 if /I "%~1"=="--start-menu" (
   if "%~2"=="" goto badarg
   set "STARTMENU=%~2"
-  shift
-  shift
+  shift /1
+  shift /1
   goto parse
 )
 if /I "%~1"=="--no-register" (
   set "NOREG=1"
-  shift
+  shift /1
   goto parse
 )
 echo install.bat: unknown argument: %~1 1>&2
