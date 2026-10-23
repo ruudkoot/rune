@@ -667,7 +667,11 @@ the host systems. Shuffling input traversal order does not change output.
 
 ### M3: generic dynamic calls
 
-**Depends on:** M0. **State:** planned.
+**Depends on:** M0. **State:** complete.
+
+Acceptance evidence: [M3 runtime record](../../tests/ffi/evidence/m3.md).
+The generic trusted bridge and initial Linux/Windows calls are implemented;
+callbacks and aggregate/variadic marshalling remain M4/M5 gates.
 
 Add optional libffi provisioning/builds, system-layer loaders, the native
 resource registry, foreign memory, prepared scalar/pointer calls and the
