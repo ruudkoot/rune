@@ -20,6 +20,7 @@ the signature names and no others.
 | [`ForeignPolicy`](str/ForeignPolicy.md) | : | [`FOREIGN_POLICY`](sig/FOREIGN_POLICY.md) |  |  | [lib/ffi/model/policy.sml](../../../../lib/ffi/model/policy.sml) |
 | [`ForeignProjection`](str/ForeignProjection.md) | : | [`FOREIGN_PROJECTION`](sig/FOREIGN_PROJECTION.md) |  |  | [lib/ffi/model/projection.sml](../../../../lib/ffi/model/projection.sml) |
 | [`ForeignShim`](str/ForeignShim.md) | : | [`FOREIGN_SHIM`](sig/FOREIGN_SHIM.md) |  |  | [lib/ffi/model/shim.sml](../../../../lib/ffi/model/shim.sml) |
+| [`ForeignTarget`](str/ForeignTarget.md) | : | [`FOREIGN_TARGET`](sig/FOREIGN_TARGET.md) |  |  | [lib/ffi/model/target.sml](../../../../lib/ffi/model/target.sml) |
 | [`ForeignValidate`](str/ForeignValidate.md) | : | [`FOREIGN_VALIDATE`](sig/FOREIGN_VALIDATE.md) |  |  | [lib/ffi/model/validate.sml](../../../../lib/ffi/model/validate.sml) |
 
 ---

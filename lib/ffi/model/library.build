@@ -5,6 +5,8 @@ annotate "demand" in
   model.sml
   located_json_sig.sml
   located_json.sml
+  target_sig.sml
+  target.sml
   policy_sig.sml
   policy.sml
   projection_sig.sml

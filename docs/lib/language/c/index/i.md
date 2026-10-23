@@ -5,7 +5,7 @@
 - `Identifier` (con): [C_LEX](../sig/C_LEX.md#con-identifier)
 - `identifier` (val): [C_DECLARATOR](../sig/C_DECLARATOR.md#val-identifier)
 - `Int` (con): [C_INTEGER](../sig/C_INTEGER.md#con-int)
-- `integer` (val): [C_TYPE](../sig/C_TYPE.md#val-integer)
+- `integer` (val): [C_ANALYSIS](../sig/C_ANALYSIS.md#val-integer), [C_TYPE](../sig/C_TYPE.md#val-integer)
 - `integerType` (type): [C_INTEGER](../sig/C_INTEGER.md#type-integertype)
 - `integerType` (val): [C_INTEGER](../sig/C_INTEGER.md#val-integertype)
 

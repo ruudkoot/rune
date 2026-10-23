@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 23 requirements between the 14 files become 14 arrows.
+library and not a wall of lines: the 27 requirements between the 16 files become 17 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Foreign interfaces<br>(14)"]
+  a0["Foreign interfaces<br>(16)"]
 ```
 
 ## Foreign interfaces
@@ -34,30 +34,35 @@ flowchart TD
   n1["ForeignModel"]
   n2(["FOREIGN_JSON"])
   n3["ForeignJson"]
-  n4(["FOREIGN_POLICY"])
-  n5["ForeignPolicy"]
-  n6(["FOREIGN_PROJECTION"])
-  n7["ForeignProjection"]
-  n8(["FOREIGN_VALIDATE"])
-  n9["ForeignValidate"]
-  n10(["FOREIGN_SHIM"])
-  n11["ForeignShim"]
-  n12(["FOREIGN_COVERAGE"])
-  n13["ForeignCoverage"]
+  n4(["FOREIGN_TARGET"])
+  n5["ForeignTarget"]
+  n6(["FOREIGN_POLICY"])
+  n7["ForeignPolicy"]
+  n8(["FOREIGN_PROJECTION"])
+  n9["ForeignProjection"]
+  n10(["FOREIGN_VALIDATE"])
+  n11["ForeignValidate"]
+  n12(["FOREIGN_SHIM"])
+  n13["ForeignShim"]
+  n14(["FOREIGN_COVERAGE"])
+  n15["ForeignCoverage"]
   n1 --> n0
   n2 --> n1
   n3 --> n2
   n4 --> n1
   n5 --> n4
   n5 --> n3
-  n6 --> n5
+  n6 --> n1
   n7 --> n6
-  n8 --> n5
+  n7 --> n3
+  n8 --> n7
   n9 --> n8
-  n9 --> n7
+  n10 --> n7
   n11 --> n10
-  n12 --> n1
+  n11 --> n9
   n13 --> n12
+  n14 --> n1
+  n15 --> n14
 ```
 
 ---

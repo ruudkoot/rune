@@ -4,6 +4,7 @@
 
 - `unary` (val): [C_INTEGER](../sig/C_INTEGER.md#val-unary)
 - `Union` (con): [C_PARSE](../sig/C_PARSE.md#con-union)
+- `UnsignedNonnegative` (con): [C_ANALYSIS](../sig/C_ANALYSIS.md#con-unsignednonnegative)
 
 ---
 

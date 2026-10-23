@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 4 of 4 entries documented |
+| Documentation | 5 of 5 entries documented |
 | Tests | not listed |
 | Source | [lib/language/c/type\_sig.sml](../../../../../lib/language/c/type_sig.sml) |
 
@@ -33,6 +33,7 @@ sig
   val <a href="#val-integer">integer</a> : {<a href="#fld-integer.target">target</a> : CInteger.target, <a href="#fld-integer.charsigned">charSigned</a> : bool, <a href="#fld-integer.ty">ty</a> : CParse.ctype} -&gt;
     CInteger.integerType option
   val <a href="#val-spelling">spelling</a> : CInteger.integerType -&gt; string
+  val <a href="#val-layoutattributes">layoutAttributes</a> : CParse.attribute list -&gt; string list
 end
 </pre>
 
@@ -87,6 +88,17 @@ val spelling : CInteger.integerType -> string
 ```
 
 `spelling ty` returns a canonical builtin name for an integer type.
+
+### <a name="val-layoutattributes"></a>`layoutAttributes`
+
+```sml
+val layoutAttributes : CParse.attribute list -> string list
+```
+
+`layoutAttributes attributes` lists tokens needing verified ABI handling.
+
+Known qualifiers and linkage/diagnostic metadata are transparent.
+Unknown attribute identifiers remain explicit adapter requirements.
 
 ---
 

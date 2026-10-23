@@ -3,9 +3,12 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) **e** [f](f.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md)
 
 - `Enum` (con): [C_PARSE](../sig/C_PARSE.md#con-enum)
-- `environment` (type): [C_ENUM_CONST](../sig/C_ENUM_CONST.md#type-environment)
-- `Error` (exn): [C_CONST](../sig/C_CONST.md#exn-error), [C_DECLARATOR](../sig/C_DECLARATOR.md#exn-error), [C_ENUM_CONST](../sig/C_ENUM_CONST.md#exn-error), [C_EXPRESSION](../sig/C_EXPRESSION.md#exn-error), [C_INTEGER](../sig/C_INTEGER.md#exn-error), [C_LAYOUT](../sig/C_LAYOUT.md#exn-error), [C_LEX](../sig/C_LEX.md#exn-error), [C_PARSE](../sig/C_PARSE.md#exn-error), [C_PREPROCESS](../sig/C_PREPROCESS.md#exn-error)
+- `enumerator` (val): [C_ANALYSIS](../sig/C_ANALYSIS.md#val-enumerator)
+- `enumRule` (type): [C_ANALYSIS](../sig/C_ANALYSIS.md#type-enumrule)
+- `environment` (type): [C_ANALYSIS](../sig/C_ANALYSIS.md#type-environment), [C_ENUM_CONST](../sig/C_ENUM_CONST.md#type-environment)
+- `Error` (exn): [C_ANALYSIS](../sig/C_ANALYSIS.md#exn-error), [C_CONST](../sig/C_CONST.md#exn-error), [C_DECLARATOR](../sig/C_DECLARATOR.md#exn-error), [C_ENUM_CONST](../sig/C_ENUM_CONST.md#exn-error), [C_EXPRESSION](../sig/C_EXPRESSION.md#exn-error), [C_INTEGER](../sig/C_INTEGER.md#exn-error), [C_LAYOUT](../sig/C_LAYOUT.md#exn-error), [C_LEX](../sig/C_LEX.md#exn-error), [C_PARSE](../sig/C_PARSE.md#exn-error), [C_PREPROCESS](../sig/C_PREPROCESS.md#exn-error)
 - `evaluate` (val): [C_CONST](../sig/C_CONST.md#val-evaluate), [C_ENUM_CONST](../sig/C_ENUM_CONST.md#val-evaluate), [C_EXPRESSION](../sig/C_EXPRESSION.md#val-evaluate)
+- `expression` (val): [C_ANALYSIS](../sig/C_ANALYSIS.md#val-expression)
 
 ---
 

@@ -9,6 +9,7 @@
 - `common` (val): [C_INTEGER](../sig/C_INTEGER.md#val-common)
 - `compute` (val): [C_LAYOUT](../sig/C_LAYOUT.md#val-compute)
 - `convert` (val): [C_INTEGER](../sig/C_INTEGER.md#val-convert)
+- `create` (val): [C_ANALYSIS](../sig/C_ANALYSIS.md#val-create)
 - `ctype` (type): [C_PARSE](../sig/C_PARSE.md#type-ctype)
 
 ---

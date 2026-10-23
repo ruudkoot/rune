@@ -13,7 +13,10 @@
     "longLong": 8,
     "pointer": 8,
     "size": 8,
-    "wchar": 4
+    "wchar": 4,
+    "float": 4,
+    "double": 8,
+    "bool": 1
   },
   "alignments": {
     "char": 1,
@@ -22,7 +25,10 @@
     "long": 8,
     "longLong": 8,
     "pointer": 8,
-    "double": 8
+    "double": 8,
+    "wchar": 4,
+    "float": 4,
+    "bool": 1
   },
   "verifiedBy": "tests/ffi/oracle.c",
   "predefined": [
@@ -178,5 +184,7 @@
       "__has_extension(x)",
       "0"
     ]
-  ]
+  ],
+  "enumRule": "unsigned-nonnegative",
+  "sizeType": "unsigned long"
 }

@@ -20,4 +20,9 @@ sig
     CInteger.integerType option
   (* `spelling ty` returns a canonical builtin name for an integer type. *)
   val spelling : CInteger.integerType -> string
+  (* `layoutAttributes attributes` lists tokens needing verified ABI handling.
+
+     Known qualifiers and linkage/diagnostic metadata are transparent.
+     Unknown attribute identifiers remain explicit adapter requirements. *)
+  val layoutAttributes : CParse.attribute list -> string list
 end

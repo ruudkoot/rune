@@ -3,7 +3,7 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) **d** [e](e.md) [f](f.md) [g](g.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
 - `declaration` (type): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#type-declaration)
-- `decode` (val): [FOREIGN_JSON](../sig/FOREIGN_JSON.md#val-decode), [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#val-decode)
+- `decode` (val): [FOREIGN_JSON](../sig/FOREIGN_JSON.md#val-decode), [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#val-decode), [FOREIGN_TARGET](../sig/FOREIGN_TARGET.md#val-decode)
 - `direction` (type): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#type-direction)
 - `document` (type): [FOREIGN_JSON](../sig/FOREIGN_JSON.md#type-document)
 

@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`C_TYPE`](../sig/C_TYPE.md) |
 | Status | required |
-| Members | 4 |
+| Members | 5 |
 | Tests | not listed |
 | Source | [lib/language/c/type.sml](../../../../../lib/language/c/type.sml) |
 
@@ -24,6 +24,7 @@ What each means is on [`C_TYPE`](../sig/C_TYPE.md); the types are this structure
 | --- | --- | --- |
 | val | [`canonical`](../sig/C_TYPE.md#val-canonical) | `string -> string` |
 | val | [`integer`](../sig/C_TYPE.md#val-integer) | `{charSigned : bool, target : {char : int, int : int, long : int, longLong : int, short : int}, ty : CParse.ctype} -> {rank : CInteger.rank, signed : bool, width : int} option` |
+| val | [`layoutAttributes`](../sig/C_TYPE.md#val-layoutattributes) | `{kind : CLex.kind, location : {column : int, file : string, line : int}, origins : {column : int, file : string, line : int} list, space : bool, text : string} list list -> string list` |
 | val | [`parse`](../sig/C_TYPE.md#val-parse) | `{tokens : {kind : CLex.kind, location : {column : int, file : string, line : int}, origins : {column : int, file : string, line : int} list, space : bool, text : string} list, typedefs : string list} -> CParse.ctype option` |
 | val | [`spelling`](../sig/C_TYPE.md#val-spelling) | `{rank : CInteger.rank, signed : bool, width : int} -> string` |
 

@@ -7,6 +7,7 @@
 - `Sequence` (con): [C_LAYOUT](../sig/C_LAYOUT.md#con-sequence)
 - `Shim` (exn): [C_LAYOUT](../sig/C_LAYOUT.md#exn-shim)
 - `Short` (con): [C_INTEGER](../sig/C_INTEGER.md#con-short)
+- `SignedEnums` (con): [C_ANALYSIS](../sig/C_ANALYSIS.md#con-signedenums)
 - `size` (val): [C_LAYOUT](../sig/C_LAYOUT.md#val-size)
 - `source` (type): [C_LAYOUT](../sig/C_LAYOUT.md#type-source)
 - `spelling` (val): [C_LEX](../sig/C_LEX.md#val-spelling), [C_TYPE](../sig/C_TYPE.md#val-spelling)

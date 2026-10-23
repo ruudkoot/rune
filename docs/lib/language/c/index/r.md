@@ -6,6 +6,7 @@
 - `read` (val): [C_FILES](../sig/C_FILES.md#val-read)
 - `Record` (con): [C_PARSE](../sig/C_PARSE.md#con-record)
 - `recordKind` (type): [C_PARSE](../sig/C_PARSE.md#type-recordkind)
+- `resolve` (val): [C_ANALYSIS](../sig/C_ANALYSIS.md#val-resolve)
 - `resolver` (type): [C_PREPROCESS](../sig/C_PREPROCESS.md#type-resolver)
 - `resolver` (val): [C_FILES](../sig/C_FILES.md#val-resolver)
 - `run` (val): [C_PREPROCESS](../sig/C_PREPROCESS.md#val-run)

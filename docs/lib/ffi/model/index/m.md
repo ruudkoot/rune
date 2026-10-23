@@ -4,6 +4,7 @@
 
 - `Macro` (con): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#con-macro)
 - `member` (val): [FOREIGN_JSON](../sig/FOREIGN_JSON.md#val-member)
+- `model` (val): [FOREIGN_TARGET](../sig/FOREIGN_TARGET.md#val-model)
 
 ---
 

@@ -49,4 +49,16 @@ struct
     (if signed then (if rank=CInteger.Char then "signed " else "") else "unsigned ") ^
     (case rank of CInteger.Char=>"char" | CInteger.Short=>"short" | CInteger.Int=>"int"
       | CInteger.Long=>"long" | CInteger.LongLong=>"long long")
+  fun layoutAttributes attributes=
+    let val harmless=["const","volatile","restrict","__restrict","__restrict__","__w64",
+          "__attribute__","__attribute","__declspec","__cdecl","__stdcall","__fastcall","__thiscall","__vectorcall",
+          "__clrcall","__pascal","_cdecl","_stdcall","dllimport","dllexport","visibility","deprecated",
+          "__deprecated__","nothrow","__nothrow__","noreturn","__noreturn__","_Noreturn","noinline","__noinline__",
+          "always_inline","__always_inline__","forceinline","leaf","__leaf__","unused","__unused__","used","__used__",
+          "warn_unused_result","__warn_unused_result__","nonnull","__nonnull__","returns_nonnull","__returns_nonnull__",
+          "format","__format__","printf","__printf__","scanf","__scanf__","uuid","no_init_all","novtable",
+          "malloc","__malloc__","alloc_size","__alloc_size__","alloc_align","__alloc_align__","allocator",
+          "pure","__pure__","__const__","cold","__cold__","hot","__hot__","not_tail_called"]
+    in List.map #text(List.filter(fn(t:CLex.token)=> #kind t=CLex.Identifier andalso
+      not(List.exists(fn known=>known= #text t)harmless))(List.concat attributes)) end
 end
