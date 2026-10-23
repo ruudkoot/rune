@@ -393,12 +393,14 @@ struct
         "    in fn()=>if !released then () else (released:=true;borrows:= !borrows-1;releaseOwner()) end\n" ^
         "  fun borrowHandle scope value=let val release=retainHandle value val _=ForeignScope.defer(scope,release) in rawHandle value end\n" ^
         "  fun makeHandle(Session{borrowed,owned,active,...}) pointer owner retained=\n" ^
-        "    let val value={pointer=pointer,owner=owner,closed=ref false,borrows=ref 0,retained=retained,active=active}\n" ^
+        "    let val ()=borrowed:=List.filter(fn value=>not(retired value))(!borrowed)\n" ^
+        "        val ()=owned:=List.filter(fn value=>not(retired value))(!owned)\n" ^
+        "        val value={pointer=pointer,owner=owner,closed=ref false,borrows=ref 0,retained=retained,active=active}\n" ^
         "    in (case owner of NONE=>borrowed:=value:: !borrowed | SOME _=>owned:=value:: !owned);value end\n" ^
         "  fun closeSession(Session{native,borrowed,owned,active})=\n" ^
         "    let val ()=if !active>0 orelse List.exists(fn value=>not(retired value))(!owned) then raise ForeignOwner.Busy else ()\n" ^
         "        fun close []=borrowed:=[] | close(value::rest)=(if retired value then () else closeHandle value;borrowed:=rest;close rest)\n" ^
-        "    in close(!borrowed);" ^ raw ^ ".closeSession native end\n" ^
+        "    in close(!borrowed);" ^ raw ^ ".closeSession native;owned:=[];borrowed:=[] end\n" ^
         "  fun scopedBuffer scope length=let val buffer=ForeignMemory.allocate length val _=ForeignScope.defer(scope,fn()=>ForeignMemory.release buffer) in buffer end\n" ^
         "  fun inputText scope encoding terminated extent NONE=NONE\n" ^
         "    | inputText scope encoding terminated extent(SOME text)=\n" ^
