@@ -26,12 +26,20 @@ an allocator reuses their address. This is the strict memory contract;
 GUI handles permitting destruction during messages require their explicit
 callback protocol. Raw pointer escapes remain the caller's responsibility.
 
+[`ForeignGenerated`](str/ForeignGenerated.md) keeps immutable fixed call descriptors in explicit lazy
+sessions. Defining a generated structure opens no libraries. The first call
+checks native pointer width, byte order and calling convention, resolves its
+symbol through the ordered library paths, and caches the prepared interface.
+Session close releases calls and symbols before attempting library unload;
+native dependent resources prevent premature unloading, and close can be retried.
+
 [How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [f](index/f.md) [i](index/i.md) [l](index/l.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [w](index/w.md)
 
 ## Foreign interfaces
 
 | Signature |  |
 | --- | --- |
+| [`FOREIGN_GENERATED`](sig/FOREIGN_GENERATED.md) | Explicit sessions for generated dynamic foreign declarations. |
 | [`FOREIGN_MEMORY`](sig/FOREIGN_MEMORY.md) | Bounded native buffers and scoped borrowed SML array copies. |
 | [`FOREIGN_OWNER`](sig/FOREIGN_OWNER.md) | Explicit ownership and borrowed-use scopes for native pointers. |
 

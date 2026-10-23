@@ -2,6 +2,7 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [f](f.md) [i](i.md) [l](l.md) [o](o.md) [p](p.md) [r](r.md) **s** [t](t.md) [w](w.md)
 
+- `session` (type): [FOREIGN_GENERATED](../sig/FOREIGN_GENERATED.md#type-session)
 - `slice` (val): [FOREIGN_MEMORY](../sig/FOREIGN_MEMORY.md#val-slice)
 
 ---

@@ -4,4 +4,6 @@ annotate "demand" in
   owner.sml
   memory_sig.sml
   memory.sml
+  generated_sig.sml
+  generated.sml
 end

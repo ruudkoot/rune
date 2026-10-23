@@ -42,6 +42,7 @@ struct
        ("ffi.marshal.core", ["unicode", "ffi/marshal"], "ffi/marshal/core"),
        ("ffi.model.shim", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/shim"),
        ("ffi.model.target", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/target"),
+       ("ffi.model.generate", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/generate"),
        ("ffi.model.policy", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/policy")]
   fun files libraries =
     let fun one "unit" = unit ()

@@ -109,7 +109,8 @@ GEN_C    := runtime/isa.h runtime/stack/opcodes.h runtime/prims_table.h runtime/
 SOURCES_DOC := $(shell sh scripts/build-files.sh runedoc.build)
 SOURCES_OPT := $(shell sh scripts/build-files.sh runeopt.build)
 SOURCES_ISA := $(shell sh scripts/build-files.sh runeisa.build)
-BUILDFILES := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb
+SOURCES_FFI := $(shell sh scripts/build-files.sh runeffi.build)
+BUILDFILES := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb build/runeffi.mlb build/runeffi.cm build/runeffi-polyml-build.sml build/runeffi-mlkit.mlb
 VERSIONGEN := build/config.sml runtime/version.h
 BUILDGEN := $(BUILDFILES) $(VERSIONGEN)
 
@@ -232,7 +233,7 @@ RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
 .PHONY: check-docs-generated test-mutants manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
 
-all: vm boot runedoc runeopt manifests basis-cache
+all: vm boot runedoc runeopt runeffi manifests basis-cache
 
 # The MANIFEST of each library (BasisManifest; docs/build.md), what each of
 # its files provides and requires, made from the library's build file and
@@ -322,7 +323,7 @@ build/.doctor-%: scripts/doctor.sh
 # ---------------------------------------------------------------- generated
 gen: $(BUILDGEN)
 
-$(BUILDFILES) &: rune.build runedoc.build runeopt.build runeisa.build scripts/build-files.sh scripts/gen-build-files.sh
+$(BUILDFILES) &: rune.build runedoc.build runeopt.build runeisa.build runeffi.build scripts/build-files.sh scripts/gen-build-files.sh
 	sh scripts/gen-build-files.sh "$(ROOT)"
 
 # The version is git's (scripts/gen-version.sh): asked on every make, and
@@ -443,6 +444,50 @@ bin/rune-mlkit: bin/rune-mlkit.bin Makefile
 	chmod +x $@
 
 # ---------------------------------------------------------------- runedoc
+# Runeffi is an SML program. Header processing is an explicit command and
+# never an action executed from the .build language.
+.PHONY: runeffi runeffi-host-builds ffi check-ffi-generated
+runeffi: bin/runeffi
+bin/runeffi.rbc: $(RUNE) $(SOURCES_FFI) src/main/runeffi-rune-main.sml
+	@mkdir -p bin
+	$(RUNE) -o $@ $(SOURCES_FFI) src/main/runeffi-rune-main.sml
+bin/runeffi: bin/runeffi.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/runeffi.rbc" "$$@"\n' > $@
+	chmod +x $@
+bin/runeffi-mlton.bin: $(BUILDGEN) $(SOURCES_FFI) src/main/runeffi-mlton-main.sml | build/.doctor-mlton
+	@mkdir -p bin
+	$(MLTON) -output $@ build/runeffi.mlb
+bin/runeffi-mlton: bin/runeffi-mlton.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeffi-mlton.bin" "$$@"\n' > $@
+	chmod +x $@
+bin/runeffi-polyml.bin: $(BUILDGEN) $(SOURCES_FFI) src/main/runeffi-polyml-main.sml | build/.doctor-polyml
+	@mkdir -p bin
+	$(POLYC) -o $@ build/runeffi-polyml-build.sml
+bin/runeffi-polyml: bin/runeffi-polyml.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeffi-polyml.bin" -H $(POLYML_HEAP) "$$@"\n' > $@
+	chmod +x $@
+runeffi-host-builds: bin/runeffi-mlton bin/runeffi-polyml
+FFI_CONFIG ?= tests/ffi/generator/scalars.ffi
+FFI_TARGET ?= ffi/targets/linux-x86_64.json
+FFI_OUT ?= build/ffi-generated/scalars
+FFI_OPTIONS ?=
+ffi: bin/runeffi
+	bin/runeffi generate --config $(FFI_CONFIG) --target $(FFI_TARGET) --out $(FFI_OUT) $(FFI_OPTIONS)
+check-ffi-generated: bin/runeffi
+	bin/runeffi check --config $(FFI_CONFIG) --target $(FFI_TARGET) --out $(FFI_OUT) $(FFI_OPTIONS)
+FFI_GENERATOR_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/generator-check.sml
+check-tools: bin/runeffi bin/rune-ffi-generator-check
+bin/rune-ffi-generator-check.rbc: $(RUNE) $(FFI_GENERATOR_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner --library json $(FFI_GENERATOR_CHECK_SRCS) -o $@
+bin/rune-ffi-generator-check: bin/rune-ffi-generator-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-generator-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-ffi-generator test-ffi-generator-hosts
+test-ffi-generator: $(RUNE) vm bin/runeffi bin/rune-ffi-generator-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-generator
+test-ffi-generator-hosts: $(RUNE) vm bin/runeffi bin/rune-ffi-generator-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-generator-hosts
+
 # The documentation generator (docs/plans/docgen.md): the sources of
 # runedoc.build, built like the compiler by every host and by the compiler
 # itself (bin/runedoc, on runevm). The SML/NJ builds come one after another

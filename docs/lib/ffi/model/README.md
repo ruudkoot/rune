@@ -29,6 +29,13 @@ commands; the generator/build integration supplies provenance and rebuilds.
 alignments, size type, byte order, enum policy and preprocessing macros are data;
 the generator does not infer them from the host running Rune.
 
+[`ForeignGenerate`](str/ForeignGenerate.md) produces documented, sealed raw bindings, fixed scalar
+projections, selected object measurements, typed field adapters and an
+implementation manifest. Explicit public adapters remain named in that
+manifest. An unsupported selected projection fails generation; it never
+quietly exports an unsafe public wrapper. `runeffi` supplies filesystem
+inputs and atomic publication around this reusable pure emitter.
+
 [How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md)
 
 ## Foreign interfaces
@@ -36,6 +43,7 @@ the generator does not infer them from the host running Rune.
 | Signature |  |
 | --- | --- |
 | [`FOREIGN_COVERAGE`](sig/FOREIGN_COVERAGE.md) | Declaration coverage and implementation evidence stay separate. |
+| [`FOREIGN_GENERATE`](sig/FOREIGN_GENERATE.md) | Deterministic source generation from checked C declarations and policy. |
 | [`FOREIGN_JSON`](sig/FOREIGN_JSON.md) | JSON values with physical positions for declarative policy diagnostics. |
 | [`FOREIGN_MODEL`](sig/FOREIGN_MODEL.md) | Foreign declarations, independent of target layout and SML projection. |
 | [`FOREIGN_POLICY`](sig/FOREIGN_POLICY.md) | Declarative FFI policy; reading a sidecar never executes its adapters. |

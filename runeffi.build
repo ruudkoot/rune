@@ -1,0 +1,56 @@
+(* Runeffi's reusable C frontend, binding policy and deterministic generator.
+   This file describes SML compilation only; generation is an explicit command. *)
+files
+  lib/unicode/utf8_sig.sml
+  lib/unicode/utf8.sml
+  lib/json/json_sig.sml
+  lib/json/json.sml
+  lib/digest/digest_sig.sml
+  lib/digest/sha256.sml
+  lib/digest/hex_sig.sml
+  lib/digest/hex.sml
+  lib/language/c/lex_sig.sml
+  lib/language/c/lex.sml
+  lib/language/c/const_sig.sml
+  lib/language/c/const.sml
+  lib/language/c/integer_sig.sml
+  lib/language/c/integer.sml
+  lib/language/c/preprocess_sig.sml
+  lib/language/c/preprocess.sml
+  lib/language/c/parse_sig.sml
+  lib/language/c/parse.sml
+  lib/language/c/type_sig.sml
+  lib/language/c/type.sml
+  lib/language/c/declarator_sig.sml
+  lib/language/c/declarator.sml
+  lib/language/c/expression_sig.sml
+  lib/language/c/expression.sml
+  lib/language/c/enum_const_sig.sml
+  lib/language/c/enum_const.sml
+  lib/language/c/layout_sig.sml
+  lib/language/c/layout.sml
+  lib/language/c/analysis_sig.sml
+  lib/language/c/analysis.sml
+  lib/language/c/files_sig.sml
+  lib/language/c/files.sml
+  lib/ffi/model/model_sig.sml
+  lib/ffi/model/model.sml
+  lib/ffi/model/located_json_sig.sml
+  lib/ffi/model/located_json.sml
+  lib/ffi/model/target_sig.sml
+  lib/ffi/model/target.sml
+  lib/ffi/model/policy_sig.sml
+  lib/ffi/model/policy.sml
+  lib/ffi/model/projection_sig.sml
+  lib/ffi/model/projection.sml
+  lib/ffi/model/validate_sig.sml
+  lib/ffi/model/validate.sml
+  lib/ffi/model/shim_sig.sml
+  lib/ffi/model/shim.sml
+  lib/ffi/model/coverage_sig.sml
+  lib/ffi/model/coverage.sml
+  lib/ffi/model/generate_sig.sml
+  lib/ffi/model/generate.sml
+  src/ffi/main.sml
+end
+src/main/runeffi-rune-main.sml

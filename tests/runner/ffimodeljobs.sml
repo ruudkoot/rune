@@ -15,4 +15,15 @@ struct
      job "prepare-goldens" "goldens-prepare" ["test-ffi-model-hosts"] [],
      Test.describe "hosts" (List.map(fn name=>Test.requires["host:" ^ name]
        (job name ("goldens " ^ name) ["test-ffi-model-hosts","library","nightly"] ["ffi/model/prepare-goldens"])) Hosts.names)]
+  fun generatorJob name arguments tags=
+    List.foldl(fn(tag,tree)=>Test.tag tag tree)
+      (Test.it name {program="/bin/sh",args=["sh","-c","exec bin/rune-ffi-generator-check " ^ arguments],
+        env=NONE,dir=SOME ".",stdin=NONE,timeout=Time.fromSeconds 1800,cap=0,cpus=1,memory=3000,
+        pools=["matrix"],exclusive=false,after=[],judge=Sh.failLines}:Run.command Test.tree)
+      (tags @ ["covers:src/ffi/*","covers:lib/ffi/model/*","covers:lib/ffi/runtime/*","covers:tests/ffi/generator/*"])
+  val tree=Test.describe ""
+    [tree,Test.describe "ffi/generator"
+      [Test.requires["cc"](generatorJob "native" "native" ["check","test-ffi-generator"]),
+       Test.describe "hosts" (List.map(fn name=>Test.requires["host:" ^ name]
+         (generatorJob name ("host " ^ name)["test-ffi-generator-hosts","library","nightly"]))Hosts.names)]]
 end

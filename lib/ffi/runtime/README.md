@@ -27,3 +27,10 @@ Closed owners leave the ownership index and cannot become live again when
 an allocator reuses their address. This is the strict memory contract;
 GUI handles permitting destruction during messages require their explicit
 callback protocol. Raw pointer escapes remain the caller's responsibility.
+
+`ForeignGenerated` keeps immutable fixed call descriptors in explicit lazy
+sessions. Defining a generated structure opens no libraries. The first call
+checks native pointer width, byte order and calling convention, resolves its
+symbol through the ordered library paths, and caches the prepared interface.
+Session close releases calls and symbols before attempting library unload;
+native dependent resources prevent premature unloading, and close can be retried.

@@ -1,5 +1,6 @@
 name	kind	signature	realisations	status	origin	source
 FOREIGN_COVERAGE	signature			required	declared	lib/ffi/model/coverage_sig.sml
+FOREIGN_GENERATE	signature			required	declared	lib/ffi/model/generate_sig.sml
 FOREIGN_JSON	signature			required	declared	lib/ffi/model/located_json_sig.sml
 FOREIGN_MODEL	signature			required	declared	lib/ffi/model/model_sig.sml
 FOREIGN_POLICY	signature			required	declared	lib/ffi/model/policy_sig.sml
@@ -8,6 +9,7 @@ FOREIGN_SHIM	signature			required	declared	lib/ffi/model/shim_sig.sml
 FOREIGN_TARGET	signature			required	declared	lib/ffi/model/target_sig.sml
 FOREIGN_VALIDATE	signature			required	declared	lib/ffi/model/validate_sig.sml
 ForeignCoverage	structure	FOREIGN_COVERAGE		required	claimed	lib/ffi/model/coverage.sml
+ForeignGenerate	structure	FOREIGN_GENERATE		required	claimed	lib/ffi/model/generate.sml
 ForeignJson	structure	FOREIGN_JSON		required	claimed	lib/ffi/model/located_json.sml
 ForeignModel	structure	FOREIGN_MODEL		required	claimed	lib/ffi/model/model.sml
 ForeignPolicy	structure	FOREIGN_POLICY		required	claimed	lib/ffi/model/policy.sml

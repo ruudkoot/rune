@@ -17,4 +17,6 @@ annotate "demand" in
   shim.sml
   coverage_sig.sml
   coverage.sml
+  generate_sig.sml
+  generate.sml
 end

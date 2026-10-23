@@ -1,5 +1,60 @@
 {
  "signatures": {
+  "FOREIGN_GENERATED": {
+   "doc": "Explicit sessions for generated dynamic foreign declarations.\n\n",
+   "page": "sig/FOREIGN_GENERATED.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "descriptor",
+     "spec": "type descriptor = {name : string, symbol : string, abi : int,\n  result : RuneForeign.scalar, arguments : RuneForeign.scalar list}",
+     "doc": "A fixed native descriptor; its spelling retains the original declaration.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#type-descriptor"
+    },
+    {
+     "kind": "type",
+     "name": "session",
+     "spec": "type session",
+     "doc": "A lazily opened collection of native libraries and prepared calls.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#type-session"
+    },
+    {
+     "kind": "exception",
+     "name": "Closed",
+     "spec": "exception Closed",
+     "doc": "Access after successful close.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#exn-closed"
+    },
+    {
+     "kind": "val",
+     "name": "create",
+     "spec": "val create : {libraries : string list, descriptors : descriptor list,\n  target : {pointerBytes : int, littleEndian : bool, stdcall : bool}} -> session",
+     "doc": "`create {libraries, descriptors, target}` creates a session without loading.\n\nTarget facts must agree with the executing VM before any native entry.\nLibrary names are searched in their declared order for each symbol.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-create"
+    },
+    {
+     "kind": "val",
+     "name": "prepare",
+     "spec": "val prepare : session -> string -> RuneForeign.resource",
+     "doc": "`prepare session name` returns the cached descriptor for a declared name.\n\n**Raises** `Closed`, `Fail` for an undeclared name, or a native bridge error.\nThe resource belongs to the session and must not be released separately.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-prepare"
+    },
+    {
+     "kind": "val",
+     "name": "invoke",
+     "spec": "val invoke : session -> string -> RuneForeign.argument list -> RuneForeign.result",
+     "doc": "`invoke session name arguments` executes a declared, fixed native call.\n\nNative status bytes and immediately captured errors remain available.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-invoke"
+    },
+    {
+     "kind": "val",
+     "name": "close",
+     "spec": "val close : session -> unit",
+     "doc": "`close session` releases prepared calls, symbols and libraries in order.\n\nA live native dependent can prevent unloading. Successfully released\nentries are removed, so closing can be retried after dependents close.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-close"
+    }
+   ]
+  },
   "FOREIGN_MEMORY": {
    "doc": "Bounded native buffers and scoped borrowed SML array copies.\n\n",
    "page": "sig/FOREIGN_MEMORY.md",
@@ -203,6 +258,7 @@
   }
  },
  "structures": {
+  "ForeignGenerated": "FOREIGN_GENERATED",
   "ForeignMemory": "FOREIGN_MEMORY",
   "ForeignOwner": "FOREIGN_OWNER"
  }

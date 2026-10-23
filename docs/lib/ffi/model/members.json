@@ -41,6 +41,40 @@
     }
    ]
   },
+  "FOREIGN_GENERATE": {
+   "doc": "Deterministic source generation from checked C declarations and policy.\n\n",
+   "page": "sig/FOREIGN_GENERATE.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "artifact",
+     "spec": "type artifact = {path : string, text : string}",
+     "doc": "An ordinary generated text artifact, relative to its immutable output set.\n\n",
+     "page": "sig/FOREIGN_GENERATE.md#type-artifact"
+    },
+    {
+     "kind": "type",
+     "name": "field",
+     "spec": "type field = {aggregate : string, path : string list, writable : bool}",
+     "doc": "An explicit native field adapter selection.\n\n",
+     "page": "sig/FOREIGN_GENERATE.md#type-field"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of ForeignModel.source * string",
+     "doc": "Source-located unsupported generation requests.\n\n",
+     "page": "sig/FOREIGN_GENERATE.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "emit",
+     "spec": "val emit : {policy : ForeignPolicy.policy, profile : ForeignTarget.profile,\n  declarations : CParse.declaration list, layouts : string list,\n  fields : field list, constants : (string * IntInf.int) list,\n  sourceName : string -> string} -> artifact list",
+     "doc": "`emit {policy, profile, declarations, layouts, fields, constants, sourceName}` produces sources.\n\nFixed raw calls always retain native statuses. Safe scalar projections\nare emitted where their complete policy can be implemented. An explicit\nadapter selection remains visible in the manifest rather than claiming\nan implemented public projection. Target layouts come from the reusable\nC analysis library; no compiler or native library is executed.\n\n",
+     "page": "sig/FOREIGN_GENERATE.md#val-emit"
+    }
+   ]
+  },
   "FOREIGN_JSON": {
    "doc": "JSON values with physical positions for declarative policy diagnostics.\n\n",
    "page": "sig/FOREIGN_JSON.md",
@@ -555,6 +589,7 @@
  },
  "structures": {
   "ForeignCoverage": "FOREIGN_COVERAGE",
+  "ForeignGenerate": "FOREIGN_GENERATE",
   "ForeignJson": "FOREIGN_JSON",
   "ForeignModel": "FOREIGN_MODEL",
   "ForeignPolicy": "FOREIGN_POLICY",

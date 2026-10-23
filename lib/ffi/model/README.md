@@ -30,3 +30,10 @@ commands; the generator/build integration supplies provenance and rebuilds.
 `ForeignTarget` validates version-one target profiles before generation. Widths,
 alignments, size type, byte order, enum policy and preprocessing macros are data;
 the generator does not infer them from the host running Rune.
+
+`ForeignGenerate` produces documented, sealed raw bindings, fixed scalar
+projections, selected object measurements, typed field adapters and an
+implementation manifest. Explicit public adapters remain named in that
+manifest. An unsupported selected projection fails generation; it never
+quietly exports an unsafe public wrapper. `runeffi` supplies filesystem
+inputs and atomic publication around this reusable pure emitter.

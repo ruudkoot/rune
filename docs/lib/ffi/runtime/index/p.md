@@ -3,6 +3,7 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [f](f.md) [i](i.md) [l](l.md) [o](o.md) **p** [r](r.md) [s](s.md) [t](t.md) [w](w.md)
 
 - `pointer` (val): [FOREIGN_MEMORY](../sig/FOREIGN_MEMORY.md#val-pointer)
+- `prepare` (val): [FOREIGN_GENERATED](../sig/FOREIGN_GENERATED.md#val-prepare)
 
 ---
 

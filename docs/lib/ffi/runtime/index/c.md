@@ -2,8 +2,9 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [f](f.md) [i](i.md) [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
 
-- `close` (val): [FOREIGN_OWNER](../sig/FOREIGN_OWNER.md#val-close)
-- `Closed` (exn): [FOREIGN_OWNER](../sig/FOREIGN_OWNER.md#exn-closed)
+- `close` (val): [FOREIGN_GENERATED](../sig/FOREIGN_GENERATED.md#val-close), [FOREIGN_OWNER](../sig/FOREIGN_OWNER.md#val-close)
+- `Closed` (exn): [FOREIGN_GENERATED](../sig/FOREIGN_GENERATED.md#exn-closed), [FOREIGN_OWNER](../sig/FOREIGN_OWNER.md#exn-closed)
+- `create` (val): [FOREIGN_GENERATED](../sig/FOREIGN_GENERATED.md#val-create)
 
 ---
 
