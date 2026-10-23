@@ -163,3 +163,10 @@ absolute-library fixture verifies its source link against the original file.
 Both native widths additionally passed drive, UNC, space and Unicode path
 probes against an independent URI oracle. The documentation consistency and
 31-case generator cohort passed.
+
+The full run at `92cadd504` exposed a staging race in the shared count oracle:
+parallel cases could overwrite the same `prog.rbc`. Count and image invocations
+now atomically reserve separate endpoint directories. A deterministic nested
+invocation reproduces the failure with the shared-directory control and passes
+with private staging. All Windows count/image jobs pass (34 and 13 runner jobs);
+the earlier full receipt remains a failed result.

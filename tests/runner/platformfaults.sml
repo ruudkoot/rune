@@ -6,6 +6,30 @@ struct
   fun need (ok,why)=if ok then () else raise Fail ("platform fault: " ^ why)
   fun executable file text=(write (file,"#!/bin/sh\n" ^ text ^ "\n");Posix.FileSys.chmod (file,
              Posix.FileSys.S.flags [Posix.FileSys.S.irusr,Posix.FileSys.S.iwusr,Posix.FileSys.S.ixusr]))
+  fun staging () =
+    let val dir=run ^ "/oracle-staging"
+        val ()=mkdirs dir
+        val vm=dir ^ "/counter"
+        val ()=executable vm "printf 'runevm: count: ' >&2\ncat prog.rbc >&2"
+        val a=dir ^ "/a.rbc" val b=dir ^ "/b.rbc"
+        val ()=(write (a,"A\n");write (b,"B\n"))
+        fun scenario label count =
+          let val shared=dir ^ "/" ^ label ^ "/shared"
+              val reference=dir ^ "/" ^ label ^ "/reference"
+              val ()=(mkdirs shared;mkdirs reference)
+              val entered=ref false
+              fun endpoint name directory environment : VMOracles.endpoint =
+                {name=name,program=vm,directory=directory,windows=false,options=[],environment=environment}
+              fun interleave env =
+                (entered:=true;count (dir ^ "/" ^ label ^ "/inner") b [] [endpoint "inner" shared (fn e => e)];env)
+              val ()=count (dir ^ "/" ^ label ^ "/outer") a []
+                [endpoint "racing" shared interleave,endpoint "reference" reference (fn e => e)]
+          in need (!entered,"staging interleave was not exercised") end
+        val rejected=(scenario "shared-control" (VMOracles.countWith (fn endpoint => endpoint));false)
+          handle VMOracles.Failed message => String.isSubstring "VM counts differ" message
+        val ()=need (rejected,"shared staging planted fault was not detected")
+        val ()=scenario "isolated" VMOracles.count
+    in say "PASS interleaved VM oracle staging and shared-directory planted fault\n" end
   fun one () =
     let val dir=run ^ "/platform-faults"
         val ()=mkdirs dir

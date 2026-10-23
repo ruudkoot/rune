@@ -732,6 +732,12 @@ Windows ways share local fixture judges, strict refusal cases and cross-VM
 count/image oracles. Build preparation and consumers have explicit dependencies;
 unavailable selected targets fail, while capabilities retain their named skips.
 
+Each count/image oracle invocation atomically reserves private staging under
+its endpoint directory. Parallel cases and widths therefore use separate
+`prog.rbc` and image files. `platform/oracle-staging` forces a second oracle
+between the first copy and execution: the planted shared-directory allocator
+must fail its counter comparison, and the production allocator must pass.
+
 
 GMP configuration, dependency, CPU-family, build-mode, download, installation
 and cross-platform controllers are routes of bin/rune-intinf. The root
