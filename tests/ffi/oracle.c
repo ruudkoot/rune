@@ -90,6 +90,13 @@ static void foreign(void) {
 
 int main(void) {
     const unsigned endian = 1;
+    /* C11 6.3.1.2: Boolean conversion tests value, rather than its low bit. */
+    CHECK("bool-zero", (_Bool)0 == 0);
+    CHECK("bool-one", (_Bool)1 == 1);
+    CHECK("bool-even-positive", (_Bool)2 == 1);
+    CHECK("bool-even-negative", (_Bool)-2 == 1);
+    CHECK("bool-wide-positive", (_Bool)256 == 1);
+    CHECK("bool-wide-negative", (_Bool)-256 == 1);
     CHECK("i8", rf_i8(INT8_MIN) == INT8_MIN && rf_i8(INT8_MAX) == INT8_MAX);
     CHECK("u8", rf_u8(UINT8_MAX) == UINT8_MAX);
     CHECK("i16", rf_i16(INT16_MIN) == INT16_MIN && rf_i16(INT16_MAX) == INT16_MAX);

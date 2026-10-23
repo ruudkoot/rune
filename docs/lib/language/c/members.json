@@ -213,14 +213,14 @@
      "kind": "val",
      "name": "read",
      "spec": "val read : string -> {file : string, text : string}",
-     "doc": "`read path` reads original bytes without newline conversion and uses\nthe canonical file name as the source identity.\n\n**Raises** `IO.Io` or `OS.SysErr` for unreadable sources.\n\n",
+     "doc": "`read path` reads original bytes without newline conversion and uses\nan absolute canonical file name as the source identity.\n\n**Raises** `IO.Io` or `OS.SysErr` for unreadable sources.\n\n",
      "page": "sig/C_FILES.md#val-read"
     },
     {
      "kind": "val",
      "name": "resolver",
      "spec": "val resolver : string list -> CPreprocess.resolver",
-     "doc": "`resolver roots` searches quoted includes beside their source before\nsearching the ordered include roots.\n\nAngle includes search roots.\n`include_next` continues after the root containing the source.\nA found but unreadable source reports its I/O error.\n\n**Raises** `OS.SysErr` for an invalid include root.\n\n",
+     "doc": "`resolver roots` searches quoted includes beside their source before\nsearching the ordered include roots.\n\nRoots also use absolute canonical identities, including native drive paths.\nAngle includes search roots.\n`include_next` continues after the root containing the source.\nA found but unreadable source reports its I/O error.\n\n**Raises** `OS.SysErr` for an invalid include root.\n\n",
      "page": "sig/C_FILES.md#val-resolver"
     }
    ]
@@ -289,7 +289,7 @@
      "kind": "val",
      "name": "convert",
      "spec": "val convert : integerType -> value -> value",
-     "doc": "`convert ty value` applies the target's two's-complement conversion.\n\n",
+     "doc": "`convert ty value` applies the target C integer conversion.\n\nThe model represents `_Bool` as unsigned width one. C11 6.3.1.2\nconverts zero to zero and every nonzero integer to one; ordinary\ntarget integers retain their explicit two's-complement conversion.\n\n",
      "page": "sig/C_INTEGER.md#val-convert"
     },
     {

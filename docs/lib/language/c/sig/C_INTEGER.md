@@ -143,7 +143,11 @@ val literal : target -> CLex.token -> value
 val convert : integerType -> value -> value
 ```
 
-`convert ty value` applies the target's two's-complement conversion.
+`convert ty value` applies the target C integer conversion.
+
+The model represents `_Bool` as unsigned width one. C11 6.3.1.2
+converts zero to zero and every nonzero integer to one; ordinary
+target integers retain their explicit two's-complement conversion.
 
 ### <a name="val-promote"></a>`promote`
 

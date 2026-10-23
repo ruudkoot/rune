@@ -135,7 +135,9 @@ struct
           val foreignLibs =
             let val input = TextIO.openIn (dir ^ "/foreign-libs")
                 val text = TextIO.inputAll input before TextIO.closeIn input
-            in String.concat (List.map (fn flag => " " ^ shellQuote flag) (String.tokens Char.isSpace text)) end
+                fun relocate flag=if String.isPrefix "@RUNTIME@/" flag
+                  then dir ^ "/" ^ String.extract(flag,size "@RUNTIME@/",NONE) else flag
+            in String.concat (List.map (fn flag => " " ^ shellQuote(relocate flag)) (String.tokens Char.isSpace text)) end
             handle IO.Io _ => ""
           val command =
             String.concatWith " "

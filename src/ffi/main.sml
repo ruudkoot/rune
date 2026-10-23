@@ -135,6 +135,8 @@ struct
     in (work();removeTree temporary) handle e=>(removeTree temporary handle _=>();raise e) end
   fun diagnostic({file,line,column}:ForeignModel.source,message)=file ^ ":" ^ Int.toString line ^ ":" ^ Int.toString column ^ ": " ^ message
   fun message e=case e of Usage s=>s | ForeignModel.Error p=>diagnostic p | ForeignJson.Error p=>diagnostic p
+    | IO.Io{name,function,cause}=>function ^ " " ^ name ^ ": " ^ message cause
+    | OS.SysErr(text,_)=>text
     | CLex.Error p=>diagnostic p | CPreprocess.Error p=>diagnostic p | CParse.Error p=>diagnostic p
     | CInteger.Error p=>diagnostic p | CAnalysis.Error p=>diagnostic p | CLayout.Error p=>diagnostic p
     | CLayout.Shim(p,s)=>diagnostic(p,"native C adapter required: " ^ s) | _=>General.exnMessage e

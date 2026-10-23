@@ -40,7 +40,7 @@ val read : string -> {file : string, text : string}
 ```
 
 `read path` reads original bytes without newline conversion and uses
-the canonical file name as the source identity.
+an absolute canonical file name as the source identity.
 
 **Raises** [`IO.Io`](../../../basis/sig/IO.md#exn-io) or [`OS.SysErr`](../../../basis/sig/OS.md#exn-syserr) for unreadable sources.
 
@@ -58,6 +58,7 @@ val resolver : string list -> CPreprocess.resolver
 `resolver roots` searches quoted includes beside their source before
 searching the ordered include roots.
 
+Roots also use absolute canonical identities, including native drive paths.
 Angle includes search roots.
 `include_next` continues after the root containing the source.
 A found but unreadable source reports its I/O error.

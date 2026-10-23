@@ -2,13 +2,13 @@
 structure CFiles : C_FILES =
 struct
   fun read path =
-    let val file = OS.FileSys.realPath path
+    let val file = OS.FileSys.fullPath path
         val input = BinIO.openIn file
         val text = (Byte.bytesToString (BinIO.inputAll input) before BinIO.closeIn input)
           handle e => (BinIO.closeIn input; raise e)
     in {file = file, text = text} end
   fun resolver roots =
-    let val roots = List.map OS.FileSys.realPath roots
+    let val roots = List.map OS.FileSys.fullPath roots
         fun exists path = OS.FileSys.access (path, []) handle OS.SysErr _ => false
         fun within (root, file) = String.isPrefix (root ^ "/") file
         fun following file [] = []

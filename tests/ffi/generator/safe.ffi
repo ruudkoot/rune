@@ -31,6 +31,30 @@
       "owner": "subscription",
       "thread": "owner-vm-thread",
       "failure": -1
+    },
+    {
+      "foreign": "safe_selector_callback",
+      "lifetime": "call",
+      "thread": "owner-vm-thread",
+      "failure": {
+        "parameter": "code",
+        "cases": {
+          "-1": -9
+        },
+        "otherwise": -3
+      }
+    },
+    {
+      "foreign": "safe_bool_selector_callback",
+      "lifetime": "call",
+      "thread": "owner-vm-thread",
+      "failure": {
+        "parameter": "code",
+        "cases": {
+          "2": -13
+        },
+        "otherwise": -3
+      }
     }
   ],
   "functions": [
@@ -1079,6 +1103,68 @@
       ],
       "result": {
         "type": "real"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_selected",
+      "name": "selected",
+      "parameters": [
+        {
+          "name": "callback",
+          "callback": "safe_selector_callback",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false
+        }
+      ],
+      "result": {
+        "type": "unit"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_selected_bool",
+      "name": "selectedBool",
+      "parameters": [
+        {
+          "name": "callback",
+          "callback": "safe_bool_selector_callback",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false
+        }
+      ],
+      "result": {
+        "type": "unit"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_failure_value",
+      "name": "failureValue",
+      "parameters": [],
+      "result": {
+        "type": "int"
       }
     }
   ]

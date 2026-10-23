@@ -40,7 +40,8 @@ struct
   fun convert (ty as {width,signed,...}:integerType) ({integer,...}:value) : value =
     let val modulus=power width
         val bits=IntInf.mod(integer,modulus)
-        val value=if signed andalso bits>=power(width-1) then IntInf.-(bits,modulus) else bits
+        val value=if width=1 andalso not signed then (if integer=0 then 0 else 1)
+          else if signed andalso bits>=power(width-1) then IntInf.-(bits,modulus) else bits
     in {integer=value,ty=ty} end
   fun promote target (value as {ty={rank,...},...}:value) =
     if order rank>=order Int then value else

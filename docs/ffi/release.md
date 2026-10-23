@@ -80,6 +80,9 @@ prefix carries headers, archive, notices, provenance and source archive and is
 validated again before relinking after relocation. System libffi is an external
 development dependency with unknown source/build provenance. Existing GMP
 provisioning retains its separate role.
+The installed `runeopt` runtime also carries the selected static archive;
+`@RUNTIME@/libffi.a` link metadata resolves relative to its new runtime directory
+before quoting, preserving existing native-code dynamic calls after relocation.
 
 ## Interactive use
 
