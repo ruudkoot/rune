@@ -54,3 +54,17 @@ owner/deallocator contract. Native strings are read by complete code unit
 through their terminator, never by copying an entire maximum extent past
 an earlier NUL. The [marshalling library](../lib/ffi/marshal/README.md) and
 [runtime support](../lib/ffi/runtime/README.md) document these interfaces.
+
+The selected-header acceptance consumer (`tests/ffi/header-layout.sml`)
+uses `CAnalysis` with validated `ForeignTarget` profiles. Native probes
+verify all required SDL/Win32 types, selected nested event/surface fields,
+constants and the eight Win32 macro helpers against original headers.
+Unknown representation attributes require an adapter; diagnostic/linkage
+metadata does not change object layout. Full-int enum representation is
+explicit per compiler ABI, rather than inferred from enum constants alone.
+
+Binary32 byte encoding uses nearest rounding with ties to even regardless
+of native floating-point environment changes. It canonicalizes NaNs and
+widens finite binary32 values exactly on decoding. Native C conversions
+on six targets provide an independent oracle; binary64 uses the checked
+Basis packing interface.

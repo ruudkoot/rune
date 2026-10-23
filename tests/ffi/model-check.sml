@@ -76,7 +76,7 @@ struct
         val ()=write(wrapper,"#!/bin/sh\nexec " ^ quote(#program host) ^ " -no_ri \"$@\"\n")
         val ()=Posix.FileSys.chmod(wrapper,Posix.FileSys.S.flags[Posix.FileSys.S.irusr,Posix.FileSys.S.iwusr,Posix.FileSys.S.ixusr])
         val sources=List.concat(List.map Hosts.portable["unicode","json","language/c","ffi/model"])
-          @ (if subject="target" then Hosts.portable "test/unit" else [])
+          @ (if subject="target" then Hosts.portable "random" @ Hosts.portable "test/property" @ Hosts.portable "test/unit" else [])
           @ ["tests/lib/ffi/model/" ^ subject ^ ".sml"]
         val result=Hosts.build{host={name="mlkit",program=fromRoot wrapper,library= #library host},name="policy-no-ri",
           sources=sources,dir=directory ^ "/no-ri",runDir=root,timeout=600,memory=2048}

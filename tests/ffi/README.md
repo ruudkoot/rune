@@ -21,3 +21,9 @@ installed original SDK selected by `RUNEFFI_WINDOWS_SDK`.
 The dated `evidence/` records commands, identities and unresolved checks.
 Successful native reference programs establish expected behavior, not a
 passing Rune bridge or completed GUI milestone.
+
+`make test-ffi-header-layout` checks selected original SDL/SDK type layouts,
+nested field offsets, constants and Win32 macro expressions against native
+C. Configure the pinned SDK/MSVC include roots as documented in
+`ffi/win32/README.md` to enable its Windows cases. `make test-ffi-real32`
+compares binary32 conversion against six independent native C targets.

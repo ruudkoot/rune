@@ -1,6 +1,6 @@
 # Foreign byte marshalling
 
-Portable SML support for target integer and binary64 representations,
+Portable SML support for target integer, binary32 and binary64 representations,
 explicit byte/text encodings and deterministic cleanup scopes. Native
 addresses and VM operations belong to the runtime support library.
 
@@ -20,6 +20,11 @@ Binary64 conversion uses the optional default-real packing structures and
 checks their byte width. Rune supplies them; native SML/NJ hosts without
 those structures have an explicit `HOST-ABSENT` record. Native MLKit's
 known large `IntInf.~>>` fault is recorded separately from Rune validation.
+
+Binary32 encoding rounds to nearest with ties to even, independently of native
+floating-point environment changes. Overflow yields signed infinity; NaNs
+receive a canonical quiet payload. Decoding widens finite binary32 values
+exactly into the default binary64 real.
 
 [How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [i](index/i.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md)
 
