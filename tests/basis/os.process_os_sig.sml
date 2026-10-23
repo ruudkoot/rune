@@ -8,7 +8,8 @@ struct
   structure C : SPEC_OS = OS
   val () = T.check ("OS:OS/matches", fn () => true)
   structure O :> SPEC_OS = OS
-  val () = T.check ("OS:OS/matches-opaquely", fn () => O.Path.concat ("a", "b") = "a/b")
+  val () = T.check ("OS:OS/matches-opaquely", fn () =>
+    O.Path.fromString (O.Path.concat ("a", "b")) = {isAbs=false,vol="",arcs=["a","b"]})
   val () = T.check ("OS:OS/same-SysErr",
                     fn () => (raise C.SysErr ("m", NONE)) handle OS.SysErr ("m", NONE) => true | _ => false)
   val () = T.check ("OS:OS/syserror-is-OS.syserror",

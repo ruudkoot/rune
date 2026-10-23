@@ -170,3 +170,27 @@ now atomically reserve separate endpoint directories. A deterministic nested
 invocation reproduces the failure with the shared-directory control and passes
 with private staging. All Windows count/image jobs pass (34 and 13 runner jobs);
 the earlier full receipt remains a failed result.
+
+The case-preserving filesystem checkpoint `ff1bfd7ac` passed the full Linux
+check: 19,490 passes and three skips (`20261023-141152-3350968`,
+`/tmp/rune-native-case-frozen-full-check.log`). Its complete host-library
+matrix passed 3,196 jobs with 156 skips (`20261023-140244-3279385`,
+`/tmp/rune-native-case-frozen-matrix.log`). These receipts cover the corrected
+case policy; the later native library/source-URL and oracle fixes have their
+separate focused and native receipts above.
+
+Retained native failures are `ff1bfd7ac` with five Unix-prefix home-fixture
+failures and one WSL launch error (2,382 passes, six failures), followed by
+`92cadd504` with the shared count-staging failure (2,387 passes, one failure).
+The exact WSL launch case passed with explicit native storage and separate
+history (`20261023-153851-3928348`, eight runner jobs). Neither failed full
+run is reclassified as clean by those focused reruns.
+
+At `767dc8d9a`, all 2,388 Windows language/runtime jobs passed
+(`20261023-163455-303320`). Its Basis matrix then exposed two remaining test
+assumptions on each VM: the opaque OS signature check hardcoded `a/b`, and
+the volume-information fixture still constructed `/C:/`. The signature check
+now verifies parsed arcs, and the volume check uses `OS.FileSys.fullPath` for
+the root. Both corrected fixtures pass all four configurations (22 and 38
+runner jobs). The failed full matrix remains recorded as 1,909 passes and
+nine failed jobs, including its aggregate report (`20261023-165916-411560`).
