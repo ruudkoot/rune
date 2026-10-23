@@ -2,6 +2,9 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) **f** [g](g.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
 
+- `fill` (val): [WIN32_GUI_DRIVER](../sig/WIN32_GUI_DRIVER.md#val-fill)
+- `finish` (val): [WIN32_GUI_DRIVER](../sig/WIN32_GUI_DRIVER.md#val-finish)
+- `frequency` (val): [WIN32_GUI_DRIVER](../sig/WIN32_GUI_DRIVER.md#val-frequency)
 - `freshAtom` (val): [WIN32_COMMON](../sig/WIN32_COMMON.md#val-freshatom)
 - `freshBrush` (val): [WIN32_COMMON](../sig/WIN32_COMMON.md#val-freshbrush)
 - `freshModule` (val): [WIN32_COMMON](../sig/WIN32_COMMON.md#val-freshmodule)

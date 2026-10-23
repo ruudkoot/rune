@@ -8,6 +8,7 @@
 - `paintKey` (val): [WIN32_COMMON](../sig/WIN32_COMMON.md#val-paintkey)
 - `pen` (type): [WIN32_TYPES](../sig/WIN32_TYPES.md#type-pen)
 - `penObject` (val): [WIN32_COMMON](../sig/WIN32_COMMON.md#val-penobject)
+- `poll` (val): [WIN32_GUI_DRIVER](../sig/WIN32_GUI_DRIVER.md#val-poll)
 - `User.peekMessage` (val): [WIN32](../sig/WIN32.md#val-user.peekmessage)
 - `User.postMessage` (val): [WIN32](../sig/WIN32.md#val-user.postmessage)
 - `User.postQuitMessage` (val): [WIN32](../sig/WIN32.md#val-user.postquitmessage)

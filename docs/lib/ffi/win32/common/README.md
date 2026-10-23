@@ -23,6 +23,7 @@ controls have separate interfaces.
 | --- | --- |
 | [`WIN32`](sig/WIN32.md) | Stable GUI subset implemented by native Windows, SDL3 and mocks. |
 | [`WIN32_COMMON`](sig/WIN32_COMMON.md) | Provider support for the shared Win32 type identities. |
+| [`WIN32_GUI_DRIVER`](sig/WIN32_GUI_DRIVER.md) | Thin GUI driver used by the shared Win32 SDL and mock semantics. |
 | [`WIN32_TYPES`](sig/WIN32_TYPES.md) | Shared public identities and messages for the Win32 GUI subset. |
 
 ---

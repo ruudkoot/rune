@@ -6,7 +6,7 @@
 - `Kernel.queryPerformanceFrequency` (val): [WIN32](../sig/WIN32.md#val-kernel.queryperformancefrequency)
 - `queued` (type): [WIN32_TYPES](../sig/WIN32_TYPES.md#type-queued)
 - `queuedKey` (val): [WIN32_COMMON](../sig/WIN32_COMMON.md#val-queuedkey)
-- `Quit` (con): [WIN32_TYPES](../sig/WIN32_TYPES.md#con-quit)
+- `Quit` (con): [WIN32_GUI_DRIVER](../sig/WIN32_GUI_DRIVER.md#con-quit), [WIN32_TYPES](../sig/WIN32_TYPES.md#con-quit)
 
 ---
 

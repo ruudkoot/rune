@@ -3,7 +3,10 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) **d** [e](e.md) [f](f.md) [g](g.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
 
 - `Default` (con): [WIN32_TYPES](../sig/WIN32_TYPES.md#con-default)
+- `delay` (val): [WIN32_GUI_DRIVER](../sig/WIN32_GUI_DRIVER.md#val-delay)
 - `Destroy` (con): [WIN32_TYPES](../sig/WIN32_TYPES.md#con-destroy)
+- `destroy` (val): [WIN32_GUI_DRIVER](../sig/WIN32_GUI_DRIVER.md#val-destroy)
+- `drawing` (type): [WIN32_GUI_DRIVER](../sig/WIN32_GUI_DRIVER.md#type-drawing)
 - `Gdi.deleteObject` (val): [WIN32](../sig/WIN32.md#val-gdi.deleteobject)
 - `User.defWindowProc` (val): [WIN32](../sig/WIN32.md#val-user.defwindowproc)
 - `User.destroyWindow` (val): [WIN32](../sig/WIN32.md#val-user.destroywindow)

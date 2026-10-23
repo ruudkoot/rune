@@ -3,6 +3,7 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [i](i.md) [k](k.md) **l** [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
 
 - `Gdi.lineTo` (val): [WIN32](../sig/WIN32.md#val-gdi.lineto)
+- `line` (val): [WIN32_GUI_DRIVER](../sig/WIN32_GUI_DRIVER.md#val-line)
 
 ---
 

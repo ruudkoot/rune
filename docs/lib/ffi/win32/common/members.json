@@ -460,6 +460,145 @@
     }
    ]
   },
+  "WIN32_GUI_DRIVER": {
+   "doc": "Thin GUI driver used by the shared Win32 SDL and mock semantics.\n\n",
+   "page": "sig/WIN32_GUI_DRIVER.md",
+   "members": [
+    {
+     "kind": "eqtype",
+     "name": "window",
+     "spec": "eqtype window",
+     "doc": "A driver-owned window, separate from the portable public token.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#type-window"
+    },
+    {
+     "kind": "type",
+     "name": "drawing",
+     "spec": "type drawing",
+     "doc": "A drawing scope owned by this driver.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#type-drawing"
+    },
+    {
+     "kind": "datatype",
+     "name": "event",
+     "spec": "datatype event = Quit | Message of window * Win32Common.Types.message",
+     "doc": "A normalized external event; the model owns class procedure dispatch.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#type-event"
+    },
+    {
+     "kind": "val",
+     "name": "externalEvents",
+     "spec": "val externalEvents : bool",
+     "doc": "Whether events may arrive independently of deterministic model state.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-externalevents"
+    },
+    {
+     "kind": "val",
+     "name": "create",
+     "spec": "val create : {title:string,width:int,height:int,visible:bool,resizable:bool} -> window",
+     "doc": "`create specification` creates a driver window without invoking SML procedures.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-create"
+    },
+    {
+     "kind": "val",
+     "name": "destroy",
+     "spec": "val destroy : window -> unit",
+     "doc": "`destroy window` releases a driver window and its drawing resources.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-destroy"
+    },
+    {
+     "kind": "val",
+     "name": "show",
+     "spec": "val show : window * int -> unit",
+     "doc": "`show (window, command)` applies a supported Win32 visibility command.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-show"
+    },
+    {
+     "kind": "val",
+     "name": "title",
+     "spec": "val title : window * string -> unit",
+     "doc": "`title (window, text)` changes the UTF-8 window title.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-title"
+    },
+    {
+     "kind": "val",
+     "name": "client",
+     "spec": "val client : window -> {width:int,height:int}",
+     "doc": "`client window` reads its current client dimensions.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-client"
+    },
+    {
+     "kind": "val",
+     "name": "begin",
+     "spec": "val begin : window -> drawing",
+     "doc": "`begin window` acquires a drawing scope.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-begin"
+    },
+    {
+     "kind": "val",
+     "name": "finish",
+     "spec": "val finish : drawing -> unit",
+     "doc": "`finish drawing` presents the completed drawing and releases its scope.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-finish"
+    },
+    {
+     "kind": "val",
+     "name": "fill",
+     "spec": "val fill : {drawing:drawing,rectangle:Win32Common.Types.rect,colour:Word32.word} -> unit",
+     "doc": "`fill specification` fills an exclusive-edge rectangle with RGB colour.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-fill"
+    },
+    {
+     "kind": "val",
+     "name": "line",
+     "spec": "val line : {drawing:drawing,x1:int,y1:int,x2:int,y2:int,width:int,colour:Word32.word} -> unit",
+     "doc": "`line specification` draws a solid line with the requested positive width.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-line"
+    },
+    {
+     "kind": "val",
+     "name": "text",
+     "spec": "val text : {drawing:drawing,x:int,y:int,text:string,colour:Word32.word,opaque:bool,background:Word32.word} -> unit",
+     "doc": "`text specification` draws fixed ASCII text with the declared background mode.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-text"
+    },
+    {
+     "kind": "val",
+     "name": "poll",
+     "spec": "val poll : unit -> event option",
+     "doc": "`poll ()` copies the next available external event.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-poll"
+    },
+    {
+     "kind": "val",
+     "name": "ticks",
+     "spec": "val ticks : unit -> IntInf.int",
+     "doc": "`ticks ()` returns monotonic milliseconds as an unbounded integer.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-ticks"
+    },
+    {
+     "kind": "val",
+     "name": "counter",
+     "spec": "val counter : unit -> Int64.int",
+     "doc": "`counter ()` returns the monotonic performance counter.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-counter"
+    },
+    {
+     "kind": "val",
+     "name": "frequency",
+     "spec": "val frequency : unit -> Int64.int",
+     "doc": "`frequency ()` returns performance counter ticks per second.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-frequency"
+    },
+    {
+     "kind": "val",
+     "name": "delay",
+     "spec": "val delay : Word32.word -> unit",
+     "doc": "`delay milliseconds` waits, or advances deterministic mock time.\n\n",
+     "page": "sig/WIN32_GUI_DRIVER.md#val-delay"
+    }
+   ]
+  },
   "WIN32_TYPES": {
    "doc": "Shared public identities and messages for the Win32 GUI subset.\n\n",
    "page": "sig/WIN32_TYPES.md",

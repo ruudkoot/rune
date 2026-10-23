@@ -6,6 +6,7 @@
 - `Gdi.setBkMode` (val): [WIN32](../sig/WIN32.md#val-gdi.setbkmode)
 - `Gdi.setTextColor` (val): [WIN32](../sig/WIN32.md#val-gdi.settextcolor)
 - `Kernel.setLastError` (val): [WIN32](../sig/WIN32.md#val-kernel.setlasterror)
+- `show` (val): [WIN32_GUI_DRIVER](../sig/WIN32_GUI_DRIVER.md#val-show)
 - `Size` (con): [WIN32_TYPES](../sig/WIN32_TYPES.md#con-size)
 - `User.sendMessage` (val): [WIN32](../sig/WIN32.md#val-user.sendmessage)
 - `User.setTimer` (val): [WIN32](../sig/WIN32.md#val-user.settimer)

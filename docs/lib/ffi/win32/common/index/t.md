@@ -3,7 +3,10 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) **t** [u](u.md) [w](w.md)
 
 - `Gdi.textOut` (val): [WIN32](../sig/WIN32.md#val-gdi.textout)
+- `text` (val): [WIN32_GUI_DRIVER](../sig/WIN32_GUI_DRIVER.md#val-text)
+- `ticks` (val): [WIN32_GUI_DRIVER](../sig/WIN32_GUI_DRIVER.md#val-ticks)
 - `Timer` (con): [WIN32_TYPES](../sig/WIN32_TYPES.md#con-timer)
+- `title` (val): [WIN32_GUI_DRIVER](../sig/WIN32_GUI_DRIVER.md#val-title)
 - `Types` (str): [WIN32](../sig/WIN32.md#str-types), [WIN32_COMMON](../sig/WIN32_COMMON.md#str-types)
 - `User.translateMessage` (val): [WIN32](../sig/WIN32.md#val-user.translatemessage)
 
