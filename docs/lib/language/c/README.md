@@ -42,7 +42,7 @@ the supported System V ABI uses unsigned int for nonnegative full-int enums.
 Unknown representation attributes and extended enum representations require
 native adapters. Private unsupported declarations do not force evaluation.
 
-[How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [i](index/i.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md)
+[How to read these pages](conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [i](index/i.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md)
 
 ## Languages
 

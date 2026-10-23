@@ -33,7 +33,7 @@ struct
   fun result (text,expected)=Test.it text (fn()=>Expect.that(text,value text=expected))
   val expressions=List.map result
     [("(unsigned int)-1 + 1",0),("(unsigned char)257",1),("(signed char)255",~1),
-     ("(BYTE)255 + 1",256),("(_Bool)2",1),("(_Bool)0",0),
+     ("(BYTE)255 + 1",256),("(_Bool)2",1),("(_Bool)0",0),("(_Bool)-2",1),("(_Bool)256",1),("(_Bool)-256",1),
      ("(unsigned short)65535 + 1",65536),("-7 / 3",~2),("-7 % 3",~1),
      ("-1L < 1U",1),("0xffffffff + 1",0),("0 ? 1/0 : 7",7),
      ("1 ? 7 : 2147483647 + 1",7),("0 && 1/0",0),("1 || 1/0",1),
@@ -68,7 +68,10 @@ struct
        "#pragma pack(push,1)\nstruct a {char c;int n;};\n#pragma pack(pop)\n"
        in CLayout.size l=5 andalso CLayout.alignment l=1 end)])
     [("LP64",lp64,8,8),("LLP64",llp64,8,8),("Win32",llp64,4,8),("i386",llp64,4,4)]
-  val tests=Test.describe "language/c/target" (expressions @ invalid @ layouts @
+  val booleanConversions=List.map(fn(value,expected)=>layoutTest("boolean conversion " ^ IntInf.toString value)
+    (fn()=> #integer(CInteger.convert {rank=CInteger.Char,width=1,signed=false}
+      {integer=value,ty=CInteger.integerType lp64 CInteger.Int true})=expected))[(0,0),(1,1),(2,1),(~2,1),(256,1),(~256,1)]
+  val tests=Test.describe "language/c/target" (expressions @ invalid @ layouts @ booleanConversions @
     [layoutTest "LLP64 long conversion"(fn()=> #integer(evaluate llp64 8 8 "-1L < 1U")=0),
      layoutTest "LLP64 decimal literal chooses long long"(fn()=> #rank(#ty(evaluate llp64 8 8 "2147483648"))=CInteger.LongLong),
      layoutTest "LP64 decimal literal chooses long"(fn()=> #rank(#ty(evaluate lp64 8 8 "2147483648"))=CInteger.Long),

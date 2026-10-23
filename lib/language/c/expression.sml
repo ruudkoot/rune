@@ -97,8 +97,7 @@ struct
               in case value of SOME n=>CInteger.convert ty {integer=n,ty=ty} | NONE=>fail t "C object has no constant value" end
           | eval(Cast(t,ty,e))=
               let val ty=integral t ty val value=eval e
-              in if #width ty=1 then {integer=if truth value then 1 else 0,ty=ty}
-                 else CInteger.convert ty value end
+              in CInteger.convert ty value end
           | eval(MeasureType(t,ty))=measured t ty
           | eval(MeasureValue(t,e))=measured t (typeof e)
           | eval(Unary(t,e))=CInteger.unary target t (eval e)

@@ -289,7 +289,7 @@
      "kind": "val",
      "name": "convert",
      "spec": "val convert : integerType -> value -> value",
-     "doc": "`convert ty value` applies the target's two's-complement conversion.\n\n",
+     "doc": "`convert ty value` applies the target C integer conversion.\n\nThe model represents `_Bool` as unsigned width one. C11 6.3.1.2\nconverts zero to zero and every nonzero integer to one; ordinary\ntarget integers retain their explicit two's-complement conversion.\n\n",
      "page": "sig/C_INTEGER.md#val-convert"
     },
     {
