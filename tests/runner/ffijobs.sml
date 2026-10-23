@@ -1,11 +1,20 @@
 structure FfiJobs =
 struct
   fun jobWith program name args tags =
-    List.foldl (fn (tag, tree) => Test.tag tag tree)
-      (Test.it name {program = "/bin/sh", args = ["sh", "-c", "exec bin/" ^ program ^ " " ^ args],
+    let
+      val nativeCalls = program = "rune-sdl-check" orelse program = "rune-win32-check" orelse
+        (program = "rune-ffi-shim-check" andalso
+         List.exists (fn mode => mode = args) ["native", "asan", "windows32", "windows64"])
+      val tags = if nativeCalls andalso not (RuneForeign.available ())
+                 then List.filter (fn tag => tag <> "check") tags else tags
+      val execution =
+        (Test.it name {program = "/bin/sh", args = ["sh", "-c", "exec bin/" ^ program ^ " " ^ args],
         env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds 1800, cap = 0,
         cpus = 1, memory = 1000, pools = if program="rune-ffi-shim-check" andalso args="host mlkit" then ["matrix"] else [], exclusive = false, after = if args = "runtime asan" orelse (program="rune-ffi-shim-check" andalso args="asan") then ["native/prepare/asan"] else [], judge = Sh.failLines} : Run.command Test.tree)
+      val execution = if nativeCalls then Test.requires ["ffi-runtime"] execution else execution
+    in List.foldl (fn (tag, tree) => Test.tag tag tree) execution
       (tags @ ["covers:ffi/*", "covers:tests/ffi/*", "covers:tests/runner/ffijobs.sml"])
+    end
   fun job name args tags = jobWith "rune-ffi-check" name args tags
   fun frontendJob name args tags = jobWith "rune-c-check" name args
     (tags @ ["covers:lib/language/c/*", "covers:tools/cfrontend/*", "covers:tests/lib/language/c/*"])

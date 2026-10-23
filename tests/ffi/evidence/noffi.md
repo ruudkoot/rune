@@ -26,3 +26,14 @@ Both commands pass with immutable generation
 `49795920c9852ac9df5f915c7815ab597e31d3fc690ae15d8e375dbb9d771794`.
 This is optional-build component evidence, not cumulative acceptance of
 later aggregate/public-generator and packaging additions. M10 remains planned.
+
+The final integrated runner also distinguishes native execution from pure
+generation. With its FFI-enabled VM, the `check` inventory contains all 13
+FFI jobs. The same runner bytecode on the FFI-disabled VM retains 10 pure or
+independent-C jobs; generated native/safe calls and native shim execution are
+excluded from that mandatory tier. An explicitly selected native shim job
+reports `SKIP: needs ffi-runtime`, with the build instruction, rather than
+failing a foreign operation. The exact selection passed five runner canaries
+and recorded one expected skip in `20261023-111305-2`. Native SDL/Win32 jobs
+carry the same capability requirement; strict enabled acceptance still treats
+a missing required capability as an error.
