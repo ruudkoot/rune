@@ -886,6 +886,11 @@ uint32_t program_add_function(VM *vm, const char *name, const uint8_t *code, uin
 
 /* interp.c */
 int vm_run(VM *vm);                          /* vm_start, then the loop */
+/* Opaque native safepoint addresses snapshot by the owning instruction set.
+   Indices survive value-stack and separate frame-array relocation. */
+typedef struct NativeSafepoints { size_t top, verify; int has_top, has_verify; } NativeSafepoints;
+void vm_safepoints_save(const VM *vm, NativeSafepoints *saved);
+void vm_safepoints_restore(VM *vm, const NativeSafepoints *saved);
 int vm_callback_loop(VM *vm); /* interpreter only; never enters a driver or JIT */
 int vm_callback_apply(VM *vm, size_t closure, const char *input, size_t length, char *output, size_t capacity, size_t *written);
 uint64_t vm_callback_live(VM *vm, const FrameRef *frame);

@@ -19,12 +19,9 @@ int vm_callback_apply(VM *vm, size_t handle, const char *input, size_t length,
     CallbackScope scope = {vm->callback_scope, parked.id, vm->top_live, vm_frame_top_live(vm, &parked)};
     size_t old_sp = vm->sp, old_hp = vm->hp, old_boundary = vm->callback_frame;
     uint32_t old_pc = vm->pc;
-    const void *old_top = vm->top_frame, *old_verify = vm->verify_frame;
+    NativeSafepoints saved;
+    vm_safepoints_save(vm, &saved);
     uint64_t old_live = vm->top_live;
-    /* Register frame pointers are addresses into a moving value stack.
-       Stack VM pointers are into its separate moving frame array. */
-    size_t top_index = old_top ? (isa_frame_header ? (const Value *)old_top - vm->stack : (const Frame *)old_top - vm->frames) : 0;
-    size_t verify_index = old_verify ? (isa_frame_header ? (const Value *)old_verify - vm->stack : (const Frame *)old_verify - vm->frames) : 0;
     vm->callback_scope = &scope;
     vm->callback_depth++;
     vm->interrupt_mask++;
@@ -57,7 +54,6 @@ int vm_callback_apply(VM *vm, size_t handle, const char *input, size_t length,
     vm->callback_depth--;
     vm->interrupt_mask--;
     vm->top_live = old_live;
-    vm->top_frame = old_top ? (isa_frame_header ? (const void *)(vm->stack + top_index) : (const void *)(vm->frames + top_index)) : NULL;
-    vm->verify_frame = old_verify ? (isa_frame_header ? (const void *)(vm->stack + verify_index) : (const void *)(vm->frames + verify_index)) : NULL;
+    vm_safepoints_restore(vm, &saved);
     return ok ? 0 : -1;
 }

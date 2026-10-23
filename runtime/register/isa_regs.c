@@ -704,3 +704,15 @@ void reg_frames_ret_word(VM *vm) {
     for (int more = vm_frame_top(vm, &f); more; more = vm_frame_down(vm, &f))
         if (reg_interp_word(vm, ret_word_at(vm, f.base))) set_ret_word_at(vm, f.base, ret_word(vm));
 }
+
+/* Register-native safepoints name frame bases in the moving value stack. */
+void vm_safepoints_save(const VM *vm, NativeSafepoints *saved) {
+    saved->has_top = vm->top_frame != NULL;
+    saved->has_verify = vm->verify_frame != NULL;
+    saved->top = saved->has_top ? (const Value *)vm->top_frame - vm->stack : 0;
+    saved->verify = saved->has_verify ? (const Value *)vm->verify_frame - vm->stack : 0;
+}
+void vm_safepoints_restore(VM *vm, const NativeSafepoints *saved) {
+    vm->top_frame = saved->has_top ? (const void *)(vm->stack + saved->top) : NULL;
+    vm->verify_frame = saved->has_verify ? (const void *)(vm->stack + saved->verify) : NULL;
+}
