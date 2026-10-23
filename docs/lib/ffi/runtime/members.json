@@ -117,9 +117,93 @@
      "page": "sig/FOREIGN_MEMORY.md#val-witharrays"
     }
    ]
+  },
+  "FOREIGN_OWNER": {
+   "doc": "Explicit ownership and borrowed-use scopes for native pointers.\n\n",
+   "page": "sig/FOREIGN_OWNER.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "owner",
+     "spec": "type owner",
+     "doc": "A shared owner identity; copies observe the same closing/closed state.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#type-owner"
+    },
+    {
+     "kind": "type",
+     "name": "destructor",
+     "spec": "type destructor = {call : RuneForeign.resource,\n  arguments : RuneForeign.resource -> RuneForeign.argument list, failure : RuneForeign.failure}",
+     "doc": "A prepared native destructor and its argument projection.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#type-destructor"
+    },
+    {
+     "kind": "exception",
+     "name": "Closed",
+     "spec": "exception Closed",
+     "doc": "An operation on an already retired native identity.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#exn-closed"
+    },
+    {
+     "kind": "exception",
+     "name": "Busy",
+     "spec": "exception Busy",
+     "doc": "An attempt to close an active borrower or a destructor in progress.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#exn-busy"
+    },
+    {
+     "kind": "exception",
+     "name": "AlreadyOwned",
+     "spec": "exception AlreadyOwned",
+     "doc": "A second owner for the same live native address.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#exn-alreadyowned"
+    },
+    {
+     "kind": "exception",
+     "name": "Failed",
+     "spec": "exception Failed of RuneForeign.result",
+     "doc": "A native destructor returned its annotated failure status.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#exn-failed"
+    },
+    {
+     "kind": "val",
+     "name": "adopt",
+     "spec": "val adopt : {pointer : RuneForeign.resource, destructor : destructor} -> owner",
+     "doc": "`adopt {pointer, destructor}` takes ownership of a native-owned pointer.\n\nThe pointer must come from an ownership-annotated foreign result.\nFailure leaves responsibility with the caller. Destruction also checks\nnative provenance and rejects Rune-owned storage before native entry.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#val-adopt"
+    },
+    {
+     "kind": "val",
+     "name": "isClosed",
+     "spec": "val isClosed : owner -> bool",
+     "doc": "`isClosed owner` refreshes its shared state from the native registry.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#val-isclosed"
+    },
+    {
+     "kind": "val",
+     "name": "withBorrow",
+     "spec": "val withBorrow : owner -> (RuneForeign.resource -> 'a) -> 'a",
+     "doc": "`withBorrow owner body` guards one synchronous use of its raw identity.\n\nThe borrowed identity must not outlive this use without an explicit raw\nretention contract. Native views additionally retain their source.\n\n**Raises** `Closed` or `Busy` when the owner cannot be borrowed.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#val-withborrow"
+    },
+    {
+     "kind": "val",
+     "name": "close",
+     "spec": "val close : owner -> unit",
+     "doc": "`close owner` invokes its destructor and retires its native identity.\n\nA failed native destructor preserves ownership for retry and raises\n`Failed` with the raw status/error. Native bridge failures propagate.\n\n**Raises** `Closed`, `Busy` or `Failed`.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#val-close"
+    },
+    {
+     "kind": "val",
+     "name": "inScope",
+     "spec": "val inScope : ForeignScope.scope * owner -> ForeignScope.ticket",
+     "doc": "`inScope (scope, owner)` registers at-most-once scoped destruction.\n\nAn already closed owner needs no second destructor call. Cancel the\nreturned cleanup ticket to transfer responsibility beyond this scope.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#val-inscope"
+    }
+   ]
   }
  },
  "structures": {
-  "ForeignMemory": "FOREIGN_MEMORY"
+  "ForeignMemory": "FOREIGN_MEMORY",
+  "ForeignOwner": "FOREIGN_OWNER"
  }
 }

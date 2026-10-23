@@ -1,6 +1,6 @@
 # Index: R
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [d](d.md) [f](f.md) [i](i.md) [l](l.md) [o](o.md) [p](p.md) **r** [s](s.md) [t](t.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [f](f.md) [i](i.md) [l](l.md) [o](o.md) [p](p.md) **r** [s](s.md) [t](t.md) [w](w.md)
 
 - `raw` (val): [FOREIGN_MEMORY](../sig/FOREIGN_MEMORY.md#val-raw)
 - `read` (val): [FOREIGN_MEMORY](../sig/FOREIGN_MEMORY.md#val-read)

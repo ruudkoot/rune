@@ -1,7 +1,8 @@
 # Index: D
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) **d** [f](f.md) [i](i.md) [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) **d** [f](f.md) [i](i.md) [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
 
+- `destructor` (type): [FOREIGN_OWNER](../sig/FOREIGN_OWNER.md#type-destructor)
 - `direction` (type): [FOREIGN_MEMORY](../sig/FOREIGN_MEMORY.md#type-direction)
 
 ---
