@@ -4,7 +4,7 @@ struct
     List.foldl (fn (tag, tree) => Test.tag tag tree)
       (Test.it name {program = "/bin/sh", args = ["sh", "-c", "exec bin/" ^ program ^ " " ^ args],
         env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds 1800, cap = 0,
-        cpus = 1, memory = 1000, pools = [], exclusive = false, after = if args = "runtime asan" then ["native/prepare/asan"] else [], judge = Sh.failLines} : Run.command Test.tree)
+        cpus = 1, memory = 1000, pools = if program="rune-ffi-shim-check" andalso args="host mlkit" then ["matrix"] else [], exclusive = false, after = if args = "runtime asan" orelse (program="rune-ffi-shim-check" andalso args="asan") then ["native/prepare/asan"] else [], judge = Sh.failLines} : Run.command Test.tree)
       (tags @ ["covers:ffi/*", "covers:tests/ffi/*", "covers:tests/runner/ffijobs.sml"])
   fun job name args tags = jobWith "rune-ffi-check" name args tags
   fun frontendJob name args tags = jobWith "rune-c-check" name args
@@ -19,6 +19,12 @@ struct
      Test.requires ["windows"] (Test.describe "windows"
        (List.map (fn bits => job bits ("windows " ^ bits) ["test-ffi-windows", "test-windows", "nightly"]) ["32", "64"] @
        List.map(fn bits=>job ("runtime" ^ bits) ("runtime windows" ^ bits) ["test-ffi-runtime-windows"]) ["32","64"])),
+     Test.describe "shims"
+       (List.map(fn target=>jobWith "rune-ffi-shim-check" target target (if target="native" then ["check","test-ffi-shims"] else ["test-ffi-shims"]))
+         ["native","linux32","windows32","windows64","aarch64","ppc64"] @
+        [jobWith "rune-ffi-shim-check" "asan" "asan" ["test-ffi-shims-asan","vm","nightly"]] @
+        [Test.describe "hosts"(List.map(fn host=>Test.requires["host:" ^ host]
+          (jobWith "rune-ffi-shim-check" host ("host " ^ host)["test-ffi-shims-hosts","library","nightly"]))Hosts.names)]),
      Test.describe "layout"
        (List.map(fn target=>jobWith "rune-c-layout-check" target target ["test-c-layout"])
          ["native","linux32","windows32","windows64","aarch64","ppc64"]),

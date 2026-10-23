@@ -1,0 +1,3 @@
+name	kind	signature	realisations	status	origin	source
+FOREIGN_MEMORY	signature			required	declared	lib/ffi/runtime/memory_sig.sml
+ForeignMemory	structure	FOREIGN_MEMORY		required	claimed	lib/ffi/runtime/memory.sml

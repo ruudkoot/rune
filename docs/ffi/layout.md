@@ -36,3 +36,21 @@ QEMU are development oracles, not generator dependencies.
 This is the target-analysis part of M4. Runtime marshalling, generated
 adapter integration and the complete selected-header layout inventory must
 also pass before the milestone is complete.
+
+`ForeignShim` emits fixed typed wrappers and member accessors. The C
+compiler checks the original declarations and performs aggregate copies,
+bitfield access and default argument promotions. Outbound variadic support
+is limited to an explicitly typed fixed adapter: the dynamic bridge does
+not prepare a variadic CIF. The caller still satisfies foreign value/count
+contracts. Anonymous aggregate/enum types require an original named alias;
+unsupported layouts and declarations remain visible diagnostics.
+
+`ForeignMemory.withArrays` copies borrowed arrays into native backing
+storage. Ranges of one array share backing storage, preserving overlaps.
+Views close first, then output ranges copy back on normal and exceptional
+returns before backing allocations are freed. Input-only ranges are snapshots. Retained buffers
+have explicit allocation/release; native-owned pointers need a separate
+owner/deallocator contract. Native strings are read by complete code unit
+through their terminator, never by copying an entire maximum extent past
+an earlier NUL. The [marshalling library](../lib/ffi/marshal/README.md) and
+[runtime support](../lib/ffi/runtime/README.md) document these interfaces.

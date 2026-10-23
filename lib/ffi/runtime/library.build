@@ -1,0 +1,5 @@
+libraries ffi/marshal end
+annotate "demand" in
+  memory_sig.sml
+  memory.sml
+end

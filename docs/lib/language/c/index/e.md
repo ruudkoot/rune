@@ -4,7 +4,7 @@
 
 - `Enum` (con): [C_PARSE](../sig/C_PARSE.md#con-enum)
 - `environment` (type): [C_ENUM_CONST](../sig/C_ENUM_CONST.md#type-environment)
-- `Error` (exn): [C_CONST](../sig/C_CONST.md#exn-error), [C_ENUM_CONST](../sig/C_ENUM_CONST.md#exn-error), [C_EXPRESSION](../sig/C_EXPRESSION.md#exn-error), [C_INTEGER](../sig/C_INTEGER.md#exn-error), [C_LAYOUT](../sig/C_LAYOUT.md#exn-error), [C_LEX](../sig/C_LEX.md#exn-error), [C_PARSE](../sig/C_PARSE.md#exn-error), [C_PREPROCESS](../sig/C_PREPROCESS.md#exn-error)
+- `Error` (exn): [C_CONST](../sig/C_CONST.md#exn-error), [C_DECLARATOR](../sig/C_DECLARATOR.md#exn-error), [C_ENUM_CONST](../sig/C_ENUM_CONST.md#exn-error), [C_EXPRESSION](../sig/C_EXPRESSION.md#exn-error), [C_INTEGER](../sig/C_INTEGER.md#exn-error), [C_LAYOUT](../sig/C_LAYOUT.md#exn-error), [C_LEX](../sig/C_LEX.md#exn-error), [C_PARSE](../sig/C_PARSE.md#exn-error), [C_PREPROCESS](../sig/C_PREPROCESS.md#exn-error)
 - `evaluate` (val): [C_CONST](../sig/C_CONST.md#val-evaluate), [C_ENUM_CONST](../sig/C_ENUM_CONST.md#val-evaluate), [C_EXPRESSION](../sig/C_EXPRESSION.md#val-evaluate)
 
 ---

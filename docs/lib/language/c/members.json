@@ -34,6 +34,33 @@
     }
    ]
   },
+  "C_DECLARATOR": {
+   "doc": "C declarator output for verified native adapters.\n\n",
+   "page": "sig/C_DECLARATOR.md",
+   "members": [
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of string",
+     "doc": "A type needing an original named alias or an unsupported declarator.\n\n",
+     "page": "sig/C_DECLARATOR.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "identifier",
+     "spec": "val identifier : string -> unit",
+     "doc": "`identifier name` validates a C identifier without emitting source text.\n\n**Raises** `Error` for punctuation or an invalid initial character.\n\n",
+     "page": "sig/C_DECLARATOR.md#val-identifier"
+    },
+    {
+     "kind": "val",
+     "name": "declaration",
+     "spec": "val declaration : CParse.ctype * string -> string",
+     "doc": "`declaration (ty, name)` emits a named object/function declaration.\n\nNamed aggregates refer to their original tags. Anonymous aggregates\nrequire a supplied typedef. Attributes and qualifiers retain their\nparsed spelling; original headers remain the authority on definitions.\n\n**Raises** `Error` for a type that cannot be referenced safely.\n\n",
+     "page": "sig/C_DECLARATOR.md#val-declaration"
+    }
+   ]
+  },
   "C_ENUM_CONST": {
    "doc": "Integer folding of the expressions retained in enum declarations.\n\n",
    "page": "sig/C_ENUM_CONST.md",
@@ -490,6 +517,7 @@
  },
  "structures": {
   "CConst": "C_CONST",
+  "CDeclarator": "C_DECLARATOR",
   "CEnumConst": "C_ENUM_CONST",
   "CExpression": "C_EXPRESSION",
   "CFiles": "C_FILES",

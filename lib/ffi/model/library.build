@@ -11,6 +11,8 @@ annotate "demand" in
   projection.sml
   validate_sig.sml
   validate.sml
+  shim_sig.sml
+  shim.sml
   coverage_sig.sml
   coverage.sml
 end

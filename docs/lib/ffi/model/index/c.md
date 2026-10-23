@@ -2,6 +2,7 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [g](g.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
+- `call` (val): [FOREIGN_SHIM](../sig/FOREIGN_SHIM.md#val-call)
 - `Callable` (con): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#con-callable)
 - `callbackPolicy` (type): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#type-callbackpolicy)
 - `callType` (val): [FOREIGN_PROJECTION](../sig/FOREIGN_PROJECTION.md#val-calltype)

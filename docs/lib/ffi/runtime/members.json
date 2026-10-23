@@ -1,0 +1,125 @@
+{
+ "signatures": {
+  "FOREIGN_MEMORY": {
+   "doc": "Bounded native buffers and scoped borrowed SML array copies.\n\n",
+   "page": "sig/FOREIGN_MEMORY.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "buffer",
+     "spec": "type buffer",
+     "doc": "A checked native allocation, view or explicitly bounded pointer view.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#type-buffer"
+    },
+    {
+     "kind": "datatype",
+     "name": "direction",
+     "spec": "datatype direction = Input | Output | InputOutput",
+     "doc": "Input snapshots, copied outputs, or both.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#type-direction"
+    },
+    {
+     "kind": "type",
+     "name": "argument",
+     "spec": "type argument = {array : Word8Array.array, offset : int, length : int, direction : direction}",
+     "doc": "One array range passed as a native pointer during a scoped call.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#type-argument"
+    },
+    {
+     "kind": "exception",
+     "name": "Bounds",
+     "spec": "exception Bounds",
+     "doc": "A negative size or range beyond its known object extent.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#exn-bounds"
+    },
+    {
+     "kind": "val",
+     "name": "allocate",
+     "spec": "val allocate : int -> buffer",
+     "doc": "`allocate length` creates retained zeroed storage; its caller releases it.\n\nNative bridge failures propagate.\n\n**Raises** `Bounds` for a negative size.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-allocate"
+    },
+    {
+     "kind": "val",
+     "name": "fromBytes",
+     "spec": "val fromBytes : string -> buffer",
+     "doc": "`fromBytes bytes` makes a retained native copy, released by its caller.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-frombytes"
+    },
+    {
+     "kind": "val",
+     "name": "release",
+     "spec": "val release : buffer -> unit",
+     "doc": "`release buffer` releases its registry identity after all views close.\n\nThe native bridge rejects stale storage and live dependents.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-release"
+    },
+    {
+     "kind": "val",
+     "name": "length",
+     "spec": "val length : buffer -> int",
+     "doc": "`length buffer` returns its annotated byte extent.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-length"
+    },
+    {
+     "kind": "val",
+     "name": "raw",
+     "spec": "val raw : buffer -> RuneForeign.resource",
+     "doc": "`raw buffer` returns its opaque pointer identity for raw native calls.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-raw"
+    },
+    {
+     "kind": "val",
+     "name": "slice",
+     "spec": "val slice : buffer * int * int -> buffer",
+     "doc": "`slice (buffer, offset, length)` creates a sharing view retaining its owner.\n\n**Raises** `Bounds` for an invalid range.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-slice"
+    },
+    {
+     "kind": "val",
+     "name": "pointer",
+     "spec": "val pointer : {pointer : RuneForeign.resource, length : int} -> buffer",
+     "doc": "`pointer {pointer, length}` bounds an annotated native pointer.\n\nThe caller establishes the foreign extent and ownership. Releasing this\nview never calls a native deallocator; it retains the pointer identity.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-pointer"
+    },
+    {
+     "kind": "val",
+     "name": "read",
+     "spec": "val read : buffer * int * int -> string",
+     "doc": "`read (buffer, offset, length)` copies a checked range to SML.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-read"
+    },
+    {
+     "kind": "val",
+     "name": "write",
+     "spec": "val write : buffer * int * string -> unit",
+     "doc": "`write (buffer, offset, bytes)` updates storage visible through all views.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-write"
+    },
+    {
+     "kind": "val",
+     "name": "terminated",
+     "spec": "val terminated : {buffer : buffer, unitBytes : int} -> string",
+     "doc": "`terminated {buffer, unitBytes}` reads through a native NUL code unit.\n\nUnit width is one or two bytes; the terminator must fit in the extent.\nReads stop at the terminator, avoiding a copy beyond the foreign string.\n\n**Raises** `Bounds` if no complete terminator is present.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-terminated"
+    },
+    {
+     "kind": "val",
+     "name": "withBytes",
+     "spec": "val withBytes : string -> (buffer -> 'a) -> 'a",
+     "doc": "`withBytes bytes body` scopes one copied native input buffer.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-withbytes"
+    },
+    {
+     "kind": "val",
+     "name": "withArrays",
+     "spec": "val withArrays : argument list -> (buffer list -> 'a) -> 'a",
+     "doc": "`withArrays arguments body` supplies native views in argument order.\n\nRanges of the same SML array share one backing allocation, preserving\noverlap and pointer aliasing. Inputs are snapshots; outputs copy back on\nevery returning path. Output bytes supersede callback-side SML writes.\nTemporary views close first; outputs then copy back before allocations\nclose.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-witharrays"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "ForeignMemory": "FOREIGN_MEMORY"
+ }
+}

@@ -19,6 +19,12 @@ The specification in `docs/ffi/sidecars.md` describes the schema and its
 capability boundaries. Target layout and executable generation are
 separate consumers; a selected declaration is not a generated binding.
 
+[`ForeignShim`](str/ForeignShim.md) emits typed C adapters over original functions, inline
+functions, macros and fields. Aggregate values can cross the dynamic ABI
+through pointers while C performs their copies. C handles bitfields and
+compiler packing. This source-generation component does not execute
+commands; the generator/build integration supplies provenance and rebuilds.
+
 [How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md)
 
 ## Foreign interfaces
@@ -30,6 +36,7 @@ separate consumers; a selected declaration is not a generated binding.
 | [`FOREIGN_MODEL`](sig/FOREIGN_MODEL.md) | Foreign declarations, independent of target layout and SML projection. |
 | [`FOREIGN_POLICY`](sig/FOREIGN_POLICY.md) | Declarative FFI policy; reading a sidecar never executes its adapters. |
 | [`FOREIGN_PROJECTION`](sig/FOREIGN_PROJECTION.md) | Structured public interfaces assembled from native values and outputs. |
+| [`FOREIGN_SHIM`](sig/FOREIGN_SHIM.md) | Typed C adapters for declarations outside the dynamic scalar ABI. |
 | [`FOREIGN_VALIDATE`](sig/FOREIGN_VALIDATE.md) | Declaration-aware checks before safe binding generation. |
 
 ---

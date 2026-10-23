@@ -20,3 +20,9 @@ separately, preserving mappings to original declarations.
 The specification in `docs/ffi/sidecars.md` describes the schema and its
 capability boundaries. Target layout and executable generation are
 separate consumers; a selected declaration is not a generated binding.
+
+`ForeignShim` emits typed C adapters over original functions, inline
+functions, macros and fields. Aggregate values can cross the dynamic ABI
+through pointers while C performs their copies. C handles bitfields and
+compiler packing. This source-generation component does not execute
+commands; the generator/build integration supplies provenance and rebuilds.

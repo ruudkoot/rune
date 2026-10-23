@@ -7,6 +7,7 @@ documented when a comment describes it, alone or together with the entry before 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
 | [`C_CONST`](sig/C_CONST.md) | 4 | 4 | 100% | 2 | 2 |
+| [`C_DECLARATOR`](sig/C_DECLARATOR.md) | 3 | 3 | 100% | 2 | 2 |
 | [`C_ENUM_CONST`](sig/C_ENUM_CONST.md) | 4 | 4 | 100% | 2 | 2 |
 | [`C_EXPRESSION`](sig/C_EXPRESSION.md) | 3 | 3 | 100% | 1 | 1 |
 | [`C_FILES`](sig/C_FILES.md) | 2 | 2 | 100% | 2 | 2 |
@@ -16,7 +17,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`C_PARSE`](sig/C_PARSE.md) | 9 | 9 | 100% | 2 | 2 |
 | [`C_PREPROCESS`](sig/C_PREPROCESS.md) | 4 | 4 | 100% | 1 | 1 |
 | [`C_TYPE`](sig/C_TYPE.md) | 4 | 4 | 100% | 4 | 4 |
-| **all** | 61 | 61 | 100% | 29 | 29 |
+| **all** | 64 | 64 | 100% | 31 | 31 |
 
 ## Members a signature describes
 
@@ -25,7 +26,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-10 structures have a page, with 61 members, of which 61 (100%) are described by a signature.
+11 structures have a page, with 64 members, of which 64 (100%) are described by a signature.
 
 ---
 

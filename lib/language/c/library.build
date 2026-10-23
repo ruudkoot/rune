@@ -12,6 +12,8 @@ annotate "demand" in
   parse.sml
   type_sig.sml
   type.sml
+  declarator_sig.sml
+  declarator.sml
   expression_sig.sml
   expression.sml
   enum_const_sig.sml

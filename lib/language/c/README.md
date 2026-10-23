@@ -32,3 +32,7 @@ Inline bodies are balanced syntax, not compiled C statements. Target
 layout and declaration-expression typing are explicit consumers of the
 syntax tree; FFI projection remains separate. Unknown active directives or unsupported declaration syntax
 produce source diagnostics. Original headers are never repaired in place.
+
+`CDeclarator` renders referenced C types without changing original header
+bytes. It handles pointers, arrays and function declarators and requires
+an original name for anonymous aggregate types.

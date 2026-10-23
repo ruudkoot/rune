@@ -107,10 +107,13 @@ struct
         val library = directory ^ "/subject.so"
         val bytecode = directory ^ "/calls"
         fun compile target source output = ignore(command ("compile-" ^ target ^ "-" ^ OS.Path.file source)
-          [compilerRune,"--target=" ^ target,source,"-o",output])
+          ([compilerRune,"--target=" ^ target] @ (if source="tests/ffi/memory.sml" then ["--library","ffi/runtime"] else []) @ [source,"-o",output]))
         fun calls vm options output subject =
           need(String.isSubstring "PASS foreign calls:" (command (OS.Path.file vm ^ "-calls")
             (vm :: options @ [output,subject])),"foreign call fixture did not finish")
+        fun memory vm options output subject =
+          need(String.isSubstring "PASS native memory marshalling:" (command (OS.Path.file vm ^ "-memory")
+            (vm :: options @ [output,subject])),"native memory fixture did not finish")
         fun lifecycle vm output =
           let val image=output ^ ".image"
           in need(String.isSubstring "saved closed state" (command "save-closed" [vm,output,library,image]),"save fixture");
@@ -133,7 +136,10 @@ struct
              fun one(target,vm)=
                let val output=bytecode ^ target ^ ".rbc"
                    val ()=compile target "tests/ffi/calls.sml" output
-               in calls vm ["--gc-stress","7","--gc-verify"] (winpath output) subject end
+                   val bufferOutput=bytecode ^ target ^ "-memory.rbc"
+                   val ()=compile target "tests/ffi/memory.sml" bufferOutput
+               in calls vm ["--gc-stress","7","--gc-verify"] (winpath output) subject;
+                  memory vm ["--gc-stress","7","--gc-verify"] (winpath bufferOutput) subject end
          in one("stack",if bits="32" then "bin/runevm-stack32.exe" else "bin/runevm-stack.exe");
             one("registers",if bits="32" then "bin/runevm32.exe" else "bin/runevm.exe") end
        else
@@ -149,6 +155,9 @@ struct
                let val output=bytecode ^ target ^ ".rbc"
                    val ()=compile target "tests/ffi/calls.sml" output
                    val ()=calls vm (options @ ["--gc-stress","7","--gc-verify"]) output library
+                   val bufferOutput=bytecode ^ target ^ "-memory.rbc"
+                   val ()=compile target "tests/ffi/memory.sml" bufferOutput
+                   val ()=memory vm (options @ ["--gc-stress","7","--gc-verify"]) bufferOutput library
                    val life=bytecode ^ target ^ "-life.rbc"
                in if mode="asan" then () else
                     (compile target "tests/ffi/lifecycle.sml" life;lifecycle vm life) end
@@ -158,8 +167,12 @@ struct
                   one("registers","bin/runevm",[]);
                   List.app(fn options=>calls "bin/runevm" (options @ ["--gc-stress","7","--gc-verify"])
                     (bytecode ^ "registers.rbc") library) [["--jit=all"],["--jit=all","--jit-tier=2"]];
+                  List.app(fn options=>memory "bin/runevm" (options @ ["--gc-stress","7","--gc-verify"])
+                    (bytecode ^ "registers-memory.rbc") library) [["--jit=all"],["--jit=all","--jit-tier=2"]];
                   ignore(command "compile-native-calls" ["bin/runeopt",bytecode ^ "stack.rbc","-o",bytecode ^ "-native"]);
-                  need(String.isSubstring "PASS foreign calls:" (command "native-calls" [bytecode ^ "-native",library]),"native fixture"))
+                  need(String.isSubstring "PASS foreign calls:" (command "native-calls" [bytecode ^ "-native",library]),"native fixture");
+                  ignore(command "compile-native-memory" ["bin/runeopt",bytecode ^ "stack-memory.rbc","-o",bytecode ^ "-native-memory"]);
+                  need(String.isSubstring "PASS native memory marshalling:" (command "native-memory" [bytecode ^ "-native-memory",library]),"native memory fixture"))
          end
     end
   fun main ["sources"] = (source (fromRoot "ffi/sdl/upstream") (json "ffi/sdl/source.json"); inventories ())

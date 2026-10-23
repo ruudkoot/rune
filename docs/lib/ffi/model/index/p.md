@@ -7,6 +7,7 @@
 - `ParameterLength` (con): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#con-parameterlength)
 - `Pointer` (con): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#con-pointer)
 - `policy` (type): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#type-policy)
+- `preamble` (val): [FOREIGN_SHIM](../sig/FOREIGN_SHIM.md#val-preamble)
 - `Product` (con): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#con-product)
 
 ---
