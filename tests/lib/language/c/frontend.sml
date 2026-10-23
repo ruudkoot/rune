@@ -104,5 +104,11 @@ struct
   fun parseFails s = ((ignore (parse s); false) handle CParse.Error _ => true)
   val () = List.app (fn s => check ("invalid declaration", parseFails s))
     ["int x", "int (*f)(int;", "struct { int x;", "typedef int;", "int a[3);", "unknown x;", "struct s {int x = 1;};"]
+  val originalFile=CFiles.read "tests/ffi/preprocess.h"
+  val ()=check("file source identity is absolute",OS.Path.isAbsolute(#file originalFile) andalso size(#text originalFile)>0)
+  val fileResolver=CFiles.resolver["tests/ffi"]
+  val ()=check("relative include roots produce the same canonical source",case fileResolver{from="<fixture>",name="preprocess.h",system=true,next=false} of
+    SOME resolved=>resolved=originalFile | NONE=>false)
+  val ()=check("include_next recognizes canonical source root",not(isSome(fileResolver{from= #file originalFile,name="preprocess.h",system=true,next=true})))
   val () = print ("PASS language/c: " ^ Int.toString (!checks) ^ " checks\n")
 end
