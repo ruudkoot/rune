@@ -91,7 +91,11 @@ interactive client. The semantic cases cover push/pull/workspace reports,
 refresh and partial progress, cancellation, stale requests, native project
 paths, navigation, symbols and lexical completion/resolve. Compiler scope
 tests cover shadowing, hidden members, whitespace, unfinished local
-expressions and queries after closing their original contexts.
+expressions, typed record labels, named call arguments and queries after
+closing their original contexts or deleting the original library.
+Feature transcripts also verify UTF-16 signature labels, expanded invocation
+snippets, inline constructor patterns, captured documentation, namespace
+filtering and legacy-client fallback.
 
 After building the bytecode, run the same production transcripts natively
 on Windows from this directory:

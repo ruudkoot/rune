@@ -3,14 +3,16 @@
 structure CompilerAnalysisEngine =
 struct
   type source={file:string,text:string,mode:Source.mode}
-  type candidate={name:string,kind:string,detail:string option,origin:Env.origin}
+  type candidate={name:string,kind:string,detail:string option,arguments:string list list,origin:Env.origin}
+  type application={name:string,path:string list,argument:int,parameter:int}
   type scopeQuery={unit:string,file:string,offset:int,path:string list}
   type fact={unit:string,file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}
   type typeDefinition={id:string,origin:Env.origin}
   type entry={key:string,name:string,allow:bool,mode:Source.mode,pickle:string,facts:fact list,types:typeDefinition list,syntax:CompilerSyntax.t,uses:(string*(string list*string)*Source.span*Env.origin*bool) list}
   type snapshot={facts:fact list,diagnostics:CompilerSession.diagnostic list,reused:int,checked:int,types:typeDefinition list,dependencies:source list,
     uses:(string*(string*(string list*string)*Source.span*Env.origin*bool)) list,
-    candidates:candidate list,cache:entry list,plan:string,prelude:CompilerPrelude.plan}
+    candidates:candidate list,role:string,fields:(string*string) list,application:application option,
+    cache:entry list,plan:string,prelude:CompilerPrelude.plan}
   datatype session=Session of {stored:entry list ref,plan:string ref,config:CompilerSession.config,closed:bool ref}
   exception Cancelled
   fun new config=Session {stored=ref [],plan=ref "",config=config,closed=ref false}
@@ -22,6 +24,41 @@ struct
         val ()=CompilerSettings.libDir:=lib
         val ()=UnitBasis.startSession ()
         val scopeEnv=ref NONE : (int*Env.env*SigMatch.sigma StringMap.map*Elaborate.funinfo StringMap.map) option ref
+        val application=ref NONE : (int*application) option ref
+        val role=ref "unknown"
+        val queriedSyntax=ref [] : Ast.program ref
+        fun classify (syntax,offset) =
+          let fun category kind=if kind="ESelect" then "field" else if String.isPrefix "Ty" kind then "type"
+                else if String.isPrefix "P" kind then "pattern"
+                else if String.isPrefix "E" kind andalso kind<>"ExnDecl" andalso kind<>"ExnRepl" then "expression"
+                else if String.isPrefix "Str" kind orelse kind="DOpen" then "structure"
+                else if String.isPrefix "Sig" kind orelse String.isPrefix "Spec" kind then "signature" else "declaration"
+              fun choose ((kind,span:Source.span,_),old)=
+                if #file span="" orelse offset< #start span orelse offset> #stop span then old else
+                  let val width= #stop span- #start span
+                  in case old of SOME (prior,_) => if prior<width then old else SOME (width,category kind)
+                   | NONE => SOME (width,category kind) end
+          in case List.foldl choose NONE (SyntaxAst.shape syntax) of NONE => "unknown" | SOME (_,role) => role end
+        val ()=Env.observeExpression:=(fn (expression,_) => case (query,expression) of
+          (SOME query,Ast.EApp (function,argument,span)) =>
+            let val argumentSpan=Ast.spanOfExp argument
+                fun head (Ast.EVar ((path,name),_,_),n)=SOME (path,name,n)
+                  | head (Ast.EApp (function,_,_),n)=head (function,n+1)
+                  | head (Ast.ETyped (function,_,_),n)=head (function,n)
+                  | head _=NONE
+                fun parameter ([],index)=Int.max (0,index-1)
+                  | parameter (value::rest,index)=if #offset query<= #stop (Ast.spanOfExp value) then index
+                      else parameter (rest,index+1)
+                val width= #stop span- #start span
+            in if !Env.currentUnit<> #unit query orelse #file span<> #file query orelse
+                  #offset query< #start argumentSpan orelse #offset query> #stop argumentSpan then () else
+                 case head (function,0) of NONE => () | SOME (path,name,index) =>
+                   (case !application of SOME (prior,_) => if prior<=width then () else
+                      application:=SOME (width,{path=path,name=name,argument=index,
+                        parameter=case argument of Ast.ETuple (values,_) => parameter (values,0) | _ => 0})
+                    | NONE => application:=SOME (width,{path=path,name=name,argument=index,
+                        parameter=case argument of Ast.ETuple (values,_) => parameter (values,0) | _ => 0})) end
+        | _ => ())
         val ()=Env.observeScope:=(fn (span:Source.span,env) => case query of NONE => () | SOME query =>
           if !Env.currentUnit<> #unit query orelse #file span<> #file query orelse #start span> #offset query orelse #stop span< #offset query then () else
             let val width= #stop span- #start span
@@ -93,6 +130,8 @@ struct
                     | NONE => CompilerSyntax.parse {file=file,text=text,mode=mode,orPatterns=false,fixity= !fixity}
                     val ()=case CompilerSyntax.problems syntaxTree of [] => () | problem :: _ => raise Error.CompileError problem
                     val syntax=CompilerSyntax.bridge syntaxTree
+                    val ()=case query of SOME query => if #unit query=name then
+                      (role:=classify (syntax,#offset query);queriedSyntax:=syntax) else () | NONE => ()
                     val outgoing=CompilerSyntax.fixity syntaxTree
                     val ends=IntTable.table 16
                     val ()=List.app (fn stop => IntTable.insert (ends,stop,())) (CompilerSyntax.ends syntaxTree)
@@ -197,27 +236,42 @@ struct
         val ()=(stored:=List.rev (!staged);savedPlan:=planKey)
         fun candidates ()=case (!scopeEnv,query) of (SOME (_,env,sigs,funs),SOME query) =>
           let val selected=case Env.findStr' (env,#path query) of SOME selected => SOME selected | NONE => NONE
-              fun show ty=Types.toStringNamed (fn c => Env.qualifiedName (env,c),Types.newPrinter ()) ty
               fun value (name,status)=
                 let val ty=case status of Env.Val {scheme,...} => scheme | Env.Con {scheme,...} => scheme
                       | Env.ConAsVal {scheme,...} => scheme | Env.Prim {scheme,...} => scheme
                       | Env.Exn {ty,...} => ty | Env.ExnAsVal {ty,...} => ty
                     val kind=case status of Env.Con _ => "constructor" | Env.Exn _ => "exception"
                       | _ => (case Types.prune ty of Types.TArrow _ => "function" | _ => "value")
-                in {name=name,kind=kind,detail=SOME (show ty),origin=Env.originOf (env,"v",(#path query,name))}:candidate end
-              fun member (kind,name)={name=name,kind=kind,detail=NONE,
+                    val printer=Types.newPrinter ()
+                    fun show ty=Types.toStringNamed (fn c => Env.qualifiedName (env,c),printer) ty
+                    fun domain ty=case Types.prune ty of Types.TRecord fields =>
+                          if List.map #1 fields=List.tabulate (length fields,fn i => Int.toString (i+1)) andalso length fields>=2
+                          then List.map (show o #2) fields else [show ty] | _ => [show ty]
+                    fun arguments ty=case Types.prune ty of Types.TArrow (a,b) => domain a::arguments b | _ => []
+                    val detail=show ty
+                in {name=name,kind=kind,detail=SOME detail,arguments=arguments ty,
+                  origin=Env.originOf (env,"v",(#path query,name))}:candidate end
+              fun member (kind,name)={name=name,kind=kind,detail=NONE,arguments=[],
                 origin=Env.originOf (env,if kind="type" then "t" else "s",(#path query,name))}:candidate
           in case selected of NONE => [] | SOME selected =>
             List.map value (StringMap.listItemsi (Env.vals selected)) @
             List.map (fn name => member ("type",name)) (StringMap.listKeys (Env.tys selected)) @
             List.map (fn name => member ("structure",name)) (StringMap.listKeys (Env.strs selected)) @
             (if not (null (#path query)) then [] else
-              List.map (fn (name,sigma) => {name=name,kind="signature",detail=NONE,origin= #origin sigma}:candidate) (StringMap.listItemsi sigs) @
-              List.map (fn (name,Elaborate.FunInfo {binding,...}) => {name=name,kind="functor",detail=NONE,origin=binding}:candidate) (StringMap.listItemsi funs)) end
+              List.map (fn (name,sigma) => {name=name,kind="signature",detail=NONE,arguments=[],origin= #origin sigma}:candidate) (StringMap.listItemsi sigs) @
+              List.map (fn (name,Elaborate.FunInfo {binding,...}) => {name=name,kind="functor",detail=NONE,arguments=[],origin=binding}:candidate) (StringMap.listItemsi funs)) end
           | _ => []
+        fun fields ()=case query of NONE => [] | SOME query =>
+          case CompilerFacts.recordAt (!queriedSyntax,#file query,#offset query) of NONE => [] | SOME ty =>
+            case Types.prune ty of Types.TRecord fields =>
+              let val printer=Types.newPrinter ()
+                  fun show ty=case !scopeEnv of NONE => Types.toStringNamed (fn _ => NONE,printer) ty
+                    | SOME (_,env,_,_) => Types.toStringNamed (fn c => Env.qualifiedName (env,c),printer) ty
+              in List.map (fn (name,ty) => (name,show ty)) fields end | _ => []
     in {facts=List.concat (List.rev (!facts)),diagnostics=case error of NONE => [] | SOME error => [error],
       reused= !reused,checked= !checked,types=List.concat (List.rev (!types)),
       dependencies=List.map (fn (entry,text) => {file=BasisManifest.path entry,text=text,mode=Source.Ascii}:source) librarySources,
-      uses=List.concat (List.rev (!uses)),candidates=candidates (),cache= !stored,plan=planKey,prelude=plan} end)
+      uses=List.concat (List.rev (!uses)),candidates=candidates (),role= !role,fields=fields (),application=Option.map #2 (!application),
+      cache= !stored,plan=planKey,prelude=plan} end)
   fun checkSteps (session,sources,steps,libraries,cancelled)=checkWith (session,sources,steps,libraries,cancelled,NONE,[],NONE)
 end

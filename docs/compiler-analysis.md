@@ -64,6 +64,14 @@ expression can use a bounded private syntax probe; probe facts and errors
 are never published as analysis of the original text. No mutable environment
 escapes, and a query never executes declarations or writes files.
 
+`completionAt` also returns the compiler syntax role and concrete record
+fields where the operand or pattern has a checked record type. It returns
+no guessed labels for an unresolved flexible record. `signatureAt` derives
+the named callee and active curried/tuple argument from compiler application
+syntax, including infix desugaring; its domains and types are frozen data.
+`documentationAt` reads the leading comment of the owning declaration from
+captured syntax/source, including dependencies whose disk files are gone.
+
 Checkpoints contain committed unit entries and visibility-plan metadata,
 rather than a rollback copy of mutable unification cells. They belong to
 one analysis context and never rewind its result-ID counter. Cancelled or

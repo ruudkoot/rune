@@ -68,10 +68,12 @@ struct
             val () = trace := requestedTrace
             val () = Option.app (fn token => progress token
               [("kind", Json.String "begin"), ("title", Json.String "Initialize Rune")]) token
-            val response = Json.Object [("capabilities", Json.Object
+            val response = Json.Object [("capabilities", Json.Object (
                 [("hoverProvider",Json.Bool true),
                  ("completionProvider",Json.Object [("resolveProvider",Json.Bool true),
                    ("triggerCharacters",Json.Array [Json.String "."])]),
+                 ("signatureHelpProvider",Json.Object [("triggerCharacters",Json.Array
+                   [Json.String "(",Json.String ",",Json.String " "]),("retriggerCharacters",Json.Array [Json.String ",",Json.String ")"])]),
                  ("definitionProvider",Json.Bool true),("declarationProvider",Json.Bool true),
                  ("typeDefinitionProvider",Json.Bool true),("implementationProvider",Json.Bool true),("documentSymbolProvider",Json.Bool true),
                  ("workspaceSymbolProvider",Json.Object [("resolveProvider",Json.Bool true)]),
@@ -80,7 +82,8 @@ struct
                  ("positionEncoding", Json.String (P.encodingName (P.positionEncoding caps))),
                  ("textDocumentSync", Json.Object [("openClose",Json.Bool true),("change",Json.int 2),
                    ("willSave",Json.Bool true),("save",Json.Object [("includeText",Json.Bool true)])]),
-                 ("workspace",Json.Object [("workspaceFolders",Json.Object [("supported",Json.Bool true),("changeNotifications",Json.Bool true)])])]),
+                 ("workspace",Json.Object [("workspaceFolders",Json.Object [("supported",Json.Bool true),("changeNotifications",Json.Bool true)])])] @
+                (if RuneLspService.inlineClient caps then [("inlineCompletionProvider",Json.Object [])] else []))),
               ("serverInfo", Json.Object [("name", Json.String "runelsp"), ("version", Json.String Config.version)])]
             val () = state := AwaitInitialized
             val () = Option.app (fn token => progress token [("kind", Json.String "end")]) token

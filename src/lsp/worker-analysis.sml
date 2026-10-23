@@ -277,14 +277,23 @@ struct
           | NONE => raise Fail "workspace symbol data is invalid"
         val fields=case symbol of Json.Object fields => fields | _ => []
     in Json.Object (("data",data)::fields) end
-  fun completionItems (view:view,source:source,offset) =
+  fun sourceOrdinal (view:view,source:source) =
     let fun ordinal ([],_)=NONE
           | ordinal ((input:A.input)::rest,index)=if #file input= #file source then SOME index else ordinal (rest,index+1)
-        val selected=case #ordinal view of SOME index => SOME index | NONE => ordinal (A.inputs (#snapshot view),0)
-        fun visible path=case selected of NONE => [] | SOME ordinal =>
-          A.visibleAt (#snapshot view,{ordinal=ordinal,offset=offset,path=path})
+    in case #ordinal view of SOME index => SOME index | NONE => ordinal (A.inputs (#snapshot view),0) end
+  fun completionItems (view:view,source:source,offset) =
+    let val selected=sourceOrdinal (view,source)
+        fun query path=case selected of NONE => {role="unknown",candidates=[],fields=[]} | SOME ordinal =>
+          A.completionAt (#snapshot view,{ordinal=ordinal,offset=offset,path=path})
     in RuneLspCompletion.items {text= #text source,offset=offset,pieces=tokens source,snapshot= #id view,
-      uri= #uri source,visible=visible,range=fn (start,stop) => range (source,#encoding view,start,stop)} end
+      uri= #uri source,query=query,range=fn (start,stop) => range (source,#encoding view,start,stop),
+      snippets=capability (#capabilities view,["textDocument","completion","completionItem","snippetSupport"])=SOME (Json.Bool true)} end
+  fun completionDocumentation (view:view,source:source,offset,name,kind) =
+    case sourceOrdinal (view,source) of NONE => NONE | SOME ordinal =>
+      let val {path,...}=RuneLspCompletion.prefix (#text source,offset)
+          val candidates=A.visibleAt (#snapshot view,{ordinal=ordinal,offset=offset,path=path})
+      in case List.find (fn candidate:A.candidate => #name candidate=name andalso #kind candidate=kind) candidates of
+           NONE => NONE | SOME candidate => Option.mapPartial (fn location => A.documentationAt (#snapshot view,location)) (#definition candidate) end
   fun query (view:view,{method,params}) =
     let val resolving=method="completionItem/resolve"
         val document=J.object (J.required (J.object params,if resolving then "data" else "textDocument"))
@@ -301,15 +310,40 @@ struct
            SOME (Json.String value) => SOME value | NONE => NONE | _ => raise J.Invalid "invalid diagnostic result id"})
        | "textDocument/completion" => Json.Object [("isIncomplete",Json.Bool true),
            ("items",Json.Array (case offset () of NONE => [] | SOME at => completionItems (view,source,at)))]
+       | "textDocument/inlineCompletion" =>
+           let val context=J.object (J.required (params,"context"))
+               val ()=case Json.toInt (J.required (context,"triggerKind")) of SOME 1 => () | SOME 2 => ()
+                 | _ => raise J.Invalid "invalid inline completion trigger"
+               val selected=case Json.member ("selectedCompletionInfo",context) of NONE => NONE | SOME value =>
+                 let val point=J.required (value,"range")
+                     val ()=case LspProtocol.rangeFromJson point of NONE => raise J.Invalid "invalid selected completion range" | SOME _ => ()
+                 in SOME (point,J.string (J.required (value,"text"))) end
+               fun query (ordinal,at,path)=A.completionAt (#snapshot view,{ordinal=ordinal,offset=at,path=path})
+               val items=case (sourceOrdinal (view,source),offset ()) of (SOME ordinal,SOME at) =>
+                 RuneLspCompletion.inline {text= #text source,offset=at,pieces=tokens source,
+                   query=fn path => query (ordinal,at,path),range=fn (start,stop) => range (source,#encoding view,start,stop),selected=selected}
+                 | _ => []
+           in Json.Object [("items",Json.Array items)] end
+       | "textDocument/signatureHelp" =>
+           (case (sourceOrdinal (view,source),offset ()) of (SOME ordinal,SOME at) =>
+              (case A.signatureAt (#snapshot view,{ordinal=ordinal,offset=at}) of NONE => Json.Null | SOME call =>
+                RuneLspCompletion.renderSignature (call,capability (#capabilities view,
+                  ["textDocument","signatureHelp","signatureInformation","parameterInformation","labelOffsetSupport"])=SOME (Json.Bool true)))
+            | _ => Json.Null)
        | "completionItem/resolve" =>
            let val data=document
                val ()=if J.string (J.required (data,"snapshot"))= #id view then () else raise Fail "completion item is stale"
                val at=case Json.toInt (J.required (data,"offset")) of SOME at => at | NONE => raise J.Invalid "invalid completion offset"
                val name=J.string (J.required (data,"name"))
                val kind=J.string (J.required (data,"kind"))
+               val template=Json.member ("template",data)
            in case List.find (fn item => case Json.member ("data",item) of NONE => false | SOME value =>
-                 Json.member ("name",value)=SOME (Json.String name) andalso Json.member ("kind",value)=SOME (Json.String kind))
-                (completionItems (view,source,at)) of SOME item => item | NONE => raise Fail "completion item is unavailable" end
+                 Json.member ("name",value)=SOME (Json.String name) andalso Json.member ("kind",value)=SOME (Json.String kind)
+                 andalso Json.member ("template",value)=template)
+                (completionItems (view,source,at)) of SOME (item as Json.Object fields) =>
+                  (case completionDocumentation (view,source,at,name,kind) of NONE => item | SOME text =>
+                    Json.Object (("documentation",Json.String (safe text))::fields))
+                | _ => raise Fail "completion item is unavailable" end
        | "textDocument/definition" => target (fn occurrence:A.occurrence => #definition occurrence)
        | "textDocument/declaration" => target (fn occurrence:A.occurrence => #declaration occurrence)
        | "textDocument/typeDefinition" =>
@@ -335,18 +369,29 @@ struct
          let val point=case LspProtocol.positionFromJson (J.required (params,"position")) of
                SOME point => point | NONE => raise J.Invalid "invalid hover position"
              val offset=case #index source of NONE => NONE | SOME index => L.offset (index,#encoding view,point)
-         in case Option.mapPartial (fn offset => case #ordinal view of
+             val ty=Option.mapPartial (fn offset => case #ordinal view of
                 SOME ordinal => A.typeAtOccurrence (#snapshot view,{ordinal=ordinal,offset=offset})
-              | NONE => A.typeAt (#snapshot view,{file= #file source,offset=offset})) offset of
-              NONE => Json.Null | SOME ty =>
+              | NONE => A.typeAt (#snapshot view,{file= #file source,offset=offset})) offset
+             val binding=Option.mapPartial (fn offset => at (view,source,offset)) offset
+             val documentation=case binding of NONE => NONE | SOME (occurrence,_) =>
+               Option.mapPartial (fn location => A.documentationAt (#snapshot view,location)) (#definition occurrence)
+             val ty=case ty of SOME _ => ty | NONE => case binding of SOME (occurrence,_) =>
+               if List.exists (fn kind => kind= #kind occurrence) ["type","structure","signature","functor"]
+               then SOME (#kind occurrence ^ " " ^ String.concatWith "." (#path occurrence @ [#name occurrence])) else NONE
+               | NONE => NONE
+         in case (ty,documentation) of
+              (NONE,NONE) => Json.Null | _ =>
                 let val formats=case capability (#capabilities view,["textDocument","hover","contentFormat"]) of
                       SOME (Json.Array formats) => formats | _ => []
                     val markdown=case List.find (fn format => format=Json.String "markdown" orelse format=Json.String "plaintext") formats of
                       SOME (Json.String "markdown") => true | _ => false
+                    val ty=getOpt (ty,"")
                     fun longest (i,run,best)=if i=size ty then Int.max (run,best) else
                       if String.sub (ty,i)= #"`" then longest (i+1,run+1,best) else longest (i+1,0,Int.max (run,best))
                     val fence=CharVector.tabulate (Int.max (3,longest (0,0,0)+1),fn _ => #"`")
-                    val shown=if markdown then fence ^ "sml\n" ^ safe ty ^ "\n" ^ fence else safe ty
+                    val typeText=if ty="" then "" else if markdown then fence ^ "sml\n" ^ safe ty ^ "\n" ^ fence else safe ty
+                    val shown=typeText ^ (case documentation of NONE => "" | SOME text =>
+                      (if typeText="" then "" else "\n\n") ^ safe text)
                 in Json.Object [("contents",Json.Object [("kind",Json.String (if markdown then "markdown" else "plaintext")),
                   ("value",Json.String shown)])] end
          end

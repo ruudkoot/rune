@@ -87,7 +87,7 @@ struct
         val ()=(OS.FileSys.remove dir handle _ => ();OS.FileSys.mkDir dir;OS.FileSys.mkDir (dir ^ "/basis"))
         fun write (name,text)=let val output=TextIO.openOut (dir ^ "/basis/" ^ name)
           in TextIO.output (output,text);TextIO.closeOut output end
-        val ()=write ("captured.sml","structure Captured=struct val member=1 end\n")
+        val ()=write ("captured.sml","structure Captured=struct (* Frozen member documentation. *) val member=1 end\n")
         val ()=write ("MANIFEST","captured.sml | always | yes | Captured | \n")
         fun clean ()=(List.app (fn path => OS.FileSys.remove path handle _ => ())
           [dir ^ "/basis/captured.sml",dir ^ "/basis/MANIFEST"];
@@ -99,6 +99,10 @@ struct
               val ()=check ("temporary library was checked",null (A.diagnostics snapshot))
               val ()=(A.close context;C.close parent;clean ())
               val names=A.visibleAt (snapshot,{ordinal=0,offset=20,path=["Captured"]})
+              val member=List.find (fn candidate:A.candidate => #name candidate="member") names
+              val ()=check ("declaration documentation uses captured source after library deletion",case member of
+                SOME candidate => (case #definition candidate of SOME location =>
+                  A.documentationAt (snapshot,location)=SOME "Frozen member documentation." | NONE => false) | NONE => false)
           in check ("lexical query uses captured library plan after library deletion",
             List.exists (fn candidate:A.candidate => #name candidate="member" andalso #detail candidate=SOME "int") names) end
     in (work () before clean ()) handle error => (clean ();raise error) end
@@ -195,10 +199,42 @@ struct
         val ()=check ("unfinished local expression retains lexical parameters and locals",
           List.exists (fn candidate:A.candidate => #name candidate="parameter") localNames andalso
           List.exists (fn candidate:A.candidate => #name candidate="localName") localNames)
+        val recordText="val record={name=1,other=true}\nval selected= #na record\n"
+        val recordSnapshot=analyze (context,[input ("record.sml",recordText,"5")])
+        val (recordPrefix,_)=Substring.position "#na" (Substring.full recordText)
+        val recordQuery=A.completionAt (recordSnapshot,{ordinal=0,offset=Substring.size recordPrefix+3,path=[]})
+        val ()=check ("record labels come from the concrete operand even when the selector is unfinished",
+          #role recordQuery="field" andalso List.exists (fn (name,ty) => name="name" andalso ty="int") (#fields recordQuery)
+          andalso List.exists (fn (name,ty) => name="other" andalso ty="bool") (#fields recordQuery))
         val ()=(A.close context;C.close parent)
         val closedNames=A.visibleAt (snapshot,{ordinal=0,offset=offset,path=["S"]})
     in check ("closed context retains frozen lexical queries",List.exists (fn candidate:A.candidate =>
       #name candidate="member" andalso #detail candidate=SOME "bool") closedNames) end
+  fun signatures () =
+    let val parent=compiler ()
+        val context=A.create (parent,{context="signatures"})
+        fun query (text,needle) =
+          let val snapshot=analyze (context,[input ("calls.sml",text,"1")])
+              val (prefix,_)=Substring.position needle (Substring.full text)
+          in A.signatureAt (snapshot,{ordinal=0,offset=Substring.size prefix+size needle}) end
+        val curried=query ("fun choose (x:int) (y:bool)=x\nval result=choose 1 false\n","fals")
+        val ()=check ("curried signature selects its second domain",case curried of SOME call =>
+          #name call="choose" andalso #arguments call=[["int"],["bool"]] andalso #argument call=1 andalso #parameter call=0 | NONE => false)
+        val tuple=query ("fun pair (x:int,y:bool)=x\nval result=pair(1,false)\n","fals")
+        val ()=check ("tuple signature selects its second component",case tuple of SOME call =>
+          #arguments call=[["int","bool"]] andalso #argument call=0 andalso #parameter call=1 | NONE => false)
+        val infixCall=query ("infix 5 <+>\nfun (x:int) <+> (y:bool)=x\nval result=1 <+> false\n","fals")
+        val ()=check ("infix signature uses compiler desugaring",case infixCall of SOME call =>
+          #name call="<+>" andalso #arguments call=[["int","bool"]] andalso #parameter call=1 | NONE => false)
+        val partial="structure S=struct fun f(x:int,y:bool)=x end\nval result=S.f(1, "
+        val qualified=query (partial,partial)
+        val ()=check ("unfinished qualified call retains compiler argument position",case qualified of SOME call =>
+          #name call="f" andalso #path call=["S"] andalso #arguments call=[["int","bool"]] andalso #parameter call=1 | NONE => false)
+        val localText="fun f (x:int)=x\nval result=let fun f (x:bool)=x in f ("
+        val localCall=query (localText,localText)
+        val ()=check ("signature selects the lexical function rather than a same-name outer binding",case localCall of
+          SOME call => #arguments call=[["bool"]] | NONE => false)
+    in A.close context;C.close parent end
 end
 structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
@@ -211,6 +247,7 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "project-scopes" CompilerAnalysisTests.projects,
      Test.it "batch-compiler-oracle" CompilerAnalysisTests.batchOracle,
      Test.it "repeated-source-contexts" CompilerAnalysisTests.repeatedSources,
-     Test.it "lexical-visibility" CompilerAnalysisTests.lexicalVisibility]
+     Test.it "lexical-visibility" CompilerAnalysisTests.lexicalVisibility,
+     Test.it "call-signatures" CompilerAnalysisTests.signatures]
 end)
 val ()=CompilerAnalysisTestMain.main ()

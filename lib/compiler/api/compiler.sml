@@ -152,6 +152,7 @@ struct
     type fact=A.fact
     type typeDefinition=A.typeDefinition
     type candidate=A.candidate
+    type call=A.call
     exception Cancelled=A.Cancelled
     exception Busy=A.Busy
     fun create (Session {compiler=compiler as C.Session {token,...},mode},{context}) =
@@ -193,5 +194,8 @@ struct
     val typeAt=A.typeAt
     val typeAtOccurrence=A.typeAtOccurrence
     val visibleAt=A.visibleAt
+    val signatureAt=A.signatureAt
+    val completionAt=A.completionAt
+    val documentationAt=A.documentationAt
   end
 end

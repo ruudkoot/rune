@@ -23,7 +23,7 @@ documentation and its evidence beside the tests before this plan is retired.
 | M5 | Compiler sessions, semantic snapshots and invalidation | M3, M4; compiler-library M1-M4 and the analysis contract below | in progress: public immutable snapshots, scoped prefix replay, provenance and worker transport tested; scheduling/integration and full acceptance remain |
 | M6 | Document and workspace diagnostics | M5 | in progress: push/pull/workspace reports, refresh, cancellation and partial progress implemented; full coverage/performance acceptance remains |
 | M7 | Hover, navigation and symbols | M5 | in progress: navigation, document/workspace symbols and stale resolve tests pass; documentation, broader module cases and measurements remain |
-| M8 | Completion, signature help and inline completion | M7 | in progress: compiler lexical completion and stale item resolution implemented; signature help, snippets, fields and inline completion remain |
+| M8 | Completion, signature help and inline completion | M7 | in progress: lexical/qualified/record completion, documentation resolve, invocation snippets, signature help and negotiated inline patterns implemented; build paths, broader recovery and full acceptance remain |
 | M9 | Highlighting, hints, structural editing, links and colours | M4, M7 | planned |
 | M10 | References, rename and workspace/file edits | M5-M7 | planned |
 | M11 | Formatting, code actions, refactorings and lenses | M4, M7-M10 | planned |
@@ -1020,6 +1020,23 @@ It remains a preview until the remaining applicable protocol coverage is
 accepted at M14.
 
 ### M9. Presentation and structural features (L)
+
+M8 feature checkpoint (2026-10-23): the compiler now projects completion
+roles, concrete record labels, named applications and declaration comments
+through public immutable queries. Ten public analysis cases include
+curried/tuple/infix/qualified/shadowed calls, record selectors and frozen
+library documentation. Sixteen Linux production transcripts pass, adding
+UTF-16 parameter labels (including astral type names), opt-in templates
+whose expanded text typechecks, inline selected-item compatibility,
+documentation resolve, namespace filtering and old-client fallback.
+The Linux receipt is `/tmp/rune-lsp-m8-protocol-tests.log`; the same sixteen
+cases pass natively on Windows in `/tmp/rune-lsp-m8-windows-tests.log`.
+The final focused cohort, including compiler ownership/audit with 214 roots,
+passes in `/tmp/rune-lsp-m8-checkpoint-tests.log`. Generated documentation
+and all eleven consistency cases pass (runner `20261023-073138-250`,
+`/tmp/rune-lsp-m8-check-docs.log`). This checkpoint does
+not complete M8: build paths, broader incomplete-pattern handling, real
+clients and the concurrent query/performance gates remain.
 
 * **Depends on:** M4, M7; features needing types use M5's valid snapshots.
 * **Deliver:** semantic tokens/full/range/deltas, highlights, inlay hints

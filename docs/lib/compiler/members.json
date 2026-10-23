@@ -364,9 +364,16 @@
     {
      "kind": "type",
      "name": "Analysis.candidate",
-     "spec": "type candidate={name:string,kind:string,detail:string option,definition:location option}",
+     "spec": "type candidate={name:string,kind:string,detail:string option,arguments:string list list,definition:location option}",
      "doc": "A compiler-visible name and its frozen completion detail.\n\n",
      "page": "sig/RUNE_COMPILER.md#type-analysis.candidate"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.call",
+     "spec": "type call={name:string,path:string list,detail:string,arguments:string list list,argument:int,parameter:int}",
+     "doc": "A compiler-resolved application at the cursor. argument selects a\ncurried domain; parameter selects a tuple component of that domain.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.call"
     },
     {
      "kind": "exception",
@@ -507,6 +514,27 @@
      "spec": "val visibleAt : snapshot * {ordinal:int,offset:int,path:string list} -> candidate list",
      "doc": "`visibleAt (snapshot, position)` returns actual lexical bindings at a\nsource occurrence's byte offset, or members of path.\n\nIt replays validated prefixes and rechecks the requested unit. Only\nfrozen names/details escape; no mutable environment is published.\nIncomplete expressions can use bounded private syntax probes whose\nfacts and diagnostics are never published as original-source data.\nThe snapshot remains queryable after its context closes.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-analysis.visibleat"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.signatureAt",
+     "spec": "val signatureAt : snapshot * {ordinal:int,offset:int} -> call option",
+     "doc": "`signatureAt (snapshot, position)` returns the enclosing named\napplication's checked callable type and argument position.\n\nApplication structure comes from compiler syntax, including derived\ninfix applications. Incomplete expressions use the same private\nprobes as visibleAt. Unavailable or non-callable names return NONE.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.signatureat"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.completionAt",
+     "spec": "val completionAt : snapshot * {ordinal:int,offset:int,path:string list} ->\n  {role:string,fields:(string*string) list,candidates:candidate list}",
+     "doc": "`completionAt (snapshot, position)` returns lexical candidates and\nthe compiler syntax role at the cursor.\n\nrole is expression, pattern, type, field, structure, signature, declaration\nor unknown. fields contains labels and types only where a checked\nrecord operand/pattern supplies a concrete record type. A consumer\nmay filter namespaces without implementing a second parser.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.completionat"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.documentationAt",
+     "spec": "val documentationAt : snapshot * location -> string option",
+     "doc": "`documentationAt (snapshot, location)` returns the leading source\ncomment of the declaration owning that captured location.\n\nIt uses captured source and syntax, including library dependencies;\nit does not reread disk files. The comment delimiters are removed.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.documentationat"
     }
    ]
   }

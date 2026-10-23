@@ -68,6 +68,10 @@ struct
   val observeScope : (Source.span * env -> unit) ref=ref (fn _ => ())
   val ()=CompilerState.cellRoot ("Env.observeScope",observeScope)
   fun noteScope (span,env)=if !tracking andalso !applicationDepth=0 then (!observeScope) (span,env) else ()
+  val observeExpression : (Ast.exp * env -> unit) ref=ref (fn _ => ())
+  val ()=CompilerState.cellRoot ("Env.observeExpression",observeExpression)
+  fun noteExpression (expression,env)=if !tracking andalso !applicationDepth=0 then
+    (noteScope (Ast.spanOfExp expression,env);(!observeExpression) (expression,env)) else ()
 
   val empty = Env {vals = StringMap.empty, tys = StringMap.empty, strs = StringMap.empty,origins=StringMap.empty}
 

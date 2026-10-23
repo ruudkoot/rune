@@ -917,7 +917,7 @@ struct
     | _ => false
 
   fun elabExp (env, level, scope : scope, e : exp) : ty =
-    (Env.noteScope (spanOfExp e,env);case e of
+    (Env.noteExpression (e,env);case e of
       EScon (sc, slot, sp) => sconTy (level, sc, slot, sp)
     | EVar (longid, slot, sp) =>
         (Env.noteUse (env,"v",longid,sp);case findVal (env, longid) of

@@ -10,7 +10,8 @@ struct
     binding:string option,definition:location option,declaration:location option,isDefinition:bool,derived:bool}
   type typeDefinition={id:string,definition:location option,declaration:location option,implementation:location option}
   type fact=E.fact
-  type candidate={name:string,kind:string,detail:string option,definition:location option}
+  type candidate={name:string,kind:string,detail:string option,arguments:string list list,definition:location option}
+  type call={name:string,path:string list,detail:string,arguments:string list list,argument:int,parameter:int}
   type snapshot={id:string,context:string,project:string option,inputs:input list,dependencies:input list,
     diagnostics:C.diagnostic list,occurrences:occurrence list,types:typeDefinition list,facts:fact list,reused:int,checked:int,
     config:C.config,cache:E.entry list,plan:string,steps:CompilerProject.step list,libraries:string list,prelude:CompilerPrelude.plan}
@@ -95,28 +96,74 @@ struct
     if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
       let val input=List.nth (#inputs snapshot,ordinal)
       in typeIn (snapshot,{file= #file input,unit=SOME (#file input ^ "#" ^ Int.toString (ordinal+1)),offset=offset}) end
-  fun visibleAt (snapshot:snapshot,{ordinal,offset,path}) =
-    if ordinal<0 orelse ordinal>=length (#inputs snapshot) then [] else
+  fun queryAt (snapshot:snapshot,{ordinal,offset,path},accept:E.snapshot->bool) =
+    if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
     let val input=List.nth (#inputs snapshot,ordinal)
         val engine=E.Session {stored=ref (#cache snapshot),plan=ref (#plan snapshot),config= #config snapshot,closed=ref false}
         fun source (input:input):E.source={file= #file input,text= #text input,mode=valOf (Source.modeNamed (#mode input))}
-        fun query (sources,at)= #candidates (E.checkWith
+        fun query (sources,at)= E.checkWith
           (engine,sources,#steps snapshot,#libraries snapshot,fn () => false,
            SOME {unit= #file input ^ "#" ^ Int.toString (ordinal+1),file= #file input,offset=at,path=path},
-           List.map source (#dependencies snapshot),SOME (#prelude snapshot)))
+           List.map source (#dependencies snapshot),SOME (#prelude snapshot))
         val original=List.map source (#inputs snapshot)
-        fun retry []=[]
+        fun retry []=NONE
           | retry ((text,at)::rest)=
               let fun replace ([],_) = []
                     | replace ((item:E.source)::rest,index)=
                         (if index=ordinal then {file= #file item,text=text,mode= #mode item}:E.source else item)
                         :: replace (rest,index+1)
                   val sources=replace (original,0)
-              in case query (sources,at) of [] => retry rest | found => found end
-        val candidates=case query (original,offset) of [] =>
-              retry (CompilerScopeProbe.texts {file= #file input,text= #text input,
-                mode=valOf (Source.modeNamed (#mode input)),offset=offset})
-          | found => found
-    in List.map (fn candidate:E.candidate => {name= #name candidate,kind= #kind candidate,detail= #detail candidate,
-      definition=location (Env.primary (#origin candidate))}:candidate) candidates end
+                  val result=query (sources,at)
+              in if accept result then SOME result else retry rest end
+        val result=query (original,offset)
+    in if accept result then SOME result else
+       retry (CompilerScopeProbe.texts {file= #file input,text= #text input,
+         mode=valOf (Source.modeNamed (#mode input)),offset=offset}) end
+  fun completionAt (snapshot,position) =
+    let val result=queryAt (snapshot,position,fn result => not (null (#candidates result)))
+        val (candidates,role,fields)=case result of NONE => ([],"unknown",[]) | SOME result => (#candidates result,#role result,#fields result)
+    in {role=role,fields=fields,candidates=List.map (fn candidate:E.candidate =>
+      {name= #name candidate,kind= #kind candidate,detail= #detail candidate,
+       arguments= #arguments candidate,definition=location (Env.primary (#origin candidate))}:candidate) candidates} end
+  fun visibleAt (snapshot,position)= #candidates (completionAt (snapshot,position))
+  fun signatureAt (snapshot,{ordinal,offset}) =
+    case queryAt (snapshot,{ordinal=ordinal,offset=offset,path=[]},fn result => isSome (#application result)) of NONE => NONE
+    | SOME result => case #application result of NONE => NONE | SOME application =>
+        let val candidates=visibleAt (snapshot,{ordinal=ordinal,offset=offset,path= #path application})
+        in case List.find (fn candidate:candidate => #name candidate= #name application andalso
+             #argument application<length (#arguments candidate)) candidates of NONE => NONE
+         | SOME candidate => case #detail candidate of NONE => NONE | SOME detail =>
+             SOME {name= #name candidate,path= #path application,detail=detail,arguments= #arguments candidate,
+               argument= #argument application,parameter= #parameter application}:call option end
+  fun documentationAt (snapshot:snapshot,location:location) = C.owned (fn () =>
+    let val source=List.find (fn input:input => #file input= #file location) (#inputs snapshot @ #dependencies snapshot)
+    in case source of NONE => NONE | SOME source =>
+      let val cached=List.find (fn entry:E.entry =>
+            let val CompilerSyntax.Syntax {file,...}= #syntax entry in file= #file location end) (#cache snapshot)
+          val syntax=case cached of SOME entry => #syntax entry | NONE =>
+            CompilerSyntax.parse {file= #file source,text= #text source,mode=valOf (Source.modeNamed (#mode source)),
+              orPatterns=false,fixity=Fixity.initial}
+          type piece={kind:string,start:int,stop:int,text:string}
+          val pieces=CompilerSyntax.pieces syntax
+          fun declaration (kind,span:Source.span,_)=
+            if #start span<= #start location andalso #start location<= #stop span andalso
+              (String.isPrefix "D" kind orelse String.isPrefix "Spec" kind orelse
+               List.exists (fn value => value=kind) ["constructor","typbind","valspec","exnspec","strspec"])
+            then SOME span else NONE
+          fun insert (span:Source.span,[])= [span]
+            | insert (span:Source.span,(first:Source.span)::rest)=if #stop span- #start span< #stop first- #start first
+                then span::first::rest else first::insert (span,rest)
+          val spans=List.foldl insert [] (List.mapPartial declaration (SyntaxAst.shape (CompilerSyntax.bridge syntax)))
+          fun comment (span:Source.span)=
+            let val beforePieces=List.filter (fn piece:piece => #stop piece<= #start span) pieces
+                fun find []=NONE
+                  | find ((piece:piece)::rest)=case #kind piece of
+                      "whitespace" => find rest | "bom" => find rest
+                    | "comment" => if size (#text piece)>=4 andalso String.isSuffix "*)" (#text piece) then
+                        let val text=BasisManifest.trim (String.substring (#text piece,2,size (#text piece)-4))
+                        in if text="" then NONE else SOME text end else NONE
+                    | _ => if #text piece="|" then find rest else NONE
+            in find (List.rev beforePieces) end
+          fun first []=NONE | first (span::rest)=case comment span of NONE => first rest | found => found
+      in first spans end end)
 end

@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 72 of 72 entries documented |
+| Documentation | 76 of 76 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -88,7 +88,8 @@ sig
       <a href="#fld-analysis.occurrence.binding">binding</a>:string option,<a href="#fld-analysis.occurrence.definition">definition</a>:location option,<a href="#fld-analysis.occurrence.declaration">declaration</a>:location option,<a href="#fld-analysis.occurrence.isdefinition">isDefinition</a>:bool,<a href="#fld-analysis.occurrence.derived">derived</a>:bool}
     type <a href="#type-analysis.fact">fact</a>={<a href="#fld-analysis.fact.unit">unit</a>:string,<a href="#fld-analysis.fact.file">file</a>:string,<a href="#fld-analysis.fact.start">start</a>:int,<a href="#fld-analysis.fact.stop">stop</a>:int,<a href="#fld-analysis.fact.ty">ty</a>:string,<a href="#fld-analysis.fact.derived">derived</a>:bool,<a href="#fld-analysis.fact.constructors">constructors</a>:string list,<a href="#fld-analysis.fact.arguments">arguments</a>:string list list}
     type <a href="#type-analysis.typedefinition">typeDefinition</a>={<a href="#fld-analysis.typedefinition.id">id</a>:string,<a href="#fld-analysis.typedefinition.definition">definition</a>:location option,<a href="#fld-analysis.typedefinition.declaration">declaration</a>:location option,<a href="#fld-analysis.typedefinition.implementation">implementation</a>:location option}
-    type <a href="#type-analysis.candidate">candidate</a>={<a href="#fld-analysis.candidate.name">name</a>:string,<a href="#fld-analysis.candidate.kind">kind</a>:string,<a href="#fld-analysis.candidate.detail">detail</a>:string option,<a href="#fld-analysis.candidate.definition">definition</a>:location option}
+    type <a href="#type-analysis.candidate">candidate</a>={<a href="#fld-analysis.candidate.name">name</a>:string,<a href="#fld-analysis.candidate.kind">kind</a>:string,<a href="#fld-analysis.candidate.detail">detail</a>:string option,<a href="#fld-analysis.candidate.arguments">arguments</a>:string list list,<a href="#fld-analysis.candidate.definition">definition</a>:location option}
+    type <a href="#type-analysis.call">call</a>={<a href="#fld-analysis.call.name">name</a>:string,<a href="#fld-analysis.call.path">path</a>:string list,<a href="#fld-analysis.call.detail">detail</a>:string,<a href="#fld-analysis.call.arguments">arguments</a>:string list list,<a href="#fld-analysis.call.argument">argument</a>:int,<a href="#fld-analysis.call.parameter">parameter</a>:int}
     exception <a href="#exn-analysis.cancelled">Cancelled</a>
     exception <a href="#exn-analysis.busy">Busy</a>
     val <a href="#val-analysis.create">create</a> : session * {<a href="#fld-analysis.create.context">context</a>:string} -&gt; t
@@ -109,6 +110,10 @@ sig
     val <a href="#val-analysis.typeat">typeAt</a> : snapshot * {<a href="#fld-analysis.typeat.file">file</a>:string,<a href="#fld-analysis.typeat.offset">offset</a>:int} -&gt; string option
     val <a href="#val-analysis.typeatoccurrence">typeAtOccurrence</a> : snapshot * {<a href="#fld-analysis.typeatoccurrence.ordinal">ordinal</a>:int,<a href="#fld-analysis.typeatoccurrence.offset">offset</a>:int} -&gt; string option
     val <a href="#val-analysis.visibleat">visibleAt</a> : snapshot * {<a href="#fld-analysis.visibleat.ordinal">ordinal</a>:int,<a href="#fld-analysis.visibleat.offset">offset</a>:int,<a href="#fld-analysis.visibleat.path">path</a>:string list} -&gt; candidate list
+    val <a href="#val-analysis.signatureat">signatureAt</a> : snapshot * {<a href="#fld-analysis.signatureat.ordinal">ordinal</a>:int,<a href="#fld-analysis.signatureat.offset">offset</a>:int} -&gt; call option
+    val <a href="#val-analysis.completionat">completionAt</a> : snapshot * {<a href="#fld-analysis.completionat.ordinal">ordinal</a>:int,<a href="#fld-analysis.completionat.offset">offset</a>:int,<a href="#fld-analysis.completionat.path">path</a>:string list} -&gt;
+      {role:string,fields:(string*string) list,candidates:candidate list}
+    val <a href="#val-analysis.documentationat">documentationAt</a> : snapshot * location -&gt; string option
   end
 end
 </pre>
@@ -749,7 +754,7 @@ specification separately from the known implementation.
 #### <a name="type-analysis.candidate"></a>`candidate`
 
 ```sml
-type candidate={name:string,kind:string,detail:string option,definition:location option}
+type candidate={name:string,kind:string,detail:string option,arguments:string list list,definition:location option}
 ```
 
 A compiler-visible name and its frozen completion detail.
@@ -759,7 +764,26 @@ A compiler-visible name and its frozen completion detail.
 | <a name="fld-analysis.candidate.name"></a>`name` | `string` |  |
 | <a name="fld-analysis.candidate.kind"></a>`kind` | `string` |  |
 | <a name="fld-analysis.candidate.detail"></a>`detail` | `string option` |  |
+| <a name="fld-analysis.candidate.arguments"></a>`arguments` | `string list list` |  |
 | <a name="fld-analysis.candidate.definition"></a>`definition` | `location option` |  |
+
+#### <a name="type-analysis.call"></a>`call`
+
+```sml
+type call={name:string,path:string list,detail:string,arguments:string list list,argument:int,parameter:int}
+```
+
+A compiler-resolved application at the cursor. argument selects a
+curried domain; parameter selects a tuple component of that domain.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.call.name"></a>`name` | `string` |  |
+| <a name="fld-analysis.call.path"></a>`path` | `string list` |  |
+| <a name="fld-analysis.call.detail"></a>`detail` | `string` |  |
+| <a name="fld-analysis.call.arguments"></a>`arguments` | `string list list` |  |
+| <a name="fld-analysis.call.argument"></a>`argument` | `int` |  |
+| <a name="fld-analysis.call.parameter"></a>`parameter` | `int` |  |
 
 #### <a name="exn-analysis.cancelled"></a>`Cancelled`
 
@@ -977,6 +1001,57 @@ The snapshot remains queryable after its context closes.
 | <a name="fld-analysis.visibleat.ordinal"></a>`ordinal` | `int` |  |
 | <a name="fld-analysis.visibleat.offset"></a>`offset` | `int` |  |
 | <a name="fld-analysis.visibleat.path"></a>`path` | `string list` |  |
+
+#### <a name="val-analysis.signatureat"></a>`signatureAt`
+
+```sml
+val signatureAt : snapshot * {ordinal:int,offset:int} -> call option
+```
+
+`signatureAt (snapshot, position)` returns the enclosing named
+application's checked callable type and argument position.
+
+Application structure comes from compiler syntax, including derived
+infix applications. Incomplete expressions use the same private
+probes as visibleAt. Unavailable or non-callable names return NONE.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.signatureat.ordinal"></a>`ordinal` | `int` |  |
+| <a name="fld-analysis.signatureat.offset"></a>`offset` | `int` |  |
+
+#### <a name="val-analysis.completionat"></a>`completionAt`
+
+```sml
+val completionAt : snapshot * {ordinal:int,offset:int,path:string list} ->
+  {role:string,fields:(string*string) list,candidates:candidate list}
+```
+
+`completionAt (snapshot, position)` returns lexical candidates and
+the compiler syntax role at the cursor.
+
+role is expression, pattern, type, field, structure, signature, declaration
+or unknown. fields contains labels and types only where a checked
+record operand/pattern supplies a concrete record type. A consumer
+may filter namespaces without implementing a second parser.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.completionat.ordinal"></a>`ordinal` | `int` |  |
+| <a name="fld-analysis.completionat.offset"></a>`offset` | `int` |  |
+| <a name="fld-analysis.completionat.path"></a>`path` | `string list` |  |
+
+#### <a name="val-analysis.documentationat"></a>`documentationAt`
+
+```sml
+val documentationAt : snapshot * location -> string option
+```
+
+`documentationAt (snapshot, location)` returns the leading source
+comment of the declaration owning that captured location.
+
+It uses captured source and syntax, including library dependencies;
+it does not reread disk files. The comment delimiters are removed.
 
 ---
 

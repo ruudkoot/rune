@@ -60,12 +60,26 @@ validated source tokens; workspace symbol resolution rejects stale source
 and context data. Source is checked statically and never executed.
 
 Completion returns compiler-visible lexical names, qualified members and
-keywords, with plain-text replacement edits. Signature restrictions apply
-to qualified completion. Item resolution requires its original snapshot;
-edits invalidate old items. Incomplete expression probes are private to the
-scope query and do not replace source or publish their diagnostic/type data.
-Signature help, snippets, record-field completion and inline completion
-remain pending; completion is not full M8 acceptance.
+keywords, with namespace filtering from compiler syntax. Record selectors
+offer labels from a concrete checked operand type. Signature restrictions
+apply to qualified completion. Item resolution requires its original
+snapshot; edits invalidate old items. Leading declaration comments supply
+hover and resolved-item documentation from captured source.
+
+Clients with snippet support also receive invocation templates whose
+argument groups follow the checked callable type. Their default argument
+expressions raise `Match`, so a template can be checked without inventing
+values. No completion request executes it. Named-call signature help uses
+compiler applications, including curried, tuple and infix forms; parameter
+label offsets count UTF-16 units independently of source-position encoding.
+
+Clients negotiating inline completion can request bounded constructor
+patterns, using wildcards for constructor arguments. Suggestions must be
+compatible with selected-completion information. Other clients retain
+ordinary constructor completion. Private incomplete-expression probes do
+not replace source or publish their diagnostic/type data. Build-path
+completion, broader incomplete-pattern recovery, performance and real-client
+acceptance remain open; this is not full M8 acceptance.
 
 ## Workspaces and build contexts
 

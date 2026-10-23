@@ -4,6 +4,7 @@
 
 - `Analysis.dependencies` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.dependencies)
 - `Analysis.diagnostics` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.diagnostics)
+- `Analysis.documentationAt` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.documentationat)
 - `diagnostic` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-diagnostic)
 - `Syntax.diagnostics` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.diagnostics)
 

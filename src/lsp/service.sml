@@ -66,9 +66,12 @@ struct
     handle J.Full => failure (service,request,P.requestFailed,"analysis queue is full",NONE)
   fun accepts method=List.exists (fn candidate => candidate=method) ["textDocument/diagnostic","workspace/diagnostic","textDocument/hover",
     "textDocument/definition","textDocument/declaration","textDocument/typeDefinition","textDocument/implementation","textDocument/documentSymbol",
-    "workspace/symbol","workspaceSymbol/resolve","textDocument/completion","completionItem/resolve"]
+    "workspace/symbol","workspaceSymbol/resolve","textDocument/completion","completionItem/resolve","textDocument/signatureHelp",
+    "textDocument/inlineCompletion"]
+  fun inlineClient caps=case Json.member ("textDocument",P.rawCapabilities caps) of NONE => false | SOME value =>
+    (case Json.member ("inlineCompletion",value) of SOME (Json.Object _) => true | _ => false)
   fun request (service as Service {workspace,documents,caps,jobs,requests,results,...},{id,method,params}) =
-    if not (accepts method) then false else
+    if not (accepts method) orelse method="textDocument/inlineCompletion" andalso not (inlineClient caps) then false else
     let val params=case params of SOME params => S.object params | NONE => raise S.Invalid "missing semantic parameters"
         val workspaceRequest=List.exists (fn candidate => candidate=method) ["workspace/diagnostic","workspace/symbol","workspaceSymbol/resolve"]
         val uri=if workspaceRequest then "" else S.string (S.required (S.object (S.required
@@ -153,7 +156,7 @@ struct
           else query (service,request,snapshot) end
     | J.Done (Query request,value) =>
         if List.exists (fn method => method= #method request)
-          ["textDocument/completion","completionItem/resolve"] andalso not (current (service,
+          ["textDocument/completion","completionItem/resolve","textDocument/inlineCompletion"] andalso not (current (service,
           {uri= #uri request,revision= #revision request,generation= #generation request})) then
           failure (service,request,P.contentModified,"completion source changed",NONE)
         else if #method request="textDocument/diagnostic" andalso not (current (service,

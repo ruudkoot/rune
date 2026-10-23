@@ -215,7 +215,10 @@ sig
        specification separately from the known implementation. *)
     type typeDefinition={id:string,definition:location option,declaration:location option,implementation:location option}
     (* A compiler-visible name and its frozen completion detail. *)
-    type candidate={name:string,kind:string,detail:string option,definition:location option}
+    type candidate={name:string,kind:string,detail:string option,arguments:string list list,definition:location option}
+    (* A compiler-resolved application at the cursor. argument selects a
+       curried domain; parameter selects a tuple component of that domain. *)
+    type call={name:string,path:string list,detail:string,arguments:string list list,argument:int,parameter:int}
     (* Cancellation discarded an attempt before publishing its cache. *)
     exception Cancelled
     (* An operation re-entered or closed a context during an active check. *)
@@ -282,5 +285,27 @@ sig
        facts and diagnostics are never published as original-source data.
        The snapshot remains queryable after its context closes. *)
     val visibleAt : snapshot * {ordinal:int,offset:int,path:string list} -> candidate list
+    (* `signatureAt (snapshot, position)` returns the enclosing named
+       application's checked callable type and argument position.
+
+       Application structure comes from compiler syntax, including derived
+       infix applications. Incomplete expressions use the same private
+       probes as visibleAt. Unavailable or non-callable names return NONE. *)
+    val signatureAt : snapshot * {ordinal:int,offset:int} -> call option
+    (* `completionAt (snapshot, position)` returns lexical candidates and
+       the compiler syntax role at the cursor.
+
+       role is expression, pattern, type, field, structure, signature, declaration
+       or unknown. fields contains labels and types only where a checked
+       record operand/pattern supplies a concrete record type. A consumer
+       may filter namespaces without implementing a second parser. *)
+    val completionAt : snapshot * {ordinal:int,offset:int,path:string list} ->
+      {role:string,fields:(string*string) list,candidates:candidate list}
+    (* `documentationAt (snapshot, location)` returns the leading source
+       comment of the declaration owning that captured location.
+
+       It uses captured source and syntax, including library dependencies;
+       it does not reread disk files. The comment delimiters are removed. *)
+    val documentationAt : snapshot * location -> string option
   end
 end
