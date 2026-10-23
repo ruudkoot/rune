@@ -27,7 +27,7 @@ struct
         val manifest=Json.decode(decode "manifest" "extension/package.json")
         val version=case Json.member("runeVersion",manifest) of SOME(Json.String value)=>value | _=>raise Fail "missing Rune version"
         val ()=check(OS.Path.file file="rune-language-server-" ^ version ^ ".vsix","filename/version mismatch")
-        val ()=check(Json.member("publisher",manifest)=SOME(Json.String "ruudkoot"),"publisher mismatch")
+        val ()=check(Json.member("publisher",manifest)=SOME(Json.String(env("VSIX_PUBLISHER","ruudkoot"))),"publisher mismatch")
     in say "PASS vscode/archive-members-payload-modes-version\n" end
   fun stage () =
     let val dir=run ^ "/vscode-stage"

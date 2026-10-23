@@ -2047,7 +2047,7 @@ vscode dist-vscode: bin/rune-build bin/runelsp.rbc bin/dist/runevm bin/dist/rune
 test-vscode: bin/rune-build bin/rune-scenarios bin/rune-test
 	$(RUNE_TEST) --tier test-vscode
 test-vscode-packaged: dist-vscode bin/rune-lsp-distribution-tests.rbc bin/rune-scenarios
-	bin/rune-scenarios scenario-vscode-archive "$(abspath dist)/rune-language-server-$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h).vsix"
+	VSIX_PUBLISHER='$(VSIX_PUBLISHER)' bin/rune-scenarios scenario-vscode-archive "$(abspath dist)/rune-language-server-$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h).vsix"
 	build/vscode/extension/server/bin/runevm bin/rune-lsp-distribution-tests.rbc $(abspath build/vscode/extension)
 test-vscode-editor: dist-vscode
 	$(NODE) editors/vscode/test/editor.cjs "$(abspath dist)/rune-language-server-$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h).vsix"
