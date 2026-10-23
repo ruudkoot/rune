@@ -40,7 +40,13 @@ struct
         val callback = RuneForeign.callback {abi=0,result=RuneForeign.SInt32,arguments=[RuneForeign.SInt32],
           function=fn _=>RuneForeign.Signed 1,failure=RuneForeign.Default(RuneForeign.Signed 0)}
         val () = T.check ("RuneForeign.callback/rooted-resource",fn()=>RuneForeign.isLive callback)
+        val () = T.check ("RuneForeign.callbackStatus/initial-snapshot",fn()=>
+          RuneForeign.callbackStatus{callback=callback,reset=true}={rejected=0w0,first=NONE})
+        val () = T.check ("RuneForeign.callbackFault/reasons",fn()=>
+          List.length[RuneForeign.WrongThread,RuneForeign.NoActivation,RuneForeign.EntryDisabled,RuneForeign.EntryFailure]=4)
         val () = RuneForeign.release callback
+        val () = T.check ("RuneForeign.callbackStatus/stale-resource",fn()=>
+          (ignore(RuneForeign.callbackStatus{callback=callback,reset=false});false)handle RuneForeign.Error _=>true)
         val () = T.check ("RuneForeign.callbackFailure/argument-selection",fn()=>
           case RuneForeign.ByArgument{index=0,cases=[(0w1,RuneForeign.Signed ~1)],default=RuneForeign.Signed 0} of
             RuneForeign.ByArgument{index,cases,...}=>index=0 andalso List.length cases=1 | _=>false)

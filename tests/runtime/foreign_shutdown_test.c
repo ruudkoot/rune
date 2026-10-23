@@ -76,6 +76,8 @@ int main(int argc, char **argv) {
     CHECK(foreign_destroy(context) == -1 && frees == 1 && observed[0] == 999);
     CHECK(foreign_memory(context,1) == 0 && foreign_error(context)->error_number == EBUSY);
     CHECK(escaped(NULL,129) == 0 && escaped(NULL,1) == -1 && entries == 1);
+    uint64_t rejected; ForeignCallbackFault first;
+    CHECK(foreign_callback_status(context,callback,1,&rejected,&first)==0 && rejected==2 && first==FOREIGN_CALLBACK_DISABLED);
     CHECK(foreign_destroy(context) == 0);
     CHECK(observed[0] == 0 && observed[1] == -1 && observed[2] == -77 && observed[3] == 1234);
     CHECK(entries == 1 && frees == 2 && foreign_quarantined() == 1);

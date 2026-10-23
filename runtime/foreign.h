@@ -33,6 +33,9 @@ typedef enum { FOREIGN_FAIL_NEVER, FOREIGN_FAIL_ZERO, FOREIGN_FAIL_NONZERO, FORE
 typedef int (*ForeignCallback)(void *state, const ForeignValue *, size_t, ForeignValue *);
 typedef void (*ForeignCallbackFree)(void *state);
 typedef struct { size_t index; uint64_t key; ForeignValue value; } ForeignCallbackFailure;
+typedef enum { FOREIGN_CALLBACK_NONE, FOREIGN_CALLBACK_WRONG_THREAD,
+               FOREIGN_CALLBACK_NO_ACTIVATION, FOREIGN_CALLBACK_DISABLED,
+               FOREIGN_CALLBACK_ENTRY_FAILURE } ForeignCallbackFault;
 
 Foreign *foreign_create(const ForeignSystem *system);
 int foreign_available(void);
@@ -71,6 +74,10 @@ ForeignId foreign_prepare_variadic(Foreign *foreign, ForeignId symbol, int abi, 
                                   const ForeignType *arguments, size_t count, size_t fixed_count);
 ForeignId foreign_callback(Foreign *foreign, int abi, ForeignType result, const ForeignType *arguments, size_t count,
                           ForeignValue failure, const ForeignCallbackFailure *cases, size_t ncases, ForeignCallback callback, ForeignCallbackFree release, void *state);
+/* Owner-only atomic snapshot; reset returns the old status and clears it.
+   Counts saturate at 2^56-1. Wrong-thread queries set errno, not registry state. */
+int foreign_callback_status(Foreign *foreign, ForeignId callback, int reset,
+                            uint64_t *rejected, ForeignCallbackFault *first);
 int foreign_call(Foreign *foreign, ForeignId call, const ForeignValue *arguments, size_t count, ForeignValue *result, ForeignError *captured);
 /* Atomically guard a native-owned pointer through its annotated destructor.
    A native failure preserves ownership; success also retires the identity. */

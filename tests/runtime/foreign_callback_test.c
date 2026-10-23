@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 static unsigned checks, entries, frees;
 static long remaining = -1;
@@ -22,6 +23,12 @@ static int echo(void *state, const ForeignValue *args, size_t n, ForeignValue *r
     return 0;
 }
 static void release(void *state) { (void)state; frees++; }
+typedef struct { Foreign *foreign; ForeignId callback; int status, number; } Query;
+static void *wrong_query(void *opaque) {
+    Query *q=opaque; uint64_t count; ForeignCallbackFault first;
+    q->status=foreign_callback_status(q->foreign,q->callback,1,&count,&first);
+    q->number=errno; return NULL;
+}
 static ForeignId prepare(Foreign *f, ForeignId library, const char *name) {
     ForeignId symbol = foreign_symbol(f, library, name, strlen(name));
     ForeignType args[] = {FOREIGN_POINTER, FOREIGN_POINTER, FOREIGN_I32};
@@ -48,6 +55,8 @@ int main(int argc, char **argv) {
     }
     ForeignId callback = foreign_callback(f,0,FOREIGN_I32,types,2,failure,cases,2,echo,release,NULL);
     CHECK(callback != 0);
+    uint64_t rejected; ForeignCallbackFault first;
+    CHECK(foreign_callback_status(f,callback,0,&rejected,&first)==0 && !rejected && first==FOREIGN_CALLBACK_NONE);
     ForeignValue args[] = {{FOREIGN_POINTER,{.pointer=callback}},{FOREIGN_POINTER,{.pointer=0}},{FOREIGN_I32,{.integer=41}}};
     ForeignValue result; ForeignError captured;
     CHECK(foreign_call(f,apply,args,3,&result,&captured) == 0 && result.value.integer == 42 && entries == 1);
@@ -57,7 +66,29 @@ int main(int argc, char **argv) {
     CHECK(foreign_call(f,thread,args,3,&result,&captured) == 0 && result.value.integer == -1 && entries == 1);
     args[2].value.integer = 5;
     CHECK(foreign_call(f,thread,args,3,&result,&captured) == 0 && result.value.integer == -77 && entries == 1);
+    CHECK(foreign_callback_status(f,callback,0,&rejected,&first)==0 && rejected==3 && first==FOREIGN_CALLBACK_WRONG_THREAD);
+    CHECK(foreign_callback_status(f,callback,1,&rejected,&first)==0 && rejected==3 && first==FOREIGN_CALLBACK_WRONG_THREAD);
+    CHECK(foreign_callback_status(f,callback,0,&rejected,&first)==0 && !rejected && first==FOREIGN_CALLBACK_NONE);
+    ForeignId parallel=prepare(f,library,"rf_cb_threads");
+    CHECK(parallel && foreign_call(f,parallel,args,3,&result,&captured)==0 && result.value.integer==-19712 && entries==1);
+    CHECK(foreign_callback_status(f,callback,1,&rejected,&first)==0 && rejected==256 && first==FOREIGN_CALLBACK_WRONG_THREAD);
+    ForeignError previous=*foreign_error(f);
+    Query query={f,callback,0,0}; pthread_t query_thread;
+    CHECK(pthread_create(&query_thread,NULL,wrong_query,&query)==0 && pthread_join(query_thread,NULL)==0);
+    CHECK(query.status==-1 && query.number==EPERM && memcmp(&previous,foreign_error(f),sizeof previous)==0);
+    ForeignId remember=prepare(f,library,"rf_cb_remember");
+    CHECK(remember && foreign_call(f,remember,args,3,&result,&captured)==0);
+    void *native=system.open(argv[1],strlen(argv[1]));
+    CHECK(native!=NULL);
+    void *address=system.symbol(native,"rf_cb_outside",13); int (*outside)(void)=NULL;
+    CHECK(address!=NULL && sizeof outside==sizeof address);
+    memcpy(&outside,&address,sizeof outside);
+    CHECK(outside()==-77 && entries==1);
+    CHECK(foreign_callback_status(f,callback,1,&rejected,&first)==0 && rejected==1 && first==FOREIGN_CALLBACK_NO_ACTIVATION);
+    CHECK(system.close(native)==0);
+    CHECK(foreign_callback_status(f,apply,0,&rejected,&first)!=0);
     CHECK(foreign_release(f,callback) == 0 && frees == 1);
+    CHECK(foreign_callback_status(f,callback,0,&rejected,&first)!=0);
     CHECK(foreign_release(f,callback) != 0 && frees == 1);
     failure.value.integer = 128;
     failure.type = FOREIGN_I8;

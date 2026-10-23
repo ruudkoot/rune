@@ -10,6 +10,7 @@ fun callbackSigned result=Word64.toLargeIntX(callbackWord result)
 fun callbackRejected f=(f();false) handle RuneForeign.Error _=>true
 val applyCallback=callbackCall "rf_cb_apply" RuneForeign.SInt32 [RuneForeign.Pointer,RuneForeign.Pointer,RuneForeign.SInt32]
 val threadCallback=callbackCall "rf_cb_thread" RuneForeign.SInt32 [RuneForeign.Pointer,RuneForeign.Pointer,RuneForeign.SInt32]
+val parallelThreadCallback=callbackCall "rf_cb_threads" RuneForeign.SInt32 [RuneForeign.Pointer,RuneForeign.Pointer,RuneForeign.SInt32]
 val nestedDepth=ref 0
 val capturedCallback=ref(NONE:RuneForeign.resource option)
 val borrowedCallback=ref(NONE:RuneForeign.resource option)
@@ -43,6 +44,17 @@ val ()=callbackCheck("borrowed pointer expires",not(RuneForeign.isLive borrowed)
 val ()=callbackCheck("borrowed view expires",not(RuneForeign.isLive(valOf(!borrowedView))))
 val ()=callbackCheck("nested foreign callbacks",callbackSigned(RuneForeign.invoke(applyCallback,callbackArguments callback NONE 3))=13 andalso !nestedDepth=3)
 val ()=callbackCheck("foreign thread rejected",callbackSigned(RuneForeign.invoke(threadCallback,callbackArguments callback NONE 5))= ~99)
+val ()=callbackCheck("rejected callback observable",RuneForeign.callbackStatus{callback=callback,reset=false}=
+  {rejected=0w1,first=SOME RuneForeign.WrongThread})
+val ()=callbackCheck("callback status reset returns old snapshot",RuneForeign.callbackStatus{callback=callback,reset=true}=
+  {rejected=0w1,first=SOME RuneForeign.WrongThread})
+val ()=callbackCheck("callback status reset clears count and reason",RuneForeign.callbackStatus{callback=callback,reset=false}=
+  {rejected=0w0,first=NONE})
+val parallelResult=RuneForeign.invoke(parallelThreadCallback,callbackArguments callback NONE 5)
+val ()=callbackCheck("concurrent thread failures retain annotation",callbackSigned parallelResult= ~25344)
+val ()=callbackCheck("concurrent callback faults are counted atomically",RuneForeign.callbackStatus{callback=callback,reset=true}=
+  {rejected=0w256,first=SOME RuneForeign.WrongThread})
+val ()=callbackCheck("status query preserves captured native result",callbackSigned parallelResult= ~25344)
 exception CallbackFailure
 val failedEntries=ref 0
 val failingCallback=RuneForeign.callback{abi=0,result=RuneForeign.SInt32,arguments=[RuneForeign.Pointer,RuneForeign.SInt32],
@@ -51,6 +63,8 @@ val failingCallback=RuneForeign.callback{abi=0,result=RuneForeign.SInt32,argumen
 val ()=callbackCheck("exception after native return",(ignore(RuneForeign.invoke(applyCallback,callbackArguments failingCallback NONE 1));false)handle CallbackFailure=>true)
 val ()=callbackCheck("foreign thread selected failure zero",callbackSigned(RuneForeign.invoke(threadCallback,callbackArguments failingCallback NONE 129))=0)
 val ()=callbackCheck("foreign thread selected failure minus one",callbackSigned(RuneForeign.invoke(threadCallback,callbackArguments failingCallback NONE 1))= ~1)
+val ()=callbackCheck("fault status preserves SML exception precedence",RuneForeign.callbackStatus{callback=failingCallback,reset=true}=
+  {rejected=0w2,first=SOME RuneForeign.WrongThread})
 val ()=callbackCheck("saved exception cleared",callbackSigned(RuneForeign.invoke(applyCallback,callbackArguments callback NONE 6))=16)
 val twiceCall=callbackCall "rf_cb_twice" RuneForeign.SInt32 [RuneForeign.Pointer,RuneForeign.Pointer]
 val ()=failedEntries:=0
@@ -88,6 +102,8 @@ val depthCallback=RuneForeign.callback{abi=0,result=RuneForeign.SInt32,arguments
        callbackArguments(valOf(!depthSelf))NONE(Int64.toInt n-1)))))) | _=>raise Fail "depth argument"}
 val ()=depthSelf:=SOME depthCallback
 val ()=callbackCheck("bounded callback nesting",callbackSigned(RuneForeign.invoke(applyCallback,callbackArguments depthCallback NONE 200))= ~999 andalso !depthEntries=64)
+val ()=callbackCheck("bounded callback entry failure is observable",RuneForeign.callbackStatus{callback=depthCallback,reset=true}=
+  {rejected=0w1,first=SOME RuneForeign.EntryFailure})
 val realCall=callbackCall "rf_cb_real" RuneForeign.Float64 [RuneForeign.Pointer,RuneForeign.Float64]
 val realCallback=RuneForeign.callback{abi=0,result=RuneForeign.Float64,arguments=[RuneForeign.Float64],
   failure=RuneForeign.Default(RuneForeign.Real 0.0),function=fn [RuneForeign.Real n]=>RuneForeign.Real(n+0.25) | _=>raise Fail "real argument"}

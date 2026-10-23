@@ -192,7 +192,7 @@ struct
              val callbackUnit=directory ^ "/callback-unit"
              val ()=ignore(command "compile-callback-unit" (compiler "CC" @ flags @ sanitize @
                ["-DRUNE_FFI=1","-Iruntime","tests/runtime/foreign_callback_test.c","runtime/foreign.c","runtime/sys/sys_posix.c",
-                "-Wl,--wrap=calloc","-o",callbackUnit,"-ldl","-lm"] @ ffiFlags))
+                "-Wl,--wrap=calloc","-pthread","-o",callbackUnit,"-ldl","-lm"] @ ffiFlags))
              val ()=ignore(command "callback-unit" [callbackUnit,library])
              val shutdownLibrary=directory ^ "/shutdown-provider.so"
              val ()=ignore(command "compile-shutdown-provider" (compiler "CC" @ flags @ sanitize @

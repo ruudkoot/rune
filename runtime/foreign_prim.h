@@ -175,6 +175,13 @@ static int p_foreign(VM *vm) {
             break;
         }
         case 10: result_id = foreign_live(vm->foreign); break;
+        case 19: {
+            if (auxiliary > 1 || nmeta || ninput) { ok = 0; error.error_number = EINVAL; break; }
+            uint64_t rejected; ForeignCallbackFault first;
+            ok = foreign_callback_status(vm->foreign, id, (int)auxiliary, &rejected, &first) == 0;
+            if (ok) { result_id = (uint64_t)first; foreign_bytes(scalar, rejected); noutput = 8; }
+            break;
+        }
         case 13: {
             int same = foreign_same(vm->foreign, id, auxiliary);
             ok = same >= 0; if (ok) result_id = (uint64_t)same; break;

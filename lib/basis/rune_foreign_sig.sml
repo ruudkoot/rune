@@ -17,6 +17,9 @@ sig
   (* A callback's default or argument-dependent native failure result. *)
   datatype callbackFailure = Default of argument | ByArgument of
     {index : int, cases : (Word64.word * argument) list, default : argument}
+  (* A rejected entry's reason: another OS thread, no owning native call,
+     disabled entry, or failure to enter the bounded interpreter. *)
+  datatype callbackFault = WrongThread | NoActivation | EntryDisabled | EntryFailure
   (* An integral destructor result's annotated failure condition. *)
   datatype failure = NoFailure | Zero | Nonzero | Negative
   (* Captured immediately after native execution, before cleanup. *)
@@ -102,6 +105,19 @@ sig
      Raises: `Error` for unavailable callbacks or invalid scalar policies. *)
   val callback : {abi : int, result : scalar, arguments : scalar list,
     function : argument list -> argument, failure : callbackFailure} -> resource
+  (* `callbackStatus {callback, reset}` observes rejected native entries.
+
+     The owning VM thread receives an atomic snapshot of the count and the
+     first reason since creation or reset. A reset returns the old snapshot
+     and clears both fields together; concurrent entries belong to either
+     snapshot. The count saturates at 2^56-1. User callback exceptions and
+     deliberate suppression after an earlier exception are not rejections.
+     Inspection does not raise or consume saved callback exceptions, change
+     native failure results, or replace a call's captured native errors.
+
+     Raises: `Error` for unavailable support, stale or non-callback resources. *)
+  val callbackStatus : {callback : resource, reset : bool} ->
+    {rejected : Word64.word, first : callbackFault option}
   (* `invokeDeferred (call, arguments)` returns saved callback exceptions.
 
      The raw result, captured error and pointer identity are available before

@@ -75,8 +75,10 @@ typedef struct {
 typedef struct Callback Callback;
 struct Callback {
     /* Bit zero enables entry; the remaining bits count entries already
-       using the context. Disabled quarantined thunks read immutable data. */
+       using the context. Disabled thunks use immutable data and own atomics. */
     AtomicWord gate;
+    /* One atomic snapshot combines a saturating count and first fault. */
+    AtomicWord faults;
     Callback *quarantined_next;
     Prepared signature;
     Foreign *foreign;
@@ -94,6 +96,15 @@ static Callback *quarantine;
 static void word_add(AtomicWord *word, uint64_t delta) {
     uint64_t old = ID_LOAD(word);
     while (!ID_EXCHANGE(word, &old, old + delta)) {}
+}
+static void callback_fault(Callback *c, ForeignCallbackFault fault) {
+    uint64_t old = ID_LOAD(&c->faults);
+    for (;;) {
+        uint64_t count = old >> 8;
+        if (count != (UINT64_MAX >> 8)) count++;
+        uint64_t next = (count << 8) | ((old & 255) ? old & 255 : (unsigned)fault);
+        if (ID_EXCHANGE(&c->faults, &old, next)) return;
+    }
 }
 static int callback_acquire(Callback *c) {
     uint64_t old = ID_LOAD(&c->gate);
@@ -113,7 +124,7 @@ static void callback_enable(Callback *c) {
     while (!ID_EXCHANGE(&c->gate, &old, old | UINT64_C(1))) {}
 }
 static void callback_quarantine(Callback *c) {
-    /* Keep only the executable thunk and immutable failure metadata, never
+    /* Keep the thunk, failure metadata and atomic fault status, never
        a VM, closure handle or resource registry. Registration provenance
        cannot in general prove that dlclose unregistered an OS callback. */
     if (c->release) c->release(c->state);
@@ -421,6 +432,18 @@ range: fail(f, ERANGE, "foreign scalar argument is out of range"); return 0;
 /* A closure owns its descriptor separately from the registry: nested SML
    calls can grow the latter. Foreign-thread entry touches neither VM nor
    mutable registry state, and deterministically returns the default. */
+int foreign_callback_status(Foreign *f, ForeignId id, int reset, uint64_t *rejected, ForeignCallbackFault *first) {
+    if (!f || f->owner_thread != &thread_marker) { errno = EPERM; return -1; }
+    /* A failed unload leaves disabled callbacks observable until retry. */
+    Resource *r = leased_resource(f, id);
+    if (!r || r->kind != CALLBACK || (reset != 0 && reset != 1) || !rejected || !first) {
+        fail(f, EINVAL, "invalid callback status query"); return -1;
+    }
+    uint64_t value = ID_LOAD(&r->callback->faults);
+    if (reset) while (!ID_EXCHANGE(&r->callback->faults, &value, 0)) {}
+    *rejected = value >> 8; *first = (ForeignCallbackFault)(value & 255);
+    return 0;
+}
 static ForeignValue native_value(ForeignType t, const void *p) {
     ForeignValue v; memset(&v, 0, sizeof v); v.type = t;
     switch (t) {
@@ -467,24 +490,28 @@ static void callback_entry(ffi_cif *cif, void *out, void **input, void *opaque) 
     /* Failure defaults are restricted to scalar/null values at creation;
        the rejected thread therefore never dereferences a resource. */
     if (!callback_acquire(c)) {
+        callback_fault(c, FOREIGN_CALLBACK_DISABLED);
         Foreign local; memset(&local, 0, sizeof local);
         callback_result(&local, c->signature.result, failure, out);
         return;
     }
     Foreign *f = c->foreign;
     if (f->owner_thread != &thread_marker || !f->call_depth) {
+        callback_fault(c, f->owner_thread != &thread_marker ?
+                       FOREIGN_CALLBACK_WRONG_THREAD : FOREIGN_CALLBACK_NO_ACTIVATION);
         Foreign local; memset(&local, 0, sizeof local);
         callback_result(&local, c->signature.result, failure, out);
         word_add(&c->gate, UINT64_MAX - 1); return;
     }
     if (f->activation && f->activation->failed) { callback_result(f, c->signature.result, failure, out); word_add(&c->gate, UINT64_MAX - 1); return; }
     Resource *self = find(f, c->id);
-    if (!self || self->active == UINT_MAX) { callback_result(f, c->signature.result, failure, out); word_add(&c->gate, UINT64_MAX - 1); return; }
+    if (!self || self->active == UINT_MAX) { callback_fault(c, FOREIGN_CALLBACK_ENTRY_FAILURE); callback_result(f, c->signature.result, failure, out); word_add(&c->gate, UINT64_MAX - 1); return; }
     self->active++;
     size_t count = c->signature.count;
     ForeignValue *values = calloc(count ? count : 1, sizeof *values), result = failure;
     ForeignId *borrowed = calloc(count ? count : 1, sizeof *borrowed); size_t nborrowed = 0;
     if (!values || !borrowed) {
+        callback_fault(c, FOREIGN_CALLBACK_ENTRY_FAILURE);
         free(values); free(borrowed);
         find(f, c->id)->active--;
         callback_result(f, c->signature.result, failure, out);
@@ -504,9 +531,9 @@ static void callback_entry(ffi_cif *cif, void *out, void **input, void *opaque) 
     }
     if (valid) {
         int status = c->enter(c->state, values, count, &result);
-        if (status < 0) result = failure;
+        if (status < 0) { callback_fault(c, FOREIGN_CALLBACK_ENTRY_FAILURE); result = failure; }
         else if (status > 0 && f->activation) f->activation->failed = 1;
-    }
+    } else callback_fault(c, FOREIGN_CALLBACK_ENTRY_FAILURE);
     callback_result(f, c->signature.result, result, out);
     for (size_t i = 0; i < nborrowed; i++) {
         /* Views and returned pointer aliases cannot outlive this borrowed
@@ -578,6 +605,7 @@ ForeignId foreign_callback(Foreign *f, int abi, ForeignType result, const Foreig
     if (!c->closure) goto allocation;
     c->signature.count = count; c->signature.result = result;
     ID_INIT(&c->gate, 1);
+    ID_INIT(&c->faults, 0);
     c->foreign = f; c->enter = enter; c->release = release; c->state = state; c->failure = failure;
     if (ffi_prep_closure_loc(c->closure, &c->signature.cif, callback_entry, c, address) != FFI_OK) {
         fail(f, ENOTSUP, "libffi rejected executable callback"); goto bad;
@@ -880,6 +908,7 @@ ForeignId foreign_view(Foreign *f,ForeignId r,size_t o,size_t n) { (void)r;(void
 ForeignId foreign_prepare(Foreign *f,ForeignId r,int a,ForeignType t,const ForeignType *p,size_t n) { (void)r;(void)a;(void)t;(void)p;(void)n;unavailable(f);return 0; }
 ForeignId foreign_prepare_variadic(Foreign *f,ForeignId r,int a,ForeignType t,const ForeignType *p,size_t n,size_t fixed) { (void)r;(void)a;(void)t;(void)p;(void)n;(void)fixed;unavailable(f);return 0; }
 ForeignId foreign_callback(Foreign *f,int a,ForeignType t,const ForeignType *p,size_t n,ForeignValue v,const ForeignCallbackFailure *r,size_t z,ForeignCallback c,ForeignCallbackFree d,void *s) { (void)a;(void)t;(void)p;(void)n;(void)v;(void)r;(void)z;(void)c;(void)d;(void)s;unavailable(f);return 0; }
+int foreign_callback_status(Foreign *f,ForeignId r,int z,uint64_t *n,ForeignCallbackFault *e) { (void)r;(void)z;(void)n;(void)e;return unavailable(f); }
 int foreign_call(Foreign *f,ForeignId r,const ForeignValue *p,size_t n,ForeignValue *v,ForeignError *e) { (void)r;(void)p;(void)n;(void)v;(void)e;return unavailable(f); }
 int foreign_dispose(Foreign *f,ForeignId r,ForeignId c,const ForeignValue *p,size_t n,ForeignFailure q,ForeignValue *v,ForeignError *e,int *d) { (void)r;(void)c;(void)p;(void)n;(void)q;(void)v;(void)e;*d=0;return unavailable(f); }
 ForeignId foreign_alias_handle(Foreign *f,ForeignId r) { (void)r;unavailable(f);return 0; }

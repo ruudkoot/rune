@@ -11,6 +11,7 @@ struct
         val _ : {symbol:F.resource,abi:int,result:F.scalar,arguments:F.scalar list,fixedCount:int} -> F.resource = F.prepareVariadic
         val _ : F.resource * F.argument list -> {result:F.result,callbackException:exn option} = F.invokeDeferred
         val _ : {abi:int,result:F.scalar,arguments:F.scalar list,function:F.argument list -> F.argument,failure:F.callbackFailure} -> F.resource = F.callback
+        val _ : {callback:F.resource,reset:bool} -> {rejected:Word64.word,first:F.callbackFault option} = F.callbackStatus
         val _ : F.resource -> F.resource = F.aliasHandle
         val _ : {resource:F.resource,call:F.resource,arguments:F.argument list,failure:F.failure} ->
           {disposed:bool,result:F.result} = F.consumeHandle

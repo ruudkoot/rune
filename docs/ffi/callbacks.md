@@ -15,6 +15,16 @@ Win32 `WM_NCCREATE` can return zero, `WM_CREATE` minus one, and all other
 messages the annotated default. Failed thread entry does not raise an SML
 exception on a different thread.
 
+`RuneForeign.callbackStatus {callback, reset}` lets the owner observe rejected
+entries without executing SML on the offending thread. A single atomic word
+retains the first reason and a count saturating at 2^56-1. Reset atomically
+returns and clears that snapshot; entries racing with reset appear in one
+snapshot or the next. Reasons distinguish a wrong thread, no active owning
+call, disabled entry and failure to enter the bounded interpreter. User
+exceptions and activation-scoped suppression are not rejected entries.
+Queries leave captured native results/errors and saved SML exceptions intact.
+Wrong-thread native queries reject without touching VM or registry state.
+
 ## A bounded callback delimiter
 
 The register driver remains nonrecursive: no engine calls `vm_loop`, another
@@ -92,7 +102,8 @@ then disables SML entry and closes every provider library while callback
 thunks and retained foreign memory are still valid. A provider destructor
 may call a registered thunk during unload; it receives the argument-specific
 failure value without executing SML. Native unload failure leaves a closing
-context: new operations reject and orderly destruction may be retried.
+context: new native operations reject, callback status remains observable,
+and orderly destruction may be retried.
 
 An unreleased registration cannot be proved dead merely by closing a library:
 system libraries may remain loaded, another owner may retain the library, or
@@ -101,7 +112,8 @@ therefore quarantines those disabled executable thunks and their immutable
 signature/failure tables until process termination. It releases their VM
 closure handles and removes all references to the VM and resource registry.
 Late entries, including entries on foreign threads after VM destruction, use
-only the immutable failure table. This bounded-per-registration quarantine
+only the immutable failure table and their own atomic rejection counter.
+This bounded-per-registration quarantine
 is a fallback for missing unregistration, not permission to retain an SML
 closure indefinitely. Explicitly unregistering and releasing a callback frees
 its thunk normally and creates no quarantine entry. A client must stop native

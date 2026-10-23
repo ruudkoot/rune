@@ -8,6 +8,7 @@ struct
   datatype argument = Signed of Int64.int | Unsigned of Word64.word | Real of real | Address of resource option
   datatype callbackFailure = Default of argument | ByArgument of
     {index : int, cases : (Word64.word * argument) list, default : argument}
+  datatype callbackFault = WrongThread | NoActivation | EntryDisabled | EntryFailure
   datatype failure = NoFailure | Zero | Nonzero | Negative
   type error = {number : int, native : Word32.word, message : string}
   type result = {bytes : string, pointer : resource option, error : error}
@@ -67,6 +68,13 @@ struct
     let val metadata = String.implode (Char.chr abi :: Char.chr (code result) :: List.map (Char.chr o code) arguments)
         val (id, _, _) = request (8, identity symbol, 0w0, metadata, "")
     in resource (Prepared arguments) id end
+  fun callbackStatus {callback=value as Resource{kind,...},reset} =
+    let val ()=case kind of Callback=>() | _=>failure "resource is not a callback"
+        val (first,bytes,_)=request(19,identity value,if reset then 0w1 else 0w0,"","")
+        val reason=case Word64.toInt first of 0=>NONE | 1=>SOME WrongThread
+          | 2=>SOME NoActivation | 3=>SOME EntryDisabled | 4=>SOME EntryFailure
+          | _=>failure "unknown callback fault"
+    in {rejected=PackWord64Little.subVec(Byte.stringToBytes bytes,0),first=reason} end
   fun prepareVariadic {symbol, abi, result, arguments, fixedCount} =
     if abi < 0 orelse abi > 255 then failure "invalid foreign ABI"
     else if fixedCount <= 0 orelse fixedCount > List.length arguments then failure "invalid variadic fixed argument count"

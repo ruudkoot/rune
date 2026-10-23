@@ -632,6 +632,10 @@ Operation 18 prepares an outgoing variadic call with the same scalar metadata
 as fixed preparation; its auxiliary word is the nonempty fixed argument count.
 The runtime rejects unpromoted tail types and nondefault calling conventions
 before preparing a distinct `ffi_prep_cif_var` interface.
+Operation 19 observes a callback's atomic rejection count and first reason;
+auxiliary 1 resets both together after returning their old snapshot. Its
+result identity carries the reason code and eight output bytes carry the
+count. Only the owning VM thread may inspect or reset a live callback.
 Metadata/result words use explicit
 little-endian 64-bit encoding; native calling conventions and scalar
 representations belong to libffi. Disabled builds preserve the primitive
