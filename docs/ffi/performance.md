@@ -7,6 +7,10 @@ and `FFI_PERF_SAMPLES` to five; `FFI_PERF_MODE` selects `off`, `baseline`, `opt`
 or `all`. The default measures register interpretation. No timing threshold is
 part of correctness acceptance.
 
+The [final release receipt](../../tests/ffi/evidence/performance-final.md)
+records five paired samples in each execution mode against the frozen release
+core. Earlier reports remain separately identified component snapshots.
+
 The Standard ML coordinator builds a separate C subject DSO and direct C
 executable, checks independent checksums and alternates C/Rune execution order
 between paired samples. It compiles the production generator main from the

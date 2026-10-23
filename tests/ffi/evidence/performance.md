@@ -1,7 +1,10 @@
-# FFI performance acceptance — 2026-10-23
+# FFI component performance snapshot — 2026-10-23
+
+The [final release measurements](performance-final.md) use the completed
+production core and preserve these earlier schema 2 reports unchanged.
 
 The schema 2 tool is committed as `59e58b96d118d1d4d2c9792144aaa666b03fc761`.
-Final measurements use the frozen production checkout at
+These earlier component measurements use the frozen production checkout at
 `dd0f0e7d82f222040650dd6cce350984952c64c6`, with its current generator, C
 frontend, binding/runtime libraries and VM. The VM identifies `f79b70b3a`;
 its actual SHA256 is
@@ -23,7 +26,7 @@ active. CPU frequency and filesystem/CPU caches were not controlled.
 - Three 100-iteration paired smoke samples pass in each of interpreter, baseline
   JIT and optimizing JIT modes. Strict C17 compilation, production generator
   compilation and safe-fixture optional shim compilation all pass.
-- Final acceptance is **five alternating C/Rune pairs of 50,000 operations per
+- This snapshot uses **five alternating C/Rune pairs of 50,000 operations per
   mode**, collected serially. Each report has **105 validated raw rows**,
   **21 phase/implementation distributions** and **393 source hashes**.
 - Independent C and Rune checks agree on scalar/callback totals and the complete
