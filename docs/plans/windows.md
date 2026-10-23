@@ -194,3 +194,18 @@ now verifies parsed arcs, and the volume check uses `OS.FileSys.fullPath` for
 the root. Both corrected fixtures pass all four configurations (22 and 38
 runner jobs). The failed full matrix remains recorded as 1,909 passes and
 nine failed jobs, including its aggregate report (`20261023-165916-411560`).
+
+Final Windows acceptance is recorded by phase. The language/runtime phase has
+2,388 passes at `767dc8d9a` (`20261023-163455-303320`,
+`/tmp/rune-native-case-isolated-full-windows.log`). Only the two Basis fixture
+corrections were cherry-picked onto that frozen tree as `dc5e3833a`; its
+production sources are identical. The complete corrected Windows Basis matrix
+passed all 1,918 runner jobs (`20261023-173547-458431`,
+`/tmp/rune-native-case-final-basis-matrix.log`), with no unexplained failures or
+stale deviations. The three case-preservation exceptions remain explicit per
+configuration. Native DAP and kernel acceptance then passed in
+`/tmp/rune-native-case-final-dap.log` and
+`/tmp/rune-native-case-final-kernel.log`.
+
+These successful phases complete native acceptance of the path change; the
+earlier failed monolithic commands retain their original failed status.
