@@ -29,6 +29,16 @@ bin/rune-build build-ffi sdl --offline --archive /cache/SDL3-3.4.18.tar.gz
 bin/rune-build build-ffi sdl --offline --verify-only
 ```
 
+A separate headless SDL profile supports CI without desktop development
+packages or a display server. Its provenance records `headless: true`; it does
+not establish GUI acceptance:
+
+```sh
+make ffi-sdl FFI_DEPS_OPTIONS=--headless JOBS=2
+RUNE_SDL_NATIVE_LIBRARY="$PWD/build/deps/sdl/headless/install/lib/libSDL3.so.0" \
+  make test-sdl test-win32-sdl-driver test-win32-sdl-contract test-win32-app-sdl JOBS=2
+```
+
 The tool invokes existing C/C++ compilers, CMake, Make, gzip and tar. It installs
 no system packages. SDL builds omit audio and GPU APIs and the optional X11
 screen-saver extension, which the delivered inventory does not use. Available
@@ -42,6 +52,10 @@ cross probes are compiled and mark execution outstanding. Upstream test suites
 are not implied by successful provisioning. Build, install and probe failures
 leave an existing prefix intact; `--verify-only` rejects stale or modified
 prefixes without replacing them.
+An existing nonempty prefix needs its matching ownership record. Unrecorded
+files, links or directories are preserved and cause refusal before rebuilding;
+known owned outputs may be repaired. Effective compiler/linker flags are part
+of cache identity, so changing `CFLAGS`, `CPPFLAGS` or `LDFLAGS` invalidates reuse.
 
 ## Installation and distribution
 

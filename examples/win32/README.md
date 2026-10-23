@@ -31,6 +31,15 @@ bin/rune --library ffi/win32/native --build examples/win32/native.build \
 RUNE_WIN32_ADAPTER_LIBRARY='C:\path\to\shims.dll' bin/runevm.exe build/win32-native.rbc
 ```
 
+When launching that Windows executable from WSL, forward the adapter variable
+explicitly while retaining its Windows DLL path:
+
+```sh
+RUNE_WIN32_ADAPTER_LIBRARY='C:\path\to\shims.dll' \
+  WSLENV="${WSLENV:+$WSLENV:}RUNE_WIN32_ADAPTER_LIBRARY/w" \
+  bin/runevm.exe build/win32-native.rbc --smoke
+```
+
 Pass `--smoke` to either GUI version to close automatically after three timer
 events. Otherwise close the window or press Escape. The mock always uses the
 bounded smoke path. Cleanup runs before the success marker, including when a

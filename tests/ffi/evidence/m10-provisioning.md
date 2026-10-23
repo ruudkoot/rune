@@ -109,3 +109,33 @@ and global portability/bootstrap/regression/performance acceptance are not
 inferred from these component checks. Windows generator checks are owned by the
 generator component. The Win32 application's final GUI collection-stress timeout
 is recorded separately in `m9-sdl-driver.md` and remains outstanding.
+
+## Prefix ownership, effective flags and headless profile follow-up
+
+Review identified that a nonempty unrelated `--prefix` could be replaced and
+that inherited build flags were missing from cache identity. Follow-up checks
+run before reuse/build and again on the staged and renamed old directory at
+publication. Nonempty prefixes need matching project/target/recorded-prefix
+ownership. Every file, link and directory must be recorded or an inventory
+parent; extra entries are preserved with a clear refusal. Modified bytes in
+known owned outputs remain eligible for rebuilding. Effective allowlisted
+compiler/linker/tool flags distinguish unset from empty in cache identity;
+inherited Make jobserver flags are cleared rather than recorded wholesale.
+
+The model suite now passes **29/29** with collection stress 7/heap verification.
+It covers unowned-prefix refusal, unrecorded file/link preservation, prefix
+identity mismatch, modified owned bytes, rollback and compiler flag identity.
+The repository job passes **6/6** including canaries at
+`tests/out/ffi-prefix-guard/20261023-100242-9`. Five actual CLI cases verify fresh
+reuse, CFLAGS invalidation, unrecorded link/file preservation and unowned-prefix
+refusal; `build/ffi-prefix-guard-receipts.json` retains statuses and diagnostics.
+Native MLton compiles the follow-up tool. An existing owned libffi prefix was
+rebuilt successfully through the new ownership checks and native call probe.
+
+A separate `--headless` native SDL profile records its role and uses
+`build/deps/sdl/headless/install`. It excludes X11/Wayland/KMS, OpenGL/Vulkan and
+optional device integrations while retaining dummy/offscreen/software rendering.
+SDL's documented `SDL_UNIX_CONSOLE_BUILD=ON` explicitly admits this intentional
+configuration; an initial configure without that flag was refused and did not
+publish a prefix. The headless profile is intended for bounded CI smoke tests,
+not GUI acceptance; its build/behavior receipts are tracked separately.

@@ -7,6 +7,42 @@ struct
   fun safeName name=not(OS.Path.isAbsolute name) andalso
     not(List.exists(fn part=>part=".." orelse part="")(fields #"/" name)) andalso
     not(String.isSubstring "\\" name)
+  val environmentKeys=["CFLAGS","CXXFLAGS","CPPFLAGS","LDFLAGS","LIBS","AR","ARFLAGS","RANLIB","AS","ASFLAGS","LD","NM","STRIP",
+    "CONFIG_SITE","PKG_CONFIG","PKG_CONFIG_PATH","PKG_CONFIG_LIBDIR","PKG_CONFIG_SYSROOT_DIR","CMAKE_GENERATOR","CMAKE_PREFIX_PATH","CMAKE_TOOLCHAIN_FILE"]
+  fun environmentIdentity entries=Json.Object(List.map(fn name=>(name,
+    case List.find(String.isPrefix(name ^ "="))entries of NONE=>Json.Null | SOME entry=>str(String.extract(entry,size name+1,NONE))))environmentKeys)
+  fun prefixEntries directory=List.concat(List.map(fn name=>
+    let val path=OS.Path.concat(directory,name)
+    in path::(if not(isLink path) andalso isDir path then prefixEntries path else [])end)(entries directory))
+  fun validatePrefix{directory,prefix,project,target}=
+    if not(exists directory) then () else
+    let val ()=need(not(isLink directory) andalso isDir directory,"dependency prefix must be a real directory: " ^ directory)
+    in if null(entries directory) then () else
+      let val metadata=directory ^ "/rune-ffi-dependency.json"
+          fun unowned ()=raise Failed("nonempty dependency prefix is not owned by " ^ project ^ "/" ^ target ^ ": " ^ directory)
+          val record=if exists metadata andalso not(isLink metadata) andalso not(isDir metadata)
+            then (readJson metadata handle _=>unowned()) else unowned()
+          val configuration=(field "config" record handle _=>unowned())
+          val ()=need((field "schema" configuration=number 1 andalso field "project" configuration=str project andalso
+            field "target" configuration=str target andalso field "prefix" configuration=str prefix)handle _=>false,
+            "dependency prefix ownership does not match project, target and recorded prefix: " ^ directory)
+          val outputs=(object(field "outputs" record)handle _=>unowned())
+          val links=(object(field "links" record)handle _=>unowned())
+          val directories=(case member "directories" record of Json.Null=>[] | value=>List.map text(array value))handle _=>unowned()
+          val files=List.map #1 outputs @ List.map #1 links @ ["rune-ffi-dependency.json"]
+          fun digest(_,Json.String value)=size value=64 andalso CharVector.all(fn c=>Char.isHexDigit c)value | digest _=false
+          fun link(_,Json.String _)=true | link _=false
+          val ()=need(not(null outputs) andalso List.all safeName(files @ directories) andalso
+            List.all digest outputs andalso List.all link links andalso length(unique files)=length files,
+            "invalid dependency ownership inventory: " ^ directory)
+          fun parents name=let val parts=fields #"/" name
+            in List.tabulate(Int.max(0,length parts-1),fn n=>String.concatWith "/" (List.take(parts,n+1)))end
+          val allowedDirectories=unique(directories @ List.concat(List.map parents files))
+          fun inspect path=
+            let val relative=String.extract(path,size directory+1,NONE)
+                val allowed=if not(isLink path) andalso isDir path then allowedDirectories else files
+            in need(List.exists(fn name=>name=relative)allowed,"unrecorded dependency prefix entry is preserved: " ^ path)end
+      in List.app inspect(prefixEntries directory) end end
   fun admitted top (member:BuildArchive.member)=
     let val name= #name member
         val name=if String.isSuffix "/" name then String.substring(name,0,size name-1) else name
@@ -55,21 +91,26 @@ struct
              else () end
         val ()=List.app verify members
     in out ^ "/" ^ top end
-  fun publish staged prefix =
-    let val backup=privateDirectory(OS.Path.dir prefix)".previous"
+  fun publish{staged,prefix,project,target} =
+    let fun validate directory=validatePrefix{directory=directory,prefix=prefix,project=project,target=target}
+        val ()=validate prefix val ()=validate staged
+        val backup=privateDirectory(OS.Path.dir prefix)".previous"
         val saved=backup ^ "/prefix" val present=exists prefix
         val ()=if present then OS.FileSys.rename{old=prefix,new=saved} else ()
-        val ()=OS.FileSys.rename{old=staged,new=prefix} handle e=>
-          (if present then OS.FileSys.rename{old=saved,new=prefix} else ();remove backup;raise e)
+        fun rollback e=(if present then OS.FileSys.rename{old=saved,new=prefix} else ();remove backup;raise e)
+        val ()=(if present then validate saved else ())handle e=>rollback e
+        val ()=OS.FileSys.rename{old=staged,new=prefix} handle e=>rollback e
     in remove backup end
   fun outputFiles prefix=List.filter(fn path=>not(isLink path) andalso not(isDir path) andalso
     OS.Path.file path<>"rune-ffi-dependency.json")(tree prefix)
   fun main (project::args)=
     let val ()=need(project="libffi" orelse project="sdl","dependency must be libffi or sdl")
         val options=O.parse[("--target",O.Value),("--prefix",O.Value),("--archive",O.Value),("--jobs",O.Value),("--timeout",O.Value),
-          ("--cc",O.Value),("--cxx",O.Value),("--rc",O.Value),("--offline",O.Flag),("--download-only",O.Flag),("--verify-only",O.Flag)][]args
+          ("--cc",O.Value),("--cxx",O.Value),("--rc",O.Value),("--headless",O.Flag),("--offline",O.Flag),("--download-only",O.Flag),("--verify-only",O.Flag)][]args
         val target=O.get options "--target" "native"
         val ()=need(List.exists(fn s=>s=target)["native","windows32","windows64"],"unsupported dependency target " ^ target)
+        val headless=O.flag options "--headless"
+        val ()=need(not headless orelse (project="sdl" andalso target="native"),"headless provisioning requires native SDL")
         val windows=target<>"native" val narrow=target="windows32"
         val host=if narrow then "i686-w64-mingw32" else "x86_64-w64-mingw32"
         val cc=O.get options "--cc" (if windows then host ^ "-gcc" else env("CC","cc"))
@@ -82,9 +123,11 @@ struct
         val top=(if project="sdl" then "SDL3-" else "libffi-") ^ version
         val archive=resolved(O.get options "--archive" (fromRoot("build/deps/downloads/" ^ top ^ ".tar.gz")))
         val defaultPrefix=if project="libffi" andalso windows then "build/deps/libffi-win" ^ (if narrow then "32" else "64") ^ "/install"
-          else "build/deps/" ^ project ^ "/" ^ target ^ "/install"
+          else "build/deps/" ^ project ^ "/" ^ (if headless then "headless" else target) ^ "/install"
         val prefix=resolved(O.get options "--prefix" (fromRoot defaultPrefix))
         val ()=need(prefix<>root andalso prefix<>"/","dependency prefix must be a dedicated directory")
+        val ()=if O.flag options "--download-only" then () else
+          validatePrefix{directory=prefix,prefix=prefix,project=project,target=target}
         val directory=privateDirectory(fromRoot("build/deps/" ^ project ^ "-build"))target
         val serial=ref 0 val commands=ref([]:Json.value list)
         fun executeIn cwd environment label argv=
@@ -94,7 +137,7 @@ struct
               val ()=commands:= !commands @ [Json.Object[("label",str label),("argv",strings argv),("cwd",str cwd),("status",number(#status result)),("seconds",Json.Number(minus(Real.toString(#seconds result))))]]
               val ()=json(directory ^ "/commands.json")(Json.Array(!commands))
           in need(#status result=0,label ^ " failed; see " ^ log ^ ".stderr: " ^ #errors result);#output result end
-        val environment=Posix.ProcEnv.environ()
+        val environment=unset "MAKEFLAGS" (unset "MFLAGS" (Posix.ProcEnv.environ()))
         fun run label argv=executeIn directory environment label argv
         val _=download archive checksum [url] (O.flag options "--offline") run
         val compiler=if O.flag options "--download-only" then "" else trim(run "compiler-version" (words cc @ ["--version"]))
@@ -104,7 +147,8 @@ struct
           (if windows then [("rc",str(trim(run "rc-version" (words rc @ ["--version"]))))] else [])
         val config=Json.Object[("schema",number 1),("project",str project),("version",str version),("target",str target),("prefix",str prefix),
           ("archive_sha256",str checksum),("manifest_sha256",str(hash manifestFile)),("recipe_sha256",str(recipe())),
-          ("cc",str cc),("cxx",str cxx),("rc",str rc),("compiler",str compiler),("tools",Json.Object tools)]
+          ("cc",str cc),("cxx",str cxx),("rc",str rc),("compiler",str compiler),("tools",Json.Object tools),("headless",Json.Bool headless),
+          ("build_environment",environmentIdentity environment)]
         val metadata=prefix ^ "/rune-ffi-dependency.json"
         fun fresh ()=exists metadata andalso
           let val previous=readJson metadata
@@ -136,6 +180,9 @@ struct
                  "-DSDL_SHARED=ON","-DSDL_STATIC=OFF","-DSDL_TESTS=OFF","-DSDL_TEST_LIBRARY=OFF","-DSDL_EXAMPLES=OFF","-DSDL_AUDIO=OFF","-DSDL_GPU=OFF",
                  "-DSDL_X11_XSCRNSAVER=OFF",
                  "-DCMAKE_C_COMPILER=" ^ cc,"-DCMAKE_CXX_COMPILER=" ^ cxx] @
+                 (if headless then ["-DSDL_UNIX_CONSOLE_BUILD=ON","-DSDL_X11=OFF","-DSDL_WAYLAND=OFF","-DSDL_KMSDRM=OFF","-DSDL_OPENGL=OFF","-DSDL_OPENGLES=OFF","-DSDL_VULKAN=OFF",
+                    "-DSDL_DUMMYVIDEO=ON","-DSDL_OFFSCREEN=ON","-DSDL_CAMERA=OFF","-DSDL_JOYSTICK=OFF","-DSDL_HAPTIC=OFF","-DSDL_SENSOR=OFF",
+                    "-DSDL_TRAY=OFF","-DSDL_DIALOG=OFF","-DSDL_DBUS=OFF","-DSDL_IBUS=OFF","-DSDL_LIBUDEV=OFF","-DSDL_LIBURING=OFF","-DSDL_HIDAPI=OFF"] else []) @
                  (if windows then ["-DCMAKE_SYSTEM_NAME=Windows","-DCMAKE_RC_COMPILER=" ^ rc] else [])));
                ignore(work "build" ["cmake","--build",build,"--parallel",Int.toString jobs]);
                ignore(executeIn build (setEnv("DESTDIR",stage)environment) "install" ["cmake","--install",build]))
@@ -154,11 +201,12 @@ struct
             val validation=if windows then "cross-compiled; execution outstanding" else (ignore(run "run-probe"[executable]);"native call/render probe passed")
             val output=Json.Object(List.map(fn file=>(String.extract(file,size staged+1,NONE),str(hash file)))(outputFiles staged))
             val links=Json.Object(List.map(fn file=>(String.extract(file,size staged+1,NONE),str(OS.FileSys.readLink file)))(List.filter isLink(tree staged)))
+            val directories=strings(List.map(fn file=>String.extract(file,size staged+1,NONE))(List.filter(fn file=>not(isLink file) andalso isDir file)(prefixEntries staged)))
             val record=Json.Object[("config",config),("compiler",str compiler),("archive",str archive),("validation",str validation),
-              ("upstream_tests",str "not run; Rune ABI/behavior suites are separate"),("commands",Json.Array(!commands)),("outputs",output),("links",links),("build_directory",str directory)]
+              ("upstream_tests",str "not run; Rune ABI/behavior suites are separate"),("commands",Json.Array(!commands)),("outputs",output),("links",links),("directories",directories),("build_directory",str directory)]
             val ()=json(staged ^ "/rune-ffi-dependency.json")record
             val ()=mkdirs(OS.Path.dir prefix)
-            val ()=publish staged prefix
+            val ()=publish{staged=staged,prefix=prefix,project=project,target=target}
         in say("provisioned pinned " ^ project ^ " in " ^ prefix ^ " (" ^ validation ^ ")\n");0 end end
     | main _=raise Usage "build-ffi libffi|sdl [--target native|windows32|windows64] [--offline] [--verify-only]"
 end

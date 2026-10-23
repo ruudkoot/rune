@@ -69,6 +69,9 @@ exists. A cold Make bootstrap was verified with empty build/bin directories.
 from `ffi/PROJECT/source.json`. It supports `--target native|windows32|windows64`,
 `--archive FILE`, `--prefix DIR`, `--offline`, `--download-only`, `--verify-only`,
 `--jobs N`, `--timeout SECONDS`, and explicit `--cc`, `--cxx`, `--rc` tools.
+Native SDL also accepts `--headless`, recording a distinct dummy/offscreen
+software profile under `build/deps/sdl/headless/install`. It excludes desktop
+window systems and optional device integrations for CI with no display server.
 The normal path verifies the pinned archive before extraction, admits only
 contained regular files/directories/links, compiles in an isolated directory,
 probes the installed ABI/rendering calls and atomically replaces the prefix.
@@ -78,6 +81,13 @@ not run upstream test suites: Rune's ABI/behavior suites are separate gates.
 source digest, recipe identity, installed output hashes and validation status.
 Reuse checks those identities and all installed files/links. Offline mode never
 launches a downloader. A failed build/probe preserves the previous prefix.
+Before reuse or compilation, a nonempty prefix must have a matching ownership
+record and contain only recorded files/links/directories. Modified owned outputs
+can rebuild; unrelated entries cause refusal and are preserved. Publication
+rechecks ownership after moving the old prefix aside, before replacing it.
+Allowlisted effective compiler/linker/tool flags enter cache identity, including
+the distinction between unset and empty. Inherited Make jobserver flags are
+cleared because the tool supplies its own bounded parallelism.
 
 `FFI_PREFIX` selects the static libffi archive for native Make builds; cross
 builds retain the existing `FFI_WIN32_PREFIX`/`FFI_WIN64_PREFIX` selection.
