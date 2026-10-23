@@ -11,6 +11,13 @@ How fast it is, and what would make it faster, is
 under *A native program* in [runtime.md](runtime.md), and the modules are
 listed in [architecture.md](architecture.md).
 
+The runtime directory's `foreign-libs` metadata supplies the archive's foreign
+link dependencies. A flag beginning `@RUNTIME@/` resolves inside that directory
+before shell quoting, so an installed static `libffi.a` follows a relocated
+runtime, including paths with spaces. System libffi remains an external linker
+dependency. Installation retains the verified static archive when `FFI_PREFIX`
+selected it for the VM build.
+
 ## The contract
 
 **An instruction at a time.** Every instruction of the `.rbc` becomes a

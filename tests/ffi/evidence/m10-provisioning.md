@@ -139,3 +139,28 @@ SDL's documented `SDL_UNIX_CONSOLE_BUILD=ON` explicitly admits this intentional
 configuration; an initial configure without that flag was refused and did not
 publish a prefix. The headless profile is intended for bounded CI smoke tests,
 not GUI acceptance; its build/behavior receipts are tracked separately.
+
+### Headless and relocated native-code receipts
+
+The final explicit headless SDL build passes its native software-render probe.
+Its library SHA256 is
+`3696a490148c6f4967ec513aa5e0ca84b573e64c6e9a54be2318cb676a4ef648`.
+The selected repository run covers core SDL, the Win32 SDL driver (including
+failed initialization), the shared Win32 contract and the same application,
+plus five runner canaries: **10/10 pass**, 356.3 seconds wall at two workers,
+`tests/out/ffi-headless/20261023-101144-8`. Each helper covers stack/register
+collection stress 7/heap verification and baseline/optimizing JIT. The headless
+profile does not replace the separate real GUI evidence. Final current-binary
+owned-libffi rebuild and fresh-versus-CFLAGS-change cache checks also pass.
+
+Review also found that copying a static `FFI_PREFIX` path verbatim into installed
+`runeopt` link metadata would retain the source location. The package now emits
+`native-foreign-libs` with `@RUNTIME@/libffi.a`; installation copies the verified
+archive beside `librune.a`, and `runeopt` resolves the token before shell quoting.
+The package fixture confirms `@RUNTIME@/libffi.a -ldl` is emitted. A new compiler
+build then translates `tests/ffi/provision/native.sml` after its runtime/archive
+was moved to `build/ffi-native-relocation/relocated runtime`. The resulting
+actual native executable loads the independent `gen_add` C subject, returns
+**42**, releases all native resources and prints **PASS**. This proves the
+existing native execution path with a relocated static libffi dependency;
+future direct linking remains deferred.

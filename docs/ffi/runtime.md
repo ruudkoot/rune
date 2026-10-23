@@ -27,6 +27,9 @@ selects unavailable support. The feature selection stamp invalidates native
 archives and diagnostic VM variants. `build/foreign-libs` records the
 native archive's link dependencies; `runeopt` and installation carry that
 metadata with the archive. VM provenance records include FFI flags.
+An installed static-prefix runtime carries a verified `libffi.a` beside
+`librune.a`; its `@RUNTIME@/libffi.a` metadata follows the runtime directory when
+it moves. `runeopt` resolves that token before quoting linker arguments.
 
 Windows cross builds use separate target prefixes:
 

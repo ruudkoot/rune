@@ -44,6 +44,9 @@ struct
                  if exists(ffiPrefix ^ "/rune-ffi-dependency.json") then copy(ffiPrefix ^ "/rune-ffi-dependency.json")(temporary ^ "/libffi/rune-ffi-dependency.json") else ();
                  if isDir(ffiPrefix ^ "/share/licenses/libffi") then copyTree(ffiPrefix ^ "/share/licenses/libffi")(temporary ^ "/libffi/notices") else ())
               val ()=case ffiArchive of NONE=>() | SOME path=>copy path(temporary ^ "/build/deps/downloads/" ^ OS.Path.file path)
+              val ()=if ffiPrefix="" then () else
+                atomic(temporary ^ "/native-foreign-libs")("@RUNTIME@/libffi.a" ^
+                  (if List.exists(fn flag=>text flag="-ldl")(array(field "ldlibs" record)) then " -ldl" else "") ^ "\n")
               val ()=if not(isDir(fromRoot "ffi/libffi")) then () else copyTree(fromRoot "ffi/libffi")(temporary ^ "/ffi/libffi")
               val ()=json (temporary ^ "/build-info.json") (set "version" (str version) record)
               val bytecode=fromRoot "bin/rune-build.rbc"
