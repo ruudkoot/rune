@@ -96,6 +96,17 @@ if not defined STARTMENU if "%ELEVATED%"=="1" set "STARTMENU=%ProgramData%\Micro
 if not defined STARTMENU set "STARTMENU=%APPDATA%\Microsoft\Windows\Start Menu\Programs"
 rem An absolute prefix, so the manifest does not name a path that only
 rem means something from the prompt that ran the installer.
+for %%P in ("%PREFIX%") do set "PREFIX=%%~fP"
+rem XCOPY may silently omit long names. Reject unsupported source/target
+rem lengths before creating a prefix; ordinary manifests and uninstall use
+rem the same Windows path limit. Paths reach PowerShell through environment
+rem values, never through executable command text.
+set "RUNE_INSTALL_SOURCE=%~dp0"
+powershell -NoProfile -Command "$ErrorActionPreference='Stop'; try { if ($env:PREFIX.Length -gt 248 -or $env:RUNE_INSTALL_SOURCE.TrimEnd([char]92).Length -gt 248) { throw 'archive or installation directory is too long; use shorter paths' }; foreach ($directory in [IO.Directory]::EnumerateDirectories($env:RUNE_INSTALL_SOURCE, '*', [IO.SearchOption]::AllDirectories)) { $relative=$directory.Substring($env:RUNE_INSTALL_SOURCE.Length); if ($directory.Length -gt 248 -or [IO.Path]::Combine($env:PREFIX, $relative).Length -gt 248) { throw 'archive or installation directory is too long; use shorter paths' } }; foreach ($file in [IO.Directory]::EnumerateFiles($env:RUNE_INSTALL_SOURCE, '*', [IO.SearchOption]::AllDirectories)) { $relative=$file.Substring($env:RUNE_INSTALL_SOURCE.Length); if ($file.Length -ge 260 -or [IO.Path]::Combine($env:PREFIX, $relative).Length -ge 260) { throw 'archive or installation path is too long; use shorter paths' } } } catch { [Console]::Error.WriteLine('install.bat: ' + $_.Exception.Message); exit 1 }"
+if errorlevel 1 (
+  echo install.bat: installation path preflight failed; PowerShell and supported paths are required 1>&2
+  exit /b 1
+)
 if not exist "%PREFIX%" mkdir "%PREFIX%"
 pushd "%PREFIX%"
 if errorlevel 1 (

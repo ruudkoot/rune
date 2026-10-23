@@ -250,6 +250,28 @@ struct
                   andalso not (String.isSubstring "/../" (#name m))) entries, "unsafe Windows archive member")
         val extracted = InstallChecks.execute dir "windows-extract" root "" ["unzip", "-q", zip, "-d", stage]
         val () = Scenarios.success extracted
+        val generated = "/lib/rune/ffi/sdl/generated/windows64/sets/"
+                      ^ String.implode (List.tabulate (64, fn _ => #"a")) ^ "/native.build"
+        val generatedBytes = "files raw_sig.sml raw.sml end\n"
+        val () = put (stage ^ "/rune-test1-windows") generated generatedBytes
+        val refusedPrefix = "rejected-" ^ String.implode (List.tabulate (80, fn _ => #"x"))
+        val refused = InstallChecks.execute dir "windows-long-target" stage ""
+            ["cmd.exe", "/c", "set RUNE_INSTALL_PAUSE=1&& call rune-test1-windows\\install.bat --prefix "
+                              ^ refusedPrefix ^ " --arch x86_64 --no-register"]
+        val () = need (#status refused <> 0 andalso String.isSubstring "preflight failed" (#errors refused)
+                       andalso not (exists (stage ^ "/" ^ refusedPrefix)), "long target did not reject before installation")
+        val longSource = "source-" ^ String.implode (List.tabulate (120, fn _ => #"x"))
+        val () = put stage (longSource ^ "/install.bat") (read (stage ^ "/rune-test1-windows/install.bat"))
+        val () = put stage (longSource ^ generated) generatedBytes
+        val refusedSource = InstallChecks.execute dir "windows-long-source" stage ""
+            ["cmd.exe", "/c", "set RUNE_INSTALL_PAUSE=1&& call " ^ longSource
+                              ^ "\\install.bat --prefix rejected-source --arch x86_64 --no-register"]
+        val () = need (#status refusedSource <> 0 andalso String.isSubstring "preflight failed" (#errors refusedSource)
+                       andalso not (exists (stage ^ "/rejected-source")), "long source did not reject before installation")
+        val noPowerShell = InstallChecks.execute dir "windows-no-powershell" stage ""
+            ["cmd.exe", "/c", "set RUNE_INSTALL_PAUSE=1&& set PATH=Z:\\rune-missing&& call rune-test1-windows\\install.bat --prefix rejected-tool --arch x86_64 --no-register"]
+        val () = need (#status noPowerShell <> 0 andalso String.isSubstring "preflight failed" (#errors noPowerShell)
+                       andalso not (exists (stage ^ "/rejected-tool")), "missing PowerShell did not reject before installation")
         (* Parse options from outside the archive: SHIFT must not replace %0,
            which the installer uses to find VERSION, runtimes and libraries. *)
         val installed = InstallChecks.execute dir "windows-install" stage ""
@@ -257,6 +279,29 @@ struct
         val () = Scenarios.success installed
         val () = need (same (dir ^ "/exe-x86_64", stage ^ "/prefix/bin/runevm.exe"), "Windows installer chose wrong runtime bytes")
         val () = need (exists (stage ^ "/prefix/share/rune.ico"), "Windows installer omitted the icon")
+        val () = need (read (stage ^ "/prefix" ^ generated) = generatedBytes, "Windows installer omitted a generated build file")
+        val generatedName = String.translate (fn #"/" => "\\" | c => str c) generated
+        val () = need (String.isSubstring generatedName (read (stage ^ "/prefix/DISTMANIFEST")),
+                       "Windows uninstall manifest omitted a generated build file")
+        val originalManifest = read (stage ^ "/prefix/DISTMANIFEST")
+        val () = OS.FileSys.rename {old = stage ^ "/prefix", new = stage ^ "/moved-prefix"}
+        val moved = InstallChecks.execute dir "windows-moved-uninstall" stage ""
+            ["cmd.exe", "/c", "call moved-prefix\\uninstall.bat"]
+        val () = need (#status moved <> 0 andalso String.isSubstring "manifest preflight failed" (#errors moved)
+                       andalso read (stage ^ "/moved-prefix" ^ generated) = generatedBytes
+                       andalso exists (stage ^ "/moved-prefix/bin/runevm.exe"), "moved Windows uninstall did not preserve installed files")
+        val () = OS.FileSys.rename {old = stage ^ "/moved-prefix", new = stage ^ "/prefix"}
+        val outside = stage ^ "/outside-marker"
+        val () = write (outside, "keep\n")
+        val outsidePath = InstallChecks.execute dir "windows-outside-path" root "" ["wslpath", "-w", outside]
+        val () = Scenarios.success outsidePath
+        val () = write (stage ^ "/prefix/DISTMANIFEST", originalManifest ^ Hosts.trim (#output outsidePath) ^ "\r\n")
+        val stale = InstallChecks.execute dir "windows-stale-uninstall" stage ""
+            ["cmd.exe", "/c", "call prefix\\uninstall.bat"]
+        val () = need (#status stale <> 0 andalso String.isSubstring "manifest preflight failed" (#errors stale)
+                       andalso read outside = "keep\n" andalso read (stage ^ "/prefix" ^ generated) = generatedBytes
+                       andalso exists (stage ^ "/prefix/bin/runevm.exe"), "stale Windows manifest changed installed or outside files")
+        val () = write (stage ^ "/prefix/DISTMANIFEST", originalManifest)
         (* The fixture VM is inert; a neighbouring stub observes -i forwarding. *)
         val () = write (stage ^ "/prefix/bin/rune-repl.cmd", "@echo off\r\necho FORWARDED %*\r\n")
         val interactive = InstallChecks.execute dir "windows-interactive" stage ""
@@ -264,9 +309,13 @@ struct
         val () = Scenarios.success interactive
         val () = need (Hosts.trim (#output interactive) = "FORWARDED \"one\" \"two\""
                        andalso #errors interactive = "", "Windows -i forwarding lost its neighbouring launcher or arguments")
+        (* A missing owned leaf directory must not strand its empty parents. *)
+        val () = OS.FileSys.remove (stage ^ "/prefix" ^ generated)
+        val () = OS.FileSys.rmDir (OS.Path.dir (stage ^ "/prefix" ^ generated))
         val uninstalled = InstallChecks.execute dir "windows-uninstall" (stage ^ "/prefix") "" ["cmd.exe", "/c", "uninstall.bat"]
         val () = Scenarios.success uninstalled
         val () = need (not (exists (stage ^ "/prefix")), "Windows uninstall left its prefix")
+        val () = need (read outside = "keep\n", "Windows uninstall removed an unrelated file")
         val () = rmTree stage
     in say "PASS distribution/windows-installer\n" end
 end

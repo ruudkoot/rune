@@ -74,6 +74,27 @@ so an installation can move. Generation still takes explicit `--config`,
 `--target`, `--include` and output paths; installation never runs a generator,
 opens a native library or compiles an application shim automatically.
 
+The Windows archive installer requires PowerShell for a read-only path
+preflight, including with `--no-register`. Before creating the target prefix,
+it checks the extracted archive and mapped installation paths: file paths
+must be shorter than 260 UTF-16 code units and directory paths at most 248.
+Enumeration errors and unavailable PowerShell also reject before installation.
+Choose short extraction and installation paths; the installer does not enable
+Windows long-path registry settings. These bounds follow the legacy
+[Windows shell/file API limits](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=powershell).
+
+For the existing Windows compiler's `.build` handling, use relative paths with
+forward slashes and run from the example directory. Drive-qualified absolute
+project and virtual-module paths are not supported by that path resolver.
+The installed-example receipt records a working unchanged Win32 example with
+`--build native.build --path WIN32_GENERATED=generated/32` (or `generated/64`),
+using copies of the installed `ffi-assets` fragments in the example tree.
+Windows launchers can run after moving an installation. Its legacy uninstall
+manifest records absolute installation-time filenames: restore the original
+prefix before uninstalling. Uninstall rejects a moved or out-of-prefix
+manifest before changing registration or removing installed files; PowerShell
+is required for that validation too.
+
 Original Win32 SDK headers remain externally acquired under their redistribution
 terms. Follow the pinned acquisition/provenance instructions under
 `ffi-assets/win32`; installation does not imply that the Windows SDK was vendored.
