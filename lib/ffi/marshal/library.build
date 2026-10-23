@@ -1,0 +1,9 @@
+libraries unicode end
+annotate "demand" in
+  scope_sig.sml
+  scope.sml
+  bytes_sig.sml
+  bytes.sml
+  text_sig.sml
+  text.sml
+end

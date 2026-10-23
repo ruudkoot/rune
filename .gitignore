@@ -30,3 +30,5 @@ __pycache__/
 /lib/language/c/MANIFEST
 
 /lib/ffi/model/MANIFEST
+
+/lib/ffi/marshal/MANIFEST

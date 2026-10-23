@@ -1,0 +1,7 @@
+name	kind	signature	realisations	status	origin	source
+FOREIGN_BYTES	signature			required	declared	lib/ffi/marshal/bytes_sig.sml
+FOREIGN_SCOPE	signature			required	declared	lib/ffi/marshal/scope_sig.sml
+FOREIGN_TEXT	signature			required	declared	lib/ffi/marshal/text_sig.sml
+ForeignBytes	structure	FOREIGN_BYTES		required	claimed	lib/ffi/marshal/bytes.sml
+ForeignScope	structure	FOREIGN_SCOPE		required	claimed	lib/ffi/marshal/scope.sml
+ForeignText	structure	FOREIGN_TEXT		required	claimed	lib/ffi/marshal/text.sml

@@ -177,3 +177,12 @@ native:mlkit | INT_INF.~>>/law-1@IntInf | HOST-BUG | IntInf.~>> rounds towards z
 ```
 
 names only the rounding. Reading `rshift` showed `drop`.
+
+## Runeffi byte encoding confirmation (2026-10-23)
+
+MLKit 4.7.25 still reproduces the same fault through `ForeignBytes.integer`:
+64/128-bit signed minima/maxima and unsigned maxima fail their byte round
+trips in `tests/lib/ffi/marshal/core.sml`. Six endpoint tests fail; the other
+61 marshalling/text/cleanup checks pass. The production encoder uses the
+specified `IntInf.~>>` operation without a host-specific workaround. The
+native library suite records this existing fault as `HOST-BUG`.
