@@ -24,17 +24,20 @@ struct
       val analysis = CAnalysis.create {target= #analysis profile, declarations=declarations}
       val target = #objects (#analysis profile)
       fun strip (CParse.Attributed (base, _)) = strip base | strip ty = ty
-      fun functionName (CParse.Declaration {name=SOME other, ctype, storage, ...}) =
+      fun functionName (CParse.Declaration {name=SOME other, ctype, storage, location, ...}) =
             if List.exists (fn word => word="typedef") storage then NONE
-            else (case strip ctype of CParse.Function _ => SOME (other, ctype) | _ => NONE)
+            else (case strip ctype of CParse.Function _ => SOME (other, ctype, location) | _ => NONE)
         | functionName _ = NONE
       val originals = List.mapPartial functionName declarations
-      fun original foreign position = case List.find (fn (other, _) => other=foreign) originals of
-          SOME (_, ty) => ty | NONE => fail position ("missing original C function: " ^ foreign)
+      fun original foreign position = case List.find (fn (other, _, location) => other=foreign andalso location=position) originals of
+          SOME (_, ty, _) => ty | NONE => fail position ("missing original C function: " ^ foreign)
       fun resolve ty = CAnalysis.resolve analysis ty
       fun integer ty = CAnalysis.integer analysis ty
       fun scalar position ty =
-        case resolve ty of
+        let val resolved=resolve ty
+            val ()=case resolved of CParse.Builtin "void"=>() | CParse.Function _=>()
+              | _=>ignore(CAnalysis.layout analysis {ty=ty,source=position})
+        in case resolved of
           CParse.Pointer _ => "Pointer" | CParse.Array _ => "Pointer" | CParse.Function _ => "Pointer"
         | CParse.Builtin "void" => "Void"
         | CParse.Builtin "_Bool" => "UInt8"
@@ -43,16 +46,21 @@ struct
             if List.exists (fn n => n=width) [8,16,32,64] then
               (if signed then "SInt" else "UInt") ^ Int.toString width
             else fail position "selected integer width requires a C adapter"
-          | NONE => fail position "selected by-value C object requires a C adapter")
+          | NONE => fail position "selected by-value C object requires a C adapter") end
       fun convention ty =
         let fun attributes (CParse.Attributed (base, attrs)) =
                   List.concat (List.map (fn tokens => String.tokens (fn c => not (Char.isAlphaNum c orelse c= #"_"))
                     (CLex.spelling tokens)) attrs) @ attributes base
               | attributes _ = []
-        in if #abi profile="win32" andalso List.exists (fn a => a="__stdcall" orelse a="WINAPI" orelse a="CALLBACK")
-          (attributes ty) then 1 else 0 end
+            val words=attributes ty
+            val ()=if List.exists(fn word=>List.exists(fn unsupported=>word=unsupported)
+              ["__fastcall","fastcall","__vectorcall","vectorcall","__thiscall","thiscall","__regcall","regcall",
+               "ms_abi","sysv_abi","regparm","__regparm__","pcs","__pcs__","aarch64_vector_pcs","preserve_most","preserve_all"])words
+              then fail source "selected calling convention requires a typed C adapter" else ()
+        in if #abi profile="win32" andalso List.exists (fn a => a="__stdcall" orelse a="stdcall" orelse a="WINAPI" orelse a="CALLBACK")
+          words then 1 else 0 end
       fun describe (b:ForeignValidate.binding) =
-        let val f= #policy b val ty=original (#foreign f) (#source f)
+        let val f= #policy b val ty=original (#foreign f) (#source (#declaration b))
             val native=case resolve ty of CParse.Function native=>native
               | _=>fail (#source f) "selected declaration is not a C function"
             val ()=if #prototype native andalso not (#variadic native) then ()
@@ -63,19 +71,37 @@ struct
           symbol= #foreign f, abi=convention ty, result=result, arguments=arguments, policy=f,
           native=native, source= #source (#declaration b)} end
       val functions=List.map describe bindings
+      val modelIndex=ForeignModel.index model
+      val helperNames=List.foldl(fn(name,known)=>if List.exists(fn other=>other=name)known then known else known @ [name]) []
+        (List.concat(List.map(fn f=>
+          (case #ownership(#result(#policy f)) of SOME(ForeignPolicy.Owned release)=>[release] | _=>[]) @
+          (case #getter(#errors(#policy f)) of SOME getter=>[getter] | NONE=>[]))functions))
+      val helperNames=List.filter(fn helper=>not(List.exists(fn f=> #foreign f=helper)functions))helperNames
+      fun helper name=
+        let val declaration=case ForeignModel.lookup(modelIndex,{family="c",namespace="function",name=name}) of SOME d=>d
+              | NONE=>fail source("missing native policy helper: " ^ name)
+            val ty=original name (#source declaration)
+            val f=case resolve ty of CParse.Function f=>f | _=>fail source "native policy helper is not a function"
+        in {foreign=name,symbol=name,abi=convention ty,result=scalar (#source declaration)(#result f),
+          arguments=List.map(fn CParse.Parameter{ctype,...}=>scalar (#source declaration)ctype)(#parameters f),source= #source declaration} end
+      val helpers=List.map helper helperNames
       fun unique what values=
         let fun loop []=() | loop(value::rest)=if List.exists(fn other=>other=value)rest
               then fail source ("duplicate generated " ^ what ^ ": " ^ value) else loop rest
         in loop values end
-      val ()=unique "raw member" (["openSession","closeSession","prepare","call"] @ List.map #raw functions)
-      val ()=unique "public member" (["openSession","closeSession"] @ List.map (fn f=> #name (#policy f))functions)
+      val ()=unique "raw member" (["openSession","closeSession","prepare","call","callDeferred"] @ List.map #raw functions)
+      val publicReserved=["openSession","closeSession","ForeignFailure","Session","nativeSession","rawHandle","closeHandle","retired",
+        "retainHandle","borrowHandle","makeHandle","scopedBuffer","inputText","readText","enterCall"] @
+        List.concat(List.map(fn resource=>["release_" ^ resource,"raw_" ^ resource,"unpack_" ^ resource,"Handle_" ^ resource])(#resources p))
+      val ()=unique "public member" (publicReserved @ List.map (fn f=> #name (#policy f))functions)
+      val ()=List.app(fn resource=>if List.exists(fn reserved=>resource=reserved)
+        ["session","handleState","native_pointer","unit","int","word","real","char","string","bool","list","option","vector","array","exn","order"]
+        then fail source("reserved generated resource type: " ^ resource) else ())(#resources p)
       fun descriptor (foreign, symbol, abi, result, arguments) =
         "{name=" ^ quote foreign ^ ", symbol=" ^ quote symbol ^ ", abi=" ^ Int.toString abi ^
         ", result=RuneForeign." ^ result ^ ", arguments=" ^ list (List.map (fn a=>"RuneForeign." ^ a) arguments) ^ "}"
       fun fieldAdapter ({aggregate,path,writable}:field) =
         let val ty=CParse.Named aggregate
-            val layout=CAnalysis.layout analysis {ty=ty,source=source}
-            val _=CLayout.member (layout,path)
             fun object ty=case resolve ty of
                   CParse.Record {kind,tag=SOME tag,fields=NONE,...} =>
                     (case CAnalysis.lookup analysis {namespace=case kind of CParse.Struct=>"struct" | CParse.Union=>"union",name=tag} of
@@ -98,6 +124,7 @@ struct
       val fieldAdapters=List.concat (List.map fieldAdapter fields)
       val ()=unique "native descriptor" (List.map #foreign functions @ List.map #foreign fieldAdapters)
       val allDescriptors=List.map (fn f=>descriptor (#foreign f,#symbol f,#abi f,#result f,#arguments f)) functions @
+        List.map (fn f=>descriptor (#foreign f,#symbol f,#abi f,#result f,#arguments f)) helpers @
         List.map (fn f=>descriptor (#foreign f,#symbol f,#abi f,#result f,#arguments f)) fieldAdapters
       val prefix="(* Generated by runeffi schema 1 from original headers and declarative policy. *)\n"
       fun rawSpec ({raw,foreign,...}:binding) =
@@ -114,15 +141,29 @@ struct
         "  val prepare : session -> string -> RuneForeign.resource\n" ^
         "  (* `call session name arguments` invokes a declared function or generated field adapter. *)\n" ^
         "  val call : session -> string -> RuneForeign.argument list -> RuneForeign.result\n" ^
+        "  (* `callDeferred session name arguments` returns owned output before a saved callback exception propagates. *)\n" ^
+        "  val callDeferred : session -> string -> RuneForeign.argument list -> {result:RuneForeign.result,callbackException:exn option}\n" ^
         String.concat (List.map rawSpec functions) ^ "end\n"
       val facts="{pointerBytes=" ^ Int.toString (#size (#pointer target)) ^ ", littleEndian=" ^
         Bool.toString (#byteOrder profile=ForeignModel.Little) ^ ", stdcall=" ^ Bool.toString (#abi profile="win32") ^ "}"
+      val architecture=let val triple= #triple profile
+        in if String.isPrefix "x86_64" triple orelse String.isPrefix "amd64" triple then "x86_64"
+          else if List.exists(fn prefix=>String.isPrefix prefix triple)["i386","i486","i586","i686","x86-"] then "x86"
+          else if String.isPrefix "aarch64" triple orelse String.isPrefix "arm64" triple then "aarch64"
+          else if String.isPrefix "powerpc64" triple orelse String.isPrefix "ppc64" triple then "powerpc64" else "other" end
+      fun scalarFact(name,spelling)=
+        let val value=if name="pointer" then #pointer target else case List.find(fn(n,_)=>n=spelling)(#scalars target) of
+              SOME(_,value)=>value | NONE=>fail source("target profile is missing scalar ABI facts: " ^ name)
+        in "{name=" ^ quote name ^ ",size=" ^ Int.toString(#size value) ^ ",alignment=" ^ Int.toString(#alignment value) ^ "}" end
+      val abiFacts="{architecture=" ^ quote architecture ^ ",charBits=8,charSigned=" ^ Bool.toString(#charSigned(#analysis profile)) ^ ",scalars=" ^
+        list(List.map scalarFact [("char","char"),("short","short"),("int","int"),("long","long"),("longLong","long long"),
+          ("pointer","pointer"),("wchar","wchar_t"),("float","float"),("double","double"),("bool","_Bool")]) ^ "}"
       val rawStructure=prefix ^ "(* Implements: " ^ signatureName ^ "_RAW *)\nstructure " ^ name ^ "Raw :> " ^
         signatureName ^ "_RAW =\nstruct\n  type session = ForeignGenerated.session\n" ^
         "  val descriptors = " ^ list allDescriptors ^ "\n" ^
-        "  fun openSession {libraries} = ForeignGenerated.create {libraries=if null libraries then " ^
-        list (List.map quote (#libraries p)) ^ " else libraries, descriptors=descriptors, target=" ^ facts ^ "}\n" ^
-        "  val closeSession = ForeignGenerated.close\n  val prepare = ForeignGenerated.prepare\n  val call = ForeignGenerated.invoke\n" ^
+        "  fun openSession {libraries} = ForeignGenerated.createChecked {libraries=if null libraries then " ^
+        list (List.map quote (#libraries p)) ^ " else libraries, descriptors=descriptors, target=" ^ facts ^ ",abiFacts=" ^ abiFacts ^ "}\n" ^
+        "  val closeSession = ForeignGenerated.close\n  val prepare = ForeignGenerated.prepare\n  val call = ForeignGenerated.invoke\n  val callDeferred = ForeignGenerated.invokeDeferred\n" ^
         String.concat (List.map (fn {raw,foreign,...}=>"  fun " ^ raw ^ " session arguments = call session " ^ quote foreign ^ " arguments\n") functions) ^ "end\n"
       fun layoutName original = ForeignPolicy.rawName original
       fun layoutArtifact original =
@@ -160,79 +201,16 @@ struct
         "  fun offset (name, path) = lookup measurements (\"offset_\" ^ name ^ \"_\" ^ String.concatWith \"_\" path)\n" ^
         "  val constants : (string * IntInf.int) list = " ^ list(List.map(fn(n,v)=>"(" ^ quote n ^ ", " ^ natural v ^ ")")constants) ^ "\n" ^
         "  fun constant name = lookup constants name\nend\n"
-      fun automatic ({policy=f,...}:binding) = not (isSome (#adapter f))
-      val safe=List.filter automatic functions
-      val adapters=List.filter (not o automatic) functions
-      fun typeScalar s = case s of "Void"=>ForeignPolicy.Scalar "unit" | "Float32"=>ForeignPolicy.Scalar "real" | "Float64"=>ForeignPolicy.Scalar "real"
-        | "Pointer"=>fail source "safe pointer projection requires an explicit generator adapter"
-        | _=>if String.isPrefix "SInt" s then ForeignPolicy.Scalar ("int" ^ String.extract(s,4,NONE))
-          else ForeignPolicy.Scalar ("word" ^ String.extract(s,4,NONE))
-      fun parameterNames parameters = ListPair.map (fn (i,CParse.Parameter {name,...})=>getOpt(name,"arg" ^ Int.toString i))
-        (List.tabulate (length parameters,fn i=>i),parameters)
-      fun public (f:binding) =
-        let val p= #policy f val native= #native f
-            val names=parameterNames (#parameters native)
-            val values=ListPair.zip(names,List.map typeScalar (#arguments f))
-            val types=ForeignProjection.callType {policy=p,inputs=values,result=typeScalar (#result f)}
-        in (f,names,values,types) end
-      val publicFunctions=List.map public safe
-      fun memberSpec (f:binding,names,values,{input,output}) =
-        "  (* `" ^ #name (#policy f) ^ " session input` projects " ^ #foreign f ^ " from its original C declaration. *)\n" ^
-        "  val " ^ #name (#policy f) ^ " : session -> " ^ ForeignProjection.renderType input ^ " -> " ^ ForeignProjection.renderType output ^ "\n"
-      fun inputTree (p:ForeignPolicy.functionPolicy) names = getOpt (#input p,case names of []=>ForeignPolicy.Unit | [name]=>ForeignPolicy.Value name
-        | names=>ForeignPolicy.Product (List.map ForeignPolicy.Value names))
-      fun tree render ForeignPolicy.Unit="()"
-        | tree render (ForeignPolicy.Value value)=render value
-        | tree render (ForeignPolicy.Product values)="(" ^ join (List.map (tree render) values) ^ ")"
-        | tree render (ForeignPolicy.Fields fields)="{" ^ join (List.map(fn(label,value)=>label ^ "=" ^ tree render value) fields) ^ "}"
-      fun annotation (p:ForeignPolicy.functionPolicy) n=List.find(fn a:ForeignPolicy.valuePolicy=> #name a=SOME n)(#parameters p)
-      fun projection p n base = case annotation p n of SOME a=>getOpt(#projection a,base) | NONE=>base
-      fun encode scalar ty expression =
-        let fun number (ForeignPolicy.Scalar "bool")="(if " ^ expression ^ " then 1 else 0)"
-              | number (ForeignPolicy.Scalar "int")="IntInf.fromInt " ^ expression
-              | number (ForeignPolicy.Scalar n)=
-                  if String.isPrefix "int" n then "Int" ^ String.extract(n,3,NONE) ^ ".toLarge " ^ expression
-                  else if String.isPrefix "word" n then "Word" ^ String.extract(n,4,NONE) ^ ".toLargeInt " ^ expression
-                  else fail source "unsupported safe scalar input projection"
-              | number _=fail source "non-scalar projection requires an explicit generator adapter"
-        in if scalar="Float32" orelse scalar="Float64" then
-            if ty=ForeignPolicy.Scalar "real" then "RuneForeign.Real " ^ expression else fail source "floating projection must be real"
-          else if String.isPrefix "SInt" scalar then "RuneForeign.Signed (Int64.fromLarge (" ^ number ty ^ "))"
-          else "RuneForeign.Unsigned (Word64.fromLargeInt (" ^ number ty ^ "))" end
-      fun decode scalar ty =
-        let val signed=String.isPrefix "SInt" scalar
-            val value="ForeignBytes.value {signed=" ^ Bool.toString signed ^ ", littleEndian=true, bytes= #bytes result}"
-        in case ty of
-          ForeignPolicy.Scalar "unit"=>"()"
-        | ForeignPolicy.Scalar "real"=>if scalar="Float32" orelse scalar="Float64" then
-              "ForeignBytes.real64Value {littleEndian=true, bytes= #bytes result}" else fail source "real projection on non-floating result"
-        | ForeignPolicy.Scalar "bool"=>"(" ^ value ^ " <> 0)"
-        | ForeignPolicy.Scalar "int"=>"IntInf.toInt (" ^ value ^ ")"
-        | ForeignPolicy.Scalar n=>if String.isPrefix "int" n then "Int" ^ String.extract(n,3,NONE) ^ ".fromLarge (" ^ value ^ ")"
-            else if String.isPrefix "word" n then "Word" ^ String.extract(n,4,NONE) ^ ".fromLargeInt (" ^ value ^ ")"
-            else fail source "unsupported safe scalar output projection"
-        | _=>fail source "structured result requires an explicit generator adapter" end
-      fun publicBody (f:binding,names,values,{input,output}) =
-        let val p= #policy f
-            val ()=if List.exists(fn a:ForeignPolicy.valuePolicy=> #direction a=SOME ForeignPolicy.Out orelse #direction a=SOME ForeignPolicy.InOut)(#parameters p)
-              then fail (#source p) "output pointer projection requires an explicit generator adapter" else ()
-            val ()=if #predicate (#errors p)="none" then () else fail (#source p) "error projection requires an explicit generator adapter"
-            fun variable n="value_" ^ ForeignPolicy.rawName n
-            val args=ListPair.map(fn((n,ty),scalar)=>encode scalar (projection p n ty) (variable n))(values,#arguments f)
-            val resultTy=getOpt(#projection (#result p),typeScalar (#result f))
-            val result=decode (#result f) resultTy
-            val returned=case #returns p of NONE=>result | SOME t=>tree (fn n=>if n="$result" then result else fail (#source p) "unknown scalar output") t
-        in "  fun " ^ #name p ^ " session " ^ tree variable (inputTree p names) ^ " =\n    let val result = " ^
-          name ^ "Raw." ^ #raw f ^ " session " ^ list args ^ "\n    in " ^ returned ^ " end\n" end
-      val publicSignature=prefix ^ "(* Projected native scalar bindings.\n\n   Area: Foreign interfaces *)\nsignature " ^ signatureName ^ " =\nsig\n" ^
-        "  (* Explicit native session. *)\n  type session\n" ^
-        "  (* `openSession {libraries}` chooses native library paths without loading them. *)\n  val openSession : {libraries : string list} -> session\n" ^
-        "  (* `closeSession session` releases native descriptors and libraries. *)\n  val closeSession : session -> unit\n" ^
-        String.concat(List.map memberSpec publicFunctions) ^ "end\n"
-      val publicStructure=prefix ^ "(* Implements: " ^ signatureName ^ " *)\nstructure " ^ name ^ " :> " ^ signatureName ^ " =\nstruct\n" ^
-        "  type session = " ^ name ^ "Raw.session\n  val openSession = " ^ name ^ "Raw.openSession\n  val closeSession = " ^ name ^ "Raw.closeSession\n" ^
-        String.concat (List.map publicBody publicFunctions) ^ "end\n"
+      val projected=ForeignPublic.emit {policy=p,profile=profile,declarations=declarations}
+      val publicSignature=prefix ^ #signatureText projected
+      val publicStructure=prefix ^ #structureText projected
+      val adapters=List.filter(fn f=>isSome(#adapter(#policy f)))functions
       fun sourceJson ({file,line,column}:ForeignModel.source)=Json.Object[("file",Json.String (sourceName file)),("line",Json.int line),("column",Json.int column)]
+      val identities=List.map(fn f=>{family="c",namespace="function",name= #foreign f})functions @
+        List.map(fn f=>{family="c",namespace="function",name= #foreign f})helpers
+      val coverage=ForeignCoverage.report {declarations=model,selected=identities,generated=identities,shimmed=[],unsupported=[]}
+      val coverage=List.map(fn {identity,source={file,line,column},state}:ForeignCoverage.entry=>
+        {identity=identity,source={file=sourceName file,line=line,column=column},state=state})coverage
       val manifest=Json.Object[("schema",Json.int 1),("generator",Json.String "runeffi-1"),("structure",Json.String name),
         ("target",Json.String (#name profile)),("functions",Json.Array(List.map(fn f=>Json.Object[
           ("foreign",Json.String (#foreign f)),("raw",Json.String (#raw f)),("source",sourceJson (#source f)),
@@ -240,6 +218,8 @@ struct
             | SOME adapter=>Json.Object[("adapter",Json.String adapter)]),
           ("result",Json.String (#result f)),("arguments",Json.Array(List.map Json.String (#arguments f)))])functions)),
         ("fieldAdapters",Json.Array(List.map (fn f=>Json.String (#foreign f)) fieldAdapters)),
+        ("helpers",Json.Array(List.map(fn f=>Json.Object[("foreign",Json.String(#foreign f)),("source",sourceJson(#source f))])helpers)),
+        ("coverage",ForeignCoverage.json coverage),
         ("layouts",Json.Array(List.map Json.String layouts)),
         ("measurements",Json.Object(List.map(fn(n,v)=>(n,Json.Number(IntInf.toString v)))layoutValues)),
         ("constants",Json.Object(List.map(fn(n,v)=>(n,Json.Number(if v<0 then "-" ^ IntInf.toString(IntInf.~ v) else IntInf.toString v)))constants))]

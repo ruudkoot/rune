@@ -40,17 +40,42 @@ bytes, pointer identity and captured errors. Their native signatures are
 fixed generated descriptors; callers cannot add arbitrary symbols by name.
 `prepare` exposes a session-owned descriptor for transactional destructors.
 Defining a structure opens no native libraries. The first call verifies the
-VM target and resolves its native symbol. Close dependent resources before
-closing the session. Failed unload remains retryable.
+VM target, compiler architecture, plain-char representation and every C
+scalar size/alignment before resolving a native symbol. This distinguishes
+LP64 and LLP64 even when pointers have the same width. Close dependent
+resources before closing the session. Failed unload remains retryable.
 
-Automatic public scalar projections support fixed signed/unsigned widths,
-booleans, floating values and structured input/output grouping. Other
-selected public projections require an explicit adapter, recorded by name
-in `ffi-manifest.json`. A selection without an implemented lowering or an
-explicit public adapter fails with a source diagnostic. Dynamic variadic
-calls and unprototyped C functions require fixed typed adapters. This
-component alone does not complete the generic pointer, buffer, ownership,
-aggregate, callback or error-projection delivery gate.
+Automatic public projections support fixed signed/unsigned widths, booleans,
+floating values, structured input/output grouping, strings, byte arrays,
+scalar output/inout pointers and abstract resources. Input integer ranges
+and native buffer element counts are checked. String extents count native
+code units, including any accessible terminator; a fixed input capacity is
+padded with zeroes and must fit the encoded input and required terminator.
+Terminated output without an extent has a 16 MiB scan limit. It remains the
+foreign declaration's responsibility to supply accessible native storage.
+Byte arrays preserve aliases and copy native updates back on exceptional
+returning paths. Raw resources stay opaque; no pointer is reconstructed from
+an integer or a byte sequence.
+
+Owned results are adopted before deferred callback exceptions can propagate.
+Owned strings are freed after copying, including conversion failures.
+Borrowed results annotated `parameter:name` retain their parent until the
+borrowed handle is released. Generated resource release functions reject
+active borrows. Closing a session rejects active calls and live owned
+resources before changing native state. An owned resource currently requires
+a void destructor taking one pointer; other ownership protocols need an
+explicit adapter. Native error text is copied before other conversion or
+cleanup, and `ForeignFailure` retains the raw status and captured errors.
+
+Call-scoped callbacks support scalar and borrowed pointer arguments, scalar
+results, nested foreign calls and annotated failure values. A callback
+exception remains inside the native boundary until safe cleanup finishes.
+Registered callbacks, public aggregate values, retained input memory and
+more complex destructor protocols require explicit public adapters, recorded
+by name in `ffi-manifest.json`. A selection without an implemented lowering
+or an explicit public adapter fails with a source diagnostic. Dynamic
+variadic calls and unprototyped C functions require fixed typed adapters.
+These remaining automatic projections and their tests keep M6 planned.
 
 The output directory stores immutable `sets/<content-hash>` generations and
 stable public interfaces in `api/<signature-hash>`. Publication writes and

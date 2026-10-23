@@ -31,9 +31,14 @@ commands; the generator/build integration supplies provenance and rebuilds.
 alignments, size type, byte order, enum policy and preprocessing macros are data;
 the generator does not infer them from the host running Rune.
 
-`ForeignGenerate` produces documented, sealed raw bindings, fixed scalar
-projections, selected object measurements, typed field adapters and an
-implementation manifest. Explicit public adapters remain named in that
+`ForeignPublic` lowers selected scalar, text, byte-buffer, output, owned and
+borrowed resource, native-error and call-scoped callback policies into checked
+SML wrappers. Cleanup surrounds native entry and result conversion; a deferred
+callback exception escapes only after a newly owned result is protected.
+Registered callbacks and public aggregate values require explicit adapters.
+
+`ForeignGenerate` produces documented, sealed raw and public bindings,
+selected object measurements, typed field adapters and an implementation manifest. Explicit public adapters remain named in that
 manifest. An unsupported selected projection fails generation; it never
 quietly exports an unsafe public wrapper. `runeffi` supplies filesystem
 inputs and atomic publication around this reusable pure emitter.

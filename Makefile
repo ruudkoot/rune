@@ -493,7 +493,7 @@ bin/rune-ffi-generator-check: bin/rune-ffi-generator-check.rbc bin/runevm Makefi
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-generator-check.rbc" "$$@"\n' > $@
 	chmod +x $@
 .PHONY: test-ffi-generator test-ffi-generator-hosts
-test-ffi-generator: $(RUNE) vm bin/runeffi bin/rune-ffi-generator-check bin/rune-test
+test-ffi-generator: $(RUNE) vm $(RUNEOPT) bin/runeffi bin/rune-ffi-generator-check bin/rune-test
 	$(RUNE_TEST) --tier test-ffi-generator
 test-ffi-generator-hosts: $(RUNE) vm bin/runeffi bin/rune-ffi-generator-check bin/rune-test
 	$(RUNE_TEST) --tier test-ffi-generator-hosts

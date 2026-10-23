@@ -126,9 +126,40 @@ struct
           say("EXPLAINED generator " ^ name ^ ": " ^ #category line ^ ": " ^ #reason line ^
             " (status " ^ Int.toString(#status result) ^ "; " ^ directory ^ "/host)\n"))
     end
+  fun safe mode=
+    let val output=directory ^ "/safe"
+        val ()=ignore(command true[generator,"generate","--config","tests/ffi/generator/safe.ffi","--target","ffi/targets/linux-x86_64.json","--out",output])
+        val pointer=read(output ^ "/current.build")
+        val relative=case List.find(String.isPrefix "use ")(lines pointer) of SOME line=>OS.Path.dir(String.extract(line,4,NONE))
+          | NONE=>raise Failed "missing safe generation pointer"
+        val selected=output ^ "/" ^ relative
+        val subject=directory ^ "/safe.so"
+        val ()=ignore(command true[env("CC","cc"),"-std=c17","-Wall","-Wextra","-Werror","-shared","-fPIC","tests/ffi/generator/safe.c","-o",subject])
+        val support=["lib/ffi/marshal/bytes_sig.sml","lib/ffi/marshal/bytes.sml","lib/ffi/runtime/owner_sig.sml","lib/ffi/runtime/owner.sml",
+          "lib/ffi/runtime/generated_sig.sml","lib/ffi/runtime/generated.sml"]
+        val sources=support @ List.map(fn file=>selected ^ "/" ^ file)["raw_sig.sml","raw.sml","public_sig.sml","public.sml"] @ ["tests/ffi/generator/safe-client.sml"]
+        fun one target vm options=
+          let val bytecode=directory ^ "/safe-" ^ target ^ ".rbc"
+              val ()=ignore(command true([env("RUNE","bin/rune"),"--target=" ^ target,"--library","ffi/runtime"] @ sources @ ["-o",bytecode]))
+              val output=command true(vm::options @ ["--gc-stress","7","--gc-verify",bytecode,subject])
+              val ()=need(String.isSubstring "PASS generated safe registry cleanup" output,"generated safe fixture did not complete")
+          in say output;bytecode end
+    in if mode="asan" then
+         (ignore(one "stack" (env("RUNEVM_STACK_ASAN","bin/runevm-stack-asan")) []);
+          ignore(one "registers" (env("RUNEVM_ASAN","bin/runevm-asan")) ["--jit=all","--jit-tier=2"]))
+       else let val stack=one "stack" (env("RUNEVM_STACK","bin/runevm-stack")) []
+                val _=one "registers" (env("RUNEVM","bin/runevm")) []
+                val _=one "registers" (env("RUNEVM","bin/runevm")) ["--jit=off"]
+                val _=one "registers" (env("RUNEVM","bin/runevm")) ["--jit=all","--jit-tier=2"]
+                val native=directory ^ "/safe-native"
+                val ()=ignore(command true[env("RUNEOPT","bin/runeopt"),stack,"-o",native])
+            in say(command true[native,subject]) end
+    end
   fun main["native"]=native()
     | main["host",name]=host name
-    | main _=raise Failed "expected native or host HOST"
+    | main["safe"]=safe "native"
+    | main["safe-asan"]=safe "asan"
+    | main _=raise Failed "expected native, safe, safe-asan or host HOST"
 end
 val ()=ForeignGeneratorChecks.main(CommandLine.arguments()) handle e=>
   (TextIO.output(TextIO.stdErr,"FAIL foreign generator: " ^ (case e of ForeignGeneratorChecks.Failed s=>s | _=>General.exnMessage e) ^ "\n");

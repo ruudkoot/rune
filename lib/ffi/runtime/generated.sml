@@ -3,23 +3,33 @@ structure ForeignGenerated :> FOREIGN_GENERATED =
 struct
   type descriptor = {name : string, symbol : string, abi : int,
     result : RuneForeign.scalar, arguments : RuneForeign.scalar list}
+  type abiFacts = {architecture : string, charBits : int, charSigned : bool,
+    scalars : {name : string, size : int, alignment : int} list}
   datatype session = Session of {libraries : string list, descriptors : descriptor list,
     opened : (string * RuneForeign.resource) list ref,
     symbols : RuneForeign.resource list ref,
     calls : (string * RuneForeign.resource) list ref, closed : bool ref,
-    target : {pointerBytes : int, littleEndian : bool, stdcall : bool}}
+    target : {pointerBytes : int, littleEndian : bool, stdcall : bool},
+    abiFacts : abiFacts option}
   exception Closed
-  fun create {libraries, descriptors, target} =
+  fun make {libraries, descriptors, target, abiFacts} =
     let fun unique [] = () | unique (name :: rest) =
           if List.exists (fn other => other = name) rest then
             raise Fail ("duplicate generated descriptor: " ^ name) else unique rest
         val () = unique (List.map #name descriptors)
-    in Session {libraries=libraries, descriptors=descriptors, target=target,
+    in Session {libraries=libraries, descriptors=descriptors, target=target, abiFacts=abiFacts,
       opened=ref [], symbols=ref [], calls=ref [], closed=ref false} end
-  fun prepare (Session {libraries, descriptors, target, opened, symbols, calls, closed}) name =
+  fun create {libraries,descriptors,target} =
+    make {libraries=libraries,descriptors=descriptors,target=target,abiFacts=NONE}
+  fun createChecked {libraries,descriptors,target,abiFacts} =
+    make {libraries=libraries,descriptors=descriptors,target=target,abiFacts=SOME abiFacts}
+  fun prepare (Session {libraries, descriptors, target, abiFacts, opened, symbols, calls, closed}) name =
     let val () = if !closed then raise Closed else ()
         val () = if RuneForeign.target () = target then ()
           else raise Fail "generated foreign target does not match the executing VM"
+        val () = case abiFacts of NONE=>() | SOME expected=>
+          if RuneForeign.abiFacts()=expected then ()
+          else raise Fail "generated foreign C ABI facts do not match the executing VM"
         fun library path = case List.find (fn (other, _) => other = path) (!opened) of
             SOME (_, resource) => resource
           | NONE => let val resource = RuneForeign.openLibrary path
@@ -43,6 +53,7 @@ struct
                in call end)
     end
   fun invoke session name arguments = RuneForeign.invoke (prepare session name, arguments)
+  fun invokeDeferred session name arguments = RuneForeign.invokeDeferred (prepare session name, arguments)
   fun close (Session {calls, symbols, opened, closed, ...}) =
     let fun releaseList entries resource =
           let fun loop [] = entries := []

@@ -1,6 +1,7 @@
 structure GeneratedScalars : GENERATEDSCALARS =
 struct
   type session=unit
+  exception ForeignFailure of {foreign:string,result:RuneForeign.result,text:string option}
   fun openSession {libraries}=()
   fun closeSession ()=()
   fun add () {first,second}=first+second

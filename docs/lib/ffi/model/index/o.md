@@ -6,6 +6,7 @@
 - `Option` (con): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#con-option)
 - `optional` (val): [FOREIGN_JSON](../sig/FOREIGN_JSON.md#val-optional)
 - `Out` (con): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#con-out)
+- `output` (type): [FOREIGN_PUBLIC](../sig/FOREIGN_PUBLIC.md#type-output)
 - `Owned` (con): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#con-owned)
 - `ownership` (type): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#type-ownership)
 

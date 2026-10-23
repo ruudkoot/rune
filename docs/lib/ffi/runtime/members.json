@@ -13,6 +13,13 @@
     },
     {
      "kind": "type",
+     "name": "abiFacts",
+     "spec": "type abiFacts = {architecture : string, charBits : int, charSigned : bool,\n  scalars : {name : string, size : int, alignment : int} list}",
+     "doc": "Measured C object facts, in addition to pointer size and byte order.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#type-abifacts"
+    },
+    {
+     "kind": "type",
      "name": "session",
      "spec": "type session",
      "doc": "A lazily opened collection of native libraries and prepared calls.\n\n",
@@ -34,6 +41,13 @@
     },
     {
      "kind": "val",
+     "name": "createChecked",
+     "spec": "val createChecked : {libraries : string list, descriptors : descriptor list,\n  target : {pointerBytes : int, littleEndian : bool, stdcall : bool},\n  abiFacts : abiFacts} -> session",
+     "doc": "`createChecked {libraries, descriptors, target, abiFacts}` checks the full ABI.\n\nGenerated code uses this constructor. Every scalar size and alignment,\narchitecture and plain-char representation must match before loading.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-createchecked"
+    },
+    {
+     "kind": "val",
      "name": "prepare",
      "spec": "val prepare : session -> string -> RuneForeign.resource",
      "doc": "`prepare session name` returns the cached descriptor for a declared name.\n\n**Raises** `Closed`, `Fail` for an undeclared name, or a native bridge error.\nThe resource belongs to the session and must not be released separately.\n\n",
@@ -45,6 +59,13 @@
      "spec": "val invoke : session -> string -> RuneForeign.argument list -> RuneForeign.result",
      "doc": "`invoke session name arguments` executes a declared, fixed native call.\n\nNative status bytes and immediately captured errors remain available.\n\n",
      "page": "sig/FOREIGN_GENERATED.md#val-invoke"
+    },
+    {
+     "kind": "val",
+     "name": "invokeDeferred",
+     "spec": "val invokeDeferred : session -> string -> RuneForeign.argument list ->\n  {result : RuneForeign.result, callbackException : exn option}",
+     "doc": "`invokeDeferred session name arguments` exposes ownership before propagation.\n\nRegister cleanup for an owned pointer result, then propagate a saved\ncallback exception. The native result and its captured errors survive.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-invokedeferred"
     },
     {
      "kind": "val",

@@ -8,7 +8,7 @@ struct
     predefined=[],analysis={integers={char=8,short=16,int=32,long=64,longLong=64},charSigned=true,
       sizeType={rank=CInteger.Long,width=64,signed=false},enumRule=CAnalysis.UnsignedNonnegative,
       objects={name="fixture",pointer={size=8,alignment=8,signed=NONE},enumeration=scalar,
-        maximumObject=IntInf.<<(1,0w40),scalars=[("int",scalar),("_Bool",{size=1,alignment=1,signed=SOME false})]}}}
+        maximumObject=IntInf.<<(1,0w40),scalars=[("char",{size=1,alignment=1,signed=SOME true}),("short",{size=2,alignment=2,signed=SOME true}),("int",scalar),("long",{size=8,alignment=8,signed=SOME true}),("long long",{size=8,alignment=8,signed=SOME true}),("wchar_t",scalar),("float",scalar),("double",{size=8,alignment=8,signed=NONE}),("_Bool",{size=1,alignment=1,signed=SOME false})]}}}
   val source="typedef struct Pair { int first; int second; } Pair; int add(int first, int second); _Bool invert(_Bool value);"
   val declarations= #declarations(CParse.translationUnit{tokens=CLex.scan{file="original.h",text=source},predefinedTypes=[]})
   val policyText="{\"version\":1,\"family\":\"c\",\"structure\":\"Generated\",\"headers\":[\"original.h\"],\"libraries\":[\"subject\"],\"functions\":[" ^

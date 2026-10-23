@@ -2,12 +2,12 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) **e** [f](f.md) [g](g.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
-- `emit` (val): [FOREIGN_GENERATE](../sig/FOREIGN_GENERATE.md#val-emit)
+- `emit` (val): [FOREIGN_GENERATE](../sig/FOREIGN_GENERATE.md#val-emit), [FOREIGN_PUBLIC](../sig/FOREIGN_PUBLIC.md#val-emit)
 - `encoding` (type): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#type-encoding)
 - `entry` (type): [FOREIGN_COVERAGE](../sig/FOREIGN_COVERAGE.md#type-entry)
 - `Enumeration` (con): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#con-enumeration)
 - `environment` (type): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#type-environment)
-- `Error` (exn): [FOREIGN_COVERAGE](../sig/FOREIGN_COVERAGE.md#exn-error), [FOREIGN_GENERATE](../sig/FOREIGN_GENERATE.md#exn-error), [FOREIGN_JSON](../sig/FOREIGN_JSON.md#exn-error), [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#exn-error), [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#exn-error), [FOREIGN_PROJECTION](../sig/FOREIGN_PROJECTION.md#exn-error), [FOREIGN_SHIM](../sig/FOREIGN_SHIM.md#exn-error), [FOREIGN_TARGET](../sig/FOREIGN_TARGET.md#exn-error), [FOREIGN_VALIDATE](../sig/FOREIGN_VALIDATE.md#exn-error)
+- `Error` (exn): [FOREIGN_COVERAGE](../sig/FOREIGN_COVERAGE.md#exn-error), [FOREIGN_GENERATE](../sig/FOREIGN_GENERATE.md#exn-error), [FOREIGN_JSON](../sig/FOREIGN_JSON.md#exn-error), [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#exn-error), [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#exn-error), [FOREIGN_PROJECTION](../sig/FOREIGN_PROJECTION.md#exn-error), [FOREIGN_PUBLIC](../sig/FOREIGN_PUBLIC.md#exn-error), [FOREIGN_SHIM](../sig/FOREIGN_SHIM.md#exn-error), [FOREIGN_TARGET](../sig/FOREIGN_TARGET.md#exn-error), [FOREIGN_VALIDATE](../sig/FOREIGN_VALIDATE.md#exn-error)
 - `error` (val): [FOREIGN_JSON](../sig/FOREIGN_JSON.md#val-error)
 - `errorPolicy` (type): [FOREIGN_POLICY](../sig/FOREIGN_POLICY.md#type-errorpolicy)
 - `expression` (type): [FOREIGN_MODEL](../sig/FOREIGN_MODEL.md#type-expression)

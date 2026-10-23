@@ -5,6 +5,7 @@ FOREIGN_JSON	signature			required	declared	lib/ffi/model/located_json_sig.sml
 FOREIGN_MODEL	signature			required	declared	lib/ffi/model/model_sig.sml
 FOREIGN_POLICY	signature			required	declared	lib/ffi/model/policy_sig.sml
 FOREIGN_PROJECTION	signature			required	declared	lib/ffi/model/projection_sig.sml
+FOREIGN_PUBLIC	signature			required	declared	lib/ffi/model/public_sig.sml
 FOREIGN_SHIM	signature			required	declared	lib/ffi/model/shim_sig.sml
 FOREIGN_TARGET	signature			required	declared	lib/ffi/model/target_sig.sml
 FOREIGN_VALIDATE	signature			required	declared	lib/ffi/model/validate_sig.sml
@@ -14,6 +15,7 @@ ForeignJson	structure	FOREIGN_JSON		required	claimed	lib/ffi/model/located_json.
 ForeignModel	structure	FOREIGN_MODEL		required	claimed	lib/ffi/model/model.sml
 ForeignPolicy	structure	FOREIGN_POLICY		required	claimed	lib/ffi/model/policy.sml
 ForeignProjection	structure	FOREIGN_PROJECTION		required	claimed	lib/ffi/model/projection.sml
+ForeignPublic	structure	FOREIGN_PUBLIC		required	claimed	lib/ffi/model/public.sml
 ForeignShim	structure	FOREIGN_SHIM		required	claimed	lib/ffi/model/shim.sml
 ForeignTarget	structure	FOREIGN_TARGET		required	claimed	lib/ffi/model/target.sml
 ForeignValidate	structure	FOREIGN_VALIDATE		required	claimed	lib/ffi/model/validate.sml

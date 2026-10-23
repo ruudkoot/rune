@@ -6,6 +6,7 @@
 - `InputOutput` (con): [FOREIGN_MEMORY](../sig/FOREIGN_MEMORY.md#con-inputoutput)
 - `inScope` (val): [FOREIGN_OWNER](../sig/FOREIGN_OWNER.md#val-inscope)
 - `invoke` (val): [FOREIGN_GENERATED](../sig/FOREIGN_GENERATED.md#val-invoke)
+- `invokeDeferred` (val): [FOREIGN_GENERATED](../sig/FOREIGN_GENERATED.md#val-invokedeferred)
 - `isClosed` (val): [FOREIGN_OWNER](../sig/FOREIGN_OWNER.md#val-isclosed)
 
 ---

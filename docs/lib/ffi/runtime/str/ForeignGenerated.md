@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`FOREIGN_GENERATED`](../sig/FOREIGN_GENERATED.md) |
 | Status | required |
-| Members | 7 |
+| Members | 10 |
 | Tests | not listed |
 | Source | [lib/ffi/runtime/generated.sml](../../../../../lib/ffi/runtime/generated.sml) |
 
@@ -22,12 +22,15 @@ What each means is on [`FOREIGN_GENERATED`](../sig/FOREIGN_GENERATED.md); the ty
 
 |  | Member | Is |
 | --- | --- | --- |
+| type | [`abiFacts`](../sig/FOREIGN_GENERATED.md#type-abifacts) | `{architecture : string, charBits : int, charSigned : bool, scalars : {alignment : int, name : string, size : int} list}` |
 | type | [`descriptor`](../sig/FOREIGN_GENERATED.md#type-descriptor) | `{abi : int, arguments : scalar list, name : string, result : scalar, symbol : string}` |
 | type | [`session`](../sig/FOREIGN_GENERATED.md#type-session) | *a type of its own* |
 | exception | [`Closed`](../sig/FOREIGN_GENERATED.md#exn-closed) |  |
 | val | [`close`](../sig/FOREIGN_GENERATED.md#val-close) | `session -> unit` |
 | val | [`create`](../sig/FOREIGN_GENERATED.md#val-create) | `{descriptors : descriptor list, libraries : string list, target : {littleEndian : bool, pointerBytes : int, stdcall : bool}} -> session` |
+| val | [`createChecked`](../sig/FOREIGN_GENERATED.md#val-createchecked) | `{abiFacts : abiFacts, descriptors : descriptor list, libraries : string list, target : {littleEndian : bool, pointerBytes : int, stdcall : bool}} -> session` |
 | val | [`invoke`](../sig/FOREIGN_GENERATED.md#val-invoke) | `session -> string -> argument list -> {bytes : string, error : {message : string, native : Word32.word, number : int}, pointer : resource option}` |
+| val | [`invokeDeferred`](../sig/FOREIGN_GENERATED.md#val-invokedeferred) | `session -> string -> argument list -> {callbackException : exn option, result : {bytes : string, error : {message : string, native : Word32.word, number : int}, pointer : resource option}}` |
 | val | [`prepare`](../sig/FOREIGN_GENERATED.md#val-prepare) | `session -> string -> resource` |
 
 ---

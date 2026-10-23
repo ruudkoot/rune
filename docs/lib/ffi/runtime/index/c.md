@@ -5,6 +5,7 @@
 - `close` (val): [FOREIGN_GENERATED](../sig/FOREIGN_GENERATED.md#val-close), [FOREIGN_OWNER](../sig/FOREIGN_OWNER.md#val-close)
 - `Closed` (exn): [FOREIGN_GENERATED](../sig/FOREIGN_GENERATED.md#exn-closed), [FOREIGN_OWNER](../sig/FOREIGN_OWNER.md#exn-closed)
 - `create` (val): [FOREIGN_GENERATED](../sig/FOREIGN_GENERATED.md#val-create)
+- `createChecked` (val): [FOREIGN_GENERATED](../sig/FOREIGN_GENERATED.md#val-createchecked)
 
 ---
 

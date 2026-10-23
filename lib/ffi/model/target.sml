@@ -43,7 +43,7 @@ struct
           | NONE=>fail["sizeType"]"size_t is not a supported integer type"
         fun scalar key signed={size=width key,alignment=align key,signed=signed}
         val scalars=[("char",scalar "char"(SOME charSigned)),("signed char",scalar "char"(SOME true)),("unsigned char",scalar "char"(SOME false)),
-          ("_Bool",scalar "bool"(SOME false)),("float",scalar "float" NONE),("double",scalar "double" NONE)] @
+          ("wchar_t",scalar "wchar" NONE),("_Bool",scalar "bool"(SOME false)),("float",scalar "float" NONE),("double",scalar "double" NONE)] @
           List.concat(List.map(fn(c,key)=>[(c,scalar key(SOME true)),("unsigned " ^ c,scalar key(SOME false))])
             [("short","short"),("int","int"),("long","long"),("long long","longLong")])
         val objects={name=name,pointer=scalar "pointer" NONE,enumeration=scalar "int" NONE,scalars=scalars,

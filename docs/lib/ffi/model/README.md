@@ -29,14 +29,19 @@ commands; the generator/build integration supplies provenance and rebuilds.
 alignments, size type, byte order, enum policy and preprocessing macros are data;
 the generator does not infer them from the host running Rune.
 
-[`ForeignGenerate`](str/ForeignGenerate.md) produces documented, sealed raw bindings, fixed scalar
-projections, selected object measurements, typed field adapters and an
-implementation manifest. Explicit public adapters remain named in that
+[`ForeignPublic`](str/ForeignPublic.md) lowers selected scalar, text, byte-buffer, output, owned and
+borrowed resource, native-error and call-scoped callback policies into checked
+SML wrappers. Cleanup surrounds native entry and result conversion; a deferred
+callback exception escapes only after a newly owned result is protected.
+Registered callbacks and public aggregate values require explicit adapters.
+
+[`ForeignGenerate`](str/ForeignGenerate.md) produces documented, sealed raw and public bindings,
+selected object measurements, typed field adapters and an implementation manifest. Explicit public adapters remain named in that
 manifest. An unsupported selected projection fails generation; it never
 quietly exports an unsafe public wrapper. `runeffi` supplies filesystem
 inputs and atomic publication around this reusable pure emitter.
 
-[How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md)
+[How to read these pages](conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md)
 
 ## Foreign interfaces
 
@@ -48,6 +53,7 @@ inputs and atomic publication around this reusable pure emitter.
 | [`FOREIGN_MODEL`](sig/FOREIGN_MODEL.md) | Foreign declarations, independent of target layout and SML projection. |
 | [`FOREIGN_POLICY`](sig/FOREIGN_POLICY.md) | Declarative FFI policy; reading a sidecar never executes its adapters. |
 | [`FOREIGN_PROJECTION`](sig/FOREIGN_PROJECTION.md) | Structured public interfaces assembled from native values and outputs. |
+| [`FOREIGN_PUBLIC`](sig/FOREIGN_PUBLIC.md) | Checked idiomatic wrappers over generated fixed native declarations. |
 | [`FOREIGN_SHIM`](sig/FOREIGN_SHIM.md) | Typed C adapters for declarations outside the dynamic scalar ABI. |
 | [`FOREIGN_TARGET`](sig/FOREIGN_TARGET.md) | Explicit target ABI profiles for foreign layout and marshalling. |
 | [`FOREIGN_VALIDATE`](sig/FOREIGN_VALIDATE.md) | Declaration-aware checks before safe binding generation. |

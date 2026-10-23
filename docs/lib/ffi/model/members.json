@@ -491,6 +491,33 @@
     }
    ]
   },
+  "FOREIGN_PUBLIC": {
+   "doc": "Checked idiomatic wrappers over generated fixed native declarations.\n\n",
+   "page": "sig/FOREIGN_PUBLIC.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "output",
+     "spec": "type output = {signatureText : string, structureText : string}",
+     "doc": "The emitted public signature and sealed implementation source.\n\n",
+     "page": "sig/FOREIGN_PUBLIC.md#type-output"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of ForeignModel.source * string",
+     "doc": "A source-located unsupported or contradictory public projection.\n\n",
+     "page": "sig/FOREIGN_PUBLIC.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "emit",
+     "spec": "val emit : {policy : ForeignPolicy.policy, profile : ForeignTarget.profile,\n  declarations : CParse.declaration list} -> output",
+     "doc": "`emit {policy, profile, declarations}` generates complete selected wrappers.\n\nExplicit adapters are recorded by the outer generator and excluded from\nthis automatic projection. Native ownership is established before a\ndeferred callback exception can escape. Unsupported policies fail here.\n\n",
+     "page": "sig/FOREIGN_PUBLIC.md#val-emit"
+    }
+   ]
+  },
   "FOREIGN_SHIM": {
    "doc": "Typed C adapters for declarations outside the dynamic scalar ABI.\n\n",
    "page": "sig/FOREIGN_SHIM.md",
@@ -594,6 +621,7 @@
   "ForeignModel": "FOREIGN_MODEL",
   "ForeignPolicy": "FOREIGN_POLICY",
   "ForeignProjection": "FOREIGN_PROJECTION",
+  "ForeignPublic": "FOREIGN_PUBLIC",
   "ForeignShim": "FOREIGN_SHIM",
   "ForeignTarget": "FOREIGN_TARGET",
   "ForeignValidate": "FOREIGN_VALIDATE"
