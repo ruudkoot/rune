@@ -1,0 +1,11 @@
+name	kind	signature	realisations	status	origin	source
+LSP_METHODS	signature			required	declared	lib/lsp/methods_sig.sml
+LSP_POSITION	signature			required	declared	lib/lsp/position_sig.sml
+LSP_PROTOCOL	signature			required	declared	lib/lsp/protocol_sig.sml
+LSP_REQUESTS	signature			required	declared	lib/lsp/requests_sig.sml
+LSP_URI	signature			required	declared	lib/lsp/uri_sig.sml
+LspMethods	structure	LSP_METHODS		required	claimed	lib/lsp/methods.sml
+LspPosition	structure	LSP_POSITION		required	claimed	lib/lsp/position.sml
+LspProtocol	structure	LSP_PROTOCOL		required	claimed	lib/lsp/protocol.sml
+LspRequests	structure	LSP_REQUESTS		required	claimed	lib/lsp/requests.sml
+LspUri	structure	LSP_URI		required	claimed	lib/lsp/uri.sml

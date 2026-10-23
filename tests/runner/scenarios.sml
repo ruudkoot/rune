@@ -295,7 +295,9 @@ struct
            val result = compiler c ("loader-" ^ target) root ["--target=" ^ target, "tests/units/load.sml", "-o", output]
            val save = #directory c ^ "/loadsave." ^ target ^ ".rbc"
            val result2 = compiler c ("loadsave-" ^ target) root ["--target=" ^ target, "tests/units/loadsave.sml", "-o", save]
-       in success result; bytecode output; success result2; bytecode save end) targets)
+           val inventory = #directory c ^ "/inventory." ^ target ^ ".rbc"
+           val result3 = compiler c ("inventory-" ^ target) root ["--target=" ^ target, "tests/units/inventory.sml", "-o", inventory]
+       in success result; bytecode output; success result2; bytecode save;success result3;bytecode inventory end) targets)
   fun unitBuild c name build target () =
     let val prefix = unitPrefix c name build target
         val units = build = "units"
@@ -337,7 +339,7 @@ struct
                     @ unitSources name @ ["-o", prefix ^ ".warm.rbc"])
     in success result; need (null (rebuilt (#errors result)), "warm unit build recompiled a source: " ^ name);
        need (same (prefix ^ ".rbc", prefix ^ ".warm.rbc"), "warm unit bytecode differs: " ^ name ^ "/" ^ target) end
-  val loaderCases = ["twice", "shadowed", "not-a-unit", "cut-short", "not-loaded", "other-compile", "other-set", "saved", "restored"]
+  val loaderCases = ["twice", "shadowed", "not-a-unit", "cut-short", "not-loaded", "other-compile", "other-set", "inventory", "saved", "restored"]
   fun loader c target which () =
     let val files = unitFiles (unitPrefix c "twice" "units" target)
         fun part ([], _) = raise Failed "unit fixture has no named unit"
@@ -379,6 +381,10 @@ struct
         let val other = if target = "stack" then "registers" else "stack"
             val first = hd (unitFiles (unitPrefix c "twice" "units" other))
         in loaded (run [first]) "runevm: uncaught exception Fail \"Runtime.link: a unit of another instruction set\"\nstatus 1\n" end
+    | "inventory" =>
+        loaded (execute c ("loader-inventory-" ^ target) root
+          ([vm,#directory c ^ "/inventory." ^ target ^ ".rbc"] @ basis @ [a,b]))
+          "linked before executing\n1\n2\nPASS linked unit inventory\nstatus 0\n"
     | "saved" =>
         let val () = rmTree image
             val result = execute c ("loader-save-" ^ target) root

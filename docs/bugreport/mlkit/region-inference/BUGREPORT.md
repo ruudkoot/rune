@@ -19,6 +19,13 @@ with 4.7.23 as well as 4.7.25, on the tree of 2026-10-13.
 
 ## What happens
 
+On 2026-10-22, the JSON-RPC streaming/integer-width changes altered the
+current `jsonrpc.jsonrpc` suite enough that it passed all six test groups
+with MLKit 4.7.25's default region inference. Its now-stale deviation entry
+was removed. This is not evidence that the underlying region-inference
+fault is fixed: the reduced reproduction and the other affected suites
+remain relevant. No library workaround or `-no_ri` setting was introduced.
+
 `repro.sml` decodes the JSON text `{"ab":1}` with `lib/json` and prints the
 name of the member it finds. Built with `$(SML_LIB)/basis/basis.mlb`,
 `lib/unicode/utf8_sig.sml`, `lib/unicode/utf8.sml`, `lib/json/json_sig.sml`,
@@ -37,6 +44,26 @@ of a JSON string (`String.concat (rev acc)`) and returns the string with
 an index, as it does for every string of the text; values that are
 strings decode right, names of members do not. `gdb` stops in generated
 code (`L_selLab_...`).
+
+## LSP capability lookup (2026-10-22)
+
+The new `tests/lib/lsp/protocol.sml` suite passes on Rune, MLton, both
+legacy SML/NJ widths, SML/NJ 2026.2 and Poly/ML. MLKit 4.7.25 with default
+region inference passes wire values, positions, inventory and request
+ownership, but fails its capability lookup check. The input has
+`workspace.configuration = true` and no `workspace.workspaceFolders`;
+the check expects the first supported and the second unsupported.
+
+Recompiling exactly the same source list with `-no_ri` passes all five
+groups. This isolates a dependence on region inference, but the failure
+has not yet been reduced to a specific decoder-name lifetime error. The
+normal library suite retains default region inference and records a
+`HOST-BUG`; the diagnostic flag is not a library or server workaround.
+
+The failing native-host run is
+`tests/out/r/20261022-040752-2175585/lib-hosts/mlkit/lsp.protocol`.
+Its `.mlb` and compiler/run logs identify the unchanged input list; the
+collector-only control was built as `tests/out/lsp-mlkit-no-ri`.
 
 ## What it breaks
 

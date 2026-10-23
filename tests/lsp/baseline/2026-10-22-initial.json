@@ -1,0 +1,329 @@
+{
+  "schema": 1,
+  "date": "2026-10-22",
+  "base_commit": "c3e713891e6ea9f32770371427fdfa5f76369255",
+  "command": "bin/rune-lsp-bench --out tests/out/lsp-baseline-20261022-d --service bin/rune --repetitions 20 --warmup 3",
+  "build_command": "make test-lsp-bench RUNE=bin/rune-mlton JOBS=8",
+  "machine": {
+    "cpu": "Intel(R) Xeon(R) CPU E5-1680 v3 @ 3.20GHz",
+    "context": "WSL2; 16 available processors; no RUNEVM_OPTIONS"
+  },
+  "metadata": {
+    "schema": 1,
+    "compiler_version": "29e8b5004-dirty",
+    "compiler_identity": "5a8a9290158634eee798a8c6bad495da",
+    "harness_sha256": "65d49e2de901c42f0cf264150fe5ea37a572d2743281576fdd3b7bf1b3b0fbd1",
+    "vm_sha256": "be3029b2955a8cac88956c1978ff7060c49721f26fba1b3d5985e04734bb33db",
+    "processors": 16,
+    "manifest_sha256": "0a97d127ee1a54b1db2b5b33523d04b7e85c7c96e1f9d326ed1aee36048f68ca",
+    "repetitions": 20,
+    "warmup": 3,
+    "retention_cycles": 3,
+    "runtime_options": "",
+    "platform": {
+      "sysname": "Linux",
+      "release": "6.18.33.2-microsoft-standard-WSL2",
+      "machine": "x86_64"
+    },
+    "service_compiler": "bin/rune",
+    "heap_bytes_before_collection": 17825792,
+    "live_bytes_before_collection": 7229352,
+    "oracle": "fresh batch parser; debug hash is not structural AST equivalence"
+  },
+  "parser_summary": [
+    {
+      "key": "compiler-ordered/src/frontend/fixity.sml/lex",
+      "samples": 20,
+      "p50_us": 84,
+      "p95_us": 169,
+      "p99_us": 195
+    },
+    {
+      "key": "compiler-ordered/src/frontend/fixity.sml/parse",
+      "samples": 20,
+      "p50_us": 107,
+      "p95_us": 206,
+      "p99_us": 1164
+    },
+    {
+      "key": "compiler-ordered/src/frontend/lexer.sml/lex",
+      "samples": 20,
+      "p50_us": 1300,
+      "p95_us": 3594,
+      "p99_us": 3746
+    },
+    {
+      "key": "compiler-ordered/src/frontend/lexer.sml/parse",
+      "samples": 20,
+      "p50_us": 954,
+      "p95_us": 2889,
+      "p99_us": 3389
+    },
+    {
+      "key": "compiler-ordered/src/frontend/parser.sml/lex",
+      "samples": 20,
+      "p50_us": 2051,
+      "p95_us": 3232,
+      "p99_us": 3961
+    },
+    {
+      "key": "compiler-ordered/src/frontend/parser.sml/parse",
+      "samples": 20,
+      "p50_us": 1579,
+      "p95_us": 3368,
+      "p99_us": 5086
+    },
+    {
+      "key": "compiler-ordered/src/frontend/token.sml/lex",
+      "samples": 20,
+      "p50_us": 166,
+      "p95_us": 261,
+      "p99_us": 837
+    },
+    {
+      "key": "compiler-ordered/src/frontend/token.sml/parse",
+      "samples": 20,
+      "p50_us": 137,
+      "p95_us": 503,
+      "p99_us": 540
+    },
+    {
+      "key": "compiler-parser/src/frontend/parser.sml/lex",
+      "samples": 20,
+      "p50_us": 2056,
+      "p95_us": 5133,
+      "p99_us": 5314
+    },
+    {
+      "key": "compiler-parser/src/frontend/parser.sml/parse",
+      "samples": 20,
+      "p50_us": 1835,
+      "p95_us": 3279,
+      "p99_us": 5931
+    },
+    {
+      "key": "fixity-edits/tests/lsp/fixtures/fixity.sml/edit",
+      "samples": 80,
+      "p50_us": 4,
+      "p95_us": 31,
+      "p99_us": 465
+    },
+    {
+      "key": "fixity-edits/tests/lsp/fixtures/fixity.sml/lex",
+      "samples": 100,
+      "p50_us": 4,
+      "p95_us": 7,
+      "p99_us": 20
+    },
+    {
+      "key": "fixity-edits/tests/lsp/fixtures/fixity.sml/parse",
+      "samples": 80,
+      "p50_us": 8,
+      "p95_us": 16,
+      "p99_us": 379
+    },
+    {
+      "key": "fixity-ordered/tests/lsp/fixtures/fixity-use.sml/lex",
+      "samples": 20,
+      "p50_us": 5,
+      "p95_us": 8,
+      "p99_us": 9
+    },
+    {
+      "key": "fixity-ordered/tests/lsp/fixtures/fixity-use.sml/parse",
+      "samples": 20,
+      "p50_us": 9,
+      "p95_us": 14,
+      "p99_us": 53
+    },
+    {
+      "key": "fixity-ordered/tests/lsp/fixtures/fixity.sml/lex",
+      "samples": 20,
+      "p50_us": 6,
+      "p95_us": 391,
+      "p99_us": 612
+    },
+    {
+      "key": "fixity-ordered/tests/lsp/fixtures/fixity.sml/parse",
+      "samples": 20,
+      "p50_us": 14,
+      "p95_us": 209,
+      "p99_us": 572
+    },
+    {
+      "key": "incomplete/tests/lsp/fixtures/incomplete.sml/lex",
+      "samples": 20,
+      "p50_us": 4,
+      "p95_us": 8,
+      "p99_us": 11
+    },
+    {
+      "key": "incomplete/tests/lsp/fixtures/incomplete.sml/parse",
+      "samples": 20,
+      "p50_us": 5,
+      "p95_us": 11,
+      "p99_us": 45
+    },
+    {
+      "key": "large-generated/generated:large-generated/lex",
+      "samples": 20,
+      "p50_us": 15246,
+      "p95_us": 30194,
+      "p99_us": 39093
+    },
+    {
+      "key": "large-generated/generated:large-generated/parse",
+      "samples": 20,
+      "p50_us": 9811,
+      "p95_us": 19241,
+      "p99_us": 21297
+    },
+    {
+      "key": "nested/tests/lsp/fixtures/nested.sml/lex",
+      "samples": 20,
+      "p50_us": 27,
+      "p95_us": 246,
+      "p99_us": 527
+    },
+    {
+      "key": "nested/tests/lsp/fixtures/nested.sml/parse",
+      "samples": 20,
+      "p50_us": 129,
+      "p95_us": 2058,
+      "p99_us": 3381
+    },
+    {
+      "key": "small/tests/lsp/fixtures/small.sml/lex",
+      "samples": 20,
+      "p50_us": 17,
+      "p95_us": 321,
+      "p99_us": 1632
+    },
+    {
+      "key": "small/tests/lsp/fixtures/small.sml/parse",
+      "samples": 20,
+      "p50_us": 19,
+      "p95_us": 87,
+      "p99_us": 102
+    }
+  ],
+  "prototype_summary": [
+    {
+      "phase": "startup_initialize",
+      "samples": 20,
+      "p50_us": 32415,
+      "p95_us": 45889,
+      "p99_us": 49826
+    },
+    {
+      "phase": "diagnostics_first_private_cache",
+      "samples": 20,
+      "p50_us": 31871,
+      "p95_us": 58698,
+      "p99_us": 59438
+    },
+    {
+      "phase": "diagnostics_repeat",
+      "samples": 20,
+      "p50_us": 24395,
+      "p95_us": 43749,
+      "p99_us": 50108
+    },
+    {
+      "phase": "hover_repeat",
+      "samples": 20,
+      "p50_us": 30963,
+      "p95_us": 44580,
+      "p99_us": 51358
+    }
+  ],
+  "retention": [
+    {
+      "cycle": 0,
+      "live_before_bytes": 438880,
+      "live_after_bytes": 439344,
+      "heap_after_bytes": 17825792
+    },
+    {
+      "cycle": 1,
+      "live_before_bytes": 439240,
+      "live_after_bytes": 439320,
+      "heap_after_bytes": 17825792
+    },
+    {
+      "cycle": 2,
+      "live_before_bytes": 439216,
+      "live_after_bytes": 439296,
+      "heap_after_bytes": 17825792
+    }
+  ],
+  "source_sha256": {
+    "Makefile": "f88b527cfbca4fe83052b9e89ae80c8047af4190e1d000d0c0834abe5d7e09f6",
+    "rune-lsp-bench.build": "70d6a962d063bf3e6c8db4589af8aec4d6ff334342a2cc7d69b80ffafbf5d0dc",
+    "tools/lsp/bench.sml": "8394cf55816cbc89255de9aa7f6124373481326366b20d2d0810c08a17fd6d20",
+    "tools/lsp/service-baseline.sml": "d00a872b8837abe9920a21c57c64fd73961b0683fe52ef2d0b33cdf551ad2204",
+    "tools/lsp/bench-main.sml": "2fd143c696c475f9669d077e39425030beacc6e887b4dda98261e853c94f3d05",
+    "tests/lsp/bench-tests.sml": "14f71de2f5008c081e4677ed8603cac11c44c4bf68b1c7599330455bf3c9ef22",
+    "tests/lsp/fixtures/fixity-use.sml": "a0c4b778c52b4ddc9558c4369cc4c2f76f591bc9db492dae136c233430258575",
+    "tests/lsp/fixtures/fixity.sml": "39b662a3867b00737e9914b8b4571e8b35c5f07796c83ba9fce9d86557c1581f",
+    "tests/lsp/fixtures/hover.sml": "7fc3013167f228312001c8c9364eb9cd5d68fd8e3f63d4c7b388a2a1b89daeb1",
+    "tests/lsp/fixtures/incomplete.sml": "74bc2d8240e04e585c138b783d11497f44f83b9b6d3d31be725c1b214d50207c",
+    "tests/lsp/fixtures/manifest.json": "0a97d127ee1a54b1db2b5b33523d04b7e85c7c96e1f9d326ed1aee36048f68ca",
+    "tests/lsp/fixtures/nested.sml": "fc78c32b76af6f070cea575e5c1e0e7da824c0abacdddf8a99676f9c4557c31c",
+    "tests/lsp/fixtures/small.sml": "eb25bdb6b5471cffdd62057ab3d2943bb4e894bad3f3c670c4c3b64faf1a8428"
+  },
+  "archive": "rune-benchmark-results/lsp/2026-10-22-language-server-m1",
+  "artifacts": {
+    "fixtures.jsonl": {
+      "sha256": "177e6cc87911eef24cdb70f9a7cb85400cbd11161cb64e3bcefcb478cd132c44",
+      "bytes": 6102
+    },
+    "metadata.json": {
+      "sha256": "40e805f891ba9c4a43527f513a1ea25e6a5b1b85e674a547ecb74ad29dac78c9",
+      "bytes": 806
+    },
+    "prototype-service.jsonl": {
+      "sha256": "012b7c8be455a857bd191ad1c7233ea379846250405f6f1bddae48b873537c14",
+      "bytes": 13447
+    },
+    "retention.jsonl": {
+      "sha256": "fa077dba133215867a6e7353afe2a3ddd757f30805cc8fff46721a252e39ebf9",
+      "bytes": 279
+    },
+    "rune-lsp-bench.rbc": {
+      "sha256": "65d49e2de901c42f0cf264150fe5ea37a572d2743281576fdd3b7bf1b3b0fbd1",
+      "bytes": 1807880
+    },
+    "rune.rbc": {
+      "sha256": "47aa2b0cf1be44bc35b3b996c65c3f84fbe255c253ca0ca757e1137a4efb14e9",
+      "bytes": 2955873
+    },
+    "runevm": {
+      "sha256": "be3029b2955a8cac88956c1978ff7060c49721f26fba1b3d5985e04734bb33db",
+      "bytes": 716304
+    },
+    "samples.jsonl": {
+      "sha256": "53e040e0f11cc6d7a0a27ecea07dcef72d4b9efcfaee4dc899259499f5fd92a9",
+      "bytes": 128947
+    },
+    "summary.json": {
+      "sha256": "d667397c56dec9ec449100c4356319af56c30b10b607d0e56232a6227afa39f7",
+      "bytes": 3612
+    }
+  },
+  "limitations": [
+    "Linux measurements only; native Windows acceptance remains unrecorded.",
+    "New process/private unit cache does not imply a flushed operating-system disk cache.",
+    "The AST debug hash is supplementary; structural AST equivalence is M4.",
+    "This is the existing newline compiler-service prototype, which starts a fresh child for each query.",
+    "Incremental syntax, cancellation, resident semantic-query and IDE-client budgets remain proposed until their milestones."
+  ],
+  "proposed_budgets": {
+    "small_edit_p95_us": 1000,
+    "incremental_local_syntax_p95_us": 10000,
+    "cached_query_p95_us": 50000,
+    "local_diagnostics_p95_us": 250000,
+    "cancellation_observation_p95_us": 50000,
+    "retention_growth_after_100_cycles_bytes": 1048576
+  }
+}

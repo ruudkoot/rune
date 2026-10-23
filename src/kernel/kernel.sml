@@ -167,7 +167,7 @@ struct
   fun call (e : engine, req : Jupyter.request, method : string, params : Json.value) : R.outcome =
     let
       val () = #serial e := !(#serial e) + 1
-      val id = R.Number (!(#serial e))
+      val id = R.Number (IntInf.fromInt (!(#serial e)))
     in
       send (e, R.Request {id = id, method = method, params = SOME params});
       await (e, id, req)

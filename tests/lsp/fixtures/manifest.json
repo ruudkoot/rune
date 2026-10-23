@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "fixtures": [
+    {"name": "small", "mode": "ascii", "files": ["small.sml"], "accepted": true},
+    {"name": "nested", "mode": "ascii", "files": ["nested.sml"], "accepted": true},
+    {"name": "incomplete", "mode": "ascii", "files": ["incomplete.sml"], "accepted": false},
+    {"name": "fixity-ordered", "mode": "ascii", "files": ["fixity.sml", "fixity-use.sml"], "accepted": true},
+    {"name": "fixity-edits", "mode": "ascii", "files": ["fixity.sml"], "accepted": true,
+      "edits": [
+        {"start": 6, "stop": 7, "text": "8", "accepted": true},
+        {"start": 6, "stop": 7, "text": "4", "accepted": true},
+        {"start": 0, "stop": 0, "text": "(*", "accepted": false},
+        {"start": 0, "stop": 2, "text": "", "accepted": true}
+      ]},
+    {"name": "large-generated", "mode": "ascii", "generate": 10000, "accepted": true},
+    {"name": "compiler-parser", "mode": "ascii", "files": ["../../../lib/compiler/frontend/parser.sml"], "accepted": true},
+    {"name": "compiler-ordered", "mode": "ascii", "files": ["../../../lib/compiler/frontend/token.sml", "../../../lib/compiler/frontend/lexer.sml", "../../../lib/compiler/frontend/fixity.sml", "../../../lib/compiler/frontend/parser.sml"], "accepted": true}
+  ]
+}

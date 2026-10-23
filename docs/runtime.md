@@ -107,7 +107,7 @@ real has elsewhere). Both are laid out as C has them, and the collector
 copies them without looking inside.
 
 A constructor whose argument is a tuple is one object of the tuple's
-fields, its tag in the header (`CONN`; `src/backend/rep.sml`); one of any
+fields, its tag in the header (`CONN`; `lib/compiler/backend/rep.sml`); one of any
 other argument is an object of one field around it, 16 bytes. So a list
 cell, `::` of head and tail, is one object of 24 bytes. `runevm --stats`
 and `--count` report what a program really allocates; `--count` leaves
@@ -941,6 +941,15 @@ structure. `runtime/sys/sys_posix.c` implements it for POSIX systems, `runtime/s
 for Windows ([building.md](building.md)), and `runtime/sys/sys_none.c` fails every
 call with `ENOSYS`, which keeps the rest of the VM ISO C with no platform
 code in it (`make SYS=none`).
+
+Windows filesystem paths retain native drive or UNC syntax and backslash
+separators. The former `/C:/...` adaptation is removed. `OS.Path` uses the
+host syntax; `OS.FileSys.getDir` and `fullPath` include the volume and
+canonicalize path syntax while retaining native case. Windows can host
+case-sensitive directories, so lowercasing can change the named object.
+Temporary names and link targets retain their native spelling. WTF-8 preserves
+lone UTF-16 surrogates at every Windows boundary.
+A restored image refreshes `OS.Path` for the restoring operating system.
 
 A call the platform cannot make answers `ENOSYS`, which the library turns
 into `OS.SysErr`. Which those are is listed per platform in

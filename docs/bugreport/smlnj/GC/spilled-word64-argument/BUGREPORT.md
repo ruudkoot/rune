@@ -17,6 +17,14 @@
 
 ## Summary
 
+Two native library runs on 2026-10-22 with the installed SML/NJ 2026.2
+give different outcomes for unchanged `property.shrink` sources: one
+stops with the bogus-fault message at `planted/sort-drops-equals`, and the
+next passes all its checks. Its library deviation is therefore
+`HOST-FLAKY`, not an unconditional `HOST-BUG`. The failure is still not
+reduced to this particular argument-spilling defect; that connection
+remains a hypothesis. No property-library workaround was introduced.
+
 * **The trigger:** a 64-bit build, and a call with more arguments than the
   argument registers. On amd64 that is five or more general arguments: the
   return continuation and three arguments go in registers, and the rest in

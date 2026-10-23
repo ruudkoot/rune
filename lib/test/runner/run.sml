@@ -141,13 +141,24 @@ struct
       val stamp = Date.fmt "%Y%m%d-%H%M%S" (Date.fromTimeLocal (Time.now ()))
                   ^ "-" ^ SysWord.fmt StringCvt.DEC (Posix.Process.pidToWord (Posix.ProcEnv.getpid ()))
       val runDir = out ^ "/" ^ stamp
-      (* the runs before, newest first by their stamps: the last few stay *)
+      (* Only finished runs take part in retention. Another invocation can
+         still be writing an older directory, regardless of its age or how
+         many newer runs have finished. Legacy runs have both reports and
+         no running marker. An interrupted run is left for explicit cleanup. *)
       val () = mkdirs out
-      val earlier = List.filter (fn n => size n > 15 andalso Char.isDigit (String.sub (n, 0))) (entries out)
+      fun completed n =
+        let val dir = out ^ "/" ^ n
+        in OS.FileSys.access (dir ^ "/complete", []) orelse
+           (not (OS.FileSys.access (dir ^ "/running", [])) andalso
+            OS.FileSys.access (dir ^ "/summary.md", []) andalso
+            OS.FileSys.access (dir ^ "/junit.xml", [])) end
+      val earlier = List.filter (fn n => size n > 15 andalso Char.isDigit (String.sub (n, 0))
+                                         andalso completed n) (entries out)
       val earlier = List.foldl (fn (x, acc) => let fun ins [] = [x] | ins (y :: ys) = if x > y then x :: y :: ys else y :: ins ys
                                                in ins acc end) [] earlier
       val () = List.app (fn n => rmTree (out ^ "/" ^ n)) (List.drop (earlier, Int.min (length earlier, keepRuns - 1)))
       val () = mkdirs (runDir ^ "/j")
+      val () = TextIO.closeOut (TextIO.openOut (runDir ^ "/running"))
       (* the run's directory and the tree's, as a job finds them *)
       val absRun = OS.FileSys.fullPath runDir
       val absRoot = OS.FileSys.fullPath root
@@ -256,6 +267,8 @@ struct
         handle SML90.Interrupt => true
       val () = History.write (history, !hist) handle IO.Io _ => () | OS.SysErr _ => ()
       val ok = Report.finish (report, {cpus = cpus, freed = !freed, keptBytes = !kept})
+      val () = if interrupted then () else
+        OS.FileSys.rename {old = runDir ^ "/running", new = runDir ^ "/complete"}
     in
       ok andalso not interrupted
     end

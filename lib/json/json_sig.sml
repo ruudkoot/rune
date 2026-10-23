@@ -5,7 +5,8 @@
    RFC requires of text exchanged between systems; a string's escapes must
    name scalar values, so a lone surrogate is an error. A number is kept as
    the text it was written in, so that nothing is lost to a conversion that
-   the program did not ask for; `int` and `toInt` convert. An object keeps
+   the program did not ask for; `int` and `toInt` convert host integers,
+   `intInf` and `toIntInf` arbitrary-precision integers. An object keeps
    its members in the order they were written, a repeated name included.
    Nesting deeper than `maxDepth` is refused rather than followed.
 
@@ -71,11 +72,21 @@ sig
      Example: `int ~3 = Number "-3"` *)
   val int : int -> value
 
+  (* `intInf i` is the integer i, without a host-width restriction.
+
+     Example: `intInf (IntInf.fromInt ~3) = Number "-3"` *)
+  val intInf : IntInf.int -> value
+
   (* `toInt v` is the integer `v` is, when it is a `Number` with no
      fraction or exponent that fits an `int`; `NONE` otherwise.
 
      Example: `toInt (Number "-42") = SOME ~42 andalso toInt (Number "4.2") = NONE` *)
   val toInt : value -> int option
+
+  (* `toIntInf v` is the integer of a number with no fraction or exponent.
+
+     Example: `toIntInf (Number "2147483647") = IntInf.fromString "2147483647"` *)
+  val toIntInf : value -> IntInf.int option
 
   (* `member (name, v)` is the value of the first member called `name` of
      the object `v`, or `NONE` when `v` is not an object or has none.

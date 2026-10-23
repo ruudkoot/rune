@@ -1,6 +1,6 @@
 # Index: D
 
-[Overview](../README.md) &middot; [a](a.md) [c](c.md) **d** [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) **d** [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md)
 
 - `decode` (val): [JSON_RPC](../sig/JSON_RPC.md#val-decode)
 

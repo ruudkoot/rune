@@ -61,11 +61,21 @@ struct
         val profile=ForeignTarget.decode {file=target,text=targetText}
         val roots=List.map OS.FileSys.fullPath (OS.Path.dir(OS.FileSys.fullPath config)::roots)
         fun sourceName path=
-          let fun find []=if String.isPrefix "<" path then path else OS.Path.file path
+          let fun relative root=
+                let val name=OS.Path.mkRelative{path=path,relativeTo=root}
+                    val {isAbs,arcs,...}=OS.Path.fromString name
+                in case arcs of first::_=>
+                     if not isAbs andalso name<>OS.Path.currentArc andalso first<>OS.Path.parentArc
+                     then SOME(String.concatWith "/" arcs) else NONE
+                   | []=>NONE
+                end handle OS.Path.Path=>NONE
+              fun find []=OS.Path.file path
                 | find((root,index)::rest)=
-                    if String.isPrefix(root ^ "/")path then "include" ^ Int.toString index ^ "/" ^ String.extract(path,size root+1,NONE)
-                    else find rest
-          in find(ListPair.zip(roots,List.tabulate(length roots,fn i=>i))) end
+                    (case relative root of SOME name=>"include" ^ Int.toString index ^ "/" ^ name
+                     | NONE=>find rest)
+          in if String.isPrefix "<" path then path
+             else if not(OS.Path.isAbsolute path) then OS.Path.file path
+             else find(ListPair.zip(roots,List.tabulate(length roots,fn i=>i))) end
         val ()=List.app(fn name=>if identifier name then () else fail("invalid selected constant name: " ^ name))constants
         fun probe i="runeffi_constant_probe_" ^ Int.toString i
         val source={file="<runeffi-input>",text=String.concat(List.map(fn header=>

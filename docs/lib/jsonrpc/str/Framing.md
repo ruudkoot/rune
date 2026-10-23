@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`FRAMING`](../sig/FRAMING.md) |
 | Status | required |
-| Members | 7 |
+| Members | 9 |
 | Tests | not listed |
 | Source | [lib/jsonrpc/framing.sml](../../../../lib/jsonrpc/framing.sml) |
 
@@ -16,7 +16,8 @@
 structure Framing :> FRAMING
 ```
 
-Framing: messages to a line, or behind Content-Length.
+Framing: persistent streaming readers. Received chunks are retained
+until one message is complete, and concatenated once for that message.
 
 ## Members
 
@@ -27,6 +28,8 @@ What each means is on [`FRAMING`](../sig/FRAMING.md); the types are this structu
 | datatype | [`framing`](../sig/FRAMING.md#type-framing) | `Lines` &#124; `ContentLength` |
 | type | [`reader`](../sig/FRAMING.md#type-reader) | *a type of its own* |
 | exception | [`Header`](../sig/FRAMING.md#exn-header) | `of string` |
+| exception | [`Limit`](../sig/FRAMING.md#exn-limit) | `of string` |
+| val | [`bounded`](../sig/FRAMING.md#val-bounded) | `{framing : framing, maxBodyBytes : int, maxHeaderBytes : int} -> reader` |
 | val | [`feed`](../sig/FRAMING.md#val-feed) | `reader * string -> string list * reader` |
 | val | [`frame`](../sig/FRAMING.md#val-frame) | `framing * string -> string` |
 | val | [`pending`](../sig/FRAMING.md#val-pending) | `reader -> bool` |

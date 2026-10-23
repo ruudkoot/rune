@@ -238,12 +238,18 @@ struct
   fun int i = Number (if i < 0 then "-" ^ Int.toString (~ i) else Int.toString i)
     handle Overflow => Number ("-" ^ String.extract (Int.toString i, 1, NONE))
 
-  fun toInt (Number str) =
-        if CharVector.all (fn c => isDigit c orelse c = #"-") str andalso size str > 0 then
-          (Int.fromString (if String.sub (str, 0) = #"-" then "~" ^ String.extract (str, 1, NONE) else str)
-           handle Overflow => NONE)
-        else NONE
-    | toInt _ = NONE
+  fun intInf n = Number
+    (if IntInf.< (n, 0) then "-" ^ IntInf.toString (IntInf.~ n) else IntInf.toString n)
+
+  fun toIntInf (Number s) =
+        let val digits = if String.isPrefix "-" s then String.extract (s, 1, NONE) else s
+        in if digits <> "" andalso CharVector.all isDigit digits
+              andalso (size digits = 1 orelse String.sub (digits, 0) <> #"0")
+           then IntInf.fromString s else NONE end
+    | toIntInf _ = NONE
+
+  fun toInt value =
+        (Option.map IntInf.toInt (toIntInf value) handle Overflow => NONE)
 
   fun member (name, Object ms) = Option.map #2 (List.find (fn (k, _) => k = name) ms)
     | member _ = NONE

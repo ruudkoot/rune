@@ -24,13 +24,20 @@ it.
 | Milestone | What | State |
 |---|---|---|
 | M0 | The REPL's branch and `incremental` merged; this plan's numbers measured again | done 2026-10-13: both on `master` since 2026-10-11 (#38, #39), the numbers measured again at `2e2351ba` |
-| M1 | The compiler moved to `lib/compiler`, the driver left in `src` | planned |
-| M2 | A library's names: export lists for `rune --library` | planned |
-| M3 | The compiler's state: a session that starts from nothing | planned |
-| M4 | `RuneCompiler`: the API, its tests, its frozen cache | planned |
+| M1 | The compiler moved to `lib/compiler`, the driver left in `src` | done 2026-10-22: extraction, cross-host equality, reproducibility and full acceptance passed |
+| M2 | A library's names: export lists for `rune --library` | in progress: scoped manifests, public compiler facade and namespace tests pass; final combined acceptance pending |
+| M3 | The compiler's state: a session that starts from nothing | in progress: registered roots and serialized ownership implemented; public API integration and acceptance remain |
+| M4 | `RuneCompiler`: the API, its tests, its frozen cache | in progress: public facade, static sessions, artifact I/O, explicit execution and frozen cache implemented; full/platform acceptance pending |
 | M5 | The clients: the REPL's engine, `rune --serve`, the Basis's `Compiler` | planned |
 
 Size: L, about 2,000 lines of SML beside the move of about 19,000.
+
+Implementation is part of the owner's language-server work as explicitly
+requested on 2026-10-22. It is on the `language-server` branch, in the
+separate worktree created from `origin/master` at
+`c3e713891e6ea9f32770371427fdfa5f76369255`. The measurements below remain
+the historical M0 baseline; implementation evidence is recorded with each
+milestone. Public sessions remain a prerequisite of language-server M5.
 
 ## Before it starts: the REPL's work merged
 
@@ -172,7 +179,15 @@ Basis's `Compiler.use` and `Compiler.compile`, so `use` works in any
 program that has the library. (b) The library is a second `Compiler`.
 Recommended: (a).
 
-## The API (to be settled in M4)
+## The API
+
+The public signature and complete operation contracts are documented in
+[RUNE_COMPILER](../lib/compiler/sig/RUNE_COMPILER.md). Compilation and
+queries are static; execution with libraries requires a RuneVM host built
+with `--units`, so its library identities can be shared. Native hosts
+support compilation and artifact output. M4's initial implementation uses
+fresh owned compilers and replay of the successful history; resident
+incremental semantic snapshots are subsequent language-server work.
 
 ```sml
 signature RUNE_COMPILER =
@@ -182,8 +197,11 @@ sig
   type diagnostic = {severity : string, file : string, start : int, stop : int,
                      line : int, column : int, message : string}
   exception Failed of diagnostic list
+  exception Closed
 
+  val version : string
   val session : {lib : string option, flags : string list} -> session
+  val close : session -> unit
   val compileText : session * {file : string, text : string} -> compiled
   val compileFile : session * string -> compiled
   val readUnit : session * string -> compiled            (* a .rbu *)
@@ -239,6 +257,48 @@ session is the REPL engine's, made a library's.
 * **Touches:** every path in `docs/architecture.md`; `AGENTS.md`;
   rune-ide's generated MLB, which reads Rune's sources.
 
+Implementation checkpoint (2026-10-22):
+
+* Moved 61 compiler files under `lib/compiler`, retaining their directory
+  structure. The driver and executable entrypoints remain in `src`.
+  `util.build`, `frontend.build` and `internal.build` describe the shared
+  implementation subsets; `library.build` is the future public library's
+  build. The seven settings read by library passes now belong to
+  `CompilerSettings`; command-line `Options` aliases them.
+* The bootstrap build walker follows relative, nested `use` declarations,
+  accepts nested comments, includes an imported build once and rejects
+  cycles. Library indexing follows annotated imports too. The compiler's
+  build-list command now agrees with its existing once-only elaboration of
+  repeated imports. Regression coverage is `low-level/compiler-layout`.
+* Version/identity configuration remains generated outside hashed source
+  blocks. A generated copy in `lib/compiler/config.sml` lets an installed
+  library use its own sources without reaching outside its directory.
+  Generated configuration and MANIFEST files are ignored.
+* Native MLton and self-hosted builds, the compiler-library manifest check
+  (358 files including its dependencies), moved-compiler smoke test,
+  layout regression, and documentation generation passed. The first full
+  check (`tests/out/r/20261022-055115-2191344`) recorded 19,328 passes,
+  five failures and four skips. The failures exposed missing imported build
+  files in two copy fixtures, an outdated host-suite count, scratch register
+  bytecode picked up by the stack disassembly sweep, and an absent-GMP
+  report-directory bug. The copied-build failure also caused two dependent
+  reproducibility skips, alongside the two documented native interrupt
+  skips. After correction, rerunning all affected cases and their
+  dependencies passed 588 tests with the intended pinned-GMP absence skip
+  (`tests/out/r/20261022-061408-2371193`, 34.7 seconds). All 427 cross-host
+  comparison cases had passed in the full run.
+* Clean combined acceptance passed after the portability and startup-cost
+  corrections described below: `make check JOBS=8`,
+  `tests/out/r/20261022-101701-2630163`, 19,338 passes and three skips,
+  1,213.5 seconds wall time. The skips are the two documented native
+  interrupt cases and the absent pinned-GMP dependency. Cross-host
+  bytecode equality and reproducibility are included in this run. M1 is
+  complete; this does not complete the public API or client migrations.
+
+The IDE migration is separate work. Its generated build inputs will need
+to follow the new compiler paths when that roadmap consumes this branch;
+changing the IDE checkout is not a prerequisite for the standalone server.
+
 ### M2. A library's names (M, about 300 SML)
 
 * **What:** D1's (a): the export list of a library's build file in its
@@ -249,6 +309,38 @@ session is the REPL engine's, made a library's.
   beside the library.
 * **Done when:** those pass, and the libraries of the REPL's branch that
   want one have an export list.
+
+Export-boundary checkpoint (2026-10-22):
+
+* Library indexing follows one outer `library (...) = ... end` boundary,
+  including nested build imports, and records it in an optional sixth
+  MANIFEST column. Legacy manifests retain their existing visibility.
+  Selection uses public providers for clients and dependencies, while files
+  of the library can use private providers. Missing exports, wrong kinds
+  and inconsistent scope metadata are rejected; failed indexing preserves
+  a previous valid manifest.
+* The compiler restores public visibility at each library boundary in
+  whole-program and unit compilation. Its final units retain their private
+  context, and private fixity changes do not affect clients. `LibraryScope`
+  shares the namespace filtering rules with runedoc; generated library
+  pages and dependency graphs show public names.
+* `low-level/library-exports` covers whole-program, unit and whole-from-unit
+  modes; private structures, signatures and types; a public functor using
+  a private generative functor; verified cold/warm byte agreement; demand
+  selection; invalid export metadata; dependent libraries; and library
+  roots containing spaces. The focused run passed six runner cases at
+  `tests/out/r/20261022-065433-2387565` (7.4 seconds). The combined existing
+  documentation/toy-library suite and new fixtures passed 32 cases at
+  `tests/out/r/20261022-065730-2387877` (7.2 seconds). The new documentation
+  fixture's IR, Markdown, member index and public file list were reviewed.
+* `make manifests` now keeps the extracted compiler's manifest current too,
+  so source installation does not copy an old partial compiler inventory.
+  The compiler facade will apply its public export list in M4; its current
+  implementation modules remain internal interfaces, as its README says.
+
+The earlier combined full check passed as recorded under M1. The public
+compiler facade/namespace test now passes as recorded under M4; final
+combined acceptance remains pending.
 
 ### M3. The compiler's state (M, about 400 SML)
 
@@ -261,6 +353,73 @@ session is the REPL engine's, made a library's.
 * **Done when:** a program that compiles the same text in two sessions
   one after the other gets the same bytes both times (a test), and the
   script passes.
+
+Ownership checkpoint (2026-10-22):
+
+* `CompilerState : COMPILER_STATE` registers 206 persistent roots. The
+  baseline is sealed after compiler module initialization, so builtins
+  initialized after a counter's declaration retain their identities.
+  New owners clone mutable containers from that baseline. Ordinary
+  switches preserve each owner's live ref-held objects and integer-table
+  binding cells; fixed arrays and tables retain their global handles.
+* One owner is active at a time. Owners can be interleaved and calls can
+  nest or re-enter a paused owner. Updates made by re-entry remain visible
+  when its caller resumes. Return and exception restore the caller; owner
+  creation also restores it if a copy fails. Closing an owner on the call
+  stack is rejected, and closed handles cannot be entered again.
+* `tools/compiler/state-audit.sml` parses source with Rune's frontend. It
+  checks registration names and copy adapters for known allocations and
+  explicit mutable root types, including nested/local modules, functor
+  bodies and eager collection callbacks. Four lifecycle roots of the
+  ownership mechanism itself are explicitly classified there. Its planted
+  faults cover missing/false registrations, wrong adapters and variables,
+  custom typed factories, callback allocations and deferred scratch cells.
+  New allocation helpers must extend this audit; it is not an alias
+  analysis of arbitrary SML functions.
+* `make test-compiler-state` audits the compiler, runs the ownership model
+  and compiles opaque signatures, generative functors and exception
+  replication in independent owners, checking identical unit bytes and
+  overlay/table isolation. The interpreter and `--jit=all` passed. A
+  separate alias regression first reproduced the loss of a live array
+  alias; baseline cloning was separated from switching and that case,
+  table callbacks and owner-stack re-entry now pass.
+* Full-check follow-up: the combined run at
+  `tests/out/r/20261022-075421-2401107` passed 19,333 cases, skipped the two
+  documented native interrupt cases and absent pinned-GMP dependency, and
+  failed five existing compiler instruction budgets. The dominant cost was
+  a quadratic primitive-arity initializer introduced during extraction;
+  linear construction through a private scratch array restored it. Root
+  registration now appends in constant time and validates unique names
+  once at sealing. A separate interpreter/JIT test rejects duplicates then.
+  All 12 compiler budgets passed without changing thresholds (17 runner
+  passes at `tests/out/r/20261022-083744-2585502`); register hello fell from
+  4,008,186 to 1,974,930 instructions and stack hello from 7,000,728 to
+  3,489,021. The ledger and raw-artifact hashes are in
+  [2026-10-22-compiler-startup.json](../../tests/lsp/baseline/2026-10-22-compiler-startup.json).
+  Portable ownership, exports, nested builds and the benchmark harness
+  passed 15 focused cases at `tests/out/r/20261022-084745-2586788`.
+* The final portable ownership model passed on MLton, SML/NJ 110.99.9
+  (64-bit and 32-bit), SML/NJ 2026.2, Poly/ML and MLKit 4.7.25:
+  `tests/out/r/20261022-062900-2380279`, 13 passes, 8.1 seconds, including
+  host-adapter and runner acceptance.
+* A fresh complete `make test-lib-hosts JOBS=8` profile passed all 168 runner
+  cases under the repository's recorded host deviations:
+  `tests/out/r/20261022-063449-2382187`, 601.9 seconds. This includes the
+  protocol libraries and their revised deviation classifications. It is
+  classified acceptance, not a claim that every host program passed
+  without a deviation; Poly/ML's documented ZMTP timeout remains covered
+  by its `HOST-FLAKY` entry.
+* The final `make matrix-quick JOBS=8` passed at
+  `tests/out/r/20261022-085654-2589280`: 3,182 passes and 156 classified
+  skips, 4,302.5 seconds wall time. This compares Rune's Basis on all six
+  installed host configurations. The subsequent clean full check passed
+  as recorded under M1.
+
+These are ownership saves. Mutable type variables and AST annotations
+within one owner require the analysis publication/rollback contract in the
+language-server roadmap. Public `RuneCompiler` sessions are integrated in
+M4. Subprocess isolation and final combined acceptance remain pending;
+M3 remains in progress.
 
 ### M4. `RuneCompiler` (L, about 1,000 SML)
 
@@ -278,7 +437,148 @@ session is the REPL engine's, made a library's.
   (`test-lib-hosts`).
 * **Done when:** those pass under the interpreter and `--jit=all`.
 
+API implementation checkpoint (2026-10-22):
+
+* `api.build` packages `RuneCompiler :> RUNE_COMPILER`, exposing only the
+  facade and signature. Static compilation, checked unit/Mid imports,
+  source companions, program output, type queries and closed-session
+  behavior have public tests. Failed operations preserve the successful
+  history; published artifacts contain serialized compiler data and
+  source snapshots rather than mutable compiler annotations.
+* Explicit execution follows runtime dependencies, avoiding unrelated
+  earlier side effects. Unit initializers can be retried after exceptions;
+  user exceptions propagate unchanged. The Rune adapter captures its
+  host's linked units, sharing the already initialized Basis instead of
+  making a second set of process-exit hooks. Whole-program hosts refuse
+  library-backed execution before linking dependencies. Program output
+  places the latest snapshot's library finalizers after all selected units.
+  Sharing also checks recorded source provenance: interface identities can
+  survive implementation-only changes. The adapter refuses differing or
+  unavailable host-library provenance and colliding explicit imports
+  before executing dependencies. This adds one registered compiler root
+  for source hashes (207 in total).
+  Execution remaps session units into separate runtime namespaces while
+  preserving portable output identities. Current provenance is checked
+  before every run, so raw replacement of a shared host unit is detected.
+* `Runtime.linkedUnits` reports successful links, including empty units,
+  through the reserved top-level export. Failed links and merely interned
+  references do not appear. This is linkage information, not proof that
+  the caller ran an initializer. The inventory survives collection and
+  existing image serialization; those platform paths still require their
+  full acceptance runs.
+* `make basis-cache` now packages both targets of the compiler library and
+  its Unicode/JSON dependencies. The public client test verifies that a
+  new private cache takes compiler units from the frozen cache without
+  recompiling them. API source companions validate the code, basis, Mid,
+  source hash and mode; atomic individual writes publish the integrity
+  record last. This does not promise a multi-file filesystem transaction.
+* `tests/out/r/20261022-112002-2820414` passed 21 focused runner cases,
+  including all six native host configurations, public isolation and
+  artifact tests, interpreter/JIT execution, export privacy and both unit
+  inventories (185.2 seconds). An earlier restricted 32-bit run exited
+  with SIGSYS/status 159; its unrestricted retry passed at
+  `tests/out/r/20261022-111741-2819045` before the combined six-host run.
+* Documentation review caught the legacy Rune-prefix filter hiding the
+  explicitly exported API. Library export lists now override that naming
+  convention throughout page/index/example generation. The reviewed
+  `rune-exports.lib` fixture checks public Rune-prefixed names and hides
+  private modules and opaque helpers. Documentation and public API checks
+  passed 39 cases at `tests/out/r/20261022-112609-2822812` (10.3 seconds).
+  All 17 API entries are documented; all 11 functions have usage heads.
+* The expanded root audit, planted faults and interpreter/JIT ownership
+  tests passed. `make perf-check` passed all 39 cases without changing
+  thresholds: `tests/out/r/20261022-112702-215`, 11.6 seconds. A preceding
+  direct runner invocation encountered stale pre-change bytecode in its
+  budget helper; rebuilding through the Make target resolved that setup
+  failure. It was not a measured performance regression.
+
+* Follow-up execution acceptance passed ten runner cases at
+  `tests/out/r/20261022-115137-9` (15.3 seconds): independent runtime
+  globals for identical units, current host provenance, foreign-library
+  refusal, raw host-unit replacement, CLI imports without API source
+  companions, interpreter/JIT execution, public artifact operations and
+  Rune-prefixed documentation. The preceding six-host run passed its
+  other 23 cases at `tests/out/r/20261022-114736-2828680`; its one failing
+  execution fixture had assumed `Fail` belonged to the initial language
+  basis. Declaring the fixture's exception corrected that assumption.
+  The root audit reports 207 roots, and all 39 performance cases passed
+  at `tests/out/r/20261022-114723-2828420` (10.7 seconds).
+
+* Full acceptance at `tests/out/r/20261022-115602-2832609` exposed lost
+  provenance when emitted unit files were linked again. The run was
+  interrupted after 805 passes, 28 failures and two skips (656.4 seconds);
+  it is not a full acceptance result. Provenance now travels in each
+  immutable unit and its unreferenced named-unit metadata, rather than a
+  global table. This restores 206 registered roots. All 28 failures and
+  their dependencies passed on rerun: 35 cases at
+  `tests/out/r/20261022-121533-2872344` (22.7 seconds). Public compiler API
+  and unit-inventory checks passed 14 cases at
+  `tests/out/r/20261022-121556-2873132` (16.0 seconds).
+
+M4 remains in progress until the combined full check and required VM
+platform acceptance pass. M3's optional subprocess isolation and M5's
+REPL/service/Basis hook migrations remain outstanding.
+
+Native-cache follow-up (2026-10-22):
+
+* The next full run completed 19,344 passes, three documented skips and
+  one failure: `cross/rune-units`, at
+  `tests/out/r/20261022-122208-2877037` (1,240.4 seconds). The MLKit
+  executable had retained an older inlined `Config.identity` in its native
+  source cache. Code sections matched; 230 provenance records used the
+  older identity. A fresh native compilation emitted the expected identity
+  and the same probe unit bytes as MLton. Small standalone configuration
+  probes did not reproduce the full repository's cache-context history.
+* Native MLKit compiler/tool builds now use a private copied source view
+  under `build/mlkit-root`, invalidated when the generated configuration
+  changes. Library-test subjects own separate input copies, with quoted
+  MLB paths. Original source caches and the installed Basis cache are not
+  removed. No SML library workaround was introduced.
+* Focused acceptance passed 11 cases at
+  `tests/out/r/20261022-132403-3064280` (298.6 seconds), including the
+  failing cross-host comparison, source-view invalidation and preservation
+  of original caches, host-adapter behavior and the MLKit compiler API.
+  The MLKit LSP test still reproduces its recorded capability-lookup
+  `HOST-BUG`; that runner pass is classified acceptance, not five literal
+  passing checks. Final combined and platform acceptance remain pending.
+
+Shared project-model checkpoint (2026-10-22):
+
+* `RuneCompiler.Project` exposes immutable scoped build plans and captured
+  discovery inputs, source occurrences/modes/annotations, libraries,
+  cache paths and a configuration-sensitive fingerprint. The CLI uses the
+  same planner. `use` annotations now propagate, and ordinary program builds
+  honor their declared library headers, with permanent acceptance probes.
+* Public API tests cover ordered/group sources, overlays, inherited
+  annotations, variable isolation, Windows drive paths and fingerprints.
+  The six-host API and position/URI focused run passed all 28 runner cases
+  at `tests/out/r/20261022-152747-3086877` (342.0 seconds).
+* The preceding complete native library profile passed 174 runner cases
+  at `tests/out/r/20261022-134545-3067536` (1,288.8 seconds), retaining
+  documented host deviations, including MLKit's LSP protocol bug. That
+  profile precedes the new project API; it is not final combined acceptance.
+
+Combined M3/M4 follow-up (2026-10-22): the run at
+`tests/out/r/20261022-161924-3118918` completed 19,346 passes, three
+documented skips and one failure (1,992.5 seconds). The sole failure was
+the migration inventory missing `scripts/mlkit-build-root.sh`; its native
+bootstrap role is now recorded with the original committed blob. Inventory
+and planted-fault checks then passed all seven selected runner cases at
+`tests/out/r/20261022-165548-8` (1.1 seconds). This records the failure and
+focused correction; a clean combined run and remaining platform/profile
+acceptance are still required for the final implementation.
+
 ### M5. The clients (M, about 500 SML)
+
+The language-server analysis extension now exposes immutable snapshots,
+validated prefix replay, checkpoints and lexical provenance through
+`RuneCompiler.Analysis` ([contract](../compiler-analysis.md)). Its six
+public cases pass in the interpreter/JIT and on all six native hosts;
+selected native/API/layout acceptance passed 20 runner cases at
+`tests/out/r/20261022-182602-3732836` (500.8 seconds). The version-7 basis
+retains provenance independently of runtime exception/type identities.
+This extension does not complete the REPL/service/Basis hook migration
+listed below. Combined acceptance for the new format remains pending.
 
 * **What:** the REPL's engine and session written on `RuneCompiler`;
   `rune --serve` on it and on `lib/json` and `lib/jsonrpc` (its own codec

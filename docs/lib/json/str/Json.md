@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`JSON`](../sig/JSON.md) |
 | Status | required |
-| Members | 9 |
+| Members | 11 |
 | Tests | not listed |
 | Source | [lib/json/json.sml](../../../../lib/json/json.sml) |
 
@@ -28,9 +28,11 @@ What each means is on [`JSON`](../sig/JSON.md); the types are this structure's o
 | val | [`encode`](../sig/JSON.md#val-encode) | `value -> string` |
 | val | [`encodeIndented`](../sig/JSON.md#val-encodeindented) | `int -> value -> string` |
 | val | [`int`](../sig/JSON.md#val-int) | `int -> value` |
+| val | [`intInf`](../sig/JSON.md#val-intinf) | `IntInf.int -> value` |
 | val | [`maxDepth`](../sig/JSON.md#val-maxdepth) | `int` |
 | val | [`member`](../sig/JSON.md#val-member) | `string * value -> value option` |
 | val | [`toInt`](../sig/JSON.md#val-toint) | `value -> int option` |
+| val | [`toIntInf`](../sig/JSON.md#val-tointinf) | `value -> IntInf.int option` |
 
 ---
 

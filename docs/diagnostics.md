@@ -3,7 +3,7 @@
 How `rune` and `runedoc` show their errors and warnings, when they colour
 them, and the palette that the compiler, runedoc and the REPL share.
 `docs/plans/repl.md` (D1 to D3, D17 and M2) gives the reasons; the code is
-`src/util/color.sml` (the palette) and `src/util/diagnostic.sml` (the
+`lib/compiler/util/color.sml` (the palette) and `lib/compiler/util/diagnostic.sml` (the
 rendering).
 
 ## The format
@@ -152,7 +152,7 @@ also carries a word or a mark (`error:`, `^`), so colour is never the only
 cue.
 
 `auto` has so few colours because the others fail somewhere:
-`tests/color/contrast.sml`, compiled with `src/util/color.sml`, draws each role on the default palettes of
+`tests/color/contrast.sml`, compiled with `lib/compiler/util/color.sml`, draws each role on the default palettes of
 xterm, VTE, Windows Terminal, the legacy console and VS Code, on the
 backgrounds its theme is for, also as seen with protanopia, deuteranopia
 and tritanopia, and requires WCAG's 3:1 (2.5:1 with a deficiency). On

@@ -297,6 +297,10 @@ struct
   val () = T.raises ("Runtime.load/a-file-that-is-not-there",
                      fn IO.Io _ => true | _ => false,
                      fn () => Runtime.load "no-such-unit-here.rbu")
+  val () = T.check ("Runtime.linkedUnits/unique-identities",
+                     fn () =>
+                       let val units=Runtime.linkedUnits ()
+                       in List.all (fn u => u<>"" andalso length (List.filter (fn v => v=u) units)=1) units end)
 
   (* ---- the interrupt
 

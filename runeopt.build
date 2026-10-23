@@ -7,12 +7,16 @@
   hold here too. *)
 build/config.sml
 files
-  src/util/ordmap.sml
+  lib/compiler/util/scon.sml
+  lib/compiler/util/ordmap.sml
+  lib/compiler/util/inttable.sml
+  lib/compiler/state_sig.sml
+  lib/compiler/state.sml
   src/isa/isa.sml
   src/isa/stack.sml
   src/isa/prims.sml
-  src/backend/opcodes.sml
-  src/backend/prims.sml
+  lib/compiler/backend/opcodes.sml
+  lib/compiler/backend/prims.sml
   src/opt/rbc.sml
   src/opt/x64_layout.sml
   src/opt/rbcimage.sml

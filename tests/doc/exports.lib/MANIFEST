@@ -1,0 +1,2 @@
+# Hand-written fixture: the library exports its public interface only.
+../exports.sml | demand | yes | INTERNAL Hidden API Api | | signature:API structure:Api

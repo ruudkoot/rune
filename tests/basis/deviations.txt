@@ -280,6 +280,9 @@ native:mlkit@* | *Array2.copy/Subscript-*src-* | HOST-BUG | copy, of Array2 and 
 native:mlkit@* | Array2.copy/[!o]* | HOST-BUG | copy checks the destination region against the dimensions of the source's base array instead of those of dst, and writes dst with the source's number of columns as its row length: Subscript for a valid destination, none for an invalid one (the elements are written past the end of dst), the elements in the wrong places when the two arrays have different numbers of columns, and Overflow when dst_row + nrows or dst_col + ncols overflows
 
 # ---- OS.Path
+rune:windows* | OS.Path.mkCanonical/windows-lowercase | RUNE-DEV | preserves native case so canonical paths remain usable on case-sensitive NTFS directories and WSL shares, rather than following the specification's lowercase-only Windows note
+rune:windows* | OS.Path.isCanonical/windows-case | RUNE-DEV | native-case Windows paths are canonical under Rune's case-preserving model
+rune:windows* | OS.Path.isRoot/windows-uppercase | RUNE-DEV | drive roots retain their native letter case and are canonical under Rune's case-preserving model
 native:mlton@* | OS.Path.splitBaseExt/*empty-arc | HOST-BUG | the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
 native:mlton@* | OS.Path.joinBaseExt/inverts-splitBaseExt-random | HOST-BUG | joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
 native:smlnj*@* | OS.Path.splitBaseExt/*empty-arc | HOST-BUG | the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
@@ -870,7 +873,6 @@ rune:windows* | Socket.Ctl.getATMARK/before-and-at-the-mark | WINDOWS | stays: W
 rune:windows* | NetHostDB.name/localhost | WINDOWS | stays: the resolver of Windows answers localhost itself, with the name of the machine
 rune:windows* | NetHostDB.aliases/localhost | WINDOWS | stays: the resolver of Windows answers localhost itself, with the name of the machine
 rune:windows* | NetHostDB.getByAddr/loopback | WINDOWS | stays: the resolver of Windows answers localhost itself, with the name of the machine
-rune:windows* | OS.FileSys.fullPath/root | WINDOWS | stays: the root of Windows is that of a drive, /C:/
 rune:windows* | OS.FileSys.A_EXEC/with-execute-bit | WINDOWS | stays: Windows has no execute permission; a file is executable by its extension (PATHEXT)
 rune:windows* | OS.FileSys.A_READ/write-only | WINDOWS | stays: Windows cannot make a file unreadable to its owner
 rune:windows* | OS.Process.system/* | WINDOWS | stays: the command is run by cmd.exe, and the test's are sh's
@@ -879,7 +881,7 @@ rune:windows* | Posix.Error.acces/open-unreadable-file | WINDOWS | stays: Window
 rune:windows* | Posix.FileSys.mkfifo/* | WINDOWS | stays: Windows has no named pipes in the file system
 rune:windows* | Posix.FileSys.*/*fifo* | WINDOWS | stays: Windows has no named pipes in the file system
 rune:windows* | Posix.FileSys.ST.is*/none-of-the-others | WINDOWS | stays: the check makes a named pipe, which Windows does not have in the file system
-rune:windows* | Posix.FileSys.chdir/absolute | WINDOWS | stays: the root of Windows is that of a drive, /C:/
+rune:windows* | Posix.FileSys.chdir/absolute | WINDOWS | stays: the root of Windows includes its drive volume and backslash separator
 rune:windows* | Posix.FileSys.A_READ/not-readable | WINDOWS | stays: Windows cannot make a file unreadable to its owner
 rune:windows* | Posix.FileSys.* | WINDOWS | stays: a mode of Windows is whether the owner may write, and an extension that makes a file executable; the owner always reads, and a group or others have no bits
 rune:windows* | Posix.ProcEnv.getpid/PPID-of-shell | WINDOWS | stays: the test asks sh

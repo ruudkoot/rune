@@ -34,7 +34,7 @@ struct
         in
           topName := SOME n; n
         end
-  fun p name = top () ^ "/" ^ name
+  fun p name = OS.Path.concat (top (), name)
 
   fun insert (x : string, []) = [x]
     | insert (x, y :: r) = if x <= y then x :: y :: r else y :: insert (x, r)
@@ -144,7 +144,7 @@ struct
   val () = eqB ("OS.FileSys.getDir/canonical", true, fn () => OS.Path.isCanonical (OS.FileSys.getDir ()))
   val () = eqB ("OS.FileSys.getDir/same-twice", true, fn () => OS.FileSys.getDir () = OS.FileSys.getDir ())
   val () = eqB ("OS.FileSys.getDir/is-a-directory", true, fn () => OS.FileSys.isDir (OS.FileSys.getDir ()))
-  val () = eqS ("OS.FileSys.chDir/relative", "/" ^ top () ^ "/sub",
+  val () = eqS ("OS.FileSys.chDir/relative", OS.Path.concat (OS.Path.fromUnixPath "/", p "sub"),
                 fn () => let val here = OS.FileSys.getDir ()
                              val there = inDir (p "sub", OS.FileSys.getDir)
                          in if String.isPrefix here there then String.extract (there, size here, NONE) else there end)
@@ -208,7 +208,15 @@ struct
                          in OS.Path.isAbsolute f andalso OS.Path.isCanonical f end)
   val () = eqB ("OS.FileSys.fullPath/of-fullPath", true,
                 fn () => let val f = OS.FileSys.fullPath (p "a.txt") in OS.FileSys.fullPath f = f end)
-  val () = eqS ("OS.FileSys.fullPath/root", "/", fn () => OS.FileSys.fullPath "/")
+  val () = eqB ("OS.FileSys.fullPath/mixed-case-same-object", true,
+                fn () => let val file = p "MiXeD-Case.txt"
+                             val () = write (file, "case")
+                             val same = (OS.FileSys.fileId (OS.FileSys.fullPath file) = OS.FileSys.fileId file)
+                               handle e => (OS.FileSys.remove file; raise e)
+                         in OS.FileSys.remove file; same end)
+  val () = eqB ("OS.FileSys.fullPath/root", true,
+                fn () => let val root=OS.FileSys.fullPath "/"
+                         in OS.Path.isRoot root andalso OS.Path.getVolume root=OS.Path.getVolume (here ()) end)
   val () = eqB ("OS.FileSys.fullPath/parent-arc", true,
                 fn () => OS.FileSys.fullPath (p "sub/..") = OS.Path.concat (here (), top ()))
   (* "It raises SysErr if, for example, a directory on the path, or the file
@@ -220,13 +228,13 @@ struct
   (* ---- realPath: "If path is relative ..., then it returns a path that is
      relative to the current working directory"; "If path is an absolute
      path, then realPath acts like fullPath" ---- *)
-  val () = eqS ("OS.FileSys.realPath/relative-file", top () ^ "/a.txt", fn () => OS.FileSys.realPath (p "a.txt"))
-  val () = eqS ("OS.FileSys.realPath/arcs-removed", top () ^ "/a.txt",
+  val () = eqS ("OS.FileSys.realPath/relative-file", p "a.txt", fn () => OS.FileSys.realPath (p "a.txt"))
+  val () = eqS ("OS.FileSys.realPath/arcs-removed", p "a.txt",
                 fn () => OS.FileSys.realPath (top () ^ "/./sub//../a.txt"))
   val () = eqS ("OS.FileSys.realPath/current-arc", ".", fn () => OS.FileSys.realPath ".")
   val () = eqS ("OS.FileSys.realPath/empty", ".", fn () => OS.FileSys.realPath "")
   val () = eqS ("OS.FileSys.realPath/parent-arc", "..", fn () => OS.FileSys.realPath "..")
-  val () = eqS ("OS.FileSys.realPath/from-a-subdirectory", "../a.txt",
+  val () = eqS ("OS.FileSys.realPath/from-a-subdirectory", OS.Path.concat ("..", "a.txt"),
                 fn () => inDir (p "sub", fn () => OS.FileSys.realPath "../a.txt"))
   val () = eqB ("OS.FileSys.realPath/absolute-is-fullPath", true,
                 fn () => let val f = OS.Path.concat (here (), top () ^ "/sub/../a.txt")
@@ -480,7 +488,7 @@ struct
                 fn () => OS.FileSys.fullPath (p "link") = OS.FileSys.fullPath (p "a.txt"))
   val () = eqB ("OS.FileSys.fullPath/link-as-directory-component", true,
                 fn () => OS.FileSys.fullPath (p "sublink/c.txt") = OS.FileSys.fullPath (p "sub/c.txt"))
-  val () = eqS ("OS.FileSys.realPath/link", top () ^ "/a.txt", fn () => OS.FileSys.realPath (p "link"))
+  val () = eqS ("OS.FileSys.realPath/link", p "a.txt", fn () => OS.FileSys.realPath (p "link"))
   val () = eqS ("OS.FileSys.realPath/link-then-parent-arc", top (),
                 fn () => OS.FileSys.realPath (p "sublink/.."))
   val () = eqB ("OS.FileSys.isLink/loop", true,

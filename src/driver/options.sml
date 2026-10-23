@@ -2,7 +2,7 @@
 structure Options =
 struct
   val output : string option ref = ref NONE
-  val inputs : string list ref = ref []
+  val inputs = CompilerSettings.inputs
   val noPrelude = ref false
   val basisAll = ref false         (* --basis all: every file of the basis library *)
   val basisDeps = ref false        (* --basis-deps: print the files that would be loaded *)
@@ -15,7 +15,7 @@ struct
   val defaultInt64 = ref false     (* --default-type=int64 *)
   val defaultWord64 = ref false    (* --default-type=word64 *)
   (* No default: every bin/rune* is a wrapper that passes --lib. *)
-  val libDir : string option ref = ref NONE
+  val libDir = CompilerSettings.libDir
   val libraries : string list ref = ref []     (* --library NAME: libraries besides the basis *)
   val dumpTokens = ref false
   val lexCount = ref 0                         (* --lex-count N: lex the inputs N times (bin/rune-measure lex-corpus) *)
@@ -23,10 +23,10 @@ struct
   val typecheckOnly = ref false
   val units = ref false                        (* --units: a unit per file, linked (docs/units.md) *)
   val emitUnits : string option ref = ref NONE (* --emit-units DIR: each unit's file there too *)
-  val cacheDir : string option ref = ref NONE  (* --cache-dir DIR: the cache of units (UnitCache) *)
-  val noCache = ref false                      (* --no-cache: compile every unit *)
+  val cacheDir = CompilerSettings.cacheDir      (* --cache-dir DIR: the cache of units (UnitCache) *)
+  val noCache = CompilerSettings.noCache        (* --no-cache: compile every unit *)
   val explainRebuild = ref false               (* --explain-rebuild: say why each unit was compiled *)
-  val verifyCache = ref false                  (* --verify-cache: compile each unit found, and compare *)
+  val verifyCache = CompilerSettings.verifyCache (* --verify-cache: compile each unit found, and compare *)
   val jobs = ref 1                             (* -j N: units compiled by up to N child processes (Parallel) *)
   val wholeFromUnits = ref false               (* --whole: with --units, one program of the units' Mid *)
   val deps = ref false                         (* --deps: the files' order, by what they declare and use *)
@@ -43,8 +43,8 @@ struct
   val showVersion = ref false
   val showHelp = ref false
   val readMid : string option ref = ref NONE   (* --read-mid FILE: a Mid program, not SML *)
-  val midRoundTrip = ref false                 (* --mid-roundtrip: check MidText against itself *)
-  val target = ref "registers"                 (* --target=T: the bytecode made (Target) *)
+  val midRoundTrip = CompilerSettings.midRoundTrip (* --mid-roundtrip: check MidText against itself *)
+  val target = CompilerSettings.target         (* --target=T: the bytecode made (Target) *)
 
   val usage =
     "usage: rune [options] file.sml ...\n\

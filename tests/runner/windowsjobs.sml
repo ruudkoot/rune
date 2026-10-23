@@ -7,6 +7,7 @@ struct
        | VMChecks.Failed text => text | VMOracles.Failed text => text | _ => General.exnMessage e
   fun protect f ()=f () handle e => (say ("FAIL Windows: " ^ failure e ^ "\n");Posix.Process.exit 0w1)
   fun command ["platform-faults"]=SOME (protect PlatformFaults.one)
+    | command ["oracle-staging-faults"]=SOME (protect PlatformFaults.staging)
     | command ["windows-directory"]=SOME (protect (fn () => say (WindowsDir.directory () ^ "\n")))
     | command ["windows-prepare"]=SOME (protect WindowsChecks.prepare)
     | command ["windows-compile",id,name]=SOME (protect (WindowsChecks.compile id name))
@@ -24,8 +25,9 @@ struct
   fun job name args after =
     Test.it name {program="/bin/sh",args=["sh","-c","exec \"$RUNE_TEST_ROOT\"/bin/rune-windows " ^ String.concatWith " " (List.map quote args)],
        env=NONE,dir=SOME ".",stdin=NONE,timeout=Time.fromSeconds 1800,cap=0,cpus=1,memory=500,pools=[],exclusive=false,after=after,judge=failLines} : Run.command Test.tree
-  val faults=tags ["check","covers:tests/runner/windows*.sml","covers:tests/runner/langchecks.sml"]
+  val faults=tags ["check","covers:tests/runner/windows*.sml","covers:tests/runner/langchecks.sml","covers:tests/runner/vmoracles.sml"]
        (Test.describe "platform" [job "faults" ["platform-faults"] [],
+          job "oracle-staging" ["oracle-staging-faults"] [],
           job "windows-text-faults" ["windows-text-faults"] []])
   fun tree () =
     let val selected=env ("WINDOWS_SELECTED","0")="1"

@@ -7,7 +7,8 @@
    that names nothing, a directory that may not be read, a file that may not
    be removed -- all of them arrive as that one exception.
 
-   Windows paths and names use WTF-8, which preserves lone UTF-16
+   Windows paths retain native case and use drive/UNC syntax with backslash separators,
+   and names use WTF-8, which preserves lone UTF-16
    surrogates and is UTF-8 for Unicode text. Other malformed byte sequences
    raise `OS.SysErr` with `ilseq`. Extended paths remove the 260-character
    filesystem limit; native process, Shell and socket limits still apply.
@@ -118,7 +119,8 @@ sig
 
   (* `realPath p` is `fullPath p` when `p` is absolute, and the same made relative to the current directory when it is not.
 
-     Raises: `OS.SysErr` as `fullPath` does. *)
+     Raises: `OS.SysErr` as `fullPath` does, or `OS.Path.Path` for a relative
+     path on a volume different from the current working directory. *)
   val realPath : string -> string
 
   (* `modTime p` is when what `p` names was last changed.

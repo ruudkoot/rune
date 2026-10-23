@@ -59,7 +59,9 @@ sig
      capabilities, strict, quarantine}` runs `tests` under `out`, and is
      whether every test passed.
 
-     Each run has a new directory under `out`.
+     Each run has a new directory under `out`. Retention removes only
+     finished runs, keeping the last five including this run. Active and
+     interrupted runs are preserved for explicit cleanup.
 
      The tree's directory is `root`; the run has `cpus` processors and
      `memory` megabytes; it reads and rewrites the history file `history`;

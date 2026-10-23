@@ -849,6 +849,9 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
                 undo(vm, m); FAIL("out of memory");
             }
     }
+    /* The reserved top-level export also records an empty, successfully
+       linked unit. Merely interning a referenced name above is not enough. */
+    if (!unit_export(vm, session, -1, 0, func_base)) { undo(vm, m); FAIL("out of memory"); }
     result = func_base;
 done:
 #undef FAIL

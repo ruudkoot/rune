@@ -87,7 +87,10 @@ again. The last line begins `RESULT:`. Every run writes its events as JSON
 lines (`events.jsonl`), a summary in Markdown (`summary.md`, and GitHub's
 page of the job) and every verdict as JUnit's XML (`junit.xml`) in its
 directory. The directories of tests that pass are
-removed as they end, and the last five runs are kept. The wall time of each
+removed as they end, and the last five completed runs are kept. Retention
+leaves active and interrupted runs alone, so concurrent invocations cannot
+delete each other's output. A `running` marker becomes `complete` only after
+the final reports are closed; interrupted runs need explicit cleanup. The wall time of each
 test goes into `build/test-history.tsv`, from which the next run orders its
 jobs.
 
@@ -728,6 +731,12 @@ directory, vm --vm BIN --def FILE and the Windows language selection.
 Windows ways share local fixture judges, strict refusal cases and cross-VM
 count/image oracles. Build preparation and consumers have explicit dependencies;
 unavailable selected targets fail, while capabilities retain their named skips.
+
+Each count/image oracle invocation atomically reserves private staging under
+its endpoint directory. Parallel cases and widths therefore use separate
+`prog.rbc` and image files. `platform/oracle-staging` forces a second oracle
+between the first copy and execution: the planted shared-directory allocator
+must fail its counter comparison, and the production allocator must pass.
 
 
 GMP configuration, dependency, CPU-family, build-mode, download, installation

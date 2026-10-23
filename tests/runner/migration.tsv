@@ -32,6 +32,7 @@ scripts/jit-dump.py	python	P2.14	retired	b6a1116c1cf7aa8e5a6ab81739da94ae871ea78
 scripts/lex-corpus.sh	shell	P2.14	retired	8208cb9e3679108cce562e40aba5a59335781d1b	tools/measure/lex-corpus.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure lex-corpus
 scripts/make-dist.py	python	P2.16	retired	f8606fa790caf68c02f0744d81ef4d0fd7e3e718	tools/builder/dist.sml	clean-bootstrap-configs-and-package-members
 scripts/measure-benchmarks.sh	shell	P2.14	retired	f79574567fa02872e8252b240663b736a208b194	tools/measure/benchmarks.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure benchmarks
+scripts/mlkit-build-root.sh	shell	Retain: bootstrap/setup	retained	36a900a30ed8e161a15edb6cf05d669e02b5348d	-	native MLKit bootstrap source-cache isolation; compiler-layout checks config invalidation and original-cache preservation
 scripts/ncpus.sh	shell	Retain: bootstrap/setup	retained	bf17a4157092e825df8513890d9af3852bf34517	-	bootstrap/setup
 scripts/opt.sh	shell	P2.14	retired	37fcb0eb343e8fd2c51d27193f5f23a5e00151da	tools/measure/basics.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure opt
 scripts/package-runtime.py	python	P2.16	retired	26df2e153d91f71c5a325e0d33ea3d178511d921	tools/builder/package-runtime.sml	clean-bootstrap-configs-and-package-members

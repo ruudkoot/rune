@@ -217,12 +217,12 @@ struct
                  fn () => let val v = Windows.getVolumeInformation (systemDrive ())
                           in #systemName v <> "" andalso #maximumComponentLength v >= 255 end,
                  fn () => Windows.getVolumeInformation "C:\\")
-  (* the root as OS.FileSys writes the paths of a drive, /C:/ *)
+  (* The native absolute root returned by OS.FileSys names the same volume. *)
   val () = both ("Windows.getVolumeInformation/root-as-OS.FileSys-writes-it",
                  fn () => let val d = systemDrive ()
-                          in #serialNumber (Windows.getVolumeInformation ("/" ^ String.substring (d, 0, 2) ^ "/"))
+                          in #serialNumber (Windows.getVolumeInformation (OS.FileSys.fullPath d))
                              = #serialNumber (Windows.getVolumeInformation d) end,
-                 fn () => Windows.getVolumeInformation "/C:/")
+                 fn () => Windows.getVolumeInformation "C:\\")
   val () = both ("Windows.findExecutable/a-program-is-its-own",
                  fn () => isSome (Windows.findExecutable (C.getSystemDirectory () ^ "\\cmd.exe")),
                  fn () => Windows.findExecutable "C:\\Windows\\System32\\cmd.exe")

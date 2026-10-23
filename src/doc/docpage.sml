@@ -71,20 +71,26 @@ struct
 
   (* A path without `dir/..` in it. *)
   fun normalise (path : string) : string =
-    let
-      fun go ([], acc) = List.rev acc
-        | go (".." :: rest, a :: acc) = if a = ".." then go (rest, ".." :: a :: acc) else go (rest, acc)
-        | go ("." :: rest, acc) = go (rest, acc)
-        | go (c :: rest, acc) = go (rest, c :: acc)
-    in
-      String.concatWith "/" (go (String.fields (fn c => c = #"/") path, []))
-    end
+    if path="" then "" else
+      let val canonical=OS.Path.mkCanonical path
+      in if OS.Path.validVolume {isAbs=true,vol="C:"} then
+           String.map (fn #"\\" => #"/" | c => c) canonical else canonical end
+
+  (* Native Windows paths need a file URI in Markdown, including UNC hosts. *)
+  fun sourceUrl path =
+    if OS.Path.validVolume {isAbs=true,vol="C:"} andalso OS.Path.isAbsolute path andalso OS.Path.getVolume path<>"" then
+      let val hex="0123456789ABCDEF"
+          val encoded=String.translate (fn c =>
+            if Char.ord c<128 andalso (Char.isAlphaNum c orelse Char.contains "-._~/:" c) then str c else
+              "%" ^ str (String.sub (hex,Char.ord c div 16)) ^ str (String.sub (hex,Char.ord c mod 16))) path
+      in "file:" ^ (if String.isPrefix "//" path then "" else "///") ^ encoded end
+    else path
 
   (* A link to a source file from a page: the way back to where the paths of
      the sources begin, and then the path; an absolute path is where it is. *)
   fun sourceLink (env : env, root : string, file : string) : string =
     let val f = normalise file
-    in "[" ^ DocMarkdown.escape f ^ "](" ^ (if String.isPrefix "/" f then f else root ^ #up env ^ f) ^ ")" end
+    in "[" ^ DocMarkdown.escape f ^ "](" ^ (if OS.Path.isAbsolute f then sourceUrl f else root ^ #up env ^ f) ^ ")" end
 
   (* ---- counting ---- *)
   fun entriesOf (items : I.item list) : I.entryRecord list =

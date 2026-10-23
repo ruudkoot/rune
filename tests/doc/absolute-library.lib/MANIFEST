@@ -1,0 +1,2 @@
+# Reuse the reviewed exports.sml input and its IR, Markdown and diagnostics.
+../exports.sml | demand | yes | INTERNAL Hidden API Api | | signature:API structure:Api

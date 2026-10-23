@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-22",
+  "base_commit": "82c0fb151",
+  "working_tree_changes": [
+    "shared benchmark utility graph",
+    "deferred root-name validation",
+    "linear primitive-arity initialization"
+  ],
+  "compiler_identity": "7aae3d02562ca0adfc9abbfa43c50fa0",
+  "archive": "/home/ruud/rune-benchmark-results/lsp/2026-10-22-compiler-startup",
+  "before_run": "tests/out/r/20261022-075421-2401107",
+  "before_instructions": {
+    "register/compile-hello": 4008186,
+    "register/compile-expo": 4443291,
+    "register/compile-where": 17850386,
+    "register/compile-sharenest": 22570392,
+    "stack/compile-hello": 7000728
+  },
+  "after": {
+    "register/compile-hello": {
+      "instructions": 1974930,
+      "allocated_bytes": 2474728,
+      "allocated_objects": 58376
+    },
+    "register/compile-expo": {
+      "instructions": 2410035,
+      "allocated_bytes": 2832192,
+      "allocated_objects": 72349
+    },
+    "register/compile-where": {
+      "instructions": 15817130,
+      "allocated_bytes": 22763120,
+      "allocated_objects": 785373
+    },
+    "register/compile-sharenest": {
+      "instructions": 20537136,
+      "allocated_bytes": 18056096,
+      "allocated_objects": 557903
+    },
+    "stack/compile-hello": {
+      "instructions": 3489021,
+      "allocated_bytes": 2474688,
+      "allocated_objects": 58365
+    }
+  },
+  "startup_instructions": {
+    "archived_M1_register": 311859,
+    "after_duplicate_deferral_register": 2175774,
+    "after_linear_arity_register": 315168
+  },
+  "startup_notes": "M1 and current compilers also differ in protocol support, export boundaries and source extraction; this is a startup counter comparison, not a paired parser benchmark.",
+  "validation": {
+    "budgets": "17 PASS, tests/out/r/20261022-083744-2585502, unchanged thresholds",
+    "ownership": "make test-compiler-state, interpreter and JIT accepted including duplicate-root rejection"
+  },
+  "commands": [
+    "make test-compiler-state bin/rune-budget bin/rune.stack.rbc JOBS=8",
+    "bin/rune-test run 'budgets/*/compile-*' -j 4",
+    "bin/runevm --count bin/rune.rbc --version",
+    "bin/runevm --count /home/ruud/rune-benchmark-results/lsp/2026-10-22-language-server-m1/rune.rbc --version"
+  ],
+  "files": {
+    "rune.rbc": {
+      "bytes": 3012002,
+      "sha256": "49a2344862edbd2179ae149e0eb23bb3163eb1cdddc438edb9aa921df74794e5"
+    },
+    "rune.stack.rbc": {
+      "bytes": 1992377,
+      "sha256": "6f4edbfd5a7692cdc46dcdc1dac3199e6d4977ed1e79735fbe1f0a28cd648dad"
+    },
+    "runevm": {
+      "bytes": 716304,
+      "sha256": "5a0ba1d3d202f587eaed314997530961bfe9b9dc5c20215de06725a199ea75eb"
+    },
+    "runevm-stack": {
+      "bytes": 425040,
+      "sha256": "b0a2ea973bd4fa2cca1a140e331f1160e6a4945d2aae482a2cfae47b75861d5d"
+    },
+    "before-summary.md": {
+      "bytes": 1426,
+      "sha256": "1e39c2d94ae3883e31d206597c381d7965608386f3f89bf270c9755487414360"
+    },
+    "after-summary.md": {
+      "bytes": 284,
+      "sha256": "f74ad7845beef7a9af02101dcff8efcbe3c915001d1f8e58a79d95e65ab72ef8"
+    },
+    "register-compile-hello.stderr": {
+      "bytes": 66,
+      "sha256": "3ab4deadf903112be7407ba409e21a565e5a6c75538d534a4b2a38fbd85b2c75"
+    },
+    "register-compile-expo.stderr": {
+      "bytes": 66,
+      "sha256": "d00c196937d3bfa690fc629b120a3e22aea1f151472e26640ec7a34ae671fba8"
+    },
+    "register-compile-where.stderr": {
+      "bytes": 69,
+      "sha256": "1ffe1e7691df274ce13b5bf1b0ec5f9af8c1d13b4095648f48882449b420a10f"
+    },
+    "register-compile-sharenest.stderr": {
+      "bytes": 69,
+      "sha256": "b154c8577393887a86a323f89a172a656e96051a72fcdf5919d49781204207e5"
+    },
+    "stack-compile-hello.stderr": {
+      "bytes": 66,
+      "sha256": "ee67c6852d96fd542a405b74abaebc51d099dccc32b267593def766764d96cbe"
+    }
+  },
+  "host": {
+    "kernel": "6.18.33.2-microsoft-standard-WSL2",
+    "machine": "x86_64",
+    "cpu": "Intel(R) Xeon(R) CPU E5-1680 v3 @ 3.20GHz",
+    "note": "Instruction counts from the existing VM budget harness; no wall-time performance claim."
+  }
+}

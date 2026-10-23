@@ -1,0 +1,50 @@
+(* The compiler frontend and the runelsp measurement harness. *)
+files
+  build/config.sml
+end
+use lib/compiler/util.build
+files
+  lib/unicode/utf8_sig.sml
+  lib/unicode/utf8.sml
+  lib/unicode/width_data.sml
+  lib/unicode/display_width_sig.sml
+  lib/unicode/display_width.sml
+  lib/unicode/grapheme_data.sml
+  lib/unicode/grapheme_sig.sml
+  lib/unicode/grapheme.sml
+  lib/unicode/normalize_data.sml
+  lib/unicode/normalize_sig.sml
+  lib/unicode/normalize.sml
+  lib/unicode/identifier_data.sml
+  lib/unicode/identifier_sig.sml
+  lib/unicode/identifier.sml
+  lib/unicode/security_data.sml
+  lib/unicode/security_sig.sml
+  lib/unicode/security.sml
+  lib/compiler/util/ident.sml
+  lib/compiler/util/source.sml
+  lib/compiler/util/error.sml
+  lib/json/json_sig.sml
+  lib/json/json.sml
+  lib/compiler/util/color.sml
+  lib/compiler/util/diagnostic.sml
+  lib/compiler/util/pass.sml
+  lib/compiler/util/usage.sml
+  lib/compiler/util/pickle.sml
+  lib/compiler/frontend/token.sml
+  lib/compiler/frontend/lexer.sml
+  lib/compiler/elab/elabstats.sml
+  lib/compiler/elab/types.sml
+  lib/compiler/core/ty.sml
+  lib/compiler/elab/overload.sml
+  lib/compiler/frontend/ast.sml
+  lib/compiler/frontend/fixity.sml
+  lib/compiler/frontend/parser.sml
+  lib/digest/digest_sig.sml
+  lib/digest/sha256.sml
+  lib/digest/hex_sig.sml
+  lib/digest/hex.sml
+  tools/lsp/service-baseline.sml
+  tools/lsp/bench.sml
+end
+tools/lsp/bench-main.sml

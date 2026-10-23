@@ -62,7 +62,7 @@ either a nullary constructor or a value in the heap (a list), `8` unit,
 `9` an `Int64.int` and `10` a `Word64.word` (64 bits where an int and a
 word are the VM's 63: an immediate, or a small object for a number past
 them) -- a register being shared only among values of one representation
-(`src/backend/regs.sml`); its blocks, each by the `pc` it begins at and
+(`lib/compiler/backend/regs.sml`); its blocks, each by the `pc` it begins at and
 the registers of its parameters, so that the SSA form the compiler had
 can be had again; and the `pc`s of its loop heads. The register bytecode
 carries the section (`nmeta` is `nfuncs`); the stack bytecode none
@@ -210,6 +210,31 @@ units       nunits × { identity: len u32, bytes;
             kind 0 a function, by its index in the program; 1 a global
 ```
 
+A function export numbered `~1` is reserved for the unit's top-level
+function. The linker emits it even for a unit with no public declarations;
+a successful runtime link publishes it after checking the code.
+`rt_linked_units` (the primitive behind `Runtime.linkedUnits`) lists these
+identities in first-link order. Referenced names from a failed link are not
+listed. The marker records linkage, not execution of the initializer.
+
+The compiler also emits internal source-provenance entries named
+`\001RuneSource:HASH:IDENTITY`, with the same reserved function export.
+`HASH` is the 24-digit hash of the compiler identity, target, source mode
+and decoded-source hash from the checked basis, separated by colons. These
+are metadata, filtered from `Runtime.linkedUnits`. The compiler adapter
+uses them to check host-library source before sharing a unit: its
+interface identity alone can survive implementation-only changes.
+New unit files preserve this record as an unreferenced entry in their
+named-units table. The SML reader retains it in the immutable unit record,
+so linking emitted unit files reproduces the original program's inventory
+without requiring checked-basis companions. Older units may lack it;
+sharing such a host unit through the API is refused. The entry uses the
+existing file layouts and is preserved by image serialization.
+The runtime ignores a provenance record after raw linking replaces the
+unit's reserved function export. The API checks current provenance before
+each run and namespaces its own execution units per session; portable
+artifact identities are unaffected.
+
 ### A unit's basis (`.rbi`)
 
 Beside its code, `--emit-units` writes each unit's basis, what the
@@ -221,7 +246,7 @@ source      varint len, bytes   the hash of its source
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    6 (UnitBasis.version)
+version     varint    7 (UnitBasis.version)
 name        varint len, bytes   the unit's name
 units       varint n, n × string   the identities of the units it names
 counts      3 × varint   its own names of each kind
@@ -232,6 +257,13 @@ counts      3 × varint   its own names of each kind
                 kind written as built in, the unit's own (a number), or
                 another unit's (its place, a number) ...
 ```
+
+Version 7 adds optional lexical binding origins to environments,
+signatures, functors and type-constructor tables. Static analysis records
+source definitions, signature constraints and the lexical owner of copied
+functor bodies separately from runtime stamps. Ordinary batch compilation
+leaves tracking disabled. Earlier bases are rejected and caches rebuilt;
+the bytecode instruction/file versions are unchanged.
 
 Version 6 added a functor's summary (performance M3; version 5 the
 source's mode): a cache or a unit file of an earlier version is not read,
@@ -320,7 +352,7 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `SELECT i` | index | Pop a tuple, push field `i`. |
 | `CON t` | tag | Pop a value, push `t` applied to it. |
 | `DECON t` | tag | Pop a constructor value, of tag `t`, push its argument. The tag is tested only under `runevm-stack --checked`. |
-| `CONN t, n` | tag, count | Pop `n` values (first pushed is field 0) and push `t` made of them: one object of `n` fields, the tag in its header -- how a constructor whose argument is a tuple of `n` is made (`src/backend/rep.sml`). |
+| `CONN t, n` | tag, count | Pop `n` values (first pushed is field 0) and push `t` made of them: one object of `n` fields, the tag in its header -- how a constructor whose argument is a tuple of `n` is made (`lib/compiler/backend/rep.sml`). |
 | `FIELD t, i` | tag, index | Pop a constructor value that `CONN` made, of tag `t`, push its field `i`. The tag is tested only under `runevm-stack --checked`. |
 | `CONTAG` | | Pop a constructor value (nullary or not), push its tag as an int. |
 | `CLOSURE f, n` | function, count | Pop `n` values into the environment of a new closure of function `f`. |

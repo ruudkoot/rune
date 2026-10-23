@@ -15,17 +15,23 @@
 
    See also: `OS_FILE_SYS`, `OS`, `SUBSTRING`
 
-   Implementation: `OS.Path/unix-syntax`. Rune's paths are Unix paths: the
-   separator is `/`, the only volume is the empty string, and
-   `fromUnixPath` and `toUnixPath` are the identity. That holds on Windows
-   as well, where the system layer of the VM hands the library a path of a
-   drive as `/C:/Users/...`, which is absolute by these rules since no name
-   of Windows has a colon in it, and gives Windows back `C:/...`. The syntax
-   the specification describes for Windows, with the volume `C:` and `\`
-   between the arcs, is not implemented.
+   Implementation: `OS.Path/host-syntax`. Unix uses `/` with no volume.
+   Windows accepts `/` and `\`, writes `\`, and recognizes drive volumes
+   such as `C:` and absolute UNC volumes such as `\\server\share`. A drive
+   without a root, such as `C:a`, is relative. Canonical Windows paths retain
+   native case and bytes, including WTF-8. Volumes compare without ASCII case;
+   path components compare exactly so case-sensitive directories stay distinct.
 
-   Pinned by: `OS.Path.parentArc/unix`, `OS.Path.currentArc/unix`,
-   `OS.Path.validVolume/*` *)
+   Reading: `OS.Path.validVolume/windows-root`. The specification lists
+   root-relative Windows paths such as `\a` as absolute, although its
+   validVolume paragraph excludes an empty absolute volume. Rune permits
+   that volume so these paths can be split and rebuilt. UNC server/share
+   volumes extend the drive-volume model. Separator spelling is normalized
+   by toString on Windows, so the textual inverse law applies to paths
+   already written with backslashes.
+
+   Pinned by: `OS.Path.fromString/windows-*`,
+   `OS.Path.validVolume/windows-*`, `OS.Path.mkCanonical/windows-*` *)
 signature OS_PATH =
 sig
   (* Raised when a path cannot be built: an argument is not of the shape the operation needs.
@@ -41,7 +47,8 @@ sig
   (* Raised when an arc holds something no arc may hold.
 
      Implementation: `OS.Path.InvalidArc/what-is-invalid`. On Unix an arc is
-     invalid exactly when it contains a `/`. *)
+     invalid exactly when it contains a `/`. Windows also rejects `\` and
+     arcs starting with a drive volume, such as `C:x`. *)
   exception InvalidArc
 
   (* The arc that names the directory above: `".."`.
@@ -86,7 +93,9 @@ sig
 
   (* `validVolume {isAbs, vol}` is `true` when `vol` is a volume a path of that kind may have.
 
-     On Unix the only volume is the empty one.
+     On Unix the only volume is the empty one. Windows also accepts ASCII
+     drive letters followed by `:`, and UNC server/share volumes for
+     absolute paths. An empty volume permits a current-drive rooted path.
 
      Example: `validVolume {isAbs = true, vol = ""} = true`
 
@@ -192,6 +201,14 @@ sig
 
   (* `mkCanonical p` is `p` with the current arcs dropped, the parent arcs cancelled where they can be, and the separators made single.
 
+     Implementation: `OS.Path.mkCanonical/windows-native-case`. Rune preserves
+     Windows path case instead of following the specification's lowercase-only
+     system note. NTFS directories and WSL shares can be case sensitive;
+     lowercasing can produce a different object or a nonexistent path. Use
+     `OS.FileSys.fileId` to compare filesystem identities across aliases.
+
+     Pinned by: `OS.Path.mkCanonical/windows-lowercase`
+
      Reading: `OS.Path.mkCanonical/root-current-arc`. `"/."` becomes `"/"`,
      because "redundant current arcs are removed", although the
      specification's list of canonical paths has `"/."` among them; every
@@ -210,6 +227,11 @@ sig
 
   (* `isCanonical p` is `true` when `p` is what `mkCanonical` would give.
 
+     Implementation: `OS.Path.isCanonical/windows-native-case`. Native-case
+     Windows paths are canonical under Rune's case-preserving model.
+
+     Pinned by: `OS.Path.isCanonical/windows-case`
+
      Law: `isCanonical p = (mkCanonical p = p)`, and it is run for `p` from
      `BasisDataArb.path`
 
@@ -218,7 +240,7 @@ sig
 
   (* `mkAbsolute {path, relativeTo}` is `path` read as lying under `relativeTo`, canonicalised.
 
-     `path` is given back canonicalised when it is already absolute.
+     `path` is given back unchanged when it is already absolute.
 
      Raises: `Path` if `relativeTo` is not absolute -- also when `path`
      already is.
@@ -264,6 +286,11 @@ sig
 
   (* `isRoot p` is `true` when `p` is a canonical absolute path with no arcs below the root.
 
+     Implementation: `OS.Path.isRoot/windows-native-case`. A native drive root
+     is canonical with either letter case, consistently with `mkCanonical`.
+
+     Pinned by: `OS.Path.isRoot/windows-uppercase`
+
      Reading: `OS.Path.isRoot/double-separator`. `"/"` is a root and `"//"`
      is not: the second has an empty arc under the root.
 
@@ -272,8 +299,9 @@ sig
 
   (* `concat (p, q)` is `q` read as lying under `p`.
 
-     Raises: `Path` if `q` is absolute, or if `q` is relative and `p` has a
-     volume that `q` does not.
+     Raises: `Path` if `q` is absolute, or has a nonempty volume different
+     from that of `p`. Windows drive and UNC volumes compare without ASCII
+     letter case.
 
      Reading: `OS.Path.concat/keeps-the-parent-arc`. The arcs of `q` are
      appended to those of `p` without cancelling: a `p` that ends in the

@@ -1,6 +1,6 @@
 # Index: A
 
-[Overview](../README.md) &middot; **a** [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md)
+[Overview](../README.md) &middot; **a** [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md)
 
 - `answer` (val): [JSON_RPC](../sig/JSON_RPC.md#val-answer)
 

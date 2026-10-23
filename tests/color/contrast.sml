@@ -1,5 +1,5 @@
 (* The palette's contrast (docs/diagnostics.md), formerly contrast.py.
-   Compile with src/util/color.sml: use the actual palette values rather
+   Compile with lib/compiler/util/color.sml: use the actual palette values rather
    than extracting strings from its source. The terminal palettes, floors
    and Machado et al. (2009) matrices are the former test's oracle. *)
 structure Contrast =

@@ -92,7 +92,18 @@ struct
      check ("int and toInt at the edges",
             case (Int.minInt, Int.maxInt) of
               (SOME lo, SOME hi) => Json.toInt (Json.int lo) = SOME lo andalso Json.toInt (Json.int hi) = SOME hi
-            | _ => true))
+            | _ => true);
+     List.app (fn s =>
+       let val n = valOf (IntInf.fromString s)
+       in check ("arbitrary-width integer", Json.toIntInf (Json.intInf n) = SOME n
+                 andalso Json.encode (Json.intInf n) = s) end)
+       ["2147483647", "-2147483648", "18446744073709551616", "-18446744073709551616"];
+     List.app (fn s => check ("malformed integer rejected",
+       Json.toIntInf (Json.Number s) = NONE andalso Json.toInt (Json.Number s) = NONE))
+       ["", "-", "--1", "1-2", "01", "-01", "+1", "1.0", "1e0"];
+     check ("wide integer does not truncate",
+       case Int.maxInt of SOME hi => Json.toInt (Json.intInf (IntInf.+ (IntInf.fromInt hi, 1))) = NONE
+                        | NONE => true))
 
   val tests =
     Test.describe "json/roundtrip"

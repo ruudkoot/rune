@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "date": "2026-10-22",
+  "baseline_commit": "c3e713891e6ea9f32770371427fdfa5f76369255",
+  "meaning": "framing-only paired comparison in one VM; original signature/structure renamed, implementation unchanged",
+  "machine": "Intel Xeon E5-1680 v3, WSL2 x86_64, default VM, no RUNEVM_OPTIONS",
+  "observer": "tests/lsp/framing-performance.sml",
+  "warmup_per_candidate": 1,
+  "paired_repetitions": 5,
+  "policy": "alternate old/new order, collect before each candidate outside timed work, compare decoded bytes after timing",
+  "summary": [
+    {
+      "body_bytes": 4096,
+      "chunk_bytes": 1,
+      "implementation": "new",
+      "samples": 5,
+      "median_wall_us": 613,
+      "median_allocated_bytes": 631752
+    },
+    {
+      "body_bytes": 4096,
+      "chunk_bytes": 1,
+      "implementation": "old",
+      "samples": 5,
+      "median_wall_us": 9957,
+      "median_allocated_bytes": 25534616
+    },
+    {
+      "body_bytes": 16384,
+      "chunk_bytes": 1,
+      "implementation": "new",
+      "samples": 5,
+      "median_wall_us": 1262,
+      "median_allocated_bytes": 2511984
+    },
+    {
+      "body_bytes": 16384,
+      "chunk_bytes": 1,
+      "implementation": "old",
+      "samples": 5,
+      "median_wall_us": 112866,
+      "median_allocated_bytes": 305177312
+    },
+    {
+      "body_bytes": 16384,
+      "chunk_bytes": 64,
+      "implementation": "new",
+      "samples": 5,
+      "median_wall_us": 25,
+      "median_allocated_bytes": 71136
+    },
+    {
+      "body_bytes": 16384,
+      "chunk_bytes": 64,
+      "implementation": "old",
+      "samples": 5,
+      "median_wall_us": 833,
+      "median_allocated_bytes": 4804912
+    },
+    {
+      "body_bytes": 16384,
+      "chunk_bytes": 4096,
+      "implementation": "new",
+      "samples": 5,
+      "median_wall_us": 10,
+      "median_allocated_bytes": 34848
+    },
+    {
+      "body_bytes": 16384,
+      "chunk_bytes": 4096,
+      "implementation": "old",
+      "samples": 5,
+      "median_wall_us": 17,
+      "median_allocated_bytes": 125776
+    }
+  ],
+  "archive": "rune-benchmark-results/lsp/2026-10-22-m2-framing",
+  "source_sha256": {
+    "lib/jsonrpc/framing.sml": "3eb476ee9ee7fc6c3e3beece3a33e3ef03f0f7974177a1b301bc5a22a5ef9246",
+    "lib/jsonrpc/framing_sig.sml": "89faa2756ba4cca8c7686da04df52b9c83f8cf21e1d5be550449753d46f60b9d",
+    "tests/lsp/framing-performance.sml": "1ac4009410ad03e90b5641834bf3e5f5abba2d224e6f3eecabed20c8e309cd23"
+  },
+  "artifacts": {
+    "observer.rbc": {
+      "sha256": "1bdab53d4f561cbeffb06708dab58f06eecf520dccfb007cefd59e8944b32f0d",
+      "bytes": 101585
+    },
+    "old-framing.sml": {
+      "sha256": "46f0547303ac256f537a8f70e7464328218537804dfc7c1d1962b7369d23aed2",
+      "bytes": 4257
+    },
+    "runevm": {
+      "sha256": "5704f3284498171dbe47da35099368a6777e52d3debca214348179fe92115ca5",
+      "bytes": 716304
+    },
+    "samples.jsonl": {
+      "sha256": "4af5a104823136282528bc4f280dfdc1528cb5e8c73428da6895fc932ea23149",
+      "bytes": 4625
+    }
+  }
+}

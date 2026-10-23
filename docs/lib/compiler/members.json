@@ -1,0 +1,615 @@
+{
+ "signatures": {
+  "RUNE_COMPILER": {
+   "doc": "The reusable Rune compiler. Compilation and queries are static;\nexecution is an explicit operation on a compiled unit.\n\n",
+   "page": "sig/RUNE_COMPILER.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "session",
+     "spec": "type session",
+     "doc": "An independent ordered compilation context.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-session"
+    },
+    {
+     "kind": "type",
+     "name": "compiled",
+     "spec": "type compiled",
+     "doc": "A unit's checked basis, bytecode, Mid and source snapshot.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-compiled"
+    },
+    {
+     "kind": "type",
+     "name": "diagnostic",
+     "spec": "type diagnostic = {severity : string, file : string, start : int, stop : int,\n                   line : int, column : int, message : string}",
+     "doc": "A diagnostic uses UTF-8 byte offsets in its source snapshot; line and\ncolumn are one-based.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-diagnostic"
+    },
+    {
+     "kind": "exception",
+     "name": "Failed",
+     "spec": "exception Failed of diagnostic list",
+     "doc": "A compile or artifact operation failed with these diagnostics.\n\n",
+     "page": "sig/RUNE_COMPILER.md#exn-failed"
+    },
+    {
+     "kind": "exception",
+     "name": "Closed",
+     "spec": "exception Closed",
+     "doc": "An operation requires an open compiler context.\n\n",
+     "page": "sig/RUNE_COMPILER.md#exn-closed"
+    },
+    {
+     "kind": "val",
+     "name": "version",
+     "spec": "val version : string",
+     "doc": "The compiler implementation version.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-version"
+    },
+    {
+     "kind": "val",
+     "name": "session",
+     "spec": "val session : {lib : string option, flags : string list} -> session",
+     "doc": "`session {lib, flags}` constructs an independent ordered context.\n\n`NONE` selects the\nlanguage's initial basis; `SOME root` selects the Basis and requested\nlibraries under `root`. No absolute library path is built in.\n\nSupported flags are `--target=registers`, `--target=stack`,\n`--allow-prim`, `--unicode`, `--unicode=utf8`, `--unicode=latin1` and\n`--library NAME`. Unknown flags raise `Failed`. The defaults are\nregister bytecode, ASCII source and no additional libraries.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-session"
+    },
+    {
+     "kind": "val",
+     "name": "close",
+     "spec": "val close : session -> unit",
+     "doc": "`close session` releases its retained compilation history.\n\nRepeated\ncalls do nothing. Operations requiring the context then raise `Closed`;\nimmutable compiled artifacts can still be written to disk.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-close"
+    },
+    {
+     "kind": "val",
+     "name": "compileText",
+     "spec": "val compileText : session * {file : string, text : string} -> compiled",
+     "doc": "`compileText (session, {file, text})` compiles text and appends a unit\nto the context's ordered history on success.\n\nIt uses the context's source mode.\nText is already decoded: Unicode text is UTF-8, also when source\nfiles are Latin-1. Failure leaves the preceding history unchanged.\nNo user declarations, dynamic loads or compiler hooks are executed.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-compiletext"
+    },
+    {
+     "kind": "val",
+     "name": "compileFile",
+     "spec": "val compileFile : session * string -> compiled",
+     "doc": "`compileFile (session, file)` reads a file in the configured source\nmode and compiles it as `compileText` does.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-compilefile"
+    },
+    {
+     "kind": "val",
+     "name": "readUnit",
+     "spec": "val readUnit : session * string -> compiled",
+     "doc": "`readUnit (session, file)` imports a unit and its checked basis/source\ncompanions.\n\nIts required units must already be available in the\ncontext. For older CLI artifacts without a source companion, matching\noriginal source must be available; mismatched source is rejected.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-readunit"
+    },
+    {
+     "kind": "val",
+     "name": "readMid",
+     "spec": "val readMid : session * {basis : string, mid : string} -> compiled",
+     "doc": "`readMid (session, {basis, mid})` reads a checked basis and unit Mid,\nthen generates the context's selected bytecode target.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-readmid"
+    },
+    {
+     "kind": "val",
+     "name": "run",
+     "spec": "val run : compiled -> unit",
+     "doc": "`run unit` links and executes a unit with the runtime dependencies it\nneeds.\n\nUnrelated units are not executed. Dependencies run once per\ncontext; calling `run` again executes this unit again. User exceptions\npropagate unchanged, and a failed initializer can be retried.\n\nSession execution uses separate unit namespaces, including for\nidentical input units. Artifact output retains deterministic portable\nidentities. Use this API to import units that depend on session units;\nraw runtime loading does not rewrite their dependency identities.\n\nRuneVM is required, and execution with libraries requires a host\nprogram built with `--units` so its Basis identities can be shared.\nA whole-program host raises `Fail` before linking any dependencies.\nNative SML hosts support static compilation and\nartifact output but raise `Fail` for execution. Host library units\ncaptured when the adapter starts are reused; normal build order must\ninitialize those libraries before clients invoke the API. Their source\nprovenance must match the configured library; differing or unavailable\nprovenance raises `Fail` before dependencies execute. Explicit unit or\nMid imports cannot replace a colliding host library implicitly.\nReplacing a shared host unit through raw runtime linking invalidates\nits provenance; later runs needing it raise `Fail` before execution.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-run"
+    },
+    {
+     "kind": "val",
+     "name": "writeUnit",
+     "spec": "val writeUnit : compiled * string -> unit",
+     "doc": "`writeUnit (unit, file)` writes a unit and its companion basis, Mid\nand source metadata (`.rbi`, `.rbm`, `.rbs`).\n\nEach file is replaced\natomically; the source integrity record is published last. Readers\nreject a mismatched set.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-writeunit"
+    },
+    {
+     "kind": "val",
+     "name": "writeMid",
+     "spec": "val writeMid : compiled * string -> unit",
+     "doc": "`writeMid (unit, file)` writes the unit's Mid representation.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-writemid"
+    },
+    {
+     "kind": "val",
+     "name": "writeProgram",
+     "spec": "val writeProgram : compiled list * string -> unit",
+     "doc": "`writeProgram (units, file)` links selected units, library finalizers\nand required dependencies into a program file.\n\nUnits must belong to\none context. It does not execute the program.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-writeprogram"
+    },
+    {
+     "kind": "val",
+     "name": "typeAt",
+     "spec": "val typeAt : session * {file : string, offset : int} -> string option",
+     "doc": "`typeAt (session, {file, offset})` returns the checked type of an\nannotated value occurrence, or `NONE` where none exists.\n\nThe offset is a UTF-8 byte offset in the latest ordered history.\nThe innermost occurrence is selected.\nThis initial implementation performs fresh static elaboration; it\ndoes not retain a resident semantic snapshot or execute user code.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-typeat"
+    },
+    {
+     "kind": "structure",
+     "name": "Syntax",
+     "spec": "structure Syntax : sig ... end",
+     "doc": "Lossless editor syntax, separate from the compiler's batch parser.\n\n",
+     "page": "sig/RUNE_COMPILER.md#str-syntax"
+    },
+    {
+     "kind": "type",
+     "name": "Syntax.t",
+     "spec": "type t",
+     "doc": "An immutable syntax snapshot. No mutable compiler annotations escape.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-syntax.t"
+    },
+    {
+     "kind": "type",
+     "name": "Syntax.fixities",
+     "spec": "type fixities",
+     "doc": "An immutable lexical fixity environment, transferable between files.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-syntax.fixities"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.initial",
+     "spec": "val initial : fixities",
+     "doc": "Standard ML's initial fixities.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.initial"
+    },
+    {
+     "kind": "type",
+     "name": "Syntax.piece",
+     "spec": "type piece = {kind:string,start:int,stop:int,text:string}",
+     "doc": "A lossless source piece. start/stop are half-open decoded byte offsets.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-syntax.piece"
+    },
+    {
+     "kind": "type",
+     "name": "Syntax.event",
+     "spec": "type event = {kind:string,start:int,stop:int,values:string list}",
+     "doc": "A structural syntax event. Constructor tags, spans, scalar fields and\nlist lengths distinguish full syntax, including signature constraints.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-syntax.event"
+    },
+    {
+     "kind": "type",
+     "name": "Syntax.work",
+     "spec": "type work = {lexedBytes:int,reusedTokens:int,parsedDeclarations:int,reusedDeclarations:int}",
+     "doc": "Measured work counters for this parse/edit, not elapsed-time estimates.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-syntax.work"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.parse",
+     "spec": "val parse : {file:string,text:string,mode:string,orPatterns:bool,fixity:fixities} -> t",
+     "doc": "`parse request` parses decoded text with the selected mode and incoming\nfixities. orPatterns enables Rune's optional pattern extension.\n\nMalformed syntax is retained with diagnostics and bounded recovery.\nIt does not execute or elaborate declarations. Unknown modes raise Failed.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.parse"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.edit",
+     "spec": "val edit : t * {start:int,stop:int,text:string,fixity:fixities} -> t",
+     "doc": "`edit (snapshot, change)` applies one byte-range replacement and updates\nsyntax. Incoming fixities can change after an earlier file is edited.\n\nIt reuses unchanged lexical suffixes and declarations only with matching\ntoken boundaries and incoming fixities. Invalid byte ranges raise Subscript.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.edit"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.text",
+     "spec": "val text : t -> string",
+     "doc": "`text snapshot` returns exactly its decoded source bytes.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.text"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.fixities",
+     "spec": "val fixities : t -> fixities",
+     "doc": "`fixities snapshot` returns the environment exported to the next file.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.fixities"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.pieces",
+     "spec": "val pieces : t -> piece list",
+     "doc": "`pieces snapshot` returns nonoverlapping pieces whose concatenation is\nthe entire original text, including comments and malformed tokens.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.pieces"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.events",
+     "spec": "val events : t -> event list",
+     "doc": "`events snapshot` returns structural syntax events without annotation refs.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.events"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.diagnostics",
+     "spec": "val diagnostics : t -> diagnostic list",
+     "doc": "`diagnostics snapshot` returns parse/lexical errors in its own source.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.diagnostics"
+    },
+    {
+     "kind": "val",
+     "name": "Syntax.work",
+     "spec": "val work : t -> work",
+     "doc": "`work snapshot` reports lexical and declaration reuse for this operation.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.work"
+    },
+    {
+     "kind": "structure",
+     "name": "Project",
+     "spec": "structure Project : sig ... end",
+     "doc": "The compiler's immutable project model, shared with the CLI.\n\n",
+     "page": "sig/RUNE_COMPILER.md#str-project"
+    },
+    {
+     "kind": "type",
+     "name": "Project.t",
+     "spec": "type t",
+     "doc": "A scoped plan and the inputs captured while discovering it.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-project.t"
+    },
+    {
+     "kind": "type",
+     "name": "Project.source",
+     "spec": "type source = {file : string, annotations : string list, mode : string, ordinal : int}",
+     "doc": "An ordered source occurrence; repeated paths retain their separate\noccurrences and annotations. mode is ascii, unicode or unicode=latin1.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-project.source"
+    },
+    {
+     "kind": "type",
+     "name": "Project.input",
+     "spec": "type input = {file : string, text : string, mode : string, kind : string, revision : string}",
+     "doc": "A captured build or group-analysis input. revision hashes decoded\ntext together with its source mode.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-project.input"
+    },
+    {
+     "kind": "type",
+     "name": "Project.buildReference",
+     "spec": "type buildReference={kind:string,value:string,start:int,stop:int,quoted:bool}",
+     "doc": "A build parser path occurrence. kind is source, build, directory or\nlibrary; the byte range includes any quotes and value excludes them.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-project.buildreference"
+    },
+    {
+     "kind": "type",
+     "name": "Project.pathCompletion",
+     "spec": "type pathCompletion={label:string,text:string,kind:string,start:int,stop:int}",
+     "doc": "A bounded filesystem/path-variable completion. Its replacement range\nand text include required build-language quoting.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-project.pathcompletion"
+    },
+    {
+     "kind": "type",
+     "name": "Project.buildLink",
+     "spec": "type buildLink={kind:string,target:string,start:int,stop:int}",
+     "doc": "A build reference expanded through the compiler's actual path rules.\ntarget preserves read-path arcs; its existence is not inspected.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-project.buildlink"
+    },
+    {
+     "kind": "val",
+     "name": "Project.buildSyntax",
+     "spec": "val buildSyntax : {file:string,text:string} -> {references:buildReference list,diagnostics:diagnostic list}",
+     "doc": "`buildSyntax request` returns observed path roles and structured build\ndiagnostics through the compiler's own lexer/parser.\n\nRecovery retains unfinished quoted paths and variables. No files are\nread and no project declarations execute.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-project.buildsyntax"
+    },
+    {
+     "kind": "val",
+     "name": "Project.buildLinks",
+     "spec": "val buildLinks : session * {file:string,text:string,variables:(string*string) list,windows:bool} -> buildLink list",
+     "doc": "`buildLinks (session, request)` expands complete build path tokens.\n\nSource/build/cache paths use the build directory and configured path\nvariables. Libraries use the same directory resolver as the compiler.\nUnfinished quotes and unresolved variables are omitted. This query\nperforms no filesystem reads or execution; offsets include quotes.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-project.buildlinks"
+    },
+    {
+     "kind": "val",
+     "name": "Project.pathCompletions",
+     "spec": "val pathCompletions : session * {file:string,text:string,offset:int,variables:(string*string) list,windows:bool} ->\n  {items:pathCompletion list,isIncomplete:bool}",
+     "doc": "`pathCompletions (session, request)` lists matching paths or variables\nat a build cursor without building or executing the project.\n\nByte ranges refer to captured text. Windows roots/UNC and configured\npath variables follow the compiler project rules. Directory scanning\nis bounded to 8192 entries and results to 512; isIncomplete reports\ntruncation. Native filename bytes are preserved in returned strings.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-project.pathcompletions"
+    },
+    {
+     "kind": "val",
+     "name": "Project.read",
+     "spec": "val read : session * {file : string, variables : (string * string) list,\n                      overlays : {file : string, text : string} list, windows : bool} -> t",
+     "doc": "`read (session, request)` resolves a build through compiler rules,\npreserving scopes, order, annotations, virtual implementations and use.\n\nVariables are path-variable bindings. Overlays are already decoded\nUTF-8, also for Latin-1 source files. windows selects Windows drive/UNC\nsyntax independently of the host operating system. No user declarations execute and no cache\nfiles are written. Failure is reported through Failed.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-project.read"
+    },
+    {
+     "kind": "val",
+     "name": "Project.sources",
+     "spec": "val sources : t -> source list",
+     "doc": "`sources project` lists source occurrences in compiler order.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-project.sources"
+    },
+    {
+     "kind": "val",
+     "name": "Project.inputs",
+     "spec": "val inputs : t -> input list",
+     "doc": "`inputs project` is the captured build and group-discovery text.\nNormal ordered sources need not be parsed to discover membership.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-project.inputs"
+    },
+    {
+     "kind": "val",
+     "name": "Project.libraries",
+     "spec": "val libraries : t -> string list",
+     "doc": "`libraries project` lists library-header dependencies in source order.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-project.libraries"
+    },
+    {
+     "kind": "val",
+     "name": "Project.cacheDirectories",
+     "spec": "val cacheDirectories : t -> string list",
+     "doc": "`cacheDirectories project` lists declared cache paths. Reading a\nproject does not create or write these directories.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-project.cachedirectories"
+    },
+    {
+     "kind": "val",
+     "name": "Project.fingerprint",
+     "spec": "val fingerprint : t -> string",
+     "doc": "`fingerprint project` identifies the captured plan, configuration\nand discovery inputs. It is not a persisted analysis snapshot.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-project.fingerprint"
+    },
+    {
+     "kind": "structure",
+     "name": "Analysis",
+     "spec": "structure Analysis : sig ... end",
+     "doc": "Versioned static analysis with immutable query data and replay checkpoints.\n\n",
+     "page": "sig/RUNE_COMPILER.md#str-analysis"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.t",
+     "spec": "type t",
+     "doc": "An analysis context belonging to one compiler session.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.t"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.snapshot",
+     "spec": "type snapshot",
+     "doc": "A frozen result. It remains readable after either context is closed.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.snapshot"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.checkpoint",
+     "spec": "type checkpoint",
+     "doc": "A validated unit-cache checkpoint belonging to one analysis context.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.checkpoint"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.input",
+     "spec": "type input={file:string,text:string,mode:string,annotations:string list,revision:string}",
+     "doc": "An ordered decoded source occurrence.\n\nrevision is the caller's source\nidentity/version; an empty mode selects the compiler session's mode.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.input"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.location",
+     "spec": "type location={file:string,start:int,stop:int}",
+     "doc": "A half-open source byte range, before LSP position conversion.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.location"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.occurrence",
+     "spec": "type occurrence={unit:string,file:string,start:int,stop:int,kind:string,name:string,path:string list,\n  binding:string option,definition:location option,declaration:location option,isDefinition:bool,derived:bool}",
+     "doc": "An actual compiler-resolved binding occurrence.\n\nThe range can cover\nits enclosing syntax, so editing clients must locate identifier tokens.\nderived marks a copied functor body rather than original source syntax.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.occurrence"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.fact",
+     "spec": "type fact={unit:string,file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}",
+     "doc": "A frozen inferred type.\n\nconstructors are semantic type identities;\narguments contains curried domains, with tuple components grouped.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.fact"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.typeDefinition",
+     "spec": "type typeDefinition={id:string,definition:location option,declaration:location option,implementation:location option}",
+     "doc": "A named type's source relationships.\n\nAbstract types retain their\nspecification separately from the known implementation.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.typedefinition"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.candidate",
+     "spec": "type candidate={name:string,kind:string,detail:string option,arguments:string list list,definition:location option}",
+     "doc": "A compiler-visible name and its frozen completion detail.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.candidate"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.call",
+     "spec": "type call={name:string,path:string list,detail:string,arguments:string list list,argument:int,parameter:int}",
+     "doc": "A compiler-resolved application at the cursor. argument selects a\ncurried domain; parameter selects a tuple component of that domain.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.call"
+    },
+    {
+     "kind": "type",
+     "name": "Analysis.typeHint",
+     "spec": "type typeHint={name:string,position:int,ty:string,binding:string,location:location}",
+     "doc": "An inferred variable-pattern type at the end of its actual name token.\nbinding is an opaque lexical identity; location selects that token.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.typehint"
+    },
+    {
+     "kind": "exception",
+     "name": "Analysis.Cancelled",
+     "spec": "exception Cancelled",
+     "doc": "Cancellation discarded an attempt before publishing its cache.\n\n",
+     "page": "sig/RUNE_COMPILER.md#exn-analysis.cancelled"
+    },
+    {
+     "kind": "exception",
+     "name": "Analysis.Busy",
+     "spec": "exception Busy",
+     "doc": "An operation re-entered or closed a context during an active check.\n\n",
+     "page": "sig/RUNE_COMPILER.md#exn-analysis.busy"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.create",
+     "spec": "val create : session * {context:string} -> t",
+     "doc": "`create (compiler, {context})` creates an isolated analysis history.\n\ncontext identifies the caller's project/target. It does not append to\nthe compiler's executable history or execute user code.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.create"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.close",
+     "spec": "val close : t -> unit",
+     "doc": "`close context` releases its retained caches; repeated calls do nothing.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.close"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.check",
+     "spec": "val check : t * {project:Project.t option,inputs:input list,cancelled:unit->bool} -> snapshot",
+     "doc": "`check (context, request)` checks captured inputs in compiler order.\n\nA project must come from the same compiler session; inputs must match\nits ordered occurrences, modes, annotations and group-discovery text.\nWithout a project the inputs form an ordered loose-file context.\nNo files or artifacts are written, and user initializers never run.\n\nValid unchanged prefixes replay checked bases. Changed units receive\nfresh annotation slots in a fresh compiler owner. A failed unit returns\ndiagnostics and query data for its validated prefix; later units remain\nunavailable. Cancellation is polled between analysis phases and units;\na supervisor must bound phases that cannot yet be interrupted.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.check"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.checkpoint",
+     "spec": "val checkpoint : t -> checkpoint",
+     "doc": "`checkpoint context` captures only committed, validated unit entries.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.checkpoint"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.restore",
+     "spec": "val restore : t * checkpoint -> unit",
+     "doc": "`restore (context, checkpoint)` restores a cache from that same context.\nThe next check still validates its full configuration and inputs.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.restore"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.id",
+     "spec": "val id : snapshot -> string",
+     "doc": "`id snapshot` is unique within this analysis context's lifetime.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.id"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.context",
+     "spec": "val context : snapshot -> string",
+     "doc": "`context snapshot` returns the caller's project/target identity.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.context"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.project",
+     "spec": "val project : snapshot -> string option",
+     "doc": "`project snapshot` returns its captured project fingerprint, if any.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.project"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.inputs",
+     "spec": "val inputs : snapshot -> input list",
+     "doc": "`inputs snapshot` returns the exact captured user source occurrences.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.inputs"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.unitAt",
+     "spec": "val unitAt : snapshot * {ordinal:int} -> string option",
+     "doc": "`unitAt (snapshot, position)` returns the opaque unit identity of a\nprimary source occurrence by its zero-based ordinal.\n\nCompare it with occurrence/fact unit fields within this snapshot;\ndo not interpret its spelling. An invalid ordinal returns NONE.\nIt remains readable after closing the analysis context or session.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.unitat"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.syntaxAt",
+     "spec": "val syntaxAt : snapshot * {ordinal:int} -> Syntax.t option",
+     "doc": "`syntaxAt (snapshot, position)` returns the captured syntax of an\nattempted primary source occurrence, using its actual incoming fixities.\n\nA failed parse retains its current text and recovery diagnostics. An\ninvalid ordinal, or an input not reached after an earlier failure,\nreturns NONE. The result is immutable and survives closing its owner.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.syntaxat"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.dependencies",
+     "spec": "val dependencies : snapshot -> input list",
+     "doc": "`dependencies snapshot` returns captured library source and identities.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.dependencies"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.diagnostics",
+     "spec": "val diagnostics : snapshot -> diagnostic list",
+     "doc": "`diagnostics snapshot` returns source-addressed analysis diagnostics.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.diagnostics"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.occurrences",
+     "spec": "val occurrences : snapshot -> occurrence list",
+     "doc": "`occurrences snapshot` returns frozen lexical binding relationships.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.occurrences"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.types",
+     "spec": "val types : snapshot -> typeDefinition list",
+     "doc": "`types snapshot` returns semantic constructor identities and sources.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.types"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.facts",
+     "spec": "val facts : snapshot -> fact list",
+     "doc": "`facts snapshot` returns inferred types without mutable compiler refs.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.facts"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.work",
+     "spec": "val work : snapshot -> {checked:int,reused:int}",
+     "doc": "`work snapshot` reports checked and replayed units, including libraries.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.work"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.typeAt",
+     "spec": "val typeAt : snapshot * {file:string,offset:int} -> string option",
+     "doc": "`typeAt (snapshot, position)` returns its innermost original-source type.\n\nCopied-body facts are used only where no original fact is available.\nA file with several source occurrences requires typeAtOccurrence.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.typeat"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.typeAtOccurrence",
+     "spec": "val typeAtOccurrence : snapshot * {ordinal:int,offset:int} -> string option",
+     "doc": "`typeAtOccurrence (snapshot, {ordinal, offset})` queries one ordered\nsource occurrence, preserving its incoming build context.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.typeatoccurrence"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.typeHints",
+     "spec": "val typeHints : snapshot * {ordinal:int,start:int,stop:int} -> typeHint list",
+     "doc": "`typeHints (snapshot, range)` returns checked, unannotated variable\npatterns whose hint positions lie between start and stop, inclusively.\n\nOffsets address one ordered source occurrence. Explicitly typed\npatterns, constructors and copied bodies are excluded. Invalid ordinals\nor reversed/negative ranges return no hints. No source is rechecked;\nthe result remains readable after closing the context or session.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.typehints"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.visibleAt",
+     "spec": "val visibleAt : snapshot * {ordinal:int,offset:int,path:string list} -> candidate list",
+     "doc": "`visibleAt (snapshot, position)` returns actual lexical bindings at a\nsource occurrence's byte offset, or members of path.\n\nIt replays validated prefixes and rechecks the requested unit. Only\nfrozen names/details escape; no mutable environment is published.\nIncomplete expressions can use bounded private syntax probes whose\nfacts and diagnostics are never published as original-source data.\nThe snapshot remains queryable after its context closes.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.visibleat"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.signatureAt",
+     "spec": "val signatureAt : snapshot * {ordinal:int,offset:int} -> call option",
+     "doc": "`signatureAt (snapshot, position)` returns the enclosing named\napplication's checked callable type and argument position.\n\nApplication structure comes from compiler syntax, including derived\ninfix applications. Incomplete expressions use the same private\nprobes as visibleAt. Unavailable or non-callable names return NONE.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.signatureat"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.completionAt",
+     "spec": "val completionAt : snapshot * {ordinal:int,offset:int,path:string list} ->\n  {role:string,fields:(string*string) list,candidates:candidate list}",
+     "doc": "`completionAt (snapshot, position)` returns lexical candidates and\nthe compiler syntax role at the cursor.\n\nrole is expression, pattern, type, field, structure, signature, declaration\nor unknown. fields contains labels and types only where a checked\nrecord operand/pattern supplies a concrete record type. A consumer\nmay filter namespaces without implementing a second parser.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.completionat"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.documentationAt",
+     "spec": "val documentationAt : snapshot * location -> string option",
+     "doc": "`documentationAt (snapshot, location)` returns the leading source\ncomment of the declaration owning that captured location.\n\nIt uses captured source and syntax, including library dependencies;\nit does not reread disk files. The comment delimiters are removed.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.documentationat"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "RuneCompiler": "RUNE_COMPILER"
+ }
+}

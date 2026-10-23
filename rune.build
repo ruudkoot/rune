@@ -1,12 +1,6 @@
-(* The build file of Rune compiler sources. Every SML build file (MLton
-  .mlb, SML/NJ .cm, Poly/ML use-script) is generated from this file by
-  scripts/gen-build-files.sh -- edit only this file. Files must contain only
-  structure/signature/functor declarations. *)
+(* Compiler libraries followed by the command-line driver. *)
 build/config.sml
 files
-  src/util/scon.sml
-  src/util/ordmap.sml
-  src/util/inttable.sml
   lib/unicode/utf8_sig.sml
   lib/unicode/utf8.sml
   lib/unicode/width_data.sml
@@ -24,67 +18,12 @@ files
   lib/unicode/security_data.sml
   lib/unicode/security_sig.sml
   lib/unicode/security.sml
-  src/util/ident.sml
-  src/util/source.sml
-  src/util/error.sml
   lib/json/json_sig.sml
   lib/json/json.sml
-  src/util/color.sml
-  src/util/diagnostic.sml
-  src/util/pass.sml
-  src/util/usage.sml
-  src/util/pickle.sml
-  src/frontend/token.sml
-  src/frontend/lexer.sml
-  src/elab/elabstats.sml
-  src/elab/types.sml
-  src/core/ty.sml
-  src/elab/overload.sml
-  src/frontend/ast.sml
-  src/frontend/fixity.sml
-  src/frontend/parser.sml
-  src/elab/unify.sml
-  src/elab/env.sml
-  src/elab/sigmatch.sml
-  src/elab/exhaust.sml
-  src/backend/opcodes.sml
-  src/backend/prims.sml
-  src/elab/elaborate.sml
-  src/core/lambda.sml
-  src/core/lambdalint.sml
-  src/core/matchcomp.sml
-  src/core/translate.sml
-  src/core/mid.sml
-  src/core/midlint.sml
-  src/core/midtext.sml
-  src/core/tomid.sml
-  src/core/midcanon.sml
-  src/core/target.sml
-  src/core/shake.sml
-  src/core/lift.sml
-  src/core/simplify.sml
-  src/core/workers.sml
-  src/core/refs.sml
-  src/backend/code.sml
-  src/backend/low.sml
-  src/backend/target.sml
-  src/backend/lowlint.sml
-  src/backend/rep.sml
-  src/backend/lower.sml
-  src/backend/stack.sml
-  src/backend/regcodes.sml
-  src/backend/regs.sml
-  src/backend/emit.sml
-  src/backend/link.sml
-  src/backend/unitfile.sml
-  src/driver/basismanifest.sml
-  src/driver/buildfile.sml
+end
+use lib/compiler/internal.build
+files
   src/driver/options.sml
-  src/driver/unitbasis.sml
-  src/driver/pipeline.sml
-  src/driver/unitmid.sml
-  src/driver/unitcache.sml
-  src/driver/deps.sml
   src/driver/parallel.sml
   src/driver/main.sml
   src/driver/serve.sml

@@ -66,6 +66,9 @@ struct
   val make =
     Test.describe "make"
       [some ("check-docs-generated", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
+       alone ("test-lsp-protocol", [], ["src/lsp/*", "lib/lsp/*", "lib/jsonrpc/*", "tests/lsp/*", "tools/lsp/*", "runelsp.build"]),
+       alone ("test-compiler-state", [], ["lib/compiler/*", "tests/lib/compiler/*", "tests/compiler/*", "tools/compiler/*", "rune-compiler-state*.build"]),
+       alone ("test-lsp-bench", [], ["tools/lsp/*", "tests/lsp/*", "rune-lsp-bench.build"]),
        alone ("bench-coverage", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
        alone ("check-isa", [], [])]
 
@@ -139,7 +142,7 @@ struct
   (* These inputs can change every produced program or the machinery that
      judges it. Give every leaf their coverage, even when a narrower group
      also names the same file (for example Basis docs or JIT dump checks). *)
-  val broadInputs = ["src/*", "runtime/*", "lib/basis/*", "lib/test/runner/*",
+  val broadInputs = ["src/*", "lib/compiler/*", "runtime/*", "lib/basis/*", "lib/test/runner/*",
                      "Makefile", "tools/builder/*", "tools/generate/*", "scripts/*"]
   val tests = List.foldl (fn (path, tree) => Test.tag ("covers:" ^ path) tree)
     (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, ForeignModelJobs.tree, FfiJobs.tree, Canary.tests]) broadInputs

@@ -8,6 +8,16 @@ struct
   fun need (ok,why)=if ok then () else raise Failed why
   fun safe name=String.translate (fn #"/" => "_" | ch => str ch) name
   fun normalized (endpoint : endpoint) text=if #windows endpoint then String.translate (fn #"\r" => "" | ch => str ch) text else text
+  fun private tag (endpoint:endpoint) : endpoint =
+    let val base= #directory endpoint
+        val ()=mkdirs base
+        val stem=base ^ "/" ^ tag ^ "-" ^ SysWord.toString (Posix.Process.pidToWord (Posix.ProcEnv.getpid ()))
+        fun reserve n=if n=100 then raise Failed "cannot reserve VM oracle staging" else
+          let val path=stem ^ "-" ^ Int.toString n
+          in (OS.FileSys.mkDir path;path) handle e as OS.SysErr (_,SOME code) =>
+            if code=Posix.Error.exist then reserve (n+1) else raise e end
+    in {name= #name endpoint,program= #program endpoint,directory=reserve 0,windows= #windows endpoint,
+      options= #options endpoint,environment= #environment endpoint} end
   fun execute logs label (endpoint : endpoint) args =
     let val ()=(mkdirs logs;mkdirs (#directory endpoint))
         val stdout=logs ^ "/" ^ safe label ^ ".out"
@@ -17,8 +27,9 @@ struct
              {cmd= #program endpoint :: #options endpoint @ args,dir=SOME (#directory endpoint),stdin="",stdout=stdout,stderr=stderr,timeout=900}
     in need (status=0,"VM oracle command failed: " ^ label ^ ": " ^ read stderr);
        (normalized endpoint (read stdout),normalized endpoint (read stderr)) end
-  fun count logs bytecode options endpoints =
-    let fun one (endpoint : endpoint) =
+  fun countWith staging logs bytecode options endpoints =
+    let val endpoints=List.map staging endpoints
+        fun one (endpoint : endpoint) =
           let val ()=MatrixLoad.copy (bytecode,#directory endpoint ^ "/prog.rbc")
               val (_,errors)=execute logs ("count-" ^ #name endpoint) endpoint (["--count"] @ options @ ["prog.rbc"])
               val lines=List.filter (String.isPrefix "runevm: count:") (lines errors)
@@ -27,8 +38,10 @@ struct
         val ()=need (not (null counts),"no endpoints for count oracle")
         val expected= #2 (hd counts)
     in List.app (fn (name,value) => need (value=expected,"VM counts differ: " ^ name ^ ": " ^ value ^ "; expected " ^ expected)) counts end
+  fun count logs bytecode options endpoints=countWith (private "count") logs bytecode options endpoints
   fun images logs bytecode imageName endpoints =
-    let val ()=List.app (fn endpoint : endpoint =>
+    let val endpoints=List.map (private "image") endpoints
+        val ()=List.app (fn endpoint : endpoint =>
               (mkdirs (#directory endpoint ^ "/tests/out");MatrixLoad.copy (bytecode,#directory endpoint ^ "/prog.rbc"))) endpoints
         fun pair (writer : endpoint) (reader : endpoint) =
           if #name writer= #name reader then () else

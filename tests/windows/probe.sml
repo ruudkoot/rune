@@ -13,6 +13,10 @@ val () = check ("vm-malformed-file-access",
   (ignore (OS.FileSys.access ("\255", [])); false) handle OS.SysErr (_, SOME e) => OS.errorName e = "ilseq" | _ => false)
 val here = OS.FileSys.getDir ()
 val base = OS.FileSys.tmpName ()
+val () = check ("vm-native-filesystem-paths", OS.Path.getVolume here <> "" andalso
+  OS.Path.isCanonical here andalso OS.Path.isAbsolute base andalso
+  OS.Path.getVolume base <> "" andalso String.isSubstring "\\" here andalso
+  String.isSubstring "\\" base andalso not (String.isPrefix "/" base))
 val () = (OS.FileSys.remove base; OS.FileSys.mkDir base)
 val piece = "abcdefghijabcdefghijabcdefghijabcdefghij\206\187"
 fun deep (path, 0) = path

@@ -16,15 +16,15 @@ documentation and its evidence beside the tests before this plan is retired.
 | Milestone | What | Depends on | State |
 |---|---|---|---|
 | M0 | This roadmap, baseline and protocol inventory | none | done 2026-10-22; verification below; measurements remain M1 |
-| M1 | Reference study, fixtures and performance baselines | M0 | planned |
-| M2 | Protocol libraries, transport, lifecycle and harness | M0 | planned |
-| M3 | Documents, positions, workspaces and build contexts | M2 | planned |
-| M4 | Incremental syntax, recovery and the parser decision | M1, M3 | planned |
-| M5 | Compiler sessions, semantic snapshots and invalidation | M3, M4; compiler-library M1-M4 and the analysis contract below | planned |
-| M6 | Document and workspace diagnostics | M5 | planned |
-| M7 | Hover, navigation and symbols | M5 | planned |
-| M8 | Completion, signature help and inline completion | M7 | planned |
-| M9 | Highlighting, hints, structural editing, links and colours | M4, M7 | planned |
+| M1 | Reference study, fixtures and performance baselines | M0 | in progress: SML harness and Linux baseline recorded; native Windows measurement remains |
+| M2 | Protocol libraries, transport, lifecycle and harness | M0 | in progress: protocol foundation and focused Linux checks implemented; final profile/platform acceptance remains |
+| M3 | Documents, positions, workspaces and build contexts | M2 | in progress: synchronization, reusable codecs, shared project planning and workspace requests implemented; combined/platform acceptance pending |
+| M4 | Incremental syntax, recovery and the parser decision | M1, M3 | in progress: separate SML parser, lossless pieces, lexical/declaration reuse, AST bridge and differential checks implemented; performance/platform acceptance pending |
+| M5 | Compiler sessions, semantic snapshots and invalidation | M3, M4; compiler-library M1-M4 and the analysis contract below | in progress: immutable queries, scoped replay, provenance, supervised workers and scheduling/integration implemented; settings/recovery/performance and full acceptance remain |
+| M6 | Document and workspace diagnostics | M5 | in progress: push/pull/workspace reports, refresh, cancellation and partial progress implemented; full coverage/performance acceptance remains |
+| M7 | Hover, navigation and symbols | M5 | in progress: navigation, document/workspace symbols and stale resolve tests pass; documentation, broader module cases and measurements remain |
+| M8 | Completion, signature help and inline completion | M7 | in progress: lexical/qualified/record completion, documentation resolve, invocation snippets, signature help, negotiated inline patterns and build-file path completion implemented; broader recovery and full acceptance remain |
+| M9 | Highlighting, hints, structural editing, links and colours | M4, M7 | in progress: document highlights, captured syntax, folding/selection, semantic tokens, inferred pattern hints and compiler-resolved build links implemented; colours, safe linked editing and full acceptance remain |
 | M10 | References, rename and workspace/file edits | M5-M7 | planned |
 | M11 | Formatting, code actions, refactorings and lenses | M4, M7-M10 | planned |
 | M12 | Call hierarchy, monikers and virtual source content | M7, M10 | planned |
@@ -37,6 +37,19 @@ declared done through an adapter that repeatedly calls the current global
 driver. The usable preview is after M8 and its prerequisite checks: a
 standalone server with project analysis, diagnostics, navigation and
 completion. M9-M13 remain required for full acceptance at M14.
+
+Implementation began on 2026-10-22 in the isolated `language-server`
+worktree, branched from refreshed `origin/master` at
+`c3e713891e6ea9f32770371427fdfa5f76369255`. The M0 checks below describe
+the earlier documentation baseline; they are not acceptance results for
+this new branch. M1 remeasures the current compiler and records its own
+fixture and tool identities.
+
+The owner also explicitly requested the compiler-library refactor as part
+of this work on 2026-10-22. This branch therefore owns the prerequisites
+in [compiler-library.md](compiler-library.md), including extraction,
+exports, session isolation, the public API and client migration; it will
+not leave M5 waiting for an unspecified external implementation.
 
 ## The request and the decisions
 
@@ -507,7 +520,7 @@ must map to a transcript or semantic fixture, including exclusions.
 | `textDocument/inlineCompletion` | C>S R | P M8 | inlineCompletionProvider; textDocument.inlineCompletion | Deterministic syntactic/typed templates; no remote model dependency. Q1 |
 | `textDocument/semanticTokens/full` | C>S R | P M9 | semanticTokensProvider; textDocument.semanticTokens | Negotiated legend, real binding kinds and modifiers. Q2 |
 | `textDocument/semanticTokens/full/delta` | C>S R | P M9 | semanticTokensProvider.full.delta; requests.full.delta | Deltas only from matching retained result IDs; otherwise a full result. Q2 |
-| `textDocument/semanticTokens/range` | C>S R | P M9 | semanticTokensProvider.range; requests.range | Correct clipped token ranges in the negotiated encoding. Q2 |
+| `textDocument/semanticTokens/range` | C>S R | P M9 | semanticTokensProvider.range; requests.range | Whole intersecting tokens in the negotiated encoding. Q2 |
 | `workspace/semanticTokens/refresh` | S>C R | P M9 | workspace.semanticTokens.refreshSupport | Refresh when dependencies/configuration change classifications. Q2 |
 | `textDocument/documentHighlight` | C>S R | P M9 | documentHighlightProvider; textDocument.documentHighlight | Current-document occurrences by identity, with justified read/write kinds. Q2 |
 | `textDocument/inlayHint` | C>S R | P M9 | inlayHintProvider; textDocument.inlayHint | Inferred type/parameter hints with positions and bounded density. Q2 |
@@ -660,6 +673,52 @@ by editing this document.
   Parser sharing already has the stricter fixed gate above. Other initial
   latency targets remain labelled proposals until this measurement.
 
+#### M1, implemented so far (2026-10-22)
+
+`make lsp-bench` builds the SML measurement program from
+`rune-lsp-bench.build`; `make test-lsp-bench` runs arithmetic/fault oracles
+and independent command-level acceptance. [The fixture and command
+contract](../../tests/lsp/README.md) documents strict result-directory
+ownership, fixture verdicts, source identities, separate timed phases,
+warmup exclusion, retention passes and prototype-service measurements.
+
+The [initial ledger](../../tests/lsp/baseline/2026-10-22-initial.json)
+records 700 frontend/edit phase samples, 20 independent prototype startup
+and query runs, raw-artifact hashes, source hashes and proposed budgets.
+The machine was an Intel Xeon E5-1680 v3 at 3.20 GHz under WSL2, with 16
+available processors. The Linux run used 20 repetitions, three warmups
+and three separate retention cycles. The raw measurements and observer
+binaries are archived under
+`rune-benchmark-results/lsp/2026-10-22-language-server-m1`.
+
+| Existing newline service, microseconds | p50 | p95 | p99 |
+|---|---|---|---|
+| Process startup and initialize | 32415 | 45889 | 49826 |
+| First diagnostics in a private unit cache | 31871 | 58698 | 59438 |
+| Repeated diagnostics | 24395 | 43749 | 50108 |
+| Repeated hover | 30963 | 44580 | 51358 |
+
+The prototype starts a fresh child for each analysis request; these are
+not resident runelsp query results. Its self-hosted entry implements
+`--serve`, while current native-host entries call the batch driver.
+Private cache/process runs do not flush the operating-system disk cache.
+After three separately collected fixture replays, live data was 439344,
+439320 and 439296 bytes: this small observed run is not the future
+100-cycle project-retention acceptance test.
+
+The current lexer already has `Lexer.scan`, a tolerant line scanner with
+comment/gap state used for presentation. M4 should reuse that knowledge
+and `lexerOf`'s token rules where appropriate; neither is a complete
+incremental syntax tree or a replacement for the parser-sharing gate.
+
+Validated here: fixture classification, ordered fixity, the independently
+interpreted stale-fixity fault, edit/undo replay, sample/warmup counts,
+prototype diagnostics/hover, refusal to overwrite evidence, and refusal
+to publish successful timing summaries after planted verdict/service
+failures. Native Windows measurements and unavailable future query/
+cancellation paths remain unrecorded. M2 can proceed independently while
+those platform measurements are completed.
+
 ### M2. Protocol and harness (L)
 
 * **Depends on:** M0.
@@ -679,6 +738,44 @@ by editing this document.
   integer boundary probes. Library changes include signature docs and
   generated library documentation as the repository requires.
 
+#### M2, implemented so far (2026-10-22)
+
+`lib/lsp` supplies portable wire integers, positions/ranges, envelopes,
+capability negotiation and bounded request ownership. The generated
+inventory has 95 methods, 814 declared wire properties and 250 enum
+members; its source, hash and CC BY 4.0 attribution are preserved in
+`tools/lsp/protocol`. Generation and a planted stale-output rejection are
+tested by `make test-lsp-protocol` and `make check-lsp-protocol`.
+
+`make lsp` builds `bin/runelsp`. Independent transcripts validate its
+stdio lifecycle, full-width ids, encoding negotiation, initialization
+progress, tracing, malformed notification/response handling, bounds and
+interactive reads without EOF. It advertises no editing providers yet.
+The [permanent user manual](../language-server.md) and
+[wire contract](../lsp-protocol.md) describe the implemented behavior.
+
+Shared changes include `Json.intInf`/`toIntInf`, exact JSON-RPC ids/error
+codes and a persistent bounded framing reader. The
+[paired framing ledger](../../tests/lsp/baseline/2026-10-22-framing.json)
+records the original/candidate payload oracle, timings and allocations.
+Repository adapters were updated for the new id type. Clean-worktree
+protocol-test targets now depend explicitly on their migrated helper;
+the new LSP acceptance targets are registered in the normal check tier.
+
+Focused validation passed: five portable LSP groups, independent wire
+transcripts, baseline-producer/fault checks, generated inventory/fault
+checks, all 11 documentation-consistency tests, REPL protocol (13), DAP
+(7) and kernel (9). The protocol integrations were run serially after a
+concurrent invocation exposed the runner's shared history-tempfile race.
+
+The six-host library run exposed an obsolete MLKit JSON-RPC deviation, an
+intermittent SML/NJ 2026.2 shrink failure, and a new MLKit LSP capability
+lookup failure. The first was removed, the second classified HOST-FLAKY,
+and the third recorded HOST-BUG after the identical suite passed the
+diagnostic `-no_ri` build. Default library/compiler flags remain unchanged.
+Fresh classified host/profile acceptance and native Windows acceptance
+remain pending; failed exploratory invocations are not counted as passes.
+
 ### M3. Documents and projects (L)
 
 * **Depends on:** M2.
@@ -694,6 +791,36 @@ by editing this document.
   unsaved build edits select the corresponding new context, and malformed
   transitions preserve the last valid document state. Record text/index
   update latency and memory from M1 traces.
+
+M3 implementation checkpoint (2026-10-22):
+
+* `lib/lsp` provides strict UTF-8/16/32 position conversion, bounded sparse
+  indexes and POSIX/Windows URI conversion, including WTF-8 filename bytes.
+  Atomic sequential document changes preserve the preceding valid snapshot
+  on failure and quarantine malformed transitions until replacement/reopen.
+  Independent token-list edit oracles exercise 1,500 randomized edits.
+* `RuneCompiler.Project` and the CLI share scoped build planning, source
+  order, group discovery, library headers and inherited annotations.
+  Discovery reads captured overlays without executing declarations. The
+  server supports multiple roots, scoped settings, explicit ambiguous
+  context choices, configuration requests and balanced watcher registration.
+* Focused native-host acceptance passed 28 cases at
+  `tests/out/r/20261022-152747-3086877` (342.0 seconds), covering all six
+  hosts for both codecs and the public compiler API, compiler layout and
+  host adaptation. `make test-lsp docs check-docs` passed; documentation
+  consistency recorded 11 passes at `tests/out/r/20261022-153216-3089215`.
+  Interpreter/JIT workspace checks also pass after the scoped-choice and
+  watcher validation follow-up.
+* The [document-index ledger](../../tests/lsp/baseline/2026-10-22-documents.json)
+  records observer/source hashes and 20 paired edit samples per fixture.
+  On this Linux WSL2 host, the 100 KB ASCII multiline fixture measured
+  885 microseconds p95 for incremental index updates and 49,910 for fresh
+  indexes. A 1 MiB single line measured 15,472 and 434,826 respectively.
+  These include text replacement, not parsing or semantic analysis.
+
+M3 remains in progress pending combined acceptance, the full source-mode
+and file-operation race matrix, and native Windows evidence. These results
+do not establish resident semantic reuse or parser correctness.
 
 ### M4. Incremental syntax and recovery (XL)
 
@@ -711,6 +838,61 @@ by editing this document.
   trees equal fresh full trees after every trace step; malformed input
   preserves bytes and later recoverable syntax. Publish paired timings
   and keep parsers separate unless the strict less-than-10% gate passes.
+
+M4 initial implementation checkpoint (2026-10-22):
+
+* `RuneCompiler.Syntax` exposes immutable syntax snapshots and fixity
+  environments. Its separate SML recursive-descent parser starts from
+  the batch grammar at `3760da885`; the batch parser remains unchanged.
+  Complete token boundaries allow suffix reuse across nested comments and
+  string gaps. Declaration caches cover top level, structures and local
+  scopes, and validate token lookahead and incoming fixities before reuse.
+  Changed fixities from earlier files invalidate affected cached parses.
+* Lossless pieces cover every source byte, including malformed lexemes.
+  Recovery retains later declarations where a lexical scope can be
+  established, without treating unterminated comment contents as code.
+  Unmatched openers can conservatively consume through EOF. The compiler
+  bridge copies every annotation slot, including functor bodies. Published
+  syntax events contain no elaborator refs.
+* Differential tests compare constructor tags, scalar fields, list lengths
+  and spans, rather than the debugging AST printer. The 328 language
+  fixtures run in ASCII and Unicode modes, five frontend/parser sources
+  and systematic deletion probes match the batch parser's acceptance or
+  rejection. Public tests perform 400 randomized edits; the private suite
+  also checks 500 edit/undo pairs for full structure, diagnostics,
+  topdec boundaries, lossless pieces and outgoing fixities. These suites
+  pass in the interpreter and JIT.
+* The focused native-host run recorded 12 passes and one sandbox SIGSYS
+  (`smlnj32`, exit 159) at `tests/out/r/20261022-160428-202`. The unrestricted
+  32-bit retry passed all seven selected runner cases at
+  `tests/out/r/20261022-160856-3106277` (25.8 seconds); all six native
+  compiler hosts pass the four public syntax tests. Compiler ownership
+  tests still pass with 206 roots, byte agreement and restoration checks.
+  `make test-lsp docs check-docs` passes; documentation consistency recorded
+  11 passes at `tests/out/r/20261022-161023-392` (8.1 seconds).
+* The [initial syntax ledger](../../tests/lsp/baseline/2026-10-22-syntax-initial.json)
+  archives 300 measurements with lexing, owner setup and required AST
+  conversion included. Full editor parsing and EOF edits on the larger
+  fixtures exceed batch timings and the proposed local-syntax budget.
+  **Keep the parsers separate:** the less-than-10% sharing gate has not
+  passed. These initial EOF edits do not establish representative edit-trace
+  performance, confidence intervals, memory-retention or Windows acceptance.
+
+M4 remains in progress. Required follow-ups include bounded lexical
+checkpoints within long constructs, broader recovery/locality evidence,
+representative edit traces and resource/platform acceptance. The existing
+compiler lexer is a shared lexical kernel; the editor parser is separate.
+
+Encoding follow-up (2026-10-22): editor lexing now applies the batch
+parser's BOM rule to Latin-1 overlays, and the shared lexer rejects raw
+overlay characters above U+00FF in that mode. ASCII escapes for wider
+literals remain valid. The differential corpus now checks 329 language
+fixtures in ASCII, Unicode and decoded Latin-1 modes. Interpreter/JIT
+syntax checks and documentation checks pass. The new escaped-character
+fixture passed all 82 selected compiler, VM, sanitizer, Windows and
+portability cases at `tests/out/r/20261022-174957-3683526` (20.0 seconds).
+Earlier exploratory runs exposed restricted 32-bit/LeakSanitizer execution
+and unbuilt VM prerequisites; those runs are not counted as passes.
 
 ### M5. Compiler-backed semantic snapshots (XL)
 
@@ -730,6 +912,53 @@ by editing this document.
   Measure analysis, replay, worker startup and cancellation separately;
   retain exact cold-path fallback when reuse is unproven.
 
+M5 foundation checkpoint (2026-10-22):
+
+* [The public analysis API](../compiler-analysis.md) checks captured ordered
+  inputs, validates project ownership/group text and returns frozen inputs,
+  type facts, constructor identities and lexical source relationships.
+  Valid unchanged prefixes replay bases in a fresh owner; rejected units
+  expose only their validated prefix. Checkpoints retain unit entries,
+  rather than claiming to roll back mutable type cells.
+* Provenance distinguishes exception aliases from runtime exception stamps,
+  preserves signature declaration/implementation relationships and retains
+  a functor body's lexical owner across applications. The version-7 basis
+  carries this data through replay. CLI and analysis share scope visibility.
+* Six public analysis cases pass in the interpreter and JIT, including
+  comparison with fresh batch queries. All 20 selected native-host/API,
+  compiler-layout and host-adapter runner cases passed at
+  `tests/out/r/20261022-182602-3732836` (500.8 seconds). Ownership/audit
+  checks pass with 212 registered roots; documentation checks passed 11
+  cases at `tests/out/r/20261022-182347-298` (8.7 seconds).
+* Private worker framing and nonblocking pipes reuse the portable
+  `Subprocess` layer. Binary bytes, independent input readiness, process
+  cancellation and truncated frames pass Linux and native Windows probes.
+  These test the transport; the server's semantic job scheduler and
+  provider integration remain pending.
+
+M5 remains in progress. Compiler setting coverage, recovery within rejected
+units, worker scheduling, stale-publication checks, measurements and final
+combined/platform acceptance still need evidence. Editing providers remain
+unadvertised.
+
+Resumed integration checkpoint (2026-10-23): the production server now
+uses supervised analysis jobs with foreground priority, background
+coalescing, cooperative cancellation and process-group termination. The
+public lexical query replays frozen inputs, preserves scope at whitespace
+and unfinished expressions, and remains usable after closing its context.
+Nine public analysis cases cover interpreter/JIT behavior, including
+queries after the captured library and manifest have been deleted. These
+results do not replace M5's remaining setting/recovery/performance gates.
+
+Protocol-error follow-up (2026-10-23): typed worker rejections preserve
+`InvalidParams` and `ContentModified`; one fresh retry recovers an evicted
+normal query without accepting stale resolved items. All seventeen
+production semantic transcripts pass on Linux and native Windows
+(`/tmp/rune-lsp-typed-errors-protocol-tests.log`,
+`/tmp/rune-lsp-typed-errors-windows.log`). Worker/scheduler tests, including
+typed rejection and startup failure, pass in
+`/tmp/rune-lsp-typed-errors-worker-tests.log`.
+
 ### M6. Diagnostics (M)
 
 * **Depends on:** M5.
@@ -748,6 +977,21 @@ by editing this document.
   diagnostic latency including queue and serialization time.
 
 ### M7. Navigation and symbols (L)
+
+M6/M7 integration evidence (2026-10-23): eleven production stdio transcripts
+pass on Linux and native Windows, including push/pull diagnostics,
+request/progress cancellation, refresh, stale requests, markup negotiation, native project
+paths, closed-source/disk-change workspace diagnostics, partial progress,
+navigation, document symbols, workspace symbol resolution and lexical
+completion. Logs are `/tmp/rune-lsp-resumed-checkpoint-final.log` and
+`/tmp/rune-lsp-completion-windows-final.log`. Compiler ownership/audit checks
+pass with 213 registered roots. Documentation consistency passes 11 cases
+(`20261023-065129-253`), and public compiler API acceptance passes six runner
+cases (`20261023-065452-1420598`). The current full repository result
+remains the earlier committed checkpoint (19,392 PASS, three SKIP); these
+new changes still require combined acceptance. Initial exploratory runs
+with an incorrectly located standalone payload failed worker startup and
+are not counted as passing evidence.
 
 * **Depends on:** M5.
 * **Deliver:** hover/types/docs; declaration, definition, type and
@@ -785,6 +1029,93 @@ It remains a preview until the remaining applicable protocol coverage is
 accepted at M14.
 
 ### M9. Presentation and structural features (L)
+
+The first M9 checkpoint provides binding-based document highlights, including
+shadowing, qualified components, prefix/infix clause heads, negotiated position
+encodings and an explicit oversized-response refusal. Twenty-two semantic
+transcripts pass on Linux and native Windows. Repeated-source probes select
+the second occurrence through the real context-choice exchange and check its
+inferred type across identical and aliased paths. The adapter obtains opaque
+unit identities from `Analysis.unitAt`; the ten public analysis cases also pass
+on both Windows widths. The focused cohort and eleven documentation checks
+pass in `/tmp/rune-lsp-m9-final-cohort.log` and
+`/tmp/rune-lsp-m9-final-doc-check.log`. Native receipts are
+`/tmp/rune-lsp-m9-final-highlights-windows.log` and
+`/tmp/rune-lsp-m9-final-analysis-windows{64,32}.log`.
+Other M9 providers, real-client coverage and performance acceptance remain.
+
+The captured-syntax and structural checkpoint adds folding/refresh and nested
+selection, with current recovery trees after parse/type errors. Eleven public
+snapshot cases pass on the interpreter/JIT and both Windows widths, including
+cross-file fixity propagation and post-close access. Twenty-six semantic
+transcripts pass on Linux and Windows, covering complete-line folds, client
+limits, selection cardinality/containment, invalid encoding splits, build path
+spans and refresh coalescing/refusal. Focused checks and documentation consistency
+pass in `/tmp/rune-lsp-structure-cohort.log` and
+`/tmp/rune-lsp-structure-doc-check.log`; native receipts are
+`/tmp/rune-lsp-structure-final-windows.log` and
+`/tmp/rune-lsp-structure-analysis-windows{64,32}.log`.
+
+The token checkpoint implements negotiated full/range/delta/refresh with
+per-line nonoverlapping spans, complete edge tokens, bounded history and full
+fallback after eviction/restart. An independent decoder and delta splicer are
+part of 34 passing transcripts on Linux and both Windows widths. Four service
+race cases reject document/workspace-stale worker results and pass on the
+interpreter/JIT and both Windows widths; the original service fails the planted
+stale-query/check probes. The focused cohort, API checks and documentation pass
+in `/tmp/rune-lsp-tokens-race-final-cohort.log`; native receipts are
+`/tmp/rune-lsp-tokens-race-final-windows{64,32}.log` and
+`/tmp/rune-lsp-service-race-windows{64,32}.log`.
+
+The inferred-pattern hint checkpoint adds pure `Analysis.typeHints`, negotiated
+type hints/tooltips, retained-view resolution and workspace refresh. Twelve
+public analysis cases pass on the interpreter/JIT, all six SML hosts and both
+Windows widths. Five deterministic service cases pass on the interpreter/JIT
+and both Windows widths. An actual child-process restart test proves private
+view IDs cannot repeat across worker lifetimes; the original worker fails both
+restart assertions. View IDs include the supervisor's monotonic job number.
+
+All 41 semantic transcripts pass Linux and native Windows with each width's
+front end and worker paired. The initial 8192-entry native 32-bit budget probe
+timed out and remains a failed receipt. The final visible-hint limit is 2048,
+with separate count and byte fixtures requiring successful typechecking and
+the specific budget error. Final native receipts are
+`/tmp/rune-lsp-hints-bounded-{protocol,worker}-windows{64,32}.log`;
+Linux and host receipts are `/tmp/rune-lsp-hints-bounded-protocol-tests.log`
+and `/tmp/rune-lsp-hints-host-analysis.log` (`20261023-144506-3494645`).
+The focused cohort and documentation checks pass in
+`/tmp/rune-lsp-hints-final-cohort.log` and
+`/tmp/rune-lsp-hints-final-doc-check.log`. Links, colours, safe linked editing,
+real-client coverage and performance acceptance remain.
+
+The build-link checkpoint adds compiler-owned reference expansion and negotiated
+document-link resolution for build files, preserving actual source/build/cache
+and library path rules. Source revisions, workspace generations and typed ranges
+guard resolution; native file identity is checked in the transcripts. All 45
+semantic transcripts pass on Linux and paired 64/32-bit Windows workers,
+including independent count/byte refusals and reordered JSON fields. Seven
+public API cases pass on all six SML hosts (`20261023-163530-310074`,
+`/tmp/rune-lsp-build-links-host-api.log`) and both Windows widths. Focused checks
+and documentation pass in `/tmp/rune-lsp-build-links-final-cohort.log`; native
+receipts are `/tmp/rune-lsp-build-links-{protocol,api}-windows{64,32}.log`.
+Colour/linked-editing providers and complete M9 acceptance remain open.
+
+M8 feature checkpoint (2026-10-23): the compiler now projects completion
+roles, concrete record labels, named applications and declaration comments
+through public immutable queries. Ten public analysis cases include
+curried/tuple/infix/qualified/shadowed calls, record selectors and frozen
+library documentation. Sixteen Linux production transcripts pass, adding
+UTF-16 parameter labels (including astral type names), opt-in templates
+whose expanded text typechecks, inline selected-item compatibility,
+documentation resolve, namespace filtering and old-client fallback.
+The Linux receipt is `/tmp/rune-lsp-m8-protocol-tests.log`; the same sixteen
+cases pass natively on Windows in `/tmp/rune-lsp-m8-windows-tests.log`.
+The final focused cohort, including compiler ownership/audit with 214 roots,
+passes in `/tmp/rune-lsp-m8-checkpoint-tests.log`. Generated documentation
+and all eleven consistency cases pass (runner `20261023-073138-250`,
+`/tmp/rune-lsp-m8-check-docs.log`). This checkpoint does
+not complete M8: build paths, broader incomplete-pattern handling, real
+clients and the concurrent query/performance gates remain.
 
 * **Depends on:** M4, M7; features needing types use M5's valid snapshots.
 * **Deliver:** semantic tokens/full/range/deltas, highlights, inlay hints

@@ -209,10 +209,10 @@ struct
     end
 
   (* The directory of the library NAME: LIBDIR/NAME, or NAME itself when it
-     is written as a path, beginning with / or . (as the compiler reads
+     is an absolute host path or begins with . (as the compiler reads
      --library). *)
   fun directoryOf (name : string) : string =
-    if String.isPrefix "/" name orelse String.isPrefix "." name then name
+    if BasisManifest.isLibraryPath name then name
     else case !libDir of SOME d => BasisManifest.libraryDir (d, name) | NONE => raise Usage "no library directory (use --lib DIR)"
 
   (* What a library other than the Basis Library is written on: LIBDIR/basis,

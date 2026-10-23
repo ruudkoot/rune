@@ -1,0 +1,8 @@
+(* The reusable compiler's public boundary. Drivers use internal.build. *)
+libraries unicode json end
+library (structure RuneCompiler, signature RUNE_COMPILER) =
+annotate "demand" in
+  config.sml
+  use api.build
+end
+end

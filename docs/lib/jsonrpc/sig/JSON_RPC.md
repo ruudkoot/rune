@@ -30,20 +30,20 @@ the cancellation the Language Server Protocol adds.
 <pre>
 signature JSON_RPC =
 sig
-  datatype <a href="#type-id">id</a> = <a href="#con-number">Number</a> of int | <a href="#con-string">String</a> of string
-  type <a href="#type-error">error</a> = {<a href="#fld-error.code">code</a> : int, <a href="#fld-error.message">message</a> : string, <a href="#fld-error.data">data</a> : Json.value option}
+  datatype <a href="#type-id">id</a> = <a href="#con-number">Number</a> of IntInf.int | <a href="#con-string">String</a> of string
+  type <a href="#type-error">error</a> = {<a href="#fld-error.code">code</a> : IntInf.int, <a href="#fld-error.message">message</a> : string, <a href="#fld-error.data">data</a> : Json.value option}
   datatype <a href="#type-outcome">outcome</a> = <a href="#con-result">Result</a> of Json.value | <a href="#con-error">Error</a> of error
   datatype <a href="#type-message">message</a> =
       <a href="#con-request">Request</a> of {<a href="#fld-request.id">id</a> : id, <a href="#fld-request.method">method</a> : string, <a href="#fld-request.params">params</a> : Json.value option}
     | <a href="#con-notification">Notification</a> of {<a href="#fld-notification.method">method</a> : string, <a href="#fld-notification.params">params</a> : Json.value option}
     | <a href="#con-response">Response</a> of {<a href="#fld-response.id">id</a> : id option, <a href="#fld-response.outcome">outcome</a> : outcome}
   datatype <a href="#type-read">read</a> = <a href="#con-message">Message</a> of message | <a href="#con-invalid">Invalid</a> of error * id option
-  val <a href="#val-parseerror">parseError</a> : int
-  val <a href="#val-invalidrequest">invalidRequest</a> : int
-  val <a href="#val-methodnotfound">methodNotFound</a> : int
-  val <a href="#val-invalidparams">invalidParams</a> : int
-  val <a href="#val-internalerror">internalError</a> : int
-  val <a href="#val-requestcancelled">requestCancelled</a> : int
+  val <a href="#val-parseerror">parseError</a> : IntInf.int
+  val <a href="#val-invalidrequest">invalidRequest</a> : IntInf.int
+  val <a href="#val-methodnotfound">methodNotFound</a> : IntInf.int
+  val <a href="#val-invalidparams">invalidParams</a> : IntInf.int
+  val <a href="#val-internalerror">internalError</a> : IntInf.int
+  val <a href="#val-requestcancelled">requestCancelled</a> : IntInf.int
   val <a href="#val-tojson">toJson</a> : message -&gt; Json.value
   val <a href="#val-fromjson">fromJson</a> : Json.value -&gt; read
   val <a href="#val-decode">decode</a> : string -&gt; read list
@@ -59,27 +59,28 @@ end
 ### <a name="type-id"></a>`id`
 
 ```sml
-datatype id = Number of int | String of string
+datatype id = Number of IntInf.int | String of string
 ```
 
-A request's id: a number or a string.
+A request's id: an integer number or a string. Numbers retain their
+full precision on hosts whose default integer has only 31 bits.
 
 | Constructor | Argument | Description |
 | --- | --- | --- |
-| <a name="con-number"></a>`Number` | `int` |  |
+| <a name="con-number"></a>`Number` | `IntInf.int` |  |
 | <a name="con-string"></a>`String` | `string` |  |
 
 ### <a name="type-error"></a>`error`
 
 ```sml
-type error = {code : int, message : string, data : Json.value option}
+type error = {code : IntInf.int, message : string, data : Json.value option}
 ```
 
 An error's code and message, and anything more about it.
 
 | Field | Type | Description |
 | --- | --- | --- |
-| <a name="fld-error.code"></a>`code` | `int` |  |
+| <a name="fld-error.code"></a>`code` | `IntInf.int` |  |
 | <a name="fld-error.message"></a>`message` | `string` |  |
 | <a name="fld-error.data"></a>`data` | `Json.value option` |  |
 
@@ -141,7 +142,7 @@ with the id of the request when it could be read.
 ### <a name="val-parseerror"></a>`parseError`
 
 ```sml
-val parseError : int
+val parseError : IntInf.int
 ```
 
 The code of an error: the text is no JSON.
@@ -151,7 +152,7 @@ The code of an error: the text is no JSON.
 ### <a name="val-invalidrequest"></a>`invalidRequest`
 
 ```sml
-val invalidRequest : int
+val invalidRequest : IntInf.int
 ```
 
 The code of an error: the JSON is no request.
@@ -161,7 +162,7 @@ The code of an error: the JSON is no request.
 ### <a name="val-methodnotfound"></a>`methodNotFound`
 
 ```sml
-val methodNotFound : int
+val methodNotFound : IntInf.int
 ```
 
 The code of an error: the server has no such method.
@@ -171,7 +172,7 @@ The code of an error: the server has no such method.
 ### <a name="val-invalidparams"></a>`invalidParams`
 
 ```sml
-val invalidParams : int
+val invalidParams : IntInf.int
 ```
 
 The code of an error: the parameters are not what the method takes.
@@ -181,7 +182,7 @@ The code of an error: the parameters are not what the method takes.
 ### <a name="val-internalerror"></a>`internalError`
 
 ```sml
-val internalError : int
+val internalError : IntInf.int
 ```
 
 The code of an error: the server failed.
@@ -191,7 +192,7 @@ The code of an error: the server failed.
 ### <a name="val-requestcancelled"></a>`requestCancelled`
 
 ```sml
-val requestCancelled : int
+val requestCancelled : IntInf.int
 ```
 
 The code of an error, the Language Server Protocol's: the request was

@@ -9,7 +9,7 @@ fails the build when it drifts from the code or tests, so every change must
 keep these invariants:
 
 * **Any change to what the language accepts or how programs behave**
-  (`src/frontend/`, `src/elab/`, `src/core/translate.sml`, `lib/basis/`)
+  (`lib/compiler/frontend/`, `lib/compiler/elab/`, `lib/compiler/core/translate.sml`, `lib/basis/`)
   must update `docs/language.md` (add a row, change a status, or extend the
   *Notes*/*Deviations*) **and** add or adjust a test in `tests/lang/`.
 * Feature rows have an id (`exp.case`, `basis.list`, ...). A row marked
@@ -398,6 +398,11 @@ keep these invariants:
   library** (the owner's rule, 2026-09-27): write it plainly, and mark the
   failure as `HOST-BUG` in `tests/lib/deviations.txt`, with a report in
   `docs/bugreport/HOST`.
+  The compiler library retains the compiler's existing documented host
+  compatibility adaptations when its sources move under `lib/compiler`;
+  this extraction exception does not authorize workarounds in other
+  libraries. Keep compiler adaptations documented and covered by the
+  compiler's cross-host/bootstrap checks.
 * A `Law:` of lib/basis is Standard ML that runedoc elaborates and `make
   test-laws` runs at every structure that implements its signature, with its
   variables drawn by lib/test/property/basis, the arbitraries of the Basis

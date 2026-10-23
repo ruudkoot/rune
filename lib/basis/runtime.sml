@@ -24,6 +24,7 @@ struct
     val restore' = _prim "rt_restore" : string -> int
     val link' = _prim "rt_link" : string -> (unit -> unit) option
     val linkError' = _prim "rt_link_error" : unit -> string
+    val linkedUnits' = _prim "rt_linked_units" : unit -> string list
     val catchInterrupt' = _prim "rt_interrupt_catch" : exn -> bool
     val maskInterrupt' = _prim "rt_interrupt_mask" : bool -> bool
     val raiseMark' = _prim "rt_raise_mark" : int -> int
@@ -135,7 +136,7 @@ struct
     fun save file =
       case (collect' (); save' file) of
         0 => Saved
-      | 1 => (freshStdIn (); Restored)
+      | 1 => (RunePath.refresh (); freshStdIn (); Restored)
       | _ => raise RuneError.lastError ()
 
     (* The primitive comes back only when it could not read the image: on
@@ -151,6 +152,17 @@ struct
     fun load file =
       let val ins = BinIO.openIn file
       in link (BinIO.inputAll ins before BinIO.closeIn ins) end
+
+    val sourceMarker = "\001RuneSource:"
+    fun linkedUnits () = List.filter (fn name => not (String.isPrefix sourceMarker name)) (linkedUnits' ())
+    (* Internal provenance for the compiler adapter, separate from public
+       unit names. An older/raw-linked program may carry no such record. *)
+    fun linkedUnitSources () =
+      List.mapPartial (fn name =>
+        let val at=size sourceMarker
+        in if String.isPrefix sourceMarker name andalso size name>at+25 andalso String.sub (name,at+24)= #":"
+           then SOME (String.extract (name,at+25,NONE),String.substring (name,at,24)) else NONE end)
+        (linkedUnits' ())
 
     fun catchInterrupt () = catchInterrupt' SML90.Interrupt
 

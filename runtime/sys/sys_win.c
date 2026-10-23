@@ -7,8 +7,8 @@
    command, the named constants and errors of POSIX (numbered as Linux
    numbers them where this layer decodes them itself, as Winsock does where
    they go to Winsock), the sockets, which are Winsock's, the user and groups
-   of the process, and the console as a terminal. A path of a drive goes to
-   the library as /C:/... (the section on paths says why). What it does not
+   of the process, and the console as a terminal. Paths use native Windows
+   drive and UNC syntax. What it does not
    do fails with ENOSYS, as in `make vm SYS=none`, and the library turns that
    into OS.SysErr; docs/basis-compat.md and the WINDOWS lines of
    tests/basis/deviations.txt say which calls those are and which checks of
@@ -193,14 +193,6 @@ static void rune_console_vt(void) {
     atexit(vt_restore);
 }
 
-/* Rune's OS.Path is the one of POSIX: it separates with "/" and knows no
-   drive letter. Windows takes "/" everywhere the CRT is used, so every path
-   this layer hands back is written that way and the library's own path
-   operations work on it. A path the program gives is passed on as it is. */
-static const char *forward(char *p) {
-    for (char *c = p; *c; c++) if (*c == '\\') *c = '/';
-    return p;
-}
 static int fail(void) { last = ENOSYS; return -1; }
 /* the CRT left the reason in errno */
 static int failed(void) { last = errno; return -1; }
@@ -519,41 +511,15 @@ const char *sys_getenv(const char *name) {
 }
 
 /* ---------------------------------------------------------------- paths */
-/* Windows writes a path as C:\Users\me, and Rune's OS.Path is POSIX's, to
-   which that is one relative arc. So every path of a drive this layer hands
-   back is written /C:/Users/me -- absolute to POSIX, and no file of Windows
-   has a colon in its name, so no other path reads so -- and a path that
-   comes in as /C:/... is given to Windows as C:/.... /dev/null is NUL, and
-   everything else goes as it came; Windows takes "/" for "\" everywhere. */
+/* Paths returned to SML retain Windows drive/UNC syntax and separators.
+   Device aliases used by portable clients remain accepted on input. */
 static int is_drive(const char *p) {
     return ((p[0] >= 'A' && p[0] <= 'Z') || (p[0] >= 'a' && p[0] <= 'z')) && p[1] == ':';
 }
 static const char *native(const char *path) {
-    if (!path) return path;
-    if (strcmp(path, "/dev/null") == 0) return "NUL";
-    if (strcmp(path, "/dev/tty") == 0) return "CON";
-    if (path[0] == '/' && is_drive(path + 1)) {
-        if (path[3] == '/') return path + 1;
-        if (path[3] == 0) {
-            static char roots[4][4];
-            static unsigned next;
-            char *r = roots[next++ % 4];
-            r[0] = path[1]; r[1] = ':'; r[2] = '/'; r[3] = 0;
-            return r;
-        }
-    }
+    if (path && strcmp(path, "/dev/null") == 0) return "NUL";
+    if (path && strcmp(path, "/dev/tty") == 0) return "CON";
     return path;
-}
-/* a path of Windows, in place, as the library reads it; p has room for one
-   more character */
-static const char *posix_path(char *p) {
-    forward(p);
-    if (is_drive(p) && (p[2] == '/' || p[2] == 0)) {
-        memmove(p + 1, p, strlen(p) + 1);
-        p[0] = '/';
-        if (p[3] == 0) { p[3] = '/'; p[4] = 0; }
-    }
-    return p;
 }
 
 /* Only filesystem paths gain an extended prefix. Relative link targets,
@@ -610,7 +576,6 @@ static const char *store_path(char **slot, const WCHAR *wide, size_t n) {
     char *out = text_alloc(size + 4);
     if (!out) { free(bytes); return NULL; }
     memcpy(out, bytes, size + 1); free(bytes);
-    posix_path(out);
     free(*slot); *slot = out;
     return out;
 }
@@ -1008,8 +973,7 @@ int sys_utime(const char *path, int64_t access, int64_t modification) {
 /* ---------------------------------------------------------------- links */
 /* A symbolic link is a reparse point of the tag IO_REPARSE_TAG_SYMLINK (a
    junction, IO_REPARSE_TAG_MOUNT_POINT, is read as one too). Its target is
-   kept as its print name, with "\" for "/" and a drive written C:\; this
-   layer writes and reads it as POSIX has it. The layout of the reparse data
+   kept as its native Windows print name, preserving relative targets. The layout of the reparse data
    is that of ntifs.h, which user programs do not get. */
 typedef struct {
     ULONG tag;
@@ -1150,7 +1114,7 @@ const char *sys_tmp_name(void) {
         HANDLE h = path_create_file(name, GENERIC_WRITE, SHARE_ALL, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
         if (h != INVALID_HANDLE_VALUE) {
             CloseHandle(h); free(dir);
-            free(previous); previous = name; posix_path(name); return name;
+            free(previous); previous = name; return name;
         }
         if (GetLastError() != ERROR_FILE_EXISTS) { win_failed(dir); free(dir); free(name); return NULL; }
     }
@@ -2197,12 +2161,12 @@ const char *sys_getpw(const char *name, int64_t uid, int64_t out[2]) {
     if (!h && last) return NULL;
     char *home = text_alloc(strlen(h ? h : "") + 4);
     if (!home) return NULL;
-    strcpy(home, h ? h : ""); posix_path(home);
+    strcpy(home, h ? h : "");
     const char *c = sys_getenv("COMSPEC");
     if (!c && last) { free(home); return NULL; }
     char *shell = text_alloc(strlen(c ? c : "") + 4);
     if (!shell) { free(home); return NULL; }
-    strcpy(shell, c ? c : ""); posix_path(shell);
+    strcpy(shell, c ? c : "");
     const char *parts[3] = { me, home, shell };
     size_t size = strlen(me) + strlen(home) + strlen(shell) + 4;
     char *packed = text_alloc(size);
@@ -2656,7 +2620,7 @@ const char *sys_unix_path(const char *addr, int n) {
     memcpy(&un, addr, (size_t)n < sizeof un ? (size_t)n : sizeof un);
     if (un.sun_family != AF_UNIX) return NULL;
     snprintf(result, sizeof result, "%s", un.sun_path);
-    return posix_path(result);
+    return result;
 }
 /* The databases of hosts, protocols and services are Winsock's, which reads
    the files POSIX has under %SystemRoot%\System32\drivers\etc. An entry is

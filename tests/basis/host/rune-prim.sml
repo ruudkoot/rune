@@ -1533,6 +1533,7 @@ struct
   (* a host has no program of Rune's to append a unit to *)
   fun rt_link (_ : string) : (unit -> unit) option = unsupported NONE
   fun rt_link_error () = "a host of another compiler links no units of Rune's"
+  fun rt_linked_units () : string list = unsupported []
   fun rt_interrupt_catch (_ : exn) = false
   fun rt_interrupt_mask (_ : bool) = false
   fun rt_interrupt_is (_ : exn) = false

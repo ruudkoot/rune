@@ -11,6 +11,14 @@ The compiler Rune ships is the one it compiled itself: **`bin/rune`** is
 bootstrap that one, and to check it (`make check-cross`, `make test-all`). Everything that runs,
 tests or measures the compiler goes through `bin/rune`.
 
+Native MLKit builds use a private source view under `build/mlkit-root`.
+It separates compiler/tool caches from library-test compilation contexts;
+a changed generated configuration discards that view before rebuilding.
+The installed MLKit Basis cache is shared and the original source caches
+are untouched. MLKit library subjects likewise compile private input
+copies in their test directories. This prevents an older inlined compiler
+identity from contaminating provenance after a warm rebuild.
+
 The compiler knows no library location of its own: it takes the basis library
 from `--lib DIR` (which it reads from `DIR/basis`) and refuses to compile
 without it. Each of the `bin/rune*` is therefore a small wrapper script
@@ -206,7 +214,7 @@ name the tools to check.
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot`; `bin/rune.stack.rbc` is the same compiler in the stack bytecode |
 | `make test` | the programs of `tests/lang` and `tests/errors` compiled by `bin/rune-stack` (`bin/rune --target=stack`, written by every `make`, for `RUNE=` if you give one) and run on `bin/runevm-stack`, on the runner (`bin/rune-test run --tier test`; `tests/runner/lang.sml`), and `make test-steps`: the compiler's own tests, the runtime's limits and collector log, `bin/rune-windows vm` (bytecode files and options the VM must refuse with a message) and the C test of the heap. `make test-heap`, `test-gc`, `test-all`, `test-native`, `test-register` and `test-register-jit` run `tests/lang` in their ways the same way, each by its tag, and the rest of what they run as `make TARGET-steps` |
 | `make test-all` | run the suite with each of the six host builds |
-| `make isa` | write the tables of the instruction set and the primitives again from their descriptions in `src/isa`, with `runeisa` built by MLton: `runtime/stack/opcodes.def`, `runtime/prims.def`, `runtime/isa.h`, `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `src/backend/opcodes.sml`, `src/backend/prims.sml`; they are committed |
+| `make isa` | write the tables of the instruction set and the primitives again from their descriptions in `src/isa`, with `runeisa` built by MLton: `runtime/stack/opcodes.def`, `runtime/prims.def`, `runtime/isa.h`, `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `lib/compiler/backend/opcodes.sml`, `lib/compiler/backend/prims.sml`; they are committed |
 | `make check-isa` | fail when one of those files is not what `src/isa` gives, with `runeisa` built by MLton and by the self-hosted compiler; part of `make check` |
 | `make test-ir` | the tests of the intermediate representations (`tests/ir`, [ir.md](ir.md)): the dumps of small programs compiled with the lint of every pass on |
 | `make check-levels` | every program of `tests/lang` and `tests/perf` compiled at `-O0` and `-O2` with the lint on; where the bytecode differs, both runs must print and exit the same |
@@ -297,11 +305,11 @@ a network path, and passes `TZ` to them through `WSLENV`. It also runs a few pro
 
 `runtime/sys/sys_win.c` gives what Windows has -- the clock, the calendar, files,
 directories, descriptors, the environment and running a command -- and
-answers `ENOSYS` for what it does not do. A path of a drive comes back as
-`/C:/Users/...`, because Rune's `OS.Path` is the one of POSIX, to which
-that is absolute (no name of Windows has a colon in it), and a path that
-goes in as `/C:/...` is given to Windows as `C:/...`; `/dev/null` is `NUL`
-and `/dev/tty` the console. The standard streams are put in binary mode before
+answers `ENOSYS` for what it does not do. Returned paths use native drive
+and UNC syntax, such as `C:\Users\...`; `OS.Path` recognizes both Windows
+separators and the volume. `OS.FileSys.getDir` and `fullPath` return
+canonical paths including the volume. `/dev/null` is `NUL` and `/dev/tty`
+the console. The standard streams are put in binary mode before
 `main` runs, since a Rune string is bytes and a `\n` must stay one.
 
 Paths, arguments, environment variables and the text of the `Windows`
@@ -350,10 +358,9 @@ and 195 on the register bytecode, every one of them explained by a
 `WINDOWS` line, and 6 are skipped as POSIX's alone. The tests of the
 terminal, the debug adapter and the Jupyter kernel pass too.
 
-What Windows does not get: `OS.Path` keeps the rules of POSIX rather than
-the drive letters and backslashes of Windows, which is why a path of a drive
-reaches a program as `/C:/...`; `bin/rune` itself is not run on the Windows
-VMs, only the VM is built and tested there; and nothing of this runs in
+Native Windows acceptance includes the compiler running on the Windows
+VMs with Unicode and WTF-8 filenames (`make test-windows-text`). The
+Windows suites require a native Windows host or WSL; they do not run in
 continuous integration.
 
 ## MSYS2
@@ -645,8 +652,8 @@ toolchains.
   ML: `src/isa/stack.sml` and `src/isa/prims.sml`, in the language of
   `src/isa/isa.sml`. `runeisa` (`runeisa.build`, `src/isa`) writes from
   them `runtime/isa.h` (what the two instruction sets share: the `.rbc` version and
-  each set's fingerprint), `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `src/backend/opcodes.sml`,
-  `src/backend/prims.sml`, and `runtime/stack/opcodes.def` and `runtime/prims.def`, which the
+  each set's fingerprint), `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `lib/compiler/backend/opcodes.sml`,
+  `lib/compiler/backend/prims.sml`, and `runtime/stack/opcodes.def` and `runtime/prims.def`, which the
   scripts read. All of them are committed, so that the VM builds with a C
   compiler alone: `make isa` writes them again, and `make check-isa`, part of
   `make check`, fails when one is not what the descriptions give. The C
@@ -696,7 +703,7 @@ counter-generated stamps, rule 5 below) and on its sources staying inside the
 language Rune accepts (rule 6). If stage 2 ever differs from stage 1, diff the
 `runevm-stack --disasm` output of the two files, then the `--dump-lambda` /
 `--dump-code` output of `bin/rune-mlton` and `bin/rune` on the first
-differing input. `src/util/ordmap.sml` (a functor applied twice) is the
+differing input. `lib/compiler/util/ordmap.sml` (a functor applied twice) is the
 module-system acceptance test of the bootstrap.
 
 ## Portability rules for compiler sources
@@ -718,9 +725,9 @@ rules so that one source tree builds everywhere and emits identical output:
 4. Reals are never converted to binary by the compiler; they travel to the VM
    as their literal text.
 5. All iteration over maps uses the ordered `StringMap`/`IntMap` from
-   `src/util/ordmap.sml`, and every generated name/stamp comes from a counter,
+   `lib/compiler/util/ordmap.sml`, and every generated name/stamp comes from a counter,
    so output is deterministic across hosts. A hash table (`IntTable`,
-   `src/util/inttable.sml`) is only set and asked by key, never listed.
+   `lib/compiler/util/inttable.sml`) is only set and asked by key, never listed.
 6. The compiler must be compilable by Rune itself, so its sources stay inside
    the language described in `docs/language.md`: in particular no literal or
    operator overloading at `IntInf.int` (write `IntInf.fromInt n` and
@@ -745,7 +752,10 @@ are the VM's standard streams.
 
 A library other than the basis library is compiled with `--library NAME`:
 the directory `NAME` of the `--lib` directory (`lib/test/property`, say),
-or a path when `NAME` begins with `/` or `.`. It has a `library.build` in
+or a path when `NAME` is absolute in the host's syntax or begins with `.`.
+Absolute Windows drive and UNC paths are accepted directly, including paths
+returned by `OS.FileSys.fullPath`. `runedoc --library` uses the same rule.
+It has a `library.build` in
 the basis library's form, whose `libraries NAME ... end` names the
 libraries it is written on, and the `MANIFEST` that `make manifests` makes
 of it (`rune --basis-index DIR`); those are compiled first, and the files of all of them are

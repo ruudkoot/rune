@@ -1,0 +1,31 @@
+(* The shared compiler frontend, in dependency order. *)
+use util.build
+files
+  util/ident.sml
+  util/source.sml
+  util/error.sml
+  util/color.sml
+  util/diagnostic.sml
+  util/pass.sml
+  util/usage.sml
+  util/pickle.sml
+  frontend/token.sml
+  frontend/lexer.sml
+  elab/elabstats.sml
+  elab/types.sml
+  core/ty.sml
+  elab/overload.sml
+  frontend/ast.sml
+  frontend/fixity.sml
+  frontend/parser.sml
+  elab/unify.sml
+  elab/env.sml
+  elab/sigmatch.sml
+  elab/exhaust.sml
+  backend/opcodes.sml
+  backend/prims.sml
+  elab/elaborate.sml
+  driver/basismanifest.sml
+  driver/libraryscope.sml
+  driver/buildfile.sml
+end

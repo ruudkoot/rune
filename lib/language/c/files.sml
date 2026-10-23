@@ -10,7 +10,12 @@ struct
   fun resolver roots =
     let val roots = List.map OS.FileSys.fullPath roots
         fun exists path = OS.FileSys.access (path, []) handle OS.SysErr _ => false
-        fun within (root, file) = String.isPrefix (root ^ "/") file
+        fun within (root, file) =
+          let val relative = OS.Path.mkRelative {path = file, relativeTo = root}
+              val {isAbs, arcs, ...} = OS.Path.fromString relative
+          in not isAbs andalso relative <> OS.Path.currentArc andalso
+             (case arcs of first :: _ => first <> OS.Path.parentArc | [] => false)
+          end handle OS.Path.Path => false
         fun following file [] = []
           | following file (root :: rest) = if within (root, file) then rest else following file rest
     in fn {from, name, system, next} =>

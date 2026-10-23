@@ -15,6 +15,7 @@
 - `LINE_BUF` (con): [IO](../sig/IO.md#con-line_buf)
 - `lineLength` (val): [COMPILER](../sig/COMPILER.md#val-linelength)
 - `link` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-link), [RUNTIME](../sig/RUNTIME.md#val-link)
+- `linkedUnits` (val): [RUNTIME](../sig/RUNTIME.md#val-linkedunits)
 - `list` (type): [LIST](../sig/LIST.md#type-list)
 - `listen` (val): [SOCKET](../sig/SOCKET.md#val-listen)
 - `Ln` (exn): [SML90](../sig/SML90.md#exn-ln)

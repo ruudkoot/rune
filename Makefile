@@ -104,14 +104,14 @@ RUNEDOC ?= bin/runedoc
 RUNEOPT ?= bin/runeopt
 
 SOURCES  := $(shell sh scripts/build-files.sh rune.build)
-GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml src/backend/regcodes.sml
+GEN_SML  := lib/compiler/backend/opcodes.sml lib/compiler/backend/prims.sml lib/compiler/backend/regcodes.sml
 GEN_C    := runtime/isa.h runtime/stack/opcodes.h runtime/prims_table.h runtime/stack/interp_cases.h runtime/stack/interp_labels.h runtime/stack/ops.h runtime/register/regops.h runtime/register/reg_cases.h
 SOURCES_DOC := $(shell sh scripts/build-files.sh runedoc.build)
 SOURCES_OPT := $(shell sh scripts/build-files.sh runeopt.build)
 SOURCES_ISA := $(shell sh scripts/build-files.sh runeisa.build)
 SOURCES_FFI := $(shell sh scripts/build-files.sh runeffi.build)
 BUILDFILES := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb build/runeffi.mlb build/runeffi.cm build/runeffi-polyml-build.sml build/runeffi-mlkit.mlb
-VERSIONGEN := build/config.sml runtime/version.h
+VERSIONGEN := build/config.sml runtime/version.h lib/compiler/config.sml
 BUILDGEN := $(BUILDFILES) $(VERSIONGEN)
 
 # The core VM is ISO C99; what needs the operating system is in runtime/sys/sys.h and
@@ -246,8 +246,140 @@ all: vm boot runedoc runeopt runeffi manifests basis-cache
 # its sources by the first host's compiler, which builds before any rune
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
-REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
-manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST lib/ffi/runtime/MANIFEST lib/ffi/win32/common/MANIFEST lib/ffi/win32/model/MANIFEST lib/ffi/win32/mock/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST) lib/sdl/MANIFEST lib/ffi/win32/sdldriver/MANIFEST
+REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter lsp
+DOC_LIBS := $(REPL_LIBS) compiler
+
+# Compiler ownership audit and interleaved-session acceptance.
+COMPILER_STATE_AUDIT_SRCS := $(shell sh scripts/build-files.sh rune-compiler-state-audit.build)
+COMPILER_STATE_TEST_SRCS := $(shell sh scripts/build-files.sh rune-compiler-state-tests.build)
+.PHONY: test-compiler-state
+bin/rune-compiler-state-audit.rbc: $(RUNE) $(COMPILER_STATE_AUDIT_SRCS) rune-compiler-state-audit.build manifests
+	$(RUNE) --build rune-compiler-state-audit.build -o $@
+bin/rune-compiler-state-audit: bin/rune-compiler-state-audit.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-compiler-state-audit.rbc" "$$@"\n' > $@
+	chmod +x $@
+bin/rune-compiler-state-model.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/lib/compiler/state.sml manifests
+	$(RUNE) --library test/unit lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/lib/compiler/state.sml -o $@
+bin/rune-compiler-state-duplicate.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml manifests
+	$(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml -o $@
+bin/rune-compiler-state-tests.rbc: $(RUNE) $(COMPILER_STATE_TEST_SRCS) rune-compiler-state-tests.build manifests
+	$(RUNE) --build rune-compiler-state-tests.build -o $@
+test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc
+	bin/rune-compiler-state-audit --self-test $(wildcard lib/compiler/*.sml lib/compiler/*/*.sml)
+	bin/runevm bin/rune-compiler-state-model.rbc
+	bin/runevm --jit=all bin/rune-compiler-state-model.rbc
+	bin/runevm bin/rune-compiler-state-duplicate.rbc
+	bin/runevm --jit=all bin/rune-compiler-state-duplicate.rbc
+	bin/runevm bin/rune-compiler-state-tests.rbc
+	bin/runevm --jit=all bin/rune-compiler-state-tests.rbc
+
+# Frontend baselines and edit traces for the language-server roadmap.
+LSP_BENCH_SRCS := $(shell sh scripts/build-files.sh rune-lsp-bench.build)
+.PHONY: lsp-bench test-lsp-bench
+lsp-bench: bin/rune-lsp-bench
+bin/rune-lsp-bench.rbc: $(RUNE) $(LSP_BENCH_SRCS) rune-lsp-bench.build manifests
+	$(RUNE) --build rune-lsp-bench.build -o $@
+bin/rune-lsp-bench: bin/rune-lsp-bench.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-lsp-bench.rbc" "$$@"\n' > $@
+	chmod +x $@
+bin/rune-lsp-bench-tests.rbc: $(RUNE) tests/runner/sh.sml tests/lsp/bench-tests.sml manifests
+	$(RUNE) --library test/runner --library json tests/runner/sh.sml tests/lsp/bench-tests.sml -o $@
+test-lsp-bench: bin/rune-lsp-bench bin/rune-lsp-bench-tests.rbc bin/rune
+	bin/rune-lsp-bench --self-test
+	bin/runevm bin/rune-lsp-bench-tests.rbc
+
+bin/rune-lsp-protocol.rbc: $(RUNE) tools/lsp/protocol-gen.sml manifests
+	$(RUNE) --library json --library digest tools/lsp/protocol-gen.sml -o $@
+bin/rune-lsp-protocol: bin/rune-lsp-protocol.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-lsp-protocol.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: lsp-protocol check-lsp-protocol
+lsp-protocol: bin/rune-lsp-protocol
+	bin/rune-lsp-protocol
+check-lsp-protocol: bin/rune-lsp-protocol
+	bin/rune-lsp-protocol --check
+
+LSP_SRCS := $(shell sh scripts/build-files.sh runelsp.build)
+.PHONY: lsp
+lsp: bin/runelsp
+bin/runelsp.rbc: $(RUNE) $(LSP_SRCS) runelsp.build manifests | check-lsp-protocol
+	$(RUNE) --build runelsp.build -o $@
+bin/runelsp: bin/runelsp.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/runelsp.rbc" --lib "$$d/../lib" "$$@"\n' > $@
+	chmod +x $@
+bin/rune-lsp-wire-tests.rbc: $(RUNE) tests/runner/sh.sml tests/lsp/protocol-tests.sml manifests
+	$(RUNE) --library test/runner --library json tests/runner/sh.sml tests/lsp/protocol-tests.sml -o $@
+bin/rune-lsp-tests.rbc: $(RUNE) tests/lib/lsp/protocol.sml manifests
+	$(RUNE) --library test/unit --library random --library lsp tests/lib/lsp/protocol.sml -o $@
+.PHONY: test-lsp test-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker
+LSP_WORKER_TEST_SRCS := src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/worker-model.sml src/lsp/worker-process.sml
+bin/rune-lsp-analysis-worker.rbc: $(RUNE) rune-lsp-worker.build $(LSP_SRCS) tests/lsp/worker-main.sml manifests
+	$(RUNE) --build rune-lsp-worker.build -o $@
+bin/rune-lsp-worker-analysis-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml manifests
+	$(RUNE) --library test/unit --library compiler --library lsp $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml -o $@
+bin/rune-lsp-jobs-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) src/lsp/jobs.sml tests/lsp/jobs-tests.sml manifests
+	$(RUNE) --library test/unit --library compiler --library lsp $(LSP_WORKER_TEST_SRCS) src/lsp/jobs.sml tests/lsp/jobs-tests.sml -o $@
+bin/rune-lsp-semantic-tests.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/semantic-protocol-tests.sml manifests
+	$(RUNE) --library test/unit --library json --library lsp tests/lsp/client.sml tests/lsp/semantic-protocol-tests.sml -o $@
+bin/rune-lsp-worker-wire-tests.rbc: $(RUNE) src/lsp/worker-wire.sml tests/lsp/worker-wire-tests.sml manifests
+	$(RUNE) --library test/unit --library lsp src/lsp/worker-wire.sml tests/lsp/worker-wire-tests.sml -o $@
+bin/rune-lsp-worker-echo.rbc: $(RUNE) src/lsp/worker-wire.sml tests/lsp/worker-echo.sml manifests
+	$(RUNE) --library lsp src/lsp/worker-wire.sml tests/lsp/worker-echo.sml -o $@
+bin/rune-lsp-worker-process-tests.rbc: $(RUNE) src/lsp/worker-wire.sml src/lsp/worker-process.sml tests/lsp/worker-process-tests.sml manifests
+	$(RUNE) --library test/unit --library lsp src/lsp/worker-wire.sml src/lsp/worker-process.sml tests/lsp/worker-process-tests.sml -o $@
+test-lsp-worker: bin/rune-lsp-worker-wire-tests.rbc bin/rune-lsp-worker-process-tests.rbc bin/rune-lsp-worker-echo.rbc bin/rune-lsp-worker-analysis-tests.rbc bin/rune-lsp-analysis-worker.rbc bin/rune-lsp-jobs-tests.rbc
+	bin/runevm bin/rune-lsp-worker-wire-tests.rbc
+	bin/runevm bin/rune-lsp-worker-process-tests.rbc bin/runevm bin/rune-lsp-worker-echo.rbc
+	bin/runevm --jit=all bin/rune-lsp-worker-process-tests.rbc bin/runevm bin/rune-lsp-worker-echo.rbc
+	bin/runevm bin/rune-lsp-worker-analysis-tests.rbc bin/runevm bin/rune-lsp-analysis-worker.rbc
+	bin/runevm bin/rune-lsp-jobs-tests.rbc bin/runevm bin/rune-lsp-analysis-worker.rbc
+bin/rune-compiler-analysis-tests.rbc: $(RUNE) tests/lib/compiler/analysis.sml manifests
+	$(RUNE) --library test/unit --library compiler tests/lib/compiler/analysis.sml -o $@
+test-lsp-analysis: bin/rune-compiler-analysis-tests.rbc
+	bin/runevm bin/rune-compiler-analysis-tests.rbc
+	bin/runevm --jit=all bin/rune-compiler-analysis-tests.rbc
+bin/rune-lsp-syntax-bench.rbc: $(RUNE) rune-lsp-syntax-bench.build tools/lsp/syntax-bench.sml src/main/lsp-syntax-bench-main.sml $(wildcard lib/compiler/syntax/*.sml) manifests
+	$(RUNE) --build rune-lsp-syntax-bench.build -o $@
+bin/rune-compiler-syntax-tests.rbc: $(RUNE) tests/lib/compiler/syntax.sml manifests
+	$(RUNE) --library test/unit --library compiler tests/lib/compiler/syntax.sml -o $@
+bin/rune-lsp-syntax-tests.rbc: $(RUNE) rune-lsp-syntax-tests.build tests/lsp/syntax-tests.sml $(wildcard lib/compiler/syntax/*.sml) manifests
+	$(RUNE) --build rune-lsp-syntax-tests.build -o $@
+test-lsp-syntax: bin/rune-compiler-syntax-tests.rbc bin/rune-lsp-syntax-tests.rbc
+	bin/runevm bin/rune-compiler-syntax-tests.rbc
+	bin/runevm --jit=all bin/rune-compiler-syntax-tests.rbc
+	bin/runevm bin/rune-lsp-syntax-tests.rbc
+	bin/runevm --jit=all bin/rune-lsp-syntax-tests.rbc
+bin/rune-lsp-documents-bench.rbc: $(RUNE) tools/lsp/documents-bench.sml src/main/lsp-documents-bench-main.sml rune-lsp-documents-bench.build manifests
+	$(RUNE) --build rune-lsp-documents-bench.build -o $@
+test-lsp: test-lsp-protocol
+bin/rune-lsp-documents-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml tests/lsp/edit-traces.sml tests/lsp/documents-tests.sml manifests
+	$(RUNE) --library test/unit --library lsp src/lsp/documents.sml src/lsp/sync.sml tests/lsp/edit-traces.sml tests/lsp/documents-tests.sml -o $@
+test-lsp-documents: bin/rune-lsp-documents-tests.rbc
+	bin/runevm bin/rune-lsp-documents-tests.rbc
+	bin/runevm --jit=all bin/rune-lsp-documents-tests.rbc
+bin/rune-lsp-workspace-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml tests/lsp/workspace-tests.sml manifests
+	$(RUNE) --library test/unit --library lsp --library compiler src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml tests/lsp/workspace-tests.sml -o $@
+bin/rune-lsp-controller-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/controller.sml tests/lsp/controller-tests.sml manifests
+	$(RUNE) --library test/unit --library lsp --library compiler src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/controller.sml tests/lsp/controller-tests.sml -o $@
+test-lsp-workspace: bin/rune-lsp-workspace-tests.rbc bin/rune-lsp-controller-tests.rbc
+	bin/runevm bin/rune-lsp-workspace-tests.rbc
+	bin/runevm --jit=all bin/rune-lsp-workspace-tests.rbc
+	bin/runevm bin/rune-lsp-controller-tests.rbc
+	bin/runevm --jit=all bin/rune-lsp-controller-tests.rbc
+bin/rune-lsp-service-tests.rbc: $(RUNE) $(LSP_SRCS) tests/lsp/service-tests.sml manifests
+	$(RUNE) --library test/unit --library compiler --library lsp --library digest $(filter-out src/main/runelsp-main.sml,$(LSP_SRCS)) tests/lsp/service-tests.sml -o $@
+.PHONY: test-lsp-service
+test-lsp-service: bin/rune-lsp-service-tests.rbc
+	bin/runevm bin/rune-lsp-service-tests.rbc
+	bin/runevm --jit=all bin/rune-lsp-service-tests.rbc
+test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-semantic-tests.rbc check-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker test-lsp-service
+	bin/runevm bin/rune-lsp-tests.rbc
+	bin/runevm bin/rune-lsp-wire-tests.rbc
+	bin/runevm bin/rune-lsp-semantic-tests.rbc bin/runevm bin/runelsp.rbc
+
+manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/compiler/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST lib/ffi/runtime/MANIFEST lib/ffi/win32/common/MANIFEST lib/ffi/win32/model/MANIFEST lib/ffi/win32/mock/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST) lib/sdl/MANIFEST lib/ffi/win32/sdldriver/MANIFEST
+lib/compiler/MANIFEST: lib/compiler/library.build $(wildcard lib/compiler/*.build lib/compiler/*.sml lib/compiler/*/*.sml) lib/json/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/compiler
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
 lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -280,6 +412,8 @@ lib/digest/MANIFEST: lib/digest/library.build $(wildcard lib/digest/*.sml) lib/b
 	bin/rune-$(BOOTHOST) --basis-index lib/digest
 lib/jsonrpc/MANIFEST: lib/jsonrpc/library.build $(wildcard lib/jsonrpc/*.sml) lib/basis/MANIFEST lib/json/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/jsonrpc
+lib/lsp/MANIFEST: lib/lsp/library.build $(wildcard lib/lsp/*.sml) lib/jsonrpc/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/lsp
 lib/dap/MANIFEST: lib/dap/library.build $(wildcard lib/dap/*.sml) lib/basis/MANIFEST lib/jsonrpc/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/dap
 lib/zmtp/MANIFEST: lib/zmtp/library.build $(wildcard lib/zmtp/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -318,15 +452,15 @@ $(FFI_GENERATED_MANIFESTS): %/MANIFEST: %/library.build $(foreach family,sdl win
 	bin/rune-$(BOOTHOST) --basis-index $(@D)
 endif
 
-# The frozen Basis Library (docs/units.md, The cache): every unit of
+# The frozen Basis and compiler libraries (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
 # compile in units reads after its own cache and never writes; made again,
 # empty first, when the compiler or the library changes
 basis-cache: lib/cache/made
-lib/cache/made: bin/rune bin/rune.rbc bin/runevm $(wildcard lib/basis/*.sml) lib/basis/MANIFEST
+lib/cache/made: bin/rune bin/rune.rbc bin/runevm $(wildcard lib/basis/*.sml lib/compiler/*.sml lib/compiler/*/*.sml lib/compiler/*.build) lib/basis/MANIFEST lib/compiler/MANIFEST
 	rm -rf lib/cache
-	bin/rune --units --basis all --cache-dir lib/cache examples/hello.sml -o build/basis-cache.rbc
-	bin/rune --units --basis all --target=stack --cache-dir lib/cache examples/hello.sml -o build/basis-cache.stack.rbc
+	bin/rune --units --basis all --library compiler --cache-dir lib/cache examples/hello.sml -o build/basis-cache.rbc
+	bin/rune --units --basis all --library compiler --target=stack --cache-dir lib/cache examples/hello.sml -o build/basis-cache.stack.rbc
 	touch $@
 
 # ---------------------------------------------------------------- environment
@@ -353,7 +487,7 @@ build/.doctor-%: scripts/doctor.sh
 # ---------------------------------------------------------------- generated
 gen: $(BUILDGEN)
 
-$(BUILDFILES) &: rune.build runedoc.build runeopt.build runeisa.build runeffi.build scripts/build-files.sh scripts/gen-build-files.sh
+$(BUILDFILES) &: rune.build runedoc.build runeopt.build runeisa.build runeffi.build lib/compiler/internal.build lib/compiler/frontend.build lib/compiler/util.build scripts/build-files.sh scripts/gen-build-files.sh
 	sh scripts/gen-build-files.sh "$(ROOT)"
 
 # The version is git's (scripts/gen-version.sh): asked on every make, and
@@ -465,9 +599,9 @@ bin/rune-polyml: bin/rune-polyml.bin Makefile
 # compiler, runedoc and runeopt come one after another, as SML/NJ's do.
 MLKIT_BUILD = SML_LIB=$(MLKIT_LIB) $(MLKIT) -j $(JOBS)
 
-bin/rune-mlkit.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/mlkit-main.sml | build/.doctor-mlkit
+bin/rune-mlkit.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/mlkit-main.sml scripts/mlkit-build-root.sh | build/.doctor-mlkit
 	@mkdir -p bin
-	$(MLKIT_BUILD) -o $@ build/rune-mlkit.mlb
+	mlb=$$(sh scripts/mlkit-build-root.sh build/rune-mlkit.mlb); $(MLKIT_BUILD) -o $@ "$$mlb"
 
 bin/rune-mlkit: bin/rune-mlkit.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/rune-mlkit.bin" --lib "$$d/../lib" "$$@"\n' > $@
@@ -581,9 +715,9 @@ bin/runedoc-polyml: bin/runedoc-polyml.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runedoc-polyml.bin" -H $(POLYML_HEAP) --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
-bin/runedoc-mlkit.bin: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) src/main/runedoc-mlkit-main.sml | build/.doctor-mlkit bin/rune-mlkit.bin
+bin/runedoc-mlkit.bin: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) src/main/runedoc-mlkit-main.sml scripts/mlkit-build-root.sh | build/.doctor-mlkit bin/rune-mlkit.bin
 	@mkdir -p bin
-	$(MLKIT_BUILD) -o $@ build/runedoc-mlkit.mlb
+	mlb=$$(sh scripts/mlkit-build-root.sh build/runedoc-mlkit.mlb); $(MLKIT_BUILD) -o $@ "$$mlb"
 
 bin/runedoc-mlkit: bin/runedoc-mlkit.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runedoc-mlkit.bin" --lib "$$d/../lib" "$$@"\n' > $@
@@ -637,9 +771,9 @@ bin/runeopt-polyml: bin/runeopt-polyml.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-polyml.bin" -H $(POLYML_HEAP) --runtime "$$d/../build" "$$@"\n' > $@
 	chmod +x $@
 
-bin/runeopt-mlkit.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-mlkit-main.sml | build/.doctor-mlkit bin/runedoc-mlkit.bin
+bin/runeopt-mlkit.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-mlkit-main.sml scripts/mlkit-build-root.sh | build/.doctor-mlkit bin/runedoc-mlkit.bin
 	@mkdir -p bin
-	$(MLKIT_BUILD) -o $@ build/runeopt-mlkit.mlb
+	mlb=$$(sh scripts/mlkit-build-root.sh build/runeopt-mlkit.mlb); $(MLKIT_BUILD) -o $@ "$$mlb"
 
 bin/runeopt-mlkit: bin/runeopt-mlkit.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-mlkit.bin" --runtime "$$d/../build" "$$@"\n' > $@
@@ -1265,17 +1399,17 @@ test-repl: bin/rune-repl bin/runevm bin/rune-test
 
 # rune-kernel, a Jupyter kernel for Standard ML (docs/kernel.md): a bridge
 # in SML over lib/jupyter that drives the REPL's engine as its child
-bin/rune-kernel.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml src/util/ident.sml src/kernel/kernel.sml manifests \
+bin/rune-kernel.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml lib/compiler/util/ident.sml src/kernel/kernel.sml manifests \
                      $(wildcard lib/jupyter/*.sml lib/zmtp/*.sml lib/digest/*.sml lib/json/*.sml lib/jsonrpc/*.sml lib/unicode/*.sml)
 	$(RUNE) --library jupyter --library jsonrpc --library digest --library unicode src/front/engine.sml src/dap/translate.sml \
-	  src/util/ident.sml src/kernel/kernel.sml -o $@
+	  lib/compiler/util/ident.sml src/kernel/kernel.sml -o $@
 bin/rune-kernel: bin/rune-kernel.rbc bin/rune-repl.img bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-kernel.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" --program "$$d/rune-kernel.rbc" "$$@"\n' > $@
 	chmod +x $@
 kernel: bin/rune-kernel
 # and again with the engine's channel a connection, as on Windows
 # (src/front/engine.sml)
-test-kernel: bin/rune-kernel bin/rune-test
+test-kernel: bin/rune-kernel bin/rune-test bin/rune-protocol-check
 	$(RUNE_TEST) --tier test-kernel
 
 # rune-dap, the Debug Adapter Protocol for Standard ML (docs/dap.md): an
@@ -1287,12 +1421,12 @@ bin/rune-dap: bin/rune-dap.rbc bin/rune-repl.img bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-dap.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" "$$@"\n' > $@
 	chmod +x $@
 dap: bin/rune-dap
-test-dap: bin/rune-dap bin/rune-repl bin/rune-test
+test-dap: bin/rune-dap bin/rune-repl bin/rune-test bin/rune-protocol-check
 	$(RUNE_TEST) --tier test-dap
 
 # The REPL's engine and its protocol (docs/repl-protocol.md): each script
 # of tests/repl-protocol played to rune-repl --engine, as a front drives it
-test-repl-protocol: bin/rune-repl bin/runevm bin/rune-test
+test-repl-protocol: bin/rune-repl bin/runevm bin/rune-test bin/rune-protocol-check
 	$(RUNE_TEST) --tier test-repl-protocol
 
 # Programs on a terminal (docs/plans/repl.md, M1): each script of
@@ -1344,7 +1478,7 @@ check-docs: check-docs-generated bin/rune-test bin/rune-doc-check
 
 check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/sdl/*.sml lib/ffi/win32/common/*.sml lib/ffi/win32/native/*.sml lib/ffi/win32/sdldriver/*.sml lib/ffi/win32/model/*.sml lib/ffi/win32/mock/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/sdl/*.sml lib/ffi/win32/common/*.sml lib/ffi/win32/native/*.sml lib/ffi/win32/sdldriver/*.sml lib/ffi/win32/model/*.sml lib/ffi/win32/mock/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) lib/compiler/*.sml lib/compiler/*/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
@@ -1361,7 +1495,7 @@ check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_SDL) --check
 	$(RUNEDOC) $(DOCS_WIN32_SDL_DRIVER) --check
 	$(RUNEDOC) $(DOCS_WIN32_NATIVE) --check
-	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
+	$(foreach l,$(DOC_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW) --check
 	$(RUNEDOC) --palette docs/lib/palette --check
 
@@ -1416,7 +1550,7 @@ DOCS_FFI_MODEL := --lib lib --library ffi/model --out docs/lib/ffi/model --basis
 DOCS_C := --lib lib --library language/c --out docs/lib/language/c --basis-docs ../../basis \
           --conventions ../../conventions.md
 # the libraries of docs/plans/repl.md (The libraries), each in
-# docs/lib/NAME (REPL_LIBS, with the manifests). The heading of the library's
+# docs/lib/NAME (DOC_LIBS, with the manifests). The heading of the library's
 # README.md is its name, on its pages and in the overview below.
 docs_lib = --lib lib --library $(1) --out docs/lib/$(1) --basis-docs ../basis \
            --conventions ../conventions.md
@@ -1438,6 +1572,8 @@ DOCS_OVERVIEW := --lib lib --overview docs/lib \
 	--library-page terminal \
 	--library-page json \
 	--library-page jsonrpc \
+	--library-page lsp \
+	--library-page compiler \
 	--library-page dap \
 	--library-page zmtp \
 	--library-page jupyter \
@@ -1470,7 +1606,7 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_SDL)
 	$(RUNEDOC) $(DOCS_WIN32_SDL_DRIVER)
 	$(RUNEDOC) $(DOCS_WIN32_NATIVE)
-	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
+	$(foreach l,$(DOC_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW)
 	$(RUNEDOC) --palette docs/lib/palette
 
@@ -1501,6 +1637,10 @@ test-doc: $(RUNEDOC) vm manifests bin/rune-test
 # docs/plans/quickcheck.md, D1).
 test-lib: $(RUNE) $(RUNEDOC) vm manifests bin/rune-test
 	$(RUNE_TEST) --tier test-lib
+
+.PHONY: test-compiler-api
+test-compiler-api: $(RUNE) vm manifests bin/rune-test
+	$(RUNE_TEST) --tier test-compiler-api
 
 # The laws of the Basis Library's documentation, each at every structure that
 # implements its signature (docs/plans/quickcheck.md, M8): every law holds,
@@ -1809,6 +1949,13 @@ bin/rune-matrix: bin/rune-matrix.rbc bin/runevm Makefile bin/rune-generate bin/r
 # that two steps that run at once never build one file (each step is a make
 # of its own).
 CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all repl dap kernel mlton smlnj-legacy \
+               bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-documents-tests.rbc \
+               bin/rune-lsp-workspace-tests.rbc bin/rune-lsp-controller-tests.rbc bin/rune-lsp-bench bin/rune-lsp-bench-tests.rbc \
+               bin/rune-compiler-syntax-tests.rbc bin/rune-lsp-syntax-tests.rbc \
+               bin/rune-compiler-analysis-tests.rbc \
+               bin/rune-lsp-worker-wire-tests.rbc bin/rune-lsp-worker-process-tests.rbc bin/rune-lsp-worker-echo.rbc \
+               bin/rune-lsp-worker-analysis-tests.rbc bin/rune-lsp-analysis-worker.rbc bin/rune-lsp-jobs-tests.rbc bin/rune-lsp-semantic-tests.rbc \
+               bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc \
                bin/rune-boot bin/rune.rbc bin/rune.stack.rbc bin/runedoc.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc \
                bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy \
                build/librune.a bin/runevm-gcbits bin/runevm-cards \

@@ -11,3 +11,4 @@ two equal refs are two: true
 profile sees the cell and nothing else: true
 profile returns the value: true
 version is a word: true
+linked units have unique nonempty identities: true

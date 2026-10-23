@@ -254,10 +254,55 @@ struct
                              (Expectations.stale (sample, {ways = ["mlkit"], paths = [], used = [at 4], today = "2026-10-12"}))))
        end)]
 
+  fun retention () =
+    let
+      val base = OS.FileSys.tmpName ()
+      val () = (OS.FileSys.remove base; OS.FileSys.mkDir base)
+      fun join p = OS.Path.concat (base,p)
+      fun touch p = TextIO.closeOut (TextIO.openOut p)
+      fun entries dir =
+        let val stream = OS.FileSys.openDir dir
+            fun read kept = case OS.FileSys.readDir stream of NONE => kept | SOME n => read (n::kept)
+        in read [] before OS.FileSys.closeDir stream end
+      fun clean path = if OS.FileSys.isDir path then
+        (List.app (fn n => clean (OS.Path.concat (path,n))) (entries path); OS.FileSys.rmDir path)
+        else OS.FileSys.remove path
+      fun work () =
+        let
+          val out = join "runs"
+          val () = OS.FileSys.mkDir out
+          fun directory name = let val path=OS.Path.concat (out,name)
+                               in OS.FileSys.mkDir path; path end
+          (* The oldest run is still active while more than five newer runs
+             finish. Reports may already exist while a run is closing them. *)
+          val active = directory "19990101-000000-1"
+          val () = List.app (fn n => touch (OS.Path.concat (active,n)))
+            ["running","sentinel","summary.md","junit.xml"]
+          val unfinished = directory "19990101-000000-2"
+          val () = touch (OS.Path.concat (unfinished,"running"))
+          fun completed i =
+            let val dir=directory ("20000101-000000-" ^ Int.toString i)
+            in List.app (fn n => touch (OS.Path.concat (dir,n))) ["summary.md","junit.xml"] end
+          val () = List.app completed [1,2,3,4,5,6]
+          val tests = List.map (fn {path,meta,leaf} => (path,meta,leaf))
+            (Test.leaves (Test.it "retention/probe" (Run.shell ("exit 0",1))))
+          val ok = Run.run {tests=tests,root=OS.FileSys.getDir (),out=out,
+            history=join "history",cpus=1,memory=100,keep=false,
+            reader=Report.Log,capabilities=[],strict=true,quarantine=[]}
+        in
+          Expect.that ("run completed",ok);
+          Expect.that ("active output survives",OS.FileSys.access (OS.Path.concat (active,"sentinel"),[]));
+          Expect.that ("interrupted output survives",OS.FileSys.access (unfinished,[]));
+          Expect.that ("old completed output is removed",not (OS.FileSys.access (OS.Path.concat (out,"20000101-000000-1"),[])));
+          Expect.that ("five completed runs and two unfinished runs remain",length (entries out)=7)
+        end
+    in (work () before clean base) handle error => (clean base; raise error) end
+
   val tests =
     Test.describe "runner/props"
       (expectationTests () @
-      [Test.property "Scheduler.simulate/after-its-dependencies" (prop afterItsDeps),
+      [Test.it "Run.run/preserves-concurrent-output" retention,
+       Test.property "Scheduler.simulate/after-its-dependencies" (prop afterItsDeps),
        Test.property "Scheduler.simulate/fits-the-machine" (prop fitsTheMachine),
        Test.property "Scheduler.simulate/pools-exclude" (prop poolsExclude),
        Test.property "Scheduler.simulate/exclusive-alone" (prop exclusiveAlone),

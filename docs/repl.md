@@ -124,7 +124,7 @@ lib/terminal ([plans/repl.md](plans/repl.md), M5 and M6):
   (the theme `wide`); elsewhere in the 16 colours' few, which do too
   ([diagnostics.md](diagnostics.md), *Themes*). The prompt, the names of
   the echo, `uncaught exception` and `Interrupt` have the roles of the
-  palette (`src/util/color.sml`; `RUNE_COLORS` restyles them). A diagnostic
+  palette (`lib/compiler/util/color.sml`; `RUNE_COLORS` restyles them). A diagnostic
   shows the line it is about, with `^` under the place.
 * **Completion.** Tab completes what the cursor is in: after a `:` at the
   start, a command; in a string after `use`, a file; after a structure's
@@ -257,7 +257,7 @@ val () = Compiler.addPrettyPrinter (fn _ => fn _ => fn (s : Word8Vector.vector) 
 | Variable | Says |
 |---|---|
 | `NO_COLOR`, `FORCE_COLOR`, `CLICOLOR_FORCE` | whether to colour, where `--color` does not say ([diagnostics.md](diagnostics.md)) |
-| `RUNE_COLORS` | the palette's roles restyled (`src/util/color.sml`) |
+| `RUNE_COLORS` | the palette's roles restyled (`lib/compiler/util/color.sml`) |
 | `TERM`, `INSIDE_EMACS`, `RUNE_BASIC_REPL` | the basic mode (*On a terminal*) |
 | `TERM_PROGRAM` | how the terminal measures text, until it is asked, and whether it takes marks |
 | `XDG_CONFIG_HOME`, `XDG_STATE_HOME`, `APPDATA`, `LOCALAPPDATA` | where the init file and the history are |

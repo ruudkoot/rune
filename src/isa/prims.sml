@@ -870,5 +870,8 @@ struct
         [{name = "foreign", arity = 5, ty = "int * Word64.word * Word64.word * string * string -> bool * Word64.word * string * string * int * Word32.word", effects = anything,
           doc = "Trusted generic foreign bridge: operation, resource, extent, metadata and bytes; returns success, resource, bytes, error text, errno and native error. Includes measured native C ABI facts, guarded native destruction and opaque identity queries. Disabled builds answer ENOSYS for native operations while retaining ABI queries. No bound function adds a primitive."},
          {name = "foreign_callback", arity = 3, ty = "string * string * (string -> string) -> bool * Word64.word * string * int * Word32.word", effects = anything,
-          doc = "Root a trusted SML callback wrapper and prepare a generic libffi closure, with scalar ABI and failure policy metadata. Entry is restricted to the owning VM thread and a bounded interpreter delimiter while a native call is suspended."}]]
+          doc = "Root a trusted SML callback wrapper and prepare a generic libffi closure, with scalar ABI and failure policy metadata. Entry is restricted to the owning VM thread and a bounded interpreter delimiter while a native call is suspended."}],
+       group "linked unit inventory (compiler library sessions)"
+        [{name = "rt_linked_units", arity = 1, ty = "unit -> string list", effects = [ReadsHeap, Allocates],
+          doc = "Identities of successfully linked units in first-link order, each once; the reserved top-level export is the marker. Does not imply execution of initializers."}]]
 end

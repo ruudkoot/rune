@@ -367,7 +367,7 @@ struct
   fun opcodesSml (instrs : instruction list, fp : int) : file =
     let val is = numbered instrs
     in
-      {path = "src/backend/opcodes.sml",
+      {path = "lib/compiler/backend/opcodes.sml",
        text =
          lines
            (["(* " ^ generated ^ " *)",
@@ -410,7 +410,7 @@ struct
       val ps = numbered prims
       val n = List.length prims
     in
-      {path = "src/backend/prims.sml",
+      {path = "lib/compiler/backend/prims.sml",
        text =
          lines
            (["(* " ^ generated ^ " *)",
@@ -447,6 +447,7 @@ struct
                "     representations), 0 where the type says nothing; made when",
                "     first asked, by LowLint *)",
                "  val reps : (int list * int) StringMap.map option ref = ref NONE",
+               "  val () = CompilerState.cellRoot (\"Prims.reps\", reps)",
                "  fun repsOf name =",
                "    case !reps of",
                "      SOME m => StringMap.find (m, name)",

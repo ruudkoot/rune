@@ -1,0 +1,8 @@
+(* Common compiler utilities. *)
+files
+  util/scon.sml
+  util/ordmap.sml
+  util/inttable.sml
+  state_sig.sml
+  state.sml
+end

@@ -1,0 +1,38 @@
+file tests/doc/exports.sml
+  signature INTERNAL
+    para: An implementation detail.
+    reserved Area: Tests
+    type t
+      spec: type t
+      para: The internal representation.
+    val value
+      spec: val value : t
+      para: An internal value.
+    source:
+      |signature INTERNAL =
+      |sig
+      |  type t
+      |  val value : t
+      |end
+  structure Hidden
+    ascribed: INTERNAL
+    members: t value
+  signature API
+    para: The public interface.
+    reserved Area: Tests
+    type t
+      spec: type t
+      para: An abstract value type.
+    val value
+      spec: val value : t
+      para: The published value.
+    source:
+      |signature API =
+      |sig
+      |  type t
+      |  val value : t
+      |end
+  structure Api
+    sealed with: API
+    members: t value
+    twin: value = Hidden.value

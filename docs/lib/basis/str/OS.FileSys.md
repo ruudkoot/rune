@@ -7,7 +7,7 @@
 | Signature | [`OS_FILE_SYS`](../sig/OS_FILE_SYS.md) |
 | Status | required |
 | Members | 26 |
-| Tests | 186 checks |
+| Tests | 187 checks |
 | Source | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 ## Synopsis

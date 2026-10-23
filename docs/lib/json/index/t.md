@@ -3,6 +3,7 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [d](d.md) [e](e.md) [i](i.md) [m](m.md) [n](n.md) [o](o.md) [s](s.md) **t** [v](v.md)
 
 - `toInt` (val): [JSON](../sig/JSON.md#val-toint)
+- `toIntInf` (val): [JSON](../sig/JSON.md#val-tointinf)
 
 ---
 

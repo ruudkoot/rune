@@ -100,7 +100,8 @@ struct
       val suite = (if isDir (lib ^ "/tests") then ["--tests", lib ^ "/tests"] else [])
                   @ (if exists (lib ^ "/ANNOTATIONS") then ["--annotations", lib ^ "/ANNOTATIONS"] else [])
                   @ (if exists (lib ^ "/LAW-SKIPS") then ["--law-skips", lib ^ "/LAW-SKIPS"] else [])
-      val where' = (if exists (lib ^ "/ON-BASIS") then ["--lib", "lib", "--library", "./tests/doc/" ^ n ^ ".lib"]
+      val where' = (if exists (lib ^ "/ABSOLUTE-LIBRARY") then ["--lib", "tests/doc", "--library", OS.FileSys.fullPath lib]
+                    else if exists (lib ^ "/ON-BASIS") then ["--lib", "lib", "--library", "./tests/doc/" ^ n ^ ".lib"]
                     else ["--lib", "tests/doc", "--library", n ^ ".lib"])
                    @ (if exists (lib ^ "/BASIS-DOCS") then "--basis-docs" :: words (lib ^ "/BASIS-DOCS") else [])
       val () = rmTree site
@@ -113,6 +114,17 @@ struct
       val () = write (o' ".lib.files", String.concat (List.map (fn p => "./" ^ p ^ "\n") (sort (if isDir site then tree site else []))))
       val () = sameDoc (n ^ ".lib.diag", o' ".lib.diag", t ".diag")
       val () = sameDoc (n ^ ".lib.files", o' ".lib.files", t ".files")
+      val () = if not (exists (lib ^ "/ABSOLUTE-LIBRARY")) then () else
+        let val file=OS.FileSys.fullPath (OS.Path.concat (lib,Hosts.trim (read (lib ^ "/ABSOLUTE-LIBRARY"))))
+            val windows=OS.Path.validVolume {isAbs=true,vol="C:"}
+            val path=if windows then String.map (fn #"\\" => #"/" | c => c) file else file
+            val hex="0123456789ABCDEF"
+            fun quote c=if Char.ord c<128 andalso (Char.isAlphaNum c orelse Char.contains "-._~/:" c) then str c else
+              "%" ^ str (String.sub (hex,Char.ord c div 16)) ^ str (String.sub (hex,Char.ord c mod 16))
+            val target=if windows then "file:" ^ (if String.isPrefix "//" path then "" else "///") ^ String.translate quote path else path
+            val pages=List.map read (glob (site ^ "/sig", ".md"))
+        in if List.exists (String.isSubstring ("](" ^ target ^ ")")) pages then ()
+           else fail "doc: absolute library source link does not name its original file" end
       fun optional (ext, text) = if exists (t ext) then (write (o' (".lib" ^ ext), text ()); sameDoc (n ^ ".lib" ^ ext, o' (".lib" ^ ext), t ext)) else ()
       val () = optional (".notes", fn () => read (site ^ "/notes.tsv"))
       val () = optional (".members", fn () => read (site ^ "/members.json"))
@@ -750,7 +762,7 @@ struct
       val () = if planted then write (fault,
         "structure Color = struct\n  open Color\n"
         ^ "  val table = map (fn (\"error\", _, d, l) => (\"error\", \"30\", d, l) | row => row) table\nend\n") else ()
-      val sources = ["src/util/color.sml"] @ (if planted then [fault] else []) @ ["tests/color/contrast.sml"]
+      val sources = ["lib/compiler/util/color.sml"] @ (if planted then [fault] else []) @ ["tests/color/contrast.sml"]
     in
       if exec {cmd = ["bin/rune", "--library", "json"] @ sources @ ["-o", dir ^ "/contrast.rbc"],
                dir = NONE, stdin = "", stdout = log, stderr = log, timeout = 120} <> 0
@@ -777,8 +789,10 @@ struct
       val programs = [("rune", "polyml-build.sml"), ("runedoc", "runedoc-polyml-build.sml"),
                       ("runeopt", "runeopt-polyml-build.sml"), ("runeisa", "runeisa-polyml-build.sml"),
                       ("runeffi", "runeffi-polyml-build.sml")]
-      val () = List.app (fn n => write (dir ^ "/" ^ n, read (fromRoot n)))
-                         (List.map (fn (name, _) => name ^ ".build") programs)
+      val () = List.app (fn n => (mkdirs (OS.Path.dir (dir ^ "/" ^ n));
+                                  write (dir ^ "/" ^ n, read (fromRoot n))))
+                         (List.map (fn (name, _) => name ^ ".build") programs @
+                          ["lib/compiler/internal.build", "lib/compiler/frontend.build", "lib/compiler/util.build"])
       val () = write (dir ^ "/scripts/build-files.sh", read (fromRoot "scripts/build-files.sh"))
       val script = fromRoot script
       val log = dir ^ "/reference.log"
@@ -854,7 +868,7 @@ struct
 
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
 
-  val replLibs = ["unicode", "json", "terminal", "digest", "jsonrpc", "dap", "pretty", "markdown", "zmtp", "jupyter", "language/c", "ffi/model", "ffi/marshal", "ffi/runtime", "ffi/win32/common"]
+  val replLibs = ["unicode", "json", "terminal", "digest", "jsonrpc", "dap", "pretty", "markdown", "zmtp", "jupyter", "lsp", "language/c", "ffi/model", "ffi/marshal", "ffi/runtime", "ffi/win32/common"]
   val native = case OS.Process.getEnv "NATIVE_HOST" of SOME v => v = "yes" | NONE => exists "bin/runevm-native"
 
   val tree =
@@ -888,6 +902,9 @@ struct
               job ("property-laws", ["lib-laws"], [], 300, 600),
               job ("unit-core", ["lib-check", "passes", "unit-core", "test/unit", "tests/lib/unit/core.sml"], [], 300, 600),
               job ("runner-props", ["lib-check", "passes", "runner-props", "test/runner", "tests/lib/runner/props.sml"], [], 300, 600)]
+             @ [job ("compiler/api", ["lib-suite", "compiler", "tests/lib/compiler/api.sml"], [], 500, 600),
+                job ("compiler/@check", ["lib-basis-check", "compiler"], [], 500, 600),
+                job ("compiler/@examples", ["lib-examples", "compiler", "guarded"], [], 500, 600)]
              @ List.concat (List.map (fn lib => let val t = String.translate (fn #"/" => "-" | c => str c) lib
                                                 in [job (t ^ "-check", ["lib-basis-check", lib], [], 300, 600),
                                                     job (t ^ "-examples", ["lib-examples", lib, "guarded"], [], 300, 600)] end)

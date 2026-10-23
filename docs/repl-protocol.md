@@ -73,7 +73,7 @@ An *outcome* is
 REPL prints it, with its limits (`printDepth` and the rest). `line` is the
 binding as the REPL says it (`val x = 3 : int`), and `html` the same in
 `<span class="rune-ROLE">` elements of the palette's roles
-(`src/util/color.sml`), which `css` styles: a notebook shows it as the
+(`lib/compiler/util/color.sml`), which `css` styles: a notebook shows it as the
 terminal would. A *diagnostic*
 is rune-ide's: `{severity: "error" | "warning", message, path, startByte,
 endByte, range, rendered}`, `range` Monaco's (`startLineNumber`,

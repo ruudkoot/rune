@@ -28,6 +28,25 @@ struct
 
   fun inBasis (e : entry) : bool = #dir e = libDir ()
 
+  (* Manifest entries are already ordered by library dependency. Preserve
+     contiguous library groups so their private bases can be hidden. *)
+  fun entryGroups (entries : entry list) : entry list list =
+    let
+      fun take (_,[],acc) = (List.rev acc,[])
+        | take (dir,e :: rest,acc) =
+            if #dir (e : entry) = dir then take (dir,rest,e :: acc) else (List.rev acc,e :: rest)
+      fun groups [] = []
+        | groups (e :: rest) =
+            let val (group,rest) = take (#dir e,rest,[e]) in group :: groups rest end
+    in groups entries end
+
+  fun exportsOf entries =
+    Option.map (List.map (fn (kind,n) =>
+      ((case kind of "structure" => BuildFile.Str | "signature" => BuildFile.Sig
+                   | "functor" => BuildFile.Fun | "type" => BuildFile.Ty
+                   | _ => raise Options.Usage ("unknown library export kind: " ^ kind)),n)))
+      (BasisManifest.scopeOf entries)
+
   fun defaultOutput (first : string) : string =
     let
       val base = if String.isSuffix ".sml" first then String.substring (first, 0, String.size first - 4) else first
@@ -58,7 +77,7 @@ struct
      else the command line's (modeOf; compile) *)
   val buildModes : Source.mode StringMap.map ref = ref StringMap.empty
   fun modeOf (anns : string list) : Source.mode =
-    List.foldl (fn (a, m) => case Source.modeNamed a of SOME m' => m' | NONE => m) (!Options.sourceMode) anns
+    CompilerProject.modeOf (!Options.sourceMode,anns)
   (* the mode of an input file: its build file's, else the command line's *)
   fun inputMode (path : string) : Source.mode =
     case StringMap.find (!buildModes, path) of
@@ -109,6 +128,8 @@ struct
       val basisEntries = readManifest ()
       val libs = libraryManifests ()
       val ok = ref true
+      val declaredKinds = ref StringMap.empty : unit StringMap.map ref
+      fun declarationKey (dir,kind,name) = dir ^ "\000" ^ kind ^ " " ^ name
       fun complain (e : entry, msg) = (eprintln ("rune: " ^ #dir e ^ "/MANIFEST: " ^ #file e ^ ": " ^ msg); ok := false)
       fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
       fun show l = String.concatWith " " l
@@ -127,6 +148,10 @@ struct
                                     | _ => []) prog)
           val () = if sorted declared = sorted (#provides e) then ()
                    else complain (e, "provides " ^ show (sorted (#provides e)) ^ " but declares " ^ show (sorted declared))
+          val deps = Deps.analyse (BasisManifest.path e,prog)
+          val () = if #when e = Final then () else List.app (fn (kind,name) =>
+            declaredKinds := StringMap.insert (!declaredKinds,declarationKey (#dir e,Deps.kindName kind,name),()))
+            (#declares deps)
           (* the names another file provides and this one does not *)
           val used =
             List.filter (fn n => not (List.exists (fn p => p = n) (#provides e))
@@ -135,7 +160,7 @@ struct
                                           | NONE => false))
                         (StringMap.listKeys
                            (List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) StringMap.empty
-                                       (#uses (Deps.analyse (BasisManifest.path e, prog)))))
+                                       (#uses deps)))
           (* -Name in the column: named, but not required *)
           fun plain n = if String.isPrefix "-" n then String.extract (n, 1, NONE) else n
           val () = if used = sorted (List.map plain (#requires e ())) then ()
@@ -153,7 +178,20 @@ struct
         in List.foldl (fn (n, m) => StringMap.insert (m, n, ())) earlier (#provides e) end
       val earlier = List.foldl (check (providers basisEntries)) StringMap.empty basisEntries
       val all = basisEntries @ List.concat (List.map #2 libs)
-      val _ = List.foldl (fn ((_, es), earlier) => List.foldl (check (providers all)) earlier es) earlier libs
+      fun library ((dir,es),earlier) =
+        let val incoming = !fixity
+            val raw = List.foldl (check (providers all)) earlier es
+        in case BasisManifest.scopeOf es of
+             NONE => raw
+           | SOME exports =>
+               (List.app (fn (kind,name) =>
+                  if StringMap.member (!declaredKinds,declarationKey (dir,kind,name)) then ()
+                  else (eprintln ("rune: " ^ dir ^ "/MANIFEST: exports " ^ kind ^ " " ^ name ^
+                                  ", which no source before the program declares");ok := false)) exports;
+                fixity := incoming;
+                List.foldl (fn ((_,name),m) => StringMap.insert (m,name,())) earlier exports)
+        end
+      val _ = List.foldl library earlier libs
       val count = List.length all
     in
       if !ok then (println ("basis-check: OK (" ^ Int.toString count ^ " files)"); OS.Process.success)
@@ -251,11 +289,7 @@ struct
   (* What a build file says, as the units driver follows it: a unit -- a
      file, with the annotations in force -- or a scope of units whose basis
      the build file says (compileUnits, elabSteps) *)
-  datatype step = SUnit of string * string list
-                | SLocal of step list * step list
-                | SLibrary of (BuildFile.kind * string) list * step list
-                | SUse of string * step list            (* a build file used, by its path: elaborated once *)
-                | SImplements of string * step list
+  datatype step = datatype CompilerProject.step
 
   val buildPlan : step list option ref = ref NONE
 
@@ -266,40 +300,17 @@ struct
      directory, the variables given), each build file it uses read in its
      place, each group put in the order its files' modules give (Deps), the
      annotations given to each unit; and the cache directories it names *)
-  fun planOf (file : string) : step list * string list =
+  fun projectOf (file : string) : CompilerProject.plan =
     let
-      val caches : string list ref = ref []
-      fun read (f : string, seen : string list) : step list =
-        let
-          val canonical = OS.Path.mkCanonical f
-          val () = if List.exists (fn s => s = canonical) seen then raise Options.Usage ("the build file " ^ f ^ " uses itself")
-                   else ()
-          val text = readText f handle IO.Io _ => raise Options.Usage ("cannot read the build file " ^ f)
-          val decs = BuildFile.parse (f, text) handle BuildFile.Error m => raise Options.Usage m
-          val dir = OS.Path.dir f
-          fun path p = BuildFile.expand (dir, p) handle BuildFile.Error m => raise Options.Usage (f ^ ": " ^ m)
-          fun steps (anns, ds) = List.concat (List.map (fn d => step (anns, d)) ds)
-          and step (anns, d) =
-            case d of
-              BuildFile.File p => [SUnit (path p, anns)]
-            | BuildFile.Files ps => List.map (fn p => SUnit (path p, anns)) ps
-            | BuildFile.Group ps =>
-                let
-                  val analysed = List.map (fn p => Deps.analyse (p, syntaxOf (modeOf anns, p))) (List.map path ps)
-                  val broken = List.concat (List.map breaksOf analysed)
-                  val () = case broken of [] => () | b :: _ => raise Options.Usage b
-                  val (ordered, _) = Deps.order analysed handle Deps.Graph m => raise Options.Usage (f ^ ": " ^ m)
-                in List.map (fn (g : Deps.file) => SUnit (#path g, anns)) ordered end
-            | BuildFile.Local (a, b) => [SLocal (steps (anns, a), steps (anns, b))]
-            | BuildFile.Library (es, ds) => [SLibrary (es, steps (anns, ds))]
-            | BuildFile.Use p => let val q = path p in [SUse (OS.Path.mkCanonical q, read (q, canonical :: seen))] end
-            | BuildFile.Implements (x, ds) => [SImplements (x, steps (anns, ds))]
-            | BuildFile.Annotate (a, ds) => steps (anns @ a, ds)
-            | BuildFile.Cache p => (caches := path p :: !caches; [])
-            | BuildFile.Libraries _ => []
-        in steps ([], decs) end
-      val plan = read (file, [])
-    in (plan, List.rev (!caches)) end
+      val windows=List.exists (fn (key,value) => key="sysname" andalso value="Windows")
+                    (Posix.ProcEnv.uname ()) handle OS.SysErr _ => false
+      fun read path =
+        let val text=readText path handle IO.Io _ => raise CompilerProject.Invalid ("cannot read the build file " ^ path)
+        in {text=text,revision=Pickle.hash text} end
+      val plan=CompilerProject.plan {file=file,defaultMode= !Options.sourceMode,windows=windows,readBuild=read,syntax=syntaxOf}
+        handle CompilerProject.Invalid message => raise Options.Usage message
+    in plan end
+  fun planOf file = let val plan=projectOf file in (#steps plan,#caches plan) end
 
   (* --basis-index DIR: DIR/MANIFEST, what each file of the library provides
      and requires (BasisManifest), from its build file DIR/library.build --
@@ -315,15 +326,36 @@ struct
       val text = readText file handle IO.Io _ => raise Options.Usage ("cannot read the build file " ^ file)
       val decs = BuildFile.parse (file, text) handle BuildFile.Error m => raise Options.Usage m
       val libs : string list ref = ref []
-      fun entries (anns, ds) = List.concat (List.map (fn d => entry (anns, d)) ds)
-      and entry (anns, d) =
+      val used = ref [] : string list ref
+      val boundary = ref NONE : (BuildFile.kind * string) list option ref
+      fun relative (base, p) = OS.Path.mkCanonical (OS.Path.concat (base, p))
+      fun entries (base, stack, anns, inside, ds) = List.concat (List.map (fn d => entry (base, stack, anns, inside, d)) ds)
+      and entry (base, stack, anns, inside, d) =
         case d of
-          BuildFile.File p => [(p, anns)]
-        | BuildFile.Files ps => List.map (fn p => (p, anns)) ps
-        | BuildFile.Annotate (a, ds) => entries (anns @ a, ds)
+          BuildFile.File p => [(relative (base, p), anns, inside)]
+        | BuildFile.Files ps => List.map (fn p => (relative (base, p), anns, inside)) ps
+        | BuildFile.Annotate (a, ds) => entries (base, stack, anns @ a, inside, ds)
+        | BuildFile.Use p =>
+            let val path = relative (base, p)
+                val () = if List.exists (fn q => q = path) stack then raise Options.Usage (file ^ ": cyclic use of " ^ path) else ()
+            in if List.exists (fn q => q = path) (!used) then []
+               else let val () = used := path :: !used
+                        val source = readText (OS.Path.concat (dir, path))
+                          handle IO.Io _ => raise Options.Usage (file ^ ": cannot read " ^ path)
+                        val included = BuildFile.parse (path, source) handle BuildFile.Error m => raise Options.Usage m
+                    in entries (OS.Path.dir path, path :: stack, anns, inside, included) end end
+        | BuildFile.Library (es, ds) =>
+            if inside orelse isSome (!boundary) then raise Options.Usage (file ^ ": a library has one outer export boundary")
+            else (boundary := SOME es; entries (base, stack, anns, true, ds))
         | BuildFile.Libraries ns => (libs := !libs @ ns; [])
         | _ => raise Options.Usage (file ^ ": a library's build file lists its files, annotated; no more")
-      val listed = entries ([], decs)
+      val raw = entries (".", ["library.build"], [], false, decs)
+      val () = if isSome (!boundary) andalso List.exists (fn (_,_,inside) => not inside) raw
+               then raise Options.Usage (file ^ ": all source files belong inside the library export boundary") else ()
+      val listed = List.map (fn (p,anns,_) => (p,anns)) raw
+      fun kindName k = case k of BuildFile.Str => "structure" | BuildFile.Sig => "signature"
+                              | BuildFile.Fun => "functor" | BuildFile.Ty => "type"
+      val exports = Option.map (List.map (fn (k,n) => (kindName k,n))) (!boundary)
       fun classOf anns =
         case List.filter (fn a => List.exists (fn c => c = a) ["always", "demand", "seal", "final"]) anns of
           [] => "demand" | cs => List.last cs
@@ -339,12 +371,20 @@ struct
         if OS.Path.mkCanonical dir = OS.Path.mkCanonical (libRoot () ^ "/basis") then []
         else readManifest () @ List.concat (List.map BasisManifest.readManifest
                                                     (BasisManifest.libraries (libRoot (), !libs)))
-      val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (#provides e))
+      val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (BasisManifest.public e))
                                 StringMap.empty outside
       fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
       val providers = List.foldl (fn ((_, _, f : Deps.file), m) => List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) m
                                                                                (#declares f))
                                  provided analysed
+      val declared = List.concat (List.map (fn (_,_,f : Deps.file) =>
+        List.map (fn (k,n) => (Deps.kindName k,n)) (#declares f))
+        (List.filter (fn (_,anns,_) => classOf anns <> "final") analysed))
+      val () = Option.app (List.app (fn exported as (k,n) =>
+        if List.exists (fn declared => exported=declared) declared then ()
+        else raise Options.Usage (file ^ ": exports " ^ k ^ " " ^ n ^ ", which no source declares"))) exports
+      val scopeColumn = case exports of NONE => "" | SOME [] => " | -"
+        | SOME es => " | " ^ String.concatWith " " (List.map (fn (k,n) => k ^ ":" ^ n) es)
       val (lines, _) =
         List.foldl
           (fn ((p, anns, f : Deps.file), (acc, earlier)) =>
@@ -358,7 +398,7 @@ struct
                                                                     ", which only a file after it provides"))
                                  requires
                val line = p ^ " | " ^ classOf anns ^ " | " ^ hostOf anns ^ " | " ^ String.concatWith " " provides ^ " | "
-                          ^ String.concatWith " " requires
+                          ^ String.concatWith " " requires ^ scopeColumn
              in (line :: acc, List.foldl (fn (n, m) => StringMap.insert (m, n, ())) earlier provides) end)
           ([], provided) analysed
       val out = OS.Path.joinDirFile {dir = dir, file = "MANIFEST"}
@@ -375,13 +415,8 @@ struct
 
   (* the files of a plan, in the order they are compiled, with their
      annotations *)
-  fun unitsOf (steps : step list) : (string * string list) list =
-    List.concat (List.map (fn SUnit (p, anns) => [(p, anns)]
-                            | SLocal (a, b) => unitsOf a @ unitsOf b
-                            | SLibrary (_, ds) => unitsOf ds
-                            | SUse (_, ds) => unitsOf ds
-                            | SImplements (_, ds) => unitsOf ds) steps)
-  fun filesOf (steps : step list) : string list = List.map #1 (unitsOf steps)
+  val unitsOf = CompilerProject.units
+  val filesOf = CompilerProject.files
 
   fun compile () : OS.Process.status =
     let
@@ -391,7 +426,12 @@ struct
         case !Options.build of
           NONE => ()
         | SOME f =>
-            let val (plan, caches) = planOf f
+            let val project=projectOf f
+                val plan= #steps project
+                val caches= #caches project
+                val ()=Options.libraries:=List.foldl (fn (library,all) =>
+                  if List.exists (fn present => present=library) all then all else all @ [library])
+                  (!Options.libraries) (#libraries project)
             in
               buildPlan := SOME plan;
               Options.inputs := filesOf plan;
@@ -499,11 +539,8 @@ struct
                                   (userToks, inputs)
       val finalPart = List.map (fn e => file (e, !Options.allowPrim)) final
       val sources = basisPart @ userPart @ finalPart
-      (* the signatures and functors the units declared, newest first: what a
-         scope of a build file added (elabSteps) *)
-      val declLog : (string * string) list ref = ref []
-      fun logDeclared (l : UnitBasis.result) =
-        declLog := List.map (fn n => ("fun", n)) (#funs l) @ List.map (fn n => ("sig", n)) (#sigs l) @ !declLog
+      val buildContext=CompilerBuildContext.new (env,fixity)
+      fun logDeclared result=CompilerBuildContext.note (buildContext,result)
       (* a program that may load units while it runs -- it has Runtime's
          loading or a dynamic module's: their files are among its units --
          keeps in its file what its units export, under the identities a
@@ -771,59 +808,34 @@ struct
          environment, the fixity, the signatures and functors, and the units
          that bound each name (UnitBasis.binders), which the usages of the
          units after it are of *)
-      type snapshot = {env : Env.env, fixity : Fixity.env, sigs : SigMatch.sigma StringMap.map,
-                       funs : Elaborate.funinfo StringMap.map, binders : string StringMap.map,
-                       declared : int, bound : int}
-      fun snap () : snapshot =
-        {env = !env, fixity = !fixity, sigs = !Elaborate.sigs, funs = !Elaborate.funs, binders = !UnitBasis.binders,
-         declared = List.length (!declLog), bound = List.length (!UnitBasis.bindLog)}
-      (* what the steps between two snapshots added *)
-      type delta = {env : Env.env, directives : (string * Fixity.fixity) list, declared : (string * string) list,
-                    bound : string list, sigs : SigMatch.sigma StringMap.map, funs : Elaborate.funinfo StringMap.map,
-                    binders : string StringMap.map}
-      fun deltaOf (b1 : snapshot, b2 : snapshot) : delta =
-        {env = UnitBasis.envDelta (#env b1, #env b2),
-         directives = List.take (#list (#fixity b2), List.length (#list (#fixity b2)) - List.length (#list (#fixity b1))),
-         declared = List.rev (List.take (!declLog, List.length (!declLog) - #declared b1)),
-         bound = List.rev (List.take (!UnitBasis.bindLog, List.length (!UnitBasis.bindLog) - #bound b1)),
-         sigs = #sigs b2, funs = #funs b2, binders = #binders b2}
-      (* b0's basis, and what a delta adds to it: all of it, or a library's
-         exports *)
-      fun apply (b0 : snapshot, d : delta, exports : (BuildFile.kind * string) list option) =
-        let
-          fun exported (k, n) = case exports of NONE => true | SOME es => List.exists (fn e => e = (k, n)) es
-          val Env.Env {vals, tys, strs} = #env d
-          val e = Env.Env {vals = if isSome exports then StringMap.empty else vals,
-                           tys = StringMap.filteri (fn (n, _) => exported (BuildFile.Ty, n)) tys,
-                           strs = StringMap.filteri (fn (n, _) => exported (BuildFile.Str, n)) strs}
-          fun keyVisible key =
-            case String.fields (fn c => c = #" ") key of
-              [kind, n] =>
-                (case kind of
-                   "s" => exported (BuildFile.Str, n) | "t" => exported (BuildFile.Ty, n)
-                 | "sig" => exported (BuildFile.Sig, n) | "fun" => exported (BuildFile.Fun, n)
-                 | _ => not (isSome exports))
-            | _ => not (isSome exports)
-        in
-          env := Env.plus (#env b0, e);
-          fixity := Fixity.extend (#fixity b0, if isSome exports then [] else #directives d);
-          Elaborate.sigs := List.foldl (fn (("sig", n), m) =>
-                                          if exported (BuildFile.Sig, n)
-                                          then (case StringMap.find (#sigs d, n) of SOME x => StringMap.insert (m, n, x) | NONE => m)
-                                          else m
-                                        | (_, m) => m) (#sigs b0) (#declared d);
-          Elaborate.funs := List.foldl (fn (("fun", n), m) =>
-                                          if exported (BuildFile.Fun, n)
-                                          then (case StringMap.find (#funs d, n) of SOME x => StringMap.insert (m, n, x) | NONE => m)
-                                          else m
-                                        | (_, m) => m) (#funs b0) (#declared d);
-          UnitBasis.binders := List.foldl (fn (key, m) =>
-                                             if keyVisible key
-                                             then (case StringMap.find (#binders d, key) of
-                                                     SOME i => StringMap.insert (m, key, i)
-                                                   | NONE => m)
-                                             else m) (#binders b0) (#bound d)
-        end
+      type snapshot=CompilerBuildContext.snapshot
+      type delta=CompilerBuildContext.delta
+      fun snap ()=CompilerBuildContext.snap buildContext
+      fun deltaOf (before',after)=CompilerBuildContext.delta (buildContext,before',after)
+      fun apply (before',change,exports)=CompilerBuildContext.apply (buildContext,before',change,exports)
+      val libraryContexts : (string * snapshot) list ref = ref []
+      fun restoreContext (b : snapshot) =
+        (env := #env b; fixity := #fixity b; Elaborate.sigs := #sigs b;
+         Elaborate.funs := #funs b; UnitBasis.binders := #binders b)
+      fun libraries (es,acc) =
+        List.foldl (fn (group,acc) =>
+          let val prior = snap ()
+              val acc = List.foldl (fn (e,acc) => unit (file (e,inBasis e),acc)) acc group
+          in case exportsOf group of
+               NONE => acc
+             | SOME exports =>
+                 (libraryContexts := (#dir (hd group),snap ()) :: !libraryContexts;
+                  apply (prior,deltaOf (prior,snap ()),SOME exports); acc)
+          end) acc (entryGroups es)
+      fun finals (es,acc) =
+        List.foldl (fn (group,acc) =>
+          case List.find (fn (dir,_) => dir = #dir (hd group)) (!libraryContexts) of
+            NONE => List.foldl (fn (e,acc) => unit (file (e,!Options.allowPrim),acc)) acc group
+          | SOME (_,context) =>
+              let val prior = snap ()
+                  val () = restoreContext context
+                  val acc = List.foldl (fn (e,acc) => unit (file (e,!Options.allowPrim),acc)) acc group
+              in restoreContext prior; acc end) acc (entryGroups es)
       val implemented : string list ref = ref []
       val used : (string * delta) list ref = ref []
       fun elabSteps (steps : step list, acc) = List.foldl elabStep acc steps
@@ -910,10 +922,9 @@ struct
         else ()
       val compiled =
         (case !buildPlan of
-           NONE => List.rev (List.foldl unit (withDefaults (fn acc => List.foldl unit acc userPart) (List.foldl unit [] basisPart))
-                                        finalPart)
+           NONE => List.rev (finals (final,withDefaults (fn acc => List.foldl unit acc userPart) (libraries (basis,[]))))
          | SOME plan =>
-             List.rev (List.foldl unit (withDefaults (fn acc => elabSteps (plan, acc)) (List.foldl unit [] basisPart)) finalPart))
+             List.rev (finals (final,withDefaults (fn acc => elabSteps (plan,acc)) (libraries (basis,[])))))
         handle e => (Parallel.finish (); raise e)
       val () = Parallel.finish ()
       val units = List.map #1 compiled
@@ -1016,6 +1027,23 @@ struct
   and frontEnd (basis : entry list, final : entry list, userToks, _ : string list) : Lambda.lexp option =
     let
       fun parseEntries es = List.concat (List.map (fn e : entry => parseTokens (loadTokens (Source.Ascii, BasisManifest.path e))) es)
+      val syntaxGroups : (entry list * Ast.program * Fixity.env) list ref = ref []
+      val finalSyntax : (entry list * Ast.program) list ref = ref []
+      fun parseLibrary es =
+        let val incoming = !fixity
+            val ds = parseEntries es
+            val outgoing = !fixity
+            val () = if isSome (exportsOf es) then fixity := incoming else ()
+        in (es,ds,outgoing) end
+      fun parseFinal es =
+        let val incoming = !fixity
+            val scoped = isSome (exportsOf es)
+            val () = if not scoped then () else
+              (case List.find (fn (group,_,_) => #dir (hd group) = #dir (hd es)) (!syntaxGroups) of
+                 SOME (_,_,fx) => fixity := fx | NONE => ())
+            val ds = parseEntries es
+            val () = if scoped then fixity := incoming else ()
+        in (es,ds) end
       (* The front end's two stages, for --pass-stats; their size is the
          number of top-level declarations. *)
       fun frontStage name f =
@@ -1027,19 +1055,48 @@ struct
         frontStage "parse"
                    (fn () => let
                                val b = parseEntries (List.filter inBasis basis)
-                               val l = parseEntries (List.filter (not o inBasis) basis)
-                             in (b, l, List.concat (List.map parseTokens userToks), parseEntries final) end)
+                               val libraries = List.map parseLibrary (entryGroups (List.filter (not o inBasis) basis))
+                               val () = syntaxGroups := libraries
+                               val l = List.concat (List.map #2 libraries)
+                               val u = List.concat (List.map parseTokens userToks)
+                               val finals = List.map parseFinal (entryGroups final)
+                               val () = finalSyntax := finals
+                             in (b,l,u,List.concat (List.map #2 finals)) end)
                    ()
       val preludeProg = basisProg @ libraryProg
       (* the warnings of UTS #39 the inputs' lexing found (D13) *)
       val () = List.app Lexer.report (!Options.inputs)
       val () = if !Options.dumpAst then List.app (fn d => println (Ast.decToString d)) (userProg @ finalProg) else ()
       val env = ref Env.initial
+      type libraryContext = LibraryScope.basis
+      val libraryContexts : (string * libraryContext) list ref = ref []
+      fun context () : libraryContext = {env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs}
+      fun restore (b : libraryContext) =
+        (env := #env b; Elaborate.sigs := #sigs b; Elaborate.funs := #funs b)
+      fun elabLibrary (es,ds,_) =
+        let val prior = context ()
+            val () = Elaborate.elabTop (env,ds)
+        in case exportsOf es of
+             NONE => ()
+           | SOME _ =>
+               let val raw = context ()
+                   val exports = valOf (BasisManifest.scopeOf es)
+               in libraryContexts := (#dir (hd es),raw) :: !libraryContexts;
+                  restore (LibraryScope.restrict (prior,raw,exports)) end
+        end
+      fun elabFinal (es : entry list,ds) =
+        case List.find (fn (dir,_) => dir = #dir (hd es)) (!libraryContexts) of
+          NONE => Elaborate.elabTop (env,ds)
+        | SOME (_,raw) =>
+            let val prior = context ()
+                val () = restore raw
+                val () = Elaborate.elabTop (env,ds)
+            in restore prior end
       fun elaborate (progs as (b, l, u, fin)) =
         (Elaborate.allowPrim := true;
          Elaborate.elabTop (env, b);
          Elaborate.allowPrim := false;
-         Elaborate.elabTop (env, l);
+         List.app elabLibrary (!syntaxGroups);
          Elaborate.allowPrim := !Options.allowPrim;
          (* --default-type holds for the input files, not for the libraries *)
          Elaborate.intDefault := (if !Options.defaultInt64 then Types.int64Ty else Types.intTy);
@@ -1047,7 +1104,7 @@ struct
          Elaborate.elabTop (env, u);
          Elaborate.intDefault := Types.intTy;
          Elaborate.wordDefault := Types.wordTy;
-         Elaborate.elabTop (env, fin);
+         List.app elabFinal (!finalSyntax);
          Elaborate.finish ();
          progs)
       val () = Elaborate.recover := true

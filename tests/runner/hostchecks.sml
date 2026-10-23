@@ -8,6 +8,8 @@ struct
     let
       val dir = run ^ "/host-checks"
       val () = mkdirs dir
+      val source=dir ^ "/source with spaces.sml"
+      val ()=write (source,"structure Input = struct val answer=42 end\n")
       fun check (name, ok) = if ok then () else say ("FAIL host-adapter: " ^ name ^ "\n")
       fun script (name, text) =
         let val file = dir ^ "/" ^ name
@@ -16,7 +18,7 @@ struct
         in file end
       fun build (host, text, timeout) =
         Hosts.build {host = {name = host, program = script ("compiler with spaces", text), library = "library with spaces"},
-                     name = "program", sources = ["source with spaces.sml"], dir = dir ^ "/build with spaces",
+                     name = "program", sources = [source], dir = dir ^ "/build with spaces",
                      runDir = root, timeout = timeout, memory = 256}
       val pass = build ("smlnj-legacy", "test -r tests/lib/unicode/GraphemeBreakTest.txt || exit 10\n"
                         ^ "printf 'Standard ML fake\n[opening x]\nPASS suite\nval x = 1\n'", 5)
@@ -53,6 +55,9 @@ struct
         ^ "test -z \"${FORCE_COLOR-}${CLICOLOR_FORCE-}\" || exit 8\nprintf 'PASS suite\\n'\nPROGRAM\nchmod +x \"$2\""
       val native = build ("mlkit", compiled, 5)
       val () = check ("MLKit build and executable", #built native andalso #status native = 0 andalso #output native = "PASS suite\n")
+      val () = check ("MLKit inputs are private snapshots",
+        same (source,dir ^ "/build with spaces/inputs/0-source with spaces.sml") andalso
+        String.isSubstring "0-source with spaces.sml\"" (read (dir ^ "/build with spaces/program.mlb")))
       val rejected = build ("mlton", "exit 3", 5)
       val () = check ("compiler exit checked", not (#built rejected) andalso #status rejected = 3)
       val () = check ("PASS required", not (LibHosts.outputOK "props" "" "" ""))
@@ -81,7 +86,7 @@ struct
       val () = check ("matching failure uses deviation", null (LibHosts.unused ls "mlton" ["random.kat"]))
       val () = check ("stale strict deviation", length (LibHosts.unused ls "mlton" []) = 1)
       val () = check ("another host's deviation", null (LibHosts.unused ls "smlnj32" []))
-      val () = check ("library inventory", length LibHosts.tests = 34)
+      val () = check ("library inventory", length LibHosts.tests = 41)
       val () = check ("C frontend host coverage", List.exists (fn t : LibHosts.test =>
         #label t = "language.c.frontend" andalso #libraries t = ["unit", "language/c"]
         andalso #source t = "tests/lib/language/c/frontend.sml") LibHosts.tests)

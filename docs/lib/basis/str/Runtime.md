@@ -6,8 +6,8 @@
 | --- | --- |
 | Signature | [`RUNTIME`](../sig/RUNTIME.md) |
 | Status | extension |
-| Members | 19 |
-| Tests | 50 checks |
+| Members | 20 |
+| Tests | 51 checks |
 | Source | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
 
 ## Synopsis
@@ -34,6 +34,7 @@ What each means is on [`RUNTIME`](../sig/RUNTIME.md); the types are this structu
 | val | [`clock`](../sig/RUNTIME.md#val-clock) | `unit -> Time.time` |
 | val | [`collect`](../sig/RUNTIME.md#val-collect) | `unit -> unit` |
 | val | [`link`](../sig/RUNTIME.md#val-link) | `Word8Vector.vector -> unit -> unit` |
+| val | [`linkedUnits`](../sig/RUNTIME.md#val-linkedunits) | `unit -> string list` |
 | val | [`load`](../sig/RUNTIME.md#val-load) | `string -> unit -> unit` |
 | val | [`maskInterrupt`](../sig/RUNTIME.md#val-maskinterrupt) | `bool -> bool` |
 | val | [`printTrace`](../sig/RUNTIME.md#val-printtrace) | `TextIO.outstream -> unit` |

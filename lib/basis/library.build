@@ -15,7 +15,7 @@
 
    What a file provides -- the structures, signatures, functors and
    top-level types it declares -- and what it requires -- those of other
-   files that it names (Deps, src/driver/deps.sml; docs/units.md, The graph)
+   files that it names (Deps, lib/compiler/driver/deps.sml; docs/units.md, The graph)
    -- are worked out from the files: `make manifests` writes them to
    lib/basis/MANIFEST (rune --basis-index), which the compiler reads. A name
    the library needs for itself and offers to nobody is written `RuneFoo` or

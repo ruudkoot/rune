@@ -189,7 +189,8 @@ sig
      pipe are the system's, and a restored world does not have them. Nor is
      what the program read ahead of its standard input and has not taken:
      `TextIO.stdIn` in the restored world reads that world's standard input
-     from where it begins.
+     from where it begins. `OS.Path` also refreshes its host syntax when an
+     image resumes on a different operating system.
 
      Raises: `OS.SysErr` if the image cannot be written. *)
   val save : string -> world
@@ -247,6 +248,16 @@ sig
      Raises: `IO.Io` if the file cannot be read, and `Fail` as `link`
      does. *)
   val load : string -> unit -> unit
+
+  (* `linkedUnits ()` is the identities of the units successfully linked
+     into this program, in first-link order, each listed once.
+
+     Linking does not execute a unit. This inventory does not say whether
+     its top-level declarations ran or completed. A failed link does not
+     add its identity. A whole-program compile has no unit inventory.
+     Programs made by older compilers may omit units without a reserved
+     top-level export. *)
+  val linkedUnits : unit -> string list
 
   (* `catchInterrupt ()` makes Ctrl-C, the user's interrupt, raise
      `SML90.Interrupt` in the program from now on rather than end it.

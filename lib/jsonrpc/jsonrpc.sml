@@ -3,8 +3,8 @@
    Implements: JSON_RPC *)
 structure JsonRpc :> JSON_RPC =
 struct
-  datatype id = Number of int | String of string
-  type error = {code : int, message : string, data : Json.value option}
+  datatype id = Number of IntInf.int | String of string
+  type error = {code : IntInf.int, message : string, data : Json.value option}
   datatype outcome = Result of Json.value | Error of error
   datatype message =
       Request of {id : id, method : string, params : Json.value option}
@@ -12,21 +12,23 @@ struct
     | Response of {id : id option, outcome : outcome}
   datatype read = Message of message | Invalid of error * id option
 
-  val parseError = ~32700
-  val invalidRequest = ~32600
-  val methodNotFound = ~32601
-  val invalidParams = ~32602
-  val internalError = ~32603
-  val requestCancelled = ~32800
+  val parseError = IntInf.fromInt ~32700
+  val invalidRequest = IntInf.fromInt ~32600
+  val methodNotFound = IntInf.fromInt ~32601
+  val invalidParams = IntInf.fromInt ~32602
+  val internalError = IntInf.fromInt ~32603
+  val requestCancelled = IntInf.fromInt ~32800
 
   exception Unknown
   exception Failed of error
 
-  fun idJson (Number n) = Json.int n
+  val integerJson = Json.intInf
+  val integerOf = Json.toIntInf
+  fun idJson (Number n) = integerJson n
     | idJson (String s) = Json.String s
 
   fun errorJson ({code, message, data} : error) =
-    Json.Object ([("code", Json.int code), ("message", Json.String message)]
+    Json.Object ([("code", integerJson code), ("message", Json.String message)]
                  @ (case data of SOME d => [("data", d)] | NONE => []))
 
   fun toJson m =
@@ -48,7 +50,7 @@ struct
 
   fun idOf v =
     case v of
-      Json.Number _ => Option.map Number (Json.toInt v)
+      Json.Number _ => Option.map Number (integerOf v)
     | Json.String s => SOME (String s)
     | _ => NONE
 
@@ -78,7 +80,7 @@ struct
                 (case (get "result", get "error") of
                    (SOME r, NONE) => Message (Response {id = id, outcome = Result r})
                  | (NONE, SOME (e as Json.Object _)) =>
-                     (case (Option.mapPartial Json.toInt (Json.member ("code", e)), Json.member ("message", e)) of
+                     (case (Option.mapPartial integerOf (Json.member ("code", e)), Json.member ("message", e)) of
                         (SOME code, SOME (Json.String msg)) =>
                           Message (Response {id = id, outcome = Error {code = code, message = msg,
                                                                       data = Json.member ("data", e)}})

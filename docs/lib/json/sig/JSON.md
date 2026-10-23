@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 9 of 9 entries documented |
+| Documentation | 11 of 11 entries documented |
 | Tests | not listed |
 | Source | [lib/json/json\_sig.sml](../../../../lib/json/json_sig.sml) |
 
@@ -28,7 +28,8 @@ comments, no trailing commas, no single quotes, no NaN -- in UTF-8, as the
 RFC requires of text exchanged between systems; a string's escapes must
 name scalar values, so a lone surrogate is an error. A number is kept as
 the text it was written in, so that nothing is lost to a conversion that
-the program did not ask for; [`int`](#val-int) and [`toInt`](#val-toint) convert. An object keeps
+the program did not ask for; [`int`](#val-int) and [`toInt`](#val-toint) convert host integers,
+[`intInf`](#val-intinf) and [`toIntInf`](#val-tointinf) arbitrary-precision integers. An object keeps
 its members in the order they were written, a repeated name included.
 Nesting deeper than [`maxDepth`](#val-maxdepth) is refused rather than followed.
 
@@ -50,7 +51,9 @@ sig
   val <a href="#val-encode">encode</a> : value -&gt; string
   val <a href="#val-encodeindented">encodeIndented</a> : int -&gt; value -&gt; string
   val <a href="#val-int">int</a> : int -&gt; value
+  val <a href="#val-intinf">intInf</a> : IntInf.int -&gt; value
   val <a href="#val-toint">toInt</a> : value -&gt; int option
+  val <a href="#val-tointinf">toIntInf</a> : value -&gt; IntInf.int option
   val <a href="#val-member">member</a> : string * value -&gt; value option
 end
 </pre>
@@ -157,6 +160,16 @@ val int : int -> value
 
 **Example** `int ~3 = Number "-3"`
 
+### <a name="val-intinf"></a>`intInf`
+
+```sml
+val intInf : IntInf.int -> value
+```
+
+`intInf i` is the integer i, without a host-width restriction.
+
+**Example** `intInf (IntInf.fromInt ~3) = Number "-3"`
+
 ### <a name="val-toint"></a>`toInt`
 
 ```sml
@@ -167,6 +180,16 @@ val toInt : value -> int option
 fraction or exponent that fits an [`int`](#val-int); `NONE` otherwise.
 
 **Example** `toInt (Number "-42") = SOME ~42 andalso toInt (Number "4.2") = NONE`
+
+### <a name="val-tointinf"></a>`toIntInf`
+
+```sml
+val toIntInf : value -> IntInf.int option
+```
+
+`toIntInf v` is the integer of a number with no fraction or exponent.
+
+**Example** `toIntInf (Number "2147483647") = IntInf.fromString "2147483647"`
 
 ### <a name="val-member"></a>`member`
 

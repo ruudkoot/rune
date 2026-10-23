@@ -1,0 +1,3 @@
+library (structure Api, signature API, functor Make, type exposed) =
+  use entries.build
+end

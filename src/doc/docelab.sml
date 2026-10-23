@@ -27,15 +27,28 @@ struct
       fun parse d (e : BasisManifest.entry) =
         let val (prog, fx) = Parser.parseTokensWith (Lexer.tokenize (Source.load (!DocSource.mode, d ^ "/" ^ #file e)), !fixity)
         in fixity := fx; prog end
-      fun programOf d = List.concat (List.map (parse d) (BasisManifest.readManifest d))
-      val basisProg = case #basis prelude of SOME d => programOf d | NONE => []
-      val prog = List.concat (List.map programOf (#libraries prelude)) @ programOf dir
       val env = ref Env.initial
+      fun namespace () : LibraryScope.basis = {env = !env, sigs = !Elaborate.sigs, funs = !Elaborate.funs}
+      fun restore (basis : LibraryScope.basis) =
+        (env := #env basis; Elaborate.sigs := #sigs basis; Elaborate.funs := #funs basis)
+      fun elaborate d =
+        let
+          val entries = BasisManifest.readManifest d
+          val incoming = !fixity
+          val prior = namespace ()
+          val prog = List.concat (List.map (parse d) entries)
+          val () = Elaborate.elabTop (env, prog)
+        in
+          case BasisManifest.scopeOf entries of
+            NONE => ()
+          | SOME exports => (restore (LibraryScope.restrict (prior, namespace (), exports)); fixity := incoming)
+        end
     in
       Elaborate.allowPrim := true;
-      Elaborate.elabTop (env, basisProg);
+      Option.app elaborate (#basis prelude);
       Elaborate.allowPrim := not (isSome (#basis prelude));
-      Elaborate.elabTop (env, prog);
+      List.app elaborate (#libraries prelude);
+      elaborate dir;
       Elaborate.allowPrim := true;
       Elaborate.finish ();
       Error.warnings := [];
@@ -86,7 +99,7 @@ struct
                                 ^ (if #realisations c = "" then "" else " " ^ #realisations c)
                                 ^ ", as its comment claims: " ^ msg)
 
-  fun namesIn (Env.Env {vals, tys, strs}) : string list =
+  fun namesIn (Env.Env {vals, tys, strs,...}) : string list =
     StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty
                                    (StringMap.listKeys vals @ StringMap.listKeys tys @ StringMap.listKeys strs))
 
@@ -219,7 +232,7 @@ struct
   fun membersOf (lib : library, public : string -> bool) (path : string list) : (string * member) list option =
     case Env.findStr (#env lib, path) of
       NONE => NONE
-    | SOME (structure' as Env.Env {vals, tys, strs}) =>
+    | SOME (structure' as Env.Env {vals, tys, strs,...}) =>
         let
           (* What a type is called on this page: a type that this structure
              names is that name, a type that a structure below it names is the
@@ -429,7 +442,7 @@ struct
     in
       case sigma of
         NONE => NONE
-      | SOME {bound, env = sigEnv} =>
+      | SOME {bound, env = sigEnv,...} =>
           (case Env.findStr (sigEnv, sub) of
              SOME (Env.Env {tys, ...}) =>
                (case StringMap.find (tys, ty) of
@@ -445,7 +458,7 @@ struct
   fun abstractTypesOf (lib : library) (sigexp : string) : (string list * string) list =
     (ignore (typeSpecOf lib (sigexp, [], ""));
      case StringMap.find (!probed, sigexp) of
-       SOME (SOME {bound, env = sigEnv}) =>
+       SOME (SOME {bound, env = sigEnv,...}) =>
          let
            fun walk (path, Env.Env {tys, strs, ...}) =
              List.mapPartial (fn (name, Env.TyStr {fcn = Types.TName c, ...}) =>

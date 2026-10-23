@@ -106,7 +106,7 @@ ASCII, and a unit in any mode can name it (*A library's build file* of
 
 Once a unit is compiled, what the units after it need of it -- its
 *export basis* (the incremental roadmap's D4) -- is written as bytes
-(`UnitBasis.export`, `src/driver/unitbasis.sml`; [bytecode.md](bytecode.md),
+(`UnitBasis.export`, `lib/compiler/driver/unitbasis.sml`; [bytecode.md](bytecode.md),
 *A unit's basis*): the environment it declared, its fixity directives,
 signatures, functors and overloading, and the compiler's tables of what it
 declared: each value's scheme, each exception's argument, each datatype's
@@ -126,6 +126,16 @@ application that makes code takes the equality of the types its copy
 made (rule 54; [plans/functors.md](plans/functors.md)). The summary's
 values and exceptions are named by placeholders, which are no names of the
 unit's.
+
+Static analysis can also record lexical origins in a version-7 basis:
+source ranges for bindings and the specification/implementation relation
+introduced by signature matching. These origins are separate from value,
+exception and generative type stamps. Exception replication shares a
+runtime exception identity while introducing a distinct lexical name.
+Copied functor bodies retain their definition's lexical owner. Analysis
+freezes query data before replacing a unit's mutable annotations; replay
+restores origins together with its checked basis. The batch driver and
+analysis share build-scope visibility through `CompilerBuildContext`.
 
 Then the unit's basis is *loaded* again in place of what its compile left
 (`UnitBasis.load`; `Pipeline.unitThrough`): the compiler's tables go back
@@ -236,7 +246,7 @@ per declaration pays for its compiler and not for the JIT again
 A compile in units keeps what it made of each unit -- its basis and its
 code -- in a cache, and a compile after it takes a unit from there rather
 than compiling it again where nothing it depends on changed (`UnitCache`,
-`src/driver/unitcache.sml`; the incremental roadmap's D14):
+`lib/compiler/driver/unitcache.sml`; the incremental roadmap's D14):
 
 * the cache is a directory: `--cache-dir DIR`, else `$RUNE_CACHE` (empty:
   none), else `.rune` beside the first input; `--no-cache` compiles every
@@ -374,13 +384,30 @@ its Mid the same way, so the two are one program and the same bytes:
 ways, through the cache and from it, `check-levels` at both levels, and
 `check-cross` the compiler (S42 of `tests/incremental/SCENARIOS.md`).
 
-**The frozen Basis Library** (D8): `make basis-cache`, part of `make all`,
-compiles every unit of `lib/basis` once, for each bytecode, into
+**The frozen libraries** (D8): `make basis-cache`, part of `make all`,
+compiles every unit of `lib/basis` and `lib/compiler` once, with the
+compiler library's Unicode and JSON dependencies, for each bytecode, into
 `lib/cache`, which `make install` installs read-only beside the library. A
 compile reads it after its own cache and never writes it, so that a
 program's first compile takes the Basis Library's units from there where
 their usages hold, which they do but for the seals of structures the
 program does not name.
+
+The public [compiler library](lib/compiler/README.md) writes units with
+`.rbi` checked-basis, `.rbm` Mid and `.rbs` source companions. The source
+companion is a `Pickle` encoding: `RCS`, version 2, then strings containing
+the source filename, source-mode name, decoded source text, unit-code
+hash, basis hash and Mid hash, with no trailing data. Text is UTF-8 in
+Unicode modes. Readers check the artifact hashes, source hash and mode
+against the checked basis; this detects mismatched or partially published
+sets. Each file is replaced atomically and the source record is published
+last. This is not a multi-file filesystem transaction.
+
+The source companion is an API addition; ordinary CLI units remain
+compatible when their matching original source is available. A unit read
+without Mid can be compiled against and executed but cannot be exported
+through `writeMid`. The [compiler-library roadmap](plans/compiler-library.md) records the remaining
+session and client-migration acceptance gates.
 
 **`use`** in the REPL ([repl.md](repl.md)) takes a file's declarations
 from the cache the same way, each a unit named by the file and its place
@@ -397,7 +424,7 @@ runs the scenarios of `tests/incremental/SCENARIOS.md` it can be held to.
 ## The graph
 
 `rune --deps FILE...` puts files in an order where each comes after the
-files that declare the modules it uses (`Deps`, `src/driver/deps.sml`; the
+files that declare the modules it uses (`Deps`, `lib/compiler/driver/deps.sml`; the
 incremental roadmap's M8 and D15), and `--deps-dot` gives the graph in DOT,
 each file to the files it needs. A file declares the structures,
 signatures, functors and top-level type abbreviations of its top level;

@@ -2803,6 +2803,38 @@ static int p_rt_link_error(VM *vm) {
     return ret(vm, 1, mk_ptr(vm_string_from(vm, vm->unit_error, (uint32_t)strlen(vm->unit_error))));
 }
 
+/* Only successful links publish the reserved top-level export. This is
+   linkage information; the VM does not infer whether the caller ran it. */
+static int unit_source_current(VM *vm, const UnitExport *source, const char *name) {
+    const char prefix[] = "\001RuneSource:";
+    size_t n = sizeof prefix - 1;
+    if (strncmp(name, prefix, n) != 0) return 1;
+    if (strlen(name) <= n + 25 || name[n + 24] != ':') return 0;
+    const char *identity = name + n + 25;
+    for (uint32_t i = 0; i < vm->nunit_exports; i++) {
+        const UnitExport *unit = &vm->unit_exports[i];
+        if (unit->kind == 0 && unit->stamp == -1 &&
+            strcmp(vm->unit_sessions[unit->session], identity) == 0)
+            return unit->index == source->index;
+    }
+    return 0;
+}
+
+static int p_rt_linked_units(VM *vm) {
+    check_tag(vm, ARG(0), T_CON0, "rt_linked_units");
+    vm->sp--;
+    vm_push(vm, mk_con0(0));
+    for (uint32_t i = vm->nunit_exports; i > 0; i--) {
+        const UnitExport *e = &vm->unit_exports[i - 1];
+        if (e->kind != 0 || e->stamp != -1) continue;
+        const char *name = vm->unit_sessions[e->session];
+        if (!unit_source_current(vm, e, name)) continue;
+        vm_push(vm, mk_ptr(vm_string_from(vm, name, (uint32_t)strlen(name))));
+        vm_cons(vm);
+    }
+    return 0;
+}
+
 /* rt_interrupt_catch e: from now on the user's interrupt raises e where
    the program next polls (VM.interrupt; docs/runtime.md, Interrupts), the
    exception kept before the handler is installed; false where the system

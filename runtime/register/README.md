@@ -25,7 +25,7 @@ builds (`bin/runevm.exe`, `bin/runevm32.exe`, `bin/runevm32`,
 sources with `runtime/stack/isa_stack.c` left out (`NEW_SRCS`, `WIN_NEW_SRCS`).
 
 The generated files -- `runtime/register/regs.def`, `regops.h`, `reg_cases.h`,
-`reg_labels.h`, `jit_emit.h`, `jit_cases.h` and `src/backend/regcodes.sml`
+`reg_labels.h`, `jit_emit.h`, `jit_cases.h` and `lib/compiler/backend/regcodes.sml`
 -- are written by `runeisa`
 from `src/isa/regs.sml` (`make isa`; `make check-isa` fails when they are
 stale) and committed, so that the VM builds with a C compiler alone.
