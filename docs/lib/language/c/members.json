@@ -68,6 +68,33 @@
     }
    ]
   },
+  "C_EXPRESSION": {
+   "doc": "Typed C integer expressions for target declaration consumers.\n\n",
+   "page": "sig/C_EXPRESSION.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "binding",
+     "spec": "type binding = {ty : CParse.ctype, value : IntInf.int option}",
+     "doc": "A named object, enumerator or constant, before integer promotion.\n\n",
+     "page": "sig/C_EXPRESSION.md#type-binding"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of CLex.location * string",
+     "doc": "A source-located invalid or unsupported selected expression.\n\n",
+     "page": "sig/C_EXPRESSION.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "evaluate",
+     "spec": "val evaluate : {target : CInteger.target, sizeType : CInteger.integerType,\n  tokens : CLex.token list, lookup : string -> binding option,\n  resolveType : CLex.token list -> CParse.ctype option,\n  integerType : CParse.ctype -> CInteger.integerType option,\n  measure : CParse.ctype -> {size : IntInf.int, alignment : int}} -> CInteger.value",
+     "doc": "`evaluate context` evaluates a target C integer constant expression.\n\nCasts, integer promotions, usual conversions, lazy conditional/logical\noperators, `sizeof` and `_Alignof` use explicit target facts. Both lazy\nbranches are typechecked. Unevaluated operands do not perform arithmetic.\nPointer-valued constants and other unsupported constructs fail explicitly.\n\n**Raises** `Error` for invalid syntax, unresolved types or undefined arithmetic.\n\n",
+     "page": "sig/C_EXPRESSION.md#val-evaluate"
+    }
+   ]
+  },
   "C_FILES": {
    "doc": "File-system include resolution for a C translation unit.\n\n",
    "page": "sig/C_FILES.md",
@@ -85,6 +112,186 @@
      "spec": "val resolver : string list -> CPreprocess.resolver",
      "doc": "`resolver roots` searches quoted includes beside their source before\nsearching the ordered include roots.\n\nAngle includes search roots.\n`include_next` continues after the root containing the source.\nA found but unreadable source reports its I/O error.\n\n**Raises** `OS.SysErr` for an invalid include root.\n\n",
      "page": "sig/C_FILES.md#val-resolver"
+    }
+   ]
+  },
+  "C_INTEGER": {
+   "doc": "Target integer types and the usual C arithmetic conversions.\n\n",
+   "page": "sig/C_INTEGER.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "rank",
+     "spec": "datatype rank = Char | Short | Int | Long | LongLong",
+     "doc": "Integer rank, independent of the generator host's widths.\n\n",
+     "page": "sig/C_INTEGER.md#type-rank"
+    },
+    {
+     "kind": "type",
+     "name": "integerType",
+     "spec": "type integerType = {rank : rank, width : int, signed : bool}",
+     "doc": "One target C integer type.\n\n",
+     "page": "sig/C_INTEGER.md#type-integertype"
+    },
+    {
+     "kind": "type",
+     "name": "value",
+     "spec": "type value = {integer : IntInf.int, ty : integerType}",
+     "doc": "An integer constant and its C type.\n\n",
+     "page": "sig/C_INTEGER.md#type-value"
+    },
+    {
+     "kind": "type",
+     "name": "target",
+     "spec": "type target = {char : int, short : int, int : int, long : int, longLong : int}",
+     "doc": "Standard target integer widths, in bits.\n\n",
+     "page": "sig/C_INTEGER.md#type-target"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of CLex.location * string",
+     "doc": "A source-located invalid conversion or undefined arithmetic result.\n\n",
+     "page": "sig/C_INTEGER.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "integerType",
+     "spec": "val integerType : target -> rank -> bool -> integerType",
+     "doc": "`integerType target rank signed` resolves an explicit target type.\n\n",
+     "page": "sig/C_INTEGER.md#val-integertype"
+    },
+    {
+     "kind": "val",
+     "name": "limits",
+     "spec": "val limits : integerType -> IntInf.int * IntInf.int",
+     "doc": "`limits ty` returns the inclusive range of a target integer type.\n\n",
+     "page": "sig/C_INTEGER.md#val-limits"
+    },
+    {
+     "kind": "val",
+     "name": "literal",
+     "spec": "val literal : target -> CLex.token -> value",
+     "doc": "`literal target token` selects the C type from base, suffix and range.\n\n**Raises** `Error` when no supported target integer type holds the value.\n\n",
+     "page": "sig/C_INTEGER.md#val-literal"
+    },
+    {
+     "kind": "val",
+     "name": "convert",
+     "spec": "val convert : integerType -> value -> value",
+     "doc": "`convert ty value` applies the target's two's-complement conversion.\n\n",
+     "page": "sig/C_INTEGER.md#val-convert"
+    },
+    {
+     "kind": "val",
+     "name": "promote",
+     "spec": "val promote : target -> value -> value",
+     "doc": "`promote target value` applies C integer promotion.\n\n",
+     "page": "sig/C_INTEGER.md#val-promote"
+    },
+    {
+     "kind": "val",
+     "name": "common",
+     "spec": "val common : target -> integerType * integerType -> integerType",
+     "doc": "`common target (left, right)` computes the usual arithmetic type.\n\n",
+     "page": "sig/C_INTEGER.md#val-common"
+    },
+    {
+     "kind": "val",
+     "name": "unary",
+     "spec": "val unary : target -> CLex.token -> value -> value",
+     "doc": "`unary target token value` applies a checked promoted unary operator.\n\n**Raises** `Error` for signed negation overflow or an unknown operator.\n\n",
+     "page": "sig/C_INTEGER.md#val-unary"
+    },
+    {
+     "kind": "val",
+     "name": "binary",
+     "spec": "val binary : target -> CLex.token -> value * value -> value",
+     "doc": "`binary target token (left, right)` evaluates a checked binary operator.\n\n**Raises** `Error` for undefined shifts, division or signed overflow.\n\n",
+     "page": "sig/C_INTEGER.md#val-binary"
+    }
+   ]
+  },
+  "C_LAYOUT": {
+   "doc": "Explicit target layouts for reusable C declaration consumers.\n\n",
+   "page": "sig/C_LAYOUT.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "source",
+     "spec": "type source = CLex.location",
+     "doc": "A physical source position in an original declaration.\n\n",
+     "page": "sig/C_LAYOUT.md#type-source"
+    },
+    {
+     "kind": "type",
+     "name": "scalar",
+     "spec": "type scalar = {size : int, alignment : int, signed : bool option}",
+     "doc": "Size/alignment in bytes; signedness remains explicit where meaningful.\n\n",
+     "page": "sig/C_LAYOUT.md#type-scalar"
+    },
+    {
+     "kind": "type",
+     "name": "target",
+     "spec": "type target = {name : string, pointer : scalar, enumeration : scalar,\n  scalars : (string * scalar) list, maximumObject : IntInf.int}",
+     "doc": "Target facts, independent of the generator host's arithmetic width.\n\n",
+     "page": "sig/C_LAYOUT.md#type-target"
+    },
+    {
+     "kind": "datatype",
+     "name": "layout",
+     "spec": "datatype layout = Atom of {size : IntInf.int, alignment : int}\n  | Sequence of {size : IntInf.int, alignment : int, count : IntInf.int, element : layout}\n  | Aggregate of {size : IntInf.int, alignment : int, union : bool, packed : bool, fields : field list}",
+     "doc": "Sized atoms, arrays and aggregates. FieldLayouts retain their own layouts.\n\n",
+     "page": "sig/C_LAYOUT.md#type-layout"
+    },
+    {
+     "kind": "datatype",
+     "name": "field",
+     "spec": "datatype field = FieldLayout of {name : string option, offset : IntInf.int, layout : layout, source : source}",
+     "doc": "A named or anonymous member's byte offset and original source.\n\n",
+     "page": "sig/C_LAYOUT.md#type-field"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of source * string",
+     "doc": "An incomplete, invalid, cyclic or oversized selected layout.\n\n",
+     "page": "sig/C_LAYOUT.md#exn-error"
+    },
+    {
+     "kind": "exception",
+     "name": "Shim",
+     "spec": "exception Shim of source * string",
+     "doc": "A layout/access operation requiring a verified native adapter.\n\n",
+     "page": "sig/C_LAYOUT.md#exn-shim"
+    },
+    {
+     "kind": "val",
+     "name": "size",
+     "spec": "val size : layout -> IntInf.int",
+     "doc": "`size layout` returns its target byte size.\n\n",
+     "page": "sig/C_LAYOUT.md#val-size"
+    },
+    {
+     "kind": "val",
+     "name": "alignment",
+     "spec": "val alignment : layout -> int",
+     "doc": "`alignment layout` returns its target byte alignment.\n\n",
+     "page": "sig/C_LAYOUT.md#val-alignment"
+    },
+    {
+     "kind": "val",
+     "name": "compute",
+     "spec": "val compute : {target : target, source : source, ty : CParse.ctype,\n  lookup : {namespace : string, name : string} -> CParse.ctype option,\n  constant : CLex.token list -> IntInf.int} -> layout",
+     "doc": "`compute {target, source, ty, lookup, constant}` lays out a C object.\n\nThe caller resolves aliases/tags and evaluates typed constant bounds.\nBitfields and unsupported representations require explicit adapters.\n\n**Raises** `Error` or `Shim` rather than guessing an ABI layout.\n\n",
+     "page": "sig/C_LAYOUT.md#val-compute"
+    },
+    {
+     "kind": "val",
+     "name": "member",
+     "spec": "val member : layout * string list -> {offset : IntInf.int, layout : layout}",
+     "doc": "`member (layout, path)` resolves named and anonymous aggregate fields.\n\n**Raises** `Error` for missing or ambiguous members.\n\n",
+     "page": "sig/C_LAYOUT.md#val-member"
     }
    ]
   },
@@ -202,6 +409,13 @@
      "spec": "val translationUnit : {tokens : CLex.token list, predefinedTypes : string list} ->\n                      {declarations : declaration list, pragmas : attribute list}",
      "doc": "`translationUnit {tokens, predefinedTypes}` parses preprocessed input\nwith typedef-sensitive declarators.\n\nIt preserves pragmas and applies\n`pack` push/pop state to aggregate definitions. Unmatched packing and\nunterminated syntax fail explicitly.\n\n**Raises** `Error` for malformed declarations or unsupported syntax.\n\n",
      "page": "sig/C_PARSE.md#val-translationunit"
+    },
+    {
+     "kind": "val",
+     "name": "typeName",
+     "spec": "val typeName : {tokens : CLex.token list, predefinedTypes : string list} -> ctype",
+     "doc": "`typeName {tokens, predefinedTypes}` parses one abstract C type name.\n\nIt accepts array and function declarators without changing their shape.\n\n**Raises** `Error` for named declarators, storage classes or trailing syntax.\n\n",
+     "page": "sig/C_PARSE.md#val-typename"
     }
    ]
   },
@@ -238,14 +452,52 @@
      "page": "sig/C_PREPROCESS.md#val-run"
     }
    ]
+  },
+  "C_TYPE": {
+   "doc": "Shared C type spelling and abstract type-name analysis.\n\n",
+   "page": "sig/C_TYPE.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "canonical",
+     "spec": "val canonical : string -> string",
+     "doc": "`canonical spelling` normalizes equivalent builtin C spellings.\n\nInvalid or unsupported spellings remain visible rather than becoming\nan unrelated scalar type. Microsoft fixed-width spellings are included.\n\n",
+     "page": "sig/C_TYPE.md#val-canonical"
+    },
+    {
+     "kind": "val",
+     "name": "parse",
+     "spec": "val parse : {tokens : CLex.token list, typedefs : string list} -> CParse.ctype option",
+     "doc": "`parse {tokens, typedefs}` recognizes an abstract C type name.\n\nOriginal token positions survive; expression parentheses return `NONE`.\nTypedef names must be supplied explicitly by the declaration consumer.\n\n",
+     "page": "sig/C_TYPE.md#val-parse"
+    },
+    {
+     "kind": "val",
+     "name": "integer",
+     "spec": "val integer : {target : CInteger.target, charSigned : bool, ty : CParse.ctype} ->\n  CInteger.integerType option",
+     "doc": "`integer {target, charSigned, ty}` resolves an unaliased integer type.\n\nQualifiers are transparent; aliases remain the caller's responsibility.\n\n",
+     "page": "sig/C_TYPE.md#val-integer"
+    },
+    {
+     "kind": "val",
+     "name": "spelling",
+     "spec": "val spelling : CInteger.integerType -> string",
+     "doc": "`spelling ty` returns a canonical builtin name for an integer type.\n\n",
+     "page": "sig/C_TYPE.md#val-spelling"
+    }
+   ]
   }
  },
  "structures": {
   "CConst": "C_CONST",
   "CEnumConst": "C_ENUM_CONST",
+  "CExpression": "C_EXPRESSION",
   "CFiles": "C_FILES",
+  "CInteger": "C_INTEGER",
+  "CLayout": "C_LAYOUT",
   "CLex": "C_LEX",
   "CParse": "C_PARSE",
-  "CPreprocess": "C_PREPROCESS"
+  "CPreprocess": "C_PREPROCESS",
+  "CType": "C_TYPE"
  }
 }

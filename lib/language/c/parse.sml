@@ -16,7 +16,7 @@ struct
     initializer : CLex.token list, body : CLex.token list, location : CLex.location}
     | StaticAssert of {condition : CLex.token list, message : CLex.token list, location : CLex.location}
   exception Error of CLex.location * string
-  fun translationUnit {tokens, predefinedTypes} =
+  fun parse {tokens, predefinedTypes, typeOnly} =
     let
       val input = ref tokens
       val typedefs = ref predefinedTypes
@@ -232,5 +232,15 @@ struct
         else if accept ";" then loop acc
         else loop (rev (declaration false) @ acc)
       val () = pragmaHandler := pragma
-    in loop [] end
+    in if typeOnly then
+         let val (base,storage,_) = specifiers ()
+             val (name,build) = declarator true
+             val () = if null storage andalso not(isSome name) andalso not(isSome(peek()))
+                      then () else fail "expected one abstract C type name"
+         in {declarations=[Declaration{name=NONE,ctype=build base,storage=[],initializer=[],body=[],location= !last}],pragmas=[]} end
+       else loop [] end
+  fun translationUnit {tokens,predefinedTypes}=parse{tokens=tokens,predefinedTypes=predefinedTypes,typeOnly=false}
+  fun typeName {tokens,predefinedTypes}=
+    case #declarations(parse{tokens=tokens,predefinedTypes=predefinedTypes,typeOnly=true}) of
+      [Declaration{ctype,...}]=>ctype | _=>raise Fail "C type parser result"
 end

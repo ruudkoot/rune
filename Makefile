@@ -1854,6 +1854,17 @@ test-ffi-model-windows: $(RUNE) vm bin/rune-ffi-model bin/rune-ffi-model-check b
 test-ffi-model-hosts: $(RUNE) vm bin/rune-ffi-model-check bin/rune-test bin/rune-generate
 	$(RUNE_TEST) --tier test-ffi-model-hosts
 
+C_LAYOUT_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/layout-check.sml
+check-tools: bin/rune-c-layout-check
+bin/rune-c-layout-check.rbc: $(RUNE) $(C_LAYOUT_CHECK_SRCS) $(wildcard lib/language/c/*.sml) manifests
+	$(RUNE) --library test/runner --library language/c $(C_LAYOUT_CHECK_SRCS) -o $@
+bin/rune-c-layout-check: bin/rune-c-layout-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-c-layout-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-c-layout
+test-c-layout: $(RUNE) vm bin/rune-c-layout-check bin/rune-test
+	$(RUNE_TEST) --tier test-c-layout
+
 C_FRONTEND_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/frontend-check.sml
 check-tools: bin/rune-c-check
 bin/rune-c-check.rbc: $(RUNE) $(C_FRONTEND_CHECK_SRCS) $(wildcard lib/language/c/*.sml) manifests

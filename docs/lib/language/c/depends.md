@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 20 requirements between the 12 files become 13 arrows.
+library and not a wall of lines: the 45 requirements between the 20 files become 26 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Languages<br>(12)"]
+  a0["Languages<br>(20)"]
 ```
 
 ## Languages
@@ -34,14 +34,22 @@ flowchart TD
   n1["CLex"]
   n2(["C_CONST"])
   n3["CConst"]
-  n4(["C_PREPROCESS"])
-  n5["CPreprocess"]
-  n6(["C_PARSE"])
-  n7["CParse"]
-  n8(["C_ENUM_CONST"])
-  n9["CEnumConst"]
-  n10(["C_FILES"])
-  n11["CFiles"]
+  n4(["C_INTEGER"])
+  n5["CInteger"]
+  n6(["C_PREPROCESS"])
+  n7["CPreprocess"]
+  n8(["C_PARSE"])
+  n9["CParse"]
+  n10(["C_TYPE"])
+  n11["CType"]
+  n12(["C_EXPRESSION"])
+  n13["CExpression"]
+  n14(["C_ENUM_CONST"])
+  n15["CEnumConst"]
+  n16(["C_LAYOUT"])
+  n17["CLayout"]
+  n18(["C_FILES"])
+  n19["CFiles"]
   n1 --> n0
   n2 --> n1
   n3 --> n2
@@ -49,12 +57,25 @@ flowchart TD
   n5 --> n3
   n5 --> n4
   n6 --> n1
+  n7 --> n3
   n7 --> n6
-  n8 --> n3
-  n8 --> n7
+  n8 --> n1
   n9 --> n8
   n10 --> n5
+  n10 --> n9
   n11 --> n10
+  n12 --> n5
+  n12 --> n9
+  n13 --> n11
+  n13 --> n12
+  n14 --> n3
+  n14 --> n9
+  n15 --> n14
+  n16 --> n9
+  n17 --> n11
+  n17 --> n16
+  n18 --> n7
+  n19 --> n18
 ```
 
 ---

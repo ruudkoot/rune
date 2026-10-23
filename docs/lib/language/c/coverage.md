@@ -8,11 +8,15 @@ documented when a comment describes it, alone or together with the entry before 
 | --- | --- | --- | --- | --- | --- |
 | [`C_CONST`](sig/C_CONST.md) | 4 | 4 | 100% | 2 | 2 |
 | [`C_ENUM_CONST`](sig/C_ENUM_CONST.md) | 4 | 4 | 100% | 2 | 2 |
+| [`C_EXPRESSION`](sig/C_EXPRESSION.md) | 3 | 3 | 100% | 1 | 1 |
 | [`C_FILES`](sig/C_FILES.md) | 2 | 2 | 100% | 2 | 2 |
+| [`C_INTEGER`](sig/C_INTEGER.md) | 13 | 13 | 100% | 8 | 8 |
+| [`C_LAYOUT`](sig/C_LAYOUT.md) | 11 | 11 | 100% | 4 | 4 |
 | [`C_LEX`](sig/C_LEX.md) | 7 | 7 | 100% | 3 | 3 |
-| [`C_PARSE`](sig/C_PARSE.md) | 8 | 8 | 100% | 1 | 1 |
+| [`C_PARSE`](sig/C_PARSE.md) | 9 | 9 | 100% | 2 | 2 |
 | [`C_PREPROCESS`](sig/C_PREPROCESS.md) | 4 | 4 | 100% | 1 | 1 |
-| **all** | 29 | 29 | 100% | 11 | 11 |
+| [`C_TYPE`](sig/C_TYPE.md) | 4 | 4 | 100% | 4 | 4 |
+| **all** | 61 | 61 | 100% | 29 | 29 |
 
 ## Members a signature describes
 
@@ -21,7 +25,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-6 structures have a page, with 29 members, of which 29 (100%) are described by a signature.
+10 structures have a page, with 61 members, of which 61 (100%) are described by a signature.
 
 ---
 

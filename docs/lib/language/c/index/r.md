@@ -2,6 +2,7 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [p](p.md) **r** [s](s.md) [t](t.md) [u](u.md) [v](v.md)
 
+- `rank` (type): [C_INTEGER](../sig/C_INTEGER.md#type-rank)
 - `read` (val): [C_FILES](../sig/C_FILES.md#val-read)
 - `Record` (con): [C_PARSE](../sig/C_PARSE.md#con-record)
 - `recordKind` (type): [C_PARSE](../sig/C_PARSE.md#type-recordkind)

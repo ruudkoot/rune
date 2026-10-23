@@ -4,12 +4,20 @@ annotate "demand" in
   lex.sml
   const_sig.sml
   const.sml
+  integer_sig.sml
+  integer.sml
   preprocess_sig.sml
   preprocess.sml
   parse_sig.sml
   parse.sml
+  type_sig.sml
+  type.sml
+  expression_sig.sml
+  expression.sml
   enum_const_sig.sml
   enum_const.sml
+  layout_sig.sml
+  layout.sml
   files_sig.sml
   files.sml
 end

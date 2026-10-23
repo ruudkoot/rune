@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`C_PARSE`](../sig/C_PARSE.md) |
 | Status | required |
-| Members | 8 |
+| Members | 9 |
 | Tests | not listed |
 | Source | [lib/language/c/parse.sml](../../../../../lib/language/c/parse.sml) |
 
@@ -30,6 +30,7 @@ What each means is on [`C_PARSE`](../sig/C_PARSE.md); the types are this structu
 | datatype | [`recordKind`](../sig/C_PARSE.md#type-recordkind) | `Struct` &#124; `Union` |
 | exception | [`Error`](../sig/C_PARSE.md#exn-error) | `of {column : int, file : string, line : int} * string` |
 | val | [`translationUnit`](../sig/C_PARSE.md#val-translationunit) | `{predefinedTypes : string list, tokens : attribute} -> {declarations : declaration list, pragmas : attribute list}` |
+| val | [`typeName`](../sig/C_PARSE.md#val-typename) | `{predefinedTypes : string list, tokens : attribute} -> ctype` |
 
 ---
 

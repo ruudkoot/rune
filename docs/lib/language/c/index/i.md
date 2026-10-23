@@ -3,6 +3,10 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) **i** [k](k.md) [l](l.md) [m](m.md) [n](n.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md)
 
 - `Identifier` (con): [C_LEX](../sig/C_LEX.md#con-identifier)
+- `Int` (con): [C_INTEGER](../sig/C_INTEGER.md#con-int)
+- `integer` (val): [C_TYPE](../sig/C_TYPE.md#val-integer)
+- `integerType` (type): [C_INTEGER](../sig/C_INTEGER.md#type-integertype)
+- `integerType` (val): [C_INTEGER](../sig/C_INTEGER.md#val-integertype)
 
 ---
 

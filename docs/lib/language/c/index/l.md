@@ -2,8 +2,12 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [k](k.md) **l** [m](m.md) [n](n.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md)
 
-- `literal` (val): [C_CONST](../sig/C_CONST.md#val-literal)
+- `layout` (type): [C_LAYOUT](../sig/C_LAYOUT.md#type-layout)
+- `limits` (val): [C_INTEGER](../sig/C_INTEGER.md#val-limits)
+- `literal` (val): [C_CONST](../sig/C_CONST.md#val-literal), [C_INTEGER](../sig/C_INTEGER.md#val-literal)
 - `location` (type): [C_LEX](../sig/C_LEX.md#type-location)
+- `Long` (con): [C_INTEGER](../sig/C_INTEGER.md#con-long)
+- `LongLong` (con): [C_INTEGER](../sig/C_INTEGER.md#con-longlong)
 
 ---
 
