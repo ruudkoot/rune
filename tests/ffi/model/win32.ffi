@@ -1,0 +1,159 @@
+{
+  "version": 1,
+  "family": "c",
+  "structure": "Win32PolicySample",
+  "headers": [
+    "Windows.h",
+    "windowsx.h"
+  ],
+  "libraries": [
+    "kernel32.dll",
+    "user32.dll",
+    "gdi32.dll"
+  ],
+  "resources": [
+    "module",
+    "window"
+  ],
+  "functions": [
+    {
+      "foreign": "GetModuleHandleW",
+      "name": "Kernel.getModuleHandle",
+      "parameters": [
+        {
+          "name": "lpModuleName",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "encoding": "utf16",
+          "terminator": true,
+          "type": {
+            "option": "string"
+          }
+        }
+      ],
+      "result": {
+        "ownership": {
+          "borrowed": "library"
+        },
+        "nullable": false,
+        "type": {
+          "resource": "module"
+        }
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "GetLastError",
+      "name": "Kernel.getLastError",
+      "parameters": [],
+      "result": {
+        "type": "word32"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "SetLastError",
+      "name": "Kernel.setLastError",
+      "parameters": [
+        {
+          "name": "dwErrCode",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "QueryPerformanceCounter",
+      "name": "Kernel.queryPerformanceCounter",
+      "parameters": [
+        {
+          "name": "lpPerformanceCount",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "int64",
+          "output": "value",
+          "length": 1
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32.largeInteger",
+      "returns": "lpPerformanceCount"
+    },
+    {
+      "foreign": "QueryPerformanceFrequency",
+      "name": "Kernel.queryPerformanceFrequency",
+      "parameters": [
+        {
+          "name": "lpFrequency",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "int64",
+          "output": "value",
+          "length": 1
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32.largeInteger",
+      "returns": "lpFrequency"
+    }
+  ],
+  "callbacks": [
+    {
+      "foreign": "WNDPROC",
+      "lifetime": "registered",
+      "owner": "window-class",
+      "thread": "owner-vm-thread",
+      "failure": {
+        "parameter": "arg1",
+        "cases": {
+          "WM_CREATE": -1,
+          "WM_NCCREATE": 0
+        },
+        "otherwise": 0
+      }
+    }
+  ]
+}

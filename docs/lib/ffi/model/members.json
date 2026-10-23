@@ -1,0 +1,496 @@
+{
+ "signatures": {
+  "FOREIGN_COVERAGE": {
+   "doc": "Declaration coverage and implementation evidence stay separate.\n\n",
+   "page": "sig/FOREIGN_COVERAGE.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "state",
+     "spec": "datatype state = Selected | Generated | Shimmed | Unselected | Unsupported of string",
+     "doc": "Selection alone never claims generated or executable code.\n\n",
+     "page": "sig/FOREIGN_COVERAGE.md#type-state"
+    },
+    {
+     "kind": "type",
+     "name": "entry",
+     "spec": "type entry = {identity : ForeignModel.identity, source : ForeignModel.source, state : state}",
+     "doc": "A foreign identity, original source and current delivery state.\n\n",
+     "page": "sig/FOREIGN_COVERAGE.md#type-entry"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of ForeignModel.source * string",
+     "doc": "A source-located conflicting or stale coverage claim.\n\n",
+     "page": "sig/FOREIGN_COVERAGE.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "report",
+     "spec": "val report : {declarations : ForeignModel.declaration list,\n  selected : ForeignModel.identity list, generated : ForeignModel.identity list,\n  shimmed : ForeignModel.identity list, unsupported : (ForeignModel.identity * string) list} -> entry list",
+     "doc": "`report {declarations, selected, generated, shimmed, unsupported}`\nproduces one canonical entry per identity.\n\nImplementation consumers supply generated/shimmed evidence only after producing those artifacts.\n\n**Raises** `Error` for unknown identities or conflicting claims.\n\n",
+     "page": "sig/FOREIGN_COVERAGE.md#val-report"
+    },
+    {
+     "kind": "val",
+     "name": "json",
+     "spec": "val json : entry list -> Json.value",
+     "doc": "`json entries` serializes the report without discarding source mappings.\n\n",
+     "page": "sig/FOREIGN_COVERAGE.md#val-json"
+    }
+   ]
+  },
+  "FOREIGN_JSON": {
+   "doc": "JSON values with physical positions for declarative policy diagnostics.\n\n",
+   "page": "sig/FOREIGN_JSON.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "document",
+     "spec": "type document",
+     "doc": "Validated JSON and the physical positions of values and object keys.\n\n",
+     "page": "sig/FOREIGN_JSON.md#type-document"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of ForeignModel.source * string",
+     "doc": "A source-located syntax or schema error.\n\n",
+     "page": "sig/FOREIGN_JSON.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "decode",
+     "spec": "val decode : {file : string, text : string} -> document",
+     "doc": "`decode {file, text}` parses JSON and records physical positions.\n\n**Raises** `Error` for malformed JSON.\n\n",
+     "page": "sig/FOREIGN_JSON.md#val-decode"
+    },
+    {
+     "kind": "val",
+     "name": "value",
+     "spec": "val value : document -> Json.value",
+     "doc": "`value document` returns its parsed root.\n\n",
+     "page": "sig/FOREIGN_JSON.md#val-value"
+    },
+    {
+     "kind": "val",
+     "name": "location",
+     "spec": "val location : document -> string list -> ForeignModel.source",
+     "doc": "`location document path` finds a value by object keys/array indices.\n\n",
+     "page": "sig/FOREIGN_JSON.md#val-location"
+    },
+    {
+     "kind": "val",
+     "name": "error",
+     "spec": "val error : document -> string list -> string -> 'a",
+     "doc": "`error document path message` raises a source-located schema error.\n\n",
+     "page": "sig/FOREIGN_JSON.md#val-error"
+    },
+    {
+     "kind": "val",
+     "name": "object",
+     "spec": "val object : document -> string list -> string list -> Json.value -> (string * Json.value) list",
+     "doc": "`object document path allowed value` validates keys and duplicates.\n\n**Raises** `Error` for unknown/duplicate keys or a non-object value.\n\n",
+     "page": "sig/FOREIGN_JSON.md#val-object"
+    },
+    {
+     "kind": "val",
+     "name": "member",
+     "spec": "val member : document -> string list -> (string * Json.value) list -> string -> Json.value",
+     "doc": "`member document path fields name` requires a named member.\n\n**Raises** `Error` for a missing member.\n\n",
+     "page": "sig/FOREIGN_JSON.md#val-member"
+    },
+    {
+     "kind": "val",
+     "name": "optional",
+     "spec": "val optional : (string * Json.value) list -> string -> Json.value option",
+     "doc": "`optional fields name` looks up an optional member.\n\n",
+     "page": "sig/FOREIGN_JSON.md#val-optional"
+    },
+    {
+     "kind": "val",
+     "name": "string",
+     "spec": "val string : document -> string list -> Json.value -> string",
+     "doc": "`string document path value` requires a JSON string.\n\n",
+     "page": "sig/FOREIGN_JSON.md#val-string"
+    },
+    {
+     "kind": "val",
+     "name": "boolean",
+     "spec": "val boolean : document -> string list -> Json.value -> bool",
+     "doc": "`boolean document path value` requires a JSON Boolean.\n\n",
+     "page": "sig/FOREIGN_JSON.md#val-boolean"
+    },
+    {
+     "kind": "val",
+     "name": "array",
+     "spec": "val array : document -> string list -> Json.value -> Json.value list",
+     "doc": "`array document path value` requires a JSON array.\n\n",
+     "page": "sig/FOREIGN_JSON.md#val-array"
+    }
+   ]
+  },
+  "FOREIGN_MODEL": {
+   "doc": "Foreign declarations, independent of target layout and SML projection.\n\n",
+   "page": "sig/FOREIGN_MODEL.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "source",
+     "spec": "type source = {file : string, line : int, column : int}",
+     "doc": "An original description's physical source position.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#type-source"
+    },
+    {
+     "kind": "type",
+     "name": "identity",
+     "spec": "type identity = {family : string, namespace : string, name : string}",
+     "doc": "A stable source identity, including the foreign namespace.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#type-identity"
+    },
+    {
+     "kind": "type",
+     "name": "expression",
+     "spec": "type expression = {family : string, text : string, source : source}",
+     "doc": "An expression in its source language, before target evaluation.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#type-expression"
+    },
+    {
+     "kind": "datatype",
+     "name": "foreignType",
+     "spec": "datatype foreignType =\n    Scalar of {family : string, name : string}\n  | Named of identity\n  | Pointer of {target : foreignType, qualifiers : string list}\n  | Array of {element : foreignType, bound : expression option}\n  | Callable of {result : foreignType, parameters : parameter list,\n                 variadic : bool, prototype : bool}\n  | Aggregate of {kind : string, tag : identity option, fields : field list option,\n                  packing : int option}\n  | Enumeration of {tag : identity option, values : (string * expression option) list option}\n  | Attributed of foreignType * expression list\n  | Macro of {parameters : string list option, variadic : bool, body : expression}\n  | BackendType of {family : string, description : string}",
+     "doc": "Foreign types. Backend-specific types stay explicit and cannot silently\nbecome machine pointers or libffi scalars.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#type-foreigntype"
+    },
+    {
+     "kind": "datatype",
+     "name": "parameter",
+     "spec": "datatype parameter = Parameter of {name : string option, ty : foreignType}",
+     "doc": "A foreign parameter before naming, ownership or output projection.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#type-parameter"
+    },
+    {
+     "kind": "datatype",
+     "name": "field",
+     "spec": "datatype field = Field of {name : string option, ty : foreignType,\n                      bits : expression option, source : source}",
+     "doc": "A foreign aggregate member; bit widths remain source expressions.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#type-field"
+    },
+    {
+     "kind": "type",
+     "name": "declaration",
+     "spec": "type declaration = {identity : identity, ty : foreignType,\n                    storage : string list, source : source}",
+     "doc": "A declaration with source identity and linkage, separate from policy.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#type-declaration"
+    },
+    {
+     "kind": "type",
+     "name": "scalarLayout",
+     "spec": "type scalarLayout = {size : int, alignment : int, signed : bool option}",
+     "doc": "Target scalar facts, separate from SML host arithmetic.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#type-scalarlayout"
+    },
+    {
+     "kind": "datatype",
+     "name": "byteOrder",
+     "spec": "datatype byteOrder = Little | Big",
+     "doc": "Target byte order.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#type-byteorder"
+    },
+    {
+     "kind": "type",
+     "name": "target",
+     "spec": "type target = {name : string, abi : string, byteOrder : byteOrder,\n               scalars : (string * scalarLayout) list}",
+     "doc": "Target facts do not add ownership or projection to declarations.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#type-target"
+    },
+    {
+     "kind": "type",
+     "name": "layout",
+     "spec": "type layout = {size : IntInf.int, alignment : int,\n               fields : (string * IntInf.int) list}",
+     "doc": "A checked native layout produced by the layout consumer.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#type-layout"
+    },
+    {
+     "kind": "type",
+     "name": "capabilities",
+     "spec": "type capabilities = {backend : string, families : string list,\n                     mechanisms : string list, callbacks : string list,\n                     unsupported : string list}",
+     "doc": "Backends state which source families and mechanisms they implement.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#type-capabilities"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of source * string",
+     "doc": "A source-located model diagnostic.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "key",
+     "spec": "val key : identity -> string",
+     "doc": "`key identity` encodes a source identity without delimiter collisions.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#val-key"
+    },
+    {
+     "kind": "val",
+     "name": "fromC",
+     "spec": "val fromC : CParse.declaration list -> declaration list",
+     "doc": "`fromC declarations` adapts parsed C declarations without applying\nownership, target widths or SML naming policy.\n\nUnresolved redeclarations remain available for a selected consumer's\ndiagnostic; private declarations do not block unrelated selections.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#val-fromc"
+    },
+    {
+     "kind": "val",
+     "name": "fromCMacros",
+     "spec": "val fromCMacros : CPreprocess.macro list -> declaration list",
+     "doc": "`fromCMacros macros` preserves macro source, parameters and body.\nMacro identities occupy their own namespace; they are not functions.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#val-fromcmacros"
+    },
+    {
+     "kind": "val",
+     "name": "canonical",
+     "spec": "val canonical : declaration list -> declaration list",
+     "doc": "`canonical declarations` sorts identities and physical source positions.\nInput traversal order cannot affect reports or selected closures.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#val-canonical"
+    },
+    {
+     "kind": "val",
+     "name": "reachable",
+     "spec": "val reachable : declaration list * identity list -> declaration list",
+     "doc": "`reachable (declarations, selected)` resolves the transitive declaration\nclosure, including aliases, while retaining opaque aggregate pointers.\n\n**Raises** `Error` for missing or ambiguous selected identities.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#val-reachable"
+    },
+    {
+     "kind": "type",
+     "name": "environment",
+     "spec": "type environment",
+     "doc": "An immutable lookup index over one declaration collection.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#type-environment"
+    },
+    {
+     "kind": "val",
+     "name": "index",
+     "spec": "val index : declaration list -> environment",
+     "doc": "`index declarations` prepares repeated identity lookups without\nchanging declaration/source information.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#val-index"
+    },
+    {
+     "kind": "val",
+     "name": "lookup",
+     "spec": "val lookup : environment * identity -> declaration option",
+     "doc": "`lookup (environment, identity)` resolves one indexed identity.\n\n**Raises** `Error` for an ambiguous identity.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#val-lookup"
+    },
+    {
+     "kind": "val",
+     "name": "find",
+     "spec": "val find : declaration list * identity -> declaration option",
+     "doc": "`find (declarations, identity)` resolves an exact foreign identity.\n\n**Raises** `Error` when that identity has incompatible redeclarations.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#val-find"
+    },
+    {
+     "kind": "val",
+     "name": "libffi",
+     "spec": "val libffi : capabilities",
+     "doc": "`libffi` describes the dynamic C backend contract. Runtime availability\nis checked separately; other families need explicit future backends.\n\n",
+     "page": "sig/FOREIGN_MODEL.md#val-libffi"
+    }
+   ]
+  },
+  "FOREIGN_POLICY": {
+   "doc": "Declarative FFI policy; reading a sidecar never executes its adapters.\n\n",
+   "page": "sig/FOREIGN_POLICY.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "encoding",
+     "spec": "datatype encoding = Bytes | Utf8 | Wtf8 | Utf16",
+     "doc": "Supported text encodings; raw buffers use bytes explicitly.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#type-encoding"
+    },
+    {
+     "kind": "datatype",
+     "name": "direction",
+     "spec": "datatype direction = In | Out | InOut",
+     "doc": "Parameter movement and copy-back direction.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#type-direction"
+    },
+    {
+     "kind": "datatype",
+     "name": "ownership",
+     "spec": "datatype ownership = Borrowed of string | Owned of string",
+     "doc": "Ownership is separate from C pointer syntax.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#type-ownership"
+    },
+    {
+     "kind": "datatype",
+     "name": "extent",
+     "spec": "datatype extent = ParameterLength of string | FixedLength of IntInf.int",
+     "doc": "Buffer extents name a parameter or a fixed element count.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#type-extent"
+    },
+    {
+     "kind": "datatype",
+     "name": "smlType",
+     "spec": "datatype smlType = Scalar of string | Resource of string | Option of smlType\n  | Vector of smlType | Array of smlType | Tuple of smlType list\n  | Record of (string * smlType) list",
+     "doc": "A structured SML type, never an executable SML source fragment.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#type-smltype"
+    },
+    {
+     "kind": "datatype",
+     "name": "tree",
+     "spec": "datatype tree = Unit | Value of string | Product of tree list | Fields of (string * tree) list",
+     "doc": "Structured input/output grouping; leaves refer to foreign parameters\nor `$result`. It contains no SML expressions.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#type-tree"
+    },
+    {
+     "kind": "type",
+     "name": "valuePolicy",
+     "spec": "type valuePolicy = {name : string option, direction : direction option,\n  ownership : ownership option, nullable : bool option, encoding : encoding option, terminator : bool option,\n  extent : extent option, callback : string option, projection : smlType option,\n  output : string option, consumes : bool, source : ForeignModel.source}",
+     "doc": "A parameter or returned-value annotation. Absence stays explicit until\ndeclaration-aware validation; the decoder guesses no ownership.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#type-valuepolicy"
+    },
+    {
+     "kind": "type",
+     "name": "errorPolicy",
+     "spec": "type errorPolicy = {predicate : string, capture : string, getter : string option}",
+     "doc": "Native error predicates and capture mechanisms are independent.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#type-errorpolicy"
+    },
+    {
+     "kind": "type",
+     "name": "functionPolicy",
+     "spec": "type functionPolicy = {foreign : string, namespace : string, name : string, raw : string option,\n  parameters : valuePolicy list, result : valuePolicy, errors : errorPolicy,\n  variadic : string, unsafeRaw : bool, adapter : string option,\n  input : tree option, returns : tree option,\n  source : ForeignModel.source}",
+     "doc": "A selected function and its naming/marshalling policy.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#type-functionpolicy"
+    },
+    {
+     "kind": "datatype",
+     "name": "failure",
+     "spec": "datatype failure = ConstantFailure of IntInf.int\n  | ArgumentFailure of {parameter : string, cases : (string * IntInf.int) list,\n                        otherwise : IntInf.int}",
+     "doc": "A constant callback failure result, or a table keyed by one native\nargument, such as a Win32 message identifier.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#type-failure"
+    },
+    {
+     "kind": "type",
+     "name": "callbackPolicy",
+     "spec": "type callbackPolicy = {foreign : string, lifetime : string, owner : string option,\n  thread : string, failure : failure, source : ForeignModel.source}",
+     "doc": "Callback lifetime, thread and failure rules must be declared.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#type-callbackpolicy"
+    },
+    {
+     "kind": "type",
+     "name": "policy",
+     "spec": "type policy = {version : int, family : string, structureName : string,\n  headers : string list, libraries : string list, resources : string list, functions : functionPolicy list,\n  callbacks : callbackPolicy list, source : ForeignModel.source}",
+     "doc": "Sidecar contents; paths and library names are data.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#type-policy"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of ForeignModel.source * string",
+     "doc": "A source-located sidecar diagnostic.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "decode",
+     "spec": "val decode : {file : string, text : string} -> policy",
+     "doc": "`decode {file, text}` reads version one JSON policy, checking field\nnames, duplicates, names, enums and structured projection types.\n\n**Raises** `Error` for malformed or unsupported policy.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#val-decode"
+    },
+    {
+     "kind": "val",
+     "name": "rawName",
+     "spec": "val rawName : string -> string",
+     "doc": "`rawName name` escapes foreign identifiers into legal SML value names.\nA projection consumer must check collisions across its complete API.\n\n",
+     "page": "sig/FOREIGN_POLICY.md#val-rawname"
+    }
+   ]
+  },
+  "FOREIGN_PROJECTION": {
+   "doc": "Structured public interfaces assembled from native values and outputs.\n\n",
+   "page": "sig/FOREIGN_PROJECTION.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "tree",
+     "spec": "datatype tree = datatype ForeignPolicy.tree",
+     "doc": "A public argument/result tree. Leaves name foreign parameters;\n`$result` names the native result. No leaf is executable source.\n\n",
+     "page": "sig/FOREIGN_PROJECTION.md#type-tree"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of ForeignModel.source * string",
+     "doc": "A source-located projection error.\n\n",
+     "page": "sig/FOREIGN_PROJECTION.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "check",
+     "spec": "val check : {source : ForeignModel.source, available : string list, projection : tree} -> unit",
+     "doc": "`check {source, available, projection}` verifies that every leaf has\na unique value binding and every record label is unique.\n\n",
+     "page": "sig/FOREIGN_PROJECTION.md#val-check"
+    },
+    {
+     "kind": "val",
+     "name": "typeOf",
+     "spec": "val typeOf : {source : ForeignModel.source, values : (string * ForeignPolicy.smlType) list,\n              projection : tree} -> ForeignPolicy.smlType",
+     "doc": "`typeOf {source, values, projection}` builds the SML type of a checked\nprojection from the separately established leaf types.\n\n**Raises** `Error` for unknown leaves or duplicate fields.\n\n",
+     "page": "sig/FOREIGN_PROJECTION.md#val-typeof"
+    },
+    {
+     "kind": "val",
+     "name": "callType",
+     "spec": "val callType : {policy : ForeignPolicy.functionPolicy,\n  inputs : (string * ForeignPolicy.smlType) list, result : ForeignPolicy.smlType} ->\n  {input : ForeignPolicy.smlType, output : ForeignPolicy.smlType}",
+     "doc": "`callType {policy, inputs, result}` projects separately established\nnative value types into a public argument/result pair.\n\nAnnotations override leaf types; output parameters become returned values.\n\n",
+     "page": "sig/FOREIGN_PROJECTION.md#val-calltype"
+    },
+    {
+     "kind": "val",
+     "name": "renderType",
+     "spec": "val renderType : ForeignPolicy.smlType -> string",
+     "doc": "`renderType ty` emits a type using fixed scalar spellings and checked\nresource names; it never copies arbitrary source text from policy.\n\n",
+     "page": "sig/FOREIGN_PROJECTION.md#val-rendertype"
+    }
+   ]
+  },
+  "FOREIGN_VALIDATE": {
+   "doc": "Declaration-aware checks before safe binding generation.\n\n",
+   "page": "sig/FOREIGN_VALIDATE.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "binding",
+     "spec": "type binding = {declaration : ForeignModel.declaration, policy : ForeignPolicy.functionPolicy}",
+     "doc": "A uniquely resolved function and its separate projection policy.\n\n",
+     "page": "sig/FOREIGN_VALIDATE.md#type-binding"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of ForeignModel.source * string",
+     "doc": "A source-located ambiguity, contradiction or unsupported selection.\n\n",
+     "page": "sig/FOREIGN_VALIDATE.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "resolve",
+     "spec": "val resolve : {declarations : ForeignModel.declaration list, policy : ForeignPolicy.policy} -> binding list",
+     "doc": "`resolve {declarations, policy}` resolves selected C functions and\nvalidates names, pointer policy, extents, errors and callbacks.\n\n**Raises** `Error` when selected declarations or annotations cannot\nproduce the requested safe interface without guessing.\n\n",
+     "page": "sig/FOREIGN_VALIDATE.md#val-resolve"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "ForeignCoverage": "FOREIGN_COVERAGE",
+  "ForeignJson": "FOREIGN_JSON",
+  "ForeignModel": "FOREIGN_MODEL",
+  "ForeignPolicy": "FOREIGN_POLICY",
+  "ForeignProjection": "FOREIGN_PROJECTION",
+  "ForeignValidate": "FOREIGN_VALIDATE"
+ }
+}

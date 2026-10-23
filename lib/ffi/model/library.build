@@ -1,0 +1,16 @@
+(* Foreign declarations, policy and projection; independent of native calls. *)
+libraries json language/c end
+annotate "demand" in
+  model_sig.sml
+  model.sml
+  located_json_sig.sml
+  located_json.sml
+  policy_sig.sml
+  policy.sml
+  projection_sig.sml
+  projection.sml
+  validate_sig.sml
+  validate.sml
+  coverage_sig.sml
+  coverage.sml
+end

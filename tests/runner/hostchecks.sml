@@ -66,10 +66,13 @@ struct
       val () = check ("matching failure uses deviation", null (LibHosts.unused ls "mlton" ["random.kat"]))
       val () = check ("stale strict deviation", length (LibHosts.unused ls "mlton" []) = 1)
       val () = check ("another host's deviation", null (LibHosts.unused ls "smlnj32" []))
-      val () = check ("library inventory", length LibHosts.tests = 25)
+      val () = check ("library inventory", length LibHosts.tests = 26)
       val () = check ("C frontend host coverage", List.exists (fn t : LibHosts.test =>
         #label t = "language.c.frontend" andalso #libraries t = ["unit", "language/c"]
         andalso #source t = "tests/lib/language/c/frontend.sml") LibHosts.tests)
+      val () = check ("FFI model host coverage", List.exists (fn t : LibHosts.test =>
+        #label t = "ffi.model.policy" andalso #libraries t = ["unit","unicode","json","language/c","ffi/model"]
+        andalso #source t = "tests/lib/ffi/model/policy.sml") LibHosts.tests)
     in () end
 
   fun command ["host-adapter-checks"] = SOME one

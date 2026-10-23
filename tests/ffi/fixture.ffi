@@ -1,0 +1,466 @@
+{
+  "version": 1,
+  "family": "c",
+  "structure": "Fixture",
+  "headers": [
+    "fixture.h"
+  ],
+  "libraries": [
+    "runeffi-subject"
+  ],
+  "functions": [
+    {
+      "parameters": [],
+      "result": {
+        "type": "int8"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_i8",
+      "name": "i8"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "word8"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_u8",
+      "name": "u8"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "int16"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_i16",
+      "name": "i16"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "word16"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_u16",
+      "name": "u16"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "int32"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_i32",
+      "name": "i32"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "word32"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_u32",
+      "name": "u32"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "int64"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_i64",
+      "name": "i64"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "word64"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_u64",
+      "name": "u64"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "real"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_float",
+      "name": "float"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "real"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_double",
+      "name": "double"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": {
+          "record": {
+            "integer": "int32",
+            "fraction": "real"
+          }
+        }
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_make_pair",
+      "name": "makePair",
+      "input": {
+        "record": {
+          "integer": "integer",
+          "fraction": "fraction"
+        }
+      }
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "real"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_pair_total",
+      "name": "pairTotal"
+    },
+    {
+      "parameters": [
+        {
+          "name": "text",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "encoding": "bytes",
+          "type": "string",
+          "terminator": true
+        }
+      ],
+      "result": {
+        "type": "word64"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_length",
+      "name": "length"
+    },
+    {
+      "parameters": [
+        {
+          "name": "text",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "encoding": "bytes",
+          "type": "string",
+          "terminator": true
+        }
+      ],
+      "result": {
+        "ownership": {
+          "owned": "rf_free"
+        },
+        "nullable": false,
+        "encoding": "bytes",
+        "type": "string",
+        "terminator": true
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "errno"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_copy",
+      "name": "copy"
+    },
+    {
+      "parameters": [
+        {
+          "name": "memory",
+          "direction": "in",
+          "nullable": true,
+          "ownership": {
+            "borrowed": "call"
+          },
+          "type": {
+            "option": {
+              "resource": "memory"
+            }
+          },
+          "consumes": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_free",
+      "name": "free"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "word64"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_allocations",
+      "name": "allocations"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_fail_allocation",
+      "name": "failAllocation"
+    },
+    {
+      "parameters": [
+        {
+          "name": "first",
+          "direction": "inout",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "encoding": "bytes",
+          "length": 2,
+          "type": {
+            "array": "word8"
+          },
+          "terminator": false
+        },
+        {
+          "name": "second",
+          "direction": "inout",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "encoding": "bytes",
+          "length": 1,
+          "type": {
+            "array": "word8"
+          },
+          "terminator": false
+        }
+      ],
+      "result": {
+        "type": "int"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_alias",
+      "name": "alias"
+    },
+    {
+      "parameters": [
+        {
+          "name": "callback",
+          "direction": "in",
+          "nullable": true,
+          "callback": "rf_callback"
+        },
+        {
+          "name": "context",
+          "direction": "in",
+          "nullable": true,
+          "ownership": {
+            "borrowed": "callback-registration"
+          },
+          "type": {
+            "option": {
+              "resource": "memory"
+            }
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_set_callback",
+      "name": "setCallback"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "int"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_invoke",
+      "name": "invoke"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "int"
+      },
+      "errors": {
+        "predicate": "minus-one",
+        "capture": "errno"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_error",
+      "name": "error"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "int"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "raw",
+      "unsafeRaw": true,
+      "foreign": "rf_variadic",
+      "name": "variadic"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "real"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "raw",
+      "unsafeRaw": true,
+      "foreign": "rf_variadic_real",
+      "name": "variadicReal"
+    },
+    {
+      "parameters": [],
+      "result": {
+        "type": "int"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "rf_stdcall_add",
+      "name": "stdcallAdd"
+    }
+  ],
+  "callbacks": [
+    {
+      "foreign": "rf_callback",
+      "lifetime": "registered",
+      "owner": "callback-registration",
+      "thread": "owner-vm-thread",
+      "failure": -1
+    }
+  ],
+  "resources": [
+    "memory"
+  ]
+}

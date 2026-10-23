@@ -30,6 +30,7 @@ native:smlnj-dev | property.shrink | HOST-BUG | the host stops with "Fatal error
 # (docs/bugreport/mlkit/region-inference), a Socket without acceptNB
 # (docs/bugreport/mlkit/socket-acceptNB-absent), and a tail call that keeps
 # its region (docs/bugreport/mlkit/preserve-tail-calls).
+native:mlkit | ffi.model.policy | HOST-BUG | region inference corrupts JSON member names during sidecar decoding; the default build requests an impossible allocation or segfaults, while the same 48 checks pass with -no_ri (docs/bugreport/mlkit/region-inference)
 native:mlkit | json.roundtrip | HOST-BUG | region inference hands the program strings and values that are no longer its own, and it dies with SIGSEGV; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)
 native:mlkit | jsonrpc.jsonrpc | HOST-BUG | region inference: a name lib/json decodes comes back corrupt, and the program dies with SIGSEGV; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)
 native:mlkit | dap.dap | HOST-BUG | region inference: the names of the members of a message lib/json decodes come back corrupt, so no message reads back; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)

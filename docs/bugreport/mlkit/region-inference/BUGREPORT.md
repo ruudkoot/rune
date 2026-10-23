@@ -93,3 +93,19 @@ with `MLKIT` and `MLKIT_LIB` selecting 4.7.25. The run keeps the generated
 and program output. Rebuild that `.mlb` with the same compiler and
 `SML_LIB`, adding `-no_ri`, to compare the collector-only configuration.
 Keep the address-space limit when running either executable.
+
+## Runeffi sidecar decoding — 2026-10-23
+
+The same failure affects `tests/lib/ffi/model/policy.sml` on the pinned
+MLKit 4.7.25. Rune, MLton, all three SML/NJ builds and Poly/ML pass the
+48 checks. The default MLKit build corrupts a JSON member name in the first
+valid sidecar. GDB shows `ForeignJson.object` trying to concatenate
+`"unknown field: "` with a pair pointer interpreted as a string; the runtime
+requests an impossible allocation, or dies with SIGSEGV. Peak RSS before
+failure is about 7 MiB, so increasing the heap is not the remedy.
+
+The same sources, compiler and 2 GiB address-space limit pass all 48 checks
+with `-no_ri`. Removing source-adjacent caches and rebuilding does not fix
+the default mode. The production libraries are unchanged for this compiler
+fault. The native library suite records `ffi.model.policy` as `HOST-BUG`;
+`ffi/model/mlkit-no-ri` retains the successful comparison as a separate job.

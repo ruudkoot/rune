@@ -225,7 +225,7 @@ all: vm boot runedoc runeopt manifests basis-cache
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
-manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
+manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
 lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -264,6 +264,9 @@ lib/zmtp/MANIFEST: lib/zmtp/library.build $(wildcard lib/zmtp/*.sml) lib/basis/M
 	bin/rune-$(BOOTHOST) --basis-index lib/zmtp
 lib/jupyter/MANIFEST: lib/jupyter/library.build $(wildcard lib/jupyter/*.sml) lib/basis/MANIFEST lib/zmtp/MANIFEST lib/json/MANIFEST lib/digest/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/jupyter
+
+lib/ffi/model/MANIFEST: lib/ffi/model/library.build $(wildcard lib/ffi/model/*.sml) lib/json/MANIFEST lib/language/c/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/ffi/model
 
 # The frozen Basis Library (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
@@ -1170,7 +1173,7 @@ check-docs: check-docs-generated bin/rune-test bin/rune-doc-check
 
 check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
@@ -1178,6 +1181,7 @@ check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_UNIT) --check
 	$(RUNEDOC) $(DOCS_RUNNER) --check
 	$(RUNEDOC) $(DOCS_C) --check
+	$(RUNEDOC) $(DOCS_FFI_MODEL) --check
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW) --check
 	$(RUNEDOC) --palette docs/lib/palette --check
@@ -1208,6 +1212,9 @@ DOCS_UNIT := --lib lib --library test/unit --out docs/lib/test/unit --basis-docs
 DOCS_RUNNER := --lib lib --library test/runner --out docs/lib/test/runner --basis-docs ../../basis \
                --library-docs test/unit ../unit --library-docs terminal ../../terminal \
                --conventions ../../conventions.md
+DOCS_FFI_MODEL := --lib lib --library ffi/model --out docs/lib/ffi/model --basis-docs ../../basis \
+                  --library-docs json ../../json --library-docs language/c ../../language/c \
+                  --conventions ../../conventions.md
 DOCS_C := --lib lib --library language/c --out docs/lib/language/c --basis-docs ../../basis \
           --conventions ../../conventions.md
 # the libraries of docs/plans/repl.md (The libraries), each in
@@ -1237,7 +1244,8 @@ DOCS_OVERVIEW := --lib lib --overview docs/lib \
 	--library-page zmtp \
 	--library-page jupyter \
 	--library-page digest \
-	--library-page language/c
+	--library-page language/c \
+	--library-page ffi/model
 
 docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_BASIS)
@@ -1247,6 +1255,7 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_UNIT)
 	$(RUNEDOC) $(DOCS_RUNNER)
 	$(RUNEDOC) $(DOCS_C)
+	$(RUNEDOC) $(DOCS_FFI_MODEL)
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW)
 	$(RUNEDOC) --palette docs/lib/palette
@@ -1526,7 +1535,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml \
                tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
                tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
-               tests/runner/ffijobs.sml tests/runner/main.sml
+               tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
 	$(RUNE) --library test/runner --library json --library digest $(RUNNER_SRCS) -o $@
@@ -1778,6 +1787,27 @@ bin/rune-cfrontend.rbc: $(RUNE) tools/cfrontend/main.sml $(wildcard lib/language
 bin/rune-cfrontend: bin/rune-cfrontend.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-cfrontend.rbc" "$$@"\n' > $@
 	chmod +x $@
+bin/rune-ffi-model.rbc: $(RUNE) tools/ffimodel/main.sml $(wildcard lib/ffi/model/*.sml) manifests
+	$(RUNE) --library ffi/model tools/ffimodel/main.sml -o $@
+bin/rune-ffi-model: bin/rune-ffi-model.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-ffi-model.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+FFI_MODEL_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/model-check.sml
+check-tools: bin/rune-ffi-model bin/rune-ffi-model-check
+bin/rune-ffi-model-check.rbc: $(RUNE) $(FFI_MODEL_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner --library json $(FFI_MODEL_CHECK_SRCS) -o $@
+bin/rune-ffi-model-check: bin/rune-ffi-model-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-model-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-ffi-model test-ffi-model-windows test-ffi-model-hosts
+test-ffi-model: $(RUNE) vm bin/rune-ffi-model bin/rune-ffi-model-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-model
+test-ffi-model-windows: $(RUNE) vm bin/rune-ffi-model bin/rune-ffi-model-check bin/rune-test bin/rune-windows
+	$(RUNE_TEST) --tier test-ffi-model-windows
+test-ffi-model-hosts: $(RUNE) vm bin/rune-ffi-model-check bin/rune-test bin/rune-generate
+	$(RUNE_TEST) --tier test-ffi-model-hosts
+
 C_FRONTEND_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/frontend-check.sml
 check-tools: bin/rune-c-check
 bin/rune-c-check.rbc: $(RUNE) $(C_FRONTEND_CHECK_SRCS) $(wildcard lib/language/c/*.sml) manifests
