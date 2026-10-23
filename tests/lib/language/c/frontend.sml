@@ -110,5 +110,8 @@ struct
   val ()=check("relative include roots produce the same canonical source",case fileResolver{from="<fixture>",name="preprocess.h",system=true,next=false} of
     SOME resolved=>resolved=originalFile | NONE=>false)
   val ()=check("include_next recognizes canonical source root",not(isSome(fileResolver{from= #file originalFile,name="preprocess.h",system=true,next=true})))
+  val nextResolver=CFiles.resolver["tests/ffi","tests"]
+  val ()=check("include_next searches the following root",case nextResolver{from= #file originalFile,name="ffi/preprocess.h",system=true,next=true} of
+    SOME resolved=>resolved=originalFile | NONE=>false)
   val () = print ("PASS language/c: " ^ Int.toString (!checks) ^ " checks\n")
 end

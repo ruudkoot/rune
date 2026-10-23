@@ -62,7 +62,7 @@ struct
               val ()=write (fixture ^ "/tests/repl-protocol/" ^ name ^ ".script","send {\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}\nuntil 1\nend\n")
           in rejected name [("RUNE_TEST_ROOT",fixture)] [worker,"repl",name] expected end
         val ()=List.app repl
-             [("bad-headers","printf 'Content-Length: invalid\\r\\n\\r\\n' >&4","a length that is no number"),
+             [("bad-headers","printf 'Content-Length: invalid\\r\\n\\r\\n' >&4","Content-Length is not a nonnegative decimal integer"),
               ("wrong-id","printf '%s\\n' '{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{}}' >&4","engine closed its channel"),
               ("early-exit","exit 0","engine closed its channel")]
         val ()=rejected "lost-interrupt" [("PROTOCOL_TIMEOUT","3")] [worker,"fault-lost-interrupt"] "kernel reply timed out"
