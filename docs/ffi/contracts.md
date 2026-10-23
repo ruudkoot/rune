@@ -1,9 +1,11 @@
 # Runeffi implementation contracts
 
-The public surface is fixed in [the SML contracts](../../ffi/contracts/).
-These signatures are implementation inputs for M2/M6, with native and
-portable Win32 implementations sharing one sealed logical type module.
-`Win32SharedContract` checks those type equations during elaboration.
+The delivered public surface is [WIN32](../../lib/ffi/win32/common/win32_sig.sml)
+with [shared types](../../lib/ffi/win32/common/types_sig.sml). Native and
+portable implementations share one sealed logical type module and the same
+behavioral contract suite. The earlier [M0 SML contracts](../../ffi/contracts/)
+remain design/type-sharing fixtures; their `Win32SharedContract` checks the
+original type equations during elaboration.
 Raw pointers never serve as portable window or paint identities.
 
 ## Win32 observations
@@ -54,7 +56,8 @@ SDL titles accept Unicode scalar UTF-8 and reject lone surrogates.
 The roadmap's [runtime contracts](../plans/runeffi.md#runtime-contracts)
 remain authoritative. Descriptors are serializable; native sessions,
 allocations, prepared calls and closures are process-local registry
-resources with owner, epoch, generation and dependency checks. Explicit
+resources with ownership, liveness and dependency checks. Process-wide
+monotonic identities and the saved image floor prevent stale identity reuse. Explicit
 release diagnoses double release. Images/fork/restore and REPL mutation
 reject live-resource/activation conflicts before changing state.
 
