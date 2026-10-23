@@ -75,6 +75,12 @@ struct
     right=Int32.min(#right a,#right b),bottom=Int32.min(#bottom a,#bottom b)}
   fun rectangleText({left,top,right,bottom}:Types.rect)=String.concatWith ","(List.map Int32.toString[left,top,right,bottom])
   fun enqueue window message=(ignore(messageCode message);queue:= !queue @ [(window,message)])
+  fun markPaint(window:windowState,area)=
+    let val client=rect window val area=case area of NONE=>client | SOME r=>intersect(r,client)
+    in if empty area then () else
+      (#invalid window:=SOME(case !(#invalid window) of NONE=>area | SOME old=>union(old,area));
+       if !(#visible window) andalso not(List.exists(fn(w,m)=>w=SOME(#token window) andalso messageCode m=0wxF)(!queue))
+       then enqueue(SOME(#token window))Types.Paint else ()) end
   fun activeWindow token=List.exists(fn(w:windowState)=> #token w=token andalso !(#phase w)<>Closed)(!windows)
   fun invoke (window:windowState) message=
     if isSome(pending()) then failure message else
@@ -129,12 +135,17 @@ struct
           | SOME Driver.Quit=>(List.app(fn(w:windowState)=>if !(#phase w)=Live then enqueue(SOME(#token w))Types.Close else())(!windows);events(count+1))
           | SOME(Driver.Message(driver,message))=>
               (case List.find(fn(w:windowState)=> #driver w=driver andalso !(#phase w)=Live)(!windows) of
-                 NONE=>() | SOME w=>enqueue(SOME(#token w))message;events(count+1))
+                 NONE=>() | SOME w=>(case message of Types.Paint=>markPaint(w,NONE)
+                   | Types.Size _=>(enqueue(SOME(#token w))message;markPaint(w,NONE))
+                   | _=>enqueue(SOME(#token w))message);events(count+1))
         val ()=events 0 val now=Driver.ticks()
         fun timer(t:timerState)=if activeWindow(#window t) andalso now>= !(#due t) then
           (if List.exists(fn(w,m)=>w=SOME(#window t) andalso(case m of Types.Timer id=>id= #id t | _=>false))(!queue)
            then () else enqueue(SOME(#window t))(Types.Timer(#id t));#due t:=IntInf.+(now,#interval t)) else ()
-    in List.app timer(!timers) end
+        fun repaint(w:windowState)=if !(#phase w)=Live andalso !(#visible w) andalso isSome(!(#invalid w)) andalso
+          not(List.exists(fn(token,message)=>token=SOME(#token w) andalso messageCode message=0wxF)(!queue))
+          then enqueue(SOME(#token w))Types.Paint else ()
+    in List.app timer(!timers);List.app repaint(!windows) end
   fun matches(window,minimum,maximum)(w,message)=
     (case window of NONE=>true | SOME token=>w=SOME token) andalso
     ((minimum=0w0 andalso maximum=0w0) orelse(messageCode message>=minimum andalso messageCode message<=maximum))
@@ -149,8 +160,8 @@ struct
     let val window=findWindow "beginPaint" token
         val ()=if !(#phase window)=Destroying then fail "beginPaint" 0w1400 else ()
         val ()=if List.exists(fn(p:paintState)=> #token(#window p)=token andalso !(#live p))(!paints) then fail "beginPaint" 0w170 else ()
-        val area=intersect((case !(#invalid window) of SOME r=>r | NONE=>
-          {left=Int32.fromInt 0,top=Int32.fromInt 0,right=Int32.fromInt 0,bottom=Int32.fromInt 0}),rect window)
+        val zero={left=Int32.fromInt 0,top=Int32.fromInt 0,right=Int32.fromInt 0,bottom=Int32.fromInt 0}
+        val area=if !(#visible window) then intersect((case !(#invalid window) of SOME r=>r | NONE=>zero),rect window) else zero
         val black=stock 7 val white=stock 0
         val drawing=native "beginPaint"(fn()=>Driver.begin{window= #driver window,rectangle=area})
         val paint=Win32Common.freshPaint()
@@ -206,6 +217,7 @@ struct
           val made=accepted andalso !(#phase window)<>Closed andalso invoke window Types.Create<>Int64.fromInt ~1
           val ()=if made andalso not(isSome(pending())) andalso !(#phase window)<>Closed then #phase window:=Live
             else (if !(#phase window)=Closed then () else closeState accepted window;fail "createWindowEx" 0w1407)
+          val ()=if visible then markPaint(window,NONE) else ()
       in token end)
     fun destroyWindow token=activation(fn()=>destroyState(findWindow "destroyWindow" token))
     fun showWindow(token,command)=
@@ -213,7 +225,9 @@ struct
           val ()=if List.exists(fn c=>c=command)[0,1,5,8,9,10] then () else unsupported "window show command"
           val previous= !(#visible window)
           val ()=native "showWindow"(fn()=>Driver.show(#driver window,command))
-      in #visible window:=command<>0;note("show " ^ Int.toString(#number window) ^ " " ^ Int.toString command);previous end
+          val ()= #visible window:=command<>0
+          val ()=if command<>0 andalso not previous then markPaint(window,NONE) else ()
+      in note("show " ^ Int.toString(#number window) ^ " " ^ Int.toString command);previous end
     fun updateWindow token=activation(fn()=>let val window=findWindow "updateWindow" token
       in case !(#invalid window) of NONE=>() | SOME _=>
         (queue:=List.filter(fn(w,m)=>not(w=SOME token andalso messageCode m=0wxF))(!queue);ignore(invoke window Types.Paint)) end)
@@ -252,12 +266,8 @@ struct
     fun sendMessage(token,message)=activation(fn()=>
       (postable message;note("send " ^ Word32.toString(messageCode message));invoke(findWindow "sendMessage" token)message))
     fun invalidateRect(token,area,erase)=
-      let val window=findWindow "invalidateRect" token val client=rect window
-          val area=case area of NONE=>client | SOME r=>intersect(r,client)
-          val first=not(isSome(!(#invalid window)))
-      in if empty area then () else
-        (#invalid window:=SOME(case !(#invalid window) of NONE=>area | SOME old=>union(old,area));
-         if first then enqueue(SOME token)Types.Paint else ();note("invalidate " ^ Int.toString(#number window) ^ " " ^ Bool.toString erase)) end
+      let val window=findWindow "invalidateRect" token
+      in markPaint(window,area);note("invalidate " ^ Int.toString(#number window) ^ " " ^ Bool.toString erase) end
     val beginPaint=beginPaint val endPaint=endPaint
     fun withPaint token body=
       let val value=beginPaint token

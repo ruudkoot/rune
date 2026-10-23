@@ -9,7 +9,7 @@ struct
     | procedure(_,W.Types.Application _)=W.Types.Result(Int64.fromInt 42)
     | procedure _=W.Types.Default
   val class=W.User.registerClassEx{name="trace",instance=module,style=0w0,procedure=procedure}
-  val window=W.User.createWindowEx{class=class,instance=module,title="trace",style=0wxCF0000,
+  val window=W.User.createWindowEx{class=class,instance=module,title="trace",style=0wx10CF0000,
     extendedStyle=0w0,x=0,y=0,width=64,height=48,parent=NONE}
   val ()=W.User.invalidateRect(window,NONE,false)
   val ()=W.User.updateWindow window

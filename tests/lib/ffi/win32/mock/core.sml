@@ -71,9 +71,21 @@ struct
      test "active paint prevents destruction"(fn()=>using default(fn window=>
        W.User.withPaint window(fn _=>check "paint borrow"(error(fn()=>W.User.destroyWindow window))))),
      test "paint invalidation clips to the current client rectangle"(fn()=>using default(fn window=>
-       (W.User.invalidateRect(window,SOME{left=Int32.fromInt ~5,top=Int32.fromInt ~6,right=Int32.fromInt 1000,bottom=Int32.fromInt 1000},false);
+       (ignore(W.User.showWindow(window,8));W.User.invalidateRect(window,SOME{left=Int32.fromInt ~5,top=Int32.fromInt ~6,right=Int32.fromInt 1000,bottom=Int32.fromInt 1000},false);
         W.User.withPaint window(fn(_,area)=>check "client clip"(#left area=Int32.fromInt 0 andalso #top area=Int32.fromInt 0 andalso
           #right area=Int32.fromInt 320 andalso #bottom area=Int32.fromInt 200))))),
+     test "hidden windows have an empty paint clip"(fn()=>using default(fn window=>
+       (W.User.invalidateRect(window,NONE,false);
+        W.User.withPaint window(fn(_,area)=>check "hidden clip"(#left area= #right area andalso #top area= #bottom area))))),
+     test "discarded paint messages regenerate until validation"(fn()=>using default(fn window=>
+       let val _=W.User.showWindow(window,8)
+           fun paint()=W.User.peekMessage{window=SOME window,minimum=0wxF,maximum=0wxF,remove=true}
+           val first=some(paint())
+           val ()=W.User.discardMessage first
+           val second=some(paint())
+           val ()=W.User.discardMessage second
+           val ()=W.User.withPaint window(fn _=>())
+       in check "validated region"(not(isSome(paint()))) end)),
      test "selected objects are guarded and share closed state"(fn()=>using default(fn window=>
        let val pen=W.Gdi.createPen{style=0,width=2,colour=0wx112233}
            val object=W.Gdi.penObject pen
@@ -101,7 +113,7 @@ struct
      test "invalidations coalesce before synchronous update"(fn()=>
        let val count=ref 0
        in using(fn(window,W.Types.Paint)=>(count:= !count+1;W.User.withPaint window(fn _=>());W.Types.Result(Int64.fromInt 0)) | _=>W.Types.Default)
-         (fn window=>(W.User.invalidateRect(window,NONE,false);W.User.invalidateRect(window,NONE,true);W.User.updateWindow window;
+         (fn window=>(ignore(W.User.showWindow(window,8));W.User.invalidateRect(window,NONE,false);W.User.invalidateRect(window,NONE,true);W.User.updateWindow window;
            W.User.updateWindow window;check "one paint"(!count=1))) end),
      test "deterministic message timers and cancellation"(fn()=>using default(fn window=>
        let val earlier=W.Kernel.queryPerformanceCounter()
