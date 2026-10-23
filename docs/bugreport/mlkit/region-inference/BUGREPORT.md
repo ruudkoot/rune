@@ -127,3 +127,35 @@ exactly the same JSON artifact report as Rune. The explicit
 `tests/ffi/generator-deviations.txt` retains the default failure as a strict
 `HOST-BUG` expectation. A successful default run makes the expectation stale.
 No production generator or library source is changed for the compiler fault.
+
+
+## Generator library fixture — 2026-10-23
+
+The default MLKit 4.7.25 build of the unchanged
+`tests/lib/ffi/model/generate.sml` also exits with SIGSEGV (139), before
+printing its first test verdict. A debugger backtrace stops in
+`concatStringML` at `String.c:144`, called by generated
+`L_ret_funcall_5A9g6iZHcn7joPTlRoDjQo`; the program has empty stdout.
+The same original source list, compiler, and fixture compiled with
+`-no_ri` pass **all 32 checks**, including both duplicate callback selector
+checks. No production or fixture source is changed.
+
+Reproduce the default mode with:
+
+```
+NATIVE_HOST=yes bin/rune-test run 'lib-hosts/mlkit/ffi.model.generate' --keep
+```
+
+The distinct `lib-hosts/mlkit/ffi.model.generate-no-ri` job builds that
+same source list with a compiler wrapper adding only `-no_ri`, under the
+same 2 GiB address-space and 600 second limits. It compares every named
+verdict and the exact 32/32 summary. This positive comparison is labeled
+explicitly; it does not replace the default-region execution or claim
+that it passed.
+
+For this new deviation the native judge accepts only a successful build,
+status 139, and empty pre-verdict output. A build failure, timeout,
+post-verdict crash, or different output remains unexpected. The separate
+positive comparison and retained debugger evidence support attributing
+this observation to the region-inference configuration, rather than
+classifying arbitrary generator failures as host defects.

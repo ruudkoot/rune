@@ -53,3 +53,8 @@ native:smlnj* | ffi.marshal.core | HOST-ABSENT | optional default-real PackRealB
 # native-own-Basis jobs do not supply Rune extension witnesses.
 native:smlnj* | ffi.win32.* | HOST-ABSENT | the host Basis has no Word16 structure required by the public WIN32_TYPES and WIN32_VALUES signatures; native C oracles and Rune's own fixed-width Basis cover both Windows widths
 native:polyml | ffi.win32.* | HOST-ABSENT | the host Basis has no Int64 structure required by the public WIN32_TYPES and WIN32_VALUES signatures; native C oracles and Rune's own fixed-width Basis cover both Windows widths
+
+# Generator failure shapes are checked by LibHosts.generatorHostBug; these
+# expectations do not accept another assertion or an arbitrary crash.
+native:smlnj* | ffi.model.generate | HOST-BUG | polymorphic equality misses equal IntInf selector values after target conversion; only duplicate narrowed selectors rejected fails (31 of 32 pass), while specialized equality and IntInf.compare agree (docs/bugreport/smlnj/IntInf/normalized-selector-equality)
+native:mlkit | ffi.model.generate | HOST-BUG | default region inference crashes in concatStringML before the first verdict; the unchanged 32 checks pass with -no_ri in the separate ffi.model.generate-no-ri control (docs/bugreport/mlkit/region-inference)

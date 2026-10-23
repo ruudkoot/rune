@@ -61,6 +61,18 @@ struct
                      andalso not (LibHosts.outputOK "kat" "seed 8\n" "seed 7\n" ""))
       val () = check ("fingerprint oracle", LibHosts.outputOK "core" "PASS a\nfingerprint ABC\n" "" "ABC"
                      andalso not (LibHosts.outputOK "core" "PASS a\nfingerprint ABD\n" "" "ABC"))
+      val selectors = read "tests/lib/ffi/model/generate.smlnj.expected"
+      fun known host built status output = LibHosts.generatorHostBug host "ffi.model.generate"
+        {built = built, status = status, output = output}
+      val () = check ("exact SML/NJ selector defect", known "smlnj-dev" true 1 selectors)
+      val () = check ("selector defect rejects another failure", not (known "smlnj-dev" true 1 (selectors ^ "FAIL extra\n")))
+      val () = check ("selector defect rejects crash", not (known "smlnj-dev" true 139 selectors))
+      val () = check ("selector defect rejects build error", not (known "smlnj32" false 1 selectors))
+      val () = check ("selector defect rejects missing verdict", not (known "smlnj-legacy" true 1 "FAIL duplicate\n"))
+      val () = check ("exact MLKit region defect", known "mlkit" true 139 "")
+      val () = check ("region defect rejects partial execution", not (known "mlkit" true 139 "PASS earlier\n"))
+      val () = check ("region defect rejects timeout", not (known "mlkit" true 124 ""))
+      val () = check ("region defect rejects build error", not (known "mlkit" false 139 ""))
       val ls = Expectations.parse ("deviations", "native:mlton | random.* | HOST-BUG | planted\n"
                   ^ "native:mlton | unit.* | HOST-FLAKY | intermittent\nnative:polyml | other | HOST-BUG | another host\n")
       val () = check ("matching failure uses deviation", null (LibHosts.unused ls "mlton" ["random.kat"]))
