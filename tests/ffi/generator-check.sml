@@ -90,12 +90,20 @@ struct
     in say "PASS deterministic regeneration, transitive invalidation, unchanged check, failed publication and edited/missing artifacts\n" end
   fun host name=
     let val ()=mkdirs directory
+        val noRegions=name="mlkit-no-ri"
+        val actualName=if noRegions then "mlkit" else name
+        val original=Hosts.get actualName
+        val selectedHost=if not noRegions then original else
+          let val wrapper=directory ^ "/mlkit-no-ri"
+              val ()=write(wrapper,"#!/bin/sh\nexec " ^ quote(#program original) ^ " -no_ri \"$@\"\n")
+              val ()=Posix.FileSys.chmod(wrapper,Posix.FileSys.S.flags[Posix.FileSys.S.irusr,Posix.FileSys.S.iwusr,Posix.FileSys.S.ixusr])
+          in {name="mlkit",program=wrapper,library= #library original} end
         val marker=directory ^ "/entry.sml"
         val ()=write(marker,"val ()=let val ()=print \"RUNEFFI-BEGIN\\n\" val status=RuneffiMain.main(CommandLine.name(),[\"inspect\",\"--config\",\"tests/ffi/generator/scalars.ffi\",\"--target\",\"ffi/targets/linux-x86_64.json\",\"--layout\",\"gen_record\",\"--constant\",\"GEN_HIGH\"]) val ()=print \"RUNEFFI-END\\n\" in OS.Process.exit status end\n")
         val sources=List.filter(fn file=>String.isSuffix ".sml" file)(lines(command true["sh","scripts/build-files.sh","runeffi.build"]))
-        val result=Hosts.build{host=Hosts.get name,name="runeffi-generator",sources=sources @ [marker],
+        val result=Hosts.build{host=selectedHost,name="runeffi-generator",sources=sources @ [marker],
           dir=directory ^ "/host",runDir=root,timeout=600,memory=2500}
-        val ()=need(#built result andalso #status result=0,"generator host " ^ name ^ ": " ^ #messages result ^ #output result)
+        val ()=need(#built result,"generator host did not build: " ^ name ^ ": " ^ #messages result)
         val expected=command true[generator,"inspect","--config","tests/ffi/generator/scalars.ffi","--target","ffi/targets/linux-x86_64.json",
           "--layout","gen_record","--constant","GEN_HIGH"]
         val actual= #output result
@@ -105,9 +113,19 @@ struct
           | afterMarker(line::rest)=if line="RUNEFFI-BEGIN" then rest else afterMarker rest
         fun throughMarker []=raise Failed "host omitted completion marker"
           | throughMarker(line::rest)=if line="RUNEFFI-END" then [] else line::throughMarker rest
-        val payload=String.concatWith "\n" (throughMarker(afterMarker(String.fields(fn c=>c= #"\n")actual))) ^ "\n"
-        val ()=need(expected=payload,"generator host output differs: " ^ name)
-    in say("PASS generator inspection agreement on " ^ name ^ "\n") end
+        val payload=(SOME(String.concatWith "\n" (throughMarker(afterMarker(String.fields(fn c=>c= #"\n")actual))) ^ "\n")handle Failed _=>NONE)
+        val passed= #status result=0 andalso payload=SOME expected
+        val deviation=Expectations.find(Expectations.read "tests/ffi/generator-deviations.txt",
+          {way="native:" ^ name,path="generator.inspect",label=NONE})
+    in case deviation of NONE=>
+         (need(passed,"generator host " ^ name ^ " status " ^ Int.toString(#status result) ^ ": " ^ actual);
+          say("PASS generator inspection agreement on " ^ name ^ "\n"))
+       | SOME line=>
+         (need(not passed,"stale generator host deviation: " ^ Expectations.describe line);
+          need(#status result<>125 andalso #status result<>124,"generator host did not complete its supervised process");
+          say("EXPLAINED generator " ^ name ^ ": " ^ #category line ^ ": " ^ #reason line ^
+            " (status " ^ Int.toString(#status result) ^ "; " ^ directory ^ "/host)\n"))
+    end
   fun main["native"]=native()
     | main["host",name]=host name
     | main _=raise Failed "expected native or host HOST"

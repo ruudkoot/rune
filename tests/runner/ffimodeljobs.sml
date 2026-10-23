@@ -24,6 +24,7 @@ struct
   val tree=Test.describe ""
     [tree,Test.describe "ffi/generator"
       [Test.requires["cc"](generatorJob "native" "native" ["check","test-ffi-generator"]),
+       Test.requires["host:mlkit"](generatorJob "mlkit-no-ri" "host mlkit-no-ri" ["test-ffi-generator-hosts","library","nightly"]),
        Test.describe "hosts" (List.map(fn name=>Test.requires["host:" ^ name]
          (generatorJob name ("host " ^ name)["test-ffi-generator-hosts","library","nightly"]))Hosts.names)]]
 end
