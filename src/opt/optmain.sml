@@ -132,10 +132,15 @@ struct
       else
         let
           val dir = case !runtime of SOME d => d | NONE => raise Usage "no runtime directory (use --runtime DIR)"
+          val foreignLibs =
+            let val input = TextIO.openIn (dir ^ "/foreign-libs")
+                val text = TextIO.inputAll input before TextIO.closeIn input
+            in String.concat (List.map (fn flag => " " ^ shellQuote flag) (String.tokens Char.isSpace text)) end
+            handle IO.Io _ => ""
           val command =
             String.concatWith " "
               [!cc, "-o", shellQuote exe, shellQuote asm, "-Wa,-I," ^ shellQuote dir,
-               shellQuote (dir ^ "/librune.a"), "-lm"]
+               shellQuote (dir ^ "/librune.a"), "-lm"] ^ foreignLibs
         in
           if OS.Process.isSuccess (OS.Process.system command)
           then (OS.FileSys.remove asm; OS.Process.success)

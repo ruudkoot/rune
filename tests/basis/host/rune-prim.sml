@@ -1587,4 +1587,6 @@ struct
       :: Posix.SysDB.Group.members gr
     end
     handle OS.SysErr (_, e) => (noteError e; [])
+  fun foreign _ = unsupported (false, (0w0 : Word64.word), "", "host has no Rune VM foreign bridge", 38, (0w0 : Word32.word))
+
 end

@@ -36,6 +36,7 @@ RF_EXPORT void rf_free(void *memory);
 RF_EXPORT size_t rf_allocations(void);
 RF_EXPORT void rf_fail_allocation(int fail);
 RF_EXPORT int rf_alias(unsigned char *first, unsigned char *second);
+RF_EXPORT unsigned char *rf_offset(unsigned char *memory, size_t offset);
 RF_EXPORT void rf_set_callback(rf_callback callback, void *context);
 RF_EXPORT int rf_invoke(int value);
 RF_EXPORT int rf_error(int error);

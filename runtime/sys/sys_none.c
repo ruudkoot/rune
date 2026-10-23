@@ -289,3 +289,9 @@ void sys_mem_release(void *p, size_t size) {
     memcpy(&block, (char *)p - sizeof(void *), sizeof block);
     free(block);
 }
+
+void *sys_library_open(const char *p,size_t n) { (void)p;(void)n;fail();return NULL; }
+void *sys_library_symbol(void *l,const char *p,size_t n) { (void)l;(void)p;(void)n;fail();return NULL; }
+int sys_library_close(void *l) { (void)l;return fail(); }
+void sys_library_error(int *e,uint32_t *n,char *p,size_t c) { *e=ENOSYS;*n=0;if(c)p[0]=0; }
+void sys_foreign_capture(int *e,uint32_t *n) { *e=ENOSYS;*n=0; }

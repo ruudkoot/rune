@@ -41,6 +41,7 @@
    and refuses an image whose heap is not sound. */
 #include "gc/gc.h"
 #include "intinf.h"
+#include "foreign.h"
 #include "sys/sys.h"
 #include <fenv.h>
 #include <errno.h>
@@ -374,6 +375,7 @@ static void write_image(VM *vm, Stream *s, int kind) {
    that dies before it has read the image is still a child, whose status
    says so: the pid comes back all the same. */
 int64_t vm_fork(VM *vm) {
+    if (foreign_live(vm->foreign)) { vm->io_errno = EBUSY; sys_set_errno(EBUSY); return -1; }
     fflush(NULL);
     for (size_t i = 0; i < vm->nfiles; i++) {
         FILE *f = vm->files[i];
@@ -391,6 +393,7 @@ int64_t vm_fork(VM *vm) {
    what the system layer holds -- sockets, directory streams, a pipe -- is not
    in the image, and the files that are come back by their path. */
 int vm_save(VM *vm, const char *path) {
+    if (foreign_live(vm->foreign)) { vm->io_errno = EBUSY; sys_set_errno(EBUSY); return 0; }
     FILE *f = sys_fopen(path, "wb");
     if (!f) { vm->io_errno = errno; return 0; }
     fflush(NULL);
@@ -944,6 +947,7 @@ int vm_restore(VM *vm, const char *path, char *err, size_t errlen) {
    The world that was here is let go -- its files closed, its heap and its
    program freed -- which is what a program that restores in a loop needs. */
 int vm_become(VM *vm, const char *path) {
+    if (foreign_live(vm->foreign)) { vm->io_errno = EBUSY; sys_set_errno(EBUSY); return 0; }
     VM *next = calloc(1, sizeof(VM));
     char err[256];
     if (!next) { vm->io_errno = ENOMEM; return 0; }

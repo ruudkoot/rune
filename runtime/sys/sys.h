@@ -24,6 +24,15 @@ const char *sys_error_msg(int e);
 const char *sys_error_name(int e);      /* "ENOENT"; "" when it has no name here */
 int sys_error_of_name(const char *name); /* the number, or -1 */
 
+/* Generic dynamic libraries. Names are length-delimited and contain no
+   embedded NUL. Windows paths/text use the layer's WTF-8 conversions.
+   Native call errors are captured separately before cleanup or conversion. */
+void *sys_library_open(const char *path, size_t length);
+void *sys_library_symbol(void *library, const char *name, size_t length);
+int sys_library_close(void *library);
+void sys_library_error(int *number, uint32_t *native, char *message, size_t capacity);
+void sys_foreign_capture(int *number, uint32_t *native);
+
 /* Time. Wall clock and processor time in microseconds. */
 int64_t sys_time_now(void);
 int64_t sys_time_user(void);

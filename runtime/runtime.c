@@ -6,6 +6,7 @@
 #include "gc/gc.h"
 #include "sys/sys.h"
 #include "intinf.h"
+#include "foreign.h"
 #include <stdarg.h>
 
 /* Where a frame is stopped: the instruction being executed in the innermost
@@ -367,6 +368,8 @@ void vm_init(VM *vm, size_t heap) {
 
 /* Also for a VM that an image was read into only in part (vm_resume). */
 void vm_release(VM *vm) {
+    foreign_destroy(vm->foreign);
+    vm->foreign = NULL;
     dbg_free(vm);
     program_free_meta(&vm->prog);
     for (uint32_t i = 0; vm->prog.funcs && i < vm->prog.nfuncs; i++) free(vm->prog.funcs[i].name);

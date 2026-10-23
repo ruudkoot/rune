@@ -413,7 +413,8 @@ struct
     ("array_to_vector", 407, 1),
     ("pty_spawn", 408, 6),
     ("pty_resize", 409, 3),
-    ("pty_close", 410, 1)
+    ("pty_close", 410, 1),
+    ("foreign", 411, 5)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -975,7 +976,8 @@ struct
            ("array_to_vector", ([6], 6)),
            ("pty_spawn", ([6, 7, 7, 6, 1, 1], 7)),
            ("pty_resize", ([1, 1, 1], 1)),
-           ("pty_close", ([1], 1))
+           ("pty_close", ([1], 1)),
+           ("foreign", ([1, 10, 10, 6, 6], 0))
          ]);
          repsOf name)
 end
