@@ -1745,6 +1745,83 @@
       "variadic": "reject",
       "unsafeRaw": false,
       "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_SetWindowPosition",
+      "name": "setWindowPosition",
+      "raw": "SDL_SetWindowPosition",
+      "parameters": [
+        {
+          "name": "window",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "x",
+          "type": "int"
+        },
+        {
+          "name": "y",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_SetHint",
+      "name": "setHint",
+      "raw": "SDL_SetHint",
+      "parameters": [
+        {
+          "name": "name",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "string",
+          "encoding": "utf8",
+          "terminator": true
+        },
+        {
+          "name": "value",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "string",
+          "encoding": "utf8",
+          "terminator": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
     }
   ]
 }

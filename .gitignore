@@ -40,3 +40,6 @@ __pycache__/
 /lib/ffi/win32/mock/MANIFEST
 
 /lib/sdl/MANIFEST
+/lib/ffi/win32/common/MANIFEST
+
+/lib/ffi/win32/sdldriver/MANIFEST

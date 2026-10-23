@@ -3,7 +3,8 @@
 [`SDLFn`](fun/SDLFn.md) implements Rune's core SDL3 signature over generated declarations and
 layout facts. It covers all 53 entries of `ffi/sdl/inventory.json`: startup,
 windows, copied events, keyboard and mouse input, text input, surfaces, 2D
-rendering, debug text, clipboard text, and clocks. `SDL_free` is used internally
+rendering, debug text, clipboard text, and clocks. The separately inventoried M9 support operations add native window
+positioning and SDL hints. `SDL_free` is used internally
 for owned clipboard results. Audio, GPU APIs, application-entry integration,
 and callbacks from foreign threads remain outside this core.
 

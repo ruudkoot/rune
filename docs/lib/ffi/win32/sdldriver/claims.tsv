@@ -1,0 +1,3 @@
+name	kind	signature	realisations	status	origin	source
+WIN32_SDL_DRIVER	signature			required	declared	lib/ffi/win32/sdldriver/driver_sig.sml
+Win32SdlDriverFn	functor	WIN32_SDL_DRIVER		required	claimed	lib/ffi/win32/sdldriver/driver.sml

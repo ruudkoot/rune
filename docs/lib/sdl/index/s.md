@@ -4,8 +4,10 @@
 
 - `session` (type): [SDL_NATIVE_RAW](../sig/SDL_NATIVE_RAW.md#type-session)
 - `setClipboardText` (val): [SDL](../sig/SDL.md#val-setclipboardtext)
+- `setHint` (val): [SDL](../sig/SDL.md#val-sethint)
 - `setMainReady` (val): [SDL](../sig/SDL.md#val-setmainready)
 - `setRenderDrawColor` (val): [SDL](../sig/SDL.md#val-setrenderdrawcolor)
+- `setWindowPosition` (val): [SDL](../sig/SDL.md#val-setwindowposition)
 - `setWindowSize` (val): [SDL](../sig/SDL.md#val-setwindowsize)
 - `setWindowTitle` (val): [SDL](../sig/SDL.md#val-setwindowtitle)
 - `showWindow` (val): [SDL](../sig/SDL.md#val-showwindow)

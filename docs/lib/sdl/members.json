@@ -195,6 +195,20 @@
     },
     {
      "kind": "val",
+     "name": "setWindowPosition",
+     "spec": "val setWindowPosition : window * int * int -> unit",
+     "doc": "`setWindowPosition (window, x, y)` requests a supported native position.\n\n`SDL_WINDOWPOS_UNDEFINED` lets SDL choose an axis. Compositors may reject\nexplicit positioning; native failure propagates rather than being ignored.\n\n",
+     "page": "sig/SDL.md#val-setwindowposition"
+    },
+    {
+     "kind": "val",
+     "name": "setHint",
+     "spec": "val setHint : string * string -> unit",
+     "doc": "`setHint (name, value)` sets an SDL policy hint before initialization.\n\nThis support operation is selected for the Win32-over-SDL provider.\n\n",
+     "page": "sig/SDL.md#val-sethint"
+    },
+    {
+     "kind": "val",
      "name": "showWindow",
      "spec": "val showWindow : window -> unit",
      "doc": "`showWindow window` requests that the native window become visible.\n\n",

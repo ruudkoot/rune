@@ -70,6 +70,15 @@ sig
   val getWindowSize : window -> {width : int, height : int}
   (* `setWindowSize (window, width, height)` requests a size change; OS events remain asynchronous. *)
   val setWindowSize : window * int * int -> unit
+  (* `setWindowPosition (window, x, y)` requests a supported native position.
+
+     `SDL_WINDOWPOS_UNDEFINED` lets SDL choose an axis. Compositors may reject
+     explicit positioning; native failure propagates rather than being ignored. *)
+  val setWindowPosition : window * int * int -> unit
+  (* `setHint (name, value)` sets an SDL policy hint before initialization.
+
+     This support operation is selected for the Win32-over-SDL provider. *)
+  val setHint : string * string -> unit
   (* `showWindow window` requests that the native window become visible. *)
   val showWindow : window -> unit
   (* `hideWindow window` requests that the native window become hidden. *)

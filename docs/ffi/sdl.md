@@ -92,3 +92,21 @@ agreed inventory. Tests compare semantic fields, ownership and drawing effects;
 they do not require identical OS event streams or pixels.
 
 See [the dated evidence](../../tests/ffi/evidence/m7.md) for results and open gates.
+
+## Win32 SDL provider support
+
+The required core inventory remains 53 functions. The Win32 GUI provider adds
+`SDL_SetWindowPosition` and `SDL_SetHint`; the additional selections and
+constants are listed in `ffi/sdl/support.json`. Select every listed constant
+with the generator's `--constant NAME` option as well as the core command above.
+`make test-win32-sdl-driver` performs the complete explicit generation, compiles
+an independent C constant oracle and field adapters, and runs the driver on both
+interpreters under collection stress and both JIT modes. Its GUI tier is
+`make test-win32-sdl-driver-gui` with desktop access.
+
+Compile the thin driver with `--library ffi/win32/sdldriver` and
+`ffi/win32/sdl-driver.build`, supplying the same `SDL_GENERATED` path variable.
+That entrypoint exposes `Win32SdlDriver`, including `load` and `shutdown`
+controls, for the common Win32 model. The shared model owns classes, window
+procedures, timers, queue filtering and GDI object lifetime. This split keeps
+those semantics identical between SDL and mocks.

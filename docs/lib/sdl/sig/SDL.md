@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 67 of 67 entries documented |
+| Documentation | 69 of 69 entries documented |
 | Tests | not listed |
 | Source | [lib/sdl/sdl\_sig.sml](../../../../lib/sdl/sdl_sig.sml) |
 
@@ -66,6 +66,8 @@ sig
   val <a href="#val-setwindowtitle">setWindowTitle</a> : window * string -&gt; unit
   val <a href="#val-getwindowsize">getWindowSize</a> : window -&gt; {<a href="#fld-getwindowsize.width">width</a> : int, <a href="#fld-getwindowsize.height">height</a> : int}
   val <a href="#val-setwindowsize">setWindowSize</a> : window * int * int -&gt; unit
+  val <a href="#val-setwindowposition">setWindowPosition</a> : window * int * int -&gt; unit
+  val <a href="#val-sethint">setHint</a> : string * string -&gt; unit
   val <a href="#val-showwindow">showWindow</a> : window -&gt; unit
   val <a href="#val-hidewindow">hideWindow</a> : window -&gt; unit
   val <a href="#val-pollevent">pollEvent</a> : unit -&gt; event option
@@ -403,6 +405,27 @@ val setWindowSize : window * int * int -> unit
 ```
 
 `setWindowSize (window, width, height)` requests a size change; OS events remain asynchronous.
+
+### <a name="val-setwindowposition"></a>`setWindowPosition`
+
+```sml
+val setWindowPosition : window * int * int -> unit
+```
+
+`setWindowPosition (window, x, y)` requests a supported native position.
+
+`SDL_WINDOWPOS_UNDEFINED` lets SDL choose an axis. Compositors may reject
+explicit positioning; native failure propagates rather than being ignored.
+
+### <a name="val-sethint"></a>`setHint`
+
+```sml
+val setHint : string * string -> unit
+```
+
+`setHint (name, value)` sets an SDL policy hint before initialization.
+
+This support operation is selected for the Win32-over-SDL provider.
 
 ### <a name="val-showwindow"></a>`showWindow`
 

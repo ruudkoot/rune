@@ -128,6 +128,8 @@ struct
        checked "SDL_GetWindowSize" [address p,address(ForeignMemory.raw w),address(ForeignMemory.raw h)];
        {width=intAt(b,0,4),height=intAt(b,4,4)})) end))
   fun setWindowSize(window,w,h)=withHandle window(fn p=>checked "SDL_SetWindowSize" [address p,signed w,signed h])
+  fun setWindowPosition(window,x,y)=withHandle window(fn p=>checked "SDL_SetWindowPosition" [address p,signed x,signed y])
+  fun setHint(name,value)=withString name(fn name=>withString value(fn value=>checked "SDL_SetHint" [name,value]))
   fun windowOperation name window=withHandle window(fn p=>checked name[address p])
   val showWindow=windowOperation "SDL_ShowWindow"
   val hideWindow=windowOperation "SDL_HideWindow"
