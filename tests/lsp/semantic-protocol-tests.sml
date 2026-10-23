@@ -306,6 +306,25 @@ struct
         val ()=C.request (client,151,"textDocument/inlineCompletion",object (("context",object [("triggerKind",Json.int 1)])::params))
         val unsupported=C.response (client,151)
     in check ("inline completion requires negotiated client support",C.field (C.field (unsupported,"error"),"code")=Json.int (~32601)) end)
+  fun semanticErrorsAndEviction ()=fixture (fn client =>
+    let val uris=List.tabulate (6,fn index => "untitled:eviction-" ^ Int.toString index)
+        val ()=List.app (fn uri => openDocument (client,uri,"val answer=42\n")) uris
+        fun pull ([],_)=() | pull (uri::rest,id)=
+          (C.request (client,id,"textDocument/diagnostic",object [("textDocument",document uri)]);
+           ignore (C.result (C.response (client,id)));pull (rest,id+1))
+        val ()=pull (uris,160)
+        val uri=hd uris
+        val ()=C.request (client,166,"textDocument/hover",object [("textDocument",document uri),
+          ("position",object [("line",Json.int 0),("character",Json.int 4)])])
+        val hover=C.result (C.response (client,166))
+        val ()=check ("an evicted semantic view is recomputed once",C.field (C.field (hover,"contents"),"value")=Json.String "int")
+        val ()=C.request (client,167,"textDocument/hover",object [("textDocument",document uri),
+          ("position",object [("line",Json.int (~1)),("character",Json.int 0)])])
+        val invalid=C.response (client,167)
+        val ()=check ("malformed semantic positions return InvalidParams",C.field (C.field (invalid,"error"),"code")=Json.int (~32602))
+        val ()=C.request (client,168,"textDocument/diagnostic",object [("textDocument",document uri),("previousResultId",Json.int 7)])
+        val malformed=C.response (client,168)
+    in check ("malformed diagnostic parameters retain their error code",C.field (C.field (malformed,"error"),"code")=Json.int (~32602)) end)
 end
 structure RuneLspSemanticProtocolTestMain=Main (struct
   val name="lsp-semantic-protocol"
@@ -324,6 +343,7 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "completion-snippets" RuneLspSemanticProtocolTests.completionSnippets,
     Test.it "inline-completion" RuneLspSemanticProtocolTests.inlineCompletion,
     Test.it "completion-context-and-documentation" RuneLspSemanticProtocolTests.completionContextAndDocumentation,
-    Test.it "legacy-completion-fallback" RuneLspSemanticProtocolTests.legacyCompletionFallback]
+    Test.it "legacy-completion-fallback" RuneLspSemanticProtocolTests.legacyCompletionFallback,
+    Test.it "semantic-errors-and-eviction" RuneLspSemanticProtocolTests.semanticErrorsAndEviction]
 end)
 val ()=RuneLspSemanticProtocolTestMain.main ()

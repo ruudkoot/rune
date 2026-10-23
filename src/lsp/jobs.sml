@@ -4,7 +4,8 @@ structure RuneLspJobs =
 struct
   structure V=RuneLspWorkerWire
   structure P=RuneLspWorkerProcess
-  datatype 'a event=Done of 'a * V.value | Failed of 'a * string | Cancelled of 'a | Restarted
+  type rejection={code:IntInf.int,message:string,data:V.value option}
+  datatype 'a event=Done of 'a * V.value | Failed of 'a * string | Rejected of 'a * rejection | Cancelled of 'a | Restarted
   type 'a job={id:IntInf.int,key:string option,priority:int,data:'a,payload:V.value}
   datatype phase=Starting of Time.time | Idle | Working of Time.time | Cancelling of Time.time | AwaitReady
   datatype 'a t=Jobs of {command:string,args:string list,timeout:Time.time,cancelGrace:Time.time,maxPending:int,
@@ -68,8 +69,12 @@ struct
               fun optional name=case List.find (fn (key,_) => key=name) fields of NONE => NONE | SOME (_,value) => SOME value
               val ()=if cancelling then () else case optional "result" of SOME result => emit (jobs,Done (#data job,result))
                 | NONE => (case optional "cancelled" of SOME (V.Bool true) => emit (jobs,Cancelled (#data job))
-                  | _ => emit (jobs,Failed (#data job,case optional "error" of SOME message => V.bytes message
-                    | NONE => "invalid worker response")))
+                  | _ => (case optional "error" of SOME (error as V.Object _) =>
+                      emit (jobs,Rejected (#data job,{code=V.integer (V.field (error,"code")),
+                        message=V.bytes (V.field (error,"message")),
+                        data=case List.find (fn (name,_) => name="data") (V.object error) of NONE => NONE | SOME (_,value) => SOME value}))
+                    | SOME message => emit (jobs,Failed (#data job,V.bytes message))
+                    | NONE => emit (jobs,Failed (#data job,"invalid worker response"))))
           in active:=NONE;phase:=AwaitReady end
        end end
     handle V.Invalid message => lost (jobs,message)

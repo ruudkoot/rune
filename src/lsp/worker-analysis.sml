@@ -10,6 +10,7 @@ struct
   structure U=LspUri
   structure L=LspPosition
   structure J=RuneLspSync
+  exception Stale of string
   type context={key:string,compiler:C.session,analysis:A.t}
   type source={file:string,uri:string,text:string,mode:string,version:IntInf.int option,index:L.t option,tokens:C.Syntax.piece list option ref}
   type view={id:string,snapshot:A.snapshot,sources:source list,encoding:LspProtocol.encoding,uri:string,ordinal:int option,
@@ -260,8 +261,8 @@ struct
     let val data=J.object (J.required (J.object params,"data"))
         val generation=case Json.toIntInf (J.required (data,"generation")) of SOME generation => generation
           | NONE => raise Fail "invalid symbol generation"
-        val ()=if generation=V.integer (V.field (state,"generation")) then () else raise Fail "workspace symbol is stale"
-        val view=case find (worker,J.string (J.required (data,"snapshot"))) of SOME view => view | NONE => raise Fail "symbol snapshot has been evicted"
+        val ()=if generation=V.integer (V.field (state,"generation")) then () else raise Stale "workspace symbol is stale"
+        val view=case find (worker,J.string (J.required (data,"snapshot"))) of SOME view => view | NONE => raise Stale "symbol snapshot has been evicted"
         val uri=J.string (J.required (data,"uri"))
         val ordinal=case J.required (data,"ordinal") of Json.Null => NONE | value => Json.toInt value
         val view={id= #id view,snapshot= #snapshot view,sources= #sources view,encoding= #encoding view,uri=uri,
@@ -271,10 +272,10 @@ struct
         val (_,documents)=M.restore state
         val text=case D.snapshot (documents,uri) of SOME snapshot => L.text (#content snapshot)
           | NONE => readFile (#file source,#mode source)
-        val ()=if text= #text source then () else raise Fail "workspace symbol source changed"
+        val ()=if text= #text source then () else raise Stale "workspace symbol source changed"
         val token=J.string (J.required (data,"token"))
         val symbol=case List.find (fn symbol => symbolToken symbol=token) (symbols (view,source)) of SOME symbol => symbol
-          | NONE => raise Fail "workspace symbol data is invalid"
+          | NONE => raise J.Invalid "workspace symbol data is invalid"
         val fields=case symbol of Json.Object fields => fields | _ => []
     in Json.Object (("data",data)::fields) end
   fun sourceOrdinal (view:view,source:source) =
@@ -332,7 +333,7 @@ struct
             | _ => Json.Null)
        | "completionItem/resolve" =>
            let val data=document
-               val ()=if J.string (J.required (data,"snapshot"))= #id view then () else raise Fail "completion item is stale"
+               val ()=if J.string (J.required (data,"snapshot"))= #id view then () else raise Stale "completion item is stale"
                val at=case Json.toInt (J.required (data,"offset")) of SOME at => at | NONE => raise J.Invalid "invalid completion offset"
                val name=J.string (J.required (data,"name"))
                val kind=J.string (J.required (data,"kind"))
@@ -343,7 +344,7 @@ struct
                 (completionItems (view,source,at)) of SOME (item as Json.Object fields) =>
                   (case completionDocumentation (view,source,at,name,kind) of NONE => item | SOME text =>
                     Json.Object (("documentation",Json.String (safe text))::fields))
-                | _ => raise Fail "completion item is unavailable" end
+                | _ => raise J.Invalid "completion item is unavailable" end
        | "textDocument/definition" => target (fn occurrence:A.occurrence => #definition occurrence)
        | "textDocument/declaration" => target (fn occurrence:A.occurrence => #declaration occurrence)
        | "textDocument/typeDefinition" =>

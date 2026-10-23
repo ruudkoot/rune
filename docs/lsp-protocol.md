@@ -66,6 +66,11 @@ diagnostic refresh instead of duplicate pushes. A stale diagnostic request
 returns ServerCancelled with retriggerRequest, and completion edits for an
 obsolete source return ContentModified. Workspace symbol and completion
 resolution validate their original snapshot data before returning results.
+Malformed semantic parameters retain `InvalidParams` through the private
+worker protocol. A normal query whose immutable view was evicted retries
+one fresh check when its source revision/context is still current. Stale
+item resolution returns `ContentModified` instead; process startup, I/O and
+deadline failures remain request failures.
 
 `$/setTrace` accepts off, messages and verbose. Requested trace data is
 sent as framed `$/logTrace` notifications; operational errors remain on

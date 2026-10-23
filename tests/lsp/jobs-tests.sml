@@ -31,7 +31,8 @@ struct
         val _=J.submit (jobs,{key=NONE,priority=0,data="foreground",payload=body})
         val events=collect (jobs,3)
         fun label (J.Cancelled name)="cancel:" ^ name | label (J.Done (name,_))="done:" ^ name
-          | label (J.Failed (name,message))=raise Fail (name ^ ": " ^ message) | label J.Restarted="restart"
+          | label (J.Failed (name,message))=raise Fail (name ^ ": " ^ message)
+          | label (J.Rejected (name,error))=raise Fail (name ^ ": " ^ #message error) | label J.Restarted="restart"
     in check ("foreground precedes coalesced background",List.map label events=["cancel:superseded","done:foreground","done:background"]) end)
   fun queuedCancellation ()=fixture (fn jobs =>
     let val id=J.submit (jobs,{key=NONE,priority=0,data="cancelled",payload=payload ()})
@@ -43,10 +44,17 @@ struct
         val events=collect (jobs,1)
         val ()=J.close jobs
     in check ("startup failure completes without retrying forever",case events of [J.Failed ("missing",_)] => true | _ => false) end
+  fun typedRejection ()=fixture (fn jobs =>
+    let val _=J.submit (jobs,{key=NONE,priority=0,data="expired",payload=V.Object [("op",V.Bytes "query"),
+          ("snapshot",V.Bytes "not-retained"),("method",V.Bytes "textDocument/hover"),("params",V.Object [])]})
+        val events=collect (jobs,1)
+    in check ("worker rejection retains its code separately from infrastructure failure",case events of
+      [J.Rejected ("expired",error)] => #code error=LspProtocol.contentModified | _ => false) end)
 end
 structure RuneLspJobsTestMain=Main (struct
   val name="lsp-jobs"
   val tests=Test.describe "lsp-jobs" [Test.it "priority-and-coalescing" RuneLspJobsTests.priorities,
-    Test.it "queued-cancellation" RuneLspJobsTests.queuedCancellation,Test.it "failed-startup" RuneLspJobsTests.failedStartup]
+    Test.it "queued-cancellation" RuneLspJobsTests.queuedCancellation,Test.it "failed-startup" RuneLspJobsTests.failedStartup,
+    Test.it "typed-rejection" RuneLspJobsTests.typedRejection]
 end)
 val ()=RuneLspJobsTestMain.main ()

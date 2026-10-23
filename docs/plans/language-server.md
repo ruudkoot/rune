@@ -20,7 +20,7 @@ documentation and its evidence beside the tests before this plan is retired.
 | M2 | Protocol libraries, transport, lifecycle and harness | M0 | in progress: protocol foundation and focused Linux checks implemented; final profile/platform acceptance remains |
 | M3 | Documents, positions, workspaces and build contexts | M2 | in progress: synchronization, reusable codecs, shared project planning and workspace requests implemented; combined/platform acceptance pending |
 | M4 | Incremental syntax, recovery and the parser decision | M1, M3 | in progress: separate SML parser, lossless pieces, lexical/declaration reuse, AST bridge and differential checks implemented; performance/platform acceptance pending |
-| M5 | Compiler sessions, semantic snapshots and invalidation | M3, M4; compiler-library M1-M4 and the analysis contract below | in progress: public immutable snapshots, scoped prefix replay, provenance and worker transport tested; scheduling/integration and full acceptance remain |
+| M5 | Compiler sessions, semantic snapshots and invalidation | M3, M4; compiler-library M1-M4 and the analysis contract below | in progress: immutable queries, scoped replay, provenance, supervised workers and scheduling/integration implemented; settings/recovery/performance and full acceptance remain |
 | M6 | Document and workspace diagnostics | M5 | in progress: push/pull/workspace reports, refresh, cancellation and partial progress implemented; full coverage/performance acceptance remains |
 | M7 | Hover, navigation and symbols | M5 | in progress: navigation, document/workspace symbols and stale resolve tests pass; documentation, broader module cases and measurements remain |
 | M8 | Completion, signature help and inline completion | M7 | in progress: lexical/qualified/record completion, documentation resolve, invocation snippets, signature help and negotiated inline patterns implemented; build paths, broader recovery and full acceptance remain |
@@ -949,6 +949,15 @@ and unfinished expressions, and remains usable after closing its context.
 Nine public analysis cases cover interpreter/JIT behavior, including
 queries after the captured library and manifest have been deleted. These
 results do not replace M5's remaining setting/recovery/performance gates.
+
+Protocol-error follow-up (2026-10-23): typed worker rejections preserve
+`InvalidParams` and `ContentModified`; one fresh retry recovers an evicted
+normal query without accepting stale resolved items. All seventeen
+production semantic transcripts pass on Linux and native Windows
+(`/tmp/rune-lsp-typed-errors-protocol-tests.log`,
+`/tmp/rune-lsp-typed-errors-windows.log`). Worker/scheduler tests, including
+typed rejection and startup failure, pass in
+`/tmp/rune-lsp-typed-errors-worker-tests.log`.
 
 ### M6. Diagnostics (M)
 

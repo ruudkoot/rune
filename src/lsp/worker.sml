@@ -27,6 +27,8 @@ struct
         fun ready ()=send (V.Object [("op",V.Bytes "ready")])
         fun reply (id,result)=send (V.Object [("id",V.Integer id),("result",result)])
         fun failed (id,message)=send (V.Object [("id",V.Integer id),("error",V.Bytes (E.safe message))])
+        fun rejected (id,code,message)=send (V.Object [("id",V.Integer id),("error",V.Object
+          [("code",V.Integer code),("message",V.Bytes (E.safe message))])])
         fun cancelMessage (id,value)=V.bytes (V.field (value,"op"))="cancel" andalso V.integer (V.field (value,"id"))=id
         fun cancelled id =
           let val descriptor=OS.IO.pollIn (valOf (OS.IO.pollDesc (Posix.FileSys.fdToIOD Posix.FileSys.stdin)))
@@ -51,7 +53,7 @@ struct
                   in V.Object [("snapshot",V.Bytes (#id view)),("reports",V.Array (E.reports view))] end
               | "query" =>
                   let val view=case E.find (engine,V.bytes (V.field (value,"snapshot"))) of SOME view => view
-                        | NONE => raise Fail "analysis snapshot has been evicted"
+                        | NONE => raise E.Stale "analysis snapshot has been evicted"
                   in V.json (E.query (view,{method=V.bytes (V.field (value,"method")),params=V.unjson (V.field (value,"params"))})) end
               | "workspace" =>
                   let val encoding=case V.bytes (V.field (value,"encoding")) of "utf-8" => LspProtocol.Utf8
@@ -74,9 +76,10 @@ struct
                ((reply (id,work ()) handle RuneCompiler.Analysis.Cancelled =>
                    send (V.Object [("id",V.Integer id),("cancelled",V.Bool true)])
                  | RuneCompiler.Failed diagnostics => failed (id,String.concatWith "\n" (List.map #message diagnostics))
+                 | E.Stale message => rejected (id,LspProtocol.contentModified,message)
                  | V.Invalid message => failed (id,message)
                  | RuneLspWorkspace.Invalid message => failed (id,message)
-                 | RuneLspSync.Invalid message => failed (id,message)
+                 | RuneLspSync.Invalid message => rejected (id,JsonRpc.invalidParams,message)
                  | LspUri.Invalid => failed (id,"invalid file URI during worker analysis")
                  | error => failed (id,General.exnMessage error));ready ()) end
         fun loop ()=case !pending of value :: rest => (pending:=rest;command value;loop ())

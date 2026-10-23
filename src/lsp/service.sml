@@ -10,7 +10,7 @@ struct
   structure S=RuneLspSync
   structure Q=LspRequests
   type request={id:R.id,method:string,params:Json.value,uri:string,revision:IntInf.int,generation:IntInf.int,
-    done:bool ref,job:IntInf.int option ref}
+    done:bool ref,job:IntInf.int option ref,retried:bool ref}
   datatype task=Discover of {uri:string,revision:IntInf.int,generation:IntInf.int}
     | Check of {uri:string,revision:IntInf.int,generation:IntInf.int,request:request option}
     | Query of request | Workspace of request
@@ -84,7 +84,7 @@ struct
           | SOME value => if isSome (P.integer value) then () else raise S.Invalid "invalid progress token"
         val ()=(token "workDoneToken";token "partialResultToken")
         val request={id=id,method=method,params=params,uri=uri,revision=revision,generation=W.generation workspace,
-          done=ref false,job=ref NONE}:request
+          done=ref false,job=ref NONE,retried=ref false}:request
         val ()=requests:=request :: !requests
         val ()=case Json.member ("workDoneToken",params) of NONE => () | SOME token =>
           let val Service {send,...}=service
@@ -167,6 +167,17 @@ struct
         if #method request<>"workspace/diagnostic" orelse current (service,{uri="",revision=0,generation= #generation request}) then finish (service,request,R.Result (V.unjson value))
         else failure (service,request,P.serverCancelled,"workspace source changed",SOME (Json.Object [("retriggerRequest",Json.Bool true)]))
     | J.Failed (Workspace request,message) => failure (service,request,P.requestFailed,message,NONE)
+    | J.Rejected (task,error) =>
+        let fun reject request=failure (service,request,#code error,#message error,Option.map V.unjson (#data error))
+        in case task of Query request =>
+             if #code error=P.contentModified andalso not (!(#done request)) andalso not (!(#retried request))
+               andalso not (List.exists (fn method => method= #method request) ["completionItem/resolve"])
+               andalso current (service,{uri= #uri request,revision= #revision request,generation= #generation request}) then
+               (#retried request:=true;results:=List.filter (fn result:result => #uri result<> #uri request) (!results);
+                check (service,#uri request,SOME request)) else reject request
+           | Workspace request => reject request
+           | Check {request=SOME request,...} => reject request
+           | _ => log (#message error) end
     | J.Failed (Query request,message) => failure (service,request,P.requestFailed,message,NONE)
     | J.Failed (Check {request=SOME request,...},message) => failure (service,request,P.requestFailed,message,NONE)
     | J.Failed (_,message) => log message
