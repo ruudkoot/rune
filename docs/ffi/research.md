@@ -38,4 +38,5 @@ make test-ffi-windows JOBS=8
 
 The comparison does not assert callback-exception or worker-thread behavior
 for those other runtimes. Rune's stricter boundary is specified in
-[contracts.md](contracts.md) and remains an M5 implementation gate.
+[contracts.md](contracts.md) and exercised by the callback and lifecycle
+fixtures recorded in [M5 evidence](../../tests/ffi/evidence/m5.md).

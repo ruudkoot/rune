@@ -43,8 +43,10 @@ The pinned libffi source and checksum are in `ffi/libffi/source.json`.
 A missing cross prefix builds the unavailable bridge; native include and
 link flags never enter another target's build. Provisioning those prefixes
 is an explicit development step; no build description executes commands.
-Other cross targets currently retain unavailable support. Extending their
-provisioning and executing their ABI fixtures remain portability gates.
+Linux x86, AArch64 and big-endian PowerPC64 use separately provisioned target
+prefixes and explicit FFI acceptance VMs. Ordinary portability builds retain
+their existing optional-feature configuration. The capability report names
+the tested binaries and distinguishes native execution from QEMU execution.
 
 The scalar call interface covers fixed signed/unsigned 8/16/32/64-bit
 integers, float, double, void results and pointers. ABI 0 is the target

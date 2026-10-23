@@ -8,8 +8,8 @@ SML over another library, or a deterministic mock, selected by `.build`.
 
 Written on 2026-10-22 against
 `c3e713891e6ea9f32770371427fdfa5f76369255`. This document records the agreed
-design and the work still to do. It does not establish that an FFI, C
-frontend, or binding described below has been implemented. All milestones
+design and its original baseline. The implementation and executed checks
+are recorded in the status table and dated evidence below. All milestones
 started **planned**; the status table and dated acceptance evidence record
 implementation progress separately from this original design baseline.
 
@@ -350,7 +350,8 @@ timestamps and absolute acquisition paths are not part of generated code.
 
 Generation is an explicit prerequisite driven by the repository's build
 tooling. Provide `make ffi`, `make check-ffi-generated`, and focused FFI test
-targets in M6; these names are planned targets, not commands that exist now.
+targets in M6. These targets now exist; their prerequisites and explicit
+regeneration commands are documented in [generation](../ffi/generation.md).
 Invoking `rune --build` compiles declared SML inputs; it does not launch a
 header parser or arbitrary shell hook. Release/install builds ship the
 generated SML and any required target shim binaries.
@@ -649,7 +650,9 @@ generation requires no Clang frontend.
 
 ### M2: binding model and sidecars
 
-**Depends on:** M1. **State:** planned.
+**Depends on:** M1. **State:** complete.
+
+Acceptance evidence: [M2 binding-model record](../../tests/ffi/evidence/m2.md).
 
 Implement the separated models, versioned declarative policy parser,
 selection closure and SML projection rules. Share type identities across
