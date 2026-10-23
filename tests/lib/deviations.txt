@@ -48,3 +48,8 @@ native:polyml | zmtp.zmtp | HOST-BUG | the first Zmtp.wait reads the connection 
 # Foreign marshalling: exercises large shifts in the native host's IntInf.
 native:mlkit | ffi.marshal.core | HOST-BUG | IntInf.~>> by 30 or more returns zero for large integers, corrupting 64/128-bit byte encoding and binary32 conversions through binary64 bits; eleven cases fail (docs/bugreport/mlkit/IntInf/shift-right-by-30-or-more)
 native:smlnj* | ffi.marshal.core | HOST-ABSENT | optional default-real PackRealBig and PackRealLittle are unbound (docs/bugreport/smlnj/PackReal-default-absent)
+
+# The public Win32 contract requires fixed-width Word16 and Int64. These
+# native-own-Basis jobs do not supply Rune extension witnesses.
+native:smlnj* | ffi.win32.* | HOST-ABSENT | the host Basis has no Word16 structure required by the public WIN32_TYPES and WIN32_VALUES signatures; native C oracles and Rune's own fixed-width Basis cover both Windows widths
+native:polyml | ffi.win32.* | HOST-ABSENT | the host Basis has no Int64 structure required by the public WIN32_TYPES and WIN32_VALUES signatures; native C oracles and Rune's own fixed-width Basis cover both Windows widths

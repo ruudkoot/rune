@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "originals": "source.json",
+  "structure": "Win32Values",
+  "mechanism": "pure SML integer projections checked against original SDK macros",
+  "oracle": "tests/ffi/win32/helpers.c",
+  "entries": [
+    {"foreign": "LOWORD", "public": "lowWord", "file": "shared/minwindef.h", "line": 204},
+    {"foreign": "HIWORD", "public": "highWord", "file": "shared/minwindef.h", "line": 205},
+    {"foreign": "RGB", "public": "rgb", "file": "um/wingdi.h", "line": 1859},
+    {"foreign": "GetRValue", "public": "red", "file": "um/wingdi.h", "line": 1869},
+    {"foreign": "GetGValue", "public": "green", "file": "um/wingdi.h", "line": 1870},
+    {"foreign": "GetBValue", "public": "blue", "file": "um/wingdi.h", "line": 1871},
+    {"foreign": "GET_X_LPARAM", "public": "xFromLParam", "file": "shared/windowsx.h", "line": 1233},
+    {"foreign": "GET_Y_LPARAM", "public": "yFromLParam", "file": "shared/windowsx.h", "line": 1234}
+  ]
+}

@@ -15,7 +15,12 @@ carry copied values; text characters preserve individual UTF-16 code units.
 through a virtual build module; implementation setup and deterministic mock
 controls have separate interfaces.
 
-[How to read these pages](../../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [i](index/i.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [w](index/w.md)
+[`Win32Values`](str/Win32Values.md) implements the eight selected Windows integer macros in pure
+SML. Inputs make widths explicit; `rgb` takes byte components and `xFromLParam`
+and `yFromLParam` sign-extend sixteen-bit coordinates. Native SDK oracle tests
+and source mappings are recorded in `ffi/win32/helpers.json`.
+
+[How to read these pages](../../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [h](index/h.md) [i](index/i.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [w](index/w.md) [x](index/x.md) [y](index/y.md)
 
 ## Foreign interfaces
 
@@ -25,6 +30,7 @@ controls have separate interfaces.
 | [`WIN32_COMMON`](sig/WIN32_COMMON.md) | Provider support for the shared Win32 type identities. |
 | [`WIN32_GUI_DRIVER`](sig/WIN32_GUI_DRIVER.md) | Thin GUI driver used by the shared Win32 SDL and mock semantics. |
 | [`WIN32_TYPES`](sig/WIN32_TYPES.md) | Shared public identities and messages for the Win32 GUI subset. |
+| [`WIN32_VALUES`](sig/WIN32_VALUES.md) | Portable integer projections of the selected Windows SDK macros. |
 
 ---
 

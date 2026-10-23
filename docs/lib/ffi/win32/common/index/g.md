@@ -1,9 +1,10 @@
 # Index: G
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) **g** [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) **g** [h](h.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md) [x](x.md) [y](y.md)
 
 - `Gdi` (str): [WIN32](../sig/WIN32.md#str-gdi)
 - `Gdi.getStockObject` (val): [WIN32](../sig/WIN32.md#val-gdi.getstockobject)
+- `green` (val): [WIN32_VALUES](../sig/WIN32_VALUES.md#val-green)
 - `Kernel.getLastError` (val): [WIN32](../sig/WIN32.md#val-kernel.getlasterror)
 - `Kernel.getModuleHandle` (val): [WIN32](../sig/WIN32.md#val-kernel.getmodulehandle)
 - `User.getClientRect` (val): [WIN32](../sig/WIN32.md#val-user.getclientrect)

@@ -1,6 +1,6 @@
 # Index: D
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) **d** [e](e.md) [f](f.md) [g](g.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) **d** [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md) [x](x.md) [y](y.md)
 
 - `Default` (con): [WIN32_TYPES](../sig/WIN32_TYPES.md#con-default)
 - `delay` (val): [WIN32_GUI_DRIVER](../sig/WIN32_GUI_DRIVER.md#val-delay)

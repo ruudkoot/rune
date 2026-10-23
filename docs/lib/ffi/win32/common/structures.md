@@ -16,6 +16,7 @@ the signature names and no others.
 | --- | --- | --- | --- | --- | --- |
 | [`Win32Common`](str/Win32Common.md) | :> | [`WIN32_COMMON`](sig/WIN32_COMMON.md) |  |  | [lib/ffi/win32/common/common.sml](../../../../../lib/ffi/win32/common/common.sml) |
 | [`Win32Common.Types`](str/Win32Common.Types.md) | *in* | [`WIN32_COMMON`](sig/WIN32_COMMON.md) |  |  | [lib/ffi/win32/common/common.sml](../../../../../lib/ffi/win32/common/common.sml) |
+| [`Win32Values`](str/Win32Values.md) | :> | [`WIN32_VALUES`](sig/WIN32_VALUES.md) |  |  | [lib/ffi/win32/common/values.sml](../../../../../lib/ffi/win32/common/values.sml) |
 
 ---
 

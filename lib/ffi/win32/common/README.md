@@ -16,3 +16,8 @@ carry copied values; text characters preserve individual UTF-16 code units.
 `WIN32` is the stable public surface. Applications select an implementation
 through a virtual build module; implementation setup and deterministic mock
 controls have separate interfaces.
+
+`Win32Values` implements the eight selected Windows integer macros in pure
+SML. Inputs make widths explicit; `rgb` takes byte components and `xFromLParam`
+and `yFromLParam` sign-extend sixteen-bit coordinates. Native SDK oracle tests
+and source mappings are recorded in `ffi/win32/helpers.json`.

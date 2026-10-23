@@ -12,7 +12,7 @@
   ],
   "entryHeaders": [
     "um/Windows.h",
-    "um/windowsx.h"
+    "shared/windowsx.h"
   ],
   "files": [
     {

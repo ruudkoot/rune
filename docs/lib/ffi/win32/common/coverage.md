@@ -10,7 +10,8 @@ documented when a comment describes it, alone or together with the entry before 
 | [`WIN32_COMMON`](sig/WIN32_COMMON.md) | 18 | 18 | 100% | 17 | 17 |
 | [`WIN32_GUI_DRIVER`](sig/WIN32_GUI_DRIVER.md) | 19 | 19 | 100% | 15 | 15 |
 | [`WIN32_TYPES`](sig/WIN32_TYPES.md) | 14 | 14 | 100% | 0 | 0 |
-| **all** | 98 | 98 | 100% | 75 | 75 |
+| [`WIN32_VALUES`](sig/WIN32_VALUES.md) | 8 | 8 | 100% | 8 | 8 |
+| **all** | 106 | 106 | 100% | 83 | 83 |
 
 ## Members a signature describes
 
@@ -19,7 +20,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-2 structures have a page, with 32 members, of which 32 (100%) are described by a signature.
+3 structures have a page, with 40 members, of which 40 (100%) are described by a signature.
 
 ---
 

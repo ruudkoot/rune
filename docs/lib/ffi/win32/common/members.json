@@ -709,9 +709,72 @@
      "page": "sig/WIN32_TYPES.md#exn-unsupported"
     }
    ]
+  },
+  "WIN32_VALUES": {
+   "doc": "Portable integer projections of the selected Windows SDK macros.\n\n",
+   "page": "sig/WIN32_VALUES.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "lowWord",
+     "spec": "val lowWord : Word64.word -> Word16.word",
+     "doc": "`lowWord value` implements `LOWORD`, retaining bits zero through fifteen.\n\n",
+     "page": "sig/WIN32_VALUES.md#val-lowword"
+    },
+    {
+     "kind": "val",
+     "name": "highWord",
+     "spec": "val highWord : Word64.word -> Word16.word",
+     "doc": "`highWord value` implements `HIWORD`, retaining bits sixteen through thirty-one.\n\n",
+     "page": "sig/WIN32_VALUES.md#val-highword"
+    },
+    {
+     "kind": "val",
+     "name": "rgb",
+     "spec": "val rgb : {red : Word8.word, green : Word8.word, blue : Word8.word} -> Word32.word",
+     "doc": "`rgb {red, green, blue}` implements `RGB` for explicit byte components.\n\n`Word8.word` makes the macro's byte projection explicit in the SML type.\n\n",
+     "page": "sig/WIN32_VALUES.md#val-rgb"
+    },
+    {
+     "kind": "val",
+     "name": "red",
+     "spec": "val red : Word32.word -> Word8.word",
+     "doc": "`red colour` implements `GetRValue`, ignoring other and palette bits.\n\n",
+     "page": "sig/WIN32_VALUES.md#val-red"
+    },
+    {
+     "kind": "val",
+     "name": "green",
+     "spec": "val green : Word32.word -> Word8.word",
+     "doc": "`green colour` implements `GetGValue`, ignoring other and palette bits.\n\n",
+     "page": "sig/WIN32_VALUES.md#val-green"
+    },
+    {
+     "kind": "val",
+     "name": "blue",
+     "spec": "val blue : Word32.word -> Word8.word",
+     "doc": "`blue colour` implements `GetBValue`, ignoring other and palette bits.\n\n",
+     "page": "sig/WIN32_VALUES.md#val-blue"
+    },
+    {
+     "kind": "val",
+     "name": "xFromLParam",
+     "spec": "val xFromLParam : Int64.int -> int",
+     "doc": "`xFromLParam value` implements `GET_X_LPARAM` with signed 16-bit extension.\n\n",
+     "page": "sig/WIN32_VALUES.md#val-xfromlparam"
+    },
+    {
+     "kind": "val",
+     "name": "yFromLParam",
+     "spec": "val yFromLParam : Int64.int -> int",
+     "doc": "`yFromLParam value` implements `GET_Y_LPARAM` with signed 16-bit extension.\n\n",
+     "page": "sig/WIN32_VALUES.md#val-yfromlparam"
+    }
+   ]
   }
  },
  "structures": {
-  "Win32Common": "WIN32_COMMON"
+  "Win32Common": "WIN32_COMMON",
+  "Win32Values": "WIN32_VALUES"
  }
 }
