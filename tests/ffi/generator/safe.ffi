@@ -952,6 +952,134 @@
       "result": {
         "type": "unit"
       }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "SAFE_MACRO_ADD",
+      "namespace": "macro",
+      "name": "macroAdd",
+      "shim": "unsigned int SAFE_MACRO_ADD(unsigned int first, unsigned int second)",
+      "parameters": [
+        {
+          "name": "first",
+          "type": "word32"
+        },
+        {
+          "name": "second",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "type": "word32"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "SAFE_MACRO_PACKET",
+      "namespace": "macro",
+      "name": "macroPacket",
+      "shim": "safe_packet SAFE_MACRO_PACKET(safe_packet value)",
+      "parameters": [
+        {
+          "name": "value",
+          "type": {
+            "record": {
+              "origin": {
+                "record": {
+                  "x": "int",
+                  "y": "real"
+                }
+              },
+              "codes": {
+                "vector": "word32"
+              },
+              "scale": "real"
+            }
+          }
+        }
+      ],
+      "result": {
+        "type": {
+          "record": {
+            "origin": {
+              "record": {
+                "x": "int",
+                "y": "real"
+              }
+            },
+            "codes": {
+              "vector": "word32"
+            },
+            "scale": "real"
+          }
+        }
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_variadic_sum",
+      "name": "variadicSum",
+      "shim": "int safe_variadic_sum(int count, short first, unsigned char second)",
+      "parameters": [
+        {
+          "name": "count",
+          "type": "int"
+        },
+        {
+          "name": "first",
+          "type": "int"
+        },
+        {
+          "name": "second",
+          "type": "word8"
+        }
+      ],
+      "result": {
+        "type": "int"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_variadic_real",
+      "name": "variadicReal",
+      "shim": "double safe_variadic_real(int count, float first, float second)",
+      "parameters": [
+        {
+          "name": "count",
+          "type": "int"
+        },
+        {
+          "name": "first",
+          "type": "real"
+        },
+        {
+          "name": "second",
+          "type": "real"
+        }
+      ],
+      "result": {
+        "type": "real"
+      }
     }
   ]
 }

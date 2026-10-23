@@ -59,6 +59,11 @@ struct
         val ()=check("fixed native array member length checked",((ignore(GeneratedSafe.transform session({origin={x=0,y=0.0},codes=Vector.fromList[0w1],scale=0.0},1));false)handle ForeignMemory.Bounds=>true))
         val ()=check("original inline definition called through typed shim",GeneratedSafe.inline session 7=21)
         val ()=check("nonstandard native convention called through typed shim",GeneratedSafe.otherAbi session 7=26)
+        val ()=check("selected macro keeps explicit fixed native types",GeneratedSafe.macroAdd session(0wxF0000000,0w17)=0wxF0000011)
+        val macroPacket=GeneratedSafe.macroPacket session packet
+        val ()=check("selected aggregate macro uses typed indirect shim",#x(#origin macroPacket)=5 andalso Vector.sub(#codes macroPacket,1)=0w4)
+        val ()=check("fixed variadic shim applies integer promotions",GeneratedSafe.variadicSum session(2,~7,0w250)=243)
+        val ()=check("fixed variadic shim applies floating promotions",Real.abs(GeneratedSafe.variadicReal session(2,1.25,2.5)-3.75)<0.00001)
         val context=GeneratedSafe.allocate session 4
         val ()=RuneForeign.write(GeneratedSafe.raw_memory context,0w0,"\037\000\000\000")
         val destroyed=ref 0

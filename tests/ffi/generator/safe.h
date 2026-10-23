@@ -38,6 +38,10 @@ typedef struct safe_packet { safe_point origin; unsigned int codes[3]; double sc
 safe_packet safe_transform(safe_packet value, int delta);
 void safe_packet_out(safe_packet *value);
 void safe_packet_inout(safe_packet *value);
+#define SAFE_MACRO_ADD(first,second) ((first)+(second))
+#define SAFE_MACRO_PACKET(value) safe_transform((value),2)
+int safe_variadic_sum(int count, ...);
+double safe_variadic_real(int count, ...);
 static inline int safe_inline(int value) { return value*3; }
 #if defined(__x86_64__)
 __attribute__((ms_abi)) int safe_other_abi(int value);

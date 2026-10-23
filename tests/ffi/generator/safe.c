@@ -1,5 +1,6 @@
 #include "safe.h"
 #include <errno.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 static unsigned long allocations;
@@ -59,4 +60,15 @@ safe_registration *safe_register_none(safe_registered_callback callback, void *c
 int safe_dispatch(safe_registration *registration, int value) { return registration->callback(value,registration->context); }
 void safe_unregister(safe_registration *registration) {
     if (registration) { (void)registration->callback(91,registration->context); safe_free(registration); }
+}
+
+int safe_variadic_sum(int count, ...) {
+    va_list arguments; va_start(arguments,count); int result=0;
+    for (int i=0;i<count;i++) result+=va_arg(arguments,int);
+    va_end(arguments); return result;
+}
+double safe_variadic_real(int count, ...) {
+    va_list arguments; va_start(arguments,count); double result=0;
+    for (int i=0;i<count;i++) result+=va_arg(arguments,double);
+    va_end(arguments); return result;
 }

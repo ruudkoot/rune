@@ -13,7 +13,7 @@ struct
     projection : smlType option, output : string option, consumes : bool, source : ForeignModel.source}
   type errorPolicy = {predicate : string, capture : string, getter : string option}
   type functionPolicy = {foreign : string, namespace : string, name : string, raw : string option, parameters : valuePolicy list,
-    result : valuePolicy, errors : errorPolicy, variadic : string, unsafeRaw : bool, adapter : string option,
+    result : valuePolicy, errors : errorPolicy, variadic : string, unsafeRaw : bool, adapter : string option, shim : string option,
     input : tree option, returns : tree option, source : ForeignModel.source}
   datatype failure = ConstantFailure of IntInf.int
     | ArgumentFailure of {parameter : string, cases : (string * IntInf.int) list, otherwise : IntInf.int}
@@ -103,7 +103,7 @@ struct
           capture = oneOf (path @ ["capture"]) ["none", "errno", "win32", "text"] (field path fs "capture"),
           getter = optional path fs "getter" string} end
       fun function path value : functionPolicy =
-        let val fs = object path ["foreign", "namespace", "name", "raw", "parameters", "result", "errors", "variadic", "unsafeRaw", "adapter", "input", "returns"] value
+        let val fs = object path ["foreign", "namespace", "name", "raw", "parameters", "result", "errors", "variadic", "unsafeRaw", "adapter", "shim", "input", "returns"] value
         in {foreign = string (path @ ["foreign"]) (field path fs "foreign"),
           namespace = getOpt(optional path fs "namespace" (fn whereAt=>oneOf whereAt ["function","macro"]),"function"),
           name = qualified (path @ ["name"]) (field path fs "name"), raw = optional path fs "raw" name,
@@ -112,7 +112,7 @@ struct
           errors = errors (path @ ["errors"]) (field path fs "errors"),
           variadic = oneOf (path @ ["variadic"]) ["reject", "raw"] (field path fs "variadic"),
           unsafeRaw = bool (path @ ["unsafeRaw"]) (field path fs "unsafeRaw"),
-          adapter = optional path fs "adapter" string, input = optional path fs "input" tree,
+          adapter = optional path fs "adapter" string, shim = optional path fs "shim" string, input = optional path fs "input" tree,
           returns = optional path fs "returns" tree, source = ForeignJson.location doc path} end
       fun failure path (value as Json.Number _) = ConstantFailure (integer path value)
         | failure path value =

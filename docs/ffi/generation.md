@@ -109,6 +109,17 @@ mechanism, and coverage marks these declarations `shimmed`. Compile emitted
 `shims.c` with the same pinned original headers and target compiler options.
 No build command is embedded in `.build` or executed by the generator.
 
+Selected macros and fixed variadic call sites use the sidecar's optional
+`shim` prototype. A macro remains a macro identity in provenance; its ABI
+comes from that explicit prototype. Variadic shims check the original return
+and fixed-prefix C types, then let C promote the explicitly typed tail.
+Integer and float promotion fixtures compare these calls with native C.
+Only one fixed declaration is accepted, with no bodies or initializer code.
+Original headers stay unmodified and shim compilation stays a separate
+build prerequisite. An untyped selected macro, mismatched declaration or
+open-ended variadic selection fails before executable binding emission.
+
+
 The output directory stores immutable `sets/<content-hash>` generations and
 stable public interfaces in `api/<signature-hash>`. Publication writes and
 checks a complete generation before atomically replacing `current.build`.

@@ -14,6 +14,7 @@ the signature names and no others.
 
 | Structure |  | Signature | Realisations |  | Source |
 | --- | --- | --- | --- | --- | --- |
+| [`ForeignAdapter`](str/ForeignAdapter.md) | : | [`FOREIGN_ADAPTER`](sig/FOREIGN_ADAPTER.md) |  |  | [lib/ffi/model/adapter.sml](../../../../lib/ffi/model/adapter.sml) |
 | [`ForeignCoverage`](str/ForeignCoverage.md) | : | [`FOREIGN_COVERAGE`](sig/FOREIGN_COVERAGE.md) |  |  | [lib/ffi/model/coverage.sml](../../../../lib/ffi/model/coverage.sml) |
 | [`ForeignGenerate`](str/ForeignGenerate.md) | : | [`FOREIGN_GENERATE`](sig/FOREIGN_GENERATE.md) |  |  | [lib/ffi/model/generate.sml](../../../../lib/ffi/model/generate.sml) |
 | [`ForeignJson`](str/ForeignJson.md) | :> | [`FOREIGN_JSON`](sig/FOREIGN_JSON.md) |  |  | [lib/ffi/model/located\_json.sml](../../../../lib/ffi/model/located_json.sml) |

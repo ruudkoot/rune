@@ -82,7 +82,7 @@ struct
                 SOME(CParse.Declaration{initializer,...})=>initializer | _=>fail("missing selected constant: " ^ name)
           in (name, #integer(CAnalysis.expression analysis initializer)) end
         val values=ListPair.map constant(List.tabulate(length constants,fn i=>i),constants)
-        val artifacts=ForeignGenerate.emit {policy=policy,profile=profile,declarations=declarations,
+        val artifacts=ForeignGenerate.emit {policy=policy,profile=profile,declarations=declarations,macros= #macros preprocessed,
           layouts=layouts,fields=fields,constants=values,sourceName=sourceName}
         val dependencies=List.filter(fn path=>path<> #file source)(#dependencies preprocessed)
         val dependencyJson=Json.Object[("schema",Json.int 1),("generator",Json.String "runeffi-1"),

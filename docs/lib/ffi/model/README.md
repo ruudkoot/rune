@@ -40,6 +40,11 @@ owned result handle, whose destructor must unregister before returning.
 Other registration protocols, union active members and pointer fields require
 explicit adapters.
 
+[`ForeignAdapter`](str/ForeignAdapter.md) resolves explicit fixed shim prototypes for selected macros
+and variadic functions. The sidecar supplies type data only; Rune rejects
+bodies and array expressions, checks original identities, macro arity and
+function fixed-prefix types, and retains original provenance separately.
+
 [`ForeignGenerate`](str/ForeignGenerate.md) produces documented, sealed raw and public bindings,
 selected object measurements, typed field/call adapters and an implementation
 manifest. Static/inline selections record a required shim during validation;
@@ -54,6 +59,7 @@ inputs and atomic publication around this reusable pure emitter.
 
 | Signature |  |
 | --- | --- |
+| [`FOREIGN_ADAPTER`](sig/FOREIGN_ADAPTER.md) | Explicit fixed prototypes for macro and variadic C adapters. |
 | [`FOREIGN_COVERAGE`](sig/FOREIGN_COVERAGE.md) | Declaration coverage and implementation evidence stay separate. |
 | [`FOREIGN_GENERATE`](sig/FOREIGN_GENERATE.md) | Deterministic source generation from checked C declarations and policy. |
 | [`FOREIGN_JSON`](sig/FOREIGN_JSON.md) | JSON values with physical positions for declarative policy diagnostics. |

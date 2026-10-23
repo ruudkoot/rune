@@ -43,7 +43,7 @@ sig
   type <a href="#type-errorpolicy">errorPolicy</a> = {<a href="#fld-errorpolicy.predicate">predicate</a> : string, <a href="#fld-errorpolicy.capture">capture</a> : string, <a href="#fld-errorpolicy.getter">getter</a> : string option}
   type <a href="#type-functionpolicy">functionPolicy</a> = {<a href="#fld-functionpolicy.foreign">foreign</a> : string, <a href="#fld-functionpolicy.namespace">namespace</a> : string, <a href="#fld-functionpolicy.name">name</a> : string, <a href="#fld-functionpolicy.raw">raw</a> : string option,
     <a href="#fld-functionpolicy.parameters">parameters</a> : valuePolicy list, <a href="#fld-functionpolicy.result">result</a> : valuePolicy, <a href="#fld-functionpolicy.errors">errors</a> : errorPolicy,
-    <a href="#fld-functionpolicy.variadic">variadic</a> : string, <a href="#fld-functionpolicy.unsaferaw">unsafeRaw</a> : bool, <a href="#fld-functionpolicy.adapter">adapter</a> : string option,
+    <a href="#fld-functionpolicy.variadic">variadic</a> : string, <a href="#fld-functionpolicy.unsaferaw">unsafeRaw</a> : bool, <a href="#fld-functionpolicy.adapter">adapter</a> : string option, <a href="#fld-functionpolicy.shim">shim</a> : string option,
     <a href="#fld-functionpolicy.input">input</a> : tree option, <a href="#fld-functionpolicy.returns">returns</a> : tree option,
     <a href="#fld-functionpolicy.source">source</a> : ForeignModel.source}
   datatype <a href="#type-failure">failure</a> = <a href="#con-constantfailure">ConstantFailure</a> of IntInf.int
@@ -197,12 +197,15 @@ Native error predicates and capture mechanisms are independent.
 ```sml
 type functionPolicy = {foreign : string, namespace : string, name : string, raw : string option,
   parameters : valuePolicy list, result : valuePolicy, errors : errorPolicy,
-  variadic : string, unsafeRaw : bool, adapter : string option,
+  variadic : string, unsafeRaw : bool, adapter : string option, shim : string option,
   input : tree option, returns : tree option,
   source : ForeignModel.source}
 ```
 
 A selected function and its naming/marshalling policy.
+
+An optional shim is one fixed C prototype, parsed as declaration data;
+it supplies a macro ABI or an explicit variadic tail.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -216,6 +219,7 @@ A selected function and its naming/marshalling policy.
 | <a name="fld-functionpolicy.variadic"></a>`variadic` | `string` |  |
 | <a name="fld-functionpolicy.unsaferaw"></a>`unsafeRaw` | `bool` |  |
 | <a name="fld-functionpolicy.adapter"></a>`adapter` | `string option` |  |
+| <a name="fld-functionpolicy.shim"></a>`shim` | `string option` |  |
 | <a name="fld-functionpolicy.input"></a>`input` | `tree option` |  |
 | <a name="fld-functionpolicy.returns"></a>`returns` | `tree option` |  |
 | <a name="fld-functionpolicy.source"></a>`source` | `ForeignModel.source` |  |

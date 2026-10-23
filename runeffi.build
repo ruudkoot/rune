@@ -51,6 +51,8 @@ files
   lib/ffi/model/coverage.sml
   lib/ffi/model/public_sig.sml
   lib/ffi/model/public.sml
+  lib/ffi/model/adapter_sig.sml
+  lib/ffi/model/adapter.sml
   lib/ffi/model/generate_sig.sml
   lib/ffi/model/generate.sml
   src/ffi/main.sml

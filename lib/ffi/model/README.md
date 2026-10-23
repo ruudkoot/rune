@@ -42,6 +42,11 @@ owned result handle, whose destructor must unregister before returning.
 Other registration protocols, union active members and pointer fields require
 explicit adapters.
 
+`ForeignAdapter` resolves explicit fixed shim prototypes for selected macros
+and variadic functions. The sidecar supplies type data only; Rune rejects
+bodies and array expressions, checks original identities, macro arity and
+function fixed-prefix types, and retains original provenance separately.
+
 `ForeignGenerate` produces documented, sealed raw and public bindings,
 selected object measurements, typed field/call adapters and an implementation
 manifest. Static/inline selections record a required shim during validation;

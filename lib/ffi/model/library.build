@@ -19,6 +19,8 @@ annotate "demand" in
   coverage.sml
   public_sig.sml
   public.sml
+  adapter_sig.sml
+  adapter.sml
   generate_sig.sml
   generate.sml
 end

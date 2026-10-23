@@ -13,14 +13,18 @@ struct
   fun list values = "[" ^ join values ^ "]"
   fun upper text = String.map Char.toUpper text
   fun natural value = if value < 0 then "~" ^ IntInf.toString (IntInf.~ value) else IntInf.toString value
-  fun emit {policy=p:ForeignPolicy.policy, profile:ForeignTarget.profile, declarations, layouts, fields, constants, sourceName} =
+  fun emit {policy=originalPolicy:ForeignPolicy.policy, profile:ForeignTarget.profile, declarations=originalDeclarations, macros, layouts, fields, constants, sourceName} =
     let
+      val {policy=p,declarations}=ForeignAdapter.prepare{policy=originalPolicy,declarations=originalDeclarations,macros=macros}
+      val originalMacros=List.filter(fn macro:CPreprocess.macro=>List.exists(fn f:ForeignPolicy.functionPolicy=>
+        #namespace f="macro" andalso #foreign f= #name macro)(#functions originalPolicy))macros
       val name = #structureName p
       val signatureName = upper name
       val source = #source p
       fun fail position message = raise Error (position, message)
-      val model = ForeignModel.fromC declarations
-      val bindings = ForeignValidate.resolve {declarations=model, policy=p}
+      val model = ForeignModel.fromC originalDeclarations @ ForeignModel.fromCMacros originalMacros
+      val callModel=ForeignModel.fromC declarations
+      val bindings = ForeignValidate.resolve {declarations=callModel, policy=p}
       val analysis = CAnalysis.create {target= #analysis profile, declarations=declarations}
       val target = #objects (#analysis profile)
       fun strip (CParse.Attributed (base, _)) = strip base | strip ty = ty
@@ -71,7 +75,7 @@ struct
       fun convention ty = if #abi profile="win32" andalso
           List.exists(fn a=>a="__stdcall" orelse a="stdcall" orelse a="WINAPI" orelse a="CALLBACK")(attributeWords ty) then 1 else 0
       fun aggregate ty=case resolve ty of CParse.Record _=>true | _=>false
-      fun lower foreign position ty =
+      fun lower foreign position ty force =
         let val native=case resolve ty of CParse.Function native=>callFunction native
               | _=>fail position "selected declaration is not a C function"
             val ()=if #prototype native andalso not (#variadic native) then ()
@@ -83,7 +87,7 @@ struct
                 CParse.Declaration{name=SOME name,location,storage,...}=>name=foreign andalso location=position andalso
                   List.exists(fn value=>value="static" orelse value="inline" orelse value="__inline" orelse value="__inline__" orelse value="__forceinline")storage
               | _=>false)declarations
-            val shim=indirectResult orelse List.exists(fn b=>b)indirectArguments orelse localLinkage orelse
+            val shim=force orelse indirectResult orelse List.exists(fn b=>b)indirectArguments orelse localLinkage orelse
               List.exists(fn word=>List.exists(fn unsupported=>word=unsupported)nonstandard)(attributeWords ty)
             val symbol=if shim then "rf_call_" ^ ForeignPolicy.rawName foreign else foreign
             val result=if indirectResult then "Void" else scalar position (#result native)
@@ -95,12 +99,12 @@ struct
           code=code,mechanism=if shim then "typed-c-shim" else "libffi-fixed"} end
       fun describe (b:ForeignValidate.binding) =
         let val f= #policy b val position= #source(#declaration b)
-            val lowered=lower (#foreign f) position (original (#foreign f) position)
+            val lowered=lower (#foreign f) position (original (#foreign f) position)(isSome(#shim f))
         in {foreign= #foreign f, raw=getOpt (#raw f, ForeignPolicy.rawName (#foreign f)),
           symbol= #symbol lowered,abi= #abi lowered,result= #result lowered,arguments= #arguments lowered,
           mechanism= #mechanism lowered,code= #code lowered,policy=f,native= #native lowered,source=position} end
       val functions=List.map describe bindings
-      val modelIndex=ForeignModel.index model
+      val modelIndex=ForeignModel.index callModel
       val helperNames=List.foldl(fn(name,known)=>if List.exists(fn other=>other=name)known then known else known @ [name]) []
         (List.concat(List.map(fn f=>
           (case #ownership(#result(#policy f)) of SOME(ForeignPolicy.Owned release)=>[release] | _=>[]) @
@@ -109,7 +113,7 @@ struct
       fun helper name=
         let val declaration=case ForeignModel.lookup(modelIndex,{family="c",namespace="function",name=name}) of SOME d=>d
               | NONE=>fail source("missing native policy helper: " ^ name)
-            val lowered=lower name (#source declaration)(original name (#source declaration))
+            val lowered=lower name (#source declaration)(original name (#source declaration)) false
         in {foreign=name,symbol= #symbol lowered,abi= #abi lowered,result= #result lowered,
           arguments= #arguments lowered,code= #code lowered,mechanism= #mechanism lowered,source= #source declaration} end
       val helpers=List.map helper helperNames
@@ -235,17 +239,19 @@ struct
       val publicStructure=prefix ^ #structureText projected
       val adapters=List.filter(fn f=>isSome(#adapter(#policy f)))functions
       fun sourceJson ({file,line,column}:ForeignModel.source)=Json.Object[("file",Json.String (sourceName file)),("line",Json.int line),("column",Json.int column)]
-      val identities=List.map(fn f=>{family="c",namespace="function",name= #foreign f})functions @
-        List.map(fn f=>{family="c",namespace="function",name= #foreign f})helpers
-      val shimmed=List.map(fn f=>{family="c",namespace="function",name= #foreign f})(List.filter(fn f=> #code f<>"")functions) @
-        List.map(fn f=>{family="c",namespace="function",name= #foreign f})(List.filter(fn f=> #code f<>"")helpers)
+      fun selectedIdentity foreign=case List.find(fn f:ForeignPolicy.functionPolicy=> #foreign f=foreign)(#functions originalPolicy) of
+          SOME f=>{family="c",namespace= #namespace f,name=foreign} | NONE=>{family="c",namespace="function",name=foreign}
+      val identities=List.map(fn f=>selectedIdentity(#foreign f))functions @ List.map(fn f=>selectedIdentity(#foreign f))helpers
+      val shimmed=List.map(fn f=>selectedIdentity(#foreign f))(List.filter(fn f=> #code f<>"")functions) @
+        List.map(fn f=>selectedIdentity(#foreign f))(List.filter(fn f=> #code f<>"")helpers)
       val generated=List.filter(fn identity=>not(List.exists(fn shim=>shim=identity)shimmed))identities
       val coverage=ForeignCoverage.report {declarations=model,selected=identities,generated=generated,shimmed=shimmed,unsupported=[]}
       val coverage=List.map(fn {identity,source={file,line,column},state}:ForeignCoverage.entry=>
         {identity=identity,source={file=sourceName file,line=line,column=column},state=state})coverage
       val manifest=Json.Object[("schema",Json.int 1),("generator",Json.String "runeffi-1"),("structure",Json.String name),
         ("target",Json.String (#name profile)),("functions",Json.Array(List.map(fn f=>Json.Object[
-          ("foreign",Json.String (#foreign f)),("raw",Json.String (#raw f)),("source",sourceJson (#source f)),
+          ("foreign",Json.String (#foreign f)),("namespace",Json.String(#namespace(selectedIdentity(#foreign f)))),
+          ("shimPrototype",case #shim(#policy f) of NONE=>Json.Null | SOME prototype=>Json.String prototype),("raw",Json.String (#raw f)),("source",sourceJson (#source f)),
           ("mechanism",Json.String (#mechanism f)),("symbol",Json.String (#symbol f)),("public",case #adapter (#policy f) of NONE=>Json.String "generated"
             | SOME adapter=>Json.Object[("adapter",Json.String adapter)]),
           ("result",Json.String (#result f)),("arguments",Json.Array(List.map Json.String (#arguments f)))])functions)),

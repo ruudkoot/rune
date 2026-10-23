@@ -32,7 +32,7 @@ sig
   type <a href="#type-field">field</a> = {<a href="#fld-field.aggregate">aggregate</a> : string, <a href="#fld-field.path">path</a> : string list, <a href="#fld-field.writable">writable</a> : bool}
   exception <a href="#exn-error">Error</a> of ForeignModel.source * string
   val <a href="#val-emit">emit</a> : {<a href="#fld-emit.policy">policy</a> : ForeignPolicy.policy, <a href="#fld-emit.profile">profile</a> : ForeignTarget.profile,
-    <a href="#fld-emit.declarations">declarations</a> : CParse.declaration list, <a href="#fld-emit.layouts">layouts</a> : string list,
+    <a href="#fld-emit.declarations">declarations</a> : CParse.declaration list, <a href="#fld-emit.macros">macros</a> : CPreprocess.macro list, <a href="#fld-emit.layouts">layouts</a> : string list,
     <a href="#fld-emit.fields">fields</a> : field list, <a href="#fld-emit.constants">constants</a> : (string * IntInf.int) list,
     <a href="#fld-emit.sourcename">sourceName</a> : string -&gt; string} -&gt; artifact list
 end
@@ -77,15 +77,16 @@ Source-located unsupported generation requests.
 
 ```sml
 val emit : {policy : ForeignPolicy.policy, profile : ForeignTarget.profile,
-  declarations : CParse.declaration list, layouts : string list,
+  declarations : CParse.declaration list, macros : CPreprocess.macro list, layouts : string list,
   fields : field list, constants : (string * IntInf.int) list,
   sourceName : string -> string} -> artifact list
 ```
 
-`emit {policy, profile, declarations, layouts, fields, constants, sourceName}` produces sources.
+`emit {policy, profile, declarations, macros, layouts, fields, constants, sourceName}` produces sources.
 
-Fixed raw calls always retain native statuses. Safe scalar projections
-are emitted where their complete policy can be implemented. An explicit
+Fixed raw calls always retain native statuses. Checked public projections
+are emitted where their complete policy can be implemented. Retained
+original macros resolve explicitly typed native shim prototypes. An explicit
 adapter selection remains visible in the manifest rather than claiming
 an implemented public projection. Target layouts come from the reusable
 C analysis library; no compiler or native library is executed.
@@ -95,6 +96,7 @@ C analysis library; no compiler or native library is executed.
 | <a name="fld-emit.policy"></a>`policy` | `ForeignPolicy.policy` |  |
 | <a name="fld-emit.profile"></a>`profile` | `ForeignTarget.profile` |  |
 | <a name="fld-emit.declarations"></a>`declarations` | `CParse.declaration list` |  |
+| <a name="fld-emit.macros"></a>`macros` | `CPreprocess.macro list` |  |
 | <a name="fld-emit.layouts"></a>`layouts` | `string list` |  |
 | <a name="fld-emit.fields"></a>`fields` | `field list` |  |
 | <a name="fld-emit.constants"></a>`constants` | `(string * IntInf.int) list` |  |

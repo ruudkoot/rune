@@ -28,6 +28,20 @@ for duplicate foreign identities and public/raw name collisions. Optional
 `adapter` names an adapter capability, as data; the generator must resolve
 that capability rather than treating it as source or a shell command.
 
+Optional `shim` supplies one fixed C function prototype, for example
+`"unsigned int RF_MACRO(unsigned int first, unsigned int second)"` with
+`namespace: "macro"`, or `"int sum(int count, short first, unsigned char second)"`
+for an original variadic function. Rune parses it as declaration data. It
+must name the selected foreign identity and cannot contain storage classes,
+initializers, function bodies, additional declarations, aggregate definitions,
+array expressions or behavioral attributes. Use original typedefs and tags.
+The original macro must exist and its argument count must agree. Function
+shims retain the original result and fixed-prefix C declarator types; only
+the variadic tail can add typed arguments. The generated C compiler applies
+C default promotions to that tail. Dynamic open-ended variadic calls remain
+unsupported. The manifest records the explicit prototype, original namespace
+and source, exported shim symbol and `typed-c-shim` mechanism.
+
 Selection is explicit. Unrelated, unselected header declarations can remain
 unsupported. Selecting a missing, incompatible or ambiguous declaration
 fails. Repeated compatible declarations coalesce using canonical original
