@@ -1,0 +1,4 @@
+files raw_sig.sml raw.sml layout_sig.sml layout.sml end
+implements Win32Generated =
+  files public.sml export.sml end
+end

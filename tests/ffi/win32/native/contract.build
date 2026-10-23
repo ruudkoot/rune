@@ -1,0 +1,3 @@
+libraries ffi/win32/native test/unit end
+use "$(WIN32_GENERATED)/current.build"
+files config.sml implementation.sml ../contract.sml contract-main.sml end

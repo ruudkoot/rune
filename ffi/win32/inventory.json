@@ -19,12 +19,13 @@
       },
       "public": "Kernel.getModuleHandle",
       "raw": "GetModuleHandleW",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "GetLastError",
@@ -34,12 +35,13 @@
       },
       "public": "Kernel.getLastError",
       "raw": "GetLastError",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "SetLastError",
@@ -49,12 +51,13 @@
       },
       "public": "Kernel.setLastError",
       "raw": "SetLastError",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "QueryPerformanceCounter",
@@ -64,12 +67,13 @@
       },
       "public": "Kernel.queryPerformanceCounter",
       "raw": "QueryPerformanceCounter",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "QueryPerformanceFrequency",
@@ -79,12 +83,13 @@
       },
       "public": "Kernel.queryPerformanceFrequency",
       "raw": "QueryPerformanceFrequency",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "RegisterClassExW",
@@ -94,12 +99,13 @@
       },
       "public": "User.registerClassEx",
       "raw": "RegisterClassExW",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "UnregisterClassW",
@@ -109,12 +115,13 @@
       },
       "public": "User.unregisterClass",
       "raw": "UnregisterClassW",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "CreateWindowExW",
@@ -124,12 +131,13 @@
       },
       "public": "User.createWindowEx",
       "raw": "CreateWindowExW",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "DestroyWindow",
@@ -139,12 +147,13 @@
       },
       "public": "User.destroyWindow",
       "raw": "DestroyWindow",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "ShowWindow",
@@ -154,12 +163,13 @@
       },
       "public": "User.showWindow",
       "raw": "ShowWindow",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "UpdateWindow",
@@ -169,12 +179,13 @@
       },
       "public": "User.updateWindow",
       "raw": "UpdateWindow",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "DefWindowProcW",
@@ -184,12 +195,13 @@
       },
       "public": "User.defWindowProc",
       "raw": "DefWindowProcW",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "GetClientRect",
@@ -199,12 +211,13 @@
       },
       "public": "User.getClientRect",
       "raw": "GetClientRect",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "SetWindowTextW",
@@ -214,12 +227,13 @@
       },
       "public": "User.setWindowText",
       "raw": "SetWindowTextW",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "GetMessageW",
@@ -229,12 +243,13 @@
       },
       "public": "User.getMessage",
       "raw": "GetMessageW",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "PeekMessageW",
@@ -244,12 +259,13 @@
       },
       "public": "User.peekMessage",
       "raw": "PeekMessageW",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "TranslateMessage",
@@ -259,12 +275,13 @@
       },
       "public": "User.translateMessage",
       "raw": "TranslateMessage",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "DispatchMessageW",
@@ -274,12 +291,13 @@
       },
       "public": "User.dispatchMessage",
       "raw": "DispatchMessageW",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "PostQuitMessage",
@@ -289,12 +307,13 @@
       },
       "public": "User.postQuitMessage",
       "raw": "PostQuitMessage",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "PostMessageW",
@@ -304,12 +323,13 @@
       },
       "public": "User.postMessage",
       "raw": "PostMessageW",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "SendMessageW",
@@ -319,12 +339,13 @@
       },
       "public": "User.sendMessage",
       "raw": "SendMessageW",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "InvalidateRect",
@@ -334,12 +355,13 @@
       },
       "public": "User.invalidateRect",
       "raw": "InvalidateRect",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "BeginPaint",
@@ -349,12 +371,13 @@
       },
       "public": "User.beginPaint",
       "raw": "BeginPaint",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "EndPaint",
@@ -364,12 +387,13 @@
       },
       "public": "User.endPaint",
       "raw": "EndPaint",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "FillRect",
@@ -379,12 +403,13 @@
       },
       "public": "User.fillRect",
       "raw": "FillRect",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "SetTimer",
@@ -394,12 +419,13 @@
       },
       "public": "User.setTimer",
       "raw": "SetTimer",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "KillTimer",
@@ -409,12 +435,13 @@
       },
       "public": "User.killTimer",
       "raw": "KillTimer",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "CreatePen",
@@ -424,12 +451,13 @@
       },
       "public": "Gdi.createPen",
       "raw": "CreatePen",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "CreateSolidBrush",
@@ -439,12 +467,13 @@
       },
       "public": "Gdi.createSolidBrush",
       "raw": "CreateSolidBrush",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "SelectObject",
@@ -454,12 +483,13 @@
       },
       "public": "Gdi.selectObject",
       "raw": "SelectObject",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "DeleteObject",
@@ -469,12 +499,13 @@
       },
       "public": "Gdi.deleteObject",
       "raw": "DeleteObject",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "GetStockObject",
@@ -484,12 +515,13 @@
       },
       "public": "Gdi.getStockObject",
       "raw": "GetStockObject",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "MoveToEx",
@@ -499,12 +531,13 @@
       },
       "public": "Gdi.moveToEx",
       "raw": "MoveToEx",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "LineTo",
@@ -514,12 +547,13 @@
       },
       "public": "Gdi.lineTo",
       "raw": "LineTo",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "Rectangle",
@@ -529,12 +563,13 @@
       },
       "public": "Gdi.rectangle",
       "raw": "Rectangle",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "SetTextColor",
@@ -544,12 +579,13 @@
       },
       "public": "Gdi.setTextColor",
       "raw": "SetTextColor",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "SetBkMode",
@@ -559,12 +595,13 @@
       },
       "public": "Gdi.setBkMode",
       "raw": "SetBkMode",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     },
     {
       "foreign": "TextOutW",
@@ -574,12 +611,13 @@
       },
       "public": "Gdi.textOut",
       "raw": "TextOutW",
-      "implementation": "planned",
+      "implementation": "complete",
       "gate": "M8",
       "test": "win32-contract",
-      "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
     }
   ],
   "requiredTypes": [
@@ -915,50 +953,58 @@
     {
       "foreign": "LOWORD",
       "gate": "M4",
-      "state": "planned",
-      "policy": "checked constant evaluation or generated C adapter"
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
     },
     {
       "foreign": "HIWORD",
       "gate": "M4",
-      "state": "planned",
-      "policy": "checked constant evaluation or generated C adapter"
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
     },
     {
       "foreign": "RGB",
       "gate": "M4",
-      "state": "planned",
-      "policy": "checked constant evaluation or generated C adapter"
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
     },
     {
       "foreign": "GetRValue",
       "gate": "M4",
-      "state": "planned",
-      "policy": "checked constant evaluation or generated C adapter"
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
     },
     {
       "foreign": "GetGValue",
       "gate": "M4",
-      "state": "planned",
-      "policy": "checked constant evaluation or generated C adapter"
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
     },
     {
       "foreign": "GetBValue",
       "gate": "M4",
-      "state": "planned",
-      "policy": "checked constant evaluation or generated C adapter"
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
     },
     {
       "foreign": "GET_X_LPARAM",
       "gate": "M4",
-      "state": "planned",
-      "policy": "checked constant evaluation or generated C adapter"
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
     },
     {
       "foreign": "GET_Y_LPARAM",
       "gate": "M4",
-      "state": "planned",
-      "policy": "checked constant evaluation or generated C adapter"
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
     }
   ],
   "callbackFailureResults": [

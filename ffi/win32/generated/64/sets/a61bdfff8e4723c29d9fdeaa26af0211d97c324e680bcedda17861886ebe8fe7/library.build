@@ -1,0 +1,9 @@
+libraries ffi/runtime end
+annotate "demand" in
+  raw_sig.sml
+  raw.sml
+  layout_sig.sml
+  layout.sml
+  public_sig.sml
+  public.sml
+end

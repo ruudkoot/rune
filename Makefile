@@ -303,6 +303,9 @@ lib/sdl/MANIFEST: lib/sdl/library.build $(wildcard lib/sdl/*.sml) lib/ffi/runtim
 	bin/rune-$(BOOTHOST) --basis-index lib/sdl
 lib/ffi/win32/sdldriver/MANIFEST: lib/ffi/win32/sdldriver/library.build $(wildcard lib/ffi/win32/sdldriver/*.sml) lib/sdl/MANIFEST lib/ffi/win32/common/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/sdldriver
+lib/ffi/win32/native/MANIFEST: lib/ffi/win32/native/library.build $(wildcard lib/ffi/win32/native/*.sml) lib/ffi/win32/common/MANIFEST lib/ffi/runtime/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/native
+manifests: lib/ffi/win32/native/MANIFEST
 
 # The frozen Basis Library (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
@@ -1298,7 +1301,7 @@ check-docs: check-docs-generated bin/rune-test bin/rune-doc-check
 
 check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/sdl/*.sml lib/ffi/win32/common/*.sml lib/ffi/win32/sdldriver/*.sml lib/ffi/win32/model/*.sml lib/ffi/win32/mock/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/sdl/*.sml lib/ffi/win32/common/*.sml lib/ffi/win32/native/*.sml lib/ffi/win32/sdldriver/*.sml lib/ffi/win32/model/*.sml lib/ffi/win32/mock/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
@@ -1314,6 +1317,7 @@ check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_WIN32_MOCK) --check
 	$(RUNEDOC) $(DOCS_SDL) --check
 	$(RUNEDOC) $(DOCS_WIN32_SDL_DRIVER) --check
+	$(RUNEDOC) $(DOCS_WIN32_NATIVE) --check
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW) --check
 	$(RUNEDOC) --palette docs/lib/palette --check
@@ -1356,6 +1360,9 @@ DOCS_WIN32_COMMON := --lib lib --library ffi/win32/common --out docs/lib/ffi/win
                      --conventions ../../../conventions.md
 DOCS_SDL := --lib lib --library sdl --out docs/lib/sdl --basis-docs ../basis \
             --library-docs ffi/runtime ../ffi/runtime --library-docs ffi/marshal ../ffi/marshal --conventions ../conventions.md
+DOCS_WIN32_NATIVE := --lib lib --library ffi/win32/native --out docs/lib/ffi/win32/native --basis-docs ../../../basis \
+                     --library-docs ffi/win32/common ../common --library-docs ffi/runtime ../../runtime \
+                     --conventions ../../../conventions.md
 DOCS_FFI_RUNTIME := --lib lib --library ffi/runtime --out docs/lib/ffi/runtime --basis-docs ../../basis \
                     --library-docs ffi/marshal ../marshal --conventions ../../conventions.md
 DOCS_FFI_MARSHAL := --lib lib --library ffi/marshal --out docs/lib/ffi/marshal --basis-docs ../../basis \
@@ -1400,7 +1407,8 @@ DOCS_OVERVIEW := --lib lib --overview docs/lib \
 	--library-page ffi/win32/model \
 	--library-page ffi/win32/mock \
 	--library-page sdl \
-	--library-page ffi/win32/sdldriver
+	--library-page ffi/win32/sdldriver \
+	--library-page ffi/win32/native
 
 docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_BASIS)
@@ -1418,6 +1426,7 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_WIN32_MOCK)
 	$(RUNEDOC) $(DOCS_SDL)
 	$(RUNEDOC) $(DOCS_WIN32_SDL_DRIVER)
+	$(RUNEDOC) $(DOCS_WIN32_NATIVE)
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW)
 	$(RUNEDOC) --palette docs/lib/palette
@@ -2187,3 +2196,17 @@ bin/rune-ffi-deps-check: bin/rune-ffi-deps-check.rbc bin/runevm Makefile
 .PHONY: test-ffi-deps
 test-ffi-deps: $(RUNE) vm bin/rune-ffi-deps-check bin/rune-test
 	$(RUNE_TEST) --tier test-ffi-deps
+# Original SDK generation and native Windows GUI acceptance; .build files
+# contain source/virtual-module declarations only.
+WIN32_NATIVE_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/win32/native/check.sml
+bin/rune-win32-check.rbc: $(RUNE) $(WIN32_NATIVE_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner --library json $(WIN32_NATIVE_CHECK_SRCS) -o $@
+bin/rune-win32-check: bin/rune-win32-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-win32-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+check-tools: bin/rune-win32-check
+.PHONY: test-win32-native test-win32-app-native
+test-win32-native: $(RUNE) vm windows bin/runeffi bin/rune-win32-check bin/rune-test bin/rune-windows
+	$(RUNE_TEST) --tier test-win32-native
+test-win32-app-native: $(RUNE) vm windows bin/runeffi bin/rune-win32-check bin/rune-test bin/rune-windows
+	$(RUNE_TEST) --tier test-win32-app-native

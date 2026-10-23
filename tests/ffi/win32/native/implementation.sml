@@ -1,0 +1,1 @@
+structure Win32Native=Win32NativeFn(NativeWin32Config)

@@ -14,3 +14,6 @@ tests/errors/err.lex_gap_cr*.sml -text
 examples/benchmarks/plclub-ray/upstream/test.gml -text
 examples/benchmarks/raytrace/upstream/chess.gml -text
 docs/lib/** linguist-generated=true
+# Immutable generated artifacts retain the generator's function separator.
+ffi/win32/generated/** linguist-generated=true
+ffi/win32/generated/**/shims.c whitespace=-blank-at-eof

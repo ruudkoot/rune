@@ -39,6 +39,10 @@ struct
         Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "asan" "asan" ["test-sdl-asan"]),
         Test.requires["windows","windows-sdk","sdl3-windows32"](jobWith "rune-sdl-check" "windows32" "windows32" ["test-sdl-windows"]),
         Test.requires["windows","windows-sdk","sdl3-windows64"](jobWith "rune-sdl-check" "windows64" "windows64" ["test-sdl-windows"])],
+     Test.requires ["windows", "windows-sdk", "clang"] (Test.describe "win32-native"
+       (List.concat(List.map(fn bits=>
+         [jobWith "rune-win32-check" ("contract" ^ bits) ("contract " ^ bits) ["test-win32-native","test-windows","nightly"],
+          jobWith "rune-win32-check" ("app" ^ bits) ("app " ^ bits) ["test-win32-app-native","test-windows","nightly"]])["32","64"]))),
      Test.describe "layout"
        (List.map(fn target=>jobWith "rune-c-layout-check" target target ["test-c-layout"])
          ["native","linux32","windows32","windows64","aarch64","ppc64"]),

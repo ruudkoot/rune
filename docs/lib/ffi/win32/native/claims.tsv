@@ -1,0 +1,4 @@
+name	kind	signature	realisations	status	origin	source
+WIN32_NATIVE	signature			required	declared	lib/ffi/win32/native/native_sig.sml
+WIN32_NATIVE_CONFIG	signature			required	declared	lib/ffi/win32/native/config_sig.sml
+Win32NativeFn	functor	WIN32_NATIVE	where type Types.window = Win32Common.Types.window and type Types.module = Win32Common.Types.module and type Types.atom = Win32Common.Types.atom and type Types.paint = Win32Common.Types.paint and type Types.object = Win32Common.Types.object and type Types.pen = Win32Common.Types.pen and type Types.brush = Win32Common.Types.brush and type Types.message = Win32Common.Types.message and type Types.reply = Win32Common.Types.reply and type Types.queued = Win32Common.Types.queued and type Types.next = Win32Common.Types.next	required	claimed	lib/ffi/win32/native/native.sml

@@ -1,0 +1,68 @@
+{
+ "signatures": {
+  "WIN32_NATIVE": {
+   "doc": "Native Windows implementation and its explicit session shutdown.\n\n",
+   "page": "sig/WIN32_NATIVE.md",
+   "members": [
+    {
+     "kind": "include",
+     "name": "WIN32",
+     "spec": "include WIN32",
+     "doc": "",
+     "page": "sig/WIN32_NATIVE.md#include-win32"
+    },
+    {
+     "kind": "val",
+     "name": "close",
+     "spec": "val close : unit -> unit",
+     "doc": "`close ()` releases unused messages, borrowed identities and libraries.\n\nWindows, classes, paint leases and owned GDI objects must be closed\nfirst. The provider rejects use after successful close.\n\nRejects live dependents or callback reentry with the public error.\n\n",
+     "page": "sig/WIN32_NATIVE.md#val-close"
+    }
+   ]
+  },
+  "WIN32_NATIVE_CONFIG": {
+   "doc": "Generated declarations and native layout for one Windows ABI.\n\n",
+   "page": "sig/WIN32_NATIVE_CONFIG.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "prepare",
+     "spec": "val prepare : string -> RuneForeign.resource",
+     "doc": "`prepare name` returns a generated, session-owned native descriptor.\n\n",
+     "page": "sig/WIN32_NATIVE_CONFIG.md#val-prepare"
+    },
+    {
+     "kind": "val",
+     "name": "sizeOf",
+     "spec": "val sizeOf : string -> int",
+     "doc": "`sizeOf name` returns the generated C object extent.\n\n",
+     "page": "sig/WIN32_NATIVE_CONFIG.md#val-sizeof"
+    },
+    {
+     "kind": "val",
+     "name": "offset",
+     "spec": "val offset : string * string list -> int",
+     "doc": "`offset (name, path)` returns the generated C member offset.\n\n",
+     "page": "sig/WIN32_NATIVE_CONFIG.md#val-offset"
+    },
+    {
+     "kind": "val",
+     "name": "constant",
+     "spec": "val constant : string -> IntInf.int",
+     "doc": "`constant name` returns an independently target-evaluated C constant.\n\n",
+     "page": "sig/WIN32_NATIVE_CONFIG.md#val-constant"
+    },
+    {
+     "kind": "val",
+     "name": "close",
+     "spec": "val close : unit -> unit",
+     "doc": "`close ()` closes the generated session after dependents are released.\n\n",
+     "page": "sig/WIN32_NATIVE_CONFIG.md#val-close"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Win32NativeFn": "WIN32_NATIVE"
+ }
+}
