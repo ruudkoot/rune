@@ -7,7 +7,7 @@
 | Signature | [`BIT_FLAGS`](../sig/BIT_FLAGS.md) |
 | Status | optional |
 | Members | 10 |
-| Tests | 61 checks |
+| Tests | 62 checks |
 | Source | [lib/basis/posix\_process.sml](../../../../lib/basis/posix_process.sml) |
 
 ## Synopsis

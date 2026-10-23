@@ -7,7 +7,7 @@
 | Status | optional |
 | Implementations | 1 |
 | Documentation | 22 of 22 entries documented |
-| Tests | 50 checks of 16 entries |
+| Tests | 51 checks of 16 entries |
 | Source | [lib/basis/sig\_posix\_process.sml](../../../../lib/basis/sig_posix_process.sml) |
 
 ## Synopsis
@@ -336,9 +336,9 @@ Report a child that has stopped as well as one that has ended.
 
 </details>
 
-<details><summary>Tests (3)</summary>
+<details><summary>Tests (4)</summary>
 
-For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `in-all` &middot; `nonempty` &middot; `waitpid-without-it`
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `in-all` &middot; `nonempty` &middot; `waitpid-without-it` &middot; `continued-child-remains-live`
 
 </details>
 
