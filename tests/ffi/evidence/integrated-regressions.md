@@ -31,3 +31,15 @@ and a fresh output root.
 
 Final full-check, matrix and VM-profile receipts are recorded separately
 when those runs finish. Focused fixes do not relabel either earlier run.
+
+The first final-source `ddba4faad` full-check attempt was stopped after
+**21/19,699** cases: **18 PASS**, **2 SKIP**, **1 FAIL**, 221.3 seconds,
+run `20261023-130556-3104841`. The new example catalog used the current
+directory instead of `RUNE_TEST_ROOT` during runner initialization. A law
+job's isolated working directory therefore triggered `missing build
+entrypoint examples/win32/mock.build` before its law ran. The runner received
+SIGINT and cleaned up its children; this partial failed receipt is retained.
+The correction `49d5113a6` and an isolated-directory regression are recorded
+in [the focused receipt](example-cwd.md); the exact original law bytecode
+subsequently reports nine passes and no failures. A new cumulative check runs
+in the independent `runeffi-check-final` worktree after the SDL packaging fix.

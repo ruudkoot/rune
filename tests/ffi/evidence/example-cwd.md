@@ -18,7 +18,7 @@ Focused validation with the complete revised runner and frozen final VM:
   classification, ten standalone examples and the mock `.build` project.
 - Exact previously failing `laws-one MONO_ARRAY2.rbc LargeIntArray2`, launched
   from an isolated directory using the original run's law bytecode: PASS,
-  all six laws, 100 cases each.
+  final summary `laws: 9 pass, 0 fail` (100 generated cases per law).
 - Actual mock-project position check: PASS with nonempty disassembly and
   application source positions.
 
