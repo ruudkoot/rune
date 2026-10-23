@@ -498,6 +498,21 @@ test-ffi-generator: $(RUNE) vm $(RUNEOPT) bin/runeffi bin/rune-ffi-generator-che
 test-ffi-generator-hosts: $(RUNE) vm bin/runeffi bin/rune-ffi-generator-check bin/rune-test
 	$(RUNE_TEST) --tier test-ffi-generator-hosts
 
+# Explicit measurements, kept outside correctness checks and their budgets.
+FFI_PERF_OUT ?= tests/out/ffi-performance
+FFI_PERF_ITERATIONS ?= 10000
+FFI_PERF_SAMPLES ?= 5
+FFI_PERF_MODE ?= off
+FFI_PERF_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/performance-check.sml
+bin/rune-ffi-performance.rbc: $(RUNE) $(FFI_PERF_SRCS) manifests
+	$(RUNE) --library test/runner --library json --library digest $(FFI_PERF_SRCS) -o $@
+bin/rune-ffi-performance: bin/rune-ffi-performance.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-ffi-performance.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: ffi-performance
+ffi-performance: $(RUNE) vm bin/rune-ffi-performance manifests
+	FFI_PERF_MODE='$(FFI_PERF_MODE)' bin/rune-ffi-performance '$(FFI_PERF_OUT)' '$(FFI_PERF_ITERATIONS)' '$(FFI_PERF_SAMPLES)'
+
 # The documentation generator (docs/plans/docgen.md): the sources of
 # runedoc.build, built like the compiler by every host and by the compiler
 # itself (bin/runedoc, on runevm). The SML/NJ builds come one after another
