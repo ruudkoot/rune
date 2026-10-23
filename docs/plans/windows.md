@@ -142,3 +142,10 @@ the path and filesystem matrices on all four VMs (38 and 30 jobs), and the
 mixed-case language fixture on both widths and bytecode formats. The path
 matrix has exactly the three documented casing deviations per configuration,
 with no unexplained failures or stale deviations.
+
+The full native suite also exposed a Unix-only assertion in
+`tests/lang/basis.posix_files.sml`: a home directory was considered absolute
+only when it began with `/`. The fixture now uses `OS.Path.isAbsolute`.
+Both native widths return the existing home directory in drive syntax, and
+the corrected fixture passes on all four Windows VMs. The fixture now checks
+the native-path contract with the portable predicate.

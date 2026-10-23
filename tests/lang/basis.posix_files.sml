@@ -20,4 +20,4 @@ val () = Posix.FileSys.chmod (path, Posix.FileSys.S.flags [Posix.FileSys.S.irusr
 val () = print ("mode: " ^ SysWord.toString (Posix.FileSys.S.toWord (Posix.FileSys.ST.mode (Posix.FileSys.stat path))) ^ "\n")
 val () = Posix.FileSys.unlink path
 val me = Posix.SysDB.getpwuid (Posix.ProcEnv.getuid ())
-val () = print ("user has a home: " ^ Bool.toString (String.isPrefix "/" (Posix.SysDB.Passwd.home me)) ^ "\n")
+val () = print ("user has a home: " ^ Bool.toString (OS.Path.isAbsolute (Posix.SysDB.Passwd.home me)) ^ "\n")
