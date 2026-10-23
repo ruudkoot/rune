@@ -70,3 +70,6 @@ capture and conversion. Generated public wrappers add policy and ownership work.
 There is no aggregate score, GUI-throughput prediction or claim about future
 direct linking. Use an otherwise idle machine and the dated evidence before
 making performance decisions.
+
+The [dated acceptance report](../../tests/ffi/evidence/performance.md) links the
+final interpreter/JIT samples and records their measured scope and limits.
