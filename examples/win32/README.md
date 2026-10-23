@@ -18,7 +18,7 @@ output directory, containing `current.build`:
 
 ```sh
 bin/rune --library ffi/win32/sdldriver --library ffi/win32/model \
-  --build examples/win32/sdl.build --path SDL_GENERATED=build/ffi-generated/sdl \
+  --build examples/win32/sdl.build --path SDL_GENERATED="$PWD/build/ffi-generated/sdl" \
   -o build/win32-sdl.rbc
 bin/runevm build/win32-sdl.rbc /path/to/libSDL3.so.0 /path/to/shims.so
 ```
@@ -27,7 +27,7 @@ The native version uses the generated binding for the matching Windows ABI:
 
 ```sh
 bin/rune --library ffi/win32/native --build examples/win32/native.build \
-  --path WIN32_GENERATED=build/ffi-generated/win32-64 -o build/win32-native.rbc
+  --path WIN32_GENERATED="$PWD/build/ffi-generated/win32-64" -o build/win32-native.rbc
 RUNE_WIN32_ADAPTER_LIBRARY='C:\path\to\shims.dll' bin/runevm.exe build/win32-native.rbc
 ```
 
