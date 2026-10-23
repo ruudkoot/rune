@@ -2217,3 +2217,11 @@ test-win32-native: $(RUNE) vm windows bin/runeffi bin/rune-win32-check bin/rune-
 	$(RUNE_TEST) --tier test-win32-native
 test-win32-app-native: $(RUNE) vm windows bin/runeffi bin/rune-win32-check bin/rune-test bin/rune-windows
 	$(RUNE_TEST) --tier test-win32-app-native
+
+# Each planted defect must compile, then fail its intended shared WIN32 check.
+WIN32_MUTANT_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/win32/mutants.sml
+.PHONY: test-win32-contract-mutants
+bin/rune-win32-mutants.rbc: $(RUNE) $(WIN32_MUTANT_SRCS) tests/ffi/win32/contract.sml manifests
+	$(RUNE) --library test/runner --library json --library digest $(WIN32_MUTANT_SRCS) -o $@
+test-win32-contract-mutants: $(RUNE) vm bin/rune-win32-mutants.rbc
+	bin/runevm bin/rune-win32-mutants.rbc

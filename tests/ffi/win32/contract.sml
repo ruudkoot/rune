@@ -94,7 +94,15 @@ struct
                    (fn()=>W.User.discardMessage queued handle T.Error{code=0w6,...}=>()) | T.Quit _=>false)
              val remaining=W.User.peekMessage{window=SOME window,minimum=0wx8004,maximum=0wx8005,remove=true}
              val ()=Option.app(fn queued=>onCleanup(fn()=>W.User.discardMessage queued handle T.Error{code=0w6,...}=>()))remaining
-         in assert "no matching queue residue"(not(isSome remaining)) end)),
+             val ()=assert "no matching queue residue"(not(isSome remaining))
+             val ()=W.User.postMessage(window,app 0wx8006 61)
+             val ()=W.User.postMessage(window,app 0wx8006 62)
+             fun next()=case W.User.getMessage(filter(SOME window)0wx8006 0wx8006) of
+                 T.Message queued=>finally(fn()=>W.User.dispatchMessage queued)
+                   (fn()=>W.User.discardMessage queued handle T.Error{code=0w6,...}=>())
+               | T.Quit _=>raise Fail "unexpected quit in filtered FIFO check"
+         in assert "same-code messages retain posting order"
+              (next()=Int64.fromInt 61 andalso next()=Int64.fromInt 62) end)),
      test "paint-output-scopes-and-exception-cleanup"(fn()=>
        fixture "paint" (fn _=>T.Default)(fn{create,...}=>
          let val window=create "paint"

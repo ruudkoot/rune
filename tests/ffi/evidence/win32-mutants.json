@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "libraryRoot": "/home/ruud/rune/.worktrees/runeffi-layout/lib",
+  "modelSha256": "dfe50e61265763f0eba4823ef62c356f271ffe23423dea3a2750c862439f63b9",
+  "mockSha256": "e9be99578a9fa119f59bbf5a6875716e4690b6b88f1fa3cb2196e6ad0e6c02df",
+  "contractSha256": "90fe91e6fbb73cc869904f4b24fc7b76e13c7117b85be5f8022de2bdb9b3e961",
+  "vmSha256": "b1556ea59a929cf5faa618bdb94b228450993215e6673ff4ed34ca3d96dd47c3",
+  "variants": [
+    {
+      "variant": "baseline",
+      "sourceSha256": "dfe50e61265763f0eba4823ef62c356f271ffe23423dea3a2750c862439f63b9",
+      "bytecodeSha256": "6c5de7b02d5da206da4271652b925897757e65dfe6ce731eeb620f57f2a66ad8",
+      "status": 0,
+      "expectedFailure": null
+    },
+    {
+      "variant": "paint-cleanup",
+      "sourceSha256": "13cd8c2369d8c8fd788c292bcfdc357c1c9ec57418da71d5be469c3f24b6096f",
+      "bytecodeSha256": "d622c18087b8da5149139cb7e7168cc458ae66b1f6c4a796add4b921dfc5e361",
+      "status": 1,
+      "expectedFailure": "paint-output-scopes-and-exception-cleanup"
+    },
+    {
+      "variant": "message-order",
+      "sourceSha256": "2c024269592068b9c10fd554cd9f1ed1936ee0d43c90e5b59df13de5ca2905b0",
+      "bytecodeSha256": "be5749c8a9515e13d514139a1d73f8a9f94c73fef1d969f451dbc67837699fbe",
+      "status": 1,
+      "expectedFailure": "queue-filter-copy-discard-and-single-use"
+    },
+    {
+      "variant": "timer-cancellation",
+      "sourceSha256": "e21e7e5fd44c44be4b658d6991b79643d2a4c6c6bc2f091cc13199d794c12bec",
+      "bytecodeSha256": "47fb6a8a78b171192ea7f518cdbb40c97ec9c5849fe0d5943ab87f930f4fb447",
+      "status": 1,
+      "expectedFailure": "timers-cancel-and-preserve-identity"
+    },
+    {
+      "variant": "stale-window",
+      "sourceSha256": "a97de7df8f1ccc8d5d5bd6f438ef2f905d0a3c2faddd3c3e9c7a28807c89a418",
+      "bytecodeSha256": "16761bc7d1dbeafb94ef8e5c972e261ff3e1f9ecd17b154c0fc0f9ac66768a48",
+      "status": 1,
+      "expectedFailure": "unsupported-selection-and-stale-window"
+    }
+  ]
+}
