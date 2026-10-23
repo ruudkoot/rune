@@ -105,9 +105,12 @@ incompatible-volume errors follow the host model in the
 [Basis specification](https://smlfamily.github.io/Basis/os-path.html).
 `getDir` and `fullPath` include their volume and return canonical paths as
 [OS.FileSys requires](https://smlfamily.github.io/Basis/os-file-sys.html).
-Canonical Windows paths fold ASCII case; other bytes, including WTF-8, stay
-intact. The empty-volume/root-relative reading and UNC extension are documented
-once in the `OS_PATH` signature.
+Canonical Windows paths preserve native case and bytes, including WTF-8.
+This intentionally differs from the Basis lowercase-only Windows system note,
+because [case-sensitive NTFS directories and WSL shares](https://learn.microsoft.com/en-us/windows/wsl/case-sensitivity)
+must remain usable.
+The empty-volume/root-relative reading and UNC extension are documented once
+in the `OS_PATH` signature.
 
 Rebuild bytecode and saved images that embed the earlier Unix-only `OS.Path`
 before using them with the updated Windows VM.
@@ -127,3 +130,15 @@ skips (`20261023-094630-2323736`,
 also passed 19,445 jobs with three skips (`20261023-102438-2394411`,
 `/tmp/rune-native-path-frozen-full-check.log`). These receipts cover
 `aace898fc`; interrupted and earlier failed runs remain separate results.
+
+The mixed-case follow-up caught a gap in those earlier receipts: `fullPath
+"Makefile"` produced a nonexistent `makefile` on the WSL share. The canonical
+text model now preserves path-component case; volume comparison still ignores
+ASCII case and separators. Three specification checks retain their normative
+lowercase expectations and have explicit RUNE-DEV entries. Native path-case
+fixtures separately verify case preservation, identity and relative paths.
+The corrected library passed the Windows text/oracle cohort (12 runner jobs),
+the path and filesystem matrices on all four VMs (38 and 30 jobs), and the
+mixed-case language fixture on both widths and bytecode formats. The path
+matrix has exactly the three documented casing deviations per configuration,
+with no unexplained failures or stale deviations.

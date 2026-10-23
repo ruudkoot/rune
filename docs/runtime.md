@@ -945,9 +945,10 @@ code in it (`make SYS=none`).
 Windows filesystem paths retain native drive or UNC syntax and backslash
 separators. The former `/C:/...` adaptation is removed. `OS.Path` uses the
 host syntax; `OS.FileSys.getDir` and `fullPath` include the volume and
-canonicalize paths, including ASCII lowercasing on Windows as the Basis
-specification requires. Temporary names and link targets retain their native
-spelling. WTF-8 preserves lone UTF-16 surrogates at every Windows boundary.
+canonicalize path syntax while retaining native case. Windows can host
+case-sensitive directories, so lowercasing can change the named object.
+Temporary names and link targets retain their native spelling. WTF-8 preserves
+lone UTF-16 surrogates at every Windows boundary.
 A restored image refreshes `OS.Path` for the restoring operating system.
 
 A call the platform cannot make answers `ENOSYS`, which the library turns

@@ -208,6 +208,12 @@ struct
                          in OS.Path.isAbsolute f andalso OS.Path.isCanonical f end)
   val () = eqB ("OS.FileSys.fullPath/of-fullPath", true,
                 fn () => let val f = OS.FileSys.fullPath (p "a.txt") in OS.FileSys.fullPath f = f end)
+  val () = eqB ("OS.FileSys.fullPath/mixed-case-same-object", true,
+                fn () => let val file = p "MiXeD-Case.txt"
+                             val () = write (file, "case")
+                             val same = (OS.FileSys.fileId (OS.FileSys.fullPath file) = OS.FileSys.fileId file)
+                               handle e => (OS.FileSys.remove file; raise e)
+                         in OS.FileSys.remove file; same end)
   val () = eqB ("OS.FileSys.fullPath/root", true,
                 fn () => let val root=OS.FileSys.fullPath "/"
                          in OS.Path.isRoot root andalso OS.Path.getVolume root=OS.Path.getVolume (here ()) end)

@@ -280,6 +280,9 @@ native:mlkit@* | *Array2.copy/Subscript-*src-* | HOST-BUG | copy, of Array2 and 
 native:mlkit@* | Array2.copy/[!o]* | HOST-BUG | copy checks the destination region against the dimensions of the source's base array instead of those of dst, and writes dst with the source's number of columns as its row length: Subscript for a valid destination, none for an invalid one (the elements are written past the end of dst), the elements in the wrong places when the two arrays have different numbers of columns, and Overflow when dst_row + nrows or dst_col + ncols overflows
 
 # ---- OS.Path
+rune:windows* | OS.Path.mkCanonical/windows-lowercase | RUNE-DEV | preserves native case so canonical paths remain usable on case-sensitive NTFS directories and WSL shares, rather than following the specification's lowercase-only Windows note
+rune:windows* | OS.Path.isCanonical/windows-case | RUNE-DEV | native-case Windows paths are canonical under Rune's case-preserving model
+rune:windows* | OS.Path.isRoot/windows-uppercase | RUNE-DEV | drive roots retain their native letter case and are canonical under Rune's case-preserving model
 native:mlton@* | OS.Path.splitBaseExt/*empty-arc | HOST-BUG | the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
 native:mlton@* | OS.Path.joinBaseExt/inverts-splitBaseExt-random | HOST-BUG | joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
 native:smlnj*@* | OS.Path.splitBaseExt/*empty-arc | HOST-BUG | the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")

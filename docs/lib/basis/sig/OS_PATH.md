@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 27 of 27 entries documented |
-| Tests | 142 checks of 27 entries |
+| Tests | 144 checks of 27 entries |
 | Source | [lib/basis/sig\_os\_path.sml](../../../../lib/basis/sig_os_path.sml) |
 
 ## Synopsis
@@ -37,8 +37,9 @@ systems.
 > **Implementation** `OS.Path/host-syntax`. Unix uses `/` with no volume.
 > Windows accepts `/` and `\`, writes `\`, and recognizes drive volumes
 > such as `C:` and absolute UNC volumes such as `\\server\share`. A drive
-> without a root, such as `C:a`, is relative. Canonical Windows paths fold
-> ASCII letters to lowercase; other bytes, including WTF-8, are preserved.
+> without a root, such as `C:a`, is relative. Canonical Windows paths retain
+> native case and bytes, including WTF-8. Volumes compare without ASCII case;
+> path components compare exactly so case-sensitive directories stay distinct.
 
 > **Reading** `OS.Path.validVolume/windows-root`. The specification lists
 > root-relative Windows paths such as `\a` as absolute, although its
@@ -532,6 +533,12 @@ val mkCanonical : string -> string
 
 `mkCanonical p` is `p` with the current arcs dropped, the parent arcs cancelled where they can be, and the separators made single.
 
+> **Implementation** `OS.Path.mkCanonical/windows-native-case`. Rune preserves
+> Windows path case instead of following the specification's lowercase-only
+> system note. NTFS directories and WSL shares can be case sensitive;
+> lowercasing can produce a different object or a nonexistent path. Use
+> [`OS.FileSys.fileId`](../sig/OS_FILE_SYS.md#val-fileid) to compare filesystem identities across aliases.
+
 > **Reading** `OS.Path.mkCanonical/root-current-arc`. `"/."` becomes `"/"`,
 > because "redundant current arcs are removed", although the
 > specification's list of canonical paths has `"/."` among them; every
@@ -552,11 +559,11 @@ val mkCanonical : string -> string
 
 </details>
 
-<details><summary>Tests (7)</summary>
+<details><summary>Tests (8)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `*` &middot; `equality-of-paths` &middot; `is-canonical-random` &middot; `never-empty-random` &middot; `keeps-isAbsolute-random`
 
-For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*` &middot; `windows-WTF8`
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*` &middot; `windows-lowercase` &middot; `windows-WTF8`
 
 </details>
 
@@ -567,6 +574,9 @@ val isCanonical : string -> bool
 ```
 
 `isCanonical p` is `true` when `p` is what [`mkCanonical`](#val-mkcanonical) would give.
+
+> **Implementation** `OS.Path.isCanonical/windows-native-case`. Native-case
+> Windows paths are canonical under Rune's case-preserving model.
 
 **Law** `isCanonical p = (mkCanonical p = p)`, and it is run for `p` from
 `BasisDataArb.path` (for every `p : string`)
@@ -704,16 +714,19 @@ val isRoot : string -> bool
 
 `isRoot p` is `true` when `p` is a canonical absolute path with no arcs below the root.
 
+> **Implementation** `OS.Path.isRoot/windows-native-case`. A native drive root
+> is canonical with either letter case, consistently with [`mkCanonical`](#val-mkcanonical).
+
 > **Reading** `OS.Path.isRoot/double-separator`. `"/"` is a root and `"//"`
 > is not: the second has an empty arc under the root.
 
 **Example** `isRoot "/" = true`
 
-<details><summary>Tests (2)</summary>
+<details><summary>Tests (3)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `*`
 
-For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*`
+For `OS.Path`, in [tests/basis/os.path\_windows.sml](../../../../tests/basis/os.path_windows.sml): `windows-*` &middot; `windows-uppercase`
 
 </details>
 

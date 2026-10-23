@@ -7,7 +7,7 @@
    that names nothing, a directory that may not be read, a file that may not
    be removed -- all of them arrive as that one exception.
 
-   Windows paths use native drive and UNC syntax, with backslash separators,
+   Windows paths retain native case and use drive/UNC syntax with backslash separators,
    and names use WTF-8, which preserves lone UTF-16
    surrogates and is UTF-8 for Unicode text. Other malformed byte sequences
    raise `OS.SysErr` with `ilseq`. Extended paths remove the 260-character

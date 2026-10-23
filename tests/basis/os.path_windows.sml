@@ -57,20 +57,21 @@ struct
   val () = List.app (fn (p,e) =>
     (eqS ("OS.Path.mkCanonical/windows-" ^ p,e,fn () => P.mkCanonical p);
      eqB ("OS.Path.isCanonical/windows-" ^ p,true,fn () => P.isCanonical e)))
-    [("C:/A/../B//","c:\\b"),("C:foo/..","c:."),("C:","c:."),
-     ("C:/../..","c:\\"),("a/../../B","..\\b"),
-     ("//Server/Share/a/../..","\\\\server\\share\\")]
+    [("c:/a/../b//","c:\\b"),("c:foo/..","c:."),("c:","c:."),
+     ("c:/../..","c:\\"),("a/../../b","..\\b"),
+     ("//server/share/a/../..","\\\\server\\share\\")]
+  val () = eqS ("OS.Path.mkCanonical/windows-lowercase","c:\\b",fn () => P.mkCanonical "C:/A/../B")
   val () = eqB ("OS.Path.isCanonical/windows-case",false,fn () => P.isCanonical "C:\\A")
   val () = eqS ("OS.Path.concat/windows-matching-drive","C:\\a\\b",
     fn () => P.concat ("C:\\a","c:b"))
   val () = T.raises ("OS.Path.concat/windows-different-drive",isPath,fn () => P.concat ("C:a","D:b"))
   val () = T.raises ("OS.Path.concat/windows-absolute",isPath,fn () => P.concat ("C:a","\\b"))
   val () = eqS ("OS.Path.mkAbsolute/windows","c:\\b",
-    fn () => P.mkAbsolute {path="C:..\\B",relativeTo="c:\\a"})
+    fn () => P.mkAbsolute {path="C:..\\b",relativeTo="c:\\a"})
   val () = T.raises ("OS.Path.mkAbsolute/windows-different-drive",isPath,
     fn () => P.mkAbsolute {path="D:b",relativeTo="C:\\a"})
   val () = eqS ("OS.Path.mkRelative/windows-case","..\\B",
-    fn () => P.mkRelative {path="C:\\A\\B",relativeTo="c:\\a\\c"})
+    fn () => P.mkRelative {path="C:\\a\\B",relativeTo="c:\\a\\c"})
   val () = eqS ("OS.Path.mkRelative/windows-UNC-separator-case","b",
     fn () => P.mkRelative {path="//SERVER/SHARE/a/b",relativeTo="\\\\server\\share\\a"})
   val () = T.raises ("OS.Path.mkRelative/windows-different-drive",isPath,
@@ -80,13 +81,14 @@ struct
      eqB ("OS.Path.isRelative/windows-" ^ p,not abs,fn () => P.isRelative p)))
     [("C:x",false),("C:",false),("C:\\x",true),("\\x",true),("//s/share/x",true)]
   val () = List.app (fn (p,root) => eqB ("OS.Path.isRoot/windows-" ^ p,root,fn () => P.isRoot p))
-    [("c:\\",true),("C:\\",false),("c:/",false),("c:",false),("c:\\\\",false),("\\\\s\\share\\",true)]
+    [("c:\\",true),("c:/",false),("c:",false),("c:\\\\",false),("\\\\s\\share\\",true),("//s/share\\",false)]
+  val () = eqB ("OS.Path.isRoot/windows-uppercase",false,fn () => P.isRoot "C:\\")
   val () = eqS ("OS.Path.fromUnixPath/windows","\\a\\b",fn () => P.fromUnixPath "/a/b")
   val () = T.raises ("OS.Path.fromUnixPath/windows-backslash",invalid,fn () => P.fromUnixPath "a\\b")
   val () = eqS ("OS.Path.toUnixPath/windows","/a/b",fn () => P.toUnixPath "\\a\\b")
   val () = T.raises ("OS.Path.toUnixPath/windows-volume",isPath,fn () => P.toUnixPath "C:\\a")
   val odd = "\237\160\128-\206\187"
   val () = eqS ("OS.Path.mkCanonical/windows-WTF8","c:\\" ^ odd,
-    fn () => P.mkCanonical ("C:/" ^ odd))
+    fn () => P.mkCanonical ("c:/" ^ odd))
   in () end
 end

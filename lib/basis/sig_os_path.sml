@@ -18,8 +18,9 @@
    Implementation: `OS.Path/host-syntax`. Unix uses `/` with no volume.
    Windows accepts `/` and `\`, writes `\`, and recognizes drive volumes
    such as `C:` and absolute UNC volumes such as `\\server\share`. A drive
-   without a root, such as `C:a`, is relative. Canonical Windows paths fold
-   ASCII letters to lowercase; other bytes, including WTF-8, are preserved.
+   without a root, such as `C:a`, is relative. Canonical Windows paths retain
+   native case and bytes, including WTF-8. Volumes compare without ASCII case;
+   path components compare exactly so case-sensitive directories stay distinct.
 
    Reading: `OS.Path.validVolume/windows-root`. The specification lists
    root-relative Windows paths such as `\a` as absolute, although its
@@ -200,6 +201,14 @@ sig
 
   (* `mkCanonical p` is `p` with the current arcs dropped, the parent arcs cancelled where they can be, and the separators made single.
 
+     Implementation: `OS.Path.mkCanonical/windows-native-case`. Rune preserves
+     Windows path case instead of following the specification's lowercase-only
+     system note. NTFS directories and WSL shares can be case sensitive;
+     lowercasing can produce a different object or a nonexistent path. Use
+     `OS.FileSys.fileId` to compare filesystem identities across aliases.
+
+     Pinned by: `OS.Path.mkCanonical/windows-lowercase`
+
      Reading: `OS.Path.mkCanonical/root-current-arc`. `"/."` becomes `"/"`,
      because "redundant current arcs are removed", although the
      specification's list of canonical paths has `"/."` among them; every
@@ -217,6 +226,11 @@ sig
   val mkCanonical : string -> string
 
   (* `isCanonical p` is `true` when `p` is what `mkCanonical` would give.
+
+     Implementation: `OS.Path.isCanonical/windows-native-case`. Native-case
+     Windows paths are canonical under Rune's case-preserving model.
+
+     Pinned by: `OS.Path.isCanonical/windows-case`
 
      Law: `isCanonical p = (mkCanonical p = p)`, and it is run for `p` from
      `BasisDataArb.path`
@@ -271,6 +285,11 @@ sig
   val isRelative : string -> bool
 
   (* `isRoot p` is `true` when `p` is a canonical absolute path with no arcs below the root.
+
+     Implementation: `OS.Path.isRoot/windows-native-case`. A native drive root
+     is canonical with either letter case, consistently with `mkCanonical`.
+
+     Pinned by: `OS.Path.isRoot/windows-uppercase`
 
      Reading: `OS.Path.isRoot/double-separator`. `"/"` is a root and `"//"`
      is not: the second has an empty arc under the root.

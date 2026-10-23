@@ -7,7 +7,7 @@
 | Signature | [`OS_PATH`](../sig/OS_PATH.md) |
 | Status | required |
 | Members | 27 |
-| Tests | 142 checks |
+| Tests | 144 checks |
 | Source | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 ## Synopsis
@@ -60,8 +60,9 @@ What each means is on [`OS_PATH`](../sig/OS_PATH.md); the types are this structu
 > **Implementation** `OS.Path/host-syntax`. Unix uses `/` with no volume.
 > Windows accepts `/` and `\`, writes `\`, and recognizes drive volumes
 > such as `C:` and absolute UNC volumes such as `\\server\share`. A drive
-> without a root, such as `C:a`, is relative. Canonical Windows paths fold
-> ASCII letters to lowercase; other bytes, including WTF-8, are preserved.
+> without a root, such as `C:a`, is relative. Canonical Windows paths retain
+> native case and bytes, including WTF-8. Volumes compare without ASCII case;
+> path components compare exactly so case-sensitive directories stay distinct.
 
 > **Reading** `OS.Path.validVolume/windows-root`. The specification lists
 > root-relative Windows paths such as `\a` as absolute, although its
@@ -97,7 +98,15 @@ What each means is on [`OS_PATH`](../sig/OS_PATH.md); the types are this structu
 > a separator the parent arc is appended after it: `"a/"` gives `"a/.."`
 > and `"a///"` gives `"a///.."`.
 
+### isCanonical
+
+> **Implementation** `OS.Path.isCanonical/windows-native-case`. Native-case
+> Windows paths are canonical under Rune's case-preserving model.
+
 ### isRoot
+
+> **Implementation** `OS.Path.isRoot/windows-native-case`. A native drive root
+> is canonical with either letter case, consistently with [`mkCanonical`](../sig/OS_PATH.md#val-mkcanonical).
 
 > **Reading** `OS.Path.isRoot/double-separator`. `"/"` is a root and `"//"`
 > is not: the second has an empty arc under the root.
@@ -109,6 +118,12 @@ What each means is on [`OS_PATH`](../sig/OS_PATH.md); the types are this structu
 > empty one.
 
 ### mkCanonical
+
+> **Implementation** `OS.Path.mkCanonical/windows-native-case`. Rune preserves
+> Windows path case instead of following the specification's lowercase-only
+> system note. NTFS directories and WSL shares can be case sensitive;
+> lowercasing can produce a different object or a nonexistent path. Use
+> [`OS.FileSys.fileId`](../sig/OS_FILE_SYS.md#val-fileid) to compare filesystem identities across aliases.
 
 > **Reading** `OS.Path.mkCanonical/root-current-arc`. `"/."` becomes `"/"`,
 > because "redundant current arcs are removed", although the

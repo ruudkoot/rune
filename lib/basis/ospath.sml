@@ -22,7 +22,7 @@ struct
     String.sub (p,1) = #":"
   fun fold p = if !windows then
     String.map (fn #"/" => #"\\" | c => Char.toLower c) p else p
-  fun same (a,b) = fold a = fold b
+  fun sameVolume (a,b) = fold a = fold b
 
   (* A UNC volume has exactly a server and a share, both nonempty. *)
   fun uncEnd p =
@@ -64,7 +64,7 @@ struct
      and not "//", whose last arc is the empty one. *)
   fun isRoot path =
     case fromString path of
-      {isAbs = true, vol, arcs = [""], ...} => path = fold (vol ^ sep ())
+      {isAbs = true, vol, arcs = [""], ...} => path = toString {isAbs=true,vol=vol,arcs=[""]}
     | _ => false
 
   (* "the file part is the last arc" *)
@@ -138,7 +138,7 @@ struct
              | k :: above => if k = parentArc then go (rest, parentArc :: kept) else go (rest, above))
           else go (rest, a :: kept)
       val arcs = go (arcs, [])
-      fun render arcs = fold (toString {isAbs=isAbs,vol=vol,arcs=arcs})
+      fun render arcs = toString {isAbs=isAbs,vol=vol,arcs=arcs}
     in
       case (isAbs, arcs) of
         (true, []) => render [""]
@@ -156,7 +156,7 @@ struct
       let
         val {isAbs, vol, arcs = pArcs} = fromString p
         val {vol=qVol,arcs=qArcs,...} = fromString q
-        val ()=if qVol="" orelse same (vol,qVol) then () else raise Path
+        val ()=if qVol="" orelse sameVolume (vol,qVol) then () else raise Path
         fun drop [] = []
           | drop [""] = []                 (* a trailing empty arc joins *)
           | drop (a :: rest) = a :: drop rest
@@ -182,14 +182,14 @@ struct
       let
         val {vol = pVol, arcs = pArcs, ...} = fromString path
         val {vol = aVol, arcs = aArcs, ...} = fromString (mkCanonical relativeTo)
-        val () = if same (pVol,aVol) then () else raise Path
+        val () = if sameVolume (pVol,aVol) then () else raise Path
         val pArcs = case pArcs of [""] => [] | l => l
         val aArcs = List.filter (fn a => a <> "") aArcs
         fun parents l = List.map (fn _ => parentArc) l
         fun h ([], []) = [currentArc]
           | h (p, []) = p
           | h ([], a) = parents a
-          | h (p as x :: xs, a as y :: ys) = if same (x,y) then h (xs, ys) else parents a @ p
+          | h (p as x :: xs, a as y :: ys) = if x=y then h (xs, ys) else parents a @ p
       in
         case h (pArcs, aArcs) of
           [""] => currentArc

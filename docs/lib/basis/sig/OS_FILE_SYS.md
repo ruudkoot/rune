@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 26 of 26 entries documented |
-| Tests | 175 checks of 23 entries |
+| Tests | 176 checks of 23 entries |
 | Source | [lib/basis/sig\_os\_file\_sys.sml](../../../../lib/basis/sig_os_file_sys.sml) |
 
 ## Synopsis
@@ -30,7 +30,7 @@ the file system, and everything here reports a refusal the same way:
 that names nothing, a directory that may not be read, a file that may not
 be removed -- all of them arrive as that one exception.
 
-Windows paths use native drive and UNC syntax, with backslash separators,
+Windows paths retain native case and use drive/UNC syntax with backslash separators,
 and names use WTF-8, which preserves lone UTF-16
 surrogates and is UTF-8 for Unicode text. Other malformed byte sequences
 raise [`OS.SysErr`](../sig/OS.md#exn-syserr) with `ilseq`. Extended paths remove the 260-character
@@ -300,9 +300,9 @@ The empty path is taken as `"."`.
 
 **Example** `fullPath "." = getDir ()`
 
-<details><summary>Tests (15)</summary>
+<details><summary>Tests (16)</summary>
 
-For `OS.FileSys`, in [tests/basis/os.filesys.sml](../../../../tests/basis/os.filesys.sml): `current-arc` &middot; `empty-is-current-arc` &middot; `relative-file` &middot; `arcs-removed` &middot; `trailing-separator` &middot; `absolute-canonical` &middot; `of-fullPath` &middot; `root` &middot; `parent-arc` &middot; `missing-SysErr` (raises) &middot; `missing-directory-SysErr` (raises) &middot; `link` &middot; `link-as-directory-component` &middot; `link-loop-SysErr` (raises) &middot; `dangling-SysErr` (raises)
+For `OS.FileSys`, in [tests/basis/os.filesys.sml](../../../../tests/basis/os.filesys.sml): `current-arc` &middot; `empty-is-current-arc` &middot; `relative-file` &middot; `arcs-removed` &middot; `trailing-separator` &middot; `absolute-canonical` &middot; `of-fullPath` &middot; `mixed-case-same-object` &middot; `root` &middot; `parent-arc` &middot; `missing-SysErr` (raises) &middot; `missing-directory-SysErr` (raises) &middot; `link` &middot; `link-as-directory-component` &middot; `link-loop-SysErr` (raises) &middot; `dangling-SysErr` (raises)
 
 </details>
 
