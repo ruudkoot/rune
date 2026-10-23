@@ -1,3 +1,4 @@
+(* libraries: test/unit *)
 (* Source generation keeps implementation mechanisms and source identity explicit. *)
 structure ForeignGenerateTests =
 struct
