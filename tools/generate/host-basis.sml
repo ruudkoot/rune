@@ -5,9 +5,6 @@ struct
   fun rewrite swap text =T.lineMap (fn line =>
     let val line=if swap andalso line="exception Unordered" then "exception Unordered = IEEEReal.Unordered"
           else if swap andalso (String.isPrefix "datatype " line orelse String.isPrefix "exception " line) then "" else line
-        (* Host default ints may have only 31/32 bits. Rune's original
-           construction deliberately uses its wider default int. *)
-        val line=T.replace line "IntInf.fromInt 4294967296" "IntInf.<< (IntInf.fromInt 1, 0w32)"
         val line=T.substitute "_prim \"[a-z_0-9]*\"" (fn call => "RunePrim." ^ List.nth (fields #"\"" call,1)) line
     in if String.isPrefix "_overload " line then "" else if String.isPrefix "structure Position :> " line then "structure Position : " ^ String.extract (line,22,NONE)
        else if String.isPrefix "structure SysWord :> " line then "structure SysWord : " ^ String.extract (line,21,NONE) else line end) text

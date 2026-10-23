@@ -37,7 +37,13 @@ struct
   val basis=run ^ "/ffi-model/golden-basis"
   fun prepare ()=
     (ignore(command "prepare-host-basis" ["bin/rune-generate","host-basis",basis]);
-     write(basis ^ "/selected",command "projection-basis-dependencies" [env("RUNE","bin/rune"),"--basis-deps","tests/ffi/model/basis_imports.sml"]))
+     write(basis ^ "/selected",command "projection-basis-dependencies" [env("RUNE","bin/rune"),"--basis-deps","tests/ffi/model/basis_imports.sml"]);
+     List.app(fn file=>
+       let val path=basis ^ "/basis/" ^ file
+           fun line text=if Hosts.trim text="val two32 = IntInf.fromInt 4294967296" then
+             "    val two32 = IntInf.<< (IntInf.fromInt 1, 0w32)" else text
+       in write(path,String.concatWith "\n" (List.map line (String.fields(fn c=>c= #"\n")(read path)))) end)
+       ["int64.sml","word64.sml"])
   fun host name =
     let val ()=mkdirs directory
         val prelude=List.filter(fn path=>path<>"")(lines(read(basis ^ "/prelude")))
