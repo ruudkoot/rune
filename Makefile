@@ -240,7 +240,7 @@ all: vm boot runedoc runeopt manifests basis-cache
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
-manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
+manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
 lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -282,6 +282,8 @@ lib/jupyter/MANIFEST: lib/jupyter/library.build $(wildcard lib/jupyter/*.sml) li
 
 lib/ffi/model/MANIFEST: lib/ffi/model/library.build $(wildcard lib/ffi/model/*.sml) lib/json/MANIFEST lib/language/c/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/ffi/model
+lib/ffi/marshal/MANIFEST: lib/ffi/marshal/library.build $(wildcard lib/ffi/marshal/*.sml) lib/unicode/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/ffi/marshal
 
 # The frozen Basis Library (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
@@ -1218,7 +1220,7 @@ check-docs: check-docs-generated bin/rune-test bin/rune-doc-check
 
 check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
@@ -1227,6 +1229,7 @@ check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_RUNNER) --check
 	$(RUNEDOC) $(DOCS_C) --check
 	$(RUNEDOC) $(DOCS_FFI_MODEL) --check
+	$(RUNEDOC) $(DOCS_FFI_MARSHAL) --check
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW) --check
 	$(RUNEDOC) --palette docs/lib/palette --check
@@ -1257,6 +1260,8 @@ DOCS_UNIT := --lib lib --library test/unit --out docs/lib/test/unit --basis-docs
 DOCS_RUNNER := --lib lib --library test/runner --out docs/lib/test/runner --basis-docs ../../basis \
                --library-docs test/unit ../unit --library-docs terminal ../../terminal \
                --conventions ../../conventions.md
+DOCS_FFI_MARSHAL := --lib lib --library ffi/marshal --out docs/lib/ffi/marshal --basis-docs ../../basis \
+                    --library-docs unicode ../../unicode --conventions ../../conventions.md
 DOCS_FFI_MODEL := --lib lib --library ffi/model --out docs/lib/ffi/model --basis-docs ../../basis \
                   --library-docs json ../../json --library-docs language/c ../../language/c \
                   --conventions ../../conventions.md
@@ -1290,7 +1295,8 @@ DOCS_OVERVIEW := --lib lib --overview docs/lib \
 	--library-page jupyter \
 	--library-page digest \
 	--library-page language/c \
-	--library-page ffi/model
+	--library-page ffi/model \
+	--library-page ffi/marshal
 
 docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_BASIS)
@@ -1301,6 +1307,7 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_RUNNER)
 	$(RUNEDOC) $(DOCS_C)
 	$(RUNEDOC) $(DOCS_FFI_MODEL)
+	$(RUNEDOC) $(DOCS_FFI_MARSHAL)
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW)
 	$(RUNEDOC) --palette docs/lib/palette

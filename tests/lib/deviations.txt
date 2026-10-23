@@ -43,3 +43,7 @@ native:mlkit | unicode.utf8 | HOST-FLAKY | MLKit keeps a region and a frame for 
 # acceptNB returned, where it must return NONE
 # (docs/bugreport/polyml/recvVecNB-blocks-on-accepted).
 native:polyml | zmtp.zmtp | HOST-BUG | the first Zmtp.wait reads the connection the ROUTER accepted with recvVecNB, which waits for data that never comes, so the test hangs until the native library suite's time limit; on the connecting socket the same call returns NONE, and MLton and Rune return NONE on both
+
+# Foreign marshalling: exercises large shifts in the native host's IntInf.
+native:mlkit | ffi.marshal.core | HOST-BUG | IntInf.~>> by 30 or more returns zero for large integers, corrupting 64/128-bit byte encoding; six endpoint cases fail (docs/bugreport/mlkit/IntInf/shift-right-by-30-or-more)
+native:smlnj* | ffi.marshal.core | HOST-ABSENT | optional default-real PackRealBig and PackRealLittle are unbound (docs/bugreport/smlnj/PackReal-default-absent)

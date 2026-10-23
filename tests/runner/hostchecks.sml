@@ -66,7 +66,7 @@ struct
       val () = check ("matching failure uses deviation", null (LibHosts.unused ls "mlton" ["random.kat"]))
       val () = check ("stale strict deviation", length (LibHosts.unused ls "mlton" []) = 1)
       val () = check ("another host's deviation", null (LibHosts.unused ls "smlnj32" []))
-      val () = check ("library inventory", length LibHosts.tests = 27)
+      val () = check ("library inventory", length LibHosts.tests = 28)
       val () = check ("C frontend host coverage", List.exists (fn t : LibHosts.test =>
         #label t = "language.c.frontend" andalso #libraries t = ["unit", "language/c"]
         andalso #source t = "tests/lib/language/c/frontend.sml") LibHosts.tests)

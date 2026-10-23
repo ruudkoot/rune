@@ -57,6 +57,7 @@ Library is what every program starts with.
 | Library |  |
 | --- | --- |
 | [Foreign binding model](ffi/model/README.md) `ffi/model` | This library separates original foreign declarations, target layout facts, and SML projection policy. It contains no native loader or compiler primitive. `ForeignModel` adapts C declarations, preserves source identities and aliases, and computes deterministic selection closures. Other source families require explicit backends; they never silently become C pointers. |
+| [Foreign byte marshalling](ffi/marshal/README.md) `ffi/marshal` | Portable SML support for target integer and binary64 representations, explicit byte/text encodings and deterministic cleanup scopes. Native addresses and VM operations belong to the runtime support library. |
 
 ---
 
