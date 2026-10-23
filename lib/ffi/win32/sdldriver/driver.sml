@@ -2,9 +2,10 @@
 functor Win32SdlDriverFn (structure Sdl : SDL) :> WIN32_SDL_DRIVER =
 struct
   structure T = Win32Common.Types
+  type canvas = {surface:Sdl.surface,renderer:Sdl.renderer,width:int,height:int}
   datatype window = Window of {native:Sdl.window,renderer:Sdl.renderer option ref,
-    id:Word32.word,closed:bool ref,drawings:int ref}
-  datatype drawing = Drawing of {window:window,active:bool ref}
+    canvas:canvas option ref,retired:canvas list ref,id:Word32.word,closed:bool ref,drawings:int ref}
+  datatype drawing = Drawing of {window:window,canvas:canvas,rectangle:T.rect,active:bool ref}
   datatype event = Quit | Message of window * T.message
   val externalEvents=true
   val windows=ref([]:window list)
@@ -25,7 +26,7 @@ struct
   fun constant name=Sdl.constant name
   fun live(Window{closed,...})=not(!closed)
   fun native(window as Window{native,...})=if live window then native else error "SDL window" 1400
-  fun renderer(window as Window{renderer,...})=
+  fun displayRenderer(window as Window{renderer,...})=
     if not(live window) then error "SDL renderer" 1400 else
     case !renderer of SOME r=>r | NONE=>error "SDL renderer" 6
   fun find id=List.find(fn window as Window{id=other,...}=>live window andalso id=other)(!windows)
@@ -50,6 +51,41 @@ struct
   fun position value=if IntInf.fromInt value= ~2147483648 then IntInf.toInt(constant "SDL_WINDOWPOS_UNDEFINED") else value
   fun onFailure action cleanup=action() handle e=>
     (List.app(fn release=>(release() handle _=>()))cleanup;raise e)
+  fun complete actions=
+    let val first=ref(NONE:exn option)
+        fun attempt action=action() handle e=>if isSome(!first) then () else first:=SOME e
+        val ()=List.app attempt actions
+    in case !first of NONE=>() | SOME e=>raise e end
+  fun closeCanvas({surface,renderer,...}:canvas)=complete
+    [fn()=>Sdl.destroyRenderer renderer handle Sdl.Closed=>(),fn()=>Sdl.destroySurface surface handle Sdl.Closed=>()]
+  fun makeCanvas{width,height}=
+    let val width=Int.max(1,width) val height=Int.max(1,height)
+        val surface=Sdl.createSurface{width=width,height=height,format=Word32.fromLargeInt(constant "SDL_PIXELFORMAT_ARGB8888")}
+        val render=onFailure(fn()=>Sdl.createSoftwareRenderer surface)[fn()=>Sdl.destroySurface surface]
+        val ()=onFailure(fn()=>(Sdl.setRenderDrawColor(render,{red=0,green=0,blue=0,alpha=255});
+          Sdl.renderClear render;Sdl.renderPresent render))[fn()=>Sdl.destroyRenderer render,fn()=>Sdl.destroySurface surface]
+    in {surface=surface,renderer=render,width=width,height=height}:canvas end
+  fun cleanupRetired(Window{retired,...})=
+    let fun loop()=case !retired of []=>() | old::rest=>(closeCanvas old;retired:=rest;loop())
+    in loop() end
+  fun ensureCanvas(window as Window{canvas,retired,drawings,...})=
+    let val ()=cleanupRetired window
+        val dimensions=Sdl.getWindowSize(native window)
+        val width=Int.max(1,#width dimensions) val height=Int.max(1,#height dimensions)
+    in case !canvas of SOME old=>
+      if #width old=width andalso #height old=height then old
+      else if !drawings<>0 then error "SDL resize canvas" 170 else
+        let val replacement=makeCanvas{width=width,height=height}
+            val rectangle=SOME{x=0,y=0,width=Int.min(#width old,width),height=Int.min(#height old,height)}
+            val ()=onFailure(fn()=>(Sdl.renderPresent(#renderer old);
+              Sdl.blitSurface{source= #surface old,sourceRect=rectangle,destination= #surface replacement,destinationRect=rectangle}))
+              [fn()=>closeCanvas replacement]
+            val ()=canvas:=SOME replacement
+            val ()=retired:=old:: !retired
+            val ()=cleanupRetired window
+        in replacement end
+    | NONE=>let val replacement=makeCanvas{width=width,height=height}
+      in canvas:=SOME replacement;replacement end end
   fun create{title,width,height,x,y,visible,resizable}=protect "SDL createWindow"(fn()=>
     let val flags=Word64.orb(if visible then 0w0 else Word64.fromLargeInt(constant "SDL_WINDOW_HIDDEN"),
           if resizable then Word64.fromLargeInt(constant "SDL_WINDOW_RESIZABLE") else 0w0)
@@ -57,12 +93,18 @@ struct
         val id=onFailure(fn()=>Sdl.getWindowID handleWindow)[fn()=>Sdl.destroyWindow handleWindow]
         val ()=onFailure(fn()=>Sdl.setWindowPosition(handleWindow,position x,position y))[fn()=>Sdl.destroyWindow handleWindow]
         val handleRenderer=onFailure(fn()=>Sdl.createRenderer(handleWindow,SOME "software"))[fn()=>Sdl.destroyWindow handleWindow]
-        val ()=onFailure(fn()=>Sdl.startTextInput handleWindow)[fn()=>Sdl.destroyRenderer handleRenderer,fn()=>Sdl.destroyWindow handleWindow]
-        val window=Window{native=handleWindow,renderer=ref(SOME handleRenderer),id=id,closed=ref false,drawings=ref 0}
+        val backing=onFailure(fn()=>makeCanvas(Sdl.getWindowSize handleWindow))
+          [fn()=>Sdl.destroyRenderer handleRenderer,fn()=>Sdl.destroyWindow handleWindow]
+        val ()=onFailure(fn()=>Sdl.startTextInput handleWindow)
+          [fn()=>closeCanvas backing,fn()=>Sdl.destroyRenderer handleRenderer,fn()=>Sdl.destroyWindow handleWindow]
+        val window=Window{native=handleWindow,renderer=ref(SOME handleRenderer),canvas=ref(SOME backing),retired=ref[],
+          id=id,closed=ref false,drawings=ref 0}
     in windows:=window:: !windows;window end)
-  fun destroy(window as Window{renderer=render,closed,drawings,...})=protect "SDL destroyWindow"(fn()=>
+  fun destroy(window as Window{renderer=render,canvas,retired,closed,drawings,...})=protect "SDL destroyWindow"(fn()=>
     if not(live window) then error "SDL destroyWindow" 1400 else if !drawings<>0 then error "SDL destroyWindow" 170 else
-    (case !render of NONE=>() | SOME r=>(Sdl.destroyRenderer r;render:=NONE);
+    (case !canvas of NONE=>() | SOME old=>(retired:=old:: !retired;canvas:=NONE);
+     cleanupRetired window;
+     (case !render of NONE=>() | SOME r=>(Sdl.destroyRenderer r;render:=NONE));
      Sdl.destroyWindow(native window);closed:=true;windows:=List.filter(fn w=>w<>window)(!windows);
      pending:=List.filter(fn Message(w,_)=>w<>window | Quit=>true)(!pending)))
   fun show(window,command)=protect "SDL showWindow"(fn()=>
@@ -71,11 +113,27 @@ struct
     else raise T.Unsupported "SDL visibility command is outside the shared GUI subset")
   fun title(window,text)=protect "SDL setWindowText"(fn()=>Sdl.setWindowTitle(native window,displayText text))
   fun client window=protect "SDL getClientRect"(fn()=>Sdl.getWindowSize(native window))
-  fun begin(window as Window{drawings,...})=
-    (ignore(renderer window);drawings:= !drawings+1;Drawing{window=window,active=ref true})
-  fun drawing(Drawing{window,active})=if !active then renderer window else error "SDL drawing" 6
-  fun finish(value as Drawing{window=Window{drawings,...},active})=protect "SDL endPaint"(fn()=>
-    let val render=drawing value in active:=false;drawings:= !drawings-1;Sdl.renderPresent render end)
+  fun clip({left,top,right,bottom}:T.rect)=
+    {x=Int32.toInt left,y=Int32.toInt top,width=Int.max(0,Int32.toInt right-Int32.toInt left),
+     height=Int.max(0,Int32.toInt bottom-Int32.toInt top)}
+  fun begin{window=window as Window{drawings,...},rectangle}=protect "SDL beginPaint"(fn()=>
+    let val backing=ensureCanvas window
+        val ()=Sdl.setRenderClipRect(#renderer backing,SOME(clip rectangle))
+    in drawings:= !drawings+1;Drawing{window=window,canvas=backing,rectangle=rectangle,active=ref true} end)
+  fun drawing(Drawing{window,canvas,rectangle,active})=
+    if not(!active) then error "SDL drawing" 6 else
+      (ignore(native window);Sdl.setRenderClipRect(#renderer canvas,SOME(clip rectangle));#renderer canvas)
+  fun present window (backing:canvas)=
+    let val display=displayRenderer window
+        val texture=Sdl.createTextureFromSurface(display,#surface backing)
+    in ForeignScope.withScope(fn scope=>
+      (ignore(ForeignScope.defer(scope,fn()=>Sdl.destroyTexture texture));
+       Sdl.setRenderClipRect(display,NONE);Sdl.renderTexture(display,texture,NONE,NONE);Sdl.renderPresent display)) end
+  fun finish(Drawing{window=window as Window{drawings,...},canvas,active,...})=protect "SDL endPaint"(fn()=>
+    if not(!active) then error "SDL endPaint" 6 else
+    ForeignScope.withScope(fn scope=>
+      (ignore(ForeignScope.defer(scope,fn()=>(active:=false;drawings:= !drawings-1)));
+       complete[fn()=>Sdl.setRenderClipRect(#renderer canvas,NONE),fn()=>Sdl.renderPresent(#renderer canvas),fn()=>present window canvas])))
   fun colour value={red=Word32.toInt(Word32.andb(value,0wxFF)),
     green=Word32.toInt(Word32.andb(Word32.>>(value,0w8),0wxFF)),
     blue=Word32.toInt(Word32.andb(Word32.>>(value,0w16),0wxFF)),alpha=255}

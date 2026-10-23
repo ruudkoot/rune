@@ -78,3 +78,27 @@ driver. It confirmed that the original failure is reported and all native
 identities return to baseline after `SDL_Quit` and unload. The same fixture
 passed ASAN/UBSAN with GC stress 7/verification and LeakSanitizer outside the
 sandbox. This exercises the partial-initialization cleanup path directly.
+
+## Persistent clipped painting follow-up
+
+The drawing contract now requires `begin {window, rectangle}` and preservation
+of pixels outside the invalid bounding rectangle. A third original support
+selection, `SDL_SetRenderClipRect`, brings the total to **53 core + 3 support**
+functions. Each window owns an ARGB8888 surface/software renderer independently
+of the display renderer's backbuffer. Finish flushes the canvas, presents it
+through a scoped texture, resets clipping and releases the scope on every
+returning path. Resize allocates/clears/copies before publishing replacement
+storage, and retired resources remain owned until cleanup succeeds.
+
+The expanded pixel probe passed **30/30** checks with dummy video, real Linux
+windows, the stack interpreter under GC stress 7/verification, optimizing JIT,
+and register ASAN/UBSAN with GC stress 7/verification and LeakSanitizer outside
+the sandbox. It proves black exterior pixels survive successive red/blue
+partial presents, empty clips modify nothing, and resize preserves overlapping
+old pixels while initializing the new area. Native identities return to
+baseline after destroying both windows and shutting down the provider.
+
+Receipts are `/tmp/runeffi-sdl-win32-canvas-{dummy,gui,stack,jit,asan}.log`.
+The earlier 17/18-check receipts remain distinct and are not relabeled as pixel
+acceptance. Shared-model-over-SDL and native Windows common-suite acceptance
+are still required before the full M9 gate closes.

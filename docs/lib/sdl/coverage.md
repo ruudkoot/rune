@@ -6,10 +6,10 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
-| [`SDL`](sig/SDL.md) | 69 | 69 | 100% | 58 | 58 |
+| [`SDL`](sig/SDL.md) | 70 | 70 | 100% | 59 | 59 |
 | [`SDL_NATIVE_LAYOUT`](sig/SDL_NATIVE_LAYOUT.md) | 6 | 6 | 100% | 3 | 3 |
 | [`SDL_NATIVE_RAW`](sig/SDL_NATIVE_RAW.md) | 5 | 5 | 100% | 4 | 4 |
-| **all** | 80 | 80 | 100% | 65 | 65 |
+| **all** | 81 | 81 | 100% | 66 | 66 |
 
 ---
 

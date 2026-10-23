@@ -128,6 +128,10 @@ sig
   val destroyRenderer : renderer -> unit
   (* `setRenderDrawColor (renderer, color)` sets channels from zero through 255; other values raise `Domain`. *)
   val setRenderDrawColor : renderer * {red : int, green : int, blue : int, alpha : int} -> unit
+  (* `setRenderClipRect (renderer, rectangle)` sets an integer drawing clip.
+
+     `NONE` resets clipping; a zero-area rectangle clips every pixel. *)
+  val setRenderClipRect : renderer * rect option -> unit
   (* `renderClear renderer` clears the render target with the current draw color. *)
   val renderClear : renderer -> unit
   (* `renderPoint (renderer, x, y)` draws one floating point position. *)

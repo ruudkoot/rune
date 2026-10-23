@@ -29,7 +29,9 @@ close/destruction and signed quit status. Provider-specific tests additionally
 cover raw ABI facts and capability limits outside this common surface.
 
 `sdl-driver.sml` independently tests the SDL projection using real SDL calls
-and SML observation hooks, without handwritten native call descriptors. Run
+and SML observation hooks, without handwritten native call descriptors.
+Pixel probes verify persistent clipped partial paints, empty clips and resize
+preservation across presentations. Run
 `make test-win32-sdl-driver` with a provisioned native SDL library (or set
 `RUNE_SDL_NATIVE_LIBRARY`). The GUI tier is `test-win32-sdl-driver-gui` and
 requires desktop access. The test helper reads `ffi/sdl/support.json`, generates

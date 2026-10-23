@@ -256,6 +256,7 @@ struct
   fun setRenderDrawColor(renderer,{red,green,blue,alpha})=withHandle renderer(fn p=>
     let fun channel n=if n<0 orelse n>255 then raise Domain else RuneForeign.Unsigned(Word64.fromInt n)
     in checked "SDL_SetRenderDrawColor" (address p::List.map channel[red,green,blue,alpha]) end)
+  fun setRenderClipRect(renderer,rect)=withHandle renderer(fn p=>withRect "SDL_Rect" rect(fn rect=>checked "SDL_SetRenderClipRect" [address p,rect]))
   val renderClear=rendererOperation "SDL_RenderClear"
   fun renderPoint(renderer,x,y)=withHandle renderer(fn p=>checked "SDL_RenderPoint" [address p,RuneForeign.Real x,RuneForeign.Real y])
   fun renderLine(renderer,x1,y1,x2,y2)=withHandle renderer(fn p=>checked "SDL_RenderLine" (address p::List.map RuneForeign.Real[x1,y1,x2,y2]))

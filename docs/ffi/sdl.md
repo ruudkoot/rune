@@ -96,7 +96,7 @@ See [the dated evidence](../../tests/ffi/evidence/m7.md) for results and open ga
 ## Win32 SDL provider support
 
 The required core inventory remains 53 functions. The Win32 GUI provider adds
-`SDL_SetWindowPosition` and `SDL_SetHint`; the additional selections and
+`SDL_SetWindowPosition`, `SDL_SetHint` and `SDL_SetRenderClipRect`; the additional selections and
 constants are listed in `ffi/sdl/support.json`. Select every listed constant
 with the generator's `--constant NAME` option as well as the core command above.
 `make test-win32-sdl-driver` performs the complete explicit generation, compiles

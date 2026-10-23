@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 69 of 69 entries documented |
+| Documentation | 70 of 70 entries documented |
 | Tests | not listed |
 | Source | [lib/sdl/sdl\_sig.sml](../../../../lib/sdl/sdl_sig.sml) |
 
@@ -92,6 +92,7 @@ sig
   val <a href="#val-createsoftwarerenderer">createSoftwareRenderer</a> : surface -&gt; renderer
   val <a href="#val-destroyrenderer">destroyRenderer</a> : renderer -&gt; unit
   val <a href="#val-setrenderdrawcolor">setRenderDrawColor</a> : renderer * {<a href="#fld-setrenderdrawcolor.red">red</a> : int, <a href="#fld-setrenderdrawcolor.green">green</a> : int, <a href="#fld-setrenderdrawcolor.blue">blue</a> : int, <a href="#fld-setrenderdrawcolor.alpha">alpha</a> : int} -&gt; unit
+  val <a href="#val-setrendercliprect">setRenderClipRect</a> : renderer * rect option -&gt; unit
   val <a href="#val-renderclear">renderClear</a> : renderer -&gt; unit
   val <a href="#val-renderpoint">renderPoint</a> : renderer * real * real -&gt; unit
   val <a href="#val-renderline">renderLine</a> : renderer * real * real * real * real -&gt; unit
@@ -635,6 +636,16 @@ val setRenderDrawColor : renderer * {red : int, green : int, blue : int, alpha :
 | <a name="fld-setrenderdrawcolor.green"></a>`green` | `int` |  |
 | <a name="fld-setrenderdrawcolor.blue"></a>`blue` | `int` |  |
 | <a name="fld-setrenderdrawcolor.alpha"></a>`alpha` | `int` |  |
+
+### <a name="val-setrendercliprect"></a>`setRenderClipRect`
+
+```sml
+val setRenderClipRect : renderer * rect option -> unit
+```
+
+`setRenderClipRect (renderer, rectangle)` sets an integer drawing clip.
+
+`NONE` resets clipping; a zero-area rectangle clips every pixel.
 
 ### <a name="val-renderclear"></a>`renderClear`
 

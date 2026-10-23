@@ -1822,6 +1822,48 @@
       "variadic": "reject",
       "unsafeRaw": false,
       "adapter": "sdl-core-v1"
+    },
+    {
+      "foreign": "SDL_SetRenderClipRect",
+      "name": "setRenderClipRect",
+      "raw": "SDL_SetRenderClipRect",
+      "parameters": [
+        {
+          "name": "renderer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "renderer"
+          }
+        },
+        {
+          "name": "rect",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "rectBuffer"
+            }
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "sdl-core-v1"
     }
   ]
 }

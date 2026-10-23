@@ -3,8 +3,8 @@
 Area: Foreign interfaces
 
 `Win32SdlDriverFn` implements the thin `WIN32_GUI_DRIVER` contract using the
-sealed SDL3 projection. It owns SDL windows, one software renderer per window,
-and drawing scopes. Shared Win32 class registration, creation callbacks,
+sealed SDL3 projection. It owns SDL windows, a persistent ARGB8888 canvas and software renderer per
+window, a separate display renderer, and clipped drawing scopes. Shared Win32 class registration, creation callbacks,
 message dispatch, timers, paint regions and GDI object policy belong to the
 separate shared model. The driver never invokes a window procedure.
 
@@ -16,11 +16,19 @@ explicit x/y coordinates; Win32 `CW_USEDEFAULT` becomes generated
 `SDL_WINDOWPOS_UNDEFINED`. Platforms refusing explicit placement report that
 limitation rather than silently ignoring it.
 
-The core inventory retains its required 53 functions. Two additional original
-header selections, `SDL_SetWindowPosition` and `SDL_SetHint`, are recorded in
+The core inventory retains its required 53 functions. Three additional original
+header selections, `SDL_SetWindowPosition`, `SDL_SetHint` and
+`SDL_SetRenderClipRect`, are recorded in
 `ffi/sdl/support.json` for this provider. That file also lists required generated
 SDL constants. Raw descriptors and layout facts are generated; the driver adds
 no primitives or handwritten native call descriptors.
+
+Each scope clips to the client-intersected invalid bounding rectangle. An empty
+clip changes no pixels. Finish resets the clip, flushes the canvas, presents a
+temporary texture and releases the scope on every returning path. Pixels outside
+the invalid rectangle survive subsequent presentations. Resize allocates and
+clears a replacement canvas, copies the overlapping old pixels, then publishes
+it; failed retired-resource cleanup remains owned for retry.
 
 Drawing uses Win32 COLORREF channel order, exclusive-edge rectangles, positive
 width solid lines and printable ASCII text. SDL's fixed 8 by 8 debug font and

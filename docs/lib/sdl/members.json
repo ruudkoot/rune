@@ -356,6 +356,13 @@
     },
     {
      "kind": "val",
+     "name": "setRenderClipRect",
+     "spec": "val setRenderClipRect : renderer * rect option -> unit",
+     "doc": "`setRenderClipRect (renderer, rectangle)` sets an integer drawing clip.\n\n`NONE` resets clipping; a zero-area rectangle clips every pixel.\n\n",
+     "page": "sig/SDL.md#val-setrendercliprect"
+    },
+    {
+     "kind": "val",
      "name": "renderClear",
      "spec": "val renderClear : renderer -> unit",
      "doc": "`renderClear renderer` clears the render target with the current draw color.\n\n",

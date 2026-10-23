@@ -4,6 +4,10 @@ struct
   open SDL
   val created=ref(NONE:SDL.window option)
   val positions=ref([]:(int*int)list)
+  val surfaces=ref([]:SDL.surface list)
+  val canvasRenderer=ref(NONE:SDL.renderer option)
+  fun createSurface options=let val surface=SDL.createSurface options in surfaces:=surface:: !surfaces;surface end
+  fun createSoftwareRenderer surface=let val renderer=SDL.createSoftwareRenderer surface in canvasRenderer:=SOME renderer;renderer end
   val lines=ref 0
   val fills=ref 0
   val texts=ref([]:string list)
@@ -50,7 +54,8 @@ struct
         val ()=Driver.show(window,0)
         val ()=Driver.show(window,10)
         val ()=Driver.show(window,0)
-        val drawing=Driver.begin window
+        val drawing=Driver.begin{window=window,rectangle={left=Int32.fromInt 0,top=Int32.fromInt 0,
+          right=Int32.fromInt(#width size),bottom=Int32.fromInt(#height size)}}
         val ()=check(rejected(fn()=>Driver.destroy window),"active drawing prevents window destruction")
         val rectangle={left=Int32.fromInt 1,top=Int32.fromInt 2,right=Int32.fromInt 20,bottom=Int32.fromInt 30}
         val ()=Driver.fill{drawing=drawing,rectangle=rectangle,colour=0wx00332211}
@@ -87,6 +92,41 @@ struct
         val ()=check(Driver.ticks()>=started andalso Driver.frequency()>Int64.fromInt 0 andalso Driver.counter()>Int64.fromInt 0,"monotonic clocks")
         val ()=Driver.destroy window
         val ()=check(rejected(fn()=>ignore(Driver.client window)),"closed window")
+        val pixelWindow=Driver.create{title="paint pixels",x= ~2147483648,y= ~2147483648,width=8,height=8,visible=false,resizable=true}
+        val pixelNative=valOf(!ObservedSDL.created)
+        val pixelSize=Driver.client pixelWindow
+        fun rect(x,y,right,bottom)={left=Int32.fromInt x,top=Int32.fromInt y,right=Int32.fromInt right,bottom=Int32.fromInt bottom}
+        val whole=rect(0,0,#width pixelSize,#height pixelSize)
+        fun paint rectangle colour=
+          let val scope=Driver.begin{window=pixelWindow,rectangle=rectangle}
+              val ()=(Driver.fill{drawing=scope,rectangle=whole,colour=colour}
+                handle e=>(Driver.finish scope;raise e))
+          in Driver.finish scope end
+        fun pixels expected=SDL.withSurfacePixels(hd(!ObservedSDL.surfaces))(fn{bytes,pitch,...}=>
+          List.app(fn(x,y,wanted)=>
+            let val offset=y*pitch+x*4
+                val actual=ForeignBytes.value{signed=false,littleEndian= #littleEndian(RuneForeign.target()),
+                  bytes=Byte.bytesToString(Word8ArraySlice.vector(Word8ArraySlice.slice(bytes,offset,SOME 4)))}
+            in check(actual=wanted,"persistent clipped canvas pixel") end)expected)
+        val ()=paint whole 0w0
+        val ()=paint(rect(2,2,4,4))0wx000000FF
+        val ()=pixels[(0,0,0xFF000000),(2,2,0xFFFF0000),(4,2,0xFF000000),(6,6,0xFF000000)]
+        val ()=paint(rect(5,5,7,7))0wx00FF0000
+        val ()=pixels[(0,0,0xFF000000),(2,2,0xFFFF0000),(5,5,0xFF0000FF)]
+        val ()=paint(rect(1,1,1,3))0wx0000FF00
+        val ()=pixels[(0,0,0xFF000000),(2,2,0xFFFF0000),(5,5,0xFF0000FF)]
+        val requestedWidth= #width pixelSize+4 val requestedHeight= #height pixelSize+4
+        val ()=SDL.setWindowSize(pixelNative,requestedWidth,requestedHeight)
+        fun resized 0=raise Fail "SDL window resize did not settle" | resized n=
+          let val size=Driver.client pixelWindow
+          in if #width size>=requestedWidth andalso #height size>=requestedHeight then size
+             else (ignore(Driver.poll());Driver.delay 0w1;resized(n-1)) end
+        val enlarged=resized 1000
+        val empty=rect(#width enlarged,#height enlarged,#width enlarged,#height enlarged)
+        val scope=Driver.begin{window=pixelWindow,rectangle=empty}
+        val ()=Driver.finish scope
+        val ()=pixels[(2,2,0xFFFF0000),(5,5,0xFF0000FF),(#width pixelSize+1,#height pixelSize+1,0xFF000000)]
+        val ()=Driver.destroy pixelWindow
         val ()=Driver.shutdown()
         val ()=check(RuneForeign.live()=baseline,"driver shutdown releases native resources")
     in print("PASS SDL Win32 driver: " ^ Int.toString(!count) ^ " checks\n") end

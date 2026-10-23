@@ -4,7 +4,8 @@
   "requiredCoreFunctions": 53,
   "functions": [
     "SDL_SetWindowPosition",
-    "SDL_SetHint"
+    "SDL_SetHint",
+    "SDL_SetRenderClipRect"
   ],
   "constants": [
     "SDL_WINDOWPOS_UNDEFINED",

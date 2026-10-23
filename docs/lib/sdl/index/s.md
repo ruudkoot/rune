@@ -6,6 +6,7 @@
 - `setClipboardText` (val): [SDL](../sig/SDL.md#val-setclipboardtext)
 - `setHint` (val): [SDL](../sig/SDL.md#val-sethint)
 - `setMainReady` (val): [SDL](../sig/SDL.md#val-setmainready)
+- `setRenderClipRect` (val): [SDL](../sig/SDL.md#val-setrendercliprect)
 - `setRenderDrawColor` (val): [SDL](../sig/SDL.md#val-setrenderdrawcolor)
 - `setWindowPosition` (val): [SDL](../sig/SDL.md#val-setwindowposition)
 - `setWindowSize` (val): [SDL](../sig/SDL.md#val-setwindowsize)
