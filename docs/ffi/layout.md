@@ -40,9 +40,10 @@ also pass before the milestone is complete.
 `ForeignShim` emits fixed typed wrappers and member accessors. The C
 compiler checks the original declarations and performs aggregate copies,
 bitfield access and default argument promotions. Outbound variadic support
-is limited to an explicitly typed fixed adapter: the dynamic bridge does
-not prepare a variadic CIF. The caller still satisfies foreign value/count
-contracts. Anonymous aggregate/enum types require an original named alias;
+in generated wrappers uses an explicitly typed fixed adapter. The raw
+`RuneForeign.prepareVariadic` interface additionally prepares complete dynamic
+variadic signatures with already promoted tail types. Both callers still
+satisfy foreign value/count contracts. Anonymous aggregate/enum types require an original named alias;
 unsupported layouts and declarations remain visible diagnostics.
 
 `ForeignMemory.withArrays` copies borrowed arrays into native backing

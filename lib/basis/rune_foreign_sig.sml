@@ -74,6 +74,19 @@ sig
 
      Raises: `Error` for unsupported interfaces or invalid resources. *)
   val prepare : {symbol : resource, abi : int, result : scalar, arguments : scalar list} -> resource
+  (* `prepareVariadic {symbol, abi, result, arguments, fixedCount}` prepares an outgoing C variadic call.
+
+     The complete argument list includes its nonempty fixed prefix. Tail
+     types and values must already have C default argument promotions:
+     float becomes double, and narrow integers become int or unsigned int.
+     Unpromoted tail types and nondefault ABIs are rejected. Reuse the
+     prepared resource for this exact signature; a different tail requires
+     another resource, explicitly released after use. Variadic callbacks
+     and automatic format-string interpretation are unsupported.
+
+     Raises: `Error` for invalid counts, unpromoted types or unavailable support. *)
+  val prepareVariadic : {symbol : resource, abi : int, result : scalar,
+    arguments : scalar list, fixedCount : int} -> resource
   (* `callback {abi, result, arguments, function, failure}` roots a closure.
 
      Entry is synchronous on the creating VM thread while a native call is

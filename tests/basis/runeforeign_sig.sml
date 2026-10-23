@@ -8,6 +8,7 @@ struct
         val _ : unit -> {architecture:string,charBits:int,charSigned:bool,
           scalars:{name:string,size:int,alignment:int}list} = F.abiFacts
         val _ : F.resource * F.argument list -> F.result = F.invoke
+        val _ : {symbol:F.resource,abi:int,result:F.scalar,arguments:F.scalar list,fixedCount:int} -> F.resource = F.prepareVariadic
         val _ : F.resource * F.argument list -> {result:F.result,callbackException:exn option} = F.invokeDeferred
         val _ : {abi:int,result:F.scalar,arguments:F.scalar list,function:F.argument list -> F.argument,failure:F.callbackFailure} -> F.resource = F.callback
         val _ : F.resource -> F.resource = F.aliasHandle

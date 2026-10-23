@@ -132,11 +132,14 @@ static int p_foreign(VM *vm) {
             }
             result_id = foreign_view(vm->foreign, id, (size_t)auxiliary, (size_t)foreign_u64(metadata)); ok = result_id != 0; break;
         case 7: ok = foreign_release(vm->foreign, id) == 0; break;
-        case 8: {
+        case 8: case 18: {
             if (nmeta < 2 || nmeta - 2 > 1024) { ok = 0; error.error_number = EINVAL; break; }
+            if (operation == 18 && auxiliary > SIZE_MAX) { ok = 0; error.error_number = ERANGE; break; }
             ForeignType arguments[1024];
             for (size_t i = 2; i < nmeta; i++) arguments[i - 2] = (ForeignType)metadata[i];
-            result_id = foreign_prepare(vm->foreign, id, metadata[0], (ForeignType)metadata[1], arguments, nmeta - 2);
+            result_id = operation == 18 ?
+                foreign_prepare_variadic(vm->foreign, id, metadata[0], (ForeignType)metadata[1], arguments, nmeta - 2, (size_t)auxiliary) :
+                foreign_prepare(vm->foreign, id, metadata[0], (ForeignType)metadata[1], arguments, nmeta - 2);
             ok = result_id != 0; break;
         }
         case 9: case 12: case 16: {

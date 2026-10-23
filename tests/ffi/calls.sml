@@ -15,6 +15,67 @@ fun withCall name result types action =
       val answer = action call handle e => (cleanup();raise e)
   in cleanup();answer end
 fun word result = PackWord64Little.subVec(Byte.stringToBytes(#bytes (result:RuneForeign.result)),0)
+fun withVariadic name result fixedCount types action =
+  let val symbol = RuneForeign.symbol(library,name)
+      val call = RuneForeign.prepareVariadic{symbol=symbol,abi=0,result=result,arguments=types,fixedCount=fixedCount}
+      fun cleanup()=(RuneForeign.release call;RuneForeign.release symbol)
+      val answer=action call handle e=>(cleanup();raise e)
+  in cleanup();answer end
+val () = List.app (fn values =>
+  withVariadic "rf_variadic" RuneForeign.SInt32 1
+    (RuneForeign.UInt32 :: List.map (fn _ => RuneForeign.SInt32) values) (fn call =>
+      let val arguments=RuneForeign.Unsigned(Word64.fromInt(List.length values)) ::
+            List.map (RuneForeign.Signed o Int64.fromInt) values
+          fun invoke ()=Word64.toLargeIntX(word(RuneForeign.invoke(call,arguments)))
+          val expected=IntInf.fromInt(List.foldl op+ 0 values)
+      in check("variadic integer register/stack arguments",invoke()=expected);
+         check("variadic prepared signature reused",invoke()=expected);
+         check("variadic argument count checked",rejected(fn()=>ignore(RuneForeign.invoke(call,[])))) end))
+  [[],[3,14,25],[1,2,3,4,5,6,7,8,9,10,11,12]]
+val () = withVariadic "rf_variadic_real" RuneForeign.Float64 1
+  (RuneForeign.UInt32 :: List.tabulate(12,fn _=>RuneForeign.Float64)) (fn call =>
+    let val result=RuneForeign.invoke(call,RuneForeign.Unsigned 0w12 ::
+          List.tabulate(12,fn _=>RuneForeign.Real 0.25))
+    in check("variadic promoted real register/stack arguments",
+      Real.==(PackReal64Little.fromBytes(Byte.stringToBytes(#bytes result)),3.0)) end)
+val () =
+  let val symbol=RuneForeign.symbol(library,"rf_variadic")
+      val initial=RuneForeign.live()
+      fun prepare abi fixedCount tail=ignore(RuneForeign.prepareVariadic{symbol=symbol,abi=abi,
+        result=RuneForeign.SInt32,arguments=RuneForeign.UInt32 :: tail,fixedCount=fixedCount})
+      val ()=List.app(fn ty=>check("unpromoted variadic tail rejected",rejected(fn()=>prepare 0 1 [ty])))
+        [RuneForeign.SInt8,RuneForeign.UInt8,RuneForeign.SInt16,RuneForeign.UInt16,RuneForeign.Float32,RuneForeign.Void]
+      val ()=List.app(fn n=>check("invalid variadic fixed count",rejected(fn()=>prepare 0 n []))) [~1,0,2]
+      val ()=check("variadic nondefault ABI rejected",rejected(fn()=>prepare 1 1 []))
+      val ()=check("rejected variadic interfaces leave no resources",RuneForeign.live()=initial)
+  in RuneForeign.release symbol end
+val () =
+  let val memory=RuneForeign.allocate 0w4
+      val ()=RuneForeign.write(memory,0w0,if #littleEndian target then "\037\000\000\000" else "\000\000\000\037")
+      val visits=ref 0
+      val callback=RuneForeign.callback{abi=0,result=RuneForeign.SInt32,
+        arguments=[RuneForeign.Pointer,RuneForeign.SInt32],failure=RuneForeign.Default(RuneForeign.Signed ~999),
+        function=fn [RuneForeign.Address(SOME context),RuneForeign.Signed n]=>
+          (check("variadic callback context identity",RuneForeign.sameAddress(context,memory));
+           check("variadic callback payload",n=1);visits:= !visits+1;Runtime.collect();RuneForeign.Signed 42)
+          | _=>raise Fail "variadic callback arguments"}
+      val types=[RuneForeign.SInt32,RuneForeign.Float64,RuneForeign.SInt64,RuneForeign.UInt64,
+        RuneForeign.Pointer,RuneForeign.Pointer,RuneForeign.Pointer]
+      val values=[RuneForeign.Signed 1,RuneForeign.Real 0.25,RuneForeign.Signed ~81985529216486895,
+        RuneForeign.Unsigned 0wxFEDCBA9876543210,RuneForeign.Address(SOME memory),
+        RuneForeign.Address(SOME callback),RuneForeign.Address(SOME memory)]
+      val symbol=RuneForeign.symbol(library,"rf_variadic_mixed")
+      val call=RuneForeign.prepareVariadic{symbol=symbol,abi=0,result=RuneForeign.Float64,fixedCount=3,
+        arguments=[RuneForeign.Float32,RuneForeign.SInt8,RuneForeign.UInt32] @ List.concat(List.tabulate(12,fn _=>types))}
+      val ()=check("variadic call retains its symbol",rejected(fn()=>RuneForeign.release symbol))
+      val ()=check("variadic call retains its library",rejected(fn()=>RuneForeign.release library))
+      val result=RuneForeign.invoke(call,[RuneForeign.Real 0.5,RuneForeign.Signed ~5,RuneForeign.Unsigned 0w12] @
+        List.concat(List.tabulate(12,fn _=>values)))
+      val ()=check("mixed variadic register/stack tail and unpromoted fixed prefix",
+        Real.==(PackReal64Little.fromBytes(Byte.stringToBytes(#bytes result)),958.5) andalso !visits=12)
+      val ()=RuneForeign.release call
+      val ()=check("stale variadic call rejected",rejected(fn()=>ignore(RuneForeign.invoke(call,[]))))
+  in List.app RuneForeign.release[symbol,callback,memory] end
 fun signed(name,ty,n) = withCall name ty [ty] (fn call =>
   check(name,Word64.toLargeIntX(word(RuneForeign.invoke(call,[RuneForeign.Signed(Int64.fromLarge n)])))=n))
 fun unsigned(name,ty,n) = withCall name ty [ty] (fn call =>

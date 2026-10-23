@@ -75,8 +75,9 @@ retained text/array inputs and more complex destructor protocols require
 explicit public adapters, recorded
 by name in `ffi-manifest.json`. A selection without an implemented lowering
 or an explicit public adapter fails with a source diagnostic. Dynamic
-variadic calls and unprototyped C functions require fixed typed adapters.
-These remaining automatic projections and their tests keep M6 planned.
+variadic calls and unprototyped C functions require fixed typed adapters for
+automatic public projection. The explicit raw runtime interface also supports
+prepared outgoing variadic signatures; it does not infer a public wrapper.
 
 Registered callbacks can instead name an owned result resource in `owner`.
 That resource's single-pointer void destructor must synchronously unregister

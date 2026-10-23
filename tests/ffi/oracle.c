@@ -1,6 +1,7 @@
 /* Direct C is the semantic oracle; optional libffi calls verify the selected
    ABI engine independently of Rune's marshalling and VM transitions. */
 #include "fixture.h"
+#include "variadic.h"
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -17,6 +18,7 @@ static int failed;
 #define RF_ALIGNMENT(type) _Alignof(type)
 
 static int callback(void *context, int value) { return *(int *)context + value; }
+static int variadic_callback(void *context, int value) { return *(int32_t *)context == 37 && value == 1 ? 42 : -999; }
 static int nested(void *context, int value) {
     int base = *(int *)context;
     rf_set_callback(callback, context);
@@ -129,6 +131,13 @@ int main(void) {
     CHECK("callback-release", rf_invoke(0) == -1);
     CHECK("variadic", rf_variadic(3, (signed char)3, (short)14, 25) == 42);
     CHECK("variadic-float", rf_variadic_real(3, (float)0.5, 1.25, 2.0) == 3.75);
+    int32_t mixed_memory = 37;
+#define RF_MIXED_ARGS 1, 0.25, -INT64_C(0x123456789abcdef), UINT64_C(0xfedcba9876543210), &mixed_memory, variadic_callback, &mixed_memory
+    CHECK("variadic-mixed-spills", rf_variadic_mixed(0.5f, (int8_t)-5, 12,
+        RF_MIXED_ARGS, RF_MIXED_ARGS, RF_MIXED_ARGS, RF_MIXED_ARGS,
+        RF_MIXED_ARGS, RF_MIXED_ARGS, RF_MIXED_ARGS, RF_MIXED_ARGS,
+        RF_MIXED_ARGS, RF_MIXED_ARGS, RF_MIXED_ARGS, RF_MIXED_ARGS) == 958.5);
+#undef RF_MIXED_ARGS
     CHECK("stdcall", rf_stdcall_add(19, 23) == 42);
     int error_result = rf_error(ENOENT), captured = errno;
     rf_free(NULL);

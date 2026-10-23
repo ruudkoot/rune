@@ -332,10 +332,20 @@ static ffi_type *type(ForeignType t) {
     default: return NULL;
     }
 }
-ForeignId foreign_prepare(Foreign *f, ForeignId symbol, int abi, ForeignType result, const ForeignType *arguments, size_t count) {
+static ForeignId prepare(Foreign *f, ForeignId symbol, int abi, ForeignType result,
+                         const ForeignType *arguments, size_t count, size_t fixed_count, int variadic) {
     Resource *s = find(f, symbol);
-    if (!s || s->kind != SYMBOL || !type(result) || count > 1024) {
+    if (!s || s->kind != SYMBOL || !type(result) || count > 1024 || (count && !arguments) ||
+        (variadic && (!fixed_count || fixed_count > count))) {
         fail(f, EINVAL, "invalid foreign call specification"); return 0;
+    }
+    if (variadic && abi) { fail(f, ENOTSUP, "variadic calls require the target default ABI"); return 0; }
+    if (variadic) for (size_t i = fixed_count; i < count; i++) {
+        ffi_type *t = type(arguments[i]);
+        if (!t || arguments[i] == FOREIGN_VOID || arguments[i] == FOREIGN_F32 ||
+            (arguments[i] >= FOREIGN_I8 && arguments[i] <= FOREIGN_U64 && t->size < sizeof(int))) {
+            fail(f, EINVAL, "variadic arguments require C default promotions"); return 0;
+        }
     }
     ffi_abi convention = FFI_DEFAULT_ABI;
     if (abi) {
@@ -356,7 +366,10 @@ ForeignId foreign_prepare(Foreign *f, ForeignId symbol, int abi, ForeignType res
         }
         p->arguments[i] = arguments[i];
     }
-    if (ffi_prep_cif(&p->cif, convention, (unsigned)count, type(result), p->types) != FFI_OK) {
+    ffi_status status = variadic ?
+        ffi_prep_cif_var(&p->cif, convention, (unsigned)fixed_count, (unsigned)count, type(result), p->types) :
+        ffi_prep_cif(&p->cif, convention, (unsigned)count, type(result), p->types);
+    if (status != FFI_OK) {
         free(p->types); free(p->arguments); free(p); fail(f, ENOTSUP, "libffi rejected call interface"); return 0;
     }
     Resource *r = reserve(f);
@@ -364,6 +377,13 @@ ForeignId foreign_prepare(Foreign *f, ForeignId symbol, int abi, ForeignType res
     p->address = address; p->count = count; p->result = result;
     r->kind = CALL; r->parent = symbol; r->call = p; f->live++;
     return r->id;
+}
+ForeignId foreign_prepare(Foreign *f, ForeignId symbol, int abi, ForeignType result, const ForeignType *arguments, size_t count) {
+    return prepare(f, symbol, abi, result, arguments, count, 0, 0);
+}
+ForeignId foreign_prepare_variadic(Foreign *f, ForeignId symbol, int abi, ForeignType result,
+                                  const ForeignType *arguments, size_t count, size_t fixed_count) {
+    return prepare(f, symbol, abi, result, arguments, count, fixed_count, 1);
 }
 
 typedef union { int8_t i8; uint8_t u8; int16_t i16; uint16_t u16; int32_t i32; uint32_t u32;
@@ -858,6 +878,7 @@ int foreign_read(Foreign *f,ForeignId r,size_t o,void *p,size_t n) { (void)r;(vo
 int foreign_write(Foreign *f,ForeignId r,size_t o,const void *p,size_t n) { (void)r;(void)o;(void)p;(void)n;return unavailable(f); }
 ForeignId foreign_view(Foreign *f,ForeignId r,size_t o,size_t n) { (void)r;(void)o;(void)n;unavailable(f);return 0; }
 ForeignId foreign_prepare(Foreign *f,ForeignId r,int a,ForeignType t,const ForeignType *p,size_t n) { (void)r;(void)a;(void)t;(void)p;(void)n;unavailable(f);return 0; }
+ForeignId foreign_prepare_variadic(Foreign *f,ForeignId r,int a,ForeignType t,const ForeignType *p,size_t n,size_t fixed) { (void)r;(void)a;(void)t;(void)p;(void)n;(void)fixed;unavailable(f);return 0; }
 ForeignId foreign_callback(Foreign *f,int a,ForeignType t,const ForeignType *p,size_t n,ForeignValue v,const ForeignCallbackFailure *r,size_t z,ForeignCallback c,ForeignCallbackFree d,void *s) { (void)a;(void)t;(void)p;(void)n;(void)v;(void)r;(void)z;(void)c;(void)d;(void)s;unavailable(f);return 0; }
 int foreign_call(Foreign *f,ForeignId r,const ForeignValue *p,size_t n,ForeignValue *v,ForeignError *e) { (void)r;(void)p;(void)n;(void)v;(void)e;return unavailable(f); }
 int foreign_dispose(Foreign *f,ForeignId r,ForeignId c,const ForeignValue *p,size_t n,ForeignFailure q,ForeignValue *v,ForeignError *e,int *d) { (void)r;(void)c;(void)p;(void)n;(void)q;(void)v;(void)e;*d=0;return unavailable(f); }

@@ -67,6 +67,13 @@ struct
     let val metadata = String.implode (Char.chr abi :: Char.chr (code result) :: List.map (Char.chr o code) arguments)
         val (id, _, _) = request (8, identity symbol, 0w0, metadata, "")
     in resource (Prepared arguments) id end
+  fun prepareVariadic {symbol, abi, result, arguments, fixedCount} =
+    if abi < 0 orelse abi > 255 then failure "invalid foreign ABI"
+    else if fixedCount <= 0 orelse fixedCount > List.length arguments then failure "invalid variadic fixed argument count"
+    else
+      let val metadata = String.implode (Char.chr abi :: Char.chr (code result) :: List.map (Char.chr o code) arguments)
+          val (id, _, _) = request (18, identity symbol, Word64.fromInt fixedCount, metadata, "")
+      in resource (Prepared arguments) id end
   fun encodeArguments (Resource {kind, ...}, arguments) =
     let val types = case kind of Prepared types => types | _ => failure "resource is not a prepared call"
         val () = if List.length types = List.length arguments then () else failure "foreign argument count mismatch"

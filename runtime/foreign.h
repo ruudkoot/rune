@@ -66,6 +66,9 @@ int foreign_read(Foreign *foreign, ForeignId memory, size_t offset, void *data, 
 int foreign_write(Foreign *foreign, ForeignId memory, size_t offset, const void *data, size_t length);
 ForeignId foreign_view(Foreign *foreign, ForeignId memory, size_t offset, size_t length);
 ForeignId foreign_prepare(Foreign *foreign, ForeignId symbol, int abi, ForeignType result, const ForeignType *arguments, size_t count);
+/* Tail types must already satisfy the C default argument promotions. */
+ForeignId foreign_prepare_variadic(Foreign *foreign, ForeignId symbol, int abi, ForeignType result,
+                                  const ForeignType *arguments, size_t count, size_t fixed_count);
 ForeignId foreign_callback(Foreign *foreign, int abi, ForeignType result, const ForeignType *arguments, size_t count,
                           ForeignValue failure, const ForeignCallbackFailure *cases, size_t ncases, ForeignCallback callback, ForeignCallbackFree release, void *state);
 int foreign_call(Foreign *foreign, ForeignId call, const ForeignValue *arguments, size_t count, ForeignValue *result, ForeignError *captured);

@@ -628,6 +628,10 @@ executes a guarded native destructor with a fixed integral failure predicate;
 its auxiliary identity is the owned pointer. Success retires that identity.
 Operations 13/14 compare pointer addresses and query identity liveness.
 Queries never expose an address or turn an old identity into a new resource.
+Operation 18 prepares an outgoing variadic call with the same scalar metadata
+as fixed preparation; its auxiliary word is the nonempty fixed argument count.
+The runtime rejects unpromoted tail types and nondefault calling conventions
+before preparing a distinct `ffi_prep_cif_var` interface.
 Metadata/result words use explicit
 little-endian 64-bit encoding; native calling conventions and scalar
 representations belong to libffi. Disabled builds preserve the primitive

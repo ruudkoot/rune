@@ -29,7 +29,7 @@ dynamic native operations. Existing GMP primitives retain their role.
 | Scalars | Fixed signed/unsigned widths, pointers, float/double; profile-specific C aliases and checked ranges | Prepared libffi calls use fixed scalar signatures |
 | Structs and unions | Target-aware SML byte representation, layout facts and native round trips | Aggregate passing uses generated C adapters where required |
 | Packed fields and bitfields | Explicit native field adapters and adjacent-byte preservation tests | They do not become portable SML field-address arithmetic |
-| Macros, inline functions, variadic calls | Typed C shims; fixed variadic adapters apply C default promotions | No arbitrary dynamic variadic CIF or unrestricted macro-expression interface |
+| Macros, inline functions, variadic calls | Typed C shims; fixed variadic adapters apply C default promotions; raw `prepareVariadic` retains an exact promoted signature through `ffi_prep_cif_var` | No inferred format-string protocol, variadic callbacks or unrestricted macro-expression interface |
 | Strings and buffers | Explicit encodings, bounds/element counts, input/output direction, alias-preserving copies and every-return-path cleanup | Retained native storage requires explicit lifetime/ownership policy |
 | Public SML | Records, options, abstract handles, returned outputs and named error policy; checked raw access retained | Adapter selections and original declaration mappings remain in manifests |
 | Callbacks | Rooted closures, owning-thread synchronous entry, nested calls, bounded VM reentry, saved exceptions and annotated foreign failure values | Foreign-thread entry returns failure without SML execution; registration must end before explicit release |

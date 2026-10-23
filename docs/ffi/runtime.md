@@ -46,15 +46,28 @@ is an explicit development step; no build description executes commands.
 Other cross targets currently retain unavailable support. Extending their
 provisioning and executing their ABI fixtures remain portability gates.
 
-The initial call interface covers fixed signed/unsigned 8/16/32/64-bit
+The scalar call interface covers fixed signed/unsigned 8/16/32/64-bit
 integers, float, double, void results and pointers. ABI 0 is the target
 default; ABI 1 is x86 Windows stdcall. `RuneForeign.target ()` reports native
 pointer bytes, byte order and stdcall support, independently of the SML
 word representation. For example, 32-bit Windows C `size_t` is 32 bits even
 when the portable SML word representation is wider. Invalid argument types, ranges,
 argument counts and unsupported conventions fail before native entry.
-Aggregates, outbound varargs, closures and foreign-thread entry require the
-later marshalling and callback milestones. No direct-link backend exists.
+Aggregates use typed C adapters; same-thread closures use the explicit
+[callback protocol](callbacks.md). No direct-link backend exists.
+
+`prepareVariadic` prepares an outgoing C variadic interface with a nonempty
+fixed prefix and the complete argument types. The caller applies C default
+promotions to tail types and values: `float` becomes `double`, and integers
+narrower than C `int` become `int` or `unsigned int` as required by the target.
+The runtime rejects unpromoted types, invalid counts and nondefault ABIs
+before native entry. It uses `ffi_prep_cif_var` even when the tail is empty,
+as required by the [libffi manual](https://github.com/libffi/libffi/blob/master/doc/libffi.texi).
+Each prepared resource retains its exact complete signature for reuse; a
+different tail requires a different prepared resource. Release cached calls
+explicitly before their symbols/libraries. Generated idiomatic bindings use
+sidecar-selected fixed typed adapters; no format-string inference or variadic
+callback entry is provided.
 
 ## Resources and memory
 
@@ -105,10 +118,11 @@ native registry. Native `runeopt` programs use the same primitive and rules.
 REPL code can use the Basis bridge, but must explicitly release resources
 before requesting an image or unloading their owner library.
 
-Callbacks are not enabled by this milestone. The existing driver nesting
-constraint is still enforced. Later callbacks must use an explicit VM
-entry delimiter, rooted closures, owning-thread guards and saved-exception
-propagation; libffi closures alone do not supply those requirements.
+Callbacks use an explicit VM entry delimiter, rooted closures, owning-thread
+guards and saved-exception propagation. The existing no-nested-driver rule
+remains enforced: the bounded interpreter callback loop does not call
+`vm_loop`, compile JIT code or invoke another engine driver. See the
+[callback lifecycle contract](callbacks.md) for suspended frames and shutdown.
 
 ## Reproduction
 

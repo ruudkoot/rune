@@ -86,12 +86,12 @@ struct
   fun native withLibffi =
     let val executable = directory ^ "/oracle"
         val () = ignore (command "compile-c" (compiler "CC" @ flags @
-          ["tests/ffi/fixture.c", "tests/ffi/oracle.c", "-o", executable]))
+          ["tests/ffi/fixture.c", "tests/ffi/variadic.c", "tests/ffi/oracle.c", "-o", executable]))
         val () = layout "linux-x86_64" (command "oracle-c" [executable])
         val () = if not withLibffi then () else
           let val ffiFlags = String.tokens Char.isSpace (command "pkg-config" ["pkg-config", "--cflags", "--libs", "libffi"])
               val () = ignore (command "compile-libffi" (compiler "CC" @ flags @
-                ["-DRUNEFFI_TEST_LIBFFI", "tests/ffi/fixture.c", "tests/ffi/oracle.c", "-o", executable ^ "-ffi"] @ ffiFlags))
+                ["-DRUNEFFI_TEST_LIBFFI", "tests/ffi/fixture.c", "tests/ffi/variadic.c", "tests/ffi/oracle.c", "-o", executable ^ "-ffi"] @ ffiFlags))
           in layout "linux-x86_64" (command "oracle-libffi" [executable ^ "-ffi"]) end
     in () end
   fun windows bits =
@@ -99,7 +99,7 @@ struct
         val executable = directory ^ "/oracle" ^ bits ^ ".exe"
         val gui = directory ^ "/gui" ^ bits ^ ".exe"
         val () = ignore (command ("compile-win" ^ bits) (cc @ flags @
-          ["tests/ffi/fixture.c", "tests/ffi/oracle.c", "-o", executable]))
+          ["tests/ffi/fixture.c", "tests/ffi/variadic.c", "tests/ffi/oracle.c", "-o", executable]))
         val () = ignore (command ("compile-gui" ^ bits) (cc @ flags @
           ["tests/ffi/win32_oracle.c", "-luser32", "-lgdi32", "-o", gui]))
         val () = layout (if bits = "64" then "windows-x86_64" else "windows-x86")
@@ -145,7 +145,7 @@ struct
          let val bits=if mode="windows32" then "32" else "64"
              val cc=compiler(if bits="32" then "WINCC32" else "WINCC")
              val dll=directory ^ "/subject" ^ bits ^ ".dll"
-             val ()=ignore(command "compile-dll" (cc @ flags @ ["-shared","-Wl,--kill-at","tests/ffi/fixture.c","tests/ffi/ownership.c","tests/ffi/callback-fixture.c","-o",dll]))
+             val ()=ignore(command "compile-dll" (cc @ flags @ ["-shared","-Wl,--kill-at","tests/ffi/fixture.c","tests/ffi/variadic.c","tests/ffi/ownership.c","tests/ffi/callback-fixture.c","-o",dll]))
              fun winpath path=String.translate (fn #"\r" => "" | #"\n" => "" | c => str c) (command "windows-path" ["wslpath","-w",fromRoot path])
              val subject=winpath dll
              fun one(target,vm)=
@@ -176,7 +176,7 @@ struct
          in one("stack",if bits="32" then "bin/runevm-stack32.exe" else "bin/runevm-stack.exe");
             one("registers",if bits="32" then "bin/runevm32.exe" else "bin/runevm.exe") end
        else
-         let val ()=ignore(command "compile-subject" (compiler "CC" @ flags @ ["-shared","-fPIC","tests/ffi/fixture.c","tests/ffi/ownership.c","tests/ffi/callback-fixture.c","-pthread","-o",library]))
+         let val ()=ignore(command "compile-subject" (compiler "CC" @ flags @ ["-shared","-fPIC","tests/ffi/fixture.c","tests/ffi/variadic.c","tests/ffi/ownership.c","tests/ffi/callback-fixture.c","-pthread","-o",library]))
              val ffiFlags=String.tokens Char.isSpace(command "runtime-pkg-config" ["pkg-config","--cflags","--libs","libffi"])
              val unit=directory ^ "/unit"
              val sanitize=if mode="asan" then ["-fsanitize=address,undefined","-fno-omit-frame-pointer"] else []

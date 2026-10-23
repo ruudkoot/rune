@@ -98,11 +98,33 @@ int main(int argc,char **argv){
     /* Failure at each prepared-call allocation must leave no live entry. */
     ForeignId error_symbol=foreign_symbol(f,lib,"rf_error",8);
     CHECK(error_symbol!=0);
+    ForeignId var_symbol=foreign_symbol(f,lib,"rf_variadic",11);
+    CHECK(var_symbol!=0);
+    ForeignType var_types[]={FOREIGN_U32,FOREIGN_I32,FOREIGN_I32,FOREIGN_I32};
+    ForeignId var_call=foreign_prepare_variadic(f,var_symbol,0,FOREIGN_I32,var_types,4,1);
+    CHECK(var_call!=0);
+    ForeignValue var_values[]={{.type=FOREIGN_U32,.value.word=3},
+        {.type=FOREIGN_I32,.value.integer=3},{.type=FOREIGN_I32,.value.integer=14},
+        {.type=FOREIGN_I32,.value.integer=25}};
+    CHECK(foreign_call(f,var_call,var_values,4,&result,&captured)==0 && result.value.integer==42);
+    CHECK(foreign_release(f,var_call)==0);
+    CHECK(foreign_prepare_variadic(f,var_symbol,0,FOREIGN_I32,var_types,4,0)==0);
+    CHECK(foreign_prepare_variadic(f,var_symbol,0,FOREIGN_I32,var_types,4,5)==0);
+    CHECK(foreign_prepare_variadic(f,var_symbol,1,FOREIGN_I32,var_types,4,1)==0);
+    CHECK(foreign_prepare_variadic(f,var_symbol,0,FOREIGN_I32,NULL,4,1)==0);
+    ForeignType unpromoted[]={FOREIGN_U32,FOREIGN_F32};
+    CHECK(foreign_prepare_variadic(f,var_symbol,0,FOREIGN_I32,unpromoted,2,1)==0);
+    unpromoted[1]=FOREIGN_I8;
+    CHECK(foreign_prepare_variadic(f,var_symbol,0,FOREIGN_I32,unpromoted,2,1)==0);
     before=foreign_live(f);
     ForeignType i32=FOREIGN_I32;
     for(long step=0;step<3;step++){
         remaining=step;
         CHECK(foreign_prepare(f,error_symbol,0,FOREIGN_I32,&i32,1)==0);
+        remaining=-1;
+        CHECK(foreign_live(f)==before);
+        remaining=step;
+        CHECK(foreign_prepare_variadic(f,var_symbol,0,FOREIGN_I32,var_types,4,1)==0);
         remaining=-1;
         CHECK(foreign_live(f)==before);
     }

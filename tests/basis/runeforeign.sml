@@ -25,6 +25,18 @@ struct
         val ()=T.check("RuneForeign.invokeDeferred/ordinary-result",fn()=>not(Option.isSome(#callbackException deferred)))
         val result = #result deferred
         val () = T.check ("RuneForeign.invoke/native-scalar", fn () => PackWord64Little.subVec(Byte.stringToBytes(#bytes result),0)=0w42)
+        val variadicSymbol=RuneForeign.symbol(library,"sprintf")
+        val variadicCall=RuneForeign.prepareVariadic{symbol=variadicSymbol,abi=0,result=RuneForeign.SInt32,
+          arguments=[RuneForeign.Pointer,RuneForeign.Pointer,RuneForeign.SInt32,RuneForeign.Float64],fixedCount=2}
+        val formatted=RuneForeign.allocate 0w64
+        val format=RuneForeign.allocate 0w9
+        val ()=RuneForeign.write(format,0w0,"%d:%.2f\000")
+        val formattedResult=RuneForeign.invoke(variadicCall,[RuneForeign.Address(SOME formatted),
+          RuneForeign.Address(SOME format),RuneForeign.Signed ~42,RuneForeign.Real 0.25])
+        val ()=T.check("RuneForeign.prepareVariadic/promoted-mixed-native-call",fn()=>
+          PackWord64Little.subVec(Byte.stringToBytes(#bytes formattedResult),0)=0w8 andalso
+          RuneForeign.read(formatted,0w0,9)="-42:0.25\000")
+        val ()=List.app RuneForeign.release[formatted,format,variadicCall,variadicSymbol]
         val callback = RuneForeign.callback {abi=0,result=RuneForeign.SInt32,arguments=[RuneForeign.SInt32],
           function=fn _=>RuneForeign.Signed 1,failure=RuneForeign.Default(RuneForeign.Signed 0)}
         val () = T.check ("RuneForeign.callback/rooted-resource",fn()=>RuneForeign.isLive callback)
