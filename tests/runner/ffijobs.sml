@@ -26,7 +26,11 @@ struct
         [Test.describe "hosts"(List.map(fn host=>Test.requires["host:" ^ host]
           (jobWith "rune-ffi-shim-check" host ("host " ^ host)["test-ffi-shims-hosts","library","nightly"]))Hosts.names)]),
      Test.describe "sdl"
-       [Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "win32-driver-failed-init" "win32-driver-failed-init" ["test-win32-sdl-driver"]),
+       [Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "win32-contract" "win32-contract" ["test-win32-sdl-contract"]),
+        Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "win32-contract-gui" "win32-contract-gui" ["test-win32-sdl-contract-gui"]),
+        Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "win32-app" "win32-app" ["test-win32-app-sdl"]),
+        Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "win32-app-gui" "win32-app-gui" ["test-win32-app-sdl-gui"]),
+        Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "win32-driver-failed-init" "win32-driver-failed-init" ["test-win32-sdl-driver"]),
         Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "win32-driver" "win32-driver" ["test-win32-sdl-driver"]),
         Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "win32-driver-gui" "win32-driver-gui" ["test-win32-sdl-driver-gui"]),
         Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "native" "native" ["test-sdl"]),

@@ -1,0 +1,2 @@
+use ../../ffi/win32/native.build
+files app.sml native-main.sml end

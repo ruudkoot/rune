@@ -1,0 +1,4 @@
+use ../../../ffi/win32/sdl-driver.build
+../../../ffi/win32/sdl-model.sml
+contract.sml
+sdl-contract-main.sml

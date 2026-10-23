@@ -1,0 +1,5 @@
+libraries ffi/win32/native end
+use "$(WIN32_GENERATED)/current.build"
+native-config.sml
+implements Win32 = native-export.sml end
+win32.sml

@@ -2141,3 +2141,13 @@ test-win32-sdl-driver: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
 	$(RUNE_TEST) --tier test-win32-sdl-driver
 test-win32-sdl-driver-gui: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
 	$(RUNE_TEST) --tier test-win32-sdl-driver-gui
+
+.PHONY: test-win32-sdl-contract test-win32-sdl-contract-gui test-win32-app-sdl test-win32-app-sdl-gui
+test-win32-sdl-contract: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-sdl-contract
+test-win32-sdl-contract-gui: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-sdl-contract-gui
+test-win32-app-sdl: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-app-sdl
+test-win32-app-sdl-gui: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-app-sdl-gui

@@ -1,0 +1,3 @@
+libraries ffi/win32/mock end
+implements Win32 = mock-export.sml end
+win32.sml
