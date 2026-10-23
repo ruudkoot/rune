@@ -4,7 +4,7 @@
   "description": "Compiler-backed Standard ML editing with Rune",
   "version": "0.0.0",
   "publisher": "ruudkoot",
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "CC0-1.0",
   "repository": { "type": "git", "url": "https://github.com/ruudkoot/rune.git" },
   "homepage": "https://github.com/ruudkoot/rune/blob/master/docs/language-server.md",
   "engines": { "vscode": "^1.106.0", "node": ">=22" },

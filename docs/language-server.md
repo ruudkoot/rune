@@ -10,6 +10,14 @@ feature, performance and platform acceptance.
 
 ## Build and launch
 
+For VS Code, `make dist-vscode` produces an installable VSIX containing
+private Linux and Windows x86-64 runtimes and a fallback Basis. It supports
+Remote WSL and does not use Rune executables from PATH or the workspace's
+build outputs. See [the extension guide](../editors/vscode/README.md).
+For Rune development, set `runelsp.libraryRoot` to the checkout's `lib`
+directory as a file URI so analysis follows saved library edits. Run
+`make manifests` after adding files or changing their provided names.
+
 ```
 make lsp
 bin/runelsp --stdio

@@ -168,7 +168,7 @@ BUILDER_LIB_SRCS := lib/unicode/utf8_sig.sml lib/unicode/utf8.sml lib/json/json_
                     lib/digest/digest_sig.sml lib/digest/sha256.sml lib/digest/hex_sig.sml lib/digest/hex.sml
 BUILDER_MODEL_SRCS := tools/builder/common.sml tools/builder/options.sml tools/builder/runtime-inputs.sml \
                     tools/builder/gmp-config.sml tools/builder/runtime-record.sml tools/builder/cross-vm.sml \
-                    tools/builder/formats.sml tools/builder/archive.sml tools/builder/dist.sml \
+                    tools/builder/formats.sml tools/builder/archive.sml tools/builder/dist.sml tools/builder/vscode.sml \
                     tools/builder/gmp-build.sml tools/builder/ffi-deps.sml tools/builder/relink.sml tools/builder/package-runtime.sml \
                     tools/builder/setup-mlton.sml
 BUILDER_NATIVE_SRCS := $(BUILDER_LIB_SRCS) tools/builder/io.sig tools/builder/native-io.sml $(BUILDER_MODEL_SRCS) tools/builder/main.sml
@@ -1887,7 +1887,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/tracecheck.sml tests/runner/heapchecks.sml tests/runner/censustrace.sml tests/runner/heapfaults.sml tests/runner/jitdumpcheck.sml tests/runner/heap.sml \
                examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
-               tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml \
+               tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/vscodechecks.sml tests/runner/scenariojobs.sml \
                tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
                tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
                tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/main.sml
@@ -2012,7 +2012,7 @@ uninstall:
 # Distribution archives (docs/building.md, Distribution). The version is
 # git's, the one runtime/version.h already carries. Phony: the archives
 # land in the dist/ directory, whose stamp is not the archives'.
-dist: bin/rune-build runtime/version.h manifests bin/rune.rbc bin/rune-repl.img bin/runeffi.rbc \
+dist: dist-vscode bin/rune-build runtime/version.h manifests bin/rune.rbc bin/rune-repl.img bin/runeffi.rbc \
       bin/dist/runevm bin/dist/runevm32 bin/dist/runevm-aarch64 bin/dist/runevm-ppc64 \
       bin/dist/runevm.exe bin/dist/runevm32.exe
 	@mkdir -p dist
@@ -2023,6 +2023,34 @@ dist: bin/rune-build runtime/version.h manifests bin/rune.rbc bin/rune-repl.img 
 	  --linux x86_64=bin/dist/runevm --linux i686=bin/dist/runevm32 \
 	  --linux aarch64=bin/dist/runevm-aarch64 --linux ppc64=bin/dist/runevm-ppc64 \
 	  --windows x86_64=bin/dist/runevm.exe --windows i686=bin/dist/runevm32.exe
+
+# VS Code uses copies of these runtimes, never a development/installed VM.
+NODE ?= node
+NPM ?= npm
+VSIX_PUBLISHER ?= ruudkoot
+VSCODE_CLIENT_SRCS := $(wildcard editors/vscode/src/*.js) editors/vscode/bundle.cjs
+.PHONY: vscode dist-vscode test-vscode test-vscode-packaged test-vscode-editor
+bin/rune-lsp-distribution-tests.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/distribution-tests.sml manifests
+	$(RUNE) --library json --library lsp tests/lsp/client.sml tests/lsp/distribution-tests.sml -o $@
+editors/vscode/node_modules/.package-lock.json: editors/vscode/package.json editors/vscode/package-lock.json
+	$(NODE) -e 'if (+process.versions.node.split(".")[0] < 22) throw Error("VSIX tooling requires Node.js 22 or later")'
+	cd editors/vscode && $(NPM) ci --ignore-scripts --no-audit --no-fund
+build/vscode/client/.built: $(VSCODE_CLIENT_SRCS) editors/vscode/node_modules/.package-lock.json
+	$(NODE) editors/vscode/bundle.cjs $(abspath build/vscode/client)
+	touch $@
+vscode dist-vscode: bin/rune-build bin/runelsp.rbc bin/dist/runevm bin/dist/runevm.exe build/vscode/client/.built manifests
+	bin/rune-build package-lsp --version "$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h)" \
+	  --out build/vscode/extension --server bin/runelsp.rbc --lib lib \
+	  --linux bin/dist/runevm --windows bin/dist/runevm.exe --publisher '$(VSIX_PUBLISHER)' \
+	  --gmp-notices '$(GMP_DIST_NATIVE_PREFIX)/share/licenses/gmp' \
+	  --node '$(NODE)' $(if $(filter dist-vscode,$@),--vsix dist)
+test-vscode: bin/rune-build bin/rune-scenarios bin/rune-test
+	$(RUNE_TEST) --tier test-vscode
+test-vscode-packaged: dist-vscode bin/rune-lsp-distribution-tests.rbc bin/rune-scenarios
+	bin/rune-scenarios scenario-vscode-archive "$(abspath dist)/rune-language-server-$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h).vsix"
+	build/vscode/extension/server/bin/runevm bin/rune-lsp-distribution-tests.rbc $(abspath build/vscode/extension)
+test-vscode-editor: dist-vscode
+	$(NODE) editors/vscode/test/editor.cjs "$(abspath dist)/rune-language-server-$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h).vsix"
 
 # Portable suite correctness, serial measurements and deterministic counts
 # (docs/plans/benchmarks.md). Timing thresholds stay outside make check.
@@ -2104,7 +2132,7 @@ BENCH_CHECK_SRCS := $(HOST_LAWS_SRCS) tests/runner/matrixload.sml tests/runner/m
 bin/rune-bench-check.rbc: $(RUNE) $(BENCH_CHECK_SRCS) tests/runner/benchmark-cases.json tests/runner/inventory-cases.json manifests
 	$(RUNE) --library test/runner --library json --library digest $(BENCH_CHECK_SRCS) -o $@
 SCENARIO_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/scenarios.sml tests/runner/windowsdir.sml tests/runner/installchecks.sml \
-                 tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml tests/runner/scenarios-main.sml
+                 tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/vscodechecks.sml tests/runner/scenariojobs.sml tests/runner/scenarios-main.sml
 bin/rune-scenarios.rbc: $(RUNE) $(SCENARIO_SRCS) manifests
 	$(RUNE) --library test/runner --library json $(SCENARIO_SRCS) -o $@
 bin/rune-budget bin/rune-bench-check bin/rune-scenarios: bin/%: bin/%.rbc bin/runevm Makefile

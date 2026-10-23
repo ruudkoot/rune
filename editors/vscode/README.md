@@ -45,6 +45,19 @@ and the Windows x86-64 cross toolchain. Dependencies are locked and installed
 locally; no global npm packages are required. `make dist` also creates this
 VSIX alongside the Linux and Windows Rune archives.
 
+`make test-vscode` runs the dependency-free client, staging and version
+checks, also included in `make check`. `make test-vscode-packaged` builds
+the VSIX and checks its archive and live Linux protocol behavior.
+`make test-vscode-editor` runs the extracted package in an isolated VS Code
+test host; it needs a display (or Xvfb). `VSCODE_TEST_VERSION` selects the
+test host version, defaulting to the minimum supported version, 1.106.0.
+The portable `bin/rune-lsp-distribution-tests.rbc` can also run on the
+packaged Windows VM with the native extracted-extension path as its argument.
+
+Linux needs glibc and the shared libraries used by its distribution VM;
+with the default FFI-enabled Linux build this includes `libffi.so.8`.
+GMP is linked statically. The package carries its license notices.
+
 Install with **Extensions: Install from VSIX...**, or:
 
 ```sh

@@ -9,9 +9,10 @@ struct
     | main ("record-vm-build"::args)=BuildRuntimeRecord.main args
     | main ("package-runtime"::args)=BuildPackageRuntime.main args
     | main ("make-dist"::args)=BuildDist.main args
+    | main ("package-lsp"::args)=BuildVSCode.main args
     | main ("setup-mlton"::args)=BuildSetupMLton.main args
     | main ("relink"::args)=BuildRelink.main args
-    | main ["--help"]=(say "rune-build MODE [ARGS]\nModes: configure-gmp, build-gmp [download], build-ffi libffi|sdl, build-gmp-vm, record-vm-build,\npackage-runtime, make-dist, setup-mlton, relink, check-windows-imports. See tools/builder/README.md.\n";0)
+    | main ["--help"]=(say "rune-build MODE [ARGS]\nModes: configure-gmp, build-gmp [download], build-ffi libffi|sdl, build-gmp-vm, record-vm-build,\npackage-runtime, make-dist, package-lsp, setup-mlton, relink, check-windows-imports. See tools/builder/README.md.\n";0)
     | main _=raise Usage "rune-build MODE [ARGS]"
   fun run () =
     let val ()=BuildIO.initialize ()
