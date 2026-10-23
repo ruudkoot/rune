@@ -25,6 +25,7 @@ typedef struct {
     union { int64_t integer; uint64_t word; double real; ForeignId pointer; } value;
 } ForeignValue;
 typedef struct { int error_number; uint32_t native_error; char message[256]; } ForeignError;
+typedef enum { FOREIGN_FAIL_NEVER, FOREIGN_FAIL_ZERO, FOREIGN_FAIL_NONZERO, FOREIGN_FAIL_NEGATIVE } ForeignFailure;
 
 Foreign *foreign_create(const ForeignSystem *system);
 int foreign_available(void);
@@ -33,6 +34,9 @@ uint64_t foreign_target(void);
 void foreign_destroy(Foreign *foreign);
 const ForeignError *foreign_error(const Foreign *foreign);
 size_t foreign_live(const Foreign *foreign);
+int foreign_alive(const Foreign *foreign, ForeignId resource);
+/* -1 on invalid/non-pointer resources; otherwise native address equality. */
+int foreign_same(Foreign *foreign, ForeignId left, ForeignId right);
 ForeignId foreign_library(Foreign *foreign, const char *path, size_t length);
 ForeignId foreign_symbol(Foreign *foreign, ForeignId library, const char *name, size_t length);
 ForeignId foreign_memory(Foreign *foreign, size_t length);
@@ -41,5 +45,9 @@ int foreign_write(Foreign *foreign, ForeignId memory, size_t offset, const void 
 ForeignId foreign_view(Foreign *foreign, ForeignId memory, size_t offset, size_t length);
 ForeignId foreign_prepare(Foreign *foreign, ForeignId symbol, int abi, ForeignType result, const ForeignType *arguments, size_t count);
 int foreign_call(Foreign *foreign, ForeignId call, const ForeignValue *arguments, size_t count, ForeignValue *result, ForeignError *captured);
+/* Atomically guard a native-owned pointer through its annotated destructor.
+   A native failure preserves ownership; success also retires the identity. */
+int foreign_dispose(Foreign *foreign, ForeignId resource, ForeignId call, const ForeignValue *arguments,
+                    size_t count, ForeignFailure failure, ForeignValue *result, ForeignError *captured, int *disposed);
 int foreign_release(Foreign *foreign, ForeignId resource);
 #endif

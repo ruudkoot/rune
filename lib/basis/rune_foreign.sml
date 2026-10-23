@@ -6,6 +6,7 @@ struct
   datatype kind = Library | Symbol | Memory | View | Prepared of scalar list | DataPointer
   datatype resource = Resource of {id : Word64.word, live : bool ref, kind : kind}
   datatype argument = Signed of Int64.int | Unsigned of Word64.word | Real of real | Address of resource option
+  datatype failure = NoFailure | Zero | Nonzero | Negative
   type error = {number : int, native : Word32.word, message : string}
   type result = {bytes : string, pointer : resource option, error : error}
   exception Error of error
@@ -43,7 +44,7 @@ struct
     let val metadata = String.implode (Char.chr abi :: Char.chr (code result) :: List.map (Char.chr o code) arguments)
         val (id, _, _) = request (8, identity symbol, 0w0, metadata, "")
     in resource (Prepared arguments) id end
-  fun invoke (call as Resource {kind, ...}, arguments) =
+  fun encodeArguments (Resource {kind, ...}, arguments) =
     let val types = case kind of Prepared types => types | _ => failure "resource is not a prepared call"
         val () = if List.length types = List.length arguments then () else failure "foreign argument count mismatch"
         fun encode (ty, value) =
@@ -60,9 +61,23 @@ struct
               | (Pointer, Address (SOME pointer)) => wordBytes (identity pointer)
               | _ => failure "foreign argument kind mismatch"
           in str (Char.chr (code ty)) ^ bytes end
-        val data = String.concat (ListPair.map encode (types, arguments))
+    in String.concat (ListPair.map encode (types, arguments)) end
+  fun invoke (call, arguments) =
+    let val data=encodeArguments(call,arguments)
         val (pointer, bytes, error) = request (9, identity call, 0w0, "", data)
     in {bytes = bytes, pointer = if pointer = 0w0 then NONE else SOME (resource DataPointer pointer), error = error} end
+  fun dispose {resource=value as Resource{live,...},call,arguments,failure} =
+    let val data=encodeArguments(call,arguments)
+        val predicate=case failure of NoFailure=>0 | Zero=>1 | Nonzero=>2 | Negative=>3
+        val (disposed,bytes,error)=request(12,identity call,identity value,str(Char.chr predicate),data)
+        val disposed=disposed<>0w0
+        val ()=if disposed then live:=false else ()
+    in {disposed=disposed,result={bytes=bytes,pointer=NONE,error=error}} end
+  fun sameAddress(left,right)=
+    let val (same,_,_)=request(13,identity left,identity right,"","") in same<>0w0 end
+  fun isLive(Resource{id,live,...})=if not(!live) then false else
+    let val (present,_,_)=request(14,id,0w0,"","") val found=present<>0w0
+    in if found then true else (live:=false;false) end
   fun release (value as Resource {live, ...}) = (ignore (request (7, identity value, 0w0, "", "")); live := false)
   fun live () = let val (count, _, _) = request (10, 0w0, 0w0, "", "") in count end
 end

@@ -63,8 +63,9 @@ static int p_foreign(VM *vm) {
             result_id = foreign_prepare(vm->foreign, id, metadata[0], (ForeignType)metadata[1], arguments, nmeta - 2);
             ok = result_id != 0; break;
         }
-        case 9: {
+        case 9: case 12: {
             if (ninput % 9 || ninput / 9 > 1024) { ok = 0; error.error_number = EINVAL; break; }
+            if (operation == 12 && nmeta != 1) { ok = 0; error.error_number = EINVAL; break; }
             size_t count = ninput / 9;
             ForeignValue arguments[1024], result;
             for (size_t i = 0; i < count; i++) {
@@ -74,8 +75,12 @@ static int p_foreign(VM *vm) {
                     memcpy(&arguments[i].value.real, &word, sizeof word);
                 else arguments[i].value.word = word;
             }
-            ok = foreign_call(vm->foreign, id, arguments, count, &result, &error) == 0;
+            int disposed = 0;
+            ok = operation == 12 ?
+                foreign_dispose(vm->foreign, auxiliary, id, arguments, count, (ForeignFailure)metadata[0], &result, &error, &disposed) == 0 :
+                foreign_call(vm->foreign, id, arguments, count, &result, &error) == 0;
             if (ok) {
+                if (operation == 12) result_id = (uint64_t)disposed;
                 if (result.type == FOREIGN_POINTER) result_id = result.value.pointer;
                 else if (result.type != FOREIGN_VOID) {
                     uint64_t word;
@@ -87,6 +92,11 @@ static int p_foreign(VM *vm) {
             break;
         }
         case 10: result_id = foreign_live(vm->foreign); break;
+        case 13: {
+            int same = foreign_same(vm->foreign, id, auxiliary);
+            ok = same >= 0; if (ok) result_id = (uint64_t)same; break;
+        }
+        case 14: result_id = (uint64_t)foreign_alive(vm->foreign, id); break;
         default: ok = 0; error.error_number = EINVAL; strcpy(error.message, "unknown foreign operation"); break;
         }
         if (!ok && !error.error_number) error = *foreign_error(vm->foreign);

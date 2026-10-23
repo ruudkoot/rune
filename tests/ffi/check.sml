@@ -151,6 +151,11 @@ struct
                ["-DRUNE_FFI=1","-Iruntime","tests/runtime/foreign_test.c","runtime/foreign.c","runtime/sys/sys_posix.c",
                 "-Wl,--wrap=calloc","-Wl,--wrap=realloc","-o",unit,"-ldl","-lm"] @ ffiFlags))
              val ()=ignore(command "runtime-unit" [unit,library])
+             val disposal=directory ^ "/disposal-unit"
+             val ()=ignore(command "compile-disposal-unit" (compiler "CC" @ flags @ sanitize @
+               ["-DRUNE_FFI=1","-Iruntime","tests/runtime/foreign_dispose_test.c","runtime/foreign.c","runtime/sys/sys_posix.c",
+                "-Wl,--wrap=calloc","-Wl,--wrap=realloc","-o",disposal,"-ldl","-lm"] @ ffiFlags))
+             val ()=ignore(command "disposal-unit" [disposal,library])
              fun one(target,vm,options)=
                let val output=bytecode ^ target ^ ".rbc"
                    val ()=compile target "tests/ffi/calls.sml" output

@@ -48,7 +48,10 @@ allocator never reuses identities, including across different VMs. SML
 contains identities and liveness tombstones, never native addresses.
 Libraries retain symbols; symbols retain prepared calls; native pointer
 results retain their library. Views retain their source allocation or view.
-Release rejects stale resources, active prepared calls and live dependents.
+Release rejects stale resources, active prepared calls, leased arguments
+and live dependents. Native calls lease pointer arguments until native
+execution returns. Reserved result identities survive registry growth
+during native reentry without retaining a movable registry address.
 The VM releases remaining registry resources on shutdown.
 
 Foreign allocations contain zeroed bytes outside the moving heap. Reads
@@ -112,3 +115,34 @@ sentinel destination on rejected saves, then save and restore closed
 handles. Sanitizer and GC-stress executions complement these contracts.
 Acceptance commands, toolchains and outstanding checks belong in the dated
 milestone evidence rather than inferred platform claims.
+
+## Guarded native ownership
+
+`RuneForeign.dispose` combines an annotated native destructor with registry
+retirement. It checks active uses and live views before any native entry,
+marks the target as being destroyed, and rejects nested reads, views, reuse
+or release during destruction. Its destructor alone may receive that
+retiring pointer. The native return/error capture precedes cleanup. A
+zero/nonzero/negative failure predicate preserves ownership for retry;
+success closes the identity even if later SML result construction fails.
+Void destructors require the unconditional-success policy. Floating and
+pointer-valued destructor results require a separately specified adapter.
+
+This operation accepts external pointers, not Rune allocations or returned
+pointers retaining Rune-owned storage. Dropping a raw pointer identity still
+does not invoke a native deallocator. `sameAddress` compares pointer values
+without exposing an address, and `isLive` refreshes SML tombstones after
+retirement. Old identities are never reused for a new allocation.
+
+These guards are the strict memory-ownership contract. Opaque GUI handles
+whose native APIs explicitly permit destruction during a synchronous
+message require a separately specified callback/lifecycle protocol; they
+are not silently exempted from memory leases.
+
+Sanitizer fixtures keep native allocation/deallocation in one coherent
+symbol namespace. A direct per-library lookup of libc allocation functions
+can bypass sanitizer interposition for one member of a pair; the retained
+independent C reproducer is `tests/ffi/research/libc-asan.c`. The runtime does
+not silently substitute symbol names. Its fixture library calls its
+allocator and deallocator normally, allowing sanitizer instrumentation to
+observe both ends of the ownership contract.

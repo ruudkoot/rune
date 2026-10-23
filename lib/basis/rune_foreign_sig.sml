@@ -14,6 +14,8 @@ sig
   (* Checked scalar arguments; addresses use resource identities. *)
   datatype argument = Signed of Int64.int | Unsigned of Word64.word
     | Real of real | Address of resource option
+  (* An integral destructor result's annotated failure condition. *)
+  datatype failure = NoFailure | Zero | Nonzero | Negative
   (* Captured immediately after native execution, before cleanup. *)
   type error = {number : int, native : Word32.word, message : string}
   (* A successful native invocation's raw result and captured error. *)
@@ -69,6 +71,28 @@ sig
 
      Raises: `Error` for unavailable support or invalid calls/arguments. *)
   val invoke : resource * argument list -> result
+  (* `dispose {resource, call, arguments, failure}` runs a native destructor.
+
+     The resource must be a native-owned pointer with no active uses or live
+     dependents. Reentry cannot access or destroy it while destruction runs.
+     Success retires its identity; a native failure preserves it for retry.
+     The returned raw status and captured error survive either outcome.
+
+     Raises: `Error` before native entry for invalid ownership or busy state. *)
+  val dispose : {resource : resource, call : resource, arguments : argument list,
+    failure : failure} -> {disposed : bool, result : result}
+  (* `sameAddress (left, right)` compares native pointer identities safely.
+
+     This does not read storage. Allocations, views, symbols and returned
+     pointers may be compared, including a pointer undergoing destruction.
+
+     Raises: `Error` for stale or non-pointer resources. *)
+  val sameAddress : resource * resource -> bool
+  (* `isLive resource` checks its registry identity and refreshes its tombstone.
+
+     A retired or previously released resource returns false. This never
+     treats an old identity as a new allocation at the same native address. *)
+  val isLive : resource -> bool
   (* `release resource` releases it after all dependents have been released.
 
      Its SML tombstone survives images; stale values cannot become live.
