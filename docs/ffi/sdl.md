@@ -9,6 +9,26 @@ copied events, scoped pixels, records, options and returned outputs.
 
 ## Generate and compile
 
+Complete checked-in source artifacts are available under
+[`lib/ffi/sdl/generated`](../../lib/ffi/sdl/README.md) for Linux/x86-64,
+Windows x86 and Windows x86-64. They include all 53 core and three support
+functions, target layouts, constants, declaration provenance and optional
+field-shim C sources. Select the relevant directory as `SDL_GENERATED`:
+
+```sh
+bin/rune --library sdl --build examples/sdl/hello.build \
+  --path SDL_GENERATED="$PWD/lib/ffi/sdl/generated/native" -o build/sdl-hello.rbc
+```
+
+`make sdl-generated` regenerates all three targets from the original headers;
+`make check-sdl-generated` strictly verifies every generated file and pointer
+without publishing changes. The commands need the pinned SDK/MSVC roots for
+the Windows profiles. A single profile can be checked with
+`bin/runevm bin/rune-sdl-generated.rbc check native` or `windows32`/`windows64`.
+Native shim libraries remain explicit build prerequisites. Target set IDs,
+digests, exact commands and validation are recorded in
+[the artifact receipt](../../tests/ffi/evidence/sdl-generated.md).
+
 Provision the pinned sources as described by `ffi/sdl/source.json`. Provision
 libffi for the target VM as described by `docs/ffi/runtime.md`. The generator
 runs in Rune/SML; neither Clang nor a native C compiler parses its input.

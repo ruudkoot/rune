@@ -2285,3 +2285,12 @@ test-sdl-hosts: host-builds bin/rune-boot bin/runeffi bin/rune-sdl-check bin/run
 	$(RUNE_TEST) --tier test-sdl-hosts
 test-win32-hosts: host-builds bin/rune-boot bin/runeffi bin/rune-win32-check bin/rune-test
 	$(RUNE_TEST) --tier test-win32-hosts
+
+SDL_GENERATED_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/sdl/generated.sml
+.PHONY: sdl-generated check-sdl-generated
+bin/rune-sdl-generated.rbc: $(RUNE) $(SDL_GENERATED_SRCS) manifests
+	$(RUNE) --library test/runner --library json --library digest $(SDL_GENERATED_SRCS) -o $@
+sdl-generated: $(RUNE) vm bin/runeffi bin/rune-sdl-generated.rbc
+	bin/runevm bin/rune-sdl-generated.rbc generate
+check-sdl-generated: $(RUNE) vm bin/runeffi bin/rune-sdl-generated.rbc
+	bin/runevm bin/rune-sdl-generated.rbc check
