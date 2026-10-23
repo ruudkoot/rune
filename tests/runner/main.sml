@@ -74,6 +74,9 @@ struct
   val capabilities =
     [{name = "python3", probe = "command -v python3", hint = "install python3 (apt, dnf: python3; pacman, brew: python)"},
      {name = "cc", probe = "command -v ${CC:-cc}", hint = "install a C compiler (apt: build-essential; dnf: gcc; pacman: base-devel; brew: gcc)"},
+     {name = "sdl3", probe = "test -r \"${RUNE_SDL_NATIVE_LIBRARY:-build/deps/sdl/native/install/lib/libSDL3.so.0}\"", hint = "provision pinned SDL3 or set RUNE_SDL_NATIVE_LIBRARY; docs/ffi/sdl.md"},
+     {name = "sdl3-windows32", probe = "test -r \"${RUNE_SDL_WINDOWS32_LIBRARY:-build/deps/sdl/windows32/install/bin/SDL3.dll}\"", hint = "provision pinned Windows32 SDL3 or set RUNE_SDL_WINDOWS32_LIBRARY"},
+     {name = "sdl3-windows64", probe = "test -r \"${RUNE_SDL_WINDOWS64_LIBRARY:-build/deps/sdl/windows64/install/bin/SDL3.dll}\"", hint = "provision pinned Windows64 SDL3 or set RUNE_SDL_WINDOWS64_LIBRARY"},
      {name = "libffi", probe = "pkg-config --exists libffi", hint = "install libffi headers and pkg-config for the independent FFI oracle"},
      {name = "clang", probe = "command -v ${CLANG:-clang}", hint = "install Clang for independent C frontend comparisons"},
      {name = "windows-sdk", probe = "test -d \"$RUNEFFI_WINDOWS_SDK/um\" && test -d \"$RUNEFFI_MSVC_INCLUDE\"",

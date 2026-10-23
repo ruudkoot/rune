@@ -17,12 +17,14 @@
       },
       "public": "setMainReady",
       "raw": "SDL_SetMainReady",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_Init",
@@ -32,12 +34,14 @@
       },
       "public": "init",
       "raw": "SDL_Init",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_InitSubSystem",
@@ -47,12 +51,14 @@
       },
       "public": "initSubSystem",
       "raw": "SDL_InitSubSystem",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_QuitSubSystem",
@@ -62,12 +68,14 @@
       },
       "public": "quitSubSystem",
       "raw": "SDL_QuitSubSystem",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_Quit",
@@ -77,12 +85,14 @@
       },
       "public": "quit",
       "raw": "SDL_Quit",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_GetError",
@@ -92,12 +102,14 @@
       },
       "public": "getError",
       "raw": "SDL_GetError",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_ClearError",
@@ -107,12 +119,14 @@
       },
       "public": "clearError",
       "raw": "SDL_ClearError",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_free",
@@ -122,12 +136,14 @@
       },
       "public": "cleanup",
       "raw": "SDL_free",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_CreateWindow",
@@ -137,12 +153,14 @@
       },
       "public": "createWindow",
       "raw": "SDL_CreateWindow",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_DestroyWindow",
@@ -152,12 +170,14 @@
       },
       "public": "destroyWindow",
       "raw": "SDL_DestroyWindow",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_GetWindowID",
@@ -167,12 +187,14 @@
       },
       "public": "getWindowID",
       "raw": "SDL_GetWindowID",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_SetWindowTitle",
@@ -182,12 +204,14 @@
       },
       "public": "setWindowTitle",
       "raw": "SDL_SetWindowTitle",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_GetWindowSize",
@@ -197,12 +221,14 @@
       },
       "public": "getWindowSize",
       "raw": "SDL_GetWindowSize",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_SetWindowSize",
@@ -212,12 +238,14 @@
       },
       "public": "setWindowSize",
       "raw": "SDL_SetWindowSize",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_ShowWindow",
@@ -227,12 +255,14 @@
       },
       "public": "showWindow",
       "raw": "SDL_ShowWindow",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_HideWindow",
@@ -242,12 +272,14 @@
       },
       "public": "hideWindow",
       "raw": "SDL_HideWindow",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_PollEvent",
@@ -257,12 +289,14 @@
       },
       "public": "pollEvent",
       "raw": "SDL_PollEvent",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_WaitEvent",
@@ -272,12 +306,14 @@
       },
       "public": "waitEvent",
       "raw": "SDL_WaitEvent",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_WaitEventTimeout",
@@ -287,12 +323,14 @@
       },
       "public": "waitEventTimeout",
       "raw": "SDL_WaitEventTimeout",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_PushEvent",
@@ -302,12 +340,14 @@
       },
       "public": "pushEvent",
       "raw": "SDL_PushEvent",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_GetKeyboardState",
@@ -317,12 +357,14 @@
       },
       "public": "getKeyboardState",
       "raw": "SDL_GetKeyboardState",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_GetMouseState",
@@ -332,12 +374,14 @@
       },
       "public": "getMouseState",
       "raw": "SDL_GetMouseState",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_StartTextInput",
@@ -347,12 +391,14 @@
       },
       "public": "startTextInput",
       "raw": "SDL_StartTextInput",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_StopTextInput",
@@ -362,12 +408,14 @@
       },
       "public": "stopTextInput",
       "raw": "SDL_StopTextInput",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_CreateSurface",
@@ -377,12 +425,14 @@
       },
       "public": "createSurface",
       "raw": "SDL_CreateSurface",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_DestroySurface",
@@ -392,12 +442,14 @@
       },
       "public": "destroySurface",
       "raw": "SDL_DestroySurface",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_LockSurface",
@@ -407,12 +459,14 @@
       },
       "public": "lockSurface",
       "raw": "SDL_LockSurface",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_UnlockSurface",
@@ -422,12 +476,14 @@
       },
       "public": "unlockSurface",
       "raw": "SDL_UnlockSurface",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_FillSurfaceRect",
@@ -437,12 +493,14 @@
       },
       "public": "fillSurfaceRect",
       "raw": "SDL_FillSurfaceRect",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_BlitSurface",
@@ -452,12 +510,14 @@
       },
       "public": "blitSurface",
       "raw": "SDL_BlitSurface",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_CreateRenderer",
@@ -467,12 +527,14 @@
       },
       "public": "createRenderer",
       "raw": "SDL_CreateRenderer",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_CreateSoftwareRenderer",
@@ -482,12 +544,14 @@
       },
       "public": "createSoftwareRenderer",
       "raw": "SDL_CreateSoftwareRenderer",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_DestroyRenderer",
@@ -497,12 +561,14 @@
       },
       "public": "destroyRenderer",
       "raw": "SDL_DestroyRenderer",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_SetRenderDrawColor",
@@ -512,12 +578,14 @@
       },
       "public": "setRenderDrawColor",
       "raw": "SDL_SetRenderDrawColor",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_RenderClear",
@@ -527,12 +595,14 @@
       },
       "public": "renderClear",
       "raw": "SDL_RenderClear",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_RenderPoint",
@@ -542,12 +612,14 @@
       },
       "public": "renderPoint",
       "raw": "SDL_RenderPoint",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_RenderLine",
@@ -557,12 +629,14 @@
       },
       "public": "renderLine",
       "raw": "SDL_RenderLine",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_RenderRect",
@@ -572,12 +646,14 @@
       },
       "public": "renderRect",
       "raw": "SDL_RenderRect",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_RenderFillRect",
@@ -587,12 +663,14 @@
       },
       "public": "renderFillRect",
       "raw": "SDL_RenderFillRect",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_RenderPresent",
@@ -602,12 +680,14 @@
       },
       "public": "renderPresent",
       "raw": "SDL_RenderPresent",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_RenderReadPixels",
@@ -617,12 +697,14 @@
       },
       "public": "renderReadPixels",
       "raw": "SDL_RenderReadPixels",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_CreateTextureFromSurface",
@@ -632,12 +714,14 @@
       },
       "public": "createTextureFromSurface",
       "raw": "SDL_CreateTextureFromSurface",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_DestroyTexture",
@@ -647,12 +731,14 @@
       },
       "public": "destroyTexture",
       "raw": "SDL_DestroyTexture",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_RenderTexture",
@@ -662,12 +748,14 @@
       },
       "public": "renderTexture",
       "raw": "SDL_RenderTexture",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_RenderDebugText",
@@ -677,12 +765,14 @@
       },
       "public": "renderDebugText",
       "raw": "SDL_RenderDebugText",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_HasClipboardText",
@@ -692,12 +782,14 @@
       },
       "public": "hasClipboardText",
       "raw": "SDL_HasClipboardText",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_GetClipboardText",
@@ -707,12 +799,14 @@
       },
       "public": "getClipboardText",
       "raw": "SDL_GetClipboardText",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_SetClipboardText",
@@ -722,12 +816,14 @@
       },
       "public": "setClipboardText",
       "raw": "SDL_SetClipboardText",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_GetTicks",
@@ -737,12 +833,14 @@
       },
       "public": "getTicks",
       "raw": "SDL_GetTicks",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_GetTicksNS",
@@ -752,12 +850,14 @@
       },
       "public": "getTicksNS",
       "raw": "SDL_GetTicksNS",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_GetPerformanceCounter",
@@ -767,12 +867,14 @@
       },
       "public": "getPerformanceCounter",
       "raw": "SDL_GetPerformanceCounter",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_GetPerformanceFrequency",
@@ -782,12 +884,14 @@
       },
       "public": "getPerformanceFrequency",
       "raw": "SDL_GetPerformanceFrequency",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     },
     {
       "foreign": "SDL_Delay",
@@ -797,12 +901,14 @@
       },
       "public": "delay",
       "raw": "SDL_Delay",
-      "implementation": "planned",
+      "implementation": "implemented",
       "gate": "M7",
       "test": "sdl-contract",
       "unresolved": [
-        "M2: parameter ownership, nullability, lengths, errors and resource dependencies must be reviewed against the declaration"
-      ]
+        "M7: preceding milestone and final integration gates remain open; see tests/ffi/evidence/m7.md"
+      ],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
     }
   ],
   "requiredTypes": [

@@ -25,6 +25,12 @@ struct
         [jobWith "rune-ffi-shim-check" "asan" "asan" ["test-ffi-shims-asan","vm","nightly"]] @
         [Test.describe "hosts"(List.map(fn host=>Test.requires["host:" ^ host]
           (jobWith "rune-ffi-shim-check" host ("host " ^ host)["test-ffi-shims-hosts","library","nightly"]))Hosts.names)]),
+     Test.describe "sdl"
+       [Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "native" "native" ["test-sdl"]),
+        Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "gui-linux" "gui-linux" ["test-sdl-gui"]),
+        Test.requires["cc","libffi","sdl3"](jobWith "rune-sdl-check" "asan" "asan" ["test-sdl-asan"]),
+        Test.requires["windows","windows-sdk","sdl3-windows32"](jobWith "rune-sdl-check" "windows32" "windows32" ["test-sdl-windows"]),
+        Test.requires["windows","windows-sdk","sdl3-windows64"](jobWith "rune-sdl-check" "windows64" "windows64" ["test-sdl-windows"])],
      Test.describe "layout"
        (List.map(fn target=>jobWith "rune-c-layout-check" target target ["test-c-layout"])
          ["native","linux32","windows32","windows64","aarch64","ppc64"]),

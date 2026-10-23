@@ -38,3 +38,5 @@ __pycache__/
 
 /lib/ffi/win32/model/MANIFEST
 /lib/ffi/win32/mock/MANIFEST
+
+/lib/sdl/MANIFEST

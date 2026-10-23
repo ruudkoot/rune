@@ -241,7 +241,7 @@ all: vm boot runedoc runeopt runeffi manifests basis-cache
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
-manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST lib/ffi/runtime/MANIFEST lib/ffi/win32/common/MANIFEST lib/ffi/win32/model/MANIFEST lib/ffi/win32/mock/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
+manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST lib/ffi/runtime/MANIFEST lib/ffi/win32/common/MANIFEST lib/ffi/win32/model/MANIFEST lib/ffi/win32/mock/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST) lib/sdl/MANIFEST
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
 lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -293,6 +293,8 @@ lib/ffi/win32/model/MANIFEST: lib/ffi/win32/model/library.build $(wildcard lib/f
 	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/model
 lib/ffi/win32/mock/MANIFEST: lib/ffi/win32/mock/library.build $(wildcard lib/ffi/win32/mock/*.sml) lib/ffi/win32/model/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/mock
+lib/sdl/MANIFEST: lib/sdl/library.build $(wildcard lib/sdl/*.sml) lib/ffi/runtime/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/sdl
 
 # The frozen Basis Library (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
@@ -1273,7 +1275,7 @@ check-docs: check-docs-generated bin/rune-test bin/rune-doc-check
 
 check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/ffi/win32/common/*.sml lib/ffi/win32/model/*.sml lib/ffi/win32/mock/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/sdl/*.sml lib/ffi/win32/common/*.sml lib/ffi/win32/model/*.sml lib/ffi/win32/mock/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
@@ -1287,6 +1289,7 @@ check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_WIN32_COMMON) --check
 	$(RUNEDOC) $(DOCS_WIN32_MODEL) --check
 	$(RUNEDOC) $(DOCS_WIN32_MOCK) --check
+	$(RUNEDOC) $(DOCS_SDL) --check
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW) --check
 	$(RUNEDOC) --palette docs/lib/palette --check
@@ -1325,6 +1328,8 @@ DOCS_WIN32_MOCK := --lib lib --library ffi/win32/mock --out docs/lib/ffi/win32/m
                    --conventions ../../../conventions.md
 DOCS_WIN32_COMMON := --lib lib --library ffi/win32/common --out docs/lib/ffi/win32/common --basis-docs ../../../basis \
                      --conventions ../../../conventions.md
+DOCS_SDL := --lib lib --library sdl --out docs/lib/sdl --basis-docs ../basis \
+            --library-docs ffi/runtime ../ffi/runtime --library-docs ffi/marshal ../ffi/marshal --conventions ../conventions.md
 DOCS_FFI_RUNTIME := --lib lib --library ffi/runtime --out docs/lib/ffi/runtime --basis-docs ../../basis \
                     --library-docs ffi/marshal ../marshal --conventions ../../conventions.md
 DOCS_FFI_MARSHAL := --lib lib --library ffi/marshal --out docs/lib/ffi/marshal --basis-docs ../../basis \
@@ -1367,7 +1372,8 @@ DOCS_OVERVIEW := --lib lib --overview docs/lib \
 	--library-page ffi/runtime \
 	--library-page ffi/win32/common \
 	--library-page ffi/win32/model \
-	--library-page ffi/win32/mock
+	--library-page ffi/win32/mock \
+	--library-page sdl
 
 docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_BASIS)
@@ -1383,6 +1389,7 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_WIN32_COMMON)
 	$(RUNEDOC) $(DOCS_WIN32_MODEL)
 	$(RUNEDOC) $(DOCS_WIN32_MOCK)
+	$(RUNEDOC) $(DOCS_SDL)
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW)
 	$(RUNEDOC) --palette docs/lib/palette
@@ -2088,3 +2095,21 @@ bin/rune-build.rbc: $(RUNE) $(BUILDER_RUNE_SRCS) manifests
 bin/rune-build-rune: bin/rune-build.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_BUILD_ROOT:-}" ]; then RUNE_BUILD_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_BUILD_ROOT; fi\nexec "$$d/runevm" "$$d/rune-build.rbc" "$$@"\n' > $@
 	chmod +x $@
+
+
+SDL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/sdl/check.sml
+check-tools: bin/rune-sdl-check
+bin/rune-sdl-check.rbc: $(RUNE) $(SDL_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner $(SDL_CHECK_SRCS) -o $@
+bin/rune-sdl-check: bin/rune-sdl-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-sdl-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-sdl test-sdl-gui test-sdl-windows test-sdl-asan
+test-sdl: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-sdl
+test-sdl-gui: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-sdl-gui
+test-sdl-windows: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-sdl-windows
+test-sdl-asan: $(RUNE) vm-asan bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-sdl-asan

@@ -1,0 +1,5 @@
+name	kind	signature	realisations	status	origin	source
+SDL	signature			required	declared	lib/sdl/sdl_sig.sml
+SDL_NATIVE_LAYOUT	signature			required	declared	lib/sdl/layout_sig.sml
+SDL_NATIVE_RAW	signature			required	declared	lib/sdl/raw_sig.sml
+SDLFn	functor	SDL		required	claimed	lib/sdl/sdl.sml
