@@ -140,8 +140,10 @@ struct
         val cxx=O.get options "--cxx" (#cxx selected)
         val rc=O.get options "--rc" (host ^ "-windres")
         fun combined original extra=String.concatWith " "(List.filter(fn text=>text<>"")[original,extra])
-        val cflags=O.get options "--cflags" (combined(env("CFLAGS",""))(#cflags selected))
-        val cxxflags=combined(env("CXXFLAGS",""))(#cflags selected)
+        (* Autoconf normally supplies these only when flags are unset. Profile
+           flags must preserve that default; an explicitly empty env stays empty. *)
+        val cflags=O.get options "--cflags" (combined(env("CFLAGS","-g -O2"))(#cflags selected))
+        val cxxflags=combined(env("CXXFLAGS","-g -O2"))(#cflags selected)
         val ldflags=O.get options "--ldflags" (combined(env("LDFLAGS",""))(#ldflags selected))
         val ar=O.get options "--ar" (#ar selected) val ranlib=O.get options "--ranlib" (#ranlib selected)
         val runner=O.get options "--runner" (#runner selected)
