@@ -1,0 +1,186 @@
+{
+  "schema": 1,
+  "date": "2026-10-23",
+  "originalFailure": {
+    "run": "/home/ruud/rune/.worktrees/runeffi/tests/out/r/20261023-112250-2501228",
+    "case": "intinf/hardening/runtime",
+    "reason": "expected IntInf refusal bad IntInf policy; exit 0"
+  },
+  "oldOffsetReproduction": {
+    "argv": [
+      "/home/ruud/rune/.worktrees/runeffi-layout/bin/runevm",
+      "--restore",
+      "/home/ruud/rune/.worktrees/runeffi-release/tests/out/intinf-image15/old-mode-offset.img"
+    ],
+    "status": 0,
+    "stdout": "restored\n",
+    "stderr": "",
+    "imageHeader": "runevm image 15 isa 0091b522",
+    "oldRelativeOffset": 28,
+    "actualImage15Field": "rounding_mode"
+  },
+  "hardeningNative": {
+    "subprocesses": 63,
+    "result": "pass",
+    "native": true,
+    "has_gmp": true,
+    "allocation_checks": [
+      "success",
+      "malloc",
+      "realloc"
+    ],
+    "saved_policy_layout": {
+      "version": 15,
+      "header_bytes": 29,
+      "mode": 36,
+      "stats": 40,
+      "bits": 60,
+      "memory": 68
+    }
+  },
+  "hardeningGmpFree": {
+    "subprocesses": 37,
+    "result": "pass",
+    "native": false,
+    "has_gmp": false,
+    "allocation_checks": [
+      "success",
+      "malloc",
+      "realloc"
+    ],
+    "saved_policy_layout": {
+      "version": 15,
+      "header_bytes": 29,
+      "mode": 36,
+      "stats": 40,
+      "bits": 60,
+      "memory": 68
+    }
+  },
+  "checks": {
+    "faults": {
+      "status": 0,
+      "output": "PASS IntInf independent-answer, storage, fork, limit, allocation and measurement faults\n"
+    },
+    "native-images": {
+      "status": 0,
+      "output": "",
+      "meaning": "VM-to-native and native-to-VM save/restore, plus wrong-program image rejection"
+    },
+    "limits": {
+      "status": 0,
+      "output": "slowest: limits/stack 3.6 s, limits/register 3.3 s, runner/canary/runs-past-its-time 1.0 s, runner/canary/floods-its-output 0.0 s, runner/canary/crashes 0.0 s\noutput: kept 0 bytes, freed 1000039; events in /home/ruud/rune/.worktrees/runeffi-release/tests/out/intinf-image15/limits/20261023-114638-8/events.jsonl, summary in /home/ruud/rune/.worktrees/runeffi-release/tests/out/intinf-image15/limits/20261023-114638-8/summary.md\nRESULT: PASS 7 of 7 tests (7 PASS), 4.3 s wall, 4.4 s CPU (51% of 2)\n"
+    }
+  },
+  "compileArgv": [
+    "/home/ruud/rune/.worktrees/runeffi-layout/bin/rune",
+    "--lib",
+    "/home/ruud/rune/.worktrees/runeffi-layout/lib",
+    "--library",
+    "test/runner",
+    "--library",
+    "json",
+    "--library",
+    "digest",
+    "tests/runner/sh.sml",
+    "tests/runner/hosts.sml",
+    "tests/runner/children.sml",
+    "tests/runner/scenarios.sml",
+    "tests/runner/cacheplant.sml",
+    "tests/runner/incrementalfixtures.sml",
+    "tests/runner/incremental.sml",
+    "tests/runner/bytecode.sml",
+    "tests/runner/commandwords.sml",
+    "tests/runner/intinfchecks.sml",
+    "tests/runner/measured.sml",
+    "tests/runner/intinfmeasurements.sml",
+    "tests/runner/intinfbackends.sml",
+    "tests/runner/intinfhardening.sml",
+    "tests/runner/intinfstorage.sml",
+    "tests/runner/windowsdir.sml",
+    "tests/runner/gmpchecks.sml",
+    "tests/runner/gmpdownloadchecks.sml",
+    "tests/runner/gmpinstallchecks.sml",
+    "tests/runner/gmpplatformchecks.sml",
+    "tests/runner/intinffaults.sml",
+    "tests/runner/intinffixtures.sml",
+    "tests/runner/intinf-main.sml",
+    "-o",
+    "build/intinf-image15/rune-intinf.rbc"
+  ],
+  "hashes": {
+    "/home/ruud/rune/.worktrees/runeffi-layout/bin/runevm": "b1556ea59a929cf5faa618bdb94b228450993215e6673ff4ed34ca3d96dd47c3",
+    "/home/ruud/rune/.worktrees/runeffi-layout/bin/runevm-stack": "6017f9b57ff79a7f40c0062194440b7281e322556bdd61cc0bd710f5ea255ee3",
+    "/home/ruud/rune/.worktrees/runeffi-layout/bin/runevm-sml": "2610d9f0b70f30293f2e18e06fe38f0055c9fb698ff4ccd1cbb836afecca07b1",
+    "/home/ruud/rune/.worktrees/runeffi-layout/bin/runeopt.rbc": "f014088b68d46c8f74991f8fc3d80cb4aa434eb36eb6b3fb361fd9fdc9603c2d",
+    "/home/ruud/rune/.worktrees/runeffi-layout/runtime/image.c": "e556381546eb650f18a0ae765d4a0a21647d6456697f010d8d88561c3c55cf43",
+    "tests/runner/intinfhardening.sml": "916d0fcc55adf6745b291ae48dc0a11859503663b5dcee1ce640fe96e0c25403",
+    "tests/runner/intinffaults.sml": "e006f876ad4dac29753f184563fecc3552a017ba017133b4d087d8f3b1a05cd4",
+    "build/intinf-image15/rune-intinf.rbc": "d6ef8bf2cdc0f8f7785807deaf884d13268f36ca4caa1cc37eafd84dcb5f2a30"
+  },
+  "policyMutations": [
+    {
+      "argv": [
+        "/home/ruud/rune/.worktrees/runeffi-layout/bin/runevm",
+        "--restore",
+        "/home/ruud/rune/.worktrees/runeffi-release/tests/out/intinf-image15/hardening-native/mode.img"
+      ],
+      "status": 2,
+      "stdout": "",
+      "stderr": "runevm: --restore: bad IntInf policy in the image\n"
+    },
+    {
+      "argv": [
+        "/home/ruud/rune/.worktrees/runeffi-layout/bin/runevm",
+        "--restore",
+        "/home/ruud/rune/.worktrees/runeffi-release/tests/out/intinf-image15/hardening-native/stats.img"
+      ],
+      "status": 2,
+      "stdout": "",
+      "stderr": "runevm: --restore: bad IntInf policy in the image\n"
+    },
+    {
+      "argv": [
+        "/home/ruud/rune/.worktrees/runeffi-layout/bin/runevm",
+        "--restore",
+        "/home/ruud/rune/.worktrees/runeffi-release/tests/out/intinf-image15/hardening-native/bits-zero.img"
+      ],
+      "status": 2,
+      "stdout": "",
+      "stderr": "runevm: --restore: bad IntInf limits in the image\n"
+    },
+    {
+      "argv": [
+        "/home/ruud/rune/.worktrees/runeffi-layout/bin/runevm",
+        "--restore",
+        "/home/ruud/rune/.worktrees/runeffi-release/tests/out/intinf-image15/hardening-native/bits-large.img"
+      ],
+      "status": 2,
+      "stdout": "",
+      "stderr": "runevm: --restore: bad IntInf limits in the image\n"
+    },
+    {
+      "argv": [
+        "/home/ruud/rune/.worktrees/runeffi-layout/bin/runevm",
+        "--restore",
+        "/home/ruud/rune/.worktrees/runeffi-release/tests/out/intinf-image15/hardening-native/memory-zero.img"
+      ],
+      "status": 2,
+      "stdout": "",
+      "stderr": "runevm: --restore: bad IntInf limits in the image\n"
+    },
+    {
+      "argv": [
+        "/home/ruud/rune/.worktrees/runeffi-layout/bin/runevm",
+        "--intinf-gmp-memory",
+        "128",
+        "--intinf-stats",
+        "--restore",
+        "/home/ruud/rune/.worktrees/runeffi-release/tests/out/intinf-image15/hardening-native/memory-wide.img"
+      ],
+      "status": 0,
+      "stdout": "restored\n",
+      "stderr": "runevm: intinf: gmp, max 134217728 bits, GMP memory limit 128, 0 GMP calls, 0 GMP allocations, 0 GMP bytes requested, 0 GMP peak, 0 GMP live\n"
+    }
+  ]
+}
