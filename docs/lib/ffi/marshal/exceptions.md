@@ -5,7 +5,7 @@
 From the **Raises** paragraphs of the documented entries.
 
 - `Closed`: [`defer`](sig/FOREIGN_SCOPE.md#val-defer) of FOREIGN_SCOPE
-- `Error`: [`value`](sig/FOREIGN_BYTES.md#val-value) of FOREIGN_BYTES, [`real64`](sig/FOREIGN_BYTES.md#val-real64) of FOREIGN_BYTES, [`real64Value`](sig/FOREIGN_BYTES.md#val-real64value) of FOREIGN_BYTES
+- `Error`: [`value`](sig/FOREIGN_BYTES.md#val-value) of FOREIGN_BYTES, [`real64`](sig/FOREIGN_BYTES.md#val-real64) of FOREIGN_BYTES, [`real64Value`](sig/FOREIGN_BYTES.md#val-real64value) of FOREIGN_BYTES, [`real32Value`](sig/FOREIGN_BYTES.md#val-real32value) of FOREIGN_BYTES
 
 ---
 

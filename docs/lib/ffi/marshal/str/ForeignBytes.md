@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`FOREIGN_BYTES`](../sig/FOREIGN_BYTES.md) |
 | Status | required |
-| Members | 5 |
+| Members | 7 |
 | Tests | not listed |
 | Source | [lib/ffi/marshal/bytes.sml](../../../../../lib/ffi/marshal/bytes.sml) |
 
@@ -24,6 +24,8 @@ What each means is on [`FOREIGN_BYTES`](../sig/FOREIGN_BYTES.md); the types are 
 | --- | --- | --- |
 | exception | [`Error`](../sig/FOREIGN_BYTES.md#exn-error) | `of string` |
 | val | [`integer`](../sig/FOREIGN_BYTES.md#val-integer) | `{littleEndian : bool, signed : bool, value : IntInf.int, width : int} -> string` |
+| val | [`real32`](../sig/FOREIGN_BYTES.md#val-real32) | `{littleEndian : bool, value : real} -> string` |
+| val | [`real32Value`](../sig/FOREIGN_BYTES.md#val-real32value) | `{bytes : string, littleEndian : bool} -> real` |
 | val | [`real64`](../sig/FOREIGN_BYTES.md#val-real64) | `{littleEndian : bool, value : real} -> string` |
 | val | [`real64Value`](../sig/FOREIGN_BYTES.md#val-real64value) | `{bytes : string, littleEndian : bool} -> real` |
 | val | [`value`](../sig/FOREIGN_BYTES.md#val-value) | `{bytes : string, littleEndian : bool, signed : bool} -> IntInf.int` |

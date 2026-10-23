@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 5 of 5 entries documented |
+| Documentation | 7 of 7 entries documented |
 | Tests | not listed |
 | Source | [lib/ffi/marshal/bytes\_sig.sml](../../../../../lib/ffi/marshal/bytes_sig.sml) |
 
@@ -33,6 +33,8 @@ sig
   val <a href="#val-value">value</a> : {<a href="#fld-value.signed">signed</a> : bool, <a href="#fld-value.littleendian">littleEndian</a> : bool, <a href="#fld-value.bytes">bytes</a> : string} -&gt; IntInf.int
   val <a href="#val-real64">real64</a> : {<a href="#fld-real64.littleendian">littleEndian</a> : bool, <a href="#fld-real64.value">value</a> : real} -&gt; string
   val <a href="#val-real64value">real64Value</a> : {<a href="#fld-real64value.littleendian">littleEndian</a> : bool, <a href="#fld-real64value.bytes">bytes</a> : string} -&gt; real
+  val <a href="#val-real32">real32</a> : {<a href="#fld-real32.littleendian">littleEndian</a> : bool, <a href="#fld-real32.value">value</a> : real} -&gt; string
+  val <a href="#val-real32value">real32Value</a> : {<a href="#fld-real32value.littleendian">littleEndian</a> : bool, <a href="#fld-real32value.bytes">bytes</a> : string} -&gt; real
 end
 </pre>
 
@@ -107,6 +109,38 @@ val real64Value : {littleEndian : bool, bytes : string} -> real
 | --- | --- | --- |
 | <a name="fld-real64value.littleendian"></a>`littleEndian` | `bool` |  |
 | <a name="fld-real64value.bytes"></a>`bytes` | `string` |  |
+
+### <a name="val-real32"></a>`real32`
+
+```sml
+val real32 : {littleEndian : bool, value : real} -> string
+```
+
+`real32 {littleEndian, value}` rounds binary64 to IEEE binary32 bytes.
+
+Rounding is to nearest, ties to even. Overflow produces signed infinity;
+NaNs use a canonical quiet payload. This is independent of the C process
+floating-point rounding mode.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-real32.littleendian"></a>`littleEndian` | `bool` |  |
+| <a name="fld-real32.value"></a>`value` | `real` |  |
+
+### <a name="val-real32value"></a>`real32Value`
+
+```sml
+val real32Value : {littleEndian : bool, bytes : string} -> real
+```
+
+`real32Value {littleEndian, bytes}` widens an IEEE binary32 object exactly.
+
+**Raises** [`Error`](#exn-error) unless exactly four bytes are supplied.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-real32value.littleendian"></a>`littleEndian` | `bool` |  |
+| <a name="fld-real32value.bytes"></a>`bytes` | `string` |  |
 
 ---
 

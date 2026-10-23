@@ -2,6 +2,8 @@
 
 [Overview](../README.md) &middot; [b](b.md) [c](c.md) [d](d.md) [e](e.md) [i](i.md) **r** [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
+- `real32` (val): [FOREIGN_BYTES](../sig/FOREIGN_BYTES.md#val-real32)
+- `real32Value` (val): [FOREIGN_BYTES](../sig/FOREIGN_BYTES.md#val-real32value)
 - `real64` (val): [FOREIGN_BYTES](../sig/FOREIGN_BYTES.md#val-real64)
 - `real64Value` (val): [FOREIGN_BYTES](../sig/FOREIGN_BYTES.md#val-real64value)
 - `run` (val): [FOREIGN_SCOPE](../sig/FOREIGN_SCOPE.md#val-run)
