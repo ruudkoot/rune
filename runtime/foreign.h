@@ -27,7 +27,9 @@ typedef struct {
 typedef struct { int error_number; uint32_t native_error; char message[256]; } ForeignError;
 typedef enum { FOREIGN_FAIL_NEVER, FOREIGN_FAIL_ZERO, FOREIGN_FAIL_NONZERO, FOREIGN_FAIL_NEGATIVE } ForeignFailure;
 /* Hooks are called only on the context's creating thread, within a native
-   call. The opaque state is owned until the closure's explicit release. */
+   call. The opaque state is owned until the closure's explicit release.
+   Return 0 on success, negative to use the native fallback, or positive for
+   a contained exception: later callbacks in this activation bypass SML. */
 typedef int (*ForeignCallback)(void *state, const ForeignValue *, size_t, ForeignValue *);
 typedef void (*ForeignCallbackFree)(void *state);
 typedef struct { size_t index; uint64_t key; ForeignValue value; } ForeignCallbackFailure;

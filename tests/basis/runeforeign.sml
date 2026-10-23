@@ -16,7 +16,9 @@ struct
           (RuneForeign.release library;false) handle RuneForeign.Error _ => true)
         val call = RuneForeign.prepare {symbol=symbol,abi=0,result=RuneForeign.SInt32,arguments=[RuneForeign.SInt32]}
         val () = T.check ("RuneForeign.prepare/prepared-call", fn () => RuneForeign.live () >= 0w3)
-        val result = RuneForeign.invoke (call,[RuneForeign.Signed (Int64.fromInt ~42)])
+        val deferred=RuneForeign.invokeDeferred(call,[RuneForeign.Signed(Int64.fromInt ~42)])
+        val ()=T.check("RuneForeign.invokeDeferred/ordinary-result",fn()=>not(Option.isSome(#callbackException deferred)))
+        val result = #result deferred
         val () = T.check ("RuneForeign.invoke/native-scalar", fn () => PackWord64Little.subVec(Byte.stringToBytes(#bytes result),0)=0w42)
         val callback = RuneForeign.callback {abi=0,result=RuneForeign.SInt32,arguments=[RuneForeign.SInt32],
           function=fn _=>RuneForeign.Signed 1,failure=RuneForeign.Default(RuneForeign.Signed 0)}

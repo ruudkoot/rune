@@ -16,9 +16,16 @@ struct
     bool * Word64.word * string * string * int * Word32.word
   val callbackPrimitive = _prim "foreign_callback" : string * string * (string -> string) ->
     bool * Word64.word * string * int * Word32.word
-  val pendingCallbackException : exn option ref = ref NONE
-  fun propagateCallbackException () = case !pendingCallbackException of NONE => ()
-    | SOME error => (pendingCallbackException := NONE; raise error)
+  val activations : exn option ref list ref = ref []
+  fun activation body =
+    let val pending : exn option ref = ref NONE
+        val previous = !activations
+        val ()=activations:=pending::previous
+    in let val result=body() val ()=activations:=previous in (result,!pending) end
+      handle error => (activations:=previous;case !pending of NONE=>raise error | SOME saved=>raise saved) end
+  fun pendingException () = case !activations of pending::_=> !pending | []=>NONE
+  fun saveException error = case !activations of []=>() | pending::_=>
+    (case !pending of NONE=>pending:=SOME error | SOME _=>())
   fun failure message = raise Error {number = 22, native = 0w0, message = message}
   fun identity (Resource {id, live, ...}) = if !live then id else failure "stale foreign resource"
   fun resource kind id = Resource {id = id, live = ref true, kind = kind}
@@ -97,26 +104,29 @@ struct
               val fallback=case policy of Default _=>defaultBytes | ByArgument{index,cases,...}=>
                 let val key=word(String.substring(bytes,index*9+1,8))
                 in case List.find(fn(k,_)=>k=key)cases of NONE=>defaultBytes | SOME(_,value)=>encode value end
-          in encode(function values) handle exn =>
-            (case !pendingCallbackException of NONE=>pendingCallbackException:=SOME exn | SOME _=>();fallback) end
-          handle exn => (case !pendingCallbackException of NONE=>pendingCallbackException:=SOME exn | SOME _=>();defaultBytes)
+          in case pendingException() of SOME _=>fallback ^ "\001"
+            | NONE=>(encode(function values) ^ "\000" handle error => (saveException error;fallback ^ "\001")) end
+          handle error => (saveException error;defaultBytes ^ "\001")
         val metadata=String.implode(Char.chr abi::Char.chr(code result)::List.map(Char.chr o code)arguments)
         val (ok,id,message,number,native)=callbackPrimitive(metadata,defaultBytes^cases,enter)
     in if ok then resource Callback id else raise Error{message=message,number=number,native=native} end
-  fun invoke (call, arguments) =
+  fun invokeDeferred (call, arguments) =
     let val data=encodeArguments(call,arguments)
-        val (pointer, bytes, error) = request (9, identity call, 0w0, "", data)
-          handle exn => (propagateCallbackException();raise exn)
-        val ()=propagateCallbackException()
-    in {bytes = bytes, pointer = if pointer = 0w0 then NONE else SOME (resource DataPointer pointer), error = error} end
+        val ((pointer,bytes,error),saved)=activation(fn()=>request(9,identity call,0w0,"",data))
+        val result={bytes=bytes,pointer=if pointer=0w0 then NONE else SOME(resource DataPointer pointer),error=error}
+    in {result=result,callbackException=saved} end
+  fun invoke requestValue =
+    let val {result,callbackException}=invokeDeferred requestValue
+    in case callbackException of NONE=>result | SOME error=>
+      ((case #pointer result of NONE=>() | SOME(value as Resource{live,...})=>
+          (ignore(request(7,identity value,0w0,"",""));live:=false));raise error) end
   fun disposeWith operation {resource=value as Resource{live,...},call,arguments,failure} =
     let val data=encodeArguments(call,arguments)
         val predicate=case failure of NoFailure=>0 | Zero=>1 | Nonzero=>2 | Negative=>3
-        val (disposed,bytes,error)=request(operation,identity call,identity value,str(Char.chr predicate),data)
-          handle exn => (propagateCallbackException();raise exn)
+        val ((disposed,bytes,error),saved)=activation(fn()=>request(operation,identity call,identity value,str(Char.chr predicate),data))
         val disposed=disposed<>0w0
         val ()=if disposed then live:=false else ()
-        val ()=propagateCallbackException()
+        val ()=case saved of NONE=>() | SOME error=>raise error
     in {disposed=disposed,result={bytes=bytes,pointer=NONE,error=error}} end
   val dispose=disposeWith 12
   val consumeHandle=disposeWith 16

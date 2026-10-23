@@ -80,11 +80,26 @@ sig
      Raises: `Error` for unavailable callbacks or invalid scalar policies. *)
   val callback : {abi : int, result : scalar, arguments : scalar list,
     function : argument list -> argument, failure : callbackFailure} -> resource
+  (* `invokeDeferred (call, arguments)` returns saved callback exceptions.
+
+     The raw result, captured error and pointer identity are available before
+     the caller propagates the original exception. Ownership adapters must
+     release owned native results on this path before raising it. Each call
+     has its own exception activation; nested calls cannot consume an outer
+     pending exception. Later callbacks in a failed activation return their
+     annotated failure value without executing SML.
+
+     Raises: `Error` for unavailable support or invalid calls/arguments. *)
+  val invokeDeferred : resource * argument list -> {result : result, callbackException : exn option}
   (* `invoke (call, arguments)` executes one prepared call.
 
      Signed, unsigned and real results use eight little-endian bytes.
      Pointer results are opaque resources, with `NONE` for native null.
      Captured errors are interpreted by the calling library's policy.
+     An escaping callback exception is propagated after native return. An
+     unexposed pointer registry identity is then released; native allocation
+     ownership is unknown here. Owned result adapters use `invokeDeferred`
+     to run their annotated cleanup before propagating the exception.
 
      Raises: `Error` for unavailable support or invalid calls/arguments. *)
   val invoke : resource * argument list -> result

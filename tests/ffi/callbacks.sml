@@ -44,13 +44,41 @@ val ()=callbackCheck("borrowed view expires",not(RuneForeign.isLive(valOf(!borro
 val ()=callbackCheck("nested foreign callbacks",callbackSigned(RuneForeign.invoke(applyCallback,callbackArguments callback NONE 3))=13 andalso !nestedDepth=3)
 val ()=callbackCheck("foreign thread rejected",callbackSigned(RuneForeign.invoke(threadCallback,callbackArguments callback NONE 5))= ~99)
 exception CallbackFailure
+val failedEntries=ref 0
 val failingCallback=RuneForeign.callback{abi=0,result=RuneForeign.SInt32,arguments=[RuneForeign.Pointer,RuneForeign.SInt32],
   failure=RuneForeign.ByArgument{index=1,cases=[(0w129,RuneForeign.Signed 0),(0w1,RuneForeign.Signed ~1)],default=RuneForeign.Signed ~77},
-  function=fn _=>raise CallbackFailure}
+  function=fn _=>(failedEntries:= !failedEntries+1;raise CallbackFailure)}
 val ()=callbackCheck("exception after native return",(ignore(RuneForeign.invoke(applyCallback,callbackArguments failingCallback NONE 1));false)handle CallbackFailure=>true)
 val ()=callbackCheck("foreign thread selected failure zero",callbackSigned(RuneForeign.invoke(threadCallback,callbackArguments failingCallback NONE 129))=0)
 val ()=callbackCheck("foreign thread selected failure minus one",callbackSigned(RuneForeign.invoke(threadCallback,callbackArguments failingCallback NONE 1))= ~1)
 val ()=callbackCheck("saved exception cleared",callbackSigned(RuneForeign.invoke(applyCallback,callbackArguments callback NONE 6))=16)
+val twiceCall=callbackCall "rf_cb_twice" RuneForeign.SInt32 [RuneForeign.Pointer,RuneForeign.Pointer]
+val ()=failedEntries:=0
+val twiceDeferred=RuneForeign.invokeDeferred(twiceCall,[RuneForeign.Address(SOME failingCallback),RuneForeign.Address NONE])
+val ()=callbackCheck("failed activation suppresses subsequent SML callback",!failedEntries=1 andalso callbackSigned(#result twiceDeferred)= ~100 andalso
+  (case #callbackException twiceDeferred of SOME CallbackFailure=>true | _=>false))
+val handledNested=RuneForeign.callback{abi=0,result=RuneForeign.SInt32,arguments=[RuneForeign.Pointer,RuneForeign.SInt32],
+  failure=RuneForeign.Default(RuneForeign.Signed ~1),function=fn _=>
+    let val deferred=RuneForeign.invokeDeferred(twiceCall,[RuneForeign.Address(SOME failingCallback),RuneForeign.Address NONE])
+    in callbackCheck("nested deferred exception remains local",case #callbackException deferred of SOME CallbackFailure=>true | _=>false);
+       RuneForeign.Signed 55 end}
+val handledOuter=RuneForeign.invokeDeferred(applyCallback,callbackArguments handledNested NONE 0)
+val ()=callbackCheck("nested handled exception does not poison outer activation",not(Option.isSome(#callbackException handledOuter)) andalso callbackSigned(#result handledOuter)=55)
+val ownedCall=callbackCall "rf_cb_owned" RuneForeign.Pointer [RuneForeign.Pointer,RuneForeign.Pointer]
+val freeOwned=callbackCall "rf_free" RuneForeign.Void [RuneForeign.Pointer]
+val callbackSizeType=if #pointerBytes(RuneForeign.target())=4 then RuneForeign.UInt32 else RuneForeign.UInt64
+val countOwned=callbackCall "rf_allocations" callbackSizeType []
+val ownedDeferred=RuneForeign.invokeDeferred(ownedCall,[RuneForeign.Address(SOME failingCallback),RuneForeign.Address NONE])
+val ownedResult=valOf(#pointer(#result ownedDeferred))
+val ()=callbackCheck("owned pointer exposed before callback exception",callbackWord(RuneForeign.invoke(countOwned,[]))=0w1 andalso
+  (case #callbackException ownedDeferred of SOME CallbackFailure=>true | _=>false))
+val ()=ignore(RuneForeign.dispose{resource=ownedResult,call=freeOwned,arguments=[RuneForeign.Address(SOME ownedResult)],failure=RuneForeign.NoFailure})
+val ()=callbackCheck("owned pointer cleaned before exception propagation",callbackWord(RuneForeign.invoke(countOwned,[]))=0w0)
+val pointerCall=callbackCall "rf_cb_pointer" RuneForeign.Pointer [RuneForeign.Pointer,RuneForeign.Pointer]
+val liveBeforePointer=RuneForeign.live()
+val ()=callbackCheck("ordinary invoke propagates pointer callback exception",(ignore(RuneForeign.invoke(pointerCall,
+  [RuneForeign.Address(SOME failingCallback),RuneForeign.Address(SOME marker)]));false)handle CallbackFailure=>true)
+val ()=callbackCheck("ordinary invoke releases unexposed pointer identity",RuneForeign.live()=liveBeforePointer)
 val depthEntries=ref 0
 val depthSelf=ref(NONE:RuneForeign.resource option)
 val depthCallback=RuneForeign.callback{abi=0,result=RuneForeign.SInt32,arguments=[RuneForeign.Pointer,RuneForeign.SInt32],
@@ -100,7 +128,7 @@ val destroying=RuneForeign.callback{abi=0,result=RuneForeign.SInt32,arguments=[R
     in callbackCheck("destruction while native caller is suspended",#disposed result);RuneForeign.Signed 42 end}
 val ()=callbackCheck("nested opaque destruction",callbackSigned(RuneForeign.invoke(applyCallback,callbackArguments destroying(SOME opaque)2))=42)
 val ()=callbackCheck("all aliases retired",not(RuneForeign.isLive opaque) andalso not(RuneForeign.isLive alias) andalso not(RuneForeign.isLive created))
-val ()=List.app RuneForeign.release [callback,failingCallback,depthCallback,realCallback,narrowCallback,messageCallback,createCallback,destroyNotification,destroying,marker]
+val ()=List.app RuneForeign.release [callback,failingCallback,handledNested,depthCallback,realCallback,narrowCallback,messageCallback,createCallback,destroyNotification,destroying,marker]
 val ()=List.app RuneForeign.release(!callbackOwned)
 val ()=RuneForeign.release callbackLibrary
 val ()=callbackCheck("all callback resources released",RuneForeign.live()=0w0)

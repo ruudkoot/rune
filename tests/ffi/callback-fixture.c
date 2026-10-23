@@ -62,3 +62,18 @@ RF_EXPORT void rf_cb_destroy_notify(void *handle, rf_callback callback) {
     free(handle);
 }
 RF_EXPORT int rf_cb_handle_use(void *handle) { return handle != NULL; }
+
+RF_EXPORT int rf_cb_twice(rf_callback callback, void *context) {
+    int first = callback(context, 1);
+    int second = callback(context, 129);
+    return first * 100 + second;
+}
+RF_EXPORT void *rf_cb_owned(rf_callback callback, void *context) {
+    char *result = rf_copy("owned-result");
+    (void)callback(context, 7);
+    return result;
+}
+RF_EXPORT void *rf_cb_pointer(rf_callback callback, void *context) {
+    (void)callback(context, 7);
+    return context;
+}

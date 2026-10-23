@@ -46,12 +46,19 @@ No unrooted SML pointer remains in C across collection.
 ## Exceptions and resources
 
 The trusted SML wrapper catches an escaping user exception and returns the
-selected native failure value. The first pending exception is rooted in SML.
+selected native failure value. Each native call has its own activation and pending exception, rooted in
+SML. Once a callback fails, subsequent callbacks in that activation return
+their message-specific native failure value without entering SML. Nested
+activations retain independent pending exceptions.
 `invoke`, `dispose` and `consumeHandle` re-raise it only after native control
 has returned, native errors have been captured, and native lease cleanup has
 finished. Nested invocations move that same exception through enclosing
-callback wrappers without unwinding a C frame. Later invocations do not
-inherit a consumed saved exception.
+callback wrappers without unwinding a C frame. `invokeDeferred` exposes the
+raw result and an optional `callbackException` before propagation. Generated
+ownership adapters use it to destroy an owned result even when native code
+returns a non-null pointer after a callback failed. Ordinary `invoke` can
+release an unexposed registry identity but cannot infer its native
+deallocator. Later invocations do not inherit a consumed saved exception.
 
 Native callback pointer arguments have temporary registry identities. They
 may be used during the callback and expire on return. A native closure's

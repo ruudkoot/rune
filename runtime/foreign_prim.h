@@ -25,7 +25,7 @@ static ForeignValue foreign_wire_value(const unsigned char *data) {
 }
 static int foreign_closure_enter(void *opaque, const ForeignValue *arguments, size_t count, ForeignValue *result) {
     ForeignClosureRoot *root = opaque;
-    unsigned char *input = malloc(count ? count * 9 : 1), output[9]; size_t written = 0;
+    unsigned char *input = malloc(count ? count * 9 : 1), output[10]; size_t written = 0;
     if (!input) return -1;
     for (size_t i = 0; i < count; i++) {
         input[i * 9] = (unsigned char)arguments[i].type;
@@ -36,9 +36,9 @@ static int foreign_closure_enter(void *opaque, const ForeignValue *arguments, si
     }
     int status = vm_callback_apply(root->vm, root->closure, (const char *)input, count * 9, (char *)output, sizeof output, &written);
     free(input);
-    if (status != 0 || written != 9) return -1;
+    if (status != 0 || written != 10 || output[9] > 1) return -1;
     *result = foreign_wire_value(output);
-    return 0;
+    return output[9];
 }
 static int p_foreign_callback(VM *vm) {
     Obj *meta = check_obj(vm, ARG(2), K_STRING, "foreign_callback");

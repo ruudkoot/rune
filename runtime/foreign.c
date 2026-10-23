@@ -68,6 +68,7 @@ typedef struct {
     Callback *callback;
     unsigned active, retiring;
 } Resource;
+typedef struct Activation { struct Activation *parent; int failed; } Activation;
 struct Foreign {
     ForeignSystem system;
     ForeignError error;
@@ -76,6 +77,7 @@ struct Foreign {
     const void *owner_thread;
     unsigned call_depth;
     ForeignId active_library;
+    Activation *activation;
 };
 static ForeignId identity(void) {
     uint64_t value = ID_LOAD(&next_identity);
@@ -368,6 +370,7 @@ static void callback_entry(ffi_cif *cif, void *out, void **input, void *opaque) 
         callback_result(&local, c->signature.result, failure, out);
         return;
     }
+    if (f->activation && f->activation->failed) { callback_result(f, c->signature.result, failure, out); return; }
     Resource *self = find(f, c->id);
     if (!self || self->active == UINT_MAX) { callback_result(f, c->signature.result, failure, out); return; }
     self->active++;
@@ -391,7 +394,11 @@ static void callback_entry(ffi_cif *cif, void *out, void **input, void *opaque) 
             values[i].value.pointer = r->id; borrowed[nborrowed++] = r->id; f->live++;
         }
     }
-    if (valid && c->enter(c->state, values, count, &result) != 0) result = failure;
+    if (valid) {
+        int status = c->enter(c->state, values, count, &result);
+        if (status < 0) result = failure;
+        else if (status > 0 && f->activation) f->activation->failed = 1;
+    }
     callback_result(f, c->signature.result, result, out);
     for (size_t i = 0; i < nborrowed; i++) {
         /* Views and returned pointer aliases cannot outlive this borrowed
@@ -510,6 +517,8 @@ static int call_checked(Foreign *f, ForeignId call, const ForeignValue *argument
             unlease(f, arguments[i].value.pointer);
         cancel(f, pointer_id); free(storage); free(addresses); fail(f, EBUSY, "foreign argument nesting limit exceeded"); return -1;
     }
+    Activation activation = {f->activation, 0};
+    f->activation = &activation;
     ForeignId old_library = f->active_library;
     f->active_library = library;
     p->active++; f->call_depth++;
@@ -521,7 +530,7 @@ static int call_checked(Foreign *f, ForeignId call, const ForeignValue *argument
     memset(captured, 0, sizeof *captured);
     captured->error_number = saved_errno;
     captured->native_error = saved_native;
-    p->active--; f->call_depth--; f->active_library = old_library;
+    p->active--; f->call_depth--; f->active_library = old_library; f->activation = activation.parent;
     for (size_t i = 0; i < count; i++) if (arguments[i].type == FOREIGN_POINTER && arguments[i].value.pointer)
         unlease(f, arguments[i].value.pointer);
     result->type = p->result;
