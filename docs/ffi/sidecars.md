@@ -150,7 +150,11 @@ A callback failure is a native integer or a message-specific table:
 ```
 
 The selector must name an actual callback parameter; unnamed parameters
-use `arg0`, `arg1`, and so on. The target/layout consumer checks values and
+use `arg0`, `arg1`, and so on.
+Each case expression is converted to that parameter's target C integer type
+before building the raw selector key. Cases that become identical after
+native conversion fail, including narrowed unsigned values and nonzero
+Boolean aliases. The target/layout consumer checks values and
 constant names against the native result type. The runtime must retain the
 closure, contain exceptions, return the annotated failure and re-raise the
 saved exception after native control safely returns to SML. Decoding a

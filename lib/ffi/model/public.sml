@@ -316,9 +316,17 @@ struct
                     | ForeignPolicy.ArgumentFailure{parameter,cases,otherwise}=>
                         let fun index(i,[])=fail (#source cb) "callback failure selector is not an argument"
                               | index(i,n::ns)=if n=parameter then i else index(i+1,ns)
-                            fun value expression= #integer(CAnalysis.expression analysis(CLex.scan{file= #file(#source cb),text=expression}))
-                        in "RuneForeign.ByArgument{index=" ^ Int.toString(index(0,cn)) ^ ",cases=" ^
-                          list(List.map(fn(expression,v)=>"(Word64.fromLargeInt " ^ IntInf.toString(value expression) ^ "," ^ failure v ^ ")")cases) ^
+                            val selected=index(0,cn)
+                            val selector=case List.nth(#parameters function,selected) of CParse.Parameter{ctype,...}=>
+                              (case integer ctype of SOME ty=>ty | NONE=>fail (#source cb) "callback failure selector must be an integer")
+                            fun value expression= #integer(CInteger.convert selector
+                              (CAnalysis.expression analysis(CLex.scan{file= #file(#source cb),text=expression})))
+                            val cases=List.map(fn(expression,result)=>(value expression,result))cases
+                            fun distinct []=() | distinct((key,_)::rest)=
+                              if List.exists(fn(other,_)=>key=other)rest then fail (#source cb) "duplicate callback failure selectors after native conversion" else distinct rest
+                            val ()=distinct cases
+                        in "RuneForeign.ByArgument{index=" ^ Int.toString selected ^ ",cases=" ^
+                          list(List.map(fn(key,v)=>"(Word64.fromLargeInt " ^ IntInf.toString key ^ "," ^ failure v ^ ")")cases) ^
                           ",default=" ^ failure otherwise ^ "}" end
                   val build="(fn function=>let val callback=RuneForeign.callback{abi=" ^ Int.toString(#abi info) ^ ",result=RuneForeign." ^ result ^
                     ",arguments=" ^ list(List.map(fn c=>"RuneForeign." ^ c)cs) ^ ",function=fn arguments=>case arguments of " ^

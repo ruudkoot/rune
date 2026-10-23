@@ -72,3 +72,8 @@ double safe_variadic_real(int count, ...) {
     for (int i=0;i<count;i++) result+=va_arg(arguments,double);
     va_end(arguments); return result;
 }
+
+static int last_callback_failure;
+void safe_selected(safe_selector_callback callback) { last_callback_failure=callback(0xffffffffU); }
+void safe_selected_bool(safe_bool_selector_callback callback) { last_callback_failure=callback(2); }
+int safe_failure_value(void) { return last_callback_failure; }

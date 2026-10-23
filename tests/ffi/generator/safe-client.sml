@@ -64,6 +64,10 @@ struct
         val ()=check("selected aggregate macro uses typed indirect shim",#x(#origin macroPacket)=5 andalso Vector.sub(#codes macroPacket,1)=0w4)
         val ()=check("fixed variadic shim applies integer promotions",GeneratedSafe.variadicSum session(2,~7,0w250)=243)
         val ()=check("fixed variadic shim applies floating promotions",Real.abs(GeneratedSafe.variadicReal session(2,1.25,2.5)-3.75)<0.00001)
+        val ()=check("failure selector converts to native unsigned width",((GeneratedSafe.selected session(fn _=>raise CallbackStop);false)
+          handle CallbackStop=>GeneratedSafe.failureValue session()= ~9))
+        val ()=check("failure selector uses C Boolean conversion",((GeneratedSafe.selectedBool session(fn _=>raise CallbackStop);false)
+          handle CallbackStop=>GeneratedSafe.failureValue session()= ~13))
         val context=GeneratedSafe.allocate session 4
         val ()=RuneForeign.write(GeneratedSafe.raw_memory context,0w0,"\037\000\000\000")
         val destroyed=ref 0

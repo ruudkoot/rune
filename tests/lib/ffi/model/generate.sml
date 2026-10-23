@@ -8,7 +8,7 @@ struct
     predefined=[],analysis={integers={char=8,short=16,int=32,long=64,longLong=64},charSigned=true,
       sizeType={rank=CInteger.Long,width=64,signed=false},enumRule=CAnalysis.UnsignedNonnegative,
       objects={name="fixture",pointer={size=8,alignment=8,signed=NONE},enumeration=scalar,
-        maximumObject=IntInf.<<(1,0w40),scalars=[("char",{size=1,alignment=1,signed=SOME true}),("short",{size=2,alignment=2,signed=SOME true}),("int",scalar),("long",{size=8,alignment=8,signed=SOME true}),("long long",{size=8,alignment=8,signed=SOME true}),("wchar_t",scalar),("float",scalar),("double",{size=8,alignment=8,signed=NONE}),("_Bool",{size=1,alignment=1,signed=SOME false})]}}}
+        maximumObject=IntInf.<<(1,0w40),scalars=[("char",{size=1,alignment=1,signed=SOME true}),("short",{size=2,alignment=2,signed=SOME true}),("int",scalar),("unsigned int",{size=4,alignment=4,signed=SOME false}),("long",{size=8,alignment=8,signed=SOME true}),("long long",{size=8,alignment=8,signed=SOME true}),("wchar_t",scalar),("float",scalar),("double",{size=8,alignment=8,signed=NONE}),("_Bool",{size=1,alignment=1,signed=SOME false})]}}}
   val source="typedef struct Pair { int first; int second; } Pair; int add(int first, int second); _Bool invert(_Bool value);"
   val declarations= #declarations(CParse.translationUnit{tokens=CLex.scan{file="original.h",text=source},predefinedTypes=[]})
   val policyText="{\"version\":1,\"family\":\"c\",\"structure\":\"Generated\",\"headers\":[\"original.h\"],\"libraries\":[\"subject\"],\"functions\":[" ^
@@ -36,6 +36,22 @@ struct
   fun fixedText path=case List.find(fn a:ForeignGenerate.artifact=> #path a=path)(fixed "macro" "MACRO" (SOME "int MACRO(int value)")) of
       SOME a=> #text a | NONE=>raise Fail "fixed artifact absent"
   fun rejectsFixed namespace foreign text=((ignore(fixed namespace foreign text);false)handle ForeignModel.Error _=>true)
+  fun selectorCases boolean cases=
+    let val source="typedef int (*selector)(" ^ (if boolean then "_Bool" else "unsigned int") ^ " code); void selected(selector callback);"
+        val declarations= #declarations(CParse.translationUnit{tokens=CLex.scan{file="selectors.h",text=source},predefinedTypes=[]})
+        val function=Json.Object[("foreign",Json.String "selected"),("name",Json.String "selected"),
+          ("parameters",Json.Array[Json.Object[("name",Json.String "callback"),("callback",Json.String "selector"),
+            ("direction",Json.String "in"),("ownership",Json.Object[("borrowed",Json.String "call")]),("nullable",Json.Bool false)]]),
+          ("result",Json.Object[("type",Json.String "unit")]),("errors",Json.Object[("predicate",Json.String "none"),("capture",Json.String "none")]),
+          ("variadic",Json.String "reject"),("unsafeRaw",Json.Bool false)]
+        val callback=Json.Object[("foreign",Json.String "selector"),("lifetime",Json.String "call"),("thread",Json.String "owner-vm-thread"),
+          ("failure",Json.Object[("parameter",Json.String "code"),("cases",Json.Object(List.map(fn key=>(key,Json.int ~9))cases)),("otherwise",Json.int ~3)])]
+        val policy=ForeignPolicy.decode{file="selectors.ffi",text=Json.encode(Json.Object[("version",Json.int 1),("family",Json.String "c"),
+          ("structure",Json.String "Selectors"),("headers",Json.Array[Json.String "selectors.h"]),("libraries",Json.Array[Json.String "subject"]),
+          ("functions",Json.Array[function]),("resources",Json.Array[]),("callbacks",Json.Array[callback])])}
+        val files=ForeignGenerate.emit{policy=policy,profile=profile,declarations=declarations,macros=[],layouts=[],fields=[],constants=[],sourceName=fn name=>name}
+    in case List.find(fn a:ForeignGenerate.artifact=> #path a="public.sml")files of SOME a=> #text a | NONE=>raise Fail "selector public artifact" end
+  fun rejectsSelectors boolean cases=((ignore(selectorCases boolean cases);false)handle ForeignModel.Error _=>true)
   fun test name body=Test.it name(fn()=>Expect.that(name,body()))
   val tests=Test.describe "ffi/model/generate"
     [test "raw fixed scalar descriptor"(fn()=>String.isSubstring "result=RuneForeign.SInt32"(text "raw.sml")),
@@ -65,6 +81,10 @@ struct
      test "variadic prefix type checked"(fn()=>rejectsFixed "function" "variadic"(SOME "int variadic(long count, int value)")),
      test "variadic result type checked"(fn()=>rejectsFixed "function" "variadic"(SOME "long variadic(int count, int value)")),
      test "shim itself cannot be variadic"(fn()=>rejectsFixed "function" "variadic"(SOME "int variadic(int value, ...)")),
+     test "failure selector converts unsigned width"(fn()=>String.isSubstring "Word64.fromLargeInt 4294967295"(selectorCases false["-1"])),
+     test "failure selector converts Boolean truth"(fn()=>String.isSubstring "Word64.fromLargeInt 1"(selectorCases true["2"])),
+     test "duplicate narrowed selectors rejected"(fn()=>rejectsSelectors false["-1","4294967295U"]),
+     test "duplicate Boolean selectors rejected"(fn()=>rejectsSelectors true["1","2"]),
      test "missing field rejected at generation"(fn()=>((ignore(emit declarations [{aggregate="Pair",path=["absent"],writable=false}]);false)
        handle CLayout.Error _=>true | ForeignGenerate.Error _=>true))]
 end
