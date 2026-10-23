@@ -11,7 +11,7 @@ An implemented component and a validated target are separate claims.
 | --- | --- | --- | --- |
 | Linux x86-64, LP64 | Native C and original SDL headers | Stack/register interpretation, both JIT tiers and existing `runeopt` execution tested | Core SDL3, Win32 over SDL3 and deterministic mock |
 | Windows x86, ILP32 | Original Microsoft SDK and SDL headers; native 32-bit probes | Stack/register interpretation and x86 stdcall tested | Core SDL3 and native Win32; common mock also available |
-| Windows x86-64, LLP64 | Original Microsoft SDK and SDL headers; native 64-bit probes | Stack/register interpretation tested; cumulative JIT acceptance tracked separately | Core SDL3 and native Win32; common mock also available |
+| Windows x86-64, LLP64 | Original Microsoft SDK and SDL headers; native 64-bit probes | Stack/register interpretation and forced baseline/optimizing JIT tested | Core SDL3 and native Win32; common mock also available |
 | Linux x86, ILP32 | Native C layout, adapter and binary32 probes | Dedicated pinned-libffi VMs: both interpreters, raw variadics, callbacks/status, marshalling and generated contracts tested | No GUI acceptance claim |
 | Linux AArch64, LP64 | Cross-compiled C oracles executed by explicit QEMU wrappers | Dedicated pinned-libffi VMs: both interpreters and both JIT tiers, including raw variadics, callbacks/status and generated contracts tested under explicit QEMU | No GUI acceptance claim |
 | Linux big-endian PowerPC64, LP64 | Cross-compiled C oracles executed by explicit QEMU wrappers | Dedicated pinned-libffi VMs: both interpreters, raw variadics, callback descriptors/status and generated contracts tested under explicit QEMU | No GUI acceptance claim |
