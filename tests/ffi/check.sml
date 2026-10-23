@@ -47,10 +47,14 @@ struct
     in one ("sdl", 53); one ("win32", 38);
        say ("PASS ffi/requirements: " ^ Int.toString (length ids) ^ " delivery/test owners\n") end
   val directory = run ^ "/ffi/" ^ SysWord.toString (Posix.Process.pidToWord (Posix.ProcEnv.getpid ()))
+  val commandNumber = ref 0
   fun command name args =
     let val () = mkdirs directory
-        val output = directory ^ "/" ^ name ^ ".out"
-        val errors = directory ^ "/" ^ name ^ ".err"
+        val n = !commandNumber val () = commandNumber := n + 1
+        val prefix = directory ^ "/" ^ name ^ "-" ^ Int.toString n
+        val output = prefix ^ ".out"
+        val errors = prefix ^ ".err"
+        val () = write(prefix ^ ".command.json", Json.encode(Json.Array(List.map Json.String args)) ^ "\n")
         val start = Runtime.clock ()
         val status = Children.exec Subprocess.unlimited (fn e => e)
           {cmd = args, dir = SOME root, stdin = "", stdout = output, stderr = errors, timeout = 600}
@@ -156,10 +160,19 @@ struct
                    val staleOutput=bytecode ^ target ^ "-stale.rbc"
                    val ()=compile target "tests/ffi/stale-image.sml" staleOutput
                    val ()=staleImage vm (winpath staleOutput) subject (winpath(staleOutput ^ ".image"))
-               in owner vm ["--gc-stress","7","--gc-verify"] (winpath ownerOutput) subject;
-                  callbacks vm ["--gc-stress","7","--gc-verify"] (winpath callbackOutput) subject;
-                  calls vm ["--gc-stress","7","--gc-verify"] (winpath output) subject;
-                  memory vm ["--gc-stress","7","--gc-verify"] (winpath bufferOutput) subject end
+                   val factsOutput=bytecode ^ target ^ "-abi-facts.rbc"
+                   val ()=compile target "tests/lang/basis.runeforeign_abi-facts.sml" factsOutput
+                   val ()=need(String.isSubstring "PASS native C ABI facts"(command "windows-abi-facts"[vm,winpath factsOutput]),"Windows C ABI facts")
+                   fun exercise options=
+                     let val options=options @ ["--gc-stress","7","--gc-verify"]
+                     in owner vm options (winpath ownerOutput) subject;
+                        callbacks vm options (winpath callbackOutput) subject;
+                        calls vm options (winpath output) subject;
+                        memory vm options (winpath bufferOutput) subject end
+               in exercise [];
+                  if target="registers" andalso bits="64" then
+                    List.app exercise [["--jit=baseline","--jit-calls=1"],["--jit=opt","--jit-calls=1"]]
+                  else () end
          in one("stack",if bits="32" then "bin/runevm-stack32.exe" else "bin/runevm-stack.exe");
             one("registers",if bits="32" then "bin/runevm32.exe" else "bin/runevm.exe") end
        else
