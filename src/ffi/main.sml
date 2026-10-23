@@ -3,6 +3,9 @@
 structure RuneffiMain =
 struct
   exception Usage of string
+  type options={operation:string,config:string,target:string,output:string option,
+    roots:string list,layouts:string list,fields:ForeignGenerate.field list,constants:string list}
+  type publication={files:ForeignGenerate.artifact list,pointer:string,revision:string,api:string}
   fun fail message=raise Usage message
   fun read path= #text (CFiles.read path)
   fun hash text=Hex.fromBytes (Sha256.digest text)
@@ -52,7 +55,7 @@ struct
       roots=List.rev(!roots),layouts=List.rev(!layouts),fields=List.rev(!fields),constants=List.rev(!constants)} end
   fun identifier text=size text>0 andalso (Char.isAlpha(String.sub(text,0)) orelse String.sub(text,0)= #"_") andalso
     CharVector.all(fn c=>Char.isAlphaNum c orelse c= #"_")text
-  fun inputs {config,target,roots,layouts,fields,constants,...}=
+  fun inputs ({config,target,roots,layouts,fields,constants,...}:options)=
     let val configText=read config val targetText=read target
         val policy=ForeignPolicy.decode {file=config,text=configText}
         val profile=ForeignTarget.decode {file=target,text=targetText}
@@ -110,7 +113,7 @@ struct
     let val file=OS.Path.concat(root,path)
     in if not(exists file) then fail("missing generated file: " ^ file)
        else if read file=text then () else fail("changed or stale generated file: " ^ file) end
-  fun check root {files,pointer,...}=
+  fun check root ({files,pointer,...}:publication)=
     (List.app(checkFile root)files;checkFile root {path="current.build",text=pointer})
   fun publish root {files,pointer,revision,api}=
     let val ()=mkdirs root
