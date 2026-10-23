@@ -1,0 +1,153 @@
+{
+ "signatures": {
+  "FOREIGN_BYTES": {
+   "doc": "Target byte representations independent of the SML host's widths.\n\n",
+   "page": "sig/FOREIGN_BYTES.md",
+   "members": [
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of string",
+     "doc": "Invalid widths, malformed byte counts or out-of-range values.\n\n",
+     "page": "sig/FOREIGN_BYTES.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "integer",
+     "spec": "val integer : {width : int, signed : bool, littleEndian : bool, value : IntInf.int} -> string",
+     "doc": "`integer {width, signed, littleEndian, value}` encodes one C integer.\n\nWidth is in bytes, from one through sixteen. Values are range checked;\nnegative signed values use two's complement.\n\n",
+     "page": "sig/FOREIGN_BYTES.md#val-integer"
+    },
+    {
+     "kind": "val",
+     "name": "value",
+     "spec": "val value : {signed : bool, littleEndian : bool, bytes : string} -> IntInf.int",
+     "doc": "`value {signed, littleEndian, bytes}` decodes a bounded integer object.\n\n**Raises** `Error` unless the string contains one through sixteen bytes.\n\n",
+     "page": "sig/FOREIGN_BYTES.md#val-value"
+    },
+    {
+     "kind": "val",
+     "name": "real64",
+     "spec": "val real64 : {littleEndian : bool, value : real} -> string",
+     "doc": "`real64 {littleEndian, value}` encodes an IEEE binary64 object.\n\n**Raises** `Error` when the host's default SML real has another width.\n\n",
+     "page": "sig/FOREIGN_BYTES.md#val-real64"
+    },
+    {
+     "kind": "val",
+     "name": "real64Value",
+     "spec": "val real64Value : {littleEndian : bool, bytes : string} -> real",
+     "doc": "`real64Value {littleEndian, bytes}` decodes exactly eight bytes.\n\n**Raises** `Error` for another byte count.\n\n",
+     "page": "sig/FOREIGN_BYTES.md#val-real64value"
+    },
+    {
+     "kind": "val",
+     "name": "real32",
+     "spec": "val real32 : {littleEndian : bool, value : real} -> string",
+     "doc": "`real32 {littleEndian, value}` rounds binary64 to IEEE binary32 bytes.\n\nRounding is to nearest, ties to even. Overflow produces signed infinity;\nNaNs use a canonical quiet payload. This is independent of the C process\nfloating-point rounding mode.\n\n",
+     "page": "sig/FOREIGN_BYTES.md#val-real32"
+    },
+    {
+     "kind": "val",
+     "name": "real32Value",
+     "spec": "val real32Value : {littleEndian : bool, bytes : string} -> real",
+     "doc": "`real32Value {littleEndian, bytes}` widens an IEEE binary32 object exactly.\n\n**Raises** `Error` unless exactly four bytes are supplied.\n\n",
+     "page": "sig/FOREIGN_BYTES.md#val-real32value"
+    }
+   ]
+  },
+  "FOREIGN_SCOPE": {
+   "doc": "Deterministic foreign cleanup on normal and exceptional SML returns.\n\n",
+   "page": "sig/FOREIGN_SCOPE.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "scope",
+     "spec": "type scope",
+     "doc": "One dynamically scoped collection of cleanup actions.\n\n",
+     "page": "sig/FOREIGN_SCOPE.md#type-scope"
+    },
+    {
+     "kind": "type",
+     "name": "ticket",
+     "spec": "type ticket",
+     "doc": "An armed cleanup action, independent of a native address.\n\n",
+     "page": "sig/FOREIGN_SCOPE.md#type-ticket"
+    },
+    {
+     "kind": "exception",
+     "name": "Closed",
+     "spec": "exception Closed",
+     "doc": "Registration after cleanup has begun.\n\n",
+     "page": "sig/FOREIGN_SCOPE.md#exn-closed"
+    },
+    {
+     "kind": "val",
+     "name": "withScope",
+     "spec": "val withScope : (scope -> 'a) -> 'a",
+     "doc": "`withScope body` runs registered actions in reverse registration order.\n\nEvery armed action is attempted once. A body exception takes priority\nover cleanup exceptions; otherwise the first cleanup exception escapes.\n\n",
+     "page": "sig/FOREIGN_SCOPE.md#val-withscope"
+    },
+    {
+     "kind": "val",
+     "name": "defer",
+     "spec": "val defer : scope * (unit -> unit) -> ticket",
+     "doc": "`defer (scope, action)` registers an action before its resource escapes.\n\n**Raises** `Closed` when the scope is closing or closed.\n\n",
+     "page": "sig/FOREIGN_SCOPE.md#val-defer"
+    },
+    {
+     "kind": "val",
+     "name": "run",
+     "spec": "val run : ticket -> unit",
+     "doc": "`run ticket` attempts its action now, at most once, even if it raises.\n\n",
+     "page": "sig/FOREIGN_SCOPE.md#val-run"
+    },
+    {
+     "kind": "val",
+     "name": "cancel",
+     "spec": "val cancel : ticket -> unit",
+     "doc": "`cancel ticket` transfers cleanup responsibility to the caller.\n\n",
+     "page": "sig/FOREIGN_SCOPE.md#val-cancel"
+    }
+   ]
+  },
+  "FOREIGN_TEXT": {
+   "doc": "Explicit foreign text boundaries with preserved Windows code units.\n\n",
+   "page": "sig/FOREIGN_TEXT.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "encoding",
+     "spec": "datatype encoding = Bytes | Utf8 | Wtf8 | Utf16",
+     "doc": "Bytes are uninterpreted; UTF-16 consumes and produces WTF-8 SML text.\n\n",
+     "page": "sig/FOREIGN_TEXT.md#type-encoding"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of {offset : int, message : string}",
+     "doc": "A byte position and the reason conversion cannot satisfy its policy.\n\n",
+     "page": "sig/FOREIGN_TEXT.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "encode",
+     "spec": "val encode : {encoding : encoding, littleEndian : bool, terminated : bool, text : string} -> string",
+     "doc": "`encode {encoding, littleEndian, terminated, text}` copies native text.\n\nUTF-8 is strict. WTF-8 permits lone surrogates; UTF-16 preserves them.\nTerminated text rejects embedded NUL and appends a native terminator.\n\n",
+     "page": "sig/FOREIGN_TEXT.md#val-encode"
+    },
+    {
+     "kind": "val",
+     "name": "decode",
+     "spec": "val decode : {encoding : encoding, littleEndian : bool, terminated : bool, bytes : string} -> string",
+     "doc": "`decode {encoding, littleEndian, terminated, bytes}` reads bounded text.\n\nTerminated input must contain a terminator within these bytes. UTF-16\npairs become scalar UTF-8; lone surrogate code units remain WTF-8.\nOdd UTF-16 byte counts and malformed UTF-8/WTF-8 raise `Error`.\n\n",
+     "page": "sig/FOREIGN_TEXT.md#val-decode"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "ForeignBytes": "FOREIGN_BYTES",
+  "ForeignScope": "FOREIGN_SCOPE",
+  "ForeignText": "FOREIGN_TEXT"
+ }
+}

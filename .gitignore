@@ -27,3 +27,23 @@ __pycache__/
 /lib/dap/MANIFEST
 /lib/zmtp/MANIFEST
 /lib/jupyter/MANIFEST
+/lib/language/c/MANIFEST
+
+/lib/ffi/model/MANIFEST
+
+/lib/ffi/marshal/MANIFEST
+
+/lib/ffi/runtime/MANIFEST
+/lib/ffi/win32/common/MANIFEST
+
+/lib/ffi/win32/model/MANIFEST
+/lib/ffi/win32/mock/MANIFEST
+
+/lib/sdl/MANIFEST
+
+/lib/ffi/win32/sdldriver/MANIFEST
+/lib/ffi/win32/native/MANIFEST
+
+# Derived indexes of immutable generated FFI source libraries.
+/lib/ffi/sdl/generated/*/sets/*/MANIFEST
+/lib/ffi/win32/generated/*/sets/*/MANIFEST

@@ -1587,4 +1587,9 @@ struct
       :: Posix.SysDB.Group.members gr
     end
     handle OS.SysErr (_, e) => (noteError e; [])
+  (* Native resource transactions, including guarded disposal and identity
+     queries, have no implementation on a host's portable primitive shim. *)
+  fun foreign_callback _ = unsupported (false, (0w0 : Word64.word), "host has no Rune VM foreign callback bridge", 38, (0w0 : Word32.word))
+  fun foreign _ = unsupported (false, (0w0 : Word64.word), "", "host has no Rune VM foreign bridge", 38, (0w0 : Word32.word))
+
 end

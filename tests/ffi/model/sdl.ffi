@@ -1,0 +1,201 @@
+{
+  "version": 1,
+  "family": "c",
+  "structure": "SDLPolicySample",
+  "headers": [
+    "SDL3/SDL.h",
+    "SDL3/SDL_main.h"
+  ],
+  "libraries": [
+    "SDL3"
+  ],
+  "resources": [
+    "window"
+  ],
+  "callbacks": [],
+  "functions": [
+    {
+      "foreign": "SDL_SetMainReady",
+      "name": "setMainReady",
+      "parameters": [],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "SDL_GetError",
+      "name": "getError",
+      "parameters": [],
+      "result": {
+        "ownership": {
+          "borrowed": "library"
+        },
+        "nullable": false,
+        "encoding": "utf8",
+        "terminator": true,
+        "type": "string"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "SDL_CreateWindow",
+      "name": "createWindow",
+      "parameters": [
+        {
+          "name": "title",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "encoding": "utf8",
+          "terminator": true,
+          "type": "string"
+        },
+        {
+          "name": "w",
+          "type": "int"
+        },
+        {
+          "name": "h",
+          "type": "int"
+        },
+        {
+          "name": "flags",
+          "type": "word64"
+        }
+      ],
+      "result": {
+        "ownership": {
+          "owned": "SDL_DestroyWindow"
+        },
+        "nullable": false,
+        "type": {
+          "resource": "window"
+        }
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "input": {
+        "record": {
+          "title": "title",
+          "width": "w",
+          "height": "h",
+          "flags": "flags"
+        }
+      }
+    },
+    {
+      "foreign": "SDL_DestroyWindow",
+      "name": "destroyWindow",
+      "parameters": [
+        {
+          "name": "window",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          },
+          "consumes": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "SDL_GetWindowSize",
+      "name": "getWindowSize",
+      "parameters": [
+        {
+          "name": "window",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          },
+          "consumes": false
+        },
+        {
+          "name": "w",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "int",
+          "output": "width"
+        },
+        {
+          "name": "h",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "int",
+          "output": "height"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "SDL_GetClipboardText",
+      "name": "getClipboardText",
+      "parameters": [],
+      "result": {
+        "ownership": {
+          "owned": "SDL_free"
+        },
+        "nullable": false,
+        "encoding": "utf8",
+        "terminator": true,
+        "type": "string"
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "text",
+        "getter": "SDL_GetError"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    }
+  ]
+}

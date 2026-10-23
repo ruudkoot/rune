@@ -35,6 +35,19 @@ Makefile, and is where the scripts of `tests/` look when they are run by
 hand.
 
 
+## Foreign-call dependency
+
+`make FFI=auto|yes|no` controls the optional generic dynamic-call bridge.
+`make ffi-libffi` provisions the pinned static library without installing system
+packages; select it with `FFI_PREFIX=build/deps/libffi/native/install`. SDL3,
+cross-target provisioning, installation and REPL use are described in the
+[Runeffi release guide](ffi/release.md).
+The default uses the native target's libffi development installation through
+`pkg-config`; `yes` requires it and `no` preserves builds without it.
+`SYS=none` uses unavailable operations. Cross targets use their own prefixes
+and never inherit native libffi flags. See [the runtime contract](ffi/runtime.md)
+for target prefixes, link metadata, capability limits and fixture commands.
+
 ## GMP dependency
 
 `make GMP=auto|yes|no` controls the register VM's optional arithmetic backend.

@@ -610,3 +610,40 @@ cleared means that the variable is absent, while `NONE` with an error means
 that the operating-system conversion or lookup failed. The Basis wrappers
 raise `OS.SysErr` in the latter case. On Windows operating-system text uses
 WTF-8 and wide APIs; binary registry payloads and file contents remain bytes.
+
+
+## Generic foreign bridge
+
+`foreign` is one effectful primitive, independent of the number of bound
+functions. Its trusted Basis wrapper supplies an operation, opaque resource
+identity, extent, metadata and bytes. It returns success, an opaque result
+identity, bytes, error text, errno and the native error value. Native
+addresses are held by a per-VM registry, never encoded as SML pointers.
+
+Operations 0 through 10 query availability, open a library, resolve a symbol,
+allocate storage, read, write, form a view, release, prepare a fixed call,
+invoke it, and count resources. Operation 11 reports native pointer bytes,
+byte order and stdcall support, including on disabled builds. Operation 12
+executes a guarded native destructor with a fixed integral failure predicate;
+its auxiliary identity is the owned pointer. Success retires that identity.
+Operations 13/14 compare pointer addresses and query identity liveness.
+Queries never expose an address or turn an old identity into a new resource.
+Operation 18 prepares an outgoing variadic call with the same scalar metadata
+as fixed preparation; its auxiliary word is the nonempty fixed argument count.
+The runtime rejects unpromoted tail types and nondefault calling conventions
+before preparing a distinct `ffi_prep_cif_var` interface.
+Operation 19 observes a callback's atomic rejection count and first reason;
+auxiliary 1 resets both together after returning their old snapshot. Its
+result identity carries the reason code and eight output bytes carry the
+count. Only the owning VM thread may inspect or reset a live callback.
+Metadata/result words use explicit
+little-endian 64-bit encoding; native calling conventions and scalar
+representations belong to libffi. Disabled builds preserve the primitive
+and report ENOSYS. Existing GMP primitives are unchanged.
+
+The trusted `foreign_callback` primitive roots an SML `string -> string`
+wrapper and prepares a scalar libffi closure from ABI and failure-policy
+metadata. Ordinary libraries use `RuneForeign.callback`; no bound function
+adds a primitive. Callback execution stops at an explicit interpreter RET
+delimiter and never reenters `vm_loop` or compiles JIT code. See
+[foreign callbacks](ffi/callbacks.md).

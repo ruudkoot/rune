@@ -30,6 +30,8 @@ native:smlnj-dev | property.shrink | HOST-BUG | the host stops with "Fatal error
 # (docs/bugreport/mlkit/region-inference), a Socket without acceptNB
 # (docs/bugreport/mlkit/socket-acceptNB-absent), and a tail call that keeps
 # its region (docs/bugreport/mlkit/preserve-tail-calls).
+native:mlkit | ffi.model.policy | HOST-BUG | region inference corrupts JSON member names during sidecar decoding; the default build requests an impossible allocation or segfaults, while the same 48 checks pass with -no_ri (docs/bugreport/mlkit/region-inference)
+native:mlkit | ffi.model.target | HOST-BUG | region inference corrupts decoded JSON target profile data and requests an impossible allocation; unchanged sources pass all 19 checks with -no_ri (docs/bugreport/mlkit/region-inference)
 native:mlkit | json.roundtrip | HOST-BUG | region inference hands the program strings and values that are no longer its own, and it dies with SIGSEGV; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)
 native:mlkit | jsonrpc.jsonrpc | HOST-BUG | region inference: a name lib/json decodes comes back corrupt, and the program dies with SIGSEGV; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)
 native:mlkit | dap.dap | HOST-BUG | region inference: the names of the members of a message lib/json decodes come back corrupt, so no message reads back; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)
@@ -42,3 +44,17 @@ native:mlkit | unicode.utf8 | HOST-FLAKY | MLKit keeps a region and a frame for 
 # acceptNB returned, where it must return NONE
 # (docs/bugreport/polyml/recvVecNB-blocks-on-accepted).
 native:polyml | zmtp.zmtp | HOST-BUG | the first Zmtp.wait reads the connection the ROUTER accepted with recvVecNB, which waits for data that never comes, so the test hangs until the native library suite's time limit; on the connecting socket the same call returns NONE, and MLton and Rune return NONE on both
+
+# Foreign marshalling: exercises large shifts in the native host's IntInf.
+native:mlkit | ffi.marshal.core | HOST-BUG | IntInf.~>> by 30 or more returns zero for large integers, corrupting 64/128-bit byte encoding and binary32 conversions through binary64 bits; eleven cases fail (docs/bugreport/mlkit/IntInf/shift-right-by-30-or-more)
+native:smlnj* | ffi.marshal.core | HOST-ABSENT | optional default-real PackRealBig and PackRealLittle are unbound (docs/bugreport/smlnj/PackReal-default-absent)
+
+# The public Win32 contract requires fixed-width Word16 and Int64. These
+# native-own-Basis jobs do not supply Rune extension witnesses.
+native:smlnj* | ffi.win32.* | HOST-ABSENT | the host Basis has no Word16 structure required by the public WIN32_TYPES and WIN32_VALUES signatures; native C oracles and Rune's own fixed-width Basis cover both Windows widths
+native:polyml | ffi.win32.* | HOST-ABSENT | the host Basis has no Int64 structure required by the public WIN32_TYPES and WIN32_VALUES signatures; native C oracles and Rune's own fixed-width Basis cover both Windows widths
+
+# Generator failure shapes are checked by LibHosts.generatorHostBug; these
+# expectations do not accept another assertion or an arbitrary crash.
+native:smlnj* | ffi.model.generate | HOST-BUG | polymorphic equality misses equal IntInf selector values after target conversion; only duplicate narrowed selectors rejected fails (31 of 32 pass), while specialized equality and IntInf.compare agree (docs/bugreport/smlnj/IntInf/normalized-selector-equality)
+native:mlkit | ffi.model.generate | HOST-BUG | default region inference crashes in concatStringML before the first verdict; the unchanged 32 checks pass with -no_ri in the separate ffi.model.generate-no-ri control (docs/bugreport/mlkit/region-inference)

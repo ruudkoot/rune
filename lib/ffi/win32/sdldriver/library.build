@@ -1,0 +1,5 @@
+libraries sdl ffi/win32/common end
+annotate "demand" in
+  driver_sig.sml
+  driver.sml
+end

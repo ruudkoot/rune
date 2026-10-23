@@ -1,0 +1,10 @@
+(* Shared types and pure policy; no native runtime dependency. *)
+annotate "demand" in
+  values_sig.sml
+  values.sml
+  types_sig.sml
+  common_sig.sml
+  common.sml
+  driver_sig.sml
+  win32_sig.sml
+end

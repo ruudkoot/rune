@@ -1,0 +1,1090 @@
+{
+  "schema": 1,
+  "source": "source.json",
+  "headers": [
+    "Windows.h",
+    "windowsx.h"
+  ],
+  "library": [
+    "kernel32",
+    "user32",
+    "gdi32"
+  ],
+  "entries": [
+    {
+      "foreign": "GetModuleHandleW",
+      "source": {
+        "file": "um/libloaderapi.h",
+        "line": 244
+      },
+      "public": "Kernel.getModuleHandle",
+      "raw": "GetModuleHandleW",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "GetLastError",
+      "source": {
+        "file": "um/errhandlingapi.h",
+        "line": 85
+      },
+      "public": "Kernel.getLastError",
+      "raw": "GetLastError",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "SetLastError",
+      "source": {
+        "file": "um/errhandlingapi.h",
+        "line": 94
+      },
+      "public": "Kernel.setLastError",
+      "raw": "SetLastError",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "QueryPerformanceCounter",
+      "source": {
+        "file": "um/profileapi.h",
+        "line": 34
+      },
+      "public": "Kernel.queryPerformanceCounter",
+      "raw": "QueryPerformanceCounter",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "QueryPerformanceFrequency",
+      "source": {
+        "file": "um/profileapi.h",
+        "line": 41
+      },
+      "public": "Kernel.queryPerformanceFrequency",
+      "raw": "QueryPerformanceFrequency",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "RegisterClassExW",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 4363
+      },
+      "public": "User.registerClassEx",
+      "raw": "RegisterClassExW",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "UnregisterClassW",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 4311
+      },
+      "public": "User.unregisterClass",
+      "raw": "UnregisterClassW",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "CreateWindowExW",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 4465
+      },
+      "public": "User.createWindowEx",
+      "raw": "CreateWindowExW",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "DestroyWindow",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 4506
+      },
+      "public": "User.destroyWindow",
+      "raw": "DestroyWindow",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "ShowWindow",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 4512
+      },
+      "public": "User.showWindow",
+      "raw": "ShowWindow",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "UpdateWindow",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 8444
+      },
+      "public": "User.updateWindow",
+      "raw": "UpdateWindow",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "DefWindowProcW",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 4154
+      },
+      "public": "User.defWindowProc",
+      "raw": "DefWindowProcW",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "GetClientRect",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 8985
+      },
+      "public": "User.getClientRect",
+      "raw": "GetClientRect",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "SetWindowTextW",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 8929
+      },
+      "public": "User.setWindowText",
+      "raw": "SetWindowTextW",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "GetMessageW",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 3432
+      },
+      "public": "User.getMessage",
+      "raw": "GetMessageW",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "PeekMessageW",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 3515
+      },
+      "public": "User.peekMessage",
+      "raw": "PeekMessageW",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "TranslateMessage",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 3448
+      },
+      "public": "User.translateMessage",
+      "raw": "TranslateMessage",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "DispatchMessageW",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 3476
+      },
+      "public": "User.dispatchMessage",
+      "raw": "DispatchMessageW",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "PostQuitMessage",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 4168
+      },
+      "public": "User.postQuitMessage",
+      "raw": "PostQuitMessage",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "PostMessageW",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 4037
+      },
+      "public": "User.postMessage",
+      "raw": "PostMessageW",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "SendMessageW",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 3726
+      },
+      "public": "User.sendMessage",
+      "raw": "SendMessageW",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "InvalidateRect",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 8631
+      },
+      "public": "User.invalidateRect",
+      "raw": "InvalidateRect",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "BeginPaint",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 8561
+      },
+      "public": "User.beginPaint",
+      "raw": "BeginPaint",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "EndPaint",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 8568
+      },
+      "public": "User.endPaint",
+      "raw": "EndPaint",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "FillRect",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 9671
+      },
+      "public": "User.fillRect",
+      "raw": "FillRect",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "SetTimer",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 7056
+      },
+      "public": "User.setTimer",
+      "raw": "SetTimer",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "KillTimer",
+      "source": {
+        "file": "um/winuser.h",
+        "line": 7101
+      },
+      "public": "User.killTimer",
+      "raw": "KillTimer",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "CreatePen",
+      "source": {
+        "file": "um/wingdi.h",
+        "line": 3852
+      },
+      "public": "Gdi.createPen",
+      "raw": "CreatePen",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "CreateSolidBrush",
+      "source": {
+        "file": "um/wingdi.h",
+        "line": 3869
+      },
+      "public": "Gdi.createSolidBrush",
+      "raw": "CreateSolidBrush",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "SelectObject",
+      "source": {
+        "file": "um/wingdi.h",
+        "line": 4585
+      },
+      "public": "Gdi.selectObject",
+      "raw": "SelectObject",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "DeleteObject",
+      "source": {
+        "file": "um/wingdi.h",
+        "line": 3873
+      },
+      "public": "Gdi.deleteObject",
+      "raw": "DeleteObject",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "GetStockObject",
+      "source": {
+        "file": "um/wingdi.h",
+        "line": 4212
+      },
+      "public": "Gdi.getStockObject",
+      "raw": "GetStockObject",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "MoveToEx",
+      "source": {
+        "file": "um/wingdi.h",
+        "line": 5145
+      },
+      "public": "Gdi.moveToEx",
+      "raw": "MoveToEx",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "LineTo",
+      "source": {
+        "file": "um/wingdi.h",
+        "line": 4544
+      },
+      "public": "Gdi.lineTo",
+      "raw": "LineTo",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "Rectangle",
+      "source": {
+        "file": "um/wingdi.h",
+        "line": 4561
+      },
+      "public": "Gdi.rectangle",
+      "raw": "Rectangle",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "SetTextColor",
+      "source": {
+        "file": "um/wingdi.h",
+        "line": 4633
+      },
+      "public": "Gdi.setTextColor",
+      "raw": "SetTextColor",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "SetBkMode",
+      "source": {
+        "file": "um/wingdi.h",
+        "line": 4594
+      },
+      "public": "Gdi.setBkMode",
+      "raw": "SetBkMode",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    },
+    {
+      "foreign": "TextOutW",
+      "source": {
+        "file": "um/wingdi.h",
+        "line": 5147
+      },
+      "public": "Gdi.textOut",
+      "raw": "TextOutW",
+      "implementation": "complete",
+      "gate": "M8",
+      "test": "win32-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "provider": "Win32NativeFn",
+      "evidence": "../../tests/ffi/evidence/m8.md"
+    }
+  ],
+  "requiredTypes": [
+    "WNDCLASSEXW",
+    "WNDPROC",
+    "CREATESTRUCTW",
+    "MSG",
+    "POINT",
+    "RECT",
+    "PAINTSTRUCT"
+  ],
+  "constants": [
+    {
+      "foreign": "WM_NCCREATE",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_CREATE",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_SIZE",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_PAINT",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_CLOSE",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_DESTROY",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_NCDESTROY",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_QUIT",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_KEYDOWN",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_KEYUP",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_CHAR",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_MOUSEMOVE",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_LBUTTONDOWN",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_LBUTTONUP",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_RBUTTONDOWN",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_RBUTTONUP",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_MBUTTONDOWN",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_MBUTTONUP",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_TIMER",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WM_APP",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WS_OVERLAPPEDWINDOW",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WS_VISIBLE",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "CS_HREDRAW",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "CS_VREDRAW",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SW_HIDE",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SW_SHOW",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SW_SHOWNORMAL",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "PM_NOREMOVE",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "PM_REMOVE",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WHITE_BRUSH",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "BLACK_BRUSH",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "NULL_BRUSH",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "BLACK_PEN",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "WHITE_PEN",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "NULL_PEN",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "PS_SOLID",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "OPAQUE",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "TRANSPARENT",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "VK_SHIFT",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "VK_CONTROL",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "VK_MENU",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "VK_ESCAPE",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "VK_SPACE",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "VK_LEFT",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "VK_RIGHT",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "VK_UP",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "VK_DOWN",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "VK_RETURN",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "MK_LBUTTON",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "MK_RBUTTON",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "MK_MBUTTON",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "MK_SHIFT",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "MK_CONTROL",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    }
+  ],
+  "helpers": [
+    {
+      "foreign": "LOWORD",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
+    },
+    {
+      "foreign": "HIWORD",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
+    },
+    {
+      "foreign": "RGB",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
+    },
+    {
+      "foreign": "GetRValue",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
+    },
+    {
+      "foreign": "GetGValue",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
+    },
+    {
+      "foreign": "GetBValue",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
+    },
+    {
+      "foreign": "GET_X_LPARAM",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
+    },
+    {
+      "foreign": "GET_Y_LPARAM",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "pure SML Win32Values projection, checked against original SDK macros",
+      "provenance": "helpers.json"
+    }
+  ],
+  "callbackFailureResults": [
+    {
+      "message": "WM_NCCREATE",
+      "result": 0
+    },
+    {
+      "message": "WM_CREATE",
+      "result": -1
+    },
+    {
+      "message": "WM_SIZE",
+      "result": 0
+    },
+    {
+      "message": "WM_PAINT",
+      "result": 0
+    },
+    {
+      "message": "WM_CLOSE",
+      "result": 0
+    },
+    {
+      "message": "WM_DESTROY",
+      "result": 0
+    },
+    {
+      "message": "WM_NCDESTROY",
+      "result": 0
+    },
+    {
+      "message": "WM_KEYDOWN",
+      "result": 0
+    },
+    {
+      "message": "WM_KEYUP",
+      "result": 0
+    },
+    {
+      "message": "WM_CHAR",
+      "result": 0
+    },
+    {
+      "message": "WM_MOUSEMOVE",
+      "result": 0
+    },
+    {
+      "message": "WM_LBUTTONDOWN",
+      "result": 0
+    },
+    {
+      "message": "WM_LBUTTONUP",
+      "result": 0
+    },
+    {
+      "message": "WM_RBUTTONDOWN",
+      "result": 0
+    },
+    {
+      "message": "WM_RBUTTONUP",
+      "result": 0
+    },
+    {
+      "message": "WM_MBUTTONDOWN",
+      "result": 0
+    },
+    {
+      "message": "WM_MBUTTONUP",
+      "result": 0
+    },
+    {
+      "message": "WM_TIMER",
+      "result": 0
+    },
+    {
+      "message": "WM_APP",
+      "result": 0
+    }
+  ],
+  "otherCallbackFailureResult": 0,
+  "completionEvidence": "../../tests/ffi/evidence/release.md"
+}

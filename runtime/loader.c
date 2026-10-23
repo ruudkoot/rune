@@ -584,6 +584,7 @@ static int unit_return_function(VM *vm, char *err, size_t errlen) {
 }
 
 int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t errlen) {
+    if (vm->callback_depth) { snprintf(err, errlen, "cannot load a unit inside a foreign callback"); return -1; }
     if (vm->native) { fail(err, errlen, "a program of native code loads no units"); return -1; }
     Reader r = { data, size, 0, 0 };
     Program *p = &vm->prog;

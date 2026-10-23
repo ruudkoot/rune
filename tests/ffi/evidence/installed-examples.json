@@ -1,0 +1,1057 @@
+{
+  "schema": 1,
+  "date": "2026-10-23",
+  "result": "PASS installed examples and focused installer follow-up; earlier failed attempts retained",
+  "runtime_basis_freeze": "18c353b49",
+  "binding_source_freeze": "ddba4faad9fa5f8540367f1067be35d1b561936d",
+  "installer_component": "ed4c57f87",
+  "frozen_runtime_sources_rechecked": 68,
+  "frozen_artifacts_sha256": {
+    "bin/runevm": "eef487c7081c347cabee509ed1e71945997190dbfe6a99b2bdc0a84a96aa1531",
+    "bin/runevm-stack": "0ce6e622a92abcf190f3b7f1e2c15c078c65d8ec6a999d74572569e4392895e9",
+    "bin/rune.rbc": "36225003fa50774cf84419b904d5c0e74de65bb97eddd7b7525c0ab704695be0",
+    "bin/rune-repl.img": "e7b2fbdb2ff8730307adcacda8b9bb7b66d5bc433cb1af3d8fccbd2ab954ba51",
+    "bin/runeffi.rbc": "9144040b994bba876d34a90c0ee905efa56a29bf6827f1b25cf6323fcb5641ba",
+    "build/librune.a": "6add32a414662d54c6ffeea2d10e0e70660f41acd09ae8abfc93376da28d5522"
+  },
+  "asset_applicability": "204 installed source assets are tied to ddba4faad, before later status-only metadata promotion; current-archive verification is a separate reusable witness.",
+  "linux": {
+    "result": "PASS",
+    "external": "/tmp/runeffi installed examples sudfcn3p",
+    "source_commit": "ddba4faad",
+    "source_hashes": {
+      "examples/win32/mock.build": "e763429e0c2ff4d0f7334878e09d4b40f30443e4679b43a5735993b0f520b7b5",
+      "examples/win32/native-main.sml": "48ebcd84e83607d2c88eced555e99d6d499ca416fe114e5a628af7e3ff1b5d99",
+      "examples/win32/mock-main.sml": "4b3dc161366f0dae1a1ccedaeddb45f57f5e9e469394f067903bb5f4cbac4b0e",
+      "examples/win32/native.build": "cba57e09413a36a896a1d81d8ec88d959d5859b1e8fee7bc5f9238f7eadeda30",
+      "examples/win32/sdl.build": "eb636d997dc0329a5117f91474f7ff614fdf249998b861252c571d9cd2e4f0b7",
+      "examples/win32/sdl-main.sml": "96961cfe2e4c2d8b538878db88be513c3d53a2c6a31c38e3033a2dc8e5a1bd83",
+      "examples/win32/app.sml": "a59e868cd661b0f2751d24a028ed3af2eeca0772c73a0ba80af559b1714c6b17",
+      "examples/sdl/hello.sml": "8262751e50093f259b053335c9f0f04827941a0db63c573afc087f6d09b12df6",
+      "examples/sdl/hello.build": "2a68622f3a71170de4b5312172a9fafb8c15822feca11418d8364ca47b1fb3e6"
+    },
+    "commands": [
+      {
+        "label": "source-install",
+        "argv": [
+          "sh",
+          "/home/ruud/rune/.worktrees/runeffi-package-final/scripts/install.sh",
+          "--prefix",
+          "/tmp/runeffi installed examples sudfcn3p/initial installation"
+        ],
+        "cwd": "/home/ruud/rune/.worktrees/runeffi-package-final",
+        "status": 0,
+        "seconds": 10.165117695025401,
+        "stdout": "retained runtime build and dependency material in /tmp/runeffi installed examples sudfcn3p/initial installation/lib/rune/rebuild\ninstalled rune, runedoc, runeopt, rune-repl, rune-dap, rune-kernel, runevm and runevm-stack in /tmp/runeffi installed examples sudfcn3p/initial installation/bin, the basis library in /tmp/runeffi installed examples sudfcn3p/initial installation/lib/rune\nnote: /tmp/runeffi installed examples sudfcn3p/initial installation/bin is not on your PATH\n",
+        "stderr": ""
+      },
+      {
+        "label": "compile-installed-sdl-shim",
+        "argv": [
+          "cc",
+          "-shared",
+          "-fPIC",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-DSDL_MAIN_HANDLED=1",
+          "-I/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/lib/rune/ffi-assets/sdl/upstream",
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/lib/rune/ffi/sdl/generated/native/sets/4fcd7b48b41e48268ed3b11311b41800dc37586a6f8b99573e7cff44dc7c753b/shims.c",
+          "-o",
+          "/tmp/runeffi installed examples sudfcn3p/native dependencies/sdl fields.so"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.680217752000317,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "compile-mock",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "ffi/win32/mock",
+          "--target=registers",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/mock.build",
+          "-o",
+          "/tmp/runeffi installed examples sudfcn3p/mock.rbc"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 2.5355652080033906,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "dependencies-mock",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "ffi/win32/mock",
+          "--target=registers",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/mock.build",
+          "--basis-deps"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.117680700001074,
+        "stdout": "initial.sml\npervasive.sml\nstringcvt.sml\nbool.sml\noption.sml\nlist.sml\nrunebytes.sml\nintinf.sml\nint.sml\nword.sml\nword64.sml\nword_sig.sml\nint_sig.sml\nintn_fn.sml\nint32.sml\nint64.sml\nwordn_fn.sml\nword8.sml\nword16.sml\nword32.sml\nchar.sml\nstring.sml\nieeereal.sml\nreal.sml\nmono_sigs.sml\nmono_vector_fn.sml\nmono_array_slice_fn.sml\ncharvector.sml\nsubstring.sml\ncharvectorslice.sml\nword8vector.sml\nbyte_array_fn.sml\nword8array.sml\nword8arrayslice.sml\nchararray.sml\nchararrayslice.sml\nposition.sml\nsig_time.sml\ntime.sml\ntimer.sml\nruneerror.sml\nruneexit.sml\nosio.sml\nio.sml\nprimio_sig.sml\nprimio_fn.sml\nstreamio_sig.sml\nstreamio_fn.sml\nrunefile.sml\nrunepos.sml\ntextprimio.sml\nbinprimio.sml\nimperativeio_fn.sml\ntextio.sml\nbyte.sml\nbinio.sml\nsml90.sml\nruntime.sml\ndynamic_sig.sml\ndynamic.sml\nsig_bool.sml\nsig_char.sml\nsig_int_inf.sml\nsig_io.sml\nsig_list.sml\nsig_sml90.sml\nsig_string.sml\nsig_timer.sml\nseal_bool.sml\nseal_list.sml\nseal_intinf.sml\nseal_int.sml\nseal_int32.sml\nseal_int64.sml\nseal_word16.sml\nseal_word32.sml\nseal_word64.sml\nseal_char.sml\nseal_string.sml\nseal_timer.sml\nepilogue.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/unicode/utf8_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/unicode/utf8.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/types_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/common_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/common.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/driver_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/win32_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/model/model_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/model/model.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/mock/mock_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/mock/mock.sml\n",
+        "stderr": ""
+      },
+      {
+        "label": "compile-mock",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "ffi/win32/mock",
+          "--target=registers",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/mock.build",
+          "-o",
+          "/tmp/runeffi installed examples sudfcn3p/mock.rbc"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.9277029340155423,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "dependencies-mock",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "ffi/win32/mock",
+          "--target=registers",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/mock.build",
+          "--basis-deps"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.1361398650042247,
+        "stdout": "initial.sml\npervasive.sml\nstringcvt.sml\nbool.sml\noption.sml\nlist.sml\nrunebytes.sml\nintinf.sml\nint.sml\nword.sml\nword64.sml\nword_sig.sml\nint_sig.sml\nintn_fn.sml\nint32.sml\nint64.sml\nwordn_fn.sml\nword8.sml\nword16.sml\nword32.sml\nchar.sml\nstring.sml\nieeereal.sml\nreal.sml\nmono_sigs.sml\nmono_vector_fn.sml\nmono_array_slice_fn.sml\ncharvector.sml\nsubstring.sml\ncharvectorslice.sml\nword8vector.sml\nbyte_array_fn.sml\nword8array.sml\nword8arrayslice.sml\nchararray.sml\nchararrayslice.sml\nposition.sml\nsig_time.sml\ntime.sml\ntimer.sml\nruneerror.sml\nruneexit.sml\nosio.sml\nio.sml\nprimio_sig.sml\nprimio_fn.sml\nstreamio_sig.sml\nstreamio_fn.sml\nrunefile.sml\nrunepos.sml\ntextprimio.sml\nbinprimio.sml\nimperativeio_fn.sml\ntextio.sml\nbyte.sml\nbinio.sml\nsml90.sml\nruntime.sml\ndynamic_sig.sml\ndynamic.sml\nsig_bool.sml\nsig_char.sml\nsig_int_inf.sml\nsig_io.sml\nsig_list.sml\nsig_sml90.sml\nsig_string.sml\nsig_timer.sml\nseal_bool.sml\nseal_list.sml\nseal_intinf.sml\nseal_int.sml\nseal_int32.sml\nseal_int64.sml\nseal_word16.sml\nseal_word32.sml\nseal_word64.sml\nseal_char.sml\nseal_string.sml\nseal_timer.sml\nepilogue.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/unicode/utf8_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/unicode/utf8.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/types_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/common_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/common.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/driver_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/win32_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/model/model_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/model/model.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/mock/mock_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/mock/mock.sml\n",
+        "stderr": ""
+      },
+      {
+        "label": "run-mock",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/runevm",
+          "--jit=off",
+          "--gc-stress",
+          "101",
+          "--gc-verify",
+          "/tmp/runeffi installed examples sudfcn3p/mock.rbc"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.07224228398990817,
+        "stdout": "PASS shared Win32 application: 0\n",
+        "stderr": ""
+      },
+      {
+        "label": "compile-sdl-app-registers",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "ffi/win32/sdldriver",
+          "--target=registers",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/sdl.build",
+          "--path",
+          "SDL_GENERATED=/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/lib/rune/ffi/sdl/generated/native",
+          "-o",
+          "/tmp/runeffi installed examples sudfcn3p/sdl-app-registers.rbc"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 1,
+        "seconds": 2.9491593860147987,
+        "stdout": "",
+        "stderr": "/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/../../ffi/win32/sdl-model.sml:2:20: error: unbound functor: Win32ModelFn\n/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/../../ffi/win32/sdl-export.sml:1:35: error: unbound structure: Win32Sdl\n/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/sdl-main.sml:7:16: error: unbound variable or constructor: Win32Sdl.reset\n/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/sdl-main.sml:12:8: error: unbound variable or constructor: Win32SdlExampleMain.main\n"
+      },
+      {
+        "label": "compile-mock",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "ffi/win32/mock",
+          "--target=registers",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/mock.build",
+          "-o",
+          "/tmp/runeffi installed examples sudfcn3p/mock.rbc"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.8821049389953259,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "dependencies-mock",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "ffi/win32/mock",
+          "--target=registers",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/mock.build",
+          "--basis-deps"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.16718858300009742,
+        "stdout": "initial.sml\npervasive.sml\nstringcvt.sml\nbool.sml\noption.sml\nlist.sml\nrunebytes.sml\nintinf.sml\nint.sml\nword.sml\nword64.sml\nword_sig.sml\nint_sig.sml\nintn_fn.sml\nint32.sml\nint64.sml\nwordn_fn.sml\nword8.sml\nword16.sml\nword32.sml\nchar.sml\nstring.sml\nieeereal.sml\nreal.sml\nmono_sigs.sml\nmono_vector_fn.sml\nmono_array_slice_fn.sml\ncharvector.sml\nsubstring.sml\ncharvectorslice.sml\nword8vector.sml\nbyte_array_fn.sml\nword8array.sml\nword8arrayslice.sml\nchararray.sml\nchararrayslice.sml\nposition.sml\nsig_time.sml\ntime.sml\ntimer.sml\nruneerror.sml\nruneexit.sml\nosio.sml\nio.sml\nprimio_sig.sml\nprimio_fn.sml\nstreamio_sig.sml\nstreamio_fn.sml\nrunefile.sml\nrunepos.sml\ntextprimio.sml\nbinprimio.sml\nimperativeio_fn.sml\ntextio.sml\nbyte.sml\nbinio.sml\nsml90.sml\nruntime.sml\ndynamic_sig.sml\ndynamic.sml\nsig_bool.sml\nsig_char.sml\nsig_int_inf.sml\nsig_io.sml\nsig_list.sml\nsig_sml90.sml\nsig_string.sml\nsig_timer.sml\nseal_bool.sml\nseal_list.sml\nseal_intinf.sml\nseal_int.sml\nseal_int32.sml\nseal_int64.sml\nseal_word16.sml\nseal_word32.sml\nseal_word64.sml\nseal_char.sml\nseal_string.sml\nseal_timer.sml\nepilogue.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/unicode/utf8_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/unicode/utf8.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/types_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/common_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/common.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/driver_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/win32_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/model/model_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/model/model.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/mock/mock_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/mock/mock.sml\n",
+        "stderr": ""
+      },
+      {
+        "label": "run-mock",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/runevm",
+          "--jit=off",
+          "--gc-stress",
+          "101",
+          "--gc-verify",
+          "/tmp/runeffi installed examples sudfcn3p/mock.rbc"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.0688283370109275,
+        "stdout": "PASS shared Win32 application: 0\n",
+        "stderr": ""
+      },
+      {
+        "label": "compile-sdl-app-registers",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "ffi/win32/sdldriver",
+          "--library",
+          "ffi/win32/model",
+          "--target=registers",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/sdl.build",
+          "--path",
+          "SDL_GENERATED=/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/lib/rune/ffi/sdl/generated/native",
+          "-o",
+          "/tmp/runeffi installed examples sudfcn3p/sdl-app-registers.rbc"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 1.997444393025944,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "dependencies-sdl-app-registers",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "ffi/win32/sdldriver",
+          "--library",
+          "ffi/win32/model",
+          "--target=registers",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/sdl.build",
+          "--path",
+          "SDL_GENERATED=/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/lib/rune/ffi/sdl/generated/native",
+          "--basis-deps"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.12087151000741869,
+        "stdout": "initial.sml\npervasive.sml\nstringcvt.sml\nbool.sml\noption.sml\nlist.sml\nlistpair.sml\nrunebytes.sml\nintinf.sml\nint.sml\nword.sml\nword64.sml\nword_sig.sml\nint_sig.sml\nintn_fn.sml\nint32.sml\nint64.sml\nwordn_fn.sml\nword8.sml\nword16.sml\nword32.sml\nchar.sml\nstring.sml\nieeereal.sml\nreal.sml\nvector.sml\nmono_sigs.sml\nmono_vector_fn.sml\nmono_array_slice_fn.sml\ncharvector.sml\nsubstring.sml\ncharvectorslice.sml\nword8vector.sml\nbyte_array_fn.sml\nword8array.sml\nword8arrayslice.sml\npack_word.sml\npack_real.sml\nchararray.sml\nchararrayslice.sml\ntext.sml\nposition.sml\nsig_time.sml\ntime.sml\ntimer.sml\nruneerror.sml\nruneexit.sml\nospath.sml\nosfilesys.sml\nosio.sml\nos.sml\nio.sml\nprimio_sig.sml\nprimio_fn.sml\nstreamio_sig.sml\nstreamio_fn.sml\nrunefile.sml\nrunepos.sml\ntextprimio.sml\nbinprimio.sml\nimperativeio_fn.sml\ntextio.sml\nbyte.sml\nbinio.sml\ncommandline.sml\nsml90.sml\nrune_foreign_sig.sml\nrune_foreign.sml\nruntime.sml\ndynamic_sig.sml\ndynamic.sml\nsig_bool.sml\nsig_byte.sml\nsig_char.sml\nsig_command_line.sml\nsig_int_inf.sml\nsig_io.sml\nsig_list.sml\nsig_math.sml\nsig_option.sml\nsig_os_file_sys.sml\nsig_os_io.sml\nsig_os_path.sml\nsig_os_process.sml\nsig_pack_real.sml\nsig_sml90.sml\nsig_string.sml\nsig_substring.sml\nsig_timer.sml\nsig_vector.sml\nsig_real.sml\nsig_os.sml\nsig_text.sml\nseal_bool.sml\nseal_option.sml\nseal_list.sml\nseal_intinf.sml\nseal_int.sml\nseal_word.sml\nseal_int32.sml\nseal_int64.sml\nseal_word16.sml\nseal_word32.sml\nseal_word64.sml\nseal_char.sml\nseal_string.sml\nseal_real.sml\nseal_vector.sml\nseal_pack_real.sml\nseal_text.sml\nseal_timer.sml\nseal_os.sml\nseal_byte.sml\nseal_commandline.sml\nepilogue.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/unicode/utf8_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/unicode/utf8.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/scope_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/scope.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/bytes_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/bytes.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/text_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/text.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/owner_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/owner.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/memory_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/memory.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/generated_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/generated.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/sdl/raw_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/sdl/layout_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/sdl/sdl_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/sdl/sdl.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/types_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/common_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/common.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/driver_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/win32_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/sdldriver/driver_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/sdldriver/driver.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/model/model_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/model/model.sml\n",
+        "stderr": ""
+      },
+      {
+        "label": "run-sdl-app-registers",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/runevm",
+          "--jit=off",
+          "--gc-stress",
+          "101",
+          "--gc-verify",
+          "--stats",
+          "/tmp/runeffi installed examples sudfcn3p/sdl-app-registers.rbc",
+          "/tmp/runeffi installed examples sudfcn3p/native dependencies/libSDL3.so.0.4.18",
+          "/tmp/runeffi installed examples sudfcn3p/native dependencies/sdl fields.so",
+          "--smoke"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 4.822090051020496,
+        "stdout": "PASS shared Win32 application: 0\n",
+        "stderr": "runevm: 1854 collections, 3953736 bytes allocated, semispace 4194304 bytes, 386728 live, copied 385080, max live 385176, gc 0 us, longest 0 us\nrunevm: nursery 1048576 bytes: 1854 minor and 0 full collections, promoted 385080, large objects 0 (0 bytes), 0 bytes of them live\nrunevm: 5 boxes, 80 bytes\n"
+      },
+      {
+        "label": "compile-sdl-app-stack",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "ffi/win32/sdldriver",
+          "--library",
+          "ffi/win32/model",
+          "--target=stack",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/sdl.build",
+          "--path",
+          "SDL_GENERATED=/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/lib/rune/ffi/sdl/generated/native",
+          "-o",
+          "/tmp/runeffi installed examples sudfcn3p/sdl-app-stack.rbc"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 5.22085190701182,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "dependencies-sdl-app-stack",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "ffi/win32/sdldriver",
+          "--library",
+          "ffi/win32/model",
+          "--target=stack",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/sdl.build",
+          "--path",
+          "SDL_GENERATED=/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/lib/rune/ffi/sdl/generated/native",
+          "--basis-deps"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.1706231400021352,
+        "stdout": "initial.sml\npervasive.sml\nstringcvt.sml\nbool.sml\noption.sml\nlist.sml\nlistpair.sml\nrunebytes.sml\nintinf.sml\nint.sml\nword.sml\nword64.sml\nword_sig.sml\nint_sig.sml\nintn_fn.sml\nint32.sml\nint64.sml\nwordn_fn.sml\nword8.sml\nword16.sml\nword32.sml\nchar.sml\nstring.sml\nieeereal.sml\nreal.sml\nvector.sml\nmono_sigs.sml\nmono_vector_fn.sml\nmono_array_slice_fn.sml\ncharvector.sml\nsubstring.sml\ncharvectorslice.sml\nword8vector.sml\nbyte_array_fn.sml\nword8array.sml\nword8arrayslice.sml\npack_word.sml\npack_real.sml\nchararray.sml\nchararrayslice.sml\ntext.sml\nposition.sml\nsig_time.sml\ntime.sml\ntimer.sml\nruneerror.sml\nruneexit.sml\nospath.sml\nosfilesys.sml\nosio.sml\nos.sml\nio.sml\nprimio_sig.sml\nprimio_fn.sml\nstreamio_sig.sml\nstreamio_fn.sml\nrunefile.sml\nrunepos.sml\ntextprimio.sml\nbinprimio.sml\nimperativeio_fn.sml\ntextio.sml\nbyte.sml\nbinio.sml\ncommandline.sml\nsml90.sml\nrune_foreign_sig.sml\nrune_foreign.sml\nruntime.sml\ndynamic_sig.sml\ndynamic.sml\nsig_bool.sml\nsig_byte.sml\nsig_char.sml\nsig_command_line.sml\nsig_int_inf.sml\nsig_io.sml\nsig_list.sml\nsig_math.sml\nsig_option.sml\nsig_os_file_sys.sml\nsig_os_io.sml\nsig_os_path.sml\nsig_os_process.sml\nsig_pack_real.sml\nsig_sml90.sml\nsig_string.sml\nsig_substring.sml\nsig_timer.sml\nsig_vector.sml\nsig_real.sml\nsig_os.sml\nsig_text.sml\nseal_bool.sml\nseal_option.sml\nseal_list.sml\nseal_intinf.sml\nseal_int.sml\nseal_word.sml\nseal_int32.sml\nseal_int64.sml\nseal_word16.sml\nseal_word32.sml\nseal_word64.sml\nseal_char.sml\nseal_string.sml\nseal_real.sml\nseal_vector.sml\nseal_pack_real.sml\nseal_text.sml\nseal_timer.sml\nseal_os.sml\nseal_byte.sml\nseal_commandline.sml\nepilogue.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/unicode/utf8_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/unicode/utf8.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/scope_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/scope.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/bytes_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/bytes.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/text_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/text.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/owner_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/owner.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/memory_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/memory.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/generated_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/generated.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/sdl/raw_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/sdl/layout_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/sdl/sdl_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/sdl/sdl.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/types_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/common_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/common.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/driver_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/win32_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/sdldriver/driver_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/sdldriver/driver.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/model/model_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/model/model.sml\n",
+        "stderr": ""
+      },
+      {
+        "label": "run-sdl-app-stack",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/runevm-stack",
+          "--jit=off",
+          "--gc-stress",
+          "101",
+          "--gc-verify",
+          "--stats",
+          "/tmp/runeffi installed examples sudfcn3p/sdl-app-stack.rbc",
+          "/tmp/runeffi installed examples sudfcn3p/native dependencies/libSDL3.so.0.4.18",
+          "/tmp/runeffi installed examples sudfcn3p/native dependencies/sdl fields.so",
+          "--smoke"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 2,
+        "seconds": 0.0028593690076377243,
+        "stdout": "",
+        "stderr": "runevm: --jit=off: this VM has no JIT (bin/runevm has)\nusage: runevm [options] file.rbc [args ...]\n  --heap-size N   initial semispace size in bytes (default 4194304)\n  --heap-limit N  maximum semispace size in bytes, at least 4096 (unlimited by default)\n  --equality-work N  maximum steps per structural comparison (default 1000000)\n  --stack-size N  the most bytes the stack may grow to (default 1073741824): a\n                  recursion without end stops here, not at the machine's memory\n  --disasm        print the bytecode and exit\n  --trace         trace every instruction to stderr\n  --stats         print heap statistics to stderr at exit\n  --count         print instructions executed and bytes and objects allocated\n                  to stderr at exit; the same for every run of a program\n  --gc-stress N   collect before every Nth allocation (testing the collector\n                  and the primitives' handling of heap pointers)\n  --heap-fill P   grow the heap until at most P percent of it is in use after\n                  a collection, 1 to 100 (default 50)\n  --gc-log FILE   write a line about every collection into FILE (docs/runtime.md)\n  --gc-verify     check the heap before and after every collection (testing the collector)\n  --gc-compact    compact the old space at every full collection (testing the collector)\n  --gc-stress-cycles  make --gc-stress's collection a minor one, which begins the low-pause\n                  collector's cycle or marks a little of it (testing the collector)\n  --nursery N     a nursery of N bytes, at least 4096, before the old space (default 1048576;\n                  0: none, every object made in the old space as the copier had it); after a\n                  full collection the nursery is half the room the heap has, from N to\n  --nursery-max N the most (default 8388608; 0: the nursery stays N)\n  --gc G          the collector: throughput (the default: the least memory and time, its\n                  full collections stopping the program) or low-pause (docs/runtime.md)\n  --old-space S   the old space beneath --gc, for testing it: copy, which a full\n                  collection copies (as with --nursery 0); mark: one\n                  whose objects stay where they are (docs/plans/garbage-collector-v2.md, M4);\n                  immix: a mark-region one (--gc throughput, the default); segfit: one\n                  of segregated size classes (--gc low-pause); compact: one that every full\n                  collection slides down (measured beside them)\n  --checked       DECON tests the tag it is given, which a match that names\n                  every constructor leaves untested (for testing the compiler)\n  --emulate-fork  fork as on Windows, which has none: by a second runevm that\n                  is handed this one's state (testing that path)\n  --resume TOKEN  carry on as the child of such a fork; runevm gives this itself\n  --restore FILE  carry on the world Runtime.save wrote to FILE, with the\n                  arguments after it, if any or after --, as its\n                  CommandLine.arguments\n  --name NAME     the name the program has (CommandLine.name), the file's\n                  else: for a script that runs a .rbc as a command of its own\n  --              the end of the options\n  --jit=MODE      register VM: off, baseline, opt or all (docs/plans/jit.md)\n  --jit-stats     register VM: what the JIT did, to stderr at exit\n  --jit-only=SPEC register VM: give code to functions LO-HI, or the odd or even ones, alone\n  --jit-calls=N, --jit-work=N  register VM: compile a function at its Nth call, or at N iterations of its loops and calls it makes (baseline)\n  --jit-stress=N  register VM: every Nth call into compiled code invalidates it (a test of invalidation)\n  --deopt-stress=N  register VM: compiled code leaves for the interpreter at every Nth instruction (a test of the frames' exactness)\n  --jit-perf-map  register VM: write /tmp/perf-PID.map, so that perf record names compiled functions\n  --jit-dump=DIR  register VM: write the code of every function compiled into DIR, with what each part\n                  of it is for, and perf's jitdump of it (runtime/register/jit/dump.c)\n  --jit-profile   register VM: count what compiled code calls, branches and loops on (--jit-stats shows them)\n  --jit-check     register VM: run a few bytes of code from executable memory and exit\n  --jit-returns=R register VM: jmp or call, how compiled code returns (docs/plans/native-frames.md, M7)\n  --intinf=MODE   auto (default), gmp or sml; explicit GMP requires a supported library\n  --intinf-max-bits N  magnitude budget, 64..1073741822 (default 134217728)\n  --intinf-gmp-memory N  tracked GMP allocation budget in bytes (default 268435456)\n  --intinf-stats  report backend and native arithmetic allocations\n  --version       print the version and exit\n"
+      },
+      {
+        "label": "run-sdl-app-stack-retry",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/runevm-stack",
+          "--gc-stress",
+          "101",
+          "--gc-verify",
+          "--stats",
+          "/tmp/runeffi installed examples sudfcn3p/sdl-app-stack.rbc",
+          "/tmp/runeffi installed examples sudfcn3p/native dependencies/libSDL3.so.0.4.18",
+          "/tmp/runeffi installed examples sudfcn3p/native dependencies/sdl fields.so",
+          "--smoke"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 4.527531045983778,
+        "stdout": "PASS shared Win32 application: 0\n",
+        "stderr": "runevm: 1856 collections, 3958304 bytes allocated, semispace 4194304 bytes, 440560 live, copied 439264, max live 439360, gc 0 us, longest 0 us\nrunevm: nursery 1048576 bytes: 1856 minor and 0 full collections, promoted 439264, large objects 0 (0 bytes), 0 bytes of them live\nrunevm: 5 boxes, 80 bytes\n"
+      },
+      {
+        "label": "compile-sdl-hello",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "sdl",
+          "--target=registers",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/sdl/hello.build",
+          "--path",
+          "SDL_GENERATED=/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/lib/rune/ffi/sdl/generated/native",
+          "-o",
+          "/tmp/runeffi installed examples sudfcn3p/sdl-hello.rbc"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 2.4601778909855057,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "dependencies-sdl-hello",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "sdl",
+          "--target=registers",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/sdl/hello.build",
+          "--path",
+          "SDL_GENERATED=/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/lib/rune/ffi/sdl/generated/native",
+          "--basis-deps"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.2232536289957352,
+        "stdout": "initial.sml\npervasive.sml\nstringcvt.sml\noption.sml\nlist.sml\nlistpair.sml\nrunebytes.sml\nintinf.sml\nint.sml\nword.sml\nword64.sml\nword_sig.sml\nint_sig.sml\nint64.sml\nwordn_fn.sml\nword8.sml\nword16.sml\nword32.sml\nchar.sml\nstring.sml\nieeereal.sml\nreal.sml\nvector.sml\nmono_sigs.sml\nmono_vector_fn.sml\nmono_array_slice_fn.sml\ncharvector.sml\nsubstring.sml\ncharvectorslice.sml\nword8vector.sml\nbyte_array_fn.sml\nword8array.sml\nword8arrayslice.sml\npack_word.sml\npack_real.sml\nchararray.sml\nchararrayslice.sml\ntext.sml\nposition.sml\nsig_time.sml\ntime.sml\nruneerror.sml\nruneexit.sml\nosio.sml\nio.sml\nprimio_sig.sml\nprimio_fn.sml\nstreamio_sig.sml\nstreamio_fn.sml\nrunefile.sml\nrunepos.sml\ntextprimio.sml\nbinprimio.sml\nimperativeio_fn.sml\ntextio.sml\nbyte.sml\nbinio.sml\ncommandline.sml\nsml90.sml\nrune_foreign_sig.sml\nrune_foreign.sml\nruntime.sml\ndynamic_sig.sml\ndynamic.sml\nsig_byte.sml\nsig_char.sml\nsig_command_line.sml\nsig_int_inf.sml\nsig_io.sml\nsig_list.sml\nsig_option.sml\nsig_pack_real.sml\nsig_sml90.sml\nsig_string.sml\nsig_substring.sml\nsig_vector.sml\nsig_text.sml\nseal_option.sml\nseal_list.sml\nseal_intinf.sml\nseal_word.sml\nseal_int64.sml\nseal_word16.sml\nseal_word32.sml\nseal_word64.sml\nseal_char.sml\nseal_string.sml\nseal_vector.sml\nseal_pack_real.sml\nseal_text.sml\nseal_byte.sml\nseal_commandline.sml\nepilogue.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/unicode/utf8_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/unicode/utf8.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/scope_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/scope.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/bytes_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/bytes.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/text_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/marshal/text.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/owner_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/owner.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/memory_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/memory.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/generated_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/runtime/generated.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/sdl/raw_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/sdl/layout_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/sdl/sdl_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/sdl/sdl.sml\n",
+        "stderr": ""
+      },
+      {
+        "label": "compile-window-close-driver",
+        "argv": [
+          "cc",
+          "-std=c99",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "/tmp/runeffi installed examples sudfcn3p/close-hello.c",
+          "-lX11",
+          "-o",
+          "/tmp/runeffi installed examples sudfcn3p/close-hello"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.9374202520120889,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "close-real-hello",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/close-hello"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.3732003679906484,
+        "stdout": "OBSERVED real mapped SDL hello: 640x360 window=8388655 background=1580068 rectangle=5944550\n",
+        "stderr": ""
+      },
+      {
+        "label": "run-sdl-hello",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/runevm",
+          "--jit=off",
+          "--gc-stress",
+          "101",
+          "--gc-verify",
+          "/tmp/runeffi installed examples sudfcn3p/sdl-hello.rbc",
+          "/tmp/runeffi installed examples sudfcn3p/native dependencies/libSDL3.so.0.4.18",
+          "/tmp/runeffi installed examples sudfcn3p/native dependencies/sdl fields.so"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "environment": {
+          "SDL_VIDEODRIVER": "x11"
+        },
+        "status": 0,
+        "seconds": 2.6123201549926307,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "uninstall-linux-source",
+        "argv": [
+          "sh",
+          "/home/ruud/rune/.worktrees/runeffi-package-final/scripts/install.sh",
+          "--prefix",
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces",
+          "--uninstall"
+        ],
+        "cwd": "/home/ruud/rune/.worktrees/runeffi-package-final",
+        "status": 0,
+        "seconds": 0.22596127100405283,
+        "stdout": "uninstalled rune from /tmp/runeffi installed examples sudfcn3p/relocated installation with spaces\n",
+        "stderr": ""
+      }
+    ],
+    "real_hello_window_observation": "OBSERVED real mapped SDL hello: 640x360 window=8388655 background=1580068 rectangle=5944550\n",
+    "dependencies": {
+      "/tmp/runeffi installed examples sudfcn3p/native dependencies/libSDL3.so.0.4.18": "4984737ef3e9a08328dab514342fd4fe6737c0d1a35062ba23b73f0e09d958f5",
+      "/tmp/runeffi installed examples sudfcn3p/native dependencies/sdl fields.so": "ebf11331130596fdfa0f925583ae8e6c6bdad67db60eec2806a263c04ba86b0d",
+      "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/runevm": "eef487c7081c347cabee509ed1e71945997190dbfe6a99b2bdc0a84a96aa1531",
+      "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/runevm-stack": "0ce6e622a92abcf190f3b7f1e2c15c078c65d8ec6a999d74572569e4392895e9",
+      "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/lib/rune/rune.rbc": "36225003fa50774cf84419b904d5c0e74de65bb97eddd7b7525c0ab704695be0"
+    },
+    "all_compile_and_execute_argv_outside_checkout": true,
+    "cleanup": "owned installation removed; unrelated bin marker preserved"
+  },
+  "windows": {
+    "result": "PASS",
+    "external": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+    "source_commit": "ddba4faad",
+    "source_hashes": {
+      "examples/win32/app.sml": "a59e868cd661b0f2751d24a028ed3af2eeca0772c73a0ba80af559b1714c6b17",
+      "examples/win32/native-main.sml": "48ebcd84e83607d2c88eced555e99d6d499ca416fe114e5a628af7e3ff1b5d99",
+      "examples/win32/native.build": "cba57e09413a36a896a1d81d8ec88d959d5859b1e8fee7bc5f9238f7eadeda30"
+    },
+    "commands": [
+      {
+        "label": "install-32",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "install-32.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\ncall \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/rune-final-ddba-windows/install.bat\" --prefix \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/original prefix 32\" --arch i686 --no-register\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+        "status": 0,
+        "seconds": 3.7791429740027525,
+        "stdout": "installed rune in C:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\original prefix 32\n",
+        "stderr": ""
+      },
+      {
+        "label": "compile-32",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "compile-32.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\ncall \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/relocated installed prefix 32/bin/rune.cmd\" --library ffi/win32/native --target=registers --build \"client tree 32/examples/win32/native.build\" --path \"WIN32_GENERATED=../../../relocated installed prefix 32/lib/rune/ffi-assets/win32/generated/32\" -o \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/native application 32.rbc\"\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+        "status": 1,
+        "seconds": 0.6757234429824166,
+        "stdout": "",
+        "stderr": "rune: cannot read the build file client tree 32/examples/win32/../../ffi/win32/../../../relocated installed prefix 32/lib/rune/ffi-assets/win32/generated/32/sets/26ff0de56852afddda13a8bf304d3cd546aa3b8f474e68f0e90064e105329d5e/native.build\ntry 'rune --help'\n"
+      },
+      {
+        "label": "compile-32",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "compile-32.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\npushd \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/client tree 32/examples/win32\"\ncall \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/relocated installed prefix 32/bin/rune.cmd\" --library ffi/win32/native --target=registers --build native.build --path WIN32_GENERATED=generated/32 -o \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/native application 32.rbc\"\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+        "status": 0,
+        "seconds": 25.982919570000377,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "dependencies-32",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "dependencies-32.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\npushd \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/client tree 32/examples/win32\"\ncall \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/relocated installed prefix 32/bin/rune.cmd\" --library ffi/win32/native --target=registers --build native.build --path WIN32_GENERATED=generated/32 --basis-deps\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+        "status": 0,
+        "seconds": 0.6958995510067325,
+        "stdout": "initial.sml\npervasive.sml\nstringcvt.sml\noption.sml\nlist.sml\nlistpair.sml\nrunebytes.sml\nintinf.sml\nint.sml\nword.sml\nword64.sml\nword_sig.sml\nsysword.sml\nint_sig.sml\nintn_fn.sml\nint32.sml\nint64.sml\nwordn_fn.sml\nword8.sml\nword16.sml\nword32.sml\nchar.sml\nstring.sml\nieeereal.sml\nreal.sml\nmono_sigs.sml\nmono_vector_fn.sml\nmono_array_slice_fn.sml\ncharvector.sml\nsubstring.sml\ncharvectorslice.sml\nword8vector.sml\nbyte_array_fn.sml\nword8array.sml\nword8arrayslice.sml\npack_word.sml\npack_real.sml\nchararray.sml\nchararrayslice.sml\nposition.sml\nsig_time.sml\ntime.sml\ntimer.sml\nruneerror.sml\nruneexit.sml\nospath.sml\nosfilesys.sml\nosio.sml\nos.sml\nio.sml\nprimio_sig.sml\nprimio_fn.sml\nstreamio_sig.sml\nstreamio_fn.sml\nrunefile.sml\nrunepos.sml\ntextprimio.sml\nbinprimio.sml\nposix_error.sml\nposix_signal.sml\nposix_process.sml\nposix_procenv.sml\nposix_filesys.sml\nposix_io.sml\nposix_sysdb.sml\nposix_tty.sml\nposix.sml\nimperativeio_fn.sml\ntextio.sml\nbyte.sml\nbinio.sml\ncommandline.sml\nsml90.sml\nrune_foreign_sig.sml\nrune_foreign.sml\nruntime.sml\ndynamic_sig.sml\ndynamic.sml\nsig_bit_flags.sml\nsig_byte.sml\nsig_char.sml\nsig_command_line.sml\nsig_int_inf.sml\nsig_io.sml\nsig_list.sml\nsig_option.sml\nsig_os_file_sys.sml\nsig_os_io.sml\nsig_os_path.sml\nsig_os_process.sml\nsig_pack_real.sml\nsig_pack_word.sml\nsig_posix_proc_env.sml\nsig_posix_signal.sml\nsig_posix_sys_db.sml\nsig_sml90.sml\nsig_string.sml\nsig_timer.sml\nsig_posix_tty.sml\nsig_posix_io.sml\nsig_os.sml\nsig_posix_process.sml\nsig_posix_file_sys.sml\nsig_posix_error.sml\nsig_posix.sml\nseal_option.sml\nseal_list.sml\nseal_intinf.sml\nseal_word.sml\nseal_int32.sml\nseal_int64.sml\nseal_word8.sml\nseal_word16.sml\nseal_word32.sml\nseal_word64.sml\nseal_char.sml\nseal_string.sml\nseal_pack_word.sml\nseal_pack_real.sml\nseal_timer.sml\nseal_os.sml\nseal_posix.sml\nseal_byte.sml\nseal_commandline.sml\nepilogue.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/win32/common/values_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/win32/common/values.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/win32/common/types_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/win32/common/common_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/win32/common/common.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/win32/common/win32_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/unicode/utf8_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/unicode/utf8.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/marshal/scope_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/marshal/scope.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/marshal/bytes_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/marshal/bytes.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/marshal/text_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/marshal/text.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/runtime/owner_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/runtime/owner.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/runtime/memory_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/runtime/memory.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/runtime/generated_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/runtime/generated.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/win32/native/config_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/win32/native/native_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 32\\bin\\..\\lib\\rune/ffi/win32/native/native.sml\n",
+        "stderr": ""
+      },
+      {
+        "label": "run-native-32",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "run-native-32.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\nset \"RUNE_WIN32_ADAPTER_LIBRARY=C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/native Win32 fields 32.dll\"\n\"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/relocated installed prefix 32/bin/runevm.exe\" --gc-stress 101 --gc-verify --stats \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/native application 32.rbc\" --smoke\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+        "status": 0,
+        "seconds": 2.3052961779758334,
+        "stdout": "PASS shared Win32 application: 0\n",
+        "stderr": "runevm: 927 collections, 2019824 bytes allocated, semispace 4194304 bytes, 243424 live, copied 241168, max live 241264, gc 0 us, longest 0 us\nrunevm: nursery 1048576 bytes: 927 minor and 0 full collections, promoted 241168, large objects 0 (0 bytes), 0 bytes of them live\nrunevm: 39 boxes, 624 bytes\n"
+      },
+      {
+        "label": "uninstall-32",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "uninstall-32.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\ncall \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/relocated installed prefix 32/uninstall.bat\"\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+        "status": 255,
+        "seconds": 404.60732622499927,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "uninstall-32-original-location",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "uninstall-32-original-location.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\ncall \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/original prefix 32/uninstall.bat\"\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+        "status": 0,
+        "seconds": 31.49773378498503,
+        "stdout": "uninstalled rune from C:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\original prefix 32\n",
+        "stderr": ""
+      },
+      {
+        "label": "install-64",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "install-64.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\ncall \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/rune-final-ddba-windows/install.bat\" --prefix \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/original prefix 64\" --arch x86_64 --no-register\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+        "status": 0,
+        "seconds": 7.532256620004773,
+        "stdout": "installed rune in C:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\original prefix 64\n",
+        "stderr": ""
+      },
+      {
+        "label": "compile-64",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "compile-64.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\npushd \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/client tree 64/examples/win32\"\ncall \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/relocated installed prefix 64/bin/rune.cmd\" --library ffi/win32/native --target=registers --build native.build --path WIN32_GENERATED=generated/64 -o \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/native application 64.rbc\"\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+        "status": 0,
+        "seconds": 10.332011563004926,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "dependencies-64",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "dependencies-64.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\npushd \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/client tree 64/examples/win32\"\ncall \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/relocated installed prefix 64/bin/rune.cmd\" --library ffi/win32/native --target=registers --build native.build --path WIN32_GENERATED=generated/64 --basis-deps\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+        "status": 0,
+        "seconds": 0.3966595029924065,
+        "stdout": "initial.sml\npervasive.sml\nstringcvt.sml\noption.sml\nlist.sml\nlistpair.sml\nrunebytes.sml\nintinf.sml\nint.sml\nword.sml\nword64.sml\nword_sig.sml\nsysword.sml\nint_sig.sml\nintn_fn.sml\nint32.sml\nint64.sml\nwordn_fn.sml\nword8.sml\nword16.sml\nword32.sml\nchar.sml\nstring.sml\nieeereal.sml\nreal.sml\nmono_sigs.sml\nmono_vector_fn.sml\nmono_array_slice_fn.sml\ncharvector.sml\nsubstring.sml\ncharvectorslice.sml\nword8vector.sml\nbyte_array_fn.sml\nword8array.sml\nword8arrayslice.sml\npack_word.sml\npack_real.sml\nchararray.sml\nchararrayslice.sml\nposition.sml\nsig_time.sml\ntime.sml\ntimer.sml\nruneerror.sml\nruneexit.sml\nospath.sml\nosfilesys.sml\nosio.sml\nos.sml\nio.sml\nprimio_sig.sml\nprimio_fn.sml\nstreamio_sig.sml\nstreamio_fn.sml\nrunefile.sml\nrunepos.sml\ntextprimio.sml\nbinprimio.sml\nposix_error.sml\nposix_signal.sml\nposix_process.sml\nposix_procenv.sml\nposix_filesys.sml\nposix_io.sml\nposix_sysdb.sml\nposix_tty.sml\nposix.sml\nimperativeio_fn.sml\ntextio.sml\nbyte.sml\nbinio.sml\ncommandline.sml\nsml90.sml\nrune_foreign_sig.sml\nrune_foreign.sml\nruntime.sml\ndynamic_sig.sml\ndynamic.sml\nsig_bit_flags.sml\nsig_byte.sml\nsig_char.sml\nsig_command_line.sml\nsig_int_inf.sml\nsig_io.sml\nsig_list.sml\nsig_option.sml\nsig_os_file_sys.sml\nsig_os_io.sml\nsig_os_path.sml\nsig_os_process.sml\nsig_pack_real.sml\nsig_pack_word.sml\nsig_posix_proc_env.sml\nsig_posix_signal.sml\nsig_posix_sys_db.sml\nsig_sml90.sml\nsig_string.sml\nsig_timer.sml\nsig_posix_tty.sml\nsig_posix_io.sml\nsig_os.sml\nsig_posix_process.sml\nsig_posix_file_sys.sml\nsig_posix_error.sml\nsig_posix.sml\nseal_option.sml\nseal_list.sml\nseal_intinf.sml\nseal_word.sml\nseal_int32.sml\nseal_int64.sml\nseal_word8.sml\nseal_word16.sml\nseal_word32.sml\nseal_word64.sml\nseal_char.sml\nseal_string.sml\nseal_pack_word.sml\nseal_pack_real.sml\nseal_timer.sml\nseal_os.sml\nseal_posix.sml\nseal_byte.sml\nseal_commandline.sml\nepilogue.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/win32/common/values_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/win32/common/values.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/win32/common/types_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/win32/common/common_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/win32/common/common.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/win32/common/win32_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/unicode/utf8_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/unicode/utf8.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/marshal/scope_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/marshal/scope.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/marshal/bytes_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/marshal/bytes.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/marshal/text_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/marshal/text.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/runtime/owner_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/runtime/owner.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/runtime/memory_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/runtime/memory.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/runtime/generated_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/runtime/generated.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/win32/native/config_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/win32/native/native_sig.sml\nC:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\relocated installed prefix 64\\bin\\..\\lib\\rune/ffi/win32/native/native.sml\n",
+        "stderr": ""
+      },
+      {
+        "label": "run-native-64",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "run-native-64.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\nset \"RUNE_WIN32_ADAPTER_LIBRARY=C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/native Win32 fields 64.dll\"\n\"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/relocated installed prefix 64/bin/runevm.exe\" --jit=off --gc-stress 101 --gc-verify --stats \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/native application 64.rbc\" --smoke\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+        "status": 0,
+        "seconds": 1.5143161620071623,
+        "stdout": "PASS shared Win32 application: 0\n",
+        "stderr": "runevm: 831 collections, 1821848 bytes allocated, semispace 4194304 bytes, 227072 live, copied 225608, max live 225704, gc 0 us, longest 0 us\nrunevm: nursery 1048576 bytes: 831 minor and 0 full collections, promoted 225608, large objects 0 (0 bytes), 0 bytes of them live\nrunevm: 23 boxes, 368 bytes\n"
+      },
+      {
+        "label": "uninstall-64",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "uninstall-64.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\ncall \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/original prefix 64/uninstall.bat\"\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+        "status": 0,
+        "seconds": 16.78632134301006,
+        "stdout": "uninstalled rune from C:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\original prefix 64\n",
+        "stderr": ""
+      }
+    ],
+    "dependencies": {
+      "64": {
+        "vm_sha256": "ce28be2b4110a56b53923253e0a3a700f2537549204cdcf1c86ac5245d7acfbf",
+        "compiler_rbc_sha256": "36225003fa50774cf84419b904d5c0e74de65bb97eddd7b7525c0ab704695be0",
+        "shim_dll_sha256": "1843fe74d1f87d238ec2327df39fc9438c1839a82e55e0478b363dd85720b206",
+        "generated_shims_c_sha256": "bd240f1e5526e290da202b7bb9982778ab251792159c92da1badf6b1b1d6f565",
+        "app_rbc_sha256": "c70bbd5061372a821ef4807d405c38702915f5943f7a2ad9977391bd8167379d"
+      },
+      "32": {
+        "vm_sha256": "01fa91e108b1025a7fcbc4d35c164f189e491b33631ec3469aa390d5d6efe0da",
+        "compiler_rbc_sha256": "36225003fa50774cf84419b904d5c0e74de65bb97eddd7b7525c0ab704695be0",
+        "shim_dll_sha256": "d2217195c828a2fb4db7f04e046bbcc789541108bc6617dc3dacb34546fc06fc",
+        "generated_shims_c_sha256": "bd240f1e5526e290da202b7bb9982778ab251792159c92da1badf6b1b1d6f565",
+        "app_rbc_sha256": "4ef762917e2625cde7056bdfb48a3dc670926b38fbadba9c0eb04de36b881a33"
+      }
+    },
+    "actual_windows_widths": [
+      "i686",
+      "x86_64"
+    ],
+    "real_gui_smoke": true,
+    "registration": "disabled",
+    "prefix_moved_before_compile_and_execute": true,
+    "cleanup_restored_original_manifest_prefix": true,
+    "all_compile_and_execute_paths_outside_checkout": true,
+    "relocation_uninstall_attempt": "Old absolute manifest loop stopped after404.6seconds; newguard and restored original prefix permit safe cleanup."
+  },
+  "first_linux_basis_dependency_witness_attempt": {
+    "external": "/tmp/runeffi installed examples sudfcn3p",
+    "commands": [
+      {
+        "label": "source-install",
+        "argv": [
+          "sh",
+          "/home/ruud/rune/.worktrees/runeffi-package-final/scripts/install.sh",
+          "--prefix",
+          "/tmp/runeffi installed examples sudfcn3p/initial installation"
+        ],
+        "cwd": "/home/ruud/rune/.worktrees/runeffi-package-final",
+        "status": 0,
+        "seconds": 10.165117695025401,
+        "stdout": "retained runtime build and dependency material in /tmp/runeffi installed examples sudfcn3p/initial installation/lib/rune/rebuild\ninstalled rune, runedoc, runeopt, rune-repl, rune-dap, rune-kernel, runevm and runevm-stack in /tmp/runeffi installed examples sudfcn3p/initial installation/bin, the basis library in /tmp/runeffi installed examples sudfcn3p/initial installation/lib/rune\nnote: /tmp/runeffi installed examples sudfcn3p/initial installation/bin is not on your PATH\n",
+        "stderr": ""
+      },
+      {
+        "label": "compile-installed-sdl-shim",
+        "argv": [
+          "cc",
+          "-shared",
+          "-fPIC",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-DSDL_MAIN_HANDLED=1",
+          "-I/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/lib/rune/ffi-assets/sdl/upstream",
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/lib/rune/ffi/sdl/generated/native/sets/4fcd7b48b41e48268ed3b11311b41800dc37586a6f8b99573e7cff44dc7c753b/shims.c",
+          "-o",
+          "/tmp/runeffi installed examples sudfcn3p/native dependencies/sdl fields.so"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.680217752000317,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "compile-mock",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "ffi/win32/mock",
+          "--target=registers",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/mock.build",
+          "-o",
+          "/tmp/runeffi installed examples sudfcn3p/mock.rbc"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 2.5355652080033906,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "dependencies-mock",
+        "argv": [
+          "/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune",
+          "--library",
+          "ffi/win32/mock",
+          "--target=registers",
+          "--build",
+          "/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/mock.build",
+          "--basis-deps"
+        ],
+        "cwd": "/tmp/runeffi installed examples sudfcn3p",
+        "status": 0,
+        "seconds": 0.117680700001074,
+        "stdout": "initial.sml\npervasive.sml\nstringcvt.sml\nbool.sml\noption.sml\nlist.sml\nrunebytes.sml\nintinf.sml\nint.sml\nword.sml\nword64.sml\nword_sig.sml\nint_sig.sml\nintn_fn.sml\nint32.sml\nint64.sml\nwordn_fn.sml\nword8.sml\nword16.sml\nword32.sml\nchar.sml\nstring.sml\nieeereal.sml\nreal.sml\nmono_sigs.sml\nmono_vector_fn.sml\nmono_array_slice_fn.sml\ncharvector.sml\nsubstring.sml\ncharvectorslice.sml\nword8vector.sml\nbyte_array_fn.sml\nword8array.sml\nword8arrayslice.sml\nchararray.sml\nchararrayslice.sml\nposition.sml\nsig_time.sml\ntime.sml\ntimer.sml\nruneerror.sml\nruneexit.sml\nosio.sml\nio.sml\nprimio_sig.sml\nprimio_fn.sml\nstreamio_sig.sml\nstreamio_fn.sml\nrunefile.sml\nrunepos.sml\ntextprimio.sml\nbinprimio.sml\nimperativeio_fn.sml\ntextio.sml\nbyte.sml\nbinio.sml\nsml90.sml\nruntime.sml\ndynamic_sig.sml\ndynamic.sml\nsig_bool.sml\nsig_char.sml\nsig_int_inf.sml\nsig_io.sml\nsig_list.sml\nsig_sml90.sml\nsig_string.sml\nsig_timer.sml\nseal_bool.sml\nseal_list.sml\nseal_intinf.sml\nseal_int.sml\nseal_int32.sml\nseal_int64.sml\nseal_word16.sml\nseal_word32.sml\nseal_word64.sml\nseal_char.sml\nseal_string.sml\nseal_timer.sml\nepilogue.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/unicode/utf8_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/unicode/utf8.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/types_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/common_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/common.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/driver_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/common/win32_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/model/model_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/model/model.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/mock/mock_sig.sml\n/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/../lib/rune/ffi/win32/mock/mock.sml\n",
+        "stderr": ""
+      }
+    ]
+  },
+  "first_deep_windows_attempt": {
+    "external": "/mnt/c/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843",
+    "commands": [
+      {
+        "label": "install-32",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "install-32.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\ncall \"C:\\Users\\inbox\\AppData\\Local\\Temp\\rune-test-windows\\runeffi-package-final-2411916019\\external GUI examples 3455843\\rune-final-ddba-windows\\install.bat\" --prefix \"C:\\Users\\inbox\\AppData\\Local\\Temp\\rune-test-windows\\runeffi-package-final-2411916019\\external GUI examples 3455843\\original prefix 32\" --arch i686 --no-register\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843",
+        "status": 0,
+        "seconds": 3.6806289660162292,
+        "stdout": "installed rune in C:\\Users\\inbox\\AppData\\Local\\Temp\\rune-test-windows\\runeffi-package-final-2411916019\\external GUI examples 3455843\\original prefix 32\n",
+        "stderr": ""
+      },
+      {
+        "label": "compile-32",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "compile-32.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\ncall \"C:\\Users\\inbox\\AppData\\Local\\Temp\\rune-test-windows\\runeffi-package-final-2411916019\\external GUI examples 3455843\\relocated installed prefix 32\\bin\\rune.cmd\" --library ffi/win32/native --target=registers --build \"C:\\Users\\inbox\\AppData\\Local\\Temp\\rune-test-windows\\runeffi-package-final-2411916019\\external GUI examples 3455843\\client tree 32\\examples\\win32\\native.build\" --path \"WIN32_GENERATED=C:\\Users\\inbox\\AppData\\Local\\Temp\\rune-test-windows\\runeffi-package-final-2411916019\\external GUI examples 3455843\\relocated installed prefix 32\\lib\\rune\\ffi-assets\\win32\\generated\\32\" -o \"C:\\Users\\inbox\\AppData\\Local\\Temp\\rune-test-windows\\runeffi-package-final-2411916019\\external GUI examples 3455843\\native application 32.rbc\"\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843",
+        "status": 1,
+        "seconds": 0.45136447399272583,
+        "stdout": "",
+        "stderr": "rune: cannot read the build file ../../ffi/win32/native.build\ntry 'rune --help'\n"
+      }
+    ]
+  },
+  "first_short_windows_attempt": {
+    "external": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+    "commands": [
+      {
+        "label": "install-32",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "install-32.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\ncall \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/rune-final-ddba-windows/install.bat\" --prefix \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/original prefix 32\" --arch i686 --no-register\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+        "status": 0,
+        "seconds": 3.7791429740027525,
+        "stdout": "installed rune in C:\\Users\\inbox\\AppData\\Local\\Temp\\rf installed GUI 3462583\\original prefix 32\n",
+        "stderr": ""
+      },
+      {
+        "label": "compile-32",
+        "argv": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "compile-32.cmd"
+        ],
+        "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\ncall \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/relocated installed prefix 32/bin/rune.cmd\" --library ffi/win32/native --target=registers --build \"client tree 32/examples/win32/native.build\" --path \"WIN32_GENERATED=../../../relocated installed prefix 32/lib/rune/ffi-assets/win32/generated/32\" -o \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/native application 32.rbc\"\nexit /b %ERRORLEVEL%\n",
+        "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583",
+        "status": 1,
+        "seconds": 0.6757234429824166,
+        "stdout": "",
+        "stderr": "rune: cannot read the build file client tree 32/examples/win32/../../ffi/win32/../../../relocated installed prefix 32/lib/rune/ffi-assets/win32/generated/32/sets/26ff0de56852afddda13a8bf304d3cd546aa3b8f474e68f0e90064e105329d5e/native.build\ntry 'rune --help'\n"
+      }
+    ]
+  },
+  "original_xcopy_omission": {
+    "archive_source": "/mnt/c/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843/rune-final-ddba-windows/lib/rune/ffi-assets/win32/generated/32/sets/26ff0de56852afddda13a8bf304d3cd546aa3b8f474e68f0e90064e105329d5e",
+    "partial_target": "/mnt/c/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843/relocated installed prefix 32/lib/rune/ffi-assets/win32/generated/32/sets/26ff0de56852afddda13a8bf304d3cd546aa3b8f474e68f0e90064e105329d5e",
+    "source": {
+      "dependencies.json": "434a6306cb897081ac8773c5336ad39255626b1d09b35a42a9d7947562329d67",
+      "export.sml": "3243153b04088f3394940700b7b86883ba48e1ef83f9137cd8bb42e04cd5a6e6",
+      "ffi-manifest.json": "685cf764b3f78b0b82514d1f0c58a37512cfd5cfa3345fb261517ae9c5fe80b2",
+      "layout.sml": "51cfb3f004716634697cf103a0b911d036b3eeea1a59be1cb8c817e25c8b72ba",
+      "layout_sig.sml": "227475bfa7e1764e2caab5a2c979622fa4c93e569ca911a9a5bd0358d2dcd697",
+      "library.build": "6169730f93c894723fd83ba0a841f2f7de317abb2d2e0d5833d729f062aa07d5",
+      "native.build": "1da44c928e0550c824670fefe108a996ed34f59ee9d1ad78e1268c602ab216b6",
+      "public.sml": "65afdf5fa37cac70bcbf8cb8d61421aded8a0de9dde629ebeaa1794315d4a85a",
+      "public_sig.sml": "dd7375fb3543df8a7b9f445b9c6056e508b7a0a1014aaac14defe755d5e62221",
+      "raw.sml": "50d911e9134c32920b0fdd141c0464e7ccee41c550d1a491888d4155e0389e83",
+      "raw_sig.sml": "95d96b63f3d9e901d9a752a502c21c850bd317b308c25ab9b237bebf9d7b9e2f",
+      "README.md": "04fd0797e6ba8a3d176c8c5fdf5e8520e92e990d3d203990027ddd3c21a52fb2",
+      "shims.c": "bd240f1e5526e290da202b7bb9982778ab251792159c92da1badf6b1b1d6f565"
+    },
+    "target": {
+      "export.sml": "3243153b04088f3394940700b7b86883ba48e1ef83f9137cd8bb42e04cd5a6e6",
+      "layout.sml": "51cfb3f004716634697cf103a0b911d036b3eeea1a59be1cb8c817e25c8b72ba",
+      "public.sml": "65afdf5fa37cac70bcbf8cb8d61421aded8a0de9dde629ebeaa1794315d4a85a",
+      "raw.sml": "50d911e9134c32920b0fdd141c0464e7ccee41c550d1a491888d4155e0389e83",
+      "raw_sig.sml": "95d96b63f3d9e901d9a752a502c21c850bd317b308c25ab9b237bebf9d7b9e2f",
+      "README.md": "04fd0797e6ba8a3d176c8c5fdf5e8520e92e990d3d203990027ddd3c21a52fb2",
+      "shims.c": "bd240f1e5526e290da202b7bb9982778ab251792159c92da1badf6b1b1d6f565"
+    },
+    "missing_files": [
+      "dependencies.json",
+      "ffi-manifest.json",
+      "layout_sig.sml",
+      "library.build",
+      "native.build",
+      "public_sig.sml"
+    ],
+    "original_install_command": {
+      "label": "install-32",
+      "argv": [
+        "cmd.exe",
+        "/d",
+        "/c",
+        "install-32.cmd"
+      ],
+      "batch": "@echo off\nsetlocal EnableExtensions\nset \"RUNE_INSTALL_PAUSE=1\"\ncall \"C:\\Users\\inbox\\AppData\\Local\\Temp\\rune-test-windows\\runeffi-package-final-2411916019\\external GUI examples 3455843\\rune-final-ddba-windows\\install.bat\" --prefix \"C:\\Users\\inbox\\AppData\\Local\\Temp\\rune-test-windows\\runeffi-package-final-2411916019\\external GUI examples 3455843\\original prefix 32\" --arch i686 --no-register\nexit /b %ERRORLEVEL%\n",
+      "cwd": "/mnt/c/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843",
+      "status": 0,
+      "seconds": 3.6806289660162292,
+      "stdout": "installed rune in C:\\Users\\inbox\\AppData\\Local\\Temp\\rune-test-windows\\runeffi-package-final-2411916019\\external GUI examples 3455843\\original prefix 32\n",
+      "stderr": ""
+    }
+  },
+  "preflight_independent_negatives": {
+    "result": "PASS",
+    "external": "/mnt/c/Users/inbox/AppData/Local/Temp/rf preflight 3502652",
+    "commands": [
+      {
+        "label": "long-target",
+        "batch": "@echo off\r\nsetlocal EnableExtensions\r\nset \"RUNE_INSTALL_PAUSE=1\"\r\ncall \"C:\\Users\\inbox\\AppData\\Local\\Temp\\rf preflight 3502652\\short source\\install.bat\" --prefix \"C:\\Users\\inbox\\AppData\\Local\\Temp\\rf preflight 3502652\\target-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\" --arch x86_64 --no-register\r\nexit /b %ERRORLEVEL%\r\n",
+        "status": 1,
+        "stdout": "",
+        "stderr": "install.bat: archive or installation directory is too long; use shorter paths\r\ninstall.bat: installation path preflight failed; PowerShell and supported paths are required \r\n",
+        "prefix_created": false
+      },
+      {
+        "label": "long-source",
+        "batch": "@echo off\r\nsetlocal EnableExtensions\r\nset \"RUNE_INSTALL_PAUSE=1\"\r\ncall \"C:\\Users\\inbox\\AppData\\Local\\Temp\\rf preflight 3502652\\source-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\install.bat\" --prefix \"C:\\Users\\inbox\\AppData\\Local\\Temp\\rf preflight 3502652\\refused-source\" --arch x86_64 --no-register\r\nexit /b %ERRORLEVEL%\r\n",
+        "status": 1,
+        "stdout": "",
+        "stderr": "install.bat: archive or installation directory is too long; use shorter paths\r\ninstall.bat: installation path preflight failed; PowerShell and supported paths are required \r\n",
+        "prefix_created": false
+      },
+      {
+        "label": "missing-powershell",
+        "batch": "@echo off\r\nsetlocal EnableExtensions\r\nset \"RUNE_INSTALL_PAUSE=1\"\r\nset \"PATH=Z:\\rune-missing\"\r\ncall \"C:\\Users\\inbox\\AppData\\Local\\Temp\\rf preflight 3502652\\short source\\install.bat\" --prefix \"C:\\Users\\inbox\\AppData\\Local\\Temp\\rf preflight 3502652\\refused-tool\" --arch x86_64 --no-register\r\nexit /b %ERRORLEVEL%\r\n",
+        "status": 1,
+        "stdout": "",
+        "stderr": "'powershell' is not recognized as an internal or external command,\r\noperable program or batch file.\r\ninstall.bat: installation path preflight failed; PowerShell and supported paths are required \r\n",
+        "prefix_created": false
+      }
+    ]
+  },
+  "final_focused_fixture": {
+    "argv": [
+      "bin/runevm",
+      "build/final-package/scenarios-preflight.rbc",
+      "scenario-dist-windows"
+    ],
+    "environment": {
+      "RUNE_TEST_ROOT": "/home/ruud/rune/.worktrees/runeffi-package-final",
+      "RUNE_TEST_RUN": "/home/ruud/rune/.worktrees/runeffi-package-final/build/final-package/regression-preflight"
+    },
+    "status": 0,
+    "output": "PASS distribution/windows-installer\n",
+    "source_sha256": {
+      "scripts/dist-install.bat": "22236f1fd9887e9bfbceea337d9ca3a34657c5a21cf2b5f490bf5468dc04660b",
+      "scripts/dist-uninstall.bat": "b2cf5ad127d253dc066955530144a3a3643922575541de0d27beac9bf6aa8685",
+      "tests/runner/distchecks.sml": "b5eb93673234d5742d8e627b31129f3ccacd7f65e7a70eea2121751b5eb9c858"
+    },
+    "helper_rbc_sha256": "91d39701a94bbcef3bfde464217c7a09c7dd285d2e044e73e747f47d42e3a3f3",
+    "windows_scenario_source": "\n    let val dir = directory ()\n        val choice = {status=0,output=WindowsDir.directory () ^ \"\\n\",errors=\"\"} : Scenarios.result\n        val () = Scenarios.success choice\n        val windowsRoot = Hosts.trim (#output choice)\n        val () = need (windowsRoot <> \"\" andalso isDir windowsRoot, \"Windows staging directory is unavailable\")\n        val stage = windowsRoot ^ \"/dist-test-\" ^ SysWord.toString (Posix.Process.pidToWord (Posix.ProcEnv.getpid ()))\n        val () = need (not (exists stage), \"Windows staging path already exists\")\n        val () = mkdirs stage\n        val zip = dir ^ \"/archives/rune-test1-windows.zip\"\n        (* Member validation precedes extraction, including path safety. *)\n        val entries = ArchiveCheck.zip (ArchiveCheck.binary zip)\n        val () = need (List.all (fn m : ArchiveCheck.zipped =>\n                  String.isPrefix \"rune-test1-windows/\" (#name m)\n                  andalso not (String.isSubstring \"/../\" (#name m))) entries, \"unsafe Windows archive member\")\n        val extracted = InstallChecks.execute dir \"windows-extract\" root \"\" [\"unzip\", \"-q\", zip, \"-d\", stage]\n        val () = Scenarios.success extracted\n        val generated = \"/lib/rune/ffi/sdl/generated/windows64/sets/\"\n                      ^ String.implode (List.tabulate (64, fn _ => #\"a\")) ^ \"/native.build\"\n        val generatedBytes = \"files raw_sig.sml raw.sml end\\n\"\n        val () = put (stage ^ \"/rune-test1-windows\") generated generatedBytes\n        val refusedPrefix = \"rejected-\" ^ String.implode (List.tabulate (80, fn _ => #\"x\"))\n        val refused = InstallChecks.execute dir \"windows-long-target\" stage \"\"\n            [\"cmd.exe\", \"/c\", \"set RUNE_INSTALL_PAUSE=1&& call rune-test1-windows\\\\install.bat --prefix \"\n                              ^ refusedPrefix ^ \" --arch x86_64 --no-register\"]\n        val () = need (#status refused <> 0 andalso String.isSubstring \"preflight failed\" (#errors refused)\n                       andalso not (exists (stage ^ \"/\" ^ refusedPrefix)), \"long target did not reject before installation\")\n        val longSource = \"source-\" ^ String.implode (List.tabulate (120, fn _ => #\"x\"))\n        val () = put stage (longSource ^ \"/install.bat\") (read (stage ^ \"/rune-test1-windows/install.bat\"))\n        val () = put stage (longSource ^ generated) generatedBytes\n        val refusedSource = InstallChecks.execute dir \"windows-long-source\" stage \"\"\n            [\"cmd.exe\", \"/c\", \"set RUNE_INSTALL_PAUSE=1&& call \" ^ longSource\n                              ^ \"\\\\install.bat --prefix rejected-source --arch x86_64 --no-register\"]\n        val () = need (#status refusedSource <> 0 andalso String.isSubstring \"preflight failed\" (#errors refusedSource)\n                       andalso not (exists (stage ^ \"/rejected-source\")), \"long source did not reject before installation\")\n        val noPowerShell = InstallChecks.execute dir \"windows-no-powershell\" stage \"\"\n            [\"cmd.exe\", \"/c\", \"set RUNE_INSTALL_PAUSE=1&& set PATH=Z:\\\\rune-missing&& call rune-test1-windows\\\\install.bat --prefix rejected-tool --arch x86_64 --no-register\"]\n        val () = need (#status noPowerShell <> 0 andalso String.isSubstring \"preflight failed\" (#errors noPowerShell)\n                       andalso not (exists (stage ^ \"/rejected-tool\")), \"missing PowerShell did not reject before installation\")\n        (* Parse options from outside the archive: SHIFT must not replace %0,\n           which the installer uses to find VERSION, runtimes and libraries. *)\n        val installed = InstallChecks.execute dir \"windows-install\" stage \"\"\n            [\"cmd.exe\", \"/c\", \"set RUNE_INSTALL_PAUSE=1&& call rune-test1-windows\\\\install.bat --prefix prefix --arch x86_64 --no-register\"]\n        val () = Scenarios.success installed\n        val () = need (same (dir ^ \"/exe-x86_64\", stage ^ \"/prefix/bin/runevm.exe\"), \"Windows installer chose wrong runtime bytes\")\n        val () = need (exists (stage ^ \"/prefix/share/rune.ico\"), \"Windows installer omitted the icon\")\n        val () = need (read (stage ^ \"/prefix\" ^ generated) = generatedBytes, \"Windows installer omitted a generated build file\")\n        val generatedName = String.translate (fn #\"/\" => \"\\\\\" | c => str c) generated\n        val () = need (String.isSubstring generatedName (read (stage ^ \"/prefix/DISTMANIFEST\")),\n                       \"Windows uninstall manifest omitted a generated build file\")\n        val originalManifest = read (stage ^ \"/prefix/DISTMANIFEST\")\n        val () = OS.FileSys.rename {old = stage ^ \"/prefix\", new = stage ^ \"/moved-prefix\"}\n        val moved = InstallChecks.execute dir \"windows-moved-uninstall\" stage \"\"\n            [\"cmd.exe\", \"/c\", \"call moved-prefix\\\\uninstall.bat\"]\n        val () = need (#status moved <> 0 andalso String.isSubstring \"manifest preflight failed\" (#errors moved)\n                       andalso read (stage ^ \"/moved-prefix\" ^ generated) = generatedBytes\n                       andalso exists (stage ^ \"/moved-prefix/bin/runevm.exe\"), \"moved Windows uninstall did not preserve installed files\")\n        val () = OS.FileSys.rename {old = stage ^ \"/moved-prefix\", new = stage ^ \"/prefix\"}\n        val outside = stage ^ \"/outside-marker\"\n        val () = write (outside, \"keep\\n\")\n        val outsidePath = InstallChecks.execute dir \"windows-outside-path\" root \"\" [\"wslpath\", \"-w\", outside]\n        val () = Scenarios.success outsidePath\n        val () = write (stage ^ \"/prefix/DISTMANIFEST\", originalManifest ^ Hosts.trim (#output outsidePath) ^ \"\\r\\n\")\n        val stale = InstallChecks.execute dir \"windows-stale-uninstall\" stage \"\"\n            [\"cmd.exe\", \"/c\", \"call prefix\\\\uninstall.bat\"]\n        val () = need (#status stale <> 0 andalso String.isSubstring \"manifest preflight failed\" (#errors stale)\n                       andalso read outside = \"keep\\n\" andalso read (stage ^ \"/prefix\" ^ generated) = generatedBytes\n                       andalso exists (stage ^ \"/prefix/bin/runevm.exe\"), \"stale Windows manifest changed installed or outside files\")\n        val () = write (stage ^ \"/prefix/DISTMANIFEST\", originalManifest)\n        (* The fixture VM is inert; a neighbouring stub observes -i forwarding. *)\n        val () = write (stage ^ \"/prefix/bin/rune-repl.cmd\", \"@echo off\\r\\necho FORWARDED %*\\r\\n\")\n        val interactive = InstallChecks.execute dir \"windows-interactive\" stage \"\"\n            [\"cmd.exe\", \"/c\", \"prefix\\\\bin\\\\rune.cmd -i one two\"]\n        val () = Scenarios.success interactive\n        val () = need (Hosts.trim (#output interactive) = \"FORWARDED \\\"one\\\" \\\"two\\\"\"\n                       andalso #errors interactive = \"\", \"Windows -i forwarding lost its neighbouring launcher or arguments\")\n        (* A missing owned leaf directory must not strand its empty parents. *)\n        val () = OS.FileSys.remove (stage ^ \"/prefix\" ^ generated)\n        val () = OS.FileSys.rmDir (OS.Path.dir (stage ^ \"/prefix\" ^ generated))\n        val uninstalled = InstallChecks.execute dir \"windows-uninstall\" (stage ^ \"/prefix\") \"\" [\"cmd.exe\", \"/c\", \"uninstall.bat\"]\n        val () = Scenarios.success uninstalled\n        val () = need (not (exists (stage ^ \"/prefix\")), \"Windows uninstall left its prefix\")\n        val () = need (read outside = \"keep\\n\", \"Windows uninstall removed an unrelated file\")\n        val () = rmTree stage\n    in say \"PASS distribution/windows-installer\\n\" end\nend\n",
+    "child_outputs": {
+      "build/final-package/regression-preflight/distribution/windows-stale-uninstall.out": "",
+      "build/final-package/regression-preflight/distribution/windows-long-source.err": "install.bat: archive or installation directory is too long; use shorter paths\ninstall.bat: installation path preflight failed; PowerShell and supported paths are required \n",
+      "build/final-package/regression-preflight/distribution/windows-moved-uninstall.err": "uninstall.bat: manifest names another installation; restore the original prefix\nuninstall.bat: manifest preflight failed; no installed files were removed \n",
+      "build/final-package/regression-preflight/distribution/windows-moved-uninstall.out": "",
+      "build/final-package/regression-preflight/distribution/windows-stale-uninstall.err": "uninstall.bat: manifest names another installation; restore the original prefix\nuninstall.bat: manifest preflight failed; no installed files were removed \n",
+      "build/final-package/regression-preflight/distribution/windows-interactive.err": "",
+      "build/final-package/regression-preflight/distribution/windows-no-powershell.err": "'powershell' is not recognized as an internal or external command,\noperable program or batch file.\ninstall.bat: installation path preflight failed; PowerShell and supported paths are required \n",
+      "build/final-package/regression-preflight/distribution/windows-interactive.out": "FORWARDED \"one\" \"two\"\n",
+      "build/final-package/regression-preflight/distribution/windows-uninstall.err": "",
+      "build/final-package/regression-preflight/distribution/windows-long-target.out": "",
+      "build/final-package/regression-preflight/distribution/windows-extract.err": "",
+      "build/final-package/regression-preflight/distribution/windows-extract.out": "",
+      "build/final-package/regression-preflight/distribution/windows-long-source.out": "",
+      "build/final-package/regression-preflight/distribution/windows-no-powershell.out": "",
+      "build/final-package/regression-preflight/distribution/windows-uninstall.out": "uninstalled rune from C:\\Users\\inbox\\AppData\\Local\\Temp\\rune-test-windows\\runeffi-package-final-2411916019\\dist-test-365398\\prefix\n",
+      "build/final-package/regression-preflight/distribution/windows-outside-path.out": "C:\\Users\\inbox\\AppData\\Local\\Temp\\rune-test-windows\\runeffi-package-final-2411916019\\dist-test-365398\\outside-marker\n",
+      "build/final-package/regression-preflight/distribution/windows-outside-path.err": "",
+      "build/final-package/regression-preflight/distribution/windows-long-target.err": "install.bat: archive or installation directory is too long; use shorter paths\ninstall.bat: installation path preflight failed; PowerShell and supported paths are required \n",
+      "build/final-package/regression-preflight/distribution/windows-install.err": "",
+      "build/final-package/regression-preflight/distribution/windows-install.out": "installed rune in C:\\Users\\inbox\\AppData\\Local\\Temp\\rune-test-windows\\runeffi-package-final-2411916019\\dist-test-365398\\prefix\n"
+    },
+    "validated_cases": [
+      "long target refusal/no prefix",
+      "long source refusal/no prefix",
+      "missing PowerShell refusal/no prefix",
+      "normal generated file exact bytes",
+      "DISTMANIFEST tracks generated file",
+      "moved prefix refusal preserving installed files",
+      "out-of-prefix entry refusal preserving installed/outside files",
+      "interactive forwarding",
+      "missing owned leaf directory cleanup",
+      "normal uninstall preserves outside marker"
+    ]
+  },
+  "documentation": {
+    "argv": [
+      "bin/rune-test",
+      "run",
+      "--tier",
+      "docs-consistency",
+      "--out",
+      "tests/out/installed-examples-final-docs",
+      "-j",
+      "1"
+    ],
+    "status": 0,
+    "result": "11/11 PASS",
+    "events": "tests/out/installed-examples-final-docs/20261023-150304-8/events.jsonl"
+  },
+  "compatibility_limits": [
+    "Existing Windows .build resolver requires relative forward-slash project/virtual paths; drive-qualified absolute addressing is not added.",
+    "Windows legacy absolute uninstall manifests require original prefix; moved/stale/out-of-prefix manifests now reject before deletion/registration.",
+    "CMD-era installer paths are conservatively bounded: files<260 UTF16 units, directories<=248; PowerShell required even without registration.",
+    "This is actual Linux desktop and native Windows execution, not hardware/ABI acceptance beyond those targets or production multi-architecture distribution."
+  ],
+  "logs": {
+    "/tmp/runeffi-installed-examples.log": "PASS source-install\nPASS compile-installed-sdl-shim\nPASS compile-mock\nPASS dependencies-mock\nTraceback (most recent call last):\n  File \"/tmp/runeffi-installed-examples.py\", line 38, in <module>\n    mock=compile('mock','ffi/win32/mock','examples/win32/mock.build')\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/runeffi-installed-examples.py\", line 36, in compile\n    path=Path(line.strip()).resolve();assert path.is_relative_to(external),('source escapes installed/client tree',line)\n                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: ('source escapes installed/client tree', 'initial.sml')\n",
+    "/tmp/runeffi-installed-examples-retry.log": "PASS compile-mock\nPASS dependencies-mock\nPASS run-mock\nTraceback (most recent call last):\n  File \"/tmp/runeffi-installed-examples-resume.py\", line 10, in <module>\n    exec(source[source.index('def compile('):])\n  File \"<string>\", line 15, in <module>\n  File \"<string>\", line 5, in compile\n  File \"<string>\", line 11, in run\nAssertionError: {'label': 'compile-sdl-app-registers', 'argv': ['/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/rune', '--library', 'ffi/win32/sdldriver', '--target=registers', '--build', '/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/sdl.build', '--path', 'SDL_GENERATED=/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/lib/rune/ffi/sdl/generated/native', '-o', '/tmp/runeffi installed examples sudfcn3p/sdl-app-registers.rbc'], 'cwd': '/tmp/runeffi installed examples sudfcn3p', 'status': 1, 'seconds': 2.9491593860147987, 'stdout': '', 'stderr': '/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/../../ffi/win32/sdl-model.sml:2:20: error: unbound functor: Win32ModelFn\\n/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/../../ffi/win32/sdl-export.sml:1:35: error: unbound structure: Win32Sdl\\n/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/sdl-main.sml:7:16: error: unbound variable or constructor: Win32Sdl.reset\\n/tmp/runeffi installed examples sudfcn3p/client tree/examples/win32/sdl-main.sml:12:8: error: unbound variable or constructor: Win32SdlExampleMain.main\\n'}\n",
+    "/tmp/runeffi-installed-examples-retry2.log": "PASS compile-mock\nPASS dependencies-mock\nPASS run-mock\nPASS compile-sdl-app-registers\nPASS dependencies-sdl-app-registers\nPASS run-sdl-app-registers\nPASS compile-sdl-app-stack\nPASS dependencies-sdl-app-stack\nTraceback (most recent call last):\n  File \"/tmp/runeffi-installed-examples-resume.py\", line 10, in <module>\n    exec(source[source.index('def compile('):])\n  File \"<string>\", line 17, in <module>\n  File \"<string>\", line 11, in run\nAssertionError: {'label': 'run-sdl-app-stack', 'argv': ['/tmp/runeffi installed examples sudfcn3p/relocated installation with spaces/bin/runevm-stack', '--jit=off', '--gc-stress', '101', '--gc-verify', '--stats', '/tmp/runeffi installed examples sudfcn3p/sdl-app-stack.rbc', '/tmp/runeffi installed examples sudfcn3p/native dependencies/libSDL3.so.0.4.18', '/tmp/runeffi installed examples sudfcn3p/native dependencies/sdl fields.so', '--smoke'], 'cwd': '/tmp/runeffi installed examples sudfcn3p', 'status': 2, 'seconds': 0.0028593690076377243, 'stdout': '', 'stderr': \"runevm: --jit=off: this VM has no JIT (bin/runevm has)\\nusage: runevm [options] file.rbc [args ...]\\n  --heap-size N   initial semispace size in bytes (default 4194304)\\n  --heap-limit N  maximum semispace size in bytes, at least 4096 (unlimited by default)\\n  --equality-work N  maximum steps per structural comparison (default 1000000)\\n  --stack-size N  the most bytes the stack may grow to (default 1073741824): a\\n                  recursion without end stops here, not at the machine's memory\\n  --disasm        print the bytecode and exit\\n  --trace         trace every instruction to stderr\\n  --stats         print heap statistics to stderr at exit\\n  --count         print instructions executed and bytes and objects allocated\\n                  to stderr at exit; the same for every run of a program\\n  --gc-stress N   collect before every Nth allocation (testing the collector\\n                  and the primitives' handling of heap pointers)\\n  --heap-fill P   grow the heap until at most P percent of it is in use after\\n                  a collection, 1 to 100 (default 50)\\n  --gc-log FILE   write a line about every collection into FILE (docs/runtime.md)\\n  --gc-verify     check the heap before and after every collection (testing the collector)\\n  --gc-compact    compact the old space at every full collection (testing the collector)\\n  --gc-stress-cycles  make --gc-stress's collection a minor one, which begins the low-pause\\n                  collector's cycle or marks a little of it (testing the collector)\\n  --nursery N     a nursery of N bytes, at least 4096, before the old space (default 1048576;\\n                  0: none, every object made in the old space as the copier had it); after a\\n                  full collection the nursery is half the room the heap has, from N to\\n  --nursery-max N the most (default 8388608; 0: the nursery stays N)\\n  --gc G          the collector: throughput (the default: the least memory and time, its\\n                  full collections stopping the program) or low-pause (docs/runtime.md)\\n  --old-space S   the old space beneath --gc, for testing it: copy, which a full\\n                  collection copies (as with --nursery 0); mark: one\\n                  whose objects stay where they are (docs/plans/garbage-collector-v2.md, M4);\\n                  immix: a mark-region one (--gc throughput, the default); segfit: one\\n                  of segregated size classes (--gc low-pause); compact: one that every full\\n                  collection slides down (measured beside them)\\n  --checked       DECON tests the tag it is given, which a match that names\\n                  every constructor leaves untested (for testing the compiler)\\n  --emulate-fork  fork as on Windows, which has none: by a second runevm that\\n                  is handed this one's state (testing that path)\\n  --resume TOKEN  carry on as the child of such a fork; runevm gives this itself\\n  --restore FILE  carry on the world Runtime.save wrote to FILE, with the\\n                  arguments after it, if any or after --, as its\\n                  CommandLine.arguments\\n  --name NAME     the name the program has (CommandLine.name), the file's\\n                  else: for a script that runs a .rbc as a command of its own\\n  --              the end of the options\\n  --jit=MODE      register VM: off, baseline, opt or all (docs/plans/jit.md)\\n  --jit-stats     register VM: what the JIT did, to stderr at exit\\n  --jit-only=SPEC register VM: give code to functions LO-HI, or the odd or even ones, alone\\n  --jit-calls=N, --jit-work=N  register VM: compile a function at its Nth call, or at N iterations of its loops and calls it makes (baseline)\\n  --jit-stress=N  register VM: every Nth call into compiled code invalidates it (a test of invalidation)\\n  --deopt-stress=N  register VM: compiled code leaves for the interpreter at every Nth instruction (a test of the frames' exactness)\\n  --jit-perf-map  register VM: write /tmp/perf-PID.map, so that perf record names compiled functions\\n  --jit-dump=DIR  register VM: write the code of every function compiled into DIR, with what each part\\n                  of it is for, and perf's jitdump of it (runtime/register/jit/dump.c)\\n  --jit-profile   register VM: count what compiled code calls, branches and loops on (--jit-stats shows them)\\n  --jit-check     register VM: run a few bytes of code from executable memory and exit\\n  --jit-returns=R register VM: jmp or call, how compiled code returns (docs/plans/native-frames.md, M7)\\n  --intinf=MODE   auto (default), gmp or sml; explicit GMP requires a supported library\\n  --intinf-max-bits N  magnitude budget, 64..1073741822 (default 134217728)\\n  --intinf-gmp-memory N  tracked GMP allocation budget in bytes (default 268435456)\\n  --intinf-stats  report backend and native arithmetic allocations\\n  --version       print the version and exit\\n\"}\n",
+    "/tmp/runeffi-installed-examples-retry3.log": "PASS run-sdl-app-stack-retry\nPASS compile-sdl-hello\nPASS dependencies-sdl-hello\nPASS compile-window-close-driver\nPASS close-real-hello\nPASS run-sdl-hello with real mapped pixels and OS close event\nPASS installed external Linux/mock examples /tmp/runeffi installed examples sudfcn3p\n",
+    "/tmp/runeffi-installed-examples-windows.log": "PASS install-32\nTraceback (most recent call last):\n  File \"/tmp/runeffi-installed-examples-windows.py\", line 42, in <module>\n    command('compile-'+bits,'call \"'+win(bin/'rune.cmd')+'\" '+args+' -o \"'+win(app)+'\"')\n  File \"/tmp/runeffi-installed-examples-windows.py\", line 17, in command\n    row={'label':label,'argv':argv,'batch':driver.read_text(),'cwd':str(external),'status':r.returncode,'seconds':time.monotonic()-started,'stdout':out.read_text(errors='replace'),'stderr':err.read_text(errors='replace')};records.append(row);save();assert r.returncode==0,row\n                                                                                                                                                                                                                                                                ^^^^^^^^^^^^^^^\nAssertionError: {'label': 'compile-32', 'argv': ['cmd.exe', '/d', '/c', 'compile-32.cmd'], 'batch': '@echo off\\nsetlocal EnableExtensions\\nset \"RUNE_INSTALL_PAUSE=1\"\\ncall \"C:\\\\Users\\\\inbox\\\\AppData\\\\Local\\\\Temp\\\\rune-test-windows\\\\runeffi-package-final-2411916019\\\\external GUI examples 3455843\\\\relocated installed prefix 32\\\\bin\\\\rune.cmd\" --library ffi/win32/native --target=registers --build \"C:\\\\Users\\\\inbox\\\\AppData\\\\Local\\\\Temp\\\\rune-test-windows\\\\runeffi-package-final-2411916019\\\\external GUI examples 3455843\\\\client tree 32\\\\examples\\\\win32\\\\native.build\" --path \"WIN32_GENERATED=C:\\\\Users\\\\inbox\\\\AppData\\\\Local\\\\Temp\\\\rune-test-windows\\\\runeffi-package-final-2411916019\\\\external GUI examples 3455843\\\\relocated installed prefix 32\\\\lib\\\\rune\\\\ffi-assets\\\\win32\\\\generated\\\\32\" -o \"C:\\\\Users\\\\inbox\\\\AppData\\\\Local\\\\Temp\\\\rune-test-windows\\\\runeffi-package-final-2411916019\\\\external GUI examples 3455843\\\\native application 32.rbc\"\\nexit /b %ERRORLEVEL%\\n', 'cwd': '/mnt/c/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843', 'status': 1, 'seconds': 0.45136447399272583, 'stdout': '', 'stderr': \"rune: cannot read the build file ../../ffi/win32/native.build\\ntry 'rune --help'\\n\"}\n",
+    "/tmp/runeffi-installed-examples-windows-retry.log": "Traceback (most recent call last):\n  File \"/tmp/runeffi-installed-examples-windows-resume.py\", line 10, in <module>\n    tail=source[source.index('files=['):]\n                ^^^^^^^^^^^^\nAttributeError: 'PosixPath' object has no attribute 'index'\n",
+    "/tmp/runeffi-installed-examples-windows-retry2.log": "Traceback (most recent call last):\n  File \"/tmp/runeffi-installed-examples-windows-resume.py\", line 17, in <module>\n    exec(tail)\n  File \"<string>\", line 27, in <module>\n  File \"<string>\", line 15, in command\nAssertionError: {'label': 'compile-32', 'argv': ['cmd.exe', '/d', '/c', 'compile-32.cmd'], 'batch': '@echo off\\nsetlocal EnableExtensions\\nset \"RUNE_INSTALL_PAUSE=1\"\\ncall \"C:/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843/relocated installed prefix 32/bin/rune.cmd\" --library ffi/win32/native --target=registers --build \"C:/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843/client tree 32/examples/win32/native.build\" --path \"WIN32_GENERATED=C:/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843/relocated installed prefix 32/lib/rune/ffi-assets/win32/generated/32\" -o \"C:/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843/native application 32.rbc\"\\nexit /b %ERRORLEVEL%\\n', 'cwd': '/mnt/c/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843', 'status': 1, 'seconds': 0.32388834000448696, 'stdout': '', 'stderr': \"rune: cannot read the build file C:/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843/client tree 32/examples/win32/../../ffi/win32/C:/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843/relocated installed prefix 32/lib/rune/ffi-assets/win32/generated/32/current.build\\ntry 'rune --help'\\n\"}\n",
+    "/tmp/runeffi-installed-examples-windows-retry3.log": "Traceback (most recent call last):\n  File \"/tmp/runeffi-installed-examples-windows-resume.py\", line 17, in <module>\n    exec(tail)\n  File \"<string>\", line 27, in <module>\n  File \"<string>\", line 15, in command\nAssertionError: {'label': 'compile-32', 'argv': ['cmd.exe', '/d', '/c', 'compile-32.cmd'], 'batch': '@echo off\\nsetlocal EnableExtensions\\nset \"RUNE_INSTALL_PAUSE=1\"\\ncall \"C:/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843/relocated installed prefix 32/bin/rune.cmd\" --library ffi/win32/native --target=registers --build \"client tree 32/examples/win32/native.build\" --path \"WIN32_GENERATED=../../../relocated installed prefix 32/lib/rune/ffi-assets/win32/generated/32\" -o \"C:/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843/native application 32.rbc\"\\nexit /b %ERRORLEVEL%\\n', 'cwd': '/mnt/c/Users/inbox/AppData/Local/Temp/rune-test-windows/runeffi-package-final-2411916019/external GUI examples 3455843', 'status': 1, 'seconds': 0.38095508501282893, 'stdout': '', 'stderr': \"rune: cannot read the build file client tree 32/examples/win32/../../ffi/win32/../../../relocated installed prefix 32/lib/rune/ffi-assets/win32/generated/32/sets/26ff0de56852afddda13a8bf304d3cd546aa3b8f474e68f0e90064e105329d5e/native.build\\ntry 'rune --help'\\n\"}\n",
+    "/tmp/runeffi-installed-examples-windows-short-prefix.log": "PASS install-32\nTraceback (most recent call last):\n  File \"/tmp/runeffi-installed-examples-windows.py\", line 42, in <module>\n    command('compile-'+bits,'call \"'+win(bin/'rune.cmd')+'\" '+args+' -o \"'+win(app)+'\"')\n  File \"/tmp/runeffi-installed-examples-windows.py\", line 17, in command\n    row={'label':label,'argv':argv,'batch':driver.read_text(),'cwd':str(external),'status':r.returncode,'seconds':time.monotonic()-started,'stdout':out.read_text(errors='replace'),'stderr':err.read_text(errors='replace')};records.append(row);save();assert r.returncode==0,row\n                                                                                                                                                                                                                                                                ^^^^^^^^^^^^^^^\nAssertionError: {'label': 'compile-32', 'argv': ['cmd.exe', '/d', '/c', 'compile-32.cmd'], 'batch': '@echo off\\nsetlocal EnableExtensions\\nset \"RUNE_INSTALL_PAUSE=1\"\\ncall \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/relocated installed prefix 32/bin/rune.cmd\" --library ffi/win32/native --target=registers --build \"client tree 32/examples/win32/native.build\" --path \"WIN32_GENERATED=../../../relocated installed prefix 32/lib/rune/ffi-assets/win32/generated/32\" -o \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/native application 32.rbc\"\\nexit /b %ERRORLEVEL%\\n', 'cwd': '/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583', 'status': 1, 'seconds': 0.6757234429824166, 'stdout': '', 'stderr': \"rune: cannot read the build file client tree 32/examples/win32/../../ffi/win32/../../../relocated installed prefix 32/lib/rune/ffi-assets/win32/generated/32/sets/26ff0de56852afddda13a8bf304d3cd546aa3b8f474e68f0e90064e105329d5e/native.build\\ntry 'rune --help'\\n\"}\n",
+    "/tmp/runeffi-installed-examples-windows-relative.log": "PASS compile-32\nPASS dependencies-32\nPASS run-native-32\nTraceback (most recent call last):\n  File \"/tmp/runeffi-installed-examples-windows-resume.py\", line 17, in <module>\n    exec(tail)\n  File \"<string>\", line 38, in <module>\n  File \"<string>\", line 15, in command\nAssertionError: {'label': 'uninstall-32', 'argv': ['cmd.exe', '/d', '/c', 'uninstall-32.cmd'], 'batch': '@echo off\\nsetlocal EnableExtensions\\nset \"RUNE_INSTALL_PAUSE=1\"\\ncall \"C:/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/relocated installed prefix 32/uninstall.bat\"\\nexit /b %ERRORLEVEL%\\n', 'cwd': '/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583', 'status': 255, 'seconds': 404.60732622499927, 'stdout': '', 'stderr': ''}\n",
+    "/tmp/runeffi-installed-examples-windows-supported-cleanup.log": "Traceback (most recent call last):\n  File \"/tmp/runeffi-installed-examples-windows-resume.py\", line 17, in <module>\n    exec(tail)\n  File \"<string>\", line 17, in <module>\n  File \"<string>\", line 8, in sha\n  File \"/usr/lib/python3.12/pathlib.py\", line 1021, in read_bytes\n    with self.open(mode='rb') as f:\n         ^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pathlib.py\", line 1015, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '/mnt/c/Users/inbox/AppData/Local/Temp/rf installed GUI 3462583/relocated installed prefix 32/lib/rune/ffi-assets/win32/generated/32/api/dd7375fb3543df8a7b9f445b9c6056e508b7a0a1014aaac14defe755d5e62221/.rune/9d3e96c2997247b724e52c92/units/00100b1234166f389c1b3f16'\n",
+    "/tmp/runeffi-installed-examples-windows-final.log": "PASS uninstall-32-original-location\nPASS install-64\nPASS compile-64\nPASS dependencies-64\nPASS run-native-64\nPASS uninstall-64\nPASS actual installed external native Windows32/64 examples\n",
+    "/tmp/runeffi-installer-preflight-negatives.log": "PASS long-target\nPASS long-source\nPASS missing-powershell\n",
+    "/tmp/runeffi-preflight-regression-build-final.log": "",
+    "/tmp/runeffi-preflight-archives-current.log": "PASS distribution/archive-metadata\n",
+    "/tmp/runeffi-preflight-regression-final.log": "PASS distribution/windows-installer\n",
+    "/tmp/runeffi-stop-owned-uninstaller.log": "{\n    \"ProcessId\":  54100,\n    \"ParentProcessId\":  64860,\n    \"CommandLine\":  \"cmd.exe /d /c uninstall-32.cmd\"\n}\n",
+    "/tmp/runeffi-installed-examples-docs.log": "slowest: documentation/faults 14.9 s, documentation/signatures 4.4 s, documentation/features 4.2 s, runner/canary/runs-past-its-time 1.0 s, documentation/annotations 0.1 s\noutput: kept 0 bytes, freed 1000433; events in tests/out/installed-examples-docs/20261023-145618-8/events.jsonl, summary in tests/out/installed-examples-docs/20261023-145618-8/summary.md\nRESULT: PASS 11 of 11 tests (11 PASS), 24.8 s wall, 22.6 s CPU (91% of 1)\n",
+    "/tmp/runeffi-installed-examples-final-docs.log": "slowest: documentation/faults 15.7 s, documentation/features 4.4 s, documentation/signatures 4.3 s, runner/canary/runs-past-its-time 1.0 s, documentation/annotations 0.1 s\noutput: kept 0 bytes, freed 1000433; events in tests/out/installed-examples-final-docs/20261023-150304-8/events.jsonl, summary in tests/out/installed-examples-final-docs/20261023-150304-8/summary.md\nRESULT: PASS 11 of 11 tests (11 PASS), 25.8 s wall, 23.3 s CPU (90% of 1)\n"
+  },
+  "witness_scripts": {
+    "/tmp/runeffi-installed-examples.py": "from pathlib import Path\nimport subprocess,os,json,hashlib,shutil,tempfile,time,tarfile\nroot=Path.cwd(); external=Path(tempfile.mkdtemp(prefix='runeffi installed examples ')); records=[]\nreceipt=root/'build/final-package/installed-examples.json'\ndef sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()\ndef save():receipt.write_text(json.dumps({'external':str(external),'commands':records},indent=2)+'\\n')\ndef run(label,args,cwd=external,env=None,timeout=600):\n out=external/(label+'.out');err=external/(label+'.err');started=time.monotonic()\n with out.open('wb') as o,err.open('wb') as e:r=subprocess.run(list(map(str,args)),cwd=cwd,env=env,stdout=o,stderr=e,timeout=timeout)\n row={'label':label,'argv':list(map(str,args)),'cwd':str(cwd),'status':r.returncode,'seconds':time.monotonic()-started,'stdout':out.read_text(errors='replace'),'stderr':err.read_text(errors='replace')};records.append(row);save()\n assert r.returncode==0,row\n print('PASS',label,flush=True);return row['stdout']\ninstall=external/'initial installation';prefix=external/'relocated installation with spaces'\nrun('source-install',['sh',root/'scripts/install.sh','--prefix',install],cwd=root)\ninstall.rename(prefix);lib=prefix/'lib/rune';bin=prefix/'bin'\n# Original example source and entrypoint bytes; the installed FFI fragments are symlinked locally.\nexamples=external/'client tree';(examples/'examples/win32').mkdir(parents=True);(examples/'examples/sdl').mkdir(parents=True)\nfiles=['examples/win32/'+f for f in ['app.sml','native-main.sml','sdl-main.sml','mock-main.sml','native.build','sdl.build','mock.build']]+['examples/sdl/hello.sml','examples/sdl/hello.build']\nsourceHashes={}\nfor f in files:\n shutil.copy2(root/f,examples/f);assert sha(root/f)==sha(examples/f);sourceHashes[f]=sha(examples/f)\n(examples/'ffi').symlink_to(lib/'ffi-assets',target_is_directory=True)\nnative=external/'native dependencies';native.mkdir()\nsdlSource=Path('/home/ruud/rune/.worktrees/runeffi/build/deps/sdl/native/install/lib/libSDL3.so.0.4.18');sdl=native/sdlSource.name;shutil.copy2(sdlSource,sdl)\ngenerated=lib/'ffi/sdl/generated/native';setpath=generated/Path(next(x[4:] for x in (generated/'current.build').read_text().splitlines() if x.startswith('use '))).parent\nshim=native/'sdl fields.so'\nrun('compile-installed-sdl-shim',['cc','-shared','-fPIC','-Wall','-Wextra','-Werror','-DSDL_MAIN_HANDLED=1','-I'+str(lib/'ffi-assets/sdl/upstream'),setpath/'shims.c','-o',shim])\ndef compile(label,provider,build,target='registers',paths=[]):\n out=external/(label+'.rbc')\n args=[bin/'rune','--library',provider]+(['--library','ffi/win32/model'] if provider=='ffi/win32/sdldriver' else [])+['--target='+target,'--build',examples/build]\n for key,value in paths:args+=['--path',key+'='+str(value)]\n run('compile-'+label,args+['-o',out])\n dependencies=run('dependencies-'+label,args+['--basis-deps'])\n for line in dependencies.splitlines():\n  if line.strip().endswith('.sml'):\n   path=Path(line.strip());path=(path if path.is_absolute() else lib/'basis'/path).resolve();assert path.is_file() and path.is_relative_to(external),('source escapes installed/client tree',line)\n return out\nmock=compile('mock','ffi/win32/mock','examples/win32/mock.build')\nassert 'PASS shared Win32 application: 0' in run('run-mock',[bin/'runevm','--jit=off','--gc-stress','101','--gc-verify',mock])\nsdlArgs=[('SDL_GENERATED',generated)]\nfor target,vm in [('registers','runevm'),('stack','runevm-stack')]:\n app=compile('sdl-app-'+target,'ffi/win32/sdldriver','examples/win32/sdl.build',target,sdlArgs)\n env=os.environ.copy();env.pop('SDL_VIDEODRIVER',None)\n assert 'PASS shared Win32 application: 0' in run('run-sdl-app-'+target,[bin/vm,'--jit=off','--gc-stress','101','--gc-verify','--stats',app,sdl,shim,'--smoke'],env=env,timeout=180)\nhello=compile('sdl-hello','sdl','examples/sdl/hello.build',paths=sdlArgs)\n# OS-window automation lives outside the app. Observe a real mapped X11 window and send WM_DELETE_WINDOW.\nhelper=external/'close-hello.c'\nhelper.write_text(r'''#define _POSIX_C_SOURCE 200809L\n#include <X11/Xlib.h>\n#include <X11/Xutil.h>\n#include <stdio.h>\n#include <string.h>\n#include <time.h>\nstatic Window find(Display*d,Window w,int depth){\n char *name=0;Window root,parent,*children=0,result=0;unsigned n=0;\n if(depth>32)return 0;\n if(XFetchName(d,w,&name)&&name){int matches=strstr(name,\"Runeffi\")&&strstr(name,\"SDL3\");XFree(name);if(matches)return w;}\n if(XQueryTree(d,w,&root,&parent,&children,&n))for(unsigned i=0;i<n&&!result;i++)result=find(d,children[i],depth+1);\n if(children) { XFree(children); }\n return result;\n}\nint main(void){\n Display*d=XOpenDisplay(0);if(!d){fprintf(stderr,\"no real X display\\n\");return 2;}\n struct timespec delay={0,100000000};\n for(int attempt=0;attempt<600;attempt++){\n  Window w=find(d,DefaultRootWindow(d),0);XWindowAttributes a;\n  if(w&&XGetWindowAttributes(d,w,&a)&&a.map_state==IsViewable&&a.width>=640&&a.height>=360){\n   XImage*image=XGetImage(d,w,0,0,640,360,AllPlanes,ZPixmap);\n   if(!image){fprintf(stderr,\"no mapped window pixels\\n\");return 3;}\n   unsigned long background=XGetPixel(image,8,8),rectangle=XGetPixel(image,40,80);XDestroyImage(image);\n   if(background==rectangle){nanosleep(&delay,0);continue;}\n   printf(\"OBSERVED real mapped SDL hello: %dx%d window=%lu background=%lu rectangle=%lu\\n\",a.width,a.height,w,background,rectangle);\n   XEvent event;memset(&event,0,sizeof event);event.xclient.type=ClientMessage;event.xclient.window=w;\n   event.xclient.message_type=XInternAtom(d,\"WM_PROTOCOLS\",False);event.xclient.format=32;\n   event.xclient.data.l[0]=(long)XInternAtom(d,\"WM_DELETE_WINDOW\",False);event.xclient.data.l[1]=CurrentTime;\n   if(!XSendEvent(d,w,False,NoEventMask,&event))return 4;\n   XFlush(d);XCloseDisplay(d);return 0;\n  }\n  nanosleep(&delay,0);\n }\n fprintf(stderr,\"mapped SDL hello window timeout\\n\");XCloseDisplay(d);return 5;\n}\n''')\ncloser=external/'close-hello';run('compile-window-close-driver',['cc','-std=c99','-Wall','-Wextra','-Werror',helper,'-lX11','-o',closer])\nenv=os.environ.copy();env['SDL_VIDEODRIVER']='x11'\nout=external/'run-sdl-hello.out';err=external/'run-sdl-hello.err';started=time.monotonic()\nwith out.open('wb') as o,err.open('wb') as e:\n args=list(map(str,[bin/'runevm','--jit=off','--gc-stress','101','--gc-verify',hello,sdl,shim]))\n proc=subprocess.Popen(args,cwd=external,env=env,stdout=o,stderr=e)\n try:\n  observed=run('close-real-hello',[closer],env=env,timeout=70)\n  status=proc.wait(timeout=30)\n finally:\n  if proc.poll() is None:proc.kill();proc.wait()\nrow={'label':'run-sdl-hello','argv':args,'cwd':str(external),'environment':{'SDL_VIDEODRIVER':'x11'},'status':status,'seconds':time.monotonic()-started,'stdout':out.read_text(),'stderr':err.read_text()};records.append(row);save();assert status==0,row\nprint('PASS run-sdl-hello with real mapped pixels and OS close event',flush=True)\nassert not any('/home/ruud/rune' in a for row in records if row['label']!='source-install' for a in row['argv'])\nresult={'result':'PASS','external':str(external),'source_commit':'ddba4faad','source_hashes':sourceHashes,'commands':records,'real_hello_window_observation':observed,'dependencies':{str(p):sha(p) for p in [sdl,shim,bin/'runevm',bin/'runevm-stack',lib/'rune.rbc']},'all_compile_and_execute_argv_outside_checkout':True}\nreceipt.write_text(json.dumps(result,indent=2)+'\\n');print('PASS installed external Linux/mock examples',external,flush=True)\n",
+    "/tmp/runeffi-installed-examples-resume.py": "from pathlib import Path\nimport json\nsource=Path('/tmp/runeffi-installed-examples.py').read_text()\nold=json.loads(Path('build/final-package/installed-examples.json').read_text())\nhead=source[:source.index(\"install=external/\")]\nhead=head.replace(\"external=Path(tempfile.mkdtemp(prefix='runeffi installed examples ')); records=[]\",'external=Path('+repr(old['external'])+'); records='+repr(old['commands']))\nexec(head)\nprefix=external/'relocated installation with spaces';lib=prefix/'lib/rune';bin=prefix/'bin';examples=external/'client tree';native=external/'native dependencies';sdl=native/'libSDL3.so.0.4.18';shim=native/'sdl fields.so';generated=lib/'ffi/sdl/generated/native'\nsourceHashes={str(p.relative_to(examples)):sha(p) for p in (examples/'examples').rglob('*') if p.is_file()}\nexec(source[source.index('def compile('):])\n",
+    "/tmp/runeffi-installed-examples-resume2.py": "from pathlib import Path\nimport json\nsource=Path('/tmp/runeffi-installed-examples.py').read_text();old=json.loads(Path('build/final-package/installed-examples.json').read_text())\nhead=source[:source.index(\"install=external/\")].replace(\"external=Path(tempfile.mkdtemp(prefix='runeffi installed examples ')); records=[]\",'external=Path('+repr(old['external'])+'); records='+repr(old['commands']))\nexec(head)\nprefix=external/'relocated installation with spaces';lib=prefix/'lib/rune';bin=prefix/'bin';examples=external/'client tree';native=external/'native dependencies';sdl=native/'libSDL3.so.0.4.18';shim=native/'sdl fields.so';generated=lib/'ffi/sdl/generated/native';sdlArgs=[('SDL_GENERATED',generated)]\nsourceHashes={str(p.relative_to(examples)):sha(p) for p in (examples/'examples').rglob('*') if p.is_file()}\nexec(source[source.index('def compile('):source.index(\"mock=compile(\")])\nassert 'PASS shared Win32 application: 0' in run('run-sdl-app-stack-retry',[bin/'runevm-stack','--gc-stress','101','--gc-verify','--stats',external/'sdl-app-stack.rbc',sdl,shim,'--smoke'],timeout=180)\nexec(source[source.index(\"hello=compile(\"):])\n",
+    "/tmp/runeffi-installed-examples-windows.py": "from pathlib import Path\nimport subprocess,os,json,hashlib,shutil,time,zipfile\nroot=Path.cwd();records=[];receipt=root/'build/final-package/installed-examples-windows.json'\nbase=Path('/mnt/c/Users/inbox/AppData/Local/Temp')\nexternal=base/('rf installed GUI '+str(os.getpid()));external.mkdir()\narchive=root/'build/final-package/current archives/rune-final-ddba-windows.zip'\nwith zipfile.ZipFile(archive) as stream:stream.extractall(external)\nsource=external/'rune-final-ddba-windows'\ndef win(p):return subprocess.check_output(['wslpath','-w',str(p)],text=True).strip().replace('\\\\','/')\ndef sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()\ndef save():receipt.write_text(json.dumps({'external':str(external),'commands':records},indent=2)+'\\n')\ndef command(label,text,timeout=600):\n driver=external/(label+'.cmd');out=external/(label+'.out');err=external/(label+'.err')\n driver.write_bytes(('@echo off\\r\\nsetlocal EnableExtensions\\r\\nset \"RUNE_INSTALL_PAUSE=1\"\\r\\n'+text+'\\r\\nexit /b %ERRORLEVEL%\\r\\n').encode())\n argv=['cmd.exe','/d','/c',driver.name];started=time.monotonic()\n with out.open('wb') as o,err.open('wb') as e:r=subprocess.run(argv,cwd=external,stdout=o,stderr=e,timeout=timeout)\n row={'label':label,'argv':argv,'batch':driver.read_text(),'cwd':str(external),'status':r.returncode,'seconds':time.monotonic()-started,'stdout':out.read_text(errors='replace'),'stderr':err.read_text(errors='replace')};records.append(row);save();assert r.returncode==0,row\n print('PASS',label,flush=True);return row['stdout']\nfiles=['examples/win32/'+n for n in ['app.sml','native-main.sml','native.build']]\nhashes={};dependencies={}\nfor bits,arch,exe in [('32','i686','runevm32.exe'),('64','x86_64','runevm.exe')]:\n initial=external/('original prefix '+bits);prefix=external/('relocated installed prefix '+bits)\n command('install-'+bits,'call \"'+win(source/'install.bat')+'\" --prefix \"'+win(initial)+'\" --arch '+arch+' --no-register')\n initial.rename(prefix);lib=prefix/'lib/rune';bin=prefix/'bin'\n assert 'registered=0' in (prefix/'install-info.txt').read_text();assert sha(bin/'runevm.exe')==sha(root/'bin'/exe)\n client=external/('client tree '+bits);client.mkdir()\n for file in files:\n  p=client/file;p.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(root/file,p);assert sha(p)==sha(root/file);hashes[file]=sha(p)\n shutil.copytree(lib/'ffi-assets',client/'ffi')\n # All copied build fragments/generated sources originate in this installed archive.\n for p in (lib/'ffi-assets').rglob('*'):\n  if p.is_file():assert sha(client/'ffi'/p.relative_to(lib/'ffi-assets'))==sha(p)\n generated=lib/'ffi-assets/win32/generated'/bits\n shim=external/('native Win32 fields '+bits+'.dll')\n origin=Path('/home/ruud/rune/.worktrees/runeffi-win32-native/build/win32-native')/('runeffi-win32-'+bits+'.dll');shutil.copy2(origin,shim)\n expected={'32':'d2217195c828a2fb4db7f04e046bbcc789541108bc6617dc3dacb34546fc06fc','64':'1843fe74d1f87d238ec2327df39fc9438c1839a82e55e0478b363dd85720b206'}[bits]\n assert sha(shim)==expected\n setpath=generated/Path(next(x[4:] for x in (generated/'current.build').read_text().splitlines() if x.startswith('use '))).parent\n assert sha(setpath/'shims.c')=='bd240f1e5526e290da202b7bb9982778ab251792159c92da1badf6b1b1d6f565'\n app=external/('native application '+bits+'.rbc')\n args='--library ffi/win32/native --target=registers --build native.build --path WIN32_GENERATED=generated/'+bits\n prologue='pushd \"'+win(client/'examples/win32')+'\"\\r\\n'\n command('compile-'+bits,prologue+'call \"'+win(bin/'rune.cmd')+'\" '+args+' -o \"'+win(app)+'\"')\n deps=command('dependencies-'+bits,prologue+'call \"'+win(bin/'rune.cmd')+'\" '+args+' --basis-deps')\n for line in deps.splitlines():\n  if line.strip().endswith('.sml'):\n   name=line.strip();absolute=len(name)>1 and name[1]==':'\n   assert (win(external).lower() in name.replace('\\\\','/').lower()) if absolute else ((lib/'basis'/name).is_file() or (client/'examples/win32'/name).resolve().is_relative_to(external)),('dependency outside installed external tree',line)\n text=command('run-native-'+bits,'set \"RUNE_WIN32_ADAPTER_LIBRARY='+win(shim)+'\"\\r\\n\"'+win(bin/'runevm.exe')+'\" '+('--jit=off ' if bits=='64' else '')+'--gc-stress 101 --gc-verify --stats \"'+win(app)+'\" --smoke',timeout=180)\n assert 'PASS shared Win32 application: 0' in text\n dependencies[bits]={'vm_sha256':sha(bin/'runevm.exe'),'compiler_rbc_sha256':sha(lib/'rune.rbc'),'shim_dll_sha256':sha(shim),'generated_shims_c_sha256':sha(setpath/'shims.c'),'app_rbc_sha256':sha(app)}\n # The archive manifest records installation-time absolute names; restore it before cleanup.\n prefix.rename(initial);prefix=initial\n (prefix/'bin/unrelated-marker').write_text('keep\\n')\n command('uninstall-'+bits,'call \"'+win(prefix/'uninstall.bat')+'\"')\n assert (prefix/'bin/unrelated-marker').read_text()=='keep\\n' and not (prefix/'lib/rune').exists()\nresult={'result':'PASS','external':str(external),'source_commit':'ddba4faad','source_hashes':hashes,'commands':records,'dependencies':dependencies,'actual_windows_widths':['i686','x86_64'],'real_gui_smoke':True,'registration':'disabled','prefix_moved_before_compile_and_execute':True,'cleanup_restored_original_manifest_prefix':True,'all_compile_and_execute_paths_outside_checkout':True}\nreceipt.write_text(json.dumps(result,indent=2)+'\\n');print('PASS actual installed external native Windows32/64 examples',flush=True)\n",
+    "/tmp/runeffi-installed-examples-windows-resume.py": "from pathlib import Path\nimport json\nscriptText=Path('/tmp/runeffi-installed-examples-windows.py').read_text()\nold=json.loads(Path('build/final-package/installed-examples-windows.json').read_text())\nhead=scriptText[:scriptText.index('files=[')]\nhead=head.replace(\"root=Path.cwd();records=[];receipt=\",'root=Path.cwd();records='+repr(old['commands'])+';receipt=')\nstart=head.index(\"external=base/\");end=head.index('def win(')\nhead=head[:start]+\"external=Path(\"+repr(old['external'])+\")\\nsource=external/'rune-final-ddba-windows'\\n\"+head[end:]\nexec(head)\ntail=scriptText[scriptText.index('files=['):]\na=tail.index(\" command('install-'\");b=tail.index(\" client=external/\")\ntail=tail[:a]+''' if prefix.exists():\n  lib=prefix/'lib/rune';bin=prefix/'bin'\n else:\n'''+''.join(' '+line+'\\n' for line in tail[a:b].splitlines())+tail[b:]\ntail=tail.replace(\"client.mkdir()\",\"client.mkdir(exist_ok=True)\").replace(\"shutil.copytree(lib/'ffi-assets',client/'ffi')\",\"shutil.copytree(lib/'ffi-assets',client/'ffi',dirs_exist_ok=True)\")\nexec(tail)\n",
+    "/tmp/runeffi-installed-examples-windows-finish.py": "from pathlib import Path\nimport json\nscriptText=Path('/tmp/runeffi-installed-examples-windows.py').read_text();old=json.loads(Path('build/final-package/installed-examples-windows.json').read_text())\nhead=scriptText[:scriptText.index('files=[')].replace(\"root=Path.cwd();records=[];receipt=\",'root=Path.cwd();records='+repr(old['commands'])+';receipt=')\na=head.index('external=base/');b=head.index('def win(');head=head[:a]+\"external=Path(\"+repr(old['external'])+\")\\nsource=external/'rune-final-ddba-windows'\\n\"+head[b:];exec(head)\nprefix=external/'relocated installed prefix 32';initial=external/'original prefix 32';lib=prefix/'lib/rune';shim=external/'native Win32 fields 32.dll';app=external/'native application 32.rbc'\nnative32={'vm_sha256':sha(prefix/'bin/runevm.exe'),'compiler_rbc_sha256':sha(lib/'rune.rbc'),'shim_dll_sha256':sha(shim),'generated_shims_c_sha256':'bd240f1e5526e290da202b7bb9982778ab251792159c92da1badf6b1b1d6f565','app_rbc_sha256':sha(app)}\nshutil.copy2(root/'scripts/dist-uninstall.bat',prefix/'uninstall.bat');prefix.rename(initial)\ncommand('uninstall-32-original-location','call \"'+win(initial/'uninstall.bat')+'\"')\nassert (initial/'bin/unrelated-marker').read_text()=='keep\\n' and not (initial/'lib/rune').exists()\nfor name in ['install','uninstall']:shutil.copy2(root/('scripts/dist-'+name+'.bat'),source/(name+'.bat'))\ntail=scriptText[scriptText.index('files=['):].replace(\"[('32','i686','runevm32.exe'),('64','x86_64','runevm.exe')]\",\"[('64','x86_64','runevm.exe')]\")\nexec(tail)\nd=json.loads(receipt.read_text());d['dependencies']['32']=native32;d['relocation_uninstall_attempt']='Old absolute manifest loop stopped after404.6seconds; newguard and restored original prefix permit safe cleanup.';receipt.write_text(json.dumps(d,indent=2)+'\\n')\n",
+    "/tmp/runeffi-installer-preflight-negatives.py": "from pathlib import Path\nimport subprocess,os,json,shutil,time\nroot=Path.cwd();x=Path('/mnt/c/Users/inbox/AppData/Local/Temp')/('rf preflight '+str(os.getpid()));x.mkdir();rows=[]\ndef win(p):return subprocess.check_output(['wslpath','-w',str(p)],text=True).strip()\ndef run(label,archive,prefix,pathOverride=False):\n driver=x/(label+'.cmd');cmd='@echo off\\r\\nsetlocal EnableExtensions\\r\\nset \"RUNE_INSTALL_PAUSE=1\"\\r\\n'+('set \"PATH=Z:\\\\rune-missing\"\\r\\n' if pathOverride else '')+'call \"'+win(archive/'install.bat')+'\" --prefix \"'+win(prefix)+'\" --arch x86_64 --no-register\\r\\nexit /b %ERRORLEVEL%\\r\\n';driver.write_bytes(cmd.encode())\n r=subprocess.run(['cmd.exe','/d','/c',driver.name],cwd=x,capture_output=True,timeout=60);row={'label':label,'batch':cmd,'status':r.returncode,'stdout':r.stdout.decode(errors='replace'),'stderr':r.stderr.decode(errors='replace'),'prefix_created':prefix.exists()};rows.append(row);assert r.returncode!=0 and not prefix.exists() and 'preflight failed' in row['stderr'],row;print('PASS',label,flush=True)\nshort=x/'short source';short.mkdir();shutil.copy2(root/'scripts/dist-install.bat',short/'install.bat')\nrel=Path('lib/rune/ffi/sdl/generated/windows64/sets')/('a'*64)/'native.build';p=short/rel;p.parent.mkdir(parents=True);p.write_text('files raw.sml end\\n')\nrun('long-target',short,x/('target-'+('x'*140)))\nlong=x/('source-'+('x'*120));long.mkdir();shutil.copy2(root/'scripts/dist-install.bat',long/'install.bat');p=long/rel;p.parent.mkdir(parents=True);p.write_text('files raw.sml end\\n')\nrun('long-source',long,x/'refused-source')\nrun('missing-powershell',short,x/'refused-tool',True)\n(root/'build/final-package/installer-preflight-negatives.json').write_text(json.dumps({'result':'PASS','external':str(x),'commands':rows},indent=2)+'\\n')\n",
+    "/tmp/runeffi-verify-archive-assets.py": "from pathlib import Path\nimport sys,subprocess,tarfile,zipfile,hashlib,json\nrepo=Path(sys.argv[1]).resolve();linux=Path(sys.argv[2]).resolve();windows=Path(sys.argv[3]).resolve()\nassets=subprocess.check_output(['git','-C',str(repo),'ls-files','ffi','lib/ffi/sdl'],text=True).splitlines()\nsource={name:(repo/name).read_bytes() for name in assets}\nwith tarfile.open(linux) as archive:\n roots={name.split('/')[0] for name in archive.getnames()};assert len(roots)==1,roots\n prefix=next(iter(roots))+'/lib/rune/'\n for name,contents in source.items():\n  target=prefix+(name[4:] if name.startswith('lib/') else 'ffi-assets/'+name[4:])\n  assert archive.extractfile(target).read()==contents,('tar',name)\nwith zipfile.ZipFile(windows) as archive:\n roots={name.split('/')[0] for name in archive.namelist()};assert len(roots)==1,roots\n prefix=next(iter(roots))+'/lib/rune/'\n for name,contents in source.items():\n  target=prefix+(name[4:] if name.startswith('lib/') else 'ffi-assets/'+name[4:])\n  assert archive.read(target)==contents,('zip',name)\nprint(json.dumps({'result':'PASS','scope':'git-tracked ffi and lib/ffi/sdl assets only; runtime and installer payload identities are separate','source_commit':subprocess.check_output(['git','-C',str(repo),'rev-parse','HEAD'],text=True).strip(),'source_asset_count':len(assets),'source_assets_sha256':{name:hashlib.sha256(value).hexdigest() for name,value in source.items()},'archives_sha256':{str(path):hashlib.sha256(path.read_bytes()).hexdigest() for path in [linux,windows]}},indent=2))\n"
+  },
+  "retained_attempt_classification": {
+    "product_defects_fixed": [
+      "XCOPY silently omitted six long generated-set filenames with success status.",
+      "Relocated absolute uninstall manifest led to unbounded cleanup; owned process54100 stopped after404.607seconds."
+    ],
+    "documented_existing_compatibility": [
+      "Windows drive-qualified absolute .build paths and virtual values fail resolution.",
+      "Unresolved relative path spelling can exceed legacy Windows path limits."
+    ],
+    "witness_repairs": [
+      "Relative Basis dependency basenames resolve under installed basis.",
+      "SDL Win32 build needs documented ffi/win32/model library flag.",
+      "Stack VM rejects register-only --jit flags.",
+      "Continuation variable name collided with source archive Path.",
+      "Repeated source-copy verification initially included client compiler cache files absent from original installed assets.",
+      "An initial process-diagnostic WQL string lost its quotes; exact owned process selection then succeeded.",
+      "Receipt link validation initially ran before writing its self-referenced JSON; write/check ordering repaired."
+    ]
+  }
+}

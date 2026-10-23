@@ -80,6 +80,7 @@ if [ "$uninstall" = 1 ]; then
         "$bindir/runedoc-smlnj-dev" "$bindir/runedoc-polyml" "$bindir/runedoc-mlkit" \
         "$bindir/runeopt" "$bindir/runeopt-mlton" "$bindir/runeopt-smlnj-legacy" \
         "$bindir/runeopt-smlnj-dev" "$bindir/runeopt-polyml" "$bindir/runeopt-mlkit" \
+        "$bindir/runeffi" "$bindir/runeffi-mlton" "$bindir/runeffi-polyml" \
         "$bindir/rune-repl" "$bindir/rune-dap" "$bindir/rune-kernel"
   [ -d "$libdir" ] && chmod -R u+w "$libdir"   # the frozen Basis is read-only
   rm -rf "$libdir"
@@ -203,6 +204,21 @@ if [ -e "$root/bin/rune-repl.img" ]; then
   fi
 fi
 
+# Runeffi, when built. It reads headers and writes ordinary SML sources;
+# no acquisition paths are baked into the installed generator.
+if [ -e "$root/bin/runeffi.rbc" ]; then
+  copy "$root/bin/runeffi.rbc" "$libdir/runeffi.rbc" 644
+  printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" "$d/../lib/rune/runeffi.rbc" "$@"\n' > "$bindir/runeffi"
+  chmod 755 "$bindir/runeffi"
+fi
+for ffi_host in mlton polyml; do
+  if [ -e "$root/bin/runeffi-$ffi_host.bin" ]; then
+    copy "$root/bin/runeffi-$ffi_host.bin" "$libdir/runeffi-$ffi_host.bin" 755
+    printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/../lib/rune/runeffi-%s.bin" "$@"\n' "$ffi_host" > "$bindir/runeffi-$ffi_host"
+    chmod 755 "$bindir/runeffi-$ffi_host"
+  fi
+done
+
 # runedoc, when it is built: the same kind of build as rune.
 doc=""
 if [ -z "$host" ]; then
@@ -270,6 +286,12 @@ if [ -e "$root/build/librune.a" ] && [ -e "$root/build/rune-offsets.s" ]; then
     mkdir -p "$libdir/runtime"
     copy "$root/build/librune.a" "$libdir/runtime/librune.a" 644
     copy "$root/build/rune-offsets.s" "$libdir/runtime/rune-offsets.s" 644
+    if [ -f "$libdir/rebuild/native-foreign-libs" ]; then
+      copy "$libdir/rebuild/libffi/lib/libffi.a" "$libdir/runtime/libffi.a" 644
+      copy "$libdir/rebuild/native-foreign-libs" "$libdir/runtime/foreign-libs" 644
+    elif [ -e "$root/build/foreign-libs" ]; then
+      copy "$root/build/foreign-libs" "$libdir/runtime/foreign-libs" 644
+    fi
   fi
 fi
 
@@ -292,6 +314,24 @@ for manifest in $(cd "$root/lib" && find . -name MANIFEST | sort); do
     if [ -e "$root/lib/$l/$f" ]; then copy "$root/lib/$l/$f" "$libdir/$l/$f" 644; fi
   done
 done
+
+# The generated FFI sets also carry current/API pointers, .build files, C
+# shims and declaration provenance, which are not entries in an SML MANIFEST.
+for generated in ffi/sdl ffi/win32/generated; do
+  if [ -d "$root/lib/$generated" ]; then
+    parent=$(dirname "$generated")
+    mkdir -p "$libdir/$parent"
+    cp -R "$root/lib/$generated" "$libdir/$parent/"
+  fi
+done
+
+# Original headers, target profiles, sidecars and implementation-selection build
+# entrypoints accompany runeffi. Generated/native resources remain application
+# dependencies and are never opened by installing the library sources.
+if [ -e "$root/bin/runeffi.rbc" ]; then
+  rm -rf "$libdir/ffi-assets"
+  cp -R "$root/ffi" "$libdir/ffi-assets"
+fi
 
 manpage rune
 copy "$root/share/man/runevm-stack.1" "$mandir/runevm-stack.1" 644

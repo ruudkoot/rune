@@ -1,0 +1,265 @@
+{
+  "date": "2026-10-23",
+  "baseline": "303db25bc0ddebdb44bd55ae601ea000e8d92ddd",
+  "scope": "test-only stopped-child lifetime repair; original full-run exception cause remains unknown",
+  "original_full_run": {
+    "run": "tests/out/r/20261023-142919-3454924",
+    "case": "basis/rune-jit/posix_process",
+    "failed_assertion": "Posix.Process.W.untraced/waitpid-without-it",
+    "reported_reason": "raised an exception, expected true",
+    "summary": "SUMMARY 76 checks, 1 failed",
+    "stdout_sha256": "d4f1b9eb1471220a663a423bc13799d52cf8a881077b0acf22ed0ecfe1cf709e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "rbc_sha256": "ea593105391285e82bcdc0f7c54eee60235c7da411388cce1c524478b158accf",
+    "vm_sha256": "9541ea42ef31fd9d33e5a0724f2cacc40f09746850a7d38db6c0a0f22a67e838",
+    "classification": "failed full receipt retained; exception identity unavailable from original harness"
+  },
+  "original_exact_repeats": [
+    {
+      "n": 1,
+      "traced": false,
+      "status": 0,
+      "wall": 4.528814692021115,
+      "failures": [],
+      "command": [
+        "/tmp/runeffi-posix-wait/runevm",
+        "--jit=all",
+        "--jit-tier=2",
+        "/tmp/runeffi-posix-wait/original/prog.rbc"
+      ]
+    },
+    {
+      "n": 2,
+      "traced": false,
+      "status": 0,
+      "wall": 4.525266456999816,
+      "failures": [],
+      "command": [
+        "/tmp/runeffi-posix-wait/runevm",
+        "--jit=all",
+        "--jit-tier=2",
+        "/tmp/runeffi-posix-wait/original/prog.rbc"
+      ]
+    },
+    {
+      "n": 3,
+      "traced": false,
+      "status": 0,
+      "wall": 4.297917968011461,
+      "failures": [],
+      "command": [
+        "/tmp/runeffi-posix-wait/runevm",
+        "--jit=all",
+        "--jit-tier=2",
+        "/tmp/runeffi-posix-wait/original/prog.rbc"
+      ]
+    },
+    {
+      "n": 4,
+      "traced": false,
+      "status": 0,
+      "wall": 4.291672735998873,
+      "failures": [],
+      "command": [
+        "/tmp/runeffi-posix-wait/runevm",
+        "--jit=all",
+        "--jit-tier=2",
+        "/tmp/runeffi-posix-wait/original/prog.rbc"
+      ]
+    },
+    {
+      "n": 5,
+      "traced": false,
+      "status": 0,
+      "wall": 4.347920625994448,
+      "failures": [],
+      "command": [
+        "/tmp/runeffi-posix-wait/runevm",
+        "--jit=all",
+        "--jit-tier=2",
+        "/tmp/runeffi-posix-wait/original/prog.rbc"
+      ]
+    },
+    {
+      "n": 6,
+      "traced": false,
+      "status": 0,
+      "wall": 4.395504118991084,
+      "failures": [],
+      "command": [
+        "/tmp/runeffi-posix-wait/runevm",
+        "--jit=all",
+        "--jit-tier=2",
+        "/tmp/runeffi-posix-wait/original/prog.rbc"
+      ]
+    },
+    {
+      "n": 7,
+      "traced": true,
+      "status": 0,
+      "wall": 4.9195796879939735,
+      "failures": [],
+      "command": [
+        "strace",
+        "-ff",
+        "-tt",
+        "-o",
+        "/tmp/runeffi-posix-wait/repeat-07/trace",
+        "-e",
+        "trace=wait4,waitid,kill,nanosleep,clock_nanosleep,execve,clone,clone3,rt_sigaction,rt_sigprocmask",
+        "/tmp/runeffi-posix-wait/runevm",
+        "--jit=all",
+        "--jit-tier=2",
+        "/tmp/runeffi-posix-wait/original/prog.rbc"
+      ]
+    },
+    {
+      "n": 8,
+      "traced": true,
+      "status": 0,
+      "wall": 4.755960442009382,
+      "failures": [],
+      "command": [
+        "strace",
+        "-ff",
+        "-tt",
+        "-o",
+        "/tmp/runeffi-posix-wait/repeat-08/trace",
+        "-e",
+        "trace=wait4,waitid,kill,nanosleep,clock_nanosleep,execve,clone,clone3,rt_sigaction,rt_sigprocmask",
+        "/tmp/runeffi-posix-wait/runevm",
+        "--jit=all",
+        "--jit-tier=2",
+        "/tmp/runeffi-posix-wait/original/prog.rbc"
+      ]
+    }
+  ],
+  "native_c_oracle": {
+    "compiler": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "source": "tests/basis/fixtures/posix_stop_resume.c",
+    "source_sha256": "ee8aac9d224aa754b2d879703d6645a5ca1d58b7f104ee0dd7d596ecd9a29539",
+    "old_after_deliberate_continue": {
+      "exit_status": 7,
+      "wait": "reaped",
+      "cleanup_kill": -1,
+      "errno": 3,
+      "errno_name": "ESRCH"
+    },
+    "persistent_after_deliberate_continue": {
+      "wait": "none",
+      "cleanup_kill": 0,
+      "reaped_signal": "SIGKILL"
+    }
+  },
+  "sml_modes": [
+    {
+      "name": "stack",
+      "pid": 3723269,
+      "pgid": 3723269,
+      "status": 0,
+      "summary": [
+        "SUMMARY 77 checks, 0 failed"
+      ],
+      "failures": [],
+      "diagnostics": [],
+      "wall": 4.177972455014242
+    },
+    {
+      "name": "registers-fixed",
+      "pid": 3723268,
+      "pgid": 3723268,
+      "status": 0,
+      "summary": [
+        "SUMMARY 77 checks, 0 failed"
+      ],
+      "failures": [],
+      "diagnostics": [],
+      "wall": 4.177642263006419
+    },
+    {
+      "name": "registers-probe",
+      "pid": 3723551,
+      "pgid": 3723551,
+      "status": 0,
+      "summary": [
+        "SUMMARY 79 checks, 0 failed"
+      ],
+      "failures": [],
+      "diagnostics": [
+        "CAPTURED old fixture cleanup: SysErr srch: No such process"
+      ],
+      "wall": 4.230074541002978
+    },
+    {
+      "name": "baseline-fixed",
+      "pid": 3723552,
+      "pgid": 3723552,
+      "status": 0,
+      "summary": [
+        "SUMMARY 77 checks, 0 failed"
+      ],
+      "failures": [],
+      "diagnostics": [],
+      "wall": 4.2278446840064134
+    },
+    {
+      "name": "baseline-probe",
+      "pid": 3723904,
+      "pgid": 3723904,
+      "status": 0,
+      "summary": [
+        "SUMMARY 79 checks, 0 failed"
+      ],
+      "failures": [],
+      "diagnostics": [
+        "CAPTURED old fixture cleanup: SysErr srch: No such process"
+      ],
+      "wall": 4.28036393498769
+    },
+    {
+      "name": "optimized-fixed",
+      "pid": 3723905,
+      "pgid": 3723905,
+      "status": 0,
+      "summary": [
+        "SUMMARY 77 checks, 0 failed"
+      ],
+      "failures": [],
+      "diagnostics": [],
+      "wall": 4.227996736008208
+    },
+    {
+      "name": "optimized-probe",
+      "pid": 3724267,
+      "pgid": 3724267,
+      "status": 0,
+      "summary": [
+        "SUMMARY 79 checks, 0 failed"
+      ],
+      "failures": [],
+      "diagnostics": [
+        "CAPTURED old fixture cleanup: SysErr srch: No such process"
+      ],
+      "wall": 4.2775694919982925
+    }
+  ],
+  "native_execution": {
+    "command": "bin/runeopt fixed.stack.rbc -o fixed-native; ./fixed-native",
+    "summary": "SUMMARY 77 checks, 0 failed",
+    "stderr": ""
+  },
+  "fixture_changes": {
+    "existing_negative_case": "parent-controlled child pauses indefinitely after any continuation",
+    "new_regression": "Posix.Process.W.untraced/continued-child-remains-live",
+    "resume_observed": "child creates marker after returning from self SIGSTOP",
+    "cleanup": "kill and reap on normal return; preserve first observation exception if cleanup also raises",
+    "new_default_assertions": 77,
+    "manual_causal_probe_assertions": 79,
+    "production_changes": false
+  },
+  "limits": {
+    "cross_job_SIGCONT": "not observed; runner requests independent process groups and native creation sets PGID in parent and child",
+    "original_cause": "unknown; no claim that the planted SIGCONT occurred in the failed full run",
+    "targeted_host_and_portability_followup": "recorded separately after component integration"
+  }
+}

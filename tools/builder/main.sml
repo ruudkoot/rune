@@ -2,6 +2,7 @@ structure BuildMain =
 struct
   open BuildCommon
   fun main ("configure-gmp"::args)=BuildGMPConfig.main args
+    | main ("build-ffi"::args)=BuildFFIDeps.main args
     | main ("build-gmp"::args)=BuildGMP.main args
     | main ("build-gmp-vm"::args)=BuildCrossVM.main args
     | main ("check-windows-imports"::args)=BuildCrossVM.imports args
@@ -10,7 +11,7 @@ struct
     | main ("make-dist"::args)=BuildDist.main args
     | main ("setup-mlton"::args)=BuildSetupMLton.main args
     | main ("relink"::args)=BuildRelink.main args
-    | main ["--help"]=(say "rune-build MODE [ARGS]\nModes: configure-gmp, build-gmp [download], build-gmp-vm, record-vm-build,\npackage-runtime, make-dist, setup-mlton, relink, check-windows-imports. See tools/builder/README.md.\n";0)
+    | main ["--help"]=(say "rune-build MODE [ARGS]\nModes: configure-gmp, build-gmp [download], build-ffi libffi|sdl, build-gmp-vm, record-vm-build,\npackage-runtime, make-dist, setup-mlton, relink, check-windows-imports. See tools/builder/README.md.\n";0)
     | main _=raise Usage "rune-build MODE [ARGS]"
   fun run () =
     let val ()=BuildIO.initialize ()

@@ -1,0 +1,2240 @@
+{
+  "total": 168,
+  "intentional_host_extension_absence": {
+    "count": 102,
+    "suites_per_host": 17,
+    "hosts": 6,
+    "RuneForeign_count": 12,
+    "by_reason": {
+      "UNAVAILABLE ABSENT Subprocess, ABSENT Runtime": 5,
+      "UNAVAILABLE ABSENT Compiler": 12,
+      "UNAVAILABLE ABSENT Terminal": 12,
+      "UNAVAILABLE ABSENT Runtime": 12,
+      "UNAVAILABLE ABSENT Subprocess": 6,
+      "UNAVAILABLE ABSENT Pty, ABSENT Subprocess": 11,
+      "UNAVAILABLE ABSENT Dynamic": 12,
+      "UNAVAILABLE ABSENT RuneForeign": 11,
+      "UNAVAILABLE ABSENT Display": 6,
+      "UNAVAILABLE ABSENT Repl": 12,
+      "UNAVAILABLE ABSENT Subprocess, ABSENT Runtime, NA Posix, NA SysWord": 1,
+      "UNAVAILABLE ABSENT Pty, ABSENT Subprocess, NA Posix, NA SysWord": 1,
+      "UNAVAILABLE ABSENT RuneForeign, NA Posix, NA Int64, NA Word64": 1
+    }
+  },
+  "smlnj32_existing_width_or_dependency_limitations": {
+    "count": 66,
+    "by_reason": {
+      "UNAVAILABLE NA Word64, NA LargeWord": 2,
+      "UNAVAILABLE NA PackReal32Big, NA PackReal32Little": 2,
+      "UNAVAILABLE NA Int64": 3,
+      "UNAVAILABLE NA Posix": 15,
+      "UNAVAILABLE NA LargeWord": 15,
+      "UNAVAILABLE NA Windows, NA Posix": 1,
+      "UNAVAILABLE NA Posix, NA SysWord": 6,
+      "UNAVAILABLE NA Timer": 2,
+      "UNAVAILABLE NA LargeWord, NA SysWord": 1,
+      "UNAVAILABLE NA Unix, NA Posix": 1,
+      "UNAVAILABLE NA Windows": 1,
+      "UNAVAILABLE NA Word64": 2,
+      "UNAVAILABLE NA Position": 9,
+      "UNAVAILABLE NA Int32": 4,
+      "UNAVAILABLE NA Unix": 1,
+      "UNAVAILABLE NA Int64, NA FixedInt": 1
+    }
+  },
+  "missing_host_or_tool_skips": 0,
+  "rows": [
+    {
+      "path": "matrix/xc1-mlkit/compare/subprocess",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Subprocess, ABSENT Runtime",
+      "wall": 0.03,
+      "user": 0.019,
+      "system": 0.011,
+      "peakResidentKB": 88612,
+      "outputBytes": 46,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__subprocess"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/subprocess",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Subprocess, ABSENT Runtime",
+      "wall": 0.03,
+      "user": 0.022,
+      "system": 0.008,
+      "peakResidentKB": 88612,
+      "outputBytes": 46,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__subprocess"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/compiler",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Compiler",
+      "wall": 0.025,
+      "user": 0.016,
+      "system": 0.008,
+      "peakResidentKB": 88612,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__compiler"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/intn_word64",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Word64, NA LargeWord",
+      "wall": 0.023,
+      "user": 0.014,
+      "system": 0.009,
+      "peakResidentKB": 88612,
+      "outputBytes": 36,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__intn_word64"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/terminal",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Terminal",
+      "wall": 0.021,
+      "user": 0.016,
+      "system": 0.005,
+      "peakResidentKB": 88612,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__terminal"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/runtime_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Runtime",
+      "wall": 0.069,
+      "user": 0.04,
+      "system": 0.029,
+      "peakResidentKB": 88612,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__runtime_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/runtime",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Runtime",
+      "wall": 0.032,
+      "user": 0.017,
+      "system": 0.016,
+      "peakResidentKB": 88612,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__runtime"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/subprocess_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Subprocess",
+      "wall": 0.031,
+      "user": 0.016,
+      "system": 0.013,
+      "peakResidentKB": 88612,
+      "outputBytes": 30,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__subprocess_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/compiler",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Compiler",
+      "wall": 0.028,
+      "user": 0.02,
+      "system": 0.007,
+      "peakResidentKB": 88612,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__compiler"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/compiler_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Compiler",
+      "wall": 0.029,
+      "user": 0.013,
+      "system": 0.015,
+      "peakResidentKB": 88612,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__compiler_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/pty",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Pty, ABSENT Subprocess",
+      "wall": 0.025,
+      "user": 0.016,
+      "system": 0.008,
+      "peakResidentKB": 88616,
+      "outputBytes": 42,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__pty"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/dynamic_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Dynamic",
+      "wall": 0.027,
+      "user": 0.013,
+      "system": 0.012,
+      "peakResidentKB": 88616,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__dynamic_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/terminal_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Terminal",
+      "wall": 0.037,
+      "user": 0.021,
+      "system": 0.012,
+      "peakResidentKB": 88616,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__terminal_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/runeforeign",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT RuneForeign",
+      "wall": 0.032,
+      "user": 0.015,
+      "system": 0.017,
+      "peakResidentKB": 88616,
+      "outputBytes": 31,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__runeforeign"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/pack_real32_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA PackReal32Big, NA PackReal32Little",
+      "wall": 0.028,
+      "user": 0.019,
+      "system": 0.006,
+      "peakResidentKB": 88616,
+      "outputBytes": 50,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__pack_real32_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/intn_int64",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Int64",
+      "wall": 0.025,
+      "user": 0.018,
+      "system": 0.008,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__intn_int64"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/pty_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Pty, ABSENT Subprocess",
+      "wall": 0.026,
+      "user": 0.017,
+      "system": 0.008,
+      "peakResidentKB": 88616,
+      "outputBytes": 42,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__pty_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/display",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Display",
+      "wall": 0.025,
+      "user": 0.008,
+      "system": 0.014,
+      "peakResidentKB": 88616,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__display"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.028,
+      "user": 0.016,
+      "system": 0.011,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/repl",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Repl",
+      "wall": 0.028,
+      "user": 0.013,
+      "system": 0.009,
+      "peakResidentKB": 88616,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__repl"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/subprocess_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Subprocess",
+      "wall": 0.032,
+      "user": 0.017,
+      "system": 0.014,
+      "peakResidentKB": 88616,
+      "outputBytes": 30,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__subprocess_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/subprocess",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Subprocess, ABSENT Runtime",
+      "wall": 0.029,
+      "user": 0.01,
+      "system": 0.018,
+      "peakResidentKB": 88616,
+      "outputBytes": 46,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__subprocess"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/dynamic",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Dynamic",
+      "wall": 0.028,
+      "user": 0.018,
+      "system": 0.008,
+      "peakResidentKB": 88616,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__dynamic"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/terminal_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Terminal",
+      "wall": 0.026,
+      "user": 0.016,
+      "system": 0.009,
+      "peakResidentKB": 88616,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__terminal_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/repl_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Repl",
+      "wall": 0.039,
+      "user": 0.028,
+      "system": 0.011,
+      "peakResidentKB": 88616,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__repl_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/terminal",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Terminal",
+      "wall": 0.029,
+      "user": 0.021,
+      "system": 0.008,
+      "peakResidentKB": 88616,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__terminal"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_error",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.028,
+      "user": 0.008,
+      "system": 0.017,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_error"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_process",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.032,
+      "user": 0.016,
+      "system": 0.014,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_process"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/pty_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Pty, ABSENT Subprocess",
+      "wall": 0.032,
+      "user": 0.02,
+      "system": 0.011,
+      "peakResidentKB": 88616,
+      "outputBytes": 42,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__pty_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/mono.largeword_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.038,
+      "user": 0.027,
+      "system": 0.011,
+      "peakResidentKB": 88616,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__mono.largeword_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/windows",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Windows, NA Posix",
+      "wall": 0.03,
+      "user": 0.017,
+      "system": 0.012,
+      "peakResidentKB": 88616,
+      "outputBytes": 33,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__windows"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/subprocess",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Subprocess, ABSENT Runtime, NA Posix, NA SysWord",
+      "wall": 0.027,
+      "user": 0.022,
+      "system": 0.003,
+      "peakResidentKB": 88616,
+      "outputBytes": 68,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__subprocess"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_bitflags_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix, NA SysWord",
+      "wall": 0.035,
+      "user": 0.017,
+      "system": 0.014,
+      "peakResidentKB": 88616,
+      "outputBytes": 33,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_bitflags_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_procenv_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.026,
+      "user": 0.018,
+      "system": 0.006,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_procenv_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_filesys",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix, NA SysWord",
+      "wall": 0.034,
+      "user": 0.023,
+      "system": 0.01,
+      "peakResidentKB": 88616,
+      "outputBytes": 33,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_filesys"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/repl",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Repl",
+      "wall": 0.027,
+      "user": 0.021,
+      "system": 0.004,
+      "peakResidentKB": 88616,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__repl"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_process_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.024,
+      "user": 0.018,
+      "system": 0.006,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_process_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/repl_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Repl",
+      "wall": 0.025,
+      "user": 0.016,
+      "system": 0.008,
+      "peakResidentKB": 88616,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__repl_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/runtime_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Runtime",
+      "wall": 0.023,
+      "user": 0.005,
+      "system": 0.018,
+      "peakResidentKB": 88616,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__runtime_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/runeforeign_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT RuneForeign",
+      "wall": 0.025,
+      "user": 0.02,
+      "system": 0.005,
+      "peakResidentKB": 88616,
+      "outputBytes": 31,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__runeforeign_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/word_large",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.03,
+      "user": 0.009,
+      "system": 0.02,
+      "peakResidentKB": 88616,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__word_large"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/terminal_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Terminal",
+      "wall": 0.026,
+      "user": 0.013,
+      "system": 0.012,
+      "peakResidentKB": 88616,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__terminal_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/compiler",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Compiler",
+      "wall": 0.024,
+      "user": 0.012,
+      "system": 0.011,
+      "peakResidentKB": 88616,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__compiler"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/intn_word32",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.025,
+      "user": 0.015,
+      "system": 0.009,
+      "peakResidentKB": 88616,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__intn_word32"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/timer",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Timer",
+      "wall": 0.024,
+      "user": 0.016,
+      "system": 0.007,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__timer"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/timer_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Timer",
+      "wall": 0.025,
+      "user": 0.019,
+      "system": 0.004,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__timer_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/pack_word32",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.025,
+      "user": 0.016,
+      "system": 0.007,
+      "peakResidentKB": 88616,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__pack_word32"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_signal",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.027,
+      "user": 0.014,
+      "system": 0.01,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_signal"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_signal_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.025,
+      "user": 0.018,
+      "system": 0.006,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_signal_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/word_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord, NA SysWord",
+      "wall": 0.03,
+      "user": 0.013,
+      "system": 0.015,
+      "peakResidentKB": 88616,
+      "outputBytes": 37,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__word_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/pty",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Pty, ABSENT Subprocess",
+      "wall": 0.025,
+      "user": 0.008,
+      "system": 0.017,
+      "peakResidentKB": 88616,
+      "outputBytes": 42,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__pty"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_filesys_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix, NA SysWord",
+      "wall": 0.025,
+      "user": 0.021,
+      "system": 0.004,
+      "peakResidentKB": 88616,
+      "outputBytes": 33,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_filesys_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/word8",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.025,
+      "user": 0.02,
+      "system": 0.005,
+      "peakResidentKB": 88616,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__word8"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/pty_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Pty, ABSENT Subprocess",
+      "wall": 0.025,
+      "user": 0.006,
+      "system": 0.018,
+      "peakResidentKB": 88616,
+      "outputBytes": 42,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__pty_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_filesys_dir",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.027,
+      "user": 0.019,
+      "system": 0.007,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_filesys_dir"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_filesys_stat",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.028,
+      "user": 0.008,
+      "system": 0.018,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_filesys_stat"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/unix",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Unix, NA Posix",
+      "wall": 0.025,
+      "user": 0.017,
+      "system": 0.005,
+      "peakResidentKB": 88616,
+      "outputBytes": 30,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__unix"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/dynamic",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Dynamic",
+      "wall": 0.026,
+      "user": 0.017,
+      "system": 0.008,
+      "peakResidentKB": 88616,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__dynamic"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/pack_word16_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.023,
+      "user": 0.01,
+      "system": 0.01,
+      "peakResidentKB": 88616,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__pack_word16_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/windows_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Windows",
+      "wall": 0.023,
+      "user": 0.005,
+      "system": 0.017,
+      "peakResidentKB": 88616,
+      "outputBytes": 23,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__windows_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_bitflags",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix, NA SysWord",
+      "wall": 0.033,
+      "user": 0.025,
+      "system": 0.008,
+      "peakResidentKB": 88616,
+      "outputBytes": 33,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_bitflags"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/pty_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Pty, ABSENT Subprocess",
+      "wall": 0.025,
+      "user": 0.009,
+      "system": 0.015,
+      "peakResidentKB": 88616,
+      "outputBytes": 42,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__pty_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/mono.word64_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Word64",
+      "wall": 0.026,
+      "user": 0.01,
+      "system": 0.016,
+      "peakResidentKB": 88616,
+      "outputBytes": 22,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__mono.word64_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/pack_word16",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.024,
+      "user": 0.012,
+      "system": 0.011,
+      "peakResidentKB": 88616,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__pack_word16"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_error_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.026,
+      "user": 0.016,
+      "system": 0.008,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_error_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_sysdb",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.023,
+      "user": 0.018,
+      "system": 0.004,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_sysdb"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_procenv",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.03,
+      "user": 0.021,
+      "system": 0.006,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_procenv"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_tty",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.034,
+      "user": 0.029,
+      "system": 0.004,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_tty"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/runtime",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Runtime",
+      "wall": 0.036,
+      "user": 0.028,
+      "system": 0.004,
+      "peakResidentKB": 88616,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__runtime"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/terminal",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Terminal",
+      "wall": 0.028,
+      "user": 0.022,
+      "system": 0.004,
+      "peakResidentKB": 88616,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__terminal"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/repl_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Repl",
+      "wall": 0.03,
+      "user": 0.01,
+      "system": 0.02,
+      "peakResidentKB": 88616,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__repl_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/os.filesys",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Position",
+      "wall": 0.027,
+      "user": 0.008,
+      "system": 0.018,
+      "peakResidentKB": 88616,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__os.filesys"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/repl",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Repl",
+      "wall": 0.027,
+      "user": 0.018,
+      "system": 0.008,
+      "peakResidentKB": 88616,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__repl"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/os.process_os_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Position",
+      "wall": 0.026,
+      "user": 0.008,
+      "system": 0.017,
+      "peakResidentKB": 88616,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__os.process_os_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/display",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Display",
+      "wall": 0.024,
+      "user": 0.016,
+      "system": 0.007,
+      "peakResidentKB": 88616,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__display"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/runtime",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Runtime",
+      "wall": 0.041,
+      "user": 0.021,
+      "system": 0.019,
+      "peakResidentKB": 88616,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__runtime"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/compiler",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Compiler",
+      "wall": 0.055,
+      "user": 0.033,
+      "system": 0.02,
+      "peakResidentKB": 88616,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__compiler"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/terminal_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Terminal",
+      "wall": 0.046,
+      "user": 0.037,
+      "system": 0.008,
+      "peakResidentKB": 88616,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__terminal_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/terminal",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Terminal",
+      "wall": 0.039,
+      "user": 0.021,
+      "system": 0.018,
+      "peakResidentKB": 88616,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__terminal"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/repl",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Repl",
+      "wall": 0.046,
+      "user": 0.03,
+      "system": 0.016,
+      "peakResidentKB": 88616,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__repl"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/pack_word64",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.045,
+      "user": 0.009,
+      "system": 0.035,
+      "peakResidentKB": 88616,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__pack_word64"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/mono.largeword",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.063,
+      "user": 0.026,
+      "system": 0.033,
+      "peakResidentKB": 88616,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__mono.largeword"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/runtime",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Runtime",
+      "wall": 0.045,
+      "user": 0.026,
+      "system": 0.017,
+      "peakResidentKB": 88616,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__runtime"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/mono.int32_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Int32",
+      "wall": 0.039,
+      "user": 0.026,
+      "system": 0.012,
+      "peakResidentKB": 88616,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__mono.int32_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/pack_word64_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.041,
+      "user": 0.029,
+      "system": 0.011,
+      "peakResidentKB": 88616,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__pack_word64_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/repl_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Repl",
+      "wall": 0.041,
+      "user": 0.028,
+      "system": 0.012,
+      "peakResidentKB": 88616,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__repl_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/widetextio_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Position",
+      "wall": 0.04,
+      "user": 0.028,
+      "system": 0.012,
+      "peakResidentKB": 88616,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__widetextio_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/intn_word64_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Word64, NA LargeWord",
+      "wall": 0.045,
+      "user": 0.03,
+      "system": 0.012,
+      "peakResidentKB": 88616,
+      "outputBytes": 36,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__intn_word64_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/dynamic",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Dynamic",
+      "wall": 0.042,
+      "user": 0.026,
+      "system": 0.015,
+      "peakResidentKB": 88616,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__dynamic"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/runtime",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Runtime",
+      "wall": 0.036,
+      "user": 0.022,
+      "system": 0.012,
+      "peakResidentKB": 88616,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__runtime"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/pack_word32_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.042,
+      "user": 0.03,
+      "system": 0.008,
+      "peakResidentKB": 88616,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__pack_word32_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/unix_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Unix",
+      "wall": 0.039,
+      "user": 0.027,
+      "system": 0.011,
+      "peakResidentKB": 88616,
+      "outputBytes": 20,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__unix_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlkit/compare/subprocess_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Subprocess",
+      "wall": 0.049,
+      "user": 0.03,
+      "system": 0.019,
+      "peakResidentKB": 88616,
+      "outputBytes": 30,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlkit__compare__subprocess_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/pty",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Pty, ABSENT Subprocess, NA Posix, NA SysWord",
+      "wall": 0.04,
+      "user": 0.022,
+      "system": 0.015,
+      "peakResidentKB": 88616,
+      "outputBytes": 64,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__pty"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/dynamic_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Dynamic",
+      "wall": 0.042,
+      "user": 0.017,
+      "system": 0.023,
+      "peakResidentKB": 88616,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__dynamic_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/pty",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Pty, ABSENT Subprocess",
+      "wall": 0.046,
+      "user": 0.02,
+      "system": 0.026,
+      "peakResidentKB": 88616,
+      "outputBytes": 42,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__pty"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/pty_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Pty, ABSENT Subprocess",
+      "wall": 0.046,
+      "user": 0.04,
+      "system": 0.004,
+      "peakResidentKB": 88616,
+      "outputBytes": 42,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__pty_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/compiler",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Compiler",
+      "wall": 0.043,
+      "user": 0.026,
+      "system": 0.014,
+      "peakResidentKB": 88616,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__compiler"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/display",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Display",
+      "wall": 0.1,
+      "user": 0.027,
+      "system": 0.072,
+      "peakResidentKB": 88616,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__display"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/compiler_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Compiler",
+      "wall": 0.048,
+      "user": 0.026,
+      "system": 0.02,
+      "peakResidentKB": 88616,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__compiler_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/pty",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Pty, ABSENT Subprocess",
+      "wall": 0.038,
+      "user": 0.025,
+      "system": 0.015,
+      "peakResidentKB": 88620,
+      "outputBytes": 42,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__pty"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/repl",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Repl",
+      "wall": 0.044,
+      "user": 0.028,
+      "system": 0.015,
+      "peakResidentKB": 88620,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__repl"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_io",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix, NA SysWord",
+      "wall": 0.042,
+      "user": 0.034,
+      "system": 0.008,
+      "peakResidentKB": 88620,
+      "outputBytes": 33,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_io"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/terminal_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Terminal",
+      "wall": 0.044,
+      "user": 0.024,
+      "system": 0.019,
+      "peakResidentKB": 88620,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__terminal_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/dynamic_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Dynamic",
+      "wall": 0.043,
+      "user": 0.031,
+      "system": 0.012,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__dynamic_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/display",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Display",
+      "wall": 0.04,
+      "user": 0.029,
+      "system": 0.012,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__display"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/display",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Display",
+      "wall": 0.041,
+      "user": 0.027,
+      "system": 0.013,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__display"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/os.filesys_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Position",
+      "wall": 0.045,
+      "user": 0.026,
+      "system": 0.016,
+      "peakResidentKB": 88620,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__os.filesys_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/subprocess_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Subprocess",
+      "wall": 0.043,
+      "user": 0.021,
+      "system": 0.02,
+      "peakResidentKB": 88620,
+      "outputBytes": 30,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__subprocess_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/intn_int32",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Int32",
+      "wall": 0.044,
+      "user": 0.023,
+      "system": 0.021,
+      "peakResidentKB": 88620,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__intn_int32"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_tty_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.044,
+      "user": 0.022,
+      "system": 0.016,
+      "peakResidentKB": 88620,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_tty_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/word8_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.033,
+      "user": 0.021,
+      "system": 0.011,
+      "peakResidentKB": 88620,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__word8_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/dynamic",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Dynamic",
+      "wall": 0.042,
+      "user": 0.028,
+      "system": 0.011,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__dynamic"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_io_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix, NA SysWord",
+      "wall": 0.047,
+      "user": 0.028,
+      "system": 0.018,
+      "peakResidentKB": 88620,
+      "outputBytes": 33,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_io_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/runtime_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Runtime",
+      "wall": 0.042,
+      "user": 0.024,
+      "system": 0.018,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__runtime_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/subprocess_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Subprocess",
+      "wall": 0.04,
+      "user": 0.018,
+      "system": 0.02,
+      "peakResidentKB": 88620,
+      "outputBytes": 30,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__subprocess_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/terminal",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Terminal",
+      "wall": 0.096,
+      "user": 0.02,
+      "system": 0.075,
+      "peakResidentKB": 88620,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__terminal"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/runtime_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Runtime",
+      "wall": 0.04,
+      "user": 0.028,
+      "system": 0.011,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__runtime_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/dynamic_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Dynamic",
+      "wall": 0.035,
+      "user": 0.024,
+      "system": 0.008,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__dynamic_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/repl_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Repl",
+      "wall": 0.042,
+      "user": 0.024,
+      "system": 0.011,
+      "peakResidentKB": 88620,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__repl_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/repl_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Repl",
+      "wall": 0.039,
+      "user": 0.026,
+      "system": 0.012,
+      "peakResidentKB": 88620,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__repl_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/compiler_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Compiler",
+      "wall": 0.035,
+      "user": 0.02,
+      "system": 0.014,
+      "peakResidentKB": 88620,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__compiler_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/intn_word32_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.035,
+      "user": 0.013,
+      "system": 0.022,
+      "peakResidentKB": 88620,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__intn_word32_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/io_primio",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Position",
+      "wall": 0.039,
+      "user": 0.018,
+      "system": 0.021,
+      "peakResidentKB": 88620,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__io_primio"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/repl",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Repl",
+      "wall": 0.04,
+      "user": 0.034,
+      "system": 0.005,
+      "peakResidentKB": 88620,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__repl"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/runtime_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Runtime",
+      "wall": 0.039,
+      "user": 0.026,
+      "system": 0.012,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__runtime_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/dynamic_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Dynamic",
+      "wall": 0.037,
+      "user": 0.024,
+      "system": 0.012,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__dynamic_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/intn_int64_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Int64, NA FixedInt",
+      "wall": 0.037,
+      "user": 0.013,
+      "system": 0.023,
+      "peakResidentKB": 88620,
+      "outputBytes": 34,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__intn_int64_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/subprocess",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Subprocess, ABSENT Runtime",
+      "wall": 0.036,
+      "user": 0.02,
+      "system": 0.015,
+      "peakResidentKB": 88620,
+      "outputBytes": 46,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__subprocess"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/binio_streamio",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Position",
+      "wall": 0.035,
+      "user": 0.022,
+      "system": 0.012,
+      "peakResidentKB": 88620,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__binio_streamio"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/intn_word16_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.036,
+      "user": 0.008,
+      "system": 0.026,
+      "peakResidentKB": 88620,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__intn_word16_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/pack_real32",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA PackReal32Big, NA PackReal32Little",
+      "wall": 0.032,
+      "user": 0.024,
+      "system": 0.008,
+      "peakResidentKB": 88620,
+      "outputBytes": 50,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__pack_real32"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/posix_sysdb_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Posix",
+      "wall": 0.035,
+      "user": 0.025,
+      "system": 0.008,
+      "peakResidentKB": 88620,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__posix_sysdb_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/compiler_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Compiler",
+      "wall": 0.046,
+      "user": 0.028,
+      "system": 0.018,
+      "peakResidentKB": 88620,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__compiler_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/display",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Display",
+      "wall": 0.049,
+      "user": 0.027,
+      "system": 0.022,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__display"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/runtime_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Runtime",
+      "wall": 0.041,
+      "user": 0.03,
+      "system": 0.01,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__runtime_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/intn_int32_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Int32",
+      "wall": 0.041,
+      "user": 0.029,
+      "system": 0.012,
+      "peakResidentKB": 88620,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__intn_int32_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/compiler_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Compiler",
+      "wall": 0.042,
+      "user": 0.013,
+      "system": 0.029,
+      "peakResidentKB": 88620,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__compiler_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/dynamic",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Dynamic",
+      "wall": 0.044,
+      "user": 0.027,
+      "system": 0.016,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__dynamic"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/runtime",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Runtime",
+      "wall": 0.042,
+      "user": 0.026,
+      "system": 0.016,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__runtime"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/dynamic_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Dynamic",
+      "wall": 0.04,
+      "user": 0.021,
+      "system": 0.019,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__dynamic_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/io_primio_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Position",
+      "wall": 0.041,
+      "user": 0.021,
+      "system": 0.019,
+      "peakResidentKB": 88620,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__io_primio_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/mono.int64_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Int64",
+      "wall": 0.038,
+      "user": 0.029,
+      "system": 0.008,
+      "peakResidentKB": 88620,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__mono.int64_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/subprocess",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Subprocess, ABSENT Runtime",
+      "wall": 0.04,
+      "user": 0.023,
+      "system": 0.015,
+      "peakResidentKB": 88620,
+      "outputBytes": 46,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__subprocess"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/mono.int32",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Int32",
+      "wall": 0.044,
+      "user": 0.032,
+      "system": 0.011,
+      "peakResidentKB": 88620,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__mono.int32"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/mono.word64",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Word64",
+      "wall": 0.048,
+      "user": 0.022,
+      "system": 0.021,
+      "peakResidentKB": 88620,
+      "outputBytes": 22,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__mono.word64"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/int_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Position",
+      "wall": 0.038,
+      "user": 0.023,
+      "system": 0.014,
+      "peakResidentKB": 88620,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__int_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/intn_word16",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA LargeWord",
+      "wall": 0.034,
+      "user": 0.023,
+      "system": 0.011,
+      "peakResidentKB": 88620,
+      "outputBytes": 25,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__intn_word16"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/pty_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Pty, ABSENT Subprocess",
+      "wall": 0.038,
+      "user": 0.025,
+      "system": 0.012,
+      "peakResidentKB": 88620,
+      "outputBytes": 42,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__pty_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/subprocess_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Subprocess",
+      "wall": 0.038,
+      "user": 0.014,
+      "system": 0.017,
+      "peakResidentKB": 88620,
+      "outputBytes": 30,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__subprocess_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/compiler",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Compiler",
+      "wall": 0.046,
+      "user": 0.026,
+      "system": 0.02,
+      "peakResidentKB": 88620,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__compiler"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/dynamic",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Dynamic",
+      "wall": 0.042,
+      "user": 0.025,
+      "system": 0.016,
+      "peakResidentKB": 88620,
+      "outputBytes": 27,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__dynamic"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/pty",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Pty, ABSENT Subprocess",
+      "wall": 0.041,
+      "user": 0.027,
+      "system": 0.013,
+      "peakResidentKB": 88620,
+      "outputBytes": 42,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__pty"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/compiler_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Compiler",
+      "wall": 0.059,
+      "user": 0.025,
+      "system": 0.032,
+      "peakResidentKB": 88620,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__compiler_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/mono.int64",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Int64",
+      "wall": 0.043,
+      "user": 0.035,
+      "system": 0.006,
+      "peakResidentKB": 88620,
+      "outputBytes": 21,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__mono.int64"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/runeforeign_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT RuneForeign",
+      "wall": 0.043,
+      "user": 0.03,
+      "system": 0.012,
+      "peakResidentKB": 88620,
+      "outputBytes": 31,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__runeforeign_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/binio_full_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE NA Position",
+      "wall": 0.044,
+      "user": 0.018,
+      "system": 0.025,
+      "peakResidentKB": 88620,
+      "outputBytes": 24,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__binio_full_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/runeforeign",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT RuneForeign",
+      "wall": 0.039,
+      "user": 0.024,
+      "system": 0.015,
+      "peakResidentKB": 88620,
+      "outputBytes": 31,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__runeforeign"
+      ]
+    },
+    {
+      "path": "matrix/xc1-polyml/compare/runeforeign_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT RuneForeign",
+      "wall": 0.043,
+      "user": 0.028,
+      "system": 0.016,
+      "peakResidentKB": 88620,
+      "outputBytes": 31,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-polyml__compare__runeforeign_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/terminal",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Terminal",
+      "wall": 0.049,
+      "user": 0.017,
+      "system": 0.031,
+      "peakResidentKB": 88620,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__terminal"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/terminal_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT Terminal",
+      "wall": 0.046,
+      "user": 0.022,
+      "system": 0.024,
+      "peakResidentKB": 88620,
+      "outputBytes": 28,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__terminal_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/runeforeign_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT RuneForeign",
+      "wall": 0.054,
+      "user": 0.029,
+      "system": 0.02,
+      "peakResidentKB": 88620,
+      "outputBytes": 31,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__runeforeign_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/runeforeign",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT RuneForeign, NA Posix, NA Int64, NA Word64",
+      "wall": 0.049,
+      "user": 0.026,
+      "system": 0.02,
+      "peakResidentKB": 88620,
+      "outputBytes": 62,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__runeforeign"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/runeforeign",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT RuneForeign",
+      "wall": 0.052,
+      "user": 0.04,
+      "system": 0.011,
+      "peakResidentKB": 88620,
+      "outputBytes": 31,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__runeforeign"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-dev/compare/runeforeign",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT RuneForeign",
+      "wall": 0.054,
+      "user": 0.044,
+      "system": 0.007,
+      "peakResidentKB": 88620,
+      "outputBytes": 31,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-dev__compare__runeforeign"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj32/compare/runeforeign_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT RuneForeign",
+      "wall": 0.056,
+      "user": 0.025,
+      "system": 0.031,
+      "peakResidentKB": 88620,
+      "outputBytes": 31,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj32__compare__runeforeign_sig"
+      ]
+    },
+    {
+      "path": "matrix/xc1-smlnj-legacy/compare/runeforeign",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT RuneForeign",
+      "wall": 0.041,
+      "user": 0.024,
+      "system": 0.016,
+      "peakResidentKB": 88620,
+      "outputBytes": 31,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-smlnj-legacy__compare__runeforeign"
+      ]
+    },
+    {
+      "path": "matrix/xc1-mlton/compare/runeforeign_sig",
+      "verdict": "SKIP",
+      "reason": "UNAVAILABLE ABSENT RuneForeign",
+      "wall": 0.045,
+      "user": 0.023,
+      "system": 0.022,
+      "peakResidentKB": 88620,
+      "outputBytes": 31,
+      "kept": [
+        "tests/out/r/20261023-122519-3013462/failed/matrix__xc1-mlton__compare__runeforeign_sig"
+      ]
+    }
+  ],
+  "documented_timeout_deviation": {
+    "configuration": "xc1:polyml@5.9.2",
+    "suite": "unix",
+    "label": "@load/unix",
+    "category": "HOST-BUG",
+    "deviations_line": 470,
+    "description": "forked child cannot finish host Posix.Process.exit126; reap hangs; existing120s timeout is expected and explained"
+  }
+}

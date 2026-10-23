@@ -200,22 +200,67 @@ struct
     let val rest = after "\"" s
     in Substring.string (#1 (Substring.position "\"" (Substring.full rest))) end
   fun trim s = Substring.string (Substring.dropl Char.isSpace (Substring.dropr Char.isSpace (Substring.full s)))
-  fun dwarfLines text =
+  (* Scope line rows by the generated Rune functions, independently of their
+     reported source names/lines. Linked static libraries retain their DWARF;
+     a wrong Rune filename must remain visible rather than be filtered out. *)
+  fun runeAddresses functions text =
+    let fun hex value = StringCvt.scanString (IntInf.scan StringCvt.HEX) value
+        val expected = sort functions
+        val names = Vector.fromList expected
+        fun wanted name =
+          let fun search (low, high) = if low >= high then false else
+                let val middle = low + (high - low) div 2
+                    val value = Vector.sub (names, middle)
+                in if name < value then search (low, middle)
+                   else if name > value then search (middle + 1, high) else true end
+          in search (0, Vector.length names) end
+        fun row line = case String.tokens Char.isSpace line of
+            address :: size :: kind :: symbol :: _ =>
+              (case List.rev (String.fields (fn c => c = #"#") symbol) of
+                 index :: _ => if (kind = "t" orelse kind = "T") andalso wanted index then
+                   (case (hex address, hex size) of (SOME first, SOME count) =>
+                     (require (count > 0, "Rune function has no symbol size"); SOME (index, first, first + count))
+                    | _ => raise Check "invalid Rune function symbol address") else NONE
+               | [] => NONE)
+          | _ => NONE
+        val rows = List.mapPartial row (lines text)
+        val () = require (not (null functions) andalso sort (List.map (fn (index, _, _) => index) rows) = expected,
+                          "missing or duplicated Rune function symbol ranges")
+        val ranges = Vector.fromList (List.map (fn (_, first, last) => (first, last)) rows)
+        fun contains address =
+          let fun search (low, high) = if low >= high then false else
+                let val middle = low + (high - low) div 2
+                    val (first, last) = Vector.sub (ranges, middle)
+                in if address < first then search (low, middle)
+                   else if address >= last then search (middle + 1, high) else true end
+          in search (0, Vector.length ranges) end
+    in fn address => case hex address of SOME value => contains value | NONE => false end
+  fun readelfLines rune text = collapse (List.mapPartial (fn line => case String.tokens Char.isSpace line of
+      _ :: number :: address :: _ =>
+        if CharVector.all Char.isDigit number andalso String.isPrefix "0x" address andalso rune address
+        then SOME number else NONE
+    | _ => NONE) (lines text))
+  fun dwarfLines rune text =
     let val directories = ref [] : (string * string) list ref
         val files = ref [] : (string * string) list ref
         val index = ref ""
         fun lookup key values = case List.find (fn (k, _) => k = key) values of SOME (_, v) => v | NONE => ""
         fun subscript s = trim (Substring.string (#1 (Substring.position "]" (Substring.full (after "[" s)))))
         fun line s =
-          if String.isPrefix "include_directories[" s then (directories := (subscript s, quoted s) :: !directories; NONE)
+          if String.isPrefix "debug_line[" (trim s) then (directories := []; files := []; index := ""; NONE)
+          else if String.isPrefix "include_directories[" s then (directories := (subscript s, quoted s) :: !directories; NONE)
           else if String.isPrefix "file_names[" s then (index := subscript s; NONE)
           else if String.isPrefix "name: \"" (trim s) then (files := (!index, quoted s) :: !files; NONE)
           else if String.isPrefix "dir_index: " (trim s) then
             let val n = trim (after "dir_index: " s)
-                val () = if n = "0" then () else files := (!index, lookup n (!directories) ^ "/" ^ lookup (!index) (!files)) :: !files
+                val directory = lookup n (!directories)
+                val file = lookup (!index) (!files)
+                val () = if directory = "" orelse OS.Path.isAbsolute file then () else
+                  files := (!index, directory ^ "/" ^ file) :: !files
             in NONE end
           else if String.isPrefix "0x" s andalso not (String.isSubstring "end_sequence" s) then
-            (case String.tokens Char.isSpace s of _ :: line :: col :: file :: _ => SOME (lookup file (!files) ^ ":" ^ line ^ ":" ^ col)
+            (case String.tokens Char.isSpace s of address :: line :: col :: file :: _ =>
+                 if rune address then SOME (lookup file (!files) ^ ":" ^ line ^ ":" ^ col) else NONE
                                                | _ => NONE)
           else NONE
     in collapse (List.mapPartial line (lines text)) end
@@ -241,9 +286,13 @@ struct
           else NONE) disassembly)
         fun save (name, ls) = write (dir ^ "/" ^ name, String.concat (List.map (fn l => l ^ "\n") ls))
         val () = save ("rbc-lines", expected)
+        val functions = List.mapPartial (fn line => case String.tokens Char.isSpace line of
+          "function" :: index :: _ => SOME index | _ => NONE) disassembly
+        val () = require (call dir "nm" ["nm", "--numeric-sort", "--print-size", exe] = 0, "nm failed")
+        val rune = runeAddresses functions (read (dir ^ "/nm.out"))
         val () = if not dwarfOnly then () else case dwarfTool () of NONE => raise Check "llvm-dwarfdump is unavailable" | SOME dwarf =>
           (require (call dir "dwarf" [dwarf, "--debug-line", exe] = 0, "llvm-dwarfdump failed");
-           save ("dwarf-lines", dwarfLines (read (dir ^ "/dwarf.out")));
+           save ("dwarf-lines", dwarfLines rune (read (dir ^ "/dwarf.out")));
            sameFiles ("DWARF line table", dir ^ "/rbc-lines", dir ^ "/dwarf-lines"))
     in if dwarfOnly then () else let
         fun noColumn s = String.concatWith ":" (List.take (String.fields (fn c => c = #":") s,
@@ -251,10 +300,7 @@ struct
         fun lineno s = List.last (String.fields (fn c => c = #":") (noColumn s))
         val () = save ("rbc-lineno", collapse (List.map lineno expected))
         val () = require (call dir "readelf" ["readelf", "--debug-dump=decodedline", exe] = 0, "readelf failed")
-        val decoded = List.mapPartial (fn line => case String.tokens Char.isSpace line of
-                   _ :: n :: address :: _ => if CharVector.all Char.isDigit n andalso String.isPrefix "0x" address then SOME n else NONE
-                 | _ => NONE) (lines (read (dir ^ "/readelf.out")))
-        val () = save ("readelf-lineno", collapse decoded)
+        val () = save ("readelf-lineno", readelfLines rune (read (dir ^ "/readelf.out")))
         val () = sameFiles ("readelf line table", dir ^ "/rbc-lineno", dir ^ "/readelf-lineno")
         fun firsts ([], _, _, acc) = List.rev acc
           | firsts (line :: rest, function, want, acc) =
@@ -262,9 +308,8 @@ struct
               else firsts (rest, function, false,
                      if want andalso String.isSubstring "\t; " line then (function, noColumn (after "\t; " line)) :: acc else acc)
         val first = firsts (disassembly, "", false, [])
-        val () = require (call dir "nm" ["nm", exe] = 0, "nm failed")
         val syms = List.mapPartial (fn line => case String.tokens Char.isSpace line of
-               address :: _ :: name :: _ => (case List.rev (String.fields (fn c => c = #"#") name) of
+               address :: _ :: _ :: name :: _ => (case List.rev (String.fields (fn c => c = #"#") name) of
                  n :: _ => if CharVector.all Char.isDigit n then SOME (n, address) else NONE | [] => NONE)
              | _ => NONE) (lines (read (dir ^ "/nm.out")))
         val joined = List.mapPartial (fn (n, position) => Option.map (fn (_, address) => (position, address))

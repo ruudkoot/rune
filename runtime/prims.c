@@ -5,6 +5,7 @@
 #include "version.h"
 #include "vm.h"
 #include "intinf.h"
+#include "foreign.h"
 #include <math.h>
 #include <errno.h>
 #include <fenv.h>
@@ -2130,6 +2131,7 @@ static void free_array(char **a) {
    is a second VM handed this one's state (runtime/image.c), which is written
    while the argument is still on the stack. */
 static int p_posix_fork(VM *vm) {
+    if (foreign_live(vm->foreign)) { vm->io_errno = EBUSY; sys_set_errno(EBUSY); return ret(vm, 1, mk_int(-1)); }
     fflush(stdout);
     fflush(stderr);
     if (vm->gc_log) fflush(vm->gc_log);
@@ -2492,6 +2494,7 @@ static int dbg_flags(const Debugger *d) {
    the user's interrupt a pause (8); the mode it replaces */
 static int p_rt_debug_mode(VM *vm) {
     INT1("rt_debug_mode");
+    if (vm->callback_depth) return ret(vm, 1, mk_int(-1));
     Debugger *d = dbg_get(vm);
     if (!d) return ret(vm, 1, mk_int(0));
     int was = dbg_flags(d);
@@ -3211,6 +3214,8 @@ static int p_pty_close(VM *vm) {
     INT1("pty_close");
     return ret(vm, 1, mk_int(sys_pty_close(x >= 0 && x <= INT_MAX ? (int)x : -1)));
 }
+
+#include "foreign_prim.h"
 
 const PrimFn prim_table[PRIM__COUNT] = {
     RUNE_PRIM_LIST(PRIM_ENTRY)

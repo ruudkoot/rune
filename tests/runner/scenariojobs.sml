@@ -22,6 +22,7 @@ struct
     | command ["scenario-install", name] = SOME (protect (InstallChecks.installed name))
     | command ["scenario-dist-prepare"] = SOME (protect DistChecks.setup)
     | command ["scenario-dist-archives"] = SOME (protect DistChecks.archives)
+    | command ["scenario-dist-ffi"] = SOME (protect DistChecks.ffiArchives)
     | command ["scenario-dist-metadata"] = SOME (protect DistChecks.rejectedMetadata)
     | command ["scenario-dist-installer"] = SOME (protect DistChecks.installer)
     | command ["scenario-dist-binaries"] = SOME (protect DistChecks.binaryHeaders)
@@ -77,6 +78,7 @@ struct
           [tagged ["check"] (Test.describe ""
           [job "prepare" ["scenario-dist-prepare"] [] [],
            job "archives" ["scenario-dist-archives"] ["scenarios/dist/prepare"] [],
+           job "ffi" ["scenario-dist-ffi"] ["scenarios/dist/prepare"] [],
            job "metadata" ["scenario-dist-metadata"] ["scenarios/dist/prepare"] [],
            job "installer" ["scenario-dist-installer"] ["scenarios/dist/archives"] [],
            job "binaries" ["scenario-dist-binaries"] ["scenarios/dist/prepare"] [],

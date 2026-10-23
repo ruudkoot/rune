@@ -1,0 +1,182 @@
+{
+  "schema": 1,
+  "name": "linux-x86",
+  "triple": "i686-linux-gnu",
+  "abi": "sysv",
+  "byteOrder": "little",
+  "charSigned": true,
+  "widths": {
+    "char": 1,
+    "short": 2,
+    "int": 4,
+    "long": 4,
+    "longLong": 8,
+    "pointer": 4,
+    "size": 4,
+    "wchar": 4,
+    "float": 4,
+    "double": 8,
+    "bool": 1
+  },
+  "alignments": {
+    "char": 1,
+    "short": 2,
+    "int": 4,
+    "long": 4,
+    "longLong": 4,
+    "pointer": 4,
+    "double": 4,
+    "wchar": 4,
+    "float": 4,
+    "bool": 1
+  },
+  "verifiedBy": "tests/ffi/target-oracle.c (explicit target execution)",
+  "predefined": [
+    [
+      "__linux__",
+      "1"
+    ],
+    [
+      "__GNUC__",
+      "13"
+    ],
+    [
+      "__GNUC_MINOR__",
+      "3"
+    ],
+    [
+      "__GNUC_PATCHLEVEL__",
+      "0"
+    ],
+    [
+      "__STDC__",
+      "1"
+    ],
+    [
+      "__STDC_VERSION__",
+      "201710L"
+    ],
+    [
+      "__STDC_HOSTED__",
+      "1"
+    ],
+    [
+      "__SIZE_TYPE__",
+      "unsigned int"
+    ],
+    [
+      "__PTRDIFF_TYPE__",
+      "int"
+    ],
+    [
+      "__WCHAR_TYPE__",
+      "long int"
+    ],
+    [
+      "__INTMAX_TYPE__",
+      "long long int"
+    ],
+    [
+      "__UINTMAX_TYPE__",
+      "long long unsigned int"
+    ],
+    [
+      "__INT8_TYPE__",
+      "signed char"
+    ],
+    [
+      "__UINT8_TYPE__",
+      "unsigned char"
+    ],
+    [
+      "__INT16_TYPE__",
+      "short int"
+    ],
+    [
+      "__UINT16_TYPE__",
+      "short unsigned int"
+    ],
+    [
+      "__INT32_TYPE__",
+      "int"
+    ],
+    [
+      "__UINT32_TYPE__",
+      "unsigned int"
+    ],
+    [
+      "__INT64_TYPE__",
+      "long long int"
+    ],
+    [
+      "__UINT64_TYPE__",
+      "long long unsigned int"
+    ],
+    [
+      "__INTPTR_TYPE__",
+      "int"
+    ],
+    [
+      "__UINTPTR_TYPE__",
+      "unsigned int"
+    ],
+    [
+      "__SIZEOF_LONG__",
+      "4"
+    ],
+    [
+      "__SIZEOF_POINTER__",
+      "4"
+    ],
+    [
+      "__SIZEOF_INT__",
+      "4"
+    ],
+    [
+      "__SIZEOF_LONG_LONG__",
+      "8"
+    ],
+    [
+      "__SIZEOF_WCHAR_T__",
+      "4"
+    ],
+    [
+      "__BYTE_ORDER__",
+      "__ORDER_LITTLE_ENDIAN__"
+    ],
+    [
+      "__ORDER_LITTLE_ENDIAN__",
+      "1234"
+    ],
+    [
+      "__ORDER_BIG_ENDIAN__",
+      "4321"
+    ],
+    [
+      "__i386__",
+      "1"
+    ],
+    [
+      "SDL_DISABLE_INTRINSICS",
+      "1"
+    ],
+    [
+      "__has_builtin(x)",
+      "0"
+    ],
+    [
+      "__has_attribute(x)",
+      "0"
+    ],
+    [
+      "__has_feature(x)",
+      "0"
+    ],
+    [
+      "__has_extension(x)",
+      "0"
+    ]
+  ],
+  "enumRule": "unsigned-nonnegative",
+  "sizeType": "unsigned int"
+}

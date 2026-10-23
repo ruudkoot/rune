@@ -1,0 +1,152 @@
+{
+  "date": "2026-10-23T13:14:23.042175+00:00",
+  "sourceCommit": "c95c5f308ea3e57e88874a4bb7ef094428441dd7",
+  "originalFailedRun": "tests/out/r/20261023-134115-3192404",
+  "originalCompilerReadelfExpectedRows": 32014,
+  "originalCompilerReadelfUnscopedRows": 35443,
+  "vmSha256": "eef487c7081c347cabee509ed1e71945997190dbfe6a99b2bdc0a84a96aa1531",
+  "compilerSha256": "36225003fa50774cf84419b904d5c0e74de65bb97eddd7b7525c0ab704695be0",
+  "tools": {
+    "readelf": "GNU readelf (GNU Binutils for Ubuntu) 2.42",
+    "nm": "GNU nm (GNU Binutils for Ubuntu) 2.42",
+    "llvm-dwarfdump": "Ubuntu LLVM version 18.1.3"
+  },
+  "realChecks": [
+    {
+      "program": "bin/rune.stack.rbc",
+      "reader": "debug",
+      "exitStatus": 0,
+      "diagnosticBytes": 0,
+      "matchedRows": 32014,
+      "rowsSha256": "542130eb81e6b0468442fd5f108899377bc4fbabfee30d123d6da90bc45b40ee",
+      "bytecodeSha256": "9f2b1eb1e06d98ee4f38e89573d5e9c800050e18e858f7b0ad76f5507e577a9c",
+      "elfSha256": "e5b30a4d84f48b6df65f25d1b0524b6f21447aab1b0eb1f5ec50d2d3970db59f",
+      "command": [
+        "/home/ruud/rune/.worktrees/runeffi/bin/runevm",
+        "/home/ruud/rune/.worktrees/runeffi-dwarf/build/native-debug/check.rbc",
+        "native-debug",
+        "bin/rune.stack.rbc"
+      ],
+      "workingDirectory": "/home/ruud/rune/.worktrees/runeffi-check-final",
+      "outputDirectory": "/home/ruud/rune/.worktrees/runeffi-dwarf/tests/out/native-debug-compiler/native/debug-bin_rune.stack.rbc"
+    },
+    {
+      "program": "bin/rune.stack.rbc",
+      "reader": "dwarf",
+      "exitStatus": 0,
+      "diagnosticBytes": 0,
+      "matchedRows": 42591,
+      "rowsSha256": "05107cdef54430e17523e7953cd1a14a852ed5538652bd00d9aebecc35aa8f07",
+      "bytecodeSha256": "9f2b1eb1e06d98ee4f38e89573d5e9c800050e18e858f7b0ad76f5507e577a9c",
+      "elfSha256": "e5b30a4d84f48b6df65f25d1b0524b6f21447aab1b0eb1f5ec50d2d3970db59f",
+      "command": [
+        "/home/ruud/rune/.worktrees/runeffi/bin/runevm",
+        "/home/ruud/rune/.worktrees/runeffi-dwarf/build/native-debug/check.rbc",
+        "native-dwarf",
+        "bin/rune.stack.rbc"
+      ],
+      "workingDirectory": "/home/ruud/rune/.worktrees/runeffi-check-final",
+      "outputDirectory": "/home/ruud/rune/.worktrees/runeffi-dwarf/tests/out/native-dwarf-compiler/native/dwarf-bin_rune.stack.rbc"
+    },
+    {
+      "program": "tests/out/dec.val_simple.rbc",
+      "reader": "debug",
+      "exitStatus": 0,
+      "diagnosticBytes": 0,
+      "matchedRows": 23,
+      "rowsSha256": "501078efb147d1b6412713c116b807fb90faaf6c9dff52a05619f362b57d0e51",
+      "bytecodeSha256": "3bd629d2604cf74aa3b31a1c68d4b627a3d2c9fea7b0b19783d7e9563d1b8475",
+      "elfSha256": "0981c0d17f990613438e3486d47167deb7db6190aaaea47f975c5ea2c23811e8",
+      "command": [
+        "/home/ruud/rune/.worktrees/runeffi/bin/runevm",
+        "/home/ruud/rune/.worktrees/runeffi-dwarf/build/native-debug/check.rbc",
+        "native-debug",
+        "tests/out/dec.val_simple.rbc"
+      ],
+      "workingDirectory": "/home/ruud/rune/.worktrees/runeffi-check-final",
+      "outputDirectory": "/home/ruud/rune/.worktrees/runeffi-dwarf/tests/out/native-debug-hello/native/debug-tests_out_dec.val_simple.rbc"
+    },
+    {
+      "program": "tests/out/dec.val_simple.rbc",
+      "reader": "dwarf",
+      "exitStatus": 0,
+      "diagnosticBytes": 0,
+      "matchedRows": 28,
+      "rowsSha256": "92160f52166ea47777247b165dd00b367659aa6a7bd66ebe64aae17fc6094686",
+      "bytecodeSha256": "3bd629d2604cf74aa3b31a1c68d4b627a3d2c9fea7b0b19783d7e9563d1b8475",
+      "elfSha256": "0981c0d17f990613438e3486d47167deb7db6190aaaea47f975c5ea2c23811e8",
+      "command": [
+        "/home/ruud/rune/.worktrees/runeffi/bin/runevm",
+        "/home/ruud/rune/.worktrees/runeffi-dwarf/build/native-debug/check.rbc",
+        "native-dwarf",
+        "tests/out/dec.val_simple.rbc"
+      ],
+      "workingDirectory": "/home/ruud/rune/.worktrees/runeffi-check-final",
+      "outputDirectory": "/home/ruud/rune/.worktrees/runeffi-dwarf/tests/out/native-dwarf-hello/native/dwarf-tests_out_dec.val_simple.rbc"
+    },
+    {
+      "program": "tests/out/rt.interrupt_self.rbc",
+      "reader": "debug",
+      "exitStatus": 0,
+      "diagnosticBytes": 0,
+      "matchedRows": 717,
+      "rowsSha256": "46b2c7ae45be811b79ff24c8d8d6bb7b30d5328b00b1c7c860b3100e44ba7f57",
+      "bytecodeSha256": "81dd341cd0cb541156e6357528ee3b6331114d2c9d1acf30662f268f2179d38e",
+      "elfSha256": "f1748d3c6b9db7e8bd00e0e2f6d72f0a60e26c42fb0cf24c347a0dc473cbcf62",
+      "command": [
+        "/home/ruud/rune/.worktrees/runeffi/bin/runevm",
+        "/home/ruud/rune/.worktrees/runeffi-dwarf/build/native-debug/check.rbc",
+        "native-debug",
+        "tests/out/rt.interrupt_self.rbc"
+      ],
+      "workingDirectory": "/home/ruud/rune/.worktrees/runeffi-check-final",
+      "outputDirectory": "/home/ruud/rune/.worktrees/runeffi-dwarf/tests/out/native-debug-interrupt/native/debug-tests_out_rt.interrupt_self.rbc"
+    },
+    {
+      "program": "tests/out/rt.interrupt_self.rbc",
+      "reader": "dwarf",
+      "exitStatus": 0,
+      "diagnosticBytes": 0,
+      "matchedRows": 907,
+      "rowsSha256": "fc6720c1cca409754a050a3bc33857dbf2e8a67253cffec8c8f1551e1194dbbf",
+      "bytecodeSha256": "81dd341cd0cb541156e6357528ee3b6331114d2c9d1acf30662f268f2179d38e",
+      "elfSha256": "f1748d3c6b9db7e8bd00e0e2f6d72f0a60e26c42fb0cf24c347a0dc473cbcf62",
+      "command": [
+        "/home/ruud/rune/.worktrees/runeffi/bin/runevm",
+        "/home/ruud/rune/.worktrees/runeffi-dwarf/build/native-debug/check.rbc",
+        "native-dwarf",
+        "tests/out/rt.interrupt_self.rbc"
+      ],
+      "workingDirectory": "/home/ruud/rune/.worktrees/runeffi-check-final",
+      "outputDirectory": "/home/ruud/rune/.worktrees/runeffi-dwarf/tests/out/native-dwarf-interrupt/native/dwarf-tests_out_rt.interrupt_self.rbc"
+    }
+  ],
+  "scope": "half-open ELF text symbol ranges, one positive-sized symbol for every disassembled Rune function index; source names and locations remain comparison data",
+  "sourceHashes": {
+    "tests/runner/nativechecks.sml": "bfe8a4a29a1e44b9fee3072a8a439ea92706bf610d9982be648ab143d09bd072",
+    "tests/runner/nativefaults.sml": "05ef2c723123384234371cb2337dddb42205be875149246adab5ef588e9fb05b"
+  },
+  "plantedFixtures": [
+    "half-open Rune address boundaries",
+    "missing Rune symbol rejected",
+    "duplicate Rune symbol rejected",
+    "zero-sized Rune symbol rejected",
+    "readelf external C units before and after Rune rows",
+    "readelf missing Rune row remains a mismatch",
+    "readelf wrong Rune line remains visible",
+    "LLVM external C units and reused file indexes",
+    "LLVM file map reset at line-table boundary",
+    "LLVM directory map reset at line-table boundary",
+    "LLVM wrong Rune filename remains visible",
+    "LLVM wrong Rune column remains visible",
+    "LLVM missing Rune row remains a mismatch"
+  ],
+  "faultSuite": {
+    "entrypoint": "NativeFaults.one()",
+    "exitStatus": 0,
+    "diagnosticBytes": 0,
+    "newParserAssertions": 13,
+    "artifactDirectory": "/home/ruud/rune/.worktrees/runeffi-dwarf/tests/out/native-faults-final",
+    "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

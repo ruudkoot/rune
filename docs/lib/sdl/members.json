@@ -1,0 +1,592 @@
+{
+ "signatures": {
+  "SDL": {
+   "doc": "Core SDL3 GUI, input and software rendering, with explicit lifetimes.\n\n",
+   "page": "sig/SDL.md",
+   "members": [
+    {
+     "kind": "eqtype",
+     "name": "window",
+     "spec": "eqtype window",
+     "doc": "A window owned until `destroyWindow`; dependent renderers prevent release.\n\n",
+     "page": "sig/SDL.md#type-window"
+    },
+    {
+     "kind": "eqtype",
+     "name": "surface",
+     "spec": "eqtype surface",
+     "doc": "An owned software pixel surface.\n\n",
+     "page": "sig/SDL.md#type-surface"
+    },
+    {
+     "kind": "eqtype",
+     "name": "renderer",
+     "spec": "eqtype renderer",
+     "doc": "An owned renderer retaining its window or software surface.\n\n",
+     "page": "sig/SDL.md#type-renderer"
+    },
+    {
+     "kind": "eqtype",
+     "name": "texture",
+     "spec": "eqtype texture",
+     "doc": "An owned texture retaining its renderer.\n\n",
+     "page": "sig/SDL.md#type-texture"
+    },
+    {
+     "kind": "type",
+     "name": "rect",
+     "spec": "type rect = {x : int, y : int, width : int, height : int}",
+     "doc": "Integer coordinates and dimensions in native pixels.\n\n",
+     "page": "sig/SDL.md#type-rect"
+    },
+    {
+     "kind": "type",
+     "name": "frect",
+     "spec": "type frect = {x : real, y : real, width : real, height : real}",
+     "doc": "Floating point coordinates and dimensions in native pixels.\n\n",
+     "page": "sig/SDL.md#type-frect"
+    },
+    {
+     "kind": "datatype",
+     "name": "event",
+     "spec": "datatype event =\n    Quit\n  | Window of {window : Word32.word, kind : Word32.word, data1 : int, data2 : int}\n  | Key of {window : Word32.word, down : bool, repeated : bool,\n            key : Word32.word, scan : int, modifiers : Word16.word}\n  | Text of {window : Word32.word, text : string}\n  | MouseMotion of {window : Word32.word, x : real, y : real,\n                     buttons : Word32.word}\n  | MouseButton of {window : Word32.word, down : bool,\n                     button : int, clicks : int, x : real, y : real}\n  | Unknown of Word32.word",
+     "doc": "Copied event values; text survives subsequent SDL operations.\n\n",
+     "page": "sig/SDL.md#type-event"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of {function : string, message : string}",
+     "doc": "Native failure; the error text is captured before cleanup.\n\n",
+     "page": "sig/SDL.md#exn-error"
+    },
+    {
+     "kind": "exception",
+     "name": "Unsupported",
+     "spec": "exception Unsupported of string",
+     "doc": "A request outside the declared portable core behavior.\n\n",
+     "page": "sig/SDL.md#exn-unsupported"
+    },
+    {
+     "kind": "exception",
+     "name": "Closed",
+     "spec": "exception Closed",
+     "doc": "A closed resource or an operation before loading its native library.\n\n",
+     "page": "sig/SDL.md#exn-closed"
+    },
+    {
+     "kind": "exception",
+     "name": "Busy",
+     "spec": "exception Busy",
+     "doc": "A release with live children, locks or borrowers.\n\n",
+     "page": "sig/SDL.md#exn-busy"
+    },
+    {
+     "kind": "val",
+     "name": "load",
+     "spec": "val load : string list -> unit",
+     "doc": "`load paths` names SDL3 and its generated adapter library; call before initialization.\n\nThe generated target must match the runtime width and byte order.\n\n",
+     "page": "sig/SDL.md#val-load"
+    },
+    {
+     "kind": "val",
+     "name": "unload",
+     "spec": "val unload : unit -> unit",
+     "doc": "`unload ()` closes a quiescent library after `quit` and all resources.\n\n",
+     "page": "sig/SDL.md#val-unload"
+    },
+    {
+     "kind": "val",
+     "name": "constant",
+     "spec": "val constant : string -> IntInf.int",
+     "doc": "`constant name` looks up one generated SDL core integer constant.\n\n",
+     "page": "sig/SDL.md#val-constant"
+    },
+    {
+     "kind": "val",
+     "name": "setMainReady",
+     "spec": "val setMainReady : unit -> unit",
+     "doc": "`setMainReady ()` declares that Rune owns application startup on the VM thread.\n\n",
+     "page": "sig/SDL.md#val-setmainready"
+    },
+    {
+     "kind": "val",
+     "name": "init",
+     "spec": "val init : Word32.word -> unit",
+     "doc": "`init flags` initializes SDL subsystems after declaring main readiness.\n\n",
+     "page": "sig/SDL.md#val-init"
+    },
+    {
+     "kind": "val",
+     "name": "initSubSystem",
+     "spec": "val initSubSystem : Word32.word -> unit",
+     "doc": "`initSubSystem flags` adds a reference to the named subsystems.\n\n",
+     "page": "sig/SDL.md#val-initsubsystem"
+    },
+    {
+     "kind": "val",
+     "name": "quitSubSystem",
+     "spec": "val quitSubSystem : Word32.word -> unit",
+     "doc": "`quitSubSystem flags` releases subsystem references after all owned resources close.\n\n",
+     "page": "sig/SDL.md#val-quitsubsystem"
+    },
+    {
+     "kind": "val",
+     "name": "quit",
+     "spec": "val quit : unit -> unit",
+     "doc": "`quit ()` shuts down SDL and releases retained pushed-event text; live resources raise `Busy`.\n\n",
+     "page": "sig/SDL.md#val-quit"
+    },
+    {
+     "kind": "val",
+     "name": "getError",
+     "spec": "val getError : unit -> string",
+     "doc": "`getError ()` copies the current SDL UTF-8 error text immediately.\n\n",
+     "page": "sig/SDL.md#val-geterror"
+    },
+    {
+     "kind": "val",
+     "name": "clearError",
+     "spec": "val clearError : unit -> unit",
+     "doc": "`clearError ()` clears the current SDL error text.\n\n",
+     "page": "sig/SDL.md#val-clearerror"
+    },
+    {
+     "kind": "val",
+     "name": "createWindow",
+     "spec": "val createWindow : {title : string, width : int, height : int,\n                    flags : Word64.word} -> window",
+     "doc": "`createWindow options` creates an owned window with a copied UTF-8 title.\n\n",
+     "page": "sig/SDL.md#val-createwindow"
+    },
+    {
+     "kind": "val",
+     "name": "destroyWindow",
+     "spec": "val destroyWindow : window -> unit",
+     "doc": "`destroyWindow window` destroys a window after its renderers close.\n\n",
+     "page": "sig/SDL.md#val-destroywindow"
+    },
+    {
+     "kind": "val",
+     "name": "getWindowID",
+     "spec": "val getWindowID : window -> Word32.word",
+     "doc": "`getWindowID window` returns its nonzero SDL event identity.\n\n",
+     "page": "sig/SDL.md#val-getwindowid"
+    },
+    {
+     "kind": "val",
+     "name": "setWindowTitle",
+     "spec": "val setWindowTitle : window * string -> unit",
+     "doc": "`setWindowTitle (window, title)` copies a UTF-8 title into SDL.\n\n",
+     "page": "sig/SDL.md#val-setwindowtitle"
+    },
+    {
+     "kind": "val",
+     "name": "getWindowSize",
+     "spec": "val getWindowSize : window -> {width : int, height : int}",
+     "doc": "`getWindowSize window` returns both native output dimensions.\n\n",
+     "page": "sig/SDL.md#val-getwindowsize"
+    },
+    {
+     "kind": "val",
+     "name": "setWindowSize",
+     "spec": "val setWindowSize : window * int * int -> unit",
+     "doc": "`setWindowSize (window, width, height)` requests a size change; OS events remain asynchronous.\n\n",
+     "page": "sig/SDL.md#val-setwindowsize"
+    },
+    {
+     "kind": "val",
+     "name": "setWindowPosition",
+     "spec": "val setWindowPosition : window * int * int -> unit",
+     "doc": "`setWindowPosition (window, x, y)` requests a supported native position.\n\n`SDL_WINDOWPOS_UNDEFINED` lets SDL choose an axis. Compositors may reject\nexplicit positioning; native failure propagates rather than being ignored.\n\n",
+     "page": "sig/SDL.md#val-setwindowposition"
+    },
+    {
+     "kind": "val",
+     "name": "setHint",
+     "spec": "val setHint : string * string -> unit",
+     "doc": "`setHint (name, value)` sets an SDL policy hint before initialization.\n\nThis support operation is selected for the Win32-over-SDL provider.\n\n",
+     "page": "sig/SDL.md#val-sethint"
+    },
+    {
+     "kind": "val",
+     "name": "showWindow",
+     "spec": "val showWindow : window -> unit",
+     "doc": "`showWindow window` requests that the native window become visible.\n\n",
+     "page": "sig/SDL.md#val-showwindow"
+    },
+    {
+     "kind": "val",
+     "name": "hideWindow",
+     "spec": "val hideWindow : window -> unit",
+     "doc": "`hideWindow window` requests that the native window become hidden.\n\n",
+     "page": "sig/SDL.md#val-hidewindow"
+    },
+    {
+     "kind": "val",
+     "name": "pollEvent",
+     "spec": "val pollEvent : unit -> event option",
+     "doc": "`pollEvent ()` copies one available event; `NONE` means no event was returned.\n\n",
+     "page": "sig/SDL.md#val-pollevent"
+    },
+    {
+     "kind": "val",
+     "name": "waitEvent",
+     "spec": "val waitEvent : unit -> event",
+     "doc": "`waitEvent ()` blocks for one event and copies its payload.\n\n",
+     "page": "sig/SDL.md#val-waitevent"
+    },
+    {
+     "kind": "val",
+     "name": "waitEventTimeout",
+     "spec": "val waitEventTimeout : int -> event option",
+     "doc": "`waitEventTimeout milliseconds` waits up to the given duration; `NONE` preserves the native timeout-or-error result through raw access.\n\n",
+     "page": "sig/SDL.md#val-waiteventtimeout"
+    },
+    {
+     "kind": "val",
+     "name": "pushEvent",
+     "spec": "val pushEvent : event -> unit",
+     "doc": "`pushEvent event` queues a supported event; input-state snapshots are unaffected.\n\nText storage is retained until consumption or `quit`; `Unknown` requires raw access.\n\n",
+     "page": "sig/SDL.md#val-pushevent"
+    },
+    {
+     "kind": "val",
+     "name": "getKeyboardState",
+     "spec": "val getKeyboardState : unit -> bool vector",
+     "doc": "`getKeyboardState ()` copies the complete current SDL keyboard snapshot.\n\n",
+     "page": "sig/SDL.md#val-getkeyboardstate"
+    },
+    {
+     "kind": "val",
+     "name": "getMouseState",
+     "spec": "val getMouseState : unit -> {buttons : Word32.word, x : real, y : real}",
+     "doc": "`getMouseState ()` returns buttons and both native float output coordinates.\n\n",
+     "page": "sig/SDL.md#val-getmousestate"
+    },
+    {
+     "kind": "val",
+     "name": "startTextInput",
+     "spec": "val startTextInput : window -> unit",
+     "doc": "`startTextInput window` enables UTF-8 text input events for that window.\n\n",
+     "page": "sig/SDL.md#val-starttextinput"
+    },
+    {
+     "kind": "val",
+     "name": "stopTextInput",
+     "spec": "val stopTextInput : window -> unit",
+     "doc": "`stopTextInput window` disables text input for that window.\n\n",
+     "page": "sig/SDL.md#val-stoptextinput"
+    },
+    {
+     "kind": "val",
+     "name": "createSurface",
+     "spec": "val createSurface : {width : int, height : int, format : Word32.word} -> surface",
+     "doc": "`createSurface options` allocates an owned, zero-initialized pixel surface.\n\n",
+     "page": "sig/SDL.md#val-createsurface"
+    },
+    {
+     "kind": "val",
+     "name": "destroySurface",
+     "spec": "val destroySurface : surface -> unit",
+     "doc": "`destroySurface surface` releases it after software renderers and locks close.\n\n",
+     "page": "sig/SDL.md#val-destroysurface"
+    },
+    {
+     "kind": "val",
+     "name": "lockSurface",
+     "spec": "val lockSurface : surface -> unit",
+     "doc": "`lockSurface surface` acquires a counted pixel lock; balance it with `unlockSurface`.\n\n",
+     "page": "sig/SDL.md#val-locksurface"
+    },
+    {
+     "kind": "val",
+     "name": "unlockSurface",
+     "spec": "val unlockSurface : surface -> unit",
+     "doc": "`unlockSurface surface` releases one lock; an unmatched call raises `Busy`.\n\n",
+     "page": "sig/SDL.md#val-unlocksurface"
+    },
+    {
+     "kind": "val",
+     "name": "withSurfacePixels",
+     "spec": "val withSurfacePixels : surface ->\n  ({bytes : Word8Array.array, pitch : int, width : int, height : int,\n    format : Word32.word} -> 'a) -> 'a",
+     "doc": "`withSurfacePixels surface body` locks an uncompressed surface and supplies a copied byte array.\n\nWrites copy back on every returning path, including exceptions, before unlocking. FourCC and compressed formats raise `Unsupported`.\n\n",
+     "page": "sig/SDL.md#val-withsurfacepixels"
+    },
+    {
+     "kind": "val",
+     "name": "fillSurfaceRect",
+     "spec": "val fillSurfaceRect : surface * rect option * Word32.word -> unit",
+     "doc": "`fillSurfaceRect (surface, rect, color)` fills a rectangle or the entire surface; color is encoded in its pixel format.\n\n",
+     "page": "sig/SDL.md#val-fillsurfacerect"
+    },
+    {
+     "kind": "val",
+     "name": "blitSurface",
+     "spec": "val blitSurface : {source : surface, sourceRect : rect option,\n                   destination : surface, destinationRect : rect option} -> unit",
+     "doc": "`blitSurface options` copies and clips between surfaces using optional integer rectangles.\n\n",
+     "page": "sig/SDL.md#val-blitsurface"
+    },
+    {
+     "kind": "val",
+     "name": "createRenderer",
+     "spec": "val createRenderer : window * string option -> renderer",
+     "doc": "`createRenderer (window, driver)` creates a renderer retaining the window; `NONE` lets SDL choose a driver.\n\n",
+     "page": "sig/SDL.md#val-createrenderer"
+    },
+    {
+     "kind": "val",
+     "name": "createSoftwareRenderer",
+     "spec": "val createSoftwareRenderer : surface -> renderer",
+     "doc": "`createSoftwareRenderer surface` creates a renderer retaining the target surface.\n\n",
+     "page": "sig/SDL.md#val-createsoftwarerenderer"
+    },
+    {
+     "kind": "val",
+     "name": "destroyRenderer",
+     "spec": "val destroyRenderer : renderer -> unit",
+     "doc": "`destroyRenderer renderer` destroys it after its textures close.\n\n",
+     "page": "sig/SDL.md#val-destroyrenderer"
+    },
+    {
+     "kind": "val",
+     "name": "setRenderDrawColor",
+     "spec": "val setRenderDrawColor : renderer * {red : int, green : int, blue : int, alpha : int} -> unit",
+     "doc": "`setRenderDrawColor (renderer, color)` sets channels from zero through 255; other values raise `Domain`.\n\n",
+     "page": "sig/SDL.md#val-setrenderdrawcolor"
+    },
+    {
+     "kind": "val",
+     "name": "setRenderClipRect",
+     "spec": "val setRenderClipRect : renderer * rect option -> unit",
+     "doc": "`setRenderClipRect (renderer, rectangle)` sets an integer drawing clip.\n\n`NONE` resets clipping; a zero-area rectangle clips every pixel.\n\n",
+     "page": "sig/SDL.md#val-setrendercliprect"
+    },
+    {
+     "kind": "val",
+     "name": "renderClear",
+     "spec": "val renderClear : renderer -> unit",
+     "doc": "`renderClear renderer` clears the render target with the current draw color.\n\n",
+     "page": "sig/SDL.md#val-renderclear"
+    },
+    {
+     "kind": "val",
+     "name": "renderPoint",
+     "spec": "val renderPoint : renderer * real * real -> unit",
+     "doc": "`renderPoint (renderer, x, y)` draws one floating point position.\n\n",
+     "page": "sig/SDL.md#val-renderpoint"
+    },
+    {
+     "kind": "val",
+     "name": "renderLine",
+     "spec": "val renderLine : renderer * real * real * real * real -> unit",
+     "doc": "`renderLine (renderer, x1, y1, x2, y2)` draws a line in renderer coordinates.\n\n",
+     "page": "sig/SDL.md#val-renderline"
+    },
+    {
+     "kind": "val",
+     "name": "renderRect",
+     "spec": "val renderRect : renderer * frect option -> unit",
+     "doc": "`renderRect (renderer, rect)` outlines the optional rectangle or complete target.\n\n",
+     "page": "sig/SDL.md#val-renderrect"
+    },
+    {
+     "kind": "val",
+     "name": "renderFillRect",
+     "spec": "val renderFillRect : renderer * frect option -> unit",
+     "doc": "`renderFillRect (renderer, rect)` fills the optional rectangle or complete target.\n\n",
+     "page": "sig/SDL.md#val-renderfillrect"
+    },
+    {
+     "kind": "val",
+     "name": "renderPresent",
+     "spec": "val renderPresent : renderer -> unit",
+     "doc": "`renderPresent renderer` presents accumulated drawing on the owning VM thread.\n\n",
+     "page": "sig/SDL.md#val-renderpresent"
+    },
+    {
+     "kind": "val",
+     "name": "renderReadPixels",
+     "spec": "val renderReadPixels : renderer * rect option -> surface",
+     "doc": "`renderReadPixels (renderer, rect)` copies pixels into a new owned surface.\n\n",
+     "page": "sig/SDL.md#val-renderreadpixels"
+    },
+    {
+     "kind": "val",
+     "name": "createTextureFromSurface",
+     "spec": "val createTextureFromSurface : renderer * surface -> texture",
+     "doc": "`createTextureFromSurface (renderer, surface)` copies pixels into a texture retaining its renderer.\n\n",
+     "page": "sig/SDL.md#val-createtexturefromsurface"
+    },
+    {
+     "kind": "val",
+     "name": "destroyTexture",
+     "spec": "val destroyTexture : texture -> unit",
+     "doc": "`destroyTexture texture` destroys the texture and releases its renderer dependency.\n\n",
+     "page": "sig/SDL.md#val-destroytexture"
+    },
+    {
+     "kind": "val",
+     "name": "renderTexture",
+     "spec": "val renderTexture : renderer * texture * frect option * frect option -> unit",
+     "doc": "`renderTexture (renderer, texture, source, destination)` copies a texture using optional floating rectangles.\n\n",
+     "page": "sig/SDL.md#val-rendertexture"
+    },
+    {
+     "kind": "val",
+     "name": "renderDebugText",
+     "spec": "val renderDebugText : renderer * real * real * string -> unit",
+     "doc": "`renderDebugText (renderer, x, y, text)` draws SDL debug text. SDL documents its built-in font as ASCII; UTF-8 is validated at the boundary.\n\n",
+     "page": "sig/SDL.md#val-renderdebugtext"
+    },
+    {
+     "kind": "val",
+     "name": "hasClipboardText",
+     "spec": "val hasClipboardText : unit -> bool",
+     "doc": "`hasClipboardText ()` reports whether SDL exposes clipboard text.\n\n",
+     "page": "sig/SDL.md#val-hasclipboardtext"
+    },
+    {
+     "kind": "val",
+     "name": "getClipboardText",
+     "spec": "val getClipboardText : unit -> string",
+     "doc": "`getClipboardText ()` copies UTF-8 clipboard text and calls `SDL_free` before returning.\n\n",
+     "page": "sig/SDL.md#val-getclipboardtext"
+    },
+    {
+     "kind": "val",
+     "name": "setClipboardText",
+     "spec": "val setClipboardText : string -> unit",
+     "doc": "`setClipboardText text` copies UTF-8 text to the clipboard.\n\n",
+     "page": "sig/SDL.md#val-setclipboardtext"
+    },
+    {
+     "kind": "val",
+     "name": "getTicks",
+     "spec": "val getTicks : unit -> Word64.word",
+     "doc": "`getTicks ()` returns elapsed SDL milliseconds as an unsigned 64-bit value.\n\n",
+     "page": "sig/SDL.md#val-getticks"
+    },
+    {
+     "kind": "val",
+     "name": "getTicksNS",
+     "spec": "val getTicksNS : unit -> Word64.word",
+     "doc": "`getTicksNS ()` returns elapsed SDL nanoseconds as an unsigned 64-bit value.\n\n",
+     "page": "sig/SDL.md#val-getticksns"
+    },
+    {
+     "kind": "val",
+     "name": "getPerformanceCounter",
+     "spec": "val getPerformanceCounter : unit -> Word64.word",
+     "doc": "`getPerformanceCounter ()` returns the current unsigned high-resolution counter.\n\n",
+     "page": "sig/SDL.md#val-getperformancecounter"
+    },
+    {
+     "kind": "val",
+     "name": "getPerformanceFrequency",
+     "spec": "val getPerformanceFrequency : unit -> Word64.word",
+     "doc": "`getPerformanceFrequency ()` returns high-resolution counter ticks per second.\n\n",
+     "page": "sig/SDL.md#val-getperformancefrequency"
+    },
+    {
+     "kind": "val",
+     "name": "delay",
+     "spec": "val delay : Word32.word -> unit",
+     "doc": "`delay milliseconds` requests a native delay; scheduling can extend it.\n\n",
+     "page": "sig/SDL.md#val-delay"
+    }
+   ]
+  },
+  "SDL_NATIVE_LAYOUT": {
+   "doc": "Generated target facts used by SDL's SML projection.\n\n",
+   "page": "sig/SDL_NATIVE_LAYOUT.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "pointerBytes",
+     "spec": "val pointerBytes : int",
+     "doc": "The selected native pointer width in bytes.\n\n",
+     "page": "sig/SDL_NATIVE_LAYOUT.md#val-pointerbytes"
+    },
+    {
+     "kind": "val",
+     "name": "littleEndian",
+     "spec": "val littleEndian : bool",
+     "doc": "Whether native scalar objects store the least significant byte first.\n\n",
+     "page": "sig/SDL_NATIVE_LAYOUT.md#val-littleendian"
+    },
+    {
+     "kind": "val",
+     "name": "enumSigned",
+     "spec": "val enumSigned : bool",
+     "doc": "Whether the target C ABI gives nonnegative enums a signed int type.\n\n",
+     "page": "sig/SDL_NATIVE_LAYOUT.md#val-enumsigned"
+    },
+    {
+     "kind": "val",
+     "name": "sizeOf",
+     "spec": "val sizeOf : string -> int",
+     "doc": "`sizeOf name` returns a selected original C object's byte size.\n\n",
+     "page": "sig/SDL_NATIVE_LAYOUT.md#val-sizeof"
+    },
+    {
+     "kind": "val",
+     "name": "offset",
+     "spec": "val offset : string * string list -> int",
+     "doc": "`offset (name, path)` returns a selected nested field's byte offset.\n\n",
+     "page": "sig/SDL_NATIVE_LAYOUT.md#val-offset"
+    },
+    {
+     "kind": "val",
+     "name": "constant",
+     "spec": "val constant : string -> IntInf.int",
+     "doc": "`constant name` returns a selected C integer constant, preserving its bits.\n\n",
+     "page": "sig/SDL_NATIVE_LAYOUT.md#val-constant"
+    }
+   ]
+  },
+  "SDL_NATIVE_RAW": {
+   "doc": "The generated dynamic calls required by the core SDL projection.\n\n",
+   "page": "sig/SDL_NATIVE_RAW.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "session",
+     "spec": "type session",
+     "doc": "One explicitly loaded collection of libraries and prepare calls.\n\n",
+     "page": "sig/SDL_NATIVE_RAW.md#type-session"
+    },
+    {
+     "kind": "val",
+     "name": "openSession",
+     "spec": "val openSession : {libraries : string list} -> session",
+     "doc": "`openSession {libraries}` loads the named native SDL and adapter files.\n\n",
+     "page": "sig/SDL_NATIVE_RAW.md#val-opensession"
+    },
+    {
+     "kind": "val",
+     "name": "closeSession",
+     "spec": "val closeSession : session -> unit",
+     "doc": "`closeSession session` closes an idle session after its resources close.\n\n",
+     "page": "sig/SDL_NATIVE_RAW.md#val-closesession"
+    },
+    {
+     "kind": "val",
+     "name": "call",
+     "spec": "val call : session -> string -> RuneForeign.argument list -> RuneForeign.result",
+     "doc": "`call session name arguments` invokes one selected original or generated helper.\n\n",
+     "page": "sig/SDL_NATIVE_RAW.md#val-call"
+    },
+    {
+     "kind": "val",
+     "name": "prepare",
+     "spec": "val prepare : session -> string -> RuneForeign.resource",
+     "doc": "`prepare session name` exposes the selected prepare call for guarded destruction.\n\n",
+     "page": "sig/SDL_NATIVE_RAW.md#val-prepare"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "SDLFn": "SDL"
+ }
+}

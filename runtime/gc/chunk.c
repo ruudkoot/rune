@@ -11,18 +11,43 @@ static void out_of_memory(void) {
     exit(2);
 }
 
+/* Object ownership is recovered by masking its header to CHUNK_SIZE.
+   Tables proportional to a very large mapping must not push that header
+   into a later chunk. Keep the barrier's cards and dirty bytes in front;
+   put the other tables after the usable payload in those mappings. The
+   barrier's fixed card offset and dirty_at stay the same. */
+static size_t payload_start(size_t size) {
+    if (CHUNK_PAYLOAD(size) < CHUNK_SIZE) return CHUNK_PAYLOAD(size);
+    size_t prefix = (GC_CARDS + (size >> GC_CARD_SHIFT) + (size >> GC_BLOCK_SHIFT) + 4095) & ~(size_t)4095;
+    if (prefix >= CHUNK_SIZE) out_of_memory();
+    return prefix;
+}
+
+static size_t payload_room(size_t size) {
+    size_t prefix = payload_start(size);
+    if (CHUNK_PAYLOAD(size) < CHUNK_SIZE) return size - prefix;
+    /* Eight bytes cover the alignment before the object-start bitmap. */
+    size_t tail = 2 * (size >> GC_CARD_SHIFT) + 3 * (size >> GC_UNIT_SHIFT) + 8
+                + 2 * (size >> 6) + 8 * (size >> IX_BLOCK_SHIFT);
+    if (tail > size || ((size - tail) & ~(size_t)4095) < prefix) out_of_memory();
+    return ((size - tail) & ~(size_t)4095) - prefix;
+}
+
 /* the header and tables of a chunk of size bytes, for its first use (the
    system's memory is zero, so its tables are clear) */
 static void chunk_layout(Chunk *c, size_t size) {
+    if (size > UINT32_MAX) out_of_memory();   /* table offsets have 32 bits */
     c->size = size;
+    c->payload = (uint32_t)payload_start(size);
+    c->capacity = payload_room(size);
     c->dirty_at = (uint32_t)(GC_CARDS + (size >> GC_CARD_SHIFT));
-    c->cross_at = (uint32_t)(c->dirty_at + (size >> GC_BLOCK_SHIFT));
+    c->cross_at = (uint32_t)(CHUNK_PAYLOAD(size) < CHUNK_SIZE
+        ? c->dirty_at + (size >> GC_BLOCK_SHIFT) : c->payload + c->capacity);
     c->units_at = (uint32_t)(c->cross_at + 2 * (size >> GC_CARD_SHIFT));
     c->marks_at = (uint32_t)(c->units_at + 2 * (size >> GC_UNIT_SHIFT));
     c->bits_at = (uint32_t)((c->marks_at + (size >> GC_UNIT_SHIFT) + 7) & ~(size_t)7);
     c->lines_at = (uint32_t)(c->bits_at + (size >> 6));
     c->blocks_at = (uint32_t)(c->lines_at + (size >> IX_LINE_SHIFT));
-    c->payload = (uint32_t)CHUNK_PAYLOAD(size);
 }
 
 Chunk *chunk_take(VM *vm, size_t bytes, int kind) {
@@ -45,14 +70,19 @@ Chunk *chunk_take(VM *vm, size_t bytes, int kind) {
             const size_t grain = (size_t)64 << 10;
             if (bytes > SIZE_MAX / 2) out_of_memory();
             size = (bytes + CHUNK_PAYLOAD(CHUNK_SIZE) + grain - 1) & ~(grain - 1);
-            while (size - CHUNK_PAYLOAD(size) < bytes)
-                if ((size += grain) > SIZE_MAX - grain) out_of_memory();
+            while (payload_room(size) < bytes) {
+                if (size > UINT32_MAX - grain) out_of_memory();
+                size += grain;
+            }
         }
         c = sys_mem_reserve(size, CHUNK_SIZE, vm->gc.hint);
         if (!c) out_of_memory();
         vm->gc.hint = (char *)c + size;
         chunk_layout(c, size);
     }
+    /* A copying-space run holds one object. Its alignment slack must not
+       accept another header beyond the first CHUNK_SIZE bytes. */
+    if (kind == CHUNK_OLD && bytes > CHUNK_ROOM) c->capacity = bytes;
     c->next = NULL;
     c->used = 0;
     c->base = 0;

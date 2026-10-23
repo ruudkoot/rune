@@ -1,0 +1,1171 @@
+{
+  "version": 1,
+  "family": "c",
+  "structure": "GeneratedSafe",
+  "headers": [
+    "safe.h"
+  ],
+  "libraries": [
+    "runeffi-safe-subject"
+  ],
+  "resources": [
+    "memory",
+    "subscription"
+  ],
+  "callbacks": [
+    {
+      "foreign": "safe_callback",
+      "lifetime": "call",
+      "thread": "owner-vm-thread",
+      "failure": -1
+    },
+    {
+      "foreign": "safe_bool_callback",
+      "lifetime": "call",
+      "thread": "owner-vm-thread",
+      "failure": 0
+    },
+    {
+      "foreign": "safe_registered_callback",
+      "lifetime": "registered",
+      "owner": "subscription",
+      "thread": "owner-vm-thread",
+      "failure": -1
+    },
+    {
+      "foreign": "safe_selector_callback",
+      "lifetime": "call",
+      "thread": "owner-vm-thread",
+      "failure": {
+        "parameter": "code",
+        "cases": {
+          "-1": -9
+        },
+        "otherwise": -3
+      }
+    },
+    {
+      "foreign": "safe_bool_selector_callback",
+      "lifetime": "call",
+      "thread": "owner-vm-thread",
+      "failure": {
+        "parameter": "code",
+        "cases": {
+          "2": -13
+        },
+        "otherwise": -3
+      }
+    }
+  ],
+  "functions": [
+    {
+      "foreign": "safe_length",
+      "name": "length",
+      "parameters": [
+        {
+          "name": "text",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "encoding": "utf8",
+          "terminator": true,
+          "type": {
+            "option": "string"
+          }
+        }
+      ],
+      "result": {
+        "type": "int"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_copy",
+      "name": "copy",
+      "parameters": [
+        {
+          "name": "text",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "encoding": "utf8",
+          "terminator": true,
+          "type": "string"
+        }
+      ],
+      "result": {
+        "ownership": {
+          "owned": "safe_free"
+        },
+        "nullable": false,
+        "encoding": "utf8",
+        "terminator": true,
+        "type": "string"
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "errno"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_optional",
+      "name": "optional",
+      "parameters": [
+        {
+          "name": "empty",
+          "type": "bool"
+        }
+      ],
+      "result": {
+        "ownership": {
+          "borrowed": "static"
+        },
+        "nullable": true,
+        "encoding": "utf8",
+        "terminator": true,
+        "type": {
+          "option": "string"
+        }
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_allocate",
+      "name": "allocate",
+      "parameters": [
+        {
+          "name": "length",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "ownership": {
+          "owned": "safe_free"
+        },
+        "nullable": false,
+        "type": {
+          "resource": "memory"
+        }
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "errno"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_free",
+      "name": "free",
+      "parameters": [
+        {
+          "name": "memory",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "memory"
+            }
+          },
+          "consumes": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_allocations",
+      "name": "allocations",
+      "parameters": [],
+      "result": {
+        "type": "int"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_numbers",
+      "name": "numbers",
+      "parameters": [
+        {
+          "name": "integer",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "int",
+          "output": "integer"
+        },
+        {
+          "name": "bits",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "word32",
+          "output": "bits"
+        },
+        {
+          "name": "fraction",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "real",
+          "output": "fraction"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_accumulate",
+      "name": "accumulate",
+      "parameters": [
+        {
+          "name": "value",
+          "direction": "inout",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "int",
+          "output": "value"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_alias",
+      "name": "alias",
+      "parameters": [
+        {
+          "name": "first",
+          "direction": "inout",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "encoding": "bytes",
+          "length": 2,
+          "terminator": false,
+          "type": {
+            "array": "word8"
+          }
+        },
+        {
+          "name": "second",
+          "direction": "inout",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "encoding": "bytes",
+          "length": 2,
+          "terminator": false,
+          "type": {
+            "array": "word8"
+          }
+        }
+      ],
+      "result": {
+        "type": "int"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_fill",
+      "name": "fill",
+      "parameters": [
+        {
+          "name": "buffer",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "encoding": "bytes",
+          "length": "length",
+          "terminator": false,
+          "type": {
+            "array": "word8"
+          }
+        },
+        {
+          "name": "length",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_fail",
+      "name": "fail",
+      "parameters": [
+        {
+          "name": "code",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "minus-one",
+        "capture": "text",
+        "getter": "safe_error_text"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_identity",
+      "name": "borrow",
+      "parameters": [
+        {
+          "name": "memory",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "memory"
+          }
+        }
+      ],
+      "result": {
+        "ownership": {
+          "borrowed": "parameter:memory"
+        },
+        "nullable": false,
+        "type": {
+          "resource": "memory"
+        }
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_callback_owned",
+      "name": "callbackOwned",
+      "parameters": [
+        {
+          "name": "callback",
+          "direction": "in",
+          "nullable": false,
+          "callback": "safe_callback"
+        }
+      ],
+      "result": {
+        "ownership": {
+          "owned": "safe_free"
+        },
+        "nullable": false,
+        "encoding": "utf8",
+        "terminator": true,
+        "type": "string"
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "errno"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_callback_buffer",
+      "name": "callbackBuffer",
+      "parameters": [
+        {
+          "name": "callback",
+          "direction": "in",
+          "nullable": false,
+          "callback": "safe_callback"
+        },
+        {
+          "name": "buffer",
+          "direction": "inout",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "encoding": "bytes",
+          "length": 2,
+          "terminator": false,
+          "type": {
+            "array": "word8"
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_preflight",
+      "name": "preflight",
+      "parameters": [],
+      "result": {
+        "ownership": {
+          "owned": "safe_missing_free"
+        },
+        "nullable": false,
+        "encoding": "utf8",
+        "terminator": true,
+        "type": "string"
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "errno"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_preflight_calls",
+      "name": "preflightCalls",
+      "parameters": [],
+      "result": {
+        "type": "int"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_fill_ints",
+      "name": "fillInts",
+      "parameters": [
+        {
+          "name": "buffer",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "encoding": "bytes",
+          "length": 3,
+          "terminator": false,
+          "type": {
+            "array": "word8"
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_sum_ints",
+      "name": "sumInts",
+      "parameters": [
+        {
+          "name": "buffer",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "encoding": "bytes",
+          "length": "length",
+          "terminator": false,
+          "type": {
+            "array": "word8"
+          }
+        },
+        {
+          "name": "length",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "int"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "input": "buffer"
+    },
+    {
+      "foreign": "safe_call_bool",
+      "name": "callBool",
+      "parameters": [
+        {
+          "name": "callback",
+          "direction": "in",
+          "nullable": false,
+          "callback": "safe_bool_callback"
+        }
+      ],
+      "result": {
+        "type": "bool"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_float_fail",
+      "name": "floatFail",
+      "parameters": [],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "negative",
+        "capture": "errno"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_bad_utf8",
+      "name": "badUtf8",
+      "parameters": [],
+      "result": {
+        "ownership": {
+          "owned": "safe_free"
+        },
+        "nullable": false,
+        "encoding": "utf8",
+        "terminator": true,
+        "type": "string"
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "errno"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_utf16",
+      "name": "utf16",
+      "parameters": [],
+      "result": {
+        "ownership": {
+          "borrowed": "static"
+        },
+        "nullable": false,
+        "encoding": "utf16",
+        "terminator": true,
+        "length": 4,
+        "type": "string"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "foreign": "safe_utf16_input",
+      "name": "utf16Input",
+      "parameters": [
+        {
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "encoding": "utf16",
+          "terminator": true,
+          "length": 4,
+          "type": "string",
+          "name": "text",
+          "direction": "in"
+        }
+      ],
+      "result": {
+        "type": "int"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_transform",
+      "name": "transform",
+      "parameters": [
+        {
+          "name": "value",
+          "type": {
+            "record": {
+              "origin": {
+                "record": {
+                  "x": "int",
+                  "y": "real"
+                }
+              },
+              "codes": {
+                "vector": "word32"
+              },
+              "scale": "real"
+            }
+          }
+        },
+        {
+          "name": "delta",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": {
+          "record": {
+            "origin": {
+              "record": {
+                "x": "int",
+                "y": "real"
+              }
+            },
+            "codes": {
+              "vector": "word32"
+            },
+            "scale": "real"
+          }
+        }
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_packet_out",
+      "name": "packetOut",
+      "parameters": [
+        {
+          "name": "value",
+          "type": {
+            "record": {
+              "origin": {
+                "record": {
+                  "x": "int",
+                  "y": "real"
+                }
+              },
+              "codes": {
+                "vector": "word32"
+              },
+              "scale": "real"
+            }
+          },
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "length": 1
+        }
+      ],
+      "result": {
+        "type": "unit"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_packet_inout",
+      "name": "packetInout",
+      "parameters": [
+        {
+          "name": "value",
+          "type": {
+            "record": {
+              "origin": {
+                "record": {
+                  "x": "int",
+                  "y": "real"
+                }
+              },
+              "codes": {
+                "vector": "word32"
+              },
+              "scale": "real"
+            }
+          },
+          "direction": "inout",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "length": 1
+        }
+      ],
+      "result": {
+        "type": "unit"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_inline",
+      "name": "inline",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "int"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_other_abi",
+      "name": "otherAbi",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "int"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "null",
+        "capture": "errno"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_register",
+      "name": "register",
+      "parameters": [
+        {
+          "name": "callback",
+          "callback": "safe_registered_callback",
+          "ownership": {
+            "borrowed": "subscription"
+          },
+          "nullable": false,
+          "direction": "in"
+        },
+        {
+          "name": "context",
+          "type": {
+            "resource": "memory"
+          },
+          "ownership": {
+            "borrowed": "subscription"
+          },
+          "nullable": false,
+          "direction": "in"
+        }
+      ],
+      "result": {
+        "type": {
+          "resource": "subscription"
+        },
+        "ownership": {
+          "owned": "safe_unregister"
+        },
+        "nullable": false
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_register_none",
+      "name": "registerNone",
+      "parameters": [
+        {
+          "name": "callback",
+          "callback": "safe_registered_callback",
+          "ownership": {
+            "borrowed": "subscription"
+          },
+          "nullable": false,
+          "direction": "in"
+        },
+        {
+          "name": "context",
+          "type": {
+            "resource": "memory"
+          },
+          "ownership": {
+            "borrowed": "subscription"
+          },
+          "nullable": false,
+          "direction": "in"
+        }
+      ],
+      "result": {
+        "type": {
+          "option": {
+            "resource": "subscription"
+          }
+        },
+        "ownership": {
+          "owned": "safe_unregister"
+        },
+        "nullable": true
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_dispatch",
+      "name": "dispatch",
+      "parameters": [
+        {
+          "name": "registration",
+          "type": {
+            "resource": "subscription"
+          },
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "direction": "in"
+        },
+        {
+          "name": "value",
+          "type": "int32"
+        }
+      ],
+      "result": {
+        "type": "int32"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_unregister",
+      "name": "unregister",
+      "parameters": [
+        {
+          "name": "registration",
+          "type": {
+            "resource": "subscription"
+          },
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "consumes": true,
+          "direction": "in"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "SAFE_MACRO_ADD",
+      "namespace": "macro",
+      "name": "macroAdd",
+      "shim": "unsigned int SAFE_MACRO_ADD(unsigned int first, unsigned int second)",
+      "parameters": [
+        {
+          "name": "first",
+          "type": "word32"
+        },
+        {
+          "name": "second",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "type": "word32"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "SAFE_MACRO_PACKET",
+      "namespace": "macro",
+      "name": "macroPacket",
+      "shim": "safe_packet SAFE_MACRO_PACKET(safe_packet value)",
+      "parameters": [
+        {
+          "name": "value",
+          "type": {
+            "record": {
+              "origin": {
+                "record": {
+                  "x": "int",
+                  "y": "real"
+                }
+              },
+              "codes": {
+                "vector": "word32"
+              },
+              "scale": "real"
+            }
+          }
+        }
+      ],
+      "result": {
+        "type": {
+          "record": {
+            "origin": {
+              "record": {
+                "x": "int",
+                "y": "real"
+              }
+            },
+            "codes": {
+              "vector": "word32"
+            },
+            "scale": "real"
+          }
+        }
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_variadic_sum",
+      "name": "variadicSum",
+      "shim": "int safe_variadic_sum(int count, short first, unsigned char second)",
+      "parameters": [
+        {
+          "name": "count",
+          "type": "int"
+        },
+        {
+          "name": "first",
+          "type": "int"
+        },
+        {
+          "name": "second",
+          "type": "word8"
+        }
+      ],
+      "result": {
+        "type": "int"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_variadic_real",
+      "name": "variadicReal",
+      "shim": "double safe_variadic_real(int count, float first, float second)",
+      "parameters": [
+        {
+          "name": "count",
+          "type": "int"
+        },
+        {
+          "name": "first",
+          "type": "real"
+        },
+        {
+          "name": "second",
+          "type": "real"
+        }
+      ],
+      "result": {
+        "type": "real"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_selected",
+      "name": "selected",
+      "parameters": [
+        {
+          "name": "callback",
+          "callback": "safe_selector_callback",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false
+        }
+      ],
+      "result": {
+        "type": "unit"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_selected_bool",
+      "name": "selectedBool",
+      "parameters": [
+        {
+          "name": "callback",
+          "callback": "safe_bool_selector_callback",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false
+        }
+      ],
+      "result": {
+        "type": "unit"
+      }
+    },
+    {
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "foreign": "safe_failure_value",
+      "name": "failureValue",
+      "parameters": [],
+      "result": {
+        "type": "int"
+      }
+    }
+  ]
+}

@@ -10,10 +10,13 @@ wait ^\.$
 send 1;
 keys Enter
 wait ^read 10 bytes: val x =\\n1;$
+wait ^>$
 send 0123456789\xe4\xb8\xad\xe6\x96\x87abcdefghij\xe4\xb8\xad\xe6\x96\x87klmnop
 wait klmnop$
 expect @DIR@/edit-lines.screen
 keys C-c
 wait ^cancelled$
+# Ctrl-D must reach the next raw read, after terminal restoration/reentry.
+wait ^>$
 keys C-d
 wait ^bye$

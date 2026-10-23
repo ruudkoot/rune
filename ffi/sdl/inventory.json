@@ -1,0 +1,914 @@
+{
+  "schema": 1,
+  "source": "source.json",
+  "headers": [
+    "SDL3/SDL.h",
+    "SDL3/SDL_main.h"
+  ],
+  "library": [
+    "SDL3"
+  ],
+  "entries": [
+    {
+      "foreign": "SDL_SetMainReady",
+      "source": {
+        "file": "SDL3/SDL_main.h",
+        "line": 549
+      },
+      "public": "setMainReady",
+      "raw": "SDL_SetMainReady",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_Init",
+      "source": {
+        "file": "SDL3/SDL_init.h",
+        "line": 238
+      },
+      "public": "init",
+      "raw": "SDL_Init",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_InitSubSystem",
+      "source": {
+        "file": "SDL3/SDL_init.h",
+        "line": 257
+      },
+      "public": "initSubSystem",
+      "raw": "SDL_InitSubSystem",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_QuitSubSystem",
+      "source": {
+        "file": "SDL3/SDL_init.h",
+        "line": 274
+      },
+      "public": "quitSubSystem",
+      "raw": "SDL_QuitSubSystem",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_Quit",
+      "source": {
+        "file": "SDL3/SDL_init.h",
+        "line": 310
+      },
+      "public": "quit",
+      "raw": "SDL_Quit",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_GetError",
+      "source": {
+        "file": "SDL3/SDL_error.h",
+        "line": 158
+      },
+      "public": "getError",
+      "raw": "SDL_GetError",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_ClearError",
+      "source": {
+        "file": "SDL3/SDL_error.h",
+        "line": 172
+      },
+      "public": "clearError",
+      "raw": "SDL_ClearError",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_free",
+      "source": {
+        "file": "SDL3/SDL_stdinc.h",
+        "line": 1427
+      },
+      "public": "cleanup",
+      "raw": "SDL_free",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml",
+      "projectionRole": "Internal ownership cleanup for getClipboardText; cleanup is not an exported SDL member. Raw SDL_free remains available."
+    },
+    {
+      "foreign": "SDL_CreateWindow",
+      "source": {
+        "file": "SDL3/SDL_video.h",
+        "line": 1184
+      },
+      "public": "createWindow",
+      "raw": "SDL_CreateWindow",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_DestroyWindow",
+      "source": {
+        "file": "SDL3/SDL_video.h",
+        "line": 3018
+      },
+      "public": "destroyWindow",
+      "raw": "SDL_DestroyWindow",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_GetWindowID",
+      "source": {
+        "file": "SDL3/SDL_video.h",
+        "line": 1466
+      },
+      "public": "getWindowID",
+      "raw": "SDL_GetWindowID",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_SetWindowTitle",
+      "source": {
+        "file": "SDL3/SDL_video.h",
+        "line": 1705
+      },
+      "public": "setWindowTitle",
+      "raw": "SDL_SetWindowTitle",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_GetWindowSize",
+      "source": {
+        "file": "SDL3/SDL_video.h",
+        "line": 1874
+      },
+      "public": "getWindowSize",
+      "raw": "SDL_GetWindowSize",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_SetWindowSize",
+      "source": {
+        "file": "SDL3/SDL_video.h",
+        "line": 1850
+      },
+      "public": "setWindowSize",
+      "raw": "SDL_SetWindowSize",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_ShowWindow",
+      "source": {
+        "file": "SDL3/SDL_video.h",
+        "line": 2199
+      },
+      "public": "showWindow",
+      "raw": "SDL_ShowWindow",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_HideWindow",
+      "source": {
+        "file": "SDL3/SDL_video.h",
+        "line": 2215
+      },
+      "public": "hideWindow",
+      "raw": "SDL_HideWindow",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_PollEvent",
+      "source": {
+        "file": "SDL3/SDL_events.h",
+        "line": 1310
+      },
+      "public": "pollEvent",
+      "raw": "SDL_PollEvent",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_WaitEvent",
+      "source": {
+        "file": "SDL3/SDL_events.h",
+        "line": 1334
+      },
+      "public": "waitEvent",
+      "raw": "SDL_WaitEvent",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_WaitEventTimeout",
+      "source": {
+        "file": "SDL3/SDL_events.h",
+        "line": 1364
+      },
+      "public": "waitEventTimeout",
+      "raw": "SDL_WaitEventTimeout",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_PushEvent",
+      "source": {
+        "file": "SDL3/SDL_events.h",
+        "line": 1398
+      },
+      "public": "pushEvent",
+      "raw": "SDL_PushEvent",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_GetKeyboardState",
+      "source": {
+        "file": "SDL3/SDL_keyboard.h",
+        "line": 159
+      },
+      "public": "getKeyboardState",
+      "raw": "SDL_GetKeyboardState",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_GetMouseState",
+      "source": {
+        "file": "SDL3/SDL_mouse.h",
+        "line": 310
+      },
+      "public": "getMouseState",
+      "raw": "SDL_GetMouseState",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_StartTextInput",
+      "source": {
+        "file": "SDL3/SDL_keyboard.h",
+        "line": 378
+      },
+      "public": "startTextInput",
+      "raw": "SDL_StartTextInput",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_StopTextInput",
+      "source": {
+        "file": "SDL3/SDL_keyboard.h",
+        "line": 511
+      },
+      "public": "stopTextInput",
+      "raw": "SDL_StopTextInput",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_CreateSurface",
+      "source": {
+        "file": "SDL3/SDL_surface.h",
+        "line": 173
+      },
+      "public": "createSurface",
+      "raw": "SDL_CreateSurface",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_DestroySurface",
+      "source": {
+        "file": "SDL3/SDL_surface.h",
+        "line": 219
+      },
+      "public": "destroySurface",
+      "raw": "SDL_DestroySurface",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_LockSurface",
+      "source": {
+        "file": "SDL3/SDL_surface.h",
+        "line": 495
+      },
+      "public": "lockSurface",
+      "raw": "SDL_LockSurface",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_UnlockSurface",
+      "source": {
+        "file": "SDL3/SDL_surface.h",
+        "line": 510
+      },
+      "public": "unlockSurface",
+      "raw": "SDL_UnlockSurface",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_FillSurfaceRect",
+      "source": {
+        "file": "SDL3/SDL_surface.h",
+        "line": 1301
+      },
+      "public": "fillSurfaceRect",
+      "raw": "SDL_FillSurfaceRect",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_BlitSurface",
+      "source": {
+        "file": "SDL3/SDL_surface.h",
+        "line": 1402
+      },
+      "public": "blitSurface",
+      "raw": "SDL_BlitSurface",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_CreateRenderer",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 273
+      },
+      "public": "createRenderer",
+      "raw": "SDL_CreateRenderer",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_CreateSoftwareRenderer",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 421
+      },
+      "public": "createSoftwareRenderer",
+      "raw": "SDL_CreateSoftwareRenderer",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_DestroyRenderer",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 2654
+      },
+      "public": "destroyRenderer",
+      "raw": "SDL_DestroyRenderer",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_SetRenderDrawColor",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 1944
+      },
+      "public": "setRenderDrawColor",
+      "raw": "SDL_SetRenderDrawColor",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_RenderClear",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 2114
+      },
+      "public": "renderClear",
+      "raw": "SDL_RenderClear",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_RenderPoint",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 2131
+      },
+      "public": "renderPoint",
+      "raw": "SDL_RenderPoint",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_RenderLine",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 2167
+      },
+      "public": "renderLine",
+      "raw": "SDL_RenderLine",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_RenderRect",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 2202
+      },
+      "public": "renderRect",
+      "raw": "SDL_RenderRect",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_RenderFillRect",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 2238
+      },
+      "public": "renderFillRect",
+      "raw": "SDL_RenderFillRect",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_RenderPresent",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 2621
+      },
+      "public": "renderPresent",
+      "raw": "SDL_RenderPresent",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_RenderReadPixels",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 2572
+      },
+      "public": "renderReadPixels",
+      "raw": "SDL_RenderReadPixels",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_CreateTextureFromSurface",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 676
+      },
+      "public": "createTextureFromSurface",
+      "raw": "SDL_CreateTextureFromSurface",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_DestroyTexture",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 2638
+      },
+      "public": "destroyTexture",
+      "raw": "SDL_DestroyTexture",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_RenderTexture",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 2278
+      },
+      "public": "renderTexture",
+      "raw": "SDL_RenderTexture",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_RenderDebugText",
+      "source": {
+        "file": "SDL3/SDL_render.h",
+        "line": 2856
+      },
+      "public": "renderDebugText",
+      "raw": "SDL_RenderDebugText",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_HasClipboardText",
+      "source": {
+        "file": "SDL3/SDL_clipboard.h",
+        "line": 137
+      },
+      "public": "hasClipboardText",
+      "raw": "SDL_HasClipboardText",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_GetClipboardText",
+      "source": {
+        "file": "SDL3/SDL_clipboard.h",
+        "line": 123
+      },
+      "public": "getClipboardText",
+      "raw": "SDL_GetClipboardText",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_SetClipboardText",
+      "source": {
+        "file": "SDL3/SDL_clipboard.h",
+        "line": 104
+      },
+      "public": "setClipboardText",
+      "raw": "SDL_SetClipboardText",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_GetTicks",
+      "source": {
+        "file": "SDL3/SDL_timer.h",
+        "line": 201
+      },
+      "public": "getTicks",
+      "raw": "SDL_GetTicks",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_GetTicksNS",
+      "source": {
+        "file": "SDL3/SDL_timer.h",
+        "line": 213
+      },
+      "public": "getTicksNS",
+      "raw": "SDL_GetTicksNS",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_GetPerformanceCounter",
+      "source": {
+        "file": "SDL3/SDL_timer.h",
+        "line": 232
+      },
+      "public": "getPerformanceCounter",
+      "raw": "SDL_GetPerformanceCounter",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_GetPerformanceFrequency",
+      "source": {
+        "file": "SDL3/SDL_timer.h",
+        "line": 245
+      },
+      "public": "getPerformanceFrequency",
+      "raw": "SDL_GetPerformanceFrequency",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    },
+    {
+      "foreign": "SDL_Delay",
+      "source": {
+        "file": "SDL3/SDL_timer.h",
+        "line": 263
+      },
+      "public": "delay",
+      "raw": "SDL_Delay",
+      "implementation": "complete",
+      "gate": "M7",
+      "test": "sdl-contract",
+      "unresolved": [],
+      "policy": "core.ffi",
+      "projection": "lib/sdl/sdl.sml"
+    }
+  ],
+  "requiredTypes": [
+    "SDL_Event",
+    "SDL_Surface",
+    "SDL_Rect",
+    "SDL_FRect"
+  ],
+  "constants": [
+    {
+      "foreign": "SDL_INIT_VIDEO",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SDL_INIT_EVENTS",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SDL_WINDOW_RESIZABLE",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SDL_WINDOW_HIDDEN",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SDL_WINDOW_FULLSCREEN",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SDL_EVENT_QUIT",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SDL_EVENT_WINDOW_RESIZED",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SDL_EVENT_KEY_DOWN",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SDL_EVENT_KEY_UP",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SDL_EVENT_TEXT_INPUT",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SDL_EVENT_MOUSE_MOTION",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SDL_EVENT_MOUSE_BUTTON_DOWN",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SDL_EVENT_MOUSE_BUTTON_UP",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SDL_PIXELFORMAT_RGBA8888",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    },
+    {
+      "foreign": "SDL_PIXELFORMAT_ARGB8888",
+      "gate": "M4",
+      "state": "complete",
+      "policy": "preserve aliases and unknown bits; evaluate for target"
+    }
+  ],
+  "deferred": [
+    {
+      "foreign": "SDL_RunApp",
+      "reason": "application-entry integration is explicitly outside the first delivery"
+    }
+  ],
+  "completionEvidence": "../../tests/ffi/evidence/release.md"
+}

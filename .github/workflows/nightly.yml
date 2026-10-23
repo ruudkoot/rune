@@ -20,6 +20,8 @@ jobs:
   nightly:
     runs-on: ubuntu-24.04
     timeout-minutes: 360
+    env:
+      FFI: "yes"
     steps:
       - uses: actions/checkout@v4
 
@@ -31,7 +33,7 @@ jobs:
           # with gcc-multilib, which the 32-bit VM needs.
           v=$(gcc -dumpversion | cut -d. -f1)
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
-            libgmp-dev gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind \
+            libgmp-dev libffi-dev pkg-config gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind \
             python3-jupyter-client python3-zmq \
             qemu-user clang \
             libc6-dev-ppc64-cross binutils-powerpc64-linux-gnu \
@@ -56,6 +58,16 @@ jobs:
 
       - name: make check-tools portability
         run: make check-tools portability
+
+      - name: Pinned headless SDL3
+        run: make ffi-sdl FFI_DEPS_OPTIONS=--headless JOBS=2
+
+      - name: Headless SDL and shared Win32 behavior
+        env:
+          RUNE_SDL_NATIVE_LIBRARY: ${{ github.workspace }}/build/deps/sdl/headless/install/lib/libSDL3.so.0
+        run: |
+          env --default-signal=PIPE make test-sdl test-win32-sdl-driver \
+            test-win32-sdl-contract test-win32-app-sdl JOBS=2
 
       - name: bin/rune-test run --tier nightly
         run: env --default-signal=PIPE bin/rune-test run --tier nightly

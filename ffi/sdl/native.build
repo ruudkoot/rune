@@ -1,0 +1,5 @@
+(* SDL_GENERATED names the generator output for the executing target.
+   Generation and C compilation are explicit prerequisites; .build executes
+   no shell commands. Compile with --library sdl. *)
+use "$(SDL_GENERATED)/current.build"
+instantiate.sml

@@ -1,0 +1,38 @@
+{
+  "target": "aarch64",
+  "profile_sha256": "5f748684b2e47a584feca54b01e2aaaf0c1abb821f018fb1cc525b7253ada9fe",
+  "dependency_sha256": "a81f961950406897ad18f7811b9988c2d699657ae3249e8898828c0815c1ccbc",
+  "static_library_sha256": "50bcab3de5b7429a16d67a8bc2a478e7fdad5ba61a7483a431ab9172d10e2ba5",
+  "source_archive_sha256": "b0dea9df23c863a7a50e825440f3ebffabd65df1497108e5d437747843895a4e",
+  "compiler": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: aarch64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+  "runner": "qemu-aarch64 version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)\nCopyright (c) 2003-2023 Fabrice Bellard and the QEMU Project developers\n",
+  "stack_vm_sha256": "9bd62f46ff600bb7deb9fc998cc4c70af71cb2b255dc969babe8b1683f96e7df",
+  "register_vm_sha256": "8dafb32ba095145f74741b4704ca5274214a570af0b48325859327727ac2b815",
+  "result": "all cross fixtures passed",
+  "date": "2026-10-23",
+  "runtime_components": [
+    "17c471463",
+    "3b0cb62fb",
+    "706c66cd2"
+  ],
+  "provision_components": [
+    "2f3e946a9",
+    "d6d147bed"
+  ],
+  "modes": [
+    "stack",
+    "registers-off",
+    "registers-baseline",
+    "registers-opt"
+  ],
+  "c_oracle_checks": 46,
+  "shared_checks_per_mode": {
+    "memory": 23,
+    "owners": 26,
+    "typed_shims": 18,
+    "generated_public_contracts": 49
+  },
+  "gc_stress": 7,
+  "gc_verify": true,
+  "evidence_directory": "tests/out/runeffi-final-cross/ffi-cross/2DB4A0"
+}

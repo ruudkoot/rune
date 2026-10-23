@@ -93,3 +93,69 @@ with `MLKIT` and `MLKIT_LIB` selecting 4.7.25. The run keeps the generated
 and program output. Rebuild that `.mlb` with the same compiler and
 `SML_LIB`, adding `-no_ri`, to compare the collector-only configuration.
 Keep the address-space limit when running either executable.
+
+## Runeffi sidecar decoding — 2026-10-23
+
+The same failure affects `tests/lib/ffi/model/policy.sml` on the pinned
+MLKit 4.7.25. Rune, MLton, all three SML/NJ builds and Poly/ML pass the
+48 checks. The default MLKit build corrupts a JSON member name in the first
+valid sidecar. GDB shows `ForeignJson.object` trying to concatenate
+`"unknown field: "` with a pair pointer interpreted as a string; the runtime
+requests an impossible allocation, or dies with SIGSEGV. Peak RSS before
+failure is about 7 MiB, so increasing the heap is not the remedy.
+
+The same sources, compiler and 2 GiB address-space limit pass all 48 checks
+with `-no_ri`. Removing source-adjacent caches and rebuilding does not fix
+the default mode. The production libraries are unchanged for this compiler
+fault. The native library suite records `ffi.model.policy` as `HOST-BUG`;
+`ffi/model/mlkit-no-ri` retains the successful comparison as a separate job.
+
+The target profile decoder added on the same date reproduces this fault:
+`tests/lib/ffi/model/target.sml` stops with `alloc_lobjs: malloc returned
+NULL` in the default configuration, while the same sources pass all **19**
+checks with `-no_ri` under the same bounded host harness. The separate
+`ffi/model/target-mlkit-no-ri` job preserves that comparison. Production
+JSON and target decoding remain unchanged for MLKit.
+
+The complete Runeffi generator reproduces the same failure (2026-10-23).
+The default MLKit build compiles successfully, prints the inspection start
+marker and exits with SIGSEGV (status 139) while decoding the original
+`tests/ffi/generator/scalars.ffi` sidecar and target profile. The same
+generator sources and inspection entrypoint compiled with `-no_ri` produce
+exactly the same JSON artifact report as Rune. The explicit
+`ffi/generator/mlkit-no-ri` job records that successful comparison;
+`tests/ffi/generator-deviations.txt` retains the default failure as a strict
+`HOST-BUG` expectation. A successful default run makes the expectation stale.
+No production generator or library source is changed for the compiler fault.
+
+
+## Generator library fixture — 2026-10-23
+
+The default MLKit 4.7.25 build of the unchanged
+`tests/lib/ffi/model/generate.sml` also exits with SIGSEGV (139), before
+printing its first test verdict. A debugger backtrace stops in
+`concatStringML` at `String.c:144`, called by generated
+`L_ret_funcall_5A9g6iZHcn7joPTlRoDjQo`; the program has empty stdout.
+The same original source list, compiler, and fixture compiled with
+`-no_ri` pass **all 32 checks**, including both duplicate callback selector
+checks. No production or fixture source is changed.
+
+Reproduce the default mode with:
+
+```
+NATIVE_HOST=yes bin/rune-test run 'lib-hosts/mlkit/ffi.model.generate' --keep
+```
+
+The distinct `lib-hosts/mlkit/ffi.model.generate-no-ri` job builds that
+same source list with a compiler wrapper adding only `-no_ri`, under the
+same 2 GiB address-space and 600 second limits. It compares every named
+verdict and the exact 32/32 summary. This positive comparison is labeled
+explicitly; it does not replace the default-region execution or claim
+that it passed.
+
+For this new deviation the native judge accepts only a successful build,
+status 139, and empty pre-verdict output. A build failure, timeout,
+post-verdict crash, or different output remains unexpected. The separate
+positive comparison and retained debugger evidence support attributing
+this observation to the region-inference configuration, rather than
+classifying arbitrary generator failures as host defects.

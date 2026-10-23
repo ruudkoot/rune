@@ -1,0 +1,9 @@
+libraries ffi/marshal end
+annotate "demand" in
+  owner_sig.sml
+  owner.sml
+  memory_sig.sml
+  memory.sml
+  generated_sig.sml
+  generated.sml
+end

@@ -1,0 +1,3 @@
+libraries ffi/win32/native end
+use ../../../../lib/ffi/win32/generated/64/current.build
+files config.sml implementation.sml suite.sml end

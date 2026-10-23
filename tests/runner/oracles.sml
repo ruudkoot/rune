@@ -47,11 +47,19 @@ struct
 
   val langPerf = glob ("tests/lang", ".sml") @ glob ("tests/perf", ".sml")
   fun base src = String.substring (src, 0, size src - 4)
-  fun name src = basename src
+  fun name src = if String.isPrefix "examples/" src then ExampleProjects.name src else basename src
   (* run-tests.sh's siblings: the words of .cargs, .args, .vmargs, and the
      file of .stdin *)
   fun sib (b, ext) = words (b ^ ext)
   fun stdinOf b = if exists (b ^ ".stdin") then fromRoot (b ^ ".stdin") else ""
+  fun sourceArguments source=case ExampleProjects.find source of
+      SOME project=>ExampleProjects.arguments project
+    | NONE=>
+      let val first=case String.fields(fn c=>c= #"\n")(read source) of line::_=>line | []=>""
+          val libraries=if String.isPrefix "(* libraries: " first andalso String.isSuffix " *)" first then
+            List.concat(List.map(fn library=>["--library",library])
+              (String.tokens Char.isSpace(String.substring(first,14,size first-17)))) else []
+      in libraries @ sib(base source,".cargs") @ [source] end
   (* the files of a tool's build, as scripts/build-files.sh lists them *)
   fun buildFiles tool =
     let val f = OS.FileSys.tmpName ()
@@ -513,16 +521,18 @@ struct
     let
       val n = name src
       val out = run ^ "/positions"
-      val () = mkdirs out
+      val () = mkdirs (OS.Path.dir(out ^ "/" ^ n ^ ".rbc"))
     in
       (* a program that does not compile is tests/errors' *)
-      if exec {cmd = ["bin/rune-stack", "--lib", "lib"] @ sib (base src, ".cargs") @ [src, "-o", out ^ "/" ^ n ^ ".rbc"], dir = NONE,
-               stdin = "", stdout = out ^ "/" ^ n ^ ".log", stderr = out ^ "/" ^ n ^ ".log", timeout = 0} <> 0 then ()
+      if exec {cmd = ["bin/rune-stack", "--lib", "lib"] @ sourceArguments src @ ["-o", out ^ "/" ^ n ^ ".rbc"], dir = NONE,
+               stdin = "", stdout = out ^ "/" ^ n ^ ".log", stderr = out ^ "/" ^ n ^ ".log", timeout = 0} <> 0 then
+        (case ExampleProjects.find src of NONE=>() | SOME _=>say("FAIL " ^ n ^ ": example project did not compile\n"))
       else
         let
           val dis = out ^ "/" ^ n ^ ".disasm"
-          val _ = exec {cmd = ["bin/runevm-stack", "--disasm", out ^ "/" ^ n ^ ".rbc"], dir = NONE, stdin = "", stdout = dis,
-                        stderr = "", timeout = 0}
+          val disassembled = exec {cmd = ["bin/runevm-stack", "--disasm", out ^ "/" ^ n ^ ".rbc"], dir = NONE, stdin = "", stdout = dis,
+                                   stderr = "", timeout = 0}
+          val ()=if disassembled=0 andalso size(read dis)>0 then () else say("FAIL " ^ n ^ ": no disassembly for position checks\n")
           (* the position of a line `...\t; FILE:LINE:COL` *)
           fun pos l =
             case List.rev (String.fields (fn c => c = #"\t") l) of
@@ -558,7 +568,7 @@ struct
   fun crossCheck (n, target, args, mayFail) =
     let
       val out = run ^ "/cross"
-      val () = mkdirs out
+      val () = mkdirs (OS.Path.dir(out ^ "/" ^ n ^ ".rbc"))
       fun f (c, ext) = out ^ "/" ^ n ^ "." ^ c ^ ext
       val results = List.map (fn c => (c, exec {cmd = ["bin/rune-" ^ c] @ target @ args @ ["-o", f (c, ".rbc")], dir = NONE,
                                                 stdin = "", stdout = "", stderr = f (c, ".err"), timeout = 0} = 0))
@@ -619,15 +629,7 @@ struct
             crossCheck ("basis-" ^ t, [], ["tests/basis/harness.sml"] @ List.map (fn u => "tests/basis/" ^ u) uses
                                           @ ["tests/basis/" ^ t ^ ".sml", "tests/basis/finish.sml"], true)
           end
-        else
-          let
-            (* the first line's `(* libraries: a b *)` *)
-            val first = case String.fields (fn c => c = #"\n") (read x) of l :: _ => l | [] => ""
-            val libs = if String.isPrefix "(* libraries: " first andalso String.isSuffix " *)" first
-                       then List.concat (List.map (fn l => ["--library", l])
-                                                  (String.tokens Char.isSpace (String.substring (first, 14, size first - 17))))
-                       else []
-          in crossCheck (name x, [], libs @ sib (base x, ".cargs") @ [x], false) end
+        else crossCheck (name x, [], sourceArguments x, false)
 
   (* runedoc's builds print the same: the IR of the library and of
      tests/doc, and the site *)
@@ -864,6 +866,7 @@ struct
     | ["units-one", variant, rune, vm, src] => SOME (fn () => unitsOne (variant, rune, vm, src))
     | ["positions-one", src] => SOME (fn () => positionsOne src)
     | ["cross-one", x] => SOME (fn () => crossOne x)
+    | ["example-project-inventory"] => SOME ExampleProjects.audit
     | ["doc-cross"] => SOME docCross
     | ["opt-cross"] => SOME optCross
     | ["repro-copy"] => SOME reproCopy
@@ -901,9 +904,7 @@ struct
 
   fun perProgram (cmd, srcs, after, name) = List.map (fn src => job (name src, [cmd, src], after, 1, 600, 3600)) srcs
 
-  val positionsSrcs = glob ("tests/lang", ".sml") @ glob ("examples", ".sml")
-                      @ List.concat (List.map (fn d => glob ("examples/" ^ d, ".sml"))
-                                              (List.filter (fn d => isDir ("examples/" ^ d)) (sort (entries "examples"))))
+  val positionsSrcs = glob ("tests/lang", ".sml") @ ExampleProjects.programs()
   val basisTests = List.filter (fn t => t <> "harness" andalso t <> "finish") (List.map basename (glob ("tests/basis", ".sml")))
   val crossSrcs = positionsSrcs @ List.map (fn t => "basis:" ^ t) basisTests
 
@@ -935,7 +936,8 @@ struct
        Test.requires hostBuilds (tagged ["check", "check-cross", "covers:tests/lang/*", "covers:examples/*", "covers:tests/basis/*", "covers:tests/doc/*",
                "covers:tests/opt/*"]
          (Test.describe "cross"
-            (List.map (fn x => job (x, ["cross-one", x], [], 1, 1500, 3600))
+            (job ("@examples", ["example-project-inventory"], [], 1, 100, 60) ::
+             List.map (fn x => job (x, ["cross-one", x], [], 1, 1500, 3600))
                       ["rune", "rune-stack", "rune-units", "runedoc", "runedoc-stack", "runeopt", "runeopt-stack", "basis-all"]
              @ List.map (fn x => job (if String.isPrefix "basis:" x then "basis-" ^ String.extract (x, 6, NONE) else name x,
                                        ["cross-one", x], [], 1, 1000, 3600))

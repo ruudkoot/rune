@@ -1,0 +1,2 @@
+# Strict expectations for complete native generator inspection.
+native:mlkit | generator.inspect | HOST-BUG | default region inference corrupts JSON values while decoding the unchanged sidecar/target and the generator crashes after its start marker; the same sources with -no_ri must agree exactly with Rune (docs/bugreport/mlkit/region-inference)

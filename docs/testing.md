@@ -211,6 +211,18 @@ the tools; the run before was on a build already made.
 
 ## Requirements
 
+The `ffi-runtime` capability reflects `RuneForeign.available()` in the
+coordinator VM and gates tests that execute generated native calls. Build
+that VM with `FFI=yes` to enable it. It is separate from `libffi`, which
+checks development files for independent C ABI oracles. Generator parsing,
+publication, host comparisons and Windows CLI checks remain available when
+native calls are disabled. An explicit `RUNEVM` override does not redefine
+the coordinator's capability. With `FFI=no`, enabled-call jobs omit their
+`check` tag because that configured feature is absent; explicit native-call
+tiers still name `ffi-runtime` and report an unsupported capability. The
+runtime's disabled branch remains in `check` and verifies unavailability.
+Strict missing-capability policy stays unchanged.
+
 A test names the capabilities it needs of the machine (`Test.requires`):
 `pty`, `python3`, `cc`, `qemu`, `windows`, and each host
 (`mlton`, `smlnj-legacy`, `smlnj32`, `smlnj-dev`, `polyml`, `mlkit`), each
@@ -303,6 +315,23 @@ compiled by itself reproduces `bin/rune.rbc` byte for byte, and
 test program (`building.md`, *Bootstrapping*). This rests on the compiler
 being deterministic: ordered maps, counter-generated stamps, reals passed
 through as text.
+
+The example inventory covers top-level sources and sources one directory
+below `examples`. `tests/runner/exampleprojects.sml` distinguishes standalone
+programs from `.build` applications and their shared fragments. Example job
+and artifact names include their directory, so root `hello.sml` and SDL's
+`hello.sml` cannot collide. Unknown build entrypoints or unclassified project
+members fail the inventory audit.
+
+`check-cross` and `check-positions` compile the Win32 mock application through
+`examples/win32/mock.build`. The generated providers have focused compilation
+gates: `make test-sdl-hosts` generates the complete SDL binding and compares
+bytecode for both SDL examples across all seven Rune compiler builds;
+`make test-win32-hosts` does the same for the native Win32 application using
+both Windows ABI profiles and the pinned original SDK headers. These gates
+compile the actual `.build` entrypoints without opening GUI libraries. Runtime
+and real-desktop acceptance remain the separate SDL/Windows suites. Project
+fragments are never advertised as standalone programs.
 
 The rest of this page is about the second oracle, because it is the one
 that is easy to break from outside the VM: a count that differs between

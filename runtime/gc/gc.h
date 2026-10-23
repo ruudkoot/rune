@@ -47,6 +47,9 @@
      placed, cleared by a full collection, which sets them again for what it
      reaches -- so that they are its marks, its objects' starts and what a
      walk of it visits.
+   Very large mappings keep the cards and dirty bytes before the payload
+   and the remaining tables after it, so object headers still begin in
+   the first CHUNK_SIZE bytes. capacity excludes those trailing tables.
    Every chunk has them all, so that one goes from the pool to any use; the
    bits are cleared by their user alone, so that a chunk of another use
    never touches their pages. */
@@ -76,12 +79,12 @@ struct Chunk {
     size_t top;          /* a non-moving chunk's: where the next object goes, from the payload (used is what it holds) */
     uint32_t *lines;     /* a non-moving chunk's, while an image is written: the offset from base of the first object at or after each 64 bytes (heap_number) */
     size_t marked;       /* while a cycle of the low-pause collector marks: the bytes of its objects marked (cycle.c) */
+    size_t capacity;     /* usable payload; very large mappings keep some tables after it */
 };
 typedef char chunk_header_fits[sizeof(Chunk) <= GC_CARDS ? 1 : -1];
 
-/* the layout of a chunk of size bytes: the tables after the header, and the
-   payload from the next 4 KiB, so that the units of the large-object space
-   are pages */
+/* The ordinary prefix layout. Very large mappings split these tables at
+   cross_at (chunk.c), retaining a 4 KiB-aligned payload and capacity. */
 #define CHUNK_TABLES(size) (GC_CARDS + ((size) >> GC_CARD_SHIFT) + ((size) >> GC_BLOCK_SHIFT) \
                             + 2 * ((size) >> GC_CARD_SHIFT) + 3 * ((size) >> GC_UNIT_SHIFT) + 8 + ((size) >> 6) \
                             + ((size) >> IX_LINE_SHIFT) + 8 * ((size) >> IX_BLOCK_SHIFT))
@@ -91,7 +94,7 @@ typedef char chunk_header_fits[sizeof(Chunk) <= GC_CARDS ? 1 : -1];
 
 static inline Chunk *chunk_of(const void *p) { return (Chunk *)((uintptr_t)p & ~(uintptr_t)(CHUNK_SIZE - 1)); }
 static inline char *chunk_payload(Chunk *c) { return (char *)c + c->payload; }
-static inline size_t chunk_room(const Chunk *c) { return c->size - c->payload; }
+static inline size_t chunk_room(const Chunk *c) { return c->capacity; }
 static inline uint8_t *chunk_cards(Chunk *c) { return (uint8_t *)c + GC_CARDS; }
 static inline uint8_t *chunk_dirty(Chunk *c) { return (uint8_t *)c + c->dirty_at; }
 static inline uint16_t *chunk_cross(Chunk *c) { return (uint16_t *)(void *)((char *)c + c->cross_at); }

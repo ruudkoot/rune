@@ -4,7 +4,7 @@
 # (scripts/build-files.sh).
 # Usage: scripts/gen-build-files.sh [ROOT_DIR]
 # For every program (rune from rune.build, runedoc from runedoc.build,
-# runeopt from runeopt.build, runeisa from runeisa.build)
+# runeopt from runeopt.build, runeisa from runeisa.build, runeffi from runeffi.build)
 # produces build/PROG.mlb (MLton), build/PROG.cm (SML/NJ),
 # build/PROG-polyml-build.sml (Poly/ML, run from ROOT; polyml-build.sml for
 # rune) and build/PROG-mlkit.mlb (MLKit). Each loads build/config.sml first,
@@ -80,5 +80,6 @@ gen rune rune.build "" polyml-build.sml
 gen runedoc runedoc.build runedoc- runedoc-polyml-build.sml
 gen runeopt runeopt.build runeopt- runeopt-polyml-build.sml
 gen runeisa runeisa.build runeisa- runeisa-polyml-build.sml
+gen runeffi runeffi.build runeffi- runeffi-polyml-build.sml
 
-echo "generated build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb"
+echo "generated build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb build/runeffi.mlb build/runeffi.cm build/runeffi-polyml-build.sml build/runeffi-mlkit.mlb"

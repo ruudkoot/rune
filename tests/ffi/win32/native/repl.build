@@ -1,0 +1,3 @@
+libraries ffi/win32/native end
+use "$(WIN32_GENERATED)/current.build"
+files ../../../../ffi/win32/native-config.sml repl-setup.sml end

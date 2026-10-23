@@ -11,6 +11,13 @@ How fast it is, and what would make it faster, is
 under *A native program* in [runtime.md](runtime.md), and the modules are
 listed in [architecture.md](architecture.md).
 
+The runtime directory's `foreign-libs` metadata supplies the archive's foreign
+link dependencies. A flag beginning `@RUNTIME@/` resolves inside that directory
+before shell quoting, so an installed static `libffi.a` follows a relocated
+runtime, including paths with spaces. System libffi remains an external linker
+dependency. Installation retains the verified static archive when `FFI_PREFIX`
+selected it for the VM build.
+
 ## The contract
 
 **An instruction at a time.** Every instruction of the `.rbc` becomes a
@@ -33,6 +40,16 @@ may sit in registers between the points where it must be exact:
 * no heap pointer is kept in a register across a call into C, and after one
   the code reloads the base of the stack; the frames, the constants, the
   globals and the closure are loaded afresh where they are used.
+
+**Foreign callbacks have a delimiter.** An FFI-enabled native executable
+retains the stack-bytecode callback interpreter. An owning-thread callback
+enters that bounded interpreter above its parked native caller and returns
+at the callback root frame; it never reenters `rune_enter`. The suspended
+native frames remain GC roots, and stack/frame relocation restores their
+addresses from stable identities. Nested foreign calls use the same bounded
+scope protocol. Exceptions return an annotated foreign failure first, then
+propagate after native return and cleanup. Loading, image operations and
+other lifecycle changes obey [the callback guards](ffi/callbacks.md).
 
 **Three freedoms**, none of which changes what runs or what a counter says:
 
@@ -250,6 +267,8 @@ FILE"`, `Runtime.restore`, and the child of `--emulate-fork`.
   `OS.SysErr` with `ENOEXEC`, and `--restore` exits with a message.
 * **`runeopt --from-image`** makes the program of an image (`RbcImage`),
   writing each real constant as C's hexadecimal notation from its bits.
+  Image version 15 includes the foreign identity allocator floor; native
+  restore preserves the same stale-resource rejection as interpretation.
 
 Images cross between native programs and every VM, of every width and byte
 order.

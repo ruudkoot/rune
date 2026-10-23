@@ -118,3 +118,15 @@ void vm_frames_to_interpreter(VM *vm) {
         vm->frames[i].result = UINT32_MAX;   /* the loop's RET reads it from the code (vm.h, Frame) */
     }
 }
+
+/* Native safepoints in this instruction set name separate frame records. */
+void vm_safepoints_save(const VM *vm, NativeSafepoints *saved) {
+    saved->has_top = vm->top_frame != NULL;
+    saved->has_verify = vm->verify_frame != NULL;
+    saved->top = saved->has_top ? (const Frame *)vm->top_frame - vm->frames : 0;
+    saved->verify = saved->has_verify ? (const Frame *)vm->verify_frame - vm->frames : 0;
+}
+void vm_safepoints_restore(VM *vm, const NativeSafepoints *saved) {
+    vm->top_frame = saved->has_top ? (const void *)(vm->frames + saved->top) : NULL;
+    vm->verify_frame = saved->has_verify ? (const void *)(vm->frames + saved->verify) : NULL;
+}

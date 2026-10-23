@@ -550,6 +550,12 @@ typedef struct VM {
     /* The debugger (the REPL roadmap's D22, M12; runtime/debug.c): NULL
        until the REPL asks for it */
     struct Debugger *dbg;
+    struct Foreign *foreign; /* process-local native resources; never part of an image */
+    struct CallbackScope *callback_scope; /* bounded foreign callback delimiter */
+    size_t callback_frame; /* frame whose RET returns to the delimiter */
+    Value callback_result;
+    unsigned callback_depth;
+    int (*callback_loop)(struct VM *); /* process-local engine entry, never serialized */
 } VM;
 
 /* Whether p points into the room objects are made in (alloc). Young and
@@ -801,8 +807,8 @@ void vm_start(VM *vm);                       /* the builtin exceptions, and func
 void vm_cons(VM *vm);                        /* stack: ..., hd, tl  ->  ..., hd :: tl */
 int values_equal(VM *vm, Value a, Value b);
 void vm_print_trace(VM *vm, FILE *out);
-void vm_release(VM *vm);                     /* free what a VM holds, but not the VM */
-void vm_destroy(VM *vm);                     /* and the VM */
+int vm_release(VM *vm);                      /* -1 preserves VM roots on active/failed FFI teardown */
+int vm_destroy(VM *vm);                      /* frees VM only after successful release */
 
 /* The debugger (runtime/debug.c; the REPL roadmap's D22 and M12). The
    REPL installs an SML hook; where the program stops -- at a breakpoint, a
@@ -881,6 +887,14 @@ uint32_t program_add_function(VM *vm, const char *name, const uint8_t *code, uin
 
 /* interp.c */
 int vm_run(VM *vm);                          /* vm_start, then the loop */
+/* Opaque native safepoint addresses snapshot by the owning instruction set.
+   Indices survive value-stack and separate frame-array relocation. */
+typedef struct NativeSafepoints { size_t top, verify; int has_top, has_verify; } NativeSafepoints;
+void vm_safepoints_save(const VM *vm, NativeSafepoints *saved);
+void vm_safepoints_restore(VM *vm, const NativeSafepoints *saved);
+int vm_callback_loop(VM *vm); /* interpreter only; never enters a driver or JIT */
+int vm_callback_apply(VM *vm, size_t closure, const char *input, size_t length, char *output, size_t capacity, size_t *written);
+uint64_t vm_callback_live(VM *vm, const FrameRef *frame);
 int vm_loop(VM *vm);                         /* the dispatch loop alone, from vm->pc */
 /* The options of the JIT (--jit=MODE, --jit-stats, --jit-check), which
    runtime/register takes and runevm-stack refuses: 1 when the option is taken, 0 when it is
@@ -942,7 +956,7 @@ uint32_t return_function_code(uint8_t *out, uint32_t *nlocals);
 
 /* What each VM's instruction set gives (runtime/stack/isa_stack.c, runtime/register/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
-#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 14 isa 00000000")
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 15 isa 00000000")
 extern const uint32_t isa_fingerprint;
 extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);

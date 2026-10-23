@@ -42,14 +42,15 @@ struct
         val () = BinaryFixtures.write (dir ^ "/bad-ppc-loader")
                 (BinaryFixtures.elf "ppc64" "/usr/powerpc64-linux-gnu/lib/ld64.so.1" ["libc.so.6"])
     in () end
-  fun pack label fixture version library linux windows =
+  fun packWith extra label fixture version library linux windows =
     let val dir = directory ()
         val flags = List.concat (List.map (fn (arch, file) => ["--linux", arch ^ "=" ^ file]) linux)
                     @ List.concat (List.map (fn (arch, file) => ["--windows", arch ^ "=" ^ file]) windows)
     in InstallChecks.execute dir label root ""
        ([fromRoot "bin/rune-build", "make-dist", "--version", version, "--out", dir ^ (if fixture then "/archives" else "/checked-" ^ label), "--lib", library,
           "--license", fromRoot "LICENSE", "--compiler", dir ^ "/rune.rbc", "--repl", dir ^ "/rune-repl.img"]
-          @ (if fixture then ["--fixture"] else []) @ flags) end
+          @ (if fixture then ["--fixture"] else []) @ flags @ extra) end
+  fun pack label fixture version library linux windows=packWith [] label fixture version library linux windows
   fun maps good =
     let val dir = directory ()
     in (List.map (fn arch => (arch, dir ^ (if good then "/good-" else "/vm-") ^ arch)) linuxArchitectures,
@@ -57,6 +58,53 @@ struct
   val libraryMembers = ["LICENSE", "VERSION", "lib/rune/basis/MANIFEST", "lib/rune/basis/README.md", "lib/rune/basis/list.sml",
        "lib/rune/json/MANIFEST", "lib/rune/json/README.md", "lib/rune/json/json.sml", "lib/rune/json/pkg/extra.sml",
        "lib/rune/rune-repl.img", "lib/rune/rune.rbc"]
+  fun ffiArchives ()=
+    let val dir=directory() val assets=dir ^ "/ffi-assets"
+        val ()=put dir "ffi-assets/sdl/core.ffi" "original sidecar\n"
+        val ()=put dir "ffi-assets/sdl/upstream/original.h" "original header\n"
+        val library=dir ^ "/ffi-library"
+        val ()=List.app(fn(path,text)=>put library path text)
+          [("basis/library.build","files list.sml end\n"),("basis/MANIFEST","list.sml | demand | yes | List | \n"),
+           ("basis/list.sml","structure List = struct end\n")]
+        val generated=List.concat(List.map(fn(family,target)=>
+          let val prefix="ffi/" ^ family ^ "/generated/" ^ target ^ "/"
+          in List.map(fn(name,text)=>(prefix ^ name,text))
+            [("current.build","use sets/identity/native.build\n"),("api/api/public_sig.sml","signature GENERATED = sig end\n"),
+             ("sets/identity/library.build","files raw.sml end\n"),("sets/identity/MANIFEST","raw.sml | demand | yes | Generated | \n"),
+             ("sets/identity/raw.sml","structure Generated = struct end\n"),("sets/identity/native.build","raw.sml\n"),
+             ("sets/identity/shims.c","/* generated typed C shim */\n"),("sets/identity/ffi-manifest.json","{\"declarations\":[]}\n"),
+             ("sets/identity/dependencies.json","{\"headers\":[]}\n")]
+          end)[("sdl","native"),("sdl","windows32"),("sdl","windows64"),("win32","32"),("win32","64")])
+        val ()=List.app(fn(path,text)=>put library path text)generated
+        val(linux,windows)=maps false
+        val ()=Scenarios.success(packWith["--ffi",dir ^ "/rune.rbc","--ffi-assets",assets]
+          "ffi-pack" true "ffi1" library linux windows)
+        val tarfile=dir ^ "/archives/rune-ffi1-linux.tar.gz"
+        val tar=ArchiveCheck.tar(ArchiveCheck.decode dir "ffi.tar"["gzip","-dc",tarfile])
+        fun member name=case List.find(fn(m:ArchiveCheck.member)=> #name m="rune-ffi1-linux/" ^ name)tar of
+          SOME m=> #data m | NONE=>raise Failed("missing FFI archive member " ^ name)
+        val ()=need(member "lib/rune/runeffi.rbc"="compiler\n" andalso
+          member "lib/rune/ffi-assets/sdl/core.ffi"="original sidecar\n" andalso
+          member "lib/rune/ffi-assets/sdl/upstream/original.h"="original header\n","FFI archive bytes differ")
+        val ()=List.app(fn(path,text)=>need(member("lib/rune/" ^ path)=text,"generated FFI source missing or changed: " ^ path))generated
+        val zip=dir ^ "/archives/rune-ffi1-windows.zip"
+        val zipped=ArchiveCheck.zip(ArchiveCheck.binary zip)
+        val ()=need(List.exists(fn(m:ArchiveCheck.zipped)=> #name m="rune-ffi1-windows/wrappers/runeffi.cmd")zipped,"missing Windows runeffi launcher")
+        val ()=List.app(fn(path,_)=>need(List.exists(fn(m:ArchiveCheck.zipped)=>
+          #name m="rune-ffi1-windows/lib/rune/" ^ path)zipped,"generated FFI source missing from Windows archive: " ^ path))generated
+        val out=dir ^ "/ffi-extracted" val ()=mkdirs out
+        val ()=Scenarios.success(InstallChecks.execute dir "ffi-extract" root ""["tar","-xzf",tarfile,"-C",out])
+        val prefix=dir ^ "/FFI relocated prefix" val script=out ^ "/rune-ffi1-linux/install.sh"
+        val ()=Scenarios.success(InstallChecks.execute dir "ffi-install" root ""["sh",script,"--prefix",prefix,"--arch","x86_64"])
+        val wrapper=read(prefix ^ "/bin/runeffi")
+        val ()=need(String.isSubstring "../lib/rune/runeffi.rbc" wrapper andalso not(String.isSubstring root wrapper),"runeffi launcher is not relocatable")
+        val ()=need(read(prefix ^ "/lib/rune/ffi-assets/sdl/upstream/original.h")="original header\n","installer omitted original header")
+        val ()=List.app(fn(path,text)=>need(read(prefix ^ "/lib/rune/" ^ path)=text,"installed generated FFI source differs: " ^ path))generated
+        val ()=write(prefix ^ "/bin/unrelated","keep\n")
+        val ()=Scenarios.success(InstallChecks.execute dir "ffi-uninstall" root ""["sh",script,"--prefix",prefix,"--uninstall"])
+        val ()=need(not(exists(prefix ^ "/bin/runeffi")) andalso not(exists(prefix ^ "/lib/rune/ffi-assets")) andalso
+          read(prefix ^ "/bin/unrelated")="keep\n","FFI uninstall retained owned files or removed unrelated files")
+    in say "PASS distribution/ffi-generator-assets-install-uninstall\n" end
   fun archives () =
     let val dir = directory ()
         val (linux, windows) = maps false
@@ -202,14 +250,72 @@ struct
                   andalso not (String.isSubstring "/../" (#name m))) entries, "unsafe Windows archive member")
         val extracted = InstallChecks.execute dir "windows-extract" root "" ["unzip", "-q", zip, "-d", stage]
         val () = Scenarios.success extracted
-        val installed = InstallChecks.execute dir "windows-install" (stage ^ "/rune-test1-windows") ""
-            ["cmd.exe", "/c", "install.bat --prefix ..\\prefix --arch x86_64 --no-register"]
+        val generated = "/lib/rune/ffi/sdl/generated/windows64/sets/"
+                      ^ String.implode (List.tabulate (64, fn _ => #"a")) ^ "/native.build"
+        val generatedBytes = "files raw_sig.sml raw.sml end\n"
+        val () = put (stage ^ "/rune-test1-windows") generated generatedBytes
+        val refusedPrefix = "rejected-" ^ String.implode (List.tabulate (80, fn _ => #"x"))
+        val refused = InstallChecks.execute dir "windows-long-target" stage ""
+            ["cmd.exe", "/c", "set RUNE_INSTALL_PAUSE=1&& call rune-test1-windows\\install.bat --prefix "
+                              ^ refusedPrefix ^ " --arch x86_64 --no-register"]
+        val () = need (#status refused <> 0 andalso String.isSubstring "preflight failed" (#errors refused)
+                       andalso not (exists (stage ^ "/" ^ refusedPrefix)), "long target did not reject before installation")
+        val longSource = "source-" ^ String.implode (List.tabulate (120, fn _ => #"x"))
+        val () = put stage (longSource ^ "/install.bat") (read (stage ^ "/rune-test1-windows/install.bat"))
+        val () = put stage (longSource ^ generated) generatedBytes
+        val refusedSource = InstallChecks.execute dir "windows-long-source" stage ""
+            ["cmd.exe", "/c", "set RUNE_INSTALL_PAUSE=1&& call " ^ longSource
+                              ^ "\\install.bat --prefix rejected-source --arch x86_64 --no-register"]
+        val () = need (#status refusedSource <> 0 andalso String.isSubstring "preflight failed" (#errors refusedSource)
+                       andalso not (exists (stage ^ "/rejected-source")), "long source did not reject before installation")
+        val noPowerShell = InstallChecks.execute dir "windows-no-powershell" stage ""
+            ["cmd.exe", "/c", "set RUNE_INSTALL_PAUSE=1&& set PATH=Z:\\rune-missing&& call rune-test1-windows\\install.bat --prefix rejected-tool --arch x86_64 --no-register"]
+        val () = need (#status noPowerShell <> 0 andalso String.isSubstring "preflight failed" (#errors noPowerShell)
+                       andalso not (exists (stage ^ "/rejected-tool")), "missing PowerShell did not reject before installation")
+        (* Parse options from outside the archive: SHIFT must not replace %0,
+           which the installer uses to find VERSION, runtimes and libraries. *)
+        val installed = InstallChecks.execute dir "windows-install" stage ""
+            ["cmd.exe", "/c", "set RUNE_INSTALL_PAUSE=1&& call rune-test1-windows\\install.bat --prefix prefix --arch x86_64 --no-register"]
         val () = Scenarios.success installed
         val () = need (same (dir ^ "/exe-x86_64", stage ^ "/prefix/bin/runevm.exe"), "Windows installer chose wrong runtime bytes")
         val () = need (exists (stage ^ "/prefix/share/rune.ico"), "Windows installer omitted the icon")
+        val () = need (read (stage ^ "/prefix" ^ generated) = generatedBytes, "Windows installer omitted a generated build file")
+        val generatedName = String.translate (fn #"/" => "\\" | c => str c) generated
+        val () = need (String.isSubstring generatedName (read (stage ^ "/prefix/DISTMANIFEST")),
+                       "Windows uninstall manifest omitted a generated build file")
+        val originalManifest = read (stage ^ "/prefix/DISTMANIFEST")
+        val () = OS.FileSys.rename {old = stage ^ "/prefix", new = stage ^ "/moved-prefix"}
+        val moved = InstallChecks.execute dir "windows-moved-uninstall" stage ""
+            ["cmd.exe", "/c", "call moved-prefix\\uninstall.bat"]
+        val () = need (#status moved <> 0 andalso String.isSubstring "manifest preflight failed" (#errors moved)
+                       andalso read (stage ^ "/moved-prefix" ^ generated) = generatedBytes
+                       andalso exists (stage ^ "/moved-prefix/bin/runevm.exe"), "moved Windows uninstall did not preserve installed files")
+        val () = OS.FileSys.rename {old = stage ^ "/moved-prefix", new = stage ^ "/prefix"}
+        val outside = stage ^ "/outside-marker"
+        val () = write (outside, "keep\n")
+        val outsidePath = InstallChecks.execute dir "windows-outside-path" root "" ["wslpath", "-w", outside]
+        val () = Scenarios.success outsidePath
+        val () = write (stage ^ "/prefix/DISTMANIFEST", originalManifest ^ Hosts.trim (#output outsidePath) ^ "\r\n")
+        val stale = InstallChecks.execute dir "windows-stale-uninstall" stage ""
+            ["cmd.exe", "/c", "call prefix\\uninstall.bat"]
+        val () = need (#status stale <> 0 andalso String.isSubstring "manifest preflight failed" (#errors stale)
+                       andalso read outside = "keep\n" andalso read (stage ^ "/prefix" ^ generated) = generatedBytes
+                       andalso exists (stage ^ "/prefix/bin/runevm.exe"), "stale Windows manifest changed installed or outside files")
+        val () = write (stage ^ "/prefix/DISTMANIFEST", originalManifest)
+        (* The fixture VM is inert; a neighbouring stub observes -i forwarding. *)
+        val () = write (stage ^ "/prefix/bin/rune-repl.cmd", "@echo off\r\necho FORWARDED %*\r\n")
+        val interactive = InstallChecks.execute dir "windows-interactive" stage ""
+            ["cmd.exe", "/c", "prefix\\bin\\rune.cmd -i one two"]
+        val () = Scenarios.success interactive
+        val () = need (Hosts.trim (#output interactive) = "FORWARDED \"one\" \"two\""
+                       andalso #errors interactive = "", "Windows -i forwarding lost its neighbouring launcher or arguments")
+        (* A missing owned leaf directory must not strand its empty parents. *)
+        val () = OS.FileSys.remove (stage ^ "/prefix" ^ generated)
+        val () = OS.FileSys.rmDir (OS.Path.dir (stage ^ "/prefix" ^ generated))
         val uninstalled = InstallChecks.execute dir "windows-uninstall" (stage ^ "/prefix") "" ["cmd.exe", "/c", "uninstall.bat"]
         val () = Scenarios.success uninstalled
         val () = need (not (exists (stage ^ "/prefix")), "Windows uninstall left its prefix")
+        val () = need (read outside = "keep\n", "Windows uninstall removed an unrelated file")
         val () = rmTree stage
     in say "PASS distribution/windows-installer\n" end
 end

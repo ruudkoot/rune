@@ -1,0 +1,26 @@
+{
+  "status": 0,
+  "wallSeconds": 9.526902723999228,
+  "childCpuSeconds": 7.861288,
+  "videoDriverOverride": null,
+  "argv": [
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/runevm",
+    "--jit=off",
+    "--gc-stress",
+    "101",
+    "--gc-verify",
+    "--stats",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/win32-app.rbc",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/deps/sdl/native/install/lib/libSDL3.so.0.4.18",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/shims.so",
+    "--smoke"
+  ],
+  "stdout": "PASS shared Win32 application: 0\n",
+  "stderr": "runevm: 3238 collections, 6839704 bytes allocated, semispace 4194304 bytes, 552280 live, copied 551816, max live 551912, gc 0 us, longest 0 us\nrunevm: nursery 1048576 bytes: 3238 minor and 0 full collections, promoted 551816, large objects 0 (0 bytes), 0 bytes of them live\nrunevm: 5 boxes, 80 bytes\n",
+  "sha256": {
+    "build/ffi-final-acceptance/runevm": "b1556ea59a929cf5faa618bdb94b228450993215e6673ff4ed34ca3d96dd47c3",
+    "build/ffi-final-acceptance/win32-app.rbc": "79c87266734a8eceeef44f9700d7361bbbb91a09c677389ef7b17db38d3624fb",
+    "build/ffi-final-acceptance/shims.so": "ebf11331130596fdfa0f925583ae8e6c6bdad67db60eec2806a263c04ba86b0d",
+    "build/ffi-final-acceptance/generated/sets/f83b5f519861f8d76eae6b99a3f655a6aa5022fbb0632ddc56a46bd8493e6f5e/ffi-manifest.json": "2ce15da25c00766e32d2310ad3d048d0f66db37892d903443caa2617a7bb2553"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "status": 0,
+  "wallSeconds": 9.523233925021486,
+  "argv": [
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/runevm",
+    "--jit=off",
+    "--gc-stress",
+    "101",
+    "--gc-verify",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/sdl-contract-fifo.rbc",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/deps/sdl/native/install/lib/libSDL3.so.0.4.18",
+    "/home/ruud/rune/.worktrees/runeffi-sdl-win32/build/ffi-final-acceptance/shims.so"
+  ],
+  "stdout": "PASS win32/contract/sdl/kernel-errors-and-clock\nPASS win32/contract/sdl/creation-and-nested-dispatch\nPASS win32/contract/sdl/queue-filter-copy-discard-and-single-use\nPASS win32/contract/sdl/paint-output-scopes-and-exception-cleanup\nPASS win32/contract/sdl/gdi-owned-selection-stock-and-drawing-state\nPASS win32/contract/sdl/timers-cancel-and-preserve-identity\nPASS win32/contract/sdl/callback-exception-containment\nPASS win32/contract/sdl/creation-veto-and-exception-cleanup\nPASS win32/contract/sdl/unsupported-selection-and-stale-window\nPASS win32/contract/sdl/default-close-destroys-before-return\nPASS win32/contract/sdl/quit-status-is-signed-and-consumed\nSUMMARY 11 tests, 11 passed, 0 failed, 0 skipped\n",
+  "stderr": "",
+  "contractSha256": "90fe91e6fbb73cc869904f4b24fc7b76e13c7117b85be5f8022de2bdb9b3e961"
+}

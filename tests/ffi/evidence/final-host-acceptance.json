@@ -1,0 +1,2132 @@
+{
+  "schema": 1,
+  "date": "2026-10-23",
+  "scope": "Runeffi final host/Basis acceptance; runner verdicts distinguish expected host failures and genuine program success",
+  "matrix": {
+    "source": "18c353b497683980c44c14552a3736edf9bbe11e",
+    "command": "RUNE_MATRIX_OUT=tests/out/matrix-final-18c353b49 make matrix-quick JOBS=2",
+    "outside_sandbox": true,
+    "run": "tests/out/r/20261023-122519-3013462",
+    "fresh_output": true,
+    "jobs": 2,
+    "load_timeout_seconds": 120,
+    "retries": 0,
+    "runner_result": {
+      "status": "PASS",
+      "selected": 3366,
+      "passed": 3198,
+      "skipped": 168,
+      "failed": 0,
+      "wall_seconds": 4216.8,
+      "cpu_seconds": 8161.9
+    },
+    "skip_details": "final-host-skips.json",
+    "accepted_timeout": {
+      "host": "xc1:polyml@5.9.2",
+      "suite": "Unix",
+      "seconds": 120,
+      "category": "HOST-BUG",
+      "deviation": "tests/basis/deviations.txt:470",
+      "reason": "forked child Posix.Process.exit126 does not terminate; reap hangs",
+      "interpretation": "explained failure, not successful Unix execution or skipped test"
+    },
+    "former_timeout_cases_first_attempt_seconds": {
+      "mono.word": 43.69,
+      "mono.word16": 45.995,
+      "mono.word32": 43.485,
+      "mono.int16": 42.548
+    },
+    "log_sha256": "b1d05c99bd033ab623f638235ee8dca53036af2da47697437a04e40fba75a8a2",
+    "events_sha256": "d5fe77e81869e929fced576509b68c490aae4f257e9fe2072bb64121e4394158",
+    "report_sha256": "29be7715002513928f9d7c7c01735f345db9f4a685f9d0a256c5944c71aafda0"
+  },
+  "first_library_host_run": {
+    "source": "18c353b497683980c44c14552a3736edf9bbe11e",
+    "command": "NATIVE_HOST=yes MAKE=make bin/rune-test run --strict --tier test-lib-hosts -j 2",
+    "run": "tests/out/r/20261023-133649-3186936",
+    "runner_result": {
+      "status": "FAIL",
+      "selected": 216,
+      "passed": 208,
+      "failed": 4,
+      "skipped": 4,
+      "wall_seconds": 1520.2,
+      "cpu_seconds": 2374.3
+    },
+    "skip_reason": "four @stale dependency jobs blocked by unexpected generator failures; not accepted host absence",
+    "default_program_oracle_outcomes": {
+      "total": 204,
+      "pass": 170,
+      "fail": 34,
+      "previously_explained": 30,
+      "unexpected": 4
+    },
+    "failed_default_programs": [
+      {
+        "host": "mlkit",
+        "label": "dap.dap",
+        "category": "HOST-BUG"
+      },
+      {
+        "host": "mlkit",
+        "label": "ffi.marshal.core",
+        "category": "HOST-BUG"
+      },
+      {
+        "host": "mlkit",
+        "label": "ffi.model.generate",
+        "category": "unexpected"
+      },
+      {
+        "host": "mlkit",
+        "label": "ffi.model.policy",
+        "category": "HOST-BUG"
+      },
+      {
+        "host": "mlkit",
+        "label": "ffi.model.target",
+        "category": "HOST-BUG"
+      },
+      {
+        "host": "mlkit",
+        "label": "json.roundtrip",
+        "category": "HOST-BUG"
+      },
+      {
+        "host": "mlkit",
+        "label": "jsonrpc.jsonrpc",
+        "category": "HOST-BUG"
+      },
+      {
+        "host": "mlkit",
+        "label": "jupyter.jupyter",
+        "category": "HOST-ABSENT"
+      },
+      {
+        "host": "mlkit",
+        "label": "pretty.pretty",
+        "category": "HOST-BUG"
+      },
+      {
+        "host": "mlkit",
+        "label": "unicode.utf8",
+        "category": "HOST-FLAKY"
+      },
+      {
+        "host": "mlkit",
+        "label": "zmtp.zmtp",
+        "category": "HOST-ABSENT"
+      },
+      {
+        "host": "polyml",
+        "label": "ffi.win32.common",
+        "category": "HOST-ABSENT"
+      },
+      {
+        "host": "polyml",
+        "label": "ffi.win32.values",
+        "category": "HOST-ABSENT"
+      },
+      {
+        "host": "polyml",
+        "label": "zmtp.zmtp",
+        "category": "HOST-BUG"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "ffi.marshal.core",
+        "category": "HOST-ABSENT"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "ffi.model.generate",
+        "category": "unexpected"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "ffi.win32.common",
+        "category": "HOST-ABSENT"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "ffi.win32.values",
+        "category": "HOST-ABSENT"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "property.core",
+        "category": "HOST-BUG"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "property.shrink",
+        "category": "HOST-BUG"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "ffi.marshal.core",
+        "category": "HOST-ABSENT"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "ffi.model.generate",
+        "category": "unexpected"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "ffi.win32.common",
+        "category": "HOST-ABSENT"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "ffi.win32.values",
+        "category": "HOST-ABSENT"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "property.core",
+        "category": "HOST-BUG"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "property.shrink",
+        "category": "HOST-FLAKY"
+      },
+      {
+        "host": "smlnj32",
+        "label": "ffi.marshal.core",
+        "category": "HOST-ABSENT"
+      },
+      {
+        "host": "smlnj32",
+        "label": "ffi.model.generate",
+        "category": "unexpected"
+      },
+      {
+        "host": "smlnj32",
+        "label": "ffi.win32.common",
+        "category": "HOST-ABSENT"
+      },
+      {
+        "host": "smlnj32",
+        "label": "ffi.win32.values",
+        "category": "HOST-ABSENT"
+      },
+      {
+        "host": "smlnj32",
+        "label": "property.core",
+        "category": "HOST-BUG"
+      },
+      {
+        "host": "smlnj32",
+        "label": "property.shrink",
+        "category": "HOST-BUG"
+      },
+      {
+        "host": "smlnj32",
+        "label": "random.kat",
+        "category": "HOST-BUG"
+      },
+      {
+        "host": "smlnj32",
+        "label": "random.props",
+        "category": "HOST-BUG"
+      }
+    ],
+    "log_sha256": "a62736aec0c0c6c0d621b0530f2aedc173dada95f2cd3d25f9d6f36d36d8f070",
+    "events_sha256": "1162e7e4a0a49c380e6e5a127550b3a3ff52bf5452cf2c9e5e720764da66641b"
+  },
+  "interrupted_library_host_guard_run": {
+    "source": "7bb284dc3bbe411c25ecf61468b7910225f8a9e1",
+    "run": "tests/out/r/20261023-141740-3439792",
+    "status": "interrupted",
+    "reason": "Owner review found guard accepted a leading FAIL before its exact expected suffix; restart after test-only fix",
+    "completed": 10,
+    "outcomes": {
+      "PASS": 10,
+      "FAIL": 0,
+      "SKIP": 0
+    }
+  },
+  "historical_interrupted_matrix": {
+    "status": "interrupted failed partial run",
+    "source": "e5d379022e2cac8cd6d6ee24f1106e8ac8b551aa",
+    "command": "make matrix-quick JOBS=4",
+    "outside_sandbox": true,
+    "default_load_timeout_seconds": 120,
+    "stop": "SIGINT sent to this runner after parent explicitly requested stopping the already-failed old-source run",
+    "completed": 319,
+    "inventory": 3366,
+    "verdicts": {
+      "PASS": 316,
+      "FAIL": 3
+    },
+    "failures": [
+      {
+        "path": "matrix/xc1-mlkit/compare/mono.word",
+        "verdict": "FAIL",
+        "reason": "FAIL @load/mono.word -- timed out after 120 s",
+        "wall": 0.151,
+        "user": 0.035,
+        "system": 0.03,
+        "peakResidentKB": 92040,
+        "outputBytes": 46,
+        "kept": [
+          "tests/out/r/20261023-110835-2466881/failed/matrix__xc1-mlkit__compare__mono.word"
+        ]
+      },
+      {
+        "path": "matrix/xc1-mlkit/compare/mono.word16",
+        "verdict": "FAIL",
+        "reason": "FAIL @load/mono.word16 -- timed out after 120 s",
+        "wall": 0.127,
+        "user": 0.042,
+        "system": 0.028,
+        "peakResidentKB": 92044,
+        "outputBytes": 48,
+        "kept": [
+          "tests/out/r/20261023-110835-2466881/failed/matrix__xc1-mlkit__compare__mono.word16"
+        ]
+      },
+      {
+        "path": "matrix/xc1-mlkit/compare/mono.word32",
+        "verdict": "FAIL",
+        "reason": "FAIL @load/mono.word32 -- timed out after 120 s",
+        "wall": 0.118,
+        "user": 0.022,
+        "system": 0.029,
+        "peakResidentKB": 92044,
+        "outputBytes": 48,
+        "kept": [
+          "tests/out/r/20261023-110835-2466881/failed/matrix__xc1-mlkit__compare__mono.word32"
+        ]
+      }
+    ],
+    "critical_first_attempt": [
+      {
+        "path": "matrix/xc1-mlkit/collect/mono.int16",
+        "verdict": "PASS",
+        "reason": "",
+        "wall": 62.667,
+        "user": 59.163,
+        "system": 2.908,
+        "peakResidentKB": 251392,
+        "outputBytes": 38,
+        "kept": []
+      },
+      {
+        "path": "matrix/xc1-mlkit/compare/mono.int16",
+        "verdict": "PASS",
+        "reason": "",
+        "wall": 0.041,
+        "user": 0.028,
+        "system": 0.011,
+        "peakResidentKB": 89692,
+        "outputBytes": 0,
+        "kept": []
+      }
+    ],
+    "receipt": "/home/ruud/rune/.worktrees/runeffi-acceptance/tests/out/r/20261023-110835-2466881",
+    "log": "/tmp/runeffi-final-matrix-quick.log",
+    "ended_utc": "2026-10-23T10:50:39.224504+00:00"
+  },
+  "focused_repairs": {
+    "commits": [
+      "7bb284dc3bbe411c25ecf61468b7910225f8a9e1",
+      "7c7bc7006"
+    ],
+    "production_changes": false,
+    "checks": [
+      {
+        "command": "bin/rune-test run runner/host-adapter -j1",
+        "result": "PASS6/6",
+        "run": "20261023-141950-3440996",
+        "planted_new_guards": 12
+      },
+      {
+        "command": "NATIVE_HOST=yes bin/rune-test run --strict lib-hosts/*/ffi.model.generate* -j2",
+        "result": "strict PASS13/13, original exact-judge component",
+        "run": "20261023-141351-3389937"
+      },
+      {
+        "command": "NATIVE_HOST=yes bin/rune-test run --strict lib-hosts/smlnj-legacy/ffi.model.generate -j1",
+        "result": "strict PASS7/7 after prefix guard",
+        "run": "20261023-142013-3441148"
+      }
+    ]
+  },
+  "applicability": {
+    "accepted_source": "18c353b497683980c44c14552a3736edf9bbe11e",
+    "selected_count": 591,
+    "manifest_sha256": "3a72096f86d67d1b4e0a9f430663533e737771fe5de953a9685f56de2a3668ad",
+    "comparisons": [
+      {
+        "source": "ddba4faad9fa5f8540367f1067be35d1b561936d",
+        "changed_selected_production_sources": []
+      },
+      {
+        "source": "0e7f4cbfd5b48df96366176764299d97458911e4",
+        "changed_selected_production_sources": []
+      },
+      {
+        "source": "7bb284dc3bbe411c25ecf61468b7910225f8a9e1",
+        "changed_selected_production_sources": []
+      },
+      {
+        "source": "bca128b32934d23d0a41da63bfacb3680aba7f93",
+        "changed_selected_production_sources": []
+      }
+    ],
+    "additional_selected_inputs_count": 558,
+    "additional_selected_inputs_sha256": "7d411375391f599d52d38670dd23f8aca1f65e3a3d9e23d6a4e65ca94cccba05",
+    "additional_selected_input_comparisons": [
+      {
+        "source": "ddba4faad9fa5f8540367f1067be35d1b561936d",
+        "changed_selected_test_and_library_dependencies": []
+      },
+      {
+        "source": "0e7f4cbfd5b48df96366176764299d97458911e4",
+        "changed_selected_test_and_library_dependencies": []
+      },
+      {
+        "source": "7bb284dc3bbe411c25ecf61468b7910225f8a9e1",
+        "changed_selected_test_and_library_dependencies": []
+      },
+      {
+        "source": "7c7bc70067938ea59862b378a62f9837815c8ebb",
+        "changed_selected_test_and_library_dependencies": []
+      },
+      {
+        "source": "bca128b32934d23d0a41da63bfacb3680aba7f93",
+        "changed_selected_test_and_library_dependencies": []
+      }
+    ],
+    "excluded_test_only_changes": [
+      "tests/lib/deviations.txt",
+      "tests/lib/ffi/model/generate.smlnj.expected",
+      "tests/runner/libhosts.sml",
+      "tests/runner/hostchecks.sml"
+    ],
+    "new_generated_sdl_sets": "not selected by either accepted host/Basis gate",
+    "final_host_judge_files_identical": [
+      "tests/runner/libhosts.sml",
+      "tests/runner/hostchecks.sml",
+      "tests/lib/deviations.txt",
+      "tests/lib/ffi/model/generate.smlnj.expected"
+    ],
+    "final_delivery_at_receipt": "bca128b32934d23d0a41da63bfacb3680aba7f93"
+  },
+  "tools": {
+    "compiler_version": "rune 18c353b49",
+    "vm_version": "runevm 18c353b49",
+    "compiler_rbc_sha256": "4692cb15f02d97e6cd955d95421b07de1d13366206ed0b4802cb8b214d471d06",
+    "vm_sha256": "8e24aa8a76a0fdaf94afe3d09216601149bf6dc1467296df71af0ae1baa2e582",
+    "hosts": [
+      {
+        "name": "mlton",
+        "version": "20241230",
+        "bits": 64
+      },
+      {
+        "name": "smlnj-legacy",
+        "version": "110.99.9",
+        "bits": 64
+      },
+      {
+        "name": "smlnj32",
+        "version": "110.99.9",
+        "bits": 32
+      },
+      {
+        "name": "smlnj-dev",
+        "version": "2026.2",
+        "bits": 64
+      },
+      {
+        "name": "polyml",
+        "version": "5.9.2",
+        "bits": 64
+      },
+      {
+        "name": "mlkit",
+        "version": "4.7.25",
+        "bits": 64
+      }
+    ]
+  },
+  "final_library_host_run": {
+    "status": "PASS",
+    "source": "7c7bc70067938ea59862b378a62f9837815c8ebb",
+    "run": "tests/out/r/20261023-142056-3441889",
+    "command": "NATIVE_HOST=yes MAKE=make bin/rune-test run --strict --tier test-lib-hosts -j 2 --keep",
+    "outside_sandbox": true,
+    "runner_result": {
+      "selected": 217,
+      "passed": 217,
+      "failed": 0,
+      "skipped": 0,
+      "wall_seconds": 1723.9,
+      "cpu_seconds": 2554.6
+    },
+    "inventory": {
+      "default_programs": 204,
+      "explicit_collector_only_controls": 1,
+      "c_reference": 1,
+      "stale_deviation_checks": 6,
+      "runner_canaries": 5
+    },
+    "default_program_oracle_outcomes": {
+      "pass": 170,
+      "fail_explained": 34,
+      "fail_unexpected": 0,
+      "explained_categories": {
+        "HOST-BUG": 19,
+        "HOST-ABSENT": 13,
+        "HOST-FLAKY": 2
+      }
+    },
+    "default_program_records": [
+      {
+        "host": "mlkit",
+        "label": "dap.dap",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "region inference: the names of the members of a message lib/json decodes come back corrupt, so no message reads back; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)",
+        "output_sha256": "68cb1ca0b5c1df72cc388147f5ca1d0d4d2b7ee0f1a52d17aa03e62b8ceaf725"
+      },
+      {
+        "host": "mlkit",
+        "label": "digest.digest",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "1394c4ddf8fbf58a8b653feec39cd0baa1cf325bd0df3901eae88ac49bf13642"
+      },
+      {
+        "host": "mlkit",
+        "label": "ffi.marshal.core",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "IntInf.~>> by 30 or more returns zero for large integers, corrupting 64/128-bit byte encoding and binary32 conversions through binary64 bits; eleven cases fail (docs/bugreport/mlkit/IntInf/shift-right-by-30-or-more)",
+        "output_sha256": "060af31d9573c0e467c400a9050dbf07a8c424fc6c89f71ee01bd164e8fe409b"
+      },
+      {
+        "host": "mlkit",
+        "label": "ffi.model.generate",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "default region inference crashes in concatStringML before the first verdict; the unchanged 32 checks pass with -no_ri in the separate ffi.model.generate-no-ri control (docs/bugreport/mlkit/region-inference)",
+        "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "host": "mlkit",
+        "label": "ffi.model.policy",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "region inference corrupts JSON member names during sidecar decoding; the default build requests an impossible allocation or segfaults, while the same 48 checks pass with -no_ri (docs/bugreport/mlkit/region-inference)",
+        "output_sha256": "7361bfb7005d117dad867cc2f3685a3655be234f87da11e5f46512c9862d8839"
+      },
+      {
+        "host": "mlkit",
+        "label": "ffi.model.shim",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "dbb2e7431d95ec2a78ab4fd7aa348afe833be07bc8fea8df53490f53e39bce3e"
+      },
+      {
+        "host": "mlkit",
+        "label": "ffi.model.target",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "region inference corrupts decoded JSON target profile data and requests an impossible allocation; unchanged sources pass all 19 checks with -no_ri (docs/bugreport/mlkit/region-inference)",
+        "output_sha256": "7361bfb7005d117dad867cc2f3685a3655be234f87da11e5f46512c9862d8839"
+      },
+      {
+        "host": "mlkit",
+        "label": "ffi.win32.common",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "d23e9b1c8e3195f89b0cb46e6b43fe885d7a2e0a263fdd9675b0a00a1a1b9138"
+      },
+      {
+        "host": "mlkit",
+        "label": "ffi.win32.values",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "583582b945a56d8f1b53d22c97660d0e243cb1c69578b3bbea244ebb63300267"
+      },
+      {
+        "host": "mlkit",
+        "label": "json.roundtrip",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "region inference hands the program strings and values that are no longer its own, and it dies with SIGSEGV; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)",
+        "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "host": "mlkit",
+        "label": "json.suite",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "4ed238af2b493d55306115f44cfcbf980bb7529c61fa68ae59515324ac7d5fae"
+      },
+      {
+        "host": "mlkit",
+        "label": "jsonrpc.jsonrpc",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "region inference: a name lib/json decodes comes back corrupt, and the program dies with SIGSEGV; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)",
+        "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "host": "mlkit",
+        "label": "jupyter.jupyter",
+        "oracle": "FAIL",
+        "explanation": "HOST-ABSENT",
+        "reason": "lib/jupyter is written on lib/zmtp, which needs Socket.acceptNB (docs/bugreport/mlkit/socket-acceptNB-absent)",
+        "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "host": "mlkit",
+        "label": "language.c.analysis",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "22347509906d443ae640fa264ed2091566679a24da5f39b078409ff3c2ee40dd"
+      },
+      {
+        "host": "mlkit",
+        "label": "language.c.frontend",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "0fdd2d38ae2b46725350001a8c78260d072953aff5d2d2ccfc5a3775e5c0dcbb"
+      },
+      {
+        "host": "mlkit",
+        "label": "language.c.target",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "fdc2ec46162d69665d1adbce486cee50c269db35e5f35642b85fe5a073ccc493"
+      },
+      {
+        "host": "mlkit",
+        "label": "markdown.spec",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "8fa95001669a2862c1c93a426c85e6e39db144d3f34c877ed2966bb8f375a328"
+      },
+      {
+        "host": "mlkit",
+        "label": "pretty.pretty",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "region inference: the random documents end in SIGSEGV; built with -no_ri the test passes (docs/bugreport/mlkit/region-inference)",
+        "output_sha256": "55f6c11a1b7c391d44135c31e2fbe0aff74855b780628e83523a3ee980a64e70"
+      },
+      {
+        "host": "mlkit",
+        "label": "property.core",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "aae83977183ddb1cc1bf4497268823601a6933fd705c0c63e41e19ace6dfad97"
+      },
+      {
+        "host": "mlkit",
+        "label": "property.shrink",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "4e5cd91dcffb2723acde2b97e13abe78bd0ab21a5498411351396435a3adb79b"
+      },
+      {
+        "host": "mlkit",
+        "label": "random.kat",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "597080ceb1f88b0973fc106647ab36d407ae3ded9f05f374d58f9d81e9c406fb"
+      },
+      {
+        "host": "mlkit",
+        "label": "random.props",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "96e62b7a5c1337f84f2d3247dcf44f5efd7376e35e047b8c89973213fd8077a2"
+      },
+      {
+        "host": "mlkit",
+        "label": "terminal.edit",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "3fdc23ac9d57a3eba795ecc1258c259028c852b052c6c84380dcf7e8bd4730a4"
+      },
+      {
+        "host": "mlkit",
+        "label": "terminal.emulator",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "1135e36a23312f81b01f07e1ca24858ae7dcedfc744dac4758ea8be44647e7b8"
+      },
+      {
+        "host": "mlkit",
+        "label": "terminal.key",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "e9d8480e94af55d6e433363a5ce3e4032e4d1c20f1b10a0662edea755a2dfa70"
+      },
+      {
+        "host": "mlkit",
+        "label": "terminal.style",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "f0ce1470b19876fd5b20eeeeb979428c5f720710560c21e01344542a6646c624"
+      },
+      {
+        "host": "mlkit",
+        "label": "unicode.graphemes",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "2fc13f9930e9d4e581200780b296441082f7f3adb640668621b1ec6ce0b22b30"
+      },
+      {
+        "host": "mlkit",
+        "label": "unicode.identifier",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "57bb43709462e92f900575dd224b2a6cba2853151005d38244300aae05433188"
+      },
+      {
+        "host": "mlkit",
+        "label": "unicode.normalize",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "f2f0119437a18f85a78db0a5783d55b1ca9b3e89695817d1e5536a23cafbe172"
+      },
+      {
+        "host": "mlkit",
+        "label": "unicode.normalize-props",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "9eb4f8fd3d597bc8230e776096dcd19080f6ddcbf07ad2aabae1cd5ec6a8a3f4"
+      },
+      {
+        "host": "mlkit",
+        "label": "unicode.security",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "e07cda8385d909219b44e99c65491de185d5ed2b20bf37084a20414aecb0e8cd"
+      },
+      {
+        "host": "mlkit",
+        "label": "unicode.utf8",
+        "oracle": "FAIL",
+        "explanation": "HOST-FLAKY",
+        "reason": "MLKit keeps a region and a frame for every step of a loop whose tail call stands inside the let that makes a string, although --preserve_tail_calls is on (docs/bugreport/mlkit/preserve-tail-calls): the round trip of every scalar value takes 7.1 GB, and the test fails with \"Cannot allocate memory\" where the machine cannot give it that (under ulimit -v 14000000); it passes where it can, and passes in 3.5 MB built with -no_ri",
+        "output_sha256": "61d255eeefb1f2712ffe067f55accdaeb787147b253a34437b7a9b8c2aa67b40"
+      },
+      {
+        "host": "mlkit",
+        "label": "unit.core",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "12da5a335dc9d7b9ca93df61be2967f315c6745e051d89d91908b6fcd91b51ab"
+      },
+      {
+        "host": "mlkit",
+        "label": "zmtp.zmtp",
+        "oracle": "FAIL",
+        "explanation": "HOST-ABSENT",
+        "reason": "MLKit's Socket has no acceptNB, which lib/zmtp's loop accepts with (docs/bugreport/mlkit/socket-acceptNB-absent)",
+        "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "host": "mlton",
+        "label": "dap.dap",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "54938f404ff85bd55817f9aef2e8da8dc389c8a38e31111125f71bac3edc0d45"
+      },
+      {
+        "host": "mlton",
+        "label": "digest.digest",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "1394c4ddf8fbf58a8b653feec39cd0baa1cf325bd0df3901eae88ac49bf13642"
+      },
+      {
+        "host": "mlton",
+        "label": "ffi.marshal.core",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "972a164394697a4d9486f8fae81540222287cb695c8c8ca01a71e6772f0d5ee5"
+      },
+      {
+        "host": "mlton",
+        "label": "ffi.model.generate",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "763b041625fc6d7751c9f77b7f74a43db5ac6d69856a97c79bc3cc8672076c7a"
+      },
+      {
+        "host": "mlton",
+        "label": "ffi.model.policy",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "d3891c203a4bfd120396369dc1ef9870b5077fe2ec4d922456e503a26d42d4f5"
+      },
+      {
+        "host": "mlton",
+        "label": "ffi.model.shim",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "dbb2e7431d95ec2a78ab4fd7aa348afe833be07bc8fea8df53490f53e39bce3e"
+      },
+      {
+        "host": "mlton",
+        "label": "ffi.model.target",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "83eca919aa7cb0ef2fa87e5b100969078e82afd70ca7d6e1a6c074c9fc5e0ab9"
+      },
+      {
+        "host": "mlton",
+        "label": "ffi.win32.common",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "d23e9b1c8e3195f89b0cb46e6b43fe885d7a2e0a263fdd9675b0a00a1a1b9138"
+      },
+      {
+        "host": "mlton",
+        "label": "ffi.win32.values",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "583582b945a56d8f1b53d22c97660d0e243cb1c69578b3bbea244ebb63300267"
+      },
+      {
+        "host": "mlton",
+        "label": "json.roundtrip",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "e03d3a8cd272e9f0ac1a0d53f0c20672b04b7c92a6b4d6fbd58148afe8730768"
+      },
+      {
+        "host": "mlton",
+        "label": "json.suite",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "4ed238af2b493d55306115f44cfcbf980bb7529c61fa68ae59515324ac7d5fae"
+      },
+      {
+        "host": "mlton",
+        "label": "jsonrpc.jsonrpc",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "d421e644604206e045273de920225c47eb39d1f784c15a35c1642f13e5347a9c"
+      },
+      {
+        "host": "mlton",
+        "label": "jupyter.jupyter",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "a5bfe92c195d77e7b620b7fdde7390bd14f6e9741bc0a1db6c9e51c6e721cbc1"
+      },
+      {
+        "host": "mlton",
+        "label": "language.c.analysis",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "22347509906d443ae640fa264ed2091566679a24da5f39b078409ff3c2ee40dd"
+      },
+      {
+        "host": "mlton",
+        "label": "language.c.frontend",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "0fdd2d38ae2b46725350001a8c78260d072953aff5d2d2ccfc5a3775e5c0dcbb"
+      },
+      {
+        "host": "mlton",
+        "label": "language.c.target",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "fdc2ec46162d69665d1adbce486cee50c269db35e5f35642b85fe5a073ccc493"
+      },
+      {
+        "host": "mlton",
+        "label": "markdown.spec",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "8fa95001669a2862c1c93a426c85e6e39db144d3f34c877ed2966bb8f375a328"
+      },
+      {
+        "host": "mlton",
+        "label": "pretty.pretty",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "7f8864dd033617cd7a49b03b0a0b1d10582456251705793fdf68535afe539a34"
+      },
+      {
+        "host": "mlton",
+        "label": "property.core",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "aae83977183ddb1cc1bf4497268823601a6933fd705c0c63e41e19ace6dfad97"
+      },
+      {
+        "host": "mlton",
+        "label": "property.shrink",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "22ac60c338795807f5e1027898b354bd3216a5ca34fef7dafbd69e31d4934abe"
+      },
+      {
+        "host": "mlton",
+        "label": "random.kat",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "597080ceb1f88b0973fc106647ab36d407ae3ded9f05f374d58f9d81e9c406fb"
+      },
+      {
+        "host": "mlton",
+        "label": "random.props",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "96e62b7a5c1337f84f2d3247dcf44f5efd7376e35e047b8c89973213fd8077a2"
+      },
+      {
+        "host": "mlton",
+        "label": "terminal.edit",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "3fdc23ac9d57a3eba795ecc1258c259028c852b052c6c84380dcf7e8bd4730a4"
+      },
+      {
+        "host": "mlton",
+        "label": "terminal.emulator",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "1135e36a23312f81b01f07e1ca24858ae7dcedfc744dac4758ea8be44647e7b8"
+      },
+      {
+        "host": "mlton",
+        "label": "terminal.key",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "e9d8480e94af55d6e433363a5ce3e4032e4d1c20f1b10a0662edea755a2dfa70"
+      },
+      {
+        "host": "mlton",
+        "label": "terminal.style",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "f0ce1470b19876fd5b20eeeeb979428c5f720710560c21e01344542a6646c624"
+      },
+      {
+        "host": "mlton",
+        "label": "unicode.graphemes",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "2fc13f9930e9d4e581200780b296441082f7f3adb640668621b1ec6ce0b22b30"
+      },
+      {
+        "host": "mlton",
+        "label": "unicode.identifier",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "57bb43709462e92f900575dd224b2a6cba2853151005d38244300aae05433188"
+      },
+      {
+        "host": "mlton",
+        "label": "unicode.normalize",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "f2f0119437a18f85a78db0a5783d55b1ca9b3e89695817d1e5536a23cafbe172"
+      },
+      {
+        "host": "mlton",
+        "label": "unicode.normalize-props",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "9eb4f8fd3d597bc8230e776096dcd19080f6ddcbf07ad2aabae1cd5ec6a8a3f4"
+      },
+      {
+        "host": "mlton",
+        "label": "unicode.security",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "e07cda8385d909219b44e99c65491de185d5ed2b20bf37084a20414aecb0e8cd"
+      },
+      {
+        "host": "mlton",
+        "label": "unicode.utf8",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "1dac6b445f4fd01dabc5d3c6a2f5a2d650dd7f0e1f977140dfe3e9a18d02589e"
+      },
+      {
+        "host": "mlton",
+        "label": "unit.core",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "12da5a335dc9d7b9ca93df61be2967f315c6745e051d89d91908b6fcd91b51ab"
+      },
+      {
+        "host": "mlton",
+        "label": "zmtp.zmtp",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "25cbd206ff5cc34e711e27ceafd44a7aef6d5ca82bc6f584e429e0eb150cc301"
+      },
+      {
+        "host": "polyml",
+        "label": "dap.dap",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "75a8fc14942c2a754b0620430504dbd9b44c4847a2be86c14c4c6fce54a26ca2"
+      },
+      {
+        "host": "polyml",
+        "label": "digest.digest",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "822ce5e8ef74ccf01a620a5b2a4ad301ef7625f8d5cbf57d43ee049217830b7a"
+      },
+      {
+        "host": "polyml",
+        "label": "ffi.marshal.core",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "02203e7fe0eccfeddb8fdca45e67a92ea99e3afd37091d627eb980ddaf97b851"
+      },
+      {
+        "host": "polyml",
+        "label": "ffi.model.generate",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "bb2528ef52152add338c682f3e2682ffb8561eec641e7cfc25b8a61c34b84b70"
+      },
+      {
+        "host": "polyml",
+        "label": "ffi.model.policy",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "8f4bb19ce045d7940612d5c2c3ef105f892971d2b9cf83d257341ee91944721d"
+      },
+      {
+        "host": "polyml",
+        "label": "ffi.model.shim",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "b39cb0d8789ecbfdac8b134dc4ae1a3a157ad0f4ad2cb3f6243b54719931f74e"
+      },
+      {
+        "host": "polyml",
+        "label": "ffi.model.target",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "b3739ea43064ec54c1600768746dead304fd8ae13adc2c94770b39dc8d0e1395"
+      },
+      {
+        "host": "polyml",
+        "label": "ffi.win32.common",
+        "oracle": "FAIL",
+        "explanation": "HOST-ABSENT",
+        "reason": "the host Basis has no Int64 structure required by the public WIN32_TYPES and WIN32_VALUES signatures; native C oracles and Rune's own fixed-width Basis cover both Windows widths",
+        "output_sha256": "f4d3701c801391870c21e35e5843ed5d87115ff6c40faf49d657b7ca128c8486"
+      },
+      {
+        "host": "polyml",
+        "label": "ffi.win32.values",
+        "oracle": "FAIL",
+        "explanation": "HOST-ABSENT",
+        "reason": "the host Basis has no Int64 structure required by the public WIN32_TYPES and WIN32_VALUES signatures; native C oracles and Rune's own fixed-width Basis cover both Windows widths",
+        "output_sha256": "20362ded9e1b61b6d570306fd87b7f7d912c31600670c810a9fb3a77d113ae4e"
+      },
+      {
+        "host": "polyml",
+        "label": "json.roundtrip",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "8fbeeae0ed5582e3fccfb42e60bcf3b4764c7a412c5d80d44a86ce1a90e3a2ca"
+      },
+      {
+        "host": "polyml",
+        "label": "json.suite",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "6916e519faed716d468d7d014d4ca18c5b4d3c7f238c90803eb46f331a04a9cb"
+      },
+      {
+        "host": "polyml",
+        "label": "jsonrpc.jsonrpc",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "8e61b13b714bd437f7551f4d03715f34ab257c3b248969b41a23a0f63fc827c7"
+      },
+      {
+        "host": "polyml",
+        "label": "jupyter.jupyter",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "aa8c5bcb59b72185d220bc97b72ef5dbc9621c5648a88c5bdab77d8ff4e50aeb"
+      },
+      {
+        "host": "polyml",
+        "label": "language.c.analysis",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "36b8f0213d3d140bac0cd8d943aa7a90ebc39558cdcb6811cec6c2c6d8395c92"
+      },
+      {
+        "host": "polyml",
+        "label": "language.c.frontend",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "cff6ec858c6abae2b3876c613fc9f4f354eb7c5c6bc65778179da3ec1d1ef2be"
+      },
+      {
+        "host": "polyml",
+        "label": "language.c.target",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "499af90ae0d9a62d923ec26aadb3f910e064492c7873af2f0a0f38cad9f54f9e"
+      },
+      {
+        "host": "polyml",
+        "label": "markdown.spec",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "5c52038c590863921b9a184a98d6c0a33548321dd0a6016ac6ad6c9479bf789b"
+      },
+      {
+        "host": "polyml",
+        "label": "pretty.pretty",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "5d053699886b36920f71fa537c600fd3f7650b701fb704af5f52526eea67fbcb"
+      },
+      {
+        "host": "polyml",
+        "label": "property.core",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "c6ecb5e28a27693104bdd6c6d4f7f704a48f9cd40da32ccf43407c9c9f2189b1"
+      },
+      {
+        "host": "polyml",
+        "label": "property.shrink",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "bd50e5d36c6246d29af963bc502bf59be0cdc2f85837ca14af1228be5c1e10b0"
+      },
+      {
+        "host": "polyml",
+        "label": "random.kat",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "8bbb0fb0e861b8f3ad63db4050ca297b548bf46117577e7e43b9d8992266bbea"
+      },
+      {
+        "host": "polyml",
+        "label": "random.props",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "b7b11c13fa8772ca62932d24f845b2eebe60d86a6d7e6431bea983b2ec63c459"
+      },
+      {
+        "host": "polyml",
+        "label": "terminal.edit",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "020a986407e7504be81a73c569811569f45df0b1e44dbe24a86778e9b01fb498"
+      },
+      {
+        "host": "polyml",
+        "label": "terminal.emulator",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "3e161f4639debfef59cfe88b462f0c17f17c320dd6ec8ce8817e2c5f1a41b203"
+      },
+      {
+        "host": "polyml",
+        "label": "terminal.key",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "05b91f4d8cb4b51b2d69b616193415ce1276b80a6a364788129a18a2c9f6f0c5"
+      },
+      {
+        "host": "polyml",
+        "label": "terminal.style",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "f7e881610b58c57b577430a931250381ceb384d684f29a929ac325fb29dd21c1"
+      },
+      {
+        "host": "polyml",
+        "label": "unicode.graphemes",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "67f68b2301ea7a654fa86f0de6511a2a314dd38255a4808c609cf63b3ee53c98"
+      },
+      {
+        "host": "polyml",
+        "label": "unicode.identifier",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "f386d411cfa69b827568fb2686580969a4eabe5dd3affb6a604999227cea247e"
+      },
+      {
+        "host": "polyml",
+        "label": "unicode.normalize",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "73e8b95e466bc3464fe63ad4f1b32d4f3bf4f323d38b7811715c48a786c41991"
+      },
+      {
+        "host": "polyml",
+        "label": "unicode.normalize-props",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "6849d0753f2d2f8dc0b78c2879319c017973d16059be831a33d0b8a1aa742b80"
+      },
+      {
+        "host": "polyml",
+        "label": "unicode.security",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "bdc07c00aca67737186f078dfd22ee5391a743e9befeb7156487f11b4b0a74f8"
+      },
+      {
+        "host": "polyml",
+        "label": "unicode.utf8",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "a4ce6689c7458f0cc89909ff568534e155f4a5223bf349c3d3e9daa751199a9b"
+      },
+      {
+        "host": "polyml",
+        "label": "unit.core",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "b8150023ff334ad22eaff399f44bd71acf4a2da812b306e9fec9f1d07234f67d"
+      },
+      {
+        "host": "polyml",
+        "label": "zmtp.zmtp",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "the first Zmtp.wait reads the connection the ROUTER accepted with recvVecNB, which waits for data that never comes, so the test hangs until the native library suite's time limit; on the connecting socket the same call returns NONE, and MLton and Rune return NONE on both",
+        "output_sha256": "7a1a31a3ed0808e3ab6a796681d97307b929940f3e20d36f309caecdf4a7cc68"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "dap.dap",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "cd88f01f888a90df585d1a81ebf8b3ad3d39d65253b4175643c5d1f3490f5b6d"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "digest.digest",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "cbae2cc70d93ee5a9acdd76fe7126b967bf844b8e3d1f5efead56a6473148dd1"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "ffi.marshal.core",
+        "oracle": "FAIL",
+        "explanation": "HOST-ABSENT",
+        "reason": "optional default-real PackRealBig and PackRealLittle are unbound (docs/bugreport/smlnj/PackReal-default-absent)",
+        "output_sha256": "3e3a96fdf233a4fe9f4d804120894b2adf3ee44f9bb57e6199cd1612fce10098"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "ffi.model.generate",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "polymorphic equality misses equal IntInf selector values after target conversion; only duplicate narrowed selectors rejected fails (31 of 32 pass), while specialized equality and IntInf.compare agree (docs/bugreport/smlnj/IntInf/normalized-selector-equality)",
+        "output_sha256": "2c1386304b6ad814adbb6593bb446c7fc40fb6fbb13642ea64703e21894ab488"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "ffi.model.policy",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "e153faf9fe3891e42fce38b8d7b7870e905c4e91d64a4f69a91aba347f14773b"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "ffi.model.shim",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "d680159e19b41faf52c8c94b974331884c435fe19f4404abbb570f6e76e003ad"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "ffi.model.target",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "19910f93b5efafed74fc340d373e22f72a134b91df88142bf59a1645b5e90d92"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "ffi.win32.common",
+        "oracle": "FAIL",
+        "explanation": "HOST-ABSENT",
+        "reason": "the host Basis has no Word16 structure required by the public WIN32_TYPES and WIN32_VALUES signatures; native C oracles and Rune's own fixed-width Basis cover both Windows widths",
+        "output_sha256": "6fd0be8b4e9d9356a382b818ef11ded92ddf5fa33a372e0ce77188c74e2a806b"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "ffi.win32.values",
+        "oracle": "FAIL",
+        "explanation": "HOST-ABSENT",
+        "reason": "the host Basis has no Word16 structure required by the public WIN32_TYPES and WIN32_VALUES signatures; native C oracles and Rune's own fixed-width Basis cover both Windows widths",
+        "output_sha256": "6fd0be8b4e9d9356a382b818ef11ded92ddf5fa33a372e0ce77188c74e2a806b"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "json.roundtrip",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "b1112be60bb2597f54413c16042a722f8c81ef5327d874e7c223eb8cc034c948"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "json.suite",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "57cbdb320df51ff5491c843441dff73f37850b2562538eeb49815deec1321774"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "jsonrpc.jsonrpc",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "33a724912919fb2bab65ef175a7205ddc380a26cd7891714c310702840d2b7d0"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "jupyter.jupyter",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "1459c90e19ff042a5ab54ad2cbea129bee911fd9d15ecbdbdcb772326b39c1c5"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "language.c.analysis",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "77f8ba4c1b9c7a550dfb22a9722dd1bb7e51fe37154a22ef9efcfc5644516c27"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "language.c.frontend",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "ada42b8bf7f981a91e35f5c4f6d7ff1c4cdf7e2306ef64f660e7b8d608634694"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "language.c.target",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "c8bbf33adbeaa2b96b119e7367a071e98b0e6577628a2be8f90aab9a7f45650d"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "markdown.spec",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "7f652d50ba73c06320f09a59157752e0b26f78caf75a34698842726000c7bdfd"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "pretty.pretty",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "21d1c764c889065a869bfd2b8b0a1d25855aa4d60c8701f45f30455c540616d4"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "property.core",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "Real.fromManExp {man = 0.5, exp = ~1021} is 0.0, not the least normal real, and so is every subnormal, and Real.nextAfter (Real.minNormalPos, 0.0) is 0.0: lib/test/property decodes a real node's bits with fromManExp and draws that nextAfter as an edge case, so the fingerprint differs (docs/bugreport/smlnj/Real.fromManExp, Real.nextAfter)",
+        "output_sha256": "a3cfdf096d78ca8507a8ef9e03391f6d342fd6547d6c5d11af141633dda143b7"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "property.shrink",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "the host stops with \"Fatal error -- bogus fault not in ML\" (signal 11) in planted/sort-drops-equals, in every run, and the tests after it do not run; not reduced, and perhaps the raw Word64 among the pointers of a record of arguments that 2026.3 fixed (smlnj/smlnj#394; docs/bugreport/smlnj/GC/spilled-word64-argument)",
+        "output_sha256": "f96040bb848ae82e85e6b396b5d8bfbbf758142a2982ac122080509ce4d9b079"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "random.kat",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "d2902557ddedcb342865959ba09113510f6d4f210174fd5a3c58c137e2ea53ba"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "random.props",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "1fa1c868201b2d17def53e6ffe50483127eb378665ee053bd5ec5ae7476feb50"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "terminal.edit",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "0b95867acd41e5348f4b9d773db0ba80c7ed6ab7246a739f9c54ed089c924ca0"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "terminal.emulator",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "3e3042bfcb25c7d7604851a283f69cfd210b55bee5961321785a5615304a1557"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "terminal.key",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "483ac134b3853f87fefcdf37aef90288bc81538c7567129f1d3d015bcc0e9cbd"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "terminal.style",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "823d859b227001601f81e4fc70691b214f149e831d77911b917536fa46af4f54"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "unicode.graphemes",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "eb21adb85141e000a3310cd12110c24919546e17e58b3f66c1b708a9546339d8"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "unicode.identifier",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "843dc51cfebc4ae11616e8bc176200933d466585cffc9e6371cba6a20978b657"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "unicode.normalize",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "d36368d6ff89bbc2f336fde2199c90ca6acdc8fa0d83d8a7bb11649c7984a070"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "unicode.normalize-props",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "743746638fad3757a5ed8fe5dad0a29129742bb170e6d3f24a2f1603f4901423"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "unicode.security",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "669f6b20c975ea4b3e0c4ac127acf4bbc7873a9a5e55ef9e81f40cefc7374d8b"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "unicode.utf8",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "24332aa4da9d1f9ef5d02407ab6ba9049cdff810fc9a27ac3c43c9d4bcff1864"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "unit.core",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "87c102201d70b30983d21676c19a76435742928d02ed1261db47e03ff3ebc370"
+      },
+      {
+        "host": "smlnj-dev",
+        "label": "zmtp.zmtp",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "834eede793fa601768a3165583972e8ec5a4c2510f5ae9ec35a062519a616808"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "dap.dap",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "36ca8176974dc4d106139eedd1b6fd08a1f3abf5ad6d87193de542630afd35a5"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "digest.digest",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "d14681de42ee0177a1b1e44921f8ac8c0286e25da34223183737258f6415e095"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "ffi.marshal.core",
+        "oracle": "FAIL",
+        "explanation": "HOST-ABSENT",
+        "reason": "optional default-real PackRealBig and PackRealLittle are unbound (docs/bugreport/smlnj/PackReal-default-absent)",
+        "output_sha256": "507f403bd2bde29573f7a73e01fd48f1badc72f941e80ecb7f216a5f70fc5953"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "ffi.model.generate",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "polymorphic equality misses equal IntInf selector values after target conversion; only duplicate narrowed selectors rejected fails (31 of 32 pass), while specialized equality and IntInf.compare agree (docs/bugreport/smlnj/IntInf/normalized-selector-equality)",
+        "output_sha256": "e1f88b0bb0387e7b5eeb9135610e7ec71a218ce203ce0f9b89fdfb35b6107a43"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "ffi.model.policy",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "ab31b00c1b456a14c8965da30f5a7f7dc9073d884923f33ae3dccab67a19ffbf"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "ffi.model.shim",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "f38d68f2b14b480875051f151805eef887f4ce9dfa4ee0a8a217a9580f8c620a"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "ffi.model.target",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "119650bd89eaa8586b163152304b9eab2a3c3355462e11297479c772eef29d0c"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "ffi.win32.common",
+        "oracle": "FAIL",
+        "explanation": "HOST-ABSENT",
+        "reason": "the host Basis has no Word16 structure required by the public WIN32_TYPES and WIN32_VALUES signatures; native C oracles and Rune's own fixed-width Basis cover both Windows widths",
+        "output_sha256": "df956f15ea8060154329218aa4353d1d96eccf67963ca486e123ec4f6eadc6bf"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "ffi.win32.values",
+        "oracle": "FAIL",
+        "explanation": "HOST-ABSENT",
+        "reason": "the host Basis has no Word16 structure required by the public WIN32_TYPES and WIN32_VALUES signatures; native C oracles and Rune's own fixed-width Basis cover both Windows widths",
+        "output_sha256": "df956f15ea8060154329218aa4353d1d96eccf67963ca486e123ec4f6eadc6bf"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "json.roundtrip",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "9282c65830eebb7240962842f28b9d6c1c49bf2e3af4bf650b8677980ab7fc05"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "json.suite",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "1f7b1fdba0643e4af199e072e7d0708a8f52d6b434a0128f6277fb8e6741cde8"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "jsonrpc.jsonrpc",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "d4dbe8c7c5b9861968a00c08bbe7af3fdcbfe1ae3b2df31c0987d7529d87d64b"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "jupyter.jupyter",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "5a37d97e94bd0b2b05206c56f59b2eea318c432cb4242dbfdcba5124d697b94c"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "language.c.analysis",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "2a7d16a64d6df23f39635244e8d416ecc0f2ff95b77f9e6ae885746e39c151a8"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "language.c.frontend",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "8d711948ff1c4ae22498325b1cdbe3a29f6474c0f86b16ddf81961995be61253"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "language.c.target",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "b0d417c095dd0de237cb64cca78217f7f5cdc5744b1cc771d0ee6b40c0e5683d"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "markdown.spec",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "7a4fbe801ab8e787ea9314f6b3b59a6a9429b8868f1468c04b0cce080b6cf537"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "pretty.pretty",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "45897a2a371b1b7fb2c836204dc021e95e8ad74bed66c4d32ccb02b48dd30268"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "property.core",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "Real.fromManExp {man = 0.5, exp = ~1021} is 0.0, not the least normal real, and so is every subnormal, and Real.nextAfter (Real.minNormalPos, 0.0) is 0.0: lib/test/property decodes a real node's bits with fromManExp and draws that nextAfter as an edge case, so the fingerprint differs (docs/bugreport/smlnj/Real.fromManExp, Real.nextAfter); the 64-bit build also now and then loses a real in a garbage collection, as functions share GC code that does not save it (docs/bugreport/smlnj/GC/real-corrupted-on-64-bit), or stops with \"bogus fault\" when the collector meets a raw Word64 in a record of arguments (docs/bugreport/smlnj/GC/spilled-word64-argument)",
+        "output_sha256": "144f3d938d94c1ac21560fe9e7d867d9f31247716dc67b1c012ca9460fe4f7cb"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "property.shrink",
+        "oracle": "FAIL",
+        "explanation": "HOST-FLAKY",
+        "reason": "the 64-bit build now and then loses a real or a Word64 in a garbage collection (docs/bugreport/smlnj/GC/real-corrupted-on-64-bit, spilled-word64-argument): functions/pure-has-no-effects failed in one of three runs of the same program, which passes on every other compiler and on the development line",
+        "output_sha256": "a64b1b6f68b6c7e3af30ffc592481f529f92a3e12bc09e14abf6b17179961e5f"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "random.kat",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "34e59fae146d65e859d3f9328758f4287e23780288d5a4e92f2392ccd5c067c4"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "random.props",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "5aa1b2a8245243526c3b8b28dffcd7dd99db8ed417ed1546b407d5253c6c8fcf"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "terminal.edit",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "352039d63d21bea32928142e2951ae23a40db1851c3813f53096d51774344435"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "terminal.emulator",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "a8fda01293e6d69fde3a6cd18be33ab88cedd0b93c1ea07d353c3b1c778b82ba"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "terminal.key",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "691ecf5ecd59675e7932b114cd88bd4497c651001a496d87d3a720602957bf5e"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "terminal.style",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "fcde3e34a9ecbbe3537a9ff33f1bb74d6b928a9151775c7d5f504b9419e7a728"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "unicode.graphemes",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "06b082cdaa6beafe00465cc27713603b830db96b5f24507fab05046c697c0b18"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "unicode.identifier",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "e30b1f3dd1ccffac2ac480f80e5adf68279868044f5c4a43a991fd4195996eb4"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "unicode.normalize",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "bc03527624a1e7deab6681450d788f0c35a6dad505349e204b71e7ece35d682b"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "unicode.normalize-props",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "e951f6a4cfd87500ae930adf4002c4f7f27ae5dd11719c5addc72ee00b2febf2"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "unicode.security",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "192086fedd492751388f37477c8c3f134c0a2f136c794d7211db41b09517665f"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "unicode.utf8",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "ec49eba7f2897f43faebc8e0f8466f8ea044454e9d8c88e0a6a4fc978a83ad95"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "unit.core",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "71d6357f29e68de264d9f56cfdd51df9a9525bc77982c298f55362af29fbcc3e"
+      },
+      {
+        "host": "smlnj-legacy",
+        "label": "zmtp.zmtp",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "d5df0485a1594669d7f0c391de98175cb503e6b480c687dfba5ab3d9513380bd"
+      },
+      {
+        "host": "smlnj32",
+        "label": "dap.dap",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "36ca8176974dc4d106139eedd1b6fd08a1f3abf5ad6d87193de542630afd35a5"
+      },
+      {
+        "host": "smlnj32",
+        "label": "digest.digest",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "d14681de42ee0177a1b1e44921f8ac8c0286e25da34223183737258f6415e095"
+      },
+      {
+        "host": "smlnj32",
+        "label": "ffi.marshal.core",
+        "oracle": "FAIL",
+        "explanation": "HOST-ABSENT",
+        "reason": "optional default-real PackRealBig and PackRealLittle are unbound (docs/bugreport/smlnj/PackReal-default-absent)",
+        "output_sha256": "507f403bd2bde29573f7a73e01fd48f1badc72f941e80ecb7f216a5f70fc5953"
+      },
+      {
+        "host": "smlnj32",
+        "label": "ffi.model.generate",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "polymorphic equality misses equal IntInf selector values after target conversion; only duplicate narrowed selectors rejected fails (31 of 32 pass), while specialized equality and IntInf.compare agree (docs/bugreport/smlnj/IntInf/normalized-selector-equality)",
+        "output_sha256": "e1f88b0bb0387e7b5eeb9135610e7ec71a218ce203ce0f9b89fdfb35b6107a43"
+      },
+      {
+        "host": "smlnj32",
+        "label": "ffi.model.policy",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "ab31b00c1b456a14c8965da30f5a7f7dc9073d884923f33ae3dccab67a19ffbf"
+      },
+      {
+        "host": "smlnj32",
+        "label": "ffi.model.shim",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "f38d68f2b14b480875051f151805eef887f4ce9dfa4ee0a8a217a9580f8c620a"
+      },
+      {
+        "host": "smlnj32",
+        "label": "ffi.model.target",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "119650bd89eaa8586b163152304b9eab2a3c3355462e11297479c772eef29d0c"
+      },
+      {
+        "host": "smlnj32",
+        "label": "ffi.win32.common",
+        "oracle": "FAIL",
+        "explanation": "HOST-ABSENT",
+        "reason": "the host Basis has no Word16 structure required by the public WIN32_TYPES and WIN32_VALUES signatures; native C oracles and Rune's own fixed-width Basis cover both Windows widths",
+        "output_sha256": "df956f15ea8060154329218aa4353d1d96eccf67963ca486e123ec4f6eadc6bf"
+      },
+      {
+        "host": "smlnj32",
+        "label": "ffi.win32.values",
+        "oracle": "FAIL",
+        "explanation": "HOST-ABSENT",
+        "reason": "the host Basis has no Word16 structure required by the public WIN32_TYPES and WIN32_VALUES signatures; native C oracles and Rune's own fixed-width Basis cover both Windows widths",
+        "output_sha256": "df956f15ea8060154329218aa4353d1d96eccf67963ca486e123ec4f6eadc6bf"
+      },
+      {
+        "host": "smlnj32",
+        "label": "json.roundtrip",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "9282c65830eebb7240962842f28b9d6c1c49bf2e3af4bf650b8677980ab7fc05"
+      },
+      {
+        "host": "smlnj32",
+        "label": "json.suite",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "1f7b1fdba0643e4af199e072e7d0708a8f52d6b434a0128f6277fb8e6741cde8"
+      },
+      {
+        "host": "smlnj32",
+        "label": "jsonrpc.jsonrpc",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "d4dbe8c7c5b9861968a00c08bbe7af3fdcbfe1ae3b2df31c0987d7529d87d64b"
+      },
+      {
+        "host": "smlnj32",
+        "label": "jupyter.jupyter",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "5a37d97e94bd0b2b05206c56f59b2eea318c432cb4242dbfdcba5124d697b94c"
+      },
+      {
+        "host": "smlnj32",
+        "label": "language.c.analysis",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "2a7d16a64d6df23f39635244e8d416ecc0f2ff95b77f9e6ae885746e39c151a8"
+      },
+      {
+        "host": "smlnj32",
+        "label": "language.c.frontend",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "8d711948ff1c4ae22498325b1cdbe3a29f6474c0f86b16ddf81961995be61253"
+      },
+      {
+        "host": "smlnj32",
+        "label": "language.c.target",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "b0d417c095dd0de237cb64cca78217f7f5cdc5744b1cc771d0ee6b40c0e5683d"
+      },
+      {
+        "host": "smlnj32",
+        "label": "markdown.spec",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "7a4fbe801ab8e787ea9314f6b3b59a6a9429b8868f1468c04b0cce080b6cf537"
+      },
+      {
+        "host": "smlnj32",
+        "label": "pretty.pretty",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "45897a2a371b1b7fb2c836204dc021e95e8ad74bed66c4d32ccb02b48dd30268"
+      },
+      {
+        "host": "smlnj32",
+        "label": "property.core",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "lib/test/property is written on lib/random (see random.*); with lib/random right (a native fixed point of 110.99.9), property.core still fails on other bugs of docs/bugreport/smlnj (Word64, Int64 and reals), and with all their fixes it passes",
+        "output_sha256": "e6d89dabf6c1c2b24365e5f4af8bd3c19093f52402c92f7b8dcb7f6bf91b16f8"
+      },
+      {
+        "host": "smlnj32",
+        "label": "property.shrink",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "lib/test/property is written on lib/random (see random.*); with lib/random right (a native fixed point of 110.99.9), property.core still fails on other bugs of docs/bugreport/smlnj (Word64, Int64 and reals), and with all their fixes it passes",
+        "output_sha256": "e6d89dabf6c1c2b24365e5f4af8bd3c19093f52402c92f7b8dcb7f6bf91b16f8"
+      },
+      {
+        "host": "smlnj32",
+        "label": "random.kat",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "SplitMix64's 64-bit constants lose bits 30 and 31 of their low half (0wx40000000 : Word64.word is 0w0): the release's boot files are cross-compiled on amd64, which builds IntInf constants with 62-bit digits; smlnj/legacy #260, closed as fixed in 110.99.4, is still there in 110.99.9, and a native fixed point of 110.99.9 passes",
+        "output_sha256": "7b596d8ccbf42a0e8a0dbb12733b37399a33fff00a17183f1dfaa473ca23421e"
+      },
+      {
+        "host": "smlnj32",
+        "label": "random.props",
+        "oracle": "FAIL",
+        "explanation": "HOST-BUG",
+        "reason": "SplitMix64's 64-bit constants lose bits 30 and 31 of their low half (0wx40000000 : Word64.word is 0w0): the release's boot files are cross-compiled on amd64, which builds IntInf constants with 62-bit digits; smlnj/legacy #260, closed as fixed in 110.99.4, is still there in 110.99.9, and a native fixed point of 110.99.9 passes",
+        "output_sha256": "c78d027b8e0fd01ddc9b71c2cf149ba344cb88d1a18134dce11eec29363365c7"
+      },
+      {
+        "host": "smlnj32",
+        "label": "terminal.edit",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "352039d63d21bea32928142e2951ae23a40db1851c3813f53096d51774344435"
+      },
+      {
+        "host": "smlnj32",
+        "label": "terminal.emulator",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "a8fda01293e6d69fde3a6cd18be33ab88cedd0b93c1ea07d353c3b1c778b82ba"
+      },
+      {
+        "host": "smlnj32",
+        "label": "terminal.key",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "691ecf5ecd59675e7932b114cd88bd4497c651001a496d87d3a720602957bf5e"
+      },
+      {
+        "host": "smlnj32",
+        "label": "terminal.style",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "fcde3e34a9ecbbe3537a9ff33f1bb74d6b928a9151775c7d5f504b9419e7a728"
+      },
+      {
+        "host": "smlnj32",
+        "label": "unicode.graphemes",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "06b082cdaa6beafe00465cc27713603b830db96b5f24507fab05046c697c0b18"
+      },
+      {
+        "host": "smlnj32",
+        "label": "unicode.identifier",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "e30b1f3dd1ccffac2ac480f80e5adf68279868044f5c4a43a991fd4195996eb4"
+      },
+      {
+        "host": "smlnj32",
+        "label": "unicode.normalize",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "bc03527624a1e7deab6681450d788f0c35a6dad505349e204b71e7ece35d682b"
+      },
+      {
+        "host": "smlnj32",
+        "label": "unicode.normalize-props",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "e951f6a4cfd87500ae930adf4002c4f7f27ae5dd11719c5addc72ee00b2febf2"
+      },
+      {
+        "host": "smlnj32",
+        "label": "unicode.security",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "192086fedd492751388f37477c8c3f134c0a2f136c794d7211db41b09517665f"
+      },
+      {
+        "host": "smlnj32",
+        "label": "unicode.utf8",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "ec49eba7f2897f43faebc8e0f8466f8ea044454e9d8c88e0a6a4fc978a83ad95"
+      },
+      {
+        "host": "smlnj32",
+        "label": "unit.core",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "71d6357f29e68de264d9f56cfdd51df9a9525bc77982c298f55362af29fbcc3e"
+      },
+      {
+        "host": "smlnj32",
+        "label": "zmtp.zmtp",
+        "oracle": "PASS",
+        "explanation": null,
+        "reason": null,
+        "output_sha256": "d5df0485a1594669d7f0c391de98175cb503e6b480c687dfba5ab3d9513380bd"
+      }
+    ],
+    "mlkit_collector_only_control": {
+      "status": "PASS",
+      "assertions": 32,
+      "summary": "SUMMARY 32 tests, 32 passed, 0 failed, 0 skipped"
+    },
+    "accepted_polyml_zmtp_timeout_seconds": 600,
+    "summary_sha256": "014bbe8a066fa50953cbd96144cb2f7c2b51e4f44ec999f63cb7999a3c3c3110",
+    "events_sha256": "d8b105e2b389758f8e5b21e69d4b02f077fd57295b41e25985f2e06f55131d06",
+    "log_sha256": "99f434c992d72070f6123358c61eab17370c491312ee600f4edf1e6e6b32e706"
+  }
+}

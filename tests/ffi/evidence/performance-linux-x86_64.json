@@ -1,0 +1,483 @@
+{
+  "schema": 1,
+  "date": "2026-10-23T08:05:54Z",
+  "compiler": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "vm": "runevm 8a94f1313\nGMP headers 6.3.0, library 6.3.0, 64-bit limbs, supported\nGMP target: x86_64-linux-gnu\nGMP provenance: checked system installation; source and build options not supplied\nGMP build: {\"unknown\": true}\n",
+  "revision": "fb1d42cbc20015a99f1aedc301f985a660dc1c9e\n",
+  "libraryRevision": "8a94f13139be441e2410295269e742eaed1b8bb1\n",
+  "libraryRoot": "/home/ruud/rune/.worktrees/runeffi-layout/lib",
+  "vmSha256": "0c2579a4cadc1f44da9ab1c8629ca94676a051f334bcd73f6bbf05226e295dc8",
+  "workerSha256": "8bb9965c9744ccabe26e13cb0a255d669ee4131ebe9fb2a17d4d416f22c4d500",
+  "generationSha256": "ccd279e0324d7cd9fe6bd3aac9f2bde9851222b59f62ac8afcf11d7226ebc19c",
+  "vmOptions": [
+    "--jit=off"
+  ],
+  "cFlags": [
+    "-std=c17",
+    "-O2",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic"
+  ],
+  "sources": [
+    {
+      "path": "tests/ffi/performance.c",
+      "sha256": "77d8612b21fc143b3062efb171e9bc15715d49c1683c400d5fa9be7afd46f8b0"
+    },
+    {
+      "path": "tests/ffi/performance-direct.c",
+      "sha256": "df89545c815deef499aac055b27faf961e76ba88c501ae992ebefb10b8b36672"
+    },
+    {
+      "path": "tests/ffi/performance.sml",
+      "sha256": "2b43373b2e51a51e4f75195645bd0058a345d3d38c474a1ed1a0f7f702692251"
+    },
+    {
+      "path": "tests/ffi/performance-generation.sml",
+      "sha256": "4bc13259627e5fe51ffb86a086b2b0ebe050d4591c6a976024735d6bed53c7cb"
+    },
+    {
+      "path": "tests/ffi/performance-check.sml",
+      "sha256": "094d8e8fd5e21281bde2f5b4973f5cafbb931f1b230ad5b1d5f7df4b13124c0d"
+    }
+  ],
+  "subjectSha256": "685ea76979c3e7129ec7ed0b56a54db34d008122b89b661650972447b4f1b87d",
+  "platform": {
+    "sysname": "Linux",
+    "nodename": "ThinkStation",
+    "release": "6.18.33.2-microsoft-standard-WSL2",
+    "version": "#1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026",
+    "machine": "x86_64"
+  },
+  "samples": [
+    {
+      "sample": 0,
+      "implementation": "direct-c",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.000145000,
+      "checksum": "50000"
+    },
+    {
+      "sample": 0,
+      "implementation": "direct-c",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 0.009943000,
+      "checksum": "80"
+    },
+    {
+      "sample": 0,
+      "implementation": "direct-c",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.000277000,
+      "checksum": "50000"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "load-symbol",
+      "iterations": 500,
+      "cpuSeconds": 0.032321,
+      "wallSeconds": 0.03231,
+      "checksum": "0"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "prepare",
+      "iterations": 500,
+      "cpuSeconds": 4.27E-4,
+      "wallSeconds": 4.24E-4,
+      "checksum": "0"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.220129,
+      "wallSeconds": 0.220123,
+      "checksum": "50000"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 3.956858,
+      "wallSeconds": 3.966574,
+      "checksum": "80"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.495923,
+      "wallSeconds": 0.495962,
+      "checksum": "50000"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "generation",
+      "iterations": 10,
+      "cpuSeconds": 0.290866,
+      "wallSeconds": 0.290872,
+      "checksum": 11210
+    },
+    {
+      "sample": 1,
+      "implementation": "direct-c",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.000164000,
+      "checksum": "50000"
+    },
+    {
+      "sample": 1,
+      "implementation": "direct-c",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 0.006678000,
+      "checksum": "80"
+    },
+    {
+      "sample": 1,
+      "implementation": "direct-c",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.000154000,
+      "checksum": "50000"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "load-symbol",
+      "iterations": 500,
+      "cpuSeconds": 0.047651,
+      "wallSeconds": 0.047642,
+      "checksum": "0"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "prepare",
+      "iterations": 500,
+      "cpuSeconds": 4.19E-4,
+      "wallSeconds": 4.17E-4,
+      "checksum": "0"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.18497,
+      "wallSeconds": 0.184966,
+      "checksum": "50000"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 3.090077,
+      "wallSeconds": 3.090238,
+      "checksum": "80"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.480032,
+      "wallSeconds": 0.480051,
+      "checksum": "50000"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "generation",
+      "iterations": 10,
+      "cpuSeconds": 0.277989,
+      "wallSeconds": 0.277981,
+      "checksum": 11210
+    },
+    {
+      "sample": 2,
+      "implementation": "direct-c",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.000155000,
+      "checksum": "50000"
+    },
+    {
+      "sample": 2,
+      "implementation": "direct-c",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 0.007531000,
+      "checksum": "80"
+    },
+    {
+      "sample": 2,
+      "implementation": "direct-c",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.000167000,
+      "checksum": "50000"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "load-symbol",
+      "iterations": 500,
+      "cpuSeconds": 0.041428,
+      "wallSeconds": 0.041418,
+      "checksum": "0"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "prepare",
+      "iterations": 500,
+      "cpuSeconds": 5.38E-4,
+      "wallSeconds": 5.33E-4,
+      "checksum": "0"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.239428,
+      "wallSeconds": 0.239434,
+      "checksum": "50000"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 3.012619,
+      "wallSeconds": 3.014641,
+      "checksum": "80"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.382251,
+      "wallSeconds": 0.382714,
+      "checksum": "50000"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "generation",
+      "iterations": 10,
+      "cpuSeconds": 0.254341,
+      "wallSeconds": 0.254332,
+      "checksum": 11210
+    },
+    {
+      "sample": 3,
+      "implementation": "direct-c",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.000108000,
+      "checksum": "50000"
+    },
+    {
+      "sample": 3,
+      "implementation": "direct-c",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 0.006727000,
+      "checksum": "80"
+    },
+    {
+      "sample": 3,
+      "implementation": "direct-c",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.000222000,
+      "checksum": "50000"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "load-symbol",
+      "iterations": 500,
+      "cpuSeconds": 0.030128,
+      "wallSeconds": 0.03012,
+      "checksum": "0"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "prepare",
+      "iterations": 500,
+      "cpuSeconds": 4.32E-4,
+      "wallSeconds": 4.29E-4,
+      "checksum": "0"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.149822,
+      "wallSeconds": 0.149816,
+      "checksum": "50000"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 2.799913,
+      "wallSeconds": 2.801125,
+      "checksum": "80"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.460046,
+      "wallSeconds": 0.460036,
+      "checksum": "50000"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "generation",
+      "iterations": 10,
+      "cpuSeconds": 0.274878,
+      "wallSeconds": 0.274967,
+      "checksum": 11210
+    },
+    {
+      "sample": 4,
+      "implementation": "direct-c",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.000108000,
+      "checksum": "50000"
+    },
+    {
+      "sample": 4,
+      "implementation": "direct-c",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 0.005986000,
+      "checksum": "80"
+    },
+    {
+      "sample": 4,
+      "implementation": "direct-c",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.000143000,
+      "checksum": "50000"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "load-symbol",
+      "iterations": 500,
+      "cpuSeconds": 0.034138,
+      "wallSeconds": 0.034128,
+      "checksum": "0"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "prepare",
+      "iterations": 500,
+      "cpuSeconds": 8.25E-4,
+      "wallSeconds": 8.2E-4,
+      "checksum": "0"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.16983,
+      "wallSeconds": 0.169841,
+      "checksum": "50000"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 3.47713,
+      "wallSeconds": 3.477458,
+      "checksum": "80"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.471215,
+      "wallSeconds": 0.471221,
+      "checksum": "50000"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "generation",
+      "iterations": 10,
+      "cpuSeconds": 0.308524,
+      "wallSeconds": 0.308541,
+      "checksum": 11210
+    }
+  ],
+  "summary": [
+    {
+      "phase": "generation",
+      "runeCpuNs": 27798900,
+      "directCCpuNs": null,
+      "ratio": null
+    },
+    {
+      "phase": "load-symbol",
+      "runeCpuNs": 68276,
+      "directCCpuNs": null,
+      "ratio": null
+    },
+    {
+      "phase": "prepare",
+      "runeCpuNs": 864,
+      "directCCpuNs": null,
+      "ratio": null
+    },
+    {
+      "phase": "scalar",
+      "runeCpuNs": 3699.4,
+      "directCCpuNs": 2.9,
+      "ratio": 1275.65517241
+    },
+    {
+      "phase": "marshal-256",
+      "runeCpuNs": 61801.54,
+      "directCCpuNs": 134.54,
+      "ratio": 459.354392746
+    },
+    {
+      "phase": "callback",
+      "runeCpuNs": 9424.3,
+      "directCCpuNs": 3.34,
+      "ratio": 2821.64670659
+    }
+  ]
+}

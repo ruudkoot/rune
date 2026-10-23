@@ -207,16 +207,40 @@ struct
   (* "In systems supporting job control, this flag requests the status of
      child processes that are stopped": W_STOPPED/stop above, and waitpid
      without it does not report a stopped child. *)
+  (* Keep this child alive after a continuation too: waitpid_nh can reap a
+     child that exits after SIGCONT, after which an unconditional cleanup
+     kill raises ESRCH and obscures the observation. The positive stopped
+     status check above covers W.untraced; this negative check must have no
+     terminal status to report, whether the child is stopped or resumed. *)
+  fun withoutUntraced resume =
+    let
+      val marker = "untraced-continued.txt"
+      val () = if resume then (OS.FileSys.remove marker handle OS.SysErr _ => ()) else ()
+      val pid = C.fork (fn () =>
+        let
+          val () = P.kill (P.K_PROC (Posix.ProcEnv.getpid ()), Posix.Signal.stop)
+          val () = if resume then C.write (marker, "continued") else ()
+          fun await () = (P.pause (); await ())
+        in await () end)
+      fun cleanup () = (P.kill (P.K_PROC pid, Posix.Signal.kill); C.status pid)
+      fun observe () =
+        let
+          val () = if resume then
+            (case C.stopped pid of
+               SOME (P.W_STOPPED signal) => if signal = Posix.Signal.stop then () else raise Fail "wrong stop signal"
+             | _ => raise Fail "child did not stop";
+             P.kill (P.K_PROC pid, Posix.Signal.cont);
+             if C.appears marker then () else raise Fail "child did not resume")
+            else OS.Process.sleep (C.ms 300)
+        in P.waitpid_nh (P.W_CHILD pid, []) end
+      (* If observation raises, cleanup cannot replace that first exception. *)
+      val result = observe () handle e => ((ignore (cleanup ()) handle _ => ()); raise e)
+      val final = cleanup ()
+    in result = NONE andalso final = P.W_SIGNALED Posix.Signal.kill end
   val () = eqB ("Posix.Process.W.untraced/waitpid-without-it", true,
-                fn () => let
-                           val pid = C.fork (sh "kill -STOP $$; exit 7")
-                           val () = OS.Process.sleep (C.ms 300)
-                           val r = P.waitpid_nh (P.W_CHILD pid, [])
-                         in
-                           P.kill (P.K_PROC pid, Posix.Signal.kill);
-                           ignore (C.status pid);
-                           r = NONE
-                         end)
+                fn () => withoutUntraced false)
+  val () = eqB ("Posix.Process.W.untraced/continued-child-remains-live", true,
+                fn () => withoutUntraced true)
   (* BIT_FLAGS: "flags [] denotes the empty set", "intersect [] denotes
      all", clear is the set difference, allSet inclusion, anySet a non-empty
      intersection, "fromWord o toWord must be the identity function, and

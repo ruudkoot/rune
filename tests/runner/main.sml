@@ -74,6 +74,18 @@ struct
   val capabilities =
     [{name = "python3", probe = "command -v python3", hint = "install python3 (apt, dnf: python3; pacman, brew: python)"},
      {name = "cc", probe = "command -v ${CC:-cc}", hint = "install a C compiler (apt: build-essential; dnf: gcc; pacman: base-devel; brew: gcc)"},
+     {name = "sdl3", probe = "test -r \"${RUNE_SDL_NATIVE_LIBRARY:-build/deps/sdl/native/install/lib/libSDL3.so.0}\"", hint = "provision pinned SDL3 or set RUNE_SDL_NATIVE_LIBRARY; docs/ffi/sdl.md"},
+     {name = "sdl3-windows32", probe = "test -r \"${RUNE_SDL_WINDOWS32_LIBRARY:-build/deps/sdl/windows32/install/bin/SDL3.dll}\"", hint = "provision pinned Windows32 SDL3 or set RUNE_SDL_WINDOWS32_LIBRARY"},
+     {name = "sdl3-windows64", probe = "test -r \"${RUNE_SDL_WINDOWS64_LIBRARY:-build/deps/sdl/windows64/install/bin/SDL3.dll}\"", hint = "provision pinned Windows64 SDL3 or set RUNE_SDL_WINDOWS64_LIBRARY"},
+     {name = "libffi", probe = "pkg-config --exists libffi", hint = "install libffi headers and pkg-config for the independent FFI oracle"},
+     {name = "ffi-runtime", probe = if RuneForeign.available() then "true" else "false",
+      hint = "build the Rune VMs with FFI=yes for native foreign execution"},
+     {name = "ffi-linux32", probe = "test -r \"${FFI_LINUX32_PREFIX:-build/deps/libffi/linux32/install}/rune-ffi-dependency.json\" && test -x bin/runevm-ffi32 && test -x bin/runevm-stack-ffi32", hint = "make ffi-libffi-linux32 ffi-portability; native32 execution needs an unrestricted host"},
+     {name = "ffi-aarch64", probe = "command -v qemu-aarch64 && test -r \"${FFI_AARCH64_PREFIX:-build/deps/libffi/aarch64/install}/rune-ffi-dependency.json\" && test -x bin/runevm-ffi-aarch64.bin && test -x bin/runevm-stack-ffi-aarch64.bin", hint = "make ffi-libffi-aarch64 ffi-portability; install Clang, target sysroot/binutils and qemu-user"},
+     {name = "ffi-ppc64", probe = "command -v qemu-ppc64 && test -r \"${FFI_PPC64_PREFIX:-build/deps/libffi/ppc64/install}/rune-ffi-dependency.json\" && test -x bin/runevm-ffi-ppc64.bin && test -x bin/runevm-stack-ffi-ppc64.bin", hint = "make ffi-libffi-ppc64 ffi-portability; install Clang, target sysroot/binutils and qemu-user"},
+     {name = "clang", probe = "command -v ${CLANG:-clang}", hint = "install Clang for independent C frontend comparisons"},
+     {name = "windows-sdk", probe = "test -d \"$RUNEFFI_WINDOWS_SDK/um\" && test -d \"$RUNEFFI_MSVC_INCLUDE\"",
+      hint = "set RUNEFFI_WINDOWS_SDK and RUNEFFI_MSVC_INCLUDE as described in ffi/win32/README.md"},
      (* registered with the kernel too: a fork by a VM under qemu is an exec
         of its own binary, which hangs where the kernel cannot start it *)
      {name = "qemu", probe = "{ command -v qemu-ppc64 || command -v qemu-ppc64-static; } && [ -e /proc/sys/fs/binfmt_misc/qemu-ppc64 ] && [ -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]",
@@ -130,7 +142,7 @@ struct
   val broadInputs = ["src/*", "runtime/*", "lib/basis/*", "lib/test/runner/*",
                      "Makefile", "tools/builder/*", "tools/generate/*", "scripts/*"]
   val tests = List.foldl (fn (path, tree) => Test.tag ("covers:" ^ path) tree)
-    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, Canary.tests]) broadInputs
+    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, ForeignModelJobs.tree, FfiJobs.tree, Canary.tests]) broadInputs
 
   fun requirements () =
     let val rows = Test.leaves tests

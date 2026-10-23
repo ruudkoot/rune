@@ -1,0 +1,5 @@
+libraries ffi/win32/sdldriver ffi/win32/model end
+use sdl-driver.build
+sdl-model.sml
+implements Win32 = sdl-export.sml end
+win32.sml

@@ -1,0 +1,34 @@
+PASS ffi/model/generate/raw fixed scalar descriptor
+PASS ffi/model/generate/C bool byte ABI
+PASS ffi/model/generate/public record projection
+PASS ffi/model/generate/public bool projection
+PASS ffi/model/generate/explicit raw session
+PASS ffi/model/generate/lazy native acquisition
+PASS ffi/model/generate/source mapping
+PASS ffi/model/generate/native getter descriptor
+PASS ffi/model/generate/native setter descriptor
+PASS ffi/model/generate/typed original header shim
+PASS ffi/model/generate/target field offset
+PASS ffi/model/generate/integer constants retain sign and width
+PASS ffi/model/generate/reordered traversal is identical
+PASS ffi/model/generate/macro fixed typed shim emitted
+PASS ffi/model/generate/macro namespace and shimmed provenance retained
+PASS ffi/model/generate/macro prototype required
+PASS ffi/model/generate/unknown macro rejected
+PASS ffi/model/generate/prototype name checked
+PASS ffi/model/generate/macro argument count checked
+PASS ffi/model/generate/prototype body rejected
+PASS ffi/model/generate/multiple prototypes rejected
+PASS ffi/model/generate/array expressions rejected in prototype
+PASS ffi/model/generate/behavioral attributes rejected in prototype
+PASS ffi/model/generate/fixed variadic tail resolves
+PASS ffi/model/generate/variadic prefix type checked
+PASS ffi/model/generate/variadic result type checked
+PASS ffi/model/generate/shim itself cannot be variadic
+PASS ffi/model/generate/failure selector converts unsigned width
+PASS ffi/model/generate/failure selector converts Boolean truth
+FAIL ffi/model/generate/duplicate narrowed selectors rejected
+  - duplicate narrowed selectors rejected
+PASS ffi/model/generate/duplicate Boolean selectors rejected
+PASS ffi/model/generate/missing field rejected at generation
+SUMMARY 32 tests, 31 passed, 1 failed, 0 skipped

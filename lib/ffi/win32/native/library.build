@@ -1,0 +1,6 @@
+libraries ffi/win32/common ffi/runtime end
+annotate "demand" in
+  config_sig.sml
+  native_sig.sml
+  native.sml
+end

@@ -20,6 +20,7 @@ set "ARCH="
 set "STARTMENU="
 set "NOREG=0"
 
+rem Keep the original script path in %0 for archive-relative inputs.
 :parse
 if "%~1"=="" goto parsed
 if /I "%~1"=="--help" goto help
@@ -27,27 +28,27 @@ if /I "%~1"=="-h" goto help
 if /I "%~1"=="--prefix" (
   if "%~2"=="" goto badarg
   set "PREFIX=%~2"
-  shift
-  shift
+  shift /1
+  shift /1
   goto parse
 )
 if /I "%~1"=="--arch" (
   if "%~2"=="" goto badarg
   set "ARCH=%~2"
-  shift
-  shift
+  shift /1
+  shift /1
   goto parse
 )
 if /I "%~1"=="--start-menu" (
   if "%~2"=="" goto badarg
   set "STARTMENU=%~2"
-  shift
-  shift
+  shift /1
+  shift /1
   goto parse
 )
 if /I "%~1"=="--no-register" (
   set "NOREG=1"
-  shift
+  shift /1
   goto parse
 )
 echo install.bat: unknown argument: %~1 1>&2
@@ -95,6 +96,17 @@ if not defined STARTMENU if "%ELEVATED%"=="1" set "STARTMENU=%ProgramData%\Micro
 if not defined STARTMENU set "STARTMENU=%APPDATA%\Microsoft\Windows\Start Menu\Programs"
 rem An absolute prefix, so the manifest does not name a path that only
 rem means something from the prompt that ran the installer.
+for %%P in ("%PREFIX%") do set "PREFIX=%%~fP"
+rem XCOPY may silently omit long names. Reject unsupported source/target
+rem lengths before creating a prefix; ordinary manifests and uninstall use
+rem the same Windows path limit. Paths reach PowerShell through environment
+rem values, never through executable command text.
+set "RUNE_INSTALL_SOURCE=%~dp0"
+powershell -NoProfile -Command "$ErrorActionPreference='Stop'; try { if ($env:PREFIX.Length -gt 248 -or $env:RUNE_INSTALL_SOURCE.TrimEnd([char]92).Length -gt 248) { throw 'archive or installation directory is too long; use shorter paths' }; foreach ($directory in [IO.Directory]::EnumerateDirectories($env:RUNE_INSTALL_SOURCE, '*', [IO.SearchOption]::AllDirectories)) { $relative=$directory.Substring($env:RUNE_INSTALL_SOURCE.Length); if ($directory.Length -gt 248 -or [IO.Path]::Combine($env:PREFIX, $relative).Length -gt 248) { throw 'archive or installation directory is too long; use shorter paths' } }; foreach ($file in [IO.Directory]::EnumerateFiles($env:RUNE_INSTALL_SOURCE, '*', [IO.SearchOption]::AllDirectories)) { $relative=$file.Substring($env:RUNE_INSTALL_SOURCE.Length); if ($file.Length -ge 260 -or [IO.Path]::Combine($env:PREFIX, $relative).Length -ge 260) { throw 'archive or installation path is too long; use shorter paths' } } } catch { [Console]::Error.WriteLine('install.bat: ' + $_.Exception.Message); exit 1 }"
+if errorlevel 1 (
+  echo install.bat: installation path preflight failed; PowerShell and supported paths are required 1>&2
+  exit /b 1
+)
 if not exist "%PREFIX%" mkdir "%PREFIX%"
 pushd "%PREFIX%"
 if errorlevel 1 (
@@ -133,6 +145,7 @@ if errorlevel 1 (
 )
 copy /Y "%~dp0wrappers\rune.cmd" "%PREFIX%\bin\rune.cmd" >nul
 copy /Y "%~dp0wrappers\rune-repl.cmd" "%PREFIX%\bin\rune-repl.cmd" >nul
+if exist "%~dp0wrappers\runeffi.cmd" copy /Y "%~dp0wrappers\runeffi.cmd" "%PREFIX%\bin\runeffi.cmd" >nul
 copy /Y "%~dp0uninstall.bat" "%PREFIX%\uninstall.bat" >nul
 copy /Y "%~dp0register.ps1" "%PREFIX%\register.ps1" >nul
 copy /Y "%~dp0LICENSE" "%PREFIX%\LICENSE" >nul

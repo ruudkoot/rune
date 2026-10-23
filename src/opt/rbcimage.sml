@@ -20,7 +20,7 @@ struct
   fun fail msg = raise Bad msg
 
   (* IMAGE_MAGIC of runtime/image.c, with the fingerprint of the instruction set *)
-  val magic = "runevm image 14 isa " ^ Opcodes.fingerprintHex ^ "\000"
+  val magic = "runevm image 15 isa " ^ Opcodes.fingerprintHex ^ "\000"
   val big = Rbc.big
 
   type reader = {data : string, pos : int ref}
@@ -124,6 +124,7 @@ struct
       val () = if String.size data >= String.size magic andalso String.substring (data, 0, String.size magic) = magic
                then #pos r := String.size magic else fail "not an image of this runevm-stack"
       val _ = u32 r                                   (* the kind *)
+      val () = if uN(r,8)>0 then () else fail "bad foreign identity floor in the image"
       val () = List.app (fn _ => ignore (u32 r)) [1, 2, 3, 4, 5, 6, 7, 8]
       val () = List.app (fn _ => ignore (uN (r, 8))) [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
       val _ = u32 r                                   (* pc *)

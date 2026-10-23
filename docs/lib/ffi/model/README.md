@@ -1,0 +1,76 @@
+# Foreign binding model
+
+This library separates original foreign declarations, target layout facts,
+and SML projection policy. It contains no native loader or compiler
+primitive. [`ForeignModel`](str/ForeignModel.md) adapts C declarations, preserves source identities
+and aliases, and computes deterministic selection closures. Other source
+families require explicit backends; they never silently become C pointers.
+
+[`ForeignPolicy`](str/ForeignPolicy.md) reads versioned JSON `.ffi` sidecars with physical source
+diagnostics from [`ForeignJson`](str/ForeignJson.md). Sidecars contain data, including structured
+types and argument/result grouping; they cannot insert SML source or run
+commands. [`ForeignValidate`](str/ForeignValidate.md) checks selected declarations against ownership,
+nullability, extents, directions, errors and callback lifecycle rules.
+[`ForeignProjection`](str/ForeignProjection.md) assembles public types from established value types.
+[`ForeignCoverage`](str/ForeignCoverage.md) reports selection and supplied implementation evidence
+separately, preserving mappings to original declarations.
+
+The specification in `docs/ffi/sidecars.md` describes the schema and its
+capability boundaries. Target layout and executable generation are
+separate consumers; a selected declaration is not a generated binding.
+
+[`ForeignShim`](str/ForeignShim.md) emits typed C adapters over original functions, inline
+functions, macros and fields. Aggregate values can cross the dynamic ABI
+through pointers while C performs their copies. C handles bitfields and
+compiler packing. This source-generation component does not execute
+commands; the generator/build integration supplies provenance and rebuilds.
+
+[`ForeignTarget`](str/ForeignTarget.md) validates version-one target profiles before generation. Widths,
+alignments, size type, byte order, enum policy and preprocessing macros are data;
+the generator does not infer them from the host running Rune.
+
+[`ForeignPublic`](str/ForeignPublic.md) lowers selected scalar, text, byte-buffer, output, owned and
+borrowed resource, native-error and call-scoped callback policies into checked
+SML wrappers. Cleanup surrounds native entry and result conversion; a deferred
+callback exception escapes only after a newly owned result is protected.
+Struct values use checked target layouts for complete records and fixed
+vectors, crossing the dynamic call boundary through generated typed C shims.
+Registered callbacks transfer roots and retained resource leases to their
+owned result handle, whose destructor must unregister before returning.
+Other registration protocols, union active members and pointer fields require
+explicit adapters.
+
+[`ForeignAdapter`](str/ForeignAdapter.md) resolves explicit fixed shim prototypes for selected macros
+and variadic functions. The sidecar supplies type data only; Rune rejects
+bodies and array expressions, checks original identities, macro arity and
+function fixed-prefix types, and retains original provenance separately.
+
+[`ForeignGenerate`](str/ForeignGenerate.md) produces documented, sealed raw and public bindings,
+selected object measurements, typed field/call adapters and an implementation
+manifest. Static/inline selections record a required shim during validation;
+the generator emits that shim over the original definition. Explicit public adapters remain named in that
+manifest. An unsupported selected projection fails generation; it never
+quietly exports an unsafe public wrapper. `runeffi` supplies filesystem
+inputs and atomic publication around this reusable pure emitter.
+
+[How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md)
+
+## Foreign interfaces
+
+| Signature |  |
+| --- | --- |
+| [`FOREIGN_ADAPTER`](sig/FOREIGN_ADAPTER.md) | Explicit fixed prototypes for macro and variadic C adapters. |
+| [`FOREIGN_COVERAGE`](sig/FOREIGN_COVERAGE.md) | Declaration coverage and implementation evidence stay separate. |
+| [`FOREIGN_GENERATE`](sig/FOREIGN_GENERATE.md) | Deterministic source generation from checked C declarations and policy. |
+| [`FOREIGN_JSON`](sig/FOREIGN_JSON.md) | JSON values with physical positions for declarative policy diagnostics. |
+| [`FOREIGN_MODEL`](sig/FOREIGN_MODEL.md) | Foreign declarations, independent of target layout and SML projection. |
+| [`FOREIGN_POLICY`](sig/FOREIGN_POLICY.md) | Declarative FFI policy; reading a sidecar never executes its adapters. |
+| [`FOREIGN_PROJECTION`](sig/FOREIGN_PROJECTION.md) | Structured public interfaces assembled from native values and outputs. |
+| [`FOREIGN_PUBLIC`](sig/FOREIGN_PUBLIC.md) | Checked idiomatic wrappers over generated fixed native declarations. |
+| [`FOREIGN_SHIM`](sig/FOREIGN_SHIM.md) | Typed C adapters for declarations outside the dynamic scalar ABI. |
+| [`FOREIGN_TARGET`](sig/FOREIGN_TARGET.md) | Explicit target ABI profiles for foreign layout and marshalling. |
+| [`FOREIGN_VALIDATE`](sig/FOREIGN_VALIDATE.md) | Declaration-aware checks before safe binding generation. |
+
+---
+
+<sub>Generated by runedoc; do not edit.</sub>

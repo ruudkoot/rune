@@ -1,0 +1,164 @@
+{
+  "date": "2026-10-23",
+  "result": "PASS",
+  "baseline": "e875edca96ac5a15af83986b633c7f74a95aa144",
+  "validationSource": "1a3ffbb40cf63a21e19db1d2a404ba996ccedfa1",
+  "runtimeBasisSource": "18c353b49",
+  "run": "20261023-160520-21671",
+  "cumulativeResult": "RESULT: PASS 19699 of 19699 tests (3 SKIP, 19696 PASS), 1770.7 s wall, 13102.9 s CPU (92% of 8)",
+  "counts": {
+    "SKIP": 3,
+    "PASS": 19696
+  },
+  "skips": [
+    {
+      "path": "lang/native/rt.interrupt_self",
+      "verdict": "SKIP",
+      "reason": "UNSUPPORTED: interrupt: native code does not poll for the user's interrupt (docs/native.md, Interrupts)",
+      "wall": 0.0,
+      "user": 0.0,
+      "system": 0.0,
+      "peakResidentKB": 0,
+      "outputBytes": 0,
+      "kept": []
+    },
+    {
+      "path": "lang/native-cycles/rt.interrupt_self",
+      "verdict": "SKIP",
+      "reason": "UNSUPPORTED: interrupt: native code does not poll for the user's interrupt (docs/native.md, Interrupts)",
+      "wall": 0.0,
+      "user": 0.0,
+      "system": 0.0,
+      "peakResidentKB": 0,
+      "outputBytes": 0,
+      "kept": []
+    },
+    {
+      "path": "gmp/dependency",
+      "verdict": "SKIP",
+      "reason": "SKIP pinned GMP dependency native: not installed",
+      "wall": 0.047,
+      "user": 0.02,
+      "system": 0.011,
+      "peakResidentKB": 143660,
+      "outputBytes": 49,
+      "kept": [
+        "tests/out/r/20261023-160520-21671/failed/gmp__dependency"
+      ]
+    }
+  ],
+  "execution": "Unrestricted local Linux; Windows, cross-target and host gates have separate linked receipts.",
+  "environment": {
+    "RUNEFFI_WINDOWS_SDK": "/mnt/c/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0",
+    "RUNEFFI_MSVC_INCLUDE": "/mnt/c/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.40.33807/include",
+    "RUNE_SDL_NATIVE_LIBRARY": "/home/ruud/rune/.worktrees/runeffi-variadic/build/deps/sdl/native/install/lib/libSDL3.so.0"
+  },
+  "makeVariables": [
+    "FFI=yes",
+    "FFI_PREFIX=/home/ruud/rune/.worktrees/runeffi-variadic/build/deps/libffi/native/install",
+    "FFI_WIN32_PREFIX=/home/ruud/rune/.worktrees/runeffi-variadic/build/deps/libffi-win32/install",
+    "FFI_WIN64_PREFIX=/home/ruud/rune/.worktrees/runeffi-variadic/build/deps/libffi-win64/install",
+    "JOBS=8",
+    "DOCTOR=no"
+  ],
+  "commands": [
+    [
+      "make",
+      "docs",
+      "check-docs",
+      "check-sdl-generated",
+      "check-win32-generated"
+    ],
+    [
+      "make",
+      "check"
+    ]
+  ],
+  "artifacts": {
+    "preparationLog": "/tmp/runeffi-release-doc-corrected-preparation.log",
+    "checkLog": "/tmp/runeffi-release-doc-corrected-check.log",
+    "summary": "/home/ruud/rune/.worktrees/runeffi-check-final/tests/out/r/20261023-160520-21671/summary.md",
+    "events": "/home/ruud/rune/.worktrees/runeffi-check-final/tests/out/r/20261023-160520-21671/events.jsonl"
+  },
+  "sourceApplicability": {
+    "result": "PASS",
+    "production_source_blobs_unchanged": 591,
+    "win32_generated_files_moved_byte_identically": 32,
+    "delivery_head": "7997c95a43f10f637a4d10a9f78ec2ffbffb5860",
+    "validation_head": "1a3ffbb40cf63a21e19db1d2a404ba996ccedfa1",
+    "tracked_functional_diff": []
+  },
+  "validationBinarySha256": {
+    "bin/runevm": "f19238668d9aba88c68b2b99b651c49c46432e6244646f49afa536427b929eef",
+    "bin/runevm-stack": "0515613b82d6e4dc77e1c9414467c9c7bf59086f72afca07bc6e756fe420a78e",
+    "bin/rune.rbc": "9a5de0d6d0a4c0d5e11c20884e8f6aaaa5ae705133eeca2aa75fffba198f7a01",
+    "bin/runeffi.rbc": "9144040b994bba876d34a90c0ee905efa56a29bf6827f1b25cf6323fcb5641ba",
+    "bin/rune-repl.img": "c1ece24acd20806a014e851f97fb57d3b6196590f0929e41831d4fa26564ad54"
+  },
+  "toolchains": {
+    "cc": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+    "make": "GNU Make 4.3"
+  },
+  "outstanding": [
+    "Fresh remote CI",
+    "Production all-architecture binary-distribution release",
+    "Upstream dependency test suites",
+    "Physical AArch64/PowerPC64 hardware and GUI checks",
+    "Native allocator/libffi closure/JIT metadata memory quantification"
+  ],
+  "finalDeliveryChecks": {
+    "result": "PASS",
+    "command": [
+      "make",
+      "docs",
+      "check-docs",
+      "check-sdl-generated",
+      "check-win32-generated",
+      "JOBS=2",
+      "DOCTOR=no"
+    ],
+    "environmentAndFFIPrefixes": "Same as cumulative acceptance above; final delivery working tree after completion metadata promotion.",
+    "log": "/tmp/runeffi-final-delivery-docs.log",
+    "logSha256": "e5a0f9fe280146d49f9b98cbb636e2f9d4b5aad5b8038cf141f48a8cb27d30ae",
+    "documentationResult": "RESULT: PASS 11 of 11 tests (11 PASS), 8.1 s wall, 11.6 s CPU (71% of 2)",
+    "canonicalGeneratedSets": 5,
+    "workingTreeReview": {
+      "result": "PASS",
+      "documents": 22,
+      "localLinks": 132,
+      "originalSDLFiles": 87,
+      "originalSDKFiles": 1906,
+      "metadataReview": {
+        "result": "PASS",
+        "requirements": 26,
+        "completedMilestones": 11,
+        "metadataDifferences": {
+          "ffi/requirements.json": 70,
+          "ffi/sdl/inventory.json": 123,
+          "ffi/win32/inventory.json": 54,
+          "ffi/win32/native-support.json": 2
+        },
+        "bindingPoliciesAndForeignDeclarations": "unchanged"
+      }
+    },
+    "originalHeaderCommands": [
+      [
+        "bin/rune-ffi-check",
+        "sources"
+      ],
+      [
+        "bin/rune-ffi-check",
+        "sdk"
+      ]
+    ],
+    "metadataPackagingEvidence": "final-status-packaging.json",
+    "postValidationSourceDiff": [
+      "ffi/requirements.json",
+      "ffi/sdl/inventory.json",
+      "ffi/win32/inventory.json",
+      "ffi/win32/native-support.json"
+    ],
+    "sourceDiffScope": "Only completion states, evidence references, requirement row locations and the documented SDL_free cleanup role. No foreign declarations, policy or runtime changes."
+  }
+}

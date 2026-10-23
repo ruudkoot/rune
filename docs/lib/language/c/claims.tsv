@@ -1,0 +1,25 @@
+name	kind	signature	realisations	status	origin	source
+C_ANALYSIS	signature			required	declared	lib/language/c/analysis_sig.sml
+C_CONST	signature			required	declared	lib/language/c/const_sig.sml
+C_DECLARATOR	signature			required	declared	lib/language/c/declarator_sig.sml
+C_ENUM_CONST	signature			required	declared	lib/language/c/enum_const_sig.sml
+C_EXPRESSION	signature			required	declared	lib/language/c/expression_sig.sml
+C_FILES	signature			required	declared	lib/language/c/files_sig.sml
+C_INTEGER	signature			required	declared	lib/language/c/integer_sig.sml
+C_LAYOUT	signature			required	declared	lib/language/c/layout_sig.sml
+C_LEX	signature			required	declared	lib/language/c/lex_sig.sml
+C_PARSE	signature			required	declared	lib/language/c/parse_sig.sml
+C_PREPROCESS	signature			required	declared	lib/language/c/preprocess_sig.sml
+C_TYPE	signature			required	declared	lib/language/c/type_sig.sml
+CAnalysis	structure	C_ANALYSIS		required	claimed	lib/language/c/analysis.sml
+CConst	structure	C_CONST		required	claimed	lib/language/c/const.sml
+CDeclarator	structure	C_DECLARATOR		required	claimed	lib/language/c/declarator.sml
+CEnumConst	structure	C_ENUM_CONST		required	claimed	lib/language/c/enum_const.sml
+CExpression	structure	C_EXPRESSION		required	claimed	lib/language/c/expression.sml
+CFiles	structure	C_FILES		required	claimed	lib/language/c/files.sml
+CInteger	structure	C_INTEGER		required	claimed	lib/language/c/integer.sml
+CLayout	structure	C_LAYOUT		required	claimed	lib/language/c/layout.sml
+CLex	structure	C_LEX		required	claimed	lib/language/c/lex.sml
+CParse	structure	C_PARSE		required	claimed	lib/language/c/parse.sml
+CPreprocess	structure	C_PREPROCESS		required	claimed	lib/language/c/preprocess.sml
+CType	structure	C_TYPE		required	claimed	lib/language/c/type.sml

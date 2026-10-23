@@ -11,12 +11,14 @@ send ;
 wait ^> hello world;$
 keys Enter
 wait ^read 12 bytes: hello world;$
+wait ^>$
 keys Up
 wait ^> hello world;$
 keys C-a M-f C-k
 send !;
 keys Enter
 wait ^read 7 bytes: hello!;$
+wait ^>$
 send abc def
 keys C-w C-a C-y
 wait ^> defabc$
@@ -24,6 +26,7 @@ keys C-e BSpace C-u
 send x;
 keys Enter
 wait ^read 2 bytes: x;$
+wait ^>$
 expect @DIR@/edit-keys.screen
 keys C-d
 wait ^bye$

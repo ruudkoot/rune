@@ -1,12 +1,13 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 if /I not "%~1"=="-i" goto compile
-shift
+rem Keep %0 while forwarding -i arguments to the neighbouring launcher.
+shift /1
 set "rest="
 :collect
 if "%~1"=="" goto runrepl
 set "rest=!rest! "%~1""
-shift
+shift /1
 goto collect
 :runrepl
 endlocal & "%~dp0rune-repl.cmd" %rest%

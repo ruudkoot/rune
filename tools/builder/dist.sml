@@ -18,7 +18,15 @@ struct
               val sources=List.map (fn name => let val source=parent ^ "/" ^ name
                    in need (exists source andalso not (isDir source),manifest ^ " names " ^ name ^ ", which is not there");relative source end) (manifestNames manifest)
           in relative manifest::sources @ (if exists (parent ^ "/README.md") then [relative (parent ^ "/README.md")] else []) end
-    in List.concat (List.map one builds) end
+        (* Complete immutable FFI sets include non-SML outputs and pointers
+           beside their derived MANIFESTs. Keep the same source tree as the
+           source installer, including future regenerated set identities. *)
+        val assets=List.concat(List.map(fn name=>
+          let val generated=library ^ "/" ^ name
+          in if isDir generated then List.map relative
+            (List.filter(fn file=>not(isDir file) andalso not(isLink file))(tree generated)) else [] end)
+          ["ffi/sdl","ffi/win32/generated"])
+    in sort pathLess(unique(List.concat(List.map one builds) @ assets)) end
   fun crlf data =
     let val n=size data
         fun loop i acc=if i=n then String.concat (List.rev acc) else
@@ -48,7 +56,7 @@ struct
                | (true,SOME why) => raise Failed ("format self-test rejected valid " ^ arch ^ ": " ^ why) | _ => raise Failed ("format self-test accepted invalid " ^ arch) end
     in List.app one (array (field "cases" fixtures)) end
   fun main args =
-    let val specifications=[("--self-test",O.Flag),("--write-ico",O.Value),("--version",O.Value),("--out",O.Value),("--lib",O.Value),("--license",O.Value),("--compiler",O.Value),("--repl",O.Value),("--fixture",O.Flag)]
+    let val specifications=[("--self-test",O.Flag),("--write-ico",O.Value),("--version",O.Value),("--out",O.Value),("--lib",O.Value),("--license",O.Value),("--compiler",O.Value),("--repl",O.Value),("--ffi",O.Value),("--ffi-assets",O.Value),("--fixture",O.Flag)]
         (* Repeated runtime maps have append semantics. *)
         fun separate [] regular linux windows=(List.rev regular,List.rev linux,List.rev windows)
           | separate ("--linux"::value::rest) regular linux windows=separate rest regular (value::linux) windows
@@ -67,8 +75,13 @@ struct
             val ()=need (sorted (List.map #1 windows)=sorted windowsArchitectures,"windows runtimes must be " ^ String.concatWith ", " windowsArchitectures)
             val libs=libraryFiles library
             fun entry name data mode : BuildArchive.entry={name=name,data=data,mode=mode}
+            val ffi=O.get options "--ffi" "" val assets=O.get options "--ffi-assets" ""
+            val ffiFiles=if ffi="" then [] else [entry "lib/rune/runeffi.rbc" (read ffi) 420]
+            val ffiFiles=ffiFiles @ (if assets="" then [] else
+              List.map(fn file=>entry("lib/rune/ffi-assets/" ^ String.extract(file,size assets+1,NONE))(read file)420)
+                (List.filter(fn file=>not(isDir file) andalso not(isLink file))(tree assets)))
             val common=List.map (fn name => entry ("lib/rune/" ^ name) (read (library ^ "/" ^ name)) 420) libs @
-                 [entry "lib/rune/rune.rbc" (read compiler) 420,entry "lib/rune/rune-repl.img" (read repl) 420,entry "LICENSE" (read license) 420,entry "VERSION" (version ^ "\n") 420]
+                 [entry "lib/rune/rune.rbc" (read compiler) 420,entry "lib/rune/rune-repl.img" (read repl) 420,entry "LICENSE" (read license) 420,entry "VERSION" (version ^ "\n") 420] @ ffiFiles
             fun runtimes system vms =List.map (fn (arch,path) =>
               let val data=read path val ()=if O.flag options "--fixture" then () else if system="linux" then BuildFormats.linux data arch else BuildFormats.windows data arch
               in entry ("runtime/" ^ arch ^ "/" ^ (if system="windows" then "runevm.exe" else "runevm")) data 493 end) (sort (fn ((a,_),(b,_)) => a<b) vms)
@@ -76,7 +89,7 @@ struct
             val windowsFiles=common @ runtimes "windows" windows @
                   List.map (fn name => entry name (crlf (read (fromRoot ("scripts/dist-" ^ name)))) 420) ["install.bat","uninstall.bat"] @
                   [entry "register.ps1" (read (fromRoot "scripts/dist-register.ps1")) 420,entry "share/rune.ico" (icon ()) 420] @
-                  List.map (fn name => entry ("wrappers/" ^ name) (crlf (read (fromRoot ("scripts/dist-" ^ name)))) 420) ["rune.cmd","rune-repl.cmd"]
+                  List.map (fn name => entry ("wrappers/" ^ name) (crlf (read (fromRoot ("scripts/dist-" ^ name)))) 420) (["rune.cmd","rune-repl.cmd"] @ (if ffi="" then [] else ["runeffi.cmd"]))
             val ()=mkdirs out val linuxName="rune-" ^ version ^ "-linux" val windowsName="rune-" ^ version ^ "-windows"
             val ()=BuildArchive.tar (out ^ "/" ^ linuxName ^ ".tar.gz") linuxName linuxFiles
             val ()=BuildArchive.zip (out ^ "/" ^ windowsName ^ ".zip") windowsName windowsFiles

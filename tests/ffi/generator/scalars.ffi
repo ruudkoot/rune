@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "family": "c",
+  "structure": "GeneratedScalars",
+  "headers": ["scalars.h"],
+  "libraries": ["runeffi-generator-subject"],
+  "functions": [
+    {"foreign":"gen_add", "name":"add",
+     "parameters":[{"name":"first","type":"int"},{"name":"second","type":"int"}],
+     "result":{"type":"int"}, "errors":{"predicate":"none","capture":"none"},
+     "variadic":"reject", "unsafeRaw":false,
+     "input":{"record":{"first":"first","second":"second"}}},
+    {"foreign":"gen_bits", "name":"bits", "parameters":[{"name":"bits","type":"word32"}],
+     "result":{"type":"word32"}, "errors":{"predicate":"none","capture":"none"},
+     "variadic":"reject", "unsafeRaw":false},
+    {"foreign":"gen_real", "name":"fraction", "parameters":[{"name":"value","type":"real"}],
+     "result":{"type":"real"}, "errors":{"predicate":"none","capture":"none"},
+     "variadic":"reject", "unsafeRaw":false},
+    {"foreign":"gen_bool", "name":"invert", "parameters":[{"name":"value","type":"bool"}],
+     "result":{"type":"bool"}, "errors":{"predicate":"none","capture":"none"},
+     "variadic":"reject", "unsafeRaw":false}
+  ],
+  "resources": [],
+  "callbacks": []
+}

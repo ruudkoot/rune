@@ -1,0 +1,293 @@
+{
+ "signatures": {
+  "FOREIGN_GENERATED": {
+   "doc": "Explicit sessions for generated dynamic foreign declarations.\n\n",
+   "page": "sig/FOREIGN_GENERATED.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "descriptor",
+     "spec": "type descriptor = {name : string, symbol : string, abi : int,\n  result : RuneForeign.scalar, arguments : RuneForeign.scalar list}",
+     "doc": "A fixed native descriptor; its spelling retains the original declaration.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#type-descriptor"
+    },
+    {
+     "kind": "type",
+     "name": "abiFacts",
+     "spec": "type abiFacts = {architecture : string, charBits : int, charSigned : bool,\n  scalars : {name : string, size : int, alignment : int} list}",
+     "doc": "Measured C object facts, in addition to pointer size and byte order.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#type-abifacts"
+    },
+    {
+     "kind": "type",
+     "name": "session",
+     "spec": "type session",
+     "doc": "A lazily opened collection of native libraries and prepared calls.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#type-session"
+    },
+    {
+     "kind": "exception",
+     "name": "Closed",
+     "spec": "exception Closed",
+     "doc": "Access after successful close.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#exn-closed"
+    },
+    {
+     "kind": "val",
+     "name": "create",
+     "spec": "val create : {libraries : string list, descriptors : descriptor list,\n  target : {pointerBytes : int, littleEndian : bool, stdcall : bool}} -> session",
+     "doc": "`create {libraries, descriptors, target}` creates a session without loading.\n\nTarget facts must agree with the executing VM before any native entry.\nLibrary names are searched in their declared order for each symbol.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-create"
+    },
+    {
+     "kind": "val",
+     "name": "createChecked",
+     "spec": "val createChecked : {libraries : string list, descriptors : descriptor list,\n  target : {pointerBytes : int, littleEndian : bool, stdcall : bool},\n  abiFacts : abiFacts} -> session",
+     "doc": "`createChecked {libraries, descriptors, target, abiFacts}` checks the full ABI.\n\nGenerated code uses this constructor. Every scalar size and alignment,\narchitecture and plain-char representation must match before loading.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-createchecked"
+    },
+    {
+     "kind": "val",
+     "name": "prepare",
+     "spec": "val prepare : session -> string -> RuneForeign.resource",
+     "doc": "`prepare session name` returns the cached descriptor for a declared name.\n\n**Raises** `Closed`, `Fail` for an undeclared name, or a native bridge error.\nThe resource belongs to the session and must not be released separately.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-prepare"
+    },
+    {
+     "kind": "val",
+     "name": "invoke",
+     "spec": "val invoke : session -> string -> RuneForeign.argument list -> RuneForeign.result",
+     "doc": "`invoke session name arguments` executes a declared, fixed native call.\n\nNative status bytes and immediately captured errors remain available.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-invoke"
+    },
+    {
+     "kind": "val",
+     "name": "invokeDeferred",
+     "spec": "val invokeDeferred : session -> string -> RuneForeign.argument list ->\n  {result : RuneForeign.result, callbackException : exn option}",
+     "doc": "`invokeDeferred session name arguments` exposes ownership before propagation.\n\nRegister cleanup for an owned pointer result, then propagate a saved\ncallback exception. The native result and its captured errors survive.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-invokedeferred"
+    },
+    {
+     "kind": "val",
+     "name": "close",
+     "spec": "val close : session -> unit",
+     "doc": "`close session` releases prepared calls, symbols and libraries in order.\n\nA live native dependent can prevent unloading. Successfully released\nentries are removed, so closing can be retried after dependents close.\n\n",
+     "page": "sig/FOREIGN_GENERATED.md#val-close"
+    }
+   ]
+  },
+  "FOREIGN_MEMORY": {
+   "doc": "Bounded native buffers and scoped borrowed SML array copies.\n\n",
+   "page": "sig/FOREIGN_MEMORY.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "buffer",
+     "spec": "type buffer",
+     "doc": "A checked native allocation, view or explicitly bounded pointer view.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#type-buffer"
+    },
+    {
+     "kind": "datatype",
+     "name": "direction",
+     "spec": "datatype direction = Input | Output | InputOutput",
+     "doc": "Input snapshots, copied outputs, or both.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#type-direction"
+    },
+    {
+     "kind": "type",
+     "name": "argument",
+     "spec": "type argument = {array : Word8Array.array, offset : int, length : int, direction : direction}",
+     "doc": "One array range passed as a native pointer during a scoped call.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#type-argument"
+    },
+    {
+     "kind": "exception",
+     "name": "Bounds",
+     "spec": "exception Bounds",
+     "doc": "A negative size or range beyond its known object extent.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#exn-bounds"
+    },
+    {
+     "kind": "val",
+     "name": "allocate",
+     "spec": "val allocate : int -> buffer",
+     "doc": "`allocate length` creates retained zeroed storage; its caller releases it.\n\nNative bridge failures propagate.\n\n**Raises** `Bounds` for a negative size.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-allocate"
+    },
+    {
+     "kind": "val",
+     "name": "fromBytes",
+     "spec": "val fromBytes : string -> buffer",
+     "doc": "`fromBytes bytes` makes a retained native copy, released by its caller.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-frombytes"
+    },
+    {
+     "kind": "val",
+     "name": "release",
+     "spec": "val release : buffer -> unit",
+     "doc": "`release buffer` releases its registry identity after all views close.\n\nThe native bridge rejects stale storage and live dependents.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-release"
+    },
+    {
+     "kind": "val",
+     "name": "length",
+     "spec": "val length : buffer -> int",
+     "doc": "`length buffer` returns its annotated byte extent.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-length"
+    },
+    {
+     "kind": "val",
+     "name": "raw",
+     "spec": "val raw : buffer -> RuneForeign.resource",
+     "doc": "`raw buffer` returns its opaque pointer identity for raw native calls.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-raw"
+    },
+    {
+     "kind": "val",
+     "name": "slice",
+     "spec": "val slice : buffer * int * int -> buffer",
+     "doc": "`slice (buffer, offset, length)` creates a sharing view retaining its owner.\n\n**Raises** `Bounds` for an invalid range.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-slice"
+    },
+    {
+     "kind": "val",
+     "name": "pointer",
+     "spec": "val pointer : {pointer : RuneForeign.resource, length : int} -> buffer",
+     "doc": "`pointer {pointer, length}` bounds an annotated native pointer.\n\nThe caller establishes the foreign extent and ownership. Releasing this\nview never calls a native deallocator; it retains the pointer identity.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-pointer"
+    },
+    {
+     "kind": "val",
+     "name": "read",
+     "spec": "val read : buffer * int * int -> string",
+     "doc": "`read (buffer, offset, length)` copies a checked range to SML.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-read"
+    },
+    {
+     "kind": "val",
+     "name": "write",
+     "spec": "val write : buffer * int * string -> unit",
+     "doc": "`write (buffer, offset, bytes)` updates storage visible through all views.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-write"
+    },
+    {
+     "kind": "val",
+     "name": "terminated",
+     "spec": "val terminated : {buffer : buffer, unitBytes : int} -> string",
+     "doc": "`terminated {buffer, unitBytes}` reads through a native NUL code unit.\n\nUnit width is one or two bytes; the terminator must fit in the extent.\nReads stop at the terminator, avoiding a copy beyond the foreign string.\n\n**Raises** `Bounds` if no complete terminator is present.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-terminated"
+    },
+    {
+     "kind": "val",
+     "name": "withBytes",
+     "spec": "val withBytes : string -> (buffer -> 'a) -> 'a",
+     "doc": "`withBytes bytes body` scopes one copied native input buffer.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-withbytes"
+    },
+    {
+     "kind": "val",
+     "name": "withArrays",
+     "spec": "val withArrays : argument list -> (buffer list -> 'a) -> 'a",
+     "doc": "`withArrays arguments body` supplies native views in argument order.\n\nRanges of the same SML array share one backing allocation, preserving\noverlap and pointer aliasing. Inputs are snapshots; outputs copy back on\nevery returning path. Output bytes supersede callback-side SML writes.\nTemporary views close first; outputs then copy back before allocations\nclose.\n\n",
+     "page": "sig/FOREIGN_MEMORY.md#val-witharrays"
+    }
+   ]
+  },
+  "FOREIGN_OWNER": {
+   "doc": "Explicit ownership and borrowed-use scopes for native pointers.\n\n",
+   "page": "sig/FOREIGN_OWNER.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "owner",
+     "spec": "type owner",
+     "doc": "A shared owner identity; copies observe the same closing/closed state.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#type-owner"
+    },
+    {
+     "kind": "type",
+     "name": "destructor",
+     "spec": "type destructor = {call : RuneForeign.resource,\n  arguments : RuneForeign.resource -> RuneForeign.argument list, failure : RuneForeign.failure}",
+     "doc": "A prepared native destructor and its argument projection.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#type-destructor"
+    },
+    {
+     "kind": "exception",
+     "name": "Closed",
+     "spec": "exception Closed",
+     "doc": "An operation on an already retired native identity.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#exn-closed"
+    },
+    {
+     "kind": "exception",
+     "name": "Busy",
+     "spec": "exception Busy",
+     "doc": "An attempt to close an active borrower or a destructor in progress.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#exn-busy"
+    },
+    {
+     "kind": "exception",
+     "name": "AlreadyOwned",
+     "spec": "exception AlreadyOwned",
+     "doc": "A second owner for the same live native address.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#exn-alreadyowned"
+    },
+    {
+     "kind": "exception",
+     "name": "Failed",
+     "spec": "exception Failed of RuneForeign.result",
+     "doc": "A native destructor returned its annotated failure status.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#exn-failed"
+    },
+    {
+     "kind": "val",
+     "name": "adopt",
+     "spec": "val adopt : {pointer : RuneForeign.resource, destructor : destructor} -> owner",
+     "doc": "`adopt {pointer, destructor}` takes ownership of a native-owned pointer.\n\nThe pointer must come from an ownership-annotated foreign result.\nFailure leaves responsibility with the caller. Destruction also checks\nnative provenance and rejects Rune-owned storage before native entry.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#val-adopt"
+    },
+    {
+     "kind": "val",
+     "name": "isClosed",
+     "spec": "val isClosed : owner -> bool",
+     "doc": "`isClosed owner` refreshes its shared state from the native registry.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#val-isclosed"
+    },
+    {
+     "kind": "val",
+     "name": "withBorrow",
+     "spec": "val withBorrow : owner -> (RuneForeign.resource -> 'a) -> 'a",
+     "doc": "`withBorrow owner body` guards one synchronous use of its raw identity.\n\nThe borrowed identity must not outlive this use without an explicit raw\nretention contract. Native views additionally retain their source.\n\n**Raises** `Closed` or `Busy` when the owner cannot be borrowed.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#val-withborrow"
+    },
+    {
+     "kind": "val",
+     "name": "retain",
+     "spec": "val retain : owner -> (unit -> unit)",
+     "doc": "`retain owner` holds a borrow guard until its returned release function runs.\n\nThe release function is idempotent. Retained callback contexts and\nbuffers release their lease only after native code unregisters them.\nThis guards ownership; it never copies storage or creates a native view.\n\n**Raises** `Closed` or `Busy` before acquiring a lease.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#val-retain"
+    },
+    {
+     "kind": "val",
+     "name": "close",
+     "spec": "val close : owner -> unit",
+     "doc": "`close owner` invokes its destructor and retires its native identity.\n\nA failed native destructor preserves ownership for retry and raises\n`Failed` with the raw status/error. Native bridge failures propagate.\n\n**Raises** `Closed`, `Busy` or `Failed`.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#val-close"
+    },
+    {
+     "kind": "val",
+     "name": "inScope",
+     "spec": "val inScope : ForeignScope.scope * owner -> ForeignScope.ticket",
+     "doc": "`inScope (scope, owner)` registers at-most-once scoped destruction.\n\nAn already closed owner needs no second destructor call. Cancel the\nreturned cleanup ticket to transfer responsibility beyond this scope.\n\n",
+     "page": "sig/FOREIGN_OWNER.md#val-inscope"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "ForeignGenerated": "FOREIGN_GENERATED",
+  "ForeignMemory": "FOREIGN_MEMORY",
+  "ForeignOwner": "FOREIGN_OWNER"
+ }
+}

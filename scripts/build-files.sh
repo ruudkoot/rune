@@ -1,6 +1,6 @@
 #!/bin/sh
 # The files of a program's build file's `files ... end` blocks, one per line,
-# in order: the sources of the compiler, runedoc, runeopt and runeisa, which
+# in order: the sources of the compiler, runedoc, runeopt, runeisa and runeffi, which
 # the hosts' build files are made from (scripts/gen-build-files.sh) and the
 # Makefile compiles, both before there is a rune to read a build file with
 # (docs/build.md). Comments are SML's.

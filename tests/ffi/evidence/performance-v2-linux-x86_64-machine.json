@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "captured": "2026-10-23T10:13:34.851698+00:00",
+  "cpu": {
+    "vendor_id": "GenuineIntel",
+    "cpu family": "6",
+    "model": "63",
+    "model name": "Intel(R) Xeon(R) CPU E5-1680 v3 @ 3.20GHz",
+    "stepping": "2",
+    "microcode": "0xffffffff",
+    "siblings": "16",
+    "cpu cores": "8"
+  },
+  "logicalProcessors": 16,
+  "memoryTotal": "32812676 kB",
+  "runtimeEnvironment": {
+    "GC_STRESS": null,
+    "RUNEVM_INTINF": null,
+    "RUNE_HEAP": null,
+    "RUNE_GC": null
+  },
+  "note": "CPU/memory facts captured immediately after measurements on the same host. Other repository jobs were active; no idle-host or cache-flush claim.",
+  "reports": {
+    "off": {
+      "path": "performance-v2-linux-x86_64-off.json",
+      "sha256": "2af943794cf20e8b871f6da1b3032dbccc78550b440315248362b4d12b1d340a"
+    },
+    "baseline": {
+      "path": "performance-v2-linux-x86_64-baseline.json",
+      "sha256": "c6cc07b8f49615aeabe4838217811505038264bc50029c3083163c5eabf6392b"
+    },
+    "opt": {
+      "path": "performance-v2-linux-x86_64-opt.json",
+      "sha256": "1c9439bb94d6d5dda4e17b2bfc586d135619142b92047b3f5fc037dde6ce05c7"
+    }
+  }
+}

@@ -35,7 +35,17 @@ struct
        ("pretty.pretty", ["unicode", "pretty"], "pretty/pretty"),
        ("markdown.spec", ["unicode", "json", "pretty", "markdown"], "markdown/spec"),
        ("zmtp.zmtp", ["zmtp"], "zmtp/zmtp"),
-       ("jupyter.jupyter", ["unicode", "json", "digest", "zmtp", "jupyter"], "jupyter/jupyter")]
+       ("jupyter.jupyter", ["unicode", "json", "digest", "zmtp", "jupyter"], "jupyter/jupyter"),
+       ("language.c.frontend", ["language/c"], "language/c/frontend"),
+       ("language.c.target", ["language/c"], "language/c/target"),
+       ("language.c.analysis", ["language/c"], "language/c/analysis"),
+       ("ffi.marshal.core", ["unicode", "ffi/marshal"], "ffi/marshal/core"),
+       ("ffi.model.shim", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/shim"),
+       ("ffi.model.target", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/target"),
+       ("ffi.model.generate", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/generate"),
+       ("ffi.model.policy", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/policy"),
+       ("ffi.win32.common", ["ffi/win32/common"], "ffi/win32/common/core"),
+       ("ffi.win32.values", ["ffi/win32/common"], "ffi/win32/common/values")]
   fun files libraries =
     let fun one "unit" = unit ()
           | one "property" = random @ Hosts.portable "test/property" @ Hosts.portable "test/property/basis"
@@ -77,6 +87,47 @@ struct
   fun accepts kind {built, status, output} expected fingerprint =
     built andalso status = 0 andalso outputOK kind output expected fingerprint
 
+  (* These two new generator deviations have exact observed failure shapes.
+     A different assertion, build failure, timeout, or post-PASS crash must
+     remain a failure even when a label has a HOST-BUG entry. *)
+  fun generatorHostBug host label {built, status, output} =
+    if label <> "ffi.model.generate" then true
+    else if String.isPrefix "smlnj" host then
+      let fun verdict [] = ""
+            | verdict (line :: rest) =
+                if String.isPrefix "PASS " line then String.concat (List.map (fn s => s ^ "\n") (line :: rest))
+                else if List.exists (fn prefix => String.isPrefix prefix line) ["FAIL ", "SKIP ", "SUMMARY ", "  - "] then ""
+                else verdict rest
+      in built andalso status = 1 andalso verdict (lines output) = read "tests/lib/ffi/model/generate.smlnj.expected" end
+    else if host = "mlkit" then built andalso status = 139 andalso output = ""
+    else true
+
+  fun generatorNoRegionInference () =
+    let
+      val host = Hosts.get "mlkit"
+      val dir = location ("mlkit", "ffi.model.generate-no-ri")
+      val () = mkdirs dir
+      val wrapper = OS.FileSys.fullPath dir ^ "/mlkit-no-ri"
+      val () = write (wrapper, "#!/bin/sh\nexec " ^ quote (#program host) ^ " -no_ri \"$@\"\n")
+      val () = Posix.FileSys.chmod (wrapper, Posix.FileSys.S.flags
+        [Posix.FileSys.S.irusr, Posix.FileSys.S.iwusr, Posix.FileSys.S.ixusr])
+      val result = Hosts.build {host = {name = "mlkit", program = wrapper, library = #library host},
+        name = "generate-no-ri", sources = files ["unit", "unicode", "json", "language/c", "ffi/model"]
+          @ ["tests/lib/ffi/model/generate.sml"], dir = dir, runDir = root, timeout = 600, memory = 2048}
+      val expected = read "tests/lib/ffi/model/generate.smlnj.expected"
+      (* The positive comparison still checks every named verdict, in order. *)
+      val expected = String.concat (List.map (fn line =>
+        if line = "FAIL ffi/model/generate/duplicate narrowed selectors rejected" then "PASS ffi/model/generate/duplicate narrowed selectors rejected\n"
+        else if line = "  - duplicate narrowed selectors rejected" then ""
+        else if line = "SUMMARY 32 tests, 31 passed, 1 failed, 0 skipped" then "SUMMARY 32 tests, 32 passed, 0 failed, 0 skipped\n"
+        else line ^ "\n") (lines expected))
+      val () = write (dir ^ "/output", #output result)
+    in
+      if #built result andalso #status result = 0 andalso #output result = expected then
+        say "PASS unchanged generator: 32 checks on MLKit -no_ri; default region inference remains HOST-BUG\n"
+      else say ("FAIL MLKit generator -no_ri control: " ^ #messages result ^ #output result ^ "\n")
+    end
+
   fun one (host, label) =
     let
       val t = case List.find (fn t : test => #label t = label) tests of
@@ -97,7 +148,9 @@ struct
     in
       if passed then ()
       else case explains (Expectations.read deviations) host label of
-        SOME l => say ("EXPLAINED " ^ host ^ " " ^ label ^ ": " ^ #category l ^ ": " ^ #reason l ^ "\n")
+        SOME l => if generatorHostBug host label {built = #built result, status = #status result, output = output} then
+          say ("EXPLAINED " ^ host ^ " " ^ label ^ ": " ^ #category l ^ ": " ^ #reason l ^ "\n")
+        else say ("FAIL " ^ host ^ " " ^ label ^ ": failure differs from the recorded generator HOST-BUG (see " ^ dir ^ ")\n")
       | NONE => say ("FAIL " ^ host ^ " " ^ label ^ ": "
                     ^ (if not (#built result) then "does not build" else if #status result <> 0 then
                          (if #status result = 125 then "left a process behind" else "exited with " ^ Int.toString (#status result))
@@ -118,6 +171,7 @@ struct
 
   fun command ["lib-host-reference"] = SOME reference
     | command ["lib-host-one", host, label] = SOME (fn () => one (host, label))
+    | command ["lib-host-generate-no-ri"] = SOME generatorNoRegionInference
     | command ["lib-host-stale", host] = SOME (fn () => stale host)
     | command _ = NONE
 
@@ -137,6 +191,7 @@ struct
            (Test.describe host
              (List.map (fn t : test => jobIn (if host = "mlkit" then ["matrix"] else [])
                 (#label t, ["lib-host-one", host, #label t], ["lib-hosts/@reference"], 2048)) tests
+              @ (if host = "mlkit" then [jobIn ["matrix"] ("ffi.model.generate-no-ri", ["lib-host-generate-no-ri"], ["lib-hosts/@reference"], 2048)] else [])
               @ [job ("@stale", ["lib-host-stale", host], List.map (fn t : test => "lib-hosts/" ^ host ^ "/" ^ #label t) tests, 10)])))
            Hosts.names)))))))
 end

@@ -33,6 +33,19 @@ if not exist "%PREFIX%\install-info.txt" (
   echo uninstall.bat: %PREFIX% is not an installed Rune 1>&2
   exit /b 1
 )
+if not exist "%PREFIX%\DISTMANIFEST" (
+  echo uninstall.bat: %PREFIX%\DISTMANIFEST is missing 1>&2
+  exit /b 1
+)
+rem The legacy manifest contains absolute installation-time names. Validate
+rem every entry before registration changes or deletion; moved/stale manifests
+rem must never send cleanup outside this prefix. Read the same console code
+rem page used by CMD when it wrote the manifest.
+powershell -NoProfile -Command "$ErrorActionPreference='Stop'; try { $root=[IO.Path]::GetFullPath($env:PREFIX).TrimEnd([char]92); $boundary=$root+[char]92; $self=$boundary+'DISTMANIFEST'; $found=$false; foreach ($entry in [IO.File]::ReadAllLines($self, [Console]::OutputEncoding)) { if ($entry.IndexOfAny([char[]]'*?') -ge 0) { throw 'wildcard in uninstall manifest' }; $full=[IO.Path]::GetFullPath($entry); if (-not $full.StartsWith($boundary, [StringComparison]::OrdinalIgnoreCase) -or [IO.Directory]::Exists($full)) { throw 'manifest names another installation; restore the original prefix' }; if ($full.Equals($self, [StringComparison]::OrdinalIgnoreCase)) { $found=$true } }; if (-not $found) { throw 'manifest names another installation; restore the original prefix' } } catch { [Console]::Error.WriteLine('uninstall.bat: ' + $_.Exception.Message); exit 1 }"
+if errorlevel 1 (
+  echo uninstall.bat: manifest preflight failed; no installed files were removed 1>&2
+  exit /b 1
+)
 
 set "REGVAL=0"
 set "STARTMENU="
@@ -54,10 +67,6 @@ if "%REGVAL%"=="1" (
   )
 )
 
-if not exist "%PREFIX%\DISTMANIFEST" (
-  echo uninstall.bat: %PREFIX%\DISTMANIFEST is missing 1>&2
-  exit /b 1
-)
 copy /Y "%PREFIX%\DISTMANIFEST" "%TEMP%\rune-dist-manifest.txt" >nul
 for /f "usebackq delims=" %%F in ("%TEMP%\rune-dist-manifest.txt") do (
   del /F /Q "%%F" >nul 2>&1
@@ -71,10 +80,14 @@ exit /b 0
 :cleandir
 set "D=%~1"
 if "%D:~-1%"=="\" set "D=%D:~0,-1%"
+set "DEPTH=0"
 :cleanloop
 if /I "%D%"=="%PREFIX%" exit /b 0
-rmdir "%D%" >nul 2>&1
-if errorlevel 1 exit /b 0
+if "%D:~1,1%"==":" if "%D:~2%"=="" exit /b 0
+set /a DEPTH+=1 >nul
+if %DEPTH% GEQ 256 exit /b 0
+if exist "%D%\." rmdir "%D%" >nul 2>&1
+if exist "%D%\." exit /b 0
 for %%P in ("%D%") do set "PARENT=%%~dpP"
 if "%PARENT:~-1%"=="\" set "PARENT=%PARENT:~0,-1%"
 if /I "%PARENT%"=="%D%" exit /b 0

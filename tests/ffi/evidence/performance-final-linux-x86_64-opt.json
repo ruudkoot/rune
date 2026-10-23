@@ -1,0 +1,4552 @@
+{
+  "schema": 2,
+  "date": "2026-10-23T12:35:01Z",
+  "compiler": "x86_64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "compilerBinary": {
+    "path": "/usr/bin/x86_64-linux-gnu-gcc-13",
+    "sha256": "1b99826121ae6682a634e5efe09bd3e3df58ce58e0b28f849114ab5b89139c26"
+  },
+  "vm": "runevm ddba4faad\nGMP headers 6.3.0, library 6.3.0, 64-bit limbs, supported\nGMP target: x86_64-linux-gnu\nGMP provenance: checked system installation; source and build options not supplied\nGMP build: {\"unknown\": true}\n",
+  "vmBinary": {
+    "path": "/home/ruud/rune/.worktrees/runeffi-performance/bin/runevm",
+    "sha256": "eef487c7081c347cabee509ed1e71945997190dbfe6a99b2bdc0a84a96aa1531"
+  },
+  "compilerDriver": {
+    "path": "/home/ruud/rune/.worktrees/runeffi-performance/bin/rune-boot",
+    "sha256": "1c4e391f65e782cee21be27fbd6fb24a6a5b01defd7afa0566d660279accda9e"
+  },
+  "compilerBytecode": {
+    "path": "/home/ruud/rune/.worktrees/runeffi-performance/bin/rune.rbc",
+    "sha256": "36225003fa50774cf84419b904d5c0e74de65bb97eddd7b7525c0ab704695be0"
+  },
+  "revision": "ddba4faad9fa5f8540367f1067be35d1b561936d\n",
+  "libraryRevision": "ddba4faad9fa5f8540367f1067be35d1b561936d\n",
+  "libraryRoot": "/home/ruud/rune/.worktrees/runeffi-performance/lib",
+  "productionSourceRoot": "/home/ruud/rune/.worktrees/runeffi-performance",
+  "worker": {
+    "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/out/ffi-release-final-opt/worker.rbc",
+    "sha256": "b4a869a2b01dd3f0232ac86b4b9c13268e085c7c737c4532654b812b5cc8a239"
+  },
+  "generationWorker": {
+    "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/out/ffi-release-final-opt/generation.rbc",
+    "sha256": "b3f84dbf42ace5c277d67a23e9a79b73f431382b9f753ff2af6a7e20fa010e2e"
+  },
+  "generatorCli": {
+    "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/out/ffi-release-final-opt/runeffi.rbc",
+    "sha256": "1f407f77f794e3199410714e62c2d54b645a9238cee8c590c2b42ff7c5ad7ecc"
+  },
+  "vmOptions": [
+    "--jit=opt"
+  ],
+  "cFlags": [
+    "-std=c17",
+    "-O2",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic"
+  ],
+  "sourceHashes": [
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/ffi/performance.c",
+      "sha256": "1873d452f96ada85740e31f4c805af746f71e138b28cdf21d602e9219afcdd82"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/ffi/performance-direct.c",
+      "sha256": "df89545c815deef499aac055b27faf961e76ba88c501ae992ebefb10b8b36672"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/ffi/performance.sml",
+      "sha256": "f1657138a98f23a4e4915feea9546764ba415dc893b7809217b8fbe2a76ef564"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/ffi/performance-model.sml",
+      "sha256": "eccb688a9efa5f4d9980a1bfd5f67201cbb4fb3376b14bd8072ef0dcaa4ab4da"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/ffi/performance-generation.sml",
+      "sha256": "80aaa2133dcf2c0250fa817759a943fc026ad8670200ba3f3dd7eac708a63f54"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/ffi/performance-check.sml",
+      "sha256": "be768b56030a393a19a067f8b50f5b72ddcf077f35ede16525041fb788823125"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/src/ffi/main.sml",
+      "sha256": "67465e6e15521aa0c4e67ffff0f62cc10d0bda38fd0895009f34b4f1c9c114c5"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/src/main/runeffi-rune-main.sml",
+      "sha256": "4fd002480120a57a81d9c00ed8eb0de71b3266053ff63cdea22af2f6ee680c70"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/ffi/generator/scalars.ffi",
+      "sha256": "e634e147a2157a01ff7cdea272daa66f4cb73d352e3ceb3c937a7c1947aba11c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/ffi/generator/scalars.h",
+      "sha256": "6e9613301e956d6b88ad48acdda8349a1b1dd1a0285b3c5cd3ad7a5ab92d08e1"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/ffi/generator/transitive.h",
+      "sha256": "6a5b0728f346db02ea532820b581014540520e369fd941dc2299138535361bca"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/ffi/generator/safe.ffi",
+      "sha256": "c26c47f9fc7d1419ae234d1ea41a6725764e1ebe11917e9dd1a56e7cff1c4264"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/ffi/generator/safe.h",
+      "sha256": "a2611c1f778d7e7cccd504cca81ae4f188ea80c01bb5eeae215e6d1919972e93"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/ffi/targets/linux-x86_64.json",
+      "sha256": "cfec26fa8e00a3f5a22f32cf24d50cba623480b8edf0fe8d73c138d8f9af19c0"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_chararray2.sml",
+      "sha256": "8075f6da89292e16edc80a9db7b753b27a182b7c9fd6dd205fbbdafb48d043d3"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_compiler.sml",
+      "sha256": "2a468f4097cd6396c55f9befee541b8dd62dbb983a7a08c3684216b223135f84"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_real64.sml",
+      "sha256": "a1008d1d3a30fb9e2bf1ed0510dec841d3c022450bea28eb6d199ef53e526eaa"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_word8array2.sml",
+      "sha256": "8578de8c1e9bce99654cfe5b00a73bc0aeb8af3dea66520ba3eea5a9a5b90fcb"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_real32.sml",
+      "sha256": "0613127c9a2596c33b8e35bec80cbfe635b85e237dd600aaee078fa3e517f563"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/binprimio.sml",
+      "sha256": "cac929eaef803a39071508349511f3704c771a4b44f1d941d8977705f403c615"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/pty_sig.sml",
+      "sha256": "d9eced2430523102a30970e247054dba6fb3cd66b5abba8cb660cf87d4ff6c89"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_binprimio.sml",
+      "sha256": "adf5b7709f304c32a2a93f53b4d28165a0ced53c5a83236235a588afd30ca2ad"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_inet_sock.sml",
+      "sha256": "293f01f03b40683fefccf2205c25048070938aa15510810b841b01ded1482bae"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/vectorslice.sml",
+      "sha256": "43fe5c1b9775a4eae09a8e3940c294395ece3ee34d9051fb529c755376f7b5b0"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/pty.sml",
+      "sha256": "ddeda38a309991b5411b8eda42766334bc93bac63cfa9a45b6867123bc8001d7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_bool.sml",
+      "sha256": "37a63b60d5657b38107ccb49685cea3e65d3633a2363dcae995a6478d5d653d2"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/timer.sml",
+      "sha256": "49e7a9056ac6e4f9fb794a5eb266b35eda18c76744013a180d46b678d5b094fd"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_listpair.sml",
+      "sha256": "ab55c5b274386f379b75e702812fd86a72562d8f6aaebad3d37a716c28d66648"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/rune_foreign.sml",
+      "sha256": "b3d10f2bf3f6234527a0e3be9939f81d29645e2cc83392753a2409ace67d0fdb"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_text.sml",
+      "sha256": "2dad237e90e38526ce9e84282a34a08c3fe46c3c32172bf6bcb8184db810fae4"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/widestringcvt.sml",
+      "sha256": "61f448cf2d8b7048d31dcb3d8db1b2d22a9038566113922b34c8a275343cb07a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/inet6sock_sig.sml",
+      "sha256": "75c172577acb038aa4187172f0c48480b1005a3baab1bf6e14eb8dc74d048666"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/bool.sml",
+      "sha256": "0e74f94fe803c22139fe14fe007250fd86c0e8902d3cebb9c37d186798dcf799"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_command_line.sml",
+      "sha256": "32f4e495837e8454aa0375ac2b014b0ade11fbe8a3cc9b64c41ca28c27604c45"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_array2.sml",
+      "sha256": "3631fbafe9063e9529b5b3ef8a7154f437445eb430704322211002344915a3df"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/word8.sml",
+      "sha256": "2c7d049e1535736929e90897ba293c590ab4a3848cb3fca151d1d21e97b8eaf4"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/posix_io.sml",
+      "sha256": "29436c4245d8135ad8c7b2075afe78c292f4c3401bb85285f0dda9457691f003"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_word64.sml",
+      "sha256": "7f5c950a59480fe8d4e5dc60d109b7060db4b14fef1900ee4dd8979313f43e95"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/runtime_sig.sml",
+      "sha256": "a338aa90e526acb8debe015a75ae3c9de1b666cbf60a2819512424905bc19720"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sysword.sml",
+      "sha256": "ebe0cd4739fba759c713aaeafdef5d99911d31fc9f10f8fc0451f54d44568efc"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_general.sml",
+      "sha256": "2dd549fddf6c621d3a77e70e51fc4a821178939c0007a441ce4ab7d379ac01ba"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_array_fn.sml",
+      "sha256": "5c87a719c76fa2b1c21e67dc69cd7a024f9dfa2d697d6be3e7ec6f246e07793a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_vector_slice_fn.sml",
+      "sha256": "93ee87f5f144dbe3f4ab7a94ca9963a7032cfc5c8988a0b10e9c6794f03cd9d9"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_date.sml",
+      "sha256": "5fba9386fa45a559efd3674f323d7aa2d64a7e5fa6c3fa56c046d53e3af691f4"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_sml90.sml",
+      "sha256": "620d272944fb08f71d51a0e984f0a1ff60ed4ad8a383770c88c9e817b62ea709"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/compiler.sml",
+      "sha256": "d81e3eb8462f6ed4f8cd623d8249b983a7976f59a8c6def764bda6cfe495defd"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_real.sml",
+      "sha256": "8907507e8166a62eb391bd9f804047e030fcf1d960f0b1f0079fd5b23aa176ec"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/pack_word.sml",
+      "sha256": "dfaeee250c0aa165a56b7aac626214100cbb66f3ff6602a98bc4979e9ef3cbeb"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/ospath.sml",
+      "sha256": "ce36c71254d89bb98f1c998102bf67e0c6e6eefe6e4d232f8b7641efd9c606e7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/library.build",
+      "sha256": "a126603e1950d6f41091b84b73505b1b53f8dfe9ab7fabc1a54ff2bd605fc2ed"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/int64.sml",
+      "sha256": "0504589cab6f5c3a912b792da759c28bf585d50f18afa4748637dcfb48d3586f"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_sysword.sml",
+      "sha256": "54bf4c34ae4e31842f6bd8ad69a6039bfc44adbde3a91fb17505f79f8d4295c7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/windows.sml",
+      "sha256": "9f2e859c1ae646faf52802cecf014b94670e6cbeedd4e918e77e2c8a3a2657cc"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/pack_real.sml",
+      "sha256": "246369c051f234f6f835bb321f84c98a733c98adb1eaa26d16da2d8f39e03d59"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_word.sml",
+      "sha256": "348f6ce40c83172baf915b11c92c1cc29d579100039b6a26243469ff8bdf45af"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_int64.sml",
+      "sha256": "26ca0479b19ad1e09d32b91e50c4da94dd71765ad0de3764ed6b452a8431dd6d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/osfilesys.sml",
+      "sha256": "83d6a8e52b4c3b7f6e57f80f447cb035ed124ec67e96d42c107e62793c8efb60"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_windows.sml",
+      "sha256": "fbc65763d1dfbbde1e3f727ee24b9d3674ecdc6ab1e428790e738ccbbbec7cbe"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_math.sml",
+      "sha256": "21fbe39f30b477b27b2487c2cd386bbb220d836304e50340bfc9ed2849e94ea3"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/display.sml",
+      "sha256": "41afbc47021752265faacfcab3fe7ed4c0f33bfabefda31e7cbacbfb705bef91"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_string.sml",
+      "sha256": "c06c4647db92610a5c2a9c38e0846cdb14c7faf3c82a0218ead4bbea6056990e"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_posix.sml",
+      "sha256": "1f43821d4572ca85f50f28075a13d9191e9cb573591bdcd938a8bf81637bf12a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_largereal.sml",
+      "sha256": "5f42a739e91ad4762ea00bd59a8061024d70266e1b9f2539452841244b168194"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_os_file_sys.sml",
+      "sha256": "57fd20db0380f284a7891a16e25e662eba800a895b38f9cebeab4dab0dbcff2c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_commandline.sml",
+      "sha256": "2c62a234190948169d77ac218ade4900e4d1317a67fbc73689b35abe4f8b5627"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/subprocess_sig.sml",
+      "sha256": "f19eee6fb192449b4d83da7ff16184a5848e7287310da2db39083c97a7d5ff28"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_binio.sml",
+      "sha256": "28e5035d65fa486356806da9aa3f750834372e10d881e8b268733043c226b2b1"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_largeword.sml",
+      "sha256": "f3cf81f2c257e007d8fab24f68ca0a7f5f3d68fcc778134e4d2b6d2d623134e5"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_array2.sml",
+      "sha256": "7ac4b68b4ca3086db9b3a6fded7e36e465240bdbc6def342eaa94be3da5352f5"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/subprocess.sml",
+      "sha256": "ff3d44b5135cf6c7b32cbd6775485268c22f250e1b1dc50a1d958b8593979e83"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/pack_real32.sml",
+      "sha256": "8c87b7f023a919f035f910681bd5e7af326a76e00668f4453f43a13388e7fe8e"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/primio_sig.sml",
+      "sha256": "9869f5abe29a3631316dc413008e468d71aa6c5f0b964d8f8f98fc734544e4ba"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/runtime.sml",
+      "sha256": "3877b8d23965db719c6f069b8c563260344237eaff8f259fd9b45a903cbbc93a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/posix.sml",
+      "sha256": "aae4a9934288d2f139f51d5c0f03adafe0bbdabe2412a6d7280c7d8d967a8352"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_net_prot_db.sml",
+      "sha256": "60064ff1db4547808c4cd1e52483602716429b736aaa39552067aa236d6d5815"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/posix_tty.sml",
+      "sha256": "444996a2017be6d9853626a96834cb5a2d3dd8276ae413f63eef1019cb115300"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_posix_proc_env.sml",
+      "sha256": "35cd5bfaa331551c619bf0be8671b92171b7275c002b914e56df178b105d4da5"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_int.sml",
+      "sha256": "33ff672591fdbddf4849ab79d8bcb448d912b69aa77bc08124d0bb8168493338"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_generic_sock.sml",
+      "sha256": "485e08f6d5a46486cfdf040f2d4d1809805adc11b7eb27f04f6c855a2e2d601b"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_word.sml",
+      "sha256": "031f38a626a4024affe311ad50c6ba226b5fdd558d596bb5ea9ac1995e17e6aa"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_bool.sml",
+      "sha256": "5f02eede11f01f4f0ed0a04d37b8d7beb222a233a4a1e222fc630069d82a8bb0"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/int.sml",
+      "sha256": "fa033dc41f6287d1adaff0ffe4b7ff1c9b84f4a9ff4d01ed507416551dce2e63"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/dynamic.sml",
+      "sha256": "8faa9b569c81d23e93923822b5c1bef5ee8de079574ed8477b3fe689bfbf9a39"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_pack_word.sml",
+      "sha256": "4bebd3eb0f348cfb163720d3ab142fa009f10fe05282181982c16cf92a5a980b"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_inetsock.sml",
+      "sha256": "ab5cd74512edb39d1a82c88661a41f2ac652b12c562d3fc73da7c669865c6793"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/osio.sml",
+      "sha256": "14ea1664e2315521873b302b9dca2c9da3b8d75a9529c120c37832c4f36c678a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_ieee_real.sml",
+      "sha256": "ce207bb87abe76457c2f8a86609b33462e7c7eea22a08ca3d581f4b72158308d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_real.sml",
+      "sha256": "cc350bbd564f2176f600733a664ef7bad0d43409568e021466a5d3993ba2eb04"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_list_pair.sml",
+      "sha256": "bdb6bea99fecc474d218b6c04524fc057452e43264c138f9782b32f118a3f168"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_largeword.sml",
+      "sha256": "dcfe6401bcd332baf05e3198cf815385d5b990ba7041652f2a6b7d1721e457f8"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_io.sml",
+      "sha256": "ce44d49c700b3e43de3ae8c9241218202fa4dafb38f247859fa6cae6b0762135"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_word32.sml",
+      "sha256": "b91a221d1d9fad8ebf7408362bf24e76efb341d2a026f6dc404862d831784b08"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_posix_signal.sml",
+      "sha256": "555e43659e8a22869ad9ffea505d6712e0d9522731832602dd23117cc993ad32"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_widetext.sml",
+      "sha256": "96fb0bf94b85d4c3978bc740be7dcafcc9e669b41411ded9531aa300e2972872"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_textprimio.sml",
+      "sha256": "1c707ea967400c4caf0f23c560ca25304a0c01bc41e05aed3e5b07347031440b"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_pty.sml",
+      "sha256": "8740df34934dff0918e295576c18b9708a180cd50f2e6750c577fe76d08221ad"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_text.sml",
+      "sha256": "d166ebea58bb391c800f0dbd26f7e0e7731061583b75abe00a8eebe4658deb70"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/real.sml",
+      "sha256": "a9515adf455b5a7cc98936fd5b90a1f12748a6c9c6b2d889f06236f9feb6841b"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_time.sml",
+      "sha256": "d602e2997447ecbb147b66f092bf33507a33ef01eedeb95451d23007e45b55ce"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/charvector.sml",
+      "sha256": "7b34af3a38b9f582853434180ea7a348a3ae0eb70e4f5aa38a5c9a19281364fd"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/commandline.sml",
+      "sha256": "4f52d6c0aec4bb49a827d73e4a5aaa0e4b3e704e09e6ddc63300eaaf09348b08"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_sml90.sml",
+      "sha256": "12af5a7fa08d85c627175b52bcdeedc6381d06ca084170b0766fe1e5de17af22"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_int16.sml",
+      "sha256": "1bd9b39e7430d521a5b614cc20c736773c26b85d0e113824d24a5f05c8585ce3"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_int8.sml",
+      "sha256": "cc4bd9f047387b83814c002d91ca848798e3e28983330b2d8519aa65088bbc0d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/word_sig.sml",
+      "sha256": "fa7bb43929383c68f077448dabdf6bc06d21450e99642e2e58cf10124f6741aa"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_posix_error.sml",
+      "sha256": "87fea46f8d693f43697ea15e5b449e3324a68b3a7e3b428ec84695e58d4141b6"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/imperativeio_fn.sml",
+      "sha256": "8a756fe2fa6227bd1bf899290c08175e7791eee8125c9c0cdc2d68189c88ed84"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/terminal_sig.sml",
+      "sha256": "3dcc0355fecb968cba95a22ff6397e9cd8c07997c205bdac50cee59096e52dfd"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/word.sml",
+      "sha256": "2c1c7f8496beef3f47ffae104ce55cb7dc5c6a3afc5659c3141e1c6ce69d4081"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/word8arrayslice.sml",
+      "sha256": "5db8c2a2494cc865adbdcff9e10ea9065de2bcf24fee00c1df6e5f9e9605eb43"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_array_slice_fn.sml",
+      "sha256": "40a497f776d8538edd3ae7880183a3bb83e0f8aa3407ae55a85eadd8f76101f5"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_intinf.sml",
+      "sha256": "4131bdb7acf8185b6f2a22648b916a028598e6a37db1384acc0727137157f47a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_pack_real32.sml",
+      "sha256": "b8b5b0e930347903a0914301f98931122d98451babad76e8b2989814b8db48e1"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_text_stream_io.sml",
+      "sha256": "ccd7080e6b81f915d5a080bcaf6136e828c36b21eb84c8f5b751a4a6fdc1541f"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/unix.sml",
+      "sha256": "f4e1f4c65f58ad47932137dc501fae65531a19e5f7b9b4b278ab8ca144a9d195"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_subprocess.sml",
+      "sha256": "35ef36686f604766df9414d6622831edac9b5dd1938e5ec1fd4328ce98f80b0d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_netdb.sml",
+      "sha256": "202361aba61ff3b174b729e3f1eca4d94ff391d9e104fc03ed498323998cb97d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_display.sml",
+      "sha256": "40ef0027ccb2ad078f226f3f23d0314ffe762f329437cba848fdfa8b7192cea4"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_socket.sml",
+      "sha256": "3bcdd1ccd82e07bc1563304e5b736cce444dc365aa93a415de2178d7a0aee498"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_arrayslice.sml",
+      "sha256": "a6cbb4c434ee40bfa7a992a450dccacdc60b304097d3146a45cccceb9b5ebd2e"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_mono_array2.sml",
+      "sha256": "e50ab3ef7e3b586a63558bb330c2580eacd052ffe76b866be7f6e280fd625ee9"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/word64.sml",
+      "sha256": "67bee06e612d683aa65c3b7e6e2b8f7d67eaadfa61b9635553658bef774b81d5"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/inet6sock.sml",
+      "sha256": "af80b54b1cb845c6a2c2d3b71c256b2cde7dfc345b0e2c058227b56a963b5a85"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/epilogue.sml",
+      "sha256": "56224fc97e09e6e20cce62ab70577a39e4eff83dcb6a9aef288891d75d3dc245"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/array2.sml",
+      "sha256": "be04a9c4be1cd7e52aeea0e8098bdf009dcebee272f87720188abe381529c3da"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_int.sml",
+      "sha256": "025eddae428854cc9a1a767973f50e062e162408e853fb5ce70b5121d828c7fc"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/list.sml",
+      "sha256": "988077487d4ed317e578797aec7a12b933ac42fb4a0c3b71e2beadbadc37d3e9"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/text.sml",
+      "sha256": "55b96e5d6b4f0d216ddf18c46b728f8396987fab82c38b8545eca075f4fd0bb7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_os.sml",
+      "sha256": "170b7065a2a5937ff5ad2c57158c0fbd6161e22d975552584a617ea3f00b7bab"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_unix.sml",
+      "sha256": "f191e94c573071e6e7b60ebc79397445704deb09df941d90936c3ae82ff6d841"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/widestring.sml",
+      "sha256": "a8c2c518e49d40b8890ad6a0f207132a321f8fbe4755e60d58f01301c8f35c22"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/int_sig.sml",
+      "sha256": "eba8d78eb0bc586a6b094fe02ba4e669a5524473c0aaaffd3b15bee778ff8e2e"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_word64.sml",
+      "sha256": "5952afc7d5e55da17fdd7cd2770400deaffc42cbbc02557c939fd4ac24671cd0"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_vector.sml",
+      "sha256": "a7874864e0ab7d8900e4e83d63fb3e90c6f61dc8e7af75503eeda13fd66e5051"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/int16.sml",
+      "sha256": "90a3a12dd4641e8ef528f60ed95c95bafff5e315cbf1db6969b2545872e3b249"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_largeint.sml",
+      "sha256": "35902e7250166956aad5c5cde20f3d775cb72378f76fbc022cf2725459ee743f"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/runenet.sml",
+      "sha256": "3194059dcb56bab011c2c247e75d6901c5b4f0f7e62f072473f67d0abb7606e8"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_option.sml",
+      "sha256": "b7569904f33ce79aeec486c639d34d32eae2303e79ba05923809946cc33a0951"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_pack_real.sml",
+      "sha256": "4b7c0cea95700b4b3dfab59bc773ed70f6c278d09bf97c1b597cd4e234514c6f"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/int32.sml",
+      "sha256": "93243246fc36b4d2f072848f06cbd9f3091f43e70ab60037465b1e9089490b74"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_time.sml",
+      "sha256": "825bfe286dda633f538816881503223d91fe449e7091b1ea2d8170e0b676a4be"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_word16.sml",
+      "sha256": "3315bf20a2cc58723ddaf1c0f9c249c32602f03f5725556a5ba71d6735144efa"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_string.sml",
+      "sha256": "e1db8f3676b446a2fbb4a751612879b3701b4da518c52ba5dad77f3c29a4f167"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_bit_flags.sml",
+      "sha256": "2e3a0e5c2dc6dfd11b33604e412716023e1ec7cb295563570349e5bef96cb5b5"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/intn_fn.sml",
+      "sha256": "a87efe95e28ccbfbd4d919893adad75191910b566ad3b8694fd4172eb2db3dae"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/byte.sml",
+      "sha256": "25cceb45503507f5d8725c6e99d9b9bcbad9c4931e48580e136b280e4a549345"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_timer.sml",
+      "sha256": "055eee1cba9f7396ce45e0571bb3fad393e0756ab329d869c062cefe9f0d0602"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/array.sml",
+      "sha256": "5ea93cb83c5cb83068dd9f6a43ef468676f2bcbf74c68291f93020f3451d1bd9"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_vectorslice.sml",
+      "sha256": "ceefccda4ccbacebc4f3e9c4d002d242c7ff4d443ff2757f0ef78a204efd17fa"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/string.sml",
+      "sha256": "daa3a388663a62d7aad914d3de2c359c20ac3905b054405bcf6c11b0ed556ba3"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_net_serv_db.sml",
+      "sha256": "8fee512ece4c26d0341671753863cb61655512b57c070b7bc4cdf18956787f13"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/socket.sml",
+      "sha256": "41111ec215b1663e74bd3a65690325d0c7fc40ec02a1f9bf2917324c08af9a6e"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_list.sml",
+      "sha256": "7fc0974463c50ff9cac1adce89094721485b350955591cb858fd8fdc15a42099"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_word16.sml",
+      "sha256": "d821362cb57ff11024acf67b61463610e5c26676781bf70bd2c6fb5edfc9ca7f"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/listpair.sml",
+      "sha256": "ee7ad660e4f1592d3c814a6e35f3dda2896ac58a023fbf7ef40a14aae75d81e8"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/streamio_fn.sml",
+      "sha256": "0fd90ef0663956d11dbcad72e152e72e7f15f735d2504ad58592f1d99f653934"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/word16.sml",
+      "sha256": "fcc97c7b1841367756718d2a763e30aff623b106a2deefd99397285cd64c7bd0"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/primio_fn.sml",
+      "sha256": "6291bc34afc16d341034c7ca4805a5c328b6212214d567828e2f590f02f8acc9"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_bool.sml",
+      "sha256": "a68c800d24405bde2843033c25f2e99e0a1a1b3e139ead97a7c9597b246c82f2"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_ieeereal.sml",
+      "sha256": "4025d67d761ca7eeb9daab319ecb092ed6a8a56062d11c243dccbd8a06311f77"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_word16.sml",
+      "sha256": "801b7b987da64a0cd24fa5d4d447bceb8567b3ae46e84181c6f7fcaa9526b435"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_word8vector.sml",
+      "sha256": "46f784b18613d82e8a8ac1d704255e0d605bfcb4bad818b31bb212d26b6a4b78"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_list.sml",
+      "sha256": "cc773ccde42a8d714c41a87f954f1260988dece8839d3c48d99e6c3455e5b571"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_bin_io.sml",
+      "sha256": "db5724ba3f427da2fc27e08da096713c4e2d7a0681b10e33d4198a32411c504b"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/charvectorslice.sml",
+      "sha256": "d2f9c8496c57b41091a73dad10fac8a31985ebce8ddf90b6412a68ad8bd5cc27"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/rune_foreign_sig.sml",
+      "sha256": "e4183fdca3ab2088a59555e47345592b4d8ba54a38801c79903ea0c69c413095"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_int_inf.sml",
+      "sha256": "908bee96a8561d83d0dabe412275dd7b688e095b305ff491dfcd815de595f58c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/chararray2.sml",
+      "sha256": "da35b7055c078d2a97d00445c8199329459e15924de05b73137522b23c3adcb9"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/option.sml",
+      "sha256": "ad797fa98695d62fc81a671639418300be9abf3139745ecbf16d85970ce6c860"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/word8array.sml",
+      "sha256": "10b924f9cc8620d270204b72318f0f181daba4e57f092fefeacd956056b5b3be"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/os.sml",
+      "sha256": "ec7d308213756b0d8b978b5d11051071ecf55845bf0b15800877078cf5486195"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_posix_sys_db.sml",
+      "sha256": "99f6dd25e04c6fbd6431a7988da9c674dda833bc98a7935562b2ea0afd48b6c7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/runebytes.sml",
+      "sha256": "bf170826a6774a1e486b6aea40c2cee34a24f8818d158ceea96a7d6b22688a8d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/io_functors.sml",
+      "sha256": "676e507925248c2269db027547acbfafdd5c99c923f711eb7447081983697a3b"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_array2_fn.sml",
+      "sha256": "fc372b962225a3bbdebfca797e83ee1426c9b4838bcae7b1b929ef997a8b89f5"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_repl.sml",
+      "sha256": "b303f25f901d54dbda6b51c3cb36c2bedc20a7d4d6114a4e654224bb1c3e1428"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/terminal.sml",
+      "sha256": "24d472092c469aa37adca305d93867030ed2ae575e9a343d262a01b578b38a36"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_posix_process.sml",
+      "sha256": "9315700f21fb9e26c581982685e0ad89832dc77b05a23714070205f307a1da6e"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/widetext.sml",
+      "sha256": "735440f8c3de8db5ed2fe719839647619d53fcf4b136dc77b81824b4c9a772d4"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_posix.sml",
+      "sha256": "a0f8580f0ca5ffd5ffb228c09007b1e7078f6e5c1b44bf6f81571f6881d77ea1"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/binio.sml",
+      "sha256": "3d9a24a19506dd30e45b557c838cf6eedf73d23d6329f8e49a60a4bb133cc8b7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_largeint.sml",
+      "sha256": "a9f590c5b09631de1dc7ff5c9046dce2bebee3b2563db071bd2257112222bc95"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_string_cvt.sml",
+      "sha256": "f23356e0b46f83ba8dd01133b01455cc4b610d3a0789e69aae67afb1d70f2edf"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/widechar.sml",
+      "sha256": "6f94590d5199792663ef62d315956fb9bd2bbf18f5b6f6e9137c039d7b4dfe55"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_pack_real.sml",
+      "sha256": "e9254221b6a834bde69ae20ce7e6e89f9b169a0ab30f78febc54c4568774c484"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/word8array2.sml",
+      "sha256": "3e17d2da78a46506894a758792d0390adfe750af4ac9f51e11b5347b7dd7e8b1"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/date.sml",
+      "sha256": "1f5e9734f906229522c0163a32ccb8c4b834f4b5a6072af2e2f768cd1c972258"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/ieeereal.sml",
+      "sha256": "136d8313c45a1839c9a4268efb3b9449e0406e34dac5220740d83b2a02ee83f2"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_position.sml",
+      "sha256": "acca99da3478a0cabd2af82b57d00ed148aef899a00d6e54c5fb1e3484403e96"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_vector_fn.sml",
+      "sha256": "549bc1a85b1dfc04036ab32559c5ecbaee82af71ce1e84ce8cf2cabe395b716a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/display_sig.sml",
+      "sha256": "0aad634933a040c432e458c9daee3656d83484cc00c7625266c82a7b054b67c4"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/posix_procenv.sml",
+      "sha256": "4c9591503563fb29e472d61c86659813b35aa7125891f814340fde75b11ff878"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_imperative_io.sml",
+      "sha256": "246c1d2728257e7dfdd30412b8ca635fda5497dfb6d5eefae60e7fa77632c0fd"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/posix_filesys.sml",
+      "sha256": "06215775d5229fa75fd8d2a3d0e560fead2ed3952a4c24c4d3ab58b6f9c4c463"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_timer.sml",
+      "sha256": "f2c024e3a20ab2b5265cc211fb2ea87bc0937fdcfb6fed47db2bb47d4819ca22"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/MANIFEST",
+      "sha256": "f5d50a8a9cc574fb35687e07ddb1c29ba8402f65636c5a028d29d9ed01ce2b2d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_socket.sml",
+      "sha256": "f7bd438a2c4b004901bfe19526a67e59ded895202ec70ad4c68b8609a829b405"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_bool.sml",
+      "sha256": "bf341776756776879c29f8929acc7d097c9e8c0fe5f88b97f80113f41af90ecd"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_windows.sml",
+      "sha256": "1048fdef22d3497503467fa6169e9294b2ff5fcbeab8a9703999c30a45956585"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_int.sml",
+      "sha256": "05002f942bbb7ae59888843acfca8777a31df2aada0e8020a0155d35febb060d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/posix_signal.sml",
+      "sha256": "fec409073760e806862356705be9dc8ccc54b9df6b8e714b16d75d502be88911"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_array.sml",
+      "sha256": "762ae6a0ed850842a434857a35fed4877f6631a11f541b20cd04aef758d0e9dd"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/posix_error.sml",
+      "sha256": "d5cc8e18df235ba999c3e32c315a323edd0213b397d9d298a342f25815f58208"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_unix.sml",
+      "sha256": "84a14bdc187670f3ef2e64577e8178088260c2f7fe5943292e6da203c04f5dc5"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/initial.sml",
+      "sha256": "56cfff988f31ecbc0fb102e11afd6c95599e15dbf1fbbc1ae1763a2a8890aba7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_os_process.sml",
+      "sha256": "233fcb5b5593dd596b994bed7bdf93a4828542b85f4bca4df04ae296bf102064"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_posix_tty.sml",
+      "sha256": "3e34f4dad8aeb7eea563ea9f0395988403f124d28afcfd512a7b4b76bb514ee8"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_option.sml",
+      "sha256": "0e46876d7621a387fd68894c0189e26cc71dd4c391d866c741d440cee3fa5642"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/io.sml",
+      "sha256": "9388ee5f0857c727ba6de28877feccdb5cc8dbad8ba730bb1d122807a69129f6"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_word8.sml",
+      "sha256": "3eed1259fa4936269cd9148113fc3479d1b8125df70141ba9f4f8776be84ce0a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/char.sml",
+      "sha256": "77a1b39bfb1c14c1d9bd614da514734cc8b08d4facbb2036dbea0b84cdbf5826"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/word32.sml",
+      "sha256": "9b89ee177f7c2e24312596505f1b17d776cdff5297c873fbbc4d29bbea3b6d71"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/word8vector.sml",
+      "sha256": "39e7507dc9e3b2e1a3e75f2a55451a8f4d0877a1097d9667c1323d0439a779c7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/runefile.sml",
+      "sha256": "28839d9199bdc40225fb5321b7d02874abe54ef6629579f53ea1302b30ad6a0f"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/compiler_sig.sml",
+      "sha256": "fc43984847edd087a0badc452934996308515d66334b635625022a701397fa97"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/repl.sml",
+      "sha256": "de3c13774459c903be0bf70f622ba210724d4236767caeb17b838a509b3c22f1"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_largereal.sml",
+      "sha256": "1999f940f8c385e06f622bd71fabc1a1bd13f2badf48f096c4a51c2d01757672"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_char.sml",
+      "sha256": "d7b0286091970bc28bcb7cb4e98ca4250f70fc8f7a2574573473ea3868f4f17a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_textio.sml",
+      "sha256": "9ad7782b784999d1c34ab422638c58c3681fa5d9e2f3c56a71e5c831d53e4a72"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_vector.sml",
+      "sha256": "9b1fbdc5234be5b323f552552b6d7738448b32f11be9c2f72a0d5feb73c84299"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/position.sml",
+      "sha256": "5bf09fd760f9ddb9a7708b94f6b9b53621832b22a3a6b2e44d42a883f3d4e7cb"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_pack_word.sml",
+      "sha256": "ced65f67f3230ece1bb7f57cd65ce1790685a4733f2697209a0e3464d23d2a4a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/time.sml",
+      "sha256": "431f6f437d33554b5689288b9c5b326c466db96f8b6e687de9dd2439cd13c4e3"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_word64.sml",
+      "sha256": "b8b40042186f5cd48a3c749f84a10318e22f50688628fe378938e0c51f9a3bce"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/runereals.sml",
+      "sha256": "e70aa5ad59d11200380592349b1aa78943a2bed32e367d3632957be442a35a4c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/repl_sig.sml",
+      "sha256": "60e13ba05eeb8b4d6fb30f9d2d8defff7cce90c82e2811562f7cd9c6941d439a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/byte_array_fn.sml",
+      "sha256": "a01159b573c52d4f54606b15b22f20656d02d65d698bb071d02e899689ac5602"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/chararrayslice.sml",
+      "sha256": "195c7ee2deec4fa89765288b7624ed8f9fecd818fb704471d957722738b190f8"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_substring.sml",
+      "sha256": "2ec760174bbb8d5eaa82e250e98cd870f576a2b3977e9e8c31a444d47a901063"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/wordn_fn.sml",
+      "sha256": "604622990ecd202da81da45db837524084e1607863ed3730cf31bd42a02610f9"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_int16.sml",
+      "sha256": "df339b79cbafad3fafaecf38f7d986ad4e3a4fbf281e2861b44b6a6f8a31f97e"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_terminal.sml",
+      "sha256": "78ceb392571215f9d78fd2bf17ea0b7bef7503f71239b458ead3520d5d045924"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_inet6sock.sml",
+      "sha256": "f43644c490033acb83b444bf8904eb82c8315939fad74fb0a4d7d02a3f341b99"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_real.sml",
+      "sha256": "c807dac3eb51f7dc843c800fb4cdb5c2e56aea6476518a05866cee0a14ab9481"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/int8.sml",
+      "sha256": "6e19d0a81c2b74c60176e7aa138c987116e7a665e2fadeb360b1f68b6176ee66"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/posix_process.sml",
+      "sha256": "76381b9e5d4976e8d2ca1eb8791ef87abfcd0e189dfbbc063e1911869c865534"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/stringcvt.sml",
+      "sha256": "819e931d9a086d6e6ebf3657121bed2b9375463378687f0828167d3a21101dc2"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_array.sml",
+      "sha256": "9ccc6f1c32d743f5c981c96807571a23fe87b835ff662b84a53520d0776a14c7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/chararray.sml",
+      "sha256": "8aa0a758afb8935585f607afa5ed4cc00b07742abf55c72b52dbe17722932e47"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/textprimio.sml",
+      "sha256": "e347b647390a4cafe47e6a31cefa3eff500aea0c8ffdc2d6a17187186a4a9d2b"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/arrayslice.sml",
+      "sha256": "872496ff4626bb0c93d4be0a52ab706c0969edb8fdf679446d92dc395085dbd7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_date.sml",
+      "sha256": "c410d6f88bf855e40e3d4334a53a4dd756fd85180c8bc5f50c1e1fb6d9ad36b6"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_byte.sml",
+      "sha256": "d58178226efeba4f249d325de76588d3c80756f54189d4e2d46e0b75d2a91b65"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/runeexit.sml",
+      "sha256": "c4e10c0f94063b94cf990c4ae0af412292be53ccd13497f84fab0914d75038d1"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_os.sml",
+      "sha256": "27802d91f9d091e96b1e883d3992eef499c2dc8f4aa4082d8083f86ec2e3fd3c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_byte.sml",
+      "sha256": "eafe051ac21a90bddfbcab72c0422b045b154500030583510c23a1a687640da2"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_posix_file_sys.sml",
+      "sha256": "5126c4908150aab0b32dbf7eb8faf2e02e083bea96225b20dd269ed5defc62e1"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_array_slice.sml",
+      "sha256": "1bedec585093c315d0dc533b04f18dcd48149109fdae3778d994bc1eb8505ccd"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_stringcvt.sml",
+      "sha256": "a78cc8412ffecf631568ba8d3025567c9da3539240f7e0f7e6af10901a516bcd"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_posix_io.sml",
+      "sha256": "3d2ab4245872c890eb0702c55eb922fe44c28da4bd007959ad881aef1f062fba"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_int32.sml",
+      "sha256": "33777ce211d51c8174120eceb6111b7e689f308960beaddd559d72cd3ce70603"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/textio.sml",
+      "sha256": "125b8be5bd4f317988c083f6815dfeaa0360a989c6b2722d62dcfb264e111e56"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/runeerror.sml",
+      "sha256": "63f04b62f0ffdc1d971ff6b6b2377661cfb99b1206766db405aed58cf7a55904"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/inetsock.sml",
+      "sha256": "c004f0253f153c2db3751d3187e8362c49d11c613558c2c7ebbf01d11f433870"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_net_host_db.sml",
+      "sha256": "ddbf2dad1a353bf3afe2a2ef84e8c66fa5fba95ce6e1bee82aabdabcfe581e38"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_unix_sock.sml",
+      "sha256": "5763d6918a041d2e853d9febc4501c6fa179b2c786526783aa4fd30d5f399017"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_int8.sml",
+      "sha256": "4280991b569effa1655ebaaf3dfcc0d68c1e57e73e99a6029d8df587fefc3d80"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_char.sml",
+      "sha256": "2356576740a5d93ceca66ed6c5dd06e5bafcceb1ec01a7c00b6205db164fd8b7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/vector.sml",
+      "sha256": "da17dda488159b209fec9d62068c646ec1c68720d8695319e27f312a78c1f882"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sml90.sml",
+      "sha256": "33376d0c2d21937ff334592e1098904e490641dc1a502381c9189ad4f2835429"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/substring.sml",
+      "sha256": "7077bae7092566629cd26d223133938092c2216f73d8abbe88e3044e511610d4"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_poly_vector_fn.sml",
+      "sha256": "3e747a1056cd3ba9d3ce3a73e1887174b63b4fc0179e3f7de6219b47d5ae6655"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/dynamic_sig.sml",
+      "sha256": "c80acde0bc15bad54925d1e61745a8086cf193026712ae9e750d76edd9ff4f8d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_real64.sml",
+      "sha256": "15a0d91e1bc491f116c8920c075cfbe82d076f7aa28be628de4f4d2bede82021"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_io.sml",
+      "sha256": "2a11e43181347d7884f99eafb0ecc1dd819be4ddd0b86cd65d7a4ddc93a68edf"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/pervasive.sml",
+      "sha256": "783e9be153e2a6800cab090eb09cbf47bcd57cc86fa42d18e66565785956d63c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_int8.sml",
+      "sha256": "7c171003bf18a31d3545c77c7a2bcd6f6a55988139f230f7f182ff53a93c6550"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_runtime.sml",
+      "sha256": "98fb29a1a426f1efbc50fab5112375052ab3598ac7a5d8e2d658141dc161bd1e"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_sigs.sml",
+      "sha256": "57b3a050484b121c75022a7600c041524f537896e44bd9ff852f208658c372cc"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_os_io.sml",
+      "sha256": "e5ea7d1612ca890e1d235442cd0cf4cc2fc90e46076ffa6aba05ed1b3403df6d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/intinf.sml",
+      "sha256": "55270ceb1600d8083be335c4bf707238f5b5c429d1e38d6eb2551d92a56c3a4c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_int64.sml",
+      "sha256": "c38fa7037eb6771da3d47c83ce375f3ca8925e7e0f0e19db5bd74020df289d11"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_real32.sml",
+      "sha256": "6ea472d8fc106cf77cfad127b94ee14e0bb23eca6e616cc2af4b581604e6c6f8"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/streamio_sig.sml",
+      "sha256": "99005adbbe7a4e83673a7201fb2c26638f74551d6082d8ea352b795679d3fca2"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_word.sml",
+      "sha256": "0217be9302bd9012592a7de21c51ed23d6be537909844a728e2ba587d56476f4"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_word32.sml",
+      "sha256": "1fcdee4f9327ea978fcd17895cc4627aeae32c7273f14cd4bd40c4001d692dbf"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/general.sml",
+      "sha256": "99a6c5546151cf68df1581173e07f4771cdb8b701f6a4077a32e15ebd4bfdf7a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_real.sml",
+      "sha256": "5812b7edd8f0e5152ef2841a82e0f0f03dff3cce67fb53935c25f69d7332d639"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/posix_sysdb.sml",
+      "sha256": "54c445de3c85c2c53ad02a390c450dd73a1b07bf4a7abfea5745752162176f88"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_substring.sml",
+      "sha256": "68cfab609b5aaa19c3fc1eff194ae70725ee464f1c3062422df97f7fa3d63be7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_os_path.sml",
+      "sha256": "4a204201cf7771c3cf23af8c6b1e63a622d5b4952e38ae20921d6c65cd7c9238"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/real32.sml",
+      "sha256": "d99690b37e9f26cd0307e247545269093c313e556e8660f7109b78b97e2e7909"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_int16.sml",
+      "sha256": "49aff406b44bcfdf6d261d5c2ad31693e74040c9d2b4a4d82d90c74613c49ef0"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_int64.sml",
+      "sha256": "579d2df2eb6f9aab492e761f0479e906e647f4d6fbd04bb3502d8ad295e909c7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_text_io.sml",
+      "sha256": "4e940ad2ae7d47c41a2b391bbc138f6ac90ca70b7ebcfd8306c14bd0b58baf6f"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/mono_int32.sml",
+      "sha256": "9f17e2ad05ce2352d2112bf4cc22c429b01e4b930f0f54c0e12f07bf0b4fbd6f"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/netdb.sml",
+      "sha256": "b4d47797fe9b4b46eec501062e1e6325f84c7b0c24e5e6605a10c541bc1960db"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_mono_word32.sml",
+      "sha256": "8ac025000ddde8224627ae45b1019d5845f3ac9ea5ec7cdbf53011d00a1c12bd"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_vector_slice.sml",
+      "sha256": "2ad67b5774f6df1efe69f7bbc510a40332543ee713148e3ec9db42015fdedbd9"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/runepos.sml",
+      "sha256": "398eb9d2c6a5ad557e3df5e7784efc742d93c510d8ea10fa83710b35dc96a962"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/widetextio.sml",
+      "sha256": "57c6f6bcc56847e6a3ad7368a0fbf4acf70768a0350403d53b4a8da02b0ca365"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/sig_general.sml",
+      "sha256": "190f3ca4688bb7db40a8acda44ae6484a27fcf9080afed8aa1564987239d9690"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_widetextio.sml",
+      "sha256": "133e676bf7f7a22a715589e43f75ce3985635772bf1609260e6dbff75ccae29a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/basis/seal_int32.sml",
+      "sha256": "503e161e8300bb791b0cc2bd72aa232a29bc8fe4eff68ce2fee996a761d67b4e"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/parse.sml",
+      "sha256": "dbddb09e636b9a6031b51c3411626b886990a07c855e07cb56bb5f9dca31ca73"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/library.build",
+      "sha256": "6fd5d1841adbf02956d1cc42efd36d5d15debbe4efd0c2d31aebaf969d9b8103"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/expression.sml",
+      "sha256": "d4b6ee0ff8dc70306a909256276f8f4fa9280238f5128d1b34ed582f8117db2c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/integer_sig.sml",
+      "sha256": "eca0e0384afaab9f79aca9df3d7f2053644a79af6937a1d234c2c4400ef6abf7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/lex_sig.sml",
+      "sha256": "2472ed95836a68996d7cb9c67cf4d8c8a59377b26463ff734b769116eac13440"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/enum_const_sig.sml",
+      "sha256": "fca82bc67a7ab41cd5e65dc6e40f74e6f5ed12dbb52f3b228fab62ed9b4e365d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/integer.sml",
+      "sha256": "056b195ca2cf2a9fae0e0942044ff53cc280276446b47cb0a2b23f4955a20123"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/expression_sig.sml",
+      "sha256": "766bcb7ba2b2076a37481c027218189226aa735ca5c1e5eb2b0141afa4e10112"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/declarator_sig.sml",
+      "sha256": "3f7d3f8fe4ae6807ebdaedc9c8e16a7910d948a4c1360a4cf46e0cd167f5bb45"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/preprocess.sml",
+      "sha256": "e6c7b5067b427320fa9642adac7b2958e57abf0ded4864aeb50f6afb6dff4745"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/const.sml",
+      "sha256": "e88fde617feffd2233c83b6ab27502d630ca5031620c908a43f96d81a7d186a8"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/lex.sml",
+      "sha256": "0443f47fa7d0b53c1f1455267e27558c78d6a863c5b9b35661ac509a61f531df"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/parse_sig.sml",
+      "sha256": "cf9e8fdac6d92e412c932477f6a82c4ce4da2bb44b072ac1f54e4de70640b2dc"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/declarator.sml",
+      "sha256": "24f43ef832067140b66126d52def1d87a22a7729e45c0643c5d3f326af272978"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/layout_sig.sml",
+      "sha256": "8fa21a981cf0445a8cba79ee242e615a843bf3388a58c45dd61b50d8795d4bc4"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/layout.sml",
+      "sha256": "b2b50073a454a17e6f4cc5fec8915fa95c3fb565d20aae9bb85d903434d71ca3"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/analysis_sig.sml",
+      "sha256": "bfb2433a1f90ca0ef4f73191501949455e3f34c65689142d9dc4e7a94c96e61d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/files_sig.sml",
+      "sha256": "e09ec23968925ceabb66de1ba5370234a7b27929342e460f3bcca14ec78c5d4c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/const_sig.sml",
+      "sha256": "7c1300a53836f453072d8a8c33ef222cff247d75e2257e84d68ce84bc47e371a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/enum_const.sml",
+      "sha256": "cef14cb931dd57ff3fdafe8a7edcd825ebc5c27084b8e50be0b9d515826858ea"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/MANIFEST",
+      "sha256": "522cd29040492c400343e098937f07fe59530ee288d14ef5b5a535b14a051141"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/preprocess_sig.sml",
+      "sha256": "92249c8c20aabde6ef6763c4fd5ca23abd70d5dcb9a0522e93966535e9dee039"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/type.sml",
+      "sha256": "cddaa49d4f2ca1a22c6e0bb8b9549ccd0c9c100cf20a0af8dfb7b6669fc579fd"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/analysis.sml",
+      "sha256": "237a691d3fdfc28b4df6a7d3cf4b82aafb1e5dc778f52184493dc8fa8b7378dd"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/type_sig.sml",
+      "sha256": "a200ff4b03aeb43a4195fcab347882ff602549530a91d0fc693d790bc13e18c6"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/language/c/files.sml",
+      "sha256": "388aa25d81cf31753119f9d4703af948497f7b2e2f09ccf33e5d215eb4676426"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/validate.sml",
+      "sha256": "c96588ca94cf22db5bdbdc13544409b5e63ea6fc4414c6f7ada096001920a991"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/generate_sig.sml",
+      "sha256": "0b00cb066979bbda06277e12a35ed98a602ba3b234224400890bde9b2e5106fd"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/shim.sml",
+      "sha256": "2ba1f1001d0c8aceb125db80c086ee767ccc5ba6c385f662b9dc7816b4a9b9ca"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/projection_sig.sml",
+      "sha256": "842f76104a33097ded1fa5555c909d72024514ed26e4d70ea539dee6790cb0a8"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/coverage_sig.sml",
+      "sha256": "b6e6519741718e49fbb9166e485f639f763e8331b71f48e13eba9159c6c86b38"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/target.sml",
+      "sha256": "45cce81a95e663e96013c43d0a7c116670d64da2d88059f2a530e0fde381c57a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/coverage.sml",
+      "sha256": "d7d68ca6906c0324c7a254c3ef56e3b0b870bb6699c7c71c255800ad67c3e321"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/library.build",
+      "sha256": "a8b7797de6ff649c2bc8fa60249db1bf89733d2c3a07fa95ec9dc69f7ee0b0a1"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/adapter.sml",
+      "sha256": "979cf6a812f8f0a1e8e35b2e5acc6f004f01de1801f8514b02a147a9a66fbecc"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/generate.sml",
+      "sha256": "691ea39a54ad51c8f91ae9e4b1e97d30a2b08e935da7e5004f8b08a8465891bb"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/shim_sig.sml",
+      "sha256": "37404aab3c87f1f0dabd3233a097a122ee0b2b7590ae25de3496bcf240874fcd"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/model.sml",
+      "sha256": "01ae0dd5067b31c4def64ddb0527f4227f111c95105f7a55fdab2c2970f1cbb8"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/public_sig.sml",
+      "sha256": "86f50d56d94d530f2b96cddeee1d8ca453766945d9502e81673945ad904102aa"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/located_json_sig.sml",
+      "sha256": "2bfa9aaeb35515805ea8eb03180898ab3a4bee8b8d6e179ff4a2ed296760d7fe"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/target_sig.sml",
+      "sha256": "b12ebfd67cb09bc6a7651db2987010ed622a2e54dd1a59d926746cb79f4c5bb2"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/located_json.sml",
+      "sha256": "f342c2cd8dae5116bca8568d938e6577e7cad29e99607e5c18483112bc2b7888"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/public.sml",
+      "sha256": "9bfd7e9bba4576092361dd3432b1c19a6db2ab5c1c2c0c209edb8a47d5ce612c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/projection.sml",
+      "sha256": "2a73e4d924ee6e9a7af03eef335220b7b0446490054eb395f4e5947c2090495c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/MANIFEST",
+      "sha256": "6495fd760840223d16727b8abfd500740dfff3701ccc0b6f771cc000a049f577"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/validate_sig.sml",
+      "sha256": "d1358556905014ea7c6f60a197bec5c6fb64905a5fb399ad65e4b768b8b77d96"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/policy_sig.sml",
+      "sha256": "4d47bc4d3886acd18ee48f363ae26399049c3bab8b221121bc86df3270eadbf6"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/policy.sml",
+      "sha256": "048c5ae30485080b359fed501bebd83a848198836e3f1b8c2fbabc6e2503e30c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/model_sig.sml",
+      "sha256": "58e6077877d2561e1a5437ceefb09fef8bcb6ed4e07e33a58241878b85f9f9fa"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/model/adapter_sig.sml",
+      "sha256": "c1f757c6e7204e14406532163221bc60e2ff7b39de009763df3d45237c094154"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/marshal/scope_sig.sml",
+      "sha256": "c8ae4a30191ba5673fae0cf69d454962a3c289bad51ae2a62b4d864ef595b545"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/marshal/bytes.sml",
+      "sha256": "88d9441877900a294a84f8856a9dde2beff681e2bc1cc4cb63a7653ba1cb6e73"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/marshal/library.build",
+      "sha256": "a5975bcc89167d2480a4a7519f8ae4d01f99578ecc7fe55f16950376cda70114"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/marshal/text_sig.sml",
+      "sha256": "fc0654abf610ea95ef173d89508b22ac7bff86e731e87081a0ae9a94bc6a45cc"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/marshal/bytes_sig.sml",
+      "sha256": "55ac5939196bd0344fa9e85587626a1d765db3e345fbfbb5a0adbdae06564698"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/marshal/text.sml",
+      "sha256": "5da182356669e672102a0053615d594506b3f954de671e1d7209b2e19fbf3346"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/marshal/MANIFEST",
+      "sha256": "07c7317d450fa35a6f4e355199a3edfd1b826936c050ecbad577f8d62bdbf440"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/marshal/scope.sml",
+      "sha256": "4aa007fbb0a6ca1bf6db1cb65119606b03f45b3d88a31ea4b4794a522c2075c4"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/runtime/owner.sml",
+      "sha256": "27b4feebb68102d12250afc1cf983701e413669fb0903ccbaa04e3f8158535f7"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/runtime/library.build",
+      "sha256": "a89d44262e43e347c95a43aecb41b544a71130a70bb2ea726d0b9cf03590b311"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/runtime/generated.sml",
+      "sha256": "30f1f48efe2006faef6370d81a880b140033641693703dd6e5743f708a433183"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/runtime/memory.sml",
+      "sha256": "ad6f7e520eecb9cc8e4643f7ee6bc0a4d90fc0df9481b59bc53aedf7f5036141"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/runtime/MANIFEST",
+      "sha256": "db86756328cd45f66aedff039ac22c813431de3d89a4ef42d994ebba01286660"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/runtime/owner_sig.sml",
+      "sha256": "796222672aff5cd839714660a60f89e7041a6342de99c05e464806c46070da77"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/runtime/generated_sig.sml",
+      "sha256": "3a565405764c9892485d941098af014c942a8d2b5b600ed892b390c254457459"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/ffi/runtime/memory_sig.sml",
+      "sha256": "8f90d87bc4c673427128a095185c5b2f6f8ca0363778aeaff39c75b110543bc6"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/digest/hmac_sig.sml",
+      "sha256": "655a360fd27c86335873ecd5c816ae5be2b7e2e5887dd5b1f3f11c82da682823"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/digest/library.build",
+      "sha256": "3a96da090f6065bf0047ee8c1b3d76cf33096486b3e254b79abf58fe94d2e67b"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/digest/hex.sml",
+      "sha256": "03cbb8140fd8af7c6c276b09197e9360336f7681dbb3bfb72a0f641ab058d2f5"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/digest/hex_sig.sml",
+      "sha256": "3f1a4c2be4558cb81e1e43704076239837e8e6c73bfd6d961c9db126f0e20c93"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/digest/MANIFEST",
+      "sha256": "011204f0be8525e937b86b7687d89c245c6e5cc8de35435a9fea8b40db7c3345"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/digest/hmac_fn.sml",
+      "sha256": "1d8582b2e690a991139d924e3fd88233170d3db7111aa7127610bc23aba033a6"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/digest/murmur2.sml",
+      "sha256": "96a8171202ce4840ca0cb1798caf8a74c34c1b6f9e41df6679b7390271b98aaa"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/digest/murmur2_sig.sml",
+      "sha256": "770f22a06e128a4227185e75f917d2c7c15fdfa9987efd71dff4471e8d962e75"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/digest/digest_sig.sml",
+      "sha256": "e4a5788c9865b52f95a99cc821a079aaa62219f9da9bc430d334c4161330b162"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/digest/sha256.sml",
+      "sha256": "f7fb8f6886c88af680bcfe3f29bd8ca70b03db599f6139a0be194afe0ddc4b95"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/json/json_sig.sml",
+      "sha256": "7dc200fcd88a27481e753a6b1160de4c2eef3316ef4cbb63207ae803daa52cf4"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/json/library.build",
+      "sha256": "452367689d73def6ab952443ca574e1a8ff0d920167ddd35a54e3d2d59eac449"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/json/MANIFEST",
+      "sha256": "23e08583e9d43595de4dd251d1f82a64ef159fe7a0876347433dc09161985d32"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/json/json.sml",
+      "sha256": "512de3732db2e14355d2182432d621ba5ca1feecf2c28e51ec7eceb95eb88784"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/normalize_data.sml",
+      "sha256": "87cb9a383202b4fbb53714efb82b60fbad6fe55935391a32efe163ff408185bf"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/library.build",
+      "sha256": "18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/grapheme_data.sml",
+      "sha256": "5c1e5250d7cd13f458403fdbdc0da82723889ec4ad5f9e148e771a61e9e2b550"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/grapheme.sml",
+      "sha256": "7d2d479cabb81486550b589cba503a6327c52774d9333b4a607d505f4bb9b64d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/normalize_sig.sml",
+      "sha256": "c03f9ac9be7ea597c3ef5b7b65ef83575609ee50ea7d9e9592140784e1a2bf28"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/width_data.sml",
+      "sha256": "c5d398f4bcd418c102c3f7add605cf06427581b92d88cbfaf1522166054570a9"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/identifier_data.sml",
+      "sha256": "22563ea738af6f7998c057a0ad7356e0c6f021ff278984cfa756aa986fe155ab"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/security.sml",
+      "sha256": "64ed0e7e277e41f4bfd561e23135c35d94580010089c21de7889063ba2d9f46c"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/identifier_sig.sml",
+      "sha256": "13631f81e1cf0341aacc3d72c7f884dcf787ef5726de4d900e5dea6eb9182f08"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/display_width.sml",
+      "sha256": "93f36ab60bbbe78ec2b908a72dd1aa4bae0fdfc33e58d97f207799fb7bb61bf8"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/utf8.sml",
+      "sha256": "29b65c054ee852f9911557f2847111beef1a6cf9069e6cb5babdf3f882b5d58e"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/utf8_sig.sml",
+      "sha256": "15ca27fbb50018d58d834676cf3e64449b2eb232be65bb83fcbb7590079742ef"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/MANIFEST",
+      "sha256": "f3708d3cbe9562d11fed329eea68dba3414b3aef6c2e4306f1c6d2186ec45e8b"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/normalize.sml",
+      "sha256": "8aaa12ce5591e017dbb71b43b395b159b5f16c6ef02486b99af2022a9e158e7a"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/security_sig.sml",
+      "sha256": "ef644b130577c1eaab1cf718f824408cedd351fc11513c3712271b72261521ab"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/identifier.sml",
+      "sha256": "61869910a82f42570e1323fd2d2285e0c6f0d16295ffa9c24256e6a55c11081d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/display_width_sig.sml",
+      "sha256": "d12a4faf07d5d41a7213cba650a0c19def78af1286244127f56fe590a618eadc"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/security_data.sml",
+      "sha256": "ab8c847ba96a586a49582c2981bb12143fa92b75bbabd6eb30b837fed88d8c54"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/lib/unicode/grapheme_sig.sml",
+      "sha256": "b03f29074f66c793b8365bf10e187fd9fc93777a8f21c8257441a6b5236a8981"
+    }
+  ],
+  "subject": {
+    "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/out/ffi-release-final-opt/libsubject.so",
+    "sha256": "685ea76979c3e7129ec7ed0b56a54db34d008122b89b661650972447b4f1b87d"
+  },
+  "directExecutable": {
+    "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/out/ffi-release-final-opt/direct",
+    "sha256": "06adf015db80cc80af7e4d2beb1f4dfedc2c3aec1986cb3063717e18a56f4362"
+  },
+  "shimSource": {
+    "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/out/ffi-release-final-opt/generated-shim/sets/081e198f5104f1bcd954bec91e291a14629ac9166b0f7085efb81d2ade25d3d6/shims.c",
+    "sha256": "ac8cb4c34a787b0a3a93f76d5f042ef4e053e31582d781aed648d10284cc6d3b"
+  },
+  "shimBinaries": [
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/out/ffi-release-final-opt/shim-0.so",
+      "sha256": "e1a7fc0692d34a88ce4f0b6406a49ecfce2cdc0b4129de69c218602773e8d49d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/out/ffi-release-final-opt/shim-1.so",
+      "sha256": "e1a7fc0692d34a88ce4f0b6406a49ecfce2cdc0b4129de69c218602773e8d49d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/out/ffi-release-final-opt/shim-2.so",
+      "sha256": "e1a7fc0692d34a88ce4f0b6406a49ecfce2cdc0b4129de69c218602773e8d49d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/out/ffi-release-final-opt/shim-3.so",
+      "sha256": "e1a7fc0692d34a88ce4f0b6406a49ecfce2cdc0b4129de69c218602773e8d49d"
+    },
+    {
+      "path": "/home/ruud/rune/.worktrees/runeffi-performance/tests/out/ffi-release-final-opt/shim-4.so",
+      "sha256": "e1a7fc0692d34a88ce4f0b6406a49ecfce2cdc0b4129de69c218602773e8d49d"
+    }
+  ],
+  "platform": {
+    "sysname": "Linux",
+    "nodename": "ThinkStation",
+    "release": "6.18.33.2-microsoft-standard-WSL2",
+    "version": "#1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026",
+    "machine": "x86_64"
+  },
+  "quantiles": "nearest rank p25/p75/p95; midpoint median for even sample counts",
+  "memoryAccounting": "SML Runtime.stats allocation deltas include constant measurement overhead; loop is a separate control baseline. Native payload counts cover only the temporary 256-byte buffer, excluding allocator/resource/libffi metadata and executable closures.",
+  "cacheAccounting": "generation-first is first use in a fresh worker VM; generation-warm repeats ten times in that VM. Filesystem/CPU caches are uncontrolled. Stage timings reuse prior stage outputs.",
+  "samples": [
+    {
+      "sample": 0,
+      "implementation": "direct-c",
+      "phase": "scalar",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.000087000,
+      "checksum": "50000",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 0,
+      "implementation": "direct-c",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.011472000,
+      "checksum": "80",
+      "bufferPayloadAllocatedBytes": 12800000,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 0,
+      "implementation": "direct-c",
+      "phase": "callback",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.000773000,
+      "checksum": "50000",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "loop",
+      "iterations": 50000,
+      "cpuSeconds": 7.5E-5,
+      "wallSeconds": 7.2E-5,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 88,
+      "smlAllocatedObjects": 3,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "load-symbol-first",
+      "iterations": 1,
+      "cpuSeconds": 1.15E-4,
+      "wallSeconds": 1.12E-4,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 536,
+      "smlAllocatedObjects": 19,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "load-symbol",
+      "iterations": 500,
+      "cpuSeconds": 0.042102,
+      "wallSeconds": 0.042264,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 224088,
+      "smlAllocatedObjects": 8003,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "prepare-first",
+      "iterations": 1,
+      "cpuSeconds": 1.4E-5,
+      "wallSeconds": 1.1E-5,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 440,
+      "smlAllocatedObjects": 17,
+      "collections": 0,
+      "foreignResourcesBefore": "2",
+      "foreignResourcesAfter": "2",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "prepare",
+      "iterations": 500,
+      "cpuSeconds": 3.73E-4,
+      "wallSeconds": 3.67E-4,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 176088,
+      "smlAllocatedObjects": 7003,
+      "collections": 0,
+      "foreignResourcesBefore": "2",
+      "foreignResourcesAfter": "2",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "scalar-first",
+      "iterations": 1,
+      "cpuSeconds": 1.7E-5,
+      "wallSeconds": 1.4E-5,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 752,
+      "smlAllocatedObjects": 30,
+      "collections": 0,
+      "foreignResourcesBefore": "3",
+      "foreignResourcesAfter": "3",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.042173,
+      "wallSeconds": 0.042413,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 33200088,
+      "smlAllocatedObjects": 1350003,
+      "collections": 31,
+      "foreignResourcesBefore": "3",
+      "foreignResourcesAfter": "3",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "marshal-256-first",
+      "iterations": 1,
+      "cpuSeconds": 2.66E-4,
+      "wallSeconds": 2.61E-4,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 9416,
+      "smlAllocatedObjects": 368,
+      "collections": 0,
+      "foreignResourcesBefore": "5",
+      "foreignResourcesAfter": "5",
+      "bufferPayloadAllocatedBytes": 256,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 0.362195,
+      "wallSeconds": 0.363563,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 466400088,
+      "smlAllocatedObjects": 18250003,
+      "collections": 445,
+      "foreignResourcesBefore": "5",
+      "foreignResourcesAfter": "5",
+      "bufferPayloadAllocatedBytes": 12800000,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null,
+      "checksum": "80"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "callback-first",
+      "iterations": 1,
+      "cpuSeconds": 3E-5,
+      "wallSeconds": 2.5E-5,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 1624,
+      "smlAllocatedObjects": 69,
+      "collections": 0,
+      "foreignResourcesBefore": "8",
+      "foreignResourcesAfter": "8",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.208672,
+      "wallSeconds": 0.209454,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 76800088,
+      "smlAllocatedObjects": 3300003,
+      "collections": 73,
+      "foreignResourcesBefore": "8",
+      "foreignResourcesAfter": "8",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "generation-first",
+      "iterations": 1,
+      "cpuSeconds": 0.015522,
+      "wallSeconds": 0.015543,
+      "checksum": "23727",
+      "smlAllocatedBytes": 2931840,
+      "smlAllocatedObjects": 69761,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "generation-warm",
+      "iterations": 10,
+      "cpuSeconds": 0.091272,
+      "wallSeconds": 0.091681,
+      "checksum": "23727",
+      "smlAllocatedBytes": 29317608,
+      "smlAllocatedObjects": 697583,
+      "collections": 15,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "preprocess",
+      "iterations": 10,
+      "cpuSeconds": 0.003469,
+      "wallSeconds": 0.003493,
+      "checksum": "49",
+      "smlAllocatedBytes": 3632328,
+      "smlAllocatedObjects": 130763,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "parse",
+      "iterations": 10,
+      "cpuSeconds": 0.001258,
+      "wallSeconds": 0.001255,
+      "checksum": "6",
+      "smlAllocatedBytes": 73608,
+      "smlAllocatedObjects": 3033,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "projection-generation",
+      "iterations": 10,
+      "cpuSeconds": 0.020673,
+      "wallSeconds": 0.02073,
+      "checksum": "21610",
+      "smlAllocatedBytes": 14567208,
+      "smlAllocatedObjects": 251803,
+      "collections": 5,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 0,
+      "implementation": "rune",
+      "phase": "packaging",
+      "iterations": 10,
+      "cpuSeconds": 0.036144,
+      "wallSeconds": 0.03626,
+      "checksum": "23141",
+      "smlAllocatedBytes": 4921528,
+      "smlAllocatedObjects": 111503,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 0,
+      "implementation": "c-compiler",
+      "phase": "shim-compile",
+      "iterations": 1,
+      "cpuSeconds": 0.08,
+      "wallSeconds": 0.217339,
+      "cpuAccounting": "reaped child user+system CPU",
+      "checksum": "e1a7fc0692d34a88ce4f0b6406a49ecfce2cdc0b4129de69c218602773e8d49d",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 1,
+      "implementation": "direct-c",
+      "phase": "scalar",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.000089000,
+      "checksum": "50000",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 1,
+      "implementation": "direct-c",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.006638000,
+      "checksum": "80",
+      "bufferPayloadAllocatedBytes": 12800000,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 1,
+      "implementation": "direct-c",
+      "phase": "callback",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.000130000,
+      "checksum": "50000",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "loop",
+      "iterations": 50000,
+      "cpuSeconds": 1.65E-4,
+      "wallSeconds": 1.6E-4,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 88,
+      "smlAllocatedObjects": 3,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "load-symbol-first",
+      "iterations": 1,
+      "cpuSeconds": 1.5E-4,
+      "wallSeconds": 1.46E-4,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 536,
+      "smlAllocatedObjects": 19,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "load-symbol",
+      "iterations": 500,
+      "cpuSeconds": 0.029795,
+      "wallSeconds": 0.029895,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 224088,
+      "smlAllocatedObjects": 8003,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "prepare-first",
+      "iterations": 1,
+      "cpuSeconds": 1.1E-5,
+      "wallSeconds": 9E-6,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 440,
+      "smlAllocatedObjects": 17,
+      "collections": 0,
+      "foreignResourcesBefore": "2",
+      "foreignResourcesAfter": "2",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "prepare",
+      "iterations": 500,
+      "cpuSeconds": 1.72E-4,
+      "wallSeconds": 1.7E-4,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 176088,
+      "smlAllocatedObjects": 7003,
+      "collections": 0,
+      "foreignResourcesBefore": "2",
+      "foreignResourcesAfter": "2",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "scalar-first",
+      "iterations": 1,
+      "cpuSeconds": 1.2E-5,
+      "wallSeconds": 1E-5,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 752,
+      "smlAllocatedObjects": 30,
+      "collections": 0,
+      "foreignResourcesBefore": "3",
+      "foreignResourcesAfter": "3",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.042417,
+      "wallSeconds": 0.042577,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 33200088,
+      "smlAllocatedObjects": 1350003,
+      "collections": 31,
+      "foreignResourcesBefore": "3",
+      "foreignResourcesAfter": "3",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "marshal-256-first",
+      "iterations": 1,
+      "cpuSeconds": 2.67E-4,
+      "wallSeconds": 2.63E-4,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 9416,
+      "smlAllocatedObjects": 368,
+      "collections": 0,
+      "foreignResourcesBefore": "5",
+      "foreignResourcesAfter": "5",
+      "bufferPayloadAllocatedBytes": 256,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 0.35168,
+      "wallSeconds": 0.352952,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 466400088,
+      "smlAllocatedObjects": 18250003,
+      "collections": 445,
+      "foreignResourcesBefore": "5",
+      "foreignResourcesAfter": "5",
+      "bufferPayloadAllocatedBytes": 12800000,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null,
+      "checksum": "80"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "callback-first",
+      "iterations": 1,
+      "cpuSeconds": 2.2E-5,
+      "wallSeconds": 1.8E-5,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 1624,
+      "smlAllocatedObjects": 69,
+      "collections": 0,
+      "foreignResourcesBefore": "8",
+      "foreignResourcesAfter": "8",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.273574,
+      "wallSeconds": 0.274975,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 76800088,
+      "smlAllocatedObjects": 3300003,
+      "collections": 73,
+      "foreignResourcesBefore": "8",
+      "foreignResourcesAfter": "8",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "generation-first",
+      "iterations": 1,
+      "cpuSeconds": 0.022371,
+      "wallSeconds": 0.022424,
+      "checksum": "23727",
+      "smlAllocatedBytes": 2931840,
+      "smlAllocatedObjects": 69761,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "generation-warm",
+      "iterations": 10,
+      "cpuSeconds": 0.081407,
+      "wallSeconds": 0.081731,
+      "checksum": "23727",
+      "smlAllocatedBytes": 29317608,
+      "smlAllocatedObjects": 697583,
+      "collections": 15,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "preprocess",
+      "iterations": 10,
+      "cpuSeconds": 0.005527,
+      "wallSeconds": 0.005521,
+      "checksum": "49",
+      "smlAllocatedBytes": 3632328,
+      "smlAllocatedObjects": 130763,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "parse",
+      "iterations": 10,
+      "cpuSeconds": 0.00157,
+      "wallSeconds": 0.001564,
+      "checksum": "6",
+      "smlAllocatedBytes": 73608,
+      "smlAllocatedObjects": 3033,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "projection-generation",
+      "iterations": 10,
+      "cpuSeconds": 0.031595,
+      "wallSeconds": 0.031692,
+      "checksum": "21610",
+      "smlAllocatedBytes": 14567208,
+      "smlAllocatedObjects": 251803,
+      "collections": 5,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 1,
+      "implementation": "rune",
+      "phase": "packaging",
+      "iterations": 10,
+      "cpuSeconds": 0.027858,
+      "wallSeconds": 0.027926,
+      "checksum": "23141",
+      "smlAllocatedBytes": 4921528,
+      "smlAllocatedObjects": 111503,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 1,
+      "implementation": "c-compiler",
+      "phase": "shim-compile",
+      "iterations": 1,
+      "cpuSeconds": 0.07,
+      "wallSeconds": 0.218692,
+      "cpuAccounting": "reaped child user+system CPU",
+      "checksum": "e1a7fc0692d34a88ce4f0b6406a49ecfce2cdc0b4129de69c218602773e8d49d",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 2,
+      "implementation": "direct-c",
+      "phase": "scalar",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.000387000,
+      "checksum": "50000",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 2,
+      "implementation": "direct-c",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.006568000,
+      "checksum": "80",
+      "bufferPayloadAllocatedBytes": 12800000,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 2,
+      "implementation": "direct-c",
+      "phase": "callback",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.000130000,
+      "checksum": "50000",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "loop",
+      "iterations": 50000,
+      "cpuSeconds": 1.44E-4,
+      "wallSeconds": 1.39E-4,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 88,
+      "smlAllocatedObjects": 3,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "load-symbol-first",
+      "iterations": 1,
+      "cpuSeconds": 1.65E-4,
+      "wallSeconds": 1.6E-4,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 536,
+      "smlAllocatedObjects": 19,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "load-symbol",
+      "iterations": 500,
+      "cpuSeconds": 0.032834,
+      "wallSeconds": 0.032989,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 224088,
+      "smlAllocatedObjects": 8003,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "prepare-first",
+      "iterations": 1,
+      "cpuSeconds": 1.5E-5,
+      "wallSeconds": 1.1E-5,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 440,
+      "smlAllocatedObjects": 17,
+      "collections": 0,
+      "foreignResourcesBefore": "2",
+      "foreignResourcesAfter": "2",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "prepare",
+      "iterations": 500,
+      "cpuSeconds": 3.2E-4,
+      "wallSeconds": 3.15E-4,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 176088,
+      "smlAllocatedObjects": 7003,
+      "collections": 0,
+      "foreignResourcesBefore": "2",
+      "foreignResourcesAfter": "2",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "scalar-first",
+      "iterations": 1,
+      "cpuSeconds": 1.3E-5,
+      "wallSeconds": 1E-5,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 752,
+      "smlAllocatedObjects": 30,
+      "collections": 0,
+      "foreignResourcesBefore": "3",
+      "foreignResourcesAfter": "3",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.036613,
+      "wallSeconds": 0.036784,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 33200088,
+      "smlAllocatedObjects": 1350003,
+      "collections": 31,
+      "foreignResourcesBefore": "3",
+      "foreignResourcesAfter": "3",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "marshal-256-first",
+      "iterations": 1,
+      "cpuSeconds": 2.38E-4,
+      "wallSeconds": 2.34E-4,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 9416,
+      "smlAllocatedObjects": 368,
+      "collections": 0,
+      "foreignResourcesBefore": "5",
+      "foreignResourcesAfter": "5",
+      "bufferPayloadAllocatedBytes": 256,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 0.441999,
+      "wallSeconds": 0.444156,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 466400088,
+      "smlAllocatedObjects": 18250003,
+      "collections": 445,
+      "foreignResourcesBefore": "5",
+      "foreignResourcesAfter": "5",
+      "bufferPayloadAllocatedBytes": 12800000,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null,
+      "checksum": "80"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "callback-first",
+      "iterations": 1,
+      "cpuSeconds": 2E-5,
+      "wallSeconds": 1.8E-5,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 1624,
+      "smlAllocatedObjects": 69,
+      "collections": 0,
+      "foreignResourcesBefore": "8",
+      "foreignResourcesAfter": "8",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.259417,
+      "wallSeconds": 0.260352,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 76800088,
+      "smlAllocatedObjects": 3300003,
+      "collections": 73,
+      "foreignResourcesBefore": "8",
+      "foreignResourcesAfter": "8",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "generation-first",
+      "iterations": 1,
+      "cpuSeconds": 0.017328,
+      "wallSeconds": 0.017382,
+      "checksum": "23727",
+      "smlAllocatedBytes": 2931840,
+      "smlAllocatedObjects": 69761,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "generation-warm",
+      "iterations": 10,
+      "cpuSeconds": 0.076398,
+      "wallSeconds": 0.076692,
+      "checksum": "23727",
+      "smlAllocatedBytes": 29317608,
+      "smlAllocatedObjects": 697583,
+      "collections": 15,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "preprocess",
+      "iterations": 10,
+      "cpuSeconds": 0.004206,
+      "wallSeconds": 0.004201,
+      "checksum": "49",
+      "smlAllocatedBytes": 3632328,
+      "smlAllocatedObjects": 130763,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "parse",
+      "iterations": 10,
+      "cpuSeconds": 0.001255,
+      "wallSeconds": 0.00125,
+      "checksum": "6",
+      "smlAllocatedBytes": 73608,
+      "smlAllocatedObjects": 3033,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "projection-generation",
+      "iterations": 10,
+      "cpuSeconds": 0.022958,
+      "wallSeconds": 0.023051,
+      "checksum": "21610",
+      "smlAllocatedBytes": 14567208,
+      "smlAllocatedObjects": 251803,
+      "collections": 5,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 2,
+      "implementation": "rune",
+      "phase": "packaging",
+      "iterations": 10,
+      "cpuSeconds": 0.020035,
+      "wallSeconds": 0.020093,
+      "checksum": "23141",
+      "smlAllocatedBytes": 4921528,
+      "smlAllocatedObjects": 111503,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 2,
+      "implementation": "c-compiler",
+      "phase": "shim-compile",
+      "iterations": 1,
+      "cpuSeconds": 0.07,
+      "wallSeconds": 0.209119,
+      "cpuAccounting": "reaped child user+system CPU",
+      "checksum": "e1a7fc0692d34a88ce4f0b6406a49ecfce2cdc0b4129de69c218602773e8d49d",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 3,
+      "implementation": "direct-c",
+      "phase": "scalar",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.000434000,
+      "checksum": "50000",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 3,
+      "implementation": "direct-c",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.010573000,
+      "checksum": "80",
+      "bufferPayloadAllocatedBytes": 12800000,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 3,
+      "implementation": "direct-c",
+      "phase": "callback",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.000151000,
+      "checksum": "50000",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "loop",
+      "iterations": 50000,
+      "cpuSeconds": 7.4E-5,
+      "wallSeconds": 7.2E-5,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 88,
+      "smlAllocatedObjects": 3,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "load-symbol-first",
+      "iterations": 1,
+      "cpuSeconds": 9.2E-5,
+      "wallSeconds": 8.9E-5,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 536,
+      "smlAllocatedObjects": 19,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "load-symbol",
+      "iterations": 500,
+      "cpuSeconds": 0.037977,
+      "wallSeconds": 0.038088,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 224088,
+      "smlAllocatedObjects": 8003,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "prepare-first",
+      "iterations": 1,
+      "cpuSeconds": 1.1E-5,
+      "wallSeconds": 8E-6,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 440,
+      "smlAllocatedObjects": 17,
+      "collections": 0,
+      "foreignResourcesBefore": "2",
+      "foreignResourcesAfter": "2",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "prepare",
+      "iterations": 500,
+      "cpuSeconds": 1.72E-4,
+      "wallSeconds": 1.7E-4,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 176088,
+      "smlAllocatedObjects": 7003,
+      "collections": 0,
+      "foreignResourcesBefore": "2",
+      "foreignResourcesAfter": "2",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "scalar-first",
+      "iterations": 1,
+      "cpuSeconds": 1.2E-5,
+      "wallSeconds": 1E-5,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 752,
+      "smlAllocatedObjects": 30,
+      "collections": 0,
+      "foreignResourcesBefore": "3",
+      "foreignResourcesAfter": "3",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.039478,
+      "wallSeconds": 0.039622,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 33200088,
+      "smlAllocatedObjects": 1350003,
+      "collections": 31,
+      "foreignResourcesBefore": "3",
+      "foreignResourcesAfter": "3",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "marshal-256-first",
+      "iterations": 1,
+      "cpuSeconds": 1.38E-4,
+      "wallSeconds": 1.35E-4,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 9416,
+      "smlAllocatedObjects": 368,
+      "collections": 0,
+      "foreignResourcesBefore": "5",
+      "foreignResourcesAfter": "5",
+      "bufferPayloadAllocatedBytes": 256,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 0.377228,
+      "wallSeconds": 0.378933,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 466400088,
+      "smlAllocatedObjects": 18250003,
+      "collections": 445,
+      "foreignResourcesBefore": "5",
+      "foreignResourcesAfter": "5",
+      "bufferPayloadAllocatedBytes": 12800000,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null,
+      "checksum": "80"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "callback-first",
+      "iterations": 1,
+      "cpuSeconds": 2.2E-5,
+      "wallSeconds": 1.9E-5,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 1624,
+      "smlAllocatedObjects": 69,
+      "collections": 0,
+      "foreignResourcesBefore": "8",
+      "foreignResourcesAfter": "8",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.262039,
+      "wallSeconds": 0.263034,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 76800088,
+      "smlAllocatedObjects": 3300003,
+      "collections": 73,
+      "foreignResourcesBefore": "8",
+      "foreignResourcesAfter": "8",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "generation-first",
+      "iterations": 1,
+      "cpuSeconds": 0.017087,
+      "wallSeconds": 0.017145,
+      "checksum": "23727",
+      "smlAllocatedBytes": 2931840,
+      "smlAllocatedObjects": 69761,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "generation-warm",
+      "iterations": 10,
+      "cpuSeconds": 0.082866,
+      "wallSeconds": 0.083163,
+      "checksum": "23727",
+      "smlAllocatedBytes": 29317608,
+      "smlAllocatedObjects": 697583,
+      "collections": 15,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "preprocess",
+      "iterations": 10,
+      "cpuSeconds": 0.003307,
+      "wallSeconds": 0.003333,
+      "checksum": "49",
+      "smlAllocatedBytes": 3632328,
+      "smlAllocatedObjects": 130763,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "parse",
+      "iterations": 10,
+      "cpuSeconds": 0.001219,
+      "wallSeconds": 0.001215,
+      "checksum": "6",
+      "smlAllocatedBytes": 73608,
+      "smlAllocatedObjects": 3033,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "projection-generation",
+      "iterations": 10,
+      "cpuSeconds": 0.021488,
+      "wallSeconds": 0.021568,
+      "checksum": "21610",
+      "smlAllocatedBytes": 14567208,
+      "smlAllocatedObjects": 251803,
+      "collections": 5,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 3,
+      "implementation": "rune",
+      "phase": "packaging",
+      "iterations": 10,
+      "cpuSeconds": 0.025314,
+      "wallSeconds": 0.025422,
+      "checksum": "23141",
+      "smlAllocatedBytes": 4921528,
+      "smlAllocatedObjects": 111503,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 3,
+      "implementation": "c-compiler",
+      "phase": "shim-compile",
+      "iterations": 1,
+      "cpuSeconds": 0.06,
+      "wallSeconds": 0.218087,
+      "cpuAccounting": "reaped child user+system CPU",
+      "checksum": "e1a7fc0692d34a88ce4f0b6406a49ecfce2cdc0b4129de69c218602773e8d49d",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 4,
+      "implementation": "direct-c",
+      "phase": "scalar",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.000088000,
+      "checksum": "50000",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 4,
+      "implementation": "direct-c",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.008373000,
+      "checksum": "80",
+      "bufferPayloadAllocatedBytes": 12800000,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 4,
+      "implementation": "direct-c",
+      "phase": "callback",
+      "iterations": 50000,
+      "warmupIterations": 1000,
+      "cpuSeconds": 0.000171000,
+      "checksum": "50000",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "loop",
+      "iterations": 50000,
+      "cpuSeconds": 1.69E-4,
+      "wallSeconds": 1.64E-4,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 88,
+      "smlAllocatedObjects": 3,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "load-symbol-first",
+      "iterations": 1,
+      "cpuSeconds": 1.74E-4,
+      "wallSeconds": 1.69E-4,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 536,
+      "smlAllocatedObjects": 19,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "load-symbol",
+      "iterations": 500,
+      "cpuSeconds": 0.035534,
+      "wallSeconds": 0.035687,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 224088,
+      "smlAllocatedObjects": 8003,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "prepare-first",
+      "iterations": 1,
+      "cpuSeconds": 1.4E-5,
+      "wallSeconds": 1.1E-5,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 440,
+      "smlAllocatedObjects": 17,
+      "collections": 0,
+      "foreignResourcesBefore": "2",
+      "foreignResourcesAfter": "2",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "prepare",
+      "iterations": 500,
+      "cpuSeconds": 3.98E-4,
+      "wallSeconds": 3.95E-4,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 176088,
+      "smlAllocatedObjects": 7003,
+      "collections": 0,
+      "foreignResourcesBefore": "2",
+      "foreignResourcesAfter": "2",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "0"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "scalar-first",
+      "iterations": 1,
+      "cpuSeconds": 1.8E-5,
+      "wallSeconds": 1.5E-5,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 752,
+      "smlAllocatedObjects": 30,
+      "collections": 0,
+      "foreignResourcesBefore": "3",
+      "foreignResourcesAfter": "3",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "scalar",
+      "iterations": 50000,
+      "cpuSeconds": 0.035562,
+      "wallSeconds": 0.035698,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 33200088,
+      "smlAllocatedObjects": 1350003,
+      "collections": 31,
+      "foreignResourcesBefore": "3",
+      "foreignResourcesAfter": "3",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "marshal-256-first",
+      "iterations": 1,
+      "cpuSeconds": 1.41E-4,
+      "wallSeconds": 1.38E-4,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 9416,
+      "smlAllocatedObjects": 368,
+      "collections": 0,
+      "foreignResourcesBefore": "5",
+      "foreignResourcesAfter": "5",
+      "bufferPayloadAllocatedBytes": 256,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "marshal-256",
+      "iterations": 50000,
+      "cpuSeconds": 0.345948,
+      "wallSeconds": 0.347232,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 466400088,
+      "smlAllocatedObjects": 18250003,
+      "collections": 445,
+      "foreignResourcesBefore": "5",
+      "foreignResourcesAfter": "5",
+      "bufferPayloadAllocatedBytes": 12800000,
+      "peakBufferPayloadBytes": 256,
+      "nativeMetadataBytes": null,
+      "checksum": "80"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "callback-first",
+      "iterations": 1,
+      "cpuSeconds": 2.2E-5,
+      "wallSeconds": 1.9E-5,
+      "warmupIterations": 0,
+      "smlAllocatedBytes": 1624,
+      "smlAllocatedObjects": 69,
+      "collections": 0,
+      "foreignResourcesBefore": "8",
+      "foreignResourcesAfter": "8",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "1"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "callback",
+      "iterations": 50000,
+      "cpuSeconds": 0.222061,
+      "wallSeconds": 0.22282,
+      "warmupIterations": 1000,
+      "smlAllocatedBytes": 76800088,
+      "smlAllocatedObjects": 3300003,
+      "collections": 73,
+      "foreignResourcesBefore": "8",
+      "foreignResourcesAfter": "8",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null,
+      "checksum": "50000"
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "generation-first",
+      "iterations": 1,
+      "cpuSeconds": 0.018972,
+      "wallSeconds": 0.019029,
+      "checksum": "23727",
+      "smlAllocatedBytes": 2931840,
+      "smlAllocatedObjects": 69761,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "generation-warm",
+      "iterations": 10,
+      "cpuSeconds": 0.091316,
+      "wallSeconds": 0.09165,
+      "checksum": "23727",
+      "smlAllocatedBytes": 29317608,
+      "smlAllocatedObjects": 697583,
+      "collections": 15,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "preprocess",
+      "iterations": 10,
+      "cpuSeconds": 0.003644,
+      "wallSeconds": 0.003674,
+      "checksum": "49",
+      "smlAllocatedBytes": 3632328,
+      "smlAllocatedObjects": 130763,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "parse",
+      "iterations": 10,
+      "cpuSeconds": 0.001264,
+      "wallSeconds": 0.00126,
+      "checksum": "6",
+      "smlAllocatedBytes": 73608,
+      "smlAllocatedObjects": 3033,
+      "collections": 0,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "projection-generation",
+      "iterations": 10,
+      "cpuSeconds": 0.020649,
+      "wallSeconds": 0.020701,
+      "checksum": "21610",
+      "smlAllocatedBytes": 14567208,
+      "smlAllocatedObjects": 251803,
+      "collections": 5,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 4,
+      "implementation": "rune",
+      "phase": "packaging",
+      "iterations": 10,
+      "cpuSeconds": 0.019152,
+      "wallSeconds": 0.019222,
+      "checksum": "23141",
+      "smlAllocatedBytes": 4921528,
+      "smlAllocatedObjects": 111503,
+      "collections": 2,
+      "foreignResourcesBefore": "0",
+      "foreignResourcesAfter": "0",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    },
+    {
+      "sample": 4,
+      "implementation": "c-compiler",
+      "phase": "shim-compile",
+      "iterations": 1,
+      "cpuSeconds": 0.06,
+      "wallSeconds": 0.205851,
+      "cpuAccounting": "reaped child user+system CPU",
+      "checksum": "e1a7fc0692d34a88ce4f0b6406a49ecfce2cdc0b4129de69c218602773e8d49d",
+      "bufferPayloadAllocatedBytes": 0,
+      "peakBufferPayloadBytes": 0,
+      "nativeMetadataBytes": null
+    }
+  ],
+  "summary": [
+    {
+      "implementation": "rune",
+      "phase": "loop",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 1.48,
+        "p25": 1.5,
+        "median": 2.88,
+        "p75": 3.3,
+        "p95": 3.38,
+        "max": 3.38
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 1.44,
+        "p25": 1.44,
+        "median": 2.78,
+        "p75": 3.2,
+        "p95": 3.28,
+        "max": 3.28
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0.00176,
+        "p25": 0.00176,
+        "median": 0.00176,
+        "p75": 0.00176,
+        "p95": 0.00176,
+        "max": 0.00176
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 6E-5,
+        "p25": 6E-5,
+        "median": 6E-5,
+        "p75": 6E-5,
+        "p95": 6E-5,
+        "max": 6E-5
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "load-symbol-first",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 92000,
+        "p25": 115000,
+        "median": 1.5E5,
+        "p75": 165000,
+        "p95": 174000,
+        "max": 174000
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 89000,
+        "p25": 112000,
+        "median": 146000,
+        "p75": 1.6E5,
+        "p95": 169000,
+        "max": 169000
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 536,
+        "p25": 536,
+        "median": 536,
+        "p75": 536,
+        "p95": 536,
+        "max": 536
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 19,
+        "p25": 19,
+        "median": 19,
+        "p75": 19,
+        "p95": 19,
+        "max": 19
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "load-symbol",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 59590,
+        "p25": 65668,
+        "median": 71068,
+        "p75": 75954,
+        "p95": 84204,
+        "max": 84204
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 59790,
+        "p25": 65978,
+        "median": 71374,
+        "p75": 76176,
+        "p95": 84528,
+        "max": 84528
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 448.176,
+        "p25": 448.176,
+        "median": 448.176,
+        "p75": 448.176,
+        "p95": 448.176,
+        "max": 448.176
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 16.006,
+        "p25": 16.006,
+        "median": 16.006,
+        "p75": 16.006,
+        "p95": 16.006,
+        "max": 16.006
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "prepare-first",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 11000,
+        "p25": 11000,
+        "median": 14000,
+        "p75": 14000,
+        "p95": 15000,
+        "max": 15000
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 8E3,
+        "p25": 9E3,
+        "median": 11000,
+        "p75": 11000,
+        "p95": 11000,
+        "max": 11000
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 440,
+        "p25": 440,
+        "median": 440,
+        "p75": 440,
+        "p95": 440,
+        "max": 440
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 17,
+        "p25": 17,
+        "median": 17,
+        "p75": 17,
+        "p95": 17,
+        "max": 17
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "prepare",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 344,
+        "p25": 344,
+        "median": 640,
+        "p75": 746,
+        "p95": 796,
+        "max": 796
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 340,
+        "p25": 340,
+        "median": 630,
+        "p75": 734,
+        "p95": 790,
+        "max": 790
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 352.176,
+        "p25": 352.176,
+        "median": 352.176,
+        "p75": 352.176,
+        "p95": 352.176,
+        "max": 352.176
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 14.006,
+        "p25": 14.006,
+        "median": 14.006,
+        "p75": 14.006,
+        "p95": 14.006,
+        "max": 14.006
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "scalar-first",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 12000,
+        "p25": 12000,
+        "median": 13000,
+        "p75": 17000,
+        "p95": 18000,
+        "max": 18000
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 1E4,
+        "p25": 1E4,
+        "median": 1E4,
+        "p75": 14000,
+        "p95": 15000,
+        "max": 15000
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 752,
+        "p25": 752,
+        "median": 752,
+        "p75": 752,
+        "p95": 752,
+        "max": 752
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 30,
+        "p25": 30,
+        "median": 30,
+        "p75": 30,
+        "p95": 30,
+        "max": 30
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "scalar",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 711.24,
+        "p25": 732.26,
+        "median": 789.56,
+        "p75": 843.46,
+        "p95": 848.34,
+        "max": 848.34
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 713.96,
+        "p25": 735.68,
+        "median": 792.44,
+        "p75": 848.26,
+        "p95": 851.54,
+        "max": 851.54
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 664.00176,
+        "p25": 664.00176,
+        "median": 664.00176,
+        "p75": 664.00176,
+        "p95": 664.00176,
+        "max": 664.00176
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 27.00006,
+        "p25": 27.00006,
+        "median": 27.00006,
+        "p75": 27.00006,
+        "p95": 27.00006,
+        "max": 27.00006
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 6.2E-4,
+        "p25": 6.2E-4,
+        "median": 6.2E-4,
+        "p75": 6.2E-4,
+        "p95": 6.2E-4,
+        "max": 6.2E-4
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "direct-c",
+      "phase": "scalar",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 1.74,
+        "p25": 1.76,
+        "median": 1.78,
+        "p75": 7.74,
+        "p95": 8.68,
+        "max": 8.68
+      },
+      "wallNsPerOperation": null,
+      "smlAllocatedBytesPerOperation": null,
+      "smlAllocatedObjectsPerOperation": null,
+      "collectionsPerOperation": null,
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "marshal-256-first",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 138000,
+        "p25": 141000,
+        "median": 238000,
+        "p75": 266000,
+        "p95": 267000,
+        "max": 267000
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 135000,
+        "p25": 138000,
+        "median": 234000,
+        "p75": 261000,
+        "p95": 263000,
+        "max": 263000
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 9416,
+        "p25": 9416,
+        "median": 9416,
+        "p75": 9416,
+        "p95": 9416,
+        "max": 9416
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 368,
+        "p25": 368,
+        "median": 368,
+        "p75": 368,
+        "p95": 368,
+        "max": 368
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 256,
+        "p25": 256,
+        "median": 256,
+        "p75": 256,
+        "p95": 256,
+        "max": 256
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "marshal-256",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 6918.96,
+        "p25": 7033.6,
+        "median": 7243.9,
+        "p75": 7544.56,
+        "p95": 8839.98,
+        "max": 8839.98
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 6944.64,
+        "p25": 7059.04,
+        "median": 7271.26,
+        "p75": 7578.66,
+        "p95": 8883.12,
+        "max": 8883.12
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 9328.00176,
+        "p25": 9328.00176,
+        "median": 9328.00176,
+        "p75": 9328.00176,
+        "p95": 9328.00176,
+        "max": 9328.00176
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 365.00006,
+        "p25": 365.00006,
+        "median": 365.00006,
+        "p75": 365.00006,
+        "p95": 365.00006,
+        "max": 365.00006
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 0.0089,
+        "p25": 0.0089,
+        "median": 0.0089,
+        "p75": 0.0089,
+        "p95": 0.0089,
+        "max": 0.0089
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 256,
+        "p25": 256,
+        "median": 256,
+        "p75": 256,
+        "p95": 256,
+        "max": 256
+      }
+    },
+    {
+      "implementation": "direct-c",
+      "phase": "marshal-256",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 131.36,
+        "p25": 132.76,
+        "median": 167.46,
+        "p75": 211.46,
+        "p95": 229.44,
+        "max": 229.44
+      },
+      "wallNsPerOperation": null,
+      "smlAllocatedBytesPerOperation": null,
+      "smlAllocatedObjectsPerOperation": null,
+      "collectionsPerOperation": null,
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 256,
+        "p25": 256,
+        "median": 256,
+        "p75": 256,
+        "p95": 256,
+        "max": 256
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "callback-first",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 2E4,
+        "p25": 22000,
+        "median": 22000,
+        "p75": 22000,
+        "p95": 3E4,
+        "max": 3E4
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 18000,
+        "p25": 18000,
+        "median": 19000,
+        "p75": 19000,
+        "p95": 25000,
+        "max": 25000
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 1624,
+        "p25": 1624,
+        "median": 1624,
+        "p75": 1624,
+        "p95": 1624,
+        "max": 1624
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 69,
+        "p25": 69,
+        "median": 69,
+        "p75": 69,
+        "p95": 69,
+        "max": 69
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "callback",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 4173.44,
+        "p25": 4441.22,
+        "median": 5188.34,
+        "p75": 5240.78,
+        "p95": 5471.48,
+        "max": 5471.48
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 4189.08,
+        "p25": 4456.4,
+        "median": 5207.04,
+        "p75": 5260.68,
+        "p95": 5499.5,
+        "max": 5499.5
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 1536.00176,
+        "p25": 1536.00176,
+        "median": 1536.00176,
+        "p75": 1536.00176,
+        "p95": 1536.00176,
+        "max": 1536.00176
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 66.00006,
+        "p25": 66.00006,
+        "median": 66.00006,
+        "p75": 66.00006,
+        "p95": 66.00006,
+        "max": 66.00006
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 0.00146,
+        "p25": 0.00146,
+        "median": 0.00146,
+        "p75": 0.00146,
+        "p95": 0.00146,
+        "max": 0.00146
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "direct-c",
+      "phase": "callback",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 2.6,
+        "p25": 2.6,
+        "median": 3.02,
+        "p75": 3.42,
+        "p95": 15.46,
+        "max": 15.46
+      },
+      "wallNsPerOperation": null,
+      "smlAllocatedBytesPerOperation": null,
+      "smlAllocatedObjectsPerOperation": null,
+      "collectionsPerOperation": null,
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "generation-first",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 15522000,
+        "p25": 17087000,
+        "median": 17328000,
+        "p75": 18972000,
+        "p95": 22371000,
+        "max": 22371000
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 15543000,
+        "p25": 17145000,
+        "median": 17382000,
+        "p75": 19029000,
+        "p95": 22424000,
+        "max": 22424000
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 2931840,
+        "p25": 2931840,
+        "median": 2931840,
+        "p75": 2931840,
+        "p95": 2931840,
+        "max": 2931840
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 69761,
+        "p25": 69761,
+        "median": 69761,
+        "p75": 69761,
+        "p95": 69761,
+        "max": 69761
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 2,
+        "p25": 2,
+        "median": 2,
+        "p75": 2,
+        "p95": 2,
+        "max": 2
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "generation-warm",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 7639800,
+        "p25": 8140700,
+        "median": 8286600,
+        "p75": 9127200,
+        "p95": 9131600,
+        "max": 9131600
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 7669200,
+        "p25": 8173100,
+        "median": 8316300,
+        "p75": 9165000,
+        "p95": 9168100,
+        "max": 9168100
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 2931760.8,
+        "p25": 2931760.8,
+        "median": 2931760.8,
+        "p75": 2931760.8,
+        "p95": 2931760.8,
+        "max": 2931760.8
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 69758.3,
+        "p25": 69758.3,
+        "median": 69758.3,
+        "p75": 69758.3,
+        "p95": 69758.3,
+        "max": 69758.3
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 1.5,
+        "p25": 1.5,
+        "median": 1.5,
+        "p75": 1.5,
+        "p95": 1.5,
+        "max": 1.5
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "preprocess",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 330700,
+        "p25": 346900,
+        "median": 364400,
+        "p75": 420600,
+        "p95": 552700,
+        "max": 552700
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 333300,
+        "p25": 349300,
+        "median": 367400,
+        "p75": 420100,
+        "p95": 552100,
+        "max": 552100
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 363232.8,
+        "p25": 363232.8,
+        "median": 363232.8,
+        "p75": 363232.8,
+        "p95": 363232.8,
+        "max": 363232.8
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 13076.3,
+        "p25": 13076.3,
+        "median": 13076.3,
+        "p75": 13076.3,
+        "p95": 13076.3,
+        "max": 13076.3
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 0.2,
+        "p25": 0.2,
+        "median": 0.2,
+        "p75": 0.2,
+        "p95": 0.2,
+        "max": 0.2
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "parse",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 121900,
+        "p25": 125500,
+        "median": 125800,
+        "p75": 126400,
+        "p95": 157000,
+        "max": 157000
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 121500,
+        "p25": 125000,
+        "median": 125500,
+        "p75": 126000,
+        "p95": 156400,
+        "max": 156400
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 7360.8,
+        "p25": 7360.8,
+        "median": 7360.8,
+        "p75": 7360.8,
+        "p95": 7360.8,
+        "max": 7360.8
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 303.3,
+        "p25": 303.3,
+        "median": 303.3,
+        "p75": 303.3,
+        "p95": 303.3,
+        "max": 303.3
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "projection-generation",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 2064900,
+        "p25": 2067300,
+        "median": 2148800,
+        "p75": 2295800,
+        "p95": 3159500,
+        "max": 3159500
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 2070100,
+        "p25": 2073000,
+        "median": 2156800,
+        "p75": 2305100,
+        "p95": 3169200,
+        "max": 3169200
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 1456720.8,
+        "p25": 1456720.8,
+        "median": 1456720.8,
+        "p75": 1456720.8,
+        "p95": 1456720.8,
+        "max": 1456720.8
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 25180.3,
+        "p25": 25180.3,
+        "median": 25180.3,
+        "p75": 25180.3,
+        "p95": 25180.3,
+        "max": 25180.3
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 0.5,
+        "p25": 0.5,
+        "median": 0.5,
+        "p75": 0.5,
+        "p95": 0.5,
+        "max": 0.5
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "rune",
+      "phase": "packaging",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 1915200,
+        "p25": 2003500,
+        "median": 2531400,
+        "p75": 2785800,
+        "p95": 3614400,
+        "max": 3614400
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 1922200,
+        "p25": 2009300,
+        "median": 2542200,
+        "p75": 2792600,
+        "p95": 3626000,
+        "max": 3626000
+      },
+      "smlAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 492152.8,
+        "p25": 492152.8,
+        "median": 492152.8,
+        "p75": 492152.8,
+        "p95": 492152.8,
+        "max": 492152.8
+      },
+      "smlAllocatedObjectsPerOperation": {
+        "count": 5,
+        "min": 11150.3,
+        "p25": 11150.3,
+        "median": 11150.3,
+        "p75": 11150.3,
+        "p95": 11150.3,
+        "max": 11150.3
+      },
+      "collectionsPerOperation": {
+        "count": 5,
+        "min": 0.2,
+        "p25": 0.2,
+        "median": 0.2,
+        "p75": 0.2,
+        "p95": 0.2,
+        "max": 0.2
+      },
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    },
+    {
+      "implementation": "c-compiler",
+      "phase": "shim-compile",
+      "cpuNsPerOperation": {
+        "count": 5,
+        "min": 6E7,
+        "p25": 6E7,
+        "median": 7E7,
+        "p75": 7E7,
+        "p95": 8E7,
+        "max": 8E7
+      },
+      "wallNsPerOperation": {
+        "count": 5,
+        "min": 205851000,
+        "p25": 209119000,
+        "median": 217339000,
+        "p75": 218087000,
+        "p95": 218692000,
+        "max": 218692000
+      },
+      "smlAllocatedBytesPerOperation": null,
+      "smlAllocatedObjectsPerOperation": null,
+      "collectionsPerOperation": null,
+      "bufferPayloadAllocatedBytesPerOperation": {
+        "count": 5,
+        "min": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "p95": 0,
+        "max": 0
+      }
+    }
+  ],
+  "pairedComparisons": [
+    {
+      "phase": "scalar",
+      "runeToDirectCCpuRatio": {
+        "count": 5,
+        "min": 90.9631336406,
+        "p25": 94.6072351421,
+        "median": 404.113636364,
+        "p75": 476.595505618,
+        "p95": 484.747126437,
+        "max": 484.747126437
+      }
+    },
+    {
+      "phase": "marshal-256",
+      "runeToDirectCCpuRatio": {
+        "count": 5,
+        "min": 31.5720885635,
+        "p25": 35.6784261799,
+        "median": 41.3170906485,
+        "p75": 52.9798131967,
+        "p95": 67.2958282582,
+        "max": 67.2958282582
+      }
+    },
+    {
+      "phase": "callback",
+      "runeToDirectCCpuRatio": {
+        "count": 5,
+        "min": 269.95084088,
+        "p25": 1298.60233918,
+        "median": 1735.35761589,
+        "p75": 1995.51538462,
+        "p95": 2104.41538462,
+        "max": 2104.41538462
+      }
+    }
+  ]
+}

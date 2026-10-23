@@ -1,0 +1,1527 @@
+{
+  "version": 1,
+  "family": "c",
+  "structure": "Win32Generated",
+  "headers": [
+    "Windows.h",
+    "windowsx.h"
+  ],
+  "libraries": [
+    "kernel32.dll",
+    "user32.dll",
+    "gdi32.dll"
+  ],
+  "resources": [
+    "module",
+    "window",
+    "atom",
+    "paint",
+    "object",
+    "pen",
+    "brush",
+    "windowClass",
+    "rect",
+    "message",
+    "point",
+    "creationParameter",
+    "timerCallback"
+  ],
+  "callbacks": [
+    {
+      "foreign": "WNDPROC",
+      "lifetime": "registered",
+      "owner": "window-class",
+      "thread": "owner-vm-thread",
+      "failure": {
+        "parameter": "arg1",
+        "cases": {
+          "WM_CREATE": -1,
+          "WM_NCCREATE": 0
+        },
+        "otherwise": 0
+      }
+    },
+    {
+      "foreign": "TIMERPROC",
+      "lifetime": "registered",
+      "owner": "timer",
+      "thread": "owner-vm-thread",
+      "failure": 0
+    }
+  ],
+  "functions": [
+    {
+      "foreign": "GetModuleHandleW",
+      "name": "Kernel.getModuleHandle",
+      "parameters": [
+        {
+          "name": "lpModuleName",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": "string"
+          },
+          "encoding": "utf16",
+          "terminator": true
+        }
+      ],
+      "result": {
+        "ownership": {
+          "borrowed": "library"
+        },
+        "nullable": false,
+        "type": {
+          "resource": "module"
+        }
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "GetModuleHandleW"
+    },
+    {
+      "foreign": "GetLastError",
+      "name": "Kernel.getLastError",
+      "parameters": [],
+      "result": {
+        "type": "word32"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "GetLastError"
+    },
+    {
+      "foreign": "SetLastError",
+      "name": "Kernel.setLastError",
+      "parameters": [
+        {
+          "name": "dwErrCode",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "SetLastError"
+    },
+    {
+      "foreign": "QueryPerformanceCounter",
+      "name": "Kernel.queryPerformanceCounter",
+      "parameters": [
+        {
+          "name": "lpPerformanceCount",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "int64",
+          "length": 1,
+          "output": "value"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "QueryPerformanceCounter",
+      "returns": "lpPerformanceCount"
+    },
+    {
+      "foreign": "QueryPerformanceFrequency",
+      "name": "Kernel.queryPerformanceFrequency",
+      "parameters": [
+        {
+          "name": "lpFrequency",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "int64",
+          "length": 1,
+          "output": "value"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "QueryPerformanceFrequency",
+      "returns": "lpFrequency"
+    },
+    {
+      "foreign": "RegisterClassExW",
+      "name": "User.registerClassEx",
+      "parameters": [
+        {
+          "name": "arg0",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "windowClass"
+          },
+          "length": 1
+        }
+      ],
+      "result": {
+        "type": {
+          "resource": "atom"
+        },
+        "ownership": {
+          "owned": "UnregisterClassW"
+        }
+      },
+      "errors": {
+        "predicate": "zero",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "RegisterClassExW"
+    },
+    {
+      "foreign": "UnregisterClassW",
+      "name": "User.unregisterClass",
+      "parameters": [
+        {
+          "name": "lpClassName",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "window-class"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "atom"
+          },
+          "consumes": true
+        },
+        {
+          "name": "hInstance",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "module"
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "UnregisterClassW"
+    },
+    {
+      "foreign": "CreateWindowExW",
+      "name": "User.createWindowEx",
+      "parameters": [
+        {
+          "name": "dwExStyle",
+          "type": "word32"
+        },
+        {
+          "name": "lpClassName",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "window-class"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "atom"
+          }
+        },
+        {
+          "name": "lpWindowName",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "string",
+          "encoding": "utf16",
+          "terminator": true
+        },
+        {
+          "name": "dwStyle",
+          "type": "word32"
+        },
+        {
+          "name": "X",
+          "type": "int"
+        },
+        {
+          "name": "Y",
+          "type": "int"
+        },
+        {
+          "name": "nWidth",
+          "type": "int"
+        },
+        {
+          "name": "nHeight",
+          "type": "int"
+        },
+        {
+          "name": "hWndParent",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "window"
+            }
+          }
+        },
+        {
+          "name": "hMenu",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "object"
+            }
+          }
+        },
+        {
+          "name": "hInstance",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "module"
+          }
+        },
+        {
+          "name": "lpParam",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "creationParameter"
+            }
+          }
+        }
+      ],
+      "result": {
+        "ownership": {
+          "owned": "DestroyWindow"
+        },
+        "nullable": false,
+        "type": {
+          "resource": "window"
+        }
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "CreateWindowExW"
+    },
+    {
+      "foreign": "DestroyWindow",
+      "name": "User.destroyWindow",
+      "parameters": [
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          },
+          "consumes": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "DestroyWindow"
+    },
+    {
+      "foreign": "ShowWindow",
+      "name": "User.showWindow",
+      "parameters": [
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "nCmdShow",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "bool"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "ShowWindow"
+    },
+    {
+      "foreign": "UpdateWindow",
+      "name": "User.updateWindow",
+      "parameters": [
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "UpdateWindow"
+    },
+    {
+      "foreign": "DefWindowProcW",
+      "name": "User.defWindowProc",
+      "parameters": [
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "Msg",
+          "type": "word32"
+        },
+        {
+          "name": "wParam",
+          "type": "word64"
+        },
+        {
+          "name": "lParam",
+          "type": "int64"
+        }
+      ],
+      "result": {
+        "type": "int64"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "DefWindowProcW"
+    },
+    {
+      "foreign": "GetClientRect",
+      "name": "User.getClientRect",
+      "parameters": [
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "lpRect",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "rect"
+          },
+          "length": 1,
+          "output": "rectangle"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "GetClientRect"
+    },
+    {
+      "foreign": "SetWindowTextW",
+      "name": "User.setWindowText",
+      "parameters": [
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "lpString",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "string",
+          "encoding": "utf16",
+          "terminator": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "SetWindowTextW"
+    },
+    {
+      "foreign": "GetMessageW",
+      "name": "User.getMessage",
+      "parameters": [
+        {
+          "name": "lpMsg",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "message"
+          },
+          "length": 1,
+          "output": "message"
+        },
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "window"
+            }
+          }
+        },
+        {
+          "name": "wMsgFilterMin",
+          "type": "word32"
+        },
+        {
+          "name": "wMsgFilterMax",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "type": "int32"
+      },
+      "errors": {
+        "predicate": "negative",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "GetMessageW"
+    },
+    {
+      "foreign": "PeekMessageW",
+      "name": "User.peekMessage",
+      "parameters": [
+        {
+          "name": "lpMsg",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "message"
+          },
+          "length": 1,
+          "output": "message"
+        },
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "window"
+            }
+          }
+        },
+        {
+          "name": "wMsgFilterMin",
+          "type": "word32"
+        },
+        {
+          "name": "wMsgFilterMax",
+          "type": "word32"
+        },
+        {
+          "name": "wRemoveMsg",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "type": "bool"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "PeekMessageW"
+    },
+    {
+      "foreign": "TranslateMessage",
+      "name": "User.translateMessage",
+      "parameters": [
+        {
+          "name": "lpMsg",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "message"
+          },
+          "length": 1
+        }
+      ],
+      "result": {
+        "type": "bool"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "TranslateMessage"
+    },
+    {
+      "foreign": "DispatchMessageW",
+      "name": "User.dispatchMessage",
+      "parameters": [
+        {
+          "name": "lpMsg",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "message"
+          },
+          "length": 1
+        }
+      ],
+      "result": {
+        "type": "int64"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "DispatchMessageW"
+    },
+    {
+      "foreign": "PostQuitMessage",
+      "name": "User.postQuitMessage",
+      "parameters": [
+        {
+          "name": "nExitCode",
+          "type": "int32"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "PostQuitMessage"
+    },
+    {
+      "foreign": "PostMessageW",
+      "name": "User.postMessage",
+      "parameters": [
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "Msg",
+          "type": "word32"
+        },
+        {
+          "name": "wParam",
+          "type": "word64"
+        },
+        {
+          "name": "lParam",
+          "type": "int64"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "PostMessageW"
+    },
+    {
+      "foreign": "SendMessageW",
+      "name": "User.sendMessage",
+      "parameters": [
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "Msg",
+          "type": "word32"
+        },
+        {
+          "name": "wParam",
+          "type": "word64"
+        },
+        {
+          "name": "lParam",
+          "type": "int64"
+        }
+      ],
+      "result": {
+        "type": "int64"
+      },
+      "errors": {
+        "predicate": "none",
+        "capture": "none"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "SendMessageW"
+    },
+    {
+      "foreign": "InvalidateRect",
+      "name": "User.invalidateRect",
+      "parameters": [
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "lpRect",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "rect"
+            }
+          },
+          "length": 1
+        },
+        {
+          "name": "bErase",
+          "type": "bool"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "InvalidateRect"
+    },
+    {
+      "foreign": "BeginPaint",
+      "name": "User.beginPaint",
+      "parameters": [
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "lpPaint",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "paint"
+          },
+          "length": 1,
+          "output": "paint"
+        }
+      ],
+      "result": {
+        "ownership": {
+          "borrowed": "parameter:hWnd"
+        },
+        "nullable": false,
+        "type": {
+          "resource": "paint"
+        }
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "BeginPaint"
+    },
+    {
+      "foreign": "EndPaint",
+      "name": "User.endPaint",
+      "parameters": [
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "lpPaint",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "paint"
+          },
+          "length": 1,
+          "consumes": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "EndPaint"
+    },
+    {
+      "foreign": "FillRect",
+      "name": "User.fillRect",
+      "parameters": [
+        {
+          "name": "hDC",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "paint"
+          }
+        },
+        {
+          "name": "lprc",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "rect"
+          },
+          "length": 1
+        },
+        {
+          "name": "hbr",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "brush"
+          }
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "zero",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "FillRect"
+    },
+    {
+      "foreign": "SetTimer",
+      "name": "User.setTimer",
+      "parameters": [
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "nIDEvent",
+          "type": "word64"
+        },
+        {
+          "name": "uElapse",
+          "type": "word32"
+        },
+        {
+          "name": "lpTimerFunc",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": true,
+          "type": {
+            "option": {
+              "resource": "timerCallback"
+            }
+          },
+          "callback": "TIMERPROC"
+        }
+      ],
+      "result": {
+        "type": "word64"
+      },
+      "errors": {
+        "predicate": "zero",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "SetTimer"
+    },
+    {
+      "foreign": "KillTimer",
+      "name": "User.killTimer",
+      "parameters": [
+        {
+          "name": "hWnd",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "window"
+          }
+        },
+        {
+          "name": "uIDEvent",
+          "type": "word64"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "KillTimer"
+    },
+    {
+      "foreign": "CreatePen",
+      "name": "Gdi.createPen",
+      "parameters": [
+        {
+          "name": "iStyle",
+          "type": "int"
+        },
+        {
+          "name": "cWidth",
+          "type": "int"
+        },
+        {
+          "name": "color",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "ownership": {
+          "owned": "DeleteObject"
+        },
+        "nullable": false,
+        "type": {
+          "resource": "pen"
+        }
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "CreatePen"
+    },
+    {
+      "foreign": "CreateSolidBrush",
+      "name": "Gdi.createSolidBrush",
+      "parameters": [
+        {
+          "name": "color",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "ownership": {
+          "owned": "DeleteObject"
+        },
+        "nullable": false,
+        "type": {
+          "resource": "brush"
+        }
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "CreateSolidBrush"
+    },
+    {
+      "foreign": "SelectObject",
+      "name": "Gdi.selectObject",
+      "parameters": [
+        {
+          "name": "hdc",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "paint"
+          }
+        },
+        {
+          "name": "h",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "object"
+          }
+        }
+      ],
+      "result": {
+        "ownership": {
+          "borrowed": "parameter:hdc"
+        },
+        "nullable": false,
+        "type": {
+          "resource": "object"
+        }
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "SelectObject"
+    },
+    {
+      "foreign": "DeleteObject",
+      "name": "Gdi.deleteObject",
+      "parameters": [
+        {
+          "name": "ho",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "object"
+          },
+          "consumes": true
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "DeleteObject"
+    },
+    {
+      "foreign": "GetStockObject",
+      "name": "Gdi.getStockObject",
+      "parameters": [
+        {
+          "name": "i",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "ownership": {
+          "borrowed": "static"
+        },
+        "nullable": false,
+        "type": {
+          "resource": "object"
+        }
+      },
+      "errors": {
+        "predicate": "null",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "GetStockObject"
+    },
+    {
+      "foreign": "MoveToEx",
+      "name": "Gdi.moveToEx",
+      "parameters": [
+        {
+          "name": "hdc",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "paint"
+          }
+        },
+        {
+          "name": "x",
+          "type": "int"
+        },
+        {
+          "name": "y",
+          "type": "int"
+        },
+        {
+          "name": "lppt",
+          "direction": "out",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "point"
+          },
+          "length": 1,
+          "output": "previous"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "MoveToEx"
+    },
+    {
+      "foreign": "LineTo",
+      "name": "Gdi.lineTo",
+      "parameters": [
+        {
+          "name": "hdc",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "paint"
+          }
+        },
+        {
+          "name": "x",
+          "type": "int"
+        },
+        {
+          "name": "y",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "LineTo"
+    },
+    {
+      "foreign": "Rectangle",
+      "name": "Gdi.rectangle",
+      "parameters": [
+        {
+          "name": "hdc",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "paint"
+          }
+        },
+        {
+          "name": "left",
+          "type": "int"
+        },
+        {
+          "name": "top",
+          "type": "int"
+        },
+        {
+          "name": "right",
+          "type": "int"
+        },
+        {
+          "name": "bottom",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "Rectangle"
+    },
+    {
+      "foreign": "SetTextColor",
+      "name": "Gdi.setTextColor",
+      "parameters": [
+        {
+          "name": "hdc",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "paint"
+          }
+        },
+        {
+          "name": "color",
+          "type": "word32"
+        }
+      ],
+      "result": {
+        "type": "word32"
+      },
+      "errors": {
+        "predicate": "minus-one",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "SetTextColor"
+    },
+    {
+      "foreign": "SetBkMode",
+      "name": "Gdi.setBkMode",
+      "parameters": [
+        {
+          "name": "hdc",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "paint"
+          }
+        },
+        {
+          "name": "mode",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "int"
+      },
+      "errors": {
+        "predicate": "zero",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "SetBkMode"
+    },
+    {
+      "foreign": "TextOutW",
+      "name": "Gdi.textOut",
+      "parameters": [
+        {
+          "name": "hdc",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": {
+            "resource": "paint"
+          }
+        },
+        {
+          "name": "x",
+          "type": "int"
+        },
+        {
+          "name": "y",
+          "type": "int"
+        },
+        {
+          "name": "lpString",
+          "direction": "in",
+          "ownership": {
+            "borrowed": "call"
+          },
+          "nullable": false,
+          "type": "string",
+          "encoding": "utf16",
+          "terminator": false,
+          "length": "c"
+        },
+        {
+          "name": "c",
+          "type": "int"
+        }
+      ],
+      "result": {
+        "type": "unit"
+      },
+      "errors": {
+        "predicate": "false",
+        "capture": "win32"
+      },
+      "variadic": "reject",
+      "unsafeRaw": false,
+      "adapter": "win32-native-v1",
+      "raw": "TextOutW"
+    }
+  ]
+}

@@ -1,0 +1,284 @@
+{
+  "date": "2026-10-23",
+  "component": "de587836f",
+  "acceptance_snapshot": "8477394c586ceae3f5fb9c1462cfc9744caa119a",
+  "production_changes": false,
+  "focused_matrix": {
+    "command": "RUNE=$PWD/bin/rune-stack RUNEVM=$PWD/bin/runevm-stack RUNE_MATRIX_OUT=tests/out/matrix-posix-after-de587 bin/rune-matrix -j2 --configs rune,xc1 posix_process",
+    "run": "tests/out/r/20261023-152247-3835554",
+    "selected": 48,
+    "passed": 46,
+    "skipped": 2,
+    "failed": 0,
+    "wall_seconds": 75.0,
+    "cpu_seconds": 91.6,
+    "timeout_seconds": 120,
+    "skip_reason": "SML/NJ32 xc1 Posix unavailable: posix_process and signature",
+    "program_assertions": [
+      {
+        "configuration": "rune",
+        "checks": 77,
+        "passed": 77,
+        "failed_explained": 0,
+        "unavailable": [],
+        "resumed_child_regression": "PASS Posix.Process.W.untraced/continued-child-remains-live",
+        "sha256": "acc9933bb56af338f4c20d2b57e88e289897e6dab4bec500ce338cdb339d4c1f"
+      },
+      {
+        "configuration": "xc1-mlkit-4.7.25",
+        "checks": 77,
+        "passed": 71,
+        "failed_explained": 6,
+        "unavailable": [],
+        "resumed_child_regression": "PASS Posix.Process.W.untraced/continued-child-remains-live",
+        "sha256": "2b49b3a17a173de0455c16d2e166f552e9557d8f1a35cddc6ce2afc39276db7c"
+      },
+      {
+        "configuration": "xc1-mlton-20241230",
+        "checks": 77,
+        "passed": 76,
+        "failed_explained": 1,
+        "unavailable": [],
+        "resumed_child_regression": "PASS Posix.Process.W.untraced/continued-child-remains-live",
+        "sha256": "52d5d902ae0284b1318130d15fa56a1d451275dbd313ec956cb9b9bb55048740"
+      },
+      {
+        "configuration": "xc1-polyml-5.9.2",
+        "checks": 77,
+        "passed": 71,
+        "failed_explained": 6,
+        "unavailable": [],
+        "resumed_child_regression": "PASS Posix.Process.W.untraced/continued-child-remains-live",
+        "sha256": "4711696bf1d92bbd3d91489e324427c92219cdcbd4a935d2a3f2499e2d9d5981"
+      },
+      {
+        "configuration": "xc1-smlnj-dev-2026.2",
+        "checks": 77,
+        "passed": 75,
+        "failed_explained": 2,
+        "unavailable": [],
+        "resumed_child_regression": "PASS Posix.Process.W.untraced/continued-child-remains-live",
+        "sha256": "04f6b30c1ca3473c48e66c5e825050f105ec58dc5ea1bfc6088835ec4dfeeeb5"
+      },
+      {
+        "configuration": "xc1-smlnj-legacy-110.99.9",
+        "checks": 77,
+        "passed": 75,
+        "failed_explained": 2,
+        "unavailable": [],
+        "resumed_child_regression": "PASS Posix.Process.W.untraced/continued-child-remains-live",
+        "sha256": "04f6b30c1ca3473c48e66c5e825050f105ec58dc5ea1bfc6088835ec4dfeeeb5"
+      },
+      {
+        "configuration": "xc1-smlnj32-110.99.9",
+        "checks": 0,
+        "passed": 0,
+        "failed_explained": 0,
+        "unavailable": [
+          "NA Posix"
+        ],
+        "resumed_child_regression": null,
+        "sha256": "c4e83f9806d805c57f0bc319a4b3025a339e08c526bdf3be6723843fca2e3b49"
+      }
+    ],
+    "summary_sha256": "e8a1c211edb6e6d805da8d2cc8389b66fe7a8a1f5e7921a3258a9fefb63f1680",
+    "events_sha256": "683d66650538e5e0310d2c27d0b7f07e17bd1f11b0d6bc71526e1b5b72a7caa4",
+    "report_sha256": "79c40f75e7e1323d04109bef18774a7ba218cc2634a6c0b5910b3b3c1acc6e95",
+    "cache_reuse": "unchanged generatedBasis sources/images copied from original full matrix; producer path metadata relocated and1536generatedSMLsourcehashesverifiedidentical"
+  },
+  "portability": {
+    "runs": [
+      {
+        "name": "linux32-stack",
+        "status": 0,
+        "summary": [
+          "SUMMARY 77 checks, 0 failed"
+        ],
+        "failures": [],
+        "stderr": "",
+        "wall": 4.179631459002849,
+        "vm_sha256": "27caeff25ad295ecfa0c40bbeff4e9a307edaa7e7a439e800bebfb42288fdb72",
+        "command": [
+          "/home/ruud/rune/.worktrees/runeffi-generator/bin/runevm-stack-ffi32",
+          "/home/ruud/rune/.worktrees/runeffi-posix-wait/build/posix-wait/fixed.stack.rbc"
+        ]
+      },
+      {
+        "name": "linux32-off",
+        "status": 0,
+        "summary": [
+          "SUMMARY 77 checks, 0 failed"
+        ],
+        "failures": [],
+        "stderr": "",
+        "wall": 4.178886034991592,
+        "vm_sha256": "1d4d23c54c78bcad48ce48152dad25301f75422f00740bf13cc49847b8db0597",
+        "command": [
+          "/home/ruud/rune/.worktrees/runeffi-generator/bin/runevm-ffi32",
+          "--jit=off",
+          "/home/ruud/rune/.worktrees/runeffi-posix-wait/build/posix-wait/fixed.rbc"
+        ]
+      },
+      {
+        "name": "aarch64-stack",
+        "status": 0,
+        "summary": [
+          "SUMMARY 77 checks, 0 failed"
+        ],
+        "failures": [],
+        "stderr": "",
+        "wall": 4.428671007975936,
+        "vm_sha256": "9bd62f46ff600bb7deb9fc998cc4c70af71cb2b255dc969babe8b1683f96e7df",
+        "command": [
+          "qemu-aarch64",
+          "-L",
+          "/usr/aarch64-linux-gnu",
+          "/home/ruud/rune/.worktrees/runeffi-generator/bin/runevm-stack-ffi-aarch64.bin",
+          "/home/ruud/rune/.worktrees/runeffi-posix-wait/build/posix-wait/fixed.stack.rbc"
+        ]
+      },
+      {
+        "name": "aarch64-off",
+        "status": 0,
+        "summary": [
+          "SUMMARY 77 checks, 0 failed"
+        ],
+        "failures": [],
+        "stderr": "",
+        "wall": 4.430344143998809,
+        "vm_sha256": "8dafb32ba095145f74741b4704ca5274214a570af0b48325859327727ac2b815",
+        "command": [
+          "qemu-aarch64",
+          "-L",
+          "/usr/aarch64-linux-gnu",
+          "/home/ruud/rune/.worktrees/runeffi-generator/bin/runevm-ffi-aarch64.bin",
+          "--jit=off",
+          "/home/ruud/rune/.worktrees/runeffi-posix-wait/build/posix-wait/fixed.rbc"
+        ]
+      },
+      {
+        "name": "aarch64-baseline",
+        "status": 0,
+        "summary": [
+          "SUMMARY 77 checks, 0 failed"
+        ],
+        "failures": [],
+        "stderr": "",
+        "wall": 5.031847853999352,
+        "vm_sha256": "8dafb32ba095145f74741b4704ca5274214a570af0b48325859327727ac2b815",
+        "command": [
+          "qemu-aarch64",
+          "-L",
+          "/usr/aarch64-linux-gnu",
+          "/home/ruud/rune/.worktrees/runeffi-generator/bin/runevm-ffi-aarch64.bin",
+          "--jit=all",
+          "--jit-tier=1",
+          "/home/ruud/rune/.worktrees/runeffi-posix-wait/build/posix-wait/fixed.rbc"
+        ]
+      },
+      {
+        "name": "aarch64-opt",
+        "status": 0,
+        "summary": [
+          "SUMMARY 77 checks, 0 failed"
+        ],
+        "failures": [],
+        "stderr": "",
+        "wall": 5.029351262986893,
+        "vm_sha256": "8dafb32ba095145f74741b4704ca5274214a570af0b48325859327727ac2b815",
+        "command": [
+          "qemu-aarch64",
+          "-L",
+          "/usr/aarch64-linux-gnu",
+          "/home/ruud/rune/.worktrees/runeffi-generator/bin/runevm-ffi-aarch64.bin",
+          "--jit=all",
+          "--jit-tier=2",
+          "/home/ruud/rune/.worktrees/runeffi-posix-wait/build/posix-wait/fixed.rbc"
+        ]
+      },
+      {
+        "name": "ppc64-stack",
+        "status": 0,
+        "summary": [
+          "SUMMARY 77 checks, 0 failed"
+        ],
+        "failures": [],
+        "stderr": "",
+        "wall": 4.4801871119998395,
+        "vm_sha256": "a57fa3715032f1d1ede50dbfb8f85cfbe850158dae681472a9870669b96ed511",
+        "command": [
+          "qemu-ppc64",
+          "-L",
+          "/usr/powerpc64-linux-gnu",
+          "/home/ruud/rune/.worktrees/runeffi-generator/bin/runevm-stack-ffi-ppc64.bin",
+          "/home/ruud/rune/.worktrees/runeffi-posix-wait/build/posix-wait/fixed.stack.rbc"
+        ]
+      },
+      {
+        "name": "ppc64-off",
+        "status": 0,
+        "summary": [
+          "SUMMARY 77 checks, 0 failed"
+        ],
+        "failures": [],
+        "stderr": "",
+        "wall": 4.4791832600021735,
+        "vm_sha256": "70e43aa573e237fa6a247ef980666bc3537ca418018df03849852b71ef8c7e5a",
+        "command": [
+          "qemu-ppc64",
+          "-L",
+          "/usr/powerpc64-linux-gnu",
+          "/home/ruud/rune/.worktrees/runeffi-generator/bin/runevm-ffi-ppc64.bin",
+          "--jit=off",
+          "/home/ruud/rune/.worktrees/runeffi-posix-wait/build/posix-wait/fixed.rbc"
+        ]
+      }
+    ],
+    "summary": "eight runs each77/77 checks; no skips/failures",
+    "linux32_and_ppc64_jit": "no JIT backend; only stack/registerinterpretation claimed",
+    "qemu": "AArch64/PPC64 underQEMU8.2.2; Linux32 executesnatively"
+  },
+  "failed_metadata_setup": {
+    "status": "failed targeted setup, not a host defect",
+    "run": "tests/out/r/20261023-151144-3772412",
+    "result": "43PASS2SKIP3FAIL/48",
+    "reason": "Cached producer absolute paths escaped new basis directory; MLKit recopied255Basisfiles perfixture. Signature-only fixture timedout too.",
+    "interrupted_repair_attempt": "Copying unreadable MLKit lock file raisedbeforepathrelocation; runnerwasstopped. No timeout or source change.",
+    "corrected_files": [
+      "xc1-smlnj32-110.99.9/basis.loaded",
+      "xc1-smlnj32-110.99.9/basis/prelude",
+      "xc1-smlnj32-110.99.9/basis.export.sml",
+      "xc1-smlnj-legacy-110.99.9/basis.loaded",
+      "xc1-smlnj-legacy-110.99.9/basis/prelude",
+      "xc1-smlnj-legacy-110.99.9/basis.export.sml",
+      "xc1-mlton-20241230/basis.loaded",
+      "xc1-mlton-20241230/basis/prelude",
+      "xc1-polyml-5.9.2/basis.loaded",
+      "xc1-polyml-5.9.2/basis/prelude",
+      "xc1-polyml-5.9.2/basis.export.sml",
+      "xc1-mlkit-4.7.25/basis.loaded",
+      "xc1-mlkit-4.7.25/basis/prelude",
+      "xc1-smlnj-dev-2026.2/basis.loaded",
+      "xc1-smlnj-dev-2026.2/basis/prelude",
+      "xc1-smlnj-dev-2026.2/basis.export.sml"
+    ],
+    "identical_copied_basis_sml_files": 1536,
+    "timeout_seconds": 120
+  },
+  "original_failed_full": {
+    "source": "303db25bc",
+    "result": "19694PASS4SKIP1FAIL/19699",
+    "wall_seconds": 2254.3,
+    "cpu_seconds": 16126.2,
+    "cause": "originalexceptionidentityunknown; failedreceiptretained, notconvertedtopass"
+  },
+  "applicability": {
+    "checked_delivery": "7b393bcce5403bfd68ecaab7d77f9ae2f2bb4441",
+    "unchanged_production_blob_count": 591,
+    "original_selected_test_dependencies": 375,
+    "changed_selected_dependencies": [
+      "tests/basis/posix_process.sml"
+    ],
+    "bridging_validation": "focusedmatrix+5Runeexecutionmodes+8crossrunsvalidatechanged77assertionfixture; unchanged591productionblobsremaincoveredbypriorfullmatrix/libhostreceipts"
+  }
+}

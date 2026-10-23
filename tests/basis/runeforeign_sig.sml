@@ -1,0 +1,24 @@
+(* requires: RuneForeign *)
+structure TestRuneForeignSig =
+struct
+  structure F : RUNE_FOREIGN = RuneForeign
+  val () = T.check ("RuneForeign:RUNE_FOREIGN/interface", fn () =>
+    let val _ : unit -> bool = F.available
+        val _ : unit -> {pointerBytes:int,littleEndian:bool,stdcall:bool} = F.target
+        val _ : unit -> {architecture:string,charBits:int,charSigned:bool,
+          scalars:{name:string,size:int,alignment:int}list} = F.abiFacts
+        val _ : F.resource * F.argument list -> F.result = F.invoke
+        val _ : {symbol:F.resource,abi:int,result:F.scalar,arguments:F.scalar list,fixedCount:int} -> F.resource = F.prepareVariadic
+        val _ : F.resource * F.argument list -> {result:F.result,callbackException:exn option} = F.invokeDeferred
+        val _ : {abi:int,result:F.scalar,arguments:F.scalar list,function:F.argument list -> F.argument,failure:F.callbackFailure} -> F.resource = F.callback
+        val _ : {callback:F.resource,reset:bool} -> {rejected:Word64.word,first:F.callbackFault option} = F.callbackStatus
+        val _ : F.resource -> F.resource = F.aliasHandle
+        val _ : {resource:F.resource,call:F.resource,arguments:F.argument list,failure:F.failure} ->
+          {disposed:bool,result:F.result} = F.consumeHandle
+        val _ : F.resource -> unit = F.release
+        val _ : F.resource -> bool = F.isLive
+        val _ : F.resource * F.resource -> bool = F.sameAddress
+        val _ : {resource:F.resource,call:F.resource,arguments:F.argument list,failure:F.failure} ->
+          {disposed:bool,result:F.result} = F.dispose
+    in true end)
+end

@@ -119,6 +119,11 @@ printf '%s\n' '#!/bin/sh' \
   "exec \"\$d/runevm\" --heap-size $heap --restore \"\$d/../lib/rune/rune-repl.img\" -- \"\$@\"" \
   > "$bindir/rune-repl"
 chmod 755 "$bindir/rune" "$bindir/rune-repl"
+if [ -f "$libdir/runeffi.rbc" ]; then
+  printf '%s\n' '#!/bin/sh' 'd=$(dirname "$0")' \
+    'exec "$d/runevm" "$d/../lib/rune/runeffi.rbc" "$@"' > "$bindir/runeffi"
+  chmod 755 "$bindir/runeffi"
+fi
 
 tmp=$(mktemp)
 find "$bindir" "$libdir" -type f ! -name DISTMANIFEST | while IFS= read -r file; do

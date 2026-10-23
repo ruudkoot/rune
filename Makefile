@@ -109,7 +109,8 @@ GEN_C    := runtime/isa.h runtime/stack/opcodes.h runtime/prims_table.h runtime/
 SOURCES_DOC := $(shell sh scripts/build-files.sh runedoc.build)
 SOURCES_OPT := $(shell sh scripts/build-files.sh runeopt.build)
 SOURCES_ISA := $(shell sh scripts/build-files.sh runeisa.build)
-BUILDFILES := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb
+SOURCES_FFI := $(shell sh scripts/build-files.sh runeffi.build)
+BUILDFILES := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb build/runeffi.mlb build/runeffi.cm build/runeffi-polyml-build.sml build/runeffi-mlkit.mlb
 VERSIONGEN := build/config.sml runtime/version.h
 BUILDGEN := $(BUILDFILES) $(VERSIONGEN)
 
@@ -133,10 +134,31 @@ CFLAGS  += -D__USE_MINGW_ANSI_STDIO=1
 endif
 SYS ?= posix
 # what a VM links beside the runtime
-VM_LIBS  = -lm $(if $(MINGW),$(WIN_LIBS))
-RT_SRCS := runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
+VM_LIBS  = -lm $(if $(MINGW),$(WIN_LIBS)) $(FFI_LIBS)
+# libffi is optional. Native flags never enter another target's compile.
+# Cross builds use explicit target prefixes or deterministic ENOSYS stubs.
+FFI ?= auto
+FFI_PREFIX ?=
+ifeq ($(filter $(FFI),auto yes no),)
+$(error FFI must be auto, yes or no)
+endif
+FFI_FOUND := $(if $(FFI_PREFIX),$(if $(and $(wildcard $(FFI_PREFIX)/include/ffi.h),$(wildcard $(FFI_PREFIX)/lib/libffi.a)),yes),$(shell pkg-config --exists libffi 2>/dev/null && echo yes))
+FFI_ENABLED := $(if $(filter no,$(FFI)),0,$(if $(filter none,$(SYS)),0,$(if $(filter yes,$(FFI_FOUND)),1,0)))
+FFI_CONFIG_GOALS := $(if $(MAKECMDGOALS),$(filter-out hosts doctor envcheck clean gmp-dep gmp-dep-windows gmp-dep-portability gmp-dep-dist-native ffi-libffi ffi-sdl ffi-libffi-windows32 ffi-libffi-windows64 ffi-libffi-linux32 ffi-libffi-aarch64 ffi-libffi-ppc64 ffi-sdl-windows32 ffi-sdl-windows64 bin/rune-build bin/rune-build.bin,$(MAKECMDGOALS)),all)
+ifneq ($(strip $(FFI_CONFIG_GOALS)),)
+ifeq ($(FFI),yes)
+ifneq ($(FFI_ENABLED),1)
+$(error FFI=yes requires a complete FFI_PREFIX or libffi headers and pkg-config on this target)
+endif
+endif
+endif
+FFI_FLAGS := -DRUNE_FFI=$(FFI_ENABLED) $(if $(filter 1,$(FFI_ENABLED)),$(if $(FFI_PREFIX),-I$(FFI_PREFIX)/include,$(shell pkg-config --cflags libffi)))
+FFI_LIBS := $(if $(filter 1,$(FFI_ENABLED)),$(if $(FFI_PREFIX),$(FFI_PREFIX)/lib/libffi.a,$(shell pkg-config --libs libffi)) $(if $(filter posix,$(SYS)),-ldl))
+FFI_INPUTS := $(if $(and $(filter 1,$(FFI_ENABLED)),$(FFI_PREFIX)),$(wildcard $(FFI_PREFIX)/include/ffi.h $(FFI_PREFIX)/include/ffitarget.h $(FFI_PREFIX)/lib/libffi.a $(FFI_PREFIX)/rune-ffi-dependency.json))
+build/librune/foreign.o bin/runevm bin/runevm-stack bin/runevm-asan bin/runevm-stack-asan: $(FFI_INPUTS)
+RT_SRCS := runtime/callback.c runtime/foreign.c runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
-VM_HDRS := runtime/intinf.h runtime/vm.h runtime/frames_array.inc runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
+VM_HDRS := runtime/callback.h runtime/foreign.h runtime/foreign_prim.h runtime/intinf.h runtime/vm.h runtime/frames_array.inc runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
 AR      ?= ar
 
@@ -147,7 +169,7 @@ BUILDER_LIB_SRCS := lib/unicode/utf8_sig.sml lib/unicode/utf8.sml lib/json/json_
 BUILDER_MODEL_SRCS := tools/builder/common.sml tools/builder/options.sml tools/builder/runtime-inputs.sml \
                     tools/builder/gmp-config.sml tools/builder/runtime-record.sml tools/builder/cross-vm.sml \
                     tools/builder/formats.sml tools/builder/archive.sml tools/builder/dist.sml \
-                    tools/builder/gmp-build.sml tools/builder/relink.sml tools/builder/package-runtime.sml \
+                    tools/builder/gmp-build.sml tools/builder/ffi-deps.sml tools/builder/relink.sml tools/builder/package-runtime.sml \
                     tools/builder/setup-mlton.sml
 BUILDER_NATIVE_SRCS := $(BUILDER_LIB_SRCS) tools/builder/io.sig tools/builder/native-io.sml $(BUILDER_MODEL_SRCS) tools/builder/main.sml
 bin/rune-build.bin: $(BUILDER_NATIVE_SRCS) tools/builder/native.mlb | build/.doctor-mlton
@@ -167,7 +189,7 @@ $(GMP_DIR)/config.mk: bin/rune-build $(if $(GMP_PREFIX),$(wildcard $(GMP_PREFIX)
 	bin/rune-build configure-gmp --mode '$(GMP)' --prefix '$(GMP_PREFIX)' --cc '$(CC)' --cflags '$(CFLAGS)' --out $(GMP_DIR)
 # Pre-host provisioning and the independent native tool cannot depend on
 # target configuration. Explicit dependency provisioning likewise precedes it.
-GMP_CONFIG_GOALS := $(if $(MAKECMDGOALS),$(filter-out hosts doctor envcheck clean gmp-dep gmp-dep-windows gmp-dep-portability gmp-dep-dist-native bin/rune-build bin/rune-build.bin,$(MAKECMDGOALS)),all)
+GMP_CONFIG_GOALS := $(if $(MAKECMDGOALS),$(filter-out hosts doctor envcheck clean gmp-dep gmp-dep-windows gmp-dep-portability gmp-dep-dist-native ffi-libffi ffi-sdl ffi-libffi-windows32 ffi-libffi-windows64 ffi-libffi-linux32 ffi-libffi-aarch64 ffi-libffi-ppc64 ffi-sdl-windows32 ffi-sdl-windows64 bin/rune-build bin/rune-build.bin,$(MAKECMDGOALS)),all)
 ifneq ($(strip $(GMP_CONFIG_GOALS)),)
 include $(GMP_DIR)/config.mk
 endif
@@ -217,7 +239,7 @@ RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
 .PHONY: check-docs-generated test-mutants manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
 
-all: vm boot runedoc runeopt manifests basis-cache
+all: vm boot runedoc runeopt runeffi manifests basis-cache
 
 # The MANIFEST of each library (BasisManifest; docs/build.md), what each of
 # its files provides and requires, made from the library's build file and
@@ -225,7 +247,7 @@ all: vm boot runedoc runeopt manifests basis-cache
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
-manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
+manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST lib/ffi/runtime/MANIFEST lib/ffi/win32/common/MANIFEST lib/ffi/win32/model/MANIFEST lib/ffi/win32/mock/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST) lib/sdl/MANIFEST lib/ffi/win32/sdldriver/MANIFEST
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
 lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -246,6 +268,8 @@ lib/unicode/MANIFEST: lib/unicode/library.build $(wildcard lib/unicode/*.sml) li
 	bin/rune-$(BOOTHOST) --basis-index lib/unicode
 lib/json/MANIFEST: lib/json/library.build $(wildcard lib/json/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/json
+lib/language/c/MANIFEST: lib/language/c/library.build $(wildcard lib/language/c/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/language/c
 lib/terminal/MANIFEST: lib/terminal/library.build $(wildcard lib/terminal/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/terminal
 lib/pretty/MANIFEST: lib/pretty/library.build $(wildcard lib/pretty/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
@@ -262,6 +286,37 @@ lib/zmtp/MANIFEST: lib/zmtp/library.build $(wildcard lib/zmtp/*.sml) lib/basis/M
 	bin/rune-$(BOOTHOST) --basis-index lib/zmtp
 lib/jupyter/MANIFEST: lib/jupyter/library.build $(wildcard lib/jupyter/*.sml) lib/basis/MANIFEST lib/zmtp/MANIFEST lib/json/MANIFEST lib/digest/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/jupyter
+
+lib/ffi/model/MANIFEST: lib/ffi/model/library.build $(wildcard lib/ffi/model/*.sml) lib/json/MANIFEST lib/language/c/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/ffi/model
+lib/ffi/marshal/MANIFEST: lib/ffi/marshal/library.build $(wildcard lib/ffi/marshal/*.sml) lib/unicode/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/ffi/marshal
+lib/ffi/runtime/MANIFEST: lib/ffi/runtime/library.build $(wildcard lib/ffi/runtime/*.sml) lib/ffi/marshal/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/ffi/runtime
+lib/ffi/win32/common/MANIFEST: lib/ffi/win32/common/library.build $(wildcard lib/ffi/win32/common/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/common
+lib/ffi/win32/model/MANIFEST: lib/ffi/win32/model/library.build $(wildcard lib/ffi/win32/model/*.sml) lib/ffi/win32/common/MANIFEST lib/unicode/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/model
+lib/ffi/win32/mock/MANIFEST: lib/ffi/win32/mock/library.build $(wildcard lib/ffi/win32/mock/*.sml) lib/ffi/win32/model/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/mock
+lib/sdl/MANIFEST: lib/sdl/library.build $(wildcard lib/sdl/*.sml) lib/ffi/runtime/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/sdl
+lib/ffi/win32/sdldriver/MANIFEST: lib/ffi/win32/sdldriver/library.build $(wildcard lib/ffi/win32/sdldriver/*.sml) lib/sdl/MANIFEST lib/ffi/win32/common/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/sdldriver
+lib/ffi/win32/native/MANIFEST: lib/ffi/win32/native/library.build $(wildcard lib/ffi/win32/native/*.sml) lib/ffi/win32/common/MANIFEST lib/ffi/runtime/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/native
+manifests: lib/ffi/win32/native/MANIFEST
+
+# Immutable generated FFI sets are real source libraries. Their MANIFESTs
+# are derived locally; current.build/API pointers, C shims and provenance are
+# additional installed/distribution source assets, outside the SML index.
+FFI_GENERATED_LIBRARIES := $(patsubst %/library.build,%,$(foreach family,sdl win32,$(wildcard lib/ffi/$(family)/generated/*/sets/*/library.build)))
+FFI_GENERATED_MANIFESTS := $(addsuffix /MANIFEST,$(FFI_GENERATED_LIBRARIES))
+manifests: $(FFI_GENERATED_MANIFESTS)
+ifneq ($(strip $(FFI_GENERATED_MANIFESTS)),)
+$(FFI_GENERATED_MANIFESTS): %/MANIFEST: %/library.build $(foreach family,sdl win32,$(wildcard lib/ffi/$(family)/generated/*/sets/*/*.sml)) lib/ffi/runtime/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index $(@D)
+endif
 
 # The frozen Basis Library (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
@@ -298,7 +353,7 @@ build/.doctor-%: scripts/doctor.sh
 # ---------------------------------------------------------------- generated
 gen: $(BUILDGEN)
 
-$(BUILDFILES) &: rune.build runedoc.build runeopt.build runeisa.build scripts/build-files.sh scripts/gen-build-files.sh
+$(BUILDFILES) &: rune.build runedoc.build runeopt.build runeisa.build runeffi.build scripts/build-files.sh scripts/gen-build-files.sh
 	sh scripts/gen-build-files.sh "$(ROOT)"
 
 # The version is git's (scripts/gen-version.sh): asked on every make, and
@@ -419,6 +474,72 @@ bin/rune-mlkit: bin/rune-mlkit.bin Makefile
 	chmod +x $@
 
 # ---------------------------------------------------------------- runedoc
+# Runeffi is an SML program. Header processing is an explicit command and
+# never an action executed from the .build language.
+.PHONY: runeffi runeffi-host-builds ffi check-ffi-generated
+runeffi: bin/runeffi
+bin/runeffi.rbc: $(RUNE) $(SOURCES_FFI) src/main/runeffi-rune-main.sml
+	@mkdir -p bin
+	$(RUNE) -o $@ $(SOURCES_FFI) src/main/runeffi-rune-main.sml
+bin/runeffi: bin/runeffi.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/runeffi.rbc" "$$@"\n' > $@
+	chmod +x $@
+bin/runeffi-mlton.bin: $(BUILDGEN) $(SOURCES_FFI) src/main/runeffi-mlton-main.sml | build/.doctor-mlton
+	@mkdir -p bin
+	$(MLTON) -output $@ build/runeffi.mlb
+bin/runeffi-mlton: bin/runeffi-mlton.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeffi-mlton.bin" "$$@"\n' > $@
+	chmod +x $@
+bin/runeffi-polyml.bin: $(BUILDGEN) $(SOURCES_FFI) src/main/runeffi-polyml-main.sml | build/.doctor-polyml
+	@mkdir -p bin
+	$(POLYC) -o $@ build/runeffi-polyml-build.sml
+bin/runeffi-polyml: bin/runeffi-polyml.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeffi-polyml.bin" -H $(POLYML_HEAP) "$$@"\n' > $@
+	chmod +x $@
+runeffi-host-builds: bin/runeffi-mlton bin/runeffi-polyml
+FFI_CONFIG ?= tests/ffi/generator/scalars.ffi
+FFI_TARGET ?= ffi/targets/linux-x86_64.json
+FFI_OUT ?= build/ffi-generated/scalars
+FFI_OPTIONS ?=
+ffi: bin/runeffi
+	bin/runeffi generate --config $(FFI_CONFIG) --target $(FFI_TARGET) --out $(FFI_OUT) $(FFI_OPTIONS)
+check-ffi-generated: bin/runeffi
+	bin/runeffi check --config $(FFI_CONFIG) --target $(FFI_TARGET) --out $(FFI_OUT) $(FFI_OPTIONS)
+FFI_GENERATOR_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/windowsdir.sml tests/ffi/generator-check.sml
+check-tools: bin/runeffi bin/rune-ffi-generator-check
+bin/rune-ffi-generator-check.rbc: $(RUNE) $(FFI_GENERATOR_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner --library json $(FFI_GENERATOR_CHECK_SRCS) -o $@
+bin/rune-ffi-generator-check: bin/rune-ffi-generator-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-generator-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-ffi-generator test-ffi-generator-hosts test-ffi-generator-windows
+test-ffi-generator: $(RUNE) vm $(RUNEOPT) bin/runeffi bin/rune-ffi-generator-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-generator
+test-ffi-generator-windows: $(RUNE) windows bin/runeffi bin/rune-ffi-generator-check bin/rune-windows bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-generator-windows
+test-ffi-generator-hosts: $(RUNE) vm bin/runeffi bin/rune-ffi-generator-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-generator-hosts
+
+# Explicit measurements, kept outside correctness checks and their budgets.
+FFI_PERF_OUT ?= tests/out/ffi-performance
+FFI_PERF_ITERATIONS ?= 10000
+FFI_PERF_SAMPLES ?= 5
+FFI_PERF_MODE ?= off
+FFI_PERF_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/performance-model.sml tests/ffi/performance-check.sml
+bin/rune-ffi-performance.rbc: $(RUNE) $(FFI_PERF_SRCS) manifests
+	$(RUNE) --library test/runner --library json --library digest $(FFI_PERF_SRCS) -o $@
+bin/rune-ffi-performance: bin/rune-ffi-performance.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-ffi-performance.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: ffi-performance
+ffi-performance: $(RUNE) vm bin/rune-ffi-performance manifests
+	FFI_PERF_MODE='$(FFI_PERF_MODE)' bin/rune-ffi-performance '$(FFI_PERF_OUT)' '$(FFI_PERF_ITERATIONS)' '$(FFI_PERF_SAMPLES)'
+
+.PHONY: test-ffi-performance-model
+test-ffi-performance-model: $(RUNE) vm manifests
+	$(RUNE) --library json --library test/unit tests/ffi/performance-model.sml tests/ffi/performance-model-tests.sml -o build/ffi-performance-model.rbc
+	$(RUNEVM_REGISTER) build/ffi-performance-model.rbc
+
 # The documentation generator (docs/plans/docgen.md): the sources of
 # runedoc.build, built like the compiler by every host and by the compiler
 # itself (bin/runedoc, on runevm). The SML/NJ builds come one after another
@@ -527,9 +648,23 @@ bin/runeopt-mlkit: bin/runeopt-mlkit.bin Makefile
 # ---------------------------------------------------------------- VM
 vm: bin/runevm-stack bin/runevm
 
-build/librune/%.o: runtime/%.c $(VM_HDRS) | build/.doctor-vm
+build/librune/%.o: runtime/%.c $(VM_HDRS) build/foreign-selected | build/.doctor-vm
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(RT_INC) -c -o $@ $<
+	$(CC) $(CFLAGS) $(RT_INC) $(FFI_FLAGS) -c -o $@ $<
+
+# Publish metadata atomically: a nested test build can overlap runeopt's read.
+define foreign_metadata
+	@set -e; rune_ffi_meta=$$(mktemp $(1).XXXXXX); \
+	printf '%s\n' '$(2)' > "$$rune_ffi_meta"; \
+	if cmp -s "$$rune_ffi_meta" $(1); then rm -f "$$rune_ffi_meta"; else mv -f "$$rune_ffi_meta" $(1); fi
+endef
+.PHONY: foreign-select
+foreign-select:
+	@mkdir -p build
+	$(call foreign_metadata,build/foreign-selected,$(CC) $(CFLAGS) $(FFI_FLAGS) $(FFI_LIBS))
+	$(call foreign_metadata,build/foreign-libs,$(FFI_LIBS))
+build/foreign-selected: foreign-select
+	@:
 
 # native.o is the main of a program runeopt makes and what its code calls
 # (runtime/native/native.c): it is in the library, but nothing of runevm-stack refers to it,
@@ -564,8 +699,8 @@ NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/debug_loop
 bin/runevm: $(NEW_LOOP) $(GMP_DIR)/intinf.o build/gmp/selected build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) bin/rune-build | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) $(GMP_DIR)/intinf.o build/librune.a $(GMP_LDLIBS) $(VM_LIBS)
-	bin/rune-build record-vm-build --vm $@ --cc '$(CC)' --cflags='$(CFLAGS) -DRUNE_JIT=$(RUNE_JIT)' \
-	  --ldlibs='$(VM_LIBS)' --config $(GMP_DIR) --out build/gmp/native-build.json --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS)
+	bin/rune-build record-vm-build --vm $@ --cc '$(CC)' --cflags='$(CFLAGS) $(FFI_FLAGS) -DRUNE_JIT=$(RUNE_JIT)' \
+	  --ldlibs='$(VM_LIBS)' --ffi-prefix='$(FFI_PREFIX)' --config $(GMP_DIR) --out build/gmp/native-build.json --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS)
 
 bin/runevm-sml: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) build/librune.a $(VM_LIBS)
@@ -577,55 +712,55 @@ vm-asan: bin/runevm-stack-asan bin/runevm-asan
 test-register-asan: bin/runevm-asan $(RUNE) bin/rune-test
 	$(RUNE_TEST) --tier test-register-asan
 
-bin/runevm-stack-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
+bin/runevm-stack-asan: build/foreign-selected $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p bin
-	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) -o $@ $(VM_SRCS) -lm
+	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) $(FFI_FLAGS) -o $@ $(VM_SRCS) $(VM_LIBS)
 
 # runtime/register with the sanitizers: its loop, its instruction set's part, and the
 # runtime but for the stack bytecode's part
 NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
-bin/runevm-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-asan
+bin/runevm-asan: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-asan
 	@mkdir -p bin
-	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 
 # The word's switches (docs/plans/heap-layout.md, D2 and D3), each a VM of its
 # own for measurements: ints and words that keep 64 bits (D2 A; a compiler
 # given --int-bits=64 makes its bytecode), and every real in a box (D3 B).
 # Not part of make check.
-bin/runevm-int64: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
+bin/runevm-int64: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 # The JIT on the first (tests/register/int64-box-home.sml), at every tier,
 # and with raw homes: a word past 63 bits is a box, which a home that holds
 # the word must not keep across a collection. Not part of make check.
 test-int64: bin/runevm-int64 bin/runevm-rawhomes $(RUNE) bin/rune-test
 	$(RUNE_TEST) --tier test-int64
-bin/runevm-realboxed: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
+bin/runevm-realboxed: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_REAL_BOXED $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_REAL_BOXED $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 # D2 A with tier 2's homes of ints and words holding the 64 bits (D5 A as the
 # roadmap states it): faster where words pass 63 bits, slower where a small
 # int crosses a slot at every call.
-bin/runevm-rawhomes: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
+bin/runevm-rawhomes: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 -DRUNE_RAW_HOMES $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 -DRUNE_RAW_HOMES $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 # The hooks for the collector to come (docs/plans/heap-layout.md, M7), each a
 # VM of its own to test or to measure with: the collector sets the header's
 # four bits on every object it copies and every reader of a kind masks them;
 # and the barrier marks a card at every store into an object that exists.
-bin/runevm-gcbits: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
+bin/runevm-gcbits: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_GC_BITS $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
-bin/runevm-cards: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_GC_BITS $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+bin/runevm-cards: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_BARRIER_CARDS $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_BARRIER_CARDS $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 # The instrument of docs/plans/performance-64bit.md's experiments 1 and 5
 # (x86-64): compiled code counts every conversion between a raw number in a
 # home and its word, by the instruction that makes it; runevm-conv
 # --jit-stats prints the table.
-bin/runevm-conv: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
+bin/runevm-conv: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_JIT_CONV $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_JIT_CONV $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 
 # The census VM (docs/census.md; docs/plans/heap-layout.md, M1, and
 # docs/plans/garbage-collector-v2.md, M1): runtime/register's loop on the runtime
@@ -634,9 +769,9 @@ bin/runevm-conv: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/confi
 # --count line, which tests/runner/heapchecks.sml checks.
 CENSUS_SRCS := $(NEW_SRCS) runtime/census/census.c runtime/census/census_static.c
 vm-census: bin/runevm-census
-bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/census/census.h runtime/census/layouts.h $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
+bin/runevm-census: build/foreign-selected $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/census/census.h runtime/census/layouts.h $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=1 -DRUNE_CENSUS $(RT_INC) $(GMP_FLAGS) -o $@ $(CENSUS_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=1 -DRUNE_CENSUS $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(CENSUS_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 
 # The census VM against the stock one on a small program: the same --count
 # line, every byte and object in census.txt, the trace's own consistency
@@ -733,6 +868,22 @@ WIN_SRCS    := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_
 # the stack bytecode's (runtime/stack/isa_stack.c), as bin/runevm-asan is built
 WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32 -lpsapi
+FFI_WIN64_PREFIX ?= build/deps/libffi-win64/install
+FFI_WIN32_PREFIX ?= build/deps/libffi-win32/install
+FFI_WIN64_ENABLED := $(if $(filter no,$(FFI)),,$(wildcard $(FFI_WIN64_PREFIX)/include/ffi.h))
+FFI_WIN32_ENABLED := $(if $(filter no,$(FFI)),,$(wildcard $(FFI_WIN32_PREFIX)/include/ffi.h))
+FFI_WIN64_FLAGS := $(if $(FFI_WIN64_ENABLED),-DRUNE_FFI=1 -I$(FFI_WIN64_PREFIX)/include,-DRUNE_FFI=0)
+FFI_WIN32_FLAGS := $(if $(FFI_WIN32_ENABLED),-DRUNE_FFI=1 -I$(FFI_WIN32_PREFIX)/include,-DRUNE_FFI=0)
+FFI_WIN64_LIBS := $(if $(FFI_WIN64_ENABLED),$(FFI_WIN64_PREFIX)/lib/libffi.a)
+FFI_WIN32_LIBS := $(if $(FFI_WIN32_ENABLED),$(FFI_WIN32_PREFIX)/lib/libffi.a)
+.PHONY: foreign-win-select
+foreign-win-select:
+	@mkdir -p build
+	$(call foreign_metadata,build/foreign-win64-selected,$(WINCC) $(WINCFLAGS) $(FFI_WIN64_FLAGS) $(FFI_WIN64_LIBS))
+	$(call foreign_metadata,build/foreign-win32-selected,$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) $(FFI_WIN32_FLAGS) $(FFI_WIN32_LIBS))
+build/foreign-win64-selected build/foreign-win32-selected: foreign-win-select
+	@:
+
 GMP_CROSS_PREFIX ?= build/deps/gmp
 GMP_WIN64_PREFIX ?= $(GMP_CROSS_PREFIX)/windows64
 GMP_WIN32_PREFIX ?= $(GMP_CROSS_PREFIX)/windows32
@@ -750,14 +901,14 @@ endef
 
 windows: bin/runevm-stack.exe bin/runevm-stack32.exe bin/runevm.exe bin/runevm32.exe
 
-bin/runevm-stack.exe: $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c bin/rune-build | build/.doctor-windows
+bin/runevm-stack.exe: build/foreign-win64-selected $(FFI_WIN64_LIBS) $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c bin/rune-build | build/.doctor-windows
 	@mkdir -p bin
-	$(WINCC) $(WINCFLAGS) -o $@ $(WIN_SRCS) $(RT_INC) $(WIN_LIBS)
+	$(WINCC) $(WINCFLAGS) $(FFI_WIN64_FLAGS) -o $@ $(WIN_SRCS) $(RT_INC) $(WIN_LIBS) $(FFI_WIN64_LIBS)
 	$(call windows_dlls,$(WINCC))
 
-bin/runevm-stack32.exe: $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c bin/rune-build | build/.doctor-windows
+bin/runevm-stack32.exe: build/foreign-win32-selected $(FFI_WIN32_LIBS) $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c bin/rune-build | build/.doctor-windows
 	@mkdir -p bin
-	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) -o $@ $(WIN_SRCS) $(RT_INC) $(WIN_LIBS)
+	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) $(FFI_WIN32_FLAGS) -o $@ $(WIN_SRCS) $(RT_INC) $(WIN_LIBS) $(FFI_WIN32_LIBS)
 	$(call windows_dlls,$(WINCC32))
 
 # share/rune.png, as a resource, so Explorer shows it on the executable.
@@ -777,13 +928,13 @@ build/runevm-x86.o: build/runevm.rc build/rune.ico | build/.doctor-windows
 
 bin/runevm.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) build/runevm-x64.o gmp-force | build/.doctor-windows
 	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_WIN64_PREFIX)' --cc '$(WINCC)' \
-	  --cflags='$(WINCFLAGS)' --ldlibs='$(WIN_LIBS)' --config build/gmp/windows64 --out $@ --windows \
+	  --cflags='$(WINCFLAGS) $(FFI_WIN64_FLAGS)' --ldlibs='$(WIN_LIBS) $(FFI_WIN64_LIBS)' --config build/gmp/windows64 --out $@ --windows \
 	  --objects build/runevm-x64.o \
 	  --sources $(WIN_NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
 bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) build/runevm-x86.o gmp-force | build/.doctor-windows
 	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_WIN32_PREFIX)' --cc '$(WINCC32)' \
-	  --cflags='$(WINCFLAGS) $(WINCFLAGS32)' --ldlibs='$(WIN_LIBS)' --config build/gmp/windows32 --out $@ --windows \
+	  --cflags='$(WINCFLAGS) $(WINCFLAGS32) $(FFI_WIN32_FLAGS)' --ldlibs='$(WIN_LIBS) $(FFI_WIN32_LIBS)' --config build/gmp/windows32 --out $@ --windows \
 	  --objects build/runevm-x86.o \
 	  --sources $(WIN_NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
@@ -883,12 +1034,12 @@ bin/runevm-stack-ppc64: bin/runevm-stack-ppc64.bin Makefile
 
 # runtime/register for the same two machines, from the sources bin/runevm-asan is
 # built from (its instruction set's part in place of the stack bytecode's)
-bin/runevm32: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
+bin/runevm32: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
 	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_LINUX32_PREFIX)' --cc '$(PORTCC32)' \
 	  --cflags='$(CFLAGS) $(PORTFLAGS32)' --runner '' --config build/gmp/linux32 --out $@ \
 	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
-bin/runevm-ppc64.bin: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
+bin/runevm-ppc64.bin: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
 	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_PPC64_PREFIX)' --cc '$(PPCCC)' \
 	  --cflags='$(CFLAGS) $(PPCFLAGS)' --runner '$(QEMUPPC) -L $(PPCROOT)' --config build/gmp/ppc64 --out $@ \
 	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
@@ -908,6 +1059,31 @@ bin/runevm-aarch64: bin/runevm-aarch64.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-aarch64.bin" "$$@"\n' '$(QEMUA64) -L $(A64ROOT)' > $@
 	chmod +x $@
 
+# Explicit FFI acceptance VMs have independent configurations. They always use
+# the pinned target library; ordinary portability and FFI=no builds stay usable
+# without provisioning it. CrossVM hashes both archive and ownership receipt.
+FFI_LINUX32_PREFIX ?= build/deps/libffi/linux32/install
+FFI_AARCH64_PREFIX ?= build/deps/libffi/aarch64/install
+FFI_PPC64_PREFIX ?= build/deps/libffi/ppc64/install
+.PHONY: ffi-portability
+ffi-portability: bin/runevm-ffi32 bin/runevm-stack-ffi32 bin/runevm-ffi-aarch64.bin bin/runevm-stack-ffi-aarch64.bin bin/runevm-ffi-ppc64.bin bin/runevm-stack-ffi-ppc64.bin
+
+define ffi-cross-vm
+bin/runevm$(1)-ffi$(2)$(3): $$(if $$(filter -stack,$(1)),$$(VM_SRCS),$(4)) $$(VM_HDRS) $$(NEW_HDRS) $$(JIT_HDRS) Makefile bin/rune-build gmp-force
+	bin/rune-build build-ffi libffi --target $(5) --prefix '$$($(6))' --verify-only
+	bin/rune-build build-gmp-vm --mode no --cc '$$($(7))' \
+	  --cflags='$$(CFLAGS) $$($(8)) $(9) -DRUNE_FFI=1 -I$$($(6))/include' \
+	  --runner '$(10)' --config build/ffi-vm/$(5)$(1) --out $$@ --ldlibs='-ldl -lm' \
+	  --sources $$(if $$(filter -stack,$(1)),$$(VM_SRCS),$(4)) \
+	  --objects $$($(6))/lib/libffi.a --headers $$(VM_HDRS) $$(NEW_HDRS) $$(JIT_HDRS) Makefile $$($(6))/rune-ffi-dependency.json
+endef
+$(eval $(call ffi-cross-vm,,32,,$(NEW_SRCS),linux32,FFI_LINUX32_PREFIX,PORTCC32,PORTFLAGS32,,))
+$(eval $(call ffi-cross-vm,,-aarch64,.bin,$(NEW_SRCS_A64),aarch64,FFI_AARCH64_PREFIX,A64CC,A64FLAGS,-DRUNE_JIT=1,$(QEMUA64) -L $(A64ROOT)))
+$(eval $(call ffi-cross-vm,,-ppc64,.bin,$(NEW_SRCS),ppc64,FFI_PPC64_PREFIX,PPCCC,PPCFLAGS,,$(QEMUPPC) -L $(PPCROOT)))
+$(eval $(call ffi-cross-vm,-stack,32,,$(NEW_SRCS),linux32,FFI_LINUX32_PREFIX,PORTCC32,PORTFLAGS32,,))
+$(eval $(call ffi-cross-vm,-stack,-aarch64,.bin,$(NEW_SRCS_A64),aarch64,FFI_AARCH64_PREFIX,A64CC,A64FLAGS,,$(QEMUA64) -L $(A64ROOT)))
+$(eval $(call ffi-cross-vm,-stack,-ppc64,.bin,$(NEW_SRCS),ppc64,FFI_PPC64_PREFIX,PPCCC,PPCFLAGS,,$(QEMUPPC) -L $(PPCROOT)))
+
 # The VMs make dist ships. The portability and Windows builds follow
 # GMP=auto, which uses the SML fallback when the pinned library is absent
 # and, on this machine, links bin/runevm to the shared libgmp.so. An
@@ -925,7 +1101,7 @@ gmp-dep-dist-native: bin/rune-build
 bin/dist/runevm: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force gmp-dep-dist-native | build/.doctor-vm
 	@mkdir -p bin/dist
 	bin/rune-build build-gmp-vm --mode yes --prefix '$(GMP_DIST_NATIVE_PREFIX)' --cc '$(CC)' \
-	  --cflags='$(CFLAGS) -DRUNE_JIT=$(RUNE_JIT)' --ldlibs='$(VM_LIBS)' \
+	  --cflags='$(CFLAGS) $(FFI_FLAGS) -DRUNE_JIT=$(RUNE_JIT)' --ldlibs='$(VM_LIBS)' \
 	  --config build/gmp/native-dist --out $@ \
 	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) Makefile
 
@@ -938,14 +1114,14 @@ bin/dist/runevm32: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL)
 bin/dist/runevm.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) build/runevm-x64.o gmp-force gmp-dep-windows | build/.doctor-windows
 	@mkdir -p bin/dist
 	bin/rune-build build-gmp-vm --mode yes --prefix '$(GMP_WIN64_PREFIX)' --cc '$(WINCC)' \
-	  --cflags='$(WINCFLAGS)' --ldlibs='$(WIN_LIBS)' --config build/gmp/windows64-dist --out $@ --windows \
+	  --cflags='$(WINCFLAGS) $(FFI_WIN64_FLAGS)' --ldlibs='$(WIN_LIBS) $(FFI_WIN64_LIBS)' --config build/gmp/windows64-dist --out $@ --windows \
 	  --objects build/runevm-x64.o \
 	  --sources $(WIN_NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
 bin/dist/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) build/runevm-x86.o gmp-force gmp-dep-windows | build/.doctor-windows
 	@mkdir -p bin/dist
 	bin/rune-build build-gmp-vm --mode yes --prefix '$(GMP_WIN32_PREFIX)' --cc '$(WINCC32)' \
-	  --cflags='$(WINCFLAGS) $(WINCFLAGS32)' --ldlibs='$(WIN_LIBS)' --config build/gmp/windows32-dist --out $@ --windows \
+	  --cflags='$(WINCFLAGS) $(WINCFLAGS32) $(FFI_WIN32_FLAGS)' --ldlibs='$(WIN_LIBS) $(FFI_WIN32_LIBS)' --config build/gmp/windows32-dist --out $@ --windows \
 	  --objects build/runevm-x86.o \
 	  --sources $(WIN_NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
@@ -1168,13 +1344,23 @@ check-docs: check-docs-generated bin/rune-test bin/rune-doc-check
 
 check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/sdl/*.sml lib/ffi/win32/common/*.sml lib/ffi/win32/native/*.sml lib/ffi/win32/sdldriver/*.sml lib/ffi/win32/model/*.sml lib/ffi/win32/mock/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
 	$(RUNEDOC) $(DOCS_PROPERTY_BASIS) --check
 	$(RUNEDOC) $(DOCS_UNIT) --check
 	$(RUNEDOC) $(DOCS_RUNNER) --check
+	$(RUNEDOC) $(DOCS_C) --check
+	$(RUNEDOC) $(DOCS_FFI_MODEL) --check
+	$(RUNEDOC) $(DOCS_FFI_MARSHAL) --check
+	$(RUNEDOC) $(DOCS_FFI_RUNTIME) --check
+	$(RUNEDOC) $(DOCS_WIN32_COMMON) --check
+	$(RUNEDOC) $(DOCS_WIN32_MODEL) --check
+	$(RUNEDOC) $(DOCS_WIN32_MOCK) --check
+	$(RUNEDOC) $(DOCS_SDL) --check
+	$(RUNEDOC) $(DOCS_WIN32_SDL_DRIVER) --check
+	$(RUNEDOC) $(DOCS_WIN32_NATIVE) --check
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW) --check
 	$(RUNEDOC) --palette docs/lib/palette --check
@@ -1205,6 +1391,30 @@ DOCS_UNIT := --lib lib --library test/unit --out docs/lib/test/unit --basis-docs
 DOCS_RUNNER := --lib lib --library test/runner --out docs/lib/test/runner --basis-docs ../../basis \
                --library-docs test/unit ../unit --library-docs terminal ../../terminal \
                --conventions ../../conventions.md
+DOCS_WIN32_MODEL := --lib lib --library ffi/win32/model --out docs/lib/ffi/win32/model --basis-docs ../../../basis \
+                    --library-docs ffi/win32/common ../common --library-docs unicode ../../../unicode \
+                    --conventions ../../../conventions.md
+DOCS_WIN32_MOCK := --lib lib --library ffi/win32/mock --out docs/lib/ffi/win32/mock --basis-docs ../../../basis \
+                   --library-docs ffi/win32/common ../common --library-docs ffi/win32/model ../model \
+                   --conventions ../../../conventions.md
+DOCS_WIN32_SDL_DRIVER := --lib lib --library ffi/win32/sdldriver --out docs/lib/ffi/win32/sdldriver --basis-docs ../../../basis \
+                         --library-docs sdl ../../../sdl --library-docs ffi/win32/common ../common --conventions ../../../conventions.md
+DOCS_WIN32_COMMON := --lib lib --library ffi/win32/common --out docs/lib/ffi/win32/common --basis-docs ../../../basis \
+                     --conventions ../../../conventions.md
+DOCS_SDL := --lib lib --library sdl --out docs/lib/sdl --basis-docs ../basis \
+            --library-docs ffi/runtime ../ffi/runtime --library-docs ffi/marshal ../ffi/marshal --conventions ../conventions.md
+DOCS_WIN32_NATIVE := --lib lib --library ffi/win32/native --out docs/lib/ffi/win32/native --basis-docs ../../../basis \
+                     --library-docs ffi/win32/common ../common --library-docs ffi/runtime ../../runtime \
+                     --conventions ../../../conventions.md
+DOCS_FFI_RUNTIME := --lib lib --library ffi/runtime --out docs/lib/ffi/runtime --basis-docs ../../basis \
+                    --library-docs ffi/marshal ../marshal --conventions ../../conventions.md
+DOCS_FFI_MARSHAL := --lib lib --library ffi/marshal --out docs/lib/ffi/marshal --basis-docs ../../basis \
+                    --library-docs unicode ../../unicode --conventions ../../conventions.md
+DOCS_FFI_MODEL := --lib lib --library ffi/model --out docs/lib/ffi/model --basis-docs ../../basis \
+                  --library-docs json ../../json --library-docs language/c ../../language/c \
+                  --conventions ../../conventions.md
+DOCS_C := --lib lib --library language/c --out docs/lib/language/c --basis-docs ../../basis \
+          --conventions ../../conventions.md
 # the libraries of docs/plans/repl.md (The libraries), each in
 # docs/lib/NAME (REPL_LIBS, with the manifests). The heading of the library's
 # README.md is its name, on its pages and in the overview below.
@@ -1231,7 +1441,17 @@ DOCS_OVERVIEW := --lib lib --overview docs/lib \
 	--library-page dap \
 	--library-page zmtp \
 	--library-page jupyter \
-	--library-page digest
+	--library-page digest \
+	--library-page language/c \
+	--library-page ffi/model \
+	--library-page ffi/marshal \
+	--library-page ffi/runtime \
+	--library-page ffi/win32/common \
+	--library-page ffi/win32/model \
+	--library-page ffi/win32/mock \
+	--library-page sdl \
+	--library-page ffi/win32/sdldriver \
+	--library-page ffi/win32/native
 
 docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_BASIS)
@@ -1240,6 +1460,16 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_PROPERTY_BASIS)
 	$(RUNEDOC) $(DOCS_UNIT)
 	$(RUNEDOC) $(DOCS_RUNNER)
+	$(RUNEDOC) $(DOCS_C)
+	$(RUNEDOC) $(DOCS_FFI_MODEL)
+	$(RUNEDOC) $(DOCS_FFI_MARSHAL)
+	$(RUNEDOC) $(DOCS_FFI_RUNTIME)
+	$(RUNEDOC) $(DOCS_WIN32_COMMON)
+	$(RUNEDOC) $(DOCS_WIN32_MODEL)
+	$(RUNEDOC) $(DOCS_WIN32_MOCK)
+	$(RUNEDOC) $(DOCS_SDL)
+	$(RUNEDOC) $(DOCS_WIN32_SDL_DRIVER)
+	$(RUNEDOC) $(DOCS_WIN32_NATIVE)
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW)
 	$(RUNEDOC) --palette docs/lib/palette
@@ -1358,11 +1588,12 @@ test-native-stress: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) 
 
 ASAN_CFLAGS := -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer
 
-build/asan/librune.a: $(RT_SRCS) runtime/sys/sys_$(SYS).c runtime/native/native.c build/rune-offsets.s $(VM_HDRS) | build/.doctor-asan
+build/asan/librune.a: build/foreign-selected $(RT_SRCS) runtime/sys/sys_$(SYS).c runtime/native/native.c build/rune-offsets.s $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p build/asan/obj
 	for f in $(RT_SRCS) runtime/sys/sys_$(SYS).c runtime/native/native.c; do \
-	  $(CC) $(ASAN_CFLAGS) $(RT_INC) -c -o build/asan/obj/$$(basename $$f .c).o $$f || exit 1; done
+	  $(CC) $(ASAN_CFLAGS) $(RT_INC) $(FFI_FLAGS) -c -o build/asan/obj/$$(basename $$f .c).o $$f || exit 1; done
 	cp build/rune-offsets.s build/asan/rune-offsets.s
+	cp build/foreign-libs build/asan/foreign-libs
 	rm -f $@
 	$(AR) rcs $@ build/asan/obj/*.o
 	rm -rf tests/out/opt-cache-asan
@@ -1518,8 +1749,8 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml \
                tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
-               tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
-               tests/runner/main.sml
+               tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
+               tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
 	$(RUNE) --library test/runner --library json --library digest $(RUNNER_SRCS) -o $@
@@ -1584,7 +1815,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(LOW_LEVEL_BINS) bin/runevm-jit bin/runevm-opt bin/rune-build bin/rune-build.rbc bin/rune-generate bin/rune-inventory bin/rune-measure $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal build/bench-counts.rbc
+check-tools: $(LOW_LEVEL_BINS) bin/runevm-jit bin/runevm-opt bin/rune-build bin/rune-build.rbc bin/rune-generate bin/rune-inventory bin/rune-measure $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal bin/rune-ffi-check build/bench-counts.rbc
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -1634,13 +1865,14 @@ uninstall:
 # Distribution archives (docs/building.md, Distribution). The version is
 # git's, the one runtime/version.h already carries. Phony: the archives
 # land in the dist/ directory, whose stamp is not the archives'.
-dist: bin/rune-build runtime/version.h manifests bin/rune.rbc bin/rune-repl.img \
+dist: bin/rune-build runtime/version.h manifests bin/rune.rbc bin/rune-repl.img bin/runeffi.rbc \
       bin/dist/runevm bin/dist/runevm32 bin/dist/runevm-aarch64 bin/dist/runevm-ppc64 \
       bin/dist/runevm.exe bin/dist/runevm32.exe
 	@mkdir -p dist
 	bin/rune-build make-dist --out dist \
 	  --version "$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h)" \
 	  --lib lib --compiler bin/rune.rbc --repl bin/rune-repl.img \
+	  --ffi bin/runeffi.rbc --ffi-assets ffi \
 	  --linux x86_64=bin/dist/runevm --linux i686=bin/dist/runevm32 \
 	  --linux aarch64=bin/dist/runevm-aarch64 --linux ppc64=bin/dist/runevm-ppc64 \
 	  --windows x86_64=bin/dist/runevm.exe --windows i686=bin/dist/runevm32.exe
@@ -1697,7 +1929,7 @@ test-intinf-backends: $(RUNE) bin/runevm bin/runevm-sml bin/rune-intinf bin/rune
 	INTINF_RUNE=$(abspath $(RUNE)) $(RUNE_TEST) --tier test-intinf-backends
 
 build/intinf-alloc-test: tests/intinf/alloc-failure.c runtime/intinf.c build/librune.a $(VM_HDRS) $(GMP_DIR)/config.mk build/gmp/selected
-	$(CC) $(CFLAGS) $(RT_INC) $(GMP_FLAGS) -o $@ tests/intinf/alloc-failure.c build/librune.a $(GMP_LDLIBS) -lm
+	$(CC) $(CFLAGS) $(RT_INC) $(GMP_FLAGS) -o $@ tests/intinf/alloc-failure.c build/librune.a $(GMP_LDLIBS) $(VM_LIBS)
 
 .PHONY: test-intinf-hardening
 test-intinf-hardening: $(RUNE) $(RUNEOPT) vm bin/runevm-sml build/intinf-alloc-test bin/rune-intinf bin/rune-test
@@ -1759,6 +1991,107 @@ bin/rune-intinf.rbc: $(RUNE) $(INTINF_SRCS) $(wildcard tests/intinf/fixtures/*) 
 bin/rune-intinf: bin/rune-intinf.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-intinf.rbc" "$$@"\n' > $@
 	chmod +x $@
+
+FFI_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/check.sml
+bin/rune-ffi-check.rbc: $(RUNE) $(FFI_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner --library json --library digest $(FFI_CHECK_SRCS) -o $@
+bin/rune-ffi-check: bin/rune-ffi-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+bin/rune-cfrontend.rbc: $(RUNE) tools/cfrontend/main.sml $(wildcard lib/language/c/*.sml) manifests
+	$(RUNE) --library json --library language/c tools/cfrontend/main.sml -o $@
+bin/rune-cfrontend: bin/rune-cfrontend.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-cfrontend.rbc" "$$@"\n' > $@
+	chmod +x $@
+bin/rune-ffi-model.rbc: $(RUNE) tools/ffimodel/main.sml $(wildcard lib/ffi/model/*.sml) manifests
+	$(RUNE) --library ffi/model tools/ffimodel/main.sml -o $@
+bin/rune-ffi-model: bin/rune-ffi-model.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-ffi-model.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+FFI_MODEL_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/model-check.sml
+check-tools: bin/rune-ffi-model bin/rune-ffi-model-check
+bin/rune-ffi-model-check.rbc: $(RUNE) $(FFI_MODEL_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner --library json $(FFI_MODEL_CHECK_SRCS) -o $@
+bin/rune-ffi-model-check: bin/rune-ffi-model-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-model-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-ffi-model test-ffi-model-windows test-ffi-model-hosts
+test-ffi-model: $(RUNE) vm bin/rune-ffi-model bin/rune-ffi-model-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-model
+test-ffi-model-windows: $(RUNE) vm bin/rune-ffi-model bin/rune-ffi-model-check bin/rune-test bin/rune-windows
+	$(RUNE_TEST) --tier test-ffi-model-windows
+test-ffi-model-hosts: $(RUNE) vm bin/rune-ffi-model-check bin/rune-test bin/rune-generate
+	$(RUNE_TEST) --tier test-ffi-model-hosts
+
+FFI_SHIM_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/shim-check.sml
+check-tools: bin/rune-ffi-shim-check
+bin/rune-ffi-shim-check.rbc: $(RUNE) $(FFI_SHIM_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner $(FFI_SHIM_CHECK_SRCS) -o $@
+bin/rune-ffi-shim-check: bin/rune-ffi-shim-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-shim-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-ffi-shims test-ffi-shims-hosts
+test-ffi-shims: $(RUNE) vm bin/rune-ffi-shim-check bin/rune-test bin/rune-windows
+	$(RUNE_TEST) --tier test-ffi-shims
+test-ffi-shims-hosts: $(RUNE) vm bin/rune-ffi-shim-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-shims-hosts
+
+C_LAYOUT_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/layout-check.sml
+check-tools: bin/rune-c-layout-check
+bin/rune-c-layout-check.rbc: $(RUNE) $(C_LAYOUT_CHECK_SRCS) $(wildcard lib/language/c/*.sml) manifests
+	$(RUNE) --library test/runner --library language/c $(C_LAYOUT_CHECK_SRCS) -o $@
+bin/rune-c-layout-check: bin/rune-c-layout-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-c-layout-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-c-layout
+test-c-layout: $(RUNE) vm bin/rune-c-layout-check bin/rune-test
+	$(RUNE_TEST) --tier test-c-layout
+
+HEADER_LAYOUT_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/header-layout-check.sml
+check-tools: bin/rune-header-layout-check
+bin/rune-header-layout-probe.rbc: $(RUNE) tests/ffi/header-layout.sml $(wildcard lib/ffi/model/*.sml) $(wildcard lib/language/c/*.sml) manifests
+	$(RUNE) --library ffi/model tests/ffi/header-layout.sml -o $@
+bin/rune-real32-probe.rbc: $(RUNE) tests/ffi/real32.sml $(wildcard lib/ffi/marshal/*.sml) manifests
+	$(RUNE) --library ffi/marshal tests/ffi/real32.sml -o $@
+bin/rune-header-layout-check.rbc: $(RUNE) $(HEADER_LAYOUT_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner --library ffi/model $(HEADER_LAYOUT_CHECK_SRCS) -o $@
+bin/rune-header-layout-check: bin/rune-header-layout-check.rbc bin/rune-header-layout-probe.rbc bin/rune-real32-probe.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-header-layout-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-ffi-header-layout test-ffi-real32
+test-ffi-header-layout: $(RUNE) vm bin/rune-header-layout-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-header-layout
+test-ffi-real32: $(RUNE) vm bin/rune-header-layout-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-real32
+
+C_FRONTEND_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/frontend-check.sml
+check-tools: bin/rune-c-check
+bin/rune-c-check.rbc: $(RUNE) $(C_FRONTEND_CHECK_SRCS) $(wildcard lib/language/c/*.sml) manifests
+	$(RUNE) --library test/runner --library json --library language/c $(C_FRONTEND_CHECK_SRCS) -o $@
+bin/rune-c-check: bin/rune-c-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-c-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-c-frontend test-c-frontend-windows
+test-c-frontend: $(RUNE) vm bin/rune-c-check bin/rune-test
+	$(RUNE_TEST) --tier test-c-frontend
+test-c-frontend-windows: $(RUNE) vm bin/rune-c-check bin/rune-test
+	$(RUNE_TEST) --tier test-c-frontend-windows
+.PHONY: test-ffi-contracts test-ffi-windows test-ffi-libffi
+test-ffi-contracts: $(RUNE) vm bin/rune-ffi-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-contracts
+test-ffi-windows: $(RUNE) vm bin/rune-ffi-check bin/rune-test bin/rune-windows
+	$(RUNE_TEST) --tier test-ffi-windows
+test-ffi-libffi: $(RUNE) vm bin/rune-ffi-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-libffi
+
+.PHONY: test-ffi-runtime test-ffi-runtime-asan test-ffi-runtime-windows
+test-ffi-runtime: $(RUNE) $(RUNEOPT) vm bin/rune-ffi-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-runtime
+test-ffi-runtime-asan: $(RUNE) vm vm-asan bin/rune-ffi-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-runtime-asan
+test-ffi-runtime-windows: $(RUNE) vm windows bin/rune-ffi-check bin/rune-test bin/rune-windows
+	$(RUNE_TEST) --tier test-ffi-runtime-windows
 
 WINDOWS_SRCS := tests/runner/langchecks.sml $(HOST_LAWS_SRCS) tests/runner/bytecode.sml \
                 tests/runner/matrixload.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml \
@@ -1843,3 +2176,137 @@ bin/rune-build.rbc: $(RUNE) $(BUILDER_RUNE_SRCS) manifests
 bin/rune-build-rune: bin/rune-build.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_BUILD_ROOT:-}" ]; then RUNE_BUILD_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_BUILD_ROOT; fi\nexec "$$d/runevm" "$$d/rune-build.rbc" "$$@"\n' > $@
 	chmod +x $@
+
+
+SDL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/exampleprojects.sml tests/ffi/sdl/check.sml
+check-tools: bin/rune-sdl-check
+bin/rune-sdl-check.rbc: $(RUNE) $(SDL_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner --library json $(SDL_CHECK_SRCS) -o $@
+bin/rune-sdl-check: bin/rune-sdl-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-sdl-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-sdl test-sdl-gui test-sdl-windows test-sdl-asan
+test-sdl: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-sdl
+test-sdl-gui: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-sdl-gui
+test-sdl-windows: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-sdl-windows
+test-sdl-asan: $(RUNE) vm-asan bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-sdl-asan
+
+.PHONY: test-win32-sdl-driver test-win32-sdl-driver-gui
+test-win32-sdl-driver: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-sdl-driver
+test-win32-sdl-driver-gui: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-sdl-driver-gui
+
+.PHONY: test-win32-sdl-contract test-win32-sdl-contract-gui test-win32-app-sdl test-win32-app-sdl-gui
+test-win32-sdl-contract: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-sdl-contract
+test-win32-sdl-contract-gui: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-sdl-contract-gui
+test-win32-app-sdl: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-app-sdl
+test-win32-app-sdl-gui: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-app-sdl-gui
+
+# Optional FFI dependencies are provisioned explicitly, before VM/binding builds.
+# Original source manifests are committed under ffi/{libffi,sdl}/source.json.
+FFI_DEPS_OPTIONS ?=
+.PHONY: ffi-libffi ffi-sdl ffi-libffi-windows32 ffi-libffi-windows64 ffi-sdl-windows32 ffi-sdl-windows64
+ffi-libffi: bin/rune-build
+	bin/rune-build build-ffi libffi --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+ffi-sdl: bin/rune-build
+	bin/rune-build build-ffi sdl --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+ffi-libffi-windows32: bin/rune-build
+	bin/rune-build build-ffi libffi --target windows32 --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+ffi-libffi-windows64: bin/rune-build
+	bin/rune-build build-ffi libffi --target windows64 --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+ffi-sdl-windows32: bin/rune-build
+	bin/rune-build build-ffi sdl --target windows32 --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+ffi-sdl-windows64: bin/rune-build
+	bin/rune-build build-ffi sdl --target windows64 --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+
+FFI_DEPS_MODEL_SRCS := tools/builder/io.sig tools/builder/rune-io.sml tools/builder/common.sml tools/builder/options.sml \
+                       tools/builder/archive.sml tools/builder/ffi-deps.sml tests/ffi/provision/model.sml
+check-tools: bin/rune-ffi-deps-check
+bin/rune-ffi-deps-check.rbc: $(RUNE) $(FFI_DEPS_MODEL_SRCS) manifests
+	$(RUNE) --library json --library digest $(FFI_DEPS_MODEL_SRCS) -o $@
+bin/rune-ffi-deps-check: bin/rune-ffi-deps-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_BUILD_ROOT:-}" ]; then RUNE_BUILD_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_BUILD_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-deps-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-ffi-deps
+test-ffi-deps: $(RUNE) vm bin/rune-ffi-deps-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-deps
+# Original SDK generation and native Windows GUI acceptance; .build files
+# contain source/virtual-module declarations only.
+WIN32_NATIVE_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/exampleprojects.sml tests/ffi/win32/native/check.sml
+bin/rune-win32-check.rbc: $(RUNE) $(WIN32_NATIVE_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner --library json $(WIN32_NATIVE_CHECK_SRCS) -o $@
+bin/rune-win32-check: bin/rune-win32-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-win32-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+check-tools: bin/rune-win32-check
+.PHONY: win32-generated check-win32-generated
+win32-generated: $(RUNE) bin/runeffi bin/rune-win32-check
+	bin/rune-win32-check generate
+check-win32-generated: $(RUNE) bin/runeffi bin/rune-win32-check
+	bin/rune-win32-check check
+.PHONY: test-win32-native test-win32-app-native
+test-win32-native: $(RUNE) vm windows bin/runeffi bin/rune-win32-check bin/rune-test bin/rune-windows
+	$(RUNE_TEST) --tier test-win32-native
+test-win32-app-native: $(RUNE) vm windows bin/runeffi bin/rune-win32-check bin/rune-test bin/rune-windows
+	$(RUNE_TEST) --tier test-win32-app-native
+
+# Each planted defect must compile, then fail its intended shared WIN32 check.
+WIN32_MUTANT_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/win32/mutants.sml
+.PHONY: test-win32-contract-mutants
+bin/rune-win32-mutants.rbc: $(RUNE) $(WIN32_MUTANT_SRCS) tests/ffi/win32/contract.sml manifests
+	$(RUNE) --library test/runner --library json --library digest $(WIN32_MUTANT_SRCS) -o $@
+test-win32-contract-mutants: $(RUNE) vm bin/rune-win32-mutants.rbc
+	bin/runevm bin/rune-win32-mutants.rbc
+
+SDL_REPL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/sdl/repl-check.sml
+bin/rune-sdl-repl-check.rbc: $(RUNE) $(SDL_REPL_CHECK_SRCS) tests/ffi/sdl/repl-session.sml manifests
+	$(RUNE) --library test/runner --library json --library digest $(SDL_REPL_CHECK_SRCS) -o $@
+
+FFI_REPL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/generator/repl-check.sml
+.PHONY: test-ffi-repl
+bin/rune-ffi-repl-check.rbc: $(RUNE) $(FFI_REPL_CHECK_SRCS) tests/ffi/generator/repl-session.sml manifests
+	$(RUNE) --library test/runner --library json --library digest $(FFI_REPL_CHECK_SRCS) -o $@
+test-ffi-repl: $(RUNE) vm bin/runeffi.rbc bin/rune-repl.img bin/rune-ffi-repl-check.rbc
+	bin/runevm bin/rune-ffi-repl-check.rbc
+
+.PHONY: ffi-libffi-linux32 ffi-libffi-aarch64 ffi-libffi-ppc64 test-ffi-portability
+ffi-libffi-linux32: bin/rune-build
+	bin/rune-build build-ffi libffi --target linux32 --prefix '$(FFI_LINUX32_PREFIX)' --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+ffi-libffi-aarch64: bin/rune-build
+	bin/rune-build build-ffi libffi --target aarch64 --prefix '$(FFI_AARCH64_PREFIX)' --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+ffi-libffi-ppc64: bin/rune-build
+	bin/rune-build build-ffi libffi --target ppc64 --prefix '$(FFI_PPC64_PREFIX)' --jobs $(JOBS) $(FFI_DEPS_OPTIONS)
+
+FFI_CROSS_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/cross-check.sml
+check-tools: bin/rune-ffi-cross-check
+bin/rune-ffi-cross-check.rbc: $(RUNE) $(FFI_CROSS_CHECK_SRCS) manifests
+	$(RUNE) --library test/runner --library json --library digest $(FFI_CROSS_CHECK_SRCS) -o $@
+bin/rune-ffi-cross-check: bin/rune-ffi-cross-check.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-cross-check.rbc" "$$@"\n' > $@
+	chmod +x $@
+test-ffi-portability: $(RUNE) bin/runeffi vm ffi-portability bin/rune-ffi-cross-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-portability
+
+.PHONY: test-sdl-hosts test-win32-hosts
+test-sdl-hosts: host-builds bin/rune-boot bin/runeffi bin/rune-sdl-check bin/rune-test
+	$(RUNE_TEST) --tier test-sdl-hosts
+test-win32-hosts: host-builds bin/rune-boot bin/runeffi bin/rune-win32-check bin/rune-test
+	$(RUNE_TEST) --tier test-win32-hosts
+
+SDL_GENERATED_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/sdl/generated.sml
+.PHONY: sdl-generated check-sdl-generated
+bin/rune-sdl-generated.rbc: $(RUNE) $(SDL_GENERATED_SRCS) manifests
+	$(RUNE) --library test/runner --library json --library digest $(SDL_GENERATED_SRCS) -o $@
+sdl-generated: $(RUNE) vm bin/runeffi bin/rune-sdl-generated.rbc
+	bin/runevm bin/rune-sdl-generated.rbc generate
+check-sdl-generated: $(RUNE) vm bin/runeffi bin/rune-sdl-generated.rbc
+	bin/runevm bin/rune-sdl-generated.rbc check

@@ -865,5 +865,10 @@ struct
          {name = "pty_resize", arity = 3, ty = "int * int * int -> int", effects = anything,
           doc = "Resize a pseudo-terminal session to columns and rows; 0 or ~1 with sys_errno. Notifies its foreground program."},
          {name = "pty_close", arity = 1, ty = "int -> int", effects = anything,
-          doc = "Close a pseudo-terminal session and its borrowed descriptors, discarding unread output and disconnecting attached programs; reap the child separately. 0 or ~1 with sys_errno."}]]
+          doc = "Close a pseudo-terminal session and its borrowed descriptors, discarding unread output and disconnecting attached programs; reap the child separately. 0 or ~1 with sys_errno."}],
+       group "generic foreign resources and dynamic calls"
+        [{name = "foreign", arity = 5, ty = "int * Word64.word * Word64.word * string * string -> bool * Word64.word * string * string * int * Word32.word", effects = anything,
+          doc = "Trusted generic foreign bridge: operation, resource, extent, metadata and bytes; returns success, resource, bytes, error text, errno and native error. Includes measured native C ABI facts, guarded native destruction and opaque identity queries. Disabled builds answer ENOSYS for native operations while retaining ABI queries. No bound function adds a primitive."},
+         {name = "foreign_callback", arity = 3, ty = "string * string * (string -> string) -> bool * Word64.word * string * int * Word32.word", effects = anything,
+          doc = "Root a trusted SML callback wrapper and prepare a generic libffi closure, with scalar ABI and failure policy metadata. Entry is restricted to the owning VM thread and a bounded interpreter delimiter while a native call is suspended."}]]
 end

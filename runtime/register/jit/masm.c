@@ -1466,8 +1466,9 @@ static const void *trampoline(const Masm *m, uint64_t at) {
    five bytes (or one bl), where it has one; else the move, the address
    in a register and an indirect call (as_call_c) */
 void ms_call(Masm *m, MsHelper helper) {
-    uint64_t at;   /* a function pointer's bits, through memcpy: ISO C has no cast for them */
-    memcpy(&at, &helper, sizeof at);
+    uint64_t at = 0; /* ISO C has no cast for function-pointer bits. */
+    if (sizeof helper > sizeof at) abort();
+    memcpy(&at, &helper, sizeof helper);
     const void *t = trampoline(m, at);
     if (t) { as_call_to(&m->a, t); return; }
     as_mov_rr(&m->a, ms_arg(m, 0), VMR);
