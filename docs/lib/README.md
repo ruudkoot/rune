@@ -59,6 +59,7 @@ Library is what every program starts with.
 | [Foreign binding model](ffi/model/README.md) `ffi/model` | This library separates original foreign declarations, target layout facts, and SML projection policy. It contains no native loader or compiler primitive. `ForeignModel` adapts C declarations, preserves source identities and aliases, and computes deterministic selection closures. Other source families require explicit backends; they never silently become C pointers. |
 | [Foreign byte marshalling](ffi/marshal/README.md) `ffi/marshal` | Portable SML support for target integer, binary32 and binary64 representations, explicit byte/text encodings and deterministic cleanup scopes. Native addresses and VM operations belong to the runtime support library. |
 | [Foreign runtime support](ffi/runtime/README.md) `ffi/runtime` | Ordinary SML support over the trusted `RuneForeign` bridge. No primitives are declared here. `ForeignMemory` owns or bounds native storage and supplies scoped copies of borrowed SML byte arrays. Overlapping arguments referring to the same array share backing storage and preserve native aliasing. |
+| [Shared Win32 GUI contracts](ffi/win32/common/README.md) `ffi/win32/common` | The native Windows, SDL3 and deterministic mock implementations share `Win32Common.Types`. Their registries validate every identity and reject values belonging to another implementation or an ended lifetime. Provider support factories create unregistered tokens; they carry no native pointer or permission to use a native resource. |
 
 ---
 

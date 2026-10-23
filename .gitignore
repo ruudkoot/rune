@@ -34,3 +34,4 @@ __pycache__/
 /lib/ffi/marshal/MANIFEST
 
 /lib/ffi/runtime/MANIFEST
+/lib/ffi/win32/common/MANIFEST

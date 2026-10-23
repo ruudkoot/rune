@@ -1,0 +1,571 @@
+{
+ "signatures": {
+  "WIN32": {
+   "doc": "Stable GUI subset implemented by native Windows, SDL3 and mocks.\n\n",
+   "page": "sig/WIN32.md",
+   "members": [
+    {
+     "kind": "structure",
+     "name": "Types",
+     "spec": "structure Types : WIN32_TYPES",
+     "doc": "Shared identities, copied messages and provider exceptions.\n\n",
+     "page": "sig/WIN32.md#str-types"
+    },
+    {
+     "kind": "structure",
+     "name": "Kernel",
+     "spec": "structure Kernel : sig ... end",
+     "doc": "Module, native error and monotonic clock support.\n\n",
+     "page": "sig/WIN32.md#str-kernel"
+    },
+    {
+     "kind": "val",
+     "name": "Kernel.getModuleHandle",
+     "spec": "val getModuleHandle : string option -> Types.module",
+     "doc": "`getModuleHandle name` looks up a process module; NONE selects the application module.\n\n",
+     "page": "sig/WIN32.md#val-kernel.getmodulehandle"
+    },
+    {
+     "kind": "val",
+     "name": "Kernel.getLastError",
+     "spec": "val getLastError : unit -> Word32.word",
+     "doc": "`getLastError ()` returns the last captured provider error.\n\n",
+     "page": "sig/WIN32.md#val-kernel.getlasterror"
+    },
+    {
+     "kind": "val",
+     "name": "Kernel.setLastError",
+     "spec": "val setLastError : Word32.word -> unit",
+     "doc": "`setLastError code` sets the provider error value.\n\n",
+     "page": "sig/WIN32.md#val-kernel.setlasterror"
+    },
+    {
+     "kind": "val",
+     "name": "Kernel.queryPerformanceCounter",
+     "spec": "val queryPerformanceCounter : unit -> Int64.int",
+     "doc": "`queryPerformanceCounter ()` reads the monotonic performance counter.\n\n",
+     "page": "sig/WIN32.md#val-kernel.queryperformancecounter"
+    },
+    {
+     "kind": "val",
+     "name": "Kernel.queryPerformanceFrequency",
+     "spec": "val queryPerformanceFrequency : unit -> Int64.int",
+     "doc": "`queryPerformanceFrequency ()` returns the counter ticks per second.\n\n",
+     "page": "sig/WIN32.md#val-kernel.queryperformancefrequency"
+    },
+    {
+     "kind": "structure",
+     "name": "User",
+     "spec": "structure User : sig ... end",
+     "doc": "Owning-thread windows, message dispatch, timers and painting.\n\n",
+     "page": "sig/WIN32.md#str-user"
+    },
+    {
+     "kind": "val",
+     "name": "User.registerClassEx",
+     "spec": "val registerClassEx : {name : string, instance : Types.module,\n                      style : Word32.word,\n                      procedure : Types.window * Types.message -> Types.reply} -> Types.atom",
+     "doc": "`registerClassEx specification` registers a named class and a same-thread window procedure.\n\n",
+     "page": "sig/WIN32.md#val-user.registerclassex"
+    },
+    {
+     "kind": "val",
+     "name": "User.unregisterClass",
+     "spec": "val unregisterClass : Types.atom * Types.module -> unit",
+     "doc": "`unregisterClass (atom, instance)` unregisters a class after every associated window has ended.\n\n",
+     "page": "sig/WIN32.md#val-user.unregisterclass"
+    },
+    {
+     "kind": "val",
+     "name": "User.createWindowEx",
+     "spec": "val createWindowEx : {class : Types.atom, instance : Types.module,\n                      title : string, style : Word32.word, extendedStyle : Word32.word,\n                      x : int, y : int, width : int, height : int,\n                      parent : Types.window option} -> Types.window",
+     "doc": "`createWindowEx specification` creates a window, delivering NcCreate and Create before returning its identity.\n\n",
+     "page": "sig/WIN32.md#val-user.createwindowex"
+    },
+    {
+     "kind": "val",
+     "name": "User.destroyWindow",
+     "spec": "val destroyWindow : Types.window -> unit",
+     "doc": "`destroyWindow window` destroys the window, delivering Destroy and NcDestroy before closing its identity.\n\n",
+     "page": "sig/WIN32.md#val-user.destroywindow"
+    },
+    {
+     "kind": "val",
+     "name": "User.showWindow",
+     "spec": "val showWindow : Types.window * int -> bool",
+     "doc": "`showWindow (window, command)` changes visibility and returns the previous visibility.\n\n",
+     "page": "sig/WIN32.md#val-user.showwindow"
+    },
+    {
+     "kind": "val",
+     "name": "User.updateWindow",
+     "spec": "val updateWindow : Types.window -> unit",
+     "doc": "`updateWindow window` processes the pending paint region synchronously.\n\n",
+     "page": "sig/WIN32.md#val-user.updatewindow"
+    },
+    {
+     "kind": "val",
+     "name": "User.defWindowProc",
+     "spec": "val defWindowProc : Types.window * Types.message -> Int64.int",
+     "doc": "`defWindowProc (window, message)` performs the provider default action; Close destroys a live window.\n\n",
+     "page": "sig/WIN32.md#val-user.defwindowproc"
+    },
+    {
+     "kind": "val",
+     "name": "User.getClientRect",
+     "spec": "val getClientRect : Types.window -> Types.rect",
+     "doc": "`getClientRect window` returns its client rectangle.\n\n",
+     "page": "sig/WIN32.md#val-user.getclientrect"
+    },
+    {
+     "kind": "val",
+     "name": "User.setWindowText",
+     "spec": "val setWindowText : Types.window * string -> unit",
+     "doc": "`setWindowText (window, text)` sets the title using WTF-8 at native Windows boundaries.\n\n",
+     "page": "sig/WIN32.md#val-user.setwindowtext"
+    },
+    {
+     "kind": "val",
+     "name": "User.getMessage",
+     "spec": "val getMessage : {window : Types.window option, minimum : Word32.word,\n                  maximum : Word32.word} -> Types.next",
+     "doc": "`getMessage filter` waits for a matching queued message or a posted quit status.\n\n",
+     "page": "sig/WIN32.md#val-user.getmessage"
+    },
+    {
+     "kind": "val",
+     "name": "User.peekMessage",
+     "spec": "val peekMessage : {window : Types.window option, minimum : Word32.word,\n                   maximum : Word32.word, remove : bool} -> Types.queued option",
+     "doc": "`peekMessage filter` returns a matching copied message when available, optionally removing it.\n\n",
+     "page": "sig/WIN32.md#val-user.peekmessage"
+    },
+    {
+     "kind": "val",
+     "name": "User.translateMessage",
+     "spec": "val translateMessage : Types.queued -> bool",
+     "doc": "`translateMessage message` requests keyboard text translation and reports whether translation occurred.\n\n",
+     "page": "sig/WIN32.md#val-user.translatemessage"
+    },
+    {
+     "kind": "val",
+     "name": "User.dispatchMessage",
+     "spec": "val dispatchMessage : Types.queued -> Int64.int",
+     "doc": "`dispatchMessage message` dispatches a copied message to its window procedure.\n\n",
+     "page": "sig/WIN32.md#val-user.dispatchmessage"
+    },
+    {
+     "kind": "val",
+     "name": "User.postQuitMessage",
+     "spec": "val postQuitMessage : Int32.int -> unit",
+     "doc": "`postQuitMessage status` queues the application quit status.\n\n",
+     "page": "sig/WIN32.md#val-user.postquitmessage"
+    },
+    {
+     "kind": "val",
+     "name": "User.postMessage",
+     "spec": "val postMessage : Types.window * Types.message -> unit",
+     "doc": "`postMessage (window, message)` queues a supported message for later dispatch.\n\n",
+     "page": "sig/WIN32.md#val-user.postmessage"
+    },
+    {
+     "kind": "val",
+     "name": "User.sendMessage",
+     "spec": "val sendMessage : Types.window * Types.message -> Int64.int",
+     "doc": "`sendMessage (window, message)` dispatches synchronously, permitting nested same-thread sends.\n\n",
+     "page": "sig/WIN32.md#val-user.sendmessage"
+    },
+    {
+     "kind": "val",
+     "name": "User.invalidateRect",
+     "spec": "val invalidateRect : Types.window * Types.rect option * bool -> unit",
+     "doc": "`invalidateRect (window, rectangle, erase)` adds a client rectangle to the pending paint region.\n\n",
+     "page": "sig/WIN32.md#val-user.invalidaterect"
+    },
+    {
+     "kind": "val",
+     "name": "User.beginPaint",
+     "spec": "val beginPaint : Types.window -> Types.paint * Types.rect",
+     "doc": "`beginPaint window` begins a paint scope and returns its invalid rectangle.\n\n",
+     "page": "sig/WIN32.md#val-user.beginpaint"
+    },
+    {
+     "kind": "val",
+     "name": "User.endPaint",
+     "spec": "val endPaint : Types.window * Types.paint -> unit",
+     "doc": "`endPaint (window, paint)` ends the matching paint scope and invalidates its drawing capability.\n\n",
+     "page": "sig/WIN32.md#val-user.endpaint"
+    },
+    {
+     "kind": "val",
+     "name": "User.withPaint",
+     "spec": "val withPaint : Types.window -> (Types.paint * Types.rect -> 'a) -> 'a",
+     "doc": "`withPaint window body` runs body inside a paint scope and ends it on every returning path.\n\n",
+     "page": "sig/WIN32.md#val-user.withpaint"
+    },
+    {
+     "kind": "val",
+     "name": "User.fillRect",
+     "spec": "val fillRect : Types.paint * Types.rect * Types.brush -> unit",
+     "doc": "`fillRect (paint, rectangle, brush)` fills a rectangle with a live brush.\n\n",
+     "page": "sig/WIN32.md#val-user.fillrect"
+    },
+    {
+     "kind": "val",
+     "name": "User.setTimer",
+     "spec": "val setTimer : Types.window * Word64.word * Word32.word -> Word64.word",
+     "doc": "`setTimer (window, requested, milliseconds)` creates or replaces an owning-thread message timer and returns its identity.\n\n",
+     "page": "sig/WIN32.md#val-user.settimer"
+    },
+    {
+     "kind": "val",
+     "name": "User.killTimer",
+     "spec": "val killTimer : Types.window * Word64.word -> unit",
+     "doc": "`killTimer (window, identity)` cancels the associated message timer.\n\n",
+     "page": "sig/WIN32.md#val-user.killtimer"
+    },
+    {
+     "kind": "structure",
+     "name": "Gdi",
+     "spec": "structure Gdi : sig ... end",
+     "doc": "Owned and borrowed drawing objects, geometry and text.\n\n",
+     "page": "sig/WIN32.md#str-gdi"
+    },
+    {
+     "kind": "val",
+     "name": "Gdi.createPen",
+     "spec": "val createPen : {style : int, width : int, colour : Word32.word} -> Types.pen",
+     "doc": "`createPen specification` creates an owned drawing pen.\n\n",
+     "page": "sig/WIN32.md#val-gdi.createpen"
+    },
+    {
+     "kind": "val",
+     "name": "Gdi.createSolidBrush",
+     "spec": "val createSolidBrush : Word32.word -> Types.brush",
+     "doc": "`createSolidBrush colour` creates an owned solid colour brush.\n\n",
+     "page": "sig/WIN32.md#val-gdi.createsolidbrush"
+    },
+    {
+     "kind": "val",
+     "name": "Gdi.penObject",
+     "spec": "val penObject : Types.pen -> Types.object",
+     "doc": "`penObject pen` returns its generic object identity.\n\n",
+     "page": "sig/WIN32.md#val-gdi.penobject"
+    },
+    {
+     "kind": "val",
+     "name": "Gdi.brushObject",
+     "spec": "val brushObject : Types.brush -> Types.object",
+     "doc": "`brushObject brush` returns its generic object identity.\n\n",
+     "page": "sig/WIN32.md#val-gdi.brushobject"
+    },
+    {
+     "kind": "val",
+     "name": "Gdi.objectBrush",
+     "spec": "val objectBrush : Types.object -> Types.brush",
+     "doc": "`objectBrush object` returns a brush view after validating the object kind.\n\n",
+     "page": "sig/WIN32.md#val-gdi.objectbrush"
+    },
+    {
+     "kind": "val",
+     "name": "Gdi.selectObject",
+     "spec": "val selectObject : Types.paint * Types.object -> Types.object",
+     "doc": "`selectObject (paint, object)` selects a live drawing object and returns the previous selection of that kind.\n\n",
+     "page": "sig/WIN32.md#val-gdi.selectobject"
+    },
+    {
+     "kind": "val",
+     "name": "Gdi.deleteObject",
+     "spec": "val deleteObject : Types.object -> unit",
+     "doc": "`deleteObject object` deletes an owned, unselected object; borrowed stock objects are rejected.\n\n",
+     "page": "sig/WIN32.md#val-gdi.deleteobject"
+    },
+    {
+     "kind": "val",
+     "name": "Gdi.getStockObject",
+     "spec": "val getStockObject : int -> Types.object",
+     "doc": "`getStockObject index` returns a borrowed stock drawing object.\n\n",
+     "page": "sig/WIN32.md#val-gdi.getstockobject"
+    },
+    {
+     "kind": "val",
+     "name": "Gdi.moveToEx",
+     "spec": "val moveToEx : Types.paint * int * int -> {x : int, y : int}",
+     "doc": "`moveToEx (paint, x, y)` sets the current drawing point and returns its previous coordinates.\n\n",
+     "page": "sig/WIN32.md#val-gdi.movetoex"
+    },
+    {
+     "kind": "val",
+     "name": "Gdi.lineTo",
+     "spec": "val lineTo : Types.paint * int * int -> unit",
+     "doc": "`lineTo (paint, x, y)` draws from the current point and updates that point.\n\n",
+     "page": "sig/WIN32.md#val-gdi.lineto"
+    },
+    {
+     "kind": "val",
+     "name": "Gdi.rectangle",
+     "spec": "val rectangle : Types.paint * Types.rect -> unit",
+     "doc": "`rectangle (paint, rectangle)` draws an outline and fills the interior using the selected pen and brush.\n\n",
+     "page": "sig/WIN32.md#val-gdi.rectangle"
+    },
+    {
+     "kind": "val",
+     "name": "Gdi.setTextColor",
+     "spec": "val setTextColor : Types.paint * Word32.word -> Word32.word",
+     "doc": "`setTextColor (paint, colour)` sets text colour and returns the previous colour.\n\n",
+     "page": "sig/WIN32.md#val-gdi.settextcolor"
+    },
+    {
+     "kind": "val",
+     "name": "Gdi.setBkMode",
+     "spec": "val setBkMode : Types.paint * int -> int",
+     "doc": "`setBkMode (paint, mode)` sets transparent or opaque text background mode and returns the previous mode.\n\n",
+     "page": "sig/WIN32.md#val-gdi.setbkmode"
+    },
+    {
+     "kind": "val",
+     "name": "Gdi.textOut",
+     "spec": "val textOut : Types.paint * int * int * string -> unit",
+     "doc": "`textOut (paint, x, y, text)` draws text through the provider with explicit text and rendering limitations.\n\n",
+     "page": "sig/WIN32.md#val-gdi.textout"
+    }
+   ]
+  },
+  "WIN32_COMMON": {
+   "doc": "Provider support for the shared Win32 type identities.\n\n",
+   "page": "sig/WIN32_COMMON.md",
+   "members": [
+    {
+     "kind": "structure",
+     "name": "Types",
+     "spec": "structure Types : WIN32_TYPES",
+     "doc": "One public type module reused by native, SDL and mock providers.\n\n",
+     "page": "sig/WIN32_COMMON.md#str-types"
+    },
+    {
+     "kind": "val",
+     "name": "freshWindow",
+     "spec": "val freshWindow : unit -> Types.window",
+     "doc": "`freshWindow ()` creates an unregistered window token.\n\nA token alone grants no capability; every provider validates its registry.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-freshwindow"
+    },
+    {
+     "kind": "val",
+     "name": "freshModule",
+     "spec": "val freshModule : unit -> Types.module",
+     "doc": "`freshModule ()` creates an unregistered module token.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-freshmodule"
+    },
+    {
+     "kind": "val",
+     "name": "freshAtom",
+     "spec": "val freshAtom : unit -> Types.atom",
+     "doc": "`freshAtom ()` creates an unregistered class token.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-freshatom"
+    },
+    {
+     "kind": "val",
+     "name": "freshPaint",
+     "spec": "val freshPaint : unit -> Types.paint",
+     "doc": "`freshPaint ()` creates an unregistered paint token.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-freshpaint"
+    },
+    {
+     "kind": "val",
+     "name": "freshObject",
+     "spec": "val freshObject : unit -> Types.object",
+     "doc": "`freshObject ()` creates an unregistered object token.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-freshobject"
+    },
+    {
+     "kind": "val",
+     "name": "freshPen",
+     "spec": "val freshPen : unit -> Types.pen",
+     "doc": "`freshPen ()` creates a pen and its associated object identity.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-freshpen"
+    },
+    {
+     "kind": "val",
+     "name": "freshBrush",
+     "spec": "val freshBrush : unit -> Types.brush",
+     "doc": "`freshBrush ()` creates a brush and its associated object identity.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-freshbrush"
+    },
+    {
+     "kind": "val",
+     "name": "freshQueued",
+     "spec": "val freshQueued : unit -> Types.queued",
+     "doc": "`freshQueued ()` creates an unregistered copied-message token.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-freshqueued"
+    },
+    {
+     "kind": "val",
+     "name": "penObject",
+     "spec": "val penObject : Types.pen -> Types.object",
+     "doc": "`penObject pen` returns the pen's shared object identity.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-penobject"
+    },
+    {
+     "kind": "val",
+     "name": "brushObject",
+     "spec": "val brushObject : Types.brush -> Types.object",
+     "doc": "`brushObject brush` returns the brush's shared object identity.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-brushobject"
+    },
+    {
+     "kind": "val",
+     "name": "objectBrush",
+     "spec": "val objectBrush : Types.object -> Types.brush",
+     "doc": "`objectBrush object` reinterprets the token without granting ownership.\n\nThe provider must verify that the associated object is a brush.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-objectbrush"
+    },
+    {
+     "kind": "val",
+     "name": "windowKey",
+     "spec": "val windowKey : Types.window -> IntInf.int",
+     "doc": "`windowKey window` returns its process-local diagnostic identity.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-windowkey"
+    },
+    {
+     "kind": "val",
+     "name": "moduleKey",
+     "spec": "val moduleKey : Types.module -> IntInf.int",
+     "doc": "`moduleKey module` returns its process-local diagnostic identity.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-modulekey"
+    },
+    {
+     "kind": "val",
+     "name": "atomKey",
+     "spec": "val atomKey : Types.atom -> IntInf.int",
+     "doc": "`atomKey atom` returns its process-local diagnostic identity.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-atomkey"
+    },
+    {
+     "kind": "val",
+     "name": "paintKey",
+     "spec": "val paintKey : Types.paint -> IntInf.int",
+     "doc": "`paintKey paint` returns its process-local diagnostic identity.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-paintkey"
+    },
+    {
+     "kind": "val",
+     "name": "objectKey",
+     "spec": "val objectKey : Types.object -> IntInf.int",
+     "doc": "`objectKey object` returns its process-local diagnostic identity.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-objectkey"
+    },
+    {
+     "kind": "val",
+     "name": "queuedKey",
+     "spec": "val queuedKey : Types.queued -> IntInf.int",
+     "doc": "`queuedKey queued` returns its process-local diagnostic identity.\n\n",
+     "page": "sig/WIN32_COMMON.md#val-queuedkey"
+    }
+   ]
+  },
+  "WIN32_TYPES": {
+   "doc": "Shared public identities and messages for the Win32 GUI subset.\n\n",
+   "page": "sig/WIN32_TYPES.md",
+   "members": [
+    {
+     "kind": "eqtype",
+     "name": "window",
+     "spec": "eqtype window",
+     "doc": "An abstract window identity; operations validate its provider and lifetime.\n\n",
+     "page": "sig/WIN32_TYPES.md#type-window"
+    },
+    {
+     "kind": "eqtype",
+     "name": "module",
+     "spec": "eqtype module",
+     "doc": "An abstract process module identity.\n\n",
+     "page": "sig/WIN32_TYPES.md#type-module"
+    },
+    {
+     "kind": "eqtype",
+     "name": "atom",
+     "spec": "eqtype atom",
+     "doc": "A registered window class owned by one implementation.\n\n",
+     "page": "sig/WIN32_TYPES.md#type-atom"
+    },
+    {
+     "kind": "eqtype",
+     "name": "paint",
+     "spec": "eqtype paint",
+     "doc": "An active BeginPaint scope, valid until its matching EndPaint.\n\n",
+     "page": "sig/WIN32_TYPES.md#type-paint"
+    },
+    {
+     "kind": "eqtype",
+     "name": "object",
+     "spec": "eqtype object",
+     "doc": "A GDI object identity; selected and stock objects have distinct ownership.\n\n",
+     "page": "sig/WIN32_TYPES.md#type-object"
+    },
+    {
+     "kind": "eqtype",
+     "name": "pen",
+     "spec": "eqtype pen",
+     "doc": "A pen identity sharing its object lifetime.\n\n",
+     "page": "sig/WIN32_TYPES.md#type-pen"
+    },
+    {
+     "kind": "eqtype",
+     "name": "brush",
+     "spec": "eqtype brush",
+     "doc": "A brush identity sharing its object lifetime.\n\n",
+     "page": "sig/WIN32_TYPES.md#type-brush"
+    },
+    {
+     "kind": "type",
+     "name": "rect",
+     "spec": "type rect = {left : Int32.int, top : Int32.int, right : Int32.int, bottom : Int32.int}",
+     "doc": "Client coordinates; the right and bottom edges are exclusive.\n\n",
+     "page": "sig/WIN32_TYPES.md#type-rect"
+    },
+    {
+     "kind": "datatype",
+     "name": "message",
+     "spec": "datatype message = NcCreate | Create | Size of {width : int, height : int}\n  | Paint | Close | Destroy | NcDestroy\n  | KeyDown of {key : Word32.word, repeated : bool}\n  | KeyUp of Word32.word | Char of Word16.word\n  | MouseMove of {x : int, y : int, buttons : Word32.word}\n  | ButtonDown of {button : int, x : int, y : int}\n  | ButtonUp of {button : int, x : int, y : int}\n  | Timer of Word64.word\n  | Application of {code : Word32.word, w : Word64.word, l : Int64.int}\n  | Unknown of Word32.word",
+     "doc": "Normalized GUI messages.\n\nChar carries one UTF-16 code unit, including lone\nsurrogates. Application preserves the caller's integer payload. Native\ndefault processing retains the original message's complete ABI payload.\n\n",
+     "page": "sig/WIN32_TYPES.md#type-message"
+    },
+    {
+     "kind": "datatype",
+     "name": "reply",
+     "spec": "datatype reply = Default | Result of Int64.int",
+     "doc": "Default asks the provider to perform its documented default behavior.\n\n",
+     "page": "sig/WIN32_TYPES.md#type-reply"
+    },
+    {
+     "kind": "type",
+     "name": "queued",
+     "spec": "type queued",
+     "doc": "A copied message returned by GetMessage or PeekMessage.\n\n",
+     "page": "sig/WIN32_TYPES.md#type-queued"
+    },
+    {
+     "kind": "datatype",
+     "name": "next",
+     "spec": "datatype next = Quit of Int32.int | Message of queued",
+     "doc": "A quit status or one copied queued message.\n\n",
+     "page": "sig/WIN32_TYPES.md#type-next"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of {function : string, code : Word32.word}",
+     "doc": "A captured native-style error, before conversion or resource cleanup.\n\n",
+     "page": "sig/WIN32_TYPES.md#exn-error"
+    },
+    {
+     "kind": "exception",
+     "name": "Unsupported",
+     "spec": "exception Unsupported of string",
+     "doc": "An explicit operation outside the delivered provider's contract.\n\n",
+     "page": "sig/WIN32_TYPES.md#exn-unsupported"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Win32Common": "WIN32_COMMON"
+ }
+}

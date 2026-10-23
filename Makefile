@@ -241,7 +241,7 @@ all: vm boot runedoc runeopt runeffi manifests basis-cache
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
-manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST lib/ffi/runtime/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
+manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST lib/ffi/runtime/MANIFEST lib/ffi/win32/common/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
 lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -287,6 +287,8 @@ lib/ffi/marshal/MANIFEST: lib/ffi/marshal/library.build $(wildcard lib/ffi/marsh
 	bin/rune-$(BOOTHOST) --basis-index lib/ffi/marshal
 lib/ffi/runtime/MANIFEST: lib/ffi/runtime/library.build $(wildcard lib/ffi/runtime/*.sml) lib/ffi/marshal/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/ffi/runtime
+lib/ffi/win32/common/MANIFEST: lib/ffi/win32/common/library.build $(wildcard lib/ffi/win32/common/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/common
 
 # The frozen Basis Library (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
@@ -1267,7 +1269,7 @@ check-docs: check-docs-generated bin/rune-test bin/rune-doc-check
 
 check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/ffi/win32/common/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
@@ -1278,6 +1280,7 @@ check-docs-generated: $(RUNE) $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_FFI_MODEL) --check
 	$(RUNEDOC) $(DOCS_FFI_MARSHAL) --check
 	$(RUNEDOC) $(DOCS_FFI_RUNTIME) --check
+	$(RUNEDOC) $(DOCS_WIN32_COMMON) --check
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW) --check
 	$(RUNEDOC) --palette docs/lib/palette --check
@@ -1308,6 +1311,8 @@ DOCS_UNIT := --lib lib --library test/unit --out docs/lib/test/unit --basis-docs
 DOCS_RUNNER := --lib lib --library test/runner --out docs/lib/test/runner --basis-docs ../../basis \
                --library-docs test/unit ../unit --library-docs terminal ../../terminal \
                --conventions ../../conventions.md
+DOCS_WIN32_COMMON := --lib lib --library ffi/win32/common --out docs/lib/ffi/win32/common --basis-docs ../../../basis \
+                     --conventions ../../../conventions.md
 DOCS_FFI_RUNTIME := --lib lib --library ffi/runtime --out docs/lib/ffi/runtime --basis-docs ../../basis \
                     --library-docs ffi/marshal ../marshal --conventions ../../conventions.md
 DOCS_FFI_MARSHAL := --lib lib --library ffi/marshal --out docs/lib/ffi/marshal --basis-docs ../../basis \
@@ -1347,7 +1352,8 @@ DOCS_OVERVIEW := --lib lib --overview docs/lib \
 	--library-page language/c \
 	--library-page ffi/model \
 	--library-page ffi/marshal \
-	--library-page ffi/runtime
+	--library-page ffi/runtime \
+	--library-page ffi/win32/common
 
 docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_BASIS)
@@ -1360,6 +1366,7 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_FFI_MODEL)
 	$(RUNEDOC) $(DOCS_FFI_MARSHAL)
 	$(RUNEDOC) $(DOCS_FFI_RUNTIME)
+	$(RUNEDOC) $(DOCS_WIN32_COMMON)
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
 	$(RUNEDOC) $(DOCS_OVERVIEW)
 	$(RUNEDOC) --palette docs/lib/palette
