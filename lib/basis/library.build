@@ -156,6 +156,8 @@ annotate "demand" in
   sml90.sml
 end
 annotate "demand" "host=no" in
+  rune_foreign_sig.sml
+  rune_foreign.sml
   runtime_sig.sml
   runtime.sml
   dynamic_sig.sml

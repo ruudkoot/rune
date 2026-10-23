@@ -610,3 +610,21 @@ cleared means that the variable is absent, while `NONE` with an error means
 that the operating-system conversion or lookup failed. The Basis wrappers
 raise `OS.SysErr` in the latter case. On Windows operating-system text uses
 WTF-8 and wide APIs; binary registry payloads and file contents remain bytes.
+
+
+## Generic foreign bridge
+
+`foreign` is one effectful primitive, independent of the number of bound
+functions. Its trusted Basis wrapper supplies an operation, opaque resource
+identity, extent, metadata and bytes. It returns success, an opaque result
+identity, bytes, error text, errno and the native error value. Native
+addresses are held by a per-VM registry, never encoded as SML pointers.
+
+Operations 0 through 10 query availability, open a library, resolve a symbol,
+allocate storage, read, write, form a view, release, prepare a fixed call,
+invoke it, and count resources. Operation 11 reports native pointer bytes,
+byte order and stdcall support, including on disabled builds.
+Metadata/result words use explicit
+little-endian 64-bit encoding; native calling conventions and scalar
+representations belong to libffi. Disabled builds preserve the primitive
+and report ENOSYS. Existing GMP primitives are unchanged.

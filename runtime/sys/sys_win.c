@@ -4213,3 +4213,43 @@ void *sys_mem_reserve(size_t size, size_t align, void *hint) {
     return NULL;
 }
 void sys_mem_release(void *p, size_t size) { (void)size; VirtualFree(p, 0, MEM_RELEASE); }
+
+/* Dynamic native libraries use the same text boundary as other wide APIs. */
+void *sys_library_open(const char *path, size_t n) {
+    if (memchr(path, 0, n)) { last = EINVAL; SetLastError(ERROR_INVALID_NAME); return NULL; }
+    WCHAR *name = text16(path, n, NULL);
+    if (!name) return NULL;
+    HMODULE library = LoadLibraryW(name);
+    DWORD error = GetLastError();
+    free(name);
+    if (!library) { last = errno_of_win(error); SetLastError(error); }
+    return library;
+}
+void *sys_library_symbol(void *library, const char *symbol, size_t n) {
+    if (n == SIZE_MAX || memchr(symbol, 0, n)) { last = EINVAL; SetLastError(ERROR_INVALID_NAME); return NULL; }
+    char *name = malloc(n + 1);
+    if (!name) { last = ENOMEM; SetLastError(ERROR_NOT_ENOUGH_MEMORY); return NULL; }
+    memcpy(name, symbol, n); name[n] = 0;
+    FARPROC procedure = GetProcAddress((HMODULE)library, name);
+    DWORD error = GetLastError();
+    free(name);
+    void *address = NULL;
+    if (sizeof address != sizeof procedure) { last = ENOSYS; SetLastError(ERROR_NOT_SUPPORTED); return NULL; }
+    memcpy(&address, &procedure, sizeof address);
+    if (!procedure) { last = errno_of_win(error); SetLastError(error); }
+    return address;
+}
+int sys_library_close(void *library) {
+    if (FreeLibrary((HMODULE)library)) return 0;
+    DWORD error = GetLastError(); last = errno_of_win(error); SetLastError(error); return -1;
+}
+void sys_library_error(int *number, uint32_t *native, char *message, size_t capacity) {
+    DWORD error = GetLastError();
+    *number = last; *native = error;
+    const char *text = "Windows dynamic library operation failed";
+    if (capacity) { size_t n = strlen(text); if (n >= capacity) n = capacity - 1; memcpy(message, text, n); message[n] = 0; }
+}
+void sys_foreign_capture(int *number, uint32_t *native) {
+    DWORD error = GetLastError();
+    *number = errno; *native = error;
+}

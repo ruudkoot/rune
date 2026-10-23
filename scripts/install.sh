@@ -270,6 +270,9 @@ if [ -e "$root/build/librune.a" ] && [ -e "$root/build/rune-offsets.s" ]; then
     mkdir -p "$libdir/runtime"
     copy "$root/build/librune.a" "$libdir/runtime/librune.a" 644
     copy "$root/build/rune-offsets.s" "$libdir/runtime/rune-offsets.s" 644
+    if [ -e "$root/build/foreign-libs" ]; then
+      copy "$root/build/foreign-libs" "$libdir/runtime/foreign-libs" 644
+    fi
   fi
 fi
 

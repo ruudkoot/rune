@@ -49,6 +49,7 @@ int rf_alias(unsigned char *first, unsigned char *second) {
     second[0] = (unsigned char)(first[0] + 1);
     return first[1];
 }
+unsigned char *rf_offset(unsigned char *memory, size_t offset) { return memory + offset; }
 static rf_callback retained;
 static void *retained_context;
 void rf_set_callback(rf_callback callback, void *context) {

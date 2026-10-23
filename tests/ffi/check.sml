@@ -101,11 +101,73 @@ struct
         val () = layout (if bits = "64" then "windows-x86_64" else "windows-x86")
           (command ("oracle-win" ^ bits) [executable])
     in ignore (command ("oracle-gui" ^ bits) [gui]) end
+  fun runtime mode =
+    let val ()=need(List.exists(fn value=>value=mode)["native","asan","windows32","windows64"],"unknown runtime mode")
+        val compilerRune = env ("RUNE", "bin/rune")
+        val library = directory ^ "/subject.so"
+        val bytecode = directory ^ "/calls"
+        fun compile target source output = ignore(command ("compile-" ^ target ^ "-" ^ OS.Path.file source)
+          [compilerRune,"--target=" ^ target,source,"-o",output])
+        fun calls vm options output subject =
+          need(String.isSubstring "PASS foreign calls:" (command (OS.Path.file vm ^ "-calls")
+            (vm :: options @ [output,subject])),"foreign call fixture did not finish")
+        fun lifecycle vm output =
+          let val image=output ^ ".image"
+          in need(String.isSubstring "saved closed state" (command "save-closed" [vm,output,library,image]),"save fixture");
+             need(String.isSubstring "restored closed state" (command "restore-closed" [vm,"--restore",image]),"restore fixture") end
+        val disabled = directory ^ "/disabled-c"
+        val () = ignore(command "compile-disabled-c" (compiler "CC" @ flags @ ["-Iruntime",
+          "tests/runtime/foreign_disabled.c","runtime/foreign.c","-o",disabled]))
+        val () = ignore(command "disabled-c" [disabled])
+    in if not(RuneForeign.available()) then
+         let val output=bytecode ^ "-disabled.rbc"
+             val ()=compile "registers" "tests/ffi/disabled.sml" output
+         in ignore(command "disabled-sml" ["bin/runevm",output]) end
+       else if mode="windows32" orelse mode="windows64" then
+         let val bits=if mode="windows32" then "32" else "64"
+             val cc=compiler(if bits="32" then "WINCC32" else "WINCC")
+             val dll=directory ^ "/subject" ^ bits ^ ".dll"
+             val ()=ignore(command "compile-dll" (cc @ flags @ ["-shared","-Wl,--kill-at","tests/ffi/fixture.c","-o",dll]))
+             fun winpath path=String.translate (fn #"\r" => "" | #"\n" => "" | c => str c) (command "windows-path" ["wslpath","-w",fromRoot path])
+             val subject=winpath dll
+             fun one(target,vm)=
+               let val output=bytecode ^ target ^ ".rbc"
+                   val ()=compile target "tests/ffi/calls.sml" output
+               in calls vm ["--gc-stress","7","--gc-verify"] (winpath output) subject end
+         in one("stack",if bits="32" then "bin/runevm-stack32.exe" else "bin/runevm-stack.exe");
+            one("registers",if bits="32" then "bin/runevm32.exe" else "bin/runevm.exe") end
+       else
+         let val ()=ignore(command "compile-subject" (compiler "CC" @ flags @ ["-shared","-fPIC","tests/ffi/fixture.c","-o",library]))
+             val ffiFlags=String.tokens Char.isSpace(command "runtime-pkg-config" ["pkg-config","--cflags","--libs","libffi"])
+             val unit=directory ^ "/unit"
+             val sanitize=if mode="asan" then ["-fsanitize=address,undefined","-fno-omit-frame-pointer"] else []
+             val ()=ignore(command "compile-runtime-unit" (compiler "CC" @ flags @ sanitize @
+               ["-DRUNE_FFI=1","-Iruntime","tests/runtime/foreign_test.c","runtime/foreign.c","runtime/sys/sys_posix.c",
+                "-Wl,--wrap=calloc","-Wl,--wrap=realloc","-o",unit,"-ldl","-lm"] @ ffiFlags))
+             val ()=ignore(command "runtime-unit" [unit,library])
+             fun one(target,vm,options)=
+               let val output=bytecode ^ target ^ ".rbc"
+                   val ()=compile target "tests/ffi/calls.sml" output
+                   val ()=calls vm (options @ ["--gc-stress","7","--gc-verify"]) output library
+                   val life=bytecode ^ target ^ "-life.rbc"
+               in if mode="asan" then () else
+                    (compile target "tests/ffi/lifecycle.sml" life;lifecycle vm life) end
+         in if mode="asan" then
+              (one("stack","bin/runevm-stack-asan",[]);one("registers","bin/runevm-asan",["--jit=all","--jit-tier=2"]))
+            else (one("stack","bin/runevm-stack",[]);
+                  one("registers","bin/runevm",[]);
+                  List.app(fn options=>calls "bin/runevm" (options @ ["--gc-stress","7","--gc-verify"])
+                    (bytecode ^ "registers.rbc") library) [["--jit=all"],["--jit=all","--jit-tier=2"]];
+                  ignore(command "compile-native-calls" ["bin/runeopt",bytecode ^ "stack.rbc","-o",bytecode ^ "-native"]);
+                  need(String.isSubstring "PASS foreign calls:" (command "native-calls" [bytecode ^ "-native",library]),"native fixture"))
+         end
+    end
   fun main ["sources"] = (source (fromRoot "ffi/sdl/upstream") (json "ffi/sdl/source.json"); inventories ())
     | main ["contracts"] = contracts ()
     | main ["native"] = native false
     | main ["libffi"] = native true
     | main ["windows", bits] = (need (bits = "32" orelse bits = "64", "expected 32 or 64"); windows bits)
+    | main ["runtime",mode] = runtime mode
     | main ["sdk"] = source (env ("RUNEFFI_WINDOWS_SDK", "")) (json "ffi/win32/source.json")
     | main _ = raise Failed "expected sources, contracts, native, libffi, windows 32|64, or sdk"
 end

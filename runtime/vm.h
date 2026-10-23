@@ -550,6 +550,7 @@ typedef struct VM {
     /* The debugger (the REPL roadmap's D22, M12; runtime/debug.c): NULL
        until the REPL asks for it */
     struct Debugger *dbg;
+    struct Foreign *foreign; /* process-local native resources; never part of an image */
 } VM;
 
 /* Whether p points into the room objects are made in (alloc). Young and

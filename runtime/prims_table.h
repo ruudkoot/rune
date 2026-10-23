@@ -414,6 +414,7 @@ enum Prim {
   PRIM_pty_spawn = 408,
   PRIM_pty_resize = 409,
   PRIM_pty_close = 410,
+  PRIM_foreign = 411,
   PRIM__COUNT
 };
 
@@ -829,6 +830,7 @@ static const char *const prim_names[] = {
   "pty_spawn",
   "pty_resize",
   "pty_close",
+  "foreign",
 };
 
 static const unsigned char prim_arity[] = {
@@ -1243,6 +1245,7 @@ static const unsigned char prim_arity[] = {
   6,
   3,
   1,
+  5,
 };
 
 /* what each primitive's result is (the representations of
@@ -1660,6 +1663,7 @@ static const unsigned char prim_result[] = {
   7,
   1,
   1,
+  0,
 };
 
 #define RUNE_PRIM_LIST(X) \
@@ -2073,6 +2077,7 @@ static const unsigned char prim_result[] = {
   X(array_to_vector) \
   X(pty_spawn) \
   X(pty_resize) \
-  X(pty_close)
+  X(pty_close) \
+  X(foreign)
 
 #endif

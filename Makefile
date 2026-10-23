@@ -133,10 +133,25 @@ CFLAGS  += -D__USE_MINGW_ANSI_STDIO=1
 endif
 SYS ?= posix
 # what a VM links beside the runtime
-VM_LIBS  = -lm $(if $(MINGW),$(WIN_LIBS))
-RT_SRCS := runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
+VM_LIBS  = -lm $(if $(MINGW),$(WIN_LIBS)) $(FFI_LIBS)
+# libffi is optional. Native flags never enter another target's compile.
+# Cross builds use explicit target prefixes or deterministic ENOSYS stubs.
+FFI ?= auto
+ifeq ($(filter $(FFI),auto yes no),)
+$(error FFI must be auto, yes or no)
+endif
+FFI_FOUND := $(shell pkg-config --exists libffi 2>/dev/null && echo yes)
+FFI_ENABLED := $(if $(filter no,$(FFI)),0,$(if $(filter none,$(SYS)),0,$(if $(filter yes,$(FFI_FOUND)),1,0)))
+ifeq ($(FFI),yes)
+ifneq ($(FFI_ENABLED),1)
+$(error FFI=yes requires libffi headers and pkg-config on this target)
+endif
+endif
+FFI_FLAGS := -DRUNE_FFI=$(FFI_ENABLED) $(if $(filter 1,$(FFI_ENABLED)),$(shell pkg-config --cflags libffi))
+FFI_LIBS := $(if $(filter 1,$(FFI_ENABLED)),$(shell pkg-config --libs libffi) $(if $(filter posix,$(SYS)),-ldl))
+RT_SRCS := runtime/foreign.c runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
-VM_HDRS := runtime/intinf.h runtime/vm.h runtime/frames_array.inc runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
+VM_HDRS := runtime/foreign.h runtime/foreign_prim.h runtime/intinf.h runtime/vm.h runtime/frames_array.inc runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
 AR      ?= ar
 
@@ -532,9 +547,23 @@ bin/runeopt-mlkit: bin/runeopt-mlkit.bin Makefile
 # ---------------------------------------------------------------- VM
 vm: bin/runevm-stack bin/runevm
 
-build/librune/%.o: runtime/%.c $(VM_HDRS) | build/.doctor-vm
+build/librune/%.o: runtime/%.c $(VM_HDRS) build/foreign-selected | build/.doctor-vm
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(RT_INC) -c -o $@ $<
+	$(CC) $(CFLAGS) $(RT_INC) $(FFI_FLAGS) -c -o $@ $<
+
+# Publish metadata atomically: a nested test build can overlap runeopt's read.
+define foreign_metadata
+	@set -e; rune_ffi_meta=$$(mktemp $(1).XXXXXX); \
+	printf '%s\n' '$(2)' > "$$rune_ffi_meta"; \
+	if cmp -s "$$rune_ffi_meta" $(1); then rm -f "$$rune_ffi_meta"; else mv -f "$$rune_ffi_meta" $(1); fi
+endef
+.PHONY: foreign-select
+foreign-select:
+	@mkdir -p build
+	$(call foreign_metadata,build/foreign-selected,$(CC) $(CFLAGS) $(FFI_FLAGS) $(FFI_LIBS))
+	$(call foreign_metadata,build/foreign-libs,$(FFI_LIBS))
+build/foreign-selected: foreign-select
+	@:
 
 # native.o is the main of a program runeopt makes and what its code calls
 # (runtime/native/native.c): it is in the library, but nothing of runevm-stack refers to it,
@@ -569,7 +598,7 @@ NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/debug_loop
 bin/runevm: $(NEW_LOOP) $(GMP_DIR)/intinf.o build/gmp/selected build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) bin/rune-build | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) $(GMP_DIR)/intinf.o build/librune.a $(GMP_LDLIBS) $(VM_LIBS)
-	bin/rune-build record-vm-build --vm $@ --cc '$(CC)' --cflags='$(CFLAGS) -DRUNE_JIT=$(RUNE_JIT)' \
+	bin/rune-build record-vm-build --vm $@ --cc '$(CC)' --cflags='$(CFLAGS) $(FFI_FLAGS) -DRUNE_JIT=$(RUNE_JIT)' \
 	  --ldlibs='$(VM_LIBS)' --config $(GMP_DIR) --out build/gmp/native-build.json --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS)
 
 bin/runevm-sml: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
@@ -582,55 +611,55 @@ vm-asan: bin/runevm-stack-asan bin/runevm-asan
 test-register-asan: bin/runevm-asan $(RUNE) bin/rune-test
 	$(RUNE_TEST) --tier test-register-asan
 
-bin/runevm-stack-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
+bin/runevm-stack-asan: build/foreign-selected $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p bin
-	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) -o $@ $(VM_SRCS) -lm
+	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) $(FFI_FLAGS) -o $@ $(VM_SRCS) $(VM_LIBS)
 
 # runtime/register with the sanitizers: its loop, its instruction set's part, and the
 # runtime but for the stack bytecode's part
 NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
-bin/runevm-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-asan
+bin/runevm-asan: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-asan
 	@mkdir -p bin
-	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 
 # The word's switches (docs/plans/heap-layout.md, D2 and D3), each a VM of its
 # own for measurements: ints and words that keep 64 bits (D2 A; a compiler
 # given --int-bits=64 makes its bytecode), and every real in a box (D3 B).
 # Not part of make check.
-bin/runevm-int64: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
+bin/runevm-int64: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 # The JIT on the first (tests/register/int64-box-home.sml), at every tier,
 # and with raw homes: a word past 63 bits is a box, which a home that holds
 # the word must not keep across a collection. Not part of make check.
 test-int64: bin/runevm-int64 bin/runevm-rawhomes $(RUNE) bin/rune-test
 	$(RUNE_TEST) --tier test-int64
-bin/runevm-realboxed: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
+bin/runevm-realboxed: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_REAL_BOXED $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_REAL_BOXED $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 # D2 A with tier 2's homes of ints and words holding the 64 bits (D5 A as the
 # roadmap states it): faster where words pass 63 bits, slower where a small
 # int crosses a slot at every call.
-bin/runevm-rawhomes: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
+bin/runevm-rawhomes: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 -DRUNE_RAW_HOMES $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 -DRUNE_RAW_HOMES $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 # The hooks for the collector to come (docs/plans/heap-layout.md, M7), each a
 # VM of its own to test or to measure with: the collector sets the header's
 # four bits on every object it copies and every reader of a kind masks them;
 # and the barrier marks a card at every store into an object that exists.
-bin/runevm-gcbits: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
+bin/runevm-gcbits: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_GC_BITS $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
-bin/runevm-cards: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_GC_BITS $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+bin/runevm-cards: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_BARRIER_CARDS $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_BARRIER_CARDS $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 # The instrument of docs/plans/performance-64bit.md's experiments 1 and 5
 # (x86-64): compiled code counts every conversion between a raw number in a
 # home and its word, by the instruction that makes it; runevm-conv
 # --jit-stats prints the table.
-bin/runevm-conv: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
+bin/runevm-conv: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_JIT_CONV $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_JIT_CONV $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 
 # The census VM (docs/census.md; docs/plans/heap-layout.md, M1, and
 # docs/plans/garbage-collector-v2.md, M1): runtime/register's loop on the runtime
@@ -639,9 +668,9 @@ bin/runevm-conv: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/confi
 # --count line, which tests/runner/heapchecks.sml checks.
 CENSUS_SRCS := $(NEW_SRCS) runtime/census/census.c runtime/census/census_static.c
 vm-census: bin/runevm-census
-bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/census/census.h runtime/census/layouts.h $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
+bin/runevm-census: build/foreign-selected $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/census/census.h runtime/census/layouts.h $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=1 -DRUNE_CENSUS $(RT_INC) $(GMP_FLAGS) -o $@ $(CENSUS_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=1 -DRUNE_CENSUS $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(CENSUS_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 
 # The census VM against the stock one on a small program: the same --count
 # line, every byte and object in census.txt, the trace's own consistency
@@ -738,6 +767,22 @@ WIN_SRCS    := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_
 # the stack bytecode's (runtime/stack/isa_stack.c), as bin/runevm-asan is built
 WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32 -lpsapi
+FFI_WIN64_PREFIX ?= build/deps/libffi-win64/install
+FFI_WIN32_PREFIX ?= build/deps/libffi-win32/install
+FFI_WIN64_ENABLED := $(if $(filter no,$(FFI)),,$(wildcard $(FFI_WIN64_PREFIX)/include/ffi.h))
+FFI_WIN32_ENABLED := $(if $(filter no,$(FFI)),,$(wildcard $(FFI_WIN32_PREFIX)/include/ffi.h))
+FFI_WIN64_FLAGS := $(if $(FFI_WIN64_ENABLED),-DRUNE_FFI=1 -I$(FFI_WIN64_PREFIX)/include,-DRUNE_FFI=0)
+FFI_WIN32_FLAGS := $(if $(FFI_WIN32_ENABLED),-DRUNE_FFI=1 -I$(FFI_WIN32_PREFIX)/include,-DRUNE_FFI=0)
+FFI_WIN64_LIBS := $(if $(FFI_WIN64_ENABLED),$(FFI_WIN64_PREFIX)/lib/libffi.a)
+FFI_WIN32_LIBS := $(if $(FFI_WIN32_ENABLED),$(FFI_WIN32_PREFIX)/lib/libffi.a)
+.PHONY: foreign-win-select
+foreign-win-select:
+	@mkdir -p build
+	$(call foreign_metadata,build/foreign-win64-selected,$(WINCC) $(WINCFLAGS) $(FFI_WIN64_FLAGS) $(FFI_WIN64_LIBS))
+	$(call foreign_metadata,build/foreign-win32-selected,$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) $(FFI_WIN32_FLAGS) $(FFI_WIN32_LIBS))
+build/foreign-win64-selected build/foreign-win32-selected: foreign-win-select
+	@:
+
 GMP_CROSS_PREFIX ?= build/deps/gmp
 GMP_WIN64_PREFIX ?= $(GMP_CROSS_PREFIX)/windows64
 GMP_WIN32_PREFIX ?= $(GMP_CROSS_PREFIX)/windows32
@@ -755,14 +800,14 @@ endef
 
 windows: bin/runevm-stack.exe bin/runevm-stack32.exe bin/runevm.exe bin/runevm32.exe
 
-bin/runevm-stack.exe: $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c bin/rune-build | build/.doctor-windows
+bin/runevm-stack.exe: build/foreign-win64-selected $(FFI_WIN64_LIBS) $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c bin/rune-build | build/.doctor-windows
 	@mkdir -p bin
-	$(WINCC) $(WINCFLAGS) -o $@ $(WIN_SRCS) $(RT_INC) $(WIN_LIBS)
+	$(WINCC) $(WINCFLAGS) $(FFI_WIN64_FLAGS) -o $@ $(WIN_SRCS) $(RT_INC) $(WIN_LIBS) $(FFI_WIN64_LIBS)
 	$(call windows_dlls,$(WINCC))
 
-bin/runevm-stack32.exe: $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c bin/rune-build | build/.doctor-windows
+bin/runevm-stack32.exe: build/foreign-win32-selected $(FFI_WIN32_LIBS) $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c bin/rune-build | build/.doctor-windows
 	@mkdir -p bin
-	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) -o $@ $(WIN_SRCS) $(RT_INC) $(WIN_LIBS)
+	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) $(FFI_WIN32_FLAGS) -o $@ $(WIN_SRCS) $(RT_INC) $(WIN_LIBS) $(FFI_WIN32_LIBS)
 	$(call windows_dlls,$(WINCC32))
 
 # share/rune.png, as a resource, so Explorer shows it on the executable.
@@ -782,13 +827,13 @@ build/runevm-x86.o: build/runevm.rc build/rune.ico | build/.doctor-windows
 
 bin/runevm.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) build/runevm-x64.o gmp-force | build/.doctor-windows
 	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_WIN64_PREFIX)' --cc '$(WINCC)' \
-	  --cflags='$(WINCFLAGS)' --ldlibs='$(WIN_LIBS)' --config build/gmp/windows64 --out $@ --windows \
+	  --cflags='$(WINCFLAGS) $(FFI_WIN64_FLAGS)' --ldlibs='$(WIN_LIBS) $(FFI_WIN64_LIBS)' --config build/gmp/windows64 --out $@ --windows \
 	  --objects build/runevm-x64.o \
 	  --sources $(WIN_NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
 bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) build/runevm-x86.o gmp-force | build/.doctor-windows
 	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_WIN32_PREFIX)' --cc '$(WINCC32)' \
-	  --cflags='$(WINCFLAGS) $(WINCFLAGS32)' --ldlibs='$(WIN_LIBS)' --config build/gmp/windows32 --out $@ --windows \
+	  --cflags='$(WINCFLAGS) $(WINCFLAGS32) $(FFI_WIN32_FLAGS)' --ldlibs='$(WIN_LIBS) $(FFI_WIN32_LIBS)' --config build/gmp/windows32 --out $@ --windows \
 	  --objects build/runevm-x86.o \
 	  --sources $(WIN_NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
@@ -888,12 +933,12 @@ bin/runevm-stack-ppc64: bin/runevm-stack-ppc64.bin Makefile
 
 # runtime/register for the same two machines, from the sources bin/runevm-asan is
 # built from (its instruction set's part in place of the stack bytecode's)
-bin/runevm32: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
+bin/runevm32: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
 	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_LINUX32_PREFIX)' --cc '$(PORTCC32)' \
 	  --cflags='$(CFLAGS) $(PORTFLAGS32)' --runner '' --config build/gmp/linux32 --out $@ \
 	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
-bin/runevm-ppc64.bin: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
+bin/runevm-ppc64.bin: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
 	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_PPC64_PREFIX)' --cc '$(PPCCC)' \
 	  --cflags='$(CFLAGS) $(PPCFLAGS)' --runner '$(QEMUPPC) -L $(PPCROOT)' --config build/gmp/ppc64 --out $@ \
 	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
@@ -930,7 +975,7 @@ gmp-dep-dist-native: bin/rune-build
 bin/dist/runevm: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force gmp-dep-dist-native | build/.doctor-vm
 	@mkdir -p bin/dist
 	bin/rune-build build-gmp-vm --mode yes --prefix '$(GMP_DIST_NATIVE_PREFIX)' --cc '$(CC)' \
-	  --cflags='$(CFLAGS) -DRUNE_JIT=$(RUNE_JIT)' --ldlibs='$(VM_LIBS)' \
+	  --cflags='$(CFLAGS) $(FFI_FLAGS) -DRUNE_JIT=$(RUNE_JIT)' --ldlibs='$(VM_LIBS)' \
 	  --config build/gmp/native-dist --out $@ \
 	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) Makefile
 
@@ -943,14 +988,14 @@ bin/dist/runevm32: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL)
 bin/dist/runevm.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) build/runevm-x64.o gmp-force gmp-dep-windows | build/.doctor-windows
 	@mkdir -p bin/dist
 	bin/rune-build build-gmp-vm --mode yes --prefix '$(GMP_WIN64_PREFIX)' --cc '$(WINCC)' \
-	  --cflags='$(WINCFLAGS)' --ldlibs='$(WIN_LIBS)' --config build/gmp/windows64-dist --out $@ --windows \
+	  --cflags='$(WINCFLAGS) $(FFI_WIN64_FLAGS)' --ldlibs='$(WIN_LIBS) $(FFI_WIN64_LIBS)' --config build/gmp/windows64-dist --out $@ --windows \
 	  --objects build/runevm-x64.o \
 	  --sources $(WIN_NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
 bin/dist/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) build/runevm-x86.o gmp-force gmp-dep-windows | build/.doctor-windows
 	@mkdir -p bin/dist
 	bin/rune-build build-gmp-vm --mode yes --prefix '$(GMP_WIN32_PREFIX)' --cc '$(WINCC32)' \
-	  --cflags='$(WINCFLAGS) $(WINCFLAGS32)' --ldlibs='$(WIN_LIBS)' --config build/gmp/windows32-dist --out $@ --windows \
+	  --cflags='$(WINCFLAGS) $(WINCFLAGS32) $(FFI_WIN32_FLAGS)' --ldlibs='$(WIN_LIBS) $(FFI_WIN32_LIBS)' --config build/gmp/windows32-dist --out $@ --windows \
 	  --objects build/runevm-x86.o \
 	  --sources $(WIN_NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
@@ -1374,11 +1419,12 @@ test-native-stress: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) 
 
 ASAN_CFLAGS := -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer
 
-build/asan/librune.a: $(RT_SRCS) runtime/sys/sys_$(SYS).c runtime/native/native.c build/rune-offsets.s $(VM_HDRS) | build/.doctor-asan
+build/asan/librune.a: build/foreign-selected $(RT_SRCS) runtime/sys/sys_$(SYS).c runtime/native/native.c build/rune-offsets.s $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p build/asan/obj
 	for f in $(RT_SRCS) runtime/sys/sys_$(SYS).c runtime/native/native.c; do \
-	  $(CC) $(ASAN_CFLAGS) $(RT_INC) -c -o build/asan/obj/$$(basename $$f .c).o $$f || exit 1; done
+	  $(CC) $(ASAN_CFLAGS) $(RT_INC) $(FFI_FLAGS) -c -o build/asan/obj/$$(basename $$f .c).o $$f || exit 1; done
 	cp build/rune-offsets.s build/asan/rune-offsets.s
+	cp build/foreign-libs build/asan/foreign-libs
 	rm -f $@
 	$(AR) rcs $@ build/asan/obj/*.o
 	rm -rf tests/out/opt-cache-asan
@@ -1713,7 +1759,7 @@ test-intinf-backends: $(RUNE) bin/runevm bin/runevm-sml bin/rune-intinf bin/rune
 	INTINF_RUNE=$(abspath $(RUNE)) $(RUNE_TEST) --tier test-intinf-backends
 
 build/intinf-alloc-test: tests/intinf/alloc-failure.c runtime/intinf.c build/librune.a $(VM_HDRS) $(GMP_DIR)/config.mk build/gmp/selected
-	$(CC) $(CFLAGS) $(RT_INC) $(GMP_FLAGS) -o $@ tests/intinf/alloc-failure.c build/librune.a $(GMP_LDLIBS) -lm
+	$(CC) $(CFLAGS) $(RT_INC) $(GMP_FLAGS) -o $@ tests/intinf/alloc-failure.c build/librune.a $(GMP_LDLIBS) $(VM_LIBS)
 
 .PHONY: test-intinf-hardening
 test-intinf-hardening: $(RUNE) $(RUNEOPT) vm bin/runevm-sml build/intinf-alloc-test bin/rune-intinf bin/rune-test
@@ -1827,6 +1873,14 @@ test-ffi-windows: $(RUNE) vm bin/rune-ffi-check bin/rune-test bin/rune-windows
 	$(RUNE_TEST) --tier test-ffi-windows
 test-ffi-libffi: $(RUNE) vm bin/rune-ffi-check bin/rune-test
 	$(RUNE_TEST) --tier test-ffi-libffi
+
+.PHONY: test-ffi-runtime test-ffi-runtime-asan test-ffi-runtime-windows
+test-ffi-runtime: $(RUNE) $(RUNEOPT) vm bin/rune-ffi-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-runtime
+test-ffi-runtime-asan: $(RUNE) vm vm-asan bin/rune-ffi-check bin/rune-test
+	$(RUNE_TEST) --tier test-ffi-runtime-asan
+test-ffi-runtime-windows: $(RUNE) vm windows bin/rune-ffi-check bin/rune-test bin/rune-windows
+	$(RUNE_TEST) --tier test-ffi-runtime-windows
 
 WINDOWS_SRCS := tests/runner/langchecks.sml $(HOST_LAWS_SRCS) tests/runner/bytecode.sml \
                 tests/runner/matrixload.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml \

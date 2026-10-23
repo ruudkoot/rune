@@ -1,0 +1,45 @@
+#ifndef RUNE_FOREIGN_H
+#define RUNE_FOREIGN_H
+#include <stddef.h>
+#include <stdint.h>
+#ifndef RUNE_FFI
+#define RUNE_FFI 0
+#endif
+
+typedef uint64_t ForeignId;
+typedef struct Foreign Foreign;
+typedef struct {
+    void *(*open)(const char *path, size_t length);
+    void *(*symbol)(void *library, const char *name, size_t length);
+    int (*close)(void *library);
+    void (*error)(int *error_number, uint32_t *native_error, char *message, size_t capacity);
+    void (*capture)(int *error_number, uint32_t *native_error);
+} ForeignSystem;
+typedef enum {
+    FOREIGN_VOID, FOREIGN_I8, FOREIGN_U8, FOREIGN_I16, FOREIGN_U16,
+    FOREIGN_I32, FOREIGN_U32, FOREIGN_I64, FOREIGN_U64,
+    FOREIGN_F32, FOREIGN_F64, FOREIGN_POINTER
+} ForeignType;
+typedef struct {
+    ForeignType type;
+    union { int64_t integer; uint64_t word; double real; ForeignId pointer; } value;
+} ForeignValue;
+typedef struct { int error_number; uint32_t native_error; char message[256]; } ForeignError;
+
+Foreign *foreign_create(const ForeignSystem *system);
+int foreign_available(void);
+/* Pointer bytes, little-endian flag (bit 8), stdcall availability (bit 9). */
+uint64_t foreign_target(void);
+void foreign_destroy(Foreign *foreign);
+const ForeignError *foreign_error(const Foreign *foreign);
+size_t foreign_live(const Foreign *foreign);
+ForeignId foreign_library(Foreign *foreign, const char *path, size_t length);
+ForeignId foreign_symbol(Foreign *foreign, ForeignId library, const char *name, size_t length);
+ForeignId foreign_memory(Foreign *foreign, size_t length);
+int foreign_read(Foreign *foreign, ForeignId memory, size_t offset, void *data, size_t length);
+int foreign_write(Foreign *foreign, ForeignId memory, size_t offset, const void *data, size_t length);
+ForeignId foreign_view(Foreign *foreign, ForeignId memory, size_t offset, size_t length);
+ForeignId foreign_prepare(Foreign *foreign, ForeignId symbol, int abi, ForeignType result, const ForeignType *arguments, size_t count);
+int foreign_call(Foreign *foreign, ForeignId call, const ForeignValue *arguments, size_t count, ForeignValue *result, ForeignError *captured);
+int foreign_release(Foreign *foreign, ForeignId resource);
+#endif

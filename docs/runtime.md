@@ -589,8 +589,8 @@ is a change to the collector and not to everything that touches the heap.
 
 Nothing but a large object stays where it is under the collector, so C
 keeps no pointer into the heap across anything that may allocate. What it has instead
-(`runtime/vm.h`; a foreign-function interface is not built, and these are
-what it will stand on):
+(`runtime/vm.h`; the optional foreign-call bridge copies bytes into
+separate native storage and uses these roots when building its results):
 
 * **A handle** (`vm_handle_new`, `vm_handle_get`, `vm_handle_free`): a
   number for a value, in a table that is a root. The value is found again

@@ -1682,3 +1682,64 @@ void *sys_mem_reserve(size_t size, size_t align, void *hint) {
     return at;
 }
 void sys_mem_release(void *p, size_t size) { munmap(p, size); }
+
+/* Dynamic loading is optional with the generic FFI. */
+#ifndef RUNE_FFI
+#define RUNE_FFI 0
+#endif
+#if RUNE_FFI
+#include <dlfcn.h>
+static char library_message[256];
+static void library_failure(void) {
+    int saved = errno;
+    const char *message = dlerror();
+    if (!message) message = "dynamic library operation failed";
+    size_t n = strlen(message);
+    if (n >= sizeof library_message) n = sizeof library_message - 1;
+    memcpy(library_message, message, n); library_message[n] = 0;
+    errno = saved ? saved : ENOENT;
+}
+static char *library_name(const char *name, size_t n) {
+    if (n == SIZE_MAX || memchr(name, 0, n)) { errno = EINVAL; return NULL; }
+    char *out = malloc(n + 1);
+    if (!out) { errno = ENOMEM; return NULL; }
+    memcpy(out, name, n); out[n] = 0;
+    return out;
+}
+void *sys_library_open(const char *path, size_t n) {
+    char *name = library_name(path, n);
+    if (!name) return NULL;
+    dlerror();
+    void *library = dlopen(name, RTLD_NOW | RTLD_LOCAL);
+    if (!library) library_failure();
+    int saved = errno; free(name); errno = saved;
+    return library;
+}
+void *sys_library_symbol(void *library, const char *symbol, size_t n) {
+    char *name = library_name(symbol, n);
+    if (!name) return NULL;
+    dlerror();
+    void *address = dlsym(library, name);
+    if (!address) library_failure();
+    int saved = errno; free(name); errno = saved;
+    return address;
+}
+int sys_library_close(void *library) {
+    if (dlclose(library) == 0) return 0;
+    library_failure(); return -1;
+}
+void sys_library_error(int *number, uint32_t *native, char *message, size_t capacity) {
+    *number = errno; *native = 0;
+    if (capacity) {
+        size_t n = strlen(library_message);
+        if (n >= capacity) n = capacity - 1;
+        memcpy(message, library_message, n); message[n] = 0;
+    }
+}
+#else
+void *sys_library_open(const char *p,size_t n) { (void)p;(void)n;errno=ENOSYS;return NULL; }
+void *sys_library_symbol(void *l,const char *p,size_t n) { (void)l;(void)p;(void)n;errno=ENOSYS;return NULL; }
+int sys_library_close(void *l) { (void)l;errno=ENOSYS;return -1; }
+void sys_library_error(int *e,uint32_t *n,char *p,size_t c) { *e=ENOSYS;*n=0;if(c)p[0]=0; }
+#endif
+void sys_foreign_capture(int *number, uint32_t *native) { *number = errno; *native = 0; }
