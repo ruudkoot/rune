@@ -46,13 +46,17 @@ void foreign_facts(unsigned char facts[FOREIGN_FACTS_BYTES]) {
 #include <stdatomic.h>
 #endif
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
-static _Atomic uint64_t next_identity = 1;
+typedef _Atomic uint64_t AtomicWord;
+static AtomicWord next_identity = 1;
 #define ID_LOAD(p) atomic_load(p)
+#define ID_INIT(p, value) atomic_init(p, value)
 #define ID_EXCHANGE(p, old, next) atomic_compare_exchange_weak(p, old, next)
 #elif defined(__GNUC__) || defined(__clang__)
 /* GCC/Clang retain thread-safe identities in the supported C99 build. */
-static uint64_t next_identity = 1;
+typedef uint64_t AtomicWord;
+static AtomicWord next_identity = 1;
 #define ID_LOAD(p) __atomic_load_n(p, __ATOMIC_SEQ_CST)
+#define ID_INIT(p, value) (*(p) = (value))
 #define ID_EXCHANGE(p, old, next) __atomic_compare_exchange_n(p, old, next, 1, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
 #else
 #error "Enabled Runeffi requires C11 atomics or GCC-compatible atomic builtins"
@@ -70,6 +74,10 @@ typedef struct {
 } Prepared;
 typedef struct Callback Callback;
 struct Callback {
+    /* Bit zero enables entry; the remaining bits count entries already
+       using the context. Disabled quarantined thunks read immutable data. */
+    AtomicWord gate;
+    Callback *quarantined_next;
     Prepared signature;
     Foreign *foreign;
     ForeignId id;
@@ -81,6 +89,41 @@ struct Callback {
     ForeignCallbackFailure *failures;
     size_t nfailures;
 };
+static AtomicWord quarantine_lock, quarantine_count;
+static Callback *quarantine;
+static void word_add(AtomicWord *word, uint64_t delta) {
+    uint64_t old = ID_LOAD(word);
+    while (!ID_EXCHANGE(word, &old, old + delta)) {}
+}
+static int callback_acquire(Callback *c) {
+    uint64_t old = ID_LOAD(&c->gate);
+    while (old & 1) {
+        if (old > UINT64_MAX - 2) return 0;
+        if (ID_EXCHANGE(&c->gate, &old, old + 2)) return 1;
+    }
+    return 0;
+}
+static uint64_t callback_disable(Callback *c) {
+    uint64_t old = ID_LOAD(&c->gate);
+    while (!ID_EXCHANGE(&c->gate, &old, old & ~UINT64_C(1))) {}
+    return old;
+}
+static void callback_enable(Callback *c) {
+    uint64_t old = ID_LOAD(&c->gate);
+    while (!ID_EXCHANGE(&c->gate, &old, old | UINT64_C(1))) {}
+}
+static void callback_quarantine(Callback *c) {
+    /* Keep only the executable thunk and immutable failure metadata, never
+       a VM, closure handle or resource registry. Registration provenance
+       cannot in general prove that dlclose unregistered an OS callback. */
+    if (c->release) c->release(c->state);
+    c->state = NULL; c->release = NULL; c->enter = NULL; c->foreign = NULL;
+    uint64_t unlocked = 0;
+    while (!ID_EXCHANGE(&quarantine_lock, &unlocked, 1)) unlocked = 0;
+    c->quarantined_next = quarantine; quarantine = c;
+    word_add(&quarantine_count, 1);
+    word_add(&quarantine_lock, UINT64_MAX);
+}
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 static _Thread_local unsigned char thread_marker;
 #elif defined(__GNUC__) || defined(__clang__)
@@ -107,6 +150,7 @@ struct Foreign {
     unsigned call_depth;
     ForeignId active_library;
     Activation *activation;
+    int closing;
 };
 static ForeignId identity(void) {
     uint64_t value = ID_LOAD(&next_identity);
@@ -127,6 +171,7 @@ static void native_error(Foreign *f) {
     f->system.error(&f->error.error_number, &f->error.native_error, f->error.message, sizeof f->error.message);
 }
 static Resource *find(Foreign *f, ForeignId id) {
+    if (f->closing) { fail(f, EBUSY, "foreign context is closing"); return NULL; }
     for (size_t i = 0; i < f->count; i++)
         if (f->resources[i].kind != FREE && f->resources[i].kind != RESERVED && f->resources[i].kind != RETIRED && f->resources[i].id == id) return &f->resources[i];
     fail(f, EINVAL, "stale or foreign resource identity");
@@ -142,6 +187,7 @@ static void unlease(Foreign *f, ForeignId id) {
     if (r && r->active) { r->active--; if (!r->active && r->kind == RETIRED) r->kind = FREE; }
 }
 static Resource *reserve(Foreign *f) {
+    if (f->closing) { fail(f, EBUSY, "foreign context is closing"); return NULL; }
     ForeignId id = identity();
     if (!id) { fail(f, ENOSPC, "foreign identity space exhausted"); return NULL; }
     for (size_t i = 0; i < f->count; i++) if (f->resources[i].kind == FREE) {
@@ -385,7 +431,6 @@ static void callback_result(Foreign *f, ForeignType t, ForeignValue v, void *out
 static void callback_entry(ffi_cif *cif, void *out, void **input, void *opaque) {
     (void)cif;
     Callback *c = opaque;
-    Foreign *f = c->foreign;
     ForeignValue failure = c->failure;
     for (size_t i = 0; i < c->nfailures; i++) {
         const ForeignCallbackFailure *rule = &c->failures[i];
@@ -394,14 +439,20 @@ static void callback_entry(ffi_cif *cif, void *out, void **input, void *opaque) 
     }
     /* Failure defaults are restricted to scalar/null values at creation;
        the rejected thread therefore never dereferences a resource. */
-    if (f->owner_thread != &thread_marker || !f->call_depth) {
+    if (!callback_acquire(c)) {
         Foreign local; memset(&local, 0, sizeof local);
         callback_result(&local, c->signature.result, failure, out);
         return;
     }
-    if (f->activation && f->activation->failed) { callback_result(f, c->signature.result, failure, out); return; }
+    Foreign *f = c->foreign;
+    if (f->owner_thread != &thread_marker || !f->call_depth) {
+        Foreign local; memset(&local, 0, sizeof local);
+        callback_result(&local, c->signature.result, failure, out);
+        word_add(&c->gate, UINT64_MAX - 1); return;
+    }
+    if (f->activation && f->activation->failed) { callback_result(f, c->signature.result, failure, out); word_add(&c->gate, UINT64_MAX - 1); return; }
     Resource *self = find(f, c->id);
-    if (!self || self->active == UINT_MAX) { callback_result(f, c->signature.result, failure, out); return; }
+    if (!self || self->active == UINT_MAX) { callback_result(f, c->signature.result, failure, out); word_add(&c->gate, UINT64_MAX - 1); return; }
     self->active++;
     size_t count = c->signature.count;
     ForeignValue *values = calloc(count ? count : 1, sizeof *values), result = failure;
@@ -410,6 +461,7 @@ static void callback_entry(ffi_cif *cif, void *out, void **input, void *opaque) 
         free(values); free(borrowed);
         find(f, c->id)->active--;
         callback_result(f, c->signature.result, failure, out);
+        word_add(&c->gate, UINT64_MAX - 1);
         return;
     }
     int valid = 1;
@@ -450,6 +502,7 @@ static void callback_entry(ffi_cif *cif, void *out, void **input, void *opaque) 
     }
     find(f, c->id)->active--;
     free(values); free(borrowed);
+    word_add(&c->gate, UINT64_MAX - 1);
 }
 ForeignId foreign_callback(Foreign *f, int abi, ForeignType result, const ForeignType *arguments, size_t count,
                           ForeignValue failure, const ForeignCallbackFailure *cases, size_t ncases, ForeignCallback enter, ForeignCallbackFree release, void *state) {
@@ -497,6 +550,7 @@ ForeignId foreign_callback(Foreign *f, int abi, ForeignType result, const Foreig
     c->closure = ffi_closure_alloc(sizeof *c->closure, &address);
     if (!c->closure) goto allocation;
     c->signature.count = count; c->signature.result = result;
+    ID_INIT(&c->gate, 1);
     c->foreign = f; c->enter = enter; c->release = release; c->state = state; c->failure = failure;
     if (ffi_prep_closure_loc(c->closure, &c->signature.cif, callback_entry, c, address) != FFI_OK) {
         fail(f, ENOTSUP, "libffi rejected executable callback"); goto bad;
@@ -708,6 +762,10 @@ int foreign_release(Foreign *f, ForeignId id) {
     if (r->kind == CALL) { free(r->call->types); free(r->call->arguments); free(r->call); }
     if (r->kind == CALLBACK) {
         Callback *c = r->callback;
+        if (callback_disable(c) & ~UINT64_C(1)) {
+            callback_enable(c);
+            fail(f, EBUSY, "foreign callback entry is active"); return -1;
+        }
         ffi_closure_free(c->closure);
         if (c->release) c->release(c->state);
         free(c->failures); free(c->signature.types); free(c->signature.arguments); free(c);
@@ -715,16 +773,51 @@ int foreign_release(Foreign *f, ForeignId id) {
     r->kind = FREE; f->live--;
     return 0;
 }
-void foreign_destroy(Foreign *f) {
-    if (!f) return;
-    while (f->live) {
-        size_t before = f->live;
-        for (size_t i = 0; i < f->count; i++) if (f->resources[i].kind != FREE)
-            (void)foreign_release(f, f->resources[i].id);
-        if (f->live == before) break;
+int foreign_destroy(Foreign *f) {
+    if (!f) return 0;
+    if (f->owner_thread != &thread_marker || f->call_depth) {
+        fail(f, EBUSY, "foreign context has an active call or another owner thread"); return -1;
     }
-    free(f->resources); free(f);
+    for (size_t i = 0; i < f->count; i++) {
+        Resource *r = &f->resources[i];
+        if (r->kind != FREE && (r->active || r->retiring || (r->kind == CALL && r->call->active))) {
+            fail(f, EBUSY, "foreign context has active resources"); return -1;
+        }
+    }
+    if (!f->closing) {
+        int active = 0;
+        for (size_t i = 0; i < f->count; i++) if (f->resources[i].kind == CALLBACK)
+            if (callback_disable(f->resources[i].callback) & ~UINT64_C(1)) active = 1;
+        if (active) {
+            for (size_t i = 0; i < f->count; i++) if (f->resources[i].kind == CALLBACK)
+                callback_enable(f->resources[i].callback);
+            fail(f, EBUSY, "foreign context has an active callback entry"); return -1;
+        }
+        f->closing = 1;
+    }
+    /* Provider destructors may invoke registered callbacks and read retained
+       memory. Disable SML first, keeping both alive through every unload. */
+    for (size_t i = 0; i < f->count; i++) if (f->resources[i].kind == LIBRARY) {
+        Resource *r = &f->resources[i];
+        if (f->system.close(r->address) != 0) { native_error(f); return -1; }
+        r->kind = FREE; f->live--;
+    }
+    for (size_t i = 0; i < f->count; i++) {
+        Resource *r = &f->resources[i];
+        if (r->kind == CALLBACK) callback_quarantine(r->callback);
+        if (r->kind == MEMORY) free(r->address);
+        if (r->kind == CALL) { free(r->call->types); free(r->call->arguments); free(r->call); }
+    }
+    free(f->resources); free(f); return 0;
 }
+void foreign_abandon(Foreign *f) {
+    /* Terminal process exit only: native callers still own their VM roots
+       and arenas. Leave them alive, but make all subsequent entries fail. */
+    if (!f) return;
+    for (size_t i = 0; i < f->count; i++) if (f->resources[i].kind == CALLBACK)
+        (void)callback_disable(f->resources[i].callback);
+}
+size_t foreign_quarantined(void) { return (size_t)ID_LOAD(&quarantine_count); }
 #else
 #include <stdlib.h>
 #include <string.h>
@@ -737,7 +830,9 @@ static int unavailable(Foreign *f) {
 }
 int foreign_available(void) { return 0; }
 Foreign *foreign_create(const ForeignSystem *system) { (void)system; return calloc(1, sizeof(Foreign)); }
-void foreign_destroy(Foreign *f) { free(f); }
+int foreign_destroy(Foreign *f) { free(f); return 0; }
+void foreign_abandon(Foreign *f) { (void)f; }
+size_t foreign_quarantined(void) { return 0; }
 const ForeignError *foreign_error(const Foreign *f) { return &f->error; }
 size_t foreign_live(const Foreign *f) { (void)f; return 0; }
 int foreign_alive(const Foreign *f,ForeignId r) { (void)f;(void)r;return 0; }

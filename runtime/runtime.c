@@ -367,8 +367,8 @@ void vm_init(VM *vm, size_t heap) {
 }
 
 /* Also for a VM that an image was read into only in part (vm_resume). */
-void vm_release(VM *vm) {
-    foreign_destroy(vm->foreign);
+int vm_release(VM *vm) {
+    if (foreign_destroy(vm->foreign)) return -1;
     vm->foreign = NULL;
     dbg_free(vm);
     program_free_meta(&vm->prog);
@@ -404,11 +404,13 @@ void vm_release(VM *vm) {
         free(vm->argv);
         free((char *)vm->progname);
     }
+    return 0;
 }
 
-void vm_destroy(VM *vm) {
-    vm_release(vm);
+int vm_destroy(VM *vm) {
+    if (vm_release(vm)) return -1;
     free(vm);
+    return 0;
 }
 
 void vm_exit(VM *vm, int status) {
@@ -449,6 +451,6 @@ void vm_exit(VM *vm, int status) {
     }
     heap_log_close(vm);
     fflush(stderr);
-    vm_destroy(vm);
+    if (vm_destroy(vm)) foreign_abandon(vm->foreign);
     exit(status);
 }

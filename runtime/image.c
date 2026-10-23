@@ -996,7 +996,12 @@ int vm_become(VM *vm, const char *path) {
     next->gc_verify = vm->gc_verify;
     /* Nothing of this world is read again, so it goes before the other takes
        its place; the path was copied out of the heap by the caller. */
-    vm_release(vm);
+    if (vm_release(vm)) {
+        vm->io_errno = foreign_error(vm->foreign)->error_number;
+        sys_set_errno(vm->io_errno);
+        vm_destroy(next);
+        return 0;
+    }
     *vm = *next;
     free(next);
     interrupt_again(vm);

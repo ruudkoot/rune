@@ -807,8 +807,8 @@ void vm_start(VM *vm);                       /* the builtin exceptions, and func
 void vm_cons(VM *vm);                        /* stack: ..., hd, tl  ->  ..., hd :: tl */
 int values_equal(VM *vm, Value a, Value b);
 void vm_print_trace(VM *vm, FILE *out);
-void vm_release(VM *vm);                     /* free what a VM holds, but not the VM */
-void vm_destroy(VM *vm);                     /* and the VM */
+int vm_release(VM *vm);                      /* -1 preserves VM roots on active/failed FFI teardown */
+int vm_destroy(VM *vm);                      /* frees VM only after successful release */
 
 /* The debugger (runtime/debug.c; the REPL roadmap's D22 and M12). The
    REPL installs an SML hook; where the program stops -- at a breakpoint, a

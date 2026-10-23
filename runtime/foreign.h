@@ -42,7 +42,14 @@ uint64_t foreign_target(void);
    char/short/int/long/longLong/pointer/wchar/float/double/bool size/alignment. */
 #define FOREIGN_FACTS_BYTES 24
 void foreign_facts(unsigned char facts[FOREIGN_FACTS_BYTES]);
-void foreign_destroy(Foreign *foreign);
+/* Disable entry, unload providers while retained memory/thunks live, then
+   release VM roots. Returns -1 before teardown on active use; an unload
+   failure leaves a closing context which permits only a destroy retry. */
+int foreign_destroy(Foreign *foreign);
+/* Terminal process exit only: disable entry without freeing active roots. */
+void foreign_abandon(Foreign *foreign);
+/* Disabled unproven registrations retained until process termination. */
+size_t foreign_quarantined(void);
 const ForeignError *foreign_error(const Foreign *foreign);
 size_t foreign_live(const Foreign *foreign);
 int foreign_alive(const Foreign *foreign, ForeignId resource);

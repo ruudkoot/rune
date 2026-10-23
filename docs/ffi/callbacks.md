@@ -82,3 +82,34 @@ Callback unregistration is a foreign API obligation: calling executable
 closure storage after it has been released is invalid native behavior.
 Foreign-thread callbacks, audio callbacks, and arbitrary asynchronous SML
 entry remain outside the delivery contract.
+
+## Shutdown and registrations
+
+Orderly VM shutdown rejects an active native call, resource lease or callback
+entry before unloading anything or releasing VM roots. Callback entry gates
+are atomic, including the guard read by unsupported foreign threads. Shutdown
+then disables SML entry and closes every provider library while callback
+thunks and retained foreign memory are still valid. A provider destructor
+may call a registered thunk during unload; it receives the argument-specific
+failure value without executing SML. Native unload failure leaves a closing
+context: new operations reject and orderly destruction may be retried.
+
+An unreleased registration cannot be proved dead merely by closing a library:
+system libraries may remain loaded, another owner may retain the library, or
+the foreign API may have retained an independent callback pointer. Shutdown
+therefore quarantines those disabled executable thunks and their immutable
+signature/failure tables until process termination. It releases their VM
+closure handles and removes all references to the VM and resource registry.
+Late entries, including entries on foreign threads after VM destruction, use
+only the immutable failure table. This bounded-per-registration quarantine
+is a fallback for missing unregistration, not permission to retain an SML
+closure indefinitely. Explicitly unregistering and releasing a callback frees
+its thunk normally and creates no quarantine entry. A client must stop native
+producers before explicit release, as the foreign API's unregistration
+contract requires.
+
+Process exit from inside a callback cannot orderly destroy its suspended
+native callers. The terminal exit path disables further SML entries and
+preserves their VM roots and foreign arenas through native exit handlers;
+process termination reclaims them. It does not return to a partly freed VM.
+This terminal path is distinct from reusable orderly VM destruction.

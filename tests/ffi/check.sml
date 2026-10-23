@@ -173,6 +173,14 @@ struct
                ["-DRUNE_FFI=1","-Iruntime","tests/runtime/foreign_callback_test.c","runtime/foreign.c","runtime/sys/sys_posix.c",
                 "-Wl,--wrap=calloc","-o",callbackUnit,"-ldl","-lm"] @ ffiFlags))
              val ()=ignore(command "callback-unit" [callbackUnit,library])
+             val shutdownLibrary=directory ^ "/shutdown-provider.so"
+             val ()=ignore(command "compile-shutdown-provider" (compiler "CC" @ flags @ sanitize @
+               ["-shared","-fPIC","tests/runtime/foreign_shutdown_fixture.c","-o",shutdownLibrary]))
+             val shutdownUnit=directory ^ "/shutdown-unit"
+             val ()=ignore(command "compile-shutdown-unit" (compiler "CC" @ flags @ sanitize @
+               ["-DRUNE_FFI=1","-Iruntime","tests/runtime/foreign_shutdown_test.c","runtime/foreign.c","runtime/sys/sys_posix.c",
+                "-pthread","-o",shutdownUnit,"-ldl","-lm"] @ ffiFlags))
+             val ()=ignore(command "shutdown-unit" [shutdownUnit,shutdownLibrary])
              fun one(target,vm,options)=
                let val output=bytecode ^ target ^ ".rbc"
                    val ()=compile target "tests/ffi/calls.sml" output
@@ -188,7 +196,9 @@ struct
                    val ()=callbacks vm (options @ ["--gc-stress","7","--gc-verify"]) callbackOutput library
                    val life=bytecode ^ target ^ "-life.rbc"
                in if mode="asan" then () else
-                    (compile target "tests/ffi/lifecycle.sml" life;lifecycle vm life) end
+                    (compile target "tests/ffi/lifecycle.sml" life;lifecycle vm life;
+                     compile target "tests/ffi/shutdown-exit.sml" (bytecode ^ target ^ "-shutdown.rbc");
+                     ignore(command ("shutdown-exit-" ^ target) [vm,bytecode ^ target ^ "-shutdown.rbc",shutdownLibrary])) end
          in if mode="asan" then
               (one("stack","bin/runevm-stack-asan",[]);one("registers","bin/runevm-asan",["--jit=all","--jit-tier=2"]))
             else (one("stack","bin/runevm-stack",[]);
@@ -201,6 +211,9 @@ struct
                     (bytecode ^ "registers-owner.rbc") library) [["--jit=all"],["--jit=all","--jit-tier=2"]];
                   List.app(fn options=>callbacks "bin/runevm" (options @ ["--gc-stress","7","--gc-verify"])
                     (bytecode ^ "registers-callbacks.rbc") library) [["--jit=all"],["--jit=all","--jit-tier=2"]];
+                  ignore(command "shutdown-exit-jit" ["bin/runevm","--jit=all","--jit-tier=2",bytecode ^ "registers-shutdown.rbc",shutdownLibrary]);
+                  ignore(command "compile-native-shutdown" ["bin/runeopt",bytecode ^ "stack-shutdown.rbc","-o",bytecode ^ "-native-shutdown"]);
+                  ignore(command "native-shutdown" [bytecode ^ "-native-shutdown",shutdownLibrary]);
                   ignore(command "compile-native-callbacks" ["bin/runeopt",bytecode ^ "stack-callbacks.rbc","-o",bytecode ^ "-native-callbacks"]);
                   need(String.isSubstring "PASS foreign callbacks:" (command "native-callbacks" [bytecode ^ "-native-callbacks",library]),"native callback fixture");
                   ignore(command "compile-native-calls" ["bin/runeopt",bytecode ^ "stack.rbc","-o",bytecode ^ "-native"]);
