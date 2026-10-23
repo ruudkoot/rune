@@ -6,10 +6,10 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
-| [`FOREIGN_BYTES`](sig/FOREIGN_BYTES.md) | 5 | 5 | 100% | 4 | 4 |
+| [`FOREIGN_BYTES`](sig/FOREIGN_BYTES.md) | 7 | 7 | 100% | 6 | 6 |
 | [`FOREIGN_SCOPE`](sig/FOREIGN_SCOPE.md) | 7 | 7 | 100% | 4 | 4 |
 | [`FOREIGN_TEXT`](sig/FOREIGN_TEXT.md) | 4 | 4 | 100% | 2 | 2 |
-| **all** | 16 | 16 | 100% | 10 | 10 |
+| **all** | 18 | 18 | 100% | 12 | 12 |
 
 ## Members a signature describes
 
@@ -18,7 +18,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-3 structures have a page, with 16 members, of which 16 (100%) are described by a signature.
+3 structures have a page, with 18 members, of which 18 (100%) are described by a signature.
 
 ---
 

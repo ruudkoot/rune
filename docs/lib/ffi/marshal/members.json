@@ -38,6 +38,20 @@
      "spec": "val real64Value : {littleEndian : bool, bytes : string} -> real",
      "doc": "`real64Value {littleEndian, bytes}` decodes exactly eight bytes.\n\n**Raises** `Error` for another byte count.\n\n",
      "page": "sig/FOREIGN_BYTES.md#val-real64value"
+    },
+    {
+     "kind": "val",
+     "name": "real32",
+     "spec": "val real32 : {littleEndian : bool, value : real} -> string",
+     "doc": "`real32 {littleEndian, value}` rounds binary64 to IEEE binary32 bytes.\n\nRounding is to nearest, ties to even. Overflow produces signed infinity;\nNaNs use a canonical quiet payload. This is independent of the C process\nfloating-point rounding mode.\n\n",
+     "page": "sig/FOREIGN_BYTES.md#val-real32"
+    },
+    {
+     "kind": "val",
+     "name": "real32Value",
+     "spec": "val real32Value : {littleEndian : bool, bytes : string} -> real",
+     "doc": "`real32Value {littleEndian, bytes}` widens an IEEE binary32 object exactly.\n\n**Raises** `Error` unless exactly four bytes are supplied.\n\n",
+     "page": "sig/FOREIGN_BYTES.md#val-real32value"
     }
    ]
   },
