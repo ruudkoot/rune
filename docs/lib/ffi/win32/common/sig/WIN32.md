@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | none |
-| Documentation | 46 of 46 entries documented |
+| Documentation | 47 of 47 entries documented |
 | Tests | not listed |
 | Source | [lib/ffi/win32/common/win32\_sig.sml](../../../../../../lib/ffi/win32/common/win32_sig.sml) |
 
@@ -54,6 +54,7 @@ sig
                        <a href="#fld-user.peekmessage.maximum">maximum</a> : Word32.word, <a href="#fld-user.peekmessage.remove">remove</a> : bool} -&gt; Types.queued option
     val <a href="#val-user.translatemessage">translateMessage</a> : Types.queued -&gt; bool
     val <a href="#val-user.dispatchmessage">dispatchMessage</a> : Types.queued -&gt; Int64.int
+    val <a href="#val-user.discardmessage">discardMessage</a> : Types.queued -&gt; unit
     val <a href="#val-user.postquitmessage">postQuitMessage</a> : Int32.int -&gt; unit
     val <a href="#val-user.postmessage">postMessage</a> : Types.window * Types.message -&gt; unit
     val <a href="#val-user.sendmessage">sendMessage</a> : Types.window * Types.message -&gt; Int64.int
@@ -286,6 +287,16 @@ val dispatchMessage : Types.queued -> Int64.int
 ```
 
 `dispatchMessage message` dispatches a copied message to its window procedure.
+
+#### <a name="val-user.discardmessage"></a>`discardMessage`
+
+```sml
+val discardMessage : Types.queued -> unit
+```
+
+`discardMessage message` releases an undispatched copied message.
+
+Both dispatch and discard consume the copy on every returning path.
 
 #### <a name="val-user.postquitmessage"></a>`postQuitMessage`
 

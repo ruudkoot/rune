@@ -153,6 +153,13 @@
     },
     {
      "kind": "val",
+     "name": "User.discardMessage",
+     "spec": "val discardMessage : Types.queued -> unit",
+     "doc": "`discardMessage message` releases an undispatched copied message.\n\nBoth dispatch and discard consume the copy on every returning path.\n\n",
+     "page": "sig/WIN32.md#val-user.discardmessage"
+    },
+    {
+     "kind": "val",
      "name": "User.postQuitMessage",
      "spec": "val postQuitMessage : Int32.int -> unit",
      "doc": "`postQuitMessage status` queues the application quit status.\n\n",
@@ -495,7 +502,7 @@
     {
      "kind": "val",
      "name": "create",
-     "spec": "val create : {title:string,width:int,height:int,visible:bool,resizable:bool} -> window",
+     "spec": "val create : {title:string,x:int,y:int,width:int,height:int,visible:bool,resizable:bool} -> window",
      "doc": "`create specification` creates a driver window without invoking SML procedures.\n\n",
      "page": "sig/WIN32_GUI_DRIVER.md#val-create"
     },
@@ -677,7 +684,7 @@
      "kind": "type",
      "name": "queued",
      "spec": "type queued",
-     "doc": "A copied message returned by GetMessage or PeekMessage.\n\n",
+     "doc": "A copied message returned by GetMessage or PeekMessage.\n\nDispatch or discard each copy; both end its lifetime.\n\n",
      "page": "sig/WIN32_TYPES.md#type-queued"
     },
     {

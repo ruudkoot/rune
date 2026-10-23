@@ -6,11 +6,11 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
-| [`WIN32`](sig/WIN32.md) | 46 | 46 | 100% | 42 | 42 |
+| [`WIN32`](sig/WIN32.md) | 47 | 47 | 100% | 43 | 43 |
 | [`WIN32_COMMON`](sig/WIN32_COMMON.md) | 18 | 18 | 100% | 17 | 17 |
 | [`WIN32_GUI_DRIVER`](sig/WIN32_GUI_DRIVER.md) | 19 | 19 | 100% | 15 | 15 |
 | [`WIN32_TYPES`](sig/WIN32_TYPES.md) | 14 | 14 | 100% | 0 | 0 |
-| **all** | 97 | 97 | 100% | 74 | 74 |
+| **all** | 98 | 98 | 100% | 75 | 75 |
 
 ## Members a signature describes
 

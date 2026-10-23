@@ -55,6 +55,10 @@ sig
     val translateMessage : Types.queued -> bool
     (* `dispatchMessage message` dispatches a copied message to its window procedure. *)
     val dispatchMessage : Types.queued -> Int64.int
+    (* `discardMessage message` releases an undispatched copied message.
+
+       Both dispatch and discard consume the copy on every returning path. *)
+    val discardMessage : Types.queued -> unit
     (* `postQuitMessage status` queues the application quit status. *)
     val postQuitMessage : Int32.int -> unit
     (* `postMessage (window, message)` queues a supported message for later dispatch. *)

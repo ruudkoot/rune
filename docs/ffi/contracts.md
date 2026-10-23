@@ -35,6 +35,14 @@ null native timer callback and deliver `Timer` through the window procedure.
 `Char` preserves individual UTF-16 units. Drawing tests compare operations
 and observable results; OS scheduling and rasterization may differ.
 
+Queued messages are explicit copied resources. Dispatch consumes a copy on
+every returning path; `discardMessage` releases a copy that will not be
+dispatched, including lookahead snapshots from PeekMessage. Translating,
+dispatching or discarding a consumed copy raises a stale-resource error.
+Provider shutdown also releases undispatched copies. Native MSG storage
+stays outside portable images. The discard operation extends the original
+prototype signature so long-lived lookahead loops can release every copy.
+
 The SDL and mock subsets support resizable top-level windows, solid pens
 and brushes, basic lines/rectangles and fixed ASCII text. They reject
 unsupported native flags and drawing modes explicitly. No backend invents

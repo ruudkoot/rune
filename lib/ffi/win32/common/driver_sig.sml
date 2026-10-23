@@ -12,7 +12,7 @@ sig
   (* Whether events may arrive independently of deterministic model state. *)
   val externalEvents : bool
   (* `create specification` creates a driver window without invoking SML procedures. *)
-  val create : {title:string,width:int,height:int,visible:bool,resizable:bool} -> window
+  val create : {title:string,x:int,y:int,width:int,height:int,visible:bool,resizable:bool} -> window
   (* `destroy window` releases a driver window and its drawing resources. *)
   val destroy : window -> unit
   (* `show (window, command)` applies a supported Win32 visibility command. *)

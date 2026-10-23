@@ -197,6 +197,8 @@ type queued
 
 A copied message returned by GetMessage or PeekMessage.
 
+Dispatch or discard each copy; both end its lifetime.
+
 ### <a name="type-next"></a>`next`
 
 ```sml

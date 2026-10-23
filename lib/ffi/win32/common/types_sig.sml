@@ -36,7 +36,9 @@ sig
     | Unknown of Word32.word
   (* Default asks the provider to perform its documented default behavior. *)
   datatype reply = Default | Result of Int64.int
-  (* A copied message returned by GetMessage or PeekMessage. *)
+  (* A copied message returned by GetMessage or PeekMessage.
+
+     Dispatch or discard each copy; both end its lifetime. *)
   type queued
   (* A quit status or one copied queued message. *)
   datatype next = Quit of Int32.int | Message of queued

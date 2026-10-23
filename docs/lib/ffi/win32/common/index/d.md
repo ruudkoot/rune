@@ -10,6 +10,7 @@
 - `Gdi.deleteObject` (val): [WIN32](../sig/WIN32.md#val-gdi.deleteobject)
 - `User.defWindowProc` (val): [WIN32](../sig/WIN32.md#val-user.defwindowproc)
 - `User.destroyWindow` (val): [WIN32](../sig/WIN32.md#val-user.destroywindow)
+- `User.discardMessage` (val): [WIN32](../sig/WIN32.md#val-user.discardmessage)
 - `User.dispatchMessage` (val): [WIN32](../sig/WIN32.md#val-user.dispatchmessage)
 
 ---

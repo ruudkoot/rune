@@ -27,7 +27,7 @@ sig
   type <a href="#type-drawing">drawing</a>
   datatype <a href="#type-event">event</a> = <a href="#con-quit">Quit</a> | <a href="#con-message">Message</a> of window * Win32Common.Types.message
   val <a href="#val-externalevents">externalEvents</a> : bool
-  val <a href="#val-create">create</a> : {<a href="#fld-create.title">title</a>:string,<a href="#fld-create.width">width</a>:int,<a href="#fld-create.height">height</a>:int,<a href="#fld-create.visible">visible</a>:bool,<a href="#fld-create.resizable">resizable</a>:bool} -&gt; window
+  val <a href="#val-create">create</a> : {<a href="#fld-create.title">title</a>:string,<a href="#fld-create.x">x</a>:int,<a href="#fld-create.y">y</a>:int,<a href="#fld-create.width">width</a>:int,<a href="#fld-create.height">height</a>:int,<a href="#fld-create.visible">visible</a>:bool,<a href="#fld-create.resizable">resizable</a>:bool} -&gt; window
   val <a href="#val-destroy">destroy</a> : window -&gt; unit
   val <a href="#val-show">show</a> : window * int -&gt; unit
   val <a href="#val-title">title</a> : window * string -&gt; unit
@@ -85,7 +85,7 @@ Whether events may arrive independently of deterministic model state.
 ### <a name="val-create"></a>`create`
 
 ```sml
-val create : {title:string,width:int,height:int,visible:bool,resizable:bool} -> window
+val create : {title:string,x:int,y:int,width:int,height:int,visible:bool,resizable:bool} -> window
 ```
 
 `create specification` creates a driver window without invoking SML procedures.
@@ -93,6 +93,8 @@ val create : {title:string,width:int,height:int,visible:bool,resizable:bool} -> 
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-create.title"></a>`title` | `string` |  |
+| <a name="fld-create.x"></a>`x` | `int` |  |
+| <a name="fld-create.y"></a>`y` | `int` |  |
 | <a name="fld-create.width"></a>`width` | `int` |  |
 | <a name="fld-create.height"></a>`height` | `int` |  |
 | <a name="fld-create.visible"></a>`visible` | `bool` |  |
