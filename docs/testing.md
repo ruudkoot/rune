@@ -87,7 +87,10 @@ again. The last line begins `RESULT:`. Every run writes its events as JSON
 lines (`events.jsonl`), a summary in Markdown (`summary.md`, and GitHub's
 page of the job) and every verdict as JUnit's XML (`junit.xml`) in its
 directory. The directories of tests that pass are
-removed as they end, and the last five runs are kept. The wall time of each
+removed as they end, and the last five completed runs are kept. Retention
+leaves active and interrupted runs alone, so concurrent invocations cannot
+delete each other's output. A `running` marker becomes `complete` only after
+the final reports are closed; interrupted runs need explicit cleanup. The wall time of each
 test goes into `build/test-history.tsv`, from which the next run orders its
 jobs.
 
