@@ -16,10 +16,14 @@ the signature names and no others.
 | --- | --- | --- | --- | --- | --- |
 | [`CConst`](str/CConst.md) | : | [`C_CONST`](sig/C_CONST.md) |  |  | [lib/language/c/const.sml](../../../../lib/language/c/const.sml) |
 | [`CEnumConst`](str/CEnumConst.md) | :> | [`C_ENUM_CONST`](sig/C_ENUM_CONST.md) |  |  | [lib/language/c/enum\_const.sml](../../../../lib/language/c/enum_const.sml) |
+| [`CExpression`](str/CExpression.md) | : | [`C_EXPRESSION`](sig/C_EXPRESSION.md) |  |  | [lib/language/c/expression.sml](../../../../lib/language/c/expression.sml) |
 | [`CFiles`](str/CFiles.md) | : | [`C_FILES`](sig/C_FILES.md) |  |  | [lib/language/c/files.sml](../../../../lib/language/c/files.sml) |
+| [`CInteger`](str/CInteger.md) | : | [`C_INTEGER`](sig/C_INTEGER.md) |  |  | [lib/language/c/integer.sml](../../../../lib/language/c/integer.sml) |
+| [`CLayout`](str/CLayout.md) | : | [`C_LAYOUT`](sig/C_LAYOUT.md) |  |  | [lib/language/c/layout.sml](../../../../lib/language/c/layout.sml) |
 | [`CLex`](str/CLex.md) | : | [`C_LEX`](sig/C_LEX.md) |  |  | [lib/language/c/lex.sml](../../../../lib/language/c/lex.sml) |
 | [`CParse`](str/CParse.md) | : | [`C_PARSE`](sig/C_PARSE.md) |  |  | [lib/language/c/parse.sml](../../../../lib/language/c/parse.sml) |
 | [`CPreprocess`](str/CPreprocess.md) | : | [`C_PREPROCESS`](sig/C_PREPROCESS.md) |  |  | [lib/language/c/preprocess.sml](../../../../lib/language/c/preprocess.sml) |
+| [`CType`](str/CType.md) | : | [`C_TYPE`](sig/C_TYPE.md) |  |  | [lib/language/c/type.sml](../../../../lib/language/c/type.sml) |
 
 ---
 

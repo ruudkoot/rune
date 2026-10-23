@@ -16,9 +16,19 @@ checking referenced declarations and preserving target-independent values.
 fields, bounds, bit widths, attributes, conventions, packing and inline
 bodies. [`CFiles`](str/CFiles.md) supplies a portable file resolver using original bytes.
 
+[`CInteger`](str/CInteger.md) implements target integer ranks, promotions, checked arithmetic
+and two's-complement conversions. [`CType`](str/CType.md) normalizes equivalent scalar
+spellings and parses abstract type names through the declaration parser.
+[`CExpression`](str/CExpression.md) adds typed casts, `sizeof`, alignment and lazy operators;
+unevaluated operands are typechecked without executing their arithmetic.
+[`CLayout`](str/CLayout.md) computes target structs, unions, nested arrays, anonymous members,
+flexible tails and pragma packing. Alias/tag lookup, constant values and
+all scalar facts come from the caller. Bitfields and explicit alignment
+attributes request a verified native adapter rather than guessing.
+
 Inline bodies are balanced syntax, not compiled C statements. Target
-layout, declaration-expression typing and FFI projection are separate
-consumers. Unknown active directives or unsupported declaration syntax
+layout and declaration-expression typing are explicit consumers of the
+syntax tree; FFI projection remains separate. Unknown active directives or unsupported declaration syntax
 produce source diagnostics. Original headers are never repaired in place.
 
 [How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [i](index/i.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md)
@@ -29,10 +39,14 @@ produce source diagnostics. Original headers are never repaired in place.
 | --- | --- |
 | [`C_CONST`](sig/C_CONST.md) | Integer constant expressions for C preprocessing and declarations. |
 | [`C_ENUM_CONST`](sig/C_ENUM_CONST.md) | Integer folding of the expressions retained in enum declarations. |
+| [`C_EXPRESSION`](sig/C_EXPRESSION.md) | Typed C integer expressions for target declaration consumers. |
 | [`C_FILES`](sig/C_FILES.md) | File-system include resolution for a C translation unit. |
+| [`C_INTEGER`](sig/C_INTEGER.md) | Target integer types and the usual C arithmetic conversions. |
+| [`C_LAYOUT`](sig/C_LAYOUT.md) | Explicit target layouts for reusable C declaration consumers. |
 | [`C_LEX`](sig/C_LEX.md) | C preprocessing tokens with original physical source positions. |
 | [`C_PARSE`](sig/C_PARSE.md) | Target-neutral C declarations, retaining layout-affecting syntax. |
 | [`C_PREPROCESS`](sig/C_PREPROCESS.md) | Target-configured preprocessing without a dependency on a C compiler. |
+| [`C_TYPE`](sig/C_TYPE.md) | Shared C type spelling and abstract type-name analysis. |
 
 ---
 

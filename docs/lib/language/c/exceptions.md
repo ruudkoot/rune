@@ -4,7 +4,7 @@
 
 From the **Raises** paragraphs of the documented entries.
 
-- `Error`: [`literal`](sig/C_CONST.md#val-literal) of C_CONST, [`evaluate`](sig/C_CONST.md#val-evaluate) of C_CONST, [`collect`](sig/C_ENUM_CONST.md#val-collect) of C_ENUM_CONST, [`evaluate`](sig/C_ENUM_CONST.md#val-evaluate) of C_ENUM_CONST, [`scan`](sig/C_LEX.md#val-scan) of C_LEX, [`translationUnit`](sig/C_PARSE.md#val-translationunit) of C_PARSE, [`run`](sig/C_PREPROCESS.md#val-run) of C_PREPROCESS
+- `Error`: [`literal`](sig/C_CONST.md#val-literal) of C_CONST, [`evaluate`](sig/C_CONST.md#val-evaluate) of C_CONST, [`collect`](sig/C_ENUM_CONST.md#val-collect) of C_ENUM_CONST, [`evaluate`](sig/C_ENUM_CONST.md#val-evaluate) of C_ENUM_CONST, [`evaluate`](sig/C_EXPRESSION.md#val-evaluate) of C_EXPRESSION, [`literal`](sig/C_INTEGER.md#val-literal) of C_INTEGER, [`unary`](sig/C_INTEGER.md#val-unary) of C_INTEGER, [`binary`](sig/C_INTEGER.md#val-binary) of C_INTEGER, [`compute`](sig/C_LAYOUT.md#val-compute) of C_LAYOUT, [`member`](sig/C_LAYOUT.md#val-member) of C_LAYOUT, [`scan`](sig/C_LEX.md#val-scan) of C_LEX, [`translationUnit`](sig/C_PARSE.md#val-translationunit) of C_PARSE, [`typeName`](sig/C_PARSE.md#val-typename) of C_PARSE, [`run`](sig/C_PREPROCESS.md#val-run) of C_PREPROCESS
 - `IO.Io`: [`read`](sig/C_FILES.md#val-read) of C_FILES
 - `OS.SysErr`: [`resolver`](sig/C_FILES.md#val-resolver) of C_FILES
 

@@ -46,4 +46,10 @@ sig
      Raises: `Error` for malformed declarations or unsupported syntax. *)
   val translationUnit : {tokens : CLex.token list, predefinedTypes : string list} ->
                         {declarations : declaration list, pragmas : attribute list}
+  (* `typeName {tokens, predefinedTypes}` parses one abstract C type name.
+
+     It accepts array and function declarators without changing their shape.
+
+     Raises: `Error` for named declarators, storage classes or trailing syntax. *)
+  val typeName : {tokens : CLex.token list, predefinedTypes : string list} -> ctype
 end

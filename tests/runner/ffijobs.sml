@@ -19,6 +19,9 @@ struct
      Test.requires ["windows"] (Test.describe "windows"
        (List.map (fn bits => job bits ("windows " ^ bits) ["test-ffi-windows", "test-windows", "nightly"]) ["32", "64"] @
        List.map(fn bits=>job ("runtime" ^ bits) ("runtime windows" ^ bits) ["test-ffi-runtime-windows"]) ["32","64"])),
+     Test.describe "layout"
+       (List.map(fn target=>jobWith "rune-c-layout-check" target target ["test-c-layout"])
+         ["native","linux32","windows32","windows64","aarch64","ppc64"]),
      Test.describe "frontend"
        [Test.requires ["cc"] (frontendJob "fixture" "fixture" ["check", "test-c-frontend"]),
         Test.requires ["clang"] (frontendJob "sdl-linux" "headers sdl linux-x86_64" ["test-c-frontend"]),

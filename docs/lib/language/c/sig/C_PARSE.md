@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 8 of 8 entries documented |
+| Documentation | 9 of 9 entries documented |
 | Tests | not listed |
 | Source | [lib/language/c/parse\_sig.sml](../../../../../lib/language/c/parse_sig.sml) |
 
@@ -53,6 +53,7 @@ sig
   exception <a href="#exn-error">Error</a> of CLex.location * string
   val <a href="#val-translationunit">translationUnit</a> : {<a href="#fld-translationunit.tokens">tokens</a> : CLex.token list, <a href="#fld-translationunit.predefinedtypes">predefinedTypes</a> : string list} -&gt;
                         {declarations : declaration list, pragmas : attribute list}
+  val <a href="#val-typename">typeName</a> : {<a href="#fld-typename.tokens">tokens</a> : CLex.token list, <a href="#fld-typename.predefinedtypes">predefinedTypes</a> : string list} -&gt; ctype
 end
 </pre>
 
@@ -209,6 +210,23 @@ unterminated syntax fail explicitly.
 | --- | --- | --- |
 | <a name="fld-translationunit.tokens"></a>`tokens` | `CLex.token list` |  |
 | <a name="fld-translationunit.predefinedtypes"></a>`predefinedTypes` | `string list` |  |
+
+### <a name="val-typename"></a>`typeName`
+
+```sml
+val typeName : {tokens : CLex.token list, predefinedTypes : string list} -> ctype
+```
+
+`typeName {tokens, predefinedTypes}` parses one abstract C type name.
+
+It accepts array and function declarators without changing their shape.
+
+**Raises** [`Error`](#exn-error) for named declarators, storage classes or trailing syntax.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-typename.tokens"></a>`tokens` | `CLex.token list` |  |
+| <a name="fld-typename.predefinedtypes"></a>`predefinedTypes` | `string list` |  |
 
 ---
 

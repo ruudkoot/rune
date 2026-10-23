@@ -37,6 +37,7 @@ struct
        ("zmtp.zmtp", ["zmtp"], "zmtp/zmtp"),
        ("jupyter.jupyter", ["unicode", "json", "digest", "zmtp", "jupyter"], "jupyter/jupyter"),
        ("language.c.frontend", ["language/c"], "language/c/frontend"),
+       ("language.c.target", ["language/c"], "language/c/target"),
        ("ffi.model.policy", ["unicode", "json", "language/c", "ffi/model"], "ffi/model/policy")]
   fun files libraries =
     let fun one "unit" = unit ()

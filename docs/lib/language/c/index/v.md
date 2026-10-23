@@ -2,7 +2,7 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) **v**
 
-- `value` (type): [C_CONST](../sig/C_CONST.md#type-value)
+- `value` (type): [C_CONST](../sig/C_CONST.md#type-value), [C_INTEGER](../sig/C_INTEGER.md#type-value)
 
 ---
 

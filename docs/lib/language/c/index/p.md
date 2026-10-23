@@ -4,7 +4,9 @@
 
 - `Parameter` (con): [C_PARSE](../sig/C_PARSE.md#con-parameter)
 - `parameter` (type): [C_PARSE](../sig/C_PARSE.md#type-parameter)
+- `parse` (val): [C_TYPE](../sig/C_TYPE.md#val-parse)
 - `Pointer` (con): [C_PARSE](../sig/C_PARSE.md#con-pointer)
+- `promote` (val): [C_INTEGER](../sig/C_INTEGER.md#val-promote)
 - `Punctuation` (con): [C_LEX](../sig/C_LEX.md#con-punctuation)
 
 ---

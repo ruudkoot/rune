@@ -2,7 +2,10 @@
 
 [Overview](../README.md) &middot; **a** [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md)
 
+- `Aggregate` (con): [C_LAYOUT](../sig/C_LAYOUT.md#con-aggregate)
+- `alignment` (val): [C_LAYOUT](../sig/C_LAYOUT.md#val-alignment)
 - `Array` (con): [C_PARSE](../sig/C_PARSE.md#con-array)
+- `Atom` (con): [C_LAYOUT](../sig/C_LAYOUT.md#con-atom)
 - `attribute` (type): [C_PARSE](../sig/C_PARSE.md#type-attribute)
 - `Attributed` (con): [C_PARSE](../sig/C_PARSE.md#con-attributed)
 
