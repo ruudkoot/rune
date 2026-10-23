@@ -5,6 +5,25 @@ policy are written in Standard ML; the executable wrappers only launch
 their bytecode. Run commands from the worktree root so fixture paths have
 their documented meaning.
 
+## Real compiler-project replay
+
+`make bin/rune-lsp-project-replay.rbc` builds an independent stdio replay
+for opening `src/main/rune-main.sml` in the complete `rune.build` project.
+It explicitly supplies the source/library root and target, then sends the
+diagnostic/hover/symbol/link burst before waiting for any response. Latencies
+start at dispatch and include queue time. Any failed response fails the run.
+
+```
+bin/runevm bin/rune-lsp-project-replay.rbc /absolute/VM /absolute/runelsp.rbc \
+  /absolute/rune-source /new/results/replay.json
+```
+
+The unchanged installed `f4ee51368` release fails this replay at its existing
+256 MiB heap, 768 MiB address-space and 30-second job limits. The ledger is
+`baseline/2026-10-24-rune-project.json`; raw logs, the installed VSIX and
+source hashes are retained outside Git under `rune-benchmark-results/lsp`.
+Small protocol examples alone do not establish project-editing acceptance.
+
 ## Document and workspace foundations (M3)
 
 `make test-lsp` checks document lifetimes, atomic sequential edits,

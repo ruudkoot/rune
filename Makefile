@@ -2032,6 +2032,8 @@ VSCODE_CLIENT_SRCS := $(wildcard editors/vscode/src/*.js) editors/vscode/bundle.
 .PHONY: vscode dist-vscode test-vscode test-vscode-packaged test-vscode-editor
 bin/rune-lsp-distribution-tests.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/distribution-tests.sml manifests
 	$(RUNE) --library json --library lsp tests/lsp/client.sml tests/lsp/distribution-tests.sml -o $@
+bin/rune-lsp-project-replay.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/project-replay.sml manifests
+	$(RUNE) --library json --library lsp tests/lsp/client.sml tests/lsp/project-replay.sml -o $@
 editors/vscode/node_modules/.package-lock.json: editors/vscode/package.json editors/vscode/package-lock.json
 	$(NODE) -e 'if (+process.versions.node.split(".")[0] < 22) throw Error("VSIX tooling requires Node.js 22 or later")'
 	cd editors/vscode && $(NPM) ci --ignore-scripts --no-audit --no-fund

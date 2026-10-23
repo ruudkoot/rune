@@ -36,8 +36,8 @@ struct
           val body=Substring.string (Substring.triml 4 suffix)
       in if size body<count then NONE else SOME (Json.decode (String.substring (body,0,count)),String.extract (body,count,NONE)) end
     end
-  fun receive (Client {output,bytes,messages,...},predicate) =
-    let val until=Time.+ (Time.now (),Time.fromSeconds 20)
+  fun receiveWithin (Client {output,bytes,messages,...},predicate,timeout) =
+    let val until=Time.+ (Time.now (),timeout)
         fun buffer ()=case take (!bytes) of NONE => () | SOME (value,rest) =>
           (bytes:=rest;messages:= !messages @ [value];buffer ())
         fun loop () =
@@ -51,6 +51,7 @@ struct
                  in if Word8Vector.length chunk=0 then raise Fail "LSP server exited" else
                     (bytes:= !bytes ^ Byte.bytesToString chunk;loop ()) end end end
     in loop () end
+  fun receive (client,predicate)=receiveWithin(client,predicate,Time.fromSeconds 20)
   fun response (client,id)=receive (client,fn value => Json.member ("id",value)=SOME (Json.int id))
   fun result response=case Json.member ("result",response) of SOME value => value
     | NONE => raise Fail (Json.encode (field (response,"error")))
