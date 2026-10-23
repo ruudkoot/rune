@@ -177,10 +177,12 @@ struct
        # library: NAME ...
      and are loaded before it. A NAME is a directory under the directory of
      the libraries (--lib), test/property for LIBDIR/test/property, unless it
-     begins with / or ., when it is a path. *)
+     is an absolute host path or begins with ., when it is a path. *)
+
+  fun isLibraryPath name = OS.Path.isAbsolute name orelse String.isPrefix "." name
 
   fun libraryDir (libDir : string, name : string) : string =
-    if String.isPrefix "/" name orelse String.isPrefix "." name then name else libDir ^ "/" ^ name
+    if isLibraryPath name then name else libDir ^ "/" ^ name
 
   (* The libraries a library's MANIFEST names on its # library: lines. *)
   fun libraryRequires (dir : string) : string list =

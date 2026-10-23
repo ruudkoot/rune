@@ -156,6 +156,29 @@ struct
         val ()=check ("empty root-relative cache keeps its drive root",C.Project.cacheDirectories rootCache=["C:/"])
         val ()=C.close context
     in check ("project value survives session close",length (C.Project.sources first)=2) end)
+  fun absoluteLibrary () = temporary (fn root =>
+    let val basis=OS.Path.concat (root,"basis")
+        val library=OS.Path.concat (root,"custom")
+        val ()=(OS.FileSys.mkDir basis;OS.FileSys.mkDir library)
+        fun write (file,text)=let val output=TextIO.openOut file
+          in TextIO.output (output,text);TextIO.closeOut output end
+        val basisManifest=OS.Path.concat (basis,"MANIFEST")
+        val libraryManifest=OS.Path.concat (library,"MANIFEST")
+        val source=OS.Path.concat (library,"native.sml")
+        val ()=(write (basisManifest,"");write (libraryManifest,"native.sml | demand | rune | NativeLibrary | -\n");
+          write (source,"structure NativeLibrary=struct val value=42 end\n"))
+        fun clean ()=(List.app remove [basisManifest,libraryManifest,source];OS.FileSys.rmDir basis;OS.FileSys.rmDir library)
+        fun work () =
+          let val absolute=OS.FileSys.fullPath library
+              val parent=C.session {lib=SOME root,flags=["--library",absolute]}
+              val context=C.Analysis.create (parent,{context="absolute-library"})
+              val result=C.Analysis.check (context,{project=NONE,cancelled=fn () => false,
+                inputs=[{file="main.sml",text="val answer=NativeLibrary.value\n",mode="ascii",annotations=[],revision="1"}]})
+              val ()=check ("native absolute library paths retain their volume and do not get the library root prepended",
+                OS.Path.isAbsolute absolute andalso null (C.Analysis.diagnostics result) andalso
+                C.Analysis.typeAtOccurrence (result,{ordinal=0,offset=4})=SOME "int")
+          in C.Analysis.close context;C.close parent end
+    in (work () before clean ()) handle error => (clean () handle _ => ();raise error) end)
   fun buildQueries () = temporary (fn dir =>
     let val context=session ()
         val windows=(size dir>=2 andalso String.sub (dir,1)= #":") orelse String.isPrefix "\\\\" dir
@@ -207,6 +230,7 @@ structure CompilerApiTestMain = Main (struct
      Test.it "queries" CompilerApiTests.queries,
      Test.it "artifacts" CompilerApiTests.artifacts,
      Test.it "projects" CompilerApiTests.projects,
-     Test.it "build-queries" CompilerApiTests.buildQueries]
+     Test.it "build-queries" CompilerApiTests.buildQueries,
+     Test.it "native-absolute-library" CompilerApiTests.absoluteLibrary]
 end)
 val ()=CompilerApiTestMain.main ()

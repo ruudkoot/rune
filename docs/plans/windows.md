@@ -149,3 +149,17 @@ only when it began with `/`. The fixture now uses `OS.Path.isAbsolute`.
 Both native widths return the existing home directory in drive syntax, and
 the corrected fixture passes on all four Windows VMs. The fixture now checks
 the native-path contract with the portable predicate.
+
+Native absolute library paths now use the host path predicate in the shared
+compiler/documentation library resolver. The previous slash-prefix test
+prepended the installed library root to a drive path returned by `fullPath`.
+Seven public API cases pass on Linux interpreter/JIT, all six SML hosts and
+both Windows widths. An independent native before/after probe reproduces the
+bad manifest path and verifies the corrected library loads.
+
+Documentation source paths also retain Windows volumes during normalization
+and use percent-encoded `file:` URLs for drive/UNC sources. The versioned
+absolute-library fixture verifies its source link against the original file.
+Both native widths additionally passed drive, UNC, space and Unicode path
+probes against an independent URI oracle. The documentation consistency and
+31-case generator cohort passed.

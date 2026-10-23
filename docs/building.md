@@ -752,7 +752,10 @@ are the VM's standard streams.
 
 A library other than the basis library is compiled with `--library NAME`:
 the directory `NAME` of the `--lib` directory (`lib/test/property`, say),
-or a path when `NAME` begins with `/` or `.`. It has a `library.build` in
+or a path when `NAME` is absolute in the host's syntax or begins with `.`.
+Absolute Windows drive and UNC paths are accepted directly, including paths
+returned by `OS.FileSys.fullPath`. `runedoc --library` uses the same rule.
+It has a `library.build` in
 the basis library's form, whose `libraries NAME ... end` names the
 libraries it is written on, and the `MANIFEST` that `make manifests` makes
 of it (`rune --basis-index DIR`); those are compiled first, and the files of all of them are

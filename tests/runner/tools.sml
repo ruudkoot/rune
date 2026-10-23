@@ -100,7 +100,8 @@ struct
       val suite = (if isDir (lib ^ "/tests") then ["--tests", lib ^ "/tests"] else [])
                   @ (if exists (lib ^ "/ANNOTATIONS") then ["--annotations", lib ^ "/ANNOTATIONS"] else [])
                   @ (if exists (lib ^ "/LAW-SKIPS") then ["--law-skips", lib ^ "/LAW-SKIPS"] else [])
-      val where' = (if exists (lib ^ "/ON-BASIS") then ["--lib", "lib", "--library", "./tests/doc/" ^ n ^ ".lib"]
+      val where' = (if exists (lib ^ "/ABSOLUTE-LIBRARY") then ["--lib", "tests/doc", "--library", OS.FileSys.fullPath lib]
+                    else if exists (lib ^ "/ON-BASIS") then ["--lib", "lib", "--library", "./tests/doc/" ^ n ^ ".lib"]
                     else ["--lib", "tests/doc", "--library", n ^ ".lib"])
                    @ (if exists (lib ^ "/BASIS-DOCS") then "--basis-docs" :: words (lib ^ "/BASIS-DOCS") else [])
       val () = rmTree site
@@ -113,6 +114,17 @@ struct
       val () = write (o' ".lib.files", String.concat (List.map (fn p => "./" ^ p ^ "\n") (sort (if isDir site then tree site else []))))
       val () = sameDoc (n ^ ".lib.diag", o' ".lib.diag", t ".diag")
       val () = sameDoc (n ^ ".lib.files", o' ".lib.files", t ".files")
+      val () = if not (exists (lib ^ "/ABSOLUTE-LIBRARY")) then () else
+        let val file=OS.FileSys.fullPath (OS.Path.concat (lib,Hosts.trim (read (lib ^ "/ABSOLUTE-LIBRARY"))))
+            val windows=OS.Path.validVolume {isAbs=true,vol="C:"}
+            val path=if windows then String.map (fn #"\\" => #"/" | c => c) file else file
+            val hex="0123456789ABCDEF"
+            fun quote c=if Char.ord c<128 andalso (Char.isAlphaNum c orelse Char.contains "-._~/:" c) then str c else
+              "%" ^ str (String.sub (hex,Char.ord c div 16)) ^ str (String.sub (hex,Char.ord c mod 16))
+            val target=if windows then "file:" ^ (if String.isPrefix "//" path then "" else "///") ^ String.translate quote path else path
+            val pages=List.map read (glob (site ^ "/sig", ".md"))
+        in if List.exists (String.isSubstring ("](" ^ target ^ ")")) pages then ()
+           else fail "doc: absolute library source link does not name its original file" end
       fun optional (ext, text) = if exists (t ext) then (write (o' (".lib" ^ ext), text ()); sameDoc (n ^ ".lib" ^ ext, o' (".lib" ^ ext), t ext)) else ()
       val () = optional (".notes", fn () => read (site ^ "/notes.tsv"))
       val () = optional (".members", fn () => read (site ^ "/members.json"))
