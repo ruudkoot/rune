@@ -12,6 +12,7 @@ files
   src/lsp/worker-process.sml
   src/lsp/jobs.sml
   src/lsp/completion.sml
+  src/lsp/structure.sml
   src/lsp/worker-analysis.sml
   src/lsp/build.sml
   src/lsp/worker.sml

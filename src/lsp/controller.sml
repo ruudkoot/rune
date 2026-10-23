@@ -12,14 +12,23 @@ struct
     | Folders of IntInf.int
     | Choice of {uri:string,revision:IntInf.int,generation:IntInf.int,actions:(string*string) list}
     | Register of {id:string,epoch:IntInf.int}
+    | Refresh of {method:string,capability:string list,generation:IntInf.int}
     | Unregister
   datatype t=Controller of {workspace:W.t,documents:D.t,caps:P.capabilities,pending:request Q.t,
     epoch:IntInf.int ref,asked:string list ref,waiting:string list ref,registration:string option ref,
+    refreshing:string list ref,refreshDenied:string list ref,
     serial:IntInf.int ref,discover:string->unit,selected:string->unit,send:R.message->unit,log:string->unit,error:string->unit}
   fun workspace (Controller {workspace,...})=workspace
   fun issue (Controller {pending,send,error,...},method,params,data) =
     (send (Q.issue (pending,{method=method,params=params,data=data}));true)
     handle Q.Full => (error "workspace request limit reached";false)
+  fun refresh (controller as Controller {workspace,documents,caps,waiting,refreshing,refreshDenied,...},method,capability) =
+    if null (D.all documents) orelse not (null (!waiting)) orelse not (P.supports (caps,capability)) orelse
+       List.exists (fn pending => pending=method) (!refreshing @ !refreshDenied) then () else
+    if issue (controller,method,NONE,Refresh {method=method,capability=capability,generation=W.generation workspace})
+    then refreshing:=method:: !refreshing else ()
+  fun refreshPresentations controller = refresh (controller,"workspace/foldingRange/refresh",
+    ["workspace","foldingRange","refreshSupport"])
   fun scopes (Controller {workspace,documents,...}) =
     List.foldl (fn (uri,all) => if List.exists (fn prior => prior=uri) all then all else all @ [uri])
       (W.roots workspace) (List.map #uri (D.all documents))
@@ -46,7 +55,8 @@ struct
             Choice {uri=uri,revision= #revision snapshot,generation=W.generation workspace,actions=actions})
       in if sent then asked:=uri :: !asked else () end
     end
-  fun allContexts (controller as Controller {documents,...}) = List.app (fn snapshot:D.snapshot => context (controller,#uri snapshot)) (D.all documents)
+  fun allContexts (controller as Controller {documents,...}) =
+    (List.app (fn snapshot:D.snapshot => context (controller,#uri snapshot)) (D.all documents);refreshPresentations controller)
   fun unregister (controller as Controller {registration,...},id) =
     (if !registration=SOME id then registration:=NONE else ();
      ignore (issue (controller,"client/unregisterCapability",SOME (Json.Object
@@ -70,7 +80,8 @@ struct
     let val workspace=W.new {platform=platform,lib=lib}
         val ()=W.initialize (workspace,initialize)
     in Controller {workspace=workspace,documents=documents,caps=caps,pending=Q.new {prefix="runelsp-ws-",maxPending=2048},
-      epoch=ref 0,asked=ref [],waiting=ref [],registration=ref NONE,serial=ref 0,discover=discover,selected=selected,send=send,log=log,error=error} end
+      epoch=ref 0,asked=ref [],waiting=ref [],registration=ref NONE,refreshing=ref [],refreshDenied=ref [],
+      serial=ref 0,discover=discover,selected=selected,send=send,log=log,error=error} end
   fun initialized (controller as Controller {workspace,caps,epoch,...}) =
     (if null (W.roots workspace) andalso P.supports (caps,["workspace","workspaceFolders"])
      then ignore (issue (controller,"workspace/workspaceFolders",NONE,Folders (!epoch))) else ();
@@ -105,7 +116,8 @@ struct
     | _ => false
     end handle W.Invalid message => (error message;true) | J.Invalid message => (error message;true)
       | LspUri.Invalid => (error "invalid watched-file URI";true)
-  fun response (controller as Controller {workspace,documents,pending,epoch,waiting,asked,registration,error,log,selected,...},message) =
+  fun response (controller as Controller {workspace,documents,pending,epoch,waiting,asked,registration,
+                                        refreshing,refreshDenied,error,log,selected,...},message) =
     case Q.resolve (pending,message) of NONE => false | SOME (request,outcome) =>
       ((case request of
          Configuration {epoch=issued,scopes=uris} =>
@@ -122,7 +134,7 @@ struct
        | Folders issued => if issued<> !epoch then () else
            (case outcome of R.Result (Json.Array values) =>
               (W.setRoots (workspace,List.map W.folder values);
-               ignore (configuration (controller,scopes controller));watch controller)
+               ignore (configuration (controller,scopes controller));watch controller;allContexts controller)
             | R.Result Json.Null => () | _ => log "client supplied no workspace folders")
        | Choice {uri,revision,generation,actions} =>
            let val ()=asked:=List.filter (fn document => document<>uri) (!asked)
@@ -131,14 +143,22 @@ struct
              (case outcome of R.Result Json.Null => asked:=uri :: !asked
               | R.Result value =>
                   (case J.member (J.object value,"title") of SOME (Json.String title) =>
-                    (case List.find (fn (action,_) => action=title) actions of SOME (_,id) => (W.choose (workspace,uri,id);selected uri)
+                    (case List.find (fn (action,_) => action=title) actions of SOME (_,id) =>
+                       (W.choose (workspace,uri,id);selected uri;refreshPresentations controller)
                      | NONE => error "unknown build-context action") | _ => error "invalid build-context action")
               | R.Error _ => (asked:=uri :: !asked;log "client declined build-context selection")) end
        | Register {id,epoch=issued} =>
            (case outcome of R.Result _ => if issued= !epoch then () else unregister (controller,id)
             | R.Error _ => (if !registration=SOME id then registration:=NONE else ();log "client refused file watchers; contexts revalidate on queries"))
+       | Refresh {method,capability,generation} =>
+           (refreshing:=List.filter (fn pending => pending<>method) (!refreshing);
+            case outcome of R.Result _ => if W.generation workspace=generation then () else refresh (controller,method,capability)
+              | R.Error {code,...} =>
+                  (if code=R.methodNotFound then refreshDenied:=method:: !refreshDenied else ();
+                   log ("client refused " ^ method)))
        | Unregister => ());true)
       handle W.Invalid message => (error message;true) | J.Invalid message => (error message;true)
            | LspUri.Invalid => (error "invalid workspace URI";true)
-  fun clear (Controller {pending,...})=ignore (Q.clear pending)
+  fun clear (Controller {pending,refreshing,refreshDenied,...})=
+    (ignore (Q.clear pending);refreshing:=[];refreshDenied:=[])
 end

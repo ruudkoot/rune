@@ -4,6 +4,7 @@
 
 - `Analysis.signatureAt` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.signatureat)
 - `Analysis.snapshot` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.snapshot)
+- `Analysis.syntaxAt` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.syntaxat)
 - `Project.source` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-project.source)
 - `Project.sources` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.sources)
 - `session` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-session)

@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 81 of 81 entries documented |
+| Documentation | 82 of 82 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -107,6 +107,7 @@ sig
     val <a href="#val-analysis.project">project</a> : snapshot -&gt; string option
     val <a href="#val-analysis.inputs">inputs</a> : snapshot -&gt; input list
     val <a href="#val-analysis.unitat">unitAt</a> : snapshot * {<a href="#fld-analysis.unitat.ordinal">ordinal</a>:int} -&gt; string option
+    val <a href="#val-analysis.syntaxat">syntaxAt</a> : snapshot * {<a href="#fld-analysis.syntaxat.ordinal">ordinal</a>:int} -&gt; Syntax.t option
     val <a href="#val-analysis.dependencies">dependencies</a> : snapshot -&gt; input list
     val <a href="#val-analysis.diagnostics">diagnostics</a> : snapshot -&gt; diagnostic list
     val <a href="#val-analysis.occurrences">occurrences</a> : snapshot -&gt; occurrence list
@@ -994,6 +995,23 @@ It remains readable after closing the analysis context or session.
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-analysis.unitat.ordinal"></a>`ordinal` | `int` |  |
+
+#### <a name="val-analysis.syntaxat"></a>`syntaxAt`
+
+```sml
+val syntaxAt : snapshot * {ordinal:int} -> Syntax.t option
+```
+
+`syntaxAt (snapshot, position)` returns the captured syntax of an
+attempted primary source occurrence, using its actual incoming fixities.
+
+A failed parse retains its current text and recovery diagnostics. An
+invalid ordinal, or an input not reached after an earlier failure,
+returns NONE. The result is immutable and survives closing its owner.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.syntaxat.ordinal"></a>`ordinal` | `int` |  |
 
 #### <a name="val-analysis.dependencies"></a>`dependencies`
 

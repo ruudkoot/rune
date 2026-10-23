@@ -284,6 +284,13 @@ sig
        do not interpret its spelling. An invalid ordinal returns NONE.
        It remains readable after closing the analysis context or session. *)
     val unitAt : snapshot * {ordinal:int} -> string option
+    (* `syntaxAt (snapshot, position)` returns the captured syntax of an
+       attempted primary source occurrence, using its actual incoming fixities.
+
+       A failed parse retains its current text and recovery diagnostics. An
+       invalid ordinal, or an input not reached after an earlier failure,
+       returns NONE. The result is immutable and survives closing its owner. *)
+    val syntaxAt : snapshot * {ordinal:int} -> Syntax.t option
     (* `dependencies snapshot` returns captured library source and identities. *)
     val dependencies : snapshot -> input list
     (* `diagnostics snapshot` returns source-addressed analysis diagnostics. *)

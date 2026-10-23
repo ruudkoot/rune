@@ -50,6 +50,33 @@ struct
         val ()=C.close parent
     in check ("frozen snapshot survives closing",A.inputs initial=[first,second] andalso not (null (A.facts initial))
       andalso A.unitAt (initial,{ordinal=0})=firstUnit) end
+  fun syntaxSnapshots () =
+    let val parent=compiler ()
+        val context=A.create (parent,{context="syntax-snapshots"})
+        val first=input ("fixity.sml","infixr 6 %%\nfun (a %% b)=a+b\n","1")
+        val second=input ("uses.sml","val value=1 %% 2 %% 3\n","1")
+        val snapshot=analyze (context,[first,second])
+        val incoming=valOf (A.syntaxAt (snapshot,{ordinal=0}))
+        val syntax=valOf (A.syntaxAt (snapshot,{ordinal=1}))
+        fun parse fixity=C.Syntax.parse {file= #file second,text= #text second,mode="ascii",orPatterns=false,fixity=fixity}
+        val oracle=parse (C.Syntax.fixities incoming)
+        val wrong=parse C.Syntax.initial
+        val ()=check ("captured syntax uses actual cross-file fixities",null (A.diagnostics snapshot) andalso
+          C.Syntax.events syntax=C.Syntax.events oracle andalso C.Syntax.events syntax<>C.Syntax.events wrong)
+        val replayed=analyze (context,[first,second])
+        val ()=check ("replayed syntax remains available",C.Syntax.events (valOf (A.syntaxAt (replayed,{ordinal=1})))=C.Syntax.events syntax)
+        val brokenText="val value=(\n"
+        val failed=analyze (context,[first,input ("uses.sml",brokenText,"2")])
+        val broken=valOf (A.syntaxAt (failed,{ordinal=1}))
+        val ()=check ("failed syntax has current text rather than the last successful tree",
+          C.Syntax.text broken=brokenText andalso not (null (C.Syntax.diagnostics broken)))
+        val blocked=analyze (context,[input ("fixity.sml","val bad=(\n","3"),second])
+        val ()=check ("unattempted and invalid source ordinals have no syntax",
+          not (isSome (A.syntaxAt (blocked,{ordinal=1}))) andalso
+          not (isSome (A.syntaxAt (snapshot,{ordinal= ~1}))) andalso not (isSome (A.syntaxAt (snapshot,{ordinal=2}))))
+        val ()=(A.close context;C.close parent)
+    in check ("syntax snapshots survive closing and later failed attempts",C.Syntax.text syntax= #text second andalso
+      C.Syntax.events syntax=C.Syntax.events oracle andalso C.Syntax.text broken=brokenText) end
   fun bindings () =
     let val parent=compiler ()
         val context=A.create (parent,{context="bindings"})
@@ -247,6 +274,7 @@ structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
   val tests=Test.describe "compiler-analysis"
     [Test.it "snapshots-checkpoints-cancellation" CompilerAnalysisTests.snapshots,
+     Test.it "captured-syntax-snapshots" CompilerAnalysisTests.syntaxSnapshots,
      Test.it "lexical-bindings" CompilerAnalysisTests.bindings,
      Test.it "generative-identities" CompilerAnalysisTests.generative,
      Test.it "static-library-replay" CompilerAnalysisTests.libraries,

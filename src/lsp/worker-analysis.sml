@@ -12,7 +12,8 @@ struct
   structure J=RuneLspSync
   exception Stale of string
   type context={key:string,compiler:C.session,analysis:A.t}
-  type source={file:string,uri:string,text:string,mode:string,ordinal:int option,version:IntInf.int option,index:L.t option,
+  type source={file:string,uri:string,text:string,mode:string,ordinal:int option,syntax:C.Syntax.t option,
+    version:IntInf.int option,index:L.t option,
     tokens:(C.Syntax.piece list * C.Syntax.piece vector) option ref}
   type view={id:string,snapshot:A.snapshot,sources:source list,encoding:LspProtocol.encoding,uri:string,ordinal:int option,
     capabilities:Json.value,activeUnit:string option}
@@ -64,7 +65,8 @@ struct
     (uri<> #uri view orelse #ordinal source=SOME (getOpt (#ordinal view,0)))) (#sources view)
   fun sourceFor (view:view,file)=List.find (fn source:source => #file source=file) (#sources view)
   fun tokenData (source:source) = case !(#tokens source) of SOME tokens => tokens | NONE =>
-    let val parsed=C.Syntax.parse {file= #file source,text= #text source,mode= #mode source,orPatterns=true,fixity=C.Syntax.initial}
+    let val parsed=case #syntax source of SOME syntax => syntax | NONE =>
+          C.Syntax.parse {file= #file source,text= #text source,mode= #mode source,orPatterns=true,fixity=C.Syntax.initial}
         val pieces=C.Syntax.pieces parsed
         val tokens=(pieces,Vector.fromList pieces)
     in #tokens source:=SOME tokens;tokens end
@@ -205,7 +207,9 @@ struct
                 else List.map (fn snapshot:D.snapshot => (#uri snapshot,SOME (#version snapshot))) aliases
               val index=(SOME (L.make (#text input)) handle L.Invalid => NONE)
               val pieces=ref NONE
-          in List.map (fn (uri,version) => {file= #file input,uri=uri,text= #text input,mode= #mode input,ordinal=ordinal,version=version,
+              val syntax=Option.mapPartial (fn ordinal => A.syntaxAt (snapshot,{ordinal=ordinal})) ordinal
+          in List.map (fn (uri,version) => {file= #file input,uri=uri,text= #text input,mode= #mode input,ordinal=ordinal,
+            syntax=syntax,version=version,
             index=index,tokens=pieces}:source) uris end
         val primary=A.inputs snapshot
         val sources=List.concat (ListPair.map (fn (input,ordinal) => captured (input,SOME ordinal))
@@ -393,6 +397,10 @@ struct
        | "textDocument/declaration" => target (fn occurrence:A.occurrence => #declaration occurrence)
        | "textDocument/documentHighlight" => (case offset () of NONE => Json.Array []
            | SOME offset => highlights (view,source,offset))
+       | "textDocument/foldingRange" => RuneLspStructure.folding {text= #text source,syntax= #syntax source,
+           pieces=tokens source,index= #index source,encoding= #encoding view,capabilities= #capabilities view}
+       | "textDocument/selectionRange" => RuneLspStructure.selection {text= #text source,syntax= #syntax source,
+           pieces=tokens source,index= #index source,encoding= #encoding view,positions=J.required (params,"positions")}
        | "textDocument/typeDefinition" =>
            let val constructors=case offset () of NONE => [] | SOME offset => List.concat (List.map #constructors
                  (List.filter (fn fact:A.fact => #file fact= #file source andalso ownedUnit (view,#unit fact) andalso not (#derived fact)

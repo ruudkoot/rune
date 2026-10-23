@@ -56,6 +56,10 @@ ordinary batch compilation leaves provenance tracking disabled.
 clients compare it with fact/occurrence unit fields instead of constructing
 identities from filenames. `typeAtOccurrence` selects an ordered source
 occurrence explicitly when a file appears several times in a build.
+`syntaxAt` retains each attempted primary input's current parser snapshot,
+including recovery diagnostics after a failed parse and its actual incoming
+project fixities. Inputs not reached after an earlier failure have no captured
+syntax. These trees remain readable after the owner closes.
 `visibleAt` replays the captured
 prefix and asks the compiler for the lexical environment at a byte cursor,
 or for members of a qualified structure path. Its frozen names, kinds,

@@ -57,7 +57,8 @@ struct
         val () = need (field "positionEncoding" caps = Json.String "utf-16" andalso
                        field "change" (field "textDocumentSync" caps) = Json.int 2 andalso
                        field "openClose" (field "textDocumentSync" caps) = Json.Bool true andalso
-                       field "documentHighlightProvider" caps = Json.Bool true,
+                       field "documentHighlightProvider" caps = Json.Bool true andalso
+                       field "foldingRangeProvider" caps = Json.Bool true andalso field "selectionRangeProvider" caps = Json.Bool true,
                        "document capability negotiation differs")
         val () = need (code (List.nth (rows, 1)) = SOME ~32601 andalso field "id" (List.nth (rows, 1)) = Json.String "query",
                        "unimplemented provider was advertised or its request id changed")

@@ -75,6 +75,16 @@ spellings of the same path; navigation uses the corresponding inferred type.
 The remaining presentation features and performance gates are still part of
 M9 acceptance.
 
+Folding and selection ranges use captured compiler syntax. Type errors keep
+structural ranges available, and parse failures retain current comments and
+tokens rather than the previous successful tree. Folding returns complete-line
+ranges, respects the client's range limit, and caps results at 8192. Selection
+requests support up to 128 positions and 64 nested ranges per position, retaining
+the document as the outermost range. Build-file selections use the shared build
+grammar's path spans. Split encoded characters and oversized requests fail
+explicitly. Negotiated folding refreshes follow workspace/configuration changes;
+pending refreshes coalesce and ordinary typing does not trigger a global refresh.
+
 Clients with snippet support also receive invocation templates whose
 argument groups follow the checked callable type. Their default argument
 expressions use `raise op Match` where a nullary `Match` exception is visible,

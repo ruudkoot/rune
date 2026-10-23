@@ -259,6 +259,98 @@ struct
           in check ("type definition uses the selected occurrence's inferred type",case definition of
             Json.Array [target] => C.field (target,"uri")=Json.String (uri (dir ^ "/b.sml")) | _ => false) end))
     in (List.app work ["shared.sml","./shared.sml"] before clean ()) handle error => (clean () handle _ => ();raise error) end
+  val structuralText="(* first\n   second *)\nstructure S =\nstruct\n  fun f x =\n    let\n      val y = x + 1\n    in\n      y\n    end\nend\nval result=S.f 1\n"
+  fun structuralRanges ()=fixture (fn client =>
+    let val uri="untitled:structure"
+        val ()=openDocument (client,uri,structuralText)
+        val ()=C.request (client,240,"textDocument/foldingRange",object [("textDocument",document uri)])
+        val folds=C.result (C.response (client,240))
+        val lines=case folds of Json.Array values => List.map (fn value => (C.field (value,"startLine"),C.field (value,"endLine"))) values
+          | _ => raise Fail "folds are not an array"
+        val ()=check ("folds follow comments and real nested compiler syntax",lines=
+          List.map (fn (a,b) => (Json.int a,Json.int b)) [(0,1),(2,10),(3,10),(4,9),(5,9)])
+        val ()=check ("comment folds retain their kind",case folds of Json.Array (first::_) => C.field (first,"kind")=Json.String "comment" | _ => false)
+        val ()=C.request (client,241,"textDocument/selectionRange",object [("textDocument",document uri),
+          ("positions",Json.Array [object [("line",Json.int 6),("character",Json.int 14)],object [("line",Json.int 11),("character",Json.int 13)]])])
+        val selections=C.result (C.response (client,241))
+        fun parsed node=valOf (LspProtocol.rangeFromJson (C.field (node,"range")))
+        fun leq (a:LspProtocol.position,b:LspProtocol.position)= #line a< #line b orelse #line a= #line b andalso #character a<= #character b
+        fun nested node=case Json.member ("parent",node) of NONE => true | SOME parent =>
+          let val small=parsed node val large=parsed parent
+          in small<>large andalso leq (#start large,#start small) andalso leq (#stop small,#stop large) andalso nested parent end
+        val (first,second)=case selections of Json.Array [first,second] => (first,second) | _ => raise Fail "selection cardinality differs"
+        val ()=check ("selection starts with the identifier and qualified member components",
+          parsed first={start={line=6,character=14},stop={line=6,character=15}} andalso
+          parsed second={start={line=11,character=13},stop={line=11,character=14}})
+        val ()=check ("selection parents are strict containing ranges",nested first andalso nested second)
+        val ()=C.notify (client,"textDocument/didChange",object [("textDocument",object [("uri",Json.String uri),("version",Json.int 2)]),
+          ("contentChanges",Json.Array [object [("text",Json.String "(* first\n second *)\nval bad:int=true\nstructure S=\nstruct\nend\n")]])])
+        val ()=C.request (client,242,"textDocument/foldingRange",object [("textDocument",document uri)])
+        val typedError=C.result (C.response (client,242))
+        val ()=check ("type errors retain current structural syntax",case typedError of Json.Array values =>
+          List.exists (fn value => C.field (value,"startLine")=Json.int 3 andalso C.field (value,"endLine")=Json.int 5) values | _ => false)
+        val ()=C.notify (client,"textDocument/didChange",object [("textDocument",object [("uri",Json.String uri),("version",Json.int 3)]),
+          ("contentChanges",Json.Array [object [("text",Json.String "(* first\n second *)\nval bad=(\n")]])])
+        val ()=C.request (client,243,"textDocument/foldingRange",object [("textDocument",document uri)])
+        val recovered=C.result (C.response (client,243))
+    in check ("parse errors keep comments without reusing stale structure folds",case recovered of
+      Json.Array [value] => C.field (value,"startLine")=Json.int 0 andalso C.field (value,"endLine")=Json.int 1 | _ => false) end)
+  fun foldingLimits ()=fixtureWith (object [("textDocument",object [("foldingRange",object
+    [("rangeLimit",Json.int 1),("lineFoldingOnly",Json.Bool true)])])]) (fn client =>
+    let val uri="untitled:fold-limit"
+        val ()=openDocument (client,uri,structuralText)
+        val ()=C.request (client,250,"textDocument/foldingRange",object [("textDocument",document uri)])
+        val result=C.result (C.response (client,250))
+    in check ("fold count and complete-line capability are respected",case result of Json.Array [value] =>
+      Json.member ("startCharacter",value)=NONE andalso Json.member ("endCharacter",value)=NONE | _ => false) end)
+  fun selectionValidation ()=fixtureInitialized (object [("capabilities",object []),
+    ("initializationOptions",object [("sourceMode",Json.String "unicode")])]) (fn client =>
+    let val uri="untitled:selection-validation"
+        val ()=openDocument (client,uri,"(* \240\159\154\128 *)\n")
+        fun query (id,positions)=(C.request (client,id,"textDocument/selectionRange",object [("textDocument",document uri),("positions",positions)]);C.response (client,id))
+        val split=query (260,Json.Array [object [("line",Json.int 0),("character",Json.int 4)]])
+        val ()=check ("selection rejects a split UTF16 scalar",C.field (C.field (split,"error"),"code")=Json.int (~32602))
+        val huge=query (261,Json.Array (List.tabulate (129,fn _ => object [("line",Json.int 0),("character",Json.int 0)])))
+        val ()=check ("selection position budget is explicit",C.field (C.field (huge,"error"),"code")=Json.int (~32803))
+    in check ("empty position arrays have an empty result",C.result (query (262,Json.Array []))=Json.Array []) end)
+  fun foldingRefresh () =
+    let val capabilities=object [("workspace",object [("foldingRange",object [("refreshSupport",Json.Bool true)])])]
+        fun isRefresh value=Json.member ("method",value)=SOME (Json.String "workspace/foldingRange/refresh")
+        fun configure (client,mode)=C.notify (client,"workspace/didChangeConfiguration",object
+          [("settings",object [("sourceMode",Json.String mode)])])
+        fun acknowledge (client,message,result)=C.send (client,object
+          [("jsonrpc",Json.String "2.0"),("id",C.field (message,"id")),("result",result)])
+        fun barrier (client,id,uri)=
+          (C.request (client,id,"textDocument/foldingRange",object [("textDocument",document uri)]);ignore (C.result (C.response (client,id))))
+        fun pending (C.Client {messages,...})=List.exists isRefresh (!messages)
+        val ()=fixtureWith capabilities (fn client =>
+          let val uri="untitled:fold-refresh"
+              val ()=openDocument (client,uri,"val x=1\n")
+              val ()=configure (client,"unicode")
+              val first=C.receive (client,isRefresh)
+              val ()=configure (client,"ascii")
+              val ()=barrier (client,270,uri)
+              val ()=check ("folding refreshes coalesce while a request is pending",not (pending client))
+              val ()=acknowledge (client,first,Json.Null)
+              val next=C.receive (client,isRefresh)
+              val ()=check ("a newer workspace generation gets a fresh refresh id",C.field (first,"id")<>C.field (next,"id"))
+              val ()=acknowledge (client,next,Json.Null)
+              val ()=barrier (client,271,uri)
+              val ()=check ("refresh acknowledgements do not create a loop",not (pending client))
+              val ()=C.notify (client,"textDocument/didChange",object [("textDocument",object [("uri",Json.String uri),("version",Json.int 2)]),
+                ("contentChanges",Json.Array [object [("text",Json.String "val x=2\n")]])])
+              val ()=barrier (client,272,uri)
+          in check ("ordinary typing does not trigger a global folding refresh",not (pending client)) end)
+    in fixtureWith capabilities (fn client =>
+      let val uri="untitled:fold-refresh-refusal"
+          val ()=openDocument (client,uri,"val x=1\n")
+          val ()=configure (client,"unicode")
+          val message=C.receive (client,isRefresh)
+          val ()=C.send (client,object [("jsonrpc",Json.String "2.0"),("id",C.field (message,"id")),
+            ("error",object [("code",Json.int (~32601)),("message",Json.String "not implemented")])])
+          val ()=configure (client,"ascii")
+          val ()=barrier (client,280,uri)
+      in check ("an unsupported client refresh method is not requested again",not (pending client)) end) end
   fun workspaceSymbols ()=fixtureWith (object [("workspace",object [("symbol",object
     [("resolveSupport",object [("properties",Json.Array [Json.String "location.range"])])])])]) (fn client =>
     let val uri="untitled:workspace-symbols"
@@ -453,6 +545,12 @@ struct
               val ()=C.request (client,183,"textDocument/diagnostic",object [("textDocument",document uri)])
               val corrected=C.result (C.response (client,183))
               val ()=check ("valid build overlays clear errors without SML parsing or execution",C.field (corrected,"items")=Json.Array [])
+              val ()=C.request (client,185,"textDocument/selectionRange",object [("textDocument",document uri),
+                ("positions",Json.Array [object [("line",Json.int 0),("character",Json.int 8)]])])
+              val selection=C.result (C.response (client,185))
+              val ()=check ("build selections use actual grammar path spans",case selection of Json.Array [node] =>
+                (case LspProtocol.rangeFromJson (C.field (node,"range")) of SOME range =>
+                  range={start={line=0,character=6},stop={line=0,character=23}} | _ => false) | _ => false)
               val ()=C.request (client,184,"completionItem/resolve",item)
               val stale=C.response (client,184)
           in check ("build path resolution rejects stale source revisions",C.field (C.field (stale,"error"),"code")=Json.int (~32801)) end)
@@ -474,6 +572,10 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "highlight-position-encodings" RuneLspSemanticProtocolTests.highlightEncodings,
     Test.it "highlight-response-budget" RuneLspSemanticProtocolTests.highlightBudget,
     Test.it "highlight-source-occurrence" RuneLspSemanticProtocolTests.highlightOccurrence,
+    Test.it "structural-ranges" RuneLspSemanticProtocolTests.structuralRanges,
+    Test.it "folding-client-limits" RuneLspSemanticProtocolTests.foldingLimits,
+    Test.it "selection-validation" RuneLspSemanticProtocolTests.selectionValidation,
+    Test.it "folding-refresh" RuneLspSemanticProtocolTests.foldingRefresh,
     Test.it "completion" RuneLspSemanticProtocolTests.completion,
     Test.it "signature-help" RuneLspSemanticProtocolTests.signatureHelp,
     Test.it "completion-snippets" RuneLspSemanticProtocolTests.completionSnippets,

@@ -22,7 +22,7 @@ struct
         val native=Option.map #path (U.native (platform,U.parse uri))
         val file=getOpt (native,uri)
         val text=L.text (#content snapshot)
-        val source={file=file,uri=uri,text=text,mode="ascii",ordinal=NONE,version=SOME (#version snapshot),
+        val source={file=file,uri=uri,text=text,mode="ascii",ordinal=NONE,syntax=NONE,version=SOME (#version snapshot),
           index=SOME (#content snapshot),tokens=ref NONE}:E.source
         val configuration=W.configurationFor (workspace,uri)
         fun matches (target:W.target)=case native of NONE => false | SOME path =>
@@ -82,7 +82,15 @@ struct
           in if previous=SOME id then Json.Object [("kind",Json.String "unchanged"),("resultId",Json.String id)] else
             Json.Object [("kind",Json.String "full"),("resultId",Json.String id),("items",Json.Array items)] end
     in case method of
-         "textDocument/completion" =>
+         "textDocument/selectionRange" =>
+           let val grammar=C.Project.buildSyntax {file=file,text=text}
+               val pieces=List.map (fn reference:C.Project.buildReference =>
+                 {kind="buildPath",start= #start reference,stop= #stop reference,
+                  text=String.substring (text,#start reference,#stop reference- #start reference)}:C.Syntax.piece)
+                 (#references grammar)
+           in RuneLspStructure.selection {text=text,syntax=NONE,pieces=pieces,index=SOME (#content snapshot),
+             encoding=encoding,positions=J.required (params,"positions")} end
+       | "textDocument/completion" =>
            let val result=items (position ())
            in Json.Object [("items",Json.Array (#items result)),("isIncomplete",Json.Bool (#isIncomplete result))] end
        | "completionItem/resolve" =>

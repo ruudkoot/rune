@@ -489,6 +489,13 @@
     },
     {
      "kind": "val",
+     "name": "Analysis.syntaxAt",
+     "spec": "val syntaxAt : snapshot * {ordinal:int} -> Syntax.t option",
+     "doc": "`syntaxAt (snapshot, position)` returns the captured syntax of an\nattempted primary source occurrence, using its actual incoming fixities.\n\nA failed parse retains its current text and recovery diagnostics. An\ninvalid ordinal, or an input not reached after an earlier failure,\nreturns NONE. The result is immutable and survives closing its owner.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.syntaxat"
+    },
+    {
+     "kind": "val",
      "name": "Analysis.dependencies",
      "spec": "val dependencies : snapshot -> input list",
      "doc": "`dependencies snapshot` returns captured library source and identities.\n\n",

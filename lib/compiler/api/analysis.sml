@@ -14,7 +14,8 @@ struct
   type call={name:string,path:string list,detail:string,arguments:string list list,argument:int,parameter:int}
   type snapshot={id:string,context:string,project:string option,inputs:input list,dependencies:input list,
     diagnostics:C.diagnostic list,occurrences:occurrence list,types:typeDefinition list,facts:fact list,reused:int,checked:int,
-    config:C.config,cache:E.entry list,plan:string,steps:CompilerProject.step list,libraries:string list,prelude:CompilerPrelude.plan}
+    config:C.config,cache:E.entry list,syntaxes:(string*CompilerSyntax.t) list,plan:string,
+    steps:CompilerProject.step list,libraries:string list,prelude:CompilerPrelude.plan}
   datatype t=Analysis of {parent:C.session,context:string,namespace:string,engine:E.session,
     token:unit ref,serial:IntInf.int ref,busy:bool ref,closed:bool ref}
   datatype checkpoint=Checkpoint of {token:unit ref,entries:E.entry list,plan:string}
@@ -75,7 +76,8 @@ struct
               val snapshot={id=namespace ^ ":" ^ IntInf.toString (!serial),context=name,project=project,inputs=inputs,
                 dependencies=List.map dependency (#dependencies result),diagnostics= #diagnostics result,
                 occurrences=List.map freeze (#uses result),types=types,facts= #facts result,
-                reused= #reused result,checked= #checked result,config=config,cache= #cache result,plan= #plan result,
+                reused= #reused result,checked= #checked result,config=config,cache= #cache result,
+                syntaxes= #syntaxes result,plan= #plan result,
                 steps=steps,libraries=libraries,prelude= #prelude result}:snapshot
           in serial:=IntInf.+ (!serial,1);snapshot end
         val result=work () handle error => (busy:=false;raise error)
@@ -95,6 +97,8 @@ struct
   fun unitAt (snapshot:snapshot,{ordinal}) =
     if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
       SOME (E.unitName (#file (List.nth (#inputs snapshot,ordinal)),ordinal+1))
+  fun syntaxAt (snapshot:snapshot,position) = Option.mapPartial (fn unit =>
+    Option.map #2 (List.find (fn (name,_) => name=unit) (#syntaxes snapshot))) (unitAt (snapshot,position))
   fun typeAtOccurrence (snapshot:snapshot,{ordinal,offset}) =
     if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
       let val input=List.nth (#inputs snapshot,ordinal)

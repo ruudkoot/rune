@@ -13,7 +13,7 @@ struct
   type snapshot={facts:fact list,diagnostics:CompilerSession.diagnostic list,reused:int,checked:int,types:typeDefinition list,dependencies:source list,
     uses:(string*(string*(string list*string)*Source.span*Env.origin*bool)) list,
     candidates:candidate list,role:string,fields:(string*string) list,application:application option,
-    cache:entry list,plan:string,prelude:CompilerPrelude.plan}
+    cache:entry list,syntaxes:(string*CompilerSyntax.t) list,plan:string,prelude:CompilerPrelude.plan}
   datatype session=Session of {stored:entry list ref,plan:string ref,config:CompilerSession.config,closed:bool ref}
   exception Cancelled
   fun new config=Session {stored=ref [],plan=ref "",config=config,closed=ref false}
@@ -76,6 +76,7 @@ struct
         val types=ref [] : typeDefinition list list ref
         val uses=ref []
         val unitUses=ref []
+        val syntaxes=ref [] : (string*CompilerSyntax.t) list ref
         val ()=Env.tracking:=true
         val ()=Env.observe:=(fn event => unitUses:=event :: !unitUses)
         val reused=ref 0
@@ -117,7 +118,8 @@ struct
               val cached=case previous of SOME entry =>
                 if !prefix andalso not (case query of SOME query => #unit query=name | NONE => false) andalso #name entry=name andalso #allow entry=allow andalso #mode entry=mode
                   andalso CompilerSyntax.text (#syntax entry)=text then SOME entry else NONE | NONE => NONE
-              val entry=case cached of SOME entry => (reused:= !reused+1;entry)
+              fun remember syntax=if keepFacts then syntaxes:=(name,syntax):: !syntaxes else ()
+              val entry=case cached of SOME entry => (remember (#syntax entry);reused:= !reused+1;entry)
               | NONE => (prefix:=false;
                 let val ((syntaxTree,syntax,outgoing),usages)=Usage.record (fn () =>
                     let val ()=List.app (fn name => Usage.use ("fix",name)) (StringMap.listKeys (#table (!fixity)))
@@ -129,6 +131,7 @@ struct
                              {start= #start change,stop= #stop change,text= #text change,fixity= !fixity})
                            else CompilerSyntax.parse {file=file,text=text,mode=mode,orPatterns=false,fixity= !fixity} end
                     | NONE => CompilerSyntax.parse {file=file,text=text,mode=mode,orPatterns=false,fixity= !fixity}
+                    val ()=remember syntaxTree
                     val ()=case CompilerSyntax.problems syntaxTree of [] => () | problem :: _ => raise Error.CompileError problem
                     val syntax=CompilerSyntax.bridge syntaxTree
                     val ()=case query of SOME query => if #unit query=name then
@@ -273,6 +276,6 @@ struct
       reused= !reused,checked= !checked,types=List.concat (List.rev (!types)),
       dependencies=List.map (fn (entry,text) => {file=BasisManifest.path entry,text=text,mode=Source.Ascii}:source) librarySources,
       uses=List.concat (List.rev (!uses)),candidates=candidates (),role= !role,fields=fields (),application=Option.map #2 (!application),
-      cache= !stored,plan=planKey,prelude=plan} end)
+      cache= !stored,syntaxes=List.rev (!syntaxes),plan=planKey,prelude=plan} end)
   fun checkSteps (session,sources,steps,libraries,cancelled)=checkWith (session,sources,steps,libraries,cancelled,NONE,[],NONE)
 end

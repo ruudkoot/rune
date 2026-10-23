@@ -80,6 +80,19 @@ than inventing mutable writes. Ranges use the negotiated position encoding.
 Requests exceeding the 8192-range response budget fail explicitly without a
 partial highlight set, and leave the worker available for later queries.
 
+`textDocument/foldingRange` returns complete-line syntax/comment folds and
+honours `rangeLimit`. `textDocument/selectionRange` returns one containing range
+chain per requested position, including compiler syntax and qualified-name
+components. Chains have at most 64 entries and requests at most 128 positions;
+the outermost range covers the document. Split character positions are invalid.
+Build documents use build grammar path spans for selection.
+
+Clients offering `workspace.foldingRange.refreshSupport` receive refresh
+requests after relevant workspace/configuration changes and context choices.
+Only one request is outstanding; a changed generation is refreshed after the
+acknowledgement. A `MethodNotFound` refusal disables that refresh for the
+connection. Text edits do not emit global folding refreshes.
+
 `$/setTrace` accepts off, messages and verbose. Requested trace data is
 sent as framed `$/logTrace` notifications; operational errors remain on
 stderr. Notifications never receive ordinary response messages.

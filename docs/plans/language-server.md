@@ -24,7 +24,7 @@ documentation and its evidence beside the tests before this plan is retired.
 | M6 | Document and workspace diagnostics | M5 | in progress: push/pull/workspace reports, refresh, cancellation and partial progress implemented; full coverage/performance acceptance remains |
 | M7 | Hover, navigation and symbols | M5 | in progress: navigation, document/workspace symbols and stale resolve tests pass; documentation, broader module cases and measurements remain |
 | M8 | Completion, signature help and inline completion | M7 | in progress: lexical/qualified/record completion, documentation resolve, invocation snippets, signature help, negotiated inline patterns and build-file path completion implemented; broader recovery and full acceptance remain |
-| M9 | Highlighting, hints, structural editing, links and colours | M4, M7 | in progress: binding-aware document highlights implemented; tokens, hints, structural features and full acceptance remain |
+| M9 | Highlighting, hints, structural editing, links and colours | M4, M7 | in progress: document highlights, captured syntax, folding/refresh and nested selection implemented; tokens, hints, links, colours and full acceptance remain |
 | M10 | References, rename and workspace/file edits | M5-M7 | planned |
 | M11 | Formatting, code actions, refactorings and lenses | M4, M7-M10 | planned |
 | M12 | Call hierarchy, monikers and virtual source content | M7, M10 | planned |
@@ -1043,6 +1043,18 @@ pass in `/tmp/rune-lsp-m9-final-cohort.log` and
 `/tmp/rune-lsp-m9-final-highlights-windows.log` and
 `/tmp/rune-lsp-m9-final-analysis-windows{64,32}.log`.
 Other M9 providers, real-client coverage and performance acceptance remain.
+
+The captured-syntax and structural checkpoint adds folding/refresh and nested
+selection, with current recovery trees after parse/type errors. Eleven public
+snapshot cases pass on the interpreter/JIT and both Windows widths, including
+cross-file fixity propagation and post-close access. Twenty-six semantic
+transcripts pass on Linux and Windows, covering complete-line folds, client
+limits, selection cardinality/containment, invalid encoding splits, build path
+spans and refresh coalescing/refusal. Focused checks and documentation consistency
+pass in `/tmp/rune-lsp-structure-cohort.log` and
+`/tmp/rune-lsp-structure-doc-check.log`; native receipts are
+`/tmp/rune-lsp-structure-final-windows.log` and
+`/tmp/rune-lsp-structure-analysis-windows{64,32}.log`.
 
 M8 feature checkpoint (2026-10-23): the compiler now projects completion
 roles, concrete record labels, named applications and declaration comments

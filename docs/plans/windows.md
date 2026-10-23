@@ -121,6 +121,8 @@ runner jobs), native path and filesystem matrices (38 and 30 jobs on all four
 VMs), six compiler API cases on Linux and Windows, and all 12 directed saved
 image transfers between Linux and both Windows widths across both bytecode
 formats. The image fixture checks the restoring host's path syntax. The
-broader host-library matrix and combined language-server acceptance remain
-tracked by the language-server roadmap; interrupted and earlier failed runs
-are not clean acceptance results.
+complete host-library matrix at `aace898fc` passed 3,196 runner jobs with 156
+skips (`20261023-094630-2323736`,
+`/tmp/rune-native-path-frozen-matrix.log`). Combined repository acceptance is
+still tracked by the language-server roadmap; interrupted and earlier failed
+runs are not clean acceptance results.

@@ -85,7 +85,7 @@ struct
   fun accepts method=List.exists (fn candidate => candidate=method) ["textDocument/diagnostic","workspace/diagnostic","textDocument/hover",
     "textDocument/definition","textDocument/declaration","textDocument/typeDefinition","textDocument/implementation","textDocument/documentSymbol","textDocument/documentHighlight",
     "workspace/symbol","workspaceSymbol/resolve","textDocument/completion","completionItem/resolve","textDocument/signatureHelp",
-    "textDocument/inlineCompletion"]
+    "textDocument/inlineCompletion","textDocument/foldingRange","textDocument/selectionRange"]
   fun inlineClient caps=case Json.member ("textDocument",P.rawCapabilities caps) of NONE => false | SOME value =>
     (case Json.member ("inlineCompletion",value) of SOME (Json.Object _) => true | _ => false)
   fun request (service as Service {workspace,documents,caps,jobs,requests,results,...},{id,method,params}) =
