@@ -72,7 +72,7 @@ The launcher copies the guest script and editor suite from this directory
 into the input before starting. The guest checks the full Rune project,
 semantic protocol suite, packaged Basis/library workflow and editor
 providers, including restart and error repair. All source edits use the
-guest's private copy, whose path contains spaces and Unicode. Rune is
+guest's private copy; both project and extension paths contain spaces and Unicode. Rune is
 absent from the guest's `PATH`.
 
 From a Windows PowerShell terminal in the worktree:

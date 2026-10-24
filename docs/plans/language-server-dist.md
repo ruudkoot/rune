@@ -141,3 +141,19 @@ Implemented presentation and repository cleanup:
 All seven ordered bootstrap source lists were preserved, and all relocated
 manifests passed typechecking. `runelsp.build` remains the public server build.
 Historical measurement ledgers retain their original captured filenames.
+
+## Installed-server follow-up, 2026-10-24
+
+The installed failure on `src/main/rune-main.sml` is reproduced and fixed:
+resident analysis is bounded, concurrent providers share checks, frozen
+editor data is reused, and worker errors identify the PID, job, document,
+selected project and last compiler phase. See
+[the debugging and acceptance record](language-server-debug.md).
+
+The production implementation passes `make check`: 19,863 PASS, 3 SKIP,
+0 FAIL. VS Code 1.143.1 passes on Linux in namespaces/private Xvfb and on
+Windows inside a separate Windows Sandbox. The Windows test launcher starts
+minimized and disposes its owned processes after evidence is saved, without
+guest shutdown. The installed Windows editor remains separate from these
+test instances. Final artifact versions, hashes and post-build checks are
+recorded in `build/lsp-debug/acceptance/final.json`.

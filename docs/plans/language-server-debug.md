@@ -1,0 +1,220 @@
+# Installed language-server debugging
+
+The installed `f4ee51368` package failed while editing
+`src/main/rune-main.sml` in Rune's complete `rune.build` project. Work remains
+isolated on `language-server-dist`; the original checkout is preserved.
+
+## Milestones
+
+| Milestone | Evidence and implementation |
+|---|---|
+| Reproduce the installed failure | `d3ce4b515`: independent concurrent diagnostic/hover/symbol/link replay; four heap failures in 77 seconds. |
+| Measure the real project | `f2dcebccf`: opt-in phase/allocation observations; 231 checked units and 141,341 occurrences. |
+| Bound resident analysis and supervision | `5c88e38e2`: immutable occurrence reuse, memoized type qualification, shared checks, failure backoff, bounded stderr and paired heap/process budgets. |
+| Keep providers responsive and errors useful | `126ecec96`: document queries precede automatic workspace pulls; worker failures include request, context and last phase. |
+| Complete the distribution presentation requests | `688cf5ddb`: gallery icon, categories, names/settings, and hidden helper build manifests. |
+| Reuse frozen editor data | `e2688dc14`: bounded completion cache, exact-text position/token index reuse, optimizing worker JIT, and snapshot invalidation tests. |
+| Verify interactive operation | Repeated edits, forced-collection retention measurements, native Windows, actual editor providers, cancellation and shutdown; receipts below. |
+| Isolate editor tests | `8d2ce58e5`: Linux namespaces/private Xvfb and a minimized Windows Sandbox with scoped host cleanup; VS Code 1.143.1 checks on both platforms. |
+| Deliver a versioned VSIX | Build from the clean acceptance commit; final artifact hashes, versions and run receipts are recorded in `build/lsp-debug/acceptance/final.json`. Publishing remains a user action. |
+
+## Confirmed causes and fixes
+
+The original worker exhausted its 256 MiB heap after elaboration, before
+freezing the final occurrence list. The measured attempt allocated
+11,716,565,160 bytes before that projection, with 256,656,760 last-collected
+live bytes. Recursive mapping added a large stack at the limit. Separate
+queued providers repeated the same failed full check and inherited stderr
+forwarded the entire VM trace into VS Code's rotating output logs.
+
+Projection now uses bounded stack space and reuses immutable lists for
+validated unchanged unit keys. Qualified type names are memoized within one
+unit's fixed environment. Exact source text/mode/path keys also reuse
+prelude name sets instead of lexing every unchanged source on each check.
+
+The worker uses the optimizing JIT, with a 512 MiB heap cap and a 1.5 GiB process cap. The 30-second
+job deadline remains. Count and source-byte retention budgets limit old
+contexts and views. Concurrent providers share one check; cancellation of
+one waiter preserves the others. An infrastructure failure completes all
+waiters and suppresses further checks of the same failed revision and
+workspace generation until an edit, dependency/configuration change,
+close/reopen or restart.
+
+Worker stderr is a private nonblocking pipe: a 4 KiB prefix is retained, a
+64 KiB stream is terminated, and heap exhaustion is classified immediately.
+Shutdown terminates and reaps the worker before replying. Automatic workspace
+diagnostic pulls queue behind document checks and their dependent queries.
+Cancellation replies immediately and grants 250 ms for acknowledgement.
+
+The public compiler adapter now reports missing-library manifest errors as
+`Failed` diagnostics. Discovery can then report an unavailable target instead
+of aborting with the exception name `Usage`.
+
+## Reproduction and measurement
+
+`tests/lsp/project-replay.sml` is the independent protocol client. Supply
+the VM, server, source root and a new result file explicitly. Opening the
+three-line entry point analyzes the entire compiler target. The harness
+checks the provider burst, warm hover, project navigation, completion and
+normal process exit. Set `RUNE_LSP_REPLAY_CYCLES=100` for leaf-edit cycles;
+every tenth revision introduces an explicit `int`/`bool` mismatch and the
+next repairs it.
+
+Set `RUNE_LSP_PROFILE` to an absolute JSONL path for phase, allocation and
+request observations. A separate run with `RUNE_LSP_PROFILE_GC=1` collects
+after each command returns, measuring retained state rather than temporary
+command data. Forced-collection runs do not supply query latency claims.
+
+Raw baseline logs, source hashes, the original VSIX and measurement results
+are under `/home/ruud/rune-benchmark-results/lsp/2026-10-24-live-debug`.
+Build/editor receipts are under `build/lsp-debug/acceptance` in the worktree.
+
+The final implementation's 100-edit retention pass produced 308 post-command
+collections. After discarding the first 30 samples, live data stayed between
+271,072,816 and 271,086,744 bytes. The first and last 30-sample medians were
+both 271,081,344 bytes; maximum process-tree RSS was 417,332 KiB. Each warm
+leaf check reused 230 of 231 units. This pass had no worker failures. The
+tracked ledger is `tests/lsp/baseline/2026-10-24-resident.json`; raw results
+and the exact measured package are retained in `retention-optimized`.
+
+The Linux and native Windows real-project replays both passed. The isolated
+VS Code host also exercised the actual project providers and error/repair
+workflow. Initial GUI attempts exposed missing-manifest reporting and
+workspace-pull scheduling races; their failed logs are retained. Follow-up
+checks must be recorded separately rather than treating those attempts as
+clean acceptance.
+
+A controlled Linux JIT comparison used identical VM/image bytes and changed only
+worker JIT mode in a private launcher. Forty repetitions with optimizing JIT
+measured p95 hover 22.702 ms, definition 27.297 ms, repeated completion
+4.049 ms and leaf diagnostics 941.950 ms. Cold diagnostics took 9.576 s and
+the first uncached completion 407.865 ms. These meet the proposed 250 ms
+hover/navigation, 500 ms completion and 1 s leaf-diagnostic gates. No forced
+collections were enabled. Raw `latency-jit-opt` and tier-one comparison
+results remain separate from the retention run. The shipped policy selects
+optimizing JIT directly, without the experimental launcher.
+
+## Acceptance receipts
+
+Production code at `e2688dc14` passed the unrestricted final full check:
+**19,863 PASS, 3 SKIP, 0 FAIL**, 3,532.5 seconds wall time
+(`make-check-final.log`, `tests/out/r/20261024-022246-2607123/summary.md`).
+The skips are the two documented native interrupt cases and the missing
+separate pinned GMP `native` prefix. Earlier full receipts remain separate:
+the previous unrestricted run passed the same count, the sandbox attempt
+could not execute native 32-bit SML/NJ (exit 159), and the original
+distribution acceptance recorded five crash/output-limit failures.
+
+The library profile passed **281/281**, including compiler-library tests on
+all six native hosts (`library-profile.log`). The separate six-way Basis
+matrix passed **2,747**, with **151 documented unsupported-host skips** and
+no failures (`matrix-six-configs.log`). The complete `make matrix-quick`
+receipt, including MLKit, is `matrix-quick-final.log`, run
+`20261024-022320-2611440`; its final verdict is included in `final.json`.
+The runner serializes MLKit compilations through its matrix pool.
+
+The full LSP suite passes, including 45 semantic protocol cases, process
+supervision, cancellation, snapshot isolation and changed completion/index
+invalidation (`optimizing-worker-lsp.log`). Native Windows passes all 45
+protocol cases, six worker-supervision cases, the frozen-analysis tests and
+five process/reaping cases. The updated client/staging/version checks pass
+all eight runner cases, including their planted-fault canaries.
+
+Forcing a development VM rebuild with the packaged server and worker alive
+passed all **11** package/library checks, including actual manifest
+regeneration (`development-rebuild-linux-final.log`). Before/after SHA-256
+receipts show the private VM and server unchanged. The development VM was
+published by an atomic rename because the matrix runner was executing its
+previous inode; its rebuilt bytes were identical as well.
+
+## Isolated editor acceptance
+
+VS Code **1.106.0 and 1.142.0** pass the real-project editor workflow
+(`editor-final-minimum.log`, `editor-final-current.log`). Those initial
+runs used private profiles and a separately downloaded Code build.
+
+VS Code **1.143.1** also passes on Linux inside bubblewrap with a private
+Xvfb display (`editor-1.143.1-sandbox-quiet.log`). A further run also passes with the
+extension and worker executable paths containing spaces and Unicode
+(`editor-1.143.1-sandbox-paths.log`). The namespace has no host
+home, Windows drives, WSL interop socket, host display or network. Editor
+and runtime files are read-only; source, profiles and results use private
+copies. The mount policy and result are under
+`build/lsp-debug/rune-editor-sandbox-2j0bwd3b/results`.
+The machine-specific driver and privately extracted Xvfb dependencies are
+retained in `build/lsp-debug/acceptance/editor-sandbox.py` and
+`build/lsp-debug/sandbox-deps`.
+
+A portable Windows **1.143.1** build passes in Windows Sandbox: full Rune
+project initialization/diagnostics, hover, navigation, completion, restart
+and error/repair. All 45 semantic cases and all 10 packaged Basis/library
+checks also pass inside that guest, without Rune on `PATH`. Its private
+source path contains spaces and Unicode, and the Code file URI uses the
+encoded, lower-case Windows drive form. The configuration maps only
+read-only inputs and a dedicated writable results directory. Networking,
+clipboard, microphone, camera, printers and vGPU are disabled; Protected
+Client is enabled and guest memory is 4096 MiB.
+
+The launcher in `editors/vscode/test/windows-sandbox-launch.ps1` starts
+minimized, records PID/creation-time ownership outside the writable guest
+mapping and waits for a nonce-matched completion marker after logs close.
+It then disposes only the owned processes from the host. The guest does
+not call Windows shutdown. The lifecycle smoke check confirms two minimized
+windows and all owned processes gone. The full functional run also passes
+while minimized; its first cleanup exposed a vanished-window race after
+client disposal. The VM was already gone when checked independently; the
+fixed lifecycle rerun confirms cleanup (`windows-sandbox-background-recheck.log`).
+The corrected combined run confirms both minimized windows and all owned
+processes gone, with no guest shutdown. Its functional/lifecycle receipt is
+`windows-sandbox-minimized-final.log`. The subsequent path-coverage run
+also passes with the private Windows extension binaries under
+`C:\Work\Rune extension Ω` (`windows-sandbox-paths.log`). See
+[the test guide](../../editors/vscode/test/README.md) for the prepared-case
+format and commands. This host runs Windows build 22000 and lacks the newer
+headless `wsb` CLI, so the legacy desktop client is used minimized.
+
+## Failed attempts and limits
+
+Failed attempts remain preserved and are not reclassified by later passes.
+
+- The installed `f4ee51368` package exhausted its heap repeatedly; baseline
+  logs and the exact original package remain in the external results tree.
+- Initial GUI attempts exposed a missing-manifest exception and a workspace
+  diagnostic scheduling race. Both were corrected and the follow-ups pass.
+  The initial restricted GUI launch also lacked permission for local IPC.
+- The first informative-error assertion found a started child PID without
+  its executable path. Errors now always include the executable; the
+  corrected focused checks pass (`further-requests-checks-final.log`).
+- A candidate archive check compared a privately rebuilt server with the
+  different `bin/runelsp.rbc` and rejected it (`candidate-archive.log`). The
+  final normal archive/payload checks are recorded in `final.json`.
+- A native Windows replay over the WSL UNC share exceeded the unchanged
+  30-second deadline during concurrent full-check/matrix/semantic load.
+  `project-windows-optimized.json` identifies its worker, Rune build,
+  document and last parsed compiler file. A separate native-storage replay
+  passes (`project-windows-native-rerun.log`), as do guest replays.
+- The first isolated Linux 1.143.1 run timed out while clearing diagnostics;
+  a profiled follow-up reached the cold Rune check's worker deadline during
+  full-check load. The non-profiled follow-up after that load ended passes.
+- A loaded/profiled Windows 1.143.1 editor run timed out waiting for hover,
+  although analysis completed. The quiet run passes, including the encoded
+  Windows URI. A combined Windows profiling capture contains one fragmented
+  JSONL record and supplies no performance acceptance claim.
+- The installed Windows editor's updater blocked early GUI launches with
+  `vscode-updating`; the launcher returned zero even though no test provider
+  ran. Native GUI acceptance was completed using a separate portable Code
+  build inside Windows Sandbox, leaving the installed editor alone.
+- Windows fixture setup initially omitted ignored/generated manifests;
+  the corrected fixture passes. Native `tar.exe` could not use a Unicode
+  extraction destination, so extraction uses an ASCII directory followed
+  by a Unicode rename. A script-policy block was rerun with a process-local
+  override without changing system policy.
+
+The independent structured protocol assertions, editor PASS markers and
+process-exit checks determine acceptance; a GUI launcher's zero exit alone
+is insufficient. Forced-GC retention results and loaded/profiling attempts
+remain separate from Linux latency measurements.
+
+Final artifact generation follows the acceptance commit to preserve Rune's
+Git-derived version. `build/lsp-debug/acceptance/final.json` records the
+artifact's exact commit, version mapping, hashes and post-build checks.

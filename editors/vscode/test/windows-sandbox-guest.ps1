@@ -25,10 +25,12 @@ try {
   New-Item -ItemType Directory C:\Tools\Code\data | Out-Null
   Add-Type -AssemblyName System.IO.Compression.FileSystem
   [IO.Compression.ZipFile]::ExtractToDirectory('C:\Inputs\extension.vsix','C:\Work')
+  $extension = 'C:\Work\Rune extension Ω'
+  Move-Item -LiteralPath C:\Work\extension -Destination $extension
   $project = 'C:\Work\Rune Ω'
   Move-Item -LiteralPath C:\Work\checkout -Destination $project
-  $vm = 'C:\Work\extension\server\bin\runevm.exe'
-  $server = 'C:\Work\extension\server\bin\runelsp.rbc'
+  $vm = Join-Path $extension 'server\bin\runevm.exe'
+  $server = Join-Path $extension 'server\bin\runelsp.rbc'
   $env:PATH = "$env:SystemRoot\System32"
   $stage = 'project replay'
   & $vm C:\Work\project-replay.rbc $vm $server $project C:\Results\project.json *> C:\Results\project.log
@@ -40,7 +42,7 @@ try {
   if ((Get-Content C:\Results\semantic.log -Raw) -notmatch 'SUMMARY 45 tests, 45 passed, 0 failed') { throw 'missing semantic acceptance marker' }
   $stage = 'packaged library workflow'
   $env:RUNE_VSCODE_CHECKOUT = $project
-  & $vm C:\Work\distribution-tests.rbc C:\Work\extension *> C:\Results\packaged.log
+  & $vm C:\Work\distribution-tests.rbc $extension *> C:\Results\packaged.log
   if ($LASTEXITCODE -ne 0) { throw 'packaged suite failed' }
   if ((Get-Content C:\Results\packaged.log -Raw) -notmatch 'PASS vscode/packaged/regenerated-checkout-manifest') { throw 'missing manifest regeneration marker' }
   $stage = 'editor integration'
@@ -48,7 +50,7 @@ try {
   Remove-Item Env:RUNE_LSP_PROFILE -ErrorAction SilentlyContinue
   $projectUri = ([Uri]($project + '\')).AbsoluteUri.TrimEnd('/')
   @{folders=@(@{path=$project});settings=@{'runelsp.libraryRoot'=($projectUri+'/lib');'runelsp.targets'=@(@{name='rune';build=($projectUri+'/rune.build')});'runelsp.activeContext'='rune';'runelsp.trace.server'='verbose';'chat.disableAIFeatures'=$true}} | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 C:\Work\rune.code-workspace
-  $arguments = @('--disable-gpu','--disable-extensions','--disable-updates','--disable-telemetry','--skip-welcome','--skip-release-notes','--no-cached-data','--disable-workspace-trust','--user-data-dir=C:\Work\user','--extensions-dir=C:\Work\extensions','--extensionDevelopmentPath=C:\Work\extension','--extensionTestsPath=C:\Inputs\editor-suite.cjs','C:\Work\rune.code-workspace')
+  $arguments = @('--disable-gpu','--disable-extensions','--disable-updates','--disable-telemetry','--skip-welcome','--skip-release-notes','--no-cached-data','--disable-workspace-trust','--user-data-dir=C:\Work\user','--extensions-dir=C:\Work\extensions',('--extensionDevelopmentPath="'+$extension+'"'),'--extensionTestsPath=C:\Inputs\editor-suite.cjs','C:\Work\rune.code-workspace')
   $editor = Start-Process C:\Tools\Code\Code.exe -ArgumentList $arguments -PassThru -RedirectStandardOutput C:\Results\editor.log -RedirectStandardError C:\Results\editor-error.log
   if (-not $editor.WaitForExit(240000)) { Stop-Process -Id $editor.Id; throw 'editor integration exceeded 240 seconds' }
   $log = (Get-Content C:\Results\editor.log -Raw) + (Get-Content C:\Results\editor-error.log -Raw)
