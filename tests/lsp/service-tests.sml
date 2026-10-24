@@ -17,7 +17,8 @@ struct
         val output=ref [] : R.message list ref
         val service=S.new {workspace=workspace,documents=documents,caps=valOf (LspProtocol.capabilities (Json.Object
           [("textDocument",Json.Object [("inlayHint",Json.Object [("resolveSupport",Json.Object [("properties",Json.Array [Json.String "tooltip"])])])])])),
-          command="unused-worker",args=[],send=fn value => output:= !output @ [value],log=fn _ => (),discovered=fn _ => ()}
+          command="unused-worker",args=[],send=fn value => output:= !output @ [value],log=fn _ => (),discovered=fn _ => (),
+          watchedRoots=fn () => []}
         fun request method : S.request={id=R.Number 1,method=method,params=Json.Object [],uri= #uri initial,
           revision= #revision initial,generation=W.generation workspace,done=ref false,job=ref NONE,retried=ref false}
         fun change ()=ignore (D.changeDocument (documents,{uri= #uri initial,version=2,changes=[D.Replace "val x=2\n"]}))
