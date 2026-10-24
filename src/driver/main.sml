@@ -665,7 +665,7 @@ struct
             in
               case found of
                 UnitCache.Missed why => (Miss why, against)
-              | UnitCache.Found (e as {pickle, code, file, others, mid, ...}) =>
+              | UnitCache.Found (e as {pickle, identity, code, file, others, mid, ...}) =>
                   let val at = UnitBasis.counters ()
                   in
                     (let
@@ -681,9 +681,10 @@ struct
                                    | NONE => []
                        val u = UnitBasis.remapKeys (u, remap)
                        val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
-                       val l = timed "cache-basis" (fn () => UnitBasis.loadAgainst ({pickle = pickle, file = name, at = at,
-                                                                                      env = !env, fixity = !fixity,
-                                                                                      text = text (name, mode)}, remap))
+                       val l = timed "cache-basis" (fn () => UnitBasis.loadKnown ({pickle = pickle, file = name, at = at,
+                                                                                    env = !env, fixity = !fixity,
+                                                                                    text = text (name, mode)},
+                                                                                   SOME identity, remap))
                        (* its source, and those of the functors' bodies it
                           applied, where they are now, in its code's files *)
                        val u = UnitBasis.relocate (u, file, name, others)
@@ -798,7 +799,7 @@ struct
                    UnitCache.store (dir, config, k,
                                     {usages = usages, warnings = warnings, file = name,
                                      others = UnitBasis.sourcesOf (code, name), pickle = #pickle exported,
-                                     code = bytes, mid = midBytes})
+                                     identity = #identity exported, code = bytes, mid = midBytes})
                | _ => ());
               (code, keptPickle (#pickle exported)) :: acc
             end
@@ -1161,7 +1162,7 @@ struct
 
   fun main (name : string, args : string list) : OS.Process.status =
     let val status = main' (name, args)
-    in Pass.finish (); Diagnostic.finish (OS.Process.isSuccess status); status end
+    in UnitBasis.hashStats (); Pass.finish (); Diagnostic.finish (OS.Process.isSuccess status); status end
 
   and main' (_ : string, args : string list) : OS.Process.status =
     (Options.parse args;

@@ -84,20 +84,47 @@ struct
   (* ---- the hash of a content: four independent hashes of 24 bits each,
      96 bits in 24 hexadecimal digits, which a host of 31-bit ints works
      out as well as any other ---- *)
-  fun hash (s : string) : string =
+
+  (* What was hashed, for --pass-stats=hash: while counting, each hash
+     adds its bytes to its label's, the place that hashed them (UnitBasis
+     sets it), and one to its count *)
+  val counting = ref false
+  val () = CompilerState.cellRoot ("Pickle.counting", counting)
+  val label = ref "other"
+  val () = CompilerState.cellRoot ("Pickle.label", label)
+  val counted : (string * int * int) list ref = ref []     (* label, bytes, hashes *)
+  val () = CompilerState.cellRoot ("Pickle.counted", counted)
+  fun count (n : int) : unit =
     let
-      val n = String.size s
-      (* one pass, the four at once: a * 43 + 255 is below 2^31 *)
-      fun go (i, a, b, c, d) =
-        if i = n then (a, b, c, d)
-        else
-          let val x = Char.ord (String.sub (s, i))
-          in go (i + 1, (a * 31 + x) mod 16777213, (b * 37 + x) mod 16777199, (c * 41 + x) mod 16777183,
-                 (d * 43 + x) mod 16777153)
-          end
-      val (a, b, c, d) = go (0, 7, 11, 13, 17)
-      fun hex6 n = StringCvt.padLeft #"0" 6 (Int.fmt StringCvt.HEX n)
-    in
-      String.map Char.toLower (hex6 a ^ hex6 b ^ hex6 c ^ hex6 d)
-    end
+      val l = !label
+      fun add [] = [(l, n, 1)]
+        | add ((k, b, c) :: rest) = if k = l then (k, b + n, c + 1) :: rest else (k, b, c) :: add rest
+    in counted := add (!counted) end
+
+  (* the four at once over s from i: a * 43 + 255 is below 2^31 *)
+  fun lanes (s : string, i : int, a : int, b : int, c : int, d : int) : int * int * int * int =
+    if i = String.size s then (a, b, c, d)
+    else
+      let val x = Char.ord (String.sub (s, i))
+      in lanes (s, i + 1, (a * 31 + x) mod 16777213, (b * 37 + x) mod 16777199, (c * 41 + x) mod 16777183,
+                (d * 43 + x) mod 16777153)
+      end
+
+  fun digest (a : int, b : int, c : int, d : int) : string =
+    let fun hex6 n = StringCvt.padLeft #"0" 6 (Int.fmt StringCvt.HEX n)
+    in String.map Char.toLower (hex6 a ^ hex6 b ^ hex6 c ^ hex6 d) end
+
+  fun hash (s : string) : string =
+    (if !counting then count (String.size s) else (); digest (lanes (s, 0, 7, 11, 13, 17)))
+
+  (* The same hash of a text given piece by piece, which is never made
+     (functors-units, S0): finish gives what hash gives of the pieces fed,
+     concatenated *)
+  type hasher = {lanes : (int * int * int * int) ref, bytes : int ref}
+  fun hasher () : hasher = {lanes = ref (7, 11, 13, 17), bytes = ref 0}
+  fun feed ({lanes = l, bytes} : hasher, s : string) : unit =
+    let val (a, b, c, d) = !l
+    in l := lanes (s, 0, a, b, c, d); bytes := !bytes + String.size s end
+  fun finish ({lanes = l, bytes} : hasher) : string =
+    (if !counting then count (!bytes) else (); digest (!l))
 end

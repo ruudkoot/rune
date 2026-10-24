@@ -49,6 +49,7 @@ of results in globals (see *Low*).
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
 | `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then `total: T s processor time, S s in the stages (P%)` (below) |
 | `--pass-stats=elab` | `--pass-stats`, and a line for each top-level declaration elaborated: where its processor time went, by context and operation, and what the elaborator counted (*The elaborator's counters* below) |
+| `--pass-stats=hash` | `--pass-stats`, and at the end what the compile hashed: a line `hash PHASE:SITE: B bytes, N hashes` for each part of a compile in units (`usages`, `find`, `export`, `load`, `cache`) and place that hashed, and `memo PHASE: H hits, M misses` for the memo of fingerprints (*What a compile in units hashes* below) |
 | `--units` | run the pipeline on one unit, a file, at a time, and link them ([units.md](units.md)): the passes see a unit, with `Pass.whole` false, and `--pass-stats` names each unit before its passes |
 | `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would (there is no bytecode from Mid yet) |
 | `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same |
@@ -76,6 +77,27 @@ stages of the pipeline above, the compile's stages are:
 below it unless they are all atoms, and leaves positions out. Variables
 and globals are numbered afresh (`v1`, `g1`, ...) in the order they appear,
 so that an expected dump does not change with stamps made elsewhere.
+
+### What a compile in units hashes
+
+`--pass-stats=hash` counts the bytes `Pickle` hashes (`Pickle.counting`),
+each under the label of the part of the compile and the place that hashed
+it (`UnitBasis.labelled`):
+
+* `usages:KIND`, the fingerprints of a unit's usages by the kind of name
+  (`v`, `t`, `s`, `sig`, `fun`, `fix`), and `usages:tycon` the definitions
+  of the type names they name, each hashed once (`tyconFps`);
+* `find:KIND`, the fingerprints worked out to check a cache entry's usages;
+* `export:source`, `export:identity` and `export:body`, a unit's source, its
+  basis and a functor's body; `export:KIND` a functor applied in a body;
+* `load:source`, a source parsed again for a functor's body;
+* `cache:key`, `cache:source`, `cache:read`, `cache:store`, `cache:paths`
+  and `cache:configuration`, the cache's keys and the integrity of its
+  files.
+
+`memo PHASE` counts the memo of fingerprints (`fpMemo`): a usage's
+fingerprint by its binder and key is worked out once a session. Nothing
+else changes: the bytes and the program are the same with the counters on.
 
 ### The elaborator's counters
 

@@ -139,6 +139,8 @@ struct
     \  --pass-stats      print the size and the time of every stage, and the total\n\
     \  --pass-stats=elab  and of each top-level declaration's elaboration: its\n\
     \                    time by context and operation, and its counters\n\
+    \  --pass-stats=hash  and the bytes hashed, by the part of the compile and\n\
+    \                    the place, and the fingerprints' memo's hits\n\
     \  --read-mid FILE   read a Mid program as --dump-after=mid prints it, and\n\
     \                    make and check it as the pass mid would, but no bytecode\n\
     \  --mid-roundtrip   check that Mid printed, read and printed again is the same\n\
@@ -256,7 +258,8 @@ struct
         (case valued a of
            SOME ("--passes", v) => (Pass.only := SOME (String.fields (fn c => c = #",") v); parse rest)
          | SOME ("--pass-stats", "elab") => (Pass.stats := true; ElabStats.enable (); parse rest)
-         | SOME ("--pass-stats", _) => raise Usage "--pass-stats= requires elab"
+         | SOME ("--pass-stats", "hash") => (Pass.stats := true; Pickle.counting := true; parse rest)
+         | SOME ("--pass-stats", _) => raise Usage "--pass-stats= requires elab or hash"
          | SOME ("--dump-before", v) => (Pass.dumpBefore := !Pass.dumpBefore @ [v]; parse rest)
          | SOME ("--dump-after", v) => (Pass.dumpAfter := !Pass.dumpAfter @ [v]; parse rest)
          | SOME ("--target", v) =>

@@ -336,7 +336,7 @@ struct
       val hit =
         case if UnitCache.verifying () then NONE else found of
           NONE => NONE
-        | SOME {pickle, code, warnings, file = was, others, ...} =>
+        | SOME {pickle, identity, code, warnings, file = was, others, ...} =>
           let val at = UnitBasis.counters ()
           in
             (let
@@ -348,8 +348,8 @@ struct
                            | NONE => []
                val u = UnitBasis.remapKeys (u, remap)
                val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
-               val l = UnitBasis.loadAgainst ({pickle = pickle, file = file, at = at, env = !env, fixity = #fixity start,
-                                               text = fn () => text}, remap)
+               val l = UnitBasis.loadKnown ({pickle = pickle, file = file, at = at, env = !env, fixity = #fixity start,
+                                             text = fn () => text}, SOME identity, remap)
                (* its source, and those of the functors' bodies it
                   applied, where they are now, in its code's files *)
                val code = if UnitBasis.moves (u, was, file, others) orelse not (List.null remap)
@@ -432,7 +432,7 @@ struct
              SOME (d, c, key) =>
                UnitCache.store (d, c, key, {usages = usages, warnings = !warnings, file = file,
                                             others = UnitBasis.sourcesOf (code, file), pickle = #pickle exported,
-                                            code = bytes, mid = ""})
+                                            identity = #identity exported, code = bytes, mid = ""})
            | NONE => ()
        in
          Source.unregister echoName;

@@ -100,6 +100,8 @@ struct
         | SOME hash => StringMap.insert (m,#identity u,hash)) StringMap.empty units
       (* every key a number of the link's own: next is next *)
       val keyIds : int StringMap.map ref = ref StringMap.empty
+      (* how many: StringMap.numItems would walk the map at each new key *)
+      val nkeyIds = ref 0
       fun keyId ({unit, number} : key) : int =
         if unit = "" andalso number = ~1 then next
         else
@@ -107,7 +109,7 @@ struct
           in
             case StringMap.find (!keyIds, k) of
               SOME i => i
-            | NONE => let val i = StringMap.numItems (!keyIds) in keyIds := StringMap.insert (!keyIds, k, i); i end
+            | NONE => let val i = !nkeyIds in nkeyIds := i + 1; keyIds := StringMap.insert (!keyIds, k, i); i end
           end
       (* the bases of each unit's functions *)
       val nunits = List.length units
@@ -229,15 +231,24 @@ struct
                if #identity u = "" then NONE
                else
                  (* by kind and number: a unit read from the cache lists its
-                    globals in another order than its compile did *)
+                    globals in another order than its compile did; the
+                    first of a kind and number kept, by a merge sort, not
+                    an insertion sort, which took the square of a unit's
+                    exports (functors-units, E3) *)
                  SOME (#identity u,
-                       List.foldl (fn (x as (k, n, _), acc) =>
-                                     let fun ins [] = [x]
-                                           | ins ((y as (k', n', _)) :: rest) =
-                                               if k < k' orelse (k = k' andalso n < n') then x :: y :: rest
-                                               else if k = k' andalso n = n' then y :: rest
-                                               else y :: ins rest
-                                     in ins acc end) []
+                       let
+                         fun lt ((k, n, _), (k', n', _)) = k < k' orelse (k = k' andalso n < n')
+                         fun merge ([], ys) = ys
+                           | merge (xs, []) = xs
+                           | merge (x :: xs, y :: ys) =
+                               if lt (y, x) then y :: merge (x :: xs, ys)
+                               else if lt (x, y) then x :: merge (xs, y :: ys)
+                               else x :: merge (xs, ys)
+                         fun sort [] = []
+                           | sort [x] = [x]
+                           | sort xs = let val h = List.length xs div 2
+                                       in merge (sort (List.take (xs, h)), sort (List.drop (xs, h))) end
+                       in sort end
                                   ((0, ~1, Vector.sub (fbases, i)) ::
                                    List.map (fn (n, f) => (0, n, Vector.sub (fbases, i) + f)) (#exports u)
                                    @ List.mapPartial (fn (k : key, _) =>

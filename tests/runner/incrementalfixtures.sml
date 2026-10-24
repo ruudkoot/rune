@@ -83,7 +83,10 @@ struct
     (("S66", "c.sml", 1), "functor F (X : sig val n : int end) = struct fun f () = X.n + 2 end"),
     (("S66", "c.sml", 2), "functor F (X : sig val n : int end) = struct fun f () = X.n + 2  val extra = 0 end"),
     (("S67", "c.sml", 0), "functor F (X : sig val n : int end) = struct fun f () = X.n + 1 end"),
-    (("S67", "main.sml", 0), "structure M = F (struct val n = 4 end)  val () = print (Int.toString (M.f ()) ^ \"\\n\")")
+    (("S67", "main.sml", 0), "structure M = F (struct val n = 4 end)  val () = print (Int.toString (M.f ()) ^ \"\\n\")"),
+    (("S72", "a.sml", 0), "functor F (X : sig val x : int end) = struct val y = X.x + 1 end"),
+    (("S72", "m.sml", 0), "structure S0 = F (struct val x = 2 end)"),
+    (("S72", "b.sml", 0), "structure S1 = F (struct val x = 1 end)  functor F (X : sig val z : string end) = struct val w = X.z end  functor G () = struct structure T = F (struct val z = \"g\" end) end  val () = print (Int.toString S1.y ^ \"\\n\")")
   ]
   fun get key = case List.find (fn (k, _) => k = key) files of SOME (_, text) => text
                 | NONE => raise Fail "missing incremental fixture"

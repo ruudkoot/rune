@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S69. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, S49 to S69, and S72. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
@@ -277,6 +277,14 @@ when the scenarios above were all green
   real`; then `type u` becomes `eqtype u`. `e.sml` is compiled again and
   the build fails: a signature's fingerprint writes each of its local
   names with its arity and equality (issue 16).
+* **S72, a functor used and then declared again.** `b.sml` applies
+  `a.sml`'s functor `F`, then declares its own `F`, which its functor `G`
+  applies. Built once after `m.sml`, which applies `a.sml`'s `F` too, and
+  once without it, `b.sml` gives the same entry: its usage of `F` is
+  `a.sml`'s `F` at its start, as a usage of a value is, and its basis
+  writes the same fingerprint for it (functors-units, F1). Before, the
+  usage was the fingerprint of `b.sml`'s own `F` where no unit before had
+  worked out `a.sml`'s, and the basis wrote `b.sml`'s own `F` always.
 * **S59, one unit in two sessions.** `c.sml` uses `a.sml` and `b.sml`,
   which do not use each other. Built after them in one order and then in
   the other through one cache, `c.sml`'s entry is taken, and compiled

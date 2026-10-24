@@ -175,6 +175,11 @@ struct
                  put s "e.sml" "structure E : HAS = struct type u = real end";
                  put s "files" "a.sml b.sml e.sml c.sml d.sml main.sml"; b [] "a.sml b.sml e.sml c.sml d.sml main.sml";
                  e "a.sml" "sig type u end" "sig eqtype u end"; build s []; fails s)
+    | "S72" => (c "a.sml m.sml b.sml"; b [] "a.sml m.sml b.sml"; prints s "2";
+                 let val withM = cache s
+                 in c "a.sml b.sml"; b [] "a.sml b.sml"; prints s "2";
+                    check s "b.sml's usages depend on what an earlier unit fingerprinted"
+                      (List.all (fn file => List.exists (fn other => other = file) withM) (cache s)) end)
     | _ => raise Failed ("not a simple scenario: " ^ #name s)
     end
 end

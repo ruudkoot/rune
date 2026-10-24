@@ -27,16 +27,18 @@ struct
   structure P = Pickle
 
   val magic = "RCE"
-  val version = 5
+  val version = 6
 
   (* what a unit's entry holds: its usages, the warnings its compile gave,
      which a compile that takes it from the cache gives again, the name its
      source had in the compile, which its code's files name it by, the other
      files its code names with the unit each is the source of
-     (UnitBasis.sourcesOf), its basis, its code's file, and its Mid
-     (UnitMid), for a whole program made of the units' *)
+     (UnitBasis.sourcesOf), its basis and the identity the basis gives,
+     which loading need not work out from the bytes again (functors-units,
+     F2), its code's file, and its Mid (UnitMid), for a whole program made
+     of the units' *)
   type entry = {usages : (string * string) list, warnings : string list, file : string,
-                others : (string * string) list, pickle : string, code : string, mid : string}
+                others : (string * string) list, pickle : string, identity : string, code : string, mid : string}
 
   (* an entry found, or why there is none *)
   datatype found = Found of entry | Missed of string
@@ -97,7 +99,7 @@ struct
 
   (* The hash of the configuration of this compile *)
   fun configuration () : string =
-    P.hash (String.concatWith "\000"
+    UnitBasis.hashAt ("configuration", String.concatWith "\000"
               [Config.identity, Int.toString version, Int.toString UnitBasis.version, Int.toString UnitFile.version,
                Int.toString (Pipeline.fingerprint ()), Int.toString (!Pass.level),
                (case !Pass.only of NONE => "-" | SOME ps => String.concatWith "," ps),
@@ -139,8 +141,9 @@ struct
      (--default-type, --or-patterns); "" for none, which keeps the key it
      had before there were such settings *)
   fun key {name : string, text : string, allow : bool, settings : string} : string =
-    P.hash (String.concatWith "\000" ([name, P.hash text, if allow then "1" else "0"]
-                                        @ (if settings = "" then [] else [settings])))
+    UnitBasis.during "cache" (fn () =>
+      UnitBasis.hashAt ("key", String.concatWith "\000" ([name, UnitBasis.hashAt ("source", text), if allow then "1" else "0"]
+                                                           @ (if settings = "" then [] else [settings]))))
 
   fun keyDir (dir : string, config : string, k : string) : string =
     OS.Path.joinDirFile {dir = OS.Path.joinDirFile {dir = dir, file = config}, file = k}
@@ -168,12 +171,14 @@ struct
            val file = P.rstring r
            val others = P.rlist (fn r => let val f = P.rstring r in (f, P.rstring r) end) r
            val pickle = P.rstring r
+           val identity = P.rstring r
            val code = P.rstring r
            val mid = P.rstring r
          in
-           if not (P.atEnd r) orelse P.hash (String.extract (s, at, NONE)) <> h then Missed "a damaged entry"
-           else Found {usages = us, warnings = warnings, file = file, others = others, pickle = pickle, code = code,
-                       mid = mid}
+           if not (P.atEnd r) orelse UnitBasis.during "cache" (fn () => UnitBasis.hashAt ("read", String.extract (s, at, NONE))) <> h
+           then Missed "a damaged entry"
+           else Found {usages = us, warnings = warnings, file = file, others = others, pickle = pickle, identity = identity,
+                       code = code, mid = mid}
          end
          handle P.Bad why => Missed ("a damaged entry: " ^ why)
               | Overflow => Missed "a damaged entry"
@@ -240,7 +245,7 @@ struct
   val pathsMagic = "RCP"
   fun pathsFile (dir : string, config : string, identity : string) : string =
     OS.Path.joinDirFile {dir = OS.Path.joinDirFile {dir = OS.Path.joinDirFile {dir = dir, file = config}, file = "units"},
-                         file = P.hash identity}
+                         file = UnitBasis.during "cache" (fn () => UnitBasis.hashAt ("paths", identity))}
 
   fun readPaths (dir : string, config : string, identity : string) : (int * int * string) list option =
     (let
@@ -252,7 +257,9 @@ struct
        val i = P.rstring r
        val ps = P.rlist (fn r => let val k = P.rnat r val n = P.rnat r in (k, n, P.rstring r) end) r
      in
-       if i = identity andalso P.atEnd r andalso P.hash (String.extract (s, at, NONE)) = h then SOME ps else NONE
+       if i = identity andalso P.atEnd r
+          andalso UnitBasis.during "cache" (fn () => UnitBasis.hashAt ("paths", String.extract (s, at, NONE))) = h
+       then SOME ps else NONE
      end)
     handle IO.Io _ => NONE | P.Bad _ => NONE | Overflow => NONE | Subscript => NONE
 
@@ -283,7 +290,8 @@ struct
                 P.list (fn (w, (k, n, path)) => (P.nat (w, k); P.nat (w, n); P.string (w, path))) (body, ps))
       val b = P.contents body
       val w = P.writer ()
-      val () = (P.bytes (w, pathsMagic); P.nat (w, version); P.string (w, P.hash b); P.bytes (w, b))
+      val () = (P.bytes (w, pathsMagic); P.nat (w, version);
+                P.string (w, UnitBasis.during "cache" (fn () => UnitBasis.hashAt ("paths", b))); P.bytes (w, b))
     in
       (mkdirs (OS.Path.dir p);
        let val out = BinIO.openOut tmp
@@ -296,20 +304,22 @@ struct
   (* store: the entry of a key written, whole or not at all, by the hash of
      its usages, beside the key's others; a cache that cannot be written is
      a cache that is not there *)
-  fun store (dir : string, config : string, k : string, {usages = us, warnings, file, others, pickle, code, mid} : entry)
-      : unit =
+  fun store (dir : string, config : string, k : string,
+             {usages = us, warnings, file, others, pickle, identity, code, mid} : entry) : unit =
+    UnitBasis.during "cache" (fn () =>
     let
       val d = keyDir (dir, config, k)
       val u = P.writer ()
       val () = usages (u, us)
-      val p = OS.Path.joinDirFile {dir = d, file = P.hash (P.contents u)}
+      val p = OS.Path.joinDirFile {dir = d, file = UnitBasis.hashAt ("store", P.contents u)}
       val tmp = p ^ ".tmp-" ^ unique ()
       val body = P.writer ()
       val () = (usages (body, us); P.list P.string (body, warnings); P.string (body, file);
-                usages (body, others); P.string (body, pickle); P.string (body, code); P.string (body, mid))
+                usages (body, others); P.string (body, pickle); P.string (body, identity); P.string (body, code);
+                P.string (body, mid))
       val b = P.contents body
       val w = P.writer ()
-      val () = (P.bytes (w, magic); P.nat (w, version); P.string (w, P.hash b); P.bytes (w, b))
+      val () = (P.bytes (w, magic); P.nat (w, version); P.string (w, UnitBasis.hashAt ("store", b)); P.bytes (w, b))
     in
       (mkdirs d;
        let val out = BinIO.openOut tmp
@@ -317,5 +327,5 @@ struct
        OS.FileSys.rename {old = tmp, new = p})
       handle IO.Io _ => ((OS.FileSys.remove tmp) handle OS.SysErr _ => ())
            | OS.SysErr _ => ((OS.FileSys.remove tmp) handle OS.SysErr _ => ())
-    end
+    end)
 end

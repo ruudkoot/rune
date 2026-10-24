@@ -327,8 +327,10 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   rather than the link finding nothing to take the name from;
 * an entry keeps the warnings its compile gave, which a compile that takes
   it from the cache gives again;
-* an entry is one file, its usages, warnings, basis and code with the hash
-  of them, written under a name of its own and renamed into place, so that
+* an entry is one file, its usages, warnings, basis, the basis's identity
+  (which loading takes from it rather than hashing the basis again) and
+  code with the hash of them, written under a name of its own and renamed
+  into place, so that
   two compiles at once never see half of one. One that cannot be read, or
   does not hold what its hash says, is no entry, and the unit is compiled
   and the entry written again. A cache that cannot be written is one that
@@ -346,7 +348,14 @@ none. A usage holds where its binder is the same unit, or where what the
 name names now has the same fingerprint. A functor's fingerprint is its
 signature, its parameter's and its summary's (S65, S66); a functor with no
 summary, an overloading and the REPL's settings hold by their binder
-alone.
+alone. A fingerprint is of what the name names at the unit's start, as
+its binder is, though the unit declares another of the name before its
+usages are worked out (S72); it says which type variables admit equality,
+and the arity and equality of a signature's own type names (S68, S69).
+The text a fingerprint is of is never made: it is fed to the hash piece by
+piece, and each usage's fingerprint is worked out once a session by its
+binder and name. `--pass-stats=hash` counts what is hashed, and where
+([ir.md](ir.md), *What a compile in units hashes*).
 
 So a unit whose usages hold may have been compiled against a unit that has
 changed since -- a value added to `a.sml` changes its identity, not what
