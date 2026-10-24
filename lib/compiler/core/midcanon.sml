@@ -18,6 +18,12 @@ struct
   (* above every name a compile makes, and in a host's 31 bits *)
   val base = 268435456
 
+  (* the type name after the last a program was given (program): where
+     the expansion (Expand) takes those of the datatypes its copies
+     declare *)
+  val nextTycon = ref base
+  val () = CompilerState.cellRoot ("MidCanon.nextTycon", nextTycon)
+
   (* p with each name of each kind renamed by the functions given -- stamp
      for a variable, global or join point, tycon for a type name, tvar for a
      type variable -- called in the order the names appear, binders and uses
@@ -222,6 +228,7 @@ struct
     in
       (* fresh names after the last: the same in every build that says the same *)
       Elaborate.stampCounter := base + !nstamps;
+      nextTycon := base + !ntycons;
       p'
     end
 end

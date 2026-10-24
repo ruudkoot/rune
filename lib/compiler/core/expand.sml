@@ -1,0 +1,791 @@
+(* The expansion (docs/plans/functors-units.md, M6; a prototype, under
+   --functors=functions; docs/ir.md, Functors compiled once): Mid in which
+   each functor is a function its applications call, given back the copies
+   static interpretation makes, as far as a budget allows (D13).
+
+   An application is a definition of the top level whose value is a call
+   of a functor's function, after the place the type names its body
+   substitutes (Translate.callExp: a cast of () to the type of the pairs
+   name -> type, the parameter's type names realised by the argument and
+   the body's datatypes by the application's instances). It is expanded
+   where the function is defined in the program (in a build in units, the
+   unit: D2 A):
+   * the body is copied, its variables fresh, each type name the
+     application substitutes made what it says, and each datatype the body
+     declares over them made a fresh one (laid out from its realised
+     types); a constructor whose layout the parameter leaves open is made
+     and taken apart as the datatype it is (its descriptor's test folded);
+   * the copy's declarations become definitions of the top level, as an
+     application's are where static interpretation makes them: each
+     binding, each group of functions, the value a join point gives the
+     rest; what does not fit stays one definition of the record;
+   * a slot read from a record whose value is known is that value, and a
+     cast of it back through unit is the value cast from (at an instance of
+     its scheme, for a polymorphic one): the casts the substitution made
+     trivial go, in the copy and in what reads the application's result.
+   The copies' applications are expanded in turn, all of them within
+   --functor-budget Mid nodes a top-level application (0 expands nothing);
+   past it, an application stays a call. An instance of a body's datatype
+   is laid out from its realised types where no application left a call
+   takes it (its descriptor was worked out from the body's layout, which
+   such a one keeps). *)
+structure Expand =
+struct
+  open Mid
+
+  (* --functor-budget: the Mid nodes the copies of a top-level application,
+     and of those in them, may hold *)
+  val budget = ref 400000
+  val () = CompilerState.cellRoot ("Expand.budget", budget)
+  (* how deep copies of applications in copies go *)
+  val maxDepth = 64
+
+  (* --pass-stats: the applications expanded, those left calls, and the
+     copies whose declarations did not all become definitions *)
+  val expanded = ref 0
+  val () = CompilerState.cellRoot ("Expand.expanded", expanded)
+  val kept = ref 0
+  val () = CompilerState.cellRoot ("Expand.kept", kept)
+  val partial = ref 0
+  val () = CompilerState.cellRoot ("Expand.partial", partial)
+
+  fun bug msg = Error.bug ("expand: " ^ msg)
+  fun fresh () = Elaborate.freshStamp ()
+
+  (* a type name of its own for a datatype a copy declares: after the
+     names MidCanon gave, in a whole program, else the elaborator's next *)
+  fun freshTycon () : int =
+    if !Pass.whole then let val s = !MidCanon.nextTycon in MidCanon.nextTycon := s + 1; s end
+    else #stamp (Types.freshTycon ("", 0, false))
+
+  (* a function's name is its first parameter's (Translate.funNames) *)
+  fun isFunctor ({params, ...} : fundef) : bool =
+    case params of
+      (p, _) :: _ => (case IntMap.find (!Translate.funNames, p) of
+                        SOME n => String.isPrefix "functor " n
+                      | NONE => false)
+    | [] => false
+
+  (* ---- the types an application substitutes ---- *)
+
+  (* What a type name becomes: a type of the variables (Ty.Var) that stand
+     for its arguments, or another name *)
+  datatype image = Body of int list * Ty.ty | Name of int
+
+  (* the type t with each variable of m made what m says *)
+  fun replaceVars (m : Ty.ty IntMap.map) (t : Ty.ty) : Ty.ty =
+    if IntMap.isEmpty m then t
+    else
+      let
+        fun go t =
+          case Ty.view t of
+            Ty.Var i => (case IntMap.find (m, i) of SOME u => u | NONE => t)
+          | Ty.Con (s, n, args) => Ty.con (s, n, List.map go args)
+          | Ty.Tuple ts => Ty.tuple (List.map go ts)
+          | Ty.Arrow (a, b) => Ty.arrow (go a, go b)
+          | _ => t
+      in go t end
+
+  (* The marker of an application (Translate.callExp): the pairs of its
+     parameter's type names and its body's datatypes, each the name applied
+     to variables and what it becomes *)
+  fun markerType (r : rhs) : Ty.ty option =
+    case r of
+      Prim ("unsafe_cast", t, [Unit]) =>
+        (case Ty.view t of
+           Ty.Arrow (d, enc) =>
+             if Ty.equal (d, Ty.unit) then
+               (case Ty.view enc of
+                  Ty.Tuple [bs, gs] =>
+                    (case (Ty.view bs, Ty.view gs) of
+                       (Ty.Tuple _, Ty.Tuple _) => SOME enc
+                     | _ => NONE)
+                | _ => NONE)
+             else NONE
+         | _ => NONE)
+    | _ => NONE
+
+  fun entries (enc : Ty.ty) : (int * image) list * (int * image) list =
+    let
+      fun entry t =
+        case Ty.view t of
+          Ty.Arrow (from, to) =>
+            (case Ty.view from of
+               Ty.Con (s, _, args) =>
+                 (s, Body (List.map (fn a => case Ty.view a of Ty.Var i => i | _ => bug "a marker's argument") args, to))
+             | _ => bug "a marker's name")
+        | _ => bug "a marker's pair"
+      fun list t = case Ty.view t of Ty.Tuple ts => List.map entry ts | _ => bug "a marker's pairs"
+    in
+      case Ty.view enc of
+        Ty.Tuple [bs, gs] => (list bs, list gs)
+      | _ => bug "a marker"
+    end
+
+  (* The datatypes a type names, after Ty.view: what a marker's images
+     name *)
+  fun namesIn (t : Ty.ty, acc : unit IntMap.map) : unit IntMap.map =
+    case Ty.view t of
+      Ty.Con (s, _, args) => List.foldl namesIn (IntMap.insert (acc, s, ())) args
+    | Ty.Tuple ts => List.foldl namesIn acc ts
+    | Ty.Arrow (a, b) => namesIn (b, namesIn (a, acc))
+    | _ => acc
+
+  (* ---- the program's state through the pass ---- *)
+
+  type state =
+    {(* the locals of copies made globals *)
+     globalized : unit IntTable.table,
+     (* what a variable dropped is, at the types it is used at *)
+     alias : (Ty.ty list -> atom) IntTable.table,
+     (* a global known to be a tuple of these, or a cast to unit of this
+        atom of this type *)
+     tuples : atom vector IntTable.table,
+     casts : (atom * Ty.ty) IntTable.table,
+     (* every global's scheme *)
+     schemes : scheme IntTable.table,
+     (* the datatypes the copies declared, each by the one it copies, and
+        the instances of applications expanded *)
+     copied : (int * int * {params : int list, cons : (int * string * Ty.ty option) list}) list ref,
+     instances : int list ref}
+
+  fun newState () : state =
+    {globalized = IntTable.table 1024, alias = IntTable.table 1024, tuples = IntTable.table 256,
+     casts = IntTable.table 1024, schemes = IntTable.table 4096, copied = ref [], instances = ref []}
+
+  (* ---- copying a body ---- *)
+
+  (* the type names a datatype's constructors name, by its stamp *)
+  val datatypeNames : int list IntTable.table ref = ref (IntTable.table 256)
+  val () = CompilerState.refRoot ("Expand.datatypeNames", datatypeNames, IntTable.copy)
+  fun namesOfDatatype (s : int) : int list =
+    case IntTable.find (!datatypeNames, s) of
+      SOME l => l
+    | NONE =>
+        let
+          val l = case Ty.datatypeOf s of
+                    NONE => []
+                  | SOME {cons, ...} =>
+                      IntMap.listKeys (List.foldl (fn ((_, _, SOME a), acc) => namesIn (a, acc) | (_, acc) => acc) IntMap.empty cons)
+        in IntTable.insert (!datatypeNames, s, l); l end
+
+  (* The body of the function f, its parameter the atom given: fresh names
+     for what it binds, the types substituted as sigma says, each datatype
+     the body declares over what sigma substitutes copied (into copied) *)
+  fun copyExp (st : state, sigma0 : image IntMap.map, given : (int * atom) list, e0 : exp) : exp =
+    let
+      val sigma = ref sigma0
+      val memo : Ty.ty IntTable.table = IntTable.table 256
+      (* whether a datatype names what sigma substitutes, through those it
+         names: worked out by a walk of all it reaches *)
+      val dep : bool IntTable.table = IntTable.table 64
+      (* NONE where its constructors name a substituted name; else the
+         names they name *)
+      fun direct (s : int) : int list option =
+        let val names = namesOfDatatype s
+        in if List.exists (fn n => IntMap.member (!sigma, n)) names then NONE else SOME names end
+      fun depends (s : int) : bool =
+        case IntTable.find (dep, s) of
+          SOME b => b
+        | NONE =>
+            let
+              val seen : unit IntTable.table = IntTable.table 16
+              fun reach [] = false
+                | reach (n :: rest) =
+                    if isSome (IntTable.find (seen, n)) then reach rest
+                    else
+                      (IntTable.insert (seen, n, ());
+                       case direct n of
+                         NONE => true
+                       | SOME more => reach (more @ rest))
+              val b = reach [s]
+            in IntTable.insert (dep, s, b); b end
+      fun ty (t : Ty.ty) : Ty.ty =
+        case IntTable.find (memo, Ty.id t) of
+          SOME u => u
+        | NONE => let val u = ty' t in IntTable.insert (memo, Ty.id t, u); u end
+      and ty' t =
+        case Ty.view t of
+          Ty.Con (s, n, args) =>
+            let
+              val args' = List.map ty args
+              fun image (Body (vs, body)) =
+                    replaceVars (ListPair.foldl (fn (v, a, m) => IntMap.insert (m, v, a)) IntMap.empty (vs, args')) body
+                | image (Name s') = Ty.con (s', n, args')
+            in
+              case IntMap.find (!sigma, s) of
+                SOME i => image i
+              | NONE => if Ty.flatOf s = NONE andalso depends s then image (instantiate s) else Ty.con (s, n, args')
+            end
+        | Ty.Tuple ts => Ty.tuple (List.map ty ts)
+        | Ty.Arrow (a, b) => Ty.arrow (ty a, ty b)
+        | _ => t
+      (* a datatype of the body's over what sigma substitutes, copied *)
+      and instantiate (s : int) : image =
+        let
+          val s' = freshTycon ()
+          val () = sigma := IntMap.insert (!sigma, s, Name s')
+          val info = case Ty.datatypeOf s of
+                       SOME {params, cons} => {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map ty a)) cons}
+                     | NONE => bug "a datatype without constructors"
+        in #copied st := (s, s', info) :: !(#copied st); Name s' end
+
+      val vars : atom IntTable.table = IntTable.table 256
+      val labels : int IntTable.table = IntTable.table 64
+      fun rename x = let val x' = fresh () in IntTable.insert (vars, x, Var (x', [])); x' end
+      fun label j = let val j' = fresh () in IntTable.insert (labels, j, j'); j' end
+      fun named (x, x') = case IntMap.find (!Translate.funNames, x) of
+                            SOME n => Translate.funNames := IntMap.insert (!Translate.funNames, x', n)
+                          | NONE => ()
+      (* a parameter, renamed, and the function's name with it *)
+      fun param (x, t) = let val x' = rename x in named (x, x'); (x', ty t) end
+      val () = List.app (fn (x, a) => IntTable.insert (vars, x, a)) given
+      fun atom a =
+        case a of
+          Var (x, ts) =>
+            (case IntTable.find (vars, x) of
+               SOME (Var (x', _)) => Var (x', List.map ty ts)
+             | SOME other => other
+             | NONE => bug ("v" ^ Int.toString x ^ " free in a functor's body"))
+        | Global (g, ts) => Global (g, List.map ty ts)
+        | Const (c, t) => Const (c, ty t)
+        | Con0 (tag, t) => Con0 (tag, ty t)
+        | Unit => Unit
+      fun scheme ((vs, t) : scheme) : scheme = (vs, ty t)
+      fun rhs r =
+        case r of
+          Atom a => Atom (atom a)
+        | App (f, xs) => App (atom f, List.map atom xs)
+        | Prim (p, t, xs) => Prim (p, ty t, List.map atom xs)
+        | Tuple xs => Tuple (List.map atom xs)
+        | Select (i, a) => Select (i, atom a)
+        | Con (tag, t, a) => Con (tag, ty t, atom a)
+        | Decon (tag, t, a) => Decon (tag, ty t, atom a)
+        | ConTag a => ConTag (atom a)
+        | NewExn s => NewExn s
+        | BuiltinExn i => BuiltinExn i
+        | MkExn (c, a) => MkExn (atom c, atom a)
+        | ExnCon a => ExnCon (atom a)
+        | ExnArg (t, a) => ExnArg (ty t, atom a)
+        | SetGlobal (g, a) => SetGlobal (g, atom a)
+      (* the test of an open constructor's descriptor (ToMid.opened), whose
+         first branch makes or takes it apart as its datatype *)
+      fun openTest (c, r, b) =
+        case (r, b) of
+          (Prim ("poly_eq", _, [Var _, Const (Lambda.CInt n, _)]), If (Var (c', []), fast, _)) =>
+            if n = 0 andalso c = c' andalso isOpenStep fast then SOME fast else NONE
+        | _ => NONE
+      and isOpenStep e =
+        let
+          fun openTy t = case Ty.view t of Ty.Con (s, _, _) => Ty.isOpen s | _ => false
+          fun step r = case r of Con (_, t, _) => openTy t | Decon (_, t, _) => openTy t | _ => false
+        in
+          case e of
+            Return r => step r
+          | Let (_, _, r, _) => step r
+          | Mark (_, e) => isOpenStep e
+          | _ => false
+        end
+      fun exp e =
+        case e of
+          Let (x, s, r, b) =>
+            (case openTest (x, r, b) of
+               SOME fast => exp fast
+             | NONE => let val r' = rhs r val x' = rename x in Let (x', scheme s, r', exp b) end)
+        | Fun (fs, b) =>
+            let
+              val names = List.map (fn (g : fundef) => rename (#name g)) fs
+              val fs' = ListPair.map (fn (g, g') => fundef (g, g')) (fs, names)
+            in Fun (fs', exp b) end
+        | Join (j, ps, b, sc) =>
+            let
+              val ps' = List.map (fn (x, t) => (rename x, ty t)) ps
+              val b' = exp b
+              val j' = label j
+            in Join (j', ps', b', exp sc) end
+        | Jump (j, xs) =>
+            (case IntTable.find (labels, j) of
+               SOME j' => Jump (j', List.map atom xs)
+             | NONE => bug ("j" ^ Int.toString j ^ " free in a functor's body"))
+        | If (a, t, f) => If (atom a, exp t, exp f)
+        | Handle (b, x, h) => let val b' = exp b val x' = rename x in Handle (b', x', exp h) end
+        | Raise a => Raise (atom a)
+        | Return r => Return (rhs r)
+        | Mark (pos, b) => Mark (pos, exp b)
+      and fundef ({tyvars, params, result, body, ...} : fundef, name') : fundef =
+        let val ps = List.map param params
+        in {name = name', tyvars = tyvars, params = ps, result = ty result, body = exp body} end
+    in exp e0 end
+
+  (* The body of the functor's function f, its parameter the atom given *)
+  fun copyBody (st : state, sigma : image IntMap.map, f : fundef, arg : atom) : exp =
+    case #params f of
+      [(p, _)] => copyExp (st, sigma, [(p, arg)], #body f)
+    | _ => bug "a functor's function of other than one parameter"
+
+  (* ---- rewriting with what is known ---- *)
+
+  fun substAtom (m : Ty.ty IntMap.map) (a : atom) : atom =
+    if IntMap.isEmpty m then a
+    else
+      case a of
+        Var (x, ts) => Var (x, List.map (Ty.subst m) ts)
+      | Global (g, ts) => Global (g, List.map (Ty.subst m) ts)
+      | Const (c, t) => Const (c, Ty.subst m t)
+      | Con0 (tag, t) => Con0 (tag, Ty.subst m t)
+      | Unit => Unit
+
+  fun rwAtom (st : state) (a : atom) : atom =
+    case a of
+      Var (x, ts) =>
+        (case IntTable.find (#alias st, x) of
+           SOME f => f ts
+         | NONE => if isSome (IntTable.find (#globalized st, x)) then Global (x, ts) else a)
+    | Global (g, ts) => (case IntTable.find (#alias st, g) of SOME f => f ts | NONE => a)
+    | _ => a
+
+  fun rwRhs (st : state) (r : rhs) : rhs =
+    let val atom = rwAtom st
+    in
+      case r of
+        Atom a => Atom (atom a)
+      | App (f, xs) => App (atom f, List.map atom xs)
+      | Prim (p, t, xs) => Prim (p, t, List.map atom xs)
+      | Tuple xs => Tuple (List.map atom xs)
+      | Select (i, a) => Select (i, atom a)
+      | Con (tag, t, a) => Con (tag, t, atom a)
+      | Decon (tag, t, a) => Decon (tag, t, atom a)
+      | ConTag a => ConTag (atom a)
+      | MkExn (c, a) => MkExn (atom c, atom a)
+      | ExnCon a => ExnCon (atom a)
+      | ExnArg (t, a) => ExnArg (t, atom a)
+      | SetGlobal (g, a) => SetGlobal (g, atom a)
+      | other => other
+    end
+
+  (* A step made simpler by what is known, and whether it was: a field of a
+     known tuple; a cast to the same type; a cast back through unit of what
+     was cast to unit from the type wanted, or from a polymorphic global's
+     instance at it *)
+  fun fold (st : state) (r : rhs) : rhs * bool =
+    case r of
+      Select (i, Global (g, [])) =>
+        (case IntTable.find (#tuples st, g) of
+           SOME v => if i < Vector.length v then (Atom (Vector.sub (v, i)), true) else (r, false)
+         | NONE => (r, false))
+    | Prim ("unsafe_cast", t, [a]) =>
+        (case Ty.view t of
+           Ty.Arrow (d, c) =>
+             if Ty.equal (d, c) then (Atom a, true)
+             else if not (Ty.equal (d, Ty.unit)) then (r, false)
+             else
+               (case a of
+                  Global (g, _) =>
+                    (case IntTable.find (#casts st, g) of
+                       SOME (z, from) =>
+                         if Ty.equal (from, c) then (Atom z, true)
+                         else
+                           (case z of
+                              Global (f, _) =>
+                                (case IntTable.find (#schemes st, f) of
+                                   SOME (vs as _ :: _, tf) =>
+                                     (case Ty.match (tf, c) of
+                                        SOME m => (Atom (Global (f, List.map (fn v => case IntMap.find (m, v) of
+                                                                                         SOME u => u
+                                                                                       | NONE => Ty.unit) vs)), true)
+                                      | NONE => (r, false))
+                                 | _ => (r, false))
+                            | _ => (r, false))
+                     | NONE => (r, false))
+                | _ => (r, false))
+         | _ => (r, false))
+    | _ => (r, false)
+
+  (* x of scheme s, which is the atom a, dropped *)
+  fun setAlias (st : state) (x : int, (vs, _) : scheme, a : atom) : unit =
+    IntTable.insert (#alias st, x,
+                     case vs of
+                       [] => (fn _ => a)
+                     | _ => (fn ts => substAtom (ListPair.foldl (fn (v, t, m) => IntMap.insert (m, v, t)) IntMap.empty (vs, ts)) a))
+
+  (* what a global whose value is r is known to be *)
+  fun know (st : state) (g : int, s : scheme, r : rhs) : unit =
+    (IntTable.insert (#schemes st, g, s);
+     case r of
+       Tuple xs => IntTable.insert (#tuples st, g, Vector.fromList xs)
+     | Prim ("unsafe_cast", t, [a]) =>
+         (case Ty.view t of
+            Ty.Arrow (d, c) => if Ty.equal (c, Ty.unit) andalso not (Ty.equal (d, Ty.unit))
+                               then IntTable.insert (#casts st, g, (a, d)) else ()
+          | _ => ())
+     | _ => ())
+
+  (* An expression rewritten with what is known *)
+  fun rewrite (st : state) (e : exp) : exp =
+    let
+      val atom = rwAtom st
+      fun exp e =
+        case e of
+          Let (x, s, r, b) =>
+            (case fold st (rwRhs st r) of
+               (Atom a, true) => (setAlias st (x, s, a); exp b)
+             | (r', _) => Let (x, s, r', exp b))
+        | Fun (fs, b) => Fun (List.map fundef fs, exp b)
+        | Join (j, ps, b, sc) => Join (j, ps, exp b, exp sc)
+        | Jump (j, xs) => Jump (j, List.map atom xs)
+        | If (a, t, f) => If (atom a, exp t, exp f)
+        | Handle (b, x, h) => Handle (exp b, x, exp h)
+        | Raise a => Raise (atom a)
+        | Return r => Return (#1 (fold st (rwRhs st r)))
+        | Mark (pos, b) => Mark (pos, exp b)
+      and fundef ({name, tyvars, params, result, body} : fundef) : fundef =
+        {name = name, tyvars = tyvars, params = params, result = result, body = exp body}
+    in exp e end
+
+  (* ---- the declarations of a copy as definitions ---- *)
+
+  (* whether an expression gives its value (Return) in a tail position of
+     its own, or only jumps and raises *)
+  fun returns (e : exp) : bool =
+    case e of
+      Return _ => true
+    | Let (_, _, _, b) => returns b
+    | Fun (_, b) => returns b
+    | Mark (_, b) => returns b
+    | Join (_, _, b, sc) => returns b orelse returns sc
+    | If (_, t, f) => returns t orelse returns f
+    | Handle (a, _, h) => returns a orelse returns h
+    | Jump _ => false
+    | Raise _ => false
+
+  (* e with each jump to j made what k makes of its arguments *)
+  fun jumpsTo (j : int, k : atom list -> exp) (e : exp) : exp =
+    let
+      fun go e =
+        case e of
+          Let (x, s, r, b) => Let (x, s, r, go b)
+        | Fun (fs, b) => Fun (fs, go b)
+        | Join (j', ps, b, sc) => Join (j', ps, go b, go sc)
+        | Jump (j', xs) => if j' = j then k xs else e
+        | If (a, t, f) => If (a, go t, go f)
+        | Handle (b, x, h) => Handle (go b, x, go h)
+        | Mark (pos, b) => Mark (pos, go b)
+        | _ => e
+    in go e end
+
+  fun small (e : exp) : bool =
+    let
+      fun go (e, n) =
+        if n > 64 then n
+        else
+          case e of
+            Let (_, _, _, b) => go (b, n + 1)
+          | Mark (_, b) => go (b, n)
+          | If (_, t, f) => go (f, go (t, n + 1))
+          | Return _ => n + 1
+          | Raise _ => n + 1
+          | _ => 1000
+    in go (e, 0) <= 64 end
+
+  (* The definitions of the copy e of a body, its value the record r of
+     scheme s, emitted by emit in order, under the place mark *)
+  fun spine (st : state, emit : def -> unit, r : int, s : scheme) (e : exp) : unit =
+    let
+      fun place (mark, e) = case mark of SOME pos => Mark (pos, e) | NONE => e
+      fun global x = IntTable.insert (#globalized st, x, ())
+      fun value (mark, x, sc, e) = emit (Val (x, sc, place (mark, e)))
+      fun rest (mark, e) =
+        (partial := !partial + 1; value (mark, r, s, rewrite st e))
+      fun go (mark, e) =
+        case e of
+          Mark (pos, b) => go (SOME pos, b)
+        | Let (x, sc, rh, b) =>
+            (case fold st (rwRhs st rh) of
+               (Atom a, _) => (setAlias st (x, sc, a); go (mark, b))
+             | (rh', _) => (global x; know st (x, sc, rh'); value (mark, x, sc, Return rh'); go (mark, b)))
+        | Fun (fs, b) =>
+            (List.app (fn (f : fundef) => (global (#name f); IntTable.insert (#schemes st, #name f, (#tyvars f, funTy f)))) fs;
+             emit (Funs (List.map (fn (f : fundef) => {name = #name f, tyvars = #tyvars f, params = #params f,
+                                                        result = #result f, body = rewrite st (#body f)}) fs));
+             go (mark, b))
+        | Return rh =>
+            let val rh' = #1 (fold st (rwRhs st rh))
+            in
+              (case rh' of Atom a => setAlias st (r, s, a) | _ => know st (r, s, rh'));
+              value (mark, r, s, Return rh')
+            end
+        | Join (j, ps, b, sc) =>
+            if not (returns sc) andalso returns b then
+              (case ps of
+                 [(x, t)] =>
+                   (global x; value (mark, x, ([], t), rewrite st (jumpsTo (j, fn [a] => Return (Atom a)
+                                                                               | _ => bug "a jump's arguments") sc)))
+               | [] => emit (Do ([], place (mark, rewrite st (jumpsTo (j, fn _ => Return (Atom Unit)) sc))))
+               | _ =>
+                   let
+                     val tmp = fresh ()
+                     val tt = Ty.tuple (List.map #2 ps)
+                   in
+                     global tmp;
+                     value (mark, tmp, ([], tt), rewrite st (jumpsTo (j, fn xs => Return (Tuple xs)) sc));
+                     List.foldl (fn ((x, t), i) => (global x; value (mark, x, ([], t), Return (Select (i, Global (tmp, [])))); i + 1))
+                                0 ps;
+                     ()
+                   end;
+               go (mark, b))
+            else if returns sc andalso not (returns b) andalso small b then
+              go (mark, jumpsTo (j, fn xs => copyExp (st, IntMap.empty, ListPair.zip (List.map #1 ps, xs), b)) sc)
+            else rest (mark, e)
+        | If (a, t, f) =>
+            if returns t andalso not (returns f) then
+              (emit (Do ([], place (mark, If (rwAtom st a, Return (Atom Unit), rewrite st f)))); go (mark, t))
+            else if returns f andalso not (returns t) then
+              (emit (Do ([], place (mark, If (rwAtom st a, rewrite st t, Return (Atom Unit))))); go (mark, f))
+            else rest (mark, e)
+        | _ => rest (mark, e)
+    in go (NONE, e) end
+
+  (* ---- the program ---- *)
+
+  (* The application a definition is, where its value is a call of a
+     functor's function defined in the program: its steps before the call
+     (with the place of each), the function, the argument, and its marker
+     if it is among the steps *)
+  fun applicationOf (fns : fundef IntTable.table, e : exp) =
+    let
+      fun go (mark, steps, e) =
+        case e of
+          Mark (pos, b) => go (SOME pos, steps, b)
+        | Let (x, s, r, b) => go (mark, (mark, x, s, r) :: steps, b)
+        | Return (App (Global (g, _), [a])) =>
+            (case IntTable.find (fns, g) of
+               SOME f => SOME (List.rev steps, f, a, mark)
+             | NONE => NONE)
+        | _ => NONE
+    in go (NONE, [], e) end
+
+  (* The program with each global a copy made that a value of the top level
+     is under another name, at the same types -- an application's result,
+     which a later unit may name -- given that name, and that value's
+     definition gone: what a later unit calls is the copy's function, as
+     static interpretation's copy is, not a closure in a global *)
+  fun renameCopies (st : state, p : program) : program =
+    let
+      fun under (Mark (_, e)) = under e
+        | under e = e
+      fun candidate d =
+        case d of
+          Val (g, (gs, _), e) =>
+            (case under e of
+               Return (Atom (Global (h, ts))) =>
+                 if isSome (IntTable.find (#globalized st, h))
+                    andalso List.length ts = List.length gs
+                    andalso ListPair.all (fn (t, v) => Ty.equal (t, Ty.gen v)) (ts, gs)
+                    andalso (case IntTable.find (#schemes st, h) of
+                               SOME (hs, _) => List.length hs = List.length gs
+                             | NONE => false)
+                 then SOME (g, h) else NONE
+             | _ => NONE)
+        | _ => NONE
+      val found = List.mapPartial candidate p
+      val count : int IntTable.table = IntTable.table 64
+      val () = List.app (fn (_, h) => IntTable.update (count, h, fn n => getOpt (n, 0) + 1)) found
+      val names = List.foldl (fn ((g, h), m) => if IntTable.find (count, h) = SOME 1 then IntMap.insert (m, h, g) else m)
+                             IntMap.empty found
+      val gone = IntMap.foldl (fn (g, m) => IntMap.insert (m, g, ())) IntMap.empty names
+    in
+      if IntMap.isEmpty names then p
+      else
+        let
+          fun name x = getOpt (IntMap.find (names, x), x)
+          fun atom a = case a of Global (g, ts) => Global (name g, ts) | _ => a
+          fun rhs r =
+            case r of
+              Atom a => Atom (atom a)
+            | App (f, xs) => App (atom f, List.map atom xs)
+            | Prim (p, t, xs) => Prim (p, t, List.map atom xs)
+            | Tuple xs => Tuple (List.map atom xs)
+            | Select (i, a) => Select (i, atom a)
+            | Con (tag, t, a) => Con (tag, t, atom a)
+            | Decon (tag, t, a) => Decon (tag, t, atom a)
+            | ConTag a => ConTag (atom a)
+            | MkExn (c, a) => MkExn (atom c, atom a)
+            | ExnCon a => ExnCon (atom a)
+            | ExnArg (t, a) => ExnArg (t, atom a)
+            | SetGlobal (g, a) => SetGlobal (name g, atom a)
+            | other => other
+          fun exp e =
+            case e of
+              Let (x, s, r, b) => Let (x, s, rhs r, exp b)
+            | Fun (fs, b) => Fun (List.map fundef fs, exp b)
+            | Join (j, ps, b, sc) => Join (j, ps, exp b, exp sc)
+            | Jump (j, xs) => Jump (j, List.map atom xs)
+            | If (a, t, f) => If (atom a, exp t, exp f)
+            | Handle (b, x, h) => Handle (exp b, x, exp h)
+            | Raise a => Raise (atom a)
+            | Return r => Return (rhs r)
+            | Mark (pos, b) => Mark (pos, exp b)
+          and fundef ({name = f, tyvars, params, result, body} : fundef) : fundef =
+            {name = name f, tyvars = tyvars, params = params, result = result, body = exp body}
+        in
+          List.mapPartial (fn d =>
+                             case d of
+                               Val (g, s, e) => if IntMap.member (gone, g) andalso isSome (candidate d) then NONE
+                                                else SOME (Val (name g, s, exp e))
+                             | Funs fs => SOME (Funs (List.map fundef fs))
+                             | Do (gs, e) => SOME (Do (gs, exp e))) p
+        end
+    end
+
+  fun program (p : program) : program =
+    let
+      val () = (expanded := 0; kept := 0; partial := 0)
+      val st = newState ()
+      (* the functors' functions the program defines *)
+      val fns : fundef IntTable.table = IntTable.table 64
+      val () = List.app (fn Funs fs => List.app (fn (f : fundef) => if isFunctor f then IntTable.insert (fns, #name f, f) else ()) fs
+                          | _ => ()) p
+      val sizes : int IntTable.table = IntTable.table 64
+      fun sizeOf (f : fundef) =
+        case IntTable.find (sizes, #name f) of
+          SOME n => n
+        | NONE => let val n = Mid.size [Funs [f]] in IntTable.insert (sizes, #name f, n); n end
+      (* each top-level application's budget left, by a number of its own *)
+      val budgets : int IntTable.table = IntTable.table 64
+      val nroots = ref 0
+      val out : def list ref = ref []
+      fun output d = out := d :: !out
+      (* a marker defined by itself, waiting for its application *)
+      val pending : (def * Ty.ty) option ref = ref NONE
+      fun flush () = case !pending of SOME (d, _) => (output d; pending := NONE) | NONE => ()
+      fun knowDef d =
+        case d of
+          Val (g, s, e) =>
+            let
+              fun under (Mark (_, e)) = under e
+                | under e = e
+            in
+              case under e of
+                Return (Atom a) => (IntTable.insert (#schemes st, g, s); setAlias st (g, s, a))
+              | Return r => know st (g, s, r)
+              | _ => IntTable.insert (#schemes st, g, s)
+            end
+        | Funs fs => List.app (fn (f : fundef) => IntTable.insert (#schemes st, #name f, (#tyvars f, funTy f))) fs
+        | Do (gs, _) => List.app (fn (g, s) => IntTable.insert (#schemes st, g, s)) gs
+      fun rewriteDef d =
+        case d of
+          Val (g, s, e) => Val (g, s, rewrite st e)
+        | Funs fs => Funs (List.map (fn (f : fundef) => {name = #name f, tyvars = #tyvars f, params = #params f,
+                                                         result = #result f, body = rewrite st (#body f)}) fs)
+        | Do (gs, e) => Do (gs, rewrite st e)
+      (* the definitions left, each with its root, its depth and whether it
+         is rewritten already *)
+      fun loop [] = ()
+        | loop ((d, root, depth, done) :: rest) =
+            let
+              val d = if done then d else rewriteDef d
+              fun plain () = (knowDef d; output d; loop rest)
+              fun markerOf (Val (_, _, e)) =
+                    let fun under (Mark (_, e)) = under e | under (Return r) = markerType r | under _ = NONE
+                    in under e end
+                | markerOf _ = NONE
+            in
+              case markerOf d of
+                SOME enc => (flush (); pending := SOME (d, enc); loop rest)
+              | NONE =>
+                  case d of
+                    Val (r, s, e) =>
+                      (case applicationOf (fns, e) of
+                         NONE => plain ()
+                       | SOME (steps, f, a, mark) =>
+                           let
+                             val inSteps = List.find (fn (_, _, _, rh) => isSome (markerType rh)) steps
+                             (* a marker among its steps is its own; else the one
+                                waiting is *)
+                             val () = if isSome inSteps then flush () else ()
+                             val enc = case inSteps of
+                                         SOME (_, _, _, rh) => markerType rh
+                                       | NONE => Option.map #2 (!pending)
+                             val (root', left) =
+                               case root of
+                                 SOME k => (k, getOpt (IntTable.find (budgets, k), 0))
+                               | NONE => let val k = !nroots in nroots := k + 1; IntTable.insert (budgets, k, !budget); (k, !budget) end
+                             val n = sizeOf f
+                           in
+                             if not (isSome enc) orelse n > left orelse depth >= maxDepth orelse not (Pass.spend ()) then
+                               (kept := !kept + 1; flush (); plain ())
+                             else
+                               let
+                                 val () = IntTable.insert (budgets, root', left - n)
+                                 val () = expanded := !expanded + 1
+                                 val () = pending := NONE
+                                 val enc = valOf enc
+                                 val (bs, gs) = entries enc
+                                 val () = List.app (fn (_, Body (_, to)) =>
+                                                         (case Ty.view to of
+                                                            Ty.Con (c', _, _) => #instances st := c' :: !(#instances st)
+                                                          | _ => ())
+                                                     | _ => ()) gs
+                                 val sigma = List.foldl (fn ((s, i), m) => IntMap.insert (m, s, i)) IntMap.empty (bs @ gs)
+                                 val made : def list ref = ref []
+                                 fun emit d = made := d :: !made
+                                 (* the steps before the call: definitions of their own *)
+                                 val () =
+                                   List.app (fn (mk, x, sc, rh) =>
+                                               if isSome (markerType rh) then ()
+                                               else
+                                                 case fold st (rwRhs st rh) of
+                                                   (Atom a, true) => setAlias st (x, sc, a)
+                                                 | (rh', _) =>
+                                                     (IntTable.insert (#globalized st, x, ()); know st (x, sc, rh');
+                                                      emit (Val (x, sc, case mk of SOME pos => Mark (pos, Return rh') | NONE => Return rh'))))
+                                            steps
+                                 val a' = rwAtom st a
+                                 val body = copyBody (st, sigma, f, a')
+                                 val body = case mark of SOME pos => Mark (pos, body) | NONE => body
+                                 val () = spine (st, emit, r, s) body
+                                 val made = List.map (fn d => (d, SOME root', depth + 1, true)) (List.rev (!made))
+                               in loop (made @ rest) end
+                           end)
+                  | _ => plain ()
+            end
+      val () = loop (List.map (fn d => (d, NONE, 0, false)) p)
+      val () = flush ()
+      val p' = renameCopies (st, List.rev (!out))
+      (* the datatypes the copies declared, entered *)
+      val copied = List.rev (!(#copied st))
+      val () = List.app (fn (_, s', info) => Ty.bindDatatypeDirect (s', info)) copied
+      (* the layouts: the datatypes an application left a call takes keep
+         the body's layout, whose descriptors were worked out from it *)
+      val taken : unit IntMap.map ref = ref IntMap.empty
+      fun scanExp e =
+        case e of
+          Let (_, _, r, b) => (scanRhs r; scanExp b)
+        | Fun (fs, b) => (List.app (fn (f : fundef) => scanExp (#body f)) fs; scanExp b)
+        | Join (_, _, b, sc) => (scanExp b; scanExp sc)
+        | If (_, t, f) => (scanExp t; scanExp f)
+        | Handle (b, _, h) => (scanExp b; scanExp h)
+        | Return r => scanRhs r
+        | Mark (_, b) => scanExp b
+        | _ => ()
+      and scanRhs r =
+        case markerType r of
+          SOME enc =>
+            let val (bs, gs) = entries enc
+            in List.app (fn (_, Body (_, to)) => taken := namesIn (to, !taken) | _ => ()) (bs @ gs) end
+        | NONE => ()
+      val () = if null copied andalso null (!(#instances st)) then ()
+               else List.app (fn Val (_, _, e) => scanExp e
+                               | Funs fs => List.app (fn (f : fundef) => scanExp (#body f)) fs
+                               | Do (_, e) => scanExp e) p'
+      fun isTaken s = IntMap.member (!taken, s)
+      val () = List.app (fn c' => if isTaken c' orelse not (IntMap.member (!Ty.pinned, c')) then ()
+                                  else Ty.pinned := IntMap.remove (!Ty.pinned, c')) (!(#instances st))
+      val () = List.app (fn (s, s', _) => if isTaken s' then Ty.pinLayout (s', Ty.elabLayout s) else ()) copied
+      val () =
+        if !Pass.stats then
+          Pass.eprint ("expand: " ^ Int.toString (!expanded) ^ " applications expanded, " ^ Int.toString (!kept)
+                       ^ " left calls, " ^ Int.toString (!partial) ^ " copies not all definitions\n")
+        else ()
+    in p' end
+end

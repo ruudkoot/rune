@@ -11,6 +11,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `translate` | the elaborated syntax | `Lambda` (`lib/compiler/core/lambda.sml`) | `LambdaLint` |
 | `mid` | `Lambda` | `Mid` (`lib/compiler/core/mid.sml`, by `ToMid`) | `MidLint` |
 | `midcanon` | `Mid` | `Mid` numbered canonically (`lib/compiler/core/midcanon.sml`), as one made of its units' `Mid` is; a whole program only | `MidLint` |
+| `expand` | `Mid` | `Mid`, functors' applications copied (`lib/compiler/core/expand.sml`), under `--functors=functions` only (*Functors compiled once* below), from `-O1` | `MidLint` |
 | `shake` | `Mid` | `Mid`, what nothing reaches gone (`lib/compiler/core/shake.sml`), from `-O1` | `MidLint` |
 | `lift` | `Mid` | `Mid`, local functions that never escape made functions of the top level (`lib/compiler/core/lift.sml`), from `-O1` | `MidLint` |
 | `workers` | `Mid` | `Mid`, tupled and curried functions split into workers and wrappers (`lib/compiler/core/workers.sml`), from `-O1` | `MidLint` |
@@ -31,7 +32,8 @@ Each stage runs through `Pass.stage` (`lib/compiler/util/pass.sml`), which print
 what it is given or makes when asked, checks it with the lint of its
 representation, and says what it cost. An optional pass, one that only
 optimises, says from which level it runs (`Pass.enabled`): `trees`, which
-is how `translate` compiles a match (see *Matches*), then `shake`, `lift`,
+is how `translate` compiles a match (see *Matches*), then `expand` (under
+`--functors=functions` only), `shake`, `lift`,
 `workers`, `simplify` and `refs`, in that order, and `shake` again where `simplify`
 inlined (see *The optimisations of Mid*); `inline` and `specialise` are
 what `simplify` does besides shrinking, each of which may be left out, as
@@ -53,6 +55,7 @@ of results in globals (see *Low*).
 | `--units` | run the pipeline on one unit, a file, at a time, and link them ([units.md](units.md)): the passes see a unit, with `Pass.whole` false, and `--pass-stats` names each unit before its passes |
 | `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would (there is no bytecode from Mid yet) |
 | `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same |
+| `--functor-budget=N` | with `--functors=functions`, the Mid nodes `expand` may copy for a top-level application and those in its copies (400000 by default; 0 copies none) |
 
 **What `--pass-stats` shows** is the whole compile: the stages add up to
 the process's processor time from its start, which `tests/compiler` holds
@@ -257,8 +260,8 @@ each application, and the copy is what is translated.
   which bind locals, not globals (`Elaborate.inBody`), and makes the
   result's record, a substructure that is a record in reach given as it is.
   Each call runs the body again: its exceptions and `ref`s are new (rule
-  154). Simplify never puts a functor's function where it is called (that
-  is the expansion's, with its budget, M6).
+  154). Simplify never puts a functor's function where it is called: that
+  is the expansion's, with its budget (below).
 * **An application** (`Elaborate.callCode`) is typed by the functor's
   summary alone (rule 54), the type names it made given fresh names, and its
   values and exceptions given fresh variables -- globals at the top level,
@@ -296,6 +299,45 @@ each application, and the copy is what is translated.
   whatever its realised types would say. `MidCanon` and a unit's Mid
   (`UnitMid`) carry the fixed layouts and the open datatypes (`Ty.openTypes`)
   with the datatypes they rename and keep.
+* **The expansion** (`expand`, `Expand`; M6, decisions D1, D2 and D13)
+  gives a program the copies static interpretation makes, in Mid: in a
+  whole compile right after `midcanon`, in `--units --whole` right after
+  the units' Mid is made one program (the same pass on the same Mid, so
+  that the two give the same bytes, S42), and in a build in units on each
+  unit, before it is kept for `--units --whole`, where only an application
+  of a functor the unit declares is expanded (D2 A).
+  - An application carries what a copy substitutes: before the call, a
+    cast of `()` to a pair of tuples of arrows, which nothing reads -- the
+    parameter's type names applied to variables (`Ty.Var`), each to what
+    the argument realises it as, and the body's datatypes to the
+    application's instances (`Translate.functorTypes`). Being a type of the
+    program, it is renamed with it by `MidCanon` and kept by `UnitMid`, and
+    substituted in a copy like any other, for the applications inside it.
+  - At an application of the top level whose function the program
+    defines, the function's body is copied, its names fresh and its types
+    substituted as the marker says; a datatype the body declares over
+    what is substituted gets a name of its own (after `MidCanon`'s,
+    `MidCanon.nextTycon`); an open constructor's descriptor test keeps its
+    first branch, which makes or takes the constructor apart as its
+    datatype. The copy's bindings, groups of functions and the values its
+    join points give the rest become definitions of the top level, as
+    static interpretation's are; what does not fit (a branch both of whose
+    arms go on) stays one definition of the record (`--pass-stats` counts
+    them).
+  - A slot read from a record whose value is known is that value, and a
+    cast through `unit` of it is what was cast, at an instance of its
+    scheme for a polymorphic one (`Ty.match`): what substituting made
+    trivial goes, in the copy and wherever the application's result is
+    read. A value of the top level that is a copy's global at the same
+    types gives that global its name, so that a later unit calls the
+    copy's function by name.
+  - The copies' applications are expanded in turn. A top-level
+    application and those in its copies may copy `--functor-budget` Mid
+    nodes (and 64 deep); past it, an application stays a call (D13).
+  - An instance of a body's datatype that an expanded application named
+    is laid out from its realised types, unless an application left a
+    call takes it, whose descriptor the body's layout gave; a datatype a
+    copy declared that such an application takes keeps the body's layout.
 
 ## Mid
 
@@ -358,6 +400,10 @@ have generalised them: a variable of the program or a function; a variable
   that type variables are in scope.
 * **Calls:** a function of other than one parameter is only called, with
   an argument for each, and never used as a value.
+* **Casts,** under `--functors=functions` (D3): no value cast to `unit` is
+  cast back to another ground type. A record's slot is cast to `unit` and
+  back; where the expansion knows the slot's value, a cast left between two
+  ground types that differ is a bug of the expansion.
 
 ### Mid as text
 

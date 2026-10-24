@@ -13,6 +13,9 @@
      scheme has at them.
    * calls: a function of other than one parameter (a worker, M8) is only
      called, with an argument for each, and never used as a value.
+   * casts, under --functors=functions (functors-units.md, D3): no value
+     cast to unit is cast back to another ground type -- what a record's
+     slot is where its value is known, after the expansion (Expand).
    A breach is a bug of the compiler, raised as Error.Bug. *)
 structure MidLint =
 struct
@@ -60,6 +63,40 @@ struct
                ^ Int.toString (List.length args) ^ " types")
         else if null tyvars then t
         else Ty.subst (ListPair.foldl (fn (a, u, s) => IntMap.insert (s, a, u)) IntMap.empty (tyvars, args)) t
+
+      (* the variables whose value is a cast to unit, of the type cast from *)
+      val castRule = !Elaborate.functorFunctions
+      val toUnit : Ty.ty IntTable.table = IntTable.table 64
+      fun ground t =
+        case Ty.view t of
+          Ty.Gen _ => false
+        | Ty.Var _ => false
+        | Ty.Con (_, _, args) => List.all ground args
+        | Ty.Tuple ts => List.all ground ts
+        | Ty.Arrow (a, b) => ground a andalso ground b
+        | Ty.ExnCon => true
+      fun noteCast (x, r) =
+        case r of
+          Prim ("unsafe_cast", t, [_]) =>
+            (case Ty.view t of
+               Ty.Arrow (d, c) => if castRule andalso Ty.equal (c, Ty.unit) andalso not (Ty.equal (d, Ty.unit))
+                                  then IntTable.insert (toUnit, x, d) else ()
+             | _ => ())
+        | _ => ()
+      fun castBack (t, a) =
+        case (Ty.view t, a) of
+          (Ty.Arrow (d, c), Var (x, _)) => castFrom (d, c, x)
+        | (Ty.Arrow (d, c), Global (x, _)) => castFrom (d, c, x)
+        | _ => ()
+      and castFrom (d, c, x) =
+        if not (Ty.equal (d, Ty.unit)) then ()
+        else
+          case IntTable.find (toUnit, x) of
+            SOME from =>
+              if ground from andalso ground c andalso not (Ty.equal (from, c)) then
+                bug ("v" ^ Int.toString x ^ ", cast to unit from " ^ Ty.toString from ^ ", is cast back to " ^ Ty.toString c)
+              else ()
+          | NONE => ()
 
       fun conArg (what, t, tag) =
         case Ty.view t of
@@ -124,7 +161,8 @@ struct
                 | _ => wrong ()
               end
           | Prim (p, t, args) =>
-              (case Ty.view t of
+              ((case (castRule, p, args) of (true, "unsafe_cast", [a]) => castBack (t, a) | _ => ());
+               case Ty.view t of
                  Ty.Arrow (d, res) =>
                    (case (args, Ty.view d) of
                       ([a], _) => expect ("the argument of " ^ p, at a, d)
@@ -176,6 +214,7 @@ struct
           Let (x, s as (_, t), r, b) =>
             (expect ("the value of v" ^ Int.toString x, rhs (env, r), t);
              bind x;
+             noteCast (x, r);
              exp (IntMap.insert (env, x, s), labels, b, want))
         | Fun (fs, b) =>
             let val env' = List.foldl (fn (f, env) => (bind (#name f); naryOf f; IntMap.insert (env, #name f, schemeOf f)))
@@ -206,9 +245,10 @@ struct
           (List.app (fn (x, _) => bind x) params;
            exp (List.foldl (fn ((x, t), env) => IntMap.insert (env, x, ([], t))) env params, IntMap.empty, body, result))
 
+      fun valueOf e = case e of Mark (_, e) => valueOf e | Return r => SOME r | _ => NONE
       fun def d =
         case d of
-          Val (g, (_, t), e) => (bind g; exp (IntMap.empty, IntMap.empty, e, t))
+          Val (g, (_, t), e) => (bind g; exp (IntMap.empty, IntMap.empty, e, t); Option.app (fn r => noteCast (g, r)) (valueOf e))
         | Funs fs => List.app (fn f => (bind (#name f); fundef (IntMap.empty, f))) fs
         | Do (gs, e) => (List.app (fn (g, _) => bind g) gs; exp (IntMap.empty, IntMap.empty, e, Ty.unit))
     in

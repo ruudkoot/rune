@@ -11,6 +11,7 @@ files
   core/midtext.sml
   core/tomid.sml
   core/midcanon.sml
+  core/expand.sml
   core/target.sml
   core/shake.sml
   core/lift.sml

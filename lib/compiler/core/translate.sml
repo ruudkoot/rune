@@ -820,14 +820,34 @@ struct
                   openFuns (rest, k))
         end
 
+  (* What the expansion (Expand, M6) substitutes in a copy of a functor's
+     body for an application, as a type: a pair of tuples, the parameter's
+     type names realised and the body's datatypes made the application's
+     instances, each an arrow from the name applied to variables (Ty.Var)
+     to what it becomes at them *)
+  and functorTypes ({bound, made, ...} : Elaborate.callCode) : Ty.ty =
+    let
+      fun entry (c : Types.tycon, f : Types.tyfcn) =
+        let
+          val vs = List.tabulate (#arity c, fn _ => Types.fresh 0)
+          val from = Ty.con (#stamp c, #name c, List.map Ty.fromTypes vs)
+        in Ty.arrow (from, Ty.fromTypes (Types.applyFcn (f, vs))) end
+    in
+      Ty.tuple [Ty.tuple (List.map entry bound), Ty.tuple (List.map (fn (c, c') => entry (c, Types.TName c')) made)]
+    end
+
   (* an application: the call, and the variables of its result set from
      what it returns *)
-  and callExp ({func, arg, argVar, result, global, record} : Elaborate.callCode, sp, k : unit -> lexp) : lexp =
+  and callExp (code as {func, arg, argVar, result, global, record, ...} : Elaborate.callCode, sp, k : unit -> lexp) : lexp =
     let
-      (* the call under the application's place; at the top level each
-         variable a definition of its own (ToMid), which a mark around them
-         would make one *)
-      fun call a = MatchComp.bindVar (result, global, Mark (sp, App (Global func, a)),
+      (* the call under the application's place, after its marker -- a cast
+         of () to what the expansion substitutes, which nothing reads; at the
+         top level each variable a definition of its own (ToMid), which a
+         mark around them would make one *)
+      fun call a = MatchComp.bindVar (result, global,
+                                      Mark (sp, Let (MatchComp.freshVar (),
+                                                     Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, functorTypes code)), [Unit]),
+                                                     App (Global func, a))),
                                       if global then bindRecord (record, Global result, k)
                                       else bindUsed (record, Var result, k ()))
     in

@@ -37,6 +37,10 @@ struct
                       size = Mid.size}
                      f m
         else m
+      (* --functors=functions: the copies of applications given back
+         (Expand, functors-units.md M6), before anything else is done to
+         them; in a build in units, of the unit's own functors (D2) *)
+      val mid = if !Elaborate.functorFunctions then optional ("expand", Expand.program) mid else mid
       val mid = optional ("shake", Shake.program) mid
       val mid = optional ("lift", Lift.program) mid
       val mid = optional ("workers", Workers.program) mid

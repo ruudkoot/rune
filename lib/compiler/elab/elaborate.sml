@@ -938,7 +938,13 @@ struct
      decon), the datatype at its parameters and the constructor's argument *)
   type openCon = {tycon : int, tag : int, desc : int, con : int, decon : int, dataTy : ty, argTy : ty, used : bool ref}
   type functorCode = {func : int, param : int, paramRecord : record, result : record, opens : openCon list}
-  type callCode = {func : int, arg : record, argVar : int option, result : int, global : bool, record : record}
+  (* an application's: the function, the argument's record (and the
+     variable it is in reach by), the result's variable, whether a global,
+     and its record; and what the expansion (Expand) substitutes in a copy
+     of the body: the parameter's type names realised, and the body's
+     datatypes by the application's instances (Translate.functorTypes) *)
+  type callCode = {func : int, arg : record, argVar : int option, result : int, global : bool, record : record,
+                   bound : (tycon * tyfcn) list, made : (tycon * tycon) list}
   fun spanKey ({file, start, stop} : Source.span) : string =
     file ^ "\000" ^ Int.toString start ^ "\000" ^ Int.toString stop
   val bodies : functorCode StringMap.map ref = ref StringMap.empty
@@ -2032,6 +2038,9 @@ struct
                    val (phi, specE) = ElabStats.during ElabStats.Match (fn () => SigMatch.match (paramSig, argEnv, sp))
                    val descs = descriptors (paramSig, phi, sp)
                    val fresh = List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) generated
+                   val bound = List.map (fn (c : tycon) => (c, case IntMap.find (phi, #stamp c) of
+                                                                SOME f => f
+                                                              | NONE => TName c)) (#bound paramSig)
                    val phi = List.foldl (fn ((c, c'), m) => IntMap.insert (m, #stamp c, TName c')) phi fresh
                    val () = List.app (fn (c, c') => instance (phi, c, c')) fresh
                    val g = globalAt top
@@ -2049,7 +2058,9 @@ struct
                    val () = register (record, {var = r, global = g, path = []})
                  in
                    calls := StringMap.insert (!calls, spanKey sp, {func = func, arg = arg, argVar = argVar, result = r, global = g,
-                                                                   record = record});
+                                                                   record = record, bound = bound,
+                                                                   made = List.filter (fn (c, _) => IntMap.member (!Ty.datatypes, #stamp c))
+                                                                                      fresh});
                    res
                  end
                (* --pass-stats=elab: the match, the copy and its elaboration

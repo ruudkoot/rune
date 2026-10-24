@@ -82,7 +82,11 @@ struct
     \  --functors=M      how a functor is compiled: copies (the default), a copy of\n\
     \                    its body for each application; or functions, each once,\n\
     \                    to a function its applications call (a prototype;\n\
-    \                    docs/plans/functors-units.md, M5)\n\
+    \                    docs/plans/functors-units.md, M5), whose copies a\n\
+    \                    whole program's Mid is given back (M6)\n\
+    \  --functor-budget=N with --functors=functions, the Mid nodes the copies\n\
+    \                    of a top-level application, and of those in them, may\n\
+    \                    hold (400000 by default; 0 makes none)\n\
     \  --datatype-tags=O the tags of a datatype's constructors: declared (the\n\
     \                    default), by their declaration; sorted (the default with\n\
     \                    --functors=functions), by their names; or sorted-x,\n\
@@ -297,6 +301,10 @@ struct
          | SOME ("--functors", "functions") => (Elaborate.functorFunctions := true; parse rest)
          | SOME ("--functors", "copies") => (Elaborate.functorFunctions := false; parse rest)
          | SOME ("--functors", _) => raise Usage "--functors requires copies or functions"
+         | SOME ("--functor-budget", v) =>
+             (case Int.fromString v of
+                SOME n => if n >= 0 then (Expand.budget := n; parse rest) else raise Usage "--functor-budget requires a number"
+              | NONE => raise Usage "--functor-budget requires a number")
          | SOME ("--datatype-tags", v) =>
              (case Types.tagOrderOf v of
                 SOME o' => (datatypeTags := SOME o'; parse rest)
