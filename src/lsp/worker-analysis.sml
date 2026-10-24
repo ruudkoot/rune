@@ -316,32 +316,38 @@ struct
       ("version",case #version source of NONE => V.Null | SOME version => V.Integer version),
       ("report",V.json (documentDiagnostics (view,{uri= #uri source,previous=NONE})))])
       (case activeSource (view,#uri view) of NONE => [] | SOME source => [source])
-  fun workspaceViews (worker,{state,encoding,capabilities,cancelled}) =
+  (* Finish each context's response before checking the next one. Keeping
+     every snapshot here bypasses the resident cache's eviction budget. *)
+  fun workspaceResults (worker,{state,encoding,capabilities,cancelled},collect) =
     let val (workspace,documents)=M.restore state
         val {uris,problems}=RuneLspProjects.enrich (workspace,documents,cancelled)
         val uris=unique (List.map #uri (D.all documents) @ uris)
         val captured=M.capture (workspace,documents)
-        val checked=ref [] : (string*view) list ref
-        val output=ref [] : view list ref
         fun contextKey (context:W.context)= #build context ^ "#" ^ #target context ^ ":" ^ C.Project.fingerprint (#project context)
-        fun one uri =
+        fun group (uri,groups) =
           if cancelled () then raise A.Cancelled else
-          case W.select (workspace,documents,uri) of W.Ambiguous _ => ()
+          case W.select (workspace,documents,uri) of W.Ambiguous _ => groups
           | selected =>
             let val key=case selected of W.Loose => "loose:" ^ uri | W.Selected context => contextKey context | _ => ""
-                val prior=List.find (fn (old,_) => old=key) (!checked)
-                val view=case prior of SOME (_,view) => view
-                  | NONE => check (worker,{state=captured,uri=uri,encoding=encoding,capabilities=capabilities,cancelled=cancelled})
-                val view=makeView {id= #id view,snapshot= #snapshot view,sources= #sources view,encoding= #encoding view,uri=uri,
-                  ordinal=case selected of W.Selected context => SOME (#ordinal context) | _ => NONE,capabilities=capabilities,
-                  generation= #generation view}:view
-                val ()=if isSome prior then () else checked:=(key,view):: !checked
-            in output:=view :: !output end
-        val ()=List.app one uris
-    in {views=List.rev (!output),problems=problems} end
+                val ordinal=case selected of W.Selected context => SOME (#ordinal context) | _ => NONE
+                fun insert []=[(key,[(uri,ordinal)])]
+                  | insert ((prior,items)::rest)=if prior=key then (prior,items @ [(uri,ordinal)])::rest
+                    else (prior,items)::insert rest
+            in insert groups end
+        val groups=List.foldl group [] uris
+        fun one (_,[]) = []
+          | one (_,(items as (uri,_)::_)) =
+              let val view=check (worker,{state=captured,uri=uri,encoding=encoding,capabilities=capabilities,cancelled=cancelled})
+                  fun result (uri,ordinal)=
+                    if cancelled () then raise A.Cancelled else
+                    (uri,collect (makeView {id= #id view,snapshot= #snapshot view,sources= #sources view,
+                      encoding= #encoding view,uri=uri,ordinal=ordinal,capabilities=capabilities,generation= #generation view}))
+              in List.map result items end
+        val results=List.concat (List.map one groups)
+        val ordered=List.mapPartial (fn uri=>Option.map #2 (List.find (fn (file,_)=>file=uri) results)) uris
+    in {results=ordered,problems=problems} end
   fun workspaceDiagnostics (worker,{state,encoding,capabilities,cancelled,previous}) =
-    let val {views,problems}=workspaceViews (worker,{state=state,encoding=encoding,capabilities=capabilities,cancelled=cancelled})
-        fun report (view:view)=
+    let fun report (view:view)=
           let val prior=case List.find (fn (uri,_) => uri= #uri view) previous of NONE => NONE | SOME (_,id) => SOME id
               val json=documentDiagnostics (view,{uri= #uri view,previous=prior})
               val fields=case json of Json.Object fields => fields | _ => []
@@ -352,11 +358,12 @@ struct
           ("kind",Json.String "full"),("items",Json.Array [Json.Object
             [("range",LspProtocol.rangeToJson {start={line=0,character=0},stop={line=0,character=0}}),
              ("severity",Json.int 1),("source",Json.String "rune-build"),("message",Json.String (safe message))]])]
-    in Json.Object [("items",Json.Array (List.map report views @ List.map problem problems))] end
+        val {results,problems}=workspaceResults (worker,
+          {state=state,encoding=encoding,capabilities=capabilities,cancelled=cancelled},report)
+    in Json.Object [("items",Json.Array (results @ List.map problem problems))] end
   fun symbolToken symbol=Hex.fromBytes (Sha256.digest (Json.encode symbol))
   fun workspaceSymbols (worker,{state,encoding,capabilities,cancelled,query}) =
-    let val {views,...}=workspaceViews (worker,{state=state,encoding=encoding,capabilities=capabilities,cancelled=cancelled})
-        val generation=V.integer (V.field (state,"generation"))
+    let val generation=V.integer (V.field (state,"generation"))
         val needle=String.map Char.toLower query
         val resolve=case capability (capabilities,["workspace","symbol","resolveSupport","properties"]) of
           SOME (Json.Array properties) => List.exists (fn value => value=Json.String "location.range") properties | _ => false
@@ -372,7 +379,9 @@ struct
               in if not (String.isSubstring needle (String.map Char.toLower name)) then NONE else
                    SOME (Json.Object (("data",data)::("location",shown)::List.filter (fn (key,_) => key<>"location") fields)) end)
               (symbols (view,source))
-        val all=unique (List.concat (List.map viewSymbols views))
+        val {results,...}=workspaceResults (worker,
+          {state=state,encoding=encoding,capabilities=capabilities,cancelled=cancelled},viewSymbols)
+        val all=unique (List.concat results)
     in Json.Array (List.take (all,Int.min (1000,length all))) end
   fun resolveSymbol (worker,params,state) =
     let val data=J.object (J.required (J.object params,"data"))

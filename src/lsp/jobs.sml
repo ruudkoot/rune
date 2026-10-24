@@ -29,13 +29,17 @@ struct
           | NONE=>loop(i+1,escaped(String.sub(text,i))::all)
     in if CharVector.all(fn c=>Char.ord c>=32 andalso Char.ord c<127)text then text else loop(0,[]) end
   fun textField (value,name)=SOME(V.bytes(V.field(value,name))) handle V.Invalid _=>NONE
+  fun workspaceJob (job:'a job)=textField(#payload job,"op")=SOME "workspace"
+  fun workspaceLimit timeout=Time.fromMicroseconds(IntInf.*(4,Time.toMicroseconds timeout))
   fun elapsed since=Time.toString(if Time.<(Time.now(),since) then Time.zeroTime else Time.-(Time.now(),since)) ^ " s"
   fun details (Jobs{worker,command,active,queue,phase,timeout,cancelGrace,started,progress,context,...}) =
     let val job=case !active of SOME job=>SOME job | NONE=>(case !phase of Starting _=>List.find(fn _=>true)(!queue) | _=>NONE)
         val worker=case !worker of NONE=>"worker PID unavailable"
           | SOME(P.Process{pid,...})=>"worker PID " ^ Int.toString pid
         val limit=case !phase of Starting _=>Time.fromSeconds 30 | Cancelling _=>cancelGrace | _=>timeout
-        val timing=(case !started of NONE=>"" | SOME since=>", elapsed " ^ elapsed since) ^ ", limit " ^ Time.toString limit ^ " s"
+        val timing=(case !started of NONE=>"" | SOME since=>", elapsed " ^ elapsed since) ^
+          (case job of SOME job=>if workspaceJob job then ", context limit " else ", limit " | NONE=>", limit ") ^
+          Time.toString limit ^ " s"
         fun field(payload,name,label)=case textField(payload,name) of NONE=>"" | SOME ""=>""
           | SOME value=>"\n  " ^ label ^ ": " ^ preview value
         val work=case job of NONE=>"" | SOME job=>", job " ^ IntInf.toString(#id job) ^
@@ -92,7 +96,7 @@ struct
           (queue:=rest;active:=SOME job;started:=SOME(Time.now());progress:=NONE;context:=NONE;
            phase:=Working (Time.+ (Time.now (),timeout));P.enqueue (process,#payload job))
         | _ => ()
-  fun message (jobs as Jobs {active,phase,progress,context,started,...},value) =
+  fun message (jobs as Jobs {active,phase,progress,context,started,timeout,...},value) =
     let val opName=textField(value,"op")
         val ready=opName=SOME "ready"
     in if ready then
@@ -107,6 +111,11 @@ struct
                   in if IntInf.<(n,0) orelse IntInf.>(n,1000000) then raise V.Invalid "invalid worker progress count" else n end
                 val ()=if size name>256 then raise V.Invalid "worker progress metadata exceeds limit" else ()
                 val ()=case textField(value,"context") of NONE=>() | SOME label=>context:=SOME(preview label,file)
+                (* A workspace sweep checks several independent projects.
+                   Unit progress cannot extend a stalled project's deadline. *)
+                val ()=case !phase of Working _=>
+                  if workspaceJob job andalso name="project-selected" then
+                    phase:=Working(Time.+(Time.now(),timeout)) else () | _=>()
             in progress:=SOME{phase=name,file=file,checked=count "checked",reused=count "reused",at=Time.now()} end
           else
           let val cancelling=case !phase of Cancelling _ => true | _ => false
@@ -123,11 +132,15 @@ struct
           in active:=NONE;phase:=AwaitReady end
        end end
     handle V.Invalid message => lost (jobs,message)
-  fun tick (jobs as Jobs {retired,phase,...}) =
+  fun tick (jobs as Jobs {retired,phase,active,started,timeout,...}) =
     let val ()=retired:=List.filter (fn process => (not (isSome (P.reap process))) handle OS.SysErr _ => false) (!retired)
         val expired=case !phase of Starting deadline => Time.> (Time.now (),deadline)
           | Working deadline => Time.> (Time.now (),deadline) | Cancelling deadline => Time.> (Time.now (),deadline) | _ => false
-        val ()=if expired then lost (jobs,"analysis worker exceeded its deadline") else ()
+        val workspaceExpired=case (!phase,!active,!started) of (Working _,SOME job,SOME since)=>
+          workspaceJob job andalso Time.>(Time.now(),Time.+(since,workspaceLimit timeout)) | _=>false
+        val ()=if workspaceExpired then lost(jobs,"analysis worker exceeded its overall workspace deadline (" ^
+            Time.toString(workspaceLimit timeout) ^ " s)")
+          else if expired then lost (jobs,"analysis worker exceeded its deadline") else ()
     in startNext jobs end
     handle error => lost (jobs,case error of OS.SysErr(message,code)=>message ^
       (case code of NONE=>"" | SOME code=>": " ^ OS.errorMsg code) | Fail message=>message | _=>General.exnMessage error)

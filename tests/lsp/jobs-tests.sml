@@ -82,6 +82,29 @@ struct
         val shown=J.preview path
     in check("metadata stays bounded and escapes controls and invalid native bytes",size shown<1100 andalso
       String.isSubstring "tail\\x0A\\xFF" shown andalso not(String.isSubstring "\n" shown)) end
+  fun workspaceDeadlines () =
+    let fun scenario (opName,wholeExpired,cancelling,unitProgress) =
+          let val jobs=J.new {command="unused",args=[],timeout=Time.fromSeconds 1,
+                cancelGrace=Time.fromMilliseconds 50,maxPending=1}:string J.t
+              val J.Jobs {active,queue,phase,started,events,...}=jobs
+              val id=J.submit(jobs,{key=NONE,priority=0,data="deadline",
+                payload=V.Object[("op",V.Bytes opName)]})
+              val expired=Time.-(Time.now(),Time.fromSeconds 2)
+              val ()=(active:=SOME(hd(!queue));queue:=[];
+                started:=SOME(if wholeExpired then Time.-(Time.now(),Time.fromSeconds 5) else Time.now());
+                phase:=(if cancelling then J.Cancelling expired else J.Working expired))
+              val ()=J.message(jobs,V.Object[("op",V.Bytes "progress"),("id",V.Integer id),
+                ("phase",V.Bytes(if unitProgress then "unit-start" else "project-selected")),
+                ("file",V.Bytes "file:///project/main.sml"),("context",V.Bytes "project")])
+              val ()=J.tick jobs
+              val failed=List.exists(fn J.Failed _=>true | _=>false)(!events)
+              val ended=case !phase of J.Idle=>true | _=>false
+          in J.close jobs;(failed,ended) end
+    in check("a new workspace context gets its own deadline",scenario("workspace",false,false,false)=(false,false));
+      check("unit progress cannot extend the context deadline",scenario("workspace",false,false,true)=(true,true));
+      check("context progress cannot extend the overall workspace deadline",scenario("workspace",true,false,false)=(true,true));
+      check("document deadlines remain absolute",scenario("check",false,false,false)=(true,true));
+      check("context progress cannot extend cancellation grace",#2(scenario("workspace",false,true,false))) end
 end
 structure RuneLspJobsTestMain=Main (struct
   val name="lsp-jobs"
@@ -89,6 +112,7 @@ structure RuneLspJobsTestMain=Main (struct
     Test.it "queued-cancellation" RuneLspJobsTests.queuedCancellation,Test.it "failed-startup" RuneLspJobsTests.failedStartup,
     Test.it "typed-rejection" RuneLspJobsTests.typedRejection,
     Test.it "informative-timeout" RuneLspJobsTests.informativeTimeout,
+    Test.it "workspace-context-deadlines" RuneLspJobsTests.workspaceDeadlines,
     Test.it "bounded-error-metadata" RuneLspJobsTests.metadataBounds]
 end)
 val ()=RuneLspJobsTestMain.main ()

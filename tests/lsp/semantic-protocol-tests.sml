@@ -5,8 +5,10 @@ struct
   fun object fields=Json.Object fields
   fun document uri=object [("uri",Json.String uri)]
   fun textValue (Json.String value)=value | textValue _=raise Fail "expected string"
+  fun launchArguments ("--filter"::_::rest)=launchArguments rest
+    | launchArguments (arg::rest)=arg::launchArguments rest | launchArguments []=[]
   fun fixtureInitializedResult initialization action =
-    let val (program,args)=case CommandLine.arguments () of [vm,server,worker] => (vm,[server,vm,worker])
+    let val (program,args)=case launchArguments(CommandLine.arguments ()) of [vm,server,worker] => (vm,[server,vm,worker])
           | [vm,server] => (vm,[server]) | [program] => (program,[])
           | _ => raise Fail "semantic protocol tests require server launch arguments"
         val client=C.start (program,args)
@@ -186,6 +188,37 @@ struct
         fun write(path,text)=let val out=TextIO.openOut path in TextIO.output(out,text);TextIO.closeOut out end
         fun work()=action{root=root,uri=uri,write=write}
     in (work() before remove root) handle error=>(remove root handle _=>();raise error) end
+  fun workspaceContexts ()=temporaryTree(fn {root,uri,write}=>
+    let fun path name=OS.Path.concat(root,name)
+        val ()=write(path "left.build","files left.sml left-tail.sml end\n")
+        val ()=write(path "right.build","files right.sml right-tail.sml end\n")
+        val ()=write(path "left.sml","val contextLeft=1\n")
+        val ()=write(path "right.sml","val contextRight=true\n")
+        val ()=write(path "left-tail.sml","val leftTail:int=true\n")
+        val ()=write(path "right-tail.sml","val rightTail:bool=1\n")
+        fun array (Json.Array values)=values | array _=raise Fail "expected array"
+        fun report (items,name)=case List.find(fn item=>C.field(item,"uri")=Json.String(uri(path name)))items of
+          SOME item=>item | NONE=>raise Fail("missing workspace source " ^ name)
+    in fixtureInitialized(object[("capabilities",object[("textDocument",object[("diagnostic",object[])])]),
+        ("workspaceFolders",Json.Array[object[("uri",Json.String(uri root)),("name",Json.String "contexts")]])]) (fn client=>
+      let fun pull(id,previous)=(C.request(client,id,"workspace/diagnostic",object[("previousResultIds",Json.Array previous)]);
+            array(C.field(C.result(C.response(client,id)),"items")))
+          val first=pull(270,[])
+          val ()=check("all sources survive context-at-a-time reporting",length first=4 andalso
+            List.all(fn name=>C.field(report(first,name),"items")=Json.Array[])["left.sml","right.sml"] andalso
+            List.all(fn name=>not(null(array(C.field(report(first,name),"items")))))["left-tail.sml","right-tail.sml"])
+          val ()=write(path "left-tail.sml","val leftTail:int=contextLeft\n")
+          val ()=write(path "right-tail.sml","val rightTail:bool=contextRight\n")
+          val previous=List.map(fn item=>object[("uri",C.field(item,"uri")),("value",C.field(item,"resultId"))]) first
+          val fixed=pull(271,previous)
+          val ()=check("each context uses its own ordinal and previous result",length fixed=4 andalso
+            List.all(fn name=>C.field(report(fixed,name),"kind")=Json.String "unchanged")["left.sml","right.sml"] andalso
+            List.all(fn name=>C.field(report(fixed,name),"items")=Json.Array[])["left-tail.sml","right-tail.sml"])
+          val ()=C.request(client,272,"workspace/symbol",object[("query",Json.String "context")])
+          val symbols=array(C.result(C.response(client,272)))
+      in check("workspace symbols include both contexts",List.all(fn name=>
+        List.exists(fn symbol=>C.field(symbol,"name")=Json.String name)symbols)["contextLeft","contextRight"]) end)
+    end)
   fun basisDevelopment ()=temporaryTree(fn {root,uri,write}=>
     let val lib=root ^ "/lib" val basis=lib ^ "/basis"
         val ()=List.app OS.FileSys.mkDir [lib,basis]
@@ -1019,6 +1052,7 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "markup-negotiation" RuneLspSemanticProtocolTests.markup,
     Test.it "file-project-mapping" RuneLspSemanticProtocolTests.fileProject,
     Test.it "workspace-diagnostics" RuneLspSemanticProtocolTests.workspaceDiagnostics,
+    Test.it "workspace-context-reporting" RuneLspSemanticProtocolTests.workspaceContexts,
     Test.it "basis-development-context" RuneLspSemanticProtocolTests.basisDevelopment,
     Test.it "navigation-and-symbols" RuneLspSemanticProtocolTests.navigation,
     Test.it "workspace-symbols-resolve" RuneLspSemanticProtocolTests.workspaceSymbols,

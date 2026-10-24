@@ -33,7 +33,8 @@ unit's fixed environment. Exact source text/mode/path keys also reuse
 prelude name sets instead of lexing every unchanged source on each check.
 
 The worker uses the optimizing JIT, with a 512 MiB heap cap and a 1.5 GiB process cap. The 30-second
-job deadline remains. Count and source-byte retention budgets limit old
+job deadline remains for document work; workspace sweeps have 30 seconds per
+context and a 120-second overall cap. Count and source-byte retention budgets limit old
 contexts and views. Concurrent providers share one check; cancellation of
 one waiter preserves the others. An infrastructure failure completes all
 waiters and suppresses further checks of the same failed revision and
@@ -45,6 +46,30 @@ Worker stderr is a private nonblocking pipe: a 4 KiB prefix is retained, a
 Shutdown terminates and reaps the worker before replying. Automatic workspace
 diagnostic pulls queue behind document checks and their dependent queries.
 Cancellation replies immediately and grants 250 ms for acknowledgement.
+
+An unconfigured checkout workspace exposed another retention path: the
+workspace diagnostic/symbol collector kept a view for every analyzed context,
+outside the resident cache's eviction budget. A focused replay of the installed
+`2a11e26ce` reached the 512 MiB cap at `compiler/backend/lower.sml` while checking
+`runelsp.build`. Workspace requests now group sources by context and collect
+their JSON results before checking the next context. Reports preserve source
+ordinals and URI ordering without retaining every context's analysis snapshot.
+Progress at a new context starts its own deadline; unit progress and cancellation
+cannot extend it, and the overall workspace cap remains absolute.
+
+Focused verification of this follow-up checks only the affected workspace
+paths: the two-context diagnostic/refresh regression, existing workspace
+diagnostics and symbol resolution (three passing cases), and the scheduler's
+context/overall/cancellation deadlines (one passing case). An independent
+stdio replay against the original checkout's 13 discovered build contexts
+returns 106 clean reports in 77.277 seconds, followed by a nonempty hover and
+clean shutdown, with the unchanged 512 MiB heap cap. Receipts are
+`build/lsp-debug/acceptance/workspace-{context,deadline}-tests.log` and
+`workspace-heap-final.{json,jsonl,log}`. The intermediate replay exposed the
+aggregate 30-second timeout; another client attempt stopped at its own
+45-second wait before that wait was corrected. Neither is a passing run.
+At the user's request, the full suite is deferred until debugging is complete;
+native Windows and editor-host checks are not rerun for this follow-up.
 
 The public compiler adapter now reports missing-library manifest errors as
 `Failed` diagnostics. Discovery can then report an unavailable target instead
