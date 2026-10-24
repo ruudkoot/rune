@@ -663,7 +663,7 @@ struct
     | Env.Con _ => Error.bug "a constructor as a slot of a record"
 
   (* a record made, or the one in reach *)
-  and recordExp (r as Elaborate.Record {vals, descs, strs, shared}) : lexp =
+  and recordExp (r as Elaborate.Record {vals, descs, strs, shared, ...}) : lexp =
     case shared of
       SOME h => reachExp (h, Elaborate.slotsOf r)
     | NONE =>
@@ -713,8 +713,8 @@ struct
         let
           val saved = (!structPath, !inBody)
           val () = (structPath := [#name b]; inBody := true)
-          val body = bindRecord (paramRecord, Var param,
-                                 fn () => openFuns (opens, fn () => transStrexp (#body b, fn () => recordExp result)))
+          val body = pruneSlots (bindRecord (paramRecord, Var param,
+                                             fn () => openFuns (opens, fn () => transStrexp (#body b, fn () => recordExp result))))
                      handle x => (structPath := #1 saved; inBody := #2 saved; raise x)
           val () = (structPath := #1 saved; inBody := #2 saved)
           val fty = Ty.arrow (recordTyN (Elaborate.slotsOf paramRecord), recordTyN (Elaborate.slotsOf result))
@@ -762,9 +762,96 @@ struct
 
   (* an application: the call, and the variables of its result set from
      what it returns *)
-  and callExp ({func, arg, result, global, record} : Elaborate.callCode, sp, k : unit -> lexp) : lexp =
-    Mark (sp, MatchComp.bindVar (result, global, App (Global func, recordExp arg),
-                                 bindRecord (record, if global then Global result else Var result, k)))
+  and callExp ({func, arg, argVar, result, global, record} : Elaborate.callCode, sp, k : unit -> lexp) : lexp =
+    let
+      fun call a = MatchComp.bindVar (result, global, App (Global func, a),
+                                      bindRecord (record, if global then Global result else Var result, k))
+    in
+      Mark (sp, case argVar of
+                  SOME v => Let (v, recordExp arg, call (Var v))
+                | NONE => call (recordExp arg))
+    end
+
+  (* What a functor's body binds of records and no code reads -- a
+     variable set from a slot, a substructure's record -- taken out: the
+     parameter's values and an application's, most of which a body does
+     not use. Such a binding reads, casts and selects variables, which
+     cannot fail or do anything else *)
+  and pruneSlots (e : lexp) : lexp =
+    let
+      val uses : int IntTable.table = IntTable.table 4096
+      fun use x = IntTable.update (uses, x, fn NONE => 1 | SOME n => n + 1)
+      fun unuse x = IntTable.update (uses, x, fn NONE => 0 | SOME n => n - 1)
+      fun usesOf x = getOpt (IntTable.find (uses, x), 0)
+      (* each variable read, given to f *)
+      fun walk (f : int -> unit) (e : lexp) : unit =
+        let
+          fun go e =
+            case e of
+              Var x => f x
+            | Fn (_, _, b) => go b
+            | Inst (a, _) => go a
+            | App (a, b) => (go a; go b)
+            | Let (_, a, b) => (go a; go b)
+            | LetRec (bs, b) => (List.app (fn (_, _, r) => go r) bs; go b)
+            | Seq (a, b) => (go a; go b)
+            | SetGlobal (_, a) => go a
+            | Tuple es => List.app go es
+            | Select (_, a) => go a
+            | Con (_, _, a) => go a
+            | Decon (_, a) => go a
+            | ConTag a => go a
+            | If (a, b, c) => (go a; go b; go c)
+            | Try (a, b) => (go a; go b)
+            | Join (_, _, a, b) => (go a; go b)
+            | Jump (_, es) => List.app go es
+            | Raise a => go a
+            | Handle (a, _, b) => (go a; go b)
+            | MkExn (a, b) => (go a; go b)
+            | ExnCon a => go a
+            | ExnArg (_, a) => go a
+            | Prim (_, _, es) => List.app go es
+            | Mark (_, a) => go a
+            | Rest a => go a
+            | _ => ()
+        in go e end
+      fun pure e =
+        case e of
+          Var _ => true
+        | Global _ => true
+        | Select (_, a) => pure a
+        | Prim ("unsafe_cast", _, [a]) => pure a
+        | _ => false
+      fun go e =
+        case e of
+          Let (x, a, b) =>
+            let val b' = go b
+            in if usesOf x = 0 andalso pure a then (walk unuse a; b') else Let (x, go a, b') end
+        | Fn (x, t, b) => Fn (x, t, go b)
+        | Inst (a, t) => Inst (go a, t)
+        | App (a, b) => App (go a, go b)
+        | LetRec (bs, b) => LetRec (List.map (fn (x, t, r) => (x, t, go r)) bs, go b)
+        | Seq (a, b) => Seq (go a, go b)
+        | SetGlobal (g, a) => SetGlobal (g, go a)
+        | Tuple es => Tuple (List.map go es)
+        | Select (i, a) => Select (i, go a)
+        | Con (t, ty, a) => Con (t, ty, go a)
+        | Decon (t, a) => Decon (t, go a)
+        | ConTag a => ConTag (go a)
+        | If (a, b, c) => If (go a, go b, go c)
+        | Try (a, b) => Try (go a, go b)
+        | Join (j, ps, a, b) => Join (j, ps, go a, go b)
+        | Jump (j, es) => Jump (j, List.map go es)
+        | Raise a => Raise (go a)
+        | Handle (a, x, b) => Handle (go a, x, go b)
+        | MkExn (a, b) => MkExn (go a, go b)
+        | ExnCon a => ExnCon (go a)
+        | ExnArg (t, a) => ExnArg (t, go a)
+        | Prim (p, t, es) => Prim (p, t, List.map go es)
+        | Mark (sp, a) => Mark (sp, go a)
+        | Rest a => Rest (go a)
+        | _ => e
+    in walk use e; go e end
 
   (* Recursive bindings: globals are assigned in sequence (closures refer to
      them through the global table); locals use LetRec. *)

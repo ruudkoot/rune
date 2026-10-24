@@ -266,6 +266,12 @@ Version 9 adds the probe, and every hash is rx2fw, two lanes of 63 bits
 in 32 hexadecimal digits ([plans/functors-units.md](plans/functors-units.md),
 D11), so every identity changed.
 
+Under `--functors=functions` (a prototype, whose configuration no cache
+entry of another shares) a functor compiled to a function is written as
+its signature, the place of its body and the global of its function
+([units.md](units.md), *The export basis*), and each type name's entry ends
+with the layout a functor's body fixed for it, where it has one.
+
 Version 8 changed no field: the usages a cache entry keeps were
 fingerprinted without the equality of type variables and of a signature's
 local names (docs/plans/build-cache-issues.md, issue 16), so an entry made
@@ -297,7 +303,7 @@ exponent allows it -- or a pointer to a heap object. Heap objects:
 | kind | contents | used for |
 |---|---|---|
 | TUPLE | n fields | tuples, records (fields in canonical label order), vectors |
-| CON | tag, 1 field or n | datatype constructors with an argument: its argument, or, where the constructor's declared argument is a tuple of n, those n fields (`CONN`; lists: `::` is tag 1 of head and tail, `nil` is `CON0 0`) |
+| CON | tag, 1 field or n | datatype constructors with an argument: its argument, or, where the constructor's declared argument is a tuple of n, those n fields (`CONN`; lists: `::` is tag 1 of head and tail, `nil` is `CON0 0`, and the other way round under `--datatype-tags=sorted`, on `bin/runevm-sorted`) |
 | CLOSURE | function index, environment fields | functions |
 | STRING | bytes | strings |
 | REF | 1 field | `ref` cells (identity equality) |

@@ -127,6 +127,18 @@ made (rule 54; [plans/functors.md](plans/functors.md)). The summary's
 values and exceptions are named by placeholders, which are no names of the
 unit's.
 
+Under `--functors=functions` (*Functors compiled once* in
+[ir.md](ir.md); a prototype) a functor is compiled to a function, and its
+entry is its signature -- its parameter's, and its summary without the
+counts, which are the body's -- the place of its body, and the global of
+its function, which the units that apply it call: nothing else of the
+body. No source is parsed again on loading, no declaration's environment,
+signatures and functors are written, no binder of what the unit's compile
+looked up, and no `funat` usage is made, so that a unit whose functor's
+body changed and whose signature did not keeps its identity, and the units
+that apply the functor are taken from the cache. The tables give each
+instance of a body's datatype the layout the body fixed (`Ty.pinned`).
+
 Static analysis can also record lexical origins in a version-7 basis:
 source ranges for bindings and the specification/implementation relation
 introduced by signature matching. These origins are separate from value,

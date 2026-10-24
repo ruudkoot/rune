@@ -800,7 +800,7 @@ struct
      and the substructures to go through, each by its place in the record
      and the number of slots of its own *)
   datatype record = Record of {vals : (string * valstatus) list, descs : desc list, strs : (string * record) list,
-                               shared : reach option}
+                               id : int option, shared : reach option}
   (* A parameter's record holds, after its values, a descriptor for each
      constructor of a datatype it specifies whose layout it leaves open
      (D4, openConstructors): the number of fields of the argument's
@@ -820,36 +820,56 @@ struct
   fun valSlots (Env {vals, ...}) : (string * valstatus) list =
     List.filter (fn (_, Con _) => false | _ => true) (StringMap.listItemsi vals)
 
-  fun recordOf (e : env) : record =
-    Record {vals = valSlots e, descs = [], strs = List.map (fn (n, s) => (n, recordOf s)) (StringMap.listItemsi (strs e)),
-            shared = NONE}
-
-  (* The records in reach, by what their slots hold (key): while one
-     top-level declaration is elaborated, which is compiled as a whole in
-     every mode, so that whether one is shared does not depend on what is
-     compiled with it (elabTop empties it) *)
-  val inReach : reach StringMap.map ref = ref StringMap.empty
+  (* The records of one top-level declaration, each by a number of what
+     its slots hold (id): its own slots' variables and descriptors, and its
+     substructures' numbers -- the same number for the same slots; NONE for
+     one with a slot of no variable (a constructor given as a value), which
+     is never shared. And the records in reach, by their numbers. Both
+     while one top-level declaration is elaborated, which is compiled as a
+     whole in every mode, so that whether one is shared does not depend on
+     what is compiled with it (elabTop empties them) *)
+  val recordIds : int StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Elaborate.recordIds", recordIds)
+  val nextRecordId = ref 0
+  val () = CompilerState.cellRoot ("Elaborate.nextRecordId", nextRecordId)
+  val inReach : reach IntMap.map ref = ref IntMap.empty
   val () = CompilerState.cellRoot ("Elaborate.inReach", inReach)
+  fun forgetRecords () = (recordIds := StringMap.empty; nextRecordId := 0; inReach := IntMap.empty)
 
   exception Unshared
-  fun recordKey (Record {vals, descs, strs, ...}) : string =
+  fun mkRecord (vals : (string * valstatus) list, descs : desc list, strs : (string * record) list, shared : reach option)
+      : record =
     let
       fun slot (_, v) =
         case v of
-          Val {stamp, ...} => Int.toString stamp ^ ","
-        | Exn {info, ...} => if isSome (#builtin info) then raise Unshared else "e" ^ Int.toString (#stamp info) ^ ","
+          Val {stamp, ...} => Int.toString stamp
+        | Exn {info, ...} => if isSome (#builtin info) then raise Unshared else "e" ^ Int.toString (#stamp info)
         | _ => raise Unshared
-      fun desc (DescConst n) = "#" ^ Int.toString n ^ ","
-        | desc (DescVar d) = "d" ^ Int.toString d ^ ","
-    in
-      "(" ^ String.concat (List.map slot vals) ^ String.concat (List.map desc descs)
-      ^ String.concat (List.map (fn (_, r) => recordKey r) strs) ^ ")"
-    end
-  fun keyOf (r : record) : string option = SOME (recordKey r) handle Unshared => NONE
+      fun desc (DescConst n) = "#" ^ Int.toString n
+        | desc (DescVar d) = "d" ^ Int.toString d
+      fun sub (_, Record {id = SOME i, ...}) = Int.toString i
+        | sub _ = raise Unshared
+      val id =
+        let
+          val key = String.concatWith "," (List.map slot vals) ^ "|" ^ String.concatWith "," (List.map desc descs) ^ "|"
+                    ^ String.concatWith "," (List.map sub strs)
+        in
+          case StringMap.find (!recordIds, key) of
+            SOME i => SOME i
+          | NONE => let val i = !nextRecordId in nextRecordId := i + 1; recordIds := StringMap.insert (!recordIds, key, i); SOME i end
+        end
+        handle Unshared => NONE
+    in Record {vals = vals, descs = descs, strs = strs, id = id, shared = shared} end
 
-  (* r is in reach by h, and so is each of its substructures' *)
-  fun register (r as Record {vals, descs, strs, ...}, h : reach) : unit =
-    (case keyOf r of SOME k => inReach := StringMap.insert (!inReach, k, h) | NONE => ();
+  fun recordOf (e : env) : record =
+    mkRecord (valSlots e, [], List.map (fn (n, s) => (n, recordOf s)) (StringMap.listItemsi (strs e)), NONE)
+
+  (* r is in reach by h, and so is each of its substructures', where none
+     of the same slots is already *)
+  fun register (Record {vals, descs, strs, id, ...}, h : reach) : unit =
+    ((case id of
+        SOME i => if IntMap.member (!inReach, i) then () else inReach := IntMap.insert (!inReach, i, h)
+      | NONE => ());
      ignore (List.foldl (fn ((_, sub), i) =>
                            (register (sub, {var = #var h, global = #global h, path = #path h @ [(i, slotsOf sub)]}); i + 1))
                         (List.length vals + List.length descs) strs))
@@ -861,10 +881,10 @@ struct
     let
       val vals = valSlots e
       val strs = List.map (fn (n, s) => (n, argRecordWith (s, []))) (StringMap.listItemsi (strs e))
-      val r = Record {vals = vals, descs = descs, strs = strs, shared = NONE}
+      val r as Record {id, ...} = mkRecord (vals, descs, strs, NONE)
     in
-      case Option.mapPartial (fn k => StringMap.find (!inReach, k)) (keyOf r) of
-        SOME h => Record {vals = vals, descs = descs, strs = strs, shared = SOME h}
+      case Option.mapPartial (fn i => IntMap.find (!inReach, i)) id of
+        SOME h => Record {vals = vals, descs = descs, strs = strs, id = id, shared = SOME h}
       | NONE => r
     end
 
@@ -881,7 +901,7 @@ struct
      decon), the datatype at its parameters and the constructor's argument *)
   type openCon = {tycon : int, tag : int, desc : int, con : int, decon : int, dataTy : ty, argTy : ty}
   type functorCode = {func : int, param : int, paramRecord : record, result : record, opens : openCon list}
-  type callCode = {func : int, arg : record, result : int, global : bool, record : record}
+  type callCode = {func : int, arg : record, argVar : int option, result : int, global : bool, record : record}
   fun spanKey ({file, start, stop} : Source.span) : string =
     file ^ "\000" ^ Int.toString start ^ "\000" ^ Int.toString stop
   val bodies : functorCode StringMap.map ref = ref StringMap.empty
@@ -1028,7 +1048,8 @@ struct
      tag: the datatype, the tag and the constructor's scheme *)
   fun openConstructors ({bound, env = pe, ...} : SigMatch.sigma) : (tycon * int * ty) list =
     let
-      fun isBound (c : tycon) = List.exists (fn b => #stamp b = #stamp c) bound
+      val boundSet = List.foldl (fn (b : tycon, m) => IntMap.insert (m, #stamp b, ())) IntMap.empty bound
+      fun isBound (c : tycon) = IntMap.member (boundSet, #stamp c)
       fun isDatatype (c : tycon) = IntMap.member (!Ty.datatypes, #stamp c)
       fun opens (c, cs) =
         List.mapPartial (fn (_, Con {scheme, info}) =>
@@ -1750,7 +1771,8 @@ struct
           fun function (b : funbind) =
             let
               val sigma = elabSigexp (env, #paramSig b)
-              val _ = specDatatypes (fn c => List.exists (fn b' => #stamp b' = #stamp c) (#bound sigma)
+              val boundSet = List.foldl (fn (c : tycon, m) => IntMap.insert (m, #stamp c, ())) IntMap.empty (#bound sigma)
+              val _ = specDatatypes (fn c => IntMap.member (boundSet, #stamp c)
                                               andalso not (IntMap.member (!Ty.datatypes, #stamp c)), #env sigma)
               val pEnv = localParam (#env sigma)
               val bodyEnv = case #param b of
@@ -1775,9 +1797,8 @@ struct
                             end)
                          (openConstructors sigma)
               val paramRecord = case recordOf pEnv of
-                                  Record {vals, strs, shared, ...} =>
-                                    Record {vals = vals, descs = List.map (fn (o' : openCon) => DescVar (#desc o')) opens,
-                                            strs = strs, shared = shared}
+                                  Record {vals, strs, ...} =>
+                                    mkRecord (vals, List.map (fn (o' : openCon) => DescVar (#desc o')) opens, strs, NONE)
               val () = register (paramRecord, {var = param, global = false, path = []})
               val lo = !tyconCounter
               val saved = !inBody
@@ -1974,9 +1995,16 @@ struct
                    val record = recordOf res
                    val () = Ty.bindVar (r, recordTy record)
                    val arg = argRecordWith (thinned, descs)
+                   (* a record made in a body, in reach for what comes after *)
+                   val argVar = case arg of
+                                  Record {shared = NONE, id = SOME _, ...} =>
+                                    if g then NONE
+                                    else let val v = freshStamp () in register (arg, {var = v, global = false, path = []}); SOME v end
+                                | _ => NONE
                    val () = register (record, {var = r, global = g, path = []})
                  in
-                   calls := StringMap.insert (!calls, spanKey sp, {func = func, arg = arg, result = r, global = g, record = record});
+                   calls := StringMap.insert (!calls, spanKey sp, {func = func, arg = arg, argVar = argVar, result = r, global = g,
+                                                                   record = record});
                    res
                  end
                (* --pass-stats=elab: the match, the copy and its elaboration
@@ -2285,7 +2313,7 @@ struct
                   val () = ElabStats.reset ()
                   fun go () =
                     let
-                      val () = inReach := StringMap.empty
+                      val () = forgetRecords ()
                       val () = Types.startWork (spanOfDec d)
                       val () = Unify.flexHook := (fn r => pendingFlex := (r, spanOfDec d) :: !pendingFlex)
                       val delta = elabDec (!env, 0, true, ref StringMap.empty, d)

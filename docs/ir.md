@@ -232,6 +232,65 @@ list) : int`, each use of a variable at an instance, `(inst g1 : int ->
 int)`, and the type of each payload, `(exnarg v3 : int)`; type variables
 are numbered afresh as `'a`, `'b`, ... like the program's.
 
+### Functors compiled once (a prototype)
+
+Under `rune --functors=functions` ([plans/functors-units.md](plans/functors-units.md),
+M5; a prototype behind a flag, which M7 would make the only way) a functor
+is compiled once, where it is declared, to a function, and an application
+is a call of it, in every mode: a whole compile, a build in units and
+`--units --whole`. Off, a functor's body is copied and elaborated again for
+each application, and the copy is what is translated.
+
+* **A structure's record.** A structure that reaches a functor is a value
+  at run time: a tuple of its slots, each cast to `unit` by `unsafe_cast`
+  (a polymorphic value at `unit` for its type variables, which changes
+  nothing of it) -- its values, its exceptions (their constructors), and the
+  constructors, exceptions and primitives a value specification gave as
+  values, by name; then each substructure's record, a record of its own, by
+  name; at least two slots. A constructor has no slot: tags are the
+  datatype's, the same in every instance. A parameter's record holds a
+  descriptor after its values for each open constructor (below).
+* **The function** (`Elaborate.functorCode`) takes the parameter's record
+  and returns the body's. Its body sets a local variable from each slot of
+  the parameter that the body reads (`Translate.pruneSlots` drops the
+  rest), then runs the body's declarations, which bind locals, not globals
+  (`Elaborate.inBody`), and makes the result's record. Each call runs the
+  body again: its exceptions and `ref`s are new (rule 154).
+* **An application** (`Elaborate.callCode`) is typed by the functor's
+  summary alone (rule 54), the type names it made given fresh names, and its
+  values and exceptions given fresh variables -- globals at the top level,
+  locals in a body -- which the call's result sets. The argument's record
+  is made from the argument's environment thinned to the parameter's
+  signature, unless a record of the same slots is in reach: a parameter's,
+  an application's result or an argument made before, in the same
+  top-level declaration (`Elaborate.inReach`), which every mode compiles as
+  a whole.
+* **Types.** The parameter's types are abstract in the function: `Con`s of
+  their names, which `Lower.repOfTy` makes `RAny` (by stamp, not by name,
+  for `array`, `vector` and `ref`), and `=` at one is `poly_eq`'s walk. A
+  datatype the parameter specifies is given its constructors under the
+  name the body sees (`Elaborate.specDatatypes`).
+* **Tags by name** (decision D4): `--functors=functions` numbers every
+  datatype's constructors by their names sorted (`--datatype-tags=sorted`,
+  `Types.tagNames`), so that a specification and the datatype that matches
+  it agree on every tag; `sorted-x` keeps `nil, ::` and `LESS, EQUAL,
+  GREATER` as declared, by their names, for the VM's C, which follows
+  `sorted` only when built with `-DRUNE_TAGS_SORTED` (`bin/runevm-sorted`).
+* **Open constructors** (D4). A constructor of a parameter's datatype whose
+  argument is one of the parameter's abstract types may be laid out flat
+  in the argument where the specification reads it boxed. Its descriptor,
+  in the parameter's record, is the argument's number of fields (0 for
+  boxed); `ToMid` makes or takes apart such a constructor as the
+  specification reads it where the descriptor is 0, and otherwise calls the
+  body's functions for it (`Translate.openFuns`), which see the object
+  through `Ty.flat n`, a datatype of the basis whose constructors have `n`
+  fields. Simplify's equality functions leave such a datatype to
+  `poly_eq`.
+* **Layouts** (D5). A datatype a body declares has the layout its declared
+  types give it there, a parameter's type boxed; an instance an
+  application's summary names keeps it (`Ty.pinned`, `Ty.layoutOf`),
+  whatever its realised types would say.
+
 ## Mid
 
 Mid (`lib/compiler/core/mid.sml`) is the representation the optimisations will work
