@@ -1805,6 +1805,28 @@ struct
         end
     | DFunctor (binds, _) =>
         let
+          (* rule 89: no free type variable enters the basis. One the body
+             leaves free (`val r = ref []`, which the value restriction does
+             not generalise) would be in the functor's signature, the same in
+             every application (rule 54), and no declaration after the body
+             can determine it: the declaration is refused, as the
+             Definition's Appendix G allows and HaMLet and MLKit do. The
+             basis's own, which a declaration later in the topdec may
+             determine, the summary shares. Whether the body's result has a
+             summary: none where a flexible record is left, which the
+             topdec's end refuses (settleFlex) *)
+          fun closure (b : funbind, result : env) : bool =
+            let
+              val closed = closedEnv (result, [])
+              val shared = if closed then [] else basisTyvars ()
+              val () =
+                case if closed then NONE else bodyTyvar (result, shared) of
+                  SOME (n, t) =>
+                    err (#span b, "the type of " ^ n ^ " in the result of functor " ^ #name b ^ ", " ^ toString t
+                                   ^ ", contains a type variable that cannot be generalised "
+                                   ^ "(a functor's result may not have free type variables)")
+                | NONE => ()
+            in closed orelse closedEnv (result, shared) end
           (* --functors=functions: the body elaborated once, its
              annotations kept for its code, its declarations local to the
              function it is compiled to, which takes the parameter's
@@ -1850,10 +1872,9 @@ struct
               val () = inBody := saved
               val () = resolvePending ()
               val summary =
-                if closedEnv result then
+                if closure (b, result) then
                   SOME {generated = generatedDeep (lo, result), result = placeholders result, counts = (0, 0, 0)}
-                else err (#span b, "functor " ^ #name b ^ " has no signature: its result has a type variable not "
-                                   ^ "generalised, which --functors=functions refuses (rule 89)")
+                else NONE
               val func = freshStamp ()
               val resultRecord = recordInReach result
               val () = let fun note (Record {vals, strs, ...}) =
@@ -1893,29 +1914,8 @@ struct
                            val () = checking := !checking - 1
                            val (s1, c1, v1) = counters ()
                            val () = resolvePending ()
-                           (* rule 89: no free type variable enters the basis.
-                              One the body leaves free (`val r = ref []`, which
-                              the value restriction does not generalise) would be
-                              in the functor's signature, the same in every
-                              application (rule 54), and no declaration after
-                              the body can determine it: the declaration is
-                              refused, as the Definition's Appendix G allows and
-                              HaMLet and MLKit do. The basis's own, which a
-                              declaration later in the topdec may determine, the
-                              summary shares *)
-                           val closed = closedEnv (result, [])
-                           val shared = if closed then [] else basisTyvars ()
-                           val () =
-                             case if closed then NONE else bodyTyvar (result, shared) of
-                               SOME (n, t) =>
-                                 err (#span b, "the type of " ^ n ^ " in the result of functor " ^ #name b ^ ", " ^ toString t
-                                                ^ ", contains a type variable that cannot be generalised "
-                                                ^ "(a functor's result may not have free type variables)")
-                             | NONE => ()
-                           (* none where a flexible record is left, which the
-                              topdec's end refuses (settleFlex) *)
                            val summary =
-                             if closed orelse closedEnv (result, shared) then
+                             if closure (b, result) then
                                SOME {generated = generatedIn (lo, result), result = placeholders result,
                                      counts = (s1 - s0, c1 - c0, v1 - v0)}
                              else NONE
@@ -2028,7 +2028,7 @@ struct
                    val {generated, result, ...} =
                      case summary of
                        SOME s => s
-                     | NONE => err (sp, "functor " ^ funid ^ " has no signature (--functors=functions)")
+                     | NONE => Error.bug "an application by a functor's function without its summary"
                    val (phi, specE) = ElabStats.during ElabStats.Match (fn () => SigMatch.match (paramSig, argEnv, sp))
                    val descs = descriptors (paramSig, phi, sp)
                    val fresh = List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) generated
@@ -2058,7 +2058,12 @@ struct
                  case (!checking > 0 orelse not (!makesCode), summary) of
                    (true, SOME s) => typed s
                  | _ => copied ()
-             in ElabStats.application (!makesCode) (if !functorFunctions then call else apply) end)
+             in
+               (* a functor with no summary (a flexible record its body
+                  leaves, which the end of the topdec refuses) is applied
+                  as before until then *)
+               ElabStats.application (!makesCode) (if !functorFunctions andalso isSome summary then call else apply)
+             end)
     | StrLet (decs, body, _) =>
         let val delta = elabDecs (env, level, top, scope, decs)
         in elabStrexp (plus (env, delta), level, top, scope, body) end
