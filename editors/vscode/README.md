@@ -59,6 +59,12 @@ Set `RUNE_VSCODE_CHECKOUT` to a native checkout path for an additional check
 that regenerates the temporary library's manifest with that checkout's
 compiler. All edits remain in the test's private library copy.
 
+Editor tests use dedicated profiles. For operating-system isolation, run
+Windows tests in Windows Sandbox or a disposable VM, and Linux tests in
+namespaces with a private headless display. The
+[test isolation guide](https://github.com/ruudkoot/rune/blob/master/editors/vscode/test/README.md)
+describes the minimized Windows Sandbox launcher and its scoped cleanup.
+
 Linux needs glibc and the shared libraries used by its distribution VM;
 with the default FFI-enabled Linux build this includes `libffi.so.8`.
 GMP is linked statically. The package carries its license notices.
