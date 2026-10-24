@@ -285,11 +285,13 @@ each application, and the copy is what is translated.
   body's functions for it (`Translate.openFuns`), which see the object
   through `Ty.flat n`, a datatype of the basis whose constructors have `n`
   fields. Simplify's equality functions leave such a datatype to
-  `poly_eq`.
+  `poly_eq`. Only the constructors the body uses get the functions.
 * **Layouts** (D5). A datatype a body declares has the layout its declared
   types give it there, a parameter's type boxed; an instance an
   application's summary names keeps it (`Ty.pinned`, `Ty.layoutOf`),
-  whatever its realised types would say.
+  whatever its realised types would say. `MidCanon` and a unit's Mid
+  (`UnitMid`) carry the fixed layouts and the open datatypes (`Ty.openTypes`)
+  with the datatypes they rename and keep.
 
 ## Mid
 

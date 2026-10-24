@@ -715,6 +715,7 @@ struct
       IntTable.removeRange (Ty.exnArgs, s0, s1);
       IntTable.removeRange (Ty.realizations, t0, t1);
       Ty.pinned := IntMap.filteri (fn (stamp, _) => stamp < t0 orelse stamp >= t1) (!Ty.pinned);
+      Ty.openTypes := IntMap.filteri (fn (stamp, _) => stamp < t0 orelse stamp >= t1) (!Ty.openTypes);
       Env.typeOrigins:=IntMap.filteri (fn (stamp,_) => stamp<t0 orelse stamp>=t1) (!Env.typeOrigins)
     end
 
@@ -732,6 +733,7 @@ struct
       IntTable.removeRange (Ty.realizations, Vector.sub (at, kTycon), Vector.sub (now, kTycon));
       Ty.datatypes := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.datatypes);
       Ty.pinned := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.pinned);
+      Ty.openTypes := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.openTypes);
       Env.typeOrigins := IntMap.filteri (fn (s, _) => outside kTycon s) (!Env.typeOrigins);
       Elaborate.dataCons := IntMap.filteri (fn (s, _) => outside kTycon s) (!Elaborate.dataCons);
       Translate.primAliases := IntMap.filteri (fn (s, _) => outside kStamp s) (!Translate.primAliases);

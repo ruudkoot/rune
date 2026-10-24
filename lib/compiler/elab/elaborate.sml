@@ -820,49 +820,73 @@ struct
   fun valSlots (Env {vals, ...}) : (string * valstatus) list =
     List.filter (fn (_, Con _) => false | _ => true) (StringMap.listItemsi vals)
 
-  (* The records of one top-level declaration, each by a number of what
+  (* The records of one top-level declaration, each with a number of what
      its slots hold (id): its own slots' variables and descriptors, and its
      substructures' numbers -- the same number for the same slots; NONE for
      one with a slot of no variable (a constructor given as a value), which
-     is never shared. And the records in reach, by their numbers. Both
-     while one top-level declaration is elaborated, which is compiled as a
-     whole in every mode, so that whether one is shared does not depend on
-     what is compiled with it (elabTop empties them) *)
-  val recordIds : int StringMap.map ref = ref StringMap.empty
-  val () = CompilerState.cellRoot ("Elaborate.recordIds", recordIds)
+     is never shared. They are found by the variable of their first slot,
+     and compared slot by slot. And the records in reach, by their numbers.
+     Both while one top-level declaration is elaborated, which is compiled
+     as a whole in every mode, so that whether one is shared does not
+     depend on what is compiled with it (elabTop empties them) *)
+  val records : (int * int list * desc list * int list) list IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Elaborate.records", records)
   val nextRecordId = ref 0
   val () = CompilerState.cellRoot ("Elaborate.nextRecordId", nextRecordId)
   val inReach : reach IntMap.map ref = ref IntMap.empty
   val () = CompilerState.cellRoot ("Elaborate.inReach", inReach)
-  fun forgetRecords () = (recordIds := StringMap.empty; nextRecordId := 0; inReach := IntMap.empty)
+  fun forgetRecords () = (records := IntMap.empty; nextRecordId := 0; inReach := IntMap.empty)
 
   exception Unshared
   fun mkRecord (vals : (string * valstatus) list, descs : desc list, strs : (string * record) list, shared : reach option)
       : record =
     let
+      (* a variable's stamp, an exception's negated (below every value's) *)
       fun slot (_, v) =
         case v of
-          Val {stamp, ...} => Int.toString stamp
-        | Exn {info, ...} => if isSome (#builtin info) then raise Unshared else "e" ^ Int.toString (#stamp info)
+          Val {stamp, ...} => stamp
+        | Exn {info, ...} => if isSome (#builtin info) then raise Unshared else ~2 - #stamp info
         | _ => raise Unshared
-      fun desc (DescConst n) = "#" ^ Int.toString n
-        | desc (DescVar d) = "d" ^ Int.toString d
-      fun sub (_, Record {id = SOME i, ...}) = Int.toString i
+      fun sub (_, Record {id = SOME i, ...}) = i
         | sub _ = raise Unshared
       val id =
         let
-          val key = String.concatWith "," (List.map slot vals) ^ "|" ^ String.concatWith "," (List.map desc descs) ^ "|"
-                    ^ String.concatWith "," (List.map sub strs)
+          val ss = List.map slot vals
+          val cs = List.map sub strs
+          val key = case (ss, cs) of (x :: _, _) => x | ([], c :: _) => ~1000000000 - c | ([], []) => ~999999999
+          val same = List.find (fn (_, ss', ds', cs') => ss' = ss andalso ds' = descs andalso cs' = cs)
+                               (getOpt (IntMap.find (!records, key), []))
         in
-          case StringMap.find (!recordIds, key) of
-            SOME i => SOME i
-          | NONE => let val i = !nextRecordId in nextRecordId := i + 1; recordIds := StringMap.insert (!recordIds, key, i); SOME i end
+          case same of
+            SOME (i, _, _, _) => SOME i
+          | NONE =>
+              let val i = !nextRecordId
+              in
+                nextRecordId := i + 1;
+                records := IntMap.insert (!records, key, (i, ss, descs, cs) :: getOpt (IntMap.find (!records, key), []));
+                SOME i
+              end
         end
         handle Unshared => NONE
     in Record {vals = vals, descs = descs, strs = strs, id = id, shared = shared} end
 
   fun recordOf (e : env) : record =
     mkRecord (valSlots e, [], List.map (fn (n, s) => (n, recordOf s)) (StringMap.listItemsi (strs e)), NONE)
+
+  (* the record of an environment, each of its substructures' one in reach
+     where there is one, and itself: a body's result, which gives back what
+     a structure it has holds without making its record again (a parameter
+     that it opens, an application's result) *)
+  fun recordInReach (e : env) : record =
+    let
+      val vals = valSlots e
+      val strs = List.map (fn (n, s) => (n, recordInReach s)) (StringMap.listItemsi (strs e))
+      val r as Record {id, ...} = mkRecord (vals, [], strs, NONE)
+    in
+      case Option.mapPartial (fn i => IntMap.find (!inReach, i)) id of
+        SOME h => Record {vals = vals, descs = [], strs = strs, id = id, shared = SOME h}
+      | NONE => r
+    end
 
   (* r is in reach by h, and so is each of its substructures', where none
      of the same slots is already *)
@@ -874,13 +898,26 @@ struct
                            (register (sub, {var = #var h, global = #global h, path = #path h @ [(i, slotsOf sub)]}); i + 1))
                         (List.length vals + List.length descs) strs))
 
-  (* the record an argument's environment, thinned to the parameter's
-     signature, makes, with the descriptors given: one in reach where there
-     is one *)
-  fun argRecordWith (e : env, descs : desc list) : record =
+  (* The record an argument makes, its environment thinned to the
+     parameter's signature (specE, as SigMatch.match realised it), with
+     the descriptors given: one in reach where there is one. Each slot is
+     the argument's own -- a variable at its own scheme, which is cast to
+     unit -- as SigMatch.mergeInfo would give it but for the
+     specification's type, which is the argument's realised and would only
+     be kept (all but a primitive's, whose type at the specification picks
+     it) *)
+  fun argRecordOf (specE : env, actual : env, descs : desc list) : record =
     let
-      val vals = valSlots e
-      val strs = List.map (fn (n, s) => (n, argRecordWith (s, []))) (StringMap.listItemsi (strs e))
+      fun get (m, n) = case StringMap.find (m, n) of SOME x => x | NONE => Error.bug ("argRecordOf: missing " ^ n)
+      fun slot (n, sv) =
+        case (sv, get (vals actual, n)) of
+          (Con _, _) => NONE
+        | (Val {scheme, ...}, Prim {name, ...}) => SOME (n, Prim {scheme = scheme, name = name})
+        | (Val _, Con {scheme, info}) => SOME (n, ConAsVal {scheme = scheme, info = info})
+        | (Val _, Exn {ty, info}) => SOME (n, ExnAsVal {ty = ty, info = info})
+        | (_, v) => SOME (n, v)
+      val vals = List.mapPartial slot (StringMap.listItemsi (Env.vals specE))
+      val strs = List.map (fn (n, s) => (n, argRecordOf (s, get (Env.strs actual, n), []))) (StringMap.listItemsi (Env.strs specE))
       val r as Record {id, ...} = mkRecord (vals, descs, strs, NONE)
     in
       case Option.mapPartial (fn i => IntMap.find (!inReach, i)) id of
@@ -899,7 +936,7 @@ struct
      the parameter's datatype and the tag, the variable of its descriptor,
      the functions that make and take apart such a constructor by it (con,
      decon), the datatype at its parameters and the constructor's argument *)
-  type openCon = {tycon : int, tag : int, desc : int, con : int, decon : int, dataTy : ty, argTy : ty}
+  type openCon = {tycon : int, tag : int, desc : int, con : int, decon : int, dataTy : ty, argTy : ty, used : bool ref}
   type functorCode = {func : int, param : int, paramRecord : record, result : record, opens : openCon list}
   type callCode = {func : int, arg : record, argVar : int option, result : int, global : bool, record : record}
   fun spanKey ({file, start, stop} : Source.span) : string =
@@ -965,9 +1002,7 @@ struct
                 val () = Ty.bindExn (s, case prune ty of TArrow (a, _) => SOME a | _ => NONE)
               in Exn {ty = ty, info = {name = #name info, stamp = s, isGlobal = false, hasArg = #hasArg info, builtin = NONE}} end
         | other => other
-      val vals' = List.foldl (fn ((n, v), m) => StringMap.insert (m, n, value v)) StringMap.empty (StringMap.listItemsi vals)
-      val strs' = List.foldl (fn ((n, e), m) => StringMap.insert (m, n, localParam e)) StringMap.empty (StringMap.listItemsi strs)
-    in Env {vals = vals', tys = tys, strs = strs', origins = origins} end
+    in Env {vals = StringMap.map value vals, tys = tys, strs = StringMap.map localParam strs, origins = origins} end
 
   (* An application's result: the summary's values and exceptions given
      fresh variables -- globals at the top level, locals in a body -- which
@@ -989,9 +1024,7 @@ struct
                 val () = Ty.bindExn (s, case prune ty of TArrow (a, _) => SOME a | _ => NONE)
               in Exn {ty = ty, info = {name = #name info, stamp = s, isGlobal = g, hasArg = #hasArg info, builtin = NONE}} end
         | other => other
-      val vals' = List.foldl (fn ((n, v), m) => StringMap.insert (m, n, value v)) StringMap.empty (StringMap.listItemsi vals)
-      val strs' = List.foldl (fn ((n, e), m) => StringMap.insert (m, n, freshSlots (g, e))) StringMap.empty (StringMap.listItemsi strs)
-    in Env {vals = vals', tys = tys, strs = strs', origins = origins} end
+    in Env {vals = StringMap.map value vals, tys = tys, strs = StringMap.map (fn e => freshSlots (g, e)) strs, origins = origins} end
 
   (* The type names made from lo on that an environment names, and those
      an opaque one of them stands for (Ty.realizations), by stamp: what an
@@ -1081,6 +1114,14 @@ struct
       SOME l => List.find (fn (o' : openCon) => #tag o' = tag) l
     | NONE => NONE
   fun hasOpen (stamp : int) : bool = IntMap.member (!opened, stamp)
+  (* a constructor of the scheme given used: its body makes the functions
+     for it, where it is open (Translate.openFuns) *)
+  fun noteOpen (scheme : ty, info : Ast.coninfo) : unit =
+    if IntMap.isEmpty (!opened) orelse not (#hasArg info) then ()
+    else
+      case prune (case prune scheme of TArrow (_, r) => r | r => r) of
+        TCon (c, _) => (case openAt (#stamp c, #tag info) of SOME {used, ...} => used := true | NONE => ())
+      | _ => ()
 
   (* An argument's descriptors for a parameter's open constructors: its
      datatype's layout of each (phi), or, where its datatype is the
@@ -1241,7 +1282,7 @@ struct
                 case lookupCon (env, longid, sp) of
                   SOME (Con {scheme, info}) =>
                     if not (#hasArg info) then err (sp, "constructor " ^ #name info ^ " takes no argument")
-                    else (slot := SOME (PICon info); Unify.instantiate (level, scheme))
+                    else (noteOpen (scheme, info); slot := SOME (PICon info); Unify.instantiate (level, scheme))
                 | SOME (Exn {ty, info}) =>
                     if not (#hasArg info) then err (sp, "exception constructor " ^ #name info ^ " takes no argument")
                     else (slot := SOME (PIExn info); ty)
@@ -1319,13 +1360,13 @@ struct
              let val t = Unify.instantiate (level, scheme)
              in slot := SOME (if global then VGlobal (stamp, t) else VLocal (stamp, t)); t end
          | SOME (Con {scheme, info}) =>
-             let val t = Unify.instantiate (level, scheme) in slot := SOME (VCon (info, t)); t end
+             let val t = Unify.instantiate (level, scheme) in noteOpen (scheme, info); slot := SOME (VCon (info, t)); t end
          | SOME (Exn {ty, info}) => (slot := SOME (VExn (info, ty)); ty)
          | SOME (Prim {scheme, name}) =>
              let val t = Unify.instantiate (level, scheme)
              in registerOverloads t; slot := SOME (VBuiltin (name, t)); t end
          | SOME (ConAsVal {scheme, info}) =>
-             let val t = Unify.instantiate (level, scheme) in slot := SOME (VConVal (info, t)); t end
+             let val t = Unify.instantiate (level, scheme) in noteOpen (scheme, info); slot := SOME (VConVal (info, t)); t end
          | SOME (ExnAsVal {ty, info}) => (slot := SOME (VExnVal (info, ty)); ty))
     | ERecord (fields, sp) =>
         (checkDupLabels (fields, sp);
@@ -1790,9 +1831,10 @@ struct
                                                                                  ^ " is past what a descriptor can build")
                                        else ()
                               val o' = {tycon = #stamp c, tag = tag, desc = freshStamp (), con = freshStamp (),
-                                        decon = freshStamp (), dataTy = dataTy, argTy = argTy}
+                                        decon = freshStamp (), dataTy = dataTy, argTy = argTy, used = ref false}
                             in
                               opened := IntMap.insert (!opened, #stamp c, o' :: getOpt (IntMap.find (!opened, #stamp c), []));
+                              Ty.markOpen (#stamp c);
                               o'
                             end)
                          (openConstructors sigma)
@@ -1813,7 +1855,11 @@ struct
                 else err (#span b, "functor " ^ #name b ^ " has no signature: its result has a type variable not "
                                    ^ "generalised, which --functors=functions refuses (rule 89)")
               val func = freshStamp ()
-              val resultRecord = recordOf result
+              val resultRecord = recordInReach result
+              val () = let fun note (Record {vals, strs, ...}) =
+                             (List.app (fn (_, ConAsVal {scheme, info}) => noteOpen (scheme, info) | _ => ()) vals;
+                              List.app (fn (_, r) => note r) strs)
+                       in note resultRecord end
               val () = Ty.bindVar (func, TArrow (recordTy paramRecord, recordTy resultRecord))
               val () = bodies := StringMap.insert (!bodies, spanKey (#span b),
                                                    {func = func, param = param, paramRecord = paramRecord, result = resultRecord,
@@ -1984,7 +2030,6 @@ struct
                        SOME s => s
                      | NONE => err (sp, "functor " ^ funid ^ " has no signature (--functors=functions)")
                    val (phi, specE) = ElabStats.during ElabStats.Match (fn () => SigMatch.match (paramSig, argEnv, sp))
-                   val thinned = SigMatch.mergeInfo (specE, argEnv)
                    val descs = descriptors (paramSig, phi, sp)
                    val fresh = List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) generated
                    val phi = List.foldl (fn ((c, c'), m) => IntMap.insert (m, #stamp c, TName c')) phi fresh
@@ -1994,7 +2039,7 @@ struct
                    val r = freshStamp ()
                    val record = recordOf res
                    val () = Ty.bindVar (r, recordTy record)
-                   val arg = argRecordWith (thinned, descs)
+                   val arg = argRecordOf (specE, argEnv, descs)
                    (* a record made in a body, in reach for what comes after *)
                    val argVar = case arg of
                                   Record {shared = NONE, id = SOME _, ...} =>

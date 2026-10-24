@@ -441,6 +441,13 @@ struct
   val pinned : (int * int option) list IntMap.map ref = ref IntMap.empty
   val () = CompilerState.cellRoot ("Ty.pinned", pinned)
   fun pinLayout (stamp : int, l : (int * int option) list) = pinned := IntMap.insert (!pinned, stamp, l)
+  (* the datatypes a functor's parameter specifies with a constructor whose
+     layout the argument gives (D4), by stamp: what no function made of the
+     datatype's layout may take apart (Simplify's equality) *)
+  val openTypes : unit IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Ty.openTypes", openTypes)
+  fun markOpen (stamp : int) = openTypes := IntMap.insert (!openTypes, stamp, ())
+  fun isOpen (stamp : int) : bool = IntMap.member (!openTypes, stamp)
   fun declaredLayout (stamp : int) : (int * int option) list =
     case datatypeOf stamp of
       SOME {cons, ...} =>

@@ -730,6 +730,7 @@ struct
   and openFuns (opens : Elaborate.openCon list, k : unit -> lexp) : lexp =
     case opens of
       [] => k ()
+    | {used = ref false, ...} :: rest => openFuns (rest, k)
     | {desc, con, decon, tag, dataTy, argTy, ...} :: rest =>
         let
           val t = Ty.fromTypes dataTy

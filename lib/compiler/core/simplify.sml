@@ -202,6 +202,8 @@ struct
   (* What a variable is known to be: a step that made it, of those whose
      parts can be read back. *)
   datatype known = Made of rhs
+                 | Fields of atom vector   (* a tuple made of these, read a field in a step: a functor's record
+                                              of many (--functors=functions) *)
 
   (* What a round knows: the atom each variable it has dropped is, and what
      made each variable whose parts can be read back. A variable is used only
@@ -335,7 +337,7 @@ struct
      the argument gives (--functors=functions, D4), which no function made
      here may take apart *)
   fun openLayout (t : Ty.ty) : bool =
-    case Ty.view t of Ty.Con (stamp, _, _) => Elaborate.hasOpen stamp | _ => false
+    case Ty.view t of Ty.Con (stamp, _, _) => Ty.isOpen stamp | _ => false
 
   fun eqKindOf (t : Ty.ty) : eqKind =
     case eqByType (t, []) of
@@ -473,7 +475,7 @@ struct
       case r of
         Select (i, a) =>
           (case madeOf a of
-             SOME (Made (Tuple xs)) => if i < List.length xs andalso spend () then Atom (List.nth (xs, i)) else r
+             SOME (Fields v) => if i < Vector.length v andalso spend () then Atom (Vector.sub (v, i)) else r
            | _ => r)
       | Prim ("poly_eq", pty, xs) =>
           (case Ty.view pty of
@@ -1427,7 +1429,7 @@ struct
         else if uses (c, x) = 0 andalso removable r andalso spend () then simp (c, env, body)
         else
           (case r of
-             Tuple _ => IntTable.insert (#known env, x, Made r)
+             Tuple xs => IntTable.insert (#known env, x, Fields (Vector.fromList xs))
            | Con _ => IntTable.insert (#known env, x, Made r)
            | MkExn _ => IntTable.insert (#known env, x, Made r)
            | _ => ();
