@@ -19,9 +19,12 @@ struct
   type scopeEntry={ordinal:int,offset:int,path:string list,result:scope,bytes:int}
   type view={id:string,snapshot:A.snapshot,sources:source list,encoding:LspProtocol.encoding,uri:string,ordinal:int option,
     capabilities:Json.value,activeUnit:string option,generation:IntInf.int,scopes:scopeEntry list ref}
+  type watched={file:string,mode:string,digest:string option}
+  type diagnosticCache={key:string,files:watched list,builds:(string*string list) list,reports:Json.value list}
   datatype t=Worker of {contexts:context list ref,views:view list ref,tokens:RuneLspTokens.t,namespace:string ref,
-    progress:(V.value->unit) ref}
-  fun new ()=Worker {contexts=ref [],views=ref [],tokens=RuneLspTokens.new (),namespace=ref "local",progress=ref(fn _=>())}
+    progress:(V.value->unit) ref,diagnosticCache:diagnosticCache option ref}
+  fun new ()=Worker {contexts=ref [],views=ref [],tokens=RuneLspTokens.new (),namespace=ref "local",
+    progress=ref(fn _=>()),diagnosticCache=ref NONE}
   fun onProgress (Worker{progress,...},report)=progress:=report
   fun notify (Worker{progress,...},fields)=(!progress)(V.Object fields)
   (* Job IDs belong to the supervisor and do not reset with this process. *)
@@ -32,9 +35,11 @@ struct
           case Utf8.decode (text,i) of SOME (_,count) => String.substring (text,i,count) :: loop (i+count)
           | NONE => ("\\x" ^ StringCvt.padLeft #"0" 2 (Int.fmt StringCvt.HEX (Char.ord (String.sub (text,i))))) :: loop (i+1)
     in String.concat (loop 0) end
-  fun clear (Worker {contexts,views,tokens,...}) =
+  fun clearAnalysis (Worker {contexts,views,...}) =
     (List.app (fn context:context => (A.close (#analysis context);C.close (#compiler context))) (!contexts);
-     contexts:=[];views:=[];RuneLspTokens.clear tokens)
+     contexts:=[];views:=[])
+  fun clear (worker as Worker {tokens,diagnosticCache,...}) =
+    (clearAnalysis worker;diagnosticCache:=NONE;RuneLspTokens.clear tokens)
   val retainedSourceBudget=2*1024*1024
   fun inputBytes inputs=List.foldl(fn (input:A.input,n)=>size(#text input)+n)0 inputs
   fun snapshotBytes snapshot=inputBytes(A.inputs snapshot)+inputBytes(A.dependencies snapshot)
@@ -318,17 +323,22 @@ struct
       (case activeSource (view,#uri view) of NONE => [] | SOME source => [source])
   (* Finish each context's response before checking the next one. Keeping
      every snapshot here bypasses the resident cache's eviction budget. *)
-  fun workspaceResults (worker,{state,encoding,capabilities,cancelled},collect) =
-    let val (workspace,documents)=M.restore state
+  fun workspaceResults (worker,{state,encoding,capabilities,cancelled},transient,watch,collect) =
+    let val (workspace as W.Workspace {platform,...},documents)=M.restore state
         val {uris,problems}=RuneLspProjects.enrich (workspace,documents,cancelled)
         val uris=unique (List.map #uri (D.all documents) @ uris)
         val captured=M.capture (workspace,documents)
+        fun opened file=List.exists(fn snapshot:D.snapshot=>
+          case U.native(platform,U.parse(#uri snapshot)) of NONE=>false
+          | SOME {path,...}=>W.sameFile platform(file,path))(D.all documents)
         fun contextKey (context:W.context)= #build context ^ "#" ^ #target context ^ ":" ^ C.Project.fingerprint (#project context)
         fun group (uri,groups) =
           if cancelled () then raise A.Cancelled else
           case W.select (workspace,documents,uri) of W.Ambiguous _ => groups
           | selected =>
             let val key=case selected of W.Loose => "loose:" ^ uri | W.Selected context => contextKey context | _ => ""
+                val ()=case selected of W.Selected context=>List.app(fn input:C.Project.input=>
+                  if opened(#file input) then () else watch(#file input,#mode input,#text input))(C.Project.inputs(#project context)) | _=>()
                 val ordinal=case selected of W.Selected context => SOME (#ordinal context) | _ => NONE
                 fun insert []=[(key,[(uri,ordinal)])]
                   | insert ((prior,items)::rest)=if prior=key then (prior,items @ [(uri,ordinal)])::rest
@@ -340,22 +350,47 @@ struct
         val contextIndex=ref 0
         fun one (_,[]) = []
           | one (_,(items as (uri,_)::_)) =
-              let val ()=contextIndex:= !contextIndex+1
+              let val ()=if transient then clearAnalysis worker else ()
+                  val ()=contextIndex:= !contextIndex+1
                   val ()=notify(worker,[("phase",V.Bytes "workspace-context-start"),("file",V.Bytes uri),
                     ("contextIndex",V.Integer(IntInf.fromInt(!contextIndex)))])
                   val view=check (worker,{state=captured,uri=uri,encoding=encoding,capabilities=capabilities,cancelled=cancelled})
+                  val ()=List.app(fn source:source=>if isSome(#version source) then () else
+                    watch(#file source,#mode source,#text source))(#sources view)
                   fun result (uri,ordinal)=
                     if cancelled () then raise A.Cancelled else
                     (uri,collect (makeView {id= #id view,snapshot= #snapshot view,sources= #sources view,
                       encoding= #encoding view,uri=uri,ordinal=ordinal,capabilities=capabilities,generation= #generation view}))
-              in List.map result items end
+                  val results=List.map result items
+                  val ()=if transient then clearAnalysis worker else ()
+              in results end
         val results=List.concat (List.map one groups)
         val ordered=List.mapPartial (fn uri=>Option.map #2 (List.find (fn (file,_)=>file=uri) results)) uris
     in {results=ordered,problems=problems} end
-  fun workspaceDiagnostics (worker,{state,encoding,capabilities,cancelled,previous}) =
-    let fun report (view:view)=
-          let val prior=case List.find (fn (uri,_) => uri= #uri view) previous of NONE => NONE | SOME (_,id) => SOME id
-              val json=documentDiagnostics (view,{uri= #uri view,previous=prior})
+  fun workspaceDiagnostics (worker as Worker {diagnosticCache,...},{state,encoding,capabilities,cancelled,previous}) =
+    let val (workspace as W.Workspace {platform,...},_)=M.restore state
+        fun hash text=Hex.fromBytes(Sha256.digest text)
+        val key=hash(V.encode(V.Array[state,V.Bytes(LspProtocol.encodingName encoding),V.json capabilities]))
+        fun disk (file,mode)=SOME(hash(readFile(file,mode))) handle OS.SysErr _=>NONE | IO.Io _=>NONE
+        fun builds()=List.mapPartial(fn uri=>case U.native(platform,U.parse uri) of NONE=>NONE
+          | SOME {path,...}=>SOME(path,W.buildFiles platform path))(W.roots workspace)
+        fun valid (cached:diagnosticCache)= #key cached=key andalso #builds cached=builds() andalso
+          List.all(fn {file,mode,digest}:watched=>
+            if cancelled() then raise A.Cancelled else disk(file,mode)=digest)(#files cached)
+        val files=ref []:watched list ref
+        val consistent=ref true
+        fun remember (file,mode,digest)=case List.find(fn prior:watched=> #file prior=file andalso #mode prior=mode)(!files) of
+          SOME prior=>if #digest prior=digest then () else consistent:=false
+        | NONE=>files:={file=file,mode=mode,digest=digest}:: !files
+        fun manifests file=
+          let val dir=OS.Path.dir file
+              val manifest=OS.Path.concat(dir,"MANIFEST")
+              val ()=if List.exists(fn prior:watched=> #file prior=manifest)(!files) then ()
+                else remember(manifest,"",disk(manifest,""))
+          in if dir=file orelse dir="" then () else manifests dir end
+        fun watch(file,mode,text)=(remember(file,mode,SOME(hash text));manifests file)
+        fun report (view:view)=
+          let val json=documentDiagnostics (view,{uri= #uri view,previous=NONE})
               val fields=case json of Json.Object fields => fields | _ => []
               val version=case activeSource (view,#uri view) of
                 SOME source => (case #version source of NONE => Json.Null | SOME version => Json.intInf version) | NONE => Json.Null
@@ -364,9 +399,25 @@ struct
           ("kind",Json.String "full"),("items",Json.Array [Json.Object
             [("range",LspProtocol.rangeToJson {start={line=0,character=0},stop={line=0,character=0}}),
              ("severity",Json.int 1),("source",Json.String "rune-build"),("message",Json.String (safe message))]])]
-        val {results,problems}=workspaceResults (worker,
-          {state=state,encoding=encoding,capabilities=capabilities,cancelled=cancelled},report)
-    in Json.Object [("items",Json.Array (results @ List.map problem problems))] end
+        fun fresh()=
+          let val initialBuilds=builds()
+              val ()=diagnosticCache:=NONE
+              val {results,problems}=workspaceResults (worker,
+                {state=state,encoding=encoding,capabilities=capabilities,cancelled=cancelled},true,watch,report)
+              val reports=results @ List.map problem problems
+              val ()=if !consistent andalso null problems andalso size(Json.encode(Json.Array reports))<=4*1024*1024 then
+                diagnosticCache:=SOME{key=key,files= !files,builds=initialBuilds,reports=reports} else ()
+          in reports end handle error=>(clearAnalysis worker;raise error)
+        val reports=case !diagnosticCache of SOME cached=>if valid cached then
+            (RuneLspProfile.sample "workspace-diagnostics-cache-hit" "" 0 0 (length(#reports cached));#reports cached) else fresh()
+          | NONE=>fresh()
+        fun reuse report=case (Json.member("uri",report),Json.member("resultId",report)) of
+          (SOME(Json.String uri),SOME(Json.String id))=>
+            if not(List.exists(fn (file,value)=>file=uri andalso value=id)previous) then report else
+              (case report of Json.Object fields=>Json.Object(("kind",Json.String "unchanged")::
+                List.filter(fn (name,_)=>name<>"kind" andalso name<>"items")fields) | _=>report)
+          | _=>report
+    in Json.Object [("items",Json.Array(List.map reuse reports))] end
   fun symbolToken symbol=Hex.fromBytes (Sha256.digest (Json.encode symbol))
   fun workspaceSymbols (worker,{state,encoding,capabilities,cancelled,query}) =
     let val generation=V.integer (V.field (state,"generation"))
@@ -386,7 +437,7 @@ struct
                    SOME (Json.Object (("data",data)::("location",shown)::List.filter (fn (key,_) => key<>"location") fields)) end)
               (symbols (view,source))
         val {results,...}=workspaceResults (worker,
-          {state=state,encoding=encoding,capabilities=capabilities,cancelled=cancelled},viewSymbols)
+          {state=state,encoding=encoding,capabilities=capabilities,cancelled=cancelled},false,fn _=>(),viewSymbols)
         val all=unique (List.concat results)
     in Json.Array (List.take (all,Int.min (1000,length all))) end
   fun resolveSymbol (worker,params,state) =

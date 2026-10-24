@@ -57,19 +57,20 @@ A configured program target that does not contain a Basis file does not
 prevent selecting its owning Basis build. Ordinary programs retain their
 normal primitive restrictions.
 
-A supervised child process owns compiler sessions. The connection continues
+A supervised foreground child process owns compiler sessions. The connection continues
 reading requests while analysis runs; foreground queries precede queued
 background checks. Concurrent providers for one document revision and
 workspace generation share a single check. Cancellation
 receives one response and interrupts the child, with process termination as
 a fallback; cancelling one provider preserves a check with other waiters.
 Worker restart drops references to its old snapshots.
-Queued document checks and queries precede automatic workspace diagnostic
-pulls, so a pull cannot evict a just-published view before its waiting
-providers query it. Cancellation replies immediately and allows the worker
+Automatic workspace diagnostic pulls use a separate supervised worker, so
+they cannot evict foreground views or hold up navigation and document queries.
+Each background context releases its compiler session and analysis snapshots
+after producing its diagnostic reports. Cancellation replies immediately and allows each worker
 250 milliseconds to acknowledge before process termination.
 
-The worker uses Rune's optimizing JIT, with a 512 MiB VM heap cap and a
+Each worker uses Rune's optimizing JIT, with a 512 MiB VM heap cap and a
 1.5 GiB process address-space cap
 (including both copying spaces and native code), and a 30-second job deadline.
 Workspace sweeps have 30 seconds per context and an overall allowance of
@@ -83,6 +84,13 @@ file and phase, checked/reused unit counts, and elapsed time. Document checks
 start reporting after two seconds. Completion is logged for reported work.
 Clients supplying a work-done token receive these intermediate reports through
 `$/progress` as well. Progress updates do not extend deadlines or cancellation.
+The background worker retains at most one diagnostic report cache, bounded
+to 4 MiB of encoded reports. Unchanged workspace polls reuse those JSON
+reports without retaining analysis snapshots or logging another sweep.
+Captured source/build content, relevant manifest content/existence, root
+build-file membership, settings and overlays guard reuse. Saved changes are
+detected even without a watched-file notification; previous result IDs still
+produce unchanged reports.
 Contexts and frozen views each retain at most four entries and charge at most
 2 MiB of source text across entries; a single larger entry can occupy the
 cache alone. Shared text is charged separately per view. These are retention

@@ -44,8 +44,8 @@ close/reopen or restart.
 
 Worker stderr is a private nonblocking pipe: a 4 KiB prefix is retained, a
 64 KiB stream is terminated, and heap exhaustion is classified immediately.
-Shutdown terminates and reaps the worker before replying. Automatic workspace
-diagnostic pulls queue behind document checks and their dependent queries.
+Shutdown terminates and reaps both workers before replying. Automatic workspace
+diagnostic pulls run in a separate worker from document checks and queries.
 Cancellation replies immediately and grants 250 ms for acknowledgement.
 
 An unconfigured checkout workspace exposed another retention path: the
@@ -93,6 +93,33 @@ throttling/content, and info/work-done reports preceding final diagnostics.
 All four pass; receipts are `build/lsp-debug/acceptance/progress-*-tests.log`.
 No full workspace replay, broad suite, editor host or native Windows LSP
 run is repeated for this change.
+
+The `117beacc7` editor log then exposed repeated idle sweeps: VS Code's pinned
+language client polls workspace diagnostics two seconds after each response.
+Recomputing every context on every poll also evicted foreground snapshots,
+causing another document check and refresh; an opened Basis context eventually
+led to another heap failure. Workspace diagnostics now use a separate worker
+and retain only bounded JSON reports and content fingerprints between polls.
+Each background context releases its analysis before the next one starts.
+Background restart cannot invalidate foreground result IDs, and cancellation
+routes to the correct worker even when their job numbers coincide.
+
+The focused idle-poll regression fails against installed `117beacc7` and
+passes with the fix. It covers repeated/unchanged reports, saved library
+changes, regenerated manifests, changed build membership, new root builds
+and unsaved overlays. Existing workspace diagnostics and progress cases pass
+as well. The first candidate missed `IO.Io` for absent manifest probes;
+the corrected three-case run is `idle-loop-regression-fixed.log`.
+
+An independent replay checks only `rune.build`, never all 13 contexts. It
+checks hover while the background analysis is outstanding, three cached polls,
+foreground snapshot survival and clean shutdown. The polls take 0.330,
+0.318 and 0.308 seconds, with no additional `unit-start` observations; final
+hover takes 0.008 seconds. The background retains about 1.3 MiB after a forced
+collection. Receipts are `idle-loop-real-project.log` and
+`workspace-heap-idle-candidate.{json,jsonl}` under
+`build/lsp-debug/acceptance`. Full suites and editor/native Windows LSP
+runs remain deferred under the debugging rule.
 
 The public compiler adapter now reports missing-library manifest errors as
 `Failed` diagnostics. Discovery can then report an unavailable target instead

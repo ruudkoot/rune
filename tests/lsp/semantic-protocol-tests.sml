@@ -188,6 +188,54 @@ struct
         fun write(path,text)=let val out=TextIO.openOut path in TextIO.output(out,text);TextIO.closeOut out end
         fun work()=action{root=root,uri=uri,write=write}
     in (work() before remove root) handle error=>(remove root handle _=>();raise error) end
+  fun idleWorkspacePolls ()=temporaryTree(fn {root,uri,write}=>
+    let fun path name=OS.Path.concat(root,name)
+        val lib=path "lib" val basis=OS.Path.concat(lib,"basis")
+        val ()=(OS.FileSys.mkDir lib;OS.FileSys.mkDir basis)
+        val initial=OS.Path.concat(basis,"initial.sml")
+        val manifest=OS.Path.concat(basis,"MANIFEST")
+        val manifestText="initial.sml | always | yes | | \n"
+        val ()=write(initial,"val libraryValue=1\n")
+        val ()=write(manifest,manifestText)
+        val ()=write(path "main.build","main.sml\n")
+        val ()=write(path "main.sml","val answer=libraryValue\n")
+        val ()=write(path "extra.sml","val extra=2\n")
+        val options=object[("libraryRoot",Json.String(uri lib))]
+    in fixtureInitialized(object[("capabilities",object[("textDocument",object[("diagnostic",object[])])]),
+        ("workspaceFolders",Json.Array[object[("uri",Json.String(uri root)),("name",Json.String "idle")]]),
+        ("initializationOptions",options)]) (fn client=>
+      let val C.Client {messages,...}=client
+          fun plans()=length(List.filter(fn message=>Json.member("method",message)=SOME(Json.String "window/logMessage") andalso
+            (case Json.member("params",message) of SOME params=>
+              (case Json.member("message",params) of SOME(Json.String text)=>String.isSubstring "Workspace analysis:" text | _=>false)
+            | _=>false))(!messages))
+          fun pull(id,previous)=(C.request(client,id,"workspace/diagnostic",object[("previousResultIds",Json.Array previous)]);
+            C.field(C.result(C.response(client,id)),"items"))
+          val first=pull(290,[])
+          val count=plans()
+          val ()=check("the initial poll performs one workspace sweep",count=1)
+          val ()=check("unchanged polls reuse reports without another analysis sweep",pull(291,[])=first andalso plans()=count)
+          val previous=case first of Json.Array [report]=>[object[("uri",C.field(report,"uri")),("value",C.field(report,"resultId"))]]
+            | _=>raise Fail "missing initial idle report"
+          val ()=check("cached reports honor previous result IDs",case pull(292,previous) of Json.Array [report]=>
+            C.field(report,"kind")=Json.String "unchanged" andalso plans()=count | _=>false)
+          val ()=write(initial,"val libraryValue=true\n")
+          val _=pull(293,[])
+          val ()=check("saved library source edits invalidate the cache without watched-file notifications",plans()=count+1)
+          val ()=write(manifest,manifestText ^ "# regenerated\n")
+          val _=pull(294,[])
+          val ()=check("regenerated manifests invalidate the cache",plans()=count+2)
+          val ()=write(path "main.build","files main.sml extra.sml end\n")
+          val ()=check("build changes invalidate membership",case pull(295,[]) of Json.Array reports=>length reports=2 andalso plans()=count+3 | _=>false)
+          val ()=write(path "other.build","other.sml\n")
+          val ()=write(path "other.sml","val other=3\n")
+          val ()=check("new root build files invalidate discovery",case pull(296,[]) of Json.Array reports=>length reports=3 andalso plans()=count+4 | _=>false)
+          val ()=openDocument(client,uri(path "main.sml"),"val overlay:int=true\n")
+          val ()=check("unsaved overlays invalidate diagnostic results",case pull(297,[]) of Json.Array reports=>
+            List.exists(fn report=>C.field(report,"uri")=Json.String(uri(path "main.sml")) andalso
+              C.field(report,"items")<>Json.Array[])reports | _=>false)
+      in () end)
+    end)
   fun analysisProgress ()=temporaryTree(fn {root,uri,write}=>
     let fun path name=OS.Path.concat(root,name)
         val ()=write(path "left.build","left.sml\n")
@@ -1083,6 +1131,7 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "workspace-diagnostics" RuneLspSemanticProtocolTests.workspaceDiagnostics,
     Test.it "workspace-context-reporting" RuneLspSemanticProtocolTests.workspaceContexts,
     Test.it "live-analysis-progress" RuneLspSemanticProtocolTests.analysisProgress,
+    Test.it "idle-workspace-polls" RuneLspSemanticProtocolTests.idleWorkspacePolls,
     Test.it "basis-development-context" RuneLspSemanticProtocolTests.basisDevelopment,
     Test.it "navigation-and-symbols" RuneLspSemanticProtocolTests.navigation,
     Test.it "workspace-symbols-resolve" RuneLspSemanticProtocolTests.workspaceSymbols,

@@ -19,13 +19,15 @@ struct
   type flight={uri:string,revision:IntInf.int,generation:IntInf.int,job:IntInf.int}
   type failed={uri:string,revision:IntInf.int,generation:IntInf.int,message:string}
   exception Duplicate
-  datatype t=Service of {workspace:W.t,documents:D.t,caps:P.capabilities,jobs:task J.t,
+  datatype t=Service of {workspace:W.t,documents:D.t,caps:P.capabilities,jobs:task J.t,workspaceJobs:task J.t,
     results:result list ref,requests:request list ref,flights:flight list ref,failures:failed list ref,
     refresh:unit Q.t,refreshPending:bool ref,send:R.message->unit,log:string->unit,
     discovered:string*V.value->unit}
   fun new {workspace,documents,caps,command,args,send,log,discovered} =
     Service {workspace=workspace,documents=documents,caps=caps,jobs=J.new {command=command,args=args,
       timeout=Time.fromSeconds 30,cancelGrace=Time.fromMilliseconds 250,maxPending=128},results=ref [],requests=ref [],
+      workspaceJobs=J.new {command=command,args=args,timeout=Time.fromSeconds 30,
+        cancelGrace=Time.fromMilliseconds 250,maxPending=8},
       flights=ref [],failures=ref [],refresh=Q.new {prefix="runelsp-diagnostics-",maxPending=1},refreshPending=ref false,
       send=send,log=log,discovered=discovered}
   fun current (Service {workspace,documents,...},{uri,revision,generation}) =
@@ -45,6 +47,8 @@ struct
          send (R.Response {id=SOME (#id request),outcome=outcome}) end
   fun failure (service,request,code,message,data)=finish (service,request,R.Error {code=code,message=message,data=data})
   fun submit (Service {jobs,...},parameters)=J.submit (jobs,parameters)
+  fun requestJobs (Service {jobs,workspaceJobs,...},method)=
+    if method="workspace/diagnostic" then workspaceJobs else jobs
   fun capture (Service {workspace,documents,...})=RuneLspWorkerModel.capture (workspace,documents)
   fun buildDocument (Service {workspace=W.Workspace {platform,...},documents,...},uri)=
     case D.snapshot (documents,uri) of NONE => false | SOME snapshot => RuneLspBuild.isDocument (platform,snapshot)
@@ -135,7 +139,7 @@ struct
         val prior=List.find (fn result:result => #uri result=uri andalso #revision result=revision
           andalso #generation result=W.generation workspace) (!results)
     in ((if workspaceRequest then
-          #job request:=SOME (J.submit (jobs,{key=NONE,priority=if method="workspace/diagnostic" then 25 else 0,
+          #job request:=SOME (J.submit (requestJobs(service,method),{key=NONE,priority=if method="workspace/diagnostic" then 25 else 0,
             data=Workspace request,payload=V.Object
             [("op",V.Bytes "workspace"),("state",capture service),("params",V.json params),
              ("method",V.Bytes method),
@@ -156,8 +160,9 @@ struct
   fun cancel (service as Service {jobs,requests,...},id) =
     case List.find (fn request:request => #id request=id) (!requests) of NONE => () | SOME request =>
       (failure (service,request,R.requestCancelled,"request cancelled",NONE);Option.app (fn id =>
-        if List.exists(fn other:request=> !(#job other)=SOME id andalso not(!(#done other)))(!requests)
-        then () else J.cancel (jobs,id)) (!(#job request)))
+        if List.exists(fn other:request=> !(#job other)=SOME id andalso not(!(#done other)) andalso
+          (#method other="workspace/diagnostic")=(#method request="workspace/diagnostic"))(!requests)
+        then () else J.cancel (requestJobs(service,#method request),id)) (!(#job request)))
   fun cancelProgress (service as Service {requests,...},token) =
     List.app (fn request:request => if Json.member ("workDoneToken",#params request)=SOME (P.idToJson token)
       then cancel (service,#id request) else ()) (!requests)
@@ -166,7 +171,7 @@ struct
       ["textDocument/diagnostic","workspace/diagnostic"]) orelse
       current (service,{uri= #uri request,revision= #revision request,generation= #generation request}) then () else
       (failure (service,request,P.serverCancelled,"diagnostic source changed",SOME (Json.Object [("retriggerRequest",Json.Bool true)]));
-       Option.app (fn id => J.cancel (jobs,id)) (!(#job request)))) (!requests)
+       Option.app (fn id => J.cancel (requestJobs(service,#method request),id)) (!(#job request)))) (!requests)
   fun pullClient (Service {caps,...}) = case Json.member ("textDocument",P.rawCapabilities caps) of
     SOME value => (case Json.member ("diagnostic",value) of SOME (Json.Object _) => true | _ => false) | _ => false
   fun refresh (service as Service {caps,send,refresh,refreshPending,...}) =
@@ -274,10 +279,12 @@ struct
         failure (service,request,R.requestCancelled,"request cancelled",NONE))(waiters(service,ticket))
     | J.Cancelled (Build {request=SOME request,...}) => if !(#done request) then () else failure (service,request,R.requestCancelled,"request cancelled",NONE)
     | J.Cancelled _ => ()
-  fun descriptors (Service {jobs,...})=J.descriptors jobs
-  fun pump (service as Service {jobs,log,...},ready) =
-    List.app (fn event => handleEvent (service,event) handle V.Invalid message => log message) (J.pump (jobs,ready))
-  fun close (service as Service {jobs,requests,refresh,...}) =
+  fun descriptors (Service {jobs,workspaceJobs,...})=J.descriptors jobs @ J.descriptors workspaceJobs
+  fun pump (service as Service {jobs,workspaceJobs,log,...},ready) =
+    let val foreground=J.pump(jobs,ready)
+        val background=List.filter(fn J.Restarted=>false | _=>true)(J.pump(workspaceJobs,ready))
+    in List.app (fn event => handleEvent (service,event) handle V.Invalid message => log message) (foreground @ background) end
+  fun close (service as Service {jobs,workspaceJobs,requests,refresh,...}) =
     (List.app (fn request => failure (service,request,R.requestCancelled,"server shutting down",NONE)) (!requests);
-     ignore (Q.clear refresh);J.close jobs)
+     ignore (Q.clear refresh);J.close jobs;J.close workspaceJobs)
 end

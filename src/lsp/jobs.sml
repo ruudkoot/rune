@@ -62,7 +62,7 @@ struct
     case (!active,!phase,!started) of (SOME job,Working _,SOME since)=>
       let val now=Time.now()
           val workspace=workspaceJob job
-          val visible=workspace orelse Time.>=(Time.-(now,since),Time.fromSeconds 2)
+          val visible=workspace andalso isSome(!progress) orelse Time.>=(Time.-(now,since),Time.fromSeconds 2)
           val due=force orelse (case !reported of NONE=>true
             | SOME at=>Time.>=(Time.-(now,at),Time.fromSeconds 5))
       in if not visible orelse not due then () else
