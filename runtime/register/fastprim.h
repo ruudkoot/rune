@@ -23,8 +23,12 @@ void census_store_fast(Obj *o, uint32_t i, Value v, int32_t reg);
 #define HEAP_STORE(obj, i, v) obj_set_field(vm, (obj), (uint32_t)(i), (v))
 #endif
 
-/* LESS, EQUAL or GREATER, the nullary constructors 0, 1 and 2 */
+/* LESS, EQUAL or GREATER, the nullary constructors 0, 1 and 2 (TAG_LESS, ...) */
+#ifdef RUNE_TAGS_SORTED
+static inline Value fast_order(int lt, int gt) { return mk_con0(2 * lt + gt); }
+#else
 static inline Value fast_order(int lt, int gt) { return mk_con0(1 + gt - lt); }
+#endif
 /* the order of two strings, str_cmp's (runtime/prims.c): their bytes as
    unsigned, then their lengths */
 static inline int fast_str_cmp(const Obj *a, const Obj *b) {

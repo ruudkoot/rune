@@ -96,16 +96,6 @@ static void set_bool(Jit *j, int32_t d, int cc) {
     ms_set_reg(M, d, T_CON0, R_S0);
     ms_bool_flags(M, R_S0);   /* and back into the flags (ZF: false), for a branch fused onto it */
 }
-/* LESS, EQUAL or GREATER (0, 1, 2) of the flags into d: ge + g */
-static void set_order(Jit *j, int32_t d, int cc_ge, int cc_g) {
-    as_setcc(A, R_S0, cc_ge);
-    as_setcc(A, R_S1, cc_g);
-    as_add_rr(A, R_S0, R_S1);
-    ms_set_reg(M, d, T_CON0, R_S0);
-}
-/* the two arguments, immediates of one tag, as their words in rax and rcx:
-   what a comparison compares, and what the arithmetic of masm.h takes */
-static void two(Jit *j, int32_t x, int32_t y, int tag, AsmLabel *slow) { ms_two_imm(M, x, y, tag, slow); }
 /* the condition that is cc's negation (the integer ones) */
 static int cc_not(int cc) {
     switch (cc) {
@@ -115,6 +105,24 @@ static int cc_not(int cc) {
     default: return -1;
     }
 }
+/* LESS, EQUAL or GREATER (0, 1, 2) of the flags into d: ge + g; under
+   RUNE_TAGS_SORTED (2, 0, 1: value.h), 2 lt + g */
+static void set_order(Jit *j, int32_t d, int cc_ge, int cc_g) {
+#ifdef RUNE_TAGS_SORTED
+    as_setcc(A, R_S0, cc_not(cc_ge));
+    as_setcc(A, R_S1, cc_g);
+    as_add_rr(A, R_S0, R_S0);
+    as_add_rr(A, R_S0, R_S1);
+#else
+    as_setcc(A, R_S0, cc_ge);
+    as_setcc(A, R_S1, cc_g);
+    as_add_rr(A, R_S0, R_S1);
+#endif
+    ms_set_reg(M, d, T_CON0, R_S0);
+}
+/* the two arguments, immediates of one tag, as their words in rax and rcx:
+   what a comparison compares, and what the arithmetic of masm.h takes */
+static void two(Jit *j, int32_t x, int32_t y, int tag, AsmLabel *slow) { ms_two_imm(M, x, y, tag, slow); }
 /* Whether the bool a comparison makes in d goes to the branch right after
    it alone (M6, tier 2, where what is live is known): the branch on d,
    reached from the comparison only, and d dead after it either way. Then

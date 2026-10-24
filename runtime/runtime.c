@@ -156,11 +156,11 @@ void vm_push_handler(VM *vm, uint32_t pc) {
     vm->hp++;
 }
 
-/* A list cell is one object, the constructor :: (tag 1) of the two fields
-   of its argument, head and tail -- a constructor whose argument is a tuple
-   is made of its fields (lib/compiler/backend/rep.sml; middle-end M11). */
+/* A list cell is one object, the constructor :: (TAG_CONS, 1) of the two
+   fields of its argument, head and tail -- a constructor whose argument is a
+   tuple is made of its fields (lib/compiler/backend/rep.sml; middle-end M11). */
 void vm_cons(VM *vm) {
-    Obj *cell = vm_alloc_fields(vm, K_CON, 1, 2);
+    Obj *cell = vm_alloc_fields(vm, K_CON, TAG_CONS, 2);
     obj_fill_field(cell, 0, vm->stack[vm->sp - 1]);
     obj_fill_field(cell, 1, vm->stack[vm->sp - 2]);
     vm->sp -= 2;
