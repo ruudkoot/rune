@@ -29,6 +29,8 @@ the Linux path. Each workspace folder can select its own library root.
 Saved source changes are rechecked; after adding library files or changing
 the names they provide, run `make manifests` in the checkout. Compiler
 language and primitive changes may require an updated extension as well.
+The Basis's own sources are checked through `basis/library.build` in their
+bootstrap environment, including their permitted primitive declarations.
 The extension's executable files remain separate from that checkout's
 builds and from installed Rune binaries.
 

@@ -39,7 +39,7 @@ try {
   $stage = 'semantic protocol'
   & $vm C:\Work\semantic-tests.rbc $vm $server *> C:\Results\semantic.log
   if ($LASTEXITCODE -ne 0) { throw 'semantic suite failed' }
-  if ((Get-Content C:\Results\semantic.log -Raw) -notmatch 'SUMMARY 45 tests, 45 passed, 0 failed') { throw 'missing semantic acceptance marker' }
+  if ((Get-Content C:\Results\semantic.log -Raw) -notmatch 'SUMMARY (\d+) tests, \1 passed, 0 failed, 0 skipped') { throw 'missing semantic acceptance marker' }
   $stage = 'packaged library workflow'
   $env:RUNE_VSCODE_CHECKOUT = $project
   & $vm C:\Work\distribution-tests.rbc $extension *> C:\Results\packaged.log
@@ -54,7 +54,7 @@ try {
   $editor = Start-Process C:\Tools\Code\Code.exe -ArgumentList $arguments -PassThru -RedirectStandardOutput C:\Results\editor.log -RedirectStandardError C:\Results\editor-error.log
   if (-not $editor.WaitForExit(240000)) { Stop-Process -Id $editor.Id; throw 'editor integration exceeded 240 seconds' }
   $log = (Get-Content C:\Results\editor.log -Raw) + (Get-Content C:\Results\editor-error.log -Raw)
-  if ($log -notmatch 'PASS vscode/editor/activation-hover-diagnostics-restart' -or $log -notmatch 'PASS vscode/editor/rune-project-hover-navigation-completion-edit-repair') { throw 'missing editor acceptance markers' }
+  if ($log -notmatch 'PASS vscode/editor/activation-hover-diagnostics-restart' -or $log -notmatch 'PASS vscode/editor/rune-project-hover-navigation-completion-edit-repair' -or $log -notmatch 'PASS vscode/editor/basis-development-context') { throw 'missing editor acceptance markers' }
   $status = 'PASS'
   @{status=$status;vscode=$codeVersion;stage=$stage;network='disabled';clipboard='disabled';sourcePath=$project} | ConvertTo-Json | Set-Content -Encoding UTF8 C:\Results\result.json
 } catch {

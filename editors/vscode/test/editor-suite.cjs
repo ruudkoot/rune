@@ -64,5 +64,15 @@ exports.run = async () => {
     await until(() => vscode.languages.getDiagnostics(source.uri).length === 0);
     await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
     console.log('PASS vscode/editor/rune-project-hover-navigation-completion-edit-repair');
+    const basis = await vscode.workspace.openTextDocument(vscode.Uri.file(`${root}/lib/basis/runtime.sml`));
+    await vscode.window.showTextDocument(basis);
+    const primitive = basis.getText().indexOf('instructions\'');
+    assert.ok(primitive >= 0);
+    await until(async () => {
+      const values = await vscode.commands.executeCommand('vscode.executeHoverProvider', basis.uri, basis.positionAt(primitive));
+      return values?.length && vscode.languages.getDiagnostics(basis.uri).length === 0;
+    });
+    await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
+    console.log('PASS vscode/editor/basis-development-context');
   }
 };

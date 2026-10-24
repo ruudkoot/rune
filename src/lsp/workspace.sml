@@ -135,6 +135,8 @@ struct
       | SOME at => String.substring (path,0,at) end
   fun join platform (directory,path)=if platform=U.Windows then
     directory ^ (if String.isSuffix "/" directory then "" else "/") ^ path else OS.Path.concat (directory,path)
+  fun basisBuild platform root=join platform(join platform(root,"basis"),"library.build")
+  fun isBasisBuild platform (root,file)=sameFile platform(file,basisBuild platform root)
   fun parent platform path =
     let val directory=directory platform path in if directory=path orelse directory="" then NONE else SOME directory end
   fun buildFiles platform directory =
@@ -177,15 +179,24 @@ struct
             {id= #build target ^ "#" ^ #name target ^ ":" ^ Int.toString (#ordinal source),
              label= #name target ^ " (unit " ^ Int.toString (#ordinal source+1) ^ ")",build= #build target,
              target= #name target,ordinal= #ordinal source,project=project,source=source}:context) sources end
-    in List.concat (List.map (fn candidate =>
-         if null (#targets config) then (target candidate handle C.Failed _ => []) else target candidate) targets) end
-  fun select (workspace as Workspace {settings=stored,choices,...},documents,uri) =
+        val found=List.concat (List.map (fn candidate =>
+          if null (#targets config) then (target candidate handle C.Failed _ => []) else target candidate) targets)
+        val basis=join platform (getOpt(#libraryRoot config,lib),"basis")
+        val build=basisBuild platform (getOpt(#libraryRoot config,lib))
+    in if not(null found) orelse not(below(pathKey platform basis,key)) then found
+       else let val location=U.fromPath(platform,build) handle U.Invalid=>U.fromPath(platform,OS.FileSys.fullPath build)
+            in target {name="basis",build=U.original location,flags= #flags config,
+              variables=[],libraryRoot= #libraryRoot config} end handle C.Failed _=>found end
+  fun select (workspace as Workspace {platform,lib,settings=stored,choices,...},documents,uri) =
     let val contexts=contexts (workspace,documents,uri)
         val active=case List.find (fn (document,_) => document=uri) (!choices) of SOME (_,id) => SOME id
           | NONE => #activeContext (configurationFor (workspace,uri))
     in case active of SOME id =>
          (case List.filter (fn context:context => #id context=id orelse #target context=id) contexts of
            [context] => Selected context
-          | _ => if null contexts then Loose else Ambiguous contexts)
+          | _ => case contexts of []=>Loose | [context]=>
+              if isBasisBuild platform(getOpt(#libraryRoot(configurationFor(workspace,uri)),lib),filePath platform(#build context))
+              then Selected context else Ambiguous contexts
+            | _=>Ambiguous contexts)
        | NONE => case contexts of [] => Loose | [context] => Selected context | _ => Ambiguous contexts end
 end

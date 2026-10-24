@@ -4,6 +4,7 @@ struct
   val check=Expect.that
   fun object fields=Json.Object fields
   fun document uri=object [("uri",Json.String uri)]
+  fun textValue (Json.String value)=value | textValue _=raise Fail "expected string"
   fun fixtureInitializedResult initialization action =
     let val (program,args)=case CommandLine.arguments () of [vm,server,worker] => (vm,[server,vm,worker])
           | [vm,server] => (vm,[server]) | [program] => (program,[])
@@ -171,6 +172,53 @@ struct
         val symbols=C.result (C.response (client,82))
     in check ("document symbols reflect checked declarations",case symbols of Json.Array values =>
       List.exists (fn value => Json.member ("name",value)=SOME (Json.String "identity")) values | _ => false) end)
+  fun temporaryTree action =
+    let val root=OS.FileSys.tmpName()
+        val ()=(OS.FileSys.remove root;OS.FileSys.mkDir root)
+        fun remove path=if OS.FileSys.isDir path then
+              let val stream=OS.FileSys.openDir path
+                  fun loop()=case OS.FileSys.readDir stream of NONE=>() | SOME name=>(remove(OS.Path.concat(path,name));loop())
+              in loop();OS.FileSys.closeDir stream;OS.FileSys.rmDir path end
+            else OS.FileSys.remove path
+        val platform=if List.exists(fn (key,value)=>key="sysname" andalso value="Windows")(Posix.ProcEnv.uname())
+          then LspUri.Windows else LspUri.Posix
+        fun uri path=LspUri.original(LspUri.fromPath(platform,OS.FileSys.fullPath path))
+        fun write(path,text)=let val out=TextIO.openOut path in TextIO.output(out,text);TextIO.closeOut out end
+        fun work()=action{root=root,uri=uri,write=write}
+    in (work() before remove root) handle error=>(remove root handle _=>();raise error) end
+  fun basisDevelopment ()=temporaryTree(fn {root,uri,write}=>
+    let val lib=root ^ "/lib" val basis=lib ^ "/basis"
+        val ()=List.app OS.FileSys.mkDir [lib,basis]
+        val text="structure Runtime=struct val add=primitive end\n"
+        val ()=List.app write [(basis ^ "/library.build","files initial.sml runtime.sml end\n"),
+          (basis ^ "/initial.sml","val primitive = _prim \"int_add\" : int * int -> int\n"),
+          (basis ^ "/runtime.sml",text),(basis ^ "/MANIFEST","initial.sml | always | yes | | \nruntime.sml | demand | yes | Runtime | \n"),
+          (root ^ "/program.build","main.sml\n"),(root ^ "/main.sml","val userPrimitive = _prim \"int_add\" : int * int -> int\n")]
+        val runtime=uri(basis ^ "/runtime.sml")
+        val options=object[("libraryRoot",Json.String(uri lib)),("targets",Json.Array
+          [object[("name",Json.String "program"),("build",Json.String(uri(root ^ "/program.build")))]]),
+          ("activeContext",Json.String "program")]
+    in fixtureInitialized(object[("capabilities",object[("textDocument",object[("diagnostic",object[])])]),
+         ("workspaceFolders",Json.Array[object[("uri",Json.String(uri root)),("name",Json.String "basis")]]),
+         ("initializationOptions",options)]) (fn client=>
+      let fun pull id=(C.request(client,id,"textDocument/diagnostic",object[("textDocument",document runtime)]);C.result(C.response(client,id)))
+          fun change(version,text)=C.notify(client,"textDocument/didChange",object[("textDocument",object
+            [("uri",Json.String runtime),("version",Json.int version)]),("contentChanges",Json.Array[object[("text",Json.String text)]])])
+          val ()=openDocument(client,runtime,text)
+          val ()=check("Basis bootstrap does not preload or reject its own primitives",C.field(pull 710,"items")=Json.Array[])
+          val ()=C.request(client,711,"textDocument/hover",object[("textDocument",document runtime),
+            ("position",object[("line",Json.int 0),("character",Json.int 30)])])
+          val ()=check("Basis declarations have semantic hover",C.result(C.response(client,711))<>Json.Null)
+          val ()=change(2,"structure Runtime=struct val add:int=primitive end\n")
+          val ()=check("Basis edits are checked",case C.field(pull 712,"items") of Json.Array(_::_)=>true | _=>false)
+          val ()=change(3,text)
+          val ()=check("Basis repairs clear diagnostics",C.field(pull 713,"items")=Json.Array[])
+          val ordinary=uri(root ^ "/main.sml")
+          val ()=openDocument(client,ordinary,"val userPrimitive = _prim \"int_add\" : int * int -> int\n")
+          val ()=C.request(client,714,"textDocument/diagnostic",object[("textDocument",document ordinary)])
+          val report=C.result(C.response(client,714))
+      in check("Basis privilege does not leak into ordinary programs",case C.field(report,"items") of Json.Array items=>
+        List.exists(fn item=>String.isSubstring "_prim" (textValue(C.field(item,"message"))))items | _=>false) end) end)
   fun highlightPositions values = case values of Json.Array values => List.map (fn value =>
       let val start=C.field (C.field (value,"range"),"start")
       in (C.field (start,"line"),C.field (start,"character")) end) values
@@ -971,6 +1019,7 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "markup-negotiation" RuneLspSemanticProtocolTests.markup,
     Test.it "file-project-mapping" RuneLspSemanticProtocolTests.fileProject,
     Test.it "workspace-diagnostics" RuneLspSemanticProtocolTests.workspaceDiagnostics,
+    Test.it "basis-development-context" RuneLspSemanticProtocolTests.basisDevelopment,
     Test.it "navigation-and-symbols" RuneLspSemanticProtocolTests.navigation,
     Test.it "workspace-symbols-resolve" RuneLspSemanticProtocolTests.workspaceSymbols,
     Test.it "document-highlights" RuneLspSemanticProtocolTests.documentHighlights,

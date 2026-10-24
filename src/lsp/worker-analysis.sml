@@ -51,7 +51,7 @@ struct
     case List.find (fn context:context => #key context=key) (!contexts) of SOME context =>
       (contexts:=context :: List.filter (fn prior:context => #key prior<>key) (!contexts);context)
     | NONE =>
-      let val compiler=C.session {lib=SOME lib,flags=flags}
+      let val compiler=C.session {lib=lib,flags=flags}
           val context={key=key,compiler=compiler,analysis=A.create (compiler,{context=key}),bytes=ref 0}:context
           val reportedChecked=ref ~1
           val ()=A.observe(#analysis context,SOME(fn event:A.observation=>
@@ -204,10 +204,20 @@ struct
         val libraryRoot=case target of NONE => getOpt (#libraryRoot configuration,lib)
           | SOME target => getOpt (#libraryRoot target,getOpt (#libraryRoot configuration,lib))
         val variables= #variables configuration @ (case target of NONE => [] | SOME target => #variables target)
+        (* The owning Basis is compiled from the initial environment. Loading
+           its sealed program prelude first both duplicates it and hides the
+           internal names/primitive permission needed by its own sources. *)
+        val bootstrap=case selected of NONE=>false | SOME selected=>
+          W.isBasisBuild platform (libraryRoot,W.filePath platform (#build selected))
+        fun withoutLibraries ("--library"::_::rest)=withoutLibraries rest
+          | withoutLibraries (flag::rest)=flag::withoutLibraries rest
+          | withoutLibraries []=[]
+        val compilerFlags=if bootstrap then "--allow-prim"::withoutLibraries flags else flags
+        val compilerLib=if bootstrap then NONE else SOME libraryRoot
         val key=V.encode (V.Array [V.Bytes (case selected of NONE => "loose:" ^ uri
             | SOME selected => #build selected ^ "#" ^ #target selected),
-          V.Bytes libraryRoot,M.strings flags,M.pairs variables])
-        val context=context (worker,{key=key,lib=libraryRoot,flags=flags})
+          V.Bytes libraryRoot,V.Bool bootstrap,M.strings compilerFlags,M.pairs variables])
+        val context=context (worker,{key=key,lib=compilerLib,flags=compilerFlags})
         fun native uri=U.native (platform,U.parse uri)
         val overlays=List.mapPartial (fn snapshot:D.snapshot => case native (#uri snapshot) of NONE => NONE
           | SOME {path,...} => SOME {file=path,text=L.text (#content snapshot)}) (D.all documents)

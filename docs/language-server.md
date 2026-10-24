@@ -49,6 +49,14 @@ worker resource limits are separate.
 
 ## Static analysis and queries
 
+Files listed by the configured library root's `basis/library.build` use
+the Basis bootstrap context: they are checked in build order from the
+initial environment, with primitives enabled for that context. The server
+does not preload a sealed copy of the Basis before checking its own sources.
+A configured program target that does not contain a Basis file does not
+prevent selecting its owning Basis build. Ordinary programs retain their
+normal primitive restrictions.
+
 A supervised child process owns compiler sessions. The connection continues
 reading requests while analysis runs; foreground queries precede queued
 background checks. Concurrent providers for one document revision and
