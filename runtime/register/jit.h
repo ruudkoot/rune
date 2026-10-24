@@ -203,6 +203,7 @@ typedef struct JitProgram {
     double compile_seconds;     /* CPU time compiling (clock) */
     uint64_t *prim_calls;       /* per primitive: calls of jit_h_prim from code (--jit-stats, M7) */
     uint64_t eq_calls, eq_walked;   /* --jit-stats: poly_eq's calls from code, and those walked by values_equal in C (performance M5) */
+    uint64_t div_const, div_var;    /* --jit-stats: divisions of code (div, mod, quot, rem) by a constant tier 2 knows, and the rest (functors-units M1) */
     uint64_t pushes, pushes_c;      /* --jit-stats: handlers pushed by code, and of them by the helper (M5) */
     uint64_t raises, raises_c;      /* --jit-stats: RAISEs of code, and of them through the helper (M5) */
     /* tier 2's homes, general ([0]) and of reals ([1]): the registers a

@@ -843,17 +843,25 @@ struct
        then say "FAIL units bootstrap: stage 2 failed\n"
        else if same ("bin/rune.rbc",stage2) then ()
        else say "FAIL units bootstrap: compiler bytecode differs\n" end
+  (* the programs of make test-int64, each compiled at --int-bits=64: a
+     word past 63 bits in a home, and the division by a constant
+     (functors-units M1) of tests/lang, on 64-bit dividends *)
+  val int64Programs = [("box-home", "tests/register/int64-box-home.sml", "tests/register/int64-box-home.expected"),
+                       ("div-constant", "tests/lang/rt.div_constant.sml", "tests/register/int64-div-constant.expected")]
   fun int64Compile () =
     let val out=run ^ "/int64" val ()=mkdirs out
-    in if exec {cmd=["bin/rune","--int-bits=64","tests/register/int64-box-home.sml","-o",out ^ "/box-home.rbc"],
-                dir=NONE,stdin="",stdout=out ^ "/compile.out",stderr=out ^ "/compile.err",timeout=600}=0
-       then () else say "FAIL int64 home: compilation failed\n" end
+    in List.app (fn (name, src, _) =>
+         if exec {cmd=["bin/rune","--int-bits=64",src,"-o",out ^ "/" ^ name ^ ".rbc"],
+                  dir=NONE,stdin="",stdout=out ^ "/" ^ name ^ ".compile.out",stderr=out ^ "/" ^ name ^ ".compile.err",timeout=600}=0
+         then () else say ("FAIL int64 " ^ name ^ ": compilation failed\n")) int64Programs end
   fun int64Home vm mode =
-    let val out=run ^ "/int64" val file=out ^ "/" ^ vm ^ "." ^ mode ^ ".out"
-        val status=exec {cmd=["bin/" ^ vm,"--jit=" ^ mode,out ^ "/box-home.rbc"],dir=NONE,stdin="",
-                         stdout=file,stderr=file,timeout=120}
-    in if status=0 andalso same (file,"tests/register/int64-box-home.expected") then ()
-       else say ("FAIL int64 home: " ^ vm ^ "/" ^ mode ^ " differs or exits unsuccessfully\n") end
+    let val out=run ^ "/int64"
+    in List.app (fn (name, _, expected) =>
+         let val file=out ^ "/" ^ name ^ "." ^ vm ^ "." ^ mode ^ ".out"
+             val status=exec {cmd=["bin/" ^ vm,"--jit=" ^ mode,out ^ "/" ^ name ^ ".rbc"],dir=NONE,stdin="",
+                              stdout=file,stderr=file,timeout=120}
+         in if status=0 andalso same (file,expected) then ()
+            else say ("FAIL int64 " ^ name ^ ": " ^ vm ^ "/" ^ mode ^ " differs or exits unsuccessfully\n") end) int64Programs end
 
   (* the commands of bin/rune-test that are these checks *)
   fun command args =
@@ -965,7 +973,8 @@ struct
              @ [job ("@compare", ["repro-compare"], List.map (fn (n, _, _, _) => "reproducible/" ^ n) reproBuilds, 1, 100, 600)])),
        tagged ["check", "check-units", "check-units-bootstrap", "covers:tests/units/*"]
          (Test.describe "bootstrap" [job ("units", ["units-bootstrap"], [], 1, 1500, 3600)]),
-       tagged ["test-int64", "covers:tests/register/int64-box-home.*"]
+       tagged ["test-int64", "covers:tests/register/int64-box-home.*", "covers:tests/register/int64-div-constant.*",
+               "covers:tests/lang/rt.div_constant.*"]
          (Test.describe "int64"
            (job ("compile", ["int64-compile"], [], 1, 600, 900) ::
             List.concat (List.map (fn vm => List.map (fn mode =>

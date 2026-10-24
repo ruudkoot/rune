@@ -11,7 +11,7 @@ struct
   fun executable name program args=Test.it name
     {program=fromRoot program,args=program::args,env=NONE,dir=SOME ".",stdin=NONE,
      timeout=Time.fromSeconds 300,cap=0,cpus=1,memory=500,pools=[],exclusive=false,after=[],judge=failLines} : Run.command Test.tree
-  val portableFiles=["runtime/register/jit/emit.c","runtime/register/jit/masm.c","runtime/register/jit/masm.h",
+  val portableFiles=["runtime/register/jit/emit.c","runtime/register/jit/masm.c","runtime/register/jit/masm.h","runtime/register/jit/divplan.h",
        "runtime/register/jit/compile.c","runtime/register/jit/compile.h","runtime/register/jit/dump.c","runtime/register/jit.c"]
   fun encoderFree text =
     let fun word c=Char.isAlphaNum c orelse c = #"_"
@@ -273,7 +273,7 @@ struct
           tagged ["quick"] (job "encoder-faults" ["build-asm-faults"] []),
           executable "executable-memory" "bin/runevm" ["--jit-check"],
           executable "x64" "build/register/x64_test" [],executable "a64" "build/register/a64_test" [],
-          executable "masm" "build/register/masm_test" [],
+          executable "masm" "build/register/masm_test" [],executable "divconst" "build/register/divconst_test" [],
           job "compile-deeprec" ["build-jit-compile"] [],
           Test.describe "deeprec" (List.map (fn (name,_) => job name ["build-jit-deep",name] ["low-level/jit/compile-deeprec"]) modes)])]
 end

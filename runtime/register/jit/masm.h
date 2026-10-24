@@ -33,6 +33,7 @@
 #define RUNE_JIT_MASM_H
 
 #include "asm.h"
+#include "divplan.h"
 #include "vm.h"
 #include "register/jit.h"
 
@@ -273,6 +274,11 @@ void ms_word64_arith(Masm *m, int op);                             /* modulo 2^6
 void ms_word64_not(Masm *m);
 void ms_set_num64(Masm *m, int32_t d, int tag, int r, AsmLabel *slow);
 void ms_shift_count(Masm *m, int32_t y, AsmLabel *slow);           /* R_S1 := the count in R(y), a word's payload */
+/* A division by a constant (functors-units M1): R_S0 := the quotient or
+   remainder of the payload or the 64 bits in R_S0 by the plan's divisor
+   (divplan.h, div_plan), with no division and no branch; R_S1 to R_S3
+   clobbered */
+void ms_div_const(Masm *m, const DivPlan *p);
 #ifndef RUNE_INT64
 void ms_num64_as_int(Masm *m, AsmLabel *slow);                     /* R_S0's 64 bits := an int's word; to slow past 63 bits */
 void ms_word64_as_int(Masm *m, AsmLabel *slow);                    /* the same, unsigned: to slow above an int's largest */

@@ -823,7 +823,7 @@ bin/runevm-stack: runtime/main.c runtime/stack/interp.c build/librune.a $(VM_HDR
 # runtime/register's first loop (docs/plans/middle-end.md, M5): the register bytecode,
 # on the runtime of runevm-stack. Its own instruction set's part (runtime/register/isa_regs.c)
 # is linked before build/librune.a, whose runtime/stack/isa_stack.c it takes the place of.
-NEW_HDRS := runtime/register/regvm.h runtime/register/live.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/reg_labels.h runtime/register/reg_loop.h runtime/register/reg_words.h runtime/register/fastprim.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
+NEW_HDRS := runtime/register/regvm.h runtime/register/live.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/reg_labels.h runtime/register/reg_loop.h runtime/register/reg_words.h runtime/register/fastprim.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/masm.h runtime/register/jit/divplan.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
 # RUNE_JIT=0 builds it without the JIT (docs/plans/jit.md): the
 # interpreter alone, which refuses --jit.
 RUNE_JIT ?= 1
@@ -866,7 +866,8 @@ bin/runevm-int64: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JI
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 # The JIT on the first (tests/register/int64-box-home.sml), at every tier,
 # and with raw homes: a word past 63 bits is a box, which a home that holds
-# the word must not keep across a collection. Not part of make check.
+# the word must not keep across a collection; and division by a constant on
+# dividends of 64 bits (tests/lang/rt.div_constant.sml). Not part of make check.
 test-int64: bin/runevm-int64 bin/runevm-rawhomes $(RUNE) bin/rune-test
 	$(RUNE_TEST) --tier test-int64
 bin/runevm-realboxed: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
@@ -1149,7 +1150,7 @@ gmp-dep-portability: bin/rune-build
 	bin/rune-build build-gmp --prefix '$(GMP_PPC64_PREFIX)' --cc '$(PPCCC)' --cflags='-O2 $(PPCFLAGS)' --host powerpc64-linux-gnu --runner '$(QEMUPPC) -L $(PPCROOT)' $(GMP_PPC64_FLAGS) --with-pic --jobs $(JOBS)
 	bin/rune-build build-gmp --prefix '$(GMP_AARCH64_PREFIX)' --cc '$(A64CC)' --cflags='-O2 $(A64FLAGS)' --host aarch64-linux-gnu --runner '$(QEMUA64) -L $(A64ROOT)' --with-pic --jobs $(JOBS)
 
-portability: bin/runevm-stack32 bin/runevm-stack-ppc64 bin/runevm32 bin/runevm-ppc64 bin/runevm-aarch64
+portability: bin/runevm-stack32 bin/runevm-stack-ppc64 bin/runevm32 bin/runevm-ppc64 bin/runevm-aarch64 build/register/divconst_test-aarch64
 
 bin/runevm-stack32: $(VM_SRCS) $(VM_HDRS) Makefile | build/.doctor-portability
 	@mkdir -p bin
@@ -1290,7 +1291,7 @@ RUNE_TEST = GC_STRESS=$(GC_STRESS) $(if $(filter command line environment,$(orig
             NATIVE_HOST=$(NATIVE_HOST) MAKE='$(CHECK_MAKE)' \
             bin/rune-test run $(if $(filter command line environment,$(origin JOBS)),-j $(JOBS))
 LOW_LEVEL_BINS := build/heap_test build/heap_test-gcbits build/heap_test-cards \
-                  build/register/x64_test build/register/a64_test build/register/masm_test
+                  build/register/x64_test build/register/a64_test build/register/masm_test build/register/divconst_test
 .PHONY: $(LOW_LEVEL_BINS)
 build/heap_test: tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile
 	@mkdir -p build
@@ -1809,6 +1810,18 @@ build/register/a64_test: tests/register/a64_test.c runtime/register/jit/a64.c $(
 build/register/masm_test: tests/register/masm_test.c runtime/register/jit/masm.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile
 	@mkdir -p build/register
 	$(CC) $(CFLAGS) $(RT_INC) -o $@ tests/register/masm_test.c runtime/register/jit/masm.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/sys/sys_$(SYS).c
+# division by a constant (functors-units M1): the plans' steps run against
+# C's division, on this machine and, built as the aarch64 VM is, under qemu
+# (make portability, make test-portability)
+build/register/divconst_test: tests/register/divconst_test.c runtime/register/jit/divplan.h runtime/register/jit/masm.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile
+	@mkdir -p build/register
+	$(CC) $(CFLAGS) $(RT_INC) -o $@ tests/register/divconst_test.c runtime/register/jit/masm.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/sys/sys_$(SYS).c
+build/register/divconst_test-aarch64.bin: tests/register/divconst_test.c runtime/register/jit/divplan.h runtime/register/jit/masm.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile | build/.doctor-portability
+	@mkdir -p build/register
+	$(A64CC) $(CFLAGS) $(A64FLAGS) $(RT_INC) -o $@ tests/register/divconst_test.c runtime/register/jit/masm.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/sys/sys_$(SYS).c
+build/register/divconst_test-aarch64: build/register/divconst_test-aarch64.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/divconst_test-aarch64.bin" "$$@"\n' '$(QEMUA64) -L $(A64ROOT)' > $@
+	chmod +x $@
 bin/runevm-jit: bin/runevm Makefile
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all "$$@"\n' > $@
 	chmod +x $@

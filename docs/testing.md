@@ -798,14 +798,17 @@ also build as Rune bytecode for the retained runtime SDK. See
 requirements. P2.16 retires all eight production scripts; the current ledger has 282
 retired targets and nineteen explicit bootstrap/installer/oracle exceptions.
 Make's unit-bootstrap, template and Int64 comparisons also use SML jobs.
-`make test-int64` preserves both VMs and all four JIT modes. Final global
+`make test-int64` preserves both VMs and all four JIT modes, on a word past 63
+bits in a home and on `tests/lang/rt.div_constant.sml` (division by a constant,
+functors-units M1), each compiled at `--int-bits=64`. Final global
 acceptance is recorded by P2.17 of the continuation roadmap.
 
 The final recipe audit exposes C fixture execution under `low-level/*`.
 `low-level/basic` preserves VM refusals and the original heap test;
 `low-level/heap-hooks` preserves the default, GC-bit and card variants.
-`low-level/jit` checks encoder independence, executable memory, all three C
-encoder/macro-assembler subjects and deep recursion in all/tiered/call-return
+`low-level/jit` checks encoder independence, executable memory, the C
+encoder and macro-assembler subjects (and `divconst`, the steps of a division
+by a constant run against C's division) and deep recursion in all/tiered/call-return
 modes. The recursion cases retain a 1 MiB OS stack through a thin `ulimit`
 adapter; SML owns arguments, deadlines and byte comparisons. The focused
 selection passes 20/20 including canaries and eight literal guard fault vectors.

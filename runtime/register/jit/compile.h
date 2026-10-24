@@ -31,6 +31,16 @@ typedef struct Jit {
        the instruction just emitted and the one before; -1: the flags are
        the bool's (ZF: false) */
     int cc_for, cc_prev;
+    /* tier 2 (functors-units M1): the registers known to hold a constant
+       at the instruction being emitted -- set earlier in its run by an
+       INT, a CONST of a number, or a MOVE of such a register, and written
+       by nothing since -- each with the constant: an immediate's word, or
+       the 64 bits of a box (imm 0). Emptied where control arrives from
+       elsewhere and after an instruction that does not go on to the next
+       (compile.c, known_after); a division by one reads it (emit.c,
+       div_const). */
+    struct { int32_t reg; int imm; uint64_t word; } known[8];
+    int nknown;
     const uint8_t *target;  /* the scan's: 1 where control arrives from elsewhere, by pc - from */
     /* the profile's sites (--jit-profile, M8): as many as the scan counted
        calls through a closure, branches and jumps back, filled as the
