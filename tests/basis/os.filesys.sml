@@ -435,8 +435,9 @@ struct
   val () = eqB ("OS.FileSys.compare/same-object", true,
                 fn () => OS.FileSys.compare (id (p "a.txt"), id (top () ^ "/./a.txt")) = EQUAL)
   (* "returns a hash value associated with fid": the same for the same
-     object; and, "well distributed when taken modulo 2(n)", not the same bit
-     0 for sixteen files. *)
+     object. Sixteen new files do not all hash alike. Bit 0 of this hash is
+     the parity of the device added to the inode, so a filesystem that
+     allocates one parity does not vary it. *)
   val () = eqB ("OS.FileSys.hash/same-object", true,
                 fn () => OS.FileSys.hash (id (p "a.txt")) = OS.FileSys.hash (id (top () ^ "/sub/../a.txt")))
   val () = eqB ("OS.FileSys.hash/spread", true,
@@ -444,8 +445,8 @@ struct
                            val () = OS.FileSys.mkDir (p "h")
                            val names = List.tabulate (16, fn i => p ("h/" ^ Int.toString i))
                            val () = List.app (fn n => write (n, "")) names
-                           val bits = List.map (fn n => Word.andb (OS.FileSys.hash (id n), 0w1)) names
-                         in List.exists (fn b => b = 0w0) bits andalso List.exists (fn b => b = 0w1) bits end)
+                           val hashes = List.map (fn n => OS.FileSys.hash (id n)) names
+                         in List.exists (fn h => h <> hd hashes) (tl hashes) end)
 
   (*<< links *)
   (* Symbolic links, made with Posix.FileSys.symlink: top/link -> a.txt,

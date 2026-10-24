@@ -72,8 +72,9 @@ What each means is on [`OS_FILE_SYS`](../sig/OS_FILE_SYS.md); the types are this
 > **Implementation** `OS.FileSys.hash/device-and-inode`. It is the device
 > number times 65599 plus the inode number, in wrapping word arithmetic.
 > "Well distributed modulo 2^n" is checked only as far as a test can: the
-> same file hashes the same, and sixteen files do not all agree in the
-> lowest bit.
+> same file hashes the same, and sixteen new files do not all have one
+> hash. The lowest bit of this hash is the parity of the device added to
+> the inode, so a filesystem that allocates one parity leaves it unchanged.
 
 ### mkDir
 
