@@ -703,13 +703,19 @@ struct
       and subs ([], _) = k ()
         | subs ((_, s) :: rest, i) =
             let
-              val e = fromUnit (Select (i, src), recordTyN (Elaborate.slotsOf s))
+              val n = Elaborate.slotsOf s
+              val e = fromUnit (Select (i, src), recordTyN n)
               fun global (Elaborate.Record {vals, strs, ...}) =
                 List.exists (fn (_, Env.Val {global, ...}) => global | (_, Env.Exn {info, ...}) => #isGlobal info | _ => false) vals
                 orelse List.exists (fn (_, s) => global s) strs
+              val t = MatchComp.freshVar ()
             in
-              if global s then bindRecord (s, e, fn () => subs (rest, i + 1))
-              else let val t = MatchComp.freshVar () in Let (t, e, bindRecord (s, Var t, fn () => subs (rest, i + 1))) end
+              (* a global of its own for a substructure's record of globals,
+                 which the top level's definitions read and a whole
+                 program's shake takes away with them where none is read *)
+              if global s then (Ty.bindVar (t, Elaborate.recordTyOf n);
+                                MatchComp.bindVar (t, true, e, bindRecord (s, Global t, fn () => subs (rest, i + 1))))
+              else Let (t, e, bindRecord (s, Var t, fn () => subs (rest, i + 1)))
             end
     in go (vals, 0) end
 
@@ -818,13 +824,16 @@ struct
      what it returns *)
   and callExp ({func, arg, argVar, result, global, record} : Elaborate.callCode, sp, k : unit -> lexp) : lexp =
     let
-      fun call a = MatchComp.bindVar (result, global, App (Global func, a),
+      (* the call under the application's place; at the top level each
+         variable a definition of its own (ToMid), which a mark around them
+         would make one *)
+      fun call a = MatchComp.bindVar (result, global, Mark (sp, App (Global func, a)),
                                       if global then bindRecord (record, Global result, k)
                                       else bindUsed (record, Var result, k ()))
     in
-      Mark (sp, case argVar of
-                  SOME v => Let (v, recordExp arg, call (Var v))
-                | NONE => call (recordExp arg))
+      case argVar of
+        SOME v => Let (v, recordExp arg, call (Var v))
+      | NONE => call (recordExp arg)
     end
 
   (* Recursive bindings: globals are assigned in sequence (closures refer to
