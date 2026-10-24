@@ -250,16 +250,20 @@ each application, and the copy is what is translated.
   name; at least two slots. A constructor has no slot: tags are the
   datatype's, the same in every instance. A parameter's record holds a
   descriptor after its values for each open constructor (below).
-* **The function** (`Elaborate.functorCode`) takes the parameter's record
-  and returns the body's. Its body sets a local variable from each slot of
-  the parameter that the body reads (`Translate.pruneSlots` drops the
-  rest), then runs the body's declarations, which bind locals, not globals
-  (`Elaborate.inBody`), and makes the result's record. Each call runs the
-  body again: its exceptions and `ref`s are new (rule 154).
+* **The function** (`Elaborate.functorCode`, named `functor F`) takes the
+  parameter's record and returns the body's. Its body sets a local variable
+  from each slot of the parameter that the body reads (`Translate.bindUsed`,
+  the rest of the body made first), then runs the body's declarations,
+  which bind locals, not globals (`Elaborate.inBody`), and makes the
+  result's record, a substructure that is a record in reach given as it is.
+  Each call runs the body again: its exceptions and `ref`s are new (rule
+  154). Simplify never puts a functor's function where it is called (that
+  is the expansion's, with its budget, M6).
 * **An application** (`Elaborate.callCode`) is typed by the functor's
   summary alone (rule 54), the type names it made given fresh names, and its
   values and exceptions given fresh variables -- globals at the top level,
-  locals in a body -- which the call's result sets. The argument's record
+  each a definition of its own; in a body, locals, those the rest of the
+  body reads -- which the call's result sets. The argument's record
   is made from the argument's environment thinned to the parameter's
   signature, unless a record of the same slots is in reach: a parameter's,
   an application's result or an argument made before, in the same
