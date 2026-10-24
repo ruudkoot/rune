@@ -21,7 +21,8 @@ struct
   type view={id:string,snapshot:A.snapshot,sources:source list,encoding:LspProtocol.encoding,uri:string,ordinal:int option,
     capabilities:Json.value,activeUnit:string option,generation:IntInf.int,scopes:scopeEntry list ref}
   type watched={file:string,mode:string,digest:string option}
-  type diagnosticCache={key:string,files:watched list,builds:(string*string list) list,reports:Json.value list}
+  type diagnosticCache={key:string,files:watched list,builds:(string*string list) list,reports:Json.value list,
+    trustedRoots:string list,validated:Time.time}
   datatype t=Worker of {contexts:context list ref,views:view list ref,tokens:RuneLspTokens.t,namespace:string ref,
     progress:(V.value->unit) ref,diagnosticCache:diagnosticCache option ref}
   fun new ()=Worker {contexts=ref [],views=ref [],tokens=RuneLspTokens.new (),namespace=ref "local",
@@ -368,12 +369,15 @@ struct
     in {results=ordered,problems=problems} end
   fun workspaceDiagnostics (worker as Worker {diagnosticCache,...},{state,encoding,capabilities,cancelled,previous}) =
     let val (workspace as W.Workspace {platform,choices,...},documents)=M.restore state
+        val watchedRoots=(M.unstrings(V.field(state,"watchedRoots")) handle V.Invalid _=>[])
         val ()=choices:=[]
         val state=M.capture(workspace,documents)
         val semanticState=V.Object(List.filter(fn (name,_)=>name<>"documents" andalso name<>"generation")(V.object state))
+        val hashes=ref 0 val skipped=ref 0
         fun hash text=Hex.fromBytes(Sha256.digest text)
         val key=hash(V.encode(V.Array[semanticState,V.Bytes(LspProtocol.encodingName encoding),V.json capabilities]))
-        fun disk (file,mode)=SOME(hash(readFile(file,mode))) handle OS.SysErr _=>NONE | IO.Io _=>NONE
+        fun disk (file,mode)=let val text=readFile(file,mode) in hashes:= !hashes+1;SOME(hash text) end
+          handle OS.SysErr _=>NONE | IO.Io _=>NONE
         fun effective (file,mode)=
           let val opened=List.filter(fn snapshot:D.snapshot=>case U.native(platform,U.parse(#uri snapshot)) of
                 NONE=>false | SOME {path,...}=>W.sameFile platform(file,path))(D.all documents)
@@ -382,9 +386,19 @@ struct
             then SOME(hash(L.text(#content first))) else NONE end
         fun builds()=List.mapPartial(fn uri=>case U.native(platform,U.parse uri) of NONE=>NONE
           | SOME {path,...}=>SOME(path,W.buildFiles platform path))(W.roots workspace)
-        fun valid (cached:diagnosticCache)= #key cached=key andalso #builds cached=builds() andalso
-          List.all(fn {file,mode,digest}:watched=>
-            if cancelled() then raise A.Cancelled else effective(file,mode)=digest)(#files cached)
+        fun valid (cached:diagnosticCache)=
+          let val periodic=Time.>=(Time.-(Time.now(),#validated cached),Time.fromSeconds 60)
+              fun covered file=not periodic andalso
+                (OS.Path.file file="MANIFEST" orelse List.exists(fn suffix=>String.isSuffix suffix file)[".sml",".sig",".build"]) andalso
+                List.exists(fn root=>List.exists(fn old=>old=root)(#trustedRoots cached) andalso
+                  (case W.nativeKey platform root of NONE=>false | SOME key=>W.below(key,W.pathKey platform file)))watchedRoots
+              val ok= #key cached=key andalso #builds cached=builds() andalso
+                List.all(fn {file,mode,digest}:watched=>if cancelled() then raise A.Cancelled
+                  else if covered file then (skipped:= !skipped+1;true) else effective(file,mode)=digest)(#files cached)
+              val ()=RuneLspProfile.sample "workspace-cache-validate" "" (!hashes) (!skipped) (length(#files cached))
+              val ()=if ok then diagnosticCache:=SOME{key=key,files= #files cached,builds= #builds cached,reports= #reports cached,
+                trustedRoots=watchedRoots,validated=if periodic then Time.now() else #validated cached} else ()
+          in ok end
         val files=ref []:watched list ref
         val consistent=ref true
         fun remember (file,mode,digest)=case List.find(fn prior:watched=> #file prior=file andalso #mode prior=mode)(!files) of
@@ -414,7 +428,8 @@ struct
                 {state=state,encoding=encoding,capabilities=capabilities,cancelled=cancelled},true,watch,report)
               val reports=results @ List.map problem problems
               val ()=if !consistent andalso null problems andalso size(Json.encode(Json.Array reports))<=4*1024*1024 then
-                diagnosticCache:=SOME{key=key,files= !files,builds=initialBuilds,reports=reports} else ()
+                diagnosticCache:=SOME{key=key,files= !files,builds=initialBuilds,reports=reports,
+                  trustedRoots=watchedRoots,validated=Time.now()} else ()
           in reports end handle error=>(clearAnalysis worker;raise error)
         val reports=case !diagnosticCache of SOME cached=>if valid cached then
             (RuneLspProfile.sample "workspace-diagnostics-cache-hit" "" 0 0 (length(#reports cached));#reports cached) else fresh()

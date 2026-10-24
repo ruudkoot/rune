@@ -32,8 +32,8 @@ struct
   datatype t=Service of {workspace:W.t,documents:D.t,caps:P.capabilities,jobs:task J.t,basisJobs:task J.t,workspaceJobs:task J.t,
     results:result list ref,requests:request list ref,flights:flight list ref,failures:failed list ref,
     refresh:unit Q.t,refreshPending:bool ref,refreshAgain:bool ref,published:publication list ref,send:R.message->unit,log:string->unit,
-    discovered:string*V.value->unit}
-  fun new {workspace,documents,caps,command,args,send,log,discovered} =
+    discovered:string*V.value->unit,watchedRoots:unit->string list}
+  fun new {workspace,documents,caps,command,args,send,log,discovered,watchedRoots} =
     Service {workspace=workspace,documents=documents,caps=caps,jobs=J.new {command=command,args=args,
       timeout=Time.fromSeconds 30,cancelGrace=Time.fromMilliseconds 250,maxPending=128},results=ref [],requests=ref [],
       workspaceJobs=J.new {command=command,args=args,timeout=Time.fromSeconds 30,
@@ -42,7 +42,7 @@ struct
         cancelGrace=Time.fromMilliseconds 250,maxPending=128},
       flights=ref [],failures=ref [],refresh=Q.new {prefix="runelsp-diagnostics-",maxPending=1},refreshPending=ref false,
       refreshAgain=ref false,published=ref [],
-      send=send,log=log,discovered=discovered}
+      send=send,log=log,discovered=discovered,watchedRoots=watchedRoots}
   fun current (Service {workspace,documents,...},{uri,revision,generation}) =
     (if uri="" then W.inputGeneration workspace else W.generation workspace)=generation andalso (uri="" orelse (D.healthy (documents,uri) andalso
       (case D.snapshot (documents,uri) of SOME snapshot => #revision snapshot=revision | NONE => false)))
@@ -66,7 +66,9 @@ struct
   fun requestJobs (service as Service {jobs,basisJobs,workspaceJobs,...},method,uri)=
     case lane(service,method,uri) of 2=>workspaceJobs | 1=>basisJobs | _=>jobs
   fun submit (service,parameters)=J.submit(requestJobs(service,"",V.bytes(V.field(#payload parameters,"uri"))),parameters)
-  fun capture (Service {workspace,documents,...})=RuneLspWorkerModel.capture (workspace,documents)
+  fun capture (Service {workspace,documents,watchedRoots,...})=
+    V.Object(("watchedRoots",RuneLspWorkerModel.strings(watchedRoots()))::
+      V.object(RuneLspWorkerModel.capture (workspace,documents)))
   fun buildDocument (Service {workspace=W.Workspace {platform,...},documents,...},uri)=
     case D.snapshot (documents,uri) of NONE => false | SOME snapshot => RuneLspBuild.isDocument (platform,snapshot)
   fun buildJob (service as Service {workspace,documents,caps,log,...},uri,request) =

@@ -198,6 +198,22 @@ and shutdown exits zero. Receipts are `refresh-context-final.log`,
 `build/lsp-debug/acceptance`. The full suite, 13-context sweep, editor host
 and native Windows LSP remain deferred under the debugging rule.
 
+An idle `53c6bceb0` sample isolated the remaining CPU load to the background
+worker (17.5% of one core over two seconds while both foreground workers
+were idle). Cached workspace polls still hashed all captured text every time.
+Acknowledged watch coverage now skips hashing covered inputs, retaining
+content checks for uncovered paths, registration failure and a periodic
+60-second full validation. A new watch baseline is validated before trust.
+
+The watcher lifecycle and cached-workspace protocol cases pass, including
+notification-driven invalidation and fallback after registration refusal.
+The focused `rune.build` replay validates 251 covered inputs without content
+hashes: five cached polls take 0.066 seconds total (12-14 ms each), versus
+0.350 seconds for the preceding full baseline validation. It checks equal
+reports and zero exit. Receipts are `watched-cache-{controller,protocol}.log`,
+`watched-cache-real-project.log` and `workspace-heap-watched-cpu-candidate`
+under `build/lsp-debug/acceptance`; no full suite or 13-context sweep is run.
+
 The public compiler adapter now reports missing-library manifest errors as
 `Failed` diagnostics. Discovery can then report an unavailable target instead
 of aborting with the exception name `Usage`.

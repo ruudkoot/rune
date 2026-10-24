@@ -194,6 +194,37 @@ struct
         val ()=write(OS.Path.concat(basis,"initial.sml"),"val preludeValue=0\n")
         val ()=write(OS.Path.concat(basis,"MANIFEST"),"initial.sml | always | yes | | \n")
     in lib end
+  fun watchedWorkspaceCache ()=temporaryTree(fn {root,uri,write}=>
+    let val lib=minimalLibrary(root,write)
+        fun path name=OS.Path.concat(root,name)
+        val ()=write(path "main.build","main.sml\n")
+        val ()=write(path "main.sml","val answer=1\n")
+        val options=object[("libraryRoot",Json.String(uri lib))]
+        val caps=object[("textDocument",object[("diagnostic",object[])]),("workspace",object
+          [("didChangeWatchedFiles",object[("dynamicRegistration",Json.Bool true),("relativePatternSupport",Json.Bool true)])])]
+    in fixtureInitialized(object[("capabilities",caps),("initializationOptions",options),
+        ("workspaceFolders",Json.Array[object[("uri",Json.String(uri root)),("name",Json.String "watched")]])]) (fn client=>
+      let fun registration()=C.receive(client,fn value=>Json.member("method",value)=SOME(Json.String "client/registerCapability"))
+          val request=registration()
+          val ()=C.send(client,object[("jsonrpc",Json.String "2.0"),("id",C.field(request,"id")),("result",Json.Null)])
+          fun pull id=(C.request(client,id,"workspace/diagnostic",object[("previousResultIds",Json.Array[])]);C.result(C.response(client,id)))
+          val first=pull 700
+          val ()=check("acknowledged watcher cache preserves results",pull 701=first)
+          val ()=write(path "main.sml","val answer:int=true\n")
+          val ()=C.notify(client,"workspace/didChangeWatchedFiles",object[("changes",Json.Array
+            [object[("uri",Json.String(uri(path "main.sml"))),("type",Json.int 2)]])])
+          val changed=pull 702
+          val ()=check("watch notifications invalidate trusted cached reports",case C.field(changed,"items") of
+            Json.Array [report]=>C.field(report,"items")<>Json.Array[] | _=>false)
+          val ()=C.notify(client,"workspace/didChangeConfiguration",object[("settings",options)])
+          val refused=registration()
+          val ()=C.send(client,object[("jsonrpc",Json.String "2.0"),("id",C.field(refused,"id")),
+            ("error",object[("code",Json.int(~32601)),("message",Json.String "unsupported")])])
+          val ()=write(path "main.sml","val answer=2\n")
+          val repaired=pull 703
+      in check("refused watcher registration falls back to content checks without notifications",case C.field(repaired,"items") of
+        Json.Array [report]=>C.field(report,"items")=Json.Array[] | _=>false) end)
+    end)
   fun evictionRefreshLoop ()=temporaryTree(fn {root,uri,write}=>
     let val lib=minimalLibrary(root,write)
         val capabilities=object[("textDocument",object[("diagnostic",object[])]),
@@ -1242,6 +1273,7 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "live-analysis-progress" RuneLspSemanticProtocolTests.analysisProgress,
     Test.it "idle-workspace-polls" RuneLspSemanticProtocolTests.idleWorkspacePolls,
     Test.it "eviction-refresh-loop" RuneLspSemanticProtocolTests.evictionRefreshLoop,
+    Test.it "watched-workspace-cache" RuneLspSemanticProtocolTests.watchedWorkspaceCache,
     Test.it "query-before-eviction" RuneLspSemanticProtocolTests.queryBeforeEviction,
     Test.it "context-selection-recovery" RuneLspSemanticProtocolTests.contextSelectionRecovery,
     Test.it "basis-development-context" RuneLspSemanticProtocolTests.basisDevelopment,

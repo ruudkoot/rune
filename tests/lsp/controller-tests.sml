@@ -69,10 +69,13 @@ struct
           send=fn message => sent:=message :: !sent,log=fn _ => (),error=fn text => raise Fail text,initialize=initialize}
         val ()=C.initialized controller
         val registration=hd (requests sent "client/registerCapability")
+        val ()=check("watch coverage is untrusted before acknowledgement",null(C.watchedRoots controller))
         val ()=check ("watch registration reply",answer (controller,registration,R.Result Json.Null))
+        val ()=check("acknowledged watches cover the registered roots",C.watchedRoots controller=[uri dir])
         val _=C.notification (controller,{method="workspace/didChangeWorkspaceFolders",params=SOME (object
           [("event",object [("added",Json.Array []),("removed",Json.Array [object [("uri",Json.String (uri dir)),("name",Json.String "fixture")]])])])})
         val unregister=hd (requests sent "client/unregisterCapability")
+        val ()=check("removed watches stop providing coverage",null(C.watchedRoots controller))
         val ()=check ("watch removal balanced",answer (controller,unregister,R.Result Json.Null))
     in C.clear controller end)
   fun navigationGeneration ()=fixture(fn (dir,uri)=>

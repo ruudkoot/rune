@@ -69,6 +69,7 @@ struct
                 [("workspace/inlayHint/refresh",["workspace","inlayHint","refreshSupport"])] else []))
             val ()=service:=SOME (RuneLspService.new {workspace=RuneLspController.workspace (valOf (!controller)),
               documents=valOf (!documents),caps=caps,command=workerCommand,args=workerArgs,send=send,log=stderr,
+              watchedRoots=fn()=>case !controller of NONE=>[] | SOME controller=>RuneLspController.watchedRoots controller,
               discovered=fn (uri,value) => Option.app (fn controller => RuneLspController.contexts (controller,uri,value)) (!controller)})
             val () = trace := requestedTrace
             val () = Option.app (fn token => progress token

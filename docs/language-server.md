@@ -100,6 +100,12 @@ Captured source/build content, relevant manifest content/existence, root
 build-file membership, settings and overlays guard reuse. Saved changes are
 detected even without a watched-file notification; previous result IDs still
 produce unchanged reports.
+Acknowledged file watches let cached workspace polls skip content hashing
+for covered SML/signature/build files and manifests. Watch notifications
+invalidate those reports through the input generation. Coverage is trusted
+only after registration succeeds and the cached content baseline is valid.
+Unwatched paths and refused registrations retain content validation; a full
+fingerprint validation also runs at least once per minute of polling.
 Document pull reports are cached separately from semantic snapshots, with
 at most 512 report identities and 4 MiB of encoded report bodies per connection.
 Polling an unchanged document can return a full or unchanged report even
