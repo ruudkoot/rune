@@ -84,6 +84,13 @@ struct
     (("S66", "c.sml", 2), "functor F (X : sig val n : int end) = struct fun f () = X.n + 2  val extra = 0 end"),
     (("S67", "c.sml", 0), "functor F (X : sig val n : int end) = struct fun f () = X.n + 1 end"),
     (("S67", "main.sml", 0), "structure M = F (struct val n = 4 end)  val () = print (Int.toString (M.f ()) ^ \"\\n\")"),
+    (("S70", "c.sml", 0), "functor F (X : sig val n : int end) = struct fun f () = X.n + 1 end"),
+    (("S70", "main.sml", 0), "structure M = F (struct val n = 4 end)  val () = print (Int.toString (M.f ()) ^ \"\\n\")"),
+    (("S73", "a.sml", 0), "structure A = struct datatype t = X of u | Y and u = Z of t | W  val k = 0 end"),
+    (("S73", "b.sml", 0), "fun f (x : A.t) = 1"),
+    (("S73", "c.sml", 0), "fun g (x : A.u) = 2"),
+    (("S73", "a.sml", 1), "structure A = struct datatype t = X of u | Y and u = Z of t | W  val k = 0  val k2 = \"x\" end"),
+    (("S73", "b.sml", 1), "fun f (x : A.u) = 1"),
     (("S72", "a.sml", 0), "functor F (X : sig val x : int end) = struct val y = X.x + 1 end"),
     (("S72", "m.sml", 0), "structure S0 = F (struct val x = 2 end)"),
     (("S72", "b.sml", 0), "structure S1 = F (struct val x = 1 end)  functor F (X : sig val z : string end) = struct val w = X.z end  functor G () = struct structure T = F (struct val z = \"g\" end) end  val () = print (Int.toString S1.y ^ \"\\n\")")

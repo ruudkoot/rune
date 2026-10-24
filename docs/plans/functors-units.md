@@ -74,9 +74,9 @@ What it rests on:
 |---|---|---|---|
 | M0 | This roadmap | | done |
 | M1 | Tier 2 divides by a constant | H | not started |
-| M2 | Hashing that changes no output | H | not started |
-| M3 | Typing that follows the Definition | T | not started |
-| M4 | Fingerprints by structure; gate G1 | H | not started |
+| M2 | Hashing that changes no output | H | done (2026-10-24) |
+| M3 | Typing that follows the Definition | T | done (2026-10-24) |
+| M4 | Fingerprints by structure; gate G1 | H | done (2026-10-24) |
 | M5 | Prototype: functors compiled once | F | not started |
 | M6 | Prototype: the expansion | F | not started |
 | G2 | Go or no-go for M7 and M8 (the owner's) | F | |
@@ -96,6 +96,83 @@ The tracks do not wait for each other:
 - **F, functors,** compiles each functor once, as a function, and gives whole
   programs their copies back in the middle end. Its two prototypes come
   first and end at gate G2, which is the owner's.
+
+## The implementation so far
+
+The owner asked on 2026-10-24 to implement the roadmap. It was rebased onto
+master `79805ac6f` first; since 78192dfd9 master had moved the compiler into
+`lib/compiler` and the test drivers into `tests/runner`, so the `file:line`
+references below are to 78192dfd9 and the milestones name files by their
+new places.
+
+**M2** (`0605214ab`, `88a48f2fd`):
+- issue 16's fix landed first, with S68 and S69 (`UnitBasis.version` 8);
+- S0, the counters (`--pass-stats=hash`), F1, F2 and the link made linear
+  changed no byte of the unit files of the compiler's own sources or of
+  MLton's 606 files, once each compiler's own identity in a unit's
+  provenance is masked;
+- F1's rule that a signature's or functor's usage is fingerprinted at the
+  unit's start changed one more case than E5 found: a unit that applies a
+  functor it declares itself wrote that functor's own fingerprint in its
+  binding list, and writes nothing now, as for every other name of its own
+  (S72 is E5's case);
+- MLton's 606 files in units: 1,196.6G instructions to 663.4G with MLton's
+  build of Rune (-44.6%; E5 predicted -38%), and 1,633.4G to 1,045.8G at
+  tier 2 (-36%; E5 predicted -28%).
+
+**M3** (`59694b2b3`, `8bf885b55`, `5e54b7e9b`):
+- `--typecheck-only`, `--serve` and the library's analyses make no copies
+  (D15): MLton's 606 files type-check in 43.0G instructions, from 93.6G;
+- a functor whose result keeps a free type variable is refused (D8); it
+  refuses nothing in MLton's sources, HOL4's kernel and functor files, the
+  xc2 configurations, the benchmarks, Rune's sources or its libraries;
+- every program of `tests/lang` and `tests/errors` is also checked by
+  `--typecheck-only`; the corners (a), (c) and (d), where a compile and the
+  check still disagree until M7, are each pinned by a test that says so
+  (`NAME.typecheck-error`, `NAME.typecheck-ok`).
+
+**M4**:
+- rx2fw with the three loops by `Word`'s width, and its probe in the
+  cache's configuration and in a basis's header (`UnitBasis.version` 9,
+  `UnitCache.version` 7, `UnitMid.version` 4; S70, S71). The probe is
+  E6d's value, `089e9c1f195c88743551d55e9a2eb6d5`, on Rune's builds and
+  on MLton's, whose `Word` is 32 bits;
+- fingerprints of tokens; a structure's of its entries' fingerprints,
+  shared with the usages of them; a recursive group of datatypes one value
+  (Tarjan's components, members by their anchors; S73). Hashing every
+  entry of every signature and functor apart, as S1 first read, made 11
+  million small hashes and gained little: a signature's and a functor's
+  fingerprint is one stream of tokens, since no usage names their entries;
+- the soundness checker, `bin/rune-incremental soundness`: M2's compiler
+  against M4's over the scenarios' project, the functors project and the
+  compiler's sources (73,121 usages), no violation; M2's against a compiler
+  without issue 16's fix, five on the probes; `make test-incremental` holds
+  a compiler to itself and checks that a weak hash is caught;
+- export beyond hashing: a type was keyed by the text of all its parts at
+  each part (the square of its depth), and another unit's name by its
+  identity's text; `Pickle.writer` was a list of one-byte strings. All
+  three changed, with the same bytes written;
+- **measures** (MLton's 606 files at tier 2): 1,045.8G instructions after
+  M2 to 698.0G, 884G cycles to 344G, `unit-usages` 106 s to 21 s and
+  `unit-export` 111 s to 46 s; hashing 4% of the cycles (from 33.5%);
+- **gate G1 is not met:** 1.73 times the whole compile's processor time
+  (77.9 s), from 5.2 when units-fixes.md was written (1.51 times in
+  cycles). What is left is the units' interface work -- `unit-export` 46
+  s, `unit-usages` 21 s, `unit-load` 10 s -- and a profile spread over
+  generic code (maps, the collector). Much of it is functors': bodies and
+  declaration environments in bases, signatures of functors in usages,
+  bodies parsed again on load, copies elaborated in each applying unit,
+  which M7 removes;
+- found on the way: the provenance of a unit
+  (`\001RuneSource:HASH:IDENTITY`) was parsed with a 24-digit hash in
+  `Link.sourceOf`, in the runtime (`unit_source_current`) and in
+  `Runtime.linkedUnitSources` -- S61 failed with rx2fw's 32 digits -- and
+  each now takes the hash up to the first `:`; and Rune's
+  `CharArraySlice.vector` and `CharVector.tabulate` go through
+  `List.tabulate`, a recursion as deep as the vector is long, which
+  overflowed the 1 GiB stack on a functor's signature written whole
+  (10 MB of tokens). The writer takes `CharArray.vector` instead; the
+  Basis is left as it is, for the owner.
 
 ## Found while writing this roadmap
 

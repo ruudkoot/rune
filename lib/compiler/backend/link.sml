@@ -86,11 +86,15 @@ struct
     Pickle.hash (Config.identity ^ ":" ^ target ^ ":" ^ Source.modeName mode ^ ":" ^ sourceHash)
   val sourceMarker = "\001RuneSource:"
   fun sourceName (identity,hash) = sourceMarker ^ hash ^ ":" ^ identity
+  (* the hash runs to the first ":" after the marker: it is hexadecimal
+     digits, as many as Pickle.hash gives *)
   fun sourceOf (identity,name) =
-    let val at=String.size sourceMarker
-    in if String.isPrefix sourceMarker name andalso String.size name=at+25+String.size identity andalso
-          String.sub (name,at+24)= #":" andalso String.extract (name,at+25,NONE)=identity
-       then SOME (String.substring (name,at,24)) else NONE end
+    if not (String.isPrefix sourceMarker name) then NONE else
+    let val rest=String.extract (name,String.size sourceMarker,NONE)
+        val (hash,tail)=Substring.splitl (fn c => c <> #":") (Substring.full rest)
+    in if Substring.size hash > 0 andalso Substring.size tail > 0
+          andalso Substring.string (Substring.triml 1 tail)=identity
+       then SOME (Substring.string hash) else NONE end
 
   fun program (target : Low.program -> Code.program, linked : (int * int) list vector, units : unitCode list)
       : Code.program =

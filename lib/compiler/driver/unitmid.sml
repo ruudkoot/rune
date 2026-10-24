@@ -19,7 +19,7 @@ struct
   open Mid
 
   val magic = "RBM"
-  val version = 3
+  val version = 4
 
   exception Bad of string
 

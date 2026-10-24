@@ -570,9 +570,15 @@ struct
       val out = run ^ "/cross"
       val () = mkdirs (OS.Path.dir(out ^ "/" ^ n ^ ".rbc"))
       fun f (c, ext) = out ^ "/" ^ n ^ "." ^ c ^ ext
+      (* a compile in units (a build file's) but by smlnj32, whose Word64 is
+         wrong and so its hash (Pickle.hash, D11 of
+         docs/plans/functors-units.md): a program that keeps its units'
+         identities carries them, which smlnj32 works out otherwise, as
+         rune-units below *)
+      val inUnits = List.exists (fn a => a = "--build" orelse a = "--units") args
       val results = List.map (fn c => (c, exec {cmd = ["bin/rune-" ^ c] @ target @ args @ ["-o", f (c, ".rbc")], dir = NONE,
                                                 stdin = "", stdout = "", stderr = f (c, ".err"), timeout = 0} = 0))
-                             (builds "rune")
+                             (List.filter (fn c => not inUnits orelse c <> "smlnj32") (builds "rune"))
       val failed = List.filter (not o #2) results
     in
       if not (null failed) then
@@ -609,11 +615,16 @@ struct
           fun f c = out ^ "/rune-units." ^ c ^ ".rbc"
           val ok = exec {cmd = ["bin/rune-mlton", "--units", "--no-cache"] @ srcs @ ["-o", f "nocache"], dir = NONE, stdin = "",
                          stdout = "", stderr = "", timeout = 0} = 0
-          (* one after another, through one cache *)
+          (* one after another, through one cache; but smlnj32, whose Word64
+             is wrong, and so its hash (Pickle.hash, D11 of
+             docs/plans/functors-units.md): the compiler built in units keeps
+             its units' identities, which smlnj32 works out otherwise, with a
+             probe of its own that keeps its entries apart. Its whole
+             programs are compared above *)
           val bad = List.mapPartial (fn c => if exec {cmd = ["bin/rune-" ^ c, "--units", "--cache-dir", cache] @ srcs @ ["-o", f c],
                                                       dir = NONE, stdin = "", stdout = "", stderr = "", timeout = 0} <> 0 then SOME c
                                              else if same (f "nocache", f c) then NONE else SOME (c ^ "(differs)"))
-                                    (builds "rune")
+                                    (List.filter (fn c => c <> "smlnj32") (builds "rune"))
         in
           if ok andalso null bad then ()
           else say ("FAIL rune-units: through one cache: " ^ String.concatWith " " ((if ok then [] else ["nocache"]) @ bad) ^ "\n")

@@ -180,6 +180,25 @@ struct
                  in c "a.sml b.sml"; b [] "a.sml b.sml"; prints s "2";
                     check s "b.sml's usages depend on what an earlier unit fingerprinted"
                       (List.all (fn file => List.exists (fn other => other = file) withM) (cache s)) end)
+    | "S70" => (c "c.sml main.sml"; b [] "c.sml main.sml"; prints s "5";
+                 check s "no entry to plant"
+                   (List.exists (fn x => x) (List.map (fn file => CachePlant.basisProbe file "c.sml" "0123456789abcdef0123456789abcdef") (cache s)));
+                 b ["--explain-rebuild"] "c.sml"; prints s "5";
+                 check s "basis of another hash was not diagnosed"
+                   (String.isSubstring "c.sml: a damaged entry: a basis made by a compiler whose hash differs" (#errors (!(#result s)))))
+    | "S71" => (fresh s; b [] all;
+                 List.app (fn config =>
+                             let val dir = path s ("cache/" ^ config)
+                                 val about = dir ^ "/units/about"
+                                 val lines = String.fields (fn ch => ch = #"\n") (read about)
+                                 fun other line = if String.isPrefix "hash " line then "hash 0123456789abcdef0123456789abcdef" else line
+                             in write (about, String.concatWith "\n" (List.map other lines));
+                                OS.FileSys.rename {old = dir, new = path s "cache/0123456789abcdef0123456789abcdef"} end)
+                          (List.filter (fn config => isDir (path s ("cache/" ^ config))) (entries (path s "cache")));
+                 b ["--explain-rebuild"] all;
+                 check s "the build did not say the cache's hash differs"
+                   (String.isSubstring "holds entries made by a compiler whose hash differs" (#errors (!(#result s)))))
+    | "S73" => (c "a.sml b.sml c.sml"; b [] "a.sml b.sml c.sml"; f "a.sml" 1; f "b.sml" 1; b [] "a.sml b.sml")
     | _ => raise Failed ("not a simple scenario: " ^ #name s)
     end
 end

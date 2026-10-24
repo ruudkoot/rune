@@ -159,9 +159,11 @@ struct
        unit names. An older/raw-linked program may carry no such record. *)
     fun linkedUnitSources () =
       List.mapPartial (fn name =>
-        let val at=size sourceMarker
-        in if String.isPrefix sourceMarker name andalso size name>at+25 andalso String.sub (name,at+24)= #":"
-           then SOME (String.extract (name,at+25,NONE),String.substring (name,at,24)) else NONE end)
+        if not (String.isPrefix sourceMarker name) then NONE else
+        (* the hash runs to the first ":", hexadecimal digits *)
+        let val (hash,tail)=Substring.splitl (fn c => c <> #":") (Substring.extract (name,size sourceMarker,NONE))
+        in if Substring.size hash>0 andalso Substring.size tail>1
+           then SOME (Substring.string (Substring.triml 1 tail),Substring.string hash) else NONE end)
         (linkedUnits' ())
 
     fun catchInterrupt () = catchInterrupt' SML90.Interrupt

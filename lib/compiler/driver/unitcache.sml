@@ -27,7 +27,7 @@ struct
   structure P = Pickle
 
   val magic = "RCE"
-  val version = 6
+  val version = 7
 
   (* what a unit's entry holds: its usages, the warnings its compile gave,
      which a compile that takes it from the cache gives again, the name its
@@ -97,14 +97,58 @@ struct
       same
     end
 
+  (* What the configuration of this compile is made of, by name. The
+     probe of the hash (Pickle.probe) says which values the compiler's hash
+     gives, which depend on the width of its host's Word: compilers whose
+     hash differs never take each other's entries *)
+  fun settings () : (string * string) list =
+    [("identity", Config.identity), ("cache", Int.toString version), ("basis", Int.toString UnitBasis.version),
+     ("unitfile", Int.toString UnitFile.version), ("isa", Int.toString (Pipeline.fingerprint ())),
+     ("level", Int.toString (!Pass.level)), ("passes", case !Pass.only of NONE => "-" | SOME ps => String.concatWith "," ps),
+     ("intbits", Int.toString (!Target.intBits)), ("flex", Elaborate.flexModeName (!Elaborate.flexRecords)),
+     ("fuel", case !Pass.fuel of NONE => "-" | SOME n => Int.toString n), ("hash", P.probe ())]
+
   (* The hash of the configuration of this compile *)
   fun configuration () : string =
-    UnitBasis.hashAt ("configuration", String.concatWith "\000"
-              [Config.identity, Int.toString version, Int.toString UnitBasis.version, Int.toString UnitFile.version,
-               Int.toString (Pipeline.fingerprint ()), Int.toString (!Pass.level),
-               (case !Pass.only of NONE => "-" | SOME ps => String.concatWith "," ps),
-               Int.toString (!Target.intBits), Elaborate.flexModeName (!Elaborate.flexRecords),
-               (case !Pass.fuel of NONE => "-" | SOME n => Int.toString n)])
+    UnitBasis.hashAt ("configuration", String.concatWith "\000" (List.map #2 (settings ())))
+
+  (* A configuration's directory says what it is made of, in units/about (a
+     line "NAME VALUE" a setting), written with its first entry, so that a
+     compile that finds none of its own but one that differs from it in the
+     hash alone can say so (--explain-rebuild) *)
+  fun aboutText () : string = String.concat (List.map (fn (n, v) => n ^ " " ^ v ^ "\n") (settings ()))
+  fun aboutFile (dir : string, config : string) : string =
+    OS.Path.joinDirFile {dir = OS.Path.joinDirFile {dir = OS.Path.joinDirFile {dir = dir, file = config}, file = "units"},
+                         file = "about"}
+
+  (* The probe of another configuration of dir that is this one but for the
+     hash, where dir has none of this one's *)
+  fun otherHash (dir : string, config : string) : string option =
+    if (OS.FileSys.isDir (OS.Path.joinDirFile {dir = dir, file = config}) handle OS.SysErr _ => false) then NONE
+    else
+      let
+        val mine = List.filter (fn (n, _) => n <> "hash") (settings ())
+        fun lines t = List.mapPartial (fn l => case String.fields (fn c => c = #" ") l of
+                                                 n :: rest => SOME (n, String.concatWith " " rest)
+                                               | [] => NONE)
+                                      (String.tokens (fn c => c = #"\n") t)
+        fun theirs c =
+          let
+            val ins = TextIO.openIn (aboutFile (dir, c))
+            val ls = lines (TextIO.inputAll ins) before TextIO.closeIn ins
+          in
+            if List.filter (fn (n, _) => n <> "hash") ls = mine
+            then Option.map #2 (List.find (fn (n, _) => n = "hash") ls) else NONE
+          end
+          handle IO.Io _ => NONE
+        val ds = (let
+                    val s = OS.FileSys.openDir dir
+                    fun go acc = case OS.FileSys.readDir s of NONE => acc | SOME n => go (n :: acc)
+                  in go [] before OS.FileSys.closeDir s end)
+                 handle OS.SysErr _ => []
+        fun insert (n, []) = [n]
+          | insert (n, m :: rest) = if n < m then n :: m :: rest else m :: insert (n, rest)
+      in List.foldl (fn (c, found) => case found of SOME _ => found | NONE => theirs c) NONE (List.foldl insert [] ds) end
 
   (* The directory of the cache: --cache-dir, else RUNE_CACHE, else .rune in
      the directory of the first input; NONE with --no-cache *)
@@ -320,8 +364,15 @@ struct
       val b = P.contents body
       val w = P.writer ()
       val () = (P.bytes (w, magic); P.nat (w, version); P.string (w, UnitBasis.hashAt ("store", b)); P.bytes (w, b))
+      val about = aboutFile (dir, config)
     in
       (mkdirs d;
+       if (OS.FileSys.access (about, []) handle OS.SysErr _ => false) then ()
+       else (let val () = mkdirs (OS.Path.dir about)
+                 val t = about ^ ".tmp-" ^ unique ()
+                 val out = TextIO.openOut t
+             in TextIO.output (out, aboutText ()); TextIO.closeOut out; OS.FileSys.rename {old = t, new = about} end
+             handle IO.Io _ => () | OS.SysErr _ => ());
        let val out = BinIO.openOut tmp
        in BinIO.output (out, Byte.stringToBytes (P.contents w)); BinIO.closeOut out end;
        OS.FileSys.rename {old = tmp, new = p})

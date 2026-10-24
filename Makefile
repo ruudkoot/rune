@@ -2146,7 +2146,8 @@ INCREMENTAL_BASE_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner
                          tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml
 INCREMENTAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/incrementalextra.sml tests/runner/smlscan.sml \
                     tests/runner/mutationproject.sml tests/runner/mutationchecks.sml tests/runner/mutationhistory.sml \
-                    tests/runner/mltonincremental.sml tests/runner/incrementalfaults.sml tests/runner/incremental-main.sml
+                    tests/runner/mltonincremental.sml tests/runner/incrementalfaults.sml tests/runner/soundness.sml \
+                    tests/runner/incremental-main.sml
 bin/rune-incremental.rbc: $(RUNE) $(INCREMENTAL_SRCS) tests/runner/incremental-edits-v1.json manifests
 	$(RUNE) --library test/runner --library json $(INCREMENTAL_SRCS) -o $@
 bin/rune-incremental: bin/rune-incremental.rbc bin/runevm Makefile

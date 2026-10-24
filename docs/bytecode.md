@@ -219,7 +219,7 @@ listed. The marker records linkage, not execution of the initializer.
 
 The compiler also emits internal source-provenance entries named
 `\001RuneSource:HASH:IDENTITY`, with the same reserved function export.
-`HASH` is the 24-digit hash of the compiler identity, target, source mode
+`HASH` is the 32-digit hash (`Pickle.hash`) of the compiler identity, target, source mode
 and decoded-source hash from the checked basis, separated by colons. These
 are metadata, filtered from `Runtime.linkedUnits`. The compiler adapter
 uses them to check host-library source before sharing a unit: its
@@ -246,7 +246,11 @@ source      varint len, bytes   the hash of its source
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    8 (UnitBasis.version)
+version     varint    9 (UnitBasis.version)
+probe       varint len, bytes   the probe of the compiler's hash
+                                (Pickle.probe): a basis made by a
+                                compiler whose hash gives other values
+                                is not read
 name        varint len, bytes   the unit's name
 units       varint n, n × string   the identities of the units it names
 counts      3 × varint   its own names of each kind
@@ -258,7 +262,11 @@ counts      3 × varint   its own names of each kind
                 another unit's (its place, a number) ...
 ```
 
-Version 8 changes no field: the usages a cache entry keeps were
+Version 9 adds the probe, and every hash is rx2fw, two lanes of 63 bits
+in 32 hexadecimal digits ([plans/functors-units.md](plans/functors-units.md),
+D11), so every identity changed.
+
+Version 8 changed no field: the usages a cache entry keeps were
 fingerprinted without the equality of type variables and of a signature's
 local names (docs/plans/build-cache-issues.md, issue 16), so an entry made
 before is not trusted, and its unit is compiled again.

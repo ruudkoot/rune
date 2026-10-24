@@ -568,6 +568,29 @@ struct
       (* --verify-cache: the units whose entry is not what compiling them gives *)
       val unverified = ref 0
       fun explain msg = if !Options.explainRebuild then TextIO.output (TextIO.stdErr, msg ^ "\n") else ()
+      (* entries of this compile's configuration but for the hash, in the
+         cache or the frozen Basis: a compiler's whose hash gives other values
+         (UnitCache.settings), which none is taken from *)
+      val otherHash =
+        if not (!Options.explainRebuild) then NONE
+        else
+          case cache of
+            SOME (dir, config) =>
+              (case UnitCache.otherHash (dir, config) of
+                 SOME p => (explain ("rune: the cache " ^ dir ^ " holds entries made by a compiler whose hash differs (its "
+                                     ^ p ^ ", this compiler's " ^ Pickle.probe () ^ "): none is taken");
+                            SOME p)
+               | NONE => NONE)
+          | NONE => NONE
+      val () =
+        case (cache, frozen) of
+          (SOME (_, config), SOME f) =>
+            if not (!Options.explainRebuild) then ()
+            else (case UnitCache.otherHash (f, config) of
+                    SOME p => explain ("rune: the frozen Basis " ^ f ^ " was made by a compiler whose hash differs (its " ^ p
+                                       ^ ", this compiler's " ^ Pickle.probe () ^ "): its units are compiled")
+                  | NONE => ())
+        | _ => ()
       (* the cache's work, for --pass-stats *)
       val timed = Pass.timed
       (* the input files' settings, which the libraries are compiled
@@ -716,7 +739,9 @@ struct
              logDeclared l;
              ((u, keptPickle pickle) :: acc, false))
           fun here (why, against) =
-            (explain ("rune: compiled " ^ name ^ ": " ^ why);
+            (explain ("rune: compiled " ^ name ^ ": " ^ why
+                      ^ (if why = "no entry" andalso isSome otherHash
+                         then " (the cache's entries were made by a compiler whose hash differs)" else ""));
              (compileUnit ((name, load, allow, ident, mode), k, against, acc), true))
         in
           case lookup quiet of

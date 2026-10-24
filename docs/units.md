@@ -267,7 +267,14 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
 * in it, a directory per *configuration*: the hash of the compiler's
   identity (`Config.identity`, a hash of the compiler's sources, which
   `scripts/gen-version.sh` writes), the versions of the files, the
-  instruction set, and the options that change what the compiler makes
+  instruction set, the options that change what the compiler makes, and
+  the probe of its hash (`Pickle.probe`, the digest of a fixed text): the
+  hash's values depend on the width of the `Word` of the host that built
+  the compiler, so a compiler whose hash differs has a configuration of its
+  own, never takes another's entries, and `--explain-rebuild` says so when
+  it finds only those (S71); a basis says the probe too, and one of another
+  is not read (S70). The configuration's `units/about` lists what it is
+  made of
   (`-O`, `--passes`, `--int-bits`, `--fuel`). A compiler built from other
   sources, or another level, finds none of another's entries, and two
   configurations live side by side;
@@ -352,10 +359,18 @@ alone. A fingerprint is of what the name names at the unit's start, as
 its binder is, though the unit declares another of the name before its
 usages are worked out (S72); it says which type variables admit equality,
 and the arity and equality of a signature's own type names (S68, S69).
-The text a fingerprint is of is never made: it is fed to the hash piece by
-piece, and each usage's fingerprint is worked out once a session by its
-binder and name. `--pass-stats=hash` counts what is hashed, and where
-([ir.md](ir.md), *What a compile in units hashes*).
+A fingerprint is the hash of tokens -- a tag for each kind of node, a
+length before each list and string -- rather than of text; a structure's,
+a signature's and a functor's is the hash of their entries' names and
+fingerprints, and an entry of a structure a usage names is worked out once
+a session, as the usage of it is, by its binder and name. A recursive
+group of datatypes is hashed as one, its members named in it by their
+units' names and paths, so that each member's fingerprint is the same
+whichever is asked for first (functors-units, M4). `--pass-stats=hash` counts what is hashed,
+and where ([ir.md](ir.md), *What a compile in units hashes*);
+`bin/rune-incremental soundness` checks that a change to how fingerprints
+are worked out tells apart all that the old way did
+(`tests/incremental/SCENARIOS.md`).
 
 So a unit whose usages hold may have been compiled against a unit that has
 changed since -- a value added to `a.sml` changes its identity, not what

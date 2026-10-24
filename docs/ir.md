@@ -84,12 +84,14 @@ so that an expected dump does not change with stamps made elsewhere.
 each under the label of the part of the compile and the place that hashed
 it (`UnitBasis.labelled`):
 
-* `usages:KIND`, the fingerprints of a unit's usages by the kind of name
-  (`v`, `t`, `s`, `sig`, `fun`, `fix`), and `usages:tycon` the definitions
-  of the type names they name, each hashed once (`tyconFps`);
+* `usages:KIND`, the fingerprints of a unit's usages by what is hashed:
+  an entry (`v`, `t`), an environment's entries (`env`), a signature
+  (`sig`), a functor (`fun`), a fixity (`fix`), and a group of type names
+  they name (`tycon`), each group once a session (`tyconFps`);
 * `find:KIND`, the fingerprints worked out to check a cache entry's usages;
 * `export:source`, `export:identity` and `export:body`, a unit's source, its
   basis and a functor's body; `export:KIND` a functor applied in a body;
+  `sigabi`, a dynamic module's signature (UnitBasis.sigFingerprint);
 * `load:source`, a source parsed again for a functor's body;
 * `cache:key`, `cache:source`, `cache:read`, `cache:store`, `cache:paths`
   and `cache:configuration`, the cache's keys and the integrity of its

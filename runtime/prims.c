@@ -2809,8 +2809,11 @@ static int unit_source_current(VM *vm, const UnitExport *source, const char *nam
     const char prefix[] = "\001RuneSource:";
     size_t n = sizeof prefix - 1;
     if (strncmp(name, prefix, n) != 0) return 1;
-    if (strlen(name) <= n + 25 || name[n + 24] != ':') return 0;
-    const char *identity = name + n + 25;
+    /* the hash runs to the first ':' (hexadecimal digits, as many as the
+       compiler's Pickle.hash gives) */
+    const char *colon = strchr(name + n, ':');
+    if (colon == NULL || colon == name + n) return 0;
+    const char *identity = colon + 1;
     for (uint32_t i = 0; i < vm->nunit_exports; i++) {
         const UnitExport *unit = &vm->unit_exports[i];
         if (unit->kind == 0 && unit->stamp == -1 &&
