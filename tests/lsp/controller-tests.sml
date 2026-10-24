@@ -109,6 +109,25 @@ struct
         val ()=C.event(controller,RuneLspSync.Closed dirty)
         val ()=check("discarding unsaved text invalidates analysis",W.generation workspace<>changed)
     in C.clear controller end)
+  fun independentChoices () =
+    let val documents=D.new(LspProtocol.Utf16,{maxDocuments=2,maxDocumentBytes=1000,maxTotalBytes=2000,
+          maxDocumentLines=100,maxTotalLines=200})
+        val names=["untitled:choice-one","untitled:choice-two"]
+        val ()=List.app(fn uri=>ignore(D.openDocument(documents,{uri=uri,languageId="sml",version=1,text="val x=1\n"})))names
+        val sent=ref []:R.message list ref
+        val controller=create{platform=LspUri.Posix,lib="lib",documents=documents,caps=caps(object[]),
+          send=fn message=>sent:=message:: !sent,log=fn _=>(),error=fn message=>raise Fail message,initialize=object[]}
+        val value=RuneLspWorkerWire.Object[("kind",RuneLspWorkerWire.Bytes "ambiguous"),
+          ("contexts",RuneLspWorkerWire.Array[RuneLspWorkerWire.Object[("id",RuneLspWorkerWire.Bytes "context"),
+            ("label",RuneLspWorkerWire.Bytes "one")]])]
+        val ()=List.app(fn uri=>C.contexts(controller,uri,value))names
+        val prompts=requests sent "window/showMessageRequest"
+        val initialInputs=W.inputGeneration(C.workspace controller)
+        val ()=List.app(fn prompt=>ignore(answer(controller,prompt,R.Result(object[("title",Json.String "1. one")]))))prompts
+        val W.Workspace{choices,...}=C.workspace controller
+    in check("choosing one document does not invalidate another pending context prompt",length(!choices)=2);
+       check("document choices leave closed-project input generation unchanged",W.inputGeneration(C.workspace controller)=initialInputs);
+       C.clear controller end
   fun staleConfiguration () =
     let val documents=D.new (LspProtocol.Utf16,{maxDocuments=1,maxDocumentBytes=1000,maxTotalBytes=1000,maxDocumentLines=100,maxTotalLines=100})
         val uri="untitled:scoped"
@@ -139,6 +158,7 @@ structure RuneLspControllerTestMain = Main (struct
     [Test.it "configuration-and-context" RuneLspControllerTests.configuration,
      Test.it "watchers" RuneLspControllerTests.watchers,
     Test.it "stale-configuration" RuneLspControllerTests.staleConfiguration,
-    Test.it "read-only-navigation" RuneLspControllerTests.navigationGeneration]
+    Test.it "read-only-navigation" RuneLspControllerTests.navigationGeneration,
+    Test.it "independent-context-choices" RuneLspControllerTests.independentChoices]
 end)
 val ()=RuneLspControllerTestMain.main ()

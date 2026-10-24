@@ -87,6 +87,9 @@ struct
                    send (V.Object [("id",V.Integer id),("cancelled",V.Bool true)])
                  | RuneCompiler.Failed diagnostics => failed (id,String.concatWith "\n" (List.map #message diagnostics))
                  | E.Stale message => rejected (id,LspProtocol.contentModified,message)
+                 | E.ContextPending message => send(V.Object[("id",V.Integer id),("error",V.Object
+                     [("code",V.Integer LspProtocol.serverCancelled),("message",V.Bytes(E.safe message)),
+                      ("data",V.json(Json.Object[("retriggerRequest",Json.Bool false)]))])])
                  | V.Invalid message => failed (id,message)
                  | RuneLspWorkspace.Invalid message => failed (id,message)
                  | RuneLspSync.Invalid message => rejected (id,JsonRpc.invalidParams,message)

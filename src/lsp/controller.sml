@@ -55,7 +55,7 @@ struct
           val params=Json.Object [("type",Json.int 3),("message",Json.String ("Select a Rune build context for " ^ uri)),
             ("actions",Json.Array (List.map (fn (title,_) => Json.Object [("title",Json.String title)]) actions))]
           val sent=issue (controller,"window/showMessageRequest",SOME params,
-            Choice {uri=uri,revision= #revision snapshot,generation=W.generation workspace,actions=actions})
+            Choice {uri=uri,revision= #revision snapshot,generation=W.inputGeneration workspace,actions=actions})
       in if sent then asked:=uri :: !asked else () end
     end
   fun allContexts (controller as Controller {documents,...}) =
@@ -152,7 +152,7 @@ struct
        | Choice {uri,revision,generation,actions} =>
            let val ()=asked:=List.filter (fn document => document<>uri) (!asked)
            in case D.snapshot (documents,uri) of NONE => () | SOME snapshot =>
-             if #revision snapshot<>revision orelse W.generation workspace<>generation then context (controller,uri) else
+             if #revision snapshot<>revision orelse W.inputGeneration workspace<>generation then context (controller,uri) else
              (case outcome of R.Result Json.Null => asked:=uri :: !asked
               | R.Result value =>
                   (case J.member (J.object value,"title") of SOME (Json.String title) =>

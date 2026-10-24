@@ -158,6 +158,46 @@ counted `unit-start` visits as checks; observations showed zero checked and
 No 13-context replay, broad suite, editor host or native Windows LSP run is
 added for this follow-up.
 
+The `0597c4446` log exposed a remaining foreground loop between the Rune
+project (more than 2 MiB of captured text) and loose-source contexts. Eviction
+caused a recheck, and every completed check requested a global diagnostic
+refresh, which could restart that cycle. Individual document polling also
+needed a path independent of semantic-view residency. The connection now
+retains bounded diagnostic identities/bodies (512 / 4 MiB), returns cached
+full/unchanged reports, and requests refresh only for a changed report or
+foreground input generation. Real changes coalesce across a pending refresh
+without losing dependency updates. Memory/process limits are unchanged.
+
+A concurrent-query probe found another eviction race: dependent queries
+shared priority with fresh checks, letting several checks evict the first
+view before its queries ran. Queries now precede those checks. The count-limit
+eviction probe fails before this fix and passes afterward.
+
+Ambiguous-context errors were also cached as infrastructure failures and
+survived choosing a context. Waiting for selection now returns typed
+`ServerCancelled` with `retriggerRequest=false`, which the pinned VS Code
+client handles without error logging. Choosing a context advances foreground
+generation, clearing the old failure/request identity. A separate closed-project
+input generation preserves background diagnostic reuse and independent
+pending prompts while still invalidating on actual source/settings changes.
+
+Focused acceptance comprises four protocol cases (refresh, eviction/refresh,
+concurrent query eviction and context recovery) plus one controller case for
+independent pending choices. The old build fails the two original regression
+probes. The first candidate context reply used the wrong private-wire data
+encoding; that was corrected. Its test also initially assumed action order;
+it now selects the named context and checks the resulting type.
+
+The real replay uses one `rune.build` context and one loose List-using buffer.
+After evicting the Rune semantic graph, 16 alternating full/unchanged document
+polls complete in 0.0072 seconds with no additional checked units or refreshes,
+and shutdown exits zero. Receipts are `refresh-context-final.log`,
+`refresh-context-controller.log`, `query-eviction-baseline.log`,
+`refresh-loop-real-project.log` and
+`workspace-heap-refresh-context-candidate.{json,jsonl}` under
+`build/lsp-debug/acceptance`. The full suite, 13-context sweep, editor host
+and native Windows LSP remain deferred under the debugging rule.
+
 The public compiler adapter now reports missing-library manifest errors as
 `Failed` diagnostics. Discovery can then report an unavailable target instead
 of aborting with the exception name `Usage`.

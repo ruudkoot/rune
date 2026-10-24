@@ -17,11 +17,21 @@ struct
     | Query of request | Workspace of request
   type result={uri:string,revision:IntInf.int,generation:IntInf.int,snapshot:string}
   type flight={uri:string,revision:IntInf.int,generation:IntInf.int,job:IntInf.int}
-  type failed={uri:string,revision:IntInf.int,generation:IntInf.int,message:string}
+  type failed={uri:string,revision:IntInf.int,generation:IntInf.int,code:IntInf.int,message:string,data:Json.value option}
+  type publication={uri:string,revision:IntInf.int,generation:IntInf.int,reportId:string,report:Json.value option,bytes:int}
+  val reportByteBudget=4*1024*1024
+  fun retainPublications (generation,entries)=
+    let fun loop([],_,_,kept)=List.rev kept
+          | loop(item::rest,n,bytes,kept)=if n=512 then List.rev kept else
+              let val keep= #generation item=generation andalso #bytes item<=reportByteBudget-bytes
+                  val item=if keep then item else {uri= #uri item,revision= #revision item,generation= #generation item,
+                    reportId= #reportId item,report=NONE,bytes=0}:publication
+              in loop(rest,n+1,bytes+ #bytes item,item::kept) end
+    in loop(entries,0,0,[]) end
   exception Duplicate
   datatype t=Service of {workspace:W.t,documents:D.t,caps:P.capabilities,jobs:task J.t,basisJobs:task J.t,workspaceJobs:task J.t,
     results:result list ref,requests:request list ref,flights:flight list ref,failures:failed list ref,
-    refresh:unit Q.t,refreshPending:bool ref,send:R.message->unit,log:string->unit,
+    refresh:unit Q.t,refreshPending:bool ref,refreshAgain:bool ref,published:publication list ref,send:R.message->unit,log:string->unit,
     discovered:string*V.value->unit}
   fun new {workspace,documents,caps,command,args,send,log,discovered} =
     Service {workspace=workspace,documents=documents,caps=caps,jobs=J.new {command=command,args=args,
@@ -31,9 +41,10 @@ struct
       basisJobs=J.new {command=command,args=args,timeout=Time.fromSeconds 30,
         cancelGrace=Time.fromMilliseconds 250,maxPending=128},
       flights=ref [],failures=ref [],refresh=Q.new {prefix="runelsp-diagnostics-",maxPending=1},refreshPending=ref false,
+      refreshAgain=ref false,published=ref [],
       send=send,log=log,discovered=discovered}
   fun current (Service {workspace,documents,...},{uri,revision,generation}) =
-    W.generation workspace=generation andalso (uri="" orelse (D.healthy (documents,uri) andalso
+    (if uri="" then W.inputGeneration workspace else W.generation workspace)=generation andalso (uri="" orelse (D.healthy (documents,uri) andalso
       (case D.snapshot (documents,uri) of SOME snapshot => #revision snapshot=revision | NONE => false)))
   fun finish (Service {send,requests,...},request:request,outcome) =
     if !(#done request) then () else
@@ -87,7 +98,7 @@ struct
           val running=List.find(fn item:flight=> #uri item=uri andalso #revision item=revision andalso #generation item=generation)(!flights)
           val ready=List.exists(fn item:result=> #uri item=uri andalso #revision item=revision andalso #generation item=generation)(!results)
       in if not(isSome request) andalso ready then () else
-       case blocked of SOME item=>Option.app(fn request=>failure(service,request,P.requestFailed,#message item,NONE))request
+       case blocked of SOME item=>Option.app(fn request=>failure(service,request,#code item,#message item,#data item))request
        | NONE=>let val id=case running of SOME item=> #job item | NONE=>
           let val id=submit (service,{key=SOME ("check:" ^ uri),
             priority=if isSome request then 0 else 100,
@@ -100,7 +111,7 @@ struct
       handle J.Full => (case request of NONE => log "analysis queue is full"
         | SOME request => failure (service,request,P.requestFailed,"analysis queue is full",NONE))
   fun query (service as Service {jobs,...},request:request,snapshot) =
-    let val id=J.submit (requestJobs(service,#method request,#uri request),{key=NONE,priority=0,data=Query request,payload=V.Object
+    let val id=J.submit (requestJobs(service,#method request,#uri request),{key=NONE,priority= ~10,data=Query request,payload=V.Object
           [("op",V.Bytes "query"),("snapshot",V.Bytes snapshot),("uri",V.Bytes(#uri request)),
            ("method",V.Bytes (#method request)),("params",V.json (#params request))]})
     in #job request:=SOME id end
@@ -114,6 +125,13 @@ struct
   fun resolving method=method="completionItem/resolve" orelse method="inlayHint/resolve" orelse method="documentLink/resolve"
   fun inlineClient caps=case Json.member ("textDocument",P.rawCapabilities caps) of NONE => false | SOME value =>
     (case Json.member ("inlineCompletion",value) of SOME (Json.Object _) => true | _ => false)
+  fun cachedDiagnostics (Service {published,...},request:request)=
+    if #method request<>"textDocument/diagnostic" then NONE else
+    case List.find(fn item:publication=> #uri item= #uri request andalso #revision item= #revision request
+      andalso #generation item= #generation request)(!published) of NONE=>NONE | SOME item=>
+      let val previous=Option.map S.string(Json.member("previousResultId",#params request))
+      in if previous=SOME(#reportId item) then SOME(Json.Object[("kind",Json.String "unchanged"),
+        ("resultId",Json.String(#reportId item))]) else #report item end
   fun request (service as Service {workspace,documents,caps,jobs,requests,results,...},{id,method,params}) =
     if not (accepts method) orelse method="textDocument/inlineCompletion" andalso not (inlineClient caps) orelse
        RuneLspTokens.method method andalso not (RuneLspTokens.enabled (P.rawCapabilities caps,method)) orelse
@@ -130,12 +148,15 @@ struct
         fun token name=case Json.member (name,params) of NONE => () | SOME (Json.String _) => ()
           | SOME value => if isSome (P.integer value) then () else raise S.Invalid "invalid progress token"
         val ()=(token "workDoneToken";token "partialResultToken")
+        val ()=if method="textDocument/diagnostic" then
+          Option.app(fn value=>ignore(S.string value))(Json.member("previousResultId",params)) else ()
         val hintResolution=if method<>"inlayHint/resolve" then NONE else
           let val data=S.object (S.required (params,"data"))
               fun number name=case Json.toIntInf (S.required (data,name)) of SOME value => value
                 | NONE => raise S.Invalid ("invalid inlay hint " ^ name)
           in SOME {snapshot=S.string (S.required (data,"snapshot")),revision=number "revision",generation=number "generation"} end
-        val request={id=id,method=method,params=params,uri=uri,revision=revision,generation=W.generation workspace,
+        val request={id=id,method=method,params=params,uri=uri,revision=revision,
+          generation=if method="workspace/diagnostic" then W.inputGeneration workspace else W.generation workspace,
           done=ref false,job=ref NONE,retried=ref false}:request
         val ()=requests:=request :: !requests
         val ()=case Json.member ("workDoneToken",params) of NONE => () | SOME token =>
@@ -144,7 +165,8 @@ struct
             ("value",Json.Object [("kind",Json.String "begin"),("title",Json.String "Analyze Rune sources"),("cancellable",Json.Bool true)])])}) end
         val prior=List.find (fn result:result => #uri result=uri andalso #revision result=revision
           andalso #generation result=W.generation workspace) (!results)
-    in ((if workspaceRequest then
+    in ((case cachedDiagnostics(service,request) of SOME report=>finish(service,request,R.Result report)
+      | NONE=>if workspaceRequest then
           #job request:=SOME (J.submit (requestJobs(service,method,uri),{key=NONE,priority=if method="workspace/diagnostic" then 25 else 0,
             data=Workspace request,payload=V.Object
             [("op",V.Bytes "workspace"),("state",capture service),("params",V.json params),
@@ -180,18 +202,38 @@ struct
        Option.app (fn id => J.cancel (requestJobs(service,#method request,#uri request),id)) (!(#job request)))) (!requests)
   fun pullClient (Service {caps,...}) = case Json.member ("textDocument",P.rawCapabilities caps) of
     SOME value => (case Json.member ("diagnostic",value) of SOME (Json.Object _) => true | _ => false) | _ => false
-  fun refresh (service as Service {caps,send,refresh,refreshPending,...}) =
-    if not (pullClient service) orelse !refreshPending orelse not (P.supports (caps,["workspace","diagnostics","refreshSupport"])) then () else
-      (refreshPending:=true;send (Q.issue (refresh,{method="workspace/diagnostic/refresh",params=NONE,data=()})))
-  fun response (Service {refresh,refreshPending,...},message) =
-    case Q.resolve (refresh,message) of NONE => false | SOME _ => (refreshPending:=false;true)
-  fun closeDocument (service as Service {results,failures,send,...},uri) =
+  fun refresh (service as Service {caps,send,refresh,refreshPending,refreshAgain,...}) =
+    if not (pullClient service) orelse not (P.supports (caps,["workspace","diagnostics","refreshSupport"])) then () else
+      if !refreshPending then refreshAgain:=true else
+        (refreshPending:=true;send (Q.issue (refresh,{method="workspace/diagnostic/refresh",params=NONE,data=()})))
+  fun response (service as Service {refresh=outstanding,refreshPending,refreshAgain,...},message) =
+    case Q.resolve (outstanding,message) of NONE => false | SOME _ =>
+      (refreshPending:=false;if !refreshAgain then (refreshAgain:=false;refresh service) else ();true)
+  fun closeDocument (service as Service {results,failures,published,send,...},uri) =
     (results:=List.filter (fn result:result => #uri result<>uri) (!results);
      failures:=List.filter(fn item:failed=> #uri item<>uri)(!failures);
+     published:=List.filter(fn item:publication=> #uri item<>uri)(!published);
      if pullClient service then refresh service else send (R.Notification {method="textDocument/publishDiagnostics",params=SOME (Json.Object
        [("uri",Json.String uri),("diagnostics",Json.Array [])])}))
-  fun publish (service as Service {documents,caps,send,...},reports) =
-    if pullClient service then refresh service else List.app (fn report =>
+  fun publish (service as Service {workspace,documents,caps,send,published,...},reports) =
+    if pullClient service then
+      let val generation=W.generation workspace
+          fun changed report=
+            let val uri=V.bytes(V.field(report,"uri"))
+                val json=V.unjson(V.field(report,"report"))
+                val reportId=case Json.member("resultId",json) of SOME(Json.String id)=>id
+                  | _=>Hex.fromBytes(Sha256.digest(Json.encode json))
+                val prior=List.find(fn item:publication=> #uri item=uri)(!published)
+                val same=case prior of SOME item=> #generation item=generation andalso #reportId item=reportId | NONE=>false
+                val revision=case D.snapshot(documents,uri) of SOME snapshot=> #revision snapshot | NONE=>0
+                val bytes=size(Json.encode json)
+                val cached=if bytes<=reportByteBudget then SOME json else NONE
+                val all={uri=uri,revision=revision,generation=generation,reportId=reportId,report=cached,
+                    bytes=if isSome cached then bytes else 0}::List.filter(fn item:publication=> #uri item<>uri)(!published)
+            in published:=retainPublications(generation,all);not same end
+          val changed=List.foldl(fn (report,any)=>changed report orelse any)false reports
+      in if changed then refresh service else () end
+    else List.app (fn report =>
       let val uri=V.bytes (V.field (report,"uri"))
           val version=case V.field (report,"version") of V.Null => NONE | value => SOME (V.integer value)
           val json=V.unjson (V.field (report,"report"))
@@ -217,13 +259,14 @@ struct
     in case matching of NONE=>(case request of NONE=>[] | SOME request=>[request])
      | SOME item=>List.filter(fn request:request=> !(#job request)=SOME(#job item) andalso not(!(#done request)) andalso
          #uri request=uri andalso #revision request=revision andalso #generation request=generation)(!requests) end
-  fun failedCheck (service as Service {failures,log,...},ticket,message) =
+  fun failedCheck (service as Service {failures,log,...},ticket,{code,message,data}) =
     let val pending=waiters(service,ticket)
-        val item={uri= #uri ticket,revision= #revision ticket,generation= #generation ticket,message=message}:failed
+        val item={uri= #uri ticket,revision= #revision ticket,generation= #generation ticket,code=code,message=message,data=data}:failed
         val all=item::List.filter(fn prior:failed=> #uri prior<> #uri item)(!failures)
         val ()=if current(service,{uri= #uri ticket,revision= #revision ticket,generation= #generation ticket})
           then failures:=List.take(all,Int.min(64,length all)) else ()
-    in if null pending then log message else List.app(fn request=>failure(service,request,P.requestFailed,message,NONE))pending end
+    in if null pending then (if code=P.serverCancelled then () else log message)
+       else List.app(fn request=>failure(service,request,code,message,data))pending end
   fun handleEvent (service as Service {results,discovered,log,send,requests,...},event) =
     case event of J.Restarted => results:=[]
     | J.Progress (task,message) =>
@@ -273,11 +316,11 @@ struct
                (#retried request:=true;results:=List.filter (fn result:result => #uri result<> #uri request) (!results);
                 check (service,#uri request,SOME request)) else reject request
            | Workspace request => reject request
-           | Check ticket => List.app reject (waiters(service,ticket))
+           | Check ticket => failedCheck(service,ticket,{code= #code error,message= #message error,data=Option.map V.unjson(#data error)})
            | Build {request=SOME request,...} => reject request
            | _ => log (#message error) end
     | J.Failed (Query request,message) => failure (service,request,P.requestFailed,message,NONE)
-    | J.Failed (Check ticket,message) => failedCheck(service,ticket,message)
+    | J.Failed (Check ticket,message) => failedCheck(service,ticket,{code=P.requestFailed,message=message,data=NONE})
     | J.Failed (Build {request=SOME request,...},message) => failure (service,request,P.requestFailed,message,NONE)
     | J.Failed (_,message) => log message
     | J.Cancelled (Query request) => if !(#done request) then () else failure (service,request,R.requestCancelled,"request cancelled",NONE)

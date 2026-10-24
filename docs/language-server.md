@@ -100,6 +100,15 @@ Captured source/build content, relevant manifest content/existence, root
 build-file membership, settings and overlays guard reuse. Saved changes are
 detected even without a watched-file notification; previous result IDs still
 produce unchanged reports.
+Document pull reports are cached separately from semantic snapshots, with
+at most 512 report identities and 4 MiB of encoded report bodies per connection.
+Polling an unchanged document can return a full or unchanged report even
+after its semantic view was evicted. Recomputing the same report for the
+same input generation does not request another global diagnostic refresh.
+Real input changes still refresh dependent diagnostics, including when the
+active file's own diagnostics stay empty; changes during a pending refresh
+coalesce into a follow-up after its acknowledgement.
+Queries waiting on a freshly checked view run before another check can evict it.
 Workspace diagnostic scope follows the workspace's project builds; merely
 opening a Basis or loose file does not add another background context.
 Those open files receive document diagnostics. Read-only buffer membership
@@ -122,6 +131,10 @@ Infrastructure failure completes all waiting providers once. Further checks
 of that failed document revision and workspace generation return the same
 failure until an edit, dependency/configuration change, close/reopen or
 `Rune: Restart Language Server` permits another attempt.
+An unresolved build-context choice is a quiet server cancellation, rather
+than an infrastructure failure. Selecting a context invalidates foreground
+providers and their cached cancellation without an edit or restart. It does
+not invalidate unchanged closed-project inputs or other pending context prompts.
 
 Infrastructure errors identify the worker PID, job ID and operation, request
 method, document or snapshot, elapsed time and configured limit. Analysis

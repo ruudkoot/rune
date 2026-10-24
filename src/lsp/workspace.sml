@@ -11,7 +11,7 @@ struct
   type context={id:string,label:string,target:string,build:string,ordinal:int,project:C.Project.t,source:C.Project.source}
   datatype selection=Loose | Selected of context | Ambiguous of context list
   datatype t=Workspace of {platform:U.platform,lib:string,roots:string list ref,settings:settings ref,scoped:(string*settings) list ref,
-    generation:IntInf.int ref,choices:(string*string) list ref}
+    generation:IntInf.int ref,inputGeneration:IntInf.int ref,choices:(string*string) list ref}
   exception Invalid of string
   val defaults:settings={targets=[],flags=[],variables=[],activeContext=NONE,libraryRoot=NONE}
   fun invalid message=raise Invalid message
@@ -59,10 +59,12 @@ struct
     in {targets=targets,flags=common,variables=vars,activeContext=active,libraryRoot=libraryRoot} end
     handle J.Invalid message => raise Invalid message | U.Invalid => raise Invalid "invalid file URI"
   fun new {platform,lib} = Workspace {platform=platform,lib=lib,roots=ref [],settings=ref defaults,scoped=ref [],
-    generation=ref 0,choices=ref []}
+    generation=ref 0,inputGeneration=ref 0,choices=ref []}
   fun generation (Workspace {generation,...})= !generation
-  fun invalidate (Workspace {generation,choices,...}) = (generation:=IntInf.+ (!generation,1);choices:=[])
-  fun dirty (Workspace {generation,...}) = generation:=IntInf.+ (!generation,1)
+  fun inputGeneration (Workspace {inputGeneration,...})= !inputGeneration
+  fun dirty (Workspace {generation,inputGeneration,...}) =
+    (generation:=IntInf.+ (!generation,1);inputGeneration:=IntInf.+(!inputGeneration,1))
+  fun invalidate (workspace as Workspace {choices,...}) = (dirty workspace;choices:=[])
   fun roots (Workspace {roots,...})= !roots
   fun setRoots (workspace as Workspace {platform,roots,...},values) =
     let val ()=if length values>64 then invalid "too many workspace folders" else ()
@@ -94,8 +96,9 @@ struct
         (scoped:=rest;if previous=configurationFor(workspace,uri) then () else dirty workspace)
       | _=>let val parsed=settings platform value
            in if parsed=previous then () else (scoped:=(uri,parsed)::rest;dirty workspace) end end
-  fun choose (Workspace {choices,...},uri,id) =
-    choices:=(uri,id) :: List.filter (fn (document,_) => document<>uri) (!choices)
+  fun choose (Workspace {choices,generation,...},uri,id) =
+    (choices:=(uri,id) :: List.filter (fn (document,_) => document<>uri) (!choices);
+     generation:=IntInf.+(!generation,1))
   fun folder value =
     let val value=J.object value
         val uri=J.string (J.required (value,"uri"))

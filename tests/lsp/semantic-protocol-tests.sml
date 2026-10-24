@@ -188,6 +188,104 @@ struct
         fun write(path,text)=let val out=TextIO.openOut path in TextIO.output(out,text);TextIO.closeOut out end
         fun work()=action{root=root,uri=uri,write=write}
     in (work() before remove root) handle error=>(remove root handle _=>();raise error) end
+  fun minimalLibrary (root,write)=
+    let val lib=OS.Path.concat(root,"lib") val basis=OS.Path.concat(lib,"basis")
+        val ()=(OS.FileSys.mkDir lib;OS.FileSys.mkDir basis)
+        val ()=write(OS.Path.concat(basis,"initial.sml"),"val preludeValue=0\n")
+        val ()=write(OS.Path.concat(basis,"MANIFEST"),"initial.sml | always | yes | | \n")
+    in lib end
+  fun evictionRefreshLoop ()=temporaryTree(fn {root,uri,write}=>
+    let val lib=minimalLibrary(root,write)
+        val capabilities=object[("textDocument",object[("diagnostic",object[])]),
+          ("workspace",object[("diagnostics",object[("refreshSupport",Json.Bool true)])])]
+        val names=List.tabulate(6,fn n=>"untitled:refresh-eviction-" ^ Int.toString n)
+    in fixtureInitialized(object[("capabilities",capabilities),
+        ("initializationOptions",object[("libraryRoot",Json.String(uri lib))])]) (fn client=>
+      let val refreshes=ref 0
+          fun refresh value=Json.member("method",value)=SOME(Json.String "workspace/diagnostic/refresh")
+          fun response id=
+            let val value=C.receive(client,fn value=>refresh value orelse Json.member("id",value)=SOME(Json.int id))
+            in if refresh value then (refreshes:= !refreshes+1;C.send(client,object[("jsonrpc",Json.String "2.0"),
+                ("id",C.field(value,"id")),("result",Json.Null)]);response id) else C.result value end
+          fun pull(id,name)=(C.request(client,id,"textDocument/diagnostic",object[("textDocument",document name)]);response id)
+          val ()=List.app(fn name=>openDocument(client,name,"val stable=42\n"))names
+          val ()=List.app(fn (name,id)=>ignore(pull(id,name)))(ListPair.zip(names,List.tabulate(6,fn n=>10+n)))
+          val _=pull(20,List.last names)
+          val initial= !refreshes
+          val ()=List.app(fn n=>List.app(fn (name,index)=>
+            let val id=100+n*20+index*2
+                val ()=C.request(client,id,"textDocument/hover",object[("textDocument",document name),
+                  ("position",object[("line",Json.int 0),("character",Json.int 5)])])
+                val _=response id
+            in ignore(pull(id+1,name)) end)(ListPair.zip(names,List.tabulate(6,fn n=>n))))[0,1]
+          val ()=check("rechecking evicted views does not generate another global diagnostic refresh",!refreshes=initial)
+          val last=List.last names
+          val ()=C.notify(client,"textDocument/didChange",object[("textDocument",object[("uri",Json.String last),("version",Json.int 2)]),
+            ("contentChanges",Json.Array[object[("text",Json.String "val stable=true\n")]])])
+          val report=pull(200,last)
+      in check("real input changes still refresh even when active diagnostics stay empty",
+        C.field(report,"items")=Json.Array[] andalso !refreshes>initial) end)
+    end)
+  fun queryBeforeEviction ()=temporaryTree(fn {root,uri,write}=>
+    let val lib=minimalLibrary(root,write)
+        val names=List.tabulate(12,fn n=>"untitled:query-eviction-" ^ Int.toString n)
+    in fixtureInitialized(object[("capabilities",object[]),
+        ("initializationOptions",object[("libraryRoot",Json.String(uri lib))])]) (fn client=>
+      let fun query(id,name)=C.request(client,id,"textDocument/hover",object[("textDocument",document name),
+            ("position",object[("line",Json.int 0),("character",Json.int 5)])])
+          val ()=List.app(fn name=>openDocument(client,name,"val stable=42\n"))names
+          val ()=List.app(fn (name,id)=>(query(id,name);ignore(C.result(C.response(client,id)))))
+            (ListPair.zip(names,List.tabulate(12,fn n=>20+n)))
+          val batch=ListPair.zip(List.take(names,6),List.tabulate(6,fn n=>100+n))
+          val ()=List.app(fn (name,id)=>query(id,name))batch
+          val ()=List.app(fn (_,id)=>
+            let val answer=C.response(client,id)
+            in check("dependent queries finish before another check evicts their view: " ^ Json.encode answer,
+              case Json.member("result",answer) of SOME hover=>
+                Json.member("value",C.field(hover,"contents"))=SOME(Json.String "int") | NONE=>false) end)batch
+      in () end)
+    end)
+  fun contextSelectionRecovery ()=temporaryTree(fn {root,uri,write}=>
+    let val lib=minimalLibrary(root,write)
+        fun path name=OS.Path.concat(root,name)
+        val ()=List.app write[(path "one.build","files one.sml shared.sml end\n"),
+          (path "two.build","files two.sml shared.sml end\n"),(path "one.sml","val input=1\n"),
+          (path "two.sml","val input=true\n"),(path "shared.sml","val result=input\n")]
+        val targets=Json.Array(List.map(fn name=>object[("name",Json.String name),
+          ("build",Json.String(uri(path(name ^ ".build"))))])["one","two"])
+        val options=object[("libraryRoot",Json.String(uri lib)),("targets",targets)]
+        val source=uri(path "shared.sml")
+    in fixtureInitialized(object[("capabilities",object[("textDocument",object[("diagnostic",object[])])]),
+        ("initializationOptions",options)]) (fn client=>
+      let val ()=openDocument(client,source,"val result=input\n")
+          fun pull id=(C.request(client,id,"textDocument/diagnostic",object[("textDocument",document source)]);C.response(client,id))
+          val pending=pull 600
+          val ()=check("a pending build-context choice cancels quietly until selection",
+            C.field(C.field(pending,"error"),"code")=Json.int(~32802) andalso
+            C.field(C.field(C.field(pending,"error"),"data"),"retriggerRequest")=Json.Bool false)
+          val again=pull 601
+          val ()=check("repeated providers remain cancelled while the choice is pending",C.field(C.field(again,"error"),"code")=Json.int(~32802))
+          val prompt=C.receive(client,fn value=>Json.member("method",value)=SOME(Json.String "window/showMessageRequest"))
+          val actions=case C.field(C.field(prompt,"params"),"actions") of Json.Array values=>values | _=>raise Fail "missing context actions"
+          val first=case List.find(fn action=>String.isSubstring "one" (textValue(C.field(action,"title"))))actions of
+            SOME action=>action | NONE=>raise Fail "missing named context action"
+          val ()=C.request(client,650,"workspace/diagnostic",object[("previousResultIds",Json.Array[])])
+          val _=C.result(C.response(client,650))
+          val C.Client{messages,...}=client
+          fun plans()=length(List.filter(fn value=>Json.member("method",value)=SOME(Json.String "window/logMessage") andalso
+            (case Json.member("params",value) of SOME params=>(case Json.member("message",params) of
+              SOME(Json.String text)=>String.isSubstring "Workspace analysis:" text | _=>false) | _=>false))(!messages))
+          val planned=plans()
+          val ()=C.send(client,object[("jsonrpc",Json.String "2.0"),("id",C.field(prompt,"id")),("result",first)])
+          val ()=check("choosing a context recovers without an edit or restart",C.field(C.result(pull 602),"items")=Json.Array[])
+          val ()=C.request(client,603,"textDocument/hover",object[("textDocument",document source),
+            ("position",object[("line",Json.int 0),("character",Json.int 5)])])
+          val hover=C.result(C.response(client,603))
+          val ()=check("the selected context supplies the actual incoming type",C.field(C.field(hover,"contents"),"value")=Json.String "int")
+          val ()=C.request(client,651,"workspace/diagnostic",object[("previousResultIds",Json.Array[])])
+          val _=C.result(C.response(client,651))
+      in check("a document context choice does not rescan unchanged workspace projects",plans()=planned) end)
+    end)
   fun idleWorkspacePolls ()=temporaryTree(fn {root,uri,write}=>
     let fun path name=OS.Path.concat(root,name)
         val lib=path "lib" val basis=OS.Path.concat(lib,"basis")
@@ -1143,6 +1241,9 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "workspace-context-reporting" RuneLspSemanticProtocolTests.workspaceContexts,
     Test.it "live-analysis-progress" RuneLspSemanticProtocolTests.analysisProgress,
     Test.it "idle-workspace-polls" RuneLspSemanticProtocolTests.idleWorkspacePolls,
+    Test.it "eviction-refresh-loop" RuneLspSemanticProtocolTests.evictionRefreshLoop,
+    Test.it "query-before-eviction" RuneLspSemanticProtocolTests.queryBeforeEviction,
+    Test.it "context-selection-recovery" RuneLspSemanticProtocolTests.contextSelectionRecovery,
     Test.it "basis-development-context" RuneLspSemanticProtocolTests.basisDevelopment,
     Test.it "navigation-and-symbols" RuneLspSemanticProtocolTests.navigation,
     Test.it "workspace-symbols-resolve" RuneLspSemanticProtocolTests.workspaceSymbols,

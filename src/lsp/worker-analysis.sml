@@ -11,6 +11,7 @@ struct
   structure L=LspPosition
   structure J=RuneLspSync
   exception Stale of string
+  exception ContextPending of string
   type context={key:string,compiler:C.session,analysis:A.t,bytes:int ref}
   type source={file:string,uri:string,text:string,mode:string,ordinal:int option,syntax:C.Syntax.t option,
     slot:int,version:IntInf.int option,revision:IntInf.int option,index:L.t option,
@@ -199,7 +200,7 @@ struct
         val _=RuneLspProjects.enrich (workspace,documents,cancelled)
         val configuration=W.configurationFor (workspace,uri)
         val selection=W.select (workspace,documents,uri)
-        val selected=case selection of W.Ambiguous _ => raise Fail "select a build context before analysis"
+        val selected=case selection of W.Ambiguous _ => raise ContextPending "select a build context before analysis"
           | W.Selected context => SOME context | W.Loose => NONE
         val ()=notify(worker,[("phase",V.Bytes "project-selected"),("file",V.Bytes(case selected of NONE=>uri | SOME context=> #build context)),
           ("context",V.Bytes(case selected of NONE=>"loose source" | SOME context=> #target context))])
@@ -369,7 +370,7 @@ struct
     let val (workspace as W.Workspace {platform,choices,...},documents)=M.restore state
         val ()=choices:=[]
         val state=M.capture(workspace,documents)
-        val semanticState=V.Object(List.filter(fn (name,_)=>name<>"documents")(V.object state))
+        val semanticState=V.Object(List.filter(fn (name,_)=>name<>"documents" andalso name<>"generation")(V.object state))
         fun hash text=Hex.fromBytes(Sha256.digest text)
         val key=hash(V.encode(V.Array[semanticState,V.Bytes(LspProtocol.encodingName encoding),V.json capabilities]))
         fun disk (file,mode)=SOME(hash(readFile(file,mode))) handle OS.SysErr _=>NONE | IO.Io _=>NONE
