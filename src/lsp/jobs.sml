@@ -27,7 +27,7 @@ struct
             if count=1 andalso (Char.ord(String.sub(text,i))<32 orelse String.sub(text,i)=Char.chr 127)
             then loop(i+1,escaped(String.sub(text,i))::all) else loop(i+count,String.substring(text,i,count)::all)
           | NONE=>loop(i+1,escaped(String.sub(text,i))::all)
-    in loop(0,[]) end
+    in if CharVector.all(fn c=>Char.ord c>=32 andalso Char.ord c<127)text then text else loop(0,[]) end
   fun textField (value,name)=SOME(V.bytes(V.field(value,name))) handle V.Invalid _=>NONE
   fun elapsed since=Time.toString(if Time.<(Time.now(),since) then Time.zeroTime else Time.-(Time.now(),since)) ^ " s"
   fun details (Jobs{worker,command,active,queue,phase,timeout,cancelGrace,started,progress,context,...}) =

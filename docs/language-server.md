@@ -61,13 +61,18 @@ pulls, so a pull cannot evict a just-published view before its waiting
 providers query it. Cancellation replies immediately and allows the worker
 250 milliseconds to acknowledge before process termination.
 
-The worker has a 512 MiB VM heap cap, a 1.5 GiB process address-space cap
+The worker uses Rune's optimizing JIT, with a 512 MiB VM heap cap and a
+1.5 GiB process address-space cap
 (including both copying spaces and native code), and a 30-second job deadline.
 Contexts and frozen views each retain at most four entries and charge at most
 2 MiB of source text across entries; a single larger entry can occupy the
 cache alone. Shared text is charged separately per view. These are retention
 budgets, separate from the document and process limits. Unchanged unit
 occurrence projections are reused with the compiler's validated unit keys.
+Each view also retains at most eight frozen completion-scope answers with
+a 1 MiB charge for strings and record overhead. Unchanged captured source
+slots reuse position/token indexes only when file, mode and exact text match;
+semantic syntax still comes from the new compiler snapshot.
 
 Worker stderr is captured privately: at most 4 KiB is retained, a 64 KiB
 stream terminates the worker, and heap exhaustion is classified immediately.

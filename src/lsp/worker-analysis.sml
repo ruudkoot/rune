@@ -13,10 +13,12 @@ struct
   exception Stale of string
   type context={key:string,compiler:C.session,analysis:A.t,bytes:int ref}
   type source={file:string,uri:string,text:string,mode:string,ordinal:int option,syntax:C.Syntax.t option,
-    version:IntInf.int option,revision:IntInf.int option,index:L.t option,
+    slot:int,version:IntInf.int option,revision:IntInf.int option,index:L.t option,
     tokens:(C.Syntax.piece list * C.Syntax.piece vector) option ref}
+  type scope={role:string,fields:(string*string) list,candidates:A.candidate list}
+  type scopeEntry={ordinal:int,offset:int,path:string list,result:scope,bytes:int}
   type view={id:string,snapshot:A.snapshot,sources:source list,encoding:LspProtocol.encoding,uri:string,ordinal:int option,
-    capabilities:Json.value,activeUnit:string option,generation:IntInf.int}
+    capabilities:Json.value,activeUnit:string option,generation:IntInf.int,scopes:scopeEntry list ref}
   datatype t=Worker of {contexts:context list ref,views:view list ref,tokens:RuneLspTokens.t,namespace:string ref,
     progress:(V.value->unit) ref}
   fun new ()=Worker {contexts=ref [],views=ref [],tokens=RuneLspTokens.new (),namespace=ref "local",progress=ref(fn _=>())}
@@ -51,9 +53,13 @@ struct
     | NONE =>
       let val compiler=C.session {lib=SOME lib,flags=flags}
           val context={key=key,compiler=compiler,analysis=A.create (compiler,{context=key}),bytes=ref 0}:context
+          val reportedChecked=ref ~1
           val ()=A.observe(#analysis context,SOME(fn event:A.observation=>
-            (RuneLspProfile.observe event;(!progress)(V.Object[("phase",V.Bytes(#phase event)),("file",V.Bytes(#file event)),
-              ("checked",V.Integer(IntInf.fromInt(#checked event))),("reused",V.Integer(IntInf.fromInt(#reused event)))]))))
+            let val report= #phase event<>"unit-frozen" orelse #checked event<> !reportedChecked
+                val ()=reportedChecked:= #checked event
+            in RuneLspProfile.observe event;if report then
+              (!progress)(V.Object[("phase",V.Bytes(#phase event)),("file",V.Bytes(#file event)),
+                ("checked",V.Integer(IntInf.fromInt(#checked event))),("reused",V.Integer(IntInf.fromInt(#reused event)))]) else () end))
           val all=context :: !contexts
           val ()=if length all<=4 then () else List.app (fn context:context =>
             (A.close (#analysis context);C.close (#compiler context))) (List.drop (all,4))
@@ -81,7 +87,7 @@ struct
   fun makeView {id,snapshot,sources,encoding,uri,ordinal,capabilities,generation} : view =
     let val activeUnit=A.unitAt (snapshot,{ordinal=getOpt (ordinal,0)})
     in {id=id,snapshot=snapshot,sources=sources,encoding=encoding,uri=uri,
-        ordinal=ordinal,capabilities=capabilities,activeUnit=activeUnit,generation=generation} end
+        ordinal=ordinal,capabilities=capabilities,activeUnit=activeUnit,generation=generation,scopes=ref []} end
   fun activeSource (view:view,uri) = List.find (fn source:source => #uri source=uri andalso
     (uri<> #uri view orelse #ordinal source=SOME (getOpt (#ordinal view,0)))) (#sources view)
   fun sourceFor (view:view,file)=List.find (fn source:source => #file source=file) (#sources view)
@@ -231,23 +237,40 @@ struct
         val kept=retain (fn context:context=> !(#bytes context)) (!contexts)
         val ()=List.app release (List.filter(fn prior:context=>not(List.exists(fn context:context=> #key context= #key prior)kept))(!contexts))
         val ()=contexts:=kept
-        fun captured (input:A.input,ordinal):source list =
+        (* Slots address the previous captured graph in linear time. Exact
+           file/text/mode guards also cover reordered and repeated inputs. *)
+        val previous=case !views of []=>Vector.fromList [] | view::_=>
+          let val slots=Array.array(length(A.inputs(#snapshot view))+length(A.dependencies(#snapshot view)),NONE)
+              val ()=List.app(fn source:source=>Array.update(slots,#slot source,SOME source))(#sources view)
+          in Array.vector slots end
+        fun captured (input:A.input,ordinal,slot):source list =
           let val opened=overlay (#file input)
               val aliases=List.filter (fn snapshot => matches (#file input,snapshot)) (D.all documents)
               val aliases=case List.find (fn snapshot:D.snapshot => #uri snapshot=uri) aliases of NONE => aliases
                 | SOME current => current :: List.filter (fn snapshot:D.snapshot => #uri snapshot<>uri) aliases
               val uris=if null aliases then [(U.original (U.fromPath (platform,OS.FileSys.fullPath (#file input))),NONE,NONE)]
                 else List.map (fn snapshot:D.snapshot => (#uri snapshot,SOME (#version snapshot),SOME (#revision snapshot))) aliases
-              val index=(SOME (L.make (#text input)) handle L.Invalid => NONE)
-              val pieces=ref NONE
+              val prior=if slot>=Vector.length previous then NONE else
+                case Vector.sub(previous,slot) of SOME source=>
+                  if #file source= #file input andalso #text source= #text input andalso #mode source= #mode input
+                  then SOME source else NONE | NONE=>NONE
+              val index=case prior of SOME source=> #index source | NONE=>
+                (notify(worker,[("phase",V.Bytes "indexing-source"),("file",V.Bytes(#file input)),
+                   ("checked",V.Integer(IntInf.fromInt(#checked(A.work snapshot)))),
+                   ("reused",V.Integer(IntInf.fromInt(#reused(A.work snapshot))))]);
+                 SOME(L.make(#text input)) handle L.Invalid=>NONE)
+              val pieces=case prior of SOME source=> #tokens source | NONE=>ref NONE
               val syntax=Option.mapPartial (fn ordinal => A.syntaxAt (snapshot,{ordinal=ordinal})) ordinal
           in List.map (fn (uri,version,revision) => {file= #file input,uri=uri,text= #text input,mode= #mode input,ordinal=ordinal,
-            syntax=syntax,version=version,revision=revision,
+            syntax=syntax,slot=slot,version=version,revision=revision,
             index=index,tokens=pieces}:source) uris end
         val primary=A.inputs snapshot
-        val sources=List.concat (ListPair.map (fn (input,ordinal) => captured (input,SOME ordinal))
-          (primary,List.tabulate (length primary,fn i => i)) @
-          List.map (fn input => captured (input,NONE)) (A.dependencies snapshot))
+        val dependencies=A.dependencies snapshot
+        val primaryCount=length primary
+        val sources=List.concat (ListPair.map (fn (input,ordinal) => captured (input,SOME ordinal,ordinal))
+          (primary,List.tabulate (primaryCount,fn i => i)) @
+          ListPair.map (fn (input,ordinal)=>captured(input,NONE,primaryCount+ordinal))
+            (dependencies,List.tabulate(length dependencies,fn i=>i)))
         val view=makeView {id= !namespace ^ ":" ^ A.id snapshot,snapshot=snapshot,sources=sources,encoding=encoding,uri=uri,
           ordinal=Option.map #ordinal selected,capabilities=capabilities,generation=W.generation workspace}:view
         val all=view :: !views
@@ -364,17 +387,40 @@ struct
     in Json.Object (("data",data)::fields) end
   fun sourceOrdinal (view:view,source:source) =
     #ordinal source
+  fun scopeAt (view:view,position as {ordinal,offset,path}) : scope =
+    let fun matches(item:scopeEntry)= #ordinal item=ordinal andalso #offset item=offset andalso #path item=path
+        val cache= #scopes view
+    in case List.find matches (!cache) of SOME item=>
+        (RuneLspProfile.sample "scope-cache-hit" (#uri view) 0 0 (#bytes item);
+         cache:=item::List.filter(fn item=>not(matches item))(!cache);#result item)
+      | NONE=>
+        let val ()=RuneLspProfile.sample "scope-cache-miss" (#uri view) 0 0 0
+            val result=A.completionAt(#snapshot view,position)
+            fun strings values=List.foldl(fn (value,n)=>size value+32+n)0 values
+            fun candidate (item:A.candidate,n)=n+128+size(#name item)+size(#kind item)+
+              (case #detail item of NONE=>0 | SOME text=>size text)+
+              List.foldl(fn (args,n)=>32+strings args+n)0(#arguments item)+
+              (case #definition item of NONE=>0 | SOME location=>48+size(#file location))
+            val bytes=256+strings path+size(#role result)+List.foldl candidate 0 (#candidates result)+
+              List.foldl(fn ((label,ty),n)=>64+size label+size ty+n)0(#fields result)
+            val maximum=1024*1024
+            fun keep([],_,_,all)=List.rev all
+              | keep(item::rest,count,total,all)=if count=8 orelse #bytes item>maximum-total then List.rev all
+                else keep(rest,count+1,total+ #bytes item,item::all)
+            val item={ordinal=ordinal,offset=offset,path=path,result=result,bytes=bytes}:scopeEntry
+            val ()=if bytes>maximum then () else cache:=keep(item:: !cache,0,0,[])
+        in result end end
   fun completionItems (view:view,source:source,offset) =
     let val selected=sourceOrdinal (view,source)
         fun query path=case selected of NONE => {role="unknown",candidates=[],fields=[]} | SOME ordinal =>
-          A.completionAt (#snapshot view,{ordinal=ordinal,offset=offset,path=path})
+          scopeAt (view,{ordinal=ordinal,offset=offset,path=path})
     in RuneLspCompletion.items {text= #text source,offset=offset,pieces=tokens source,snapshot= #id view,
       uri= #uri source,query=query,range=fn (start,stop) => range (source,#encoding view,start,stop),
       snippets=capability (#capabilities view,["textDocument","completion","completionItem","snippetSupport"])=SOME (Json.Bool true)} end
   fun completionDocumentation (view:view,source:source,offset,name,kind) =
     case sourceOrdinal (view,source) of NONE => NONE | SOME ordinal =>
       let val {path,...}=RuneLspCompletion.prefix (#text source,offset)
-          val candidates=A.visibleAt (#snapshot view,{ordinal=ordinal,offset=offset,path=path})
+          val candidates= #candidates(scopeAt(view,{ordinal=ordinal,offset=offset,path=path}))
       in case List.find (fn candidate:A.candidate => #name candidate=name andalso #kind candidate=kind) candidates of
            NONE => NONE | SOME candidate => Option.mapPartial (fn location => A.documentationAt (#snapshot view,location)) (#definition candidate) end
   fun query (Worker {tokens=history,...},view:view,{method,params}) =
@@ -442,7 +488,7 @@ struct
                  let val point=J.required (value,"range")
                      val ()=case LspProtocol.rangeFromJson point of NONE => raise J.Invalid "invalid selected completion range" | SOME _ => ()
                  in SOME (point,J.string (J.required (value,"text"))) end
-               fun query (ordinal,at,path)=A.completionAt (#snapshot view,{ordinal=ordinal,offset=at,path=path})
+               fun query (ordinal,at,path)=scopeAt (view,{ordinal=ordinal,offset=at,path=path})
                val items=case (sourceOrdinal (view,source),offset ()) of (SOME ordinal,SOME at) =>
                  RuneLspCompletion.inline {text= #text source,offset=at,pieces=tokens source,
                    query=fn path => query (ordinal,at,path),range=fn (start,stop) => range (source,#encoding view,start,stop),selected=selected}

@@ -27,7 +27,7 @@ struct
                val normalized=if windows then String.map (fn #"\\" => #"/" | c => c) program else program
                val vm=OS.Path.concat (OS.Path.dir normalized,if windows then "runevm.exe" else "runevm")
            in RuneLspSession.serve {maxMessageBytes= !maximum,lib= !lib,workerCommand=vm,
-             workerArgs=["--jit=all","--heap-limit","536870912",program,"--analysis-worker"]} end
+             workerArgs=["--jit=opt","--heap-limit","536870912",program,"--analysis-worker"]} end
     end handle Usage message => (stderr message; OS.Process.failure)
              | e => (stderr (General.exnMessage e); OS.Process.failure)
 end

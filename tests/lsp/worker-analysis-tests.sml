@@ -68,11 +68,27 @@ struct
               val hover=query (3,goodId,"textDocument/hover",params)
               val contents=valOf (Json.member ("contents",hover))
               val ()=check ("frozen hover query",Json.member ("value",contents)=SOME (Json.String "int"))
+              val completionParams=Json.Object[("textDocument",Json.Object[("uri",Json.String uri)]),
+                ("position",Json.Object[("line",Json.int 1),("character",Json.int 0)])]
+              fun answerType value=case Json.member("items",value) of SOME(Json.Array items)=>
+                  (case List.find(fn item=>Json.member("label",item)=SOME(Json.String "answer"))items of
+                     NONE=>NONE | SOME item=>Json.member("detail",item)) | _=>NONE
+              val firstCompletion=query(30,goodId,"textDocument/completion",completionParams)
+              val ()=check("repeated frozen completion keeps its semantic result",
+                firstCompletion=query(31,goodId,"textDocument/completion",completionParams) andalso
+                answerType firstCompletion=SOME(Json.String "int"))
+              val _=D.changeDocument(documents,{uri=uri,version=3,changes=[D.Replace "val answer=true\n"]})
+              val ()=ready() val ()=P.enqueue(!process,request 32)
+              val changed=result(response 32)
+              val changedId=V.bytes(V.field(changed,"snapshot"))
+              val ()=check("new text refreshes indexes and completion while old snapshots stay frozen",
+                answerType(query(33,changedId,"textDocument/completion",completionParams))=SOME(Json.String "bool") andalso
+                query(34,goodId,"textDocument/completion",completionParams)=firstCompletion)
               val old=query (4,V.bytes (V.field (bad,"snapshot")),"textDocument/diagnostic",
                 Json.Object [("textDocument",Json.Object [("uri",Json.String uri)])])
               val ()=check ("older snapshot remains isolated",not (null (items old)))
               val large=String.concat (List.tabulate (10000,fn n => "val x" ^ Int.toString n ^ "=" ^ Int.toString n ^ "\n"))
-              val _=D.changeDocument (documents,{uri=uri,version=3,changes=[D.Replace large]})
+              val _=D.changeDocument (documents,{uri=uri,version=4,changes=[D.Replace large]})
               val ()=ready ()
               val ()=P.enqueue (!process,request 5)
               val ()=P.enqueue (!process,V.Object [("op",V.Bytes "cancel"),("id",V.Integer 5)])
@@ -83,7 +99,7 @@ struct
               val ()=stop (!process)
               val ()=inbox:=[]
               val ()=process:=P.start {command=vm,args=[worker],limits=Subprocess.unlimited}
-              val _=D.changeDocument (documents,{uri=uri,version=4,changes=[D.Replace "val answer=42\n"]})
+              val _=D.changeDocument (documents,{uri=uri,version=5,changes=[D.Replace "val answer=42\n"]})
               val ()=ready ()
               val ()=P.enqueue (!process,request 7)
               val restarted=result (response 7)
