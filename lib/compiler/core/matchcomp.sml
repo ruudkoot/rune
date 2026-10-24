@@ -14,10 +14,16 @@ struct
   fun bindVar (stamp, isGlobal, value, k) =
     if isGlobal then Seq (SetGlobal (stamp, value), k) else Let (stamp, value, k)
 
+  (* each local variable an expression is made to read, told to Translate
+     (--functors=functions: the slots of a record a functor's body sets
+     are those read) *)
+  val noteLocal : (int -> unit) ref = ref (fn _ => ())
+  val () = CompilerState.cellRoot ("MatchComp.noteLocal", noteLocal)
+
   fun exnConExp (info : exninfo) =
     case #builtin info of
       SOME k => BuiltinExn k
-    | NONE => if #isGlobal info then Global (#stamp info) else Var (#stamp info)
+    | NONE => if #isGlobal info then Global (#stamp info) else (!noteLocal (#stamp info); Var (#stamp info))
 
   fun sconConst sc =
     case sc of

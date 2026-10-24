@@ -100,6 +100,13 @@ struct
      whose declarations are its function's, no rest of the program in them *)
   val inBody = ref false
   val () = CompilerState.cellRoot ("Translate.inBody", inBody)
+  (* the local variables read so far: a record's slot a body sets is one of
+     them (bindUsed), the rest of the body having been made first *)
+  val read : unit IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Translate.read", read, IntTable.copy)
+  fun noteRead (x : int) = IntTable.insert (!read, x, ())
+  val () = MatchComp.noteLocal := noteRead
+  fun wasRead (x : int) = isSome (IntTable.find (!read, x))
 
   fun qualified name = String.concatWith "." (List.rev (name :: !structPath))
 
@@ -264,7 +271,7 @@ struct
       EScon (sc, slot, _) => MatchComp.sconExp (sc, slot)
     | EVar (_, slot, sp) =>
         (case varinfo (slot, sp) of
-           VLocal (s, t) => useOf (Var s, s, t)
+           VLocal (s, t) => (noteRead s; useOf (Var s, s, t))
          | VGlobal (s, t) => useOf (Global s, s, t)
          | VCon (info, t) => conExp (info, Ty.fromTypes t)
          | VConVal (info, t) => conExp (info, Ty.fromTypes t)
@@ -655,7 +662,9 @@ struct
     case v of
       Env.Val {stamp, global, scheme} =>
         let val m = monoOf scheme
-        in toUnit (useOf (if global then Global stamp else Var stamp, stamp, m), Ty.fromTypes m) end
+        in if global then () else noteRead stamp;
+           toUnit (useOf (if global then Global stamp else Var stamp, stamp, m), Ty.fromTypes m)
+        end
     | Env.Exn {info, ...} => toUnit (exnConExp info, Ty.exnCon)
     | Env.ExnAsVal {ty, info} => let val t = Ty.fromTypes (monoOf ty) in toUnit (exnExp (info, t), t) end
     | Env.ConAsVal {scheme, info} => let val t = Ty.fromTypes (monoOf scheme) in toUnit (conExp (info, t), t) end
@@ -669,7 +678,7 @@ struct
     | NONE =>
         let
           fun desc (Elaborate.DescConst n) = toUnit (Const (CInt (IntInf.fromInt n), Ty.int), Ty.int)
-            | desc (Elaborate.DescVar d) = toUnit (Var d, Ty.int)
+            | desc (Elaborate.DescVar d) = (noteRead d; toUnit (Var d, Ty.int))
           val elems = List.map (fn (_, v) => slotValue v) vals @ List.map desc descs
                       @ List.map (fn (_, s) => toUnit (recordExp s, recordTyN (Elaborate.slotsOf s))) strs
         in Tuple (elems @ List.tabulate (Int.max (2 - List.length elems, 0), fn _ => Unit)) end
@@ -704,6 +713,49 @@ struct
             end
     in go (vals, 0) end
 
+  (* What bindRecord binds, of a record of local variables, that the code
+     made (rest) reads, around it: a body's parameter and the results of its
+     applications, most of whose slots the body reads none of *)
+  and bindUsed (r : Elaborate.record, src : lexp, rest : lexp) : lexp =
+    let
+      fun used (Elaborate.Record {vals, descs, strs, ...}) =
+        List.exists (fn (_, Env.Val {stamp, ...}) => wasRead stamp
+                      | (_, Env.Exn {info, ...}) => wasRead (#stamp info)
+                      | _ => false) vals
+        orelse List.exists (fn Elaborate.DescVar d => wasRead d | _ => false) descs
+        orelse List.exists (fn (_, s) => used s) strs
+      fun go (Elaborate.Record {vals, descs, strs, ...}, src, rest) =
+        let
+          fun slots ([], i, rest) = (i, rest)
+            | slots ((_, v) :: more, i, rest) =
+                let
+                  val rest =
+                    case v of
+                      Env.Val {stamp, scheme, ...} =>
+                        if wasRead stamp then Let (stamp, fromUnit (Select (i, src), Ty.fromTypes scheme), rest) else rest
+                    | Env.Exn {info, ...} =>
+                        if isSome (#builtin info) orelse not (wasRead (#stamp info)) then rest
+                        else Let (#stamp info, fromUnit (Select (i, src), Ty.exnCon), rest)
+                    | _ => rest
+                in slots (more, i + 1, rest) end
+          val (i, rest) = slots (vals, 0, rest)
+          val (i, rest) =
+            List.foldl (fn (d, (i, rest)) =>
+                          (i + 1, case d of
+                                    Elaborate.DescVar d => if wasRead d then Let (d, fromUnit (Select (i, src), Ty.int), rest) else rest
+                                  | Elaborate.DescConst _ => rest))
+                       (i, rest) descs
+          val (_, rest) =
+            List.foldl (fn ((_, s), (i, rest)) =>
+                          (i + 1,
+                           if not (used s) then rest
+                           else
+                             let val t = MatchComp.freshVar ()
+                             in Let (t, fromUnit (Select (i, src), recordTyN (Elaborate.slotsOf s)), go (s, Var t, rest)) end))
+                       (i, rest) strs
+        in rest end
+    in go (r, src, rest) end
+
   (* a functor's declaration: its function, of its argument's record to its
      result's *)
   and functorFun (b : funbind, rest : lexp) : lexp =
@@ -713,13 +765,13 @@ struct
         let
           val saved = (!structPath, !inBody)
           val () = (structPath := [#name b]; inBody := true)
-          val body = pruneSlots (bindRecord (paramRecord, Var param,
-                                             fn () => openFuns (opens, fn () => transStrexp (#body b, fn () => recordExp result))))
+          val () = read := IntTable.table 1024
+          val body = bindUsed (paramRecord, Var param, openFuns (opens, fn () => transStrexp (#body b, fn () => recordExp result)))
                      handle x => (structPath := #1 saved; inBody := #2 saved; raise x)
           val () = (structPath := #1 saved; inBody := #2 saved)
           val fty = Ty.arrow (recordTyN (Elaborate.slotsOf paramRecord), recordTyN (Elaborate.slotsOf result))
           val f = Mark (#span b, Fn (param, fty, body))
-        in nameFun (#name b, f); Seq (SetGlobal (func, f), rest) end
+        in nameFun ("functor " ^ #name b, f); Seq (SetGlobal (func, f), rest) end
 
   (* The functions that make and take apart each constructor whose layout
      the parameter leaves open, by its descriptor d (D4): a constructor
@@ -736,6 +788,7 @@ struct
           val t = Ty.fromTypes dataTy
           val a = Ty.fromTypes argTy
           fun cast (e, from, to) = Prim ("unsafe_cast", SOME (Ty.arrow (from, to)), [e])
+          val () = noteRead desc
           fun isD n = Prim ("poly_eq", SOME (Ty.arrow (Ty.tuple [Ty.int, Ty.int], Ty.bool)),
                             [Var desc, Const (CInt (IntInf.fromInt n), Ty.int)])
           fun chain f = List.foldr (fn (n, rest) => If (isD n, f n, rest)) (raiseBuiltin exnMatch)
@@ -766,93 +819,13 @@ struct
   and callExp ({func, arg, argVar, result, global, record} : Elaborate.callCode, sp, k : unit -> lexp) : lexp =
     let
       fun call a = MatchComp.bindVar (result, global, App (Global func, a),
-                                      bindRecord (record, if global then Global result else Var result, k))
+                                      if global then bindRecord (record, Global result, k)
+                                      else bindUsed (record, Var result, k ()))
     in
       Mark (sp, case argVar of
                   SOME v => Let (v, recordExp arg, call (Var v))
                 | NONE => call (recordExp arg))
     end
-
-  (* What a functor's body binds of records and no code reads -- a
-     variable set from a slot, a substructure's record -- taken out: the
-     parameter's values and an application's, most of which a body does
-     not use. Such a binding reads, casts and selects variables, which
-     cannot fail or do anything else *)
-  and pruneSlots (e : lexp) : lexp =
-    let
-      val uses : int IntTable.table = IntTable.table 4096
-      fun use x = IntTable.update (uses, x, fn NONE => 1 | SOME n => n + 1)
-      fun unuse x = IntTable.update (uses, x, fn NONE => 0 | SOME n => n - 1)
-      fun usesOf x = getOpt (IntTable.find (uses, x), 0)
-      (* each variable read, given to f *)
-      fun walk (f : int -> unit) (e : lexp) : unit =
-        let
-          fun go e =
-            case e of
-              Var x => f x
-            | Fn (_, _, b) => go b
-            | Inst (a, _) => go a
-            | App (a, b) => (go a; go b)
-            | Let (_, a, b) => (go a; go b)
-            | LetRec (bs, b) => (List.app (fn (_, _, r) => go r) bs; go b)
-            | Seq (a, b) => (go a; go b)
-            | SetGlobal (_, a) => go a
-            | Tuple es => List.app go es
-            | Select (_, a) => go a
-            | Con (_, _, a) => go a
-            | Decon (_, a) => go a
-            | ConTag a => go a
-            | If (a, b, c) => (go a; go b; go c)
-            | Try (a, b) => (go a; go b)
-            | Join (_, _, a, b) => (go a; go b)
-            | Jump (_, es) => List.app go es
-            | Raise a => go a
-            | Handle (a, _, b) => (go a; go b)
-            | MkExn (a, b) => (go a; go b)
-            | ExnCon a => go a
-            | ExnArg (_, a) => go a
-            | Prim (_, _, es) => List.app go es
-            | Mark (_, a) => go a
-            | Rest a => go a
-            | _ => ()
-        in go e end
-      fun pure e =
-        case e of
-          Var _ => true
-        | Global _ => true
-        | Select (_, a) => pure a
-        | Prim ("unsafe_cast", _, [a]) => pure a
-        | _ => false
-      fun go e =
-        case e of
-          Let (x, a, b) =>
-            let val b' = go b
-            in if usesOf x = 0 andalso pure a then (walk unuse a; b') else Let (x, go a, b') end
-        | Fn (x, t, b) => Fn (x, t, go b)
-        | Inst (a, t) => Inst (go a, t)
-        | App (a, b) => App (go a, go b)
-        | LetRec (bs, b) => LetRec (List.map (fn (x, t, r) => (x, t, go r)) bs, go b)
-        | Seq (a, b) => Seq (go a, go b)
-        | SetGlobal (g, a) => SetGlobal (g, go a)
-        | Tuple es => Tuple (List.map go es)
-        | Select (i, a) => Select (i, go a)
-        | Con (t, ty, a) => Con (t, ty, go a)
-        | Decon (t, a) => Decon (t, go a)
-        | ConTag a => ConTag (go a)
-        | If (a, b, c) => If (go a, go b, go c)
-        | Try (a, b) => Try (go a, go b)
-        | Join (j, ps, a, b) => Join (j, ps, go a, go b)
-        | Jump (j, es) => Jump (j, List.map go es)
-        | Raise a => Raise (go a)
-        | Handle (a, x, b) => Handle (go a, x, go b)
-        | MkExn (a, b) => MkExn (go a, go b)
-        | ExnCon a => ExnCon (go a)
-        | ExnArg (t, a) => ExnArg (t, go a)
-        | Prim (p, t, es) => Prim (p, t, List.map go es)
-        | Mark (sp, a) => Mark (sp, go a)
-        | Rest a => Rest (go a)
-        | _ => e
-    in walk use e; go e end
 
   (* Recursive bindings: globals are assigned in sequence (closures refer to
      them through the global table); locals use LetRec. *)

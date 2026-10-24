@@ -1942,6 +1942,15 @@ struct
       t
     end
 
+  (* a functor's function (--functors=functions; Translate.functorFun
+     names it so), which is not put where it is called: that is the
+     expansion's (functors-units.md, M6), with its budget, and M5's
+     applications are calls *)
+  fun functorFun ({params, ...} : fundef) : bool =
+    case params of
+      (x, _) :: _ => (case IntMap.find (!Translate.funNames, x) of SOME n => String.isPrefix "functor " n | NONE => false)
+    | [] => false
+
   fun program (p : program) : program =
     let
       (* inlining is an optional pass of its own name, which runs here *)
@@ -1957,7 +1966,7 @@ struct
           List.app (fn Funs fs =>
                          List.app (fn f =>
                                      if size (#body f) <= inlineLimit f andalso not (names (#name f, #body f))
-                                        andalso not (raises (#body f))
+                                        andalso not (raises (#body f)) andalso not (functorFun f)
                                      then IntTable.insert (!inlinable, #name f, f) else ()) fs
                      | _ => ()) p
       (* called once in the program; in a unit, a unit after it may call it
@@ -1966,7 +1975,7 @@ struct
         if not inline orelse not (!Pass.whole) then ()
         else
           List.app (fn Funs [f] =>
-                         if calledOnce (#name f) andalso not (names (#name f, #body f))
+                         if calledOnce (#name f) andalso not (names (#name f, #body f)) andalso not (functorFun f)
                          then IntTable.insert (!once, #name f, SOME f) else ()
                      | _ => ()) p
       val () = equalities := Pass.enabled ("equality", 2)
@@ -2001,6 +2010,7 @@ struct
              more code, and MLton's programs allocating 3 to 7% less) *)
           if inline andalso size (#body f') <= inlineLimit f' andalso not (names (name, #body f'))
              andalso (isSome (IntTable.find (!inlinable, name)) orelse not (raises (#body f')))
+             andalso not (functorFun f')
           then IntTable.insert (!inlinable, name, f') else ();
           if specialise andalso size (#body f') <= specialiseSize then
             (case staticParams f' of

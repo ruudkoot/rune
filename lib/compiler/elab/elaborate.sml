@@ -1062,7 +1062,7 @@ struct
                                            cons = List.map (fn (t, n, a) =>
                                                                (t, n, Option.map (fn Ty.FromElab x => Ty.FromElab (realize (phi, x))
                                                                                    | d => d) a)) cons});
-           Ty.pinLayout (#stamp c', Ty.layoutOf (#stamp c)))
+           Ty.pinLayout (#stamp c', Ty.elabLayout (#stamp c)))
       | NONE => ());
      (case IntTable.find (Ty.realizations, #stamp c) of
         SOME f => Ty.bindRealization (#stamp c', realizeFcn (phi, f))
@@ -1134,7 +1134,7 @@ struct
                     (case openAt (#stamp a, tag) of
                        SOME {desc, ...} => DescVar desc
                      | NONE =>
-                         (case List.find (fn (t, _) => t = tag) (Ty.layoutOf (#stamp a)) of
+                         (case List.find (fn (t, _) => t = tag) (Ty.elabLayout (#stamp a)) of
                             SOME (_, SOME n) =>
                               if n > Ty.maxFlat then
                                 err (sp, "--functors=functions: the argument lays out a constructor of " ^ #name c ^ " in "

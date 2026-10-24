@@ -462,6 +462,36 @@ struct
       SOME l => l
     | NONE => declaredLayout stamp
 
+  (* The same, from the elaborator's types as they are, without making
+     types of them (fromTypes), which works out every datatype's extra
+     parameters again after a datatype is entered: what the elaborator
+     asks of a datatype between entering others (an application's
+     instances) *)
+  fun shapeOf (t : Types.ty) : int option =
+    case Types.prune t of
+      Types.TRecord fields => if List.length fields >= 2 then SOME (List.length fields) else NONE
+    | Types.TCon (c, args) =>
+        (case IntTable.find (realizations, #stamp c) of
+           SOME (Types.TName c') => shapeOf (Types.TCon (c', args))
+         | SOME (Types.TAbbrev (params, body)) => shapeOf (Types.substitute (params, args, body))
+         | NONE => NONE)
+    | _ => NONE
+  fun elabLayout (stamp : int) : (int * int option) list =
+    case IntMap.find (!pinned, stamp) of
+      SOME l => l
+    | NONE =>
+        case flatOf stamp of
+          SOME _ => declaredLayout stamp
+        | NONE =>
+            case IntMap.find (!datatypes, stamp) of
+              SOME {cons, ...} =>
+                List.map (fn (tag, _, SOME (FromElab a)) => (tag, shapeOf a)
+                           | (tag, _, SOME (Direct a)) =>
+                               (tag, case view a of Tuple xs => if List.length xs >= 2 then SOME (List.length xs) else NONE
+                                                  | _ => NONE)
+                           | (tag, _, NONE) => (tag, NONE)) cons
+            | NONE => []
+
   (* ---- the types the translation makes ---- *)
 
   val int = con (#stamp Types.intTycon, "int", [])
