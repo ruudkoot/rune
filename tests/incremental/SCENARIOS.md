@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S67. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S69. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
@@ -265,6 +265,18 @@ when the scenarios above were all green
   functor's signature in its unit's basis (`UnitBasis.version` 6). An
   entry whose basis says version 5 is missed, not misread: `c.sml` is
   compiled again, to the basis it had, and `main.sml` is taken.
+* **S68, an equality type variable.** `a.sml` gains `fun same (x : 'a) =
+  0`, which `b.sml` applies to `1.5`; then `same` compares its argument
+  with itself, so its type is `''a -> int`. `b.sml` is compiled again and
+  the build fails, as a build without the cache does: a fingerprint says
+  whether a type variable admits equality
+  (docs/plans/build-cache-issues.md, issue 16). Before, `b.sml` was taken
+  from the cache and the build succeeded.
+* **S69, an equality attribute in a signature.** `a.sml` gains `signature
+  HAS = sig type u end`, which a new `e.sml` matches with `type u =
+  real`; then `type u` becomes `eqtype u`. `e.sml` is compiled again and
+  the build fails: a signature's fingerprint writes each of its local
+  names with its arity and equality (issue 16).
 * **S59, one unit in two sessions.** `c.sml` uses `a.sml` and `b.sml`,
   which do not use each other. Built after them in one order and then in
   the other through one cache, `c.sml`'s entry is taken, and compiled

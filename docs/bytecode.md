@@ -246,7 +246,7 @@ source      varint len, bytes   the hash of its source
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    7 (UnitBasis.version)
+version     varint    8 (UnitBasis.version)
 name        varint len, bytes   the unit's name
 units       varint n, n × string   the identities of the units it names
 counts      3 × varint   its own names of each kind
@@ -258,7 +258,12 @@ counts      3 × varint   its own names of each kind
                 another unit's (its place, a number) ...
 ```
 
-Version 7 adds optional lexical binding origins to environments,
+Version 8 changes no field: the usages a cache entry keeps were
+fingerprinted without the equality of type variables and of a signature's
+local names (docs/plans/build-cache-issues.md, issue 16), so an entry made
+before is not trusted, and its unit is compiled again.
+
+Version 7 added optional lexical binding origins to environments,
 signatures, functors and type-constructor tables. Static analysis records
 source definitions, signature constraints and the lexical owner of copied
 functor bodies separately from runtime stamps. Ordinary batch compilation

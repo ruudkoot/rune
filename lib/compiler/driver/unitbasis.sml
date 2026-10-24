@@ -39,7 +39,7 @@ struct
   (* a pickle that names a unit the session has not loaded *)
   exception Missing of string
 
-  val version = 7
+  val version = 8
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -226,14 +226,17 @@ struct
      signature by their place in it (local) *)
   fun fpTy (tvs : int list ref, local' : int IntMap.map, t : T.ty) : string =
     case T.prune t of
-      T.TVar (ref (T.Unbound {id, ...})) =>
+      T.TVar (ref (T.Unbound {id, eq, ...})) =>
         let
           fun index (_, []) = NONE
             | index (i, x :: rest) = if x = id then SOME i else index (i + 1, rest)
+          (* an equality variable is another type: ''a -> int is not
+             'a -> int (docs/plans/build-cache-issues.md, issue 16) *)
+          val q = if eq then "''" else "'"
         in
           case index (0, !tvs) of
-            SOME i => "'" ^ Int.toString i
-          | NONE => (tvs := !tvs @ [id]; "'" ^ Int.toString (List.length (!tvs) - 1))
+            SOME i => q ^ Int.toString i
+          | NONE => (tvs := !tvs @ [id]; q ^ Int.toString (List.length (!tvs) - 1))
         end
     | T.TVar _ => "'?"
     | T.TCon (c, args) =>
@@ -307,9 +310,15 @@ struct
     ^ String.concat (StringMap.foldri (fn (n, t, acc) => ("t " ^ n ^ " " ^ fpTyStr (local', t) ^ ";") :: acc) [] tys)
     ^ String.concat (StringMap.foldri (fn (n, e, acc) => ("s " ^ n ^ " " ^ fpEnv (local', e) ^ ";") :: acc) [] strs) ^ "}"
 
+  (* the names local to a signature: how many, and of each its arity and
+     whether it admits equality, which "local" ^ i does not say (issue 16) *)
+  fun fpBound (cs : T.tycon list) : string =
+    Int.toString (List.length cs) ^ "<"
+    ^ String.concat (List.map (fn c => Int.toString (#arity c) ^ (if #eq c then "=" else "") ^ ",") cs) ^ ">"
+
   fun fpSigma ({bound, env = en,...} : SigMatch.sigma) : string =
     let val local' = #2 (List.foldl (fn (c, (i, m)) => (i + 1, IntMap.insert (m, #stamp c, i))) (0, IntMap.empty) bound)
-    in Int.toString (List.length bound) ^ fpEnv (local', en) end
+    in fpBound bound ^ fpEnv (local', en) end
 
   (* the fingerprint of a signature's ABI (a dynamic module's: Elaborate,
      StrDynamic and StrExport): what its specifications say, the types they
@@ -339,7 +348,7 @@ struct
           val local' = #2 (List.foldl (fn (c, (i, m)) => (i + 1, IntMap.insert (m, #stamp c, i))) (0, IntMap.empty)
                                       (bound @ generated))
           val () = anchorValues := false
-          val f = (Int.toString (List.length bound) ^ fpEnv (local', pe) ^ "->" ^ Int.toString (List.length generated)
+          val f = (fpBound bound ^ fpEnv (local', pe) ^ "->" ^ fpBound generated
                    ^ fpEnv (local', result))
                   handle e => (anchorValues := true; raise e)
         in anchorValues := true; SOME f end

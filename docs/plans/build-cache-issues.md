@@ -98,6 +98,31 @@ they were found.
   code names, the unit it is the source of, and a unit taken from the cache
   names each where that unit's source is now (scenario S56).
 
+* **16. Fingerprints without equality.** Found by the functors-units
+  roadmap (E9, 2026-10-21). A fingerprint wrote a type variable as `'i`
+  whether or not it admits equality, and a name local to a signature as
+  its place among them, without its arity or its equality. So `'a -> int`
+  and `''a -> int` were one fingerprint, and so were `type t`, `eqtype t`
+  and `type 'a t` in a signature where no value names `t`. Fourteen probes
+  edited one of these in `a.sml` and built `b.sml` through the cache; in
+  seven, the warm build took `b.sml` from the cache where a build without
+  it refused the program, or the other way round:
+  * `fun f (x : 'a) = 0` edited to `fun f x = if x = x then 0 else 1`,
+    and `b.sml` applies `f` to `1.5`: the warm build succeeds; with a
+    closure instead of `1.5`, the program runs `=` on a function value
+    and prints 0;
+  * the same inside a structure; the edit the other way, which refuses a
+    program that holds;
+  * a signature's `type t` edited to `eqtype t` or to `type 'a t`, and
+    `b.sml` matches it with `type t = real` or `type t = int`;
+  * a functor's parameter edited so, and `b.sml` applies it in another
+    functor's body.
+
+  Status: fixed (functors-units M2). A type variable's fingerprint says
+  whether it admits equality, and a signature's or a functor's local names
+  are written each with its arity and equality (`UnitBasis.version` 8).
+  The probes are scenarios S68 (a value) and S69 (a signature).
+
 ## A hit that cannot link
 
 * **4. An entry whose code names a unit no longer there.** An entry is

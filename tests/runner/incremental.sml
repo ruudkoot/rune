@@ -168,6 +168,13 @@ struct
                  check s "no entry to plant" (List.exists (fn x => x) (List.map (fn file => CachePlant.basisVersion file "c.sml" 5) (cache s)));
                  b ["--explain-rebuild"] "c.sml"; prints s "5"; check s "basis version was not diagnosed"
                    (String.isSubstring "c.sml" (#errors (!(#result s))) andalso String.isSubstring "of another version" (#errors (!(#result s)))))
+    | "S68" => (fresh s; e "a.sml" "  val unused = 0" "  val unused = 0\n  fun same (x : 'a) = 0";
+                 e "b.sml" "fun area s = A.area s + 1" "fun area s = A.area s + 1 + A.same 1.5"; b [] all;
+                 e "a.sml" "fun same (x : 'a) = 0" "fun same x = if x = x then 0 else 1"; build s []; fails s)
+    | "S69" => (fresh s; e "a.sml" "  val unused = 0\nend" "  val unused = 0\nend\nsignature HAS = sig type u end";
+                 put s "e.sml" "structure E : HAS = struct type u = real end";
+                 put s "files" "a.sml b.sml e.sml c.sml d.sml main.sml"; b [] "a.sml b.sml e.sml c.sml d.sml main.sml";
+                 e "a.sml" "sig type u end" "sig eqtype u end"; build s []; fails s)
     | _ => raise Failed ("not a simple scenario: " ^ #name s)
     end
 end
