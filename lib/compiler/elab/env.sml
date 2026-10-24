@@ -338,13 +338,14 @@ struct
     {name = name, tag = tag, hasArg = hasArg, ncons = List.length siblings, isRef = false, siblings = siblings}
 
   val boolSiblings = [("false", false), ("true", false)]
-  val listSiblings = [("nil", false), ("::", true)]
+  (* the list's constructors, their tags as Types.tagOrder numbers them *)
+  fun listSiblings () = List.map (fn n => (n, n = "::")) (listTagNames ())
   val boolCons =
     [("false", Con {scheme = boolTy, info = conInfo ("false", 0, false, boolSiblings)}),
      ("true", Con {scheme = boolTy, info = conInfo ("true", 1, false, boolSiblings)})]
-  val listCons =
-    [("nil", Con {scheme = listTy a, info = conInfo ("nil", 0, false, listSiblings)}),
-     ("::", Con {scheme = TArrow (tupleTy [a, listTy a], listTy a), info = conInfo ("::", 1, true, listSiblings)})]
+  fun listConsNow () =
+    [("nil", Con {scheme = listTy a, info = conInfo ("nil", nilTag (), false, listSiblings ())}),
+     ("::", Con {scheme = TArrow (tupleTy [a, listTy a], listTy a), info = conInfo ("::", consTag (), true, listSiblings ())})]
   val refCons =
     [("ref", Con {scheme = TArrow (a, refTy a),
                   info = {name = "ref", tag = 0, hasArg = true, ncons = 1, isRef = true, siblings = [("ref", true)]}})]
@@ -370,7 +371,7 @@ struct
     let val o' = overloaded (id, class)
     in (name, Prim {scheme = TArrow (tupleTy [o', o'], boolTy), name = name}) end
 
-  val builtinVals =
+  fun builtinValsNow listCons =
     boolCons @ listCons @ refCons @
     List.rev (#1 (List.foldl (fn (n, (acc, k)) => (builtinExn (n, k) :: acc, k + 1)) ([], 0) builtinExns)) @
     [binop ("+", numeric, ~10), binop ("-", numeric, ~11), binop ("*", numeric, ~12),
@@ -393,7 +394,7 @@ struct
 
   fun nameStr (c, cons) = TyStr {fcn = TName c, cons = cons}
 
-  val builtinTys =
+  fun builtinTysNow listCons =
     [("int", nameStr (intTycon, [])),
      ("word", nameStr (wordTycon, [])),
      ("real", nameStr (realTycon, [])),
@@ -413,10 +414,16 @@ struct
      ("_realarray", nameStr (realarrayTycon, [])),
      ("unit", TyStr {fcn = TAbbrev ([], unitTy), cons = []})]
 
-  val initial =
-    Env {origins=StringMap.empty,vals = StringMap.fromList builtinVals,
-         tys = StringMap.fromList builtinTys,
-         strs = StringMap.empty}
+  (* the initial basis, with the list's tags as Types.tagOrder numbers them
+     now: what a compile begins with once its options are read *)
+  fun initialNow () =
+    let val listCons = listConsNow ()
+    in
+      Env {origins=StringMap.empty,vals = StringMap.fromList (builtinValsNow listCons),
+           tys = StringMap.fromList (builtinTysNow listCons),
+           strs = StringMap.empty}
+    end
+  val initial = initialNow ()
 
   (* ---- the names of types ---- *)
 

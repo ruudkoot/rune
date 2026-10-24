@@ -160,6 +160,51 @@ struct
           if labelCompare (l, l') = GREATER then g :: ins (f, rest) else f :: g :: rest
     in List.foldl ins [] fields end
 
+  (* --- the tags of a datatype's constructors --- *)
+  (* --datatype-tags (docs/plans/functors-units.md, D4; a prototype of its
+     M5): the constructors of a datatype numbered in the order of their
+     declaration (the default), by their names sorted (`sorted`, which
+     --functors=functions takes), or sorted but for the two sets of names
+     whose order the runtime's C has known, nil and :: and LESS, EQUAL and
+     GREATER (`sorted-x`): a rule on names alone, never on a type's
+     identity, so that a specification and the datatype that matches it
+     number alike under each *)
+  datatype tagOrder = TagsDeclared | TagsSorted | TagsSortedX
+  val tagOrder = ref TagsDeclared
+  val () = CompilerState.cellRoot ("Types.tagOrder", tagOrder)
+  fun tagOrderName TagsDeclared = "declared"
+    | tagOrderName TagsSorted = "sorted"
+    | tagOrderName TagsSortedX = "sorted-x"
+  fun tagOrderOf name = List.find (fn o' => tagOrderName o' = name) [TagsDeclared, TagsSorted, TagsSortedX]
+
+  (* the names of a datatype's constructors, given in their declaration's
+     order, in the order of their tags *)
+  fun tagNames (names : string list) : string list =
+    case !tagOrder of
+      TagsDeclared => names
+    | order =>
+        let
+          fun ins (n, []) = [n]
+            | ins (n, m :: rest) = if String.< (m, n) then m :: ins (n, rest) else n :: m :: rest
+          val sorted = List.foldl ins [] names
+          fun exactly set = List.length set = List.length names andalso List.all (fn n => List.exists (fn m => m = n) names) set
+        in
+          case order of
+            TagsSortedX =>
+              if exactly ["nil", "::"] then ["nil", "::"]
+              else if exactly ["LESS", "EQUAL", "GREATER"] then ["LESS", "EQUAL", "GREATER"]
+              else sorted
+          | _ => sorted
+        end
+  (* the tag of a constructor among names, the order tagNames gives *)
+  fun tagIn (names : string list, c : string) : int =
+    let fun go (_, []) = 0 | go (i, n :: rest) = if n = c then i else go (i + 1, rest)
+    in go (0, names) end
+  (* the list's: nil and :: *)
+  fun listTagNames () = tagNames ["nil", "::"]
+  fun nilTag () = tagIn (listTagNames (), "nil")
+  fun consTag () = tagIn (listTagNames (), "::")
+
   fun tupleTy tys =
     TRecord (ListPair.zip (List.tabulate (List.length tys, fn i => Int.toString (i + 1)), tys))
 

@@ -520,7 +520,7 @@ struct
       val () = MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE)
       val registers = !Options.target = "registers"
       val () = if registers then Code.opcodeNames := RegCodes.names else ()
-      val env = ref Env.initial
+      val env = ref (Env.initialNow ())
       val () = UnitBasis.startSession ()
       (* each unit's source, its tokens when wanted, whether it may use
          _prim -- the basis library may, the libraries beside it may not --
@@ -1093,7 +1093,7 @@ struct
       (* the warnings of UTS #39 the inputs' lexing found (D13) *)
       val () = List.app Lexer.report (!Options.inputs)
       val () = if !Options.dumpAst then List.app (fn d => println (Ast.decToString d)) (userProg @ finalProg) else ()
-      val env = ref Env.initial
+      val env = ref (Env.initialNow ())
       type libraryContext = LibraryScope.basis
       val libraryContexts : (string * libraryContext) list ref = ref []
       fun context () : libraryContext = {env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs}
@@ -1191,6 +1191,7 @@ struct
 
   and main' (_ : string, args : string list) : OS.Process.status =
     (Options.parse args;
+     Options.settle ();
      Pass.startup ();
      Parser.orPatterns := !Options.orPatterns;
      Diagnostic.install {color = !Options.color, full = !Options.diagnostics, json = !Options.diagnosticsJson};

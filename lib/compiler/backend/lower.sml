@@ -359,8 +359,13 @@ struct
               end
           | NONE =>
               (* a type name of the basis the elaborator made no datatype of:
-                 array, vector, ref, and the abstract ones, are in the heap *)
-              if name = "array" orelse name = "vector" orelse name = "ref" then L.RPtr else L.RAny
+                 array, vector, ref, and the abstract ones, are in the heap;
+                 by stamp under --functors=functions, where a parameter's
+                 abstract type of that name reaches here *)
+              if (if !Elaborate.functorFunctions
+                  then List.exists (fn c => stamp = #stamp c) [Types.arrayTycon, Types.vectorTycon, Types.refTycon]
+                  else name = "array" orelse name = "vector" orelse name = "ref")
+              then L.RPtr else L.RAny
   fun setRep (b : builder, x : L.var, r : L.rep) =
     if r = L.RAny then () else
     case IntTable.find (#reps b, x) of

@@ -159,15 +159,15 @@ struct
     | PTuple ([], _) => k
     | PTuple (ps, _) =>
         compileFields (ListPair.zip (List.tabulate (List.length ps, fn i => i), ps), v, k)
-    | PList ([], _) => testTag (v, 0, k)
+    | PList ([], _) => testTag (v, Types.nilTag (), k)
     | PList (p :: rest, sp) =>
         let
           val cell = freshVar ()
           val hd = freshVar ()
           val tl = freshVar ()
         in
-          testTag (v, 1,
-            Let (cell, Decon (1, Var v),
+          testTag (v, Types.consTag (),
+            Let (cell, Decon (Types.consTag (), Var v),
               Let (hd, Select (0, Var cell),
                 Let (tl, Select (1, Var cell),
                   compilePat (p, hd, compilePat (PList (rest, sp), tl, k))))))
@@ -308,13 +308,14 @@ struct
     | KExn
     | KConst
 
-  val listCons = [("nil", false), ("::", true)]
+  (* the list's constructors by tag, as Types.tagOrder numbers them *)
+  fun listCons () = List.map (fn n => (n, n = "::")) (Types.listTagNames ())
 
   fun kind (p : pat) : kind =
     case p of
       PTuple (ps, _) => KProd (List.length ps)
     | PRecord (_, _, _, _) => KProd (List.length (fieldsOf p))
-    | PList _ => KCon (2, listCons)
+    | PList _ => KCon (2, listCons ())
     | PScon _ => KConst
     | PVar (_, slot, sp) =>
         (case info (slot, sp) of
@@ -341,8 +342,8 @@ struct
      pattern; NONE for a wild one. *)
   fun conOf (p : pat) : (int * pat option) option =
     case p of
-      PList ([], _) => SOME (0, NONE)
-    | PList (q :: rest, sp) => SOME (1, SOME (PTuple ([q, PList (rest, sp)], sp)))
+      PList ([], _) => SOME (Types.nilTag (), NONE)
+    | PList (q :: rest, sp) => SOME (Types.consTag (), SOME (PTuple ([q, PList (rest, sp)], sp)))
     | PVar (_, slot, sp) => (case info (slot, sp) of PICon i => SOME (#tag i, NONE) | _ => NONE)
     | PApp (_, slot, arg, sp) => (case info (slot, sp) of PICon i => SOME (#tag i, SOME arg) | _ => NONE)
     | _ => NONE

@@ -96,6 +96,11 @@ struct
   val structPath : string list ref = ref []
   val () = CompilerState.cellRoot ("Translate.structPath", structPath)
 
+  (* --functors=functions: whether what is translated is a functor's body,
+     whose declarations are its function's, no rest of the program in them *)
+  val inBody = ref false
+  val () = CompilerState.cellRoot ("Translate.inBody", inBody)
+
   fun qualified name = String.concatWith "." (List.rev (name :: !structPath))
 
   (* Name e and, where it is curried, the functions inside it: they are all
@@ -265,19 +270,7 @@ struct
          | VConVal (info, t) => conExp (info, Ty.fromTypes t)
          | VExn (info, t) => exnExp (info, Ty.fromTypes t)
          | VExnVal (info, t) => exnExp (info, Ty.fromTypes t)
-         | VBuiltin (name, ty) =>
-             (case builtinGlobal (name, ty) of
-                SOME g => useOf (Global g, g, ty)
-              | NONE =>
-                  let
-                    val prim = builtinPrim (name, ty)
-                    val t = Ty.fromTypes ty
-                  in
-                    if name = "<>" then
-                      let val x = MatchComp.freshVar ()
-                      in Fn (x, t, notExp (Prim (prim, SOME t, [Select (0, Var x), Select (1, Var x)]))) end
-                    else etaPrim (prim, t)
-                  end))
+         | VBuiltin (name, ty) => builtinValue (name, ty))
     | ERecord (fields, _) =>
         let
           val sorted = Types.sortFields fields
@@ -305,7 +298,7 @@ struct
         in Fn (x, Ty.arrow (r, field), Select (i, Var x)) end
     | EList (es, slot, sp) =>
         let val t = ty (slot, sp)
-        in List.foldr (fn (e, acc) => Con (1, t, Tuple [transExp e, acc])) (Con0 (0, t)) es end
+        in List.foldr (fn (e, acc) => Con (Types.consTag (), t, Tuple [transExp e, acc])) (Con0 (Types.nilTag (), t)) es end
     | ESeq (es, _) =>
         let
           fun go [] = Unit
@@ -341,6 +334,21 @@ struct
         let val x = MatchComp.freshVar ()
         in Fn (x, ty (slot, sp), MatchComp.compileMatch (x, transRules rules, Mark (sp, raiseBuiltin exnMatch))) end
     | EPrim (name, _, slot, sp) => etaPrim (name, ty (slot, sp))
+
+  (* a built-in operator, at its type here, as a value *)
+  and builtinValue (name : string, ty : Types.ty) : lexp =
+    case builtinGlobal (name, ty) of
+      SOME g => useOf (Global g, g, ty)
+    | NONE =>
+        let
+          val prim = builtinPrim (name, ty)
+          val t = Ty.fromTypes ty
+        in
+          if name = "<>" then
+            let val x = MatchComp.freshVar ()
+            in Fn (x, t, notExp (Prim (prim, SOME t, [Select (0, Var x), Select (1, Var x)]))) end
+          else etaPrim (prim, t)
+        end
 
   and transRules rules = List.map (fn (p, e) => (p, transExp e)) rules
 
@@ -416,6 +424,7 @@ struct
      program: that is where Mid's top level splits it into definitions
      (ToMid), rather than nest the whole program once per declaration. *)
   and transTopDecs (decs : dec list, k : unit -> lexp) : lexp =
+    if !inBody then transDecs (decs, k) else
     case decs of
       [] => k ()
     | d :: rest =>
@@ -537,7 +546,11 @@ struct
                 end
         in go binds end
     | DSignature _ => k ()
-    | DFunctor _ => k ()
+    | DFunctor (binds, _) =>
+        if not (!Elaborate.functorFunctions) then k ()
+        else
+          let fun go [] = k () | go (b :: rest) = functorFun (b, go rest)
+          in go binds end
 
   (* Structure expressions have no runtime representation of their own: a
      functor application evaluates its argument's declarations and then the
@@ -549,6 +562,9 @@ struct
     | StrAscribe (e, _, _, _) => transStrexp (e, k)
     | StrApp (_, arg, slot, sp) =>
         transStrexp (arg, fn () =>
+          case if !Elaborate.functorFunctions then Elaborate.callAt sp else NONE of
+            SOME call => callExp (call, sp, k)
+          | NONE =>
           case !slot of
             SOME body => transStrexp (body, k)
           | NONE => bug (sp, "functor application not elaborated"))
@@ -619,6 +635,91 @@ struct
                                  Const (CString fingerprint, Ty.fromTypes Types.stringTy), Tuple elems]),
                      k ())
               end)
+
+  (* ---- functors compiled once (--functors=functions; functors-units.md,
+     M5) ---- *)
+
+  (* a record of n slots, as Elaborate.recordTy *)
+  and recordTyN (n : int) : Ty.ty = Ty.tuple (List.tabulate (Int.max (n, 2), fn _ => Ty.unit))
+  and toUnit (e : lexp, t : Ty.ty) : lexp = Prim ("unsafe_cast", SOME (Ty.arrow (t, Ty.unit)), [e])
+  and fromUnit (e : lexp, t : Ty.ty) : lexp = Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, t)), [e])
+
+  (* the record a reach reaches *)
+  and reachExp ({var, global, path} : Elaborate.reach, n : int) : lexp =
+    #1 (List.foldl (fn ((i, k), (e, _)) => (fromUnit (Select (i, e), recordTyN k), k))
+                   (if global then Global var else Var var, n) path)
+
+  (* what a slot of a record holds, cast to unit: a polymorphic value at
+     unit for its type variables, which changes nothing of it *)
+  and slotValue (v : Env.valstatus) : lexp =
+    case v of
+      Env.Val {stamp, global, scheme} =>
+        let val m = monoOf scheme
+        in toUnit (useOf (if global then Global stamp else Var stamp, stamp, m), Ty.fromTypes m) end
+    | Env.Exn {info, ...} => toUnit (exnConExp info, Ty.exnCon)
+    | Env.ExnAsVal {ty, info} => let val t = Ty.fromTypes (monoOf ty) in toUnit (exnExp (info, t), t) end
+    | Env.ConAsVal {scheme, info} => let val t = Ty.fromTypes (monoOf scheme) in toUnit (conExp (info, t), t) end
+    | Env.Prim {scheme, name} => let val m = monoOf scheme in toUnit (builtinValue (name, m), Ty.fromTypes m) end
+    | Env.Con _ => Error.bug "a constructor as a slot of a record"
+
+  (* a record made, or the one in reach *)
+  and recordExp (r as Elaborate.Record {vals, strs, shared}) : lexp =
+    case shared of
+      SOME h => reachExp (h, Elaborate.slotsOf r)
+    | NONE =>
+        let
+          val elems = List.map (fn (_, v) => slotValue v) vals
+                      @ List.map (fn (_, s) => toUnit (recordExp s, recordTyN (Elaborate.slotsOf s))) strs
+        in Tuple (elems @ List.tabulate (Int.max (2 - List.length elems, 0), fn _ => Unit)) end
+
+  (* the variables of a record's values and exceptions set from what src
+     holds, then k: globals where they are, a temporary local for each
+     substructure's record where they are not *)
+  and bindRecord (Elaborate.Record {vals, strs, ...}, src : lexp, k : unit -> lexp) : lexp =
+    let
+      fun go ([], i) = subs (strs, i)
+        | go ((_, v) :: rest, i) =
+            case v of
+              Env.Val {stamp, global, scheme} =>
+                MatchComp.bindVar (stamp, global, fromUnit (Select (i, src), Ty.fromTypes scheme), go (rest, i + 1))
+            | Env.Exn {info, ...} =>
+                if isSome (#builtin info) then go (rest, i + 1)
+                else MatchComp.bindVar (#stamp info, #isGlobal info, fromUnit (Select (i, src), Ty.exnCon), go (rest, i + 1))
+            | _ => go (rest, i + 1)
+      and subs ([], _) = k ()
+        | subs ((_, s) :: rest, i) =
+            let
+              val e = fromUnit (Select (i, src), recordTyN (Elaborate.slotsOf s))
+              fun global (Elaborate.Record {vals, strs, ...}) =
+                List.exists (fn (_, Env.Val {global, ...}) => global | (_, Env.Exn {info, ...}) => #isGlobal info | _ => false) vals
+                orelse List.exists (fn (_, s) => global s) strs
+            in
+              if global s then bindRecord (s, e, fn () => subs (rest, i + 1))
+              else let val t = MatchComp.freshVar () in Let (t, e, bindRecord (s, Var t, fn () => subs (rest, i + 1))) end
+            end
+    in go (vals, 0) end
+
+  (* a functor's declaration: its function, of its argument's record to its
+     result's *)
+  and functorFun (b : funbind, rest : lexp) : lexp =
+    case Elaborate.bodyAt (#span b) of
+      NONE => bug (#span b, "a functor without its code")
+    | SOME {func, param, paramRecord, result} =>
+        let
+          val saved = (!structPath, !inBody)
+          val () = (structPath := [#name b]; inBody := true)
+          val body = bindRecord (paramRecord, Var param, fn () => transStrexp (#body b, fn () => recordExp result))
+                     handle x => (structPath := #1 saved; inBody := #2 saved; raise x)
+          val () = (structPath := #1 saved; inBody := #2 saved)
+          val fty = Ty.arrow (recordTyN (Elaborate.slotsOf paramRecord), recordTyN (Elaborate.slotsOf result))
+          val f = Mark (#span b, Fn (param, fty, body))
+        in nameFun (#name b, f); Seq (SetGlobal (func, f), rest) end
+
+  (* an application: the call, and the variables of its result set from
+     what it returns *)
+  and callExp ({func, arg, result, global, record} : Elaborate.callCode, sp, k : unit -> lexp) : lexp =
+    Mark (sp, MatchComp.bindVar (result, global, App (Global func, recordExp arg),
+                                 bindRecord (record, if global then Global result else Var result, k)))
 
   (* Recursive bindings: globals are assigned in sequence (closures refer to
      them through the global table); locals use LetRec. *)

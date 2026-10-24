@@ -234,16 +234,21 @@ struct
                                  {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map Direct a)) cons}))
   fun bindRealization (stamp : int, fcn : Types.tyfcn) = IntTable.insert (realizations, stamp, fcn)
 
-  (* bool and list, which no declaration makes *)
-  val () =
+  (* bool and list, which no declaration makes: list's tags as
+     Types.tagOrder numbers them, again where an option changes it
+     (bindBuiltins) *)
+  val listParam = Types.freshTvar (Types.genericLevel, Types.KPlain, false)
+  fun bindBuiltins () =
     let
-      val a = Types.freshTvar (Types.genericLevel, Types.KPlain, false)
+      val a = listParam
       val aid = case a of Types.TVar (ref (Types.Unbound {id, ...})) => id | _ => 0
+      val cons = [(Types.nilTag (), "nil", NONE), (Types.consTag (), "::", SOME (Types.tupleTy [a, Types.listTy a]))]
     in
       bindDatatype (#stamp Types.boolTycon, {params = [], cons = [(0, "false", NONE), (1, "true", NONE)]});
       bindDatatype (#stamp Types.listTycon,
-                    {params = [aid], cons = [(0, "nil", NONE), (1, "::", SOME (Types.tupleTy [a, Types.listTy a]))]})
+                    {params = [aid], cons = if Types.nilTag () = 0 then cons else List.rev cons})
     end
+  val () = bindBuiltins ()
 
   (* ---- from the elaborator's types ---- *)
 
@@ -405,6 +410,32 @@ struct
       NONE => NONE
     | SOME {params, cons} =>
         SOME {params = paramsOf (stamp, params), cons = List.map (fn (t, n, a) => (t, n, Option.map argOf a)) cons}
+
+  (* ---- layouts (--functors=functions; functors-units.md, D5) ---- *)
+
+  (* The number of fields of each constructor of a datatype, by tag: SOME n
+     for one whose declared argument is a tuple of n >= 2 -- one object of
+     those fields -- and NONE for one that boxes its argument or has none
+     (Rep, docs/ir.md). Worked out from the declared arguments, or fixed
+     where the datatype was made, for an instance an application's
+     summary names (pinned): the body compiled once makes it so, whatever
+     the instance's types say. *)
+  val pinned : (int * int option) list IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Ty.pinned", pinned)
+  fun pinLayout (stamp : int, l : (int * int option) list) = pinned := IntMap.insert (!pinned, stamp, l)
+  fun declaredLayout (stamp : int) : (int * int option) list =
+    case datatypeOf stamp of
+      SOME {cons, ...} =>
+        List.map (fn (tag, _, SOME a) =>
+                       (case view a of
+                          Tuple xs => (tag, if List.length xs >= 2 then SOME (List.length xs) else NONE)
+                        | _ => (tag, NONE))
+                   | (tag, _, NONE) => (tag, NONE)) cons
+    | NONE => []
+  fun layoutOf (stamp : int) : (int * int option) list =
+    case IntMap.find (!pinned, stamp) of
+      SOME l => l
+    | NONE => declaredLayout stamp
 
   (* ---- the types the translation makes ---- *)
 

@@ -107,6 +107,12 @@ struct
      ("level", Int.toString (!Pass.level)), ("passes", case !Pass.only of NONE => "-" | SOME ps => String.concatWith "," ps),
      ("intbits", Int.toString (!Target.intBits)), ("flex", Elaborate.flexModeName (!Elaborate.flexRecords)),
      ("fuel", case !Pass.fuel of NONE => "-" | SOME n => Int.toString n), ("hash", P.probe ())]
+    (* the prototypes of functors-units.md's M5, where on: nothing where
+       off, which keeps the key it had before them *)
+    @ (if !Elaborate.functorFunctions then [("functors", "functions")] else [])
+    @ (case !Types.tagOrder of
+         Types.TagsDeclared => []
+       | order => [("datatype-tags", Types.tagOrderName order)])
 
   (* The hash of the configuration of this compile *)
   fun configuration () : string =

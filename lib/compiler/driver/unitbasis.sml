@@ -714,6 +714,7 @@ struct
       IntTable.removeRange (Ty.binders, s0, s1);
       IntTable.removeRange (Ty.exnArgs, s0, s1);
       IntTable.removeRange (Ty.realizations, t0, t1);
+      Ty.pinned := IntMap.filteri (fn (stamp, _) => stamp < t0 orelse stamp >= t1) (!Ty.pinned);
       Env.typeOrigins:=IntMap.filteri (fn (stamp,_) => stamp<t0 orelse stamp>=t1) (!Env.typeOrigins)
     end
 
@@ -730,6 +731,7 @@ struct
       IntTable.removeRange (Ty.exnArgs, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
       IntTable.removeRange (Ty.realizations, Vector.sub (at, kTycon), Vector.sub (now, kTycon));
       Ty.datatypes := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.datatypes);
+      Ty.pinned := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.pinned);
       Env.typeOrigins := IntMap.filteri (fn (s, _) => outside kTycon s) (!Env.typeOrigins);
       Elaborate.dataCons := IntMap.filteri (fn (s, _) => outside kTycon s) (!Elaborate.dataCons);
       Translate.primAliases := IntMap.filteri (fn (s, _) => outside kStamp s) (!Translate.primAliases);
@@ -1019,15 +1021,37 @@ struct
      where its body begins (a functor declared again leaves the first in the
      basis of those declared between); or an earlier unit's, by that unit and
      the same *)
-  fun funref (e : enc, f as Elaborate.FunInfo {body, origin, ...}) : unit =
+  fun funref (e : enc, f as Elaborate.FunInfo {body, origin, code, ...}) : unit =
     let
       val w = #w e
       val {start = at, ...} = bodyAt body
     in
       if origin = "" then
-        if IntTable.find (#funsDone e, at) = NONE then (IntTable.insert (#funsDone e, at, ()); P.byte (w, 2); funinfo (e, f))
+        if IntTable.find (#funsDone e, at) = NONE then
+          (IntTable.insert (#funsDone e, at, ());
+           case code of
+             SOME _ => (P.byte (w, 3); funcode (e, f))
+           | NONE => (P.byte (w, 2); funinfo (e, f)))
         else (P.byte (w, 0); P.nat (w, at))
       else (P.byte (w, 1); P.nat (w, unitRef (e, origin)); P.nat (w, at))
+    end
+
+  (* --functors=functions: a functor compiled to a function, which is
+     its signature -- its parameter's, and its summary but for its counts,
+     which are the body's -- its place, and the global of its function:
+     nothing of its body, so that a unit whose body changed and whose
+     signature did not keeps its identity *)
+  and funcode (e : enc, Elaborate.FunInfo {param, paramSig, body, summary, binding, code, ...}) : unit =
+    let
+      val w = #w e
+      val {start = at, ...} = bodyAt body
+    in
+      P.option P.string (w, param); sigma (e, paramSig); P.nat (w, at);
+      P.option (fn (_, {generated, result, ...} : Elaborate.summary) =>
+                  sigma (e, {bound = generated, env = result, origin = Env.Unknown}))
+               (w, summary);
+      writeOrigin (w, binding);
+      case code of SOME g => name (e, kStamp, g) | NONE => bug "a functor's function without its global"
     end
 
   and funinfo (e : enc, Elaborate.FunInfo {param, paramSig, body, defEnv, allowPrim, defSigs, defFuns, summary, binding,...}) : unit =
@@ -1107,7 +1131,11 @@ struct
                     (w, IntMap.find (!Ty.datatypes, v));
            P.option (fn (_, f) => tyfcn (e, f)) (w, IntTable.find (Ty.realizations, v));
            P.option (P.list (fn (w, (n, s)) => (P.string (w, n); valstatus (e, s)))) (w, IntMap.find (!Elaborate.dataCons, v));
-           writeOrigin (w,getOpt (IntMap.find (!Env.typeOrigins,v),Env.Unknown)))
+           writeOrigin (w,getOpt (IntMap.find (!Env.typeOrigins,v),Env.Unknown));
+           (* --functors=functions: the layout a body gave an instance of its datatype (Ty.pinned) *)
+           if !Elaborate.functorFunctions
+           then P.option (P.list (fn (w, (t, n)) => (P.nat (w, t); P.option P.nat (w, n)))) (w, IntMap.find (!Ty.pinned, v))
+           else ())
         else ()
     in drain (); P.byte (w, 0) end
 
@@ -1178,7 +1206,7 @@ struct
           (case fingerprintAt (k, binderOfKey k) of SOME f => "fp " ^ f | NONE => binderOfKey k)
         else binderOfKey k
       val () = P.list (fn (w, k) => (P.string (w, k); P.string (w, binding k)))
-                      (w, if List.null funNames then []
+                      (w, if List.null funNames orelse !Elaborate.functorFunctions then []
                           else StringMap.listKeys (List.foldl (fn (k, m) => StringMap.insert (m, k, ())) StringMap.empty used))
       val before' = #overloads (#snapshot start)
       val () = P.list (fn (_, x) => overload (e, x))
@@ -1690,6 +1718,7 @@ struct
       fun rfunref (r : P.reader) : Elaborate.funinfo =
         case P.rbyte r of
           2 => rfuninfo r
+        | 3 => rfuncode r
         | 0 => let val at = P.rnat r
                in case IntMap.find (!ownFuns, at) of
                     SOME f => f
@@ -1730,9 +1759,27 @@ struct
           val f =
             Elaborate.FunInfo
               {param = param, paramSig = paramSig, body = bodyOf at, defEnv = Env.plus (startEnv, defDelta),
-               allowPrim = allowPrim, origin = identity, summary = summary,binding=binding,
+               allowPrim = allowPrim, origin = identity, summary = summary,binding=binding, code = NONE,
                defSigs = List.foldl (fn ((n, s), m) => StringMap.insert (m, n, s)) startSigs defSigs,
                defFuns = List.foldl (fn ((n, f), m) => StringMap.insert (m, n, f)) startFuns defFuns}
+        in ownFuns := IntMap.insert (!ownFuns, at, f); f end
+      (* --functors=functions: one compiled to a function (funcode), its
+         body nothing but its place *)
+      and rfuncode (r : P.reader) : Elaborate.funinfo =
+        let
+          val param = P.roption P.rstring r
+          val paramSig = rsigma d
+          val at = P.rnat r
+          val summary =
+            P.roption (fn r => let val {bound, env = result,...} = rsigma d
+                               in {generated = bound, result = result, counts = (0, 0, 0)} end) r
+          val binding = readOrigin r
+          val code = rname (d, kStamp)
+          val f =
+            Elaborate.FunInfo
+              {param = param, paramSig = paramSig, body = Ast.StrStruct ([], {file = file, start = at, stop = at}),
+               defEnv = Env.empty, allowPrim = false, origin = identity, summary = summary, binding = binding,
+               defSigs = StringMap.empty, defFuns = StringMap.empty, code = SOME code}
         in ownFuns := IntMap.insert (!ownFuns, at, f); f end
       val funs = P.rlist (fn r => let val n = P.rstring r in (n, rfunref r) end) r
       (* what its functors' bodies found their names bound by: in its identity *)
@@ -1793,6 +1840,10 @@ struct
               val real = P.roption (fn _ => rtyfcn d) r
               val dcons = P.roption (P.rlist (fn r => let val n = P.rstring r in (n, rvalstatus d) end)) r
               val origin=readOrigin r
+              val pin = if !Elaborate.functorFunctions
+                        then P.roption (P.rlist (fn r => let val t = P.rnat r in (t, P.roption P.rnat r) end)) r
+                        else NONE
+              val () = Option.app (fn l => Ty.pinLayout (c, l)) pin
             in
               Option.app (fn i => (Ty.extras := Ty.Unknown; Ty.datatypes := IntMap.insert (!Ty.datatypes, c, i))) dt;
               Option.app (fn f => IntTable.insert (Ty.realizations, c, f)) real;
