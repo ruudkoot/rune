@@ -10,7 +10,7 @@
      known bool;
    * a primitive of int, word or char on constants is folded, at the
      target's precision (Target.t's intBits), unless it would raise, which
-     is left to run;
+     is left to run -- a division by 0, an overflow;
    * a join point nothing jumps to goes, and one jumped to once is put
      where the jump is;
    * a join point that tests its one parameter, a bool, where a jump gives
@@ -145,8 +145,12 @@ struct
       fun int f = case ints () of
                     SOME (a, b) => let val r = f (a, b) in if fitsInt r then SOME (Const (Lambda.CInt r, result)) else NONE end
                   | NONE => NONE
+      (* a division by 0 raises Div, and the least int's div or quot by ~1
+         Overflow (its quotient fits no int): those are left to run *)
+      fun intDiv f = case ints () of SOME (_, b) => if IntInf.sign b = 0 then NONE else int f | NONE => NONE
       fun intCmp f = case ints () of SOME (a, b) => SOME (boolAtom (f (a, b))) | NONE => NONE
       fun word f = case words () of SOME (a, b) => SOME (Const (Lambda.CWord (wrapWord (f (a, b))), result)) | NONE => NONE
+      fun wordDiv f = case words () of SOME (_, b) => if IntInf.sign b = 0 then NONE else word f | NONE => NONE
       fun wordCmp f = case words () of SOME (a, b) => SOME (boolAtom (f (a, b))) | NONE => NONE
       fun eqs () =
         case xs of
@@ -161,6 +165,10 @@ struct
         "int_add" => int IntInf.+
       | "int_sub" => int IntInf.-
       | "int_mul" => int IntInf.*
+      | "int_div" => intDiv IntInf.div
+      | "int_mod" => intDiv IntInf.mod
+      | "int_quot" => intDiv IntInf.quot
+      | "int_rem" => intDiv IntInf.rem
       | "int_lt" => intCmp IntInf.<
       | "int_le" => intCmp IntInf.<=
       | "int_gt" => intCmp IntInf.>
@@ -168,6 +176,8 @@ struct
       | "word_add" => word IntInf.+
       | "word_sub" => word IntInf.-
       | "word_mul" => word IntInf.*
+      | "word_div" => wordDiv IntInf.div
+      | "word_mod" => wordDiv IntInf.mod
       | "word_lt" => wordCmp IntInf.<
       | "word_le" => wordCmp IntInf.<=
       | "word_gt" => wordCmp IntInf.>

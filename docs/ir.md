@@ -408,7 +408,8 @@ does.
   removable; a field of a tuple, the argument or tag of a constructor made
   in the same function, and an `If` on a known bool, are known; a primitive
   of int, word or char constants is folded at the target's precision
-  (`Target.t`'s `intBits`), unless it would raise; `=` of a type whose
+  (`Target.t`'s `intBits`), its divisions among them (functors-units M1),
+  unless it would raise -- a division by 0, an overflow; `=` of a type whose
   values are never in the heap -- int, word, char, and a datatype whose
   constructors are all nullary -- is `imm_eq`, which compares tags and
   bits (M11); `=` of a ref or an array, or where one side is a nullary
