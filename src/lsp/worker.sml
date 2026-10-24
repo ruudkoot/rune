@@ -39,6 +39,8 @@ struct
           let val opName=V.bytes (V.field (value,"op"))
               val id=V.integer (V.field (value,"id"))
               val ()=E.commandId (engine,id)
+              val ()=E.onProgress(engine,fn report=>send(V.Object
+                (("op",V.Bytes "progress")::("id",V.Integer id)::V.object report)))
               fun work () = case opName of
                 "discover" =>
                   let val (workspace,documents)=RuneLspWorkerModel.restore (V.field (value,"state"))
@@ -85,11 +87,14 @@ struct
                    send (V.Object [("id",V.Integer id),("cancelled",V.Bool true)])
                  | RuneCompiler.Failed diagnostics => failed (id,String.concatWith "\n" (List.map #message diagnostics))
                  | E.Stale message => rejected (id,LspProtocol.contentModified,message)
+                 | E.ContextPending message => send(V.Object[("id",V.Integer id),("error",V.Object
+                     [("code",V.Integer LspProtocol.serverCancelled),("message",V.Bytes(E.safe message)),
+                      ("data",V.json(Json.Object[("retriggerRequest",Json.Bool false)]))])])
                  | V.Invalid message => failed (id,message)
                  | RuneLspWorkspace.Invalid message => failed (id,message)
                  | RuneLspSync.Invalid message => rejected (id,JsonRpc.invalidParams,message)
                  | LspUri.Invalid => failed (id,"invalid file URI during worker analysis")
-                 | error => failed (id,General.exnMessage error));ready ()) end
+                 | error => failed (id,General.exnMessage error));RuneLspProfile.retained();ready ()) end
         fun loop ()=case !pending of value :: rest => (pending:=rest;command value;loop ())
           | [] => if !ended then () else (read ();loop ())
         val result=(ready ();loop ();if Framing.pending (!reader) then OS.Process.failure else OS.Process.success)

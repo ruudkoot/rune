@@ -33,6 +33,7 @@ host observations, builds, transport and compression.
 | `record-vm-build` | Selected VM, source/flags/dependency identities needed for relinking |
 | `package-runtime` | Verified runtime material, dependency notices/source archive and SML relinking entrypoints |
 | `make-dist` | Linux/Windows archives, bounded ELF/PE admission, canonical icon and standalone format self-test |
+| `package-lsp` | Private VS Code server/Basis staging, Git-derived manifest version and VSIX publication to disk |
 | `setup-mlton` | Pinned MLton source preparation and its checked 606-file compiler source list |
 | `relink` | Reconfigure and rebuild the retained runtime material in a writable location |
 
@@ -47,6 +48,20 @@ member bytes and repeat determinism are verified separately.
 from the former producer. Its source PNG and ICO digests are paired in
 `data/branding.json`; a changed or poisoned pair is refused before publication.
 Distribution creation therefore needs no Python or Pillow image conversion.
+
+`package-lsp --version VERSION --out STAGE --lib LIB --server SERVER.rbc
+--linux VM --windows VM.exe` stages a private extension. `--client` selects
+the bundled JavaScript and notices (default `build/vscode/client`),
+`--extension` the manifest/README sources (default `editors/vscode`), and
+`--publisher` can override their publisher. `--vsix DIRECTORY` additionally
+invokes the locked local vsce through `--node` (default `NODE` or `node`).
+Only Basis manifest members are included. `--self-test` checks numeric
+release and snapshot version mapping and refusal of unavailable/shallow
+Git history. `make test-vscode` also runs independent staging/fault cases
+and the adapter's dependency-free Node tests; it is part of `make check`.
+`--gmp-notices DIRECTORY` supplies the selected distribution runtime's GMP
+notices, including when its provisioning prefix has been overridden; an
+explicit missing directory is refused.
 
 GMP downloads retain private partial files and bounded mirror attempts. A
 transport error can fall back; a checksum mismatch is fatal. Existing corrupt

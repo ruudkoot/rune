@@ -1,4 +1,4 @@
-# The Rune language server
+# The Rune Language Server
 
 `runelsp` is the standalone LSP adapter for Rune. The current implementation
 provides stdio transport, initialization, capability/position-encoding
@@ -9,6 +9,14 @@ development: [the roadmap](plans/language-server.md) records outstanding
 feature, performance and platform acceptance.
 
 ## Build and launch
+
+For VS Code, `make dist-vscode` produces an installable VSIX containing
+private Linux and Windows x86-64 runtimes and a fallback Basis. It supports
+Remote WSL and does not use Rune executables from PATH or the workspace's
+build outputs. See [the extension guide](../editors/vscode/README.md).
+For Rune development, set `runelsp.libraryRoot` to the checkout's `lib`
+directory as a file URI so analysis follows saved library edits. Run
+`make manifests` after adding files or changing their provided names.
 
 ```
 make lsp
@@ -41,11 +49,117 @@ worker resource limits are separate.
 
 ## Static analysis and queries
 
-A supervised child process owns compiler sessions. The connection continues
+Files listed by the configured library root's `basis/library.build` use
+the Basis bootstrap context: they are checked in build order from the
+initial environment, with primitives enabled for that context. The server
+does not preload a sealed copy of the Basis before checking its own sources.
+A configured program target that does not contain a Basis file does not
+prevent selecting its owning Basis build. Ordinary programs retain their
+normal primitive restrictions.
+
+A supervised foreground child process owns program compiler sessions. Basis
+sources use their own foreground worker, so switching between a program and
+its Basis does not evict either analysis from the other's retention budget.
+The connection continues
 reading requests while analysis runs; foreground queries precede queued
-background checks. Background checks coalesce per document. Cancellation
+background checks. Concurrent providers for one document revision and
+workspace generation share a single check. Cancellation
 receives one response and interrupts the child, with process termination as
-a fallback. Worker restart drops references to its old snapshots.
+a fallback; cancelling one provider preserves a check with other waiters.
+Worker restart drops references to its old snapshots.
+Automatic workspace diagnostic pulls use a separate supervised worker, so
+they cannot evict foreground views or hold up navigation and document queries.
+Each background context releases its compiler session and analysis snapshots
+after producing its diagnostic reports. Cancellation replies immediately and allows each worker
+250 milliseconds to acknowledge before process termination.
+Workers start lazily: at most one for programs, one for Basis sources and
+one for workspace diagnostics. A restart invalidates only its own results.
+Read-only opens/closes whose text matches disk and identical inherited
+configuration replies preserve the workspace generation. Unsaved opens,
+discarded edits and actual configuration changes still invalidate it.
+Unchanged per-file settings do not refresh every editor presentation.
+
+Each worker uses Rune's optimizing JIT, with a 512 MiB VM heap cap and a
+1.5 GiB process address-space cap
+(including both copying spaces and native code), and a 30-second job deadline.
+Workspace sweeps have 30 seconds per context and an overall allowance of
+30 seconds for planning plus 30 seconds for each planned context;
+unit progress does not extend a context's deadline. Each context's diagnostic
+or symbol results are collected before the next context is checked, so the
+response does not keep evicted analysis snapshots alive.
+The Rune Language Server Output channel shows the workspace context count,
+each context as it starts, and progress about every five seconds: the current
+file and phase, checked/reused unit counts, and elapsed time. Document checks
+start reporting after two seconds. Completion is logged for reported work.
+Clients supplying a work-done token receive these intermediate reports through
+`$/progress` as well. Progress updates do not extend deadlines or cancellation.
+The background worker retains at most one diagnostic report cache, bounded
+to 4 MiB of encoded reports. Unchanged workspace polls reuse those JSON
+reports without retaining analysis snapshots or logging another sweep.
+Captured source/build content, relevant manifest content/existence, root
+build-file membership, settings and overlays guard reuse. Saved changes are
+detected even without a watched-file notification; previous result IDs still
+produce unchanged reports.
+Acknowledged file watches let cached workspace polls skip content hashing
+for covered SML/signature/build files and manifests. Watch notifications
+invalidate those reports through the input generation. Coverage is trusted
+only after registration succeeds and the cached content baseline is valid.
+Unwatched paths and refused registrations retain content validation; a full
+fingerprint validation also runs at least once per minute of polling.
+Document pull reports are cached separately from semantic snapshots, with
+at most 512 report identities and 4 MiB of encoded report bodies per connection.
+Polling an unchanged document can return a full or unchanged report even
+after its semantic view was evicted. Recomputing the same report for the
+same input generation does not request another global diagnostic refresh.
+Real input changes still refresh dependent diagnostics, including when the
+active file's own diagnostics stay empty; changes during a pending refresh
+coalesce into a follow-up after its acknowledgement.
+Queries waiting on a freshly checked view run before another check can evict it.
+Workspace diagnostic scope follows the workspace's project builds; merely
+opening a Basis or loose file does not add another background context.
+Those open files receive document diagnostics. Read-only buffer membership
+and document context choices do not invalidate cached workspace reports;
+buffer versions are refreshed when serving them. Content fingerprints use
+the current overlay while a file is open and disk content after it closes.
+Contexts and frozen views each retain at most four entries and charge at most
+2 MiB of source text across entries; a single larger entry can occupy the
+cache alone. Shared text is charged separately per view. These are retention
+budgets, separate from the document and process limits. Unchanged unit
+occurrence projections are reused with the compiler's validated unit keys.
+Each view also retains at most eight frozen completion-scope answers with
+a 1 MiB charge for strings and record overhead. Unchanged captured source
+slots reuse position/token indexes only when file, mode and exact text match;
+semantic syntax still comes from the new compiler snapshot.
+
+Worker stderr is captured privately: at most 4 KiB is retained, a 64 KiB
+stream terminates the worker, and heap exhaustion is classified immediately.
+Infrastructure failure completes all waiting providers once. Further checks
+of that failed document revision and workspace generation return the same
+failure until an edit, dependency/configuration change, close/reopen or
+`Rune: Restart Language Server` permits another attempt.
+An unresolved build-context choice is a quiet server cancellation, rather
+than an infrastructure failure. Selecting a context invalidates foreground
+providers and their cached cancellation without an edit or restart. It does
+not invalidate unchanged closed-project inputs or other pending context prompts.
+
+Infrastructure errors identify the worker PID, job ID and operation, request
+method, document or snapshot, elapsed time and configured limit. Analysis
+jobs also report their selected build context and last compiler phase/file,
+with checked/reused unit counts. The progress age is measured at failure
+time. For example:
+
+```text
+runelsp: analysis worker exceeded its deadline
+  worker PID 12345, elapsed 30.003 s, limit 30.000 s, job 7 (check)
+  document: file:///home/me/rune/src/main/rune-main.sml
+  executable: /private-extension/server/bin/runevm
+  context: rune (file:///home/me/rune/rune.build)
+  last reported phase: unit-elaborated at /home/me/rune/lib/compiler/elab/elaborate.sml (checked 187, reused 0; 1.200 s before failure)
+```
+
+Progress travels over the private worker pipe and does not extend the
+deadline. Error metadata is bounded; control characters and invalid native
+filename bytes are escaped. Captured source contents are excluded.
 
 The server supports push diagnostics and document/workspace pull reports,
 unchanged result IDs, refresh, work progress and workspace partial reports.
@@ -56,7 +170,14 @@ closed sources and disk-only changes.
 
 Hover and declaration/definition/type-definition/implementation navigation
 use compiler type and binding records. Document and workspace symbols use
-validated source tokens; workspace symbol resolution rejects stale source
+validated source tokens and compiler binding identities. Hierarchical document
+symbols nest named lexical scopes, classify declared functions from captured
+syntax and merge clauses belonging to one function binding. Parameters and
+locals with distinct identities remain separate, including identically named
+parameters in different clauses. Function, module and declaration ranges own
+their nested symbols; selection ranges identify the declaration's name.
+Clients without hierarchy support retain flat symbol locations. Workspace
+symbol resolution rejects stale source
 and context data. Source is checked statically and never executed.
 
 Completion returns compiler-visible lexical names, qualified members and

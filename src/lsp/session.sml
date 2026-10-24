@@ -69,6 +69,7 @@ struct
                 [("workspace/inlayHint/refresh",["workspace","inlayHint","refreshSupport"])] else []))
             val ()=service:=SOME (RuneLspService.new {workspace=RuneLspController.workspace (valOf (!controller)),
               documents=valOf (!documents),caps=caps,command=workerCommand,args=workerArgs,send=send,log=stderr,
+              watchedRoots=fn()=>case !controller of NONE=>[] | SOME controller=>RuneLspController.watchedRoots controller,
               discovered=fn (uri,value) => Option.app (fn controller => RuneLspController.contexts (controller,uri,value)) (!controller)})
             val () = trace := requestedTrace
             val () = Option.app (fn token => progress token
@@ -163,8 +164,11 @@ struct
         case P.decode text of
           P.Invalid {error, id, reply} => if reply then send (R.Response {id = id, outcome = R.Error error})
                                          else stderr (#message error)
-        | P.Message (R.Request requestData) => (log ("request: " ^ #method requestData); request requestData)
-        | P.Message (R.Notification data) => notification data
+        | P.Message (R.Request requestData) =>
+            (RuneLspProfile.sample ("request:" ^ #method requestData) "" 0 0 0;
+             log ("request: " ^ #method requestData); request requestData)
+        | P.Message (R.Notification data) =>
+            (RuneLspProfile.sample ("notification:" ^ #method data) "" 0 0 0;notification data)
         | P.Message response => if (case !service of SOME service => RuneLspService.response (service,response) | NONE => false)
                                 then () else if (case !controller of SOME controller => RuneLspController.response (controller,response) | NONE => false)
                                 then Option.app RuneLspService.changed (!service) else ignore (LspRequests.resolve (pending, response))

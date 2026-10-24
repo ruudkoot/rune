@@ -11,7 +11,7 @@ struct
   type context={id:string,label:string,target:string,build:string,ordinal:int,project:C.Project.t,source:C.Project.source}
   datatype selection=Loose | Selected of context | Ambiguous of context list
   datatype t=Workspace of {platform:U.platform,lib:string,roots:string list ref,settings:settings ref,scoped:(string*settings) list ref,
-    generation:IntInf.int ref,choices:(string*string) list ref}
+    generation:IntInf.int ref,inputGeneration:IntInf.int ref,choices:(string*string) list ref}
   exception Invalid of string
   val defaults:settings={targets=[],flags=[],variables=[],activeContext=NONE,libraryRoot=NONE}
   fun invalid message=raise Invalid message
@@ -59,10 +59,12 @@ struct
     in {targets=targets,flags=common,variables=vars,activeContext=active,libraryRoot=libraryRoot} end
     handle J.Invalid message => raise Invalid message | U.Invalid => raise Invalid "invalid file URI"
   fun new {platform,lib} = Workspace {platform=platform,lib=lib,roots=ref [],settings=ref defaults,scoped=ref [],
-    generation=ref 0,choices=ref []}
+    generation=ref 0,inputGeneration=ref 0,choices=ref []}
   fun generation (Workspace {generation,...})= !generation
-  fun invalidate (Workspace {generation,choices,...}) = (generation:=IntInf.+ (!generation,1);choices:=[])
-  fun dirty (Workspace {generation,...}) = generation:=IntInf.+ (!generation,1)
+  fun inputGeneration (Workspace {inputGeneration,...})= !inputGeneration
+  fun dirty (Workspace {generation,inputGeneration,...}) =
+    (generation:=IntInf.+ (!generation,1);inputGeneration:=IntInf.+(!inputGeneration,1))
+  fun invalidate (workspace as Workspace {choices,...}) = (dirty workspace;choices:=[])
   fun roots (Workspace {roots,...})= !roots
   fun setRoots (workspace as Workspace {platform,roots,...},values) =
     let val ()=if length values>64 then invalid "too many workspace folders" else ()
@@ -70,11 +72,8 @@ struct
         val unique=List.foldl (fn (uri,all) => if List.exists (fn prior => prior=uri) all then all else all @ [uri]) [] values
     in roots:=unique;invalidate workspace end
   fun configure (workspace as Workspace {platform,settings=stored,...},value) =
-    let val parsed=settings platform value in stored:=parsed;invalidate workspace end
-  fun configureAt (workspace as Workspace {platform,scoped,...},uri,value) =
-    let val rest=List.filter (fn (scope,_) => scope<>uri) (!scoped)
-        val next=case value of Json.Null => rest | _ => (uri,settings platform value) :: rest
-    in scoped:=next;dirty workspace end
+    let val parsed=settings platform value
+    in if parsed= !stored then () else (stored:=parsed;invalidate workspace) end
   fun forget (Workspace {scoped,choices,...},uri) =
     (scoped:=List.filter (fn (scope,_) => scope<>uri) (!scoped);
      choices:=List.filter (fn (document,_) => document<>uri) (!choices))
@@ -90,8 +89,16 @@ struct
               | nearest (current as (scope,_),old as SOME (prior,_))=
                   if size (valOf (nativeKey platform scope))>size (valOf (nativeKey platform prior)) then SOME current else old
         in case List.foldl nearest NONE roots of SOME (_,settings) => settings | NONE => !settings end
-  fun choose (Workspace {choices,...},uri,id) =
-    choices:=(uri,id) :: List.filter (fn (document,_) => document<>uri) (!choices)
+  fun configureAt (workspace as Workspace {platform,scoped,...},uri,value) =
+    let val previous=configurationFor(workspace,uri)
+        val rest=List.filter(fn (scope,_)=>scope<>uri)(!scoped)
+    in case value of Json.Null=>
+        (scoped:=rest;if previous=configurationFor(workspace,uri) then () else dirty workspace)
+      | _=>let val parsed=settings platform value
+           in if parsed=previous then () else (scoped:=(uri,parsed)::rest;dirty workspace) end end
+  fun choose (Workspace {choices,generation,...},uri,id) =
+    (choices:=(uri,id) :: List.filter (fn (document,_) => document<>uri) (!choices);
+     generation:=IntInf.+(!generation,1))
   fun folder value =
     let val value=J.object value
         val uri=J.string (J.required (value,"uri"))
@@ -135,6 +142,8 @@ struct
       | SOME at => String.substring (path,0,at) end
   fun join platform (directory,path)=if platform=U.Windows then
     directory ^ (if String.isSuffix "/" directory then "" else "/") ^ path else OS.Path.concat (directory,path)
+  fun basisBuild platform root=join platform(join platform(root,"basis"),"library.build")
+  fun isBasisBuild platform (root,file)=sameFile platform(file,basisBuild platform root)
   fun parent platform path =
     let val directory=directory platform path in if directory=path orelse directory="" then NONE else SOME directory end
   fun buildFiles platform directory =
@@ -177,15 +186,24 @@ struct
             {id= #build target ^ "#" ^ #name target ^ ":" ^ Int.toString (#ordinal source),
              label= #name target ^ " (unit " ^ Int.toString (#ordinal source+1) ^ ")",build= #build target,
              target= #name target,ordinal= #ordinal source,project=project,source=source}:context) sources end
-    in List.concat (List.map (fn candidate =>
-         if null (#targets config) then (target candidate handle C.Failed _ => []) else target candidate) targets) end
-  fun select (workspace as Workspace {settings=stored,choices,...},documents,uri) =
+        val found=List.concat (List.map (fn candidate =>
+          if null (#targets config) then (target candidate handle C.Failed _ => []) else target candidate) targets)
+        val basis=join platform (getOpt(#libraryRoot config,lib),"basis")
+        val build=basisBuild platform (getOpt(#libraryRoot config,lib))
+    in if not(null found) orelse not(below(pathKey platform basis,key)) then found
+       else let val location=U.fromPath(platform,build) handle U.Invalid=>U.fromPath(platform,OS.FileSys.fullPath build)
+            in target {name="basis",build=U.original location,flags= #flags config,
+              variables=[],libraryRoot= #libraryRoot config} end handle C.Failed _=>found end
+  fun select (workspace as Workspace {platform,lib,settings=stored,choices,...},documents,uri) =
     let val contexts=contexts (workspace,documents,uri)
         val active=case List.find (fn (document,_) => document=uri) (!choices) of SOME (_,id) => SOME id
           | NONE => #activeContext (configurationFor (workspace,uri))
     in case active of SOME id =>
          (case List.filter (fn context:context => #id context=id orelse #target context=id) contexts of
            [context] => Selected context
-          | _ => if null contexts then Loose else Ambiguous contexts)
+          | _ => case contexts of []=>Loose | [context]=>
+              if isBasisBuild platform(getOpt(#libraryRoot(configurationFor(workspace,uri)),lib),filePath platform(#build context))
+              then Selected context else Ambiguous contexts
+            | _=>Ambiguous contexts)
        | NONE => case contexts of [] => Loose | [context] => Selected context | _ => Ambiguous contexts end
 end

@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "date": "2026-10-24",
+  "production_commit": "e2688dc14a807bfd96e9708fa6549ed9b90a80ed",
+  "vsix": {
+    "file": "build/lsp-debug/rune-language-server-e2688dc14.vsix",
+    "sha256": "6ab7dd90c1fe8ce0e6aeb141895677cf72433f8106cc81603553e847a8fa1c9f",
+    "rune_version": "e2688dc14",
+    "manifest_version": "0.0.981"
+  },
+  "linux_editor_versions": [
+    "1.106.0",
+    "1.142.0",
+    "1.143.1"
+  ],
+  "linux_1_143_1": {
+    "passed": true,
+    "isolation": "bubblewrap namespaces and private Xvfb",
+    "receipt": "build/lsp-debug/acceptance/editor-1.143.1-sandbox-paths.log",
+    "extension_and_project_paths_with_spaces_and_unicode": true
+  },
+  "windows_1_143_1": {
+    "passed": true,
+    "isolation": "Windows Sandbox",
+    "semantic_cases": 45,
+    "packaged_library_cases": 10,
+    "guest_shutdown_used": false,
+    "minimized_windows": 2,
+    "owned_processes_gone": true,
+    "receipt": "build/lsp-debug/acceptance/windows-sandbox-paths-output",
+    "extension_and_project_paths_with_spaces_and_unicode": true
+  },
+  "full_check": {
+    "pass": 19863,
+    "skip": 3,
+    "fail": 0,
+    "wall_seconds": 3532.5,
+    "receipt": "tests/out/r/20261024-022246-2607123/summary.md"
+  },
+  "library_profile": {
+    "pass": 281,
+    "skip": 0,
+    "fail": 0
+  },
+  "basis_matrix_six_configs": {
+    "pass": 2747,
+    "skip": 151,
+    "fail": 0
+  },
+  "complete_basis_matrix_receipt": "build/lsp-debug/acceptance/matrix-quick-final.log",
+  "development_rebuild": {
+    "passed": true,
+    "checks": 11,
+    "publication": "atomic rename while the matrix runner held the previous public VM inode; rebuilt bytes identical",
+    "private_files_unchanged": true
+  },
+  "limitations": "Earlier loaded/profiled editor timeouts, host updater blocks and the first Sandbox cleanup race are retained in docs/plans/language-server-debug.md; none are reclassified as clean passes."
+}

@@ -644,7 +644,8 @@ M11's invalidation, and M8's metadata per unit"):
   under-loads.
 * **Elsewhere:** the corpus harness (`/home/ruud/rune-corpus-sml97`)
   has its own `sources.txt` and a generated `corpus.mlb` for Millet;
-  `millet.toml` points Millet at `build/rune.mlb`. Rune reads neither
+  the former `millet.toml` pointed Millet at `build/rune.mlb` and has been
+  removed in favour of `runelsp`. Rune reads neither
   `.mlb` nor `.cm` (`weak-points.md:22-23`).
 
 ### HOL4 today: the host contract, measured

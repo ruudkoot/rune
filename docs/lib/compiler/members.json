@@ -370,6 +370,13 @@
     },
     {
      "kind": "type",
+     "name": "Analysis.observation",
+     "spec": "type observation={phase:string,file:string,checked:int,reused:int,items:int}",
+     "doc": "A bounded phase observation. items counts bytes at source phases and\nentries at projection phases; checked/reused count completed units.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.observation"
+    },
+    {
+     "kind": "type",
      "name": "Analysis.input",
      "spec": "type input={file:string,text:string,mode:string,annotations:string list,revision:string}",
      "doc": "An ordered decoded source occurrence.\n\nrevision is the caller's source\nidentity/version; an empty mode selects the compiler session's mode.\n\n",
@@ -451,6 +458,13 @@
      "spec": "val close : t -> unit",
      "doc": "`close context` releases its retained caches; repeated calls do nothing.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-analysis.close"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.observe",
+     "spec": "val observe : t * (observation->unit) option -> unit",
+     "doc": "`observe (context, callback)` installs an optional synchronous phase\nobserver between checks.\n\nNONE disables it. Observer exceptions abort\nthe current attempt; observation never executes the checked program.\nTiming and host-specific memory counters belong to the callback.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.observe"
     },
     {
      "kind": "val",

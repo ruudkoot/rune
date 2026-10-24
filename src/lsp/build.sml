@@ -25,7 +25,7 @@ struct
         val native=Option.map #path (U.native (platform,U.parse uri))
         val file=getOpt (native,uri)
         val text=L.text (#content snapshot)
-        val source={file=file,uri=uri,text=text,mode="ascii",ordinal=NONE,syntax=NONE,version=SOME (#version snapshot),
+        val source={file=file,uri=uri,text=text,mode="ascii",ordinal=NONE,syntax=NONE,slot=0,version=SOME (#version snapshot),
           revision=SOME (#revision snapshot),index=SOME (#content snapshot),tokens=ref NONE}:E.source
         val configuration=W.configurationFor (workspace,uri)
         fun matches (target:W.target)=case native of NONE => false | SOME path =>
@@ -40,7 +40,7 @@ struct
           | SOME target => getOpt (#libraryRoot target,getOpt (#libraryRoot configuration,lib))
         val variables= #variables configuration @ (case selected of NONE => [] | SOME target => #variables target)
         fun compiler ()= #compiler (E.context (worker,{key=V.encode (V.Array
-          [V.Bytes "build",V.Bytes root,M.strings flags,M.pairs variables]),lib=root,flags=flags}))
+          [V.Bytes "build",V.Bytes root,M.strings flags,M.pairs variables]),lib=SOME root,flags=flags}))
         fun range (start,stop)=E.range (source,encoding,start,stop)
         fun position ()=case LspProtocol.positionFromJson (J.required (params,"position")) of NONE => raise J.Invalid "invalid build position"
           | SOME point => case L.offset (#content snapshot,encoding,point) of NONE => raise J.Invalid "invalid build position" | SOME at => at

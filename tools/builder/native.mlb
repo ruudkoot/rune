@@ -19,6 +19,7 @@ $(SML_LIB)/basis/mlton.mlb
 ../../tools/builder/formats.sml
 ../../tools/builder/archive.sml
 ../../tools/builder/dist.sml
+../../tools/builder/vscode.sml
 ../../tools/builder/gmp-build.sml
 ../../tools/builder/ffi-deps.sml
 ../../tools/builder/relink.sml

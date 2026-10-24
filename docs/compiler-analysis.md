@@ -43,6 +43,22 @@ unchanged tokens/declarations against the new incoming fixities. New
 elaboration always receives fresh annotation slots. No mutable compiler
 type or AST reference escapes in query results.
 
+Frozen occurrence projections share the same validated unit keys as the
+serialized bases. An unchanged prefix reuses those immutable lists; changed
+suffixes are projected again with bounded stack use. The projection cache
+retains only the current checked units and is released on close. Type-name
+qualification is memoized only within one unit's fixed outgoing environment.
+Prelude name sets are cached by exact source text, mode and path; unchanged
+inputs merge those immutable sets without lexing their text again. Both caches
+are bounded by the current input graph and released on close.
+
+`observe (context, SOME callback)` enables synchronous phase observations
+between checks. Events identify phases, source units and work counts; callers
+supply clocks and host allocation measurements. `NONE` disables observation.
+Callbacks receive no mutable compiler state. A callback exception aborts the
+attempt and releases the busy context; already published snapshots remain
+readable. Observation is disabled by default.
+
 Lexical bindings and runtime identities serve different purposes. An
 exception alias has its own lexical declaration while sharing the
 exception's runtime identity. Signature constraints retain declaration

@@ -9,6 +9,26 @@ struct
   fun analyze (context,inputs)=A.check (context,{project=NONE,inputs=inputs,cancelled=fn () => false})
   fun same (left,right)=A.facts left=A.facts right andalso A.occurrences left=A.occurrences right
     andalso A.diagnostics left=A.diagnostics right andalso A.types left=A.types right
+  fun observations () =
+    let exception Stopped
+        val parent=compiler() val context=A.create(parent,{context="observations"})
+        val source=input("observed.sml","val answer=42\n","1")
+        val initial=analyze(context,[source])
+        val events=ref [] : A.observation list ref
+        val ()=A.observe(context,SOME(fn event=>events:=event:: !events))
+        val measured=analyze(context,[source])
+        val ()=check("observations preserve frozen semantic results",same(initial,measured))
+        val ()=check("observations include publication and cache reuse",List.exists(fn event=>
+          #phase event="snapshot-published" andalso #reused event>0)(!events))
+        val ()=A.observe(context,NONE)
+        val count=length(!events) val _=analyze(context,[source])
+        val ()=check("disabled observer receives no phases",length(!events)=count)
+        val ()=A.observe(context,SOME(fn _=>raise Stopped))
+        val stopped=(analyze(context,[source]);false)handle Stopped=>true
+        val ()=check("observer failure leaves earlier snapshots readable",stopped andalso same(initial,measured))
+        val ()=A.observe(context,NONE) val recovered=analyze(context,[source])
+        val ()=check("observer failure releases the busy context",same(initial,recovered))
+    in A.close context;C.close parent end
   fun snapshots () =
     let val parent=compiler ()
         val context=A.create (parent,{context="target-one"})
@@ -154,6 +174,27 @@ struct
         val ()=check ("library source captured",null (A.diagnostics result) andalso not (null (A.dependencies result)))
         val ()=check ("libraries replay statically",same (result,again) andalso #checked (A.work again)=0)
     in A.close context;C.close parent end
+  fun missingLibrary () =
+    let val parent=C.session {lib=SOME "/no/rune-analysis-library",flags=[]}
+        val context=A.create(parent,{context="missing-library"})
+        val diagnostics=(ignore(analyze(context,[input("missing.sml","val answer=42\n","1")]));[])
+          handle C.Failed diagnostics=>diagnostics
+        val ()=(A.close context;C.close parent)
+    in check("missing library manifests become public compiler diagnostics",
+      List.exists(fn diagnostic:C.diagnostic=>String.isSubstring "manifest" (#message diagnostic))diagnostics) end
+  fun changedNames () =
+    let val parent=C.session {lib=SOME "lib",flags=[]}
+        val context=A.create(parent,{context="changed-names"})
+        val fresh=A.create(parent,{context="changed-names"})
+        val list=input("mentioned.sml","val answer=List.length [1]\n","same-revision")
+        val vector=input("mentioned.sml","val answer=Vector.length(Vector.fromList [1,2])\n","same-revision")
+        val _=analyze(context,[list])
+        val changed=analyze(context,[vector]) val oracle=analyze(fresh,[vector])
+        val repeated=analyze(context,[vector])
+        val ()=check("changed names select the fresh library plan even at the same revision",
+          null(A.diagnostics changed) andalso same(changed,oracle) andalso same(changed,repeated)
+          andalso #checked(A.work repeated)=0)
+    in A.close context;A.close fresh;C.close parent end
   fun frozenLibrary () =
     let val dir=OS.FileSys.tmpName ()
         val ()=(OS.FileSys.remove dir handle _ => ();OS.FileSys.mkDir dir;OS.FileSys.mkDir (dir ^ "/basis"))
@@ -311,12 +352,15 @@ end
 structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
   val tests=Test.describe "compiler-analysis"
-    [Test.it "snapshots-checkpoints-cancellation" CompilerAnalysisTests.snapshots,
+    [Test.it "observations" CompilerAnalysisTests.observations,
+     Test.it "snapshots-checkpoints-cancellation" CompilerAnalysisTests.snapshots,
      Test.it "captured-syntax-snapshots" CompilerAnalysisTests.syntaxSnapshots,
      Test.it "inferred-pattern-type-hints" CompilerAnalysisTests.typeHints,
      Test.it "lexical-bindings" CompilerAnalysisTests.bindings,
      Test.it "generative-identities" CompilerAnalysisTests.generative,
      Test.it "static-library-replay" CompilerAnalysisTests.libraries,
+     Test.it "missing-library-diagnostic" CompilerAnalysisTests.missingLibrary,
+     Test.it "changed-prelude-names" CompilerAnalysisTests.changedNames,
      Test.it "frozen-library-query" CompilerAnalysisTests.frozenLibrary,
      Test.it "project-scopes" CompilerAnalysisTests.projects,
      Test.it "batch-compiler-oracle" CompilerAnalysisTests.batchOracle,

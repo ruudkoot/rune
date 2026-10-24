@@ -15,11 +15,12 @@ struct
     | Refresh of {method:string,capability:string list,generation:IntInf.int}
     | Unregister
   datatype t=Controller of {workspace:W.t,documents:D.t,caps:P.capabilities,pending:request Q.t,
-    epoch:IntInf.int ref,asked:string list ref,waiting:string list ref,registration:string option ref,
+    epoch:IntInf.int ref,asked:string list ref,waiting:string list ref,registration:string option ref,watching:string list ref,
     refreshing:string list ref,refreshDenied:string list ref,
     presentations:(string*string list) list ref,
     serial:IntInf.int ref,discover:string->unit,selected:string->unit,send:R.message->unit,log:string->unit,error:string->unit}
   fun workspace (Controller {workspace,...})=workspace
+  fun watchedRoots (Controller {watching,...})= !watching
   fun issue (Controller {pending,send,error,...},method,params,data) =
     (send (Q.issue (pending,{method=method,params=params,data=data}));true)
     handle Q.Full => (error "workspace request limit reached";false)
@@ -55,13 +56,13 @@ struct
           val params=Json.Object [("type",Json.int 3),("message",Json.String ("Select a Rune build context for " ^ uri)),
             ("actions",Json.Array (List.map (fn (title,_) => Json.Object [("title",Json.String title)]) actions))]
           val sent=issue (controller,"window/showMessageRequest",SOME params,
-            Choice {uri=uri,revision= #revision snapshot,generation=W.generation workspace,actions=actions})
+            Choice {uri=uri,revision= #revision snapshot,generation=W.inputGeneration workspace,actions=actions})
       in if sent then asked:=uri :: !asked else () end
     end
   fun allContexts (controller as Controller {documents,...}) =
     (List.app (fn snapshot:D.snapshot => context (controller,#uri snapshot)) (D.all documents);refreshPresentations controller)
-  fun unregister (controller as Controller {registration,...},id) =
-    (if !registration=SOME id then registration:=NONE else ();
+  fun unregister (controller as Controller {registration,watching,...},id) =
+    (if !registration=SOME id then (registration:=NONE;watching:=[]) else ();
      ignore (issue (controller,"client/unregisterCapability",SOME (Json.Object
       [("unregisterations",Json.Array [Json.Object [("id",Json.String id),("method",Json.String "workspace/didChangeWatchedFiles")]])]),Unregister)))
   fun watch (controller as Controller {workspace,caps,epoch,registration,serial,...}) =
@@ -83,19 +84,27 @@ struct
     let val workspace=W.new {platform=platform,lib=lib}
         val ()=W.initialize (workspace,initialize)
     in Controller {workspace=workspace,documents=documents,caps=caps,pending=Q.new {prefix="runelsp-ws-",maxPending=2048},
-      epoch=ref 0,asked=ref [],waiting=ref [],registration=ref NONE,refreshing=ref [],refreshDenied=ref [],presentations=ref [],
+      epoch=ref 0,asked=ref [],waiting=ref [],registration=ref NONE,watching=ref [],refreshing=ref [],refreshDenied=ref [],presentations=ref [],
       serial=ref 0,discover=discover,selected=selected,send=send,log=log,error=error} end
   fun initialized (controller as Controller {workspace,caps,epoch,...}) =
     (if null (W.roots workspace) andalso P.supports (caps,["workspace","workspaceFolders"])
      then ignore (issue (controller,"workspace/workspaceFolders",NONE,Folders (!epoch))) else ();
      ignore (configuration (controller,scopes controller));watch controller)
+  fun savedText (W.Workspace {platform,...},snapshot:D.snapshot) =
+    (case LspUri.native(platform,LspUri.parse(#uri snapshot)) of NONE=>false | SOME {path,...}=>
+      let val input=BinIO.openIn path
+          val text=(Byte.bytesToString(BinIO.inputAll input) before BinIO.closeIn input)
+            handle error=>(BinIO.closeIn input handle _=>();raise error)
+      in text=LspPosition.text(#content snapshot) end)
+    handle IO.Io _=>false | OS.SysErr _=>false
   fun event (controller as Controller {workspace,asked,...},event) =
-    (W.dirty workspace;
-     case event of RuneLspSync.Opened snapshot =>
-       if configuration (controller,[#uri snapshot]) then () else context (controller,#uri snapshot)
-     | RuneLspSync.Changed snapshot => context (controller,#uri snapshot)
+    (case event of RuneLspSync.Opened snapshot =>
+       (if savedText(workspace,snapshot) then () else W.dirty workspace;
+        if configuration (controller,[#uri snapshot]) then () else context (controller,#uri snapshot))
+     | RuneLspSync.Changed snapshot => (W.dirty workspace;context (controller,#uri snapshot))
      | RuneLspSync.Closed snapshot =>
-         (W.forget (workspace,#uri snapshot);asked:=List.filter (fn uri => uri<> #uri snapshot) (!asked))
+         (if savedText(workspace,snapshot) then () else W.dirty workspace;
+          W.forget (workspace,#uri snapshot);asked:=List.filter (fn uri => uri<> #uri snapshot) (!asked))
      | _ => ())
   fun notification (controller as Controller {workspace,caps,epoch,asked,waiting,error,...},{method,params}) =
     let fun value ()=case params of SOME value => J.object value | NONE => raise W.Invalid "missing workspace parameters"
@@ -119,12 +128,13 @@ struct
     | _ => false
     end handle W.Invalid message => (error message;true) | J.Invalid message => (error message;true)
       | LspUri.Invalid => (error "invalid watched-file URI";true)
-  fun response (controller as Controller {workspace,documents,pending,epoch,waiting,asked,registration,
+  fun response (controller as Controller {workspace,documents,pending,epoch,waiting,asked,registration,watching,
                                         refreshing,refreshDenied,error,log,selected,...},message) =
     case Q.resolve (pending,message) of NONE => false | SOME (request,outcome) =>
       ((case request of
          Configuration {epoch=issued,scopes=uris} =>
-           let val ()=if issued<> !epoch then () else
+           let val generation=W.generation workspace
+               val ()=if issued<> !epoch then () else
                  waiting:=List.filter (fn uri => not (List.exists (fn scope => uri=scope) uris)) (!waiting)
            in if issued<> !epoch then () else
              (case outcome of R.Result (Json.Array values) =>
@@ -133,7 +143,8 @@ struct
                     then (W.configureAt (workspace,uri,value) handle W.Invalid message => error message) else ()) (uris,values)
               | R.Error _ => log "client refused workspace configuration; keeping startup settings"
               | _ => error "invalid workspace configuration response");
-             allContexts controller end
+             if W.generation workspace<>generation then allContexts controller
+             else List.app(fn uri=>context(controller,uri))uris end
        | Folders issued => if issued<> !epoch then () else
            (case outcome of R.Result (Json.Array values) =>
               (W.setRoots (workspace,List.map W.folder values);
@@ -142,7 +153,7 @@ struct
        | Choice {uri,revision,generation,actions} =>
            let val ()=asked:=List.filter (fn document => document<>uri) (!asked)
            in case D.snapshot (documents,uri) of NONE => () | SOME snapshot =>
-             if #revision snapshot<>revision orelse W.generation workspace<>generation then context (controller,uri) else
+             if #revision snapshot<>revision orelse W.inputGeneration workspace<>generation then context (controller,uri) else
              (case outcome of R.Result Json.Null => asked:=uri :: !asked
               | R.Result value =>
                   (case J.member (J.object value,"title") of SOME (Json.String title) =>
@@ -151,8 +162,10 @@ struct
                      | NONE => error "unknown build-context action") | _ => error "invalid build-context action")
               | R.Error _ => (asked:=uri :: !asked;log "client declined build-context selection")) end
        | Register {id,epoch=issued} =>
-           (case outcome of R.Result _ => if issued= !epoch then () else unregister (controller,id)
-            | R.Error _ => (if !registration=SOME id then registration:=NONE else ();log "client refused file watchers; contexts revalidate on queries"))
+           (case outcome of R.Result _ => if issued= !epoch andalso !registration=SOME id
+              then watching:=W.roots workspace else unregister (controller,id)
+            | R.Error _ => (if !registration=SOME id then (registration:=NONE;watching:=[]) else ();
+                log "client refused file watchers; contexts revalidate on queries"))
        | Refresh {method,capability,generation} =>
            (refreshing:=List.filter (fn pending => pending<>method) (!refreshing);
             case outcome of R.Result _ => if W.generation workspace=generation then () else refresh (controller,method,capability)
@@ -162,6 +175,6 @@ struct
        | Unregister => ());true)
       handle W.Invalid message => (error message;true) | J.Invalid message => (error message;true)
            | LspUri.Invalid => (error "invalid workspace URI";true)
-  fun clear (Controller {pending,refreshing,refreshDenied,presentations,...})=
-    (ignore (Q.clear pending);refreshing:=[];refreshDenied:=[];presentations:=[])
+  fun clear (Controller {pending,refreshing,refreshDenied,presentations,watching,...})=
+    (ignore (Q.clear pending);refreshing:=[];refreshDenied:=[];presentations:=[];watching:=[])
 end

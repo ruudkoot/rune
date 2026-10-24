@@ -4,8 +4,11 @@ struct
   val check=Expect.that
   fun object fields=Json.Object fields
   fun document uri=object [("uri",Json.String uri)]
+  fun textValue (Json.String value)=value | textValue _=raise Fail "expected string"
+  fun launchArguments ("--filter"::_::rest)=launchArguments rest
+    | launchArguments (arg::rest)=arg::launchArguments rest | launchArguments []=[]
   fun fixtureInitializedResult initialization action =
-    let val (program,args)=case CommandLine.arguments () of [vm,server,worker] => (vm,[server,vm,worker])
+    let val (program,args)=case launchArguments(CommandLine.arguments ()) of [vm,server,worker] => (vm,[server,vm,worker])
           | [vm,server] => (vm,[server]) | [program] => (program,[])
           | _ => raise Fail "semantic protocol tests require server launch arguments"
         val client=C.start (program,args)
@@ -171,6 +174,355 @@ struct
         val symbols=C.result (C.response (client,82))
     in check ("document symbols reflect checked declarations",case symbols of Json.Array values =>
       List.exists (fn value => Json.member ("name",value)=SOME (Json.String "identity")) values | _ => false) end)
+  fun temporaryTree action =
+    let val root=OS.FileSys.tmpName()
+        val ()=(OS.FileSys.remove root;OS.FileSys.mkDir root)
+        fun remove path=if OS.FileSys.isDir path then
+              let val stream=OS.FileSys.openDir path
+                  fun loop()=case OS.FileSys.readDir stream of NONE=>() | SOME name=>(remove(OS.Path.concat(path,name));loop())
+              in loop();OS.FileSys.closeDir stream;OS.FileSys.rmDir path end
+            else OS.FileSys.remove path
+        val platform=if List.exists(fn (key,value)=>key="sysname" andalso value="Windows")(Posix.ProcEnv.uname())
+          then LspUri.Windows else LspUri.Posix
+        fun uri path=LspUri.original(LspUri.fromPath(platform,OS.FileSys.fullPath path))
+        fun write(path,text)=let val out=TextIO.openOut path in TextIO.output(out,text);TextIO.closeOut out end
+        fun work()=action{root=root,uri=uri,write=write}
+    in (work() before remove root) handle error=>(remove root handle _=>();raise error) end
+  fun scopedOutline () =
+    let val text="structure Demo = struct\n"
+          ^ "  fun mkRelative {path, relativeTo} =\n    let\n"
+          ^ "      fun h ([], []) = [0]\n        | h (p, []) = p\n        | h ([], a) = a\n"
+          ^ "        | h (p as x :: xs, a as y :: ys) = h (xs, ys)\n"
+          ^ "    in h (path, relativeTo) end\n"
+          ^ "  fun shadow h = let fun h h = h in h 1 end\n"
+          ^ "  val maker = fn z => z\n  datatype item = Item of int | Empty\nend\n"
+        val uri="untitled:scoped-outline"
+        fun array(Json.Array values)=values | array _=raise Fail "expected symbol array"
+        fun children item=array(C.field(item,"children"))
+        fun named(name,items)=List.filter(fn item=>C.field(item,"name")=Json.String name)items
+        fun only(name,items)=case named(name,items) of [item]=>item | _=>raise Fail("expected one outline node " ^ name ^ ": " ^ Json.encode(Json.Array items))
+        fun kind(item,n)=C.field(item,"kind")=Json.int n
+        fun inside (outer,inner)=
+          case (LspProtocol.rangeFromJson outer,LspProtocol.rangeFromJson inner) of (SOME a,SOME b)=>
+            let fun leq({line=a,character=b}:LspProtocol.position,{line=c,character=d}:LspProtocol.position)=a<c orelse a=c andalso b<=d
+            in leq(#start a,#start b) andalso leq(#stop b,#stop a) end | _=>false
+        fun valid item=inside(C.field(item,"range"),C.field(item,"selectionRange")) andalso
+          List.all(fn child=>inside(C.field(item,"range"),C.field(child,"range")) andalso valid child)(children item)
+        val hierarchical=object[("textDocument",object[("documentSymbol",object[("hierarchicalDocumentSymbolSupport",Json.Bool true)])])]
+        val ()=fixtureWith hierarchical (fn client=>
+          let val ()=openDocument(client,uri,text)
+              val ()=C.request(client,820,"textDocument/diagnostic",object[("textDocument",document uri)])
+              val ()=check("outline fixture typechecks",C.field(C.result(C.response(client,820)),"items")=Json.Array[])
+              val ()=C.request(client,821,"textDocument/documentSymbol",object[("textDocument",document uri)])
+              val nodes=array(C.result(C.response(client,821)))
+              val demo=only("Demo",nodes)
+              val mk=only("mkRelative",children demo)
+              val h=only("h",children mk)
+              val ps=named("p",children h)
+              val shadow=only("shadow",children demo)
+              val hs=named("h",children shadow)
+              val localH=valOf(List.find(fn item=>kind(item,12))hs)
+              val maker=only("maker",children demo)
+              val datatypeNode=only("item",children demo)
+          in check("function clauses form one nested function",kind(mk,12) andalso kind(h,12));
+             check("function parameters belong to their function",kind(only("path",children mk),13));
+             check("clause-local p variables stay distinct under h",length ps=2 andalso
+               C.field(hd ps,"selectionRange")<>C.field(List.nth(ps,1),"selectionRange"));
+             check("shadowed h bindings do not merge",length hs=2 andalso kind(only("h",children localH),13));
+             check("function-valued val bindings own their parameters",kind(maker,12) andalso kind(only("z",children maker),13));
+             check("datatype constructors belong to their datatype",kind(only("Item",children datatypeNode),22));
+             check("symbol and selection ranges are nested",List.all valid nodes)
+          end)
+    in fixture(fn client=>
+      let val ()=openDocument(client,uri,text)
+          val ()=C.request(client,822,"textDocument/documentSymbol",object[("textDocument",document uri)])
+          val nodes=array(C.result(C.response(client,822)))
+          val hs=named("h",nodes)
+      in check("legacy clients retain flat locations with merged function clauses",length hs=4 andalso
+        List.all(fn item=>isSome(Json.member("location",item)))nodes andalso
+        length(List.filter(fn item=>kind(item,12))hs)=2) end)
+    end
+  fun minimalLibrary (root,write)=
+    let val lib=OS.Path.concat(root,"lib") val basis=OS.Path.concat(lib,"basis")
+        val ()=(OS.FileSys.mkDir lib;OS.FileSys.mkDir basis)
+        val ()=write(OS.Path.concat(basis,"initial.sml"),"val preludeValue=0\n")
+        val ()=write(OS.Path.concat(basis,"MANIFEST"),"initial.sml | always | yes | | \n")
+    in lib end
+  fun watchedWorkspaceCache ()=temporaryTree(fn {root,uri,write}=>
+    let val lib=minimalLibrary(root,write)
+        fun path name=OS.Path.concat(root,name)
+        val ()=write(path "main.build","main.sml\n")
+        val ()=write(path "main.sml","val answer=1\n")
+        val options=object[("libraryRoot",Json.String(uri lib))]
+        val caps=object[("textDocument",object[("diagnostic",object[])]),("workspace",object
+          [("didChangeWatchedFiles",object[("dynamicRegistration",Json.Bool true),("relativePatternSupport",Json.Bool true)])])]
+    in fixtureInitialized(object[("capabilities",caps),("initializationOptions",options),
+        ("workspaceFolders",Json.Array[object[("uri",Json.String(uri root)),("name",Json.String "watched")]])]) (fn client=>
+      let fun registration()=C.receive(client,fn value=>Json.member("method",value)=SOME(Json.String "client/registerCapability"))
+          val request=registration()
+          val ()=C.send(client,object[("jsonrpc",Json.String "2.0"),("id",C.field(request,"id")),("result",Json.Null)])
+          fun pull id=(C.request(client,id,"workspace/diagnostic",object[("previousResultIds",Json.Array[])]);C.result(C.response(client,id)))
+          val first=pull 700
+          val ()=check("acknowledged watcher cache preserves results",pull 701=first)
+          val ()=write(path "main.sml","val answer:int=true\n")
+          val ()=C.notify(client,"workspace/didChangeWatchedFiles",object[("changes",Json.Array
+            [object[("uri",Json.String(uri(path "main.sml"))),("type",Json.int 2)]])])
+          val changed=pull 702
+          val ()=check("watch notifications invalidate trusted cached reports",case C.field(changed,"items") of
+            Json.Array [report]=>C.field(report,"items")<>Json.Array[] | _=>false)
+          val ()=C.notify(client,"workspace/didChangeConfiguration",object[("settings",options)])
+          val refused=registration()
+          val ()=C.send(client,object[("jsonrpc",Json.String "2.0"),("id",C.field(refused,"id")),
+            ("error",object[("code",Json.int(~32601)),("message",Json.String "unsupported")])])
+          val ()=write(path "main.sml","val answer=2\n")
+          val repaired=pull 703
+      in check("refused watcher registration falls back to content checks without notifications",case C.field(repaired,"items") of
+        Json.Array [report]=>C.field(report,"items")=Json.Array[] | _=>false) end)
+    end)
+  fun evictionRefreshLoop ()=temporaryTree(fn {root,uri,write}=>
+    let val lib=minimalLibrary(root,write)
+        val capabilities=object[("textDocument",object[("diagnostic",object[])]),
+          ("workspace",object[("diagnostics",object[("refreshSupport",Json.Bool true)])])]
+        val names=List.tabulate(6,fn n=>"untitled:refresh-eviction-" ^ Int.toString n)
+    in fixtureInitialized(object[("capabilities",capabilities),
+        ("initializationOptions",object[("libraryRoot",Json.String(uri lib))])]) (fn client=>
+      let val refreshes=ref 0
+          fun refresh value=Json.member("method",value)=SOME(Json.String "workspace/diagnostic/refresh")
+          fun response id=
+            let val value=C.receive(client,fn value=>refresh value orelse Json.member("id",value)=SOME(Json.int id))
+            in if refresh value then (refreshes:= !refreshes+1;C.send(client,object[("jsonrpc",Json.String "2.0"),
+                ("id",C.field(value,"id")),("result",Json.Null)]);response id) else C.result value end
+          fun pull(id,name)=(C.request(client,id,"textDocument/diagnostic",object[("textDocument",document name)]);response id)
+          val ()=List.app(fn name=>openDocument(client,name,"val stable=42\n"))names
+          val ()=List.app(fn (name,id)=>ignore(pull(id,name)))(ListPair.zip(names,List.tabulate(6,fn n=>10+n)))
+          val _=pull(20,List.last names)
+          val initial= !refreshes
+          val ()=List.app(fn n=>List.app(fn (name,index)=>
+            let val id=100+n*20+index*2
+                val ()=C.request(client,id,"textDocument/hover",object[("textDocument",document name),
+                  ("position",object[("line",Json.int 0),("character",Json.int 5)])])
+                val _=response id
+            in ignore(pull(id+1,name)) end)(ListPair.zip(names,List.tabulate(6,fn n=>n))))[0,1]
+          val ()=check("rechecking evicted views does not generate another global diagnostic refresh",!refreshes=initial)
+          val last=List.last names
+          val ()=C.notify(client,"textDocument/didChange",object[("textDocument",object[("uri",Json.String last),("version",Json.int 2)]),
+            ("contentChanges",Json.Array[object[("text",Json.String "val stable=true\n")]])])
+          val report=pull(200,last)
+      in check("real input changes still refresh even when active diagnostics stay empty",
+        C.field(report,"items")=Json.Array[] andalso !refreshes>initial) end)
+    end)
+  fun queryBeforeEviction ()=temporaryTree(fn {root,uri,write}=>
+    let val lib=minimalLibrary(root,write)
+        val names=List.tabulate(12,fn n=>"untitled:query-eviction-" ^ Int.toString n)
+    in fixtureInitialized(object[("capabilities",object[]),
+        ("initializationOptions",object[("libraryRoot",Json.String(uri lib))])]) (fn client=>
+      let fun query(id,name)=C.request(client,id,"textDocument/hover",object[("textDocument",document name),
+            ("position",object[("line",Json.int 0),("character",Json.int 5)])])
+          val ()=List.app(fn name=>openDocument(client,name,"val stable=42\n"))names
+          val ()=List.app(fn (name,id)=>(query(id,name);ignore(C.result(C.response(client,id)))))
+            (ListPair.zip(names,List.tabulate(12,fn n=>20+n)))
+          val batch=ListPair.zip(List.take(names,6),List.tabulate(6,fn n=>100+n))
+          val ()=List.app(fn (name,id)=>query(id,name))batch
+          val ()=List.app(fn (_,id)=>
+            let val answer=C.response(client,id)
+            in check("dependent queries finish before another check evicts their view: " ^ Json.encode answer,
+              case Json.member("result",answer) of SOME hover=>
+                Json.member("value",C.field(hover,"contents"))=SOME(Json.String "int") | NONE=>false) end)batch
+      in () end)
+    end)
+  fun contextSelectionRecovery ()=temporaryTree(fn {root,uri,write}=>
+    let val lib=minimalLibrary(root,write)
+        fun path name=OS.Path.concat(root,name)
+        val ()=List.app write[(path "one.build","files one.sml shared.sml end\n"),
+          (path "two.build","files two.sml shared.sml end\n"),(path "one.sml","val input=1\n"),
+          (path "two.sml","val input=true\n"),(path "shared.sml","val result=input\n")]
+        val targets=Json.Array(List.map(fn name=>object[("name",Json.String name),
+          ("build",Json.String(uri(path(name ^ ".build"))))])["one","two"])
+        val options=object[("libraryRoot",Json.String(uri lib)),("targets",targets)]
+        val source=uri(path "shared.sml")
+    in fixtureInitialized(object[("capabilities",object[("textDocument",object[("diagnostic",object[])])]),
+        ("initializationOptions",options)]) (fn client=>
+      let val ()=openDocument(client,source,"val result=input\n")
+          fun pull id=(C.request(client,id,"textDocument/diagnostic",object[("textDocument",document source)]);C.response(client,id))
+          val pending=pull 600
+          val ()=check("a pending build-context choice cancels quietly until selection",
+            C.field(C.field(pending,"error"),"code")=Json.int(~32802) andalso
+            C.field(C.field(C.field(pending,"error"),"data"),"retriggerRequest")=Json.Bool false)
+          val again=pull 601
+          val ()=check("repeated providers remain cancelled while the choice is pending",C.field(C.field(again,"error"),"code")=Json.int(~32802))
+          val prompt=C.receive(client,fn value=>Json.member("method",value)=SOME(Json.String "window/showMessageRequest"))
+          val actions=case C.field(C.field(prompt,"params"),"actions") of Json.Array values=>values | _=>raise Fail "missing context actions"
+          val first=case List.find(fn action=>String.isSubstring "one" (textValue(C.field(action,"title"))))actions of
+            SOME action=>action | NONE=>raise Fail "missing named context action"
+          val ()=C.request(client,650,"workspace/diagnostic",object[("previousResultIds",Json.Array[])])
+          val _=C.result(C.response(client,650))
+          val C.Client{messages,...}=client
+          fun plans()=length(List.filter(fn value=>Json.member("method",value)=SOME(Json.String "window/logMessage") andalso
+            (case Json.member("params",value) of SOME params=>(case Json.member("message",params) of
+              SOME(Json.String text)=>String.isSubstring "Workspace analysis:" text | _=>false) | _=>false))(!messages))
+          val planned=plans()
+          val ()=C.send(client,object[("jsonrpc",Json.String "2.0"),("id",C.field(prompt,"id")),("result",first)])
+          val ()=check("choosing a context recovers without an edit or restart",C.field(C.result(pull 602),"items")=Json.Array[])
+          val ()=C.request(client,603,"textDocument/hover",object[("textDocument",document source),
+            ("position",object[("line",Json.int 0),("character",Json.int 5)])])
+          val hover=C.result(C.response(client,603))
+          val ()=check("the selected context supplies the actual incoming type",C.field(C.field(hover,"contents"),"value")=Json.String "int")
+          val ()=C.request(client,651,"workspace/diagnostic",object[("previousResultIds",Json.Array[])])
+          val _=C.result(C.response(client,651))
+      in check("a document context choice does not rescan unchanged workspace projects",plans()=planned) end)
+    end)
+  fun idleWorkspacePolls ()=temporaryTree(fn {root,uri,write}=>
+    let fun path name=OS.Path.concat(root,name)
+        val lib=path "lib" val basis=OS.Path.concat(lib,"basis")
+        val ()=(OS.FileSys.mkDir lib;OS.FileSys.mkDir basis)
+        val initial=OS.Path.concat(basis,"initial.sml")
+        val manifest=OS.Path.concat(basis,"MANIFEST")
+        val manifestText="initial.sml | always | yes | | \n"
+        val ()=write(initial,"val libraryValue=1\n")
+        val ()=write(manifest,manifestText)
+        val ()=write(path "main.build","main.sml\n")
+        val ()=write(path "main.sml","val answer=libraryValue\n")
+        val ()=write(path "extra.sml","val extra=2\n")
+        val options=object[("libraryRoot",Json.String(uri lib))]
+    in fixtureInitialized(object[("capabilities",object[("textDocument",object[("diagnostic",object[])])]),
+        ("workspaceFolders",Json.Array[object[("uri",Json.String(uri root)),("name",Json.String "idle")]]),
+        ("initializationOptions",options)]) (fn client=>
+      let val C.Client {messages,...}=client
+          fun plans()=length(List.filter(fn message=>Json.member("method",message)=SOME(Json.String "window/logMessage") andalso
+            (case Json.member("params",message) of SOME params=>
+              (case Json.member("message",params) of SOME(Json.String text)=>String.isSubstring "Workspace analysis:" text | _=>false)
+            | _=>false))(!messages))
+          fun pull(id,previous)=(C.request(client,id,"workspace/diagnostic",object[("previousResultIds",Json.Array previous)]);
+            C.field(C.result(C.response(client,id)),"items"))
+          val first=pull(290,[])
+          val count=plans()
+          val ()=check("the initial poll performs one workspace sweep",count=1)
+          val ()=check("unchanged polls reuse reports without another analysis sweep",pull(291,[])=first andalso plans()=count)
+          val previous=case first of Json.Array [report]=>[object[("uri",C.field(report,"uri")),("value",C.field(report,"resultId"))]]
+            | _=>raise Fail "missing initial idle report"
+          val ()=check("cached reports honor previous result IDs",case pull(292,previous) of Json.Array [report]=>
+            C.field(report,"kind")=Json.String "unchanged" andalso plans()=count | _=>false)
+          val mainUri=uri(path "main.sml")
+          val ()=openDocument(client,mainUri,"val answer=libraryValue\n")
+          val ()=check("opening an unchanged project file does not restart the workspace sweep",case pull(298,[]) of
+            Json.Array [report]=>C.field(report,"version")=Json.int 1 andalso plans()=count | _=>false)
+          val ()=C.notify(client,"textDocument/didClose",object[("textDocument",document mainUri)])
+          val ()=check("closing a clean project file preserves reports and clears its version",case pull(299,[]) of
+            Json.Array [report]=>C.field(report,"version")=Json.Null andalso plans()=count | _=>false)
+          val ()=write(initial,"val libraryValue=true\n")
+          val _=pull(293,[])
+          val ()=check("saved library source edits invalidate the cache without watched-file notifications",plans()=count+1)
+          val ()=write(manifest,manifestText ^ "# regenerated\n")
+          val _=pull(294,[])
+          val ()=check("regenerated manifests invalidate the cache",plans()=count+2)
+          val ()=write(path "main.build","files main.sml extra.sml end\n")
+          val ()=check("build changes invalidate membership",case pull(295,[]) of Json.Array reports=>length reports=2 andalso plans()=count+3 | _=>false)
+          val ()=write(path "other.build","other.sml\n")
+          val ()=write(path "other.sml","val other=3\n")
+          val ()=check("new root build files invalidate discovery",case pull(296,[]) of Json.Array reports=>length reports=3 andalso plans()=count+4 | _=>false)
+          val ()=openDocument(client,uri(path "main.sml"),"val overlay:int=true\n")
+          val ()=check("unsaved overlays invalidate diagnostic results",case pull(297,[]) of Json.Array reports=>
+            List.exists(fn report=>C.field(report,"uri")=Json.String(uri(path "main.sml")) andalso
+              C.field(report,"items")<>Json.Array[])reports | _=>false)
+      in () end)
+    end)
+  fun analysisProgress ()=temporaryTree(fn {root,uri,write}=>
+    let fun path name=OS.Path.concat(root,name)
+        val ()=write(path "left.build","left.sml\n")
+        val ()=write(path "right.build","right.sml\n")
+        val ()=write(path "left.sml","val left=1\n")
+        val ()=write(path "right.sml","val right=true\n")
+    in fixtureInitialized(object[("capabilities",object[("textDocument",object[("diagnostic",object[])])]),
+        ("workspaceFolders",Json.Array[object[("uri",Json.String(uri root)),("name",Json.String "progress")]])]) (fn client=>
+      let val ()=C.request(client,280,"workspace/diagnostic",object[("previousResultIds",Json.Array[]),
+            ("workDoneToken",Json.String "live-analysis")])
+          fun final value=Json.member("id",value)=SOME(Json.int 280)
+          fun plan value=Json.member("method",value)=SOME(Json.String "window/logMessage") andalso
+            (case Json.member("params",value) of SOME params=>
+              Json.member("type",params)=SOME(Json.int 3) andalso
+              (case Json.member("message",params) of SOME(Json.String text)=>String.isSubstring "Workspace analysis: 2 contexts" text | _=>false)
+            | _=>false)
+          val first=C.receive(client,fn value=>final value orelse plan value)
+          val ()=check("the Output channel receives the workspace plan before completion",plan first)
+          fun tokenReport value=Json.member("method",value)=SOME(Json.String "$/progress") andalso
+            (case Json.member("params",value) of SOME params=>Json.member("token",params)=SOME(Json.String "live-analysis") andalso
+              (case Json.member("value",params) of SOME report=>Json.member("kind",report)=SOME(Json.String "report") andalso
+                (case Json.member("message",report) of SOME(Json.String text)=>String.isSubstring "context 1/2" text | _=>false)
+              | _=>false) | _=>false)
+          val next=C.receive(client,fn value=>final value orelse tokenReport value)
+          val ()=check("work-done tokens receive intermediate context reports",tokenReport next)
+          val result=C.result(C.response(client,280))
+      in check("progress does not replace the final diagnostic result",case C.field(result,"items") of
+        Json.Array items=>length items=2 andalso List.all(fn item=>C.field(item,"items")=Json.Array[])items | _=>false) end)
+    end)
+  fun workspaceContexts ()=temporaryTree(fn {root,uri,write}=>
+    let fun path name=OS.Path.concat(root,name)
+        val ()=write(path "left.build","files left.sml left-tail.sml end\n")
+        val ()=write(path "right.build","files right.sml right-tail.sml end\n")
+        val ()=write(path "left.sml","val contextLeft=1\n")
+        val ()=write(path "right.sml","val contextRight=true\n")
+        val ()=write(path "left-tail.sml","val leftTail:int=true\n")
+        val ()=write(path "right-tail.sml","val rightTail:bool=1\n")
+        fun array (Json.Array values)=values | array _=raise Fail "expected array"
+        fun report (items,name)=case List.find(fn item=>C.field(item,"uri")=Json.String(uri(path name)))items of
+          SOME item=>item | NONE=>raise Fail("missing workspace source " ^ name)
+    in fixtureInitialized(object[("capabilities",object[("textDocument",object[("diagnostic",object[])])]),
+        ("workspaceFolders",Json.Array[object[("uri",Json.String(uri root)),("name",Json.String "contexts")]])]) (fn client=>
+      let fun pull(id,previous)=(C.request(client,id,"workspace/diagnostic",object[("previousResultIds",Json.Array previous)]);
+            array(C.field(C.result(C.response(client,id)),"items")))
+          val first=pull(270,[])
+          val ()=check("all sources survive context-at-a-time reporting",length first=4 andalso
+            List.all(fn name=>C.field(report(first,name),"items")=Json.Array[])["left.sml","right.sml"] andalso
+            List.all(fn name=>not(null(array(C.field(report(first,name),"items")))))["left-tail.sml","right-tail.sml"])
+          val ()=write(path "left-tail.sml","val leftTail:int=contextLeft\n")
+          val ()=write(path "right-tail.sml","val rightTail:bool=contextRight\n")
+          val previous=List.map(fn item=>object[("uri",C.field(item,"uri")),("value",C.field(item,"resultId"))]) first
+          val fixed=pull(271,previous)
+          val ()=check("each context uses its own ordinal and previous result",length fixed=4 andalso
+            List.all(fn name=>C.field(report(fixed,name),"kind")=Json.String "unchanged")["left.sml","right.sml"] andalso
+            List.all(fn name=>C.field(report(fixed,name),"items")=Json.Array[])["left-tail.sml","right-tail.sml"])
+          val ()=C.request(client,272,"workspace/symbol",object[("query",Json.String "context")])
+          val symbols=array(C.result(C.response(client,272)))
+      in check("workspace symbols include both contexts",List.all(fn name=>
+        List.exists(fn symbol=>C.field(symbol,"name")=Json.String name)symbols)["contextLeft","contextRight"]) end)
+    end)
+  fun basisDevelopment ()=temporaryTree(fn {root,uri,write}=>
+    let val lib=root ^ "/lib" val basis=lib ^ "/basis"
+        val ()=List.app OS.FileSys.mkDir [lib,basis]
+        val text="structure Runtime=struct val add=primitive end\n"
+        val ()=List.app write [(basis ^ "/library.build","files initial.sml runtime.sml end\n"),
+          (basis ^ "/initial.sml","val primitive = _prim \"int_add\" : int * int -> int\n"),
+          (basis ^ "/runtime.sml",text),(basis ^ "/MANIFEST","initial.sml | always | yes | | \nruntime.sml | demand | yes | Runtime | \n"),
+          (root ^ "/program.build","main.sml\n"),(root ^ "/main.sml","val userPrimitive = _prim \"int_add\" : int * int -> int\n")]
+        val runtime=uri(basis ^ "/runtime.sml")
+        val options=object[("libraryRoot",Json.String(uri lib)),("targets",Json.Array
+          [object[("name",Json.String "program"),("build",Json.String(uri(root ^ "/program.build")))]]),
+          ("activeContext",Json.String "program")]
+    in fixtureInitialized(object[("capabilities",object[("textDocument",object[("diagnostic",object[])])]),
+         ("workspaceFolders",Json.Array[object[("uri",Json.String(uri root)),("name",Json.String "basis")]]),
+         ("initializationOptions",options)]) (fn client=>
+      let fun pull id=(C.request(client,id,"textDocument/diagnostic",object[("textDocument",document runtime)]);C.result(C.response(client,id)))
+          fun change(version,text)=C.notify(client,"textDocument/didChange",object[("textDocument",object
+            [("uri",Json.String runtime),("version",Json.int version)]),("contentChanges",Json.Array[object[("text",Json.String text)]])])
+          val ordinary=uri(root ^ "/main.sml")
+          val ()=openDocument(client,ordinary,"val userPrimitive = _prim \"int_add\" : int * int -> int\n")
+          val ()=openDocument(client,runtime,text)
+          val ()=C.request(client,715,"textDocument/diagnostic",object[("textDocument",document ordinary)])
+          val ()=C.request(client,710,"textDocument/diagnostic",object[("textDocument",document runtime)])
+          val ordinaryReport=C.result(C.response(client,715))
+          val ()=check("concurrent worker jobs keep their document waiters separate",C.field(ordinaryReport,"items")<>Json.Array[])
+          val ()=check("Basis bootstrap does not preload or reject its own primitives",C.field(C.result(C.response(client,710)),"items")=Json.Array[])
+          val ()=C.request(client,711,"textDocument/hover",object[("textDocument",document runtime),
+            ("position",object[("line",Json.int 0),("character",Json.int 30)])])
+          val ()=check("Basis declarations have semantic hover",C.result(C.response(client,711))<>Json.Null)
+          val ()=change(2,"structure Runtime=struct val add:int=primitive end\n")
+          val ()=check("Basis edits are checked",case C.field(pull 712,"items") of Json.Array(_::_)=>true | _=>false)
+          val ()=change(3,text)
+          val ()=check("Basis repairs clear diagnostics",C.field(pull 713,"items")=Json.Array[])
+          val ()=C.request(client,714,"textDocument/diagnostic",object[("textDocument",document ordinary)])
+          val report=C.result(C.response(client,714))
+      in check("Basis privilege does not leak into ordinary programs",case C.field(report,"items") of Json.Array items=>
+        List.exists(fn item=>String.isSubstring "_prim" (textValue(C.field(item,"message"))))items | _=>false) end) end)
   fun highlightPositions values = case values of Json.Array values => List.map (fn value =>
       let val start=C.field (C.field (value,"range"),"start")
       in (C.field (start,"line"),C.field (start,"character")) end) values
@@ -971,6 +1323,15 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "markup-negotiation" RuneLspSemanticProtocolTests.markup,
     Test.it "file-project-mapping" RuneLspSemanticProtocolTests.fileProject,
     Test.it "workspace-diagnostics" RuneLspSemanticProtocolTests.workspaceDiagnostics,
+    Test.it "workspace-context-reporting" RuneLspSemanticProtocolTests.workspaceContexts,
+    Test.it "live-analysis-progress" RuneLspSemanticProtocolTests.analysisProgress,
+    Test.it "idle-workspace-polls" RuneLspSemanticProtocolTests.idleWorkspacePolls,
+    Test.it "eviction-refresh-loop" RuneLspSemanticProtocolTests.evictionRefreshLoop,
+    Test.it "watched-workspace-cache" RuneLspSemanticProtocolTests.watchedWorkspaceCache,
+    Test.it "scoped-document-outline" RuneLspSemanticProtocolTests.scopedOutline,
+    Test.it "query-before-eviction" RuneLspSemanticProtocolTests.queryBeforeEviction,
+    Test.it "context-selection-recovery" RuneLspSemanticProtocolTests.contextSelectionRecovery,
+    Test.it "basis-development-context" RuneLspSemanticProtocolTests.basisDevelopment,
     Test.it "navigation-and-symbols" RuneLspSemanticProtocolTests.navigation,
     Test.it "workspace-symbols-resolve" RuneLspSemanticProtocolTests.workspaceSymbols,
     Test.it "document-highlights" RuneLspSemanticProtocolTests.documentHighlights,

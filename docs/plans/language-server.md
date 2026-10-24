@@ -676,7 +676,7 @@ by editing this document.
 #### M1, implemented so far (2026-10-22)
 
 `make lsp-bench` builds the SML measurement program from
-`rune-lsp-bench.build`; `make test-lsp-bench` runs arithmetic/fault oracles
+`tools/lsp/bench.build`; `make test-lsp-bench` runs arithmetic/fault oracles
 and independent command-level acceptance. [The fixture and command
 contract](../../tests/lsp/README.md) documents strict result-directory
 ownership, fixture verdicts, source identities, separate timed phases,

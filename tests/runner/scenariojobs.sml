@@ -27,6 +27,8 @@ struct
     | command ["scenario-dist-installer"] = SOME (protect DistChecks.installer)
     | command ["scenario-dist-binaries"] = SOME (protect DistChecks.binaryHeaders)
     | command ["scenario-dist-windows"] = SOME (protect DistChecks.windows)
+    | command ["scenario-vscode-stage"] = SOME (protect VSCodeChecks.stage)
+    | command ["scenario-vscode-archive",file] = SOME (protect(fn()=>VSCodeChecks.archive file))
     | command ["scenario-archive-faults"] = SOME (protect ArchiveCheck.faults)
     | command _ = NONE
   fun tagged tags tree = List.foldl (fn (tag, tree) => Test.tag tag tree) tree tags
@@ -86,9 +88,18 @@ struct
            tagged ["test-windows", "nightly", "windows", "vm"]
              (Test.requires ["windows-installer"]
                (job "windows" ["scenario-dist-windows"] ["scenarios/dist/archives"] []))]))
-    in Test.describe "scenarios" [deps, builds, dynamic, units, install, dist] end
+        val vscode=tagged ["check","test-vscode","covers:editors/vscode/*","covers:tools/builder/vscode.sml"]
+          (Test.describe "vscode"
+            [job "staging" ["scenario-vscode-stage"] [] [],
+             Test.it "versions" {program=fromRoot "bin/rune-build",args=["rune-build","package-lsp","--self-test"],env=NONE,dir=SOME ".",
+               stdin=NONE,timeout=Time.fromSeconds 30,cap=0,cpus=1,memory=128,pools=[],exclusive=false,after=[],judge=failLines},
+             Test.requires ["vscode-node"] (Test.it "client" {program="/bin/sh",args=["sh","-c","exec node \"$RUNE_TEST_ROOT\"/editors/vscode/test/client.test.cjs"],
+               env=NONE,dir=SOME ".",stdin=NONE,timeout=Time.fromSeconds 30,cap=0,cpus=1,memory=256,
+               pools=[],exclusive=false,after=[],judge=failLines})])
+    in Test.describe "scenarios" [deps, builds, dynamic, units, install, dist, vscode] end
   val capabilities =
-    [{name = "gzip", probe = "command -v gzip", hint = "install gzip for distribution decoding"},
+    [{name = "vscode-node", probe = "node -e 'require(\"node:test\")'", hint = "install Node.js 18 or later for the VS Code client tests"},
+     {name = "gzip", probe = "command -v gzip", hint = "install gzip for distribution decoding"},
      {name = "unzip", probe = "command -v unzip", hint = "install unzip for distribution decoding"},
      {name = "tar", probe = "command -v tar", hint = "install tar for distribution extraction"},
      {name = "windows-installer", probe = "command -v cmd.exe && bin/rune-windows directory",

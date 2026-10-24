@@ -1,0 +1,7 @@
+libraries unicode json digest end
+files ../../build/config.sml end
+use ../../lib/compiler/api.build
+files
+  ../../tools/lsp/syntax-bench.sml
+  ../../src/main/lsp-syntax-bench-main.sml
+end

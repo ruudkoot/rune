@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "date": "2026-10-24",
+  "source_commit": "afa79467da34ab55c657d690e8f6c3a1f07e6098",
+  "source": "src/main/rune-main.sml",
+  "target": "rune.build",
+  "cycles": 100,
+  "passed": true,
+  "measurements": 308,
+  "post_warmup_measurements": 278,
+  "post_warmup_min_live_bytes": 271072816,
+  "post_warmup_max_live_bytes": 271086744,
+  "first_30_post_warmup_median_live_bytes": 271081344.0,
+  "last_30_median_live_bytes": 271081344.0,
+  "maximum_heap_capacity_bytes": 536870912,
+  "server_sha256": "8b91903cf601d0a30bd699779b211ba8dc41c9799f1f6e49860cc9bbf1a15dcd",
+  "vm_sha256": "ba0e27c87e423cc7fe92fce9766d30c8901c5f5604df4532e677d75cff51b15a",
+  "system": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "method": "Full collection after every completed command; cold check plus 100 leaf edits, ten type errors and repairs; independent stdio client waits for clean process exit. This is a retention run, not a latency acceptance run.",
+  "raw_artifacts": "/home/ruud/rune-benchmark-results/lsp/2026-10-24-live-debug/retention-optimized",
+  "limits": {
+    "worker_heap_bytes": 536870912,
+    "worker_process_bytes": 1610612736,
+    "job_deadline_seconds": 30,
+    "stderr_retained_bytes": 4096,
+    "stderr_stream_bytes": 65536
+  },
+  "process_tree_maximum_rss_kib": 417332,
+  "implementation_commit": "e2688dc14a807bfd96e9708fa6549ed9b90a80ed",
+  "worker_jit": "opt"
+}

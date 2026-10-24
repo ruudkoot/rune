@@ -286,12 +286,13 @@ date it gives.
   change or redistribute Rune. This is the cheapest item on the list, and
   only the owner can do it. *Done on 2026-10-13:* Rune is under CC0 1.0
   Universal (`LICENSE`).
-* **No language server:**
+* **Language server acceptance:**
   * `rune --serve` is a JSON-RPC prototype with diagnostics and hover,
     not LSP (`src/driver/serve.sml`).
-  * `rune-ide` is an Electron IDE with a service of its own. Its hover and
-    definitions are not started.
-  * `millet.toml` still points Millet at a build file made for MLton.
+  * `rune-ide` is an Electron IDE with a service of its own.
+  * The standalone `runelsp` and its VS Code package supersede the removed
+    `millet.toml`; real-project validation is recorded in
+    [language-server-debug.md](language-server-debug.md).
 * **No formatter.**
 * **No package manager:** a survey and a sketch of a lock file wait for
   the owner ([incremental-compilation.md](incremental-compilation.md),

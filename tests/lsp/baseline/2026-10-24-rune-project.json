@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "date": "2026-10-24",
+  "installed_rune_version": "f4ee51368",
+  "extension_version": "0.0.975",
+  "source_commit": "afa79467da34ab55c657d690e8f6c3a1f07e6098",
+  "source": "src/main/rune-main.sml",
+  "target": "rune.build",
+  "source_files": 90,
+  "source_bytes": 1531286,
+  "worker_heap_bytes": 268435456,
+  "worker_address_space_bytes": 805306368,
+  "job_deadline_seconds": 30,
+  "expected": "successful diagnostics, hover, symbols and document links",
+  "observed": "four failed requests; repeated worker heap exhaustion",
+  "raw_artifacts": "/home/ruud/rune-benchmark-results/lsp/2026-10-24-live-debug/baseline",
+  "request_latency_us": {
+    "initialize": 45908,
+    "textDocument/diagnostic": 17790570,
+    "textDocument/hover": 37411515,
+    "textDocument/documentSymbol": 56761221,
+    "textDocument/documentLink": 77181786
+  },
+  "profile": {
+    "raw_artifacts": "/home/ruud/rune-benchmark-results/lsp/2026-10-24-live-debug/profile",
+    "units": 231,
+    "occurrences": 141341,
+    "allocated_bytes_before_occurrence_projection": 11716565160,
+    "last_collected_live_bytes": 256656760,
+    "peak_observed_live_bytes": 265534528,
+    "collections_before_occurrence_projection": 1517,
+    "worker_elapsed_us_before_occurrence_projection": 14253966,
+    "process_tree_maximum_rss_kib": 405092,
+    "observer": "opt-in counters include observer overhead; live is the last collection measurement"
+  }
+}

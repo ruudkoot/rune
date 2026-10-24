@@ -168,7 +168,7 @@ BUILDER_LIB_SRCS := lib/unicode/utf8_sig.sml lib/unicode/utf8.sml lib/json/json_
                     lib/digest/digest_sig.sml lib/digest/sha256.sml lib/digest/hex_sig.sml lib/digest/hex.sml
 BUILDER_MODEL_SRCS := tools/builder/common.sml tools/builder/options.sml tools/builder/runtime-inputs.sml \
                     tools/builder/gmp-config.sml tools/builder/runtime-record.sml tools/builder/cross-vm.sml \
-                    tools/builder/formats.sml tools/builder/archive.sml tools/builder/dist.sml \
+                    tools/builder/formats.sml tools/builder/archive.sml tools/builder/dist.sml tools/builder/vscode.sml \
                     tools/builder/gmp-build.sml tools/builder/ffi-deps.sml tools/builder/relink.sml tools/builder/package-runtime.sml \
                     tools/builder/setup-mlton.sml
 BUILDER_NATIVE_SRCS := $(BUILDER_LIB_SRCS) tools/builder/io.sig tools/builder/native-io.sml $(BUILDER_MODEL_SRCS) tools/builder/main.sml
@@ -250,11 +250,11 @@ REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyt
 DOC_LIBS := $(REPL_LIBS) compiler
 
 # Compiler ownership audit and interleaved-session acceptance.
-COMPILER_STATE_AUDIT_SRCS := $(shell sh scripts/build-files.sh rune-compiler-state-audit.build)
-COMPILER_STATE_TEST_SRCS := $(shell sh scripts/build-files.sh rune-compiler-state-tests.build)
+COMPILER_STATE_AUDIT_SRCS := $(shell sh scripts/build-files.sh tools/compiler/state-audit.build)
+COMPILER_STATE_TEST_SRCS := $(shell sh scripts/build-files.sh tests/compiler/state-tests.build)
 .PHONY: test-compiler-state
-bin/rune-compiler-state-audit.rbc: $(RUNE) $(COMPILER_STATE_AUDIT_SRCS) rune-compiler-state-audit.build manifests
-	$(RUNE) --build rune-compiler-state-audit.build -o $@
+bin/rune-compiler-state-audit.rbc: $(RUNE) $(COMPILER_STATE_AUDIT_SRCS) tools/compiler/state-audit.build manifests
+	$(RUNE) --build tools/compiler/state-audit.build -o $@
 bin/rune-compiler-state-audit: bin/rune-compiler-state-audit.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-compiler-state-audit.rbc" "$$@"\n' > $@
 	chmod +x $@
@@ -262,8 +262,8 @@ bin/rune-compiler-state-model.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/comp
 	$(RUNE) --library test/unit lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/lib/compiler/state.sml -o $@
 bin/rune-compiler-state-duplicate.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml manifests
 	$(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml -o $@
-bin/rune-compiler-state-tests.rbc: $(RUNE) $(COMPILER_STATE_TEST_SRCS) rune-compiler-state-tests.build manifests
-	$(RUNE) --build rune-compiler-state-tests.build -o $@
+bin/rune-compiler-state-tests.rbc: $(RUNE) $(COMPILER_STATE_TEST_SRCS) tests/compiler/state-tests.build manifests
+	$(RUNE) --build tests/compiler/state-tests.build -o $@
 test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc
 	bin/rune-compiler-state-audit --self-test $(wildcard lib/compiler/*.sml lib/compiler/*/*.sml)
 	bin/runevm bin/rune-compiler-state-model.rbc
@@ -274,11 +274,11 @@ test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model
 	bin/runevm --jit=all bin/rune-compiler-state-tests.rbc
 
 # Frontend baselines and edit traces for the language-server roadmap.
-LSP_BENCH_SRCS := $(shell sh scripts/build-files.sh rune-lsp-bench.build)
+LSP_BENCH_SRCS := $(shell sh scripts/build-files.sh tools/lsp/bench.build)
 .PHONY: lsp-bench test-lsp-bench
 lsp-bench: bin/rune-lsp-bench
-bin/rune-lsp-bench.rbc: $(RUNE) $(LSP_BENCH_SRCS) rune-lsp-bench.build manifests
-	$(RUNE) --build rune-lsp-bench.build -o $@
+bin/rune-lsp-bench.rbc: $(RUNE) $(LSP_BENCH_SRCS) tools/lsp/bench.build manifests
+	$(RUNE) --build tools/lsp/bench.build -o $@
 bin/rune-lsp-bench: bin/rune-lsp-bench.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-lsp-bench.rbc" "$$@"\n' > $@
 	chmod +x $@
@@ -313,8 +313,8 @@ bin/rune-lsp-tests.rbc: $(RUNE) tests/lib/lsp/protocol.sml manifests
 	$(RUNE) --library test/unit --library random --library lsp tests/lib/lsp/protocol.sml -o $@
 .PHONY: test-lsp test-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker
 LSP_WORKER_TEST_SRCS := src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/worker-model.sml src/lsp/worker-process.sml
-bin/rune-lsp-analysis-worker.rbc: $(RUNE) rune-lsp-worker.build $(LSP_SRCS) tests/lsp/worker-main.sml manifests
-	$(RUNE) --build rune-lsp-worker.build -o $@
+bin/rune-lsp-analysis-worker.rbc: $(RUNE) tests/lsp/worker.build $(LSP_SRCS) tests/lsp/worker-main.sml manifests
+	$(RUNE) --build tests/lsp/worker.build -o $@
 bin/rune-lsp-worker-analysis-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml manifests
 	$(RUNE) --library test/unit --library compiler --library lsp $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml -o $@
 bin/rune-lsp-jobs-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) src/lsp/jobs.sml tests/lsp/jobs-tests.sml manifests
@@ -338,19 +338,19 @@ bin/rune-compiler-analysis-tests.rbc: $(RUNE) tests/lib/compiler/analysis.sml ma
 test-lsp-analysis: bin/rune-compiler-analysis-tests.rbc
 	bin/runevm bin/rune-compiler-analysis-tests.rbc
 	bin/runevm --jit=all bin/rune-compiler-analysis-tests.rbc
-bin/rune-lsp-syntax-bench.rbc: $(RUNE) rune-lsp-syntax-bench.build tools/lsp/syntax-bench.sml src/main/lsp-syntax-bench-main.sml $(wildcard lib/compiler/syntax/*.sml) manifests
-	$(RUNE) --build rune-lsp-syntax-bench.build -o $@
+bin/rune-lsp-syntax-bench.rbc: $(RUNE) tools/lsp/syntax-bench.build tools/lsp/syntax-bench.sml src/main/lsp-syntax-bench-main.sml $(wildcard lib/compiler/syntax/*.sml) manifests
+	$(RUNE) --build tools/lsp/syntax-bench.build -o $@
 bin/rune-compiler-syntax-tests.rbc: $(RUNE) tests/lib/compiler/syntax.sml manifests
 	$(RUNE) --library test/unit --library compiler tests/lib/compiler/syntax.sml -o $@
-bin/rune-lsp-syntax-tests.rbc: $(RUNE) rune-lsp-syntax-tests.build tests/lsp/syntax-tests.sml $(wildcard lib/compiler/syntax/*.sml) manifests
-	$(RUNE) --build rune-lsp-syntax-tests.build -o $@
+bin/rune-lsp-syntax-tests.rbc: $(RUNE) tests/lsp/syntax-tests.build tests/lsp/syntax-tests.sml $(wildcard lib/compiler/syntax/*.sml) manifests
+	$(RUNE) --build tests/lsp/syntax-tests.build -o $@
 test-lsp-syntax: bin/rune-compiler-syntax-tests.rbc bin/rune-lsp-syntax-tests.rbc
 	bin/runevm bin/rune-compiler-syntax-tests.rbc
 	bin/runevm --jit=all bin/rune-compiler-syntax-tests.rbc
 	bin/runevm bin/rune-lsp-syntax-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-syntax-tests.rbc
-bin/rune-lsp-documents-bench.rbc: $(RUNE) tools/lsp/documents-bench.sml src/main/lsp-documents-bench-main.sml rune-lsp-documents-bench.build manifests
-	$(RUNE) --build rune-lsp-documents-bench.build -o $@
+bin/rune-lsp-documents-bench.rbc: $(RUNE) tools/lsp/documents-bench.sml src/main/lsp-documents-bench-main.sml tools/lsp/documents-bench.build manifests
+	$(RUNE) --build tools/lsp/documents-bench.build -o $@
 test-lsp: test-lsp-protocol
 bin/rune-lsp-documents-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml tests/lsp/edit-traces.sml tests/lsp/documents-tests.sml manifests
 	$(RUNE) --library test/unit --library lsp src/lsp/documents.sml src/lsp/sync.sml tests/lsp/edit-traces.sml tests/lsp/documents-tests.sml -o $@
@@ -1887,7 +1887,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/tracecheck.sml tests/runner/heapchecks.sml tests/runner/censustrace.sml tests/runner/heapfaults.sml tests/runner/jitdumpcheck.sml tests/runner/heap.sml \
                examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
-               tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml \
+               tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/vscodechecks.sml tests/runner/scenariojobs.sml \
                tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
                tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
                tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/main.sml
@@ -2012,7 +2012,7 @@ uninstall:
 # Distribution archives (docs/building.md, Distribution). The version is
 # git's, the one runtime/version.h already carries. Phony: the archives
 # land in the dist/ directory, whose stamp is not the archives'.
-dist: bin/rune-build runtime/version.h manifests bin/rune.rbc bin/rune-repl.img bin/runeffi.rbc \
+dist: dist-vscode bin/rune-build runtime/version.h manifests bin/rune.rbc bin/rune-repl.img bin/runeffi.rbc \
       bin/dist/runevm bin/dist/runevm32 bin/dist/runevm-aarch64 bin/dist/runevm-ppc64 \
       bin/dist/runevm.exe bin/dist/runevm32.exe
 	@mkdir -p dist
@@ -2023,6 +2023,36 @@ dist: bin/rune-build runtime/version.h manifests bin/rune.rbc bin/rune-repl.img 
 	  --linux x86_64=bin/dist/runevm --linux i686=bin/dist/runevm32 \
 	  --linux aarch64=bin/dist/runevm-aarch64 --linux ppc64=bin/dist/runevm-ppc64 \
 	  --windows x86_64=bin/dist/runevm.exe --windows i686=bin/dist/runevm32.exe
+
+# VS Code uses copies of these runtimes, never a development/installed VM.
+NODE ?= node
+NPM ?= npm
+VSIX_PUBLISHER ?= ruudkoot
+VSCODE_CLIENT_SRCS := $(wildcard editors/vscode/src/*.js) editors/vscode/bundle.cjs
+.PHONY: vscode dist-vscode test-vscode test-vscode-packaged test-vscode-editor
+bin/rune-lsp-distribution-tests.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/distribution-tests.sml manifests
+	$(RUNE) --library json --library lsp tests/lsp/client.sml tests/lsp/distribution-tests.sml -o $@
+bin/rune-lsp-project-replay.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/project-replay.sml manifests
+	$(RUNE) --library json --library lsp tests/lsp/client.sml tests/lsp/project-replay.sml -o $@
+editors/vscode/node_modules/.package-lock.json: editors/vscode/package.json editors/vscode/package-lock.json
+	$(NODE) -e 'if (+process.versions.node.split(".")[0] < 22) throw Error("VSIX tooling requires Node.js 22 or later")'
+	cd editors/vscode && $(NPM) ci --ignore-scripts --no-audit --no-fund
+build/vscode/client/.built: $(VSCODE_CLIENT_SRCS) editors/vscode/node_modules/.package-lock.json
+	$(NODE) editors/vscode/bundle.cjs $(abspath build/vscode/client)
+	touch $@
+vscode dist-vscode: bin/rune-build bin/runelsp.rbc bin/dist/runevm bin/dist/runevm.exe build/vscode/client/.built manifests
+	bin/rune-build package-lsp --version "$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h)" \
+	  --out build/vscode/extension --server bin/runelsp.rbc --lib lib \
+	  --linux bin/dist/runevm --windows bin/dist/runevm.exe --publisher '$(VSIX_PUBLISHER)' \
+	  --gmp-notices '$(GMP_DIST_NATIVE_PREFIX)/share/licenses/gmp' \
+	  --node '$(NODE)' $(if $(filter dist-vscode,$@),--vsix dist)
+test-vscode: bin/rune-build bin/rune-scenarios bin/rune-test
+	$(RUNE_TEST) --tier test-vscode
+test-vscode-packaged: dist-vscode bin/rune-lsp-distribution-tests.rbc bin/rune-scenarios
+	VSIX_PUBLISHER='$(VSIX_PUBLISHER)' bin/rune-scenarios scenario-vscode-archive "$(abspath dist)/rune-language-server-$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h).vsix"
+	build/vscode/extension/server/bin/runevm bin/rune-lsp-distribution-tests.rbc $(abspath build/vscode/extension)
+test-vscode-editor: dist-vscode
+	$(NODE) editors/vscode/test/editor.cjs "$(abspath dist)/rune-language-server-$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h).vsix"
 
 # Portable suite correctness, serial measurements and deterministic counts
 # (docs/plans/benchmarks.md). Timing thresholds stay outside make check.
@@ -2104,7 +2134,7 @@ BENCH_CHECK_SRCS := $(HOST_LAWS_SRCS) tests/runner/matrixload.sml tests/runner/m
 bin/rune-bench-check.rbc: $(RUNE) $(BENCH_CHECK_SRCS) tests/runner/benchmark-cases.json tests/runner/inventory-cases.json manifests
 	$(RUNE) --library test/runner --library json --library digest $(BENCH_CHECK_SRCS) -o $@
 SCENARIO_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/scenarios.sml tests/runner/windowsdir.sml tests/runner/installchecks.sml \
-                 tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/scenariojobs.sml tests/runner/scenarios-main.sml
+                 tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/vscodechecks.sml tests/runner/scenariojobs.sml tests/runner/scenarios-main.sml
 bin/rune-scenarios.rbc: $(RUNE) $(SCENARIO_SRCS) manifests
 	$(RUNE) --library test/runner --library json $(SCENARIO_SRCS) -o $@
 bin/rune-budget bin/rune-bench-check bin/rune-scenarios: bin/%: bin/%.rbc bin/runevm Makefile

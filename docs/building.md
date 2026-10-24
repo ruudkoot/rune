@@ -250,7 +250,7 @@ name the tools to check.
 | `make perf` | the wall-clock times of the programs of `tests/perf` in the configurations of the matrix (`PERF_CONFIGS` selects others), one at a time, in `tests/out/perf/wall.md`; `rune` is Rune as shipped (`bin/rune` on `bin/runevm`), the stack VM `rune:stack` ([performance.md](performance.md)); not part of `make check` |
 | `make install` | install `rune`, `runevm`, `runevm-stack`, `runedoc`, `runeopt`, `rune-repl` with `rune-dap` and `rune-kernel` where they are built, the basis library, the man pages and the shell completions under `PREFIX` |
 | `make uninstall` | remove them again |
-| `make dist` | write `dist/rune-<version>-linux.tar.gz` and `dist/rune-<version>-windows.zip` ([Distribution](#distribution)) |
+| `make dist` | write the Linux archive, Windows archive and VS Code VSIX ([Distribution](#distribution)) |
 | `make test-dist` | check those archives with stand-in binaries; part of `make check` |
 | `make clean` | remove `bin/`, `build/`, generated files and test output |
 
@@ -570,7 +570,8 @@ pinned release.
 ## Distribution
 
 `make dist` writes `dist/rune-<version>-linux.tar.gz` and
-`dist/rune-<version>-windows.zip`. `<version>` is the version in
+`dist/rune-<version>-windows.zip`, plus
+`dist/rune-language-server-<version>.vsix` for VS Code. `<version>` is the version in
 `runtime/version.h`. Each archive holds the register VM for every machine
 of that system, under `runtime/<arch>/`, the compiler `lib/rune/rune.rbc`,
 the REPL image, and every library under `lib`: its `MANIFEST`, the files
@@ -608,6 +609,19 @@ loaded when `bin/rune-repl.img` was saved, so the archives do not carry
 `make test-dist` checks the archives with stand-in binaries and is part of
 `make check`. `make dist` itself needs the Windows and portability
 toolchains.
+
+`make dist-vscode` builds just the VS Code package; `make vscode` stages it
+under `build/vscode/extension` for development. Both use private copies of
+the Linux and Windows x86-64 distribution VMs, server bytecode and fallback
+Basis sources. They require Node.js 22 or later and npm; dependencies are
+installed locally from `editors/vscode/package-lock.json`. `NODE`, `NPM`
+and `VSIX_PUBLISHER` can select the tooling and publisher (default
+`ruudkoot`). The manifest uses Rune's numeric release version directly or
+`0.0.N` for a snapshot, with `N` the complete Git history's commit count.
+The filename, metadata and startup log retain Rune's exact version,
+including `-dirty`. No independent extension release number is maintained.
+See [the extension guide](../editors/vscode/README.md) for installation,
+Remote WSL, checkout library configuration and publishing.
 
 ## How the build works
 

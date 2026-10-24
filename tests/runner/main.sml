@@ -67,8 +67,8 @@ struct
     Test.describe "make"
       [some ("check-docs-generated", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
        alone ("test-lsp-protocol", [], ["src/lsp/*", "lib/lsp/*", "lib/jsonrpc/*", "tests/lsp/*", "tools/lsp/*", "runelsp.build"]),
-       alone ("test-compiler-state", [], ["lib/compiler/*", "tests/lib/compiler/*", "tests/compiler/*", "tools/compiler/*", "rune-compiler-state*.build"]),
-       alone ("test-lsp-bench", [], ["tools/lsp/*", "tests/lsp/*", "rune-lsp-bench.build"]),
+       alone ("test-compiler-state", [], ["lib/compiler/*", "tests/lib/compiler/*", "tests/compiler/*", "tools/compiler/*"]),
+       alone ("test-lsp-bench", [], ["tools/lsp/*", "tests/lsp/*"]),
        alone ("bench-coverage", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
        alone ("check-isa", [], [])]
 

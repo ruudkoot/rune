@@ -221,6 +221,9 @@ sig
     type snapshot
     (* A validated unit-cache checkpoint belonging to one analysis context. *)
     type checkpoint
+    (* A bounded phase observation. items counts bytes at source phases and
+       entries at projection phases; checked/reused count completed units. *)
+    type observation={phase:string,file:string,checked:int,reused:int,items:int}
     (* An ordered decoded source occurrence.
 
        revision is the caller's source
@@ -264,6 +267,13 @@ sig
     val create : session * {context:string} -> t
     (* `close context` releases its retained caches; repeated calls do nothing. *)
     val close : t -> unit
+    (* `observe (context, callback)` installs an optional synchronous phase
+       observer between checks.
+
+       NONE disables it. Observer exceptions abort
+       the current attempt; observation never executes the checked program.
+       Timing and host-specific memory counters belong to the callback. *)
+    val observe : t * (observation->unit) option -> unit
     (* `check (context, request)` checks captured inputs in compiler order.
 
        A project must come from the same compiler session; inputs must match

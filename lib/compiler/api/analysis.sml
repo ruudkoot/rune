@@ -18,17 +18,20 @@ struct
     config:C.config,cache:E.entry list,syntaxes:(string*CompilerSyntax.t) list,plan:string,
     steps:CompilerProject.step list,libraries:string list,prelude:CompilerPrelude.plan}
   datatype t=Analysis of {parent:C.session,context:string,namespace:string,engine:E.session,
-    token:unit ref,serial:IntInf.int ref,busy:bool ref,closed:bool ref}
+    token:unit ref,serial:IntInf.int ref,busy:bool ref,closed:bool ref,projections:occurrence list StringMap.map ref}
   datatype checkpoint=Checkpoint of {token:unit ref,entries:E.entry list,plan:string}
   exception Cancelled=E.Cancelled
   exception Busy
+  type observation=E.observation
   fun new (parent as C.Session {config,...},context) =
     (C.checked parent;Analysis {parent=parent,context=context,namespace="analysis-" ^ Int.toString (CompilerState.freshIdentity ()),
-      engine=E.new config,token=ref (),serial=ref 0,busy=ref false,closed=ref false})
+      engine=E.new config,token=ref (),serial=ref 0,busy=ref false,closed=ref false,projections=ref StringMap.empty})
   fun checked (Analysis {parent,busy,closed,...}) =
     (C.checked parent;if !closed then raise C.Closed else if !busy then raise Busy else ())
-  fun close (Analysis {engine,busy,closed,...}) =
-    if !busy then raise Busy else (closed:=true;E.close engine)
+  fun close (Analysis {engine,busy,closed,projections,...}) =
+    if !busy then raise Busy else (closed:=true;projections:=StringMap.empty;E.close engine)
+  fun observe (context as Analysis {engine=E.Session{observer,...},...},value)=
+    (checked context;observer:=value)
   fun checkpoint (context as Analysis {engine=E.Session {stored,plan,...},token,...}) =
     (checked context;Checkpoint {token=token,entries= !stored,plan= !plan})
   fun restore (context as Analysis {engine=E.Session {stored,plan,...},token,...},Checkpoint saved) =
@@ -53,7 +56,7 @@ struct
     in {unit=unit,file= #file span,start= #start span,stop= #stop span,kind=kind,name=name,path=path,
       binding=binding definition,definition=location definition,declaration=location declaration,
       isDefinition=isDefinition,derived=derived} end
-  fun check (context as Analysis {parent,context=name,namespace,engine,serial,busy,...},
+  fun check (context as Analysis {parent,context=name,namespace,engine,serial,busy,projections,...},
              {inputs:input list,steps,project,libraries,cancelled}) : snapshot =
     let val ()=checked context
         val C.Session {config,...}=parent
@@ -69,6 +72,15 @@ struct
         val ()=busy:=true
         fun work () =
           let val result=E.checkSteps (engine,sources,steps,libraries,poll)
+              val E.Session{observer,...}=engine
+              fun phase name items=Option.app(fn f=>f {phase=name,file="",checked= #checked result,reused= #reused result,items=items})(!observer)
+              val ()=phase "occurrences-start" (length(#uses result))
+              val projected=ref StringMap.empty
+              fun projectEntry (entry:E.entry)=
+                let val uses=case StringMap.find(!projections,#key entry) of SOME uses=>uses | NONE=>
+                      List.rev(List.foldl(fn (use,all)=>freeze(#name entry,use)::all)[](#uses entry))
+                in projected:=StringMap.insert(!projected,#key entry,uses);uses end
+              val occurrences=List.concat(List.map projectEntry (#cache result))
               fun dependency (source:E.source):input={file= #file source,text= #text source,
                 mode=Source.modeName (#mode source),annotations=[],revision=Pickle.hash (#text source)}
               val types=List.map (fn {id,origin}:E.typeDefinition =>
@@ -76,11 +88,12 @@ struct
                  implementation=location (Env.primary origin)}:typeDefinition) (#types result)
               val snapshot={id=namespace ^ ":" ^ IntInf.toString (!serial),context=name,project=project,inputs=inputs,
                 dependencies=List.map dependency (#dependencies result),diagnostics= #diagnostics result,
-                occurrences=List.map freeze (#uses result),types=types,facts= #facts result,
+                occurrences=occurrences,types=types,facts= #facts result,
                 reused= #reused result,checked= #checked result,config=config,cache= #cache result,
                 syntaxes= #syntaxes result,plan= #plan result,
                 steps=steps,libraries=libraries,prelude= #prelude result}:snapshot
-          in serial:=IntInf.+ (!serial,1);snapshot end
+              val ()=phase "snapshot-published" (length(#occurrences snapshot))
+          in projections:= !projected;serial:=IntInf.+ (!serial,1);snapshot end
         val result=work () handle error => (busy:=false;raise error)
     in busy:=false;result end
   fun typeIn (snapshot:snapshot,{file,unit,offset}) =
@@ -163,7 +176,8 @@ struct
   fun queryAt (snapshot:snapshot,{ordinal,offset,path},accept:E.snapshot->bool) =
     if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
     let val input=List.nth (#inputs snapshot,ordinal)
-        val engine=E.Session {stored=ref (#cache snapshot),plan=ref (#plan snapshot),config= #config snapshot,closed=ref false}
+        val engine=E.Session {stored=ref (#cache snapshot),plan=ref (#plan snapshot),config= #config snapshot,closed=ref false,
+          observer=ref NONE,names=ref StringMap.empty}
         fun source (input:input):E.source={file= #file input,text= #text input,mode=valOf (Source.modeNamed (#mode input))}
         fun query (sources,at)= E.checkWith
           (engine,sources,#steps snapshot,#libraries snapshot,fn () => false,

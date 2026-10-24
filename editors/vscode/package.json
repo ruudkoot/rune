@@ -1,0 +1,45 @@
+{
+  "name": "rune-language-server",
+  "displayName": "Rune Language Server",
+  "description": "Standard ML '97 language support using Rune",
+  "icon": "rune.png",
+  "version": "0.0.0",
+  "publisher": "ruudkoot",
+  "license": "CC0-1.0",
+  "repository": { "type": "git", "url": "https://github.com/ruudkoot/rune.git" },
+  "homepage": "https://github.com/ruudkoot/rune/blob/master/docs/language-server.md",
+  "engines": { "vscode": "^1.106.0", "node": ">=22" },
+  "categories": ["Programming Languages", "Snippets", "Linters", "Debuggers", "Formatters"],
+  "keywords": ["Standard ML", "SML", "Rune", "LSP"],
+  "extensionKind": ["workspace"],
+  "capabilities": { "virtualWorkspaces": false, "untrustedWorkspaces": { "supported": true } },
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      { "id": "sml", "aliases": ["Standard ML", "SML"], "extensions": [".sml", ".sig"], "configuration": "./sml-language.json" },
+      { "id": "rune-build", "aliases": ["Rune build"], "extensions": [".build"] }
+    ],
+    "commands": [{ "command": "runelsp.restart", "title": "Rune: Restart Language Server" }],
+    "configuration": {
+      "title": "Rune",
+      "id": "runelsp",
+      "properties": {
+        "runelsp.libraryRoot": { "type": ["string", "null"], "default": null, "scope": "resource", "description": "Library directory as a file URI, for example file:///home/me/rune/lib. Uses the bundled Basis when unset." },
+        "runelsp.target": { "type": "string", "enum": ["registers", "stack"], "default": "registers", "scope": "resource", "description": "Compiler target used for static analysis." },
+        "runelsp.sourceMode": { "type": "string", "enum": ["ascii", "unicode", "unicode=utf8", "unicode=latin1"], "default": "ascii", "scope": "resource", "description": "Source identifier and text encoding mode." },
+        "runelsp.libraries": { "type": "array", "items": { "type": "string" }, "default": [], "scope": "resource", "description": "Additional libraries under libraryRoot." },
+        "runelsp.pathVariables": { "type": "object", "additionalProperties": { "type": "string" }, "default": {}, "scope": "resource", "description": "Build path variables, with directory file URIs as values." },
+        "runelsp.targets": { "type": "array", "items": { "type": "object", "required": ["build"], "properties": { "build": { "type": "string", "description": "Build file URI." }, "name": { "type": "string" } } }, "default": [], "scope": "resource", "description": "Explicit Rune build contexts. Empty selects project discovery." },
+        "runelsp.activeContext": { "type": ["string", "null"], "default": null, "scope": "resource", "description": "Selected target name or context identifier." },
+        "runelsp.trace.server": { "type": "string", "enum": ["off", "messages", "verbose"], "default": "off", "description": "Language server protocol tracing." }
+      }
+    }
+  },
+  "scripts": {
+    "bundle": "node bundle.cjs",
+    "test": "node --test test/client.test.cjs",
+    "test:editor": "node test/editor.cjs"
+  },
+  "dependencies": { "vscode-languageclient": "10.1.2" },
+  "devDependencies": { "@vscode/vsce": "4.0.0", "esbuild": "0.28.2", "@vscode/test-electron": "3.1.0" }
+}

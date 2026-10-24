@@ -21,9 +21,10 @@ struct
   fun unsettings value : W.settings={targets=List.map untarget (V.array (V.field (value,"targets"))),
     flags=unstrings (V.field (value,"flags")),variables=unpairs (V.field (value,"variables")),
     activeContext=unoptional (V.field (value,"activeContext")),libraryRoot=unoptional (V.field (value,"libraryRoot"))}
-  fun capture (W.Workspace {platform,lib,roots,settings=global,scoped,generation,choices},documents) =
+  fun capture (W.Workspace {platform,lib,roots,settings=global,scoped,generation,inputGeneration,choices},documents) =
     V.Object [("platform",V.Bytes (if platform=LspUri.Windows then "windows" else "posix")),("lib",V.Bytes lib),
       ("roots",strings (!roots)),("settings",settings (!global)),("choices",pairs (!choices)),("generation",V.Integer (!generation)),
+      ("inputGeneration",V.Integer(!inputGeneration)),
       ("scoped",V.Array (List.map (fn (uri,value) => V.Array [V.Bytes uri,settings value]) (!scoped))),
       ("documents",V.Array (List.map (fn snapshot:D.snapshot => V.Object [("uri",V.Bytes (#uri snapshot)),
         ("language",V.Bytes (#languageId snapshot)),("version",V.Integer (#version snapshot)),
@@ -36,7 +37,7 @@ struct
         val ()=if length roots<=64 then () else raise V.Invalid "too many worker workspace roots"
         val workspace=W.Workspace {platform=platform,lib=V.bytes (V.field (value,"lib")),roots=ref roots,
           settings=ref (unsettings (V.field (value,"settings"))),choices=ref (unpairs (V.field (value,"choices"))),
-          generation=ref (V.integer (V.field (value,"generation"))),scoped=ref (List.map (fn value =>
+          generation=ref (V.integer (V.field (value,"generation"))),inputGeneration=ref(V.integer(V.field(value,"inputGeneration"))),scoped=ref (List.map (fn value =>
             case V.array value of [uri,value] => (V.bytes uri,unsettings value) | _ => raise V.Invalid "invalid worker scope")
             (V.array (V.field (value,"scoped"))))}
         val documents=D.new (LspProtocol.Utf8,{maxDocuments=512,maxDocumentBytes=4*1024*1024,maxTotalBytes=64*1024*1024,

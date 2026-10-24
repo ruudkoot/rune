@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md) specifies it inside [`RuneCompiler`](../str/RuneCompiler.md) |
 | Status | required |
-| Members | 37 |
+| Members | 39 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -22,6 +22,7 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 | type | [`fact`](../sig/RUNE_COMPILER.md#type-analysis.fact) | `{arguments : string list list, constructors : string list, derived : bool, file : string, start : int, stop : int, ty : string, unit : string}` |
 | type | [`input`](../sig/RUNE_COMPILER.md#type-analysis.input) | `{annotations : string list, file : string, mode : string, revision : string, text : string}` |
 | type | [`location`](../sig/RUNE_COMPILER.md#type-analysis.location) | `{file : string, start : int, stop : int}` |
+| type | [`observation`](../sig/RUNE_COMPILER.md#type-analysis.observation) | `{checked : int, file : string, items : int, phase : string, reused : int}` |
 | type | [`occurrence`](../sig/RUNE_COMPILER.md#type-analysis.occurrence) | `{binding : string option, declaration : location option, definition : location option, derived : bool, file : string, isDefinition : bool, kind : string, name : string, path : string list, start : int, stop : int, unit : string}` |
 | type | [`snapshot`](../sig/RUNE_COMPILER.md#type-analysis.snapshot) | *a type of its own* |
 | type | [`t`](../sig/RUNE_COMPILER.md#type-analysis.t) | *a type of its own* |
@@ -41,6 +42,7 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 | val | [`facts`](../sig/RUNE_COMPILER.md#val-analysis.facts) | `snapshot -> fact list` |
 | val | [`id`](../sig/RUNE_COMPILER.md#val-analysis.id) | `snapshot -> string` |
 | val | [`inputs`](../sig/RUNE_COMPILER.md#val-analysis.inputs) | `snapshot -> input list` |
+| val | [`observe`](../sig/RUNE_COMPILER.md#val-analysis.observe) | `t * (observation -> unit) option -> unit` |
 | val | [`occurrences`](../sig/RUNE_COMPILER.md#val-analysis.occurrences) | `snapshot -> occurrence list` |
 | val | [`project`](../sig/RUNE_COMPILER.md#val-analysis.project) | `snapshot -> string option` |
 | val | [`restore`](../sig/RUNE_COMPILER.md#val-analysis.restore) | `t * checkpoint -> unit` |
