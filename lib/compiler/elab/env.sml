@@ -427,7 +427,9 @@ struct
   (* the shortest path that names the type constructor in env: its own name
      at the top where that is it, else the structures breadth first, a path
      that ends in its own name before one that does not, then the first in
-     order; only names satisfying accepts are considered *)
+     order; only names satisfying accepts are considered, and never a name of
+     the initial basis that no program can write (`_int64`, which the
+     library names Int64.int by) *)
   fun pathOfWhen (env : env, c : tycon, accepts : string -> bool) : string option =
     let
       val stamp = #stamp c
@@ -440,12 +442,15 @@ struct
               fun other (p, e) =
                 StringMap.foldli (fn (n, ts, found) => case found of
                                                          SOME _ => found
-                                                       | NONE => if tyconOf ts = SOME stamp andalso accepts (p ^ n)
+                                                       | NONE => if tyconOf ts = SOME stamp andalso not (String.isPrefix "_" n)
+                                                                    andalso accepts (p ^ n)
                                                                  then SOME (p ^ n) else NONE)
                                  NONE (tys e)
               (* the library's own structures (Rune...) after the others,
-                 and a structure named for the type (WideString for its
-                 string, which WideChar's string is too) before the rest *)
+                 and the type's own long name (Int64.int, which FixedInt.int
+                 is too) and then a structure named for the type (WideString
+                 for its string, which WideChar's string is too) before the
+                 rest *)
               fun private p = String.isPrefix "Rune" p orelse String.isPrefix "RUNE" p
               fun lower s = String.map Char.toLower s
               fun namedFor p =
@@ -458,7 +463,10 @@ struct
                   [] => NONE
                 | found =>
                     let val public = List.filter (not o private) found
-                        val pick = case List.filter namedFor public of p :: _ => [p] | [] => public
+                        val pick = case (List.filter (fn p => p = #name c) public, List.filter namedFor public) of
+                                     (p :: _, _) => [p]
+                                   | ([], p :: _) => [p]
+                                   | ([], []) => public
                     in SOME (case pick of p :: _ => p | [] => hd found) end
             in
               case firstOf own of
