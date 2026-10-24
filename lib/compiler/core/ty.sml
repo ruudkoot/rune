@@ -405,7 +405,25 @@ struct
     case !extras of
       NoExtras => params
     | _ => (case extrasOf stamp of [] => params | extra => params @ extra)
+  (* --functors=functions (functors-units.md, D4): a constructor's object
+     seen whatever its datatype, through which a functor's body builds and
+     takes apart a constructor whose layout its parameter leaves open, by
+     the descriptor its argument gives (Translate): `flatN` has a
+     constructor of each tag below flatTags, whose argument is N units, a
+     tuple of them laid out flat for N >= 2, and one boxed for N = 1. A
+     type name of the basis, below the elaborator's first (Types), which no
+     declaration makes and no table holds *)
+  val flatTags = 256
+  val maxFlat = 8
+  fun flatStamp (n : int) : int = 20 + n
+  fun flatOf (stamp : int) : int option = if stamp > 20 andalso stamp <= 20 + maxFlat then SOME (stamp - 20) else NONE
+  fun flatArg (n : int) : ty = tuple (if n = 1 then [] else List.tabulate (n, fn _ => tuple []))
+  fun flat (n : int) : ty = con (flatStamp n, "flat" ^ Int.toString n, [])
+
   fun datatypeOf (stamp : int) : {params : int list, cons : (int * string * ty option) list} option =
+    case flatOf stamp of
+      SOME n => SOME {params = [], cons = List.tabulate (flatTags, fn t => (t, "C" ^ Int.toString t, SOME (flatArg n)))}
+    | NONE =>
     case IntMap.find (!datatypes, stamp) of
       NONE => NONE
     | SOME {params, cons} =>
@@ -532,6 +550,9 @@ struct
      arguments given, where the datatype is one and it has that constructor:
      SOME NONE for a nullary one. *)
   fun conArg (stamp : int, args : ty list, tag : int) : ty option option =
+    case flatOf stamp of
+      SOME n => if tag >= 0 andalso tag < flatTags andalso List.null args then SOME (SOME (flatArg n)) else NONE
+    | NONE =>
     case IntMap.find (!datatypes, stamp) of
       NONE => NONE
     | SOME {params, cons} =>

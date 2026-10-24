@@ -108,7 +108,8 @@ struct
 
   type datatypeInfo = {params : int list, cons : (int * string * Ty.ty option) list}
 
-  fun builtin s = s < base andalso List.exists (fn (c : Types.tycon) => #stamp c = s) Types.builtinTycons
+  fun builtin s = s < base andalso (List.exists (fn (c : Types.tycon) => #stamp c = s) Types.builtinTycons
+                                     orelse isSome (Ty.flatOf s))
 
   (* What a unit's Mid needs of the compile's tables, which the compile of
      the next unit does not keep: each datatype its types name, and those

@@ -331,6 +331,12 @@ struct
 
   datatype eqKind = EqPrim of string | EqTrue | EqFun | EqTuple of Ty.ty list
 
+  (* a datatype of a functor's parameter with a constructor whose layout
+     the argument gives (--functors=functions, D4), which no function made
+     here may take apart *)
+  fun openLayout (t : Ty.ty) : bool =
+    case Ty.view t of Ty.Con (stamp, _, _) => Elaborate.hasOpen stamp | _ => false
+
   fun eqKindOf (t : Ty.ty) : eqKind =
     case eqByType (t, []) of
       SOME p => EqPrim p
@@ -338,7 +344,7 @@ struct
         (case Ty.view t of
            Ty.Tuple [] => EqTrue
          | Ty.Tuple ts => EqTuple ts
-         | _ => if groundTy t andalso isSome (consAt t) then EqFun else EqPrim "poly_eq")
+         | _ => if groundTy t andalso isSome (consAt t) andalso not (openLayout t) then EqFun else EqPrim "poly_eq")
 
   fun eqTy t = Ty.arrow (Ty.tuple [t, t], Ty.bool)
 

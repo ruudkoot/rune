@@ -174,13 +174,22 @@ struct
                             case Ty.view t of
                               Ty.Tuple ts => deliver (ctx, st, R (M.Select (i, aa), List.nth (ts, i)))
                             | _ => bug ("a field of what has type " ^ Ty.toString t))
-        | L.Con (tag, t, a) => atom (a, st, fn (aa, _) => deliver (ctx, st, R (M.Con (tag, t, aa), t)))
+        | L.Con (tag, t, a) =>
+            atom (a, st, fn (aa, at) =>
+                            case openOf (t, tag) of
+                              NONE => deliver (ctx, st, R (M.Con (tag, t, aa), t))
+                            | SOME {desc, con, ...} =>
+                                opened (ctx, st, desc, R (M.Con (tag, t, aa), t), con, Ty.arrow (at, t), aa, t))
         | L.Decon (tag, a) =>
             atom (a, st, fn (aa, t) =>
                             case Ty.view t of
                               Ty.Con (stamp, _, args) =>
                                 (case Ty.conArg (stamp, args, tag) of
-                                   SOME (SOME arg) => deliver (ctx, st, R (M.Decon (tag, t, aa), arg))
+                                   SOME (SOME arg) =>
+                                     (case openOf (t, tag) of
+                                        NONE => deliver (ctx, st, R (M.Decon (tag, t, aa), arg))
+                                      | SOME {desc, decon, ...} =>
+                                          opened (ctx, st, desc, R (M.Decon (tag, t, aa), arg), decon, Ty.arrow (t, arg), aa, arg))
                                  | _ => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t))
                             | _ => bug ("a deconstruction of what has type " ^ Ty.toString t))
         | L.ConTag a => atom (a, st, fn (aa, _) => deliver (ctx, st, R (M.ConTag aa, Ty.int)))
@@ -222,6 +231,26 @@ struct
                                in deliver (ctx, st, R (M.Prim (p, t, xs), codomain t)) end)
         | L.Mark (sp, a) => mark (sp, exp (a, st, ctx))
         | L.Rest _ => bug "the rest of the program inside an expression"
+
+      (* --functors=functions (D4): a constructor whose layout a functor's
+         parameter leaves open, made or taken apart where its descriptor
+         is 0 as the specification reads it (fast), else by the body's
+         function for it (Translate.openFuns) *)
+      and openOf (t : Ty.ty, tag : int) : Elaborate.openCon option =
+        case Ty.view t of
+          Ty.Con (stamp, _, _) => if Elaborate.hasOpen stamp then Elaborate.openAt (stamp, tag) else NONE
+        | _ => NONE
+      and opened (ctx, st, desc, fast : value, f : int, fty : Ty.ty, aa : M.atom, res : Ty.ty) : M.exp =
+        branch (ctx, fn ctx =>
+                       let
+                         val c = fresh ()
+                         val fa = case varAtom (st, f, SOME fty) of A (a, _) => a | R _ => bug "a function of no atom"
+                       in
+                         M.Let (c, ([], Ty.bool),
+                                M.Prim ("poly_eq", Ty.arrow (Ty.tuple [Ty.int, Ty.int], Ty.bool),
+                                        [M.Var (desc, []), M.Const (L.CInt (IntInf.fromInt 0), Ty.int)]),
+                                M.If (M.Var (c, []), deliver (ctx, st, fast), deliver (ctx, st, R (M.App (fa, [aa]), res))))
+                       end)
 
       and atom (e, st, k) = exp (e, st, Then (fn v => atomize (v, k)))
 

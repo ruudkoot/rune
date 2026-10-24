@@ -799,11 +799,19 @@ struct
      A reach is where a record is in reach: the variable that holds one,
      and the substructures to go through, each by its place in the record
      and the number of slots of its own *)
-  datatype record = Record of {vals : (string * valstatus) list, strs : (string * record) list,
+  datatype record = Record of {vals : (string * valstatus) list, descs : desc list, strs : (string * record) list,
                                shared : reach option}
+  (* A parameter's record holds, after its values, a descriptor for each
+     constructor of a datatype it specifies whose layout it leaves open
+     (D4, openConstructors): the number of fields of the argument's
+     constructor, 0 where it boxes its argument. An argument's gives it, a
+     constant, or the descriptor of the body it is made in where the
+     argument's datatype is that body's parameter's; the parameter's are
+     the function's variables *)
+  and desc = DescConst of int | DescVar of int
   withtype reach = {var : int, global : bool, path : (int * int) list}
 
-  fun slotsOf (Record {vals, strs, ...}) : int = List.length vals + List.length strs
+  fun slotsOf (Record {vals, descs, strs, ...}) : int = List.length vals + List.length descs + List.length strs
   fun recordTyOf (n : int) : ty = tupleTy (List.tabulate (Int.max (n, 2), fn _ => unitTy))
   fun recordTy (r : record) : ty = recordTyOf (slotsOf r)
 
@@ -813,7 +821,7 @@ struct
     List.filter (fn (_, Con _) => false | _ => true) (StringMap.listItemsi vals)
 
   fun recordOf (e : env) : record =
-    Record {vals = valSlots e, strs = List.map (fn (n, s) => (n, recordOf s)) (StringMap.listItemsi (strs e)),
+    Record {vals = valSlots e, descs = [], strs = List.map (fn (n, s) => (n, recordOf s)) (StringMap.listItemsi (strs e)),
             shared = NONE}
 
   (* The records in reach, by what their slots hold (key): while one
@@ -824,32 +832,39 @@ struct
   val () = CompilerState.cellRoot ("Elaborate.inReach", inReach)
 
   exception Unshared
-  fun recordKey (Record {vals, strs, ...}) : string =
+  fun recordKey (Record {vals, descs, strs, ...}) : string =
     let
       fun slot (_, v) =
         case v of
           Val {stamp, ...} => Int.toString stamp ^ ","
         | Exn {info, ...} => if isSome (#builtin info) then raise Unshared else "e" ^ Int.toString (#stamp info) ^ ","
         | _ => raise Unshared
-    in "(" ^ String.concat (List.map slot vals) ^ String.concat (List.map (fn (_, r) => recordKey r) strs) ^ ")" end
+      fun desc (DescConst n) = "#" ^ Int.toString n ^ ","
+        | desc (DescVar d) = "d" ^ Int.toString d ^ ","
+    in
+      "(" ^ String.concat (List.map slot vals) ^ String.concat (List.map desc descs)
+      ^ String.concat (List.map (fn (_, r) => recordKey r) strs) ^ ")"
+    end
   fun keyOf (r : record) : string option = SOME (recordKey r) handle Unshared => NONE
 
   (* r is in reach by h, and so is each of its substructures' *)
-  fun register (r as Record {vals, strs, ...}, h : reach) : unit =
+  fun register (r as Record {vals, descs, strs, ...}, h : reach) : unit =
     (case keyOf r of SOME k => inReach := StringMap.insert (!inReach, k, h) | NONE => ();
      ignore (List.foldl (fn ((_, sub), i) =>
                            (register (sub, {var = #var h, global = #global h, path = #path h @ [(i, slotsOf sub)]}); i + 1))
-                        (List.length vals) strs))
+                        (List.length vals + List.length descs) strs))
 
   (* the record an argument's environment, thinned to the parameter's
-     signature, makes: one in reach where there is one *)
-  fun argRecord (e : env) : record =
+     signature, makes, with the descriptors given: one in reach where there
+     is one *)
+  fun argRecordWith (e : env, descs : desc list) : record =
     let
-      val r = Record {vals = valSlots e, strs = List.map (fn (n, s) => (n, argRecord s)) (StringMap.listItemsi (strs e)),
-                      shared = NONE}
+      val vals = valSlots e
+      val strs = List.map (fn (n, s) => (n, argRecordWith (s, []))) (StringMap.listItemsi (strs e))
+      val r = Record {vals = vals, descs = descs, strs = strs, shared = NONE}
     in
       case Option.mapPartial (fn k => StringMap.find (!inReach, k)) (keyOf r) of
-        SOME h => (case r of Record {vals, strs, ...} => Record {vals = vals, strs = strs, shared = SOME h})
+        SOME h => Record {vals = vals, descs = descs, strs = strs, shared = SOME h}
       | NONE => r
     end
 
@@ -860,7 +875,12 @@ struct
      the function an application calls, the record it gives it, the
      variable of what it returns, and the record of that, which the
      application's variables are set from *)
-  type functorCode = {func : int, param : int, paramRecord : record, result : record}
+  (* a constructor whose layout the parameter leaves open, in the body:
+     the parameter's datatype and the tag, the variable of its descriptor,
+     the functions that make and take apart such a constructor by it (con,
+     decon), the datatype at its parameters and the constructor's argument *)
+  type openCon = {tycon : int, tag : int, desc : int, con : int, decon : int, dataTy : ty, argTy : ty}
+  type functorCode = {func : int, param : int, paramRecord : record, result : record, opens : openCon list}
   type callCode = {func : int, arg : record, result : int, global : bool, record : record}
   fun spanKey ({file, start, stop} : Source.span) : string =
     file ^ "\000" ^ Int.toString start ^ "\000" ^ Int.toString stop
@@ -1000,41 +1020,68 @@ struct
                                                          | x => x) cs)
       | NONE => ()))
 
-  (* The constructors whose layout a parameter's datatype leaves open (D4:
-     an argument that is one of the parameter's abstract types, which may
-     be a tuple in the argument) must box under this prototype, as the
-     specification reads them: the descriptor that would carry the
-     argument's layout is not built yet *)
-  fun checkLayouts ({bound, env = pe, ...} : SigMatch.sigma, phi : realisation, sp : Source.span) : unit =
+  (* The constructors whose layout a parameter's signature leaves open
+     (D4): of a datatype it specifies, one whose argument is one of its
+     abstract types, which the argument may realise as a tuple, laid out
+     flat where the specification reads it boxed. In the order of the
+     signature's types, then its structures', by name, each datatype's by
+     tag: the datatype, the tag and the constructor's scheme *)
+  fun openConstructors ({bound, env = pe, ...} : SigMatch.sigma) : (tycon * int * ty) list =
     let
       fun isBound (c : tycon) = List.exists (fn b => #stamp b = #stamp c) bound
-      fun datatypeSpec (c : tycon) = isSome (IntMap.find (!Ty.datatypes, #stamp c))
-      fun go (prefix, Env {tys, strs, ...}) =
-        (StringMap.appi (fn (n, TyStr {fcn = TName c, cons = cs as _ :: _}) =>
-                            if not (isBound c) then ()
-                            else
-                              (case IntMap.find (phi, #stamp c) of
-                                 SOME (TName a) =>
-                                   List.app (fn (cn, Con {scheme, info}) =>
-                                                (case prune scheme of
-                                                   TArrow (arg, _) =>
-                                                     (case prune arg of
-                                                        TCon (u, _) =>
-                                                          if isBound u andalso not (datatypeSpec u) then
-                                                            (case List.find (fn (t, _) => t = #tag info) (Ty.layoutOf (#stamp a)) of
-                                                               SOME (_, SOME k) =>
-                                                                 err (sp, "--functors=functions: the argument lays out constructor "
-                                                                          ^ prefix ^ n ^ "." ^ cn ^ " of " ^ Int.toString k
-                                                                          ^ " fields, which the parameter leaves open (no descriptors yet)")
-                                                             | _ => ())
-                                                          else ()
-                                                      | _ => ())
-                                                 | _ => ())
-                                              | _ => ()) cs
-                               | _ => ())
-                          | _ => ()) tys;
-         StringMap.appi (fn (n, e) => go (prefix ^ n ^ ".", e)) strs)
-    in go ("", pe) end
+      fun isDatatype (c : tycon) = IntMap.member (!Ty.datatypes, #stamp c)
+      fun opens (c, cs) =
+        List.mapPartial (fn (_, Con {scheme, info}) =>
+                              (case prune scheme of
+                                 TArrow (arg, _) =>
+                                   (case prune arg of
+                                      TCon (u, _) => if isBound u andalso not (isDatatype u) then SOME (#tag info, (c, #tag info, scheme))
+                                                     else NONE
+                                    | _ => NONE)
+                               | _ => NONE)
+                          | _ => NONE) cs
+      fun byTag l = List.foldl (fn (x as (t, _), acc) =>
+                                  let fun ins [] = [x] | ins ((y as (u, _)) :: rest) = if t < u then x :: y :: rest else y :: ins rest
+                                  in ins acc end) [] l
+      fun go (Env {tys, strs, ...}) =
+        List.concat (List.map (fn (_, TyStr {fcn = TName c, cons = cs as _ :: _}) =>
+                                    if isBound c then List.map #2 (byTag (opens (c, cs))) else []
+                                | _ => []) (StringMap.listItemsi tys))
+        @ List.concat (List.map (fn (_, e) => go e) (StringMap.listItemsi strs))
+    in go pe end
+
+  (* the open constructors of the bodies elaborated, by the stamp of the
+     parameter's datatype: what Translate and ToMid build and take apart
+     such a constructor by *)
+  val opened : openCon list IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Elaborate.opened", opened)
+  fun openAt (stamp : int, tag : int) : openCon option =
+    case IntMap.find (!opened, stamp) of
+      SOME l => List.find (fn (o' : openCon) => #tag o' = tag) l
+    | NONE => NONE
+  fun hasOpen (stamp : int) : bool = IntMap.member (!opened, stamp)
+
+  (* An argument's descriptors for a parameter's open constructors: its
+     datatype's layout of each (phi), or, where its datatype is the
+     parameter's of the body the application is in, that body's
+     descriptor *)
+  fun descriptors (paramSig : SigMatch.sigma, phi : realisation, sp : Source.span) : desc list =
+    List.map (fn (c, tag, _) =>
+                case IntMap.find (phi, #stamp c) of
+                  SOME (TName a) =>
+                    (case openAt (#stamp a, tag) of
+                       SOME {desc, ...} => DescVar desc
+                     | NONE =>
+                         (case List.find (fn (t, _) => t = tag) (Ty.layoutOf (#stamp a)) of
+                            SOME (_, SOME n) =>
+                              if n > Ty.maxFlat then
+                                err (sp, "--functors=functions: the argument lays out a constructor of " ^ #name c ^ " in "
+                                         ^ Int.toString n ^ " fields, more than the " ^ Int.toString Ty.maxFlat
+                                         ^ " a descriptor may give")
+                              else DescConst n
+                          | _ => DescConst 0))
+                | _ => Error.bug ("a datatype of a parameter realised by no type name: " ^ #name c))
+             (openConstructors paramSig)
 
   (* ------------------------------------------------------------------ *)
   (* Types                                                                *)
@@ -1710,7 +1757,27 @@ struct
                               SOME x => bindStrAt (env, x, pEnv, #span b)
                             | NONE => plus (env, pEnv)
               val param = freshStamp ()
-              val paramRecord = recordOf pEnv
+              val opens =
+                List.map (fn (c, tag, scheme) =>
+                            let
+                              val (argTy, dataTy) = case prune scheme of
+                                                      TArrow (a, r) => (a, r)
+                                                    | _ => Error.bug "an open constructor of no argument"
+                              val () = if tag >= Ty.flatTags then err (#span b, "--functors=functions: constructor "
+                                                                                 ^ Int.toString tag ^ " of " ^ #name c
+                                                                                 ^ " is past what a descriptor can build")
+                                       else ()
+                              val o' = {tycon = #stamp c, tag = tag, desc = freshStamp (), con = freshStamp (),
+                                        decon = freshStamp (), dataTy = dataTy, argTy = argTy}
+                            in
+                              opened := IntMap.insert (!opened, #stamp c, o' :: getOpt (IntMap.find (!opened, #stamp c), []));
+                              o'
+                            end)
+                         (openConstructors sigma)
+              val paramRecord = case recordOf pEnv of
+                                  Record {vals, strs, shared, ...} =>
+                                    Record {vals = vals, descs = List.map (fn (o' : openCon) => DescVar (#desc o')) opens,
+                                            strs = strs, shared = shared}
               val () = register (paramRecord, {var = param, global = false, path = []})
               val lo = !tyconCounter
               val saved = !inBody
@@ -1728,7 +1795,8 @@ struct
               val resultRecord = recordOf result
               val () = Ty.bindVar (func, TArrow (recordTy paramRecord, recordTy resultRecord))
               val () = bodies := StringMap.insert (!bodies, spanKey (#span b),
-                                                   {func = func, param = param, paramRecord = paramRecord, result = resultRecord})
+                                                   {func = func, param = param, paramRecord = paramRecord, result = resultRecord,
+                                                    opens = opens})
             in
               (#name b, FunInfo {param = #param b, paramSig = sigma, body = #body b, defEnv = Env.empty, origin = "",
                                  binding = Env.originAt ("functor", #name b, #span b),
@@ -1896,7 +1964,7 @@ struct
                      | NONE => err (sp, "functor " ^ funid ^ " has no signature (--functors=functions)")
                    val (phi, specE) = ElabStats.during ElabStats.Match (fn () => SigMatch.match (paramSig, argEnv, sp))
                    val thinned = SigMatch.mergeInfo (specE, argEnv)
-                   val () = checkLayouts (paramSig, phi, sp)
+                   val descs = descriptors (paramSig, phi, sp)
                    val fresh = List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) generated
                    val phi = List.foldl (fn ((c, c'), m) => IntMap.insert (m, #stamp c, TName c')) phi fresh
                    val () = List.app (fn (c, c') => instance (phi, c, c')) fresh
@@ -1905,7 +1973,7 @@ struct
                    val r = freshStamp ()
                    val record = recordOf res
                    val () = Ty.bindVar (r, recordTy record)
-                   val arg = argRecord thinned
+                   val arg = argRecordWith (thinned, descs)
                    val () = register (record, {var = r, global = g, path = []})
                  in
                    calls := StringMap.insert (!calls, spanKey sp, {func = func, arg = arg, result = r, global = g, record = record});

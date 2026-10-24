@@ -663,21 +663,23 @@ struct
     | Env.Con _ => Error.bug "a constructor as a slot of a record"
 
   (* a record made, or the one in reach *)
-  and recordExp (r as Elaborate.Record {vals, strs, shared}) : lexp =
+  and recordExp (r as Elaborate.Record {vals, descs, strs, shared}) : lexp =
     case shared of
       SOME h => reachExp (h, Elaborate.slotsOf r)
     | NONE =>
         let
-          val elems = List.map (fn (_, v) => slotValue v) vals
+          fun desc (Elaborate.DescConst n) = toUnit (Const (CInt (IntInf.fromInt n), Ty.int), Ty.int)
+            | desc (Elaborate.DescVar d) = toUnit (Var d, Ty.int)
+          val elems = List.map (fn (_, v) => slotValue v) vals @ List.map desc descs
                       @ List.map (fn (_, s) => toUnit (recordExp s, recordTyN (Elaborate.slotsOf s))) strs
         in Tuple (elems @ List.tabulate (Int.max (2 - List.length elems, 0), fn _ => Unit)) end
 
   (* the variables of a record's values and exceptions set from what src
      holds, then k: globals where they are, a temporary local for each
      substructure's record where they are not *)
-  and bindRecord (Elaborate.Record {vals, strs, ...}, src : lexp, k : unit -> lexp) : lexp =
+  and bindRecord (Elaborate.Record {vals, descs, strs, ...}, src : lexp, k : unit -> lexp) : lexp =
     let
-      fun go ([], i) = subs (strs, i)
+      fun go ([], i) = ds (descs, i)
         | go ((_, v) :: rest, i) =
             case v of
               Env.Val {stamp, global, scheme} =>
@@ -686,6 +688,9 @@ struct
                 if isSome (#builtin info) then go (rest, i + 1)
                 else MatchComp.bindVar (#stamp info, #isGlobal info, fromUnit (Select (i, src), Ty.exnCon), go (rest, i + 1))
             | _ => go (rest, i + 1)
+      and ds ([], i) = subs (strs, i)
+        | ds (Elaborate.DescVar d :: rest, i) = Let (d, fromUnit (Select (i, src), Ty.int), ds (rest, i + 1))
+        | ds (Elaborate.DescConst _ :: rest, i) = ds (rest, i + 1)
       and subs ([], _) = k ()
         | subs ((_, s) :: rest, i) =
             let
@@ -704,16 +709,56 @@ struct
   and functorFun (b : funbind, rest : lexp) : lexp =
     case Elaborate.bodyAt (#span b) of
       NONE => bug (#span b, "a functor without its code")
-    | SOME {func, param, paramRecord, result} =>
+    | SOME {func, param, paramRecord, result, opens} =>
         let
           val saved = (!structPath, !inBody)
           val () = (structPath := [#name b]; inBody := true)
-          val body = bindRecord (paramRecord, Var param, fn () => transStrexp (#body b, fn () => recordExp result))
+          val body = bindRecord (paramRecord, Var param,
+                                 fn () => openFuns (opens, fn () => transStrexp (#body b, fn () => recordExp result)))
                      handle x => (structPath := #1 saved; inBody := #2 saved; raise x)
           val () = (structPath := #1 saved; inBody := #2 saved)
           val fty = Ty.arrow (recordTyN (Elaborate.slotsOf paramRecord), recordTyN (Elaborate.slotsOf result))
           val f = Mark (#span b, Fn (param, fty, body))
         in nameFun (#name b, f); Seq (SetGlobal (func, f), rest) end
+
+  (* The functions that make and take apart each constructor whose layout
+     the parameter leaves open, by its descriptor d (D4): a constructor
+     object of one field holding the argument where d is 0, as the
+     specification reads it, or of the d fields of the argument, a tuple
+     (Ty.flat); what the body's code does with such a constructor, which
+     ToMid makes a call of one of them where d is not 0 *)
+  and openFuns (opens : Elaborate.openCon list, k : unit -> lexp) : lexp =
+    case opens of
+      [] => k ()
+    | {desc, con, decon, tag, dataTy, argTy, ...} :: rest =>
+        let
+          val t = Ty.fromTypes dataTy
+          val a = Ty.fromTypes argTy
+          fun cast (e, from, to) = Prim ("unsafe_cast", SOME (Ty.arrow (from, to)), [e])
+          fun isD n = Prim ("poly_eq", SOME (Ty.arrow (Ty.tuple [Ty.int, Ty.int], Ty.bool)),
+                            [Var desc, Const (CInt (IntInf.fromInt n), Ty.int)])
+          fun chain f = List.foldr (fn (n, rest) => If (isD n, f n, rest)) (raiseBuiltin exnMatch)
+                                   (0 :: List.tabulate (Ty.maxFlat - 1, fn i => i + 2))
+          val x = MatchComp.freshVar ()
+          val y = MatchComp.freshVar ()
+          fun units n = Ty.flatArg n
+          fun make n =
+            if n = 0 then cast (Con (tag, Ty.flat 1, cast (Var x, a, Ty.unit)), Ty.flat 1, t)
+            else
+              let val p = MatchComp.freshVar ()
+              in Let (p, cast (Var x, a, units n),
+                      cast (Con (tag, Ty.flat n, Tuple (List.tabulate (n, fn i => Select (i, Var p)))), Ty.flat n, t))
+              end
+          fun take n =
+            if n = 0 then cast (Decon (tag, cast (Var y, t, Ty.flat 1)), Ty.unit, a)
+            else cast (Decon (tag, cast (Var y, t, Ty.flat n)), units n, a)
+          val () = funNames := IntMap.insert (!funNames, x, qualified "con")
+          val () = funNames := IntMap.insert (!funNames, y, qualified "decon")
+        in
+          LetRec ([(con, Ty.arrow (a, t), Fn (x, Ty.arrow (a, t), chain make)),
+                   (decon, Ty.arrow (t, a), Fn (y, Ty.arrow (t, a), chain take))],
+                  openFuns (rest, k))
+        end
 
   (* an application: the call, and the variables of its result set from
      what it returns *)
