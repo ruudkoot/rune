@@ -11,6 +11,12 @@
    `.cwarn`, and `.restore` with `.restoreargs` and `.restorevmargs`. A
    program of tests/errors must fail to compile, with the `.expected` text
    in the first line of what the compiler says (`errors/COMPILER/NAME`).
+   Each program is also checked with --typecheck-only, which must judge it
+   as the compile does (`lang/typecheck/NAME`, `errors/typecheck/NAME`),
+   but where its `.typecheck-error` (tests/lang) or `.typecheck-ok`
+   (tests/errors) says otherwise: the corners where the check types a
+   functor application by the Definition and the compile does not yet
+   (docs/language.md, *Functors*; LangChecks.typecheckJudge).
 
    Each run has a directory of its own, with `tests/out` in it for the
    images and files the programs write at fixed paths, and `tests/lang`
@@ -191,6 +197,14 @@ struct
               ^ " tests/errors/" ^ name ^ ".sml -o \"$RUNE_TEST_RUN\"/e/" ^ compiler ^ "/" ^ name ^ ".rbc",
               SOME ".", 600, 300, [], errorJudge (compiler = stackCompiler orelse (compiler="suite" andalso env ("RUNE_SUITE_UPDATE","0")="1"), name)))
 
+  (* a program of tests/lang or tests/errors checked by bin/rune with
+     --typecheck-only and its .cargs (`lang/typecheck/NAME`,
+     `errors/typecheck/NAME`; LangChecks.typecheckJudge) *)
+  fun typecheck dir name =
+    Test.it name
+      (shell (tz ^ "exec bin/rune --typecheck-only" ^ words (dir ^ "/" ^ name, ".cargs") ^ " tests/" ^ dir ^ "/" ^ name ^ ".sml",
+              SOME ".", 600, 300, [], LangChecks.typecheckJudge (dir, name)))
+
   (* the expected exit status of a program *)
   val expectedCode = LangChecks.expectedCode
   val runJudge = LangChecks.runJudge
@@ -266,6 +280,12 @@ struct
     if portable w andalso (String.isSubstring "ppc64" (#vm w) orelse String.isSubstring "aarch64" (#vm w))
     then Test.requires ["qemu"] t else t
 
+  (* the programs checked with --typecheck-only, by bin/rune; not for a
+     compiler of bin/rune-suite's *)
+  fun typecheckTests dir names =
+    if selectedCompiler <> "" then []
+    else [tagged (["check", "test"] @ covers) (Test.describe "typecheck" (List.map (typecheck dir) names))]
+
   val tests =
     Test.describe ""
       [Test.describe "compile"
@@ -282,7 +302,8 @@ struct
                                                        (Test.describe c (List.map (fn name => if c<>"suite" then error (c,command) name else
                        case selectedSkip name of SOME row => Test.pending (Expectations.describe row) (error (c,command) name)
                           | NONE => error (c,command) name) errorPrograms))))
-                   compilers),
+                   compilers
+          @ typecheckTests "errors" errorPrograms),
        Test.describe "lang"
          (List.map (fn w => wayNeeds w (needs (#compiler w) (tagged (wayTags w @ covers)
                               (Test.describe (#name w)
@@ -291,5 +312,6 @@ struct
                                                 SOME l => Test.pending (#category l ^ ": " ^ #reason l) (run w n)
                                               | NONE => run w n)
                                            langPrograms)))))
-                   ways)]
+                   ways
+          @ typecheckTests "lang" langPrograms)]
 end

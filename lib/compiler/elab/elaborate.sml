@@ -23,11 +23,14 @@ struct
      of stamps, type names and type variables. The values and exceptions
      of E' are named by placeholders (placeholder), which name nothing of
      a unit. Every application is typed by it (rule 54): one inside a
-     functor's declaration by the summary alone, one whose code is made by
-     the summary realised with the names of a copy of the body elaborated
-     for its code (signatureTyped). NONE where E' is not closed (a type
-     variable not generalised, or a flexible record): every application
-     elaborates a copy then, and is typed by it. *)
+     functor's declaration, or in a compile that makes no code (makesCode),
+     by the summary alone, one whose code is made by the summary realised
+     with the names of a copy of the body elaborated for its code
+     (signatureTyped). A type variable the body leaves free refuses the
+     declaration (rule 89); one of the basis's that a later declaration of
+     the topdec may determine the summary shares. NONE where E' keeps a
+     flexible record, which the end of the topdec refuses: every
+     application elaborates a copy then, and is typed by it. *)
   type summary = {generated : tycon list, result : env, counts : int * int * int}
 
   datatype funinfo =
@@ -43,6 +46,14 @@ struct
      makes code where it is not *)
   val checking = ref 0
   val () = CompilerState.cellRoot ("Elaborate.checking", checking)
+
+  (* Whether code is made of what is elaborated: not under --typecheck-only
+     and --serve, nor in the analyses of the compiler library, which only
+     check (docs/plans/functors-units.md, D15). Where it is not, every
+     application is typed by the functor's summary alone, as one inside a
+     functor's declaration is, and no copy of the body is elaborated *)
+  val makesCode = ref true
+  val () = CompilerState.cellRoot ("Elaborate.makesCode", makesCode)
 
   (* --lint: each application whose code is made checks that its copy
      agrees with the functor's summary but for the names the copy made *)
@@ -83,6 +94,10 @@ struct
   val () = CompilerState.cellRoot ("Elaborate.pendingOverloads", pendingOverloads)
   val pendingFlex : (tvar ref * span) list ref = ref []
   val () = CompilerState.cellRoot ("Elaborate.pendingFlex", pendingFlex)
+  (* the declarations of the topdec so far, whose free variables are checked
+     where it ends (rules 87 to 89; elabTop) *)
+  val pendingClosed : (env * span) list ref = ref []
+  val () = CompilerState.cellRoot ("Elaborate.pendingClosed", pendingClosed)
 
   (* How large the context is that must determine a flexible record's
      labels (Section 4.11 leaves it open; docs/language.md, --flex-records):
@@ -466,21 +481,63 @@ struct
       StringMap.app value vals; StringMap.app tystr tys; StringMap.app (appEnvTypes f) strs
     end
 
+  (* A type variable that unification may still bind: one not generalised,
+     and not a flexible record's *)
+  fun isFree (r : tvar ref) : bool =
+    case !r of
+      Unbound {kind = KFlex _, ...} => false
+    | Unbound {level, ...} => level <> genericLevel
+    | _ => false
+
+  (* The type variables the declarations of the topdec so far leave free,
+     which a declaration after them may still determine (rules 87 to 89):
+     the basis a functor's body is checked in shares them with it, and with
+     every application, so they are no body's own *)
+  fun basisTyvars () : tvar ref list =
+    let
+      val found : tvar ref list ref = ref []
+      fun ty t =
+        case prune t of
+          TVar r => if isFree r andalso not (List.exists (fn r' => r' = r) (!found)) then found := r :: !found else ()
+        | TCon (_, args) => List.app ty args
+        | TRecord fields => List.app (fn (_, a) => ty a) fields
+        | TArrow (a, b) => (ty a; ty b)
+    in List.app (fn (e, _) => appEnvTypes ty e) (!pendingClosed); !found end
+
   (* Whether a summary may stand for every application: no type variable of
      it that unification may still bind -- one not generalised, or a
-     flexible record -- which each copy would have of its own *)
-  fun closedEnv (e : env) : bool =
+     flexible record -- which each copy would have of its own; but those of
+     the basis (shared), which every copy shares *)
+  fun closedEnv (e : env, shared : tvar ref list) : bool =
     let
       exception Open
       fun ty t =
         case prune t of
-          TVar (ref (Unbound {level, kind, ...})) =>
-            (case kind of KFlex _ => raise Open | _ => if level <> genericLevel then raise Open else ())
-        | TVar _ => ()
+          TVar (ref (Unbound {kind = KFlex _, ...})) => raise Open
+        | TVar r => if isFree r andalso not (List.exists (fn r' => r' = r) shared) then raise Open else ()
         | TCon (_, args) => List.app ty args
         | TRecord fields => List.app (fn (_, a) => ty a) fields
         | TArrow (a, b) => (ty a; ty b)
     in (appEnvTypes ty e; true) handle Open => false end
+
+  (* The first value of a functor's result, by its long name, whose type
+     keeps a type variable that the body left free and the basis does not
+     share (rule 89, which the end of no top-level declaration can meet:
+     nothing after the body reaches the variable) *)
+  fun bodyTyvar (e : env, shared : tvar ref list) : (string * ty) option =
+    let
+      exception Found of string * ty
+      fun free t =
+        case prune t of
+          TVar r => isFree r andalso not (List.exists (fn r' => r' = r) shared)
+        | TCon (_, args) => List.exists free args
+        | TRecord fields => List.exists (fn (_, a) => free a) fields
+        | TArrow (a, b) => free a orelse free b
+      fun walk (prefix, Env {vals, strs, ...}) =
+        (StringMap.appi (fn (n, Val {scheme, ...}) => if free scheme then raise Found (prefix ^ n, scheme) else ()
+                          | _ => ()) vals;
+         StringMap.appi (fn (n, s) => walk (prefix ^ n ^ ".", s)) strs)
+    in (walk ("", e); NONE) handle Found f => SOME f end
 
   (* The type names made from lo on that an environment names, by stamp *)
   fun generatedIn (lo : int, e : env) : tycon list =
@@ -1389,8 +1446,29 @@ struct
                            val () = checking := !checking - 1
                            val (s1, c1, v1) = counters ()
                            val () = resolvePending ()
+                           (* rule 89: no free type variable enters the basis.
+                              One the body leaves free (`val r = ref []`, which
+                              the value restriction does not generalise) would be
+                              in the functor's signature, the same in every
+                              application (rule 54), and no declaration after
+                              the body can determine it: the declaration is
+                              refused, as the Definition's Appendix G allows and
+                              HaMLet and MLKit do. The basis's own, which a
+                              declaration later in the topdec may determine, the
+                              summary shares *)
+                           val closed = closedEnv (result, [])
+                           val shared = if closed then [] else basisTyvars ()
+                           val () =
+                             case if closed then NONE else bodyTyvar (result, shared) of
+                               SOME (n, t) =>
+                                 err (#span b, "the type of " ^ n ^ " in the result of functor " ^ #name b ^ ", " ^ toString t
+                                                ^ ", contains a type variable that cannot be generalised "
+                                                ^ "(a functor's result may not have free type variables)")
+                             | NONE => ()
+                           (* none where a flexible record is left, which the
+                              topdec's end refuses (settleFlex) *)
                            val summary =
-                             if closedEnv result then
+                             if closed orelse closedEnv (result, shared) then
                                SOME {generated = generatedIn (lo, result), result = placeholders result,
                                      counts = (s1 - s0, c1 - c0, v1 - v0)}
                              else NONE
@@ -1495,10 +1573,10 @@ struct
                (* --pass-stats=elab: the match, the copy and its elaboration
                   are the application's *)
                fun apply () =
-                 case (!checking > 0, summary) of
+                 case (!checking > 0 orelse not (!makesCode), summary) of
                    (true, SOME s) => typed s
                  | _ => copied ()
-             in ElabStats.application apply end)
+             in ElabStats.application (!makesCode) apply end)
     | StrLet (decs, body, _) =>
         let val delta = elabDecs (env, level, top, scope, decs)
         in elabStrexp (plus (env, delta), level, top, scope, body) end
@@ -1772,10 +1850,6 @@ struct
      (recover; docs/units.md, Errors). The tables that are keyed by stamps
      (Ty.binders and the like) only grow, and no stamp is made twice, so
      what a failed declaration put in them names nothing after it. *)
-  (* the declarations of the topdec so far, whose free variables are checked
-     where it ends *)
-  val pendingClosed : (env * span) list ref = ref []
-  val () = CompilerState.cellRoot ("Elaborate.pendingClosed", pendingClosed)
 
   type snapshot = {sigs : SigMatch.sigma StringMap.map, funs : funinfo StringMap.map,
                    datatypes : Ty.datatypeInfo IntMap.map, overloads : Overload.entry IntMap.map,

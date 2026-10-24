@@ -115,8 +115,10 @@ declaration's time is split by:
 
 * **context:** `top`, the top level; `fundecl`, a functor's body checked at
   its declaration; `appcode`, the copy of a body elaborated at an
-  application whose code is made; `appcheck`, a copy elaborated only to be
-  checked, at an application inside a declaration's check or such a copy;
+  application whose code is made; `appcheck`, an application only checked,
+  inside a declaration's check or such a copy, or anywhere under
+  `--typecheck-only`, which makes no code and types an application by the
+  functor's signature alone;
 * **operation:** `inst`, a signature instantiated; `where`, `where type`;
   `share`, sharing; `match`, a structure matched against a signature;
   `specs`, a signature's specifications, without the operations before

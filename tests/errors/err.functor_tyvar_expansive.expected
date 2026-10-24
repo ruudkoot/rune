@@ -1,0 +1,1 @@
+the type of id in the result of functor F, 'a -> 'a, contains a type variable that cannot be generalised (a functor's result may not have free type variables)

@@ -130,7 +130,16 @@ documentation and individual fixture changes use their explicit coverage.
 
 The programs of `tests/lang` and `tests/errors` are the runner's own tests
 (`compile/COMPILER/NAME`, `lang/WAY/NAME`, `errors/COMPILER/NAME`;
-`tests/runner/lang.sml`), and so are the Basis Library suite's in Rune's four
+`tests/runner/lang.sml`; each program is also checked by `bin/rune
+--typecheck-only`, `lang/typecheck/NAME` and `errors/typecheck/NAME`, which
+must judge it as the compile does -- accepted with its `.cwarn`, refused
+with its `.expected` in the first line -- but where a sibling says
+otherwise: a `.typecheck-error` beside a program of `tests/lang` that the
+check refuses, the text of the first line of what it says, or a
+`.typecheck-ok` beside one of `tests/errors` that it accepts, what it says
+(nothing, mostly); these are the corners where the check types a functor's
+application by the Definition and a compile does not yet,
+[language.md](language.md), *Functors*), and so are the Basis Library suite's in Rune's four
 configurations and the examples of its documentation
 (`basis-compile/COMPILER/TEST`, `basis/CONFIG/TEST`, `basis/CONFIG/@stale`,
 `basis-examples/NAME`; `tests/runner/basis.sml`) and the laws of its

@@ -69,7 +69,8 @@ struct
              | NONE => scopeEnv:=SOME (width,env,!Elaborate.sigs,!Elaborate.funs) end)
         fun poll ()=if !closed then raise CompilerSession.Closed else if cancelled () then raise Cancelled else ()
         val ()=poll ()
-        val ()=(Error.keep:=true;Error.silent:=true;Elaborate.recover:=false)
+        (* an analysis makes no code: no copy of a functor's body (D15) *)
+        val ()=(Error.keep:=true;Error.silent:=true;Elaborate.recover:=false;Elaborate.makesCode:=false)
         val env=ref Env.initial
         val fixity=ref Fixity.initial
         val scopes=CompilerBuildContext.new (env,fixity)

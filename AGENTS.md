@@ -255,7 +255,9 @@ keep these invariants:
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
   to a `tests/lang/` test (the compiler's stderr, compared exactly); a test
-  without one must compile silently.
+  without one must compile silently. `--typecheck-only` must judge every
+  program as the compile does, but where a `.typecheck-error` or
+  `.typecheck-ok` beside it says otherwise (docs/testing.md).
 
 ## Build and verification
 

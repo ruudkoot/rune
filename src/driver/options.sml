@@ -230,7 +230,8 @@ struct
                                        parse rest)
          | _ => raise Usage "--path requires NAME=DIR")
     | ["-I"] => raise Usage "-I requires a directory"
-    | "--typecheck-only" :: rest => (typecheckOnly := true; parse rest)
+    (* no code made, and so no copy of a functor's body (Elaborate.makesCode) *)
+    | "--typecheck-only" :: rest => (typecheckOnly := true; Elaborate.makesCode := false; parse rest)
     | "--no-warnings" :: rest => (noWarnings := true; parse rest)
     | "--diagnostics-json" :: f :: rest => (diagnosticsJson := SOME f; parse rest)
     | ["--diagnostics-json"] => raise Usage "--diagnostics-json requires a file"

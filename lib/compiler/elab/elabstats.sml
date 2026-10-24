@@ -11,8 +11,9 @@ struct
 
   (* The contexts: the top level; a functor's body checked at its
      declaration (rule 86); the copy of a body elaborated at an application
-     whose code is made; and a copy elaborated only to be checked, at an
-     application inside a declaration's check or inside such a copy. *)
+     whose code is made; and an application only checked: inside a
+     declaration's check or inside such a copy, or anywhere in a compile
+     that makes no code (--typecheck-only). *)
   datatype context = Top | FunDecl | AppCode | AppCheck
   val contexts = [(Top, "top"), (FunDecl, "fundecl"), (AppCode, "appcode"), (AppCheck, "appcheck")]
 
@@ -119,12 +120,13 @@ struct
 
   (* f (), a functor application -- its match, the copy of the body and
      the copy's elaboration -- in the context of its kind: its code is made
-     where the code of what it is in is *)
-  fun application (f : unit -> 'a) : 'a =
+     where the code of what it is in is, if the compile makes code at all
+     (`made`; not under --typecheck-only) *)
+  fun application (made : bool) (f : unit -> 'a) : 'a =
     if not (!on) then f ()
     else
       let
-        val code = case !context of Top => true | AppCode => true | _ => false
+        val code = made andalso (case !context of Top => true | AppCode => true | _ => false)
         val () = count (if code then AppsCode else AppsCheck)
         val () = depth := !depth + 1
         val i = counterIndex AppDepth
