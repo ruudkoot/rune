@@ -1,4 +1,4 @@
-# Rune language server
+# Rune Language Server
 
 Compiler-backed Standard ML diagnostics, hover, navigation, completion and
 semantic presentation, provided by Rune over the Language Server Protocol.
@@ -8,8 +8,8 @@ needed. Other architectures, macOS, Alpine Linux and browser-only workspaces
 are not supported by this package.
 
 Open an `.sml`, `.sig` or Rune `.build` file to start the server. Use the
-**Rune language server** output channel for logs and **Rune: Restart language
-server** to restart it. Project discovery and context selection use Rune's
+**Rune Language Server** output channel for logs and **Rune: Restart Language
+Server** to restart it. Project discovery and context selection use Rune's
 build files; sources are checked statically, never executed.
 
 ## Developing Rune and its libraries
@@ -35,6 +35,8 @@ builds and from installed Rune binaries.
 Settings under `runelsp` also support `target`, `sourceMode`, `libraries`,
 `pathVariables`, `targets` and `activeContext`. Their formats are documented
 in the [language server manual](https://github.com/ruudkoot/rune/blob/master/docs/language-server.md).
+The Settings editor groups these options under **Rune**; their existing
+`runelsp.*` JSON keys remain supported.
 
 ## Building and installing
 
@@ -53,6 +55,9 @@ test host; it needs a display (or Xvfb). `VSCODE_TEST_VERSION` selects the
 test host version, defaulting to the minimum supported version, 1.106.0.
 The portable `bin/rune-lsp-distribution-tests.rbc` can also run on the
 packaged Windows VM with the native extracted-extension path as its argument.
+Set `RUNE_VSCODE_CHECKOUT` to a native checkout path for an additional check
+that regenerates the temporary library's manifest with that checkout's
+compiler. All edits remain in the test's private library copy.
 
 Linux needs glibc and the shared libraries used by its distribution VM;
 with the default FFI-enabled Linux build this includes `libffi.so.8`.

@@ -111,3 +111,33 @@ vsce publish --packagePath dist/rune-language-server-<rune-version>.vsix
 ```
 
 The locally locked command is `editors/vscode/node_modules/.bin/vsce`.
+
+## Further requests
+
+Implemented presentation and repository cleanup:
+
+- Use `share/rune.png` as the extension gallery icon, staged privately as
+  `rune.png` and verified in the VSIX payload.
+- Add Snippets, Linters, Debuggers and Formatters alongside Programming
+  Languages.
+- Display **Rune Language Server**, with the tagline **Standard ML '97
+  language support using Rune**.
+- Group settings under **Rune** with an explicit `runelsp` category ID, so
+  the UI removes the redundant Runelsp prefix while existing JSON keys work.
+- Display **Rune: Restart Language Server** in the command palette.
+- Remove `millet.toml`; `runelsp` supplies the repository's language support.
+- Move developer-only build manifests out of the repository root:
+
+| Purpose | Build manifest |
+|---|---|
+| Compiler ownership audit | `tools/compiler/state-audit.build` |
+| Compiler ownership tests | `tests/compiler/state-tests.build` |
+| LSP baseline measurements | `tools/lsp/bench.build` |
+| Document-index measurements | `tools/lsp/documents-bench.build` |
+| Syntax measurements | `tools/lsp/syntax-bench.build` |
+| Syntax differential tests | `tests/lsp/syntax-tests.build` |
+| Standalone test worker | `tests/lsp/worker.build` |
+
+All seven ordered bootstrap source lists were preserved, and all relocated
+manifests passed typechecking. `runelsp.build` remains the public server build.
+Historical measurement ledgers retain their original captured filenames.

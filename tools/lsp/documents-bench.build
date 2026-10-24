@@ -1,0 +1,6 @@
+libraries lsp digest end
+files
+  ../../build/config.sml
+  ../../tools/lsp/documents-bench.sml
+end
+../../src/main/lsp-documents-bench-main.sml

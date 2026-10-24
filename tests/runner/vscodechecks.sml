@@ -13,7 +13,7 @@ struct
             SOME("extension/server/lib/basis/" ^ Hosts.trim(hd(String.fields(fn c=>c= #"|")line))) end)
           (String.fields(fn c=>c= #"\n")(read(fromRoot "lib/basis/MANIFEST")))
         val expected=["extension.vsixmanifest","[Content_Types].xml","extension/LICENSE.txt","extension/readme.md",
-          "extension/ThirdPartyNotices.txt","extension/package.json","extension/sml-language.json","extension/dist/extension.js",
+          "extension/ThirdPartyNotices.txt","extension/package.json","extension/sml-language.json","extension/rune.png","extension/dist/extension.js",
           "extension/notices/gmp/COPYING","extension/notices/gmp/COPYING.LESSERv3","extension/notices/gmp/COPYINGv2",
           "extension/notices/gmp/COPYINGv3","extension/server/bin/runevm","extension/server/bin/runevm.exe",
           "extension/server/bin/runelsp.rbc","extension/server/lib/basis/MANIFEST"] @ basis
@@ -23,7 +23,7 @@ struct
         fun decode label name=ArchiveCheck.decode dir label ["unzip","-p",file,name]
         val ()=List.app(fn(name,source)=>check(decode(OS.Path.file name)name=read(fromRoot source),"payload differs: " ^ name))
           [("extension/server/bin/runevm","bin/dist/runevm"),("extension/server/bin/runevm.exe","bin/dist/runevm.exe"),
-           ("extension/server/bin/runelsp.rbc","bin/runelsp.rbc")]
+           ("extension/server/bin/runelsp.rbc","bin/runelsp.rbc"),("extension/rune.png","share/rune.png")]
         val manifest=Json.decode(decode "manifest" "extension/package.json")
         val version=case Json.member("runeVersion",manifest) of SOME(Json.String value)=>value | _=>raise Fail "missing Rune version"
         val ()=check(OS.Path.file file="rune-language-server-" ^ version ^ ".vsix","filename/version mismatch")
@@ -51,13 +51,14 @@ struct
           Json.member("publisher",manifest)=SOME(Json.String "testpublisher"),"version/publisher metadata")
         val ()=check(Json.member("devDependencies",manifest)=NONE andalso Json.member("scripts",manifest)=NONE,"build tools leaked")
         val expected=["package.json","README.md","LICENSE","sml-language.json","ThirdPartyNotices.txt",".rune-vscode",".vscodeignore",
-          "dist/extension.js","server/bin/runevm","server/bin/runevm.exe","server/bin/runelsp.rbc",
+          "rune.png","dist/extension.js","server/bin/runevm","server/bin/runevm.exe","server/bin/runelsp.rbc",
           "server/lib/basis/MANIFEST","server/lib/basis/one.sml"]
         val actual=List.filter(fn name=>not(String.isPrefix "notices/" name))
           (List.map(fn path=>String.extract(path,size out+1,NONE))(InstallChecks.files out))
         val ()=check(sort expected=sort actual,"member set")
         val ()=check(same(dir ^ "/linux",out ^ "/server/bin/runevm") andalso
           OS.FileSys.access(out ^ "/server/bin/runevm",[OS.FileSys.A_EXEC]),"runtime bytes/mode")
+        val ()=check(same(fromRoot "share/rune.png",out ^ "/rune.png"),"extension icon bytes")
         val ()=put("linux","changed build output\n")
         val ()=check(read(out ^ "/server/bin/runevm")<>read(dir ^ "/linux"),"runtime was not a private copy")
         val original=read(out ^ "/package.json")

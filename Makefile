@@ -250,11 +250,11 @@ REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyt
 DOC_LIBS := $(REPL_LIBS) compiler
 
 # Compiler ownership audit and interleaved-session acceptance.
-COMPILER_STATE_AUDIT_SRCS := $(shell sh scripts/build-files.sh rune-compiler-state-audit.build)
-COMPILER_STATE_TEST_SRCS := $(shell sh scripts/build-files.sh rune-compiler-state-tests.build)
+COMPILER_STATE_AUDIT_SRCS := $(shell sh scripts/build-files.sh tools/compiler/state-audit.build)
+COMPILER_STATE_TEST_SRCS := $(shell sh scripts/build-files.sh tests/compiler/state-tests.build)
 .PHONY: test-compiler-state
-bin/rune-compiler-state-audit.rbc: $(RUNE) $(COMPILER_STATE_AUDIT_SRCS) rune-compiler-state-audit.build manifests
-	$(RUNE) --build rune-compiler-state-audit.build -o $@
+bin/rune-compiler-state-audit.rbc: $(RUNE) $(COMPILER_STATE_AUDIT_SRCS) tools/compiler/state-audit.build manifests
+	$(RUNE) --build tools/compiler/state-audit.build -o $@
 bin/rune-compiler-state-audit: bin/rune-compiler-state-audit.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-compiler-state-audit.rbc" "$$@"\n' > $@
 	chmod +x $@
@@ -262,8 +262,8 @@ bin/rune-compiler-state-model.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/comp
 	$(RUNE) --library test/unit lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/lib/compiler/state.sml -o $@
 bin/rune-compiler-state-duplicate.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml manifests
 	$(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml -o $@
-bin/rune-compiler-state-tests.rbc: $(RUNE) $(COMPILER_STATE_TEST_SRCS) rune-compiler-state-tests.build manifests
-	$(RUNE) --build rune-compiler-state-tests.build -o $@
+bin/rune-compiler-state-tests.rbc: $(RUNE) $(COMPILER_STATE_TEST_SRCS) tests/compiler/state-tests.build manifests
+	$(RUNE) --build tests/compiler/state-tests.build -o $@
 test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc
 	bin/rune-compiler-state-audit --self-test $(wildcard lib/compiler/*.sml lib/compiler/*/*.sml)
 	bin/runevm bin/rune-compiler-state-model.rbc
@@ -274,11 +274,11 @@ test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model
 	bin/runevm --jit=all bin/rune-compiler-state-tests.rbc
 
 # Frontend baselines and edit traces for the language-server roadmap.
-LSP_BENCH_SRCS := $(shell sh scripts/build-files.sh rune-lsp-bench.build)
+LSP_BENCH_SRCS := $(shell sh scripts/build-files.sh tools/lsp/bench.build)
 .PHONY: lsp-bench test-lsp-bench
 lsp-bench: bin/rune-lsp-bench
-bin/rune-lsp-bench.rbc: $(RUNE) $(LSP_BENCH_SRCS) rune-lsp-bench.build manifests
-	$(RUNE) --build rune-lsp-bench.build -o $@
+bin/rune-lsp-bench.rbc: $(RUNE) $(LSP_BENCH_SRCS) tools/lsp/bench.build manifests
+	$(RUNE) --build tools/lsp/bench.build -o $@
 bin/rune-lsp-bench: bin/rune-lsp-bench.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-lsp-bench.rbc" "$$@"\n' > $@
 	chmod +x $@
@@ -313,8 +313,8 @@ bin/rune-lsp-tests.rbc: $(RUNE) tests/lib/lsp/protocol.sml manifests
 	$(RUNE) --library test/unit --library random --library lsp tests/lib/lsp/protocol.sml -o $@
 .PHONY: test-lsp test-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker
 LSP_WORKER_TEST_SRCS := src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/worker-model.sml src/lsp/worker-process.sml
-bin/rune-lsp-analysis-worker.rbc: $(RUNE) rune-lsp-worker.build $(LSP_SRCS) tests/lsp/worker-main.sml manifests
-	$(RUNE) --build rune-lsp-worker.build -o $@
+bin/rune-lsp-analysis-worker.rbc: $(RUNE) tests/lsp/worker.build $(LSP_SRCS) tests/lsp/worker-main.sml manifests
+	$(RUNE) --build tests/lsp/worker.build -o $@
 bin/rune-lsp-worker-analysis-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml manifests
 	$(RUNE) --library test/unit --library compiler --library lsp $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml -o $@
 bin/rune-lsp-jobs-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) src/lsp/jobs.sml tests/lsp/jobs-tests.sml manifests
@@ -338,19 +338,19 @@ bin/rune-compiler-analysis-tests.rbc: $(RUNE) tests/lib/compiler/analysis.sml ma
 test-lsp-analysis: bin/rune-compiler-analysis-tests.rbc
 	bin/runevm bin/rune-compiler-analysis-tests.rbc
 	bin/runevm --jit=all bin/rune-compiler-analysis-tests.rbc
-bin/rune-lsp-syntax-bench.rbc: $(RUNE) rune-lsp-syntax-bench.build tools/lsp/syntax-bench.sml src/main/lsp-syntax-bench-main.sml $(wildcard lib/compiler/syntax/*.sml) manifests
-	$(RUNE) --build rune-lsp-syntax-bench.build -o $@
+bin/rune-lsp-syntax-bench.rbc: $(RUNE) tools/lsp/syntax-bench.build tools/lsp/syntax-bench.sml src/main/lsp-syntax-bench-main.sml $(wildcard lib/compiler/syntax/*.sml) manifests
+	$(RUNE) --build tools/lsp/syntax-bench.build -o $@
 bin/rune-compiler-syntax-tests.rbc: $(RUNE) tests/lib/compiler/syntax.sml manifests
 	$(RUNE) --library test/unit --library compiler tests/lib/compiler/syntax.sml -o $@
-bin/rune-lsp-syntax-tests.rbc: $(RUNE) rune-lsp-syntax-tests.build tests/lsp/syntax-tests.sml $(wildcard lib/compiler/syntax/*.sml) manifests
-	$(RUNE) --build rune-lsp-syntax-tests.build -o $@
+bin/rune-lsp-syntax-tests.rbc: $(RUNE) tests/lsp/syntax-tests.build tests/lsp/syntax-tests.sml $(wildcard lib/compiler/syntax/*.sml) manifests
+	$(RUNE) --build tests/lsp/syntax-tests.build -o $@
 test-lsp-syntax: bin/rune-compiler-syntax-tests.rbc bin/rune-lsp-syntax-tests.rbc
 	bin/runevm bin/rune-compiler-syntax-tests.rbc
 	bin/runevm --jit=all bin/rune-compiler-syntax-tests.rbc
 	bin/runevm bin/rune-lsp-syntax-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-syntax-tests.rbc
-bin/rune-lsp-documents-bench.rbc: $(RUNE) tools/lsp/documents-bench.sml src/main/lsp-documents-bench-main.sml rune-lsp-documents-bench.build manifests
-	$(RUNE) --build rune-lsp-documents-bench.build -o $@
+bin/rune-lsp-documents-bench.rbc: $(RUNE) tools/lsp/documents-bench.sml src/main/lsp-documents-bench-main.sml tools/lsp/documents-bench.build manifests
+	$(RUNE) --build tools/lsp/documents-bench.build -o $@
 test-lsp: test-lsp-protocol
 bin/rune-lsp-documents-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml tests/lsp/edit-traces.sml tests/lsp/documents-tests.sml manifests
 	$(RUNE) --library test/unit --library lsp src/lsp/documents.sml src/lsp/sync.sml tests/lsp/edit-traces.sml tests/lsp/documents-tests.sml -o $@

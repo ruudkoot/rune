@@ -1,5 +1,5 @@
 (* Private compiler names are used only by this independent differential suite. *)
 libraries unicode json test/unit end
-files build/config.sml end
-use lib/compiler/api.build
-tests/lsp/syntax-tests.sml
+files ../../build/config.sml end
+use ../../lib/compiler/api.build
+../../tests/lsp/syntax-tests.sml

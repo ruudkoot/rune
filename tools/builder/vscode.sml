@@ -67,7 +67,7 @@ struct
                 val ()=write(pending ^ "/extension/.vscodeignore",marker ^ "\n")
                 val ()=List.app copyFile
                   [("README.md",source ^ "/README.md",420),("LICENSE",fromRoot "LICENSE",420),
-                   ("sml-language.json",source ^ "/sml-language.json",420),
+                   ("sml-language.json",source ^ "/sml-language.json",420),("rune.png",fromRoot "share/rune.png",420),
                    ("dist/extension.js",client ^ "/extension.js",420),
                    ("ThirdPartyNotices.txt",client ^ "/ThirdPartyNotices.txt",420),
                    ("server/bin/runevm",linux,493),("server/bin/runevm.exe",windows,493),
