@@ -73,7 +73,7 @@ What it rests on:
 | Milestone | What | Track | State |
 |---|---|---|---|
 | M0 | This roadmap | | done |
-| M1 | Tier 2 divides by a constant | H | not started |
+| M1 | Tier 2 divides by a constant | H | done (2026-10-24) |
 | M2 | Hashing that changes no output | H | done (2026-10-24) |
 | M3 | Typing that follows the Definition | T | done (2026-10-24) |
 | M4 | Fingerprints by structure; gate G1 | H | done (2026-10-24) |
@@ -104,6 +104,22 @@ master `79805ac6f` first; since 78192dfd9 master had moved the compiler into
 `lib/compiler` and the test drivers into `tests/runner`, so the `file:line`
 references below are to 78192dfd9 and the milestones name files by their
 new places.
+
+**M1** (by an agent; on the branch after M4):
+- tier 2 keeps the fact that a register holds a constant (`INT`, `CONST`,
+  `MOVE`) and divides by one without `idiv`: shifts for a power of two, a
+  multiply-high by a magic number for any other (Granlund and Montgomery;
+  *Hacker's Delight*), for `int` and `word` `div`, `mod`, `quot`, `rem`,
+  and `Int64`/`Word64`'s own, on x86-64 and aarch64; `Simplify` folds a
+  constant divided by a constant, leaving what raises;
+- `tests/lang/rt.div_constant` (108,304 checks against a divisor read from
+  a `ref`) and `tests/register/divconst_test.c` (6.7 million checks of the
+  emitted code against C, on aarch64 too under qemu);
+- the old `Pickle.hash` loop kept as `tests/perf/hash_mod`: 179.5 cycles a
+  byte to 45.7; MLton's 606 files in units at tier 2 (measured before M2,
+  as the brief asked): 1,633.4G instructions to 1,588.7G and 0.730 times
+  the cycles, against E7's 0.697 and the 0.72 asked -- E7's base ran in
+  more cycles; the instructions saved are E7's to the count.
 
 **M2** (`0605214ab`, `88a48f2fd`):
 - issue 16's fix landed first, with S68 and S69 (`UnitBasis.version` 8);
