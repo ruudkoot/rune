@@ -903,7 +903,10 @@ implementation gives:
   `as_bswap` (`bswap`, `rev`: M5's order of strings); a multiply that may overflow is one operation
   with its jump (`as_mul_jo`: `imul` and `jo`, or `mul`, `smulh` and a
   compare); a divide gives the quotient in `R_S0` and the remainder in
-  `R_S2` (`cqo` and `idiv`, or `sdiv` and `msub`); a shift by a
+  `R_S2` (`cqo` and `idiv`, or `sdiv` and `msub`), and the high half
+  of a product `R_S2` too (`as_smulhi` and `as_umulhi`: the one-operand
+  `imul` and `mul`, which take `rax` and leave the low half there, or
+  `smulh` and `umulh`); a shift by a
   register takes the count in `R_S1`; a comparison of reals is read
   by `CC_FA`, `CC_FAE` and `CC_FE`, which are false on a NaN on every
   target (`ja` and `jae` after `ucomisd`, and `setcc` with the parity

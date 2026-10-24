@@ -63,7 +63,8 @@ void a64_orr_rr(A64 *a, int rd, int rn, int rm);
 void a64_eor_rr(A64 *a, int rd, int rn, int rm);
 void a64_orn_rr(A64 *a, int rd, int rn, int rm);
 void a64_mul(A64 *a, int rd, int rn, int rm);
-void a64_smulh(A64 *a, int rd, int rn, int rm);
+void a64_smulh(A64 *a, int rd, int rn, int rm);   /* rd := the high 64 bits of rn * rm, signed */
+void a64_umulh(A64 *a, int rd, int rn, int rm);   /* and unsigned */
 void a64_sdiv(A64 *a, int rd, int rn, int rm);
 void a64_udiv(A64 *a, int rd, int rn, int rm);
 void a64_msub(A64 *a, int rd, int rn, int rm, int ra); /* rd := ra - rn * rm */

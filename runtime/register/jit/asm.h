@@ -17,6 +17,8 @@
    * as_divmod takes the dividend in R_S0 and leaves the quotient there
      and the remainder in R_S2; a divisor of 0 or -1 is the emitter's to
      test first.
+   * as_smulhi and as_umulhi leave in R_S2 the high 64 bits of the
+     product of R_S0 and r, signed and unsigned, and R_S0 undefined.
    * as_mul_jo multiplies and jumps where the product overflowed.
    * as_setcc gives 0 or 1 in the whole register; with CC_FE on x86-64 it
      uses R_S6 too.
@@ -199,6 +201,8 @@ void as_shl_rr(Asm *a, int r);                              /* by R_S1 */
 void as_shr_rr(Asm *a, int r);
 void as_divmod(Asm *a, int divisor);                        /* signed: R_S0 / divisor, R_S0 % divisor into R_S2 */
 void as_udivmod(Asm *a, int divisor);
+void as_smulhi(Asm *a, int r);                              /* R_S2 := the high half of R_S0 * r, signed; r neither R_S0 nor R_S2 */
+void as_umulhi(Asm *a, int r);                              /* unsigned */
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v);
 void as_add_rm(Asm *a, int rd, int base, int32_t disp);
 void as_add_rm_to_mem(Asm *a, int base, int32_t disp, int rs);   /* [base + disp] += rs (64 bits) */

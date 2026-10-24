@@ -101,6 +101,8 @@ void as_udivmod(Asm *a, int divisor) {
     a64_msub(a, R_S2, R_T, divisor, R_S0);
     a64_mov_rr(a, R_S0, R_T);
 }
+void as_smulhi(Asm *a, int r) { a64_smulh(a, R_S2, R_S0, r); }
+void as_umulhi(Asm *a, int r) { a64_umulh(a, R_S2, R_S0, r); }
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v) { a64_ldr(a, R_T, base, disp); a64_add_ri(a, R_T, R_T, v); a64_str(a, R_T, base, disp); }
 void as_add_rm(Asm *a, int rd, int base, int32_t disp) { a64_ldr(a, R_T, base, disp); a64_add_rr(a, rd, rd, R_T); }
 void as_add_rm_to_mem(Asm *a, int base, int32_t disp, int rs) { a64_ldr(a, R_T, base, disp); a64_add_rr(a, R_T, R_T, rs); a64_str(a, R_T, base, disp); }

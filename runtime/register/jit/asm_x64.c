@@ -71,6 +71,8 @@ void as_shl_rr(Asm *a, int r) { x64_shl_rcl(a, r); }
 void as_shr_rr(Asm *a, int r) { x64_shr_rcl(a, r); }
 void as_divmod(Asm *a, int divisor) { x64_cqo(a); x64_idiv_r(a, divisor); }
 void as_udivmod(Asm *a, int divisor) { x64_xor_rr(a, RDX, RDX); x64_div_r(a, divisor); }
+void as_smulhi(Asm *a, int r) { x64_imul_r(a, r); }   /* rdx:rax := rax * r */
+void as_umulhi(Asm *a, int r) { x64_mul_r(a, r); }
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v) { x64_add_mi(a, base, disp, v); }
 void as_add_rm(Asm *a, int rd, int base, int32_t disp) { x64_add_rm(a, rd, base, disp); }
 void as_add_rm_to_mem(Asm *a, int base, int32_t disp, int rs) { x64_add_mr(a, base, disp, rs); }

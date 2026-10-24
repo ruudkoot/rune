@@ -39,6 +39,12 @@ int main(void) {
     x64_init(&a); a.base = 0x10000; x64_call_to(&a, (const void *)(uintptr_t)0x10100); fails += expect("call rel32 (+0xfb)", &a, "e8fb000000"); x64_free(&a);
     x64_init(&a); a.base = 0x10100; x64_call_to(&a, (const void *)(uintptr_t)0x10000); fails += expect("call rel32 (-0x105)", &a, "e8fbfeffff"); x64_free(&a);
     x64_init(&a); x64_imul_rri(&a, RCX, R11, 720); fails += expect("imul rcx, r11, 720", &a, "4969cbd0020000"); x64_free(&a);
+    /* the high half of a product, rdx:rax := rax * r (a division by a constant) */
+    x64_init(&a); x64_imul_r(&a, RCX); fails += expect("imul rcx", &a, "48f7e9"); x64_free(&a);
+    x64_init(&a); x64_mul_r(&a, RCX); fails += expect("mul rcx", &a, "48f7e1"); x64_free(&a);
+    x64_init(&a); x64_imul_r(&a, R9); fails += expect("imul r9", &a, "49f7e9"); x64_free(&a);
+    x64_init(&a); x64_mul_r(&a, R11); fails += expect("mul r11", &a, "49f7e3"); x64_free(&a);
+    x64_init(&a); x64_mul_r(&a, R8); fails += expect("mul r8", &a, "49f7e0"); x64_free(&a);
     x64_init(&a); x64_movsd_xx(&a, XMM3, XMM9); fails += expect("movsd xmm3, xmm9", &a, "f2410f10d9"); x64_free(&a);
     x64_init(&a); x64_sqrtsd(&a, XMM0, XMM1); fails += expect("sqrtsd xmm0, xmm1", &a, "f20f51c1"); x64_free(&a);
     x64_init(&a); x64_cvtsi2sd(&a, XMM0, RAX); fails += expect("cvtsi2sd xmm0, rax", &a, "f2480f2ac0"); x64_free(&a);
@@ -95,6 +101,29 @@ int main(void) {
     Fn2 f = as_fn2(run(&a));
     if (f(40, 2) != 42) { printf("FAIL loop: %ld\n", f(40, 2)); fails++; }
     x64_label_free(&top); x64_label_free(&done); x64_free(&a);
+    /* the high halves of products, signed and unsigned: rax := a, then
+       imul or mul by b, and rdx returned */
+    for (int sgn = 0; sgn < 2; sgn++) {
+        x64_init(&a);
+        x64_mov_rr(&a, RAX, RDI);
+        if (sgn) x64_imul_r(&a, RSI); else x64_mul_r(&a, RSI);
+        x64_mov_rr(&a, RAX, RDX);
+        x64_ret(&a);
+        Fn2 hi = as_fn2(run(&a));
+        static const struct { unsigned long a, b, shi, uhi; } cases[] = {
+            { 3, 5, 0, 0 },
+            { 0xFFFFFFFFFFFFFFFFul, 2, 0xFFFFFFFFFFFFFFFFul, 1 },                      /* -1 * 2; (2^64 - 1) * 2 */
+            { 0x8000000000000000ul, 0x8000000000000000ul, 0x4000000000000000ul, 0x4000000000000000ul },
+            { 0x8000000000000001ul, 0x0000000100000000ul, 0xFFFFFFFF80000000ul, 0x0000000080000000ul },
+            { 0x8000018000048001ul, 0x00000000DEADBEEFul, 0xFFFFFFFF90A921D6ul, 0x000000006F56E0C5ul },
+        };
+        for (size_t i = 0; i < sizeof cases / sizeof cases[0]; i++) {
+            unsigned long want = sgn ? cases[i].shi : cases[i].uhi;
+            unsigned long got = (unsigned long)hi((long)cases[i].a, (long)cases[i].b);
+            if (got != want) { printf("FAIL %s high half %lx * %lx: %lx, expected %lx\n", sgn ? "imul" : "mul", cases[i].a, cases[i].b, got, want); fails++; }
+        }
+        x64_free(&a);
+    }
     /* a 16-byte copy through xmm0 */
     x64_init(&a);
     x64_movups_xm(&a, XMM0, RSI, 0);
