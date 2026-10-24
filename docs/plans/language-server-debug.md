@@ -34,7 +34,8 @@ prelude name sets instead of lexing every unchanged source on each check.
 
 The worker uses the optimizing JIT, with a 512 MiB heap cap and a 1.5 GiB process cap. The 30-second
 job deadline remains for document work; workspace sweeps have 30 seconds per
-context and a 120-second overall cap. Count and source-byte retention budgets limit old
+context and an overall allowance of 30 seconds for planning plus 30 seconds
+per planned context. Count and source-byte retention budgets limit old
 contexts and views. Concurrent providers share one check; cancellation of
 one waiter preserves the others. An infrastructure failure completes all
 waiters and suppresses further checks of the same failed revision and
@@ -55,7 +56,7 @@ outside the resident cache's eviction budget. A focused replay of the installed
 their JSON results before checking the next context. Reports preserve source
 ordinals and URI ordering without retaining every context's analysis snapshot.
 Progress at a new context starts its own deadline; unit progress and cancellation
-cannot extend it, and the overall workspace cap remains absolute.
+cannot extend it, and the plan-derived overall workspace cap remains absolute.
 
 Focused verification of this follow-up checks only the affected workspace
 paths: the two-context diagnostic/refresh regression, existing workspace
@@ -70,6 +71,28 @@ aggregate 30-second timeout; another client attempt stopped at its own
 45-second wait before that wait was corrected. Neither is a passing run.
 At the user's request, the full suite is deferred until debugging is complete;
 native Windows and editor-host checks are not rerun for this follow-up.
+
+The subsequent installed `22b701bcd` run reached the fixed 120-second cap
+while still elaborating a context. That cap incorrectly assumed four time
+allowances regardless of workspace size. The worker now announces its plan
+once, and the supervisor derives an absolute allowance for planning plus all
+contexts (420 seconds for 13 contexts), retaining the 30-second per-context
+deadline. Repeated plans or invalid context indices are rejected.
+
+The same bounded progress metadata now reaches `window/logMessage` at info
+level and client-supplied work-done tokens. Context starts are immediate;
+file/phase, checked/reused units and elapsed time are refreshed about every
+five seconds, including while waiting for the next worker observation.
+Short document checks stay quiet until two seconds, and reported work logs
+completion. The VS Code client needs no custom protocol or UI logic.
+
+Verification for this follow-up is limited to two scheduler cases and two
+protocol cases: simulated 130-second progress without sleeping, plan-derived
+absolute expiry, stalled-context and cancellation deadlines, heartbeat
+throttling/content, and info/work-done reports preceding final diagnostics.
+All four pass; receipts are `build/lsp-debug/acceptance/progress-*-tests.log`.
+No full workspace replay, broad suite, editor host or native Windows LSP
+run is repeated for this change.
 
 The public compiler adapter now reports missing-library manifest errors as
 `Failed` diagnostics. Discovery can then report an unavailable target instead

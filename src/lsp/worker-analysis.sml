@@ -335,9 +335,15 @@ struct
                     else (prior,items)::insert rest
             in insert groups end
         val groups=List.foldl group [] uris
+        val ()=notify(worker,[("phase",V.Bytes "workspace-planned"),("file",V.Bytes ""),
+          ("contexts",V.Integer(IntInf.fromInt(length groups)))])
+        val contextIndex=ref 0
         fun one (_,[]) = []
           | one (_,(items as (uri,_)::_)) =
-              let val view=check (worker,{state=captured,uri=uri,encoding=encoding,capabilities=capabilities,cancelled=cancelled})
+              let val ()=contextIndex:= !contextIndex+1
+                  val ()=notify(worker,[("phase",V.Bytes "workspace-context-start"),("file",V.Bytes uri),
+                    ("contextIndex",V.Integer(IntInf.fromInt(!contextIndex)))])
+                  val view=check (worker,{state=captured,uri=uri,encoding=encoding,capabilities=capabilities,cancelled=cancelled})
                   fun result (uri,ordinal)=
                     if cancelled () then raise A.Cancelled else
                     (uri,collect (makeView {id= #id view,snapshot= #snapshot view,sources= #sources view,

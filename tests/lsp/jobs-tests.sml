@@ -21,7 +21,7 @@ struct
         fun loop all=if length all>=count then List.rev all else
           if Time.> (Time.now (),until) then raise Fail "job completion timeout" else
           let val events=J.pump (jobs,OS.IO.poll (J.descriptors jobs,SOME (Time.fromMilliseconds 20)))
-              val events=List.filter (fn J.Restarted => false | _ => true) events
+              val events=List.filter (fn J.Restarted => false | J.Progress _=>false | _ => true) events
           in loop (List.rev events @ all) end
     in J.tick jobs;loop [] end
   fun priorities ()=fixture (fn jobs =>
@@ -32,7 +32,8 @@ struct
         val events=collect (jobs,3)
         fun label (J.Cancelled name)="cancel:" ^ name | label (J.Done (name,_))="done:" ^ name
           | label (J.Failed (name,message))=raise Fail (name ^ ": " ^ message)
-          | label (J.Rejected (name,error))=raise Fail (name ^ ": " ^ #message error) | label J.Restarted="restart"
+          | label (J.Rejected (name,error))=raise Fail (name ^ ": " ^ #message error)
+          | label (J.Progress _)="progress" | label J.Restarted="restart"
     in check ("foreground precedes coalesced background",List.map label events=["cancel:superseded","done:foreground","done:background"]) end)
   fun queuedCancellation ()=fixture (fn jobs =>
     let val id=J.submit (jobs,{key=NONE,priority=0,data="cancelled",payload=payload ()})
@@ -67,7 +68,7 @@ struct
         val ()=J.message(jobs,V.Object[("op",V.Bytes "progress"),("id",V.Integer id),
           ("phase",V.Bytes "unit-elaborated"),("file",V.Bytes "/project with spaces \206\187/elaborate.sml"),
           ("checked",V.Integer 187),("reused",V.Integer 2)])
-        val ()=check("progress is metadata, not a completed job",null(!events))
+        val ()=check("progress is metadata, not a completed job",List.all(fn J.Progress _=>true | _=>false)(!events))
         val ()=J.tick jobs
         val message=case List.find(fn J.Failed("deadline",_)=>true | _=>false)(!events) of
           SOME(J.Failed(_,message))=>message | _=>raise Fail "deadline did not fail despite progress"
@@ -83,15 +84,15 @@ struct
     in check("metadata stays bounded and escapes controls and invalid native bytes",size shown<1100 andalso
       String.isSubstring "tail\\x0A\\xFF" shown andalso not(String.isSubstring "\n" shown)) end
   fun workspaceDeadlines () =
-    let fun scenario (opName,wholeExpired,cancelling,unitProgress) =
+    let fun scenario (opName,age,cancelling,unitProgress) =
           let val jobs=J.new {command="unused",args=[],timeout=Time.fromSeconds 1,
                 cancelGrace=Time.fromMilliseconds 50,maxPending=1}:string J.t
-              val J.Jobs {active,queue,phase,started,events,...}=jobs
+              val J.Jobs {active,queue,phase,started,events,planned,...}=jobs
               val id=J.submit(jobs,{key=NONE,priority=0,data="deadline",
                 payload=V.Object[("op",V.Bytes opName)]})
               val expired=Time.-(Time.now(),Time.fromSeconds 2)
               val ()=(active:=SOME(hd(!queue));queue:=[];
-                started:=SOME(if wholeExpired then Time.-(Time.now(),Time.fromSeconds 5) else Time.now());
+                started:=SOME(Time.-(Time.now(),Time.fromSeconds age));planned:=SOME 13;
                 phase:=(if cancelling then J.Cancelling expired else J.Working expired))
               val ()=J.message(jobs,V.Object[("op",V.Bytes "progress"),("id",V.Integer id),
                 ("phase",V.Bytes(if unitProgress then "unit-start" else "project-selected")),
@@ -100,11 +101,47 @@ struct
               val failed=List.exists(fn J.Failed _=>true | _=>false)(!events)
               val ended=case !phase of J.Idle=>true | _=>false
           in J.close jobs;(failed,ended) end
-    in check("a new workspace context gets its own deadline",scenario("workspace",false,false,false)=(false,false));
-      check("unit progress cannot extend the context deadline",scenario("workspace",false,false,true)=(true,true));
-      check("context progress cannot extend the overall workspace deadline",scenario("workspace",true,false,false)=(true,true));
-      check("document deadlines remain absolute",scenario("check",false,false,false)=(true,true));
-      check("context progress cannot extend cancellation grace",#2(scenario("workspace",false,true,false))) end
+    in check("a new workspace context gets its own deadline",scenario("workspace",0,false,false)=(false,false));
+      check("13 contexts can exceed the old four-context overall cap",scenario("workspace",5,false,false)=(false,false));
+      check("unit progress cannot extend the context deadline",scenario("workspace",0,false,true)=(true,true));
+      check("context progress cannot extend the plan-derived overall deadline",scenario("workspace",15,false,false)=(true,true));
+      check("document deadlines remain absolute",scenario("check",0,false,false)=(true,true));
+      check("context progress cannot extend cancellation grace",#2(scenario("workspace",0,true,false))) end
+  fun liveProgress () =
+    let val jobs=J.new {command="unused",args=[],timeout=Time.fromSeconds 30,
+          cancelGrace=Time.fromMilliseconds 50,maxPending=1}:string J.t
+        val J.Jobs {active,queue,phase,started,events,reported,planned,...}=jobs
+        val id=J.submit(jobs,{key=NONE,priority=0,data="progress",payload=V.Object
+          [("op",V.Bytes "workspace"),("state",V.Bytes "source-sentinel")]})
+        val ()=(active:=SOME(hd(!queue));queue:=[];started:=SOME(Time.-(Time.now(),Time.fromSeconds 6));
+          phase:=J.Working(Time.+(Time.now(),Time.fromSeconds 30)))
+        fun update (name,file,extra)=J.message(jobs,V.Object
+          ([("op",V.Bytes "progress"),("id",V.Integer id),("phase",V.Bytes name),("file",V.Bytes file)] @ extra))
+        val ()=update("workspace-planned","",[("contexts",V.Integer 13)])
+        val ()=update("workspace-context-start","",[("contextIndex",V.Integer 1)])
+        val ()=update("project-selected","file:///project/rune.build",[("context",V.Bytes "rune")])
+        fun messages()=List.mapPartial(fn J.Progress(_,text)=>SOME text | _=>NONE)(List.rev(!events))
+        val ()=check("workspace plan controls the bounded overall budget",!planned=SOME 13 andalso
+          J.workspaceLimit(Time.fromSeconds 30,!planned)=Time.fromSeconds 420)
+        val ()=check("context changes are visible immediately",length(messages())=2 andalso
+          List.exists(fn text=>String.isSubstring "context 1/13: rune" text)(messages()))
+        val ()=started:=SOME(Time.-(Time.now(),Time.fromSeconds 130))
+        val ()=J.tick jobs
+        val ()=check("a progressing 13-context workspace survives 120 seconds without waiting in the test",
+          case !phase of J.Working _=>true | _=>false)
+        val ()=started:=SOME(Time.-(Time.now(),Time.fromSeconds 6))
+        val ()=update("unit-start","/project with spaces/lower.sml",[("checked",V.Integer 216),("reused",V.Integer 4)])
+        val ()=check("per-unit output is throttled",length(messages())=2)
+        val ()=reported:=SOME(Time.-(Time.now(),Time.fromSeconds 6))
+        val ()=J.tick jobs
+        val ()=check("heartbeat includes current source, work and elapsed time",length(messages())=3 andalso
+          List.exists(fn text=>List.all(fn part=>String.isSubstring part text)
+            ["/project with spaces/lower.sml","216 checked, 4 reused","elapsed"])(messages()))
+        val ()=J.message(jobs,V.Object[("id",V.Integer id),("result",V.Null)])
+        val ()=check("completion is visible and captured source is excluded",length(messages())=4 andalso
+          List.exists(fn text=>String.isSubstring "Analysis finished" text)(messages()) andalso
+          List.all(fn text=>not(String.isSubstring "source-sentinel" text))(messages()))
+    in J.close jobs end
 end
 structure RuneLspJobsTestMain=Main (struct
   val name="lsp-jobs"
@@ -113,6 +150,7 @@ structure RuneLspJobsTestMain=Main (struct
     Test.it "typed-rejection" RuneLspJobsTests.typedRejection,
     Test.it "informative-timeout" RuneLspJobsTests.informativeTimeout,
     Test.it "workspace-context-deadlines" RuneLspJobsTests.workspaceDeadlines,
+    Test.it "live-analysis-progress" RuneLspJobsTests.liveProgress,
     Test.it "bounded-error-metadata" RuneLspJobsTests.metadataBounds]
 end)
 val ()=RuneLspJobsTestMain.main ()

@@ -212,8 +212,20 @@ struct
         val ()=if current(service,{uri= #uri ticket,revision= #revision ticket,generation= #generation ticket})
           then failures:=List.take(all,Int.min(64,length all)) else ()
     in if null pending then log message else List.app(fn request=>failure(service,request,P.requestFailed,message,NONE))pending end
-  fun handleEvent (service as Service {results,discovered,log,...},event) =
+  fun handleEvent (service as Service {results,discovered,log,send,requests,...},event) =
     case event of J.Restarted => results:=[]
+    | J.Progress (task,message) =>
+        let val ()=send(R.Notification{method="window/logMessage",params=SOME(Json.Object
+              [("type",Json.int 3),("message",Json.String message)])})
+            val pending=case task of Workspace request=>[request] | Query request=>[request]
+              | Check {uri,revision,generation,...}=>List.filter(fn request:request=>
+                  #uri request=uri andalso #revision request=revision andalso #generation request=generation)(!requests)
+              | Build {request=SOME request,...}=>[request] | _=>[]
+            fun report (request:request)=if !(#done request) then () else
+              case Json.member("workDoneToken",#params request) of NONE=>() | SOME token=>
+                send(R.Notification{method="$/progress",params=SOME(Json.Object[("token",token),
+                  ("value",Json.Object[("kind",Json.String "report"),("message",Json.String message)])])})
+        in List.app report pending end
     | J.Done (Discover ticket,value) => if current (service,ticket) then discovered (#uri ticket,value) else ()
     | J.Done (Check ticket,value) =>
         let val snapshot=V.bytes (V.field (value,"snapshot"))

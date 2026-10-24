@@ -72,10 +72,17 @@ providers query it. Cancellation replies immediately and allows the worker
 The worker uses Rune's optimizing JIT, with a 512 MiB VM heap cap and a
 1.5 GiB process address-space cap
 (including both copying spaces and native code), and a 30-second job deadline.
-Workspace sweeps have 30 seconds per context and a 120-second overall cap;
+Workspace sweeps have 30 seconds per context and an overall allowance of
+30 seconds for planning plus 30 seconds for each planned context;
 unit progress does not extend a context's deadline. Each context's diagnostic
 or symbol results are collected before the next context is checked, so the
 response does not keep evicted analysis snapshots alive.
+The Rune Language Server Output channel shows the workspace context count,
+each context as it starts, and progress about every five seconds: the current
+file and phase, checked/reused unit counts, and elapsed time. Document checks
+start reporting after two seconds. Completion is logged for reported work.
+Clients supplying a work-done token receive these intermediate reports through
+`$/progress` as well. Progress updates do not extend deadlines or cancellation.
 Contexts and frozen views each retain at most four entries and charge at most
 2 MiB of source text across entries; a single larger entry can occupy the
 cache alone. Shared text is charged separately per view. These are retention

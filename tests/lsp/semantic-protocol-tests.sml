@@ -188,6 +188,35 @@ struct
         fun write(path,text)=let val out=TextIO.openOut path in TextIO.output(out,text);TextIO.closeOut out end
         fun work()=action{root=root,uri=uri,write=write}
     in (work() before remove root) handle error=>(remove root handle _=>();raise error) end
+  fun analysisProgress ()=temporaryTree(fn {root,uri,write}=>
+    let fun path name=OS.Path.concat(root,name)
+        val ()=write(path "left.build","left.sml\n")
+        val ()=write(path "right.build","right.sml\n")
+        val ()=write(path "left.sml","val left=1\n")
+        val ()=write(path "right.sml","val right=true\n")
+    in fixtureInitialized(object[("capabilities",object[("textDocument",object[("diagnostic",object[])])]),
+        ("workspaceFolders",Json.Array[object[("uri",Json.String(uri root)),("name",Json.String "progress")]])]) (fn client=>
+      let val ()=C.request(client,280,"workspace/diagnostic",object[("previousResultIds",Json.Array[]),
+            ("workDoneToken",Json.String "live-analysis")])
+          fun final value=Json.member("id",value)=SOME(Json.int 280)
+          fun plan value=Json.member("method",value)=SOME(Json.String "window/logMessage") andalso
+            (case Json.member("params",value) of SOME params=>
+              Json.member("type",params)=SOME(Json.int 3) andalso
+              (case Json.member("message",params) of SOME(Json.String text)=>String.isSubstring "Workspace analysis: 2 contexts" text | _=>false)
+            | _=>false)
+          val first=C.receive(client,fn value=>final value orelse plan value)
+          val ()=check("the Output channel receives the workspace plan before completion",plan first)
+          fun tokenReport value=Json.member("method",value)=SOME(Json.String "$/progress") andalso
+            (case Json.member("params",value) of SOME params=>Json.member("token",params)=SOME(Json.String "live-analysis") andalso
+              (case Json.member("value",params) of SOME report=>Json.member("kind",report)=SOME(Json.String "report") andalso
+                (case Json.member("message",report) of SOME(Json.String text)=>String.isSubstring "context 1/2" text | _=>false)
+              | _=>false) | _=>false)
+          val next=C.receive(client,fn value=>final value orelse tokenReport value)
+          val ()=check("work-done tokens receive intermediate context reports",tokenReport next)
+          val result=C.result(C.response(client,280))
+      in check("progress does not replace the final diagnostic result",case C.field(result,"items") of
+        Json.Array items=>length items=2 andalso List.all(fn item=>C.field(item,"items")=Json.Array[])items | _=>false) end)
+    end)
   fun workspaceContexts ()=temporaryTree(fn {root,uri,write}=>
     let fun path name=OS.Path.concat(root,name)
         val ()=write(path "left.build","files left.sml left-tail.sml end\n")
@@ -1053,6 +1082,7 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "file-project-mapping" RuneLspSemanticProtocolTests.fileProject,
     Test.it "workspace-diagnostics" RuneLspSemanticProtocolTests.workspaceDiagnostics,
     Test.it "workspace-context-reporting" RuneLspSemanticProtocolTests.workspaceContexts,
+    Test.it "live-analysis-progress" RuneLspSemanticProtocolTests.analysisProgress,
     Test.it "basis-development-context" RuneLspSemanticProtocolTests.basisDevelopment,
     Test.it "navigation-and-symbols" RuneLspSemanticProtocolTests.navigation,
     Test.it "workspace-symbols-resolve" RuneLspSemanticProtocolTests.workspaceSymbols,
