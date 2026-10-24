@@ -14,4 +14,7 @@ struct
           ("collections",Json.int(#collections stats)),("checked",Json.int checked),("reused",Json.int reused),("items",Json.int items)]
     in TextIO.output(stream,Json.encode record ^ "\n");TextIO.flushOut stream end
   fun observe ({phase,file,checked,reused,items}:RuneCompiler.Analysis.observation)=sample phase file checked reused items
+  fun retained ()=case stream of NONE=>() | SOME _=>
+    if OS.Process.getEnv "RUNE_LSP_PROFILE_GC"=SOME "1" then
+      (Runtime.collect();sample "job-retained" "" 0 0 0) else ()
 end

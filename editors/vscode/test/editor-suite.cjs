@@ -36,4 +36,33 @@ exports.run = async () => {
   });
   await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
   console.log('PASS vscode/editor/activation-hover-diagnostics-restart');
+  const root = process.env.RUNE_VSCODE_PROJECT_ROOT;
+  if (root) {
+    const config = vscode.workspace.getConfiguration('runelsp');
+    await config.update('libraryRoot', vscode.Uri.file(`${root}/lib`).toString(), vscode.ConfigurationTarget.Workspace);
+    await config.update('targets', [{ name: 'rune', build: vscode.Uri.file(`${root}/rune.build`).toString() }], vscode.ConfigurationTarget.Workspace);
+    await config.update('activeContext', 'rune', vscode.ConfigurationTarget.Workspace);
+    const source = await vscode.workspace.openTextDocument(vscode.Uri.file(`${root}/src/main/rune-main.sml`));
+    await vscode.window.showTextDocument(source);
+    const original = source.getText();
+    const position = new vscode.Position(1, 15);
+    await until(async () => {
+      const hover = await vscode.commands.executeCommand('vscode.executeHoverProvider', source.uri, position);
+      return hover?.some(item => item.contents.some(content => /ref/.test(content.value ?? content)));
+    });
+    const definitions = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', source.uri, position);
+    assert.ok(definitions?.length);
+    const completion = await vscode.commands.executeCommand('vscode.executeCompletionItemProvider', source.uri, new vscode.Position(2, 11));
+    assert.ok(completion?.items.length);
+    const broken = new vscode.WorkspaceEdit();
+    broken.insert(source.uri, source.positionAt(original.length), '\nval editor_error:int=true\n');
+    assert.equal(await vscode.workspace.applyEdit(broken), true);
+    await until(() => vscode.languages.getDiagnostics(source.uri).some(item => item.severity === vscode.DiagnosticSeverity.Error));
+    const repair = new vscode.WorkspaceEdit();
+    repair.replace(source.uri, new vscode.Range(source.positionAt(0), source.positionAt(source.getText().length)), original);
+    assert.equal(await vscode.workspace.applyEdit(repair), true);
+    await until(() => vscode.languages.getDiagnostics(source.uri).length === 0);
+    await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
+    console.log('PASS vscode/editor/rune-project-hover-navigation-completion-edit-repair');
+  }
 };

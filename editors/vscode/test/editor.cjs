@@ -20,6 +20,17 @@ if (process.platform === 'linux') {
   process.env.XDG_RUNTIME_DIR = runtime;
 }
 execFileSync('unzip', ['-q', path.resolve(archive), '-d', temp]);
+const project = process.env.RUNE_VSCODE_PROJECT_ROOT;
+const workspace = path.join(temp, 'rune.code-workspace');
+if (project) {
+  const { pathToFileURL } = require('node:url');
+  fs.writeFileSync(workspace, JSON.stringify({ folders: [{ path: path.resolve(project) }], settings: {
+    'runelsp.libraryRoot': pathToFileURL(path.join(project, 'lib')).href,
+    'runelsp.targets': [{ name: 'rune', build: pathToFileURL(path.join(project, 'rune.build')).href }],
+    'runelsp.activeContext': 'rune',
+    ...(process.env.RUNE_VSCODE_TRACE ? { 'runelsp.trace.server': 'verbose' } : {})
+  } }));
+}
 runTests({
   extensionDevelopmentPath: path.join(temp, 'extension'),
   extensionTestsPath: path.join(__dirname, 'editor-suite.cjs'),
@@ -27,5 +38,6 @@ runTests({
   version,
   launchArgs: ['--disable-gpu', '--ozone-platform=x11', '--password-store=basic',
     '--disable-extensions', '--skip-welcome', '--skip-release-notes',
-    '--user-data-dir', path.join(temp, 'user'), '--extensions-dir', path.join(temp, 'extensions')]
+    '--user-data-dir', path.join(temp, 'user'), '--extensions-dir', path.join(temp, 'extensions'),
+    ...(project ? [workspace] : [])]
 }).catch(error => { console.error(error); process.exitCode = 1; });

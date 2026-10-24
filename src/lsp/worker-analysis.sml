@@ -17,8 +17,11 @@ struct
     tokens:(C.Syntax.piece list * C.Syntax.piece vector) option ref}
   type view={id:string,snapshot:A.snapshot,sources:source list,encoding:LspProtocol.encoding,uri:string,ordinal:int option,
     capabilities:Json.value,activeUnit:string option,generation:IntInf.int}
-  datatype t=Worker of {contexts:context list ref,views:view list ref,tokens:RuneLspTokens.t,namespace:string ref}
-  fun new ()=Worker {contexts=ref [],views=ref [],tokens=RuneLspTokens.new (),namespace=ref "local"}
+  datatype t=Worker of {contexts:context list ref,views:view list ref,tokens:RuneLspTokens.t,namespace:string ref,
+    progress:(V.value->unit) ref}
+  fun new ()=Worker {contexts=ref [],views=ref [],tokens=RuneLspTokens.new (),namespace=ref "local",progress=ref(fn _=>())}
+  fun onProgress (Worker{progress,...},report)=progress:=report
+  fun notify (Worker{progress,...},fields)=(!progress)(V.Object fields)
   (* Job IDs belong to the supervisor and do not reset with this process. *)
   fun commandId (Worker {namespace,...},id)=
     (namespace:="worker-job-" ^ IntInf.toString id;RuneLspProfile.job:= !namespace)
@@ -42,13 +45,15 @@ struct
               else loop(rest,n+1,bytes+weight entry,entry::kept)
     in loop(entries,0,0,[]) end
   fun release (context:context)=(A.close(#analysis context);C.close(#compiler context))
-  fun context (Worker {contexts,...},{key,lib,flags}) =
+  fun context (Worker {contexts,progress,...},{key,lib,flags}) =
     case List.find (fn context:context => #key context=key) (!contexts) of SOME context =>
       (contexts:=context :: List.filter (fn prior:context => #key prior<>key) (!contexts);context)
     | NONE =>
       let val compiler=C.session {lib=SOME lib,flags=flags}
           val context={key=key,compiler=compiler,analysis=A.create (compiler,{context=key}),bytes=ref 0}:context
-          val ()=case RuneLspProfile.path of NONE=>() | SOME _=>A.observe(#analysis context,SOME RuneLspProfile.observe)
+          val ()=A.observe(#analysis context,SOME(fn event:A.observation=>
+            (RuneLspProfile.observe event;(!progress)(V.Object[("phase",V.Bytes(#phase event)),("file",V.Bytes(#file event)),
+              ("checked",V.Integer(IntInf.fromInt(#checked event))),("reused",V.Integer(IntInf.fromInt(#reused event)))]))))
           val all=context :: !contexts
           val ()=if length all<=4 then () else List.app (fn context:context =>
             (A.close (#analysis context);C.close (#compiler context))) (List.drop (all,4))
@@ -185,6 +190,8 @@ struct
         val selection=W.select (workspace,documents,uri)
         val selected=case selection of W.Ambiguous _ => raise Fail "select a build context before analysis"
           | W.Selected context => SOME context | W.Loose => NONE
+        val ()=notify(worker,[("phase",V.Bytes "project-selected"),("file",V.Bytes(case selected of NONE=>uri | SOME context=> #build context)),
+          ("context",V.Bytes(case selected of NONE=>"loose source" | SOME context=> #target context))])
         val target=case selected of NONE => NONE | SOME selected => List.find (fn target:W.target =>
           #build target= #build selected andalso #name target= #target selected) (#targets configuration)
         val flags=case target of NONE => #flags configuration | SOME target => #flags target

@@ -47,6 +47,9 @@ struct
        (closed:=true;queue:=[];bytes:=0;closeFd input;closeFd output;closeFd errors;
         Subprocess.kill (pid,Posix.Signal.kill) handle OS.SysErr _ => ());
      ignore (reap process) handle OS.SysErr _ => ())
+  fun await (process as Process {pid,status,...}) =
+    (terminate process;case !status of SOME ended=>ended
+     | NONE=>let val ended=Subprocess.wait(SOME pid) in status:=SOME ended;ended end)
   fun enqueue (Process {queue,bytes,closed,...},value) =
     if !closed then raise W.Invalid "analysis worker is closed" else
       let val (count,pieces)=W.chunks value
@@ -75,7 +78,7 @@ struct
           in () end handle OS.SysErr(_,error)=>if again error then () else errorEnded:=true
         fun reason ()=if String.isSubstring "heap limit exceeded" (!errorText) then "analysis worker exhausted its heap budget"
           else if !errorBytes>=65536 then "analysis worker exceeded its stderr budget"
-          else "analysis worker exited"
+          else "analysis worker exited: " ^ Substring.string(Substring.takel(fn c=>c<> #"\n" andalso c<> #"\r")(Substring.full(!errorText)))
         fun write ()=case !queue of [] => () | (text,offset) :: rest =>
           if offset=size text then (queue:=rest;write ()) else
           let val count=Int.min (4096,size text-offset)

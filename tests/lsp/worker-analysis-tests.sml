@@ -17,13 +17,15 @@ struct
                 else (ignore (OS.IO.poll ([],SOME (Time.fromMilliseconds 10)));reap ())
           in reap () end
         val inbox=ref [] : V.value list ref
+        val observations=ref [] : V.value list ref
+        fun progress value=(V.bytes(V.field(value,"op"))="progress") handle V.Invalid _=>false
         fun receive predicate =
           let val until=Time.+ (Time.now (),Time.fromSeconds 20)
               fun find ()=case List.find predicate (!inbox) of SOME value =>
                     (inbox:=List.filter (fn other => other<>value) (!inbox);value)
                 | NONE => if Time.> (Time.now (),until) then raise Fail "analysis worker timeout" else
                     let val events=P.pump (!process,OS.IO.poll (P.descriptors (!process),SOME (Time.fromMilliseconds 20)))
-                        val ()=List.app (fn P.Message value => inbox:= !inbox @ [value]
+                        val ()=List.app (fn P.Message value => if progress value then observations:=value:: !observations else inbox:= !inbox @ [value]
                           | P.Ended => raise Fail "analysis worker exited" | P.Failed message => raise Fail message) events
                     in find () end
           in find () end
@@ -52,6 +54,9 @@ struct
               val ()=P.enqueue (!process,request 1)
               val bad=result (response 1)
               val ()=check ("compiler diagnostics cross worker boundary",not (null (items (report bad))))
+              val ()=check("worker reports the analyzed source and phase",List.exists(fn value=>
+                (V.bytes(V.field(value,"phase"))="unit-start" andalso V.bytes(V.field(value,"file"))=uri
+                 andalso V.integer(V.field(value,"id"))=1)handle V.Invalid _=>false)(!observations))
               val _=D.changeDocument (documents,{uri=uri,version=2,changes=[D.Replace "val answer=42\n"]})
               val ()=ready ()
               val ()=P.enqueue (!process,request 2)

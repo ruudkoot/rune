@@ -50,13 +50,29 @@ struct
               val hover=timed("warm-hover",fn()=>(C.request(client,20,"textDocument/hover",params);C.result(response 20)))
               val ()=if hover=Json.Null then raise Fail "project hover is empty" else ()
               val navigation=object[("textDocument",document),("position",object[("line",Json.int 1),("character",Json.int 15)])]
+              val _=timed("warm-hover-navigation",fn()=>(C.request(client,23,"textDocument/hover",navigation);C.result(response 23)))
               val definition=timed("warm-definition",fn()=>(C.request(client,21,"textDocument/definition",navigation);C.result(response 21)))
-              val ()=if definition=Json.Null orelse definition=Json.Array[] then raise Fail "project definition is empty" else ()
+              fun definitionOk value=case value of Json.Array targets=>List.exists(fn target=>
+                case Json.member("uri",target) of SOME(Json.String uri)=>String.isSuffix "/lib/compiler/util/pass.sml" uri | _=>false)targets | _=>false
+              val ()=if definitionOk definition then () else raise Fail "project definition did not locate Pass.liveBytes"
               val completion=timed("warm-completion",fn()=>(C.request(client,22,"textDocument/completion",params);C.result(response 22)))
-              val ()=if completion=Json.Null then raise Fail "project completion is empty" else ()
-              val cycles=case OS.Process.getEnv "RUNE_LSP_REPLAY_CYCLES" of NONE=>0 | SOME value=>
+              fun completionOk value=case Json.member("items",value) of SOME(Json.Array items)=>
+                List.exists(fn item=>Json.member("label",item)=SOME(Json.String "OS"))items | _=>false
+              val ()=if completionOk completion then () else raise Fail "project completion omitted OS"
+              fun count name=case OS.Process.getEnv name of NONE=>0 | SOME value=>
                 (case Int.fromString value of SOME count=>if count>=0 andalso count<=1000 then count else raise Fail "invalid replay cycle count"
                   | NONE=>raise Fail "invalid replay cycle count")
+              val cycles=count "RUNE_LSP_REPLAY_CYCLES"
+              val queries=count "RUNE_LSP_REPLAY_QUERIES"
+              fun queryCycle n=if n>queries then () else
+                let val id=10000+n*3
+                    val hover=timed("repeat-hover-" ^ Int.toString n,fn()=>(C.request(client,id,"textDocument/hover",params);C.result(response id)))
+                    val target=timed("repeat-definition-" ^ Int.toString n,fn()=>(C.request(client,id+1,"textDocument/definition",navigation);C.result(response(id+1))))
+                    val choices=timed("repeat-completion-" ^ Int.toString n,fn()=>(C.request(client,id+2,"textDocument/completion",params);C.result(response(id+2))))
+                    val ()=if hover<>Json.Null andalso definitionOk target andalso completionOk choices then ()
+                      else raise Fail "repeated query lost its semantic result"
+                in queryCycle(n+1) end
+              val ()=queryCycle 1
               fun cycle n=if n>cycles then () else
                 let val bad=n mod 10=0
                     val text=read source ^ (if bad then "\nval replay_error:int=true\n" else "\n(* replay leaf revision " ^ Int.toString n ^ " *)\n")
@@ -72,6 +88,7 @@ struct
               val ()=C.request(client,9000,"shutdown",Json.Null)
               val _=C.result(response 9000)
               val ()=C.notify(client,"exit",Json.Null)
+              val _=timed("shutdown-exit",fn()=>(C.awaitExit(client,Time.fromSeconds 5);Json.Null))
           in print "PASS lsp/project-replay\n" end
     in (work() before C.close client) handle error=>(C.close client;raise error) end
 end

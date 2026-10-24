@@ -1,4 +1,4 @@
-# The Rune language server
+# The Rune Language Server
 
 `runelsp` is the standalone LSP adapter for Rune. The current implementation
 provides stdio transport, initialization, capability/position-encoding
@@ -56,6 +56,10 @@ workspace generation share a single check. Cancellation
 receives one response and interrupts the child, with process termination as
 a fallback; cancelling one provider preserves a check with other waiters.
 Worker restart drops references to its old snapshots.
+Queued document checks and queries precede automatic workspace diagnostic
+pulls, so a pull cannot evict a just-published view before its waiting
+providers query it. Cancellation replies immediately and allows the worker
+250 milliseconds to acknowledge before process termination.
 
 The worker has a 512 MiB VM heap cap, a 1.5 GiB process address-space cap
 (including both copying spaces and native code), and a 30-second job deadline.
@@ -70,7 +74,26 @@ stream terminates the worker, and heap exhaustion is classified immediately.
 Infrastructure failure completes all waiting providers once. Further checks
 of that failed document revision and workspace generation return the same
 failure until an edit, dependency/configuration change, close/reopen or
-`Rune: Restart language server` permits another attempt.
+`Rune: Restart Language Server` permits another attempt.
+
+Infrastructure errors identify the worker PID, job ID and operation, request
+method, document or snapshot, elapsed time and configured limit. Analysis
+jobs also report their selected build context and last compiler phase/file,
+with checked/reused unit counts. The progress age is measured at failure
+time. For example:
+
+```text
+runelsp: analysis worker exceeded its deadline
+  worker PID 12345, elapsed 30.003 s, limit 30.000 s, job 7 (check)
+  document: file:///home/me/rune/src/main/rune-main.sml
+  executable: /private-extension/server/bin/runevm
+  context: rune (file:///home/me/rune/rune.build)
+  last reported phase: unit-elaborated at /home/me/rune/lib/compiler/elab/elaborate.sml (checked 187, reused 0; 1.200 s before failure)
+```
+
+Progress travels over the private worker pipe and does not extend the
+deadline. Error metadata is bounded; control characters and invalid native
+filename bytes are escaped. Captured source contents are excluded.
 
 The server supports push diagnostics and document/workspace pull reports,
 unchanged result IDs, refresh, work progress and workspace partial reports.

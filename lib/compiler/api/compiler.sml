@@ -20,6 +20,7 @@ struct
          | UnitFile.Bad message => invalid message
          | UnitMid.Bad message => invalid message
          | UnitBasis.Missing identity => invalid ("missing unit dependency: " ^ identity)
+         | BasisManifest.Usage message => invalid message
          | Fail message => invalid message
   fun session {lib,flags} =
     let

@@ -174,6 +174,27 @@ struct
         val ()=check ("library source captured",null (A.diagnostics result) andalso not (null (A.dependencies result)))
         val ()=check ("libraries replay statically",same (result,again) andalso #checked (A.work again)=0)
     in A.close context;C.close parent end
+  fun missingLibrary () =
+    let val parent=C.session {lib=SOME "/no/rune-analysis-library",flags=[]}
+        val context=A.create(parent,{context="missing-library"})
+        val diagnostics=(ignore(analyze(context,[input("missing.sml","val answer=42\n","1")]));[])
+          handle C.Failed diagnostics=>diagnostics
+        val ()=(A.close context;C.close parent)
+    in check("missing library manifests become public compiler diagnostics",
+      List.exists(fn diagnostic:C.diagnostic=>String.isSubstring "manifest" (#message diagnostic))diagnostics) end
+  fun changedNames () =
+    let val parent=C.session {lib=SOME "lib",flags=[]}
+        val context=A.create(parent,{context="changed-names"})
+        val fresh=A.create(parent,{context="changed-names"})
+        val list=input("mentioned.sml","val answer=List.length [1]\n","same-revision")
+        val vector=input("mentioned.sml","val answer=Vector.length(Vector.fromList [1,2])\n","same-revision")
+        val _=analyze(context,[list])
+        val changed=analyze(context,[vector]) val oracle=analyze(fresh,[vector])
+        val repeated=analyze(context,[vector])
+        val ()=check("changed names select the fresh library plan even at the same revision",
+          null(A.diagnostics changed) andalso same(changed,oracle) andalso same(changed,repeated)
+          andalso #checked(A.work repeated)=0)
+    in A.close context;A.close fresh;C.close parent end
   fun frozenLibrary () =
     let val dir=OS.FileSys.tmpName ()
         val ()=(OS.FileSys.remove dir handle _ => ();OS.FileSys.mkDir dir;OS.FileSys.mkDir (dir ^ "/basis"))
@@ -338,6 +359,8 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "lexical-bindings" CompilerAnalysisTests.bindings,
      Test.it "generative-identities" CompilerAnalysisTests.generative,
      Test.it "static-library-replay" CompilerAnalysisTests.libraries,
+     Test.it "missing-library-diagnostic" CompilerAnalysisTests.missingLibrary,
+     Test.it "changed-prelude-names" CompilerAnalysisTests.changedNames,
      Test.it "frozen-library-query" CompilerAnalysisTests.frozenLibrary,
      Test.it "project-scopes" CompilerAnalysisTests.projects,
      Test.it "batch-compiler-oracle" CompilerAnalysisTests.batchOracle,

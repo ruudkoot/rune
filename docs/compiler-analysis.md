@@ -48,6 +48,9 @@ serialized bases. An unchanged prefix reuses those immutable lists; changed
 suffixes are projected again with bounded stack use. The projection cache
 retains only the current checked units and is released on close. Type-name
 qualification is memoized only within one unit's fixed outgoing environment.
+Prelude name sets are cached by exact source text, mode and path; unchanged
+inputs merge those immutable sets without lexing their text again. Both caches
+are bounded by the current input graph and released on close.
 
 `observe (context, SOME callback)` enables synchronous phase observations
 between checks. Events identify phases, source units and work counts; callers

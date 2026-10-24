@@ -43,18 +43,52 @@ struct
         val _=J.submit (jobs,{key=NONE,priority=0,data="missing",payload=payload ()})
         val events=collect (jobs,1)
         val ()=J.close jobs
-    in check ("startup failure completes without retrying forever",case events of [J.Failed ("missing",_)] => true | _ => false) end
+        val message=case events of [J.Failed("missing",message)]=>message | _=>"unexpected startup events"
+    in check ("startup failure completes with the launch path and job: " ^ message,
+      String.isSubstring "/no/runelsp/worker" message andalso String.isSubstring "job 0" message) end
   fun typedRejection ()=fixture (fn jobs =>
     let val _=J.submit (jobs,{key=NONE,priority=0,data="expired",payload=V.Object [("op",V.Bytes "query"),
           ("snapshot",V.Bytes "not-retained"),("method",V.Bytes "textDocument/hover"),("params",V.Object [])]})
         val events=collect (jobs,1)
     in check ("worker rejection retains its code separately from infrastructure failure",case events of
       [J.Rejected ("expired",error)] => #code error=LspProtocol.contentModified | _ => false) end)
+  fun informativeTimeout ()=fixture(fn jobs=>
+    let val J.Jobs{command,args,worker,active,queue,phase,started,events,...}=jobs
+        val process=RuneLspWorkerProcess.start{command=command,args=args,limits=Subprocess.unlimited}
+        val RuneLspWorkerProcess.Process{pid,...}=process
+        val uri="file:///project%20with%20spaces/%CE%BB/rune-main.sml"
+        val id=J.submit(jobs,{key=NONE,priority=0,data="deadline",payload=V.Object[("op",V.Bytes "query"),
+          ("uri",V.Bytes uri),("snapshot",V.Bytes "snapshot-55"),("method",V.Bytes "textDocument/completion"),
+          ("state",V.Bytes "captured-source-sentinel")]})
+        val ()=(worker:=SOME process;active:=SOME(hd(!queue));queue:=[];
+          started:=SOME(Time.-(Time.now(),Time.fromSeconds 11));phase:=J.Working(Time.-(Time.now(),Time.fromSeconds 1)))
+        val ()=J.message(jobs,V.Object[("op",V.Bytes "progress"),("id",V.Integer id),
+          ("phase",V.Bytes "project-selected"),("file",V.Bytes "file:///project/rune.build"),("context",V.Bytes "rune")])
+        val ()=J.message(jobs,V.Object[("op",V.Bytes "progress"),("id",V.Integer id),
+          ("phase",V.Bytes "unit-elaborated"),("file",V.Bytes "/project with spaces \206\187/elaborate.sml"),
+          ("checked",V.Integer 187),("reused",V.Integer 2)])
+        val ()=check("progress is metadata, not a completed job",null(!events))
+        val ()=J.tick jobs
+        val message=case List.find(fn J.Failed("deadline",_)=>true | _=>false)(!events) of
+          SOME(J.Failed(_,message))=>message | _=>raise Fail "deadline did not fail despite progress"
+    in check("deadline identifies worker, job, request, source, project and last phase",
+      List.all(fn text=>String.isSubstring text message)["analysis worker exceeded its deadline",
+        "worker PID " ^ Int.toString pid,"job " ^ IntInf.toString id,"textDocument/completion",uri,
+        "snapshot-55","context: rune","rune.build","unit-elaborated","elaborate.sml","checked 187","reused 2","limit 10.000 s"]);
+      check("failure metadata excludes captured source/state",not(String.isSubstring "captured-source-sentinel" message))
+    end)
+  fun metadataBounds ()=
+    let val path=String.implode(List.tabulate(10000,fn _=> #"x")) ^ "/tail\n\255\206\187.sml"
+        val shown=J.preview path
+    in check("metadata stays bounded and escapes controls and invalid native bytes",size shown<1100 andalso
+      String.isSubstring "tail\\x0A\\xFF" shown andalso not(String.isSubstring "\n" shown)) end
 end
 structure RuneLspJobsTestMain=Main (struct
   val name="lsp-jobs"
   val tests=Test.describe "lsp-jobs" [Test.it "priority-and-coalescing" RuneLspJobsTests.priorities,
     Test.it "queued-cancellation" RuneLspJobsTests.queuedCancellation,Test.it "failed-startup" RuneLspJobsTests.failedStartup,
-    Test.it "typed-rejection" RuneLspJobsTests.typedRejection]
+    Test.it "typed-rejection" RuneLspJobsTests.typedRejection,
+    Test.it "informative-timeout" RuneLspJobsTests.informativeTimeout,
+    Test.it "bounded-error-metadata" RuneLspJobsTests.metadataBounds]
 end)
 val ()=RuneLspJobsTestMain.main ()

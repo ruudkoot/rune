@@ -166,7 +166,8 @@ struct
         | P.Message (R.Request requestData) =>
             (RuneLspProfile.sample ("request:" ^ #method requestData) "" 0 0 0;
              log ("request: " ^ #method requestData); request requestData)
-        | P.Message (R.Notification data) => notification data
+        | P.Message (R.Notification data) =>
+            (RuneLspProfile.sample ("notification:" ^ #method data) "" 0 0 0;notification data)
         | P.Message response => if (case !service of SOME service => RuneLspService.response (service,response) | NONE => false)
                                 then () else if (case !controller of SOME controller => RuneLspController.response (controller,response) | NONE => false)
                                 then Option.app RuneLspService.changed (!service) else ignore (LspRequests.resolve (pending, response))

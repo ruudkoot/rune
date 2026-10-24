@@ -16,11 +16,11 @@ struct
     cache:entry list,syntaxes:(string*CompilerSyntax.t) list,plan:string,prelude:CompilerPrelude.plan}
   type observation={phase:string,file:string,checked:int,reused:int,items:int}
   datatype session=Session of {stored:entry list ref,plan:string ref,config:CompilerSession.config,closed:bool ref,
-    observer:(observation->unit) option ref}
+    observer:(observation->unit) option ref,names:(Source.mode*string*unit StringMap.map) StringMap.map ref}
   exception Cancelled
-  fun new config=Session {stored=ref [],plan=ref "",config=config,closed=ref false,observer=ref NONE}
-  fun close (Session {closed,stored,...})=(closed:=true;stored:=[])
-  fun checkWith (Session {stored,plan=savedPlan,config,closed,observer},sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
+  fun new config=Session {stored=ref [],plan=ref "",config=config,closed=ref false,observer=ref NONE,names=ref StringMap.empty}
+  fun close (Session {closed,stored,names,...})=(closed:=true;stored:=[];names:=StringMap.empty)
+  fun checkWith (Session {stored,plan=savedPlan,config,closed,observer,names=savedNames},sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
                  frozen:source list,frozenPlan:CompilerPrelude.plan option) : snapshot = CompilerSession.owned (fn () =>
     let val {lib,libraries,target,allowPrim}=config
         val ()=CompilerSettings.target:=target
@@ -198,10 +198,17 @@ struct
               val ()=CompilerBuildContext.note (scopes,loaded)
           in observe "unit-frozen" file (length(#uses entry));poll ();chain:=key;staged:=entry :: !staged;types:= #types entry :: !types;
              facts:= #facts entry :: !facts;uses:=List.map (fn event => (name,event)) (#uses entry) :: !uses end
+        val sourceNames=ref StringMap.empty
         fun names (source:source,mentioned)=
-          let val ()=observe "names-start" (#file source) (size(#text source))
-              val (lexemes,_,_)=CompilerSyntax.lexical {file= #file source,text= #text source,mode= #mode source,previous=NONE,change=NONE}
-          in BasisManifest.namesOf (CompilerSyntax.tokens lexemes (#file source),mentioned) end
+          let val ()=poll()
+              val ()=observe "names-start" (#file source) (size(#text source))
+              fun scan ()=let val (lexemes,_,_)=CompilerSyntax.lexical
+                    {file= #file source,text= #text source,mode= #mode source,previous=NONE,change=NONE}
+                in BasisManifest.namesOf(CompilerSyntax.tokens lexemes (#file source),StringMap.empty) end
+              val found=case StringMap.find(!savedNames,#file source) of SOME(mode,text,names)=>
+                  if mode= #mode source andalso text= #text source then names else scan() | NONE=>scan()
+              val ()=sourceNames:=StringMap.insert(!sourceNames,#file source,(#mode source,#text source,found))
+          in StringMap.foldli(fn (name,(),all)=>StringMap.insert(all,name,()))mentioned found end
         val plan=case frozenPlan of SOME plan => plan | NONE =>
           CompilerPrelude.select {lib=lib,libraries=libraries @ extraLibraries,mentioned=List.foldl names StringMap.empty sources}
         val librarySources=List.map (fn entry:BasisManifest.entry =>
@@ -254,7 +261,8 @@ struct
           SOME (CompilerSession.sourceError ("error",span,message))
         val ()=poll ()
         val ()=observe "analysis-frozen" "" (List.foldl(fn(xs,n)=>n+length xs)0(!uses))
-        val ()=(stored:=List.rev (!staged);savedPlan:=planKey)
+        val ()=(stored:=List.rev (!staged);savedPlan:=planKey;
+          case frozenPlan of NONE=>savedNames:= !sourceNames | SOME _=>())
         fun candidates ()=case (!scopeEnv,query) of (SOME (_,env,sigs,funs),SOME query) =>
           let val selected=case Env.findStr' (env,#path query) of SOME selected => SOME selected | NONE => NONE
               fun value (name,status)=

@@ -73,9 +73,21 @@ struct
               val basis=OS.Path.concat(localLib,"basis")
               val manifest=OS.Path.concat(basis,"MANIFEST")
               val original=read manifest
+              val checkout=OS.Process.getEnv "RUNE_VSCODE_CHECKOUT"
+              fun regenerate files=case checkout of NONE=>()
+                | SOME root=>
+                    let val build=OS.Path.concat(basis,"library.build")
+                        val ()=write(build,read(OS.Path.concat(root,"lib/basis/library.build")) ^
+                          "\nannotate \"demand\" in\n" ^ String.concat(List.map(fn file=>"  " ^ file ^ "\n")files) ^ "end\n")
+                        val program=OS.Path.concat(root,"bin/rune.rbc")
+                        val pid=Subprocess.spawn{program=vm,args=[vm,program,"--lib",OS.Path.concat(root,"lib"),"--basis-index",basis],
+                          env=NONE,search=false,dir=NONE,stdin=NONE,stdout=NONE,stderr=NONE,group=true,limits=Subprocess.unlimited}
+                    in case #status(Subprocess.wait(SOME pid)) of Posix.Process.W_EXITED=>()
+                      | _=>raise Fail "checkout manifest regeneration failed" end
               val probe=OS.Path.concat(basis,"vscode-probe.sml")
               val ()=write(probe,"structure VSCodeProbe=struct val value=1 end\n")
-              val ()=write(manifest,original ^ "vscode-probe.sml | demand | yes | VSCodeProbe | \n")
+              val ()=case checkout of NONE=>write(manifest,original ^ "vscode-probe.sml | demand | yes | VSCodeProbe | \n")
+                | SOME _=>regenerate["vscode-probe.sml"]
               val ()=C.notify(client,"workspace/didChangeConfiguration",object[("settings",object
                 [("libraryRoot",Json.String(uri localLib))])])
               val ()=text "val answer=VSCodeProbe.value\n"
@@ -86,11 +98,13 @@ struct
               val ()=check("saved-basis-change",C.field(C.field(hover 4,"contents"),"value")=Json.String "bool")
               val extra=OS.Path.concat(basis,"vscode-extra.sml")
               val ()=write(extra,"structure VSCodeExtra=struct val value=\"new\" end\n")
-              val ()=write(manifest,read manifest ^ "vscode-extra.sml | demand | yes | VSCodeExtra | \n")
+              val ()=case checkout of NONE=>write(manifest,read manifest ^ "vscode-extra.sml | demand | yes | VSCodeExtra | \n")
+                | SOME _=>regenerate["vscode-probe.sml","vscode-extra.sml"]
               val ()=watched manifest
               val ()=text "val answer=VSCodeExtra.value\n"
               val ()=check("changed-manifest",diagnostics()=Json.Array[] andalso
                 C.field(C.field(hover 4,"contents"),"value")=Json.String "string")
+              val ()=case checkout of NONE=>() | SOME _=>check("regenerated-checkout-manifest",String.isSubstring "VSCodeExtra" (read manifest))
               val ()=check("shutdown",request "shutdown" Json.Null=Json.Null)
               val ()=C.notify(client,"exit",Json.Null)
           in () end

@@ -40,6 +40,14 @@ explicit `int`/`bool` mismatch; the next revision repairs it. The replay also
 checks project navigation and completion. These are semantic/retention
 acceptance runs; record competing compiler or host-suite load before using
 their latencies as performance evidence.
+`RUNE_LSP_REPLAY_QUERIES=40` additionally repeats warm hover, navigation to
+`Pass.liveBytes` and completion of `OS`, retaining per-request samples for
+percentile calculations. Use it without forced collection for latency gates.
+
+For a separate retention pass, also set `RUNE_LSP_PROFILE_GC=1`. The worker
+then collects after each command returns and emits `job-retained`; this
+includes only retained worker state after temporary command data is dead.
+Forced-collection runs must not supply headline query latency measurements.
 
 ## Document and workspace foundations (M3)
 

@@ -176,7 +176,8 @@ struct
   fun queryAt (snapshot:snapshot,{ordinal,offset,path},accept:E.snapshot->bool) =
     if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
     let val input=List.nth (#inputs snapshot,ordinal)
-        val engine=E.Session {stored=ref (#cache snapshot),plan=ref (#plan snapshot),config= #config snapshot,closed=ref false,observer=ref NONE}
+        val engine=E.Session {stored=ref (#cache snapshot),plan=ref (#plan snapshot),config= #config snapshot,closed=ref false,
+          observer=ref NONE,names=ref StringMap.empty}
         fun source (input:input):E.source={file= #file input,text= #text input,mode=valOf (Source.modeNamed (#mode input))}
         fun query (sources,at)= E.checkWith
           (engine,sources,#steps snapshot,#libraries snapshot,fn () => false,

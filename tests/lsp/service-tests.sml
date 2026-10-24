@@ -93,6 +93,17 @@ struct
           andalso List.all failed(!output) andalso null(!queue))
         val ()=change() val ()=send 4
     in check("a new revision permits recovery",length(!queue)=1) end)
+  fun workspacePriority ()=fixture(fn {service,...}=>
+    let val S.Service{jobs=J.Jobs{queue,...},...}=service
+        val _=S.request(service,{id=R.Number 1,method="workspace/diagnostic",params=SOME(Json.Object[])})
+        val _=S.request(service,{id=R.Number 2,method="textDocument/hover",params=SOME(Json.Object
+          [("textDocument",Json.Object[("uri",Json.String "untitled:race")])])})
+        val task= #data(hd(!queue))
+        val ()=check("document checks precede queued workspace diagnostic pulls",case task of S.Check _=>true | _=>false)
+        val ()=queue:=tl(!queue)
+        val ()=S.handleEvent(service,J.Done(task,V.Object[("snapshot",V.Bytes "shared"),("reports",V.Array [])]))
+    in check("queries on a new snapshot precede workspace pulls which may evict it",case !queue of
+      [first,second]=> (case (#data first,#data second) of (S.Query _,S.Workspace _)=>true | _=>false) | _=>false) end)
 end
 structure RuneLspServiceTestMain=Main (struct
   val name="lsp-service"
@@ -101,6 +112,7 @@ structure RuneLspServiceTestMain=Main (struct
     Test.it "workspace-generation-completions" RuneLspServiceTests.generation,
     Test.it "invalid-hint-resolution" RuneLspServiceTests.invalidResolution,
     Test.it "shared-check-cancellation" RuneLspServiceTests.sharedChecks,
-    Test.it "failed-check-backoff" RuneLspServiceTests.failedChecks]
+    Test.it "failed-check-backoff" RuneLspServiceTests.failedChecks,
+    Test.it "foreground-before-workspace-pull" RuneLspServiceTests.workspacePriority]
 end)
 val ()=RuneLspServiceTestMain.main ()

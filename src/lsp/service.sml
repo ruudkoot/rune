@@ -25,7 +25,7 @@ struct
     discovered:string*V.value->unit}
   fun new {workspace,documents,caps,command,args,send,log,discovered} =
     Service {workspace=workspace,documents=documents,caps=caps,jobs=J.new {command=command,args=args,
-      timeout=Time.fromSeconds 30,cancelGrace=Time.fromMilliseconds 50,maxPending=128},results=ref [],requests=ref [],
+      timeout=Time.fromSeconds 30,cancelGrace=Time.fromMilliseconds 250,maxPending=128},results=ref [],requests=ref [],
       flights=ref [],failures=ref [],refresh=Q.new {prefix="runelsp-diagnostics-",maxPending=1},refreshPending=ref false,
       send=send,log=log,discovered=discovered}
   fun current (Service {workspace,documents,...},{uri,revision,generation}) =
@@ -91,7 +91,8 @@ struct
         | SOME request => failure (service,request,P.requestFailed,"analysis queue is full",NONE))
   fun query (service as Service {jobs,...},request:request,snapshot) =
     let val id=J.submit (jobs,{key=NONE,priority=0,data=Query request,payload=V.Object
-          [("op",V.Bytes "query"),("snapshot",V.Bytes snapshot),("method",V.Bytes (#method request)),("params",V.json (#params request))]})
+          [("op",V.Bytes "query"),("snapshot",V.Bytes snapshot),("uri",V.Bytes(#uri request)),
+           ("method",V.Bytes (#method request)),("params",V.json (#params request))]})
     in #job request:=SOME id end
     handle J.Full => failure (service,request,P.requestFailed,"analysis queue is full",NONE)
   fun accepts method=List.exists (fn candidate => candidate=method) ["textDocument/diagnostic","workspace/diagnostic","textDocument/hover",
@@ -134,7 +135,8 @@ struct
         val prior=List.find (fn result:result => #uri result=uri andalso #revision result=revision
           andalso #generation result=W.generation workspace) (!results)
     in ((if workspaceRequest then
-          #job request:=SOME (J.submit (jobs,{key=NONE,priority=0,data=Workspace request,payload=V.Object
+          #job request:=SOME (J.submit (jobs,{key=NONE,priority=if method="workspace/diagnostic" then 25 else 0,
+            data=Workspace request,payload=V.Object
             [("op",V.Bytes "workspace"),("state",capture service),("params",V.json params),
              ("method",V.Bytes method),
              ("encoding",V.Bytes (P.encodingName (P.positionEncoding caps))),("capabilities",V.json (P.rawCapabilities caps))]}))

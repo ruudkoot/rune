@@ -55,6 +55,14 @@ struct
   fun response (client,id)=receive (client,fn value => Json.member ("id",value)=SOME (Json.int id))
   fun result response=case Json.member ("result",response) of SOME value => value
     | NONE => raise Fail (Json.encode (field (response,"error")))
+  fun awaitExit (Client {pid,input,output,closed,...},timeout)=
+    let val until=Time.+(Time.now(),timeout)
+        fun loop()=case Subprocess.poll(SOME pid) of SOME ended=>
+            (closed:=true;Posix.IO.close input;Posix.IO.close output;
+             case #status ended of Posix.Process.W_EXITED=>() | _=>raise Fail "LSP exited unsuccessfully")
+          | NONE=>if Time.>(Time.now(),until) then raise Fail "LSP shutdown timeout"
+              else (ignore(OS.IO.poll([],SOME(Time.fromMilliseconds 10)));loop())
+    in loop() end
   fun close (Client {pid,input,output,closed,...}) = if !closed then () else
     (closed:=true;(Posix.IO.close input handle _ => ());(Posix.IO.close output handle _ => ());
      (Subprocess.kill (pid,Posix.Signal.kill) handle _ => ());ignore (Subprocess.wait (SOME pid)) handle _ => ())
