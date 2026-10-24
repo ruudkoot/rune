@@ -214,6 +214,28 @@ reports and zero exit. Receipts are `watched-cache-{controller,protocol}.log`,
 `watched-cache-real-project.log` and `workspace-heap-watched-cpu-candidate`
 under `build/lsp-debug/acceptance`; no full suite or 13-context sweep is run.
 
+The outline follow-up replaces flat occurrence projection with named syntax
+scopes joined by compiler binding identity. The four declarations of
+`mkRelative`'s `h` share one identity; its separate clause-local `p` variables
+have distinct identities. Function/module/declaration ranges supply nesting,
+with exact name selection ranges and function kinds from syntax and frozen
+type facts. Hierarchical clients receive `DocumentSymbol` children; legacy
+document and workspace clients retain flat locations. Workspace resolution
+continues validating its original symbol token and captured generation.
+
+Three focused protocol cases pass: the new scope/binding outline fixture,
+existing navigation/symbols, and workspace symbol resolution. The fixture
+checks merged clauses, distinct parameters, shadowed function/parameter names,
+function-valued `val` declarations, datatype children and range containment.
+The real `lib/basis/ospath.sml` replay passes in 5.186 seconds including cold
+Basis analysis: `RunePath` contains function `mkRelative`, its `path` parameter,
+one function `h` covering four clauses, and two distinct `p` children. The
+initial harness incorrectly expected module name `OS_Path`; the source's
+actual name is `RunePath`, and the corrected replay exits zero. Receipts are
+`outline-protocol.log`, `outline-real-ospath.log` and `outline-ospath.json`
+under `build/lsp-debug/acceptance`. Full suite, editor host and native Windows
+LSP checks remain deferred under the debugging rule.
+
 The public compiler adapter now reports missing-library manifest errors as
 `Failed` diagnostics. Discovery can then report an unavailable target instead
 of aborting with the exception name `Usage`.

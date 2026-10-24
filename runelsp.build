@@ -10,6 +10,7 @@ files
   src/lsp/worker-wire.sml
   src/lsp/worker-model.sml
   src/lsp/structure.sml
+  src/lsp/outline.sml
   src/lsp/tokens.sml
   src/lsp/hints.sml
   src/lsp/controller.sml

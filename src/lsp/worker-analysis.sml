@@ -175,17 +175,22 @@ struct
                 Json.Object [("range",range (source,#encoding view,start,stop)),("kind",Json.int kind)]::
                   emit (rest,SOME (start,stop))
         in Json.Array (emit (sort ranges,NONE)) end
-  fun symbols (view:view,source:source) =
+  fun symbolNodes (view:view,source:source) =
     let val definitions=List.filter (fn occurrence:A.occurrence => #file occurrence= #file source andalso #isDefinition occurrence
           andalso not (#derived occurrence) andalso owned (view,occurrence)) (A.occurrences (#snapshot view))
-        fun symbol (occurrence:A.occurrence)=case selections (source,occurrence) of [] => NONE | (start,stop)::_ =>
-          let val functions=List.exists (fn fact:A.fact => #unit fact= #unit occurrence andalso #file fact= #file source
-                andalso #start fact<=start andalso start< #stop fact andalso not (null (#arguments fact))) (A.facts (#snapshot view))
-              val kind=case #kind occurrence of "structure" => 2 | "signature" => 11 | "functor" => 12 | "type" => 23
-                | _ => if functions then 12 else 13
-          in SOME (Json.Object [("name",Json.String (#name occurrence)),("kind",Json.int kind),
-            ("location",Json.Object [("uri",Json.String (#uri source)),("range",range (source,#encoding view,start,stop))])]) end
-    in unique (List.mapPartial symbol definitions) end
+        fun entry (occurrence:A.occurrence)=case selections(source,occurrence) of []=>NONE | (start,stop)::_=>
+          SOME{identity=getOpt(#binding occurrence,"span:" ^ Int.toString start),name= #name occurrence,
+            category= #kind occurrence,start=start,stop=stop}:RuneLspOutline.entry option
+        val facts=List.filter(fn fact:A.fact=> #file fact= #file source andalso ownedUnit(view,#unit fact))(A.facts(#snapshot view))
+    in RuneLspOutline.prepare{entries=List.mapPartial entry definitions,events=RuneLspStructure.events(#syntax source),
+      pieces=tokens source,facts=facts} end
+  fun symbols (view:view,source:source)=RuneLspOutline.flat(symbolNodes(view,source),#uri source,
+    fn(start,stop)=>range(source,#encoding view,start,stop))
+  fun documentSymbols (view:view,source:source)=
+    let val nodes=symbolNodes(view,source)
+        val encode=fn(start,stop)=>range(source,#encoding view,start,stop)
+    in Json.Array(if RuneLspStructure.member(#capabilities view,["textDocument","documentSymbol","hierarchicalDocumentSymbolSupport"])=SOME(Json.Bool true)
+      then RuneLspOutline.nested(nodes,encode) else RuneLspOutline.flat(nodes,#uri source,encode)) end
   fun capability (value,[])=SOME value
     | capability (value,name::rest)=Option.mapPartial (fn value => capability (value,rest)) (Json.member (name,value))
   fun diagnostics (view:view) =
@@ -642,7 +647,7 @@ struct
                 Option.mapPartial (fn target => location (view,target)) (#definition occurrence)) implementations @
                 List.mapPartial (fn definition:A.typeDefinition => Option.mapPartial (fn target => location (view,target))
                   (#implementation definition)) typeImplementations)) end
-       | "textDocument/documentSymbol" => Json.Array (symbols (view,source))
+       | "textDocument/documentSymbol" => documentSymbols (view,source)
        | "textDocument/hover" =>
          let val point=case LspProtocol.positionFromJson (J.required (params,"position")) of
                SOME point => point | NONE => raise J.Invalid "invalid hover position"

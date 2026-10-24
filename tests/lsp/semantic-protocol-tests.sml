@@ -188,6 +188,60 @@ struct
         fun write(path,text)=let val out=TextIO.openOut path in TextIO.output(out,text);TextIO.closeOut out end
         fun work()=action{root=root,uri=uri,write=write}
     in (work() before remove root) handle error=>(remove root handle _=>();raise error) end
+  fun scopedOutline () =
+    let val text="structure Demo = struct\n"
+          ^ "  fun mkRelative {path, relativeTo} =\n    let\n"
+          ^ "      fun h ([], []) = [0]\n        | h (p, []) = p\n        | h ([], a) = a\n"
+          ^ "        | h (p as x :: xs, a as y :: ys) = h (xs, ys)\n"
+          ^ "    in h (path, relativeTo) end\n"
+          ^ "  fun shadow h = let fun h h = h in h 1 end\n"
+          ^ "  val maker = fn z => z\n  datatype item = Item of int | Empty\nend\n"
+        val uri="untitled:scoped-outline"
+        fun array(Json.Array values)=values | array _=raise Fail "expected symbol array"
+        fun children item=array(C.field(item,"children"))
+        fun named(name,items)=List.filter(fn item=>C.field(item,"name")=Json.String name)items
+        fun only(name,items)=case named(name,items) of [item]=>item | _=>raise Fail("expected one outline node " ^ name ^ ": " ^ Json.encode(Json.Array items))
+        fun kind(item,n)=C.field(item,"kind")=Json.int n
+        fun inside (outer,inner)=
+          case (LspProtocol.rangeFromJson outer,LspProtocol.rangeFromJson inner) of (SOME a,SOME b)=>
+            let fun leq({line=a,character=b}:LspProtocol.position,{line=c,character=d}:LspProtocol.position)=a<c orelse a=c andalso b<=d
+            in leq(#start a,#start b) andalso leq(#stop b,#stop a) end | _=>false
+        fun valid item=inside(C.field(item,"range"),C.field(item,"selectionRange")) andalso
+          List.all(fn child=>inside(C.field(item,"range"),C.field(child,"range")) andalso valid child)(children item)
+        val hierarchical=object[("textDocument",object[("documentSymbol",object[("hierarchicalDocumentSymbolSupport",Json.Bool true)])])]
+        val ()=fixtureWith hierarchical (fn client=>
+          let val ()=openDocument(client,uri,text)
+              val ()=C.request(client,820,"textDocument/diagnostic",object[("textDocument",document uri)])
+              val ()=check("outline fixture typechecks",C.field(C.result(C.response(client,820)),"items")=Json.Array[])
+              val ()=C.request(client,821,"textDocument/documentSymbol",object[("textDocument",document uri)])
+              val nodes=array(C.result(C.response(client,821)))
+              val demo=only("Demo",nodes)
+              val mk=only("mkRelative",children demo)
+              val h=only("h",children mk)
+              val ps=named("p",children h)
+              val shadow=only("shadow",children demo)
+              val hs=named("h",children shadow)
+              val localH=valOf(List.find(fn item=>kind(item,12))hs)
+              val maker=only("maker",children demo)
+              val datatypeNode=only("item",children demo)
+          in check("function clauses form one nested function",kind(mk,12) andalso kind(h,12));
+             check("function parameters belong to their function",kind(only("path",children mk),13));
+             check("clause-local p variables stay distinct under h",length ps=2 andalso
+               C.field(hd ps,"selectionRange")<>C.field(List.nth(ps,1),"selectionRange"));
+             check("shadowed h bindings do not merge",length hs=2 andalso kind(only("h",children localH),13));
+             check("function-valued val bindings own their parameters",kind(maker,12) andalso kind(only("z",children maker),13));
+             check("datatype constructors belong to their datatype",kind(only("Item",children datatypeNode),22));
+             check("symbol and selection ranges are nested",List.all valid nodes)
+          end)
+    in fixture(fn client=>
+      let val ()=openDocument(client,uri,text)
+          val ()=C.request(client,822,"textDocument/documentSymbol",object[("textDocument",document uri)])
+          val nodes=array(C.result(C.response(client,822)))
+          val hs=named("h",nodes)
+      in check("legacy clients retain flat locations with merged function clauses",length hs=4 andalso
+        List.all(fn item=>isSome(Json.member("location",item)))nodes andalso
+        length(List.filter(fn item=>kind(item,12))hs)=2) end)
+    end
   fun minimalLibrary (root,write)=
     let val lib=OS.Path.concat(root,"lib") val basis=OS.Path.concat(lib,"basis")
         val ()=(OS.FileSys.mkDir lib;OS.FileSys.mkDir basis)
@@ -1274,6 +1328,7 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "idle-workspace-polls" RuneLspSemanticProtocolTests.idleWorkspacePolls,
     Test.it "eviction-refresh-loop" RuneLspSemanticProtocolTests.evictionRefreshLoop,
     Test.it "watched-workspace-cache" RuneLspSemanticProtocolTests.watchedWorkspaceCache,
+    Test.it "scoped-document-outline" RuneLspSemanticProtocolTests.scopedOutline,
     Test.it "query-before-eviction" RuneLspSemanticProtocolTests.queryBeforeEviction,
     Test.it "context-selection-recovery" RuneLspSemanticProtocolTests.contextSelectionRecovery,
     Test.it "basis-development-context" RuneLspSemanticProtocolTests.basisDevelopment,

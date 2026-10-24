@@ -170,7 +170,14 @@ closed sources and disk-only changes.
 
 Hover and declaration/definition/type-definition/implementation navigation
 use compiler type and binding records. Document and workspace symbols use
-validated source tokens; workspace symbol resolution rejects stale source
+validated source tokens and compiler binding identities. Hierarchical document
+symbols nest named lexical scopes, classify declared functions from captured
+syntax and merge clauses belonging to one function binding. Parameters and
+locals with distinct identities remain separate, including identically named
+parameters in different clauses. Function, module and declaration ranges own
+their nested symbols; selection ranges identify the declaration's name.
+Clients without hierarchy support retain flat symbol locations. Workspace
+symbol resolution rejects stale source
 and context data. Source is checked statically and never executed.
 
 Completion returns compiler-visible lexical names, qualified members and
