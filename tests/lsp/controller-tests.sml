@@ -75,6 +75,40 @@ struct
         val unregister=hd (requests sent "client/unregisterCapability")
         val ()=check ("watch removal balanced",answer (controller,unregister,R.Result Json.Null))
     in C.clear controller end)
+  fun navigationGeneration ()=fixture(fn (dir,uri)=>
+    let val documents=D.new(LspProtocol.Utf16,{maxDocuments=1,maxDocumentBytes=1000,maxTotalBytes=1000,
+          maxDocumentLines=100,maxTotalLines=100})
+        val sent=ref []:R.message list ref
+        val capabilities=caps(object[("workspace",object[("configuration",Json.Bool true),
+          ("semanticTokens",object[("refreshSupport",Json.Bool true)])])])
+        val controller=create{platform=LspUri.Posix,lib="lib",documents=documents,caps=capabilities,
+          send=fn message=>sent:=message:: !sent,log=fn _=>(),error=fn text=>raise Fail text,initialize=object[]}
+        val ()=C.presentations(controller,[("workspace/semanticTokens/refresh",["workspace","semanticTokens","refreshSupport"])])
+        val workspace=C.workspace controller
+        val ()=W.configure(workspace,object[])
+        val generation=W.generation workspace
+        val clean=D.openDocument(documents,{uri=uri(dir ^ "/a.sml"),languageId="sml",version=1,text="val a=1\n"})
+        val ()=C.event(controller,RuneLspSync.Opened clean)
+        val ()=check("opening saved text is navigation, not an input change",W.generation workspace=generation)
+        val query=List.last(requests sent "workspace/configuration")
+        val _=answer(controller,query,R.Result(Json.Array[object[]]))
+        val ()=check("unchanged scope replies do not refresh every editor presentation",null(requests sent "workspace/semanticTokens/refresh"))
+        val ()=W.configureAt(workspace,#uri clean,object[])
+        val ()=W.configureAt(workspace,#uri clean,object[])
+        val ()=check("inherited and identical configuration replies do not invalidate analysis",W.generation workspace=generation)
+        val ()=C.event(controller,RuneLspSync.WillSave clean)
+        val ()=check("will-save does not invalidate analysis",W.generation workspace=generation)
+        val ()=D.closeDocument(documents,#uri clean)
+        val ()=C.event(controller,RuneLspSync.Closed clean)
+        val ()=check("closing saved text does not invalidate analysis",W.generation workspace=generation)
+        val dirty=D.openDocument(documents,{uri= #uri clean,languageId="sml",version=2,text="val a=true\n"})
+        val ()=C.event(controller,RuneLspSync.Opened dirty)
+        val ()=check("an unsaved open still invalidates analysis",W.generation workspace<>generation)
+        val changed=W.generation workspace
+        val ()=D.closeDocument(documents,#uri dirty)
+        val ()=C.event(controller,RuneLspSync.Closed dirty)
+        val ()=check("discarding unsaved text invalidates analysis",W.generation workspace<>changed)
+    in C.clear controller end)
   fun staleConfiguration () =
     let val documents=D.new (LspProtocol.Utf16,{maxDocuments=1,maxDocumentBytes=1000,maxTotalBytes=1000,maxDocumentLines=100,maxTotalLines=100})
         val uri="untitled:scoped"
@@ -104,6 +138,7 @@ structure RuneLspControllerTestMain = Main (struct
   val tests=Test.describe "lsp-controller"
     [Test.it "configuration-and-context" RuneLspControllerTests.configuration,
      Test.it "watchers" RuneLspControllerTests.watchers,
-     Test.it "stale-configuration" RuneLspControllerTests.staleConfiguration]
+    Test.it "stale-configuration" RuneLspControllerTests.staleConfiguration,
+    Test.it "read-only-navigation" RuneLspControllerTests.navigationGeneration]
 end)
 val ()=RuneLspControllerTestMain.main ()

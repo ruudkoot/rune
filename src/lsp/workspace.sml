@@ -70,11 +70,8 @@ struct
         val unique=List.foldl (fn (uri,all) => if List.exists (fn prior => prior=uri) all then all else all @ [uri]) [] values
     in roots:=unique;invalidate workspace end
   fun configure (workspace as Workspace {platform,settings=stored,...},value) =
-    let val parsed=settings platform value in stored:=parsed;invalidate workspace end
-  fun configureAt (workspace as Workspace {platform,scoped,...},uri,value) =
-    let val rest=List.filter (fn (scope,_) => scope<>uri) (!scoped)
-        val next=case value of Json.Null => rest | _ => (uri,settings platform value) :: rest
-    in scoped:=next;dirty workspace end
+    let val parsed=settings platform value
+    in if parsed= !stored then () else (stored:=parsed;invalidate workspace) end
   fun forget (Workspace {scoped,choices,...},uri) =
     (scoped:=List.filter (fn (scope,_) => scope<>uri) (!scoped);
      choices:=List.filter (fn (document,_) => document<>uri) (!choices))
@@ -90,6 +87,13 @@ struct
               | nearest (current as (scope,_),old as SOME (prior,_))=
                   if size (valOf (nativeKey platform scope))>size (valOf (nativeKey platform prior)) then SOME current else old
         in case List.foldl nearest NONE roots of SOME (_,settings) => settings | NONE => !settings end
+  fun configureAt (workspace as Workspace {platform,scoped,...},uri,value) =
+    let val previous=configurationFor(workspace,uri)
+        val rest=List.filter(fn (scope,_)=>scope<>uri)(!scoped)
+    in case value of Json.Null=>
+        (scoped:=rest;if previous=configurationFor(workspace,uri) then () else dirty workspace)
+      | _=>let val parsed=settings platform value
+           in if parsed=previous then () else (scoped:=(uri,parsed)::rest;dirty workspace) end end
   fun choose (Workspace {choices,...},uri,id) =
     choices:=(uri,id) :: List.filter (fn (document,_) => document<>uri) (!choices)
   fun folder value =

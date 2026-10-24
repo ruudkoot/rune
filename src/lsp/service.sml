@@ -19,7 +19,7 @@ struct
   type flight={uri:string,revision:IntInf.int,generation:IntInf.int,job:IntInf.int}
   type failed={uri:string,revision:IntInf.int,generation:IntInf.int,message:string}
   exception Duplicate
-  datatype t=Service of {workspace:W.t,documents:D.t,caps:P.capabilities,jobs:task J.t,workspaceJobs:task J.t,
+  datatype t=Service of {workspace:W.t,documents:D.t,caps:P.capabilities,jobs:task J.t,basisJobs:task J.t,workspaceJobs:task J.t,
     results:result list ref,requests:request list ref,flights:flight list ref,failures:failed list ref,
     refresh:unit Q.t,refreshPending:bool ref,send:R.message->unit,log:string->unit,
     discovered:string*V.value->unit}
@@ -28,6 +28,8 @@ struct
       timeout=Time.fromSeconds 30,cancelGrace=Time.fromMilliseconds 250,maxPending=128},results=ref [],requests=ref [],
       workspaceJobs=J.new {command=command,args=args,timeout=Time.fromSeconds 30,
         cancelGrace=Time.fromMilliseconds 250,maxPending=8},
+      basisJobs=J.new {command=command,args=args,timeout=Time.fromSeconds 30,
+        cancelGrace=Time.fromMilliseconds 250,maxPending=128},
       flights=ref [],failures=ref [],refresh=Q.new {prefix="runelsp-diagnostics-",maxPending=1},refreshPending=ref false,
       send=send,log=log,discovered=discovered}
   fun current (Service {workspace,documents,...},{uri,revision,generation}) =
@@ -46,9 +48,13 @@ struct
       in #done request:=true;requests:=List.filter (fn pending:request => #id pending<> #id request) (!requests);
          send (R.Response {id=SOME (#id request),outcome=outcome}) end
   fun failure (service,request,code,message,data)=finish (service,request,R.Error {code=code,message=message,data=data})
-  fun submit (Service {jobs,...},parameters)=J.submit (jobs,parameters)
-  fun requestJobs (Service {jobs,workspaceJobs,...},method)=
-    if method="workspace/diagnostic" then workspaceJobs else jobs
+  fun basisDocument (Service {workspace=workspace as W.Workspace {platform,lib,...},...},uri)=
+    case W.nativeKey platform uri of NONE=>false | SOME key=>
+      W.below(W.pathKey platform(W.join platform(getOpt(#libraryRoot(W.configurationFor(workspace,uri)),lib),"basis")),key)
+  fun lane (service,method,uri)=if method="workspace/diagnostic" then 2 else if basisDocument(service,uri) then 1 else 0
+  fun requestJobs (service as Service {jobs,basisJobs,workspaceJobs,...},method,uri)=
+    case lane(service,method,uri) of 2=>workspaceJobs | 1=>basisJobs | _=>jobs
+  fun submit (service,parameters)=J.submit(requestJobs(service,"",V.bytes(V.field(#payload parameters,"uri"))),parameters)
   fun capture (Service {workspace,documents,...})=RuneLspWorkerModel.capture (workspace,documents)
   fun buildDocument (Service {workspace=W.Workspace {platform,...},documents,...},uri)=
     case D.snapshot (documents,uri) of NONE => false | SOME snapshot => RuneLspBuild.isDocument (platform,snapshot)
@@ -94,7 +100,7 @@ struct
       handle J.Full => (case request of NONE => log "analysis queue is full"
         | SOME request => failure (service,request,P.requestFailed,"analysis queue is full",NONE))
   fun query (service as Service {jobs,...},request:request,snapshot) =
-    let val id=J.submit (jobs,{key=NONE,priority=0,data=Query request,payload=V.Object
+    let val id=J.submit (requestJobs(service,#method request,#uri request),{key=NONE,priority=0,data=Query request,payload=V.Object
           [("op",V.Bytes "query"),("snapshot",V.Bytes snapshot),("uri",V.Bytes(#uri request)),
            ("method",V.Bytes (#method request)),("params",V.json (#params request))]})
     in #job request:=SOME id end
@@ -139,7 +145,7 @@ struct
         val prior=List.find (fn result:result => #uri result=uri andalso #revision result=revision
           andalso #generation result=W.generation workspace) (!results)
     in ((if workspaceRequest then
-          #job request:=SOME (J.submit (requestJobs(service,method),{key=NONE,priority=if method="workspace/diagnostic" then 25 else 0,
+          #job request:=SOME (J.submit (requestJobs(service,method,uri),{key=NONE,priority=if method="workspace/diagnostic" then 25 else 0,
             data=Workspace request,payload=V.Object
             [("op",V.Bytes "workspace"),("state",capture service),("params",V.json params),
              ("method",V.Bytes method),
@@ -161,8 +167,8 @@ struct
     case List.find (fn request:request => #id request=id) (!requests) of NONE => () | SOME request =>
       (failure (service,request,R.requestCancelled,"request cancelled",NONE);Option.app (fn id =>
         if List.exists(fn other:request=> !(#job other)=SOME id andalso not(!(#done other)) andalso
-          (#method other="workspace/diagnostic")=(#method request="workspace/diagnostic"))(!requests)
-        then () else J.cancel (requestJobs(service,#method request),id)) (!(#job request)))
+          lane(service,#method other,#uri other)=lane(service,#method request,#uri request))(!requests)
+        then () else J.cancel (requestJobs(service,#method request,#uri request),id)) (!(#job request)))
   fun cancelProgress (service as Service {requests,...},token) =
     List.app (fn request:request => if Json.member ("workDoneToken",#params request)=SOME (P.idToJson token)
       then cancel (service,#id request) else ()) (!requests)
@@ -171,7 +177,7 @@ struct
       ["textDocument/diagnostic","workspace/diagnostic"]) orelse
       current (service,{uri= #uri request,revision= #revision request,generation= #generation request}) then () else
       (failure (service,request,P.serverCancelled,"diagnostic source changed",SOME (Json.Object [("retriggerRequest",Json.Bool true)]));
-       Option.app (fn id => J.cancel (requestJobs(service,#method request),id)) (!(#job request)))) (!requests)
+       Option.app (fn id => J.cancel (requestJobs(service,#method request,#uri request),id)) (!(#job request)))) (!requests)
   fun pullClient (Service {caps,...}) = case Json.member ("textDocument",P.rawCapabilities caps) of
     SOME value => (case Json.member ("diagnostic",value) of SOME (Json.Object _) => true | _ => false) | _ => false
   fun refresh (service as Service {caps,send,refresh,refreshPending,...}) =
@@ -209,7 +215,8 @@ struct
     let val matching=List.find(fn item:flight=> #uri item=uri andalso #revision item=revision andalso #generation item=generation)(!flights)
         val ()=flights:=List.filter(fn item:flight=>not(#uri item=uri andalso #revision item=revision andalso #generation item=generation))(!flights)
     in case matching of NONE=>(case request of NONE=>[] | SOME request=>[request])
-     | SOME item=>List.filter(fn request:request=> !(#job request)=SOME(#job item) andalso not(!(#done request)))(!requests) end
+     | SOME item=>List.filter(fn request:request=> !(#job request)=SOME(#job item) andalso not(!(#done request)) andalso
+         #uri request=uri andalso #revision request=revision andalso #generation request=generation)(!requests) end
   fun failedCheck (service as Service {failures,log,...},ticket,message) =
     let val pending=waiters(service,ticket)
         val item={uri= #uri ticket,revision= #revision ticket,generation= #generation ticket,message=message}:failed
@@ -279,12 +286,14 @@ struct
         failure (service,request,R.requestCancelled,"request cancelled",NONE))(waiters(service,ticket))
     | J.Cancelled (Build {request=SOME request,...}) => if !(#done request) then () else failure (service,request,R.requestCancelled,"request cancelled",NONE)
     | J.Cancelled _ => ()
-  fun descriptors (Service {jobs,workspaceJobs,...})=J.descriptors jobs @ J.descriptors workspaceJobs
-  fun pump (service as Service {jobs,workspaceJobs,log,...},ready) =
-    let val foreground=J.pump(jobs,ready)
-        val background=List.filter(fn J.Restarted=>false | _=>true)(J.pump(workspaceJobs,ready))
-    in List.app (fn event => handleEvent (service,event) handle V.Invalid message => log message) (foreground @ background) end
-  fun close (service as Service {jobs,workspaceJobs,requests,refresh,...}) =
+  fun descriptors (Service {jobs,basisJobs,workspaceJobs,...})=J.descriptors jobs @ J.descriptors basisJobs @ J.descriptors workspaceJobs
+  fun pump (service as Service {jobs,basisJobs,workspaceJobs,results,log,...},ready) =
+    let fun receive (queue,owner)=List.app(fn J.Restarted=>
+          (if owner=2 then () else results:=List.filter(fn result:result=>
+            lane(service,"",#uri result)<>owner)(!results))
+          | event=>handleEvent(service,event) handle V.Invalid message=>log message)(J.pump(queue,ready))
+    in receive(jobs,0);receive(basisJobs,1);receive(workspaceJobs,2) end
+  fun close (service as Service {jobs,basisJobs,workspaceJobs,requests,refresh,...}) =
     (List.app (fn request => failure (service,request,R.requestCancelled,"server shutting down",NONE)) (!requests);
-     ignore (Q.clear refresh);J.close jobs;J.close workspaceJobs)
+     ignore (Q.clear refresh);J.close jobs;J.close basisJobs;J.close workspaceJobs)
 end

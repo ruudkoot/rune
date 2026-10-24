@@ -44,7 +44,7 @@ close/reopen or restart.
 
 Worker stderr is a private nonblocking pipe: a 4 KiB prefix is retained, a
 64 KiB stream is terminated, and heap exhaustion is classified immediately.
-Shutdown terminates and reaps both workers before replying. Automatic workspace
+Shutdown terminates and reaps all workers before replying. Automatic workspace
 diagnostic pulls run in a separate worker from document checks and queries.
 Cancellation replies immediately and grants 250 ms for acknowledgement.
 
@@ -120,6 +120,43 @@ collection. Receipts are `idle-loop-real-project.log` and
 `workspace-heap-idle-candidate.{json,jsonl}` under
 `build/lsp-debug/acceptance`. Full suites and editor/native Windows LSP
 runs remain deferred under the debugging rule.
+
+Read-only navigation in `f592a4eb9` exposed another invalidation path. Opens,
+closes and save preparation unconditionally dirtied the workspace; identical
+configuration replies did so again and refreshed every editor presentation.
+The background cache also included open-buffer membership, making an opened
+Basis file expand the sweep from 13 to 14 contexts. Separately, the program
+and Basis graphs evicted each other under one foreground source budget.
+
+Saved-text navigation and inherited/no-op settings now preserve the workspace
+generation and unrelated presentations. Closed-project diagnostic scope stays
+independent of open tabs and document context choices. Cache fingerprints
+follow effective overlay/disk content, and cached report versions reflect
+current buffer state. Unsaved opens, discarded changes and actual settings
+changes still invalidate analysis. A lazy Basis foreground worker keeps its
+graph separate from program and background workers; each retains the existing
+512 MiB heap / 1.5 GiB address-space bounds. Waiter sharing, cancellation and
+restart invalidation distinguish the owning worker despite overlapping job IDs.
+
+Focused navigation regressions fail against `f592a4eb9`. Three controller
+cases and three affected protocol cases pass with the fix; the Basis case
+also overlaps program/Basis requests to check waiter isolation. The real
+replay uses only `rune.build` plus foreground Basis browsing, with scoped
+configuration responses, an in-flight workspace pull, three Basis
+close/reopen cycles and F12. It performs no newly checked units after warmup:
+each reopened Basis reuses all 278 units. Warm Rune hover takes 0.010-0.011
+seconds, definition 0.226-0.253 seconds, reopened Basis hover 0.660-0.698
+seconds, and cached workspace pulls 0.330-0.371 seconds. The workspace pull
+survives navigation and exits cleanly on shutdown.
+
+Receipts are `navigation-controller-final.log`, `navigation-protocol.log`,
+`navigation-worker-isolation.log`, `navigation-real-project.log` and
+`workspace-heap-navigation-candidate.{json,jsonl}` under
+`build/lsp-debug/acceptance`. The first real-replay assertion incorrectly
+counted `unit-start` visits as checks; observations showed zero checked and
+278 reused units. The corrected assertion counts checked units and passes.
+No 13-context replay, broad suite, editor host or native Windows LSP run is
+added for this follow-up.
 
 The public compiler adapter now reports missing-library manifest errors as
 `Failed` diagnostics. Discovery can then report an unavailable target instead

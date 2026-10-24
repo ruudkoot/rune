@@ -57,7 +57,10 @@ A configured program target that does not contain a Basis file does not
 prevent selecting its owning Basis build. Ordinary programs retain their
 normal primitive restrictions.
 
-A supervised foreground child process owns compiler sessions. The connection continues
+A supervised foreground child process owns program compiler sessions. Basis
+sources use their own foreground worker, so switching between a program and
+its Basis does not evict either analysis from the other's retention budget.
+The connection continues
 reading requests while analysis runs; foreground queries precede queued
 background checks. Concurrent providers for one document revision and
 workspace generation share a single check. Cancellation
@@ -69,6 +72,12 @@ they cannot evict foreground views or hold up navigation and document queries.
 Each background context releases its compiler session and analysis snapshots
 after producing its diagnostic reports. Cancellation replies immediately and allows each worker
 250 milliseconds to acknowledge before process termination.
+Workers start lazily: at most one for programs, one for Basis sources and
+one for workspace diagnostics. A restart invalidates only its own results.
+Read-only opens/closes whose text matches disk and identical inherited
+configuration replies preserve the workspace generation. Unsaved opens,
+discarded edits and actual configuration changes still invalidate it.
+Unchanged per-file settings do not refresh every editor presentation.
 
 Each worker uses Rune's optimizing JIT, with a 512 MiB VM heap cap and a
 1.5 GiB process address-space cap
@@ -91,6 +100,12 @@ Captured source/build content, relevant manifest content/existence, root
 build-file membership, settings and overlays guard reuse. Saved changes are
 detected even without a watched-file notification; previous result IDs still
 produce unchanged reports.
+Workspace diagnostic scope follows the workspace's project builds; merely
+opening a Basis or loose file does not add another background context.
+Those open files receive document diagnostics. Read-only buffer membership
+and document context choices do not invalidate cached workspace reports;
+buffer versions are refreshed when serving them. Content fingerprints use
+the current overlay while a file is open and disk content after it closes.
 Contexts and frozen views each retain at most four entries and charge at most
 2 MiB of source text across entries; a single larger entry can occupy the
 cache alone. Shared text is charged separately per view. These are retention

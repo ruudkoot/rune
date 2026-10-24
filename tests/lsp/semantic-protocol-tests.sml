@@ -219,6 +219,13 @@ struct
             | _=>raise Fail "missing initial idle report"
           val ()=check("cached reports honor previous result IDs",case pull(292,previous) of Json.Array [report]=>
             C.field(report,"kind")=Json.String "unchanged" andalso plans()=count | _=>false)
+          val mainUri=uri(path "main.sml")
+          val ()=openDocument(client,mainUri,"val answer=libraryValue\n")
+          val ()=check("opening an unchanged project file does not restart the workspace sweep",case pull(298,[]) of
+            Json.Array [report]=>C.field(report,"version")=Json.int 1 andalso plans()=count | _=>false)
+          val ()=C.notify(client,"textDocument/didClose",object[("textDocument",document mainUri)])
+          val ()=check("closing a clean project file preserves reports and clears its version",case pull(299,[]) of
+            Json.Array [report]=>C.field(report,"version")=Json.Null andalso plans()=count | _=>false)
           val ()=write(initial,"val libraryValue=true\n")
           val _=pull(293,[])
           val ()=check("saved library source edits invalidate the cache without watched-file notifications",plans()=count+1)
@@ -314,8 +321,14 @@ struct
       let fun pull id=(C.request(client,id,"textDocument/diagnostic",object[("textDocument",document runtime)]);C.result(C.response(client,id)))
           fun change(version,text)=C.notify(client,"textDocument/didChange",object[("textDocument",object
             [("uri",Json.String runtime),("version",Json.int version)]),("contentChanges",Json.Array[object[("text",Json.String text)]])])
+          val ordinary=uri(root ^ "/main.sml")
+          val ()=openDocument(client,ordinary,"val userPrimitive = _prim \"int_add\" : int * int -> int\n")
           val ()=openDocument(client,runtime,text)
-          val ()=check("Basis bootstrap does not preload or reject its own primitives",C.field(pull 710,"items")=Json.Array[])
+          val ()=C.request(client,715,"textDocument/diagnostic",object[("textDocument",document ordinary)])
+          val ()=C.request(client,710,"textDocument/diagnostic",object[("textDocument",document runtime)])
+          val ordinaryReport=C.result(C.response(client,715))
+          val ()=check("concurrent worker jobs keep their document waiters separate",C.field(ordinaryReport,"items")<>Json.Array[])
+          val ()=check("Basis bootstrap does not preload or reject its own primitives",C.field(C.result(C.response(client,710)),"items")=Json.Array[])
           val ()=C.request(client,711,"textDocument/hover",object[("textDocument",document runtime),
             ("position",object[("line",Json.int 0),("character",Json.int 30)])])
           val ()=check("Basis declarations have semantic hover",C.result(C.response(client,711))<>Json.Null)
@@ -323,8 +336,6 @@ struct
           val ()=check("Basis edits are checked",case C.field(pull 712,"items") of Json.Array(_::_)=>true | _=>false)
           val ()=change(3,text)
           val ()=check("Basis repairs clear diagnostics",C.field(pull 713,"items")=Json.Array[])
-          val ordinary=uri(root ^ "/main.sml")
-          val ()=openDocument(client,ordinary,"val userPrimitive = _prim \"int_add\" : int * int -> int\n")
           val ()=C.request(client,714,"textDocument/diagnostic",object[("textDocument",document ordinary)])
           val report=C.result(C.response(client,714))
       in check("Basis privilege does not leak into ordinary programs",case C.field(report,"items") of Json.Array items=>

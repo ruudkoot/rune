@@ -89,13 +89,21 @@ struct
     (if null (W.roots workspace) andalso P.supports (caps,["workspace","workspaceFolders"])
      then ignore (issue (controller,"workspace/workspaceFolders",NONE,Folders (!epoch))) else ();
      ignore (configuration (controller,scopes controller));watch controller)
+  fun savedText (W.Workspace {platform,...},snapshot:D.snapshot) =
+    (case LspUri.native(platform,LspUri.parse(#uri snapshot)) of NONE=>false | SOME {path,...}=>
+      let val input=BinIO.openIn path
+          val text=(Byte.bytesToString(BinIO.inputAll input) before BinIO.closeIn input)
+            handle error=>(BinIO.closeIn input handle _=>();raise error)
+      in text=LspPosition.text(#content snapshot) end)
+    handle IO.Io _=>false | OS.SysErr _=>false
   fun event (controller as Controller {workspace,asked,...},event) =
-    (W.dirty workspace;
-     case event of RuneLspSync.Opened snapshot =>
-       if configuration (controller,[#uri snapshot]) then () else context (controller,#uri snapshot)
-     | RuneLspSync.Changed snapshot => context (controller,#uri snapshot)
+    (case event of RuneLspSync.Opened snapshot =>
+       (if savedText(workspace,snapshot) then () else W.dirty workspace;
+        if configuration (controller,[#uri snapshot]) then () else context (controller,#uri snapshot))
+     | RuneLspSync.Changed snapshot => (W.dirty workspace;context (controller,#uri snapshot))
      | RuneLspSync.Closed snapshot =>
-         (W.forget (workspace,#uri snapshot);asked:=List.filter (fn uri => uri<> #uri snapshot) (!asked))
+         (if savedText(workspace,snapshot) then () else W.dirty workspace;
+          W.forget (workspace,#uri snapshot);asked:=List.filter (fn uri => uri<> #uri snapshot) (!asked))
      | _ => ())
   fun notification (controller as Controller {workspace,caps,epoch,asked,waiting,error,...},{method,params}) =
     let fun value ()=case params of SOME value => J.object value | NONE => raise W.Invalid "missing workspace parameters"
@@ -124,7 +132,8 @@ struct
     case Q.resolve (pending,message) of NONE => false | SOME (request,outcome) =>
       ((case request of
          Configuration {epoch=issued,scopes=uris} =>
-           let val ()=if issued<> !epoch then () else
+           let val generation=W.generation workspace
+               val ()=if issued<> !epoch then () else
                  waiting:=List.filter (fn uri => not (List.exists (fn scope => uri=scope) uris)) (!waiting)
            in if issued<> !epoch then () else
              (case outcome of R.Result (Json.Array values) =>
@@ -133,7 +142,8 @@ struct
                     then (W.configureAt (workspace,uri,value) handle W.Invalid message => error message) else ()) (uris,values)
               | R.Error _ => log "client refused workspace configuration; keeping startup settings"
               | _ => error "invalid workspace configuration response");
-             allContexts controller end
+             if W.generation workspace<>generation then allContexts controller
+             else List.app(fn uri=>context(controller,uri))uris end
        | Folders issued => if issued<> !epoch then () else
            (case outcome of R.Result (Json.Array values) =>
               (W.setRoots (workspace,List.map W.folder values);
