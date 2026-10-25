@@ -25,14 +25,11 @@ struct
      body leaves free refuses the declaration (rule 89), and so does a
      flexible record it leaves; one of the basis's that a later declaration
      of the topdec may determine the summary shares. *)
-  type summary = {generated : tycon list, result : env, counts : int * int * int}
+  type summary = {generated : tycon list, result : env}
 
   datatype funinfo =
-      FunInfo of {param : string option, paramSig : SigMatch.sigma, body : strexp, defEnv : env, allowPrim : bool,
-                  defSigs : SigMatch.sigma StringMap.map, defFuns : funinfo StringMap.map,
-                  summary : summary option,
-                  origin : string,binding:Env.origin,   (* the identity of the unit it was loaded from; "" where elaborated *)
-                  code : int option}   (* the global of its function *)
+      FunInfo of {param : string option, paramSig : SigMatch.sigma, summary : summary, binding : Env.origin,
+                  code : int}   (* the global of its function *)
   val funs : funinfo StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("Elaborate.funs", funs)
 
@@ -1622,8 +1619,8 @@ struct
              Definition's Appendix G allows and HaMLet and MLKit do. The
              basis's own, which a declaration later in the topdec may
              determine, the summary shares. Whether the body's result has a
-             summary: none where a flexible record is left, which the
-             topdec's end refuses (settleFlex) *)
+             summary: none where a flexible record is left, which refuses
+             the declaration too (refuse, below) *)
           fun closure (b : funbind, result : env) : bool =
             let
               val closed = closedEnv (result, [])
@@ -1694,8 +1691,7 @@ struct
                   | NONE => err (#span b, "the result of functor " ^ #name b ^ " has a type its body does not determine")
                 end
               val summary =
-                if closure (b, result) then
-                  SOME {generated = generatedDeep (lo, result), result = placeholders result, counts = (0, 0, 0)}
+                if closure (b, result) then {generated = generatedDeep (lo, result), result = placeholders result}
                 else refuse ()
               val func = freshStamp ()
               val () = if StringMap.member (!inlineFunctors, #name b) then IntTable.insert (!markedFunctions, func, ()) else ()
@@ -1709,10 +1705,8 @@ struct
                                                    {func = func, param = param, paramRecord = paramRecord, result = resultRecord,
                                                     opens = opens})
             in
-              (#name b, FunInfo {param = #param b, paramSig = sigma, body = #body b, defEnv = Env.empty, origin = "",
-                                 binding = Env.originAt ("functor", #name b, #span b),
-                                 allowPrim = false, defSigs = StringMap.empty, defFuns = StringMap.empty,
-                                 summary = summary, code = SOME func})
+              (#name b, FunInfo {param = #param b, paramSig = sigma, binding = Env.originAt ("functor", #name b, #span b),
+                                 summary = summary, code = func})
             end
           val elaborated =
             (if !ElabStats.on then ElabStats.count ElabStats.FunDecls else (); List.map function binds)
@@ -1757,16 +1751,11 @@ struct
                   the call's result sets (callCode) *)
                fun call () =
                  let
-                   val func = case code of
-                                SOME f => f
-                              | NONE => Error.bug ("functor " ^ funid ^ " without its function")
+                   val func = code
                    (* a functor inlined where it is applied: the unit depends on
                       its body (UnitBasis.fingerprint, "inl") *)
                    val () = if isSome (IntTable.find (!inlinedFunctions, func)) then Usage.use ("inl", funid) else ()
-                   val {generated, result, ...} =
-                     case summary of
-                       SOME s => s
-                     | NONE => Error.bug "an application of a functor without its summary (refused at its declaration)"
+                   val {generated, result} = summary
                    val (phi, specE) = ElabStats.during ElabStats.Match (fn () => SigMatch.match (paramSig, argEnv, sp))
                    val descs = descriptors (paramSig, phi, sp)
                    val fresh = List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) generated

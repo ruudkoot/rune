@@ -191,8 +191,7 @@ struct
                     val ()=UnitBasis.undo start
                 in checked:= !checked+1;{key=key,name=name,allow=allow,mode=mode,pickle= #pickle exported,facts=frozen,types=typeDefinitions,
                   syntax=syntaxTree,uses=List.rev (!unitUses)}:entry end)
-              val loaded=UnitBasis.load {pickle= #pickle entry,file=file,at= #counters start,
-                env= #env start,fixity= #fixity start,text=fn () => text}
+              val loaded=UnitBasis.load {pickle= #pickle entry,file=file,at= #counters start}
               val ()=env:=Env.plus (#env start,#delta loaded)
               val ()=fixity:=Fixity.extend (#fixity start,#directives loaded)
               val ()=UnitBasis.bind loaded

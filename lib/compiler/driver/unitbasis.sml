@@ -27,10 +27,9 @@
    what the bytes say: a unit compiled now and one taken from the cache are
    the same to them, byte for byte.
 
-   A functor's body is not written: its place in the unit's source is, and
-   loading parses the source again for it, in the mode the unit was read in
-   (Source.mode), the fixity of the unit's start in force. Its basis is the unit's start, which loading has, and what the
-   unit declared before it. *)
+   A functor is written as its signature and the global of its function,
+   to which it is compiled: nothing of its body, which loading needs not;
+   a functor marked to be inlined, its function's Mid as well (funcode). *)
 structure UnitBasis =
 struct
   structure P = Pickle
@@ -39,7 +38,7 @@ struct
   (* a pickle that names a unit the session has not loaded *)
   exception Missing of string
 
-  val version = 10
+  val version = 11
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -55,11 +54,9 @@ struct
   (* ---- the units of the session ---- *)
 
   (* A unit loaded: its identity, its name, the name its source has in
-     spans, where its numbers start in the session, how many of each kind,
-     and its functors, by where their bodies begin in its source, which a
-     later unit's functor may have in its basis. *)
-  type loaded = {identity : string, name : string, file : string, base : int vector, count : int vector,
-                 funs : Elaborate.funinfo IntMap.map}
+     spans, where its numbers start in the session, and how many of each
+     kind. *)
+  type loaded = {identity : string, name : string, file : string, base : int vector, count : int vector}
 
   val units : loaded list ref = ref []                        (* newest first *)
   val () = CompilerState.cellRoot ("UnitBasis.units", units)
@@ -149,15 +146,6 @@ struct
             else SOME (b, u)
           end
     in search (0, Vector.length rs) end
-
-  (* Expand.current: a global of a unit the session has loaded again since
-     (the REPL's use of a file through the cache) is not the one its name
-     finds now *)
-  val () = Expand.current := (fn h => case rangeOf (kStamp, h) of
-                                        NONE => true
-                                      | SOME (b, u) => (case StringMap.find (!byIdentity, #identity u) of
-                                                          SOME u' => Vector.sub (#base u', kStamp) = b
-                                                        | NONE => false))
 
   (* ---- fingerprints (the incremental roadmap's M6, the third part) ---- *)
 
@@ -565,19 +553,15 @@ struct
                          in anchorValues := true; f end)
 
   (* of a functor: its signature, the parameter's own type names and those
-     its body made local to it, its values specifications; nothing where it
-     has no summary *)
-  fun fpFunctor (Elaborate.FunInfo {paramSig = {bound, env = pe,...}, summary, ...}) : string option =
-    case summary of
-      NONE => NONE
-    | SOME {generated, result, ...} =>
-        let
-          val local' = localsOf (bound @ generated)
-          val () = anchorValues := false
-          val f = hashed "fun" (fn w => (fpBound (w, bound); fpEnvInto (w, local', pe);
-                                         fpBound (w, generated); fpEnvInto (w, local', result)))
-                  handle e => (anchorValues := true; raise e)
-        in anchorValues := true; SOME f end
+     its body made local to it, its values specifications *)
+  fun fpFunctor (Elaborate.FunInfo {paramSig = {bound, env = pe,...}, summary = {generated, result}, ...}) : string option =
+    let
+      val local' = localsOf (bound @ generated)
+      val () = anchorValues := false
+      val f = hashed "fun" (fn w => (fpBound (w, bound); fpEnvInto (w, local', pe);
+                                     fpBound (w, generated); fpEnvInto (w, local', result)))
+              handle e => (anchorValues := true; raise e)
+    in anchorValues := true; SOME f end
 
   (* What the REPL decided a declaration's echo by when it compiled it
      (src/repl): whether it echoed at all (the usage "echo on") and whether
@@ -593,14 +577,9 @@ struct
      structure's; of a setting of the REPL's, "on" where it is on *)
   fun binderOfKey (key : string) : string =
     if String.isPrefix "p " key orelse String.isPrefix "echo " key then (if !replSetting key then "on" else "")
-    (* the code of a functor's body applied, from the unit IDENTITY: that
-       unit, where the session has it *)
-    else if String.isPrefix "funat " key then
-      let val i = String.extract (key, 6, NONE)
-      in if isSome (StringMap.find (!byIdentity, i)) then i else "" end
     else if key = "whole on" then (if !wholeFingerprints then "on" else "")
-    (* a functor inlined where it is applied (M6b): the unit that bound it,
-       and its Mid's hash where that unit is another *)
+    (* a functor inlined where it is applied: the unit that bound it, and
+       its Mid's hash where that unit is another *)
     else if String.isPrefix "inl " key then binderOf ("fun " ^ String.extract (key, 4, NONE))
     else
     case String.fields (fn c => c = #" ") key of
@@ -613,10 +592,10 @@ struct
     | _ => binderOf key
 
   (* The fingerprint of what a usage names in the session as it is now:
-     NONE where nothing does. A functor is its signature (fpFunctor): a
-     unit that applies it to make code depends on the unit that declared
-     it as well ("funat"). An overloading is its binder's identity: what it
-     is is the whole unit's. *)
+     NONE where nothing does. A functor is its signature (fpFunctor), and a
+     functor inlined where it is applied its function's Mid too ("inl").
+     An overloading is its binder's identity: what it is is the whole
+     unit's. *)
   fun fingerprint (key : string) : string option =
     let
       val (kind, name) = case String.fields (fn c => c = #" ") key of k :: rest => (k, String.concatWith " " rest) | [] => ("", "")
@@ -633,7 +612,7 @@ struct
       | "sig" => Option.map fpSigma (StringMap.find (!sessionSigs, name))
       | "fun" => (case StringMap.find (!sessionFuns, name) of SOME f => fpFunctor f | NONE => NONE)
       | "inl" => (case StringMap.find (!sessionFuns, name) of
-                    SOME (Elaborate.FunInfo {code = SOME g, ...}) => IntTable.find (!inlineHashes, g)
+                    SOME (Elaborate.FunInfo {code = g, ...}) => IntTable.find (!inlineHashes, g)
                   | _ => NONE)
       | "fix" => SOME (hashAt ("fix", case StringMap.find (#table (!sessionFixity), name) of
                                         NONE => "nonfix"
@@ -698,9 +677,10 @@ struct
     in Option.map #unit (List.find (not o here) (List.map #1 (#globals u) @ List.map #2 (#imports u))) end
 
   (* The files a unit's code names other than file, its own, which are the
-     sources of units of the session -- the bodies of their functors it
-     applied -- each with that unit's name: what a compile that takes the
-     unit from the cache names them by where those units are then *)
+     sources of units of the session -- the bodies of the functors marked to
+     be inlined that it expanded -- each with that unit's name: what a
+     compile that takes the unit from the cache names them by where those
+     units are then *)
   fun sourcesOf (u : Link.unitCode, file : string) : (string * string) list =
     List.mapPartial (fn f => if f = file then NONE
                              else Option.map (fn (l : loaded) => (f, #name l))
@@ -806,10 +786,8 @@ struct
               types : int IntMap.map ref, ntypes : int ref,    (* the types written, by their key *)
               cons : int StringMap.map ref, ncons : int ref,   (* the constructors written, by their key *)
               sibs : int StringMap.map ref, nsibs : int ref,   (* their lists of siblings, the same *)
-              funsDone : unit IntTable.table,          (* own functors written, by where their bodies begin *)
-              base : Env.env,                          (* the unit's start *)
-              file : string,                           (* the unit's source, as its spans name it *)
-              text : unit -> string}                   (* the source *)
+              funsDone : unit IntTable.table,          (* own functors written, by their functions *)
+              file : string}                           (* the unit's source, as its spans name it *)
 
   fun ownNumber (e : enc, k, v) : int =
     let val t = Vector.sub (#own e, k)
@@ -1064,45 +1042,30 @@ struct
 
   (* ---- functors ---- *)
 
-  (* A functor's body, by where it begins in its unit's source *)
-  fun bodyAt (body : Ast.strexp) : Source.span = Ast.spanOfStrexp body
-
-  (* A functor: one of this unit's, written whole the first time and then by
-     where its body begins (a functor declared again leaves the first in the
-     basis of those declared between); or an earlier unit's, by that unit and
-     the same *)
-  fun funref (e : enc, f as Elaborate.FunInfo {body, origin, code, ...}) : unit =
-    let
-      val w = #w e
-      val {start = at, ...} = bodyAt body
+  (* A functor of this unit's, written whole the first time and then by
+     the global of its function (a functor declared again leaves the
+     first in the basis of those declared between) *)
+  fun funref (e : enc, f as Elaborate.FunInfo {code, ...}) : unit =
+    let val w = #w e
     in
-      if origin = "" then
-        if IntTable.find (#funsDone e, at) = NONE then
-          (IntTable.insert (#funsDone e, at, ());
-           case code of
-             SOME _ => (P.byte (w, 3); funcode (e, f))
-           | NONE => (P.byte (w, 2); funinfo (e, f)))
-        else (P.byte (w, 0); P.nat (w, at))
-      else (P.byte (w, 1); P.nat (w, unitRef (e, origin)); P.nat (w, at))
+      if IntTable.find (#funsDone e, code) = NONE then
+        (IntTable.insert (#funsDone e, code, ()); P.byte (w, 1); funcode (e, f))
+      else (P.byte (w, 0); name (e, kStamp, code))
     end
 
-  (* --functors=functions: a functor compiled to a function, which is
-     its signature -- its parameter's, and its summary but for its counts,
-     which are the body's -- its place, and the global of its function:
+  (* A functor compiled to a function, which is its signature -- its
+     parameter's, and its summary -- and the global of its function:
      nothing of its body, so that a unit whose body changed and whose
      signature did not keeps its identity *)
-  and funcode (e : enc, Elaborate.FunInfo {param, paramSig, body, summary, binding, code, ...}) : unit =
+  and funcode (e : enc, Elaborate.FunInfo {param, paramSig, summary = {generated, result}, binding, code}) : unit =
     let
       val w = #w e
-      val {start = at, ...} = bodyAt body
     in
-      P.option P.string (w, param); sigma (e, paramSig); P.nat (w, at);
-      P.option (fn (_, {generated, result, ...} : Elaborate.summary) =>
-                  sigma (e, {bound = generated, env = result, origin = Env.Unknown}))
-               (w, summary);
+      P.option P.string (w, param); sigma (e, paramSig);
+      sigma (e, {bound = generated, env = result, origin = Env.Unknown});
       writeOrigin (w, binding);
-      (case code of SOME g => name (e, kStamp, g) | NONE => bug "a functor's function without its global");
-      (* a functor marked to be inlined (M6b): its function's Mid, its
+      name (e, kStamp, code);
+      (* a functor marked to be inlined: its function's Mid, its
          globals and type names named as the basis names them, which makes
          every one a name a later unit may name; and its parameter's open
          datatypes *)
@@ -1138,42 +1101,10 @@ struct
                                P.bool (w, IntMap.member (!Lower.knownBefore, g));
                                P.option P.string (w, IntTable.find (!inlineHashes, g))))
                            (w, List.rev (!named));
-                    case code of
-                      SOME g => IntTable.insert (!inlineHashes, g,
-                                                 P.hash (CharArraySlice.vector (CharArraySlice.slice (!(#bytes w), p0, SOME (!(#used w) - p0)))))
-                    | NONE => ()
+                    IntTable.insert (!inlineHashes, code,
+                                     P.hash (CharArraySlice.vector (CharArraySlice.slice (!(#bytes w), p0, SOME (!(#used w) - p0)))))
                   end)
-               (w, case code of SOME g => IntTable.find (!Expand.declaredBodies, g) | NONE => NONE)
-    end
-
-  and funinfo (e : enc, Elaborate.FunInfo {param, paramSig, body, defEnv, allowPrim, defSigs, defFuns, summary, binding,...}) : unit =
-    let
-      val w = #w e
-      val {file, start = at, stop} = bodyAt body
-      val () = if file = #file e then () else bug ("a functor of another unit's source: " ^ file)
-      (* the body's text, by its hash: a unit whose functor's body changed
-         has another basis, and the units that apply it are compiled
-         again *)
-      val bodyText = String.substring (#text e (), at, stop - at)
-                     handle Subscript => bug "a functor's body out of its source"
-      (* the signatures and functors the unit declared, as they were when
-         this one was *)
-      fun declared (names, m) =
-        StringMap.listItemsi (List.foldl (fn (n, acc) => case StringMap.find (m, n) of
-                                                          SOME v => StringMap.insert (acc, n, v)
-                                                        | NONE => acc) StringMap.empty names)
-    in
-      P.option P.string (w, param); sigma (e, paramSig); P.nat (w, at); P.string (w, hashAt ("body", bodyText));
-      env (e, envDelta (#base e, defEnv));
-      P.bool (w, allowPrim);
-      P.list (fn (w, (n, s)) => (P.string (w, n); sigma (e, s))) (w, declared (!Elaborate.insertedSigs, defSigs));
-      P.list (fn (w, (n, f)) => (P.string (w, n); funref (e, f))) (w, declared (!Elaborate.insertedFuns, defFuns));
-      (* its summary (Elaborate.summary): the names its body made as a
-         signature's flexible names, what the body gave, its counts *)
-      P.option (fn (w, {generated, result, counts = (a, b, c)} : Elaborate.summary) =>
-                  (sigma (e, {bound = generated, env = result,origin=Env.Unknown}); P.nat (w, a); P.nat (w, b); P.nat (w, c)))
-               (w, summary);
-      writeOrigin (w,binding)
+               (w, IntTable.find (!Expand.declaredBodies, code))
     end
 
   (* ---- overloading ---- *)
@@ -1255,7 +1186,7 @@ struct
                      keys = IntTable.table 1024, nkeys = ref 0,
                      types = ref IntMap.empty, ntypes = ref 0, cons = ref StringMap.empty, ncons = ref 0,
                      sibs = ref StringMap.empty, nsibs = ref 0, funsDone = IntTable.table 16,
-                     base = #env start, file = file, text = text}
+                     file = file}
       (* fixity: the directives the unit added, newest first *)
       val directives = List.take (#list fixity, List.length (#list fixity) - List.length (#list (#fixity start)))
       val () = P.list (fn (w, (n, f)) => (P.string (w, n);
@@ -1280,26 +1211,6 @@ struct
                                      case StringMap.find (!Elaborate.funs, n) of
                                        SOME f => funref (e, f)
                                      | NONE => bug ("no functor " ^ n))) (w, funNames)
-      (* where it declared a functor, the unit that bound each name its
-         compile looked up: an application elaborates the functor's body
-         again in the basis it was declared in, parsed with the fixity it
-         had there, so what the body's names were bound to is the functor's
-         as much as its text is, and a unit that applies it is compiled
-         again where one of them changed, though it names none of them
-         (docs/plans/build-cache-issues.md, issue 1); of a functor the body
-         applied, its signature's fingerprint, which is all a functor's
-         declaration takes of it: a unit that applies this one's to make
-         code depends on the unit of each functor its copy applies itself
-         ("funat"), so that this one's basis is the same as long as their
-         signatures are *)
-      fun binding k =
-        if String.isPrefix "fun " k then
-          (* as the usage has it: its fingerprint at the unit's start, by
-             its binder (functors-units, F1) *)
-          (case fingerprintAt (k, binderOfKey k) of SOME f => "fp " ^ f | NONE => binderOfKey k)
-        else binderOfKey k
-      val () = P.list (fn (w, k) => (P.string (w, k); P.string (w, binding k)))
-                      (w, [])
       val before' = #overloads (#snapshot start)
       val () = P.list (fn (_, x) => overload (e, x))
                       (w, IntMap.listItemsi (IntMap.filteri (fn (s, _) => not (IntMap.member (before', s))) (!Overload.table)))
@@ -1312,16 +1223,13 @@ struct
                 P.list P.string (h, List.rev (!(#nameList e)));
                 Vector.app (fn c => P.nat (h, c)) counts)
       val hashed = P.contents h ^ body
-      (* what the compile used of each kind, which loading puts aside first,
-         and the hash of the source, which a functor's body is parsed from
-         again, and the mode it is read in: none is the basis's, nor in its
-         identity *)
+      (* what the compile used of each kind, which loading puts aside
+         first: not the basis's, nor in its identity *)
       val used = Vector.tabulate (3, fn k => !(counter k) - Vector.sub (#counters start, k))
       val u = P.writer ()
       val () = Vector.app (fn c => P.nat (u, c)) used
+      (* the source's hash, for the unit's provenance (Link.provenance) *)
       val sourceHash = hashAt ("source", text ())
-      val () = P.string (u, sourceHash)
-      val () = P.string (u, Source.modeName mode)
       val identity = uname ^ "@" ^ hashAt ("identity", hashed)
     in
       {pickle = P.contents u ^ hashed, identity = identity,
@@ -1593,16 +1501,6 @@ struct
 
   (* ---- loading ---- *)
 
-  (* The top-level functor declarations of a source, by where their bodies
-     begin *)
-  fun functorsOf (decs : Ast.dec list) : Ast.strexp IntMap.map =
-    let
-      fun dec (Ast.DFunctor (bs, _), m) =
-            List.foldl (fn (b : Ast.funbind, m) => IntMap.insert (m, #start (bodyAt (#body b)), #body b)) m bs
-        | dec (Ast.DLocal (a, b, _), m) = List.foldl dec (List.foldl dec m a) b
-        | dec (_, m) = m
-    in List.foldl dec IntMap.empty decs end
-
   (* What load gives: the unit, the environment it declared, and its
      fixity directives, newest first, which the caller adds to the start;
      and the names of the signatures and functors it declared *)
@@ -1655,8 +1553,6 @@ struct
     let
       val r = P.reader pickle
       val _ = Vector.tabulate (3, fn _ => P.rnat r)
-      val _ = P.rstring r   (* the hash of the source *)
-      val _ = P.rstring r   (* its mode *)
       val () = if P.rbytes (r, 3) = magic then () else raise P.Bad "not a unit's basis"
       val () = if P.rnat r = version then () else raise P.Bad "a basis of another version"
       val () = if P.rstring r = P.probe () then () else raise P.Bad "a basis made by a compiler whose hash differs"
@@ -1748,25 +1644,21 @@ struct
          imports = List.map (fn (ix, k) => (ix, key k)) (#imports u), exports = #exports u}
       end
 
-  (* load {pickle, file, at, env, fixity, text}: the unit whose basis pickle
-     is, loaded after the units of the session: its numbers given the names
-     of the session that follow at's counters and what its compile used,
-     its tables entered, its signatures, functors and overloading declared,
-     and the unit registered. env and fixity are the unit's start; text
-     gives its source, which spans name file, for its functors' bodies.
-     Raises Missing where it names a unit the session has not, and
-     Pickle.Bad where the bytes are not a basis. *)
+  (* load {pickle, file, at}: the unit whose basis pickle is, loaded after
+     the units of the session: its numbers given the names of the session
+     that follow at's counters and what its compile used, its tables
+     entered, its signatures, functors and overloading declared, and the
+     unit registered; file is its source as spans name it now. Raises
+     Missing where it names a unit the session has not, and Pickle.Bad
+     where the bytes are not a basis. *)
   (* loadKnown (args, known, remap): known, where it is SOME, the unit's
      identity, which whoever has it need not work out again from the
      bytes: export, which just did, and an entry of the cache, which keeps
      it (functors-units, F2) *)
-  fun load' ({pickle : string, file : string, at : int vector, env = startEnv : Env.env,
-              fixity = startFixity : Fixity.env, text : unit -> string}, known : string option, remap : remap) : result =
+  fun load' ({pickle : string, file : string, at : int vector}, known : string option, remap : remap) : result =
     let
       val r = P.reader pickle
       val used = Vector.tabulate (3, fn _ => P.rnat r)
-      val sourceHash = P.rstring r
-      val mode = case Source.modeNamed (P.rstring r) of SOME m => m | NONE => raise P.Bad "not a source mode"
       val hashed = String.extract (pickle, !(#pos r), NONE)
       val () = if P.rbytes (r, 3) = magic then () else raise P.Bad "not a unit's basis"
       val () = if P.rnat r = version then () else raise P.Bad "a basis of another version"
@@ -1804,95 +1696,28 @@ struct
       val directives = P.rlist (fn r => let val n = P.rstring r in (n, rfixity r) end) r
       val delta = renv d
       val sigs = P.rlist (fn r => let val n = P.rstring r in (n, rsigma d) end) r
-      (* functors: their bodies from the source parsed again, once *)
-      val bodies : Ast.strexp IntMap.map option ref = ref NONE
-      fun bodyOf at =
-        let
-          val m =
-            case !bodies of
-              SOME m => m
-            | NONE =>
-                let
-                  val t = text ()
-                  val () = if hashAt ("source", t) = sourceHash then () else raise P.Bad "its source is not the one it was made from"
-                  val src = Source.fromStringIn (mode, file, t)
-                  val () = Source.register src
-                  val (decs, _) = Parser.parseTokensWith (Lexer.tokenize src, startFixity)
-                  val m = functorsOf decs
-                in bodies := SOME m; m end
-        in
-          case IntMap.find (m, at) of
-            SOME b => b
-          | NONE => raise P.Bad "no functor where the basis says"
-        end
-      (* a unit's own functors by where they begin, those read so far; the
-         signatures and functors of the unit's start, which a functor's
-         basis adds the unit's to *)
+      (* its functors, by the globals of their functions: written whole
+         the first time, then by the global *)
       val ownFuns : Elaborate.funinfo IntMap.map ref = ref IntMap.empty
-      val startSigs = !Elaborate.sigs
-      val startFuns = !Elaborate.funs
       fun rfunref (r : P.reader) : Elaborate.funinfo =
         case P.rbyte r of
-          2 => rfuninfo r
-        | 3 => rfuncode r
-        | 0 => let val at = P.rnat r
-               in case IntMap.find (!ownFuns, at) of
+          1 => rfuncode r
+        | 0 => let val code = rname (d, kStamp)
+               in case IntMap.find (!ownFuns, code) of
                     SOME f => f
                   | NONE => raise P.Bad "a functor named before it is declared"
                end
-        | 1 =>
-            let
-              val u = P.rnat r
-              val at = P.rnat r
-              val () = if u >= Vector.length us then raise P.Bad "a unit out of range" else ()
-              (* a remapped unit's functors are not found by where their bodies were *)
-              val () = if isSome (Vector.sub (remaps, u)) then raise Missing (Vector.sub (identities', u)) else ()
-            in
-              case IntMap.find (#funs (Vector.sub (us, u)), at) of
-                SOME f => f
-              | NONE => raise P.Bad "no functor of that unit there"
-            end
         | _ => raise P.Bad "not a functor"
-      and rfuninfo (r : P.reader) : Elaborate.funinfo =
-        let
-          val param = P.roption P.rstring r
-          val paramSig = rsigma d
-          val at = P.rnat r
-          val _ = P.rstring r   (* the hash of its body's text, in the unit's identity *)
-          val defDelta = renv d
-          val allowPrim = P.rbool r
-          val defSigs = P.rlist (fn r => let val n = P.rstring r in (n, rsigma d) end) r
-          val defFuns = P.rlist (fn r => let val n = P.rstring r in (n, rfunref r) end) r
-          val summary =
-            P.roption (fn r =>
-                         let
-                           val {bound, env = result,...} = rsigma d
-                           val a = P.rnat r
-                           val b = P.rnat r
-                           val c = P.rnat r
-                         in {generated = bound, result = result, counts = (a, b, c)} end) r
-          val binding=readOrigin r
-          val f =
-            Elaborate.FunInfo
-              {param = param, paramSig = paramSig, body = bodyOf at, defEnv = Env.plus (startEnv, defDelta),
-               allowPrim = allowPrim, origin = identity, summary = summary,binding=binding, code = NONE,
-               defSigs = List.foldl (fn ((n, s), m) => StringMap.insert (m, n, s)) startSigs defSigs,
-               defFuns = List.foldl (fn ((n, f), m) => StringMap.insert (m, n, f)) startFuns defFuns}
-        in ownFuns := IntMap.insert (!ownFuns, at, f); f end
-      (* --functors=functions: one compiled to a function (funcode), its
-         body nothing but its place *)
+      (* one compiled to a function (funcode) *)
       and rfuncode (r : P.reader) : Elaborate.funinfo =
         let
           val param = P.roption P.rstring r
           val paramSig = rsigma d
-          val at = P.rnat r
-          val summary =
-            P.roption (fn r => let val {bound, env = result,...} = rsigma d
-                               in {generated = bound, result = result, counts = (0, 0, 0)} end) r
+          val summary = let val {bound, env = result, ...} = rsigma d in {generated = bound, result = result} end
           val binding = readOrigin r
           val code = rname (d, kStamp)
-          (* a marked functor's Mid (M6b): what an application of it in a
-             later unit expands *)
+          (* a marked functor's Mid: what an application of it in a later
+             unit expands *)
           val () =
             case P.rbyte r of
               0 => ()
@@ -1921,15 +1746,9 @@ struct
                   IntTable.insert (!inlineHashes, code, P.hash (String.substring (#s r, p0, p1 - p0)))
                 end
             | _ => raise P.Bad "not an option"
-          val f =
-            Elaborate.FunInfo
-              {param = param, paramSig = paramSig, body = Ast.StrStruct ([], {file = file, start = at, stop = at}),
-               defEnv = Env.empty, allowPrim = false, origin = identity, summary = summary, binding = binding,
-               defSigs = StringMap.empty, defFuns = StringMap.empty, code = SOME code}
-        in ownFuns := IntMap.insert (!ownFuns, at, f); f end
+          val f = Elaborate.FunInfo {param = param, paramSig = paramSig, summary = summary, binding = binding, code = code}
+        in ownFuns := IntMap.insert (!ownFuns, code, f); f end
       val funs = P.rlist (fn r => let val n = P.rstring r in (n, rfunref r) end) r
-      (* what its functors' bodies found their names bound by: in its identity *)
-      val _ = P.rlist (fn r => let val k = P.rstring r in (k, P.rstring r) end) r
       val overloads =
         P.rlist (fn r =>
                    let
@@ -2006,8 +1825,7 @@ struct
       val () = List.app (fn (n, s) => Elaborate.sigs := StringMap.insert (!Elaborate.sigs, n, s)) sigs
       val () = List.app (fn (n, f) => Elaborate.funs := StringMap.insert (!Elaborate.funs, n, f)) funs
       val () = List.app (fn (s, x) => Overload.table := IntMap.insert (!Overload.table, s, x)) overloads
-      val u : loaded = {identity = identity, name = uname, file = file, base = base,
-                        count = counts, funs = !ownFuns}
+      val u : loaded = {identity = identity, name = uname, file = file, base = base, count = counts}
     in
       register u;
       notePaths (u, delta, sigs);

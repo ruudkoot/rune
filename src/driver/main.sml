@@ -719,9 +719,7 @@ struct
                                    | NONE => []
                        val u = UnitBasis.remapKeys (u, remap)
                        val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
-                       val l = timed "cache-basis" (fn () => UnitBasis.loadKnown ({pickle = pickle, file = name, at = at,
-                                                                                    env = !env, fixity = !fixity,
-                                                                                    text = text (name, mode)},
+                       val l = timed "cache-basis" (fn () => UnitBasis.loadKnown ({pickle = pickle, file = name, at = at},
                                                                                    SOME identity, remap))
                        (* its source, and those of the functors' bodies it
                           applied, where they are now, in its code's files *)

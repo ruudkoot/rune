@@ -174,9 +174,7 @@ struct
 
   (* start {units, sources, lib}: the units the REPL program was loaded from
      and the source of each, as the build named them; the bases of the
-     Basis's among them loaded, each from the file beside its code (.rbi),
-     a functor's body from lib's source of it, which must be the one the
-     build compiled *)
+     Basis's among them loaded, each from the file beside its code (.rbi) *)
   fun start {units : string list, sources : string list, lib : string} : unit =
     let
       val () = Pass.whole := false
@@ -196,8 +194,7 @@ struct
                 val pickle = readBytes rbi handle IO.Io _ => raise Failed ("cannot read " ^ rbi)
                 val st = UnitBasis.begin (!env, !fixity)
                 val l =
-                  UnitBasis.load {pickle = pickle, file = name, at = #counters st, env = !env, fixity = !fixity,
-                                  text = fn () => #text (Source.readFile (Source.Ascii, path))}
+                  UnitBasis.load {pickle = pickle, file = name, at = #counters st}
                   handle Pickle.Bad why => raise Failed (rbi ^ ": " ^ why)
                        | UnitBasis.Missing u => raise Failed (rbi ^ ": names " ^ u ^ ", which was not loaded")
                        | IO.Io _ => raise Failed ("cannot read " ^ path)
@@ -352,8 +349,7 @@ struct
                   loaded and linked under an identity of its own, that what
                   named the first's globals still does (UnitBasis.unused) *)
                val as' = UnitBasis.unused identity
-               val l = UnitBasis.loadKnown ({pickle = pickle, file = file, at = at, env = !env, fixity = #fixity start,
-                                             text = fn () => text}, SOME as', remap)
+               val l = UnitBasis.loadKnown ({pickle = pickle, file = file, at = at}, SOME as', remap)
                (* its source, and those of the functors' bodies it
                   applied, where they are now, in its code's files *)
                val code = if UnitBasis.moves (u, was, file, others) orelse not (List.null remap) orelse as' <> identity

@@ -122,8 +122,7 @@ struct
       val x = timed "unit-export" (fn () => UnitBasis.export {start = start, name = name, file = file, text = text, mode = mode,
                                                              delta = delta, fixity = fixity, used = used})
       val () = timed "unit-undo" (fn () => UnitBasis.undo start)
-      val l = timed "unit-load" (fn () => UnitBasis.loadKnown ({pickle = #pickle x, file = file, at = #counters start,
-                                                               env = #env start, fixity = #fixity start, text = text},
+      val l = timed "unit-load" (fn () => UnitBasis.loadKnown ({pickle = #pickle x, file = file, at = #counters start},
                                                               SOME (if fresh then UnitBasis.unused (#identity x)
                                                                     else #identity x), []))
     in {code = timed "unit-relative" (fn () => UnitBasis.relative (x, sc)), exported = x, loaded = l} end
