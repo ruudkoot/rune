@@ -519,7 +519,7 @@ struct
   (* A step made simpler by what is known, and whether it was: a field of a
      known tuple; a cast to the same type; a cast back through unit of what
      was cast to unit from the type wanted, or from a polymorphic global's
-     instance at it *)
+     instance at it, or of a nullary constructor at another instance *)
   fun fold (st : state) (r : rhs) : rhs * bool =
     case r of
       Select (i, Global (g, [])) =>
@@ -539,7 +539,16 @@ struct
                          if Ty.equal (from, c) then (Atom z, true)
                          else
                            (case z of
-                              Global (f, _) =>
+                              (* a nullary constructor, which a polymorphic
+                                 value of the record is at unit for its type
+                                 variables (`val index = NONE`): the same
+                                 constructor at the instance wanted *)
+                              Con0 (tag, _) =>
+                                (case (Ty.view from, Ty.view c) of
+                                   (Ty.Con (s1, _, _), Ty.Con (s2, _, _)) =>
+                                     if s1 = s2 then (Atom (Con0 (tag, c)), true) else (r, false)
+                                 | _ => (r, false))
+                            | Global (f, _) =>
                                 (case IntTable.find (#schemes st, f) of
                                    SOME (vs as _ :: _, tf) =>
                                      (case Ty.match (tf, c) of
