@@ -245,9 +245,11 @@ is a call of it, in every mode: a whole compile, a build in units and
 each application, and the copy is what is translated.
 
 * **A structure's record.** A structure that reaches a functor is a value
-  at run time: a tuple of its slots, each cast to `unit` by `unsafe_cast`
+  at run time: a tuple of its slots, each cast to `unit` by `functor_cast`
   (a polymorphic value at `unit` for its type variables, which changes
-  nothing of it) -- its values, its exceptions (their constructors), and the
+  nothing of it; an `unsafe_cast` that only a record's slots are given,
+  which Lower makes one, the expansion folds and MidLint checks: a value
+  cast to `unit` is cast back at its own type) -- its values, its exceptions (their constructors), and the
   constructors, exceptions and primitives a value specification gave as
   values, by name; then each substructure's record, a record of its own, by
   name; at least two slots. A constructor has no slot: tags are the
@@ -287,8 +289,12 @@ each application, and the copy is what is translated.
   argument is one of the parameter's abstract types may be laid out flat
   in the argument where the specification reads it boxed. Its descriptor,
   in the parameter's record, is the argument's number of fields (0 for
-  boxed); `ToMid` makes or takes apart such a constructor as the
-  specification reads it where the descriptor is 0, and otherwise calls the
+  boxed), worked out where the program is lowered (`open_layout` of the
+  argument's datatype and the constructor's tag, `Elaborate.DescLayout`),
+  from the layout the datatype has then, which the expansion may have
+  given it since; `ToMid` makes or takes apart such a constructor as the
+  specification reads it where the descriptor is 0 (the test is
+  `open_boxed`, a primitive of its own), and otherwise calls the
   body's functions for it (`Translate.openFuns`), which see the object
   through `Ty.flat n`, a datatype of the basis whose constructors have `n`
   fields. Simplify's equality functions leave such a datatype to
@@ -307,7 +313,8 @@ each application, and the copy is what is translated.
   unit, before it is kept for `--units --whole`, where only an application
   of a functor the unit declares is expanded (D2 A).
   - An application carries what a copy substitutes: before the call, a
-    cast of `()` to a pair of tuples of arrows, which nothing reads -- the
+    `functor_marker` of `()` at a pair of tuples of arrows, which nothing
+    reads and Lower makes an `unsafe_cast` -- the
     parameter's type names applied to variables (`Ty.Var`), each to what
     the argument realises it as, and the body's datatypes to the
     application's instances (`Translate.functorTypes`). Being a type of the
@@ -318,9 +325,11 @@ each application, and the copy is what is translated.
     substituted as the marker says; a datatype the body declares over
     what is substituted gets a name of its own (after `MidCanon`'s,
     `MidCanon.nextTycon`), and an instance the application named is
-    entered again with the constructors the copy gives it; an open
-    constructor's descriptor test keeps its first branch, which makes or
-    takes the constructor apart as its datatype. The copy's bindings,
+    entered again with the constructors the copy gives it, and an
+    instance an application in the body makes is the copy's own, as each
+    application makes new ones; an open constructor's test (`open_boxed`)
+    keeps its first branch, which makes or takes the constructor apart as
+    its datatype. The copy's bindings,
     groups of functions and the values its join points give the rest
     become definitions of the top level, as static interpretation's are
     (a local whose type names type variables it does not abstract over
@@ -341,8 +350,20 @@ each application, and the copy is what is translated.
     nodes (and 64 deep); past it, an application stays a call (D13).
   - An instance of a body's datatype that an expanded application named
     is laid out from its realised types, unless an application left a
-    call takes it, whose descriptor the body's layout gave; a datatype a
-    copy declared that such an application takes keeps the body's layout.
+    call takes it; a datatype a copy declared that such an application
+    takes keeps the body's layout. Either way a descriptor is the layout
+    Lower gives the datatype (`open_layout`).
+  - **Traces.** A copy leaves the frames its call leaves at `-O0`: what its
+    declarations run is in a frame of the functor's function (`functor F`)
+    called where the application is, and the body's functions keep the
+    functor's names (`F.boom`) in a copy as in the function, not the
+    applying structure's (the roadmap's X5 and M7 name an expanded copy by
+    the structure, which would make `-O0` and `-O2` differ, `make
+    check-levels`). Under the flag a definition of the top level makes no
+    tail call at any level (`Simplify`: its value is made with a
+    continuation), so that a function inlined there keeps the frame of
+    `<toplevel>`; off, `-O1` drops it, as before
+    (`tests/lang/mod.functor.functions_trace`).
   - **Across units** (M6b). A functor marked to be inlined (`inline
     functor` in a build file, `--inline-functor=F`; docs/build.md) has its
     function's Mid kept in its unit's basis (`MidCodec`,

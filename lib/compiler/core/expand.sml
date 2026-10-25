@@ -125,6 +125,23 @@ struct
       | _ => NONE
     end
 
+  (* e's positions with a frame more, outermost -- the function e's code
+     comes from, called from where the frames are -- in the code that runs
+     in the activation e is put into, not in a function made there (as
+     Simplify.inlinedFrom) *)
+  fun inlinedFrom (frame : frame, outer : frame list) (e : exp) : exp =
+    let
+      fun go e =
+        case e of
+          Let (x, s, r, b) => Let (x, s, r, go b)
+        | Fun (fs, b) => Fun (fs, go b)
+        | Join (j, ps, body, sc) => Join (j, ps, go body, go sc)
+        | If (c, t, f) => If (c, go t, go f)
+        | Handle (a, x, h) => Handle (go a, x, go h)
+        | Mark ((sp, frames), a) => Mark ((sp, frames @ frame :: outer), go a)
+        | _ => e
+    in go e end
+
   (* the marked functors' functions p defines, kept (a unit's, before its
      passes) *)
   fun keepMarked (p : program) : unit =
@@ -1111,8 +1128,27 @@ struct
                                           | NONE => ()
                                  val body = copyBody (st, sigma, named, f, a')
                                  val body = case mark of SOME pos => Mark (pos, body) | NONE => body
+                                 val nMade = List.length (!made)
                                  val () = spine (st, emit, SOME (r, s), ref []) body
-                                 val made = List.map (fn d => (d, SOME root', depth + 1, false)) (List.rev (!made))
+                                 (* what the copy's declarations run, in a frame of the
+                                    functor's function called where the application is,
+                                    as at -O0 (the review of M6, finding 4): not the
+                                    steps before the call, nor its functions, which run
+                                    in activations of their own *)
+                                 val name = case #params f of
+                                              (p, _) :: _ => getOpt (IntMap.find (!Translate.funNames, p), "functor")
+                                            | [] => "functor"
+                                 fun frame d =
+                                   case mark of
+                                     SOME (sp, outer) =>
+                                       (case d of
+                                          Val (x, sc, e) => Val (x, sc, inlinedFrom ({name = name, site = SOME sp}, outer) e)
+                                        | Do (gs, e) => Do (gs, inlinedFrom ({name = name, site = SOME sp}, outer) e)
+                                        | _ => d)
+                                   | NONE => d
+                                 val all = List.rev (!made)
+                                 val made = List.take (all, nMade) @ List.map frame (List.drop (all, nMade))
+                                 val made = List.map (fn d => (d, SOME root', depth + 1, false)) made
                                in loop (made @ rest) end
                            end)
                   | Do (_, e) => if original andalso calls (fns, e) andalso Pass.spend () then flatten () else plain ()

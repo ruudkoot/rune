@@ -1,0 +1,36 @@
+trace tests/lang/mod.functor.functions_trace.sml:9
+F.leaf tests/lang/mod.functor.functions_trace.sml:13
+F.deep tests/lang/mod.functor.functions_trace.sml:14
+functor F tests/lang/mod.functor.functions_trace.sml:15
+<toplevel> tests/lang/mod.functor.functions_trace.sml:18
+--
+trace tests/lang/mod.functor.functions_trace.sml:9
+F.leaf tests/lang/mod.functor.functions_trace.sml:13
+functor F tests/lang/mod.functor.functions_trace.sml:16
+<toplevel> tests/lang/mod.functor.functions_trace.sml:18
+--
+trace tests/lang/mod.functor.functions_trace.sml:9
+F.leaf tests/lang/mod.functor.functions_trace.sml:13
+F.deep tests/lang/mod.functor.functions_trace.sml:14
+functor F tests/lang/mod.functor.functions_trace.sml:15
+functor G tests/lang/mod.functor.functions_trace.sml:22
+<toplevel> tests/lang/mod.functor.functions_trace.sml:25
+--
+trace tests/lang/mod.functor.functions_trace.sml:9
+F.leaf tests/lang/mod.functor.functions_trace.sml:13
+functor F tests/lang/mod.functor.functions_trace.sml:16
+functor G tests/lang/mod.functor.functions_trace.sml:22
+<toplevel> tests/lang/mod.functor.functions_trace.sml:25
+--
+trace tests/lang/mod.functor.functions_trace.sml:9
+F.leaf tests/lang/mod.functor.functions_trace.sml:13
+F.deep tests/lang/mod.functor.functions_trace.sml:14
+functor G tests/lang/mod.functor.functions_trace.sml:23
+<toplevel> tests/lang/mod.functor.functions_trace.sml:25
+--
+trace tests/lang/mod.functor.functions_trace.sml:9
+F.leaf tests/lang/mod.functor.functions_trace.sml:13
+<toplevel> tests/lang/mod.functor.functions_trace.sml:28
+--
+19
+H
