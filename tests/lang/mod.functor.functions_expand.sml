@@ -109,3 +109,23 @@ structure Sz = Sizes ()
 val double = Sz.memoize (fn Sz.T {bits} => bits * 2)
 val show = Sz.memoize (fn Sz.T {bits} => Int.toString bits)
 val () = print (Int.toString (double (Sz.T {bits = 2})) ^ " " ^ show (Sz.T {bits = 1}) ^ "\n")
+
+(* a nested application's instance that the outer result does not show,
+   so that every copy of the outer body keeps its name: each expansion
+   enters it again, and its constructors must name one copy of the body's
+   datatype it reaches, which the signature hides (fxp's State and ExtType) *)
+signature HIDDEN = sig type b val mk : int -> b val get : b -> int end
+functor Hidden (X : sig val k : int end) : HIDDEN =
+struct
+  datatype a = A of b | Z of int
+  and b = B of a
+  fun mk n = B (if n = 0 then Z X.k else A (mk (n - 1)))
+  fun get (B (Z k)) = k | get (B (A b)) = 1 + get b
+end
+functor Hides (Y : sig val k : int end) : sig val run : int -> int end = struct
+  structure I = Hidden (struct val k = Y.k end)
+  fun run n = I.get (I.mk n)
+end
+structure H1 = Hides (struct val k = 10 end)
+structure H2 = Hides (struct val k = 20 end)
+val () = print (Int.toString (H1.run 3) ^ " " ^ Int.toString (H2.run 4) ^ "\n")

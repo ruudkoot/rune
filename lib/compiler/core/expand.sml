@@ -229,11 +229,15 @@ struct
      copied : (int * int * {params : int list, cons : (int * string * Ty.ty option) list}) list ref,
      instances : int list ref,
      (* the instances' constructors, as the copies made them *)
-     rebound : (int * {params : int list, cons : (int * string * Ty.ty option) list}) list ref}
+     rebound : (int * {params : int list, cons : (int * string * Ty.ty option) list}) list ref,
+     (* each copy of a body's datatype, by the datatype and what the names
+        it reaches were made (copyKey) *)
+     dcopies : int StringMap.map ref}
 
   fun newState () : state =
     {globalized = IntTable.table 1024, alias = IntTable.table 1024, tuples = IntTable.table 256,
-     casts = IntTable.table 1024, schemes = IntTable.table 4096, copied = ref [], instances = ref [], rebound = ref []}
+     casts = IntTable.table 1024, schemes = IntTable.table 4096, copied = ref [], instances = ref [], rebound = ref [],
+     dcopies = ref StringMap.empty}
 
   (* ---- copying a body ---- *)
 
@@ -311,15 +315,59 @@ struct
         | Ty.Tuple ts => Ty.tuple (List.map ty ts)
         | Ty.Arrow (a, b) => Ty.arrow (ty a, ty b)
         | _ => t
-      (* a datatype of the body's over what sigma substitutes, copied *)
+      (* a datatype of the body's over what sigma substitutes, copied: once
+         for what the names it reaches are made, which two copies share
+         where both make them the same -- an instance two applications
+         share (a nested application's that the outer result does not show,
+         which keeps its name in every copy of the outer body) is entered
+         again by each, and its constructors must name one copy of a
+         datatype of the body they reach (fxp's ExtType and State) *)
       and instantiate (s : int) : image =
         let
-          val s' = freshTycon ()
-          val () = sigma := IntMap.insert (!sigma, s, Name s')
-          val info = case Ty.datatypeOf s of
-                       SOME {params, cons} => {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map ty a)) cons}
-                     | NONE => bug "a datatype without constructors"
-        in #copied st := (s, s', info) :: !(#copied st); Name s' end
+          val key = copyKey s
+        in
+          case StringMap.find (!(#dcopies st), key) of
+            SOME s' => (sigma := IntMap.insert (!sigma, s, Name s'); Name s')
+          | NONE =>
+              let
+                val s' = freshTycon ()
+                val () = sigma := IntMap.insert (!sigma, s, Name s')
+                val () = #dcopies st := StringMap.insert (!(#dcopies st), key, s')
+                val info = case Ty.datatypeOf s of
+                             SOME {params, cons} => {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map ty a)) cons}
+                           | NONE => bug "a datatype without constructors"
+              in #copied st := (s, s', info) :: !(#copied st); Name s' end
+        end
+      (* the datatype s and what the application makes of each name it
+         reaches (sigma0, not the copies this one has made so far, so that
+         the order a copy meets the body's datatypes in changes nothing),
+         through the body's datatypes it does not make anything: which
+         determine its copy *)
+      and copyKey (s : int) : string =
+        let
+          val seen : unit IntTable.table = IntTable.table 16
+          val found : (int * string) list ref = ref []
+          fun tyKey t =
+            case Ty.view t of
+              Ty.Con (c, _, args) => "c" ^ Int.toString c ^ "(" ^ String.concatWith "," (List.map tyKey args) ^ ")"
+            | Ty.Tuple ts => "t(" ^ String.concatWith "," (List.map tyKey ts) ^ ")"
+            | Ty.Arrow (a, b) => "a(" ^ tyKey a ^ "," ^ tyKey b ^ ")"
+            | Ty.Gen i => "g" ^ Int.toString i
+            | Ty.Var i => "v" ^ Int.toString i
+            | Ty.ExnCon => "e"
+          fun imageKey (Name c) = "n" ^ Int.toString c
+            | imageKey (Body (vs, body)) = "b" ^ String.concatWith "," (List.map Int.toString vs) ^ ":" ^ tyKey body
+          fun walk n =
+            if isSome (IntTable.find (seen, n)) then ()
+            else
+              (IntTable.insert (seen, n, ());
+               case IntMap.find (sigma0, n) of
+                 SOME i => found := (n, imageKey i) :: !found
+               | NONE => List.app walk (namesOfDatatype n))
+          val () = IntTable.insert (seen, s, ())
+          val () = List.app walk (namesOfDatatype s)
+          val sorted = IntMap.listItemsi (List.foldl (fn ((n, k), m) => IntMap.insert (m, n, k)) IntMap.empty (!found))
+        in Int.toString s ^ "|" ^ String.concatWith ";" (List.map (fn (n, k) => Int.toString n ^ "=" ^ k) sorted) end
 
       val vars : atom IntTable.table = IntTable.table 256
       val labels : int IntTable.table = IntTable.table 64
