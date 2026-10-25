@@ -178,12 +178,19 @@ struct
          in check s ("a cached unit linked against a unit the session replaced: " ^ output)
               (String.isSubstring "val same = 1 : int" output andalso String.isSubstring "val edited = 1 : int" output
                andalso String.isSubstring "val a = 135 : int" output) end)
+    | "S76" =>
+        (own s ""; put s "v.sml" "val v = 1 + 2  fun get (SOME x) = x | get NONE = v";
+         let val _ = session s false ["val a = 1;", "val b = 2;", "use \"v.sml\";"]
+             val output = session s true ["use \"v.sml\";", "val w = get NONE;"]
+         in check s ("a file used at another place in a session, the cache verified: " ^ output)
+              (String.isSubstring "val v = 3 : int" output andalso String.isSubstring "val w = 3 : int" output
+               andalso not (String.isSubstring "not what compiling it gives" output)) end)
     | "S58" => parallel s
     | _ => simple s
     end
   val cases = ["S1", "S2", "S3", "S5", "S6", "S8", "S17", "S18", "S19", "S29", "S13", "S24", "S31", "S33", "S34", "S36", "S28", "S40",
                "S4", "S7", "S9", "S10", "S11", "S12", "S14", "S15", "S16", "S20", "S21", "S22", "S23", "S25", "S26", "S30", "S32", "S35",
-               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75"]
+               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76"]
   fun runCase name compiler =
     let val s = create name compiler
     in one s; say ("PASS incremental." ^ name ^ ": " ^ Int.toString (!(#assertions s)) ^ " assertions\n") end

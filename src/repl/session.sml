@@ -367,8 +367,12 @@ struct
                  | Fail _ => (UnitBasis.abandon at; NONE)
           end
       val warnings : string list ref = ref []
-      (* the source of the printer, which nothing names once it is compiled *)
-      val echoName = "<echo " ^ Int.toString k ^ ">"
+      (* the source of the printer, which nothing names once it is compiled:
+         one name for every declaration's, which are compiled one at a time,
+         so that a declaration's code does not depend on how many the session
+         compiled before it, and an entry of the cache is what compiling the
+         declaration again in another session gives (RUNE_VERIFY_CACHE, S76) *)
+      val echoName = "<echo>"
     in
       case hit of
         SOME r => r

@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S75. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S76. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
@@ -332,13 +332,23 @@ when the scenarios above were all green
   added to `counter.sml`; then `twice.sml` (a functor) and `apply.sml` (an
   application of it), then both again after the functor's body is edited.
   Each `user.sml` increments the `Counter` of the `counter.sml` used last,
-  and the last `apply.sml` copies the edited body (135, not 45). A usage
+  and the last `apply.sml` runs the edited body (135, not 45). A usage
   holds by its fingerprint only where the unit that bound the name is not
   in the session: `user.sml`'s entry names the first `counter.sml`'s
-  globals, and `apply.sml`'s the first body it copied, which a REPL keeps
+  globals, and `apply.sml`'s the first functor's function, which it calls
+  (until functors-units M7, the first body it copied), which a REPL keeps
   beside the unit that binds the name now. Before, both entries were
   taken, and incremented the first `Counter` and printed 45 (build-cache
   issues 23 and 21).
+* **S76, a file used at another place in a session.** In the REPL, `use`
+  a file of a value and a function after two declarations of the prompt's,
+  then in another session `use` it first, the cache verified: its entry
+  is taken, and compiled again it is the same bytes. The source of a
+  declaration's printer is named alike in every declaration
+  (`src/repl/session.sml`). Before, it was named by how many declarations
+  the session had compiled, which the code keeps, and the entry was not
+  what compiling the declaration gave: HOL4's build, verified, stopped at
+  a file its configuration had used at another place.
 * **S59, one unit in two sessions.** `c.sml` uses `a.sml` and `b.sml`,
   which do not use each other. Built after them in one order and then in
   the other through one cache, `c.sml`'s entry is taken, and compiled
