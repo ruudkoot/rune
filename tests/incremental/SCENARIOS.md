@@ -314,7 +314,7 @@ when the scenarios above were all green
   is loaded and linked under one of its own (`identity~2`), so that what
   named the first's globals still does; its entry keeps the identity of
   its basis. Before, the second's globals were the first's to code that
-  named them (S38 is the same through the cache).
+  named them (S38 is the same through the cache; build-cache issue 22).
 * **S75, a unit the session replaced.** In the REPL, through the cache:
   `use` `counter.sml` (a structure with a ref) and `user.sml` (a function
   that increments it), then both again, then both again after a value is
@@ -326,7 +326,8 @@ when the scenarios above were all green
   in the session: `user.sml`'s entry names the first `counter.sml`'s
   globals, and `apply.sml`'s the first body it copied, which a REPL keeps
   beside the unit that binds the name now. Before, both entries were
-  taken, and incremented the first `Counter` and printed 45.
+  taken, and incremented the first `Counter` and printed 45 (build-cache
+  issues 23 and 21).
 * **S59, one unit in two sessions.** `c.sml` uses `a.sml` and `b.sml`,
   which do not use each other. Built after them in one order and then in
   the other through one cache, `c.sml`'s entry is taken, and compiled

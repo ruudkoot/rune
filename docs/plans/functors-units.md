@@ -3330,7 +3330,7 @@ mode, bytecode instructions [machine instructions]:
     took a cached unit across a file used again, edited or not, and linked
     it to the first file's globals. Fixed: a usage holds by its
     fingerprint only where the unit that bound the name is gone
-    (docs/units.md, *Fingerprints*; S75);
+    (docs/units.md, *Fingerprints*; S75; build-cache issues 21 and 23);
   - **with or without the cache, with or without the flag:** `use
     "counter.sml"; structure Old = Counter; use "counter.sml"; Old.n :=
     10` set the second `Counter.n` too (`!Counter.n` was 10 where 0 is
@@ -3338,7 +3338,7 @@ mode, bytecode instructions [machine instructions]:
     and a later unit named a global of the first load by the key the
     second load had too. Fixed: a unit loaded again is loaded and linked
     under an identity of its own (`identity~2`, docs/units.md; S38 and
-    S74). It was not functors'.
+    S74; build-cache issue 22). It was not functors'.
 
 The prototypes are on this branch, behind the flag; with it off the
 compiler's output is the same bytes, but compiling the compiler itself
