@@ -469,17 +469,28 @@ roadmap's M7 makes it the only way):
      and a free variable's copy.
 
   Status: being fixed, each with a test, before M7.
-* Found by the generator of functor programs (`tests/runner`, 2026-10-25),
-  so far:
-  * a functor applied to an earlier unit's structure, in units: the lint
-    after the expansion fails ("cast to unit from unit -> unit, is cast
-    back to int -> int");
-  * with `--datatype-tags=sorted-x`, in a program with no functor, `datatype
-    t = C0 of int | C1 of string * int` built and matched so that Lower's
-    lint finds a pointer where `int_add` wants an int, whole and in
-    `--units --whole`.
+* Found by the generator of functor programs (`tests/runner/functorgen.sml`,
+  2026-10-25: 6,688 programs, each in up to seven modes), each a failure of
+  `--lint` in a program that printed right:
+  * a functor applied to an earlier unit's structure, in units, under the
+    flag: the lint after the expansion fails ("cast to unit from unit ->
+    unit, is cast back to int -> int"), in 37% of the programs generated;
+  * a functor whose body seals its parameter (`structure I :> S = X`) and
+    declares a datatype over `I.t`, applied in another functor's body that
+    two applications make code of, whole and in units: the expansion makes
+    one copy of the datatype for both ("the argument of a constructor has
+    type int * int where real is wanted").
 
   Status: being fixed before M7.
+* Found by the same generator, and not the prototype's: with the flag off,
+  from `-O1`, a function that returns a datatype's constructors in globals
+  (Lower's `results`) shares a global between constructors -- `datatype t =
+  C0 of int | C1 of string * int` keeps C0's int and C1's string in one --
+  and the variable read from it took the representation of the first
+  binding Lower met, C1's pointer, where C0's branch adds it as an int:
+  Lower's lint refused it, and the register code told the JIT the register
+  holds a pointer. Status: fixed; such a variable holds anything
+  (`tests/lang/dec.datatype_int-payload-lint`).
 
 **In other compilers** (E1 and E6; `functors-units.md`, *Found while
 writing this roadmap*, has each):
