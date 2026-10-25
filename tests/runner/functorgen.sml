@@ -963,6 +963,8 @@ struct
                                paths := !paths @ [(s, v)] @ (if #inner v then [(s ^ ".Inner", core)] else []))
       (* the values of one structure matched by the constructors of another *)
       val cross : string list ref = ref []
+      (* the functor each printed structure is an application of *)
+      val origin : (string * string) list ref = ref []
       fun matchLine (s, by, cs) =
         "val () = print (\"match " ^ s ^ " " ^ by ^ " \" ^ " ^ String.concatWith " ^ \" \" ^ "
         (List.map (fn n => "(case " ^ s ^ ".mk " ^ ints n ^ " of "
@@ -976,6 +978,7 @@ struct
           val (t, _, _, _) = if #form f = 5 then ("", core, 0, 0) else resolveArg c (#needs f) a
           val t = if needsPath f andalso not (isPath t) andalso wrap <> 1 then hoist t else t
           val s = "S" ^ ints i
+          val () = origin := !origin @ [(if wrap = 2 then s ^ ".In" else s, #name f)]
         in
           used j;
           case wrap of
@@ -1033,10 +1036,19 @@ struct
       val exns = List.filter (fn (_, v : view) => #exn v) (!structs)
       fun pairs (a :: (rest as b :: _)) = (a, b) :: pairs rest
         | pairs _ = []
+      (* and two applications of one functor, whose exceptions differ *)
+      fun twins [] = []
+        | twins ((a, va) :: rest) =
+            case (List.find (fn (s, _) => s = a) (!origin), rest) of
+              (SOME (_, fa), _) =>
+                (case List.find (fn (b, _) => List.exists (fn (s, fb) => s = b andalso fb = fa) (!origin)) rest of
+                   SOME b => (note "exception:generative-top"; [((a, va), b)])
+                 | NONE => twins rest)
+            | (NONE, _) => twins rest
       val () = List.app (fn ((a, _), (b, _)) =>
                            emit ("val () = print (\"exn " ^ a ^ " " ^ b ^ " \" ^ ((" ^ a ^ ".fail 1; \"none\") handle " ^ b ^ ".E _ => "
                                  ^ str b ^ " | " ^ a ^ ".E _ => " ^ str a ^ ") ^ \"\\n\")"))
-                        (List.take (pairs exns, Int.min (4, length (pairs exns))))
+                        (List.take (pairs exns, Int.min (4, length (pairs exns))) @ twins exns)
       val counted = List.map #1 (List.filter (fn (_, v : view) => #count v) (leafViews @ !structs))
       val () = emit ("val () = print (\"counts \" ^ Log.ints [" ^ commas (List.map (fn s => "!" ^ s ^ ".count") counted) ^ "] ^ \"\\n\")")
       val () = emit "val () = Log.tick \"end\""
