@@ -79,8 +79,8 @@ What it rests on:
 | M4 | Fingerprints by structure; gate G1 | H | done (2026-10-24) |
 | M5 | Prototype: functors compiled once | F | done (2026-10-25) |
 | M6 | Prototype: the expansion | F | done (2026-10-25) |
-| G2 | Go or no-go for M7 and M8 (the owner's) | F | go if inline functors bring performance back to today's (the owner, 2026-10-25); the evidence is in |
-| M7 | Functors compiled once | F | not started |
+| G2 | Go or no-go for M7 and M8 (the owner's) | F | go (the owner, 2026-10-25): inline functors bring performance back to today's, and the four checks asked before M7 are clean |
+| M7 | Functors compiled once | F | next |
 | M8 | Nested functors that do not blow up | F | not started |
 | M9 | Retire | | not started |
 
@@ -3347,6 +3347,53 @@ compiles their sources too: the bootstrap's budgets were re-based for
 results are in the campaign's drafts (`impl/fu-m5/g2.md`,
 `impl/fu-m5/measures.md`).
 
+**The four checks before M7 (the owner, 2026-10-25), and the ruling.**
+Four corner-case bugs of the expansion had been found only by compiling
+large programs, so before M7 made it the only way the owner asked for
+four checks, after which G2 is go:
+1. **every corpus linted under the flag** (`--functors=functions
+   --datatype-tags=sorted-x --lint`, whole and in units, with the Basis's
+   marks): `tests/lang` and `tests/errors` in five modes (906 pass; 6 are
+   M3's corners, 5 skipped), `check-levels` (361), S42 (361 and the
+   compiler, whose bootstrap under the flag reaches its fixpoint), the
+   Basis Library suite (240), the examples, HaMLet's corpus, SML/NJ's
+   regression suite (813), the benchmark catalogue (509 of 515: the six
+   `pidigits` were IntInf's SML arithmetic, wrong with the flag off too,
+   and fixed), MLton's 606 files whole and in units, and HOL4 to
+   `hol.state` (346 s): clean;
+2. **every program's output compared with the flag on and off**, in the
+   same runs: the same, but for traces (below), the collector's numbers
+   in units, and SML/NJ's tests that print timings or the image's name;
+3. **a generator of functor programs** (`tests/runner/functorgen.sml`,
+   `functors/@generated` in `make check`): 6,688 programs of the module
+   language's hard shapes, each in up to seven modes. It found three
+   failures of `--lint` in programs that printed right: a functor applied
+   to an earlier unit's structure in units, a datatype over a sealed
+   structure copied once for two applications, and -- not functors' --
+   Lower's results giving a global two constructors share the first one's
+   representation;
+4. **an independent review of `expand.sml`**: seven findings, two of them
+   miscompiles no lint saw (a program's `if n = 0` folded as a
+   descriptor's test; a descriptor worked out apart from the layout the
+   expansion gave the instance), a lint failure of `fxp`'s kind, traces
+   that differed between -O0 and -O2, a crash on a marker recognised by
+   its type's shape, MidLint's cast rule, and two of no effect.
+
+Every one is fixed with a test (build-cache-issues.md, *Found on the
+way*): the casts, markers, open constructors' tests and descriptors are
+primitives of their own (`functor_cast`, `functor_marker`, `open_boxed`,
+`open_layout`, Lower working out the descriptor from the layout it gives
+the datatype), and each copy of a body has the instances its applications
+make. Since 13829a969 every compile a test makes is linted (`RUNE_LINT`),
+which found four more bugs outside the prototype, fixed too.
+
+**G2: go** (the owner, 2026-10-25), and M7 follows. One decision of M6c
+departs from M7's text below: a copy is named in traces by the functor
+(`F.boom`), as the functor's function is at -O0, where nothing is
+expanded, so that traces are the same at every level (`check-levels`);
+today a copy is named by the structure (`A.boom`). Naming copies by the
+structure would need the copies at -O0 too.
+
 ### M7. Functors compiled once (F; M, about 300 added and 520 removed)
 
 * **What:** the flag's way becomes the only way, in every mode (D16):
@@ -3366,7 +3413,8 @@ results are in the campaign's drafts (`impl/fu-m5/g2.md`,
   - the scenarios' expectations changed: S8, S21, S48 to S51, S55, S61, S65
     and S66 (E10 says what each becomes);
   - function names in traces and profiles: a call of a functor's function is
-    named by the functor, an expanded copy by the structure, as today;
+    named by the functor, and so, since M6c, is an expanded copy, for
+    `check-levels` (*Gate G2*, the ruling);
   - (a), (c) and (d) closed by construction, their tests turned around.
 * **Done when:** G2's budgets hold on the merged code; `make check`;
   MLton's S44 to S48; HOL4 built through the cache with `RUNE_VERIFY_CACHE=1`.
