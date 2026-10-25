@@ -410,6 +410,18 @@ found 16 to 23. They are not the cache's, and are kept here with them.
   `ListPair`'s and what is made of them -- still stop past some ten
   million elements: `performance/basis.md` says what was tried and what
   might do.
+* **`IntInf`'s SML arithmetic dropped a limb of a sum.** Adding two
+  magnitudes took the first for the longer by its bytes, and walked its
+  limbs alone; a limb is 30 bits, not a whole number of bytes, so two
+  magnitudes of as many bytes may be of two lengths in limbs, and the
+  other's top limb was lost: `(2^210 - 1) + 2^210` gave `2^210 - 1`
+  plus nothing above it, while `2^210 + (2^210 - 1)` was right. GMP's
+  arithmetic, the register VM's default, was right; the stack VM's and
+  `--intinf=sml`'s were not, and every `pidigits` benchmark printed wrong
+  digits under them (found running the benchmark catalogue under the
+  flag, wrong with it off too). Neither the IntInf suite's 230 vectors,
+  mostly small, nor its backends' comparisons had such a pair. Status:
+  fixed; the longer in limbs is taken (`tests/lang/basis.intinf_add_limbs`).
 * **A unit's provenance read by its width.** Three readers of the hash in
   a unit's provenance -- `Link.sourceOf`, the runtime's
   `unit_source_current` and the Basis's `linkedUnitSources` -- took it to
