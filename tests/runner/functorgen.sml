@@ -42,7 +42,7 @@ struct
      it is made (an inner instance in a body without one, a parameter's Sub
      not asked for) is made something that is *)
   datatype field = FInt | FStr | FX | FY | FInner of int | FPair of field * field | FRec of field * field
-                 | FSelf | FOther | FSub | FBox of field | FList of field | FOpt of field | FReal | FFun
+                 | FSelf | FOther | FSub | FBox of field | FList of field | FOpt of field | FReal | FFun | FTree of field
 
   type con = {fields : field list, record : bool}
 
@@ -62,7 +62,7 @@ struct
   datatype arg = AParam | AInner of int | APath of int | AAdapter of int | AApp of int * arg | ALit of leaf
 
   type param = {form : int, eq : bool, dt : int option, exn : bool, count : bool, sub : bool, poly : bool,
-                named : bool, perm : int, kval : int}
+                named : bool, perm : int, kval : int, tree : bool}
   type body = {tick : bool, openX : bool, hide : bool, inners : (int * arg * int) list, rep : rep, exn : int,
                carry : bool, count : bool, sub : int, poly : int, pair : bool, inner : bool, via : bool,
                probes : bool list}
@@ -85,14 +85,14 @@ struct
     Gen.primitive (fn sa =>
       let
         val c = if depth <= 0 then 0 else 1
-        (*        Int Str X  Y  Inner Pair   Rec    Self Other Sub Box List Opt Real Fun *)
-        val ws = [5,  2,  6, 1, 3,    2 * c, 2 * c, 3,   2,    1,  c,  c,   c,  1,   1]
+        (*        Int Str X  Y  Inner Pair   Rec    Self Other Sub Box List Opt Real Fun Tree *)
+        val ws = [5,  2,  6, 1, 3,    2 * c, 2 * c, 3,   2,    1,  c,  c,   c,  1,   1,  c]
         fun sub i = at sa i (fieldGen (depth - 1))
       in
         case at sa 0 (weighted ws) of
           0 => FInt | 1 => FStr | 2 => FX | 3 => FY | 4 => FInner (at sa 1 (choice 3))
         | 5 => FPair (sub 1, sub 2) | 6 => FRec (sub 1, sub 2) | 7 => FSelf | 8 => FOther | 9 => FSub
-        | 10 => FBox (sub 1) | 11 => FList (sub 1) | 12 => FOpt (sub 1) | 13 => FReal | _ => FFun
+        | 10 => FBox (sub 1) | 11 => FList (sub 1) | 12 => FOpt (sub 1) | 13 => FReal | 14 => FFun | _ => FTree (sub 1)
       end)
 
   val conGen : con Gen.gen =
@@ -133,7 +133,7 @@ struct
       {form = at sa 0 (weighted [5, 2, 2, 1, 1, 1, 1]), eq = at sa 1 (flag 40),
        dt = if at sa 2 (flag 20) then SOME (at sa 3 (choice nShapes)) else NONE,
        exn = at sa 4 (flag 30), count = at sa 5 (flag 25), sub = at sa 6 (flag 25), poly = at sa 7 (flag 30),
-       named = at sa 8 (flag 30), perm = at sa 9 (choice 8), kval = at sa 10 (choice 9)})
+       named = at sa 8 (flag 30), perm = at sa 9 (choice 8), kval = at sa 10 (choice 9), tree = at sa 11 (flag 20)})
 
   val bodyGen : body Gen.gen =
     Gen.primitive (fn sa =>
@@ -144,7 +144,7 @@ struct
        rep = at sa 4 repGen, exn = at sa 5 (weighted [4, 4, 1, 1]), carry = at sa 6 (flag 25),
        count = at sa 7 (flag 40), sub = at sa 8 (weighted [5, 1, 1, 1]), poly = at sa 9 (weighted [5, 2, 1, 1]),
        pair = at sa 10 (flag 30), inner = at sa 11 (flag 25), via = at sa 12 (flag 25),
-       probes = at sa 13 (Gen.listOf (Gen.return 18) (flag 60))})
+       probes = at sa 13 (Gen.listOf (Gen.return 19) (flag 60))})
 
   val resultGen : result Gen.gen =
     Gen.primitive (fn sa =>
@@ -172,15 +172,16 @@ struct
 
   (* ---- what a structure shows *)
   type view = {eq : bool, dt : int option, exn : bool, count : bool, sub : bool, poly : bool,
-               cons : (string * bool) list option, pair : bool, inner : bool, int : bool}
-  type needs = {eq : bool, dt : int option, exn : bool, count : bool, sub : bool, poly : bool, int : bool}
+               cons : (string * bool) list option, pair : bool, inner : bool, int : bool, tree : bool}
+  type needs = {eq : bool, dt : int option, exn : bool, count : bool, sub : bool, poly : bool, int : bool, tree : bool}
   val core : view = {eq = false, dt = NONE, exn = false, count = false, sub = false, poly = false, cons = NONE,
-                     pair = false, inner = false, int = false}
-  val nothing : needs = {eq = false, dt = NONE, exn = false, count = false, sub = false, poly = false, int = false}
+                     pair = false, inner = false, int = false, tree = false}
+  val nothing : needs = {eq = false, dt = NONE, exn = false, count = false, sub = false, poly = false, int = false, tree = false}
   fun satisfies (v : view, n : needs) =
     (not (#eq n) orelse #eq v) andalso (case #dt n of NONE => true | SOME k => #dt v = SOME k)
     andalso (not (#exn n) orelse #exn v) andalso (not (#count n) orelse #count v)
     andalso (not (#sub n) orelse #sub v) andalso (not (#poly n) orelse #poly v) andalso (not (#int n) orelse #int v)
+    andalso (not (#tree n) orelse #tree v)
 
   fun nth (xs, i) = List.nth (xs, i mod length xs)
   fun paren s = "(" ^ s ^ ")"
@@ -261,6 +262,11 @@ struct
       obs = "fun obs (a, s, b) = a + size s + (if b then 1 else 0)", eq = true},
      {ty = "real * int", mk = "fun mk n = (real n, n)", obs = "fun obs (r, k) = Real.floor r + k", eq = false}]
 
+  (* a polymorphic datatype a parameter may specify, its constructors in an
+     order of their own *)
+  fun treeDecl k =
+    "datatype 'a tree = " ^ (if k mod 2 = 0 then "Leaf | Node of 'a tree * 'a * 'a tree" else "Node of 'a tree * 'a * 'a tree | Leaf")
+
   fun subText k =
     case k mod 4 of
       0 => "structure Sub = struct type u = int fun mk2 n = n * 2 fun obs2 u = u end"
@@ -298,8 +304,9 @@ struct
           end
     in
       (decls @ ["val tag = " ^ str name, "exception E of int", "fun fail n = raise E (10 * n)", "val count = ref 0",
-                subText (#sub l), boxText (#box l)],
-       {eq = eq, dt = dt, exn = true, count = true, sub = true, poly = true, cons = cons, pair = false, inner = false, int = r = 0})
+                subText (#sub l), boxText (#box l), treeDecl (#perm l div 2)],
+       {eq = eq, dt = dt, exn = true, count = true, sub = true, poly = true, cons = cons, pair = false, inner = false, int = r = 0,
+        tree = true})
     end
 
   (* ---- what a field is where it is made: its type in the body and, where
@@ -385,6 +392,16 @@ struct
               obs = fn v => let val p = fresh "p" in "(case " ^ v ^ " of NONE => 0 | SOME " ^ p ^ " => " ^ #obs fa p ^ ")" end}
           end
       | FReal => {ty = "real", sty = SOME "real", eq = false, mk = fn e => "real " ^ paren e, obs = fn v => "Real.floor " ^ paren v}
+      | FTree a =>
+          if #tree (#x c) then
+            let val fa = r a
+            in {ty = paren (#ty fa) ^ " X.tree", sty = Option.map (fn s => paren s ^ " X.tree") (#sty fa), eq = #eq fa,
+                mk = fn e => "X.Node (X.Leaf, " ^ #mk fa e ^ ", X.Node (X.Leaf, " ^ #mk fa (e ^ " + 1") ^ ", X.Leaf))",
+                obs = fn v => let val l = fresh "l" val p = fresh "p" val q = fresh "q"
+                              in "(case " ^ v ^ " of X.Leaf => 0 | X.Node (" ^ l ^ ", " ^ p ^ ", " ^ q ^ ") => " ^ #obs fa p
+                                 ^ " + (case " ^ q ^ " of X.Leaf => 1 | X.Node _ => 2) + (case " ^ l ^ " of X.Leaf => 0 | X.Node _ => 5))" end}
+            end
+          else r (FList a)
       | FFun => {ty = "(int -> int)", sty = SOME "(int -> int)", eq = false,
                  mk = fn e => let val z = fresh "z" in "(fn " ^ z ^ " => " ^ z ^ " + " ^ paren e ^ ")" end,
                  obs = fn v => paren v ^ " 3"}
@@ -395,7 +412,7 @@ struct
   fun norec f =
     case f of
       FSelf => FInt | FOther => FInt | FPair (a, b) => FPair (norec a, norec b) | FRec (a, b) => FRec (norec a, norec b)
-    | FBox a => FBox (norec a) | FList a => FList (norec a) | FOpt a => FOpt (norec a) | x => x
+    | FBox a => FBox (norec a) | FList a => FList (norec a) | FOpt a => FOpt (norec a) | FTree a => FTree (norec a) | x => x
   fun firstNorec (cs : con list) : con list =
     case cs of
       [] => [{fields = [], record = false}]
@@ -454,7 +471,8 @@ struct
   (* whether a field is p or has a part that is *)
   fun mentions p f =
     p f orelse (case f of FPair (a, b) => mentions p a orelse mentions p b | FRec (a, b) => mentions p a orelse mentions p b
-                        | FBox a => mentions p a | FList a => mentions p a | FOpt a => mentions p a | _ => false)
+                        | FBox a => mentions p a | FList a => mentions p a | FOpt a => mentions p a | FTree a => mentions p a
+                        | _ => false)
 
   (* what a result signature may say of t *)
   type spec = {lines : string list, eq : bool, cons : (string * bool) list option, dt : int option, alias : bool}
@@ -617,8 +635,9 @@ struct
         @ (if #sub n then (if #sub xv then ["structure Sub = X.Sub"] else ["structure Sub = struct type u = int fun mk2 n = n + 1 fun obs2 u = u end"]) else [])
         @ (if #poly n then (if #poly xv then ["type 'a box = 'a X.box", "val box = X.box", "val unbox = X.unbox"]
                             else ["type 'a box = 'a * int", "fun box x = (x, 2)", "fun unbox (x, _) = x"]) else [])
+        @ (if #tree n then (if #tree xv then ["datatype tree = datatype X.tree"] else [treeDecl 0]) else [])
       val v = {eq = #eq xv, dt = NONE, exn = #exn n, count = #count n, sub = #sub n, poly = #poly n, cons = NONE, pair = false, inner = false,
-               int = false}
+               int = false, tree = #tree n}
       fun s ds = "struct " ^ String.concatWith " " (ds @ extras) ^ " end"
     in
       case i mod 4 of
@@ -627,7 +646,7 @@ struct
       | 2 => (s ["datatype t = W of X.t | N of int", "fun mk n = if n mod 2 = 0 then N n else W (X.mk n)",
                  "fun obs (W v) = X.obs v | obs (N m) = m", "val tag = \"ad2\""],
               {eq = #eq xv, dt = NONE, exn = #exn n, count = #count n, sub = #sub n, poly = #poly n,
-               cons = SOME [("W", true), ("N", true)], pair = false, inner = false, int = false}, 0, 0)
+               cons = SOME [("W", true), ("N", true)], pair = false, inner = false, int = false, tree = #tree n}, 0, 0)
       | _ => (s ["type t = X.t list", "fun mk n = [X.mk n, X.mk (n + 1)]", "fun obs l = List.foldl (fn (v, s) => s + X.obs v) 0 l",
                  "val tag = \"ad3\""], v, 0, 0)
     end
@@ -673,6 +692,7 @@ struct
     @ (if #count n then ["val count : int ref"] else [])
     @ (if #sub n then ["structure Sub : sig type u val mk2 : int -> u val obs2 : u -> int end"] else [])
     @ (if #poly n then ["type 'a box", "val box : 'a -> 'a box", "val unbox : 'a box -> 'a"] else [])
+    @ (if #tree n then [treeDecl (perm + 1)] else [])
   val coreLines = ["type t", "val mk : int -> t", "val obs : t -> int", "val tag : string"]
   val coreSpec = "structure Inner : sig type t val mk : int -> t val obs : t -> int val tag : string end"
 
@@ -712,12 +732,13 @@ struct
             {eq = #eq param andalso not (isSome needsDt), dt = needsDt, exn = #exn param orelse #exn body = 3,
              count = #count param, sub = #sub param orelse #sub body = 1 orelse List.exists (mentions (fn f => f = FSub)) fields,
              poly = #poly param orelse #poly body = 2 orelse List.exists (mentions (fn FBox _ => true | _ => false)) fields,
-             int = #form param = 6 andalso not (isSome needsDt)}
+             int = #form param = 6 andalso not (isSome needsDt),
+             tree = #tree param orelse List.exists (mentions (fn FTree _ => true | _ => false)) fields}
           (* where type and sharing are not for a datatype spec *)
           val form = if isSome needsDt then (case #form param of 3 => 0 | 4 => 1 | 6 => 2 | f => f) else #form param
           val xview : view = {eq = (case needsDt of SOME s => Vector.sub (shapeEq, s) | NONE => #eq needs orelse #int needs), dt = needsDt,
                               exn = #exn needs, count = #count needs, sub = #sub needs, poly = #poly needs,
-                              cons = Option.map shapeCons needsDt, pair = false, inner = false, int = #int needs}
+                              cons = Option.map shapeCons needsDt, pair = false, inner = false, int = #int needs, tree = #tree needs}
           val () = (if isSome needsDt then note "param:datatype" else if #eq needs then note "param:eqtype" else ();
                     if #sub needs then note "param:structure" else (); if #poly needs then note "param:polymorphic" else ();
                     if #exn needs then note "param:exception" else (); if #count needs then note "param:ref" else ();
@@ -777,7 +798,7 @@ struct
                                         emit ("structure " ^ i ^ (if n = 1 then " : " else " :> ") ^ sigText coreLines ^ " = " ^ applyText (f, t));
                                         inners := !inners @ [(i, {eq = n = 1 andalso #eq (#view f), dt = NONE, exn = false, count = false,
                                                                   sub = false, poly = false, cons = NONE, pair = false, inner = false,
-                                                                  int = false})])
+                                                                  int = false, tree = false})])
                               end
                           end)
                        (#inners body)
@@ -820,7 +841,7 @@ struct
           val () = if innerExport then (note "inner-structure"; emit ("structure Inner = " ^ #1 (hd inners))) else ()
           val via = #via body andalso not (List.null inners)
           val () = if via then (note "open-inner"; emit ("local open " ^ #1 (List.last inners) ^ " in fun via" ^ K ^ " n = obs (mk n) end")) else ()
-          val probe = Vector.fromList (#probes body @ List.tabulate (18, fn _ => false))
+          val probe = Vector.fromList (#probes body @ List.tabulate (19, fn _ => false))
           fun pr i = Vector.sub (probe, i)
           val () = if pr 12 then (note "equality-tyvar"; emit ("fun member" ^ K ^ " (x : ''a) l = List.exists (fn y => y = x) l")) else ()
           (* a polymorphic value of a typed pattern, and one of a constructor *)
@@ -854,6 +875,11 @@ struct
             @ (if pr 16 then ["Int.toString (twice" ^ K ^ " (fn i => i + 1) 3) ^ twice" ^ K ^ " (fn s => s ^ \"!\") \"w\""] else [])
             @ (if #int needs then ["Int.toString (X.mk 2 + 1)"] else [])
             @ (if pr 17 then ["Int.toString lo" ^ K ^ " ^ hi" ^ K] else [])
+            @ (if pr 18 andalso #tree xview then
+                 (note "param:polymorphic-datatype";
+                  ["Int.toString (let fun sz X.Leaf = 0 | sz (X.Node (l, _, r)) = sz l + 1 + sz r in sz (X.Node (X.Leaf, X.mk 1, X.Node (X.Leaf, X.mk 2, X.Leaf)))"
+                   ^ " + 10 * sz (X.Node (X.Leaf, \"s\", X.Leaf)) end)"])
+               else [])
           val () = emit ("val tag = \"" ^ name ^ "(\" ^ X.tag ^ \"" ^ (if List.null probes then "" else ":\" ^ " ^ String.concatWith " ^ \",\" ^ " probes ^ " ^ \"") ^ ")\"")
           val () = if hidden then emit "end" else ()
           (* the result *)
@@ -872,9 +898,9 @@ struct
                    then note "result:partly-hidden" else ()
           val view : view =
             if ascr = 0 then {eq = #eq made, dt = #dt made, exn = #exn shows, count = #count shows, sub = #sub shows, poly = #poly shows,
-                              cons = #cons made, pair = #pair shows, inner = #inner shows, int = false}
+                              cons = #cons made, pair = #pair shows, inner = #inner shows, int = false, tree = false}
             else {eq = if ascr = 1 andalso List.exists (fn l => l = "type t") (#lines sp) then #eq made else #eq sp, dt = #dt sp, exn = #exn shows, count = #count shows, sub = #sub shows,
-                  poly = #poly shows, cons = #cons sp, pair = #pair shows, inner = #inner shows, int = false}
+                  poly = #poly shows, cons = #cons sp, pair = #pair shows, inner = #inner shows, int = false, tree = false}
           val rlines =
             ["val mk : int -> t", "val obs : t -> int", "val tag : string"]
             @ (if #exn shows then ["exception E of int", "val fail : int -> int"] else [])

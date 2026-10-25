@@ -326,7 +326,7 @@ every layout; `type`, `eqtype` and datatype specs (matched by a datatype
 whose constructors are in another order), `where type`, `sharing`, the
 derived forms of parameters and none, opaque and transparent ascription,
 named signatures; polymorphic values and type constructors in parameters
-and results, equality on the parameter's and the body's types, `''a`;
+and results, equality on the parameter's and the body's types, `''a`, a polymorphic datatype spec;
 exceptions in bodies (each application's its own, or the parameter's or an
 inner instance's again), refs and effects (each application runs them once,
 in order), substructures in parameters and results. What a program prints
