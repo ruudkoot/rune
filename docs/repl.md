@@ -68,6 +68,11 @@ rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=WHEN] [--basic] [--unic
 * `--no-unicode-lints`: the warnings of UTS #39 on the names, and of a
   lookalike of `*)` in a comment, are left out, as `rune` leaves them out
   ([language.md](language.md), *Identifiers*).
+* `--inline-functor=F[,F...]`, `--no-inline-functors`: in an image made
+  with `--functors=functions` (*How it is built*, below), the functors to
+  expand in every unit that applies them, as `rune` takes the options
+  ([build.md](build.md), *Functors inlined across units*). Elsewhere they
+  change nothing.
 
 On Windows, `rune-repl.cmd` beside `runevm.exe` is `rune-repl` for the
 command prompt and PowerShell.
@@ -570,6 +575,16 @@ the REPL's own `use`, put into `RuneCompiler.useHook` when it starts.
   the JIT made, which it makes again.
 * `make install` installs it too: the image in `lib/rune`, and
   `rune-repl` beside `rune` (`scripts/install.sh`).
+* The prototype of [plans/functors-units.md](plans/functors-units.md)
+  needs an image of its own. The units are compiled with
+  `--functors=functions --datatype-tags=sorted-x`, and the same options
+  are given to the loader before `--make-image` (`runevm
+  bin/rune-repl.load.rbc UNITS --functors=functions
+  --datatype-tags=sorted-x --make-image IMAGE`). The session loads the
+  Basis Library's bases as that build wrote them, and the image keeps the
+  options for every session started from it. Under them the Basis
+  Library's marked functors are inlined across units unless
+  `--no-inline-functors` is given there.
 * A declaration is a unit of its own: elaborated against the session,
   translated with its printer, made into the bytes of a unit's file and
   appended to the running program by `Runtime.link`
@@ -598,7 +613,11 @@ debugger (`debug.in`): a breakpoint in a file used after it was set, the
 frames, the variables of each and an expression among them, steps into, over
 and out of a function the library calls, a variable of an enclosing
 function, one a later binding hides, and a stop at a raise ended with
-`:abort` -- the same frames and values on every mode of the JIT.
+`:abort` -- the same frames and values on every mode of the JIT; and a
+functor declared by one declaration and applied by others and by a file
+used again from the cache (`functors.in`), whose transcript is the same
+in an image made with `--functors=functions`, where the functor is marked
+to be inlined (`functors.args`).
 
 `tests/terminal` (`make test-terminal`, and on Windows through WSL interop
 in `make test-windows`) drives the REPL through a runtime PTY or ConPTY and waits for the

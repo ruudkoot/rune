@@ -50,7 +50,7 @@
      "kind": "val",
      "name": "session",
      "spec": "val session : {lib : string option, flags : string list} -> session",
-     "doc": "`session {lib, flags}` constructs an independent ordered context.\n\n`NONE` selects the\nlanguage's initial basis; `SOME root` selects the Basis and requested\nlibraries under `root`. No absolute library path is built in.\n\nSupported flags are `--target=registers`, `--target=stack`,\n`--allow-prim`, `--unicode`, `--unicode=utf8`, `--unicode=latin1` and\n`--library NAME`. Unknown flags raise `Failed`. The defaults are\nregister bytecode, ASCII source and no additional libraries.\n\n",
+     "doc": "`session {lib, flags}` constructs an independent ordered context.\n\n`NONE` selects the\nlanguage's initial basis; `SOME root` selects the Basis and requested\nlibraries under `root`. No absolute library path is built in.\n\nSupported flags are `--target=registers`, `--target=stack`,\n`--allow-prim`, `--unicode`, `--unicode=utf8`, `--unicode=latin1` and\n`--library NAME`, and the prototype of docs/plans/functors-units.md:\n`--functors=functions`, `--datatype-tags=ORDER`,\n`--inline-functor=F[,F...]` and `--no-inline-functors`. Units compiled\nunder the prototype run only in a program whose Basis was compiled\nunder it too. Unknown flags raise `Failed`. The defaults are register\nbytecode, ASCII source and no additional libraries.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-session"
     },
     {
