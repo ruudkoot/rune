@@ -801,9 +801,9 @@ struct
 
   (* The program with each global a copy made that a value of the top level
      is under another name, at the same types -- an application's result,
-     which a later unit may name -- given that name, and that value's
-     definition gone: what a later unit calls is the copy's function, as
-     static interpretation's copy is, not a closure in a global *)
+     which a later unit may name -- given that name (the first such value's),
+     and that value's definition gone: what a later unit calls is the copy's
+     function, as static interpretation's copy is, not a closure in a global *)
   fun renameCopies (st : state, p : program) : program =
     let
       fun under (Mark (_, e)) = under e
@@ -822,11 +822,18 @@ struct
                  then SOME (g, h) else NONE
              | _ => NONE)
         | _ => NONE
-      val found = List.mapPartial candidate p
-      val count : int IntTable.table = IntTable.table 64
-      val () = List.app (fn (_, h) => IntTable.update (count, h, fn n => getOpt (n, 0) + 1)) found
-      val names = List.foldl (fn ((g, h), m) => if IntTable.find (count, h) = SOME 1 then IntMap.insert (m, h, g) else m)
-                             IntMap.empty found
+      val found0 = List.mapPartial candidate p
+      (* not a copy that is itself a value of another, nor a value that is
+         itself such a copy: one step of renaming *)
+      val aliasNames : unit IntTable.table = IntTable.table 64
+      val targets : unit IntTable.table = IntTable.table 64
+      val () = List.app (fn (g, h) => (IntTable.insert (aliasNames, g, ()); IntTable.insert (targets, h, ()))) found0
+      val found = List.filter (fn (g, h) => not (isSome (IntTable.find (aliasNames, h))) andalso not (isSome (IntTable.find (targets, g))))
+                              found0
+      (* a copy several values are (`fun fromLarge ... val fromLargeWord =
+         fromLarge`) takes the first one's name, and the others are that
+         one, which a later unit then calls by name too (globalAliases) *)
+      val names = List.foldl (fn ((g, h), m) => if IntMap.member (m, h) then m else IntMap.insert (m, h, g)) IntMap.empty found
       val gone = IntMap.foldl (fn (g, m) => IntMap.insert (m, g, ())) IntMap.empty names
     in
       if IntMap.isEmpty names then p
