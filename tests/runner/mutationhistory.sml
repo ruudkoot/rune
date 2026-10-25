@@ -6,7 +6,12 @@ struct
   fun sources state tree =
     if exists (tree ^ "/rune.build") then
       let val result = command state "" ["sh", fromRoot "scripts/build-files.sh", tree ^ "/rune.build"]
-      in need (#status result = 0, "cannot enumerate historical compiler sources"); String.tokens Char.isSpace (#output result) end
+          (* build-files.sh names each file by the build file's directory:
+             the files of the tree, by their places in it (the replay looked
+             for TREE/TREE/...; functors-units M9) *)
+          fun inTree path = if String.isPrefix (tree ^ "/") path then String.extract (path, size tree + 1, NONE) else path
+      in need (#status result = 0, "cannot enumerate historical compiler sources");
+         List.map inTree (String.tokens Char.isSpace (#output result)) end
     else List.map Hosts.trim (List.filter (fn line => Hosts.trim line <> "" andalso not (String.isPrefix "#" (Hosts.trim line)))
                                         (lines (read (tree ^ "/sources.txt"))))
   fun compilerSources compiler =
@@ -31,7 +36,10 @@ struct
               val () = need (#status extracted = 0, "cannot extract history commit " ^ commit)
               val oldDirectory = !(#directory state)
               val () = #directory state := tree
-              val generated = command state "" ["sh","scripts/gen-build-files.sh"]
+              (* its build files and build/config.sml, which only
+                 gen-version.sh writes (the replay skipped every commit
+                 without it; functors-units M9) *)
+              val generated = command state "" ["sh","-c","sh scripts/gen-build-files.sh && sh scripts/gen-version.sh ."]
               val () = #directory state := oldDirectory
           in if #status generated <> 0 orelse not (exists (tree ^ "/build/config.sml")) then
                say ("SKIP mutate history " ^ commit ^ ": its build files could not be made\n")
