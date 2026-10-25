@@ -1,0 +1,9 @@
+# The failures of generated functor programs found and not yet fixed
+# (docs/testing.md, Generated functor programs): a mode of
+# bin/rune-functor-gen (a glob), a text of the failure's message, and why.
+# A failure a line covers is counted and not failed, by `check` and by
+# `regressions`; each line must be met by a program of this directory, or
+# `regressions` calls it stale: once fixed, the line goes.
+#
+#   MODE | TEXT | why, and the program that shows it
+on-*units* | -> unit, is cast back to | a functor applied to a structure of an earlier unit, in the unit that declares it or marked inline: a function of the argument is cast through unit and back (earlier_unit_arg.sml)

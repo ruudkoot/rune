@@ -148,7 +148,8 @@ watchdog that skips a case that hangs or runs out of memory and goes on;
 `tests/runner/laws.sml`), and the differential checks, each program a job
 that compares what it compiles and runs across levels, engines, builds and
 hosts (`levels/*`, `register/*`, `jit/*`, `units/*`, `units-stack/*`,
-`positions/*`, `cross/*`, `reproducible/*`, `bootstrap/*`;
+`positions/*`, `cross/*`, `reproducible/*`, `bootstrap/*`, and the
+generated programs of functors, `functors/*`, below;
 `tests/runner/oracles.sml`), and the tools' suites (`ir/*`, `doc/*`, `lib/*`,
 `flexrec/*`, `compiler/*`, `limits/*`, `gc-log/*`, `colour/*`, and the scenarios of
 `tests/deps`, `tests/dynamic`, `tests/buildfile` and `tests/units` as
@@ -295,6 +296,67 @@ that any line explains a failure and a line that explains none is stale),
 and by `bin/rune-matrix` for the hosts; `tests/basis/law-skips.txt` (lines of
 three fields, of every way) by the engine for the laws
 (`tests/runner/laws.sml`).
+
+## Generated functor programs
+
+`bin/rune-functor-gen` (`tests/runner/functorgen.sml`) draws programs of
+the module language's hard shapes, with `lib/test/property`, and holds the
+compiler to one property: a program prints the same compiled whole and in
+units (`--units --no-cache`), with functors compiled as functions and their
+applications expanded (`--functors=functions --datatype-tags=sorted-x`,
+always under `--lint`) and as today's copies; `--units --whole` makes the
+whole compile's bytes (S42 of
+[plans/functors-units.md](plans/functors-units.md)); and so it does with
+some of its functors marked `--inline-functor`, and under a small
+`--functor-budget`, which leaves some applications calls. A program's units
+are its files: a prelude of signatures and leaf structures, its functors (a
+unit each, or several to one), its applications and its prints, so that a
+functor is declared in one unit and applied in another, or in its own.
+
+The shapes, each a part of the generator drawn at random and combined:
+functors applied in functors' bodies, to a depth of four, to the parameter,
+an adapter or a literal of it, a structure of the top level, an inner
+instance or another application, the instances shown, hidden or partly
+hidden by the result signature, in `local` or opened; datatypes in bodies
+over the parameter's types -- plain, mutually recursive with a member
+hidden, with `withtype`, polymorphic, local, replicated from the
+parameter's datatype spec -- with constructors of tuples, records,
+parameter types, functions and reals; leaf structures whose type is of
+every layout; `type`, `eqtype` and datatype specs (matched by a datatype
+whose constructors are in another order), `where type`, `sharing`, the
+derived forms of parameters and none, opaque and transparent ascription,
+named signatures; polymorphic values and type constructors in parameters
+and results, equality on the parameter's and the body's types, `''a`;
+exceptions in bodies (each application's its own, or the parameter's or an
+inner instance's again), refs and effects (each application runs them once,
+in order), substructures in parameters and results. What a program prints
+makes each visible: every instance's results, matches on constructors,
+exceptions handled across instances, counts and equalities. A program is a
+plan of choices made well typed by construction (an argument that does not
+match a parameter falls back to a literal that does), so a failure the
+property finds is shrunk to a small program.
+
+`functors/@generated` runs 20 programs from seed 1, a minute or two;
+`functors/@regressions` runs each program of `tests/functors` (in the form
+`bin/rune-functor-gen show` prints: each unit after a line `(* unit FILE
+*)`, and a last line of the modes' options) in every mode.
+`tests/functors/known.txt` lists the failures found and not yet fixed, a
+line each: a mode, a text of the failure's message, and why. A failure a
+line covers is counted and passes, in both jobs; and each line must be met
+by a program of `tests/functors`, so that once the compiler is fixed the
+line is stale and goes. A failure one file shows is a program of
+`tests/lang` too, with its `.expected` from the flag off, and its failing
+tests in `tests/runner/quarantine.txt` until fixed.
+
+By hand, longer: `bin/rune-functor-gen check --seed S --seeds K --count N
+--known tests/functors/known.txt --rune bin/rune-mlton --out DIR` runs K
+runs of N programs from the seeds S on (`bin/rune-mlton`, MLton's build of
+the compiler, makes the same bytes about three times as fast). Each failure is
+shrunk and kept in `DIR/failures/seedS-caseN`: its units, `program.sml`
+(which `bin/rune-functor-gen run FILE` runs again) and `modes.txt`, what
+each mode compiled with and printed; the run goes on with the next seed.
+`bin/rune-functor-gen show --seed 0xHEX --size N` prints the program of a
+failure's replay token `HEX:N`, as it was drawn.
 
 ## The three oracles
 
