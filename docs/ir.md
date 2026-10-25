@@ -350,7 +350,19 @@ gives one is refused as for any option it does not know.
     copy's function by name.
   - The copies' applications are expanded in turn. A top-level
     application and those in its copies may copy `--functor-budget` Mid
-    nodes (and 64 deep); past it, an application stays a call (D13).
+    nodes, the sizes of the functions copied (and 64 deep); past it, an
+    application stays a call (D13). The default, 1,000,000, is about
+    twice the largest a program known needs (M8, measured whole with
+    `--pass-stats=expand`): MLton's 606 files 508,928 (`structure Main =
+    Main (...)`, 400 applications expanded), the benchmark set 29,322
+    (`fxp`), the compiler 1,405. Within the budget a compile grows with
+    the copies it makes, linearly; past it the copies stop. Functors
+    nested `D` deep, each body applying the one below twice
+    (`tests/perf/compile-funnest*`, whose `scale` lines hold the growth),
+    are copied whole up to `D` = 12 (8,191 applications, 507,839 nodes),
+    and from 13 on the copies stop at the budget (16,128 applications
+    expanded at 13 and at 14); what grows after is the program's
+    environment, whose structures nest as the applications do.
   - An instance of a body's datatype that an expanded application named
     is laid out from its realised types, unless an application left a
     call takes it; a datatype a copy declared that such an application

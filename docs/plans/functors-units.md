@@ -2958,6 +2958,44 @@ What B costs beyond its code:
   both, for the programs that nest deepest; the brief's "Rune should not blow
   up either" then costs that.
 
+**The budget, measured (M8, 2026-10-25).** The default stays 1,000,000 Mid
+nodes for a top-level application and the applications in its copies,
+counted as the sizes of the functions copied: about twice the largest that
+a program known needs, measured whole with `--pass-stats=expand` at M7's
+tip. MLton's 606 files need 508,928 (`structure Main = Main (...)`, 400
+applications expanded), the benchmark set 29,322 (`fxp`), the bootstrap
+1,405; none of them has an application past the budget, so the default
+changes nothing they compile. The reading of "linear": within the budget a
+compile is linear in the copies it makes, and past it the budget bounds the
+copies, so that a compile grows no faster than the applications static
+interpretation would elaborate (Σ M^k), which is also the number of
+structures in the program's environment. On `funnest` (functors nested `D`
+deep, each body applying the one below `M` times, 8 bindings a body):
+at `M` = 2 every application is copied up to `D` = 12 (8,191 applications,
+507,839 nodes), the compile growing with the applications as
+applications^1.07 whole and ^1.05 in units and in `--units --whole` from
+`D` = 8 to 12; at 13 the copies stop at the budget (16,128 of 16,383
+expanded, 999,936 nodes), and from 13 to 14 the compile grows as
+applications^0.67. At `M` = 1, from `D` = 8 to 16, applications^1.09 whole,
+^1.22 in units and ^1.24 in `--units --whole`: the copies are linear (31
+nodes a level), but the program's interface is not. `F`k's result holds
+`N1`, `F`(k-1)'s, so its signature is k levels deep, and the functors'
+signatures together, as the REPL would print them, are 1 + 2 + ... + D: a
+compile grows with D^2 however it is made. Measured at every depth from 8
+to 16 and at 24, 32 and 48: a whole compile adds 0.79M instructions a
+level from 8 to 16, 1.29M from 16 to 32 and 1.97M from 32 to 48; the
+elaboration of `F`k is 63k + 42 nodes (`--pass-stats=elab`), its
+application `N1 = F`(k-1)`(X)` realising the k-1 levels of the summary;
+the unit's basis is 23,477, 73,088, 252,568 and 551,055 bytes at D = 8, 16,
+32 and 48 while its code grows by 2,722 bytes a level; and a compile in
+units costs about 300 instructions a byte of basis throughout (E3 found the
+same, x 1.10 a level at `D` = 16). It is the size of what the units of such
+a program say, not noise; a basis that names a signature written before,
+and an instantiation that shares what it does not rename, would make it
+linear in the applications. `funapp` (one functor applied 80 to 320 times)
+grows as applications^1.01 to ^1.02. `tests/perf/compile-funnest*` and
+`compile-funapp*` hold these as budgets with `scale` lines (M8).
+
 ### D14. S42 and the cache's configuration
 
 **Decided: A** (2026-10-21), as recommended.
@@ -3484,6 +3522,53 @@ what naming the instance would take is in [functors.md](functors.md),
   the number of applications in every mode, and the code made before `shake`
   stays within the budget. E3 found the front end linear today; Σ M^k is
   the code.
+* **Done (2026-10-25).** The budget stays 1,000,000 (D13, *The budget,
+  measured*): twice MLton's largest application (508,928 nodes), the
+  bootstrap's 1,405. Nine budgets hold E3's programs in the three modes,
+  each with a `scale` line by the applications static interpretation makes
+  (`scale KIND ARGS... EXPONENT`, the generator writing the count on the
+  program's first line): `compile-funnest`, `-units`, `-unitswhole` (`D`
+  8 to 12 at `M` = 2: applications^1.07, 1.05, 1.05), `compile-funnest1*`
+  (`D` 8 to 16 at `M` = 1: 1.09, 1.22, 1.24) and `compile-funapp*` (80 to
+  320 applications: 1.01, 1.02, 1.02). The copies stay within the budget
+  by construction (`Expand`: an application is copied only while its
+  function's size fits what the top-level application has left), which
+  `tests/runner/tools.sml` (`compiler`, *budgets: functors*) holds: 127
+  applications all copied at the default, at most 500 nodes at
+  `--functor-budget=500`, none at 0.
+* **What a compile reads (2026-10-25).** M7's 0.39M instructions more a
+  compile (`compile-hello` 2.03M at e6accb2c0, 2.42M at M7) were the Basis
+  Library's MANIFEST read a second time, a line at a time, for its
+  `# inline:` line, not the marked functors' Mid: a whole compile loads no
+  basis. The `# inline:` and `# library:` lines are read from the header
+  alone now, and `compile-hello` is 2.08M (1.023 of e6accb2c0's). In a
+  compile in units of a program that loads the I/O stack, decoding the
+  marked functors' Mid costs about 2.5M instructions (1 to 2.6% of a warm
+  build: `wordcount`, `mlyacc`, `hamlet`) and hashing it 0.9M; the hash is
+  worked out when an `inl F` usage asks for it, and the decoding stays,
+  since skipping it would need a basis whose Mid says its length. What is
+  left:
+  - At `M` = 1 the growth is above linear (D13): the program's interface
+    is quadratic in `D` (each functor's result holds every level below
+    it), and the front end and a unit's basis write the summaries whole.
+    Sharing them (a basis that names a signature written before, an
+    instantiation that keeps what it does not rename) would make it
+    linear; it is not done.
+  - A limit of the program, not of the copies: past the budget its
+    environment still grows as Σ M^k, since `R` of `funnest` holds a
+    structure for every application static interpretation would make.
+    At `D` = 16, `M` = 2 that is 131,071 structures: a whole compile
+    elaborates for 58 s and translates 5,901,284 nodes, binding every
+    value of `R`'s substructures to a global of its own, and runs out of
+    memory under 6 GB, whatever the budget. At `D` = 14 (32,767
+    structures) every mode compiles: whole 8.7G instructions, in units
+    22.3G (a unit of 27.6 MB of code), `--units --whole` 27.2G.
+  - Found on the way and fixed: at `D` = 14 `--units --whole` stopped with
+    an uncaught `Size`, `Pickle.writer` doubling its buffer past
+    `CharArray.maxLen` (100,000,000 on Rune) from 67,108,864. The buffer now
+    grows to the host's longest array at most, and a unit whose basis, Mid
+    or cache entry needs more is an error of the unit's
+    (`Pipeline.keeping`), not an uncaught exception.
 
 ### M9. Retire (S)
 
