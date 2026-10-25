@@ -317,13 +317,18 @@ each application, and the copy is what is translated.
     defines, the function's body is copied, its names fresh and its types
     substituted as the marker says; a datatype the body declares over
     what is substituted gets a name of its own (after `MidCanon`'s,
-    `MidCanon.nextTycon`); an open constructor's descriptor test keeps its
-    first branch, which makes or takes the constructor apart as its
-    datatype. The copy's bindings, groups of functions and the values its
-    join points give the rest become definitions of the top level, as
-    static interpretation's are; what does not fit (a branch both of whose
-    arms go on) stays one definition of the record (`--pass-stats` counts
-    them).
+    `MidCanon.nextTycon`), and an instance the application named is
+    entered again with the constructors the copy gives it; an open
+    constructor's descriptor test keeps its first branch, which makes or
+    takes the constructor apart as its datatype. The copy's bindings,
+    groups of functions and the values its join points give the rest
+    become definitions of the top level, as static interpretation's are
+    (a local whose type names type variables it does not abstract over
+    abstracting over them, so that an alias of it is one); what does not
+    fit (a branch both of whose arms go on) stays one definition of the
+    record (`--pass-stats` counts them). A definition with an application
+    among its steps (a `local` block's `Do`, whose globals it sets) is
+    first made definitions the same way, so that the application is one.
   - A slot read from a record whose value is known is that value, and a
     cast through `unit` of it is what was cast, at an instance of its
     scheme for a polymorphic one (`Ty.match`): what substituting made

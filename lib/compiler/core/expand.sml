@@ -163,7 +163,8 @@ struct
 
   (* ---- copying a body ---- *)
 
-  (* the type names a datatype's constructors name, by its stamp *)
+  (* the type names a datatype's constructors name, by its stamp, for a
+     program *)
   val datatypeNames : int list IntTable.table ref = ref (IntTable.table 256)
   val () = CompilerState.refRoot ("Expand.datatypeNames", datatypeNames, IntTable.copy)
   fun namesOfDatatype (s : int) : int list =
@@ -514,43 +515,12 @@ struct
         | _ => e
     in go e end
 
-  (* whether the variable x is named in e *)
-  fun occurs (x : int, e : exp) : bool =
-    let
-      fun atom a = case a of Var (y, _) => y = x | _ => false
-      fun rhs r =
-        case r of
-          Atom a => atom a
-        | App (f, xs) => atom f orelse List.exists atom xs
-        | Prim (_, _, xs) => List.exists atom xs
-        | Tuple xs => List.exists atom xs
-        | Select (_, a) => atom a
-        | Con (_, _, a) => atom a
-        | Decon (_, _, a) => atom a
-        | ConTag a => atom a
-        | MkExn (c, a) => atom c orelse atom a
-        | ExnCon a => atom a
-        | ExnArg (_, a) => atom a
-        | SetGlobal (_, a) => atom a
-        | _ => false
-      fun exp e =
-        case e of
-          Let (_, _, r, b) => rhs r orelse exp b
-        | Fun (fs, b) => List.exists (fn (f : fundef) => exp (#body f)) fs orelse exp b
-        | Join (_, _, b, sc) => exp b orelse exp sc
-        | Jump (_, xs) => List.exists atom xs
-        | If (a, t, f) => atom a orelse exp t orelse exp f
-        | Handle (b, _, h) => exp b orelse exp h
-        | Raise a => atom a
-        | Return r => rhs r
-        | Mark (_, b) => exp b
-    in exp e end
-
-  (* a function whose type names type variables it does not abstract over
-     (ToMid's, of a lambda a typed pattern binds, which a polymorphic
-     variable is then bound to) *)
-  fun openFun ({tyvars, ...} : fundef, t : Ty.ty) : bool =
-    List.exists (fn g => not (List.exists (fn v => v = g) tyvars)) (Ty.gens t)
+  (* The type variables a binder's type names and it does not abstract
+     over: ToMid lets a local be of such a type, a type of its own (of a
+     lambda a typed pattern binds, or a slot cast from unit), which a
+     polymorphic variable is then bound to *)
+  fun freeGens ((tvs, t) : scheme) : int list =
+    List.filter (fn g => not (List.exists (fn v => v = g) tvs)) (Ty.gens t)
 
   fun small (e : exp) : bool =
     let
@@ -566,67 +536,98 @@ struct
           | _ => 1000
     in go (e, 0) <= 64 end
 
-  (* The definitions of the copy e of a body, its value the record r of
-     scheme s, emitted by emit in order, under the place mark *)
-  fun spine (st : state, emit : def -> unit, r : int, s : scheme) (e : exp) : unit =
+  (* A local made a global of the scheme given: one that abstracts over
+     the type variables its type names too, at those variables where it is
+     used, so that a polymorphic alias of it is one (Shake) *)
+  fun globalize (st : state) (x : int, sc as (tvs, t) : scheme) : scheme =
+    let
+      val () = IntTable.insert (#globalized st, x, ())
+      val free = freeGens sc
+      val sc' = (tvs @ free, t)
+      val () = IntTable.insert (#schemes st, x, sc')
+      val () = case free of
+                 [] => ()
+               | _ => IntTable.insert (#alias st, x, fn ts => Global (x, if List.length ts = List.length tvs
+                                                                          then ts @ List.map Ty.gen free else ts))
+    in sc' end
+
+  (* The definitions of e, emitted by emit in order: the copy of a body,
+     whose value is the record r of scheme s (final), or a definition of
+     the top level in which an application is (Do, final NONE: sets are the
+     globals it sets, each a definition of its own where it is set) *)
+  fun spine (st : state, emit : def -> unit, final : (int * scheme) option, sets : (int * scheme) list ref) (e : exp) : unit =
     let
       fun place (mark, e) = case mark of SOME pos => Mark (pos, e) | NONE => e
-      fun global x = IntTable.insert (#globalized st, x, ())
+      fun globalScheme (x, sc) = globalize st (x, sc)
+      fun global x = ignore (globalScheme (x, ([], Ty.unit)))
       fun value (mark, x, sc, e) = emit (Val (x, sc, place (mark, e)))
+      fun globalValue (mark, x, sc, e) = value (mark, x, globalScheme (x, sc), e)
       fun rest (mark, e) =
-        (partial := !partial + 1; value (mark, r, s, rewrite st e))
+        (partial := !partial + 1;
+         case final of
+           SOME (r, s) => value (mark, r, s, rewrite st e)
+         | NONE => (emit (Do (!sets, place (mark, rewrite st e))); sets := []))
+      (* a global the Do sets, set: a definition of its own *)
+      fun setsOne (mark, g, a) =
+        case List.find (fn (h, _) => h = g) (!sets) of
+          SOME (_, sg) =>
+            (sets := List.filter (fn (h, _) => h <> g) (!sets);
+             value (mark, g, sg, Return (Atom (rwAtom st a)));
+             true)
+        | NONE => false
       fun go (mark, e) =
         case e of
           Mark (pos, b) => go (SOME pos, b)
+        | Let (x, sc, SetGlobal (g, a), b) =>
+            if not (isSome final) andalso setsOne (mark, g, a) then (setAlias st (x, sc, Unit); go (mark, b))
+            else rest (mark, e)
         | Let (x, sc, rh, b) =>
             (case fold st (rwRhs st rh) of
                (Atom a, _) =>
                  if aliasable st (sc, a) then (setAlias st (x, sc, a); go (mark, b))
-                 else (global x; IntTable.insert (#schemes st, x, sc); value (mark, x, sc, Return (Atom a)); go (mark, b))
-             | (rh', _) => (global x; know st (x, sc, rh'); value (mark, x, sc, Return rh'); go (mark, b)))
+                 else (globalValue (mark, x, sc, Return (Atom a)); go (mark, b))
+             | (rh', _) =>
+                 let val sc' = globalScheme (x, sc)
+                 in know st (x, sc', rh'); value (mark, x, sc', Return rh'); go (mark, b) end)
         | Fun (fs, b) =>
-            if List.exists (fn f => openFun (f, funTy f)) fs then
-              (* the lambda of a polymorphic variable: kept local to the
-                 variable's definition, as a top-level declaration's is *)
-              let
-                fun under (Mark (_, e)) = under e
-                  | under e = e
-              in
-                case (fs, under b) of
-                  ([f], Let (x, sc as (_ :: _, _), Atom (Var (g, [])), b')) =>
-                    if g = #name f andalso not (occurs (g, b')) then
-                      (global x; IntTable.insert (#schemes st, x, sc);
-                       value (mark, x, sc, rewrite st (Fun (fs, Return (Atom (Var (g, []))))));
-                       go (mark, b'))
-                    else rest (mark, e)
-                | _ => rest (mark, e)
-              end
-            else
-            (List.app (fn (f : fundef) => (global (#name f); IntTable.insert (#schemes st, #name f, (#tyvars f, funTy f)))) fs;
-             emit (Funs (List.map (fn (f : fundef) => {name = #name f, tyvars = #tyvars f, params = #params f,
-                                                        result = #result f, body = rewrite st (#body f)}) fs));
-             go (mark, b))
+            let
+              val schemes = List.map (fn (f : fundef) => globalScheme (#name f, (#tyvars f, funTy f))) fs
+            in
+              emit (Funs (ListPair.map (fn (f : fundef, (tvs, _)) =>
+                                          {name = #name f, tyvars = tvs, params = #params f,
+                                           result = #result f, body = rewrite st (#body f)}) (fs, schemes)));
+              go (mark, b)
+            end
         | Return rh =>
             let val rh' = #1 (fold st (rwRhs st rh))
             in
-              (case rh' of Atom a => if aliasable st (s, a) then setAlias st (r, s, a) else () | _ => know st (r, s, rh'));
-              value (mark, r, s, Return rh')
+              case final of
+                SOME (r, s) =>
+                  ((case rh' of Atom a => if aliasable st (s, a) then setAlias st (r, s, a) else () | _ => know st (r, s, rh'));
+                   value (mark, r, s, Return rh'))
+              | NONE =>
+                  (case rh' of
+                     Atom _ => ()
+                   | SetGlobal (g, a) => if setsOne (mark, g, a) then () else emit (Do ([], place (mark, Return rh')))
+                   | _ => emit (Do ([], place (mark, Return rh'))));
+              if not (isSome final) andalso not (null (!sets)) then (emit (Do (!sets, Return (Atom Unit))); sets := []) else ()
             end
         | Join (j, ps, b, sc) =>
             if not (returns sc) andalso returns b then
               (case ps of
                  [(x, t)] =>
-                   (global x; value (mark, x, ([], t), rewrite st (jumpsTo (j, fn [a] => Return (Atom a)
-                                                                               | _ => bug "a jump's arguments") sc)))
+                   globalValue (mark, x, ([], t), rewrite st (jumpsTo (j, fn [a] => Return (Atom a)
+                                                                            | _ => bug "a jump's arguments") sc))
                | [] => emit (Do ([], place (mark, rewrite st (jumpsTo (j, fn _ => Return (Atom Unit)) sc))))
                | _ =>
                    let
                      val tmp = fresh ()
                      val tt = Ty.tuple (List.map #2 ps)
+                     val sct = globalScheme (tmp, ([], tt))
                    in
-                     global tmp;
-                     value (mark, tmp, ([], tt), rewrite st (jumpsTo (j, fn xs => Return (Tuple xs)) sc));
-                     List.foldl (fn ((x, t), i) => (global x; value (mark, x, ([], t), Return (Select (i, Global (tmp, [])))); i + 1))
+                     value (mark, tmp, sct, rewrite st (jumpsTo (j, fn xs => Return (Tuple xs)) sc));
+                     List.foldl (fn ((x, t), i) =>
+                                   (globalValue (mark, x, ([], t), Return (Select (i, rwAtom st (Var (tmp, []))))); i + 1))
                                 0 ps;
                      ()
                    end;
@@ -735,9 +736,25 @@ struct
         end
     end
 
+  (* whether e calls one of the functors' functions fns *)
+  fun calls (fns : fundef IntTable.table, e : exp) : bool =
+    let
+      fun app r = case r of App (Global (g, _), _) => isSome (IntTable.find (fns, g)) | _ => false
+      fun exp e =
+        case e of
+          Let (_, _, r, b) => app r orelse exp b
+        | Fun (fs, b) => List.exists (fn (f : fundef) => exp (#body f)) fs orelse exp b
+        | Join (_, _, b, sc) => exp b orelse exp sc
+        | If (_, t, f) => exp t orelse exp f
+        | Handle (b, _, h) => exp b orelse exp h
+        | Return r => app r
+        | Mark (_, b) => exp b
+        | _ => false
+    in exp e end
+
   fun program (p : program) : program =
     let
-      val () = (expanded := 0; kept := 0; partial := 0; overBudget := 0; most := 0)
+      val () = (expanded := 0; kept := 0; partial := 0; overBudget := 0; most := 0; datatypeNames := IntTable.table 256)
       val st = newState ()
       (* the functors' functions the program defines *)
       val fns : fundef IntTable.table = IntTable.table 64
@@ -777,16 +794,32 @@ struct
                                                          result = #result f, body = rewrite st (#body f)}) fs)
         | Do (gs, e) => Do (gs, rewrite st e)
       (* the definitions left, each with its root, its depth and whether it
-         is rewritten already *)
+         is the program's (else a copy's, or a definition's flattened): each
+         rewritten with what is known when it is reached, after the
+         applications before it are expanded *)
       fun loop [] = ()
-        | loop ((d, root, depth, done) :: rest) =
+        | loop ((d, root, depth, original) :: rest) =
             let
-              val d = if done then d else rewriteDef d
+              val d0 = d
+              val d = rewriteDef d
               fun plain () = (knowDef d; output d; loop rest)
               fun markerOf (Val (_, _, e)) =
                     let fun under (Mark (_, e)) = under e | under (Return r) = markerType r | under _ = NONE
                     in under e end
                 | markerOf _ = NONE
+              (* a definition with an application of a functor's function
+                 inside it, not as its value: its steps definitions of their
+                 own, so that the application is one *)
+              fun flatten () =
+                let
+                  val made : def list ref = ref []
+                  fun emit d = made := d :: !made
+                  val () =
+                    case d0 of
+                      Val (g, s, e) => spine (st, emit, SOME (g, s), ref []) e
+                    | Do (gs, e) => spine (st, emit, NONE, ref gs) e
+                    | Funs _ => ()
+                in loop (List.map (fn d => (d, root, depth, false)) (List.rev (!made)) @ rest) end
             in
               case markerOf d of
                 SOME enc => (flush (); pending := SOME (d, enc); loop rest)
@@ -794,7 +827,7 @@ struct
                   case d of
                     Val (r, s, e) =>
                       (case applicationOf (fns, e) of
-                         NONE => plain ()
+                         NONE => if original andalso calls (fns, e) andalso Pass.spend () then flatten () else plain ()
                        | SOME (steps, f, a, mark) =>
                            let
                              val inSteps = List.find (fn (_, _, _, rh) => isSome (markerType rh)) steps
@@ -838,11 +871,12 @@ struct
                                                  case fold st (rwRhs st rh) of
                                                    (Atom a, true) =>
                                                      if aliasable st (sc, a) then setAlias st (x, sc, a)
-                                                     else (IntTable.insert (#globalized st, x, ()); IntTable.insert (#schemes st, x, sc);
-                                                           emit (Val (x, sc, Return (Atom a))))
+                                                     else emit (Val (x, globalize st (x, sc), Return (Atom a)))
                                                  | (rh', _) =>
-                                                     (IntTable.insert (#globalized st, x, ()); know st (x, sc, rh');
-                                                      emit (Val (x, sc, case mk of SOME pos => Mark (pos, Return rh') | NONE => Return rh'))))
+                                                     let val sc' = globalize st (x, sc)
+                                                     in know st (x, sc', rh');
+                                                        emit (Val (x, sc', case mk of SOME pos => Mark (pos, Return rh') | NONE => Return rh'))
+                                                     end)
                                             steps
                                  val a' = rwAtom st a
                                  val named = List.mapPartial (fn (c, Body (_, to)) =>
@@ -852,13 +886,14 @@ struct
                                                               | _ => NONE) gs
                                  val body = copyBody (st, sigma, named, f, a')
                                  val body = case mark of SOME pos => Mark (pos, body) | NONE => body
-                                 val () = spine (st, emit, r, s) body
-                                 val made = List.map (fn d => (d, SOME root', depth + 1, true)) (List.rev (!made))
+                                 val () = spine (st, emit, SOME (r, s), ref []) body
+                                 val made = List.map (fn d => (d, SOME root', depth + 1, false)) (List.rev (!made))
                                in loop (made @ rest) end
                            end)
+                  | Do (_, e) => if original andalso calls (fns, e) andalso Pass.spend () then flatten () else plain ()
                   | _ => plain ()
             end
-      val () = loop (List.map (fn d => (d, NONE, 0, false)) p)
+      val () = loop (List.map (fn d => (d, NONE, 0, true)) p)
       val () = flush ()
       val p' = renameCopies (st, List.rev (!out))
       (* the datatypes the copies declared, entered *)

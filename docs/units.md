@@ -137,7 +137,10 @@ signatures and functors are written, no binder of what the unit's compile
 looked up, and no `funat` usage is made, so that a unit whose functor's
 body changed and whose signature did not keeps its identity, and the units
 that apply the functor are taken from the cache. The tables give each
-instance of a body's datatype the layout the body fixed (`Ty.pinned`).
+instance of a body's datatype the layout the body fixed (`Ty.pinned`),
+unless the unit expanded the application that named it (an application
+of a functor the unit declares, *The expansion* in [ir.md](ir.md)), whose
+instance is laid out from its realised types.
 
 Static analysis can also record lexical origins in a version-7 basis:
 source ranges for bindings and the specification/implementation relation
