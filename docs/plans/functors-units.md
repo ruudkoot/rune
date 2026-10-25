@@ -3388,11 +3388,13 @@ make. Since 13829a969 every compile a test makes is linted (`RUNE_LINT`),
 which found four more bugs outside the prototype, fixed too.
 
 **G2: go** (the owner, 2026-10-25), and M7 follows. One decision of M6c
-departs from M7's text below: a copy is named in traces by the functor
-(`F.boom`), as the functor's function is at -O0, where nothing is
-expanded, so that traces are the same at every level (`check-levels`);
-today a copy is named by the structure (`A.boom`). Naming copies by the
-structure would need the copies at -O0 too.
+departs from M7's text below, and the owner kept it (2026-10-25): a copy
+is named in traces by the functor (`F.boom`), as the functor's function is
+at -O0, where nothing is expanded, so that traces are the same at every
+level (`check-levels`), where Rune's copies were named by the structure
+(`A.boom`). SML/NJ, Poly/ML, MLton and OCaml name by the functor too;
+what naming the instance would take is in [functors.md](functors.md),
+*Names in traces*.
 
 ### M7. Functors compiled once (F; M, about 300 added and 520 removed)
 

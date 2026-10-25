@@ -513,11 +513,6 @@ struct
     "real_to_single",
     "real_single_from_string",
     "unsafe_cast",
-    (* the compiler's own, which Lower makes others of (--functors=functions) *)
-    "functor_cast",
-    "functor_marker",
-    "open_boxed",
-    "open_layout",
     "rt_link_error",
     "rt_interrupt_is",
     "int_order",
@@ -561,7 +556,12 @@ struct
     "intinf_max_bits",
     "string_eq",
     "array_to_vector",
-    "rt_linked_units"
+    "rt_linked_units",
+    (* the compiler's own (PrimIsa.compilerOwn), which Lower makes others of *)
+    "functor_cast",
+    "functor_marker",
+    "open_boxed",
+    "open_layout"
   ])
   fun removable name = StringMap.member (removables, name)
   (* what each primitive takes and gives, from the type of its
