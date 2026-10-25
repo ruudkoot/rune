@@ -22,8 +22,8 @@ struct
   open Mid
 
   (* The scheme of a global of a unit before this one, which a unit names
-     and does not define (not Pass.whole); set by the driver, since it is
-     ToMid's to say. *)
+     and does not define (not Pass.whole); set where a session of units
+     begins (UnitBasis.startSession), since it is ToMid's to say. *)
   val importedScheme : (int -> scheme option) ref = ref (fn _ => NONE)
   val () = CompilerState.cellRoot ("MidLint.importedScheme", importedScheme)
 

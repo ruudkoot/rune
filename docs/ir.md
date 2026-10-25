@@ -47,7 +47,7 @@ of results in globals (see *Low*).
 | `-O0`, `-O1`, `-O2` | the level; `-O1` when none is given; `-O2` adds `equality` (see *The optimisations of Mid*) |
 | `--passes=P,...` | run these optional passes, whatever the level |
 | `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=registers` (`stack` with `--target=stack`) |
-| `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach |
+| `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach; `RUNE_LINT` set and not empty does the same where no flag reaches (the REPL, the compiler library), and every test sets it ([testing.md](testing.md), *Running the tests*) |
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
 | `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then `total: T s processor time, S s in the stages (P%)` (below) |
 | `--pass-stats=elab` | `--pass-stats`, and a line for each top-level declaration elaborated: where its processor time went, by context and operation, and what the elaborator counted (*The elaborator's counters* below) |

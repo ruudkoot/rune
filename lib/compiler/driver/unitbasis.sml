@@ -113,10 +113,14 @@ struct
   val fpMemo : string option StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("UnitBasis.fpMemo", fpMemo)
 
+  (* a session of units begins: in the driver, the REPL and the compiler
+     library alike, whose units' Mid the lint checks against the schemes of
+     the globals of the units before them, which ToMid keeps *)
   fun startSession () =
     (units := []; byIdentity := StringMap.empty; builtin := counters ();
      Array.modify (fn _ => Vector.fromList []) ranges; tvars := IntTable.table 1024; binders := StringMap.empty;
-     fpMemo := StringMap.empty)
+     fpMemo := StringMap.empty;
+     MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE))
 
   fun binderOf (key : string) : string = case StringMap.find (!binders, key) of SOME i => i | NONE => ""
 
