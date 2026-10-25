@@ -1078,8 +1078,13 @@ struct
                  let
                    val v0 = defAs (b, L.CallK (g, List.map (fn a => atom (b, cx, a)) xs), L.RCon0)
                    val read = case IntTable.find (!sumRead, x) of SOME n => n | NONE => 0
+                   (* of any representation, whatever a constructor's field
+                      read from it is: a global holds a field of each
+                      constructor, and what an earlier return left (the
+                      first use would otherwise give it its own) *)
+                   fun slot g = let val v = def (b, L.Slot g) in IntTable.insert (#reps b, v, L.RAny); v end
                    val vs = List.tabulate (List.length (sumsOf stamp),
-                                           fn i => if i < read then def (b, L.Slot (List.nth (sumsOf stamp, i))) else v0)
+                                           fn i => if i < read then slot (List.nth (sumsOf stamp, i)) else v0)
                  in setVirtual (b, x, Sum (v0, vs)); exp (b, body, cx) end
              | (M.Decon (tag, t, a), _) =>
                  (case virtualOf (b, a) of
