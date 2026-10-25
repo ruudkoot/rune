@@ -232,7 +232,7 @@ struct
         | L.Mark (sp, a) => mark (sp, exp (a, st, ctx))
         | L.Rest _ => bug "the rest of the program inside an expression"
 
-      (* --functors=functions (D4): a constructor whose layout a functor's
+      (* (D4) a constructor whose layout a functor's
          parameter leaves open, made or taken apart where its descriptor
          is 0 as the specification reads it (fast), else by the body's
          function for it (Translate.openFuns) *)

@@ -1,5 +1,5 @@
-(* The expansion (docs/plans/functors-units.md, M6; a prototype, under
-   --functors=functions; docs/ir.md, Functors compiled once): Mid in which
+(* The expansion (docs/plans/functors-units.md, M6 and M7; docs/ir.md,
+   Functors compiled once): Mid in which
    each functor is a function its applications call, given back the copies
    static interpretation makes, as far as a budget allows (D13).
 

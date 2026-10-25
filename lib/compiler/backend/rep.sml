@@ -7,7 +7,7 @@
    and DECON). The choice is the datatype's, whatever types it is used at,
    so that every use of a constructor agrees; a list's :: is of two fields,
    which is what the C of the VM makes and walks (vm_cons, list_head,
-   list_tail). Under --functors=functions an instance of a datatype a
+   list_tail). An instance of a datatype a
    functor's body declares keeps the layout the body gave it (Ty.layoutOf,
    pinned). *)
 structure Rep =

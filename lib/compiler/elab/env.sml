@@ -338,7 +338,7 @@ struct
     {name = name, tag = tag, hasArg = hasArg, ncons = List.length siblings, isRef = false, siblings = siblings}
 
   val boolSiblings = [("false", false), ("true", false)]
-  (* the list's constructors, their tags as Types.tagOrder numbers them *)
+  (* the list's constructors, their tags as Types.tagNames numbers them *)
   fun listSiblings () = List.map (fn n => (n, n = "::")) (listTagNames ())
   val boolCons =
     [("false", Con {scheme = boolTy, info = conInfo ("false", 0, false, boolSiblings)}),
@@ -414,8 +414,8 @@ struct
      ("_realarray", nameStr (realarrayTycon, [])),
      ("unit", TyStr {fcn = TAbbrev ([], unitTy), cons = []})]
 
-  (* the initial basis, with the list's tags as Types.tagOrder numbers them
-     now: what a compile begins with once its options are read *)
+  (* the initial basis, with the list's tags as Types.tagNames numbers
+     them: what a compile begins with once its options are read *)
   fun initialNow () =
     let val listCons = listConsNow ()
     in

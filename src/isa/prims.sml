@@ -875,8 +875,8 @@ struct
         [{name = "rt_linked_units", arity = 1, ty = "unit -> string list", effects = [ReadsHeap, Allocates],
           doc = "Identities of successfully linked units in first-link order, each once; the reserved top-level export is the marker. Does not imply execution of initializers."}]]
 
-  (* The compiler's own primitives, which Translate makes under
-     --functors=functions and Lower makes others of (unsafe_cast, imm_eq, a
+  (* The compiler's own primitives, which Translate makes for the code of
+     functors and Lower makes others of (unsafe_cast, imm_eq, a
      constant): no VM has them, so they have no number and are in no
      fingerprint; they have no effect, and Simplify and Shake may drop one
      nothing uses (Prims.removable) *)

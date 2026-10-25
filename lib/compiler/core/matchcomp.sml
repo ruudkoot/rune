@@ -15,8 +15,7 @@ struct
     if isGlobal then Seq (SetGlobal (stamp, value), k) else Let (stamp, value, k)
 
   (* each local variable an expression is made to read, told to Translate
-     (--functors=functions: the slots of a record a functor's body sets
-     are those read) *)
+     (the slots of a record a functor's body sets are those read) *)
   val noteLocal : (int -> unit) ref = ref (fn _ => ())
   val () = CompilerState.cellRoot ("MatchComp.noteLocal", noteLocal)
 
@@ -314,7 +313,7 @@ struct
     | KExn
     | KConst
 
-  (* the list's constructors by tag, as Types.tagOrder numbers them *)
+  (* the list's constructors by tag, as Types.tagNames numbers them *)
   fun listCons () = List.map (fn n => (n, n = "::")) (Types.listTagNames ())
 
   fun kind (p : pat) : kind =

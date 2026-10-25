@@ -120,7 +120,7 @@ struct
   (* What a unit's Mid needs of the compile's tables, which the compile of
      the next unit does not keep: each datatype its types name, and those
      theirs name, by stamp; each function's name (Translate.funNames) *)
-  (* and, under --functors=functions, the layouts a body fixed of the
+  (* and the layouts a body fixed of the
      datatypes (Ty.pinned) and those a parameter leaves open (Ty.openTypes) *)
   type unitMid = {mid : program, datatypes : (int * datatypeInfo) list, funNames : (int * string) list,
                   pins : (int * (int * int option) list) list, opens : int list}
@@ -214,7 +214,7 @@ struct
                    val cons' = List.map (fn (tag, n, a) => (tag, n, Option.map ty a)) cons
                  in entered := (y, {params = ps', cons = cons'}) :: !entered end
              | NONE => ();
-             (* --functors=functions: its fixed layout, and whether it is open *)
+             (* its fixed layout, and whether it is open *)
              Option.app (fn l => Ty.pinLayout (y, l)) (IntMap.find (!Ty.pinned, s));
              if Ty.isOpen s then Ty.markOpen y else ();
              enter ())

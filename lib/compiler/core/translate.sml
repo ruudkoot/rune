@@ -96,7 +96,7 @@ struct
   val structPath : string list ref = ref []
   val () = CompilerState.cellRoot ("Translate.structPath", structPath)
 
-  (* --functors=functions: whether what is translated is a functor's body,
+  (* whether what is translated is a functor's body,
      whose declarations are its function's, no rest of the program in them *)
   val inBody = ref false
   val () = CompilerState.cellRoot ("Translate.inBody", inBody)
@@ -638,8 +638,7 @@ struct
                      k ())
               end)
 
-  (* ---- functors compiled once (--functors=functions; functors-units.md,
-     M5) ---- *)
+  (* ---- functors compiled once (docs/ir.md, Functors compiled once) ---- *)
 
   (* a record of n slots, as Elaborate.recordTy *)
   and recordTyN (n : int) : Ty.ty = Ty.tuple (List.tabulate (Int.max (n, 2), fn _ => Ty.unit))

@@ -203,7 +203,7 @@ struct
      parts can be read back. *)
   datatype known = Made of rhs
                  | Fields of atom vector   (* a tuple made of these, read a field in a step: a functor's record
-                                              of many (--functors=functions) *)
+                                              of many *)
 
   (* What a round knows: the atom each variable it has dropped is, and what
      made each variable whose parts can be read back. A variable is used only
@@ -334,7 +334,7 @@ struct
   datatype eqKind = EqPrim of string | EqTrue | EqFun | EqTuple of Ty.ty list
 
   (* a datatype of a functor's parameter with a constructor whose layout
-     the argument gives (--functors=functions, D4), which no function made
+     the argument gives (D4), which no function made
      here may take apart *)
   fun openLayout (t : Ty.ty) : bool =
     case Ty.view t of Ty.Con (stamp, _, _) => Ty.isOpen stamp | _ => false
@@ -1942,7 +1942,7 @@ struct
       t
     end
 
-  (* a functor's function (--functors=functions; Translate.functorFun
+  (* a functor's function (Translate.functorFun
      names it so), which is not put where it is called: that is the
      expansion's (functors-units.md, M6), with its budget, and M5's
      applications are calls *)

@@ -61,15 +61,9 @@ struct
 
   (* Dynamic modules (docs/units.md, Dynamic modules; the incremental
      roadmap's M9, D17 and D18): the fingerprint of a signature's ABI, which
-     UnitBasis gives (the hash of UnitBasis.fpSigma); and, while the body
-     of an _export is elaborated, the order the signature gives the
-     constructors of each datatype it specifies, by the datatype's name,
-     which a datatype of the body of that name and those constructors takes
-     its tags in *)
+     UnitBasis gives (the hash of UnitBasis.fpSigma) *)
   val sigFingerprint : (SigMatch.sigma -> string) ref = ref (fn _ => "")
   val () = CompilerState.cellRoot ("Elaborate.sigFingerprint", sigFingerprint)
-  val exportTags : string list StringMap.map ref = ref StringMap.empty
-  val () = CompilerState.cellRoot ("Elaborate.exportTags", exportTags)
   (* where the program loads a dynamic module, which only a program built in
      units can (Main): the first such declaration *)
   val dynamicAt : Source.span option ref = ref NONE
@@ -1435,17 +1429,9 @@ struct
                                           (ListPair.zip (#tyvars db, List.map #2 params)))
               val resTy = TCon (tc, List.map #2 params)
               val ncons = List.length (#cons db)
-              (* the tags: in the order of the declaration, or of the
-                 signature an _export ascribes it to (exportTags); by the
-                 names, sorted, under --datatype-tags (Types.tagNames), as
+              (* the tags: by the constructors' names (Types.tagNames), as
                  every specification numbers them *)
-              val order =
-                case (!Types.tagOrder, StringMap.find (!exportTags, #name db)) of
-                  (Types.TagsDeclared, SOME names) =>
-                    if List.length names = ncons
-                       andalso List.all (fn (c, _, _) => List.exists (fn n => n = c) names) (#cons db)
-                    then names else List.map #1 (#cons db)
-                | _ => Types.tagNames (List.map #1 (#cons db))
+              val order = Types.tagNames (List.map #1 (#cons db))
               fun tagOf c =
                 let fun go (_, []) = 0 | go (i, n :: rest) = if n = c then i else go (i + 1, rest)
                 in go (0, order) end
@@ -1851,25 +1837,13 @@ struct
           e
         end
     | StrExport (_, sigexp, body, slot, sp) =>
-        (* a dynamic module's implementation (D17): its body elaborated with
-           the signature's order of each datatype's constructors, ascribed
-           to the signature opaquely, and its values and exceptions, in the
-           ABI's order, what it exports *)
+        (* a dynamic module's implementation (D17): its body elaborated,
+           its datatypes numbered by their constructors' names as the
+           signature's are, ascribed to the signature opaquely, and its
+           values and exceptions, in the ABI's order, what it exports *)
         let
           val sigma = elabSigexp (env, sigexp)
-          fun orders (Env {tys, strs, ...}, m) =
-            StringMap.foldli (fn (_, e, m) => orders (e, m))
-                             (StringMap.foldli (fn (n, TyStr {cons = cs as _ :: _, ...}, m) =>
-                                                   StringMap.insert (m, n, List.map #1 (List.foldl (fn (c, acc) =>
-                                                     let fun tagOf (_, Con {info, ...}) = #tag info | tagOf _ = 0
-                                                         fun ins [] = [c] | ins (d :: rest) = if tagOf c < tagOf d then c :: d :: rest else d :: ins rest
-                                                     in ins acc end) [] cs))
-                                               | (_, _, m) => m) m tys)
-                             strs
-          val saved = !exportTags
-          val () = exportTags := orders (#env sigma, StringMap.empty)
-          val e = elabStrexp (env, level, top, scope, body) handle x => (exportTags := saved; raise x)
-          val () = exportTags := saved
+          val e = elabStrexp (env, level, top, scope, body)
           val ascribed = ElabStats.during ElabStats.Match (fn () => SigMatch.ascribe (sigma, e, true, sp))
           val via = dynamicVia (env, "export", sp)
           val slots : (int * ty * bool) list ref = ref []

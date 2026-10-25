@@ -105,19 +105,11 @@ static int cc_not(int cc) {
     default: return -1;
     }
 }
-/* LESS, EQUAL or GREATER (0, 1, 2) of the flags into d: ge + g; under
-   RUNE_TAGS_SORTED (2, 0, 1: value.h), 2 lt + g */
+/* LESS, EQUAL or GREATER (0, 1, 2) of the flags into d: ge + g */
 static void set_order(Jit *j, int32_t d, int cc_ge, int cc_g) {
-#ifdef RUNE_TAGS_SORTED
-    as_setcc(A, R_S0, cc_not(cc_ge));
-    as_setcc(A, R_S1, cc_g);
-    as_add_rr(A, R_S0, R_S0);
-    as_add_rr(A, R_S0, R_S1);
-#else
     as_setcc(A, R_S0, cc_ge);
     as_setcc(A, R_S1, cc_g);
     as_add_rr(A, R_S0, R_S1);
-#endif
     ms_set_reg(M, d, T_CON0, R_S0);
 }
 /* the two arguments, immediates of one tag, as their words in rax and rcx:

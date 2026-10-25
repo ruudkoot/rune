@@ -1,5 +1,5 @@
 (* A function of Mid in bytes, its names written and read by the caller
-   (functors-units.md, M6b; a prototype, under --functors=functions): what a
+   (functors-units.md, M6b): what a
    unit's basis keeps of a functor marked to be inlined (UnitBasis.funcode),
    so that a unit that applies it expands its body (Expand). The names a
    function binds -- its parameters, its locals, its join points -- are its

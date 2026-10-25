@@ -331,7 +331,7 @@ struct
      by their names; a datatype by its constructors (nullary only: a
      T_CON0; none nullary: in the heap; both: either); a tuple, a
      function, an exception in the heap; a type variable any. *)
-  (* open_layout's descriptor (--functors=functions): the fields the
+  (* open_layout's descriptor (docs/ir.md, Open constructors): the fields the
      constructor tag of the datatype its type takes is laid out in, 0 where
      it boxes its argument, by the datatype's layout now (Ty.layoutOf), after
      the expansion decided it *)
@@ -924,7 +924,7 @@ struct
         M.Atom _ => bug "an atom as an operation"
       | M.App (M.Global (g, _), xs) => if isKnown g then L.CallK (g, List.map at xs) else unknown (b, cx, r)
       | M.App _ => unknown (b, cx, r)
-      (* the primitives of the functors' code (--functors=functions), which
+      (* the primitives of the functors' code (docs/ir.md, Functors compiled once), which
          only the compiler makes: a record's slot cast, an application's
          marker, an open constructor's descriptor tested for 0 and worked
          out from its datatype's layout, as it is now *)

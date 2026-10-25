@@ -33,7 +33,7 @@ struct
     | Ref of spat
     | Exn of exninfo * spat list         (* exception constructors: an open domain *)
 
-  (* the list's constructors, their tags as Types.tagOrder numbers them *)
+  (* the list's constructors, their tags as Types.tagNames numbers them *)
   fun listSiblings () = List.map (fn n => (n, n = "::")) (Types.listTagNames ())
   fun nilInfo () : coninfo = {name = "nil", tag = Types.nilTag (), hasArg = false, ncons = 2, isRef = false, siblings = listSiblings ()}
   fun consInfo () : coninfo = {name = "::", tag = Types.consTag (), hasArg = true, ncons = 2, isRef = false, siblings = listSiblings ()}

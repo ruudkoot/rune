@@ -235,8 +235,7 @@ struct
   fun bindRealization (stamp : int, fcn : Types.tyfcn) = IntTable.insert (realizations, stamp, fcn)
 
   (* bool and list, which no declaration makes: list's tags as
-     Types.tagOrder numbers them, again where an option changes it
-     (bindBuiltins) *)
+     Types.tagNames numbers them (bindBuiltins) *)
   val listParam = Types.freshTvar (Types.genericLevel, Types.KPlain, false)
   fun bindBuiltins () =
     let
@@ -405,7 +404,7 @@ struct
     case !extras of
       NoExtras => params
     | _ => (case extrasOf stamp of [] => params | extra => params @ extra)
-  (* --functors=functions (functors-units.md, D4): a constructor's object
+  (* (functors-units.md, D4) a constructor's object
      seen whatever its datatype, through which a functor's body builds and
      takes apart a constructor whose layout its parameter leaves open, by
      the descriptor its argument gives (Translate): `flatN` has a
@@ -429,7 +428,7 @@ struct
     | SOME {params, cons} =>
         SOME {params = paramsOf (stamp, params), cons = List.map (fn (t, n, a) => (t, n, Option.map argOf a)) cons}
 
-  (* ---- layouts (--functors=functions; functors-units.md, D5) ---- *)
+  (* ---- layouts (functors-units.md, D5) ---- *)
 
   (* The number of fields of each constructor of a datatype, by tag: SOME n
      for one whose declared argument is a tuple of n >= 2 -- one object of

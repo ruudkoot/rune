@@ -13,7 +13,7 @@
      scheme has at them.
    * calls: a function of other than one parameter (a worker, M8) is only
      called, with an argument for each, and never used as a value.
-   * casts, under --functors=functions (functors-units.md, D3), of a
+   * casts (functors-units.md, D3) of a
      record's slots (functor_cast, which only Translate's records make: a
      program's own unsafe_cast is not checked): each is to unit or from
      unit, and none cast back from unit gives another ground type than the
