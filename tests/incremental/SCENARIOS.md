@@ -27,10 +27,11 @@ what it does, and says so:
   *The cache*, *Fingerprints*), and a type's fingerprint is its definition:
   S11 compiles the unit that only names the type whose representation
   changed, which is the scenario's correct fallback; a functor holds by
-  its signature, but a unit that applies one to make code depends on the
-  unit that declared it too, so S8 compiles every unit that applies the
-  functor; an overloading holds by its binder alone, so S28o compiles every
-  unit that resolved the overloading;
+  its signature, and since functors-units' M7 a unit that applies one calls
+  its function, so S8 compiles the declaring unit alone (a functor marked
+  to be inlined holds by its function's Mid too, `inl F`); an overloading
+  holds by its binder alone, so S28o compiles every unit that resolved the
+  overloading;
 * a unit is known by its name, which is in its identity: two files of the
   same text and different names are two units (S7 is run as one project
   in two directories), a file renamed is another unit, and the units that
@@ -416,5 +417,7 @@ static interpretation costs the cut-off (the roadmap's risk 3):
   `control/control-flags.sml`: only the units that `open` it or use a
   changed entry recompile.
 * **S48, a functor body.** Change the body of a functor applied in many
-  places (one of `ssa/`): every applying unit recompiles. The count and
-  the time are the measurement of risk 3.
+  places (one of `ssa/`): the declaring unit alone recompiles, since
+  functors-units' M7, where every applying unit did under static
+  interpretation (6 units, E8). The count and the time are the measurement
+  of risk 3.

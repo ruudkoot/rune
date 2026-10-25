@@ -562,6 +562,35 @@ struct
         | NONE => let val p = !next in next := p - 1; given := IntMap.insert (!given, s, p); p end
     in restamp f e end
 
+  (* What an application typed from a summary alone gives in place of the
+     placeholders, in a compile that makes no code (makesCode): a fresh
+     stamp for each exception, which each application makes anew (rule
+     154), and the placeholders of values as they are, which name nothing
+     that is translated *)
+  fun freshExceptions (e : env) : env =
+    let
+      val given : int IntMap.map ref = ref IntMap.empty
+      val exns : unit IntMap.map ref = ref IntMap.empty
+      fun note (Env {vals, strs, ...}) =
+        (StringMap.app (fn Exn {info, ...} => exns := IntMap.insert (!exns, #stamp info, ())
+                         | ExnAsVal {info, ...} => exns := IntMap.insert (!exns, #stamp info, ())
+                         | _ => ()) vals;
+         StringMap.app note strs)
+      val () = note e
+      fun f s =
+        if not (IntMap.member (!exns, s)) then s
+        else
+          case IntMap.find (!given, s) of
+            SOME p => p
+          | NONE => let val p = freshStamp () in given := IntMap.insert (!given, s, p); p end
+      (* its values the top level's, as a call's result makes them where
+         code is made (_overload names one) *)
+      fun top (Env {vals, tys, strs, origins}) =
+        Env {vals = StringMap.map (fn Val {scheme, stamp, ...} => Val {scheme = scheme, stamp = stamp, global = true}
+                                    | v => v) vals,
+             tys = tys, strs = StringMap.map top strs, origins = origins}
+    in top (restamp f e) end
+
   (* ------------------------------------------------------------------ *)
   (* Functors compiled once (docs/ir.md, Functors compiled once) *)
 
@@ -927,7 +956,11 @@ struct
      datatype's layout of each (phi), or, where its datatype is the
      parameter's of the body the application is in, that body's
      descriptor *)
-  fun descriptors (paramSig : SigMatch.sigma, phi : realisation, sp : Source.span) : desc list =
+  (* a functor's open constructors, by the global of its function, worked
+     out once: its parameter's signature does not change *)
+  val openMemo : (tycon * int * ty) list IntTable.table ref = ref (IntTable.table 64)
+  val () = CompilerState.refRoot ("Elaborate.openMemo", openMemo, IntTable.copy)
+  fun descriptors (code : int, paramSig : SigMatch.sigma, phi : realisation, sp : Source.span) : desc list =
     List.map (fn (c, tag, _) =>
                 case IntMap.find (phi, #stamp c) of
                   SOME (TName a) =>
@@ -943,7 +976,9 @@ struct
                               else DescLayout {stamp = #stamp a, name = #name a, arity = #arity a, tag = tag}
                           | _ => DescLayout {stamp = #stamp a, name = #name a, arity = #arity a, tag = tag}))
                 | _ => Error.bug ("a datatype of a parameter realised by no type name: " ^ #name c))
-             (openConstructors paramSig)
+             (case IntTable.find (!openMemo, code) of
+                SOME l => l
+              | NONE => let val l = openConstructors paramSig in IntTable.insert (!openMemo, code, l); l end)
 
   (* ------------------------------------------------------------------ *)
   (* Types                                                                *)
@@ -1625,10 +1660,15 @@ struct
           fun function (b : funbind) =
             let
               val sigma = elabSigexp (env, #paramSig b)
+              (* what only the code needs (the function, its records, the
+                 parameter's datatypes in the code's tables): not in a
+                 compile that makes no code (makesCode; D15) *)
+              val code = !makesCode
               val boundSet = List.foldl (fn (c : tycon, m) => IntMap.insert (m, #stamp c, ())) IntMap.empty (#bound sigma)
-              val _ = specDatatypes (fn c => IntMap.member (boundSet, #stamp c)
-                                              andalso not (IntMap.member (!Ty.datatypes, #stamp c)), #env sigma)
-              val pEnv = localParam (#env sigma)
+              val _ = if code then specDatatypes (fn c => IntMap.member (boundSet, #stamp c)
+                                                         andalso not (IntMap.member (!Ty.datatypes, #stamp c)), #env sigma)
+                      else []
+              val pEnv = if code then localParam (#env sigma) else #env sigma
               val bodyEnv = case #param b of
                               SOME x => bindStrAt (env, x, pEnv, #span b)
                             | NONE => plus (env, pEnv)
@@ -1646,15 +1686,18 @@ struct
                               val o' = {tycon = #stamp c, tag = tag, desc = freshStamp (), con = freshStamp (),
                                         decon = freshStamp (), dataTy = dataTy, argTy = argTy, used = ref false}
                             in
-                              opened := IntMap.insert (!opened, #stamp c, o' :: getOpt (IntMap.find (!opened, #stamp c), []));
-                              Ty.markOpen (#stamp c);
+                              if code then
+                                (opened := IntMap.insert (!opened, #stamp c, o' :: getOpt (IntMap.find (!opened, #stamp c), []));
+                                 Ty.markOpen (#stamp c))
+                              else ();
                               o'
                             end)
                          (openConstructors sigma)
-              val paramRecord = case recordOf pEnv of
-                                  Record {vals, strs, ...} =>
-                                    mkRecord (vals, List.map (fn (o' : openCon) => DescVar (#desc o')) opens, strs, NONE)
-              val () = register (paramRecord, {var = param, global = false, path = []})
+              val paramRecord = if not code then Record {vals = [], descs = [], strs = [], id = NONE, shared = NONE}
+                                else case recordOf pEnv of
+                                       Record {vals, strs, ...} =>
+                                         mkRecord (vals, List.map (fn (o' : openCon) => DescVar (#desc o')) opens, strs, NONE)
+              val () = if code then register (paramRecord, {var = param, global = false, path = []}) else ()
               val lo = !tyconCounter
               val saved = !inBody
               val flexBefore = List.length (!pendingFlex)
@@ -1680,16 +1723,22 @@ struct
                 if closure (b, result) then {generated = generatedDeep (lo, result), result = placeholders result}
                 else refuse ()
               val func = freshStamp ()
-              val () = if StringMap.member (!inlineFunctors, #name b) then IntTable.insert (!markedFunctions, func, ()) else ()
-              val resultRecord = recordInReach result
-              val () = let fun note (Record {vals, strs, ...}) =
-                             (List.app (fn (_, ConAsVal {scheme, info}) => noteOpen (scheme, info) | _ => ()) vals;
-                              List.app (fn (_, r) => note r) strs)
-                       in note resultRecord end
-              val () = Ty.bindVar (func, TArrow (recordTy paramRecord, recordTy resultRecord))
-              val () = bodies := StringMap.insert (!bodies, spanKey (#span b),
-                                                   {func = func, param = param, paramRecord = paramRecord, result = resultRecord,
-                                                    opens = opens})
+              val () =
+                if not code then ()
+                else
+                  let
+                    val () = if StringMap.member (!inlineFunctors, #name b) then IntTable.insert (!markedFunctions, func, ()) else ()
+                    val resultRecord = recordInReach result
+                    val () = let fun note (Record {vals, strs, ...}) =
+                                   (List.app (fn (_, ConAsVal {scheme, info}) => noteOpen (scheme, info) | _ => ()) vals;
+                                    List.app (fn (_, r) => note r) strs)
+                             in note resultRecord end
+                    val () = Ty.bindVar (func, TArrow (recordTy paramRecord, recordTy resultRecord))
+                  in
+                    bodies := StringMap.insert (!bodies, spanKey (#span b),
+                                                {func = func, param = param, paramRecord = paramRecord, result = resultRecord,
+                                                 opens = opens})
+                  end
             in
               (#name b, FunInfo {param = #param b, paramSig = sigma, binding = Env.originAt ("functor", #name b, #span b),
                                  summary = summary, code = func})
@@ -1743,7 +1792,7 @@ struct
                    val () = if isSome (IntTable.find (!inlinedFunctions, func)) then Usage.use ("inl", funid) else ()
                    val {generated, result} = summary
                    val (phi, specE) = ElabStats.during ElabStats.Match (fn () => SigMatch.match (paramSig, argEnv, sp))
-                   val descs = descriptors (paramSig, phi, sp)
+                   val descs = descriptors (code, paramSig, phi, sp)
                    val fresh = List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) generated
                    val bound = List.map (fn (c : tycon) => (c, case IntMap.find (phi, #stamp c) of
                                                                 SOME f => f
@@ -1770,9 +1819,22 @@ struct
                                                                                       fresh});
                    res
                  end
+               (* where no code is made (--typecheck-only, --serve, the
+                  library's analyses; D15): the summary realised alone, the
+                  parameter's names by the argument's types and the body's
+                  by fresh ones, and the argument's layouts checked as a
+                  compile checks them *)
+               fun typed () =
+                 let
+                   val {generated, result} = summary
+                   val (phi, _) = ElabStats.during ElabStats.Match (fn () => SigMatch.match (paramSig, argEnv, sp))
+                   val _ = descriptors (code, paramSig, phi, sp)
+                   val phi = List.foldl (fn (c, m) => IntMap.insert (m, #stamp c, TName (freshTycon (#name c, #arity c, #eq c))))
+                                        phi generated
+                 in freshExceptions (realizeEnv (phi, result)) end
              in
                (* --pass-stats=elab: the match and the call are the application's *)
-               ElabStats.application (!makesCode) call
+               ElabStats.application (!makesCode) (if !makesCode then call else typed)
              end)
     | StrLet (decs, body, _) =>
         let val delta = elabDecs (env, level, top, scope, decs)
