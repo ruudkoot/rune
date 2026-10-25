@@ -168,7 +168,7 @@ ignore it.
 The Basis Library marks its own functors in `lib/basis/library.build`.
 These are the functors that make its structures in units other than their
 own: the words, ints, vectors, arrays and slices, the packing, and the
-streams. `--basis-index` writes them to the manifest (`# inline:`), and
+streams. `--basis-index` writes them to the manifest's header (`# inline:`), and
 every compile marks them unless `--no-inline-functors` is given.
 A program whose sources must stay as they are marks its functors on the
 command line: `--inline-functor=Table` (repeatable, or a comma list), or

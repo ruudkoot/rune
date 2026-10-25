@@ -261,7 +261,9 @@ Other libraries sit beside the basis library under the `--lib` directory
 (`lib/test/property`), each with a `library.build` and a generated `MANIFEST` of the same form
 (`BasisManifest`, `lib/compiler/driver/basismanifest.sml`). `rune --library NAME` adds
 a library's entries after the basis library's, with those of the libraries
-its `# library:` lines name before it, and the files are chosen from all of
+its `# library:` lines name before it (those and its `# inline:` lines are
+its header, before the first file's line, where reading them stops), and
+the files are chosen from all of
 them together, by path. A library's requires column names what it uses of
 the basis library, so that a program that names only the library loads what
 the library needs. The driver elaborates the basis library with `_prim`
