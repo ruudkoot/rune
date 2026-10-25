@@ -57,7 +57,16 @@ outside the cache that the last section lists.
   (`docs/units.md`, *The cache*). The probes are scenarios S49 to S51. It
   costs precision, not correctness: a unit that declares a functor and
   other things changes identity where anything it used changed, not only
-  what its functors' bodies used.
+  what its functors' bodies used. Since functors-units' M7 (2026-10-25)
+  the cause is gone: a functor is compiled once, in the unit that declares
+  it, and a unit that applies it calls its function, so what the body's
+  names meant and the fixity it was parsed with are the declaring unit's
+  alone. The binders a functor's unit wrote into its basis went with the
+  cause, and so did the usage `funat`, by which an applying unit used the
+  unit a copy's code came from. S49 to S51 now compile `a.sml` and `c.sml`,
+  and `main.sml` calls the function `c.sml` made again; a functor marked to
+  be inlined, whose body an applying unit copies, makes that unit use its
+  function's Mid (`inl F`, docs/units.md, *The cache*).
 
 * **2. Overloading registered away from its type.** Resolving an
   overloaded operator or literal at a type reads the registration that some
@@ -98,7 +107,12 @@ outside the cache that the last section lists.
   not the bytes a build without the cache gives. The computation was right;
   the positions were not. Status: fixed. An entry keeps, for each file its
   code names, the unit it is the source of, and a unit taken from the cache
-  names each where that unit's source is now (scenario S56).
+  names each where that unit's source is now (scenario S56). Since
+  functors-units' M7 (2026-10-25) a unit holds a copy of another unit's
+  functor only where the functor is marked to be inlined, as the Basis
+  Library's `mono_vector_fn.sml` and `streamio_fn.sml` are; the paths stay
+  for those copies, and a marked functor's Mid names its positions by its
+  unit's own source, not by the path its compile was given (S61).
 
 * **16. Fingerprints without equality.** Found by the functors-units
   roadmap (E9, 2026-10-21). A fingerprint wrote a type variable as `'i`
@@ -365,7 +379,13 @@ outside the cache that the last section lists.
   `--verify-cache` compiles an entry that holds by fingerprint again rather
   than compare it. Left: giving such an entry the identity a fresh compile
   would -- its basis written again against the new units when it is
-  loaded -- so that `--verify-cache` can compare it too.
+  loaded -- so that `--verify-cache` can compare it too. Since
+  functors-units' M7 (2026-10-25) the functor's case is gone: a functor's
+  unit keeps no binders in its basis (issue 1), and its code is its
+  function, which names the units it uses as any code does. The rest is
+  as above: MLton's S48, which compiled six units because four held only
+  across `profile.fun` changed, compiles `profile.fun` alone, since an edit
+  of a body no longer changes its unit's identity.
 
 * **17. A functor's or a signature's usage was fingerprinted after the
   unit's own declarations.** Found by the functors-units roadmap (E5 and

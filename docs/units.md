@@ -366,9 +366,8 @@ not in the session: the entry's code names that unit's globals, which the
 unit of its name there now takes over (below), while a unit still there
 keeps them -- in the REPL, where a file used again binds the name now, or
 another unit than the first does (S75). A functor's fingerprint is its
-signature, its parameter's and its summary's (S65, S66); a functor with no
-summary, an overloading and the REPL's settings hold by their binder
-alone. A fingerprint is of what the name names at the unit's start, as
+signature, its parameter's and its summary's (S65, S66); an overloading
+and the REPL's settings hold by their binder alone. A fingerprint is of what the name names at the unit's start, as
 its binder is, though the unit declares another of the name before its
 usages are worked out (S72); it says which type variables admit equality,
 and the arity and equality of a signature's own type names (S68, S69).

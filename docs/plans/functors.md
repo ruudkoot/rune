@@ -22,6 +22,15 @@ gave and what building it taught. performance.md was retired on 2026-10-20
 expansion, was not started and stays here, with what to measure before it
 (*Before revisiting B*).
 
+**B built** by [functors-units.md](functors-units.md) (2026-10-21 to
+2026-10-25; its M5 to M8, gate G2 the owner's on 2026-10-25): every functor
+is compiled once, to a function its applications call, in every mode, and
+the middle end gives a whole program and a unit's own applications their
+copies back within a budget. *B, functors as functions*, below, says what
+was built against the design; *Before revisiting B* where each measure was
+taken. M3's corners closed with it (*What M3 built and found*): an
+application is typed by the functor's signature in every mode.
+
 ## What the Definition says
 
 The rules below are cited from their transcription on branch `runespec`
@@ -427,6 +436,23 @@ none failing in the two hours given; earlier builds of M3 reached 218 and
 
 ### B, functors as functions: to revisit
 
+*Built by [functors-units.md](functors-units.md) (M5 to M8). What was
+built against the design below: the argument and the result are nested
+records of a structure's slots (its D3), not D17's ABI; a datatype's tags
+are by its constructors' names sorted, with `nil, ::` and `LESS, EQUAL,
+GREATER` as before (D4), and a constructor of a parameter's datatype that
+takes one of the parameter's abstract types is built and taken apart by a
+descriptor of the argument's layout; a body's datatypes keep the body's
+layout in an instance a call makes (D5). The expansion is a Mid pass,
+`expand`, in every whole compile and on each unit's own applications, not
+only in `--units --whole` (which runs it on the same Mid, so the two give
+the same bytes); a functor marked to be inlined is expanded across units
+(`inline functor`, the Basis's I/O and vector functors); and a budget of
+1,000,000 Mid nodes a top-level application bounds nested functors (D13,
+M8). The code-quality cost was measured and met: the bootstrap and MLton's
+benchmark set, whole, within 1% of static interpretation's instructions
+(gate G2, M7).*
+
 * **The design:**
   * A functor is compiled once, in its own unit, into a function of its
     argument structure (a record of values).
@@ -464,6 +490,14 @@ It keeps a deviation from the Definition and pays for the copies made only
 to check.
 
 ## Before revisiting B
+
+*Measured by [functors-units.md](functors-units.md): 1 by its E2 and E8
+(HOL4's kernel declares no functor, so an edit of a body recompiles little
+there; MLton's S48, one unit where static interpretation compiled six), 2
+by its E4 and M5 (the compiler built in units 1.018 of today's
+instructions, the Basis's functors called across units dearer until they
+were marked to be inlined), 3 by its M6 and gate G2 (the expansion's code
+within 1% of static interpretation's).*
 
 To be measured first:
 
