@@ -666,13 +666,10 @@ struct
                | NONE => raise ReplSession.Failed "--datatype-tags requires declared, sorted or sorted-x")
             else if String.isPrefix "--inline-functor=" a then (ReplFront.inline (String.extract (a, 17, NONE)); go rest)
             else if a = "--no-inline-functors" then (noInline := true; Elaborate.inlineFunctors := StringMap.empty; go rest)
-            (* every pass's output checked, as rune --lint checks it *)
-            else if a = "--lint" then
-              (Pass.lint := true; Elaborate.lintSummaries := true;
-               (* the globals of the units before a declaration, by their
-                  types, as a build in units gives MidLint them (Main) *)
-               MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE);
-               go rest)
+            (* every pass's output checked, as rune --lint checks it (the
+               globals of the units before a declaration typed for the lint
+               by UnitBasis.startSession, as in a build in units) *)
+            else if a = "--lint" then (Pass.lint := true; Elaborate.lintSummaries := true; go rest)
             else a :: rest
         | go [] = []
       val rest = go args
