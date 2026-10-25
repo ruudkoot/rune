@@ -94,13 +94,11 @@ the hosts' builds against each other (`check-cross`), whole against units
   by Mid's types, which say nothing of layout. Checking each constructor's
   layout against its datatype's (`Rep`) at every `Con` and `Field` would
   have caught the review's second finding.
-* **The elaborated program checked again.** The elaborator is checked only
-  through what it hands on: `Lambda`'s types come from it, so a mistake
-  that makes ill-typed code shows in `LambdaLint`, and one that types a
-  program the Definition rejects shows nowhere. A small checker of the
-  elaborated syntax against the Definition's rules, independent of the
-  elaborator's unification, would be the analogue of the lints for the
-  front end; runespec's reference type checker ([specification.md](../specification.md)) would be one.
+* **The elaborated program checked again (`AstLint`).** The elaborator is
+  checked only through what it hands on: `Lambda`'s types come from it, so
+  a mistake that makes ill-typed code shows in `LambdaLint`, and one that
+  types a program the Definition rejects shows nowhere. *The elaborated
+  syntax* below says what a checker of it has to work with.
 * **A cheaper lint, to run more often.** Lint only what the pipeline ends
   with (Mid before `lower`, and Low), which catches most bugs at a fraction
   of the cost, as a level between none and all; or memoise `midcanon`'s
@@ -110,3 +108,74 @@ the hosts' builds against each other (`check-cross`), whole against units
   against what the exporting unit's basis says, when an entry is taken from
   the cache, would catch an entry linked against a unit that changed
   under it -- the kind of hole build-cache-issues.md's 21 to 23 were.
+
+## The elaborated syntax
+
+What an `AstLint` would check, as found on 2026-10-25.
+
+**The elaborator works on the syntax as parsed.** `Elaborate.elabTop` takes
+`Ast.dec list`, and infers by unification (`Types.ty`, whose variables are
+refs, with levels for generalisation). The core language's derived forms
+stay nodes of their own -- `if`, `andalso`, `orelse`, `case`, `while`, a
+`fun`'s clauses, lists, sequences -- and every node has its span, so an
+error names the form the program wrote ("branches of if: type mismatch
+between int and string"). The parser rewrites some of the module
+language's derived forms (`structure S : SIG = e`, `functor F (spec)`,
+`funid (strdec)`, `type` in a signature, `include`).
+
+**It annotates the syntax in part.** Mutable slots, filled as it goes, and
+read once `Elaborate.finish` has settled overloading and defaults:
+* a variable's or a constructor's use: what it is and the instance of its
+  scheme at this use (`varinfo`);
+* the type of an integer or word constant, a list, a `fn`, a `#lab` and a
+  `_prim`; a pattern's constant and record;
+* a pattern variable's or constructor's identity (`patinfo`), and an
+  exception binding's;
+* a functor application's elaborated copy (`StrApp`).
+
+Beside them, tables by stamp: every variable's scheme (`Ty.binders`), every
+exception's argument, every datatype's constructors and every opaque
+type's realisation. `CompilerFacts` reads the slots for the IDE's types at
+a position, which is why `typeAt` answers for a variable, a constant or a
+record and not for an application or a `case`.
+
+**What a checker would lack.** No type is kept for most nodes: an
+application, a tuple, a record expression, `if`, `case`, `let`, `handle`,
+`raise`, a sequence; nor a constructor's instance in a pattern, a list
+pattern's element type, or the type a `: ty` annotation elaborated to.
+Nothing of the module language is kept on the syntax but the copies: no
+structure's environment, no signature's, no realisation or thinning of a
+match. So:
+* **for the core language** a checker is within reach. Working as
+  `MidLint` does -- each node checked against the type its context wants,
+  each leaf's type from its slot or its binder's scheme -- it needs nothing
+  more for most nodes; a constructor in a pattern is found by matching its
+  declared type one way against the wanted type, not by unifying. It must
+  also check what the elaborator decided: that each binder's scheme
+  generalises its body's type and no more (the value restriction, and
+  explicit type variables' scopes, Section 4.6), that `=` is used at types
+  that admit equality, and that overloading was resolved as the defaults
+  say. A `: ty` annotation needs the type environment at that point,
+  which only the elaborator has: it would have to be kept (a slot), or the
+  checker would elaborate types itself;
+* **for the module language** a checker would re-do signature matching,
+  unless the elaborator kept each structure expression's environment and
+  each match's realisation, which it could then check against the
+  signature, as the core's leaves are checked against schemes.
+
+To be independent it must not share the elaborator's unification
+(`Unify`) or matching (`SigMatch`), only the types and the tables:
+`LambdaLint` finds the translation's bugs because it checks where the
+translation inferred.
+
+**For error messages.** The same annotations serve them: a type on every
+node gives the IDE a type at every position and an error the types of the
+parts it names. Better messages need more than that -- where a type came
+from (the constraint that fixed it), the errors as data rather than
+strings (`errror-messages.md`), and recovery that binds what failed to an
+error type: today a declaration that fails leaves its names unbound, so
+`fun f (x, y) = if x then y + 1 else "no"  val z = f (true, 2)` reports
+the mismatch, then "unbound variable or constructor: f" at its use.
+runespec's reference type checker ([specification.md](../specification.md)),
+generated from the Definition, would be another such checker, of the core
+and the modules alike.
