@@ -333,7 +333,9 @@ in order), refs, arrays and vectors of the parameter's types and the
 body's, declarations of a body that branch, bind a refutable pattern or
 close over the parameter's values, substructures in parameters and
 results. What a program prints
-makes each visible: every instance's results, matches on constructors,
+makes each visible: every instance's results, matches on constructors (an
+alias's values matched by the constructors of what it names, and a
+replicated datatype's by its argument's),
 exceptions handled across instances, counts and equalities. A program is a
 plan of choices made well typed by construction (an argument that does not
 match a parameter falls back to a literal that does), so a failure the

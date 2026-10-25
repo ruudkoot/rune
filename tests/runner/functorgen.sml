@@ -961,6 +961,14 @@ struct
       fun hoist t = let val n = "T" ^ ints (!hoisted) in hoisted := !hoisted + 1; note "arg:named-for-sharing"; emit ("structure " ^ n ^ " = " ^ t); n end
       fun add (s, v : view) = (structs := !structs @ [(s, v)];
                                paths := !paths @ [(s, v)] @ (if #inner v then [(s ^ ".Inner", core)] else []))
+      (* the values of one structure matched by the constructors of another *)
+      val cross : string list ref = ref []
+      fun matchLine (s, by, cs) =
+        "val () = print (\"match " ^ s ^ " " ^ by ^ " \" ^ " ^ String.concatWith " ^ \" \" ^ "
+        (List.map (fn n => "(case " ^ s ^ ".mk " ^ ints n ^ " of "
+                           ^ String.concatWith " | " (List.map (fn (c, a) => by ^ "." ^ c ^ (if a then " _" else "") ^ " => " ^ str c) cs) ^ ")")
+                  [1, 2, 3])
+        ^ " ^ \"\\n\")"
       fun apply (i, j, a, wrap, alias) =
         let
           val f = List.nth (finfos, j)
@@ -979,7 +987,19 @@ struct
           | _ => (note "top:nested";
                   emit ("structure " ^ s ^ " = struct structure In = " ^ applyText (f, t) ^ " val v = In.obs (In.mk 1) end");
                   extra := !extra @ [s ^ ".v"]; add (s ^ ".In", #view f));
-          if alias then (note "top:alias"; emit ("structure " ^ s ^ "a = " ^ #1 (List.last (!structs))); add (s ^ "a", #2 (List.last (!structs))))
+          (* a datatype the result replicates from its argument, matched
+             by the argument's constructors *)
+          case (#dt (#view f), #form f <> 5 andalso isPath t, List.find (fn (n, _) => n = t) (!paths)) of
+            (SOME k, true, SOME (_, av : view)) =>
+              if #dt av = SOME k then (note "match:across-instances"; cross := !cross @ [matchLine (#1 (List.last (!structs)), t, shapeCons k)])
+              else ()
+          | _ => ();
+          if alias then
+            let val (o', ov : view) = List.last (!structs)
+            in
+              note "top:alias"; emit ("structure " ^ s ^ "a = " ^ o'); add (s ^ "a", ov);
+              case #cons ov of SOME cs => cross := !cross @ [matchLine (s ^ "a", o', cs)] | NONE => ()
+            end
           else ()
         end
       val nf = length finfos
@@ -1008,6 +1028,7 @@ struct
             @ (if #exn v then ["((" ^ s ^ ".fail 3; \"none\") handle " ^ s ^ ".E m => \"E\" ^ Int.toString m)"] else [])
         in "val () = print (String.concatWith \" \" [" ^ str s ^ ", " ^ commas parts ^ "] ^ \"\\n\")" end
       val () = List.app (fn sv => emit (printOf sv)) (!structs)
+      val () = List.app emit (!cross)
       val () = List.app (fn v => emit ("val () = print (" ^ str v ^ " ^ \" \" ^ Int.toString " ^ v ^ " ^ \"\\n\")")) (!extra)
       val exns = List.filter (fn (_, v : view) => #exn v) (!structs)
       fun pairs (a :: (rest as b :: _)) = (a, b) :: pairs rest
