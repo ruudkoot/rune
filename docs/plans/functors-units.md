@@ -81,7 +81,7 @@ What it rests on:
 | M6 | Prototype: the expansion | F | done (2026-10-25) |
 | G2 | Go or no-go for M7 and M8 (the owner's) | F | go (the owner, 2026-10-25): inline functors bring performance back to today's, and the four checks asked before M7 are clean |
 | M7 | Functors compiled once | F | done (2026-10-25) |
-| M8 | Nested functors that do not blow up | F | not started |
+| M8 | Nested functors that do not blow up | F | done (2026-10-25) |
 | M9 | Retire | | not started |
 
 The owner decided D1 to D17 on 2026-10-21, each as recommended
@@ -251,6 +251,28 @@ the only way.
   `Dynamic.reload`; and the REPL's entries named their printer's source by
   the session's count, so an entry did not verify in another session
   (build-cache issue 24; S76).
+
+**M8** (by an agent; `b8778b76d` to `dc72c11fb`):
+- D13's budget stays at 1,000,000 Mid nodes: no program has an application
+  past it (MLton's largest, `Main`'s, copies 508,928; the benchmark set's
+  29,322; the bootstrap's 1,405), and funnest's copies stop at it from depth
+  13 at two applications a body (*M8* and D13 say what was measured).
+- Generated budgets grow by `scale` lines by the count of applications:
+  funnest at two applications a body grows with an exponent of 1.07, 1.05
+  and 1.05 (whole, units, `--units --whole`), funapp 1.01 to 1.02; at one
+  application a body 1.09, 1.22 and 1.24, because the program's interface
+  is quadratic in its depth, which shared summaries would make linear
+  (*Later*).
+- `compile-hello` 2.08M bytecode instructions, 1.023 of e6accb2c0's: what
+  M7 had put on every compile (0.34M) was a second reading of the Basis's
+  manifest, which now reads its header alone; decoding a marked functor's
+  Mid in a build in units costs about 2.5M where the I/O stack is loaded
+  and stays eager, and hashing it is done when a usage asks.
+- A pickle grows no further than the host's longest array, and a unit
+  that needs more is its own compile error, where `--units --whole` of
+  funnest at depth 14 stopped with an uncaught `Size`. At depth 16 and two
+  applications a body the program's own static environment has 131,071
+  structures, and no mode compiles it in 6 GB: a limit of the program.
 
 ## Found while writing this roadmap
 
@@ -3590,6 +3612,11 @@ what naming the instance would take is in [functors.md](functors.md),
   functors as functions, a client can be compiled against `functor F (X : S)
   : T` before `F` exists, as M9 of that roadmap does for structures.
 - **Memoised applications** (D13 C).
+- **Shared summaries** (M8): a basis that names a signature written before,
+  and an instantiation that keeps what it does not rename, so that an
+  interface quadratic in a program's depth (funnest at one application a
+  body: each functor's result holds every level below it) costs linear
+  time in the front end and in a unit's basis.
 - **Equality functions in the argument** (D6 B), if a build in units shows
   the walk.
 - **The functors of stable units expanded across units** (D2 C), if G2's
