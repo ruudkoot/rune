@@ -15,3 +15,4 @@ maillist	File creation/appending, paragraph parsing and complete application out
 sequence_cps	OCaml CPS translation, unfolder records, callbacks and exact wide sums.
 floyd_warshall	Seeded OCaml-compatible generation, mutable row arrays and datatype graph updates.
 grep-lazy	UTF-8 acquisition, ordered parsers, cyclic NFA sharing and complete application output checks.
+pidigits-smlnj	IntInf sums and products of growing operands on the stack VM's SML arithmetic, which once dropped a limb.
