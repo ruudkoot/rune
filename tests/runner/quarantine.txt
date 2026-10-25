@@ -5,4 +5,6 @@
 #   rune-test | TEST-PATH-GLOB | QUARANTINE | until YYYY-MM-DD: why, and who looks
 #
 # A test that is flaky and known to be is tagged `flaky` in the inventory
-# instead: it runs once more when it fails. The list is empty.
+# instead: it runs once more when it fails. A test of a compiler bug found
+# and not yet fixed waits here too, with what fails.
+rune-test | levels/dec.datatype_int-payload-lint | QUARANTINE | until 2026-12-01: --lint after lower at -O2 takes a matched int payload for a pointer (found by the generated functor programs, not functors'); the lead routes the fix

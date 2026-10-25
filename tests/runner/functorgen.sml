@@ -451,6 +451,11 @@ struct
     in if List.all isSome ds then SOME (t ^ " = " ^ String.concatWith " | " (List.map valOf ds)) else NONE end
   fun shownCons (cons : rcon list) = List.map (fn (n, fs, _) => (n, not (List.null fs))) cons
 
+  (* whether a field is p or has a part that is *)
+  fun mentions p f =
+    p f orelse (case f of FPair (a, b) => mentions p a orelse mentions p b | FRec (a, b) => mentions p a orelse mentions p b
+                        | FBox a => mentions p a | FList a => mentions p a | FOpt a => mentions p a | _ => false)
+
   (* what a result signature may say of t *)
   type spec = {lines : string list, eq : bool, cons : (string * bool) list option, dt : int option, alias : bool}
   fun spec (lines, eq) : spec = {lines = lines, eq = eq, cons = NONE, dt = NONE, alias = false}
@@ -503,7 +508,9 @@ struct
             val both = case (st, su) of
                          (SOME a, SOME b) => [{lines = ["datatype " ^ a ^ " and " ^ b], eq = eq, cons = SOME (shownCons ct), dt = NONE, alias = false}]
                        | _ => []
-            val tOnly = case st of SOME a => [{lines = ["type u", "datatype " ^ a], eq = eq, cons = SOME (shownCons ct), dt = NONE, alias = false}] | NONE => []
+            (* with u abstract, t admits equality only where none of its constructors carries a u *)
+            val tEq = eq andalso not (List.exists (fn {fields, ...} : con => List.exists (mentions (fn f => f = FOther)) fields) ts)
+            val tOnly = case st of SOME a => [{lines = ["type u", "datatype " ^ a], eq = tEq, cons = SOME (shownCons ct), dt = NONE, alias = false}] | NONE => []
             val uOnly = case su of SOME b => [spec (["type t", "datatype " ^ b], false)] | NONE => []
           in
             {decls = ["datatype " ^ valOf (declOf false ("t", ct)) ^ " and " ^ valOf (declOf false ("u", cu)),
@@ -576,9 +583,6 @@ struct
       RAlias _ => [] | RRepl => [] | RCell f => [f] | RWith (f, cs) => f :: List.concat (List.map #fields cs)
     | RData cs => List.concat (List.map #fields cs) | RLocal cs => List.concat (List.map #fields cs)
     | RMutual (ts, us) => List.concat (List.map #fields (ts @ us))
-  fun mentions p f =
-    p f orelse (case f of FPair (a, b) => mentions p a orelse mentions p b | FRec (a, b) => mentions p a orelse mentions p b
-                        | FBox a => mentions p a | FList a => mentions p a | FOpt a => mentions p a | _ => false)
 
   (* ---- a functor, as its applications see it *)
   type finfo' = {name : string, form : int, kval : int, needs : needs, view : view, weight : int, depth : int}
@@ -822,6 +826,8 @@ struct
           (* a polymorphic value of a typed pattern, and one of a constructor *)
           val () = if pr 16 then (note "polymorphic-typed-value"; emit ("val twice" ^ K ^ " : ('a -> 'a) -> 'a -> 'a = fn f => fn x => f (f x)")) else ()
           val () = if pr 15 andalso #cell made then (note "polymorphic-constructor-value"; emit ("val empty" ^ K ^ " = Nil" ^ K)) else ()
+          (* a pattern binding among the body's declarations *)
+          val () = if pr 17 then (note "pattern-binding"; emit ("val (lo" ^ K ^ ", hi" ^ K ^ ") = (obs (mk 1), " ^ str "hi" ^ ")")) else ()
           val exnInners = List.filter (fn (_, v : view) => #exn v) inners
           val probes =
             (if pr 0 then ["Int.toString (obs (mk 3))"] else [])
@@ -847,6 +853,7 @@ struct
                                                  ^ " size (Cons" ^ K ^ " (\"ab\", empty" ^ K ^ ")))"] else [])
             @ (if pr 16 then ["Int.toString (twice" ^ K ^ " (fn i => i + 1) 3) ^ twice" ^ K ^ " (fn s => s ^ \"!\") \"w\""] else [])
             @ (if #int needs then ["Int.toString (X.mk 2 + 1)"] else [])
+            @ (if pr 17 then ["Int.toString lo" ^ K ^ " ^ hi" ^ K] else [])
           val () = emit ("val tag = \"" ^ name ^ "(\" ^ X.tag ^ \"" ^ (if List.null probes then "" else ":\" ^ " ^ String.concatWith " ^ \",\" ^ " probes ^ " ^ \"") ^ ")\"")
           val () = if hidden then emit "end" else ()
           (* the result *)
@@ -866,7 +873,7 @@ struct
           val view : view =
             if ascr = 0 then {eq = #eq made, dt = #dt made, exn = #exn shows, count = #count shows, sub = #sub shows, poly = #poly shows,
                               cons = #cons made, pair = #pair shows, inner = #inner shows, int = false}
-            else {eq = if ascr = 1 then #eq made else #eq sp, dt = #dt sp, exn = #exn shows, count = #count shows, sub = #sub shows,
+            else {eq = if ascr = 1 andalso List.exists (fn l => l = "type t") (#lines sp) then #eq made else #eq sp, dt = #dt sp, exn = #exn shows, count = #count shows, sub = #sub shows,
                   poly = #poly shows, cons = #cons sp, pair = #pair shows, inner = #inner shows, int = false}
           val rlines =
             ["val mk : int -> t", "val obs : t -> int", "val tag : string"]

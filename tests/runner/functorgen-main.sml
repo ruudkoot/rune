@@ -18,7 +18,8 @@
        names it with --seed 0xHEX.
      run [OPTIONS] FILE
        runs a program as `show` prints it, or as a failure keeps it
-       (program.sml), in every mode, and keeps what each did in DIR/run. *)
+       (program.sml), in every mode, and keeps it and what each mode did in
+       DIR (modes.txt). *)
 structure FunctorGenMain =
 struct
   exception Usage of string
@@ -90,10 +91,10 @@ struct
     let
       val o' = parse args
       val file = case #files o' of [f] => f | _ => raise Usage "run takes one program"
-      val dir = #out o' ^ "/run"
-      val (verdict, hits) = FunctorGen.keep (config o', #out o' ^ "/run-work", dir, FunctorGen.parse (Sh.read file), known o', "")
+      val dir = #out o'
+      val (verdict, hits) = FunctorGen.keep (config o', dir ^ "/work", dir, FunctorGen.parse (Sh.read file), known o', "")
     in
-      Sh.rmTree (#out o' ^ "/run-work");
+      Sh.rmTree (dir ^ "/work");
       List.app (fn k => Sh.say ("known: " ^ FunctorGen.describeKnown k ^ "\n")) hits;
       case verdict of
         NONE => Sh.say ("PASS " ^ file ^ " (" ^ dir ^ "/modes.txt)\n")
