@@ -271,6 +271,35 @@ struct
     let
       val sigma = ref sigma0
       val memo : Ty.ty IntTable.table = IntTable.table 256
+      (* the instances the applications in e0 make (their markers' body
+         datatypes): each copy of a body has instances of its own, as each
+         application of a functor makes new ones, whatever its argument
+         -- one the outer result does not show would otherwise keep its name
+         in every copy and be entered again by each, with the constructors
+         of each copy's own copies of what it names (the review of M6,
+         finding 3) *)
+      val generated : unit IntTable.table = IntTable.table 16
+      val () =
+        let
+          fun note r =
+            case markerType r of
+              SOME enc => List.app (fn (_, Body (_, to)) => (case Ty.view to of
+                                                                 Ty.Con (c, _, _) => IntTable.insert (generated, c, ())
+                                                               | _ => ())
+                                     | _ => ()) (#2 (entries enc))
+            | NONE => ()
+          fun go e =
+            case e of
+              Let (_, _, r, b) => (note r; go b)
+            | Fun (fs, b) => (List.app (fn (f : fundef) => go (#body f)) fs; go b)
+            | Join (_, _, b, sc) => (go b; go sc)
+            | If (_, t, f) => (go t; go f)
+            | Handle (b, _, h) => (go b; go h)
+            | Return r => note r
+            | Mark (_, b) => go b
+            | _ => ()
+        in go e0 end
+      fun isGenerated s = isSome (IntTable.find (generated, s)) andalso not (IntMap.member (sigma0, s))
       (* whether a datatype names what sigma substitutes, through those it
          names: worked out by a walk of all it reaches *)
       val dep : bool IntTable.table = IntTable.table 64
@@ -310,7 +339,9 @@ struct
             in
               case IntMap.find (!sigma, s) of
                 SOME i => image i
-              | NONE => if Ty.flatOf s = NONE andalso depends s then image (instantiate s) else Ty.con (s, n, args')
+              | NONE =>
+                  if Ty.flatOf s = NONE andalso (isGenerated s orelse depends s) then image (instantiate s)
+                  else Ty.con (s, n, args')
             end
         | Ty.Tuple ts => Ty.tuple (List.map ty ts)
         | Ty.Arrow (a, b) => Ty.arrow (ty a, ty b)
@@ -324,15 +355,16 @@ struct
          datatype of the body they reach (fxp's ExtType and State) *)
       and instantiate (s : int) : image =
         let
-          val key = copyKey s
+          (* an instance an application in the body makes is this copy's own *)
+          val key = if isGenerated s then NONE else SOME (copyKey s)
         in
-          case StringMap.find (!(#dcopies st), key) of
+          case Option.mapPartial (fn k => StringMap.find (!(#dcopies st), k)) key of
             SOME s' => (sigma := IntMap.insert (!sigma, s, Name s'); Name s')
           | NONE =>
               let
                 val s' = freshTycon ()
                 val () = sigma := IntMap.insert (!sigma, s, Name s')
-                val () = #dcopies st := StringMap.insert (!(#dcopies st), key, s')
+                val () = Option.app (fn k => #dcopies st := StringMap.insert (!(#dcopies st), k, s')) key
                 val info = case Ty.datatypeOf s of
                              SOME {params, cons} => {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map ty a)) cons}
                            | NONE => bug "a datatype without constructors"
