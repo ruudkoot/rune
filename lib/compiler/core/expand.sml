@@ -321,14 +321,17 @@ struct
             | _ => ()
         in go e0 end
       fun isGenerated s = isSome (IntTable.find (generated, s)) andalso not (IntMap.member (sigma0, s))
-      (* whether a datatype names what sigma substitutes, through those it
-         names: worked out by a walk of all it reaches *)
+      (* whether a datatype names what sigma substitutes, or an instance
+         the copy makes its own, through those it names: worked out by a
+         walk of all it reaches (a datatype of the body over an instance
+         an application in it makes, of nothing the parameter gives, is
+         the copy's too, as the instance is: MLton's whole compile) *)
       val dep : bool IntTable.table = IntTable.table 64
       (* NONE where its constructors name a substituted name; else the
          names they name *)
       fun direct (s : int) : int list option =
         let val names = namesOfDatatype s
-        in if List.exists (fn n => IntMap.member (!sigma, n)) names then NONE else SOME names end
+        in if List.exists (fn n => IntMap.member (!sigma, n) orelse isGenerated n) names then NONE else SOME names end
       fun depends (s : int) : bool =
         case IntTable.find (dep, s) of
           SOME b => b
@@ -376,8 +379,9 @@ struct
          datatype of the body they reach (fxp's ExtType and State) *)
       and instantiate (s : int) : image =
         let
-          (* an instance an application in the body makes is this copy's own *)
-          val key = if isGenerated s then NONE else SOME (copyKey s)
+          (* an instance an application in the body makes is this copy's
+             own, and so is a datatype over one (copyKey) *)
+          val key = if isGenerated s then NONE else copyKey s
         in
           case Option.mapPartial (fn k => StringMap.find (!(#dcopies st), k)) key of
             SOME s' => (sigma := IntMap.insert (!sigma, s, Name s'); Name s')
@@ -395,11 +399,13 @@ struct
          reaches (sigma0, not the copies this one has made so far, so that
          the order a copy meets the body's datatypes in changes nothing),
          through the body's datatypes it does not make anything: which
-         determine its copy *)
-      and copyKey (s : int) : string =
+         determine its copy; NONE where it reaches an instance the copy
+         makes its own, whose copy is the copy's own too *)
+      and copyKey (s : int) : string option =
         let
           val seen : unit IntTable.table = IntTable.table 16
           val found : (int * string) list ref = ref []
+          val own = ref false
           fun tyKey t =
             case Ty.view t of
               Ty.Con (c, _, args) => "c" ^ Int.toString c ^ "(" ^ String.concatWith "," (List.map tyKey args) ^ ")"
@@ -416,11 +422,14 @@ struct
               (IntTable.insert (seen, n, ());
                case IntMap.find (sigma0, n) of
                  SOME i => found := (n, imageKey i) :: !found
-               | NONE => List.app walk (namesOfDatatype n))
+               | NONE => if isGenerated n then own := true else List.app walk (namesOfDatatype n))
           val () = IntTable.insert (seen, s, ())
           val () = List.app walk (namesOfDatatype s)
           val sorted = IntMap.listItemsi (List.foldl (fn ((n, k), m) => IntMap.insert (m, n, k)) IntMap.empty (!found))
-        in Int.toString s ^ "|" ^ String.concatWith ";" (List.map (fn (n, k) => Int.toString n ^ "=" ^ k) sorted) end
+        in
+          if !own then NONE
+          else SOME (Int.toString s ^ "|" ^ String.concatWith ";" (List.map (fn (n, k) => Int.toString n ^ "=" ^ k) sorted))
+        end
 
       val vars : atom IntTable.table = IntTable.table 256
       val labels : int IntTable.table = IntTable.table 64

@@ -87,6 +87,23 @@ end
 structure H3 = HidesFlat (struct type t = string fun k n = Int.toString n val n = size end)
 structure H4 = HidesFlat (struct type t = int * int fun k n = (n, n) fun n (a, b) = a + b end)
 val () = print (Int.toString (H3.run 12345) ^ " " ^ Int.toString (H4.run 4) ^ "\n")
+(* such an instance of an argument of no parameter's type, under a datatype
+   of the body: the datatype is each copy's own too, as the instance is,
+   and not one copy shared through what the parameter gives (MLton's whole
+   compile, a lint failure of the fix above) *)
+functor HiddenOf (X : sig type t val x : t end) = struct
+  datatype b = B of X.t * int
+  fun mk n = B (X.x, n)
+  fun get (B (_, n)) = n
+end
+functor HidesUnder (Y : sig val k : int end) : sig val run : unit -> int end = struct
+  structure I = HiddenOf (struct type t = string val x = "s" end)
+  datatype e = E of I.b * I.b
+  fun run () = case E (I.mk Y.k, I.mk 2) of E (a, b) => I.get a + I.get b
+end
+structure H5 = HidesUnder (struct val k = 1 end)
+structure H6 = HidesUnder (struct val k = 5 end)
+val () = print (Int.toString (H5.run () + 10 * H6.run ()) ^ "\n")
 
 (* 5. A value of the program's own of the shape of an application's
    marker was taken for one (a compiler crash). A marker is a primitive
