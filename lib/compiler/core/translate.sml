@@ -579,15 +579,25 @@ struct
            NONE => bug (sp, "a dynamic structure not elaborated")
          | SOME {fingerprint, slots, via, temp, reloadable} =>
              let
-               val n = Int.max (List.length slots, 2)
-               val tupleTy = Types.tupleTy (List.tabulate (n, fn _ => Types.unitTy))
+               val tupleTy = dynamicTuple slots
                val str = Ty.fromTypes Types.stringTy
                fun slotTy (t, isExn) = if isExn then Ty.exnCon else Ty.fromTypes t
-               fun set (_, [], _, k) = k ()
-                 | set (from, (s, t, isExn) :: rest, i, k) =
-                     Seq (SetGlobal (s, Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, slotTy (t, isExn))),
-                                              [Select (i, from)])),
-                          set (from, rest, i + 1, k))
+               (* a record's slots set from it, then its substructures' from
+                  theirs, each a record of its own in a slot (D3) *)
+               fun set (from, DynRecord (vals, subs), k) =
+                 let
+                   fun vs ([], i) = ss (subs, i)
+                     | vs ((s, t, isExn) :: rest, i) =
+                         Seq (SetGlobal (s, Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, slotTy (t, isExn))),
+                                                  [Select (i, from)])),
+                              vs (rest, i + 1))
+                   and ss ([], _) = k ()
+                     | ss (r :: rest, i) =
+                         let val x = MatchComp.freshVar ()
+                         in Let (x, Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, Ty.fromTypes (dynamicTuple r))), [Select (i, from)]),
+                                 set (Var x, r, fn () => ss (rest, i + 1)))
+                         end
+                 in vs (vals, 0) end
              in
                case from of
                  DynamicVirtual name =>
@@ -595,7 +605,7 @@ struct
                      val takeTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy], tupleTy)
                      val call = App (useOf (Global via, via, takeTy),
                                      Tuple [Const (CString name, str), Const (CString fingerprint, str)])
-                   in Mark (sp, Seq (SetGlobal (temp, call), set (Global temp, slots, 0, k))) end
+                   in Mark (sp, Seq (SetGlobal (temp, call), set (Global temp, slots, k))) end
                | DynamicFile path =>
                    (* the slots set by a function of the tuple, which load
                       calls, and calls again for each Dynamic.reload of the
@@ -606,7 +616,7 @@ struct
                      val loadTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy, Types.boolTy, setterTy],
                                                 Types.unitTy)
                      val x = MatchComp.freshVar ()
-                     val setter = Fn (x, Ty.fromTypes setterTy, set (Var x, slots, 0, fn () => Unit))
+                     val setter = Fn (x, Ty.fromTypes setterTy, set (Var x, slots, fn () => Unit))
                      val call = App (useOf (Global via, via, loadTy),
                                      Tuple [Const (CString path, str), Const (CString fingerprint, str),
                                             if reloadable then trueExp else falseExp,
@@ -622,15 +632,23 @@ struct
             NONE => bug (sp, "an exported structure not elaborated")
           | SOME {fingerprint, slots, via, ...} =>
               let
-                val n = Int.max (List.length slots, 2)
-                val tupleTy = Types.tupleTy (List.tabulate (n, fn _ => Types.unitTy))
+                val tupleTy = dynamicTuple slots
                 val exportTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy, tupleTy], Types.unitTy)
                 fun cast (s, t, isExn) =
                   if isExn then Prim ("unsafe_cast", SOME (Ty.arrow (Ty.exnCon, Ty.unit)), [Global s])
                   else
                     let val m = monoOf t
                     in Prim ("unsafe_cast", SOME (Ty.arrow (Ty.fromTypes m, Ty.unit)), [useOf (Global s, s, m)]) end
-                val elems = List.map cast slots @ List.tabulate (n - List.length slots, fn _ => Unit)
+                (* a record of its slots, then its substructures' records,
+                   each cast to unit (D3) *)
+                fun record (r as DynRecord (vals, subs)) =
+                  let
+                    val n = Int.max (length vals + length subs, 2)
+                    val elems = List.map cast vals
+                                @ List.map (fn s => Prim ("unsafe_cast", SOME (Ty.arrow (Ty.fromTypes (dynamicTuple s), Ty.unit)),
+                                                          [record s])) subs
+                  in Tuple (elems @ List.tabulate (n - length elems, fn _ => Unit)) end
+                val elems = case record slots of Tuple es => es | _ => bug (sp, "a dynamic record not a tuple")
               in
                 Seq (App (useOf (Global via, via, exportTy),
                           Tuple [Const (CString name, Ty.fromTypes Types.stringTy),
@@ -639,6 +657,11 @@ struct
               end)
 
   (* ---- functors compiled once (docs/ir.md, Functors compiled once) ---- *)
+
+  (* the tuple type of a dynamic module's record (D3): a unit a slot, its
+     values' and its substructures', at least two *)
+  and dynamicTuple (DynRecord (vals, subs)) : Types.ty =
+    Types.tupleTy (List.tabulate (Int.max (length vals + length subs, 2), fn _ => Types.unitTy))
 
   (* a record of n slots, as Elaborate.recordTy *)
   and recordTyN (n : int) : Ty.ty = Ty.tuple (List.tabulate (Int.max (n, 2), fn _ => Ty.unit))

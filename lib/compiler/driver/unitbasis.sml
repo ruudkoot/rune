@@ -549,7 +549,12 @@ struct
              (fn sg => if (Usage.use ("whole", "on"); !wholeFingerprints) then "whole"
                        else
                          let val () = (anchorValues := false; scratch := IntTable.table 16)
-                             val f = labelled "sigabi" (fn () => fpSigma sg) handle e => (anchorValues := true; raise e)
+                             (* the ABI's form too: a structure's record with
+                                its substructures' records nested (D3), so that
+                                a module made for the flat records before is
+                                refused, not misread *)
+                             val f = labelled "sigabi" (fn () => hashAt ("sigabi", "nested records\000" ^ fpSigma sg))
+                                     handle e => (anchorValues := true; raise e)
                          in anchorValues := true; f end)
 
   (* of a functor: its signature, the parameter's own type names and those

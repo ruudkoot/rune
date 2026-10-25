@@ -1,8 +1,9 @@
 (* A dynamic module's implementation used as an ordinary structure: _export
    ascribes it to its signature opaquely, and its datatype, whose
-   constructors it declares in another order than the signature's, takes the
-   signature's order for its tags; the program names and matches them as it
-   would any structure's (docs/units.md, Dynamic modules) *)
+   constructors it declares in another order than the signature's, numbers
+   them by their names, as the signature does; the program names and
+   matches them as it would any structure's (docs/units.md, Dynamic
+   modules) *)
 signature COLOUR =
 sig
   datatype colour = Red | Green | Blue of int

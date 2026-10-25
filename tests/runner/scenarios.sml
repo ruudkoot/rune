@@ -266,6 +266,17 @@ struct
          linked c "both" ["lib.sml", "maker.sml", "measurer.sml", "both.sml"]; run "both" [] "25\n")
     | "whole-refused" => (put c "shape.sml" shape; put c "client.sml" client;
           refused (compiler c which "" ["shape.sml", "client.sml", "-o", "whole.rbc"]) "is built in units (rune --units)")
+    | "nested" =>
+        (* substructures, each a record of its own in its structure's (D3) *)
+        (put c "nest.sml" ("signature NEST = sig val name : string\n  structure Inner : sig val twice : int -> int exception Bad of int\n"
+                           ^ "    structure Deep : sig val k : int end end end");
+         put c "impl.sml" ("_export structure Impl : NEST = struct val name = \"nest\"\n"
+                           ^ "  structure Inner = struct fun twice x = 2 * x exception Bad of int structure Deep = struct val k = 7 end end end");
+         emit c "impl" ["nest.sml", "impl.sml"];
+         put c "client.sml" ("structure N = _dynamic \"impl.rbu\" : NEST\n"
+                             ^ "val () = print (N.name ^ \" \" ^ Int.toString (N.Inner.twice N.Inner.Deep.k) ^ \"\\n\")\n"
+                             ^ "val () = (raise N.Inner.Bad 3) handle N.Inner.Bad n => print (\"Bad \" ^ Int.toString n ^ \"\\n\")");
+         linked c "client" ["nest.sml", "client.sml"]; run "client" [] "nest 14\nBad 3\n")
     | "reload" => dynamicReload c false
     | "reload-jit" => dynamicReload c true
     | "abstract-reload" =>
@@ -277,7 +288,8 @@ struct
          linked c "noreload" ["shape.sml", "noreload.sml"]; run "noreload" [] "refused\n9\n")
     | _ => raise Failed "unknown dynamic module scenario"
     end
-  val dynamicCases = ["link", "link-jit", "mismatch", "plugin", "shared-types", "whole-refused", "reload", "reload-jit", "abstract-reload"]
+  val dynamicCases = ["link", "link-jit", "mismatch", "plugin", "shared-types", "whole-refused", "reload", "reload-jit", "abstract-reload",
+                      "nested"]
   val targets = ["registers", "stack"]
   fun targetVM "registers" = fromRoot "bin/runevm"
     | targetVM "stack" = fromRoot "bin/runevm-stack"

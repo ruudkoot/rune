@@ -1800,9 +1800,11 @@ struct
           val inst = realizeEnv (phi, #env sigma)
           val specified = specDatatypes (fn c => List.exists (fn (_, c') => #stamp c' = #stamp c) fresh, inst)
           val via = dynamicVia (env, case from of DynamicFile _ => "load" | DynamicVirtual _ => "take", sp)
-          val slots : (int * ty * bool) list ref = ref []
-          fun restamp (Env {vals, tys, strs,origins}) : env =
+          (* each structure a record (DynRecord): its values and exceptions
+             by name, then its substructures' records by name *)
+          fun restamp (Env {vals, tys, strs,origins}) : env * dynamicRecord =
             let
+              val slots : (int * ty * bool) list ref = ref []
               fun slotOf v =
                 case v of
                   Val {scheme, ...} =>
@@ -1821,13 +1823,13 @@ struct
                 | other => other
               val vals' = List.foldl (fn ((n, v), m) => StringMap.insert (m, n, slotOf v)) StringMap.empty
                                      (StringMap.listItemsi vals)
-              val strs' = List.foldl (fn ((n, e), m) => StringMap.insert (m, n, restamp e)) StringMap.empty
-                                     (StringMap.listItemsi strs)
-            in Env {vals = vals', tys = tys, strs = strs',origins=origins} end
-          val e = restamp inst
-          val slots = List.rev (!slots)
+              val subs = List.map (fn (n, e) => (n, restamp e)) (StringMap.listItemsi strs)
+              val strs' = List.foldl (fn ((n, (e, _)), m) => StringMap.insert (m, n, e)) StringMap.empty subs
+            in (Env {vals = vals', tys = tys, strs = strs',origins=origins}, DynRecord (List.rev (!slots), List.map (#2 o #2) subs)) end
+          val (e, slots) = restamp inst
           val temp = freshStamp ()
-          val () = Ty.bindVar (temp, tupleTy (List.tabulate (Int.max (List.length slots, 2), fn _ => unitTy)))
+          val () = Ty.bindVar (temp, tupleTy (List.tabulate (case slots of DynRecord (vs, ss) => Int.max (length vs + length ss, 2),
+                                                              fn _ => unitTy)))
           (* a module may be loaded again (Dynamic.reload) where the
              signature has no abstract type: a value the program holds of
              one could be of another representation in the new module *)
@@ -1846,20 +1848,19 @@ struct
           val e = elabStrexp (env, level, top, scope, body)
           val ascribed = ElabStats.during ElabStats.Match (fn () => SigMatch.ascribe (sigma, e, true, sp))
           val via = dynamicVia (env, "export", sp)
-          val slots : (int * ty * bool) list ref = ref []
-          fun collect (Env {vals, strs, ...}) =
-            (List.app (fn (n, v) =>
-                         case v of
-                           Val {stamp, scheme, ...} => slots := (stamp, scheme, false) :: !slots
-                         | Exn {ty = t, info} => slots := (#stamp info, t, true) :: !slots
-                         | ConAsVal _ => err (sp, "_export: a constructor given as the value " ^ n ^ " is not supported")
-                         | ExnAsVal _ => err (sp, "_export: an exception given as the value " ^ n ^ " is not supported")
-                         | _ => ())
-                      (StringMap.listItemsi vals);
-             List.app (fn (_, e) => collect e) (StringMap.listItemsi strs))
-          val () = collect ascribed
+          (* each structure a record, as _dynamic reads it (DynRecord) *)
+          fun collect (Env {vals, strs, ...}) : dynamicRecord =
+            DynRecord (List.mapPartial (fn (n, v) =>
+                                          case v of
+                                            Val {stamp, scheme, ...} => SOME (stamp, scheme, false)
+                                          | Exn {ty = t, info} => SOME (#stamp info, t, true)
+                                          | ConAsVal _ => err (sp, "_export: a constructor given as the value " ^ n ^ " is not supported")
+                                          | ExnAsVal _ => err (sp, "_export: an exception given as the value " ^ n ^ " is not supported")
+                                          | _ => NONE)
+                                       (StringMap.listItemsi vals),
+                       List.map (fn (_, e) => collect e) (StringMap.listItemsi strs))
         in
-          slot := SOME {fingerprint = !sigFingerprint sigma, slots = List.rev (!slots), via = via, temp = 0, reloadable = false};
+          slot := SOME {fingerprint = !sigFingerprint sigma, slots = collect ascribed, via = via, temp = 0, reloadable = false};
           ascribed
         end
 

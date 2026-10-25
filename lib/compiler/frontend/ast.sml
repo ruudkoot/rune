@@ -46,6 +46,11 @@ struct
      the declaration runs, or the module of the program that exports the
      name, a virtual module's implementation (docs/build.md) *)
   datatype dynamicFrom = DynamicFile of string | DynamicVirtual of string
+  (* a dynamic module's record (D3): its values and exceptions, a slot each
+     by name -- each a global, its type, and whether it is an exception's --
+     then a record of its own for each substructure, by name, as a functor's
+     records are *)
+  datatype dynamicRecord = DynRecord of (int * Types.ty * bool) list * dynamicRecord list
 
   datatype exp =
       EScon of scon * Types.ty option ref * span   (* the type of an int or word constant, filled by elaboration *)
@@ -146,11 +151,10 @@ struct
        and sigbind = {name : string, sigexp : sigexp, span : span}
        and funbind = {name : string, param : string option, paramSig : sigexp, body : strexp, span : span}
        (* what elaboration finds of a dynamic module's boundary: the
-          fingerprint of the signature's ABI, its slots in the ABI's order --
-          each a global, its type, and whether it is an exception's -- and the
-          global of RuneDynamic.load or RuneDynamic.export, and a global of
-          the client's for the tuple of the slots *)
-       and dynamic = {fingerprint : string, slots : (int * Types.ty * bool) list, via : int, temp : int, reloadable : bool}
+          fingerprint of the signature's ABI, its record of slots
+          (dynamicRecord) and the global of RuneDynamic.load or
+          RuneDynamic.export, and a global of the client's for the record *)
+       and dynamic = {fingerprint : string, slots : dynamicRecord, via : int, temp : int, reloadable : bool}
 
   type program = dec list
 
