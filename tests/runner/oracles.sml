@@ -932,6 +932,15 @@ struct
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
   val langCovers = ["covers:tests/lang/*", "covers:tests/perf/*"]
 
+  (* a command of bin/rune-functor-gen, which exits 0 when it passed; its
+     output in the job's directory *)
+  fun functorGen (path, args, out, timeout) =
+    Test.it path
+      {program = "/bin/sh",
+       args = ["sh", "-c", "exec bin/rune-functor-gen " ^ String.concatWith " " (List.map quote args) ^ " --out \"$RUNE_TEST_RUN/" ^ out ^ "\""],
+       env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds timeout, cap = 0, cpus = 1, memory = 1500,
+       pools = [], exclusive = false, after = [], judge = Run.exitZero} : Run.command Test.tree
+
   val tree =
     Test.describe ""
       [tagged (["check", "check-levels"] @ langCovers)
@@ -974,6 +983,17 @@ struct
              @ [job ("@compare", ["repro-compare"], List.map (fn (n, _, _, _) => "reproducible/" ^ n) reproBuilds, 1, 100, 600)])),
        tagged ["check", "check-units", "check-units-bootstrap", "covers:tests/units/*"]
          (Test.describe "bootstrap" [job ("units", ["units-bootstrap"], [], 1, 1500, 3600)]),
+       (* generated programs of functors, compiled with functors as functions
+          and as copies, whole and in units, from a fixed seed; and the
+          programs of the failures it found (docs/testing.md, Generated
+          functor programs) *)
+       tagged ["check", "check-units", "covers:tests/functors/*", "covers:tests/runner/functorgen.sml",
+               "covers:tests/runner/functorgen-main.sml"]
+         (Test.describe "functors"
+            [functorGen ("@generated", ["check", "--seed", "1", "--count", "16", "--shrinks", "100", "--known", "tests/functors/known.txt"],
+                         "functors", 3600),
+             functorGen ("@regressions", ["regressions", "--known", "tests/functors/known.txt", "tests/functors"], "functors-regressions",
+                         1800)]),
        tagged ["test-int64", "covers:tests/register/int64-box-home.*", "covers:tests/register/int64-div-constant.*",
                "covers:tests/lang/rt.div_constant.*"]
          (Test.describe "int64"

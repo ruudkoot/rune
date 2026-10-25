@@ -1,11 +1,12 @@
 (* --functors=functions with the expansion: a datatype of F's body over a
    structure F seals (I :> S), F applied in G's body, and G, whose result
-   hides the instance, applied at two types. The expansion makes one copy
-   of F's datatype for both applications of G, so --lint after expand finds
+   hides the instance, applied at two types. The expansion made one copy
+   of F's datatype for both applications of G, so --lint after expand found
    a constructor's argument of the one type where the other is wanted (at
-   -O1 and -O2, whole and in units). It prints right; with I not sealed, or
-   G's result not ascribed, the lint is clean (found by the generated
-   functor programs, docs/testing.md) *)
+   -O1 and -O2, whole and in units), while it printed right; with I not
+   sealed, or G's result not ascribed, it was clean. Each copy of a body
+   now has the instances its applications make (f034733f2; found by the
+   generated functor programs, docs/testing.md) *)
 signature S = sig type t val mk : int -> t val obs : t -> int end
 functor F (X : S) : S = struct
   structure I :> S = X
