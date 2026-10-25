@@ -289,6 +289,11 @@ struct
         val path = fromRoot (dir ^ "/files")
         val () = need (exists path, "unit fixture has no source list: " ^ name)
     in List.map (fn file => dir ^ "/" ^ file) (lines (read path)) end
+  (* the compiler's flags of a fixture, from its `flags` where it has one,
+     in every build of it *)
+  fun unitFlags name =
+    let val path = fromRoot ("tests/units/" ^ name ^ "/flags")
+    in if exists path then String.tokens Char.isSpace (read path) else [] end
   fun unitsPrepare c () =
     (reset c; List.app (fn target =>
        let val output = #directory c ^ "/load." ^ target ^ ".rbc"
@@ -307,7 +312,7 @@ struct
         val flags = ["--target=" ^ target] @ (if units then ["--units", "--cache-dir", #directory c ^ "/cache",
                                "--emit-units", prefix ^ ".files"] else [])
         val compiled = compiler c (name ^ "-" ^ build ^ "-" ^ target ^ "-compile") root
-                                 (flags @ unitSources name @ ["-o", prefix ^ ".rbc"])
+                                 (flags @ unitFlags name @ unitSources name @ ["-o", prefix ^ ".rbc"])
         val () = write (prefix ^ ".compile-status", Int.toString (#status compiled) ^ "\n")
         val result = if #status compiled <> 0 then {status = 0, output = "", errors = ""} : result else
                        (bytecode (prefix ^ ".rbc"); execute c (name ^ "-" ^ build ^ "-" ^ target ^ "-run") root
@@ -336,7 +341,7 @@ struct
         val () = rmTree (prefix ^ ".warm.rbc")
         val result = compiler c (name ^ "-warm-" ^ target) root
               (["--target=" ^ target, "--units", "--cache-dir", #directory c ^ "/cache", "--explain-rebuild"]
-                    @ unitSources name @ ["-o", prefix ^ ".warm.rbc"])
+                    @ unitFlags name @ unitSources name @ ["-o", prefix ^ ".warm.rbc"])
     in success result; need (null (rebuilt (#errors result)), "warm unit build recompiled a source: " ^ name);
        need (same (prefix ^ ".rbc", prefix ^ ".warm.rbc"), "warm unit bytecode differs: " ^ name ^ "/" ^ target) end
   val loaderCases = ["twice", "shadowed", "not-a-unit", "cut-short", "not-loaded", "other-compile", "other-set", "inventory", "saved", "restored"]

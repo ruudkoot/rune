@@ -599,7 +599,14 @@ struct
                                      if s1 = s2 then (Atom (Con0 (tag, c)), true) else (r, false)
                                  | _ => (r, false))
                             | Global (f, _) =>
-                                (case IntTable.find (#schemes st, f) of
+                                (* a global of a unit before this one, by
+                                   the scheme its basis gives (the
+                                   generator's earlier_unit_arg: an argument
+                                   that names a polymorphic function of an
+                                   earlier unit, at int -> int) *)
+                                (case (case IntTable.find (#schemes st, f) of
+                                         SOME s => SOME s
+                                       | NONE => (SOME (ToMid.globalScheme f) handle Error.Bug _ => NONE)) of
                                    SOME (vs as _ :: _, tf) =>
                                      (case Ty.match (tf, c) of
                                         SOME m => (Atom (Global (f, List.map (fn v => case IntMap.find (m, v) of
