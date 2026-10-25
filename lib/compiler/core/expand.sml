@@ -82,6 +82,12 @@ struct
      bound to a primitive (Translate.primAliases), the primitive's (primCall) *)
   val globalAliases : int IntTable.table ref = ref (IntTable.table 64)
   val () = CompilerState.refRoot ("Expand.globalAliases", globalAliases, IntTable.copy)
+  (* whether a later unit may name a global of a unit before it: not where
+     its unit has been loaded again since (the REPL's use of a file through
+     the cache), whose globals the linker now finds by the same names; set
+     by the driver, since it is UnitBasis's to say *)
+  val current : (int -> bool) ref = ref (fn _ => true)
+  val () = CompilerState.cellRoot ("Expand.current", current)
   (* and functions of the top level that apply a primitive to their
      parameter (or its fields), as what a copy binds to a primitive is
      (`val length = size`): a unit's, for its basis, and those of the units
@@ -440,7 +446,7 @@ struct
          | NONE =>
              (* a unit's: a global of a unit before it that is another *)
              if !Pass.whole then a
-             else case IntTable.find (!globalAliases, g) of SOME h => Global (h, ts) | NONE => a)
+             else case IntTable.find (!globalAliases, g) of SOME h => if !current h then Global (h, ts) else a | NONE => a)
     | _ => a
 
   fun rwRhs (st : state) (r : rhs) : rhs =

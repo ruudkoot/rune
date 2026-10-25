@@ -22,7 +22,7 @@ struct
   fun close (Session {closed,stored,names,...})=(closed:=true;stored:=[];names:=StringMap.empty)
   fun checkWith (Session {stored,plan=savedPlan,config,closed,observer,names=savedNames},sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
                  frozen:source list,frozenPlan:CompilerPrelude.plan option) : snapshot = CompilerSession.owned (fn () =>
-    let val {lib,libraries,target,allowPrim}=config
+    let val {lib,libraries,target,allowPrim,...}=config
         val ()=CompilerSettings.target:=target
         val ()=CompilerSettings.libDir:=lib
         val ()=UnitBasis.startSession ()

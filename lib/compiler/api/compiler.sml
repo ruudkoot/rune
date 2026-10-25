@@ -24,6 +24,21 @@ struct
          | Fail message => invalid message
   fun session {lib,flags} =
     let
+      (* the prototype of functors-units.md (--functors=functions,
+         --datatype-tags=ORDER, --inline-functor=F[,F...],
+         --no-inline-functors), as rune takes them *)
+      val functions=ref false val tags=ref NONE val inline=ref [] val noInline=ref false
+      fun prototype flag =
+        if flag="--functors=functions" then (functions:=true;true)
+        else if flag="--functors=copies" then (functions:=false;true)
+        else if String.isPrefix "--datatype-tags=" flag then
+          (case Types.tagOrderOf (String.extract (flag,16,NONE)) of
+             SOME o' => (tags:=SOME o';true)
+           | NONE => invalid "--datatype-tags requires declared, sorted or sorted-x")
+        else if String.isPrefix "--inline-functor=" flag then
+          (inline:= !inline @ List.filter (fn n => n<>"") (String.fields (fn c => c = #",") (String.extract (flag,17,NONE)));true)
+        else if flag="--no-inline-functors" then (noInline:=true;inline:=[];true)
+        else false
       fun options ([],target,allow,mode,libraries) = (target,allow,mode,List.rev libraries)
         | options ("--target=registers" :: rest,_,allow,mode,libraries) = options (rest,"registers",allow,mode,libraries)
         | options ("--target=stack" :: rest,_,allow,mode,libraries) = options (rest,"stack",allow,mode,libraries)
@@ -32,9 +47,14 @@ struct
         | options ("--unicode=utf8" :: rest,target,allow,_,libraries) = options (rest,target,allow,Source.Unicode Source.Utf8,libraries)
         | options ("--unicode=latin1" :: rest,target,allow,_,libraries) = options (rest,target,allow,Source.Unicode Source.Latin1,libraries)
         | options ("--library" :: name :: rest,target,allow,mode,libraries) = options (rest,target,allow,mode,name :: libraries)
-        | options (flag :: _,_,_,_,_) = invalid ("unsupported compiler-library flag: " ^ flag)
+        | options (flag :: rest,target,allow,mode,libraries) =
+            if prototype flag then options (rest,target,allow,mode,libraries)
+            else invalid ("unsupported compiler-library flag: " ^ flag)
       val (target,allow,mode,libraries)=options (flags,"registers",false,Source.Ascii,[])
-    in Session {compiler=C.session ({target=target,allowPrim=allow,lib=lib,libraries=libraries},
+      val ()=if !functions andalso !tags=SOME Types.TagsDeclared
+             then invalid "--functors=functions numbers tags by names: --datatype-tags=sorted or sorted-x" else ()
+    in Session {compiler=C.session ({target=target,allowPrim=allow,lib=lib,libraries=libraries,
+                                     functors={functions= !functions,tags= !tags,inline= !inline,noInline= !noInline}},
       {link=CompilerApiPlatform.link,inherited=CompilerApiPlatform.inherited,
        prepare=CompilerApiPlatform.prepare,current=CompilerApiPlatform.current}),mode=mode} end
   fun close (Session {compiler,...}) = C.close compiler

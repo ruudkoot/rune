@@ -1,0 +1,17 @@
+(* a functor declared by one declaration and applied by others, and by a
+   file used again from the cache: under --functors=functions, with the
+   functor marked to be inlined (functors.args), a unit that applies it
+   expands its body there (docs/build.md, Functors inlined across units);
+   off, an application is a copy of the body, and the transcript is the
+   same *)
+fun write (file, text) = let val out = TextIO.openOut file in TextIO.output (out, text); TextIO.closeOut out end;
+write ("@REPL@/twice.sml", "functor Twice (X : sig val step : int -> int end) = struct fun go x = X.step (X.step x) end\n");
+write ("@REPL@/apply.sml", "structure A = Twice (struct fun step n = n * 3 end)\nval a = A.go 5\n");
+use "@REPL@/twice.sml";
+use "@REPL@/apply.sml";
+structure B = Twice (struct fun step n = n + 1 end);
+B.go 1;
+use "@REPL@/twice.sml";
+use "@REPL@/apply.sml";
+structure C = Twice (struct fun step n = n - 1 end);
+C.go 10;

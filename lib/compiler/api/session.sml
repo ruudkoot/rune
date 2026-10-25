@@ -10,7 +10,11 @@ struct
   exception Failed of diagnostic list
   exception Closed
   datatype input = Text of source | Loaded of artifact | MidInput of {source : source, pickle : string, mid : string}
-  type config = {target : string, allowPrim : bool, lib : string option, libraries : string list}
+  (* functors: the prototype of docs/plans/functors-units.md, where on --
+     functors compiled to functions, the datatype tags' order, and the
+     functors to inline across units besides the libraries' marks *)
+  type functors = {functions : bool, tags : Types.tagOrder option, inline : string list, noInline : bool}
+  type config = {target : string, allowPrim : bool, lib : string option, libraries : string list, functors : functors}
   type platform = {link : string -> unit -> unit, inherited : (string * string option) list,
                    prepare : bool -> unit, current : unit -> (string * string) list}
   datatype session = Session of {token : unit ref, namespace : string, config : config, sources : input list ref,
@@ -43,6 +47,23 @@ struct
           val () = (Pass.whole:=false; Pipeline.keepMid:=true; CompilerSettings.target:= #target config;
                     Error.keep:=true;Error.silent:=true;Elaborate.recover:=true)
           val () = CompilerSettings.libDir:= #lib config
+          (* --functors=functions and the rest (functors-units.md), set in
+             this attempt's own compiler as rune's options set them *)
+          val {functions,tags,inline,noInline} = #functors config
+          val () =
+            if not functions andalso not (isSome tags) then ()
+            else
+              (Elaborate.functorFunctions:=functions;
+               Types.tagOrder:=(case tags of SOME o' => o' | NONE => Types.TagsSorted);
+               Ty.bindBuiltins ();
+               Elaborate.inlineFunctors:=
+                 List.foldl (fn (n,m) => StringMap.insert (m,n,())) StringMap.empty
+                   (inline @ (case (functions,noInline,#lib config) of
+                                (true,false,SOME root) =>
+                                  List.concat (List.map BasisManifest.inlineFunctors
+                                    (root ^ "/basis" :: (BasisManifest.libraries (root,#libraries config)
+                                                         handle BasisManifest.Usage _ => [])))
+                              | _ => [])))
           val cacheHits=ref 0
           val compiled=ref 0
           val env = ref Env.initial

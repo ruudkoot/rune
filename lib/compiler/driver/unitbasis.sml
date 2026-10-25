@@ -146,6 +146,15 @@ struct
           end
     in search (0, Vector.length rs) end
 
+  (* Expand.current: a global of a unit the session has loaded again since
+     (the REPL's use of a file through the cache) is not the one its name
+     finds now *)
+  val () = Expand.current := (fn h => case rangeOf (kStamp, h) of
+                                        NONE => true
+                                      | SOME (b, u) => (case StringMap.find (!byIdentity, #identity u) of
+                                                          SOME u' => Vector.sub (#base u', kStamp) = b
+                                                        | NONE => false))
+
   (* ---- fingerprints (the incremental roadmap's M6, the third part) ---- *)
 
   (* The fixity the unit at hand begins with, beside its environment
