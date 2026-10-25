@@ -319,27 +319,26 @@ an adapter or a literal of it, a structure of the top level, an inner
 instance or another application, the instances shown, hidden or partly
 hidden by the result signature, in `local` or opened; datatypes in bodies
 over the parameter's types -- plain, mutually recursive with a member
-hidden, with `withtype`, polymorphic, local, replicated from the
-parameter's datatype spec -- with constructors of tuples, records,
-parameter types, functions and reals; leaf structures whose type is of
-every layout; `type`, `eqtype` and datatype specs (matched by a datatype
-whose constructors are in another order), `where type`, `sharing`, the
-derived forms of parameters and none, opaque and transparent ascription,
-named signatures; polymorphic values and type constructors in parameters
-and results, equality on the parameter's and the body's types, `''a`, a polymorphic datatype spec;
+hidden, with `withtype`, polymorphic, local, replicated from the parameter's
+datatype spec -- with constructors of tuples, records, parameter types,
+functions and reals; leaf structures whose type is of every layout; `type`,
+`eqtype` and datatype specs (matched by a datatype whose constructors are in
+another order), `where type`, `sharing`, the derived forms of parameters and
+none, opaque and transparent ascription, named signatures; polymorphic
+values and type constructors in parameters and results, equality on the
+parameter's and the body's types, `''a`, a polymorphic datatype spec;
 exceptions in bodies (each application's its own, or the parameter's or an
 inner instance's again), refs and effects (each application runs them once,
-in order), refs, arrays and vectors of the parameter's types and the
-body's, declarations of a body that branch, bind a refutable pattern or
-close over the parameter's values, substructures in parameters and
-results. What a program prints
-makes each visible: every instance's results, matches on constructors (an
-alias's values matched by the constructors of what it names, and a
-replicated datatype's by its argument's),
-exceptions handled across instances, counts and equalities. A program is a
-plan of choices made well typed by construction (an argument that does not
-match a parameter falls back to a literal that does), so a failure the
-property finds is shrunk to a small program.
+in order), refs, arrays and vectors of the parameter's types and the body's,
+declarations of a body that branch, bind a refutable pattern or close over
+the parameter's values, substructures in parameters and results. What a
+program prints makes each visible: every instance's results, matches on
+constructors (an alias's values matched by the constructors of what it
+names, and a replicated datatype's by its argument's), exceptions handled
+across instances (two applications of one functor among them), counts and
+equalities. A program is a plan of choices made well typed by construction
+(an argument that does not match a parameter falls back to a literal that
+does), so a failure the property finds is shrunk to a small program.
 
 `functors/@generated` runs 16 programs from seed 1, a minute or two;
 `functors/@regressions` runs each program of `tests/functors` (in the form
@@ -357,8 +356,8 @@ tests in `tests/runner/quarantine.txt` until fixed.
 By hand, longer: `bin/rune-functor-gen check --seed S --seeds K --count N
 --known tests/functors/known.txt --rune bin/rune-mlton --out DIR` runs K
 runs of N programs from the seeds S on (`bin/rune-mlton`, MLton's build of
-the compiler, makes the same bytes about three times as fast). Each failure is
-shrunk and kept in `DIR/failures/seedS-caseN`: its units, `program.sml`
+the compiler, makes the same bytes about three times as fast). Each failure
+is shrunk and kept in `DIR/failures/seedS-caseN`: its units, `program.sml`
 (which `bin/rune-functor-gen run FILE` runs again) and `modes.txt`, what
 each mode compiled with and printed; the run goes on with the next seed.
 `bin/rune-functor-gen show --seed 0xHEX --size N` prints the program of a
