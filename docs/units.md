@@ -80,9 +80,7 @@ of `rune-repl --unicode[=ENC]`, and what is typed as UTF-8 under
 
 A unit's mode is in its key where it is not the default (*The cache*), so
 that a unit read in one mode is not taken for one read in another (S63 of
-`tests/incremental/SCENARIOS.md`), and in its basis beside the hash of its
-source, so that loading the basis reads the source again, for a functor's
-body, as the unit was read (*The export basis*).
+`tests/incremental/SCENARIOS.md`).
 
 The modes differ in what a literal holds ([language.md](language.md),
 *Strings*). By default it holds ASCII alone, and `\U` is refused. Under
@@ -112,42 +110,34 @@ signatures, functors and overloading, and the compiler's tables of what it
 declared: each value's scheme, each exception's argument, each datatype's
 constructors, what each opaque type stands for, the primitives some of its
 values are, its functions that may be called by name, and the constructors
-the REPL prints a datatype's values by. A functor's body is not written:
-where it is in the unit's source is, and loading the basis parses the
-source again for it, in the unit's mode (*Source modes*), with the fixity
-of the unit's start, and checks that the source is the one the basis was
-made from by its hash. A functor's
-basis -- the environment it was declared in -- is written as what the unit
-added to its start. Its signature is written whole: its parameter's, and
-the summary its declaration's check left -- the environment the body gave,
-the type names it made, and how many names of each kind the check used --
-by which an application inside a functor's declaration is typed, and an
-application that makes code takes the equality of the types its copy
-made (rule 54; [plans/functors.md](plans/functors.md)). The summary's
-values and exceptions are named by placeholders, which are no names of the
-unit's.
-
-Under `--functors=functions` (*Functors compiled once* in
-[ir.md](ir.md); a prototype) a functor is compiled to a function, and its
-entry is its signature -- its parameter's, and its summary without the
-counts, which are the body's -- the place of its body, and the global of
-its function, which the units that apply it call: nothing else of the
-body. No source is parsed again on loading, no declaration's environment,
-signatures and functors are written, no binder of what the unit's compile
-looked up, and no `funat` usage is made, so that a unit whose functor's
-body changed and whose signature did not keeps its identity, and the units
-that apply the functor are taken from the cache. The tables give each
-instance of a body's datatype the layout the body fixed (`Ty.pinned`),
-unless the unit expanded the application that named it (an application
-of a functor the unit declares, *The expansion* in [ir.md](ir.md)), whose
-instance is laid out from its realised types.
+the REPL prints a datatype's values by. A functor is compiled to a
+function (*Functors compiled once* in [ir.md](ir.md)), and its entry is
+its signature -- its parameter's, and the summary its declaration left,
+the environment the body gave and the type names it made, by which every
+application is typed (rule 54; [plans/functors.md](plans/functors.md)) --
+and the global of its function, which the units that apply it call:
+nothing of its body, so that a unit whose functor's body changed and whose
+signature did not keeps its identity, and the units that apply the
+functor are taken from the cache. The summary's values and exceptions are
+named by placeholders, which are no names of the unit's. A functor marked
+to be inlined ([build.md](build.md), *Inline functors*) has its
+function's Mid written too, its positions in the unit's own source by
+nothing but that, and a unit that expands it depends on it (the usage
+`inl F`). The tables give each instance of a body's datatype the layout
+the body fixed (`Ty.pinned`), unless the unit expanded the application
+that named it (an application of a functor the unit declares or marks,
+*The expansion* in [ir.md](ir.md)), whose instance is laid out from its
+realised types. Until functors-units' M7 a functor's body was parsed
+again from the source on loading, and elaborated again by each unit that
+applied it, which then depended on the unit that declared it and on what
+the body's names were bound to.
 
 Static analysis can also record lexical origins in a version-7 basis:
 source ranges for bindings and the specification/implementation relation
 introduced by signature matching. These origins are separate from value,
 exception and generative type stamps. Exception replication shares a
 runtime exception identity while introducing a distinct lexical name.
-Copied functor bodies retain their definition's lexical owner. Analysis
+Analysis
 freezes query data before replacing a unit's mutable annotations; replay
 restores origins together with its checked basis. The batch driver and
 analysis share build-scope visibility through `CompilerBuildContext`.
@@ -309,8 +299,8 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   place in the library (`lib/basis/list.sml`), so that a cache follows the
   library where it is moved, and a unit taken from the cache names its
   source in its code's files where it is now -- its own, and those of the
-  functors' bodies it applied, which an entry keeps with the unit each is
-  the source of (S56);
+  bodies of the functors marked to be inlined that it expanded, which an
+  entry keeps with the unit each is the source of (S56);
 * in that, an entry per set of *usages* the unit was compiled with: every
   name its compile looked up -- values, types, structures, signatures,
   functors, and the fixity of every identifier it parsed (`Usage`) -- with
@@ -332,20 +322,17 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   removed or moved; and a unit whose body changed and whose basis did not
   keeps its identity, and the units that used it keep their entries: the
   cut-off;
-* a functor's body is elaborated again at each application that makes
-  code, in the basis of its declaration, as it was parsed there: what its
-  names were bound to and the fixity it had are the functor's as much as
-  its text is. So a unit that declares a functor has in its basis, and so
-  in its identity, the unit that bound each name its compile looked up --
-  but of a functor its declaration applied, that functor's signature's
-  fingerprint, since an application inside a functor's declaration is
-  typed by the signature alone -- and a unit that applies one of its
-  functors is compiled again where one of them changed, though it names
-  none of them and another unit may bind them where it is (S49 to S51). A
-  unit that applies a functor to make code uses the unit the functor is
-  from as well (the usage `funat IDENTITY`), whose code its copy has, so
-  that the functors a body applies, wherever their names are bound, have
-  their units used where the code is (S66);
+* a functor is compiled once, in the unit that declares it, and a unit
+  that applies it calls its function and uses its signature alone (the
+  usage `fun F`): what the body's names were bound to and the fixity it was
+  parsed with are the declaring unit's, which is compiled again where they
+  change (S49 to S51), and the units that apply the functor are not, nor
+  where a functor its body applies changes body (S66). A functor marked to
+  be inlined is the exception: a unit that expands its application uses
+  its function's Mid too (`inl F`). Until functors-units' M7 a unit that
+  applied a functor elaborated a copy of its body, and used the units of
+  the names the body looked up and of the functors it applied in turn
+  (the usage `funat IDENTITY`);
 * in the REPL, what a declaration of a file used echoes is compiled with
   it: two usages more say what that was compiled by, `echo on` whether it
   echoed at all (the print depth was above 0) and `p KEY` whether a printer
@@ -413,10 +400,12 @@ used the changed type and those after it whose usages changed, and S4,
 a value added, the changed unit alone.
 
 The cost is precision, not correctness, where a usage holds only by its
-binder: every unit that applies a functor of a changed unit to make code,
-or resolved an overloading one registered, is compiled again; its basis,
-typed by the functor's signature, is the same where the signature is, and
-the units after it are taken from the cache (S65).
+binder: every unit that resolved an overloading a changed unit registered,
+or expanded an application of a functor marked to be inlined there whose
+Mid changed, is compiled again; its basis is the same where what it used
+is, and the units after it are taken from the cache. A unit that applies
+a functor of a changed unit whose signature did not change is taken from
+the cache (S65).
 
 **One program of the units' Mid** (`--units --whole`; the incremental
 roadmap's M7 and D6). A compile in units links its units' code; with
@@ -523,15 +512,18 @@ val () = print (S.name ^ "\n")
 _export structure Impl : SHAPE = struct ... end
 ```
 
-Both sides agree on the signature's ABI: a slot for each value and
-exception it specifies -- its values and exceptions by name, then its
-structures', by name, recursively -- the tags of each datatype it
-specifies in the order of its specification, which the module's datatype
-of that name is given whatever order it declares its constructors in, and
+Both sides agree on the signature's ABI: a structure's record, as a
+functor's argument and result are (functors-units' D3) -- a slot for each
+value and exception it specifies, by name, then a record of its own for
+each of its structures, by name, in a slot -- the tags of each datatype
+it specifies by its constructors' names, as every datatype's are, and
 abstract types that stay abstract to the program. Its fingerprint is the
 hash of what the signature's specifications say, every type named by its
-unit's name and path (`UnitBasis.fpSigma`): a program and a module compiled
-against one signature, from the same library, agree on it.
+unit's name and path (`UnitBasis.fpSigma`), and of the records' form: a
+program and a module compiled against one signature, from the same
+library, agree on it (`tests/runner/scenarios.sml`'s `nested`). Until
+functors-units' M7 the record was flat, its substructures' slots in its
+own, and a module's datatypes were numbered in the signature's order.
 
 When the program reaches the declaration, `RuneDynamic.load` loads the
 unit (`Runtime.load`), runs its top level -- which ends by handing its
@@ -617,7 +609,7 @@ datatypes, exceptions, a functor and fixity used across files, a
 structure shadowed by a later file, the trace of an exception raised in
 the last file, the errors of two files, a flexible record left to a
 later file, which only the whole build accepts, and functors applied to a
-structure of an earlier file under `--functors=functions` (a fixture's
+structure of an earlier file (a fixture's
 `flags`, the compiler's flags in each of its builds). Last, the compiler is
 compiled in units and made to compile its own sources whole, which must
 give `bin/rune.rbc` byte for byte.

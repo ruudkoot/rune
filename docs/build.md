@@ -153,10 +153,10 @@ another mode, its exports stay ASCII all the same.
 ## Functors inlined across units
 
 `inline functor F G ... end` marks functors to be copied into every unit
-that applies them. This is a prototype, and only `--functors=functions`
-reads it (docs/plans/functors-units.md, M6b). With that flag a functor is
-compiled once, to a function, and the expansion copies an application back
-in only where the functor is declared in the same unit. A marked functor is
+that applies them (docs/plans/functors-units.md, M6b). A functor is
+compiled once, to a function, and in a build in units the expansion
+copies an application back in only where the functor is declared in the
+same unit ([ir.md](ir.md), *Functors compiled once*). A marked functor is
 also compiled once. Its unit's basis also keeps the function's Mid, so a
 later unit that applies it expands the application in its own Mid, as it
 does for its own functors and within the same budget. Such a unit depends on

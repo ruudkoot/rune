@@ -11,7 +11,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `translate` | the elaborated syntax | `Lambda` (`lib/compiler/core/lambda.sml`) | `LambdaLint` |
 | `mid` | `Lambda` | `Mid` (`lib/compiler/core/mid.sml`, by `ToMid`) | `MidLint` |
 | `midcanon` | `Mid` | `Mid` numbered canonically (`lib/compiler/core/midcanon.sml`), as one made of its units' `Mid` is; a whole program only | `MidLint` |
-| `expand` | `Mid` | `Mid`, functors' applications copied (`lib/compiler/core/expand.sml`), under `--functors=functions` only (*Functors compiled once* below), from `-O1` | `MidLint` |
+| `expand` | `Mid` | `Mid`, functors' applications copied (`lib/compiler/core/expand.sml`; *Functors compiled once* below), from `-O1` | `MidLint` |
 | `shake` | `Mid` | `Mid`, what nothing reaches gone (`lib/compiler/core/shake.sml`), from `-O1` | `MidLint` |
 | `lift` | `Mid` | `Mid`, local functions that never escape made functions of the top level (`lib/compiler/core/lift.sml`), from `-O1` | `MidLint` |
 | `workers` | `Mid` | `Mid`, tupled and curried functions split into workers and wrappers (`lib/compiler/core/workers.sml`), from `-O1` | `MidLint` |
@@ -33,7 +33,7 @@ what it is given or makes when asked, checks it with the lint of its
 representation, and says what it cost. An optional pass, one that only
 optimises, says from which level it runs (`Pass.enabled`): `trees`, which
 is how `translate` compiles a match (see *Matches*), then `expand` (under
-`--functors=functions` only), `shake`, `lift`,
+*Functors compiled once*), `shake`, `lift`,
 `workers`, `simplify` and `refs`, in that order, and `shake` again where `simplify`
 inlined (see *The optimisations of Mid*); `inline` and `specialise` are
 what `simplify` does besides shrinking, each of which may be left out, as
@@ -51,11 +51,12 @@ of results in globals (see *Low*).
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
 | `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then `total: T s processor time, S s in the stages (P%)` (below) |
 | `--pass-stats=elab` | `--pass-stats`, and a line for each top-level declaration elaborated: where its processor time went, by context and operation, and what the elaborator counted (*The elaborator's counters* below) |
+| `--pass-stats=expand` | `--pass-stats`, and after the expansion a line `expand: N applications expanded, M left calls (B past the budget), P copies not all definitions; at most S nodes copied for a top-level application` (*Functors compiled once* below) |
 | `--pass-stats=hash` | `--pass-stats`, and at the end what the compile hashed: a line `hash PHASE:SITE: B bytes, N hashes` for each part of a compile in units (`usages`, `find`, `export`, `load`, `cache`) and place that hashed, and `memo PHASE: H hits, M misses` for the memo of fingerprints (*What a compile in units hashes* below) |
 | `--units` | run the pipeline on one unit, a file, at a time, and link them ([units.md](units.md)): the passes see a unit, with `Pass.whole` false, and `--pass-stats` names each unit before its passes |
 | `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would (there is no bytecode from Mid yet) |
 | `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same |
-| `--functor-budget=N` | with `--functors=functions`, the Mid nodes `expand` may copy for a top-level application and those in its copies (1000000 by default; 0 copies none) |
+| `--functor-budget=N` | the Mid nodes `expand` may copy for a top-level application and those in its copies (1000000 by default; 0 copies none) |
 
 **What `--pass-stats` shows** is the whole compile: the stages add up to
 the process's processor time from its start, which `tests/compiler` holds
@@ -118,17 +119,16 @@ with `KIND` one of `signature`, `functor`, `structure` and `core`, and
 microseconds of processor time; what is zero is left out. The
 declaration's time is split by:
 
-* **context:** `top`, the top level; `fundecl`, a functor's body checked at
-  its declaration; `appcode`, the copy of a body elaborated at an
-  application whose code is made; `appcheck`, an application only checked,
-  inside a declaration's check or such a copy, or anywhere under
-  `--typecheck-only`, which makes no code and types an application by the
-  functor's signature alone;
+* **context:** `top`, the top level; `fundecl`, a functor's body
+  elaborated at its declaration; `appcode`, an application at the top
+  level whose code is made, its match and its call; `appcheck`, an
+  application inside a functor's body, or anywhere under
+  `--typecheck-only`, which makes no code;
 * **operation:** `inst`, a signature instantiated; `where`, `where type`;
   `share`, sharing; `match`, a structure matched against a signature;
   `specs`, a signature's specifications, without the operations before
-  inside them; `copy`, a body copied for an application; `core`, the rest.
-  Time goes to the innermost operation running.
+  inside them; `core`, the rest. Time goes to the innermost operation
+  running.
 
 The counters: `realize`, the environments realised, and `nodes`, the type
 nodes they visited (the steps of type work they took, one a node); `inst` and `inst.names`, the signatures instantiated
@@ -235,14 +235,15 @@ list) : int`, each use of a variable at an instance, `(inst g1 : int ->
 int)`, and the type of each payload, `(exnarg v3 : int)`; type variables
 are numbered afresh as `'a`, `'b`, ... like the program's.
 
-### Functors compiled once (a prototype)
+### Functors compiled once
 
-Under `rune --functors=functions` ([plans/functors-units.md](plans/functors-units.md),
-M5; a prototype behind a flag, which M7 would make the only way) a functor
-is compiled once, where it is declared, to a function, and an application
-is a call of it, in every mode: a whole compile, a build in units and
-`--units --whole`. Off, a functor's body is copied and elaborated again for
-each application, and the copy is what is translated.
+A functor is compiled once, where it is declared, to a function, and an
+application is a call of it, in every mode: a whole compile, a build in
+units and `--units --whole` ([plans/functors-units.md](plans/functors-units.md),
+M5 to M7). The expansion (below) gives a whole program and a unit's own
+applications their copies back in Mid. Until M7 a functor's body was
+copied and elaborated again for each application, and the copy was what
+was translated (static interpretation).
 
 * **A structure's record.** A structure that reaches a functor is a value
   at run time: a tuple of its slots, each cast to `unit` by `functor_cast`
@@ -279,12 +280,11 @@ each application, and the copy is what is translated.
   for `array`, `vector` and `ref`), and `=` at one is `poly_eq`'s walk. A
   datatype the parameter specifies is given its constructors under the
   name the body sees (`Elaborate.specDatatypes`).
-* **Tags by name** (decision D4): `--functors=functions` numbers every
-  datatype's constructors by their names sorted (`--datatype-tags=sorted`,
-  `Types.tagNames`), so that a specification and the datatype that matches
-  it agree on every tag; `sorted-x` keeps `nil, ::` and `LESS, EQUAL,
-  GREATER` as declared, by their names, for the VM's C, which follows
-  `sorted` only when built with `-DRUNE_TAGS_SORTED` (`bin/runevm-sorted`).
+* **Tags by name** (decision D4): every datatype's constructors are
+  numbered by their names sorted (`Types.tagNames`), so that a
+  specification and the datatype that matches it agree on every tag; but
+  `nil, ::` and `LESS, EQUAL, GREATER` keep their declarations' order, by
+  their names, for the VM's C (`runtime/value.h`).
 * **Open constructors** (D4). A constructor of a parameter's datatype whose
   argument is one of the parameter's abstract types may be laid out flat
   in the argument where the specification reads it boxed. Its descriptor,
@@ -335,7 +335,7 @@ each application, and the copy is what is translated.
     (a local whose type names type variables it does not abstract over
     abstracting over them, so that an alias of it is one); what does not
     fit (a branch both of whose arms go on) stays one definition of the
-    record (`--pass-stats` counts them). A definition with an application
+    record (`--pass-stats=expand` counts them). A definition with an application
     among its steps (a `local` block's `Do`, whose globals it sets) is
     first made definitions the same way, so that the application is one.
   - A slot read from a record whose value is known is that value, and a
@@ -357,12 +357,11 @@ each application, and the copy is what is translated.
     declarations run is in a frame of the functor's function (`functor F`)
     called where the application is, and the body's functions keep the
     functor's names (`F.boom`) in a copy as in the function, not the
-    applying structure's (the roadmap's X5 and M7 name an expanded copy by
-    the structure, which would make `-O0` and `-O2` differ, `make
-    check-levels`). Under the flag a definition of the top level makes no
-    tail call at any level (`Simplify`: its value is made with a
-    continuation), so that a function inlined there keeps the frame of
-    `<toplevel>`; off, `-O1` drops it, as before
+    applying structure's, so that traces are the same at every level (`make
+    check-levels`; [plans/functors.md](plans/functors.md), *Names in
+    traces*). A definition of the top level makes no tail call at any
+    level (`Simplify`: its value is made with a continuation), so that a
+    function inlined there keeps the frame of `<toplevel>`
     (`tests/lang/mod.functor.functions_trace`).
   - **Across units** (M6b). A functor marked to be inlined (`inline
     functor` in a build file, `--inline-functor=F`; docs/build.md) has its
@@ -441,7 +440,7 @@ have generalised them: a variable of the program or a function; a variable
   that type variables are in scope.
 * **Calls:** a function of other than one parameter is only called, with
   an argument for each, and never used as a value.
-* **Casts,** under `--functors=functions` (D3): no value cast to `unit` is
+* **Casts** (D3): no value cast to `unit` is
   cast back to another ground type. A record's slot is cast to `unit` and
   back; where the expansion knows the slot's value, a cast left between two
   ground types that differ is a bug of the expansion.

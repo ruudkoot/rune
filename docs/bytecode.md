@@ -242,11 +242,8 @@ compiles after it need of it ([units.md](units.md), *The export basis*):
 
 ```
 used        3 × varint   what the unit's compile used of each kind of name
-source      varint len, bytes   the hash of its source
-mode        varint len, bytes   how the source was read: ascii, unicode or
-                                unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    9 (UnitBasis.version)
+version     varint    11 (UnitBasis.version)
 probe       varint len, bytes   the probe of the compiler's hash
                                 (Pickle.probe): a basis made by a
                                 compiler whose hash gives other values
@@ -255,8 +252,9 @@ name        varint len, bytes   the unit's name
 units       varint n, n × string   the identities of the units it names
 counts      3 × varint   its own names of each kind
             ... the fixity directives, the environment, the signatures,
-                functors (each with its signature: its parameter's, and
-                its body's summary where it has one) and overloading it
+                functors (each its signature: its parameter's and its
+                body's summary; the global of its function; and the
+                function's Mid where it is marked to be inlined) and overloading it
                 declared, and the tables of its own names, each name of a
                 kind written as built in, the unit's own (a number), or
                 another unit's (its place, a number) ...
@@ -266,11 +264,17 @@ Version 9 adds the probe, and every hash is rx2fw, two lanes of 63 bits
 in 32 hexadecimal digits ([plans/functors-units.md](plans/functors-units.md),
 D11), so every identity changed.
 
-Under `--functors=functions` (a prototype, whose configuration no cache
-entry of another shares) a functor compiled to a function is written as
-its signature, the place of its body and the global of its function
-([units.md](units.md), *The export basis*), and each type name's entry ends
-with the layout a functor's body fixed for it, where it has one.
+Version 11 (functors-units' M7) writes a functor as its signature and the
+global of its function to which it is compiled, and the function's Mid
+where it is marked to be inlined (its positions in the unit's own source
+by nothing but that): no place of its body, which loading no longer
+parses again, no declaration environment, signatures, functors or
+`allowPrim` of its body, and no list of what its body's names were bound
+to; the source's hash and mode are gone from the prefix; each value's
+entry says the global it is another of (`Expand.globalAliases`) and the
+primitive it applies, and each type name's entry ends with the layout a
+functor's body fixed for it, where it has one ([units.md](units.md), *The
+export basis*). Version 10 was the prototype's form, under the flag.
 
 Version 8 changed no field: the usages a cache entry keeps were
 fingerprinted without the equality of type variables and of a signature's
@@ -303,7 +307,7 @@ exponent allows it -- or a pointer to a heap object. Heap objects:
 | kind | contents | used for |
 |---|---|---|
 | TUPLE | n fields | tuples, records (fields in canonical label order), vectors |
-| CON | tag, 1 field or n | datatype constructors with an argument: its argument, or, where the constructor's declared argument is a tuple of n, those n fields (`CONN`; lists: `::` is tag 1 of head and tail, `nil` is `CON0 0`, and the other way round under `--datatype-tags=sorted`, on `bin/runevm-sorted`) |
+| CON | tag, 1 field or n | datatype constructors with an argument: its argument, or, where the constructor's declared argument is a tuple of n, those n fields (`CONN`; a datatype's tags are by its constructors' names sorted, but lists': `::` is tag 1 of head and tail, `nil` is `CON0 0`; [ir.md](ir.md), *Tags by name*) |
 | CLOSURE | function index, environment fields | functions |
 | STRING | bytes | strings |
 | REF | 1 field | `ref` cells (identity equality) |
