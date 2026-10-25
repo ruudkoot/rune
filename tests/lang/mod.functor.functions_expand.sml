@@ -129,3 +129,13 @@ end
 structure H1 = Hides (struct val k = 10 end)
 structure H2 = Hides (struct val k = 20 end)
 val () = print (Int.toString (H1.run 3) ^ " " ^ Int.toString (H2.run 4) ^ "\n")
+
+(* a polymorphic value of an argument made in a body, a nullary constructor
+   (PrimIO's `val index = NONE`): the record holds it at unit for its type
+   variables, and the copy reads it at the parameter's type *)
+functor UsesIndex (X : sig type pos val index : {toInt : pos -> int, fromInt : int -> pos} option end) = struct
+  fun count p = case X.index of SOME {toInt, ...} => toInt p | NONE => ~1
+end
+functor Wrap (Y : sig type pos end) = UsesIndex (struct type pos = Y.pos val index = NONE end)
+structure Wr = Wrap (struct type pos = int end)
+val () = print (Int.toString (Wr.count 5) ^ "\n")

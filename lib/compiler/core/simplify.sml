@@ -1992,7 +1992,14 @@ struct
       (* each definition may grow by about its size by inlining: twice that
          runs the compiler no faster, in more code *)
       fun simplify e = (budget := size e + 32; here := (Source.noSpan, []); inHandler := 0; rounds (3, e))
-      fun simplifyDef e = (roundParams := []; simplify e)
+      (* a definition's value is made with a continuation (Lower), not
+         returned: a call in its tail is none, and a function put there keeps
+         the frame of the code around it, as at -O0 (the review of M6,
+         finding 4) -- under --functors=functions, whose copies' declarations
+         are definitions; off, as before *)
+      fun simplifyDef e =
+        (roundParams := []; budget := size e + 32; here := (Source.noSpan, []);
+         inHandler := (if !Elaborate.functorFunctions then 1 else 0); rounds (3, e))
       (* a function is put where it is called as it is simplified, where it
          still may be, and specialised as it is, where it may be *)
       fun fundef ({name, tyvars, params, result, body} : fundef) =

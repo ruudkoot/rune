@@ -125,6 +125,23 @@ struct
       | _ => NONE
     end
 
+  (* e's positions with a frame more, outermost -- the function e's code
+     comes from, called from where the frames are -- in the code that runs
+     in the activation e is put into, not in a function made there (as
+     Simplify.inlinedFrom) *)
+  fun inlinedFrom (frame : frame, outer : frame list) (e : exp) : exp =
+    let
+      fun go e =
+        case e of
+          Let (x, s, r, b) => Let (x, s, r, go b)
+        | Fun (fs, b) => Fun (fs, go b)
+        | Join (j, ps, body, sc) => Join (j, ps, go body, go sc)
+        | If (c, t, f) => If (c, go t, go f)
+        | Handle (a, x, h) => Handle (go a, x, go h)
+        | Mark ((sp, frames), a) => Mark ((sp, frames @ frame :: outer), go a)
+        | _ => e
+    in go e end
+
   (* the marked functors' functions p defines, kept (a unit's, before its
      passes) *)
   fun keepMarked (p : program) : unit =
@@ -171,7 +188,7 @@ struct
      to variables and what it becomes *)
   fun markerType (r : rhs) : Ty.ty option =
     case r of
-      Prim ("unsafe_cast", t, [Unit]) =>
+      Prim ("functor_marker", t, [Unit]) =>
         (case Ty.view t of
            Ty.Arrow (d, enc) =>
              if Ty.equal (d, Ty.unit) then
@@ -256,29 +273,65 @@ struct
                       IntMap.listKeys (List.foldl (fn ((_, _, SOME a), acc) => namesIn (a, acc) | (_, acc) => acc) IntMap.empty cons)
         in IntTable.insert (!datatypeNames, s, l); l end
 
-  (* The body of the function f, its parameter the atom given: fresh names
-     for what it binds, the types substituted as sigma says, each datatype
-     the body declares over what sigma substitutes copied (into copied) *)
+  (* e0 with fresh names for what it binds, the variables given (each
+     monomorphic) the atoms given, the types substituted as sigma says,
+     each datatype it declares over what sigma substitutes copied (into
+     copied); a variable it does not bind kept, where free is true (a join
+     point's body copied into the spine it is in, whose variables the
+     spine rewrites after: the review of M6, finding 7), and otherwise a
+     bug (a functor's body, closed but for its parameter) *)
   fun copyExp (st : state, sigma0 : image IntMap.map, given : (int * atom) list, e0 : exp) : exp =
-    #1 (copyExpWith (st, sigma0, [], given, e0))
+    #1 (copyExpWith (st, sigma0, [], given, true, e0))
 
   (* the same, and the datatypes of made (each a body's datatype, by the
      name of its instance) entered again under their instances' names with
      their constructors as the copy has them: their types substituted, and
      the body's other datatypes they name the copy's *)
-  and copyExpWith (st : state, sigma0 : image IntMap.map, made : (int * int) list, given : (int * atom) list, e0 : exp)
-      : exp * unit =
+  and copyExpWith (st : state, sigma0 : image IntMap.map, made : (int * int) list, given : (int * atom) list, free : bool,
+                   e0 : exp) : exp * unit =
     let
       val sigma = ref sigma0
       val memo : Ty.ty IntTable.table = IntTable.table 256
-      (* whether a datatype names what sigma substitutes, through those it
-         names: worked out by a walk of all it reaches *)
+      (* the instances the applications in e0 make (their markers' body
+         datatypes): each copy of a body has instances of its own, as each
+         application of a functor makes new ones, whatever its argument
+         -- one the outer result does not show would otherwise keep its name
+         in every copy and be entered again by each, with the constructors
+         of each copy's own copies of what it names (the review of M6,
+         finding 3) *)
+      val generated : unit IntTable.table = IntTable.table 16
+      val () =
+        let
+          fun note r =
+            case markerType r of
+              SOME enc => List.app (fn (_, Body (_, to)) => (case Ty.view to of
+                                                                 Ty.Con (c, _, _) => IntTable.insert (generated, c, ())
+                                                               | _ => ())
+                                     | _ => ()) (#2 (entries enc))
+            | NONE => ()
+          fun go e =
+            case e of
+              Let (_, _, r, b) => (note r; go b)
+            | Fun (fs, b) => (List.app (fn (f : fundef) => go (#body f)) fs; go b)
+            | Join (_, _, b, sc) => (go b; go sc)
+            | If (_, t, f) => (go t; go f)
+            | Handle (b, _, h) => (go b; go h)
+            | Return r => note r
+            | Mark (_, b) => go b
+            | _ => ()
+        in go e0 end
+      fun isGenerated s = isSome (IntTable.find (generated, s)) andalso not (IntMap.member (sigma0, s))
+      (* whether a datatype names what sigma substitutes, or an instance
+         the copy makes its own, through those it names: worked out by a
+         walk of all it reaches (a datatype of the body over an instance
+         an application in it makes, of nothing the parameter gives, is
+         the copy's too, as the instance is: MLton's whole compile) *)
       val dep : bool IntTable.table = IntTable.table 64
       (* NONE where its constructors name a substituted name; else the
          names they name *)
       fun direct (s : int) : int list option =
         let val names = namesOfDatatype s
-        in if List.exists (fn n => IntMap.member (!sigma, n)) names then NONE else SOME names end
+        in if List.exists (fn n => IntMap.member (!sigma, n) orelse isGenerated n) names then NONE else SOME names end
       fun depends (s : int) : bool =
         case IntTable.find (dep, s) of
           SOME b => b
@@ -310,7 +363,9 @@ struct
             in
               case IntMap.find (!sigma, s) of
                 SOME i => image i
-              | NONE => if Ty.flatOf s = NONE andalso depends s then image (instantiate s) else Ty.con (s, n, args')
+              | NONE =>
+                  if Ty.flatOf s = NONE andalso (isGenerated s orelse depends s) then image (instantiate s)
+                  else Ty.con (s, n, args')
             end
         | Ty.Tuple ts => Ty.tuple (List.map ty ts)
         | Ty.Arrow (a, b) => Ty.arrow (ty a, ty b)
@@ -324,15 +379,17 @@ struct
          datatype of the body they reach (fxp's ExtType and State) *)
       and instantiate (s : int) : image =
         let
-          val key = copyKey s
+          (* an instance an application in the body makes is this copy's
+             own, and so is a datatype over one (copyKey) *)
+          val key = if isGenerated s then NONE else copyKey s
         in
-          case StringMap.find (!(#dcopies st), key) of
+          case Option.mapPartial (fn k => StringMap.find (!(#dcopies st), k)) key of
             SOME s' => (sigma := IntMap.insert (!sigma, s, Name s'); Name s')
           | NONE =>
               let
                 val s' = freshTycon ()
                 val () = sigma := IntMap.insert (!sigma, s, Name s')
-                val () = #dcopies st := StringMap.insert (!(#dcopies st), key, s')
+                val () = Option.app (fn k => #dcopies st := StringMap.insert (!(#dcopies st), k, s')) key
                 val info = case Ty.datatypeOf s of
                              SOME {params, cons} => {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map ty a)) cons}
                            | NONE => bug "a datatype without constructors"
@@ -342,11 +399,13 @@ struct
          reaches (sigma0, not the copies this one has made so far, so that
          the order a copy meets the body's datatypes in changes nothing),
          through the body's datatypes it does not make anything: which
-         determine its copy *)
-      and copyKey (s : int) : string =
+         determine its copy; NONE where it reaches an instance the copy
+         makes its own, whose copy is the copy's own too *)
+      and copyKey (s : int) : string option =
         let
           val seen : unit IntTable.table = IntTable.table 16
           val found : (int * string) list ref = ref []
+          val own = ref false
           fun tyKey t =
             case Ty.view t of
               Ty.Con (c, _, args) => "c" ^ Int.toString c ^ "(" ^ String.concatWith "," (List.map tyKey args) ^ ")"
@@ -363,11 +422,14 @@ struct
               (IntTable.insert (seen, n, ());
                case IntMap.find (sigma0, n) of
                  SOME i => found := (n, imageKey i) :: !found
-               | NONE => List.app walk (namesOfDatatype n))
+               | NONE => if isGenerated n then own := true else List.app walk (namesOfDatatype n))
           val () = IntTable.insert (seen, s, ())
           val () = List.app walk (namesOfDatatype s)
           val sorted = IntMap.listItemsi (List.foldl (fn ((n, k), m) => IntMap.insert (m, n, k)) IntMap.empty (!found))
-        in Int.toString s ^ "|" ^ String.concatWith ";" (List.map (fn (n, k) => Int.toString n ^ "=" ^ k) sorted) end
+        in
+          if !own then NONE
+          else SOME (Int.toString s ^ "|" ^ String.concatWith ";" (List.map (fn (n, k) => Int.toString n ^ "=" ^ k) sorted))
+        end
 
       val vars : atom IntTable.table = IntTable.table 256
       val labels : int IntTable.table = IntTable.table 64
@@ -384,8 +446,8 @@ struct
           Var (x, ts) =>
             (case IntTable.find (vars, x) of
                SOME (Var (x', _)) => Var (x', List.map ty ts)
-             | SOME other => other
-             | NONE => bug ("v" ^ Int.toString x ^ " free in a functor's body"))
+             | SOME other => if null ts then other else bug ("v" ^ Int.toString x ^ ", given, used at types")
+             | NONE => if free then Var (x, List.map ty ts) else bug ("v" ^ Int.toString x ^ " free in a functor's body"))
         | Global (g, ts) => Global (g, List.map ty ts)
         | Const (c, t) => Const (c, ty t)
         | Con0 (tag, t) => Con0 (tag, ty t)
@@ -411,20 +473,8 @@ struct
          first branch makes or takes it apart as its datatype *)
       fun openTest (c, r, b) =
         case (r, b) of
-          (Prim ("poly_eq", _, [Var _, Const (Lambda.CInt n, _)]), If (Var (c', []), fast, _)) =>
-            if n = 0 andalso c = c' andalso isOpenStep fast then SOME fast else NONE
+          (Prim ("open_boxed", _, _), If (Var (c', []), fast, _)) => if c = c' then SOME fast else NONE
         | _ => NONE
-      and isOpenStep e =
-        let
-          fun openTy t = case Ty.view t of Ty.Con (s, _, _) => Ty.isOpen s | _ => false
-          fun step r = case r of Con (_, t, _) => openTy t | Decon (_, t, _) => openTy t | _ => false
-        in
-          case e of
-            Return r => step r
-          | Let (_, _, r, _) => step r
-          | Mark (_, e) => isOpenStep e
-          | _ => false
-        end
       fun exp e =
         case e of
           Let (x, s, r, b) =>
@@ -467,7 +517,7 @@ struct
   (* The body of the functor's function f, its parameter the atom given *)
   fun copyBody (st : state, sigma : image IntMap.map, made : (int * int) list, f : fundef, arg : atom) : exp =
     case #params f of
-      [(p, _)] => #1 (copyExpWith (st, sigma, made, [(p, arg)], #body f))
+      [(p, _)] => #1 (copyExpWith (st, sigma, made, [(p, arg)], false, #body f))
     | _ => bug "a functor's function of other than one parameter"
 
   (* ---- rewriting with what is known ---- *)
@@ -519,14 +569,14 @@ struct
   (* A step made simpler by what is known, and whether it was: a field of a
      known tuple; a cast to the same type; a cast back through unit of what
      was cast to unit from the type wanted, or from a polymorphic global's
-     instance at it *)
+     instance at it, or of a nullary constructor at another instance *)
   fun fold (st : state) (r : rhs) : rhs * bool =
     case r of
       Select (i, Global (g, [])) =>
         (case IntTable.find (#tuples st, g) of
            SOME v => if i < Vector.length v then (Atom (Vector.sub (v, i)), true) else (r, false)
          | NONE => (r, false))
-    | Prim ("unsafe_cast", t, [a]) =>
+    | Prim ("functor_cast", t, [a]) =>
         (case Ty.view t of
            Ty.Arrow (d, c) =>
              if Ty.equal (d, c) then (Atom a, true)
@@ -539,8 +589,24 @@ struct
                          if Ty.equal (from, c) then (Atom z, true)
                          else
                            (case z of
-                              Global (f, _) =>
-                                (case IntTable.find (#schemes st, f) of
+                              (* a nullary constructor, which a polymorphic
+                                 value of the record is at unit for its type
+                                 variables (`val index = NONE`): the same
+                                 constructor at the instance wanted *)
+                              Con0 (tag, _) =>
+                                (case (Ty.view from, Ty.view c) of
+                                   (Ty.Con (s1, _, _), Ty.Con (s2, _, _)) =>
+                                     if s1 = s2 then (Atom (Con0 (tag, c)), true) else (r, false)
+                                 | _ => (r, false))
+                            | Global (f, _) =>
+                                (* a global of a unit before this one, by
+                                   the scheme its basis gives (the
+                                   generator's earlier_unit_arg: an argument
+                                   that names a polymorphic function of an
+                                   earlier unit, at int -> int) *)
+                                (case (case IntTable.find (#schemes st, f) of
+                                         SOME s => SOME s
+                                       | NONE => (SOME (ToMid.globalScheme f) handle Error.Bug _ => NONE)) of
                                    SOME (vs as _ :: _, tf) =>
                                      (case Ty.match (tf, c) of
                                         SOME m => (Atom (Global (f, List.map (fn v => case IntMap.find (m, v) of
@@ -583,7 +649,7 @@ struct
     (IntTable.insert (#schemes st, g, s);
      case r of
        Tuple xs => IntTable.insert (#tuples st, g, Vector.fromList xs)
-     | Prim ("unsafe_cast", t, [a]) =>
+     | Prim ("functor_cast", t, [a]) =>
          (case Ty.view t of
             Ty.Arrow (d, c) => if Ty.equal (c, Ty.unit) andalso not (Ty.equal (d, Ty.unit))
                                then IntTable.insert (#casts st, g, (a, d)) else ()
@@ -597,9 +663,14 @@ struct
   fun primCall (st : state) (r : rhs) : ((int * Ty.ty * rhs) list * rhs) option =
     case r of
       App (Global (h, ts), [a]) =>
-        (case (case IntMap.find (!Translate.primAliases, h) of
-                 SOME p => SOME p
-               | NONE => if !Pass.whole then NONE else IntTable.find (!primGlobals, h)) of
+        (* in a whole program MidCanon has renamed the globals, which
+           Translate.primAliases and the bases name by the elaborator's
+           stamps: none of them is there (the review of M6, finding 7), and
+           Simplify inlines what an alias made of a binding to a primitive *)
+        (case (if !Pass.whole then NONE
+               else case IntMap.find (!Translate.primAliases, h) of
+                      SOME p => SOME p
+                    | NONE => IntTable.find (!primGlobals, h)) of
            NONE => NONE
          | SOME p =>
              let
@@ -1082,8 +1153,27 @@ struct
                                           | NONE => ()
                                  val body = copyBody (st, sigma, named, f, a')
                                  val body = case mark of SOME pos => Mark (pos, body) | NONE => body
+                                 val nMade = List.length (!made)
                                  val () = spine (st, emit, SOME (r, s), ref []) body
-                                 val made = List.map (fn d => (d, SOME root', depth + 1, false)) (List.rev (!made))
+                                 (* what the copy's declarations run, in a frame of the
+                                    functor's function called where the application is,
+                                    as at -O0 (the review of M6, finding 4): not the
+                                    steps before the call, nor its functions, which run
+                                    in activations of their own *)
+                                 val name = case #params f of
+                                              (p, _) :: _ => getOpt (IntMap.find (!Translate.funNames, p), "functor")
+                                            | [] => "functor"
+                                 fun frame d =
+                                   case mark of
+                                     SOME (sp, outer) =>
+                                       (case d of
+                                          Val (x, sc, e) => Val (x, sc, inlinedFrom ({name = name, site = SOME sp}, outer) e)
+                                        | Do (gs, e) => Do (gs, inlinedFrom ({name = name, site = SOME sp}, outer) e)
+                                        | _ => d)
+                                   | NONE => d
+                                 val all = List.rev (!made)
+                                 val made = List.take (all, nMade) @ List.map frame (List.drop (all, nMade))
+                                 val made = List.map (fn d => (d, SOME root', depth + 1, false)) made
                                in loop (made @ rest) end
                            end)
                   | Do (_, e) => if original andalso calls (fns, e) andalso Pass.spend () then flatten () else plain ()

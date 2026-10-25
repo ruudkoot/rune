@@ -238,7 +238,12 @@ struct
                  (case switchOf (y, [(tag, sp, t)], f) of
                     SOME (cases, (_, d)) => go (d, List.foldl (fn ((_, _, t), acc) => go (t, acc)) (var (y, acc)) cases)
                   | NONE => go (f, go (t, var (y, acc))))
-             | NONE => let val acc = rhs (r, acc) in bind x; go (b, acc) end)
+             | NONE =>
+                 (* a tuple or a constructor nothing uses is not made (exp,
+                    below): what it would hold is not read *)
+                 let val acc = if usesOf x = 0 andalso (case r of M.Tuple (_ :: _) => true | M.Con _ => true | _ => false)
+                               then acc else rhs (r, acc)
+                 in bind x; go (b, acc) end)
         | M.Fun (fs, b) =>
             (List.app (fn f => bind (#name f)) fs;
              go (b, List.foldl (fn (f, acc) =>
@@ -326,6 +331,23 @@ struct
      by their names; a datatype by its constructors (nullary only: a
      T_CON0; none nullary: in the heap; both: either); a tuple, a
      function, an exception in the heap; a type variable any. *)
+  (* open_layout's descriptor (--functors=functions): the fields the
+     constructor tag of the datatype its type takes is laid out in, 0 where
+     it boxes its argument, by the datatype's layout now (Ty.layoutOf), after
+     the expansion decided it *)
+  fun openLayout (t : Ty.ty, tag : int) : int =
+    case Ty.view t of
+      Ty.Arrow (d, _) =>
+        (case Ty.view d of
+           Ty.Con (s, _, _) =>
+             (case List.find (fn (t', _) => t' = tag) (Ty.layoutOf s) of
+                SOME (_, SOME n) =>
+                  if n > Ty.maxFlat then bug ("open_layout: " ^ Int.toString n ^ " fields, more than a descriptor gives")
+                  else n
+              | _ => 0)
+         | _ => bug "open_layout of what is no datatype")
+    | _ => bug "open_layout of no function type"
+
   fun repOfTy (t : Ty.ty) : L.rep =
     case Ty.view t of
       Ty.Tuple [] => L.RUnit
@@ -904,6 +926,14 @@ struct
         M.Atom _ => bug "an atom as an operation"
       | M.App (M.Global (g, _), xs) => if isKnown g then L.CallK (g, List.map at xs) else unknown (b, cx, r)
       | M.App _ => unknown (b, cx, r)
+      (* the primitives of the functors' code (--functors=functions), which
+         only the compiler makes: a record's slot cast, an application's
+         marker, an open constructor's descriptor tested for 0 and worked
+         out from its datatype's layout, as it is now *)
+      | M.Prim ("functor_cast", _, xs) => L.Prim ("unsafe_cast", List.map at xs)
+      | M.Prim ("functor_marker", _, xs) => L.Prim ("unsafe_cast", List.map at xs)
+      | M.Prim ("open_boxed", _, xs) => L.Prim ("imm_eq", List.map at xs)
+      | M.Prim ("open_layout", t, [M.Const (Lambda.CInt tag, _)]) => L.Const (Lambda.CInt (IntInf.fromInt (openLayout (t, IntInf.toInt tag))))
       | M.Prim (p, _, xs) => L.Prim (p, List.map at xs)
       | M.Tuple xs => L.Tuple (List.map at xs)
       | M.Select (i, a) =>

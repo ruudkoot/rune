@@ -615,7 +615,9 @@ the optimisations. Those programs are of one file; `tests/units`
 units for both bytecodes and held to what it expects: functions, workers,
 datatypes, exceptions, a functor and fixity used across files, a
 structure shadowed by a later file, the trace of an exception raised in
-the last file, the errors of two files, and a flexible record left to a
-later file, which only the whole build accepts. Last, the compiler is
+the last file, the errors of two files, a flexible record left to a
+later file, which only the whole build accepts, and functors applied to a
+structure of an earlier file under `--functors=functions` (a fixture's
+`flags`, the compiler's flags in each of its builds). Last, the compiler is
 compiled in units and made to compile its own sources whole, which must
 give `bin/rune.rbc` byte for byte.

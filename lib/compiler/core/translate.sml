@@ -648,8 +648,11 @@ struct
 
   (* a record of n slots, as Elaborate.recordTy *)
   and recordTyN (n : int) : Ty.ty = Ty.tuple (List.tabulate (Int.max (n, 2), fn _ => Ty.unit))
-  and toUnit (e : lexp, t : Ty.ty) : lexp = Prim ("unsafe_cast", SOME (Ty.arrow (t, Ty.unit)), [e])
-  and fromUnit (e : lexp, t : Ty.ty) : lexp = Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, t)), [e])
+  (* a record's slot cast to and from unit: functor_cast, an unsafe_cast
+     (Lower) that only these make, which the expansion folds and MidLint
+     checks (D3) *)
+  and toUnit (e : lexp, t : Ty.ty) : lexp = Prim ("functor_cast", SOME (Ty.arrow (t, Ty.unit)), [e])
+  and fromUnit (e : lexp, t : Ty.ty) : lexp = Prim ("functor_cast", SOME (Ty.arrow (Ty.unit, t)), [e])
 
   (* the record a reach reaches *)
   and reachExp ({var, global, path} : Elaborate.reach, n : int) : lexp =
@@ -677,7 +680,9 @@ struct
       SOME h => reachExp (h, Elaborate.slotsOf r)
     | NONE =>
         let
-          fun desc (Elaborate.DescConst n) = toUnit (Const (CInt (IntInf.fromInt n), Ty.int), Ty.int)
+          fun desc (Elaborate.DescLayout {stamp, name, arity, tag}) =
+                let val dt = Ty.con (stamp, name, List.tabulate (arity, fn _ => Ty.unit))
+                in toUnit (Prim ("open_layout", SOME (Ty.arrow (dt, Ty.int)), [Const (CInt (IntInf.fromInt tag), dt)]), Ty.int) end
             | desc (Elaborate.DescVar d) = (noteRead d; toUnit (Var d, Ty.int))
           val elems = List.map (fn (_, v) => slotValue v) vals @ List.map desc descs
                       @ List.map (fn (_, s) => toUnit (recordExp s, recordTyN (Elaborate.slotsOf s))) strs
@@ -699,7 +704,7 @@ struct
             | _ => go (rest, i + 1)
       and ds ([], i) = subs (strs, i)
         | ds (Elaborate.DescVar d :: rest, i) = Let (d, fromUnit (Select (i, src), Ty.int), ds (rest, i + 1))
-        | ds (Elaborate.DescConst _ :: rest, i) = ds (rest, i + 1)
+        | ds (Elaborate.DescLayout _ :: rest, i) = ds (rest, i + 1)
       and subs ([], _) = k ()
         | subs ((_, s) :: rest, i) =
             let
@@ -749,7 +754,7 @@ struct
             List.foldl (fn (d, (i, rest)) =>
                           (i + 1, case d of
                                     Elaborate.DescVar d => if wasRead d then Let (d, fromUnit (Select (i, src), Ty.int), rest) else rest
-                                  | Elaborate.DescConst _ => rest))
+                                  | Elaborate.DescLayout _ => rest))
                        (i, rest) descs
           val (_, rest) =
             List.foldl (fn ((_, s), (i, rest)) =>
@@ -846,7 +851,7 @@ struct
          mark around them would make one *)
       fun call a = MatchComp.bindVar (result, global,
                                       Mark (sp, Let (MatchComp.freshVar (),
-                                                     Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, functorTypes code)), [Unit]),
+                                                     Prim ("functor_marker", SOME (Ty.arrow (Ty.unit, functorTypes code)), [Unit]),
                                                      App (Global func, a))),
                                       if global then bindRecord (record, Global result, k)
                                       else bindUsed (record, Var result, k ()))

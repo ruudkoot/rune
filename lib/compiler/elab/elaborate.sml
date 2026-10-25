@@ -824,7 +824,12 @@ struct
      constant, or the descriptor of the body it is made in where the
      argument's datatype is that body's parameter's; the parameter's are
      the function's variables *)
-  and desc = DescConst of int | DescVar of int
+  (* DescLayout: the layout of the argument's datatype, by its stamp, name
+     and arity, and the constructor's tag: worked out where the program is
+     lowered (Lower, the primitive open_layout), from the layout the
+     datatype has then -- the one the expansion may have given it since
+     (the review of M6, finding 2) *)
+  and desc = DescLayout of {stamp : int, name : string, arity : int, tag : int} | DescVar of int
   withtype reach = {var : int, global : bool, path : (int * int) list}
 
   fun slotsOf (Record {vals, descs, strs, ...}) : int = List.length vals + List.length descs + List.length strs
@@ -1168,8 +1173,8 @@ struct
                                 err (sp, "--functors=functions: the argument lays out a constructor of " ^ #name c ^ " in "
                                          ^ Int.toString n ^ " fields, more than the " ^ Int.toString Ty.maxFlat
                                          ^ " a descriptor may give")
-                              else DescConst n
-                          | _ => DescConst 0))
+                              else DescLayout {stamp = #stamp a, name = #name a, arity = #arity a, tag = tag}
+                          | _ => DescLayout {stamp = #stamp a, name = #name a, arity = #arity a, tag = tag}))
                 | _ => Error.bug ("a datatype of a parameter realised by no type name: " ^ #name c))
              (openConstructors paramSig)
 

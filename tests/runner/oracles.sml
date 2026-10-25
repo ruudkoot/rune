@@ -436,7 +436,8 @@ struct
   (* ---- units *)
   (* the programs whose units are not loaded: their traces and images name
      the program, and loading has no arguments *)
-  val noLoad = ["tests/lang/rt.trace_frames", "tests/lang/rt.trace_inlined", "tests/lang/rt.save_restore_cross"]
+  val noLoad = ["tests/lang/rt.trace_frames", "tests/lang/rt.trace_inlined", "tests/lang/rt.save_restore_cross",
+                "tests/lang/mod.functor.functions_trace"]
 
   fun unitsSetup (variant, rune) =
     let val out = run ^ "/" ^ variant

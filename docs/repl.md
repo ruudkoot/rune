@@ -584,7 +584,9 @@ the REPL's own `use`, put into `RuneCompiler.useHook` when it starts.
   Basis Library's bases as that build wrote them, and the image keeps the
   options for every session started from it. Under them the Basis
   Library's marked functors are inlined across units unless
-  `--no-inline-functors` is given there.
+  `--no-inline-functors` is given there. `--lint` there makes every
+  session from the image check what each pass makes, as `rune --lint`
+  does.
 * A declaration is a unit of its own: elaborated against the session,
   translated with its printer, made into the bytes of a unit's file and
   appended to the running program by `Runtime.link`

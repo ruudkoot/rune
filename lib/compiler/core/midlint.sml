@@ -13,9 +13,14 @@
      scheme has at them.
    * calls: a function of other than one parameter (a worker, M8) is only
      called, with an argument for each, and never used as a value.
-   * casts, under --functors=functions (functors-units.md, D3): no value
-     cast to unit is cast back to another ground type -- what a record's
-     slot is where its value is known, after the expansion (Expand).
+   * casts, under --functors=functions (functors-units.md, D3), of a
+     record's slots (functor_cast, which only Translate's records make: a
+     program's own unsafe_cast is not checked): each is to unit or from
+     unit, and none cast back from unit gives another ground type than the
+     variable bound to the cast to unit was cast from -- what a slot is
+     where its value is known, after the expansion (Expand). It sees a
+     cast through a variable bound to it, not through an alias or a join
+     point's parameter, and a type variable on either side passes.
    A breach is a bug of the compiler, raised as Error.Bug. *)
 structure MidLint =
 struct
@@ -77,12 +82,19 @@ struct
         | Ty.ExnCon => true
       fun noteCast (x, r) =
         case r of
-          Prim ("unsafe_cast", t, [_]) =>
+          Prim ("functor_cast", t, [_]) =>
             (case Ty.view t of
                Ty.Arrow (d, c) => if castRule andalso Ty.equal (c, Ty.unit) andalso not (Ty.equal (d, Ty.unit))
                                   then IntTable.insert (toUnit, x, d) else ()
              | _ => ())
         | _ => ()
+      (* a record's slot is unit: a functor_cast is to it or from it *)
+      fun toOrFromUnit t =
+        case Ty.view t of
+          Ty.Arrow (d, c) =>
+            if Ty.equal (d, Ty.unit) orelse Ty.equal (c, Ty.unit) then ()
+            else bug ("a functor_cast from " ^ Ty.toString d ^ " to " ^ Ty.toString c ^ ", neither unit")
+        | _ => bug ("a functor_cast of type " ^ Ty.toString t)
       fun castBack (t, a) =
         case (Ty.view t, a) of
           (Ty.Arrow (d, c), Var (x, _)) => castFrom (d, c, x)
@@ -161,7 +173,7 @@ struct
                 | _ => wrong ()
               end
           | Prim (p, t, args) =>
-              ((case (castRule, p, args) of (true, "unsafe_cast", [a]) => castBack (t, a) | _ => ());
+              ((case (castRule, p, args) of (true, "functor_cast", [a]) => (castBack (t, a); toOrFromUnit t) | _ => ());
                case Ty.view t of
                  Ty.Arrow (d, res) =>
                    (case (args, Ty.view d) of
