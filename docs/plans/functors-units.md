@@ -3762,6 +3762,150 @@ what naming the instance would take is in [functors.md](functors.md),
 - **The generated programs** of `tests/perf/gen.py` (`funapp`, `funnest`).
 - **The bytes hashed** by call site: M2's counters.
 
+### The final measurements (M9, 2026-10-25)
+
+At `cd18b5403`, against what each experiment measured at `78192dfd9`. The
+machine was shared with another session's runs at loads of 17 to 37
+throughout, so instruction counts are the claims; where the load spoiled a
+comparison of cycles or seconds, BASE `e6accb2c0` with its flag off (static
+interpretation, the compiler M7 replaced) was run the same evening. The
+scripts and every output are in the drafts' `impl/fu-m9/` (`scripts/heavy.sh`
+and `heavy-base.sh` for MLton's files, `warm.sh` and `warm-mlton.sh` for the
+cache's builds, `light.sh` and `gen-e3.sh` for the hash loop, the bootstrap
+and the generated programs, `replay2.sh` for the history), each run's
+command beside its output.
+
+**E3, what copies cost.** MLton's 606 files by MLton's build of the
+compiler (`--pass-stats=elab`, whole; `--units --no-cache
+--pass-stats=hash`):
+
+| | E3, whole | now, whole | E3, units | now, units |
+|---|---:|---:|---:|---:|
+| instructions | 117.4G | 117.3G | 1,187.3G | 576.1G |
+| BASE the same evening | | 119.8G | | 534.7G |
+| the applications that make code, elaborated | 23.9 s of 41.8 s | 67, typed by summary in 7 ms | 7.4 s of 19.6 s | none |
+| copies made by the expansion | | 400, 1.8 s (`expand`) | | a unit's own |
+| peak | 6.7 GB | 7.1 GB | 7.3 GB | 7.3 GB |
+| link | | | 15.7 s | 1.9 s |
+
+The copies' elaboration is gone (`structure Main = Main (...)` takes 47 ms
+where it took 23.8 s), and a whole compile is the same instructions as E3's
+and 2% fewer than BASE's; in units MLton's build of the compiler takes 7.7%
+more than BASE's, its functors now compiled to code in the units that
+declare them (`unit-passes` 18.1 s against 11.1 s, at loads of 22 and 29)
+where static interpretation made none. The bootstrap (`bin/rune.rbc` on the compiler's
+own sources, `--pass-stats=elab`): 1,586.0M bytecode instructions whole and
+1,766.3M in units, against E3's 1,330.0M and 1,996.5M on the smaller sources
+of `78192dfd9`; its 19 applications are expanded (1,405 nodes) and none is
+elaborated twice. The generated programs (E3's set, `fu-m9/scale/e3-table.md`;
+a compile's instructions less the empty program's in the same mode):
+
+| program | mode | E3 | now | now / E3 |
+|---|---|---:|---:|---:|
+| funapp-40-320 | whole | 204.5M | 195.9M | 0.96 |
+| funapp-40-320 | units | 3.11G | 680.8M | 0.22 |
+| funapp-40-320 | `--units --whole` | 832.3M | 815.5M | 0.98 |
+| funnest-8-2-8 | whole | 141.8M | 132.2M | 0.93 |
+| funnest-12-2-8 | whole | 3.04G | 2.61G | 0.86 |
+| funnest-12-2-8 | units | 109.0G | 6.80G | 0.06 |
+| funnest-12-2-8 | `--units --whole` | 8.69G | 8.72G | 1.00 |
+| funnest-8-1-8 | whole | 3.3M | 4.2M | 1.29 |
+| funnest-16-1-8 | whole | 8.2M | 10.5M | 1.28 |
+| funnest-16-1-8 | units | 32.1M | 28.7M | 0.89 |
+
+The units mode's quadratic link is gone (M2), and a chain of single
+applications costs more whole than the copies did (D13, *The budget,
+measured*: its summaries).
+
+**E5, a build in units.** MLton's 606 files, `--units --no-cache
+--type-work=1000000000`:
+
+| | E5 | M4 | now | BASE, same evening |
+|---|---:|---:|---:|---:|
+| MLton's build, instructions | 1,181.1G | | 576.1G | 534.7G |
+| tier 2, instructions | 1,629.0G | 698.0G | 669.6G | 696.0G |
+| tier 2, cycles | 1,038.1G (load 3.5) | 343.8G | 568.6G (load 18) | 600.3G (load 29) |
+| tier 2, whole compile | 303.3G | 303.8G | 278.0G | 305.8G |
+| G1, units over whole: instructions | 5.37 | 2.30 | 2.41 | 2.28 |
+| G1: processor time | 5.44 | 1.73 | 2.07 (loads 18, 22) | 2.05 (loads 29, 37) |
+| MB hashed | 2,145.7 | 1,099.3 and under 25 more | 1,121.7 | 1,126.0 |
+
+By call site now: the usages' signatures 512.3 MB (530 hashes) and
+functors 375.1 MB (242), export's identities 221.9 MB (791), the sources
+9.1 MB, the rest 3.3 MB. Gone since E5: F1's 431.9 MB of functor
+fingerprints in `binding` and F2's 219.9 MB of identities hashed again on
+load (M2), the bodies' 7.2 MB in export and the 7.4 MB of sources hashed
+again to parse bodies on load (M7); the signatures' and functors'
+fingerprints are tokens, not text (M4). G1 is not met: 2.41 times the
+instructions, and at these loads about 2.05 times the cycles and the
+processor time both for this compiler and for BASE, where M4 found 1.73 at
+a lower load. The warm builds, as E5's section 3 (MLton's build; E5 counts
+the Basis's units too, 791, and these MLton's 606):
+
+| build | E5, instructions | now | E5, MB hashed | now | units compiled, E5 / now |
+|---|---:|---:|---:|---:|---:|
+| cold | 1,258.6G | 649.5G | 2,404.8 | 1,386.1 | 791 / 606 |
+| no edit | 153.1G | 60.2G | 481.5 | 262.4 | 0 / 0 |
+| a leaf, `main/main.sml` (S45) | 493.0G | 60.2G | 1,193.8 | 262.4 | 1 / 1 |
+| a functor's body, `ssa/profile.fun` (S48) | 531.5G | 61.3G | 1,319.5 | 264.0 | 6 / 1 |
+
+A leaf's edit and a body's cost what a build with no edit does: `main.sml`
+applies `Main` by a call, with a handful of usages, where E5 found 7,560.
+
+**E7, division by a constant.** E7's loop (`hashbench.sml`, `78192dfd9`'s
+`Pickle.hash`: four `mod`s by literal primes a byte), 100 MB less 0, best
+of three, pinned: 158 machine instructions a byte where `78192dfd9` took
+178 (E7's prototype 158), and 78.0 cycles at a load of 18, against 181.9 at
+a load of 1 and 229.5 at 24 then (the prototype's 46.6 and 81.4). The
+compiler's hash since M4 (rx2fw, `picklebench.sml` over
+`lib/compiler/util/pickle.sml`): 49 instructions and 21.7 cycles a byte at
+the same load. E7's test case, MLton's 606 files in units at tier 2: 669.6G
+instructions and 568.6G cycles at a load of 18, against 1,628.9G and
+1,023.9G (a load of 1.3) at `78192dfd9` and 1,584.2G and 713.4G (1.1) with
+the prototype.
+
+**E8, what an edit of a functor's body compiles again.** MLton's S44 to S48
+at tier 2 through one cache (`warm.sh`; E8's `tests/incremental/mlton.sh`
+edits, but S47's, which is no functor's):
+
+| build | E8 (wall, load 8 to 11) | now: wall, load about 27 | instructions | units compiled, E8 / now |
+|---|---:|---:|---:|---:|
+| cold | 461.3 s | 329.0 s | 708.7G | 606 / 606 |
+| warm, no edit | 106.2 s | 41.1 s | 105.0G | 0 / 0 |
+| a leaf (S45) | 298.9 s | 44.6 s | 105.0G | 1 / 1 |
+| a root, `Control`'s body (S46) | 82.9 s | 44.7 s | 105.6G | 1 / 1 |
+| a functor's body (S48) | 460.6 s | 43.4 s | 105.1G | 6 / 1 |
+| from the warm cache, `--whole` | 217.5 s | 64.1 s | 145.3G | 0 / 0 |
+| without the cache | 791.5 s | 307.2 s | 669.6G | 0 / 0 |
+
+The last warm build is the bytes of the build without the cache.
+The replay (`bin/rune-incremental mutate --history 30` on `fu-m5`: the
+last 30 first-parent commits, from `d17919c66` to `dadf31006`, each one's
+compiler sources built in units through one cache and without it, by
+MLton's build of each compiler with its library but not the frozen cache
+it ships, which was made from its own sources): the new compiler and
+BASE's compile the same units again at every commit, 235 at the first and
+237 over the other 29 -- from 2 to 50 where sources changed, the 50 where
+M7 numbered constructors by name (`lower.sml`, `rep.sml`), and none where
+only documents did -- and every build is the bytes of the one without the
+cache. The compiler's one functor,
+`OrdMapFn`, is applied in its own file, so its history has no edit that
+the two ways compile differently; MLton's S48 is the case that does. One
+commit differs by one unit, an artefact of the replay (below). Run with
+each compiler's frozen cache, the counts differ by what that cache holds,
+not by the compiler (`replay/new.steps.tsv` against `old.steps.tsv`). The
+replay had not run since it was written in SML: it skipped every commit,
+since only `gen-version.sh` writes `build/config.sml`, and it looked for
+each source under the tree twice; and it read the version from the
+repository its trees sit in, so that a commit that changes no source
+could change `config.sml`. All three are fixed
+(`tests/runner/mutationhistory.sml`).
+HOL4's edit of `Table`'s body was not measured: HOL4's build rebuilds by
+Holmake's own dependencies, so what Rune's cache compiles again is counted
+only by a build and a rebuild under each compiler, an hour each at these
+loads; E2's scan answered it (its kernel declares no functor; `KNametab`
+and `Termtab` apply `Table`).
+
 ## References
 
 Every DOI was checked against Crossref on 2026-10-21 (E11's
