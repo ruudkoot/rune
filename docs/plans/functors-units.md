@@ -3320,11 +3320,19 @@ mode, bytecode instructions [machine instructions]:
   instance, so code built and matched two copies (`fxp` under `--lint`);
   each is now copied once for what the application makes of the names it
   reaches (`tests/lang/mod.functor.functions_expand`).
-- Found in today's REPL, with the flag off, not fixed: after `use` of two
-  files and an edit of the body of a functor one applies, using both again
-  prints the old value; and a structure bound to another before the latter's
-  file is used again from the cache follows the new one. The REPL under the
-  flag gets both right.
+- Found in today's REPL, not fixed:
+  - **through the cache, with the flag off:** after `use` of two files
+    and an edit of the body of a functor one applies, using both again
+    prints the old value (45 where 135 is right): the entry of the
+    applying file is taken although the body it copied changed. Without
+    the cache, or under the flag (with or without marks), it prints 135:
+    the applying unit calls the functor's function, or, marked, depends on
+    its body by `inl F`. M7 removes it with the copies;
+  - **with or without the cache, with or without the flag:** `use
+    "counter.sml"; structure Old = Counter; use "counter.sml"; Old.n :=
+    10` sets the second `Counter.n` too (`!Counter.n` is 10 where 0 is
+    right): a later unit names a global of the first load by the key the
+    second load now has. It is not functors', and M7 leaves it.
 
 The prototypes are on this branch, behind the flag; with it off the
 compiler's output is the same bytes, but compiling the compiler itself
