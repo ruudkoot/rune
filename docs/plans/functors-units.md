@@ -80,7 +80,7 @@ What it rests on:
 | M5 | Prototype: functors compiled once | F | done (2026-10-25) |
 | M6 | Prototype: the expansion | F | done (2026-10-25) |
 | G2 | Go or no-go for M7 and M8 (the owner's) | F | go (the owner, 2026-10-25): inline functors bring performance back to today's, and the four checks asked before M7 are clean |
-| M7 | Functors compiled once | F | next |
+| M7 | Functors compiled once | F | done (2026-10-25) |
 | M8 | Nested functors that do not blow up | F | not started |
 | M9 | Retire | | not started |
 
@@ -199,8 +199,56 @@ new places.
 **M5 and M6** (by an agent; `54b50cf3d` to `77376491a`): functors compiled
 once to functions behind `--functors=functions`, and the expansion that
 gives whole programs and a unit's own applications their copies back in
-Mid; see *Gate G2* under *The milestones* for the evidence. G2 is the
-owner's: M7 and M8 wait on it.
+Mid; see *Gate G2* under *The milestones* for the evidence. G2 was go
+(the owner, 2026-10-25).
+
+**M7** (by an agent; `1049facdd` to `d55bbe8a4`): the prototypes' way is
+the only way.
+- `--functors=` and `--datatype-tags=` are gone (no release had them):
+  every functor is compiled once to its function, the expansion gives a
+  whole compile, a unit's own functors, the functors marked inline and
+  `--units --whole` their copies within the budget, and the Basis's marks
+  apply unless `--no-inline-functors`; every datatype numbers its
+  constructors by their names, with `nil, ::` and `LESS, EQUAL, GREATER`
+  as before, and the sorted VM and `_export`'s renumbering of tags go;
+  dynamic modules take the functors' nested records (their ABI's
+  fingerprint changes).
+- Removed: the elaborator's copies (`copied`, `signatureTyped`, the replay
+  of counters, `Ast.copyStrexp`, `FunInfo`'s fields of a body), and from
+  units the re-parse of bodies, issue 1's binders, `funat`,
+  `Expand.current` and the source's hash and mode in a basis's prefix; a
+  functor's basis is its signature and its function. Issue 9's paths stay,
+  for inline copies. 98 files, +964 and -1,531 lines; the elaborator,
+  units and `Ast` -532 net, as E10 estimated (520).
+- The corners (a), (c) and (d) are closed: their tests are errors now, or
+  swap sides. A flexible record a functor's result keeps is refused at
+  its declaration.
+- What an edit compiles again: S8, S65 and S66 the changed unit alone,
+  S49 to S51 `a.sml c.sml` (no longer `main.sml`), S61 `a.sml b.sml`;
+  S55's planted entry is `c.sml`'s; S21 keeps `c2.sml d.sml`, since
+  `d.sml` names the renamed unit (E10 said "probably" `c2.sml`); MLton's
+  S48 one unit, from six. MLton's 606 files: cold 606, warm 0, S45 1, S46
+  1, S47 236, S48 1, and the last warm build the bytes of one without the
+  cache.
+- Against today (e6accb2c0 with the flag off), MLton's benchmark set in
+  bytecode and machine instructions: whole 0.997 and 0.984 (the worst,
+  `simple`, 1.011 and 1.014), in units 0.981 and 0.961 (the worst,
+  `pidigits`, 1.050 in machine instructions); no program past 1.05; the
+  same as the flag on, program for program. The bootstrap's instructions
+  are today's, its output the same. HOL4 to `hol.state` through the cache
+  with `RUNE_VERIFY_CACHE=1`: 362 s, no entry differs.
+- What it costs: a compile loads the Basis's marked functors' Mid, about
+  0.39M bytecode instructions, `compile-hello` 2.03M to 2.42M; a program
+  in units keeps a marked functor's function beside its copies, so
+  `wordcount` in units starts in 1.08 times today's machine instructions
+  (its work the same).
+- Found on the way and fixed: a marked functor's Mid named its positions
+  by the path its source was given by, so a unit from the shipped cache
+  differed from one compiled again (S61); the expansion aliased a value to
+  a global a function sets again, a dynamic module's slot after
+  `Dynamic.reload`; and the REPL's entries named their printer's source by
+  the session's count, so an entry did not verify in another session
+  (build-cache issue 24; S76).
 
 ## Found while writing this roadmap
 

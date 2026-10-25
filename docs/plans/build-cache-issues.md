@@ -13,7 +13,7 @@ compile looked up and the unit that bound each one (usages), together with
 the identity of every unit the basis names. Most issues below are an input
 that this count missed; the others are gaps in how such a miss would be
 found, or what looking for them turned up. They are numbered in the order
-they were found. Issues 16 to 23 were found by the functors-units roadmap
+they were found. Issues 16 to 24 were found by the functors-units roadmap
 (`functors-units.md`, 2026-10-21 to 2026-10-25), which also found the bugs
 outside the cache that the last section lists.
 
@@ -175,6 +175,17 @@ outside the cache that the last section lists.
   the session (`docs/units.md`, *Fingerprints*); where it is, the entry is
   a miss and the unit is compiled. A batch build never has two units of
   one name, so this changes nothing there; it fixes 21 too. Scenario S75.
+
+* **24. The REPL named a declaration's printer by the session's count.**
+  Found by the functors-units roadmap (M7, 2026-10-25), building HOL4
+  through the cache with `RUNE_VERIFY_CACHE=1`, which stopped at
+  `regexpMatch.sml#0`. The code that prints what a declaration binds is
+  compiled with it (issue 3), from a source named `<echo k>`, k the count
+  of declarations the session had compiled, and the code keeps that name:
+  an entry written where the session had compiled k declarations was not
+  the bytes a compile at another count gives, so `--verify-cache`
+  refused a correct entry. What the program computed was right. Status:
+  fixed; every printer's source is `<echo>` (S76).
 
 ## A hit that cannot link
 
@@ -480,7 +491,7 @@ roadmap's M7 makes it the only way):
   7. two of no effect today: stamps compared after they were renumbered,
      and a free variable's copy.
 
-  Status: being fixed, each with a test, before M7.
+  Status: fixed, each with a test, before M7.
 * Found by the generator of functor programs (`tests/runner/functorgen.sml`,
   2026-10-25: 6,688 programs, each in up to seven modes), each a failure of
   `--lint` in a program that printed right:
@@ -493,7 +504,13 @@ roadmap's M7 makes it the only way):
     one copy of the datatype for both ("the argument of a constructor has
     type int * int where real is wanted").
 
-  Status: being fixed before M7.
+  Status: fixed before M7.
+* Found landing it as the only way (M7): a marked functor's Mid in a
+  basis named its positions by the path its source was given by, so a
+  Basis unit from the shipped cache differed from one compiled again
+  (S61); and the expansion aliased a value to a global a function sets
+  again, a dynamic module's slot, so `val kept = L.version` read the new
+  module's after `Dynamic.reload`. Status: fixed.
 * Found by the same generator, and not the prototype's: with the flag off,
   from `-O1`, a function that returns a datatype's constructors in globals
   (Lower's `results`) shares a global between constructors -- `datatype t =
