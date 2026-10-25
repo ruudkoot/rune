@@ -45,7 +45,11 @@ struct
     in {start=start,mode=mode,stats=stats,bits=bits,memory=memory,finish= !cursor} end
   fun one (c : context) forkOnly native allocationTest () =
     let val gmp=hasGMP c
-        fun compile name target=IntInfChecks.compile c name (source c "hardening" name) target ["--allow-prim"]
+        (* without the lint that bin/rune-test asks of every compile
+           (RUNE_LINT): the fixtures call primitives at the wrong types on
+           purpose, which it refuses, for the runtime to refuse them *)
+        fun compileAs (name, from, target)=IntInfChecks.compileWith [("RUNE_LINT","")] c name (source c "hardening" from) target ["--allow-prim"]
+        fun compile name target=compileAs (name, name, target)
         fun invoke label overrides args=execute c label 60 overrides args
         val fork=compile "fork" "registers"
         val modes=if gmp then ["sml","gmp"] else ["sml"]
@@ -57,7 +61,7 @@ struct
                     [NONE,SOME (if mode="sml" then "gmp" else "sml"),SOME "invalid"]) [false,true]) modes
         fun rest ()=
           let val ()=if not native then () else
-                let val stack=IntInfChecks.compile c "fork-stack" (source c "hardening" "fork") "stack" ["--allow-prim"]
+                let val stack=compileAs ("fork-stack", "fork", "stack")
                     val exe=path c "fork-native"
                     val result=invoke "native-compile" [] [fromRoot "bin/runeopt",stack,"-o",exe]
                     val ()=success result

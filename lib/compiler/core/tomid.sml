@@ -323,19 +323,39 @@ struct
              | (_, NONE) => let val (b', r) = split b in (L.Join (j, ps, b', sc), r) end)
         | _ => (e, NONE)
 
-      (* The globals a declaration sets. *)
+      (* The globals a declaration sets, wherever in it: a dynamic
+         structure's slots are set in the body of a function, an argument
+         of the call of RuneDynamic.load, which calls it as the declaration
+         runs (Translate) *)
       fun sets (e : L.lexp, acc : int list) : int list =
-        case e of
-          L.SetGlobal (g, a) => sets (a, g :: acc)
-        | L.Seq (a, b) => sets (b, sets (a, acc))
-        | L.Let (_, a, b) => sets (b, sets (a, acc))
-        | L.LetRec (bs, b) => sets (b, List.foldl (fn ((_, _, r), acc) => sets (r, acc)) acc bs)
-        | L.Mark (_, a) => sets (a, acc)
-        | L.Try (a, b) => sets (b, sets (a, acc))
-        | L.If (c, t, f) => sets (f, sets (t, sets (c, acc)))
-        | L.Handle (a, _, h) => sets (h, sets (a, acc))
-        | L.Join (_, _, b, sc) => sets (sc, sets (b, acc))
-        | _ => acc
+        let fun all (es, acc) = List.foldl sets acc es
+        in
+          case e of
+            L.SetGlobal (g, a) => sets (a, g :: acc)
+          | L.Fn (_, _, b) => sets (b, acc)
+          | L.Inst (a, _) => sets (a, acc)
+          | L.App (a, b) => all ([a, b], acc)
+          | L.Seq (a, b) => all ([a, b], acc)
+          | L.Let (_, a, b) => all ([a, b], acc)
+          | L.LetRec (bs, b) => sets (b, all (List.map #3 bs, acc))
+          | L.Tuple es => all (es, acc)
+          | L.Select (_, a) => sets (a, acc)
+          | L.Con (_, _, a) => sets (a, acc)
+          | L.Decon (_, a) => sets (a, acc)
+          | L.ConTag a => sets (a, acc)
+          | L.If (c, t, f) => all ([c, t, f], acc)
+          | L.Try (a, b) => all ([a, b], acc)
+          | L.Join (_, _, b, sc) => all ([b, sc], acc)
+          | L.Jump (_, es) => all (es, acc)
+          | L.Raise a => sets (a, acc)
+          | L.Handle (a, _, h) => all ([a, h], acc)
+          | L.MkExn (a, b) => all ([a, b], acc)
+          | L.ExnCon a => sets (a, acc)
+          | L.ExnArg (_, a) => sets (a, acc)
+          | L.Prim (_, _, es) => all (es, acc)
+          | L.Mark (_, a) => sets (a, acc)
+          | _ => acc
+        end
 
       (* The definitions of a declaration: a run of globals set in sequence
          is a function or a value each, consecutive functions one group;

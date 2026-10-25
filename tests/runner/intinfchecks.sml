@@ -35,12 +35,15 @@ struct
   fun output (result : result) expected = (success result; need (#output result=expected,"IntInf output differs: " ^ String.toString (#output result)))
   fun rejected (result : result) message = need (#status result=2 andalso String.isSubstring message (#errors result),
           "expected IntInf refusal " ^ message ^ "; exit " ^ Int.toString (#status result) ^ ": " ^ #errors result)
-  fun compile (c : context) name source target extra =
+  (* compileWith overrides: the compiler run with the environment's
+     overrides, as execute takes them *)
+  fun compileWith overrides (c : context) name source target extra =
     let val file = path c (name ^ ".sml")
         val rbc = path c (name ^ ".rbc")
         val () = (mkdirs (#directory c); write (file,source); rmTree rbc)
-        val result = run c (name ^ "-compile") ([#compiler c,"--target=" ^ target,"-o",rbc] @ extra @ [file])
+        val result = execute c (name ^ "-compile") 180 overrides ([#compiler c,"--target=" ^ target,"-o",rbc] @ extra @ [file])
     in success result; need (exists rbc andalso OS.FileSys.fileSize rbc > 0,"IntInf compiler produced no bytecode"); rbc end
+  fun compile c name source target extra = compileWith [] c name source target extra
   fun field key value = case Json.member (key,value) of SOME value => value | NONE => raise Failed ("missing IntInf fixture field " ^ key)
   fun string (Json.String text) = text | string _ = raise Failed "IntInf fixture expected string"
   fun array (Json.Array rows) = rows | array _ = raise Failed "IntInf fixture expected array"

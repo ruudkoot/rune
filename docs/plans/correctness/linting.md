@@ -33,10 +33,23 @@ Since then, every compile a test makes: `bin/rune-test` sets `RUNE_LINT=1`
 unless it is set, and `Pass.linting ()` reads it, in the driver, the REPL
 and the compiler library alike ([testing.md](../../testing.md), *Running the
 tests*). The budgets clear it, since they count the compiler as shipped.
-Turning it on found the REPL's units linted without the schemes of the
-globals of the units before them, which only the batch driver set: every
-transcript stopped with "global g... is not defined". The schemes are now
-set where any session of units begins (`UnitBasis.startSession`).
+Turning it on found, in programs that compiled and ran right without it:
+* the REPL's units linted without the schemes of the globals of the units
+  before them, which only the batch driver set: every transcript stopped
+  with "global g... is not defined". The schemes are now set where any
+  session of units begins (`UnitBasis.startSession`);
+* a datatype's global that Lower's `results` shares between constructors
+  -- an int of one, a string of another -- given the representation of
+  the first binding Lower met, which the register code hands the JIT:
+  `lib/terminal`'s programs, `examples/readline` on every host compiler
+  (the generator of functor programs found it first). Such a variable
+  holds anything now;
+* a `_dynamic` structure's slots, set in a function that the declaration
+  hands RuneDynamic.load, missing from the globals Mid's `Do` lists: every
+  scenario of dynamic modules. ToMid walks the whole declaration now.
+
+The IntInf hardening fixtures call primitives at the wrong types on
+purpose, for the runtime to refuse them; their compiles clear `RUNE_LINT`.
 
 It is not on for a user's compile, for its cost (below), and because what
 it finds is never the user's.
