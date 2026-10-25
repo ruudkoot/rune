@@ -273,18 +273,22 @@ struct
                       IntMap.listKeys (List.foldl (fn ((_, _, SOME a), acc) => namesIn (a, acc) | (_, acc) => acc) IntMap.empty cons)
         in IntTable.insert (!datatypeNames, s, l); l end
 
-  (* The body of the function f, its parameter the atom given: fresh names
-     for what it binds, the types substituted as sigma says, each datatype
-     the body declares over what sigma substitutes copied (into copied) *)
+  (* e0 with fresh names for what it binds, the variables given (each
+     monomorphic) the atoms given, the types substituted as sigma says,
+     each datatype it declares over what sigma substitutes copied (into
+     copied); a variable it does not bind kept, where free is true (a join
+     point's body copied into the spine it is in, whose variables the
+     spine rewrites after: the review of M6, finding 7), and otherwise a
+     bug (a functor's body, closed but for its parameter) *)
   fun copyExp (st : state, sigma0 : image IntMap.map, given : (int * atom) list, e0 : exp) : exp =
-    #1 (copyExpWith (st, sigma0, [], given, e0))
+    #1 (copyExpWith (st, sigma0, [], given, true, e0))
 
   (* the same, and the datatypes of made (each a body's datatype, by the
      name of its instance) entered again under their instances' names with
      their constructors as the copy has them: their types substituted, and
      the body's other datatypes they name the copy's *)
-  and copyExpWith (st : state, sigma0 : image IntMap.map, made : (int * int) list, given : (int * atom) list, e0 : exp)
-      : exp * unit =
+  and copyExpWith (st : state, sigma0 : image IntMap.map, made : (int * int) list, given : (int * atom) list, free : bool,
+                   e0 : exp) : exp * unit =
     let
       val sigma = ref sigma0
       val memo : Ty.ty IntTable.table = IntTable.table 256
@@ -433,8 +437,8 @@ struct
           Var (x, ts) =>
             (case IntTable.find (vars, x) of
                SOME (Var (x', _)) => Var (x', List.map ty ts)
-             | SOME other => other
-             | NONE => bug ("v" ^ Int.toString x ^ " free in a functor's body"))
+             | SOME other => if null ts then other else bug ("v" ^ Int.toString x ^ ", given, used at types")
+             | NONE => if free then Var (x, List.map ty ts) else bug ("v" ^ Int.toString x ^ " free in a functor's body"))
         | Global (g, ts) => Global (g, List.map ty ts)
         | Const (c, t) => Const (c, ty t)
         | Con0 (tag, t) => Con0 (tag, ty t)
@@ -504,7 +508,7 @@ struct
   (* The body of the functor's function f, its parameter the atom given *)
   fun copyBody (st : state, sigma : image IntMap.map, made : (int * int) list, f : fundef, arg : atom) : exp =
     case #params f of
-      [(p, _)] => #1 (copyExpWith (st, sigma, made, [(p, arg)], #body f))
+      [(p, _)] => #1 (copyExpWith (st, sigma, made, [(p, arg)], false, #body f))
     | _ => bug "a functor's function of other than one parameter"
 
   (* ---- rewriting with what is known ---- *)
@@ -643,9 +647,14 @@ struct
   fun primCall (st : state) (r : rhs) : ((int * Ty.ty * rhs) list * rhs) option =
     case r of
       App (Global (h, ts), [a]) =>
-        (case (case IntMap.find (!Translate.primAliases, h) of
-                 SOME p => SOME p
-               | NONE => if !Pass.whole then NONE else IntTable.find (!primGlobals, h)) of
+        (* in a whole program MidCanon has renamed the globals, which
+           Translate.primAliases and the bases name by the elaborator's
+           stamps: none of them is there (the review of M6, finding 7), and
+           Simplify inlines what an alias made of a binding to a primitive *)
+        (case (if !Pass.whole then NONE
+               else case IntMap.find (!Translate.primAliases, h) of
+                      SOME p => SOME p
+                    | NONE => IntTable.find (!primGlobals, h)) of
            NONE => NONE
          | SOME p =>
              let
