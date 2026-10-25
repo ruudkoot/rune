@@ -38,8 +38,10 @@ struct
               val () = #directory state := tree
               (* its build files and build/config.sml, which only
                  gen-version.sh writes (the replay skipped every commit
-                 without it; functors-units M9) *)
-              val generated = command state "" ["sh","-c","sh scripts/gen-build-files.sh && sh scripts/gen-version.sh ."]
+                 without it; functors-units M9), its version not read from
+                 the repository the tree sits in, whose state would make
+                 config.sml change between two commits that change nothing *)
+              val generated = command state "" ["sh","-c","sh scripts/gen-build-files.sh && GIT_CEILING_DIRECTORIES=\"$(dirname \"$PWD\")\" sh scripts/gen-version.sh ."]
               val () = #directory state := oldDirectory
           in if #status generated <> 0 orelse not (exists (tree ^ "/build/config.sml")) then
                say ("SKIP mutate history " ^ commit ^ ": its build files could not be made\n")
