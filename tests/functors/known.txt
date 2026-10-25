@@ -8,3 +8,4 @@
 #   MODE | TEXT | why, and the program that shows it
 on-*units* | is cast back to | a functor applied to a structure of an earlier unit, in the unit that declares it or marked inline: a function of the argument is cast through unit and back (earlier_unit_arg.sml)
 * | is ptr where argument 1 of int_add is int | not functors': --lint after lower at -O1 and above, a matched int payload taken for a pointer, with the flag or without (int_payload_lint.sml, tests/lang/dec.datatype_int-payload-lint.sml)
+* | the argument of a constructor has type | a datatype over a sealed structure of a functor's body, applied in a body applied at two types, copied once for both (sealed_copy.sml, tests/lang/mod.functor.functions_sealed-copy.sml)

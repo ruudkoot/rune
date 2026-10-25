@@ -8,3 +8,4 @@
 # instead: it runs once more when it fails. A test of a compiler bug found
 # and not yet fixed waits here too, with what fails.
 rune-test | levels/dec.datatype_int-payload-lint | QUARANTINE | until 2026-12-01: --lint after lower at -O2 takes a matched int payload for a pointer (found by the generated functor programs, not functors'); the lead routes the fix
+rune-test | levels/mod.functor.functions_sealed-copy | QUARANTINE | until 2026-12-01: --lint after expand at -O2: one copy of a datatype over a sealed structure for two applications (found by the generated functor programs); the lead routes the fix
