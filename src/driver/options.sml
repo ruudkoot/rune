@@ -47,9 +47,6 @@ struct
   val readMid : string option ref = ref NONE   (* --read-mid FILE: a Mid program, not SML *)
   val midRoundTrip = CompilerSettings.midRoundTrip (* --mid-roundtrip: check MidText against itself *)
   val target = CompilerSettings.target         (* --target=T: the bytecode made (Target) *)
-  (* --datatype-tags=ORDER, where given: else declared, or sorted under
-     --functors=functions (settle) *)
-  val datatypeTags : Types.tagOrder option ref = ref NONE
 
   val usage =
     "usage: rune [options] file.sml ...\n\
@@ -81,26 +78,15 @@ struct
     \  --default-type=T  in the input files, the type of an int or word constant or\n\
     \                    operator that its declaration leaves open: int (default)\n\
     \                    or int64, word (default) or word64\n\
-    \  --functors=M      how a functor is compiled: copies (the default), a copy of\n\
-    \                    its body for each application; or functions, each once,\n\
-    \                    to a function its applications call (a prototype;\n\
-    \                    docs/plans/functors-units.md, M5), whose copies a\n\
-    \                    whole program's Mid is given back (M6)\n\
-    \  --functor-budget=N with --functors=functions, the Mid nodes the copies\n\
-    \                    of a top-level application, and of those in them, may\n\
-    \                    hold (1000000 by default; 0 makes none)\n\
-    \  --inline-functor=F[,F...] with --functors=functions, expand the\n\
-    \                    applications of functor F in every unit, not only its\n\
-    \                    own: its unit keeps its function's Mid, and the units\n\
-    \                    that apply it depend on its body (as a library's\n\
-    \                    `inline functor ... end`, docs/build.md)\n\
+    \  --functor-budget=N the Mid nodes the copies of a top-level application of\n\
+    \                    a functor, and of those in them, may hold (1000000 by\n\
+    \                    default; 0 makes none: every application a call of the\n\
+    \                    functor's function, docs/ir.md)\n\
+    \  --inline-functor=F[,F...] expand the applications of functor F in every\n\
+    \                    unit, not only its own: its unit keeps its function's\n\
+    \                    Mid, and the units that apply it depend on its body (as\n\
+    \                    a library's `inline functor ... end`, docs/build.md)\n\
     \  --no-inline-functors none inlined across units, the libraries' marks too\n\
-    \  --datatype-tags=O the tags of a datatype's constructors: declared (the\n\
-    \                    default), by their declaration; sorted (the default with\n\
-    \                    --functors=functions), by their names; or sorted-x,\n\
-    \                    sorted but nil, :: and LESS, EQUAL, GREATER as declared\n\
-    \                    (a prototype: sorted needs a VM built for its list and\n\
-    \                    order, docs/plans/functors-units.md, M5)\n\
     \  --flex-records=M  what must determine a flexible record's labels\n\
     \                    (docs/language.md): binding, declaration,\n\
     \                    topdec-monomorphic, topdec (default) or program\n\
@@ -166,6 +152,8 @@ struct
     \                    time by context and operation, and its counters\n\
     \  --pass-stats=hash  and the bytes hashed, by the part of the compile and\n\
     \                    the place, and the fingerprints' memo's hits\n\
+    \  --pass-stats=expand  and the functors' applications the expansion copied,\n\
+    \                    those it left calls, and the most it copied for one\n\
     \  --read-mid FILE   read a Mid program as --dump-after=mid prints it, and\n\
     \                    make and check it as the pass mid would, but no bytecode\n\
     \  --mid-roundtrip   check that Mid printed, read and printed again is the same\n\
@@ -286,7 +274,8 @@ struct
            SOME ("--passes", v) => (Pass.only := SOME (String.fields (fn c => c = #",") v); parse rest)
          | SOME ("--pass-stats", "elab") => (Pass.stats := true; ElabStats.enable (); parse rest)
          | SOME ("--pass-stats", "hash") => (Pass.stats := true; Pickle.counting := true; parse rest)
-         | SOME ("--pass-stats", _) => raise Usage "--pass-stats= requires elab or hash"
+         | SOME ("--pass-stats", "expand") => (Pass.stats := true; Expand.stats := true; parse rest)
+         | SOME ("--pass-stats", _) => raise Usage "--pass-stats= requires elab, hash or expand"
          | SOME ("--dump-before", v) => (Pass.dumpBefore := !Pass.dumpBefore @ [v]; parse rest)
          | SOME ("--dump-after", v) => (Pass.dumpAfter := !Pass.dumpAfter @ [v]; parse rest)
          | SOME ("--target", v) =>
@@ -307,9 +296,6 @@ struct
              (case Int.fromString v of
                 SOME n => if n >= 0 then (Pass.fuel := SOME n; parse rest) else raise Usage "--fuel requires a number"
               | NONE => raise Usage "--fuel requires a number")
-         | SOME ("--functors", "functions") => (Elaborate.functorFunctions := true; parse rest)
-         | SOME ("--functors", "copies") => (Elaborate.functorFunctions := false; parse rest)
-         | SOME ("--functors", _) => raise Usage "--functors requires copies or functions"
          | SOME ("--inline-functor", v) =>
              (Elaborate.inlineFunctors :=
                 List.foldl (fn (n, m) => if n = "" then m else StringMap.insert (m, n, ())) (!Elaborate.inlineFunctors)
@@ -319,26 +305,14 @@ struct
              (case Int.fromString v of
                 SOME n => if n >= 0 then (Expand.budget := n; parse rest) else raise Usage "--functor-budget requires a number"
               | NONE => raise Usage "--functor-budget requires a number")
-         | SOME ("--datatype-tags", v) =>
-             (case Types.tagOrderOf v of
-                SOME o' => (datatypeTags := SOME o'; parse rest)
-              | NONE => raise Usage "--datatype-tags requires declared, sorted or sorted-x")
          | SOME ("--type-work", v) => (Types.workLimit := workCount ("--type-work", v); parse rest)
          | SOME ("--match-work", v) => (Exhaust.workLimit := workCount ("--match-work", v); parse rest)
          | _ =>
              if String.isPrefix "-" a andalso a <> "-" then raise Usage ("unknown option: " ^ a)
              else (inputs := !inputs @ [a]; parse rest))
-  (* what the options decide together, once all are read: the tags'
-     order, which --functors=functions sorts unless told otherwise, and the
-     list's tags in the compiler's tables of the initial basis *)
-  and settle () : unit =
-    (Types.tagOrder := (case !datatypeTags of
-                          SOME o' => o'
-                        | NONE => if !Elaborate.functorFunctions then Types.TagsSorted else Types.TagsDeclared);
-     if !Elaborate.functorFunctions andalso !Types.tagOrder = Types.TagsDeclared then
-       raise Usage "--functors=functions numbers tags by names: --datatype-tags=sorted or sorted-x"
-     else ();
-     Ty.bindBuiltins ())
+  (* what the options decide together, once all are read: the list's tags
+     in the compiler's tables of the initial basis *)
+  and settle () : unit = Ty.bindBuiltins ()
   and jobCount text =
     case Int.fromString text of
       SOME n => if n >= 1 then n else raise Usage "-j requires a number of jobs, at least 1"

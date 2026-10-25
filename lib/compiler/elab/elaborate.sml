@@ -42,14 +42,11 @@ struct
   val funs : funinfo StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("Elaborate.funs", funs)
 
-  (* --functors=functions (docs/plans/functors-units.md, M5; a prototype):
-     a functor's body elaborated once, at its declaration, and compiled
+  (* A functor's body is elaborated once, at its declaration, and compiled
      there to a function of its argument's record to its result's
-     (FunCode); every application typed by the summary alone (rule 54) and
-     compiled to a call. Off, a functor is compiled by static
-     interpretation, a copy of its body for each application. *)
-  val functorFunctions = ref false
-  val () = CompilerState.cellRoot ("Elaborate.functorFunctions", functorFunctions)
+     (FunCode); every application is typed by the summary alone (rule 54)
+     and compiled to a call, which the expansion may give a copy of the
+     body for (Expand; docs/ir.md, Functors compiled once). *)
 
   (* --functors=functions (functors-units.md, M6b): the functors to inline,
      by name (--inline-functor, a library's `inline functor`): each is still
@@ -1899,15 +1896,29 @@ struct
               val () = register (paramRecord, {var = param, global = false, path = []})
               val lo = !tyconCounter
               val saved = !inBody
+              val flexBefore = List.length (!pendingFlex)
               val () = inBody := true
               val result = ElabStats.within ElabStats.FunDecl (fn () => elabStrexp (bodyEnv, level, top, outerScope, #body b))
                            handle e => (inBody := saved; raise e)
               val () = inBody := saved
               val () = resolvePending ()
+              (* a result that keeps a flexible record of the body's, which
+                 the body compiled once must determine, is refused here, one
+                 of rule 89's two answers (D8): no program around it can
+                 determine the function's types *)
+              fun refuse () =
+                let
+                  val mine = List.take (!pendingFlex, Int.max (0, List.length (!pendingFlex) - flexBefore))
+                  val open' = List.find (fn (r, _) => case !r of Unbound {kind = KFlex _, ...} => true | _ => false) (List.rev mine)
+                in
+                  case open' of
+                    SOME (_, sp) => err (sp, "unresolved flexible record: cannot determine the full set of fields")
+                  | NONE => err (#span b, "the result of functor " ^ #name b ^ " has a type its body does not determine")
+                end
               val summary =
                 if closure (b, result) then
                   SOME {generated = generatedDeep (lo, result), result = placeholders result, counts = (0, 0, 0)}
-                else NONE
+                else refuse ()
               val func = freshStamp ()
               val () = if StringMap.member (!inlineFunctors, #name b) then IntTable.insert (!markedFunctions, func, ()) else ()
               val resultRecord = recordInReach result
@@ -1926,40 +1937,7 @@ struct
                                  summary = summary, code = SOME func})
             end
           val elaborated =
-            if !functorFunctions then
-              (if !ElabStats.on then ElabStats.count ElabStats.FunDecls else (); List.map function binds)
-            else
-            List.map (fn (b : funbind) =>
-                         let
-                           val sigma = elabSigexp (env, #paramSig b)
-                           val bodyEnv = case #param b of
-                                           SOME x => bindStrAt (env, x, #env sigma,#span b)
-                                         | NONE => plus (env, #env sigma)
-                           (* the body is checked once against the parameter signature (rule 86);
-                              its annotations are discarded, and what it gave is the functor's
-                              summary (rule 54); each application whose code is made
-                              elaborates a copy *)
-                           val () = if !ElabStats.on then ElabStats.count ElabStats.FunDecls else ()
-                           val lo = !tyconCounter
-                           val (s0, c0, v0) = counters ()
-                           val () = checking := !checking + 1
-                           val result = ElabStats.within ElabStats.FunDecl (fn () => elabStrexp (bodyEnv, level, top, outerScope, #body b))
-                                        handle e => (checking := !checking - 1; raise e)
-                           val () = checking := !checking - 1
-                           val (s1, c1, v1) = counters ()
-                           val () = resolvePending ()
-                           val summary =
-                             if closure (b, result) then
-                               SOME {generated = generatedIn (lo, result), result = placeholders result,
-                                     counts = (s1 - s0, c1 - c0, v1 - v0)}
-                             else NONE
-                           val sigsNow = !sigs
-                           val funsNow = !funs
-                         in
-                           (#name b, FunInfo {param = #param b, paramSig = sigma, body = #body b, defEnv = env, origin = "",binding=Env.originAt ("functor",#name b,#span b),
-                                              allowPrim = !allowPrim, defSigs = sigsNow, defFuns = funsNow,
-                                              summary = summary, code = NONE})
-                         end) binds
+            (if !ElabStats.on then ElabStats.count ElabStats.FunDecls else (); List.map function binds)
         in
           List.app (fn (n, f as FunInfo {binding,...}) => (funs := StringMap.insert (!funs, n, f); insertedFuns := n :: !insertedFuns;
             if !Env.tracking then (case Env.primary binding of Env.Named {span,...} =>
@@ -2104,7 +2082,7 @@ struct
                (* a functor with no summary (a flexible record its body
                   leaves, which the end of the topdec refuses) is applied
                   as before until then *)
-               ElabStats.application (!makesCode) (if !functorFunctions andalso isSome summary then call else apply)
+               ElabStats.application (!makesCode) (if isSome summary then call else apply)
              end)
     | StrLet (decs, body, _) =>
         let val delta = elabDecs (env, level, top, scope, decs)

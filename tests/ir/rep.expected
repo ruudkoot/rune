@@ -15,23 +15,23 @@ function f1 make (v1, 0 captured)
   b0:
     v2 = select 0 v1
     v3 = select 1 v1
-    v4 = con 0 v2 v3
+    v4 = con 1 v2 v3
     return v4
   reps v1:ptr v2:int v3:int v4:ptr
 function f2 sum (v1, 0 captured)
   b0:
-    iftag v1 0 b2 b3
+    iftag v1 1 b2 b3
   b2:
-    v2 = field 0 0 v1
-    v3 = field 0 1 v1
+    v2 = field 1 0 v1
+    v3 = field 1 1 v1
     v4 = prim int_add v2 v3
     return v4
   b3:
     goto b1
   b1:
-    iftag v1 1 b5 b6
+    iftag v1 0 b5 b6
   b5:
-    v5 = decon 1 v1
+    v5 = decon 0 v1
     return v5
   b6:
     goto b4

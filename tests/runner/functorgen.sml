@@ -1,12 +1,11 @@
 (* Programs of functors, generated, as a property of the compiler
-   (docs/testing.md, *Generated functor programs*; functors-units.md, before
-   M7): every program prints the same compiled whole and in units, with
-   functors compiled as functions and their applications expanded
-   (`--functors=functions --datatype-tags=sorted-x`) and as today's copies,
-   and compiles clean under `--lint` with the flag on; `--units --whole`
-   gives the whole compile's bytes (S42); and so does it with
-   `--inline-functor` for its functors, and with a small `--functor-budget`,
-   which leaves some applications calls.
+   (docs/testing.md, *Generated functor programs*; functors-units.md): every
+   program prints the same compiled whole and in units, at -O0, where every
+   application is a call of its functor's function, and from -O1, where the
+   expansion gives applications their copies back, and compiles clean under
+   `--lint`; `--units --whole` gives the whole compile's bytes (S42); and so
+   does it with `--inline-functor` for its functors, and with a small
+   `--functor-budget`, which leaves some applications calls.
 
    A program is drawn as a plan of choices by lib/test/property, so that a
    failing one is shrunk, and the plan is then made a program that is well
@@ -1097,18 +1096,19 @@ struct
   (* ---- the modes and their verdict *)
   type config = {rune : string, vm : string, memory : int, timeout : int}
 
-  val flagOn = ["--functors=functions", "--datatype-tags=sorted-x"]
+  (* the reference is the whole compile at -O0, which expands nothing:
+     every application a call of its functor's function *)
   type mode = {name : string, flags : string list, run : bool}
   fun modes (p : program) : mode list =
-    [{name = "off", flags = [], run = true},
-     {name = "on", flags = flagOn @ ["--lint"], run = true},
-     {name = "off-units", flags = ["--units", "--no-cache"], run = true},
-     {name = "on-units", flags = ["--units", "--no-cache"] @ flagOn @ ["--lint"], run = true},
-     {name = "on-units-whole", flags = ["--units", "--whole", "--no-cache"] @ flagOn @ ["--lint"], run = false},
-     {name = "on-inline-units", flags = ["--units", "--no-cache", "--inline-functor=" ^ String.concatWith "," (#inline p)] @ flagOn @ ["--lint"],
+    [{name = "O0", flags = ["-O0", "--lint"], run = true},
+     {name = "whole", flags = ["--lint"], run = true},
+     {name = "O0-units", flags = ["--units", "--no-cache", "-O0", "--lint"], run = true},
+     {name = "units", flags = ["--units", "--no-cache", "--lint"], run = true},
+     {name = "units-whole", flags = ["--units", "--whole", "--no-cache", "--lint"], run = false},
+     {name = "inline-units", flags = ["--units", "--no-cache", "--inline-functor=" ^ String.concatWith "," (#inline p), "--lint"],
       run = true},
-     {name = if #budgetUnits p then "on-budget-units" else "on-budget",
-      flags = (if #budgetUnits p then ["--units", "--no-cache"] else []) @ ["--functor-budget=" ^ ints (#budget p)] @ flagOn @ ["--lint"],
+     {name = if #budgetUnits p then "budget-units" else "budget",
+      flags = (if #budgetUnits p then ["--units", "--no-cache"] else []) @ ["--functor-budget=" ^ ints (#budget p), "--lint"],
       run = true}]
 
   (* what a mode did *)
@@ -1144,25 +1144,27 @@ struct
   (* the failures, each its own class, so that a shrink keeps to one *)
   exception Invalid
   exception TimedOut
-  exception CompileOn and LintOn and DiffersOn
-  exception CompileOffUnits and DiffersOffUnits
-  exception CompileOnUnits and LintOnUnits and DiffersOnUnits
+  exception LintO0
+  exception CompileWhole and LintWhole and DiffersWhole
+  exception CompileO0Units and LintO0Units and DiffersO0Units
+  exception CompileUnits and LintUnits and DiffersUnits
   exception CompileUnitsWhole and LintUnitsWhole and NotS42
   exception CompileInline and LintInline and DiffersInline
   exception CompileBudget and LintBudget and DiffersBudget
   exception CompileBudgetUnits and LintBudgetUnits and DiffersBudgetUnits
   fun failure (kind, mode) : exn =
     case (kind, mode) of
-      ("compile", "on") => CompileOn | ("lint", "on") => LintOn | ("differs", "on") => DiffersOn
-    | ("compile", "off-units") => CompileOffUnits | ("lint", "off-units") => CompileOffUnits | ("differs", "off-units") => DiffersOffUnits
-    | ("compile", "on-units") => CompileOnUnits | ("lint", "on-units") => LintOnUnits | ("differs", "on-units") => DiffersOnUnits
-    | ("compile", "on-units-whole") => CompileUnitsWhole | ("lint", "on-units-whole") => LintUnitsWhole
-    | ("differs", "on-units-whole") => NotS42
-    | ("compile", "on-inline-units") => CompileInline | ("lint", "on-inline-units") => LintInline
-    | ("differs", "on-inline-units") => DiffersInline
-    | ("compile", "on-budget") => CompileBudget | ("lint", "on-budget") => LintBudget | ("differs", "on-budget") => DiffersBudget
-    | ("compile", "on-budget-units") => CompileBudgetUnits | ("lint", "on-budget-units") => LintBudgetUnits
-    | ("differs", "on-budget-units") => DiffersBudgetUnits
+      ("lint", "O0") => LintO0
+    | ("compile", "whole") => CompileWhole | ("lint", "whole") => LintWhole | ("differs", "whole") => DiffersWhole
+    | ("compile", "O0-units") => CompileO0Units | ("lint", "O0-units") => LintO0Units | ("differs", "O0-units") => DiffersO0Units
+    | ("compile", "units") => CompileUnits | ("lint", "units") => LintUnits | ("differs", "units") => DiffersUnits
+    | ("compile", "units-whole") => CompileUnitsWhole | ("lint", "units-whole") => LintUnitsWhole
+    | ("differs", "units-whole") => NotS42
+    | ("compile", "inline-units") => CompileInline | ("lint", "inline-units") => LintInline
+    | ("differs", "inline-units") => DiffersInline
+    | ("compile", "budget") => CompileBudget | ("lint", "budget") => LintBudget | ("differs", "budget") => DiffersBudget
+    | ("compile", "budget-units") => CompileBudgetUnits | ("lint", "budget-units") => LintBudgetUnits
+    | ("differs", "budget-units") => DiffersBudgetUnits
     | ("timeout", _) => TimedOut
     | (k, m) => if String.isSuffix "-O0" m then failure (k, String.substring (m, 0, size m - 3)) else Invalid
 
@@ -1202,23 +1204,23 @@ struct
       fun same (a, b) = Sh.exists a andalso Sh.exists b andalso Sh.read a = Sh.read b
       fun judge (m : mode, o' : outcome, reference : outcome option) =
         if #compiled o' = 124 orelse #ran o' = SOME 124 then SOME ("timeout", #mode o', "it takes too long")
-        else if #name m = "off" then
-          (if #compiled o' <> 0 then SOME ("invalid", "off", "the program does not compile with the flag off: "
-                                                           ^ Sh.firstNonEmpty (dir ^ "/off.cerr"))
-           else if #ran o' <> SOME 0 then SOME ("invalid", "off", "the program fails with the flag off")
+        else if #name m = "O0" then
+          (if #compiled o' <> 0 then SOME (if #lint o' then "lint" else "invalid", "O0",
+                                           "the program does not compile at -O0: " ^ Sh.firstNonEmpty (dir ^ "/O0.cerr"))
+           else if #ran o' <> SOME 0 then SOME ("invalid", "O0", "the program fails at -O0")
            else NONE)
         else if #compiled o' <> 0 then
           SOME (if #lint o' then "lint" else "compile", #mode o',
                 case List.find (fn l => String.isSubstring "error" l orelse String.isSubstring "rror:" l)
                                (Sh.lines (#err o')) of SOME l => l | NONE => Sh.firstNonEmpty (dir ^ "/" ^ #mode o' ^ ".cerr"))
         else if not (#run m) then
-          (if same (dir ^ "/on.rbc", dir ^ "/" ^ #name m ^ ".rbc") then NONE
+          (if same (dir ^ "/whole.rbc", dir ^ "/" ^ #name m ^ ".rbc") then NONE
            else SOME ("differs", #mode o', "--units --whole is not the bytes of the whole compile"))
         else
           case reference of
             SOME r => if #out r = #out o' andalso #ran r = #ran o' then NONE
-                      else SOME ("differs", #mode o', "it prints otherwise than with the flag off whole: "
-                                                      ^ Sh.difference (dir ^ "/off.out", dir ^ "/" ^ #mode o' ^ ".out"))
+                      else SOME ("differs", #mode o', "it prints otherwise than whole at -O0: "
+                                                      ^ Sh.difference (dir ^ "/O0.out", dir ^ "/" ^ #mode o' ^ ".out"))
           | NONE => NONE
       fun go ([], done, verdict, _, hits) = (List.rev done, verdict, List.rev hits)
         | go (m :: rest, done, verdict, reference : outcome option, hits) =
@@ -1248,9 +1250,9 @@ struct
                        | _ => (NONE, k :: hits, o' :: done))
                   | NONE => (v, hits, o' :: done)
                 val verdict = case verdict of SOME _ => verdict | NONE => v
-                val reference = if #name m = "off" then SOME o' else reference
+                val reference = if #name m = "O0" then SOME o' else reference
               in
-                if #name m = "off" andalso isSome v then (List.rev done, verdict, List.rev hits)
+                if #name m = "O0" andalso isSome v then (List.rev done, verdict, List.rev hits)
                 else go (rest, done, verdict, reference, hits)
               end
     in go (modes p, [], NONE, NONE, []) end

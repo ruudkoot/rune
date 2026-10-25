@@ -24,18 +24,11 @@ struct
          | Fail message => invalid message
   fun session {lib,flags} =
     let
-      (* the prototype of functors-units.md (--functors=functions,
-         --datatype-tags=ORDER, --inline-functor=F[,F...],
-         --no-inline-functors), as rune takes them *)
-      val functions=ref false val tags=ref NONE val inline=ref [] val noInline=ref false
+      (* --inline-functor=F[,F...] and --no-inline-functors, as rune takes
+         them (docs/build.md, Inline functors) *)
+      val inline=ref [] val noInline=ref false
       fun prototype flag =
-        if flag="--functors=functions" then (functions:=true;true)
-        else if flag="--functors=copies" then (functions:=false;true)
-        else if String.isPrefix "--datatype-tags=" flag then
-          (case Types.tagOrderOf (String.extract (flag,16,NONE)) of
-             SOME o' => (tags:=SOME o';true)
-           | NONE => invalid "--datatype-tags requires declared, sorted or sorted-x")
-        else if String.isPrefix "--inline-functor=" flag then
+        if String.isPrefix "--inline-functor=" flag then
           (inline:= !inline @ List.filter (fn n => n<>"") (String.fields (fn c => c = #",") (String.extract (flag,17,NONE)));true)
         else if flag="--no-inline-functors" then (noInline:=true;inline:=[];true)
         else false
@@ -51,10 +44,8 @@ struct
             if prototype flag then options (rest,target,allow,mode,libraries)
             else invalid ("unsupported compiler-library flag: " ^ flag)
       val (target,allow,mode,libraries)=options (flags,"registers",false,Source.Ascii,[])
-      val ()=if !functions andalso !tags=SOME Types.TagsDeclared
-             then invalid "--functors=functions numbers tags by names: --datatype-tags=sorted or sorted-x" else ()
     in Session {compiler=C.session ({target=target,allowPrim=allow,lib=lib,libraries=libraries,
-                                     functors={functions= !functions,tags= !tags,inline= !inline,noInline= !noInline}},
+                                     functors={inline= !inline,noInline= !noInline}},
       {link=CompilerApiPlatform.link,inherited=CompilerApiPlatform.inherited,
        prepare=CompilerApiPlatform.prepare,current=CompilerApiPlatform.current}),mode=mode} end
   fun close (Session {compiler,...}) = C.close compiler

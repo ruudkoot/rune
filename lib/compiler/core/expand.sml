@@ -40,8 +40,10 @@ struct
   (* how deep copies of applications in copies go *)
   val maxDepth = 64
 
-  (* --pass-stats: the applications expanded, those left calls, and the
-     copies whose declarations did not all become definitions *)
+  (* --pass-stats=expand: the applications expanded, those left calls,
+     and the copies whose declarations did not all become definitions *)
+  val stats = ref false
+  val () = CompilerState.cellRoot ("Expand.stats", stats)
   val expanded = ref 0
   val () = CompilerState.cellRoot ("Expand.expanded", expanded)
   val kept = ref 0
@@ -620,12 +622,56 @@ struct
          | _ => (r, false))
     | _ => (r, false)
 
+  (* The globals a function of the program sets (SetGlobal in a function's
+     body: a dynamic module's slots, which RuneDynamic.load sets and
+     Dynamic.reload sets again), whose value may change after it is read *)
+  val changing : unit IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Expand.changing", changing, IntTable.copy)
+  fun noteChanging (p : program) : unit =
+    let
+      val t : unit IntTable.table = IntTable.table 16
+      fun rhs (inFun, r) = case r of SetGlobal (g, _) => if inFun then IntTable.insert (t, g, ()) else () | _ => ()
+      fun exp (inFun, e) =
+        case e of
+          Let (_, _, r, b) => (rhs (inFun, r); exp (inFun, b))
+        | Fun (fs, b) => (List.app (fn (f : fundef) => exp (true, #body f)) fs; exp (inFun, b))
+        | Join (_, _, b, sc) => (exp (inFun, b); exp (inFun, sc))
+        | If (_, a, b) => (exp (inFun, a); exp (inFun, b))
+        | Handle (a, _, h) => (exp (inFun, a); exp (inFun, h))
+        | Mark (_, b) => exp (inFun, b)
+        | Return r => rhs (inFun, r)
+        | _ => ()
+    in
+      List.app (fn Val (_, _, e) => exp (false, e)
+                 | Do (_, e) => exp (false, e)
+                 | Funs fs => List.app (fn (f : fundef) => exp (true, #body f)) fs) p;
+      changing := t
+    end
+
+  (* the functions of the units before this one known by name
+     (Lower.knownBefore), which the driver says (Pipeline) *)
+  val knownFunction : (int -> bool) ref = ref (fn _ => false)
+  val () = CompilerState.cellRoot ("Expand.knownFunction", knownFunction)
+  (* whether a global keeps the value it was first given: one the program
+     defines and no function of it sets, or one of a unit before it whose
+     basis says it is a function or another global (a value of another
+     unit may be a dynamic module's slot) *)
+  fun steady (st : state) (g : int) : bool =
+    not (isSome (IntTable.find (!changing, g)))
+    andalso (isSome (IntTable.find (#schemes st, g)) orelse !knownFunction g
+             orelse isSome (IntTable.find (!globalAliases, g)))
+
   (* Whether x of scheme s may be dropped for the atom a: where s abstracts
      over variables, each use's types must reach all a names of them, as
      they do through the types a global of a closed scheme is given; not
      through a function whose own type names them free (ToMid lets one be,
-     a type of its own, and a polymorphic alias abstract over it) *)
+     a type of its own, and a polymorphic alias abstract over it); and not
+     for a global whose value may change (steady) *)
   fun aliasable (st : state) ((vs, _) : scheme, a : atom) : bool =
+    case (vs, a) of
+      (_, Global (g, _)) => steady st g andalso aliasable' st (vs, a)
+    | _ => aliasable' st (vs, a)
+  and aliasable' (st : state) (vs : int list, a : atom) : bool =
     case (vs, a) of
       ([], _) => true
     | (_, Global (g, ts)) =>
@@ -1020,6 +1066,7 @@ struct
     let
       val () = (expanded := 0; kept := 0; partial := 0; overBudget := 0; most := 0; datatypeNames := IntTable.table 256)
       val st = newState ()
+      val () = noteChanging p
       (* the functors' functions the program defines *)
       val fns : fundef IntTable.table = IntTable.table 64
       val () = List.app (fn Funs fs => List.app (fn (f : fundef) => if isFunctor f then IntTable.insert (fns, #name f, f) else ()) fs
@@ -1195,7 +1242,7 @@ struct
             List.app (fn Val (g, (gs, _), e) =>
                            (case under e of
                               Return (Atom (Global (h, ts))) =>
-                                if List.length ts = List.length gs
+                                if steady st h andalso List.length ts = List.length gs
                                    andalso ListPair.all (fn (t, v) => Ty.equal (t, Ty.gen v)) (ts, gs)
                                    andalso (case (schemeOf g, schemeOf h) of
                                               (SOME (gv, _), SOME (hv, _)) => gv = gs andalso List.length hv = List.length gs
@@ -1241,7 +1288,7 @@ struct
                                   else Ty.pinned := IntMap.remove (!Ty.pinned, c')) (!(#instances st))
       val () = List.app (fn (s, s', _) => if isTaken s' then Ty.pinLayout (s', Ty.elabLayout s) else ()) copied
       val () =
-        if !Pass.stats then
+        if !stats then
           Pass.eprint ("expand: " ^ Int.toString (!expanded) ^ " applications expanded, " ^ Int.toString (!kept)
                        ^ " left calls (" ^ Int.toString (!overBudget) ^ " past the budget), " ^ Int.toString (!partial)
                        ^ " copies not all definitions; at most " ^ Int.toString (!most)

@@ -41,17 +41,16 @@ struct
     \  --unicode[=ENC]  read the files used as Unicode text in the encoding ENC, utf8 (the default) or latin1,\n\
     \                 and what is typed as UTF-8 (docs/units.md, Source modes)\n\
     \  --no-unicode-lints  do not warn of what UTS #39 finds in names and comments\n\
-    \  --inline-functor=F[,F...]  in an image made with --functors=functions, expand the applications of\n\
-    \                 functor F in every unit that applies them (docs/build.md, a prototype)\n\
+    \  --inline-functor=F[,F...]  expand the applications of functor F in every unit that applies them\n\
+    \                 (docs/build.md, Inline functors)\n\
     \  --no-inline-functors  none, the Basis Library's marks too\n\
     \  --engine       the engine, for a front: JSON-RPC on the descriptors 3 and 4 (docs/repl-protocol.md)\n\
     \  --engine-connect PORT  the same on a connection to 127.0.0.1:PORT, its token in RUNE_ENGINE_TOKEN\n\
     \  FILE           used before the first prompt\n"
 
-  (* --inline-functor=F[,F...] (functors-units.md, M6b): the functors the
-     declarations compiled after are to expand in every unit that applies
-     them, where the image was made with --functors=functions
-     (ReplLoop.configure) *)
+  (* --inline-functor=F[,F...] (docs/build.md, Inline functors): the
+     functors the declarations compiled after are to expand in every unit
+     that applies them *)
   fun inline (names : string) : unit =
     Elaborate.inlineFunctors :=
       List.foldl (fn (n, m) => if n = "" then m else StringMap.insert (m, n, ())) (!Elaborate.inlineFunctors)

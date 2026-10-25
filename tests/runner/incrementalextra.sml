@@ -126,18 +126,21 @@ struct
          check s "cached entry did not echo at default depth" (String.isSubstring "val v = T 3 : t" (session s false ["use \"t.sml\";", "use \"v.sml\";"])))
     | "S55" =>
         (functorFixity s; b [] "y.sml a.sml c.sml main.sml";
-         let val old = selectedEntry s "main.sml"
+         let (* c.sml's own entry: main.sml's names c.sml's unit too *)
+             fun entries () = List.filter (fn file => not (String.isSubstring "main.sml" (CachePlant.binary file)))
+                                          (selectedEntry s "c.sml")
+             val old = entries ()
              val () = copy (only old) (path s "old-entry")
-             val () = (f "a.sml" 1; b [] "a.sml c.sml main.sml"; build s ["--verify-cache"])
+             val () = (f "a.sml" 1; b [] "a.sml c.sml"; build s ["--verify-cache"])
              val () = check s "warm build did not verify" (#status (!(#result s)) = 0)
-             val new = only (notIn old (selectedEntry s "main.sml"))
+             val new = only (notIn old (entries ()))
              val () = CachePlant.stale (path s "old-entry") new
              val () = build s []
              val () = check s "planted stale entry was not used" (null (compiled s))
              val () = prints s "4"
              val () = build s ["--verify-cache"]
          in check s "verification did not reject the planted stale entry" (#status (!(#result s)) <> 0
-                andalso String.isSubstring "main.sml: the cache's entry is not what compiling it gives" (#errors (!(#result s)))) end)
+                andalso String.isSubstring "c.sml: the cache's entry is not what compiling it gives" (#errors (!(#result s)))) end)
     | "S57" =>
         (own s ""; f "u.sml" 0; ignore (session s false ["val base = 1;", "use \"u.sml\";"]);
          let val old = cache s

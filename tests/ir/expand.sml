@@ -1,4 +1,4 @@
-(* dump: --functors=functions --datatype-tags=sorted-x --passes=expand --dump-after=expand *)
+(* dump: --passes=expand --dump-after=expand *)
 (* The expansion (functors-units.md, M6): Sum's function (g1) stays, and the
    application I is its body copied as definitions of the top level, at int --
    the datatype tree an instance of its own (tree/2), sum a global function

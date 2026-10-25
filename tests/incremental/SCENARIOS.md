@@ -75,9 +75,10 @@ exactly the units X and nothing else.
 ## What a unit depends on that is not a value
 
 * **S8, a functor body.** Change the body of `c.sml`'s functor without
-  changing its signature. Recompiles `c.sml` and `d.sml`, which applies it:
-  under static interpretation a functor's clients depend on its body
-  (D1).
+  changing its signature. Recompiles `c.sml` alone: `d.sml`, which applies
+  it, calls its function and depends on its signature (functors compiled
+  once, functors-units M7). Under static interpretation, before, a
+  functor's clients depended on its body and `d.sml` was compiled again.
 * **S9, constructor order.** Reorder `a.sml`'s datatype's constructors.
   Recompiles every unit that builds or matches them, since tags and layouts
   change; their output is unchanged.
@@ -199,18 +200,22 @@ when the scenarios above were all green
 (`docs/plans/build-cache-issues.md`):
 
 * **S49, a functor's fixity.** `c.sml`'s functor's body is parsed with the
-  fixity `a.sml` gives `++`, and `a.sml` changes it. Recompiles `a.sml`,
-  `c.sml` and `main.sml`, which applies the functor and names nothing of
-  `a.sml`: what a functor's body found where it was declared is in its
-  unit's identity. Before, `main.sml` was taken from the cache and the
-  program printed the old result.
+  fixity `a.sml` gives `++`, and `a.sml` changes it. Recompiles `a.sml`
+  and `c.sml`; `main.sml`, which applies the functor and names nothing of
+  `a.sml`, calls `c.sml`'s function, which `c.sml` made again, and the
+  program prints the new result. Until functors-units M7 `main.sml` was
+  compiled again too, for its copy of the body, and before that it was
+  taken from the cache with its old copy.
 * **S50, a functor's type, shadowed.** The body uses `a.sml`'s `A.t`, which
   changes from `int` to `IntInf.int`, and a unit between the functor and
-  `main.sml` declares another `A`. Recompiles `a.sml`, `c.sml` and
-  `main.sml`, though at `main.sml` the name `A` is the other unit's.
+  `main.sml` declares another `A`. Recompiles `a.sml` and `c.sml`;
+  `main.sml` calls the functor's function (until M7 it was compiled again
+  for its copy of the body, though at `main.sml` the name `A` is the other
+  unit's).
 * **S51, a functor's call, shadowed.** As S50, the body calling `a.sml`'s
   function and matching constructors `a.sml` reorders. The same units;
-  before, `main.sml` was taken from the cache and its link failed.
+  under static interpretation `main.sml` was compiled again too, and
+  before that it was taken from the cache and its link failed.
 * **S52, hidden code renumbered.** A body changed with functions, a
   reference and a datatype added in a `local` before what `a.sml` exports.
   Recompiles `a.sml` only (the cut-off of S2).
@@ -242,7 +247,9 @@ when the scenarios above were all green
   a functor whose body uses `A.x`, and `a.sml` gains a value while `A.x`
   stays. `b.sml` is compiled again, not taken by `A.x`'s fingerprint, and
   the program is the bytes of a build without the cache
-  (docs/plans/build-cache-issues.md, issue 15).
+  (docs/plans/build-cache-issues.md, issue 15); `main.sml`, which calls
+  the functor's function, is taken from the cache (functors-units M7;
+  before, it was compiled again for its copy of the body).
 * **S60, a datatype of many constructors.** A unit declares a datatype of
   300 constructors, and its basis (`--emit-units`) is under 100 KB: each
   constructor's information, and the list of its siblings that every one
@@ -250,18 +257,21 @@ when the scenarios above were all green
   square of the constructors; docs/plans/build-cache-issues.md, issue 14).
 * **S65, a functor's body changed and not its signature.** `b.sml`
   applies `c.sml`'s functor, `d.sml` uses `b.sml`'s structure, and the
-  body changes. `c.sml` and `b.sml` are compiled again, `b.sml` for its
-  code; its basis, typed by the functor's signature (rule 54), is the same
-  bytes (`--emit-units`), and `d.sml` and `main.sml` are taken from the
-  cache (performance M3; [functors.md](../../docs/plans/functors.md), *A
-  contradiction in M3*).
+  body changes. `c.sml` alone is compiled again: `b.sml` calls the
+  functor's function (functors-units M7), and its basis, typed by the
+  functor's signature (rule 54), is the same bytes (`--emit-units`).
+  Before M7 `b.sml` was compiled again for its copy of the body, and
+  `d.sml` and `main.sml` were taken from the cache (performance M3;
+  [functors.md](../../docs/plans/functors.md), *A contradiction in M3*).
 * **S66, a functor applied in another's body.** `g.sml`'s functor applies
   `c.sml`'s, whose body changes and whose signature does not. `g.sml` is
   taken from the cache: a functor's declaration takes the signatures of
-  those its body applies. `main.sml`, whose copy of `g.sml`'s functor
-  applies `c.sml`'s to make code, is compiled again. Then a value added to
-  the functor's result changes its signature, and `g.sml` is compiled too.
-  Before M3, `g.sml` was compiled again at each change.
+  those its body applies, and its function calls `c.sml`'s. `main.sml`
+  is taken too (functors-units M7; before, its copy of `g.sml`'s functor
+  applied `c.sml`'s to make code, and it was compiled again). Then a value
+  added to the functor's result changes its signature, and `g.sml` and
+  `main.sml` are compiled too. Before M3, `g.sml` was compiled again at
+  each change.
 * **S67, a cache made before the basis's form changed.** M3 put a
   functor's signature in its unit's basis (`UnitBasis.version` 6). An
   entry whose basis says version 5 is missed, not misread: `c.sml` is
@@ -356,7 +366,9 @@ when the scenarios above were all green
 * **S55, verifying the cache.** A warm build with `--verify-cache` succeeds;
   an entry planted with usages that hold and the content of another compile
   (`bin/rune-incremental plant`) is taken by a build and found by
-  `--verify-cache`, which fails.
+  `--verify-cache`, which fails. The entry is `c.sml`'s, the functor's,
+  which the fixity's edit compiles again (since functors-units M7; before,
+  `main.sml`'s, whose copy of the body did).
 
 ## Edits nobody wrote
 

@@ -70,7 +70,6 @@ struct
         else Ty.subst (ListPair.foldl (fn (a, u, s) => IntMap.insert (s, a, u)) IntMap.empty (tyvars, args)) t
 
       (* the variables whose value is a cast to unit, of the type cast from *)
-      val castRule = !Elaborate.functorFunctions
       val toUnit : Ty.ty IntTable.table = IntTable.table 64
       fun ground t =
         case Ty.view t of
@@ -84,7 +83,7 @@ struct
         case r of
           Prim ("functor_cast", t, [_]) =>
             (case Ty.view t of
-               Ty.Arrow (d, c) => if castRule andalso Ty.equal (c, Ty.unit) andalso not (Ty.equal (d, Ty.unit))
+               Ty.Arrow (d, c) => if Ty.equal (c, Ty.unit) andalso not (Ty.equal (d, Ty.unit))
                                   then IntTable.insert (toUnit, x, d) else ()
              | _ => ())
         | _ => ()
@@ -173,7 +172,7 @@ struct
                 | _ => wrong ()
               end
           | Prim (p, t, args) =>
-              ((case (castRule, p, args) of (true, "functor_cast", [a]) => (castBack (t, a); toOrFromUnit t) | _ => ());
+              ((case (p, args) of ("functor_cast", [a]) => (castBack (t, a); toOrFromUnit t) | _ => ());
                case Ty.view t of
                  Ty.Arrow (d, res) =>
                    (case (args, Ty.view d) of

@@ -448,10 +448,10 @@ struct
                 (c :: _, NONE) => Options.cacheDir := SOME c
               | _ => ()
             end
-      (* --functors=functions: the functors the Basis Library's and the
-         chosen libraries' build files mark to be inlined (M6b) *)
+      (* the functors the Basis Library's and the chosen libraries' build
+         files mark to be inlined (docs/build.md, Inline functors) *)
       val () =
-        if !Elaborate.functorFunctions andalso not (!Options.noPrelude) andalso not (!Options.noInlineFunctors) then
+        if not (!Options.noPrelude) andalso not (!Options.noInlineFunctors) then
           Elaborate.inlineFunctors :=
             List.foldl (fn (n, m) => StringMap.insert (m, n, ())) (!Elaborate.inlineFunctors)
                        (List.concat (List.map BasisManifest.inlineFunctors

@@ -205,12 +205,10 @@ libraries under `root`. No absolute library path is built in.
 
 Supported flags are `--target=registers`, `--target=stack`,
 `--allow-prim`, `--unicode`, `--unicode=utf8`, `--unicode=latin1` and
-`--library NAME`, and the prototype of docs/plans/functors-units.md:
-`--functors=functions`, `--datatype-tags=ORDER`,
-`--inline-functor=F[,F...]` and `--no-inline-functors`. Units compiled
-under the prototype run only in a program whose Basis was compiled
-under it too. Unknown flags raise [`Failed`](#exn-failed). The defaults are register
-bytecode, ASCII source and no additional libraries.
+`--library NAME`, `--inline-functor=F[,F...]` and
+`--no-inline-functors` (docs/build.md, Inline functors). Unknown flags
+raise [`Failed`](#exn-failed). The defaults are register bytecode, ASCII source and
+no additional libraries.
 
 | Field | Type | Description |
 | --- | --- | --- |

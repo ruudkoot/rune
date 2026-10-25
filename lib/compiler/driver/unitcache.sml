@@ -27,7 +27,7 @@ struct
   structure P = Pickle
 
   val magic = "RCE"
-  val version = 7
+  val version = 8
 
   (* what a unit's entry holds: its usages, the warnings its compile gave,
      which a compile that takes it from the cache gives again, the name its
@@ -107,15 +107,9 @@ struct
      ("level", Int.toString (!Pass.level)), ("passes", case !Pass.only of NONE => "-" | SOME ps => String.concatWith "," ps),
      ("intbits", Int.toString (!Target.intBits)), ("flex", Elaborate.flexModeName (!Elaborate.flexRecords)),
      ("fuel", case !Pass.fuel of NONE => "-" | SOME n => Int.toString n), ("hash", P.probe ())]
-    (* the prototypes of functors-units.md's M5, where on: nothing where
-       off, which keeps the key it had before them *)
-    @ (if !Elaborate.functorFunctions then [("functors", "functions")] else [])
-    (* the functors inlined across units (M6b): what a unit's basis keeps *)
-    @ (if !Elaborate.functorFunctions andalso not (StringMap.isEmpty (!Elaborate.inlineFunctors))
+    (* the functors inlined across units: what a unit's basis keeps *)
+    @ (if not (StringMap.isEmpty (!Elaborate.inlineFunctors))
        then [("inline", String.concatWith "," (StringMap.listKeys (!Elaborate.inlineFunctors)))] else [])
-    @ (case !Types.tagOrder of
-         Types.TagsDeclared => []
-       | order => [("datatype-tags", Types.tagOrderName order)])
 
   (* The hash of the configuration of this compile *)
   fun configuration () : string =

@@ -645,26 +645,15 @@ struct
 
   (* The compiler's settings for what the session compiles, before the
      REPL's own arguments (rune-repl.load.rbc LIST OPTION... [--make-image
-     IMAGE]): --functors=functions and --datatype-tags=ORDER
-     (docs/plans/functors-units.md; a prototype), --inline-functor=F[,F...],
-     --no-inline-functors and --lint. They are the image's: they must be those the
-     REPL's units were compiled with (its build's --units --emit-units),
-     since the session loads the Basis Library's bases as that build wrote
-     them, and they hold for every session started from the image. Under
-     --functors=functions, the functors the Basis Library's build file marks
-     to be inlined are, but with --no-inline-functors. *)
+     IMAGE]): --inline-functor=F[,F...], --no-inline-functors and --lint.
+     They are the image's: they hold for every session started from the
+     image. The functors the Basis Library's build file marks to be
+     inlined are, but with --no-inline-functors. *)
   fun configure (args : string list, lib : string) : string list =
     let
-      val tags = ref NONE
       val noInline = ref false
       fun go (a :: rest) =
-            if a = "--functors=functions" then (Elaborate.functorFunctions := true; go rest)
-            else if a = "--functors=copies" then (Elaborate.functorFunctions := false; go rest)
-            else if String.isPrefix "--datatype-tags=" a then
-              (case Types.tagOrderOf (String.extract (a, 16, NONE)) of
-                 SOME o' => (tags := SOME o'; go rest)
-               | NONE => raise ReplSession.Failed "--datatype-tags requires declared, sorted or sorted-x")
-            else if String.isPrefix "--inline-functor=" a then (ReplFront.inline (String.extract (a, 17, NONE)); go rest)
+            if String.isPrefix "--inline-functor=" a then (ReplFront.inline (String.extract (a, 17, NONE)); go rest)
             else if a = "--no-inline-functors" then (noInline := true; Elaborate.inlineFunctors := StringMap.empty; go rest)
             (* every pass's output checked, as rune --lint checks it (the
                globals of the units before a declaration typed for the lint
@@ -674,16 +663,7 @@ struct
         | go [] = []
       val rest = go args
     in
-      if not (!Elaborate.functorFunctions) andalso not (isSome (!tags)) then ()
-      else
-        (Types.tagOrder := (case !tags of
-                              SOME o' => o'
-                            | NONE => if !Elaborate.functorFunctions then Types.TagsSorted else !Types.tagOrder);
-         if !Elaborate.functorFunctions andalso !Types.tagOrder = Types.TagsDeclared then
-           raise ReplSession.Failed "--functors=functions numbers tags by names: --datatype-tags=sorted or sorted-x"
-         else ();
-         Ty.bindBuiltins ());
-      if !Elaborate.functorFunctions andalso not (!noInline) then
+      if not (!noInline) then
         Elaborate.inlineFunctors :=
           List.foldl (fn (n, m) => StringMap.insert (m, n, ())) (!Elaborate.inlineFunctors)
                      (BasisManifest.inlineFunctors (OS.Path.concat (lib, "basis")))

@@ -310,10 +310,10 @@ three fields, of every way) by the engine for the laws
 `bin/rune-functor-gen` (`tests/runner/functorgen.sml`) draws programs of
 the module language's hard shapes, with `lib/test/property`, and holds the
 compiler to one property: a program prints the same compiled whole and in
-units (`--units --no-cache`), with functors compiled as functions and their
-applications expanded (`--functors=functions --datatype-tags=sorted-x`,
-always under `--lint`) and as today's copies; `--units --whole` makes the
-whole compile's bytes (S42 of
+units (`--units --no-cache`), at `-O0`, where every application is a call
+of its functor's function, and from `-O1`, where the expansion gives
+applications their copies back (always under `--lint`); `--units --whole`
+makes the whole compile's bytes (S42 of
 [plans/functors-units.md](plans/functors-units.md)); and so it does with
 some of its functors marked `--inline-functor`, and under a small
 `--functor-budget`, which leaves some applications calls. A program's units
@@ -358,8 +358,8 @@ line covers is counted and passes, in both jobs (a mode the lint refuses so
 is held to the rest of the property at `-O0`); and each line must be met
 by a program of `tests/functors`, so that once the compiler is fixed the
 line is stale and goes. A failure one file shows is a program of
-`tests/lang` too, with its `.expected` from the flag off, and its failing
-tests in `tests/runner/quarantine.txt` until fixed.
+`tests/lang` too, with its `.expected` from `-O0`, and its failing tests
+in `tests/runner/quarantine.txt` until fixed.
 
 By hand, longer: `bin/rune-functor-gen check --seed S --seeds K --count N
 --known tests/functors/known.txt --rune bin/rune-mlton --out DIR` runs K

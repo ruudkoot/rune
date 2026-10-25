@@ -19,7 +19,7 @@ struct
   open Mid
 
   val magic = "RBM"
-  val version = 4
+  val version = 5
 
   exception Bad of string
 
@@ -151,11 +151,9 @@ struct
                         list (fn (tag, n, a) => (P.nat (w, tag); P.string (w, n); P.option (fn (_, t) => ty t) (w, a))) cons))
                     datatypes
       val () = list (fn (s, n) => (stamp s; P.string (w, n))) funNames
-      (* --functors=functions: the layouts a body fixed, the open datatypes *)
-      val () = if !Elaborate.functorFunctions
-               then (list (fn (s, l) => (tycon s; list (fn (t, n) => (P.nat (w, t); P.option P.nat (w, n))) l)) pins;
-                     list tycon opens)
-               else ()
+      (* the layouts a body fixed, the open datatypes *)
+      val () = (list (fn (s, l) => (tycon s; list (fn (t, n) => (P.nat (w, t); P.option P.nat (w, n))) l)) pins;
+                list tycon opens)
       val body = P.contents w
       val h = P.writer ()
       val () = (P.bytes (h, magic); P.nat (h, version); P.list P.string (h, List.rev (!identities));
@@ -330,10 +328,8 @@ struct
                 in (s, {params = ps, cons = cons}) end)
       val funNames = list (fn () => let val s = stamp () in (s, P.rstring r) end)
       val (pins, opens) =
-        if !Elaborate.functorFunctions
-        then let val pins = list (fn () => let val s = tycon () in (s, list (fn () => let val t = P.rnat r in (t, P.roption P.rnat r) end)) end)
-             in (pins, list tycon) end
-        else ([], [])
+        let val pins = list (fn () => let val s = tycon () in (s, list (fn () => let val t = P.rnat r in (t, P.roption P.rnat r) end)) end)
+        in (pins, list tycon) end
     in
       if P.atEnd r then () else raise Bad "bytes after a unit's Mid";
       {mid = mid, datatypes = datatypes, funNames = funNames, pins = pins, opens = opens}

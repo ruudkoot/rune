@@ -37,10 +37,11 @@ struct
                       size = Mid.size}
                      f m
         else m
-      (* --functors=functions: the copies of applications given back
-         (Expand, functors-units.md M6), before anything else is done to
-         them; in a build in units, of the unit's own functors (D2) *)
-      val mid = if !Elaborate.functorFunctions then optional ("expand", Expand.program) mid else mid
+      (* the copies of applications given back (Expand), before anything
+         else is done to them; in a build in units, of the unit's own
+         functors and those marked to be inlined *)
+      val () = Expand.knownFunction := (fn g => IntMap.member (!Lower.knownBefore, g))
+      val mid = optional ("expand", Expand.program) mid
       val mid = optional ("shake", Shake.program) mid
       val mid = optional ("lift", Lift.program) mid
       val mid = optional ("workers", Workers.program) mid
@@ -61,9 +62,8 @@ struct
     let
       val mid = midStage (SOME Lambda.show) ToMid.program lam
       val () = if not (!Pass.whole) andalso !keepMid then lastMid := SOME (MidCanon.capture mid) else ()
-      (* --functors=functions: the marked functors' functions, for the
-         unit's basis (M6b) *)
-      val () = if !Elaborate.functorFunctions andalso not (!Pass.whole) then Expand.keepMarked mid else ()
+      (* the marked functors' functions, for the unit's basis *)
+      val () = if not (!Pass.whole) then Expand.keepMarked mid else ()
     in lowOfMid mid end
 
   (* Low to the code of the target --target names *)
@@ -87,9 +87,9 @@ struct
                             size = Lambda.size}
                            Translate.transProgram decs
       val low = lowOf lam
-      (* --functors=functions: what its functors' and applications' code was
-         made of, which no later unit's needs *)
-      val () = if !Elaborate.functorFunctions then Elaborate.forgetUnitCode () else ()
+      (* what its functors' and applications' code was made of, which no
+         later unit's needs *)
+      val () = Elaborate.forgetUnitCode ()
       val code = targetStage low
       val u : Link.sessionCode =
         {code = code, globals = IntMap.listItemsi (!Code.globals), defines = Link.defines low,

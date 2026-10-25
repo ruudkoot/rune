@@ -170,7 +170,7 @@ struct
      identity, so that a specification and the datatype that matches it
      number alike under each *)
   datatype tagOrder = TagsDeclared | TagsSorted | TagsSortedX
-  val tagOrder = ref TagsDeclared
+  val tagOrder = ref TagsSortedX
   val () = CompilerState.cellRoot ("Types.tagOrder", tagOrder)
   fun tagOrderName TagsDeclared = "declared"
     | tagOrderName TagsSorted = "sorted"

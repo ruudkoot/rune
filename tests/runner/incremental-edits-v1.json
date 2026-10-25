@@ -147,7 +147,7 @@
           "built": false,
           "agreement": true,
           "compiled": 2,
-          "across": 0
+          "across": 1
         },
         {
           "files": [
@@ -163,7 +163,7 @@
           "built": false,
           "agreement": true,
           "compiled": 1,
-          "across": 0
+          "across": 1
         },
         {
           "files": [
@@ -195,7 +195,7 @@
           "built": false,
           "agreement": true,
           "compiled": 1,
-          "across": 0
+          "across": 1
         },
         {
           "files": [
@@ -279,7 +279,7 @@
           "description": "type in shapes.sml: 'int' -> 'IntInf.int'",
           "built": true,
           "agreement": true,
-          "compiled": 3,
+          "compiled": 2,
           "across": 0
         },
         {
@@ -297,7 +297,7 @@
           "description": "ops.sml declared again as again4_ops.sml, at 3 of 6",
           "built": true,
           "agreement": true,
-          "compiled": 2,
+          "compiled": 1,
           "across": 0
         },
         {
@@ -387,7 +387,7 @@
           "description": "shapes.sml put back",
           "built": true,
           "agreement": true,
-          "compiled": 1,
+          "compiled": 0,
           "across": 0
         },
         {
@@ -405,7 +405,7 @@
           "description": "constructors in shapes.sml: 'Circle' and 'Dot' swapped",
           "built": true,
           "agreement": true,
-          "compiled": 3,
+          "compiled": 2,
           "across": 0
         },
         {
@@ -423,7 +423,7 @@
           "description": "type in shapes.sml: 'int' -> 'IntInf.int'",
           "built": true,
           "agreement": true,
-          "compiled": 3,
+          "compiled": 2,
           "across": 0
         },
         {
@@ -496,7 +496,7 @@
           "built": true,
           "agreement": true,
           "compiled": 1,
-          "across": 1
+          "across": 2
         },
         {
           "files": [
@@ -514,7 +514,7 @@
           "built": true,
           "agreement": true,
           "compiled": 1,
-          "across": 0
+          "across": 1
         },
         {
           "files": [
@@ -532,7 +532,7 @@
           "built": true,
           "agreement": true,
           "compiled": 0,
-          "across": 1
+          "across": 2
         },
         {
           "files": [
@@ -550,7 +550,7 @@
           "built": true,
           "agreement": true,
           "compiled": 1,
-          "across": 1
+          "across": 2
         },
         {
           "files": [
@@ -568,7 +568,7 @@
           "built": true,
           "agreement": true,
           "compiled": 1,
-          "across": 1
+          "across": 2
         },
         {
           "files": [
@@ -585,8 +585,8 @@
           "description": "numeral in functors.sml: 2 -> 9",
           "built": true,
           "agreement": true,
-          "compiled": 2,
-          "across": 0
+          "compiled": 1,
+          "across": 1
         },
         {
           "files": [
@@ -604,7 +604,7 @@
           "built": true,
           "agreement": true,
           "compiled": 1,
-          "across": 0
+          "across": 1
         },
         {
           "files": [
@@ -621,8 +621,8 @@
           "description": "constructors in shapes.sml: 'Line' and 'Circle' swapped",
           "built": true,
           "agreement": true,
-          "compiled": 3,
-          "across": 0
+          "compiled": 2,
+          "across": 1
         },
         {
           "files": [

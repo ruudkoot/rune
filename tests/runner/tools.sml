@@ -515,17 +515,17 @@ struct
                       = [SOME "2", SOME "1", SOME "1", SOME "2"])
       val () = check ("pass-stats=elab: functor G",
                       List.map (get "functor G") ["fundecl", "app.check", "app.code", "match"] = [SOME "1", SOME "1", NONE, SOME "1"])
-      (* checked only, N's application of G is typed by G's signature, and
-         no copy of G's body applies F again (docs/plans/functors-units.md,
-         D15); compiled, the application makes code, and so does F's in the
-         copy of G's body *)
+      (* N's application of G is typed by G's signature, and no copy of G's
+         body applies F again: checked only, and compiled, where the
+         application makes code, a call of G's function (docs/ir.md,
+         Functors compiled once) *)
       val () = check ("pass-stats=elab: structure N",
                       List.map (get "structure N") ["app.code", "app.depth", "app.check"] = [NONE, SOME "1", SOME "1"])
       val () = check ("pass-stats=elab: compiled",
                       r (["--no-prelude", "--pass-stats=elab", "-o", "output.rbc", "input.sml"], NONE) = 0)
       val compiled = List.map (String.tokens Char.isSpace) (List.filter (String.isPrefix "elab ") (lines (read (f "err"))))
       val () = check ("pass-stats=elab: structure N compiled",
-                      List.map (getIn compiled "structure N") ["app.code", "app.depth", "app.check"] = [SOME "2", SOME "2", NONE])
+                      List.map (getIn compiled "structure N") ["app.code", "app.depth", "app.check"] = [SOME "1", SOME "1", NONE])
       val () = check ("pass-stats=elab: another kind refused",
                       r (["--no-prelude", "--typecheck-only", "--pass-stats=types", "input.sml"], NONE) <> 0
                       andalso contains (f "err", "--pass-stats= requires elab"))

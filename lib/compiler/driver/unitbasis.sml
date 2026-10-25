@@ -39,7 +39,7 @@ struct
   (* a pickle that names a unit the session has not loaded *)
   exception Missing of string
 
-  val version = 9
+  val version = 10
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -478,9 +478,9 @@ struct
               SOME p => (P.byte (w, 1); P.string (w, p))
             | NONE => P.byte (w, 0));
            P.bool (w, IntMap.member (!Lower.knownBefore, stamp));
-           (* --functors=functions: the global it is (M6b), which a use of
-              it is, and what that one is to a call *)
-           if !Elaborate.functorFunctions andalso !anchorValues then
+           (* the global it is (Expand.globalAliases), which a use of it
+              is, and what that one is to a call *)
+           if !anchorValues then
              ((case IntTable.find (!Expand.globalAliases, stamp) of
                  SOME h =>
                    (P.byte (w, 1); P.string (w, anchor (kStamp, h));
@@ -1117,8 +1117,13 @@ struct
                     fun prim h = (P.option P.string (w, IntMap.find (!Translate.primAliases, h));
                                   P.option P.string (w, IntTable.find (!Expand.primGlobals, h)))
                   in
+                    (* a position in the unit's own source by nothing but
+                       that, which a unit taken from the cache names where
+                       the source is then, as its code's (relocate): not by
+                       the path the compile was given it by *)
                     MidCodec.write (w, {stamp = global, tycon = fn c => name (e, kTycon, c),
-                                        tvar = fn v => name (e, kTvar, v), file = fn f => P.string (w, f)}) f;
+                                        tvar = fn v => name (e, kTvar, v),
+                                        file = fn f => P.option P.string (w, if f = #file e then NONE else SOME f)}) f;
                     P.list (fn (_, c) => name (e, kTycon, c))
                            (w, List.filter Ty.isOpen (List.map #stamp (#bound paramSig)));
                     (* what the copies a later unit makes take of the globals
@@ -1204,11 +1209,9 @@ struct
            P.option (P.option (fn (_, t) => ty (e, t))) (w, IntTable.find (Ty.exnArgs, v));
            P.option P.string (w, IntMap.find (!Translate.primAliases, v));
            P.bool (w, IntMap.member (!Lower.knownBefore, v));
-           (* --functors=functions: the global it is (Expand.globalAliases, M6b) *)
-           if !Elaborate.functorFunctions then
-             (P.option (fn (_, h) => name (e, kStamp, h)) (w, IntTable.find (!Expand.globalAliases, v));
-              P.option P.string (w, IntTable.find (!Expand.primGlobals, v)))
-           else ())
+           (* the global it is (Expand.globalAliases) *)
+           P.option (fn (_, h) => name (e, kStamp, h)) (w, IntTable.find (!Expand.globalAliases, v));
+           P.option P.string (w, IntTable.find (!Expand.primGlobals, v)))
         else if k = kTycon then
           (P.byte (w, 2); P.nat (w, ownNumber (e, k, v));
            P.option (fn (w, {params, cons} : Ty.datatypeInfo) =>
@@ -1224,10 +1227,8 @@ struct
            P.option (fn (_, f) => tyfcn (e, f)) (w, IntTable.find (Ty.realizations, v));
            P.option (P.list (fn (w, (n, s)) => (P.string (w, n); valstatus (e, s)))) (w, IntMap.find (!Elaborate.dataCons, v));
            writeOrigin (w,getOpt (IntMap.find (!Env.typeOrigins,v),Env.Unknown));
-           (* --functors=functions: the layout a body gave an instance of its datatype (Ty.pinned) *)
-           if !Elaborate.functorFunctions
-           then P.option (P.list (fn (w, (t, n)) => (P.nat (w, t); P.option P.nat (w, n)))) (w, IntMap.find (!Ty.pinned, v))
-           else ())
+           (* the layout a body gave an instance of its datatype (Ty.pinned) *)
+           P.option (P.list (fn (w, (t, n)) => (P.nat (w, t); P.option P.nat (w, n)))) (w, IntMap.find (!Ty.pinned, v)))
         else ()
     in drain (); P.byte (w, 0) end
 
@@ -1298,8 +1299,7 @@ struct
           (case fingerprintAt (k, binderOfKey k) of SOME f => "fp " ^ f | NONE => binderOfKey k)
         else binderOfKey k
       val () = P.list (fn (w, k) => (P.string (w, k); P.string (w, binding k)))
-                      (w, if List.null funNames orelse !Elaborate.functorFunctions then []
-                          else StringMap.listKeys (List.foldl (fn (k, m) => StringMap.insert (m, k, ())) StringMap.empty used))
+                      (w, [])
       val before' = #overloads (#snapshot start)
       val () = P.list (fn (_, x) => overload (e, x))
                       (w, IntMap.listItemsi (IntMap.filteri (fn (s, _) => not (IntMap.member (before', s))) (!Overload.table)))
@@ -1904,7 +1904,8 @@ struct
                   fun local' i = (if i > !most then most := i else (); base - i)
                   val (body, names) =
                     MidCodec.read (r, {stamp = fn () => rname (d, kStamp), tycon = fn () => rname (d, kTycon),
-                                       tvar = fn () => rname (d, kTvar), file = fn () => P.rstring r, local' = local'})
+                                       tvar = fn () => rname (d, kTvar),
+                                       file = fn () => getOpt (P.roption P.rstring r, file), local' = local'})
                     handle MidCodec.Bad m => raise P.Bad m
                   val opens = P.rlist (fn _ => rname (d, kTycon)) r
                   fun prim () = (P.roption P.rstring r; P.roption P.rstring r; ())
@@ -1959,9 +1960,9 @@ struct
               val exnArg = P.roption (P.roption (fn _ => rty d)) r
               val alias = P.roption P.rstring r
               val known = P.rbool r
-              val same = if !Elaborate.functorFunctions then P.roption (fn _ => rname (d, kStamp)) r else NONE
+              val same = P.roption (fn _ => rname (d, kStamp)) r
               val () = Option.app (fn h => IntTable.insert (!Expand.globalAliases, v, h)) same
-              val prim = if !Elaborate.functorFunctions then P.roption P.rstring r else NONE
+              val prim = P.roption P.rstring r
               val () = Option.app (fn p => IntTable.insert (!Expand.primGlobals, v, p)) prim
             in
               Option.app (fn t => Ty.bindVar (v, t)) binder;
@@ -1989,9 +1990,7 @@ struct
               val real = P.roption (fn _ => rtyfcn d) r
               val dcons = P.roption (P.rlist (fn r => let val n = P.rstring r in (n, rvalstatus d) end)) r
               val origin=readOrigin r
-              val pin = if !Elaborate.functorFunctions
-                        then P.roption (P.rlist (fn r => let val t = P.rnat r in (t, P.roption P.rnat r) end)) r
-                        else NONE
+              val pin = P.roption (P.rlist (fn r => let val t = P.rnat r in (t, P.roption P.rnat r) end)) r
               val () = Option.app (fn l => Ty.pinLayout (c, l)) pin
             in
               Option.app (fn i => (Ty.extras := Ty.Unknown; Ty.datatypes := IntMap.insert (!Ty.datatypes, c, i))) dt;

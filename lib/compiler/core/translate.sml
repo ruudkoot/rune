@@ -554,10 +554,8 @@ struct
         in go binds end
     | DSignature _ => k ()
     | DFunctor (binds, _) =>
-        if not (!Elaborate.functorFunctions) then k ()
-        else
-          let fun go [] = k () | go (b :: rest) = functorFun (b, go rest)
-          in go binds end
+        let fun go [] = k () | go (b :: rest) = functorFun (b, go rest)
+        in go binds end
 
   (* Structure expressions have no runtime representation of their own: a
      functor application evaluates its argument's declarations and then the
@@ -569,11 +567,8 @@ struct
     | StrAscribe (e, _, _, _) => transStrexp (e, k)
     | StrApp (_, arg, slot, sp) =>
         transStrexp (arg, fn () =>
-          case if !Elaborate.functorFunctions then Elaborate.callAt sp else NONE of
+          case Elaborate.callAt sp of
             SOME call => callExp (call, sp, k)
-          | NONE =>
-          case !slot of
-            SOME body => transStrexp (body, k)
           | NONE => bug (sp, "functor application not elaborated"))
     | StrLet (decs, e, _) => transTopDecs (decs, fn () => transStrexp (e, k))
     (* a dynamic module (D17, D18): what RuneDynamic.load gives -- or

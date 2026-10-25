@@ -1,1 +1,1 @@
---functors=functions --datatype-tags=sorted-x --lint --inline-functor=G
+--lint --inline-functor=G
