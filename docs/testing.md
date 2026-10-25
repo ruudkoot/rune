@@ -330,7 +330,9 @@ and results, equality on the parameter's and the body's types, `''a`, a polymorp
 exceptions in bodies (each application's its own, or the parameter's or an
 inner instance's again), refs and effects (each application runs them once,
 in order), refs, arrays and vectors of the parameter's types and the
-body's, substructures in parameters and results. What a program prints
+body's, declarations of a body that branch, bind a refutable pattern or
+close over the parameter's values, substructures in parameters and
+results. What a program prints
 makes each visible: every instance's results, matches on constructors,
 exceptions handled across instances, counts and equalities. A program is a
 plan of choices made well typed by construction (an argument that does not
