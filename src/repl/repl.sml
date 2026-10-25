@@ -646,8 +646,8 @@ struct
   (* The compiler's settings for what the session compiles, before the
      REPL's own arguments (rune-repl.load.rbc LIST OPTION... [--make-image
      IMAGE]): --functors=functions and --datatype-tags=ORDER
-     (docs/plans/functors-units.md; a prototype), --inline-functor=F[,F...]
-     and --no-inline-functors. They are the image's: they must be those the
+     (docs/plans/functors-units.md; a prototype), --inline-functor=F[,F...],
+     --no-inline-functors and --lint. They are the image's: they must be those the
      REPL's units were compiled with (its build's --units --emit-units),
      since the session loads the Basis Library's bases as that build wrote
      them, and they hold for every session started from the image. Under
@@ -666,6 +666,13 @@ struct
                | NONE => raise ReplSession.Failed "--datatype-tags requires declared, sorted or sorted-x")
             else if String.isPrefix "--inline-functor=" a then (ReplFront.inline (String.extract (a, 17, NONE)); go rest)
             else if a = "--no-inline-functors" then (noInline := true; Elaborate.inlineFunctors := StringMap.empty; go rest)
+            (* every pass's output checked, as rune --lint checks it *)
+            else if a = "--lint" then
+              (Pass.lint := true; Elaborate.lintSummaries := true;
+               (* the globals of the units before a declaration, by their
+                  types, as a build in units gives MidLint them (Main) *)
+               MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE);
+               go rest)
             else a :: rest
         | go [] = []
       val rest = go args
