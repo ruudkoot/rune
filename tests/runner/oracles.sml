@@ -989,7 +989,7 @@ struct
        tagged ["check", "check-units", "covers:tests/functors/*", "covers:tests/runner/functorgen.sml",
                "covers:tests/runner/functorgen-main.sml"]
          (Test.describe "functors"
-            [functorGen ("@generated", ["check", "--seed", "1", "--count", "20", "--shrinks", "100", "--known", "tests/functors/known.txt"],
+            [functorGen ("@generated", ["check", "--seed", "1", "--count", "16", "--shrinks", "100", "--known", "tests/functors/known.txt"],
                          "functors", 3600),
              functorGen ("@regressions", ["regressions", "--known", "tests/functors/known.txt", "tests/functors"], "functors-regressions",
                          1800)]),

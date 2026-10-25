@@ -144,7 +144,7 @@ struct
        rep = at sa 4 repGen, exn = at sa 5 (weighted [4, 4, 1, 1]), carry = at sa 6 (flag 25),
        count = at sa 7 (flag 40), sub = at sa 8 (weighted [5, 1, 1, 1]), poly = at sa 9 (weighted [5, 2, 1, 1]),
        pair = at sa 10 (flag 30), inner = at sa 11 (flag 25), via = at sa 12 (flag 25),
-       probes = at sa 13 (Gen.listOf (Gen.return 19) (flag 60))})
+       probes = at sa 13 (Gen.listOf (Gen.return 21) (flag 60))})
 
   val resultGen : result Gen.gen =
     Gen.primitive (fn sa =>
@@ -163,10 +163,10 @@ struct
     Gen.sized (fn size =>
       Gen.primitive (fn sa =>
         {leaves = at sa 0 (Gen.listOf (Gen.intRange (1, 3)) leafGen),
-         functors = at sa 1 (Gen.listOf (upTo (Int.min (6, 2 + size div 20)))
+         functors = at sa 1 (Gen.listOf (upTo (Int.min (8, 2 + size div 20)))
                                         (Gen.primitive (fn sb => {param = at sb 0 paramGen, body = at sb 1 bodyGen,
                                                                   result = at sb 2 resultGen}))),
-         apps = at sa 2 (Gen.listOf (upTo (Int.min (7, 2 + size div 15))) appGen),
+         apps = at sa 2 (Gen.listOf (upTo (Int.min (9, 2 + size div 15))) appGen),
          breaks = at sa 3 (Gen.listOf (Gen.return 16) (flag 50)),
          budget = at sa 4 (choice 5), inline = at sa 5 (choice 4), budgetUnits = at sa 6 Gen.bool}))
 
@@ -841,12 +841,16 @@ struct
           val () = if innerExport then (note "inner-structure"; emit ("structure Inner = " ^ #1 (hd inners))) else ()
           val via = #via body andalso not (List.null inners)
           val () = if via then (note "open-inner"; emit ("local open " ^ #1 (List.last inners) ^ " in fun via" ^ K ^ " n = obs (mk n) end")) else ()
-          val probe = Vector.fromList (#probes body @ List.tabulate (19, fn _ => false))
+          val probe = Vector.fromList (#probes body @ List.tabulate (21, fn _ => false))
           fun pr i = Vector.sub (probe, i)
           val () = if pr 12 then (note "equality-tyvar"; emit ("fun member" ^ K ^ " (x : ''a) l = List.exists (fn y => y = x) l")) else ()
           (* a polymorphic value of a typed pattern, and one of a constructor *)
           val () = if pr 16 then (note "polymorphic-typed-value"; emit ("val twice" ^ K ^ " : ('a -> 'a) -> 'a -> 'a = fn f => fn x => f (f x)")) else ()
           val () = if pr 15 andalso #cell made then (note "polymorphic-constructor-value"; emit ("val empty" ^ K ^ " = Nil" ^ K)) else ()
+          (* a ref, an array and a vector of the parameter's type and of t *)
+          val () = if pr 19 then (note "ref-of-parameter-type"; emit ("val cell" ^ K ^ " = ref (X.mk 0)")) else ()
+          val () = if pr 20 then (note "array-of-t"; emit ("val arr" ^ K ^ " = Array.array (2, mk 1)");
+                                  emit ("val vec" ^ K ^ " = Vector.fromList [X.mk 2, X.mk 3]")) else ()
           (* a pattern binding among the body's declarations *)
           val () = if pr 17 then (note "pattern-binding"; emit ("val (lo" ^ K ^ ", hi" ^ K ^ ") = (obs (mk 1), " ^ str "hi" ^ ")")) else ()
           val exnInners = List.filter (fn (_, v : view) => #exn v) inners
@@ -875,6 +879,9 @@ struct
             @ (if pr 16 then ["Int.toString (twice" ^ K ^ " (fn i => i + 1) 3) ^ twice" ^ K ^ " (fn s => s ^ \"!\") \"w\""] else [])
             @ (if #int needs then ["Int.toString (X.mk 2 + 1)"] else [])
             @ (if pr 17 then ["Int.toString lo" ^ K ^ " ^ hi" ^ K] else [])
+            @ (if pr 19 then ["(cell" ^ K ^ " := X.mk 5; Int.toString (X.obs (!cell" ^ K ^ ")))"] else [])
+            @ (if pr 20 then ["(Array.update (arr" ^ K ^ ", 1, mk 4); Int.toString (obs (Array.sub (arr" ^ K ^ ", 1)) + obs (Array.sub (arr" ^ K
+                              ^ ", 0)) + Vector.foldl (fn (x, s) => s + X.obs x) 0 vec" ^ K ^ "))"] else [])
             @ (if pr 18 andalso #tree xview then
                  (note "param:polymorphic-datatype";
                   ["Int.toString (let fun sz X.Leaf = 0 | sz (X.Node (l, _, r)) = sz l + 1 + sz r in sz (X.Node (X.Leaf, X.mk 1, X.Node (X.Leaf, X.mk 2, X.Leaf)))"

@@ -329,14 +329,15 @@ named signatures; polymorphic values and type constructors in parameters
 and results, equality on the parameter's and the body's types, `''a`, a polymorphic datatype spec;
 exceptions in bodies (each application's its own, or the parameter's or an
 inner instance's again), refs and effects (each application runs them once,
-in order), substructures in parameters and results. What a program prints
+in order), refs, arrays and vectors of the parameter's types and the
+body's, substructures in parameters and results. What a program prints
 makes each visible: every instance's results, matches on constructors,
 exceptions handled across instances, counts and equalities. A program is a
 plan of choices made well typed by construction (an argument that does not
 match a parameter falls back to a literal that does), so a failure the
 property finds is shrunk to a small program.
 
-`functors/@generated` runs 20 programs from seed 1, a minute or two;
+`functors/@generated` runs 16 programs from seed 1, a minute or two;
 `functors/@regressions` runs each program of `tests/functors` (in the form
 `bin/rune-functor-gen show` prints: each unit after a line `(* unit FILE
 *)`, and a last line of the modes' options) in every mode.
