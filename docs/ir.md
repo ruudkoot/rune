@@ -55,7 +55,7 @@ of results in globals (see *Low*).
 | `--units` | run the pipeline on one unit, a file, at a time, and link them ([units.md](units.md)): the passes see a unit, with `Pass.whole` false, and `--pass-stats` names each unit before its passes |
 | `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would (there is no bytecode from Mid yet) |
 | `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same |
-| `--functor-budget=N` | with `--functors=functions`, the Mid nodes `expand` may copy for a top-level application and those in its copies (400000 by default; 0 copies none) |
+| `--functor-budget=N` | with `--functors=functions`, the Mid nodes `expand` may copy for a top-level application and those in its copies (1000000 by default; 0 copies none) |
 
 **What `--pass-stats` shows** is the whole compile: the stages add up to
 the process's processor time from its start, which `tests/compiler` holds

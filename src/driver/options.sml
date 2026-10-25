@@ -86,7 +86,7 @@ struct
     \                    whole program's Mid is given back (M6)\n\
     \  --functor-budget=N with --functors=functions, the Mid nodes the copies\n\
     \                    of a top-level application, and of those in them, may\n\
-    \                    hold (400000 by default; 0 makes none)\n\
+    \                    hold (1000000 by default; 0 makes none)\n\
     \  --datatype-tags=O the tags of a datatype's constructors: declared (the\n\
     \                    default), by their declaration; sorted (the default with\n\
     \                    --functors=functions), by their names; or sorted-x,\n\

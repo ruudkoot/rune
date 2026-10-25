@@ -35,7 +35,7 @@ struct
 
   (* --functor-budget: the Mid nodes the copies of a top-level application,
      and of those in them, may hold *)
-  val budget = ref 400000
+  val budget = ref 1000000
   val () = CompilerState.cellRoot ("Expand.budget", budget)
   (* how deep copies of applications in copies go *)
   val maxDepth = 64
@@ -48,6 +48,12 @@ struct
   val () = CompilerState.cellRoot ("Expand.kept", kept)
   val partial = ref 0
   val () = CompilerState.cellRoot ("Expand.partial", partial)
+  (* of those left calls, the ones past the budget; and the most a
+     top-level application copied *)
+  val overBudget = ref 0
+  val () = CompilerState.cellRoot ("Expand.overBudget", overBudget)
+  val most = ref 0
+  val () = CompilerState.cellRoot ("Expand.most", most)
 
   fun bug msg = Error.bug ("expand: " ^ msg)
   fun fresh () = Elaborate.freshStamp ()
@@ -147,11 +153,13 @@ struct
      (* the datatypes the copies declared, each by the one it copies, and
         the instances of applications expanded *)
      copied : (int * int * {params : int list, cons : (int * string * Ty.ty option) list}) list ref,
-     instances : int list ref}
+     instances : int list ref,
+     (* the instances' constructors, as the copies made them *)
+     rebound : (int * {params : int list, cons : (int * string * Ty.ty option) list}) list ref}
 
   fun newState () : state =
     {globalized = IntTable.table 1024, alias = IntTable.table 1024, tuples = IntTable.table 256,
-     casts = IntTable.table 1024, schemes = IntTable.table 4096, copied = ref [], instances = ref []}
+     casts = IntTable.table 1024, schemes = IntTable.table 4096, copied = ref [], instances = ref [], rebound = ref []}
 
   (* ---- copying a body ---- *)
 
@@ -173,6 +181,14 @@ struct
      for what it binds, the types substituted as sigma says, each datatype
      the body declares over what sigma substitutes copied (into copied) *)
   fun copyExp (st : state, sigma0 : image IntMap.map, given : (int * atom) list, e0 : exp) : exp =
+    #1 (copyExpWith (st, sigma0, [], given, e0))
+
+  (* the same, and the datatypes of made (each a body's datatype, by the
+     name of its instance) entered again under their instances' names with
+     their constructors as the copy has them: their types substituted, and
+     the body's other datatypes they name the copy's *)
+  and copyExpWith (st : state, sigma0 : image IntMap.map, made : (int * int) list, given : (int * atom) list, e0 : exp)
+      : exp * unit =
     let
       val sigma = ref sigma0
       val memo : Ty.ty IntTable.table = IntTable.table 256
@@ -315,12 +331,20 @@ struct
       and fundef ({tyvars, params, result, body, ...} : fundef, name') : fundef =
         let val ps = List.map param params
         in {name = name', tyvars = tyvars, params = ps, result = ty result, body = exp body} end
-    in exp e0 end
+      val e = exp e0
+      val () =
+        List.app (fn (c, c') =>
+                    case Ty.datatypeOf c of
+                      SOME {params, cons} =>
+                        #rebound st := (c', {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map ty a)) cons})
+                                       :: !(#rebound st)
+                    | NONE => ()) made
+    in (e, ()) end
 
   (* The body of the functor's function f, its parameter the atom given *)
-  fun copyBody (st : state, sigma : image IntMap.map, f : fundef, arg : atom) : exp =
+  fun copyBody (st : state, sigma : image IntMap.map, made : (int * int) list, f : fundef, arg : atom) : exp =
     case #params f of
-      [(p, _)] => copyExp (st, sigma, [(p, arg)], #body f)
+      [(p, _)] => #1 (copyExpWith (st, sigma, made, [(p, arg)], #body f))
     | _ => bug "a functor's function of other than one parameter"
 
   (* ---- rewriting with what is known ---- *)
@@ -401,6 +425,23 @@ struct
          | _ => (r, false))
     | _ => (r, false)
 
+  (* Whether x of scheme s may be dropped for the atom a: where s abstracts
+     over variables, each use's types must reach all a names of them, as
+     they do through the types a global of a closed scheme is given; not
+     through a function whose own type names them free (ToMid lets one be,
+     a type of its own, and a polymorphic alias abstract over it) *)
+  fun aliasable (st : state) ((vs, _) : scheme, a : atom) : bool =
+    case (vs, a) of
+      ([], _) => true
+    | (_, Global (g, ts)) =>
+        (case IntTable.find (#schemes st, g) of
+           SOME (gs, t) => List.length gs = List.length ts andalso List.all (fn v => List.exists (fn w => w = v) gs) (Ty.gens t)
+         | NONE => false)
+    | (_, Const _) => true
+    | (_, Con0 _) => true
+    | (_, Unit) => true
+    | _ => false
+
   (* x of scheme s, which is the atom a, dropped *)
   fun setAlias (st : state) (x : int, (vs, _) : scheme, a : atom) : unit =
     IntTable.insert (#alias st, x,
@@ -428,7 +469,7 @@ struct
         case e of
           Let (x, s, r, b) =>
             (case fold st (rwRhs st r) of
-               (Atom a, true) => (setAlias st (x, s, a); exp b)
+               (Atom a, true) => if aliasable st (s, a) then (setAlias st (x, s, a); exp b) else Let (x, s, Atom a, exp b)
              | (r', _) => Let (x, s, r', exp b))
         | Fun (fs, b) => Fun (List.map fundef fs, exp b)
         | Join (j, ps, b, sc) => Join (j, ps, exp b, exp sc)
@@ -473,6 +514,44 @@ struct
         | _ => e
     in go e end
 
+  (* whether the variable x is named in e *)
+  fun occurs (x : int, e : exp) : bool =
+    let
+      fun atom a = case a of Var (y, _) => y = x | _ => false
+      fun rhs r =
+        case r of
+          Atom a => atom a
+        | App (f, xs) => atom f orelse List.exists atom xs
+        | Prim (_, _, xs) => List.exists atom xs
+        | Tuple xs => List.exists atom xs
+        | Select (_, a) => atom a
+        | Con (_, _, a) => atom a
+        | Decon (_, _, a) => atom a
+        | ConTag a => atom a
+        | MkExn (c, a) => atom c orelse atom a
+        | ExnCon a => atom a
+        | ExnArg (_, a) => atom a
+        | SetGlobal (_, a) => atom a
+        | _ => false
+      fun exp e =
+        case e of
+          Let (_, _, r, b) => rhs r orelse exp b
+        | Fun (fs, b) => List.exists (fn (f : fundef) => exp (#body f)) fs orelse exp b
+        | Join (_, _, b, sc) => exp b orelse exp sc
+        | Jump (_, xs) => List.exists atom xs
+        | If (a, t, f) => atom a orelse exp t orelse exp f
+        | Handle (b, _, h) => exp b orelse exp h
+        | Raise a => atom a
+        | Return r => rhs r
+        | Mark (_, b) => exp b
+    in exp e end
+
+  (* a function whose type names type variables it does not abstract over
+     (ToMid's, of a lambda a typed pattern binds, which a polymorphic
+     variable is then bound to) *)
+  fun openFun ({tyvars, ...} : fundef, t : Ty.ty) : bool =
+    List.exists (fn g => not (List.exists (fn v => v = g) tyvars)) (Ty.gens t)
+
   fun small (e : exp) : bool =
     let
       fun go (e, n) =
@@ -501,9 +580,28 @@ struct
           Mark (pos, b) => go (SOME pos, b)
         | Let (x, sc, rh, b) =>
             (case fold st (rwRhs st rh) of
-               (Atom a, _) => (setAlias st (x, sc, a); go (mark, b))
+               (Atom a, _) =>
+                 if aliasable st (sc, a) then (setAlias st (x, sc, a); go (mark, b))
+                 else (global x; IntTable.insert (#schemes st, x, sc); value (mark, x, sc, Return (Atom a)); go (mark, b))
              | (rh', _) => (global x; know st (x, sc, rh'); value (mark, x, sc, Return rh'); go (mark, b)))
         | Fun (fs, b) =>
+            if List.exists (fn f => openFun (f, funTy f)) fs then
+              (* the lambda of a polymorphic variable: kept local to the
+                 variable's definition, as a top-level declaration's is *)
+              let
+                fun under (Mark (_, e)) = under e
+                  | under e = e
+              in
+                case (fs, under b) of
+                  ([f], Let (x, sc as (_ :: _, _), Atom (Var (g, [])), b')) =>
+                    if g = #name f andalso not (occurs (g, b')) then
+                      (global x; IntTable.insert (#schemes st, x, sc);
+                       value (mark, x, sc, rewrite st (Fun (fs, Return (Atom (Var (g, []))))));
+                       go (mark, b'))
+                    else rest (mark, e)
+                | _ => rest (mark, e)
+              end
+            else
             (List.app (fn (f : fundef) => (global (#name f); IntTable.insert (#schemes st, #name f, (#tyvars f, funTy f)))) fs;
              emit (Funs (List.map (fn (f : fundef) => {name = #name f, tyvars = #tyvars f, params = #params f,
                                                         result = #result f, body = rewrite st (#body f)}) fs));
@@ -511,7 +609,7 @@ struct
         | Return rh =>
             let val rh' = #1 (fold st (rwRhs st rh))
             in
-              (case rh' of Atom a => setAlias st (r, s, a) | _ => know st (r, s, rh'));
+              (case rh' of Atom a => if aliasable st (s, a) then setAlias st (r, s, a) else () | _ => know st (r, s, rh'));
               value (mark, r, s, Return rh')
             end
         | Join (j, ps, b, sc) =>
@@ -639,7 +737,7 @@ struct
 
   fun program (p : program) : program =
     let
-      val () = (expanded := 0; kept := 0; partial := 0)
+      val () = (expanded := 0; kept := 0; partial := 0; overBudget := 0; most := 0)
       val st = newState ()
       (* the functors' functions the program defines *)
       val fns : fundef IntTable.table = IntTable.table 64
@@ -666,7 +764,7 @@ struct
                 | under e = e
             in
               case under e of
-                Return (Atom a) => (IntTable.insert (#schemes st, g, s); setAlias st (g, s, a))
+                Return (Atom a) => (IntTable.insert (#schemes st, g, s); if aliasable st (s, a) then setAlias st (g, s, a) else ())
               | Return r => know st (g, s, r)
               | _ => IntTable.insert (#schemes st, g, s)
             end
@@ -713,10 +811,13 @@ struct
                              val n = sizeOf f
                            in
                              if not (isSome enc) orelse n > left orelse depth >= maxDepth orelse not (Pass.spend ()) then
-                               (kept := !kept + 1; flush (); plain ())
+                               (kept := !kept + 1;
+                                if n > left then overBudget := !overBudget + 1 else ();
+                                flush (); plain ())
                              else
                                let
                                  val () = IntTable.insert (budgets, root', left - n)
+                                 val () = most := Int.max (!most, !budget - (left - n))
                                  val () = expanded := !expanded + 1
                                  val () = pending := NONE
                                  val enc = valOf enc
@@ -735,13 +836,21 @@ struct
                                                if isSome (markerType rh) then ()
                                                else
                                                  case fold st (rwRhs st rh) of
-                                                   (Atom a, true) => setAlias st (x, sc, a)
+                                                   (Atom a, true) =>
+                                                     if aliasable st (sc, a) then setAlias st (x, sc, a)
+                                                     else (IntTable.insert (#globalized st, x, ()); IntTable.insert (#schemes st, x, sc);
+                                                           emit (Val (x, sc, Return (Atom a))))
                                                  | (rh', _) =>
                                                      (IntTable.insert (#globalized st, x, ()); know st (x, sc, rh');
                                                       emit (Val (x, sc, case mk of SOME pos => Mark (pos, Return rh') | NONE => Return rh'))))
                                             steps
                                  val a' = rwAtom st a
-                                 val body = copyBody (st, sigma, f, a')
+                                 val named = List.mapPartial (fn (c, Body (_, to)) =>
+                                                                  (case Ty.view to of
+                                                                     Ty.Con (c', _, _) => SOME (c, c')
+                                                                   | _ => NONE)
+                                                              | _ => NONE) gs
+                                 val body = copyBody (st, sigma, named, f, a')
                                  val body = case mark of SOME pos => Mark (pos, body) | NONE => body
                                  val () = spine (st, emit, r, s) body
                                  val made = List.map (fn d => (d, SOME root', depth + 1, true)) (List.rev (!made))
@@ -755,6 +864,7 @@ struct
       (* the datatypes the copies declared, entered *)
       val copied = List.rev (!(#copied st))
       val () = List.app (fn (_, s', info) => Ty.bindDatatypeDirect (s', info)) copied
+      val () = List.app Ty.bindDatatypeDirect (List.rev (!(#rebound st)))
       (* the layouts: the datatypes an application left a call takes keep
          the body's layout, whose descriptors were worked out from it *)
       val taken : unit IntMap.map ref = ref IntMap.empty
@@ -785,7 +895,9 @@ struct
       val () =
         if !Pass.stats then
           Pass.eprint ("expand: " ^ Int.toString (!expanded) ^ " applications expanded, " ^ Int.toString (!kept)
-                       ^ " left calls, " ^ Int.toString (!partial) ^ " copies not all definitions\n")
+                       ^ " left calls (" ^ Int.toString (!overBudget) ^ " past the budget), " ^ Int.toString (!partial)
+                       ^ " copies not all definitions; at most " ^ Int.toString (!most)
+                       ^ " nodes copied for a top-level application\n")
         else ()
     in p' end
 end

@@ -241,10 +241,23 @@ struct
           Ty.Con (stamp, _, _) => if Elaborate.hasOpen stamp then Elaborate.openAt (stamp, tag) else NONE
         | _ => NONE
       and opened (ctx, st, desc, fast : value, f : int, fty : Ty.ty, aa : M.atom, res : Ty.ty) : M.exp =
+        let
+          fun fa () = case varAtom (st, f, SOME fty) of A (a, _) => a | R _ => bug "a function of no atom"
+        in
+          case ctx of
+            (* a polymorphic variable bound to it, which a join point's
+               parameter could not be: the function alone, which tests the
+               descriptor itself *)
+            Bind (x, _) =>
+              if isSome (IntTable.find (Ty.binders, x)) andalso not (null (own (st, res)))
+              then deliver (ctx, st, R (M.App (fa (), [aa]), res))
+              else tested (ctx, st, desc, fast, fa (), aa, res)
+          | _ => tested (ctx, st, desc, fast, fa (), aa, res)
+        end
+      and tested (ctx, st, desc, fast, fa, aa, res) =
         branch (ctx, fn ctx =>
                        let
                          val c = fresh ()
-                         val fa = case varAtom (st, f, SOME fty) of A (a, _) => a | R _ => bug "a function of no atom"
                        in
                          M.Let (c, ([], Ty.bool),
                                 M.Prim ("poly_eq", Ty.arrow (Ty.tuple [Ty.int, Ty.int], Ty.bool),

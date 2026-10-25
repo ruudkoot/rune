@@ -82,3 +82,30 @@ end
 structure T1 = Twice (Pair)
 structure T2 = Twice (One)
 val _ = print (Int.toString (T1.total 3) ^ " " ^ Int.toString (T2.total 3) ^ " " ^ Int.toString (T1.B.weight (T1.B.Dot ((1, 1), (2, 2)))) ^ "\n")
+
+(* a polymorphic value of a parameter's open constructor *)
+signature OPEN = sig type size datatype 'a prim = Eq of size | Other of 'a val bits : int -> size val show : size -> string end
+functor Prims (P : OPEN) = struct
+  val size = P.bits 32
+  val eq = P.Eq size
+  fun name (P.Eq s) = "eq " ^ P.show s | name (P.Other _) = "other"
+  val both = (name (eq : int P.prim), name (eq : string P.prim))
+end
+structure Wide = Prims (struct type size = int * int datatype 'a prim = Eq of size | Other of 'a
+                               fun bits n = (n, n div 8) fun show (a, b) = Int.toString a ^ "/" ^ Int.toString b end)
+structure Narrow = Prims (struct type size = int datatype 'a prim = Eq of size | Other of 'a
+                                 fun bits n = n fun show n = Int.toString n end)
+val _ = print (#1 Wide.both ^ " " ^ #2 Wide.both ^ " " ^ #1 Narrow.both ^ " " ^ Wide.name Wide.eq ^ "\n")
+
+(* a polymorphic value given by a typed pattern, of a lambda (MLton's IntSize.memoize) *)
+functor Sizes () = struct
+  datatype t = T of {bits : int}
+  val allVector = Vector.tabulate (3, fn i => SOME (T {bits = i}))
+  val memoize : (t -> 'a) -> t -> 'a =
+    fn f => let val v = Vector.map (fn opt => Option.map f opt) allVector
+            in fn T {bits = b} => valOf (Vector.sub (v, b)) end
+end
+structure Sz = Sizes ()
+val double = Sz.memoize (fn Sz.T {bits} => bits * 2)
+val show = Sz.memoize (fn Sz.T {bits} => Int.toString bits)
+val () = print (Int.toString (double (Sz.T {bits = 2})) ^ " " ^ show (Sz.T {bits = 1}) ^ "\n")
