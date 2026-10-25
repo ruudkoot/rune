@@ -79,7 +79,7 @@ What it rests on:
 | M4 | Fingerprints by structure; gate G1 | H | done (2026-10-24) |
 | M5 | Prototype: functors compiled once | F | done (2026-10-25) |
 | M6 | Prototype: the expansion | F | done (2026-10-25) |
-| G2 | Go or no-go for M7 and M8 (the owner's) | F | the evidence is in; the owner's to decide |
+| G2 | Go or no-go for M7 and M8 (the owner's) | F | go if inline functors bring performance back to today's (the owner, 2026-10-25); the evidence is in |
 | M7 | Functors compiled once | F | not started |
 | M8 | Nested functors that do not blow up | F | not started |
 | M9 | Retire | | not started |
@@ -3278,6 +3278,53 @@ What the prototypes found against the roadmap:
   pattern's lambda bound to a polymorphic value, applications inside a
   `local` block, and an open constructor bound to a polymorphic variable.
   Each is in `tests/lang/mod.functor.functions_expand`.
+
+**Inline functors (the owner's ruling, 2026-10-25).** In place of D2 C, the
+owner asked for a way to mark functors to be copied in every unit that
+applies them -- the Basis's, and HOL4's `Table` -- measured with and
+without, and ruled: go at G2 if that brings performance back to today's.
+Built, behind the same flag: `inline functor F ... end` in a library's
+build file (all 19 of the Basis's functors are marked in
+`lib/basis/library.build`) and `--inline-functor=F` for a program; a marked
+functor is still compiled once to a function, its Mid goes into its unit's
+basis, and every unit that applies it expands it, recording a usage `inl F`
+that holds by the body and what it relies on. The REPL and `Compiler.compile`
+honour the flag, so HOL4 was built under it. Ratios to today in the same
+mode, bytecode instructions [machine instructions]:
+
+| | flag, units | flag and marks, units | flag and marks, whole |
+|---|---:|---:|---:|
+| E4's Word benchmark | 1.459 [1.963] | 0.977 [0.966] | 0.970 [0.952] |
+| `checksum` | 1.148 [1.462] | 0.920 [0.865] | 0.892 [0.782] |
+| `fxp` | 1.094 [1.210] | 0.998 [1.017] | 1.000 [0.992] |
+| `wc-input1`, `wc-scanStream` | 1.181, 1.190 | 0.982 [0.973], 1.000 [1.002] | 1.000 |
+| `hamlet` | 0.989 [1.012] | 0.989 [1.014] | 1.000 [0.968] |
+| `ray`, `peek` | 1.080, 1.015 | 0.994 [0.990], 1.000 [1.000] | 1.000 |
+| `wordcount` | 1.006 [1.041] | 0.998 [1.079] | 1.000 [0.999] |
+| the `Table` stand-in (`--inline-functor=OrdMapFn`) | 1.477 [1.773] | 1.000 [1.000] | 1.000 |
+| the benchmark set (35), geometric mean | 1.004 [0.994] | 0.981 [0.961] | 0.997 [0.983] |
+| HOL4's kernel work (machine; `--inline-functor=Table`) | 0.976 | 0.976 | |
+| HOL4 built to `hol.state` (all processes) | 1.000 | 0.999 | |
+
+- What is left above today is in machine instructions in units only:
+  `fxp` 1.017, `hamlet` 1.014 (the collector's minor pass, the flag's and
+  not the marks'), and `wordcount` 1.079 on an empty input: a unit of a
+  marked functor keeps its function beside the copies, and the set's units
+  are 1.29 times today's bytes, which a short run pays to load.
+- What the marks cost to compile: the benchmark set in units 1.090 cold and
+  1.073 warm; MLton's 606 files in units still 0.963 (`--no-cache`), 0.969
+  cold, 0.967 warm, and an edit of a leaf or of a functor's body 0.345 and
+  0.331.
+- Fixed on the way: an expansion copied a hidden datatype of a recursive
+  group once per application where the group's visible type was one
+  instance, so code built and matched two copies (`fxp` under `--lint`);
+  each is now copied once for what the application makes of the names it
+  reaches (`tests/lang/mod.functor.functions_expand`).
+- Found in today's REPL, with the flag off, not fixed: after `use` of two
+  files and an edit of the body of a functor one applies, using both again
+  prints the old value; and a structure bound to another before the latter's
+  file is used again from the cache follows the new one. The REPL under the
+  flag gets both right.
 
 The prototypes are on this branch, behind the flag; with it off the
 compiler's output is the same bytes, but compiling the compiler itself
