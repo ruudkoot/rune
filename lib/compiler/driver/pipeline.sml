@@ -61,6 +61,9 @@ struct
     let
       val mid = midStage (SOME Lambda.show) ToMid.program lam
       val () = if not (!Pass.whole) andalso !keepMid then lastMid := SOME (MidCanon.capture mid) else ()
+      (* --functors=functions: the marked functors' functions, for the
+         unit's basis (M6b) *)
+      val () = if !Elaborate.functorFunctions andalso not (!Pass.whole) then Expand.keepMarked mid else ()
     in lowOfMid mid end
 
   (* Low to the code of the target --target names *)

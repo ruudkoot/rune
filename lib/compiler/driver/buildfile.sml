@@ -21,6 +21,7 @@ struct
     | Annotate of string list * dec list
     | Cache of string
     | Libraries of string list                   (* the libraries a library is written on *)
+    | Inline of string list                      (* functors to inline across units (M6b) *)
 
   exception Error of string
   exception LocatedError of Source.span * string
@@ -67,7 +68,7 @@ struct
     handle LocatedError (_,message) => raise Error (path ^ ": " ^ message)
 
   val keywords = ["files", "group", "local", "in", "end", "library", "use", "implements", "annotate", "cache",
-                  "libraries"]
+                  "libraries", "inline"]
 
   fun parseUsing {path,text,recover,pathAt,wanted} : dec list =
     let
@@ -141,6 +142,14 @@ struct
             in Annotate (a, ds) end
         | W "cache" => Cache (pathWord "directory")
         | W "libraries" => Libraries (paths "library")
+        | W "inline" =>
+            let
+              val () = expect "functor"
+              fun names () = case next () of
+                               W "end" => []
+                             | W n => n :: names ()
+                             | S n => n :: names ()
+            in Inline (names ()) end
         | word as W s => if List.exists (fn k => k = s) keywords then error ("unexpected " ^ s) else File (reference ("source",word))
         | word as S _ => File (reference ("source",word))
     in

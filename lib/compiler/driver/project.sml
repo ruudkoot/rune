@@ -8,7 +8,7 @@ struct
     | SUse of string * step list
     | SImplements of string * step list
   type input={path:string,text:string,revision:string}
-  type plan={steps:step list,caches:string list,libraries:string list,inputs:input list}
+  type plan={steps:step list,caches:string list,libraries:string list,inputs:input list,inline:string list}
   exception Invalid of string
   fun modeOf (default,annotations)=List.foldl (fn (annotation,mode) =>
     getOpt (Source.modeNamed annotation,mode)) default annotations
@@ -85,6 +85,7 @@ struct
     let val file=normalize windows file
         val caches=ref []
         val libraries=ref []
+        val inline=ref [] : string list ref
         val inputs=ref [] : input list ref
         val captured=ref StringMap.empty : input StringMap.map ref
         val completed=ref StringMap.empty : step list StringMap.map ref
@@ -125,11 +126,12 @@ struct
                 | BuildFile.Annotate (more,declarations) => steps (annotations @ more,declarations)
                 | BuildFile.Cache directory => (caches:=path directory :: !caches;[])
                 | BuildFile.Libraries names => (libraries:= !libraries @ names;[])
+                | BuildFile.Inline names => (inline:= !inline @ names;[])
               val result=steps (annotations,declarations)
               val ()=completed:=StringMap.insert (!completed,key,result)
           in result end end
         val steps=read (file,[],[])
-    in {steps=steps,caches=List.rev (!caches),libraries= !libraries,inputs=List.rev (!inputs)} end
+    in {steps=steps,caches=List.rev (!caches),libraries= !libraries,inputs=List.rev (!inputs),inline= !inline} end
     handle BuildFile.Error message => raise Invalid message | Deps.Graph message => raise Invalid message
   fun units steps =
     let val used=ref [] : string list ref

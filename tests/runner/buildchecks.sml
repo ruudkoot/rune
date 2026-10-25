@@ -61,10 +61,19 @@ struct
       val () = if status = 0 andalso lines listed = expected then () else say "FAIL compiler layout: bootstrap use/order differs\n"
       val (status, compiled, _) = invoke "compiler" [fromRoot (env ("RUNE", "bin/rune")), "--build-list", dir ^ "/root.build"]
       val () = if status = 0 andalso lines compiled = expected then () else say "FAIL compiler layout: compiler build-list differs\n"
-      val () = write (dir ^ "/library.build", "annotate \"demand\" in use nested/part.build end\n")
+      (* functors marked to be inlined across units (docs/build.md): no file
+         to either list, and the manifest's # inline: line *)
+      val () = write (dir ^ "/inline.build", "inline functor Make Other end\nuse nested/part.build\nfiles second.sml end\n")
+      val (status, listed, _) = invoke "inline-bootstrap" ["sh", fromRoot "scripts/build-files.sh", dir ^ "/inline.build"]
+      val () = if status = 0 andalso lines listed = expected then () else say "FAIL compiler layout: bootstrap list with inline functor differs\n"
+      val (status, compiled, _) = invoke "inline-compiler" [fromRoot (env ("RUNE", "bin/rune")), "--build-list", dir ^ "/inline.build"]
+      val () = if status = 0 andalso lines compiled = expected then () else say "FAIL compiler layout: build-list with inline functor differs\n"
+      val () = write (dir ^ "/library.build", "inline functor Make Other end\nannotate \"demand\" in use nested/part.build end\n")
       val (status, _, _) = invoke "library" [fromRoot (env ("RUNE", "bin/rune")), "--basis-index", dir]
       val () = if status = 0 andalso String.isSubstring "nested/first.sml | demand" (read (dir ^ "/MANIFEST")) then ()
                else say "FAIL compiler layout: library index did not follow annotated use\n"
+      val () = if String.isSubstring "\n# inline: Make Other\n" (read (dir ^ "/MANIFEST")) then ()
+               else say "FAIL compiler layout: library index did not carry the inline functors\n"
       val () = write (dir ^ "/cycle.build", "use cycle.build\n")
       val (status, _, errors) = invoke "cycle" ["sh", fromRoot "scripts/build-files.sh", dir ^ "/cycle.build"]
       val ()=if status <> 0 andalso String.isSubstring "cyclic" errors then () else say "FAIL compiler layout: cyclic use was accepted\n"

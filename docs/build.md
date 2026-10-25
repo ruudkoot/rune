@@ -35,6 +35,8 @@ dec      ::= path                            a file, compiled in the basis befor
            | "cache" path                    where the cache of the build is
            | "libraries" name ... "end"      libraries selected by this build,
                                              or dependencies in library metadata
+           | "inline" "functor" id ... "end" functors copied into every unit that
+                                             applies them (below; a prototype)
 exports  ::= "(" export "," ... ")"          export ::= kind id
 kind     ::= "structure" | "signature" | "functor" | "type"
 path     ::= a file's path, relative to the build file's directory, in which
@@ -147,6 +149,30 @@ read in the default mode, whatever its build file and the command line
 say ([units.md](units.md), *Source modes*), and the compiler refuses a
 name beyond ASCII in it; should a library's files ever be read in
 another mode, its exports stay ASCII all the same.
+
+## Functors inlined across units
+
+`inline functor F G ... end` marks functors to be copied into every unit
+that applies them. This is a prototype, and only `--functors=functions`
+reads it (docs/plans/functors-units.md, M6b). With that flag a functor is
+compiled once, to a function, and the expansion copies an application back
+in only where the functor is declared in the same unit. A marked functor is
+also compiled once. Its unit's basis also keeps the function's Mid, so a
+later unit that applies it expands the application in its own Mid, as it
+does for its own functors and within the same budget. Such a unit depends on
+the body: an edit of the body compiles it again, and an edit that leaves the
+body alone does not. The declaration names functors and declares nothing,
+so the sources stay standard SML. `--build-list` and the hosts' build files
+ignore it.
+
+The Basis Library marks its own functors in `lib/basis/library.build`.
+These are the functors that make its structures in units other than their
+own: the words, ints, vectors, arrays and slices, the packing, and the
+streams. `--basis-index` writes them to the manifest (`# inline:`), and a
+compile under the flag marks them unless `--no-inline-functors` is given.
+A program whose sources must stay as they are marks its functors on the
+command line: `--inline-functor=Table` (repeatable, or a comma list), or
+`inline functor ... end` in the program's own build file.
 
 ## Virtual modules
 

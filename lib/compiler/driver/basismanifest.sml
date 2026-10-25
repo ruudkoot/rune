@@ -201,6 +201,24 @@ struct
             end
     in lines [] before TextIO.closeIn ins end
 
+  (* The functors a library's MANIFEST marks to be inlined across units, on
+     its # inline: lines (its build file's `inline functor ... end`; M6b) *)
+  fun inlineFunctors (dir : string) : string list =
+    let
+      val ins = TextIO.openIn (dir ^ "/MANIFEST")
+      fun lines acc =
+        case TextIO.inputLine ins of
+          NONE => List.rev acc
+        | SOME l =>
+            let val l = trim l
+            in
+              if String.isPrefix "# inline:" l
+              then lines (List.rev (String.tokens Char.isSpace (String.extract (l, 9, NONE))) @ acc)
+              else lines acc
+            end
+    in lines [] before TextIO.closeIn ins end
+    handle IO.Io _ => []
+
   (* The directories of the named libraries and of those they are written on,
      each once, every library after the ones it names. *)
   fun libraries (libDir : string, names : string list) : string list =

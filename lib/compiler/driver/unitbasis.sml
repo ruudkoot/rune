@@ -103,6 +103,13 @@ struct
   (* A session begins: what exists now is built in. *)
   (* each usage's fingerprint, by its binder and key, once worked out
      (fingerprintAt) *)
+  (* M6b: the hash of each inlined functor's Mid, by its function's global
+     (the usage "inl NAME"); and the names a read function's own names get,
+     below 0, each read its own *)
+  val inlineHashes : string IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("UnitBasis.inlineHashes", inlineHashes, IntTable.copy)
+  val privateNext = ref ~2
+  val () = CompilerState.cellRoot ("UnitBasis.privateNext", privateNext)
   val fpMemo : string option StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("UnitBasis.fpMemo", fpMemo)
 
@@ -457,7 +464,19 @@ struct
            (case IntMap.find (!Translate.primAliases, stamp) of
               SOME p => (P.byte (w, 1); P.string (w, p))
             | NONE => P.byte (w, 0));
-           P.bool (w, IntMap.member (!Lower.knownBefore, stamp)))
+           P.bool (w, IntMap.member (!Lower.knownBefore, stamp));
+           (* --functors=functions: the global it is (M6b), which a use of
+              it is, and what that one is to a call *)
+           if !Elaborate.functorFunctions andalso !anchorValues then
+             ((case IntTable.find (!Expand.globalAliases, stamp) of
+                 SOME h =>
+                   (P.byte (w, 1); P.string (w, anchor (kStamp, h));
+                    P.option P.string (w, IntMap.find (!Translate.primAliases, h));
+                    P.option P.string (w, IntTable.find (!Expand.primGlobals, h));
+                    P.bool (w, IntMap.member (!Lower.knownBefore, h)))
+               | NONE => P.byte (w, 0));
+              P.option P.string (w, IntTable.find (!Expand.primGlobals, stamp)))
+           else ())
       | Env.Con {scheme, info} => (P.byte (w, 21); P.string (w, #name info); P.int (w, #tag info); ty scheme)
       | Env.Exn {ty = t, info} => (P.byte (w, 22); anchored (#stamp info); ty t)
       | Env.Prim {scheme, name} => (P.byte (w, 23); P.string (w, name); ty scheme)
@@ -567,6 +586,9 @@ struct
       let val i = String.extract (key, 6, NONE)
       in if isSome (StringMap.find (!byIdentity, i)) then i else "" end
     else if key = "whole on" then (if !wholeFingerprints then "on" else "")
+    (* a functor inlined where it is applied (M6b): the unit that bound it,
+       and its Mid's hash where that unit is another *)
+    else if String.isPrefix "inl " key then binderOf ("fun " ^ String.extract (key, 4, NONE))
     else
     case String.fields (fn c => c = #" ") key of
       [kind, name] =>
@@ -597,6 +619,9 @@ struct
       | "s" => Option.map (fn e => fpEnv ((binderOfKey key, name ^ "."), e)) (Env.findStr' (env, path))
       | "sig" => Option.map fpSigma (StringMap.find (!sessionSigs, name))
       | "fun" => (case StringMap.find (!sessionFuns, name) of SOME f => fpFunctor f | NONE => NONE)
+      | "inl" => (case StringMap.find (!sessionFuns, name) of
+                    SOME (Elaborate.FunInfo {code = SOME g, ...}) => IntTable.find (!inlineHashes, g)
+                  | _ => NONE)
       | "fix" => SOME (hashAt ("fix", case StringMap.find (#table (!sessionFixity), name) of
                                         NONE => "nonfix"
                                       | SOME Fixity.Nonfix => "nonfix"
@@ -713,6 +738,9 @@ struct
       Elaborate.restore (#snapshot s); Translate.primAliases := #primAliases s; Lower.knownBefore := #knownBefore s;
       IntTable.removeRange (Ty.binders, s0, s1);
       IntTable.removeRange (Ty.exnArgs, s0, s1);
+      IntTable.removeRange (!Expand.globalAliases, s0, s1);
+      IntTable.removeRange (!Expand.primGlobals, s0, s1);
+      IntTable.removeRange (!inlineHashes, s0, s1);
       IntTable.removeRange (Ty.realizations, t0, t1);
       Ty.pinned := IntMap.filteri (fn (stamp, _) => stamp < t0 orelse stamp >= t1) (!Ty.pinned);
       Ty.openTypes := IntMap.filteri (fn (stamp, _) => stamp < t0 orelse stamp >= t1) (!Ty.openTypes);
@@ -730,6 +758,8 @@ struct
     in
       IntTable.removeRange (Ty.binders, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
       IntTable.removeRange (Ty.exnArgs, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
+      IntTable.removeRange (!Expand.globalAliases, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
+      IntTable.removeRange (!Expand.primGlobals, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
       IntTable.removeRange (Ty.realizations, Vector.sub (at, kTycon), Vector.sub (now, kTycon));
       Ty.datatypes := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.datatypes);
       Ty.pinned := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.pinned);
@@ -1053,7 +1083,44 @@ struct
                   sigma (e, {bound = generated, env = result, origin = Env.Unknown}))
                (w, summary);
       writeOrigin (w, binding);
-      case code of SOME g => name (e, kStamp, g) | NONE => bug "a functor's function without its global"
+      (case code of SOME g => name (e, kStamp, g) | NONE => bug "a functor's function without its global");
+      (* a functor marked to be inlined (M6b): its function's Mid, its
+         globals and type names named as the basis names them, which makes
+         every one a name a later unit may name; and its parameter's open
+         datatypes *)
+      P.option (fn (w, f) =>
+                  let
+                    val p0 = !(#used w)
+                    val named : int list ref = ref []
+                    val seen : unit IntTable.table = IntTable.table 64
+                    fun global s =
+                      (if isSome (IntTable.find (seen, s)) then () else (IntTable.insert (seen, s, ()); named := s :: !named);
+                       name (e, kStamp, s))
+                    fun prim h = (P.option P.string (w, IntMap.find (!Translate.primAliases, h));
+                                  P.option P.string (w, IntTable.find (!Expand.primGlobals, h)))
+                  in
+                    MidCodec.write (w, {stamp = global, tycon = fn c => name (e, kTycon, c),
+                                        tvar = fn v => name (e, kTvar, v), file = fn f => P.string (w, f)}) f;
+                    P.list (fn (_, c) => name (e, kTycon, c))
+                           (w, List.filter Ty.isOpen (List.map #stamp (#bound paramSig)));
+                    (* what the copies a later unit makes take of the globals
+                       the body names, which a change of makes the body
+                       another (its hash, the usage "inl F"): each one's
+                       primitive, the global it is and that one's, whether
+                       it is a function known by name, and the hash of a
+                       marked functor's function's body it calls *)
+                    P.list (fn (w, g) =>
+                              (prim g;
+                               P.option (fn (_, h) => (name (e, kStamp, h); prim h)) (w, IntTable.find (!Expand.globalAliases, g));
+                               P.bool (w, IntMap.member (!Lower.knownBefore, g));
+                               P.option P.string (w, IntTable.find (!inlineHashes, g))))
+                           (w, List.rev (!named));
+                    case code of
+                      SOME g => IntTable.insert (!inlineHashes, g,
+                                                 P.hash (CharArraySlice.vector (CharArraySlice.slice (!(#bytes w), p0, SOME (!(#used w) - p0)))))
+                    | NONE => ()
+                  end)
+               (w, case code of SOME g => IntTable.find (!Expand.declaredBodies, g) | NONE => NONE)
     end
 
   and funinfo (e : enc, Elaborate.FunInfo {param, paramSig, body, defEnv, allowPrim, defSigs, defFuns, summary, binding,...}) : unit =
@@ -1118,7 +1185,12 @@ struct
            P.option (fn (_, t) => ty (e, t)) (w, IntTable.find (Ty.binders, v));
            P.option (P.option (fn (_, t) => ty (e, t))) (w, IntTable.find (Ty.exnArgs, v));
            P.option P.string (w, IntMap.find (!Translate.primAliases, v));
-           P.bool (w, IntMap.member (!Lower.knownBefore, v)))
+           P.bool (w, IntMap.member (!Lower.knownBefore, v));
+           (* --functors=functions: the global it is (Expand.globalAliases, M6b) *)
+           if !Elaborate.functorFunctions then
+             (P.option (fn (_, h) => name (e, kStamp, h)) (w, IntTable.find (!Expand.globalAliases, v));
+              P.option P.string (w, IntTable.find (!Expand.primGlobals, v)))
+           else ())
         else if k = kTycon then
           (P.byte (w, 2); P.nat (w, ownNumber (e, k, v));
            P.option (fn (w, {params, cons} : Ty.datatypeInfo) =>
@@ -1777,6 +1849,35 @@ struct
                                in {generated = bound, result = result, counts = (0, 0, 0)} end) r
           val binding = readOrigin r
           val code = rname (d, kStamp)
+          (* a marked functor's Mid (M6b): what an application of it in a
+             later unit expands *)
+          val () =
+            case P.rbyte r of
+              0 => ()
+            | 1 =>
+                let
+                  val p0 = !(#pos r)
+                  val base = !privateNext
+                  val most = ref 0
+                  fun local' i = (if i > !most then most := i else (); base - i)
+                  val (body, names) =
+                    MidCodec.read (r, {stamp = fn () => rname (d, kStamp), tycon = fn () => rname (d, kTycon),
+                                       tvar = fn () => rname (d, kTvar), file = fn () => P.rstring r, local' = local'})
+                    handle MidCodec.Bad m => raise P.Bad m
+                  val opens = P.rlist (fn _ => rname (d, kTycon)) r
+                  fun prim () = (P.roption P.rstring r; P.roption P.rstring r; ())
+                  val _ = P.rlist (fn _ => (prim (); P.roption (fn _ => (rname (d, kStamp); prim ())) r;
+                                            P.rbool r; P.roption P.rstring r)) r
+                  val p1 = !(#pos r)
+                in
+                  privateNext := base - !most - 1;
+                  IntTable.insert (!Expand.importedNames, code, names);
+                  List.app Ty.markOpen opens;
+                  IntTable.insert (!Expand.imported, code, body);
+                  IntTable.insert (!Elaborate.inlinedFunctions, code, ());
+                  IntTable.insert (!inlineHashes, code, P.hash (String.substring (#s r, p0, p1 - p0)))
+                end
+            | _ => raise P.Bad "not an option"
           val f =
             Elaborate.FunInfo
               {param = param, paramSig = paramSig, body = Ast.StrStruct ([], {file = file, start = at, stop = at}),
@@ -1816,6 +1917,10 @@ struct
               val exnArg = P.roption (P.roption (fn _ => rty d)) r
               val alias = P.roption P.rstring r
               val known = P.rbool r
+              val same = if !Elaborate.functorFunctions then P.roption (fn _ => rname (d, kStamp)) r else NONE
+              val () = Option.app (fn h => IntTable.insert (!Expand.globalAliases, v, h)) same
+              val prim = if !Elaborate.functorFunctions then P.roption P.rstring r else NONE
+              val () = Option.app (fn p => IntTable.insert (!Expand.primGlobals, v, p)) prim
             in
               Option.app (fn t => Ty.bindVar (v, t)) binder;
               Option.app (fn a => Ty.bindExn (v, a)) exnArg;

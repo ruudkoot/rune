@@ -110,6 +110,9 @@ struct
     (* the prototypes of functors-units.md's M5, where on: nothing where
        off, which keeps the key it had before them *)
     @ (if !Elaborate.functorFunctions then [("functors", "functions")] else [])
+    (* the functors inlined across units (M6b): what a unit's basis keeps *)
+    @ (if !Elaborate.functorFunctions andalso not (StringMap.isEmpty (!Elaborate.inlineFunctors))
+       then [("inline", String.concatWith "," (StringMap.listKeys (!Elaborate.inlineFunctors)))] else [])
     @ (case !Types.tagOrder of
          Types.TagsDeclared => []
        | order => [("datatype-tags", Types.tagOrderName order)])

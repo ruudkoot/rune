@@ -58,6 +58,74 @@ struct
   fun bug msg = Error.bug ("expand: " ^ msg)
   fun fresh () = Elaborate.freshStamp ()
 
+  (* Functors inlined across units (M6b; Elaborate.inlineFunctors): the
+     functions of the marked functors a unit declares, as ToMid made them,
+     by their globals, for its basis (UnitBasis.funcode); and those of the
+     marked functors of the units before it, as their bases gave them, which
+     a unit's applications of them expand as its own functors' *)
+  val declaredBodies : fundef IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Expand.declaredBodies", declaredBodies, IntTable.copy)
+  val imported : fundef IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Expand.imported", imported, IntTable.copy)
+  (* and the names of the functions each binds (Translate.funNames, which
+     each unit's translation begins empty), entered where it is copied *)
+  val importedNames : (int * string) list IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Expand.importedNames", importedNames, IntTable.copy)
+
+  (* Globals that are other globals (M6b): g whose definition, after the
+     expansion, is the global h at the types g abstracts over -- what a copy
+     binds to a primitive or to another's value (`val andb = Word.andb`),
+     under an application's name. A unit's, for its basis (UnitBasis), and
+     those of the units before it, as their bases gave them: a use of g in a
+     later unit is one of h, as it is in the unit and in a whole program,
+     where the expansion's aliases make it so; and a call of h, where h is
+     bound to a primitive (Translate.primAliases), the primitive's (primCall) *)
+  val globalAliases : int IntTable.table ref = ref (IntTable.table 64)
+  val () = CompilerState.refRoot ("Expand.globalAliases", globalAliases, IntTable.copy)
+  (* and functions of the top level that apply a primitive to their
+     parameter (or its fields), as what a copy binds to a primitive is
+     (`val length = size`): a unit's, for its basis, and those of the units
+     before it; a call of one in a later unit is the primitive's, as a call
+     of a name Translate.primAliases has is *)
+  val primGlobals : string IntTable.table ref = ref (IntTable.table 64)
+  val () = CompilerState.refRoot ("Expand.primGlobals", primGlobals, IntTable.copy)
+
+  (* the primitive a function applies to its parameter, or to its fields
+     in order, and gives back *)
+  fun primOfFunction ({params, body, ...} : fundef) : string option =
+    let
+      fun under (Mark (_, e)) = under e
+        | under e = e
+      fun arity p = SOME (Translate.primArity p) handle Error.Bug _ => NONE
+    in
+      case params of
+        [(x, _)] =>
+          let
+            fun go (e, fields) =
+              case under e of
+                Let (y, ([], _), Select (i, Var (x', [])), b) =>
+                  if x' = x andalso i = List.length fields then go (b, fields @ [y]) else NONE
+              | Return (Prim (p, _, args)) =>
+                  (case (fields, args) of
+                     ([], [Var (x', [])]) => if x' = x andalso arity p = SOME 1 then SOME p else NONE
+                   | (_ :: _ :: _, _) =>
+                       if List.length args = List.length fields
+                          andalso ListPair.all (fn (Var (y, []), z) => y = z | _ => false) (args, fields)
+                          andalso arity p = SOME (List.length fields)
+                       then SOME p else NONE
+                   | _ => NONE)
+              | _ => NONE
+          in go (body, []) end
+      | _ => NONE
+    end
+
+  (* the marked functors' functions p defines, kept (a unit's, before its
+     passes) *)
+  fun keepMarked (p : program) : unit =
+    List.app (fn Funs fs => List.app (fn (f : fundef) => if isSome (IntTable.find (!Elaborate.markedFunctions, #name f))
+                                                         then IntTable.insert (!declaredBodies, #name f, f) else ()) fs
+               | _ => ()) p
+
   (* a type name of its own for a datatype a copy declares: after the
      names MidCanon gave, in a whole program, else the elaborator's next *)
   fun freshTycon () : int =
@@ -366,7 +434,13 @@ struct
         (case IntTable.find (#alias st, x) of
            SOME f => f ts
          | NONE => if isSome (IntTable.find (#globalized st, x)) then Global (x, ts) else a)
-    | Global (g, ts) => (case IntTable.find (#alias st, g) of SOME f => f ts | NONE => a)
+    | Global (g, ts) =>
+        (case IntTable.find (#alias st, g) of
+           SOME f => f ts
+         | NONE =>
+             (* a unit's: a global of a unit before it that is another *)
+             if !Pass.whole then a
+             else case IntTable.find (!globalAliases, g) of SOME h => Global (h, ts) | NONE => a)
     | _ => a
 
   fun rwRhs (st : state) (r : rhs) : rhs =
@@ -462,6 +536,54 @@ struct
           | _ => ())
      | _ => ())
 
+  (* A call of a global bound to a primitive (Translate.primAliases), which
+     an alias made of a name of a copy's binding, the primitive's
+     application, as Translate makes a call of the name: the steps that
+     take its argument apart, each a variable's, and the primitive's step *)
+  fun primCall (st : state) (r : rhs) : ((int * Ty.ty * rhs) list * rhs) option =
+    case r of
+      App (Global (h, ts), [a]) =>
+        (case (case IntMap.find (!Translate.primAliases, h) of
+                 SOME p => SOME p
+               | NONE => if !Pass.whole then NONE else IntTable.find (!primGlobals, h)) of
+           NONE => NONE
+         | SOME p =>
+             let
+               val sc = case IntTable.find (#schemes st, h) of
+                          SOME s => SOME s
+                        | NONE => (SOME (ToMid.globalScheme h) handle Error.Bug _ => NONE)
+             in
+               case sc of
+                 SOME (vs, t) =>
+                   if List.length vs <> List.length ts then NONE
+                   else
+                     let
+                       val pty = if null vs then t
+                                 else Ty.subst (ListPair.foldl (fn (v, u, m) => IntMap.insert (m, v, u)) IntMap.empty (vs, ts)) t
+                       val n = Translate.primArity p
+                     in
+                       case Ty.view pty of
+                         Ty.Arrow (d, _) =>
+                           if n = 1 then SOME ([], Prim (p, pty, [a]))
+                           else
+                             (case Ty.view d of
+                                Ty.Tuple ds =>
+                                  if n > 1 andalso List.length ds = n then
+                                    let val xs = List.map (fn d => (fresh (), d)) ds
+                                    in SOME (ListPair.map (fn ((x, d), i) => (x, d, Select (i, a))) (xs, List.tabulate (n, fn i => i)),
+                                             Prim (p, pty, List.map (fn (x, _) => Var (x, [])) xs))
+                                    end
+                                  else NONE
+                              | _ => NONE)
+                       | _ => NONE
+                     end
+               | NONE => NONE
+             end)
+    | _ => NONE
+
+  fun withSteps (steps : (int * Ty.ty * rhs) list, e : exp) : exp =
+    List.foldr (fn ((x, t, r), e) => Let (x, ([], t), r, e)) e steps
+
   (* An expression rewritten with what is known *)
   fun rewrite (st : state) (e : exp) : exp =
     let
@@ -471,14 +593,19 @@ struct
           Let (x, s, r, b) =>
             (case fold st (rwRhs st r) of
                (Atom a, true) => if aliasable st (s, a) then (setAlias st (x, s, a); exp b) else Let (x, s, Atom a, exp b)
-             | (r', _) => Let (x, s, r', exp b))
+             | (r', _) =>
+                 case primCall st r' of
+                   SOME (steps, r'') => withSteps (steps, Let (x, s, r'', exp b))
+                 | NONE => Let (x, s, r', exp b))
         | Fun (fs, b) => Fun (List.map fundef fs, exp b)
         | Join (j, ps, b, sc) => Join (j, ps, exp b, exp sc)
         | Jump (j, xs) => Jump (j, List.map atom xs)
         | If (a, t, f) => If (atom a, exp t, exp f)
         | Handle (b, x, h) => Handle (exp b, x, exp h)
         | Raise a => Raise (atom a)
-        | Return r => Return (#1 (fold st (rwRhs st r)))
+        | Return r =>
+            let val r' = #1 (fold st (rwRhs st r))
+            in case primCall st r' of SOME (steps, r'') => withSteps (steps, Return r'') | NONE => Return r' end
         | Mark (pos, b) => Mark (pos, exp b)
       and fundef ({name, tyvars, params, result, body} : fundef) : fundef =
         {name = name, tyvars = tyvars, params = params, result = result, body = exp body}
@@ -659,7 +786,10 @@ struct
         | Return (App (Global (g, _), [a])) =>
             (case IntTable.find (fns, g) of
                SOME f => SOME (List.rev steps, f, a, mark)
-             | NONE => NONE)
+             | NONE =>
+                 case IntTable.find (!imported, g) of
+                   SOME f => SOME (List.rev steps, f, a, mark)
+                 | NONE => NONE)
         | _ => NONE
     in go (NONE, [], e) end
 
@@ -739,7 +869,9 @@ struct
   (* whether e calls one of the functors' functions fns *)
   fun calls (fns : fundef IntTable.table, e : exp) : bool =
     let
-      fun app r = case r of App (Global (g, _), _) => isSome (IntTable.find (fns, g)) | _ => false
+      fun app r = case r of
+                    App (Global (g, _), _) => isSome (IntTable.find (fns, g)) orelse isSome (IntTable.find (!imported, g))
+                  | _ => false
       fun exp e =
         case e of
           Let (_, _, r, b) => app r orelse exp b
@@ -884,6 +1016,9 @@ struct
                                                                      Ty.Con (c', _, _) => SOME (c, c')
                                                                    | _ => NONE)
                                                               | _ => NONE) gs
+                                 val () = case IntTable.find (!importedNames, #name f) of
+                                            SOME l => List.app (fn (x, n) => Translate.funNames := IntMap.insert (!Translate.funNames, x, n)) l
+                                          | NONE => ()
                                  val body = copyBody (st, sigma, named, f, a')
                                  val body = case mark of SOME pos => Mark (pos, body) | NONE => body
                                  val () = spine (st, emit, SOME (r, s), ref []) body
@@ -896,6 +1031,33 @@ struct
       val () = loop (List.map (fn d => (d, NONE, 0, true)) p)
       val () = flush ()
       val p' = renameCopies (st, List.rev (!out))
+      (* a unit's globals that are others, at the types they abstract over
+         (and as their types say: as a later unit names them) *)
+      val () =
+        if !Pass.whole then ()
+        else
+          let
+            fun under (Mark (_, e)) = under e
+              | under e = e
+            fun schemeOf g = SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE
+          in
+            List.app (fn Val (g, (gs, _), e) =>
+                           (case under e of
+                              Return (Atom (Global (h, ts))) =>
+                                if List.length ts = List.length gs
+                                   andalso ListPair.all (fn (t, v) => Ty.equal (t, Ty.gen v)) (ts, gs)
+                                   andalso (case (schemeOf g, schemeOf h) of
+                                              (SOME (gv, _), SOME (hv, _)) => gv = gs andalso List.length hv = List.length gs
+                                            | _ => false)
+                                then IntTable.insert (!globalAliases, g, h) else ()
+                            | _ => ())
+                       | Funs fs =>
+                           List.app (fn (f : fundef) =>
+                                       case primOfFunction f of
+                                         SOME p => IntTable.insert (!primGlobals, #name f, p)
+                                       | NONE => ()) fs
+                       | _ => ()) p'
+          end
       (* the datatypes the copies declared, entered *)
       val copied = List.rev (!(#copied st))
       val () = List.app (fn (_, s', info) => Ty.bindDatatypeDirect (s', info)) copied

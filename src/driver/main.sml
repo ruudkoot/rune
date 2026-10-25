@@ -326,6 +326,7 @@ struct
       val text = readText file handle IO.Io _ => raise Options.Usage ("cannot read the build file " ^ file)
       val decs = BuildFile.parse (file, text) handle BuildFile.Error m => raise Options.Usage m
       val libs : string list ref = ref []
+      val inl : string list ref = ref []
       val used = ref [] : string list ref
       val boundary = ref NONE : (BuildFile.kind * string) list option ref
       fun relative (base, p) = OS.Path.mkCanonical (OS.Path.concat (base, p))
@@ -348,6 +349,7 @@ struct
             if inside orelse isSome (!boundary) then raise Options.Usage (file ^ ": a library has one outer export boundary")
             else (boundary := SOME es; entries (base, stack, anns, true, ds))
         | BuildFile.Libraries ns => (libs := !libs @ ns; [])
+        | BuildFile.Inline ns => (inl := !inl @ ns; [])
         | _ => raise Options.Usage (file ^ ": a library's build file lists its files, annotated; no more")
       val raw = entries (".", ["library.build"], [], false, decs)
       val () = if isSome (!boundary) andalso List.exists (fn (_,_,inside) => not inside) raw
@@ -408,6 +410,7 @@ struct
     in
       put "# Generated from library.build by rune --basis-index -- do not edit.\n";
       List.app (fn l => put ("# library: " ^ l ^ "\n")) (!libs);
+      if List.null (!inl) then () else put ("# inline: " ^ String.concatWith " " (!inl) ^ "\n");
       List.app (fn l => put (l ^ "\n")) (List.rev lines);
       BinIO.closeOut o';
       OS.Process.success
@@ -432,6 +435,9 @@ struct
                 val ()=Options.libraries:=List.foldl (fn (library,all) =>
                   if List.exists (fn present => present=library) all then all else all @ [library])
                   (!Options.libraries) (#libraries project)
+                (* the functors its build files mark to be inlined (M6b) *)
+                val ()=Elaborate.inlineFunctors:=List.foldl (fn (n,m) => StringMap.insert (m,n,()))
+                  (!Elaborate.inlineFunctors) (#inline project)
             in
               buildPlan := SOME plan;
               Options.inputs := filesOf plan;
@@ -442,6 +448,16 @@ struct
                 (c :: _, NONE) => Options.cacheDir := SOME c
               | _ => ()
             end
+      (* --functors=functions: the functors the Basis Library's and the
+         chosen libraries' build files mark to be inlined (M6b) *)
+      val () =
+        if !Elaborate.functorFunctions andalso not (!Options.noPrelude) andalso not (!Options.noInlineFunctors) then
+          Elaborate.inlineFunctors :=
+            List.foldl (fn (n, m) => StringMap.insert (m, n, ())) (!Elaborate.inlineFunctors)
+                       (List.concat (List.map BasisManifest.inlineFunctors
+                                              (libDir () :: (BasisManifest.libraries (libRoot (), !Options.libraries)
+                                                             handle BasisManifest.Usage _ => []))))
+        else ()
       (* a whole program's dynamic modules: none (UnitBasis.wholeFingerprints) *)
       val () = UnitBasis.wholeFingerprints := (not (!Options.units) orelse !Options.wholeFromUnits)
       (* -I: the entry point's files before it *)

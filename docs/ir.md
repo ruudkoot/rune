@@ -343,6 +343,21 @@ each application, and the copy is what is translated.
     is laid out from its realised types, unless an application left a
     call takes it, whose descriptor the body's layout gave; a datatype a
     copy declared that such an application takes keeps the body's layout.
+  - **Across units** (M6b). A functor marked to be inlined (`inline
+    functor` in a build file, `--inline-functor=F`; docs/build.md) has its
+    function's Mid kept in its unit's basis (`MidCodec`,
+    `UnitBasis.funcode`), and a later unit expands an application of it
+    as it expands its own functors' (`Expand.imported`). Such a unit has a
+    usage `inl F`, which holds while the body's Mid is the same.
+  - **What a later unit calls.** A unit's basis says which of its globals
+    are another global at the same types (`val andb = Word.andb` in a
+    copy: `Expand.globalAliases`), and which are functions that apply a
+    primitive to their parameter (`val length = size`:
+    `Expand.primGlobals`). A later unit's expansion uses the other global
+    for the first kind. It makes a call of either kind the primitive's
+    application, as `Translate` does for a name bound to a primitive. In a
+    whole program the expansion's own aliases do the same, and `Simplify`
+    inlines the functions.
 
 ## Mid
 

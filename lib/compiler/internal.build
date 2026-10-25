@@ -10,6 +10,7 @@ files
   core/midlint.sml
   core/midtext.sml
   core/tomid.sml
+  core/midcodec.sml
   core/midcanon.sml
   core/expand.sml
   core/target.sml

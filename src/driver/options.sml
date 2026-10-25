@@ -35,6 +35,8 @@ struct
   val includeDirs : string list ref = ref []   (* -I DIR: where an entry point's files are looked for *)
   val build : string option ref = ref NONE     (* --build FILE: compile what a build file says (docs/build.md) *)
   val buildList = ref false                    (* --build-list: print the build file's files in order *)
+  (* --no-inline-functors: none inlined across units (M6b) *)
+  val noInlineFunctors = ref false
   val basisIndex : string option ref = ref NONE (* --basis-index DIR: DIR/MANIFEST from DIR/library.build *)
   val noWarnings = ref false
   val color = ref Color.WhenTerminal           (* --color=WHEN (docs/diagnostics.md) *)
@@ -87,6 +89,12 @@ struct
     \  --functor-budget=N with --functors=functions, the Mid nodes the copies\n\
     \                    of a top-level application, and of those in them, may\n\
     \                    hold (1000000 by default; 0 makes none)\n\
+    \  --inline-functor=F[,F...] with --functors=functions, expand the\n\
+    \                    applications of functor F in every unit, not only its\n\
+    \                    own: its unit keeps its function's Mid, and the units\n\
+    \                    that apply it depend on its body (as a library's\n\
+    \                    `inline functor ... end`, docs/build.md)\n\
+    \  --no-inline-functors none inlined across units, the libraries' marks too\n\
     \  --datatype-tags=O the tags of a datatype's constructors: declared (the\n\
     \                    default), by their declaration; sorted (the default with\n\
     \                    --functors=functions), by their names; or sorted-x,\n\
@@ -250,6 +258,7 @@ struct
     (* no code made, and so no copy of a functor's body (Elaborate.makesCode) *)
     | "--typecheck-only" :: rest => (typecheckOnly := true; Elaborate.makesCode := false; parse rest)
     | "--no-warnings" :: rest => (noWarnings := true; parse rest)
+    | "--no-inline-functors" :: rest => (noInlineFunctors := true; Elaborate.inlineFunctors := StringMap.empty; parse rest)
     | "--diagnostics-json" :: f :: rest => (diagnosticsJson := SOME f; parse rest)
     | ["--diagnostics-json"] => raise Usage "--diagnostics-json requires a file"
     | "--dump-tokens" :: rest => (dumpTokens := true; parse rest)
@@ -301,6 +310,11 @@ struct
          | SOME ("--functors", "functions") => (Elaborate.functorFunctions := true; parse rest)
          | SOME ("--functors", "copies") => (Elaborate.functorFunctions := false; parse rest)
          | SOME ("--functors", _) => raise Usage "--functors requires copies or functions"
+         | SOME ("--inline-functor", v) =>
+             (Elaborate.inlineFunctors :=
+                List.foldl (fn (n, m) => if n = "" then m else StringMap.insert (m, n, ())) (!Elaborate.inlineFunctors)
+                           (String.fields (fn c => c = #",") v);
+              parse rest)
          | SOME ("--functor-budget", v) =>
              (case Int.fromString v of
                 SOME n => if n >= 0 then (Expand.budget := n; parse rest) else raise Usage "--functor-budget requires a number"

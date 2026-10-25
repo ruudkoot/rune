@@ -51,6 +51,20 @@ struct
   val functorFunctions = ref false
   val () = CompilerState.cellRoot ("Elaborate.functorFunctions", functorFunctions)
 
+  (* --functors=functions (functors-units.md, M6b): the functors to inline,
+     by name (--inline-functor, a library's `inline functor`): each is still
+     compiled to a function, and its unit's basis keeps the function's Mid
+     too (UnitBasis.funcode), so that a unit that applies it expands it
+     there (Expand) and depends on its body. markedFunctions: the functions
+     of the functors declared marked; inlinedFunctions: those whose Mid the
+     session has, from their units' bases *)
+  val inlineFunctors : unit StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Elaborate.inlineFunctors", inlineFunctors)
+  val markedFunctions : unit IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Elaborate.markedFunctions", markedFunctions, IntTable.copy)
+  val inlinedFunctions : unit IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Elaborate.inlinedFunctions", inlinedFunctions, IntTable.copy)
+
   (* Whether what is elaborated is only checked: a functor's body at its
      declaration, or a copy of a body applied there; a functor application
      makes code where it is not *)
@@ -1888,6 +1902,7 @@ struct
                   SOME {generated = generatedDeep (lo, result), result = placeholders result, counts = (0, 0, 0)}
                 else NONE
               val func = freshStamp ()
+              val () = if StringMap.member (!inlineFunctors, #name b) then IntTable.insert (!markedFunctions, func, ()) else ()
               val resultRecord = recordInReach result
               val () = let fun note (Record {vals, strs, ...}) =
                              (List.app (fn (_, ConAsVal {scheme, info}) => noteOpen (scheme, info) | _ => ()) vals;
@@ -2037,6 +2052,9 @@ struct
                    val func = case code of
                                 SOME f => f
                               | NONE => err (sp, "functor " ^ funid ^ " is not compiled to a function (--functors=functions)")
+                   (* a functor inlined where it is applied: the unit depends on
+                      its body (UnitBasis.fingerprint, "inl") *)
+                   val () = if isSome (IntTable.find (!inlinedFunctions, func)) then Usage.use ("inl", funid) else ()
                    val {generated, result, ...} =
                      case summary of
                        SOME s => s
