@@ -7,6 +7,8 @@
 structure Pickle =
 struct
   exception Bad of string
+  (* bytes to write past the host's longest array (room) *)
+  exception TooLong of int
 
   (* ---- writing: bytes gathered in place, in an array that doubles when
      it is full (it was a list of chunks, newest first, a string a byte:
@@ -15,10 +17,15 @@ struct
   type writer = {bytes : CharArray.array ref, used : int ref}
 
   fun writer () : writer = {bytes = ref (CharArray.array (64, #"\000")), used = ref 0}
+  (* doubling, but no further than the host's longest array: on Rune
+     CharArray.maxLen is 100,000,000, which a unit's Mid of a million copied
+     nodes and a big environment reaches (functors-units M8: funnest at depth
+     14 in --units --whole, where 2 * 67,108,864 raised Size) *)
   fun room ({bytes, used} : writer, n : int) : unit =
     if !used + n <= CharArray.length (!bytes) then ()
+    else if !used + n > CharArray.maxLen then raise TooLong (!used + n)
     else
-      let val bigger = CharArray.array (Int.max (2 * CharArray.length (!bytes), !used + n), #"\000")
+      let val bigger = CharArray.array (Int.min (CharArray.maxLen, Int.max (2 * CharArray.length (!bytes), !used + n)), #"\000")
       in CharArray.copy {src = !bytes, dst = bigger, di = 0}; bytes := bigger end
   (* the whole array, then its part written: two copies of the bytes,
      where a slice's vector makes a long string a byte at a time on Rune *)

@@ -807,7 +807,8 @@ struct
                                                           ^ " bytes, code " ^ Int.toString (String.size bytes) ^ " bytes\n")
                        else ()
               (* its Mid in bytes, kept in its entry *)
-              val midBytes = timed "unit-mid" (fn () => case !Pipeline.lastMid of SOME um => UnitMid.write (exported, um) | NONE => "")
+              val midBytes = timed "unit-mid" (fn () => Pipeline.keeping name (fn () =>
+                                                 case !Pipeline.lastMid of SOME um => UnitMid.write (exported, um) | NONE => ""))
               val () = Pipeline.lastMid := NONE
               (* the entry verified: its basis the same bytes, and its code,
                  named by the source where it is now *)
@@ -834,10 +835,11 @@ struct
               (* an entry that did not verify is left as it was, to be looked at *)
               (case (cache, k, verified) of
                  (SOME (dir, config), SOME k, true) =>
-                   UnitCache.store (dir, config, k,
-                                    {usages = usages, warnings = warnings, file = name,
-                                     others = UnitBasis.sourcesOf (code, name), pickle = #pickle exported,
-                                     identity = #identity exported, code = bytes, mid = midBytes})
+                   Pipeline.keeping name (fn () =>
+                     UnitCache.store (dir, config, k,
+                                      {usages = usages, warnings = warnings, file = name,
+                                       others = UnitBasis.sourcesOf (code, name), pickle = #pickle exported,
+                                       identity = #identity exported, code = bytes, mid = midBytes}))
                | _ => ());
               (code, keptPickle (#pickle exported)) :: acc
             end

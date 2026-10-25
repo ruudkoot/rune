@@ -113,9 +113,19 @@ struct
      unit of the session has (UnitBasis.unused), as the REPL loads a file it
      used before; the code is still the basis's identity's, for the cache,
      and is linked renamed (UnitBasis.renamed). *)
+  (* f (), where what a unit keeps between compiles (its basis, its Mid,
+     its code, its cache entry) longer than the host's longest array, the
+     most a pickle holds, is an error of the unit's (functors-units M8) *)
+  fun keeping (file : string) (f : unit -> 'a) : 'a =
+    f () handle Pickle.TooLong n =>
+      Error.error ({file = file, start = 0, stop = 0},
+                   "what this unit keeps between compiles needs " ^ Int.toString n ^ " bytes, more than "
+                   ^ Int.toString CharArray.maxLen ^ ", the longest array this host makes")
+
   fun unitThrough {start : UnitBasis.start, name : string, file : string, text : unit -> string, mode : Source.mode,
                    decs : Ast.dec list, delta : Env.env, fixity : Fixity.env, used : string list, fresh : bool}
       : {code : Link.unitCode, exported : UnitBasis.exported, loaded : UnitBasis.result} =
+    keeping file (fn () =>
     let
       val timed = Pass.timed
       val sc = timed "unit-passes" (fn () => unitOf decs)
@@ -125,5 +135,5 @@ struct
       val l = timed "unit-load" (fn () => UnitBasis.loadKnown ({pickle = #pickle x, file = file, at = #counters start},
                                                               SOME (if fresh then UnitBasis.unused (#identity x)
                                                                     else #identity x), []))
-    in {code = timed "unit-relative" (fn () => UnitBasis.relative (x, sc)), exported = x, loaded = l} end
+    in {code = timed "unit-relative" (fn () => UnitBasis.relative (x, sc)), exported = x, loaded = l} end)
 end

@@ -103,8 +103,18 @@ struct
   (* M6b: the hash of each inlined functor's Mid, by its function's global
      (the usage "inl NAME"); and the names a read function's own names get,
      below 0, each read its own *)
-  val inlineHashes : string IntTable.table ref = ref (IntTable.table 16)
+  datatype inlineHash = Hash of string | Bytes of string
+  val inlineHashes : inlineHash ref IntTable.table ref = ref (IntTable.table 16)
   val () = CompilerState.refRoot ("UnitBasis.inlineHashes", inlineHashes, IntTable.copy)
+  (* a functor's hash, a read one's worked out from the bytes of its Mid when
+     it is first asked for: only where a later unit expands it (functors-units
+     M8; hashing them all as they were read cost 0.9M instructions a compile
+     in units of a program that loads the I/O stack) *)
+  fun inlineHash (g : int) : string option =
+    case IntTable.find (!inlineHashes, g) of
+      NONE => NONE
+    | SOME (ref (Hash h)) => SOME h
+    | SOME (r as ref (Bytes b)) => let val h = P.hash b in r := Hash h; SOME h end
   val privateNext = ref ~2
   val () = CompilerState.cellRoot ("UnitBasis.privateNext", privateNext)
   val fpMemo : string option StringMap.map ref = ref StringMap.empty
@@ -617,7 +627,7 @@ struct
       | "sig" => Option.map fpSigma (StringMap.find (!sessionSigs, name))
       | "fun" => (case StringMap.find (!sessionFuns, name) of SOME f => fpFunctor f | NONE => NONE)
       | "inl" => (case StringMap.find (!sessionFuns, name) of
-                    SOME (Elaborate.FunInfo {code = g, ...}) => IntTable.find (!inlineHashes, g)
+                    SOME (Elaborate.FunInfo {code = g, ...}) => inlineHash g
                   | _ => NONE)
       | "fix" => SOME (hashAt ("fix", case StringMap.find (#table (!sessionFixity), name) of
                                         NONE => "nonfix"
@@ -1104,10 +1114,10 @@ struct
                               (prim g;
                                P.option (fn (_, h) => (name (e, kStamp, h); prim h)) (w, IntTable.find (!Expand.globalAliases, g));
                                P.bool (w, IntMap.member (!Lower.knownBefore, g));
-                               P.option P.string (w, IntTable.find (!inlineHashes, g))))
+                               P.option P.string (w, inlineHash g)))
                            (w, List.rev (!named));
                     IntTable.insert (!inlineHashes, code,
-                                     P.hash (CharArraySlice.vector (CharArraySlice.slice (!(#bytes w), p0, SOME (!(#used w) - p0)))))
+                                     ref (Hash (P.hash (CharArraySlice.vector (CharArraySlice.slice (!(#bytes w), p0, SOME (!(#used w) - p0)))))))
                   end)
                (w, IntTable.find (!Expand.declaredBodies, code))
     end
@@ -1756,7 +1766,7 @@ struct
                   List.app Ty.markOpen opens;
                   IntTable.insert (!Expand.imported, code, body);
                   IntTable.insert (!Elaborate.inlinedFunctions, code, ());
-                  IntTable.insert (!inlineHashes, code, P.hash (String.substring (#s r, p0, p1 - p0)))
+                  IntTable.insert (!inlineHashes, code, ref (Bytes (String.substring (#s r, p0, p1 - p0))))
                 end
             | _ => raise P.Bad "not an option"
           val f = Elaborate.FunInfo {param = param, paramSig = paramSig, summary = summary, binding = binding, code = code}
