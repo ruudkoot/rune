@@ -81,7 +81,7 @@ struct
               val () = Elaborate.finish ()
               val () = if !Error.errors=0 then () else raise Failed (List.map sourceError (List.rev (!Error.kept)))
               val result = Pipeline.unitThrough {start=start,name=name,file=file,text=fn () => text,mode=mode,
-                decs=decs,delta= !Elaborate.lastDelta,fixity=outgoing,used=[]}
+                decs=decs,delta= !Elaborate.lastDelta,fixity=outgoing,used=[],fresh=false}
               val code = #code result
               val fingerprint = Pipeline.fingerprint ()
               val mid = case !Pipeline.lastMid of SOME mid => UnitMid.write (#exported result,mid) | NONE => ""

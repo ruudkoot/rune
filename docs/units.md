@@ -180,6 +180,13 @@ of name -- stamps, type names, type variables -- after the session's, and
 registers the range, which is how a name of the session is written back as
 a unit's identity and number.
 
+A unit loaded where a unit of its identity is loaded already -- a file the
+REPL uses again, the same text against the same units -- is loaded and
+linked under its identity with `~2` after it (`~3`, ... where that is
+taken too; `UnitBasis.unused`), so that its globals are its own and what
+named the first unit's still does; its name is the same, and its entry in
+the cache keeps its basis's identity (S38, S74).
+
 A unit's code names globals and functions by *keys*, the same pairs
 (`Link.key`): its own by the numbers its basis gave them, and those its
 basis did not -- what no unit after it can name -- by numbers after those.
@@ -367,7 +374,11 @@ with every name in it written by its unit's name and the path that reaches
 it there (`a.sml:A.shape`, `a.sml:sig:SHAPE.area`), so that a change under
 a name changes every fingerprint that mentions it, and a change beside it
 none. A usage holds where its binder is the same unit, or where what the
-name names now has the same fingerprint. A functor's fingerprint is its
+name names now has the same fingerprint and the unit that bound it then is
+not in the session: the entry's code names that unit's globals, which the
+unit of its name there now takes over (below), while a unit still there
+keeps them -- in the REPL, where a file used again binds the name now, or
+another unit than the first does (S75). A functor's fingerprint is its
 signature, its parameter's and its summary's (S65, S66); a functor with no
 summary, an overloading and the REPL's settings hold by their binder
 alone. A fingerprint is of what the name names at the unit's start, as

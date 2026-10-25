@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S73. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S75. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
@@ -174,7 +174,8 @@ exactly the units X and nothing else.
 
 * **S38, `use` an unchanged file.** In the REPL, `use` a file twice: the
   second links the cached object, and its top level runs again with fresh
-  globals and fresh exceptions.
+  globals and fresh exceptions; a structure of the prompt's that named the
+  first's structure still names the first's globals (S74).
 * **S39, `use` a changed file.** Edit the file between the two `use`s: the
   second compiles it again.
 * **S40, a session's basis.** `use` a file in two sessions whose earlier
@@ -304,6 +305,28 @@ when the scenarios above were all green
   whichever of `t` and `u` a session works out first (functors-units, M4).
   Before, it was `u`'s alone where `u` was asked for first and `u`'s with
   `t` in progress where `t` was, and `c.sml` was compiled again.
+* **S74, a file used again, compiled again.** In the REPL, `use` a file
+  that declares a structure with a ref, name the structure with a structure
+  of the prompt's, and `use` the file again, the cache verified, so that
+  the second `use` compiles the file again: a write through the prompt's
+  structure is the first `use`'s, and the second's ref is still 0. The
+  same text against the same units has the same identity, and the second
+  is loaded and linked under one of its own (`identity~2`), so that what
+  named the first's globals still does; its entry keeps the identity of
+  its basis. Before, the second's globals were the first's to code that
+  named them (S38 is the same through the cache).
+* **S75, a unit the session replaced.** In the REPL, through the cache:
+  `use` `counter.sml` (a structure with a ref) and `user.sml` (a function
+  that increments it), then both again, then both again after a value is
+  added to `counter.sml`; then `twice.sml` (a functor) and `apply.sml` (an
+  application of it), then both again after the functor's body is edited.
+  Each `user.sml` increments the `Counter` of the `counter.sml` used last,
+  and the last `apply.sml` copies the edited body (135, not 45). A usage
+  holds by its fingerprint only where the unit that bound the name is not
+  in the session: `user.sml`'s entry names the first `counter.sml`'s
+  globals, and `apply.sml`'s the first body it copied, which a REPL keeps
+  beside the unit that binds the name now. Before, both entries were
+  taken, and incremented the first `Counter` and printed 45.
 * **S59, one unit in two sessions.** `c.sml` uses `a.sml` and `b.sml`,
   which do not use each other. Built after them in one order and then in
   the other through one cache, `c.sml`'s entry is taken, and compiled

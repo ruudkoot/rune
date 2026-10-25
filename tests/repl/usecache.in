@@ -1,7 +1,10 @@
 (* use through the cache (S38): a file used twice, the second time from the
-   cache, its top level run again with globals and exceptions of its own *)
+   cache, its top level run again with globals and exceptions of its own,
+   and a structure that named the first's still the first's *)
 use "tests/repl/lib/counter.sml";
 val first = Counter.n;
+structure Old = Counter;
 use "tests/repl/lib/counter.sml";
 first := 10;
 !Counter.n;
+!Old.n;
