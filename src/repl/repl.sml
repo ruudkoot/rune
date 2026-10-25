@@ -658,7 +658,7 @@ struct
             (* every pass's output checked, as rune --lint checks it (the
                globals of the units before a declaration typed for the lint
                by UnitBasis.startSession, as in a build in units) *)
-            else if a = "--lint" then (Pass.lint := true; Elaborate.lintSummaries := true; go rest)
+            else if a = "--lint" then (Pass.lint := true; go rest)
             else a :: rest
         | go [] = []
       val rest = go args

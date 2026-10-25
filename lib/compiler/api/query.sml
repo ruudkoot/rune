@@ -55,7 +55,7 @@ struct
       and str e =
         case e of
           StrStruct (ds,_) => List.app dec ds | StrAscribe (e,_,_,_) => str e
-        | StrApp (_,arg,body,_) => (str arg;Option.app str (!body))
+        | StrApp (_,arg,_) => str arg
         | StrLet (ds,e,_) => (List.app dec ds;str e) | StrExport (_,_,e,_,_) => str e | _ => ()
       val ()=List.app dec decs
       fun best ((width,ty),NONE) = SOME (width,ty)

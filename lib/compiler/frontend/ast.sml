@@ -110,7 +110,7 @@ struct
       StrStruct of dec list * span
     | StrId of longid * span
     | StrAscribe of strexp * sigexp * bool * span            (* true = opaque (:>) *)
-    | StrApp of string * strexp * strexp option ref * span   (* functor application; the slot receives the elaborated copy of the body *)
+    | StrApp of string * strexp * span                       (* functor application *)
     | StrLet of dec list * strexp * span
     | StrDynamic of dynamicFrom * sigexp * dynamic option ref * span   (* _dynamic "path" : SIG, _virtual : SIG (docs/units.md, Dynamic modules) *)
     | StrExport of string * sigexp * strexp * dynamic option ref * span    (* _export structure X : SIG = strexp *)
@@ -220,7 +220,7 @@ struct
   fun spanOfStrexp e =
     case e of
       StrStruct (_, s) => s | StrId (_, s) => s | StrAscribe (_, _, _, s) => s
-    | StrApp (_, _, _, s) => s | StrLet (_, _, s) => s
+    | StrApp (_, _, s) => s | StrLet (_, _, s) => s
     | StrDynamic (_, _, _, s) => s | StrExport (_, _, _, _, s) => s
 
   fun spanOfSigexp e =
@@ -242,84 +242,7 @@ struct
          | NONE => NONE)
     | _ => NONE
 
-  (* --- deep copy with fresh annotation slots (functor bodies are elaborated once per application) --- *)
-  fun copyExp e =
-    case e of
-      EScon (sc, _, s) => EScon (sc, ref NONE, s)
-    | EVar (id, _, sp) => EVar (id, ref NONE, sp)
-    | ERecord (fs, sp) => ERecord (List.map (fn (l, e) => (l, copyExp e)) fs, sp)
-    | ETuple (es, sp) => ETuple (List.map copyExp es, sp)
-    | ESelect (l, _, sp) => ESelect (l, ref NONE, sp)
-    | EList (es, _, sp) => EList (List.map copyExp es, ref NONE, sp)
-    | ESeq (es, sp) => ESeq (List.map copyExp es, sp)
-    | ELet (ds, e, sp) => ELet (List.map copyDec ds, copyExp e, sp)
-    | EApp (f, a, sp) => EApp (copyExp f, copyExp a, sp)
-    | ETyped (e, t, sp) => ETyped (copyExp e, t, sp)
-    | EAndalso (a, b, sp) => EAndalso (copyExp a, copyExp b, sp)
-    | EOrelse (a, b, sp) => EOrelse (copyExp a, copyExp b, sp)
-    | EHandle (e, rules, sp) => EHandle (copyExp e, copyRules rules, sp)
-    | ERaise (e, sp) => ERaise (copyExp e, sp)
-    | EIf (a, b, c, sp) => EIf (copyExp a, copyExp b, copyExp c, sp)
-    | EWhile (a, b, sp) => EWhile (copyExp a, copyExp b, sp)
-    | ECase (e, rules, sp) => ECase (copyExp e, copyRules rules, sp)
-    | EFn (rules, _, sp) => EFn (copyRules rules, ref NONE, sp)
-    | EPrim (name, t, _, sp) => EPrim (name, t, ref NONE, sp)
-
-  and copyRules rules = List.map (fn (p, e) => (copyPat p, copyExp e)) rules
-
-  and copyPat p =
-    case p of
-      PWild _ => p
-    | PScon (sc, _, s) => PScon (sc, ref NONE, s)
-    | PVar (id, _, sp) => PVar (id, ref NONE, sp)
-    | PRecord (fs, flex, _, sp) => PRecord (List.map (fn (l, p) => (l, copyPat p)) fs, flex, ref NONE, sp)
-    | PTuple (ps, sp) => PTuple (List.map copyPat ps, sp)
-    | PList (ps, sp) => PList (List.map copyPat ps, sp)
-    | PApp (id, _, p, sp) => PApp (id, ref NONE, copyPat p, sp)
-    | PTyped (p, t, sp) => PTyped (copyPat p, t, sp)
-    | PLayered (v, t, p, _, sp) => PLayered (v, t, copyPat p, ref NONE, sp)
-    | POr (ps, sp) => POr (List.map copyPat ps, sp)
-
-  and copyDec d =
-    case d of
-      DVal (tvs, binds, sp) => DVal (tvs, List.map (fn (p, e) => (copyPat p, copyExp e)) binds, sp)
-    | DValRec (tvs, binds, sp) => DValRec (tvs, List.map (fn (p, e) => (copyPat p, copyExp e)) binds, sp)
-    | DFun (tvs, fs, sp) =>
-        DFun (tvs, List.map (fn {name, clauses, info = _, span} =>
-                               {name = name,
-                                clauses = List.map (fn {pats, resty, body} =>
-                                                       {pats = List.map copyPat pats, resty = resty, body = copyExp body}) clauses,
-                                info = ref NONE, span = span}) fs, sp)
-    | DType _ => d
-    | DDatatype _ => d
-    | DDatatypeRepl _ => d
-    | DAbstype (dbs, tbs, decs, sp) => DAbstype (dbs, tbs, List.map copyDec decs, sp)
-    | DException (ebs, sp) =>
-        DException (List.map (fn ExnDecl (n, t, _, sp) => ExnDecl (n, t, ref NONE, sp)
-                               | ExnRepl (n, id, _, sp) => ExnRepl (n, id, ref NONE, sp)) ebs, sp)
-    | DLocal (d1, d2, sp) => DLocal (List.map copyDec d1, List.map copyDec d2, sp)
-    | DOpen _ => d
-    | DInfix _ => d
-    | DInfixr _ => d
-    | DNonfix _ => d
-    | DOverload _ => d
-    | DStructure (bs, sp) =>
-        DStructure (List.map (fn {name, strexp, span} => {name = name, strexp = copyStrexp strexp, span = span}) bs, sp)
-    | DSignature _ => d
-    | DFunctor _ => d
-
-  and copyStrexp se =
-    case se of
-      StrStruct (ds, sp) => StrStruct (List.map copyDec ds, sp)
-    | StrId _ => se
-    | StrAscribe (e, sg, opaque, sp) => StrAscribe (copyStrexp e, sg, opaque, sp)
-    | StrApp (f, a, _, sp) => StrApp (f, copyStrexp a, ref NONE, sp)
-    | StrLet (ds, e, sp) => StrLet (List.map copyDec ds, copyStrexp e, sp)
-    | StrDynamic (from, sg, _, sp) => StrDynamic (from, sg, ref NONE, sp)
-    | StrExport (n, sg, e, _, sp) => StrExport (n, sg, copyStrexp e, ref NONE, sp)
-
-  (* --- debugging printer (used by --dump-ast) --- *)
-  fun sconToString sc =
+    fun sconToString sc =
     case sc of
       SInt i => IntInf.toString i
     | SWord w => "0w" ^ IntInf.toString w
@@ -441,7 +364,7 @@ struct
       StrStruct (ds, _) => "struct " ^ String.concatWith " " (List.map decToString ds) ^ " end"
     | StrId (id, _) => longidToString id
     | StrAscribe (e, s, opaque, _) => strexpToString e ^ (if opaque then " :> " else " : ") ^ sigexpToString s
-    | StrApp (f, a, _, _) => f ^ " (" ^ strexpToString a ^ ")"
+    | StrApp (f, a, _) => f ^ " (" ^ strexpToString a ^ ")"
     | StrLet (ds, e, _) => "let " ^ String.concatWith " " (List.map decToString ds) ^ " in " ^ strexpToString e ^ " end"
     | StrDynamic (DynamicFile path, s, _, _) => "_dynamic \"" ^ String.toString path ^ "\" : " ^ sigexpToString s
     | StrDynamic (DynamicVirtual _, s, _, _) => "_virtual : " ^ sigexpToString s

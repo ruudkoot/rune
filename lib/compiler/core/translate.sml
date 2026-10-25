@@ -558,14 +558,14 @@ struct
         in go binds end
 
   (* Structure expressions have no runtime representation of their own: a
-     functor application evaluates its argument's declarations and then the
-     elaborated copy of the functor body. *)
+     functor application evaluates its argument's declarations and then
+     calls the functor's function (callExp). *)
   and transStrexp (se : strexp, k : unit -> lexp) : lexp =
     case se of
       StrStruct (decs, _) => transTopDecs (decs, k)
     | StrId _ => k ()
     | StrAscribe (e, _, _, _) => transStrexp (e, k)
-    | StrApp (_, arg, slot, sp) =>
+    | StrApp (_, arg, sp) =>
         transStrexp (arg, fn () =>
           case Elaborate.callAt sp of
             SOME call => callExp (call, sp, k)

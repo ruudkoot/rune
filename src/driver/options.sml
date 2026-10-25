@@ -261,7 +261,7 @@ struct
     | "-O0" :: rest => (Pass.level := 0; parse rest)
     | "-O1" :: rest => (Pass.level := 1; parse rest)
     | "-O2" :: rest => (Pass.level := 2; parse rest)
-    | "--lint" :: rest => (Pass.lint := true; Elaborate.lintSummaries := true; parse rest)
+    | "--lint" :: rest => (Pass.lint := true; parse rest)
     | "--read-mid" :: f :: rest => (readMid := SOME f; parse rest)
     | ["--read-mid"] => raise Usage "--read-mid requires a file"
     | "--mid-roundtrip" :: rest => (midRoundTrip := true; parse rest)

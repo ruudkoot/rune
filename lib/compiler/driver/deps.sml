@@ -138,7 +138,7 @@ struct
           StrStruct (ds, _) => ignore (decs (sc, ds))
         | StrId ((p, n), _) => longStr (sc, (p @ [n], ""))
         | StrAscribe (se, sg, _, _) => (strexp (sc, se); ignore (sigexp (sc, sg)))
-        | StrApp (f, arg, _, _) => (use (Fun, f); strexp (sc, arg))
+        | StrApp (f, arg, _) => (use (Fun, f); strexp (sc, arg))
         | StrLet (ds, se, _) => strexp (decs (sc, ds), se)
         | StrDynamic (_, sg, _, _) => ignore (sigexp (sc, sg))
         | StrExport (_, sg, se, _, _) => (ignore (sigexp (sc, sg)); strexp (sc, se))

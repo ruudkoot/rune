@@ -9,11 +9,10 @@ struct
   val on = ref false
   val () = CompilerState.cellRoot ("ElabStats.on", on)
 
-  (* The contexts: the top level; a functor's body checked at its
-     declaration (rule 86); the copy of a body elaborated at an application
-     whose code is made; and an application only checked: inside a
-     declaration's check or inside such a copy, or anywhere in a compile
-     that makes no code (--typecheck-only). *)
+  (* The contexts: the top level; a functor's body elaborated at its
+     declaration (rule 86); an application whose code is made, at the top
+     level; and an application only checked: inside a functor's body, or
+     anywhere in a compile that makes no code (--typecheck-only). *)
   datatype context = Top | FunDecl | AppCode | AppCheck
   val contexts = [(Top, "top"), (FunDecl, "fundecl"), (AppCode, "appcode"), (AppCheck, "appcheck")]
 
@@ -21,11 +20,11 @@ struct
      a signature instantiated (rule 65); where type (rule 64); sharing (rule
      78 and its derived form); a structure matched against a signature
      (rules 52-54); the specifications of a signature, without the
-     operations above inside them; a functor's body copied for an
-     application. Time goes to the innermost operation running. *)
-  datatype operation = Core | Inst | Where | Share | Match | Specs | Copy
+     operations above inside them. Time goes to the innermost operation
+     running. *)
+  datatype operation = Core | Inst | Where | Share | Match | Specs
   val operations = [(Core, "core"), (Inst, "inst"), (Where, "where"), (Share, "share"), (Match, "match"),
-                    (Specs, "specs"), (Copy, "copy")]
+                    (Specs, "specs")]
 
   (* The counters. *)
   datatype counter =
@@ -52,7 +51,7 @@ struct
 
   fun contextIndex c = case c of Top => 0 | FunDecl => 1 | AppCode => 2 | AppCheck => 3
   fun operationIndex opn =
-    case opn of Core => 0 | Inst => 1 | Where => 2 | Share => 3 | Match => 4 | Specs => 5 | Copy => 6
+    case opn of Core => 0 | Inst => 1 | Where => 2 | Share => 3 | Match => 4 | Specs => 5
   fun counterIndex c =
     case c of
       Realize => 0 | Nodes => 1 | InstSig => 2 | InstNames => 3 | WhereClause => 4 | ShareTypes => 5
@@ -118,10 +117,10 @@ struct
         val r = f () handle e => (charge (); context := savedC; operation := savedO; raise e)
       in charge (); context := savedC; operation := savedO; r end
 
-  (* f (), a functor application -- its match, the copy of the body and
-     the copy's elaboration -- in the context of its kind: its code is made
-     where the code of what it is in is, if the compile makes code at all
-     (`made`; not under --typecheck-only) *)
+  (* f (), a functor application -- its match and its call -- in the
+     context of its kind: its code is made where the code of what it is in
+     is, if the compile makes code at all (`made`; not under
+     --typecheck-only) *)
   fun application (made : bool) (f : unit -> 'a) : 'a =
     if not (!on) then f ()
     else
