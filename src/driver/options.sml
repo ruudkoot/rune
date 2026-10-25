@@ -81,7 +81,8 @@ struct
     \  --functor-budget=N the Mid nodes the copies of a top-level application of\n\
     \                    a functor, and of those in them, may hold (1000000 by\n\
     \                    default; 0 makes none: every application a call of the\n\
-    \                    functor's function, docs/ir.md)\n\
+    \                    functor's function, docs/ir.md); every functor is\n\
+    \                    compiled once (--functors= and --datatype-tags= are gone)\n\
     \  --inline-functor=F[,F...] expand the applications of functor F in every\n\
     \                    unit, not only its own: its unit keeps its function's\n\
     \                    Mid, and the units that apply it depend on its body (as\n\

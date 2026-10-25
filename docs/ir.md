@@ -243,7 +243,10 @@ units and `--units --whole` ([plans/functors-units.md](plans/functors-units.md),
 M5 to M7). The expansion (below) gives a whole program and a unit's own
 applications their copies back in Mid. Until M7 a functor's body was
 copied and elaborated again for each application, and the copy was what
-was translated (static interpretation).
+was translated (static interpretation). The options that chose the new
+way until then, `--functors=functions` and `--datatype-tags=sorted-x`, are
+gone rather than kept as no-ops, since no release had them: a compile that
+gives one is refused as for any option it does not know.
 
 * **A structure's record.** A structure that reaches a functor is a value
   at run time: a tuple of its slots, each cast to `unit` by `functor_cast`
