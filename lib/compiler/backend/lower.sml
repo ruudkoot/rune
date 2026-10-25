@@ -238,7 +238,12 @@ struct
                  (case switchOf (y, [(tag, sp, t)], f) of
                     SOME (cases, (_, d)) => go (d, List.foldl (fn ((_, _, t), acc) => go (t, acc)) (var (y, acc)) cases)
                   | NONE => go (f, go (t, var (y, acc))))
-             | NONE => let val acc = rhs (r, acc) in bind x; go (b, acc) end)
+             | NONE =>
+                 (* a tuple or a constructor nothing uses is not made (exp,
+                    below): what it would hold is not read *)
+                 let val acc = if usesOf x = 0 andalso (case r of M.Tuple (_ :: _) => true | M.Con _ => true | _ => false)
+                               then acc else rhs (r, acc)
+                 in bind x; go (b, acc) end)
         | M.Fun (fs, b) =>
             (List.app (fn f => bind (#name f)) fs;
              go (b, List.foldl (fn (f, acc) =>
