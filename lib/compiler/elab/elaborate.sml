@@ -1122,6 +1122,12 @@ struct
   fun hasOpen (stamp : int) : bool = IntMap.member (!opened, stamp)
   (* a constructor of the scheme given used: its body makes the functions
      for it, where it is open (Translate.openFuns) *)
+  (* what the code of a unit's functors and applications was made from,
+     forgotten once the unit is compiled (Pipeline.unitOf): no later unit's
+     code reads it, and it holds their environments and types *)
+  fun forgetUnitCode () : unit =
+    (bodies := StringMap.empty; calls := StringMap.empty; opened := IntMap.empty)
+
   fun noteOpen (scheme : ty, info : Ast.coninfo) : unit =
     if IntMap.isEmpty (!opened) orelse not (#hasArg info) then ()
     else

@@ -84,6 +84,9 @@ struct
                             size = Lambda.size}
                            Translate.transProgram decs
       val low = lowOf lam
+      (* --functors=functions: what its functors' and applications' code was
+         made of, which no later unit's needs *)
+      val () = if !Elaborate.functorFunctions then Elaborate.forgetUnitCode () else ()
       val code = targetStage low
       val u : Link.sessionCode =
         {code = code, globals = IntMap.listItemsi (!Code.globals), defines = Link.defines low,
