@@ -1338,7 +1338,7 @@ test-gc: $(RUNE) vm bin/rune-test | build/.doctor-check
 test-all: host-builds vm bin/rune-test | build/.doctor-check
 	$(RUNE_TEST) --tier test-all
 
-check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/rune.stack.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc bin/rune-test | build/.doctor-check
+check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/runeopt-boot bin/rune.stack.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc bin/rune-test | build/.doctor-check
 	$(RUNE_TEST) --tier check-cross
 
 # Every instruction says where it came from, and the line is one the file has.
