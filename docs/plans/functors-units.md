@@ -77,9 +77,9 @@ What it rests on:
 | M2 | Hashing that changes no output | H | done (2026-10-24) |
 | M3 | Typing that follows the Definition | T | done (2026-10-24) |
 | M4 | Fingerprints by structure; gate G1 | H | done (2026-10-24) |
-| M5 | Prototype: functors compiled once | F | not started |
-| M6 | Prototype: the expansion | F | not started |
-| G2 | Go or no-go for M7 and M8 (the owner's) | F | |
+| M5 | Prototype: functors compiled once | F | done (2026-10-25) |
+| M6 | Prototype: the expansion | F | done (2026-10-25) |
+| G2 | Go or no-go for M7 and M8 (the owner's) | F | the evidence is in; the owner's to decide |
 | M7 | Functors compiled once | F | not started |
 | M8 | Nested functors that do not blow up | F | not started |
 | M9 | Retire | | not started |
@@ -179,6 +179,12 @@ new places.
   declaration environments in bases, signatures of functors in usages,
   bodies parsed again on load, copies elaborated in each applying unit,
   which M7 removes;
+- MLton's S44 to S48 at the branch's tip (Rune at tier 2, through the
+  cache): cold 122.2 s, warm 16.8 s, a leaf 51.0 s (1 unit), a root 15.3 s
+  (1), an interface 130.3 s (241), a functor's body 60.0 s (6), and the
+  last warm build the bytes of one without the cache; E5 had measured the
+  cold, warm, leaf and functor builds at 287, 50.2, 124.6 and 118.5 s with
+  MLton's build of the compiler, which is faster than Rune's;
 - found on the way: the provenance of a unit
   (`\001RuneSource:HASH:IDENTITY`) was parsed with a 24-digit hash in
   `Link.sourceOf`, in the runtime (`unit_source_current`) and in
@@ -189,6 +195,12 @@ new places.
   overflowed the 1 GiB stack on a functor's signature written whole
   (10 MB of tokens). The writer takes `CharArray.vector` instead; the
   Basis is left as it is, for the owner.
+
+**M5 and M6** (by an agent; `54b50cf3d` to `77376491a`): functors compiled
+once to functions behind `--functors=functions`, and the expansion that
+gives whole programs and a unit's own applications their copies back in
+Mid; see *Gate G2* under *The milestones* for the evidence. G2 is the
+owner's: M7 and M8 wait on it.
 
 ## Found while writing this roadmap
 
@@ -3221,6 +3233,58 @@ Pre-registered, from M5 and M6:
 
 If G2 says no, M3 closes (a), (c) and (d) one by one (D8), and the flag is
 removed.
+
+**The evidence (2026-10-25).** M5 and M6 were built behind
+`--functors=functions` (with `--datatype-tags=sorted-x` and
+`--functor-budget`, default 1,000,000 Mid nodes). *Today* is this branch's
+tip with the flag off; *M6* the prototype with it on. Instruction counts
+are the claims; cycles were taken beside other sessions' work.
+
+| Criterion | Measured | Holds? |
+|---|---|---|
+| Whole-program instructions within 1%: the bootstrap | 15.575G against 15.580G (1.000); bytecode 1,493.4M against 1,493.6M | yes |
+| ... HOL4's kernel work | not measured: HOL4 builds through the REPL and `Compiler.compile`, which the prototype does not switch; a functor-heavy stand-in (`OrdMap`'s functor applied to a key) runs 1.000 | not measured |
+| ... MLton's benchmark set, geometric mean | 0.984 (bytecode 0.997), 35 programs | yes |
+| No program of the set worse by more than 5% | the worst is `simple`, 1.014 | yes |
+| S42 with the flag on | 354 of 354 programs of `tests/lang` and `tests/perf`, the compiler, and MLton's 606 files: `--units --whole` is the whole compile's bytes | yes |
+| A build in units at least as fast as today's, MLton's 606 files at tier 2 | `--no-cache` 0.953 of today's instructions; cold 0.970; warm 0.966; peak 3.56 GB against 3.61 | yes |
+| An edit of a body that keeps its signature compiles the declaring unit alone | S48: 1 unit and 105.4G instructions, against 6 and 315.7G; S8, S65, S66 the declaring unit alone; S45, a leaf, 105.0G against 304.4G | yes |
+| The run-time cost of a build in units against today's units | the compiler built in units 1.018 (bytecode 1.031); the Basis's functors called across units: E4's Word benchmark 1.96, `wordcount` 1.045, the benchmark set's I/O programs up to 1.46 (`checksum`); HOL4 not measured (the stand-in 1.77) | written down |
+| A program's own functors within one unit as fast as today | the benchmark set in units: geometric mean 0.9996; the programs that are mostly their own functors as fast or faster (`mlyacc` 0.82, `tyan` 0.72); the seven over 5% slower are slow in the Basis's functors across units (`checksum`'s profile) | yes for a program's own; the Basis's across units cost up to 1.46 |
+| Lines M7 removes against lines M5 and M6 add | M5 and M6 add 2,248 and remove 184 (the expansion, `expand.sml`, 938); M7 would remove about 520 and the flag's branches, about 60; the expansion stays | written down |
+
+What the prototypes found against the roadmap:
+- **Whole compiles are not faster.** E3 expected half of MLton's
+  elaboration to go; it went 7%. MLton's whole compile runs 0.968 of the
+  instructions, but the collector takes 5 s more: the records and the
+  expansion's markers allocate 7% more. The gain is in builds in units:
+  S45 and S48 cost a third of today's.
+- **D2 A leaves the Basis's functors slow across units**: `Word8Array`,
+  `PackWord32Little` and their like are made by functors of other Basis
+  units and called through records, where today's copies are inlined
+  (the Word benchmark 1.96, M5 found 1.98, E4 had predicted +54%). D2 C,
+  expanding the stable Basis's functors across units, answers it; it is
+  under *Later*.
+- **Simplify's inlining of functions called once** pulled every functor's
+  function back into its one call, with no budget; the prototype never
+  inlines one, and the expansion does it within D13's budget.
+- **D5's layouts** had to be carried through `MidCanon` and a unit's Mid
+  too, not only Ty's table and the basis: a datatype entered again there
+  was laid out anew, which miscompiled until fixed.
+- **D4's sorted-with-exceptions numbering is not needed**: plain sorted
+  costs nothing measurable (the compiler 0.15% slower, the benchmark set
+  equal), and renumbering `list` and `order` moves nothing.
+- E2 counted the shapes the expansion meets but not its corners: a typed
+  pattern's lambda bound to a polymorphic value, applications inside a
+  `local` block, and an open constructor bound to a polymorphic variable.
+  Each is in `tests/lang/mod.functor.functions_expand`.
+
+The prototypes are on this branch, behind the flag; with it off the
+compiler's output is the same bytes, but compiling the compiler itself
+compiles their sources too: the bootstrap's budgets were re-based for
+1,494.1M bytecode instructions, from 1,407.2M (+6.2%). The full tables, scripts and raw
+results are in the campaign's drafts (`impl/fu-m5/g2.md`,
+`impl/fu-m5/measures.md`).
 
 ### M7. Functors compiled once (F; M, about 300 added and 520 removed)
 
