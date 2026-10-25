@@ -242,8 +242,13 @@ compiles after it need of it ([units.md](units.md), *The export basis*):
 
 ```
 used        3 × varint   what the unit's compile used of each kind of name
+source      varint len, bytes   the hash of its source, by which the
+                                compiler library checks a source it is
+                                given (RuneCompiler.readUnit, readMid)
+mode        varint len, bytes   how the source was read: ascii, unicode or
+                                unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    11 (UnitBasis.version)
+version     varint    12 (UnitBasis.version)
 probe       varint len, bytes   the probe of the compiler's hash
                                 (Pickle.probe): a basis made by a
                                 compiler whose hash gives other values

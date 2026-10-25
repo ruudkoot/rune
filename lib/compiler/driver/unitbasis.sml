@@ -38,7 +38,7 @@ struct
   (* a pickle that names a unit the session has not loaded *)
   exception Missing of string
 
-  val version = 11
+  val version = 12
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -1229,12 +1229,16 @@ struct
                 Vector.app (fn c => P.nat (h, c)) counts)
       val hashed = P.contents h ^ body
       (* what the compile used of each kind, which loading puts aside
-         first: not the basis's, nor in its identity *)
+         first, and the hash of the source and the mode it was read in, by
+         which the compiler library checks a source it is given against
+         the basis (RuneCompiler.readUnit, readMid): none is the basis's,
+         nor in its identity *)
       val used = Vector.tabulate (3, fn k => !(counter k) - Vector.sub (#counters start, k))
+      val sourceHash = hashAt ("source", text ())
       val u = P.writer ()
       val () = Vector.app (fn c => P.nat (u, c)) used
-      (* the source's hash, for the unit's provenance (Link.provenance) *)
-      val sourceHash = hashAt ("source", text ())
+      val () = P.string (u, sourceHash)
+      val () = P.string (u, Source.modeName mode)
       val identity = uname ^ "@" ^ hashAt ("identity", hashed)
     in
       {pickle = P.contents u ^ hashed, identity = identity,
@@ -1558,6 +1562,8 @@ struct
     let
       val r = P.reader pickle
       val _ = Vector.tabulate (3, fn _ => P.rnat r)
+      val _ = P.rstring r   (* the hash of its source *)
+      val _ = P.rstring r   (* its mode *)
       val () = if P.rbytes (r, 3) = magic then () else raise P.Bad "not a unit's basis"
       val () = if P.rnat r = version then () else raise P.Bad "a basis of another version"
       val () = if P.rstring r = P.probe () then () else raise P.Bad "a basis made by a compiler whose hash differs"
@@ -1664,6 +1670,8 @@ struct
     let
       val r = P.reader pickle
       val used = Vector.tabulate (3, fn _ => P.rnat r)
+      val _ = P.rstring r   (* the hash of its source, for the compiler library *)
+      val _ = P.rstring r   (* its mode *)
       val hashed = String.extract (pickle, !(#pos r), NONE)
       val () = if P.rbytes (r, 3) = magic then () else raise P.Bad "not a unit's basis"
       val () = if P.rnat r = version then () else raise P.Bad "a basis of another version"

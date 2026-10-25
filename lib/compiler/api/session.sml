@@ -276,6 +276,7 @@ struct
         val expected=Pickle.rstring r
         val mode=case Source.modeNamed (Pickle.rstring r) of SOME mode => mode | NONE => raise Pickle.Bad "unit source mode"
         val ()=if Pickle.rbytes (r,3)=UnitBasis.magic andalso Pickle.rnat r=UnitBasis.version then () else raise Pickle.Bad "unit basis version"
+        val ()=if Pickle.rstring r=Pickle.probe () then () else raise Pickle.Bad "unit basis made by a compiler whose hash differs"
         val name=Pickle.rstring r
         val parts=String.fields (fn c => c = #"#") name
         val inferred=case List.rev parts of

@@ -215,10 +215,12 @@ the only way.
   fingerprint changes).
 - Removed: the elaborator's copies (`copied`, `signatureTyped`, the replay
   of counters, `Ast.copyStrexp`, `FunInfo`'s fields of a body), and from
-  units the re-parse of bodies, issue 1's binders, `funat`,
-  `Expand.current` and the source's hash and mode in a basis's prefix; a
-  functor's basis is its signature and its function. Issue 9's paths stay,
-  for inline copies. 98 files, +964 and -1,531 lines; the elaborator,
+  units the re-parse of bodies, issue 1's binders, `funat` and
+  `Expand.current`; a functor's basis is its signature and its function.
+  Issue 9's paths stay, for inline copies, and so do the source's hash and
+  mode in a basis's prefix, which M7 took out with the re-parse, E10 not
+  having seen that the compiler library checks a unit's source by them
+  (`RuneCompiler.readUnit`, `readMid`; put back, `UnitBasis.version` 12). 98 files, +964 and -1,531 lines; the elaborator,
   units and `Ast` -532 net, as E10 estimated (520).
 - The corners (a), (c) and (d) are closed: their tests are errors now, or
   swap sides. A flexible record a functor's result keeps is refused at
