@@ -1,9 +1,12 @@
 (* A functor declared and applied in one unit, to a structure of an earlier
-   unit: the expansion (D2 A) casts the argument's function through unit
-   from `unit -> unit` and back to `int -> int`, which --lint refuses after
-   expand in every mode in units (and --units --whole). It
-   prints right. The structure declared in the applying unit, or the functor
-   applied in a later unit without --inline-functor, compiles clean. *)
+   unit whose function the argument passes on: the expansion (D2 A) casts
+   the function to unit from its type with unit for some parts (`unit ->
+   unit` for `int -> int`, `unit ref -> unit` for `int ref -> int`) and back
+   to its type, which --lint refuses after expand at -O1 and -O2, in every mode in units
+   and in --units --whole; -O0 is clean, and it prints right. A literal
+   argument that names the earlier unit's function (`struct val mk = A.mk
+   end`), or an int of the earlier unit, compiles clean; `struct open A end`
+   declared in the applying unit fails too. *)
 (* unit u0.sml *)
 structure A = struct fun mk n = n end
 (* unit u1.sml *)
