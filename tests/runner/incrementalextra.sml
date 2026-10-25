@@ -150,12 +150,37 @@ struct
              val output = session s true ["val base = 1;", "use \"u.sml\";"]
          in check s "REPL verification did not reject planted entry"
                (String.isSubstring "the cache's entry for " output andalso String.isSubstring " is not what compiling it gives" output) end)
+    | "S74" =>
+        (own s ""; put s "counter.sml" "structure Counter = struct val n = ref 0 end";
+         let val _ = session s false ["use \"counter.sml\";"]
+             val output = session s true ["use \"counter.sml\";", "structure Old = Counter;", "use \"counter.sml\";",
+                                          "Old.n := 10;", "val now = !Counter.n;", "val old = !Old.n;"]
+         in check s ("a structure named a file's used again: " ^ output)
+              (String.isSubstring "val now = 0 : int" output andalso String.isSubstring "val old = 10 : int" output
+               andalso not (String.isSubstring "not what compiling it gives" output)) end)
+    | "S75" =>
+        (own s ""; put s "user.sml" "fun bump () = Counter.n := !Counter.n + 1";
+         put s "apply.sml" "structure A = Twice (struct fun step n = n * 3 end)  val a = A.go 5";
+         let
+           val write = "fun write (f, t) = let val out = TextIO.openOut f in TextIO.output (out, t); TextIO.closeOut out end;"
+           fun counter more = "write (\"counter.sml\", \"structure Counter = struct val n = ref 0" ^ more ^ " end\");"
+           fun twice body = "write (\"twice.sml\", \"functor Twice (X : sig val step : int -> int end) = struct fun go x = "
+                            ^ body ^ " end\");"
+           val output = session s false
+             [write, counter "", "use \"counter.sml\";", "use \"user.sml\";", "use \"counter.sml\";", "use \"user.sml\";",
+              "bump ();", "val same = !Counter.n;",
+              counter " val m = 1", "use \"counter.sml\";", "use \"user.sml\";", "bump ();", "val edited = !Counter.n;",
+              twice "X.step (X.step x)", "use \"twice.sml\";", "use \"apply.sml\";",
+              twice "X.step (X.step (X.step x))", "use \"twice.sml\";", "use \"apply.sml\";"]
+         in check s ("a cached unit linked against a unit the session replaced: " ^ output)
+              (String.isSubstring "val same = 1 : int" output andalso String.isSubstring "val edited = 1 : int" output
+               andalso String.isSubstring "val a = 135 : int" output) end)
     | "S58" => parallel s
     | _ => simple s
     end
   val cases = ["S1", "S2", "S3", "S5", "S6", "S8", "S17", "S18", "S19", "S29", "S13", "S24", "S31", "S33", "S34", "S36", "S28", "S40",
                "S4", "S7", "S9", "S10", "S11", "S12", "S14", "S15", "S16", "S20", "S21", "S22", "S23", "S25", "S26", "S30", "S32", "S35",
-               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73"]
+               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75"]
   fun runCase name compiler =
     let val s = create name compiler
     in one s; say ("PASS incremental." ^ name ^ ": " ^ Int.toString (!(#assertions s)) ^ " assertions\n") end

@@ -273,7 +273,7 @@ Library that are not listed are not available.
 | basis.word8vectorslice | `Word8VectorSlice`: all of MONO_VECTOR_SLICE | Supported | |
 | basis.word8array | `Word8Array`: all of MONO_ARRAY | Supported | The VM's array of bytes (`RuneBytes`, behind the functor `RuneByteArrayFn`): a byte an element, laid out as C has an array of bytes. `vector`, `copy` and `copyVec` move the bytes in one step. `maxLen` is `Array.maxLen`. |
 | basis.word8arrayslice | `Word8ArraySlice`: all of MONO_ARRAY_SLICE | Supported | |
-| basis.charvector | `CharVector`: all of MONO_VECTOR; `CharVector.vector` is `string` | Supported | |
+| basis.charvector | `CharVector`: all of MONO_VECTOR; `CharVector.vector` is `string` | Supported | A vector of more than 1,024 elements is made in place, so that `tabulate` of any length takes a stack of a bounded size (`rt.stack`), and so do the slices' `vector` of CharArraySlice and Word8ArraySlice. |
 | basis.charvectorslice | `CharVectorSlice`: all of MONO_VECTOR_SLICE; `CharVectorSlice.slice` is `Substring.substring` | Supported | |
 | basis.chararray | `CharArray`: all of MONO_ARRAY | Supported | The VM's array of bytes, a byte a character, as `Word8Array` is. |
 | basis.chararrayslice | `CharArraySlice`: all of MONO_ARRAY_SLICE | Supported | |

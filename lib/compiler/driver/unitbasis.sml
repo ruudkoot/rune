@@ -656,7 +656,12 @@ struct
   (* The usages of a compile: each name it looked up (Usage) *)
   fun usagesOf (names : string list) : (string * string) list = during "usages" (fn () => List.map (fn k => (k, usageValue k)) names)
 
-  (* the first usage that does not hold in the session as it is, if one *)
+  (* the first usage that does not hold in the session as it is, if one.
+     By its fingerprint only where the unit that bound the name is not in
+     the session: the entry's code names that unit's globals, which a unit
+     loaded in its place takes over (remapping), while a unit of the
+     session keeps them -- where the REPL used a file again, or another
+     unit binds the name now, the code would reach the old unit's *)
   fun broken (us : (string * string) list) : string option = during "find" (fn () =>
     let
       fun holds (k, v) =
@@ -667,7 +672,7 @@ struct
           val i = String.concatWith " " (List.take (fs, List.length fs - 1))
           val b = binderOfKey k
         in
-          b = i orelse (fp <> "-" andalso fingerprintAt (k, b) = SOME fp)
+          b = i orelse (fp <> "-" andalso not (isSome (StringMap.find (!byIdentity, i))) andalso fingerprintAt (k, b) = SOME fp)
         end
     in Option.map #1 (List.find (not o holds) us) end)
 
@@ -1712,6 +1717,30 @@ struct
                | NONE => raise Missing (unit ^ " (a name no path of it reaches)"))
       in
         {code = #code u, identity = #identity u,provenance= #provenance u, globals = List.map (fn (k, ix) => (key k, ix)) (#globals u),
+         imports = List.map (fn (ix, k) => (ix, key k)) (#imports u), exports = #exports u}
+      end
+
+  (* An identity no unit of the session has: identity, or else identity~2,
+     identity~3, ...: for a unit loaded again where it is loaded already --
+     the same text against the same units, as a file the REPL uses again --
+     whose globals must be its own, as a structure that names the first
+     unit's must keep naming them. Its name is the same (nameOf). *)
+  fun unused (identity : string) : string =
+    let
+      fun taken i = isSome (StringMap.find (!byIdentity, i))
+      fun go n = let val i = identity ^ "~" ^ Int.toString n in if taken i then go (n + 1) else i end
+    in if taken identity then go 2 else identity end
+
+  (* code compiled as one unit, its own keys made those of the unit of
+     identity to, as it is linked when it is loaded under another identity
+     than its entry's (unused) *)
+  fun renamed (u : Link.unitCode, to : string) : Link.unitCode =
+    if #identity u = to then u
+    else
+      let
+        fun key (k as {unit, number} : Link.key) = if unit = #identity u then {unit = to, number = number} else k
+      in
+        {code = #code u, identity = to, provenance = #provenance u, globals = List.map (fn (k, ix) => (key k, ix)) (#globals u),
          imports = List.map (fn (ix, k) => (ix, key k)) (#imports u), exports = #exports u}
       end
 

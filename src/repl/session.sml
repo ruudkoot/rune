@@ -348,12 +348,16 @@ struct
                            | NONE => []
                val u = UnitBasis.remapKeys (u, remap)
                val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
+               (* a file used again, the same text against the same units:
+                  loaded and linked under an identity of its own, that what
+                  named the first's globals still does (UnitBasis.unused) *)
+               val as' = UnitBasis.unused identity
                val l = UnitBasis.loadKnown ({pickle = pickle, file = file, at = at, env = !env, fixity = #fixity start,
-                                             text = fn () => text}, SOME identity, remap)
+                                             text = fn () => text}, SOME as', remap)
                (* its source, and those of the functors' bodies it
                   applied, where they are now, in its code's files *)
-               val code = if UnitBasis.moves (u, was, file, others) orelse not (List.null remap)
-                          then String.concat (UnitFile.chunks (fp, UnitBasis.relocate (u, was, file, others)))
+               val code = if UnitBasis.moves (u, was, file, others) orelse not (List.null remap) orelse as' <> identity
+                          then String.concat (UnitFile.chunks (fp, UnitBasis.relocate (UnitBasis.renamed (u, as'), was, file, others)))
                           else code
                val run = linkFor (code, IntMap.empty)
              in
@@ -415,8 +419,12 @@ struct
             the session's after it has run, is what the basis says *)
          val {code, loaded, exported} =
            Pipeline.unitThrough {start = start, name = name, file = file, text = fn () => text, mode = srcMode,
-                                 decs = decs @ pdecs, delta = delta, fixity = #fixity start, used = used}
+                                 decs = decs @ pdecs, delta = delta, fixity = #fixity start, used = used, fresh = true}
          val bytes = String.concat (UnitFile.chunks (Pipeline.fingerprint (), code))
+         (* linked as it was loaded, under an identity of its own where it
+            is a file used again (Pipeline.unitThrough's fresh) *)
+         val linked = if #identity (#unit loaded) = #identity code then bytes
+                      else String.concat (UnitFile.chunks (Pipeline.fingerprint (), UnitBasis.renamed (code, #identity (#unit loaded))))
          val () =
            case against of
              SOME e =>
@@ -425,7 +433,7 @@ struct
            | NONE => ()
          val () =
            case cache of
-             SOME (d, c, _) => UnitCache.storePaths (d, c, #identity (#unit loaded), UnitBasis.pathsOf (#unit loaded))
+             SOME (d, c, _) => UnitCache.storePaths (d, c, #identity exported, UnitBasis.pathsOf (#unit loaded))
            | NONE => ()
          val () =
            case cache of
@@ -436,7 +444,7 @@ struct
            | NONE => ()
        in
          Source.unregister echoName;
-         result (loaded, linkFor (bytes, if !debugging then tyconsMoved (delta, #delta loaded) else IntMap.empty))
+         result (loaded, linkFor (linked, if !debugging then tyconsMoved (delta, #delta loaded) else IntMap.empty))
        end)
       handle e => (UnitBasis.undo start; Source.unregister echoName; raise e)
     end

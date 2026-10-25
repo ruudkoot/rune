@@ -109,9 +109,12 @@ struct
      the unit's, file its source's in spans, text its source and mode how
      it was read. Its code by
      keys, its basis, and what loading gave, which the caller adds to the
-     start's environment and fixity. *)
+     start's environment and fixity. fresh: loaded under an identity no
+     unit of the session has (UnitBasis.unused), as the REPL loads a file it
+     used before; the code is still the basis's identity's, for the cache,
+     and is linked renamed (UnitBasis.renamed). *)
   fun unitThrough {start : UnitBasis.start, name : string, file : string, text : unit -> string, mode : Source.mode,
-                   decs : Ast.dec list, delta : Env.env, fixity : Fixity.env, used : string list}
+                   decs : Ast.dec list, delta : Env.env, fixity : Fixity.env, used : string list, fresh : bool}
       : {code : Link.unitCode, exported : UnitBasis.exported, loaded : UnitBasis.result} =
     let
       val timed = Pass.timed
@@ -121,6 +124,7 @@ struct
       val () = timed "unit-undo" (fn () => UnitBasis.undo start)
       val l = timed "unit-load" (fn () => UnitBasis.loadKnown ({pickle = #pickle x, file = file, at = #counters start,
                                                                env = #env start, fixity = #fixity start, text = text},
-                                                              SOME (#identity x), []))
+                                                              SOME (if fresh then UnitBasis.unused (#identity x)
+                                                                    else #identity x), []))
     in {code = timed "unit-relative" (fn () => UnitBasis.relative (x, sc)), exported = x, loaded = l} end
 end

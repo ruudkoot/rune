@@ -801,7 +801,7 @@ struct
               val usages = timed "unit-usages" (fn () => UnitBasis.usagesOf names)
               val {code, exported, loaded} =
                 Pipeline.unitThrough {start = start, name = ident, file = name, text = text (name, mode), mode = mode, decs = decs,
-                                      delta = !Elaborate.lastDelta, fixity = !fixity, used = names}
+                                      delta = !Elaborate.lastDelta, fixity = !fixity, used = names, fresh = false}
               val bytes = timed "unit-chunks" (fn () => String.concat (UnitFile.chunks (Pipeline.fingerprint (), code)))
               (* --pass-stats with RUNE_MEM set: the bytes of its basis and
                  its code (issue 14) *)
