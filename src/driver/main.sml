@@ -533,7 +533,6 @@ struct
          of them all (the incremental roadmap's M7) *)
       val () = Pipeline.keepMid := (!Options.wholeFromUnits orelse isSome (UnitCache.directory ()))
       val mids : MidCanon.unitMid list ref = ref []
-      val () = MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE)
       val registers = !Options.target = "registers"
       val () = if registers then Code.opcodeNames := RegCodes.names else ()
       val env = ref (Env.initialNow ())

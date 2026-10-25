@@ -402,6 +402,11 @@ struct
   fun def (b : builder, oper) = let val x = newVar b in emit (b, L.Def (x, oper)); x end
   (* a variable defined by an operation whose representation is known *)
   fun defAs (b : builder, oper, r : L.rep) = let val x = def (b, oper) in setRep (b, x, r); x end
+  (* one whose value is of more than one representation, whatever a later
+     binding of it says: a datatype's global, in which each constructor
+     leaves a field of its own (results) -- an int of one, a string of
+     another -- read before the match takes the constructor apart *)
+  fun defAny (b : builder, oper) = let val x = def (b, oper) in IntTable.insert (#reps b, x, L.RAny); x end
   fun finish (b : builder, t : L.transfer) =
     if !(#open' b) then
       (#blocks b := {label = !(#label b), params = !(#params b), instrs = List.rev (!(#instrs b)), transfer = t}
@@ -1078,13 +1083,8 @@ struct
                  let
                    val v0 = defAs (b, L.CallK (g, List.map (fn a => atom (b, cx, a)) xs), L.RCon0)
                    val read = case IntTable.find (!sumRead, x) of SOME n => n | NONE => 0
-                   (* of any representation, whatever a constructor's field
-                      read from it is: a global holds a field of each
-                      constructor, and what an earlier return left (the
-                      first use would otherwise give it its own) *)
-                   fun slot g = let val v = def (b, L.Slot g) in IntTable.insert (#reps b, v, L.RAny); v end
                    val vs = List.tabulate (List.length (sumsOf stamp),
-                                           fn i => if i < read then slot (List.nth (sumsOf stamp, i)) else v0)
+                                           fn i => if i < read then defAny (b, L.Slot (List.nth (sumsOf stamp, i))) else v0)
                  in setVirtual (b, x, Sum (v0, vs)); exp (b, body, cx) end
              | (M.Decon (tag, t, a), _) =>
                  (case virtualOf (b, a) of

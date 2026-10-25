@@ -19,6 +19,10 @@ struct
   val () = CompilerState.cellRoot ("Pass.dumpAfter", dumpAfter)
   val lint = ref false
   val () = CompilerState.cellRoot ("Pass.lint", lint)
+  (* --lint, or RUNE_LINT set and not empty: what the tests compile with
+     (bin/rune-test sets it), the REPL's and the compiler library's compiles
+     too, which take no flags *)
+  fun linting () = !lint orelse (case OS.Process.getEnv "RUNE_LINT" of SOME s => s <> "" | NONE => false)
   val stats = ref false
   val () = CompilerState.cellRoot ("Pass.stats", stats)
   (* the live heap's bytes after a full collection, where the program can
@@ -108,7 +112,7 @@ struct
       val after = used ()
       val () = if asked (dumpAfter, name) then print ("(* after " ^ name ^ " *)\n" ^ show y ^ "\n") else ()
       val () =
-        if !lint then (check y handle Error.Bug msg => raise Error.Bug ("lint after " ^ name ^ ": " ^ msg))
+        if linting () then (check y handle Error.Bug msg => raise Error.Bug ("lint after " ^ name ^ ": " ^ msg))
         else ()
       val () =
         if !depth = 0
@@ -149,7 +153,7 @@ struct
     if !stats then
       let
         val () = (outer := Time.+ (!outer, !sizes); line ("stats", 0, !sizes))
-        val () = if !lint orelse not (List.null (!dumpBefore)) orelse not (List.null (!dumpAfter))
+        val () = if linting () orelse not (List.null (!dumpBefore)) orelse not (List.null (!dumpAfter))
                  then (outer := Time.+ (!outer, !checks); line ("checks", 0, !checks))
                  else ()
         val total = Time.- (used (), !origin)

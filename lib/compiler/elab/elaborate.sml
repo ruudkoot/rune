@@ -79,10 +79,12 @@ struct
   val makesCode = ref true
   val () = CompilerState.cellRoot ("Elaborate.makesCode", makesCode)
 
-  (* --lint: each application whose code is made checks that its copy
-     agrees with the functor's summary but for the names the copy made *)
+  (* --lint (or RUNE_LINT, Pass.linting): each application whose code is
+     made checks that its copy agrees with the functor's summary but for the
+     names the copy made *)
   val lintSummaries = ref false
   val () = CompilerState.cellRoot ("Elaborate.lintSummaries", lintSummaries)
+  fun lintingSummaries () = !lintSummaries orelse Pass.linting ()
 
   (* Dynamic modules (docs/units.md, Dynamic modules; the incremental
      roadmap's M9, D17 and D18): the fingerprint of a signature's ABI, which
@@ -780,7 +782,7 @@ struct
       val alike = not (List.exists (fn c => not (#eq c)) generated)
                   andalso not (IntMap.foldl (fn (f, b) => b orelse drops f) false phi)
     in
-      if alike andalso not (!lintSummaries) then SOME copy
+      if alike andalso not (lintingSummaries ()) then SOME copy
       else
         (walk (result, copy);
          (* --lint: where nothing can differ, nothing does *)
@@ -2045,7 +2047,7 @@ struct
                          (case signatureTyped (s, phi, result, "functor " ^ funid ^ " at " ^ Source.describe sp) of
                             SOME r => r
                           | NONE =>
-                              if !lintSummaries then Error.bug ("the copy of functor " ^ funid ^ " at " ^ Source.describe sp
+                              if lintingSummaries () then Error.bug ("the copy of functor " ^ funid ^ " at " ^ Source.describe sp
                                                                 ^ " disagrees with its summary")
                               else result)
                  in slot := SOME copy; result end

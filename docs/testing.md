@@ -69,6 +69,14 @@ its load, but at least half of them, and its available memory), keeps
 apart the jobs that name one pool, and starts a job only after those it
 waits for.
 
+Every compile a test makes is linted: `bin/rune-test` sets `RUNE_LINT=1`
+for itself and its jobs unless it is set already, and the compiler, the
+REPL and the compiler library then check what every pass makes as `--lint`
+does ([ir.md](ir.md), *Options*), and stop at the first breach, which is a
+bug of the compiler. `RUNE_LINT=` (empty) runs the tests without it. The
+budgets (`bin/rune-budget`) count the compiler as it is shipped, and clear
+it for what they count.
+
 * `bin/rune-test list [FILTER]` lists the tests (`make/*`,
   `tag:check & !runner/*`), and `explain FILTER` shows each one's command,
   directory, CPUs, pools and edges;

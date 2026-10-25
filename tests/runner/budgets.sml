@@ -25,8 +25,10 @@ struct
   fun compilerRbc Registers = "bin/rune.rbc" | compilerRbc Stack = "bin/rune.stack.rbc"
   fun runedocRbc Registers = "bin/runedoc.rbc" | runedocRbc Stack = "bin/runedoc.stack.rbc"
   val limits = {addressSpace = NONE, cpuTime = SOME 900, fileSize = SOME (64 * 1024 * 1024), core = SOME 0}
+  (* without RUNE_LINT, which bin/rune-test sets: a budget counts the
+     compiler as it is shipped, which lints nothing *)
   fun execute name command stdout stderr =
-    let val status = Children.exec limits (fn e => e)
+    let val status = Children.exec limits (List.filter (fn kv => not (String.isPrefix "RUNE_LINT=" kv)))
           {cmd = command, dir = SOME root, stdin = "-", stdout = fromRoot stdout,
            stderr = fromRoot stderr, timeout = 900}
     in need (status = 0, name ^ ": exit " ^ Int.toString status ^ ": " ^ firstLine (fromRoot stderr)) end
