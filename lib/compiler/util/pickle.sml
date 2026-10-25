@@ -20,8 +20,8 @@ struct
     else
       let val bigger = CharArray.array (Int.max (2 * CharArray.length (!bytes), !used + n), #"\000")
       in CharArray.copy {src = !bytes, dst = bigger, di = 0}; bytes := bigger end
-  (* the whole array, then its part written: a slice's vector would go
-     through a list on Rune, as deep as the bytes are many *)
+  (* the whole array, then its part written: two copies of the bytes,
+     where a slice's vector makes a long string a byte at a time on Rune *)
   fun contents ({bytes, used} : writer) : string = String.substring (CharArray.vector (!bytes), 0, !used)
   fun bytes (w as {bytes = b, used} : writer, s : string) : unit =
     (room (w, String.size s); CharArray.copyVec {src = s, dst = !b, di = !used}; used := !used + String.size s)

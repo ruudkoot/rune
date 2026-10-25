@@ -12,9 +12,16 @@ struct
   (* one element, as output1 makes: a string of it, with no list *)
   fun fromList [x] = String.str (toChar x)
     | fromList l = implode (map toChar l)
+  (* a short vector by a list, as fast as there is; a long one in place, as
+     a list as long would be as deep on the stack, which the VM's is bounded
+     (rt.stack). The two tests of the length are the two of Size *)
   fun tabulate (n, f) =
-    if n < 0 orelse n > maxLen then raise Size
-    else implode (List.tabulate (n, fn i => toChar (f i)))
+    if n <= 1024 then (if n < 0 then raise Size else implode (List.tabulate (n, fn i => toChar (f i))))
+    else if n > maxLen then raise Size
+    else
+      let val b = RuneBytes.new (n, 0)
+          fun go i = if i >= n then RuneBytes.extract (b, 0, n) else (RuneBytes.update (b, i, toChar (f i)); go (i + 1))
+      in go 0 end
   fun update (v : vector, i, x) =
     if i < 0 orelse i >= size v then raise Subscript
     else String.concat [String.substring (v, 0, i), str (toChar x), String.extract (v, i + 1, NONE)]
