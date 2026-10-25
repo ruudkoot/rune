@@ -5,9 +5,9 @@
 (funs
   (fn g1 ((v1 : unit * unit)) : unit * unit
     (let (v2 : unit) (select 1 v1)
-    (let (v3 : t) (prim unsafe_cast v2 : unit -> t)
+    (let (v3 : t) (prim functor_cast v2 : unit -> t)
     (let (v4 : unit) (select 0 v1)
-    (let (v5 : (t * t) -> t) (prim unsafe_cast v4 : unit -> (t * t) -> t)
+    (let (v5 : (t * t) -> t) (prim functor_cast v4 : unit -> (t * t) -> t)
     (fun
       (fn v6 ((v7 : tree)) : t
         (join j1 ()
@@ -37,7 +37,7 @@
         (if v25
           (return v3)
           (jump j1))))))
-    (let (v26 : unit) (prim unsafe_cast v6 : (tree -> t) -> unit)
+    (let (v26 : unit) (prim functor_cast v6 : (tree -> t) -> unit)
     (return (tuple v26 ()))))))))))
 (funs
   (fn g2 ((v27 : int * int)) : int
@@ -49,9 +49,9 @@
 (val g3 : int
   (return 0))
 (val g4 : unit
-  (return (prim unsafe_cast g2 : ((int * int) -> int) -> unit)))
+  (return (prim functor_cast g2 : ((int * int) -> int) -> unit)))
 (val g5 : unit
-  (return (prim unsafe_cast 0 : int -> unit)))
+  (return (prim functor_cast 0 : int -> unit)))
 (val g6 : unit * unit
   (return (tuple g4 g5)))
 (funs
@@ -84,7 +84,7 @@
       (return 0)
       (jump j3)))))))
 (val g8 : unit
-  (return (prim unsafe_cast g7 : (tree/2 -> int) -> unit)))
+  (return (prim functor_cast g7 : (tree/2 -> int) -> unit)))
 (val g9 : unit * unit
   (return (tuple g8 ())))
 (val g10 : int

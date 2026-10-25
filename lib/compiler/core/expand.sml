@@ -171,7 +171,7 @@ struct
      to variables and what it becomes *)
   fun markerType (r : rhs) : Ty.ty option =
     case r of
-      Prim ("unsafe_cast", t, [Unit]) =>
+      Prim ("functor_marker", t, [Unit]) =>
         (case Ty.view t of
            Ty.Arrow (d, enc) =>
              if Ty.equal (d, Ty.unit) then
@@ -411,20 +411,8 @@ struct
          first branch makes or takes it apart as its datatype *)
       fun openTest (c, r, b) =
         case (r, b) of
-          (Prim ("poly_eq", _, [Var _, Const (Lambda.CInt n, _)]), If (Var (c', []), fast, _)) =>
-            if n = 0 andalso c = c' andalso isOpenStep fast then SOME fast else NONE
+          (Prim ("open_boxed", _, _), If (Var (c', []), fast, _)) => if c = c' then SOME fast else NONE
         | _ => NONE
-      and isOpenStep e =
-        let
-          fun openTy t = case Ty.view t of Ty.Con (s, _, _) => Ty.isOpen s | _ => false
-          fun step r = case r of Con (_, t, _) => openTy t | Decon (_, t, _) => openTy t | _ => false
-        in
-          case e of
-            Return r => step r
-          | Let (_, _, r, _) => step r
-          | Mark (_, e) => isOpenStep e
-          | _ => false
-        end
       fun exp e =
         case e of
           Let (x, s, r, b) =>
@@ -526,7 +514,7 @@ struct
         (case IntTable.find (#tuples st, g) of
            SOME v => if i < Vector.length v then (Atom (Vector.sub (v, i)), true) else (r, false)
          | NONE => (r, false))
-    | Prim ("unsafe_cast", t, [a]) =>
+    | Prim ("functor_cast", t, [a]) =>
         (case Ty.view t of
            Ty.Arrow (d, c) =>
              if Ty.equal (d, c) then (Atom a, true)
@@ -592,7 +580,7 @@ struct
     (IntTable.insert (#schemes st, g, s);
      case r of
        Tuple xs => IntTable.insert (#tuples st, g, Vector.fromList xs)
-     | Prim ("unsafe_cast", t, [a]) =>
+     | Prim ("functor_cast", t, [a]) =>
          (case Ty.view t of
             Ty.Arrow (d, c) => if Ty.equal (c, Ty.unit) andalso not (Ty.equal (d, Ty.unit))
                                then IntTable.insert (#casts st, g, (a, d)) else ()

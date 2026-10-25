@@ -259,8 +259,11 @@ struct
                        let
                          val c = fresh ()
                        in
+                         (* open_boxed: the descriptor is 0 (an imm_eq, Lower),
+                            which only this makes, the test the expansion
+                            folds (Expand.openTest) *)
                          M.Let (c, ([], Ty.bool),
-                                M.Prim ("poly_eq", Ty.arrow (Ty.tuple [Ty.int, Ty.int], Ty.bool),
+                                M.Prim ("open_boxed", Ty.arrow (Ty.tuple [Ty.int, Ty.int], Ty.bool),
                                         [M.Var (desc, []), M.Const (L.CInt (IntInf.fromInt 0), Ty.int)]),
                                 M.If (M.Var (c, []), deliver (ctx, st, fast), deliver (ctx, st, R (M.App (fa, [aa]), res))))
                        end)
