@@ -345,7 +345,8 @@ property finds is shrunk to a small program.
 *)`, and a last line of the modes' options) in every mode.
 `tests/functors/known.txt` lists the failures found and not yet fixed, a
 line each: a mode, a text of the failure's message, and why. A failure a
-line covers is counted and passes, in both jobs; and each line must be met
+line covers is counted and passes, in both jobs (a mode the lint refuses so
+is held to the rest of the property at `-O0`); and each line must be met
 by a program of `tests/functors`, so that once the compiler is fixed the
 line is stale and goes. A failure one file shows is a program of
 `tests/lang` too, with its `.expected` from the flag off, and its failing

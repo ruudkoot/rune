@@ -1118,7 +1118,7 @@ struct
   exception CompileInline and LintInline and DiffersInline
   exception CompileBudget and LintBudget and DiffersBudget
   exception CompileBudgetUnits and LintBudgetUnits and DiffersBudgetUnits
-  fun failure (kind, mode) =
+  fun failure (kind, mode) : exn =
     case (kind, mode) of
       ("compile", "on") => CompileOn | ("lint", "on") => LintOn | ("differs", "on") => DiffersOn
     | ("compile", "off-units") => CompileOffUnits | ("lint", "off-units") => CompileOffUnits | ("differs", "off-units") => DiffersOffUnits
@@ -1131,7 +1131,7 @@ struct
     | ("compile", "on-budget-units") => CompileBudgetUnits | ("lint", "on-budget-units") => LintBudgetUnits
     | ("differs", "on-budget-units") => DiffersBudgetUnits
     | ("timeout", _) => TimedOut
-    | _ => Invalid
+    | (k, m) => if String.isSuffix "-O0" m then failure (k, String.substring (m, 0, size m - 3)) else Invalid
 
   (* a failure known and not yet fixed (tests/functors/known.txt): a mode
      (a glob, * for any) and a text its message has; a failure it covers is
@@ -1167,40 +1167,58 @@ struct
       val () = Sh.rmTree dir
       val files = writeUnits (dir, p)
       fun same (a, b) = Sh.exists a andalso Sh.exists b andalso Sh.read a = Sh.read b
+      fun judge (m : mode, o' : outcome, reference : outcome option) =
+        if #compiled o' = 124 orelse #ran o' = SOME 124 then SOME ("timeout", #mode o', "it takes too long")
+        else if #name m = "off" then
+          (if #compiled o' <> 0 then SOME ("invalid", "off", "the program does not compile with the flag off: "
+                                                           ^ Sh.firstNonEmpty (dir ^ "/off.cerr"))
+           else if #ran o' <> SOME 0 then SOME ("invalid", "off", "the program fails with the flag off")
+           else NONE)
+        else if #compiled o' <> 0 then
+          SOME (if #lint o' then "lint" else "compile", #mode o',
+                case List.find (fn l => String.isSubstring "error" l orelse String.isSubstring "rror:" l)
+                               (Sh.lines (#err o')) of SOME l => l | NONE => Sh.firstNonEmpty (dir ^ "/" ^ #mode o' ^ ".cerr"))
+        else if not (#run m) then
+          (if same (dir ^ "/on.rbc", dir ^ "/" ^ #name m ^ ".rbc") then NONE
+           else SOME ("differs", #mode o', "--units --whole is not the bytes of the whole compile"))
+        else
+          case reference of
+            SOME r => if #out r = #out o' andalso #ran r = #ran o' then NONE
+                      else SOME ("differs", #mode o', "it prints otherwise than with the flag off whole: "
+                                                      ^ Sh.difference (dir ^ "/off.out", dir ^ "/" ^ #mode o' ^ ".out"))
+          | NONE => NONE
       fun go ([], done, verdict, _, hits) = (List.rev done, verdict, List.rev hits)
         | go (m :: rest, done, verdict, reference : outcome option, hits) =
             if isSome verdict andalso not keepGoing then (List.rev done, verdict, List.rev hits)
             else
               let
                 val o' = runMode (c, dir, files) m
-                val v =
-                  if #compiled o' = 124 orelse #ran o' = SOME 124 then SOME ("timeout", #mode o', "it takes too long")
-                  else if #name m = "off" then
-                    (if #compiled o' <> 0 then SOME ("invalid", "off", "the program does not compile with the flag off: "
-                                                                     ^ Sh.firstNonEmpty (dir ^ "/off.cerr"))
-                     else if #ran o' <> SOME 0 then SOME ("invalid", "off", "the program fails with the flag off")
-                     else NONE)
-                  else if #compiled o' <> 0 then
-                    SOME (if #lint o' then "lint" else "compile", #mode o',
-                          case List.find (fn l => String.isSubstring "error" l orelse String.isSubstring "rror:" l)
-                                         (Sh.lines (#err o')) of SOME l => l | NONE => Sh.firstNonEmpty (dir ^ "/" ^ #mode o' ^ ".cerr"))
-                  else if not (#run m) then
-                    (if same (dir ^ "/on.rbc", dir ^ "/" ^ #name m ^ ".rbc") then NONE
-                     else SOME ("differs", #mode o', "--units --whole is not the bytes of the whole compile"))
-                  else
-                    case reference of
-                      SOME r => if #out r = #out o' andalso #ran r = #ran o' then NONE
-                                else SOME ("differs", #mode o', "it prints otherwise than with the flag off whole: "
-                                                                ^ Sh.difference (dir ^ "/off.out", dir ^ "/" ^ #mode o' ^ ".out"))
-                    | NONE => NONE
-                val (v, hits) = case Option.mapPartial (covers ks) v of
-                                  SOME k => (NONE, k :: hits)
-                                | NONE => (v, hits)
+                val v = judge (m, o', reference)
+                (* a known lint failure at -O1 and -O2: the mode is held to
+                   the rest of the property at -O0, where the lint is clean *)
+                val (v, hits, done) =
+                  case Option.mapPartial (covers ks) v of
+                    SOME k =>
+                      (case v of
+                         SOME ("lint", _, _) =>
+                           if #run m then
+                             let
+                               val m0 = {name = #name m ^ "-O0", flags = #flags m @ ["-O0"], run = true}
+                               val o0 = runMode (c, dir, files) m0
+                               val v0 = judge (m0, o0, reference)
+                             in
+                               case Option.mapPartial (covers ks) v0 of
+                                 SOME k0 => (NONE, k0 :: k :: hits, o0 :: o' :: done)
+                               | NONE => (v0, k :: hits, o0 :: o' :: done)
+                             end
+                           else (NONE, k :: hits, o' :: done)
+                       | _ => (NONE, k :: hits, o' :: done))
+                  | NONE => (v, hits, o' :: done)
                 val verdict = case verdict of SOME _ => verdict | NONE => v
                 val reference = if #name m = "off" then SOME o' else reference
               in
-                if #name m = "off" andalso isSome v then (List.rev (o' :: done), verdict, List.rev hits)
-                else go (rest, o' :: done, verdict, reference, hits)
+                if #name m = "off" andalso isSome v then (List.rev done, verdict, List.rev hits)
+                else go (rest, done, verdict, reference, hits)
               end
     in go (modes p, [], NONE, NONE, []) end
 
