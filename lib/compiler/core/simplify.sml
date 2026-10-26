@@ -2024,6 +2024,15 @@ struct
           else ();
           f'
         end
+      (* Each definition as it is made, with the copies its calls made,
+         checked by MidLint in the program it was taken from and the copies
+         made before it, at level 2 (simplify-def; linting roadmap, E9): a
+         breach is found where it was made *)
+      val context = if Pass.linting' 2 then SOME (MidLint.context p) else NONE
+      fun check group =
+        case context of
+          SOME c => (Pass.checkAt ("simplify-def", 2) (MidLint.checkIn c) group; MidLint.extend c group)
+        | NONE => ()
       (* the copies a definition's calls made, simplified -- which may make
          more -- as one group before it *)
       fun withCopies d =
@@ -2032,10 +2041,11 @@ struct
             case !pendingCopies @ !pendingEqs of
               [] => acc
             | fs => (pendingCopies := []; pendingEqs := []; drain (List.map fundef (List.rev fs) @ acc))
+          val group = case drain [] of
+                        [] => [d]
+                      | fs => [Funs fs, d]
         in
-          case drain [] of
-            [] => [d]
-          | fs => [Funs fs, d]
+          check group; group
         end
     in
       List.concat

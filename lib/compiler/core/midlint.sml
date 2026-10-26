@@ -32,13 +32,24 @@ struct
   val importedScheme : (int -> scheme option) ref = ref (fn _ => NONE)
   val () = CompilerState.cellRoot ("MidLint.importedScheme", importedScheme)
 
+  (* the functor bodies a unit's basis decoded (UnitBasis), the last first,
+     to be linted at the next unit's passes (Pipeline.functorBodies) *)
+  val pendingBodies : fundef list ref = ref []
+  val () = CompilerState.cellRoot ("MidLint.pendingBodies", pendingBodies)
+
   (* The check, with imperative tables (linting roadmap, M2; E2): the
      binders, the globals and the functions of other than one parameter in
      hash tables, and the variables in scope in one table, entered and left
      as the walk goes -- which stamps' being unique, checked as each is
      bound, makes the same as a map per scope. A message is made only for a
      breach. *)
-  fun check (p : program) : unit =
+  (* What a program, or a part of one, is checked in: the scheme of a
+     global it names and does not define, the parameters' types of a
+     function of several parameters it names and does not define, and
+     whether it may set such a global. *)
+  type surround = {global : int -> scheme option, nary : int -> Ty.ty list option, sets : bool}
+
+  fun checkWith ({global = outer, nary = outerNary, sets} : surround) (p : program) : unit =
     let
       fun bug msg = Error.bug msg
       val bound : unit IntTable.table = IntTable.table 256
@@ -58,7 +69,8 @@ struct
         case #params f of
           [_] => ()
         | ps => IntTable.insert (nary, #name f, List.map #2 ps)
-      fun isNary x = isSome (IntTable.find (nary, x))
+      fun naryParams x = case IntTable.find (nary, x) of SOME ps => SOME ps | NONE => outerNary x
+      fun isNary x = isSome (naryParams x)
 
       (* the globals, from their definitions *)
       val globals : scheme IntTable.table = IntTable.table 256
@@ -151,7 +163,7 @@ struct
             (case IntTable.find (globals, g) of
                SOME s => instance (fn () => "g" ^ Int.toString g, s, args)
              | NONE =>
-                 case if !Pass.whole then NONE else !importedScheme g of
+                 case outer g of
                    SOME s => instance (fn () => "g" ^ Int.toString g, s, args)
                  | NONE => bug ("global g" ^ Int.toString g ^ " is not defined"))
         | Const (_, t) => t
@@ -167,7 +179,7 @@ struct
         | App (f, args) =>
             let
               val name = case f of Var (x, _) => SOME x | Global (g, _) => SOME g | _ => NONE
-              val n = case Option.mapPartial (fn x => IntTable.find (nary, x)) name of SOME ps => List.length ps | NONE => 1
+              val n = case Option.mapPartial naryParams name of SOME ps => List.length ps | NONE => 1
               val ft = callee f
               fun wrong () = bug ("an application of what has type " ^ Ty.toString ft)
             in
@@ -227,9 +239,10 @@ struct
         | ExnCon a => (expect (the "an exception", atom a, Ty.exn); Ty.exnCon)
         | ExnArg (t, a) => (expect (the "an exception", atom a, Ty.exn); t)
         | SetGlobal (g, a) =>
-            (case IntTable.find (globals, g) of
-               SOME (_, t) => (expect (fn () => "the value of global g" ^ Int.toString g, atom a, t); Ty.unit)
-             | NONE => bug ("global g" ^ Int.toString g ^ " is not defined"))
+            (case (IntTable.find (globals, g), if sets then outer g else NONE) of
+               (SOME (_, t), _) => (expect (fn () => "the value of global g" ^ Int.toString g, atom a, t); Ty.unit)
+             | (NONE, SOME (_, t)) => (expect (fn () => "the value of global g" ^ Int.toString g, atom a, t); Ty.unit)
+             | (NONE, NONE) => bug ("global g" ^ Int.toString g ^ " is not defined"))
 
       (* e, where the join points in labels are in scope, wanted to have
          type want *)
@@ -283,4 +296,34 @@ struct
     in
       List.app def p
     end
+
+  (* A whole program, or a unit's, whose globals of units before it are
+     ToMid's to say (importedScheme) *)
+  fun check (p : program) : unit =
+    checkWith {global = fn g => if !Pass.whole then NONE else !importedScheme g, nary = fn _ => NONE, sets = false} p
+
+  (* A part of a program checked in what is around it (Simplify's
+     definitions, each as it is made: the linting roadmap, E9): the schemes
+     of the globals and the functions of several parameters of the program
+     it was taken from, and of the parts checked before it, which `extend`
+     adds; a part may set a global of those. *)
+  type context = {schemes : scheme IntTable.table, nary : Ty.ty list IntTable.table}
+  fun extend ({schemes, nary} : context) (p : program) : unit =
+    let
+      fun fundef (f : fundef) =
+        (IntTable.insert (schemes, #name f, (#tyvars f, funTy f));
+         case #params f of [_] => () | ps => IntTable.insert (nary, #name f, List.map #2 ps))
+    in
+      List.app (fn Val (g, s, _) => IntTable.insert (schemes, g, s)
+                 | Funs fs => List.app fundef fs
+                 | Do (gs, _) => List.app (fn (g, s) => IntTable.insert (schemes, g, s)) gs) p
+    end
+  fun context (p : program) : context =
+    let val c = {schemes = IntTable.table 1024, nary = IntTable.table 64}
+    in extend c p; c end
+  fun checkIn ({schemes, nary} : context) (part : program) : unit =
+    checkWith {global = fn g => case IntTable.find (schemes, g) of
+                                  SOME s => SOME s
+                                | NONE => if !Pass.whole then NONE else !importedScheme g,
+               nary = fn x => IntTable.find (nary, x), sets = true} part
 end
