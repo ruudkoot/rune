@@ -91,7 +91,7 @@ What it rests on:
 | M7 | The instruction sets described for checking | B | done (2026-10-26) |
 | M8 | A verifier of the register code | B | done (2026-10-26); its level comes with M3 |
 | M9 | Units and the link | B | done (2026-10-26) |
-| M10 | The stack code's check, in the compiler | B | not started |
+| M10 | The stack code's check, in the compiler | B | done (2026-10-26) |
 | M11 | Node ids, witnesses and `SourceTy` | A | not started |
 | M12 | AstLint of the Core | A | not started |
 | G1 | How AstLint goes on (the owner's) | A | |
@@ -331,6 +331,27 @@ passes on its exact commit.
       cannot be made from source.
     - The bootstrap's budgets were re-based (with M4's and M11's; the
       lead sets them once on the merged tip).
+
+- **M10** (`0579ac644`, merged `2afa40684`; `make check` 21,706 of
+  21,706).
+  - **What landed:** runeopt's `RbcCheck` runs in the compiler after
+    `stack` and at a link of stack units, at level 2. It serialises the
+    code as `Emit` writes it, reads it back with `Rbc.read`, and checks
+    it (`src/driver/stackcheck.sml`).
+  - **Negative tests:** `RUNE_RBCCHECK_INJECT` makes six corruptions,
+    each refused with its message (`stack/@rbccheck-*`).
+  - **Found:** there was no quadratic part.
+    - E8's 12.6 s on MLton was one full collection of a 5 GB heap that
+      fell inside the check.
+    - Alone, the check is linear: 586M instructions on MLton.
+    - The one cost per instruction that was not constant, a
+      `List.length` per primitive operand in `Rbc.validate`, is gone
+      (about -20%).
+  - **What it costs:** +2.0% of a small stack compile, +7.6% of HaMLet,
+    +13.8% of the bootstrap.
+  - **A departure:** the check's files are built with the driver
+    (`rune.build`), not into the installed compiler library, so the
+    compiler library runs no stack check.
 
 ## Found while writing this roadmap
 
