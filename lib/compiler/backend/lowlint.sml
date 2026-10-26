@@ -293,4 +293,88 @@ struct
       List.app func p;
       List.app representations p
     end
+
+  (* What Lower keeps of results in globals (performance M8; docs/ir.md,
+     Low), checked after every lower, --lint or not: a function of the top
+     level that returns n fields, or a datatype's constructor, returns its
+     first field, or the constructor's tag, and leaves the rest in globals
+     that its call reads at once.
+   * a read of such a global (Slot) follows, in its block, a known call
+     (CallK) of a function that leaves it, with only other such reads and
+     positions between;
+   * a function of n fields returns, in each block, either what the
+     block's last call gave, a call of another function of n, or a value
+     after which, since the block's last call, it has set each global of
+     its fields that some call reads;
+   * it calls in tail position only a function of n, and never through a
+     closure.
+   Lower says which functions these are, by their globals, and Low names a
+     known call's function by its id: `global` is the function's global
+     (the inverse of Lower.globalFids), `fields` a function's n, `slots`
+     the globals of fields 1 to n - 1 of n, `needed (n, i)` whether a call
+     reads field i, and `sum` the globals of a function's datatype. *)
+  type results = {global : int -> int option, fields : int -> int option, slots : int -> int list,
+                  needed : int * int -> bool, sum : int -> int list option}
+
+  fun results ({global, fields, slots, needed, sum} : results) (p : program) : unit =
+    let
+      fun bug msg = Error.bug msg
+      fun fieldsOf f = case global f of SOME g => fields g | NONE => NONE
+      (* the globals a call of f leaves its results in *)
+      fun leaves f =
+        case global f of
+          NONE => NONE
+        | SOME g => (case fields g of SOME n => SOME (slots n) | NONE => sum g)
+      fun mem (x, l) = List.exists (fn y => y = x) l
+      fun func ({id, blocks, ...} : func) =
+        let
+          val where' = "function f" ^ Int.toString id
+          val own = fieldsOf id
+          fun block ({label, instrs, transfer, ...} : block) =
+            let
+              val here = where' ^ ", b" ^ Int.toString label
+              fun g s = "g" ^ Int.toString s
+              (* the instructions in order: what the call just before
+                 leaves (with only reads and positions between), the last
+                 call (a variable, and its function where it is known),
+                 and the globals set since *)
+              fun scan ([], _, last, sets) = (last, sets)
+                | scan (i :: rest, after, last, sets) =
+                    case i of
+                      At _ => scan (rest, after, last, sets)
+                    | Def (_, Slot s) =>
+                        (case after of
+                           SOME (f, ss) =>
+                             if mem (s, ss) then scan (rest, after, last, sets)
+                             else bug (here ^ ": " ^ g s ^ " read after a call of f" ^ Int.toString f ^ ", which leaves no result in it")
+                         | NONE => bug (here ^ ": " ^ g s ^ " read where no call of a function that leaves results comes just before"))
+                    | Def (x, CallK (f, _)) => scan (rest, Option.map (fn ss => (f, ss)) (leaves f), SOME (x, SOME f), [])
+                    | Def (x, Call _) => scan (rest, NONE, SOME (x, NONE), [])
+                    | Def (_, SetGlobal (s, _)) => scan (rest, NONE, last, s :: sets)
+                    | _ => scan (rest, NONE, last, sets)
+              val (last, sets) = scan (instrs, NONE, NONE, [])
+              fun setsAll n =
+                List.app (fn (i, s) => if not (needed (n, i)) orelse mem (s, sets) then ()
+                                       else bug (here ^ ": a return that has not set " ^ g s ^ ", field " ^ Int.toString i
+                                                 ^ " of " ^ Int.toString n))
+                         (ListPair.zip (List.tabulate (n - 1, fn i => i + 1), slots n))
+            in
+              case (own, transfer) of
+                (NONE, _) => ()
+              | (SOME n, Return v) =>
+                  (case last of
+                     SOME (x, SOME f) => if x = v andalso fieldsOf f = SOME n then () else setsAll n
+                   | _ => setsAll n)
+              | (SOME n, TailCallK (f, _)) =>
+                  if fieldsOf f = SOME n then ()
+                  else bug (here ^ ": a tail call of f" ^ Int.toString f ^ ", which returns no " ^ Int.toString n ^ " fields")
+              | (SOME _, TailCall _) => bug (here ^ ": a tail call through a closure")
+              | _ => ()
+            end
+        in
+          List.app block blocks
+        end
+    in
+      List.app func p
+    end
 end

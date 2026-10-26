@@ -82,7 +82,7 @@ What it rests on:
 | Milestone | What | Track | State |
 |---|---|---|---|
 | M0 | This roadmap | | done (2026-10-25) |
-| M1 | The fixes found, and the guards that cost nothing | P | not started |
+| M1 | The fixes found, and the guards that cost nothing | P | done (2026-10-26) |
 | M2 | Lints that cost less, with the same rules | P | not started |
 | M3 | Levels | P | not started |
 | M4 | The missing rules of LambdaLint and MidLint, a negative test for every rule | I | not started |

@@ -75,7 +75,19 @@ REPL and the compiler library then check what every pass makes as `--lint`
 does ([ir.md](ir.md), *Options*), and stop at the first breach, which is a
 bug of the compiler. `RUNE_LINT=` (empty) runs the tests without it. The
 budgets (`bin/rune-budget`) count the compiler as it is shipped, and clear
-it for what they count.
+it for what they count. A check never changes what the compiler makes, so
+that a test linted tests the compiler a user runs: `levels/*` compiles
+every program of `tests/lang` and `tests/perf` to the register bytecode
+with the lint and without it, whole and in units, and fails where the two
+differ by a byte, a unit's files and their bases too; `compiler/*` compares a
+program's units with `--mid-roundtrip` and without; and `Pass.checkAt`
+stops a compile whose check moved a counter of the compiler's names
+([ir.md](ir.md), *Options*). A rule that no program the compiler makes
+breaks is broken by hand instead: `compiler/lint-rules` compiles the
+compiler's internals with `tests/compiler/lint-rules.sml`, which gives
+each rule of the guard of the counters and of the invariant of results
+in globals what breaks it. The Basis and the compiler library of
+`lib/cache` are compiled with `--lint` (`make basis-cache`).
 
 * `bin/rune-test list [FILTER]` lists the tests (`make/*`,
   `tag:check & !runner/*`), and `explain FILTER` shows each one's command,

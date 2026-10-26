@@ -668,6 +668,40 @@ struct
       val () = check ("pass-stats=elab: another kind refused",
                       r (["--no-prelude", "--typecheck-only", "--pass-stats=types", "input.sml"], NONE) <> 0
                       andalso contains (f "err", "--pass-stats= requires elab"))
+      (* no check changes what the compiler makes, a unit's basis among it:
+         --mid-roundtrip read Mid back with stamps from the elaborator's
+         counter, which a unit's basis then counted (linting roadmap, M1) *)
+      val () = write (f "a.sml", "datatype shape = Circle of int | Square of int * int\n"
+                                 ^ "fun area (Circle r) = 3 * r * r | area (Square (w, h)) = w * h\n"
+                                 ^ "val shapes = [Circle 2, Square (3, 4)]\n")
+      val () = write (f "b.sml", "structure S = struct datatype t = A | B of shape fun f A = 0 | f (B s) = area s end\n"
+                                 ^ "fun sum [] = 0 | sum (s :: ss) = area s + sum ss\n"
+                                 ^ "val total = sum shapes + S.f (S.B (Circle 1))\n")
+      fun emitted (d, flags) =
+        (rmTree (f d);
+         r (["--units", "--no-prelude", "--no-cache", "--emit-units", d] @ flags @ ["-o", d ^ ".rbc", "a.sml", "b.sml"], NONE) = 0)
+      fun unitFiles d = sort (List.filter (fn x => x <> "units") (if isDir (f d) then entries (f d) else []))
+      val () = check ("lint: the same units, bases and all",
+                      emitted ("plain", []) andalso emitted ("roundtrip", ["--lint", "--mid-roundtrip"])
+                      andalso unitFiles "plain" = ["0000-a.rbi", "0000-a.rbu", "0001-b.rbi", "0001-b.rbu", "sources"]
+                      andalso unitFiles "plain" = unitFiles "roundtrip"
+                      andalso List.all (fn x => same (f ("plain/" ^ x), f ("roundtrip/" ^ x))) (unitFiles "plain")
+                      andalso same (f "plain.rbc", f "roundtrip.rbc"))
+      (* --pass-stats counts each check at every depth, a line `check KEY: N
+         runs, T s` (and its instructions on Rune's own build), the stages of
+         a unit, and their checks, running inside unit-passes *)
+      fun checkLine l =
+        case String.tokens (fn c => c = #" " orelse c = #":" orelse c = #",") l of
+          "check" :: key :: runs :: _ => Option.map (fn n => (key, n)) (Int.fromString runs)
+        | _ => NONE
+      val () = check ("pass-stats: the checks at every depth",
+                      r (["--units", "--no-prelude", "--no-cache", "--lint", "--mid-roundtrip", "--pass-stats", "-o", "checks.rbc",
+                          "a.sml", "b.sml"], NONE) = 0
+                      andalso
+                      let val checked = List.mapPartial checkLine (lines (read (f "err")))
+                      in List.all (fn k => List.exists (fn (k', n) => k' = k andalso n = 2) checked)
+                                  ["translate", "mid", "mid-roundtrip", "lower", "results"]
+                      end)
       (* --pass-stats accounts for the whole compile (docs/plans/performance.md, M1):
          a line `pass NAME: N nodes, T s` per stage, then
          `total: T s processor time, S s in the stages (P%)`, the process's
@@ -707,6 +741,7 @@ struct
       val process = children () - start
       val ls = lines (read (f "err"))
       val stages = List.mapPartial stage (if null ls then [] else List.take (ls, length ls - 1))
+      val checks = List.filter (String.isPrefix "check ") ls
       val names = List.map #1 stages
       val added = List.foldl (fn ((_, t), s) => s + t) 0.0 stages
       val n = real (length stages)
@@ -716,7 +751,7 @@ struct
         | _ => (NONE, NONE)
     in
       check ("pass-stats: compiled", code = 0);
-      check ("pass-stats: a stage per line", length stages = length ls - 1);
+      check ("pass-stats: a stage or a check per line", length stages + length checks = length ls - 1);
       check ("pass-stats: the stages",
              List.all (fn w => List.exists (fn x => x = w) names)
                       ["startup", "lex", "select", "parse", "elaborate", "translate", "mid", "midcanon", "lower", "stack", "emit",
@@ -729,6 +764,30 @@ struct
                   total - added <= 0.001 * n + (if String.isSubstring "smlnj" rune then 0.15 else 0.02) * total);
            check ("pass-stats: the process took no more than the total", process <= 1.10 * total + 0.05))
       | _ => check ("pass-stats: the last line is the total", false)
+    end
+
+  (* ---- tests/compiler: the rules of a check that no program the compiler
+     makes breaks, each refused on IR made by hand (lint-tests.build) *)
+  fun lintRules () =
+    let
+      val dir = run ^ "/compiler/lint-rules"
+      val () = (rmTree dir; mkdirs dir)
+      fun f x = dir ^ "/" ^ x
+    in
+      if exec {cmd = ["bin/rune", "--build", "tests/compiler/lint-tests.build", "-o", f "lint-tests.rbc"], dir = NONE, stdin = "",
+               stdout = f "cerr", stderr = f "cerr", timeout = 600} <> 0
+      then fail ("compiler.lint-rules: does not compile: " ^ firstLine (f "cerr"))
+      else
+        let
+          val code = exec {cmd = ["bin/runevm", f "lint-tests.rbc"], dir = NONE, stdin = "", stdout = f "out", stderr = f "err",
+                           timeout = 120}
+          val ls = lines (read (f "out"))
+        in
+          List.app (fn l => if String.isPrefix "FAIL " l then say (l ^ "\n") else ()) ls;
+          if code = 0 andalso List.length (List.filter (String.isPrefix "PASS ") ls) >= 19 then ()
+          else fail ("compiler.lint-rules: exit " ^ Int.toString code ^ ", " ^ Int.toString (List.length ls) ^ " lines: "
+                     ^ firstLine (f "err"))
+        end
     end
 
   (* ---- tests/runtime: limits saved with an image and stricter on restore *)
@@ -1010,6 +1069,7 @@ struct
     | ["overloading-repl", option, mode, p] => SOME (fn () => overloadingRepl (option, mode, p))
     | ["overloading-cache"] => SOME overloadingCache
     | ["compiler", rune] => SOME (fn () => compilerProtection rune)
+    | ["compiler-lint-rules"] => SOME lintRules
     | ["limits", rune, vm] => SOME (fn () => limits (rune, vm))
     | ["gc-log", rune, vm] => SOME (fn () => gcLog (rune, vm))
     | ["colour-contrast"] => SOME (fn () => contrast false)
@@ -1096,6 +1156,7 @@ struct
        tagged ["check", "covers:tests/compiler/*"]
          (Test.describe "compiler"
             (tagged ["test"] (job ("stack", ["compiler", "bin/rune-stack"], [], 300, 600))
+             :: tagged ["test"] (job ("lint-rules", ["compiler-lint-rules"], [], 800, 900))
              :: List.map (fn h => Test.requires [h] (tagged ["test-all"] (job (h, ["compiler", "bin/rune-" ^ h], [], 500, 600))))
                          ["mlton", "smlnj-legacy", "smlnj32", "smlnj-dev", "polyml", "mlkit"])),
        tagged ["check", "covers:tests/runtime/*"]
