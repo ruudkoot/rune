@@ -372,10 +372,24 @@ its binder is, though the unit declares another of the name before its
 usages are worked out (S72); it says which type variables admit equality,
 and the arity and equality of a signature's own type names (S68, S69).
 A fingerprint is the hash of tokens -- a tag for each kind of node, a
-length before each list and string -- rather than of text; a structure's,
-a signature's and a functor's is the hash of their entries' names and
-fingerprints, and an entry of a structure a usage names is worked out once
-a session, as the usage of it is, by its binder and name. A recursive
+length before each list and string -- rather than of text; a structure's
+is the hash of its entries' names and fingerprints, and an entry of a
+structure a usage names is worked out once a session, as the usage of it
+is, by its binder and name. A signature's and a functor's is one stream of
+their entries' tokens, in which a structure that is a structure of a loaded
+signature, realised, is a reference: that structure's fingerprint, worked
+out once a session, and the realisation, what each of its own type names
+is there (functors-units M11; `UnitCache.version` 9). The structure is
+found by the path its first value's stamp has in the unit that declared
+the signature (a specification's stamp is kept by instantiation,
+realisation and the bases); a functor's result, whose values are its
+summary's placeholders, is looked up by the names of its entries among the
+structures its parameter's were found to be. A walk of both checks that
+the one is the other realised -- the same entries, the same stamps (in a
+functor's stream, which writes no anchor, stamps may differ where neither
+has a primitive or a known function behind it), each of the structure's
+own type names the same image wherever it is -- and where it is not, the
+structure is written whole (S77). A recursive
 group of datatypes is hashed as one, its members named in it by their
 units' names and paths, so that each member's fingerprint is the same
 whichever is asked for first (functors-units, M4). `--pass-stats=hash` counts what is hashed,

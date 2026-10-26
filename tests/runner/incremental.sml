@@ -175,6 +175,9 @@ struct
                  put s "e.sml" "structure E : HAS = struct type u = real end";
                  put s "files" "a.sml b.sml e.sml c.sml d.sml main.sml"; b [] "a.sml b.sml e.sml c.sml d.sml main.sml";
                  e "a.sml" "sig type u end" "sig eqtype u end"; build s []; fails s)
+    | "S77" => (c "e.sml s.sml u.sml main.sml"; b [] "e.sml s.sml u.sml main.sml"; prints s "1";
+                 f "e.sml" 1; build s []; fails s;
+                 f "u.sml" 1; b [] "u.sml"; prints s "1")
     | "S72" => (c "a.sml m.sml b.sml"; b [] "a.sml m.sml b.sml"; prints s "2";
                  let val withM = cache s
                  in c "a.sml b.sml"; b [] "a.sml b.sml"; prints s "2";

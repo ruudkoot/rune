@@ -27,7 +27,7 @@ struct
   structure P = Pickle
 
   val magic = "RCE"
-  val version = 8
+  val version = 9
 
   (* what a unit's entry holds: its usages, the warnings its compile gave,
      which a compile that takes it from the cache gives again, the name its

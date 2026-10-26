@@ -119,6 +119,14 @@ struct
   val () = CompilerState.cellRoot ("UnitBasis.privateNext", privateNext)
   val fpMemo : string option StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("UnitBasis.fpMemo", fpMemo)
+  (* the fingerprints of the signatures' structures that a usage's stream
+     names by reference (fpChild), by mode, unit, signature and path, once
+     worked out (functors-units M11) *)
+  val refMemo : string StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.refMemo", refMemo)
+  (* each loaded unit's signatures, by its identity and their names *)
+  val unitSigs : SigMatch.sigma StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.unitSigs", unitSigs)
 
   (* a session of units begins: in the driver, the REPL and the compiler
      library alike, whose units' Mid the lint checks against the schemes of
@@ -126,7 +134,7 @@ struct
   fun startSession () =
     (units := []; byIdentity := StringMap.empty; builtin := counters ();
      Array.modify (fn _ => Vector.fromList []) ranges; tvars := IntTable.table 1024; binders := StringMap.empty;
-     fpMemo := StringMap.empty;
+     fpMemo := StringMap.empty; refMemo := StringMap.empty; unitSigs := StringMap.empty;
      MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE))
 
   fun binderOf (key : string) : string = case StringMap.find (!binders, key) of SOME i => i | NONE => ""
@@ -210,7 +218,10 @@ struct
       walk ("", delta);
       (* a signature's specifications, which a unit that matched or applied
          it names, by sig:NAME and the path in it *)
-      List.app (fn (n, sg : SigMatch.sigma) => walk ("sig:" ^ n ^ ".", #env sg)) sigs
+      List.app (fn (n, sg : SigMatch.sigma) => walk ("sig:" ^ n ^ ".", #env sg)) sigs;
+      (* and the signatures themselves, where a fingerprint finds the
+         structure a specification's stamp is in (fpChild) *)
+      List.app (fn (n, sg) => unitSigs := StringMap.insert (!unitSigs, #identity u ^ "\000" ^ n, sg)) sigs
     end
 
   (* What the cache keeps of a unit by its identity, for a unit compiled
@@ -508,13 +519,342 @@ struct
       | NONE => let val () = countMemo false val r = f () in fpMemo := StringMap.insert (!fpMemo, m, r); r end
     end
 
+  fun localsOf (cs : T.tycon list) : int IntMap.map =
+    #2 (List.foldl (fn (c, (i, m)) => (i + 1, IntMap.insert (m, #stamp c, i))) (0, IntMap.empty) cs)
+
+  (* ---- structures by reference (functors-units M11, part 1; E12) ----
+
+     A usage's stream of a signature or a functor wrote every structure of
+     its environment whole, nested signatures and all: the signatures of
+     MLton's build hashed 512 MB, almost all of it the same structures again
+     (E12). In such a stream (childRefs), a structure the environment holds
+     -- a child -- that is a structure of a loaded signature, realised, is
+     written as a reference to it: that structure's fingerprint, worked out
+     once a session (refMemo), and the realisation, what each of its own
+     type names is in the child. The structure is found by the path its
+     first value's stamp has in the unit that declared the signature
+     (sig:NAME.a.b.v, notePaths): a specification's stamp is kept by
+     instantiation, realisation and the bases. A walk of both checks that
+     the child is the structure realised, and derives the realisation
+     (realisation). A functor's result, whose values are the summary's
+     placeholders, is looked up by the names of its entries among the
+     structures its parameter's children were found to be, and checked the
+     same way. Where none is found or the walk fails, the child is written
+     whole, its own children each tried in turn.
+
+     A reference tells apart all that the child's tokens did: the
+     structure's tokens, each of its own type names written as the
+     realisation's image of it, are the child's -- the walk checks that each
+     entry is there under the same name, a value with the same stamp (in a
+     functor's stream, where no anchor is written, with none of a stamp's
+     facts on either side), a type with the same names but the
+     structure's own, each of those its image every time (a type name, or a
+     type without variables for one without parameters), and each type
+     variable in the same places with the same equality. Where it is not,
+     nothing is assumed. *)
+  val childRefs = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.childRefs", childRefs)
+  (* in a functor's stream: whether the parameter or the result is being
+     written, and the structures the parameter's children were found to be,
+     with each of theirs, by the names of their entries *)
+  val inParam = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.inParam", inParam)
+  val inResult = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.inResult", inResult)
+  val paramRefs : (string * int IntMap.map * Env.env) list StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.paramRefs", paramRefs)
+
+  exception NoMatch
+
+  (* the local names an environment names, by stamp, in the order of their
+     first occurrence: its values', then its types', then its structures' *)
+  fun localOrder (local' : int IntMap.map, en : Env.env) : int list =
+    let
+      val seen : unit IntMap.map ref = ref IntMap.empty
+      val order : int list ref = ref []
+      fun tc (c : T.tycon) =
+        let val s = #stamp c
+        in if IntMap.member (local', s) andalso not (IntMap.member (!seen, s))
+           then (seen := IntMap.insert (!seen, s, ()); order := s :: !order) else () end
+      fun ty t =
+        case T.prune t of
+          T.TVar _ => ()
+        | T.TCon (c, args) => (tc c; List.app ty args)
+        | T.TRecord fs => List.app (fn (_, a) => ty a) fs
+        | T.TArrow (a, b) => (ty a; ty b)
+      fun fcn f = case f of T.TName c => tc c | T.TAbbrev (_, b) => ty b
+      fun walk (Env.Env {vals, tys, strs, ...}) =
+        (StringMap.app (fn v => ty (schemeOf v)) vals;
+         StringMap.app (fn (Env.TyStr {fcn = f, cons}) => (fcn f; List.app (fn (_, v) => ty (schemeOf v)) cons)) tys;
+         StringMap.app walk strs)
+    in walk en; List.rev (!order) end
+
+  (* the first value of en's tree with a stamp, and the path from en to the
+     structure that holds it *)
+  fun firstStamp (Env.Env {vals, strs, ...}) : (string list * int) option =
+    let
+      fun stamped (v : Env.valstatus) : int option =
+        case v of
+          Env.Val {stamp, ...} => SOME stamp
+        | Env.Exn {info, ...} => if isSome (#builtin info) then NONE else SOME (#stamp info)
+        | Env.ExnAsVal {info, ...} => if isSome (#builtin info) then NONE else SOME (#stamp info)
+        | _ => NONE
+    in
+      case StringMap.foldli (fn (_, v, NONE) => stamped v | (_, _, found) => found) NONE vals of
+        SOME s => SOME ([], s)
+      | NONE => StringMap.foldli (fn (n, e, NONE) => Option.map (fn (q, s) => (n :: q, s)) (firstStamp e)
+                                   | (_, _, found) => found) NONE strs
+    end
+
+  (* the structure of a loaded signature en may be, by its first value's
+     stamp: its key (unit, signature, path), the signature's own type
+     names, and the structure *)
+  fun candidate (en : Env.env) : (string * int IntMap.map * Env.env) option =
+    case firstStamp en of
+      NONE => NONE
+    | SOME (q, s) =>
+        (case (IntTable.find (Vector.sub (paths, kStamp), s), rangeOf (kStamp, s)) of
+           (SOME p, SOME (_, u)) =>
+             if not (String.isPrefix "sig:" p) then NONE
+             else
+               (case String.fields (fn c => c = #".") (String.extract (p, 4, NONE)) of
+                  name :: (rest as _ :: _) =>
+                    let
+                      val strPath = List.take (rest, List.length rest - 1)
+                      val nq = List.length q
+                      val np = List.length strPath
+                    in
+                      if nq > np orelse List.drop (strPath, np - nq) <> q then NONE
+                      else
+                        case StringMap.find (!unitSigs, #identity u ^ "\000" ^ name) of
+                          NONE => NONE
+                        | SOME (sg : SigMatch.sigma) =>
+                            let val cpath = List.take (strPath, np - nq)
+                            in
+                              Option.map (fn c => (#identity u ^ "\000" ^ name ^ "\000" ^ String.concatWith "." cpath,
+                                                   localsOf (#bound sg), c))
+                                         (Env.findStr' (#env sg, cpath))
+                            end
+                    end
+                | _ => NONE)
+         | _ => NONE)
+
+  (* the realisation by which en is c, a structure whose own type names are
+     cl, by their stamps; NoMatch where it is not (the checks above). bare:
+     a value's stamp may differ where neither has a fact a stream writes *)
+  fun realisation (cl : int IntMap.map, c : Env.env, en : Env.env, bare : bool) : T.tyfcn IntMap.map =
+    let
+      val phi : T.tyfcn IntMap.map ref = ref IntMap.empty
+      val fromTyStr : unit IntMap.map ref = ref IntMap.empty
+      fun isLocal (k : T.tycon) = IntMap.member (cl, #stamp k)
+      fun factless (s : int) = not (IntMap.member (!Translate.primAliases, s)) andalso not (IntMap.member (!Lower.knownBefore, s))
+      fun sameStamp (a : int, b : int) = a = b orelse (bare andalso factless a andalso factless b)
+      fun tvPair (tv : (int * int) list ref) (a : int, e1 : bool, b : int, e2 : bool) : unit =
+        if e1 <> e2 then raise NoMatch
+        else
+          case List.find (fn (x, _) => x = a) (!tv) of
+            SOME (_, y) => if y = b then () else raise NoMatch
+          | NONE => if List.exists (fn (_, y) => y = b) (!tv) then raise NoMatch else tv := (a, b) :: !tv
+      fun noTvars (t : T.ty) : unit =
+        case T.prune t of
+          T.TVar _ => raise NoMatch
+        | T.TCon (_, args) => List.app noTvars args
+        | T.TRecord fs => List.app (fn (_, a) => noTvars a) fs
+        | T.TArrow (a, b) => (noTvars a; noTvars b)
+      (* two types of en, the same where type variables are in the same places *)
+      fun plain (tv : (int * int) list ref) (t1 : T.ty, t2 : T.ty) : unit =
+        case (T.prune t1, T.prune t2) of
+          (T.TVar (ref (T.Unbound {id = a, eq = e1, ...})), T.TVar (ref (T.Unbound {id = b, eq = e2, ...}))) => tvPair tv (a, e1, b, e2)
+        | (T.TCon (k1, a1), T.TCon (k2, a2)) =>
+            if #stamp k1 = #stamp k2 andalso List.length a1 = List.length a2 then ListPair.app (plain tv) (a1, a2) else raise NoMatch
+        | (T.TRecord f1, T.TRecord f2) =>
+            if List.length f1 = List.length f2
+            then ListPair.app (fn ((l1, x), (l2, y)) => if l1 = l2 then plain tv (x, y) else raise NoMatch) (f1, f2)
+            else raise NoMatch
+        | (T.TArrow (a1, b1), T.TArrow (a2, b2)) => (plain tv (a1, a2); plain tv (b1, b2))
+        | _ => raise NoMatch
+      (* a type of c and one of en: the second the first realised *)
+      fun ty (tv : (int * int) list ref) (t1 : T.ty, t2 : T.ty) : unit =
+        case (T.prune t1, T.prune t2) of
+          (T.TVar (ref (T.Unbound {id = a, eq = e1, ...})), T.TVar (ref (T.Unbound {id = b, eq = e2, ...}))) => tvPair tv (a, e1, b, e2)
+        | (T.TCon (k, args1), t2') =>
+            if isLocal k then
+              (case IntMap.find (!phi, #stamp k) of
+                 NONE =>
+                   if List.null args1 then (noTvars t2'; phi := IntMap.insert (!phi, #stamp k, T.TAbbrev ([], t2')))
+                   else
+                     (case t2' of
+                        T.TCon (k2, args2) =>
+                          if List.length args2 = List.length args1
+                          then (phi := IntMap.insert (!phi, #stamp k, T.TName k2); ListPair.app (ty tv) (args1, args2))
+                          else raise NoMatch
+                      | _ => raise NoMatch)
+               | SOME (T.TName k2) =>
+                   (case t2' of
+                      T.TCon (k3, args2) =>
+                        if #stamp k3 = #stamp k2 andalso List.length args1 = List.length args2
+                        then ListPair.app (ty tv) (args1, args2) else raise NoMatch
+                    | _ => raise NoMatch)
+               | SOME (T.TAbbrev ([], b)) => if List.null args1 then plain (ref []) (b, t2') else raise NoMatch
+               | SOME _ => raise NoMatch)
+            else
+              (case t2' of
+                 T.TCon (k2, args2) =>
+                   if #stamp k2 = #stamp k andalso List.length args1 = List.length args2
+                   then ListPair.app (ty tv) (args1, args2) else raise NoMatch
+               | _ => raise NoMatch)
+        | (T.TRecord f1, T.TRecord f2) =>
+            if List.length f1 = List.length f2
+            then ListPair.app (fn ((l1, x), (l2, y)) => if l1 = l2 then ty tv (x, y) else raise NoMatch) (f1, f2)
+            else raise NoMatch
+        | (T.TArrow (a1, b1), T.TArrow (a2, b2)) => (ty tv (a1, a2); ty tv (b1, b2))
+        | _ => raise NoMatch
+      fun fcnPlain (f1 : T.tyfcn, f2 : T.tyfcn) : unit =
+        case (f1, f2) of
+          (T.TName a, T.TName b) => if #stamp a = #stamp b then () else raise NoMatch
+        | (T.TAbbrev (p1, b1), T.TAbbrev (p2, b2)) =>
+            if List.length p1 = List.length p2 then plain (ref (ListPair.zip (p1, p2))) (b1, b2) else raise NoMatch
+        | _ => raise NoMatch
+      (* g, an image a type gave, and f2, the one a type's specification gives *)
+      fun fcnFromTy (g : T.tyfcn, f2 : T.tyfcn) : unit =
+        case (g, f2) of
+          (T.TAbbrev ([], t), T.TName k2) => plain (ref []) (t, T.TCon (k2, []))
+        | (T.TAbbrev ([], t), T.TAbbrev ([], b)) => plain (ref []) (t, b)
+        | (T.TName a, T.TName b) => if #stamp a = #stamp b then () else raise NoMatch
+        | _ => raise NoMatch
+      fun value (v1 : Env.valstatus, v2 : Env.valstatus) : unit =
+        case (v1, v2) of
+          (Env.Val {scheme = s1, stamp = a, ...}, Env.Val {scheme = s2, stamp = b, ...}) =>
+            if sameStamp (a, b) then ty (ref []) (s1, s2) else raise NoMatch
+        | (Env.Con {scheme = s1, info = i1}, Env.Con {scheme = s2, info = i2}) =>
+            if #name i1 = #name i2 andalso #tag i1 = #tag i2 then ty (ref []) (s1, s2) else raise NoMatch
+        | (Env.Exn {ty = t1, info = i1}, Env.Exn {ty = t2, info = i2}) =>
+            if sameStamp (#stamp i1, #stamp i2) then ty (ref []) (t1, t2) else raise NoMatch
+        | (Env.Prim {scheme = s1, name = n1}, Env.Prim {scheme = s2, name = n2}) =>
+            if n1 = n2 then ty (ref []) (s1, s2) else raise NoMatch
+        | (Env.ConAsVal {scheme = s1, info = i1}, Env.ConAsVal {scheme = s2, info = i2}) =>
+            if #name i1 = #name i2 andalso #tag i1 = #tag i2 then ty (ref []) (s1, s2) else raise NoMatch
+        | (Env.ExnAsVal {ty = t1, info = i1}, Env.ExnAsVal {ty = t2, info = i2}) =>
+            if sameStamp (#stamp i1, #stamp i2) then ty (ref []) (t1, t2) else raise NoMatch
+        | _ => raise NoMatch
+      fun tyStr (Env.TyStr {fcn = f1, cons = c1}, Env.TyStr {fcn = f2, cons = c2}) : unit =
+        ((case f1 of
+            T.TName k =>
+              if isLocal k then
+                (case IntMap.find (!phi, #stamp k) of
+                   NONE => (phi := IntMap.insert (!phi, #stamp k, f2); fromTyStr := IntMap.insert (!fromTyStr, #stamp k, ()))
+                 | SOME g =>
+                     if IntMap.member (!fromTyStr, #stamp k) then fcnPlain (g, f2)
+                     else (fcnFromTy (g, f2); phi := IntMap.insert (!phi, #stamp k, f2);
+                           fromTyStr := IntMap.insert (!fromTyStr, #stamp k, ())))
+              else (case f2 of T.TName k2 => if #stamp k2 = #stamp k then () else raise NoMatch | _ => raise NoMatch)
+          | T.TAbbrev (p1, b1) =>
+              (case f2 of
+                 T.TAbbrev (p2, b2) =>
+                   if List.length p1 = List.length p2 then ty (ref (ListPair.zip (p1, p2))) (b1, b2) else raise NoMatch
+               | _ => raise NoMatch));
+         if List.length c1 = List.length c2
+         then ListPair.app (fn ((n1, v1), (n2, v2)) => if n1 = n2 then value (v1, v2) else raise NoMatch) (c1, c2)
+         else raise NoMatch)
+      fun keysEq (m1 : 'a StringMap.map, m2 : 'b StringMap.map) : bool =
+        StringMap.numItems m1 = StringMap.numItems m2
+        andalso StringMap.foldli (fn (n, _, ok) => ok andalso isSome (StringMap.find (m2, n))) true m1
+      fun env (Env.Env {vals = v1, tys = t1, strs = s1, ...}, Env.Env {vals = v2, tys = t2, strs = s2, ...}) : unit =
+        if not (keysEq (v1, v2) andalso keysEq (t1, t2) andalso keysEq (s1, s2)) then raise NoMatch
+        else
+          (StringMap.appi (fn (n, x) => tyStr (x, valOf (StringMap.find (t2, n)))) t1;
+           StringMap.appi (fn (n, x) => value (x, valOf (StringMap.find (v2, n)))) v1;
+           StringMap.appi (fn (n, x) => env (x, valOf (StringMap.find (s2, n)))) s1)
+    in env (c, en); !phi end
+
+  (* the names of an environment's entries, by which a functor's result is
+     looked up among the structures of its parameter *)
+  fun namesKey (Env.Env {vals, tys, strs, ...}) : string =
+    String.concatWith " " (StringMap.foldri (fn (n, _, acc) => n :: acc) [] vals) ^ "\000"
+    ^ String.concatWith " " (StringMap.foldri (fn (n, _, acc) => n :: acc) [] tys) ^ "\000"
+    ^ String.concatWith " " (StringMap.foldri (fn (n, _, acc) => n :: acc) [] strs)
+
+  (* a structure of a signature, and each of its own, kept by the names of
+     its entries for a functor's result (paramRefs) *)
+  fun noteParam (key : string, cl : int IntMap.map, c : Env.env) : unit =
+    let
+      val k = namesKey c
+      val l = getOpt (StringMap.find (!paramRefs, k), [])
+    in
+      if List.exists (fn (key', _, _) => key' = key) l then ()
+      else paramRefs := StringMap.insert (!paramRefs, k, l @ [(key, cl, c)]);
+      StringMap.appi (fn (n, sub) => noteParam (key ^ (if String.isSuffix "\000" key then "" else ".") ^ n, cl, sub)) (Env.strs c)
+    end
+
   (* An environment written whole, its values, types and structures each
      kind in the order of the names, each entry by its name and what it is:
-     a signature's and a functor's, whose entries no usage names *)
+     a signature's and a functor's, whose entries no usage names; each
+     structure by reference where it may be (fpChild) *)
   fun fpEnvInto (w : P.writer, local' : int IntMap.map, Env.Env {vals, tys, strs, ...}) : unit =
     (P.nat (w, StringMap.numItems vals); StringMap.appi (fn (n, v) => (P.string (w, n); fpVal (w, local', v))) vals;
      P.nat (w, StringMap.numItems tys); StringMap.appi (fn (n, t) => (P.string (w, n); fpTyStr (w, local', t))) tys;
-     P.nat (w, StringMap.numItems strs); StringMap.appi (fn (n, e) => (P.string (w, n); fpEnvInto (w, local', e))) strs)
+     P.nat (w, StringMap.numItems strs); StringMap.appi (fn (n, e) => (P.string (w, n); fpChild (w, local', e))) strs)
+
+  (* a child: whole as before but in a usage's stream, and there a byte, 0
+     and the child whole, or 1 and a reference -- the structure's
+     fingerprint and the image of each of its own type names in the order
+     of their first occurrence in it *)
+  and fpChild (w : P.writer, local' : int IntMap.map, en : Env.env) : unit =
+    if not (!childRefs) then fpEnvInto (w, local', en)
+    else
+      case reference en of
+        SOME (fp, order, phi) =>
+          (P.byte (w, 1); P.string (w, fp); P.nat (w, List.length order);
+           List.app (fn s => fpFcn (w, local', valOf (IntMap.find (phi, s)))) order)
+      | NONE => (P.byte (w, 0); fpEnvInto (w, local', en))
+
+  (* the reference that may stand for en: the structure's fingerprint, its
+     own type names, and the realisation *)
+  and reference (en : Env.env) : (string * int list * T.tyfcn IntMap.map) option =
+    let
+      fun check (key, cl, c) =
+        let
+          val order = localOrder (cl, c)
+          val phi = realisation (cl, c, en, not (!anchorValues))
+        in
+          if List.all (fn s => IntMap.member (phi, s)) order then SOME (structureFp (key, cl, c, order), order, phi) else NONE
+        end
+        handle NoMatch => NONE
+    in
+      case candidate en of
+        SOME (x as (key, cl, c)) =>
+          (case check x of
+             SOME r => (if !inParam then noteParam (key, cl, c) else (); SOME r)
+           | NONE => NONE)
+      | NONE =>
+          if not (!inResult) then NONE
+          else
+            let
+              fun try [] = NONE
+                | try (x :: rest) = (case check x of SOME r => SOME r | NONE => try rest)
+            in try (getOpt (StringMap.find (!paramRefs, namesKey en), [])) end
+    end
+
+  (* a signature's structure's fingerprint: its tokens, its own type names
+     numbered in the order of their first occurrence in it, worked out once
+     a session, apart from any functor's stream *)
+  and structureFp (key : string, cl : int IntMap.map, c : Env.env, order : int list) : string =
+    let val m = (if !anchorValues then "v\000" else "-\000") ^ key
+    in
+      case StringMap.find (!refMemo, m) of
+        SOME f => f
+      | NONE =>
+          let
+            val own = #2 (List.foldl (fn (s, (i, m)) => (i + 1, IntMap.insert (m, s, i))) (0, IntMap.empty) order)
+            val saved = (!inParam, !inResult)
+            val () = (inParam := false; inResult := false)
+            val f = hashed "sigref" (fn w => fpEnvInto (w, own, c))
+                    handle e => (inParam := #1 saved; inResult := #2 saved; raise e)
+          in
+            inParam := #1 saved; inResult := #2 saved;
+            refMemo := StringMap.insert (!refMemo, m, f); f
+          end
+    end
 
   (* A structure's fingerprint, of one a usage names: its entries of each
      kind in the order of their names, each by its name and fingerprint,
@@ -538,9 +878,6 @@ struct
      arity and whether it admits equality (issue 16) *)
   fun fpBound (w : P.writer, cs : T.tycon list) : unit =
     (P.nat (w, List.length cs); List.app (fn c => (P.nat (w, #arity c); P.bool (w, #eq c))) cs)
-
-  fun localsOf (cs : T.tycon list) : int IntMap.map =
-    #2 (List.foldl (fn (c, (i, m)) => (i + 1, IntMap.insert (m, #stamp c, i))) (0, IntMap.empty) cs)
 
   fun fpSigma ({bound, env = en, ...} : SigMatch.sigma) : string =
     hashed "sig" (fn w => (fpBound (w, bound); fpEnvInto (w, localsOf bound, en)))
@@ -572,11 +909,14 @@ struct
   fun fpFunctor (Elaborate.FunInfo {paramSig = {bound, env = pe,...}, summary = {generated, result}, ...}) : string option =
     let
       val local' = localsOf (bound @ generated)
-      val () = anchorValues := false
-      val f = hashed "fun" (fn w => (fpBound (w, bound); fpEnvInto (w, local', pe);
-                                     fpBound (w, generated); fpEnvInto (w, local', result)))
-              handle e => (anchorValues := true; raise e)
-    in anchorValues := true; SOME f end
+      fun reset () = (anchorValues := true; inParam := false; inResult := false; paramRefs := StringMap.empty)
+      val () = (anchorValues := false; paramRefs := StringMap.empty)
+      val f = hashed "fun" (fn w => (fpBound (w, bound);
+                                     inParam := true; fpEnvInto (w, local', pe); inParam := false;
+                                     fpBound (w, generated);
+                                     inResult := true; fpEnvInto (w, local', result); inResult := false))
+              handle e => (reset (); raise e)
+    in reset (); SOME f end
 
   (* What the REPL decided a declaration's echo by when it compiled it
      (src/repl): whether it echoed at all (the usage "echo on") and whether
@@ -611,6 +951,10 @@ struct
      functor inlined where it is applied its function's Mid too ("inl").
      An overloading is its binder's identity: what it is is the whole
      unit's. *)
+  (* a usage's stream, its structures by reference where they may be (fpChild) *)
+  fun byReference (f : unit -> 'a) : 'a =
+    (childRefs := true; (f () before childRefs := false) handle e => (childRefs := false; raise e))
+
   fun fingerprint (key : string) : string option =
     let
       val (kind, name) = case String.fields (fn c => c = #" ") key of k :: rest => (k, String.concatWith " " rest) | [] => ("", "")
@@ -624,8 +968,8 @@ struct
         "v" => inStr (fn e => Option.map (fn v => hashed "v" (fn w => fpVal (w, IntMap.empty, v))) (StringMap.find (Env.vals e, last)))
       | "t" => inStr (fn e => Option.map (fn t => hashed "t" (fn w => fpTyStr (w, IntMap.empty, t))) (StringMap.find (Env.tys e, last)))
       | "s" => Option.map (fn e => fpEnv ((binderOfKey key, name ^ "."), e)) (Env.findStr' (env, path))
-      | "sig" => Option.map fpSigma (StringMap.find (!sessionSigs, name))
-      | "fun" => (case StringMap.find (!sessionFuns, name) of SOME f => fpFunctor f | NONE => NONE)
+      | "sig" => Option.map (fn sg => byReference (fn () => fpSigma sg)) (StringMap.find (!sessionSigs, name))
+      | "fun" => (case StringMap.find (!sessionFuns, name) of SOME f => byReference (fn () => fpFunctor f) | NONE => NONE)
       | "inl" => (case StringMap.find (!sessionFuns, name) of
                     SOME (Elaborate.FunInfo {code = g, ...}) => inlineHash g
                   | _ => NONE)

@@ -91,6 +91,12 @@ struct
     (("S73", "c.sml", 0), "fun g (x : A.u) = 2"),
     (("S73", "a.sml", 1), "structure A = struct datatype t = X of u | Y and u = Z of t | W  val k = 0  val k2 = \"x\" end"),
     (("S73", "b.sml", 1), "fun f (x : A.u) = 1"),
+    (("S77", "e.sml", 0), "signature ELT = sig type t  val x : t end"),
+    (("S77", "s.sml", 0), "signature SET = sig structure E : ELT  val size : int end"),
+    (("S77", "u.sml", 0), "structure U : SET = struct structure E = struct type t = int  val x = 1 end  val size = 0 end"),
+    (("S77", "main.sml", 0), "val () = print (Int.toString U.E.x ^ \"\\n\")"),
+    (("S77", "e.sml", 1), "signature ELT = sig type t  val x : t  val y : t end"),
+    (("S77", "u.sml", 1), "structure U : SET = struct structure E = struct type t = int  val x = 1  val y = 2 end  val size = 0 end"),
     (("S72", "a.sml", 0), "functor F (X : sig val x : int end) = struct val y = X.x + 1 end"),
     (("S72", "m.sml", 0), "structure S0 = F (struct val x = 2 end)"),
     (("S72", "b.sml", 0), "structure S1 = F (struct val x = 1 end)  functor F (X : sig val z : string end) = struct val w = X.z end  functor G () = struct structure T = F (struct val z = \"g\" end) end  val () = print (Int.toString S1.y ^ \"\\n\")")
