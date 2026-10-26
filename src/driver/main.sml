@@ -65,6 +65,15 @@ struct
     if not (!Options.dumpWitnesses) orelse !Error.errors > 0 then ()
     else Witness.dump (fn f => List.exists (fn i => i = f) (!Options.inputs), print)
 
+  (* AstLint (elab/astlint.sml), at --lint=2 and above: what was elaborated
+     checked, once Elaborate.finish has run and before Translate; nothing
+     where an error was found. The elaborator keeps what it reads from the
+     start of the elaboration (lintWanted) *)
+  fun lintWanted () = Elaborate.lintRecords := Pass.linting' 2
+  fun astlint () =
+    if !Error.errors > 0 then Elaborate.forgetLintRecords ()
+    else Pass.checkAt ("astlint", 2) AstLint.check ()
+
   (* the syntax of the program's units, elaborated, when wanted (Serve) *)
   val keepSyntax = ref false
   val keptSyntax : (string * Ast.dec list) list ref = ref []
@@ -789,8 +798,8 @@ struct
                    (* a unit's flexible records are settled at its end, and its
                       matches reported (docs/units.md) *)
                    frontStage "elaborate"
-                              (fn () => (Elaborate.allowPrim := allow; Elaborate.elabTop (env, decs); Elaborate.finish ();
-                                         dumpWitnesses (); decs))
+                              (fn () => (Elaborate.allowPrim := allow; lintWanted (); Elaborate.elabTop (env, decs);
+                                         Elaborate.finish (); dumpWitnesses (); astlint (); decs))
                               ()
                  end)
           val () = if !keepSyntax then keptSyntax := (name, decs) :: !keptSyntax else ()
@@ -1143,7 +1152,8 @@ struct
                 val () = Elaborate.elabTop (env,ds)
             in restore prior end
       fun elaborate (progs as (b, l, u, fin)) =
-        (Elaborate.allowPrim := true;
+        (lintWanted ();
+         Elaborate.allowPrim := true;
          Elaborate.elabTop (env, b);
          Elaborate.allowPrim := false;
          List.app elabLibrary (!syntaxGroups);
@@ -1157,6 +1167,7 @@ struct
          List.app elabFinal (!finalSyntax);
          Elaborate.finish ();
          dumpWitnesses ();
+         astlint ();
          progs)
       val () = Elaborate.recover := true
       val _ = frontStage "elaborate" elaborate (basisProg, libraryProg, userProg, finalProg)

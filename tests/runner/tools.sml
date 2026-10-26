@@ -768,6 +768,34 @@ struct
       | _ => check ("pass-stats: the last line is the total", false)
     end
 
+  (* ---- tests/compiler: AstLint's rules, each refused where the datum it
+     checks is corrupted (RUNE_ASTLINT_FAULT, the linting roadmap's M12):
+     tests/compiler/astlint-faults.sml compiles at --lint=2, and with each
+     fault stops with its rule's message *)
+  val astlintFaults =
+    [("instance", "[41 instance] constructor B at"), ("wildcard", "[41 instance] constructor B's argument"),
+     ("raise", "[13 match] a clause of g"), ("nil", "[35 instance] [] at"), ("constant", "[E constant]"),
+     ("select", "[38 record] #1 of"), ("flex", "[38 record] a flexible record left open"),
+     ("binder", "[13 match] a clause of f: exn expected"), ("scope", "[4.6 scope]"), ("generalise", "[15 Clos]"),
+     ("equality", "[4.9 equality] datatype t"), ("result", "[result] f: its scheme")]
+  fun astlintFaultTests () =
+    let
+      val dir = run ^ "/compiler/astlint"
+      val () = (rmTree dir; mkdirs dir)
+      fun f x = dir ^ "/" ^ x
+      fun compile fault =
+        exec {cmd = ["/bin/sh", "-c", "RUNE_LINT=2 RUNE_ASTLINT_FAULT=" ^ fault
+                                     ^ " exec bin/rune --no-prelude --typecheck-only tests/compiler/astlint-faults.sml"],
+              dir = NONE, stdin = "", stdout = f (fault ^ ".err"), stderr = f (fault ^ ".err"), timeout = 300}
+    in
+      if compile "" = 0 then () else fail ("astlint-faults: the program is refused: " ^ firstLine (f ".err"));
+      List.app (fn (fault, msg) =>
+                  if compile fault = 0 then fail ("astlint-faults: " ^ fault ^ ": compiled")
+                  else if contains (f (fault ^ ".err"), "lint after astlint") andalso contains (f (fault ^ ".err"), msg) then ()
+                  else fail ("astlint-faults: " ^ fault ^ ": not refused with " ^ msg ^ ": " ^ firstLine (f (fault ^ ".err"))))
+               astlintFaults
+    end
+
   (* ---- tests/compiler: the rules of a check that no program the compiler
      makes breaks, each refused on IR made by hand (lint-tests.build) *)
   fun lintRules () =
@@ -1072,6 +1100,7 @@ struct
     | ["overloading-cache"] => SOME overloadingCache
     | ["compiler", rune] => SOME (fn () => compilerProtection rune)
     | ["compiler-lint-rules"] => SOME lintRules
+    | ["compiler-astlint-faults"] => SOME astlintFaultTests
     | ["limits", rune, vm] => SOME (fn () => limits (rune, vm))
     | ["gc-log", rune, vm] => SOME (fn () => gcLog (rune, vm))
     | ["colour-contrast"] => SOME (fn () => contrast false)
@@ -1159,6 +1188,7 @@ struct
          (Test.describe "compiler"
             (tagged ["test"] (job ("stack", ["compiler", "bin/rune-stack"], [], 300, 600))
              :: tagged ["test"] (job ("lint-rules", ["compiler-lint-rules"], [], 800, 900))
+             :: tagged ["test"] (job ("astlint-faults", ["compiler-astlint-faults"], [], 500, 600))
              :: List.map (fn h => Test.requires [h] (tagged ["test-all"] (job (h, ["compiler", "bin/rune-" ^ h], [], 500, 600))))
                          ["mlton", "smlnj-legacy", "smlnj32", "smlnj-dev", "polyml", "mlkit"])),
        tagged ["check", "covers:tests/runtime/*"]

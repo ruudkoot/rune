@@ -27,6 +27,7 @@ files
   backend/opcodes.sml
   backend/prims.sml
   elab/elaborate.sml
+  elab/astlint.sml
   driver/basismanifest.sml
   driver/libraryscope.sml
   driver/buildfile.sml

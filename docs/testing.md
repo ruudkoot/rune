@@ -77,7 +77,10 @@ stop at the first breach, which is a bug of the compiler. That includes
 the check of the register code (`RegVerify`, at level 1; [ir.md](ir.md),
 *The register target*), whose own negative tests are
 `register/@regverify-*`: the eleven corruptions its switch
-`RUNE_REGVERIFY_INJECT` makes, each refused with its own message.
+`RUNE_REGVERIFY_INJECT` makes, each refused with its own message; and
+`AstLint`, the check of the elaborated Core (level 2; [ir.md](ir.md),
+*AstLint*), whose are `compiler/astlint-faults`: the twelve corruptions
+`RUNE_ASTLINT_FAULT` makes of what it reads.
 `RUNE_LINT=1` lints at the boundaries alone, `RUNE_LINT=0` runs only what
 is always on, and `RUNE_LINT=` (empty) what each program runs by itself:
 level 0 in `rune`, 1 in the REPL and the compiler library. One tier lints

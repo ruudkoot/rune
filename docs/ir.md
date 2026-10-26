@@ -8,6 +8,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 
 | Stage | From | To | Lint |
 |---|---|---|---|
+| `elaborate` | the syntax | the elaborated syntax: its slots filled, its witnesses recorded (`lib/compiler/elab/elaborate.sml`, `witness.sml`) | `AstLint` (*AstLint* below) |
 | `translate` | the elaborated syntax | `Lambda` (`lib/compiler/core/lambda.sml`) | `LambdaLint` |
 | `mid` | `Lambda` | `Mid` (`lib/compiler/core/mid.sml`, by `ToMid`) | `MidLint` |
 | `midcanon` | `Mid` | `Mid` numbered canonically (`lib/compiler/core/midcanon.sml`), as one made of its units' `Mid` is; a whole program only | its renaming (`MidCanon.checkRenaming`); `MidLint` of the units' `Mid` it concatenates (`midconcat`) |
@@ -68,7 +69,7 @@ linting roadmap, D12 and D13), each from its level up:
 | `off` | none of level 0's; the passes' own assertions, the decoders and the loader, as always | -- |
 | 0 | always on, where nothing says otherwise in `rune`: the invariant of results in globals after every `lower` (`results`), and the functor bodies a unit's basis decoded, linted at the next unit's passes (`functor-body`) | 0.14%; 0.52% |
 | 1 | the boundaries between representations: `LambdaLint` after `translate`, `MidLint` after `mid` (and of the units' Mid `--units --whole` concatenates, `midconcat`) and of what `lower` is given (`prelower`), `midcanon`'s renaming, `LowLint` after `lower`, `RegVerify` after `registers` and at every link (*The register target*); what the REPL and the compiler library run where nothing says otherwise | 16.4%; 32.8% |
-| 2 | every pass: `MidLint` after each optional pass on Mid, and inside `simplify` of each definition as it is made, with the copies its calls made, in the program around it (`simplify-def`), and a unit's code read back as its file says it (`code-rt`: `UnitFile.read` of the bytes written, the same code but for the reader's normal form, and the same bytes written again); what `--lint` runs, and every test | 35.4%; 70.7%, and 11% more of a compile in units for `code-rt` |
+| 2 | every pass: `AstLint` after elaboration (`astlint`, *AstLint* below; in `rune`, not yet in the REPL or the compiler library), `MidLint` after each optional pass on Mid, and inside `simplify` of each definition as it is made, with the copies its calls made, in the program around it (`simplify-def`), and a unit's code read back as its file says it (`code-rt`: `UnitFile.read` of the bytes written, the same code but for the reader's normal form, and the same bytes written again); what `--lint` runs, and every test | 35.4%; 70.7%, and 11% more of a compile in units for `code-rt`; `AstLint` 8%; 17% more (*AstLint*) |
 | 3 | and Mid's text read back after every stage of Mid (`KEY-roundtrip`), as `--mid-roundtrip` does after `mid` alone from level 1; one tier of `make check` (`make test-ir`) | about 9 times the compile |
 
 `--lint=LEVEL` gives the level; else `RUNE_LINT` (a level, `off`, or
@@ -181,6 +182,74 @@ the program or of a unit -- whether matches are exhaustive, flexible
 records -- have a line of their own, `elab - deferred - ...`.
 `bin/rune-measure elab-stats` adds the lines up into a table of contexts and
 operations, and names the declarations that took longest.
+
+### AstLint
+
+`AstLint` (`lib/compiler/elab/astlint.sml`; the linting roadmap's M12)
+checks, at level 2 (`astlint`), the derivation the elaborator found for the
+Core against the Definition's chapter 4: after `Elaborate.finish` and
+before `translate`, each declaration at top level that elaborated, in the
+environment it was elaborated in, in a batch of `SourceTy`'s of its own.
+It is a checker, not an inferencer. The choices the Definition leaves open
+the elaborator recorded by node id (`Witness`: the instance at a
+constructor pattern, the type of a wildcard, of a `raise` and of a `[]`
+pattern, the names a datatype declaration made, the explicit type
+variables a value declaration scopes, what each binding generalised), or
+are in the slots `translate` reads (an identifier's instance, a constant's
+type, `#lab`'s record, a flexible record's, a `fn`'s) and in `Ty.binders`
+(a variable's type). Read as `SourceTy`, every node's type follows
+bottom-up, by equality and one-way matching of a scheme against an
+instance; `AstLint` never unifies, and calls nothing of `Unify`,
+`SigMatch` or `Types` but the zonk. It works out `Clos` (rule 15),
+non-expansiveness (4.7, the derived forms read as what they stand for) and
+the scope of explicit type variables (4.6) itself, and checks against what
+the elaborator recorded:
+
+* the instances of rule 2 and of constructors in patterns (35, 41), an
+  equality type variable's image admitting equality, an overloaded one's of
+  its class (4.5, Appendix E);
+* `Clos` and the value restriction, against what each binding generalised,
+  and rule 15's side condition;
+* the explicit type variables each value declaration scopes;
+* datatypes' equality, maximised (4.9);
+* constants' classes;
+* a type name a `let` declares, which may not escape into its type or its
+  context (rule 4, where Rune checks it);
+* the identity and status the slots give, and each slot against its node;
+* each declaration's result against the elaborator's, its schemes and
+  their bound variables, and that it leaves no free type variable (rules
+  87-89).
+
+An alarm names the rule it breaks (`[15 Clos]`, `[4.9 equality]`, `[2
+instance]`) and stops the compile as every check does (`Pass.checkAt`).
+The module language is taken as given: the environment a declaration at
+top level was elaborated in, and what the elaborator records, only at
+level 2, of the results of ascriptions, functor applications, dynamic
+modules and exports, and of functor parameters (`Elaborate.tops`,
+`moduleResults`, `functorParams`), are axioms; signatures and
+`_overload` are not read, and `_prim`'s annotation is trusted. Where Rune
+reads the book otherwise it is read as Rune reads it, by runespec's names
+of the readings: the modes of `--overloading`, `--flex-records` and
+`--free-tyvars` by their results after `finish` (`E.topdec`,
+`4.11.program`, `87.free`), `4.4.scoped`, an abstype's names the same
+stamps without equality outside, and `ref` and `array` admitting equality
+whatever their argument. `rune` runs it; the REPL and the compiler library
+do not yet.
+
+`RUNE_ASTLINT_FAULT=KIND`, for the tests, corrupts the first datum of a
+kind as `AstLint` reads it -- `instance`, `wildcard`, `raise`, `nil`,
+`constant`, `select`, `flex`, `binder`, `scope`, `generalise`, `equality`,
+`result` -- and `compiler/astlint-faults` holds each to its rule's
+message. The thirteen mutants of the elaborator that the roadmap's E3 and
+E6 found nothing else catching, or catching late, each accepting what the
+Definition rejects or recording a wrong instance, are all caught by it.
+
+What it costs (`--pass-stats`'s `check astlint`, instructions): 0.25
+million of `examples/hello.sml`'s 2.9 million at level 2, 10.5 million of
+`compile-sigs`' 65 million, 137 million of HaMLet's 2.48 billion (8% of
+its compile at level 0), 306 million of the bootstrap's 3.41 billion (17%
+of its compile at level 0). At levels 0 and 1 it costs nothing: the
+elaborator keeps its records for it only at 2.
 
 ## What a `Lambda` keeps
 
