@@ -1347,7 +1347,7 @@ check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/runeopt-boot bin/run
 # The intermediate representations (docs/ir.md): the dumps of tests/ir, and
 # every program of tests/lang and tests/perf the same at -O0 and -O2, whole
 # and in units, on both bytecodes and at tier 2 of the JIT, with the lint of
-# every pass on, which makes the same bytes as with it off
+# every pass on, which makes the register bytecode's same bytes as with it off
 # (docs/plans/middle-end.md, M2; docs/plans/correctness/linting.md, M1).
 test-ir: $(RUNE) bin/rune-test
 	$(RUNE_TEST) --tier test-ir

@@ -77,9 +77,9 @@ bug of the compiler. `RUNE_LINT=` (empty) runs the tests without it. The
 budgets (`bin/rune-budget`) count the compiler as it is shipped, and clear
 it for what they count. A check never changes what the compiler makes, so
 that a test linted tests the compiler a user runs: `levels/*` compiles
-every program of `tests/lang` and `tests/perf` with the lint and without
-it, on both bytecodes, whole and in units, and fails where the two differ
-by a byte, a unit's files and their bases too; `compiler/*` compares a
+every program of `tests/lang` and `tests/perf` to the register bytecode
+with the lint and without it, whole and in units, and fails where the two
+differ by a byte, a unit's files and their bases too; `compiler/*` compares a
 program's units with `--mid-roundtrip` and without; and `Pass.checkAt`
 stops a compile whose check moved a counter of the compiler's names
 ([ir.md](ir.md), *Options*). A rule that no program the compiler makes

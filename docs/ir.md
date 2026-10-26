@@ -860,13 +860,14 @@ stack target.
 * **`make check-levels`** (the oracle `levels` of `tests/runner/oracles.sml`): every program of
   `tests/lang` and `tests/perf` compiled to both bytecodes at `-O0` and at
   `-O2`, whole and whole of its units' Mid (`--units --whole`), and in
-  units linked by `Link` (`--units`, its unit files kept), with the lint on
-  and Mid's text checked against itself (`--mid-roundtrip`), and again
-  without either: the two must be the same bytes, a unit's files and their
-  bases too. Each runs under `--checked` (a `DECON` of another constructor
-  than it names stops the program), the register bytecode's at tier 2 of
-  the JIT too (`--jit=all --jit-tier=2`), and must print and exit as the
-  stack bytecode's at `-O0` does, on both streams: traces too, where
+  units linked by `Link` (`--units`, its unit files kept), with the lint
+  on, and on the stack bytecode Mid's text checked against itself
+  (`--mid-roundtrip`). The register bytecode's builds are compiled again
+  without the lint: the two must be the same bytes, a unit's files and
+  their bases too. Each runs under `--checked` (a `DECON` of another
+  constructor than it names stops the program), the register bytecode's at
+  tier 2 of the JIT too (`--jit=all --jit-tier=2`), and must print and exit
+  as the stack bytecode's at `-O0` does, on both streams: traces too, where
   inlining has moved code into another function
   (`tests/lang/rt.trace_inlined.sml`).
 * **The bootstrap** is compiled with `--lint --mid-roundtrip` whenever it is

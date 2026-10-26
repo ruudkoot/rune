@@ -8,9 +8,10 @@
 
    - levels: every program of tests/lang and tests/perf compiled to both
      bytecodes at -O0 and -O2, whole and of its units' Mid, and in units
-     linked by Link, with the lint, must be the same bytes as without it,
-     its unit files and their bases too, and print, err and exit the same,
-     the register bytecode's at tier 2 of the JIT too (check-levels.sh);
+     linked by Link, with the lint, must print, err and exit the same, the
+     register bytecode's at tier 2 of the JIT too, and the register
+     bytecode's must be the same bytes as without the lint, its unit files
+     and their bases too (check-levels.sh);
    - register: compiled to both bytecodes, runevm-stack and runtime/register
      must allocate the same; the compiler on runtime/register must make the
      bytes it makes on runevm-stack; the primitives must print the same; and
@@ -81,12 +82,17 @@ struct
   fun jitDir () = run ^ (if jitVm () = "bin/runevm" then "/jit" else "/jit-" ^ OS.Path.file (jitVm ()))
 
   (* ---- levels *)
-  (* each target: its compiler, its VM, and the ways each build is run. The
-     compiler by its absolute path, as bin/rune-stack runs bin/rune: the
-     library's files are named so in positions, which traces print *)
+  (* each target: its compiler, its checks, whether each build is compiled
+     again without them to compare the bytes, its VM, and the ways each build
+     is run. The stack bytecode's builds check Mid's text against itself
+     too; the register bytecode's, the default, are the ones compared with
+     the compile that checks nothing (the cost of both on both is three
+     times the tier's: linting roadmap, M1). The compiler by its absolute
+     path, as bin/rune-stack runs bin/rune: the library's files are named
+     so in positions, which traces print *)
   val levelTargets =
-    [("stack", "bin/rune-stack", "bin/runevm-stack", [("run", ["--checked"])]),
-     ("registers", fromRoot "bin/rune", "bin/runevm",
+    [("stack", "bin/rune-stack", ["--lint", "--mid-roundtrip"], false, "bin/runevm-stack", [("run", ["--checked"])]),
+     ("registers", fromRoot "bin/rune", ["--lint"], true, "bin/runevm",
       [("run", ["--checked"]), ("tier2", ["--jit=all", "--jit-tier=2", "--checked"])])]
   fun levelsOne src =
     let
@@ -113,38 +119,39 @@ struct
       fun sameUnits (a, c) =
         let val fs = unitFiles a
         in fs = unitFiles c andalso List.all (fn f => same (a ^ "/" ^ f, c ^ "/" ^ f)) fs end
-      (* each build with the lint and Mid's text checked against itself, and
-         without either (RUNE_LINT empty), which must be the same bytes: no
+      (* each build with the target's checks, and where it says so again
+         without them (RUNE_LINT empty), which must be the same bytes: no
          check changes what the compiler makes *)
-      fun compile (t, rune) [] = true
-        | compile (t, rune) (k :: rest) =
+      fun compile (t, rune, checks, compared) [] = true
+        | compile (t, rune, checks, compared) (k :: rest) =
             let
               val () = clear (t, k)
               val linted =
-                exec {cmd = [rune] @ flags (t, k, true) @ cargs @ ["--lint", "--mid-roundtrip", src, "-o", file (t, k, ".rbc")],
+                exec {cmd = [rune] @ flags (t, k, true) @ cargs @ checks @ [src, "-o", file (t, k, ".rbc")],
                       dir = NONE, stdin = "", stdout = "", stderr = file (t, k, ".cerr"), timeout = 0} = 0
               val plain =
                 linted andalso
-                execEnv (setEnv ("RUNE_LINT", "") o setEnv ("RUNEVM_INTINF", "sml"))
-                        {cmd = [rune] @ flags (t, k, false) @ cargs @ [src, "-o", file (t, k, ".plain.rbc")],
-                         dir = NONE, stdin = "", stdout = "", stderr = file (t, k, ".plain.cerr"), timeout = 0} = 0
+                (not compared orelse
+                 execEnv (setEnv ("RUNE_LINT", "") o setEnv ("RUNEVM_INTINF", "sml"))
+                         {cmd = [rune] @ flags (t, k, false) @ cargs @ [src, "-o", file (t, k, ".plain.rbc")],
+                          dir = NONE, stdin = "", stdout = "", stderr = file (t, k, ".plain.cerr"), timeout = 0} = 0)
               val what = t ^ " " ^ String.concatWith " " (List.filter (fn w => not (String.isPrefix out w)) (flags (t, k, true) @ cargs))
               val ok =
                 if not linted then (say ("FAIL levels." ^ n ^ ": " ^ what ^ ": " ^ firstLine (file (t, k, ".cerr")) ^ "\n"); false)
                 else if not plain then
                   (say ("FAIL levels." ^ n ^ ": " ^ what ^ ", without the lint: " ^ firstLine (file (t, k, ".plain.cerr")) ^ "\n"); false)
-                else if not (same (file (t, k, ".rbc"), file (t, k, ".plain.rbc"))) then
+                else if compared andalso not (same (file (t, k, ".rbc"), file (t, k, ".plain.rbc"))) then
                   (say ("FAIL levels." ^ n ^ ": " ^ what ^ ": the lint changes the bytes\n"); false)
-                else if k = "UL" andalso not (sameUnits (file (t, k, ".units"), file (t, k, ".plain.units"))) then
+                else if compared andalso k = "UL" andalso not (sameUnits (file (t, k, ".units"), file (t, k, ".plain.units"))) then
                   (say ("FAIL levels." ^ n ^ ": " ^ what ^ ": the lint changes a unit's file or its basis\n"); false)
                 else true
             in
               clear (t, k);
               (OS.FileSys.remove (file (t, k, ".plain.rbc")) handle OS.SysErr _ => ());
-              ok andalso compile (t, rune) rest
+              ok andalso compile (t, rune, checks, compared) rest
             end
     in
-      if not (List.all (fn (t, rune, _, _) => compile (t, rune) builds) levelTargets) then ()
+      if not (List.all (fn (t, rune, checks, compared, _, _) => compile (t, rune, checks, compared) builds) levelTargets) then ()
       else
         let
           val dir = run ^ "/levels-run/" ^ n
@@ -157,7 +164,7 @@ struct
             | earlier (_, []) = []
           fun distinct (t, k) = not (List.exists (fn k' => same (file (t, k', ".rbc"), file (t, k, ".rbc"))) (earlier (k, builds)))
           val runs =
-            List.concat (List.map (fn (t, _, vm, ways) =>
+            List.concat (List.map (fn (t, _, _, _, vm, ways) =>
                                      List.concat (List.map (fn k => if distinct (t, k) then List.map (fn (w, vmflags) => (t, k, w, vm, vmflags)) ways
                                                                     else [])
                                                            builds))
