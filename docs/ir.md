@@ -207,6 +207,30 @@ operations, and names the declarations that took longest.
   match compiled as a decision tree makes them (below).
 * **`LetRec`:** every right-hand side is a function.
 * **Types:** it is well typed, as below.
+* **What its types alone do not say** (`IrRules`, which `MidLint` shares;
+  plans/correctness/linting.md, M4):
+  - a constant is of its type's kind -- an `int`'s `CInt`, a `word`'s
+    `CWord`, ... -- and in its range: an `int`'s 63 bits, an `Int64.int`'s
+    64, a `word`'s and a `Word64.word`'s from 0, a `char`'s 8;
+  - a primitive's type at a use is an instance of its description
+    (`PrimTys`, which `runeisa` makes of `src/isa/prims.sml`): each type
+    variable one type throughout, a type the compiler builds in itself,
+    `unit` the empty tuple, and a name it does not (`option`, `order`,
+    `Word32.word`) any type; the compiler's own primitives are checked by
+    their own rules;
+  - an exception's payload (`MkExn`) has its argument's type, by the
+    constructor's stamp (`Ty.exnArgOf`): the elaborator's, or a copy's
+    that the pass which copied it registered at the copy's types
+    (`Ty.copyExn`: `Expand` and `Simplify` with their substitutions, `Lift`,
+    `MidCanon` with its renaming), or the one `Simplify` gave it where it
+    put the body of a function called once at the call's types
+    (`Ty.retypeExn`), each from level 1, where a lint will look:
+    `exception E of 'a` in a function is checked at `'a` in the function
+    and at the types of each copy made of it;
+  - a cast the compiler makes is of its origin's kind (below): a
+    `functor_cast` or a `dynamic_cast` is to `unit` or from it, an
+    `open_cast` to or from a flat type (`unit`, a tuple of units,
+    `Ty.flat n`); the program's own `unsafe_cast` is anything.
 
 A breach is a bug of the compiler, never of the program.
 
@@ -343,7 +367,8 @@ gives one is refused as for any option it does not know.
   `open_boxed`, a primitive of its own), and otherwise calls the
   body's functions for it (`Translate.openFuns`), which see the object
   through `Ty.flat n`, a datatype of the basis whose constructors have `n`
-  fields. Simplify's equality functions leave such a datatype to
+  fields, by a cast of their own (`open_cast`, which Lower makes an
+  `unsafe_cast`, and the lints hold to a flat side). Simplify's equality functions leave such a datatype to
   `poly_eq`. Only the constructors the body uses get the functions.
 * **Layouts** (D5). A datatype a body declares has the layout its declared
   types give it there, a parameter's type boxed; an instance an
@@ -498,6 +523,17 @@ have generalised them: a variable of the program or a function; a variable
   that type variables are in scope.
 * **Calls:** a function of other than one parameter is only called, with
   an argument for each, and never used as a value.
+* **What its types alone do not say:** constants, primitives, exceptions'
+  payloads and the casts the compiler makes, as in `Lambda` (`IrRules`;
+  above). An exception's copies keep their argument's type through every
+  pass that copies code, so the payload's rule holds after the first.
+* **A `Do`** sets each global it lists on every way of it that returns:
+  one that always raises sets none (after `simplify`, a `Do` whose
+  expression raises still lists them), and a handler's way is the
+  handler's alone. A global a function sets is the exception: a dynamic
+  module's slots are set by the function the runtime is given, at the load
+  and at each reload (`Translate`, `RuneDynamic.take`; a `dynamic_cast` of
+  each slot from `unit`), which `Lift` may take out of the `Do`.
 * **Casts** (D3): no value cast to `unit` is
   cast back to another ground type. A record's slot is cast to `unit` and
   back; where the expansion knows the slot's value, a cast left between two
@@ -1033,6 +1069,21 @@ holds the link to refusing; a unit so made is not stored in the cache.
   moved code into another function (`tests/lang/rt.trace_inlined.sml`).
 * **The bootstrap** is compiled with `--lint --mid-roundtrip` whenever it is
   built (`bin/rune.rbc`).
+* **The lints' negative tests** (plans/correctness/linting.md, M4): each
+  rule of each lint refuses what breaks it. A fault made on purpose after a
+  stage (`RUNE_FAULT=STAGE:KIND[@N]`, `lib/compiler/backend/fault.sml`, for
+  the tests alone: the identity where it is unset) corrupts what the stage
+  made, at the `N`-th place of the kind, before the stage's checks see it,
+  and says on standard error what it did; the jobs `faults/STAGE:KIND` of
+  `tests/runner/tools.sml` (tier `test-ir`) compile `tests/compiler/faults.sml`
+  (or, built in units, `faults-dynamic.sml`) at level 2 and want the
+  stage's lint to refuse it with the rule's message: a variable out of
+  scope, a stamp bound twice, a jump given one argument more, a constant
+  of another kind, a payload of another type, a cast of another kind, a
+  `Do` that no longer sets a global, ... The rules no fault reaches, and
+  the invariant of results, are refused on IR made by hand
+  (`compiler/lint-rules`, `tests/compiler/lint-rules.sml`); `RegVerify`'s
+  by its own switch (`register/@regverify-*`).
 * **`bin/rune-measure bisect-fuel PROGRAM.sml`**: where a program runs otherwise
   at `-O2` than at `-O0`, halving `--fuel` finds the first rewrite that
   breaks it (after Whalley, "Automatic isolation of compiler errors").

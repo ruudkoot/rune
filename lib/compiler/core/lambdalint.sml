@@ -12,7 +12,11 @@
    * it is well typed (Ty): every node has the type its parts give it, a use
      of a variable at an instance (Inst) is one of its scheme, a
      constructor is one of the datatype it builds, and an argument, a
-     binding and a branch have the type they must.
+     binding and a branch have the type they must;
+   * a constant is of its type's kind and range, a primitive's type is an
+     instance of its description, an exception's payload has its
+     argument's type, and a cast the compiler makes is of its origin's
+     kind (IrRules; linting roadmap, M4).
    A breach is a bug of the compiler, raised as Error.Bug. *)
 structure LambdaLint =
 struct
@@ -68,7 +72,7 @@ struct
                T s => if isSome (Ty.match (s, t)) then T t
                       else Error.bug ("a use at " ^ Ty.toString t ^ " of what has type " ^ Ty.toString s)
              | Never => T t)
-        | Const (_, t) => T t
+        | Const (c, t) => (Option.app Error.bug (IrRules.const (c, t)); T t)
         | Unit => T Ty.unit
         | Fn (x, t, b) =>
             (case Ty.view t of
@@ -173,13 +177,21 @@ struct
         | BuiltinExn _ => T Ty.exnCon
         | MkExn (c, p) =>
             (expect ("an exception constructor", go (c, scope, no), Ty.exnCon);
-             ignore (go (p, scope, no));
+             case (unmark c, go (p, scope, no)) of
+               (Var x, T t) => Option.app Error.bug (IrRules.payload (x, t))
+             | (Global g, T t) => Option.app Error.bug (IrRules.payload (g, t))
+             | _ => ();
              T Ty.exn)
         | ExnCon a => (expect ("an exception", go (a, scope, no), Ty.exn); T Ty.exnCon)
         | ExnArg (t, a) => (expect ("an exception", go (a, scope, no), Ty.exn); T t)
         | Prim (p, SOME t, args) =>
             let
-              val found = List.map (fn e => go (e, scope, no)) args
+              (* open_layout's descriptor is a CInt given its datatype *)
+              val layout = p = "open_layout"
+              val found = List.map (fn e => case (layout, unmark e) of
+                                              (true, Const (_, t)) => T t
+                                            | _ => go (e, scope, no)) args
+              val () = Option.app Error.bug (IrRules.use (p, t))
             in
               case Ty.view t of
                 Ty.Arrow (d, r) =>

@@ -13,6 +13,8 @@ files
   frontend/lexer.sml
   elab/elabstats.sml
   elab/types.sml
+  elab/sourcety.sml
+  elab/witness.sml
   core/ty.sml
   elab/overload.sml
   frontend/ast.sml

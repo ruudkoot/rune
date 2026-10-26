@@ -97,11 +97,11 @@ struct
   (* The first record type that a type writes out, outermost and leftmost. *)
   fun recordOf (ty : Ast.ty) : (string * Ast.ty) list option =
     case ty of
-      Ast.TyRecord (fields, _) => SOME fields
+      Ast.TyRecord (fields, _, _) => SOME (Ast.unlabel fields)
     | Ast.TyVar _ => NONE
-    | Ast.TyTuple (tys, _) => firstOf tys
-    | Ast.TyCon (tys, _, _) => firstOf tys
-    | Ast.TyArrow (a, b, _) => firstOf [a, b]
+    | Ast.TyTuple (tys, _, _) => firstOf tys
+    | Ast.TyCon (tys, _, _, _) => firstOf tys
+    | Ast.TyArrow (a, b, _, _) => firstOf [a, b]
   and firstOf tys =
     case tys of
       [] => NONE
@@ -145,8 +145,8 @@ struct
 
   fun sigHead (e : Ast.sigexp) : string option =
     case e of
-      Ast.SigId (n, _) => SOME n
-    | Ast.SigWhere (e', _, _) => sigHead e'
+      Ast.SigId (n, _, _) => SOME n
+    | Ast.SigWhere (e', _, _, _) => sigHead e'
     | Ast.SigSig _ => NONE
 
   (* An entry follows the one before it closely: between the token that ends
@@ -246,34 +246,34 @@ struct
       val entry = entry (ctx, path)
     in
       case spec of
-        Ast.SpecVal (descs, _) =>
+        Ast.SpecVal (descs, _, _) =>
           List.map (fn (name, ty, sp) =>
                       (#tys ctx := IntMap.insert (!(#tys ctx), #start sp, ty);
                        entry {kind = I.Val, name = name, spec = described (ctx, "val", sp), span = sp, cons = [],
                               fields = fieldsOf (ctx, path @ [name], SOME ty), sigref = NONE, body = NONE})) descs
-      | Ast.SpecType (descs, _) =>
+      | Ast.SpecType (descs, _, _) =>
           List.map (fn (_, name, sp) =>
                       entry {kind = I.Type, name = name, spec = described (ctx, "type", sp), span = sp, cons = [],
                              fields = [], sigref = NONE, body = NONE}) descs
-      | Ast.SpecEqtype (descs, _) =>
+      | Ast.SpecEqtype (descs, _, _) =>
           List.map (fn (_, name, sp) =>
                       entry {kind = I.Eqtype, name = name, spec = described (ctx, "eqtype", sp), span = sp, cons = [],
                              fields = [], sigref = NONE, body = NONE}) descs
-      | Ast.SpecDatatype (binds, _) =>
+      | Ast.SpecDatatype (binds, _, _) =>
           List.map (fn {name, cons, span, ...} =>
                       entry {kind = I.Datatype, name = name, spec = described (ctx, "datatype", span), span = span,
                              cons = List.map (conOf (ctx, path)) cons, fields = [], sigref = NONE, body = NONE}) binds
-      | Ast.SpecDatatypeRepl (name, _, sp) =>
+      | Ast.SpecDatatypeRepl (name, _, sp, _) =>
           [entry {kind = I.Datatype, name = name, spec = margin (ctx, sp), span = sp, cons = [],
                   fields = [], sigref = NONE, body = NONE}]
-      | Ast.SpecException (descs, _) =>
+      | Ast.SpecException (descs, _, _) =>
           List.map (fn (name, ty, sp) =>
                       entry {kind = I.Exception, name = name, spec = described (ctx, "exception", sp), span = sp,
                              cons = [], fields = fieldsOf (ctx, path @ [name], ty), sigref = NONE, body = NONE}) descs
-      | Ast.SpecStructure (descs, _) =>
+      | Ast.SpecStructure (descs, _, _) =>
           List.map (fn (name, sigexp, sp) =>
                       case sigexp of
-                        Ast.SigSig (specs, inner) =>
+                        Ast.SigSig (specs, inner, _) =>
                           entry {kind = I.Structure, name = name, spec = "structure " ^ name ^ " : sig ... end", span = sp,
                                  cons = [], fields = [], sigref = NONE, body = SOME (body (ctx, path @ [name]) (specs, inner))}
                       | _ =>
@@ -282,17 +282,17 @@ struct
         (* `type t = ty` is parsed into its derived form, an include of a
            signature with a where clause; all its parts have the span of the
            description, which a written include never has. *)
-      | Ast.SpecInclude (sigexp as Ast.SigWhere (Ast.SigSig ([Ast.SpecType ([(_, name, _)], _)], inner), wheres, _), sp) =>
+      | Ast.SpecInclude (sigexp as Ast.SigWhere (Ast.SigSig ([Ast.SpecType ([(_, name, _)], _, _)], inner, _), wheres, _, _), sp, _) =>
           if spanEq (inner, sp) then
             [entry {kind = I.Type, name = name, spec = described (ctx, "type", sp), span = sp, cons = [],
                     fields = (case wheres of [(_, _, ty, _)] => fieldsOf (ctx, path @ [name], SOME ty) | _ => []),
                     sigref = NONE, body = NONE}]
           else includeItems (ctx, path) (sigexp, sp)
-      | Ast.SpecInclude (sigexp, sp) => includeItems (ctx, path) (sigexp, sp)
-      | Ast.SpecSharingType (_, sp) =>
+      | Ast.SpecInclude (sigexp, sp, _) => includeItems (ctx, path) (sigexp, sp)
+      | Ast.SpecSharingType (_, sp, _) =>
           [entry {kind = I.Sharing, name = "", spec = margin (ctx, sp), span = sp, cons = [], fields = [],
                   sigref = NONE, body = NONE}]
-      | Ast.SpecSharing (_, sp) =>
+      | Ast.SpecSharing (_, sp, _) =>
           [entry {kind = I.Sharing, name = "", spec = margin (ctx, sp), span = sp, cons = [], fields = [],
                   sigref = NONE, body = NONE}]
     end
@@ -307,7 +307,7 @@ struct
                   cons = [], fields = [], sigref = SOME n, body = NONE}]
       | NONE =>
           (case sigexp of
-             Ast.SigSig (specs, inner) =>
+             Ast.SigSig (specs, inner, _) =>
                [entry {kind = I.Include, name = "", spec = "include sig ... end", span = sp, cons = [], fields = [],
                        sigref = NONE, body = SOME (body (ctx, path) (specs, inner))}]
            | _ =>
@@ -329,39 +329,39 @@ struct
 
   fun ascriptionOf (ctx : ctx) (e : Ast.strexp) : I.ascription option * Ast.strexp =
     case e of
-      Ast.StrAscribe (e', sigexp, opaque, _) =>
+      Ast.StrAscribe (e', sigexp, opaque, _, _) =>
         (SOME {sigexp = margin (ctx, Ast.spanOfSigexp sigexp), opaque = opaque}, e')
     | _ => (NONE, e)
 
   (* ---- the declarations of a structure body ---- *)
   fun patternNames (p : Ast.pat) : string list =
     case p of
-      Ast.PVar (([], x), _, _) => [x]
-    | Ast.PRecord (fields, _, _, _) => List.concat (List.map (fn (_, q) => patternNames q) fields)
-    | Ast.PTuple (ps, _) => List.concat (List.map patternNames ps)
-    | Ast.PList (ps, _) => List.concat (List.map patternNames ps)
-    | Ast.PApp (_, _, q, _) => patternNames q
-    | Ast.PTyped (q, _, _) => patternNames q
-    | Ast.PLayered (x, _, q, _, _) => x :: patternNames q
-    | Ast.POr (q :: _, _) => patternNames q        (* every alternative binds the same *)
+      Ast.PVar (([], x), _, _, _) => [x]
+    | Ast.PRecord (fields, _, _, _, _) => List.concat (List.map (fn (_, q, _) => patternNames q) fields)
+    | Ast.PTuple (ps, _, _) => List.concat (List.map patternNames ps)
+    | Ast.PList (ps, _, _) => List.concat (List.map patternNames ps)
+    | Ast.PApp (_, _, q, _, _) => patternNames q
+    | Ast.PTyped (q, _, _, _) => patternNames q
+    | Ast.PLayered (x, _, q, _, _, _) => x :: patternNames q
+    | Ast.POr (q :: _, _, _) => patternNames q        (* every alternative binds the same *)
     | _ => []
 
   (* What a declaration declares, by name; nothing for one that declares
      none. *)
   fun declared (dec : Ast.dec) : string list =
     case dec of
-      Ast.DVal (_, binds, _) => List.concat (List.map (fn (p, _) => patternNames p) binds)
-    | Ast.DValRec (_, binds, _) => List.concat (List.map (fn (p, _) => patternNames p) binds)
-    | Ast.DFun (_, defs, _) => List.map #name defs
-    | Ast.DType (binds, _) => List.map #name binds
-    | Ast.DDatatype (datbinds, typbinds, _) =>
+      Ast.DVal (_, binds, _, _) => List.concat (List.map (fn (p, _) => patternNames p) binds)
+    | Ast.DValRec (_, binds, _, _) => List.concat (List.map (fn (p, _) => patternNames p) binds)
+    | Ast.DFun (_, defs, _, _) => List.map #name defs
+    | Ast.DType (binds, _, _) => List.map #name binds
+    | Ast.DDatatype (datbinds, typbinds, _, _) =>
         List.concat (List.map (fn {name, cons, ...} => name :: List.map #1 cons) datbinds) @ List.map #name typbinds
-    | Ast.DDatatypeRepl (name, _, _) => [name]
-    | Ast.DAbstype (datbinds, typbinds, decs, _) =>
+    | Ast.DDatatypeRepl (name, _, _, _) => [name]
+    | Ast.DAbstype (datbinds, typbinds, decs, _, _) =>
         List.map #name datbinds @ List.map #name typbinds @ List.concat (List.map declared decs)
-    | Ast.DException (binds, _) => List.map (fn Ast.ExnDecl (n, _, _, _) => n | Ast.ExnRepl (n, _, _, _) => n) binds
-    | Ast.DLocal (_, decs, _) => List.concat (List.map declared decs)
-    | Ast.DStructure (binds, _) => List.map #name binds
+    | Ast.DException (binds, _, _) => List.map (fn Ast.ExnDecl (n, _, _, _, _) => n | Ast.ExnRepl (n, _, _, _, _) => n) binds
+    | Ast.DLocal (_, decs, _, _) => List.concat (List.map declared decs)
+    | Ast.DStructure (binds, _, _) => List.map #name binds
     | _ => []
 
   (* The notes in the comment above a declaration, for each name it declares:
@@ -370,7 +370,7 @@ struct
   fun notesOf (ctx : ctx) (dec : Ast.dec) : (string * I.doc) list =
     case dec of
       Ast.DStructure _ => []
-    | Ast.DLocal (_, decs, _) => List.concat (List.map (notesOf ctx) decs)
+    | Ast.DLocal (_, decs, _, _) => List.concat (List.map (notesOf ctx) decs)
     | _ =>
         (case declared dec of
            [] => []
@@ -393,27 +393,27 @@ struct
   (* The members that a body declares to be something else, by name. *)
   fun twinsOf (dec : Ast.dec) : (string * string) list =
     case dec of
-      Ast.DVal (_, binds, _) =>
-        List.mapPartial (fn (Ast.PVar (([], x), _, _), Ast.EVar (longid, _, _)) => SOME (x, Ast.longidToString longid)
+      Ast.DVal (_, binds, _, _) =>
+        List.mapPartial (fn (Ast.PVar (([], x), _, _, _), Ast.EVar (longid, _, _, _)) => SOME (x, Ast.longidToString longid)
                           | _ => NONE) binds
-    | Ast.DDatatypeRepl (name, longid, _) => [(name, Ast.longidToString longid)]
-    | Ast.DException (binds, _) =>
-        List.mapPartial (fn Ast.ExnRepl (n, longid, _, _) => SOME (n, Ast.longidToString longid) | _ => NONE) binds
-    | Ast.DLocal (_, decs, _) => List.concat (List.map twinsOf decs)
+    | Ast.DDatatypeRepl (name, longid, _, _) => [(name, Ast.longidToString longid)]
+    | Ast.DException (binds, _, _) =>
+        List.mapPartial (fn Ast.ExnRepl (n, longid, _, _, _) => SOME (n, Ast.longidToString longid) | _ => NONE) binds
+    | Ast.DLocal (_, decs, _, _) => List.concat (List.map twinsOf decs)
     | _ => []
 
-  fun structOf (ctx : ctx) ({name, strexp, span} : Ast.strbind) : I.module =
+  fun structOf (ctx : ctx) ({name, strexp, span, ...} : Ast.strbind) : I.module =
     let
       val src = #src ctx
       val doc = docOf (ctx, StructureDoc, span)
       val (ascription, e) = ascriptionOf ctx strexp
       val (rhs, subs, members, notes, twins) =
         case e of
-          Ast.StrStruct (decs, _) =>
+          Ast.StrStruct (decs, _, _) =>
             (I.Body, List.concat (List.map (subStructs ctx) decs), SOME (List.concat (List.map declared decs)),
              List.concat (List.map (notesOf ctx) decs), List.concat (List.map twinsOf decs))
-        | Ast.StrId (longid, _) => (I.Alias (Ast.longidToString longid), [], NONE, [], [])
-        | Ast.StrApp (f, arg, _) => (I.Apply (f, margin (ctx, Ast.spanOfStrexp arg)), [], NONE, [], [])
+        | Ast.StrId (longid, _, _) => (I.Alias (Ast.longidToString longid), [], NONE, [], [])
+        | Ast.StrApp (f, arg, _, _) => (I.Apply (f, margin (ctx, Ast.spanOfStrexp arg)), [], NONE, [], [])
         | _ => (I.Other, [], NONE, [], [])
     in
       I.Struct {name = name, file = S.name src, span = span, doc = doc, ascription = ascription, rhs = rhs, subs = subs,
@@ -422,8 +422,8 @@ struct
 
   and subStructs ctx (dec : Ast.dec) : I.module list =
     case dec of
-      Ast.DStructure (binds, _) => List.map (structOf ctx) binds
-    | Ast.DLocal (_, decs, _) => List.concat (List.map (subStructs ctx) decs)
+      Ast.DStructure (binds, _, _) => List.map (structOf ctx) binds
+    | Ast.DLocal (_, decs, _, _) => List.concat (List.map (subStructs ctx) decs)
     | _ => []
 
   fun decl (ctx : ctx, kind : string, names : string list, dec : Ast.dec) : I.module =
@@ -434,12 +434,12 @@ struct
     let val src = #src ctx
     in
       case dec of
-        Ast.DSignature (binds, _) =>
-          List.map (fn {name, sigexp, span} =>
+        Ast.DSignature (binds, _, _) =>
+          List.map (fn {name, sigexp, span, ...} =>
                       let
                         val doc = docOf (ctx, SignatureDoc, span)
                         val items = case sigexp of
-                                      Ast.SigSig (specs, inner) => body (ctx, []) (specs, inner)
+                                      Ast.SigSig (specs, inner, _) => body (ctx, []) (specs, inner)
                                     | _ => []
                         val whole = fromKeyword (src, Token.SIGNATURE, span)
                       in
@@ -454,21 +454,21 @@ struct
                                                | _ => SOME (margin (ctx, Ast.spanOfSigexp sigexp))),
                                      body = items}
                       end) binds
-      | Ast.DStructure (binds, _) => List.map (structOf ctx) binds
-      | Ast.DFunctor (binds, _) =>
-          List.map (fn {name, param, paramSig, body, span} =>
+      | Ast.DStructure (binds, _, _) => List.map (structOf ctx) binds
+      | Ast.DFunctor (binds, _, _) =>
+          List.map (fn {name, param, paramSig, body, span, ...} =>
                       I.Functor {name = name, file = S.name src, span = span, doc = docOf (ctx, FunctorDoc, span),
                                  param = (case param of
                                             SOME x => x ^ " : " ^ margin (ctx, Ast.spanOfSigexp paramSig)
                                           | NONE => margin (ctx, Ast.spanOfSigexp paramSig)),
                                  result = #1 (ascriptionOf ctx body),
                                  notes = (case #2 (ascriptionOf ctx body) of
-                                            Ast.StrStruct (decs, _) => List.concat (List.map (notesOf ctx) decs)
+                                            Ast.StrStruct (decs, _, _) => List.concat (List.map (notesOf ctx) decs)
                                           | _ => [])}) binds
         (* the other declarations of the top level: what the top-level
            environment has, where a file has any *)
-      | Ast.DInfix (p, names, span) => [decl (ctx, "infix " ^ Int.toString p, names, dec)]
-      | Ast.DInfixr (p, names, span) => [decl (ctx, "infixr " ^ Int.toString p, names, dec)]
+      | Ast.DInfix (p, names, span, _) => [decl (ctx, "infix " ^ Int.toString p, names, dec)]
+      | Ast.DInfixr (p, names, span, _) => [decl (ctx, "infixr " ^ Int.toString p, names, dec)]
       | Ast.DOverload {kind, strid, ...} => [decl (ctx, "_overload " ^ kind, [String.concatWith "." strid], dec)]
       | _ =>
           (case declared dec of

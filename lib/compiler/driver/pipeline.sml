@@ -120,7 +120,7 @@ struct
                 check = fn p => (Pass.checkAt ("mid", 1) MidLint.check p;
                                  Pass.checkAt ("mid-roundtrip", if !CompilerSettings.midRoundTrip then 1 else 3) MidText.roundTrip p),
                 size = Mid.size}
-               f
+               (fn x => Fault.mid ("mid", f x))
 
   (* The functor bodies a unit's basis decoded (UnitBasis; Expand.imported),
      linted at the next unit's passes, at level 0, always on: when they are
@@ -152,7 +152,7 @@ struct
         then Pass.stage {name = "midcanon", showIn = SOME MidText.show, show = MidText.show,
                          check = fn p => (Pass.checkAt ("midcanon", 1) (MidCanon.checkRenaming mid) p; roundTrip "midcanon" p),
                          size = Mid.size}
-                        MidCanon.program mid
+                        (fn m => Fault.mid ("midcanon", MidCanon.program m)) mid
         else mid
       (* the optional passes on Mid (docs/ir.md), each linted at level 2;
          whether one ran, so that the boundary before lower is linted at
@@ -163,7 +163,7 @@ struct
           (passed := true;
            Pass.stage {name = name, showIn = SOME MidText.show, show = MidText.show,
                        check = fn p => (Pass.lintAt name MidLint.check p; roundTrip name p), size = Mid.size}
-                      f m)
+                      (fn m => Fault.mid (name, f m)) m)
         else m
       val () = functorBodies ()
       (* the copies of applications given back (Expand), before anything
@@ -186,7 +186,7 @@ struct
     in
       Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = fn p => (Pass.checkAt ("lower", 1) LowLint.check p; LowShapes.stage p),
                   size = Low.size}
-                 (fn m => lowered (Lower.program (m, !Translate.funNames))) mid
+                 (fn m => lowered (Fault.low ("lower", Lower.program (m, !Translate.funNames)))) mid
     end
 
   (* Lambda to Low: Mid, the optional passes on it, and Lower *)
@@ -242,7 +242,7 @@ struct
     let
       val lam = Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = Pass.checkAt ("translate", 1) LambdaLint.check,
                             size = Lambda.size}
-                           Translate.transProgram decs
+                           (fn decs => Fault.lambda ("translate", Translate.transProgram decs)) decs
       val low = lowOf lam
       (* what its functors' and applications' code was made of, which no
          later unit's needs *)

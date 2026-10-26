@@ -982,6 +982,8 @@ struct
          marker, an open constructor's descriptor tested for 0 and worked
          out from its datatype's layout, as it is now *)
       | M.Prim ("functor_cast", _, xs) => L.Prim ("unsafe_cast", List.map at xs)
+      | M.Prim ("dynamic_cast", _, xs) => L.Prim ("unsafe_cast", List.map at xs)
+      | M.Prim ("open_cast", _, xs) => L.Prim ("unsafe_cast", List.map at xs)
       | M.Prim ("functor_marker", _, xs) => L.Prim ("unsafe_cast", List.map at xs)
       | M.Prim ("open_boxed", _, xs) => L.Prim ("imm_eq", List.map at xs)
       | M.Prim ("open_layout", t, [M.Const (Lambda.CInt tag, _)]) => L.Const (Lambda.CInt (IntInf.fromInt (openLayout (t, IntInf.toInt tag))))

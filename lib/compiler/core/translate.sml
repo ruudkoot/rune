@@ -167,14 +167,14 @@ struct
   (* A primitive an expression names, with its type at this use. *)
   fun primAliasOf (e : exp) : (string * Ty.ty) option =
     case e of
-      ETyped (e, _, _) => primAliasOf e
-    | EPrim (name, _, slot, sp) => SOME (name, ty (slot, sp))
-    | EVar (_, ref (SOME (VGlobal (s, t))), _) => Option.map (fn p => (p, Ty.fromTypes t)) (IntMap.find (!primAliases, s))
-    | EVar (_, ref (SOME (VLocal (s, t))), _) => Option.map (fn p => (p, Ty.fromTypes t)) (IntMap.find (!primAliases, s))
+      ETyped (e, _, _, _) => primAliasOf e
+    | EPrim (name, _, slot, sp, _) => SOME (name, ty (slot, sp))
+    | EVar (_, ref (SOME (VGlobal (s, t))), _, _) => Option.map (fn p => (p, Ty.fromTypes t)) (IntMap.find (!primAliases, s))
+    | EVar (_, ref (SOME (VLocal (s, t))), _, _) => Option.map (fn p => (p, Ty.fromTypes t)) (IntMap.find (!primAliases, s))
     (* `val size = size`, and the like, of an operation of the top level on
        strings (`^`, `size`, `concat`, `substring`) that resolved to a
        primitive, the 8-bit one's *)
-    | EVar (_, ref (SOME (VBuiltin (name, t))), _) =>
+    | EVar (_, ref (SOME (VBuiltin (name, t))), _, _) =>
         if List.exists (fn n => n = name) ["^", "size", "concat", "substring"]
            andalso not (isSome (builtinGlobal (name, t)))
         then SOME (builtinPrim (name, t), Ty.fromTypes t)
@@ -194,7 +194,7 @@ struct
     in
       case (arity, arg) of
         (1, _) => Prim (prim, SOME pty, [transExp arg])
-      | (n, ETuple (es, _)) =>
+      | (n, ETuple (es, _, _)) =>
           if List.length es = n then Prim (prim, SOME pty, List.map transExp es)
           else Error.bug "primitive applied to tuple of wrong size"
       | (n, _) =>
@@ -268,8 +268,8 @@ struct
 
   and transExp' (e : exp) : lexp =
     case e of
-      EScon (sc, slot, _) => MatchComp.sconExp (sc, slot)
-    | EVar (_, slot, sp) =>
+      EScon (sc, slot, _, _) => MatchComp.sconExp (sc, slot)
+    | EVar (_, slot, sp, _) =>
         (case varinfo (slot, sp) of
            VLocal (s, t) => (noteRead s; useOf (Var s, s, t))
          | VGlobal (s, t) => useOf (Global s, s, t)
@@ -278,8 +278,9 @@ struct
          | VExn (info, t) => exnExp (info, Ty.fromTypes t)
          | VExnVal (info, t) => exnExp (info, Ty.fromTypes t)
          | VBuiltin (name, ty) => builtinValue (name, ty))
-    | ERecord (fields, _) =>
+    | ERecord (fields, _, _) =>
         let
+          val fields = unlabel fields
           val sorted = Types.sortFields fields
           val inOrder = ListPair.all (fn ((l1, _), (l2, _)) => l1 = l2) (fields, sorted)
         in
@@ -294,35 +295,35 @@ struct
                                               | NONE => Error.bug "record label") sorted)
             in List.foldr (fn ((_, v, e), body) => Let (v, e, body)) tuple temps end
         end
-    | ETuple ([], _) => Unit
-    | ETuple (es, _) => Tuple (List.map transExp es)
-    | ESelect (lab, slot, sp) =>
+    | ETuple ([], _, _) => Unit
+    | ETuple (es, _, _) => Tuple (List.map transExp es)
+    | ESelect (lab, slot, sp, _) =>
         let
           val x = MatchComp.freshVar ()
           val i = recordIndex (slot, lab, sp)
           val r = ty (slot, sp)
           val field = case Ty.view r of Ty.Tuple ts => List.nth (ts, i) | _ => bug (sp, "record selector of no record")
         in Fn (x, Ty.arrow (r, field), Select (i, Var x)) end
-    | EList (es, slot, sp) =>
+    | EList (es, slot, sp, _) =>
         let val t = ty (slot, sp)
         in List.foldr (fn (e, acc) => Con (Types.consTag (), t, Tuple [transExp e, acc])) (Con0 (Types.nilTag (), t)) es end
-    | ESeq (es, _) =>
+    | ESeq (es, _, _) =>
         let
           fun go [] = Unit
             | go [e] = transExp e
             | go (e :: rest) = Seq (transExp e, go rest)
         in go es end
-    | ELet (decs, body, _) => transDecs (decs, fn () => transExp body)
-    | EApp (f, a, sp) => transApp (f, a, sp)
-    | ETyped (e, _, _) => transExp e
-    | EAndalso (a, b, _) => If (transExp a, transExp b, falseExp)
-    | EOrelse (a, b, _) => If (transExp a, trueExp, transExp b)
-    | EHandle (e, rules, _) =>
+    | ELet (decs, body, _, _) => transDecs (decs, fn () => transExp body)
+    | EApp (f, a, sp, _) => transApp (f, a, sp)
+    | ETyped (e, _, _, _) => transExp e
+    | EAndalso (a, b, _, _) => If (transExp a, transExp b, falseExp)
+    | EOrelse (a, b, _, _) => If (transExp a, trueExp, transExp b)
+    | EHandle (e, rules, _, _) =>
         let val x = MatchComp.freshVar ()
         in Handle (transExp e, x, MatchComp.compileMatch (x, transRules rules, Raise (Var x))) end
-    | ERaise (e, _) => Raise (transExp e)
-    | EIf (c, t, e, _) => If (transExp c, transExp t, transExp e)
-    | EWhile (c, b, _) =>
+    | ERaise (e, _, _) => Raise (transExp e)
+    | EIf (c, t, e, _, _) => If (transExp c, transExp t, transExp e)
+    | EWhile (c, b, _, _) =>
         let
           val loop = MatchComp.freshVar ()
           val u = MatchComp.freshVar ()
@@ -334,13 +335,13 @@ struct
           LetRec ([(loop, t, Fn (u, t, If (transExp c, Seq (transExp b, App (Var loop, Unit)), Unit)))],
                   App (Var loop, Unit))
         end
-    | ECase (e, rules, sp) =>
+    | ECase (e, rules, sp, _) =>
         let val x = MatchComp.freshVar ()
         in Let (x, transExp e, MatchComp.compileMatch (x, transRules rules, Mark (sp, raiseBuiltin exnMatch))) end
-    | EFn (rules, slot, sp) =>
+    | EFn (rules, slot, sp, _) =>
         let val x = MatchComp.freshVar ()
         in Fn (x, ty (slot, sp), MatchComp.compileMatch (x, transRules rules, Mark (sp, raiseBuiltin exnMatch))) end
-    | EPrim (name, _, slot, sp) => etaPrim (name, ty (slot, sp))
+    | EPrim (name, _, slot, sp, _) => etaPrim (name, ty (slot, sp))
 
   (* a built-in operator, at its type here, as a value *)
   and builtinValue (name : string, ty : Types.ty) : lexp =
@@ -359,7 +360,7 @@ struct
 
   and transRules rules = List.map (fn (p, e) => (p, transExp e)) rules
 
-  and stripTyped (ETyped (e, _, _)) = stripTyped e
+  and stripTyped (ETyped (e, _, _, _)) = stripTyped e
     | stripTyped e = e
 
   (* an application of a variable: of a primitive it names, or of a function *)
@@ -386,7 +387,7 @@ struct
 
   and transApp (f, a, sp) =
     case stripTyped f of
-      EVar (_, slot, vsp) =>
+      EVar (_, slot, vsp, _) =>
         (case varinfo (slot, vsp) of
            VCon (info, t) => conApp (info, Ty.fromTypes t, f, a)
          | VConVal (info, t) => conApp (info, Ty.fromTypes t, f, a)
@@ -405,10 +406,10 @@ struct
                   in if name = "<>" then notExp call else call end)
          | VGlobal (_, t) => varApp (f, t, a)
          | VLocal (_, t) => varApp (f, t, a))
-    | EPrim ("repl_printer_add", _, slot, psp) =>
+    | EPrim ("repl_printer_add", _, slot, psp, _) =>
         (case !slot of SOME t => printerAdd (t, a) | NONE => bug (psp, "expression without a type"))
-    | EPrim (name, _, slot, psp) => applyPrim (name, ty (slot, psp), a)
-    | ESelect (lab, slot, ssp) => Select (recordIndex (slot, lab, ssp), transExp a)
+    | EPrim (name, _, slot, psp, _) => applyPrim (name, ty (slot, psp), a)
+    | ESelect (lab, slot, ssp, _) => Select (recordIndex (slot, lab, ssp), transExp a)
     | _ => App (transExp f, transExp a)
 
   and conApp (info : coninfo, t : Ty.ty, f, a) =
@@ -440,8 +441,8 @@ struct
 
   and transTopDec (d : dec, k : unit -> lexp) : lexp =
     case d of
-      DLocal (d1, d2, _) => transTopDecs (d1, fn () => transTopDecs (d2, k))
-    | DAbstype (_, _, decs, _) => transTopDecs (decs, k)
+      DLocal (d1, d2, _, _) => transTopDecs (d1, fn () => transTopDecs (d2, k))
+    | DAbstype (_, _, decs, _, _) => transTopDecs (decs, k)
     | _ => transDec (d, k)
 
   and patInfo (slot : patinfo option ref, sp) =
@@ -451,11 +452,11 @@ struct
 
   and transDec (d : dec, k : unit -> lexp) : lexp =
     case d of
-      DVal (_, binds, _) =>
+      DVal (_, binds, _, _) =>
         let
           fun one ((p, e), k) =
             case p of
-              PVar ((_, vname), slot, sp) =>
+              PVar ((_, vname), slot, sp, _) =>
                 (case patInfo (slot, sp) of
                    PIVar (stamp, g) =>
                      (case primAliasOf e of
@@ -464,7 +465,7 @@ struct
                       let val e' = transExp e
                       in nameFun (vname, e'); MatchComp.bindVar (stamp, g, e', k ()) end)
                  | _ => general (p, e, k))
-            | PWild _ => Seq (transExp e, k ())
+            | PWild (_, _) => Seq (transExp e, k ())
             | _ => general (p, e, k)
           and general (p, e, k) =
             let val t = MatchComp.freshVar ()
@@ -472,7 +473,7 @@ struct
           fun go [] = k ()
             | go (b :: rest) = one (b, fn () => go rest)
         in go binds end
-    | DValRec (_, binds, _) =>
+    | DValRec (_, binds, _, _) =>
         let
           (* the first variable of each pattern carries the closure; the
              others are bound to it afterwards *)
@@ -497,7 +498,7 @@ struct
                            (aliases more) rest
             | aliases (_ :: more) = aliases more
         in transRecBindings (primaries, fn () => aliases groups) end
-    | DFun (_, fundefs, _) =>
+    | DFun (_, fundefs, _, _) =>
         let
           fun transFundef (f : fundef) =
             let
@@ -525,23 +526,23 @@ struct
     | DType _ => k ()
     | DDatatype _ => k ()
     | DDatatypeRepl _ => k ()
-    | DAbstype (_, _, decs, _) => transDecs (decs, k)     (* dynamically local datatype ... in decs end *)
-    | DException (exbinds, _) =>
+    | DAbstype (_, _, decs, _, _) => transDecs (decs, k)     (* dynamically local datatype ... in decs end *)
+    | DException (exbinds, _, _) =>
         let
           fun go [] = k ()
-            | go (ExnDecl (name, _, slot, sp) :: rest) =
+            | go (ExnDecl (name, _, slot, sp, _) :: rest) =
               (case patInfo (slot, sp) of
                  PIExn info => MatchComp.bindVar (#stamp info, #isGlobal info, NewExn name, go rest)
                | _ => bug (sp, "exception declaration"))
             | go (ExnRepl _ :: rest) = go rest
         in go exbinds end
-    | DLocal (d1, d2, _) => transDecs (d1, fn () => transDecs (d2, k))
+    | DLocal (d1, d2, _, _) => transDecs (d1, fn () => transDecs (d2, k))
     | DOpen _ => k ()
     | DInfix _ => k ()
     | DInfixr _ => k ()
     | DNonfix _ => k ()
     | DOverload _ => k ()
-    | DStructure (binds, _) =>
+    | DStructure (binds, _, _) =>
         let
           fun go [] = k ()
             | go ((b : strbind) :: rest) =
@@ -553,7 +554,7 @@ struct
                 end
         in go binds end
     | DSignature _ => k ()
-    | DFunctor (binds, _) =>
+    | DFunctor (binds, _, _) =>
         let fun go [] = k () | go (b :: rest) = functorFun (b, go rest)
         in go binds end
 
@@ -562,19 +563,19 @@ struct
      calls the functor's function (callExp). *)
   and transStrexp (se : strexp, k : unit -> lexp) : lexp =
     case se of
-      StrStruct (decs, _) => transTopDecs (decs, k)
+      StrStruct (decs, _, _) => transTopDecs (decs, k)
     | StrId _ => k ()
-    | StrAscribe (e, _, _, _) => transStrexp (e, k)
-    | StrApp (_, arg, sp) =>
+    | StrAscribe (e, _, _, _, _) => transStrexp (e, k)
+    | StrApp (_, arg, sp, _) =>
         transStrexp (arg, fn () =>
           case Elaborate.callAt sp of
             SOME call => callExp (call, sp, k)
           | NONE => bug (sp, "functor application not elaborated"))
-    | StrLet (decs, e, _) => transTopDecs (decs, fn () => transStrexp (e, k))
+    | StrLet (decs, e, _, _) => transTopDecs (decs, fn () => transStrexp (e, k))
     (* a dynamic module (D17, D18): what RuneDynamic.load gives -- or
        RuneDynamic.take, for a virtual module -- a tuple of the slots as
        units, and each slot's global set from it *)
-    | StrDynamic (from, _, slot, sp) =>
+    | StrDynamic (from, _, slot, sp, _) =>
         (case !slot of
            NONE => bug (sp, "a dynamic structure not elaborated")
          | SOME {fingerprint, slots, via, temp, reloadable} =>
@@ -588,13 +589,13 @@ struct
                  let
                    fun vs ([], i) = ss (subs, i)
                      | vs ((s, t, isExn) :: rest, i) =
-                         Seq (SetGlobal (s, Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, slotTy (t, isExn))),
+                         Seq (SetGlobal (s, Prim ("dynamic_cast", SOME (Ty.arrow (Ty.unit, slotTy (t, isExn))),
                                                   [Select (i, from)])),
                               vs (rest, i + 1))
                    and ss ([], _) = k ()
                      | ss (r :: rest, i) =
                          let val x = MatchComp.freshVar ()
-                         in Let (x, Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, Ty.fromTypes (dynamicTuple r))), [Select (i, from)]),
+                         in Let (x, Prim ("dynamic_cast", SOME (Ty.arrow (Ty.unit, Ty.fromTypes (dynamicTuple r))), [Select (i, from)]),
                                  set (Var x, r, fn () => ss (rest, i + 1)))
                          end
                  in vs (vals, 0) end
@@ -626,7 +627,7 @@ struct
     (* its implementation: the body, then its slots, each cast to unit -- a
        polymorphic one at unit, which changes nothing of its value -- given
        to RuneDynamic.export with the fingerprint *)
-    | StrExport (name, _, body, slot, sp) =>
+    | StrExport (name, _, body, slot, sp, _) =>
         transStrexp (body, fn () =>
           case !slot of
             NONE => bug (sp, "an exported structure not elaborated")
@@ -635,17 +636,17 @@ struct
                 val tupleTy = dynamicTuple slots
                 val exportTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy, tupleTy], Types.unitTy)
                 fun cast (s, t, isExn) =
-                  if isExn then Prim ("unsafe_cast", SOME (Ty.arrow (Ty.exnCon, Ty.unit)), [Global s])
+                  if isExn then Prim ("dynamic_cast", SOME (Ty.arrow (Ty.exnCon, Ty.unit)), [Global s])
                   else
                     let val m = monoOf t
-                    in Prim ("unsafe_cast", SOME (Ty.arrow (Ty.fromTypes m, Ty.unit)), [useOf (Global s, s, m)]) end
+                    in Prim ("dynamic_cast", SOME (Ty.arrow (Ty.fromTypes m, Ty.unit)), [useOf (Global s, s, m)]) end
                 (* a record of its slots, then its substructures' records,
                    each cast to unit (D3) *)
                 fun record (r as DynRecord (vals, subs)) =
                   let
                     val n = Int.max (length vals + length subs, 2)
                     val elems = List.map cast vals
-                                @ List.map (fn s => Prim ("unsafe_cast", SOME (Ty.arrow (Ty.fromTypes (dynamicTuple s), Ty.unit)),
+                                @ List.map (fn s => Prim ("dynamic_cast", SOME (Ty.arrow (Ty.fromTypes (dynamicTuple s), Ty.unit)),
                                                           [record s])) subs
                   in Tuple (elems @ List.tabulate (n - length elems, fn _ => Unit)) end
                 val elems = case record slots of Tuple es => es | _ => bug (sp, "a dynamic record not a tuple")
@@ -815,7 +816,9 @@ struct
         let
           val t = Ty.fromTypes dataTy
           val a = Ty.fromTypes argTy
-          fun cast (e, from, to) = Prim ("unsafe_cast", SOME (Ty.arrow (from, to)), [e])
+          (* a cast of its own, open_cast, which Lower makes unsafe_cast:
+             MidLint holds it to a flat side (IrRules.cast) *)
+          fun cast (e, from, to) = Prim ("open_cast", SOME (Ty.arrow (from, to)), [e])
           val () = noteRead desc
           fun isD n = Prim ("poly_eq", SOME (Ty.arrow (Ty.tuple [Ty.int, Ty.int], Ty.bool)),
                             [Var desc, Const (CInt (IntInf.fromInt n), Ty.int)])

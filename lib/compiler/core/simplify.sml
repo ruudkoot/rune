@@ -576,6 +576,27 @@ struct
           | Unit => Unit
       in mapExp (atom, ty) e end
 
+  (* The body of a function called once, put in place at the types of the
+     call (substTypes): the exceptions it declares are declared there at
+     those types (Ty.retypeExn), so that MidLint checks their payloads at
+     them, where it will (from level 1). *)
+  fun retyped (s : Ty.ty IntMap.map) (e : exp) : exp =
+    if IntMap.isEmpty s then e
+    else
+      let
+        val ty = Ty.subst s
+        fun go e =
+          case e of
+            Let (x, _, NewExn _, b) => (Ty.retypeExn (x, ty); go b)
+          | Let (_, _, _, b) => go b
+          | Fun (fs, b) => (List.app (fn (f : fundef) => go (#body f)) fs; go b)
+          | Join (_, _, b, sc) => (go b; go sc)
+          | If (_, t, f) => (go t; go f)
+          | Handle (a, _, h) => (go a; go h)
+          | Mark (_, a) => go a
+          | _ => ()
+      in if Pass.linting' 1 then go e else (); substTypes s e end
+
   (* e with the variable x, which abstracts over no type, replaced by b. *)
   fun substVar (x : var, b : atom) (e : exp) : exp =
     mapExp (fn a as Var (y, []) => if y = x then b else a | a => a, fn t => t) e
@@ -590,7 +611,12 @@ struct
   (* A copy in which the variables free in e that s0 names are renamed too:
      the parameters of a function whose body is copied, renamed on the same
      walk. *)
-  and copyWith (s0 : var IntMap.map, e : exp) : exp =
+  and copyWith (s0 : var IntMap.map, e : exp) : exp = copyAt (s0, fn t => t, e)
+
+  (* A copy at the types sub makes of e's, which substTypes made them:
+     what sub makes of each exception's argument is its copy's (Ty.copyExn),
+     so that MidLint checks the copy's payloads as the original's *)
+  and copyAt (s0 : var IntMap.map, sub : Ty.ty -> Ty.ty, e : exp) : exp =
     let
       (* the new name of each binder: one table for the whole copy, since
          stamps are unique and so no name is bound twice in it *)
@@ -617,7 +643,14 @@ struct
       fun params ps = List.map (fn (x, ty) => (fresh x, ty)) ps
       fun exp e =
         case e of
-          Let (x, sc, r, b) => let val r = rhs r val y = fresh x in Let (y, sc, r, exp b) end
+          Let (x, sc, r, b) =>
+            let
+              val r = rhs r
+              val y = fresh x
+              (* an exception declared in the copy: its argument at the
+                 copy's types *)
+              val () = case r of NewExn _ => Ty.copyExn (x, y, sub) | _ => ()
+            in Let (y, sc, r, exp b) end
         | Fun (fs, b) =>
             let
               val () = List.app (fn f => ignore (fresh (#name f))) fs
@@ -794,7 +827,7 @@ struct
               (* the parameters, renamed like the rest of the copy *)
               val ps = List.map (fn (x, t) => (x, freshStamp (), Ty.subst inst t)) params
               val renamed = List.foldl (fn ((x, y, _), m) => IntMap.insert (m, x, y)) IntMap.empty ps
-              val body = framed (nameOf f, !here, !inHandler > 0, not (isSome k)) (copyWith (renamed, substTypes inst body))
+              val body = framed (nameOf f, !here, !inHandler > 0, not (isSome k)) (copyAt (renamed, Ty.subst inst, substTypes inst body))
               val body = ListPair.foldr (fn ((_, y, t), a, e) => Let (y, ([], t), Atom a, e)) (retarget (k, body)) (ps, args)
             in SOME body end
         end
@@ -1136,7 +1169,7 @@ struct
       val extraParams = List.concat (List.map #3 extra)
       val extraArgs = List.map (fn (y, _) => Var (y, [])) extraParams
       val renamed = List.foldl (fn ((x, y, _), m) => IntMap.insert (m, x, y)) IntMap.empty kept
-      val body = copyWith (renamed, substTypes inst body)
+      val body = copyAt (renamed, Ty.subst inst, substTypes inst body)
       val body = List.foldl (fn ((i, FixAtom a), e) => substVar (#1 (List.nth (params, i)), a) e | (_, e) => e) body fixed
       (* a call of a local function given: of the function of the top level
          made of it, given what it captured *)
@@ -1552,7 +1585,7 @@ struct
               else
                 let
                   val j = freshStamp ()
-                  val b = framed (nameOf f, p, region, false) (substTypes (instance ts) (#body f))
+                  val b = framed (nameOf f, p, region, false) (retyped (instance ts) (#body f))
                   fun give r = let val v = freshStamp () in Let (v, ([], t), r, Jump (j, [Var (v, [])])) end
                 in
                   SOME (Join (j, [(x, t)], Mark (p, rest),
@@ -1564,7 +1597,7 @@ struct
         | Return (App (Var (g, ts), [arg])) =>
             if g = #name f andalso spend () then
               SOME (Let (param, ([], paramTy ts), Atom arg,
-                         framed (nameOf f, p, region, true) (substTypes (instance ts) (#body f))))
+                         framed (nameOf f, p, region, true) (retyped (instance ts) (#body f))))
             else NONE
         | Fun (fs, b) => Option.map (fn b' => Fun (fs, b')) (place (b, p, region))
         | Join (j, ps, jb, s) =>

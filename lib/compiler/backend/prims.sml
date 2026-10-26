@@ -561,7 +561,9 @@ struct
     "functor_cast",
     "functor_marker",
     "open_boxed",
-    "open_layout"
+    "open_layout",
+    "dynamic_cast",
+    "open_cast"
   ])
   fun removable name = StringMap.member (removables, name)
   (* what each primitive takes and gives, from the type of its
