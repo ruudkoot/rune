@@ -62,7 +62,9 @@ other lifecycle changes obey [the callback guards](ffi/callbacks.md).
 
 **What the translation relies on.** `src/opt/rbccheck.sml` checks it and
 refuses a file that breaks it, with a message. `runevm-stack` stays the place
-where any file its loader accepts can run. It checks:
+where any file its loader accepts can run. The compiler runs the same check
+on the stack code it makes, from level 2 of the lint ([ir.md](ir.md), *The
+stack target*). It checks:
 
 * on every path into an instruction, the stack height and the handler depth
   agree: at a jump target, at a handler (its height and the exception), and

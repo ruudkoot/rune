@@ -198,6 +198,24 @@ struct
       val () = if not (!Pass.whole) then Expand.keepMarked mid else ()
     in lowOfMid mid end
 
+  (* The check of a program's stack code (the linting roadmap's D11 and
+     M10): the loader's checks and runeopt's RbcCheck, on the code as its
+     file has it. They are runeopt's, built with the driver (rune.build,
+     src/driver/stackcheck.sml, which sets this) and not with the compiler
+     library, whose files are its own; elsewhere it checks nothing. A
+     refusal is Error.Bug. *)
+  val stackCheck : (Code.program -> unit) ref = ref (fn _ => ())
+  val () = CompilerState.cellRoot ("Pipeline.stackCheck", stackCheck)
+  (* it, from level 2 of the lint (the roadmap's D12), as a check of
+     Pass.checkAt, which --pass-stats counts as "rbccheck"; RUNE_RBCCHECK=1
+     runs it at every level, to measure it, and 0 at none *)
+  fun checkStack (p : Code.program) : unit =
+    case OS.Process.getEnv "RUNE_RBCCHECK" of
+      SOME "0" => ()
+    | SOME "" => Pass.checkAt ("rbccheck", 2) (!stackCheck) p
+    | SOME _ => Pass.checkAt ("rbccheck", Pass.off) (!stackCheck) p
+    | NONE => Pass.checkAt ("rbccheck", 2) (!stackCheck) p
+
   (* Low to the code of the target --target names *)
   fun targetStage (low : Low.program) : Code.program =
     if !CompilerSettings.target = "registers" then
@@ -208,7 +226,10 @@ struct
                   size = Code.size}
                  (RegVerify.inject o Regs.program) low
     else
-      Pass.stage {name = "stack", showIn = SOME Low.show, show = Code.dump, check = fn _ => (), size = Code.size}
+      (* a whole program's, as the stage's check; a unit's is checked in
+         the program it is linked into (Main.linkUnits) *)
+      Pass.stage {name = "stack", showIn = SOME Low.show, show = Code.dump,
+                  check = fn p => if !Pass.whole then checkStack p else (), size = Code.size}
                  Stack.program low
 
   (* the fingerprint of the bytecode --target names *)
