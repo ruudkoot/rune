@@ -35,7 +35,9 @@ struct
       fun marker m = if String.isPrefix ("(* " ^ m ^ ": ") line1 andalso String.isSuffix " *)" line1
                      then SOME (String.substring (line1, size m + 5, size line1 - size m - 8)) else NONE
       val input = if String.isSuffix ".mid" src then ["--read-mid", src] else ["--no-prelude", "-o", f ".rbc", src]
-      fun rune flags = exec {cmd = ["bin/rune-stack", "--lint", "--mid-roundtrip"] @ flags @ input, dir = NONE, stdin = "",
+      (* at level 3, every stage's Mid read back: the tier of make check
+         that lints deepest (docs/ir.md, Levels) *)
+      fun rune flags = exec {cmd = ["bin/rune-stack", "--lint=3"] @ flags @ input, dir = NONE, stdin = "",
                              stdout = f ".out", stderr = f ".err", timeout = 0}
       val expected = "tests/ir/" ^ n ^ ".expected"
     in
@@ -784,7 +786,7 @@ struct
           val ls = lines (read (f "out"))
         in
           List.app (fn l => if String.isPrefix "FAIL " l then say (l ^ "\n") else ()) ls;
-          if code = 0 andalso List.length (List.filter (String.isPrefix "PASS ") ls) >= 38 then ()
+          if code = 0 andalso List.length (List.filter (String.isPrefix "PASS ") ls) >= 55 then ()
           else fail ("compiler.lint-rules: exit " ^ Int.toString code ^ ", " ^ Int.toString (List.length ls) ^ " lines: "
                      ^ firstLine (f "err"))
         end

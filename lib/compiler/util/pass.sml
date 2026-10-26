@@ -17,12 +17,45 @@ struct
   val () = CompilerState.cellRoot ("Pass.dumpBefore", dumpBefore)
   val dumpAfter : string list ref = ref []
   val () = CompilerState.cellRoot ("Pass.dumpAfter", dumpAfter)
-  val lint = ref false
-  val () = CompilerState.cellRoot ("Pass.lint", lint)
-  (* --lint, or RUNE_LINT set and not empty: what the tests compile with
-     (bin/rune-test sets it), the REPL's and the compiler library's compiles
-     too, which take no flags *)
-  fun linting () = !lint orelse (case OS.Process.getEnv "RUNE_LINT" of SOME s => s <> "" | NONE => false)
+  (* The level of lint (docs/ir.md, Levels; linting roadmap, D13): which
+     checks run, each from its level up --
+       off (~1), none of those level 0 adds;
+       0, what is always on: the invariant of results, the functor bodies a
+          unit decoded, linted at the next unit's passes;
+       1, the boundaries: LambdaLint after translate, MidLint after mid and
+          before lower, midcanon's renaming, LowLint after lower;
+       2, every pass, and inside simplify and a unit's code read back: what
+          the tests compile with (bin/rune-test sets RUNE_LINT=2);
+       3, Mid's text read back after every stage of Mid, for one tier.
+     --lint=N gives it (lintGiven; a bare --lint is 2, --lint=off is off),
+     else RUNE_LINT (a level, off, or anything else not empty, 2), else
+     lintDefault: 0 for rune, 1 for the REPL and the compiler library. *)
+  val off = ~1
+  val lintGiven : int option ref = ref NONE
+  val () = CompilerState.cellRoot ("Pass.lintGiven", lintGiven)
+  val lintDefault = ref 0
+  val () = CompilerState.cellRoot ("Pass.lintDefault", lintDefault)
+  (* a level as --lint= and RUNE_LINT say it: NONE for none given *)
+  fun levelOf (s : string) : int option =
+    case s of
+      "" => NONE
+    | "off" => SOME off
+    | "0" => SOME 0
+    | "1" => SOME 1
+    | "2" => SOME 2
+    | "3" => SOME 3
+    | _ => SOME 2
+  fun lintLevel () : int =
+    case !lintGiven of
+      SOME n => n
+    | NONE =>
+        case Option.mapPartial levelOf (OS.Process.getEnv "RUNE_LINT") of
+          SOME n => n
+        | NONE => !lintDefault
+  (* whether the checks of the level run *)
+  fun linting' (level : int) : bool = lintLevel () >= level
+  (* whether every pass is checked, as --lint did before its levels *)
+  fun linting () = linting' 2
   val stats = ref false
   val () = CompilerState.cellRoot ("Pass.stats", stats)
   (* the live heap's bytes after a full collection, where the program can
@@ -103,44 +136,61 @@ struct
   fun line (name : string, size : int, t : Time.time) : unit =
     eprint ("pass " ^ name ^ ": " ^ Int.toString size ^ " nodes, " ^ Time.toString t ^ " s\n")
 
-  (* A check of y, by its key (the stage it follows, mostly), at whatever
-     depth: counted for --pass-stats under the key, and held to moving none
-     of the compiler's counters, as every check is to changing nothing of
-     the compile. A breach is a bug of the compiler, Error.Bug, which names
-     the key: "lint after KEY". *)
-  fun checkAt (key : string) (check : 'b -> unit) (y : 'b) : unit =
-    let
-      val names = !counters ()
-      val t0 = if !stats then used () else Time.zeroTime
-      val i0 = if !stats then !instructions () else 0
-      fun count () =
-        if !stats then
-          let
-            val {runs, time, instructions = n} =
-              case List.find (fn (k, _) => k = key) (!checked) of
-                SOME (_, c) => c
-              | NONE =>
-                  let val c = {runs = ref 0, time = ref Time.zeroTime, instructions = ref 0}
-                  in checked := !checked @ [(key, c)]; c end
-          in
-            runs := !runs + 1;
-            time := Time.+ (!time, Time.- (used (), t0));
-            n := !n + (!instructions () - i0)
-          end
-        else ()
-      val () = check y handle Error.Bug msg => (count (); raise Error.Bug ("lint after " ^ key ^ ": " ^ msg))
-      val () = count ()
-    in
-      if !counters () = names then ()
-      else raise Error.Bug ("lint after " ^ key ^ ": the check moved the compiler's counters of names")
-    end
+  (* The last check that found a breach, by its key and level, for the
+     driver: a breach found at level 1 is diagnosed by compiling again at 2,
+     which says which pass made it (Main) *)
+  val breach : (string * int) option ref = ref NONE
+  val () = CompilerState.cellRoot ("Pass.breach", breach)
 
-  (* --lint's checks: checkAt where the compile is linted *)
-  fun lintAt (key : string) (check : 'b -> unit) (y : 'b) : unit = if linting () then checkAt key check y else ()
+  (* A check of y, by its key (the stage it follows, mostly) and its level,
+     run where the level of lint is the check's or above, at whatever depth:
+     counted for --pass-stats under the key, and held to moving none of the
+     compiler's counters, as every check is to changing nothing of the
+     compile. A breach is a bug of the compiler, Error.Bug, which names the
+     key, "lint after KEY"; one of a check that is always on (level 0) says
+     so, and how to turn it off. *)
+  fun checkAt (key : string, level : int) (check : 'b -> unit) (y : 'b) : unit =
+    if not (linting' level) then ()
+    else
+      let
+        val names = !counters ()
+        val t0 = if !stats then used () else Time.zeroTime
+        val i0 = if !stats then !instructions () else 0
+        fun count () =
+          if !stats then
+            let
+              val {runs, time, instructions = n} =
+                case List.find (fn (k, _) => k = key) (!checked) of
+                  SOME (_, c) => c
+                | NONE =>
+                    let val c = {runs = ref 0, time = ref Time.zeroTime, instructions = ref 0}
+                    in checked := !checked @ [(key, c)]; c end
+            in
+              runs := !runs + 1;
+              time := Time.+ (!time, Time.- (used (), t0));
+              n := !n + (!instructions () - i0)
+            end
+          else ()
+        fun found msg =
+          (breach := SOME (key, level);
+           raise Error.Bug ("lint after " ^ key ^ ": " ^ msg
+                            ^ (if level = 0 then " (a check that is always on: a bug of the compiler, not of the program; "
+                                                 ^ "--lint=2 names the pass that made it, and --lint=off turns the check off)"
+                               else if level = 1 andalso lintLevel () < 2 then
+                                 " (found at a boundary: --lint=2 names the pass that made it)"
+                               else "")))
+        val () = check y handle Error.Bug msg => (count (); found msg)
+        val () = count ()
+      in
+        if !counters () = names then () else found "the check moved the compiler's counters of names"
+      end
+
+  (* the checks of every pass, level 2 *)
+  fun lintAt (key : string) (check : 'b -> unit) (y : 'b) : unit = checkAt (key, 2) check y
 
   (* Run a stage of the pipeline: `name` for the options, `show` to print
-     what it made, `check` its lint, run where the compile is linted (its
-     checks, each by lintAt), `size` a count of what it made for
+     what it made, `check` its lint (its checks, each by checkAt, at its
+     level), `size` a count of what it made for
      --pass-stats. The input is printed with --dump-before by the stage
      before's `show`, which the caller passes as `showIn`. *)
   fun stage {name : string, showIn : ('a -> string) option, show : 'b -> string, check : 'b -> unit,
@@ -163,7 +213,7 @@ struct
       val () = if !stats then line (name, size y, t) else ()
       val after = used ()
       val () = if asked (dumpAfter, name) then print ("(* after " ^ name ^ " *)\n" ^ show y ^ "\n") else ()
-      val () = if linting () then check y else ()
+      val () = if linting' 0 then check y else ()
       val () =
         if !depth = 0
         then (outer := Time.+ (!outer, t);
@@ -205,7 +255,7 @@ struct
     if !stats then
       let
         val () = (outer := Time.+ (!outer, !sizes); line ("stats", 0, !sizes))
-        val () = if linting () orelse not (List.null (!dumpBefore)) orelse not (List.null (!dumpAfter))
+        val () = if linting' 1 orelse not (List.null (!dumpBefore)) orelse not (List.null (!dumpAfter))
                  then (outer := Time.+ (!outer, !checks); line ("checks", 0, !checks))
                  else ()
         val () =

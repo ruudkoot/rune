@@ -9,9 +9,9 @@ struct
                                        !Elaborate.nextRecordId, !MidCanon.nextTycon, !Lower.nextFn, !Lower.nextFuncId,
                                        !Code.nextLabel, !UnitBasis.privateNext])
 
-  (* What Lower made of results in globals, checked after every lower,
-     linted or not (LowLint.results; docs/ir.md, Options): its facts, by a
-     function's global, which a known call in Low names by its id *)
+  (* What Lower made of results in globals, checked after every lower, at
+     level 0, always on (LowLint.results; docs/ir.md, Levels): its facts, by
+     a function's global, which a known call in Low names by its id *)
   fun lowered (low : Low.program) : Low.program =
     let
       val globals = IntMap.foldli (fn (g, fid, m) => IntMap.insert (m, fid, g)) IntMap.empty (!Lower.globalFids)
@@ -20,17 +20,115 @@ struct
          slots = fn n => getOpt (IntMap.find (!Lower.slotGlobals, n), []), needed = Lower.needed,
          sum = fn g => Option.map Lower.sumsOf (IntMap.find (!Lower.sumFuns, g))}
     in
-      Pass.checkAt "results" (LowLint.results facts) low;
+      Pass.checkAt ("results", 0) (LowLint.results facts) low;
       low
     end
 
-  (* The stage that makes Mid, from Lambda or from its text. *)
+  (* Mid's text read back after a stage that makes Mid, at level 3, after
+     every stage (docs/ir.md, Levels) *)
+  fun roundTrip (key : string) (p : Mid.program) : unit = Pass.checkAt (key ^ "-roundtrip", 3) MidText.roundTrip p
+
+  (* A unit's code, as UnitFile wrote it (bytes), read back (UnitFile.read):
+     what was written, but for the reader's normal form, and the same bytes
+     written again; at level 2, where a unit is made (linting roadmap, E9). The
+     reader makes every instruction an Ops of its operands and a jump's
+     target a label, numbers the labels afresh, drops those nothing jumps
+     to, makes two at one offset one, and may put a label and a position at
+     one offset the other way round: Link treats those alike, so labels are
+     compared by their offsets, and positions and labels apart. *)
+  fun codeRoundTrip (fp : int, bytes : string) (u : Link.unitCode) : unit =
+    let
+      val (fp', u') = UnitFile.read bytes handle UnitFile.Bad m => Error.bug ("UnitFile.read: " ^ m)
+      fun bug m = Error.bug ("the code read back: " ^ m)
+      fun ints l = String.concatWith " " (List.map Int.toString l)
+      fun item (Code.Op (oc, a)) = "Op " ^ Int.toString oc ^ " [" ^ ints a ^ "]"
+        | item (Code.Ops (oc, a)) =
+            "Ops " ^ Int.toString oc ^ " ["
+            ^ String.concatWith " " (List.map (fn Code.I i => "I" ^ Int.toString i | Code.L l => "L" ^ Int.toString l) a) ^ "]"
+        | item (Code.OpLab (oc, l)) = "OpLab " ^ Int.toString oc ^ " " ^ Int.toString l
+        | item (Code.OpLabImm (oc, l, i)) = "OpLabImm " ^ Int.toString oc ^ " " ^ Int.toString l ^ " " ^ Int.toString i
+        | item (Code.Lab l) = "Lab " ^ Int.toString l
+        | item (Code.Pos (a, b, c, d)) = "Pos " ^ ints [a, b, c, d]
+      fun norm (Code.Op (oc, a)) = Code.Ops (oc, List.map Code.I a)
+        | norm (Code.OpLab (oc, l)) = Code.Ops (oc, [Code.L l])
+        | norm (Code.OpLabImm (oc, l, i)) = Code.Ops (oc, [Code.L l, Code.I i])
+        | norm it = it
+      (* each label by its byte offset in its function *)
+      fun offsets items =
+        let
+          val t : int IntTable.table = IntTable.table 64
+          fun go (_, []) = ()
+            | go (off, Code.Lab l :: rest) = (IntTable.insert (t, l, off); go (off, rest))
+            | go (off, it :: rest) = go (off + Code.itemSize it, rest)
+        in go (0, items); fn l => case IntTable.find (t, l) of SOME o' => o' | NONE => ~1 - l end
+      fun canonCode items =
+        let val off = offsets items
+        in
+          List.mapPartial (fn it => case norm it of
+                                      Code.Lab _ => NONE
+                                    | Code.Ops (oc, a) => SOME (Code.Ops (oc, List.map (fn Code.L l => Code.L (off l) | x => x) a))
+                                    | x => SOME x) items
+        end
+      fun canonMeta (_, NONE : Code.meta option) = NONE
+        | canonMeta (items, SOME {arity, reps, blocks, loops}) =
+            let val off = offsets items
+            in SOME {arity = arity, reps = reps, blocks = List.map (fn (l, ps) => (off l, ps)) blocks, loops = List.map off loops} end
+      fun firstDiff (a, b) =
+        let
+          fun go (i, x :: xs, y :: ys) = if x = y then go (i + 1, xs, ys) else "item " ^ Int.toString i ^ ": " ^ item x ^ " / " ^ item y
+            | go (i, [], y :: _) = "item " ^ Int.toString i ^ ": end / " ^ item y
+            | go (i, x :: _, []) = "item " ^ Int.toString i ^ ": " ^ item x ^ " / end"
+            | go (_, [], []) = "none"
+        in go (0, a, b) ^ " (of " ^ Int.toString (List.length a) ^ " and " ^ Int.toString (List.length b) ^ ")" end
+      val c = #code u and c' = #code u'
+      fun same (x, y, what) = if x = y then () else bug what
+    in
+      same (fp, fp', "another fingerprint");
+      same (String.concat (UnitFile.chunks (fp', u')), bytes, "other bytes written again");
+      same (#identity u, #identity u', "another identity");
+      same (#provenance u, #provenance u', "another provenance");
+      same (#globals u, #globals u', "other globals");
+      same (#imports u, #imports u', "other imports");
+      same (#exports u, #exports u', "other exports");
+      same (#consts c, #consts c', "other constants");
+      same (#nglobals c, #nglobals c', "another number of globals");
+      same (#files c, #files c', "other files");
+      same (#inlines c, #inlines c', "other inlined frames");
+      same (List.length (#funcs c), List.length (#funcs c'), "another number of functions");
+      ListPair.app (fn (f : Code.func, f' : Code.func) =>
+                      let
+                        val a = canonCode (#code f) and b = canonCode (#code f')
+                      in
+                        same (#id f, #id f', "function " ^ #name f ^ ": another id");
+                        same (#name f, #name f', "function " ^ #name f ^ ": another name " ^ #name f');
+                        same (#nlocals f, #nlocals f', "function " ^ #name f ^ ": another number of locals");
+                        if a = b then () else bug ("function " ^ #name f ^ ": other code: " ^ firstDiff (a, b));
+                        same (canonMeta (#code f, #meta f), canonMeta (#code f', #meta f'), "function " ^ #name f ^ ": another meta")
+                      end)
+                   (#funcs c, #funcs c')
+    end
+
+  (* The stage that makes Mid, from Lambda or from its text: MidLint at the
+     boundary, level 1, and Mid's text read back -- from level 1 with
+     --mid-roundtrip, and at level 3 *)
   fun midStage (showIn : ('a -> string) option) (f : 'a -> Mid.program) : 'a -> Mid.program =
     Pass.stage {name = "mid", showIn = showIn, show = MidText.show,
-                check = fn p => (Pass.lintAt "mid" MidLint.check p;
-                                 if !CompilerSettings.midRoundTrip then Pass.lintAt "mid-roundtrip" MidText.roundTrip p else ()),
+                check = fn p => (Pass.checkAt ("mid", 1) MidLint.check p;
+                                 Pass.checkAt ("mid-roundtrip", if !CompilerSettings.midRoundTrip then 1 else 3) MidText.roundTrip p),
                 size = Mid.size}
                f
+
+  (* The functor bodies a unit's basis decoded (UnitBasis; Expand.imported),
+     linted at the next unit's passes, at level 0, always on: when they are
+     read, the datatypes they name are not yet entered (E9). A whole
+     program's passes take what they were given *)
+  fun functorBodies () : unit =
+    let val bodies = !MidLint.pendingBodies
+    in
+      MidLint.pendingBodies := [];
+      if !Pass.whole orelse null bodies then ()
+      else Pass.checkAt ("functor-body", 0) (List.app (fn f => MidLint.check [Mid.Funs [f]])) (List.rev bodies)
+    end
 
   (* a unit's Mid as ToMid made it, with what it needs of the tables, kept
      where a whole program is to be made of its units' (--whole; the
@@ -48,17 +146,22 @@ struct
       val mid =
         if !Pass.whole
         then Pass.stage {name = "midcanon", showIn = SOME MidText.show, show = MidText.show,
-                         check = Pass.lintAt "midcanon" (MidCanon.checkRenaming mid),
+                         check = fn p => (Pass.checkAt ("midcanon", 1) (MidCanon.checkRenaming mid) p; roundTrip "midcanon" p),
                          size = Mid.size}
                         MidCanon.program mid
         else mid
-      (* the optional passes on Mid (docs/ir.md) *)
+      (* the optional passes on Mid (docs/ir.md), each linted at level 2;
+         whether one ran, so that the boundary before lower is linted at
+         level 1 *)
+      val passed = ref false
       fun optional (name, f) m =
         if Pass.enabled (name, 1) andalso (name <> "shake" orelse !Pass.whole) then
-          Pass.stage {name = name, showIn = SOME MidText.show, show = MidText.show, check = Pass.lintAt name MidLint.check,
-                      size = Mid.size}
-                     f m
+          (passed := true;
+           Pass.stage {name = name, showIn = SOME MidText.show, show = MidText.show,
+                       check = fn p => (Pass.lintAt name MidLint.check p; roundTrip name p), size = Mid.size}
+                      f m)
         else m
+      val () = functorBodies ()
       (* the copies of applications given back (Expand), before anything
          else is done to them; in a build in units, of the unit's own
          functors and those marked to be inlined *)
@@ -73,8 +176,11 @@ struct
       val mid =
         if Pass.enabled ("simplify", 1) andalso Pass.enabled ("inline", 1) then optional ("shake", Shake.program) mid
         else mid
+      (* what Lower is given, at the boundary, where no pass's lint saw it
+         (level 1 alone: every pass's lint at 2 did) *)
+      val () = if !passed andalso Pass.lintLevel () = 1 then Pass.checkAt ("prelower", 1) MidLint.check mid else ()
     in
-      Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = Pass.lintAt "lower" LowLint.check,
+      Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = Pass.checkAt ("lower", 1) LowLint.check,
                   size = Low.size}
                  (fn m => lowered (Lower.program (m, !Translate.funNames))) mid
     end
@@ -105,7 +211,7 @@ struct
      its functions by name (Lower.knownBefore). *)
   fun unitOf (decs : Ast.dec list) : Link.sessionCode =
     let
-      val lam = Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = Pass.lintAt "translate" LambdaLint.check,
+      val lam = Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = Pass.checkAt ("translate", 1) LambdaLint.check,
                             size = Lambda.size}
                            Translate.transProgram decs
       val low = lowOf lam

@@ -587,7 +587,9 @@ the REPL's own `use`, put into `RuneCompiler.useHook` when it starts.
   image keeps for every session started from it: the Basis Library's
   marked functors are inlined across units unless `--no-inline-functors`
   is given there, and `--lint` makes every session from the image check
-  what each pass makes, as `rune --lint` does.
+  what each pass makes, as `rune --lint` does (`--lint=LEVEL` lints at
+  that level, [ir.md](ir.md), *Levels*). Where neither it nor `RUNE_LINT`
+  says otherwise, the REPL lints at level 1, the boundaries.
 * A declaration is a unit of its own: elaborated against the session,
   translated with its printer, made into the bytes of a unit's file and
   appended to the running program by `Runtime.link`
