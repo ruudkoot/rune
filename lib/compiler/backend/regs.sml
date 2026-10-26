@@ -30,12 +30,12 @@ struct
   val int32Max : IntInf.int = IntInf.fromInt 1073741823
   val int32Min : IntInf.int = IntInf.fromInt ~1073741824
 
-  (* the primitives that save or restore an image (Isa.effect), grow the
-     program (rt_link, rt_debug_hook), or put the debugger's debug mode on
-     (rt_debug_mode, rt_debug_step): a PRIMPUSH, so that the loop takes the
-     program again after them, or gives it to the driver, and their result
-     comes back through RESULT *)
-  val imagePrims = ["posix_fork", "rt_save", "rt_restore", "rt_link", "rt_debug_hook", "rt_debug_mode", "rt_debug_step"]
+  (* the primitives that save or restore an image, grow the program
+     (rt_link, rt_debug_hook), or put the debugger's debug mode on
+     (rt_debug_mode, rt_debug_step), as their effects say (Isa.imagePrimitive):
+     a PRIMPUSH, so that the loop takes the program again after them, or
+     gives it to the driver, and their result comes back through RESULT *)
+  val imagePrims = R.imagePrims
 
   fun func (f : L.func) : C.func =
     let

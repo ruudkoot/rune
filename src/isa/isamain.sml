@@ -6,10 +6,12 @@ struct
   fun eprintln s = TextIO.output (TextIO.stdErr, s ^ "\n")
 
   val usage =
-    "usage: runeisa [--root DIR] [--check]\n\
+    "usage: runeisa [--root DIR] [--check] [--test]\n\
     \  --root DIR  the root of the tree the files are written into (default .)\n\
     \  --check     write nothing: name each file that is not what src/isa gives,\n\
-    \              and fail if there is one\n"
+    \              and fail if there is one\n\
+    \  --test      write nothing: hold the checks of the descriptions to what\n\
+    \              they refuse (src/isa/isatest.sml), and fail where one does not\n"
 
   fun readFile (path : string) : string option =
     let val ins = TextIO.openIn path
@@ -27,8 +29,13 @@ struct
         | parse (root, _, "--check" :: rest) = parse (root, true, rest)
         | parse _ = NONE
     in
-      case parse (".", false, args) of
-        NONE => (TextIO.output (TextIO.stdErr, usage); OS.Process.failure)
+      case if args = ["--test"] then NONE else parse (".", false, args) of
+        NONE =>
+          if args = ["--test"] then
+            (case IsaTest.run () of
+               [] => (print ("runeisa: " ^ Int.toString IsaTest.count ^ " wrong descriptions refused\n"); OS.Process.success)
+             | failed => (List.app (fn m => eprintln ("runeisa --test: " ^ m)) failed; OS.Process.failure))
+          else (TextIO.output (TextIO.stdErr, usage); OS.Process.failure)
       | SOME (root, check) =>
           let
             val files = IsaGen.files (StackIsa.instructions, PrimIsa.primitives)

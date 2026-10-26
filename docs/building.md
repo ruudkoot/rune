@@ -214,8 +214,8 @@ name the tools to check.
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot`; `bin/rune.stack.rbc` is the same compiler in the stack bytecode |
 | `make test` | the programs of `tests/lang` and `tests/errors` compiled by `bin/rune-stack` (`bin/rune --target=stack`, written by every `make`, for `RUNE=` if you give one) and run on `bin/runevm-stack`, on the runner (`bin/rune-test run --tier test`; `tests/runner/lang.sml`), and `make test-steps`: the compiler's own tests, the runtime's limits and collector log, `bin/rune-windows vm` (bytecode files and options the VM must refuse with a message) and the C test of the heap. `make test-heap`, `test-gc`, `test-all`, `test-native`, `test-register` and `test-register-jit` run `tests/lang` in their ways the same way, each by its tag, and the rest of what they run as `make TARGET-steps` |
 | `make test-all` | run the suite with each of the six host builds |
-| `make isa` | write the tables of the instruction set and the primitives again from their descriptions in `src/isa`, with `runeisa` built by MLton: `runtime/stack/opcodes.def`, `runtime/prims.def`, `runtime/isa.h`, `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `lib/compiler/backend/opcodes.sml`, `lib/compiler/backend/prims.sml`; they are committed |
-| `make check-isa` | fail when one of those files is not what `src/isa` gives, with `runeisa` built by MLton and by the self-hosted compiler; part of `make check` |
+| `make isa` | write the tables of the instruction sets and the primitives again from their descriptions in `src/isa`, with `runeisa` built by MLton: `runtime/stack/opcodes.def`, `runtime/prims.def`, `runtime/isa.h`, `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `lib/compiler/backend/opcodes.sml`, `lib/compiler/backend/prims.sml`, and the register bytecode's `runtime/register/regs.def`, `regops.h`, `reg_cases.h`, `reg_labels.h`, `jit_emit.h`, `jit_cases.h` and `lib/compiler/backend/regcodes.sml`; they are committed |
+| `make check-isa` | fail when one of those files is not what `src/isa` gives, with `runeisa` built by MLton and by the self-hosted compiler, or when a check of the descriptions does not refuse a description made wrong (`runeisa --test`, `src/isa/isatest.sml`); part of `make check` |
 | `make test-ir` | the tests of the intermediate representations (`tests/ir`, [ir.md](ir.md)): the dumps of small programs compiled with the lint of every pass on |
 | `make check-levels` | every program of `tests/lang` and `tests/perf` compiled at `-O0` and `-O2` with the lint on; where the bytecode differs, both runs must print and exit the same |
 | `make check-units` | every program of `tests/lang` and `tests/perf` compiled whole and a unit per file, at `-O0`, `-O1` and `-O2`, without the cache of units, through it and from it; all must print and exit the same, the builds through and from the cache be the bytes of the one without it, and the unit files linked or loaded do the same; and the compiler compiled in units compiling itself ([units.md](units.md)) |
@@ -674,7 +674,11 @@ Remote WSL, checkout library configuration and publishing.
   dispatch table in `runtime/prims.c` is built from the generated
   `RUNE_PRIM_LIST` X-macro, so adding a primitive means: add it at the end of
   `src/isa/prims.sml`, run `make isa`, implement `p_<name>` in `runtime/prims.c`,
-  document it in `docs/bytecode.md`.
+  document it in `docs/bytecode.md`. Its type there is read as an SML type
+  (`Isa.primType`), and must be a function's of as many arguments as its
+  arity: `lib/compiler/backend/prims.sml` carries the types (`PrimTys`) and
+  the representations each takes and gives (`Prims.repsOf`) for the
+  compiler's checks.
 * Entry points: `src/main/mlton-main.sml`, `src/main/polyml-main.sml`,
   `src/main/mlkit-main.sml` and `src/main/rune-main.sml` (the self-hosted
   build) call `Main.main`; SML/NJ's `ml-build` exports `Main.main` directly.

@@ -1,7 +1,8 @@
 (* The build file of the sources of runeisa, the generator of the
   instruction sets (docs/plans/middle-end.md, M1): the compiler's ordered
-  maps, the language of the descriptions, the descriptions themselves, and
-  what writes the files. scripts/gen-build-files.sh makes the build files of
+  maps, the language of the descriptions, the descriptions themselves, what
+  writes the files, and the test of the descriptions' checks.
+  scripts/gen-build-files.sh makes the build files of
   every host from this file -- edit only this file. The rules of rune.build
   hold here too. *)
 build/config.sml
@@ -13,6 +14,7 @@ files
   src/isa/regs.sml
   src/isa/isagen.sml
   src/isa/reggen.sml
+  src/isa/isatest.sml
   src/isa/isamain.sml
 end
 src/main/runeisa-rune-main.sml
