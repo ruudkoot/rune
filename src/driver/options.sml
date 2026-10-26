@@ -93,7 +93,7 @@ struct
     \                    topdec-monomorphic, topdec (default) or program\n\
     \  --overloading=M   what must determine an overloaded operator's or\n\
     \                    constant's type before it defaults (docs/language.md):\n\
-    \                    binding, declaration, toplevel (default) or topdec\n\
+    \                    binding, declaration (default), toplevel or topdec\n\
     \  --free-tyvars=M   what becomes of a type variable a top-level declaration\n\
     \                    leaves free (docs/language.md): refuse (default),\n\
     \                    monotype, dummy, later or later-monotype\n\

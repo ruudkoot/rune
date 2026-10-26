@@ -116,13 +116,13 @@ struct
      or constant, where it is defaulted (Appendix E: no larger than the
      smallest enclosing structure-level declaration; docs/language.md,
      --overloading): the innermost value declaration (HaMLet), the
-     declaration at structure level (SML/NJ, MLKit: the bound), the
-     declaration at top level -- a whole structure, local or functor --
-     (Moscow ML, and Rune before the option: the default), or the topdec,
-     to a `;` or the end of the file (MLton, Poly/ML). A functor's body,
-     compiled once, is settled where it ends in every mode *)
+     declaration at structure level (SML/NJ, MLKit: the bound, and the
+     default), the declaration at top level -- a whole structure, local or
+     functor -- (Moscow ML, and Rune before the option), or the topdec, to a
+     `;` or the end of the file (MLton, Poly/ML). A functor's body, compiled
+     once, is settled where it ends in every mode *)
   datatype overloadMode = OverBinding | OverDeclaration | OverToplevel | OverTopdec
-  val overloading = ref OverToplevel
+  val overloading = ref OverDeclaration
   val () = CompilerState.cellRoot ("Elaborate.overloading", overloading)
   fun overloadModeName m =
     case m of

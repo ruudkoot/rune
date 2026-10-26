@@ -29,7 +29,7 @@ struct
       val inline=ref [] val noInline=ref false
       (* --overloading=MODE and --free-tyvars=MODE, as rune takes them
          (docs/language.md) *)
-      val overloading=ref Elaborate.OverToplevel val freeTyvars=ref Elaborate.FreeRefuse
+      val overloading=ref Elaborate.OverDeclaration val freeTyvars=ref Elaborate.FreeRefuse
       fun choice (prefix,named,cell) flag =
         String.isPrefix prefix flag andalso
         (case named (String.extract (flag,size prefix,NONE)) of

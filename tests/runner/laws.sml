@@ -133,7 +133,7 @@ struct
     end
 
   (* ---- the tree *)
-  fun sort xs =
+  fun sort (xs : string list) =
     let
       fun merge ([], ys) = ys
         | merge (xs, []) = xs
