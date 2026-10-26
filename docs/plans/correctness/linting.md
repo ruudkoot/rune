@@ -100,9 +100,11 @@ What it rests on:
 | M15 | Overloading's context and free type variables, as options | A | not started |
 | M16 | Retire | | not started |
 
-D1 to D17 are undecided; they are the owner's (*Decisions*). D18 and D19,
-the options of M15, are the owner's direction of 2026-10-26; their modes'
-names and defaults are recommendations.
+The owner took every recommendation, D1 to D19, on 2026-10-26
+(*Decisions*). Two calls stay the owner's:
+- gate G1, after M12;
+- the move of `--overloading`'s default, once M15 has counted what it
+  breaks (D18).
 
 The tracks do not wait for each other, after M1:
 - **P, placement and cost,** puts lint where it does not run and makes it
@@ -260,6 +262,9 @@ leaves the choice to the implementation:
 On the answer (E13) the owner directed: "like flex-records i want to make
 this a language options". The modes and defaults are this roadmap's
 proposal (D18, D19), and M15 builds them.
+
+**The decisions (2026-10-26):** the owner took every recommendation, D1 to
+D19. **And:** "rebase on functors-units and implement all milestones".
 
 | The brief asks | Answered in |
 |---|---|
@@ -3210,9 +3215,10 @@ since a compile is deterministic and no check changes it.
 ## Decisions
 
 Each decision gives the options, what favours each, and a recommendation.
-None is decided; they are the owner's.
+The owner took every recommendation on 2026-10-26. Each decision says so
+under its heading, and the table gives the choice.
 
-| Decision | Recommended |
+| Decision | Decided (2026-10-26, as recommended) |
 |---|---|
 | D1. How nodes of the syntax are keyed | A: an id on every node, tables by ranges of ids |
 | D2. What the elaborator records, and in what type language | A: the witnesses, always; `SourceTy`, zonked after `finish` when read |
@@ -3235,6 +3241,8 @@ None is decided; they are the owner's.
 | D19. Free type variables at top level, as an option (the owner's direction) | `--free-tyvars=refuse\|monotype\|dummy\|later\|later-monotype`, default `refuse`, as today |
 
 ### D1. How nodes of the syntax are keyed
+
+**Decided: A** (2026-10-26), as recommended.
 
 Types, witnesses, facts for the editor and, later, errors all need to name
 a node.
@@ -3263,6 +3271,8 @@ a node.
 
 ### D2. What the elaborator records, and in what type language
 
+**Decided: A** (2026-10-26), as recommended.
+
 - **A. The witnesses, always, and `SourceTy` made from them after
   `finish`, when something reads it.** **Recommended.**
   - **What it costs:** the witnesses are today's slots plus about 6-8% of
@@ -3290,6 +3300,8 @@ a node.
 
 ### D3. What AstLint checks
 
+**Decided: A** (2026-10-26), as recommended.
+
 - **A. The Definition's Core, as *What the Definition says* lists it.**
   **Recommended.** It checks:
   - instances against schemes, with equality and overloading classes;
@@ -3315,6 +3327,8 @@ a node.
 
 ### D4. How independent AstLint is
 
+**Decided: A** (2026-10-26), as recommended.
+
 The literature suggests a gradient (*What the literature says*): a
 separate checker over shared data, then one with
 a written specification, then one mechanised.
@@ -3337,6 +3351,8 @@ a written specification, then one mechanised.
 
 ### D5. The module language in AstLint
 
+**Decided: B** (2026-10-26), as recommended.
+
 - **A. Everything at once.** The elaborator would record:
   - the bound names of each signature expression (rule 65's `T`) and the
     representatives of sharing classes (rule 78's `t`);
@@ -3358,6 +3374,8 @@ a written specification, then one mechanised.
 
 ### D6. The groundwork for error messages
 
+**Decided: A** (2026-10-26), as recommended.
+
 The brief asks for groundwork only; the error-message roadmap comes later.
 
 - **A. What the types on the syntax need anyway:**
@@ -3374,6 +3392,8 @@ The brief asks for groundwork only; the error-message roadmap comes later.
   roadmap that changes messages.
 
 ### D7. The editor's types
+
+**Decided: A** (2026-10-26), as recommended.
 
 - **A. A type at every node, worked out per declaration from the witnesses
   when first asked, and kept.** **Recommended.**
@@ -3392,6 +3412,8 @@ The brief asks for groundwork only; the error-message roadmap comes later.
   type (E12).
 
 ### D8. Types for the register code
+
+**Decided: A** (2026-10-26), as recommended.
 
 - **A. Reps under a directed order, "unset", and downcasts trusted and
   counted; shapes checked in LowLint.** **Recommended.**
@@ -3421,6 +3443,8 @@ typed. A refinement for later.
 
 ### D9. How the verifier gets its facts
 
+**Decided: A** (2026-10-26), as recommended.
+
 `RegVerify` needs each function's result rep, its captures' count and
 reps, and each global's rep. E7's prototype derives them in a pass of its
 own, which is half its cost.
@@ -3439,6 +3463,8 @@ own, which is half its cost.
 
 ### D10. Where the verifier's rules come from
 
+**Decided: A** (2026-10-26), as recommended.
+
 - **A. Generated tables, from `src/isa`; the dataflow written by hand.**
   **Recommended.** The rules are tables:
   - each operand's role and the rep it wants;
@@ -3455,6 +3481,8 @@ own, which is half its cost.
 
 ### D11. Which code is verified
 
+**Decided: A** (2026-10-26), as recommended.
+
 - **A. The register code first; `RbcCheck` for the stack code, at level 2,
   once its quadratic part is found.** **Recommended.** The register code
   is the default VM's and the one tier 2 trusts. Nothing trusts the stack
@@ -3466,6 +3494,8 @@ own, which is half its cost.
   trusts it.
 
 ### D12. Where each check runs
+
+**Decided: the placement table** (2026-10-26), as recommended.
 
 | Place | Check | Level |
 |---|---|---|
@@ -3488,6 +3518,8 @@ own, which is half its cost.
 | `check-levels` | the register target, and true `--units` | -- |
 
 ### D13. Levels, and what is always on
+
+**Decided: B** (2026-10-26), as recommended.
 
 **The measures.**
 - **Today's `--lint`** costs 16-148% of a compile, and 6-8% of
@@ -3530,6 +3562,8 @@ own, which is half its cost.
 
 ### D14. Layouts across functions
 
+**Decided: B** (2026-10-26), as recommended.
+
 - **A. A datatype on Low's `Con`, `Field` and `Decon`,** checked against
   `Rep.fields`. Circular: Lower made both from the same `Rep`, and the
   comparison never disagreed (E7b).
@@ -3539,6 +3573,8 @@ own, which is half its cost.
   which is what the review's second finding broke, and costs 0.5-4.6%.
 
 ### D15. The boundary of units
+
+**Decided: A** (2026-10-26), as recommended.
 
 - **A. Each unit verified once, when compiled; its cache entry marked;
   interfaces checked at the link.** **Recommended.**
@@ -3554,6 +3590,8 @@ own, which is half its cost.
 
 ### D16. runespec
 
+**Decided: A** (2026-10-26), as recommended.
+
 - **A. AstLint independent of runespec, and runespec a third oracle in
   `check-spec` once merged.** **Recommended.** AstLint checks only what the
   elaborator accepted; runespec finds what it wrongly rejects. The
@@ -3563,6 +3601,8 @@ own, which is half its cost.
 - **B. AstLint generated from runespec** (D4 C).
 
 ### D17. What Mid's type variables mean
+
+**Decided: A** (2026-10-26), as recommended.
 
 E10 found Mid not well scoped in its type variables, by Lift and by ToMid
 (*Found while writing this roadmap*). Nothing is miscompiled, because every
@@ -3579,6 +3619,8 @@ id is unique.
   uniqueness.
 
 ### D18. Overloading's context, as an option
+
+**Decided: A, default `declaration`** (2026-10-26), as recommended.
 
 The owner's direction (2026-10-26): as `--flex-records` does for flexible
 records, an option chooses the context that must resolve an overloaded
@@ -3609,6 +3651,8 @@ There is no `program` mode: defaulting at the end of a program would make
 a unit's types depend on the units compiled after it.
 
 ### D19. Free type variables at top level, as an option
+
+**Decided: A, default `refuse`** (2026-10-26), as recommended.
 
 The owner's direction (2026-10-26). Rules 87 and 89 forbid a free type
 variable in the basis, and Appendix G.8 lets an implementation refuse the
@@ -4087,10 +4131,10 @@ Not this roadmap's:
   - the cache entry, with its marks (M9).
 
   The `.rbc` and the image do not change (D9).
-- **What the owner decides:**
-  - D1 to D17;
-  - the modes and defaults of D18 and D19, and whether the default of
-    `--overloading` moves once M15 has counted what it breaks;
+- **What the owner decides:** the owner took D1 to D19 as recommended
+  (2026-10-26). What stays the owner's:
+  - whether the default of `--overloading` moves, once M15 has counted
+    what it breaks;
   - gate G1, after M12;
   - whether the test of `CALL`'s function index (E7b's C-call) lands in
     the VM now or with the VM roadmap (D8).
