@@ -90,8 +90,10 @@ it (`UnitBasis.labelled`):
 
 * `usages:KIND`, the fingerprints of a unit's usages by what is hashed:
   an entry (`v`, `t`), an environment's entries (`env`), a signature
-  (`sig`), a functor (`fun`), a fixity (`fix`), and a group of type names
-  they name (`tycon`), each group once a session (`tyconFps`);
+  (`sig`), a functor (`fun`), a structure of a signature that their
+  streams name by reference (`sigref`, once a session: [units.md](units.md),
+  *Fingerprints*), a fixity (`fix`), and a group of type names they name
+  (`tycon`), each group once a session (`tyconFps`);
 * `find:KIND`, the fingerprints worked out to check a cache entry's usages;
 * `export:source`, `export:identity` and `export:body`, a unit's source, its
   basis and a functor's body; `export:KIND` a functor applied in a body;

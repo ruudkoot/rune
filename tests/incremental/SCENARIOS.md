@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S77. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S78. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
@@ -349,7 +349,15 @@ when the scenarios above were all green
   the session had compiled, which the code keeps, and the entry was not
   what compiling the declaration gave: HOL4's build, verified, stopped at
   a file its configuration had used at another place.
-* **S77, a function marked to be inlined.** A build file marks `A.inc`
+* **S77, a nested signature named by reference.** `s.sml`'s `SET` has a
+  structure `E : ELT` of `e.sml`'s signature, which `u.sml` matches. A
+  usage's fingerprint of `SET` names `E` by reference to `ELT`'s
+  fingerprint and the realisation (functors-units M11). Then `ELT` gains
+  `val y : t`: `s.sml` is compiled again and so is `u.sml`, which fails as
+  a build without the cache does; then `u.sml` gains `y`, and it alone is
+  compiled. Were the reference to tell `ELT`'s change apart no better than
+  its name, `u.sml` would be taken from the cache and the build succeed.
+* **S78, a function marked to be inlined.** A build file marks `A.inc`
   (`inline val A.inc end`); `b.sml` names it, `c.sml` names `A.other`.
   An edit of `inc`'s body compiles `a.sml` and `b.sml`, which copied it
   (its usage `inlv A.inc` holds by the body's Mid), and not `c.sml` nor

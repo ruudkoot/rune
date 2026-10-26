@@ -192,7 +192,7 @@ top level. Simplify then puts the copy where it is called, or specialises
 it, by its own rules, as it does in a whole program. Such a unit depends on
 the body ([units.md](units.md), the usage `inlv NAME`): an edit of the
 body, or of what it calls, compiles it again, and an edit beside it does
-not (S77 of `tests/incremental/SCENARIOS.md`). A whole compile and
+not (S78 of `tests/incremental/SCENARIOS.md`). A whole compile and
 `--units --whole` are the same bytes with the marks and without. A
 function that only applies a primitive to its parameter (`fun sub (s, i)
 = RuneReals.sub (s, i)`) needs no mark: its unit's basis keeps every such
