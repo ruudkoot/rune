@@ -92,7 +92,7 @@ What it rests on:
 | M8 | A verifier of the register code | B | done (2026-10-26); its level comes with M3 |
 | M9 | Units and the link | B | done (2026-10-26) |
 | M10 | The stack code's check, in the compiler | B | done (2026-10-26) |
-| M11 | Node ids, witnesses and `SourceTy` | A | not started |
+| M11 | Node ids, witnesses and `SourceTy` | A | done (2026-10-26) |
 | M12 | AstLint of the Core | A | not started |
 | G1 | How AstLint goes on (the owner's) | A | |
 | M13 | AstLint of the module language | A | not started |
@@ -352,6 +352,37 @@ passes on its exact commit.
   - **A departure:** the check's files are built with the driver
     (`rune.build`), not into the installed compiler library, so the
     compiler library runs no stack check.
+
+- **M11** (`b7b18dd94`, `7a26734d6`, `46ad7b57b`, and merges, tip
+  `e5f448acc`; merged `7530287be`; `make check` 21,691 of 21,695, the one
+  failure `terminal/edit-complete` under a load of about 30, passing alone
+  twice).
+  - **Ids:** every `Ast` node has one, given by both parsers, fresh in
+    `SyntaxAst.copy`. Clauses, record labels and sequences of type
+    variables have spans; a match rule's span is worked out.
+  - **`Witness`** (`elab/witness.sml`) keeps seven tables by node id:
+    - constructor patterns' instances;
+    - the types of `_`, `raise` and `[]`;
+    - the datatype names created, with their equality;
+    - the explicit type variables each `val` scopes;
+    - what each binding generalised, taken at the binding
+      (`Unify.generalizeWith`);
+    - the defaults in every `--overloading` mode;
+    - each declaration's status.
+  - **`SourceTy`** (`elab/sourcety.sml`) is zonked only when read, after
+    `finish`, under a budget of steps, memoised per cell. It has one
+    printer. `--dump-witnesses` shows the tables (`tests/ir/witnesses`).
+  - **The gates hold:**
+    - Mid and bytes are the same on `tests/lang`, the bootstrap, HaMLet
+      and MLton;
+    - the Basis's unit files differ only in their provenance hash;
+    - `compile-hello` +0.73%, `compile-sigs` +0.83%, the bootstrap +0.29%
+      on the same sources.
+  - **A departure:** witnesses are dropped by marks of a log, not by ranges
+    of ids, because the end of a declaration's context can default nodes
+    of earlier declarations. `unitbasis.sml` is unchanged.
+  - **For M12:** an abstype's names are recorded with the equality they
+    have inside its body.
 
 ## Found while writing this roadmap
 
