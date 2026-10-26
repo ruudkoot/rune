@@ -31,10 +31,11 @@ its `--count` differs.
 The front end runs on one unit as on a program: its tokens are parsed with
 the fixity the units before left, and its declarations are elaborated one
 by one into the environment they left. Overloading and the literals are
-settled at the end of each top-level declaration, as in a whole program,
-or of the context `--overloading` names, and so are the flexible records,
-in the default mode of `--flex-records` ([language.md](language.md),
-*Overloading*, *Flexible records*), a file's end ending one; the free type
+settled at the end of the context `--overloading` names (by default each
+declaration at structure level), as in a whole program; the flexible
+records at the end of each top-level declaration, in the default mode of
+`--flex-records` ([language.md](language.md), *Overloading*, *Flexible
+records*), a file's end ending one; the free type
 variables where the topdec ends, or at the end of the unit under
 `--free-tyvars=later` and `later-monotype` (*Free type variables*); the
 reports of the matches at the end of the unit. So nothing of a unit waits

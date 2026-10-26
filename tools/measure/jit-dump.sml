@@ -130,7 +130,7 @@ struct
                         say (F.format "%12d  %6d %6s %-10s %-9s %s\n" [F.Integer n,F.Integer (IntInf.fromInt (#offset i)),F.Text (pc (#pc i)),F.Text (#opcode i),F.Text (#role i),F.Text (#text i)]) else () | NONE => ()
              in if n=0 then () else add counts order (key by i) n end) (load directory row arch)) (index directory)
     in (!counts,!order,total) end
-  fun totals counts=List.foldl (fn ((_,n),total) => total+n) 0 counts
+  fun totals counts=List.foldl (fn ((_,n),total : IntInf.int) => total+n) 0 counts
   fun float n=Real.fromLargeInt (IntInf.toLarge n)
   fun countArgs (file::directory::args) =
     let val by=ref "role" val calls=ref NONE val listing=ref NONE
