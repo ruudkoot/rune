@@ -84,7 +84,7 @@ What it rests on:
 | M8 | Nested functors that do not blow up | F | done (2026-10-25) |
 | M9 | Retire | | done (2026-10-25) |
 | M10 | Small functions inlined across units; `--inline-functor` retired | F | added (the owner, 2026-10-26); in progress |
-| M11 | Shared summaries, measured, and built where they gain | H | added (the owner, 2026-10-26); in progress |
+| M11 | Shared summaries, measured, and built where they gain | H | added (the owner, 2026-10-26); E12 measured (2026-10-26): parts 1 and 2 pass their thresholds, not built yet |
 
 The owner decided D1 to D17 on 2026-10-21, each as recommended
 (*Decisions*). D1's functors compiled once wait on gate G2, which stays the
@@ -3820,6 +3820,153 @@ Added by the owner (2026-10-26).
   through the cache with `RUNE_VERIFY_CACHE=1`; the version keys bumped.
 * **Done when:** E12 is written down, each part built or not by its
   threshold, and G1 measured again.
+
+**E12, measured** (2026-10-26, at BASE `8c80eb75c`). An instrumented
+compiler counts, as the build runs, what each part would write and hash.
+It is a patch kept off the branch (the drafts'
+`impl/fu-m11/patches/e12-instrument.patch`, on `unitbasis.sml`). It
+changes no count of `--pass-stats=hash`, and no byte of the output but the
+compiler's own identity in each unit's provenance. The commands are in
+`impl/fu-m11/scripts/`:
+- `e12-mlton.sh` for MLton's 606 files, `--units --no-cache
+  --type-work=1000000000 --pass-stats=hash`: with `RUNE_E12=all` at tier 2
+  and by MLton's build, which count the same bytes; with `RUNE_E12=time`
+  and with BASE's compiler at tier 2, for the times (pinned, loads 3 to 8);
+- `e12-boot.sh` for the compiler's own sources in units, and `e12-hol.sh`
+  for HOL4's build.
+
+`e12-sum.py` sums the counts, and `impl/fu-m11/e12-summary.txt` holds the
+sums.
+
+*Where the usages' bytes are.* MLton's files hash 890.3 MB in usages. All
+but 2.9 MB of it is signatures (512.3 MB in 530 hashes) and functors
+(375.1 MB in 242: 180.6 MB their parameters, 194.5 MB their results).
+99.8% of the signatures' bytes and 99.9% of the functors' lie under a
+structure of the environment the stream writes (a child). By token:
+- the signatures': values' anchors 34% (173.3 MB), other units' type names'
+  fingerprints 34% (175.6 MB), entries' names 10%, the signature's own type
+  names 4%, and the rest 18% (tags and counts);
+- the functors': type names' fingerprints 53%, names 15%, own type names
+  6%, and the rest 26% (their values have no anchor).
+
+*Part 1, a fingerprint of references.* A child is hashed as a reference:
+its fingerprint, with its own type names numbered in it, and the numbers
+they have in the parent. There are three ways to find one:
+- **prov** can be built in the fingerprint functions alone. A child that is
+  a structure of a loaded signature, realised, is found by the path its
+  first value's stamp has in the unit that declared it (`sig:NAME.a.b.v`).
+  A specification's stamp survives instantiation, realisation and the
+  bases. A walk of both checks the match and derives the realisation,
+  hashing nothing. The reference is then to that structure's fingerprint,
+  worked out once in the session and memoised by its unit, NAME and path,
+  with the realisation's images. Any other child is written as now, and
+  each of its own children is tried the same way.
+- **provn** adds, in a functor's stream, a lookup by the names of the
+  child's entries among the signatures' structures, checked the same way.
+  It is for a child whose values have no such stamp: a result's values
+  are the summary's placeholders.
+- **ideal** takes every child by its shape, as if an oracle told the shape
+  without hashing it. It bounds any such scheme.
+
+| | now | prov | provn | ideal |
+|---|---:|---:|---:|---:|
+| signatures | 512.3 MB, 530 hashes | 7.8 MB, 869 | as prov | 2.0 MB, 943 |
+| functors | 375.1 MB, 242 | 197.8 MB, 507 | 1.7 MB, 662 | 1.6 MB, 642 |
+| the usages | 890.3 MB | 208.5 MB | 12.4 MB | 6.5 MB |
+
+- prov makes 19,658 references in the signatures' streams, to 339
+  structures. 1,548 children failed the check (their causes were not
+  counted; in small tests an `include` with more specifications and a
+  realisation by a type function with parameters fail it), and 370 had no
+  stamp to go by. In the functors' streams 257,016 children had none.
+  provn looked up 5,909 by names and found 5,785, each a reference for
+  everything under it.
+- The hashes double, from 772 to 1,531. M4's 11 million small hashes do not
+  come back, since a reference is written into its parent's stream.
+- The signatures' and functors' streams take 25.8 s of `unit-usages`' 26.1
+  s (`RUNE_E12=time`: 675.4G instructions against BASE's 669.6G). provn's
+  work took 5.6 s for the signatures and 7.2 s for the functors (prov's
+  7.8 s) in the analysing run: the walks, the structures' fingerprints and
+  the streams' hashes.
+- The compiler's own sources and HOL4 gain nothing, because their
+  signatures are flat:
+  - the compiler's usages hash 2.2 MB: its signatures 0.26 MB (57 streams,
+    43% under a child; prov −3.5%), its functors 0.05 MB (prov −22%);
+  - HOL4's build hashes 60.8 MB of signatures in 1,605 streams, 1% under a
+    child (prov −0.1%). That is 150 Rune processes, to `hol.state` (341 s)
+    and on until the build was stopped at 697 s.
+- What would help all three is not in M11: each type name's fingerprint
+  written once in a stream and then by its number, and each anchor's unit
+  name the same.
+  - MLton: −164.1 MB of the signatures, −184.4 MB of the functors, and
+    −74.0 MB of the anchors, together −47% of the usages.
+  - About −48% of the compiler's signatures and −80% of HOL4's.
+  - It composes with prov.
+
+*Part 2, bases of references.* An environment's shape is what it is with
+every name (type name, stamp, type variable) numbered by its first
+occurrence in it; it names the environment up to renaming. MLton's bases
+are 221.9 MB: signatures 102.4 MB, functors' summaries 115.8 MB,
+environments declared 0.4 MB, the tables 2.6 MB, headers 0.8 MB. 217.2 MB
+of them (98%) are environments of a shape written before:
+
+| what | by an earlier unit | earlier in the same unit |
+|---|---:|---:|
+| signatures | 50.2 MB (540 environments) | 51.6 MB (2,600) |
+| functors' parameters | 55.5 MB (232) | 0 |
+| functors' results | 48.3 MB (1,183) | 11.4 MB (2,260) |
+| structures declared | 0.2 MB (806) | 0 |
+
+The patch also writes each basis again, not kept, with each such
+environment a reference by its unit and number and the names it renames:
+- every name listed: 19.0 MB (−91%);
+- the type names listed, and the stamps and type variables a byte where
+  they are the earlier environment's or the unit's own met first: 15.5 MB
+  (−93%);
+- with references to earlier units alone, about −66% by the table's split.
+
+The tables grow from 2.6 to 3.9 MB, with the types they no longer find
+already written. The times:
+- `unit-export` takes 41.3 s: writing signatures and summaries 36.6 s, the
+  identity's hash 1.0 s;
+- `unit-load` takes 8.6 s, reading them 7.3 s;
+- in the analysing run, writing them with references took 2.2 s, against
+  39.9 s in full. That leaves out how each reference is found: the shapes,
+  this measure's device, took 68 to 78 s, more than they saved.
+- Reading a reference would rebuild the environment renamed. Rebuilding
+  them all took 7.6 s where reading them took 11.0 s.
+
+*Prediction.*
+- **Part 1 passes.**
+  - The usages' hashed bytes go from 890.3 MB to 12.4 MB with provn
+    (−98.6%), or to 208.5 MB with prov alone (−77%), against half.
+  - `unit-usages` goes from 26.1 s to about 13 s (−50%), against 30%
+    faster.
+- **Part 2 passes.**
+  - MLton's bases go from 221.9 MB to between 15.5 and 19.0 MB (−91 to
+    −93%), against 30% smaller.
+  - Export and load go from 49.9 s to about 17 s (−66%, or −62% if load
+    gains nothing), against 20% faster. That holds if a reference is found
+    as part 1 finds one, by the stamps' paths and a check (about 3 s for
+    the bases' 218 MB at part 1's rate), and not by its shape.
+- Together they would save about 46 s of the build's 124 s at tier 2 (BASE,
+  load 4). G1 is measured again once they are built.
+
+*What this changes in M11.*
+- Part 1 needs no change to the elaborator or the basis: the
+  specifications' stamps tell which signature a structure is, and a walk
+  checks it. Functors' results, whose values are placeholders, need the
+  lookup by names (provn); without it functors' streams only halve.
+- Part 2 must find the environment it names the same way, not by content.
+  It shares part 1's walk, so part 1 comes first.
+- Part 2 names any environment written before, not only signatures and
+  summaries:
+  - a third of the saving (63.0 MB) is a unit's own earlier environments;
+  - a quarter (55.5 MB) is functors' parameters, which are signatures
+    instantiated.
+- Load gains little; the saving is export's and usages'.
+- M11's *Why* quotes the stages at a load of 18 (246 s). At loads of 4 to
+  8 they take 124 s: export 39 to 41 s, usages 26 s, load 9 to 11 s.
 
 ### Later
 
