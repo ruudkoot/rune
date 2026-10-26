@@ -722,9 +722,7 @@ struct
                        (* the schemes of what it names of other units, as its
                           compile had them, against those units now, where it
                           holds by their identities *)
-                       val () = if List.null remap then Option.app (fn k => raise UnitBasis.SchemeChanged k)
-                                                                   (UnitBasis.schemesHold (#schemes e))
-                                else ()
+                       val () = if List.null remap then UnitBasis.checkSchemes (#schemes e) else ()
                        val l = timed "cache-basis" (fn () => UnitBasis.loadKnown ({pickle = pickle, file = name, at = at},
                                                                                    SOME identity, remap))
                        (* its source, and those of the functors' bodies it

@@ -222,7 +222,8 @@ checked whole when it was compiled (`RegVerify`; [ir.md](ir.md), *The
 register target*), so this is what is left to check of the program; the
 check of the whole linked program is there for tests, where
 `RUNE_REGVERIFY_LINK` is set and not empty, and `RUNE_LINK_CHECK=0` leaves
-the interfaces out, to measure them. A unit file keeps what its unit
+the interfaces out, to measure them. The check runs at every link, linted
+or not, as a check of `Pass.checkAt` (`--pass-stats` counts it as `link`). A unit file keeps what its unit
 expects (version 4), so a unit relinked from its file against another
 build of an import is held to it too (S78 of
 `tests/incremental/SCENARIOS.md`). The stack code expects nothing.
@@ -382,7 +383,8 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   text (`UnitBasis.importedSchemes`), and where its usages hold by their
   binders each is held to the scheme the unit there now has when the entry
   is taken, a cheap check of what the binders say: one that differs is no
-  entry, and the unit is compiled ("its entry had another scheme of ...");
+  entry, and the unit is compiled ("its entry had another scheme of ...";
+  `Pass.checkAt`, which `--pass-stats` counts as `schemes`);
   where usages hold by fingerprint, the fingerprints are of the schemes
   already;
 * an entry is one file, its usages, warnings, basis, the basis's identity

@@ -1125,6 +1125,12 @@ struct
       fun go [] = NONE
         | go (x :: rest) = case inUnit x of NONE => go rest | some => some
     in go us end
+  (* the check where an entry is taken: SchemeChanged where one differs; a
+     check of every compile in units, which --pass-stats counts as
+     "schemes" and which moves none of the compiler's counters
+     (Pass.checkAt) *)
+  fun checkSchemes (us : (string * (int * string) list) list) : unit =
+    Pass.checkAt "schemes" (fn us => Option.app (fn k => raise SchemeChanged k) (schemesHold us)) us
 
   (* The files a unit's code names other than file, its own, which are the
      sources of units of the session -- the bodies of the functors marked to

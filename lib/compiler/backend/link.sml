@@ -343,10 +343,12 @@ struct
       (* the interfaces: what each unit expects of the units before it,
          against what they declare -- in time linear in the imports, where a
          check of the whole program took a fifth of a warm build (the linting
-         roadmap's D15) *)
+         roadmap's D15); a check of every link, linted or not, which
+         --pass-stats counts as "link" and which moves none of the compiler's
+         counters (Pass.checkAt) *)
       val () =
         if List.null (!calls) andalso List.null (!reads) then ()
-        else
+        else Pass.checkAt "link" (fn () =>
           let
             val metas = Array.array (List.length funcs, NONE)
             val () = List.app (fn ({id, meta, name, ...} : func) =>
@@ -395,7 +397,7 @@ struct
               [] => ()
             | ws => raise Mismatch (String.concatWith "; " (List.take (ws, Int.min (3, List.length ws)))
                                     ^ (if List.length ws > 3 then "; and " ^ Int.toString (List.length ws - 3) ^ " more" else ""))
-          end
+          end) ()
       (* the program checked whole too, where RUNE_REGVERIFY_LINK says: for
          tests (docs/plans/correctness/linting.md, M8 and M9) *)
       val () = RegVerify.linked prog

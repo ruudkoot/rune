@@ -80,8 +80,10 @@ stages of the pipeline above, the compile's stages are:
 After them, a line `check KEY` for each check that ran, at whatever depth,
 by its key (`Pass.checkAt`): the stage it follows (`translate`, `mid`,
 `midcanon`, ..., `lower`), `midconcat` (the units' `Mid` concatenated, with
-`--units --whole`), `mid-roundtrip`, and `results`, which runs inside
-`lower`. They are counted in the stages' times already, `checks`
+`--units --whole`), `mid-roundtrip`, `results`, which runs inside
+`lower`, and in units `link`, the check of the units' interfaces at the
+link, and `schemes`, of a cache entry's imported schemes where it is taken
+([units.md](units.md)). They are counted in the stages' times already, `checks`
 or a unit's `unit-passes`, so they show what a compile in units lints,
 which `checks` does not, and are not added to the total again.
 

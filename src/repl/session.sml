@@ -347,8 +347,7 @@ struct
                val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
                (* the schemes of what it names of other units, against those
                   units now (UnitBasis.schemesHold) *)
-               val () = if List.null remap then Option.app (fn k => raise UnitBasis.SchemeChanged k) (UnitBasis.schemesHold schemes)
-                        else ()
+               val () = if List.null remap then UnitBasis.checkSchemes schemes else ()
                (* a file used again, the same text against the same units:
                   loaded and linked under an identity of its own, that what
                   named the first's globals still does (UnitBasis.unused) *)

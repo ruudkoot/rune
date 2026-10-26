@@ -181,7 +181,7 @@ struct
                       val (fingerprint,code)=UnitFile.read (#code entry)
                       (* the schemes of what it names of other units, as its
                          compile had them, against those units now *)
-                      val ()=Option.app (fn k => raise UnitBasis.SchemeChanged k) (UnitBasis.schemesHold (#schemes entry))
+                      val ()=UnitBasis.checkSchemes (#schemes entry)
                       val moved=UnitBasis.movedTo (#file entry,file,#others entry)
                       val code=UnitBasis.relocate (code,#file entry,file,#others entry)
                       val mid=if #mid entry="" then "" else UnitMid.relocate (#mid entry,moved)
