@@ -589,13 +589,13 @@ struct
                  let
                    fun vs ([], i) = ss (subs, i)
                      | vs ((s, t, isExn) :: rest, i) =
-                         Seq (SetGlobal (s, Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, slotTy (t, isExn))),
+                         Seq (SetGlobal (s, Prim ("dynamic_cast", SOME (Ty.arrow (Ty.unit, slotTy (t, isExn))),
                                                   [Select (i, from)])),
                               vs (rest, i + 1))
                    and ss ([], _) = k ()
                      | ss (r :: rest, i) =
                          let val x = MatchComp.freshVar ()
-                         in Let (x, Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, Ty.fromTypes (dynamicTuple r))), [Select (i, from)]),
+                         in Let (x, Prim ("dynamic_cast", SOME (Ty.arrow (Ty.unit, Ty.fromTypes (dynamicTuple r))), [Select (i, from)]),
                                  set (Var x, r, fn () => ss (rest, i + 1)))
                          end
                  in vs (vals, 0) end
@@ -636,17 +636,17 @@ struct
                 val tupleTy = dynamicTuple slots
                 val exportTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy, tupleTy], Types.unitTy)
                 fun cast (s, t, isExn) =
-                  if isExn then Prim ("unsafe_cast", SOME (Ty.arrow (Ty.exnCon, Ty.unit)), [Global s])
+                  if isExn then Prim ("dynamic_cast", SOME (Ty.arrow (Ty.exnCon, Ty.unit)), [Global s])
                   else
                     let val m = monoOf t
-                    in Prim ("unsafe_cast", SOME (Ty.arrow (Ty.fromTypes m, Ty.unit)), [useOf (Global s, s, m)]) end
+                    in Prim ("dynamic_cast", SOME (Ty.arrow (Ty.fromTypes m, Ty.unit)), [useOf (Global s, s, m)]) end
                 (* a record of its slots, then its substructures' records,
                    each cast to unit (D3) *)
                 fun record (r as DynRecord (vals, subs)) =
                   let
                     val n = Int.max (length vals + length subs, 2)
                     val elems = List.map cast vals
-                                @ List.map (fn s => Prim ("unsafe_cast", SOME (Ty.arrow (Ty.fromTypes (dynamicTuple s), Ty.unit)),
+                                @ List.map (fn s => Prim ("dynamic_cast", SOME (Ty.arrow (Ty.fromTypes (dynamicTuple s), Ty.unit)),
                                                           [record s])) subs
                   in Tuple (elems @ List.tabulate (n - length elems, fn _ => Unit)) end
                 val elems = case record slots of Tuple es => es | _ => bug (sp, "a dynamic record not a tuple")
@@ -816,7 +816,9 @@ struct
         let
           val t = Ty.fromTypes dataTy
           val a = Ty.fromTypes argTy
-          fun cast (e, from, to) = Prim ("unsafe_cast", SOME (Ty.arrow (from, to)), [e])
+          (* a cast of its own, open_cast, which Lower makes unsafe_cast:
+             MidLint holds it to a flat side (IrRules.cast) *)
+          fun cast (e, from, to) = Prim ("open_cast", SOME (Ty.arrow (from, to)), [e])
           val () = noteRead desc
           fun isD n = Prim ("poly_eq", SOME (Ty.arrow (Ty.tuple [Ty.int, Ty.int], Ty.bool)),
                             [Var desc, Const (CInt (IntInf.fromInt n), Ty.int)])

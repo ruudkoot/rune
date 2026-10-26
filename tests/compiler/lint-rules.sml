@@ -1,6 +1,10 @@
 (* The rules of the checks that no program the compiler makes breaks, each
    refused where it is broken by hand (tests/runner/tools.sml,
-   compiler/lint-rules):
+   compiler/lint-rules) -- those no fault made after a stage reaches
+   (RUNE_FAULT; the jobs faults/STAGE:KIND), which are the rest's negative tests:
+   * LambdaLint's, MidLint's, LowLint's and the renaming's (M4), with
+     what is near each taken: constants at each end of their range, the
+     casts by origin, an exception's payload and a copy's, a Do's globals;
    * a check moves none of the compiler's counters of names (Pass.checkAt),
      and runs from its level up (M3);
    * a part of a program checked in its context (MidLint.checkIn, inside
@@ -122,6 +126,154 @@ struct
                 "of another kind")
     end
 
+  (* ---- the renaming's other rules (M4): the types, the datatypes met,
+     and what no fault after midcanon reaches *)
+  fun dtAs (stamp, name, cons) = (Ty.bindDatatypeDirect (stamp, {params = [], cons = cons}); Ty.con (stamp, name, []))
+  val sameCons = [(0, "A", NONE), (1, "B", SOME Ty.int)]
+  fun renamings2 () =
+    let
+      val u = dtAs (900004, "u", sameCons)
+      val noArg = dtAs (900005, "t", [(0, "A", NONE), (1, "B", NONE)])
+      val otherName = dtAs (900006, "t", [(0, "A", NONE), (1, "C", SOME Ty.int)])
+      val pinned = dtAs (900007, "t", sameCons)
+      val () = Ty.pinLayout (900007, [(0, NONE), (1, NONE)])
+      val opened = dtAs (900008, "t", sameCons)
+      val () = Ty.markOpen 900008
+      fun with' (q, q') = fn (what, wanted) => checked ("midcanon: " ^ what, fn () => MidCanon.checkRenaming q q', wanted)
+      fun one' (r, r') = with' ([M.Val (41, ([], Ty.exnCon), M.Return r)], [M.Val (51, ([], Ty.exnCon), M.Return r')])
+      val here' : M.pos = (Source.noSpan, [{name = "f", site = NONE}])
+    in
+      renaming ("a type name renamed", prog (21, 22, 23, 24, one, u), "type name t renamed u");
+      renaming ("a constructor's argument gone", prog (21, 22, 23, 24, one, noArg), "argument came or went");
+      renaming ("a constructor's name changed", prog (21, 22, 23, 24, one, otherName), "a constructor's name changed");
+      renaming ("a layout not fixed again", prog (21, 22, 23, 24, one, pinned), "not fixed again");
+      renaming ("a datatype opened otherwise", prog (21, 22, 23, 24, one, opened), "opened otherwise");
+      renaming ("a type made another",
+                [M.Val (21, ([], dty), M.Let (22, ([], Ty.unit), M.Atom one,
+                                              M.Let (23, ([], dty), M.Con (1, dty, M.Var (22, [])), M.Return (M.Atom (M.Var (23, [])))))),
+                 M.Val (24, ([], dty), M.Return (M.Atom (M.Con0 (0, dty))))], "type int made unit");
+      renaming ("an expression of another kind",
+                [List.hd (prog (21, 22, 23, 24, one, dty)), M.Val (24, ([], dty), M.Raise (M.Con0 (0, dty)))], "an expression of another kind");
+      one' (M.NewExn "E", M.NewExn "F") ("an exception's name changed", "an exception's name changed");
+      one' (M.BuiltinExn 0, M.BuiltinExn 1) ("a built-in exception changed", "a built-in exception changed");
+      with' ([M.Val (41, ([], Ty.int), M.Mark ((Source.noSpan, []), M.Return (M.Atom one)))],
+             [M.Val (51, ([], Ty.int), M.Mark (here', M.Return (M.Atom one)))]) ("a position changed", "a position changed")
+    end
+
+  (* ---- LambdaLint's rules that no fault after translate reaches (M4;
+     tests/runner/tools.sml, the jobs faults/translate:KIND): each refused on Lambda
+     made by hand, and what is near each taken *)
+  structure L = Lambda
+  val i1 = L.Const (L.CInt (IntInf.fromInt 1), Ty.int)
+  val s1 = L.Const (L.CString "s", Ty.string)
+  fun big n = IntInf.pow (IntInf.fromInt 2, n)
+  val wordTy = Ty.con (#stamp Types.wordTycon, #name Types.wordTycon, [])
+  val charTy = Ty.con (#stamp Types.charTycon, #name Types.charTycon, [])
+  val pairToInt = Ty.arrow (Ty.tuple [Ty.int, Ty.int], Ty.int)
+  fun lam (what, e, wanted) = checked ("lambda: " ^ what, fn () => LambdaLint.check e, wanted)
+  fun lambdaRules () =
+    let
+      val () = IntTable.insert (Ty.exnArgs, 70, SOME Types.intTy)
+      (* a copy is registered where a lint will look, from level 1 *)
+      val saved = !Pass.lintGiven
+      val () = Pass.lintGiven := SOME 0
+      val () = Ty.copyExn (70, 72, fn t => t)
+      val () = Pass.lintGiven := SOME 1
+      val () = Ty.copyExn (70, 71, fn t => t)
+      val () = Pass.lintGiven := saved
+    in
+      lam ("branches of two types", L.If (L.trueExp, i1, s1), "where int is wanted");
+      lam ("a constructor of what is no datatype", L.Con (0, Ty.unit, i1), "is no datatype");
+      lam ("a function of a type that is no arrow", L.Fn (1, Ty.int, L.Unit), "a function of type int");
+      lam ("an application of what is no function", L.App (i1, L.Unit), "an application of what has type int");
+      lam ("a field of what is no tuple", L.Select (0, i1), "a field of what has type int");
+      lam ("a nullary constructor that takes an argument", L.Con0 (1, dty), "is not nullary");
+      lam ("a constructor given an argument it does not take", L.Con (0, dty, i1), "takes no argument");
+      lam ("an argument taken from a nullary constructor", L.Decon (0, L.Con0 (0, dty)), "has no argument");
+      lam ("the tag of what is no datatype", L.ConTag L.Unit, "the tag of what has type unit");
+      lam ("a primitive of no description", L.Prim ("no_such_primitive", SOME (Ty.arrow (Ty.int, Ty.int)), [i1]), "has no description");
+      lam ("int_add at its description", L.Prim ("int_add", SOME pairToInt, [i1, i1]), "");
+      lam ("a primitive given three arguments for two", L.Prim ("int_add", SOME pairToInt, [i1, i1, i1]), "given 3 arguments");
+      lam ("a primitive of a type that is no arrow", L.Prim ("functor_marker", SOME Ty.int, []), "primitive functor_marker of type int");
+      lam ("ref_get of what is no ref", L.Prim ("ref_get", NONE, [i1]), "ref_get of what has type int");
+      lam ("a primitive without a type", L.Prim ("int_add", NONE, [i1]), "without a type");
+      (* constants: each kind's range *)
+      lam ("the least int", L.Const (L.CInt (IntInf.~ (big 62)), Ty.int), "");
+      lam ("an int past 63 bits", L.Const (L.CInt (big 62), Ty.int), "out of the range of int");
+      lam ("a word below 0", L.Const (L.CWord (IntInf.fromInt ~1), wordTy), "out of the range of");
+      lam ("the least Int64.int", L.Const (L.CInt64 (IntInf.~ (big 63)), Ty.int64), "");
+      lam ("an Int64.int past 64 bits", L.Const (L.CInt64 (big 63), Ty.int64), "out of the range of");
+      lam ("the largest Word64.word", L.Const (L.CWord64 (IntInf.- (big 64, IntInf.fromInt 1)), Ty.word64), "");
+      lam ("a Word64.word past 64 bits", L.Const (L.CWord64 (big 64), Ty.word64), "out of the range of");
+      lam ("a char past 255", L.Const (L.CChar 256, charTy), "out of the range of");
+      lam ("a real of type int", L.Const (L.CReal "1.0", Ty.int), "a constant 1.0 of type int");
+      (* the casts, by their origin *)
+      lam ("an open_cast to a flat datatype", L.Prim ("open_cast", SOME (Ty.arrow (Ty.int, Ty.flat 2)), [i1]), "");
+      lam ("an open_cast to a tuple of units", L.Prim ("open_cast", SOME (Ty.arrow (Ty.int, Ty.flatArg 2)), [i1]), "");
+      lam ("a dynamic_cast from unit", L.Prim ("dynamic_cast", SOME (Ty.arrow (Ty.unit, Ty.int)), [L.Unit]), "");
+      lam ("a functor_cast of a type that is no arrow", L.Prim ("functor_cast", SOME Ty.int, [i1]), "a functor_cast of type int");
+      lam ("the program's unsafe_cast from string to int", L.Prim ("unsafe_cast", SOME (Ty.arrow (Ty.string, Ty.int)), [s1]), "");
+      (* an exception's payload, and a copy's (Ty.copyExn) *)
+      lam ("an exception's payload of its argument's type", L.Let (70, L.NewExn "E", L.MkExn (L.Var 70, i1)), "");
+      lam ("an exception's payload of another type", L.Let (70, L.NewExn "E", L.MkExn (L.Var 70, s1)),
+           "payload has type string where its argument is int");
+      lam ("a copy's payload of another type", L.Let (71, L.NewExn "E", L.MkExn (L.Var 71, s1)),
+           "payload has type string where its argument is int");
+      lam ("a copy made at level 0, not registered", L.Let (72, L.NewExn "E", L.MkExn (L.Var 72, s1)), "")
+    end
+
+  (* ---- MidLint's rules that no fault after a stage on Mid reaches (M4;
+     the jobs faults/mid:KIND), and a Do's *)
+  fun midP (what, q, wanted) = checked ("mid: " ^ what, fn () => MidLint.check q, wanted)
+  fun valR (g, t, r) = M.Val (g, ([], t), M.Return r)
+  fun midRules () =
+    let
+      val add = M.Prim ("int_add", pairToInt, [one, one])
+      val two : M.fundef = {name = 43, tyvars = [], params = [(44, Ty.int), (45, Ty.int)], result = Ty.int, body = M.Return add}
+      val unitRet = M.Return (M.Atom M.Unit)
+      fun setting x = M.Let (x, ([], Ty.unit), M.SetGlobal (48, one), unitRet)
+      val raising = M.Let (51, ([], Ty.exnCon), M.BuiltinExn 0,
+                           M.Let (52, ([], Ty.exn), M.MkExn (M.Var (51, []), M.Unit), M.Raise (M.Var (52, []))))
+      val g48 = [(48, ([], Ty.int))]
+      val yes = M.Con0 (1, Ty.bool)
+      val setter : M.fundef = {name = 50, tyvars = [], params = [(54, Ty.unit)], result = Ty.unit, body = setting 55}
+      fun castBack t =
+        [M.Val (46, ([], t), M.Let (47, ([], Ty.unit), M.Prim ("functor_cast", Ty.arrow (Ty.int, Ty.unit), [one]),
+                                    M.Return (M.Prim ("functor_cast", Ty.arrow (Ty.unit, t), [M.Var (47, [])]))))]
+    in
+      midP ("a global defined twice", [valR (41, Ty.int, M.Atom one), valR (41, Ty.int, M.Atom one)], "is defined twice");
+      midP ("a function of no parameter", [M.Funs [{name = 42, tyvars = [], params = [], result = Ty.int, body = M.Return (M.Atom one)}]],
+            "has no parameter");
+      midP ("a function of two parameters given both", [M.Funs [two], valR (46, Ty.int, M.App (M.Global (43, []), [one, one]))], "");
+      midP ("a function of two parameters given one argument", [M.Funs [two], valR (46, Ty.int, M.App (M.Global (43, []), [one]))],
+            "parameters given 1 argument");
+      midP ("a function of two parameters given three", [M.Funs [two], valR (46, Ty.int, M.App (M.Global (43, []), [one, one, one]))],
+            "given 3 arguments");
+      midP ("an application of what is no function", [valR (46, Ty.int, M.App (one, [one]))], "an application of what has type int");
+      midP ("a primitive given three arguments for two", [valR (46, Ty.int, M.Prim ("int_add", pairToInt, [one, one, one]))],
+            "given 3 arguments");
+      midP ("a primitive of a type that is no arrow", [valR (46, Ty.int, M.Prim ("functor_marker", Ty.int, []))],
+            "primitive functor_marker of type int");
+      midP ("a primitive of no description", [valR (46, Ty.int, M.Prim ("no_such_primitive", Ty.arrow (Ty.int, Ty.int), [one]))],
+            "has no description");
+      midP ("a field of what is no tuple", [valR (46, Ty.int, M.Select (0, one))], "a field of what has type int");
+      midP ("a nullary constructor that takes an argument", [valR (46, dty, M.Atom (M.Con0 (1, dty)))], "is not nullary");
+      midP ("a constructor given an argument it does not take", [valR (46, dty, M.Con (0, dty, one))], "takes no argument");
+      midP ("an argument taken from a nullary constructor", [valR (46, Ty.int, M.Decon (0, dty, M.Con0 (0, dty)))], "has no argument");
+      midP ("a constructor of what is no datatype", [valR (46, Ty.int, M.Con (0, Ty.unit, one))], "is no datatype");
+      midP ("the tag of what is no datatype", [valR (46, Ty.int, M.ConTag M.Unit)], "the tag of what has type unit");
+      midP ("a slot cast back to its type", castBack Ty.int, "");
+      midP ("a slot cast back to another type", castBack Ty.string, "is cast back to string");
+      (* a Do sets each global it lists on every way that returns *)
+      midP ("a Do that sets its global", [M.Do (g48, setting 53)], "");
+      midP ("a Do that always raises", [M.Do (g48, raising)], "");
+      midP ("a Do that sets its global on both ways", [M.Do (g48, M.If (yes, setting 53, setting 56))], "");
+      midP ("a Do that sets its global on one way of two", [M.Do (g48, M.If (yes, setting 53, unitRet))],
+            "which a way of it that returns does not set");
+      midP ("a Do whose global a handler's way does not set", [M.Do (g48, M.Handle (setting 53, 49, unitRet))], "does not set");
+      midP ("a Do whose global a function sets", [M.Funs [setter], M.Do (g48, M.Return (M.App (M.Global (50, []), [M.Unit])))], "")
+    end
+
   (* ---- the levels (M3): a check runs from its level up; one that is
      always on says so, and how to turn it off; one at a boundary, found
      below level 2, how to find the pass *)
@@ -176,7 +328,7 @@ struct
     in go 0 end
   fun unitOf (nlocals, items) : Link.unitCode =
     {code = {consts = [], nglobals = 0, funcs = [{id = 0, nlocals = nlocals, code = items, name = "<toplevel>", meta = NONE}],
-             files = [], inlines = [], nlabels = 0, globalReps = []},
+             files = [], inlines = [], nlabels = 0, globalReps = [], expects = Code.expectsNothing},
      identity = "lint-rules", provenance = NONE, globals = [], imports = [], exports = []}
   val ret = [Code.Op (opcode "UNIT", []), Code.Op (opcode "RET", [])]
   fun bytesOf u = String.concat (UnitFile.chunks (Opcodes.fingerprint, u))
@@ -192,8 +344,64 @@ struct
       back ("bytes that are no unit", "not a unit", "UnitFile.read")
     end
 
+  (* ---- LowLint's rules that no fault after lower reaches (M4;
+     the jobs faults/lower:KIND): each refused on Low made by hand. funcR: a function
+     with these parameters, variables, captured values, blocks and
+     representations (the rest any) *)
+  fun funcR (id, params, nvars, ncaptured, blocks, reps) : func =
+    {id = id, name = "f" ^ Int.toString id, params = params, ncaptured = ncaptured, nvars = nvars, blocks = blocks, pos = NONE,
+     reps = Vector.tabulate (nvars, fn x => case List.find (fn (y, _) => y = x) reps of SOME (_, r) => r | NONE => RAny),
+     result = RAny, captures = List.tabulate (ncaptured, fn _ => RAny)}
+  fun lowP (what, q, wanted) = checked ("low: " ^ what, fn () => LowLint.check q, wanted)
+  val c1 = Const (Lambda.CInt (IntInf.fromInt 1))
+  fun top0 instrs = func (0, [block (0, Def (1, Unit) :: instrs, Return 1)])
+  fun lowRules () =
+    let
+      val saved = !Pass.whole
+    in
+      low ("a variable past the function's", [block (0, [Def (12, Unit)], Return 12)], "is no variable of it");
+      low ("a block twice", [block (0, [Def (1, Unit)], Goto (1, [])), block (1, [], Return 1), block (1, [], Return 1)], "block b1 twice");
+      low ("a handler of no parameter", [block (0, [Def (1, Unit), Push 2, Pop], Goto (1, [])), block (1, [], Return 1), block (2, [], Return 1)],
+           "has other than one parameter");
+      low ("a tail call with a handler pushed", [block (0, [Def (1, Unit), Push 1], TailCall (1, 1)), blockP (1, [2], [], Return 2)],
+           "a tail call with a handler pushed");
+      low ("a jump back with another number of handlers",
+           [block (0, [Def (1, Unit)], Goto (1, [])), block (1, [Push 3], Goto (2, [])), block (2, [], Goto (1, [])),
+            blockP (3, [4], [], Return 4)], "handlers where it has");
+      lowP ("a closure of a function of two parameters", [top0 [Def (2, Closure (5, []))], funcR (5, [0, 1], 4, 0, [block (0, [], Return 0)], [])],
+            "which has 2 parameters");
+      lowP ("a closure of no function", [top0 [Def (2, Closure (99, []))]], "a closure of no function f99");
+      lowP ("a value captured and never read", [funcR (5, [0], 4, 1, [block (0, [], Return 0)], [])], "env 0 is captured and never read");
+      Pass.whole := true;
+      lowP ("a known call of no function, in a whole program", [top0 [Def (2, CallK (99, [1]))]], "a known call of no function f99");
+      Pass.whole := saved;
+      (* representations *)
+      lowP ("an argument of a primitive of another representation",
+            [funcR (0, [0], 10, 0, [block (0, [Def (1, Const (Lambda.CString "s")), Def (2, Prim ("int_add", [1, 1]))], Return 2)],
+                    [(1, RPtr)])], "argument 0 of int_add");
+      lowP ("a field of another representation than its part",
+            [funcR (0, [0], 10, 0, [block (0, [Def (1, c1), Def (2, Tuple [1, 1]), Def (3, Select (0, 2))], Return 3)],
+                    [(1, RInt), (3, RPtr)])], "where field 0 of v2");
+      lowP ("a block's parameter of another representation",
+            [funcR (0, [0], 10, 0, [block (0, [Def (1, c1)], Goto (1, [1])), blockP (1, [2], [], Return 2)], [(1, RInt), (2, RPtr)])],
+            "parameter 0 of b1");
+      lowP ("a known function's parameter of another representation",
+            [funcR (0, [0], 10, 0, [block (0, [Def (1, c1), Def (2, CallK (5, [1]))], Return 2)], [(1, RInt)]),
+             funcR (5, [0], 4, 0, [block (0, [], Return 0)], [(0, RPtr)])], "parameter 0 of f5");
+      lowP ("a handler's exception as an int",
+            [funcR (0, [0], 10, 0, [block (0, [Def (1, Unit), Push 2, Pop], Goto (1, [])), block (1, [], Return 1),
+                                    blockP (2, [3], [], Return 3)], [(3, RInt)])], "the exception");
+      lowP ("a captured value of another representation than what reads it",
+            [funcR (0, [0], 10, 0, [block (0, [Def (1, c1), Def (2, Closure (5, [SOME 1]))], Return 2)], [(1, RInt)]),
+             funcR (5, [0], 4, 1, [block (0, [Def (1, Env 0)], Return 1)], [(1, RPtr)])], "env 0 of f5")
+    end
+
   fun main () =
     (parts ();
+     renamings2 ();
+     lambdaRules ();
+     midRules ();
+     lowRules ();
      codes ();
      levels ();
      lowWays ();

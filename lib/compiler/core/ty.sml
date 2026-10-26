@@ -188,6 +188,15 @@ struct
   (* the argument of each exception, by its stamp *)
   val exnArgs : Types.ty option IntTable.table = IntTable.table 256
   val () = CompilerState.tableRoot ("Ty.exnArgs", exnArgs)
+  (* the argument of each copy a pass made of an exception declared in a
+     function (Expand, Simplify, Lift, MidCanon: copyExn), by the copy's
+     stamp, as a type here, with the copy's types: so that MidLint checks
+     MkExn in the copies as in the original (linting roadmap, M4); and of
+     one whose declaration a pass put at other types where it was
+     (Simplify's body of a function called once: retypeExn), which stands
+     for the elaborator's *)
+  val exnCopies : ty option IntTable.table = IntTable.table 64
+  val () = CompilerState.tableRoot ("Ty.exnCopies", exnCopies)
   (* each datatype, by the stamp of its type name: the ids of its parameters,
      and each constructor's tag, name and argument, as the elaborator gave it
      or, for one Mid's text declares (MidText), as it is *)
@@ -651,4 +660,24 @@ struct
 
   (* by the elaborator's ids, for messages *)
   val toString = format (fn x => "'a" ^ Int.toString x, fn x => "'_" ^ Int.toString x)
+
+  (* The argument of the exception a stamp declares, where it is known: SOME
+     NONE for one of no argument; NONE where the stamp is no exception's, or
+     a copy's no pass registered *)
+  fun exnArgOf (stamp : int) : ty option option =
+    case IntTable.find (exnCopies, stamp) of
+      SOME arg => SOME arg
+    | NONE => Option.map (Option.map fromTypes) (IntTable.find (exnArgs, stamp))
+  (* the copy y of the exception x, its argument's types made what f makes
+     of them (a copy's substitution), registered where x's is known and a
+     lint will look (from level 1: Pass.linting') *)
+  fun copyExn (x : int, y : int, f : ty -> ty) : unit =
+    if not (Pass.linting' 1) then ()
+    else
+      case exnArgOf x of
+        SOME arg => IntTable.insert (exnCopies, y, Option.map f arg)
+      | NONE => ()
+  (* the exception x, declared where it was at the types f makes of its
+     argument's *)
+  fun retypeExn (x : int, f : ty -> ty) : unit = copyExn (x, x, f)
 end

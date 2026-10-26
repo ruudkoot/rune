@@ -180,7 +180,21 @@ struct
         case IntTable.find (t, x) of
           SOME y => y
         | NONE => let val y = base + !n in IntTable.insert (t, x, y); n := !n + 1; y end
-      val stamp = number (stamps, nstamps)
+      (* the exceptions renamed, whose arguments are registered under their
+         new names once the types are (Ty.copyExn), so that MidLint checks
+         MkExn in the program renamed too *)
+      val exns : (int * int) list ref = ref []
+      val registering = Pass.linting' 1
+      fun stamp x =
+        case IntTable.find (stamps, x) of
+          SOME y => y
+        | NONE =>
+            let val y = number (stamps, nstamps) x
+            in
+              if registering andalso (isSome (IntTable.find (Ty.exnArgs, x)) orelse isSome (IntTable.find (Ty.exnCopies, x)))
+              then exns := (x, y) :: !exns else ();
+              y
+            end
       val tvar = number (tvars, ntvars)
       (* the datatypes met, in the order met, to be entered again *)
       val met : (int * int) list ref = ref []
@@ -195,6 +209,7 @@ struct
       val p' = rename {stamp = stamp, tycon = tycon, tvar = tvar} p
       (* after p's, which calls tycon first for what p names *)
       val ty = renamer {tycon = tycon, tvar = tvar}
+      val () = List.app (fn (x, y) => Ty.copyExn (x, y, ty)) (List.rev (!exns))
       (* each datatype met entered under its new name, its constructors'
          types renamed too: which may meet more, until none comes. They are
          entered once all are met: entering one makes Ty work out the extra

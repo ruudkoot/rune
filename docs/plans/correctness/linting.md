@@ -85,26 +85,27 @@ What it rests on:
 | M1 | The fixes found, and the guards that cost nothing | P | done (2026-10-26) |
 | M2 | Lints that cost less, with the same rules | P | done (2026-10-26) |
 | M3 | Levels | P | done (2026-10-26) |
-| M4 | The missing rules of LambdaLint and MidLint, a negative test for every rule | I | not started |
+| M4 | The missing rules of LambdaLint and MidLint, a negative test for every rule | I | done (2026-10-26); a `Select` past its tuple's fields is M6's (shapes) |
 | M5 | Mid is System F | I | not started |
 | M6 | Shapes and layouts in LowLint | I | not started |
 | M7 | The instruction sets described for checking | B | done (2026-10-26) |
 | M8 | A verifier of the register code | B | done (2026-10-26); its level comes with M3 |
-| M9 | Units and the link | B | not started |
-| M10 | The stack code's check, in the compiler | B | not started |
-| M11 | Node ids, witnesses and `SourceTy` | A | not started |
-| M12 | AstLint of the Core | A | not started |
-| G1 | How AstLint goes on (the owner's) | A | |
+| M9 | Units and the link | B | done (2026-10-26) |
+| M10 | The stack code's check, in the compiler | B | done (2026-10-26) |
+| M11 | Node ids, witnesses and `SourceTy` | A | done (2026-10-26) |
+| M12 | AstLint of the Core | A | done (2026-10-26); at level 2, and G1 is next |
+| G1 | How AstLint goes on (the owner's) | A | decided (2026-10-26): M13 in two steps; AstLint stays at level 2 |
 | M13 | AstLint of the module language | A | not started |
 | M14 | The editor's types | A | not started |
 | M15 | Overloading's context and free type variables, as options | A | done (2026-10-26) |
 | M16 | Retire | | not started |
 
 The owner took every recommendation, D1 to D19, on 2026-10-26
-(*Decisions*). Two calls stay the owner's:
-- gate G1, after M12;
-- the move of `--overloading`'s default, once M15 has counted what it
-  breaks (D18).
+(*Decisions*). The two calls left to the owner are made:
+- **gate G1** (2026-10-26): the module language is checked, in M13's two
+  steps, and AstLint stays at level 2 for now;
+- **the move of `--overloading`'s default** (D18): moved to
+  `declaration`, with HOL4's build passing `--overloading=toplevel`.
 
 The tracks do not wait for each other, after M1:
 - **P, placement and cost,** puts lint where it does not run and makes it
@@ -300,6 +301,180 @@ passes on its exact commit.
     `tests/lang/mod.functor.functions_review.sml` ("fatal error …
     expected tuple"), with or without the lint, and in the main tree's
     `rune-repl` too. It is not this roadmap's.
+
+- **M9** (`dec6663d6`, `bba401d0a` and merges, tip `1a9f6b138`; merged
+  `a0511d3ac`; `make check` 21,697 of 21,697).
+  - **The interfaces at the link.** Regs records what a unit expects of
+    its imports: each call's arity, its arguments' reps and the rep its
+    result is taken as, and each global read's rep. These travel in
+    `Code.program.expects` and in the unit file (version 4).
+    - `Link.program` checks them against the callees' `meta` and the
+      globals' reps, at level 0, in time linear in the imports.
+    - A mismatch is "rune: the units do not fit together: …" (S78:
+      arity, argument, result, global read).
+    - The whole program is checked at the link only under
+      `RUNE_REGVERIFY_LINK`.
+  - **Cache marks.** An entry records the level of the lint that checked
+    it (`UnitCache.version` 10). A compile takes entries at its level or
+    above; a lower one is compiled again and marked (S79).
+  - **Imported schemes.** An entry keeps the schemes of the other units'
+    globals its code names, and they are checked against the session's
+    units when it is taken by its binders (S80).
+  - **What it costs:**
+    - the interface check: +0.13% on a warm HaMLet, +0.32% on a warm
+      bootstrap, +0.6% at most linking from `.rbu` files;
+    - the whole program verified at every link, as M8 did it: +10-20%;
+    - the scheme check: +0.16% and +0.82%.
+  - **Departures:**
+    - The VM's loader changed again, to skip version 4's data. The REPL's
+      dynamic loading has no interface check.
+    - S78 uses a test switch, since a real mismatch under one identity
+      cannot be made from source.
+    - The bootstrap's budgets were re-based (with M4's and M11's; the
+      lead sets them once on the merged tip).
+
+- **M10** (`0579ac644`, merged `2afa40684`; `make check` 21,706 of
+  21,706).
+  - **What landed:** runeopt's `RbcCheck` runs in the compiler after
+    `stack` and at a link of stack units, at level 2. It serialises the
+    code as `Emit` writes it, reads it back with `Rbc.read`, and checks
+    it (`src/driver/stackcheck.sml`).
+  - **Negative tests:** `RUNE_RBCCHECK_INJECT` makes six corruptions,
+    each refused with its message (`stack/@rbccheck-*`).
+  - **Found:** there was no quadratic part.
+    - E8's 12.6 s on MLton was one full collection of a 5 GB heap that
+      fell inside the check.
+    - Alone, the check is linear: 586M instructions on MLton.
+    - The one cost per instruction that was not constant, a
+      `List.length` per primitive operand in `Rbc.validate`, is gone
+      (about -20%).
+  - **What it costs:** +2.0% of a small stack compile, +7.6% of HaMLet,
+    +13.8% of the bootstrap.
+  - **A departure:** the check's files are built with the driver
+    (`rune.build`), not into the installed compiler library, so the
+    compiler library runs no stack check.
+
+- **M11** (`b7b18dd94`, `7a26734d6`, `46ad7b57b`, and merges, tip
+  `e5f448acc`; merged `7530287be`; `make check` 21,691 of 21,695, the one
+  failure `terminal/edit-complete` under a load of about 30, passing alone
+  twice).
+  - **Ids:** every `Ast` node has one, given by both parsers, fresh in
+    `SyntaxAst.copy`. Clauses, record labels and sequences of type
+    variables have spans; a match rule's span is worked out.
+  - **`Witness`** (`elab/witness.sml`) keeps seven tables by node id:
+    - constructor patterns' instances;
+    - the types of `_`, `raise` and `[]`;
+    - the datatype names created, with their equality;
+    - the explicit type variables each `val` scopes;
+    - what each binding generalised, taken at the binding
+      (`Unify.generalizeWith`);
+    - the defaults in every `--overloading` mode;
+    - each declaration's status.
+  - **`SourceTy`** (`elab/sourcety.sml`) is zonked only when read, after
+    `finish`, under a budget of steps, memoised per cell. It has one
+    printer. `--dump-witnesses` shows the tables (`tests/ir/witnesses`).
+  - **The gates hold:**
+    - Mid and bytes are the same on `tests/lang`, the bootstrap, HaMLet
+      and MLton;
+    - the Basis's unit files differ only in their provenance hash;
+    - `compile-hello` +0.73%, `compile-sigs` +0.83%, the bootstrap +0.29%
+      on the same sources.
+  - **A departure:** witnesses are dropped by marks of a log, not by ranges
+    of ids, because the end of a declaration's context can default nodes
+    of earlier declarations. `unitbasis.sml` is unchanged.
+  - **For M12:** an abstype's names are recorded with the equality they
+    have inside its body.
+
+- **M4** (`f297abdcc`, merged `e931d95d2`; `make check` 21,735 of
+  21,735).
+  - **The new rules** (`core/irrules.sml`, shared by LambdaLint and
+    MidLint):
+    - each constant is of its type's kind and in its range;
+    - each primitive's use is an instance of its description in
+      `PrimTys`;
+    - `MkExn`'s payload has exactly the type of the exception's argument,
+      through every copy: each pass that copies code registers the copied
+      exceptions at the copy's types. type-checker.md's open case,
+      `exception E of 'a` in a function, is now checked;
+    - casts by origin: Translate's casts are the compiler's own
+      `functor_cast`, `dynamic_cast` and `open_cast`, each with its rule.
+      The program's own `unsafe_cast` is not checked;
+    - each global a `Do` lists is set on every way that returns.
+  - **Negative tests:** `RUNE_FAULT=STAGE:KIND[@N]`
+    (`backend/fault.sml`) corrupts a stage's output on purpose. 88 jobs
+    `faults/*` expect each rule's lint at its stage, and
+    `compiler/lint-rules` has cases made by hand for the rules no fault
+    reaches.
+  - **The compiler mutants:** E3's 68 mutants are kept as
+    `make test-compiler-mutants`, outside `make check`. The whole set
+    has not been run (it takes hours), only samples.
+  - **Found:** E10's faults are caught at the stage that made them, 34 of
+    36. `mid:nary` finds no place, as in E10. `lower:select` is placed but
+    not caught: a `Select` of a parameter or a call's result needs M6's
+    shapes.
+  - **What it costs:** level 0 unchanged; level 2 +36.6% of HaMLet
+    (M3 +35.4%), +73.5% of the bootstrap.
+  - **The bootstrap's budgets were re-based:** register 2,003.8M, stack
+    3,277.0M. About 90M of the growth is `PrimTys`'s table of 414
+    descriptions, which the compiler now uses; `fault.sml` adds 19.5M.
+  - **A departure:** the fault hook is in `backend/fault.sml`, called from
+    the pipeline, not in `util/pass.sml`, which knows no IR.
+
+- **M12** (`1a3cab697`, merged `9265b1ffc`; `make check` 21,696 of
+  21,696).
+  - **AstLint** (`elab/astlint.sml`) runs after `Elaborate.finish`, before
+    Translate and `UnitBasis.undo`, at level 2.
+    - It reads the syntax, M11's witnesses, the slots Translate reads and
+      `Ty.binders`, zonked to `SourceTy`, one top-level declaration at a
+      time.
+    - It builds its own environment and works out every node's type
+      bottom up, by equality of `SourceTy` and one-way matching of
+      schemes. It computes Clos, 4.7's nonexpansive expressions and 4.6's
+      scope itself, and calls neither `Unify`, `SigMatch` nor `Types`.
+    - Each alarm names its rule, as `[15 Clos]`.
+  - **What it checks:**
+    - instances, with equality and overloading classes;
+    - Clos against what each binding generalised, and rule 15's side
+      condition;
+    - 4.9's maximal equality;
+    - the classes of constants;
+    - every slot Translate reads;
+    - each top-level result, and the closure of 87-89;
+    - that a `let`'s names do not escape into its type or its context.
+  - **The module language is axioms** (D5): at level 2 only, the
+    elaborator records each top-level declaration's environment, the
+    results of ascriptions, applications, dynamic modules and exports, and
+    each functor's parameter. At levels 0 and 1 it records nothing.
+  - **Negative tests:** `RUNE_ASTLINT_FAULT=KIND` corrupts what AstLint
+    reads, in 12 ways, each refused with its rule's message
+    (`compiler/astlint-faults`).
+  - **Found:**
+    - no alarm on `tests/lang`, the modes of `--overloading`,
+      `--flex-records` and `--free-tyvars`, the Basis, the compiler,
+      HaMLet, MLton's 606 files, or HOL4 built to `hol.state`;
+    - all 13 elaborator mutants caught (E3's eight and E6's five). Some of
+      them give programs that are silently wrong (equality off prints
+      `false`), which no other check catches;
+    - no bug of the elaborator;
+    - two false alarms of its own, fixed before the commit.
+  - **What it costs,** in instructions: 0.25M of hello, 137M of HaMLet (8%
+    of a level-0 compile), 306M of the bootstrap (17%). MLton's 606 files:
+    8.9 s of 66.9 s.
+  - **Not done:** the REPL and the compiler library do not run AstLint
+    yet, at any level (`docs/ir.md` says so). A declaration past
+    `SourceTy`'s budget of steps is skipped and counted, but the count is
+    shown nowhere; none was seen.
+  - **Agent A's view for G1:**
+    - **M13, in two steps.** First, transparent ascriptions and functor
+      arguments, matched one way against the recorded results, with no new
+      records. Then opaque ascriptions and applications, with M13's records
+      of the fresh names. E3's two mutants of signature matching (E12,
+      E13) and the bugs B15 and B34 are invisible while the module
+      language is axioms.
+    - **Keep AstLint at level 2 for now.** Its cost is like level 1's
+      set, so level 1 is affordable for `rune`, but the REPL and the
+      library need the hook first, and the editor's latency must be
+      measured.
 
 ## Found while writing this roadmap
 
@@ -4182,9 +4357,21 @@ After M12, the owner decides two things from what AstLint cost and found:
 - whether the module language is checked as M13 plans, or stays axioms;
 - whether AstLint stays at level 2 or moves to 1.
 
+**Decided (2026-10-26):**
+- **The module language is checked, in two steps** (M13). First,
+  transparent ascriptions and functor arguments are matched one way
+  against the results M12 records, with no new records. Then opaque
+  ascriptions and applications, with the records of the fresh names.
+- **AstLint stays at level 2.** Level 1 is reconsidered once the REPL and
+  the compiler library run it, and the editor's latency is measured.
+
 ### M13. AstLint of the module language (A; L, about 1,000; after G1)
 
-* **What:** D5 B's second step (D5 A's records).
+* **What:** D5 B's second step (D5 A's records), in two steps (G1):
+  - **First, without new records:** transparent ascriptions and functor
+    arguments, their schemes matched one way against the results M12
+    records.
+  - **Then, with them:** opaque ascriptions and applications.
   - **The elaborator records** the fresh names the module language chose:
     - the bound names of each signature expression (rule 65's `T`) and the
       representatives of sharing classes (rule 78's `t`);
@@ -4313,10 +4500,9 @@ Not this roadmap's:
 
   The `.rbc` and the image do not change (D9).
 - **What the owner decides:** the owner took D1 to D19 as recommended
-  (2026-10-26). What stays the owner's:
-  - whether the default of `--overloading` moves, once M15 has counted
-    what it breaks;
-  - gate G1, after M12;
+  (2026-10-26), and made the two calls left to it the same day: the
+  default of `--overloading` moves (D18), and gate G1 goes on to M13 in
+  two steps with AstLint at level 2. What stays the owner's:
   - whether the test of `CALL`'s function index (E7b's C-call) lands in
     the VM now or with the VM roadmap (D8).
 

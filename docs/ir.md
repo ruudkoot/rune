@@ -19,7 +19,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `simplify` | `Mid` | `Mid`, shrunk (`lib/compiler/core/simplify.sml`), from `-O1` | `MidLint` |
 | `refs` | `Mid` | `Mid`, a loop's local refs as values (`lib/compiler/core/refs.sml`), from `-O1` | `MidLint` |
 | `lower` | `Mid` | `Low` (`lib/compiler/backend/low.sml`, by `Lower`) | `LowLint` |
-| `stack` | `Low` | instruction lists (`lib/compiler/backend/stack.sml`), with `--target=stack` | none yet |
+| `stack` | `Low` | instruction lists (`lib/compiler/backend/stack.sml`), with `--target=stack` | the loader's checks and `RbcCheck` (`StackCheck`) |
 | `registers` | `Low` | instruction lists of the register bytecode (`lib/compiler/backend/regs.sml`), the default target | `RegVerify` |
 | `emit` | instruction lists | the `.rbc` (`lib/compiler/backend/emit.sml`) | |
 
@@ -109,7 +109,11 @@ After them, a line `check KEY` for each check that ran, at whatever depth,
 by its key (`Pass.checkAt`; *Levels* above): the stage it follows
 (`translate`, `mid`, `midcanon`, ..., `lower`), `midconcat`, `prelower`,
 `mid-roundtrip` and the other round trips, `results`, which runs inside
-`lower`, `simplify-def`, inside `simplify`, `functor-body` and `code-rt`. They are counted in the stages' times already, `checks`
+`lower`, `simplify-def`, inside `simplify`, `functor-body`, `code-rt`,
+`rbccheck`, the check of the stack code (level 2), and in units `link`, the
+check of the units' interfaces at the link, and `schemes`, of a cache
+entry's imported schemes where it is taken, both at level 0
+([units.md](units.md)). They are counted in the stages' times already, `checks`
 or a unit's `unit-passes`, so they show what a compile in units lints,
 which `checks` does not, and are not added to the total again.
 
@@ -271,6 +275,30 @@ elaborator keeps its records for it only at 2.
   match compiled as a decision tree makes them (below).
 * **`LetRec`:** every right-hand side is a function.
 * **Types:** it is well typed, as below.
+* **What its types alone do not say** (`IrRules`, which `MidLint` shares;
+  plans/correctness/linting.md, M4):
+  - a constant is of its type's kind -- an `int`'s `CInt`, a `word`'s
+    `CWord`, ... -- and in its range: an `int`'s 63 bits, an `Int64.int`'s
+    64, a `word`'s and a `Word64.word`'s from 0, a `char`'s 8;
+  - a primitive's type at a use is an instance of its description
+    (`PrimTys`, which `runeisa` makes of `src/isa/prims.sml`): each type
+    variable one type throughout, a type the compiler builds in itself,
+    `unit` the empty tuple, and a name it does not (`option`, `order`,
+    `Word32.word`) any type; the compiler's own primitives are checked by
+    their own rules;
+  - an exception's payload (`MkExn`) has its argument's type, by the
+    constructor's stamp (`Ty.exnArgOf`): the elaborator's, or a copy's
+    that the pass which copied it registered at the copy's types
+    (`Ty.copyExn`: `Expand` and `Simplify` with their substitutions, `Lift`,
+    `MidCanon` with its renaming), or the one `Simplify` gave it where it
+    put the body of a function called once at the call's types
+    (`Ty.retypeExn`), each from level 1, where a lint will look:
+    `exception E of 'a` in a function is checked at `'a` in the function
+    and at the types of each copy made of it;
+  - a cast the compiler makes is of its origin's kind (below): a
+    `functor_cast` or a `dynamic_cast` is to `unit` or from it, an
+    `open_cast` to or from a flat type (`unit`, a tuple of units,
+    `Ty.flat n`); the program's own `unsafe_cast` is anything.
 
 A breach is a bug of the compiler, never of the program.
 
@@ -407,7 +435,8 @@ gives one is refused as for any option it does not know.
   `open_boxed`, a primitive of its own), and otherwise calls the
   body's functions for it (`Translate.openFuns`), which see the object
   through `Ty.flat n`, a datatype of the basis whose constructors have `n`
-  fields. Simplify's equality functions leave such a datatype to
+  fields, by a cast of their own (`open_cast`, which Lower makes an
+  `unsafe_cast`, and the lints hold to a flat side). Simplify's equality functions leave such a datatype to
   `poly_eq`. Only the constructors the body uses get the functions.
 * **Layouts** (D5). A datatype a body declares has the layout its declared
   types give it there, a parameter's type boxed; an instance an
@@ -562,6 +591,17 @@ have generalised them: a variable of the program or a function; a variable
   that type variables are in scope.
 * **Calls:** a function of other than one parameter is only called, with
   an argument for each, and never used as a value.
+* **What its types alone do not say:** constants, primitives, exceptions'
+  payloads and the casts the compiler makes, as in `Lambda` (`IrRules`;
+  above). An exception's copies keep their argument's type through every
+  pass that copies code, so the payload's rule holds after the first.
+* **A `Do`** sets each global it lists on every way of it that returns:
+  one that always raises sets none (after `simplify`, a `Do` whose
+  expression raises still lists them), and a handler's way is the
+  handler's alone. A global a function sets is the exception: a dynamic
+  module's slots are set by the function the runtime is given, at the load
+  and at each reload (`Translate`, `RuneDynamic.take`; a `dynamic_cast` of
+  each slot from `unit`), which `Lift` may take out of the `Do`.
 * **Casts** (D3): no value cast to `unit` is
   cast back to another ground type. A record's slot is cast to `unit` and
   back; where the expansion knows the slot's value, a cast left between two
@@ -937,6 +977,27 @@ middle end may ask of it):
   was made at. A position's frames are a row of the program's table of
   inlined frames, each made once (`Code.inlineIdx`).
 
+**The check of the stack code** (`StackCheck`, `src/driver/stackcheck.sml`;
+[plans/correctness/linting.md](plans/correctness/linting.md), D11 and M10)
+runs from level 2 of the lint (*Levels*), after `stack` on a whole program
+and on the program `Link` makes of units of stack code, or at every level
+where `RUNE_RBCCHECK=1` says (`0`: at none): the code as its file has it (`Emit.serialize`), read back
+as `runevm-stack`'s loader reads it, which refuses what the loader refuses
+with its message (`Rbc.read`), and held to what `runeopt` relies on
+(`RbcCheck`; [native.md](native.md), *What the translation relies on*):
+the stack's height and the handlers' depth agree on every path into an
+instruction, no path underflows, leaves its function or runs off its end,
+no `RET` or `TAILCALL` has a handler of its function installed, and every
+function is given one arity. `Rbc` and `RbcCheck` are `runeopt`'s, built
+with the driver (`rune.build`) and not with the compiler library, which
+runs no check of the stack code. A refusal is a bug of the compiler, "lint
+after rbccheck: ..."; `--pass-stats` counts it as `rbccheck`.
+`RUNE_RBCCHECK_INJECT=KIND` corrupts the code the check is given in one of
+six ways, which its tests (`stack/@rbccheck-*`) hold it to refusing. Its
+cost is linear in the code: about 85 of the VM's instructions for each byte
+of the program's file, the file made included, 0.59G for MLton's 6.7 MB
+(+14% of a compile of the bootstrap for the stack target).
+
 ### The register target
 
 `Regs` makes the register bytecode of `runtime/register` from the same Low
@@ -966,9 +1027,13 @@ stack target.
 **`RegVerify`** (`lib/compiler/backend/regverify.sml`) checks the register
 code from level 1 of the lint, the boundaries (*Levels*), by its cost: 4.4%
 of compiling the compiler, 1.6% of HaMLet, 0.8% of MLton. It runs after
-`registers` (`regverify`), and on every program `Link` makes
-of units (`regverify-link`), those read back from the cache and from `.rbu` files included
-([plans/correctness/linting.md](plans/correctness/linting.md), M8). Its
+`registers` (`regverify`), so each unit once, when it is compiled
+([plans/correctness/linting.md](plans/correctness/linting.md), M8); a unit
+taken from the cache was checked when its entry was made, which the
+entry's mark says, and `Link` checks the units' interfaces against each
+other rather than the whole program again (M9; [units.md](units.md),
+*Linking*), which `RUNE_REGVERIFY_LINK` set and not empty asks for too
+(`regverify-link`). Its
 rules are the tables `runeisa` writes from `src/isa/regs.sml` (`RegCodes`:
 what each instruction reads and writes, what it leaves and takes, what
 must follow it, which primitives it names), what Lower declares of the
@@ -1006,7 +1071,9 @@ It checks `Regs` and `Link`, not that the code is safe for an untrusted
 `RUNE_REGVERIFY=1` runs it at every level, `off` too, `0` not at all, and `census`
 prints what it counted; `RUNE_REGVERIFY_INJECT=KIND` corrupts the code
 `Regs` made, before the check, in one of eleven ways, which its tests
-(`register/@regverify-*`) hold it to refusing.
+(`register/@regverify-*`) hold it to refusing, or in three more what the
+unit expects of its imports, which S78 of `tests/incremental/SCENARIOS.md`
+holds the link to refusing; a unit so made is not stored in the cache.
 
 ## Tests
 
@@ -1032,6 +1099,21 @@ prints what it counted; `RUNE_REGVERIFY_INJECT=KIND` corrupts the code
   moved code into another function (`tests/lang/rt.trace_inlined.sml`).
 * **The bootstrap** is compiled with `--lint --mid-roundtrip` whenever it is
   built (`bin/rune.rbc`).
+* **The lints' negative tests** (plans/correctness/linting.md, M4): each
+  rule of each lint refuses what breaks it. A fault made on purpose after a
+  stage (`RUNE_FAULT=STAGE:KIND[@N]`, `lib/compiler/backend/fault.sml`, for
+  the tests alone: the identity where it is unset) corrupts what the stage
+  made, at the `N`-th place of the kind, before the stage's checks see it,
+  and says on standard error what it did; the jobs `faults/STAGE:KIND` of
+  `tests/runner/tools.sml` (tier `test-ir`) compile `tests/compiler/faults.sml`
+  (or, built in units, `faults-dynamic.sml`) at level 2 and want the
+  stage's lint to refuse it with the rule's message: a variable out of
+  scope, a stamp bound twice, a jump given one argument more, a constant
+  of another kind, a payload of another type, a cast of another kind, a
+  `Do` that no longer sets a global, ... The rules no fault reaches, and
+  the invariant of results, are refused on IR made by hand
+  (`compiler/lint-rules`, `tests/compiler/lint-rules.sml`); `RegVerify`'s
+  by its own switch (`register/@regverify-*`).
 * **`bin/rune-measure bisect-fuel PROGRAM.sml`**: where a program runs otherwise
   at `-O2` than at `-O0`, halving `--fuel` finds the first rewrite that
   breaks it (after Whalley, "Automatic isolation of compiler errors").

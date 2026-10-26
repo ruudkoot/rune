@@ -188,6 +188,9 @@ struct
               | UnitCache.Found entry =>
                   ((let
                       val (fingerprint,code)=UnitFile.read (#code entry)
+                      (* the schemes of what it names of other units, as its
+                         compile had them, against those units now *)
+                      val ()=UnitBasis.checkSchemes (#schemes entry)
                       val moved=UnitBasis.movedTo (#file entry,file,#others entry)
                       val code=UnitBasis.relocate (code,#file entry,file,#others entry)
                       val mid=if #mid entry="" then "" else UnitMid.relocate (#mid entry,moved)
@@ -195,7 +198,8 @@ struct
                         bytes=String.concat (UnitFile.chunks (fingerprint,code)),pickle= #pickle entry,mid=mid,source=source,library=true}
                       val result=compile (Loaded artifact,state)
                     in cacheHits:= !cacheHits+1;result end)
-                   handle UnitFile.Bad _ => raise CachedLoad | Pickle.Bad _ => raise CachedLoad | UnitBasis.Missing _ => raise CachedLoad)
+                   handle UnitFile.Bad _ => raise CachedLoad | Pickle.Bad _ => raise CachedLoad | UnitBasis.Missing _ => raise CachedLoad
+                        | UnitBasis.SchemeChanged _ => raise CachedLoad)
             end
           fun group (entries,state) =
             let val prior=context ()
@@ -383,9 +387,10 @@ struct
       val fingerprint = #fingerprint (hd artifacts)
       val () = if List.all (fn a : artifact => #fingerprint a=fingerprint) artifacts then () else raise Domain
       val code =
-        if fingerprint=RegCodes.fingerprint then
-          (Code.opcodeNames:=RegCodes.names;Link.program (Regs.program,RegCodes.linked,List.map #code artifacts))
-        else Link.program (Stack.program,Opcodes.linked,List.map #code artifacts)
+        (if fingerprint=RegCodes.fingerprint then
+           (Code.opcodeNames:=RegCodes.names;Link.program (Regs.program,RegCodes.linked,List.map #code artifacts))
+         else Link.program (Stack.program,Opcodes.linked,List.map #code artifacts))
+        handle Link.Mismatch why => raise Fail ("the units do not fit together: " ^ why)
       val prior = !Emit.trailer
       val () = Emit.trailer:=Emit.unitsSection (!Link.lastExports)
       val () = Emit.writeFileAs (fingerprint,path,code) handle e => (Emit.trailer:=prior;raise e)

@@ -333,7 +333,7 @@ struct
       val hit =
         case if UnitCache.verifying () then NONE else found of
           NONE => NONE
-        | SOME {pickle, identity, code, warnings, file = was, others, ...} =>
+        | SOME {pickle, identity, code, warnings, file = was, others, schemes, ...} =>
           let val at = UnitBasis.counters ()
           in
             (let
@@ -345,6 +345,9 @@ struct
                            | NONE => []
                val u = UnitBasis.remapKeys (u, remap)
                val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
+               (* the schemes of what it names of other units, against those
+                  units now (UnitBasis.schemesHold) *)
+               val () = if List.null remap then UnitBasis.checkSchemes schemes else ()
                (* a file used again, the same text against the same units:
                   loaded and linked under an identity of its own, that what
                   named the first's globals still does (UnitBasis.unused) *)
@@ -363,6 +366,7 @@ struct
              end)
             handle Pickle.Bad _ => (UnitBasis.abandon at; NONE)
                  | UnitBasis.Missing _ => (UnitBasis.abandon at; NONE)
+                 | UnitBasis.SchemeChanged _ => (UnitBasis.abandon at; NONE)
                  | UnitFile.Bad _ => (UnitBasis.abandon at; NONE)
                  | Fail _ => (UnitBasis.abandon at; NONE)
           end
@@ -449,7 +453,8 @@ struct
              SOME (d, c, key) =>
                UnitCache.store (d, c, key, {usages = usages, warnings = !warnings, file = file,
                                             others = UnitBasis.sourcesOf (code, file), pickle = #pickle exported,
-                                            identity = #identity exported, code = bytes, mid = ""})
+                                            identity = #identity exported, code = bytes, mid = "",
+                                            level = UnitCache.level (), schemes = UnitBasis.importedSchemes code})
            | NONE => ()
        in
          Source.unregister echoName;

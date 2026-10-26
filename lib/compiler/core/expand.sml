@@ -476,7 +476,13 @@ struct
           Let (x, s, r, b) =>
             (case openTest (x, r, b) of
                SOME fast => exp fast
-             | NONE => let val r' = rhs r val x' = rename x in Let (x', scheme s, r', exp b) end)
+             | NONE =>
+                 let
+                   val r' = rhs r
+                   val x' = rename x
+                   (* an exception declared in the copy: its argument at the copy's types *)
+                   val () = case r of NewExn _ => Ty.copyExn (x, x', ty) | _ => ()
+                 in Let (x', scheme s, r', exp b) end)
         | Fun (fs, b) =>
             let
               val names = List.map (fn (g : fundef) => rename (#name g)) fs

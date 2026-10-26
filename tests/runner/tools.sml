@@ -814,11 +814,98 @@ struct
           val ls = lines (read (f "out"))
         in
           List.app (fn l => if String.isPrefix "FAIL " l then say (l ^ "\n") else ()) ls;
-          if code = 0 andalso List.length (List.filter (String.isPrefix "PASS ") ls) >= 55 then ()
+          if code = 0 andalso List.length (List.filter (String.isPrefix "PASS ") ls) >= 136 then ()
           else fail ("compiler.lint-rules: exit " ^ Int.toString code ^ ", " ^ Int.toString (List.length ls) ^ " lines: "
                      ^ firstLine (f "err"))
         end
     end
+
+  (* ---- the lints' negative tests (docs/testing.md; the linting roadmap,
+     M4): a fault made in a program after a stage (RUNE_FAULT,
+     lib/compiler/backend/fault.sml), which the check of that stage refuses
+     with its message, at level 2, where every pass is checked. Each rule
+     of LambdaLint (after translate), MidLint (after mid and each pass),
+     the renaming (after midcanon) and LowLint (after lower) that a fault
+     reaches; the others, and the results', are compiler/lint-rules', and
+     RegVerify's register/@regverify-*. E10's faults are among them. *)
+  val faultPrograms =
+    [("faults", (["-O2"], "tests/compiler/faults.sml")),
+     ("dynamic", (["--units", "-O2"], "tests/compiler/faults-dynamic.sml"))]
+  (* the stage and kind, the program, what the refusal says *)
+  val faults : (string * string * string) list =
+    let
+      fun at (stage, prog) = List.map (fn (kind, msg) => (stage ^ ":" ^ kind, prog, msg))
+      val notInScope = "variable v999999937 is not in scope"
+      val payload = "an exception's payload has type"
+      val word = "which is no instance of its description"
+      val range = "out of the range of int"
+      val unset = "which a way of it that returns does not set"
+    in
+      at ("translate", "faults")
+        [("scope", notInScope), ("twice", "is bound twice"), ("jump", "arguments"),
+         ("jump-out", "that is not in tail position of its scope"), ("con", "has no constructor"),
+         ("select", "of a tuple of"), ("const-type", "a constant 1 of type string"), ("const-kind", "a constant 0w"),
+         ("const-range", range), ("mkexn", payload), ("prim-name", word),
+         ("functor-cast", "a functor_cast from string to int, neither unit"), ("open-cast", "neither unit nor flat"),
+         ("inst", "a use at exn of what has type"), ("fail", "a Fail is not in tail position of a Try"),
+         ("letrec", "binds what is no function"), ("global", "has no type")]
+      @ at ("translate", "dynamic") [("dynamic-cast", "a dynamic_cast from string to int, neither unit")]
+      @ at ("mid", "faults")
+          [("scope", notInScope), ("twice", "is bound twice"), ("jump", "arguments"),
+           ("jump-out", "join point j999999937 is not in scope"), ("type", "where string is wanted"),
+           ("poly", "abstracts over 0 variables"), ("tyargs", "abstracts over"), ("select", "of a tuple of"),
+           ("con", "has no constructor"), ("mkexn", payload), ("prim-name", word), ("const-kind", "a constant 0w"),
+           ("const-range", range), ("do-drop", "is not defined"), ("do-unset", unset),
+           ("functor-cast", "neither unit"), ("open-cast", "neither unit nor flat")]
+      @ at ("mid", "dynamic") [("dynamic-cast", "a dynamic_cast from string to int, neither unit")]
+      @ at ("midcanon", "faults")
+          [("scope", "renamed to"), ("twice", "is the new name of"), ("jump", "a list of another length"),
+           ("type", "the built-in type name"), ("select", "a field changed"), ("con", "a tag changed"),
+           ("mkexn", "an atom of another kind"), ("prim-name", "a primitive changed"), ("const-kind", "a constant changed"),
+           ("do-unset", "a right-hand side of another kind"), ("functor-cast", "renamed two ways")]
+      @ at ("expand", "faults")
+          [("scope", notInScope), ("mkexn-copy", payload), ("functor-cast", "neither unit"),
+           ("open-cast", "neither unit nor flat"), ("poly", "abstracts over 0 variables"), ("do-unset", unset)]
+      @ at ("expand", "dynamic") [("dynamic-cast", "a dynamic_cast from string to int, neither unit")]
+      @ at ("shake", "faults") [("scope", notInScope), ("poly", "abstracts over 0 variables")]
+      @ at ("lift", "faults") [("scope", notInScope), ("mkexn-copy", payload), ("nary", "used as a value")]
+      @ at ("workers", "faults") [("nary", "used as a value"), ("tyargs", "abstracts over")]
+      @ at ("simplify", "faults")
+          [("scope", notInScope), ("type", "where string is wanted"), ("jump", "arguments"), ("mkexn", payload),
+           ("mkexn-copy", payload), ("const-kind", "a constant 0w"), ("const-range", range), ("nary", "used as a value"),
+           ("poly", "abstracts over 0 variables"), ("tyargs", "abstracts over"), ("do-unset", unset),
+           ("select", "of a tuple of"), ("con", "has no constructor"), ("prim-name", word)]
+      @ at ("refs", "faults") [("scope", notInScope), ("type", "where string is wanted")]
+      @ at ("lower", "faults")
+          [("twice", "is defined twice"), ("undef", "is used where it is not defined on every way"), ("jump", "arguments"),
+           ("nojump", "a jump to no block b999999937"), ("pop", "a pop with no handler"),
+           ("push", "a return with a handler pushed"), ("callk", "parameters given"), ("closure", "values, given"),
+           ("env", "env 7 of a function that captures"), ("rep", "is ptr where what makes it is int")]
+    end
+  fun faultOne spec =
+    case (List.find (fn (s, _, _) => s = spec) faults) of
+      NONE => fail ("faults." ^ spec ^ ": no such fault")
+    | SOME (_, prog, msg) =>
+        let
+          val (flags, src) = valOf (Option.map #2 (List.find (fn (p, _) => p = prog) faultPrograms))
+          val out = run ^ "/faults"
+          val () = mkdirs out
+          val name = String.map (fn #":" => #"." | c => c) spec
+          val err = out ^ "/" ^ name ^ ".err"
+          val status = execEnv (setEnv ("RUNE_FAULT", spec))
+                               {cmd = ["bin/rune", "--lint=2"] @ flags @ [src, "-o", out ^ "/" ^ name ^ ".rbc"], dir = NONE,
+                                stdin = "", stdout = err, stderr = err, timeout = 0}
+          val text = read err
+          val stage = hd (String.fields (fn c => c = #":") spec)
+          val placed = List.exists (fn l => String.isPrefix ("fault " ^ spec ^ ": ") l andalso not (String.isSuffix "no place found" l))
+                                   (lines text)
+          val refusal = case List.filter (String.isSubstring "error") (lines text) of l :: _ => l | [] => firstNonEmpty err
+        in
+          if not placed then fail ("faults." ^ spec ^ ": no place to corrupt in " ^ src)
+          else if status = 0 then fail ("faults." ^ spec ^ ": not refused")
+          else if String.isSubstring ("lint after " ^ stage ^ ": internal compiler error: ") text andalso String.isSubstring msg text then ()
+          else fail ("faults." ^ spec ^ ": refused otherwise: " ^ refusal)
+        end
 
   (* ---- tests/runtime: limits saved with an image and stricter on restore *)
   fun limits (rune, vm) =
@@ -1100,6 +1187,7 @@ struct
     | ["overloading-cache"] => SOME overloadingCache
     | ["compiler", rune] => SOME (fn () => compilerProtection rune)
     | ["compiler-lint-rules"] => SOME lintRules
+    | ["fault-one", spec] => SOME (fn () => faultOne spec)
     | ["compiler-astlint-faults"] => SOME astlintFaultTests
     | ["limits", rune, vm] => SOME (fn () => limits (rune, vm))
     | ["gc-log", rune, vm] => SOME (fn () => gcLog (rune, vm))
@@ -1184,6 +1272,8 @@ struct
                         [("overloading", "topdec", "o_next_dec"), ("free-tyvars", "later", "f_ref_next_dec"),
                          ("free-tyvars", "later", "f_ref_after_semicolon"), ("free-tyvars", "monotype", "f_ref_alone")]
              @ [job ("cache", ["overloading-cache"], [], 500, 600)])),
+       tagged ["check", "test-ir", "covers:tests/compiler/*"]
+         (Test.describe "faults" (List.map (fn (spec, _, _) => job (spec, ["fault-one", spec], [], 600, 600)) faults)),
        tagged ["check", "covers:tests/compiler/*"]
          (Test.describe "compiler"
             (tagged ["test"] (job ("stack", ["compiler", "bin/rune-stack"], [], 300, 600))

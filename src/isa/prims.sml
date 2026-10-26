@@ -878,9 +878,11 @@ struct
           doc = "Identities of successfully linked units in first-link order, each once; the reserved top-level export is the marker. Does not imply execution of initializers."}]]
 
   (* The compiler's own primitives, which Translate makes for the code of
-     functors and Lower makes others of (unsafe_cast, imm_eq, a
-     constant): no VM has them, so they have no number and are in no
-     fingerprint; they have no effect, and Simplify and Shake may drop one
-     nothing uses (Prims.removable) *)
-  val compilerOwn = ["functor_cast", "functor_marker", "open_boxed", "open_layout"]
+     functors, of dynamic modules' slots and of open constructors, and
+     Lower makes others of (unsafe_cast, imm_eq, a constant): no VM has
+     them, so they have no number and are in no fingerprint; they have no
+     effect, and Simplify and Shake may drop one nothing uses
+     (Prims.removable). A cast of its own, each by its origin, is checked
+     by its origin's rule (IrRules.cast), the program's unsafe_cast not *)
+  val compilerOwn = ["functor_cast", "functor_marker", "open_boxed", "open_layout", "dynamic_cast", "open_cast"]
 end

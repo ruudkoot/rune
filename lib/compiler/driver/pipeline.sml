@@ -120,7 +120,7 @@ struct
                 check = fn p => (Pass.checkAt ("mid", 1) MidLint.check p;
                                  Pass.checkAt ("mid-roundtrip", if !CompilerSettings.midRoundTrip then 1 else 3) MidText.roundTrip p),
                 size = Mid.size}
-               f
+               (fn x => Fault.mid ("mid", f x))
 
   (* The functor bodies a unit's basis decoded (UnitBasis; Expand.imported),
      linted at the next unit's passes, at level 0, always on: when they are
@@ -152,7 +152,7 @@ struct
         then Pass.stage {name = "midcanon", showIn = SOME MidText.show, show = MidText.show,
                          check = fn p => (Pass.checkAt ("midcanon", 1) (MidCanon.checkRenaming mid) p; roundTrip "midcanon" p),
                          size = Mid.size}
-                        MidCanon.program mid
+                        (fn m => Fault.mid ("midcanon", MidCanon.program m)) mid
         else mid
       (* the optional passes on Mid (docs/ir.md), each linted at level 2;
          whether one ran, so that the boundary before lower is linted at
@@ -163,7 +163,7 @@ struct
           (passed := true;
            Pass.stage {name = name, showIn = SOME MidText.show, show = MidText.show,
                        check = fn p => (Pass.lintAt name MidLint.check p; roundTrip name p), size = Mid.size}
-                      f m)
+                      (fn m => Fault.mid (name, f m)) m)
         else m
       val () = functorBodies ()
       (* the copies of applications given back (Expand), before anything
@@ -186,7 +186,7 @@ struct
     in
       Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = Pass.checkAt ("lower", 1) LowLint.check,
                   size = Low.size}
-                 (fn m => lowered (Lower.program (m, !Translate.funNames))) mid
+                 (fn m => lowered (Fault.low ("lower", Lower.program (m, !Translate.funNames)))) mid
     end
 
   (* Lambda to Low: Mid, the optional passes on it, and Lower *)
@@ -198,6 +198,24 @@ struct
       val () = if not (!Pass.whole) then Expand.keepMarked mid else ()
     in lowOfMid mid end
 
+  (* The check of a program's stack code (the linting roadmap's D11 and
+     M10): the loader's checks and runeopt's RbcCheck, on the code as its
+     file has it. They are runeopt's, built with the driver (rune.build,
+     src/driver/stackcheck.sml, which sets this) and not with the compiler
+     library, whose files are its own; elsewhere it checks nothing. A
+     refusal is Error.Bug. *)
+  val stackCheck : (Code.program -> unit) ref = ref (fn _ => ())
+  val () = CompilerState.cellRoot ("Pipeline.stackCheck", stackCheck)
+  (* it, from level 2 of the lint (the roadmap's D12), as a check of
+     Pass.checkAt, which --pass-stats counts as "rbccheck"; RUNE_RBCCHECK=1
+     runs it at every level, to measure it, and 0 at none *)
+  fun checkStack (p : Code.program) : unit =
+    case OS.Process.getEnv "RUNE_RBCCHECK" of
+      SOME "0" => ()
+    | SOME "" => Pass.checkAt ("rbccheck", 2) (!stackCheck) p
+    | SOME _ => Pass.checkAt ("rbccheck", Pass.off) (!stackCheck) p
+    | NONE => Pass.checkAt ("rbccheck", 2) (!stackCheck) p
+
   (* Low to the code of the target --target names *)
   fun targetStage (low : Low.program) : Code.program =
     if !CompilerSettings.target = "registers" then
@@ -208,7 +226,10 @@ struct
                   size = Code.size}
                  (RegVerify.inject o Regs.program) low
     else
-      Pass.stage {name = "stack", showIn = SOME Low.show, show = Code.dump, check = fn _ => (), size = Code.size}
+      (* a whole program's, as the stage's check; a unit's is checked in
+         the program it is linked into (Main.linkUnits) *)
+      Pass.stage {name = "stack", showIn = SOME Low.show, show = Code.dump,
+                  check = fn p => if !Pass.whole then checkStack p else (), size = Code.size}
                  Stack.program low
 
   (* the fingerprint of the bytecode --target names *)
@@ -221,7 +242,7 @@ struct
     let
       val lam = Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = Pass.checkAt ("translate", 1) LambdaLint.check,
                             size = Lambda.size}
-                           Translate.transProgram decs
+                           (fn decs => Fault.lambda ("translate", Translate.transProgram decs)) decs
       val low = lowOf lam
       (* what its functors' and applications' code was made of, which no
          later unit's needs *)

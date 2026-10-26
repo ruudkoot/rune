@@ -208,6 +208,9 @@ struct
       if !q <> stop then fail "bad line table" else Vector.fromList (List.rev es)
     end
 
+  (* how many primitives there are: an operand of kind Primitive is below it *)
+  val nprims = List.length Prims.table
+
   (* The byte length of an instruction, or 0 for an opcode there is not. *)
   fun instrLength (opc : int) : int =
     if opc < 0 orelse opc >= Opcodes.count then 0 else 1 + 4 * Vector.sub (Opcodes.nargs, opc)
@@ -269,7 +272,7 @@ struct
                   | Isa.Function => within (x, 0, nfuncs - 1)
                   | Isa.Label => true
                   | Isa.HandlerLabel => true
-                  | Isa.Primitive => within (x, 0, List.length Prims.table - 1)
+                  | Isa.Primitive => within (x, 0, nprims - 1)
                   | Isa.Count => within (x, 0, 1000000)
                   | Isa.Field => nonneg x
                   | Isa.BuiltinExn => within (x, 0, builtinExns - 1)
