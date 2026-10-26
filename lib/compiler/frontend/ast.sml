@@ -380,7 +380,7 @@ struct
 
   and decToString d =
     let
-      fun tyvars [] = "" | tyvars vs = "(" ^ String.concatWith ", " (List.map #1 vs) ^ ") "
+      fun tyvars ([] : tyvarseq) = "" | tyvars vs = "(" ^ String.concatWith ", " (List.map #1 vs) ^ ") "
       fun binds bs = String.concatWith " and " (List.map (fn (p, e) => patToString p ^ " = " ^ expToString e) bs)
     in
       case d of

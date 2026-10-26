@@ -44,8 +44,10 @@ struct
     | KArrow of int * int
     | KFlex of int * bool * (string * int) list
 
-  val prime = 1073741789
-  fun mix (h, x) = (h * 1009 + x mod prime) mod prime
+  (* within 31 bits wherever it is computed, so that no host's int
+     overflows (SML/NJ's 32-bit one has 31, MLton's 32) *)
+  val prime = 1048573
+  fun mix (h, x) = (h * 31 + x mod prime) mod prime
   fun mixString (h, s) = CharVector.foldl (fn (c, h) => mix (h, Char.ord c)) h s
   fun hash k =
     case k of
@@ -115,7 +117,7 @@ struct
      marker, a type name of a stamp below markerBase whose distance from it
      numbers the result, and every cell is put back when the batch ends,
      whatever happens, so that the elaborator's types are as they were *)
-  val markerBase = ~2000000000
+  val markerBase = ~1000000000
   val results : ty option array ref = ref (Array.array (16, NONE))
   val () = CompilerState.refRoot ("SourceTy.results", results, CompilerState.copyArray)
   val nresults = ref 0
