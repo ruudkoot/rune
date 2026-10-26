@@ -155,7 +155,11 @@ struct
     \  --passes=P,...    run these optional passes, whatever the level\n\
     \  --dump-before=P   print what the pass P is given (all: every pass)\n\
     \  --dump-after=P    print what the pass P makes (all: every pass)\n\
-    \  --lint            check what every pass makes (docs/ir.md; RUNE_LINT too)\n\
+    \  --lint            check what every pass makes: --lint=2 (docs/ir.md, Levels)\n\
+    \  --lint=LEVEL      the checks of the level and those below: 0, always on\n\
+    \                    (the default); 1, the boundaries between representations;\n\
+    \                    2, every pass; 3, and Mid read back after each; off, not\n\
+    \                    those of 0 (RUNE_LINT=LEVEL too)\n\
     \  --fuel=N          make no more than N rewrites (bin/rune-measure bisect-fuel)\n\
     \  --pass-stats      print the size and the time of every stage, and of every\n\
     \                    check (--lint) at every depth, and the total\n\
@@ -289,7 +293,7 @@ struct
     | "-O0" :: rest => (Pass.level := 0; parse rest)
     | "-O1" :: rest => (Pass.level := 1; parse rest)
     | "-O2" :: rest => (Pass.level := 2; parse rest)
-    | "--lint" :: rest => (Pass.lint := true; parse rest)
+    | "--lint" :: rest => (Pass.lintGiven := SOME 2; parse rest)
     | "--read-mid" :: f :: rest => (readMid := SOME f; parse rest)
     | ["--read-mid"] => raise Usage "--read-mid requires a file"
     | "--mid-roundtrip" :: rest => (midRoundTrip := true; parse rest)
@@ -304,6 +308,9 @@ struct
          | SOME ("--pass-stats", "hash") => (Pass.stats := true; Pickle.counting := true; parse rest)
          | SOME ("--pass-stats", "expand") => (Pass.stats := true; Expand.stats := true; parse rest)
          | SOME ("--pass-stats", _) => raise Usage "--pass-stats= requires elab, hash or expand"
+         | SOME ("--lint", v) =>
+             if List.exists (fn l => l = v) ["off", "0", "1", "2", "3"] then (Pass.lintGiven := Pass.levelOf v; parse rest)
+             else raise Usage "--lint= requires off, 0, 1, 2 or 3"
          | SOME ("--dump-before", v) => (Pass.dumpBefore := !Pass.dumpBefore @ [v]; parse rest)
          | SOME ("--dump-after", v) => (Pass.dumpAfter := !Pass.dumpAfter @ [v]; parse rest)
          | SOME ("--target", v) =>

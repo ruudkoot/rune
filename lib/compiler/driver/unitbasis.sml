@@ -2099,6 +2099,8 @@ struct
                                        tvar = fn () => rname (d, kTvar),
                                        file = fn () => getOpt (P.roption P.rstring r, file), local' = local'})
                     handle MidCodec.Bad m => raise P.Bad m
+                  (* linted at the next unit's passes, always on (Pipeline.functorBodies) *)
+                  val () = if Pass.linting' 0 then MidLint.pendingBodies := body :: !MidLint.pendingBodies else ()
                   val opens = P.rlist (fn _ => rname (d, kTycon)) r
                   fun prim () = (P.roption P.rstring r; P.roption P.rstring r; ())
                   val _ = P.rlist (fn _ => (prim (); P.roption (fn _ => (rname (d, kStamp); prim ())) r;

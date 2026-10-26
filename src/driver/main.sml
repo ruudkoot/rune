@@ -807,6 +807,8 @@ struct
                 Pipeline.unitThrough {start = start, name = ident, file = name, text = text (name, mode), mode = mode, decs = decs,
                                       delta = !Elaborate.lastDelta, fixity = !fixity, used = names, fresh = false}
               val bytes = timed "unit-chunks" (fn () => String.concat (UnitFile.chunks (Pipeline.fingerprint (), code)))
+              (* its code read back, at level 2 *)
+              val () = Pass.checkAt ("code-rt", 2) (Pipeline.codeRoundTrip (Pipeline.fingerprint (), bytes)) code
               (* --pass-stats with RUNE_MEM set: the bytes of its basis and
                  its code (issue 14) *)
               val () = if !Pass.stats andalso isSome (OS.Process.getEnv "RUNE_MEM")
@@ -989,7 +991,7 @@ struct
         (* one program of the units' Mid, with the passes of a whole one *)
         let
           val () = refuseDynamic ()
-          val prog = Pass.stage {name = "midcanon", showIn = NONE, show = MidText.show, check = Pass.lintAt "midconcat" MidLint.check,
+          val prog = Pass.stage {name = "midcanon", showIn = NONE, show = MidText.show, check = fn p => (Pass.checkAt ("midconcat", 1) MidLint.check p; Pipeline.roundTrip "midconcat" p),
                                  size = Mid.size}
                                 MidCanon.concat (List.rev (!mids))
           val () = Pass.whole := true
@@ -1163,7 +1165,7 @@ struct
     in
       if !Options.typecheckOnly then NONE
       else
-        SOME (Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = Pass.lintAt "translate" LambdaLint.check,
+        SOME (Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = Pass.checkAt ("translate", 1) LambdaLint.check,
                           size = Lambda.size}
                          Translate.transProgram (preludeProg @ userProg @ finalProg))
     end
@@ -1208,6 +1210,40 @@ struct
       OS.Process.success
     end
 
+  (* A breach that a check at a boundary found, at level 1, names where it
+     was found; the compile is then made again at level 2, from the state
+     the options left (CompilerState's baseline, sealed before the first),
+     to name the pass that made it: a compile is deterministic, and no check
+     changes it (docs/ir.md, Levels). Units the first compile stored in the
+     cache are taken from there, linted as they were; a breach in a child
+     of -j is not made again. At level 0 the seal would cost a small
+     compile a seventh (300,000 instructions, budgets compile-hello and
+     compile-expo), so a breach of a check that is always on says to
+     compile at --lint=2 instead (Pass.checkAt). *)
+  fun diagnosed (compile : unit -> OS.Process.status) : OS.Process.status =
+    let val level = Pass.lintLevel ()
+    in
+      if level <> 1 then compile ()
+      else
+        (CompilerState.seal ();
+         compile ()
+         handle Error.Bug msg =>
+           case !Pass.breach of
+             NONE => raise Error.Bug msg
+           | SOME (key, _) =>
+               let
+                 val () = eprintln ("rune: " ^ msg)
+                 val () = eprintln ("rune: found at --lint=" ^ Int.toString level ^ ", after " ^ key
+                                    ^ "; compiling again at --lint=2 to find the pass that made it")
+                 val again = CompilerState.session ()
+               in
+                 (CompilerState.withSession (again, fn () => (Pass.lintGiven := SOME 2; Pass.breach := NONE; compile ()));
+                  eprintln "rune: the compile at --lint=2 found no breach";
+                  OS.Process.failure)
+                 handle Error.Bug msg => (eprintln ("rune: " ^ msg); OS.Process.failure)
+               end)
+    end
+
   fun main (name : string, args : string list) : OS.Process.status =
     let val status = main' (name, args)
     in UnitBasis.hashStats (); Pass.finish (); Diagnostic.finish (OS.Process.isSuccess status); status end
@@ -1227,8 +1263,8 @@ struct
        (List.app println (filesOf (#1 (planOf (valOf (!Options.build))))); OS.Process.success)
      else if !Options.lexCount > 0 then lexCount ()
      else if !Options.dumpTokens then dumpTokens ()
-     else if isSome (!Options.readMid) then readMid (valOf (!Options.readMid))
-     else compile ())
+     else if isSome (!Options.readMid) then diagnosed (fn () => readMid (valOf (!Options.readMid)))
+     else diagnosed compile)
     handle BasisManifest.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Options.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Error.CompileError (sp, msg) => (eprintln (!Error.show ("error", sp, msg)); Error.note ("error", sp, msg); OS.Process.failure)
