@@ -398,6 +398,110 @@ struct
              andalso not (List.exists (fn l => String.isSubstring "error" l) ls)
     in if ok then () else fail ("flexrec.repl." ^ p) end
 
+  (* ---- tests/overloading: E13's programs (docs/plans/correctness/linting.md)
+     under every mode of --overloading and --free-tyvars, each held to what
+     the implementation the mode follows did with it: compiled and run
+     printing a line (Prints), the same with the warning of a new type
+     (Warns), or refused for a free type variable (Free) or for a type
+     mismatch (Mismatch) *)
+  datatype outcome = Prints of string | Warns of string | Free | Mismatch
+  val overloadPrograms = ["o_structure", "o_local", "o_next_dec", "o_after_semicolon", "o_let_fun", "o_let_val",
+                          "o_same_val", "o_abstype", "o_functor_body", "o_across_functor"]
+  val overloadModes =
+    let val (a, r) = (Prints "4", Mismatch)
+    in
+      [("binding", [r, r, r, r, r, r, a, r, r, r]),          (* HaMLet *)
+       ("declaration", [r, r, r, r, a, a, a, a, r, r]),      (* SML/NJ, MLKit *)
+       ("toplevel", [a, a, r, r, a, a, a, a, r, r]),         (* Moscow ML *)
+       ("topdec", [a, a, a, r, a, a, a, a, r, a])]           (* MLton, Poly/ML *)
+    end
+  val freePrograms = ["f_ref_alone", "f_ref_next_dec", "f_ref_after_semicolon", "f_ref_in_structure", "f_append_alone",
+                      "f_functor_result", "f_functor_two"]
+  val freeModes =
+    let val (f, m) = (Free, Mismatch)
+    in
+      [("refuse", [f, Prints "1", f, Prints "1", f, f, f]),                                   (* HaMLet *)
+       ("monotype", [Warns "ok", Prints "1", m, Prints "1", Warns "0", m, m]),                 (* Poly/ML *)
+       ("dummy", [Warns "ok", m, m, m, Warns "0", m, m]),                                      (* SML/NJ *)
+       ("later", [f, Prints "1", Prints "1", Prints "1", f, Prints "1", m]),                    (* MLKit, Moscow ML *)
+       ("later-monotype", [Warns "ok", Prints "1", Prints "1", Prints "1", Warns "0", Prints "1", m])]  (* MLton *)
+    end
+
+  fun overloadingOne (option, mode, p, how) =
+    let
+      val out = run ^ "/overloading"
+      val () = mkdirs out
+      val (programs, modes) = if option = "overloading" then (overloadPrograms, overloadModes) else (freePrograms, freeModes)
+      val want = case List.find (fn (m, _) => m = mode) modes of
+                   SOME (_, ws) => Option.map #2 (List.find (fn (q, _) => q = p) (ListPair.zip (programs, ws)))
+                 | NONE => NONE
+      val rbc = out ^ "/" ^ p ^ "." ^ mode ^ "." ^ how ^ ".rbc"
+      val err = out ^ "/" ^ p ^ "." ^ mode ^ "." ^ how ^ ".err"
+      val code = exec {cmd = ["bin/rune", "--" ^ option ^ "=" ^ mode] @ (if how = "units" then ["--units", "--no-cache"] else [])
+                             @ ["tests/overloading/" ^ p ^ ".sml", "-o", rbc], dir = NONE, stdin = "", stdout = err, stderr = err,
+                       timeout = 0}
+      val name = option ^ "." ^ mode ^ "." ^ p ^ " (" ^ how ^ ")"
+      fun runs (line, warned) =
+        if code <> 0 then fail (name ^ ": refused: " ^ firstLine err)
+        else if warned <> contains (err, "it is made a new type") then
+          fail (name ^ (if warned then ": no warning of a new type" else ": a warning: " ^ firstLine err))
+        else
+          let
+            val printed = rbc ^ ".out"
+            val _ = exec {cmd = ["bin/runevm", rbc], dir = NONE, stdin = "", stdout = printed, stderr = "", timeout = 0}
+            val got = String.concatWith "\n" (lines (read printed))
+          in if got = line then () else fail (name ^ ": printed " ^ got) end
+      fun refused reasons =
+        if code <> 0 andalso List.exists (fn r => contains (err, r)) reasons then ()
+        else fail (name ^ ": not refused with " ^ String.concatWith " or " reasons ^ ": " ^ firstLine err)
+    in
+      case want of
+        SOME (Prints line) => runs (line, false)
+      | SOME (Warns line) => runs (line, true)
+      | SOME Free => refused ["cannot be generalised", "nothing after it determines"]
+      | SOME Mismatch => refused ["type mismatch"]
+      | NONE => fail (name ^ ": no such mode or program")
+    end
+
+  (* the REPL: a topdec compiled at once (--overloading=topdec), and the end
+     of each input the end of what --free-tyvars=later waits for *)
+  fun overloadingRepl (option, mode, p) =
+    let
+      val out = run ^ "/overloading"
+      val () = mkdirs out
+      val f = out ^ "/" ^ p ^ "." ^ mode ^ ".repl"
+      val () = write (out ^ "/" ^ p ^ ".in", "use \"tests/overloading/" ^ p ^ ".sml\";\n")
+      val _ = exec {cmd = ["/bin/sh", "-c", "RUNE_CACHE= exec bin/rune-repl --no-init --" ^ option ^ "=" ^ mode], dir = NONE,
+                    stdin = out ^ "/" ^ p ^ ".in", stdout = f, stderr = f, timeout = 120}
+      val ls = lines (read f)
+      fun printed s = List.exists (fn l => String.isSuffix s l) ls andalso not (List.exists (fn l => String.isSubstring "error" l) ls)
+      val ok =
+        case (option, mode, p) of
+          ("overloading", "topdec", "o_next_dec") => printed "4"
+        | ("free-tyvars", "later", "f_ref_next_dec") => printed "1"
+        (* refused at the end of the input: the inputs after it do not determine it *)
+        | ("free-tyvars", "later", "f_ref_after_semicolon") => contains (f, "nothing after it determines")
+        | ("free-tyvars", "monotype", "f_ref_alone") => contains (f, "it is made a new type") andalso contains (f, "?.X1 list ref")
+        | _ => false
+    in if ok then () else fail ("overloading.repl." ^ option ^ "." ^ mode ^ "." ^ p) end
+
+  (* the cache: each mode is a configuration of its own, so that a unit
+     compiled under one is not taken under another *)
+  fun overloadingCache () =
+    let
+      val out = run ^ "/overloading/cache"
+      val () = (rmTree out; mkdirs out)
+      fun compile (option, p) =
+        exec {cmd = ["bin/rune", "--units", "--cache-dir", out ^ "/cache", option, "tests/overloading/" ^ p ^ ".sml",
+                     "-o", out ^ "/" ^ p ^ ".rbc"], dir = NONE, stdin = "", stdout = out ^ "/err", stderr = out ^ "/err", timeout = 0}
+      fun check (what, ok) = if ok then () else fail ("overloading.cache: " ^ what ^ ": " ^ firstLine (out ^ "/err"))
+    in
+      check ("topdec accepts", compile ("--overloading=topdec", "o_next_dec") = 0);
+      check ("toplevel refuses after it", compile ("--overloading=toplevel", "o_next_dec") <> 0);
+      check ("later accepts", compile ("--free-tyvars=later", "f_ref_after_semicolon") = 0);
+      check ("refuse refuses after it", compile ("--free-tyvars=refuse", "f_ref_after_semicolon") <> 0)
+    end
+
   (* ---- tests/compiler: the compiler's output and its budgets *)
   fun compilerProtection rune =
     let
@@ -961,6 +1065,9 @@ struct
     | ["lib-interop", lib] => SOME (fn () => libInterop lib)
     | ["flexrec-one", mode, p, how] => SOME (fn () => flexrecOne (mode, p, how))
     | ["flexrec-repl", p] => SOME (fn () => flexrecRepl p)
+    | ["overloading-one", option, mode, p, how] => SOME (fn () => overloadingOne (option, mode, p, how))
+    | ["overloading-repl", option, mode, p] => SOME (fn () => overloadingRepl (option, mode, p))
+    | ["overloading-cache"] => SOME overloadingCache
     | ["compiler", rune] => SOME (fn () => compilerProtection rune)
     | ["compiler-lint-rules"] => SOME lintRules
     | ["limits", rune, vm] => SOME (fn () => limits (rune, vm))
@@ -1032,6 +1139,20 @@ struct
                                                             flexPrograms))
                                    flexModes)
              @ List.map (fn p => job ("repl." ^ p, ["flexrec-repl", p], [], 500, 600)) ["next_dec", "two_types", "after_semicolon"])),
+       tagged ["check", "test-incremental", "covers:tests/overloading/*"]
+         (Test.describe "overloading"
+            (List.concat (List.map (fn (option, programs, modes) =>
+                                      List.concat (List.map (fn (mode, _) =>
+                                        List.concat (List.map (fn p =>
+                                          List.map (fn how => job (option ^ "." ^ mode ^ "." ^ p ^ "." ^ how,
+                                                                   ["overloading-one", option, mode, p, how], [], 300, 600))
+                                                   ["whole", "units"]) programs)) modes))
+                                   [("overloading", overloadPrograms, overloadModes), ("free-tyvars", freePrograms, freeModes)])
+             @ List.map (fn (option, mode, p) => job ("repl." ^ option ^ "." ^ mode ^ "." ^ p, ["overloading-repl", option, mode, p],
+                                                       [], 500, 600))
+                        [("overloading", "topdec", "o_next_dec"), ("free-tyvars", "later", "f_ref_next_dec"),
+                         ("free-tyvars", "later", "f_ref_after_semicolon"), ("free-tyvars", "monotype", "f_ref_alone")]
+             @ [job ("cache", ["overloading-cache"], [], 500, 600)])),
        tagged ["check", "covers:tests/compiler/*"]
          (Test.describe "compiler"
             (tagged ["test"] (job ("stack", ["compiler", "bin/rune-stack"], [], 300, 600))

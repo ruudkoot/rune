@@ -507,7 +507,9 @@ FORCE:
 # the VM builds with a C compiler alone: `make isa` writes them again after
 # a change to src/isa, and `make check-isa` (part of make check) fails when
 # one of them is not what the descriptions give, with runeisa built by
-# MLton and by the self-hosted compiler.
+# MLton and by the self-hosted compiler, or when a check of the
+# descriptions does not refuse a description made wrong (runeisa --test,
+# src/isa/isatest.sml).
 ISA_OUT := runtime/stack/opcodes.def runtime/prims.def $(GEN_C) $(GEN_SML)
 
 isa: bin/runeisa-mlton
@@ -516,6 +518,8 @@ isa: bin/runeisa-mlton
 check-isa: bin/runeisa-mlton bin/runeisa.rbc vm
 	bin/runeisa-mlton --root . --check
 	$(RUNEVM) bin/runeisa.rbc --root . --check
+	bin/runeisa-mlton --test
+	$(RUNEVM) bin/runeisa.rbc --test
 
 bin/runeisa-mlton.bin: $(BUILDGEN) $(SOURCES_ISA) src/main/runeisa-mlton-main.sml | build/.doctor-mlton
 	@mkdir -p bin

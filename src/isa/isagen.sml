@@ -211,33 +211,52 @@ struct
     end
 
   (* The representation of a value of a type as a primitive's description
-     writes it ("int", "'a array"): a built-in type, or a type variable or a
-     type made of others, of which nothing is said (0). *)
-  fun repOfName (t : string) : int =
+     writes it (primType), as the compiler's Lower gives a value of the type
+     (Lower.repOfTy): a built-in type by its name, a datatype of the Basis by
+     its constructors (bool and order nullary only, list and option either),
+     a tuple and a function in the heap; nothing of a type variable or of a
+     type of another name (Word32.word). *)
+  fun repOfTy (t : ty) : rep =
     case t of
-      "int" => 1 | "word" => 2 | "real" => 3 | "char" => 4 | "bool" => 5 | "order" => 5
-    | "string" => 6 | "exn" => 6 | "unit" => 8 | "Int64.int" => 9 | "Word64.word" => 10
-    | "bytearray" => 6 | "realarray" => 6
-    | _ => if String.isSuffix " array" t orelse String.isSuffix " vector" t orelse String.isSuffix " ref" t then 6
-           else if String.isSuffix " list" t then 7
-           else 0
+      TVar _ => RAny
+    | TTuple _ => RPtr
+    | TArrow _ => RPtr
+    | TCon (name, _) =>
+        case name of
+          "unit" => RUnit | "int" => RInt | "word" => RWord | "real" => RReal | "char" => RChar
+        | "Int64.int" => RInt64 | "Word64.word" => RWord64
+        | "bool" => RCon0 | "order" => RCon0
+        | "string" => RPtr | "exn" => RPtr | "bytearray" => RPtr | "realarray" => RPtr
+        | "array" => RPtr | "vector" => RPtr | "ref" => RPtr
+        | "list" => RCon | "option" => RCon
+        | _ => RAny
 
-  (* The representation of a primitive's result, from the type its
-     description gives it ("int * int -> int"): the part after the arrow. *)
-  fun resultRep (ty : string) : int =
-    let val (_, after) = Substring.position "-> " (Substring.full ty)
-    in repOfName (Substring.string (Substring.dropl Char.isSpace (Substring.triml 3 after))) end
+  (* What a primitive takes and gives, by its type: its parameters' and its
+     result's representations (Low.rep's codes). *)
+  fun primReps (p : primitive) : int list * int =
+    let val (params, result) = primType p
+    in (List.map (repCode o repOfTy) params, repCode (repOfTy result)) end
 
-  (* ... and of its arguments: the parts before the arrow, one for each,
-     where they are as many as it takes; nothing is said of them otherwise *)
-  fun argReps (ty : string, arity : int) : int list =
+  (* The result the loader's table gives a primitive (prim_result), which
+     the loader holds a PRIM's register to (runtime/register/isa_regs.c):
+     read from the type's string as it has been, the name after its first
+     arrow, so that runtime/prims_table.h stays as it is. The type read
+     whole (primReps) gives 20 primitives a result where this gives none:
+     those that return an option or a tuple, and the two whose argument is
+     a function, whose arrow this takes for the type's. Taking that is the
+     VM's to decide (docs/plans/correctness/linting.md, M7). *)
+  fun loaderResult (p : primitive) : int =
     let
-      val (args, _) = Substring.position " -> " (Substring.full ty)
-      val parts = List.map (fn s => Substring.string (Substring.dropl Char.isSpace (Substring.dropr Char.isSpace s)))
-                           (Substring.fields (fn c => c = #"*") args)
-    in
-      if List.length parts = arity then List.map repOfName parts else List.tabulate (arity, fn _ => 0)
-    end
+      fun ofName t =
+        case t of
+          "int" => 1 | "word" => 2 | "real" => 3 | "char" => 4 | "bool" => 5 | "order" => 5
+        | "string" => 6 | "exn" => 6 | "unit" => 8 | "Int64.int" => 9 | "Word64.word" => 10
+        | "bytearray" => 6 | "realarray" => 6
+        | _ => if String.isSuffix " array" t orelse String.isSuffix " vector" t orelse String.isSuffix " ref" t then 6
+               else if String.isSuffix " list" t then 7
+               else 0
+      val (_, after) = Substring.position "-> " (Substring.full (#ty p))
+    in ofName (Substring.string (Substring.dropl Char.isSpace (Substring.triml 3 after))) end
 
   fun primsH (prims : primitive list) : file =
     let
@@ -268,7 +287,7 @@ struct
                "   docs/bytecode.md: 0 any, 1 int, 2 word, 3 real, 4 char, 5 a nullary",
                "   constructor, 6 in the heap, 7 either, 8 unit), from its type */",
                "static const unsigned char prim_result[] = {"]
-            @ List.map (fn (_, p : primitive) => "  " ^ Int.toString (resultRep (#ty p)) ^ ",") ps
+            @ List.map (fn (_, p : primitive) => "  " ^ Int.toString (loaderResult p) ^ ",") ps
             @ ["};",
                "",
                "#define RUNE_PRIM_LIST(X) \\"]
@@ -405,6 +424,14 @@ struct
                "end"])}
     end
 
+  (* A primitive's type as SML of PrimTys.ty. *)
+  fun tyText (t : ty) : string =
+    case t of
+      TVar k => "Var " ^ Int.toString k
+    | TCon (c, args) => "Con (\"" ^ c ^ "\", [" ^ commaList (List.map tyText args) ^ "])"
+    | TTuple ts => "Tuple [" ^ commaList (List.map tyText ts) ^ "]"
+    | TArrow (a, b) => "Arrow (" ^ tyText a ^ ", " ^ tyText b ^ ")"
+
   fun primsSml (prims : primitive list) : file =
     let
       val ps = numbered prims
@@ -449,7 +476,7 @@ struct
             @ ["  ])",
                "  fun removable name = StringMap.member (removables, name)",
                "  (* what each primitive takes and gives, from the type of its",
-               "     description: Low.rep's codes (docs/bytecode.md, The",
+               "     description (PrimTys): Low.rep's codes (docs/bytecode.md, The",
                "     representations), 0 where the type says nothing; made when",
                "     first asked, by LowLint *)",
                "  val reps : (int list * int) StringMap.map option ref = ref NONE",
@@ -460,11 +487,47 @@ struct
                "    | NONE =>",
                "        (reps := SOME (StringMap.fromList ["]
             @ List.map (fn (k, p : primitive) =>
-                          "           (\"" ^ #name p ^ "\", ([" ^ commaList (List.map Int.toString (argReps (#ty p, #arity p)))
-                          ^ "], " ^ Int.toString (resultRep (#ty p)) ^ "))" ^ (if k < n - 1 then "," else ""))
+                          let val (args, result) = primReps p
+                          in
+                            "           (\"" ^ #name p ^ "\", ([" ^ commaList (List.map Int.toString args)
+                            ^ "], " ^ Int.toString result ^ "))" ^ (if k < n - 1 then "," else "")
+                          end)
                        ps
             @ ["         ]);",
                "         repsOf name)",
+               "end",
+               "",
+               "(* The primitives' types, as runeisa reads the type each one's",
+               "   description gives it (src/isa/prims.sml; Isa.primType), from which",
+               "   Prims.repsOf is made too: what a check of the compiler's code holds a",
+               "   primitive's use to. *)",
+               "structure PrimTys =",
+               "struct",
+               "  (* a type variable, numbered from 0 by where it first comes; a type",
+               "     constructor by the name the Basis gives it, with its arguments; a",
+               "     tuple of two or more; a function *)",
+               "  datatype ty = Var of int | Con of string * ty list | Tuple of ty list | Arrow of ty * ty",
+               "  (* each primitive's parameters, as many as its arity, and its result,",
+               "     by its number (Prims.table); made when first asked *)",
+               "  val types : (ty list * ty) vector option ref = ref NONE",
+               "  val () = CompilerState.cellRoot (\"PrimTys.types\", types)",
+               "  fun all () =",
+               "    case !types of",
+               "      SOME v => v",
+               "    | NONE =>",
+               "        let",
+               "          val v = Vector.fromList"]
+            @ List.map (fn (k, p : primitive) =>
+                          let val (params, result) = primType p
+                          in
+                            (if k = 0 then "            [" else "             ") ^ "(* " ^ #name p ^ " *) (["
+                            ^ commaList (List.map tyText params) ^ "], " ^ tyText result ^ ")"
+                            ^ (if k < n - 1 then "," else "]")
+                          end)
+                       ps
+            @ ["        in types := SOME v; v end",
+               "  (* find name = SOME (parameters, result) *)",
+               "  fun find name = case Prims.find name of SOME (i, _) => SOME (Vector.sub (all (), i)) | NONE => NONE",
                "end"])}
     end
 

@@ -440,7 +440,24 @@ refuses the other's file and image.
   `posix_fork`) is `PRIMPUSH` and `RESULT`, so that a program resumed from
   an image finds its result where `RESULT` takes it; so is `rt_link`, which
   grows the program, so that the loop and compiled code hand the VM to the
-  driver after it and the JIT's view of the program is made again.
+  driver after it and the JIT's view of the program is made again. These
+  are the primitives whose effects say they save an image or may make the
+  world another (`Isa.imagePrimitive`), and the compiler's list of them
+  (`RegCodes.imagePrims`) is generated from that.
+* **The description says more than the loader checks**
+  (`src/isa/regs.sml`): of each register operand, whether the instruction
+  reads or writes it and what it holds -- a representation, or what the
+  program says of what another operand names (a global's, a constant's, a
+  primitive's result, a known callee's parameters); what it does beside its
+  operands, above the registers (a primitive's arguments pushed, a call's
+  result left for `RESULT`, the exception `CATCH` takes) and to the
+  closure (`ENV`, `SELF`); what must come after it (`RESULT` after `CALL`,
+  `CALLK` and `PRIMPUSH`, a `SWITCH`'s table of `JUMP`s, `CATCH` at a
+  handler's start); and which primitives it may name. `runeisa` writes
+  this into the compiler's `RegCodes`, for a check of the code the
+  compiler makes ([plans/correctness/linting.md](plans/correctness/linting.md),
+  D10); none of it is in the fingerprint, since none of it changes what a
+  file means.
 * **The JIT** (`docs/plans/jit.md`; `runtime/register/README.md`, The driver
   and Tier 1): `--jit=off|baseline|opt|all` says which functions get
   native code (`RUNEVM_JIT=MODE` in the environment where no `--jit=` is

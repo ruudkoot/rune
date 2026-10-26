@@ -44,6 +44,10 @@ struct
     \  --inline-functor=F[,F...]  expand the applications of functor F in every unit that applies them\n\
     \                 (docs/build.md, Inline functors)\n\
     \  --no-inline-functors  none, the Basis Library's marks too\n\
+    \  --overloading=M  what must determine an overloaded operator's or constant's type: binding, declaration,\n\
+    \                 toplevel (the default) or topdec (docs/language.md)\n\
+    \  --free-tyvars=M  what becomes of a type variable a declaration leaves free: refuse (the default),\n\
+    \                 monotype, dummy, later or later-monotype, which the end of the input decides (docs/language.md)\n\
     \  --engine       the engine, for a front: JSON-RPC on the descriptors 3 and 4 (docs/repl-protocol.md)\n\
     \  --engine-connect PORT  the same on a connection to 127.0.0.1:PORT, its token in RUNE_ENGINE_TOKEN\n\
     \  FILE           used before the first prompt\n"
@@ -93,6 +97,17 @@ struct
                 else if a = "--no-unicode-lints" then (Lexer.lints := false; go rest)
                 else if String.isPrefix "--inline-functor=" a then (inline (String.extract (a, 17, NONE)); go rest)
                 else if a = "--no-inline-functors" then (Elaborate.inlineFunctors := StringMap.empty; go rest)
+                (* the language's choices, as rune takes them (docs/language.md) *)
+                else if String.isPrefix "--overloading=" a then
+                  (case Elaborate.overloadModeOf (String.extract (a, 14, NONE)) of
+                     SOME m => (Elaborate.overloading := m; go rest)
+                   | NONE => raise Usage ("--overloading takes binding, declaration, toplevel or topdec, not "
+                                          ^ String.extract (a, 14, NONE)))
+                else if String.isPrefix "--free-tyvars=" a then
+                  (case Elaborate.freeModeOf (String.extract (a, 14, NONE)) of
+                     SOME m => (Elaborate.freeTyvars := m; go rest)
+                   | NONE => raise Usage ("--free-tyvars takes refuse, monotype, dummy, later or later-monotype, not "
+                                          ^ String.extract (a, 14, NONE)))
                 else if String.isPrefix "--unicode=" a then
                   (case Source.modeNamed (String.extract (a, 2, NONE)) of
                      SOME m => (mode := m; go rest)

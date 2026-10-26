@@ -84,7 +84,10 @@ struct
         case IntMap.find (!memo, #stamp c) of
           SOME n => SOME n
         | NONE =>
-            let val n = case pathOf (env, c) of SOME p => p | NONE => "?." ^ #name c
+            let val n = case pathOf (env, c) of
+                          SOME p => p
+                        (* a new type of --free-tyvars, named so already *)
+                        | NONE => if String.isPrefix "?." (#name c) then #name c else "?." ^ #name c
             in memo := IntMap.insert (!memo, #stamp c, n); SOME n end
     in toStringNamed (nameOf, newPrinter ()) t end
 

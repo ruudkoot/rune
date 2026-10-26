@@ -105,7 +105,7 @@ struct
         val resultEncoder=Resource{id=0w0,live=ref true,kind=Prepared[result]}
         fun encode value =
           let fun signedRange n (lo,hi)=if Int64.toLarge n<lo orelse Int64.toLarge n>hi then failure "callback result is out of range" else ()
-              fun unsignedRange n hi=if n>hi then failure "callback result is out of range" else ()
+              fun unsignedRange (n : Word64.word) hi=if n>hi then failure "callback result is out of range" else ()
               val ()=case(result,value)of
                   (SInt8,Signed n)=>signedRange n (~128,127)
                 | (SInt16,Signed n)=>signedRange n (~32768,32767)
@@ -168,8 +168,8 @@ struct
         val ()=if disposed then live:=false else ()
         val ()=case saved of NONE=>() | SOME error=>raise error
     in {disposed=disposed,result={bytes=bytes,pointer=NONE,error=error}} end
-  val dispose=disposeWith 12
-  val consumeHandle=disposeWith 16
+  fun dispose disposal=disposeWith 12 disposal
+  fun consumeHandle disposal=disposeWith 16 disposal
   val handles : resource list ref = ref []
   fun aliasHandle pointer =
     let val(id,_,_)=request(15,identity pointer,0w0,"","")

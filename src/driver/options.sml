@@ -91,7 +91,13 @@ struct
     \  --flex-records=M  what must determine a flexible record's labels\n\
     \                    (docs/language.md): binding, declaration,\n\
     \                    topdec-monomorphic, topdec (default) or program\n\
-    \  --units           compile every file, of the basis library too, as a unit\n\
+    \  --overloading=M   what must determine an overloaded operator's or\n\
+    \                    constant's type before it defaults (docs/language.md):\n\
+    \                    binding, declaration, toplevel (default) or topdec\n\
+    \  --free-tyvars=M   what becomes of a type variable a top-level declaration\n\
+    \                    leaves free (docs/language.md): refuse (default),\n\
+    \                    monotype, dummy, later or later-monotype\n\
+    \  --units         compile every file, of the basis library too, as a unit\n\
     \                    of its own after the files before it, and link them\n\
     \                    (docs/units.md)\n\
     \  --emit-units DIR  with --units, write each unit's code (.rbu) and basis\n\
@@ -181,7 +187,19 @@ struct
       | NONE => NONE
     else NONE
 
-  (* --flex-records=MODE, before the options of fixed spelling *)
+  (* --overloading=MODE and --free-tyvars=MODE: the mode named, or the
+     message that lists them (rune's options and rune-repl's) *)
+  fun overloadingMode (m : string) : Elaborate.overloadMode =
+    case Elaborate.overloadModeOf m of
+      SOME mode => mode
+    | NONE => raise Usage ("--overloading: binding, declaration, toplevel or topdec, not " ^ m)
+  fun freeTyvarsMode (m : string) : Elaborate.freeMode =
+    case Elaborate.freeModeOf m of
+      SOME mode => mode
+    | NONE => raise Usage ("--free-tyvars: refuse, monotype, dummy, later or later-monotype, not " ^ m)
+
+  (* --flex-records=MODE, --overloading=MODE and --free-tyvars=MODE, before
+     the options of fixed spelling *)
   fun parse (args : string list) : unit =
     case args of
       arg :: rest =>
@@ -192,6 +210,10 @@ struct
               SOME mode => (Elaborate.flexRecords := mode; parse rest)
             | NONE => raise Usage ("--flex-records: binding, declaration, topdec-monomorphic, topdec or program, not " ^ m)
           end
+        else if String.isPrefix "--overloading=" arg then
+          (Elaborate.overloading := overloadingMode (String.extract (arg, size "--overloading=", NONE)); parse rest)
+        else if String.isPrefix "--free-tyvars=" arg then
+          (Elaborate.freeTyvars := freeTyvarsMode (String.extract (arg, size "--free-tyvars=", NONE)); parse rest)
         else parse' args
     | [] => ()
   and parse' (args : string list) : unit =

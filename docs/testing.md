@@ -171,7 +171,7 @@ hosts (`levels/*`, `register/*`, `jit/*`, `units/*`, `units-stack/*`,
 `positions/*`, `cross/*`, `reproducible/*`, `bootstrap/*`, and the
 generated programs of functors, `functors/*`, below;
 `tests/runner/oracles.sml`), and the tools' suites (`ir/*`, `doc/*`, `lib/*`,
-`flexrec/*`, `compiler/*`, `limits/*`, `gc-log/*`, `colour/*`, and the scenarios of
+`flexrec/*`, `overloading/*`, `compiler/*`, `limits/*`, `gc-log/*`, `colour/*`, and the scenarios of
 `tests/deps`, `tests/dynamic`, `tests/buildfile` and `tests/units` as
 `scenario/*`; `tests/runner/tools.sml`), and the protocol suites (`repl/*`,
 `diagnostics/*`, `serve/*`, `repl-protocol/*`, `dap/*`, `kernel/*`,
