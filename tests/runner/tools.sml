@@ -784,7 +784,7 @@ struct
           val ls = lines (read (f "out"))
         in
           List.app (fn l => if String.isPrefix "FAIL " l then say (l ^ "\n") else ()) ls;
-          if code = 0 andalso List.length (List.filter (String.isPrefix "PASS ") ls) >= 19 then ()
+          if code = 0 andalso List.length (List.filter (String.isPrefix "PASS ") ls) >= 38 then ()
           else fail ("compiler.lint-rules: exit " ^ Int.toString code ^ ", " ^ Int.toString (List.length ls) ^ " lines: "
                      ^ firstLine (f "err"))
         end

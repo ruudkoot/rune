@@ -982,7 +982,7 @@ struct
         (* one program of the units' Mid, with the passes of a whole one *)
         let
           val () = refuseDynamic ()
-          val prog = Pass.stage {name = "midcanon", showIn = NONE, show = MidText.show, check = Pass.lintAt "midcanon" MidLint.check,
+          val prog = Pass.stage {name = "midcanon", showIn = NONE, show = MidText.show, check = Pass.lintAt "midconcat" MidLint.check,
                                  size = Mid.size}
                                 MidCanon.concat (List.rev (!mids))
           val () = Pass.whole := true
