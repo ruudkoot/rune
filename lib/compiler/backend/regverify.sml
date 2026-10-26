@@ -37,8 +37,10 @@
      type says (Prims.repsOf).
 
    It runs where the lint is on (Pass.linting), after the stage `registers`
-   (stage) and on every program Link makes (linked); RUNE_REGVERIFY=1 runs
-   it without the lint, 0 not at all, and census prints its counts.
+   (stage), each unit once when it is compiled: a link checks the units'
+   interfaces (Link.Mismatch), and checks the whole program it makes only
+   where RUNE_REGVERIFY_LINK says (linked), for tests. RUNE_REGVERIFY=1
+   runs it without the lint, 0 not at all, and census prints its counts.
    RUNE_REGVERIFY_INJECT corrupts the code Regs made, for its negative
    tests (inject). *)
 structure RegVerify =
@@ -790,7 +792,9 @@ struct
 
   (* site: where it runs ("registers", "link"); mode as verify's *)
   fun run (site : string, mode : string, p : C.program) : unit =
-    if not (on ()) orelse List.all (fn (f : C.func) => not (isSome (#meta f))) (#funcs p) then ()
+    if not (on ()) then () else report (site, mode, p)
+  and report (site : string, mode : string, p : C.program) : unit =
+    if List.all (fn (f : C.func) => not (isSome (#meta f))) (#funcs p) then ()
     else
       let
         val {breaches, messages, counts} = verify (mode, p)
@@ -807,7 +811,13 @@ struct
 
   (* the stage's check (Pass.stage's, under the lint), and the link's *)
   fun stage (p : C.program) = run ("registers", if !Pass.whole then "whole" else "unit", p)
-  fun linked (p : C.program) = run ("link", "linked", p)
+  (* the program a link makes, checked whole where RUNE_REGVERIFY_LINK is
+     set and not empty: each unit is checked when it is compiled, and the
+     link checks their interfaces (Link; the linting roadmap's M9) *)
+  fun linked (p : C.program) =
+    case OS.Process.getEnv "RUNE_REGVERIFY_LINK" of
+      SOME s => if s = "" then () else report ("link", "linked", p)
+    | NONE => ()
 
   (* ---- faults, for the negative tests of the check ----
      RUNE_REGVERIFY_INJECT=KIND or KIND@N corrupts the N-th place (from 0)
@@ -819,13 +829,22 @@ struct
        rep-read   int_add's first argument made a ptr register of the frame
        unset      the first INT dropped, whose register is read later
        noresult   the RESULT after a CALLK dropped
-       arity      a CALLK given one argument more
+       arity      a CALLK given one argument more (where it calls an import,
+                  what the unit expects of the import says so too)
        catch      a handler's CATCH dropped
        switch     the first JUMP of a SWITCH's table dropped
        env        ENV d e made ENV d (e + 7)
        pop        a POPHANDLER dropped
        image      a PRIMPUSH made a PRIM
-       closure    a CLOSURE made of a function of arity 2 *)
+       closure    a CLOSURE made of a function of arity 2
+     and, the code left as it is, what the unit expects of the units
+     before it (Code.expects), for the link's check of interfaces:
+       import-arg     each argument of each call of an import
+       import-result  each call's result
+       import-read    each global read *)
+  (* the switch is set: the code is not what compiling it gives, and
+     UnitCache does not store it *)
+  fun injecting () = case OS.Process.getEnv "RUNE_REGVERIFY_INJECT" of SOME s => s <> "" | NONE => false
   fun inject (p : C.program) : C.program =
     case OS.Process.getEnv "RUNE_REGVERIFY_INJECT" of
       NONE => p
@@ -838,6 +857,10 @@ struct
             | _ => (spec, 0)
           val seen = ref 0
           val did = ref ""
+          (* the function a CALLK given one argument more calls: where it is
+             an import, the unit expects it to take one more too, as a unit
+             compiled against another version of it would (Code.expects) *)
+          val widened : int option ref = ref NONE
           fun hit () = (seen := !seen + 1; !seen - 1 = nth)
           val intAdd = case Prims.find "int_add" of SOME (i, _) => i | NONE => ~1
           val arity2 = List.find (fn (f : C.func) => case #meta f of SOME {arity, ...} => arity = 2 | NONE => false) (#funcs p)
@@ -883,7 +906,8 @@ struct
                               then (note "RESULT dropped"; go (prev, rest)) else keep ()
                           | ("arity", SOME (opc, fid :: n :: a)) =>
                               if opc = R.CALLK andalso not (null a) andalso free andalso hit ()
-                              then (note "CALLK given one argument more"; C.Op (R.CALLK, fid :: (n + 1) :: a @ [hd a]) :: go (SOME it, rest))
+                              then (note "CALLK given one argument more"; widened := SOME fid;
+                                    C.Op (R.CALLK, fid :: (n + 1) :: a @ [hd a]) :: go (SOME it, rest))
                               else keep ()
                           | ("catch", SOME (opc, _)) =>
                               if opc = R.CATCH andalso free andalso hit () then (note "CATCH dropped"; go (prev, rest)) else keep ()
@@ -917,8 +941,25 @@ struct
                 in
                   {id = #id f, nlocals = #nlocals f, code = go (NONE, #code f), name = #name f, meta = SOME meta}
                 end
-          val p' = {consts = #consts p, nglobals = #nglobals p, funcs = List.map func (#funcs p), files = #files p,
-                    inlines = #inlines p, nlabels = #nlabels p, globalReps = #globalReps p}
+          val funcs = List.map func (#funcs p)
+          val {calls, reads} = #expects p
+          val calls = List.map (fn (c as (fid, n, masks, rm)) =>
+                                  if SOME fid = !widened then (fid, n + 1, masks @ [case masks of m :: _ => m | [] => 1], rm) else c)
+                               calls
+          (* the import-* kinds: only what the unit expects, each mask
+             made int's where it held no int, else ptr's *)
+          fun other m = if (m div 2) mod 2 = 1 then 64 else 2
+          val calls = case kind of
+                        "import-arg" => List.map (fn (fid, n, masks, rm) => (fid, n, List.map other masks, rm)) calls
+                      | "import-result" => List.map (fn (fid, n, masks, rm) => (fid, n, masks, other rm)) calls
+                      | _ => calls
+          val reads = if kind = "import-read" then List.map (fn m => if m = 0 then 0 else other m) reads else reads
+          val () = if (kind = "import-arg" orelse kind = "import-result") andalso not (null calls)
+                      orelse kind = "import-read" andalso List.exists (fn m => m <> 0) reads
+                   then did := "what the unit expects of its imports changed" else ()
+          val p' = {consts = #consts p, nglobals = #nglobals p, funcs = funcs, files = #files p,
+                    inlines = #inlines p, nlabels = #nlabels p, globalReps = #globalReps p,
+                    expects = {calls = calls, reads = reads}}
         in
           TextIO.output (TextIO.stdErr, "regverify inject " ^ spec ^ ": " ^ (if !did = "" then "no place found" else !did) ^ "\n");
           p'

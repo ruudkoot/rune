@@ -93,6 +93,35 @@ struct
   fun basisProbe file unit probe =
     rewrite file unit (fn (rest, (_, p, n)) =>
                          String.substring (rest, 0, p) ^ encoded (IntInf.fromInt (size probe)) ^ probe ^ String.extract (rest, n, NONE))
+  (* the schemes an entry keeps of what its code names of other units
+     (UnitCache.version 10), after its warnings, file, others, basis,
+     identity, code, Mid and mark -- by unit, the number and the text of
+     each -- each text edited: how many there are *)
+  fun schemes file edit =
+    let val (outer, usages, rest) = parse file
+        fun strings (0, at) = at | strings (n, at) = strings (n - 1, #2 (stringAt rest at))
+        val (warnings, at) = natural rest 0
+        val at = strings (IntInf.toInt warnings + 1, at)
+        val (others, at) = natural rest at
+        val at = strings (IntInf.toInt others * 2 + 4, at)
+        val (_, at) = natural rest at
+        val (count, start) = natural rest at
+        fun str x = encoded (IntInf.fromInt (size x)) ^ x
+        val found = ref 0
+        fun texts (0, at) = ("", at)
+          | texts (k, at) = let val (n, at) = natural rest at
+                                val (t, at) = stringAt rest at
+                                val (more, at) = texts (k - 1, at)
+                            in found := !found + 1; (encoded n ^ str (edit (n, t)) ^ more, at) end
+        fun units (0, at) = ("", at)
+          | units (k, at) = let val (u, at) = stringAt rest at
+                                val (n, at) = natural rest at
+                                val (ts, at) = texts (IntInf.toInt n, at)
+                                val (more, at) = units (k - 1, at)
+                            in (str u ^ encoded n ^ ts ^ more, at) end
+        val (tail, finish) = units (IntInf.toInt count, start)
+        val () = need (finish = size rest, "a cache entry with more after its schemes")
+    in publish file outer (usages ^ String.substring (rest, 0, at) ^ encoded count ^ tail); !found end
   fun command [old, new] = stale old new
     | command ("--basis-version" :: version :: unit :: files) =
         let val version = case IntInf.fromString version of SOME n => n | NONE => raise Invalid "invalid basis version"

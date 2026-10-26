@@ -832,9 +832,12 @@ middle end may ask of it):
 stack target.
 
 **`RegVerify`** (`lib/compiler/backend/regverify.sml`) checks the register
-code where the lint is on: after `registers`, and every program `Link` makes
-of units, those read back from the cache and from `.rbu` files included
-([plans/correctness/linting.md](plans/correctness/linting.md), M8). Its
+code where the lint is on: after `registers`, so each unit once, when it is
+compiled ([plans/correctness/linting.md](plans/correctness/linting.md), M8);
+a unit taken from the cache was checked when its entry was made, which the
+entry's mark says, and `Link` checks the units' interfaces against each
+other rather than the whole program again (M9; [units.md](units.md),
+*Linking*), which `RUNE_REGVERIFY_LINK` set and not empty asks for too. Its
 rules are the tables `runeisa` writes from `src/isa/regs.sml` (`RegCodes`:
 what each instruction reads and writes, what it leaves and takes, what
 must follow it, which primitives it names), what Lower declares of the
@@ -872,7 +875,9 @@ It checks `Regs` and `Link`, not that the code is safe for an untrusted
 `RUNE_REGVERIFY=1` runs it without the lint, `0` not at all, and `census`
 prints what it counted; `RUNE_REGVERIFY_INJECT=KIND` corrupts the code
 `Regs` made, before the check, in one of eleven ways, which its tests
-(`register/@regverify-*`) hold it to refusing.
+(`register/@regverify-*`) hold it to refusing, or in three more what the
+unit expects of its imports, which S78 of `tests/incremental/SCENARIOS.md`
+holds the link to refusing; a unit so made is not stored in the cache.
 
 ## Tests
 

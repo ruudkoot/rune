@@ -719,6 +719,12 @@ struct
                                    | NONE => []
                        val u = UnitBasis.remapKeys (u, remap)
                        val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
+                       (* the schemes of what it names of other units, as its
+                          compile had them, against those units now, where it
+                          holds by their identities *)
+                       val () = if List.null remap then Option.app (fn k => raise UnitBasis.SchemeChanged k)
+                                                                   (UnitBasis.schemesHold (#schemes e))
+                                else ()
                        val l = timed "cache-basis" (fn () => UnitBasis.loadKnown ({pickle = pickle, file = name, at = at},
                                                                                    SOME identity, remap))
                        (* its source, and those of the functors' bodies it
@@ -740,6 +746,8 @@ struct
                          | Pickle.Bad why => (UnitBasis.abandon at; (Miss ("a damaged entry: " ^ why), NONE))
                          | UnitFile.Bad why => (UnitBasis.abandon at; (Miss ("a damaged entry: " ^ why), NONE))
                          | UnitBasis.Missing u => (UnitBasis.abandon at; (Miss ("its entry names " ^ u), NONE))
+                         | UnitBasis.SchemeChanged k =>
+                             (UnitBasis.abandon at; (Miss ("its entry had another scheme of " ^ k ^ " than its unit has"), NONE))
                   end
             end
           fun bindHit (l, u, pickle, {warnings, ...} : UnitCache.entry) =
@@ -839,7 +847,8 @@ struct
                      UnitCache.store (dir, config, k,
                                       {usages = usages, warnings = warnings, file = name,
                                        others = UnitBasis.sourcesOf (code, name), pickle = #pickle exported,
-                                       identity = #identity exported, code = bytes, mid = midBytes}))
+                                       identity = #identity exported, code = bytes, mid = midBytes,
+                                       level = UnitCache.level (), schemes = UnitBasis.importedSchemes code}))
                | _ => ());
               (code, keptPickle (#pickle exported)) :: acc
             end
@@ -1223,6 +1232,9 @@ struct
      else compile ())
     handle BasisManifest.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Options.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
+         (* units whose interfaces do not fit at the link, which unit files
+            from other compiles can be (Link.Mismatch) *)
+         | Link.Mismatch msg => (eprintln ("rune: the units do not fit together: " ^ msg); OS.Process.failure)
          | Error.CompileError (sp, msg) => (eprintln (!Error.show ("error", sp, msg)); Error.note ("error", sp, msg); OS.Process.failure)
          | Reported => OS.Process.failure
          | Error.Bug msg => (eprintln ("rune: " ^ msg); OS.Process.failure)

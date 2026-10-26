@@ -201,6 +201,28 @@ one of them is ever on the stack: the trace of an uncaught exception shows
 one `<toplevel>` frame, at the declaration that raised it, as the program
 compiled whole does.
 
+**The interfaces** (the linting roadmap's D15 and M9). A unit's register
+code says what it expects of the units before it (`Code.expects`, which
+`Regs` gathers): for each function of another unit it calls, how many
+arguments it passes, the representations of each and the representation
+it takes the result as; for each global it reads, the representation it
+reads it as. The link holds each against what the unit that defines the
+function or global declares (its `Code.meta`, and the unit's `globalReps`),
+once every unit is in, in time linear in the imports: an arity that is
+not the callee's, or a representation that does not fit the declared one
+(one is the other's, under RegVerify's order), and the units do not fit
+together -- `rune` fails with "the units do not fit together:" and up to
+three of them (`Link.Mismatch`), and the compiler library's
+`Session.writeProgram` raises `Fail` with the same. Each unit's code was
+checked whole when it was compiled (`RegVerify`; [ir.md](ir.md), *The
+register target*), so this is what is left to check of the program; the
+check of the whole linked program is there for tests, where
+`RUNE_REGVERIFY_LINK` is set and not empty, and `RUNE_LINK_CHECK=0` leaves
+the interfaces out, to measure them. A unit file keeps what its unit
+expects (version 4), so a unit relinked from its file against another
+build of an import is held to it too (S78 of
+`tests/incremental/SCENARIOS.md`). The stack code expects nothing.
+
 ## Unit files
 
 `rune --units --emit-units DIR FILE...` writes each unit's file into
@@ -343,6 +365,21 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   rather than the link finding nothing to take the name from;
 * an entry keeps the warnings its compile gave, which a compile that takes
   it from the cache gives again;
+* an entry is marked with the level of the lint its compile ran
+  (`UnitCache.level`: 2 where the lint is on, `--lint` or `RUNE_LINT`, else
+  0), its Mid linted and its register code verified at that level; a
+  compile takes an entry of its own level or above without checking it
+  again, and to a compile with the lint an entry made without it is no
+  entry ("its entry was not checked by the lint"): the unit is compiled
+  again, checked, and stored marked where the cache can be written (S79;
+  the linting roadmap's M9);
+* an entry keeps the schemes of what its code names of other units, as
+  text (`UnitBasis.importedSchemes`), and where its usages hold by their
+  binders each is held to the scheme the unit there now has when the entry
+  is taken, a cheap check of what the binders say: one that differs is no
+  entry, and the unit is compiled ("its entry had another scheme of ...");
+  where usages hold by fingerprint, the fingerprints are of the schemes
+  already;
 * an entry is one file, its usages, warnings, basis, the basis's identity
   (which loading takes from it rather than hashing the basis again) and
   code with the hash of them, written under a name of its own and renamed
@@ -443,7 +480,8 @@ compiler library's Unicode and JSON dependencies, for each bytecode, into
 compile reads it after its own cache and never writes it, so that a
 program's first compile takes the Basis Library's units from there where
 their usages hold, which they do but for the seals of structures the
-program does not name.
+program does not name. It is made with the lint (`--lint`), so its entries
+are marked and a compile with the lint takes them too.
 
 The public [compiler library](lib/compiler/README.md) writes units with
 `.rbi` checked-basis, `.rbm` Mid and `.rbs` source companions. The source

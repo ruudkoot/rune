@@ -40,11 +40,22 @@ struct
                result : int, captures : int list}
   type func = {id : int, nlocals : int, code : item list, name : string, meta : meta option}
 
+  (* What a unit's code expects of the units before it, which the link
+     holds them to (the register target's; empty where not): of each
+     function it calls and has not -- an import, by its index here -- how
+     many arguments it passes, the representations it passes at each place
+     and those it takes the result as; of each global, the representations
+     it reads it as (nglobals of them, or none). A representation set is a
+     mask, bit r for Low.repCode r. *)
+  type expects = {calls : (int * int * int list * int) list, reads : int list}
+  val expectsNothing : expects = {calls = [], reads = []}
+
   (* nlabels: the labels of the program are numbered from 0 up to it;
      globalReps: what each global holds, as Lower declares it (Low.repCode,
      nglobals of them), where the register target says ([] where not). *)
   type program = {consts : const list, nglobals : int, funcs : func list, files : string list,
-                  inlines : (string * int * int * int * int) list, nlabels : int, globalReps : int list}
+                  inlines : (string * int * int * int * int) list, nlabels : int, globalReps : int list,
+                  expects : expects}
 
   (* ---------------------------------------------------------------- *)
   (* The tables of the program being made.                              *)

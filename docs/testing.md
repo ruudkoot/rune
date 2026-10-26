@@ -76,8 +76,11 @@ does ([ir.md](ir.md), *Options*), and stop at the first breach, which is a
 bug of the compiler. That includes the check of the register code
 (`RegVerify`, [ir.md](ir.md), *The register target*), whose own negative
 tests are `register/@regverify-*`: the eleven corruptions its switch
-`RUNE_REGVERIFY_INJECT` makes, each refused with its own message.
-`RUNE_LINT=` (empty) runs the tests without it. The
+`RUNE_REGVERIFY_INJECT` makes, each refused with its own message; the
+link's check of the units' interfaces is held to its refusals by S78 of
+`tests/incremental/SCENARIOS.md`, and a compile with the lint takes from a
+cache only the entries the lint checked (S79; [units.md](units.md), *The
+cache*). `RUNE_LINT=` (empty) runs the tests without it. The
 budgets (`bin/rune-budget`) count the compiler as it is shipped, and clear
 it for what they count.
 

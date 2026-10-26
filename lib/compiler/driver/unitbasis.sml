@@ -37,6 +37,9 @@ struct
 
   (* a pickle that names a unit the session has not loaded *)
   exception Missing of string
+  (* the scheme of a global a unit taken from the cache names is another than
+     its compile had (importedSchemes, schemesHold) *)
+  exception SchemeChanged of string
 
   val version = 12
   val magic = "RBI"
@@ -127,6 +130,10 @@ struct
   (* each loaded unit's signatures, by its identity and their names *)
   val unitSigs : SigMatch.sigma StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("UnitBasis.unitSigs", unitSigs)
+  (* the text of a global's scheme (schemeText), by its stamp, once worked
+     out in a session *)
+  val schemeMemo : string option IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.schemeMemo", schemeMemo)
 
   (* a session of units begins: in the driver, the REPL and the compiler
      library alike, whose units' Mid the lint checks against the schemes of
@@ -134,7 +141,7 @@ struct
   fun startSession () =
     (units := []; byIdentity := StringMap.empty; builtin := counters ();
      Array.modify (fn _ => Vector.fromList []) ranges; tvars := IntTable.table 1024; binders := StringMap.empty;
-     fpMemo := StringMap.empty; refMemo := StringMap.empty; unitSigs := StringMap.empty;
+     fpMemo := StringMap.empty; refMemo := StringMap.empty; unitSigs := StringMap.empty; schemeMemo := IntMap.empty;
      MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE))
 
   fun binderOf (key : string) : string = case StringMap.find (!binders, key) of SOME i => i | NONE => ""
@@ -1034,6 +1041,90 @@ struct
       fun here ({unit, ...} : Link.key) =
         unit = #unit Link.nextKey orelse unit = #identity u orelse isSome (StringMap.find (!byIdentity, unit))
     in Option.map #unit (List.find (not o here) (List.map #1 (#globals u) @ List.map #2 (#imports u))) end
+
+  (* The schemes of the globals of other units a unit's code names -- the
+     values it reads and the functions it calls -- as the session has them,
+     by the unit and the number of each, in a text whose type names are
+     stable from session to session (stableName): what its compile
+     had, which a cache entry keeps (UnitCache), and what a compile that
+     takes the entry holds the units it names now to (schemesHold). A free
+     type variable of the top level is written "_", its id being the
+     session's. *)
+  fun schemeText (s : int) : string option =
+    case IntMap.find (!schemeMemo, s) of
+      SOME t => t
+    | NONE => let val t = schemeTextOf s in schemeMemo := IntMap.insert (!schemeMemo, s, t); t end
+  and schemeTextOf (s : int) : string option =
+    (let
+       val (gens, t) = ToMid.globalScheme s
+       fun gen i =
+         let fun go (_, []) = "?" | go (k, g :: rest) = if g = i then Int.toString k else go (k + 1, rest)
+         in go (0, gens) end
+       (* stableName's, by the ranges *)
+       fun tycon (c, n) =
+         if c < Vector.sub (!builtin, kTycon) then "b" ^ Int.toString c
+         else case rangeOf (kTycon, c) of
+                SOME (b, {identity, ...}) => identity ^ "#" ^ Int.toString (c - b)
+              | NONE => "?" ^ n
+       (* the text's pieces, last first *)
+       fun ty (t, acc) =
+         case Ty.view t of
+           Ty.Gen i => gen i :: "'" :: acc
+         | Ty.Var _ => "_" :: acc
+         | Ty.Con (c, n, []) => tycon (c, n) :: acc
+         | Ty.Con (c, n, args) => ")" :: list (args, "(" :: tycon (c, n) :: acc)
+         | Ty.Tuple ts => "}" :: list (ts, "{" :: acc)
+         | Ty.Arrow (a, b) => ")" :: ty (b, "->" :: ty (a, "(" :: acc))
+         | Ty.ExnCon => "exn" :: acc
+       and list ([], acc) = acc
+         | list ([t], acc) = ty (t, acc)
+         | list (t :: ts, acc) = list (ts, "," :: ty (t, acc))
+     in SOME (String.concat (List.rev (ty (t, [])))) end)
+    handle Error.Bug _ => NONE
+
+  fun keyText ({unit, number} : Link.key) : string = unit ^ "#" ^ Int.toString number
+
+  (* by unit, its identity and the number and scheme of each of its globals
+     the code names, in the order of the identities and the numbers *)
+  fun importedSchemes (u : Link.unitCode) : (string * (int * string) list) list =
+    let
+      val named =
+        List.foldl (fn ({unit, number} : Link.key, m) =>
+                      if unit = "" orelse unit = #identity u orelse number < 0 then m
+                      else StringMap.insert (m, unit, IntMap.insert (case StringMap.find (m, unit) of SOME ns => ns | NONE => IntMap.empty,
+                                                                     number, ())))
+                   StringMap.empty (List.map #1 (#globals u) @ List.map #2 (#imports u))
+    in
+      StringMap.foldri (fn (unit, ns, acc) =>
+                          case StringMap.find (!byIdentity, unit) of
+                            NONE => acc
+                          | SOME ({base, ...} : loaded) =>
+                              let val b = Vector.sub (base, kStamp)
+                              in (unit, IntMap.foldri (fn (n, (), acc) =>
+                                                         case schemeText (b + n) of SOME t => (n, t) :: acc | NONE => acc)
+                                                      [] ns) :: acc
+                              end)
+                       [] named
+    end
+
+  (* the first of what an entry's compile had that the units of the session
+     say otherwise of now, if one, by its key; checked where the entry holds
+     by its binders, its keys naming the units it was compiled against. A
+     unit not in the session is what absent says *)
+  fun schemesHold (us : (string * (int * string) list) list) : string option =
+    let
+      fun inUnit (unit, ns) =
+        case StringMap.find (!byIdentity, unit) of
+          NONE => NONE
+        | SOME ({base, ...} : loaded) =>
+            let val b = Vector.sub (base, kStamp)
+            in
+              Option.map (fn (n, _) => keyText {unit = unit, number = n})
+                         (List.find (fn (n, t) => case schemeText (b + n) of SOME t' => t' <> t | NONE => false) ns)
+            end
+      fun go [] = NONE
+        | go (x :: rest) = case inUnit x of NONE => go rest | some => some
+    in go us end
 
   (* The files a unit's code names other than file, its own, which are the
      sources of units of the session -- the bodies of the functors marked to

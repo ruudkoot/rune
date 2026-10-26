@@ -202,6 +202,47 @@ struct
                  check s "the build did not say the cache's hash differs"
                    (String.isSubstring "holds entries made by a compiler whose hash differs" (#errors (!(#result s)))))
     | "S73" => (c "a.sml b.sml c.sml"; b [] "a.sml b.sml c.sml"; f "a.sml" 1; f "b.sml" 1; b [] "a.sml b.sml")
+    | "S78" => (c "a.sml b.sml"; b [] "a.sml b.sml"; prints s "10";
+                 (* b.sml compiled again as against another a.sml
+                    (RUNE_REGVERIFY_INJECT): calling A.add with one argument
+                    more, or expecting other representations of A.add's
+                    argument or result or of A.r. The link refuses each, and
+                    says why; the unit is not stored *)
+                 f "b.sml" 1;
+                 List.app (fn (kind, whys) =>
+                             let val () = #environment s := [("RUNE_REGVERIFY_INJECT", kind)]
+                                 val () = build s []
+                                 val errors = #errors (!(#result s))
+                             in fails s;
+                                check s (kind ^ ": the link did not say why the units do not fit: " ^ errors)
+                                  (List.all (fn why => String.isSubstring why errors) ("rune: the units do not fit together: " :: whys))
+                             end)
+                          [("arity", ["calls A.add (a.sml@", "'s function 0) with 2 arguments, where it takes 1"]),
+                           ("import-arg", ["calls A.add (a.sml@", "with int for its argument 0, where it takes ptr"]),
+                           ("import-result", ["and takes its result as ptr, where it returns int"]),
+                           ("import-read", ["reads a.sml@", "'s global 1 as int, where it holds ptr"])];
+                 #environment s := []; b [] "b.sml"; prints s "12")
+    | "S79" => (c "a.sml b.sml";
+                 (* built without the lint: its entries are not marked
+                    checked, and a build with the lint compiles both again
+                    and marks them; then takes them *)
+                 #environment s := [("RUNE_LINT", "")]; build s [];
+                 check s "expected a successful build" (#status (!(#result s)) = 0);
+                 #environment s := []; b [] "a.sml b.sml";
+                 check s ("the build did not say the entries were not checked: " ^ #errors (!(#result s)))
+                   (String.isSubstring "b.sml: its entry was not checked by the lint" (#errors (!(#result s))));
+                 b [] "";
+                 #environment s := [("RUNE_LINT", "")]; b [] ""; #environment s := [])
+    | "S80" => (c "a.sml b.sml"; b [] "a.sml b.sml";
+                 (* b.sml's entry made to say what it names of other units
+                    had other schemes: it is no entry, and b.sml is compiled
+                    again *)
+                 check s "b.sml's entry keeps no scheme"
+                   (CachePlant.schemes (only (selectedEntry s "b.sml")) (fn (_, t) => t ^ "!") > 0);
+                 b [] "b.sml";
+                 check s ("the build did not say the schemes differ: " ^ #errors (!(#result s)))
+                   (String.isSubstring "b.sml: its entry had another scheme of " (#errors (!(#result s))));
+                 b [] "")
     | _ => raise Failed ("not a simple scenario: " ^ #name s)
     end
 end

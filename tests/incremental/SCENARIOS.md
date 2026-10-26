@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S77. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S80. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
@@ -357,6 +357,32 @@ when the scenarios above were all green
   a build without the cache does; then `u.sml` gains `y`, and it alone is
   compiled. Were the reference to tell `ELT`'s change apart no better than
   its name, `u.sml` would be taken from the cache and the build succeed.
+* **S78, a unit linked against an import that changed.** `b.sml` calls
+  `a.sml`'s `A.add` and reads its `A.r`. Built, then `b.sml` edited and
+  compiled again as against another `a.sml`, by `RUNE_REGVERIFY_INJECT`:
+  `arity` has its code call `A.add` with one argument more, and what the
+  unit expects of its imports say so; `import-arg`, `import-result` and
+  `import-read` leave the code and make it expect an int for `A.add`'s
+  argument, a ptr for its result and an int for `A.r`. The link fails
+  each, "rune: the units do not fit together: b.sml@... calls A.add
+  (a.sml@...'s function 0) with 2 arguments, where it takes 1", "... with
+  int for its argument 0, where it takes ptr", "... and takes its result
+  as ptr, where it returns int", "... reads a.sml@...'s global 1 as int,
+  where it holds ptr" (linting M9); the units are not stored. Built
+  again without the switch, `b.sml` is compiled and the program prints
+  12. Before, each was linked as the code had it, and ran.
+* **S79, an entry made without the lint.** The project built with
+  `RUNE_LINT` empty, then with the lint: both units are compiled again,
+  "its entry was not checked by the lint", and stored marked; built again
+  with the lint and then without, each takes them all (linting M9).
+* **S80, an entry whose schemes are not its units'.** Built, then `b.sml`'s
+  entry made to say that each value it names of another unit had another
+  scheme (`CachePlant.schemes`): its usages hold by their binders, and the
+  schemes do not, so it is no entry, "its entry had another scheme of
+  ... than its unit has", and `b.sml` is compiled; then taken (linting
+  M9). A unit's identity is the hash of its basis, so an entry of the
+  binders it holds by can differ so only where the cache or the hash
+  failed.
 * **S59, one unit in two sessions.** `c.sml` uses `a.sml` and `b.sml`,
   which do not use each other. Built after them in one order and then in
   the other through one cache, `c.sml`'s entry is taken, and compiled

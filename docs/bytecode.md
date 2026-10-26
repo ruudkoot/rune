@@ -163,7 +163,7 @@ check-units`).
 
 ```
 magic       4 bytes   "RUNU"
-version     u32       3
+version     u32       4
 fingerprint u32       of the instruction set its code is of
 kind        u32       0: bytecode of that set (native code later)
 identity    len u32, bytes   the unit's identity (below)
@@ -183,15 +183,24 @@ declared    ndeclared × { result u8, ncaptures u32, captures ncaptures × u8 }
                       what each function returns and each slot of its closures holds
 nglobalreps u32       nglobals for the register bytecode, else 0
 globalreps  nglobalreps × u8   what each global it names holds, where the unit sets it
+ncalls      u32       the functions of other units it calls
+calls       ncalls × { index u32, arity i32, nmasks u32, masks nmasks × u32, result u32 }
+                      by its index here: the arguments it passes (-1: calls of two arities),
+                      the representations of each and of what it takes the result as
+nreads      u32       nglobals for the register bytecode, else 0
+reads       nreads × u32   the representations it reads each global it names as
 key         { place u32, number i32 }   a unit's place among those named, 0 being the unit itself,
                                         and the name's number there
 ```
 
 What the unit *declares*, from Lower (version 3), is for the check of the
-register code at the link (`RegVerify`; [ir.md](ir.md), *The register
-target*): representations by the numbers of *The representations* below,
-`0` where nothing is said, as for a global another unit sets. A program's
-file has none of it.
+register code (`RegVerify`; [ir.md](ir.md), *The register target*):
+representations by the numbers of *The representations* below, `0` where
+nothing is said, as for a global another unit sets. What it *expects*
+(version 4) is for the link's check of the interfaces
+([units.md](units.md), *Linking*): a mask has bit `r` set for each
+representation `r` it was seen at, `0` where none was. A program's file has
+none of it; the VM's loader skips both.
 
 A unit names what units declared by a *key*: the identity of the unit that
 declared it and the number the unit's basis gave it
