@@ -84,7 +84,7 @@ What it rests on:
 | M8 | Nested functors that do not blow up | F | done (2026-10-25) |
 | M9 | Retire | | done (2026-10-25) |
 | M10 | Small functions inlined across units; `--inline-functor` retired | F | done (2026-10-26) |
-| M11 | Shared summaries, measured, and built where they gain | H | added (the owner, 2026-10-26); E12 measured: parts 1 and 2 pass their thresholds; part 1 built (2026-10-26); part 2 waits for M10 |
+| M11 | Shared summaries, measured, and built where they gain | H | done (2026-10-26): E12 measured, parts 1 and 2 built; G1 at 1.6 |
 
 The owner decided D1 to D17 on 2026-10-21, each as recommended
 (*Decisions*). D1's functors compiled once wait on gate G2, which stays the
@@ -104,7 +104,8 @@ The tracks do not wait for each other:
 M0 to M9 are done (2026-10-25). This section gathers what a later review
 needs: the last checks, the bugs found and where they went, and what is
 left open. The owner then added M10 and M11 (2026-10-26; *The
-milestones*), which take up two of the items left open. The campaign's logs, scripts and raw results are in the drafts
+milestones*), which take up two of the items left open; M11 closed
+on 2026-10-26 with G1 at 1.59 in instructions (*M11*). The campaign's logs, scripts and raw results are in the drafts
 (`~/.cache/claude-rune-drafts/functors-units`, `impl/` and `results/`).
 
 ### The last checks
@@ -4057,6 +4058,88 @@ signatures). `UnitCache.version` is 9, and `docs/units.md`'s
     110.8 s, load 3.6) and 1.55 (78.0 s and 121.1 s, load 6.5).
   - In cycles: 1.74 and 1.69.
   - G1 is not met; part 2's bases are the next of it.
+
+**Part 2, built** (2026-10-26, `155c13008` and `871d40f04`), by the
+lead's word once M10 had landed, in `unitbasis.sml`'s basis writer and
+reader (`UnitBasis.version` 14; `docs/units.md`, *The export basis*;
+`docs/bytecode.md`):
+- **What it writes:** in a unit's signatures and functors, an
+  environment that is a structure of a signature written before, renamed,
+  is a reference. It gives the signature by its unit (an earlier one, or
+  this one, whose signatures come before its functors) and its name, the
+  path in it, and the renaming: the image of each of the structure's own
+  type names, and its values' stamps and whether they are global, each a
+  byte where they are the structure's own.
+- **How it finds one:** by part 1's walk, never by content. A structure
+  of an earlier unit's signature is found by the path its first value's
+  stamp has there. One of this unit's own signatures written before is
+  found by its first value's stamp. A functor's result is looked up among
+  the structures its parameter is written as references to.
+  - The check (`renaming`) is stricter than part 1's: reading the
+    structure's names again must make the environment. That means the same
+    type variables and type names but the structure's own, the same
+    constructors and exceptions, and no origins.
+  - The structures a unit declares are written whole: E12 found 0.2 MB of
+    them written before.
+- **By name and path, not by number:** the reader finds the signature
+  among its unit's, or among this basis's read before. A number would
+  need a table of every environment each basis wrote.
+- **Remapping:** a unit loaded in another's place reads a reference into
+  that unit's signature by paths, as it reads every other name of it. The
+  entry is taken only where its usages hold, and the structure is in what
+  one of them names, so it is the same but for its names. A first version
+  made such a reference a miss instead; S3, S4, S5, S9 and S10 then
+  compiled `c.sml`, whose functor's parameter is `a.sml`'s `SHAPE`.
+- **What it reads:** a reference is made from a template of the
+  structure, made once a session: each of its distinct types, which of
+  them name its own type names, and the type at each place. Each
+  reference realises each type once and shares the rest with the
+  structure. The first reader realised every type at each place. Then
+  MLton's build in units held 3.2 GB at its end where M10's held 1.9 GB,
+  and loaded in twice M10's time with a table to share the types it made.
+  It now peaks at 3.19 GB live, M10's 3.20 GB.
+- **The gate**, on the final code:
+  - the soundness checker, M10 against part 2: 95 pairs of states, 61,781
+    usages, and over the nested project 2,467 usages; no violation and no
+    refinement;
+  - the scenarios, the tester, the faults and the soundness tests, 77 of
+    77. S79 is new: a signature's structures by reference to another
+    signature of its own unit;
+  - `tests/units`, the units scenarios, the REPL's, the compiler's and the
+    flexible records' tests;
+  - `lib/compiler`'s and `low-level/compiler-api` (the library reads
+    bases), and `make/test-compiler-state` (every table part 2 keeps is a
+    root);
+  - MLton's S44 to S48: cold 606, warm 0, S45 1, S46 1, S47 236, S48 1, as
+    at M7, and the last warm build the bytes of one without the cache;
+  - HOL4 through the cache with `RUNE_VERIFY_CACHE=1`, a fresh clone of
+    HOL-m3 to `hol.state` (`scripts/p2b-hol.sh`): 691 s at a load of 18,
+    no entry differs;
+  - MLton's 606 files compiled by part 2 and by M10 (`d2371dd6b`), MLton's
+    build of each: the same bytes, once the units' identities (the hashes
+    of their bases) and the compiler's in each provenance are masked.
+- **Measured** (MLton's 606 files at tier 2, `scripts/p2-measure.sh`,
+  pinned, loads 9 to 22; the other session's runs held the load at 10 to
+  20 all morning):
+  - the bases are 22.3 MB, from 222.0 MB (−90%). E12 predicted 15.5 to
+    19.0 MB: the structures a unit declares are written whole, and a
+    functor's result is looked up in its parameter alone;
+  - the build takes 443.75G instructions, from M10's 609.0G (−27%), the
+    same to 0.01% in three runs;
+  - export and load take 48.6 s (29.4 and 19.2) at a load of 18, from M10's
+    95.6 s (75.0 and 20.6) at 20: −49%. At a load of 11 they take 29.6 to
+    32.7 s.
+- **G1 again:** the whole compile is 278.5G instructions, so a build in
+  units costs 1.59 times a whole compile in instructions, from 2.40 at
+  BASE and 2.18 after part 1.
+  - In processor time, whole then units: 1.60 (69.4 s and 110.9 s, loads
+    11 to 16) and 1.46 (83.0 s and 121.5 s, 15 and 11).
+  - In cycles: 1.62 and 1.54.
+  - G1's 1.5 is not met, by about a tenth.
+
+**M11 closed** (2026-10-26): E12 is written down, both parts are built
+by their thresholds, and G1 is measured again: 1.59 in instructions,
+from 2.41 when M11 was added.
 
 ### Later
 

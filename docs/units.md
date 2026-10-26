@@ -134,7 +134,27 @@ depends on it by the usage `inlv NAME`. The tables give each instance of a body'
 the body fixed (`Ty.pinned`), unless the unit expanded the application
 that named it (an application of a functor the unit declares or marks,
 *The expansion* in [ir.md](ir.md)), whose instance is laid out from its
-realised types. Until functors-units' M7 a functor's body was parsed
+realised types.
+
+In a unit's signatures and functors, an environment that is a structure
+of a signature written before, renamed, is a reference to it
+(functors-units' M11; `UnitBasis.version` 14). The reference gives the
+signature by its unit -- an earlier one, or this one, whose signatures
+come before its functors -- and its name, the path in it, and the
+renaming: the image of each of the structure's own type names, and its
+values' stamps and whether they are global where they are not the
+structure's own. The structure is found as a fingerprint finds one it
+names by reference (*Fingerprints*, below), or among the unit's own
+signatures written before by its first value's stamp; a functor's
+result, among the structures its parameter is written as references to.
+A walk checks that reading the structure's names again makes the
+environment -- the same type variables and type names but the
+structure's own, the same constructors and exceptions -- and where it
+does not, the environment is written whole. MLton's bases are 22 MB,
+from 222 MB. A unit loaded against another of the same name (below)
+reads a reference into that unit's signature, as it reads its other
+names, by their paths: its usages hold, so the structure is the same but
+for its names. Until functors-units' M7 a functor's body was parsed
 again from the source on loading, and elaborated again by each unit that
 applied it, which then depended on the unit that declared it and on what
 the body's names were bound to.
