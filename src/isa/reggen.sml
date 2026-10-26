@@ -13,10 +13,14 @@ struct
   val generated = IsaGen.generated
 
   (* The kinds of a register operand, as the VM numbers them: those of the
-     stack bytecode, then a register. A list is described apart. *)
-  val kinds = List.map K Isa.kinds @ [Register]
-  fun kindName k = case k of K k => Isa.kindName k | Register => "REGISTER" | _ => "LIST"
-  fun kindNumber k = #1 (valOf (List.find (fn (_, k') => k' = k) (numbered kinds)))
+     stack bytecode, then a register, read or written. A list is described
+     apart. *)
+  val kindNames = List.map Isa.kindName Isa.kinds @ ["REGISTER"]
+  fun kindName k = case k of K k => Isa.kindName k | Reads _ => "REGISTER" | Writes _ => "REGISTER" | _ => "LIST"
+  fun kindNumber k =
+    case k of
+      K k => #1 (valOf (List.find (fn (_, k') => k' = k) (numbered Isa.kinds)))
+    | _ => List.length Isa.kinds
 
   (* ---- the fingerprint, of everything that says what a bytecode of it
      means, as the stack bytecode's is ---- *)
@@ -24,7 +28,7 @@ struct
     let
       fun kind k =
         case k of
-          Registers i => "regs" ^ Int.toString i
+          Registers (i, _) => "regs" ^ Int.toString i
         | PrimArgs i => "args" ^ Int.toString i
         | _ => kindName k
       fun flowName f =
@@ -50,7 +54,7 @@ struct
       val is = numbered instrs
       fun listOf (i : rinstruction) =
         case list i of
-          SOME (_, Registers k) => (Int.toString k, "0")
+          SOME (_, Registers (k, _)) => (Int.toString k, "0")
         | SOME (_, PrimArgs k) => (Int.toString k, "1")
         | _ => ("-1", "0")
     in
@@ -90,7 +94,7 @@ struct
                "   loader accepts for it: the kinds of the stack bytecode and a",
                "   register. */",
                "enum RegOperandKind {"]
-            @ List.map (fn (k, kind) => "  RK_" ^ kindName kind ^ " = " ^ Int.toString k ^ ",") (numbered kinds)
+            @ List.map (fn (k, name) => "  RK_" ^ name ^ " = " ^ Int.toString k ^ ",") (numbered kindNames)
             @ ["};",
                "",
                "/* The kind of each operand before the list, by position; 0 past the last. */",
@@ -129,7 +133,8 @@ struct
             @ List.map (fn (_, i : rinstruction) =>
                           let
                             fun find (_, []) = "-1"
-                              | find (k, (name, _) :: rest) = if name = "d" then Int.toString k else find (k + 1, rest)
+                              | find (k, (_, Writes _) :: _) = Int.toString k
+                              | find (k, _ :: rest) = find (k + 1, rest)
                           in
                             "  " ^ find (0, #operands i) ^ ","
                           end) is
@@ -188,7 +193,7 @@ struct
                              val len = Int.toString (1 + 4 * nf)
                              val listReads =
                                case list i of
-                                 SOME (_, Registers k) =>
+                                 SOME (_, Registers (k, _)) =>
                                    ["const uint8_t *L = code + pc + " ^ len ^ ";",
                                     "uint32_t n = (uint32_t)" ^ List.nth (letters, k) ^ ";"]
                                | SOME (_, PrimArgs k) =>
@@ -228,7 +233,7 @@ struct
                              val len = Int.toString (1 + 4 * nf)
                              val (listReads, advance) =
                                case list i of
-                                 SOME (_, Registers k) =>
+                                 SOME (_, Registers (k, _)) =>
                                    (["const uint8_t *L = code + pc + " ^ len ^ ";",
                                      "uint32_t n = (uint32_t)" ^ List.nth (letters, k) ^ ";"],
                                     "pc += " ^ len ^ " + 4 * n;")
@@ -315,7 +320,131 @@ struct
                                 (numbered (#operands i))
     in "[" ^ commaList ops ^ "]" end
 
-  fun regcodesSml (instrs : rinstruction list, fp : int) : file =
+  (* ---- what a checker of the code needs (docs/plans/correctness/linting.md,
+     D10), which RegCodes carries beside the encoding: none of it is in the
+     fingerprint, since none of it changes what a bytecode means ---- *)
+
+  (* the opcode of an instruction, by its name *)
+  fun opcodeOf (instrs : rinstruction list, name : string) : int =
+    case List.find (fn (_, i : rinstruction) => #name i = name) (numbered instrs) of
+      SOME (n, _) => n
+    | NONE => raise Bad ("no register instruction " ^ name)
+
+  (* a value, its operands by position *)
+  fun valueText (i : rinstruction) (v : value) : string =
+    let
+      fun at l = case operand (i, l) of SOME (k, _) => Int.toString k | NONE => raise Bad ("register instruction " ^ #name i ^ " has no operand " ^ l)
+      fun rep r = Int.toString (repCode r)
+    in
+      case v of
+        Is r => "Is " ^ rep r
+      | Like x => "Like " ^ at x
+      | ConstOf x => "ConstOf " ^ at x
+      | GlobalOf x => "GlobalOf " ^ at x
+      | EnvOf x => "EnvOf " ^ at x
+      | SlotOf (c, e) => "SlotOf (" ^ at c ^ ", " ^ at e ^ ")"
+      | ResultOf x => "ResultOf " ^ at x
+      | ReturnOf x => "ReturnOf " ^ at x
+      | Returned => "Returned"
+      | Left => "Left"
+      | UnitOr (x, r) => "UnitOr (" ^ at x ^ ", " ^ rep r ^ ")"
+      | ParamsOf x => "ParamsOf " ^ at x
+      | CapturesOf x => "CapturesOf " ^ at x
+    end
+
+  fun flowName f =
+    case f of
+      Next => "Next" | Branch => "Branch" | Jump => "Jump" | Call => "Call" | TailCall => "TailCall"
+    | Return => "Return" | Raise => "Raise" | Halt => "Halt" | Switch => "Switch"
+
+  (* one opcode's entry a line, each named *)
+  fun perOpcode (instrs : rinstruction list) (header : string, entry : rinstruction -> string) : string list =
+    let val n = List.length instrs
+    in
+      ("  val " ^ header ^ " = Vector.fromList")
+      :: List.map (fn (k, i : rinstruction) =>
+                     (if k = 0 then "    [" else "     ") ^ "(* " ^ #name i ^ " *) " ^ entry i ^ (if k = n - 1 then "]" else ","))
+                  (numbered instrs)
+    end
+
+  fun checkerTables (instrs : rinstruction list, prims : primitive list) : string list =
+    let
+      val table = perOpcode instrs
+      fun paren s = if CharVector.exists (fn c => c = #" ") s then "(" ^ s ^ ")" else s
+      fun role i (_, k) =
+        case k of
+          Reads v => "Reads " ^ paren (valueText i v)
+        | Writes v => "Writes " ^ paren (valueText i v)
+        | _ => "Other"
+      fun pos i l = case operand (i, l) of SOME (k, _) => Int.toString k | NONE => raise Bad ("register instruction " ^ #name i ^ " has no operand " ^ l)
+      fun implicitText i x =
+        case x of
+          PushesArgs => "PushesArgs"
+        | Leaves v => "Leaves " ^ paren (valueText i v)
+        | Takes => "Takes"
+        | ReadsClosure => "ReadsClosure"
+        | MakesClosure l => "MakesClosure " ^ pos i l
+        | CallsClosure => "CallsClosure"
+        | CallsKnown l => "CallsKnown " ^ pos i l
+      fun orderText i x =
+        case x of
+          Then n => "Then " ^ Int.toString (opcodeOf (instrs, n))
+        | Table (l, n) => "Table (" ^ pos i l ^ ", " ^ Int.toString (opcodeOf (instrs, n)) ^ ")"
+        | Begins (l, n) => "Begins (" ^ pos i l ^ ", " ^ Int.toString (opcodeOf (instrs, n)) ^ ")"
+      fun bracket xs = "[" ^ commaList xs ^ "]"
+    in
+      ["  (* What a checker of the code needs (src/isa/regs.sml), none of it in",
+       "     the fingerprint. What a register an instruction reads must hold, or",
+       "     one it writes then holds (RegIsa.value): a representation by",
+       "     Low.repCode's numbers, or what the program says of what another",
+       "     operand names, by its position; ArgsOf, of a list, each what the",
+       "     primitive's type says of its argument of that place (Prims.repsOf). *)",
+       "  datatype value =",
+       "      Is of int | Like of int | ConstOf of int | GlobalOf of int | EnvOf of int | SlotOf of int * int",
+       "    | ResultOf of int | ReturnOf of int | Returned | Left | UnitOr of int * int",
+       "    | ParamsOf of int | CapturesOf of int | ArgsOf of int",
+       "  (* whether an operand is a register the instruction reads or writes *)",
+       "  datatype role = Reads of value | Writes of value | Other",
+       "  (* what it does beside its operands (RegIsa.implicit): the function",
+       "     MakesClosure and CallsKnown name, by its position *)",
+       "  datatype implicit =",
+       "      PushesArgs | Leaves of value | Takes | ReadsClosure | MakesClosure of int | CallsClosure | CallsKnown of int",
+       "  (* what must come after it (RegIsa.order): an opcode right after it; as",
+       "     many of an opcode as the count at a position says; the code at the",
+       "     label at a position beginning with an opcode *)",
+       "  datatype order = Then of int | Table of int * int | Begins of int * int",
+       "  (* where control goes after it (Isa.flow), and what it does to the handlers *)",
+       "  datatype flow = Next | Branch | Jump | Call | TailCall | Return | Raise | Halt | Switch",
+       "  datatype handlers = Keeps | Installs | Removes",
+       "  (* each opcode's operands before its list, by position *)"]
+      @ table ("roles : role list vector", fn i => bracket (List.map (role i) (fixed i)))
+      @ ["  (* what each register of its list holds, which it reads *)"]
+      @ table ("listHolds : value option vector",
+               fn i => case list i of
+                         SOME (_, Registers (_, v)) => "SOME " ^ paren (valueText i v)
+                       | SOME (_, PrimArgs k) => "SOME (ArgsOf " ^ Int.toString k ^ ")"
+                       | _ => "NONE")
+      @ ["  (* what each does beside its operands *)"]
+      @ table ("implicit : implicit list vector", fn i => bracket (List.map (implicitText i) (#implicit i)))
+      @ ["  (* what must come after each *)"]
+      @ table ("order : order list vector", fn i => bracket (List.map (orderText i) (#order i)))
+      @ ["  val flow : flow vector = Vector.fromList [" ^ commaList (List.map (fn i : rinstruction => flowName (#flow i)) instrs) ^ "]",
+         "  val raises : bool vector = Vector.fromList ["
+         ^ commaList (List.map (fn i : rinstruction => if #raises i then "true" else "false") instrs) ^ "]",
+         "  val handlers : handlers vector = Vector.fromList ["
+         ^ commaList (List.map (fn i : rinstruction => case #handlers i of Keeps => "Keeps" | Installs => "Installs" | Removes => "Removes") instrs)
+         ^ "]",
+         "  (* whether the primitive it names must be an image primitive (SOME",
+         "     true), must not be one (SOME false), or is either, or none (NONE) *)",
+         "  val imageOnly : bool option vector = Vector.fromList ["
+         ^ commaList (List.map (fn i : rinstruction => case #primitives i of Images => "SOME true" | NotImages => "SOME false" | AnyPrimitive => "NONE") instrs)
+         ^ "]",
+         "  (* the image primitives (Isa.imagePrimitive): those that save or restore",
+         "     an image, or may make the world another, which PRIMPUSH calls *)",
+         "  val imagePrims = [" ^ commaList (List.map (fn p : primitive => "\"" ^ #name p ^ "\"") (List.filter imagePrimitive prims)) ^ "]"]
+    end
+
+  fun regcodesSml (instrs : rinstruction list, prims : primitive list, fp : int) : file =
     let val is = numbered instrs
     in
       {path = "lib/compiler/backend/regcodes.sml",
@@ -347,12 +476,14 @@ struct
                ^ "]",
                "  val listAt : int vector = Vector.fromList ["
                ^ commaList (List.map (fn i => case list i of
-                                                SOME (_, Registers k) => Int.toString k
+                                                SOME (_, Registers (k, _)) => Int.toString k
                                               | SOME (_, PrimArgs k) => Int.toString k
                                               | _ => "~1") instrs) ^ "]",
                "  val listPrim : bool vector = Vector.fromList ["
                ^ commaList (List.map (fn i => case list i of SOME (_, PrimArgs _) => "true" | _ => "false") instrs) ^ "]",
-               "end"])}
+               ""]
+            @ checkerTables (instrs, prims)
+            @ ["end"])}
     end
 
   fun files (instrs : rinstruction list, prims : primitive list) : file list =
@@ -361,6 +492,6 @@ struct
       val fp = fingerprint (instrs, prims)
     in
       [regsDef (instrs, fp), regopsH (instrs, fp), regCases instrs, regLabels instrs, jitEmitH instrs, jitCases instrs,
-       regcodesSml (instrs, fp)]
+       regcodesSml (instrs, prims, fp)]
     end
 end

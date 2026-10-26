@@ -461,12 +461,14 @@ endif
 # The frozen Basis and compiler libraries (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
 # compile in units reads after its own cache and never writes; made again,
-# empty first, when the compiler or the library changes
+# empty first, when the compiler or the library changes. Compiled with the
+# lint of every pass, which changes no byte of it, so that no unit a
+# compile takes from there went unchecked (docs/plans/correctness/linting.md, M1)
 basis-cache: lib/cache/made
 lib/cache/made: bin/rune bin/rune.rbc bin/runevm $(wildcard lib/basis/*.sml lib/compiler/*.sml lib/compiler/*/*.sml lib/compiler/*.build) lib/basis/MANIFEST lib/compiler/MANIFEST
 	rm -rf lib/cache
-	bin/rune --units --basis all --library compiler --cache-dir lib/cache examples/hello.sml -o build/basis-cache.rbc
-	bin/rune --units --basis all --library compiler --target=stack --cache-dir lib/cache examples/hello.sml -o build/basis-cache.stack.rbc
+	bin/rune --units --lint --basis all --library compiler --cache-dir lib/cache examples/hello.sml -o build/basis-cache.rbc
+	bin/rune --units --lint --basis all --library compiler --target=stack --cache-dir lib/cache examples/hello.sml -o build/basis-cache.stack.rbc
 	touch $@
 
 # ---------------------------------------------------------------- environment
@@ -511,7 +513,9 @@ FORCE:
 # the VM builds with a C compiler alone: `make isa` writes them again after
 # a change to src/isa, and `make check-isa` (part of make check) fails when
 # one of them is not what the descriptions give, with runeisa built by
-# MLton and by the self-hosted compiler.
+# MLton and by the self-hosted compiler, or when a check of the
+# descriptions does not refuse a description made wrong (runeisa --test,
+# src/isa/isatest.sml).
 ISA_OUT := runtime/stack/opcodes.def runtime/prims.def $(GEN_C) $(GEN_SML)
 
 isa: bin/runeisa-mlton
@@ -520,6 +524,8 @@ isa: bin/runeisa-mlton
 check-isa: bin/runeisa-mlton bin/runeisa.rbc vm
 	bin/runeisa-mlton --root . --check
 	$(RUNEVM) bin/runeisa.rbc --root . --check
+	bin/runeisa-mlton --test
+	$(RUNEVM) bin/runeisa.rbc --test
 
 bin/runeisa-mlton.bin: $(BUILDGEN) $(SOURCES_ISA) src/main/runeisa-mlton-main.sml | build/.doctor-mlton
 	@mkdir -p bin
@@ -1349,12 +1355,14 @@ check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/runeopt-boot bin/run
 
 # Every instruction says where it came from, and the line is one the file has.
 # The intermediate representations (docs/ir.md): the dumps of tests/ir, and
-# every program of tests/lang and tests/perf the same at -O0 and -O2 with the
-# lint of every pass on (docs/plans/middle-end.md, M2).
+# every program of tests/lang and tests/perf the same at -O0 and -O2, whole
+# and in units, on both bytecodes and at tier 2 of the JIT, with the lint of
+# every pass on, which makes the register bytecode's same bytes as with it off
+# (docs/plans/middle-end.md, M2; docs/plans/correctness/linting.md, M1).
 test-ir: $(RUNE) bin/rune-test
 	$(RUNE_TEST) --tier test-ir
 
-check-levels: $(RUNE) $(RUNEVM) bin/rune-test
+check-levels: $(RUNE) vm basis-cache bin/rune-test
 	$(RUNE_TEST) --tier check-levels
 
 # Every program of tests/lang and tests/perf compiled a unit per file (--units)

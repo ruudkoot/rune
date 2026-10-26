@@ -157,7 +157,8 @@ struct
     \  --dump-after=P    print what the pass P makes (all: every pass)\n\
     \  --lint            check what every pass makes (docs/ir.md; RUNE_LINT too)\n\
     \  --fuel=N          make no more than N rewrites (bin/rune-measure bisect-fuel)\n\
-    \  --pass-stats      print the size and the time of every stage, and the total\n\
+    \  --pass-stats      print the size and the time of every stage, and of every\n\
+    \                    check (--lint) at every depth, and the total\n\
     \  --pass-stats=elab  and of each top-level declaration's elaboration: its\n\
     \                    time by context and operation, and its counters\n\
     \  --pass-stats=hash  and the bytes hashed, by the part of the compile and\n\

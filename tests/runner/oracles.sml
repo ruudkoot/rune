@@ -6,9 +6,12 @@
    a command of bin/rune-test (`bin/rune-test levels-one PROGRAM`, ...) that
    prints a line FAIL for what it finds, and each check of its own a job.
 
-   - levels: every program of tests/lang and tests/perf compiled at -O0 and
-     -O2, whole and of its units' Mid, with the lint, must print, err and
-     exit the same (check-levels.sh);
+   - levels: every program of tests/lang and tests/perf compiled to both
+     bytecodes at -O0 and -O2, whole and of its units' Mid, and in units
+     linked by Link, with the lint, must print, err and exit the same, the
+     register bytecode's at tier 2 of the JIT too, and the register
+     bytecode's must be the same bytes as without the lint, its unit files
+     and their bases too (check-levels.sh);
    - register: compiled to both bytecodes, runevm-stack and runtime/register
      must allocate the same; the compiler on runtime/register must make the
      bytes it makes on runevm-stack; the primitives must print the same; and
@@ -79,42 +82,110 @@ struct
   fun jitDir () = run ^ (if jitVm () = "bin/runevm" then "/jit" else "/jit-" ^ OS.Path.file (jitVm ()))
 
   (* ---- levels *)
+  (* each target: its compiler, its checks, whether each build is compiled
+     again without them to compare the bytes, its VM, and the ways each build
+     is run. The stack bytecode's builds check Mid's text against itself
+     too; the register bytecode's, the default, are the ones compared with
+     the compile that checks nothing (the cost of both on both is three
+     times the tier's: linting roadmap, M1). The compiler by its absolute
+     path, as bin/rune-stack runs bin/rune: the library's files are named
+     so in positions, which traces print *)
+  val levelTargets =
+    [("stack", "bin/rune-stack", ["--lint", "--mid-roundtrip"], false, "bin/runevm-stack", [("run", ["--checked"])]),
+     ("registers", fromRoot "bin/rune", ["--lint"], true, "bin/runevm",
+      [("run", ["--checked"]), ("tier2", ["--jit=all", "--jit-tier=2", "--checked"])])]
   fun levelsOne src =
     let
       val b = base src and n = name src
       val out = run ^ "/levels"
       val () = mkdirs out
       val cargs = sib (b, ".cargs")
-      val builds = [("O0", ["-O0"] @ cargs), ("O2", ["-O2"] @ cargs),
-                    ("U0", ["--units", "--whole", "--no-cache", "-O0"] @ cargs),
-                    ("U2", ["--units", "--whole", "--no-cache", "-O2"] @ cargs)]
-      fun file (k, ext) = out ^ "/" ^ n ^ "." ^ k ^ ext
-      fun compile [] = true
-        | compile ((k, flags) :: rest) =
-            if exec {cmd = ["bin/rune-stack"] @ flags @ ["--lint", "--mid-roundtrip", src, "-o", file (k, ".rbc")],
-                     dir = NONE, stdin = "", stdout = "", stderr = file (k, ".cerr"), timeout = 0} = 0
-            then compile rest
-            else (say ("FAIL levels." ^ n ^ ": " ^ String.concatWith " " flags ^ ": " ^ firstLine (file (k, ".cerr")) ^ "\n"); false)
+      fun file (t, k, ext) = out ^ "/" ^ n ^ "." ^ t ^ "." ^ k ^ ext
+      (* whole at -O0 and -O2, whole of its units' Mid, and in units linked
+         by Link (UL), whose unit files, bases too, are kept to compare *)
+      fun flags (t, k, lint) =
+        case k of
+          "O0" => ["-O0"]
+        | "O2" => ["-O2"]
+        | "U0" => ["--units", "--whole", "--no-cache", "-O0"]
+        | "U2" => ["--units", "--whole", "--no-cache", "-O2"]
+        | _ => ["--units", "-O1", "--cache-dir", file (t, k, if lint then ".cache" else ".plain.cache"),
+                "--emit-units", file (t, k, if lint then ".units" else ".plain.units")]
+      val builds = ["O0", "O2", "U0", "U2", "UL"]
+      fun clear (t, k) =
+        List.app (fn ext => rmTree (file (t, k, ext))) [".cache", ".plain.cache", ".units", ".plain.units"]
+      (* the unit files a build in units wrote, but the list of their paths *)
+      fun unitFiles d = sort (List.filter (fn f => f <> "units") (if isDir d then entries d else []))
+      fun sameUnits (a, c) =
+        let val fs = unitFiles a
+        in fs = unitFiles c andalso List.all (fn f => same (a ^ "/" ^ f, c ^ "/" ^ f)) fs end
+      (* each build with the target's checks, and where it says so again
+         without them (RUNE_LINT empty), which must be the same bytes: no
+         check changes what the compiler makes *)
+      fun compile (t, rune, checks, compared) [] = true
+        | compile (t, rune, checks, compared) (k :: rest) =
+            let
+              val () = clear (t, k)
+              val linted =
+                exec {cmd = [rune] @ flags (t, k, true) @ cargs @ checks @ [src, "-o", file (t, k, ".rbc")],
+                      dir = NONE, stdin = "", stdout = "", stderr = file (t, k, ".cerr"), timeout = 0} = 0
+              val plain =
+                linted andalso
+                (not compared orelse
+                 execEnv (setEnv ("RUNE_LINT", "") o setEnv ("RUNEVM_INTINF", "sml"))
+                         {cmd = [rune] @ flags (t, k, false) @ cargs @ [src, "-o", file (t, k, ".plain.rbc")],
+                          dir = NONE, stdin = "", stdout = "", stderr = file (t, k, ".plain.cerr"), timeout = 0} = 0)
+              val what = t ^ " " ^ String.concatWith " " (List.filter (fn w => not (String.isPrefix out w)) (flags (t, k, true) @ cargs))
+              val ok =
+                if not linted then (say ("FAIL levels." ^ n ^ ": " ^ what ^ ": " ^ firstLine (file (t, k, ".cerr")) ^ "\n"); false)
+                else if not plain then
+                  (say ("FAIL levels." ^ n ^ ": " ^ what ^ ", without the lint: " ^ firstLine (file (t, k, ".plain.cerr")) ^ "\n"); false)
+                else if compared andalso not (same (file (t, k, ".rbc"), file (t, k, ".plain.rbc"))) then
+                  (say ("FAIL levels." ^ n ^ ": " ^ what ^ ": the lint changes the bytes\n"); false)
+                else if compared andalso k = "UL" andalso not (sameUnits (file (t, k, ".units"), file (t, k, ".plain.units"))) then
+                  (say ("FAIL levels." ^ n ^ ": " ^ what ^ ": the lint changes a unit's file or its basis\n"); false)
+                else true
+            in
+              clear (t, k);
+              (OS.FileSys.remove (file (t, k, ".plain.rbc")) handle OS.SysErr _ => ());
+              ok andalso compile (t, rune, checks, compared) rest
+            end
     in
-      if not (compile builds) then ()
+      if not (List.all (fn (t, rune, checks, compared, _, _) => compile (t, rune, checks, compared) builds) levelTargets) then ()
       else
         let
           val dir = run ^ "/levels-run/" ^ n
           val () = scratch dir
-          val () = List.app (fn (k, _) =>
-                               write (file (k, ".code"),
-                                      Int.toString (exec {cmd = ["bin/runevm-stack", "--checked"] @ sib (b, ".vmargs")
-                                                                @ [file (k, ".rbc")] @ sib (b, ".args"),
-                                                          dir = SOME dir, stdin = stdinOf b, stdout = file (k, ".out"),
-                                                          stderr = file (k, ".err"), timeout = 0}) ^ "\n"))
-                            builds
+          (* every build of each target run each of its ways, each compared
+             with the stack's at -O0; but a build the same bytes as one
+             before it of its target, whole of its units' Mid as whole most
+             often, which would run as that one did *)
+          fun earlier (k, x :: xs) = if x = k then [] else x :: earlier (k, xs)
+            | earlier (_, []) = []
+          fun distinct (t, k) = not (List.exists (fn k' => same (file (t, k', ".rbc"), file (t, k, ".rbc"))) (earlier (k, builds)))
+          val runs =
+            List.concat (List.map (fn (t, _, _, _, vm, ways) =>
+                                     List.concat (List.map (fn k => if distinct (t, k) then List.map (fn (w, vmflags) => (t, k, w, vm, vmflags)) ways
+                                                                    else [])
+                                                           builds))
+                                  levelTargets)
+          fun ran (t, k, w) = t ^ "." ^ k ^ "." ^ w
+          val () = List.app (fn (t, k, w, vm, vmflags) =>
+                               write (file (t, k, "." ^ w ^ ".code"),
+                                      Int.toString (exec {cmd = [vm] @ vmflags @ sib (b, ".vmargs") @ [file (t, k, ".rbc")] @ sib (b, ".args"),
+                                                          dir = SOME dir, stdin = stdinOf b, stdout = file (t, k, "." ^ w ^ ".out"),
+                                                          stderr = file (t, k, "." ^ w ^ ".err"), timeout = 0}) ^ "\n"))
+                            runs
           fun check [] = ()
-            | check ((k, part) :: rest) =
-                if same (file ("O0", part), file (k, part)) then check rest
-                else say ("FAIL levels." ^ n ^ ": -O0 and " ^ k ^ " differ (" ^ String.extract (part, 1, NONE) ^ ": "
-                          ^ difference (file ("O0", part), file (k, part)) ^ ")\n")
+            | check ((t, k, w, _, _) :: rest) =
+                case List.find (fn part => not (same (file ("stack", "O0", ".run" ^ part), file (t, k, "." ^ w ^ part))))
+                               [".out", ".err", ".code"] of
+                  NONE => check rest
+                | SOME part =>
+                    say ("FAIL levels." ^ n ^ ": stack.O0.run and " ^ ran (t, k, w) ^ " differ (" ^ String.extract (part, 1, NONE) ^ ": "
+                         ^ difference (file ("stack", "O0", ".run" ^ part), file (t, k, "." ^ w ^ part)) ^ ")\n")
         in
-          check (List.concat (List.map (fn k => List.map (fn p => (k, p)) [".out", ".err", ".code"]) ["O2", "U0", "U2"]))
+          check (List.tl runs)
         end
     end
 
@@ -212,6 +283,45 @@ struct
                       else say ("FAIL new.dead-roots: --jit=" ^ mode ^ ": " ^ difference ("tests/register/dead-roots.expected", f) ^ "\n")
                     end)
                  ["off", "baseline", "opt", "all"]
+    end
+
+  (* the check of the register code (RegVerify; docs/plans/correctness/linting.md,
+     M8) on tests/register/regverify.sml: clean as it is, and each of the
+     eleven corruptions its switch makes (RUNE_REGVERIFY_INJECT) refused
+     with a message of its own, which the VM's loader lets through all but
+     the first of (docs/plans/correctness/vm-verifier.md) *)
+  val regverifyKinds =
+    [("rep-write", "CON0 writes con0 into register"),
+     ("rep-read", "argument 0 of int_add: register"),
+     ("unset", "which is not set on every way here"),
+     ("noresult", "RESULT is due after CALLK"),
+     ("arity", "arguments, whose arity is"),
+     ("catch", "a handler's block that does not begin with CATCH"),
+     ("switch", "where a test says"),
+     ("env", "of a function whose closures capture"),
+     ("pop", "is reached with"),
+     ("image", "the image primitive posix_fork in PRIM"),
+     ("closure", ", of arity 2")]
+  fun regverifyOne kind =
+    let
+      val out = run ^ "/regverify"
+      val () = mkdirs out
+      val err = out ^ "/" ^ kind ^ ".err"
+      val inject = if kind = "clean" then (fn e => e) else setEnv ("RUNE_REGVERIFY_INJECT", kind)
+      val status = execEnv (inject o setEnv ("RUNE_REGVERIFY", "1"))
+                           {cmd = ["bin/rune", "tests/register/regverify.sml", "-o", out ^ "/" ^ kind ^ ".rbc"], dir = NONE,
+                            stdin = "", stdout = err, stderr = err, timeout = 0}
+      val text = read err
+    in
+      if kind = "clean" then (if status = 0 then () else say ("FAIL regverify.clean: does not compile: " ^ firstLine err ^ "\n"))
+      else
+        case List.find (fn (k, _) => k = kind) regverifyKinds of
+          NONE => say ("FAIL regverify." ^ kind ^ ": no such corruption\n")
+        | SOME (_, why) =>
+            if String.isSubstring "no place found" text then say ("FAIL regverify." ^ kind ^ ": no place to corrupt\n")
+            else if status = 0 then say ("FAIL regverify." ^ kind ^ ": not refused\n")
+            else if String.isSubstring "regverify" text andalso String.isSubstring why text then ()
+            else say ("FAIL regverify." ^ kind ^ ": refused for another reason: " ^ firstNonEmpty err ^ "\n")
     end
 
   (* ---- jit *)
@@ -875,6 +985,7 @@ struct
     | ["register-bootstrap"] => SOME registerBootstrap
     | ["register-prims"] => SOME registerPrims
     | ["register-dead-roots"] => SOME registerDeadRoots
+    | ["regverify-one", kind] => SOME (fn () => regverifyOne kind)
     | ["jit-one", src] => SOME (fn () => jitOne src)
     | ["jit-probe"] => SOME jitProbe
     | ["jit-every-opcode"] => SOME jitEveryOpcode
@@ -950,7 +1061,9 @@ struct
             (perProgram ("register-one", langPerf, [], name)
              @ [job ("@bootstrap", ["register-bootstrap"], [], 1, 1500, 3600),
                 job ("@prims", ["register-prims"], [], 1, 500, 600),
-                job ("@dead-roots", ["register-dead-roots"], [], 1, 500, 600)])),
+                job ("@dead-roots", ["register-dead-roots"], [], 1, 500, 600)]
+             @ List.map (fn k => job ("@regverify-" ^ k, ["regverify-one", k], [], 1, 500, 600))
+                        ("clean" :: List.map #1 regverifyKinds))),
        tagged (["check", "test-register-jit", "covers:tests/register/*", "covers:tests/opt/*"] @ langCovers)
          (jitTree ("bin/runevm", "jit")),
        tagged (["check", "check-units", "covers:tests/units/*"] @ langCovers)

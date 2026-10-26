@@ -1410,6 +1410,16 @@ struct
 
   (* ------------------------------------------------------------------ *)
   (* Expressions                                                          *)
+  (* What names the function of an application, where it is an identifier
+     alone or in parentheses with a type, nested any number of times:
+     4.7's conexp where it names a constructor or an exception --
+     `(SOME : 'a -> 'a option) nil`, `((op :: : t) : t) (x, xs)`. The
+     parser keeps no parentheses, so a typed expression in the function's
+     place had them *)
+  fun conexp (EVar (_, slot, _, _)) = !slot
+    | conexp (ETyped (e, _, _, _)) = conexp e
+    | conexp _ = NONE
+
   fun nonexpansive e =
     case e of
       EScon _ => true
@@ -1421,8 +1431,8 @@ struct
     | ERecord (fs, _, _) => List.all (fn (_, e, _) => nonexpansive e) fs
     | EList (es, _, _, _) => List.all nonexpansive es
     | ETyped (e, _, _, _) => nonexpansive e
-    | EApp (EVar (_, slot, _, _), a, _, _) =>
-        (case !slot of
+    | EApp (f, a, _, _) =>
+        (case conexp f of
            SOME (VCon (info, _)) => not (#isRef info) andalso nonexpansive a
          | SOME (VExn _) => nonexpansive a
          | _ => false)                     (* a constructor that lost its status is an ordinary variable *)

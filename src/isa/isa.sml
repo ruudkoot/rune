@@ -109,10 +109,39 @@ struct
   type primitive =
     {name : string,
      arity : int,
-     ty : string,                        (* its SML type, as documentation *)
+     ty : string,                        (* its SML type, which primType reads *)
      doc : string,
      effects : effect list,
      group : string}                     (* the heading it is listed under *)
+
+  (* What a value is to the VM, where something says: the representations
+     of docs/bytecode.md (The representations), which the compiler gives
+     each variable of Low (Low.rep) and the register bytecode's meta each
+     register, by the same numbers (repCode). *)
+  datatype rep =
+      RAny                  (* anything: nothing is said *)
+    | RInt | RWord | RReal | RChar
+    | RCon0                 (* a nullary constructor, a bool *)
+    | RPtr                  (* in the heap *)
+    | RCon                  (* a nullary constructor or in the heap: a list *)
+    | RUnit
+    | RInt64 | RWord64
+
+  fun repCode r =
+    case r of
+      RAny => 0 | RInt => 1 | RWord => 2 | RReal => 3 | RChar => 4 | RCon0 => 5 | RPtr => 6 | RCon => 7 | RUnit => 8
+    | RInt64 => 9 | RWord64 => 10
+
+  (* A primitive's type, as primType reads the string its description
+     gives it ("'a array * int -> 'a"): a type variable, numbered from 0 in
+     the order they first come; a type constructor by the name the Basis
+     gives it ("int", "list", "Word64.word"), with its arguments; a tuple of
+     two or more; a function. *)
+  datatype ty =
+      TVar of int
+    | TCon of string * ty list
+    | TTuple of ty list
+    | TArrow of ty * ty
 
   (* ---- building descriptions ---- *)
 
@@ -144,6 +173,13 @@ struct
 
   fun hasEffect (p : primitive, e : effect) = List.exists (fn e' => e' = e) (#effects p)
 
+  (* A primitive that saves or restores an image, or may make the world
+     another (the program grown, the debugger's mode put on): the register
+     bytecode calls it by PRIMPUSH, whose result RESULT takes, so that a
+     program resumed at RESULT finds it there and the loop takes the
+     program again after it (src/isa/regs.sml). *)
+  fun imagePrimitive (p : primitive) = hasEffect (p, SavesImage) orelse hasEffect (p, NewWorld)
+
   (* An instruction after which control does not go on to the next. *)
   fun ends (i : instruction) =
     case #flow i of
@@ -168,6 +204,99 @@ struct
      format cannot hold, is refused before anything is written. *)
   exception Bad of string
 
+  (* A type as an SML type is written, of the types a primitive's
+     description gives: type variables, type constructors applied after
+     their arguments, tuples, and arrows to the right; or Bad. *)
+  fun parseTy (s : string) : ty =
+    let
+      datatype token = TyVarTok of string | Name of string | LParen | RParen | Star | Arrow | Comma
+      val n = String.size s
+      fun bad what = raise Bad ("the type \"" ^ s ^ "\" " ^ what)
+      fun nameChar c = Char.isAlphaNum c orelse c = #"_" orelse c = #"'" orelse c = #"."
+      fun lex (i, acc) =
+        if i >= n then List.rev acc
+        else
+          let val c = String.sub (s, i)
+          in
+            if Char.isSpace c then lex (i + 1, acc)
+            else if c = #"(" then lex (i + 1, LParen :: acc)
+            else if c = #")" then lex (i + 1, RParen :: acc)
+            else if c = #"*" then lex (i + 1, Star :: acc)
+            else if c = #"," then lex (i + 1, Comma :: acc)
+            else if c = #"-" andalso i + 1 < n andalso String.sub (s, i + 1) = #">" then lex (i + 2, Arrow :: acc)
+            else if nameChar c then
+              let
+                fun stop j = if j < n andalso nameChar (String.sub (s, j)) then stop (j + 1) else j
+                val j = stop i
+                val w = String.substring (s, i, j - i)
+              in lex (j, (if c = #"'" then TyVarTok w else Name w) :: acc) end
+            else bad ("has the character " ^ String.str c)
+          end
+      val tokens = ref (lex (0, []))
+      val vars : string list ref = ref []        (* in reverse order of first appearance *)
+      fun var v =
+        let
+          fun find (_, []) = NONE
+            | find (k, w :: rest) = if w = v then SOME k else find (k - 1, rest)
+        in
+          case find (List.length (!vars) - 1, !vars) of
+            SOME k => TVar k
+          | NONE => (vars := v :: !vars; TVar (List.length (!vars) - 1))
+        end
+      fun peek () = case !tokens of t :: _ => SOME t | [] => NONE
+      fun next () = case !tokens of t :: rest => (tokens := rest; t) | [] => bad "ends too soon"
+      (* ty: a tuple, or a tuple -> ty *)
+      fun ty () =
+        let val t = tuple ()
+        in case peek () of SOME Arrow => (ignore (next ()); TArrow (t, ty ())) | _ => t end
+      and tuple () =
+        let
+          fun more acc = case peek () of SOME Star => (ignore (next ()); more (applied () :: acc)) | _ => List.rev acc
+        in case more [applied ()] of [t] => t | ts => TTuple ts end
+      (* an atom, or a sequence of types in parentheses, then the type
+         constructors applied to it, each to what is before it *)
+      and applied () =
+        let
+          fun apply args =
+            case peek () of
+              SOME (Name c) => (ignore (next ()); apply [TCon (c, args)])
+            | _ => (case args of [t] => t | _ => bad "has a sequence of types applied to no type constructor")
+        in apply (atom ()) end
+      and atom () =
+        case next () of
+          TyVarTok v => [var v]
+        | Name c => [TCon (c, [])]
+        | LParen =>
+            let
+              fun seq acc =
+                case next () of
+                  Comma => seq (ty () :: acc)
+                | RParen => List.rev acc
+                | _ => bad "has a parenthesis not closed"
+            in seq [ty ()] end
+        | _ => bad "has a type missing"
+      val t = ty ()
+    in
+      if List.null (!tokens) then t else bad "goes on after its type"
+    end
+
+  (* A primitive's parameters, as many as its arity, and its result: its
+     type a function's, from a tuple of as many as that where it takes two
+     or more, and from unit where it takes none. *)
+  fun primType (p : primitive) : ty list * ty =
+    let
+      fun bad what = raise Bad ("primitive " ^ #name p ^ " has a type " ^ what)
+    in
+      case (parseTy (#ty p) handle Bad msg => bad ("that cannot be read: " ^ msg)) of
+        TArrow (from, to) =>
+          (case (#arity p, from) of
+             (0, TCon ("unit", [])) => ([], to)
+           | (1, _) => ([from], to)
+           | (k, TTuple ts) => if List.length ts = k then (ts, to) else bad "of another number of arguments than its arity"
+           | _ => bad "of another number of arguments than its arity")
+      | _ => bad "that is no function's"
+    end
+
   fun check (instrs : instruction list, prims : primitive list) : unit =
     let
       fun unique (what, names) =
@@ -187,7 +316,8 @@ struct
           | (Jump, NONE) => raise Bad ("instruction " ^ #name i ^ " jumps without a label")
           | _ => ()))
       fun prim (p : primitive) =
-        if #arity p < 0 orelse #arity p > 255 then raise Bad ("primitive " ^ #name p ^ " has an arity out of range") else ()
+        (if #arity p < 0 orelse #arity p > 255 then raise Bad ("primitive " ^ #name p ^ " has an arity out of range") else ();
+         ignore (primType p))
     in
       unique ("instruction", List.map #name instrs);
       unique ("primitive", List.map #name prims);

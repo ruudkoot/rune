@@ -4,10 +4,31 @@
    the linker needs of it (docs/units.md). *)
 structure Pipeline =
 struct
+  (* the counters of names that no check may move (Pass.checkAt) *)
+  val () = Pass.counters := (fn () => [!Elaborate.stampCounter, !Types.tyconCounter, !Types.tvarCounter,
+                                       !Elaborate.nextRecordId, !MidCanon.nextTycon, !Lower.nextFn, !Lower.nextFuncId,
+                                       !Code.nextLabel, !UnitBasis.privateNext])
+
+  (* What Lower made of results in globals, checked after every lower,
+     linted or not (LowLint.results; docs/ir.md, Options): its facts, by a
+     function's global, which a known call in Low names by its id *)
+  fun lowered (low : Low.program) : Low.program =
+    let
+      val globals = IntMap.foldli (fn (g, fid, m) => IntMap.insert (m, fid, g)) IntMap.empty (!Lower.globalFids)
+      val facts : LowLint.results =
+        {global = fn f => IntMap.find (globals, f), fields = fn g => IntMap.find (!Lower.slotFuns, g),
+         slots = fn n => getOpt (IntMap.find (!Lower.slotGlobals, n), []), needed = Lower.needed,
+         sum = fn g => Option.map Lower.sumsOf (IntMap.find (!Lower.sumFuns, g))}
+    in
+      Pass.checkAt "results" (LowLint.results facts) low;
+      low
+    end
+
   (* The stage that makes Mid, from Lambda or from its text. *)
   fun midStage (showIn : ('a -> string) option) (f : 'a -> Mid.program) : 'a -> Mid.program =
     Pass.stage {name = "mid", showIn = showIn, show = MidText.show,
-                check = fn p => (MidLint.check p; if !CompilerSettings.midRoundTrip then MidText.roundTrip p else ()),
+                check = fn p => (Pass.lintAt "mid" MidLint.check p;
+                                 if !CompilerSettings.midRoundTrip then Pass.lintAt "mid-roundtrip" MidText.roundTrip p else ()),
                 size = Mid.size}
                f
 
@@ -26,14 +47,15 @@ struct
     let
       val mid =
         if !Pass.whole
-        then Pass.stage {name = "midcanon", showIn = SOME MidText.show, show = MidText.show, check = MidLint.check,
+        then Pass.stage {name = "midcanon", showIn = SOME MidText.show, show = MidText.show,
+                         check = Pass.lintAt "midcanon" (MidCanon.checkRenaming mid),
                          size = Mid.size}
                         MidCanon.program mid
         else mid
       (* the optional passes on Mid (docs/ir.md) *)
       fun optional (name, f) m =
         if Pass.enabled (name, 1) andalso (name <> "shake" orelse !Pass.whole) then
-          Pass.stage {name = name, showIn = SOME MidText.show, show = MidText.show, check = MidLint.check,
+          Pass.stage {name = name, showIn = SOME MidText.show, show = MidText.show, check = Pass.lintAt name MidLint.check,
                       size = Mid.size}
                      f m
         else m
@@ -52,9 +74,9 @@ struct
         if Pass.enabled ("simplify", 1) andalso Pass.enabled ("inline", 1) then optional ("shake", Shake.program) mid
         else mid
     in
-      Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = LowLint.check,
+      Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = Pass.lintAt "lower" LowLint.check,
                   size = Low.size}
-                 (fn m => Lower.program (m, !Translate.funNames)) mid
+                 (fn m => lowered (Lower.program (m, !Translate.funNames))) mid
     end
 
   (* Lambda to Low: Mid, the optional passes on it, and Lower *)
@@ -69,8 +91,17 @@ struct
   (* Low to the code of the target --target names *)
   fun targetStage (low : Low.program) : Code.program =
     if !CompilerSettings.target = "registers" then
-      Pass.stage {name = "registers", showIn = SOME Low.show, show = Code.dump, check = fn _ => (), size = Code.size}
-                 Regs.program low
+      (* the code checked (RegVerify) where the lint is on, as the stage's
+         check, or where RUNE_REGVERIFY says without it; corrupted first
+         where RUNE_REGVERIFY_INJECT says, for the check's tests *)
+      let
+        val code = Pass.stage {name = "registers", showIn = SOME Low.show, show = Code.dump, check = RegVerify.stage,
+                               size = Code.size}
+                              (RegVerify.inject o Regs.program) low
+      in
+        if Pass.linting () then () else RegVerify.stage code;
+        code
+      end
     else
       Pass.stage {name = "stack", showIn = SOME Low.show, show = Code.dump, check = fn _ => (), size = Code.size}
                  Stack.program low
@@ -83,7 +114,7 @@ struct
      its functions by name (Lower.knownBefore). *)
   fun unitOf (decs : Ast.dec list) : Link.sessionCode =
     let
-      val lam = Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = LambdaLint.check,
+      val lam = Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = Pass.lintAt "translate" LambdaLint.check,
                             size = Lambda.size}
                            Translate.transProgram decs
       val low = lowOf lam

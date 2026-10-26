@@ -10,7 +10,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 |---|---|---|---|
 | `translate` | the elaborated syntax | `Lambda` (`lib/compiler/core/lambda.sml`) | `LambdaLint` |
 | `mid` | `Lambda` | `Mid` (`lib/compiler/core/mid.sml`, by `ToMid`) | `MidLint` |
-| `midcanon` | `Mid` | `Mid` numbered canonically (`lib/compiler/core/midcanon.sml`), as one made of its units' `Mid` is; a whole program only | `MidLint` |
+| `midcanon` | `Mid` | `Mid` numbered canonically (`lib/compiler/core/midcanon.sml`), as one made of its units' `Mid` is; a whole program only | its renaming (`MidCanon.checkRenaming`); `MidLint` of the units' `Mid` it concatenates (`midconcat`) |
 | `expand` | `Mid` | `Mid`, functors' applications copied (`lib/compiler/core/expand.sml`; *Functors compiled once* below), from `-O1` | `MidLint` |
 | `shake` | `Mid` | `Mid`, what nothing reaches gone (`lib/compiler/core/shake.sml`), from `-O1` | `MidLint` |
 | `lift` | `Mid` | `Mid`, local functions that never escape made functions of the top level (`lib/compiler/core/lift.sml`), from `-O1` | `MidLint` |
@@ -19,7 +19,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `refs` | `Mid` | `Mid`, a loop's local refs as values (`lib/compiler/core/refs.sml`), from `-O1` | `MidLint` |
 | `lower` | `Mid` | `Low` (`lib/compiler/backend/low.sml`, by `Lower`) | `LowLint` |
 | `stack` | `Low` | instruction lists (`lib/compiler/backend/stack.sml`), with `--target=stack` | none yet |
-| `registers` | `Low` | instruction lists of the register bytecode (`lib/compiler/backend/regs.sml`), the default target | none yet |
+| `registers` | `Low` | instruction lists of the register bytecode (`lib/compiler/backend/regs.sml`), the default target | `RegVerify` |
 | `emit` | instruction lists | the `.rbc` (`lib/compiler/backend/emit.sml`) | |
 
 `-O0` is the same stages with no optional pass; `-O0` and `-O2` must give
@@ -47,15 +47,15 @@ of results in globals (see *Low*).
 | `-O0`, `-O1`, `-O2` | the level; `-O1` when none is given; `-O2` adds `equality` (see *The optimisations of Mid*) |
 | `--passes=P,...` | run these optional passes, whatever the level |
 | `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=registers` (`stack` with `--target=stack`) |
-| `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach; `RUNE_LINT` set and not empty does the same where no flag reaches (the REPL, the compiler library), and every test sets it ([testing.md](testing.md), *Running the tests*) |
+| `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach; `RUNE_LINT` set and not empty does the same where no flag reaches (the REPL, the compiler library), and every test sets it ([testing.md](testing.md), *Running the tests*). A check changes nothing of what the compiler makes, the same bytes as without it, units and their bases too (`make check-levels`), and moves none of its counters of names -- stamps, type names, functions, labels -- which `Pass.checkAt` holds every check to, since one that took fresh names hid a bug it should have caught; the invariant of results in globals (*What a `Low` keeps*) is checked after every `lower`, linted or not |
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
-| `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then `total: T s processor time, S s in the stages (P%)` (below) |
+| `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then each check, at every depth, as `check KEY: N runs, T s, I instructions` (the instructions where the runtime counts them, as Rune's own build does); then `total: T s processor time, S s in the stages (P%)` (below) |
 | `--pass-stats=elab` | `--pass-stats`, and a line for each top-level declaration elaborated: where its processor time went, by context and operation, and what the elaborator counted (*The elaborator's counters* below) |
 | `--pass-stats=expand` | `--pass-stats`, and after the expansion a line `expand: N applications expanded, M left calls (B past the budget), P copies not all definitions; at most S nodes copied for a top-level application` (*Functors compiled once* below) |
 | `--pass-stats=hash` | `--pass-stats`, and at the end what the compile hashed: a line `hash PHASE:SITE: B bytes, N hashes` for each part of a compile in units (`usages`, `find`, `export`, `load`, `cache`) and place that hashed, and `memo PHASE: H hits, M misses` for the memo of fingerprints (*What a compile in units hashes* below) |
 | `--units` | run the pipeline on one unit, a file, at a time, and link them ([units.md](units.md)): the passes see a unit, with `Pass.whole` false, and `--pass-stats` names each unit before its passes |
 | `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would (there is no bytecode from Mid yet) |
-| `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same |
+| `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same, after `mid` (the check `mid-roundtrip`); what it reads is numbered by counters of its own, so that a unit's basis is what it is without it |
 | `--functor-budget=N` | the Mid nodes `expand` may copy for a top-level application and those in its copies (1000000 by default; 0 copies none) |
 
 **What `--pass-stats` shows** is the whole compile: the stages add up to
@@ -76,6 +76,14 @@ stages of the pipeline above, the compile's stages are:
   the outermost stages are added up;
 * `stats`, the sizes `--pass-stats` counted, and `checks`, what `--lint` and
   the dumps took, apart from the stages they checked or printed.
+
+After them, a line `check KEY` for each check that ran, at whatever depth,
+by its key (`Pass.checkAt`): the stage it follows (`translate`, `mid`,
+`midcanon`, ..., `lower`), `midconcat` (the units' `Mid` concatenated, with
+`--units --whole`), `mid-roundtrip`, and `results`, which runs inside
+`lower`. They are counted in the stages' times already, `checks`
+or a unit's `unit-passes`, so they show what a compile in units lints,
+which `checks` does not, and are not added to the total again.
 
 **A dump** (`Lambda.show`) prints one node to a line, its parts indented
 below it unless they are all atoms, and leaves positions out. Variables
@@ -462,6 +470,18 @@ have generalised them: a variable of the program or a function; a variable
   back; where the expansion knows the slot's value, a cast left between two
   ground types that differ is a bug of the expansion.
 
+It keeps its tables in hash tables, and what is in scope in one table,
+entered and left as it walks: stamps' being unique, which it checks, makes
+that the same as a map for each scope, at about 40% of its cost
+(plans/correctness/linting.md, M2). After `midcanon` it is not run again:
+`MidCanon.checkRenaming` checks that what `midcanon` made is what it was
+given with each name of each kind renamed by a bijection -- stamps, type
+names that are not built in, type variables -- node for node, and each
+datatype entered again under its new name, its constructors, layout and
+openness the old one's; so it keeps what `MidLint` checked after `mid`. The
+units' `Mid` that `--units --whole` concatenates is linted by `MidLint`
+(`midconcat`), since a unit taken from the cache was not.
+
 ### Mid as text
 
 `MidText.show` prints a program (`--dump-after=mid`), and `MidText.parse`
@@ -745,7 +765,22 @@ leaves implicit is explicit.
 
 ### What a `Low` keeps
 
-`LowLint` checks, after `lower`:
+After every `lower`, linted or not, `LowLint.results` checks what results
+in globals keep, from what `Lower` says of which functions return so
+(`Pipeline.lowered`): a read of such a global (`Slot`) follows, in its
+block, a known call of a function that leaves its results there, with
+only other such reads and positions between; a function of n fields
+returns, in each block, what the block's last call gave, a call of
+another of n, or a value after which it has set, since that call, each
+global of its fields that some call reads; and it calls in tail position
+only another of n, never through a closure. It costs 0.1 to 0.6% of a
+compile (plans/correctness/linting.md, E9).
+
+`LowLint` checks, after `lower` (what is defined on every way to a use by
+dominance, over a function's blocks cut at each push, a walk up the tree
+of dominators from each use, where a map of what is available, filtered at
+every join, cost blocks times variables: 26M instructions on HaMLet's Low
+against 234M; plans/correctness/linting.md, M2):
 
 * **SSA:** every variable is defined once in its function and on every way
   to each of its uses; a handler's block sees only what was defined where
@@ -766,7 +801,8 @@ leaves implicit is explicit.
 * **Representations:** a variable holds what its representation says,
   where something else says too: the operation that makes it, a primitive
   that takes it (`Prims.repsOf`, made from the primitive's type in
-  `src/isa/prims.sml`), a field of a tuple or a constructor made in the
+  `src/isa/prims.sml`, which `runeisa` reads as an SML type: `PrimTys`),
+  a field of a tuple or a constructor made in the
   function, a block's or a known function's parameter it is passed to,
   what a closure's function reads of a value it captures, and an
   exception. Two agree where a value can be both: any with every one, con
@@ -830,6 +866,49 @@ middle end may ask of it):
 [plans/middle-end.md](plans/middle-end.md), M5, for how it compares with the
 stack target.
 
+**`RegVerify`** (`lib/compiler/backend/regverify.sml`) checks the register
+code where the lint is on: after `registers`, and every program `Link` makes
+of units, those read back from the cache and from `.rbu` files included
+([plans/correctness/linting.md](plans/correctness/linting.md), M8). Its
+rules are the tables `runeisa` writes from `src/isa/regs.sml` (`RegCodes`:
+what each instruction reads and writes, what it leaves and takes, what
+must follow it, which primitives it names), what Lower declares of the
+program (each function's result and its closures' captures, each global's
+representation, carried in `Code.meta`, `Code.program` and the unit's file),
+and a dataflow, one pass over each function:
+
+* **Representations:** a register holds its representation under the order
+  x ≤ x, x ≤ any, con0 ≤ con, ptr ≤ con. A write of what is below the
+  register's representation is right; of what is above it, a downcast,
+  trusted and counted, since only ML's types say what a value read from the
+  heap or returned by a polymorphic function is; of anything else, a
+  breach. A read that wants a representation is judged the same.
+* **Unset:** nothing reads a register not set on every way to the read; at a
+  function's entry its parameters are set, and the scratch holds nothing at
+  a label.
+* **Labels:** a label's state is the meet of the ways in; a jump back goes to a
+  loop head of the meta and sets what the head has set; at a loop head and
+  a handler's block the registers are what they are declared; the handlers
+  pushed are as many on every way in, and none where the frame is left.
+* **The order the VM relies on:** `RESULT` right after `CALL`, `CALLK` and
+  `PRIMPUSH`, `CATCH` at a handler's start, a `SWITCH`'s table of `JUMP`s,
+  only image primitives in `PRIMPUSH` and none in `PRIM`.
+* **Calls and closures:** a known call passes the callee's parameters, and
+  a known tail call returns what its caller does; a closure is of a function
+  of one parameter and captures what its closures do; `ENV` and `SELF` are
+  only in a function closures are made of and no known call calls; a
+  primitive's arguments and result are what its type says.
+* **Tags:** a register's constructor, where a constructor made or a tag
+  tested says, and a `FIELD` or `DECON` of another tag is a breach; a tag
+  test whose answer is known leaves the other way untaken.
+
+It checks `Regs` and `Link`, not that the code is safe for an untrusted
+`.rbc`: that is the VM's ([plans/correctness/vm-verifier.md](plans/correctness/vm-verifier.md)).
+`RUNE_REGVERIFY=1` runs it without the lint, `0` not at all, and `census`
+prints what it counted; `RUNE_REGVERIFY_INJECT=KIND` corrupts the code
+`Regs` made, before the check, in one of eleven ways, which its tests
+(`register/@regverify-*`) hold it to refusing.
+
 ## Tests
 
 * **`make test-ir`** (`ir/*` of `tests/runner/tools.sml`): each `tests/ir/NAME.sml`
@@ -840,12 +919,18 @@ stack target.
   the compiler must stop (`(* fail: MESSAGE *)`), for a program a lint must
   refuse.
 * **`make check-levels`** (the oracle `levels` of `tests/runner/oracles.sml`): every program of
-  `tests/lang` and `tests/perf` compiled at `-O0` and at `-O2`, with the
-  lint on and Mid's text checked against itself (`--mid-roundtrip`). Both
-  run under `runevm-stack --checked` (a `DECON` of another constructor than it
-  names stops the program), and must print and exit the same, on both
-  streams: traces too, where inlining has moved code into another
-  function (`tests/lang/rt.trace_inlined.sml`).
+  `tests/lang` and `tests/perf` compiled to both bytecodes at `-O0` and at
+  `-O2`, whole and whole of its units' Mid (`--units --whole`), and in
+  units linked by `Link` (`--units`, its unit files kept), with the lint
+  on, and on the stack bytecode Mid's text checked against itself
+  (`--mid-roundtrip`). The register bytecode's builds are compiled again
+  without the lint: the two must be the same bytes, a unit's files and
+  their bases too. Each runs under `--checked` (a `DECON` of another
+  constructor than it names stops the program), the register bytecode's at
+  tier 2 of the JIT too (`--jit=all --jit-tier=2`), and must print and exit
+  as the stack bytecode's at `-O0` does, on both streams: traces too, where
+  inlining has moved code into another function
+  (`tests/lang/rt.trace_inlined.sml`).
 * **The bootstrap** is compiled with `--lint --mid-roundtrip` whenever it is
   built (`bin/rune.rbc`).
 * **`bin/rune-measure bisect-fuel PROGRAM.sml`**: where a program runs otherwise

@@ -30,12 +30,12 @@ struct
   val int32Max : IntInf.int = IntInf.fromInt 1073741823
   val int32Min : IntInf.int = IntInf.fromInt ~1073741824
 
-  (* the primitives that save or restore an image (Isa.effect), grow the
-     program (rt_link, rt_debug_hook), or put the debugger's debug mode on
-     (rt_debug_mode, rt_debug_step): a PRIMPUSH, so that the loop takes the
-     program again after them, or gives it to the driver, and their result
-     comes back through RESULT *)
-  val imagePrims = ["posix_fork", "rt_save", "rt_restore", "rt_link", "rt_debug_hook", "rt_debug_mode", "rt_debug_step"]
+  (* the primitives that save or restore an image, grow the program
+     (rt_link, rt_debug_hook), or put the debugger's debug mode on
+     (rt_debug_mode, rt_debug_step), as their effects say (Isa.imagePrimitive):
+     a PRIMPUSH, so that the loop takes the program again after them, or
+     gives it to the driver, and their result comes back through RESULT *)
+  val imagePrims = R.imagePrims
 
   fun func (f : L.func) : C.func =
     let
@@ -331,7 +331,10 @@ struct
                                                                  (L.succs (#transfer bl))
                                                      andalso blockIndex (#label bl) >= i)
                                                   blocks
-                                 then labelOf i else ~1))}}
+                                 then labelOf i else ~1)),
+                    (* what Lower declares it returns and its closures capture *)
+                    result = L.repCode (#result f),
+                    captures = List.map L.repCode (#captures f)}}
     end
 
   fun program (p : L.program) : C.program =
@@ -340,9 +343,15 @@ struct
       val () = Lower.debugRegs := []
       val funcs = List.map func p
       val sorted = IntMap.listItems (List.foldl (fn (f : C.func, m) => IntMap.insert (m, #id f, f)) IntMap.empty funcs)
+      (* what each global holds, as Lower declares it, by its index here *)
+      val greps = Array.array (!C.nglobals, L.repCode L.RAny)
+      val () = IntMap.appi (fn (g, ix) => case IntMap.find (!Lower.globalReps, g) of
+                                            SOME r => Array.update (greps, ix, L.repCode r)
+                                          | NONE => ())
+                           (!C.globals)
     in
       {consts = List.rev (!C.consts), nglobals = !C.nglobals, funcs = sorted, files = List.rev (!C.files),
        inlines = List.rev (!C.inlines),
-       nlabels = !C.nextLabel}
+       nlabels = !C.nextLabel, globalReps = Array.foldr (op ::) [] greps}
     end
 end

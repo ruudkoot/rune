@@ -61,4 +61,209 @@ struct
   val operandKinds : int list vector = Vector.fromList [[], [14, 14], [14, 2], [14, 0], [14], [14, 3], [14, 6], [6, 14], [14, 5], [14], [14, 14], [14], [14, 14], [14], [10, 14], [10], [14, 11], [14, 7, 11], [14, 12, 14], [14, 3, 14], [14, 14, 3], [14, 14], [14, 1], [14, 13], [14, 14, 14], [14, 14], [14, 14], [14, 5, 14], [8], [14, 8], [14, 8], [14, 8, 3], [9], [], [14], [14], [7, 11], [7, 11], [14, 11], [14, 3, 11], [14, 14, 3, 12]]
   val listAt : int vector = Vector.fromList [~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, 0, 0, 1, 2, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, 1, 1, ~1, 2, ~1]
   val listPrim : bool vector = Vector.fromList [false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
+
+  (* What a checker of the code needs (src/isa/regs.sml), none of it in
+     the fingerprint. What a register an instruction reads must hold, or
+     one it writes then holds (RegIsa.value): a representation by
+     Low.repCode's numbers, or what the program says of what another
+     operand names, by its position; ArgsOf, of a list, each what the
+     primitive's type says of its argument of that place (Prims.repsOf). *)
+  datatype value =
+      Is of int | Like of int | ConstOf of int | GlobalOf of int | EnvOf of int | SlotOf of int * int
+    | ResultOf of int | ReturnOf of int | Returned | Left | UnitOr of int * int
+    | ParamsOf of int | CapturesOf of int | ArgsOf of int
+  (* whether an operand is a register the instruction reads or writes *)
+  datatype role = Reads of value | Writes of value | Other
+  (* what it does beside its operands (RegIsa.implicit): the function
+     MakesClosure and CallsKnown name, by its position *)
+  datatype implicit =
+      PushesArgs | Leaves of value | Takes | ReadsClosure | MakesClosure of int | CallsClosure | CallsKnown of int
+  (* what must come after it (RegIsa.order): an opcode right after it; as
+     many of an opcode as the count at a position says; the code at the
+     label at a position beginning with an opcode *)
+  datatype order = Then of int | Table of int * int | Begins of int * int
+  (* where control goes after it (Isa.flow), and what it does to the handlers *)
+  datatype flow = Next | Branch | Jump | Call | TailCall | Return | Raise | Halt | Switch
+  datatype handlers = Keeps | Installs | Removes
+  (* each opcode's operands before its list, by position *)
+  val roles : role list vector = Vector.fromList
+    [(* HALT *) [],
+     (* MOVE *) [Writes (Like 1), Reads (Is 0)],
+     (* INT *) [Writes (Is 1), Other],
+     (* CONST *) [Writes (ConstOf 1), Other],
+     (* UNIT *) [Writes (Is 8)],
+     (* CON0 *) [Writes (Is 5), Other],
+     (* GLOBAL *) [Writes (GlobalOf 1), Other],
+     (* SETGLOBAL *) [Other, Reads (GlobalOf 0)],
+     (* ENV *) [Writes (EnvOf 1), Other],
+     (* SELF *) [Writes (Is 6)],
+     (* CALL *) [Reads (Is 6), Reads (Is 0)],
+     (* RESULT *) [Writes Left],
+     (* TAILCALL *) [Reads (Is 6), Reads (Is 0)],
+     (* RET *) [Reads Returned],
+     (* PRIM *) [Other, Writes (ResultOf 0)],
+     (* PRIMPUSH *) [Other],
+     (* TUPLE *) [Writes (UnitOr (1, 6)), Other],
+     (* CLOSURE *) [Writes (Is 6), Other, Other],
+     (* SELECT *) [Writes (Is 0), Other, Reads (Is 6)],
+     (* CON *) [Writes (Is 6), Other, Reads (Is 0)],
+     (* DECON *) [Writes (Is 0), Reads (Is 6), Other],
+     (* CONTAG *) [Writes (Is 1), Reads (Is 7)],
+     (* NEWEXN *) [Writes (Is 6), Other],
+     (* BUILTINEXN *) [Writes (Is 6), Other],
+     (* MKEXN *) [Writes (Is 6), Reads (Is 6), Reads (Is 0)],
+     (* EXNCON *) [Writes (Is 6), Reads (Is 6)],
+     (* EXNARG *) [Writes (Is 0), Reads (Is 6)],
+     (* SETENV *) [Reads (Is 6), Other, Reads (SlotOf (0, 1))],
+     (* JUMP *) [Other],
+     (* JUMPIF *) [Reads (Is 5), Other],
+     (* JUMPIFNOT *) [Reads (Is 5), Other],
+     (* JUMPIFNOTTAG *) [Reads (Is 7), Other, Other],
+     (* PUSHHANDLER *) [Other],
+     (* POPHANDLER *) [],
+     (* CATCH *) [Writes (Is 6)],
+     (* RAISE *) [Reads (Is 6)],
+     (* CALLK *) [Other, Other],
+     (* TAILCALLK *) [Other, Other],
+     (* SWITCH *) [Reads (Is 7), Other],
+     (* CONN *) [Writes (Is 6), Other, Other],
+     (* FIELD *) [Writes (Is 0), Reads (Is 6), Other, Other]]
+  (* what each register of its list holds, which it reads *)
+  val listHolds : value option vector = Vector.fromList
+    [(* HALT *) NONE,
+     (* MOVE *) NONE,
+     (* INT *) NONE,
+     (* CONST *) NONE,
+     (* UNIT *) NONE,
+     (* CON0 *) NONE,
+     (* GLOBAL *) NONE,
+     (* SETGLOBAL *) NONE,
+     (* ENV *) NONE,
+     (* SELF *) NONE,
+     (* CALL *) NONE,
+     (* RESULT *) NONE,
+     (* TAILCALL *) NONE,
+     (* RET *) NONE,
+     (* PRIM *) SOME (ArgsOf 0),
+     (* PRIMPUSH *) SOME (ArgsOf 0),
+     (* TUPLE *) SOME (Is 0),
+     (* CLOSURE *) SOME (CapturesOf 1),
+     (* SELECT *) NONE,
+     (* CON *) NONE,
+     (* DECON *) NONE,
+     (* CONTAG *) NONE,
+     (* NEWEXN *) NONE,
+     (* BUILTINEXN *) NONE,
+     (* MKEXN *) NONE,
+     (* EXNCON *) NONE,
+     (* EXNARG *) NONE,
+     (* SETENV *) NONE,
+     (* JUMP *) NONE,
+     (* JUMPIF *) NONE,
+     (* JUMPIFNOT *) NONE,
+     (* JUMPIFNOTTAG *) NONE,
+     (* PUSHHANDLER *) NONE,
+     (* POPHANDLER *) NONE,
+     (* CATCH *) NONE,
+     (* RAISE *) NONE,
+     (* CALLK *) SOME (ParamsOf 0),
+     (* TAILCALLK *) SOME (ParamsOf 0),
+     (* SWITCH *) NONE,
+     (* CONN *) SOME (Is 0),
+     (* FIELD *) NONE]
+  (* what each does beside its operands *)
+  val implicit : implicit list vector = Vector.fromList
+    [(* HALT *) [],
+     (* MOVE *) [],
+     (* INT *) [],
+     (* CONST *) [],
+     (* UNIT *) [],
+     (* CON0 *) [],
+     (* GLOBAL *) [],
+     (* SETGLOBAL *) [],
+     (* ENV *) [ReadsClosure],
+     (* SELF *) [ReadsClosure],
+     (* CALL *) [CallsClosure, Leaves (Is 0)],
+     (* RESULT *) [Takes],
+     (* TAILCALL *) [CallsClosure],
+     (* RET *) [],
+     (* PRIM *) [PushesArgs],
+     (* PRIMPUSH *) [PushesArgs, Leaves (ResultOf 0)],
+     (* TUPLE *) [],
+     (* CLOSURE *) [MakesClosure 1],
+     (* SELECT *) [],
+     (* CON *) [],
+     (* DECON *) [],
+     (* CONTAG *) [],
+     (* NEWEXN *) [],
+     (* BUILTINEXN *) [],
+     (* MKEXN *) [],
+     (* EXNCON *) [],
+     (* EXNARG *) [],
+     (* SETENV *) [],
+     (* JUMP *) [],
+     (* JUMPIF *) [],
+     (* JUMPIFNOT *) [],
+     (* JUMPIFNOTTAG *) [],
+     (* PUSHHANDLER *) [],
+     (* POPHANDLER *) [],
+     (* CATCH *) [Takes],
+     (* RAISE *) [],
+     (* CALLK *) [CallsKnown 0, Leaves (ReturnOf 0)],
+     (* TAILCALLK *) [CallsKnown 0],
+     (* SWITCH *) [],
+     (* CONN *) [],
+     (* FIELD *) []]
+  (* what must come after each *)
+  val order : order list vector = Vector.fromList
+    [(* HALT *) [],
+     (* MOVE *) [],
+     (* INT *) [],
+     (* CONST *) [],
+     (* UNIT *) [],
+     (* CON0 *) [],
+     (* GLOBAL *) [],
+     (* SETGLOBAL *) [],
+     (* ENV *) [],
+     (* SELF *) [],
+     (* CALL *) [Then 11],
+     (* RESULT *) [],
+     (* TAILCALL *) [],
+     (* RET *) [],
+     (* PRIM *) [],
+     (* PRIMPUSH *) [Then 11],
+     (* TUPLE *) [],
+     (* CLOSURE *) [],
+     (* SELECT *) [],
+     (* CON *) [],
+     (* DECON *) [],
+     (* CONTAG *) [],
+     (* NEWEXN *) [],
+     (* BUILTINEXN *) [],
+     (* MKEXN *) [],
+     (* EXNCON *) [],
+     (* EXNARG *) [],
+     (* SETENV *) [],
+     (* JUMP *) [],
+     (* JUMPIF *) [],
+     (* JUMPIFNOT *) [],
+     (* JUMPIFNOTTAG *) [],
+     (* PUSHHANDLER *) [Begins (0, 34)],
+     (* POPHANDLER *) [],
+     (* CATCH *) [],
+     (* RAISE *) [],
+     (* CALLK *) [Then 11],
+     (* TAILCALLK *) [],
+     (* SWITCH *) [Table (1, 28)],
+     (* CONN *) [],
+     (* FIELD *) []]
+  val flow : flow vector = Vector.fromList [Halt, Next, Next, Next, Next, Next, Next, Next, Next, Next, Call, Next, TailCall, Return, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Jump, Branch, Branch, Branch, Next, Next, Next, Raise, Call, TailCall, Switch, Next, Next]
+  val raises : bool vector = Vector.fromList [false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, false]
+  val handlers : handlers vector = Vector.fromList [Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Installs, Removes, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps]
+  (* whether the primitive it names must be an image primitive (SOME
+     true), must not be one (SOME false), or is either, or none (NONE) *)
+  val imageOnly : bool option vector = Vector.fromList [NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, SOME false, SOME true, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE]
+  (* the image primitives (Isa.imagePrimitive): those that save or restore
+     an image, or may make the world another, which PRIMPUSH calls *)
+  val imagePrims = ["posix_fork", "rt_save", "rt_restore", "rt_link", "rt_debug_hook", "rt_debug_mode", "rt_debug_step"]
 end

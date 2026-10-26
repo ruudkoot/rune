@@ -92,9 +92,13 @@ struct
      many values it captures, how many variables it has -- they are numbered
      from 0 in each function, so that a target keeps what it knows of them
      in arrays -- and its blocks, the entry first. The top level of the
-     program is a function too, whose parameter is never used. *)
+     program is a function too, whose parameter is never used. What it
+     returns and what each value it captures holds are declared, from
+     their types (Lower), for a check of the code made of it (RegVerify):
+     its result, and its captures, ncaptured of them. *)
   type func = {id : int, name : string, params : var list, ncaptured : int, nvars : int, blocks : block list,
-               pos : Source.span option, reps : rep vector}   (* by variable; nvars long *)
+               pos : Source.span option, reps : rep vector,   (* by variable; nvars long *)
+               result : rep, captures : rep list}
 
   type program = func list
 
