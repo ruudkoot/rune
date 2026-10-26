@@ -94,17 +94,18 @@ What it rests on:
 | M10 | The stack code's check, in the compiler | B | done (2026-10-26) |
 | M11 | Node ids, witnesses and `SourceTy` | A | done (2026-10-26) |
 | M12 | AstLint of the Core | A | done (2026-10-26); at level 2, and G1 is next |
-| G1 | How AstLint goes on (the owner's) | A | |
+| G1 | How AstLint goes on (the owner's) | A | decided (2026-10-26): M13 in two steps; AstLint stays at level 2 |
 | M13 | AstLint of the module language | A | not started |
 | M14 | The editor's types | A | not started |
 | M15 | Overloading's context and free type variables, as options | A | done (2026-10-26) |
 | M16 | Retire | | not started |
 
 The owner took every recommendation, D1 to D19, on 2026-10-26
-(*Decisions*). Two calls stay the owner's:
-- gate G1, after M12;
-- the move of `--overloading`'s default, once M15 has counted what it
-  breaks (D18).
+(*Decisions*). The two calls left to the owner are made:
+- **gate G1** (2026-10-26): the module language is checked, in M13's two
+  steps, and AstLint stays at level 2 for now;
+- **the move of `--overloading`'s default** (D18): moved to
+  `declaration`, with HOL4's build passing `--overloading=toplevel`.
 
 The tracks do not wait for each other, after M1:
 - **P, placement and cost,** puts lint where it does not run and makes it
@@ -4356,9 +4357,21 @@ After M12, the owner decides two things from what AstLint cost and found:
 - whether the module language is checked as M13 plans, or stays axioms;
 - whether AstLint stays at level 2 or moves to 1.
 
+**Decided (2026-10-26):**
+- **The module language is checked, in two steps** (M13). First,
+  transparent ascriptions and functor arguments are matched one way
+  against the results M12 records, with no new records. Then opaque
+  ascriptions and applications, with the records of the fresh names.
+- **AstLint stays at level 2.** Level 1 is reconsidered once the REPL and
+  the compiler library run it, and the editor's latency is measured.
+
 ### M13. AstLint of the module language (A; L, about 1,000; after G1)
 
-* **What:** D5 B's second step (D5 A's records).
+* **What:** D5 B's second step (D5 A's records), in two steps (G1):
+  - **First, without new records:** transparent ascriptions and functor
+    arguments, their schemes matched one way against the results M12
+    records.
+  - **Then, with them:** opaque ascriptions and applications.
   - **The elaborator records** the fresh names the module language chose:
     - the bound names of each signature expression (rule 65's `T`) and the
       representatives of sharing classes (rule 78's `t`);
@@ -4487,10 +4500,9 @@ Not this roadmap's:
 
   The `.rbc` and the image do not change (D9).
 - **What the owner decides:** the owner took D1 to D19 as recommended
-  (2026-10-26). What stays the owner's:
-  - whether the default of `--overloading` moves, once M15 has counted
-    what it breaks;
-  - gate G1, after M12;
+  (2026-10-26), and made the two calls left to it the same day: the
+  default of `--overloading` moves (D18), and gate G1 goes on to M13 in
+  two steps with AstLint at level 2. What stays the owner's:
   - whether the test of `CALL`'s function index (E7b's C-call) lands in
     the VM now or with the VM roadmap (D8).
 
