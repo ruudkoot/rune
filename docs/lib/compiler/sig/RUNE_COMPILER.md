@@ -206,9 +206,12 @@ libraries under `root`. No absolute library path is built in.
 Supported flags are `--target=registers`, `--target=stack`,
 `--allow-prim`, `--unicode`, `--unicode=utf8`, `--unicode=latin1` and
 `--library NAME`, `--inline-functor=F[,F...]` and
-`--no-inline-functors` (docs/build.md, Inline functors). Unknown flags
-raise [`Failed`](#exn-failed). The defaults are register bytecode, ASCII source and
-no additional libraries.
+`--no-inline-functors` (docs/build.md, Inline functors),
+`--overloading=MODE` and `--free-tyvars=MODE` (docs/language.md,
+Overloading and Free type variables). Unknown flags and modes raise
+[`Failed`](#exn-failed). The defaults are register bytecode, ASCII source, no
+additional libraries, `--overloading=toplevel` and
+`--free-tyvars=refuse`.
 
 | Field | Type | Description |
 | --- | --- | --- |

@@ -1,0 +1,1 @@
+tests/lang/ty.infer.valuerestriction_monotype.sml:4:1: warning: the type of x, 'a list, contains a type variable that cannot be generalised: it is made a new type, ?.X1 list (--free-tyvars=monotype)
