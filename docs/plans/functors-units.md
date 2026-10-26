@@ -84,7 +84,7 @@ What it rests on:
 | M8 | Nested functors that do not blow up | F | done (2026-10-25) |
 | M9 | Retire | | done (2026-10-25) |
 | M10 | Small functions inlined across units; `--inline-functor` retired | F | added (the owner, 2026-10-26); in progress |
-| M11 | Shared summaries, measured, and built where they gain | H | added (the owner, 2026-10-26); E12 measured (2026-10-26): parts 1 and 2 pass their thresholds, not built yet |
+| M11 | Shared summaries, measured, and built where they gain | H | added (the owner, 2026-10-26); E12 measured: parts 1 and 2 pass their thresholds; part 1 built (2026-10-26); part 2 waits for M10 |
 
 The owner decided D1 to D17 on 2026-10-21, each as recommended
 (*Decisions*). D1's functors compiled once wait on gate G2, which stays the
@@ -3968,6 +3968,60 @@ already written. The times:
 - M11's *Why* quotes the stages at a load of 18 (246 s). At loads of 4 to
   8 they take 124 s: export 39 to 41 s, usages 26 s, load 9 to 11 s.
 
+**Part 1, built** (2026-10-26, `21f036bd9`), by the lead's word, as
+prov and a lookup by names, in the fingerprint functions of
+`unitbasis.sml` alone (`fpChild`, `reference`, `candidate`,
+`realisation`, `structureFp`; `notePaths` keeps each loaded unit's
+signatures). `UnitCache.version` is 9, and `docs/units.md`'s
+*Fingerprints* says how a stream names a structure.
+- A functor's result's children are looked up by the names of their
+  entries among the structures its parameter's children were found to be,
+  and each of theirs. E12's provn used one index of every signature's
+  structures in the session instead, filled as streams were worked out. A
+  functor's fingerprint would then have depended on unrelated signatures,
+  and on what the session had fingerprinted before, so an edit elsewhere
+  would cost spurious misses. The parameter's structures depend on the
+  functor and the units its stamps name alone.
+- A dynamic module's signature's fingerprint (`sigabi`) names nothing by
+  reference and is unchanged.
+- **The gate:**
+  - `bin/rune-incremental soundness`, BASE against part 1 (`--probes`,
+    `tests/incremental/project`, `tests/incremental/functors`, the
+    compiler's sources): 95 pairs of states, 63,915 usages compared, no
+    violation and no refinement;
+  - the same over a project of nested signatures, `include`, sharing,
+    `where type` and functors' parameters and results (the drafts'
+    `impl/fu-m11/p1/nested`), seeds 1 and 7, 80 steps each: 2,401 usages,
+    no violation and no refinement;
+  - the scenarios, 70 of 70. S77 is new: a nested signature named by
+    reference whose specification changes. It fails when a reference's
+    fingerprint ignores the structure's content;
+  - the tester (`mutate`), the faults and the soundness tests, 10 of 10;
+    `tests/units`, the REPL's and the compiler's tests;
+  - MLton's S44 to S48 (`bin/rune-incremental mlton`): cold 606, warm 0,
+    S45 1, S46 1, S47 236, S48 1, as at M7, and the last warm build the
+    bytes of one without the cache;
+  - HOL4 through the cache with `RUNE_VERIFY_CACHE=1`, a fresh clone of
+    HOL-m3 to `hol.state` (`scripts/p1-hol.sh`): 372 s, no entry differs.
+- **Measured** (MLton's 606 files at tier 2, `scripts/p1-measure.sh`, CPU
+  pinned, loads 2 to 7):
+  - the usages hash 18.3 MB, from 890.3 MB: signatures 6.9 MB, functors 6.5
+    MB, and the structures they name 1.9 MB in 722 hashes. The whole build
+    hashes 249.6 MB, from 1,121.7 MB;
+  - `unit-usages` takes 12.1 to 13.0 s at a load of about 3.6, from 26.4 s
+    (BASE at 3.7): −51 to −54%. Against BASE at a load of 6.4 it is 14.4 s
+    against 23.4 s;
+  - the build takes 606.4G instructions in each of three runs, from BASE's
+    669.6G (−9.4%). The output is BASE's once the compiler's own
+    identity in each unit's provenance is masked.
+- **G1 again:** the whole compile is 278.6G instructions, so units cost
+  2.18 times a whole compile in instructions, from 2.40 (BASE, the same
+  whole compile).
+  - In processor time, whole then units back to back: 1.86 (59.7 s and
+    110.8 s, load 3.6) and 1.55 (78.0 s and 121.1 s, load 6.5).
+  - In cycles: 1.74 and 1.69.
+  - G1 is not met; part 2's bases are the next of it.
+
 ### Later
 
 - **Compiling against a functor's signature alone** (SMLSC's functor
@@ -3986,6 +4040,13 @@ already written. The times:
   the walk.
 - **A cache shared between people who do not trust each other** (issue 7):
   SHA-256 for identities (D11 D).
+- **Type names and anchors' units written once a stream** (E12): each type
+  name's fingerprint, and each anchor's unit name, written once in a
+  signature's or a functor's stream and then by its number. E12 found −47%
+  of MLton's usages and −80% of HOL4's signatures by it, before part 1.
+  Left out (the lead, 2026-10-26): outside MLton its absolute gain is
+  small, since HOL4's usages are about 3G instructions of a build of about
+  1,900G.
 
 ### Why this order
 
