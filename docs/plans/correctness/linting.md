@@ -126,6 +126,29 @@ The owner took every decision as recommended and asked for every milestone
 (2026-10-26). Each milestone is merged into `linting` after `make check`
 passes on its exact commit.
 
+- **M1** (`78e29e130`, `1835c1da7`, `6e09be6bc`, `eb976d841`, `903e3dc82`,
+  merged `71bad1be4`; `make check` 21,307 of 21,307).
+  - **The two bugs, fixed:**
+    - the value restriction takes `(conexp : ty) atexp`, with a test in
+      `tests/lang` and one that `ref`'s stays expansive;
+    - `--mid-roundtrip` reads Mid back with counters of its own.
+  - **No check may move the compiler's counters:** `Pass.checkAt` refuses
+    one that moves the counters of stamps, type names, type variables,
+    records, functions, labels or private names.
+  - **Each check is counted at every depth** in `--pass-stats`. HaMLet in
+    units: the old `checks` line said 0.005 s; the checks take 2.2 s.
+  - **The invariant of `results` is always on:** 0.14% of HaMLet, 0.53% of
+    the bootstrap.
+  - **`check-levels`** compiles both targets and a true `--units` build
+    (UL). The register target is compared lint on against lint off, and
+    runs at tier 2 with `--checked`. Its CPU is about 2.3 to 2.75 times
+    what it was (more builds and runs per program); M3 weighs cuts against
+    "make check does not grow".
+  - **`lib/cache` is built with `--lint`:** all 768 entries are the same
+    bytes.
+  - **A departure:** the Mid round trip gives its type names stamps from a
+    range below every stamp the compiler makes, never reused, because
+    `Ty.con` hash-conses by stamp and keeps the first name it saw.
 - **M7** (`ac2e7e2ad`, merged `efa5148f1`; `make check` 21,251 of 21,251).
   - **The register instructions are described for checking in
     `src/isa/regs.sml`:**
