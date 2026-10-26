@@ -47,15 +47,15 @@ of results in globals (see *Low*).
 | `-O0`, `-O1`, `-O2` | the level; `-O1` when none is given; `-O2` adds `equality` (see *The optimisations of Mid*) |
 | `--passes=P,...` | run these optional passes, whatever the level |
 | `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=registers` (`stack` with `--target=stack`) |
-| `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach; `RUNE_LINT` set and not empty does the same where no flag reaches (the REPL, the compiler library), and every test sets it ([testing.md](testing.md), *Running the tests*) |
+| `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach; `RUNE_LINT` set and not empty does the same where no flag reaches (the REPL, the compiler library), and every test sets it ([testing.md](testing.md), *Running the tests*). A check changes nothing of what the compiler makes, the same bytes as without it, units and their bases too (`make check-levels`), and moves none of its counters of names -- stamps, type names, functions, labels -- which `Pass.checkAt` holds every check to, since one that took fresh names hid a bug it should have caught; the invariant of results in globals (*What a `Low` keeps*) is checked after every `lower`, linted or not |
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
-| `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then `total: T s processor time, S s in the stages (P%)` (below) |
+| `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then each check, at every depth, as `check KEY: N runs, T s, I instructions` (the instructions where the runtime counts them, as Rune's own build does); then `total: T s processor time, S s in the stages (P%)` (below) |
 | `--pass-stats=elab` | `--pass-stats`, and a line for each top-level declaration elaborated: where its processor time went, by context and operation, and what the elaborator counted (*The elaborator's counters* below) |
 | `--pass-stats=expand` | `--pass-stats`, and after the expansion a line `expand: N applications expanded, M left calls (B past the budget), P copies not all definitions; at most S nodes copied for a top-level application` (*Functors compiled once* below) |
 | `--pass-stats=hash` | `--pass-stats`, and at the end what the compile hashed: a line `hash PHASE:SITE: B bytes, N hashes` for each part of a compile in units (`usages`, `find`, `export`, `load`, `cache`) and place that hashed, and `memo PHASE: H hits, M misses` for the memo of fingerprints (*What a compile in units hashes* below) |
 | `--units` | run the pipeline on one unit, a file, at a time, and link them ([units.md](units.md)): the passes see a unit, with `Pass.whole` false, and `--pass-stats` names each unit before its passes |
 | `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would (there is no bytecode from Mid yet) |
-| `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same |
+| `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same, after `mid` (the check `mid-roundtrip`); what it reads is numbered by counters of its own, so that a unit's basis is what it is without it |
 | `--functor-budget=N` | the Mid nodes `expand` may copy for a top-level application and those in its copies (1000000 by default; 0 copies none) |
 
 **What `--pass-stats` shows** is the whole compile: the stages add up to
@@ -76,6 +76,13 @@ stages of the pipeline above, the compile's stages are:
   the outermost stages are added up;
 * `stats`, the sizes `--pass-stats` counted, and `checks`, what `--lint` and
   the dumps took, apart from the stages they checked or printed.
+
+After them, a line `check KEY` for each check that ran, at whatever depth,
+by its key (`Pass.checkAt`): the stage it follows (`translate`, `mid`,
+`midcanon`, ..., `lower`), `mid-roundtrip`, and `results`, which runs
+inside `lower`. They are counted in the stages' times already, `checks`
+or a unit's `unit-passes`, so they show what a compile in units lints,
+which `checks` does not, and are not added to the total again.
 
 **A dump** (`Lambda.show`) prints one node to a line, its parts indented
 below it unless they are all atoms, and leaves positions out. Variables
@@ -744,6 +751,17 @@ leaves implicit is explicit.
   constructor.
 
 ### What a `Low` keeps
+
+After every `lower`, linted or not, `LowLint.results` checks what results
+in globals keep, from what `Lower` says of which functions return so
+(`Pipeline.lowered`): a read of such a global (`Slot`) follows, in its
+block, a known call of a function that leaves its results there, with
+only other such reads and positions between; a function of n fields
+returns, in each block, what the block's last call gave, a call of
+another of n, or a value after which it has set, since that call, each
+global of its fields that some call reads; and it calls in tail position
+only another of n, never through a closure. It costs 0.1 to 0.6% of a
+compile (plans/correctness/linting.md, E9).
 
 `LowLint` checks, after `lower`:
 
