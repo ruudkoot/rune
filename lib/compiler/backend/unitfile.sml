@@ -13,8 +13,9 @@ struct
 
   val magic = "RUNU"
   (* 3: what Lower declares of the code, for RegVerify (Code.meta's result
-     and captures, Code.program's globalReps) *)
-  val version = 3
+     and captures, Code.program's globalReps); 4: what the code expects of
+     the units before it, which the link checks (Code.expects) *)
+  val version = 4
 
   (* the code kind: the bytecode of the instruction set the fingerprint
      names; native code will be another (docs/plans/incremental-compilation.md,
@@ -75,8 +76,17 @@ struct
           ^ String.concat (List.map (fn (m : Code.meta) =>
                                        u8 (#result m) ^ u32 (List.length (#captures m)) ^ String.concat (List.map u8 (#captures m)))
                                     metas)
+      val {calls, reads} = #expects code
     in
       fs ^ u32 (List.length (#globalReps code)) ^ String.concat (List.map u8 (#globalReps code))
+      (* what it expects: each call of an import, its index, arity (~1:
+         two), the masks of what it passes and takes back; each global's
+         mask of what it is read as *)
+      ^ u32 (List.length calls)
+      ^ String.concat (List.map (fn (fid, n, masks, rm) =>
+                                   u32 fid ^ u32 n ^ u32 (List.length masks) ^ String.concat (List.map u32 masks) ^ u32 rm)
+                                calls)
+      ^ u32 (List.length reads) ^ String.concat (List.map u32 reads)
     end
 
   fun write (path : string, fingerprint : int, u : Link.unitCode) : unit =
@@ -226,7 +236,10 @@ struct
       val exports = list (r, fn r => let val n = count r in (n, count r) end)
       val declared = list (r, fn r => let val result = u8 r in (result, list (r, u8)) end)
       val globalReps = list (r, u8)
+      val calls = list (r, fn r => let val fid = count r val n = i32 r val masks = list (r, count) in (fid, n, masks, count r) end)
+      val reads = list (r, count)
       val () = if !(#pos r) = String.size s then () else raise Bad "more after the unit"
+      val () = if List.null reads orelse List.length reads = nglobals then () else raise Bad "what the globals are read as"
       val () = if List.null declared orelse List.length declared = nmeta then () else raise Bad "what the code declares"
       val () = if List.null globalReps orelse List.length globalReps = nglobals then () else raise Bad "what the globals hold"
 
@@ -306,7 +319,7 @@ struct
                         {id = i, nlocals = nlocals, code = items (off, stop), name = name, meta = metaOf i})
                      (ListPair.zip (funcs, ends), List.tabulate (List.length funcs, fn i => i))
       val code = {consts = consts, nglobals = nglobals, funcs = funcs', files = files, inlines = inlines,
-                  nlabels = IntMap.numItems targets, globalReps = globalReps}
+                  nlabels = IntMap.numItems targets, globalReps = globalReps, expects = {calls = calls, reads = reads}}
     in
       (fingerprint,
        {code = code, identity = self,provenance=provenance, globals = ListPair.zip (globals, List.tabulate (nglobals, fn i => i)),
@@ -316,11 +329,11 @@ struct
 
   (* u with the source the files of its code name old named new: a unit
      from the cache whose source has moved *)
-  fun mapFiles ({code = {consts, nglobals, funcs, files, inlines, nlabels, globalReps}, identity, provenance, globals,
+  fun mapFiles ({code = {consts, nglobals, funcs, files, inlines, nlabels, globalReps, expects}, identity, provenance, globals,
                  imports, exports}
                 : Link.unitCode, f : string -> string) : Link.unitCode =
     {code = {consts = consts, nglobals = nglobals, funcs = funcs, files = List.map f files,
-             inlines = inlines, nlabels = nlabels, globalReps = globalReps},
+             inlines = inlines, nlabels = nlabels, globalReps = globalReps, expects = expects},
      identity = identity,provenance=provenance, globals = globals, imports = imports, exports = exports}
 
   fun renameFile (u : Link.unitCode, old : string, new : string) : Link.unitCode =

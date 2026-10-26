@@ -108,7 +108,10 @@ After them, a line `check KEY` for each check that ran, at whatever depth,
 by its key (`Pass.checkAt`; *Levels* above): the stage it follows
 (`translate`, `mid`, `midcanon`, ..., `lower`), `midconcat`, `prelower`,
 `mid-roundtrip` and the other round trips, `results`, which runs inside
-`lower`, `simplify-def`, inside `simplify`, `functor-body` and `code-rt`. They are counted in the stages' times already, `checks`
+`lower`, `simplify-def`, inside `simplify`, `functor-body` and `code-rt`,
+and in units `link`, the check of the units' interfaces at the link, and
+`schemes`, of a cache entry's imported schemes where it is taken, both at
+level 0 ([units.md](units.md)). They are counted in the stages' times already, `checks`
 or a unit's `unit-passes`, so they show what a compile in units lints,
 which `checks` does not, and are not added to the total again.
 
@@ -896,9 +899,13 @@ stack target.
 **`RegVerify`** (`lib/compiler/backend/regverify.sml`) checks the register
 code from level 1 of the lint, the boundaries (*Levels*), by its cost: 4.4%
 of compiling the compiler, 1.6% of HaMLet, 0.8% of MLton. It runs after
-`registers` (`regverify`), and on every program `Link` makes
-of units (`regverify-link`), those read back from the cache and from `.rbu` files included
-([plans/correctness/linting.md](plans/correctness/linting.md), M8). Its
+`registers` (`regverify`), so each unit once, when it is compiled
+([plans/correctness/linting.md](plans/correctness/linting.md), M8); a unit
+taken from the cache was checked when its entry was made, which the
+entry's mark says, and `Link` checks the units' interfaces against each
+other rather than the whole program again (M9; [units.md](units.md),
+*Linking*), which `RUNE_REGVERIFY_LINK` set and not empty asks for too
+(`regverify-link`). Its
 rules are the tables `runeisa` writes from `src/isa/regs.sml` (`RegCodes`:
 what each instruction reads and writes, what it leaves and takes, what
 must follow it, which primitives it names), what Lower declares of the
@@ -936,7 +943,9 @@ It checks `Regs` and `Link`, not that the code is safe for an untrusted
 `RUNE_REGVERIFY=1` runs it at every level, `off` too, `0` not at all, and `census`
 prints what it counted; `RUNE_REGVERIFY_INJECT=KIND` corrupts the code
 `Regs` made, before the check, in one of eleven ways, which its tests
-(`register/@regverify-*`) hold it to refusing.
+(`register/@regverify-*`) hold it to refusing, or in three more what the
+unit expects of its imports, which S78 of `tests/incremental/SCENARIOS.md`
+holds the link to refusing; a unit so made is not stored in the cache.
 
 ## Tests
 

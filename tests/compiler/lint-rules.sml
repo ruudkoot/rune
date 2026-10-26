@@ -176,7 +176,7 @@ struct
     in go 0 end
   fun unitOf (nlocals, items) : Link.unitCode =
     {code = {consts = [], nglobals = 0, funcs = [{id = 0, nlocals = nlocals, code = items, name = "<toplevel>", meta = NONE}],
-             files = [], inlines = [], nlabels = 0, globalReps = []},
+             files = [], inlines = [], nlabels = 0, globalReps = [], expects = Code.expectsNothing},
      identity = "lint-rules", provenance = NONE, globals = [], imports = [], exports = []}
   val ret = [Code.Op (opcode "UNIT", []), Code.Op (opcode "RET", [])]
   fun bytesOf u = String.concat (UnitFile.chunks (Opcodes.fingerprint, u))

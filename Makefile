@@ -457,7 +457,8 @@ endif
 # compile in units reads after its own cache and never writes; made again,
 # empty first, when the compiler or the library changes. Compiled with the
 # lint of every pass, which changes no byte of it, so that no unit a
-# compile takes from there went unchecked (docs/plans/correctness/linting.md, M1)
+# compile takes from there went unchecked (docs/plans/correctness/linting.md, M1);
+# its entries are marked so, and a compile with the lint takes them (M9)
 basis-cache: lib/cache/made
 lib/cache/made: bin/rune bin/rune.rbc bin/runevm $(wildcard lib/basis/*.sml lib/compiler/*.sml lib/compiler/*/*.sml lib/compiler/*.build) lib/basis/MANIFEST lib/compiler/MANIFEST
 	rm -rf lib/cache
