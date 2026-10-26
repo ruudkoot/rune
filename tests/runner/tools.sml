@@ -797,7 +797,7 @@ struct
      lib/compiler/backend/fault.sml), which the check of that stage refuses
      with its message, at level 2, where every pass is checked. Each rule
      of LambdaLint (after translate), MidLint (after mid and each pass),
-     the renaming (after midcanon) and LowLint (after lower) that a fault
+     the renaming (after midcanon), LowLint and LowShapes (after lower) that a fault
      reaches; the others, and the results', are compiler/lint-rules', and
      RegVerify's register/@regverify-*. E10's faults are among them. *)
   val faultPrograms =
@@ -852,8 +852,12 @@ struct
           [("twice", "is defined twice"), ("undef", "is used where it is not defined on every way"), ("jump", "arguments"),
            ("nojump", "a jump to no block b999999937"), ("pop", "a pop with no handler"),
            ("push", "a return with a handler pushed"), ("callk", "parameters given"), ("closure", "values, given"),
-           ("env", "env 7 of a function that captures"), ("rep", "is ptr where what makes it is int")]
+           ("env", "env 7 of a function that captures"), ("rep", "is ptr where what makes it is int"),
+           ("select", "which is a tuple of")]
     end
+  (* the check that refuses a fault where it is not the stage's own: a
+     Select past its tuple's arity is LowShapes', after lower (M6) *)
+  val faultChecks = [("lower:select", "shapes")]
   fun faultOne spec =
     case (List.find (fn (s, _, _) => s = spec) faults) of
       NONE => fail ("faults." ^ spec ^ ": no such fault")
@@ -868,7 +872,9 @@ struct
                                {cmd = ["bin/rune", "--lint=2"] @ flags @ [src, "-o", out ^ "/" ^ name ^ ".rbc"], dir = NONE,
                                 stdin = "", stdout = err, stderr = err, timeout = 0}
           val text = read err
-          val stage = hd (String.fields (fn c => c = #":") spec)
+          val stage = case List.find (fn (s, _) => s = spec) faultChecks of
+                        SOME (_, check) => check
+                      | NONE => hd (String.fields (fn c => c = #":") spec)
           val placed = List.exists (fn l => String.isPrefix ("fault " ^ spec ^ ": ") l andalso not (String.isSuffix "no place found" l))
                                    (lines text)
           val refusal = case List.filter (String.isSubstring "error") (lines text) of l :: _ => l | [] => firstNonEmpty err

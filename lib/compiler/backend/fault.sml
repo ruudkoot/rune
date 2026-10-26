@@ -16,8 +16,8 @@
              mkexn-copy prim-name const-kind const-range do-drop do-unset
              nary cast functor-cast dynamic-cast open-cast
      Low:    twice undef jump nojump pop push callk closure env rep select
-   (select, a field past a tuple's, is for shapes to refuse: the
-   roadmap's M6). *)
+   (Low's select, a field past a tuple's, is LowShapes' to refuse, the
+   check `shapes` after lower: the roadmap's M6). *)
 structure Fault =
 struct
   fun spec () : (string * string * int) option =
