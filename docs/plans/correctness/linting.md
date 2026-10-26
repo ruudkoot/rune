@@ -93,7 +93,7 @@ What it rests on:
 | M9 | Units and the link | B | done (2026-10-26) |
 | M10 | The stack code's check, in the compiler | B | done (2026-10-26) |
 | M11 | Node ids, witnesses and `SourceTy` | A | done (2026-10-26) |
-| M12 | AstLint of the Core | A | not started |
+| M12 | AstLint of the Core | A | done (2026-10-26); at level 2, and G1 is next |
 | G1 | How AstLint goes on (the owner's) | A | |
 | M13 | AstLint of the module language | A | not started |
 | M14 | The editor's types | A | not started |
@@ -418,6 +418,62 @@ passes on its exact commit.
     descriptions, which the compiler now uses; `fault.sml` adds 19.5M.
   - **A departure:** the fault hook is in `backend/fault.sml`, called from
     the pipeline, not in `util/pass.sml`, which knows no IR.
+
+- **M12** (`1a3cab697`, merged `9265b1ffc`; `make check` 21,696 of
+  21,696).
+  - **AstLint** (`elab/astlint.sml`) runs after `Elaborate.finish`, before
+    Translate and `UnitBasis.undo`, at level 2.
+    - It reads the syntax, M11's witnesses, the slots Translate reads and
+      `Ty.binders`, zonked to `SourceTy`, one top-level declaration at a
+      time.
+    - It builds its own environment and works out every node's type
+      bottom up, by equality of `SourceTy` and one-way matching of
+      schemes. It computes Clos, 4.7's nonexpansive expressions and 4.6's
+      scope itself, and calls neither `Unify`, `SigMatch` nor `Types`.
+    - Each alarm names its rule, as `[15 Clos]`.
+  - **What it checks:**
+    - instances, with equality and overloading classes;
+    - Clos against what each binding generalised, and rule 15's side
+      condition;
+    - 4.9's maximal equality;
+    - the classes of constants;
+    - every slot Translate reads;
+    - each top-level result, and the closure of 87-89;
+    - that a `let`'s names do not escape into its type or its context.
+  - **The module language is axioms** (D5): at level 2 only, the
+    elaborator records each top-level declaration's environment, the
+    results of ascriptions, applications, dynamic modules and exports, and
+    each functor's parameter. At levels 0 and 1 it records nothing.
+  - **Negative tests:** `RUNE_ASTLINT_FAULT=KIND` corrupts what AstLint
+    reads, in 12 ways, each refused with its rule's message
+    (`compiler/astlint-faults`).
+  - **Found:**
+    - no alarm on `tests/lang`, the modes of `--overloading`,
+      `--flex-records` and `--free-tyvars`, the Basis, the compiler,
+      HaMLet, MLton's 606 files, or HOL4 built to `hol.state`;
+    - all 13 elaborator mutants caught (E3's eight and E6's five). Some of
+      them give programs that are silently wrong (equality off prints
+      `false`), which no other check catches;
+    - no bug of the elaborator;
+    - two false alarms of its own, fixed before the commit.
+  - **What it costs,** in instructions: 0.25M of hello, 137M of HaMLet (8%
+    of a level-0 compile), 306M of the bootstrap (17%). MLton's 606 files:
+    8.9 s of 66.9 s.
+  - **Not done:** the REPL and the compiler library do not run AstLint
+    yet, at any level (`docs/ir.md` says so). A declaration past
+    `SourceTy`'s budget of steps is skipped and counted, but the count is
+    shown nowhere; none was seen.
+  - **Agent A's view for G1:**
+    - **M13, in two steps.** First, transparent ascriptions and functor
+      arguments, matched one way against the recorded results, with no new
+      records. Then opaque ascriptions and applications, with M13's records
+      of the fresh names. E3's two mutants of signature matching (E12,
+      E13) and the bugs B15 and B34 are invisible while the module
+      language is axioms.
+    - **Keep AstLint at level 2 for now.** Its cost is like level 1's
+      set, so level 1 is affordable for `rune`, but the REPL and the
+      library need the hook first, and the editor's latency must be
+      measured.
 
 ## Found while writing this roadmap
 
