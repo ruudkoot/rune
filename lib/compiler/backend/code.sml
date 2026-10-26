@@ -31,14 +31,20 @@ struct
      (docs/bytecode.md, The representations; docs/plans/jit.md, M8): its
      arity, what each of its registers holds (Low.repCode, nlocals of
      them), its blocks -- each by its label and the registers of its
-     parameters -- and the labels of its loop heads. The stack target says
-     nothing (NONE). *)
-  type meta = {arity : int, reps : int list, blocks : (int * int list) list, loops : int list}
+     parameters -- and the labels of its loop heads; and, for a check of
+     the code (RegVerify), what Lower declares of it: what it returns, and
+     what each slot of the environment of a closure of it holds. The stack
+     target says nothing (NONE). A program's file has the first four
+     (Emit); a unit's file all of them (UnitFile). *)
+  type meta = {arity : int, reps : int list, blocks : (int * int list) list, loops : int list,
+               result : int, captures : int list}
   type func = {id : int, nlocals : int, code : item list, name : string, meta : meta option}
 
-  (* nlabels: the labels of the program are numbered from 0 up to it. *)
+  (* nlabels: the labels of the program are numbered from 0 up to it;
+     globalReps: what each global holds, as Lower declares it (Low.repCode,
+     nglobals of them), where the register target says ([] where not). *)
   type program = {consts : const list, nglobals : int, funcs : func list, files : string list,
-                  inlines : (string * int * int * int * int) list, nlabels : int}
+                  inlines : (string * int * int * int * int) list, nlabels : int, globalReps : int list}
 
   (* ---------------------------------------------------------------- *)
   (* The tables of the program being made.                              *)

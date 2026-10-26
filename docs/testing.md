@@ -73,7 +73,11 @@ Every compile a test makes is linted: `bin/rune-test` sets `RUNE_LINT=1`
 for itself and its jobs unless it is set already, and the compiler, the
 REPL and the compiler library then check what every pass makes as `--lint`
 does ([ir.md](ir.md), *Options*), and stop at the first breach, which is a
-bug of the compiler. `RUNE_LINT=` (empty) runs the tests without it. The
+bug of the compiler. That includes the check of the register code
+(`RegVerify`, [ir.md](ir.md), *The register target*), whose own negative
+tests are `register/@regverify-*`: the eleven corruptions its switch
+`RUNE_REGVERIFY_INJECT` makes, each refused with its own message.
+`RUNE_LINT=` (empty) runs the tests without it. The
 budgets (`bin/rune-budget`) count the compiler as it is shipped, and clear
 it for what they count.
 

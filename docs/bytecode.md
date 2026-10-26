@@ -163,7 +163,7 @@ check-units`).
 
 ```
 magic       4 bytes   "RUNU"
-version     u32       2
+version     u32       3
 fingerprint u32       of the instruction set its code is of
 kind        u32       0: bytecode of that set (native code later)
 identity    len u32, bytes   the unit's identity (below)
@@ -178,9 +178,20 @@ imports     nimports × { index u32, key }   a function of a unit before it, by 
                                             the unit's own place and number -1: the next unit's top level
 nexports    u32
 exports     nexports × { number u32, index u32 }   its functions another unit may call by name
+ndeclared   u32       its functions where the representations section has them, else 0
+declared    ndeclared × { result u8, ncaptures u32, captures ncaptures × u8 }
+                      what each function returns and each slot of its closures holds
+nglobalreps u32       nglobals for the register bytecode, else 0
+globalreps  nglobalreps × u8   what each global it names holds, where the unit sets it
 key         { place u32, number i32 }   a unit's place among those named, 0 being the unit itself,
                                         and the name's number there
 ```
+
+What the unit *declares*, from Lower (version 3), is for the check of the
+register code at the link (`RegVerify`; [ir.md](ir.md), *The register
+target*): representations by the numbers of *The representations* below,
+`0` where nothing is said, as for a global another unit sets. A program's
+file has none of it.
 
 A unit names what units declared by a *key*: the identity of the unit that
 declared it and the number the unit's basis gave it

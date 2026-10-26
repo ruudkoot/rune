@@ -477,24 +477,25 @@ struct
                "  fun removable name = StringMap.member (removables, name)",
                "  (* what each primitive takes and gives, from the type of its",
                "     description (PrimTys): Low.rep's codes (docs/bytecode.md, The",
-               "     representations), 0 where the type says nothing; made when",
-               "     first asked, by LowLint *)",
-               "  val reps : (int list * int) StringMap.map option ref = ref NONE",
+               "     representations), 0 where the type says nothing; by its number",
+               "     (repsAt) or its name; made when first asked, by LowLint and",
+               "     RegVerify *)",
+               "  val reps : (int list * int) vector option ref = ref NONE",
                "  val () = CompilerState.cellRoot (\"Prims.reps\", reps)",
-               "  fun repsOf name =",
+               "  fun repsAt i =",
                "    case !reps of",
-               "      SOME m => StringMap.find (m, name)",
+               "      SOME v => if i >= 0 andalso i < Vector.length v then SOME (Vector.sub (v, i)) else NONE",
                "    | NONE =>",
-               "        (reps := SOME (StringMap.fromList ["]
+               "        (reps := SOME (Vector.fromList"]
             @ List.map (fn (k, p : primitive) =>
                           let val (args, result) = primReps p
                           in
-                            "           (\"" ^ #name p ^ "\", ([" ^ commaList (List.map Int.toString args)
-                            ^ "], " ^ Int.toString result ^ "))" ^ (if k < n - 1 then "," else "")
+                            (if k = 0 then "           [" else "            ") ^ "(* " ^ #name p ^ " *) ([" ^ commaList (List.map Int.toString args)
+                            ^ "], " ^ Int.toString result ^ ")" ^ (if k < n - 1 then "," else "]);")
                           end)
                        ps
-            @ ["         ]);",
-               "         repsOf name)",
+            @ ["         repsAt i)",
+               "  fun repsOf name = case find name of SOME (i, _) => repsAt i | NONE => NONE",
                "end",
                "",
                "(* The primitives' types, as runeisa reads the type each one's",

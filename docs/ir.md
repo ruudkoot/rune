@@ -19,7 +19,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `refs` | `Mid` | `Mid`, a loop's local refs as values (`lib/compiler/core/refs.sml`), from `-O1` | `MidLint` |
 | `lower` | `Mid` | `Low` (`lib/compiler/backend/low.sml`, by `Lower`) | `LowLint` |
 | `stack` | `Low` | instruction lists (`lib/compiler/backend/stack.sml`), with `--target=stack` | none yet |
-| `registers` | `Low` | instruction lists of the register bytecode (`lib/compiler/backend/regs.sml`), the default target | none yet |
+| `registers` | `Low` | instruction lists of the register bytecode (`lib/compiler/backend/regs.sml`), the default target | `RegVerify` |
 | `emit` | instruction lists | the `.rbc` (`lib/compiler/backend/emit.sml`) | |
 
 `-O0` is the same stages with no optional pass; `-O0` and `-O2` must give
@@ -830,6 +830,49 @@ middle end may ask of it):
 `make test-register` runs the suites through it and `runtime/register`'s first loop; see
 [plans/middle-end.md](plans/middle-end.md), M5, for how it compares with the
 stack target.
+
+**`RegVerify`** (`lib/compiler/backend/regverify.sml`) checks the register
+code where the lint is on: after `registers`, and every program `Link` makes
+of units, those read back from the cache and from `.rbu` files included
+([plans/correctness/linting.md](plans/correctness/linting.md), M8). Its
+rules are the tables `runeisa` writes from `src/isa/regs.sml` (`RegCodes`:
+what each instruction reads and writes, what it leaves and takes, what
+must follow it, which primitives it names), what Lower declares of the
+program (each function's result and its closures' captures, each global's
+representation, carried in `Code.meta`, `Code.program` and the unit's file),
+and a dataflow, one pass over each function:
+
+* **Representations:** a register holds its representation under the order
+  x ≤ x, x ≤ any, con0 ≤ con, ptr ≤ con. A write of what is below the
+  register's representation is right; of what is above it, a downcast,
+  trusted and counted, since only ML's types say what a value read from the
+  heap or returned by a polymorphic function is; of anything else, a
+  breach. A read that wants a representation is judged the same.
+* **Unset:** nothing reads a register not set on every way to the read; at a
+  function's entry its parameters are set, and the scratch holds nothing at
+  a label.
+* **Labels:** a label's state is the meet of the ways in; a jump back goes to a
+  loop head of the meta and sets what the head has set; at a loop head and
+  a handler's block the registers are what they are declared; the handlers
+  pushed are as many on every way in, and none where the frame is left.
+* **The order the VM relies on:** `RESULT` right after `CALL`, `CALLK` and
+  `PRIMPUSH`, `CATCH` at a handler's start, a `SWITCH`'s table of `JUMP`s,
+  only image primitives in `PRIMPUSH` and none in `PRIM`.
+* **Calls and closures:** a known call passes the callee's parameters, and
+  a known tail call returns what its caller does; a closure is of a function
+  of one parameter and captures what its closures do; `ENV` and `SELF` are
+  only in a function closures are made of and no known call calls; a
+  primitive's arguments and result are what its type says.
+* **Tags:** a register's constructor, where a constructor made or a tag
+  tested says, and a `FIELD` or `DECON` of another tag is a breach; a tag
+  test whose answer is known leaves the other way untaken.
+
+It checks `Regs` and `Link`, not that the code is safe for an untrusted
+`.rbc`: that is the VM's ([plans/correctness/vm-verifier.md](plans/correctness/vm-verifier.md)).
+`RUNE_REGVERIFY=1` runs it without the lint, `0` not at all, and `census`
+prints what it counted; `RUNE_REGVERIFY_INJECT=KIND` corrupts the code
+`Regs` made, before the check, in one of eleven ways, which its tests
+(`register/@regverify-*`) hold it to refusing.
 
 ## Tests
 

@@ -72,7 +72,7 @@ struct
   fun endFunction (target : Low.program -> Code.program) : Code.program =
     target [{id = 0, name = "<toplevel>", params = [0], ncaptured = 0, nvars = 1,
              blocks = [{label = 0, params = [], instrs = [], transfer = Low.Return 0}], pos = NONE,
-             reps = Vector.fromList [Low.RUnit]}]
+             reps = Vector.fromList [Low.RUnit], result = Low.RUnit, captures = []}]
 
   (* What each unit of the last program linked exports, by its numbers, as
      the program has it -- a function (0) or a global (1), its number in the
@@ -142,6 +142,9 @@ struct
       val nconsts = ref 0
       val nglobals = ref 0
       val globalOf : int IntMap.map ref = ref IntMap.empty
+      (* what each global holds, as the unit that sets it declares, by its
+         number in the program *)
+      val globalReps : (int * int) list ref = ref []
       val nlabels = ref 0
       fun linkUnit (i, u : unitCode) : Code.func list =
         let
@@ -172,6 +175,17 @@ struct
                                           SOME g => g
                                         | NONE => bug ("a global is set by no unit before (" ^ Int.toString st ^ ")")
                                      end)
+          val () =
+            case #globalReps code of
+              [] => ()
+            | rs =>
+                let val rv = Vector.fromList rs
+                in
+                  List.app (fn (k : key, ix) =>
+                              if #unit k = #identity u andalso ix >= 0 andalso ix < Vector.length rv
+                              then globalReps := (Array.sub (globalMap, ix), Vector.sub (rv, ix)) :: !globalReps else ())
+                           (#globals u)
+                end
           val importMap = List.foldl (fn ((ix, k), m) => IntMap.insert (m, ix, keyId k)) IntMap.empty (#imports u)
           fun func f =
             if f < nown then fbase + f
@@ -212,9 +226,9 @@ struct
             | Lab l => Lab (lbase + l)
             | Pos (f, line, col, j) => Pos (file f, line, col, inline j)
           fun meta NONE = NONE
-            | meta (SOME {arity, reps, blocks, loops} : meta option) =
+            | meta (SOME {arity, reps, blocks, loops, result, captures} : meta option) =
                 SOME {arity = arity, reps = reps, blocks = List.map (fn (l, ps) => (lbase + l, ps)) blocks,
-                      loops = List.map (fn l => lbase + l) loops}
+                      loops = List.map (fn l => lbase + l) loops, result = result, captures = captures}
           val () =
             List.app (fn (name, f, line, col, parent) =>
                         (inlines := (name, if line = 0 then f else file f, line, col, inline parent) :: !inlines;
@@ -266,8 +280,16 @@ struct
           (case StringMap.find (sourceHashes,identity) of NONE => [] | SOME hash =>
             [(sourceName (identity,hash),
               List.filter (fn (kind,number,_) => kind=0 andalso number= ~1) exports)])) (!lastExports))
+      val greps = Array.array (!nglobals, 0)
+      val () = List.app (fn (g, r) => Array.update (greps, g, r)) (!globalReps)
+      val prog : Code.program =
+        {consts = List.rev (!consts), nglobals = !nglobals, funcs = funcs, files = List.rev (!files),
+         inlines = List.rev (!inlines), nlabels = !nlabels,
+         globalReps = if List.null (!globalReps) then [] else Array.foldr (op ::) [] greps}
+      (* the program checked whole, where the code is the register target's
+         and the lint is on (docs/plans/correctness/linting.md, M8) *)
+      val () = RegVerify.linked prog
     in
-      {consts = List.rev (!consts), nglobals = !nglobals, funcs = funcs, files = List.rev (!files),
-       inlines = List.rev (!inlines), nlabels = !nlabels}
+      prog
     end
 end
