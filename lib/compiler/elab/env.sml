@@ -243,6 +243,7 @@ struct
      be inlined, whose Mid the session has (UnitBasis; functors-units M10):
      a unit that names it copies it, and uses its Mid too ("inlv") *)
   val inlinedValue : (int -> bool) ref = ref (fn _ => false)
+  val ()=CompilerState.cellRoot ("Env.inlinedValue",inlinedValue)
 
   fun findVal (env, (path, name)) =
     let
