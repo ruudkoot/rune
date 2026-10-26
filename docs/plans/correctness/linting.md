@@ -97,7 +97,7 @@ What it rests on:
 | G1 | How AstLint goes on (the owner's) | A | |
 | M13 | AstLint of the module language | A | not started |
 | M14 | The editor's types | A | not started |
-| M15 | Overloading's context and free type variables, as options | A | done in part (2026-10-26): the options; the default's move to `declaration` follows |
+| M15 | Overloading's context and free type variables, as options | A | done (2026-10-26) |
 | M16 | Retire | | not started |
 
 The owner took every recommendation, D1 to D19, on 2026-10-26
@@ -149,6 +149,26 @@ passes on its exact commit.
   - **A departure:** the Mid round trip gives its type names stamps from a
     range below every stamp the compiler makes, never reused, because
     `Ty.con` hash-conses by stamp and keeps the first name it saw.
+- **M2** (`54a2d65c4`, `8aeee5c0e`, merged `6a02ec637`; `make check`
+  21,307 of 21,307).
+  - **What changed:**
+    - MidLint keeps imperative tables, with one scope table entered and
+      left;
+    - LowLint checks availability by dominance over the blocks;
+    - `midcanon` is checked as a renaming of its input (`midconcat` keys
+      the lint of units' Mid joined under `--units --whole`).
+
+    The rules and the messages are the same.
+  - **What `--lint` costs now:**
+    - HaMLet -O1: +31.5% (+83.4% before);
+    - the bootstrap -O1: +60.1% (+148.3%);
+    - MLton whole: +14.1% (+39.5%);
+    - MLton `--units --whole`: +7.2% (+16.3%).
+
+    LambdaLint is now the largest single check.
+  - **A departure:** LowLint's walk up the dominator tree is not strictly
+    linear (5.8 steps a use on HaMLet, 1.8 on the bootstrap).
+
 - **M7** (`ac2e7e2ad`, merged `efa5148f1`; `make check` 21,251 of 21,251).
   - **The register instructions are described for checking in
     `src/isa/regs.sml`:**
@@ -191,7 +211,18 @@ passes on its exact commit.
     declaration or the signature makes `IntInf.int`, one annotation each.
   - **The owner's call (2026-10-26):** the default moves to
     `declaration`, and HOL4 builds with `--overloading=toplevel` until the
-    annotations land in the HOL4 tree. The move is M15's last commit.
+    annotations land in the HOL4 tree.
+  - **The move** (`bff52625b`, merged `a1121a6b2`; `make check` 21,626 of
+    21,626).
+    - It needed seven more annotations in the repository that the count
+      had missed: string sorts whose `<` would now default to `int`
+      (`tests/runner/sh.sml`, `basis.sml`, `laws.sml`,
+      `tools/builder/common.sml`), `tools/measure/jit-dump.sml`,
+      `tests/ffi/performance-model.sml`, and
+      `lib/ffi/win32/model/model.sml`.
+    - `docs/plans/hol4.md` says how HOL4 builds with
+      `--overloading=toplevel`, and `hol4-overloading-declaration.patch`
+      beside it holds the seven annotations for the HOL4 tree.
   - **Where the implementations are less tidy than D18 and D19 say:**
     - MLton's `topdec` context also ends at a functor or signature
       declaration, and Poly/ML lets an application settle a functor body's
