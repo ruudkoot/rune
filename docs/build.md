@@ -174,9 +174,9 @@ These are the functors that make its structures in units other than their
 own: the words, ints, vectors, arrays and slices, the packing, and the
 streams. `--basis-index` writes them to the manifest's header (`# inline:`), and
 every compile marks them unless `--no-inline-functors` is given.
-A program whose sources must stay as they are marks its functors on the
-command line: `--inline-functor=Table` (repeatable, or a comma list), or
-`inline functor ... end` in the program's own build file.
+A program marks its own functors in its build file (`inline functor ...
+end`); there is no option for it (`--inline-functor` was retired by
+functors-units' M10, which no build used).
 
 ## Functions inlined across units
 

@@ -21,4 +21,4 @@ end
 structure P = G (struct type t = int * int fun mk n = (n, n * 10) fun obs (a, b) = a + b end)
 structure Q = G (struct type t = real fun mk n = real n fun obs r = Real.floor r * 7 end)
 val () = print (String.concatWith " " (List.map (fn n => Int.toString (P.probe n) ^ "/" ^ Int.toString (Q.probe n)) [0, 1, 2]) ^ "\n")
-(* options --inline-functor=F,G --functor-budget=5 *)
+(* options inline=F,G --functor-budget=5 *)

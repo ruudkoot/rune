@@ -40,7 +40,7 @@ struct
      body for (Expand; docs/ir.md, Functors compiled once). *)
 
   (* The functors to inline (docs/build.md, Inline functors),
-     by name (--inline-functor, a library's `inline functor`): each is still
+     by name (a build file's `inline functor`): each is still
      compiled to a function, and its unit's basis keeps the function's Mid
      too (UnitBasis.funcode), so that a unit that applies it expands it
      there (Expand) and depends on its body. markedFunctions: the functions

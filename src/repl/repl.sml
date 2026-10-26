@@ -645,16 +645,16 @@ struct
 
   (* The compiler's settings for what the session compiles, before the
      REPL's own arguments (rune-repl.load.rbc LIST OPTION... [--make-image
-     IMAGE]): --inline-functor=F[,F...], --no-inline-functors and --lint.
-     They are the image's: they hold for every session started from the
-     image. The functors the Basis Library's build file marks to be
-     inlined are, but with --no-inline-functors. *)
+     IMAGE]): --no-inline-functors and --lint. They are the image's: they
+     hold for every session started from the image. The functors and
+     functions the Basis Library's build file marks to be inlined are, but
+     with --no-inline-functors. *)
   fun configure (args : string list, lib : string) : string list =
     let
       val noInline = ref false
       fun go (a :: rest) =
-            if String.isPrefix "--inline-functor=" a then (ReplFront.inline (String.extract (a, 17, NONE)); go rest)
-            else if a = "--no-inline-functors" then (noInline := true; Elaborate.inlineFunctors := StringMap.empty; go rest)
+            if a = "--no-inline-functors" then
+              (noInline := true; Elaborate.inlineFunctors := StringMap.empty; Elaborate.inlineValues := StringMap.empty; go rest)
             (* every pass's output checked, as rune --lint checks it (the
                globals of the units before a declaration typed for the lint
                by UnitBasis.startSession, as in a build in units) *)

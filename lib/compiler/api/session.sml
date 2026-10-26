@@ -10,10 +10,10 @@ struct
   exception Failed of diagnostic list
   exception Closed
   datatype input = Text of source | Loaded of artifact | MidInput of {source : source, pickle : string, mid : string}
-  (* functors: the functors to inline across units besides the libraries'
-     marks, and whether the marks are left out (docs/build.md, Inline
-     functors) *)
-  type functors = {inline : string list, noInline : bool}
+  (* functors: whether the libraries' marks of the functors and functions
+     to inline across units are left out (docs/build.md, Inline functors
+     and functions) *)
+  type functors = {noInline : bool}
   type config = {target : string, allowPrim : bool, lib : string option, libraries : string list, functors : functors}
   type platform = {link : string -> unit -> unit, inherited : (string * string option) list,
                    prepare : bool -> unit, current : unit -> (string * string) list}
@@ -49,16 +49,16 @@ struct
           val () = CompilerSettings.libDir:= #lib config
           (* the functors to inline, set in this attempt's own compiler as
              rune's options set them *)
-          val {inline,noInline} = #functors config
+          val {noInline} = #functors config
           val () =
             Elaborate.inlineFunctors:=
               List.foldl (fn (n,m) => StringMap.insert (m,n,())) StringMap.empty
-                (inline @ (case (noInline,#lib config) of
-                             (false,SOME root) =>
-                               List.concat (List.map BasisManifest.inlineFunctors
-                                 (root ^ "/basis" :: (BasisManifest.libraries (root,#libraries config)
-                                                      handle BasisManifest.Usage _ => [])))
-                           | _ => []))
+                (case (noInline,#lib config) of
+                   (false,SOME root) =>
+                     List.concat (List.map BasisManifest.inlineFunctors
+                       (root ^ "/basis" :: (BasisManifest.libraries (root,#libraries config)
+                                            handle BasisManifest.Usage _ => [])))
+                 | _ => [])
           (* and the functions (functors-units M10) *)
           val () =
             Elaborate.inlineValues:=

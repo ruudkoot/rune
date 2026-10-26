@@ -13,4 +13,4 @@ structure A = struct fun mk n = n end
 functor F (X : sig val mk : int -> int end) = struct fun mk n = X.mk n end
 structure S = F (A)
 val () = print (Int.toString (S.mk 1) ^ "\n")
-(* options --inline-functor=F --functor-budget=0 *)
+(* options inline=F --functor-budget=0 *)

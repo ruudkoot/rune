@@ -256,16 +256,13 @@ and
 .BR \-\-datatype\-tags= ,
 are gone.
 .TP
-.BI \-\-inline\-functor= F[,F...]
-Expand the applications of functor
-.I F
-in every unit that applies it, not only its own, as a library's
-.B inline functor
-does
-.RI ( docs/build.md ).
-.TP
 .B \-\-no\-inline\-functors
-Expand no functor across units, the libraries' marks too.
+Inline across units none of the functors and functions the libraries'
+build files mark
+.RB ( "inline functor" ,
+.BR "inline val" ;
+.IR docs/build.md ).
+A program marks its own in its build file.
 .TP
 .B \-\-units
 Compile every file, the basis library's too, as a unit of its own after the

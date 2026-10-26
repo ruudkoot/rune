@@ -1,0 +1,4 @@
+(* G marked to be inlined across units (docs/build.md, Inline functors), as
+   the fixture's flags marked it before --inline-functor was retired *)
+inline functor G end
+files u0.sml u1.sml end

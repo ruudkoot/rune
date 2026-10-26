@@ -24,8 +24,8 @@ sig
 
      Supported flags are `--target=registers`, `--target=stack`,
      `--allow-prim`, `--unicode`, `--unicode=utf8`, `--unicode=latin1` and
-     `--library NAME`, `--inline-functor=F[,F...]` and
-     `--no-inline-functors` (docs/build.md, Inline functors). Unknown flags
+     `--library NAME` and `--no-inline-functors` (docs/build.md, Inline
+     functors and functions). Unknown flags
      raise `Failed`. The defaults are register bytecode, ASCII source and
      no additional libraries. *)
   val session : {lib : string option, flags : string list} -> session

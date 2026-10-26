@@ -379,11 +379,11 @@ gives one is refused as for any option it does not know.
     function inlined there keeps the frame of `<toplevel>`
     (`tests/lang/mod.functor.functions_trace`).
   - **Across units** (M6b). A functor marked to be inlined (`inline
-    functor` in a build file, `--inline-functor=F`; docs/build.md) has its
-    function's Mid kept in its unit's basis (`MidCodec`,
-    `UnitBasis.funcode`), and a later unit expands an application of it
-    as it expands its own functors' (`Expand.imported`). Such a unit has a
-    usage `inl F`, which holds while the body's Mid is the same.
+    functor` in a build file; docs/build.md) has its function's Mid kept
+    in its unit's basis (`MidCodec`, `UnitBasis.funcode`), and a later
+    unit expands an application of it as it expands its own functors'
+    (`Expand.imported`). Such a unit has a usage `inl F`, which holds
+    while the body's Mid is the same.
   - **Functions across units** (functors-units M10). A function marked to
     be inlined (`inline val` in a build file; docs/build.md), and every
     function that only applies a primitive to its parameter

@@ -315,7 +315,8 @@ of its functor's function, and from `-O1`, where the expansion gives
 applications their copies back (always under `--lint`); `--units --whole`
 makes the whole compile's bytes (S42 of
 [plans/functors-units.md](plans/functors-units.md)); and so it does with
-some of its functors marked `--inline-functor`, and under a small
+some of its functors marked to be inlined (`inline functor` in a build
+file the runner writes beside the units), and under a small
 `--functor-budget`, which leaves some applications calls. A program's units
 are its files: a prelude of signatures and leaf structures, its functors (a
 unit each, or several to one), its applications and its prints, so that a

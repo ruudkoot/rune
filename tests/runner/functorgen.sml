@@ -4,7 +4,8 @@
    application is a call of its functor's function, and from -O1, where the
    expansion gives applications their copies back, and compiles clean under
    `--lint`; `--units --whole` gives the whole compile's bytes (S42); and so
-   does it with `--inline-functor` for its functors, and with a small
+   does it with some of its functors marked to be inlined in a build file
+   (`inline functor`, written beside the units), and with a small
    `--functor-budget`, which leaves some applications calls.
 
    A program is drawn as a plan of choices by lib/test/property, so that a
@@ -1073,7 +1074,7 @@ struct
      names its file, and a last line of the options of its modes *)
   fun show (p : program) : string =
     String.concat (List.tabulate (length (#units p), fn i => "(* unit u" ^ ints i ^ ".sml *)\n" ^ List.nth (#units p, i)))
-    ^ "(* options --inline-functor=" ^ String.concatWith "," (#inline p) ^ " --functor-budget=" ^ ints (#budget p)
+    ^ "(* options inline=" ^ String.concatWith "," (#inline p) ^ " --functor-budget=" ^ ints (#budget p)
     ^ (if #budgetUnits p then " budget-in-units" else "") ^ " *)\n"
 
   fun parse (text : string) : program =
@@ -1086,7 +1087,7 @@ struct
             else go (rest, Option.map (fn c => l :: c) cur, acc, opts)
       val (units, opts) = go (lines, NONE, [], [])
       fun opt prefix = Option.map (fn o' => String.extract (o', size prefix, NONE)) (List.find (String.isPrefix prefix) opts)
-      val inline = case opt "--inline-functor=" of SOME s => String.tokens (fn ch => ch = #",") s | NONE => []
+      val inline = case opt "inline=" of SOME s => String.tokens (fn ch => ch = #",") s | NONE => []
     in
       {units = List.map (fn ls => String.concatWith "\n" ls ^ "\n") units, functors = inline,
        budget = getOpt (Option.mapPartial Int.fromString (opt "--functor-budget="), 0), inline = inline,
@@ -1105,7 +1106,8 @@ struct
      {name = "O0-units", flags = ["--units", "--no-cache", "-O0", "--lint"], run = true},
      {name = "units", flags = ["--units", "--no-cache", "--lint"], run = true},
      {name = "units-whole", flags = ["--units", "--whole", "--no-cache", "--lint"], run = false},
-     {name = "inline-units", flags = ["--units", "--no-cache", "--inline-functor=" ^ String.concatWith "," (#inline p), "--lint"],
+     (* the functors marked in a build file beside the units (runMode) *)
+     {name = "inline-units", flags = ["--units", "--no-cache", "@inline=" ^ String.concatWith "," (#inline p), "--lint"],
       run = true},
      {name = if #budgetUnits p then "budget-units" else "budget",
       flags = (if #budgetUnits p then ["--units", "--no-cache"] else []) @ ["--functor-budget=" ^ ints (#budget p), "--lint"],
@@ -1120,10 +1122,21 @@ struct
     (Sh.mkdirs dir;
      List.tabulate (length (#units p), fn i => let val f = "u" ^ ints i ^ ".sml" in Sh.write (dir ^ "/" ^ f, List.nth (#units p, i)); f end))
 
-  fun runMode (c : config, dir, files) (m : mode) : outcome =
+  fun runMode (c : config, dir, files0) (m : mode) : outcome =
     let
       val rbc = #name m ^ ".rbc"
-      val cmd = [Sh.fromRoot (#rune c)] @ #flags m @ files @ ["-o", rbc]
+      (* @inline=F,G: a build file, inline.build, that lists the units and
+         marks those functors to be inlined across units (docs/build.md),
+         compiled by --build in their place *)
+      val (flags, files) =
+        case List.find (String.isPrefix "@inline=") (#flags m) of
+          NONE => (#flags m, files0)
+        | SOME mark =>
+            (Sh.write (dir ^ "/inline.build",
+                       "inline functor " ^ String.concatWith " " (String.tokens (fn ch => ch = #",") (String.extract (mark, 8, NONE)))
+                       ^ " end\nfiles " ^ String.concatWith " " files0 ^ " end\n");
+             (List.concat (List.map (fn f => if f = mark then ["--build", "inline.build"] else [f]) (#flags m)), []))
+      val cmd = [Sh.fromRoot (#rune c)] @ flags @ files @ ["-o", rbc]
       val compiled = Sh.execLimited (limits c) (fn e => e)
                                     {cmd = cmd, dir = SOME dir, stdin = "", stdout = dir ^ "/" ^ #name m ^ ".cerr",
                                      stderr = dir ^ "/" ^ #name m ^ ".cerr", timeout = 4 * #timeout c}
@@ -1135,7 +1148,7 @@ struct
                                   {cmd = [Sh.fromRoot (#vm c), "--checked", rbc], dir = SOME dir, stdin = "",
                                    stdout = dir ^ "/" ^ #name m ^ ".out", stderr = dir ^ "/" ^ #name m ^ ".err", timeout = #timeout c})
     in
-      {mode = #name m, command = String.concatWith " " (List.map Sh.quote (#rune c :: #flags m @ files @ ["-o", rbc])),
+      {mode = #name m, command = String.concatWith " " (List.map Sh.quote (#rune c :: flags @ files @ ["-o", rbc])),
        compiled = compiled, lint = lint, ran = ran,
        out = if isSome ran then Sh.read (dir ^ "/" ^ #name m ^ ".out") else "",
        err = if isSome ran then Sh.read (dir ^ "/" ^ #name m ^ ".err") else cerr}
