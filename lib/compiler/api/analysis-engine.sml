@@ -44,11 +44,11 @@ struct
                    | NONE => SOME (width,category kind) end
           in case List.foldl choose NONE (SyntaxAst.shape syntax) of NONE => "unknown" | SOME (_,role) => role end
         val ()=Env.observeExpression:=(fn (expression,_) => case (query,expression) of
-          (SOME query,Ast.EApp (function,argument,span)) =>
+          (SOME query,Ast.EApp (function,argument,span, _)) =>
             let val argumentSpan=Ast.spanOfExp argument
-                fun head (Ast.EVar ((path,name),_,_),n)=SOME (path,name,n)
-                  | head (Ast.EApp (function,_,_),n)=head (function,n+1)
-                  | head (Ast.ETyped (function,_,_),n)=head (function,n)
+                fun head (Ast.EVar ((path,name),_,_, _),n)=SOME (path,name,n)
+                  | head (Ast.EApp (function,_,_, _),n)=head (function,n+1)
+                  | head (Ast.ETyped (function,_,_, _),n)=head (function,n)
                   | head _=NONE
                 fun parameter ([],index)=Int.max (0,index-1)
                   | parameter (value::rest,index)=if #offset query<= #stop (Ast.spanOfExp value) then index
@@ -59,9 +59,9 @@ struct
                  case head (function,0) of NONE => () | SOME (path,name,index) =>
                    (case !application of SOME (prior,_) => if prior<=width then () else
                       application:=SOME (width,{path=path,name=name,argument=index,
-                        parameter=case argument of Ast.ETuple (values,_) => parameter (values,0) | _ => 0})
+                        parameter=case argument of Ast.ETuple (values,_, _) => parameter (values,0) | _ => 0})
                     | NONE => application:=SOME (width,{path=path,name=name,argument=index,
-                        parameter=case argument of Ast.ETuple (values,_) => parameter (values,0) | _ => 0})) end
+                        parameter=case argument of Ast.ETuple (values,_, _) => parameter (values,0) | _ => 0})) end
         | _ => ())
         val ()=Env.observeScope:=(fn (span:Source.span,env) => case query of NONE => () | SOME query =>
           if !Env.currentUnit<> #unit query orelse #file span<> #file query orelse #start span> #offset query orelse #stop span< #offset query then () else

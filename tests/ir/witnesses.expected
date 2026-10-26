@@ -1,0 +1,30 @@
+tests/ir/witnesses.sml:11:1: created tree (eq)
+tests/ir/witnesses.sml:11:1: elaborated
+tests/ir/witnesses.sml:12:1: created t
+tests/ir/witnesses.sml:12:1: elaborated
+tests/ir/witnesses.sml:13:10: instance 'a tree
+tests/ir/witnesses.sml:14:11: instance 'a tree * 'a * 'a tree -> 'a tree
+tests/ir/witnesses.sml:14:20: type 'a
+tests/ir/witnesses.sml:13:5: generalised 'a
+tests/ir/witnesses.sml:14:38: default int
+tests/ir/witnesses.sml:14:36: default int
+tests/ir/witnesses.sml:14:40: default int
+tests/ir/witnesses.sml:13:17: default int
+tests/ir/witnesses.sml:13:1: elaborated
+tests/ir/witnesses.sml:15:11: type 'b list
+tests/ir/witnesses.sml:15:16: type 'b
+tests/ir/witnesses.sml:16:12: instance 'b * 'b list -> 'b list
+tests/ir/witnesses.sml:16:17: type 'b list
+tests/ir/witnesses.sml:15:5: generalised 'b
+tests/ir/witnesses.sml:15:1: elaborated
+tests/ir/witnesses.sml:17:1: scoped 'a = 'a
+tests/ir/witnesses.sml:17:8: generalised 'a
+tests/ir/witnesses.sml:17:1: elaborated
+tests/ir/witnesses.sml:18:5: generalised 'c
+tests/ir/witnesses.sml:18:25: generalised 'd, 'e
+tests/ir/witnesses.sml:18:1: elaborated
+tests/ir/witnesses.sml:19:9: default word
+tests/ir/witnesses.sml:19:1: elaborated
+tests/ir/witnesses.sml:20:17: default int
+tests/ir/witnesses.sml:20:1: elaborated
+tests/ir/witnesses.sml:21:1: elaborated

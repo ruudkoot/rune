@@ -83,7 +83,9 @@ struct
   val () = CompilerState.cellRoot ("Elaborate.dataCons", dataCons)
 
   (* overloaded operator variables and flexible records awaiting resolution *)
-  val pendingOverloads : tvar ref list ref = ref []
+  (* each with the id and the span of the node that is overloaded at it,
+     where its default is recorded (Witness.defaults) *)
+  val pendingOverloads : (tvar ref * int * span) list ref = ref []
   val () = CompilerState.cellRoot ("Elaborate.pendingOverloads", pendingOverloads)
   val pendingFlex : (tvar ref * span) list ref = ref []
   val () = CompilerState.cellRoot ("Elaborate.pendingFlex", pendingFlex)
@@ -250,12 +252,12 @@ struct
       | _ => ()
     end
 
-  fun registerOverloads t =
+  fun registerOverloads (t, node : int, sp : span) =
     case prune t of
-      TVar r => (case !r of Unbound {kind = KOverload _, ...} => pendingOverloads := r :: !pendingOverloads | _ => ())
-    | TCon (_, args) => List.app registerOverloads args
-    | TRecord fields => List.app (fn (_, a) => registerOverloads a) fields
-    | TArrow (a, b) => (registerOverloads a; registerOverloads b)
+      TVar r => (case !r of Unbound {kind = KOverload _, ...} => pendingOverloads := (r, node, sp) :: !pendingOverloads | _ => ())
+    | TCon (_, args) => List.app (fn a => registerOverloads (a, node, sp)) args
+    | TRecord fields => List.app (fn (_, a) => registerOverloads (a, node, sp)) fields
+    | TArrow (a, b) => (registerOverloads (a, node, sp); registerOverloads (b, node, sp))
 
   (* The types that an int or a word constant, or an operator of the
      classes Int and Word, defaults to when its declaration leaves it open:
@@ -270,22 +272,39 @@ struct
      here, each variable that its context left open defaulted -- the one it
      was unified with, where it was: an inner context defaults what its own
      phrases are overloaded at, as HaMLet does (--overloading=binding) --
-     and each constant checked against its type *)
+     and each constant checked against its type; each node that was
+     overloaded at a variable defaulted here has the default recorded
+     (Witness.defaults) *)
   fun resolvePending () =
-    (List.app (fn r =>
-                 case prune (TVar r) of
-                   TVar (r' as ref (Unbound {kind = KOverload names, ...})) =>
-                     let
-                       val default =
-                         if List.exists (fn n => n = "int") names then !intDefault
-                         else if List.exists (fn n => n = "real") names then realTy
-                         else if List.exists (fn n => n = "word") names then !wordDefault
-                         else if List.exists (fn n => n = "char") names then charTy
-                         else if List.exists (fn n => n = "string") names then stringTy
-                         else Error.bug "resolvePending: empty overload class"
-                     in Unify.unify (TVar r', default) end
-                 | _ => ()) (!pendingOverloads);
-     pendingOverloads := [];
+    ((case !pendingOverloads of
+        [] => ()
+      | pending =>
+          let
+            val open' = List.filter (fn (r, _, _) =>
+                                       case prune (TVar r) of
+                                         TVar (ref (Unbound {kind = KOverload _, ...})) => true
+                                       | _ => false) pending
+          in
+            List.app (fn (r, _, _) =>
+                        case prune (TVar r) of
+                          TVar (r' as ref (Unbound {kind = KOverload names, ...})) =>
+                            let
+                              val default =
+                                if List.exists (fn n => n = "int") names then !intDefault
+                                else if List.exists (fn n => n = "real") names then realTy
+                                else if List.exists (fn n => n = "word") names then !wordDefault
+                                else if List.exists (fn n => n = "char") names then charTy
+                                else if List.exists (fn n => n = "string") names then stringTy
+                                else Error.bug "resolvePending: empty overload class"
+                            in Unify.unify (TVar r', default) end
+                        | _ => ()) open';
+            (* each node once: the entries of a node overloaded at one
+               variable twice (+ at 'a * 'a -> 'a) are next to each other *)
+            ignore (List.foldl (fn ((r, node, sp), last) =>
+                                  if node = last then last else (Witness.default (node, sp, TVar r); node))
+                               ~2 open');
+            pendingOverloads := []
+          end);
      List.app checkLiteral (List.rev (!pendingLiterals));
      pendingLiterals := [])
 
@@ -333,6 +352,8 @@ struct
       val () = settleFlex ()
       val () = List.app (fn f => f ()) (List.rev (!pendingChecks))
       val () = pendingChecks := []
+      (* no type can change any more: the witnesses may be read *)
+      val () = SourceTy.settled := true
     in
       (* --pass-stats=elab: the checks deferred to here, a line of their own *)
       if !ElabStats.on then ElabStats.emit ("-", "deferred", "", 0) else ()
@@ -357,14 +378,49 @@ struct
     | TCon (_, args) => List.app (fn a => lowerFlex (level, a)) args
     | TRecord fields => List.app (fn (_, a) => lowerFlex (level, a)) fields
     | TArrow (a, b) => (lowerFlex (level, a); lowerFlex (level, b))
-  fun generalizeBinding (level : int, t : ty, sp : span) : unit =
+  fun generalizeBinding (level : int, t : ty, sp : span) : unit = generalizeNoting (fn _ => ()) (level, t, sp)
+  (* the same, each variable generalised given to note *)
+  and generalizeNoting (note : tvar ref -> unit) (level : int, t : ty, sp : span) : unit =
     case !flexRecords of
       FlexBinding =>
         (if flexAbove (level, t) then err (sp, "unresolved flexible record: cannot determine the full set of fields")
          else ();
-         Unify.generalize (level, t))
-    | FlexTopdecMono => (lowerFlex (level, t); Unify.generalize (level, t))
-    | _ => Unify.generalize (level, t)
+         Unify.generalizeWith note (level, t))
+    | FlexTopdecMono => (lowerFlex (level, t); Unify.generalizeWith note (level, t))
+    | _ => Unify.generalizeWith note (level, t)
+
+  (* The type variables of a binding's type that Clos may generalise, before
+     it does (those above the declaration's level, not generic), each once;
+     and those of them it did, after: Witness.generalised. Taken so for a
+     binding of a group of several (val rec, fun ... and), where the
+     group's first generalisation marks the variables it shares with the
+     others generic; one alone notes them as it generalises (generalised) *)
+  fun candidates (level : int, t : ty) : tvar ref list =
+    let
+      val found : tvar ref list ref = ref []
+      fun go t =
+        case prune t of
+          TVar (r as ref (Unbound {level = l, kind, ...})) =>
+            (if l > level andalso l <> genericLevel andalso not (List.exists (fn r' => r' = r) (!found))
+             then found := r :: !found else ();
+             case kind of KFlex (fields, _) => List.app (fn (_, a) => go a) fields | _ => ())
+        | TVar _ => ()
+        | TCon (_, args) => List.app go args
+        | TRecord fields => List.app (fn (_, a) => go a) fields
+        | TArrow (a, b) => (go a; go b)
+    in go t; List.rev (!found) end
+  fun generalisedOf (vs : tvar ref list) : tvar ref list =
+    List.filter (fn ref (Unbound {level, ...}) => level = genericLevel | _ => false) vs
+  fun noteGeneralised (node : int, sp : span, vs : tvar ref list) : unit =
+    case generalisedOf vs of [] => () | gs => Witness.generalisation (node, sp, gs)
+  (* a binding alone generalised (sp where an error is reported), what it
+     generalised recorded at its node *)
+  fun generalised (level : int, t : ty, sp : span, node : int, nodeSpan : span) : unit =
+    let val acc : tvar ref list ref = ref []
+    in
+      generalizeNoting (fn r => acc := r :: !acc) (level, t, sp);
+      case !acc of [] => () | rs => Witness.generalisation (node, nodeSpan, List.rev rs)
+    end
 
   (* Section 2.9 and 3.5: identifiers that no binding or description may (re)bind. *)
   val reservedVids = ["true", "false", "nil", "::", "ref"]
@@ -373,23 +429,23 @@ struct
       err (sp, "'" ^ name ^ "' cannot be rebound")
     else ()
 
-  fun checkDupLabels (fields : (string * 'a) list, sp) =
+  fun checkDupLabels (fields : (string * 'a * span) list, sp) =
     let
       fun go [] = ()
-        | go ((l, _) :: rest) =
-          if List.exists (fn (l2, _) => l2 = l) rest then err (sp, "duplicate record label '" ^ l ^ "'") else go rest
+        | go ((l, _, _) :: rest) =
+          if List.exists (fn (l2, _, _) => l2 = l) rest then err (sp, "duplicate record label '" ^ l ^ "'") else go rest
     in go fields end
 
   (* The type of a special constant. An int, word or real constant is
      overloaded over the types of its kind (Appendix E: the classes Int, Word
      and Real) and defaults to int, word or real; its type is left in the slot
      for Translate. *)
-  fun sconTy (level, sc, slot : ty option ref, sp) =
+  fun sconTy (level, sc, slot : ty option ref, sp, node : int) =
     let
       fun overloaded kind =
         let val t = freshTvar (level, KOverload [kind], false)
         in
-          registerOverloads t;
+          registerOverloads (t, node, sp);
           pendingLiterals := (sc, t, sp) :: !pendingLiterals;
           slot := SOME t;
           t
@@ -411,11 +467,11 @@ struct
 
   fun tyvarsOfTy (t : Ast.ty, acc : string list) : string list =
     case t of
-      TyVar (v, _) => addTyvar (v, acc)
-    | TyRecord (fields, _) => List.foldl (fn ((_, t), acc) => tyvarsOfTy (t, acc)) acc fields
-    | TyTuple (ts, _) => List.foldl tyvarsOfTy acc ts
-    | TyCon (args, _, _) => List.foldl tyvarsOfTy acc args
-    | TyArrow (a, b, _) => tyvarsOfTy (b, tyvarsOfTy (a, acc))
+      TyVar (v, _, _) => addTyvar (v, acc)
+    | TyRecord (fields, _, _) => List.foldl (fn ((_, t, _), acc) => tyvarsOfTy (t, acc)) acc fields
+    | TyTuple (ts, _, _) => List.foldl tyvarsOfTy acc ts
+    | TyCon (args, _, _, _) => List.foldl tyvarsOfTy acc args
+    | TyArrow (a, b, _, _) => tyvarsOfTy (b, tyvarsOfTy (a, acc))
 
   fun minusTyvars (vs, bound) = List.filter (fn v => not (List.exists (fn w => w = v) bound)) vs
 
@@ -426,37 +482,37 @@ struct
     case e of
       EScon _ => acc
     | EVar _ => acc
-    | ERecord (fields, _) => List.foldl (fn ((_, e), acc) => unguardedExp (e, acc)) acc fields
-    | ETuple (es, _) => List.foldl unguardedExp acc es
+    | ERecord (fields, _, _) => List.foldl (fn ((_, e, _), acc) => unguardedExp (e, acc)) acc fields
+    | ETuple (es, _, _) => List.foldl unguardedExp acc es
     | ESelect _ => acc
-    | EList (es, _, _) => List.foldl unguardedExp acc es
-    | ESeq (es, _) => List.foldl unguardedExp acc es
-    | ELet (decs, e, _) => unguardedExp (e, List.foldl unguardedDec acc decs)
-    | EApp (f, a, _) => unguardedExp (a, unguardedExp (f, acc))
-    | ETyped (e, t, _) => tyvarsOfTy (t, unguardedExp (e, acc))
-    | EAndalso (a, b, _) => unguardedExp (b, unguardedExp (a, acc))
-    | EOrelse (a, b, _) => unguardedExp (b, unguardedExp (a, acc))
-    | EHandle (e, rules, _) => unguardedRules (rules, unguardedExp (e, acc))
-    | ERaise (e, _) => unguardedExp (e, acc)
-    | EIf (a, b, c, _) => unguardedExp (c, unguardedExp (b, unguardedExp (a, acc)))
-    | EWhile (a, b, _) => unguardedExp (b, unguardedExp (a, acc))
-    | ECase (e, rules, _) => unguardedRules (rules, unguardedExp (e, acc))
-    | EFn (rules, _, _) => unguardedRules (rules, acc)
-    | EPrim (_, t, _, _) => tyvarsOfTy (t, acc)
+    | EList (es, _, _, _) => List.foldl unguardedExp acc es
+    | ESeq (es, _, _) => List.foldl unguardedExp acc es
+    | ELet (decs, e, _, _) => unguardedExp (e, List.foldl unguardedDec acc decs)
+    | EApp (f, a, _, _) => unguardedExp (a, unguardedExp (f, acc))
+    | ETyped (e, t, _, _) => tyvarsOfTy (t, unguardedExp (e, acc))
+    | EAndalso (a, b, _, _) => unguardedExp (b, unguardedExp (a, acc))
+    | EOrelse (a, b, _, _) => unguardedExp (b, unguardedExp (a, acc))
+    | EHandle (e, rules, _, _) => unguardedRules (rules, unguardedExp (e, acc))
+    | ERaise (e, _, _) => unguardedExp (e, acc)
+    | EIf (a, b, c, _, _) => unguardedExp (c, unguardedExp (b, unguardedExp (a, acc)))
+    | EWhile (a, b, _, _) => unguardedExp (b, unguardedExp (a, acc))
+    | ECase (e, rules, _, _) => unguardedRules (rules, unguardedExp (e, acc))
+    | EFn (rules, _, _, _) => unguardedRules (rules, acc)
+    | EPrim (_, t, _, _, _) => tyvarsOfTy (t, acc)
 
   and unguardedRules (rules : mrule list, acc) =
     List.foldl (fn ((p, e), acc) => unguardedExp (e, unguardedPat (p, acc))) acc rules
 
   and unguardedPat (p : pat, acc) : string list =
     case p of
-      PRecord (fields, _, _, _) => List.foldl (fn ((_, p), acc) => unguardedPat (p, acc)) acc fields
-    | PTuple (ps, _) => List.foldl unguardedPat acc ps
-    | PList (ps, _) => List.foldl unguardedPat acc ps
-    | PApp (_, _, p, _) => unguardedPat (p, acc)
-    | PTyped (p, t, _) => tyvarsOfTy (t, unguardedPat (p, acc))
-    | PLayered (_, tyopt, p, _, _) =>
+      PRecord (fields, _, _, _, _) => List.foldl (fn ((_, p, _), acc) => unguardedPat (p, acc)) acc fields
+    | PTuple (ps, _, _) => List.foldl unguardedPat acc ps
+    | PList (ps, _, _) => List.foldl unguardedPat acc ps
+    | PApp (_, _, p, _, _) => unguardedPat (p, acc)
+    | PTyped (p, t, _, _) => tyvarsOfTy (t, unguardedPat (p, acc))
+    | PLayered (_, tyopt, p, _, _, _) =>
         unguardedPat (p, case tyopt of SOME t => tyvarsOfTy (t, acc) | NONE => acc)
-    | POr (ps, _) => List.foldl unguardedPat acc ps
+    | POr (ps, _, _) => List.foldl unguardedPat acc ps
     | _ => acc
 
   (* declarations nested in an expression *)
@@ -465,28 +521,28 @@ struct
       DVal _ => acc                          (* a smaller value declaration guards its variables *)
     | DValRec _ => acc
     | DFun _ => acc
-    | DType (tbs, _) =>
-        List.foldl (fn (tb : typbind, acc) => minusTyvars (tyvarsOfTy (#ty tb, []), #tyvars tb) @ acc) acc tbs
-    | DDatatype (dbs, tbs, _) =>
+    | DType (tbs, _, _) =>
+        List.foldl (fn (tb : typbind, acc) => minusTyvars (tyvarsOfTy (#ty tb, []), List.map #1 (#tyvars tb)) @ acc) acc tbs
+    | DDatatype (dbs, tbs, _, _) =>
         List.foldl (fn (db : datbind, acc) =>
                        minusTyvars (List.foldl (fn ((_, SOME t, _), a) => tyvarsOfTy (t, a) | ((_, NONE, _), a) => a) [] (#cons db),
-                                    #tyvars db) @ acc)
-                   (unguardedDec (DType (tbs, Source.noSpan), acc)) dbs
-    | DException (ebs, _) =>
-        List.foldl (fn (ExnDecl (_, SOME t, _, _), acc) => tyvarsOfTy (t, acc) | (_, acc) => acc) acc ebs
-    | DLocal (d1, d2, _) => List.foldl unguardedDec (List.foldl unguardedDec acc d1) d2
-    | DAbstype (dbs, tbs, decs, _) =>
-        List.foldl unguardedDec (unguardedDec (DDatatype (dbs, tbs, Source.noSpan), acc)) decs
+                                    List.map #1 (#tyvars db)) @ acc)
+                   (unguardedDec (DType (tbs, Source.noSpan, noId), acc)) dbs
+    | DException (ebs, _, _) =>
+        List.foldl (fn (ExnDecl (_, SOME t, _, _, _), acc) => tyvarsOfTy (t, acc) | (_, acc) => acc) acc ebs
+    | DLocal (d1, d2, _, _) => List.foldl unguardedDec (List.foldl unguardedDec acc d1) d2
+    | DAbstype (dbs, tbs, decs, _, _) =>
+        List.foldl unguardedDec (unguardedDec (DDatatype (dbs, tbs, Source.noSpan, noId), acc)) decs
     | _ => acc
 
   (* the unguarded variables of a value declaration itself *)
   fun unguardedValDec (d : dec) : string list =
     case d of
-      DVal (_, binds, _) => List.foldl (fn ((p, e), acc) => unguardedExp (e, unguardedPat (p, acc))) [] binds
-    | DValRec (_, binds, _) => List.foldl (fn ((p, e), acc) => unguardedExp (e, unguardedPat (p, acc))) [] binds
-    | DFun (_, fs, _) =>
+      DVal (_, binds, _, _) => List.foldl (fn ((p, e), acc) => unguardedExp (e, unguardedPat (p, acc))) [] binds
+    | DValRec (_, binds, _, _) => List.foldl (fn ((p, e), acc) => unguardedExp (e, unguardedPat (p, acc))) [] binds
+    | DFun (_, fs, _, _) =>
         List.foldl (fn (f : fundef, acc) =>
-                       List.foldl (fn ({pats, resty, body}, acc) =>
+                       List.foldl (fn ({pats, resty, body, ...}, acc) =>
                                       unguardedExp (body, List.foldl unguardedPat
                                                                     (case resty of SOME t => tyvarsOfTy (t, acc) | NONE => acc)
                                                                     pats))
@@ -495,8 +551,9 @@ struct
 
   (* Rule 15: the scope of a value declaration binds its explicit type
      variables and those implicitly scoped at it, as rigid variables. *)
-  fun valScope (outer : scope, explicit : string list, d : dec, level, sp) : scope * string list =
+  fun valScope (outer : scope, explicit : tyvarseq, d : dec, level, sp) : scope * string list =
     let
+      val explicit = List.map #1 explicit
       val () = List.app (fn v =>
                             if StringMap.member (!outer, v) then err (sp, "explicit type variable " ^ v ^ " is already in scope")
                             else ()) explicit
@@ -504,6 +561,9 @@ struct
                                  (List.rev (unguardedValDec d))
       val scoped = explicit @ implicit
       val m = List.foldl (fn (v, m) => StringMap.insert (m, v, freshTvar (level, KRigid v, String.isPrefix "''" v))) (!outer) scoped
+      val () = case scoped of
+                 [] => ()
+               | _ => Witness.scope (idOfDec d, sp, List.map (fn v => (v, valOf (StringMap.find (m, v)))) scoped)
     in (ref m, scoped) end
 
   (* Rule 15's side condition: the scoped variables must have been generalised.
@@ -1161,15 +1221,15 @@ struct
   (* Types                                                                *)
   fun elabTy (env, scope : scope, level, t : Ast.ty) : ty =
     case t of
-      TyVar (v, sp) =>
+      TyVar (v, sp, _) =>
         (case StringMap.find (!scope, v) of
            SOME t => t
          | NONE => err (sp, "unbound type variable " ^ v))
-    | TyRecord (fields, sp) =>
+    | TyRecord (fields, sp, _) =>
         (checkDupLabels (fields, sp);
-         TRecord (sortFields (List.map (fn (l, t) => (l, elabTy (env, scope, level, t))) fields)))
-    | TyTuple (ts, _) => tupleTy (List.map (fn t => elabTy (env, scope, level, t)) ts)
-    | TyCon (args, longid, sp) =>
+         TRecord (sortFields (List.map (fn (l, t, _) => (l, elabTy (env, scope, level, t))) fields)))
+    | TyTuple (ts, _, _) => tupleTy (List.map (fn t => elabTy (env, scope, level, t)) ts)
+    | TyCon (args, longid, sp, _) =>
         let
           val args' = List.map (fn t => elabTy (env, scope, level, t)) args
           val () =
@@ -1188,7 +1248,7 @@ struct
                          ^ " argument(s) but got " ^ Int.toString (List.length args'))
               else applyFcn (fcn, args'))
         end
-    | TyArrow (a, b, _) => TArrow (elabTy (env, scope, level, a), elabTy (env, scope, level, b))
+    | TyArrow (a, b, _, _) => TArrow (elabTy (env, scope, level, a), elabTy (env, scope, level, b))
 
   (* A generic parameter variable for type abbreviations and datatypes. *)
   fun paramVar (name : string) : int * ty =
@@ -1245,13 +1305,15 @@ struct
              end)
       fun elab p =
         case p of
-          PWild _ => (fresh level, [])
-        | PScon (sc, slot, sp) => (sconTy (level, sc, slot, sp), [])
-        | PVar (longid as (path, name), slot, sp) =>
+          PWild (sp, n) => let val t = fresh level in Witness.nodeType (n, sp, t); (t, []) end
+        | PScon (sc, slot, sp, n) => (sconTy (level, sc, slot, sp, n), [])
+        | PVar (longid as (path, name), slot, sp, n) =>
             (case lookupCon (env, longid, sp) of
                SOME (Con {scheme, info}) =>
                  if #hasArg info then err (sp, "constructor " ^ name ^ " expects an argument")
-                 else (slot := SOME (PICon info); (Unify.instantiate (level, scheme), []))
+                 else
+                   let val t = Unify.instantiate (level, scheme)
+                   in slot := SOME (PICon info); Witness.instance (n, sp, t); (t, []) end
              | SOME (Exn {ty, info}) =>
                  if #hasArg info then err (sp, "exception constructor " ^ name ^ " expects an argument")
                  else (slot := SOME (PIExn info); (ty, []))
@@ -1260,10 +1322,10 @@ struct
                     [] => let val (stamp, t, b) = bindVar (name, sp)
                           in slot := SOME (PIVar (stamp, isGlobal)); (t, [b]) end
                   | _ => err (sp, longidToString longid ^ " is not a constructor")))
-        | PRecord (fields, flex, slot, sp) =>
+        | PRecord (fields, flex, slot, sp, _) =>
             let
               val () = checkDupLabels (fields, sp)
-              val results = List.map (fn (l, p) => let val (t, bs) = elab p in ((l, t), bs) end) fields
+              val results = List.map (fn (l, p, _) => let val (t, bs) = elab p in ((l, t), bs) end) fields
               val ftys = sortFields (List.map #1 results)
               val bindings = List.concat (List.map #2 results)
             in
@@ -1278,23 +1340,27 @@ struct
                 end
               else (TRecord ftys, bindings)
             end
-        | PTuple ([], _) => (unitTy, [])
-        | PTuple (ps, _) =>
+        | PTuple ([], _, _) => (unitTy, [])
+        | PTuple (ps, _, _) =>
             let val results = List.map elab ps
             in (tupleTy (List.map #1 results), List.concat (List.map #2 results)) end
-        | PList (ps, sp) =>
+        | PList (ps, sp, n) =>
             let
               val a = fresh level
               val results = List.map (fn p => let val (t, bs) = elab p
                                               in unifyAt (spanOfPat p, a, t, "list pattern element"); bs end) ps
+              (* [] is a constructor whose instance nothing else records *)
+              val () = case ps of [] => Witness.nodeType (n, sp, listTy a) | _ => ()
             in (listTy a, List.concat results) end
-        | PApp (longid, slot, arg, sp) =>
+        | PApp (longid, slot, arg, sp, n) =>
             let
               val conTy =
                 case lookupCon (env, longid, sp) of
                   SOME (Con {scheme, info}) =>
                     if not (#hasArg info) then err (sp, "constructor " ^ #name info ^ " takes no argument")
-                    else (noteOpen (scheme, info); slot := SOME (PICon info); Unify.instantiate (level, scheme))
+                    else
+                      let val t = Unify.instantiate (level, scheme)
+                      in noteOpen (scheme, info); slot := SOME (PICon info); Witness.instance (n, sp, t); t end
                 | SOME (Exn {ty, info}) =>
                     if not (#hasArg info) then err (sp, "exception constructor " ^ #name info ^ " takes no argument")
                     else (slot := SOME (PIExn info); ty)
@@ -1305,12 +1371,12 @@ struct
                 TArrow (dom, cod) => (unifyAt (spanOfPat arg, dom, targ, "constructor argument"); (cod, bs))
               | _ => Error.bug "constructor with argument has non-arrow type"
             end
-        | PTyped (p, t, sp) =>
+        | PTyped (p, t, sp, _) =>
             let
               val (tp, bs) = elab p
               val ta = elabTy (env, scope, level, t)
             in unifyAt (sp, ta, tp, "pattern type annotation"); (ta, bs) end
-        | PLayered (name, tyopt, p, slot, sp) =>
+        | PLayered (name, tyopt, p, slot, sp, _) =>
             let
               val (stamp, tv, b) = bindVar (name, sp)
               val () = slot := SOME (PIVar (stamp, isGlobal))
@@ -1320,7 +1386,7 @@ struct
                          NONE => ()
                        | SOME t => unifyAt (sp, elabTy (env, scope, level, t), tv, "pattern type annotation")
             in (tv, b :: bs) end
-        | POr (p1 :: rest, _) =>
+        | POr (p1 :: rest, _, _) =>
             let
               val (t1, bs1) = elab p1
               val share = List.mapPartial (fn (name, st as Val {scheme, stamp, ...}) => SOME (name, (stamp, scheme, (name, st)))
@@ -1337,7 +1403,7 @@ struct
                   | NONE => unifyAt (spanOfPat p, t1, t, "or-pattern alternative")
                 end
             in List.app alt rest; (t1, bs1) end
-        | POr ([], _) => Error.bug "an or-pattern of no alternative"
+        | POr ([], _, _) => Error.bug "an or-pattern of no alternative"
     in
       elab p
     end
@@ -1350,8 +1416,8 @@ struct
      `(SOME : 'a -> 'a option) nil`, `((op :: : t) : t) (x, xs)`. The
      parser keeps no parentheses, so a typed expression in the function's
      place had them *)
-  fun conexp (EVar (_, slot, _)) = !slot
-    | conexp (ETyped (e, _, _)) = conexp e
+  fun conexp (EVar (_, slot, _, _)) = !slot
+    | conexp (ETyped (e, _, _, _)) = conexp e
     | conexp _ = NONE
 
   fun nonexpansive e =
@@ -1361,11 +1427,11 @@ struct
     | EFn _ => true
     | EPrim _ => true
     | ESelect _ => true
-    | ETuple (es, _) => List.all nonexpansive es
-    | ERecord (fs, _) => List.all (fn (_, e) => nonexpansive e) fs
-    | EList (es, _, _) => List.all nonexpansive es
-    | ETyped (e, _, _) => nonexpansive e
-    | EApp (f, a, _) =>
+    | ETuple (es, _, _) => List.all nonexpansive es
+    | ERecord (fs, _, _) => List.all (fn (_, e, _) => nonexpansive e) fs
+    | EList (es, _, _, _) => List.all nonexpansive es
+    | ETyped (e, _, _, _) => nonexpansive e
+    | EApp (f, a, _, _) =>
         (case conexp f of
            SOME (VCon (info, _)) => not (#isRef info) andalso nonexpansive a
          | SOME (VExn _) => nonexpansive a
@@ -1374,8 +1440,8 @@ struct
 
   fun elabExp (env, level, scope : scope, e : exp) : ty =
     (Env.noteExpression (e,env);case e of
-      EScon (sc, slot, sp) => sconTy (level, sc, slot, sp)
-    | EVar (longid, slot, sp) =>
+      EScon (sc, slot, sp, n) => sconTy (level, sc, slot, sp, n)
+    | EVar (longid, slot, sp, n) =>
         (Env.noteUse (env,"v",longid,sp);case findVal (env, longid) of
            NONE => err (sp, "unbound variable or constructor: " ^ longidToString longid)
          | SOME (Val {scheme, stamp, global}) =>
@@ -1386,16 +1452,16 @@ struct
          | SOME (Exn {ty, info}) => (slot := SOME (VExn (info, ty)); ty)
          | SOME (Prim {scheme, name}) =>
              let val t = Unify.instantiate (level, scheme)
-             in registerOverloads t; slot := SOME (VBuiltin (name, t)); t end
+             in registerOverloads (t, n, sp); slot := SOME (VBuiltin (name, t)); t end
          | SOME (ConAsVal {scheme, info}) =>
              let val t = Unify.instantiate (level, scheme) in noteOpen (scheme, info); slot := SOME (VConVal (info, t)); t end
          | SOME (ExnAsVal {ty, info}) => (slot := SOME (VExnVal (info, ty)); ty))
-    | ERecord (fields, sp) =>
+    | ERecord (fields, sp, _) =>
         (checkDupLabels (fields, sp);
-         TRecord (sortFields (List.map (fn (l, e) => (l, elabExp (env, level, scope, e))) fields)))
-    | ETuple ([], _) => unitTy
-    | ETuple (es, _) => tupleTy (List.map (fn e => elabExp (env, level, scope, e)) es)
-    | ESelect (lab, slot, sp) =>
+         TRecord (sortFields (List.map (fn (l, e, _) => (l, elabExp (env, level, scope, e))) fields)))
+    | ETuple ([], _, _) => unitTy
+    | ETuple (es, _, _) => tupleTy (List.map (fn e => elabExp (env, level, scope, e)) es)
+    | ESelect (lab, slot, sp, _) =>
         let
           val a = fresh level
           val r = freshFlex (level, [(lab, a)], false)
@@ -1404,16 +1470,16 @@ struct
           slot := SOME r;
           TArrow (r, a)
         end
-    | EList (es, slot, _) =>
+    | EList (es, slot, _, _) =>
         let val a = fresh level
         in
           List.app (fn e => unifyAt (spanOfExp e, a, elabExp (env, level, scope, e), "list element")) es;
           slot := SOME (listTy a);
           listTy a
         end
-    | ESeq (es, _) =>
+    | ESeq (es, _, _) =>
         List.foldl (fn (e, _) => elabExp (env, level, scope, e)) unitTy es
-    | ELet (decs, body, sp) =>
+    | ELet (decs, body, sp, _) =>
         let
           val first = !tyconCounter
           val delta = elabDecs (env, level, false, scope, decs)
@@ -1421,7 +1487,7 @@ struct
           val () = if !tyconCounter = first then ()
                    else (Types.noEscape (first, sp, result); Env.noEscape (first, sp, env))
         in result end
-    | EApp (f, a, sp) =>
+    | EApp (f, a, sp, _) =>
         let
           val tf = elabExp (env, level, scope, f)
           val ta = elabExp (env, level, scope, a)
@@ -1432,45 +1498,48 @@ struct
             let val r = fresh level
             in unifyAt (sp, tf, TArrow (ta, r), "function application"); r end
         end
-    | ETyped (e, t, sp) =>
+    | ETyped (e, t, sp, _) =>
         let
           val te = elabExp (env, level, scope, e)
           val ta = elabTy (env, scope, level, t)
         in unifyAt (sp, ta, te, "type annotation"); ta end
-    | EAndalso (a, b, _) =>
+    | EAndalso (a, b, _, _) =>
         (unifyAt (spanOfExp a, boolTy, elabExp (env, level, scope, a), "operand of andalso");
          unifyAt (spanOfExp b, boolTy, elabExp (env, level, scope, b), "operand of andalso");
          boolTy)
-    | EOrelse (a, b, _) =>
+    | EOrelse (a, b, _, _) =>
         (unifyAt (spanOfExp a, boolTy, elabExp (env, level, scope, a), "operand of orelse");
          unifyAt (spanOfExp b, boolTy, elabExp (env, level, scope, b), "operand of orelse");
          boolTy)
-    | EHandle (e, rules, sp) =>
+    | EHandle (e, rules, sp, _) =>
         let val te = elabExp (env, level, scope, e)
         in elabMatch (env, level, scope, rules, exnTy, te, false, sp); te end
-    | ERaise (e, _) =>
-        (unifyAt (spanOfExp e, exnTy, elabExp (env, level, scope, e), "argument of raise"); fresh level)
-    | EIf (c, t, e, _) =>
+    | ERaise (e, sp, n) =>
+        let
+          val () = unifyAt (spanOfExp e, exnTy, elabExp (env, level, scope, e), "argument of raise")
+          val t = fresh level
+        in Witness.nodeType (n, sp, t); t end
+    | EIf (c, t, e, _, _) =>
         let
           val () = unifyAt (spanOfExp c, boolTy, elabExp (env, level, scope, c), "condition of if")
           val tt = elabExp (env, level, scope, t)
           val te = elabExp (env, level, scope, e)
         in unifyAt (spanOfExp e, tt, te, "branches of if"); tt end
-    | EWhile (c, b, _) =>
+    | EWhile (c, b, _, _) =>
         (unifyAt (spanOfExp c, boolTy, elabExp (env, level, scope, c), "condition of while");
          ignore (elabExp (env, level, scope, b));
          unitTy)
-    | ECase (e, rules, sp) =>
+    | ECase (e, rules, sp, _) =>
         let
           val te = elabExp (env, level, scope, e)
           val res = fresh level
         in elabMatch (env, level, scope, rules, te, res, true, sp); res end
-    | EFn (rules, slot, sp) =>
+    | EFn (rules, slot, sp, _) =>
         let
           val arg = fresh level
           val res = fresh level
         in elabMatch (env, level, scope, rules, arg, res, true, sp); slot := SOME (TArrow (arg, res)); TArrow (arg, res) end
-    | EPrim (name, t, slot, sp) =>
+    | EPrim (name, t, slot, sp, _) =>
         if not (!allowPrim) then err (sp, "_prim is only allowed when compiling with --allow-prim")
         else
           (case Prims.find name of
@@ -1533,7 +1602,7 @@ struct
 
   and elabDecIn (env, level, top, outerScope : scope, d : dec) : env =
     case d of
-      DVal (tvs, binds, sp) =>
+      DVal (tvs, binds, sp, _) =>
         let
           val (scope, scoped) = valScope (outerScope, tvs, d, level + 1, sp)
           val allBindings =
@@ -1543,7 +1612,7 @@ struct
                            val bound = ref []
                            val (tp, bindings) = elabPat (env, level + 1, scope, globalAt top, p, bound)
                            val () = unifyAt (spanOfPat p, tp, te, "val binding")
-                           val () = if nonexpansive e then generalizeBinding (level, tp, spanOfPat p)
+                           val () = if nonexpansive e then generalised (level, tp, spanOfPat p, idOfPat p, spanOfPat p)
                                     else Unify.lowerLevels (level, tp)
                            (* 4.11: reported except for components of a top-level declaration *)
                            val () = if top then () else deferCheck (fn () => Exhaust.checkBinding (p, spanOfPat p))
@@ -1558,11 +1627,11 @@ struct
           if top andalso !flexRecords = FlexDeclaration then settleFlex () else ();
           bindingsToEnv flat
         end
-    | DValRec (tvs, binds, sp) =>
+    | DValRec (tvs, binds, sp, _) =>
         let
           val (scope, scoped) = valScope (outerScope, tvs, d, level + 1, sp)
           fun isFn (EFn _) = true
-            | isFn (ETyped (e, _, _)) = isFn e
+            | isFn (ETyped (e, _, _, _)) = isFn e
             | isFn _ = false
           (* every variable of a binding's pattern is bound to the same function *)
           val prepared =
@@ -1584,7 +1653,7 @@ struct
                                             slot := SOME (PIVar (stamp, globalAt top));
                                             (name, Val {scheme = tv, stamp = stamp, global = globalAt top})
                                           end) vars
-                         in (bindings, tv, tys, e, spanOfPat p) end) binds
+                         in (bindings, tv, tys, e, spanOfPat p, idOfPat p) end) binds
           val allBindings = List.concat (List.map #1 prepared)
           fun checkDups [] = ()
             | checkDups ((n, _) :: rest) =
@@ -1593,17 +1662,25 @@ struct
           val () = checkDups allBindings
           val env' = plus (env, bindingsToEnv allBindings)
         in
-          List.app (fn (_, tv, tys, e, psp) =>
+          List.app (fn (_, tv, tys, e, psp, _) =>
                        let
                          val () = List.app (fn t => unifyAt (psp, elabTy (env, scope, level + 1, t), tv, "val rec type annotation")) tys
                          val te = elabExp (env', level + 1, scope, e)
                        in unifyAt (spanOfExp e, tv, te, "val rec binding") end) prepared;
-          List.app (fn (_, tv, _, _, psp) => generalizeBinding (level, tv, psp)) prepared;
+          (case prepared of
+             [(_, tv, _, _, psp, node)] => generalised (level, tv, psp, node, psp)
+           | _ =>
+               (* each binding's candidates before the group's first generalisation *)
+               let val vss = List.map (fn (_, tv, _, _, _, _) => candidates (level, tv)) prepared
+               in
+                 List.app (fn (_, tv, _, _, psp, _) => generalizeBinding (level, tv, psp)) prepared;
+                 ListPair.app (fn ((_, _, _, _, psp, node), vs) => noteGeneralised (node, psp, vs)) (prepared, vss)
+               end);
           checkGeneralised (scope, scoped, level, sp);
           if top andalso !flexRecords = FlexDeclaration then settleFlex () else ();
           bindingsToEnv allBindings
         end
-    | DFun (tvs, fundefs, sp) =>
+    | DFun (tvs, fundefs, sp, _) =>
         let
           val (scope, scoped) = valScope (outerScope, tvs, d, level + 1, sp)
           val prepared =
@@ -1625,7 +1702,7 @@ struct
           val env' = plus (env, bindingsToEnv (List.map (fn (n, v, _, _) => (n, v)) prepared))
         in
           List.app (fn (name, _, tv, f : fundef) =>
-                      (List.app (fn {pats, resty, body} =>
+                      (List.app (fn {pats, resty, body, ...} =>
                                     let
                                       val bound = ref []
                                       val results = List.map (fn p => elabPat (env', level + 1, scope, false, p, bound)) pats
@@ -1643,23 +1720,30 @@ struct
                          Exhaust.checkClauses (List.map #pats (#clauses f),
                                                List.map (fn (c : clause) => spanOfPat (List.hd (#pats c))) (#clauses f),
                                                #span f)))) prepared;
-          List.app (fn (_, _, tv, _) => generalizeBinding (level, tv, sp)) prepared;
+          (case prepared of
+             [(_, _, tv, f : fundef)] => generalised (level, tv, sp, #id f, #span f)
+           | _ =>
+               let val vss = List.map (fn (_, _, tv, _) => candidates (level, tv)) prepared
+               in
+                 List.app (fn (_, _, tv, _) => generalizeBinding (level, tv, sp)) prepared;
+                 ListPair.app (fn ((_, _, _, f : fundef), vs) => noteGeneralised (#id f, #span f, vs)) (prepared, vss)
+               end);
           checkGeneralised (scope, scoped, level, sp);
           if top andalso !flexRecords = FlexDeclaration then settleFlex () else ();
           bindingsToEnv (List.map (fn (n, v, _, _) => (n, v)) prepared)
         end
-    | DType (typbinds, _) =>
+    | DType (typbinds, _, _) =>
         List.foldl (fn (tb : typbind, delta) =>
                        let
                          val () = if StringMap.member (tys delta, #name tb) then
                                     err (#span tb, "duplicate type constructor '" ^ #name tb ^ "' in one declaration") else ()
-                         val params = List.map paramVar (#tyvars tb)
+                         val params = List.map (paramVar o #1) (#tyvars tb)
                          val scope = ref (List.foldl (fn ((v, t), m) => StringMap.insert (m, v, t)) (!outerScope)
-                                                     (ListPair.zip (#tyvars tb, List.map #2 params)))
+                                                     (ListPair.zip (List.map #1 (#tyvars tb), List.map #2 params)))
                          val body = elabTy (env, scope, level, #ty tb)
                        in bindTyAt (delta, #name tb, TyStr {fcn = TAbbrev (List.map #1 params, body), cons = []},#span tb) end)
                    Env.empty typbinds
-    | DDatatype (datbinds, typbinds, sp) =>
+    | DDatatype (datbinds, typbinds, sp, _) =>
         let
           (* Fresh type names, provisionally admitting equality; the maximal
              attributes are computed below (Section 4.9, rule 17). *)
@@ -1672,13 +1756,13 @@ struct
           val () = dupTycons datbinds
           val tycons = List.map (fn (db : datbind) => (db, freshTycon (#name db, List.length (#tyvars db), true))) datbinds
           val env1 = List.foldl (fn ((db, tc), e) => bindTyAt (e, #name db, TyStr {fcn = TName tc, cons = []},#span db)) env tycons
-          val abbrevs = elabDec (env1, level, top, outerScope, DType (typbinds, sp))
+          val abbrevs = elabDec (env1, level, top, outerScope, DType (typbinds, sp, idOfDec d))
           val env2 = plus (env1, abbrevs)
           fun elabDatbind ((db : datbind, tc), (delta, groups)) =
             let
-              val params = List.map paramVar (#tyvars db)
+              val params = List.map (paramVar o #1) (#tyvars db)
               val scope = ref (List.foldl (fn ((v, t), m) => StringMap.insert (m, v, t)) (!outerScope)
-                                          (ListPair.zip (#tyvars db, List.map #2 params)))
+                                          (ListPair.zip (List.map #1 (#tyvars db), List.map #2 params)))
               val resTy = TCon (tc, List.map #2 params)
               val ncons = List.length (#cons db)
               (* the tags: by the constructors' names (Types.tagNames), as
@@ -1738,6 +1822,12 @@ struct
                            IntMap.empty groups
             in if IntMap.listItems assume' = IntMap.listItems assume then assume else iterate assume' end
           val final = iterate (List.foldl (fn ((tc : tycon, _), m) => IntMap.insert (m, #stamp tc, true)) IntMap.empty groups)
+          val () =
+            let val made = List.map (fn (tc : tycon, _) => withEq (tc, IntMap.lookup (final, #stamp tc))) (List.rev groups)
+            in
+              List.app (fn (c : tycon) => SourceTy.setEquality (#stamp c, #eq c)) made;
+              Witness.names (idOfDec d, sp, made)
+            end
           val phi =
             List.foldl (fn ((tc : tycon, _), m) =>
                            IntMap.insert (m, #stamp tc, TName (withEq (tc, IntMap.lookup (final, #stamp tc)))))
@@ -1745,17 +1835,17 @@ struct
         in
           realizeEnv (phi, plus (abbrevs, delta))
         end
-    | DDatatypeRepl (name, longid, sp) =>
+    | DDatatypeRepl (name, longid, sp, _) =>
         (case findTy (env, longid) of
            SOME (ts as TyStr {cons, ...}) =>
              List.foldl (fn ((n, v), d) => Env.putOrigin (bindVal (d,n,v),"v",n,
                Env.originOf (env,"v",(#1 longid,n)))) (bindTyAt (Env.empty,name,ts,sp)) cons
          | NONE => err (sp, "unbound type constructor: " ^ longidToString longid))
-    | DAbstype (datbinds, typbinds, decs, sp) =>
+    | DAbstype (datbinds, typbinds, decs, sp, _) =>
         let
           (* rule 19: the datatypes are visible with their constructors in the
              body only; outside they are abstract and do not admit equality *)
-          val delta1 = elabDec (env, level, top, outerScope, DDatatype (datbinds, typbinds, sp))
+          val delta1 = elabDec (env, level, top, outerScope, DDatatype (datbinds, typbinds, sp, idOfDec d))
           val delta2 = elabDecs (plus (env, delta1), level, top, outerScope, decs)
           val phi =
             StringMap.foldli (fn (_, TyStr {fcn = TName c, cons = _ :: _}, m) => IntMap.insert (m, #stamp c, TName (withEq (c, false)))
@@ -1764,10 +1854,10 @@ struct
                             tys = StringMap.map (fn TyStr {fcn, ...} => TyStr {fcn = realizeFcn (phi, fcn), cons = []}) (tys delta1),
                             strs = StringMap.empty}
         in plus (absTys, realizeEnv (phi, delta2)) end
-    | DException (exbinds, _) =>
+    | DException (exbinds, _, _) =>
         List.foldl (fn (eb, delta) =>
                        case eb of
-                         ExnDecl (name, tyopt, slot, sp) =>
+                         ExnDecl (name, tyopt, slot, sp, _) =>
                            let
                              val () = checkBindable (name, sp, false)
                              val () = if StringMap.member (vals delta, name) then
@@ -1781,7 +1871,7 @@ struct
                              val () = Ty.bindExn (stamp, arg)
                              val info = {name = name, stamp = stamp, isGlobal = globalAt top, hasArg = isSome tyopt, builtin = NONE}
                            in slot := SOME (PIExn info); bindValAt (delta, name, Exn {ty = ty, info = info},sp) end
-                       | ExnRepl (name, longid, slot, sp) =>
+                       | ExnRepl (name, longid, slot, sp, _) =>
                            (checkBindable (name, sp, false);
                             if StringMap.member (vals delta, name) then
                               err (sp, "duplicate exception constructor '" ^ name ^ "' in one declaration") else ();
@@ -1790,10 +1880,10 @@ struct
                             | SOME _ => err (sp, longidToString longid ^ " is not an exception constructor")
                             | NONE => err (sp, "unbound exception constructor: " ^ longidToString longid)))
                    Env.empty exbinds
-    | DLocal (d1, d2, _) =>
+    | DLocal (d1, d2, _, _) =>
         let val delta1 = elabDecs (env, level, top, outerScope, d1)
         in elabDecs (plus (env, delta1), level, top, outerScope, d2) end
-    | DOpen (ids, sp) =>
+    | DOpen (ids, sp, _) =>
         List.foldl (fn ((path, name), delta) =>
                        case findStr (env, path @ [name]) of
                          SOME e => plus (delta, e)
@@ -1801,7 +1891,7 @@ struct
     | DInfix _ => Env.empty
     | DInfixr _ => Env.empty
     | DNonfix _ => Env.empty
-    | DOverload {kind, strid, literal, span = sp} =>
+    | DOverload {kind, strid, literal, span = sp, ...} =>
         (* Register <strid>.<kind> as an overloading type whose operators are
            the values of the structure. A structure that only renames a
            registered type (structure Int64 = Int) needs no registration. *)
@@ -1833,11 +1923,11 @@ struct
           | NONE => Overload.register (tycon, kind, List.map operator (Overload.operators kind), lit);
           Env.empty
         end
-    | DStructure (binds, _) =>
+    | DStructure (binds, _, _) =>
         (* all bindings of one declaration are elaborated in the same environment (rule 61) *)
         List.foldl (fn (b : strbind, delta) => bindStrAt (delta, #name b, elabStrexp (env, level, top, outerScope, #strexp b),#span b))
                    Env.empty binds
-    | DSignature (binds, _) =>
+    | DSignature (binds, _, _) =>
         (* all bindings are elaborated in the same basis (rule 67) *)
         let val elaborated = List.map (fn (b : sigbind) => (#name b, let val sg=elabSigexp (env,#sigexp b)
           in {bound= #bound sg,env= #env sg,origin=Env.originAt ("signature",#name b,#span b)}:SigMatch.sigma end)) binds
@@ -1847,7 +1937,7 @@ struct
               Env.emit ("def-g",([],n),span,#origin sg) | _ => ()) else ())) elaborated;
           Env.empty
         end
-    | DFunctor (binds, _) =>
+    | DFunctor (binds, _, _) =>
         let
           (* rule 89: no free type variable enters the basis. One the body
              leaves free (`val r = ref []`, which the value restriction does
@@ -1994,17 +2084,17 @@ struct
   (* Structure expressions.                                               *)
   and elabStrexp (env, level, top, scope : scope, se : strexp) : env =
     case se of
-      StrStruct (decs, _) => elabDecs (env, level, top, scope, decs)
-    | StrId ((path, sname), sp) =>
+      StrStruct (decs, _, _) => elabDecs (env, level, top, scope, decs)
+    | StrId ((path, sname), sp, _) =>
         ((Env.noteUse (env,"s",(path,sname),sp);case findStr (env, path @ [sname]) of
            SOME e => e
          | NONE => err (sp, "unbound structure: " ^ longidToString (path, sname))))
-    | StrAscribe (se, sigexp, opaque, sp) =>
+    | StrAscribe (se, sigexp, opaque, sp, _) =>
         let
           val e = elabStrexp (env, level, top, scope, se)
           val sigma = elabSigexp (env, sigexp)
         in ElabStats.during ElabStats.Match (fn () => SigMatch.ascribe (sigma, e, opaque, sp)) end
-    | StrApp (funid, arg, sp) =>
+    | StrApp (funid, arg, sp, _) =>
         (Usage.use ("fun", funid);
          case StringMap.find (!funs, funid) of
            NONE => err (sp, "unbound functor: " ^ funid)
@@ -2068,10 +2158,10 @@ struct
                (* --pass-stats=elab: the match and the call are the application's *)
                ElabStats.application (!makesCode) (if !makesCode then call else typed)
              end)
-    | StrLet (decs, body, _) =>
+    | StrLet (decs, body, _, _) =>
         let val delta = elabDecs (env, level, top, scope, decs)
         in elabStrexp (plus (env, delta), level, top, scope, body) end
-    | StrDynamic (from, sigexp, slot, sp) =>
+    | StrDynamic (from, sigexp, slot, sp, _) =>
         (* a structure the program loads when it runs (D18): an instance
            of the signature with nothing behind it -- fresh abstract types,
            as an opaque ascription gives -- and a fresh global per value
@@ -2132,7 +2222,7 @@ struct
           slot := SOME {fingerprint = !sigFingerprint sigma, slots = slots, via = via, temp = temp, reloadable = reloadable};
           e
         end
-    | StrExport (_, sigexp, body, slot, sp) =>
+    | StrExport (_, sigexp, body, slot, sp, _) =>
         (* a dynamic module's implementation (D17): its body elaborated,
            its datatypes numbered by their constructors' names as the
            signature's are, ascribed to the signature opaquely, and its
@@ -2162,18 +2252,18 @@ struct
   (* Signature expressions and specifications (rules 62-84).             *)
   and elabSigexp (env, se : sigexp) : SigMatch.sigma =
     case se of
-      SigId (n, sp) =>
+      SigId (n, sp, _) =>
         (Usage.use ("sig", n);
          case StringMap.find (!sigs, n) of
            SOME sg => (if !Env.tracking then Env.emit ("g",([],n),sp,#origin sg) else ();
              ElabStats.during ElabStats.Inst (fn () => SigMatch.instantiate sg))
          | NONE => err (sp, "unbound signature: " ^ n))
-    | SigSig (specs, sp) => elabSpecs (env, specs)
+    | SigSig (specs, sp, _) => elabSpecs (env, specs)
     | SigWhere _ =>
         (* the clauses of a chain of where's, the innermost first, realised
            at once (SigMatch.whereStep) *)
         let
-          fun chain (SigWhere (se, clauses, _), acc) = chain (se, clauses @ acc)
+          fun chain (SigWhere (se, clauses, _, _), acc) = chain (se, clauses @ acc)
             | chain (se, acc) = (se, acc)
           val (base, clauses) = chain (se, [])
           val sigma = elabSigexp (env, base)
@@ -2200,7 +2290,7 @@ struct
       fun cur (_ : SigMatch.sigma) = !current
       fun one (spec, sigma) =
         case spec of
-          SpecVal (descs, _) =>
+          SpecVal (descs, _, _) =>
             List.foldl (fn ((n, ty, dsp), sigma) =>
                            let
                              val () = checkBindable (n, dsp, true)
@@ -2209,24 +2299,24 @@ struct
                              val () = Unify.generalize (0, t)              (* rule 79: implicitly closed *)
                            in add (sigma, [], bindValAt (Env.empty, n, Val {scheme = t, stamp = freshStamp (), global = true},dsp), dsp) end)
                        sigma descs
-        | SpecType (descs, _) =>
+        | SpecType (descs, _, _) =>
             List.foldl (fn ((tvs, n, dsp), sigma) =>
                            let val tc = freshTycon (n, List.length tvs, false)
                            in add (sigma, [tc], bindTyAt (Env.empty, n, TyStr {fcn = TName tc, cons = []},dsp), dsp) end)
                        sigma descs
-        | SpecEqtype (descs, _) =>
+        | SpecEqtype (descs, _, _) =>
             List.foldl (fn ((tvs, n, dsp), sigma) =>
                            let val tc = freshTycon (n, List.length tvs, true)
                            in add (sigma, [tc], bindTyAt (Env.empty, n, TyStr {fcn = TName tc, cons = []},dsp), dsp) end)
                        sigma descs
-        | SpecDatatype (dbs, sp) =>
+        | SpecDatatype (dbs, sp, n) =>
             let
-              val delta = elabDec (cur sigma, 0, true, ref StringMap.empty, DDatatype (dbs, [], sp))
+              val delta = elabDec (cur sigma, 0, true, ref StringMap.empty, DDatatype (dbs, [], sp, n))
               val names = StringMap.foldri (fn (_, TyStr {fcn = TName c, ...}, acc) => c :: acc | (_, _, acc) => acc) [] (tys delta)
             in add (sigma, names, delta, sp) end
-        | SpecDatatypeRepl (n, longid, sp) =>
-            add (sigma, [], elabDec (cur sigma, 0, true, ref StringMap.empty, DDatatypeRepl (n, longid, sp)), sp)
-        | SpecException (descs, _) =>
+        | SpecDatatypeRepl (n, longid, sp, i) =>
+            add (sigma, [], elabDec (cur sigma, 0, true, ref StringMap.empty, DDatatypeRepl (n, longid, sp, i)), sp)
+        | SpecException (descs, _, _) =>
             List.foldl (fn ((n, tyopt, dsp), sigma) =>
                            let
                              val () = checkBindable (n, dsp, false)
@@ -2237,20 +2327,20 @@ struct
                              val info = {name = n, stamp = freshStamp (), isGlobal = true, hasArg = isSome tyopt, builtin = NONE}
                            in add (sigma, [], bindValAt (Env.empty, n, Exn {ty = ty, info = info},dsp), dsp) end)
                        sigma descs
-        | SpecStructure (descs, _) =>
+        | SpecStructure (descs, _, _) =>
             (* all descriptions of one specification are elaborated in the same basis (rule 84) *)
             let val elaborated = List.map (fn (n, sg, dsp) => (n, elabSigexp (cur sigma, sg), dsp)) descs
             in
               List.foldl (fn ((n, sg : SigMatch.sigma, dsp), sigma) =>
                              add (sigma, #bound sg, bindStrAt (Env.empty, n, #env sg,dsp), dsp)) sigma elaborated
             end
-        | SpecInclude (sg, sp) =>
+        | SpecInclude (sg, sp, _) =>
             let val sg' = elabSigexp (cur sigma, sg)
             in add (sigma, #bound sg', #env sg', sp) end
         | SpecSharingType _ => Error.bug "elabSpecs: sharing outside a run"
         | SpecSharing _ => Error.bug "elabSpecs: sharing outside a run"
-      fun equation (SpecSharingType (ids, sp)) = SOME (SigMatch.ShareTypes (ids, sp))
-        | equation (SpecSharing (ids, sp)) = SOME (SigMatch.ShareStructures (ids, sp))
+      fun equation (SpecSharingType (ids, sp, _)) = SOME (SigMatch.ShareTypes (ids, sp))
+        | equation (SpecSharing (ids, sp, _)) = SOME (SigMatch.ShareStructures (ids, sp))
         | equation _ = NONE
       (* a run of sharing specifications, realised at once (SigMatch.shareRun) *)
       fun run (acc, rest) =
@@ -2285,19 +2375,22 @@ struct
                    dataCons : (string * valstatus) list IntMap.map,
                    pendingFlex : (tvar ref * span) list, pendingChecks : (unit -> unit) list,
                    pendingClosed : (env * span * string option) list,
-                   pendingOverloads : tvar ref list, pendingLiterals : (scon * ty * Source.span) list}
+                   pendingOverloads : (tvar ref * int * span) list, pendingLiterals : (scon * ty * Source.span) list,
+                   witnesses : int}
   fun snapshot () : snapshot =
     {sigs = !sigs, funs = !funs, datatypes = !Ty.datatypes, overloads = !Overload.table, dataCons = !dataCons,
      pendingFlex = !pendingFlex, pendingChecks = !pendingChecks, pendingClosed = !pendingClosed,
-     pendingOverloads = !pendingOverloads, pendingLiterals = !pendingLiterals}
+     pendingOverloads = !pendingOverloads, pendingLiterals = !pendingLiterals, witnesses = Witness.mark ()}
   (* also the declarations whose free variables wait for the topdec's end:
      the one that failed is not checked again at each end after it; and
      the overloading the declarations before it leave to the topdec's end
-     (--overloading=topdec), none in the other modes *)
+     (--overloading=topdec), none in the other modes; and what the
+     elaborator recorded of the nodes since (Witness) *)
   fun restore ({sigs = s, funs = f, datatypes = d, overloads = ov, dataCons = dc, pendingFlex = pf, pendingChecks = pc,
-                pendingClosed = pcl, pendingOverloads = po, pendingLiterals = pl} : snapshot) =
+                pendingClosed = pcl, pendingOverloads = po, pendingLiterals = pl, witnesses = w} : snapshot) =
     (sigs := s; funs := f; Ty.datatypes := d; Ty.extras := Ty.Unknown; Overload.table := ov; dataCons := dc;
-     pendingOverloads := po; pendingLiterals := pl; pendingFlex := pf; pendingChecks := pc; pendingClosed := pcl)
+     pendingOverloads := po; pendingLiterals := pl; pendingFlex := pf; pendingChecks := pc; pendingClosed := pcl;
+     Witness.dropSince w)
 
   (* Whether a top-level declaration that fails to elaborate is reported
      (Error.report), undone and skipped, and the next one elaborated, so
@@ -2316,15 +2409,17 @@ struct
     let
       val (kind, name) =
         case d of
-          DSignature ({name, ...} :: _, _) => ("signature", name)
-        | DFunctor ({name, ...} :: _, _) => ("functor", name)
-        | DStructure ({name, ...} :: _, _) => ("structure", name)
+          DSignature ({name, ...} :: _, _, _) => ("signature", name)
+        | DFunctor ({name, ...} :: _, _, _) => ("functor", name)
+        | DStructure ({name, ...} :: _, _, _) => ("structure", name)
         | _ => ("core", "")
     in ElabStats.emit (Source.describe (spanOfDec d), kind, name, !Types.workLimit - !Types.workLeft) end
 
   fun elabTop (env : env ref, decs : dec list) : unit =
     let val scopeEnd=ref 0
     in (lastDelta := Env.empty;
+     (* types change again until finish *)
+     SourceTy.settled := false;
      (* a type of a message is named as the top level names it *)
      Types.qualifier := (fn c => Env.qualifiedName (!env, c));
      List.app (fn d =>
@@ -2360,13 +2455,14 @@ struct
                           if freeLater () then () else (closeAt (List.rev (!pendingClosed)); pendingClosed := []))
                        else ();
                        if !ElabStats.on then stats d else ();
+                       Witness.elaborated (idOfDec d, spanOfDec d, true);
                        Types.stopWork () end
                 in
                   case saved of
                     NONE => go ()
                   | SOME s =>
                       go () handle Error.CompileError e =>
-                        (Types.stopWork (); restore s;
+                        (Types.stopWork (); restore s; Witness.elaborated (idOfDec d, spanOfDec d, false);
                          Error.report e;
                          if Parser.endsTopdec (spanOfDec d) then
                            ((* a failure where the topdec ends came from its

@@ -59,6 +59,12 @@ struct
   exception Reported
   fun failIfReported () = if !Error.errors > 0 then raise Reported else ()
 
+  (* --dump-witnesses: what the elaborator recorded of the input files'
+     nodes, once Elaborate.finish has run; nothing where an error was found *)
+  fun dumpWitnesses () =
+    if not (!Options.dumpWitnesses) orelse !Error.errors > 0 then ()
+    else Witness.dump (fn f => List.exists (fn i => i = f) (!Options.inputs), print)
+
   (* the syntax of the program's units, elaborated, when wanted (Serve) *)
   val keepSyntax = ref false
   val keptSyntax : (string * Ast.dec list) list ref = ref []
@@ -141,10 +147,10 @@ struct
           val (prog, fx) = Parser.parseTokensWith (toks, !fixity)
           val () = fixity := fx
           val declared =
-            List.concat (List.map (fn Ast.DStructure (binds, _) => List.map #name binds
-                                    | Ast.DSignature (binds, _) => List.map #name binds
-                                    | Ast.DFunctor (binds, _) => List.map #name binds
-                                    | Ast.DType (binds, _) => List.map #name binds
+            List.concat (List.map (fn Ast.DStructure (binds, _, _) => List.map #name binds
+                                    | Ast.DSignature (binds, _, _) => List.map #name binds
+                                    | Ast.DFunctor (binds, _, _) => List.map #name binds
+                                    | Ast.DType (binds, _, _) => List.map #name binds
                                     | _ => []) prog)
           val () = if sorted declared = sorted (#provides e) then ()
                    else complain (e, "provides " ^ show (sorted (#provides e)) ^ " but declares " ^ show (sorted declared))
@@ -789,7 +795,8 @@ struct
                    (* a unit's flexible records are settled at its end, and its
                       matches reported (docs/units.md) *)
                    frontStage "elaborate"
-                              (fn () => (Elaborate.allowPrim := allow; Elaborate.elabTop (env, decs); Elaborate.finish (); decs))
+                              (fn () => (Elaborate.allowPrim := allow; Elaborate.elabTop (env, decs); Elaborate.finish ();
+                                         dumpWitnesses (); decs))
                               ()
                  end)
           val () = if !keepSyntax then keptSyntax := (name, decs) :: !keptSyntax else ()
@@ -1160,6 +1167,7 @@ struct
          Elaborate.wordDefault := Types.wordTy;
          List.app elabFinal (!finalSyntax);
          Elaborate.finish ();
+         dumpWitnesses ();
          progs)
       val () = Elaborate.recover := true
       val _ = frontStage "elaborate" elaborate (basisProg, libraryProg, userProg, finalProg)

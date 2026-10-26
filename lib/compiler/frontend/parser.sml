@@ -125,7 +125,7 @@ struct
           val start = peekSpan ()
           val t = parseTupleTy ()
         in
-          if peek () = ARROW then (advance (); TyArrow (t, parseTy (), spanFrom start)) else t
+          if peek () = ARROW then (advance (); TyArrow (t, parseTy (), spanFrom start, freshId ())) else t
         end
 
       and parseTupleTy () =
@@ -137,7 +137,7 @@ struct
         in
           case loop [t] of
             [t] => t
-          | ts => TyTuple (ts, spanFrom start)
+          | ts => TyTuple (ts, spanFrom start, freshId ())
         end
 
       and parseAppTy () =
@@ -145,8 +145,8 @@ struct
           val start = peekSpan ()
           fun loop t =
             case peek () of
-              ID s => if s = "*" then t else (advance (); loop (TyCon ([t], ([], s), spanFrom start)))
-            | LONGID (p, s) => (advance (); loop (TyCon ([t], (p, s), spanFrom start)))
+              ID s => if s = "*" then t else (advance (); loop (TyCon ([t], ([], s), spanFrom start, freshId ())))
+            | LONGID (p, s) => (advance (); loop (TyCon ([t], (p, s), spanFrom start, freshId ())))
             | _ => t
         in
           loop (parseAtTy ())
@@ -156,28 +156,28 @@ struct
         let val start = peekSpan ()
         in
           case peek () of
-            TYVAR v => (advance (); TyVar (v, start))
-          | ID s => if s = "*" then err "expected type" else (advance (); TyCon ([], ([], s), start))
-          | LONGID (p, s) => (advance (); TyCon ([], (p, s), start))
+            TYVAR v => (advance (); TyVar (v, start, freshId ()))
+          | ID s => if s = "*" then err "expected type" else (advance (); TyCon ([], ([], s), start, freshId ()))
+          | LONGID (p, s) => (advance (); TyCon ([], (p, s), start, freshId ()))
           | PRIM =>
               (* `_prim "name"` as a type: a type of the VM's that has no
                  name in the initial basis (Int64.int, Word64.word) *)
               (advance ();
                case next () of
-                 STRING s => TyCon ([], ([], "_" ^ s), spanFrom start)
+                 STRING s => TyCon ([], ([], "_" ^ s), spanFrom start, freshId ())
                | _ => err "expected string literal after _prim")
           | LBRACE =>
               let
                 val () = advance ()
                 fun field () =
-                  let val lab = parseLabel ()
-                  in expect COLON; (lab, parseTy ()) end
+                  let val lsp = peekSpan () val lab = parseLabel ()
+                  in expect COLON; (lab, parseTy (), lsp) end
                 fun loop acc =
                   if peek () = RBRACE then List.rev acc
                   else let val f = field ()
                        in if peek () = COMMA then (advance (); loop (f :: acc)) else List.rev (f :: acc) end
                 val fields = loop []
-              in expect RBRACE; TyRecord (fields, spanFrom start) end
+              in expect RBRACE; TyRecord (fields, spanFrom start, freshId ()) end
           | LPAREN =>
               let
                 val () = advance ()
@@ -192,7 +192,7 @@ struct
                                 ID s => ([], s)
                               | LONGID (p, s) => (p, s)
                               | _ => err "expected type constructor after type argument list"
-                  in TyCon (ts, con, spanFrom start) end
+                  in TyCon (ts, con, spanFrom start, freshId ()) end
                 else (expect RPAREN; t)
               end
           | _ => err ("expected type but found '" ^ toString (peek ()) ^ "'")
@@ -205,12 +205,13 @@ struct
         | INT i => if IntInf.> (i, IntInf.fromInt 0) then IntInf.toString i else err "record label must be a positive integer"
         | t => errAt (prevSpan (), "expected record label but found '" ^ toString t ^ "'")
 
-      fun parseTyvarSeq () : string list =
+      (* a sequence of type variables, each with its span *)
+      fun parseTyvarSeq () : (string * Source.span) list =
         let
           val start = peekSpan ()
           val vs =
             case peek () of
-              TYVAR v => (advance (); [v])
+              TYVAR v => (advance (); [(v, prevSpan ())])
             | LPAREN =>
                 (case peekAt 1 of
                    TYVAR _ =>
@@ -218,7 +219,8 @@ struct
                        val () = advance ()
                        fun loop acc =
                          case next () of
-                           TYVAR v => if peek () = COMMA then (advance (); loop (v :: acc)) else List.rev (v :: acc)
+                           TYVAR v => let val v = (v, prevSpan ())
+                                      in if peek () = COMMA then (advance (); loop (v :: acc)) else List.rev (v :: acc) end
                          | _ => err "expected type variable"
                        val vs = loop []
                      in expect RPAREN; vs end
@@ -226,7 +228,9 @@ struct
             | _ => []
           (* Section 2.9: no tyvarseq may contain the same type variable twice *)
           fun dups [] = ()
-            | dups (v :: rest) = if List.exists (fn w => w = v) rest then errAt (start, "duplicate type variable " ^ v ^ " in type variable sequence") else dups rest
+            | dups ((v, _) :: rest) =
+              if List.exists (fn (w, _) => w = v) rest then errAt (start, "duplicate type variable " ^ v ^ " in type variable sequence")
+              else dups rest
         in dups vs; vs end
 
       (* ---------------------------------------------------------------- *)
@@ -241,18 +245,18 @@ struct
         let
           val start = peekSpan ()
           val p = parseInfPat ()
-          fun typed p = if peek () = COLON then (advance (); typed (PTyped (p, parseTy (), spanFrom start))) else p
+          fun typed p = if peek () = COLON then (advance (); typed (PTyped (p, parseTy (), spanFrom start, freshId ()))) else p
           val p = typed p
         in
           if peek () = AS then
             let
               val () = advance ()
-              fun asVar (PVar (([], v), _, _)) = SOME (v, NONE)
-                | asVar (PTyped (PVar (([], v), _, _), t, _)) = SOME (v, SOME t)
+              fun asVar (PVar (([], v), _, _, _)) = SOME (v, NONE)
+                | asVar (PTyped (PVar (([], v), _, _, _), t, _, _)) = SOME (v, SOME t)
                 | asVar _ = NONE
             in
               case asVar p of
-                SOME (v, t) => PLayered (v, t, parsePat (), ref NONE, spanFrom start)
+                SOME (v, t) => PLayered (v, t, parsePat (), ref NONE, spanFrom start, freshId ())
               | NONE => errAt (spanOfPat p, "left side of 'as' must be a variable")
             end
           else p
@@ -271,14 +275,14 @@ struct
           val items = collect []
           fun app (f, a) =
             case f of
-              PVar (id, _, sp) =>
+              PVar (id, _, sp, _) =>
                 if Option.isSome (IntTable.find (groupedPatHeads, #start sp)) then
                   errAt (sp, "only an unparenthesized constructor identifier can be applied in a pattern")
-                else PApp (id, ref NONE, a, Source.join (sp, spanOfPat a))
+                else PApp (id, ref NONE, a, Source.join (sp, spanOfPat a), freshId ())
             | _ => errAt (spanOfPat f, "only a constructor can be applied in a pattern")
           fun binop (s, sp, l, r) =
-            PApp (([], s), ref NONE, PTuple ([l, r], Source.join (spanOfPat l, spanOfPat r)),
-                  Source.join (spanOfPat l, spanOfPat r))
+            PApp (([], s), ref NONE, PTuple ([l, r], Source.join (spanOfPat l, spanOfPat r), freshId ()),
+                  Source.join (spanOfPat l, spanOfPat r), freshId ())
         in
           resolve (items, app, binop, "pattern")
         end
@@ -287,21 +291,21 @@ struct
         let val start = peekSpan ()
         in
           case peek () of
-            UNDERSCORE => (advance (); PWild start)
-          | INT i => (advance (); PScon (SInt i, ref NONE, start))
-          | WORD w => (advance (); PScon (SWord w, ref NONE, start))
-          | STRING s => (advance (); PScon (SString s, ref NONE, start))
-          | WIDESTRING s => (advance (); PScon (SWideString s, ref NONE, start))
-          | CHAR c => (advance (); PScon (SChar c, ref NONE, start))
+            UNDERSCORE => (advance (); PWild (start, freshId ()))
+          | INT i => (advance (); PScon (SInt i, ref NONE, start, freshId ()))
+          | WORD w => (advance (); PScon (SWord w, ref NONE, start, freshId ()))
+          | STRING s => (advance (); PScon (SString s, ref NONE, start, freshId ()))
+          | WIDESTRING s => (advance (); PScon (SWideString s, ref NONE, start, freshId ()))
+          | CHAR c => (advance (); PScon (SChar c, ref NONE, start, freshId ()))
           | REAL _ => err "real constants are not allowed in patterns"
-          | ID s => (advance (); PVar (([], s), ref NONE, start))
-          | LONGID (p, s) => (advance (); PVar ((p, s), ref NONE, start))
+          | ID s => (advance (); PVar (([], s), ref NONE, start, freshId ()))
+          | LONGID (p, s) => (advance (); PVar ((p, s), ref NONE, start, freshId ()))
           | OP =>
               (advance ();
                case next () of
-                 ID s => PVar (([], s), ref NONE, spanFrom start)
-               | LONGID (p, s) => PVar ((p, s), ref NONE, spanFrom start)
-               | EQUALS => PVar (([], "="), ref NONE, spanFrom start)
+                 ID s => PVar (([], s), ref NONE, spanFrom start, freshId ())
+               | LONGID (p, s) => PVar ((p, s), ref NONE, spanFrom start, freshId ())
+               | EQUALS => PVar (([], "="), ref NONE, spanFrom start, freshId ())
                | _ => err "expected identifier after 'op'")
           | LBRACE =>
               let
@@ -314,16 +318,16 @@ struct
                       val fstart = peekSpan ()
                       val lab = parseLabel ()
                     in
-                      if peek () = EQUALS then (advance (); SOME (lab, parsePat ()))
+                      if peek () = EQUALS then (advance (); SOME (lab, parsePat (), fstart))
                       else
                         let
                           val tyopt = if peek () = COLON then (advance (); SOME (parseTy ())) else NONE
                           val var = case tyopt of
-                                      NONE => PVar (([], lab), ref NONE, fstart)
-                                    | SOME t => PTyped (PVar (([], lab), ref NONE, fstart), t, spanFrom fstart)
+                                      NONE => PVar (([], lab), ref NONE, fstart, freshId ())
+                                    | SOME t => PTyped (PVar (([], lab), ref NONE, fstart, freshId ()), t, spanFrom fstart, freshId ())
                         in
-                          if peek () = AS then (advance (); SOME (lab, PLayered (lab, tyopt, parsePat (), ref NONE, spanFrom fstart)))
-                          else SOME (lab, var)
+                          if peek () = AS then (advance (); SOME (lab, PLayered (lab, tyopt, parsePat (), ref NONE, spanFrom fstart, freshId ()), fstart))
+                          else SOME (lab, var, fstart)
                         end
                     end
                 fun loop (acc, flex) =
@@ -334,37 +338,37 @@ struct
                     | SOME f => if peek () = COMMA then (advance (); loop (f :: acc, flex)) else (List.rev (f :: acc), flex)
                 val (fields, flex) = loop ([], false)
               in
-                expect RBRACE; PRecord (fields, flex, ref NONE, spanFrom start)
+                expect RBRACE; PRecord (fields, flex, ref NONE, spanFrom start, freshId ())
               end
           | LPAREN =>
               let val () = advance ()
               in
-                if peek () = RPAREN then (advance (); PTuple ([], spanFrom start))
+                if peek () = RPAREN then (advance (); PTuple ([], spanFrom start, freshId ()))
                 else
                   let val p = parsePat ()
                   in
                     if peek () = COMMA then
                       let fun loop acc = if peek () = COMMA then (advance (); loop (parsePat () :: acc)) else List.rev acc
                           val ps = loop [p]
-                      in expect RPAREN; PTuple (ps, spanFrom start) end
+                      in expect RPAREN; PTuple (ps, spanFrom start, freshId ()) end
                     else if peek () = BAR then
                       if not (!orPatterns) then err "or-patterns (p1 | p2) are not Standard ML; --or-patterns allows them"
                       else
                         let fun loop acc = if peek () = BAR then (advance (); loop (parsePat () :: acc)) else List.rev acc
                             val ps = loop [p]
-                        in expect RPAREN; POr (ps, spanFrom start) end
+                        in expect RPAREN; POr (ps, spanFrom start, freshId ()) end
                     else (expect RPAREN;
-                          (case p of PVar (_, _, sp) => IntTable.insert (groupedPatHeads, #start sp, true) | _ => ()); p)
+                          (case p of PVar (_, _, sp, _) => IntTable.insert (groupedPatHeads, #start sp, true) | _ => ()); p)
                   end
               end
           | LBRACKET =>
               let val () = advance ()
               in
-                if peek () = RBRACKET then (advance (); PList ([], spanFrom start))
+                if peek () = RBRACKET then (advance (); PList ([], spanFrom start, freshId ()))
                 else
                   let fun loop acc = if peek () = COMMA then (advance (); loop (parsePat () :: acc)) else List.rev acc
                       val ps = loop [parsePat ()]
-                  in expect RBRACKET; PList (ps, spanFrom start) end
+                  in expect RBRACKET; PList (ps, spanFrom start, freshId ()) end
               end
           | t => err ("expected pattern but found '" ^ toString t ^ "'")
         end
@@ -385,7 +389,7 @@ struct
         let val start = peekSpan ()
         in
           case peek () of
-            RAISE => (advance (); let val e = parseExp () in ERaise (e, spanFrom start) end)
+            RAISE => (advance (); let val e = parseExp () in ERaise (e, spanFrom start, freshId ()) end)
           | IF =>
               let
                 val () = advance ()
@@ -394,22 +398,22 @@ struct
                 val t = parseExp ()
                 val () = expect ELSE
                 val e = parseExp ()
-              in EIf (c, t, e, spanFrom start) end
+              in EIf (c, t, e, spanFrom start, freshId ()) end
           | WHILE =>
               let
                 val () = advance ()
                 val c = parseExp ()
                 val () = expect DO
                 val b = parseExp ()
-              in EWhile (c, b, spanFrom start) end
+              in EWhile (c, b, spanFrom start, freshId ()) end
           | CASE =>
               let
                 val () = advance ()
                 val e = parseExp ()
                 val () = expect OF
                 val m = parseMatch ()
-              in ECase (e, m, spanFrom start) end
-          | FN => (advance (); let val m = parseMatch () in EFn (m, ref NONE, spanFrom start) end)
+              in ECase (e, m, spanFrom start, freshId ()) end
+          | FN => (advance (); let val m = parseMatch () in EFn (m, ref NONE, spanFrom start, freshId ()) end)
           | _ => parseHandleExp ()
         end
 
@@ -428,7 +432,7 @@ struct
             val start = peekSpan ()
             val e = parseOrelseExp ()
           in
-            if peek () = HANDLE then (advance (); EHandle (e, parseMatch (), spanFrom start)) else e
+            if peek () = HANDLE then (advance (); EHandle (e, parseMatch (), spanFrom start, freshId ())) else e
           end
 
       and parseOrelseExp () =
@@ -437,7 +441,7 @@ struct
           let
             val start = peekSpan ()
             fun loop e =
-              if peek () = ORELSE then (advance (); loop (EOrelse (e, parseAndalsoExp (), spanFrom start))) else e
+              if peek () = ORELSE then (advance (); loop (EOrelse (e, parseAndalsoExp (), spanFrom start, freshId ()))) else e
           in loop (parseAndalsoExp ()) end
 
       and parseAndalsoExp () =
@@ -446,7 +450,7 @@ struct
           let
             val start = peekSpan ()
             fun loop e =
-              if peek () = ANDALSO then (advance (); loop (EAndalso (e, parseTypedExp (), spanFrom start))) else e
+              if peek () = ANDALSO then (advance (); loop (EAndalso (e, parseTypedExp (), spanFrom start, freshId ()))) else e
           in loop (parseTypedExp ()) end
 
       and parseTypedExp () =
@@ -455,7 +459,7 @@ struct
           let
             val start = peekSpan ()
             fun loop e =
-              if peek () = COLON then (advance (); loop (ETyped (e, parseTy (), spanFrom start))) else e
+              if peek () = COLON then (advance (); loop (ETyped (e, parseTy (), spanFrom start, freshId ()))) else e
           in loop (parseInfExp ()) end
 
       and parseInfExp () : exp =
@@ -472,10 +476,10 @@ struct
                 in advance (); collect (Oper ("=", Fixity.lookup (!fixenv, "="), sp) :: acc) end
             | t => if startsAtExp t then collect (Atom (parseAtExp ()) :: acc) else List.rev acc
           val items = collect []
-          fun app (f, a) = EApp (f, a, Source.join (spanOfExp f, spanOfExp a))
+          fun app (f, a) = EApp (f, a, Source.join (spanOfExp f, spanOfExp a), freshId ())
           fun binop (s, sp, l, r) =
             let val whole = Source.join (spanOfExp l, spanOfExp r)
-            in EApp (EVar (([], s), ref NONE, sp), ETuple ([l, r], whole), whole) end
+            in EApp (EVar (([], s), ref NONE, sp, freshId ()), ETuple ([l, r], whole, freshId ()), whole, freshId ()) end
         in
           resolve (items, app, binop, "expression")
         end
@@ -484,28 +488,28 @@ struct
         let val start = peekSpan ()
         in
           case peek () of
-            INT i => (advance (); EScon (SInt i, ref NONE, start))
-          | WORD w => (advance (); EScon (SWord w, ref NONE, start))
-          | REAL r => (advance (); EScon (SReal r, ref NONE, start))
-          | STRING s => (advance (); EScon (SString s, ref NONE, start))
-          | WIDESTRING s => (advance (); EScon (SWideString s, ref NONE, start))
-          | CHAR c => (advance (); EScon (SChar c, ref NONE, start))
-          | ID s => (advance (); EVar (([], s), ref NONE, start))
-          | LONGID (p, s) => (advance (); EVar ((p, s), ref NONE, start))
+            INT i => (advance (); EScon (SInt i, ref NONE, start, freshId ()))
+          | WORD w => (advance (); EScon (SWord w, ref NONE, start, freshId ()))
+          | REAL r => (advance (); EScon (SReal r, ref NONE, start, freshId ()))
+          | STRING s => (advance (); EScon (SString s, ref NONE, start, freshId ()))
+          | WIDESTRING s => (advance (); EScon (SWideString s, ref NONE, start, freshId ()))
+          | CHAR c => (advance (); EScon (SChar c, ref NONE, start, freshId ()))
+          | ID s => (advance (); EVar (([], s), ref NONE, start, freshId ()))
+          | LONGID (p, s) => (advance (); EVar ((p, s), ref NONE, start, freshId ()))
           | EQUALS => err "infix operator '=' used without arguments; use 'op ='"
           | OP =>
               (advance ();
                case next () of
-                 ID s => EVar (([], s), ref NONE, spanFrom start)
-               | LONGID (p, s) => EVar ((p, s), ref NONE, spanFrom start)
-               | EQUALS => EVar (([], "="), ref NONE, spanFrom start)
+                 ID s => EVar (([], s), ref NONE, spanFrom start, freshId ())
+               | LONGID (p, s) => EVar ((p, s), ref NONE, spanFrom start, freshId ())
+               | EQUALS => EVar (([], "="), ref NONE, spanFrom start, freshId ())
                | _ => err "expected identifier after 'op'")
           | LBRACE =>
               let
                 val () = advance ()
                 fun field () =
-                  let val lab = parseLabel ()
-                  in expect EQUALS; (lab, parseExp ()) end
+                  let val lsp = peekSpan () val lab = parseLabel ()
+                  in expect EQUALS; (lab, parseExp (), lsp) end
                 fun loop acc =
                   if peek () = RBRACE then List.rev acc
                   else let val f = field ()
@@ -513,17 +517,17 @@ struct
                 val fields = loop []
               in
                 expect RBRACE;
-                (case fields of [] => ETuple ([], spanFrom start) | _ => ERecord (fields, spanFrom start))
+                (case fields of [] => ETuple ([], spanFrom start, freshId ()) | _ => ERecord (fields, spanFrom start, freshId ()))
               end
           | HASH =>
               let
                 val () = advance ()
                 val lab = parseLabel ()
-              in ESelect (lab, ref NONE, spanFrom start) end
+              in ESelect (lab, ref NONE, spanFrom start, freshId ()) end
           | LPAREN =>
               let val () = advance ()
               in
-                if peek () = RPAREN then (advance (); ETuple ([], spanFrom start))
+                if peek () = RPAREN then (advance (); ETuple ([], spanFrom start, freshId ()))
                 else
                   let val e = parseExp ()
                   in
@@ -531,22 +535,22 @@ struct
                       COMMA =>
                         let fun loop acc = if peek () = COMMA then (advance (); loop (parseExp () :: acc)) else List.rev acc
                             val es = loop [e]
-                        in expect RPAREN; ETuple (es, spanFrom start) end
+                        in expect RPAREN; ETuple (es, spanFrom start, freshId ()) end
                     | SEMI =>
                         let fun loop acc = if peek () = SEMI then (advance (); loop (parseExp () :: acc)) else List.rev acc
                             val es = loop [e]
-                        in expect RPAREN; ESeq (es, spanFrom start) end
+                        in expect RPAREN; ESeq (es, spanFrom start, freshId ()) end
                     | _ => (expect RPAREN; e)
                   end
               end
           | LBRACKET =>
               let val () = advance ()
               in
-                if peek () = RBRACKET then (advance (); EList ([], ref NONE, spanFrom start))
+                if peek () = RBRACKET then (advance (); EList ([], ref NONE, spanFrom start, freshId ()))
                 else
                   let fun loop acc = if peek () = COMMA then (advance (); loop (parseExp () :: acc)) else List.rev acc
                       val es = loop [parseExp ()]
-                  in expect RBRACKET; EList (es, ref NONE, spanFrom start) end
+                  in expect RBRACKET; EList (es, ref NONE, spanFrom start, freshId ()) end
               end
           | LET =>
               let
@@ -559,15 +563,15 @@ struct
                 val es = loop [e]
                 val () = expect END
                 val () = fixenv := saved
-                val body = case es of [e] => e | _ => ESeq (es, spanFrom start)
-              in ELet (decs, body, spanFrom start) end
+                val body = case es of [e] => e | _ => ESeq (es, spanFrom start, freshId ())
+              in ELet (decs, body, spanFrom start, freshId ()) end
           | PRIM =>
               let
                 val () = advance ()
                 val name = case next () of STRING s => s | _ => err "expected string literal after _prim"
                 val () = expect COLON
                 val t = parseTy ()
-              in EPrim (name, t, ref NONE, spanFrom start) end
+              in EPrim (name, t, ref NONE, spanFrom start, freshId ()) end
           | t => err ("expected expression but found '" ^ toString t ^ "'")
         end
 
@@ -635,12 +639,12 @@ struct
                     SOME (vs, _) => List.map (fn (v, _, vsp) => (v, vsp)) vs
                   | NONE => errAt (spanOfPat p, "val rec requires a variable on the left-hand side")
                 val reexport =
-                  List.map (fn (v, vsp) => (PVar (([], v), ref NONE, vsp), EVar (([], v), ref NONE, vsp)))
+                  List.map (fn (v, vsp) => (PVar (([], v), ref NONE, vsp, freshId ()), EVar (([], v), ref NONE, vsp, freshId ())))
                            (List.concat (List.map (fn (p, _) => recVars p) recBinds))
               in
-                if isRec then DValRec (tvs, plainBinds @ recBinds, sp)
-                else if List.null recBinds then DVal (tvs, plainBinds, sp)
-                else DLocal ([DValRec (tvs, recBinds, sp)], [DVal (tvs, plainBinds @ reexport, sp)], sp)
+                if isRec then DValRec (tvs, plainBinds @ recBinds, sp, freshId ())
+                else if List.null recBinds then DVal (tvs, plainBinds, sp, freshId ())
+                else DLocal ([DValRec (tvs, recBinds, sp, freshId ())], [DVal (tvs, plainBinds @ reexport, sp, freshId ())], sp, freshId ())
               end
           | FUN =>
               let
@@ -648,8 +652,8 @@ struct
                 val tvs = parseTyvarSeq ()
                 fun loop acc = if peek () = AND then (advance (); loop (parseFundef () :: acc)) else List.rev acc
                 val fs = loop [parseFundef ()]
-              in DFun (tvs, fs, spanFrom start) end
-          | TYPE => (advance (); DType (parseTypbinds (), spanFrom start))
+              in DFun (tvs, fs, spanFrom start, freshId ()) end
+          | TYPE => (advance (); DType (parseTypbinds (), spanFrom start, freshId ()))
           | DATATYPE =>
               let val () = advance ()
               in
@@ -662,13 +666,13 @@ struct
                                 ID s => ([], s)
                               | LONGID (p, s) => (p, s)
                               | _ => err "expected type constructor"
-                  in DDatatypeRepl (name, rhs, spanFrom start) end
+                  in DDatatypeRepl (name, rhs, spanFrom start, freshId ()) end
                 else
                   let
                     fun loop acc = if peek () = AND then (advance (); loop (parseDatbind () :: acc)) else List.rev acc
                     val dbs = loop [parseDatbind ()]
                     val tbs = if peek () = WITHTYPE then (advance (); parseTypbinds ()) else []
-                  in DDatatype (dbs, tbs, spanFrom start) end
+                  in DDatatype (dbs, tbs, spanFrom start, freshId ()) end
               end
           | EXCEPTION =>
               let
@@ -680,18 +684,18 @@ struct
                     val name = case next () of ID s => s | _ => err "expected exception constructor name"
                   in
                     case peek () of
-                      OF => (advance (); ExnDecl (name, SOME (parseTy ()), ref NONE, spanFrom estart))
+                      OF => (advance (); ExnDecl (name, SOME (parseTy ()), ref NONE, spanFrom estart, freshId ()))
                     | EQUALS =>
                         (advance ();
                          if peek () = OP then advance () else ();
                          case next () of
-                           ID s => ExnRepl (name, ([], s), ref NONE, spanFrom estart)
-                         | LONGID (p, s) => ExnRepl (name, (p, s), ref NONE, spanFrom estart)
+                           ID s => ExnRepl (name, ([], s), ref NONE, spanFrom estart, freshId ())
+                         | LONGID (p, s) => ExnRepl (name, (p, s), ref NONE, spanFrom estart, freshId ())
                          | _ => err "expected exception constructor")
-                    | _ => ExnDecl (name, NONE, ref NONE, spanFrom estart)
+                    | _ => ExnDecl (name, NONE, ref NONE, spanFrom estart, freshId ())
                   end
                 fun loop acc = if peek () = AND then (advance (); loop (exbind () :: acc)) else List.rev acc
-              in DException (loop [exbind ()], spanFrom start) end
+              in DException (loop [exbind ()], spanFrom start, freshId ()) end
           | LOCAL =>
               let
                 val () = advance ()
@@ -705,7 +709,7 @@ struct
                 val env2 = !fixenv
                 (* keep fixity directives from d2 but drop those from d1 *)
                 val () = fixenv := Fixity.afterLocal (env0, env1, env2)
-              in DLocal (d1, d2, spanFrom start) end
+              in DLocal (d1, d2, spanFrom start, freshId ()) end
           | OPEN =>
               let
                 val () = advance ()
@@ -716,16 +720,16 @@ struct
                   | _ => List.rev acc
                 val ids = loop []
               in
-                case ids of [] => err "expected structure name after 'open'" | _ => DOpen (ids, spanFrom start)
+                case ids of [] => err "expected structure name after 'open'" | _ => DOpen (ids, spanFrom start, freshId ())
               end
-          | INFIX => parseFixityDec (start, fn p => Fixity.Infix p, fn (p, ids, sp) => DInfix (p, ids, sp))
-          | INFIXR => parseFixityDec (start, fn p => Fixity.Infixr p, fn (p, ids, sp) => DInfixr (p, ids, sp))
+          | INFIX => parseFixityDec (start, fn p => Fixity.Infix p, fn (p, ids, sp) => DInfix (p, ids, sp, freshId ()))
+          | INFIXR => parseFixityDec (start, fn p => Fixity.Infixr p, fn (p, ids, sp) => DInfixr (p, ids, sp, freshId ()))
           | NONFIX =>
               let
                 val () = advance ()
                 val ids = parseFixityIds ()
                 val () = fixenv := Fixity.extend (!fixenv, List.map (fn id => (id, Fixity.Nonfix)) ids)
-              in DNonfix (ids, spanFrom start) end
+              in DNonfix (ids, spanFrom start, freshId ()) end
           | OVERLOAD =>
               (* _overload <kind> <longstrid> [<bits> | via <longvid>] *)
               let
@@ -747,7 +751,7 @@ struct
                        | LONGID (p, s) => OvVia (p, s)
                        | _ => err "expected a function name after via")
                   | _ => OvBits 64
-              in DOverload {kind = kind, strid = strid, literal = literal, span = spanFrom start} end
+              in DOverload {kind = kind, strid = strid, literal = literal, span = spanFrom start, id = freshId ()} end
           (* _export structure Name : SIG = strexp: a dynamic module's
              implementation (docs/units.md, Dynamic modules) *)
           | EXPORT =>
@@ -762,8 +766,9 @@ struct
                   val () = expect EQUALS
                   val body = parseStrexp ()
                 in
-                  DStructure ([{name = name, strexp = StrExport (name, sg, body, ref NONE, spanFrom start), span = spanFrom start}],
-                              spanFrom start)
+                  DStructure ([{name = name, strexp = StrExport (name, sg, body, ref NONE, spanFrom start, freshId ()), span = spanFrom start,
+                                id = freshId ()}],
+                              spanFrom start, freshId ())
                 end
           | STRUCTURE =>
               if ctx = Let then err "structure declarations are not allowed inside expressions"
@@ -788,18 +793,18 @@ struct
                           let val vstart = peekSpan ()
                               val () = advance ()
                               val () = expect COLON
-                          in StrDynamic (DynamicVirtual name, parseSigexp (), ref NONE, spanFrom vstart) end
+                          in StrDynamic (DynamicVirtual name, parseSigexp (), ref NONE, spanFrom vstart, freshId ()) end
                         else parseStrexp ()
                       (* derived forms: structure S : SIG = e  ==>  structure S = e : SIG  (and :>) *)
                       val body = case ascription of
                                    NONE => body
-                                 | SOME (sg, opaque) => StrAscribe (body, sg, opaque, spanFrom bstart)
-                    in {name = name, strexp = body, span = spanFrom bstart} end
+                                 | SOME (sg, opaque) => StrAscribe (body, sg, opaque, spanFrom bstart, freshId ())
+                    in {name = name, strexp = body, span = spanFrom bstart, id = freshId ()} end
                   fun loop acc = if peek () = AND then (advance (); loop (bind () :: acc)) else List.rev acc
                   val binds = loop [bind ()]
                 in
                   checkDistinct (List.map (fn b : strbind => (#name b, #span b)) binds, "structure");
-                  DStructure (binds, spanFrom start)
+                  DStructure (binds, spanFrom start, freshId ())
                 end
           | SIGNATURE =>
               if ctx <> Top then err "signature declarations are only allowed at top level"
@@ -812,12 +817,12 @@ struct
                       val name = case next () of ID s => s | _ => err "expected signature name"
                       val () = expect EQUALS
                       val sg = parseSigexp ()
-                    in {name = name, sigexp = sg, span = spanFrom bstart} end
+                    in {name = name, sigexp = sg, span = spanFrom bstart, id = freshId ()} end
                   fun loop acc = if peek () = AND then (advance (); loop (bind () :: acc)) else List.rev acc
                   val binds = loop [bind ()]
                 in
                   checkDistinct (List.map (fn b : sigbind => (#name b, #span b)) binds, "signature");
-                  DSignature (binds, spanFrom start)
+                  DSignature (binds, spanFrom start, freshId ())
                 end
           | FUNCTOR =>
               if ctx <> Top then err "functor declarations are only allowed at top level"
@@ -837,7 +842,7 @@ struct
                           let
                             val sstart = peekSpan ()
                             val specs = parseSpecs ()
-                          in (NONE, SigSig (specs, spanFrom sstart)) end
+                          in (NONE, SigSig (specs, spanFrom sstart, freshId ())) end
                       val () = expect RPAREN
                       val result =
                         case peek () of
@@ -849,13 +854,13 @@ struct
                       (* derived form: functor F (X : S) : R = e  ==>  functor F (X : S) = e : R *)
                       val body = case result of
                                    NONE => body
-                                 | SOME (sg, opaque) => StrAscribe (body, sg, opaque, spanFrom bstart)
-                    in {name = name, param = param, paramSig = paramSig, body = body, span = spanFrom bstart} end
+                                 | SOME (sg, opaque) => StrAscribe (body, sg, opaque, spanFrom bstart, freshId ())
+                    in {name = name, param = param, paramSig = paramSig, body = body, span = spanFrom bstart, id = freshId ()} end
                   fun loop acc = if peek () = AND then (advance (); loop (bind () :: acc)) else List.rev acc
                   val binds = loop [bind ()]
                 in
                   checkDistinct (List.map (fn b : funbind => (#name b, #span b)) binds, "functor");
-                  DFunctor (binds, spanFrom start)
+                  DFunctor (binds, spanFrom start, freshId ())
                 end
           | ABSTYPE =>
               let
@@ -868,12 +873,12 @@ struct
                 val decs = parseDecs Let
                 val () = expect END
                 val () = fixenv := saved
-              in DAbstype (dbs, tbs, decs, spanFrom start) end
+              in DAbstype (dbs, tbs, decs, spanFrom start, freshId ()) end
           | t =>
               if ctx = Top andalso (startsAtExp t orelse isPrefixStart t) then
                 (* derived form of programs (Appendix A):  exp ;  ==>  val it = exp ; *)
                 let val e = parseExp ()
-                in DVal ([], [(PVar (([], "it"), ref NONE, spanOfExp e), e)], spanFrom start) end
+                in DVal ([], [(PVar (([], "it"), ref NONE, spanOfExp e, freshId ()), e)], spanFrom start, freshId ()) end
               else err ("expected declaration but found '" ^ toString t ^ "'")
         end
 
@@ -891,7 +896,7 @@ struct
                   val decs = parseDecs Str
                   val () = expect END
                   val () = fixenv := saved
-                in StrStruct (decs, spanFrom start) end
+                in StrStruct (decs, spanFrom start, freshId ()) end
             | LET =>
                 let
                   val () = advance ()
@@ -901,7 +906,7 @@ struct
                   val body = parseStrexp ()
                   val () = expect END
                   val () = fixenv := saved
-                in StrLet (decs, body, spanFrom start) end
+                in StrLet (decs, body, spanFrom start, freshId ()) end
             | ID s =>
                 if peekAt 1 = LPAREN then
                   let
@@ -909,9 +914,9 @@ struct
                     val () = advance ()
                     val arg = parseFunctorArg ()
                     val () = expect RPAREN
-                  in StrApp (s, arg, spanFrom start) end
-                else (advance (); StrId (([], s), start))
-            | LONGID (p, s) => (advance (); StrId ((p, s), start))
+                  in StrApp (s, arg, spanFrom start, freshId ()) end
+                else (advance (); StrId (([], s), start, freshId ()))
+            | LONGID (p, s) => (advance (); StrId ((p, s), start, freshId ()))
             (* _dynamic "path" : SIG, a structure loaded when the program runs
                (docs/units.md, Dynamic modules) *)
             | DYNAMIC =>
@@ -921,12 +926,12 @@ struct
                                STRING s => (advance (); s)
                              | t => err ("expected the path of a dynamic module but found '" ^ toString t ^ "'")
                   val () = expect COLON
-                in StrDynamic (DynamicFile path, parseSigexp (), ref NONE, spanFrom start) end
+                in StrDynamic (DynamicFile path, parseSigexp (), ref NONE, spanFrom start, freshId ()) end
             | t => err ("expected structure expression but found '" ^ toString t ^ "'")
           fun ascribe e =
             case peek () of
-              COLON => (advance (); ascribe (StrAscribe (e, parseSigexp (), false, spanFrom start)))
-            | COLONGT => (advance (); ascribe (StrAscribe (e, parseSigexp (), true, spanFrom start)))
+              COLON => (advance (); ascribe (StrAscribe (e, parseSigexp (), false, spanFrom start, freshId ())))
+            | COLONGT => (advance (); ascribe (StrAscribe (e, parseSigexp (), true, spanFrom start, freshId ())))
             | _ => e
         in ascribe e end
 
@@ -945,7 +950,7 @@ struct
                 val saved = !fixenv
                 val decs = parseDecs Str
                 val () = fixenv := saved
-              in StrStruct (decs, spanFrom start) end
+              in StrStruct (decs, spanFrom start, freshId ()) end
         end
 
       and parseSigexp () : sigexp =
@@ -958,8 +963,8 @@ struct
                   val () = advance ()
                   val specs = parseSpecs ()
                   val () = expect END
-                in SigSig (specs, spanFrom start) end
-            | ID n => (advance (); SigId (n, start))
+                in SigSig (specs, spanFrom start, freshId ()) end
+            | ID n => (advance (); SigId (n, start, freshId ()))
             | t => err ("expected signature expression but found '" ^ toString t ^ "'")
         in parseWhere (sg, start) end
 
@@ -972,7 +977,7 @@ struct
               let
                 val cstart = peekSpan ()
                 val () = expect TYPE
-                val tvs = parseTyvarSeq ()
+                val tvs = List.map #1 (parseTyvarSeq ())
                 val id = case next () of
                            ID n => ([], n)
                          | LONGID (p, n) => (p, n)
@@ -983,7 +988,7 @@ struct
             fun loop acc =
               if peek () = AND andalso peekAt 1 = TYPE then (advance (); loop (clause () :: acc)) else List.rev acc
             val clauses = loop [clause ()]
-          in parseWhere (SigWhere (sg, clauses, spanFrom start), start) end
+          in parseWhere (SigWhere (sg, clauses, spanFrom start, freshId ()), start) end
         else sg
 
       and parseSpecs () : spec list =
@@ -1001,7 +1006,7 @@ struct
                   val isType = if peek () = TYPE then (advance (); true) else false
                   val ids = parseEqualPaths ()
                   val sp = spanFrom start
-                in loop ((if isType then SpecSharingType (ids, sp) else SpecSharing (ids, sp)) :: acc) end
+                in loop ((if isType then SpecSharingType (ids, sp, freshId ()) else SpecSharing (ids, sp, freshId ())) :: acc) end
             | _ => loop (List.revAppend (parseSpec (), acc))
         in loop [] end
 
@@ -1039,14 +1044,14 @@ struct
                                        val n = vid ()
                                        val () = expect COLON
                                        val t = parseTy ()
-                                     in (n, t, spanFrom s) end), spanFrom start)])
+                                     in (n, t, spanFrom s) end), spanFrom start, freshId ())])
           | TYPE =>
               let
                 val () = advance ()
                 fun desc () =
                   let
                     val s = peekSpan ()
-                    val tvs = parseTyvarSeq ()
+                    val tvs = List.map #1 (parseTyvarSeq ())
                     val n = tyconName ()
                   in
                     if peek () = EQUALS then (advance (); (tvs, n, SOME (parseTy ()), spanFrom s))
@@ -1055,12 +1060,12 @@ struct
                 val descs = andList desc
               in
                 if List.all (fn (_, _, NONE, _) => true | _ => false) descs then
-                  [SpecType (List.map (fn (tvs, n, _, sp) => (tvs, n, sp)) descs, spanFrom start)]
+                  [SpecType (List.map (fn (tvs, n, _, sp) => (tvs, n, sp)) descs, spanFrom start, freshId ())]
                 else if List.all (fn (_, _, SOME _, _) => true | _ => false) descs then
                   (* derived form:  type tyvarseq tycon = ty  ==>
                      include sig type tyvarseq tycon end where type tyvarseq tycon = ty *)
                   List.map (fn (tvs, n, SOME t, sp) =>
-                               SpecInclude (SigWhere (SigSig ([SpecType ([(tvs, n, sp)], sp)], sp), [(tvs, ([], n), t, sp)], sp), sp)
+                               SpecInclude (SigWhere (SigSig ([SpecType ([(tvs, n, sp)], sp, freshId ())], sp, freshId ()), [(tvs, ([], n), t, sp)], sp, freshId ()), sp, freshId ())
                              | (_, _, NONE, _) => Error.bug "parseSpec: type description") descs
                 else err "type specification mixes descriptions with and without definitions"
               end
@@ -1069,9 +1074,9 @@ struct
                [SpecEqtype (andList (fn () =>
                                         let
                                           val s = peekSpan ()
-                                          val tvs = parseTyvarSeq ()
+                                          val tvs = List.map #1 (parseTyvarSeq ())
                                           val n = tyconName ()
-                                        in (tvs, n, spanFrom s) end), spanFrom start)])
+                                        in (tvs, n, spanFrom s) end), spanFrom start, freshId ())])
           | DATATYPE =>
               let val () = advance ()
               in
@@ -1084,12 +1089,12 @@ struct
                                 ID s => ([], s)
                               | LONGID (p, s) => (p, s)
                               | _ => err "expected type constructor"
-                  in [SpecDatatypeRepl (name, rhs, spanFrom start)] end
+                  in [SpecDatatypeRepl (name, rhs, spanFrom start, freshId ())] end
                 else
                   let val dbs = andList parseDatbind
                   in
                     if peek () = WITHTYPE then err "withtype is not allowed in a signature" else ();
-                    [SpecDatatype (dbs, spanFrom start)]
+                    [SpecDatatype (dbs, spanFrom start, freshId ())]
                   end
               end
           | EXCEPTION =>
@@ -1101,7 +1106,7 @@ struct
                                            in
                                              if peek () = OF then (advance (); (n, SOME (parseTy ()), spanFrom s))
                                              else (n, NONE, spanFrom s)
-                                           end), spanFrom start)])
+                                           end), spanFrom start, freshId ())])
           | STRUCTURE =>
               (advance ();
                [SpecStructure (andList (fn () =>
@@ -1110,12 +1115,12 @@ struct
                                              val n = case next () of ID s => s | _ => err "expected structure name"
                                              val () = expect COLON
                                              val sg = parseSigexp ()
-                                           in (n, sg, spanFrom s) end), spanFrom start)])
+                                           in (n, sg, spanFrom s) end), spanFrom start, freshId ())])
           | INCLUDE =>
               let val () = advance ()
               in
                 case peek () of
-                  SIG => [SpecInclude (parseSigexp (), spanFrom start)]
+                  SIG => [SpecInclude (parseSigexp (), spanFrom start, freshId ())]
                 | ID _ =>
                     (* include sigid1 ... sigidn (derived form), or one signature identifier with where clauses *)
                     let
@@ -1128,10 +1133,10 @@ struct
                       (* Each signature identifier has the span of its name,
                          and the first specification begins at `include`. *)
                       case names of
-                        [(n, sp)] => [SpecInclude (parseWhere (SigId (n, sp), sp), spanFrom start)]
+                        [(n, sp)] => [SpecInclude (parseWhere (SigId (n, sp, freshId ()), sp), spanFrom start, freshId ())]
                       | (n, sp) :: rest =>
-                          SpecInclude (SigId (n, sp), Source.join (start, sp))
-                          :: List.map (fn (n, sp) => SpecInclude (SigId (n, sp), sp)) rest
+                          SpecInclude (SigId (n, sp, freshId ()), Source.join (start, sp), freshId ())
+                          :: List.map (fn (n, sp) => SpecInclude (SigId (n, sp, freshId ()), sp, freshId ())) rest
                       | [] => []
                     end
                 | t => err ("expected signature after 'include' but found '" ^ toString t ^ "'")
@@ -1172,7 +1177,7 @@ struct
               val name = case next () of ID s => s | _ => err "expected type constructor name"
               val () = expect EQUALS
               val t = parseTy ()
-            in {tyvars = tvs, name = name, ty = t, span = spanFrom start} end
+            in {tyvars = tvs, name = name, ty = t, span = spanFrom start, id = freshId ()} end
           fun loop acc = if peek () = AND then (advance (); loop (bind () :: acc)) else List.rev acc
         in loop [bind ()] end
 
@@ -1191,20 +1196,20 @@ struct
               val arg = if peek () = OF then (advance (); SOME (parseTy ())) else NONE
             in (cname, arg, spanFrom cstart) end
           fun loop acc = if peek () = BAR then (advance (); loop (conbind () :: acc)) else List.rev acc
-        in {tyvars = tvs, name = name, cons = loop [conbind ()], span = spanFrom start} end
+        in {tyvars = tvs, name = name, cons = loop [conbind ()], span = spanFrom start, id = freshId ()} end
 
       (* One `fun` binding: clauses separated by '|'. *)
       and parseFundef () : fundef =
         let
           val start = peekSpan ()
-          fun clause () : string * Source.span * {pats : pat list, resty : ty option, body : exp} =
+          fun clause () : string * Source.span * clause =
             let
               val cstart = peekSpan ()
               val (name, args) = parseFunHead ()
               val resty = if peek () = COLON then (advance (); SOME (parseTy ())) else NONE
               val () = expect EQUALS
               val body = parseExp ()
-            in (name, cstart, {pats = args, resty = resty, body = body}) end
+            in (name, cstart, {pats = args, resty = resty, body = body, span = spanFrom cstart, id = freshId ()}) end
           val (name, _, c1) = clause ()
           val arity = List.length (#pats c1)
           fun loop acc =
@@ -1219,7 +1224,7 @@ struct
               end
             else List.rev acc
           val clauses = loop [c1]
-        in {name = name, clauses = clauses, info = ref NONE, span = spanFrom start} end
+        in {name = name, clauses = clauses, info = ref NONE, span = spanFrom start, id = freshId ()} end
 
       (* Returns the function name and its argument patterns. Handles the
          three clause head forms:  f p1 ... pn  |  p1 f p2  |  (p1 f p2) p3 ... pn *)
@@ -1241,7 +1246,7 @@ struct
                         val () = advance ()
                         val b = parseAtPat ()
                         val () = expect RPAREN
-                        val first = PTuple ([a, b], spanFrom start)
+                        val first = PTuple ([a, b], spanFrom start, freshId ())
                         fun rest acc = if startsAtPat (peek ()) then rest (parseAtPat () :: acc) else List.rev acc
                       in
                         (* `(p1 op p2) op2 p3` is the infix form with a parenthesized first argument *)
@@ -1273,8 +1278,8 @@ struct
                 | atoms (Oper (s, _, sp) :: _) = errAt (sp, "unexpected infix operator '" ^ s ^ "' in function clause")
             in
               case items of
-                [Atom a, Oper (s, _, _), Atom b] => (s, [PTuple ([a, b], Source.join (spanOfPat a, spanOfPat b))])
-              | Atom (PVar (([], f), _, _)) :: rest =>
+                [Atom a, Oper (s, _, _), Atom b] => (s, [PTuple ([a, b], Source.join (spanOfPat a, spanOfPat b), freshId ())])
+              | Atom (PVar (([], f), _, _, _)) :: rest =>
                   (case rest of
                      [] => err "function clause needs at least one argument pattern"
                    | _ => (f, atoms rest))

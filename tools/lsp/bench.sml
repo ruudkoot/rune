@@ -164,14 +164,14 @@ struct
      tree, rather than compare the parser's own debugging printer. *)
   fun arithmetic e =
     case e of
-      Ast.EScon (Ast.SInt n, _, _) => IntInf.toInt n
-    | Ast.EApp (Ast.EVar (([], "+"), _, _), Ast.ETuple ([a, b], _), _) => arithmetic a + arithmetic b
-    | Ast.EApp (Ast.EVar (([], "*"), _, _), Ast.ETuple ([a, b], _), _) => arithmetic a * arithmetic b
-    | Ast.EApp (Ast.EVar (([], "++"), _, _), Ast.ETuple ([a, b], _), _) => arithmetic a + arithmetic b
+      Ast.EScon (Ast.SInt n, _, _, _) => IntInf.toInt n
+    | Ast.EApp (Ast.EVar (([], "+"), _, _, _), Ast.ETuple ([a, b], _, _), _, _) => arithmetic a + arithmetic b
+    | Ast.EApp (Ast.EVar (([], "*"), _, _, _), Ast.ETuple ([a, b], _, _), _, _) => arithmetic a * arithmetic b
+    | Ast.EApp (Ast.EVar (([], "++"), _, _, _), Ast.ETuple ([a, b], _, _), _, _) => arithmetic a + arithmetic b
     | _ => raise Failed "unexpected arithmetic oracle tree"
   fun valueOf source fixity =
     let val (tree, outgoing) = Parser.parseFileWith (Source.fromString ("oracle.sml", source), fixity)
-        val body = case rev tree of Ast.DVal (_, [(_, e)], _) :: _ => e
+        val body = case rev tree of Ast.DVal (_, [(_, e)], _, _) :: _ => e
                                     | _ => raise Failed "oracle value declaration is absent"
     in (arithmetic body, outgoing) end
   fun selftest () =
