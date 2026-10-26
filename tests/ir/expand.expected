@@ -1,0 +1,93 @@
+(* after expand *)
+(abstract t 0)
+(datatype tree () (0 "Leaf") (1 "Node" : tree * t * tree))
+(datatype tree/2 () (0 "Leaf") (1 "Node" : tree/2 * int * tree/2))
+(funs
+  (fn g1 ((v1 : unit * unit)) : unit * unit
+    (let (v2 : unit) (select 1 v1)
+    (let (v3 : t) (prim functor_cast v2 : unit -> t)
+    (let (v4 : unit) (select 0 v1)
+    (let (v5 : (t * t) -> t) (prim functor_cast v4 : unit -> (t * t) -> t)
+    (fun
+      (fn v6 ((v7 : tree)) : t
+        (join j1 ()
+          (join j2 ()
+            (let (v8 : exncon) (builtinexn 0)
+            (let (v9 : exn) (mkexn v8 ())
+            (raise v9)))
+          (let (v10 : int) (tag v7)
+          (let (v11 : bool) (prim poly_eq v10 1 : (int * int) -> bool)
+          (if v11
+            (let (v12 : tree * t * tree) (decon 1 v7 : tree)
+            (let (v13 : tree) (select 0 v12)
+            (let (v14 : tree) v13
+            (let (v15 : t) (select 1 v12)
+            (let (v16 : t) v15
+            (let (v17 : tree) (select 2 v12)
+            (let (v18 : tree) v17
+            (let (v19 : t) (app v6 v14)
+            (let (v20 : t) (app v6 v18)
+            (let (v21 : t * t) (tuple v16 v20)
+            (let (v22 : t) (app v5 v21)
+            (let (v23 : t * t) (tuple v19 v22)
+            (return (app v5 v23))))))))))))))
+            (jump j2)))))
+        (let (v24 : int) (tag v7)
+        (let (v25 : bool) (prim poly_eq v24 0 : (int * int) -> bool)
+        (if v25
+          (return v3)
+          (jump j1))))))
+    (let (v26 : unit) (prim functor_cast v6 : (tree -> t) -> unit)
+    (return (tuple v26 ()))))))))))
+(funs
+  (fn g2 ((v27 : int * int)) : int
+    (let (v28 : int) (select 0 v27)
+    (let (v29 : int) v28
+    (let (v30 : int) (select 1 v27)
+    (let (v31 : int) v30
+    (return (prim int_add v29 v31 : (int * int) -> int))))))))
+(val g3 : int
+  (return 0))
+(val g4 : unit
+  (return (prim functor_cast g2 : ((int * int) -> int) -> unit)))
+(val g5 : unit
+  (return (prim functor_cast 0 : int -> unit)))
+(val g6 : unit * unit
+  (return (tuple g4 g5)))
+(funs
+  (fn g7 ((v32 : tree/2)) : int
+    (join j3 ()
+      (join j4 ()
+        (let (v33 : exncon) (builtinexn 0)
+        (let (v34 : exn) (mkexn v33 ())
+        (raise v34)))
+      (let (v35 : int) (tag v32)
+      (let (v36 : bool) (prim poly_eq v35 1 : (int * int) -> bool)
+      (if v36
+        (let (v37 : tree/2 * int * tree/2) (decon 1 v32 : tree/2)
+        (let (v38 : tree/2) (select 0 v37)
+        (let (v39 : tree/2) v38
+        (let (v40 : int) (select 1 v37)
+        (let (v41 : int) v40
+        (let (v42 : tree/2) (select 2 v37)
+        (let (v43 : tree/2) v42
+        (let (v44 : int) (app g7 v39)
+        (let (v45 : int) (app g7 v43)
+        (let (v46 : int * int) (tuple v41 v45)
+        (let (v47 : int) (app g2 v46)
+        (let (v48 : int * int) (tuple v44 v47)
+        (return (app g2 v48))))))))))))))
+        (jump j4)))))
+    (let (v49 : int) (tag v32)
+    (let (v50 : bool) (prim poly_eq v49 0 : (int * int) -> bool)
+    (if v50
+      (return 0)
+      (jump j3)))))))
+(val g8 : unit
+  (return (prim functor_cast g7 : (tree/2 -> int) -> unit)))
+(val g9 : unit * unit
+  (return (tuple g8 ())))
+(val g10 : int
+  (let (v51 : tree/2 * int * tree/2) (tuple (con0 0 : tree/2) 3 (con0 0 : tree/2))
+  (let (v52 : tree/2) (con 1 v51 : tree/2)
+  (return (app g7 v52)))))

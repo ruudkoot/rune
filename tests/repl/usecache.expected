@@ -1,10 +1,12 @@
-- = = counted 1
+- = = = counted 1
 structure Counter
 val it = () : unit
 - val first = ref 1 : int ref
+- structure Old
 - counted 1
 structure Counter
 val it = () : unit
 - val it = () : unit
 - val it = 1 : int
+- val it = 10 : int
 - 

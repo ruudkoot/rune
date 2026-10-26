@@ -107,6 +107,7 @@ void a64_eor_rr(A64 *a, int rd, int rn, int rm) { rrr(a, 0xCA000000, rd, rn, rm)
 void a64_orn_rr(A64 *a, int rd, int rn, int rm) { rrr(a, 0xAA200000, rd, rn, rm); }
 void a64_mul(A64 *a, int rd, int rn, int rm) { a64_word(a, 0x9B007C00 | R(rm) << 16 | R(rn) << 5 | R(rd)); }
 void a64_smulh(A64 *a, int rd, int rn, int rm) { a64_word(a, 0x9B407C00 | R(rm) << 16 | R(rn) << 5 | R(rd)); }
+void a64_umulh(A64 *a, int rd, int rn, int rm) { a64_word(a, 0x9BC07C00 | R(rm) << 16 | R(rn) << 5 | R(rd)); }
 void a64_sdiv(A64 *a, int rd, int rn, int rm) { rrr(a, 0x9AC00C00, rd, rn, rm); }
 void a64_udiv(A64 *a, int rd, int rn, int rm) { rrr(a, 0x9AC00800, rd, rn, rm); }
 void a64_msub(A64 *a, int rd, int rn, int rm, int ra) { a64_word(a, 0x9B008000 | R(rm) << 16 | R(ra) << 10 | R(rn) << 5 | R(rd)); }

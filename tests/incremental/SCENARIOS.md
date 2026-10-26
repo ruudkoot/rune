@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S67. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S79. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
@@ -27,10 +27,11 @@ what it does, and says so:
   *The cache*, *Fingerprints*), and a type's fingerprint is its definition:
   S11 compiles the unit that only names the type whose representation
   changed, which is the scenario's correct fallback; a functor holds by
-  its signature, but a unit that applies one to make code depends on the
-  unit that declared it too, so S8 compiles every unit that applies the
-  functor; an overloading holds by its binder alone, so S28o compiles every
-  unit that resolved the overloading;
+  its signature, and since functors-units' M7 a unit that applies one calls
+  its function, so S8 compiles the declaring unit alone (a functor marked
+  to be inlined holds by its function's Mid too, `inl F`); an overloading
+  holds by its binder alone, so S28o compiles every unit that resolved the
+  overloading;
 * a unit is known by its name, which is in its identity: two files of the
   same text and different names are two units (S7 is run as one project
   in two directories), a file renamed is another unit, and the units that
@@ -75,9 +76,10 @@ exactly the units X and nothing else.
 ## What a unit depends on that is not a value
 
 * **S8, a functor body.** Change the body of `c.sml`'s functor without
-  changing its signature. Recompiles `c.sml` and `d.sml`, which applies it:
-  under static interpretation a functor's clients depend on its body
-  (D1).
+  changing its signature. Recompiles `c.sml` alone: `d.sml`, which applies
+  it, calls its function and depends on its signature (functors compiled
+  once, functors-units M7). Under static interpretation, before, a
+  functor's clients depended on its body and `d.sml` was compiled again.
 * **S9, constructor order.** Reorder `a.sml`'s datatype's constructors.
   Recompiles every unit that builds or matches them, since tags and layouts
   change; their output is unchanged.
@@ -174,7 +176,8 @@ exactly the units X and nothing else.
 
 * **S38, `use` an unchanged file.** In the REPL, `use` a file twice: the
   second links the cached object, and its top level runs again with fresh
-  globals and fresh exceptions.
+  globals and fresh exceptions; a structure of the prompt's that named the
+  first's structure still names the first's globals (S74).
 * **S39, `use` a changed file.** Edit the file between the two `use`s: the
   second compiles it again.
 * **S40, a session's basis.** `use` a file in two sessions whose earlier
@@ -198,18 +201,22 @@ when the scenarios above were all green
 (`docs/plans/build-cache-issues.md`):
 
 * **S49, a functor's fixity.** `c.sml`'s functor's body is parsed with the
-  fixity `a.sml` gives `++`, and `a.sml` changes it. Recompiles `a.sml`,
-  `c.sml` and `main.sml`, which applies the functor and names nothing of
-  `a.sml`: what a functor's body found where it was declared is in its
-  unit's identity. Before, `main.sml` was taken from the cache and the
-  program printed the old result.
+  fixity `a.sml` gives `++`, and `a.sml` changes it. Recompiles `a.sml`
+  and `c.sml`; `main.sml`, which applies the functor and names nothing of
+  `a.sml`, calls `c.sml`'s function, which `c.sml` made again, and the
+  program prints the new result. Until functors-units M7 `main.sml` was
+  compiled again too, for its copy of the body, and before that it was
+  taken from the cache with its old copy.
 * **S50, a functor's type, shadowed.** The body uses `a.sml`'s `A.t`, which
   changes from `int` to `IntInf.int`, and a unit between the functor and
-  `main.sml` declares another `A`. Recompiles `a.sml`, `c.sml` and
-  `main.sml`, though at `main.sml` the name `A` is the other unit's.
+  `main.sml` declares another `A`. Recompiles `a.sml` and `c.sml`;
+  `main.sml` calls the functor's function (until M7 it was compiled again
+  for its copy of the body, though at `main.sml` the name `A` is the other
+  unit's).
 * **S51, a functor's call, shadowed.** As S50, the body calling `a.sml`'s
   function and matching constructors `a.sml` reorders. The same units;
-  before, `main.sml` was taken from the cache and its link failed.
+  under static interpretation `main.sml` was compiled again too, and
+  before that it was taken from the cache and its link failed.
 * **S52, hidden code renumbered.** A body changed with functions, a
   reference and a datatype added in a `local` before what `a.sml` exports.
   Recompiles `a.sml` only (the cut-off of S2).
@@ -241,7 +248,9 @@ when the scenarios above were all green
   a functor whose body uses `A.x`, and `a.sml` gains a value while `A.x`
   stays. `b.sml` is compiled again, not taken by `A.x`'s fingerprint, and
   the program is the bytes of a build without the cache
-  (docs/plans/build-cache-issues.md, issue 15).
+  (docs/plans/build-cache-issues.md, issue 15); `main.sml`, which calls
+  the functor's function, is taken from the cache (functors-units M7;
+  before, it was compiled again for its copy of the body).
 * **S60, a datatype of many constructors.** A unit declares a datatype of
   300 constructors, and its basis (`--emit-units`) is under 100 KB: each
   constructor's information, and the list of its siblings that every one
@@ -249,22 +258,118 @@ when the scenarios above were all green
   square of the constructors; docs/plans/build-cache-issues.md, issue 14).
 * **S65, a functor's body changed and not its signature.** `b.sml`
   applies `c.sml`'s functor, `d.sml` uses `b.sml`'s structure, and the
-  body changes. `c.sml` and `b.sml` are compiled again, `b.sml` for its
-  code; its basis, typed by the functor's signature (rule 54), is the same
-  bytes (`--emit-units`), and `d.sml` and `main.sml` are taken from the
-  cache (performance M3; [functors.md](../../docs/plans/functors.md), *A
-  contradiction in M3*).
+  body changes. `c.sml` alone is compiled again: `b.sml` calls the
+  functor's function (functors-units M7), and its basis, typed by the
+  functor's signature (rule 54), is the same bytes (`--emit-units`).
+  Before M7 `b.sml` was compiled again for its copy of the body, and
+  `d.sml` and `main.sml` were taken from the cache (performance M3;
+  [functors.md](../../docs/plans/functors.md), *A contradiction in M3*).
 * **S66, a functor applied in another's body.** `g.sml`'s functor applies
   `c.sml`'s, whose body changes and whose signature does not. `g.sml` is
   taken from the cache: a functor's declaration takes the signatures of
-  those its body applies. `main.sml`, whose copy of `g.sml`'s functor
-  applies `c.sml`'s to make code, is compiled again. Then a value added to
-  the functor's result changes its signature, and `g.sml` is compiled too.
-  Before M3, `g.sml` was compiled again at each change.
+  those its body applies, and its function calls `c.sml`'s. `main.sml`
+  is taken too (functors-units M7; before, its copy of `g.sml`'s functor
+  applied `c.sml`'s to make code, and it was compiled again). Then a value
+  added to the functor's result changes its signature, and `g.sml` and
+  `main.sml` are compiled too. Before M3, `g.sml` was compiled again at
+  each change.
 * **S67, a cache made before the basis's form changed.** M3 put a
   functor's signature in its unit's basis (`UnitBasis.version` 6). An
   entry whose basis says version 5 is missed, not misread: `c.sml` is
   compiled again, to the basis it had, and `main.sml` is taken.
+* **S68, an equality type variable.** `a.sml` gains `fun same (x : 'a) =
+  0`, which `b.sml` applies to `1.5`; then `same` compares its argument
+  with itself, so its type is `''a -> int`. `b.sml` is compiled again and
+  the build fails, as a build without the cache does: a fingerprint says
+  whether a type variable admits equality
+  (docs/plans/build-cache-issues.md, issue 16). Before, `b.sml` was taken
+  from the cache and the build succeeded.
+* **S69, an equality attribute in a signature.** `a.sml` gains `signature
+  HAS = sig type u end`, which a new `e.sml` matches with `type u =
+  real`; then `type u` becomes `eqtype u`. `e.sml` is compiled again and
+  the build fails: a signature's fingerprint writes each of its local
+  names with its arity and equality (issue 16).
+* **S70, an entry made by a compiler whose hash differs.** `c.sml`'s
+  entry is made to name another probe of the hash (Pickle.probe, in a
+  basis's header), as a compiler whose `Word` has another width would
+  write it: it is missed, not read -- `c.sml` is compiled again, and
+  `--explain-rebuild` says its basis was made by a compiler whose hash
+  differs -- and `main.sml`'s entry is taken (functors-units, D11).
+* **S71, a cache filled by a compiler whose hash differs.** The cache's
+  configuration is renamed and its `units/about` made to name another
+  probe, as another build's would: every unit is compiled again, and the
+  build says that the cache holds entries made by a compiler whose hash
+  differs.
+* **S72, a functor used and then declared again.** `b.sml` applies
+  `a.sml`'s functor `F`, then declares its own `F`, which its functor `G`
+  applies. Built once after `m.sml`, which applies `a.sml`'s `F` too, and
+  once without it, `b.sml` gives the same entry: its usage of `F` is
+  `a.sml`'s `F` at its start, as a usage of a value is, and its basis
+  writes the same fingerprint for it (functors-units, F1). Before, the
+  usage was the fingerprint of `b.sml`'s own `F` where no unit before had
+  worked out `a.sml`'s, and the basis wrote `b.sml`'s own `F` always.
+* **S73, a recursive group of datatypes.** `a.sml` declares `datatype t
+  = X of u | Y and u = Z of t | W`; `b.sml` names `A.t` and `c.sml`
+  `A.u`. Then `a.sml` gains a value and `b.sml` names `A.u` instead:
+  `a.sml` and `b.sml` are compiled again, and `c.sml` is taken from the
+  cache across `a.sml` changed, since `u`'s fingerprint is its group's,
+  whichever of `t` and `u` a session works out first (functors-units, M4).
+  Before, it was `u`'s alone where `u` was asked for first and `u`'s with
+  `t` in progress where `t` was, and `c.sml` was compiled again.
+* **S74, a file used again, compiled again.** In the REPL, `use` a file
+  that declares a structure with a ref, name the structure with a structure
+  of the prompt's, and `use` the file again, the cache verified, so that
+  the second `use` compiles the file again: a write through the prompt's
+  structure is the first `use`'s, and the second's ref is still 0. The
+  same text against the same units has the same identity, and the second
+  is loaded and linked under one of its own (`identity~2`), so that what
+  named the first's globals still does; its entry keeps the identity of
+  its basis. Before, the second's globals were the first's to code that
+  named them (S38 is the same through the cache; build-cache issue 22).
+* **S75, a unit the session replaced.** In the REPL, through the cache:
+  `use` `counter.sml` (a structure with a ref) and `user.sml` (a function
+  that increments it), then both again, then both again after a value is
+  added to `counter.sml`; then `twice.sml` (a functor) and `apply.sml` (an
+  application of it), then both again after the functor's body is edited.
+  Each `user.sml` increments the `Counter` of the `counter.sml` used last,
+  and the last `apply.sml` runs the edited body (135, not 45). A usage
+  holds by its fingerprint only where the unit that bound the name is not
+  in the session: `user.sml`'s entry names the first `counter.sml`'s
+  globals, and `apply.sml`'s the first functor's function, which it calls
+  (until functors-units M7, the first body it copied), which a REPL keeps
+  beside the unit that binds the name now. Before, both entries were
+  taken, and incremented the first `Counter` and printed 45 (build-cache
+  issues 23 and 21).
+* **S76, a file used at another place in a session.** In the REPL, `use`
+  a file of a value and a function after two declarations of the prompt's,
+  then in another session `use` it first, the cache verified: its entry
+  is taken, and compiled again it is the same bytes. The source of a
+  declaration's printer is named alike in every declaration
+  (`src/repl/session.sml`). Before, it was named by how many declarations
+  the session had compiled, which the code keeps, and the entry was not
+  what compiling the declaration gave: HOL4's build, verified, stopped at
+  a file its configuration had used at another place.
+* **S77, a nested signature named by reference.** `s.sml`'s `SET` has a
+  structure `E : ELT` of `e.sml`'s signature, which `u.sml` matches. A
+  usage's fingerprint of `SET` names `E` by reference to `ELT`'s
+  fingerprint and the realisation (functors-units M11). Then `ELT` gains
+  `val y : t`: `s.sml` is compiled again and so is `u.sml`, which fails as
+  a build without the cache does; then `u.sml` gains `y`, and it alone is
+  compiled. Were the reference to tell `ELT`'s change apart no better than
+  its name, `u.sml` would be taken from the cache and the build succeed.
+* **S78, a function marked to be inlined.** A build file marks `A.inc`
+  (`inline val A.inc end`); `b.sml` names it, `c.sml` names `A.other`.
+  An edit of `inc`'s body compiles `a.sml` and `b.sml`, which copied it
+  (its usage `inlv A.inc` holds by the body's Mid), and not `c.sml` nor
+  `main.sml`; an edit of `other`'s body compiles `a.sml` alone; and every
+  build is the bytes of one without the cache (functors-units M10).
+* **S79, a signature's structure by reference in its own unit.** `s.sml`
+  declares `ELT` and `PAIR`, whose structures `A` and `B` are `ELT`'s, and
+  `u.sml` matches `PAIR`. `s.sml`'s basis writes `A` and `B` as references
+  to `ELT`, written before them in the same basis (functors-units M11,
+  part 2), and the build is the bytes of one without the cache. A comment
+  added to `s.sml` compiles it alone; then `ELT` gains `val y : t`, and
+  `u.sml` is compiled again and fails, as a build without the cache does.
 * **S59, one unit in two sessions.** `c.sml` uses `a.sml` and `b.sml`,
   which do not use each other. Built after them in one order and then in
   the other through one cache, `c.sml`'s entry is taken, and compiled
@@ -293,7 +398,9 @@ when the scenarios above were all green
 * **S55, verifying the cache.** A warm build with `--verify-cache` succeeds;
   an entry planted with usages that hold and the content of another compile
   (`bin/rune-incremental plant`) is taken by a build and found by
-  `--verify-cache`, which fails.
+  `--verify-cache`, which fails. The entry is `c.sml`'s, the functor's,
+  which the fixity's edit compiles again (since functors-units M7; before,
+  `main.sml`'s, whose copy of the body did).
 
 ## Edits nobody wrote
 
@@ -309,6 +416,20 @@ and a unit that declares their names again) and `compiler`, the compiler's
 own sources; `--history N` replays the compiler's last N commits through one
 cache. `make test-incremental` runs it briefly, with a seed of its own; a
 long run is by hand.
+
+`bin/rune-incremental soundness --old BIN --new BIN` holds a new way of
+working out fingerprints to an old one (functors-units, M4): over the same
+edits, and over build-cache issue 16's probes (`--probes`), each compiler
+builds every state into a cache of its own, and wherever a unit keeps a
+usage in two states one after another and the old compiler's fingerprint of
+it changed, the new one's must have changed too -- or the new compiler would
+take an entry the old one missed. It reads the usages from the entries
+themselves, so any compiler can be either side. `make test-incremental`
+holds a compiler to itself, and checks that the check catches a hash that
+tells nothing apart (`--weaken 0 --expect-violations`). M4 ran it with M2's
+compiler as the old side: no violation over `tests/incremental/project`,
+`tests/incremental/functors` and the compiler's sources, and five over the
+probes when the new side is a compiler without issue 16's fix.
 
 ## A large project: MLton
 
@@ -327,5 +448,7 @@ static interpretation costs the cut-off (the roadmap's risk 3):
   `control/control-flags.sml`: only the units that `open` it or use a
   changed entry recompile.
 * **S48, a functor body.** Change the body of a functor applied in many
-  places (one of `ssa/`): every applying unit recompiles. The count and
-  the time are the measurement of risk 3.
+  places (one of `ssa/`): the declaring unit alone recompiles, since
+  functors-units' M7, where every applying unit did under static
+  interpretation (6 units, E8). The count and the time are the measurement
+  of risk 3.

@@ -648,6 +648,124 @@ void ms_shift_count(Masm *m, int32_t y, AsmLabel *slow) {
     as_shr_ri(&m->a, R_S1, 1);
 #endif
 }
+/* ---- division by a constant (divplan.h; functors-units M1) ---- */
+/* r &= c, through tmp where c is no 32-bit immediate */
+static void and_const(Masm *m, int r, uint64_t c, int tmp) {
+    int64_t v = (int64_t)c;
+    if (v >= INT32_MIN && v <= INT32_MAX) as_and_ri(&m->a, r, (int32_t)v);
+    else { as_mov_ri(&m->a, tmp, v); as_and_rr(&m->a, r, tmp); }
+}
+/* rd := rs * c, the low 64 bits, through tmp where c is no 32-bit immediate */
+static void mul_const(Masm *m, int rd, int rs, uint64_t c, int tmp) {
+    int64_t v = (int64_t)c;
+    if (v >= INT32_MIN && v <= INT32_MAX) { as_mul_ri(&m->a, rd, rs, (int32_t)v); return; }
+    as_mov_ri(&m->a, tmp, v);
+    if (rd != rs) as_mov_rr(&m->a, rd, rs);
+    as_mul_rr(&m->a, rd, tmp);
+}
+/* The steps of each plan, the dividend n in R_S0 and the result left
+   there; the comments say what each register then holds. A signed
+   division's fix-ups take a sign's mask (0 or -1) for a branch: the
+   floor's quotient is the truncation's less 1, and its remainder the
+   truncation's plus c, where the truncation's remainder is not 0 and
+   its sign is not c's. */
+void ms_div_const(Masm *m, const DivPlan *p) {
+    Asm *a = &m->a;
+    uint64_t c = p->c;
+    int neg = p->sign && (int64_t)c < 0;
+    int op = p->op;
+    switch (p->kind) {
+    case DP_ONE:
+        if (op == DIV_MOD || op == DIV_REM) as_mov_ri(a, R_S0, 0);
+        return;
+    case DP_POW2:
+        if (!p->sign) {
+            if (op == DIV_DIV) as_shr_ri(a, R_S0, p->k);
+            else and_const(m, R_S0, c - 1, R_S1);
+            return;
+        }
+        if (!neg && op == DIV_DIV) { as_sar_ri(a, R_S0, p->k); return; }   /* the floor by 2^k */
+        if (!neg && op == DIV_MOD) { and_const(m, R_S0, ((uint64_t)1 << p->k) - 1, R_S1); return; }
+        as_mov_rr(a, R_S1, R_S0);                 /* R_S1: n */
+        as_sar_ri(a, R_S0, 63);
+        as_shr_ri(a, R_S0, 64 - p->k);
+        as_add_rr(a, R_S0, R_S1);                 /* n + 2^k - 1 where n < 0 */
+        as_sar_ri(a, R_S0, p->k);                 /* R_S0: trunc(n / 2^k) */
+        if (op != DIV_QUOT) {
+            as_mov_rr(a, R_S2, R_S0);
+            as_shl_ri(a, R_S2, p->k);
+            as_sub_rr(a, R_S1, R_S2);             /* R_S1: r = n - that * 2^k, the truncation's remainder */
+        }
+        if (neg) as_neg(a, R_S0);                 /* R_S0: q = trunc(n / c) */
+        if (op == DIV_QUOT) return;
+        if (op == DIV_REM) { as_mov_rr(a, R_S0, R_S1); return; }
+        /* the floor by c < 0: where r > 0 */
+        as_mov_rr(a, R_S3, R_S1);
+        as_neg(a, R_S3);
+        as_sar_ri(a, R_S3, 63);                   /* R_S3: -1 where r > 0, else 0 */
+        if (op == DIV_DIV) { as_add_rr(a, R_S0, R_S3); return; }
+        and_const(m, R_S3, c, R_S2);
+        as_add_rr(a, R_S1, R_S3);
+        as_mov_rr(a, R_S0, R_S1);
+        return;
+    case DP_UFLOOR:
+        as_mov_rr(a, R_S3, R_S0);
+        as_sar_ri(a, R_S3, 63);                   /* R_S3: s, the sign's mask */
+        as_mov_rr(a, R_S1, R_S0);
+        as_xor_rr(a, R_S1, R_S3);                 /* R_S1: u = n ^ s, below 2^63 */
+        as_mov_ri(a, R_S0, (int64_t)p->m);
+        as_umulhi(a, R_S1);
+        if (p->sh) as_shr_ri(a, R_S2, p->sh);     /* R_S2: q' = floor(u / c) */
+        if (op == DIV_DIV) { as_xor_rr(a, R_S2, R_S3); as_mov_rr(a, R_S0, R_S2); return; }   /* s ^ q' */
+        mul_const(m, R_S2, R_S2, c, R_S0);
+        as_sub_rr(a, R_S1, R_S2);                 /* R_S1: r' = u - q' c */
+        as_xor_rr(a, R_S1, R_S3);
+        and_const(m, R_S3, c, R_S0);
+        as_add_rr(a, R_S1, R_S3);                 /* (r' ^ s) + (s & c) */
+        as_mov_rr(a, R_S0, R_S1);
+        return;
+    case DP_SMAGIC:
+        as_mov_rr(a, R_S1, R_S0);                 /* R_S1: n */
+        as_mov_ri(a, R_S0, (int64_t)p->m);
+        as_smulhi(a, R_S1);
+        if (p->add > 0) as_add_rr(a, R_S2, R_S1);
+        if (p->add < 0) as_sub_rr(a, R_S2, R_S1);
+        if (p->sh) as_sar_ri(a, R_S2, p->sh);
+        as_mov_rr(a, R_S0, R_S2);
+        as_shr_ri(a, R_S0, 63);
+        as_add_rr(a, R_S2, R_S0);                 /* R_S2: q = trunc(n / c) */
+        if (op == DIV_QUOT) { as_mov_rr(a, R_S0, R_S2); return; }
+        mul_const(m, R_S0, R_S2, c, R_S3);
+        as_sub_rr(a, R_S1, R_S0);                 /* R_S1: r = n - q c */
+        if (op == DIV_REM) { as_mov_rr(a, R_S0, R_S1); return; }
+        as_mov_rr(a, R_S3, R_S1);
+        if (neg) as_neg(a, R_S3);
+        as_sar_ri(a, R_S3, 63);                   /* R_S3: -1 where r and c differ in sign, else 0 */
+        if (op == DIV_DIV) { as_add_rr(a, R_S2, R_S3); as_mov_rr(a, R_S0, R_S2); return; }
+        and_const(m, R_S3, c, R_S0);
+        as_add_rr(a, R_S1, R_S3);
+        as_mov_rr(a, R_S0, R_S1);
+        return;
+    case DP_UMAGIC:
+        as_mov_rr(a, R_S1, R_S0);                 /* R_S1: n */
+        as_mov_ri(a, R_S0, (int64_t)p->m);
+        as_umulhi(a, R_S1);                       /* R_S2: t = hi(m n) */
+        if (p->add) {                             /* t + (n - t) / 2, below 2^64 */
+            as_mov_rr(a, R_S0, R_S1);
+            as_sub_rr(a, R_S0, R_S2);
+            as_shr_ri(a, R_S0, 1);
+            as_add_rr(a, R_S2, R_S0);
+        }
+        if (p->sh) as_shr_ri(a, R_S2, p->sh);     /* R_S2: q = floor(n / c) */
+        if (op == DIV_DIV) { as_mov_rr(a, R_S0, R_S2); return; }
+        mul_const(m, R_S2, R_S2, c, R_S0);
+        as_sub_rr(a, R_S1, R_S2);                 /* n - q c */
+        as_mov_rr(a, R_S0, R_S1);
+        return;
+    default:
+        bug("a division by a constant without a plan", p->kind, (int)p->op);
+    }
+}
 #ifndef RUNE_INT64
 /* Between the 64 bits in R_S0 and the word of an int or a word, which is 63:
    as an int, to slow where the number is past an int's bits (signed; or

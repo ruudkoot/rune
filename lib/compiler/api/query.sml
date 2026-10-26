@@ -55,7 +55,7 @@ struct
       and str e =
         case e of
           StrStruct (ds,_) => List.app dec ds | StrAscribe (e,_,_,_) => str e
-        | StrApp (_,arg,body,_) => (str arg;Option.app str (!body))
+        | StrApp (_,arg,_) => str arg
         | StrLet (ds,e,_) => (List.app dec ds;str e) | StrExport (_,_,e,_,_) => str e | _ => ()
       val ()=List.app dec decs
       fun best ((width,ty),NONE) = SOME (width,ty)
@@ -66,7 +66,8 @@ struct
     CompilerSession.owned (fn () =>
       let
         val ()=CompilerSession.checked session
-        val ()=(Error.silent:=true;Error.keep:=true;Elaborate.recover:=true)
+        (* types only: no copy of a functor's body (D15) *)
+        val ()=(Error.silent:=true;Error.keep:=true;Elaborate.recover:=true;Elaborate.makesCode:=false)
         val env=ref Env.initial
         val fixity=ref Fixity.initial
         val syntax=ref [] : Ast.program list ref

@@ -223,6 +223,8 @@ void x64_sar_ri(X64 *a, int r, int imm) { op_rr(a, 1, 0xC1, -1, 7, r); x64_byte(
 void x64_shl_rcl(X64 *a, int r) { op_rr(a, 1, 0xD3, -1, 4, r); }
 void x64_shr_rcl(X64 *a, int r) { op_rr(a, 1, 0xD3, -1, 5, r); }
 void x64_cqo(X64 *a) { x64_byte(a, 0x48); x64_byte(a, 0x99); }
+void x64_imul_r(X64 *a, int r) { op_rr(a, 1, 0xF7, -1, 5, r); }   /* REX.W F7 /5 */
+void x64_mul_r(X64 *a, int r) { op_rr(a, 1, 0xF7, -1, 4, r); }    /* REX.W F7 /4 */
 void x64_idiv_r(X64 *a, int r) { op_rr(a, 1, 0xF7, -1, 7, r); }
 void x64_div_r(X64 *a, int r) { op_rr(a, 1, 0xF7, -1, 6, r); }
 void x64_add_mi(X64 *a, int base, int32_t disp, int32_t imm) {

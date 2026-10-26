@@ -11,7 +11,8 @@
    which the Windows runner shares); the counts of --count, the same to the
    byte on every VM and on this machine (`portability/count/*`); an image
    written by each VM and read by every other (`portability/image/*`); the
-   JIT's checks on the aarch64 (`port-jit/*`); and the Basis Library suite
+   JIT's checks on the aarch64 (`port-jit/*`) and the steps of a division
+   by a constant there (`port-divconst/aarch64`); and the Basis Library suite
    in the matrix's configuration `portability`, a job of run-matrix.sh. *)
 structure Portability =
 struct
@@ -119,5 +120,8 @@ struct
              @ [Test.requires ["qemu"] (script ("matrix", "RUNE=\"$RUNE_TEST_ROOT\"/bin/rune-stack RUNE_MATRIX_TIMEOUT=" ^ env ("PORT_TIMEOUT", "900")
                                                          ^ " RUNE_MATRIX_RUN=\"$RUNE_TEST_RUN/portability/matrix\" exec bin/rune-matrix -j \"$RUNE_TEST_CPUS\" --configs portability",
                                                          Int.max (1, Runtime.processors () div 2), 2000, ["matrix"]))]),
-          Test.requires ["qemu"] (Oracles.jitTree ("bin/runevm-aarch64", "port-jit"))]))))
+          Test.requires ["qemu"] (Oracles.jitTree ("bin/runevm-aarch64", "port-jit")),
+          (* the steps of a division by a constant on aarch64 (functors-units M1) *)
+          Test.requires ["qemu"] (Test.tag "covers:tests/register/divconst_test.c"
+            (script ("port-divconst/aarch64", "exec build/register/divconst_test-aarch64", 1, 100, [])))]))))
 end

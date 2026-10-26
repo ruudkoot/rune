@@ -1,0 +1,42 @@
+(* after simplify *)
+(val g1 : int
+  (return 3))
+(val g2 : int
+  (return ~4))
+(val g3 : int
+  (return ~3))
+(val g4 : int
+  (return ~2))
+(val g5 : word
+  (return 0w3))
+(val g6 : word
+  (return 0w2))
+(val g7 : int
+  (handle v1
+    (return (prim int_div 1 0 : (int * int) -> int))
+    (let (v2 : exncon) (exncon v1)
+    (let (v3 : exncon) (builtinexn 3)
+    (let (v4 : bool) (prim ptr_eq v2 v3 : (exncon * exncon) -> bool)
+    (if v4
+      (return 1)
+      (raise v1)))))))
+(val g8 : word
+  (handle v5
+    (return (prim word_mod 0w1 0w0 : (word * word) -> word))
+    (let (v6 : exncon) (exncon v5)
+    (let (v7 : exncon) (builtinexn 3)
+    (let (v8 : bool) (prim ptr_eq v6 v7 : (exncon * exncon) -> bool)
+    (if v8
+      (return 0w1)
+      (raise v5)))))))
+(val g9 : int
+  (handle v9
+    (return (prim int_div ~4611686018427387904 ~1 : (int * int) -> int))
+    (let (v10 : exncon) (exncon v9)
+    (let (v11 : exncon) (builtinexn 2)
+    (let (v12 : bool) (prim ptr_eq v10 v11 : (exncon * exncon) -> bool)
+    (if v12
+      (return 2)
+      (raise v9)))))))
+(val g10 : int
+  (return 0))

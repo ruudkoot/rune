@@ -413,7 +413,7 @@ struct
             (I.Body, List.concat (List.map (subStructs ctx) decs), SOME (List.concat (List.map declared decs)),
              List.concat (List.map (notesOf ctx) decs), List.concat (List.map twinsOf decs))
         | Ast.StrId (longid, _) => (I.Alias (Ast.longidToString longid), [], NONE, [], [])
-        | Ast.StrApp (f, arg, _, _) => (I.Apply (f, margin (ctx, Ast.spanOfStrexp arg)), [], NONE, [], [])
+        | Ast.StrApp (f, arg, _) => (I.Apply (f, margin (ctx, Ast.spanOfStrexp arg)), [], NONE, [], [])
         | _ => (I.Other, [], NONE, [], [])
     in
       I.Struct {name = name, file = S.name src, span = span, doc = doc, ascription = ascription, rhs = rhs, subs = subs,

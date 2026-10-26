@@ -96,6 +96,10 @@ void x64_sar_ri(X64 *a, int r, int imm);
 void x64_shl_rcl(X64 *a, int r);     /* by cl */
 void x64_shr_rcl(X64 *a, int r);
 void x64_cqo(X64 *a);
+/* the one-operand multiplications, rdx:rax := rax * r, signed and
+   unsigned: the high half of a product (a division by a constant) */
+void x64_imul_r(X64 *a, int r);
+void x64_mul_r(X64 *a, int r);
 void x64_idiv_r(X64 *a, int r);
 void x64_div_r(X64 *a, int r);
 void x64_add_mi(X64 *a, int base, int32_t disp, int32_t imm);   /* [base + disp] += imm, 64 bits */

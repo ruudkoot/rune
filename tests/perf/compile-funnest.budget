@@ -1,6 +1,7 @@
 generate funnest 8 2 8
 compile @gen
 nostack the front end's cost on the module language, the same on both VMs: measured on Rune as shipped alone
-instructions 155508273
-bytes 170503669
-objects 5510411
+scale funnest 12 2 8 1.1
+instructions 146803952
+bytes 173915324
+objects 5557664

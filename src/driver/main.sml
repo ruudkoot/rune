@@ -326,6 +326,8 @@ struct
       val text = readText file handle IO.Io _ => raise Options.Usage ("cannot read the build file " ^ file)
       val decs = BuildFile.parse (file, text) handle BuildFile.Error m => raise Options.Usage m
       val libs : string list ref = ref []
+      val inl : string list ref = ref []
+      val inlVals : string list ref = ref []
       val used = ref [] : string list ref
       val boundary = ref NONE : (BuildFile.kind * string) list option ref
       fun relative (base, p) = OS.Path.mkCanonical (OS.Path.concat (base, p))
@@ -348,6 +350,8 @@ struct
             if inside orelse isSome (!boundary) then raise Options.Usage (file ^ ": a library has one outer export boundary")
             else (boundary := SOME es; entries (base, stack, anns, true, ds))
         | BuildFile.Libraries ns => (libs := !libs @ ns; [])
+        | BuildFile.Inline ns => (inl := !inl @ ns; [])
+        | BuildFile.InlineVal ns => (inlVals := !inlVals @ ns; [])
         | _ => raise Options.Usage (file ^ ": a library's build file lists its files, annotated; no more")
       val raw = entries (".", ["library.build"], [], false, decs)
       val () = if isSome (!boundary) andalso List.exists (fn (_,_,inside) => not inside) raw
@@ -408,6 +412,8 @@ struct
     in
       put "# Generated from library.build by rune --basis-index -- do not edit.\n";
       List.app (fn l => put ("# library: " ^ l ^ "\n")) (!libs);
+      if List.null (!inl) then () else put ("# inline: " ^ String.concatWith " " (!inl) ^ "\n");
+      if List.null (!inlVals) then () else put ("# inline val: " ^ String.concatWith " " (!inlVals) ^ "\n");
       List.app (fn l => put (l ^ "\n")) (List.rev lines);
       BinIO.closeOut o';
       OS.Process.success
@@ -432,6 +438,12 @@ struct
                 val ()=Options.libraries:=List.foldl (fn (library,all) =>
                   if List.exists (fn present => present=library) all then all else all @ [library])
                   (!Options.libraries) (#libraries project)
+                (* the functors its build files mark to be inlined (M6b) *)
+                val ()=Elaborate.inlineFunctors:=List.foldl (fn (n,m) => StringMap.insert (m,n,()))
+                  (!Elaborate.inlineFunctors) (#inline project)
+                (* and the functions (functors-units M10) *)
+                val ()=Elaborate.inlineValues:=List.foldl (fn (n,m) => StringMap.insert (m,n,()))
+                  (!Elaborate.inlineValues) (#inlineValues project)
             in
               buildPlan := SOME plan;
               Options.inputs := filesOf plan;
@@ -442,6 +454,20 @@ struct
                 (c :: _, NONE) => Options.cacheDir := SOME c
               | _ => ()
             end
+      (* the functors and the functions the Basis Library's and the chosen
+         libraries' build files mark to be inlined (docs/build.md, Inline
+         functors and functions) *)
+      val () =
+        if not (!Options.noPrelude) andalso not (!Options.noInlineFunctors) then
+          let
+            val dirs = libDir () :: (BasisManifest.libraries (libRoot (), !Options.libraries)
+                                     handle BasisManifest.Usage _ => [])
+            fun add (table, names) = table := List.foldl (fn (n, m) => StringMap.insert (m, n, ())) (!table) names
+          in
+            add (Elaborate.inlineFunctors, List.concat (List.map BasisManifest.inlineFunctors dirs));
+            add (Elaborate.inlineValues, List.concat (List.map BasisManifest.inlineValues dirs))
+          end
+        else ()
       (* a whole program's dynamic modules: none (UnitBasis.wholeFingerprints) *)
       val () = UnitBasis.wholeFingerprints := (not (!Options.units) orelse !Options.wholeFromUnits)
       (* -I: the entry point's files before it *)
@@ -517,10 +543,9 @@ struct
          of them all (the incremental roadmap's M7) *)
       val () = Pipeline.keepMid := (!Options.wholeFromUnits orelse isSome (UnitCache.directory ()))
       val mids : MidCanon.unitMid list ref = ref []
-      val () = MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE)
       val registers = !Options.target = "registers"
       val () = if registers then Code.opcodeNames := RegCodes.names else ()
-      val env = ref Env.initial
+      val env = ref (Env.initialNow ())
       val () = UnitBasis.startSession ()
       (* each unit's source, its tokens when wanted, whether it may use
          _prim -- the basis library may, the libraries beside it may not --
@@ -568,6 +593,29 @@ struct
       (* --verify-cache: the units whose entry is not what compiling them gives *)
       val unverified = ref 0
       fun explain msg = if !Options.explainRebuild then TextIO.output (TextIO.stdErr, msg ^ "\n") else ()
+      (* entries of this compile's configuration but for the hash, in the
+         cache or the frozen Basis: a compiler's whose hash gives other values
+         (UnitCache.settings), which none is taken from *)
+      val otherHash =
+        if not (!Options.explainRebuild) then NONE
+        else
+          case cache of
+            SOME (dir, config) =>
+              (case UnitCache.otherHash (dir, config) of
+                 SOME p => (explain ("rune: the cache " ^ dir ^ " holds entries made by a compiler whose hash differs (its "
+                                     ^ p ^ ", this compiler's " ^ Pickle.probe () ^ "): none is taken");
+                            SOME p)
+               | NONE => NONE)
+          | NONE => NONE
+      val () =
+        case (cache, frozen) of
+          (SOME (_, config), SOME f) =>
+            if not (!Options.explainRebuild) then ()
+            else (case UnitCache.otherHash (f, config) of
+                    SOME p => explain ("rune: the frozen Basis " ^ f ^ " was made by a compiler whose hash differs (its " ^ p
+                                       ^ ", this compiler's " ^ Pickle.probe () ^ "): its units are compiled")
+                  | NONE => ())
+        | _ => ()
       (* the cache's work, for --pass-stats *)
       val timed = Pass.timed
       (* the input files' settings, which the libraries are compiled
@@ -665,7 +713,7 @@ struct
             in
               case found of
                 UnitCache.Missed why => (Miss why, against)
-              | UnitCache.Found (e as {pickle, code, file, others, mid, ...}) =>
+              | UnitCache.Found (e as {pickle, identity, code, file, others, mid, ...}) =>
                   let val at = UnitBasis.counters ()
                   in
                     (let
@@ -681,9 +729,8 @@ struct
                                    | NONE => []
                        val u = UnitBasis.remapKeys (u, remap)
                        val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
-                       val l = timed "cache-basis" (fn () => UnitBasis.loadAgainst ({pickle = pickle, file = name, at = at,
-                                                                                      env = !env, fixity = !fixity,
-                                                                                      text = text (name, mode)}, remap))
+                       val l = timed "cache-basis" (fn () => UnitBasis.loadKnown ({pickle = pickle, file = name, at = at},
+                                                                                   SOME identity, remap))
                        (* its source, and those of the functors' bodies it
                           applied, where they are now, in its code's files *)
                        val u = UnitBasis.relocate (u, file, name, others)
@@ -715,7 +762,9 @@ struct
              logDeclared l;
              ((u, keptPickle pickle) :: acc, false))
           fun here (why, against) =
-            (explain ("rune: compiled " ^ name ^ ": " ^ why);
+            (explain ("rune: compiled " ^ name ^ ": " ^ why
+                      ^ (if why = "no entry" andalso isSome otherHash
+                         then " (the cache's entries were made by a compiler whose hash differs)" else ""));
              (compileUnit ((name, load, allow, ident, mode), k, against, acc), true))
         in
           case lookup quiet of
@@ -759,7 +808,7 @@ struct
               val usages = timed "unit-usages" (fn () => UnitBasis.usagesOf names)
               val {code, exported, loaded} =
                 Pipeline.unitThrough {start = start, name = ident, file = name, text = text (name, mode), mode = mode, decs = decs,
-                                      delta = !Elaborate.lastDelta, fixity = !fixity, used = names}
+                                      delta = !Elaborate.lastDelta, fixity = !fixity, used = names, fresh = false}
               val bytes = timed "unit-chunks" (fn () => String.concat (UnitFile.chunks (Pipeline.fingerprint (), code)))
               (* --pass-stats with RUNE_MEM set: the bytes of its basis and
                  its code (issue 14) *)
@@ -768,7 +817,8 @@ struct
                                                           ^ " bytes, code " ^ Int.toString (String.size bytes) ^ " bytes\n")
                        else ()
               (* its Mid in bytes, kept in its entry *)
-              val midBytes = timed "unit-mid" (fn () => case !Pipeline.lastMid of SOME um => UnitMid.write (exported, um) | NONE => "")
+              val midBytes = timed "unit-mid" (fn () => Pipeline.keeping name (fn () =>
+                                                 case !Pipeline.lastMid of SOME um => UnitMid.write (exported, um) | NONE => ""))
               val () = Pipeline.lastMid := NONE
               (* the entry verified: its basis the same bytes, and its code,
                  named by the source where it is now *)
@@ -795,10 +845,11 @@ struct
               (* an entry that did not verify is left as it was, to be looked at *)
               (case (cache, k, verified) of
                  (SOME (dir, config), SOME k, true) =>
-                   UnitCache.store (dir, config, k,
-                                    {usages = usages, warnings = warnings, file = name,
-                                     others = UnitBasis.sourcesOf (code, name), pickle = #pickle exported,
-                                     code = bytes, mid = midBytes})
+                   Pipeline.keeping name (fn () =>
+                     UnitCache.store (dir, config, k,
+                                      {usages = usages, warnings = warnings, file = name,
+                                       others = UnitBasis.sourcesOf (code, name), pickle = #pickle exported,
+                                       identity = #identity exported, code = bytes, mid = midBytes}))
                | _ => ());
               (code, keptPickle (#pickle exported)) :: acc
             end
@@ -1067,7 +1118,7 @@ struct
       (* the warnings of UTS #39 the inputs' lexing found (D13) *)
       val () = List.app Lexer.report (!Options.inputs)
       val () = if !Options.dumpAst then List.app (fn d => println (Ast.decToString d)) (userProg @ finalProg) else ()
-      val env = ref Env.initial
+      val env = ref (Env.initialNow ())
       type libraryContext = LibraryScope.basis
       val libraryContexts : (string * libraryContext) list ref = ref []
       fun context () : libraryContext = {env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs}
@@ -1161,10 +1212,11 @@ struct
 
   fun main (name : string, args : string list) : OS.Process.status =
     let val status = main' (name, args)
-    in Pass.finish (); Diagnostic.finish (OS.Process.isSuccess status); status end
+    in UnitBasis.hashStats (); Pass.finish (); Diagnostic.finish (OS.Process.isSuccess status); status end
 
   and main' (_ : string, args : string list) : OS.Process.status =
     (Options.parse args;
+     Options.settle ();
      Pass.startup ();
      Parser.orPatterns := !Options.orPatterns;
      Diagnostic.install {color = !Options.color, full = !Options.diagnostics, json = !Options.diagnosticsJson};

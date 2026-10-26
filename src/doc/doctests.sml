@@ -263,7 +263,7 @@ struct
                           List.concat
                             (List.map (fn {strexp, ...} =>
                                          (case strexp of
-                                            Ast.StrApp (f, arg, _, _) =>
+                                            Ast.StrApp (f, arg, _) =>
                                               (case (List.find (fn (n, _, _) => n = f) (!functors), nameOf arg) of
                                                  (SOME (_, ffile, sites), SOME name) =>
                                                    List.map (fn s : site =>

@@ -35,6 +35,8 @@ struct
   val includeDirs : string list ref = ref []   (* -I DIR: where an entry point's files are looked for *)
   val build : string option ref = ref NONE     (* --build FILE: compile what a build file says (docs/build.md) *)
   val buildList = ref false                    (* --build-list: print the build file's files in order *)
+  (* --no-inline-functors: none inlined across units (M6b) *)
+  val noInlineFunctors = ref false
   val basisIndex : string option ref = ref NONE (* --basis-index DIR: DIR/MANIFEST from DIR/library.build *)
   val noWarnings = ref false
   val color = ref Color.WhenTerminal           (* --color=WHEN (docs/diagnostics.md) *)
@@ -76,6 +78,14 @@ struct
     \  --default-type=T  in the input files, the type of an int or word constant or\n\
     \                    operator that its declaration leaves open: int (default)\n\
     \                    or int64, word (default) or word64\n\
+    \  --functor-budget=N the Mid nodes the copies of a top-level application of\n\
+    \                    a functor, and of those in them, may hold (1000000 by\n\
+    \                    default; 0 makes none: every application a call of the\n\
+    \                    functor's function, docs/ir.md); every functor is\n\
+    \                    compiled once (--functors= and --datatype-tags= are gone)\n\
+    \  --no-inline-functors none of the functors and functions the libraries'\n\
+    \                    build files mark (`inline functor`, `inline val`)\n\
+    \                    inlined across units (docs/build.md)\n\
     \  --flex-records=M  what must determine a flexible record's labels\n\
     \                    (docs/language.md): binding, declaration,\n\
     \                    topdec-monomorphic, topdec (default) or program\n\
@@ -134,11 +144,15 @@ struct
     \  --passes=P,...    run these optional passes, whatever the level\n\
     \  --dump-before=P   print what the pass P is given (all: every pass)\n\
     \  --dump-after=P    print what the pass P makes (all: every pass)\n\
-    \  --lint            check what every pass makes (docs/ir.md)\n\
+    \  --lint            check what every pass makes (docs/ir.md; RUNE_LINT too)\n\
     \  --fuel=N          make no more than N rewrites (bin/rune-measure bisect-fuel)\n\
     \  --pass-stats      print the size and the time of every stage, and the total\n\
     \  --pass-stats=elab  and of each top-level declaration's elaboration: its\n\
     \                    time by context and operation, and its counters\n\
+    \  --pass-stats=hash  and the bytes hashed, by the part of the compile and\n\
+    \                    the place, and the fingerprints' memo's hits\n\
+    \  --pass-stats=expand  and the functors' applications the expansion copied,\n\
+    \                    those it left calls, and the most it copied for one\n\
     \  --read-mid FILE   read a Mid program as --dump-after=mid prints it, and\n\
     \                    make and check it as the pass mid would, but no bytecode\n\
     \  --mid-roundtrip   check that Mid printed, read and printed again is the same\n\
@@ -228,8 +242,10 @@ struct
                                        parse rest)
          | _ => raise Usage "--path requires NAME=DIR")
     | ["-I"] => raise Usage "-I requires a directory"
-    | "--typecheck-only" :: rest => (typecheckOnly := true; parse rest)
+    (* no code made, and so no copy of a functor's body (Elaborate.makesCode) *)
+    | "--typecheck-only" :: rest => (typecheckOnly := true; Elaborate.makesCode := false; parse rest)
     | "--no-warnings" :: rest => (noWarnings := true; parse rest)
+    | "--no-inline-functors" :: rest => (noInlineFunctors := true; Elaborate.inlineFunctors := StringMap.empty; parse rest)
     | "--diagnostics-json" :: f :: rest => (diagnosticsJson := SOME f; parse rest)
     | ["--diagnostics-json"] => raise Usage "--diagnostics-json requires a file"
     | "--dump-tokens" :: rest => (dumpTokens := true; parse rest)
@@ -244,7 +260,7 @@ struct
     | "-O0" :: rest => (Pass.level := 0; parse rest)
     | "-O1" :: rest => (Pass.level := 1; parse rest)
     | "-O2" :: rest => (Pass.level := 2; parse rest)
-    | "--lint" :: rest => (Pass.lint := true; Elaborate.lintSummaries := true; parse rest)
+    | "--lint" :: rest => (Pass.lint := true; parse rest)
     | "--read-mid" :: f :: rest => (readMid := SOME f; parse rest)
     | ["--read-mid"] => raise Usage "--read-mid requires a file"
     | "--mid-roundtrip" :: rest => (midRoundTrip := true; parse rest)
@@ -256,7 +272,9 @@ struct
         (case valued a of
            SOME ("--passes", v) => (Pass.only := SOME (String.fields (fn c => c = #",") v); parse rest)
          | SOME ("--pass-stats", "elab") => (Pass.stats := true; ElabStats.enable (); parse rest)
-         | SOME ("--pass-stats", _) => raise Usage "--pass-stats= requires elab"
+         | SOME ("--pass-stats", "hash") => (Pass.stats := true; Pickle.counting := true; parse rest)
+         | SOME ("--pass-stats", "expand") => (Pass.stats := true; Expand.stats := true; parse rest)
+         | SOME ("--pass-stats", _) => raise Usage "--pass-stats= requires elab, hash or expand"
          | SOME ("--dump-before", v) => (Pass.dumpBefore := !Pass.dumpBefore @ [v]; parse rest)
          | SOME ("--dump-after", v) => (Pass.dumpAfter := !Pass.dumpAfter @ [v]; parse rest)
          | SOME ("--target", v) =>
@@ -277,11 +295,18 @@ struct
              (case Int.fromString v of
                 SOME n => if n >= 0 then (Pass.fuel := SOME n; parse rest) else raise Usage "--fuel requires a number"
               | NONE => raise Usage "--fuel requires a number")
+         | SOME ("--functor-budget", v) =>
+             (case Int.fromString v of
+                SOME n => if n >= 0 then (Expand.budget := n; parse rest) else raise Usage "--functor-budget requires a number"
+              | NONE => raise Usage "--functor-budget requires a number")
          | SOME ("--type-work", v) => (Types.workLimit := workCount ("--type-work", v); parse rest)
          | SOME ("--match-work", v) => (Exhaust.workLimit := workCount ("--match-work", v); parse rest)
          | _ =>
              if String.isPrefix "-" a andalso a <> "-" then raise Usage ("unknown option: " ^ a)
              else (inputs := !inputs @ [a]; parse rest))
+  (* what the options decide together, once all are read: the list's tags
+     in the compiler's tables of the initial basis *)
+  and settle () : unit = Ty.bindBuiltins ()
   and jobCount text =
     case Int.fromString text of
       SOME n => if n >= 1 then n else raise Usage "-j requires a number of jobs, at least 1"

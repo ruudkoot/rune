@@ -22,6 +22,15 @@ gave and what building it taught. performance.md was retired on 2026-10-20
 expansion, was not started and stays here, with what to measure before it
 (*Before revisiting B*).
 
+**B built** by [functors-units.md](functors-units.md) (2026-10-21 to
+2026-10-25; its M5 to M8, gate G2 the owner's on 2026-10-25): every functor
+is compiled once, to a function its applications call, in every mode, and
+the middle end gives a whole program and a unit's own applications their
+copies back within a budget. *B, functors as functions*, below, says what
+was built against the design; *Before revisiting B* where each measure was
+taken. M3's corners closed with it (*What M3 built and found*): an
+application is typed by the functor's signature in every mode.
+
 ## What the Definition says
 
 The rules below are cited from their transcription on branch `runespec`
@@ -427,6 +436,23 @@ none failing in the two hours given; earlier builds of M3 reached 218 and
 
 ### B, functors as functions: to revisit
 
+*Built by [functors-units.md](functors-units.md) (M5 to M8). What was
+built against the design below: the argument and the result are nested
+records of a structure's slots (its D3), not D17's ABI; a datatype's tags
+are by its constructors' names sorted, with `nil, ::` and `LESS, EQUAL,
+GREATER` as before (D4), and a constructor of a parameter's datatype that
+takes one of the parameter's abstract types is built and taken apart by a
+descriptor of the argument's layout; a body's datatypes keep the body's
+layout in an instance a call makes (D5). The expansion is a Mid pass,
+`expand`, in every whole compile and on each unit's own applications, not
+only in `--units --whole` (which runs it on the same Mid, so the two give
+the same bytes); a functor marked to be inlined is expanded across units
+(`inline functor`, the Basis's I/O and vector functors); and a budget of
+1,000,000 Mid nodes a top-level application bounds nested functors (D13,
+M8). The code-quality cost was measured and met: the bootstrap and MLton's
+benchmark set, whole, within 1% of static interpretation's instructions
+(gate G2, M7).*
+
 * **The design:**
   * A functor is compiled once, in its own unit, into a function of its
     argument structure (a record of values).
@@ -465,6 +491,14 @@ to check.
 
 ## Before revisiting B
 
+*Measured by [functors-units.md](functors-units.md): 1 by its E2 and E8
+(HOL4's kernel declares no functor, so an edit of a body recompiles little
+there; MLton's S48, one unit where static interpretation compiled six), 2
+by its E4 and M5 (the compiler built in units 1.018 of today's
+instructions, the Basis's functors called across units dearer until they
+were marked to be inlined), 3 by its M6 and gate G2 (the expansion's code
+within 1% of static interpretation's).*
+
 To be measured first:
 
 1. **HOL4's recompiles.** When a functor body in HOL's kernel changes, how
@@ -478,6 +512,80 @@ To be measured first:
 3. **What the link-time expansion recovers.** Specialise those applications
    from the cached Mid in `--whole` and compare with static
    interpretation's code, instruction for instruction.
+
+## Names in traces
+
+**Decided (owner, 2026-10-25): a function of a functor's body is named by
+the functor (`F.leaf`) in traces, whether the application is a call of the
+functor's function or a copy of its body,** as built in the functors-units
+roadmap ([functors-units.md](functors-units.md), *Gate G2*), which builds B.
+Written down from what was found then.
+
+**The question.** With functors compiled once (B), `structure A = F (...)`
+runs F's one function, so at `-O0`, where nothing is expanded, a trace
+shows `F.leaf` for every application of F. Copies made by the expansion
+(`-O1` and up) could be named by the instance, `A.leaf`, as Rune's copies
+were before B, elaborated as if the body were written where it is applied.
+`make check-levels` wants the same trace at every level, so the copies are
+named as the function is: `F.leaf`. The frame `functor F`, at the
+application, shows while the body runs.
+
+**What the others do**, from their sources:
+
+| | A function of F's body, applied as `structure A = F (...)` | How |
+|---|---|---|
+| SML/NJ | `F.leaf` | its instrumentation for traces names a function by its lexical path, functors included (`compiler/DebugProf/profile/tdp-instrument.sml`, `i_fctb`, `mkDescr`) |
+| Poly/ML | `F().leaf` | the body is compiled once under the prefix `F().` (`mlsource/MLCompiler/STRUCTURES_.ML:2962`); an application inlined (`inlineFunctors`) keeps that code's names |
+| MLton | `_res_F.leaf` | it copies the body for each application, and names the copy under the functor's result, `_res_F` (`mlton/elaborate/elaborate-modules.fun:196`, `Strid.uRes`), not under `A` |
+| MLKit | -- | prints no stack trace |
+| OCaml | `Map.Make.add` | the functor's name |
+
+None names the instance, MLton not even with a copy per application to
+hand.
+
+**Not functors' alone.** A trace names code, not the value it was reached
+through:
+* a closure: `fun adder n = fn x => x + n` and `val add1 = adder 1` show
+  adder's inner function, never `add1` -- a functor compiled as a function
+  is that at the level of modules;
+* an alias -- `structure B = A`, `open A`, `val g = A.f` -- shares code
+  under several names, where the name of the definition is right, B being
+  A;
+* Rune's own copies -- inlining, specialisation -- are named after the
+  function they copy, so that a trace is the one the program would give
+  had nothing been copied (docs/ir.md, *Positions*); the expansion's copies
+  are named so too.
+
+Functors differ in degree: an application is where SML gives the
+programmer an instance by name, with types, exceptions and state of its
+own, so its name says more than an alias's.
+
+**What would name the instance, and what it costs:**
+* **Copies at every level.** The expansion run at `-O0` too, so that every
+  copy is named `A.leaf`. `-O0` then costs what it did before B, and
+  `check-levels` no longer holds the expansion to calls (a comparison with
+  `--functor-budget=0` would have to). And it does not name the instance
+  everywhere: a build in units calls a functor of another unit, unless it
+  is marked inline (D2), and an application past the budget is a call, so
+  such frames say `F.leaf` -- in a build in units, which the REPL, HOL4 and
+  incremental builds are, more often than in a whole compile.
+* **The instance as an argument** (for later). Each application passes its
+  path (`"A"`, `"C.B"`) to the functor's function, a hidden argument, and
+  the trace walker finds it from each frame of the body: one constant per
+  application, and a word in each closure the body makes or a parameter of
+  each function `lift` makes of it, read only when a trace is taken.
+  Translate passes it; Lower keeps it where each frame of the body reaches
+  it; inlining, `lift`, `workers`, the expansion and the JIT's
+  deoptimisation keep it; the bytecode says, for each function, where its
+  instance is, which the trace walker (`Runtime.trace`, `vm_print_trace`)
+  and the debugger read and the lint checks. A copy may name itself
+  statically. It gives `A.leaf` in every mode -- whole and in units, at
+  every level, within the budget or past it -- the one design that does,
+  and would make a trace's names data the walker reads, where they are
+  now the code's.
+* **The application's frame alone.** `functor F` shown as `A = F`, from
+  the application's place: static and free, but a function of the body
+  called after the application returned is still `F.leaf`.
 
 ## Open questions
 

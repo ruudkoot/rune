@@ -436,9 +436,15 @@ struct
                                          not (List.exists (fn e => e = Raises orelse e = WritesHeap orelse e = System
                                                                    orelse e = SavesImage orelse e = NewWorld)
                                                           (#effects p))) prims
-                 val n = List.length rs
+                 val names = List.map #name rs
+                 val n = List.length names
+                 val m = List.length PrimIsa.compilerOwn
+                 fun quoted (s, last) = "    \"" ^ s ^ "\"" ^ (if last then "" else ",")
                in
-                 List.tabulate (n, fn k => "    \"" ^ #name (List.nth (rs, k)) ^ "\"" ^ (if k < n - 1 then "," else ""))
+                 List.tabulate (n, fn k => quoted (List.nth (names, k), k = n - 1 andalso m = 0))
+                 @ (if m = 0 then []
+                    else "    (* the compiler's own (PrimIsa.compilerOwn), which Lower makes others of *)"
+                         :: List.tabulate (m, fn k => quoted (List.nth (PrimIsa.compilerOwn, k), k = m - 1)))
                end)
             @ ["  ])",
                "  fun removable name = StringMap.member (removables, name)",

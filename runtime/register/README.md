@@ -741,6 +741,32 @@ which of them live in a machine register:
   for a number past 63 bits no word has -- its slot gets the word, or
   a box, where the value leaves the register (`Home`, `masm.h`;
   `is_raw`, `masm.c`).
+* **Constants known, and division by them** (functors-units M1). The
+  emitter knows which registers hold a constant at the instruction it is
+  emitting: those an `INT`, a `CONST` of a number (an immediate, or a
+  box of 64 bits) or a `MOVE` of such a register set earlier in the run,
+  and that nothing has written since (`Jit.known`, `known_after` in
+  `compile.c`; at most eight, the oldest forgotten). It forgets them all
+  where control arrives from elsewhere -- a target, which every landing
+  is -- and after an instruction that does not go on to the next. A
+  `PRIM` of `int_div`, `int_mod`, `int_quot`, `int_rem`, `word_div` or
+  `word_mod`, or of `Int64.int`'s and `Word64.word`'s, whose divisor is
+  such a constant other than 0 (and -1, signed) is then a plan worked
+  out when the code is made (`divplan.h`) and its steps on the
+  dividend's payload or 64 bits (`ms_div_const`): a power of two by
+  shifts and masks; a signed `div` or `mod` by a positive divisor as
+  `s ^ floor((n ^ s) / c)`, `s` the sign's mask, by Granlund and
+  Montgomery's unsigned magic number; `quot`, `rem` and a negative
+  divisor by *Hacker's Delight*'s signed one and the floor's fix-up; a
+  word by the unsigned one, of 65 bits where its dividend has 64. No
+  test of the divisor and no branch: `Pickle.hash`'s `x mod 16777213` is
+  17 instructions from the dividend's home to the result's, one `mul`
+  among them, where `cqo; idiv` was behind three tests and before a
+  fix-up with branches. The divisor 0 and -1 keep the general
+  path, which raises `Div` and `Overflow`; so does a divisor read when
+  the code runs, and every division at tier 1. `--jit-stats` counts the
+  divisions of code by a constant and the rest
+  (`tests/lang/rt.div_constant.sml`, `tests/register/divconst_test.c`).
 * **The accessors know.** Every operation of the macro-assembler that
   reads or writes a register (`ms_copy`, `ms_set`, `ms_load_payload`,
   `ms_check_tag`, `ms_store_field`, `ms_value_to`, ...) consults the
@@ -903,7 +929,10 @@ implementation gives:
   `as_bswap` (`bswap`, `rev`: M5's order of strings); a multiply that may overflow is one operation
   with its jump (`as_mul_jo`: `imul` and `jo`, or `mul`, `smulh` and a
   compare); a divide gives the quotient in `R_S0` and the remainder in
-  `R_S2` (`cqo` and `idiv`, or `sdiv` and `msub`); a shift by a
+  `R_S2` (`cqo` and `idiv`, or `sdiv` and `msub`), and the high half
+  of a product `R_S2` too (`as_smulhi` and `as_umulhi`: the one-operand
+  `imul` and `mul`, which take `rax` and leave the low half there, or
+  `smulh` and `umulh`); a shift by a
   register takes the count in `R_S1`; a comparison of reals is read
   by `CC_FA`, `CC_FAE` and `CC_FE`, which are false on a NaN on every
   target (`ja` and `jae` after `ucomisd`, and `setcc` with the parity
@@ -934,7 +963,8 @@ JIT (`make portability`, clang with the arm64 cross packages, run by
 `qemu-aarch64`); `make test-portability` runs `tests/lang`, the Basis
 suite and the JIT's oracle on it, so every mode of the JIT is held to
 the interpreter's output and counts on the second target as on the
-first.
+first, and the steps of a division by a constant against C's division
+(`tests/register/divconst_test.c`, built for aarch64).
 
 ## Calls into C: the transition, and the FFI's
 

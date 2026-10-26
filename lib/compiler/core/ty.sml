@@ -234,16 +234,20 @@ struct
                                  {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map Direct a)) cons}))
   fun bindRealization (stamp : int, fcn : Types.tyfcn) = IntTable.insert (realizations, stamp, fcn)
 
-  (* bool and list, which no declaration makes *)
-  val () =
+  (* bool and list, which no declaration makes: list's tags as
+     Types.tagNames numbers them (bindBuiltins) *)
+  val listParam = Types.freshTvar (Types.genericLevel, Types.KPlain, false)
+  fun bindBuiltins () =
     let
-      val a = Types.freshTvar (Types.genericLevel, Types.KPlain, false)
+      val a = listParam
       val aid = case a of Types.TVar (ref (Types.Unbound {id, ...})) => id | _ => 0
+      val cons = [(Types.nilTag (), "nil", NONE), (Types.consTag (), "::", SOME (Types.tupleTy [a, Types.listTy a]))]
     in
       bindDatatype (#stamp Types.boolTycon, {params = [], cons = [(0, "false", NONE), (1, "true", NONE)]});
       bindDatatype (#stamp Types.listTycon,
-                    {params = [aid], cons = [(0, "nil", NONE), (1, "::", SOME (Types.tupleTy [a, Types.listTy a]))]})
+                    {params = [aid], cons = if Types.nilTag () = 0 then cons else List.rev cons})
     end
+  val () = bindBuiltins ()
 
   (* ---- from the elaborator's types ---- *)
 
@@ -400,11 +404,92 @@ struct
     case !extras of
       NoExtras => params
     | _ => (case extrasOf stamp of [] => params | extra => params @ extra)
+  (* (functors-units.md, D4) a constructor's object
+     seen whatever its datatype, through which a functor's body builds and
+     takes apart a constructor whose layout its parameter leaves open, by
+     the descriptor its argument gives (Translate): `flatN` has a
+     constructor of each tag below flatTags, whose argument is N units, a
+     tuple of them laid out flat for N >= 2, and one boxed for N = 1. A
+     type name of the basis, below the elaborator's first (Types), which no
+     declaration makes and no table holds *)
+  val flatTags = 256
+  val maxFlat = 8
+  fun flatStamp (n : int) : int = 20 + n
+  fun flatOf (stamp : int) : int option = if stamp > 20 andalso stamp <= 20 + maxFlat then SOME (stamp - 20) else NONE
+  fun flatArg (n : int) : ty = tuple (if n = 1 then [] else List.tabulate (n, fn _ => tuple []))
+  fun flat (n : int) : ty = con (flatStamp n, "flat" ^ Int.toString n, [])
+
   fun datatypeOf (stamp : int) : {params : int list, cons : (int * string * ty option) list} option =
+    case flatOf stamp of
+      SOME n => SOME {params = [], cons = List.tabulate (flatTags, fn t => (t, "C" ^ Int.toString t, SOME (flatArg n)))}
+    | NONE =>
     case IntMap.find (!datatypes, stamp) of
       NONE => NONE
     | SOME {params, cons} =>
         SOME {params = paramsOf (stamp, params), cons = List.map (fn (t, n, a) => (t, n, Option.map argOf a)) cons}
+
+  (* ---- layouts (functors-units.md, D5) ---- *)
+
+  (* The number of fields of each constructor of a datatype, by tag: SOME n
+     for one whose declared argument is a tuple of n >= 2 -- one object of
+     those fields -- and NONE for one that boxes its argument or has none
+     (Rep, docs/ir.md). Worked out from the declared arguments, or fixed
+     where the datatype was made, for an instance an application's
+     summary names (pinned): the body compiled once makes it so, whatever
+     the instance's types say. *)
+  val pinned : (int * int option) list IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Ty.pinned", pinned)
+  fun pinLayout (stamp : int, l : (int * int option) list) = pinned := IntMap.insert (!pinned, stamp, l)
+  (* the datatypes a functor's parameter specifies with a constructor whose
+     layout the argument gives (D4), by stamp: what no function made of the
+     datatype's layout may take apart (Simplify's equality) *)
+  val openTypes : unit IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Ty.openTypes", openTypes)
+  fun markOpen (stamp : int) = openTypes := IntMap.insert (!openTypes, stamp, ())
+  fun isOpen (stamp : int) : bool = IntMap.member (!openTypes, stamp)
+  fun declaredLayout (stamp : int) : (int * int option) list =
+    case datatypeOf stamp of
+      SOME {cons, ...} =>
+        List.map (fn (tag, _, SOME a) =>
+                       (case view a of
+                          Tuple xs => (tag, if List.length xs >= 2 then SOME (List.length xs) else NONE)
+                        | _ => (tag, NONE))
+                   | (tag, _, NONE) => (tag, NONE)) cons
+    | NONE => []
+  fun layoutOf (stamp : int) : (int * int option) list =
+    case IntMap.find (!pinned, stamp) of
+      SOME l => l
+    | NONE => declaredLayout stamp
+
+  (* The same, from the elaborator's types as they are, without making
+     types of them (fromTypes), which works out every datatype's extra
+     parameters again after a datatype is entered: what the elaborator
+     asks of a datatype between entering others (an application's
+     instances) *)
+  fun shapeOf (t : Types.ty) : int option =
+    case Types.prune t of
+      Types.TRecord fields => if List.length fields >= 2 then SOME (List.length fields) else NONE
+    | Types.TCon (c, args) =>
+        (case IntTable.find (realizations, #stamp c) of
+           SOME (Types.TName c') => shapeOf (Types.TCon (c', args))
+         | SOME (Types.TAbbrev (params, body)) => shapeOf (Types.substitute (params, args, body))
+         | NONE => NONE)
+    | _ => NONE
+  fun elabLayout (stamp : int) : (int * int option) list =
+    case IntMap.find (!pinned, stamp) of
+      SOME l => l
+    | NONE =>
+        case flatOf stamp of
+          SOME _ => declaredLayout stamp
+        | NONE =>
+            case IntMap.find (!datatypes, stamp) of
+              SOME {cons, ...} =>
+                List.map (fn (tag, _, SOME (FromElab a)) => (tag, shapeOf a)
+                           | (tag, _, SOME (Direct a)) =>
+                               (tag, case view a of Tuple xs => if List.length xs >= 2 then SOME (List.length xs) else NONE
+                                                  | _ => NONE)
+                           | (tag, _, NONE) => (tag, NONE)) cons
+            | NONE => []
 
   (* ---- the types the translation makes ---- *)
 
@@ -501,6 +586,9 @@ struct
      arguments given, where the datatype is one and it has that constructor:
      SOME NONE for a nullary one. *)
   fun conArg (stamp : int, args : ty list, tag : int) : ty option option =
+    case flatOf stamp of
+      SOME n => if tag >= 0 andalso tag < flatTags andalso List.null args then SOME (SOME (flatArg n)) else NONE
+    | NONE =>
     case IntMap.find (!datatypes, stamp) of
       NONE => NONE
     | SOME {params, cons} =>

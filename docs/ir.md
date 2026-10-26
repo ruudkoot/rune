@@ -11,6 +11,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `translate` | the elaborated syntax | `Lambda` (`lib/compiler/core/lambda.sml`) | `LambdaLint` |
 | `mid` | `Lambda` | `Mid` (`lib/compiler/core/mid.sml`, by `ToMid`) | `MidLint` |
 | `midcanon` | `Mid` | `Mid` numbered canonically (`lib/compiler/core/midcanon.sml`), as one made of its units' `Mid` is; a whole program only | `MidLint` |
+| `expand` | `Mid` | `Mid`, functors' applications copied (`lib/compiler/core/expand.sml`; *Functors compiled once* below), from `-O1` | `MidLint` |
 | `shake` | `Mid` | `Mid`, what nothing reaches gone (`lib/compiler/core/shake.sml`), from `-O1` | `MidLint` |
 | `lift` | `Mid` | `Mid`, local functions that never escape made functions of the top level (`lib/compiler/core/lift.sml`), from `-O1` | `MidLint` |
 | `workers` | `Mid` | `Mid`, tupled and curried functions split into workers and wrappers (`lib/compiler/core/workers.sml`), from `-O1` | `MidLint` |
@@ -31,7 +32,8 @@ Each stage runs through `Pass.stage` (`lib/compiler/util/pass.sml`), which print
 what it is given or makes when asked, checks it with the lint of its
 representation, and says what it cost. An optional pass, one that only
 optimises, says from which level it runs (`Pass.enabled`): `trees`, which
-is how `translate` compiles a match (see *Matches*), then `shake`, `lift`,
+is how `translate` compiles a match (see *Matches*), then `expand` (under
+*Functors compiled once*), `shake`, `lift`,
 `workers`, `simplify` and `refs`, in that order, and `shake` again where `simplify`
 inlined (see *The optimisations of Mid*); `inline` and `specialise` are
 what `simplify` does besides shrinking, each of which may be left out, as
@@ -45,13 +47,16 @@ of results in globals (see *Low*).
 | `-O0`, `-O1`, `-O2` | the level; `-O1` when none is given; `-O2` adds `equality` (see *The optimisations of Mid*) |
 | `--passes=P,...` | run these optional passes, whatever the level |
 | `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=registers` (`stack` with `--target=stack`) |
-| `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach |
+| `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach; `RUNE_LINT` set and not empty does the same where no flag reaches (the REPL, the compiler library), and every test sets it ([testing.md](testing.md), *Running the tests*) |
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
 | `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then `total: T s processor time, S s in the stages (P%)` (below) |
 | `--pass-stats=elab` | `--pass-stats`, and a line for each top-level declaration elaborated: where its processor time went, by context and operation, and what the elaborator counted (*The elaborator's counters* below) |
+| `--pass-stats=expand` | `--pass-stats`, and after the expansion a line `expand: N applications expanded, M left calls (B past the budget), P copies not all definitions; at most S nodes copied for a top-level application` (*Functors compiled once* below) |
+| `--pass-stats=hash` | `--pass-stats`, and at the end what the compile hashed: a line `hash PHASE:SITE: B bytes, N hashes` for each part of a compile in units (`usages`, `find`, `export`, `load`, `cache`) and place that hashed, and `memo PHASE: H hits, M misses` for the memo of fingerprints (*What a compile in units hashes* below) |
 | `--units` | run the pipeline on one unit, a file, at a time, and link them ([units.md](units.md)): the passes see a unit, with `Pass.whole` false, and `--pass-stats` names each unit before its passes |
 | `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would (there is no bytecode from Mid yet) |
 | `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same |
+| `--functor-budget=N` | the Mid nodes `expand` may copy for a top-level application and those in its copies (1000000 by default; 0 copies none) |
 
 **What `--pass-stats` shows** is the whole compile: the stages add up to
 the process's processor time from its start, which `tests/compiler` holds
@@ -77,6 +82,31 @@ below it unless they are all atoms, and leaves positions out. Variables
 and globals are numbered afresh (`v1`, `g1`, ...) in the order they appear,
 so that an expected dump does not change with stamps made elsewhere.
 
+### What a compile in units hashes
+
+`--pass-stats=hash` counts the bytes `Pickle` hashes (`Pickle.counting`),
+each under the label of the part of the compile and the place that hashed
+it (`UnitBasis.labelled`):
+
+* `usages:KIND`, the fingerprints of a unit's usages by what is hashed:
+  an entry (`v`, `t`), an environment's entries (`env`), a signature
+  (`sig`), a functor (`fun`), a structure of a signature that their
+  streams name by reference (`sigref`, once a session: [units.md](units.md),
+  *Fingerprints*), a fixity (`fix`), and a group of type names they name
+  (`tycon`), each group once a session (`tyconFps`);
+* `find:KIND`, the fingerprints worked out to check a cache entry's usages;
+* `export:source`, `export:identity` and `export:body`, a unit's source, its
+  basis and a functor's body; `export:KIND` a functor applied in a body;
+  `sigabi`, a dynamic module's signature (UnitBasis.sigFingerprint);
+* `load:source`, a source parsed again for a functor's body;
+* `cache:key`, `cache:source`, `cache:read`, `cache:store`, `cache:paths`
+  and `cache:configuration`, the cache's keys and the integrity of its
+  files.
+
+`memo PHASE` counts the memo of fingerprints (`fpMemo`): a usage's
+fingerprint by its binder and key is worked out once a session. Nothing
+else changes: the bytes and the program are the same with the counters on.
+
 ### The elaborator's counters
 
 `--pass-stats=elab` (`lib/compiler/elab/elabstats.sml`) prints, for each top-level
@@ -91,15 +121,16 @@ with `KIND` one of `signature`, `functor`, `structure` and `core`, and
 microseconds of processor time; what is zero is left out. The
 declaration's time is split by:
 
-* **context:** `top`, the top level; `fundecl`, a functor's body checked at
-  its declaration; `appcode`, the copy of a body elaborated at an
-  application whose code is made; `appcheck`, a copy elaborated only to be
-  checked, at an application inside a declaration's check or such a copy;
+* **context:** `top`, the top level; `fundecl`, a functor's body
+  elaborated at its declaration; `appcode`, an application at the top
+  level whose code is made, its match and its call; `appcheck`, an
+  application inside a functor's body, or anywhere under
+  `--typecheck-only`, which makes no code;
 * **operation:** `inst`, a signature instantiated; `where`, `where type`;
   `share`, sharing; `match`, a structure matched against a signature;
   `specs`, a signature's specifications, without the operations before
-  inside them; `copy`, a body copied for an application; `core`, the rest.
-  Time goes to the innermost operation running.
+  inside them; `core`, the rest. Time goes to the innermost operation
+  running.
 
 The counters: `realize`, the environments realised, and `nodes`, the type
 nodes they visited (the steps of type work they took, one a node); `inst` and `inst.names`, the signatures instantiated
@@ -206,6 +237,182 @@ list) : int`, each use of a variable at an instance, `(inst g1 : int ->
 int)`, and the type of each payload, `(exnarg v3 : int)`; type variables
 are numbered afresh as `'a`, `'b`, ... like the program's.
 
+### Functors compiled once
+
+A functor is compiled once, where it is declared, to a function, and an
+application is a call of it, in every mode: a whole compile, a build in
+units and `--units --whole` ([plans/functors-units.md](plans/functors-units.md),
+M5 to M7). The expansion (below) gives a whole program and a unit's own
+applications their copies back in Mid. Until M7 a functor's body was
+copied and elaborated again for each application, and the copy was what
+was translated (static interpretation). The options that chose the new
+way until then, `--functors=functions` and `--datatype-tags=sorted-x`, are
+gone rather than kept as no-ops, since no release had them: a compile that
+gives one is refused as for any option it does not know.
+
+* **A structure's record.** A structure that reaches a functor is a value
+  at run time: a tuple of its slots, each cast to `unit` by `functor_cast`
+  (a polymorphic value at `unit` for its type variables, which changes
+  nothing of it; an `unsafe_cast` that only a record's slots are given,
+  which Lower makes one, the expansion folds and MidLint checks: a value
+  cast to `unit` is cast back at its own type) -- its values, its exceptions (their constructors), and the
+  constructors, exceptions and primitives a value specification gave as
+  values, by name; then each substructure's record, a record of its own, by
+  name; at least two slots. A constructor has no slot: tags are the
+  datatype's, the same in every instance. A parameter's record holds a
+  descriptor after its values for each open constructor (below).
+* **The function** (`Elaborate.functorCode`, named `functor F`) takes the
+  parameter's record and returns the body's. Its body sets a local variable
+  from each slot of the parameter that the body reads (`Translate.bindUsed`,
+  the rest of the body made first), then runs the body's declarations,
+  which bind locals, not globals (`Elaborate.inBody`), and makes the
+  result's record, a substructure that is a record in reach given as it is.
+  Each call runs the body again: its exceptions and `ref`s are new (rule
+  154). Simplify never puts a functor's function where it is called: that
+  is the expansion's, with its budget (below).
+* **An application** (`Elaborate.callCode`) is typed by the functor's
+  summary alone (rule 54), the type names it made given fresh names, and its
+  values and exceptions given fresh variables -- globals at the top level,
+  each a definition of its own; in a body, locals, those the rest of the
+  body reads -- which the call's result sets. The argument's record
+  is made from the argument's environment thinned to the parameter's
+  signature, unless a record of the same slots is in reach: a parameter's,
+  an application's result or an argument made before, in the same
+  top-level declaration (`Elaborate.inReach`), which every mode compiles as
+  a whole.
+* **Types.** The parameter's types are abstract in the function: `Con`s of
+  their names, which `Lower.repOfTy` makes `RAny` (by stamp, not by name,
+  for `array`, `vector` and `ref`), and `=` at one is `poly_eq`'s walk. A
+  datatype the parameter specifies is given its constructors under the
+  name the body sees (`Elaborate.specDatatypes`).
+* **Tags by name** (decision D4): every datatype's constructors are
+  numbered by their names sorted (`Types.tagNames`), so that a
+  specification and the datatype that matches it agree on every tag; but
+  `nil, ::` and `LESS, EQUAL, GREATER` keep their declarations' order, by
+  their names, for the VM's C (`runtime/value.h`).
+* **Open constructors** (D4). A constructor of a parameter's datatype whose
+  argument is one of the parameter's abstract types may be laid out flat
+  in the argument where the specification reads it boxed. Its descriptor,
+  in the parameter's record, is the argument's number of fields (0 for
+  boxed), worked out where the program is lowered (`open_layout` of the
+  argument's datatype and the constructor's tag, `Elaborate.DescLayout`),
+  from the layout the datatype has then, which the expansion may have
+  given it since; `ToMid` makes or takes apart such a constructor as the
+  specification reads it where the descriptor is 0 (the test is
+  `open_boxed`, a primitive of its own), and otherwise calls the
+  body's functions for it (`Translate.openFuns`), which see the object
+  through `Ty.flat n`, a datatype of the basis whose constructors have `n`
+  fields. Simplify's equality functions leave such a datatype to
+  `poly_eq`. Only the constructors the body uses get the functions.
+* **Layouts** (D5). A datatype a body declares has the layout its declared
+  types give it there, a parameter's type boxed; an instance an
+  application's summary names keeps it (`Ty.pinned`, `Ty.layoutOf`),
+  whatever its realised types would say. `MidCanon` and a unit's Mid
+  (`UnitMid`) carry the fixed layouts and the open datatypes (`Ty.openTypes`)
+  with the datatypes they rename and keep.
+* **The expansion** (`expand`, `Expand`; M6, decisions D1, D2 and D13)
+  gives a program the copies static interpretation makes, in Mid: in a
+  whole compile right after `midcanon`, in `--units --whole` right after
+  the units' Mid is made one program (the same pass on the same Mid, so
+  that the two give the same bytes, S42), and in a build in units on each
+  unit, before it is kept for `--units --whole`, where only an application
+  of a functor the unit declares is expanded (D2 A).
+  - An application carries what a copy substitutes: before the call, a
+    `functor_marker` of `()` at a pair of tuples of arrows, which nothing
+    reads and Lower makes an `unsafe_cast` -- the
+    parameter's type names applied to variables (`Ty.Var`), each to what
+    the argument realises it as, and the body's datatypes to the
+    application's instances (`Translate.functorTypes`). Being a type of the
+    program, it is renamed with it by `MidCanon` and kept by `UnitMid`, and
+    substituted in a copy like any other, for the applications inside it.
+  - At an application of the top level whose function the program
+    defines, the function's body is copied, its names fresh and its types
+    substituted as the marker says; a datatype the body declares over
+    what is substituted gets a name of its own (after `MidCanon`'s,
+    `MidCanon.nextTycon`), and an instance the application named is
+    entered again with the constructors the copy gives it, and an
+    instance an application in the body makes is the copy's own, as each
+    application makes new ones; an open constructor's test (`open_boxed`)
+    keeps its first branch, which makes or takes the constructor apart as
+    its datatype. The copy's bindings,
+    groups of functions and the values its join points give the rest
+    become definitions of the top level, as static interpretation's are
+    (a local whose type names type variables it does not abstract over
+    abstracting over them, so that an alias of it is one); what does not
+    fit (a branch both of whose arms go on) stays one definition of the
+    record (`--pass-stats=expand` counts them). A definition with an application
+    among its steps (a `local` block's `Do`, whose globals it sets) is
+    first made definitions the same way, so that the application is one.
+  - A slot read from a record whose value is known is that value, and a
+    cast through `unit` of it is what was cast, at an instance of its
+    scheme for a polymorphic one (`Ty.match`): what substituting made
+    trivial goes, in the copy and wherever the application's result is
+    read. A value of the top level that is a copy's global at the same
+    types gives that global its name, so that a later unit calls the
+    copy's function by name.
+  - The copies' applications are expanded in turn. A top-level
+    application and those in its copies may copy `--functor-budget` Mid
+    nodes, the sizes of the functions copied (and 64 deep); past it, an
+    application stays a call (D13). The default, 1,000,000, is about
+    twice the largest a program known needs (M8, measured whole with
+    `--pass-stats=expand`): MLton's 606 files 508,928 (`structure Main =
+    Main (...)`, 400 applications expanded), the benchmark set 29,322
+    (`fxp`), the compiler 1,405. Within the budget a compile grows with
+    the copies it makes, linearly; past it the copies stop. Functors
+    nested `D` deep, each body applying the one below twice
+    (`tests/perf/compile-funnest*`, whose `scale` lines hold the growth),
+    are copied whole up to `D` = 12 (8,191 applications, 507,839 nodes),
+    and from 13 on the copies stop at the budget (16,128 applications
+    expanded at 13 and at 14); what grows after is the program's
+    environment, whose structures nest as the applications do.
+  - An instance of a body's datatype that an expanded application named
+    is laid out from its realised types, unless an application left a
+    call takes it; a datatype a copy declared that such an application
+    takes keeps the body's layout. Either way a descriptor is the layout
+    Lower gives the datatype (`open_layout`).
+  - **Traces.** A copy leaves the frames its call leaves at `-O0`: what its
+    declarations run is in a frame of the functor's function (`functor F`)
+    called where the application is, and the body's functions keep the
+    functor's names (`F.boom`) in a copy as in the function, not the
+    applying structure's, so that traces are the same at every level (`make
+    check-levels`; [plans/functors.md](plans/functors.md), *Names in
+    traces*). A definition of the top level makes no tail call at any
+    level (`Simplify`: its value is made with a continuation), so that a
+    function inlined there keeps the frame of `<toplevel>`
+    (`tests/lang/mod.functor.functions_trace`).
+  - **Across units** (M6b). A functor marked to be inlined (`inline
+    functor` in a build file; docs/build.md) has its function's Mid kept
+    in its unit's basis (`MidCodec`, `UnitBasis.funcode`), and a later
+    unit expands an application of it as it expands its own functors'
+    (`Expand.imported`). Such a unit has a usage `inl F`, which holds
+    while the body's Mid is the same.
+  - **Functions across units** (functors-units M10). A function marked to
+    be inlined (`inline val` in a build file; docs/build.md), and every
+    function that only applies a primitive to its parameter
+    (`Expand.primOfFunction`, which sees through a variable that only
+    copies another, as a pattern with types leaves), has its Mid kept in
+    its unit's basis as the expansion leaves it (`Expand.keepValues`),
+    with the unit's functions it calls while the group is under 400 Mid
+    nodes and the schemes of the unit's globals it names that nothing
+    else types (`ToMid.importedSchemes`). In a build in units, a unit's
+    expansion first gives the unit a copy of each such function that it
+    names, through the globals that are it (`Expand.withInlined`; a
+    definition that only is another global, `val app = app` in List,
+    keeps naming the first), as a function of its own top level, its
+    names fresh, and each use of the function one of the copy; Simplify
+    then puts a copy where it is called or specialises it by its own
+    rules. A whole compile and `--units --whole` have no copies. The unit
+    has a usage `inlv NAME`, which holds while the Mid is the same.
+  - **What a later unit calls.** A unit's basis says which of its globals
+    are another global at the same types (`val andb = Word.andb` in a
+    copy: `Expand.globalAliases`), and which are functions that apply a
+    primitive to their parameter (`val length = size`:
+    `Expand.primGlobals`). A later unit's expansion uses the other global
+    for the first kind. It makes a call of either kind the primitive's
+    application, as `Translate` does for a name bound to a primitive. In a
+    whole program the expansion's own aliases do the same, and `Simplify`
+    inlines the functions.
+
 ## Mid
 
 Mid (`lib/compiler/core/mid.sml`) is the representation the optimisations will work
@@ -267,6 +474,10 @@ have generalised them: a variable of the program or a function; a variable
   that type variables are in scope.
 * **Calls:** a function of other than one parameter is only called, with
   an argument for each, and never used as a value.
+* **Casts** (D3): no value cast to `unit` is
+  cast back to another ground type. A record's slot is cast to `unit` and
+  back; where the expansion knows the slot's value, a cast left between two
+  ground types that differ is a bug of the expansion.
 
 ### Mid as text
 
@@ -382,7 +593,8 @@ does.
   removable; a field of a tuple, the argument or tag of a constructor made
   in the same function, and an `If` on a known bool, are known; a primitive
   of int, word or char constants is folded at the target's precision
-  (`Target.t`'s `intBits`), unless it would raise; `=` of a type whose
+  (`Target.t`'s `intBits`), its divisions among them (functors-units M1),
+  unless it would raise -- a division by 0, an overflow; `=` of a type whose
   values are never in the heap -- int, word, char, and a datatype whose
   constructors are all nullary -- is `imm_eq`, which compares tags and
   bits (M11); `=` of a ref or an array, or where one side is a nullary

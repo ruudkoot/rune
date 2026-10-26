@@ -184,22 +184,44 @@ struct
   fun libraryDir (libDir : string, name : string) : string =
     if isLibraryPath name then name else libDir ^ "/" ^ name
 
-  (* The libraries a library's MANIFEST names on its # library: lines. *)
-  fun libraryRequires (dir : string) : string list =
+  (* The words of a MANIFEST's header lines that begin with key: the
+     comments --basis-index writes before the first file's line, which is
+     where the reading stops, so that a compile reads no more of the file
+     than its header for them (the Basis Library's is 25 KB, which read
+     again a line at a time cost every compile 0.3M instructions; M8). *)
+  fun headerWords (ins : TextIO.instream, key : string) : string list =
     let
-      val manifest = dir ^ "/MANIFEST"
-      val ins = TextIO.openIn manifest handle IO.Io _ => raise Usage ("cannot read library manifest " ^ manifest)
       fun lines acc =
         case TextIO.inputLine ins of
           NONE => List.rev acc
         | SOME l =>
             let val l = trim l
             in
-              if String.isPrefix "# library:" l
-              then lines (List.rev (String.tokens Char.isSpace (String.extract (l, 10, NONE))) @ acc)
-              else lines acc
+              if String.isPrefix key l
+              then lines (List.rev (String.tokens Char.isSpace (String.extract (l, size key, NONE))) @ acc)
+              else if String.isPrefix "#" l then lines acc
+              else List.rev acc
             end
     in lines [] before TextIO.closeIn ins end
+
+  (* The libraries a library's MANIFEST names on its # library: lines. *)
+  fun libraryRequires (dir : string) : string list =
+    let
+      val manifest = dir ^ "/MANIFEST"
+      val ins = TextIO.openIn manifest handle IO.Io _ => raise Usage ("cannot read library manifest " ^ manifest)
+    in headerWords (ins, "# library:") end
+
+  (* The functors a library's MANIFEST marks to be inlined across units, on
+     its # inline: lines (its build file's `inline functor ... end`; M6b) *)
+  fun inlineFunctors (dir : string) : string list =
+    headerWords (TextIO.openIn (dir ^ "/MANIFEST"), "# inline:")
+    handle IO.Io _ => []
+
+  (* The values it marks to be inlined across units, on its # inline val:
+     lines (`inline val ... end`; functors-units M10) *)
+  fun inlineValues (dir : string) : string list =
+    headerWords (TextIO.openIn (dir ^ "/MANIFEST"), "# inline val:")
+    handle IO.Io _ => []
 
   (* The directories of the named libraries and of those they are written on,
      each once, every library after the ones it names. *)

@@ -239,14 +239,33 @@ struct
           (emit ("s",(prefix,name),span,originOf (env,"s",(prefix,name)));prefixes (prefix @ [name],rest))
     in emit (kind,id,span,originOf (env,kind,id));prefixes ([],path) end
 
+  (* whether a value's global is a function of an earlier unit's marked to
+     be inlined, whose Mid the session has (UnitBasis; functors-units M10):
+     a unit that names it copies it, and uses its Mid too ("inlv") *)
+  val inlinedValue : (int -> bool) ref = ref (fn _ => false)
+  val ()=CompilerState.cellRoot ("Env.inlinedValue",inlinedValue)
+
   fun findVal (env, (path, name)) =
-    case path of
-      [] =>
-        let val r = StringMap.find (vals env, name)
-        in useIf ("v", name, sameBinding, r, fn s => StringMap.find (vals s, name)); r end
-    | s :: _ => (longUse ("v", env, s, path, name); case findStr' (env, path) of
-                                                    SOME e => StringMap.find (vals e, name)
-                                                  | NONE => NONE)
+    let
+      fun inlined (SOME (Val {stamp, ...})) = !inlinedValue stamp
+        | inlined _ = false
+    in
+      case path of
+        [] =>
+          let val r = StringMap.find (vals env, name)
+          in useIf ("v", name, sameBinding, r, fn s => StringMap.find (vals s, name));
+             if !Usage.recording andalso inlined r then useIf ("inlv", name, sameBinding, r, fn s => StringMap.find (vals s, name))
+             else ();
+             r
+          end
+      | s :: _ =>
+          let
+            val () = longUse ("v", env, s, path, name)
+            val r = case findStr' (env, path) of
+                      SOME e => StringMap.find (vals e, name)
+                    | NONE => NONE
+          in if !Usage.recording andalso inlined r then longUse ("inlv", env, s, path, name) else (); r end
+    end
 
   fun findTy (env, (path, name)) =
     case path of
@@ -338,13 +357,14 @@ struct
     {name = name, tag = tag, hasArg = hasArg, ncons = List.length siblings, isRef = false, siblings = siblings}
 
   val boolSiblings = [("false", false), ("true", false)]
-  val listSiblings = [("nil", false), ("::", true)]
+  (* the list's constructors, their tags as Types.tagNames numbers them *)
+  fun listSiblings () = List.map (fn n => (n, n = "::")) (listTagNames ())
   val boolCons =
     [("false", Con {scheme = boolTy, info = conInfo ("false", 0, false, boolSiblings)}),
      ("true", Con {scheme = boolTy, info = conInfo ("true", 1, false, boolSiblings)})]
-  val listCons =
-    [("nil", Con {scheme = listTy a, info = conInfo ("nil", 0, false, listSiblings)}),
-     ("::", Con {scheme = TArrow (tupleTy [a, listTy a], listTy a), info = conInfo ("::", 1, true, listSiblings)})]
+  fun listConsNow () =
+    [("nil", Con {scheme = listTy a, info = conInfo ("nil", nilTag (), false, listSiblings ())}),
+     ("::", Con {scheme = TArrow (tupleTy [a, listTy a], listTy a), info = conInfo ("::", consTag (), true, listSiblings ())})]
   val refCons =
     [("ref", Con {scheme = TArrow (a, refTy a),
                   info = {name = "ref", tag = 0, hasArg = true, ncons = 1, isRef = true, siblings = [("ref", true)]}})]
@@ -370,7 +390,7 @@ struct
     let val o' = overloaded (id, class)
     in (name, Prim {scheme = TArrow (tupleTy [o', o'], boolTy), name = name}) end
 
-  val builtinVals =
+  fun builtinValsNow listCons =
     boolCons @ listCons @ refCons @
     List.rev (#1 (List.foldl (fn (n, (acc, k)) => (builtinExn (n, k) :: acc, k + 1)) ([], 0) builtinExns)) @
     [binop ("+", numeric, ~10), binop ("-", numeric, ~11), binop ("*", numeric, ~12),
@@ -393,7 +413,7 @@ struct
 
   fun nameStr (c, cons) = TyStr {fcn = TName c, cons = cons}
 
-  val builtinTys =
+  fun builtinTysNow listCons =
     [("int", nameStr (intTycon, [])),
      ("word", nameStr (wordTycon, [])),
      ("real", nameStr (realTycon, [])),
@@ -413,10 +433,16 @@ struct
      ("_realarray", nameStr (realarrayTycon, [])),
      ("unit", TyStr {fcn = TAbbrev ([], unitTy), cons = []})]
 
-  val initial =
-    Env {origins=StringMap.empty,vals = StringMap.fromList builtinVals,
-         tys = StringMap.fromList builtinTys,
-         strs = StringMap.empty}
+  (* the initial basis, with the list's tags as Types.tagNames numbers
+     them: what a compile begins with once its options are read *)
+  fun initialNow () =
+    let val listCons = listConsNow ()
+    in
+      Env {origins=StringMap.empty,vals = StringMap.fromList (builtinValsNow listCons),
+           tys = StringMap.fromList (builtinTysNow listCons),
+           strs = StringMap.empty}
+    end
+  val initial = initialNow ()
 
   (* ---- the names of types ---- *)
 
@@ -427,7 +453,9 @@ struct
   (* the shortest path that names the type constructor in env: its own name
      at the top where that is it, else the structures breadth first, a path
      that ends in its own name before one that does not, then the first in
-     order; only names satisfying accepts are considered *)
+     order; only names satisfying accepts are considered, and never a name of
+     the initial basis that no program can write (`_int64`, which the
+     library names Int64.int by) *)
   fun pathOfWhen (env : env, c : tycon, accepts : string -> bool) : string option =
     let
       val stamp = #stamp c
@@ -440,12 +468,15 @@ struct
               fun other (p, e) =
                 StringMap.foldli (fn (n, ts, found) => case found of
                                                          SOME _ => found
-                                                       | NONE => if tyconOf ts = SOME stamp andalso accepts (p ^ n)
+                                                       | NONE => if tyconOf ts = SOME stamp andalso not (String.isPrefix "_" n)
+                                                                    andalso accepts (p ^ n)
                                                                  then SOME (p ^ n) else NONE)
                                  NONE (tys e)
               (* the library's own structures (Rune...) after the others,
-                 and a structure named for the type (WideString for its
-                 string, which WideChar's string is too) before the rest *)
+                 and the type's own long name (Int64.int, which FixedInt.int
+                 is too) and then a structure named for the type (WideString
+                 for its string, which WideChar's string is too) before the
+                 rest *)
               fun private p = String.isPrefix "Rune" p orelse String.isPrefix "RUNE" p
               fun lower s = String.map Char.toLower s
               fun namedFor p =
@@ -458,7 +489,10 @@ struct
                   [] => NONE
                 | found =>
                     let val public = List.filter (not o private) found
-                        val pick = case List.filter namedFor public of p :: _ => [p] | [] => public
+                        val pick = case (List.filter (fn p => p = #name c) public, List.filter namedFor public) of
+                                     (p :: _, _) => [p]
+                                   | ([], p :: _) => [p]
+                                   | ([], []) => public
                     in SOME (case pick of p :: _ => p | [] => hd found) end
             in
               case firstOf own of

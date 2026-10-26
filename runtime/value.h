@@ -101,6 +101,13 @@ static inline Value mk_unit(void) { return 1; }
 static inline Value mk_int(int64_t i) { return mk_imm(i); }
 static inline Value mk_char(int64_t c) { return mk_imm(c); }
 static inline Value mk_con0(int64_t t) { return mk_imm(t); }
+/* The tags of the list's constructors and of the order's, as the compiler
+   numbers them: a datatype's constructors are numbered by their names,
+   sorted, but for these two sets, which keep the order of their
+   declarations (nil 0, :: 1; LESS 0, EQUAL 1, GREATER 2; docs/ir.md,
+   Tags by name) */
+enum { TAG_NIL = 0, TAG_CONS = 1, TAG_LESS = 0, TAG_EQUAL = 1, TAG_GREATER = 2 };
+static inline Value mk_nil(void) { return mk_con0(TAG_NIL); }
 static inline Value mk_bool(int b) { return mk_imm(b ? 1 : 0); }
 static inline Value mk_word(uint64_t w) { return mk_imm((int64_t)w); }
 static inline Value mk_ptr(Obj *p) { return (Value)(uintptr_t)p; }

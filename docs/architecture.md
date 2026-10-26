@@ -142,20 +142,19 @@ the clauses of a chain of `where type`. A realisation gives back what it
 does not change (`Types.changes`), so that where it changes nothing it
 allocates nothing, and matching skips the unification of a value whose
 scheme is the signature's own. A functor
-body is type-checked once against its parameter signature when declared,
-which gives the functor's signature: what the body gave, the type names it
-made, and the counters it used (`Elaborate.summary`). An application is
-typed by that signature (rule 54). Inside a functor's declaration, where
-nothing is translated, it is the summary realised -- the parameter's names
-by the argument's types, the body's names by fresh ones -- and the counters
-moved as a copy of the body would have moved them. An application whose
-code is made copies the body's AST (`Ast.copyStrexp`, fresh annotation
-slots), elaborates the copy with the parameter bound to the matched
-argument, stores it in the `StrApp` node, and `Translate` emits it in place;
-the application is typed by the summary, realised with the names the copy
-made, and takes the copy's stamps and constructors (`signatureTyped`). Structures therefore stay flattened to globals,
-datatype tags are those of the actual argument, and datatypes and
-exceptions in a body are generative per application.
+body is elaborated once against its parameter signature when declared,
+which gives the functor's signature: what the body gave and the type names
+it made (`Elaborate.summary`). An application is typed by that signature
+(rule 54): the summary realised -- the parameter's names by the argument's
+types, the body's names by fresh ones. The body is compiled once, to a
+function from its parameter's record to its result's (`Elaborate.functorCode`,
+`Translate.functorFun`), and an application calls it with the argument's
+record (`Elaborate.callCode`); the middle end gives a whole program and a
+unit's own applications their copies back (`Expand`; [ir.md](ir.md),
+*Functors compiled once*). A structure that no functor reaches stays
+flattened to globals; datatype tags are by their constructors' names, so a
+specification and its argument agree, and datatypes and exceptions in a
+body are generative per application.
 
 ## Bootstrapping
 
@@ -262,7 +261,9 @@ Other libraries sit beside the basis library under the `--lib` directory
 (`lib/test/property`), each with a `library.build` and a generated `MANIFEST` of the same form
 (`BasisManifest`, `lib/compiler/driver/basismanifest.sml`). `rune --library NAME` adds
 a library's entries after the basis library's, with those of the libraries
-its `# library:` lines name before it, and the files are chosen from all of
+its `# library:` lines name before it (those and its `# inline:` lines are
+its header, before the first file's line, where reading them stops), and
+the files are chosen from all of
 them together, by path. A library's requires column names what it uses of
 the basis library, so that a program that names only the library loads what
 the library needs. The driver elaborates the basis library with `_prim`

@@ -10,7 +10,7 @@
      known bool;
    * a primitive of int, word or char on constants is folded, at the
      target's precision (Target.t's intBits), unless it would raise, which
-     is left to run;
+     is left to run -- a division by 0, an overflow;
    * a join point nothing jumps to goes, and one jumped to once is put
      where the jump is;
    * a join point that tests its one parameter, a bool, where a jump gives
@@ -145,8 +145,12 @@ struct
       fun int f = case ints () of
                     SOME (a, b) => let val r = f (a, b) in if fitsInt r then SOME (Const (Lambda.CInt r, result)) else NONE end
                   | NONE => NONE
+      (* a division by 0 raises Div, and the least int's div or quot by ~1
+         Overflow (its quotient fits no int): those are left to run *)
+      fun intDiv f = case ints () of SOME (_, b) => if IntInf.sign b = 0 then NONE else int f | NONE => NONE
       fun intCmp f = case ints () of SOME (a, b) => SOME (boolAtom (f (a, b))) | NONE => NONE
       fun word f = case words () of SOME (a, b) => SOME (Const (Lambda.CWord (wrapWord (f (a, b))), result)) | NONE => NONE
+      fun wordDiv f = case words () of SOME (_, b) => if IntInf.sign b = 0 then NONE else word f | NONE => NONE
       fun wordCmp f = case words () of SOME (a, b) => SOME (boolAtom (f (a, b))) | NONE => NONE
       fun eqs () =
         case xs of
@@ -161,6 +165,10 @@ struct
         "int_add" => int IntInf.+
       | "int_sub" => int IntInf.-
       | "int_mul" => int IntInf.*
+      | "int_div" => intDiv IntInf.div
+      | "int_mod" => intDiv IntInf.mod
+      | "int_quot" => intDiv IntInf.quot
+      | "int_rem" => intDiv IntInf.rem
       | "int_lt" => intCmp IntInf.<
       | "int_le" => intCmp IntInf.<=
       | "int_gt" => intCmp IntInf.>
@@ -168,6 +176,8 @@ struct
       | "word_add" => word IntInf.+
       | "word_sub" => word IntInf.-
       | "word_mul" => word IntInf.*
+      | "word_div" => wordDiv IntInf.div
+      | "word_mod" => wordDiv IntInf.mod
       | "word_lt" => wordCmp IntInf.<
       | "word_le" => wordCmp IntInf.<=
       | "word_gt" => wordCmp IntInf.>
@@ -192,6 +202,8 @@ struct
   (* What a variable is known to be: a step that made it, of those whose
      parts can be read back. *)
   datatype known = Made of rhs
+                 | Fields of atom vector   (* a tuple made of these, read a field in a step: a functor's record
+                                              of many *)
 
   (* What a round knows: the atom each variable it has dropped is, and what
      made each variable whose parts can be read back. A variable is used only
@@ -321,6 +333,12 @@ struct
 
   datatype eqKind = EqPrim of string | EqTrue | EqFun | EqTuple of Ty.ty list
 
+  (* a datatype of a functor's parameter with a constructor whose layout
+     the argument gives (D4), which no function made
+     here may take apart *)
+  fun openLayout (t : Ty.ty) : bool =
+    case Ty.view t of Ty.Con (stamp, _, _) => Ty.isOpen stamp | _ => false
+
   fun eqKindOf (t : Ty.ty) : eqKind =
     case eqByType (t, []) of
       SOME p => EqPrim p
@@ -328,7 +346,7 @@ struct
         (case Ty.view t of
            Ty.Tuple [] => EqTrue
          | Ty.Tuple ts => EqTuple ts
-         | _ => if groundTy t andalso isSome (consAt t) then EqFun else EqPrim "poly_eq")
+         | _ => if groundTy t andalso isSome (consAt t) andalso not (openLayout t) then EqFun else EqPrim "poly_eq")
 
   fun eqTy t = Ty.arrow (Ty.tuple [t, t], Ty.bool)
 
@@ -457,7 +475,7 @@ struct
       case r of
         Select (i, a) =>
           (case madeOf a of
-             SOME (Made (Tuple xs)) => if i < List.length xs andalso spend () then Atom (List.nth (xs, i)) else r
+             SOME (Fields v) => if i < Vector.length v andalso spend () then Atom (Vector.sub (v, i)) else r
            | _ => r)
       | Prim ("poly_eq", pty, xs) =>
           (case Ty.view pty of
@@ -1411,7 +1429,7 @@ struct
         else if uses (c, x) = 0 andalso removable r andalso spend () then simp (c, env, body)
         else
           (case r of
-             Tuple _ => IntTable.insert (#known env, x, Made r)
+             Tuple xs => IntTable.insert (#known env, x, Fields (Vector.fromList xs))
            | Con _ => IntTable.insert (#known env, x, Made r)
            | MkExn _ => IntTable.insert (#known env, x, Made r)
            | _ => ();
@@ -1924,6 +1942,15 @@ struct
       t
     end
 
+  (* a functor's function (Translate.functorFun
+     names it so), which is not put where it is called: that is the
+     expansion's (functors-units.md, M6), with its budget, and M5's
+     applications are calls *)
+  fun functorFun ({params, ...} : fundef) : bool =
+    case params of
+      (x, _) :: _ => (case IntMap.find (!Translate.funNames, x) of SOME n => String.isPrefix "functor " n | NONE => false)
+    | [] => false
+
   fun program (p : program) : program =
     let
       (* inlining is an optional pass of its own name, which runs here *)
@@ -1939,7 +1966,7 @@ struct
           List.app (fn Funs fs =>
                          List.app (fn f =>
                                      if size (#body f) <= inlineLimit f andalso not (names (#name f, #body f))
-                                        andalso not (raises (#body f))
+                                        andalso not (raises (#body f)) andalso not (functorFun f)
                                      then IntTable.insert (!inlinable, #name f, f) else ()) fs
                      | _ => ()) p
       (* called once in the program; in a unit, a unit after it may call it
@@ -1948,7 +1975,7 @@ struct
         if not inline orelse not (!Pass.whole) then ()
         else
           List.app (fn Funs [f] =>
-                         if calledOnce (#name f) andalso not (names (#name f, #body f))
+                         if calledOnce (#name f) andalso not (names (#name f, #body f)) andalso not (functorFun f)
                          then IntTable.insert (!once, #name f, SOME f) else ()
                      | _ => ()) p
       val () = equalities := Pass.enabled ("equality", 2)
@@ -1965,7 +1992,12 @@ struct
       (* each definition may grow by about its size by inlining: twice that
          runs the compiler no faster, in more code *)
       fun simplify e = (budget := size e + 32; here := (Source.noSpan, []); inHandler := 0; rounds (3, e))
-      fun simplifyDef e = (roundParams := []; simplify e)
+      (* a definition's value is made with a continuation (Lower), not
+         returned: a call in its tail is none, and a function put there keeps
+         the frame of the code around it, as at -O0 (a copy's declarations
+         are definitions; check-levels) *)
+      fun simplifyDef e =
+        (roundParams := []; budget := size e + 32; here := (Source.noSpan, []); inHandler := 1; rounds (3, e))
       (* a function is put where it is called as it is simplified, where it
          still may be, and specialised as it is, where it may be *)
       fun fundef ({name, tyvars, params, result, body} : fundef) =
@@ -1983,6 +2015,7 @@ struct
              more code, and MLton's programs allocating 3 to 7% less) *)
           if inline andalso size (#body f') <= inlineLimit f' andalso not (names (name, #body f'))
              andalso (isSome (IntTable.find (!inlinable, name)) orelse not (raises (#body f')))
+             andalso not (functorFun f')
           then IntTable.insert (!inlinable, name, f') else ();
           if specialise andalso size (#body f') <= specialiseSize then
             (case staticParams f' of

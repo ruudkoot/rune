@@ -1,5 +1,18 @@
 # Units: making a compile in units cost what a whole compile costs
 
+*Retired (2026-10-25) into [functors-units.md](functors-units.md), which
+built each fix: F1 and F2 by its M2 (`export`'s functor fingerprints
+through the memo; the identity `export` works out given to `load`, and
+kept in a cache entry); F3 by its M4, as fingerprints by structure (its D9
+and D10) rather than hashes of hashes; F4 by its M1 (tier 2 divides by a
+constant) and its M4 (rx2fw, a hash of 63-bit words, its D11). The measure
+of done, MLton's 606 files in units within 1.5 times their whole compile,
+became that roadmap's gate G1, which is not met: 1.73 times the processor
+time at its M4 (2.30 times the instructions), and at its M9 2.41 times the
+instructions (669.6G against 278.0G at tier 2); it was 5.2 times the
+processor time when this file was written (*Measuring* there). Kept as it
+was written.*
+
 ## Status
 
 Not started. Recorded 2026-10-20 at the owner's request, from what

@@ -643,6 +643,37 @@ struct
     let val ins = TextIO.openIn file
     in List.filter (fn s => s <> "") (String.fields (fn c => c = #"\n") (TextIO.inputAll ins)) before TextIO.closeIn ins end
 
+  (* The compiler's settings for what the session compiles, before the
+     REPL's own arguments (rune-repl.load.rbc LIST OPTION... [--make-image
+     IMAGE]): --no-inline-functors and --lint. They are the image's: they
+     hold for every session started from the image. The functors and
+     functions the Basis Library's build file marks to be inlined are, but
+     with --no-inline-functors. *)
+  fun configure (args : string list, lib : string) : string list =
+    let
+      val noInline = ref false
+      fun go (a :: rest) =
+            if a = "--no-inline-functors" then
+              (noInline := true; Elaborate.inlineFunctors := StringMap.empty; Elaborate.inlineValues := StringMap.empty; go rest)
+            (* every pass's output checked, as rune --lint checks it (the
+               globals of the units before a declaration typed for the lint
+               by UnitBasis.startSession, as in a build in units) *)
+            else if a = "--lint" then (Pass.lint := true; go rest)
+            else a :: rest
+        | go [] = []
+      val rest = go args
+    in
+      if not (!noInline) then
+        (Elaborate.inlineFunctors :=
+           List.foldl (fn (n, m) => StringMap.insert (m, n, ())) (!Elaborate.inlineFunctors)
+                      (BasisManifest.inlineFunctors (OS.Path.concat (lib, "basis")));
+         Elaborate.inlineValues :=
+           List.foldl (fn (n, m) => StringMap.insert (m, n, ())) (!Elaborate.inlineValues)
+                      (BasisManifest.inlineValues (OS.Path.concat (lib, "basis"))))
+      else ();
+      rest
+    end
+
   (* main (list :: files): list names the REPL program's unit files, which
      its loader loaded it from (src/repl/load.sml), each by its name in the
      list's directory; the file `sources` beside it names the source of
@@ -656,6 +687,8 @@ struct
       val units = List.map (fn u => OS.Path.joinDirFile {dir = dir, file = OS.Path.file u}) (linesOf list)
       val sources = linesOf (OS.Path.joinDirFile {dir = dir, file = "sources"})
       val lib = OS.Path.concat (dir, "../../lib")
+      (* the compiler's settings of the image, before its arguments *)
+      val rest = configure (rest, lib)
       (* the options and files given: the init file, the files used, then
          the loop, or the text of -e and the end *)
       fun session args =

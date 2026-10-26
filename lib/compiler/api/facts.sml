@@ -9,9 +9,10 @@ struct
   fun collectWith record decs =
     let
       val matches=ref [] : (Source.span * Types.ty * bool) list ref
-      val derived=ref false
+      (* the flag is whether an occurrence is derived, of an elaborated
+         copy of a functor's body: none since functors are compiled once *)
       fun add (span : Source.span,ty) =
-        Option.app (fn t => matches:=(span,t,!derived) :: !matches) ty
+        Option.app (fn t => matches:=(span,t,false) :: !matches) ty
       fun pat p =
         (case p of
            PVar (_,slot,span) => (case !slot of SOME (PIVar (stamp,_)) => add (span,IntTable.find (Ty.binders,stamp)) | _ => ())
@@ -56,8 +57,7 @@ struct
       and str e =
         case e of
           StrStruct (ds,_) => List.app dec ds | StrAscribe (e,_,_,_) => str e
-        | StrApp (_,arg,body,_) => (str arg;Option.app (fn body =>
-            let val before'= !derived in derived:=true;str body;derived:=before' end) (!body))
+        | StrApp (_,arg,_) => str arg
         | StrLet (ds,e,_) => (List.app dec ds;str e) | StrExport (_,_,e,_,_) => str e | _ => ()
       val ()=List.app dec decs
     in List.rev (!matches) end

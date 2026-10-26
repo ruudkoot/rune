@@ -25,8 +25,10 @@ struct
   fun compilerRbc Registers = "bin/rune.rbc" | compilerRbc Stack = "bin/rune.stack.rbc"
   fun runedocRbc Registers = "bin/runedoc.rbc" | runedocRbc Stack = "bin/runedoc.stack.rbc"
   val limits = {addressSpace = NONE, cpuTime = SOME 900, fileSize = SOME (64 * 1024 * 1024), core = SOME 0}
+  (* without RUNE_LINT, which bin/rune-test sets: a budget counts the
+     compiler as it is shipped, which lints nothing *)
   fun execute name command stdout stderr =
-    let val status = Children.exec limits (fn e => e)
+    let val status = Children.exec limits (List.filter (fn kv => not (String.isPrefix "RUNE_LINT=" kv)))
           {cmd = command, dir = SOME root, stdin = "-", stdout = fromRoot stdout,
            stderr = fromRoot stderr, timeout = 900}
     in need (status = 0, name ^ ": exit " ^ Int.toString status ^ ": " ^ firstLine (fromRoot stderr)) end
@@ -46,13 +48,15 @@ struct
         | _ => NONE
     in case List.rev (List.mapPartial parse (readLines file)) of
          counts :: _ => counts | [] => raise Failed (file ^ ": no counters") end
-  fun measure ({mode, compiler, vm} : config) name argv =
+  (* measure config name argv generated: the counts of the budget's run,
+     with argv its program's arguments, and generated the generator's (its
+     generate line's, unless a scale run gives others) *)
+  fun measureWith ({mode, compiler, vm} : config) name argv generated =
     let
       val out = output mode
       val prefix = out ^ "/" ^ name
       val () = mkdirs (fromRoot out)
       val () = List.app (fn suffix => rmTree (fromRoot (prefix ^ suffix))) [".stdout", ".stderr", ".out.rbc", ".rbc"]
-      val generated = args name "generate"
       val () = if null generated then () else
         (execute name ([fromRoot "bin/rune-generate", "perf"] @ generated) (prefix ^ ".gen.sml") (prefix ^ ".generate.err");
          need (exists (fromRoot (prefix ^ ".gen.sml")) andalso OS.FileSys.fileSize (fromRoot (prefix ^ ".gen.sml")) > 0,
@@ -81,6 +85,15 @@ struct
                  name ^ ": compiler produced no bytecode");
            execute name ([vm, "--count", prefix ^ ".rbc"] @ argv) (prefix ^ ".stdout") (prefix ^ ".stderr"))
     in counters (fromRoot (prefix ^ ".stderr")) end
+  fun measure config name argv = measureWith config name argv (args name "generate")
+  (* the applications a generated program makes as static interpretation
+     elaborates them, which the generator writes on its first line *)
+  fun applications ({mode, ...} : config) name =
+    let val first = case readLines (fromRoot (output mode ^ "/" ^ name ^ ".gen.sml")) of l :: _ => l | [] => ""
+    in case String.tokens Char.isSpace first of
+         ["(*", n, "applications", "*)"] => integer n
+       | _ => raise Failed (name ^ ": scale wants the generator's count of applications on the program's first line")
+    end
   fun budgetPath Registers name = "tests/perf/" ^ name ^ ".budget"
     | budgetPath Stack name = "tests/perf/stack/" ^ name ^ ".budget"
   val keys = ["instructions", "bytes", "objects"]
@@ -125,16 +138,36 @@ struct
                  need (actual <= limit file key, name ^ ": " ^ IntInf.toString actual ^ " " ^ key ^ ", budget " ^ IntInf.toString (limit file key)))
                    (ListPair.zip (keys, counts))
       val scale = args name "scale"
-      val growth = case scale of [] => ""
-        | [n, exponent] =>
+      val generated = args name "generate"
+      fun expectedOf exponent = case Real.fromString exponent of SOME r => r | NONE => raise Failed "invalid scale exponent"
+      val growth = case (scale, generated) of
+          ([], _) => ""
+        | ([n, exponent], []) =>
             let val i1 = hd (measure config name [n])
                 val i4 = hd (measure config name [IntInf.toString (integer n * 4)])
                 val grown = case scaleExponent (i1, i4) of SOME s => s | NONE => raise Failed (name ^ ": scale run counted no instructions")
-                val expected = case Real.fromString exponent of SOME r => r | NONE => raise Failed "invalid scale exponent"
                 val actual = valOf (Real.fromString grown)
-                val () = need (actual <= expected + 0.15, name ^ ": instructions grow with n^" ^ grown ^ ", expected n^" ^ exponent)
+                val () = need (actual <= expectedOf exponent + 0.15, name ^ ": instructions grow with n^" ^ grown ^ ", expected n^" ^ exponent)
             in ", n^" ^ grown end
-        | _ => raise Failed (name ^ ": scale expects N EXPONENT")
+        (* a generated program: the compile of another the generator makes
+           (scale KIND ARGS... EXPONENT), against the budget's, by the
+           applications each makes (functors-units M8: nested functors'
+           copies bounded) *)
+        | (_ :: _ :: _ :: _, _ :: _) =>
+            let val exponent = List.last scale
+                val i0 = hd counts
+                val a0 = applications config name
+                val i1 = hd (measureWith config name (args name "args") (List.take (scale, length scale - 1)))
+                val a1 = applications config name
+                val () = need (i0 > 0 andalso i1 > 0 andalso a1 > a0, name ^ ": scale run counted nothing, or no more applications")
+                val actual = Math.ln (Real.fromLargeInt (IntInf.toLarge i1) / Real.fromLargeInt (IntInf.toLarge i0))
+                             / Math.ln (Real.fromLargeInt (IntInf.toLarge a1) / Real.fromLargeInt (IntInf.toLarge a0))
+                val grown = Real.fmt (StringCvt.FIX (SOME 2)) actual
+                val () = need (actual <= expectedOf exponent + 0.15,
+                               name ^ ": instructions grow with applications^" ^ grown ^ " (" ^ IntInf.toString a0 ^ " to "
+                               ^ IntInf.toString a1 ^ "), expected applications^" ^ exponent)
+            in ", " ^ IntInf.toString a0 ^ " to " ^ IntInf.toString a1 ^ " applications^" ^ grown end
+        | _ => raise Failed (name ^ ": scale expects N EXPONENT, or KIND ARGS... EXPONENT for a generated program")
     in say ("ok   " ^ name ^ ": " ^ String.concatWith " " (List.map (fn (key, n) => IntInf.toString n ^ " " ^ key)
                   (ListPair.zip (keys, counts))) ^ growth ^ "\n") end
   fun protect name f () = f () handle Failed message => say ("FAIL " ^ name ^ ": " ^ message ^ "\n")

@@ -1434,7 +1434,7 @@ waits for the owner:
 
 | Decision | Recommended | Chosen |
 |---|---|---|
-| D1. What a unit is | A: a source file; a REPL declaration; functor bodies compiled at each application | A, "for now to keep strict SML'97 semantics"; B may be considered for Rune 2.0 |
+| D1. What a unit is | A: a source file; a REPL declaration; functor bodies compiled at each application | A, "for now to keep strict SML'97 semantics"; B may be considered for Rune 2.0; functor bodies compiled once since functors-units' M7 (D1 above) |
 | D2. Incremental or separate compilation | A: IC against the actual bases before it, in explicit order; SC only against a signature, for virtual and dynamic modules | A, "for now to keep strict SML'97 semantics"; B may be considered for Rune 2.0 |
 | D3. Names across units | A: stamps stay `int`, local per unit; canonical renumbering at export, a base added at import and link | A |
 | D4. The compilation basis | A: one record with deltas, holding what every phase needs; spans kept | A |
@@ -1457,6 +1457,18 @@ waits for the owner:
 ### D1. What a unit is
 
 **Decided: A**, a source file (2026-10-09), as recommended. "For now to keep strict SML'97 semantics": B may be considered for Rune 2.0.
+
+**Since [functors-units.md](functors-units.md) (2026-10-25)** A's last
+clause no longer holds. A functor's body is compiled once, in the unit
+that declares it, to a function its applications call (that roadmap's D1
+and M7), and an application is typed by the functor's signature, as the
+Definition's rule 54 says, so SML'97's semantics are kept without static
+interpretation; a unit is still a file or a REPL declaration. The copies
+static interpretation made come back in the middle end, for a whole
+program and for a unit's own applications, within a budget (its D13).
+No body is in a basis: a unit that applies a functor depends on its
+signature (the usage `fun F`), or, where the functor is marked to be
+inlined, on its function's Mid too (`inl F`).
 
 * **A. A file of top-level declarations; a REPL declaration; a functor
   body compiled at each application in the applying unit.** The unit
@@ -3462,7 +3474,14 @@ them:
    functorises everything gets little cut-off. Measured on HOL4 (M5),
    whose kernel is functorised; the answer, if it matters, is SMLSC's
    handoff: an SC import against a functor signature, listed in *Ready
-   for, not built*.
+   for, not built*. Gone with its cause since
+   [functors-units.md](functors-units.md)'s M7 (2026-10-25): no body is in
+   a basis, and an edit of a functor's body compiles its own unit again
+   and not the units that apply it, which call its function -- MLton's
+   S48, one unit where it was six (its E8 and M9) -- but for a functor
+   marked to be inlined, whose applying units use its function's Mid.
+   HOL4's kernel declares no functor; its functors are in its tools and
+   two tables (that roadmap's E2).
 4. **The resident compiler's heap.** The Basis Library's basis and
    HOL4's live in the user's heap and are copied at every collection.
    M1 measures it; jit D14's collector is the cure; `shareCommonData`'s

@@ -1,0 +1,16 @@
+- = = = = = = val write = fn : string * string -> unit
+- val it = () : unit
+- val it = () : unit
+- val it = () : unit
+- val a = 45 : int
+structure A
+val it = () : unit
+- structure B
+- val it = 3 : int
+- val it = () : unit
+- val a = 45 : int
+structure A
+val it = () : unit
+- structure C
+- val it = 8 : int
+- 

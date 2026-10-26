@@ -27,10 +27,9 @@
    what the bytes say: a unit compiled now and one taken from the cache are
    the same to them, byte for byte.
 
-   A functor's body is not written: its place in the unit's source is, and
-   loading parses the source again for it, in the mode the unit was read in
-   (Source.mode), the fixity of the unit's start in force. Its basis is the unit's start, which loading has, and what the
-   unit declared before it. *)
+   A functor is written as its signature and the global of its function,
+   to which it is compiled: nothing of its body, which loading needs not;
+   a functor marked to be inlined, its function's Mid as well (funcode). *)
 structure UnitBasis =
 struct
   structure P = Pickle
@@ -39,7 +38,7 @@ struct
   (* a pickle that names a unit the session has not loaded *)
   exception Missing of string
 
-  val version = 7
+  val version = 14
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -55,11 +54,9 @@ struct
   (* ---- the units of the session ---- *)
 
   (* A unit loaded: its identity, its name, the name its source has in
-     spans, where its numbers start in the session, how many of each kind,
-     and its functors, by where their bodies begin in its source, which a
-     later unit's functor may have in its basis. *)
-  type loaded = {identity : string, name : string, file : string, base : int vector, count : int vector,
-                 funs : Elaborate.funinfo IntMap.map}
+     spans, where its numbers start in the session, and how many of each
+     kind. *)
+  type loaded = {identity : string, name : string, file : string, base : int vector, count : int vector}
 
   val units : loaded list ref = ref []                        (* newest first *)
   val () = CompilerState.cellRoot ("UnitBasis.units", units)
@@ -103,13 +100,56 @@ struct
   (* A session begins: what exists now is built in. *)
   (* each usage's fingerprint, by its binder and key, once worked out
      (fingerprintAt) *)
+  (* M6b: the hash of each inlined functor's Mid, by its function's global
+     (the usage "inl NAME"); and the names a read function's own names get,
+     below 0, each read its own *)
+  datatype inlineHash = Hash of string | Bytes of string
+  val inlineHashes : inlineHash ref IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("UnitBasis.inlineHashes", inlineHashes, IntTable.copy)
+  (* a functor's hash, a read one's worked out from the bytes of its Mid when
+     it is first asked for: only where a later unit expands it (functors-units
+     M8; hashing them all as they were read cost 0.9M instructions a compile
+     in units of a program that loads the I/O stack) *)
+  fun inlineHash (g : int) : string option =
+    case IntTable.find (!inlineHashes, g) of
+      NONE => NONE
+    | SOME (ref (Hash h)) => SOME h
+    | SOME (r as ref (Bytes b)) => let val h = P.hash b in r := Hash h; SOME h end
+  val privateNext = ref ~2
+  val () = CompilerState.cellRoot ("UnitBasis.privateNext", privateNext)
   val fpMemo : string option StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("UnitBasis.fpMemo", fpMemo)
+  (* the fingerprints of the signatures' structures that a usage's stream
+     names by reference (fpChild), by mode, unit, signature and path, once
+     worked out (functors-units M11) *)
+  val refMemo : string StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.refMemo", refMemo)
+  (* each loaded unit's signatures, by its identity and their names *)
+  val unitSigs : SigMatch.sigma StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.unitSigs", unitSigs)
+  (* of those: each signature's own type names by their places, and each
+     structure's in the order of their first occurrence in it, by unit,
+     signature (and path), once worked out *)
+  val sigLocals : int IntMap.map StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.sigLocals", sigLocals)
+  val targetOrders : int list StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.targetOrders", targetOrders)
+  (* the templates a basis's references to those structures are read
+     from, by the same keys (makeTemplate) *)
+  datatype tnode = NVar | NCon of T.tycon * int list | NRec of (string * int) list | NArr of int * int
+  type template = {nodes : tnode vector, orig : T.ty vector, owned : bool vector, slots : int vector}
+  val templates : template StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.templates", templates)
 
+  (* a session of units begins: in the driver, the REPL and the compiler
+     library alike, whose units' Mid the lint checks against the schemes of
+     the globals of the units before them, which ToMid keeps *)
   fun startSession () =
     (units := []; byIdentity := StringMap.empty; builtin := counters ();
      Array.modify (fn _ => Vector.fromList []) ranges; tvars := IntTable.table 1024; binders := StringMap.empty;
-     fpMemo := StringMap.empty)
+     fpMemo := StringMap.empty; refMemo := StringMap.empty; unitSigs := StringMap.empty;
+     sigLocals := StringMap.empty; targetOrders := StringMap.empty; templates := StringMap.empty;
+     MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE))
 
   fun binderOf (key : string) : string = case StringMap.find (!binders, key) of SOME i => i | NONE => ""
 
@@ -147,9 +187,19 @@ struct
   val sessionFixity : Fixity.env ref = ref Fixity.initial
   val () = CompilerState.cellRoot ("UnitBasis.sessionFixity", sessionFixity)
 
+  (* and the signatures and functors it begins with: a usage of one is its
+     fingerprint there, as a usage of a value is its fingerprint in
+     Env.session, though the unit declares another of the name before its
+     usages are worked out (functors-units, F1) *)
+  val sessionSigs : SigMatch.sigma StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.sessionSigs", sessionSigs)
+  val sessionFuns : Elaborate.funinfo StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.sessionFuns", sessionFuns)
+
   (* The place of the unit about to be looked for in the cache or compiled:
      its environment and fixity, which usages are checked against *)
-  fun position (env : Env.env, fixity : Fixity.env) : unit = (Env.session := SOME env; sessionFixity := fixity)
+  fun position (env : Env.env, fixity : Fixity.env) : unit =
+    (Env.session := SOME env; sessionFixity := fixity; sessionSigs := !Elaborate.sigs; sessionFuns := !Elaborate.funs)
 
   (* The path that reaches each name of a loaded unit in what it declared,
      by kind and stamp: the first, in the order of the names *)
@@ -182,7 +232,10 @@ struct
       walk ("", delta);
       (* a signature's specifications, which a unit that matched or applied
          it names, by sig:NAME and the path in it *)
-      List.app (fn (n, sg : SigMatch.sigma) => walk ("sig:" ^ n ^ ".", #env sg)) sigs
+      List.app (fn (n, sg : SigMatch.sigma) => walk ("sig:" ^ n ^ ".", #env sg)) sigs;
+      (* and the signatures themselves, where a fingerprint finds the
+         structure a specification's stamp is in (fpChild) *)
+      List.app (fn (n, sg) => unitSigs := StringMap.insert (!unitSigs, #identity u ^ "\000" ^ n, sg)) sigs
     end
 
   (* What the cache keeps of a unit by its identity, for a unit compiled
@@ -218,98 +271,935 @@ struct
      ABI: sigFingerprint) *)
   val anchorValues = ref true
   val () = CompilerState.cellRoot ("UnitBasis.anchorValues", anchorValues)
-  val inProgress : unit IntTable.table = IntTable.table 16
-  val () = CompilerState.tableRoot ("UnitBasis.inProgress", inProgress)
 
-  (* the text a fingerprint hashes, of a type: its generic variables
-     numbered by first occurrence (tvs), and the type names local to a
-     signature by their place in it (local) *)
-  fun fpTy (tvs : int list ref, local' : int IntMap.map, t : T.ty) : string =
+  (* What --pass-stats=hash counts, beside the bytes each place hashes
+     (Pickle.counted): the part of a unit's compile that hashes them, which
+     labels them, and the hits and misses of fpMemo by that part *)
+  val phase = ref "other"
+  val () = CompilerState.cellRoot ("UnitBasis.phase", phase)
+  val memoCounts : (string * int * int) list ref = ref []     (* phase, hits, misses *)
+  val () = CompilerState.cellRoot ("UnitBasis.memoCounts", memoCounts)
+  fun countMemo (hit : bool) : unit =
+    if !P.counting then
+      let
+        val l = !phase
+        val (h, m) = if hit then (1, 0) else (0, 1)
+        fun add [] = [(l, h, m)]
+          | add ((k, a, b) :: rest) = if k = l then (k, a + h, b + m) :: rest else (k, a, b) :: add rest
+      in memoCounts := add (!memoCounts) end
+    else ()
+  (* f, its hashes labelled by the phase and site *)
+  fun labelled (site : string) (f : unit -> 'a) : 'a =
+    if !P.counting then
+      let val old = !P.label
+      in P.label := !phase ^ ":" ^ site; (f () before P.label := old) handle e => (P.label := old; raise e) end
+    else f ()
+  fun hashAt (site : string, text : string) : string = labelled site (fn () => P.hash text)
+  (* the part of a compile f is, for the counts *)
+  fun during (ph : string) (f : unit -> 'a) : 'a =
+    let val old = !phase
+    in phase := ph; (f () before phase := old) handle e => (phase := old; raise e) end
+
+  (* --pass-stats=hash: what was hashed, by phase and site, and the memo's
+     hits and misses, so far in the process *)
+  fun hashStats () : unit =
+    if !P.counting then
+      (List.app (fn (l, b, c) => TextIO.output (TextIO.stdErr, "hash " ^ l ^ ": " ^ Int.toString b ^ " bytes, "
+                                                            ^ Int.toString c ^ " hashes\n")) (!P.counted);
+       List.app (fn (l, h, m) => TextIO.output (TextIO.stdErr, "memo " ^ l ^ ": " ^ Int.toString h ^ " hits, "
+                                                            ^ Int.toString m ^ " misses\n")) (!memoCounts))
+    else ()
+
+  (* ---- what a fingerprint is of (functors-units, S1 and S2) ----
+
+     A fingerprint is the hash of tokens, not of text: a tag for each kind of
+     node, a length before each list and string, and numbers as Pickle
+     writes them, so that no two things give one sequence of tokens. The
+     data is written as it is: a type variable with its equality (issue 16),
+     a type abbreviation's parameters, a signature's own type names by their
+     place among its bound and generated names with their arity and
+     equality, constructors' tags, opaque types' realisations, the "known"
+     and "prim" facts of values, values' anchors (but in a signature's ABI
+     and a functor's signature), and an environment in the order of its
+     names. A structure's, a signature's and a functor's fingerprint is the
+     hash of their entries' names and fingerprints (S1): no text is longer
+     than an entry's, and an entry of a structure a usage names is worked
+     out once, by its binder and its key, as the usage of it would be
+     (fpMemo). A type name's fingerprint is its anchor and the hash of the
+     strongly connected group of type names its definition is in, each named
+     inside the group by its anchor: one value for a recursive group,
+     whichever of it is asked for first (as GHC hashes them since its
+     #18733; E5 of functors-units found the spurious misses the order made). *)
+
+  (* the type names worked out in this fingerprint that are not kept: the
+     unit's own, whose stamps are given again after it is loaded *)
+  val scratch : string IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("UnitBasis.scratch", scratch, IntTable.copy)
+  (* the group of type names whose definitions are being written, by stamp *)
+  val members : unit IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.members", members)
+
+  fun knownTycon (s : int) : string option =
+    case IntTable.find (tyconFps, s) of
+      SOME f => SOME f
+    | NONE => IntTable.find (!scratch, s)
+
+  fun hashed (site : string) (f : P.writer -> unit) : string = let val w = P.writer () in f w; hashAt (site, P.contents w) end
+
+  (* the type names a type names, but a signature's own (local) *)
+  fun tyconsOf (local' : int IntMap.map, t : T.ty, acc : T.tycon list) : T.tycon list =
     case T.prune t of
-      T.TVar (ref (T.Unbound {id, ...})) =>
+      T.TVar _ => acc
+    | T.TCon (c, args) =>
+        List.foldl (fn (a, acc) => tyconsOf (local', a, acc)) (if IntMap.member (local', #stamp c) then acc else c :: acc) args
+    | T.TRecord fs => List.foldl (fn ((_, a), acc) => tyconsOf (local', a, acc)) acc fs
+    | T.TArrow (a, b) => tyconsOf (local', b, tyconsOf (local', a, acc))
+
+  fun schemeOf (v : Env.valstatus) : T.ty =
+    case v of
+      Env.Val {scheme, ...} => scheme
+    | Env.Con {scheme, ...} => scheme
+    | Env.Exn {ty, ...} => ty
+    | Env.Prim {scheme, ...} => scheme
+    | Env.ConAsVal {scheme, ...} => scheme
+    | Env.ExnAsVal {ty, ...} => ty
+
+  (* the type names a type name's definition names: its constructors' types
+     and its realisation *)
+  fun definitionNames (local' : int IntMap.map, s : int) : T.tycon list =
+    let
+      val fromCons = case IntMap.find (!Elaborate.dataCons, s) of
+                       SOME cs => List.foldl (fn ((_, v), acc) => tyconsOf (local', schemeOf v, acc)) [] cs
+                     | NONE => []
+    in
+      case IntTable.find (Ty.realizations, s) of
+        SOME (T.TName c) => if IntMap.member (local', #stamp c) then fromCons else c :: fromCons
+      | SOME (T.TAbbrev (_, body)) => tyconsOf (local', body, fromCons)
+      | NONE => fromCons
+    end
+
+  (* of a type: its generic variables numbered by first occurrence (tvs) *)
+  fun fpTy (w : P.writer, tvs : int list ref, local' : int IntMap.map, t : T.ty) : unit =
+    case T.prune t of
+      T.TVar (ref (T.Unbound {id, eq, ...})) =>
         let
           fun index (_, []) = NONE
             | index (i, x :: rest) = if x = id then SOME i else index (i + 1, rest)
         in
+          (* an equality variable is another type: ''a -> int is not
+             'a -> int (docs/plans/build-cache-issues.md, issue 16) *)
+          P.byte (w, if eq then 2 else 1);
           case index (0, !tvs) of
-            SOME i => "'" ^ Int.toString i
-          | NONE => (tvs := !tvs @ [id]; "'" ^ Int.toString (List.length (!tvs) - 1))
+            SOME i => P.nat (w, i)
+          | NONE => (tvs := !tvs @ [id]; P.nat (w, List.length (!tvs) - 1))
         end
-    | T.TVar _ => "'?"
+    | T.TVar _ => P.byte (w, 3)
     | T.TCon (c, args) =>
-        "(" ^ fpTycon (local', c) ^ String.concat (List.map (fn a => " " ^ fpTy (tvs, local', a)) args) ^ ")"
-    | T.TRecord fs => "{" ^ String.concatWith "," (List.map (fn (l, a) => l ^ ":" ^ fpTy (tvs, local', a)) fs) ^ "}"
-    | T.TArrow (a, b) => "(" ^ fpTy (tvs, local', a) ^ "->" ^ fpTy (tvs, local', b) ^ ")"
+        (P.byte (w, 4); fpTyconRef (w, local', c); P.nat (w, List.length args); List.app (fn a => fpTy (w, tvs, local', a)) args)
+    | T.TRecord fs =>
+        (P.byte (w, 5); P.nat (w, List.length fs); List.app (fn (l, a) => (P.string (w, l); fpTy (w, tvs, local', a))) fs)
+    | T.TArrow (a, b) => (P.byte (w, 6); fpTy (w, tvs, local', a); fpTy (w, tvs, local', b))
 
-  and fpTycon (local' : int IntMap.map, c : T.tycon) : string =
+  (* a type name: a signature's own by its place, one of the group being
+     written by its anchor, any other by its fingerprint *)
+  and fpTyconRef (w : P.writer, local' : int IntMap.map, c : T.tycon) : unit =
     case IntMap.find (local', #stamp c) of
-      SOME i => "local" ^ Int.toString i
+      SOME i => (P.byte (w, 10); P.nat (w, i))
     | NONE =>
-        let val s = #stamp c
-        in
-          case IntTable.find (tyconFps, s) of
-            SOME f => f
-          | NONE =>
-              if isSome (IntTable.find (inProgress, s)) then anchor (kTycon, s)
+        if IntMap.member (!members, #stamp c) then (P.byte (w, 12); P.string (w, anchor (kTycon, #stamp c)))
+        else (P.byte (w, 11); P.string (w, fpTycon (local', c)))
+
+  and fpTycon (local', c : T.tycon) : string =
+    case knownTycon (#stamp c) of
+      SOME f => f
+    | NONE => (groups (local', c);
+               case knownTycon (#stamp c) of SOME f => f | NONE => bug "a type name its group did not fingerprint")
+
+  (* Tarjan's strongly connected components of the type names reachable
+     from c that are not fingerprinted yet, each fingerprinted as it is
+     completed: the groups it names are done before it *)
+  and groups (local', root : T.tycon) : unit =
+    let
+      val index : int IntTable.table = IntTable.table 16
+      val low : int IntTable.table = IntTable.table 16
+      val stack : T.tycon list ref = ref []
+      val counter = ref 0
+      fun lowOf s = valOf (IntTable.find (low, s))
+      fun visit (c : T.tycon) : unit =
+        let
+          val s = #stamp c
+          val i = !counter
+          val () = (counter := i + 1; IntTable.insert (index, s, i); IntTable.insert (low, s, i); stack := c :: !stack)
+          fun edge (d : T.tycon) =
+            let val t = #stamp d
+            in
+              if isSome (knownTycon t) then ()
               else
-                let
-                  val () = IntTable.insert (inProgress, s, ())
-                  val cons =
-                    case IntMap.find (!Elaborate.dataCons, s) of
-                      SOME cs => String.concat (List.map (fn (n, v) => "|" ^ n ^ " " ^ fpVal (local', v)) cs)
-                    | NONE => ""
-                  val real =
-                    case IntTable.find (Ty.realizations, s) of
-                      SOME f => "=" ^ fpFcn (local', f)
-                    | NONE => ""
-                  (* the definition by its hash: a type that names this one
-                     names it in a few characters, and not by the text of
-                     every type it is made of, which grows with each *)
-                  val f = anchor (kTycon, s) ^ "#"
-                          ^ P.hash (Int.toString (#arity c) ^ (if #eq c then "=" else "") ^ "[" ^ cons ^ real ^ "]")
-                in
-                  IntTable.removeRange (inProgress, s, s + 1);
-                  (* a name of the unit being compiled is not kept: its
-                     stamps are given again after the unit is loaded *)
-                  if isSome (rangeOf (kTycon, s)) orelse s < Vector.sub (!builtin, kTycon)
-                  then IntTable.insert (tyconFps, s, f) else ();
-                  f
-                end
+                case IntTable.find (index, t) of
+                  (* visited, not done: on the stack *)
+                  SOME ti => IntTable.insert (low, s, Int.min (lowOf s, ti))
+                | NONE => (visit d; IntTable.insert (low, s, Int.min (lowOf s, lowOf t)))
+            end
+          val () = List.app edge (definitionNames (local', s))
+          fun pop acc =
+            case !stack of
+              d :: rest => (stack := rest; if #stamp d = s then d :: acc else pop (d :: acc))
+            | [] => bug "Tarjan's stack ran out"
+        in
+          if lowOf s = i then group (local', pop []) else ()
         end
+    in visit root end
 
-  and fpFcn (local' : int IntMap.map, f : T.tyfcn) : string =
+  (* a group of type names: each by its anchor, in their order, and its
+     definition; each one's fingerprint its anchor and the group's hash *)
+  and group (local', cs : T.tycon list) : unit =
+    let
+      fun insert (x as (a, _), []) = [x]
+        | insert (x as (a, _), (y as (b, _)) :: rest) = if a < b then x :: y :: rest else y :: insert (x, rest)
+      val named = List.foldl insert [] (List.map (fn c => (anchor (kTycon, #stamp c), c)) cs)
+      val outer = !members
+      val () = members := List.foldl (fn (c, m) => IntMap.insert (m, #stamp c, ())) outer cs
+      val g = hashed "tycon"
+                (fn w => (P.nat (w, List.length named);
+                          List.app (fn (a, c) => (P.string (w, a); definition (w, local', c))) named))
+              handle e => (members := outer; raise e)
+      val () = members := outer
+      fun keep s = isSome (rangeOf (kTycon, s)) orelse s < Vector.sub (!builtin, kTycon)
+    in
+      List.app (fn (a, c) => IntTable.insert (if keep (#stamp c) then tyconFps else !scratch, #stamp c, a ^ "#" ^ g)) named
+    end
+
+  and definition (w : P.writer, local', c : T.tycon) : unit =
+    let val s = #stamp c
+    in
+      P.nat (w, #arity c); P.bool (w, #eq c);
+      (case IntMap.find (!Elaborate.dataCons, s) of
+         SOME cs => (P.nat (w, List.length cs); List.app (fn (n, v) => (P.string (w, n); fpVal (w, local', v))) cs)
+       | NONE => P.nat (w, 0));
+      case IntTable.find (Ty.realizations, s) of
+        SOME f => (P.byte (w, 1); fpFcn (w, local', f))
+      | NONE => P.byte (w, 0)
+    end
+
+  and fpFcn (w : P.writer, local' : int IntMap.map, f : T.tyfcn) : unit =
     case f of
-      T.TName c => fpTycon (local', c)
-    | T.TAbbrev (params, body) => let val tvs = ref params in "\\" ^ Int.toString (List.length params) ^ "." ^ fpTy (tvs, local', body) end
+      T.TName c => (P.byte (w, 13); fpTyconRef (w, local', c))
+    | T.TAbbrev (params, body) => (P.byte (w, 14); P.nat (w, List.length params); fpTy (w, ref params, local', body))
 
-  and fpVal (local' : int IntMap.map, v : Env.valstatus) : string =
-    let fun ty t = fpTy (ref [], local', t)
+  and fpVal (w : P.writer, local' : int IntMap.map, v : Env.valstatus) : unit =
+    let
+      fun ty t = fpTy (w, ref [], local', t)
+      (* which value: another with the same type is another value -- but
+         for a signature's ABI and a functor's signature, whose values are
+         specifications *)
+      fun anchored stamp = P.string (w, if !anchorValues then anchor (kStamp, stamp) else "")
     in
       case v of
         Env.Val {scheme, stamp, ...} =>
-          (* which value: another with the same type is another value --
-             but for a signature's ABI, whose values are specifications *)
-          "val " ^ (if !anchorValues then anchor (kStamp, stamp) ^ " " else "") ^ ty scheme
-          ^ (case IntMap.find (!Translate.primAliases, stamp) of SOME p => " prim " ^ p | NONE => "")
-          ^ (if IntMap.member (!Lower.knownBefore, stamp) then " known" else "")
-      | Env.Con {scheme, info} => "con " ^ #name info ^ "#" ^ Int.toString (#tag info) ^ " " ^ ty scheme
-      | Env.Exn {ty = t, info} => "exn " ^ (if !anchorValues then anchor (kStamp, #stamp info) ^ " " else "") ^ ty t
-      | Env.Prim {scheme, name} => "prim " ^ name ^ " " ^ ty scheme
-      | Env.ConAsVal {scheme, info} => "conval " ^ #name info ^ "#" ^ Int.toString (#tag info) ^ " " ^ ty scheme
-      | Env.ExnAsVal {ty = t, info} => "exnval " ^ (if !anchorValues then anchor (kStamp, #stamp info) ^ " " else "") ^ ty t
+          (P.byte (w, 20); anchored stamp; ty scheme;
+           (case IntMap.find (!Translate.primAliases, stamp) of
+              SOME p => (P.byte (w, 1); P.string (w, p))
+            | NONE => P.byte (w, 0));
+           P.bool (w, IntMap.member (!Lower.knownBefore, stamp));
+           (* the global it is (Expand.globalAliases), which a use of it
+              is, and what that one is to a call *)
+           if !anchorValues then
+             ((case IntTable.find (!Expand.globalAliases, stamp) of
+                 SOME h =>
+                   (P.byte (w, 1); P.string (w, anchor (kStamp, h));
+                    P.option P.string (w, IntMap.find (!Translate.primAliases, h));
+                    P.option P.string (w, IntTable.find (!Expand.primGlobals, h));
+                    P.bool (w, IntMap.member (!Lower.knownBefore, h)))
+               | NONE => P.byte (w, 0));
+              P.option P.string (w, IntTable.find (!Expand.primGlobals, stamp)))
+           else ())
+      | Env.Con {scheme, info} => (P.byte (w, 21); P.string (w, #name info); P.int (w, #tag info); ty scheme)
+      | Env.Exn {ty = t, info} => (P.byte (w, 22); anchored (#stamp info); ty t)
+      | Env.Prim {scheme, name} => (P.byte (w, 23); P.string (w, name); ty scheme)
+      | Env.ConAsVal {scheme, info} => (P.byte (w, 24); P.string (w, #name info); P.int (w, #tag info); ty scheme)
+      | Env.ExnAsVal {ty = t, info} => (P.byte (w, 25); anchored (#stamp info); ty t)
     end
 
-  fun fpTyStr (local' : int IntMap.map, Env.TyStr {fcn, cons}) : string =
-    fpFcn (local', fcn) ^ String.concat (List.map (fn (n, v) => "|" ^ n ^ " " ^ fpVal (local', v)) cons)
+  fun fpTyStr (w : P.writer, local' : int IntMap.map, Env.TyStr {fcn, cons}) : unit =
+    (fpFcn (w, local', fcn); P.nat (w, List.length cons); List.app (fn (n, v) => (P.string (w, n); fpVal (w, local', v))) cons)
 
-  fun fpEnv (local' : int IntMap.map, Env.Env {vals, tys, strs,...}) : string =
-    "{" ^ String.concat (StringMap.foldri (fn (n, v, acc) => ("v " ^ n ^ " " ^ fpVal (local', v) ^ ";") :: acc) [] vals)
-    ^ String.concat (StringMap.foldri (fn (n, t, acc) => ("t " ^ n ^ " " ^ fpTyStr (local', t) ^ ";") :: acc) [] tys)
-    ^ String.concat (StringMap.foldri (fn (n, e, acc) => ("s " ^ n ^ " " ^ fpEnv (local', e) ^ ";") :: acc) [] strs) ^ "}"
+  (* a usage's fingerprint by its binder and key, from fpMemo, or worked out
+     by f and kept *)
+  fun memo (binder : string, key : string, f : unit -> string option) : string option =
+    let val m = binder ^ "\000" ^ key
+    in
+      case StringMap.find (!fpMemo, m) of
+        SOME r => (countMemo true; r)
+      | NONE => let val () = countMemo false val r = f () in fpMemo := StringMap.insert (!fpMemo, m, r); r end
+    end
 
-  fun fpSigma ({bound, env = en,...} : SigMatch.sigma) : string =
-    let val local' = #2 (List.foldl (fn (c, (i, m)) => (i + 1, IntMap.insert (m, #stamp c, i))) (0, IntMap.empty) bound)
-    in Int.toString (List.length bound) ^ fpEnv (local', en) end
+  fun localsOf (cs : T.tycon list) : int IntMap.map =
+    #2 (List.foldl (fn (c, (i, m)) => (i + 1, IntMap.insert (m, #stamp c, i))) (0, IntMap.empty) cs)
+
+  (* ---- structures by reference (functors-units M11, part 1; E12) ----
+
+     A usage's stream of a signature or a functor wrote every structure of
+     its environment whole, nested signatures and all: the signatures of
+     MLton's build hashed 512 MB, almost all of it the same structures again
+     (E12). In such a stream (childRefs), a structure the environment holds
+     -- a child -- that is a structure of a loaded signature, realised, is
+     written as a reference to it: that structure's fingerprint, worked out
+     once a session (refMemo), and the realisation, what each of its own
+     type names is in the child. The structure is found by the path its
+     first value's stamp has in the unit that declared the signature
+     (sig:NAME.a.b.v, notePaths): a specification's stamp is kept by
+     instantiation, realisation and the bases. A walk of both checks that
+     the child is the structure realised, and derives the realisation
+     (realisation). A functor's result, whose values are the summary's
+     placeholders, is looked up by the names of its entries among the
+     structures its parameter's children were found to be, and checked the
+     same way. Where none is found or the walk fails, the child is written
+     whole, its own children each tried in turn.
+
+     A reference tells apart all that the child's tokens did: the
+     structure's tokens, each of its own type names written as the
+     realisation's image of it, are the child's -- the walk checks that each
+     entry is there under the same name, a value with the same stamp (in a
+     functor's stream, where no anchor is written, with none of a stamp's
+     facts on either side), a type with the same names but the
+     structure's own, each of those its image every time (a type name, or a
+     type without variables for one without parameters), and each type
+     variable in the same places with the same equality. Where it is not,
+     nothing is assumed. *)
+  val childRefs = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.childRefs", childRefs)
+  (* in a functor's stream: whether the parameter or the result is being
+     written, and the structures the parameter's children were found to be,
+     with each of theirs, by the names of their entries *)
+  val inParam = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.inParam", inParam)
+  val inResult = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.inResult", inResult)
+  val paramRefs : (string * int IntMap.map * Env.env) list StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.paramRefs", paramRefs)
+
+  exception NoMatch
+
+  (* the local names an environment names, by stamp, in the order of their
+     first occurrence: its values', then its types', then its structures' *)
+  fun localOrder (local' : int IntMap.map, en : Env.env) : int list =
+    let
+      val seen : unit IntMap.map ref = ref IntMap.empty
+      val order : int list ref = ref []
+      fun tc (c : T.tycon) =
+        let val s = #stamp c
+        in if IntMap.member (local', s) andalso not (IntMap.member (!seen, s))
+           then (seen := IntMap.insert (!seen, s, ()); order := s :: !order) else () end
+      fun ty t =
+        case T.prune t of
+          T.TVar _ => ()
+        | T.TCon (c, args) => (tc c; List.app ty args)
+        | T.TRecord fs => List.app (fn (_, a) => ty a) fs
+        | T.TArrow (a, b) => (ty a; ty b)
+      fun fcn f = case f of T.TName c => tc c | T.TAbbrev (_, b) => ty b
+      fun walk (Env.Env {vals, tys, strs, ...}) =
+        (StringMap.app (fn v => ty (schemeOf v)) vals;
+         StringMap.app (fn (Env.TyStr {fcn = f, cons}) => (fcn f; List.app (fn (_, v) => ty (schemeOf v)) cons)) tys;
+         StringMap.app walk strs)
+    in walk en; List.rev (!order) end
+
+  (* a value's stamp, where it has one of its own *)
+  fun valueStamp (v : Env.valstatus) : int option =
+    case v of
+      Env.Val {stamp, ...} => SOME stamp
+    | Env.Exn {info, ...} => if isSome (#builtin info) then NONE else SOME (#stamp info)
+    | Env.ExnAsVal {info, ...} => if isSome (#builtin info) then NONE else SOME (#stamp info)
+    | _ => NONE
+
+  (* a loaded signature's own type names, by its unit and name ("ID\000NAME"),
+     and a structure's of a loaded signature in their order, by its key
+     ("ID\000NAME\000PATH"): each worked out once a session *)
+  fun sigLocalsOf (key : string, sg : SigMatch.sigma) : int IntMap.map =
+    case StringMap.find (!sigLocals, key) of
+      SOME m => m
+    | NONE => let val m = localsOf (#bound sg) in sigLocals := StringMap.insert (!sigLocals, key, m); m end
+  fun orderOf (key : string, cl : int IntMap.map, c : Env.env) : int list =
+    case StringMap.find (!targetOrders, key) of
+      SOME l => l
+    | NONE => let val l = localOrder (cl, c) in targetOrders := StringMap.insert (!targetOrders, key, l); l end
+
+  (* the first value of en's tree with a stamp, and the path from en to the
+     structure that holds it *)
+  fun firstStamp (Env.Env {vals, strs, ...}) : (string list * int) option =
+    let
+      val stamped = valueStamp
+    in
+      case StringMap.foldli (fn (_, v, NONE) => stamped v | (_, _, found) => found) NONE vals of
+        SOME s => SOME ([], s)
+      | NONE => StringMap.foldli (fn (n, e, NONE) => Option.map (fn (q, s) => (n :: q, s)) (firstStamp e)
+                                   | (_, _, found) => found) NONE strs
+    end
+
+  (* the path of the structure a structure at path strPath of a signature
+     is, where a value at path q in it is at strPath there *)
+  fun stripPath (q : string list, strPath : string list) : string list option =
+    let val nq = List.length q val np = List.length strPath
+    in if nq > np orelse List.drop (strPath, np - nq) <> q then NONE else SOME (List.take (strPath, np - nq)) end
+
+  (* the structure of a loaded signature that a value with stamp s at path
+     q of a structure may say the structure is: the unit, the signature's
+     name and itself, the path, and the structure *)
+  fun candidateAt (q : string list, s : int) : (loaded * string * SigMatch.sigma * string list * Env.env) option =
+    case (IntTable.find (Vector.sub (paths, kStamp), s), rangeOf (kStamp, s)) of
+      (SOME p, SOME (_, u)) =>
+        if not (String.isPrefix "sig:" p) then NONE
+        else
+          (case String.fields (fn c => c = #".") (String.extract (p, 4, NONE)) of
+             name :: (rest as _ :: _) =>
+               (case (stripPath (q, List.take (rest, List.length rest - 1)), StringMap.find (!unitSigs, #identity u ^ "\000" ^ name)) of
+                  (SOME cpath, SOME (sg : SigMatch.sigma)) =>
+                    Option.map (fn c => (u, name, sg, cpath, c)) (Env.findStr' (#env sg, cpath))
+                | _ => NONE)
+           | _ => NONE)
+    | _ => NONE
+
+  (* the structure of a loaded signature en may be, by its first value's
+     stamp: its key (unit, signature, path), the signature's own type
+     names, and the structure *)
+  fun candidate (en : Env.env) : (string * int IntMap.map * Env.env) option =
+    case firstStamp en of
+      NONE => NONE
+    | SOME (q, s) =>
+        Option.map (fn (u, name, sg, cpath, c) =>
+                      (#identity u ^ "\000" ^ name ^ "\000" ^ String.concatWith "." cpath,
+                       sigLocalsOf (#identity u ^ "\000" ^ name, sg), c))
+                   (candidateAt (q, s))
+
+  (* the realisation by which en is c, a structure whose own type names are
+     cl, by their stamps; NoMatch where it is not (the checks above). bare:
+     a value's stamp may differ where neither has a fact a stream writes *)
+  fun realisation (cl : int IntMap.map, c : Env.env, en : Env.env, bare : bool) : T.tyfcn IntMap.map =
+    let
+      val phi : T.tyfcn IntMap.map ref = ref IntMap.empty
+      val fromTyStr : unit IntMap.map ref = ref IntMap.empty
+      fun isLocal (k : T.tycon) = IntMap.member (cl, #stamp k)
+      fun factless (s : int) = not (IntMap.member (!Translate.primAliases, s)) andalso not (IntMap.member (!Lower.knownBefore, s))
+      fun sameStamp (a : int, b : int) = a = b orelse (bare andalso factless a andalso factless b)
+      fun tvPair (tv : (int * int) list ref) (a : int, e1 : bool, b : int, e2 : bool) : unit =
+        if e1 <> e2 then raise NoMatch
+        else
+          case List.find (fn (x, _) => x = a) (!tv) of
+            SOME (_, y) => if y = b then () else raise NoMatch
+          | NONE => if List.exists (fn (_, y) => y = b) (!tv) then raise NoMatch else tv := (a, b) :: !tv
+      fun noTvars (t : T.ty) : unit =
+        case T.prune t of
+          T.TVar _ => raise NoMatch
+        | T.TCon (_, args) => List.app noTvars args
+        | T.TRecord fs => List.app (fn (_, a) => noTvars a) fs
+        | T.TArrow (a, b) => (noTvars a; noTvars b)
+      (* two types of en, the same where type variables are in the same places *)
+      fun plain (tv : (int * int) list ref) (t1 : T.ty, t2 : T.ty) : unit =
+        case (T.prune t1, T.prune t2) of
+          (T.TVar (ref (T.Unbound {id = a, eq = e1, ...})), T.TVar (ref (T.Unbound {id = b, eq = e2, ...}))) => tvPair tv (a, e1, b, e2)
+        | (T.TCon (k1, a1), T.TCon (k2, a2)) =>
+            if #stamp k1 = #stamp k2 andalso List.length a1 = List.length a2 then ListPair.app (plain tv) (a1, a2) else raise NoMatch
+        | (T.TRecord f1, T.TRecord f2) =>
+            if List.length f1 = List.length f2
+            then ListPair.app (fn ((l1, x), (l2, y)) => if l1 = l2 then plain tv (x, y) else raise NoMatch) (f1, f2)
+            else raise NoMatch
+        | (T.TArrow (a1, b1), T.TArrow (a2, b2)) => (plain tv (a1, a2); plain tv (b1, b2))
+        | _ => raise NoMatch
+      (* a type of c and one of en: the second the first realised *)
+      fun ty (tv : (int * int) list ref) (t1 : T.ty, t2 : T.ty) : unit =
+        case (T.prune t1, T.prune t2) of
+          (T.TVar (ref (T.Unbound {id = a, eq = e1, ...})), T.TVar (ref (T.Unbound {id = b, eq = e2, ...}))) => tvPair tv (a, e1, b, e2)
+        | (T.TCon (k, args1), t2') =>
+            if isLocal k then
+              (case IntMap.find (!phi, #stamp k) of
+                 NONE =>
+                   if List.null args1 then (noTvars t2'; phi := IntMap.insert (!phi, #stamp k, T.TAbbrev ([], t2')))
+                   else
+                     (case t2' of
+                        T.TCon (k2, args2) =>
+                          if List.length args2 = List.length args1
+                          then (phi := IntMap.insert (!phi, #stamp k, T.TName k2); ListPair.app (ty tv) (args1, args2))
+                          else raise NoMatch
+                      | _ => raise NoMatch)
+               | SOME (T.TName k2) =>
+                   (case t2' of
+                      T.TCon (k3, args2) =>
+                        if #stamp k3 = #stamp k2 andalso List.length args1 = List.length args2
+                        then ListPair.app (ty tv) (args1, args2) else raise NoMatch
+                    | _ => raise NoMatch)
+               | SOME (T.TAbbrev ([], b)) => if List.null args1 then plain (ref []) (b, t2') else raise NoMatch
+               | SOME _ => raise NoMatch)
+            else
+              (case t2' of
+                 T.TCon (k2, args2) =>
+                   if #stamp k2 = #stamp k andalso List.length args1 = List.length args2
+                   then ListPair.app (ty tv) (args1, args2) else raise NoMatch
+               | _ => raise NoMatch)
+        | (T.TRecord f1, T.TRecord f2) =>
+            if List.length f1 = List.length f2
+            then ListPair.app (fn ((l1, x), (l2, y)) => if l1 = l2 then ty tv (x, y) else raise NoMatch) (f1, f2)
+            else raise NoMatch
+        | (T.TArrow (a1, b1), T.TArrow (a2, b2)) => (ty tv (a1, a2); ty tv (b1, b2))
+        | _ => raise NoMatch
+      fun fcnPlain (f1 : T.tyfcn, f2 : T.tyfcn) : unit =
+        case (f1, f2) of
+          (T.TName a, T.TName b) => if #stamp a = #stamp b then () else raise NoMatch
+        | (T.TAbbrev (p1, b1), T.TAbbrev (p2, b2)) =>
+            if List.length p1 = List.length p2 then plain (ref (ListPair.zip (p1, p2))) (b1, b2) else raise NoMatch
+        | _ => raise NoMatch
+      (* g, an image a type gave, and f2, the one a type's specification gives *)
+      fun fcnFromTy (g : T.tyfcn, f2 : T.tyfcn) : unit =
+        case (g, f2) of
+          (T.TAbbrev ([], t), T.TName k2) => plain (ref []) (t, T.TCon (k2, []))
+        | (T.TAbbrev ([], t), T.TAbbrev ([], b)) => plain (ref []) (t, b)
+        | (T.TName a, T.TName b) => if #stamp a = #stamp b then () else raise NoMatch
+        | _ => raise NoMatch
+      fun value (v1 : Env.valstatus, v2 : Env.valstatus) : unit =
+        case (v1, v2) of
+          (Env.Val {scheme = s1, stamp = a, ...}, Env.Val {scheme = s2, stamp = b, ...}) =>
+            if sameStamp (a, b) then ty (ref []) (s1, s2) else raise NoMatch
+        | (Env.Con {scheme = s1, info = i1}, Env.Con {scheme = s2, info = i2}) =>
+            if #name i1 = #name i2 andalso #tag i1 = #tag i2 then ty (ref []) (s1, s2) else raise NoMatch
+        | (Env.Exn {ty = t1, info = i1}, Env.Exn {ty = t2, info = i2}) =>
+            if sameStamp (#stamp i1, #stamp i2) then ty (ref []) (t1, t2) else raise NoMatch
+        | (Env.Prim {scheme = s1, name = n1}, Env.Prim {scheme = s2, name = n2}) =>
+            if n1 = n2 then ty (ref []) (s1, s2) else raise NoMatch
+        | (Env.ConAsVal {scheme = s1, info = i1}, Env.ConAsVal {scheme = s2, info = i2}) =>
+            if #name i1 = #name i2 andalso #tag i1 = #tag i2 then ty (ref []) (s1, s2) else raise NoMatch
+        | (Env.ExnAsVal {ty = t1, info = i1}, Env.ExnAsVal {ty = t2, info = i2}) =>
+            if sameStamp (#stamp i1, #stamp i2) then ty (ref []) (t1, t2) else raise NoMatch
+        | _ => raise NoMatch
+      fun tyStr (Env.TyStr {fcn = f1, cons = c1}, Env.TyStr {fcn = f2, cons = c2}) : unit =
+        ((case f1 of
+            T.TName k =>
+              if isLocal k then
+                (case IntMap.find (!phi, #stamp k) of
+                   NONE => (phi := IntMap.insert (!phi, #stamp k, f2); fromTyStr := IntMap.insert (!fromTyStr, #stamp k, ()))
+                 | SOME g =>
+                     if IntMap.member (!fromTyStr, #stamp k) then fcnPlain (g, f2)
+                     else (fcnFromTy (g, f2); phi := IntMap.insert (!phi, #stamp k, f2);
+                           fromTyStr := IntMap.insert (!fromTyStr, #stamp k, ())))
+              else (case f2 of T.TName k2 => if #stamp k2 = #stamp k then () else raise NoMatch | _ => raise NoMatch)
+          | T.TAbbrev (p1, b1) =>
+              (case f2 of
+                 T.TAbbrev (p2, b2) =>
+                   if List.length p1 = List.length p2 then ty (ref (ListPair.zip (p1, p2))) (b1, b2) else raise NoMatch
+               | _ => raise NoMatch));
+         if List.length c1 = List.length c2
+         then ListPair.app (fn ((n1, v1), (n2, v2)) => if n1 = n2 then value (v1, v2) else raise NoMatch) (c1, c2)
+         else raise NoMatch)
+      fun keysEq (m1 : 'a StringMap.map, m2 : 'b StringMap.map) : bool =
+        StringMap.numItems m1 = StringMap.numItems m2
+        andalso StringMap.foldli (fn (n, _, ok) => ok andalso isSome (StringMap.find (m2, n))) true m1
+      fun env (Env.Env {vals = v1, tys = t1, strs = s1, ...}, Env.Env {vals = v2, tys = t2, strs = s2, ...}) : unit =
+        if not (keysEq (v1, v2) andalso keysEq (t1, t2) andalso keysEq (s1, s2)) then raise NoMatch
+        else
+          (StringMap.appi (fn (n, x) => tyStr (x, valOf (StringMap.find (t2, n)))) t1;
+           StringMap.appi (fn (n, x) => value (x, valOf (StringMap.find (v2, n)))) v1;
+           StringMap.appi (fn (n, x) => env (x, valOf (StringMap.find (s2, n)))) s1)
+    in env (c, en); !phi end
+
+  (* The realisation by which en is c renamed, as a basis's reference must
+     have it (functors-units M11, part 2): what reading c's names again
+     makes of it is en. Stricter than realisation: the same type variables
+     (cells), the same type names (stamp, name, arity, equality) but c's
+     own, each of those the same image wherever it is; the same
+     constructors and exceptions but their stamps and whether they are
+     global, no origins, and a type's constructors only constructors. The
+     stamps and the flags of en's values, and c's, in the order of the
+     values (by name, then each structure's in turn); NoMatch where en is
+     not c renamed. *)
+  type renaming = {phi : T.tyfcn IntMap.map, stamps : int list, globals : bool list, cStamps : int list, cGlobals : bool list}
+  fun renaming (cl : int IntMap.map, c : Env.env, en : Env.env) : renaming =
+    let
+      val phi : T.tyfcn IntMap.map ref = ref IntMap.empty
+      val fromTyStr : unit IntMap.map ref = ref IntMap.empty
+      val stamps : int list ref = ref []
+      val globals : bool list ref = ref []
+      val cStamps : int list ref = ref []
+      val cGlobals : bool list ref = ref []
+      fun isLocal (k : T.tycon) = IntMap.member (cl, #stamp k)
+      fun sameTycon (a : T.tycon, b : T.tycon) =
+        #stamp a = #stamp b andalso #arity a = #arity b andalso #eq a = #eq b andalso #name a = #name b
+      fun noTvars (t : T.ty) : unit =
+        case T.prune t of
+          T.TVar _ => raise NoMatch
+        | T.TCon (_, args) => List.app noTvars args
+        | T.TRecord fs => List.app (fn (_, a) => noTvars a) fs
+        | T.TArrow (a, b) => (noTvars a; noTvars b)
+      fun plain (t1 : T.ty, t2 : T.ty) : unit =
+        case (T.prune t1, T.prune t2) of
+          (T.TVar r1, T.TVar r2) => if r1 = r2 then () else raise NoMatch
+        | (T.TCon (k1, a1), T.TCon (k2, a2)) =>
+            if sameTycon (k1, k2) andalso List.length a1 = List.length a2 then ListPair.app plain (a1, a2) else raise NoMatch
+        | (T.TRecord f1, T.TRecord f2) =>
+            if List.length f1 = List.length f2
+            then ListPair.app (fn ((l1, x), (l2, y)) => if l1 = l2 then plain (x, y) else raise NoMatch) (f1, f2)
+            else raise NoMatch
+        | (T.TArrow (a1, b1), T.TArrow (a2, b2)) => (plain (a1, a2); plain (b1, b2))
+        | _ => raise NoMatch
+      fun ty (t1 : T.ty, t2 : T.ty) : unit =
+        case (T.prune t1, T.prune t2) of
+          (T.TVar r1, T.TVar r2) => if r1 = r2 then () else raise NoMatch
+        | (T.TCon (k, args1), t2') =>
+            if isLocal k then
+              (case IntMap.find (!phi, #stamp k) of
+                 NONE =>
+                   if List.null args1 then (noTvars t2'; phi := IntMap.insert (!phi, #stamp k, T.TAbbrev ([], t2')))
+                   else
+                     (case t2' of
+                        T.TCon (k2, args2) =>
+                          if List.length args2 = List.length args1 andalso #arity k2 = #arity k
+                          then (phi := IntMap.insert (!phi, #stamp k, T.TName k2); ListPair.app ty (args1, args2))
+                          else raise NoMatch
+                      | _ => raise NoMatch)
+               | SOME (T.TName k2) =>
+                   (case t2' of
+                      T.TCon (k3, args2) =>
+                        if sameTycon (k3, k2) andalso List.length args1 = List.length args2 then ListPair.app ty (args1, args2)
+                        else raise NoMatch
+                    | _ => raise NoMatch)
+               | SOME (T.TAbbrev ([], b)) => if List.null args1 then plain (b, t2') else raise NoMatch
+               | SOME _ => raise NoMatch)
+            else
+              (case t2' of
+                 T.TCon (k2, args2) =>
+                   if sameTycon (k, k2) andalso List.length args1 = List.length args2 then ListPair.app ty (args1, args2)
+                   else raise NoMatch
+               | _ => raise NoMatch)
+        | (T.TRecord f1, T.TRecord f2) =>
+            if List.length f1 = List.length f2
+            then ListPair.app (fn ((l1, x), (l2, y)) => if l1 = l2 then ty (x, y) else raise NoMatch) (f1, f2)
+            else raise NoMatch
+        | (T.TArrow (a1, b1), T.TArrow (a2, b2)) => (ty (a1, a2); ty (b1, b2))
+        | _ => raise NoMatch
+      fun fcnPlain (f1 : T.tyfcn, f2 : T.tyfcn) : unit =
+        case (f1, f2) of
+          (T.TName a, T.TName b) => if sameTycon (a, b) then () else raise NoMatch
+        | (T.TAbbrev (p1, b1), T.TAbbrev (p2, b2)) => if p1 = p2 then plain (b1, b2) else raise NoMatch
+        | _ => raise NoMatch
+      fun fcnFromTy (g : T.tyfcn, f2 : T.tyfcn) : unit =
+        case (g, f2) of
+          (T.TAbbrev ([], t), T.TName k2) => plain (t, T.TCon (k2, []))
+        | (T.TAbbrev ([], t), T.TAbbrev ([], b)) => plain (t, b)
+        | (T.TName a, T.TName b) => if sameTycon (a, b) then () else raise NoMatch
+        | _ => raise NoMatch
+      fun exn (i1 : Ast.exninfo, i2 : Ast.exninfo) : unit =
+        if #name i1 = #name i2 andalso #hasArg i1 = #hasArg i2 andalso #builtin i1 = #builtin i2
+        then (stamps := #stamp i2 :: !stamps; globals := #isGlobal i2 :: !globals;
+              cStamps := #stamp i1 :: !cStamps; cGlobals := #isGlobal i1 :: !cGlobals)
+        else raise NoMatch
+      fun value (v1 : Env.valstatus, v2 : Env.valstatus) : unit =
+        case (v1, v2) of
+          (Env.Val {scheme = s1, stamp = a, global = g1}, Env.Val {scheme = s2, stamp = b, global = g2}) =>
+            (ty (s1, s2); stamps := b :: !stamps; globals := g2 :: !globals; cStamps := a :: !cStamps; cGlobals := g1 :: !cGlobals)
+        | (Env.Con {scheme = s1, info = i1}, Env.Con {scheme = s2, info = i2}) => if i1 = i2 then ty (s1, s2) else raise NoMatch
+        | (Env.Exn {ty = t1, info = i1}, Env.Exn {ty = t2, info = i2}) => (ty (t1, t2); exn (i1, i2))
+        | (Env.Prim {scheme = s1, name = n1}, Env.Prim {scheme = s2, name = n2}) => if n1 = n2 then ty (s1, s2) else raise NoMatch
+        | (Env.ConAsVal {scheme = s1, info = i1}, Env.ConAsVal {scheme = s2, info = i2}) =>
+            if i1 = i2 then ty (s1, s2) else raise NoMatch
+        | (Env.ExnAsVal {ty = t1, info = i1}, Env.ExnAsVal {ty = t2, info = i2}) => (ty (t1, t2); exn (i1, i2))
+        | _ => raise NoMatch
+      (* a type's constructors: constructors alone, which have no stamps *)
+      fun con (v1 : Env.valstatus, v2 : Env.valstatus) : unit =
+        case (v1, v2) of
+          (Env.Con _, Env.Con _) => value (v1, v2)
+        | (Env.ConAsVal _, Env.ConAsVal _) => value (v1, v2)
+        | _ => raise NoMatch
+      fun tyStr (Env.TyStr {fcn = f1, cons = c1}, Env.TyStr {fcn = f2, cons = c2}) : unit =
+        ((case f1 of
+            T.TName k =>
+              if isLocal k then
+                (case IntMap.find (!phi, #stamp k) of
+                   NONE => (phi := IntMap.insert (!phi, #stamp k, f2); fromTyStr := IntMap.insert (!fromTyStr, #stamp k, ()))
+                 | SOME g =>
+                     if IntMap.member (!fromTyStr, #stamp k) then fcnPlain (g, f2)
+                     else (fcnFromTy (g, f2); phi := IntMap.insert (!phi, #stamp k, f2);
+                           fromTyStr := IntMap.insert (!fromTyStr, #stamp k, ())))
+              else (case f2 of T.TName k2 => if sameTycon (k, k2) then () else raise NoMatch | _ => raise NoMatch)
+          | T.TAbbrev (p1, b1) =>
+              (case f2 of T.TAbbrev (p2, b2) => if p1 = p2 then ty (b1, b2) else raise NoMatch | _ => raise NoMatch));
+         if List.length c1 = List.length c2
+         then ListPair.app (fn ((n1, v1), (n2, v2)) => if n1 = n2 then con (v1, v2) else raise NoMatch) (c1, c2)
+         else raise NoMatch)
+      fun keysEq (m1 : 'a StringMap.map, m2 : 'b StringMap.map) : bool =
+        StringMap.numItems m1 = StringMap.numItems m2
+        andalso StringMap.foldli (fn (n, _, ok) => ok andalso isSome (StringMap.find (m2, n))) true m1
+      fun env (Env.Env {vals = v1, tys = t1, strs = s1, origins = o1}, Env.Env {vals = v2, tys = t2, strs = s2, origins = o2}) : unit =
+        if not (StringMap.isEmpty o1 andalso StringMap.isEmpty o2 andalso keysEq (v1, v2) andalso keysEq (t1, t2)
+                andalso keysEq (s1, s2))
+        then raise NoMatch
+        else
+          (StringMap.appi (fn (n, x) => tyStr (x, valOf (StringMap.find (t2, n)))) t1;
+           StringMap.appi (fn (n, x) => value (x, valOf (StringMap.find (v2, n)))) v1;
+           StringMap.appi (fn (n, x) => env (x, valOf (StringMap.find (s2, n)))) s1)
+    in
+      env (c, en);
+      {phi = !phi, stamps = List.rev (!stamps), globals = List.rev (!globals),
+       cStamps = List.rev (!cStamps), cGlobals = List.rev (!cGlobals)}
+    end
+
+  (* A structure's template, which each reference to it is made from (a
+     load reads it in the time of the structure's distinct types, not of
+     their occurrences, and shares them as a basis read whole shares the
+     types it wrote once, issue 14): its types, each once -- by what it is
+     made of, its parts' numbers before it -- whether each names one of the
+     structure's own type names, and the number of the type at each place a
+     type is, in the order renamedEnv takes them (values by name, then
+     types, each its definition's body and its constructors, then each
+     structure in turn) *)
+
+  (* the types an environment has, in the order a template numbers them *)
+  fun envTypes (f : T.ty -> unit) (Env.Env {vals, tys, strs, ...}) : unit =
+    (List.app (fn (_, v) => f (schemeOf v)) (StringMap.listItemsi vals);
+     List.app (fn (_, Env.TyStr {fcn, cons}) =>
+                 ((case fcn of T.TAbbrev (_, b) => f b | T.TName _ => ());
+                  List.app (fn (_, v) => f (schemeOf v)) cons)) (StringMap.listItemsi tys);
+     List.app (fn (_, e) => envTypes f e) (StringMap.listItemsi strs))
+
+  fun makeTemplate (cl : int IntMap.map, c : Env.env) : template =
+    let
+      val table : (int list * string list * int) list IntTable.table = IntTable.table 1024
+      val nodes : tnode list ref = ref []
+      val origs : T.ty list ref = ref []
+      val owns : bool list ref = ref []
+      val count = ref 0
+      val ownedSoFar : bool IntTable.table = IntTable.table 1024
+      fun owned i = getOpt (IntTable.find (ownedSoFar, i), false)
+      fun fresh (node : tnode, orig : T.ty, own : bool) : int =
+        let val i = !count
+        in count := i + 1; nodes := node :: !nodes; origs := orig :: !origs; owns := own :: !owns;
+           IntTable.insert (ownedSoFar, i, own); i end
+      fun add (ints : int list, labels : string list, node : tnode, orig : T.ty, own : bool) : int =
+        let
+          val h = List.foldl (fn (x, h) => (h * 31 + x mod 1000003) mod 1000003) (List.length labels) ints
+          val bucket = getOpt (IntTable.find (table, h), [])
+        in
+          case List.find (fn (is, ls, _) => is = ints andalso ls = labels) bucket of
+            SOME (_, _, i) => i
+          | NONE => let val i = fresh (node, orig, own) in IntTable.insert (table, h, (ints, labels, i) :: bucket); i end
+        end
+      fun intern (t : T.ty) : int =
+        case T.prune t of
+          t' as T.TVar (r as ref (T.Unbound {id, ...})) =>
+            (* by its id where it is the variable of that id the session has *)
+            (case IntTable.find (!tvars, id) of
+               SOME cell => if cell = r then add ([0, id], [], NVar, t', false) else fresh (NVar, t', false)
+             | NONE => fresh (NVar, t', false))
+        | t' as T.TVar _ => fresh (NVar, t', false)
+        | t' as T.TCon (k, args) =>
+            let val ks = List.map intern args
+            in add ([1, #stamp k, #arity k, if #eq k then 1 else 0] @ ks, [#name k], NCon (k, ks), t',
+                    IntMap.member (cl, #stamp k) orelse List.exists owned ks)
+            end
+        | t' as T.TRecord fs =>
+            let val ks = List.map (fn (_, a) => intern a) fs
+            in add (2 :: ks, List.map #1 fs, NRec (ListPair.zip (List.map #1 fs, ks)), t', List.exists owned ks) end
+        | t' as T.TArrow (a, b) =>
+            let val ka = intern a val kb = intern b
+            in add ([3, ka, kb], [], NArr (ka, kb), t', owned ka orelse owned kb) end
+      val slots : int list ref = ref []
+      val () = envTypes (fn t => slots := intern t :: !slots) c
+    in
+      {nodes = Vector.fromList (List.rev (!nodes)), orig = Vector.fromList (List.rev (!origs)),
+       owned = Vector.fromList (List.rev (!owns)), slots = Vector.fromList (List.rev (!slots))}
+    end
+
+  (* each type of a template realised by phi, where it names one of the
+     structure's own type names, and else the type itself *)
+  fun instantiate (tp : template, phi : T.tyfcn IntMap.map) : T.ty vector =
+    let
+      val n = Vector.length (#nodes tp)
+      val res : T.ty array = Array.array (n, T.TRecord [])
+      fun r i = Array.sub (res, i)
+      fun one i =
+        let val orig = Vector.sub (#orig tp, i)
+        in
+          if not (Vector.sub (#owned tp, i)) then orig
+          else
+            case Vector.sub (#nodes tp, i) of
+              NVar => orig
+            | NCon (k, ks) =>
+                (case IntMap.find (phi, #stamp k) of
+                   NONE => T.TCon (k, List.map r ks)
+                 | SOME (T.TName k2) => T.TCon (k2, List.map r ks)
+                 | SOME (T.TAbbrev ([], b)) => if List.null ks then b else T.realize (phi, orig)
+                 | SOME _ => T.realize (phi, orig))
+            | NRec fs => T.TRecord (List.map (fn (l, j) => (l, r j)) fs)
+            | NArr (a, b) => T.TArrow (r a, r b)
+        end
+      fun loop i = if i >= n then () else (Array.update (res, i, one i); loop (i + 1))
+    in loop 0; Array.vector res end
+
+  fun templateOf (key : string, cl : int IntMap.map, c : Env.env) : template =
+    case StringMap.find (!templates, key) of
+      SOME tp => tp
+    | NONE => let val tp = makeTemplate (cl, c) in templates := StringMap.insert (!templates, key, tp); tp end
+
+  (* c renamed: what a basis's reference reads as (renaming) -- its types
+     those of instantiate, in the order its template numbers its places;
+     its own type names in a type's definition by phi; its values' stamps
+     and flags from the lists where they are given (in the order renaming
+     gives them) *)
+  fun renamedEnv (tp : template, phi : T.tyfcn IntMap.map, stamps : int list ref option, globals : bool list ref option)
+                 (c : Env.env) : Env.env =
+    let
+      val types = instantiate (tp, phi)
+      val pos = ref 0
+      fun ty (_ : T.ty) : T.ty =
+        let val i = !pos
+        in
+          if i >= Vector.length (#slots tp) then raise Pickle.Bad "a reference's template ran out"
+          else (pos := i + 1; Vector.sub (types, Vector.sub (#slots tp, i)))
+        end
+      fun next (l : 'a list ref option, old : 'a) : 'a =
+        case l of
+          NONE => old
+        | SOME r => (case !r of x :: rest => (r := rest; x) | [] => raise Pickle.Bad "a reference's names ran out")
+      fun exn (info : Ast.exninfo) : Ast.exninfo =
+        let val s = next (stamps, #stamp info) val g = next (globals, #isGlobal info)
+        in {name = #name info, stamp = s, isGlobal = g, hasArg = #hasArg info, builtin = #builtin info} end
+      fun value (v : Env.valstatus) : Env.valstatus =
+        case v of
+          Env.Val {scheme, stamp, global} =>
+            let val t = ty scheme val s = next (stamps, stamp) val g = next (globals, global)
+            in Env.Val {scheme = t, stamp = s, global = g} end
+        | Env.Con {scheme, info} => Env.Con {scheme = ty scheme, info = info}
+        | Env.Exn {ty = t, info} => let val t' = ty t in Env.Exn {ty = t', info = exn info} end
+        | Env.Prim {scheme, name} => Env.Prim {scheme = ty scheme, name = name}
+        | Env.ConAsVal {scheme, info} => Env.ConAsVal {scheme = ty scheme, info = info}
+        | Env.ExnAsVal {ty = t, info} => let val t' = ty t in Env.ExnAsVal {ty = t', info = exn info} end
+      fun tystr (Env.TyStr {fcn, cons}) : Env.tystatus =
+        let
+          val fcn' = case fcn of
+                       T.TName k => (case IntMap.find (phi, #stamp k) of SOME g => g | NONE => fcn)
+                     | T.TAbbrev (ids, body) => T.TAbbrev (ids, ty body)
+          val cons' = List.map (fn (n, v) => (n, value v)) cons
+        in Env.TyStr {fcn = fcn', cons = cons'} end
+      fun go (Env.Env {vals, tys, strs, origins}) : Env.env =
+        let
+          val vals' = List.foldl (fn ((n, v), m) => StringMap.insert (m, n, value v)) StringMap.empty (StringMap.listItemsi vals)
+          val tys' = List.foldl (fn ((n, t), m) => StringMap.insert (m, n, tystr t)) StringMap.empty (StringMap.listItemsi tys)
+          val strs' = List.foldl (fn ((n, e), m) => StringMap.insert (m, n, go e)) StringMap.empty (StringMap.listItemsi strs)
+        in Env.Env {vals = vals', tys = tys', strs = strs', origins = origins} end
+      val en = go c
+    in
+      if !pos = Vector.length (#slots tp) then en else raise Pickle.Bad "a reference's template left over"
+    end
+
+  (* the names of an environment's entries, by which a functor's result is
+     looked up among the structures of its parameter *)
+  fun namesKey (Env.Env {vals, tys, strs, ...}) : string =
+    String.concatWith " " (StringMap.foldri (fn (n, _, acc) => n :: acc) [] vals) ^ "\000"
+    ^ String.concatWith " " (StringMap.foldri (fn (n, _, acc) => n :: acc) [] tys) ^ "\000"
+    ^ String.concatWith " " (StringMap.foldri (fn (n, _, acc) => n :: acc) [] strs)
+
+  (* a structure of a signature, and each of its own, kept by the names of
+     its entries for a functor's result (paramRefs) *)
+  fun noteParam (key : string, cl : int IntMap.map, c : Env.env) : unit =
+    let
+      val k = namesKey c
+      val l = getOpt (StringMap.find (!paramRefs, k), [])
+    in
+      if List.exists (fn (key', _, _) => key' = key) l then ()
+      else paramRefs := StringMap.insert (!paramRefs, k, l @ [(key, cl, c)]);
+      StringMap.appi (fn (n, sub) => noteParam (key ^ (if String.isSuffix "\000" key then "" else ".") ^ n, cl, sub)) (Env.strs c)
+    end
+
+  (* An environment written whole, its values, types and structures each
+     kind in the order of the names, each entry by its name and what it is:
+     a signature's and a functor's, whose entries no usage names; each
+     structure by reference where it may be (fpChild) *)
+  fun fpEnvInto (w : P.writer, local' : int IntMap.map, Env.Env {vals, tys, strs, ...}) : unit =
+    (P.nat (w, StringMap.numItems vals); StringMap.appi (fn (n, v) => (P.string (w, n); fpVal (w, local', v))) vals;
+     P.nat (w, StringMap.numItems tys); StringMap.appi (fn (n, t) => (P.string (w, n); fpTyStr (w, local', t))) tys;
+     P.nat (w, StringMap.numItems strs); StringMap.appi (fn (n, e) => (P.string (w, n); fpChild (w, local', e))) strs)
+
+  (* a child: whole as before but in a usage's stream, and there a byte, 0
+     and the child whole, or 1 and a reference -- the structure's
+     fingerprint and the image of each of its own type names in the order
+     of their first occurrence in it *)
+  and fpChild (w : P.writer, local' : int IntMap.map, en : Env.env) : unit =
+    if not (!childRefs) then fpEnvInto (w, local', en)
+    else
+      case reference en of
+        SOME (fp, order, phi) =>
+          (P.byte (w, 1); P.string (w, fp); P.nat (w, List.length order);
+           List.app (fn s => fpFcn (w, local', valOf (IntMap.find (phi, s)))) order)
+      | NONE => (P.byte (w, 0); fpEnvInto (w, local', en))
+
+  (* the reference that may stand for en: the structure's fingerprint, its
+     own type names, and the realisation *)
+  and reference (en : Env.env) : (string * int list * T.tyfcn IntMap.map) option =
+    let
+      fun check (key, cl, c) =
+        let
+          val order = orderOf (key, cl, c)
+          val phi = realisation (cl, c, en, not (!anchorValues))
+        in
+          if List.all (fn s => IntMap.member (phi, s)) order then SOME (structureFp (key, cl, c, order), order, phi) else NONE
+        end
+        handle NoMatch => NONE
+    in
+      case candidate en of
+        SOME (x as (key, cl, c)) =>
+          (case check x of
+             SOME r => (if !inParam then noteParam (key, cl, c) else (); SOME r)
+           | NONE => NONE)
+      | NONE =>
+          if not (!inResult) then NONE
+          else
+            let
+              fun try [] = NONE
+                | try (x :: rest) = (case check x of SOME r => SOME r | NONE => try rest)
+            in try (getOpt (StringMap.find (!paramRefs, namesKey en), [])) end
+    end
+
+  (* a signature's structure's fingerprint: its tokens, its own type names
+     numbered in the order of their first occurrence in it, worked out once
+     a session, apart from any functor's stream *)
+  and structureFp (key : string, cl : int IntMap.map, c : Env.env, order : int list) : string =
+    let val m = (if !anchorValues then "v\000" else "-\000") ^ key
+    in
+      case StringMap.find (!refMemo, m) of
+        SOME f => f
+      | NONE =>
+          let
+            val own = #2 (List.foldl (fn (s, (i, m)) => (i + 1, IntMap.insert (m, s, i))) (0, IntMap.empty) order)
+            val saved = (!inParam, !inResult)
+            val () = (inParam := false; inResult := false)
+            val f = hashed "sigref" (fn w => fpEnvInto (w, own, c))
+                    handle e => (inParam := #1 saved; inResult := #2 saved; raise e)
+          in
+            inParam := #1 saved; inResult := #2 saved;
+            refMemo := StringMap.insert (!refMemo, m, f); f
+          end
+    end
+
+  (* A structure's fingerprint, of one a usage names: its entries of each
+     kind in the order of their names, each by its name and fingerprint,
+     which is the usage of its long name's (S1): binder bound the
+     structure, and prefix ^ name is an entry's long name (memo) *)
+  fun fpEnv ((binder, prefix) : string * string, Env.Env {vals, tys, strs, ...}) : string =
+    let
+      val w = P.writer ()
+      fun child (kind : string, n : string, f : unit -> string) : string =
+        case memo (binder, kind ^ " " ^ prefix ^ n, fn () => SOME (f ())) of SOME d => d | NONE => ""
+      fun entries (kind : string, m : 'a StringMap.map, f : string * 'a -> unit -> string) =
+        (P.nat (w, StringMap.numItems m); StringMap.appi (fn (n, x) => (P.string (w, n); P.string (w, child (kind, n, f (n, x))))) m)
+    in
+      entries ("v", vals, fn (_, v) => fn () => hashed "v" (fn w => fpVal (w, IntMap.empty, v)));
+      entries ("t", tys, fn (_, t) => fn () => hashed "t" (fn w => fpTyStr (w, IntMap.empty, t)));
+      entries ("s", strs, fn (n, e) => fn () => fpEnv ((binder, prefix ^ n ^ "."), e));
+      hashAt ("env", P.contents w)
+    end
+
+  (* a signature's or a functor's own type names: how many, and of each its
+     arity and whether it admits equality (issue 16) *)
+  fun fpBound (w : P.writer, cs : T.tycon list) : unit =
+    (P.nat (w, List.length cs); List.app (fn c => (P.nat (w, #arity c); P.bool (w, #eq c))) cs)
+
+  fun fpSigma ({bound, env = en, ...} : SigMatch.sigma) : string =
+    hashed "sig" (fn w => (fpBound (w, bound); fpEnvInto (w, localsOf bound, en)))
 
   (* the fingerprint of a signature's ABI (a dynamic module's: Elaborate,
      StrDynamic and StrExport): what its specifications say, the types they
@@ -324,53 +1214,28 @@ struct
              (* a usage too: a unit made with one is not the other's *)
              (fn sg => if (Usage.use ("whole", "on"); !wholeFingerprints) then "whole"
                        else
-                         let val () = anchorValues := false
-                             val f = P.hash (fpSigma sg) handle e => (anchorValues := true; raise e)
+                         let val () = (anchorValues := false; scratch := IntTable.table 16)
+                             (* the ABI's form too: a structure's record with
+                                its substructures' records nested (D3), so that
+                                a module made for the flat records before is
+                                refused, not misread *)
+                             val f = labelled "sigabi" (fn () => hashAt ("sigabi", "nested records\000" ^ fpSigma sg))
+                                     handle e => (anchorValues := true; raise e)
                          in anchorValues := true; f end)
 
-  (* the text a fingerprint hashes, of a functor: its signature, the
-     parameter's names and those its body made local to it, its values
-     specifications; nothing where it has no summary *)
-  fun fpFunctor (Elaborate.FunInfo {paramSig = {bound, env = pe,...}, summary, ...}) : string option =
-    case summary of
-      NONE => NONE
-    | SOME {generated, result, ...} =>
-        let
-          val local' = #2 (List.foldl (fn (c, (i, m)) => (i + 1, IntMap.insert (m, #stamp c, i))) (0, IntMap.empty)
-                                      (bound @ generated))
-          val () = anchorValues := false
-          val f = (Int.toString (List.length bound) ^ fpEnv (local', pe) ^ "->" ^ Int.toString (List.length generated)
-                   ^ fpEnv (local', result))
-                  handle e => (anchorValues := true; raise e)
-        in anchorValues := true; SOME f end
-
-  (* The fingerprint of what a usage names in the session as it is now:
-     NONE where nothing does. A functor is its signature (fpFunctor): a
-     unit that applies it to make code depends on the unit that declared
-     it as well ("funat"). An overloading is its binder's identity: what it
-     is is the whole unit's. *)
-  fun fingerprint (key : string) : string option =
+  (* of a functor: its signature, the parameter's own type names and those
+     its body made local to it, its values specifications *)
+  fun fpFunctor (Elaborate.FunInfo {paramSig = {bound, env = pe,...}, summary = {generated, result}, ...}) : string option =
     let
-      val (kind, name) = case String.fields (fn c => c = #" ") key of k :: rest => (k, String.concatWith " " rest) | [] => ("", "")
-      val path = String.fields (fn c => c = #".") name
-      val (strs, last) = (List.take (path, List.length path - 1), List.last path)
-      val env = case !Env.session of SOME e => e | NONE => Env.initial
-      val hash = Option.map P.hash
-      fun inStr f = case Env.findStr' (env, strs) of SOME e => f e | NONE => NONE
-    in
-      case kind of
-        "v" => hash (inStr (fn e => Option.map (fn v => fpVal (IntMap.empty, v)) (StringMap.find (Env.vals e, last))))
-      | "t" => hash (inStr (fn e => Option.map (fn t => fpTyStr (IntMap.empty, t)) (StringMap.find (Env.tys e, last))))
-      | "s" => hash (Option.map (fn e => fpEnv (IntMap.empty, e)) (Env.findStr' (env, path)))
-      | "sig" => hash (Option.map fpSigma (StringMap.find (!Elaborate.sigs, name)))
-      | "fun" => hash (Option.mapPartial fpFunctor (StringMap.find (!Elaborate.funs, name)))
-      | "fix" => hash (SOME (case StringMap.find (#table (!sessionFixity), name) of
-                               NONE => "nonfix"
-                             | SOME Fixity.Nonfix => "nonfix"
-                             | SOME (Fixity.Infix p) => "infix " ^ Int.toString p
-                             | SOME (Fixity.Infixr p) => "infixr " ^ Int.toString p))
-      | _ => NONE
-    end
+      val local' = localsOf (bound @ generated)
+      fun reset () = (anchorValues := true; inParam := false; inResult := false; paramRefs := StringMap.empty)
+      val () = (anchorValues := false; paramRefs := StringMap.empty)
+      val f = hashed "fun" (fn w => (fpBound (w, bound);
+                                     inParam := true; fpEnvInto (w, local', pe); inParam := false;
+                                     fpBound (w, generated);
+                                     inResult := true; fpEnvInto (w, local', result); inResult := false))
+              handle e => (reset (); raise e)
+    in reset (); SOME f end
 
   (* What the REPL decided a declaration's echo by when it compiled it
      (src/repl): whether it echoed at all (the usage "echo on") and whether
@@ -386,12 +1251,13 @@ struct
      structure's; of a setting of the REPL's, "on" where it is on *)
   fun binderOfKey (key : string) : string =
     if String.isPrefix "p " key orelse String.isPrefix "echo " key then (if !replSetting key then "on" else "")
-    (* the code of a functor's body applied, from the unit IDENTITY: that
-       unit, where the session has it *)
-    else if String.isPrefix "funat " key then
-      let val i = String.extract (key, 6, NONE)
-      in if isSome (StringMap.find (!byIdentity, i)) then i else "" end
     else if key = "whole on" then (if !wholeFingerprints then "on" else "")
+    (* a functor inlined where it is applied: the unit that bound it, and
+       its Mid's hash where that unit is another *)
+    else if String.isPrefix "inl " key then binderOf ("fun " ^ String.extract (key, 4, NONE))
+    (* a function inlined where it is named: the unit that bound the name,
+       as of the value's usage (functors-units M10) *)
+    else if String.isPrefix "inlv " key then binderOfKey ("v " ^ String.extract (key, 5, NONE))
     else
     case String.fields (fn c => c = #" ") key of
       [kind, name] =>
@@ -402,6 +1268,46 @@ struct
            | _ => binderOf key)
     | _ => binderOf key
 
+  (* The fingerprint of what a usage names in the session as it is now:
+     NONE where nothing does. A functor is its signature (fpFunctor), and a
+     functor inlined where it is applied its function's Mid too ("inl").
+     An overloading is its binder's identity: what it is is the whole
+     unit's. *)
+  (* a usage's stream, its structures by reference where they may be (fpChild) *)
+  fun byReference (f : unit -> 'a) : 'a =
+    (childRefs := true; (f () before childRefs := false) handle e => (childRefs := false; raise e))
+
+  fun fingerprint (key : string) : string option =
+    let
+      val (kind, name) = case String.fields (fn c => c = #" ") key of k :: rest => (k, String.concatWith " " rest) | [] => ("", "")
+      val path = String.fields (fn c => c = #".") name
+      val (strs, last) = (List.take (path, List.length path - 1), List.last path)
+      val env = case !Env.session of SOME e => e | NONE => Env.initial
+      fun inStr f = case Env.findStr' (env, strs) of SOME e => f e | NONE => NONE
+      val () = scratch := IntTable.table 16
+    in
+      case kind of
+        "v" => inStr (fn e => Option.map (fn v => hashed "v" (fn w => fpVal (w, IntMap.empty, v))) (StringMap.find (Env.vals e, last)))
+      | "t" => inStr (fn e => Option.map (fn t => hashed "t" (fn w => fpTyStr (w, IntMap.empty, t))) (StringMap.find (Env.tys e, last)))
+      | "s" => Option.map (fn e => fpEnv ((binderOfKey key, name ^ "."), e)) (Env.findStr' (env, path))
+      | "sig" => Option.map (fn sg => byReference (fn () => fpSigma sg)) (StringMap.find (!sessionSigs, name))
+      | "fun" => (case StringMap.find (!sessionFuns, name) of SOME f => byReference (fn () => fpFunctor f) | NONE => NONE)
+      | "inl" => (case StringMap.find (!sessionFuns, name) of
+                    SOME (Elaborate.FunInfo {code = g, ...}) => inlineHash g
+                  | _ => NONE)
+      (* a function inlined where it is named: its Mid's hash, through the
+         globals that are it (functors-units M10) *)
+      | "inlv" => inStr (fn e => case StringMap.find (Env.vals e, last) of
+                                   SOME (Env.Val {stamp, ...}) => Option.mapPartial inlineHash (Expand.inlinedValue stamp)
+                                 | _ => NONE)
+      | "fix" => SOME (hashAt ("fix", case StringMap.find (#table (!sessionFixity), name) of
+                                        NONE => "nonfix"
+                                      | SOME Fixity.Nonfix => "nonfix"
+                                      | SOME (Fixity.Infix p) => "infix " ^ Int.toString p
+                                      | SOME (Fixity.Infixr p) => "infixr " ^ Int.toString p))
+      | _ => NONE
+    end
+
   (* A usage holds as "IDENTITY FINGERPRINT": the binder's identity, which
      settles it where it is the same, and the fingerprint of what the name
      names, which settles the rest (a name no fingerprint covers -- a
@@ -410,23 +1316,22 @@ struct
      name names is its binder's entry by that name, the same in every unit
      that names it there (fingerprints are a third of a compile in units
      where each unit works out its own) *)
-  fun fingerprintAt (key : string, binder : string) : string option =
-    let val m = binder ^ "\000" ^ key
-    in
-      case StringMap.find (!fpMemo, m) of
-        SOME f => f
-      | NONE => let val f = fingerprint key in fpMemo := StringMap.insert (!fpMemo, m, f); f end
-    end
+  fun fingerprintAt (key : string, binder : string) : string option = memo (binder, key, fn () => fingerprint key)
 
   fun usageValue (key : string) : string =
     let val b = binderOfKey key
     in b ^ " " ^ (case fingerprintAt (key, b) of SOME f => f | NONE => "-") end
 
   (* The usages of a compile: each name it looked up (Usage) *)
-  fun usagesOf (names : string list) : (string * string) list = List.map (fn k => (k, usageValue k)) names
+  fun usagesOf (names : string list) : (string * string) list = during "usages" (fn () => List.map (fn k => (k, usageValue k)) names)
 
-  (* the first usage that does not hold in the session as it is, if one *)
-  fun broken (us : (string * string) list) : string option =
+  (* the first usage that does not hold in the session as it is, if one.
+     By its fingerprint only where the unit that bound the name is not in
+     the session: the entry's code names that unit's globals, which a unit
+     loaded in its place takes over (remapping), while a unit of the
+     session keeps them -- where the REPL used a file again, or another
+     unit binds the name now, the code would reach the old unit's *)
+  fun broken (us : (string * string) list) : string option = during "find" (fn () =>
     let
       fun holds (k, v) =
         let
@@ -436,9 +1341,9 @@ struct
           val i = String.concatWith " " (List.take (fs, List.length fs - 1))
           val b = binderOfKey k
         in
-          b = i orelse (fp <> "-" andalso fingerprintAt (k, b) = SOME fp)
+          b = i orelse (fp <> "-" andalso not (isSome (StringMap.find (!byIdentity, i))) andalso fingerprintAt (k, b) = SOME fp)
         end
-    in Option.map #1 (List.find (not o holds) us) end
+    in Option.map #1 (List.find (not o holds) us) end)
 
   (* whether every usage holds by its binder: an entry that needs no
      unit of the session other than those it was compiled against *)
@@ -458,9 +1363,10 @@ struct
     in Option.map #unit (List.find (not o here) (List.map #1 (#globals u) @ List.map #2 (#imports u))) end
 
   (* The files a unit's code names other than file, its own, which are the
-     sources of units of the session -- the bodies of their functors it
-     applied -- each with that unit's name: what a compile that takes the
-     unit from the cache names them by where those units are then *)
+     sources of units of the session -- the bodies of the functors marked to
+     be inlined that it expanded -- each with that unit's name: what a
+     compile that takes the unit from the cache names them by where those
+     units are then *)
   fun sourcesOf (u : Link.unitCode, file : string) : (string * string) list =
     List.mapPartial (fn f => if f = file then NONE
                              else Option.map (fn (l : loaded) => (f, #name l))
@@ -516,7 +1422,14 @@ struct
       Elaborate.restore (#snapshot s); Translate.primAliases := #primAliases s; Lower.knownBefore := #knownBefore s;
       IntTable.removeRange (Ty.binders, s0, s1);
       IntTable.removeRange (Ty.exnArgs, s0, s1);
+      IntTable.removeRange (!Expand.globalAliases, s0, s1);
+      IntTable.removeRange (!Expand.primGlobals, s0, s1);
+      IntTable.removeRange (!Expand.importedValues, s0, s1);
+      IntTable.removeRange (!ToMid.importedSchemes, s0, s1);
+      IntTable.removeRange (!inlineHashes, s0, s1);
       IntTable.removeRange (Ty.realizations, t0, t1);
+      Ty.pinned := IntMap.filteri (fn (stamp, _) => stamp < t0 orelse stamp >= t1) (!Ty.pinned);
+      Ty.openTypes := IntMap.filteri (fn (stamp, _) => stamp < t0 orelse stamp >= t1) (!Ty.openTypes);
       Env.typeOrigins:=IntMap.filteri (fn (stamp,_) => stamp<t0 orelse stamp>=t1) (!Env.typeOrigins)
     end
 
@@ -531,8 +1444,14 @@ struct
     in
       IntTable.removeRange (Ty.binders, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
       IntTable.removeRange (Ty.exnArgs, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
+      IntTable.removeRange (!Expand.globalAliases, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
+      IntTable.removeRange (!Expand.primGlobals, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
+      IntTable.removeRange (!Expand.importedValues, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
+      IntTable.removeRange (!ToMid.importedSchemes, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
       IntTable.removeRange (Ty.realizations, Vector.sub (at, kTycon), Vector.sub (now, kTycon));
       Ty.datatypes := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.datatypes);
+      Ty.pinned := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.pinned);
+      Ty.openTypes := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.openTypes);
       Env.typeOrigins := IntMap.filteri (fn (s, _) => outside kTycon s) (!Env.typeOrigins);
       Elaborate.dataCons := IntMap.filteri (fn (s, _) => outside kTycon s) (!Elaborate.dataCons);
       Translate.primAliases := IntMap.filteri (fn (s, _) => outside kStamp s) (!Translate.primAliases);
@@ -548,15 +1467,17 @@ struct
               count : int ref vector,
               queue : (int * int) list ref,            (* own names whose tables are to be written, newest first *)
               names : int StringMap.map ref,           (* the identities named, by their place in the header *)
+              nnames : int ref,                        (* how many *)
+              refs : int IntTable.table,               (* the same, by the unit's range of a kind (3 * base + kind) *)
               nameList : string list ref,              (* the same, newest first *)
               tycons : int IntTable.table, ntycons : int ref,
-              types : int StringMap.map ref, ntypes : int ref, (* the types written, by their key *)
+              keys : (int list * string list * int) list IntTable.table,   (* each type's key, by what it is made of (intern) *)
+              nkeys : int ref,
+              types : int IntMap.map ref, ntypes : int ref,    (* the types written, by their key *)
               cons : int StringMap.map ref, ncons : int ref,   (* the constructors written, by their key *)
               sibs : int StringMap.map ref, nsibs : int ref,   (* their lists of siblings, the same *)
-              funsDone : unit IntTable.table,          (* own functors written, by where their bodies begin *)
-              base : Env.env,                          (* the unit's start *)
-              file : string,                           (* the unit's source, as its spans name it *)
-              text : unit -> string}                   (* the source *)
+              funsDone : unit IntTable.table,          (* own functors written, by their functions *)
+              file : string}                           (* the unit's source, as its spans name it *)
 
   fun ownNumber (e : enc, k, v) : int =
     let val t = Vector.sub (#own e, k)
@@ -572,8 +1493,8 @@ struct
     case StringMap.find (!(#names e), identity) of
       SOME i => i
     | NONE =>
-        let val i = StringMap.numItems (!(#names e))
-        in #names e := StringMap.insert (!(#names e), identity, i); #nameList e := identity :: !(#nameList e); i end
+        let val i = !(#nnames e)
+        in #names e := StringMap.insert (!(#names e), identity, i); #nnames e := i + 1; #nameList e := identity :: !(#nameList e); i end
 
   fun name (e : enc, k : int, v : int) : unit =
     let val w = #w e
@@ -582,7 +1503,13 @@ struct
       else if v >= Vector.sub (#start e, k) then (P.byte (w, 1); P.nat (w, ownNumber (e, k, v)))
       else
         case rangeOf (k, v) of
-          SOME (b, u) => (P.byte (w, 2); P.nat (w, unitRef (e, #identity u)); P.nat (w, v - b))
+          SOME (b, u) =>
+            (* the unit's place by its range, not by its identity's text,
+               which a name of another unit would look up each time *)
+            let val r = case IntTable.find (#refs e, 3 * b + k) of
+                          SOME r => r
+                        | NONE => let val r = unitRef (e, #identity u) in IntTable.insert (#refs e, 3 * b + k, r); r end
+            in P.byte (w, 2); P.nat (w, r); P.nat (w, v - b) end
         | NONE => bug ("a name of no unit: kind " ^ Int.toString k ^ ", " ^ Int.toString v)
     end
 
@@ -614,32 +1541,55 @@ struct
      of MLton's whose signature took 3.7 MB elaborated took 15.7 MB read
      back (docs/plans/build-cache-issues.md, issue 14). The key is the
      type's structure, its names by stamp. *)
-  fun tyKey (t : T.ty) : string =
-    case T.prune t of
-      T.TVar (ref (T.Unbound {id, ...})) => "v" ^ Int.toString id
-    | T.TVar _ => bug "a type pruned to a bound variable"
-    | T.TCon (c, args) => "c" ^ Int.toString (#stamp c) ^ "(" ^ String.concatWith "," (List.map tyKey args) ^ ")"
-    | T.TRecord fs => "{" ^ String.concatWith "," (List.map (fn (l, a) => l ^ ":" ^ tyKey a) fs) ^ "}"
-    | T.TArrow (a, b) => "(" ^ tyKey a ^ ">" ^ tyKey b ^ ")"
+  (* A type and its parts, each with its key: a number for what it is made
+     of, the same for two types alike in every part (intern), worked out
+     once from the parts' keys, so that writing a type looks at each part
+     once (it was the text of the whole part at each part, the square of
+     the type's depth; functors-units, M4) *)
+  datatype keyed = Keyed of int * T.ty * keyed list
 
-  fun ty (e : enc, t : T.ty) : unit =
+  fun intern (e : enc, t : T.ty) : keyed =
     let
-      val w = #w e
-      val k = tyKey t
+      (* what a part is made of: numbers (its kind, its name, its parts'
+         keys) and labels, looked up by a number worked out from them *)
+      fun keyOf (ints : int list, labels : string list, parts : keyed list) : keyed =
+        let
+          val ints = ints @ List.map (fn Keyed (k, _, _) => k) parts
+          val h = List.foldl (fn (x, h) => (h * 31 + x mod 1000003) mod 1000003) (List.length labels) ints
+          val bucket = getOpt (IntTable.find (#keys e, h), [])
+          val k = case List.find (fn (is, ls, _) => is = ints andalso ls = labels) bucket of
+                    SOME (_, _, k) => k
+                  | NONE => let val k = !(#nkeys e)
+                            in IntTable.insert (#keys e, h, (ints, labels, k) :: bucket); #nkeys e := k + 1; k end
+        in Keyed (k, t, parts) end
     in
-      case StringMap.find (!(#types e), k) of
+      case T.prune t of
+        T.TVar (ref (T.Unbound {id, ...})) => keyOf ([0, id], [], [])
+      | T.TVar _ => bug "a type pruned to a bound variable"
+      | T.TCon (c, args) => keyOf ([1, #stamp c], [], List.map (fn a => intern (e, a)) args)
+      | T.TRecord fs => keyOf ([2], List.map #1 fs, List.map (fn (_, a) => intern (e, a)) fs)
+      | T.TArrow (a, b) => keyOf ([3], [], [intern (e, a), intern (e, b)])
+    end
+
+  fun ty (e : enc, t : T.ty) : unit = keyedTy (e, intern (e, t))
+  and keyedTy (e : enc, Keyed (k, t, parts)) : unit =
+    let val w = #w e
+    in
+      case IntMap.find (!(#types e), k) of
         SOME i => (P.byte (w, 4); P.nat (w, i))
       | NONE =>
-          ((case T.prune t of
-              T.TVar (ref (T.Unbound {id, level, kind, eq})) =>
+          ((case (T.prune t, parts) of
+              (T.TVar (ref (T.Unbound {id, level, kind, eq})), _) =>
                 (P.byte (w, 0); name (e, kTvar, id); P.nat (w, if level = T.genericLevel then 0 else level + 1);
                  tkind (e, kind); P.bool (w, eq))
-            | T.TVar _ => bug "a type pruned to a bound variable"
-            | T.TCon (c, args) => (P.byte (w, 1); tycon (e, c); P.list (fn (_, a) => ty (e, a)) (w, args))
-            | T.TRecord fs => (P.byte (w, 2); P.list (fn (_, (l, a)) => (P.string (w, l); ty (e, a))) (w, fs))
-            | T.TArrow (a, b) => (P.byte (w, 3); ty (e, a); ty (e, b)));
+            | (T.TVar _, _) => bug "a type pruned to a bound variable"
+            | (T.TCon (c, _), _) => (P.byte (w, 1); tycon (e, c); P.list (fn (_, a) => keyedTy (e, a)) (w, parts))
+            | (T.TRecord fs, _) =>
+                (P.byte (w, 2); P.list (fn (_, ((l, _), a)) => (P.string (w, l); keyedTy (e, a))) (w, ListPair.zip (fs, parts)))
+            | (T.TArrow _, [a, b]) => (P.byte (w, 3); keyedTy (e, a); keyedTy (e, b))
+            | (T.TArrow _, _) => bug "an arrow of other than two parts");
            (* numbered when it is written whole, as the reader numbers it *)
-           #types e := StringMap.insert (!(#types e), k, !(#ntypes e));
+           #types e := IntMap.insert (!(#types e), k, !(#ntypes e));
            #ntypes e := !(#ntypes e) + 1)
     end
 
@@ -706,13 +1656,138 @@ struct
         P.string (w,#file span);P.nat (w,#start span);P.nat (w,#stop span))
     | Env.Constrained (actual,spec) => (P.byte (w,2);writeOrigin (w,actual);writeOrigin (w,spec))
 
-  fun env (e : enc, Env.Env {vals, tys, strs,origins}) : unit =
+  (* ---- environments by reference (functors-units M11, part 2) ----
+
+     A signature or a functor's summary was written whole, nested
+     signatures and all: MLton's bases were 222 MB, 98% of it environments
+     written before (E12). In the signatures and functors of a basis
+     (refsOK), an environment that is a structure of a signature, renamed,
+     is written as a reference to it: the signature by its unit (this one,
+     one of those its header names) and its name, the path in it, and the
+     renaming -- the image of each of the structure's own type names, in the
+     order of their first occurrence in it, and its values' stamps and
+     whether they are global, each list a byte where it is the structure's
+     own. The structure is found as a fingerprint's reference finds one
+     (candidateAt: the path its first value's stamp has in the unit that
+     declared the signature), or by its first value's stamp among this
+     unit's signatures written before (ownPaths); a functor's result, whose
+     values are the summary's placeholders, among the structures its
+     parameter was written as references to, by the names of their entries.
+     renaming checks that reading the structure's names again makes the
+     environment; where it does not, the environment is written whole, as
+     before. A reference into a unit loaded in the place of the one the
+     basis was written against (remapping) names that unit's signature, and
+     the renaming's names are read by their paths as every other name of it
+     is: an entry is taken where its usages hold, and the structure is in
+     what one of them names -- the signature, or a signature or functor
+     whose fingerprint holds it -- so it is the same there but for those
+     names. *)
+  datatype target = Here | Earlier of loaded
+  val refsOK = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.refsOK", refsOK)
+  (* this unit's signatures written so far, and the path each of their own
+     values' stamps first has in them *)
+  val ownSigs : SigMatch.sigma StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.ownSigs", ownSigs)
+  val ownPaths : (string * string list) IntTable.table ref = ref (IntTable.table 64)
+  val () = CompilerState.refRoot ("UnitBasis.ownPaths", ownPaths, IntTable.copy)
+  val ownLocals : int IntMap.map StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.ownLocals", ownLocals)
+  fun ownLocalsOf (n : string, sg : SigMatch.sigma) : int IntMap.map =
+    case StringMap.find (!ownLocals, n) of
+      SOME m => m
+    | NONE => let val m = localsOf (#bound sg) in ownLocals := StringMap.insert (!ownLocals, n, m); m end
+  (* a functor's parameter being written, or its result; and the structures
+     its parameter was written as references to, and theirs, by the names
+     of their entries *)
+  val inParamB = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.inParamB", inParamB)
+  val inResultB = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.inResultB", inResultB)
+  val paramTargets : (target * string * string list * int IntMap.map * Env.env) list StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.paramTargets", paramTargets)
+
+  fun noteOwnSig (e : enc, n : string, sg : SigMatch.sigma) : unit =
+    let
+      val start = Vector.sub (#start e, kStamp)
+      fun walk (path : string list, Env.Env {vals, strs, ...}) =
+        (StringMap.app (fn v => case valueStamp v of
+                                  SOME st => if st >= start andalso not (isSome (IntTable.find (!ownPaths, st)))
+                                             then IntTable.insert (!ownPaths, st, (n, List.rev path)) else ()
+                                | NONE => ()) vals;
+         StringMap.appi (fn (m, c) => walk (m :: path, c)) strs)
+    in ownSigs := StringMap.insert (!ownSigs, n, sg); walk ([], #env sg) end
+
+  fun noteParamTarget (x as (tg, n, path, cl, c) : target * string * string list * int IntMap.map * Env.env) : unit =
+    let
+      val k = namesKey c
+      val l = getOpt (StringMap.find (!paramTargets, k), [])
+    in
+      paramTargets := StringMap.insert (!paramTargets, k, l @ [x]);
+      StringMap.appi (fn (m, sub) => noteParamTarget (tg, n, path @ [m], cl, sub)) (Env.strs c)
+    end
+
+  (* the structure en may be written as a reference to *)
+  fun basisCandidate (e : enc, en : Env.env) : (target * string * string list * int IntMap.map * Env.env) option =
+    case firstStamp en of
+      NONE => NONE
+    | SOME (q, st) =>
+        if st >= Vector.sub (#start e, kStamp) then
+          (case IntTable.find (!ownPaths, st) of
+             SOME (n, strPath) =>
+               (case (stripPath (q, strPath), StringMap.find (!ownSigs, n)) of
+                  (SOME cpath, SOME sg) =>
+                    Option.map (fn c => (Here, n, cpath, ownLocalsOf (n, sg), c)) (Env.findStr' (#env sg, cpath))
+                | _ => NONE)
+           | NONE => NONE)
+        else
+          Option.map (fn (u, n, sg, cpath, c) => (Earlier u, n, cpath, sigLocalsOf (#identity u ^ "\000" ^ n, sg), c))
+                     (candidateAt (q, st))
+
+  fun basisReference (e : enc, en : Env.env)
+      : (target * string * string list * int list * renaming) option =
+    let
+      fun check (tg, n, path, cl, c) =
+        let
+          val order = case tg of
+                        Here => localOrder (cl, c)
+                      | Earlier u => orderOf (#identity u ^ "\000" ^ n ^ "\000" ^ String.concatWith "." path, cl, c)
+          val m = renaming (cl, c, en)
+        in if List.all (fn st => IntMap.member (#phi m, st)) order then SOME (tg, n, path, order, m) else NONE end
+        handle NoMatch => NONE
+    in
+      case basisCandidate (e, en) of
+        SOME x => (case check x of
+                     SOME r => (if !inParamB then noteParamTarget x else (); SOME r)
+                   | NONE => NONE)
+      | NONE =>
+          if not (!inResultB) then NONE
+          else
+            let
+              fun try [] = NONE
+                | try (x :: rest) = (case check x of SOME r => SOME r | NONE => try rest)
+            in try (getOpt (StringMap.find (!paramTargets, namesKey en), [])) end
+    end
+
+  (* an environment: a byte, 0 and the environment whole, or 1 and a
+     reference (above) *)
+  fun env (e : enc, en as Env.Env {vals, tys, strs,origins}) : unit =
     let val w = #w e
     in
-      P.list (fn (w, (n, v)) => (P.string (w, n); valstatus (e, v))) (w, StringMap.listItemsi vals);
-      P.list (fn (w, (n, t)) => (P.string (w, n); tystatus (e, t))) (w, StringMap.listItemsi tys);
-      P.list (fn (w, (n, s)) => (P.string (w, n); env (e, s))) (w, StringMap.listItemsi strs);
-      P.list (fn (w,(key,origin)) => (P.string (w,key);writeOrigin (w,origin))) (w,StringMap.listItemsi origins)
+      case (if !refsOK then basisReference (e, en) else NONE) of
+        SOME (tg, n, path, order, {phi, stamps, globals, cStamps, cGlobals}) =>
+          (P.byte (w, 1);
+           (case tg of Here => P.nat (w, 0) | Earlier u => P.nat (w, 1 + unitRef (e, #identity u)));
+           P.string (w, n); P.list P.string (w, path);
+           P.list (fn (_, st) => tyfcn (e, valOf (IntMap.find (phi, st)))) (w, order);
+           if stamps = cStamps then P.byte (w, 0) else (P.byte (w, 1); P.list (fn (_, st) => name (e, kStamp, st)) (w, stamps));
+           if globals = cGlobals then P.byte (w, 0) else (P.byte (w, 1); P.list P.bool (w, globals)))
+      | NONE =>
+          (P.byte (w, 0);
+           P.list (fn (w, (n, v)) => (P.string (w, n); valstatus (e, v))) (w, StringMap.listItemsi vals);
+           P.list (fn (w, (n, t)) => (P.string (w, n); tystatus (e, t))) (w, StringMap.listItemsi tys);
+           P.list (fn (w, (n, s)) => (P.string (w, n); env (e, s))) (w, StringMap.listItemsi strs);
+           P.list (fn (w,(key,origin)) => (P.string (w,key);writeOrigin (w,origin))) (w,StringMap.listItemsi origins))
     end
 
   fun sigma (e : enc, {bound, env = en,origin} : SigMatch.sigma) : unit =
@@ -782,52 +1857,110 @@ struct
 
   (* ---- functors ---- *)
 
-  (* A functor's body, by where it begins in its unit's source *)
-  fun bodyAt (body : Ast.strexp) : Source.span = Ast.spanOfStrexp body
-
-  (* A functor: one of this unit's, written whole the first time and then by
-     where its body begins (a functor declared again leaves the first in the
-     basis of those declared between); or an earlier unit's, by that unit and
-     the same *)
-  fun funref (e : enc, f as Elaborate.FunInfo {body, origin, ...}) : unit =
-    let
-      val w = #w e
-      val {start = at, ...} = bodyAt body
+  (* A functor of this unit's, written whole the first time and then by
+     the global of its function (a functor declared again leaves the
+     first in the basis of those declared between) *)
+  fun funref (e : enc, f as Elaborate.FunInfo {code, ...}) : unit =
+    let val w = #w e
     in
-      if origin = "" then
-        if IntTable.find (#funsDone e, at) = NONE then (IntTable.insert (#funsDone e, at, ()); P.byte (w, 2); funinfo (e, f))
-        else (P.byte (w, 0); P.nat (w, at))
-      else (P.byte (w, 1); P.nat (w, unitRef (e, origin)); P.nat (w, at))
+      if IntTable.find (#funsDone e, code) = NONE then
+        (IntTable.insert (#funsDone e, code, ()); P.byte (w, 1); funcode (e, f))
+      else (P.byte (w, 0); name (e, kStamp, code))
     end
 
-  and funinfo (e : enc, Elaborate.FunInfo {param, paramSig, body, defEnv, allowPrim, defSigs, defFuns, summary, binding,...}) : unit =
+  (* A functor compiled to a function, which is its signature -- its
+     parameter's, and its summary -- and the global of its function:
+     nothing of its body, so that a unit whose body changed and whose
+     signature did not keeps its identity *)
+  and funcode (e : enc, Elaborate.FunInfo {param, paramSig, summary = {generated, result}, binding, code}) : unit =
     let
       val w = #w e
-      val {file, start = at, stop} = bodyAt body
-      val () = if file = #file e then () else bug ("a functor of another unit's source: " ^ file)
-      (* the body's text, by its hash: a unit whose functor's body changed
-         has another basis, and the units that apply it are compiled
-         again *)
-      val bodyText = String.substring (#text e (), at, stop - at)
-                     handle Subscript => bug "a functor's body out of its source"
-      (* the signatures and functors the unit declared, as they were when
-         this one was *)
-      fun declared (names, m) =
-        StringMap.listItemsi (List.foldl (fn (n, acc) => case StringMap.find (m, n) of
-                                                          SOME v => StringMap.insert (acc, n, v)
-                                                        | NONE => acc) StringMap.empty names)
     in
-      P.option P.string (w, param); sigma (e, paramSig); P.nat (w, at); P.string (w, P.hash bodyText);
-      env (e, envDelta (#base e, defEnv));
-      P.bool (w, allowPrim);
-      P.list (fn (w, (n, s)) => (P.string (w, n); sigma (e, s))) (w, declared (!Elaborate.insertedSigs, defSigs));
-      P.list (fn (w, (n, f)) => (P.string (w, n); funref (e, f))) (w, declared (!Elaborate.insertedFuns, defFuns));
-      (* its summary (Elaborate.summary): the names its body made as a
-         signature's flexible names, what the body gave, its counts *)
-      P.option (fn (w, {generated, result, counts = (a, b, c)} : Elaborate.summary) =>
-                  (sigma (e, {bound = generated, env = result,origin=Env.Unknown}); P.nat (w, a); P.nat (w, b); P.nat (w, c)))
-               (w, summary);
-      writeOrigin (w,binding)
+      P.option P.string (w, param);
+      paramTargets := StringMap.empty;
+      inParamB := true; sigma (e, paramSig); inParamB := false;
+      inResultB := true; sigma (e, {bound = generated, env = result, origin = Env.Unknown}); inResultB := false;
+      paramTargets := StringMap.empty;
+      writeOrigin (w, binding);
+      name (e, kStamp, code);
+      (* a functor marked to be inlined: its function's Mid, its
+         globals and type names named as the basis names them, which makes
+         every one a name a later unit may name; and its parameter's open
+         datatypes *)
+      P.option (fn (w, f) =>
+                  let
+                    val p0 = !(#used w)
+                    val named : int list ref = ref []
+                    val seen : unit IntTable.table = IntTable.table 64
+                    fun global s =
+                      (if isSome (IntTable.find (seen, s)) then () else (IntTable.insert (seen, s, ()); named := s :: !named);
+                       name (e, kStamp, s))
+                    fun prim h = (P.option P.string (w, IntMap.find (!Translate.primAliases, h));
+                                  P.option P.string (w, IntTable.find (!Expand.primGlobals, h)))
+                  in
+                    (* a position in the unit's own source by nothing but
+                       that, which a unit taken from the cache names where
+                       the source is then, as its code's (relocate): not by
+                       the path the compile was given it by *)
+                    MidCodec.write (w, {stamp = global, tycon = fn c => name (e, kTycon, c),
+                                        tvar = fn v => name (e, kTvar, v),
+                                        file = fn f => P.option P.string (w, if f = #file e then NONE else SOME f)}) f;
+                    P.list (fn (_, c) => name (e, kTycon, c))
+                           (w, List.filter Ty.isOpen (List.map #stamp (#bound paramSig)));
+                    (* what the copies a later unit makes take of the globals
+                       the body names, which a change of makes the body
+                       another (its hash, the usage "inl F"): each one's
+                       primitive, the global it is and that one's, whether
+                       it is a function known by name, and the hash of a
+                       marked functor's function's body it calls *)
+                    P.list (fn (w, g) =>
+                              (prim g;
+                               P.option (fn (_, h) => (name (e, kStamp, h); prim h)) (w, IntTable.find (!Expand.globalAliases, g));
+                               P.bool (w, IntMap.member (!Lower.knownBefore, g));
+                               P.option P.string (w, inlineHash g)))
+                           (w, List.rev (!named));
+                    IntTable.insert (!inlineHashes, code,
+                                     ref (Hash (P.hash (CharArraySlice.vector (CharArraySlice.slice (!(#bytes w), p0, SOME (!(#used w) - p0)))))))
+                  end)
+               (w, IntTable.find (!Expand.declaredBodies, code))
+    end
+
+  (* A function marked to be inlined (functors-units M10): its global, and
+     its Mid as a marked functor's function is written, with what it takes
+     of the globals it names, and the hash over both (the usage "inlv") *)
+  fun inlineValue (e : enc, s : int, f : Mid.fundef) : unit =
+    let
+      val w = #w e
+      val () = name (e, kStamp, s)
+      val p0 = !(#used w)
+      val named : int list ref = ref []
+      val seen : unit IntTable.table = IntTable.table 64
+      fun global g =
+        (if isSome (IntTable.find (seen, g)) then () else (IntTable.insert (seen, g, ()); named := g :: !named);
+         name (e, kStamp, g))
+      fun prim h = (P.option P.string (w, IntMap.find (!Translate.primAliases, h));
+                    P.option P.string (w, IntTable.find (!Expand.primGlobals, h)))
+      (* a position's file: the unit's own by nothing, another unit's source
+         (a functor's whose copy the function is) by that unit's name, which
+         the reader makes where its source is then, so that the bytes do not
+         depend on the path a compile was given a source by (S61) *)
+      fun fileName f =
+        if f = #file e then NONE
+        else case List.find (fn (l : loaded) => #file l = f) (!units) of
+               SOME l => SOME ("\001" ^ #name l)
+             | NONE => SOME f
+    in
+      MidCodec.write (w, {stamp = global, tycon = fn c => name (e, kTycon, c),
+                          tvar = fn v => name (e, kTvar, v),
+                          file = fn f => P.option P.string (w, fileName f)}) f;
+      P.list (fn (w, g) =>
+                (prim g;
+                 P.option (fn (_, h) => (name (e, kStamp, h); prim h)) (w, IntTable.find (!Expand.globalAliases, g));
+                 P.bool (w, IntMap.member (!Lower.knownBefore, g));
+                 P.option P.string (w, inlineHash g)))
+             (w, List.rev (!named));
+      IntTable.insert (!inlineHashes, s,
+                       ref (Hash (P.hash (CharArraySlice.vector (CharArraySlice.slice (!(#bytes w), p0, SOME (!(#used w) - p0)))))))
     end
 
   (* ---- overloading ---- *)
@@ -862,7 +1995,10 @@ struct
            P.option (fn (_, t) => ty (e, t)) (w, IntTable.find (Ty.binders, v));
            P.option (P.option (fn (_, t) => ty (e, t))) (w, IntTable.find (Ty.exnArgs, v));
            P.option P.string (w, IntMap.find (!Translate.primAliases, v));
-           P.bool (w, IntMap.member (!Lower.knownBefore, v)))
+           P.bool (w, IntMap.member (!Lower.knownBefore, v));
+           (* the global it is (Expand.globalAliases) *)
+           P.option (fn (_, h) => name (e, kStamp, h)) (w, IntTable.find (!Expand.globalAliases, v));
+           P.option P.string (w, IntTable.find (!Expand.primGlobals, v)))
         else if k = kTycon then
           (P.byte (w, 2); P.nat (w, ownNumber (e, k, v));
            P.option (fn (w, {params, cons} : Ty.datatypeInfo) =>
@@ -877,7 +2013,9 @@ struct
                     (w, IntMap.find (!Ty.datatypes, v));
            P.option (fn (_, f) => tyfcn (e, f)) (w, IntTable.find (Ty.realizations, v));
            P.option (P.list (fn (w, (n, s)) => (P.string (w, n); valstatus (e, s)))) (w, IntMap.find (!Elaborate.dataCons, v));
-           writeOrigin (w,getOpt (IntMap.find (!Env.typeOrigins,v),Env.Unknown)))
+           writeOrigin (w,getOpt (IntMap.find (!Env.typeOrigins,v),Env.Unknown));
+           (* the layout a body gave an instance of its datatype (Ty.pinned) *)
+           P.option (P.list (fn (w, (t, n)) => (P.nat (w, t); P.option P.nat (w, n)))) (w, IntMap.find (!Ty.pinned, v)))
         else ()
     in drain (); P.byte (w, 0) end
 
@@ -894,15 +2032,17 @@ struct
      source, text the source and mode how it was read, used the names its
      compile looked up (Usage) *)
   fun export {start : start, name = uname : string, file : string, text : unit -> string, mode : Source.mode,
-              delta : Env.env, fixity : Fixity.env, used : string list} : exported =
+              delta : Env.env, fixity : Fixity.env, used : string list} : exported = during "export" (fn () =>
     let
       val w = P.writer ()
       val e : enc = {w = w, start = #counters start, own = Vector.tabulate (3, fn _ => IntTable.table 256),
                      count = Vector.tabulate (3, fn _ => ref 0), queue = ref [], names = ref StringMap.empty,
+                     nnames = ref 0, refs = IntTable.table 64,
                      nameList = ref [], tycons = IntTable.table 256, ntycons = ref 0,
-                     types = ref StringMap.empty, ntypes = ref 0, cons = ref StringMap.empty, ncons = ref 0,
+                     keys = IntTable.table 1024, nkeys = ref 0,
+                     types = ref IntMap.empty, ntypes = ref 0, cons = ref StringMap.empty, ncons = ref 0,
                      sibs = ref StringMap.empty, nsibs = ref 0, funsDone = IntTable.table 16,
-                     base = #env start, file = file, text = text}
+                     file = file}
       (* fixity: the directives the unit added, newest first *)
       val directives = List.take (#list fixity, List.length (#list fixity) - List.length (#list (#fixity start)))
       val () = P.list (fn (w, (n, f)) => (P.string (w, n);
@@ -919,32 +2059,35 @@ struct
         List.rev (List.foldl (fn (n, acc) => if List.exists (fn m => m = n) acc then acc else n :: acc) [] names)
       val sigNames = List.rev (distinct (!Elaborate.insertedSigs))
       val funNames = List.rev (distinct (!Elaborate.insertedFuns))
-      val () = P.list (fn (w, n) => (P.string (w, n);
-                                     case StringMap.find (!Elaborate.sigs, n) of
-                                       SOME s => sigma (e, s)
-                                     | NONE => bug ("no signature " ^ n))) (w, sigNames)
-      val () = P.list (fn (w, n) => (P.string (w, n);
-                                     case StringMap.find (!Elaborate.funs, n) of
-                                       SOME f => funref (e, f)
-                                     | NONE => bug ("no functor " ^ n))) (w, funNames)
-      (* where it declared a functor, the unit that bound each name its
-         compile looked up: an application elaborates the functor's body
-         again in the basis it was declared in, parsed with the fixity it
-         had there, so what the body's names were bound to is the functor's
-         as much as its text is, and a unit that applies it is compiled
-         again where one of them changed, though it names none of them
-         (docs/plans/build-cache-issues.md, issue 1); of a functor the body
-         applied, its signature's fingerprint, which is all a functor's
-         declaration takes of it: a unit that applies this one's to make
-         code depends on the unit of each functor its copy applies itself
-         ("funat"), so that this one's basis is the same as long as their
-         signatures are *)
-      fun binding k =
-        if String.isPrefix "fun " k then (case fingerprint k of SOME f => "fp " ^ f | NONE => binderOfKey k)
-        else binderOfKey k
-      val () = P.list (fn (w, k) => (P.string (w, k); P.string (w, binding k)))
-                      (w, if List.null funNames then []
-                          else StringMap.listKeys (List.foldl (fn (k, m) => StringMap.insert (m, k, ())) StringMap.empty used))
+      (* its signatures and functors, where an environment may be a
+         reference to one written before *)
+      val () = (refsOK := true; ownSigs := StringMap.empty; ownPaths := IntTable.table 64; ownLocals := StringMap.empty;
+                paramTargets := StringMap.empty; inParamB := false; inResultB := false)
+      fun aside () = (refsOK := false; ownSigs := StringMap.empty; ownPaths := IntTable.table 64; ownLocals := StringMap.empty;
+                      paramTargets := StringMap.empty; inParamB := false; inResultB := false)
+      val () = (P.list (fn (w, n) => (P.string (w, n);
+                                      case StringMap.find (!Elaborate.sigs, n) of
+                                        SOME s => (sigma (e, s); noteOwnSig (e, n, s))
+                                      | NONE => bug ("no signature " ^ n))) (w, sigNames);
+                P.list (fn (w, n) => (P.string (w, n);
+                                      case StringMap.find (!Elaborate.funs, n) of
+                                        SOME f => funref (e, f)
+                                      | NONE => bug ("no functor " ^ n))) (w, funNames);
+                aside ())
+               handle x => (aside (); raise x)
+      (* the functions it declares that are marked to be inlined, as its
+         expansion left them *)
+      val () = P.list (fn (_, (s, f)) => inlineValue (e, s, f))
+                      (w, List.mapPartial (fn s => Option.map (fn f => (s, f)) (IntTable.find (!Expand.declaredValues, s)))
+                                          (!Expand.declaredOrder))
+      (* the schemes of the unit's globals those name that nothing else
+         types (a copy's own): each as a function of no parameter whose
+         result is the global's type *)
+      val () = P.list (fn (w, (g, (vs, t))) =>
+                         MidCodec.write (w, {stamp = fn s => name (e, kStamp, s), tycon = fn c => name (e, kTycon, c),
+                                             tvar = fn v => name (e, kTvar, v), file = fn _ => P.option P.string (w, NONE)})
+                                        {name = g, tyvars = vs, params = [], result = t, body = Mid.Return (Mid.Atom Mid.Unit)})
+                      (w, !Expand.declaredSchemes)
       val before' = #overloads (#snapshot start)
       val () = P.list (fn (_, x) => overload (e, x))
                       (w, IntMap.listItemsi (IntMap.filteri (fn (s, _) => not (IntMap.member (before', s))) (!Overload.table)))
@@ -953,25 +2096,26 @@ struct
       val counts = Vector.map ! (#count e)
       (* the header: the name, the identities it names, the counts of its own *)
       val h = P.writer ()
-      val () = (P.bytes (h, magic); P.nat (h, version); P.string (h, uname);
+      val () = (P.bytes (h, magic); P.nat (h, version); P.string (h, P.probe ()); P.string (h, uname);
                 P.list P.string (h, List.rev (!(#nameList e)));
                 Vector.app (fn c => P.nat (h, c)) counts)
       val hashed = P.contents h ^ body
-      (* what the compile used of each kind, which loading puts aside first,
-         and the hash of the source, which a functor's body is parsed from
-         again, and the mode it is read in: none is the basis's, nor in its
-         identity *)
+      (* what the compile used of each kind, which loading puts aside
+         first, and the hash of the source and the mode it was read in, by
+         which the compiler library checks a source it is given against
+         the basis (RuneCompiler.readUnit, readMid): none is the basis's,
+         nor in its identity *)
       val used = Vector.tabulate (3, fn k => !(counter k) - Vector.sub (#counters start, k))
+      val sourceHash = hashAt ("source", text ())
       val u = P.writer ()
       val () = Vector.app (fn c => P.nat (u, c)) used
-      val sourceHash = P.hash (text ())
       val () = P.string (u, sourceHash)
       val () = P.string (u, Source.modeName mode)
-      val identity = uname ^ "@" ^ P.hash hashed
+      val identity = uname ^ "@" ^ hashAt ("identity", hashed)
     in
       {pickle = P.contents u ^ hashed, identity = identity,
        provenance=Link.provenance (!CompilerSettings.target,mode,sourceHash),own = #own e, counts = counts}
-    end
+    end)
 
   (* ---- a unit's code, by keys ---- *)
 
@@ -1038,7 +2182,10 @@ struct
               nsibs : int ref, sibs : (string * bool) list array ref,
               (* of each unit named, where it is one the pickle was not
                  written against, its names by the old numbers, by kind *)
-              remaps : int IntMap.map vector option vector}
+              remaps : int IntMap.map vector option vector,
+              (* its signatures read so far, which a reference may name,
+                 and the templates of their structures (renamedEnv) *)
+              sigsRead : SigMatch.sigma StringMap.map ref, hereTemplates : template StringMap.map ref}
 
   fun rname (d : dec, k : int) : int =
     let val r = #r d
@@ -1221,15 +2368,72 @@ struct
     | _ => raise P.Bad "invalid binding origin"
 
   fun renv (d : dec) : Env.env =
+    case P.rbyte (#r d) of
+      0 =>
+        let
+          val vals = rmap d rvalstatus
+          val tys = rmap d rtystatus
+          val strs = rmap d renv
+          val origins=StringMap.fromList (P.rlist (fn r =>
+            let val key=P.rstring r
+                val origin=readOrigin r
+            in (key,origin) end) (#r d))
+        in Env.Env {vals = vals, tys = tys, strs = strs,origins=origins} end
+    | 1 => rreference d
+    | _ => raise P.Bad "not an environment"
+
+  (* an environment written as a reference (env): the structure renamed *)
+  and rreference (d : dec) : Env.env =
     let
-      val vals = rmap d rvalstatus
-      val tys = rmap d rtystatus
-      val strs = rmap d renv
-      val origins=StringMap.fromList (P.rlist (fn r =>
-        let val key=P.rstring r
-            val origin=readOrigin r
-        in (key,origin) end) (#r d))
-    in Env.Env {vals = vals, tys = tys, strs = strs,origins=origins} end
+      val r = #r d
+      val u = P.rnat r
+      val n = P.rstring r
+      val path = P.rlist P.rstring r
+      val (sg, key) =
+        if u = 0 then
+          (case StringMap.find (!(#sigsRead d), n) of SOME sg => (sg, NONE) | NONE => raise P.Bad "a reference to a signature not read")
+        else
+          let
+            val i = u - 1
+            val () = if i >= Vector.length (#units d) then raise P.Bad "a unit out of range" else ()
+            (* the unit, or the one loaded in its place (remapping) *)
+            val lu = Vector.sub (#units d, i)
+          in
+            case StringMap.find (!unitSigs, #identity lu ^ "\000" ^ n) of
+              SOME sg => (sg, SOME (#identity lu ^ "\000" ^ n))
+            | NONE => raise P.Bad "a reference to a signature its unit has not"
+          end
+      val c = case Env.findStr' (#env sg, path) of SOME c => c | NONE => raise P.Bad "a reference to a structure not there"
+      val (order, tp) =
+        case key of
+          SOME k =>
+            let val tk = k ^ "\000" ^ String.concatWith "." path val cl = sigLocalsOf (k, sg)
+            in (orderOf (tk, cl, c), templateOf (tk, cl, c)) end
+        | NONE =>
+            let
+              val tk = n ^ "\000" ^ String.concatWith "." path
+              val cl = localsOf (#bound sg)
+              val tp = case StringMap.find (!(#hereTemplates d), tk) of
+                         SOME tp => tp
+                       | NONE => let val tp = makeTemplate (cl, c)
+                                 in #hereTemplates d := StringMap.insert (!(#hereTemplates d), tk, tp); tp end
+            in (localOrder (cl, c), tp) end
+      val images = P.rlist (fn _ => rtyfcn d) r
+      val () = if List.length images = List.length order then () else raise P.Bad "a reference's renaming of another length"
+      val phi = ListPair.foldl (fn (st, f, m) => IntMap.insert (m, st, f)) IntMap.empty (order, images)
+      val stamps = case P.rbyte r of
+                     0 => NONE
+                   | 1 => SOME (ref (P.rlist (fn _ => rname (d, kStamp)) r))
+                   | _ => raise P.Bad "not a reference's stamps"
+      val globals = case P.rbyte r of
+                      0 => NONE
+                    | 1 => SOME (ref (P.rlist P.rbool r))
+                    | _ => raise P.Bad "not a reference's flags"
+      val en = renamedEnv (tp, phi, stamps, globals) c
+      fun empty (l : 'a list ref option) = case l of NONE => true | SOME x => List.null (!x)
+    in
+      if empty stamps andalso empty globals then en else raise P.Bad "a reference's names left over"
+    end
 
   fun rsigma (d : dec) : SigMatch.sigma =
     let val bound = P.rlist (fn _ => rtycon d) (#r d)
@@ -1237,16 +2441,6 @@ struct
     in {bound=bound,env=env,origin=origin} end
 
   (* ---- loading ---- *)
-
-  (* The top-level functor declarations of a source, by where their bodies
-     begin *)
-  fun functorsOf (decs : Ast.dec list) : Ast.strexp IntMap.map =
-    let
-      fun dec (Ast.DFunctor (bs, _), m) =
-            List.foldl (fn (b : Ast.funbind, m) => IntMap.insert (m, #start (bodyAt (#body b)), #body b)) m bs
-        | dec (Ast.DLocal (a, b, _), m) = List.foldl dec (List.foldl dec m a) b
-        | dec (_, m) = m
-    in List.foldl dec IntMap.empty decs end
 
   (* What load gives: the unit, the environment it declared, and its
      fixity directives, newest first, which the caller adds to the start;
@@ -1300,11 +2494,12 @@ struct
     let
       val r = P.reader pickle
       val _ = Vector.tabulate (3, fn _ => P.rnat r)
-      val _ = P.rstring r   (* the hash of the source *)
+      val _ = P.rstring r   (* the hash of its source *)
       val _ = P.rstring r   (* its mode *)
       val () = if P.rbytes (r, 3) = magic then () else raise P.Bad "not a unit's basis"
       val () = if P.rnat r = version then () else raise P.Bad "a basis of another version"
-      val _ = P.rstring r
+      val () = if P.rstring r = P.probe () then () else raise P.Bad "a basis made by a compiler whose hash differs"
+      val _ = P.rstring r   (* its name *)
     in P.rlist P.rstring r end
 
   (* a unit's name, from its identity, name@hash *)
@@ -1368,26 +2563,57 @@ struct
          imports = List.map (fn (ix, k) => (ix, key k)) (#imports u), exports = #exports u}
       end
 
-  (* load {pickle, file, at, env, fixity, text}: the unit whose basis pickle
-     is, loaded after the units of the session: its numbers given the names
-     of the session that follow at's counters and what its compile used,
-     its tables entered, its signatures, functors and overloading declared,
-     and the unit registered. env and fixity are the unit's start; text
-     gives its source, which spans name file, for its functors' bodies.
-     Raises Missing where it names a unit the session has not, and
-     Pickle.Bad where the bytes are not a basis. *)
-  fun loadAgainst ({pickle : string, file : string, at : int vector, env = startEnv : Env.env,
-                    fixity = startFixity : Fixity.env, text : unit -> string}, remap : remap) : result =
+  (* An identity no unit of the session has: identity, or else identity~2,
+     identity~3, ...: for a unit loaded again where it is loaded already --
+     the same text against the same units, as a file the REPL uses again --
+     whose globals must be its own, as a structure that names the first
+     unit's must keep naming them. Its name is the same (nameOf). *)
+  fun unused (identity : string) : string =
+    let
+      fun taken i = isSome (StringMap.find (!byIdentity, i))
+      fun go n = let val i = identity ^ "~" ^ Int.toString n in if taken i then go (n + 1) else i end
+    in if taken identity then go 2 else identity end
+
+  (* code compiled as one unit, its own keys made those of the unit of
+     identity to, as it is linked when it is loaded under another identity
+     than its entry's (unused) *)
+  fun renamed (u : Link.unitCode, to : string) : Link.unitCode =
+    if #identity u = to then u
+    else
+      let
+        fun key (k as {unit, number} : Link.key) = if unit = #identity u then {unit = to, number = number} else k
+      in
+        {code = #code u, identity = to, provenance = #provenance u, globals = List.map (fn (k, ix) => (key k, ix)) (#globals u),
+         imports = List.map (fn (ix, k) => (ix, key k)) (#imports u), exports = #exports u}
+      end
+
+  (* load {pickle, file, at}: the unit whose basis pickle is, loaded after
+     the units of the session: its numbers given the names of the session
+     that follow at's counters and what its compile used, its tables
+     entered, its signatures, functors and overloading declared, and the
+     unit registered; file is its source as spans name it now. Raises
+     Missing where it names a unit the session has not, and Pickle.Bad
+     where the bytes are not a basis. *)
+  (* loadKnown (args, known, remap): known, where it is SOME, the unit's
+     identity, which whoever has it need not work out again from the
+     bytes: export, which just did, and an entry of the cache, which keeps
+     it (functors-units, F2) *)
+  fun load' ({pickle : string, file : string, at : int vector}, known : string option, remap : remap) : result =
     let
       val r = P.reader pickle
       val used = Vector.tabulate (3, fn _ => P.rnat r)
-      val sourceHash = P.rstring r
-      val mode = case Source.modeNamed (P.rstring r) of SOME m => m | NONE => raise P.Bad "not a source mode"
+      val _ = P.rstring r   (* the hash of its source, for the compiler library *)
+      val _ = P.rstring r   (* its mode *)
       val hashed = String.extract (pickle, !(#pos r), NONE)
       val () = if P.rbytes (r, 3) = magic then () else raise P.Bad "not a unit's basis"
       val () = if P.rnat r = version then () else raise P.Bad "a basis of another version"
+      (* made by a compiler whose hash gives other values: its identities and
+         fingerprints are not this one's (Pickle.probe) *)
+      val () = if P.rstring r = P.probe () then () else raise P.Bad "a basis made by a compiler whose hash differs"
       val uname = P.rstring r
-      val identity = uname ^ "@" ^ P.hash hashed
+      val identity = case known of
+                       SOME i => if String.isPrefix (uname ^ "@") i then i else raise P.Bad "another unit's identity"
+                     | NONE => uname ^ "@" ^ hashAt ("identity", hashed)
       val identities = P.rlist P.rstring r
       val us = Vector.fromList (List.map (fn i => case StringMap.find (!byIdentity, i) of
                                                     SOME u => u
@@ -1405,7 +2631,7 @@ struct
       val d : dec = {r = r, base = base, units = us, ntycons = ref 0, tycons = ref (Array.fromList []),
                      ntypes = ref 0, types = ref (Array.fromList []), ncons = ref 0, cons = ref (Array.fromList []),
                      nsibs = ref 0, sibs = ref (Array.fromList []),
-                     remaps = remaps}
+                     remaps = remaps, sigsRead = ref StringMap.empty, hereTemplates = ref StringMap.empty}
       fun rfixity r =
         case P.rbyte r of
           0 => Fixity.Nonfix
@@ -1414,84 +2640,105 @@ struct
         | _ => raise P.Bad "not a fixity"
       val directives = P.rlist (fn r => let val n = P.rstring r in (n, rfixity r) end) r
       val delta = renv d
-      val sigs = P.rlist (fn r => let val n = P.rstring r in (n, rsigma d) end) r
-      (* functors: their bodies from the source parsed again, once *)
-      val bodies : Ast.strexp IntMap.map option ref = ref NONE
-      fun bodyOf at =
-        let
-          val m =
-            case !bodies of
-              SOME m => m
-            | NONE =>
-                let
-                  val t = text ()
-                  val () = if P.hash t = sourceHash then () else raise P.Bad "its source is not the one it was made from"
-                  val src = Source.fromStringIn (mode, file, t)
-                  val () = Source.register src
-                  val (decs, _) = Parser.parseTokensWith (Lexer.tokenize src, startFixity)
-                  val m = functorsOf decs
-                in bodies := SOME m; m end
-        in
-          case IntMap.find (m, at) of
-            SOME b => b
-          | NONE => raise P.Bad "no functor where the basis says"
-        end
-      (* a unit's own functors by where they begin, those read so far; the
-         signatures and functors of the unit's start, which a functor's
-         basis adds the unit's to *)
+      val sigs = P.rlist (fn r => let val n = P.rstring r val sg = rsigma d
+                                  in #sigsRead d := StringMap.insert (!(#sigsRead d), n, sg); (n, sg) end) r
+      (* its functors, by the globals of their functions: written whole
+         the first time, then by the global *)
       val ownFuns : Elaborate.funinfo IntMap.map ref = ref IntMap.empty
-      val startSigs = !Elaborate.sigs
-      val startFuns = !Elaborate.funs
       fun rfunref (r : P.reader) : Elaborate.funinfo =
         case P.rbyte r of
-          2 => rfuninfo r
-        | 0 => let val at = P.rnat r
-               in case IntMap.find (!ownFuns, at) of
+          1 => rfuncode r
+        | 0 => let val code = rname (d, kStamp)
+               in case IntMap.find (!ownFuns, code) of
                     SOME f => f
                   | NONE => raise P.Bad "a functor named before it is declared"
                end
-        | 1 =>
-            let
-              val u = P.rnat r
-              val at = P.rnat r
-              val () = if u >= Vector.length us then raise P.Bad "a unit out of range" else ()
-              (* a remapped unit's functors are not found by where their bodies were *)
-              val () = if isSome (Vector.sub (remaps, u)) then raise Missing (Vector.sub (identities', u)) else ()
-            in
-              case IntMap.find (#funs (Vector.sub (us, u)), at) of
-                SOME f => f
-              | NONE => raise P.Bad "no functor of that unit there"
-            end
         | _ => raise P.Bad "not a functor"
-      and rfuninfo (r : P.reader) : Elaborate.funinfo =
+      (* one compiled to a function (funcode) *)
+      and rfuncode (r : P.reader) : Elaborate.funinfo =
         let
           val param = P.roption P.rstring r
           val paramSig = rsigma d
-          val at = P.rnat r
-          val _ = P.rstring r   (* the hash of its body's text, in the unit's identity *)
-          val defDelta = renv d
-          val allowPrim = P.rbool r
-          val defSigs = P.rlist (fn r => let val n = P.rstring r in (n, rsigma d) end) r
-          val defFuns = P.rlist (fn r => let val n = P.rstring r in (n, rfunref r) end) r
-          val summary =
-            P.roption (fn r =>
-                         let
-                           val {bound, env = result,...} = rsigma d
-                           val a = P.rnat r
-                           val b = P.rnat r
-                           val c = P.rnat r
-                         in {generated = bound, result = result, counts = (a, b, c)} end) r
-          val binding=readOrigin r
-          val f =
-            Elaborate.FunInfo
-              {param = param, paramSig = paramSig, body = bodyOf at, defEnv = Env.plus (startEnv, defDelta),
-               allowPrim = allowPrim, origin = identity, summary = summary,binding=binding,
-               defSigs = List.foldl (fn ((n, s), m) => StringMap.insert (m, n, s)) startSigs defSigs,
-               defFuns = List.foldl (fn ((n, f), m) => StringMap.insert (m, n, f)) startFuns defFuns}
-        in ownFuns := IntMap.insert (!ownFuns, at, f); f end
+          val summary = let val {bound, env = result, ...} = rsigma d in {generated = bound, result = result} end
+          val binding = readOrigin r
+          val code = rname (d, kStamp)
+          (* a marked functor's Mid: what an application of it in a later
+             unit expands *)
+          val () =
+            case P.rbyte r of
+              0 => ()
+            | 1 =>
+                let
+                  val p0 = !(#pos r)
+                  val base = !privateNext
+                  val most = ref 0
+                  fun local' i = (if i > !most then most := i else (); base - i)
+                  val (body, names) =
+                    MidCodec.read (r, {stamp = fn () => rname (d, kStamp), tycon = fn () => rname (d, kTycon),
+                                       tvar = fn () => rname (d, kTvar),
+                                       file = fn () => getOpt (P.roption P.rstring r, file), local' = local'})
+                    handle MidCodec.Bad m => raise P.Bad m
+                  val opens = P.rlist (fn _ => rname (d, kTycon)) r
+                  fun prim () = (P.roption P.rstring r; P.roption P.rstring r; ())
+                  val _ = P.rlist (fn _ => (prim (); P.roption (fn _ => (rname (d, kStamp); prim ())) r;
+                                            P.rbool r; P.roption P.rstring r)) r
+                  val p1 = !(#pos r)
+                in
+                  privateNext := base - !most - 1;
+                  IntTable.insert (!Expand.importedNames, code, names);
+                  List.app Ty.markOpen opens;
+                  IntTable.insert (!Expand.imported, code, body);
+                  IntTable.insert (!Elaborate.inlinedFunctions, code, ());
+                  IntTable.insert (!inlineHashes, code, ref (Bytes (String.substring (#s r, p0, p1 - p0))))
+                end
+            | _ => raise P.Bad "not an option"
+          val f = Elaborate.FunInfo {param = param, paramSig = paramSig, summary = summary, binding = binding, code = code}
+        in ownFuns := IntMap.insert (!ownFuns, code, f); f end
       val funs = P.rlist (fn r => let val n = P.rstring r in (n, rfunref r) end) r
-      (* what its functors' bodies found their names bound by: in its identity *)
-      val _ = P.rlist (fn r => let val k = P.rstring r in (k, P.rstring r) end) r
+      (* its functions marked to be inlined: what a later unit that names
+         one copies (Expand.withInlined) *)
+      val _ =
+        P.rlist (fn r =>
+                   let
+                     val s = rname (d, kStamp)
+                     val p0 = !(#pos r)
+                     val base = !privateNext
+                     val most = ref 0
+                     fun local' i = (if i > !most then most := i else (); base - i)
+                     fun fileOf NONE = file
+                       | fileOf (SOME f) =
+                           if String.isPrefix "\001" f
+                           then let val n = String.extract (f, 1, NONE)
+                                in case List.find (fn (l : loaded) => #name l = n) (!units) of
+                                     SOME l => #file l
+                                   | NONE => n
+                                end
+                           else f
+                     val (body, names) =
+                       MidCodec.read (r, {stamp = fn () => rname (d, kStamp), tycon = fn () => rname (d, kTycon),
+                                          tvar = fn () => rname (d, kTvar),
+                                          file = fn () => fileOf (P.roption P.rstring r), local' = local'})
+                       handle MidCodec.Bad m => raise P.Bad m
+                     fun prim () = (P.roption P.rstring r; P.roption P.rstring r; ())
+                     val _ = P.rlist (fn _ => (prim (); P.roption (fn _ => (rname (d, kStamp); prim ())) r;
+                                               P.rbool r; P.roption P.rstring r)) r
+                     val p1 = !(#pos r)
+                   in
+                     privateNext := base - !most - 1;
+                     IntTable.insert (!Expand.importedValueNames, s, names);
+                     IntTable.insert (!Expand.importedValues, s, body);
+                     Expand.anyImported := true;
+                     IntTable.insert (!inlineHashes, s, ref (Bytes (String.substring (#s r, p0, p1 - p0))))
+                   end) r
+      val _ =
+        P.rlist (fn r =>
+                   let
+                     val ({name = g, tyvars, result, ...}, _) =
+                       MidCodec.read (r, {stamp = fn () => rname (d, kStamp), tycon = fn () => rname (d, kTycon),
+                                          tvar = fn () => rname (d, kTvar), file = fn () => (P.roption P.rstring r; file),
+                                          local' = fn i => ~1 - i})
+                       handle MidCodec.Bad m => raise P.Bad m
+                   in IntTable.insert (!ToMid.importedSchemes, g, (tyvars, result)) end) r
       val overloads =
         P.rlist (fn r =>
                    let
@@ -1522,6 +2769,10 @@ struct
               val exnArg = P.roption (P.roption (fn _ => rty d)) r
               val alias = P.roption P.rstring r
               val known = P.rbool r
+              val same = P.roption (fn _ => rname (d, kStamp)) r
+              val () = Option.app (fn h => IntTable.insert (!Expand.globalAliases, v, h)) same
+              val prim = P.roption P.rstring r
+              val () = Option.app (fn p => IntTable.insert (!Expand.primGlobals, v, p)) prim
             in
               Option.app (fn t => Ty.bindVar (v, t)) binder;
               Option.app (fn a => Ty.bindExn (v, a)) exnArg;
@@ -1548,6 +2799,8 @@ struct
               val real = P.roption (fn _ => rtyfcn d) r
               val dcons = P.roption (P.rlist (fn r => let val n = P.rstring r in (n, rvalstatus d) end)) r
               val origin=readOrigin r
+              val pin = P.roption (P.rlist (fn r => let val t = P.rnat r in (t, P.roption P.rnat r) end)) r
+              val () = Option.app (fn l => Ty.pinLayout (c, l)) pin
             in
               Option.app (fn i => (Ty.extras := Ty.Unknown; Ty.datatypes := IntMap.insert (!Ty.datatypes, c, i))) dt;
               Option.app (fn f => IntTable.insert (Ty.realizations, c, f)) real;
@@ -1562,8 +2815,7 @@ struct
       val () = List.app (fn (n, s) => Elaborate.sigs := StringMap.insert (!Elaborate.sigs, n, s)) sigs
       val () = List.app (fn (n, f) => Elaborate.funs := StringMap.insert (!Elaborate.funs, n, f)) funs
       val () = List.app (fn (s, x) => Overload.table := IntMap.insert (!Overload.table, s, x)) overloads
-      val u : loaded = {identity = identity, name = uname, file = file, base = base,
-                        count = counts, funs = !ownFuns}
+      val u : loaded = {identity = identity, name = uname, file = file, base = base, count = counts}
     in
       register u;
       notePaths (u, delta, sigs);
@@ -1573,5 +2825,7 @@ struct
     handle Overflow => raise P.Bad "a number out of range"
          | Subscript => raise P.Bad "out of range"
 
-  fun load args = loadAgainst (args, [])
+  fun loadKnown (args, known : string option, remap : remap) : result = during "load" (fn () => load' (args, known, remap))
+  fun loadAgainst (args, remap : remap) : result = loadKnown (args, NONE, remap)
+  fun load args : result = loadKnown (args, NONE, [])
 end

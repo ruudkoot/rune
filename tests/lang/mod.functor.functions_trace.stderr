@@ -1,0 +1,4 @@
+runevm: uncaught exception Fail "boom 7"
+  in boom at tests/lang/mod.functor.functions_trace.sml:31:50
+  in functor H at tests/lang/mod.functor.functions_trace.sml:34:11
+  in <toplevel> at tests/lang/mod.functor.functions_trace.sml:36:15

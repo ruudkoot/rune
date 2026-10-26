@@ -1,0 +1,7 @@
+generate funapp 40 80
+compile --units --whole --no-cache @gen
+nostack the expansion's growth with nested functors, the same on both VMs: measured on Rune as shipped alone
+scale funapp 40 320 1.1
+instructions 205824683
+bytes 275245704
+objects 8508065

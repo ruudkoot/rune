@@ -39,6 +39,12 @@ struct
         | 2 => "  datatype d" ^ n ^ " = D" ^ n ^ " of X.t | E" ^ n ^ " of int * d" ^ n
         | _ => "  fun h" ^ n ^ " (D" ^ previous ^ " v) = X.f v | h" ^ n ^ " (E" ^ previous ^ " (_, d)) = h" ^ n ^ " d" end) (indices count)
   val exports=["  type t = X.t","  val x = X.x","  val f = X.f"]
+  (* the applications static interpretation elaborates, which a budget's
+     scale line measures a compile's growth by (tests/runner/budgets.sml):
+     funnest's 1 + M + M^2 + ... + M^D, as an IntInf, the same on every
+     host *)
+  fun applications n="(* " ^ IntInf.toString n ^ " applications *)"
+  fun nested (d,m)=List.foldl (fn (_,acc) => acc * IntInf.fromInt m + 1) 1 (upto d)
   fun generate kind ns =
     let fun sigText n= #1 (signatureText n)
         fun inst s k flavour =join ([sigText s,"signature USE = sig"] @ List.map (fn i => "  structure A" ^ Int.toString i ^ " : BIG") (upto k) @
@@ -52,8 +58,8 @@ struct
              val ()=need (w<=length flex,"where: only " ^ Int.toString (length flex) ^ " non-datatype types in BIG of " ^ Int.toString s ^ " specs")
              in text ^ "\nsignature W = BIG where " ^ String.concatWith "\n  and " (List.map (fn name => "type " ^ name ^ " = int") (List.take (flex,if w>=0 then w else Int.max (0,length flex+w)))) end
       | ("funsig",[s,a]) => join ([sigText s,implementation s,"functor F (X : BIG) = struct val a = X.v2 type t = X.t0 end"] @ List.map (fn i => "structure R" ^ Int.toString i ^ " = F (Impl)") (upto a))
-      | ("funapp",[b,a]) => join ([argument,"functor F (X : ARG) = struct"] @ body b @ ["end"] @ List.map (fn i => "structure S" ^ Int.toString i ^ " = F (" ^ argumentValue i ^ ")") (upto a))
-      | ("funnest",[d,m,b]) => join ([argument,"functor F0 (X : ARG) = struct"] @ body b @ exports @ ["end"] @
+      | ("funapp",[b,a]) => join ([applications (IntInf.fromInt a),argument,"functor F (X : ARG) = struct"] @ body b @ ["end"] @ List.map (fn i => "structure S" ^ Int.toString i ^ " = F (" ^ argumentValue i ^ ")") (upto a))
+      | ("funnest",[d,m,b]) => join ([applications (nested (d,m)),argument,"functor F0 (X : ARG) = struct"] @ body b @ exports @ ["end"] @
                 List.concat (List.map (fn level => ["functor F" ^ Int.toString level ^ " (X : ARG) = struct"] @ List.map (fn i => "  structure N" ^ Int.toString i ^ " = F" ^ Int.toString (level-1) ^ " (X)") (upto m) @ body b @ exports @ ["end"]) (upto d)) @ ["structure R = F" ^ minus (Int.toString d) ^ " (" ^ argumentValue 1 ^ ")"])
       | ("expo",[n]) => "fun f x = x\nfun toy () =\n   let\n      fun g y = " ^ String.concatWith " " (List.map (fn _ => "f") (indices n)) ^ " y\n   in g 3; g 4\n   end\nval _ = toy ()"
       | _ => raise Usage "perf sig S | inst/share/shareall/sharenest S K | where S W | funapp/funsig B A | funnest D M B | expo N"

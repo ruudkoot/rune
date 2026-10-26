@@ -280,7 +280,7 @@ static int p_int64_lt(VM *vm) { I64_2("int64_lt"); return ret(vm, 2, mk_bool(x <
 static int p_int64_le(VM *vm) { I64_2("int64_le"); return ret(vm, 2, mk_bool(x <= y)); }
 static int p_int64_gt(VM *vm) { I64_2("int64_gt"); return ret(vm, 2, mk_bool(x > y)); }
 static int p_int64_ge(VM *vm) { I64_2("int64_ge"); return ret(vm, 2, mk_bool(x >= y)); }
-static int p_int64_order(VM *vm) { I64_2("int64_order"); return ret(vm, 2, mk_con0(x < y ? 0 : x == y ? 1 : 2)); }
+static int p_int64_order(VM *vm) { I64_2("int64_order"); return ret(vm, 2, mk_con0(x < y ? TAG_LESS : x == y ? TAG_EQUAL : TAG_GREATER)); }
 static int p_int64_to_string(VM *vm) {
     I64_1("int64_to_string");
     char buf[32];
@@ -307,7 +307,7 @@ static int p_word64_lt(VM *vm) { W64_2("word64_lt"); return ret(vm, 2, mk_bool(x
 static int p_word64_le(VM *vm) { W64_2("word64_le"); return ret(vm, 2, mk_bool(x <= y)); }
 static int p_word64_gt(VM *vm) { W64_2("word64_gt"); return ret(vm, 2, mk_bool(x > y)); }
 static int p_word64_ge(VM *vm) { W64_2("word64_ge"); return ret(vm, 2, mk_bool(x >= y)); }
-static int p_word64_order(VM *vm) { W64_2("word64_order"); return ret(vm, 2, mk_con0(x < y ? 0 : x == y ? 1 : 2)); }
+static int p_word64_order(VM *vm) { W64_2("word64_order"); return ret(vm, 2, mk_con0(x < y ? TAG_LESS : x == y ? TAG_EQUAL : TAG_GREATER)); }
 static int p_word64_andb(VM *vm) { W64_2("word64_andb"); return ret(vm, 2, mk_word64(x & y)); }
 static int p_word64_orb(VM *vm) { W64_2("word64_orb"); return ret(vm, 2, mk_word64(x | y)); }
 static int p_word64_xorb(VM *vm) { W64_2("word64_xorb"); return ret(vm, 2, mk_word64(x ^ y)); }
@@ -674,8 +674,8 @@ static int p_string_ge(VM *vm) { STR2("string_ge"); return ret(vm, 2, mk_bool(st
 static int p_string_compare(VM *vm) { STR2("string_compare"); return ret(vm, 2, mk_int(str_cmp(a, b))); }
 
 /* The comparisons that answer an order: LESS, EQUAL and GREATER are the
-   nullary constructors 0, 1 and 2 of lib/basis/initial.sml. */
-static Value mk_order(int c) { return mk_con0(c < 0 ? 0 : c == 0 ? 1 : 2); }
+   nullary constructors 0, 1 and 2 of lib/basis/initial.sml (TAG_LESS, ...). */
+static Value mk_order(int c) { return mk_con0(c < 0 ? TAG_LESS : c == 0 ? TAG_EQUAL : TAG_GREATER); }
 static int p_int_order(VM *vm) { INT2("int_order"); return ret(vm, 2, mk_order(x < y ? -1 : x > y)); }
 static int p_word_order(VM *vm) { WORD2("word_order"); return ret(vm, 2, mk_order(x < y ? -1 : x > y)); }
 static int p_char_order(VM *vm) { CHAR2("char_order"); return ret(vm, 2, mk_order(x < y ? -1 : x > y)); }
@@ -736,7 +736,7 @@ static int p_time_sleep(VM *vm) { INT1("time_sleep"); sys_time_sleep(x); return 
 /* A list of the ints in xs, built on the VM stack so that the collector sees
    every cell while the next one is allocated. */
 static int push_int_list(VM *vm, const int64_t *xs, int n, int arity) {
-    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_nil());
     for (int i = n; i > 0; i--) {
         vm_push(vm, mk_int(xs[i - 1]));
         vm_cons(vm);
@@ -763,7 +763,7 @@ static int int_list(Value l, int32_t *out, int n) {
 static int push_strings(VM *vm, const char *packed, int arity) {
     int n = 0;
     for (const char *p = packed; p && *p; p += strlen(p) + 1) n++;
-    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_nil());
     /* backwards, so that the list comes out in order */
     for (int i = n; i > 0; i--) {
         const char *p = packed;
@@ -1221,7 +1221,7 @@ static int p_posix_umask(VM *vm) { INT1("posix_umask"); return ret(vm, 1, mk_int
 
 /* The strings of a user or a group, with the numbers written after them. */
 static int push_strings_and_ints(VM *vm, const char *packed, const int64_t *xs, int n, int arity) {
-    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_nil());
     for (int i = n; i > 0; i--) {
         char buffer[32];
         snprintf(buffer, sizeof buffer, "%lld", (long long)xs[i - 1]);
@@ -1259,7 +1259,7 @@ static int p_posix_getgr(VM *vm) {
     if (!packed) return push_int_list(vm, NULL, 0, 2);
     /* the name, the number, then the members */
     const char *group_members = sys_group_members();
-    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_nil());
     int count = 0;
     for (const char *p = group_members; p && *p; p += strlen(p) + 1) count++;
     for (int i = count; i > 0; i--) {
@@ -1282,7 +1282,7 @@ static int p_posix_getgr(VM *vm) {
 /* A list of n strings of the given lengths (bytes, NULs among them), built
    on the VM stack so that the collector sees every cell. */
 static int push_byte_strings(VM *vm, const char *const *strs, const size_t *lens, int n, int arity) {
-    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_nil());
     for (int i = n; i > 0; i--) {
         vm_push(vm, mk_ptr(vm_string_from(vm, strs[i - 1], (uint32_t)lens[i - 1])));
         vm_cons(vm);
@@ -1508,7 +1508,7 @@ static int p_socket_recvfrom(VM *vm) {
     int64_t got = sys_recvfrom((int)val_imm(ARG(2)), buf, n, (int)val_imm(ARG(0)));
     if (got < 0) { free(buf); return push_int_list(vm, NULL, 0, 3); }
     /* the bytes, then the address, built on the stack so the collector sees them */
-    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_nil());
     vm_push(vm, mk_ptr(vm_string_from(vm, sys_last_addr(), (uint32_t)sys_last_addr_len())));
     vm_cons(vm);
     vm_push(vm, mk_ptr(vm_string_from(vm, buf, (uint32_t)got)));
@@ -1578,7 +1578,7 @@ static int p_socket_inet_parts(VM *vm) {
     if (!host) return push_int_list(vm, NULL, 0, 1);
     char buffer[32];
     snprintf(buffer, sizeof buffer, "%d", port);
-    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_nil());
     vm_push(vm, mk_ptr(vm_string_from(vm, buffer, (uint32_t)strlen(buffer))));
     vm_cons(vm);
     vm_push(vm, mk_ptr(vm_string_from(vm, host, (uint32_t)strlen(host))));
@@ -1594,7 +1594,7 @@ static int p_socket_inet6_parts(VM *vm) {
     if (!host) return push_int_list(vm, NULL, 0, 1);
     char buffer[32];
     snprintf(buffer, sizeof buffer, "%d", port);
-    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_nil());
     vm_push(vm, mk_ptr(vm_string_from(vm, buffer, (uint32_t)strlen(buffer))));
     vm_cons(vm);
     vm_push(vm, mk_ptr(vm_string_from(vm, host, (uint32_t)strlen(host))));
@@ -1691,7 +1691,7 @@ static int p_string_implode(VM *vm) {
 static int p_string_explode(VM *vm) {
     Obj *s = check_obj(vm, ARG(0), K_STRING, "string_explode");
     uint32_t n = obj_len(s);
-    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_nil());
     for (uint32_t i = n; i > 0; i--) {
         s = val_ptr(vm->stack[vm->sp - 2]);
         vm_push(vm, mk_char((unsigned char)obj_bytes(s)[i - 1]));
@@ -2324,7 +2324,7 @@ static int p_posix_exit(VM *vm) {
     return 0;
 }
 static int p_command_args(VM *vm) {
-    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_nil());
     for (int i = vm->argc; i > 0; i--) {
         Obj *s = vm_string_from(vm, vm->argv[i - 1], (uint32_t)strlen(vm->argv[i - 1]));
         vm_push(vm, mk_ptr(s));
@@ -2394,7 +2394,7 @@ static uint32_t frames_at(VM *vm, uint32_t f, uint32_t pc, TraceFrame *fs, uint3
 static int p_rt_trace(VM *vm) {
     INT1("rt_trace");
     size_t skip = x < 0 ? 0 : (size_t)x;
-    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_nil());
     FrameRef *fr;
     size_t nf = vm_frames_from(vm, 0, &fr);
     if (nf) {
@@ -2439,7 +2439,7 @@ static int p_rt_raise_mark(VM *vm) {
    left, innermost first, as rt_trace gives them, inlined functions each a
    frame of its own; built from the outermost in */
 static int p_rt_raise_trace(VM *vm) {
-    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_nil());
     TraceFrame fs[64];
     for (uint32_t k = vm->raise_n; k > 0; k--) {
         uint32_t f = vm->raise_frames[k - 1].func, pc = vm->raise_frames[k - 1].pc;
@@ -2603,7 +2603,7 @@ static uint32_t stop_pc_in(const VM *vm, const FrameRef *f) {
 }
 
 static int p_rt_debug_frames(VM *vm) {
-    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_nil());
     TraceFrame fs[64];
     size_t lowest = SIZE_MAX;
     FrameRef fr;
@@ -2809,8 +2809,11 @@ static int unit_source_current(VM *vm, const UnitExport *source, const char *nam
     const char prefix[] = "\001RuneSource:";
     size_t n = sizeof prefix - 1;
     if (strncmp(name, prefix, n) != 0) return 1;
-    if (strlen(name) <= n + 25 || name[n + 24] != ':') return 0;
-    const char *identity = name + n + 25;
+    /* the hash runs to the first ':' (hexadecimal digits, as many as the
+       compiler's Pickle.hash gives) */
+    const char *colon = strchr(name + n, ':');
+    if (colon == NULL || colon == name + n) return 0;
+    const char *identity = colon + 1;
     for (uint32_t i = 0; i < vm->nunit_exports; i++) {
         const UnitExport *unit = &vm->unit_exports[i];
         if (unit->kind == 0 && unit->stamp == -1 &&
@@ -2823,7 +2826,7 @@ static int unit_source_current(VM *vm, const UnitExport *source, const char *nam
 static int p_rt_linked_units(VM *vm) {
     check_tag(vm, ARG(0), T_CON0, "rt_linked_units");
     vm->sp--;
-    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_nil());
     for (uint32_t i = vm->nunit_exports; i > 0; i--) {
         const UnitExport *e = &vm->unit_exports[i - 1];
         if (e->kind != 0 || e->stamp != -1) continue;

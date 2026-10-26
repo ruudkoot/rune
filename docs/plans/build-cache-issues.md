@@ -13,7 +13,9 @@ compile looked up and the unit that bound each one (usages), together with
 the identity of every unit the basis names. Most issues below are an input
 that this count missed; the others are gaps in how such a miss would be
 found, or what looking for them turned up. They are numbered in the order
-they were found.
+they were found. Issues 16 to 24 were found by the functors-units roadmap
+(`functors-units.md`, 2026-10-21 to 2026-10-25), which also found the bugs
+outside the cache that the last section lists.
 
 ## Wrong results
 
@@ -55,7 +57,16 @@ they were found.
   (`docs/units.md`, *The cache*). The probes are scenarios S49 to S51. It
   costs precision, not correctness: a unit that declares a functor and
   other things changes identity where anything it used changed, not only
-  what its functors' bodies used.
+  what its functors' bodies used. Since functors-units' M7 (2026-10-25)
+  the cause is gone: a functor is compiled once, in the unit that declares
+  it, and a unit that applies it calls its function, so what the body's
+  names meant and the fixity it was parsed with are the declaring unit's
+  alone. The binders a functor's unit wrote into its basis went with the
+  cause, and so did the usage `funat`, by which an applying unit used the
+  unit a copy's code came from. S49 to S51 now compile `a.sml` and `c.sml`,
+  and `main.sml` calls the function `c.sml` made again; a functor marked to
+  be inlined, whose body an applying unit copies, makes that unit use its
+  function's Mid (`inl F`, docs/units.md, *The cache*).
 
 * **2. Overloading registered away from its type.** Resolving an
   overloaded operator or literal at a type reads the registration that some
@@ -96,7 +107,99 @@ they were found.
   not the bytes a build without the cache gives. The computation was right;
   the positions were not. Status: fixed. An entry keeps, for each file its
   code names, the unit it is the source of, and a unit taken from the cache
-  names each where that unit's source is now (scenario S56).
+  names each where that unit's source is now (scenario S56). Since
+  functors-units' M7 (2026-10-25) a unit holds a copy of another unit's
+  functor only where the functor is marked to be inlined, as the Basis
+  Library's `mono_vector_fn.sml` and `streamio_fn.sml` are; the paths stay
+  for those copies, and a marked functor's Mid names its positions by its
+  unit's own source, not by the path its compile was given (S61).
+
+* **16. Fingerprints without equality.** Found by the functors-units
+  roadmap (E9, 2026-10-21). A fingerprint wrote a type variable as `'i`
+  whether or not it admits equality, and a name local to a signature as
+  its place among them, without its arity or its equality. So `'a -> int`
+  and `''a -> int` were one fingerprint, and so were `type t`, `eqtype t`
+  and `type 'a t` in a signature where no value names `t`. Fourteen probes
+  edited one of these in `a.sml` and built `b.sml` through the cache; in
+  seven, the warm build took `b.sml` from the cache where a build without
+  it refused the program, or the other way round:
+  * `fun f (x : 'a) = 0` edited to `fun f x = if x = x then 0 else 1`,
+    and `b.sml` applies `f` to `1.5`: the warm build succeeds; with a
+    closure instead of `1.5`, the program runs `=` on a function value
+    and prints 0;
+  * the same inside a structure; the edit the other way, which refuses a
+    program that holds;
+  * a signature's `type t` edited to `eqtype t` or to `type 'a t`, and
+    `b.sml` matches it with `type t = real` or `type t = int`;
+  * a functor's parameter edited so, and `b.sml` applies it in another
+    functor's body.
+
+  Status: fixed (functors-units M2). A type variable's fingerprint says
+  whether it admits equality, and a signature's or a functor's local names
+  are written each with its arity and equality (`UnitBasis.version` 8).
+  The probes are scenarios S68 (a value) and S69 (a signature).
+
+* **21. The REPL kept a functor's old body through the cache.** Found by
+  the functors-units roadmap (M6b, 2026-10-25), with functors copied (the
+  default until its M7). In one session, through the cache:
+
+  ```sml
+  (* twice.sml *) functor Twice (X : sig val step : int -> int end) =
+                    struct fun go x = X.step (X.step x) end
+  (* apply.sml *) structure A = Twice (struct fun step n = n * 3 end)  val a = A.go 5
+  ```
+
+  `use` both; edit the body to apply `X.step` three times; `use` both
+  again. `a` was 45; it should be 135. `apply.sml`'s entry was taken: its
+  usage of `Twice` held by the signature's fingerprint, and its usage of
+  the body (`funat`) held because the unit of the old body was still in
+  the session -- a REPL keeps every unit it loaded, the old one shadowed
+  by the new, where a batch build has only the new. Status: fixed by 23's
+  rule (S75).
+
+* **22. The REPL gave a file used again its first load's identity.**
+  Found by the functors-units roadmap (M6b, 2026-10-25); with or without
+  the cache, in every mode. With `counter.sml` holding `structure Counter
+  = struct val n = ref 0 end`, `use "counter.sml"; structure Old =
+  Counter; use "counter.sml"; Old.n := 10` set the second load's
+  `Counter.n` too: `!Counter.n` was 10, where 0 is right. The same text
+  against the same units has the same identity, so the second load's
+  globals were registered under the first's, and the runtime's table of
+  what units export, keyed by identity, gave them to code that named the
+  first's -- `Old.n`, compiled after the second `use`. Not the cache's,
+  but of the identities it keys on. Status: fixed. A unit loaded where a
+  unit of its identity is loaded already is loaded and linked under its
+  identity with `~2` after it (`~3`, ...), its code's own keys renamed for
+  linking only; its entry keeps its basis's identity (`docs/units.md`).
+  Scenarios S38 (through the cache) and S74 (compiled again, the cache
+  verified).
+
+* **23. The REPL linked a unit from the cache to the first of two loads.**
+  Found fixing 22 (2026-10-25). `use "counter.sml"; use "user.sml"`, where
+  `user.sml` is `fun bump () = Counter.n := !Counter.n + 1`; add a value to
+  `counter.sml`; `use` both again; `bump ()`. Through the cache it
+  incremented the first load's `Counter`: `!Counter.n` was 0, where 1 is
+  right. `user.sml`'s usage of `Counter` held by fingerprint -- the new
+  unit has the old one's name, so a structure the same is the same
+  fingerprint -- and the entry's code named the first `counter.sml`'s
+  globals, which no remapping takes over while that unit is in the
+  session. With `counter.sml` unedited, 22 made it right by accident, and
+  22's fix alone would have made it wrong. Status: fixed. A usage holds by
+  its fingerprint only where the unit that bound the name then is not in
+  the session (`docs/units.md`, *Fingerprints*); where it is, the entry is
+  a miss and the unit is compiled. A batch build never has two units of
+  one name, so this changes nothing there; it fixes 21 too. Scenario S75.
+
+* **24. The REPL named a declaration's printer by the session's count.**
+  Found by the functors-units roadmap (M7, 2026-10-25), building HOL4
+  through the cache with `RUNE_VERIFY_CACHE=1`, which stopped at
+  `regexpMatch.sml#0`. The code that prints what a declaration binds is
+  compiled with it (issue 3), from a source named `<echo k>`, k the count
+  of declarations the session had compiled, and the code keeps that name:
+  an entry written where the session had compiled k declarations was not
+  the bytes a compile at another count gives, so `--verify-cache`
+  refused a correct entry. What the program computed was right. Status:
+  fixed; every printer's source is `<echo>` (S76).
 
 ## A hit that cannot link
 
@@ -276,4 +379,176 @@ they were found.
   `--verify-cache` compiles an entry that holds by fingerprint again rather
   than compare it. Left: giving such an entry the identity a fresh compile
   would -- its basis written again against the new units when it is
-  loaded -- so that `--verify-cache` can compare it too.
+  loaded -- so that `--verify-cache` can compare it too. Since
+  functors-units' M7 (2026-10-25) the functor's case is gone: a functor's
+  unit keeps no binders in its basis (issue 1), and its code is its
+  function, which names the units it uses as any code does. The rest is
+  as above: MLton's S48, which compiled six units because four held only
+  across `profile.fun` changed, compiles `profile.fun` alone, since an edit
+  of a body no longer changes its unit's identity.
+
+* **17. A functor's or a signature's usage was fingerprinted after the
+  unit's own declarations.** Found by the functors-units roadmap (E5 and
+  E9, 2026-10-21). A value's usage is fingerprinted as the name was at the
+  unit's start; a functor's and a signature's were fingerprinted after the
+  unit was elaborated, from tables that then hold the unit's own. So a
+  unit that applies an earlier unit's `F` and then declares its own `F`
+  recorded the earlier unit's identity with its own `F`'s fingerprint, and
+  its basis wrote its own `F`'s. Not a wrong hit -- the entry names the
+  earlier functor by its place, and a remap refuses it -- but a miss where
+  nothing changed, and an entry that depended on what the session had
+  worked out before. Status: fixed (functors-units M2, F1): every usage is
+  fingerprinted at the unit's start (S72).
+
+* **18. A recursive group's fingerprint depended on which member came
+  first.** Found by the functors-units roadmap (E5). Of `datatype t = X of
+  u | Y and u = Z of t | W`, `u`'s fingerprint was `u`'s alone where the
+  session worked out `u` first, and `u`'s with `t` in progress where it
+  worked out `t` first, so whether a unit that names `A.u` was compiled
+  again across another change to `A`'s unit depended on the session.
+  Misses, never a wrong hit. Status: fixed (functors-units M4): a group's
+  fingerprint is one value, of its strongly connected component, its
+  members named by their anchors (S73).
+
+* **19. The link was quadratic.** Found by the functors-units roadmap (E3):
+  `StringMap.numItems` for each key, and an insertion sort. MLton's link in
+  units took 15.7 s, and 1.26 s with the fix, for the same bytes. Status:
+  fixed (functors-units M2).
+
+* **20. A warm build hashed every basis twice.** Found by the
+  functors-units roadmap (E5): a unit's identity was hashed when its basis
+  was written and again when it was loaded, 481.5 MB in a warm build of
+  MLton's 606 files with no edit, 220 MB of it the second time. Status:
+  fixed (functors-units M2, F2): the identity is kept with the entry and
+  given to the load.
+
+## Found on the way, outside the cache
+
+The functors-units roadmap (2026-10-21 to 2026-10-25) found these while it
+found 16 to 23. They are not the cache's, and are kept here with them.
+
+**In Rune:**
+
+* **A long vector made through a list as deep.** `CharVector.tabulate` and
+  `Word8Vector.tabulate` made a vector by `implode (List.tabulate ...)`,
+  which recursed once for each element, and `CharArraySlice.vector` and
+  `Word8ArraySlice.vector` go through them: making a string of a 10 MB
+  buffer stopped the compiler with "stack overflow" (the VM's stack is
+  bounded, `rt.stack`) on MLton's sources in units. Status: fixed; a
+  vector of more than 1,024 elements is made in place
+  (`tests/lang/basis.charvector_long`). The list functions that recurse
+  once for each element -- `@`, `map`, `foldr`, `List.tabulate`,
+  `ListPair`'s and what is made of them -- still stop past some ten
+  million elements: `performance/basis.md` says what was tried and what
+  might do.
+* **`IntInf`'s SML arithmetic dropped a limb of a sum.** Adding two
+  magnitudes took the first for the longer by its bytes, and walked its
+  limbs alone; a limb is 30 bits, not a whole number of bytes, so two
+  magnitudes of as many bytes may be of two lengths in limbs, and the
+  other's top limb was lost: `(2^210 - 1) + 2^210` gave `2^210 - 1`
+  plus nothing above it, while `2^210 + (2^210 - 1)` was right. GMP's
+  arithmetic, the register VM's default, was right; the stack VM's and
+  `--intinf=sml`'s were not, and every `pidigits` benchmark printed wrong
+  digits under them (found running the benchmark catalogue under the
+  flag, wrong with it off too). Neither the IntInf suite's 230 vectors,
+  mostly small, nor its backends' comparisons had such a pair. Status:
+  fixed; the longer in limbs is taken (`tests/lang/basis.intinf_add_limbs`).
+* **A unit's provenance read by its width.** Three readers of the hash in
+  a unit's provenance -- `Link.sourceOf`, the runtime's
+  `unit_source_current` and the Basis's `linkedUnitSources` -- took it to
+  be the 24 digits `Pickle.hash` gave, and broke when M4 changed the hash
+  (S61 failed). Status: fixed; they read to the first `:`.
+* **Errors printed `Int64.int` as `_int64`**, and `Word64.word` as
+  `_word64` (E1). Status: fixed (functors-units M3).
+* **Applications still typed by their copies** (E1): in four corners Rune
+  accepted ten programs the Definition rejects and rejected two it
+  accepts. Status: one corner refused (functors-units M3), the other three
+  pinned by tests until M7 closes them.
+* **Rune's int64 VM has a 64-bit `Word` whatever the bytecode**, so a
+  program that relies on `Word`'s 63 bits computes otherwise there, and
+  **`lib/random`'s `hashString` differs on `smlnj32`** (E6). Status: open.
+
+**In the prototype of functors compiled once** (`--functors=functions`,
+`lib/compiler/core/expand.sml`; on the branch, behind the flag, until the
+roadmap's M7 makes it the only way):
+
+* Found by compiling MLton's and ML-Yacc's sources, the benchmarks and the
+  examples (M6, M6b), each now a case of
+  `tests/lang/mod.functor.functions_expand`:
+  * a typed pattern's lambda bound to a polymorphic value (MLton's
+    `IntSize.memoize`);
+  * a `local` block that applies functors inside one declaration (ML-Yacc);
+  * an open constructor bound to a polymorphic variable
+    (`ssa2-to-rssa.fun`, `Prim.Word_equal ws`), which only `--lint` saw;
+  * a hidden datatype of a mutually recursive group copied once for each
+    application while the group's visible type was one instance that two
+    expansions shared, so code built values with one copy and took them
+    apart with the other (`fxp`; only `--lint` saw it, the two copies'
+    layouts being the same).
+
+  Status: fixed.
+* Found by an independent review of `expand.sml` (2026-10-25):
+  1. a miscompile no lint sees: a program's own `if n = 0` at a type a
+     parameter leaves open was taken, by its shape, for a descriptor's test
+     and folded (`5 0 200 100` printed where `1 0 200 100` is right);
+  2. a miscompile that stops the VM: a descriptor worked out from the
+     layout at elaboration, while the expansion laid the instance out
+     anew, so a constructor built boxed was taken apart flat ("constructor
+     field 1 out of range");
+  3. a lint failure of `fxp`'s kind: an instance whose constructors name
+     only an inner hidden datatype was taken to be independent of the
+     substitution, and copied for each expansion;
+  4. traces: a copy had no `functor F` frame at `-O1` and `-O2` where it
+     had one at `-O0`, tail calls where the source has none, and was named
+     `F.boom` where `A.boom` is right (check-levels' rule);
+  5. a crash on a contrived program: the expansion knew its marker by a
+     type's shape, and `val weird : (unit * unit) * (unit * unit) =
+     RuneDynamic.cast ()` stopped it ("expand: a marker's pair");
+  6. MidLint's rule for casts: a valid cast through `unit` refused, and
+     gaps: only a variable bound directly to a cast to `unit` was checked,
+     nothing between two types neither of which is `unit`, and type
+     variables were skipped;
+  7. two of no effect today: stamps compared after they were renumbered,
+     and a free variable's copy.
+
+  Status: fixed, each with a test, before M7.
+* Found by the generator of functor programs (`tests/runner/functorgen.sml`,
+  2026-10-25: 6,688 programs, each in up to seven modes), each a failure of
+  `--lint` in a program that printed right:
+  * a functor applied to an earlier unit's structure, in units, under the
+    flag: the lint after the expansion fails ("cast to unit from unit ->
+    unit, is cast back to int -> int"), in 37% of the programs generated;
+  * a functor whose body seals its parameter (`structure I :> S = X`) and
+    declares a datatype over `I.t`, applied in another functor's body that
+    two applications make code of, whole and in units: the expansion makes
+    one copy of the datatype for both ("the argument of a constructor has
+    type int * int where real is wanted").
+
+  Status: fixed before M7.
+* Found landing it as the only way (M7): a marked functor's Mid in a
+  basis named its positions by the path its source was given by, so a
+  Basis unit from the shipped cache differed from one compiled again
+  (S61); and the expansion aliased a value to a global a function sets
+  again, a dynamic module's slot, so `val kept = L.version` read the new
+  module's after `Dynamic.reload`. Status: fixed.
+* Found by the same generator, and not the prototype's: with the flag off,
+  from `-O1`, a function that returns a datatype's constructors in globals
+  (Lower's `results`) shares a global between constructors -- `datatype t =
+  C0 of int | C1 of string * int` keeps C0's int and C1's string in one --
+  and the variable read from it took the representation of the first
+  binding Lower met, C1's pointer, where C0's branch adds it as an int:
+  Lower's lint refused it, and the register code told the JIT the register
+  holds a pointer. Status: fixed; such a variable holds anything
+  (`tests/lang/dec.datatype_int-payload-lint`).
+
+**In other compilers** (E1 and E6; `functors-units.md`, *Found while
+writing this roadmap*, has each):
+
+* SML/NJ 110.99.9 on amd64 stops on a word constant of 2^30 or more that a
+  register spill moves ("MLRisc bug: AMD64MCEmitter: MOVABSQ
+  unimplemented"; `docs/bugreport/smlnj/MLRISC/movabsq-spilled`);
+* `smlnj32`'s `Word64` is wrong: `fromInt`, shifts and `+`;
+* MLKit 4.7.25 fails with an internal error on a functor whose body has
+  `val r = ref []`, applied after a `;`;
+* SML/NJ 110.99.9 accepts equality through a functor's opaquely ascribed
+  result.

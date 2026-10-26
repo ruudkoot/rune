@@ -126,18 +126,21 @@ struct
          check s "cached entry did not echo at default depth" (String.isSubstring "val v = T 3 : t" (session s false ["use \"t.sml\";", "use \"v.sml\";"])))
     | "S55" =>
         (functorFixity s; b [] "y.sml a.sml c.sml main.sml";
-         let val old = selectedEntry s "main.sml"
+         let (* c.sml's own entry: main.sml's names c.sml's unit too *)
+             fun entries () = List.filter (fn file => not (String.isSubstring "main.sml" (CachePlant.binary file)))
+                                          (selectedEntry s "c.sml")
+             val old = entries ()
              val () = copy (only old) (path s "old-entry")
-             val () = (f "a.sml" 1; b [] "a.sml c.sml main.sml"; build s ["--verify-cache"])
+             val () = (f "a.sml" 1; b [] "a.sml c.sml"; build s ["--verify-cache"])
              val () = check s "warm build did not verify" (#status (!(#result s)) = 0)
-             val new = only (notIn old (selectedEntry s "main.sml"))
+             val new = only (notIn old (entries ()))
              val () = CachePlant.stale (path s "old-entry") new
              val () = build s []
              val () = check s "planted stale entry was not used" (null (compiled s))
              val () = prints s "4"
              val () = build s ["--verify-cache"]
          in check s "verification did not reject the planted stale entry" (#status (!(#result s)) <> 0
-                andalso String.isSubstring "main.sml: the cache's entry is not what compiling it gives" (#errors (!(#result s)))) end)
+                andalso String.isSubstring "c.sml: the cache's entry is not what compiling it gives" (#errors (!(#result s)))) end)
     | "S57" =>
         (own s ""; f "u.sml" 0; ignore (session s false ["val base = 1;", "use \"u.sml\";"]);
          let val old = cache s
@@ -150,12 +153,74 @@ struct
              val output = session s true ["val base = 1;", "use \"u.sml\";"]
          in check s "REPL verification did not reject planted entry"
                (String.isSubstring "the cache's entry for " output andalso String.isSubstring " is not what compiling it gives" output) end)
+    | "S74" =>
+        (own s ""; put s "counter.sml" "structure Counter = struct val n = ref 0 end";
+         let val _ = session s false ["use \"counter.sml\";"]
+             val output = session s true ["use \"counter.sml\";", "structure Old = Counter;", "use \"counter.sml\";",
+                                          "Old.n := 10;", "val now = !Counter.n;", "val old = !Old.n;"]
+         in check s ("a structure named a file's used again: " ^ output)
+              (String.isSubstring "val now = 0 : int" output andalso String.isSubstring "val old = 10 : int" output
+               andalso not (String.isSubstring "not what compiling it gives" output)) end)
+    | "S75" =>
+        (own s ""; put s "user.sml" "fun bump () = Counter.n := !Counter.n + 1";
+         put s "apply.sml" "structure A = Twice (struct fun step n = n * 3 end)  val a = A.go 5";
+         let
+           val write = "fun write (f, t) = let val out = TextIO.openOut f in TextIO.output (out, t); TextIO.closeOut out end;"
+           fun counter more = "write (\"counter.sml\", \"structure Counter = struct val n = ref 0" ^ more ^ " end\");"
+           fun twice body = "write (\"twice.sml\", \"functor Twice (X : sig val step : int -> int end) = struct fun go x = "
+                            ^ body ^ " end\");"
+           val output = session s false
+             [write, counter "", "use \"counter.sml\";", "use \"user.sml\";", "use \"counter.sml\";", "use \"user.sml\";",
+              "bump ();", "val same = !Counter.n;",
+              counter " val m = 1", "use \"counter.sml\";", "use \"user.sml\";", "bump ();", "val edited = !Counter.n;",
+              twice "X.step (X.step x)", "use \"twice.sml\";", "use \"apply.sml\";",
+              twice "X.step (X.step (X.step x))", "use \"twice.sml\";", "use \"apply.sml\";"]
+         in check s ("a cached unit linked against a unit the session replaced: " ^ output)
+              (String.isSubstring "val same = 1 : int" output andalso String.isSubstring "val edited = 1 : int" output
+               andalso String.isSubstring "val a = 135 : int" output) end)
+    | "S76" =>
+        (own s ""; put s "v.sml" "val v = 1 + 2  fun get (SOME x) = x | get NONE = v";
+         let val _ = session s false ["val a = 1;", "val b = 2;", "use \"v.sml\";"]
+             val output = session s true ["use \"v.sml\";", "val w = get NONE;"]
+         in check s ("a file used at another place in a session, the cache verified: " ^ output)
+              (String.isSubstring "val v = 3 : int" output andalso String.isSubstring "val w = 3 : int" output
+               andalso not (String.isSubstring "not what compiling it gives" output)) end)
+    | "S78" =>
+        (* a function marked to be inlined (`inline val`): an edit of its
+           body compiles the declaring unit and the units that copied it,
+           and nothing else; an edit beside it, the declaring unit alone *)
+        let
+          val () = own s ""
+          val () = put s "a.sml" "structure A = struct fun inc x = x + 1 fun other x = x * 2 end"
+          val () = put s "b.sml" "val b = A.inc 41"
+          val () = put s "c.sml" "val c = A.other 3"
+          val () = put s "main.sml" "val () = print (Int.toString b ^ \" \" ^ Int.toString c ^ \"\\n\")"
+          val () = put s "p.build" "inline val A.inc end\nfiles a.sml b.sml c.sml main.sml end"
+          fun bld expected output =
+            let
+              val r = command s "" [#compiler s, "--build", "p.build", "--units", "--cache-dir", "cache", "--explain-rebuild",
+                                    "-o", "p.rbc"]
+              val () = #result s := r
+              val got = compiled s
+              val () = check s ("compiled [" ^ String.concatWith " " got ^ "], wanted [" ^ expected ^ "]")
+                             (#status r = 0 andalso got = String.tokens Char.isSpace expected)
+              val plain = command s "" [#compiler s, "--build", "p.build", "--units", "--no-cache", "-o", "nocache.rbc"]
+              val () = check s "cached program differs from uncached compilation"
+                             (#status plain = 0 andalso same (path s "p.rbc", path s "nocache.rbc"))
+            in prints s output end
+        in
+          bld "a.sml b.sml c.sml main.sml" "42 6";
+          edit s "a.sml" "fun inc x = x + 1" "fun inc x = x + 2";
+          bld "a.sml b.sml" "43 6";
+          edit s "a.sml" "fun other x = x * 2" "fun other x = x * 2 + 0";
+          bld "a.sml" "43 6"
+        end
     | "S58" => parallel s
     | _ => simple s
     end
   val cases = ["S1", "S2", "S3", "S5", "S6", "S8", "S17", "S18", "S19", "S29", "S13", "S24", "S31", "S33", "S34", "S36", "S28", "S40",
                "S4", "S7", "S9", "S10", "S11", "S12", "S14", "S15", "S16", "S20", "S21", "S22", "S23", "S25", "S26", "S30", "S32", "S35",
-               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67"]
+               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76", "S77", "S78", "S79"]
   fun runCase name compiler =
     let val s = create name compiler
     in one s; say ("PASS incremental." ^ name ^ ": " ^ Int.toString (!(#assertions s)) ^ " assertions\n") end

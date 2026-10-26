@@ -98,7 +98,7 @@ struct
     | "S5" => (standard s; copy (path s "a.sml") (path s "original"); e "a.sml" "val unused = 0" "val unused = 0 val more = 1";
                 b [] "a.sml"; copy (path s "original") (path s "a.sml"); b [] "")
     | "S6" => (standard s; OS.FileSys.setTime (path s "a.sml", NONE); b [] "")
-    | "S8" => (standard s; e "c.sml" "fun area2 x = 2 * S.area x" "fun area2 x = 3 * S.area x"; b [] "c.sml d.sml")
+    | "S8" => (standard s; e "c.sml" "fun area2 x = 2 * S.area x" "fun area2 x = 3 * S.area x"; b [] "c.sml")
     | "S9" => (standard s; e "a.sml" "datatype shape = Square of int | Rect of int * int" "datatype shape = Rect of int * int | Square of int";
                 b [] "a.sml b.sml d.sml main.sml"; prints s "20\nhandled a")
     | "S10" => (standard s; e "a.sml" "Rect of int * int" "Rect of {w : int, h : int}";
@@ -129,11 +129,11 @@ struct
                  copy (path s "original") (path s "b.sml"); e "b.sml" "(* uses a.sml *)" "(* uses a.sml, mended *)"; b [] "b.sml")
     | "S32" => (c "w.sml"; b [] "w.sml"; b [] ""; check s "warning was not replayed"
                  (String.isSubstring "w.sml:1:5: warning: match is not exhaustive" (#errors (!(#result s)))))
-    | "S49" => (functorFixity s; b [] "y.sml a.sml c.sml main.sml"; prints s "4"; f "a.sml" 1; b [] "a.sml c.sml main.sml"; prints s "14")
+    | "S49" => (functorFixity s; b [] "y.sml a.sml c.sml main.sml"; prints s "4"; f "a.sml" 1; b [] "a.sml c.sml"; prints s "14")
     | "S50" => (c "a.sml c.sml z.sml main.sml"; b [] "a.sml c.sml z.sml main.sml"; prints s "false";
-                 f "a.sml" 1; b [] "a.sml c.sml main.sml"; prints s "true")
+                 f "a.sml" 1; b [] "a.sml c.sml"; prints s "true")
     | "S51" => (c "a.sml c.sml z.sml main.sml"; b [] "a.sml c.sml z.sml main.sml"; prints s "7";
-                 f "a.sml" 1; b [] "a.sml c.sml main.sml"; prints s "7")
+                 f "a.sml" 1; b [] "a.sml c.sml"; prints s "7")
     | "S52" => (c "a.sml main.sml"; b [] "a.sml main.sml"; prints s "2 30"; f "a.sml" 1; b [] "a.sml"; prints s "2 30")
     | "S56" => (c "t.sml"; b [] "t.sml"; let val result = command s "" [OS.Path.dir (#compiler s) ^ "/runevm", "p.rbc"]
                  in check s "trace names the library elsewhere" (String.isSubstring "lib/basis/mono_vector_fn.sml:" (#errors result)
@@ -146,7 +146,7 @@ struct
                  let val files = List.filter (String.isSuffix "colors.rbi") (entriesBelow (path s "units"))
                      val bytes = OS.FileSys.fileSize (only files)
                  in check s "basis of 300 constructors exceeds its size bound" (#status (!(#result s)) = 0 andalso bytes > 0 andalso bytes < 100000) end; prints s "1")
-    | "S61" => (c "a.sml b.sml main.sml"; b [] "a.sml b.sml main.sml"; f "a.sml" 1; b [] "a.sml b.sml main.sml"; prints s "42 0")
+    | "S61" => (c "a.sml b.sml main.sml"; b [] "a.sml b.sml main.sml"; f "a.sml" 1; b [] "a.sml b.sml"; prints s "42 0")
     | "S62" => (c "p.sml"; b ["--or-patterns"] "p.sml"; prints s "small"; build s []; fails s;
                  own s "d.sml"; f "d.sml" 0; b ["--default-type=int64"] "d.sml"; prints s "1"; build s []; fails s)
     | "S63" => (c "p.sml"; b ["--unicode"] "p.sml"; prints s "read"; b [] "p.sml"; b ["--unicode=latin1"] "p.sml";
@@ -159,15 +159,52 @@ struct
                  in lint ["--unicode"] "p.sml" true; prints s "linted"; lint ["--unicode", "--no-unicode-lints"] "p.sml" false;
                     lint ["--unicode", "--no-unicode-lints"] "" false; lint ["--unicode"] "" true end)
     | "S65" => (c "c.sml b.sml d.sml main.sml"; b ["--emit-units", "u1"] "c.sml b.sml d.sml main.sml"; prints s "22";
-                 f "c.sml" 1; b ["--emit-units", "u2"] "c.sml b.sml"; prints s "24";
+                 f "c.sml" 1; b ["--emit-units", "u2"] "c.sml"; prints s "24";
                  let val name = OS.Path.file (only (List.filter (String.isSuffix "-b.rbi") (entriesBelow (path s "u1"))))
                  in check s "b.sml's basis changed with functor body" (same (path s ("u1/" ^ name), path s ("u2/" ^ name))) end)
     | "S66" => (c "c.sml g.sml main.sml"; b [] "c.sml g.sml main.sml"; prints s "6"; f "c.sml" 1;
-                 b [] "c.sml main.sml"; prints s "9"; f "c.sml" 2; b [] "c.sml g.sml main.sml"; prints s "9")
+                 b [] "c.sml"; prints s "9"; f "c.sml" 2; b [] "c.sml g.sml main.sml"; prints s "9")
     | "S67" => (c "c.sml main.sml"; b [] "c.sml main.sml"; prints s "5";
                  check s "no entry to plant" (List.exists (fn x => x) (List.map (fn file => CachePlant.basisVersion file "c.sml" 5) (cache s)));
                  b ["--explain-rebuild"] "c.sml"; prints s "5"; check s "basis version was not diagnosed"
                    (String.isSubstring "c.sml" (#errors (!(#result s))) andalso String.isSubstring "of another version" (#errors (!(#result s)))))
+    | "S68" => (fresh s; e "a.sml" "  val unused = 0" "  val unused = 0\n  fun same (x : 'a) = 0";
+                 e "b.sml" "fun area s = A.area s + 1" "fun area s = A.area s + 1 + A.same 1.5"; b [] all;
+                 e "a.sml" "fun same (x : 'a) = 0" "fun same x = if x = x then 0 else 1"; build s []; fails s)
+    | "S69" => (fresh s; e "a.sml" "  val unused = 0\nend" "  val unused = 0\nend\nsignature HAS = sig type u end";
+                 put s "e.sml" "structure E : HAS = struct type u = real end";
+                 put s "files" "a.sml b.sml e.sml c.sml d.sml main.sml"; b [] "a.sml b.sml e.sml c.sml d.sml main.sml";
+                 e "a.sml" "sig type u end" "sig eqtype u end"; build s []; fails s)
+    | "S77" => (c "e.sml s.sml u.sml main.sml"; b [] "e.sml s.sml u.sml main.sml"; prints s "1";
+                 f "e.sml" 1; build s []; fails s;
+                 f "u.sml" 1; b [] "u.sml"; prints s "1")
+    | "S79" => (c "s.sml u.sml main.sml"; b [] "s.sml u.sml main.sml"; prints s "1b";
+                 f "s.sml" 1; b [] "s.sml"; prints s "1b";
+                 f "s.sml" 2; build s []; fails s)
+    | "S72" => (c "a.sml m.sml b.sml"; b [] "a.sml m.sml b.sml"; prints s "2";
+                 let val withM = cache s
+                 in c "a.sml b.sml"; b [] "a.sml b.sml"; prints s "2";
+                    check s "b.sml's usages depend on what an earlier unit fingerprinted"
+                      (List.all (fn file => List.exists (fn other => other = file) withM) (cache s)) end)
+    | "S70" => (c "c.sml main.sml"; b [] "c.sml main.sml"; prints s "5";
+                 check s "no entry to plant"
+                   (List.exists (fn x => x) (List.map (fn file => CachePlant.basisProbe file "c.sml" "0123456789abcdef0123456789abcdef") (cache s)));
+                 b ["--explain-rebuild"] "c.sml"; prints s "5";
+                 check s "basis of another hash was not diagnosed"
+                   (String.isSubstring "c.sml: a damaged entry: a basis made by a compiler whose hash differs" (#errors (!(#result s)))))
+    | "S71" => (fresh s; b [] all;
+                 List.app (fn config =>
+                             let val dir = path s ("cache/" ^ config)
+                                 val about = dir ^ "/units/about"
+                                 val lines = String.fields (fn ch => ch = #"\n") (read about)
+                                 fun other line = if String.isPrefix "hash " line then "hash 0123456789abcdef0123456789abcdef" else line
+                             in write (about, String.concatWith "\n" (List.map other lines));
+                                OS.FileSys.rename {old = dir, new = path s "cache/0123456789abcdef0123456789abcdef"} end)
+                          (List.filter (fn config => isDir (path s ("cache/" ^ config))) (entries (path s "cache")));
+                 b ["--explain-rebuild"] all;
+                 check s "the build did not say the cache's hash differs"
+                   (String.isSubstring "holds entries made by a compiler whose hash differs" (#errors (!(#result s)))))
+    | "S73" => (c "a.sml b.sml c.sml"; b [] "a.sml b.sml c.sml"; f "a.sml" 1; f "b.sml" 1; b [] "a.sml b.sml")
     | _ => raise Failed ("not a simple scenario: " ^ #name s)
     end
 end

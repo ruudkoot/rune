@@ -219,7 +219,7 @@ listed. The marker records linkage, not execution of the initializer.
 
 The compiler also emits internal source-provenance entries named
 `\001RuneSource:HASH:IDENTITY`, with the same reserved function export.
-`HASH` is the 24-digit hash of the compiler identity, target, source mode
+`HASH` is the 32-digit hash (`Pickle.hash`) of the compiler identity, target, source mode
 and decoded-source hash from the checked basis, separated by colons. These
 are metadata, filtered from `Runtime.linkedUnits`. The compiler adapter
 uses them to check host-library source before sharing a unit: its
@@ -242,23 +242,79 @@ compiles after it need of it ([units.md](units.md), *The export basis*):
 
 ```
 used        3 × varint   what the unit's compile used of each kind of name
-source      varint len, bytes   the hash of its source
+source      varint len, bytes   the hash of its source, by which the
+                                compiler library checks a source it is
+                                given (RuneCompiler.readUnit, readMid)
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    7 (UnitBasis.version)
+version     varint    14 (UnitBasis.version)
+probe       varint len, bytes   the probe of the compiler's hash
+                                (Pickle.probe): a basis made by a
+                                compiler whose hash gives other values
+                                is not read
 name        varint len, bytes   the unit's name
 units       varint n, n × string   the identities of the units it names
 counts      3 × varint   its own names of each kind
             ... the fixity directives, the environment, the signatures,
-                functors (each with its signature: its parameter's, and
-                its body's summary where it has one) and overloading it
+                functors (each its signature: its parameter's and its
+                body's summary; the global of its function; and the
+                function's Mid where it is marked to be inlined), its
+                functions copied into the units that name them (each its
+                global and its Mid), the schemes of the globals those name
+                that nothing else types, and the overloading it
                 declared, and the tables of its own names, each name of a
                 kind written as built in, the unit's own (a number), or
                 another unit's (its place, a number) ...
 ```
 
-Version 7 adds optional lexical binding origins to environments,
+Version 14 (functors-units' M11) begins each environment with a byte: 0
+and the environment whole, as before, or 1 and a reference to a structure
+of a signature written before, renamed. That is the signature by its unit
+(a varint: 0 this unit, whose signatures come before its functors; n + 1
+the unit at place n of the header's) and its name, the path in it (a
+list of strings), the image of each of the structure's own type names in
+the order of their first occurrence in it (type functions), and its
+values' stamps and whether they are global: each a byte, 0 where they are
+the structure's own, or 1 and the list (names; booleans), in the order of
+the values by name and then each structure's in turn. Only the
+environments of a unit's signatures and functors are references; a unit
+of another name loaded in the place of the one named reads the reference
+in its signature, as it reads every other name of it, by the paths
+([units.md](units.md), *The export basis*).
+
+Version 13 (functors-units' M10) adds, after the functors, the functions
+a later unit that names one copies: those marked to be inlined (`inline
+val`) and those that only apply a primitive, each its global and its Mid
+as the expansion left it, with the functions of the unit it calls and,
+like a marked functor's, what it takes of the globals it names; a
+position in another unit's source is that unit's name. Then the schemes
+of the unit's globals those name that nothing else types, each as a
+function of no parameter whose result is the global's type ([units.md](units.md),
+*The export basis*).
+
+Version 9 adds the probe, and every hash is rx2fw, two lanes of 63 bits
+in 32 hexadecimal digits ([plans/functors-units.md](plans/functors-units.md),
+D11), so every identity changed.
+
+Version 11 (functors-units' M7) writes a functor as its signature and the
+global of its function to which it is compiled, and the function's Mid
+where it is marked to be inlined (its positions in the unit's own source
+by nothing but that): no place of its body, which loading no longer
+parses again, no declaration environment, signatures, functors or
+`allowPrim` of its body, and no list of what its body's names were bound
+to; the source's hash and mode are gone from the prefix; each value's
+entry says the global it is another of (`Expand.globalAliases`) and the
+primitive it applies, and each type name's entry ends with the layout a
+functor's body fixed for it, where it has one ([units.md](units.md), *The
+export basis*). Version 10 was the prototype's form, under the flag.
+
+Version 8 changed no field: the usages a cache entry keeps were
+fingerprinted without the equality of type variables and of a signature's
+local names (docs/plans/build-cache-issues.md, issue 16), so an entry made
+before is not trusted, and its unit is compiled again.
+
+Version 7 added optional lexical binding origins to environments,
 signatures, functors and type-constructor tables. Static analysis records
 source definitions, signature constraints and the lexical owner of copied
 functor bodies separately from runtime stamps. Ordinary batch compilation
@@ -284,7 +340,7 @@ exponent allows it -- or a pointer to a heap object. Heap objects:
 | kind | contents | used for |
 |---|---|---|
 | TUPLE | n fields | tuples, records (fields in canonical label order), vectors |
-| CON | tag, 1 field or n | datatype constructors with an argument: its argument, or, where the constructor's declared argument is a tuple of n, those n fields (`CONN`; lists: `::` is tag 1 of head and tail, `nil` is `CON0 0`) |
+| CON | tag, 1 field or n | datatype constructors with an argument: its argument, or, where the constructor's declared argument is a tuple of n, those n fields (`CONN`; a datatype's tags are by its constructors' names sorted, but lists': `::` is tag 1 of head and tail, `nil` is `CON0 0`; [ir.md](ir.md), *Tags by name*) |
 | CLOSURE | function index, environment fields | functions |
 | STRING | bytes | strings |
 | REF | 1 field | `ref` cells (identity equality) |

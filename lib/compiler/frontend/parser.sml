@@ -909,7 +909,7 @@ struct
                     val () = advance ()
                     val arg = parseFunctorArg ()
                     val () = expect RPAREN
-                  in StrApp (s, arg, ref NONE, spanFrom start) end
+                  in StrApp (s, arg, spanFrom start) end
                 else (advance (); StrId (([], s), start))
             | LONGID (p, s) => (advance (); StrId ((p, s), start))
             (* _dynamic "path" : SIG, a structure loaded when the program runs

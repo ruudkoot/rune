@@ -1,0 +1,7 @@
+generate funnest 8 1 8
+compile --units --no-cache @gen
+nostack the expansion's growth with nested functors, the same on both VMs: measured on Rune as shipped alone
+scale funnest 16 1 8 1.25
+instructions 16250763
+bytes 21447509
+objects 651002

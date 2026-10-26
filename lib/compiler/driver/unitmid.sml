@@ -19,7 +19,7 @@ struct
   open Mid
 
   val magic = "RBM"
-  val version = 3
+  val version = 5
 
   exception Bad of string
 
@@ -27,7 +27,7 @@ struct
 
   (* write (x, um): um, the Mid of the unit x was exported from, as it was
      captured before its basis was loaded again *)
-  fun write (x : B.exported, {mid, datatypes, funNames} : MidCanon.unitMid) : string =
+  fun write (x : B.exported, {mid, datatypes, funNames, pins, opens} : MidCanon.unitMid) : string =
     let
       val w = P.writer ()
       val identities : string list ref = ref []
@@ -151,6 +151,9 @@ struct
                         list (fn (tag, n, a) => (P.nat (w, tag); P.string (w, n); P.option (fn (_, t) => ty t) (w, a))) cons))
                     datatypes
       val () = list (fn (s, n) => (stamp s; P.string (w, n))) funNames
+      (* the layouts a body fixed, the open datatypes *)
+      val () = (list (fn (s, l) => (tycon s; list (fn (t, n) => (P.nat (w, t); P.option P.nat (w, n))) l)) pins;
+                list tycon opens)
       val body = P.contents w
       val h = P.writer ()
       val () = (P.bytes (h, magic); P.nat (h, version); P.list P.string (h, List.rev (!identities));
@@ -324,9 +327,12 @@ struct
                                             in (tag, n, P.roption (fn _ => ty ()) r) end)
                 in (s, {params = ps, cons = cons}) end)
       val funNames = list (fn () => let val s = stamp () in (s, P.rstring r) end)
+      val (pins, opens) =
+        let val pins = list (fn () => let val s = tycon () in (s, list (fn () => let val t = P.rnat r in (t, P.roption P.rnat r) end)) end)
+        in (pins, list tycon) end
     in
       if P.atEnd r then () else raise Bad "bytes after a unit's Mid";
-      {mid = mid, datatypes = datatypes, funNames = funNames}
+      {mid = mid, datatypes = datatypes, funNames = funNames, pins = pins, opens = opens}
     end
     handle Overflow => raise Bad "a number out of range"
          | Subscript => raise Bad "out of range"

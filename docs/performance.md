@@ -83,6 +83,7 @@ of cycles, of the run with the least cycles of five
 |---|---:|---:|---:|---:|---:|---:|---:|
 | `array_sieve` | 143M | 55M | 54M | 2.6 | 2.7 | 1.80 | 1.47 |
 | `fib` | 196M | 128M | 112M | 1.5 | 1.7 | 1.02 | 1.15 |
+| `hash_mod` | 597M | 234M | 341M | 2.6 | 1.8 | 0.99 | 0.39 |
 | `intinf_fact` | 25M | 0.9M | 4.8M | 30 | 5.2 | 15.14 | 2.93 |
 | `list_ops` | 258M | 109M | 147M | 2.4 | 1.7 | 1.89 | 1.18 |
 | `real_nbody` | 175M | 54M | 315M | 3.2 | 0.6 | 0.94 | 0.62 |
@@ -106,6 +107,17 @@ of cycles, of the run with the least cycles of five
   and faster than Poly/ML's.
 * **`intinf_fact` is IntInf**, on GMP since master's `gmp` work: 30 times
   MLton's instructions and 5 times Poly/ML's ([plans/gmp.md](plans/gmp.md)).
+* **`hash_mod` is the loop `Pickle.hash` had** until functors-units M4
+  replaced it with rx2fw (lib/compiler/util/pickle.sml), four `mod`s by
+  literal primes a byte, kept as the case of a division by
+  a constant ([plans/functors-units.md](plans/functors-units.md), M1),
+  which tier 2 makes a multiplication by a magic number since that
+  milestone: MLton's cycles, with 2.6 times its instructions, where the
+  VM before it, each `mod` a `cqo; idiv` behind three tests, took 651M
+  cycles and 667M instructions for the same bytecode, 3.5 times the
+  cycles (the row and that run taken alone on 2026-10-24 at a load of
+  2.5, not with the rest of the table; at a load of 12, 300M cycles
+  against MLton's 238M and the VM before's 827M).
 * **The compiler compiling itself** executes 2.7 times the instructions of
   MLton's build and takes 1.4 times its cycles (1.38 here, 1.46 in five
   more runs of each one after another); `compile-sigs`, the module

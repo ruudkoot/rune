@@ -1,6 +1,6 @@
 generate sig 2000
 compile --typecheck-only @gen
 nostack the front end's cost on the module language, the same on both VMs: measured on Rune as shipped alone
-instructions 29312129
-bytes 64876715
-objects 2411279
+instructions 29779238
+bytes 66045944
+objects 2444371

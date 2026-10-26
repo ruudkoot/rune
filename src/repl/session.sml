@@ -174,9 +174,7 @@ struct
 
   (* start {units, sources, lib}: the units the REPL program was loaded from
      and the source of each, as the build named them; the bases of the
-     Basis's among them loaded, each from the file beside its code (.rbi),
-     a functor's body from lib's source of it, which must be the one the
-     build compiled *)
+     Basis's among them loaded, each from the file beside its code (.rbi) *)
   fun start {units : string list, sources : string list, lib : string} : unit =
     let
       val () = Pass.whole := false
@@ -196,8 +194,7 @@ struct
                 val pickle = readBytes rbi handle IO.Io _ => raise Failed ("cannot read " ^ rbi)
                 val st = UnitBasis.begin (!env, !fixity)
                 val l =
-                  UnitBasis.load {pickle = pickle, file = name, at = #counters st, env = !env, fixity = !fixity,
-                                  text = fn () => #text (Source.readFile (Source.Ascii, path))}
+                  UnitBasis.load {pickle = pickle, file = name, at = #counters st}
                   handle Pickle.Bad why => raise Failed (rbi ^ ": " ^ why)
                        | UnitBasis.Missing u => raise Failed (rbi ^ ": names " ^ u ^ ", which was not loaded")
                        | IO.Io _ => raise Failed ("cannot read " ^ path)
@@ -336,7 +333,7 @@ struct
       val hit =
         case if UnitCache.verifying () then NONE else found of
           NONE => NONE
-        | SOME {pickle, code, warnings, file = was, others, ...} =>
+        | SOME {pickle, identity, code, warnings, file = was, others, ...} =>
           let val at = UnitBasis.counters ()
           in
             (let
@@ -348,12 +345,15 @@ struct
                            | NONE => []
                val u = UnitBasis.remapKeys (u, remap)
                val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
-               val l = UnitBasis.loadAgainst ({pickle = pickle, file = file, at = at, env = !env, fixity = #fixity start,
-                                               text = fn () => text}, remap)
+               (* a file used again, the same text against the same units:
+                  loaded and linked under an identity of its own, that what
+                  named the first's globals still does (UnitBasis.unused) *)
+               val as' = UnitBasis.unused identity
+               val l = UnitBasis.loadKnown ({pickle = pickle, file = file, at = at}, SOME as', remap)
                (* its source, and those of the functors' bodies it
                   applied, where they are now, in its code's files *)
-               val code = if UnitBasis.moves (u, was, file, others) orelse not (List.null remap)
-                          then String.concat (UnitFile.chunks (fp, UnitBasis.relocate (u, was, file, others)))
+               val code = if UnitBasis.moves (u, was, file, others) orelse not (List.null remap) orelse as' <> identity
+                          then String.concat (UnitFile.chunks (fp, UnitBasis.relocate (UnitBasis.renamed (u, as'), was, file, others)))
                           else code
                val run = linkFor (code, IntMap.empty)
              in
@@ -367,8 +367,12 @@ struct
                  | Fail _ => (UnitBasis.abandon at; NONE)
           end
       val warnings : string list ref = ref []
-      (* the source of the printer, which nothing names once it is compiled *)
-      val echoName = "<echo " ^ Int.toString k ^ ">"
+      (* the source of the printer, which nothing names once it is compiled:
+         one name for every declaration's, which are compiled one at a time,
+         so that a declaration's code does not depend on how many the session
+         compiled before it, and an entry of the cache is what compiling the
+         declaration again in another session gives (RUNE_VERIFY_CACHE, S76) *)
+      val echoName = "<echo>"
     in
       case hit of
         SOME r => r
@@ -415,8 +419,12 @@ struct
             the session's after it has run, is what the basis says *)
          val {code, loaded, exported} =
            Pipeline.unitThrough {start = start, name = name, file = file, text = fn () => text, mode = srcMode,
-                                 decs = decs @ pdecs, delta = delta, fixity = #fixity start, used = used}
+                                 decs = decs @ pdecs, delta = delta, fixity = #fixity start, used = used, fresh = true}
          val bytes = String.concat (UnitFile.chunks (Pipeline.fingerprint (), code))
+         (* linked as it was loaded, under an identity of its own where it
+            is a file used again (Pipeline.unitThrough's fresh) *)
+         val linked = if #identity (#unit loaded) = #identity code then bytes
+                      else String.concat (UnitFile.chunks (Pipeline.fingerprint (), UnitBasis.renamed (code, #identity (#unit loaded))))
          val () =
            case against of
              SOME e =>
@@ -425,18 +433,18 @@ struct
            | NONE => ()
          val () =
            case cache of
-             SOME (d, c, _) => UnitCache.storePaths (d, c, #identity (#unit loaded), UnitBasis.pathsOf (#unit loaded))
+             SOME (d, c, _) => UnitCache.storePaths (d, c, #identity exported, UnitBasis.pathsOf (#unit loaded))
            | NONE => ()
          val () =
            case cache of
              SOME (d, c, key) =>
                UnitCache.store (d, c, key, {usages = usages, warnings = !warnings, file = file,
                                             others = UnitBasis.sourcesOf (code, file), pickle = #pickle exported,
-                                            code = bytes, mid = ""})
+                                            identity = #identity exported, code = bytes, mid = ""})
            | NONE => ()
        in
          Source.unregister echoName;
-         result (loaded, linkFor (bytes, if !debugging then tyconsMoved (delta, #delta loaded) else IntMap.empty))
+         result (loaded, linkFor (linked, if !debugging then tyconsMoved (delta, #delta loaded) else IntMap.empty))
        end)
       handle e => (UnitBasis.undo start; Source.unregister echoName; raise e)
     end

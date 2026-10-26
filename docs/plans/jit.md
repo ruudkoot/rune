@@ -2599,13 +2599,34 @@ in `rbp` (native frames M1 to M8). performance.md was retired on
   constant: E9's `selftail`, a `mod 3` a call, took 8.0% more instructions
   and 12% more cycles at native frames M9 than at its M1. Folding an
   `INT` into the instruction that reads it removes the test and the load.
+  *Done for the divisor of a division* by
+  [functors-units.md](functors-units.md)'s M1 (2026-10-24): tier 2 knows the registers an `INT`, a `CONST` of a number
+  or a `MOVE` of such a register set earlier in the run (`Jit.known`,
+  `compile.c`). The test of the divisor is gone; the constant's `INT` is
+  still made into its register, and no other operation reads the fact.
 * **Division by a constant** by a multiplication and shifts, with the same
   results and the same raise: the bootstrap executes 10.5M `idiv`s, 7.1M
   of them `IntTable`'s; 2.5M are by constants the JIT does not track
   (native frames M2). `Pickle.hash` takes four `mod`s by constants a byte,
   some 170 cycles: 36% of the cycles of MLton's compiler built in units at
   tier 2 ([incremental-compilation.md](incremental-compilation.md), *After
-  M12: what is left*).
+  M12: what is left*). *Done* by [functors-units.md](functors-units.md)'s
+  M1 (2026-10-24), on x86-64 and aarch64: a division at tier 2 by a
+  constant other than 0 and -1 (`int`, `word`, `Int64.int`, `Word64.word`)
+  is shifts and masks for a power of two, else the high half of a product
+  with a magic number and the floor's or the truncation's fix-up
+  (`divplan.h`, `ms_div_const`; runtime/register/README.md, *Tier 2*),
+  with no test and no branch, and `Simplify` folds a constant divided by
+  a constant. Measured on x86-64: `Pickle.hash` takes 158 instructions a
+  byte where it took 178, and 46 cycles where it took 180 (a load of
+  2.5); MLton's 606 files built in units at tier 2, 1,589G instructions
+  where they took 1,633G, and 713G cycles where they took 976G (0.73, a
+  load of 2); the bootstrap 13,874M instructions where it took 13,900M,
+  and it divides 2.66M times by a constant and 8.77M times by a divisor
+  read when the code runs (`--jit-stats`). `tests/perf/hash_mod.sml`
+  keeps the loop in the cycles benchmarks (docs/performance.md). Left:
+  the divisions by a variable (`IntTable`'s, by its table's size), tier 1,
+  runeopt's code and the interpreter, which keep the division.
 * **`ENV`'s and `SELF`'s tests** of a null closure and of its length,
   about 0.6% of the bootstrap's instructions and 1% of HOL's: they can go
   only where the loader holds every closure of a function to its `ENV`s,

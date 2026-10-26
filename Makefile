@@ -823,7 +823,7 @@ bin/runevm-stack: runtime/main.c runtime/stack/interp.c build/librune.a $(VM_HDR
 # runtime/register's first loop (docs/plans/middle-end.md, M5): the register bytecode,
 # on the runtime of runevm-stack. Its own instruction set's part (runtime/register/isa_regs.c)
 # is linked before build/librune.a, whose runtime/stack/isa_stack.c it takes the place of.
-NEW_HDRS := runtime/register/regvm.h runtime/register/live.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/reg_labels.h runtime/register/reg_loop.h runtime/register/reg_words.h runtime/register/fastprim.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
+NEW_HDRS := runtime/register/regvm.h runtime/register/live.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/reg_labels.h runtime/register/reg_loop.h runtime/register/reg_words.h runtime/register/fastprim.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/masm.h runtime/register/jit/divplan.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
 # RUNE_JIT=0 builds it without the JIT (docs/plans/jit.md): the
 # interpreter alone, which refuses --jit.
 RUNE_JIT ?= 1
@@ -866,7 +866,8 @@ bin/runevm-int64: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JI
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 # The JIT on the first (tests/register/int64-box-home.sml), at every tier,
 # and with raw homes: a word past 63 bits is a box, which a home that holds
-# the word must not keep across a collection. Not part of make check.
+# the word must not keep across a collection; and division by a constant on
+# dividends of 64 bits (tests/lang/rt.div_constant.sml). Not part of make check.
 test-int64: bin/runevm-int64 bin/runevm-rawhomes $(RUNE) bin/rune-test
 	$(RUNE_TEST) --tier test-int64
 bin/runevm-realboxed: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
@@ -1149,7 +1150,7 @@ gmp-dep-portability: bin/rune-build
 	bin/rune-build build-gmp --prefix '$(GMP_PPC64_PREFIX)' --cc '$(PPCCC)' --cflags='-O2 $(PPCFLAGS)' --host powerpc64-linux-gnu --runner '$(QEMUPPC) -L $(PPCROOT)' $(GMP_PPC64_FLAGS) --with-pic --jobs $(JOBS)
 	bin/rune-build build-gmp --prefix '$(GMP_AARCH64_PREFIX)' --cc '$(A64CC)' --cflags='-O2 $(A64FLAGS)' --host aarch64-linux-gnu --runner '$(QEMUA64) -L $(A64ROOT)' --with-pic --jobs $(JOBS)
 
-portability: bin/runevm-stack32 bin/runevm-stack-ppc64 bin/runevm32 bin/runevm-ppc64 bin/runevm-aarch64
+portability: bin/runevm-stack32 bin/runevm-stack-ppc64 bin/runevm32 bin/runevm-ppc64 bin/runevm-aarch64 build/register/divconst_test-aarch64
 
 bin/runevm-stack32: $(VM_SRCS) $(VM_HDRS) Makefile | build/.doctor-portability
 	@mkdir -p bin
@@ -1290,7 +1291,7 @@ RUNE_TEST = GC_STRESS=$(GC_STRESS) $(if $(filter command line environment,$(orig
             NATIVE_HOST=$(NATIVE_HOST) MAKE='$(CHECK_MAKE)' \
             bin/rune-test run $(if $(filter command line environment,$(origin JOBS)),-j $(JOBS))
 LOW_LEVEL_BINS := build/heap_test build/heap_test-gcbits build/heap_test-cards \
-                  build/register/x64_test build/register/a64_test build/register/masm_test
+                  build/register/x64_test build/register/a64_test build/register/masm_test build/register/divconst_test
 .PHONY: $(LOW_LEVEL_BINS)
 build/heap_test: tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile
 	@mkdir -p build
@@ -1337,7 +1338,7 @@ test-gc: $(RUNE) vm bin/rune-test | build/.doctor-check
 test-all: host-builds vm bin/rune-test | build/.doctor-check
 	$(RUNE_TEST) --tier test-all
 
-check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/rune.stack.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc bin/rune-test | build/.doctor-check
+check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/runeopt-boot bin/rune.stack.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc bin/rune-test | build/.doctor-check
 	$(RUNE_TEST) --tier check-cross
 
 # Every instruction says where it came from, and the line is one the file has.
@@ -1355,7 +1356,7 @@ check-levels: $(RUNE) $(RUNEVM) bin/rune-test
 # both bytecodes; the programs of several files of tests/units do what they
 # expect; and the compiler compiled in units compiles itself to bin/rune.rbc
 # (docs/units.md; docs/plans/incremental-compilation.md, M2).
-check-units: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack bin/rune-test bin/rune-scenarios
+check-units: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack bin/rune-test bin/rune-scenarios bin/rune-functor-gen
 	$(RUNE_TEST) --tier check-units
 check-units-steps: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack bin/rune-test
 	$(RUNE_TEST) --tier check-units-bootstrap
@@ -1809,6 +1810,18 @@ build/register/a64_test: tests/register/a64_test.c runtime/register/jit/a64.c $(
 build/register/masm_test: tests/register/masm_test.c runtime/register/jit/masm.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile
 	@mkdir -p build/register
 	$(CC) $(CFLAGS) $(RT_INC) -o $@ tests/register/masm_test.c runtime/register/jit/masm.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/sys/sys_$(SYS).c
+# division by a constant (functors-units M1): the plans' steps run against
+# C's division, on this machine and, built as the aarch64 VM is, under qemu
+# (make portability, make test-portability)
+build/register/divconst_test: tests/register/divconst_test.c runtime/register/jit/divplan.h runtime/register/jit/masm.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile
+	@mkdir -p build/register
+	$(CC) $(CFLAGS) $(RT_INC) -o $@ tests/register/divconst_test.c runtime/register/jit/masm.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/sys/sys_$(SYS).c
+build/register/divconst_test-aarch64.bin: tests/register/divconst_test.c runtime/register/jit/divplan.h runtime/register/jit/masm.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile | build/.doctor-portability
+	@mkdir -p build/register
+	$(A64CC) $(CFLAGS) $(A64FLAGS) $(RT_INC) -o $@ tests/register/divconst_test.c runtime/register/jit/masm.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/sys/sys_$(SYS).c
+build/register/divconst_test-aarch64: build/register/divconst_test-aarch64.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/divconst_test-aarch64.bin" "$$@"\n' '$(QEMUA64) -L $(A64ROOT)' > $@
+	chmod +x $@
 bin/runevm-jit: bin/runevm Makefile
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all "$$@"\n' > $@
 	chmod +x $@
@@ -1895,7 +1908,7 @@ bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
 	$(RUNE) --library test/runner --library json --library digest $(RUNNER_SRCS) -o $@
 bin/rune-test: bin/rune-test.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-test.rbc" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\n: "$${RUNE_LINT=1}"\nexport RUNE_LINT\nexec "$$d/runevm" "$$d/rune-test.rbc" "$$@"\n' > $@
 	chmod +x $@
 
 # Individual SML native checks avoid rebuilding the complete test inventory
@@ -1962,7 +1975,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(LOW_LEVEL_BINS) bin/runevm-jit bin/runevm-opt bin/rune-build bin/rune-build.rbc bin/rune-generate bin/rune-inventory bin/rune-measure $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal bin/rune-ffi-check build/bench-counts.rbc
+check-tools: $(LOW_LEVEL_BINS) bin/runevm-jit bin/runevm-opt bin/rune-build bin/rune-build.rbc bin/rune-generate bin/rune-inventory bin/rune-measure $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test bin/rune-native-check bin/rune-heap-check bin/rune-laws-hosts bin/rune-doc-check bin/rune-matrix bin/rune-budget bin/rune-bench-check bin/rune-scenarios bin/rune-incremental bin/rune-functor-gen bin/rune-external bin/rune-intinf bin/rune-windows bin/rune-suite bin/rune-protocol-check bin/rune-terminal bin/rune-ffi-check build/bench-counts.rbc
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -2146,7 +2159,8 @@ INCREMENTAL_BASE_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner
                          tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml
 INCREMENTAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/incrementalextra.sml tests/runner/smlscan.sml \
                     tests/runner/mutationproject.sml tests/runner/mutationchecks.sml tests/runner/mutationhistory.sml \
-                    tests/runner/mltonincremental.sml tests/runner/incrementalfaults.sml tests/runner/incremental-main.sml
+                    tests/runner/mltonincremental.sml tests/runner/incrementalfaults.sml tests/runner/soundness.sml \
+                    tests/runner/incremental-main.sml
 bin/rune-incremental.rbc: $(RUNE) $(INCREMENTAL_SRCS) tests/runner/incremental-edits-v1.json manifests
 	$(RUNE) --library test/runner --library json $(INCREMENTAL_SRCS) -o $@
 bin/rune-incremental: bin/rune-incremental.rbc bin/runevm Makefile
@@ -2157,6 +2171,16 @@ bin/rune-external.rbc: $(RUNE) $(EXTERNAL_SRCS) manifests
 	$(RUNE) --library test/runner --library json $(EXTERNAL_SRCS) -o $@
 bin/rune-external: bin/rune-external.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-external.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+# Generated programs of functors, each compiled with functors as functions
+# and as copies, whole and in units (docs/testing.md, Generated functor
+# programs).
+FUNCTOR_GEN_SRCS := tests/runner/sh.sml tests/runner/functorgen.sml tests/runner/functorgen-main.sml
+bin/rune-functor-gen.rbc: $(RUNE) $(FUNCTOR_GEN_SRCS) manifests
+	$(RUNE) --library test/runner --library test/property $(FUNCTOR_GEN_SRCS) -o $@
+bin/rune-functor-gen: bin/rune-functor-gen.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-functor-gen.rbc" "$$@"\n' > $@
 	chmod +x $@
 
 INTINF_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/bytecode.sml tests/runner/commandwords.sml \

@@ -30,6 +30,11 @@ struct
      level every generic variable of a type is the global's own. *)
   val globalSchemes : M.scheme IntMap.map ref = ref IntMap.empty
   val () = CompilerState.cellRoot ("ToMid.globalSchemes", globalSchemes)
+  (* the schemes of the globals of earlier units that a copy of a function
+     marked to be inlined names and their bases type no other way (a copy's
+     own, made by the expansion; UnitBasis; functors-units M10) *)
+  val importedSchemes : M.scheme IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("ToMid.importedSchemes", importedSchemes, IntTable.copy)
   fun globalScheme (g : int) : M.scheme =
     case IntMap.find (!globalSchemes, g) of
       SOME s => s
@@ -40,7 +45,9 @@ struct
               SOME t => let val t = Ty.fromTypes t in (gens t, t) end
             | NONE =>
                 if isSome (IntTable.find (Ty.exnArgs, g)) then ([], Ty.exnCon)
-                else bug ("global g" ^ Int.toString g ^ " has no type")
+                else case IntTable.find (!importedSchemes, g) of
+                       SOME s => s
+                     | NONE => bug ("global g" ^ Int.toString g ^ " has no type")
         in globalSchemes := IntMap.insert (!globalSchemes, g, s); s end
 
   (* What the translation of an expression is in:
@@ -174,13 +181,22 @@ struct
                             case Ty.view t of
                               Ty.Tuple ts => deliver (ctx, st, R (M.Select (i, aa), List.nth (ts, i)))
                             | _ => bug ("a field of what has type " ^ Ty.toString t))
-        | L.Con (tag, t, a) => atom (a, st, fn (aa, _) => deliver (ctx, st, R (M.Con (tag, t, aa), t)))
+        | L.Con (tag, t, a) =>
+            atom (a, st, fn (aa, at) =>
+                            case openOf (t, tag) of
+                              NONE => deliver (ctx, st, R (M.Con (tag, t, aa), t))
+                            | SOME {desc, con, ...} =>
+                                opened (ctx, st, desc, R (M.Con (tag, t, aa), t), con, Ty.arrow (at, t), aa, t))
         | L.Decon (tag, a) =>
             atom (a, st, fn (aa, t) =>
                             case Ty.view t of
                               Ty.Con (stamp, _, args) =>
                                 (case Ty.conArg (stamp, args, tag) of
-                                   SOME (SOME arg) => deliver (ctx, st, R (M.Decon (tag, t, aa), arg))
+                                   SOME (SOME arg) =>
+                                     (case openOf (t, tag) of
+                                        NONE => deliver (ctx, st, R (M.Decon (tag, t, aa), arg))
+                                      | SOME {desc, decon, ...} =>
+                                          opened (ctx, st, desc, R (M.Decon (tag, t, aa), arg), decon, Ty.arrow (t, arg), aa, arg))
                                  | _ => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t))
                             | _ => bug ("a deconstruction of what has type " ^ Ty.toString t))
         | L.ConTag a => atom (a, st, fn (aa, _) => deliver (ctx, st, R (M.ConTag aa, Ty.int)))
@@ -222,6 +238,42 @@ struct
                                in deliver (ctx, st, R (M.Prim (p, t, xs), codomain t)) end)
         | L.Mark (sp, a) => mark (sp, exp (a, st, ctx))
         | L.Rest _ => bug "the rest of the program inside an expression"
+
+      (* (D4) a constructor whose layout a functor's
+         parameter leaves open, made or taken apart where its descriptor
+         is 0 as the specification reads it (fast), else by the body's
+         function for it (Translate.openFuns) *)
+      and openOf (t : Ty.ty, tag : int) : Elaborate.openCon option =
+        case Ty.view t of
+          Ty.Con (stamp, _, _) => if Elaborate.hasOpen stamp then Elaborate.openAt (stamp, tag) else NONE
+        | _ => NONE
+      and opened (ctx, st, desc, fast : value, f : int, fty : Ty.ty, aa : M.atom, res : Ty.ty) : M.exp =
+        let
+          fun fa () = case varAtom (st, f, SOME fty) of A (a, _) => a | R _ => bug "a function of no atom"
+        in
+          case ctx of
+            (* a polymorphic variable bound to it, which a join point's
+               parameter could not be: the function alone, which tests the
+               descriptor itself *)
+            Bind (x, _) =>
+              if isSome (IntTable.find (Ty.binders, x)) andalso not (null (own (st, res)))
+              then deliver (ctx, st, R (M.App (fa (), [aa]), res))
+              else tested (ctx, st, desc, fast, fa (), aa, res)
+          | _ => tested (ctx, st, desc, fast, fa (), aa, res)
+        end
+      and tested (ctx, st, desc, fast, fa, aa, res) =
+        branch (ctx, fn ctx =>
+                       let
+                         val c = fresh ()
+                       in
+                         (* open_boxed: the descriptor is 0 (an imm_eq, Lower),
+                            which only this makes, the test the expansion
+                            folds (Expand.openTest) *)
+                         M.Let (c, ([], Ty.bool),
+                                M.Prim ("open_boxed", Ty.arrow (Ty.tuple [Ty.int, Ty.int], Ty.bool),
+                                        [M.Var (desc, []), M.Const (L.CInt (IntInf.fromInt 0), Ty.int)]),
+                                M.If (M.Var (c, []), deliver (ctx, st, fast), deliver (ctx, st, R (M.App (fa, [aa]), res))))
+                       end)
 
       and atom (e, st, k) = exp (e, st, Then (fn v => atomize (v, k)))
 
@@ -278,19 +330,39 @@ struct
              | (_, NONE) => let val (b', r) = split b in (L.Join (j, ps, b', sc), r) end)
         | _ => (e, NONE)
 
-      (* The globals a declaration sets. *)
+      (* The globals a declaration sets, wherever in it: a dynamic
+         structure's slots are set in the body of a function, an argument
+         of the call of RuneDynamic.load, which calls it as the declaration
+         runs (Translate) *)
       fun sets (e : L.lexp, acc : int list) : int list =
-        case e of
-          L.SetGlobal (g, a) => sets (a, g :: acc)
-        | L.Seq (a, b) => sets (b, sets (a, acc))
-        | L.Let (_, a, b) => sets (b, sets (a, acc))
-        | L.LetRec (bs, b) => sets (b, List.foldl (fn ((_, _, r), acc) => sets (r, acc)) acc bs)
-        | L.Mark (_, a) => sets (a, acc)
-        | L.Try (a, b) => sets (b, sets (a, acc))
-        | L.If (c, t, f) => sets (f, sets (t, sets (c, acc)))
-        | L.Handle (a, _, h) => sets (h, sets (a, acc))
-        | L.Join (_, _, b, sc) => sets (sc, sets (b, acc))
-        | _ => acc
+        let fun all (es, acc) = List.foldl sets acc es
+        in
+          case e of
+            L.SetGlobal (g, a) => sets (a, g :: acc)
+          | L.Fn (_, _, b) => sets (b, acc)
+          | L.Inst (a, _) => sets (a, acc)
+          | L.App (a, b) => all ([a, b], acc)
+          | L.Seq (a, b) => all ([a, b], acc)
+          | L.Let (_, a, b) => all ([a, b], acc)
+          | L.LetRec (bs, b) => sets (b, all (List.map #3 bs, acc))
+          | L.Tuple es => all (es, acc)
+          | L.Select (_, a) => sets (a, acc)
+          | L.Con (_, _, a) => sets (a, acc)
+          | L.Decon (_, a) => sets (a, acc)
+          | L.ConTag a => sets (a, acc)
+          | L.If (c, t, f) => all ([c, t, f], acc)
+          | L.Try (a, b) => all ([a, b], acc)
+          | L.Join (_, _, b, sc) => all ([b, sc], acc)
+          | L.Jump (_, es) => all (es, acc)
+          | L.Raise a => sets (a, acc)
+          | L.Handle (a, _, h) => all ([a, h], acc)
+          | L.MkExn (a, b) => all ([a, b], acc)
+          | L.ExnCon a => sets (a, acc)
+          | L.ExnArg (_, a) => sets (a, acc)
+          | L.Prim (_, _, es) => all (es, acc)
+          | L.Mark (_, a) => sets (a, acc)
+          | _ => acc
+        end
 
       (* The definitions of a declaration: a run of globals set in sequence
          is a function or a value each, consecutive functions one group;

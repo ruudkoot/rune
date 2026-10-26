@@ -437,6 +437,9 @@ void jit_print_stats(void) {
             fprintf(stderr, "runevm: jit: tier 2's homes: %llu functions of more than 64 registers have none\n", (unsigned long long)jit->homes_too_large);
     }
     if (jit->profile) print_profile(jit);
+    if (jit->div_const || jit->div_var)
+        fprintf(stderr, "runevm: jit: divisions in code: %llu by a constant, %llu by a divisor read when they run\n",
+                (unsigned long long)jit->div_const, (unsigned long long)jit->div_var);
     if (jit->eq_calls)
         fprintf(stderr, "runevm: jit: poly_eq: %llu calls from code, %llu walked by values_equal in C (%.2f%%)\n",
                 (unsigned long long)jit->eq_calls, (unsigned long long)jit->eq_walked, 100.0 * (double)jit->eq_walked / (double)jit->eq_calls);

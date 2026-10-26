@@ -436,7 +436,8 @@ struct
   (* ---- units *)
   (* the programs whose units are not loaded: their traces and images name
      the program, and loading has no arguments *)
-  val noLoad = ["tests/lang/rt.trace_frames", "tests/lang/rt.trace_inlined", "tests/lang/rt.save_restore_cross"]
+  val noLoad = ["tests/lang/rt.trace_frames", "tests/lang/rt.trace_inlined", "tests/lang/rt.save_restore_cross",
+                "tests/lang/mod.functor.functions_trace"]
 
   fun unitsSetup (variant, rune) =
     let val out = run ^ "/" ^ variant
@@ -570,9 +571,15 @@ struct
       val out = run ^ "/cross"
       val () = mkdirs (OS.Path.dir(out ^ "/" ^ n ^ ".rbc"))
       fun f (c, ext) = out ^ "/" ^ n ^ "." ^ c ^ ext
+      (* a compile in units (a build file's) but by smlnj32, whose Word64 is
+         wrong and so its hash (Pickle.hash, D11 of
+         docs/plans/functors-units.md): a program that keeps its units'
+         identities carries them, which smlnj32 works out otherwise, as
+         rune-units below *)
+      val inUnits = List.exists (fn a => a = "--build" orelse a = "--units") args
       val results = List.map (fn c => (c, exec {cmd = ["bin/rune-" ^ c] @ target @ args @ ["-o", f (c, ".rbc")], dir = NONE,
                                                 stdin = "", stdout = "", stderr = f (c, ".err"), timeout = 0} = 0))
-                             (builds "rune")
+                             (List.filter (fn c => not inUnits orelse c <> "smlnj32") (builds "rune"))
       val failed = List.filter (not o #2) results
     in
       if not (null failed) then
@@ -609,11 +616,16 @@ struct
           fun f c = out ^ "/rune-units." ^ c ^ ".rbc"
           val ok = exec {cmd = ["bin/rune-mlton", "--units", "--no-cache"] @ srcs @ ["-o", f "nocache"], dir = NONE, stdin = "",
                          stdout = "", stderr = "", timeout = 0} = 0
-          (* one after another, through one cache *)
+          (* one after another, through one cache; but smlnj32, whose Word64
+             is wrong, and so its hash (Pickle.hash, D11 of
+             docs/plans/functors-units.md): the compiler built in units keeps
+             its units' identities, which smlnj32 works out otherwise, with a
+             probe of its own that keeps its entries apart. Its whole
+             programs are compared above *)
           val bad = List.mapPartial (fn c => if exec {cmd = ["bin/rune-" ^ c, "--units", "--cache-dir", cache] @ srcs @ ["-o", f c],
                                                       dir = NONE, stdin = "", stdout = "", stderr = "", timeout = 0} <> 0 then SOME c
                                              else if same (f "nocache", f c) then NONE else SOME (c ^ "(differs)"))
-                                    (builds "rune")
+                                    (List.filter (fn c => c <> "smlnj32") (builds "rune"))
         in
           if ok andalso null bad then ()
           else say ("FAIL rune-units: through one cache: " ^ String.concatWith " " ((if ok then [] else ["nocache"]) @ bad) ^ "\n")
@@ -832,17 +844,25 @@ struct
        then say "FAIL units bootstrap: stage 2 failed\n"
        else if same ("bin/rune.rbc",stage2) then ()
        else say "FAIL units bootstrap: compiler bytecode differs\n" end
+  (* the programs of make test-int64, each compiled at --int-bits=64: a
+     word past 63 bits in a home, and the division by a constant
+     (functors-units M1) of tests/lang, on 64-bit dividends *)
+  val int64Programs = [("box-home", "tests/register/int64-box-home.sml", "tests/register/int64-box-home.expected"),
+                       ("div-constant", "tests/lang/rt.div_constant.sml", "tests/register/int64-div-constant.expected")]
   fun int64Compile () =
     let val out=run ^ "/int64" val ()=mkdirs out
-    in if exec {cmd=["bin/rune","--int-bits=64","tests/register/int64-box-home.sml","-o",out ^ "/box-home.rbc"],
-                dir=NONE,stdin="",stdout=out ^ "/compile.out",stderr=out ^ "/compile.err",timeout=600}=0
-       then () else say "FAIL int64 home: compilation failed\n" end
+    in List.app (fn (name, src, _) =>
+         if exec {cmd=["bin/rune","--int-bits=64",src,"-o",out ^ "/" ^ name ^ ".rbc"],
+                  dir=NONE,stdin="",stdout=out ^ "/" ^ name ^ ".compile.out",stderr=out ^ "/" ^ name ^ ".compile.err",timeout=600}=0
+         then () else say ("FAIL int64 " ^ name ^ ": compilation failed\n")) int64Programs end
   fun int64Home vm mode =
-    let val out=run ^ "/int64" val file=out ^ "/" ^ vm ^ "." ^ mode ^ ".out"
-        val status=exec {cmd=["bin/" ^ vm,"--jit=" ^ mode,out ^ "/box-home.rbc"],dir=NONE,stdin="",
-                         stdout=file,stderr=file,timeout=120}
-    in if status=0 andalso same (file,"tests/register/int64-box-home.expected") then ()
-       else say ("FAIL int64 home: " ^ vm ^ "/" ^ mode ^ " differs or exits unsuccessfully\n") end
+    let val out=run ^ "/int64"
+    in List.app (fn (name, _, expected) =>
+         let val file=out ^ "/" ^ name ^ "." ^ vm ^ "." ^ mode ^ ".out"
+             val status=exec {cmd=["bin/" ^ vm,"--jit=" ^ mode,out ^ "/" ^ name ^ ".rbc"],dir=NONE,stdin="",
+                              stdout=file,stderr=file,timeout=120}
+         in if status=0 andalso same (file,expected) then ()
+            else say ("FAIL int64 " ^ name ^ ": " ^ vm ^ "/" ^ mode ^ " differs or exits unsuccessfully\n") end) int64Programs end
 
   (* the commands of bin/rune-test that are these checks *)
   fun command args =
@@ -912,6 +932,15 @@ struct
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
   val langCovers = ["covers:tests/lang/*", "covers:tests/perf/*"]
 
+  (* a command of bin/rune-functor-gen, which exits 0 when it passed; its
+     output in the job's directory *)
+  fun functorGen (path, args, out, timeout) =
+    Test.it path
+      {program = "/bin/sh",
+       args = ["sh", "-c", "exec bin/rune-functor-gen " ^ String.concatWith " " (List.map quote args) ^ " --out \"$RUNE_TEST_RUN/" ^ out ^ "\""],
+       env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds timeout, cap = 0, cpus = 1, memory = 1500,
+       pools = [], exclusive = false, after = [], judge = Run.exitZero} : Run.command Test.tree
+
   val tree =
     Test.describe ""
       [tagged (["check", "check-levels"] @ langCovers)
@@ -954,7 +983,19 @@ struct
              @ [job ("@compare", ["repro-compare"], List.map (fn (n, _, _, _) => "reproducible/" ^ n) reproBuilds, 1, 100, 600)])),
        tagged ["check", "check-units", "check-units-bootstrap", "covers:tests/units/*"]
          (Test.describe "bootstrap" [job ("units", ["units-bootstrap"], [], 1, 1500, 3600)]),
-       tagged ["test-int64", "covers:tests/register/int64-box-home.*"]
+       (* generated programs of functors, compiled with functors as functions
+          and as copies, whole and in units, from a fixed seed; and the
+          programs of the failures it found (docs/testing.md, Generated
+          functor programs) *)
+       tagged ["check", "check-units", "covers:tests/functors/*", "covers:tests/runner/functorgen.sml",
+               "covers:tests/runner/functorgen-main.sml"]
+         (Test.describe "functors"
+            [functorGen ("@generated", ["check", "--seed", "1", "--count", "16", "--shrinks", "100", "--known", "tests/functors/known.txt"],
+                         "functors", 3600),
+             functorGen ("@regressions", ["regressions", "--known", "tests/functors/known.txt", "tests/functors"], "functors-regressions",
+                         1800)]),
+       tagged ["test-int64", "covers:tests/register/int64-box-home.*", "covers:tests/register/int64-div-constant.*",
+               "covers:tests/lang/rt.div_constant.*"]
          (Test.describe "int64"
            (job ("compile", ["int64-compile"], [], 1, 600, 900) ::
             List.concat (List.map (fn vm => List.map (fn mode =>

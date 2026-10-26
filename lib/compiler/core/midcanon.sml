@@ -18,6 +18,12 @@ struct
   (* above every name a compile makes, and in a host's 31 bits *)
   val base = 268435456
 
+  (* the type name after the last a program was given (program): where
+     the expansion (Expand) takes those of the datatypes its copies
+     declare *)
+  val nextTycon = ref base
+  val () = CompilerState.cellRoot ("MidCanon.nextTycon", nextTycon)
+
   (* p with each name of each kind renamed by the functions given -- stamp
      for a variable, global or join point, tycon for a type name, tvar for a
      type variable -- called in the order the names appear, binders and uses
@@ -108,12 +114,16 @@ struct
 
   type datatypeInfo = {params : int list, cons : (int * string * Ty.ty option) list}
 
-  fun builtin s = s < base andalso List.exists (fn (c : Types.tycon) => #stamp c = s) Types.builtinTycons
+  fun builtin s = s < base andalso (List.exists (fn (c : Types.tycon) => #stamp c = s) Types.builtinTycons
+                                     orelse isSome (Ty.flatOf s))
 
   (* What a unit's Mid needs of the compile's tables, which the compile of
      the next unit does not keep: each datatype its types name, and those
      theirs name, by stamp; each function's name (Translate.funNames) *)
-  type unitMid = {mid : program, datatypes : (int * datatypeInfo) list, funNames : (int * string) list}
+  (* and the layouts a body fixed of the
+     datatypes (Ty.pinned) and those a parameter leaves open (Ty.openTypes) *)
+  type unitMid = {mid : program, datatypes : (int * datatypeInfo) list, funNames : (int * string) list,
+                  pins : (int * (int * int option) list) list, opens : int list}
 
   fun capture (p : program) : unitMid =
     let
@@ -130,12 +140,15 @@ struct
       (* visit is called again for a node met again, and does nothing *)
       and visitTy t = renameTy {tycon = fn c => (visit c; c), tvar = fn v => v} t
       val _ = rename {stamp = fn x => x, tycon = fn c => (visit c; c), tvar = fn v => v} p
+      val found = List.rev (!found)
     in
-      {mid = p, datatypes = List.rev (!found), funNames = IntMap.listItemsi (!Translate.funNames)}
+      {mid = p, datatypes = found, funNames = IntMap.listItemsi (!Translate.funNames),
+       pins = List.mapPartial (fn (s, _) => Option.map (fn l => (s, l)) (IntMap.find (!Ty.pinned, s))) found,
+       opens = List.mapPartial (fn (s, _) => if Ty.isOpen s then SOME s else NONE) found}
     end
 
   (* a unit's Mid with its names renamed, its tables' too *)
-  fun renameUnit (names as {stamp, tycon, tvar}) ({mid, datatypes, funNames} : unitMid) : unitMid =
+  fun renameUnit (names as {stamp, tycon, tvar}) ({mid, datatypes, funNames, pins, opens} : unitMid) : unitMid =
     let val ty = renamer {tycon = tycon, tvar = tvar}
     in
       {mid = rename names mid,
@@ -143,12 +156,14 @@ struct
                                (tycon s, {params = List.map tvar params,
                                           cons = List.map (fn (t, n, a) => (t, n, Option.map ty a)) cons}))
                             datatypes,
-       funNames = List.map (fn (s, n) => (stamp s, n)) funNames}
+       funNames = List.map (fn (s, n) => (stamp s, n)) funNames,
+       pins = List.map (fn (s, l) => (tycon s, l)) pins, opens = List.map tycon opens}
     end
 
   (* units' Mid made one program, their tables entered *)
   fun concat (us : unitMid list) : program =
     (List.app (fn {datatypes, ...} => List.app Ty.bindDatatypeDirect datatypes) us;
+     List.app (fn {pins, opens, ...} => (List.app Ty.pinLayout pins; List.app Ty.markOpen opens)) us;
      Translate.funNames := List.foldl (fn ({funNames, ...}, m) => List.foldl (fn ((s, n), m) => IntMap.insert (m, s, n)) m funNames)
                                       (!Translate.funNames) us;
      List.concat (List.map #mid us))
@@ -199,6 +214,9 @@ struct
                    val cons' = List.map (fn (tag, n, a) => (tag, n, Option.map ty a)) cons
                  in entered := (y, {params = ps', cons = cons'}) :: !entered end
              | NONE => ();
+             (* its fixed layout, and whether it is open *)
+             Option.app (fn l => Ty.pinLayout (y, l)) (IntMap.find (!Ty.pinned, s));
+             if Ty.isOpen s then Ty.markOpen y else ();
              enter ())
       val () = enter ()
       val () = List.app Ty.bindDatatypeDirect (List.rev (!entered))
@@ -210,6 +228,7 @@ struct
     in
       (* fresh names after the last: the same in every build that says the same *)
       Elaborate.stampCounter := base + !nstamps;
+      nextTycon := base + !ntycons;
       p'
     end
 end

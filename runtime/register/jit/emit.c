@@ -96,6 +96,15 @@ static void set_bool(Jit *j, int32_t d, int cc) {
     ms_set_reg(M, d, T_CON0, R_S0);
     ms_bool_flags(M, R_S0);   /* and back into the flags (ZF: false), for a branch fused onto it */
 }
+/* the condition that is cc's negation (the integer ones) */
+static int cc_not(int cc) {
+    switch (cc) {
+    case CC_E: return CC_NE; case CC_NE: return CC_E;
+    case CC_L: return CC_GE; case CC_GE: return CC_L; case CC_LE: return CC_G; case CC_G: return CC_LE;
+    case CC_B: return CC_AE; case CC_AE: return CC_B; case CC_BE: return CC_A; case CC_A: return CC_BE;
+    default: return -1;
+    }
+}
 /* LESS, EQUAL or GREATER (0, 1, 2) of the flags into d: ge + g */
 static void set_order(Jit *j, int32_t d, int cc_ge, int cc_g) {
     as_setcc(A, R_S0, cc_ge);
@@ -106,15 +115,6 @@ static void set_order(Jit *j, int32_t d, int cc_ge, int cc_g) {
 /* the two arguments, immediates of one tag, as their words in rax and rcx:
    what a comparison compares, and what the arithmetic of masm.h takes */
 static void two(Jit *j, int32_t x, int32_t y, int tag, AsmLabel *slow) { ms_two_imm(M, x, y, tag, slow); }
-/* the condition that is cc's negation (the integer ones) */
-static int cc_not(int cc) {
-    switch (cc) {
-    case CC_E: return CC_NE; case CC_NE: return CC_E;
-    case CC_L: return CC_GE; case CC_GE: return CC_L; case CC_LE: return CC_G; case CC_G: return CC_LE;
-    case CC_B: return CC_AE; case CC_AE: return CC_B; case CC_BE: return CC_A; case CC_A: return CC_BE;
-    default: return -1;
-    }
-}
 /* Whether the bool a comparison makes in d goes to the branch right after
    it alone (M6, tier 2, where what is live is known): the branch on d,
    reached from the comparison only, and d dead after it either way. Then
@@ -208,6 +208,63 @@ static void floor_div(Jit *j, int mod) {
     if (mod) as_add_rr(A, R_S2, R_S1); else as_sub_ri(A, R_S0, 1);
     as_bind(A, &done);
     as_label_free(&done);
+}
+/* ---- division by a constant (functors-units M1) ----
+   Where tier 2 knows the divisor's register to hold a constant (compile.c,
+   known_after), a division is the steps of its plan (divplan.h,
+   ms_div_const) on the dividend's payload, or its 64 bits: no test of the
+   divisor, no division, no branch. The dividend is tested as the general
+   path tests it, and the result goes where that path puts it. The divisor
+   0, and -1 of a signed division, have no plan and keep the general path,
+   which raises Div for the first, and Overflow for the least int divided
+   by the second. A dividend of an int or a word is 63 bits, but where the
+   homes hold 64 (RUNE_INT64 with RUNE_RAW_HOMES: masm.c's RUNE_RAW_NUMS),
+   and of an Int64.int or a Word64.word 64. Under --jit-stats the
+   divisions of code are counted, by a constant and not. 1 where it is
+   done here; 0 for the general path. */
+#if defined(RUNE_INT64) && defined(RUNE_RAW_HOMES)
+#define DIV_PAYLOAD_BITS 64
+#else
+#define DIV_PAYLOAD_BITS 63
+#endif
+static int div_const(Jit *j, int32_t p, int32_t d, int32_t x, int32_t y, AsmLabel *slow) {
+    int op, sign = 1, tag = T_INT, num64 = 0;
+    switch (p) {
+    case PRIM_int_div: op = DIV_DIV; break;
+    case PRIM_int_mod: op = DIV_MOD; break;
+    case PRIM_int_quot: op = DIV_QUOT; break;
+    case PRIM_int_rem: op = DIV_REM; break;
+    case PRIM_word_div: op = DIV_DIV; sign = 0; tag = T_WORD; break;
+    case PRIM_word_mod: op = DIV_MOD; sign = 0; tag = T_WORD; break;
+    case PRIM_int64_div: op = DIV_DIV; tag = T_INT64; num64 = 1; break;
+    case PRIM_int64_mod: op = DIV_MOD; tag = T_INT64; num64 = 1; break;
+    case PRIM_int64_quot: op = DIV_QUOT; tag = T_INT64; num64 = 1; break;
+    case PRIM_int64_rem: op = DIV_REM; tag = T_INT64; num64 = 1; break;
+    case PRIM_word64_div: op = DIV_DIV; sign = 0; tag = T_WORD64; num64 = 1; break;
+    case PRIM_word64_mod: op = DIV_MOD; sign = 0; tag = T_WORD64; num64 = 1; break;
+    default: return 0;
+    }
+    DivPlan pl;
+    int done = 0;
+    for (int i = 0; i < j->nknown; i++)   /* none at tier 1, whose walk knows nothing */
+        if (j->known[i].reg == y) {
+            /* the divisor: an immediate's payload, signed or not, or a box's 64 bits */
+            uint64_t w = j->known[i].word;
+            uint64_t c = !j->known[i].imm ? w : sign ? (uint64_t)((int64_t)w >> 1) : w >> 1;
+            done = div_plan(&pl, op, sign, c, num64 ? 64 : DIV_PAYLOAD_BITS);
+            break;
+        }
+    if (j->jit->prim_calls) {   /* --jit-stats */
+        as_mov_ri(A, R_S0, (int64_t)(intptr_t)(done ? &j->jit->div_const : &j->jit->div_var));
+        as_add_mi(A, R_S0, 0, 1);
+    }
+    if (!done) return 0;
+    if (num64) ms_one_num64(M, x, tag, slow);
+    else { ms_one_imm(M, x, tag, slow); ms_untag(M, R_S0, tag); }
+    ms_div_const(M, &pl);
+    if (num64) ms_set_num64(M, d, tag, R_S0, slow);
+    else ms_set_payload(M, d, tag, R_S0, slow);
+    return 1;
 }
 /* `=` on two immediates: their words the same. A value in the heap is the
    helper's for poly_eq, which walks it, and the primitive's own C for
@@ -435,6 +492,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     }
     case PRIM_int_mul: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_MUL, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
     case PRIM_int_div: case PRIM_int_mod: case PRIM_int_quot: case PRIM_int_rem:
+        if (div_const(j, p, d, x, y, slow)) break;
         two_payloads(j, x, y, T_INT, slow);
         as_test_rr(A, R_S1, R_S1);
         as_jcc(A, CC_E, slow);
@@ -479,6 +537,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_word_sub: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_SUB, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
     case PRIM_word_mul: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_MUL, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
     case PRIM_word_div: case PRIM_word_mod:
+        if (div_const(j, p, d, x, y, slow)) break;
         two_payloads(j, x, y, T_WORD, slow);
         as_test_rr(A, R_S1, R_S1);
         as_jcc(A, CC_E, slow);
@@ -519,6 +578,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_int64_sub: ms_two_num64(M, x, y, T_INT64, slow); ms_int64_arith(M, MS_SUB, slow); ms_set_num64(M, d, T_INT64, R_S0, slow); break;
     case PRIM_int64_mul: ms_two_num64(M, x, y, T_INT64, slow); ms_int64_arith(M, MS_MUL, slow); ms_set_num64(M, d, T_INT64, R_S0, slow); break;
     case PRIM_int64_div: case PRIM_int64_mod: case PRIM_int64_quot: case PRIM_int64_rem:
+        if (div_const(j, p, d, x, y, slow)) break;
         ms_two_num64(M, x, y, T_INT64, slow);
         as_test_rr(A, R_S1, R_S1);
         as_jcc(A, CC_E, slow);
@@ -541,6 +601,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_word64_sub: ms_two_num64(M, x, y, T_WORD64, slow); ms_word64_arith(M, MS_SUB); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
     case PRIM_word64_mul: ms_two_num64(M, x, y, T_WORD64, slow); ms_word64_arith(M, MS_MUL); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
     case PRIM_word64_div: case PRIM_word64_mod:
+        if (div_const(j, p, d, x, y, slow)) break;
         ms_two_num64(M, x, y, T_WORD64, slow);
         as_test_rr(A, R_S1, R_S1);
         as_jcc(A, CC_E, slow);

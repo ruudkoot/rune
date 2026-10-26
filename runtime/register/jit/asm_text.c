@@ -192,6 +192,8 @@ void as_shl_rr(Asm *a, int r) { emit(a, "shl %%cl, %s", r64(a, r)); }
 void as_shr_rr(Asm *a, int r) { emit(a, "shr %%cl, %s", r64(a, r)); }
 void as_divmod(Asm *a, int divisor) { emit(a, "cqo"); emit(a, "idiv %s", r64(a, divisor)); }
 void as_udivmod(Asm *a, int divisor) { emit(a, "xor %%edx, %%edx"); emit(a, "div %s", r64(a, divisor)); }
+void as_smulhi(Asm *a, int r) { emit(a, "imul %s", r64(a, r)); }
+void as_umulhi(Asm *a, int r) { emit(a, "mul %s", r64(a, r)); }
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v) { emit(a, "addq $%d, %s", (int)v, mem(a, base, disp)); }
 void as_add_rm(Asm *a, int rd, int base, int32_t disp) { emit(a, "add %s, %s", mem(a, base, disp), r64(a, rd)); }
 void as_add_rm_to_mem(Asm *a, int base, int32_t disp, int rs) { emit(a, "addq %s, %s", r64(a, rs), mem(a, base, disp)); }

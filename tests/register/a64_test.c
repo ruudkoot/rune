@@ -60,6 +60,9 @@ int main(void) {
     T("asr x0, x1, x2", "2028c29a", a64_asrv(&a, X0, X1, X2));
     T("mul x0, x1, x2", "207c029b", a64_mul(&a, X0, X1, X2));
     T("smulh x0, x1, x2", "207c429b", a64_smulh(&a, X0, X1, X2));
+    T("umulh x0, x1, x2", "207cc29b", a64_umulh(&a, X0, X1, X2));
+    T("umulh x10, x0, x9", "0a7cc99b", a64_umulh(&a, X10, X0, X9));
+    T("smulh x10, x0, x9", "0a7c499b", a64_smulh(&a, X10, X0, X9));
     T("sdiv x0, x1, x2", "200cc29a", a64_sdiv(&a, X0, X1, X2));
     T("udiv x0, x1, x2", "2008c29a", a64_udiv(&a, X0, X1, X2));
     T("msub x0, x1, x2, x3", "208c029b", a64_msub(&a, X0, X1, X2, X3));

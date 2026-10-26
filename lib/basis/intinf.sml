@@ -121,14 +121,16 @@ struct
     in if n = 0 then zero
        else if n <= smallLimbs andalso fits() then small(n-1,0)
        else B(neg,pack(a,n)) end
+  (* the longer in limbs first: two magnitudes of as many bytes may be of
+     two lengths in limbs, a limb not being a whole number of bytes *)
   fun addMag (sa,sb) =
-    if strSize sa < strSize sb then addMag(sb,sa)
-    else let val (a,na) = unpack sa and (b,nb) = unpack sb
-             fun loop(i,c) = if i = na then c
-               else let val v = at(a,i) + (if i < nb then at(b,i) else 0) + c
-                    in if v >= base then (put(a,i,v-base); loop(i+1,1))
-                       else (put(a,i,v); loop(i+1,0)) end
-         in carryDigits(a,na,loop(0,0)) end
+    let val (a,na) = unpack sa and (b,nb) = unpack sb
+        val ((a,na),(b,nb)) = if na < nb then ((b,nb),(a,na)) else ((a,na),(b,nb))
+        fun loop(i,c) = if i = na then c
+          else let val v = at(a,i) + (if i < nb then at(b,i) else 0) + c
+               in if v >= base then (put(a,i,v-base); loop(i+1,1))
+                  else (put(a,i,v); loop(i+1,0)) end
+    in carryDigits(a,na,loop(0,0)) end
   fun subMag (sa,sb) =
     let val (a,na) = unpack sa and (b,nb) = unpack sb
         fun loop(i,c) = if i = na then ()

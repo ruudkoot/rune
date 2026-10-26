@@ -106,7 +106,7 @@ struct
         StrStruct (ds,s) => let val s=note ("StrStruct",s,[count ds]) in StrStruct (List.map dec ds,s) end
       | StrId (id,s) => StrId (id,note ("StrId",s,lid id))
       | StrAscribe (e,g,opaque,s) => let val s=note ("StrAscribe",s,[Bool.toString opaque]) in StrAscribe (str e,sg g,opaque,s) end
-      | StrApp (n,e,_,s) => let val s=note ("StrApp",s,[n]) in StrApp (n,str e,ref NONE,s) end
+      | StrApp (n,e,s) => let val s=note ("StrApp",s,[n]) in StrApp (n,str e,s) end
       | StrLet (ds,e,s) => let val s=note ("StrLet",s,[count ds]) in StrLet (List.map dec ds,str e,s) end
       | StrDynamic (from,g,_,s) => let val s=note ("StrDynamic",s,case from of DynamicFile p => ["file",p] | DynamicVirtual n => ["virtual",n])
           in StrDynamic (from,sg g,ref NONE,s) end

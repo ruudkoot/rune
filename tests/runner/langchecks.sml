@@ -72,6 +72,51 @@ struct
         end
     | _ => Run.exitZero (r, files)
 
+  (* A program of tests/lang or tests/errors checked with --typecheck-only
+     (Lang.typecheck), which makes no code and types every functor
+     application by the functor's signature alone (docs/plans/functors-units.md,
+     D15): judged as the compile is -- accepted with the warnings of its
+     `.cwarn`, or refused with its `.expected` text in the first line -- but
+     where a sibling says that the check follows the Definition where the
+     compile does not yet (docs/language.md, the deviation Functors): a
+     program of tests/lang that it refuses, with the text of its
+     `.typecheck-error` in the first line, or one of tests/errors that it
+     accepts, saying what its `.typecheck-ok` holds (nothing, mostly) *)
+  fun typecheckJudge (dir, name) (r : Supervisor.result, files as {stderr, ...}) =
+    let
+      val base = "tests/" ^ dir ^ "/" ^ name
+      (* as $(cat FILE) gives it: without the newlines at its end *)
+      fun text f = let fun drop (#"\n" :: cs) = drop cs | drop cs = cs
+                   in String.implode (rev (drop (rev (String.explode (read f))))) end
+      fun accepted (warnings, why) =
+        case #outcome r of
+          Supervisor.Exited 0 =>
+            let val err = read stderr
+            in
+              if err = read warnings then NONE
+              else SOME ("FAIL", "--typecheck-only: what it says differs from " ^ (if exists warnings then warnings else "nothing")
+                                 ^ firstDifference (read warnings, err))
+            end
+        | Supervisor.Exited _ => SOME ("FAIL", "--typecheck-only refuses it" ^ why ^ ": " ^ firstLine (read stderr))
+        | _ => Run.exitZero (r, files)
+      fun refused (expected, why) =
+        case #outcome r of
+          Supervisor.Exited 0 => SOME ("FAIL", "--typecheck-only accepts it" ^ why)
+        | Supervisor.Exited _ =>
+            let val line = firstLine (read stderr)
+            in
+              if exists expected andalso String.isSubstring (text expected) line then NONE
+              else SOME ("FAIL", "--typecheck-only: error message mismatch: " ^ line ^ "\n  expected it to contain: " ^ text expected)
+            end
+        | _ => Run.exitZero (r, files)
+    in
+      if dir = "lang" then
+        if exists (base ^ ".typecheck-error") then refused (base ^ ".typecheck-error", ", where its .typecheck-error says it refuses it")
+        else accepted (base ^ ".cwarn", ", which the compile accepts")
+      else if exists (base ^ ".typecheck-ok") then accepted (base ^ ".typecheck-ok", ", where its .typecheck-ok says it accepts it")
+      else refused (base ^ ".expected", ", which the compile refuses")
+    end
+
   fun expectedCode name =
     let val f = "tests/lang/" ^ name ^ ".exitcode"
     in if exists f then getOpt (Int.fromString (read f), ~1) else 0 end

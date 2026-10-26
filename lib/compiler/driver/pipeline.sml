@@ -14,6 +14,10 @@ struct
   (* a unit's Mid as ToMid made it, with what it needs of the tables, kept
      where a whole program is to be made of its units' (--whole; the
      incremental roadmap's M7) *)
+  (* a name of a function of an earlier unit's marked to be inlined is a
+     usage of its Mid too (Env.findVal; functors-units M10) *)
+  val () = Env.inlinedValue := (fn g => isSome (Expand.inlinedValue g))
+
   val keepMid = ref false
   val () = CompilerState.cellRoot ("Pipeline.keepMid", keepMid)
   val lastMid : MidCanon.unitMid option ref = ref NONE
@@ -37,6 +41,11 @@ struct
                       size = Mid.size}
                      f m
         else m
+      (* the copies of applications given back (Expand), before anything
+         else is done to them; in a build in units, of the unit's own
+         functors and those marked to be inlined *)
+      val () = Expand.knownFunction := (fn g => IntMap.member (!Lower.knownBefore, g))
+      val mid = optional ("expand", Expand.program) mid
       val mid = optional ("shake", Shake.program) mid
       val mid = optional ("lift", Lift.program) mid
       val mid = optional ("workers", Workers.program) mid
@@ -57,6 +66,8 @@ struct
     let
       val mid = midStage (SOME Lambda.show) ToMid.program lam
       val () = if not (!Pass.whole) andalso !keepMid then lastMid := SOME (MidCanon.capture mid) else ()
+      (* the marked functors' functions, for the unit's basis *)
+      val () = if not (!Pass.whole) then Expand.keepMarked mid else ()
     in lowOfMid mid end
 
   (* Low to the code of the target --target names *)
@@ -80,6 +91,9 @@ struct
                             size = Lambda.size}
                            Translate.transProgram decs
       val low = lowOf lam
+      (* what its functors' and applications' code was made of, which no
+         later unit's needs *)
+      val () = Elaborate.forgetUnitCode ()
       val code = targetStage low
       val u : Link.sessionCode =
         {code = code, globals = IntMap.listItemsi (!Code.globals), defines = Link.defines low,
@@ -99,17 +113,35 @@ struct
      the unit's, file its source's in spans, text its source and mode how
      it was read. Its code by
      keys, its basis, and what loading gave, which the caller adds to the
-     start's environment and fixity. *)
+     start's environment and fixity. fresh: loaded under an identity no
+     unit of the session has (UnitBasis.unused), as the REPL loads a file it
+     used before; the code is still the basis's identity's, for the cache,
+     and is linked renamed (UnitBasis.renamed). *)
+  (* f (), where what a unit keeps between compiles (its basis, its Mid,
+     its code, its cache entry) longer than the host's longest array, the
+     most a pickle holds, is an error of the unit's (functors-units M8) *)
+  fun keeping (file : string) (f : unit -> 'a) : 'a =
+    f () handle Pickle.TooLong n =>
+      Error.error ({file = file, start = 0, stop = 0},
+                   "what this unit keeps between compiles needs " ^ Int.toString n ^ " bytes, more than "
+                   ^ Int.toString CharArray.maxLen ^ ", the longest array this host makes")
+
   fun unitThrough {start : UnitBasis.start, name : string, file : string, text : unit -> string, mode : Source.mode,
-                   decs : Ast.dec list, delta : Env.env, fixity : Fixity.env, used : string list}
+                   decs : Ast.dec list, delta : Env.env, fixity : Fixity.env, used : string list, fresh : bool}
       : {code : Link.unitCode, exported : UnitBasis.exported, loaded : UnitBasis.result} =
+    keeping file (fn () =>
     let
       val timed = Pass.timed
+      (* the functions it declares that are marked to be inlined, whose Mid
+         its basis keeps (functors-units M10) *)
+      val () = Elaborate.markValues delta
+      val () = (Expand.declaredOrder := []; Expand.declaredSchemes := [])
       val sc = timed "unit-passes" (fn () => unitOf decs)
       val x = timed "unit-export" (fn () => UnitBasis.export {start = start, name = name, file = file, text = text, mode = mode,
                                                              delta = delta, fixity = fixity, used = used})
       val () = timed "unit-undo" (fn () => UnitBasis.undo start)
-      val l = timed "unit-load" (fn () => UnitBasis.load {pickle = #pickle x, file = file, at = #counters start, env = #env start,
-                                                         fixity = #fixity start, text = text})
-    in {code = timed "unit-relative" (fn () => UnitBasis.relative (x, sc)), exported = x, loaded = l} end
+      val l = timed "unit-load" (fn () => UnitBasis.loadKnown ({pickle = #pickle x, file = file, at = #counters start},
+                                                              SOME (if fresh then UnitBasis.unused (#identity x)
+                                                                    else #identity x), []))
+    in {code = timed "unit-relative" (fn () => UnitBasis.relative (x, sc)), exported = x, loaded = l} end)
 end

@@ -19,7 +19,7 @@ struct
       val () = Elaborate.finish ()
       val delta = !Elaborate.lastDelta
       val r = Pipeline.unitThrough {start=start,name="state-probe.sml",file="state-probe.sml",text=fn () => text,
-        mode=Source.Ascii,decs=ds,delta=delta,fixity=fx,used=[]}
+        mode=Source.Ascii,decs=ds,delta=delta,fixity=fx,used=[],fresh=false}
     in String.concat (UnitFile.chunks (Pipeline.fingerprint (),#code r)) end
   fun main () =
     let

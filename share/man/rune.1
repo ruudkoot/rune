@@ -242,6 +242,28 @@ each use) or
 .B program
 (the whole program, or the unit).
 .TP
+.BI \-\-functor\-budget= N
+The nodes of the middle end the copies of a top-level application of a
+functor, and of the applications in them, may hold (1000000 by default;
+0 makes none). Each functor is compiled once, to a function; a whole
+program, and a unit's own applications, are given copies of its body back
+within this budget, and any other application calls the function
+.RI ( docs/ir.md ,
+Functors compiled once).
+The options that chose this until then,
+.B \-\-functors=
+and
+.BR \-\-datatype\-tags= ,
+are gone.
+.TP
+.B \-\-no\-inline\-functors
+Inline across units none of the functors and functions the libraries'
+build files mark
+.RB ( "inline functor" ,
+.BR "inline val" ;
+.IR docs/build.md ).
+A program marks its own in its build file.
+.TP
 .B \-\-units
 Compile every file, the basis library's too, as a unit of its own after the
 files before it, and link the units into the program

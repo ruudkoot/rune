@@ -96,6 +96,18 @@ struct
   val structPath : string list ref = ref []
   val () = CompilerState.cellRoot ("Translate.structPath", structPath)
 
+  (* whether what is translated is a functor's body,
+     whose declarations are its function's, no rest of the program in them *)
+  val inBody = ref false
+  val () = CompilerState.cellRoot ("Translate.inBody", inBody)
+  (* the local variables read so far: a record's slot a body sets is one of
+     them (bindUsed), the rest of the body having been made first *)
+  val read : unit IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Translate.read", read, IntTable.copy)
+  fun noteRead (x : int) = IntTable.insert (!read, x, ())
+  val () = MatchComp.noteLocal := noteRead
+  fun wasRead (x : int) = isSome (IntTable.find (!read, x))
+
   fun qualified name = String.concatWith "." (List.rev (name :: !structPath))
 
   (* Name e and, where it is curried, the functions inside it: they are all
@@ -259,25 +271,13 @@ struct
       EScon (sc, slot, _) => MatchComp.sconExp (sc, slot)
     | EVar (_, slot, sp) =>
         (case varinfo (slot, sp) of
-           VLocal (s, t) => useOf (Var s, s, t)
+           VLocal (s, t) => (noteRead s; useOf (Var s, s, t))
          | VGlobal (s, t) => useOf (Global s, s, t)
          | VCon (info, t) => conExp (info, Ty.fromTypes t)
          | VConVal (info, t) => conExp (info, Ty.fromTypes t)
          | VExn (info, t) => exnExp (info, Ty.fromTypes t)
          | VExnVal (info, t) => exnExp (info, Ty.fromTypes t)
-         | VBuiltin (name, ty) =>
-             (case builtinGlobal (name, ty) of
-                SOME g => useOf (Global g, g, ty)
-              | NONE =>
-                  let
-                    val prim = builtinPrim (name, ty)
-                    val t = Ty.fromTypes ty
-                  in
-                    if name = "<>" then
-                      let val x = MatchComp.freshVar ()
-                      in Fn (x, t, notExp (Prim (prim, SOME t, [Select (0, Var x), Select (1, Var x)]))) end
-                    else etaPrim (prim, t)
-                  end))
+         | VBuiltin (name, ty) => builtinValue (name, ty))
     | ERecord (fields, _) =>
         let
           val sorted = Types.sortFields fields
@@ -305,7 +305,7 @@ struct
         in Fn (x, Ty.arrow (r, field), Select (i, Var x)) end
     | EList (es, slot, sp) =>
         let val t = ty (slot, sp)
-        in List.foldr (fn (e, acc) => Con (1, t, Tuple [transExp e, acc])) (Con0 (0, t)) es end
+        in List.foldr (fn (e, acc) => Con (Types.consTag (), t, Tuple [transExp e, acc])) (Con0 (Types.nilTag (), t)) es end
     | ESeq (es, _) =>
         let
           fun go [] = Unit
@@ -341,6 +341,21 @@ struct
         let val x = MatchComp.freshVar ()
         in Fn (x, ty (slot, sp), MatchComp.compileMatch (x, transRules rules, Mark (sp, raiseBuiltin exnMatch))) end
     | EPrim (name, _, slot, sp) => etaPrim (name, ty (slot, sp))
+
+  (* a built-in operator, at its type here, as a value *)
+  and builtinValue (name : string, ty : Types.ty) : lexp =
+    case builtinGlobal (name, ty) of
+      SOME g => useOf (Global g, g, ty)
+    | NONE =>
+        let
+          val prim = builtinPrim (name, ty)
+          val t = Ty.fromTypes ty
+        in
+          if name = "<>" then
+            let val x = MatchComp.freshVar ()
+            in Fn (x, t, notExp (Prim (prim, SOME t, [Select (0, Var x), Select (1, Var x)]))) end
+          else etaPrim (prim, t)
+        end
 
   and transRules rules = List.map (fn (p, e) => (p, transExp e)) rules
 
@@ -416,6 +431,7 @@ struct
      program: that is where Mid's top level splits it into definitions
      (ToMid), rather than nest the whole program once per declaration. *)
   and transTopDecs (decs : dec list, k : unit -> lexp) : lexp =
+    if !inBody then transDecs (decs, k) else
     case decs of
       [] => k ()
     | d :: rest =>
@@ -537,20 +553,22 @@ struct
                 end
         in go binds end
     | DSignature _ => k ()
-    | DFunctor _ => k ()
+    | DFunctor (binds, _) =>
+        let fun go [] = k () | go (b :: rest) = functorFun (b, go rest)
+        in go binds end
 
   (* Structure expressions have no runtime representation of their own: a
-     functor application evaluates its argument's declarations and then the
-     elaborated copy of the functor body. *)
+     functor application evaluates its argument's declarations and then
+     calls the functor's function (callExp). *)
   and transStrexp (se : strexp, k : unit -> lexp) : lexp =
     case se of
       StrStruct (decs, _) => transTopDecs (decs, k)
     | StrId _ => k ()
     | StrAscribe (e, _, _, _) => transStrexp (e, k)
-    | StrApp (_, arg, slot, sp) =>
+    | StrApp (_, arg, sp) =>
         transStrexp (arg, fn () =>
-          case !slot of
-            SOME body => transStrexp (body, k)
+          case Elaborate.callAt sp of
+            SOME call => callExp (call, sp, k)
           | NONE => bug (sp, "functor application not elaborated"))
     | StrLet (decs, e, _) => transTopDecs (decs, fn () => transStrexp (e, k))
     (* a dynamic module (D17, D18): what RuneDynamic.load gives -- or
@@ -561,15 +579,25 @@ struct
            NONE => bug (sp, "a dynamic structure not elaborated")
          | SOME {fingerprint, slots, via, temp, reloadable} =>
              let
-               val n = Int.max (List.length slots, 2)
-               val tupleTy = Types.tupleTy (List.tabulate (n, fn _ => Types.unitTy))
+               val tupleTy = dynamicTuple slots
                val str = Ty.fromTypes Types.stringTy
                fun slotTy (t, isExn) = if isExn then Ty.exnCon else Ty.fromTypes t
-               fun set (_, [], _, k) = k ()
-                 | set (from, (s, t, isExn) :: rest, i, k) =
-                     Seq (SetGlobal (s, Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, slotTy (t, isExn))),
-                                              [Select (i, from)])),
-                          set (from, rest, i + 1, k))
+               (* a record's slots set from it, then its substructures' from
+                  theirs, each a record of its own in a slot (D3) *)
+               fun set (from, DynRecord (vals, subs), k) =
+                 let
+                   fun vs ([], i) = ss (subs, i)
+                     | vs ((s, t, isExn) :: rest, i) =
+                         Seq (SetGlobal (s, Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, slotTy (t, isExn))),
+                                                  [Select (i, from)])),
+                              vs (rest, i + 1))
+                   and ss ([], _) = k ()
+                     | ss (r :: rest, i) =
+                         let val x = MatchComp.freshVar ()
+                         in Let (x, Prim ("unsafe_cast", SOME (Ty.arrow (Ty.unit, Ty.fromTypes (dynamicTuple r))), [Select (i, from)]),
+                                 set (Var x, r, fn () => ss (rest, i + 1)))
+                         end
+                 in vs (vals, 0) end
              in
                case from of
                  DynamicVirtual name =>
@@ -577,7 +605,7 @@ struct
                      val takeTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy], tupleTy)
                      val call = App (useOf (Global via, via, takeTy),
                                      Tuple [Const (CString name, str), Const (CString fingerprint, str)])
-                   in Mark (sp, Seq (SetGlobal (temp, call), set (Global temp, slots, 0, k))) end
+                   in Mark (sp, Seq (SetGlobal (temp, call), set (Global temp, slots, k))) end
                | DynamicFile path =>
                    (* the slots set by a function of the tuple, which load
                       calls, and calls again for each Dynamic.reload of the
@@ -588,7 +616,7 @@ struct
                      val loadTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy, Types.boolTy, setterTy],
                                                 Types.unitTy)
                      val x = MatchComp.freshVar ()
-                     val setter = Fn (x, Ty.fromTypes setterTy, set (Var x, slots, 0, fn () => Unit))
+                     val setter = Fn (x, Ty.fromTypes setterTy, set (Var x, slots, fn () => Unit))
                      val call = App (useOf (Global via, via, loadTy),
                                      Tuple [Const (CString path, str), Const (CString fingerprint, str),
                                             if reloadable then trueExp else falseExp,
@@ -604,21 +632,251 @@ struct
             NONE => bug (sp, "an exported structure not elaborated")
           | SOME {fingerprint, slots, via, ...} =>
               let
-                val n = Int.max (List.length slots, 2)
-                val tupleTy = Types.tupleTy (List.tabulate (n, fn _ => Types.unitTy))
+                val tupleTy = dynamicTuple slots
                 val exportTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy, tupleTy], Types.unitTy)
                 fun cast (s, t, isExn) =
                   if isExn then Prim ("unsafe_cast", SOME (Ty.arrow (Ty.exnCon, Ty.unit)), [Global s])
                   else
                     let val m = monoOf t
                     in Prim ("unsafe_cast", SOME (Ty.arrow (Ty.fromTypes m, Ty.unit)), [useOf (Global s, s, m)]) end
-                val elems = List.map cast slots @ List.tabulate (n - List.length slots, fn _ => Unit)
+                (* a record of its slots, then its substructures' records,
+                   each cast to unit (D3) *)
+                fun record (r as DynRecord (vals, subs)) =
+                  let
+                    val n = Int.max (length vals + length subs, 2)
+                    val elems = List.map cast vals
+                                @ List.map (fn s => Prim ("unsafe_cast", SOME (Ty.arrow (Ty.fromTypes (dynamicTuple s), Ty.unit)),
+                                                          [record s])) subs
+                  in Tuple (elems @ List.tabulate (n - length elems, fn _ => Unit)) end
+                val elems = case record slots of Tuple es => es | _ => bug (sp, "a dynamic record not a tuple")
               in
                 Seq (App (useOf (Global via, via, exportTy),
                           Tuple [Const (CString name, Ty.fromTypes Types.stringTy),
                                  Const (CString fingerprint, Ty.fromTypes Types.stringTy), Tuple elems]),
                      k ())
               end)
+
+  (* ---- functors compiled once (docs/ir.md, Functors compiled once) ---- *)
+
+  (* the tuple type of a dynamic module's record (D3): a unit a slot, its
+     values' and its substructures', at least two *)
+  and dynamicTuple (DynRecord (vals, subs)) : Types.ty =
+    Types.tupleTy (List.tabulate (Int.max (length vals + length subs, 2), fn _ => Types.unitTy))
+
+  (* a record of n slots, as Elaborate.recordTy *)
+  and recordTyN (n : int) : Ty.ty = Ty.tuple (List.tabulate (Int.max (n, 2), fn _ => Ty.unit))
+  (* a record's slot cast to and from unit: functor_cast, an unsafe_cast
+     (Lower) that only these make, which the expansion folds and MidLint
+     checks (D3) *)
+  and toUnit (e : lexp, t : Ty.ty) : lexp = Prim ("functor_cast", SOME (Ty.arrow (t, Ty.unit)), [e])
+  and fromUnit (e : lexp, t : Ty.ty) : lexp = Prim ("functor_cast", SOME (Ty.arrow (Ty.unit, t)), [e])
+
+  (* the record a reach reaches *)
+  and reachExp ({var, global, path} : Elaborate.reach, n : int) : lexp =
+    #1 (List.foldl (fn ((i, k), (e, _)) => (fromUnit (Select (i, e), recordTyN k), k))
+                   (if global then Global var else Var var, n) path)
+
+  (* what a slot of a record holds, cast to unit: a polymorphic value at
+     unit for its type variables, which changes nothing of it *)
+  and slotValue (v : Env.valstatus) : lexp =
+    case v of
+      Env.Val {stamp, global, scheme} =>
+        let val m = monoOf scheme
+        in if global then () else noteRead stamp;
+           toUnit (useOf (if global then Global stamp else Var stamp, stamp, m), Ty.fromTypes m)
+        end
+    | Env.Exn {info, ...} => toUnit (exnConExp info, Ty.exnCon)
+    | Env.ExnAsVal {ty, info} => let val t = Ty.fromTypes (monoOf ty) in toUnit (exnExp (info, t), t) end
+    | Env.ConAsVal {scheme, info} => let val t = Ty.fromTypes (monoOf scheme) in toUnit (conExp (info, t), t) end
+    | Env.Prim {scheme, name} => let val m = monoOf scheme in toUnit (builtinValue (name, m), Ty.fromTypes m) end
+    | Env.Con _ => Error.bug "a constructor as a slot of a record"
+
+  (* a record made, or the one in reach *)
+  and recordExp (r as Elaborate.Record {vals, descs, strs, shared, ...}) : lexp =
+    case shared of
+      SOME h => reachExp (h, Elaborate.slotsOf r)
+    | NONE =>
+        let
+          fun desc (Elaborate.DescLayout {stamp, name, arity, tag}) =
+                let val dt = Ty.con (stamp, name, List.tabulate (arity, fn _ => Ty.unit))
+                in toUnit (Prim ("open_layout", SOME (Ty.arrow (dt, Ty.int)), [Const (CInt (IntInf.fromInt tag), dt)]), Ty.int) end
+            | desc (Elaborate.DescVar d) = (noteRead d; toUnit (Var d, Ty.int))
+          val elems = List.map (fn (_, v) => slotValue v) vals @ List.map desc descs
+                      @ List.map (fn (_, s) => toUnit (recordExp s, recordTyN (Elaborate.slotsOf s))) strs
+        in Tuple (elems @ List.tabulate (Int.max (2 - List.length elems, 0), fn _ => Unit)) end
+
+  (* the variables of a record's values and exceptions set from what src
+     holds, then k: globals where they are, a temporary local for each
+     substructure's record where they are not *)
+  and bindRecord (Elaborate.Record {vals, descs, strs, ...}, src : lexp, k : unit -> lexp) : lexp =
+    let
+      fun go ([], i) = ds (descs, i)
+        | go ((_, v) :: rest, i) =
+            case v of
+              Env.Val {stamp, global, scheme} =>
+                MatchComp.bindVar (stamp, global, fromUnit (Select (i, src), Ty.fromTypes scheme), go (rest, i + 1))
+            | Env.Exn {info, ...} =>
+                if isSome (#builtin info) then go (rest, i + 1)
+                else MatchComp.bindVar (#stamp info, #isGlobal info, fromUnit (Select (i, src), Ty.exnCon), go (rest, i + 1))
+            | _ => go (rest, i + 1)
+      and ds ([], i) = subs (strs, i)
+        | ds (Elaborate.DescVar d :: rest, i) = Let (d, fromUnit (Select (i, src), Ty.int), ds (rest, i + 1))
+        | ds (Elaborate.DescLayout _ :: rest, i) = ds (rest, i + 1)
+      and subs ([], _) = k ()
+        | subs ((_, s) :: rest, i) =
+            let
+              val n = Elaborate.slotsOf s
+              val e = fromUnit (Select (i, src), recordTyN n)
+              fun global (Elaborate.Record {vals, strs, ...}) =
+                List.exists (fn (_, Env.Val {global, ...}) => global | (_, Env.Exn {info, ...}) => #isGlobal info | _ => false) vals
+                orelse List.exists (fn (_, s) => global s) strs
+              val t = MatchComp.freshVar ()
+            in
+              (* a global of its own for a substructure's record of globals,
+                 which the top level's definitions read and a whole
+                 program's shake takes away with them where none is read *)
+              if global s then (Ty.bindVar (t, Elaborate.recordTyOf n);
+                                MatchComp.bindVar (t, true, e, bindRecord (s, Global t, fn () => subs (rest, i + 1))))
+              else Let (t, e, bindRecord (s, Var t, fn () => subs (rest, i + 1)))
+            end
+    in go (vals, 0) end
+
+  (* What bindRecord binds, of a record of local variables, that the code
+     made (rest) reads, around it: a body's parameter and the results of its
+     applications, most of whose slots the body reads none of *)
+  and bindUsed (r : Elaborate.record, src : lexp, rest : lexp) : lexp =
+    let
+      fun used (Elaborate.Record {vals, descs, strs, ...}) =
+        List.exists (fn (_, Env.Val {stamp, ...}) => wasRead stamp
+                      | (_, Env.Exn {info, ...}) => wasRead (#stamp info)
+                      | _ => false) vals
+        orelse List.exists (fn Elaborate.DescVar d => wasRead d | _ => false) descs
+        orelse List.exists (fn (_, s) => used s) strs
+      fun go (Elaborate.Record {vals, descs, strs, ...}, src, rest) =
+        let
+          fun slots ([], i, rest) = (i, rest)
+            | slots ((_, v) :: more, i, rest) =
+                let
+                  val rest =
+                    case v of
+                      Env.Val {stamp, scheme, ...} =>
+                        if wasRead stamp then Let (stamp, fromUnit (Select (i, src), Ty.fromTypes scheme), rest) else rest
+                    | Env.Exn {info, ...} =>
+                        if isSome (#builtin info) orelse not (wasRead (#stamp info)) then rest
+                        else Let (#stamp info, fromUnit (Select (i, src), Ty.exnCon), rest)
+                    | _ => rest
+                in slots (more, i + 1, rest) end
+          val (i, rest) = slots (vals, 0, rest)
+          val (i, rest) =
+            List.foldl (fn (d, (i, rest)) =>
+                          (i + 1, case d of
+                                    Elaborate.DescVar d => if wasRead d then Let (d, fromUnit (Select (i, src), Ty.int), rest) else rest
+                                  | Elaborate.DescLayout _ => rest))
+                       (i, rest) descs
+          val (_, rest) =
+            List.foldl (fn ((_, s), (i, rest)) =>
+                          (i + 1,
+                           if not (used s) then rest
+                           else
+                             let val t = MatchComp.freshVar ()
+                             in Let (t, fromUnit (Select (i, src), recordTyN (Elaborate.slotsOf s)), go (s, Var t, rest)) end))
+                       (i, rest) strs
+        in rest end
+    in go (r, src, rest) end
+
+  (* a functor's declaration: its function, of its argument's record to its
+     result's *)
+  and functorFun (b : funbind, rest : lexp) : lexp =
+    case Elaborate.bodyAt (#span b) of
+      NONE => bug (#span b, "a functor without its code")
+    | SOME {func, param, paramRecord, result, opens} =>
+        let
+          val saved = (!structPath, !inBody)
+          val () = (structPath := [#name b]; inBody := true)
+          val () = read := IntTable.table 1024
+          val body = bindUsed (paramRecord, Var param, openFuns (opens, fn () => transStrexp (#body b, fn () => recordExp result)))
+                     handle x => (structPath := #1 saved; inBody := #2 saved; raise x)
+          val () = (structPath := #1 saved; inBody := #2 saved)
+          val fty = Ty.arrow (recordTyN (Elaborate.slotsOf paramRecord), recordTyN (Elaborate.slotsOf result))
+          val f = Mark (#span b, Fn (param, fty, body))
+        in nameFun ("functor " ^ #name b, f); Seq (SetGlobal (func, f), rest) end
+
+  (* The functions that make and take apart each constructor whose layout
+     the parameter leaves open, by its descriptor d (D4): a constructor
+     object of one field holding the argument where d is 0, as the
+     specification reads it, or of the d fields of the argument, a tuple
+     (Ty.flat); what the body's code does with such a constructor, which
+     ToMid makes a call of one of them where d is not 0 *)
+  and openFuns (opens : Elaborate.openCon list, k : unit -> lexp) : lexp =
+    case opens of
+      [] => k ()
+    | {used = ref false, ...} :: rest => openFuns (rest, k)
+    | {desc, con, decon, tag, dataTy, argTy, ...} :: rest =>
+        let
+          val t = Ty.fromTypes dataTy
+          val a = Ty.fromTypes argTy
+          fun cast (e, from, to) = Prim ("unsafe_cast", SOME (Ty.arrow (from, to)), [e])
+          val () = noteRead desc
+          fun isD n = Prim ("poly_eq", SOME (Ty.arrow (Ty.tuple [Ty.int, Ty.int], Ty.bool)),
+                            [Var desc, Const (CInt (IntInf.fromInt n), Ty.int)])
+          fun chain f = List.foldr (fn (n, rest) => If (isD n, f n, rest)) (raiseBuiltin exnMatch)
+                                   (0 :: List.tabulate (Ty.maxFlat - 1, fn i => i + 2))
+          val x = MatchComp.freshVar ()
+          val y = MatchComp.freshVar ()
+          fun units n = Ty.flatArg n
+          fun make n =
+            if n = 0 then cast (Con (tag, Ty.flat 1, cast (Var x, a, Ty.unit)), Ty.flat 1, t)
+            else
+              let val p = MatchComp.freshVar ()
+              in Let (p, cast (Var x, a, units n),
+                      cast (Con (tag, Ty.flat n, Tuple (List.tabulate (n, fn i => Select (i, Var p)))), Ty.flat n, t))
+              end
+          fun take n =
+            if n = 0 then cast (Decon (tag, cast (Var y, t, Ty.flat 1)), Ty.unit, a)
+            else cast (Decon (tag, cast (Var y, t, Ty.flat n)), units n, a)
+          val () = funNames := IntMap.insert (!funNames, x, qualified "con")
+          val () = funNames := IntMap.insert (!funNames, y, qualified "decon")
+        in
+          LetRec ([(con, Ty.arrow (a, t), Fn (x, Ty.arrow (a, t), chain make)),
+                   (decon, Ty.arrow (t, a), Fn (y, Ty.arrow (t, a), chain take))],
+                  openFuns (rest, k))
+        end
+
+  (* What the expansion (Expand, M6) substitutes in a copy of a functor's
+     body for an application, as a type: a pair of tuples, the parameter's
+     type names realised and the body's datatypes made the application's
+     instances, each an arrow from the name applied to variables (Ty.Var)
+     to what it becomes at them *)
+  and functorTypes ({bound, made, ...} : Elaborate.callCode) : Ty.ty =
+    let
+      fun entry (c : Types.tycon, f : Types.tyfcn) =
+        let
+          val vs = List.tabulate (#arity c, fn _ => Types.fresh 0)
+          val from = Ty.con (#stamp c, #name c, List.map Ty.fromTypes vs)
+        in Ty.arrow (from, Ty.fromTypes (Types.applyFcn (f, vs))) end
+    in
+      Ty.tuple [Ty.tuple (List.map entry bound), Ty.tuple (List.map (fn (c, c') => entry (c, Types.TName c')) made)]
+    end
+
+  (* an application: the call, and the variables of its result set from
+     what it returns *)
+  and callExp (code as {func, arg, argVar, result, global, record, ...} : Elaborate.callCode, sp, k : unit -> lexp) : lexp =
+    let
+      (* the call under the application's place, after its marker -- a cast
+         of () to what the expansion substitutes, which nothing reads; at the
+         top level each variable a definition of its own (ToMid), which a
+         mark around them would make one *)
+      fun call a = MatchComp.bindVar (result, global,
+                                      Mark (sp, Let (MatchComp.freshVar (),
+                                                     Prim ("functor_marker", SOME (Ty.arrow (Ty.unit, functorTypes code)), [Unit]),
+                                                     App (Global func, a))),
+                                      if global then bindRecord (record, Global result, k)
+                                      else bindUsed (record, Var result, k ()))
+    in
+      case argVar of
+        SOME v => Let (v, recordExp arg, call (Var v))
+      | NONE => call (recordExp arg)
+    end
 
   (* Recursive bindings: globals are assigned in sequence (closures refer to
      them through the global table); locals use LetRec. *)

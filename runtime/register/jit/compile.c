@@ -848,6 +848,48 @@ static int scan(Jit *j, Scan *sc) {
 /* ---- the compiler ---- */
 
 #if JIT_TARGET
+/* The registers known to hold a constant after the instruction at I, of
+   op (tier 2, functors-units M1; Jit.known): none after one that may not
+   go on to the next, a call or a branch; else the register it defines
+   forgotten, and remembered with its constant where it is an INT's, a
+   CONST's of a number -- an immediate, or a box of 64 bits, which no
+   collection changes -- or a MOVE's of a known register. An instruction
+   writes no register but the one it defines (rop_dest), and the walk is
+   emptied where control arrives from elsewhere (emit_function), so what
+   it knows holds on every path. Up to eight are known, the oldest
+   forgotten first: forgetting is always safe. */
+static void known_after(Jit *j, const uint8_t *I, uint8_t op) {
+    if (op >= ROP__COUNT || rop_flow[op] != FLOW_NEXT) { j->nknown = 0; return; }
+    int k = rop_dest[op];
+    if (k < 0) return;
+    int32_t d = read_i32(I + 1 + 4 * k);
+    int have = 0, imm = 1;
+    uint64_t w = 0;
+    if (op == ROP_INT) { have = 1; w = (uint64_t)mk_int(read_i32(I + 5)); }
+    else if (op == ROP_CONST) {
+        uint32_t b = (uint32_t)read_i32(I + 5);
+        if (b < j->vm->prog.nconsts) {
+            Value v = j->vm->prog.consts[b];
+            if (val_is_imm(v)) { have = 1; w = (uint64_t)v; }
+            else if (val_is_num64(v)) { have = 1; imm = 0; w = box_bits(v); }
+        }
+    } else if (op == ROP_MOVE) {
+        int32_t s = read_i32(I + 5);
+        for (int i = 0; i < j->nknown; i++)
+            if (j->known[i].reg == s) { have = 1; imm = j->known[i].imm; w = j->known[i].word; }
+    }
+    for (int i = 0; i < j->nknown; i++)
+        if (j->known[i].reg == d) { j->known[i] = j->known[--j->nknown]; break; }
+    if (!have) return;
+    if (j->nknown == (int)(sizeof j->known / sizeof j->known[0])) {
+        memmove(&j->known[0], &j->known[1], (size_t)(j->nknown - 1) * sizeof j->known[0]);
+        j->nknown--;
+    }
+    j->known[j->nknown].reg = d;
+    j->known[j->nknown].imm = imm;
+    j->known[j->nknown].word = w;
+    j->nknown++;
+}
 static int emit_function(Jit *j, Scan *sc) {
     const uint8_t *code = j->vm->prog.code;
     Masm *m = &j->m;
@@ -857,8 +899,8 @@ static int emit_function(Jit *j, Scan *sc) {
     while (pc < j->to && !j->unsupported && !m->a.failed) {
         uint32_t at = pc - j->from;
         if (!sc->start[at]) { pc++; continue; }
-        if (sc->phantom[at]) { pc += rop_length(code + pc); in_run = 0; continue; }
-        if (sc->target[at]) { as_bind(&m->a, &j->labels[at]); in_run = 0; }
+        if (sc->phantom[at]) { pc += rop_length(code + pc); in_run = 0; j->nknown = 0; continue; }
+        if (sc->target[at]) { as_bind(&m->a, &j->labels[at]); in_run = 0; j->nknown = 0; }
         ms_mark_pc(m, pc);
         if (!in_run) {
             /* the run's length: to the next end, or the next target */
@@ -908,6 +950,7 @@ static int emit_function(Jit *j, Scan *sc) {
 #include "register/jit_cases.h"
         default: j->unsupported = 1;
         }
+        if (j->tier == 2) known_after(j, code + pc, op);
         if (sc->ends[at]) in_run = 0;
         /* --deopt-stress=N (M11): after an instruction whose effects are
            complete and whose successor is the next (not a branch, a call,

@@ -10,7 +10,11 @@ struct
   exception Failed of diagnostic list
   exception Closed
   datatype input = Text of source | Loaded of artifact | MidInput of {source : source, pickle : string, mid : string}
-  type config = {target : string, allowPrim : bool, lib : string option, libraries : string list}
+  (* functors: whether the libraries' marks of the functors and functions
+     to inline across units are left out (docs/build.md, Inline functors
+     and functions) *)
+  type functors = {noInline : bool}
+  type config = {target : string, allowPrim : bool, lib : string option, libraries : string list, functors : functors}
   type platform = {link : string -> unit -> unit, inherited : (string * string option) list,
                    prepare : bool -> unit, current : unit -> (string * string) list}
   datatype session = Session of {token : unit ref, namespace : string, config : config, sources : input list ref,
@@ -43,6 +47,28 @@ struct
           val () = (Pass.whole:=false; Pipeline.keepMid:=true; CompilerSettings.target:= #target config;
                     Error.keep:=true;Error.silent:=true;Elaborate.recover:=true)
           val () = CompilerSettings.libDir:= #lib config
+          (* the functors to inline, set in this attempt's own compiler as
+             rune's options set them *)
+          val {noInline} = #functors config
+          val () =
+            Elaborate.inlineFunctors:=
+              List.foldl (fn (n,m) => StringMap.insert (m,n,())) StringMap.empty
+                (case (noInline,#lib config) of
+                   (false,SOME root) =>
+                     List.concat (List.map BasisManifest.inlineFunctors
+                       (root ^ "/basis" :: (BasisManifest.libraries (root,#libraries config)
+                                            handle BasisManifest.Usage _ => [])))
+                 | _ => [])
+          (* and the functions (functors-units M10) *)
+          val () =
+            Elaborate.inlineValues:=
+              List.foldl (fn (n,m) => StringMap.insert (m,n,())) StringMap.empty
+                (case (noInline,#lib config) of
+                   (false,SOME root) =>
+                     List.concat (List.map BasisManifest.inlineValues
+                       (root ^ "/basis" :: (BasisManifest.libraries (root,#libraries config)
+                                            handle BasisManifest.Usage _ => [])))
+                 | _ => [])
           val cacheHits=ref 0
           val compiled=ref 0
           val env = ref Env.initial
@@ -60,7 +86,7 @@ struct
               val () = Elaborate.finish ()
               val () = if !Error.errors=0 then () else raise Failed (List.map sourceError (List.rev (!Error.kept)))
               val result = Pipeline.unitThrough {start=start,name=name,file=file,text=fn () => text,mode=mode,
-                decs=decs,delta= !Elaborate.lastDelta,fixity=outgoing,used=[]}
+                decs=decs,delta= !Elaborate.lastDelta,fixity=outgoing,used=[],fresh=false}
               val code = #code result
               val fingerprint = Pipeline.fingerprint ()
               val mid = case !Pipeline.lastMid of SOME mid => UnitMid.write (#exported result,mid) | NONE => ""
@@ -83,8 +109,7 @@ struct
                 val code = #code artifact
                 val () = if List.all (known o #1) (#globals code) andalso List.all (known o #2) (#imports code)
                          then () else raise Fail "unit dependency is not imported"
-                val loaded = UnitBasis.load {pickle= #pickle artifact,file=file,at=UnitBasis.counters (),
-                  env= !env,fixity= !fixity,text=fn () => text}
+                val loaded = UnitBasis.load {pickle= #pickle artifact,file=file,at=UnitBasis.counters ()}
                 val () = if #identity (#unit loaded) = #identity artifact then () else raise Fail "unit and basis identities differ"
                 val () = (env:=Env.plus (!env,#delta loaded);
                           fixity:=Fixity.extend (!fixity,#directives loaded);UnitBasis.bind loaded)
@@ -96,7 +121,7 @@ struct
               let
                 val {file,text,mode}=source
                 val ()=Source.register (Source.fromStringIn (mode,file,text))
-                val loaded=UnitBasis.load {pickle=pickle,file=file,at=UnitBasis.counters (),env= !env,fixity= !fixity,text=fn () => text}
+                val loaded=UnitBasis.load {pickle=pickle,file=file,at=UnitBasis.counters ()}
                 val unit= #unit loaded
                 val um=UnitMid.read (mid,unit,[],fn f => f)
                 val lo=Vector.sub (#base unit,UnitBasis.kStamp)
@@ -261,6 +286,7 @@ struct
         val expected=Pickle.rstring r
         val mode=case Source.modeNamed (Pickle.rstring r) of SOME mode => mode | NONE => raise Pickle.Bad "unit source mode"
         val ()=if Pickle.rbytes (r,3)=UnitBasis.magic andalso Pickle.rnat r=UnitBasis.version then () else raise Pickle.Bad "unit basis version"
+        val ()=if Pickle.rstring r=Pickle.probe () then () else raise Pickle.Bad "unit basis made by a compiler whose hash differs"
         val name=Pickle.rstring r
         val parts=String.fields (fn c => c = #"#") name
         val inferred=case List.rev parts of

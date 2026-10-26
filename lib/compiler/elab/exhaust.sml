@@ -33,8 +33,10 @@ struct
     | Ref of spat
     | Exn of exninfo * spat list         (* exception constructors: an open domain *)
 
-  val nilInfo : coninfo = {name = "nil", tag = 0, hasArg = false, ncons = 2, isRef = false, siblings = [("nil", false), ("::", true)]}
-  val consInfo : coninfo = {name = "::", tag = 1, hasArg = true, ncons = 2, isRef = false, siblings = [("nil", false), ("::", true)]}
+  (* the list's constructors, their tags as Types.tagNames numbers them *)
+  fun listSiblings () = List.map (fn n => (n, n = "::")) (Types.listTagNames ())
+  fun nilInfo () : coninfo = {name = "nil", tag = Types.nilTag (), hasArg = false, ncons = 2, isRef = false, siblings = listSiblings ()}
+  fun consInfo () : coninfo = {name = "::", tag = Types.consTag (), hasArg = true, ncons = 2, isRef = false, siblings = listSiblings ()}
 
   fun info (slot : patinfo option ref, sp) =
     case !slot of
@@ -66,8 +68,8 @@ struct
                                  | NONE => Any) labels)
         end
     | PTuple (ps, _) => Rec (List.map simplify ps)
-    | PList ([], _) => Con (nilInfo, [])
-    | PList (p :: rest, sp) => Con (consInfo, [Rec [simplify p, simplify (PList (rest, sp))]])
+    | PList ([], _) => Con (nilInfo (), [])
+    | PList (p :: rest, sp) => Con (consInfo (), [Rec [simplify p, simplify (PList (rest, sp))]])
     | PApp (_, slot, arg, sp) =>
         (case info (slot, sp) of
            PICon i => if #isRef i then Ref (simplify arg) else Con (i, [simplify arg])

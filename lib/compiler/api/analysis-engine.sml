@@ -22,7 +22,7 @@ struct
   fun close (Session {closed,stored,names,...})=(closed:=true;stored:=[];names:=StringMap.empty)
   fun checkWith (Session {stored,plan=savedPlan,config,closed,observer,names=savedNames},sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
                  frozen:source list,frozenPlan:CompilerPrelude.plan option) : snapshot = CompilerSession.owned (fn () =>
-    let val {lib,libraries,target,allowPrim}=config
+    let val {lib,libraries,target,allowPrim,...}=config
         val ()=CompilerSettings.target:=target
         val ()=CompilerSettings.libDir:=lib
         val ()=UnitBasis.startSession ()
@@ -69,7 +69,8 @@ struct
              | NONE => scopeEnv:=SOME (width,env,!Elaborate.sigs,!Elaborate.funs) end)
         fun poll ()=if !closed then raise CompilerSession.Closed else if cancelled () then raise Cancelled else ()
         val ()=poll ()
-        val ()=(Error.keep:=true;Error.silent:=true;Elaborate.recover:=false)
+        (* an analysis makes no code: no copy of a functor's body (D15) *)
+        val ()=(Error.keep:=true;Error.silent:=true;Elaborate.recover:=false;Elaborate.makesCode:=false)
         val env=ref Env.initial
         val fixity=ref Fixity.initial
         val scopes=CompilerBuildContext.new (env,fixity)
@@ -190,8 +191,7 @@ struct
                     val ()=UnitBasis.undo start
                 in checked:= !checked+1;{key=key,name=name,allow=allow,mode=mode,pickle= #pickle exported,facts=frozen,types=typeDefinitions,
                   syntax=syntaxTree,uses=List.rev (!unitUses)}:entry end)
-              val loaded=UnitBasis.load {pickle= #pickle entry,file=file,at= #counters start,
-                env= #env start,fixity= #fixity start,text=fn () => text}
+              val loaded=UnitBasis.load {pickle= #pickle entry,file=file,at= #counters start}
               val ()=env:=Env.plus (#env start,#delta loaded)
               val ()=fixity:=Fixity.extend (#fixity start,#directives loaded)
               val ()=UnitBasis.bind loaded

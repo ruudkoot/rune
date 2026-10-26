@@ -463,6 +463,41 @@ struct
                r (["--no-prelude", "--type-work=4000", "-o", "output.rbc", "input.sml"], NONE) <> 0
                andalso contains (f "err", "type translation exceeds 4000 steps")
                andalso r (["--no-prelude", "--type-work=100000", "-o", "output.rbc", "input.sml"], NONE) = 0)
+      (* --functor-budget (D13; functors-units M8): functors nested 6 deep,
+         each body applying the one below twice, which static interpretation
+         would copy 127 times; the expansion copies them all within the
+         default budget, and within a small one no more Mid nodes for the
+         top-level application than the budget, leaving the rest calls, and
+         none at 0 (--pass-stats=expand) *)
+      val () =
+        write (f "input.sml",
+               String.concatWith "\n"
+                 (["signature ARG = sig type t val x : t val f : t -> t end",
+                   "functor F0 (X : ARG) = struct val a = X.f X.x type t = X.t val x = X.x val f = X.f end"]
+                  @ List.tabulate (6, fn i =>
+                      "functor F" ^ Int.toString (i + 1) ^ " (X : ARG) = struct structure N1 = F" ^ Int.toString i
+                      ^ " (X) structure N2 = F" ^ Int.toString i ^ " (X) val a = X.f X.x type t = X.t val x = X.x val f = X.f end")
+                  @ ["structure R = F6 (struct type t = int val x = 1 fun f (y : int) = y end)\n"]))
+      (* the expand line's numbers: expanded, left calls, past the budget,
+         the most nodes copied for a top-level application *)
+      fun expansion budget =
+        if r (["--no-prelude", "--pass-stats=expand"] @ (case budget of SOME n => ["--functor-budget=" ^ Int.toString n] | NONE => [])
+              @ ["-o", "output.rbc", "input.sml"], NONE) <> 0 then NONE
+        else
+          case List.find (String.isPrefix "expand: ") (lines (read (f "err"))) of
+            NONE => NONE
+          | SOME l =>
+              case List.mapPartial Int.fromString (String.tokens (fn c => Char.isSpace c orelse c = #"(" orelse c = #",") l) of
+                [expanded, left, past, _, most] => SOME (expanded, left, past, most)
+              | _ => NONE
+      val () = check ("budgets: functors, the default copies all",
+                      case expansion NONE of SOME (127, 0, 0, _) => true | _ => false)
+      val () = check ("budgets: functors, a small budget bounds the copies",
+                      case expansion (SOME 500) of
+                        SOME (expanded, left, past, most) => expanded > 0 andalso left > 0 andalso past > 0 andalso most <= 500
+                      | NONE => false)
+      val () = check ("budgets: functors, none at 0",
+                      case expansion (SOME 0) of SOME (0, left, _, 0) => left > 0 | _ => false)
       (* --pass-stats=elab: a line for each top-level declaration, its time by
          context and operation adding up to its total, and its counters, which
          do not depend on the machine (docs/ir.md, The elaborator's counters) *)
@@ -485,12 +520,13 @@ struct
                                        if String.isPrefix "input.sml:" at then SOME (kind ^ " " ^ name) else NONE
                                    | _ => NONE) elab
       val names = List.foldl (fn (n, ns) => if List.exists (fn x => x = n) ns then ns else ns @ [n]) [] mine
-      fun counters name =
+      fun countersIn elab name =
         case List.filter (fn _ :: at :: kind :: n :: _ => String.isPrefix "input.sml:" at andalso kind ^ " " ^ n = name
                            | _ => false) elab of
           [] => []
         | ls => fieldsOf (List.last ls)
-      fun get name k = Option.map #2 (List.find (fn (k', _) => k' = k) (counters name))
+      fun getIn elab name k = Option.map #2 (List.find (fn (k', _) => k' = k) (countersIn elab name))
+      fun get name k = getIn elab name k
       fun number v = getOpt (IntInf.fromString v, ~1)
       fun adds l =
         let
@@ -514,8 +550,17 @@ struct
                       = [SOME "2", SOME "1", SOME "1", SOME "2"])
       val () = check ("pass-stats=elab: functor G",
                       List.map (get "functor G") ["fundecl", "app.check", "app.code", "match"] = [SOME "1", SOME "1", NONE, SOME "1"])
+      (* N's application of G is typed by G's signature, and no copy of G's
+         body applies F again: checked only, and compiled, where the
+         application makes code, a call of G's function (docs/ir.md,
+         Functors compiled once) *)
       val () = check ("pass-stats=elab: structure N",
-                      List.map (get "structure N") ["app.code", "app.depth", "app.check"] = [SOME "2", SOME "2", NONE])
+                      List.map (get "structure N") ["app.code", "app.depth", "app.check"] = [NONE, SOME "1", SOME "1"])
+      val () = check ("pass-stats=elab: compiled",
+                      r (["--no-prelude", "--pass-stats=elab", "-o", "output.rbc", "input.sml"], NONE) = 0)
+      val compiled = List.map (String.tokens Char.isSpace) (List.filter (String.isPrefix "elab ") (lines (read (f "err"))))
+      val () = check ("pass-stats=elab: structure N compiled",
+                      List.map (getIn compiled "structure N") ["app.code", "app.depth", "app.check"] = [SOME "1", SOME "1", NONE])
       val () = check ("pass-stats=elab: another kind refused",
                       r (["--no-prelude", "--typecheck-only", "--pass-stats=types", "input.sml"], NONE) <> 0
                       andalso contains (f "err", "--pass-stats= requires elab"))
