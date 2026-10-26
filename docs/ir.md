@@ -272,7 +272,7 @@ not give it:
 | Node | Carries | Checked |
 |---|---|---|
 | `Fn (x, t, b)` | `t`, an arrow; `x` has its domain | `b` has its codomain |
-| `Inst (e, t)` | the instance a polymorphic variable is used at | `t` is an instance of `e`'s scheme (`Ty.match`) |
+| `Inst (e, t)` | the instance a polymorphic variable is used at | `t` is an instance of `e`'s scheme (`Ty.match`) that gives each type variable fixed where the variable is bound -- one of a variable a `Fn` or a `Join` around it binds, or of a `LetRec`'s own function in its right-hand side -- as itself (plans/correctness/linting.md, M5) |
 | `LetRec` | each function's type | its right-hand side has it |
 | `Const`, `Con0`, `Con` | the type made | a constructor is one of the datatype's, and its argument fits |
 | `Decon (tag, e)` | the constructor's tag | `e`'s datatype has it; the result is its argument |
@@ -492,12 +492,25 @@ call's frame does. The line table carries them (the frames of
 [bytecode.md](bytecode.md)), so that a trace shows the frames the calls
 would have left.
 
-**Types.** Every binder says its type, and a polymorphic one the type
-variables it abstracts over; every use of a variable gives the types it is
-used at, one for each. A binder abstracts over the generic variables of its
-type that no binder around it abstracts over, where the elaborator could
-have generalised them: a variable of the program or a function; a variable
-`ToMid` makes never. `Lambda`'s `Inst` gives the types a use is at.
+**Types.** Mid is System F (plans/correctness/linting.md, D17, M5): every
+binder says its type, and a polymorphic one the type variables it
+abstracts over; every use of a variable gives the types it is used at, one
+for each; and every type variable a type names is bound by a binder around
+it -- a `Let`'s scheme over its type and its step, a function's over its
+parameters, result and body, a global's over its definition. A binder
+abstracts over the generic variables of its type that no binder around it
+abstracts over, where the elaborator could have generalised them: a
+variable of the program, a function, and a variable `ToMid` makes for a
+step that is a value (a tuple, a constructor, a field or argument taken
+out of one, an atom), which its uses then give as themselves. A
+declaration's globals bind their variables over all of it, as a `Val`'s
+do; a typed pattern binds as its pattern does (`val f : ('a -> 'a) = ...`
+binds `f` to the value, not to a variable bound to it). A type variable
+that no binder around a type binds -- of a value nothing generalises
+(`let val [] = [] in ... end`), of an expression's type left open, or given
+where a use needs no particular type (the `int` of `val (f, n) = (fn x =>
+x, 1)`) -- is made `unit` there (`ToMid.ground`), which is as good a type as
+any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
 
 ### What a `Mid` keeps
 
@@ -512,9 +525,10 @@ have generalised them: a variable of the program or a function; a variable
   -- the function's result, the global's type, `unit` for a `Do` -- and each
   step's type is found from its atoms, so nothing is inferred. A use of a
   variable gives as many types as its binder abstracts over, and has the
-  type of its scheme at them. A type variable where nothing abstracts over
-  it is a type of its own, equal only to itself: the lint does not check
-  that type variables are in scope.
+  type of its scheme at them.
+* **Type variables in scope** (Mid is System F, above): a type names only
+  the type variables of the binders around it, and no binder binds one
+  again where it is in scope.
 * **Calls:** a function of other than one parameter is only called, with
   an argument for each, and never used as a value.
 * **What its types alone do not say:** constants, primitives, exceptions'
@@ -632,9 +646,10 @@ does.
   before its own, and every call passes it on; what a function of another
   lifted group is given counts as captured. What it is given must abstract
   over no type variables; the lifted functions abstract over the type
-  variables of the functions around them that they name, and every call
-  gives them as themselves. No closure of them is made, and every call of
-  them is a known call.
+  variables of the functions around them that they name free -- not those
+  a scheme or a function inside them binds -- and those of a lifted
+  function they call, and every call gives them as themselves. No closure
+  of them is made, and every call of them is a known call.
 * **`workers`** (workers and wrappers, decision D9): a function of the top
   level with a parameter that is a tuple it only takes apart, or whose
   body only makes a function and returns it, n deep (curried), becomes a

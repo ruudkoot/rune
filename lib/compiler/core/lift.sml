@@ -14,8 +14,10 @@
      that on. Every one must abstract over no type variables, since a
      parameter cannot.
    * A lifted function abstracts over the type variables of the functions
-     around it that its definition names, before its own, and every call
-     gives them as themselves -- the call is inside those functions too.
+     around it that its definition names free -- not those a scheme or a
+     function inside it binds -- and those of a lifted function it calls,
+     before its own, and every call gives them as themselves -- the call is
+     inside those functions too (Mid is System F: the linting roadmap's M5).
    * It is named as the local function was (Translate.funNames), for
      traces. *)
 structure Lift =
@@ -103,7 +105,9 @@ struct
   fun gensOfTy (t : Ty.ty, acc : unit IntMap.map) : unit IntMap.map =
     List.foldl (fn (i, acc) => IntMap.insert (acc, i, ())) acc (Ty.gens t)
 
-  (* ... and those an expression names *)
+  (* ... and those an expression names free: not those a scheme in it binds,
+     over its own type and step, nor those a function in it abstracts over
+     (Mid is System F: the linting roadmap's M5, D17) *)
   fun gensOf (e : exp, acc : unit IntMap.map) : unit IntMap.map =
     let
       fun atom (a, acc) =
@@ -120,12 +124,16 @@ struct
           case r of
             Prim (_, t, _) => gensOfTy (t, acc)
           | Con (_, t, _) => gensOfTy (t, acc)
+          | Decon (_, t, _) => gensOfTy (t, acc)
           | ExnArg (t, _) => gensOfTy (t, acc)
           | _ => acc
         end
+      fun without (tvs, m) = List.foldl (fn (a, m) => IntMap.remove (m, a)) m tvs
     in
       case e of
-        Let (_, (_, t), r, b) => gensOf (b, rhs (r, gensOfTy (t, acc)))
+        Let (_, ([], t), r, b) => gensOf (b, rhs (r, gensOfTy (t, acc)))
+      | Let (_, (tvs, t), r, b) =>
+          gensOf (b, IntMap.unionWith #1 (acc, without (tvs, rhs (r, gensOfTy (t, IntMap.empty)))))
       | Fun (fs, b) => gensOf (b, IntMap.unionWith #1 (acc, groupGensOf fs))
       | Join (_, ps, body, s) => gensOf (s, gensOf (body, List.foldl (fn ((_, t), acc) => gensOfTy (t, acc)) acc ps))
       | Jump (_, xs) => List.foldl atom acc xs
@@ -136,7 +144,11 @@ struct
       | Mark (_, a) => gensOf (a, acc)
     end
   and gensOfFun (f : fundef, acc) =
-    gensOf (#body f, gensOfTy (#result f, List.foldl (fn ((_, t), acc) => gensOfTy (t, acc)) acc (#params f)))
+    let
+      val own = gensOf (#body f, gensOfTy (#result f, List.foldl (fn ((_, t), acc) => gensOfTy (t, acc)) IntMap.empty (#params f)))
+      val free = List.foldl (fn (a, m) => IntMap.remove (m, a)) own (#tyvars f)
+    in IntMap.unionWith #1 (acc, free) end
+  (* the variables a group names free, its members' own left out *)
   and groupGensOf (fs : fundef list) : unit IntMap.map =
     memo (groupGens, fs, fn () => List.foldl gensOfFun IntMap.empty fs)
 
@@ -234,10 +246,18 @@ struct
                    let
                      val own = List.foldl (fn (f, m) => List.foldl (fn (a, m) => IntMap.insert (m, a, ())) m (#tyvars f))
                                           IntMap.empty fs
+                     (* the type variables around it that it names, those
+                        of what it captures, and those a group lifted before
+                        that it calls is given *)
                      val gens = groupGensOf fs
                      val gens = List.foldl (fn (x, acc) => case IntTable.find (schemes, x) of
                                                              SOME (_, t) => gensOfTy (t, acc)
                                                            | NONE => acc) gens extra
+                     val gens = IntMap.foldli (fn (x, (), acc) =>
+                                                 case IntTable.find (lifted, x) of
+                                                   SOME {outer, ...} => List.foldl (fn (a, acc) => IntMap.insert (acc, a, ())) acc outer
+                                                 | NONE => acc)
+                                              gens fv
                      val outer = List.filter (fn a => not (IntMap.member (own, a))) (IntMap.listKeys gens)
                    in
                      List.app (fn f => IntTable.insert (lifted, #name f, {global = freshStamp (), extra = extra, outer = outer}))

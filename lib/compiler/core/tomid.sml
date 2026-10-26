@@ -6,12 +6,16 @@
    so that it is not copied into every branch; and splits the top level at
    each `Rest` into a list of definitions.
 
-   Types: every binder abstracts over the generic variables of its type that
-   no binder around it abstracts over, where the elaborator could have
-   generalised them there -- a variable it bound, or a function; a variable
-   the translation made is never polymorphic. A use of a variable gives its
-   instance (Lambda's Inst) as the types of the variables it abstracts over;
-   a use without one, at the variables themselves. *)
+   Types: Mid is System F (docs/ir.md; the linting roadmap's D17, M5).
+   Every binder abstracts over the generic variables of its type that no
+   binder around it abstracts over, where the elaborator could have
+   generalised them there -- a variable it bound, a function, and a
+   variable the translation made for a step that is a value; a
+   declaration's globals bind theirs over all of it. A use of a variable
+   gives its instance (Lambda's Inst) as the types of the variables it
+   abstracts over; a use without one, at the variables themselves. A type
+   that then names a variable no binder around it binds has it made unit
+   (ground). *)
 structure ToMid =
 struct
   structure L = Lambda
@@ -73,35 +77,59 @@ struct
   datatype ctx =
       Ret
     | To of M.label * Ty.ty option ref
-    | Bind of int * (Ty.ty -> M.exp)
+    | Bind of int * (M.scheme -> M.exp)
     | Then of value -> M.exp
 
   fun typeOf (A (_, t)) = t
     | typeOf (R (_, t)) = t
 
-  (* The value as an atom: a step is named first. *)
-  fun atomize (v : value, k : M.atom * Ty.ty -> M.exp) : M.exp =
+  (* A step that is a value, as a value restriction reads it: one whose
+     type a scheme may abstract over *)
+  fun isValue (r : M.rhs) : bool =
+    case r of
+      M.Atom _ => true
+    | M.Tuple _ => true
+    | M.Con _ => true
+    | M.Select _ => true
+    | M.Decon _ => true
+    | _ => false
+
+  (* The value as an atom: a step is named first -- abstracting, where it
+     is a value (poly), over the variables of its type that no binder
+     around it binds, which the use gives as themselves (where nothing
+     binds them there either, they are made unit: ground) *)
+  fun atomize (st : state, poly : bool, v : value, k : M.atom * Ty.ty -> M.exp) : M.exp =
     case v of
       A (a, t) => k (a, t)
-    | R (r, t) => let val x = fresh () in M.Let (x, ([], t), r, k (M.Var (x, []), t)) end
+    | R (r, t) =>
+        let
+          val x = fresh ()
+          val tvs = if poly andalso isValue r then own (st, t) else []
+        in M.Let (x, (tvs, t), r, k (M.Var (x, List.map Ty.gen tvs), t)) end
 
   fun mark (sp, e as M.Mark _) = e
     | mark (sp, e) = M.Mark ((sp, []), e)
 
   fun program (e : L.lexp) : M.program =
     let
-      (* the scheme a local variable is bound with, of the value's type *)
-      fun scheme (st, x, t) =
-        if isSome (IntTable.find (Ty.binders, x)) then (own (st, t), t) else ([], t)
+      (* the scheme a local variable is bound with, of the value's type: a
+         variable of the program's abstracts over the variables of its type
+         no binder around it binds, as the elaborator generalised it, and
+         one the translation made does too where it is bound to a value
+         (Mid is System F: the linting roadmap's M5, D17) *)
+      fun scheme (st, x, t, value) =
+        if value orelse isSome (IntTable.find (Ty.binders, x)) then (own (st, t), t) else ([], t)
 
       fun deliver (ctx : ctx, st : state, v : value) : M.exp =
         case ctx of
           Ret => M.Return (case v of A (a, _) => M.Atom a | R (r, _) => r)
         | To (j, r) =>
-            atomize (v, fn (a, t) => (case !r of NONE => r := SOME t | SOME _ => (); M.Jump (j, [a])))
+            atomize (st, false, v, fn (a, t) => (case !r of NONE => r := SOME t | SOME _ => (); M.Jump (j, [a])))
         | Bind (x, k) =>
-            let val t = typeOf v
-            in M.Let (x, scheme (st, x, t), case v of A (a, _) => M.Atom a | R (r, _) => r, k t) end
+            let
+              val r = case v of A (a, _) => M.Atom a | R (r, _) => r
+              val s = scheme (st, x, typeOf v, isValue r)
+            in M.Let (x, s, r, k s) end
         | Then k => k v
 
       (* An expression that branches: each branch goes to the same place,
@@ -111,7 +139,7 @@ struct
         case ctx of
           Bind (x, k) =>
             let val j = fresh () val r = ref NONE val body = f (To (j, r))
-            in case !r of NONE => body | SOME t => M.Join (j, [(x, t)], k t, body) end
+            in case !r of NONE => body | SOME t => M.Join (j, [(x, t)], k ([], t), body) end
         | Then k =>
             let val j = fresh () val x = fresh () val r = ref NONE val body = f (To (j, r))
             in case !r of NONE => body | SOME t => M.Join (j, [(x, t)], k (A (M.Var (x, []), t)), body) end
@@ -141,18 +169,21 @@ struct
         | L.Unit => deliver (ctx, st, A (M.Unit, Ty.unit))
         | L.Con0 (tag, t) => deliver (ctx, st, A (M.Con0 (tag, t), t))
         | L.Fn (x, t, b) =>
-            let val f = fresh ()
-            in M.Fun ([fundef (st, f, [], x, t, b)], deliver (ctx, bindLocal (st, f, ([], t)), A (M.Var (f, []), t))) end
+            (* a function is a value: it abstracts over the variables of its
+               type no binder around it binds, which its use gives as
+               themselves *)
+            let val f = fresh () val tvs = own (st, t)
+            in M.Fun ([fundef (st, f, tvs, x, t, b)], deliver (ctx, bindLocal (st, f, (tvs, t)), A (M.Var (f, List.map Ty.gen tvs), t))) end
         | L.App (f, a) =>
             atom (f, st, fn (fa, ft) => atom (a, st, fn (aa, _) => deliver (ctx, st, R (M.App (fa, [aa]), codomain ft))))
         | L.Let (x, a, b) =>
             (case fnOf a of
                SOME (sp, p, t, body) =>
                  let
-                   val s = scheme (st, x, t)
+                   val s = scheme (st, x, t, true)
                    val st' = bindLocal (st, x, s)
                  in M.Fun ([markDef (sp, fundef (st, x, #1 s, p, t, body))], exp (b, st', ctx)) end
-             | NONE => exp (a, st, Bind (x, fn t => exp (b, bindLocal (st, x, scheme (st, x, t)), ctx))))
+             | NONE => exp (a, st, Bind (x, fn s => exp (b, bindLocal (st, x, s), ctx))))
         | L.LetRec (bs, b) =>
             let
               val defs = List.map (fn (x, t, r) => (x, t, own (st, t), r)) bs
@@ -268,7 +299,7 @@ struct
                                 M.If (M.Var (c, []), deliver (ctx, st, fast), deliver (ctx, st, R (M.App (fa, [aa]), res))))
                        end)
 
-      and atom (e, st, k) = exp (e, st, Then (fn v => atomize (v, k)))
+      and atom (e, st, k) = exp (e, st, Then (fn v => atomize (st, true, v, k)))
 
       and atoms (es, st, k) =
         case es of
@@ -381,8 +412,37 @@ struct
           case run (d, []) of
             SOME gs => group (List.map global gs, [])
           | NONE =>
-              [M.Do (List.map (fn g => (g, globalScheme g)) (List.rev (sets (d, []))), exp (d, top, Ret))]
+              let
+                val gs = List.map (fn g => (g, globalScheme g)) (List.rev (sets (d, [])))
+                (* the globals' variables are in scope in the expression that
+                   sets them, as a Val's are in its (MidLint: Mid is System F,
+                   the linting roadmap's M5): what it binds is not
+                   generalised over them again *)
+                val tyvars = List.foldl (fn ((_, (vs, _)), acc) =>
+                                           List.foldl (fn (a, acc) => if List.exists (fn b => b = a) acc then acc else acc @ [a]) acc vs)
+                                        [] gs
+              in [M.Do (gs, exp (d, inFunction (top, tyvars), Ret))] end
         end
+
+      (* A type of a definition that names a generic variable no binder
+         around it binds -- of a value nothing generalises (`let val [] =
+         [] in ... end`, an expression's type left open), or given where a
+         use of what abstracts over it needs no particular type (the int
+         of `val (f, n) = (fn x => x, 1)`) -- has it made unit, which is
+         as good a type as any where nothing fixes it: Mid is System F,
+         every type variable bound by a binder around it (the linting
+         roadmap's D17, M5) *)
+      fun ground (d : M.def) : M.def =
+        let
+          fun fix (s, t) =
+            case Ty.gens t of
+              [] => t
+            | gs =>
+                case List.filter (fn a => not (IntMap.member (s, a))) gs of
+                  [] => t
+                | out => Ty.subst (List.foldl (fn (a, m) => IntMap.insert (m, a, Ty.unit)) IntMap.empty out) t
+          fun outside (s, t) = case Ty.gens t of [] => false | gs => List.exists (fn a => not (IntMap.member (s, a))) gs
+        in if M.existsTypeIn outside d then #1 (M.mapTypesIn fix d) else d end
 
       fun spine (e : L.lexp, acc : M.def list) : M.def list =
         case e of
@@ -390,8 +450,8 @@ struct
         | L.Rest r => spine (r, acc)
         | _ =>
             (case split e of
-               (d, SOME r) => spine (r, List.revAppend (defs d, acc))
-             | (d, NONE) => List.rev (List.revAppend (defs d, acc)))
+               (d, SOME r) => spine (r, List.revAppend (List.map ground (defs d), acc))
+             | (d, NONE) => List.rev (List.revAppend (List.map ground (defs d), acc)))
     in
       globalSchemes := IntMap.empty;
       spine (e, [])

@@ -171,6 +171,7 @@ struct
   val charTy = Ty.con (#stamp Types.charTycon, #name Types.charTycon, [])
   val pairToInt = Ty.arrow (Ty.tuple [Ty.int, Ty.int], Ty.int)
   fun lam (what, e, wanted) = checked ("lambda: " ^ what, fn () => LambdaLint.check e, wanted)
+  val ga = Ty.gen 77
   fun lambdaRules () =
     let
       val () = IntTable.insert (Ty.exnArgs, 70, SOME Types.intTy)
@@ -219,7 +220,16 @@ struct
            "payload has type string where its argument is int");
       lam ("a copy's payload of another type", L.Let (71, L.NewExn "E", L.MkExn (L.Var 71, s1)),
            "payload has type string where its argument is int");
-      lam ("a copy made at level 0, not registered", L.Let (72, L.NewExn "E", L.MkExn (L.Var 72, s1)), "")
+      lam ("a copy made at level 0, not registered", L.Let (72, L.NewExn "E", L.MkExn (L.Var 72, s1)), "");
+      (* a type variable fixed where a variable is bound, by a Fn around
+         it, is given as itself (M5) *)
+      lam ("a polymorphic variable at an instance",
+           L.Let (2, L.Fn (1, Ty.arrow (ga, ga), L.Var 1), L.Inst (L.Var 2, Ty.arrow (Ty.int, Ty.int))), "");
+      lam ("a variable at its own type, where a Fn fixes its variable",
+           L.Fn (1, Ty.arrow (ga, ga), L.Let (2, L.Var 1, L.Inst (L.Var 2, ga))), "");
+      lam ("a variable at an instance of what a Fn around it fixes",
+           L.Fn (1, Ty.arrow (ga, Ty.int), L.Let (2, L.Var 1, L.Seq (L.Inst (L.Var 2, Ty.int), i1))),
+           "fixed where v2 is bound, int")
     end
 
   (* ---- MidLint's rules that no fault after a stage on Mid reaches (M4;
@@ -237,6 +247,7 @@ struct
       val g48 = [(48, ([], Ty.int))]
       val yes = M.Con0 (1, Ty.bool)
       val setter : M.fundef = {name = 50, tyvars = [], params = [(54, Ty.unit)], result = Ty.unit, body = setting 55}
+      fun ident f : M.fundef = {name = f, tyvars = [77], params = [(f + 1, ga)], result = ga, body = M.Return (M.Atom (M.Var (f + 1, [])))}
       fun castBack t =
         [M.Val (46, ([], t), M.Let (47, ([], Ty.unit), M.Prim ("functor_cast", Ty.arrow (Ty.int, Ty.unit), [one]),
                                     M.Return (M.Prim ("functor_cast", Ty.arrow (Ty.unit, t), [M.Var (47, [])]))))]
@@ -271,7 +282,17 @@ struct
       midP ("a Do that sets its global on one way of two", [M.Do (g48, M.If (yes, setting 53, unitRet))],
             "which a way of it that returns does not set");
       midP ("a Do whose global a handler's way does not set", [M.Do (g48, M.Handle (setting 53, 49, unitRet))], "does not set");
-      midP ("a Do whose global a function sets", [M.Funs [setter], M.Do (g48, M.Return (M.App (M.Global (50, []), [M.Unit])))], "")
+      midP ("a Do whose global a function sets", [M.Funs [setter], M.Do (g48, M.Return (M.App (M.Global (50, []), [M.Unit])))], "");
+      (* Mid is System F: a type names only the variables its binders bind,
+         each once (M5) *)
+      midP ("a polymorphic function and a use of it",
+            [M.Funs [ident 51], valR (46, Ty.int, M.App (M.Global (51, [Ty.int]), [one]))], "");
+      midP ("a type of a variable no binder binds", [valR (46, Ty.arrow (ga, ga), M.Atom (M.Global (51, [ga]))), M.Funs [ident 51]],
+            "names 'a77, which no binder around it binds");
+      midP ("a function's variable bound again inside it",
+            [M.Funs [{name = 51, tyvars = [77], params = [(52, ga)], result = ga,
+                      body = M.Let (53, ([77], ga), M.Atom (M.Var (52, [])), M.Return (M.Atom (M.Var (53, [ga]))))}]],
+            "v53 binds 'a77 again")
     end
 
   (* ---- the levels (M3): a check runs from its level up; one that is
