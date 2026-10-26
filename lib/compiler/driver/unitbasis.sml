@@ -134,6 +134,12 @@ struct
   val () = CompilerState.cellRoot ("UnitBasis.sigLocals", sigLocals)
   val targetOrders : int list StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("UnitBasis.targetOrders", targetOrders)
+  (* the templates a basis's references to those structures are read
+     from, by the same keys (makeTemplate) *)
+  datatype tnode = NVar | NCon of T.tycon * int list | NRec of (string * int) list | NArr of int * int
+  type template = {nodes : tnode vector, orig : T.ty vector, owned : bool vector, slots : int vector}
+  val templates : template StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.templates", templates)
 
   (* a session of units begins: in the driver, the REPL and the compiler
      library alike, whose units' Mid the lint checks against the schemes of
@@ -142,7 +148,7 @@ struct
     (units := []; byIdentity := StringMap.empty; builtin := counters ();
      Array.modify (fn _ => Vector.fromList []) ranges; tvars := IntTable.table 1024; binders := StringMap.empty;
      fpMemo := StringMap.empty; refMemo := StringMap.empty; unitSigs := StringMap.empty;
-     sigLocals := StringMap.empty; targetOrders := StringMap.empty;
+     sigLocals := StringMap.empty; targetOrders := StringMap.empty; templates := StringMap.empty;
      MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE))
 
   fun binderOf (key : string) : string = case StringMap.find (!binders, key) of SOME i => i | NONE => ""
@@ -932,37 +938,153 @@ struct
        cStamps = List.rev (!cStamps), cGlobals = List.rev (!cGlobals)}
     end
 
-  (* c renamed: what a basis's reference reads as (renaming) -- its own type
-     names by phi, its values' stamps and flags from the lists where they are
-     given (in the order renaming gives them) *)
-  fun renamed (phi : T.tyfcn IntMap.map, stamps : int list ref option, globals : bool list ref option) (c : Env.env)
-      : Env.env =
+  (* A structure's template, which each reference to it is made from (a
+     load reads it in the time of the structure's distinct types, not of
+     their occurrences, and shares them as a basis read whole shares the
+     types it wrote once, issue 14): its types, each once -- by what it is
+     made of, its parts' numbers before it -- whether each names one of the
+     structure's own type names, and the number of the type at each place a
+     type is, in the order renamedEnv takes them (values by name, then
+     types, each its definition's body and its constructors, then each
+     structure in turn) *)
+
+  (* the types an environment has, in the order a template numbers them *)
+  fun envTypes (f : T.ty -> unit) (Env.Env {vals, tys, strs, ...}) : unit =
+    (List.app (fn (_, v) => f (schemeOf v)) (StringMap.listItemsi vals);
+     List.app (fn (_, Env.TyStr {fcn, cons}) =>
+                 ((case fcn of T.TAbbrev (_, b) => f b | T.TName _ => ());
+                  List.app (fn (_, v) => f (schemeOf v)) cons)) (StringMap.listItemsi tys);
+     List.app (fn (_, e) => envTypes f e) (StringMap.listItemsi strs))
+
+  fun makeTemplate (cl : int IntMap.map, c : Env.env) : template =
     let
+      val table : (int list * string list * int) list IntTable.table = IntTable.table 1024
+      val nodes : tnode list ref = ref []
+      val origs : T.ty list ref = ref []
+      val owns : bool list ref = ref []
+      val count = ref 0
+      val ownedSoFar : bool IntTable.table = IntTable.table 1024
+      fun owned i = getOpt (IntTable.find (ownedSoFar, i), false)
+      fun fresh (node : tnode, orig : T.ty, own : bool) : int =
+        let val i = !count
+        in count := i + 1; nodes := node :: !nodes; origs := orig :: !origs; owns := own :: !owns;
+           IntTable.insert (ownedSoFar, i, own); i end
+      fun add (ints : int list, labels : string list, node : tnode, orig : T.ty, own : bool) : int =
+        let
+          val h = List.foldl (fn (x, h) => (h * 31 + x mod 1000003) mod 1000003) (List.length labels) ints
+          val bucket = getOpt (IntTable.find (table, h), [])
+        in
+          case List.find (fn (is, ls, _) => is = ints andalso ls = labels) bucket of
+            SOME (_, _, i) => i
+          | NONE => let val i = fresh (node, orig, own) in IntTable.insert (table, h, (ints, labels, i) :: bucket); i end
+        end
+      fun intern (t : T.ty) : int =
+        case T.prune t of
+          t' as T.TVar (r as ref (T.Unbound {id, ...})) =>
+            (* by its id where it is the variable of that id the session has *)
+            (case IntTable.find (!tvars, id) of
+               SOME cell => if cell = r then add ([0, id], [], NVar, t', false) else fresh (NVar, t', false)
+             | NONE => fresh (NVar, t', false))
+        | t' as T.TVar _ => fresh (NVar, t', false)
+        | t' as T.TCon (k, args) =>
+            let val ks = List.map intern args
+            in add ([1, #stamp k, #arity k, if #eq k then 1 else 0] @ ks, [#name k], NCon (k, ks), t',
+                    IntMap.member (cl, #stamp k) orelse List.exists owned ks)
+            end
+        | t' as T.TRecord fs =>
+            let val ks = List.map (fn (_, a) => intern a) fs
+            in add (2 :: ks, List.map #1 fs, NRec (ListPair.zip (List.map #1 fs, ks)), t', List.exists owned ks) end
+        | t' as T.TArrow (a, b) =>
+            let val ka = intern a val kb = intern b
+            in add ([3, ka, kb], [], NArr (ka, kb), t', owned ka orelse owned kb) end
+      val slots : int list ref = ref []
+      val () = envTypes (fn t => slots := intern t :: !slots) c
+    in
+      {nodes = Vector.fromList (List.rev (!nodes)), orig = Vector.fromList (List.rev (!origs)),
+       owned = Vector.fromList (List.rev (!owns)), slots = Vector.fromList (List.rev (!slots))}
+    end
+
+  (* each type of a template realised by phi, where it names one of the
+     structure's own type names, and else the type itself *)
+  fun instantiate (tp : template, phi : T.tyfcn IntMap.map) : T.ty vector =
+    let
+      val n = Vector.length (#nodes tp)
+      val res : T.ty array = Array.array (n, T.TRecord [])
+      fun r i = Array.sub (res, i)
+      fun one i =
+        let val orig = Vector.sub (#orig tp, i)
+        in
+          if not (Vector.sub (#owned tp, i)) then orig
+          else
+            case Vector.sub (#nodes tp, i) of
+              NVar => orig
+            | NCon (k, ks) =>
+                (case IntMap.find (phi, #stamp k) of
+                   NONE => T.TCon (k, List.map r ks)
+                 | SOME (T.TName k2) => T.TCon (k2, List.map r ks)
+                 | SOME (T.TAbbrev ([], b)) => if List.null ks then b else T.realize (phi, orig)
+                 | SOME _ => T.realize (phi, orig))
+            | NRec fs => T.TRecord (List.map (fn (l, j) => (l, r j)) fs)
+            | NArr (a, b) => T.TArrow (r a, r b)
+        end
+      fun loop i = if i >= n then () else (Array.update (res, i, one i); loop (i + 1))
+    in loop 0; Array.vector res end
+
+  fun templateOf (key : string, cl : int IntMap.map, c : Env.env) : template =
+    case StringMap.find (!templates, key) of
+      SOME tp => tp
+    | NONE => let val tp = makeTemplate (cl, c) in templates := StringMap.insert (!templates, key, tp); tp end
+
+  (* c renamed: what a basis's reference reads as (renaming) -- its types
+     those of instantiate, in the order its template numbers its places;
+     its own type names in a type's definition by phi; its values' stamps
+     and flags from the lists where they are given (in the order renaming
+     gives them) *)
+  fun renamedEnv (tp : template, phi : T.tyfcn IntMap.map, stamps : int list ref option, globals : bool list ref option)
+                 (c : Env.env) : Env.env =
+    let
+      val types = instantiate (tp, phi)
+      val pos = ref 0
+      fun ty (_ : T.ty) : T.ty =
+        let val i = !pos
+        in
+          if i >= Vector.length (#slots tp) then raise Pickle.Bad "a reference's template ran out"
+          else (pos := i + 1; Vector.sub (types, Vector.sub (#slots tp, i)))
+        end
       fun next (l : 'a list ref option, old : 'a) : 'a =
         case l of
           NONE => old
         | SOME r => (case !r of x :: rest => (r := rest; x) | [] => raise Pickle.Bad "a reference's names ran out")
-      fun ty t = T.realize (phi, t)
       fun exn (info : Ast.exninfo) : Ast.exninfo =
         let val s = next (stamps, #stamp info) val g = next (globals, #isGlobal info)
         in {name = #name info, stamp = s, isGlobal = g, hasArg = #hasArg info, builtin = #builtin info} end
       fun value (v : Env.valstatus) : Env.valstatus =
         case v of
           Env.Val {scheme, stamp, global} =>
-            let val s = next (stamps, stamp) val g = next (globals, global) in Env.Val {scheme = ty scheme, stamp = s, global = g} end
+            let val t = ty scheme val s = next (stamps, stamp) val g = next (globals, global)
+            in Env.Val {scheme = t, stamp = s, global = g} end
         | Env.Con {scheme, info} => Env.Con {scheme = ty scheme, info = info}
         | Env.Exn {ty = t, info} => let val t' = ty t in Env.Exn {ty = t', info = exn info} end
         | Env.Prim {scheme, name} => Env.Prim {scheme = ty scheme, name = name}
         | Env.ConAsVal {scheme, info} => Env.ConAsVal {scheme = ty scheme, info = info}
         | Env.ExnAsVal {ty = t, info} => let val t' = ty t in Env.ExnAsVal {ty = t', info = exn info} end
+      fun tystr (Env.TyStr {fcn, cons}) : Env.tystatus =
+        let
+          val fcn' = case fcn of
+                       T.TName k => (case IntMap.find (phi, #stamp k) of SOME g => g | NONE => fcn)
+                     | T.TAbbrev (ids, body) => T.TAbbrev (ids, ty body)
+          val cons' = List.map (fn (n, v) => (n, value v)) cons
+        in Env.TyStr {fcn = fcn', cons = cons'} end
       fun go (Env.Env {vals, tys, strs, origins}) : Env.env =
         let
           val vals' = List.foldl (fn ((n, v), m) => StringMap.insert (m, n, value v)) StringMap.empty (StringMap.listItemsi vals)
-          val tys' = StringMap.map (fn (Env.TyStr {fcn, cons}) =>
-                                      Env.TyStr {fcn = T.realizeFcn (phi, fcn), cons = List.map (fn (n, v) => (n, value v)) cons}) tys
-          val strs' = List.foldl (fn ((n, s), m) => StringMap.insert (m, n, go s)) StringMap.empty (StringMap.listItemsi strs)
+          val tys' = List.foldl (fn ((n, t), m) => StringMap.insert (m, n, tystr t)) StringMap.empty (StringMap.listItemsi tys)
+          val strs' = List.foldl (fn ((n, e), m) => StringMap.insert (m, n, go e)) StringMap.empty (StringMap.listItemsi strs)
         in Env.Env {vals = vals', tys = tys', strs = strs', origins = origins} end
-    in go c end
+      val en = go c
+    in
+      if !pos = Vector.length (#slots tp) then en else raise Pickle.Bad "a reference's template left over"
+    end
 
   (* the names of an environment's entries, by which a functor's result is
      looked up among the structures of its parameter *)
@@ -2061,8 +2183,9 @@ struct
               (* of each unit named, where it is one the pickle was not
                  written against, its names by the old numbers, by kind *)
               remaps : int IntMap.map vector option vector,
-              (* its signatures read so far, which a reference may name *)
-              sigsRead : SigMatch.sigma StringMap.map ref}
+              (* its signatures read so far, which a reference may name,
+                 and the templates of their structures (renamedEnv) *)
+              sigsRead : SigMatch.sigma StringMap.map ref, hereTemplates : template StringMap.map ref}
 
   fun rname (d : dec, k : int) : int =
     let val r = #r d
@@ -2281,9 +2404,20 @@ struct
             | NONE => raise P.Bad "a reference to a signature its unit has not"
           end
       val c = case Env.findStr' (#env sg, path) of SOME c => c | NONE => raise P.Bad "a reference to a structure not there"
-      val order = case key of
-                    SOME k => orderOf (k ^ "\000" ^ String.concatWith "." path, sigLocalsOf (k, sg), c)
-                  | NONE => localOrder (localsOf (#bound sg), c)
+      val (order, tp) =
+        case key of
+          SOME k =>
+            let val tk = k ^ "\000" ^ String.concatWith "." path val cl = sigLocalsOf (k, sg)
+            in (orderOf (tk, cl, c), templateOf (tk, cl, c)) end
+        | NONE =>
+            let
+              val tk = n ^ "\000" ^ String.concatWith "." path
+              val cl = localsOf (#bound sg)
+              val tp = case StringMap.find (!(#hereTemplates d), tk) of
+                         SOME tp => tp
+                       | NONE => let val tp = makeTemplate (cl, c)
+                                 in #hereTemplates d := StringMap.insert (!(#hereTemplates d), tk, tp); tp end
+            in (localOrder (cl, c), tp) end
       val images = P.rlist (fn _ => rtyfcn d) r
       val () = if List.length images = List.length order then () else raise P.Bad "a reference's renaming of another length"
       val phi = ListPair.foldl (fn (st, f, m) => IntMap.insert (m, st, f)) IntMap.empty (order, images)
@@ -2295,7 +2429,7 @@ struct
                       0 => NONE
                     | 1 => SOME (ref (P.rlist P.rbool r))
                     | _ => raise P.Bad "not a reference's flags"
-      val en = renamed (phi, stamps, globals) c
+      val en = renamedEnv (tp, phi, stamps, globals) c
       fun empty (l : 'a list ref option) = case l of NONE => true | SOME x => List.null (!x)
     in
       if empty stamps andalso empty globals then en else raise P.Bad "a reference's names left over"
@@ -2497,7 +2631,7 @@ struct
       val d : dec = {r = r, base = base, units = us, ntycons = ref 0, tycons = ref (Array.fromList []),
                      ntypes = ref 0, types = ref (Array.fromList []), ncons = ref 0, cons = ref (Array.fromList []),
                      nsibs = ref 0, sibs = ref (Array.fromList []),
-                     remaps = remaps, sigsRead = ref StringMap.empty}
+                     remaps = remaps, sigsRead = ref StringMap.empty, hereTemplates = ref StringMap.empty}
       fun rfixity r =
         case P.rbyte r of
           0 => Fixity.Nonfix
