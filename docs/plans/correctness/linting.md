@@ -384,6 +384,41 @@ passes on its exact commit.
   - **For M12:** an abstype's names are recorded with the equality they
     have inside its body.
 
+- **M4** (`f297abdcc`, merged `e931d95d2`; `make check` 21,735 of
+  21,735).
+  - **The new rules** (`core/irrules.sml`, shared by LambdaLint and
+    MidLint):
+    - each constant is of its type's kind and in its range;
+    - each primitive's use is an instance of its description in
+      `PrimTys`;
+    - `MkExn`'s payload has exactly the type of the exception's argument,
+      through every copy: each pass that copies code registers the copied
+      exceptions at the copy's types. type-checker.md's open case,
+      `exception E of 'a` in a function, is now checked;
+    - casts by origin: Translate's casts are the compiler's own
+      `functor_cast`, `dynamic_cast` and `open_cast`, each with its rule.
+      The program's own `unsafe_cast` is not checked;
+    - each global a `Do` lists is set on every way that returns.
+  - **Negative tests:** `RUNE_FAULT=STAGE:KIND[@N]`
+    (`backend/fault.sml`) corrupts a stage's output on purpose. 88 jobs
+    `faults/*` expect each rule's lint at its stage, and
+    `compiler/lint-rules` has cases made by hand for the rules no fault
+    reaches.
+  - **The compiler mutants:** E3's 68 mutants are kept as
+    `make test-compiler-mutants`, outside `make check`. The whole set
+    has not been run (it takes hours), only samples.
+  - **Found:** E10's faults are caught at the stage that made them, 34 of
+    36. `mid:nary` finds no place, as in E10. `lower:select` is placed but
+    not caught: a `Select` of a parameter or a call's result needs M6's
+    shapes.
+  - **What it costs:** level 0 unchanged; level 2 +36.6% of HaMLet
+    (M3 +35.4%), +73.5% of the bootstrap.
+  - **The bootstrap's budgets were re-based:** register 2,003.8M, stack
+    3,277.0M. About 90M of the growth is `PrimTys`'s table of 414
+    descriptions, which the compiler now uses; `fault.sml` adds 19.5M.
+  - **A departure:** the fault hook is in `backend/fault.sml`, called from
+    the pipeline, not in `util/pass.sml`, which knows no IR.
+
 ## Found while writing this roadmap
 
 Each finding is answered by a milestone, unless it is said to be outside
