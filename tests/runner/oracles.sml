@@ -329,6 +329,44 @@ struct
             else say ("FAIL regverify." ^ kind ^ ": refused for another reason: " ^ firstNonEmpty err ^ "\n")
     end
 
+  (* the check of the stack code (StackCheck: the loader's checks and
+     runeopt's RbcCheck, at level 2; docs/plans/correctness/linting.md,
+     M10) on tests/opt/rbccheck.sml with the lint, whole and linked from
+     units: clean as it is, and each corruption its switch makes
+     (RUNE_RBCCHECK_INJECT) refused with a message of its own *)
+  val rbccheckKinds =
+    [("underflow", ("underflow", [], "the stack underflows at")),
+     ("height", ("height", [], "the stack or the handlers differ on the paths into")),
+     ("handler", ("handler", [], "POPHANDLER without a handler of the function")),
+     ("jump-out", ("jump-out", [], "a jump leaves its function")),
+     ("ret-handler", ("ret-handler", [], "a handler of the function is still installed")),
+     ("local", ("local", [], "the loader refuses the stack code: bad operand for LOCAL")),
+     ("link", ("jump-out", ["--units", "--no-cache"], "a jump leaves its function"))]
+  fun rbccheckOne kind =
+    let
+      val out = run ^ "/rbccheck"
+      val () = mkdirs out
+      val err = out ^ "/" ^ kind ^ ".err"
+      val (inject, flags, why) =
+        case List.find (fn (k, _) => k = kind) rbccheckKinds of
+          SOME (_, (k, flags, why)) => (setEnv ("RUNE_RBCCHECK_INJECT", k), flags, SOME why)
+        | NONE => (fn e => e, if kind = "clean-units" then ["--units", "--no-cache"] else [], NONE)
+      val status = execEnv (inject o setEnv ("RUNE_LINT", "2"))
+                           {cmd = ["bin/rune", "--target=stack"] @ flags @ ["tests/opt/rbccheck.sml", "-o", out ^ "/" ^ kind ^ ".rbc"],
+                            dir = NONE, stdin = "", stdout = err, stderr = err, timeout = 0}
+      val text = read err
+    in
+      case why of
+        NONE =>
+          if kind <> "clean" andalso kind <> "clean-units" then say ("FAIL rbccheck." ^ kind ^ ": no such corruption\n")
+          else if status = 0 then () else say ("FAIL rbccheck." ^ kind ^ ": does not compile: " ^ firstNonEmpty err ^ "\n")
+      | SOME why =>
+          if String.isSubstring "no place found" text then say ("FAIL rbccheck." ^ kind ^ ": no place to corrupt\n")
+          else if status = 0 then say ("FAIL rbccheck." ^ kind ^ ": not refused\n")
+          else if String.isSubstring "lint after rbccheck" text andalso String.isSubstring why text then ()
+          else say ("FAIL rbccheck." ^ kind ^ ": refused for another reason: " ^ firstNonEmpty err ^ "\n")
+    end
+
   (* ---- jit *)
   val jitModes =
     [("off", ["--jit=off"], ""), ("all", ["--jit=all"], "--jit=all"),
@@ -991,6 +1029,7 @@ struct
     | ["register-prims"] => SOME registerPrims
     | ["register-dead-roots"] => SOME registerDeadRoots
     | ["regverify-one", kind] => SOME (fn () => regverifyOne kind)
+    | ["rbccheck-one", kind] => SOME (fn () => rbccheckOne kind)
     | ["jit-one", src] => SOME (fn () => jitOne src)
     | ["jit-probe"] => SOME jitProbe
     | ["jit-every-opcode"] => SOME jitEveryOpcode
@@ -1071,6 +1110,10 @@ struct
                         ("clean" :: List.map #1 regverifyKinds))),
        tagged (["check", "test-register-jit", "covers:tests/register/*", "covers:tests/opt/*"] @ langCovers)
          (jitTree ("bin/runevm", "jit")),
+       tagged ["check", "test-opt", "covers:tests/opt/*", "covers:src/opt/*", "covers:src/driver/stackcheck.sml"]
+         (Test.describe "stack"
+            (List.map (fn k => job ("@rbccheck-" ^ k, ["rbccheck-one", k], [], 1, 500, 600))
+                      (["clean", "clean-units"] @ List.map #1 rbccheckKinds))),
        tagged (["check", "check-units", "covers:tests/units/*"] @ langCovers)
          (Test.describe ""
             (List.map (fn (variant, rune, vm) =>

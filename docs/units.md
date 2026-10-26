@@ -31,10 +31,11 @@ its `--count` differs.
 The front end runs on one unit as on a program: its tokens are parsed with
 the fixity the units before left, and its declarations are elaborated one
 by one into the environment they left. Overloading and the literals are
-settled at the end of each top-level declaration, as in a whole program,
-or of the context `--overloading` names, and so are the flexible records,
-in the default mode of `--flex-records` ([language.md](language.md),
-*Overloading*, *Flexible records*), a file's end ending one; the free type
+settled at the end of the context `--overloading` names (by default each
+declaration at structure level), as in a whole program; the flexible
+records at the end of each top-level declaration, in the default mode of
+`--flex-records` ([language.md](language.md), *Overloading*, *Flexible
+records*), a file's end ending one; the free type
 variables where the topdec ends, or at the end of the unit under
 `--free-tyvars=later` and `later-monotype` (*Free type variables*); the
 reports of the matches at the end of the unit. So nothing of a unit waits
@@ -204,6 +205,30 @@ one of them is ever on the stack: the trace of an uncaught exception shows
 one `<toplevel>` frame, at the declaration that raised it, as the program
 compiled whole does.
 
+**The interfaces** (the linting roadmap's D15 and M9). A unit's register
+code says what it expects of the units before it (`Code.expects`, which
+`Regs` gathers): for each function of another unit it calls, how many
+arguments it passes, the representations of each and the representation
+it takes the result as; for each global it reads, the representation it
+reads it as. The link holds each against what the unit that defines the
+function or global declares (its `Code.meta`, and the unit's `globalReps`),
+once every unit is in, in time linear in the imports: an arity that is
+not the callee's, or a representation that does not fit the declared one
+(one is the other's, under RegVerify's order), and the units do not fit
+together -- `rune` fails with "the units do not fit together:" and up to
+three of them (`Link.Mismatch`), and the compiler library's
+`Session.writeProgram` raises `Fail` with the same. Each unit's code was
+checked whole when it was compiled (`RegVerify`; [ir.md](ir.md), *The
+register target*), so this is what is left to check of the program; the
+check of the whole linked program is there for tests, where
+`RUNE_REGVERIFY_LINK` is set and not empty, and `RUNE_LINK_CHECK=0` leaves
+the interfaces out, to measure them. The check runs at every link, at
+level 0 of the lint, which is always on but where `--lint=off` says
+(`Pass.checkAt`; `--pass-stats` counts it as `link`). A unit file keeps what its unit
+expects (version 4), so a unit relinked from its file against another
+build of an import is held to it too (S78 of
+`tests/incremental/SCENARIOS.md`). The stack code expects nothing.
+
 ## Unit files
 
 `rune --units --emit-units DIR FILE...` writes each unit's file into
@@ -347,6 +372,25 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   rather than the link finding nothing to take the name from;
 * an entry keeps the warnings its compile gave, which a compile that takes
   it from the cache gives again;
+* an entry is marked with the level of the lint its compile ran
+  (`UnitCache.level`: `--lint=N` or `RUNE_LINT`, else the program's own,
+  0 for `rune`; at most 2, level 3's round trips not being asked of an
+  entry, and at most 0 where `RUNE_REGVERIFY=0` leaves the register code
+  unchecked; [ir.md](ir.md), *Levels*), its Mid linted and its register
+  code verified at that level; a compile takes an entry of its own level or
+  above without checking it again, and to a compile at a higher level an
+  entry of a lower is no entry ("its entry was checked at a lower level of
+  the lint (N)"): the unit is compiled again, checked, and stored marked
+  where the cache can be written (S79; the linting roadmap's M9);
+* an entry keeps the schemes of what its code names of other units, as
+  text (`UnitBasis.importedSchemes`), and where its usages hold by their
+  binders each is held to the scheme the unit there now has when the entry
+  is taken, a cheap check of what the binders say: one that differs is no
+  entry, and the unit is compiled ("its entry had another scheme of ...";
+  a check of level 0, `Pass.checkAt`, which `--pass-stats` counts as
+  `schemes`);
+  where usages hold by fingerprint, the fingerprints are of the schemes
+  already;
 * an entry is one file, its usages, warnings, basis, the basis's identity
   (which loading takes from it rather than hashing the basis again) and
   code with the hash of them, written under a name of its own and renamed
@@ -447,7 +491,8 @@ compiler library's Unicode and JSON dependencies, for each bytecode, into
 compile reads it after its own cache and never writes it, so that a
 program's first compile takes the Basis Library's units from there where
 their usages hold, which they do but for the seals of structures the
-program does not name.
+program does not name. It is made with the lint at level 2, so its entries
+are marked 2 and a compile at any level takes them.
 
 The public [compiler library](lib/compiler/README.md) writes units with
 `.rbi` checked-basis, `.rbm` Mid and `.rbs` source companions. The source

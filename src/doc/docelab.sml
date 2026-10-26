@@ -522,7 +522,7 @@ struct
       fun trim t = Substring.string (Substring.dropr Char.isSpace (Substring.dropl Char.isSpace (Substring.full t)))
     in
       case prog of
-        [Ast.DVal (_, [(_, Ast.EApp (Ast.EVar (([], opr), _, {start, stop, ...}), Ast.ETuple ([_, _], _), _))], _)] =>
+        [Ast.DVal (_, [(_, Ast.EApp (Ast.EVar (([], opr), _, {start, stop, ...}, _), Ast.ETuple ([_, _], _, _), _, _))], _, _)] =>
           if not (List.exists (fn o' => o' = opr) ops) then NONE
           else
             let

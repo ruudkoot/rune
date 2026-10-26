@@ -18,7 +18,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `simplify` | `Mid` | `Mid`, shrunk (`lib/compiler/core/simplify.sml`), from `-O1` | `MidLint` |
 | `refs` | `Mid` | `Mid`, a loop's local refs as values (`lib/compiler/core/refs.sml`), from `-O1` | `MidLint` |
 | `lower` | `Mid` | `Low` (`lib/compiler/backend/low.sml`, by `Lower`) | `LowLint` |
-| `stack` | `Low` | instruction lists (`lib/compiler/backend/stack.sml`), with `--target=stack` | none yet |
+| `stack` | `Low` | instruction lists (`lib/compiler/backend/stack.sml`), with `--target=stack` | the loader's checks and `RbcCheck` (`StackCheck`) |
 | `registers` | `Low` | instruction lists of the register bytecode (`lib/compiler/backend/regs.sml`), the default target | `RegVerify` |
 | `emit` | instruction lists | the `.rbc` (`lib/compiler/backend/emit.sml`) | |
 
@@ -108,7 +108,11 @@ After them, a line `check KEY` for each check that ran, at whatever depth,
 by its key (`Pass.checkAt`; *Levels* above): the stage it follows
 (`translate`, `mid`, `midcanon`, ..., `lower`), `midconcat`, `prelower`,
 `mid-roundtrip` and the other round trips, `results`, which runs inside
-`lower`, `simplify-def`, inside `simplify`, `functor-body` and `code-rt`. They are counted in the stages' times already, `checks`
+`lower`, `simplify-def`, inside `simplify`, `functor-body`, `code-rt`,
+`rbccheck`, the check of the stack code (level 2), and in units `link`, the
+check of the units' interfaces at the link, and `schemes`, of a cache
+entry's imported schemes where it is taken, both at level 0
+([units.md](units.md)). They are counted in the stages' times already, `checks`
 or a unit's `unit-passes`, so they show what a compile in units lints,
 which `checks` does not, and are not added to the total again.
 
@@ -918,6 +922,27 @@ middle end may ask of it):
   was made at. A position's frames are a row of the program's table of
   inlined frames, each made once (`Code.inlineIdx`).
 
+**The check of the stack code** (`StackCheck`, `src/driver/stackcheck.sml`;
+[plans/correctness/linting.md](plans/correctness/linting.md), D11 and M10)
+runs from level 2 of the lint (*Levels*), after `stack` on a whole program
+and on the program `Link` makes of units of stack code, or at every level
+where `RUNE_RBCCHECK=1` says (`0`: at none): the code as its file has it (`Emit.serialize`), read back
+as `runevm-stack`'s loader reads it, which refuses what the loader refuses
+with its message (`Rbc.read`), and held to what `runeopt` relies on
+(`RbcCheck`; [native.md](native.md), *What the translation relies on*):
+the stack's height and the handlers' depth agree on every path into an
+instruction, no path underflows, leaves its function or runs off its end,
+no `RET` or `TAILCALL` has a handler of its function installed, and every
+function is given one arity. `Rbc` and `RbcCheck` are `runeopt`'s, built
+with the driver (`rune.build`) and not with the compiler library, which
+runs no check of the stack code. A refusal is a bug of the compiler, "lint
+after rbccheck: ..."; `--pass-stats` counts it as `rbccheck`.
+`RUNE_RBCCHECK_INJECT=KIND` corrupts the code the check is given in one of
+six ways, which its tests (`stack/@rbccheck-*`) hold it to refusing. Its
+cost is linear in the code: about 85 of the VM's instructions for each byte
+of the program's file, the file made included, 0.59G for MLton's 6.7 MB
+(+14% of a compile of the bootstrap for the stack target).
+
 ### The register target
 
 `Regs` makes the register bytecode of `runtime/register` from the same Low
@@ -947,9 +972,13 @@ stack target.
 **`RegVerify`** (`lib/compiler/backend/regverify.sml`) checks the register
 code from level 1 of the lint, the boundaries (*Levels*), by its cost: 4.4%
 of compiling the compiler, 1.6% of HaMLet, 0.8% of MLton. It runs after
-`registers` (`regverify`), and on every program `Link` makes
-of units (`regverify-link`), those read back from the cache and from `.rbu` files included
-([plans/correctness/linting.md](plans/correctness/linting.md), M8). Its
+`registers` (`regverify`), so each unit once, when it is compiled
+([plans/correctness/linting.md](plans/correctness/linting.md), M8); a unit
+taken from the cache was checked when its entry was made, which the
+entry's mark says, and `Link` checks the units' interfaces against each
+other rather than the whole program again (M9; [units.md](units.md),
+*Linking*), which `RUNE_REGVERIFY_LINK` set and not empty asks for too
+(`regverify-link`). Its
 rules are the tables `runeisa` writes from `src/isa/regs.sml` (`RegCodes`:
 what each instruction reads and writes, what it leaves and takes, what
 must follow it, which primitives it names), what Lower declares of the
@@ -987,7 +1016,9 @@ It checks `Regs` and `Link`, not that the code is safe for an untrusted
 `RUNE_REGVERIFY=1` runs it at every level, `off` too, `0` not at all, and `census`
 prints what it counted; `RUNE_REGVERIFY_INJECT=KIND` corrupts the code
 `Regs` made, before the check, in one of eleven ways, which its tests
-(`register/@regverify-*`) hold it to refusing.
+(`register/@regverify-*`) hold it to refusing, or in three more what the
+unit expects of its imports, which S78 of `tests/incremental/SCENARIOS.md`
+holds the link to refusing; a unit so made is not stored in the cache.
 
 ## Tests
 

@@ -261,7 +261,7 @@ struct
      else NONE, and the entry is run as any other. *)
   fun evalIn (name : string, text : string, decs : Ast.dec list) : bool option =
     case (selectedFrame (), decs) of
-      (SOME {k, ...}, [Ast.DVal ([], [(Ast.PVar (([], bound), _, _), _)], _)]) =>
+      (SOME {k, ...}, [Ast.DVal ([], [(Ast.PVar (([], bound), _, _, _), _)], _, _)]) =>
         let
           val env = !ReplSession.env
           fun nameable (n, t, _) =

@@ -90,14 +90,14 @@ What it rests on:
 | M6 | Shapes and layouts in LowLint | I | not started |
 | M7 | The instruction sets described for checking | B | done (2026-10-26) |
 | M8 | A verifier of the register code | B | done (2026-10-26); its level comes with M3 |
-| M9 | Units and the link | B | not started |
-| M10 | The stack code's check, in the compiler | B | not started |
-| M11 | Node ids, witnesses and `SourceTy` | A | not started |
+| M9 | Units and the link | B | done (2026-10-26) |
+| M10 | The stack code's check, in the compiler | B | done (2026-10-26) |
+| M11 | Node ids, witnesses and `SourceTy` | A | done (2026-10-26) |
 | M12 | AstLint of the Core | A | not started |
 | G1 | How AstLint goes on (the owner's) | A | |
 | M13 | AstLint of the module language | A | not started |
 | M14 | The editor's types | A | not started |
-| M15 | Overloading's context and free type variables, as options | A | done in part (2026-10-26): the options; the default's move to `declaration` follows |
+| M15 | Overloading's context and free type variables, as options | A | done (2026-10-26) |
 | M16 | Retire | | not started |
 
 The owner took every recommendation, D1 to D19, on 2026-10-26
@@ -149,6 +149,57 @@ passes on its exact commit.
   - **A departure:** the Mid round trip gives its type names stamps from a
     range below every stamp the compiler makes, never reused, because
     `Ty.con` hash-conses by stamp and keeps the first name it saw.
+- **M2** (`54a2d65c4`, `8aeee5c0e`, merged `6a02ec637`; `make check`
+  21,307 of 21,307).
+  - **What changed:**
+    - MidLint keeps imperative tables, with one scope table entered and
+      left;
+    - LowLint checks availability by dominance over the blocks;
+    - `midcanon` is checked as a renaming of its input (`midconcat` keys
+      the lint of units' Mid joined under `--units --whole`).
+
+    The rules and the messages are the same.
+  - **What `--lint` costs now:**
+    - HaMLet -O1: +31.5% (+83.4% before);
+    - the bootstrap -O1: +60.1% (+148.3%);
+    - MLton whole: +14.1% (+39.5%);
+    - MLton `--units --whole`: +7.2% (+16.3%).
+
+    LambdaLint is now the largest single check.
+  - **A departure:** LowLint's walk up the dominator tree is not strictly
+    linear (5.8 steps a use on HaMLet, 1.8 on the bootstrap).
+
+- **M3** (`caa0330a8`, `242ab89a1`, `387974796` with two merges of
+  `linting`; merged `6a7cf3315`; `make check` 21,648 of 21,648).
+  - **The switches:** `--lint=off|0|1|2|3` and `RUNE_LINT=LEVEL`. A bare
+    `--lint` is 2, and `bin/rune-test` sets `RUNE_LINT=2`.
+  - **The defaults:** 0 for `rune`, 1 for the REPL and the compiler
+    library.
+  - **What runs at each level:**
+    - 0: `results` and the functor bodies decoded;
+    - 1: the boundaries, with `regverify` and `regverify-link`;
+    - 2: every pass, with MidLint per definition inside `simplify` and
+      the code's round trip;
+    - 3: the Mid round trip after every stage (`make test-ir`).
+  - **Diagnosis:** a breach at level 1 compiles again at level 2, in a
+    fresh session, to name the pass.
+  - **What each level costs** (HaMLet -O1 / the bootstrap -O1):
+
+    | Level | Cost |
+    |---|---|
+    | 0 | +0.14% / +0.52% |
+    | 1 | +16.4% / +32.8% |
+    | 2 | +35.4% / +70.7% |
+
+  - **`check-levels`** costs 1.92 times its CPU before M1 (2.27 at M2).
+    The stack target builds no UL, and the register target is compared
+    with a build at level 0 only at -O2 and in UL.
+  - **Departures:**
+    - A breach at level 0 is not compiled again: the seal it needs costs
+      about 305,000 instructions on every compile and would put two
+      budgets over. Its message names `--lint=2` instead.
+    - Level 0 moved no budget past its limit; none was re-based.
+
 - **M7** (`ac2e7e2ad`, merged `efa5148f1`; `make check` 21,251 of 21,251).
   - **The register instructions are described for checking in
     `src/isa/regs.sml`:**
@@ -191,7 +242,18 @@ passes on its exact commit.
     declaration or the signature makes `IntInf.int`, one annotation each.
   - **The owner's call (2026-10-26):** the default moves to
     `declaration`, and HOL4 builds with `--overloading=toplevel` until the
-    annotations land in the HOL4 tree. The move is M15's last commit.
+    annotations land in the HOL4 tree.
+  - **The move** (`bff52625b`, merged `a1121a6b2`; `make check` 21,626 of
+    21,626).
+    - It needed seven more annotations in the repository that the count
+      had missed: string sorts whose `<` would now default to `int`
+      (`tests/runner/sh.sml`, `basis.sml`, `laws.sml`,
+      `tools/builder/common.sml`), `tools/measure/jit-dump.sml`,
+      `tests/ffi/performance-model.sml`, and
+      `lib/ffi/win32/model/model.sml`.
+    - `docs/plans/hol4.md` says how HOL4 builds with
+      `--overloading=toplevel`, and `hol4-overloading-declaration.patch`
+      beside it holds the seven annotations for the HOL4 tree.
   - **Where the implementations are less tidy than D18 and D19 say:**
     - MLton's `topdec` context also ends at a functor or signature
       declaration, and Poly/ML lets an application settle a functor body's
@@ -238,6 +300,124 @@ passes on its exact commit.
     `tests/lang/mod.functor.functions_review.sml` ("fatal error …
     expected tuple"), with or without the lint, and in the main tree's
     `rune-repl` too. It is not this roadmap's.
+
+- **M9** (`dec6663d6`, `bba401d0a` and merges, tip `1a9f6b138`; merged
+  `a0511d3ac`; `make check` 21,697 of 21,697).
+  - **The interfaces at the link.** Regs records what a unit expects of
+    its imports: each call's arity, its arguments' reps and the rep its
+    result is taken as, and each global read's rep. These travel in
+    `Code.program.expects` and in the unit file (version 4).
+    - `Link.program` checks them against the callees' `meta` and the
+      globals' reps, at level 0, in time linear in the imports.
+    - A mismatch is "rune: the units do not fit together: …" (S78:
+      arity, argument, result, global read).
+    - The whole program is checked at the link only under
+      `RUNE_REGVERIFY_LINK`.
+  - **Cache marks.** An entry records the level of the lint that checked
+    it (`UnitCache.version` 10). A compile takes entries at its level or
+    above; a lower one is compiled again and marked (S79).
+  - **Imported schemes.** An entry keeps the schemes of the other units'
+    globals its code names, and they are checked against the session's
+    units when it is taken by its binders (S80).
+  - **What it costs:**
+    - the interface check: +0.13% on a warm HaMLet, +0.32% on a warm
+      bootstrap, +0.6% at most linking from `.rbu` files;
+    - the whole program verified at every link, as M8 did it: +10-20%;
+    - the scheme check: +0.16% and +0.82%.
+  - **Departures:**
+    - The VM's loader changed again, to skip version 4's data. The REPL's
+      dynamic loading has no interface check.
+    - S78 uses a test switch, since a real mismatch under one identity
+      cannot be made from source.
+    - The bootstrap's budgets were re-based (with M4's and M11's; the
+      lead sets them once on the merged tip).
+
+- **M10** (`0579ac644`, merged `2afa40684`; `make check` 21,706 of
+  21,706).
+  - **What landed:** runeopt's `RbcCheck` runs in the compiler after
+    `stack` and at a link of stack units, at level 2. It serialises the
+    code as `Emit` writes it, reads it back with `Rbc.read`, and checks
+    it (`src/driver/stackcheck.sml`).
+  - **Negative tests:** `RUNE_RBCCHECK_INJECT` makes six corruptions,
+    each refused with its message (`stack/@rbccheck-*`).
+  - **Found:** there was no quadratic part.
+    - E8's 12.6 s on MLton was one full collection of a 5 GB heap that
+      fell inside the check.
+    - Alone, the check is linear: 586M instructions on MLton.
+    - The one cost per instruction that was not constant, a
+      `List.length` per primitive operand in `Rbc.validate`, is gone
+      (about -20%).
+  - **What it costs:** +2.0% of a small stack compile, +7.6% of HaMLet,
+    +13.8% of the bootstrap.
+  - **A departure:** the check's files are built with the driver
+    (`rune.build`), not into the installed compiler library, so the
+    compiler library runs no stack check.
+
+- **M11** (`b7b18dd94`, `7a26734d6`, `46ad7b57b`, and merges, tip
+  `e5f448acc`; merged `7530287be`; `make check` 21,691 of 21,695, the one
+  failure `terminal/edit-complete` under a load of about 30, passing alone
+  twice).
+  - **Ids:** every `Ast` node has one, given by both parsers, fresh in
+    `SyntaxAst.copy`. Clauses, record labels and sequences of type
+    variables have spans; a match rule's span is worked out.
+  - **`Witness`** (`elab/witness.sml`) keeps seven tables by node id:
+    - constructor patterns' instances;
+    - the types of `_`, `raise` and `[]`;
+    - the datatype names created, with their equality;
+    - the explicit type variables each `val` scopes;
+    - what each binding generalised, taken at the binding
+      (`Unify.generalizeWith`);
+    - the defaults in every `--overloading` mode;
+    - each declaration's status.
+  - **`SourceTy`** (`elab/sourcety.sml`) is zonked only when read, after
+    `finish`, under a budget of steps, memoised per cell. It has one
+    printer. `--dump-witnesses` shows the tables (`tests/ir/witnesses`).
+  - **The gates hold:**
+    - Mid and bytes are the same on `tests/lang`, the bootstrap, HaMLet
+      and MLton;
+    - the Basis's unit files differ only in their provenance hash;
+    - `compile-hello` +0.73%, `compile-sigs` +0.83%, the bootstrap +0.29%
+      on the same sources.
+  - **A departure:** witnesses are dropped by marks of a log, not by ranges
+    of ids, because the end of a declaration's context can default nodes
+    of earlier declarations. `unitbasis.sml` is unchanged.
+  - **For M12:** an abstype's names are recorded with the equality they
+    have inside its body.
+
+- **M4** (`f297abdcc`, merged `e931d95d2`; `make check` 21,735 of
+  21,735).
+  - **The new rules** (`core/irrules.sml`, shared by LambdaLint and
+    MidLint):
+    - each constant is of its type's kind and in its range;
+    - each primitive's use is an instance of its description in
+      `PrimTys`;
+    - `MkExn`'s payload has exactly the type of the exception's argument,
+      through every copy: each pass that copies code registers the copied
+      exceptions at the copy's types. type-checker.md's open case,
+      `exception E of 'a` in a function, is now checked;
+    - casts by origin: Translate's casts are the compiler's own
+      `functor_cast`, `dynamic_cast` and `open_cast`, each with its rule.
+      The program's own `unsafe_cast` is not checked;
+    - each global a `Do` lists is set on every way that returns.
+  - **Negative tests:** `RUNE_FAULT=STAGE:KIND[@N]`
+    (`backend/fault.sml`) corrupts a stage's output on purpose. 88 jobs
+    `faults/*` expect each rule's lint at its stage, and
+    `compiler/lint-rules` has cases made by hand for the rules no fault
+    reaches.
+  - **The compiler mutants:** E3's 68 mutants are kept as
+    `make test-compiler-mutants`, outside `make check`. The whole set
+    has not been run (it takes hours), only samples.
+  - **Found:** E10's faults are caught at the stage that made them, 34 of
+    36. `mid:nary` finds no place, as in E10. `lower:select` is placed but
+    not caught: a `Select` of a parameter or a call's result needs M6's
+    shapes.
+  - **What it costs:** level 0 unchanged; level 2 +36.6% of HaMLet
+    (M3 +35.4%), +73.5% of the bootstrap.
+  - **The bootstrap's budgets were re-based:** register 2,003.8M, stack
+    3,277.0M. About 90M of the growth is `PrimTys`'s table of 414
+    descriptions, which the compiler now uses; `fault.sml` adds 19.5M.
+  - **A departure:** the fault hook is in `backend/fault.sml`, called from
+    the pipeline, not in `util/pass.sml`, which knows no IR.
 
 ## Found while writing this roadmap
 

@@ -34,7 +34,7 @@ struct
   fun read f = (let val s = TextIO.openIn f in TextIO.inputAll s before TextIO.closeIn s end) handle IO.Io _ => ""
   fun lines s = List.filter (fn l => l <> "") (String.fields (fn c => c = #"\n") s)
 
-  fun sort xs =
+  fun sort (xs : string list) =
     let
       fun merge ([], ys) = ys
         | merge (xs, []) = xs

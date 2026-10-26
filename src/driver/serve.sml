@@ -171,39 +171,39 @@ struct
                    | Ast.VBuiltin (_, t) => t | Ast.VConVal (_, t) => t | Ast.VExnVal (_, t) => t
       fun exp e =
         case e of
-          Ast.EVar ((p, x), ref (SOME v), sp) => consider (String.concatWith "." (p @ [x]), tyOf v, sp)
-        | Ast.ERecord (fs, _) => List.app (exp o #2) fs
-        | Ast.ETuple (es, _) => List.app exp es
-        | Ast.EList (es, _, _) => List.app exp es
-        | Ast.ESeq (es, _) => List.app exp es
-        | Ast.ELet (ds, e, _) => (List.app dec ds; exp e)
-        | Ast.EApp (a, b, _) => (exp a; exp b)
-        | Ast.ETyped (e, _, _) => exp e
-        | Ast.EAndalso (a, b, _) => (exp a; exp b)
-        | Ast.EOrelse (a, b, _) => (exp a; exp b)
-        | Ast.EHandle (e, ms, _) => (exp e; List.app (exp o #2) ms)
-        | Ast.ERaise (e, _) => exp e
-        | Ast.EIf (a, b, c, _) => (exp a; exp b; exp c)
-        | Ast.EWhile (a, b, _) => (exp a; exp b)
-        | Ast.ECase (e, ms, _) => (exp e; List.app (exp o #2) ms)
-        | Ast.EFn (ms, _, _) => List.app (exp o #2) ms
+          Ast.EVar ((p, x), ref (SOME v), sp, _) => consider (String.concatWith "." (p @ [x]), tyOf v, sp)
+        | Ast.ERecord (fs, _, _) => List.app (exp o #2) fs
+        | Ast.ETuple (es, _, _) => List.app exp es
+        | Ast.EList (es, _, _, _) => List.app exp es
+        | Ast.ESeq (es, _, _) => List.app exp es
+        | Ast.ELet (ds, e, _, _) => (List.app dec ds; exp e)
+        | Ast.EApp (a, b, _, _) => (exp a; exp b)
+        | Ast.ETyped (e, _, _, _) => exp e
+        | Ast.EAndalso (a, b, _, _) => (exp a; exp b)
+        | Ast.EOrelse (a, b, _, _) => (exp a; exp b)
+        | Ast.EHandle (e, ms, _, _) => (exp e; List.app (exp o #2) ms)
+        | Ast.ERaise (e, _, _) => exp e
+        | Ast.EIf (a, b, c, _, _) => (exp a; exp b; exp c)
+        | Ast.EWhile (a, b, _, _) => (exp a; exp b)
+        | Ast.ECase (e, ms, _, _) => (exp e; List.app (exp o #2) ms)
+        | Ast.EFn (ms, _, _, _) => List.app (exp o #2) ms
         | _ => ()
       and dec d =
         case d of
-          Ast.DVal (_, bs, _) => List.app (exp o #2) bs
-        | Ast.DValRec (_, bs, _) => List.app (exp o #2) bs
-        | Ast.DFun (_, fs, _) => List.app (fn (f : Ast.fundef) => List.app (exp o #body) (#clauses f)) fs
-        | Ast.DAbstype (_, _, ds, _) => List.app dec ds
-        | Ast.DLocal (a, b, _) => (List.app dec a; List.app dec b)
-        | Ast.DStructure (bs, _) => List.app (strexp o #strexp) bs
-        | Ast.DFunctor (bs, _) => List.app (strexp o #body) bs
+          Ast.DVal (_, bs, _, _) => List.app (exp o #2) bs
+        | Ast.DValRec (_, bs, _, _) => List.app (exp o #2) bs
+        | Ast.DFun (_, fs, _, _) => List.app (fn (f : Ast.fundef) => List.app (exp o #body) (#clauses f)) fs
+        | Ast.DAbstype (_, _, ds, _, _) => List.app dec ds
+        | Ast.DLocal (a, b, _, _) => (List.app dec a; List.app dec b)
+        | Ast.DStructure (bs, _, _) => List.app (strexp o #strexp) bs
+        | Ast.DFunctor (bs, _, _) => List.app (strexp o #body) bs
         | _ => ()
       and strexp s =
         case s of
-          Ast.StrStruct (ds, _) => List.app dec ds
-        | Ast.StrAscribe (s, _, _, _) => strexp s
-        | Ast.StrLet (ds, s, _) => (List.app dec ds; strexp s)
-        | Ast.StrExport (_, _, s, _, _) => strexp s
+          Ast.StrStruct (ds, _, _) => List.app dec ds
+        | Ast.StrAscribe (s, _, _, _, _) => strexp s
+        | Ast.StrLet (ds, s, _, _) => (List.app dec ds; strexp s)
+        | Ast.StrExport (_, _, s, _, _, _) => strexp s
         | _ => ()
       val () = List.app (fn (n, ds) => if n = path then List.app dec ds else ()) syntax
     in

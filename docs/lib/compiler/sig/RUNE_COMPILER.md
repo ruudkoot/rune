@@ -210,7 +210,7 @@ Supported flags are `--target=registers`, `--target=stack`,
 `--overloading=MODE` and `--free-tyvars=MODE` (docs/language.md,
 Overloading and Free type variables). Unknown flags and modes raise
 [`Failed`](#exn-failed). The defaults are register bytecode, ASCII source, no
-additional libraries, `--overloading=toplevel` and
+additional libraries, `--overloading=declaration` and
 `--free-tyvars=refuse`.
 
 | Field | Type | Description |

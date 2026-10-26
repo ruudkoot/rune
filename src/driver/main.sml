@@ -59,6 +59,12 @@ struct
   exception Reported
   fun failIfReported () = if !Error.errors > 0 then raise Reported else ()
 
+  (* --dump-witnesses: what the elaborator recorded of the input files'
+     nodes, once Elaborate.finish has run; nothing where an error was found *)
+  fun dumpWitnesses () =
+    if not (!Options.dumpWitnesses) orelse !Error.errors > 0 then ()
+    else Witness.dump (fn f => List.exists (fn i => i = f) (!Options.inputs), print)
+
   (* the syntax of the program's units, elaborated, when wanted (Serve) *)
   val keepSyntax = ref false
   val keptSyntax : (string * Ast.dec list) list ref = ref []
@@ -141,10 +147,10 @@ struct
           val (prog, fx) = Parser.parseTokensWith (toks, !fixity)
           val () = fixity := fx
           val declared =
-            List.concat (List.map (fn Ast.DStructure (binds, _) => List.map #name binds
-                                    | Ast.DSignature (binds, _) => List.map #name binds
-                                    | Ast.DFunctor (binds, _) => List.map #name binds
-                                    | Ast.DType (binds, _) => List.map #name binds
+            List.concat (List.map (fn Ast.DStructure (binds, _, _) => List.map #name binds
+                                    | Ast.DSignature (binds, _, _) => List.map #name binds
+                                    | Ast.DFunctor (binds, _, _) => List.map #name binds
+                                    | Ast.DType (binds, _, _) => List.map #name binds
                                     | _ => []) prog)
           val () = if sorted declared = sorted (#provides e) then ()
                    else complain (e, "provides " ^ show (sorted (#provides e)) ^ " but declares " ^ show (sorted declared))
@@ -719,6 +725,10 @@ struct
                                    | NONE => []
                        val u = UnitBasis.remapKeys (u, remap)
                        val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
+                       (* the schemes of what it names of other units, as its
+                          compile had them, against those units now, where it
+                          holds by their identities *)
+                       val () = if List.null remap then UnitBasis.checkSchemes (#schemes e) else ()
                        val l = timed "cache-basis" (fn () => UnitBasis.loadKnown ({pickle = pickle, file = name, at = at},
                                                                                    SOME identity, remap))
                        (* its source, and those of the functors' bodies it
@@ -740,6 +750,8 @@ struct
                          | Pickle.Bad why => (UnitBasis.abandon at; (Miss ("a damaged entry: " ^ why), NONE))
                          | UnitFile.Bad why => (UnitBasis.abandon at; (Miss ("a damaged entry: " ^ why), NONE))
                          | UnitBasis.Missing u => (UnitBasis.abandon at; (Miss ("its entry names " ^ u), NONE))
+                         | UnitBasis.SchemeChanged k =>
+                             (UnitBasis.abandon at; (Miss ("its entry had another scheme of " ^ k ^ " than its unit has"), NONE))
                   end
             end
           fun bindHit (l, u, pickle, {warnings, ...} : UnitCache.entry) =
@@ -783,7 +795,8 @@ struct
                    (* a unit's flexible records are settled at its end, and its
                       matches reported (docs/units.md) *)
                    frontStage "elaborate"
-                              (fn () => (Elaborate.allowPrim := allow; Elaborate.elabTop (env, decs); Elaborate.finish (); decs))
+                              (fn () => (Elaborate.allowPrim := allow; Elaborate.elabTop (env, decs); Elaborate.finish ();
+                                         dumpWitnesses (); decs))
                               ()
                  end)
           val () = if !keepSyntax then keptSyntax := (name, decs) :: !keptSyntax else ()
@@ -841,7 +854,8 @@ struct
                      UnitCache.store (dir, config, k,
                                       {usages = usages, warnings = warnings, file = name,
                                        others = UnitBasis.sourcesOf (code, name), pickle = #pickle exported,
-                                       identity = #identity exported, code = bytes, mid = midBytes}))
+                                       identity = #identity exported, code = bytes, mid = midBytes,
+                                       level = UnitCache.level (), schemes = UnitBasis.importedSchemes code}))
                | _ => ());
               (code, keptPickle (#pickle exported)) :: acc
             end
@@ -1001,7 +1015,11 @@ struct
     let
       val prog = if fingerprint = RegCodes.fingerprint then (Code.opcodeNames := RegCodes.names;
                                                              Link.program (Regs.program, RegCodes.linked, units))
-                 else Link.program (Stack.program, Opcodes.linked, units)
+                 else
+                   (* the stack code linked, checked at level 2 as a whole
+                      program's is after its stack stage (StackCheck) *)
+                   let val p = Link.program (Stack.program, Opcodes.linked, units)
+                   in Pipeline.checkStack p; p end
       (* the units' exports, for a unit loaded into the program later,
          where it may load one *)
       val () = Emit.trailer := (if !keepExports then Emit.unitsSection (!Link.lastExports) else "")
@@ -1149,6 +1167,7 @@ struct
          Elaborate.wordDefault := Types.wordTy;
          List.app elabFinal (!finalSyntax);
          Elaborate.finish ();
+         dumpWitnesses ();
          progs)
       val () = Elaborate.recover := true
       val _ = frontStage "elaborate" elaborate (basisProg, libraryProg, userProg, finalProg)
@@ -1259,6 +1278,9 @@ struct
      else diagnosed compile)
     handle BasisManifest.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Options.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
+         (* units whose interfaces do not fit at the link, which unit files
+            from other compiles can be (Link.Mismatch) *)
+         | Link.Mismatch msg => (eprintln ("rune: the units do not fit together: " ^ msg); OS.Process.failure)
          | Error.CompileError (sp, msg) => (eprintln (!Error.show ("error", sp, msg)); Error.note ("error", sp, msg); OS.Process.failure)
          | Reported => OS.Process.failure
          | Error.Bug msg => (eprintln ("rune: " ^ msg); OS.Process.failure)
