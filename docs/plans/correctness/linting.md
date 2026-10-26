@@ -90,7 +90,7 @@ What it rests on:
 | M6 | Shapes and layouts in LowLint | I | not started |
 | M7 | The instruction sets described for checking | B | done (2026-10-26) |
 | M8 | A verifier of the register code | B | done (2026-10-26); its level comes with M3 |
-| M9 | Units and the link | B | not started |
+| M9 | Units and the link | B | done (2026-10-26) |
 | M10 | The stack code's check, in the compiler | B | not started |
 | M11 | Node ids, witnesses and `SourceTy` | A | not started |
 | M12 | AstLint of the Core | A | not started |
@@ -300,6 +300,37 @@ passes on its exact commit.
     `tests/lang/mod.functor.functions_review.sml` ("fatal error …
     expected tuple"), with or without the lint, and in the main tree's
     `rune-repl` too. It is not this roadmap's.
+
+- **M9** (`dec6663d6`, `bba401d0a` and merges, tip `1a9f6b138`; merged
+  `a0511d3ac`; `make check` 21,697 of 21,697).
+  - **The interfaces at the link.** Regs records what a unit expects of
+    its imports: each call's arity, its arguments' reps and the rep its
+    result is taken as, and each global read's rep. These travel in
+    `Code.program.expects` and in the unit file (version 4).
+    - `Link.program` checks them against the callees' `meta` and the
+      globals' reps, at level 0, in time linear in the imports.
+    - A mismatch is "rune: the units do not fit together: …" (S78:
+      arity, argument, result, global read).
+    - The whole program is checked at the link only under
+      `RUNE_REGVERIFY_LINK`.
+  - **Cache marks.** An entry records the level of the lint that checked
+    it (`UnitCache.version` 10). A compile takes entries at its level or
+    above; a lower one is compiled again and marked (S79).
+  - **Imported schemes.** An entry keeps the schemes of the other units'
+    globals its code names, and they are checked against the session's
+    units when it is taken by its binders (S80).
+  - **What it costs:**
+    - the interface check: +0.13% on a warm HaMLet, +0.32% on a warm
+      bootstrap, +0.6% at most linking from `.rbu` files;
+    - the whole program verified at every link, as M8 did it: +10-20%;
+    - the scheme check: +0.16% and +0.82%.
+  - **Departures:**
+    - The VM's loader changed again, to skip version 4's data. The REPL's
+      dynamic loading has no interface check.
+    - S78 uses a test switch, since a real mismatch under one identity
+      cannot be made from source.
+    - The bootstrap's budgets were re-based (with M4's and M11's; the
+      lead sets them once on the merged tip).
 
 ## Found while writing this roadmap
 
