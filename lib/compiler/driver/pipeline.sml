@@ -91,8 +91,17 @@ struct
   (* Low to the code of the target --target names *)
   fun targetStage (low : Low.program) : Code.program =
     if !CompilerSettings.target = "registers" then
-      Pass.stage {name = "registers", showIn = SOME Low.show, show = Code.dump, check = fn _ => (), size = Code.size}
-                 Regs.program low
+      (* the code checked (RegVerify) where the lint is on, as the stage's
+         check, or where RUNE_REGVERIFY says without it; corrupted first
+         where RUNE_REGVERIFY_INJECT says, for the check's tests *)
+      let
+        val code = Pass.stage {name = "registers", showIn = SOME Low.show, show = Code.dump, check = RegVerify.stage,
+                               size = Code.size}
+                              (RegVerify.inject o Regs.program) low
+      in
+        if Pass.linting () then () else RegVerify.stage code;
+        code
+      end
     else
       Pass.stage {name = "stack", showIn = SOME Low.show, show = Code.dump, check = fn _ => (), size = Code.size}
                  Stack.program low

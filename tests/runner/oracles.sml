@@ -285,6 +285,45 @@ struct
                  ["off", "baseline", "opt", "all"]
     end
 
+  (* the check of the register code (RegVerify; docs/plans/correctness/linting.md,
+     M8) on tests/register/regverify.sml: clean as it is, and each of the
+     eleven corruptions its switch makes (RUNE_REGVERIFY_INJECT) refused
+     with a message of its own, which the VM's loader lets through all but
+     the first of (docs/plans/correctness/vm-verifier.md) *)
+  val regverifyKinds =
+    [("rep-write", "CON0 writes con0 into register"),
+     ("rep-read", "argument 0 of int_add: register"),
+     ("unset", "which is not set on every way here"),
+     ("noresult", "RESULT is due after CALLK"),
+     ("arity", "arguments, whose arity is"),
+     ("catch", "a handler's block that does not begin with CATCH"),
+     ("switch", "where a test says"),
+     ("env", "of a function whose closures capture"),
+     ("pop", "is reached with"),
+     ("image", "the image primitive posix_fork in PRIM"),
+     ("closure", ", of arity 2")]
+  fun regverifyOne kind =
+    let
+      val out = run ^ "/regverify"
+      val () = mkdirs out
+      val err = out ^ "/" ^ kind ^ ".err"
+      val inject = if kind = "clean" then (fn e => e) else setEnv ("RUNE_REGVERIFY_INJECT", kind)
+      val status = execEnv (inject o setEnv ("RUNE_REGVERIFY", "1"))
+                           {cmd = ["bin/rune", "tests/register/regverify.sml", "-o", out ^ "/" ^ kind ^ ".rbc"], dir = NONE,
+                            stdin = "", stdout = err, stderr = err, timeout = 0}
+      val text = read err
+    in
+      if kind = "clean" then (if status = 0 then () else say ("FAIL regverify.clean: does not compile: " ^ firstLine err ^ "\n"))
+      else
+        case List.find (fn (k, _) => k = kind) regverifyKinds of
+          NONE => say ("FAIL regverify." ^ kind ^ ": no such corruption\n")
+        | SOME (_, why) =>
+            if String.isSubstring "no place found" text then say ("FAIL regverify." ^ kind ^ ": no place to corrupt\n")
+            else if status = 0 then say ("FAIL regverify." ^ kind ^ ": not refused\n")
+            else if String.isSubstring "regverify" text andalso String.isSubstring why text then ()
+            else say ("FAIL regverify." ^ kind ^ ": refused for another reason: " ^ firstNonEmpty err ^ "\n")
+    end
+
   (* ---- jit *)
   val jitModes =
     [("off", ["--jit=off"], ""), ("all", ["--jit=all"], "--jit=all"),
@@ -946,6 +985,7 @@ struct
     | ["register-bootstrap"] => SOME registerBootstrap
     | ["register-prims"] => SOME registerPrims
     | ["register-dead-roots"] => SOME registerDeadRoots
+    | ["regverify-one", kind] => SOME (fn () => regverifyOne kind)
     | ["jit-one", src] => SOME (fn () => jitOne src)
     | ["jit-probe"] => SOME jitProbe
     | ["jit-every-opcode"] => SOME jitEveryOpcode
@@ -1021,7 +1061,9 @@ struct
             (perProgram ("register-one", langPerf, [], name)
              @ [job ("@bootstrap", ["register-bootstrap"], [], 1, 1500, 3600),
                 job ("@prims", ["register-prims"], [], 1, 500, 600),
-                job ("@dead-roots", ["register-dead-roots"], [], 1, 500, 600)])),
+                job ("@dead-roots", ["register-dead-roots"], [], 1, 500, 600)]
+             @ List.map (fn k => job ("@regverify-" ^ k, ["regverify-one", k], [], 1, 500, 600))
+                        ("clean" :: List.map #1 regverifyKinds))),
        tagged (["check", "test-register-jit", "covers:tests/register/*", "covers:tests/opt/*"] @ langCovers)
          (jitTree ("bin/runevm", "jit")),
        tagged (["check", "check-units", "covers:tests/units/*"] @ langCovers)

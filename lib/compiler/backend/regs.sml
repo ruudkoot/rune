@@ -331,7 +331,10 @@ struct
                                                                  (L.succs (#transfer bl))
                                                      andalso blockIndex (#label bl) >= i)
                                                   blocks
-                                 then labelOf i else ~1))}}
+                                 then labelOf i else ~1)),
+                    (* what Lower declares it returns and its closures capture *)
+                    result = L.repCode (#result f),
+                    captures = List.map L.repCode (#captures f)}}
     end
 
   fun program (p : L.program) : C.program =
@@ -340,9 +343,15 @@ struct
       val () = Lower.debugRegs := []
       val funcs = List.map func p
       val sorted = IntMap.listItems (List.foldl (fn (f : C.func, m) => IntMap.insert (m, #id f, f)) IntMap.empty funcs)
+      (* what each global holds, as Lower declares it, by its index here *)
+      val greps = Array.array (!C.nglobals, L.repCode L.RAny)
+      val () = IntMap.appi (fn (g, ix) => case IntMap.find (!Lower.globalReps, g) of
+                                            SOME r => Array.update (greps, ix, L.repCode r)
+                                          | NONE => ())
+                           (!C.globals)
     in
       {consts = List.rev (!C.consts), nglobals = !C.nglobals, funcs = sorted, files = List.rev (!C.files),
        inlines = List.rev (!C.inlines),
-       nlabels = !C.nextLabel}
+       nlabels = !C.nextLabel, globalReps = Array.foldr (op ::) [] greps}
     end
 end
