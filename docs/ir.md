@@ -17,7 +17,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `workers` | `Mid` | `Mid`, tupled and curried functions split into workers and wrappers (`lib/compiler/core/workers.sml`), from `-O1` | `MidLint` |
 | `simplify` | `Mid` | `Mid`, shrunk (`lib/compiler/core/simplify.sml`), from `-O1` | `MidLint` |
 | `refs` | `Mid` | `Mid`, a loop's local refs as values (`lib/compiler/core/refs.sml`), from `-O1` | `MidLint` |
-| `lower` | `Mid` | `Low` (`lib/compiler/backend/low.sml`, by `Lower`) | `LowLint` |
+| `lower` | `Mid` | `Low` (`lib/compiler/backend/low.sml`, by `Lower`) | `LowLint`, `LowShapes` |
 | `stack` | `Low` | instruction lists (`lib/compiler/backend/stack.sml`), with `--target=stack` | the loader's checks and `RbcCheck` (`StackCheck`) |
 | `registers` | `Low` | instruction lists of the register bytecode (`lib/compiler/backend/regs.sml`), the default target | `RegVerify` |
 | `emit` | instruction lists | the `.rbc` (`lib/compiler/backend/emit.sml`) | |
@@ -67,7 +67,7 @@ linting roadmap, D12 and D13), each from its level up:
 |---|---|---|
 | `off` | none of level 0's; the passes' own assertions, the decoders and the loader, as always | -- |
 | 0 | always on, where nothing says otherwise in `rune`: the invariant of results in globals after every `lower` (`results`), and the functor bodies a unit's basis decoded, linted at the next unit's passes (`functor-body`) | 0.14%; 0.52% |
-| 1 | the boundaries between representations: `LambdaLint` after `translate`, `MidLint` after `mid` (and of the units' Mid `--units --whole` concatenates, `midconcat`) and of what `lower` is given (`prelower`), `midcanon`'s renaming, `LowLint` after `lower`, `RegVerify` after `registers` and at every link (*The register target*); what the REPL and the compiler library run where nothing says otherwise | 16.4%; 32.8% |
+| 1 | the boundaries between representations: `LambdaLint` after `translate`, `MidLint` after `mid` (and of the units' Mid `--units --whole` concatenates, `midconcat`) and of what `lower` is given (`prelower`), `midcanon`'s renaming, `LowLint` and `LowShapes` after `lower`, `RegVerify` after `registers` and at every link (*The register target*); what the REPL and the compiler library run where nothing says otherwise | 16.4%; 32.8% |
 | 2 | every pass: `MidLint` after each optional pass on Mid, and inside `simplify` of each definition as it is made, with the copies its calls made, in the program around it (`simplify-def`), and a unit's code read back as its file says it (`code-rt`: `UnitFile.read` of the bytes written, the same code but for the reader's normal form, and the same bytes written again); what `--lint` runs, and every test | 35.4%; 70.7%, and 11% more of a compile in units for `code-rt` |
 | 3 | and Mid's text read back after every stage of Mid (`KEY-roundtrip`), as `--mid-roundtrip` does after `mid` alone from level 1; one tier of `make check` (`make test-ir`) | about 9 times the compile |
 
@@ -109,12 +109,14 @@ by its key (`Pass.checkAt`; *Levels* above): the stage it follows
 (`translate`, `mid`, `midcanon`, ..., `lower`), `midconcat`, `prelower`,
 `mid-roundtrip` and the other round trips, `results`, which runs inside
 `lower`, `simplify-def`, inside `simplify`, `functor-body`, `code-rt`,
-`rbccheck`, the check of the stack code (level 2), and in units `link`, the
+`shapes` (level 1), `rbccheck`, the check of the stack code (level 2), and in units `link`, the
 check of the units' interfaces at the link, and `schemes`, of a cache
 entry's imported schemes where it is taken, both at level 0
 ([units.md](units.md)). They are counted in the stages' times already, `checks`
 or a unit's `unit-passes`, so they show what a compile in units lints,
-which `checks` does not, and are not added to the total again.
+which `checks` does not, and are not added to the total again. A check's
+line ends with what it counted (`Pass.tally`): `lower`'s `downcasts`,
+`shapes`' `shaped` and `unshaped`.
 
 **A dump** (`Lambda.show`) prints one node to a line, its parts indented
 below it unless they are all atoms, and leaves positions out. Variables
@@ -836,8 +838,46 @@ against 234M; plans/correctness/linting.md, M2):
   a field of a tuple or a constructor made in the
   function, a block's or a known function's parameter it is passed to,
   what a closure's function reads of a value it captures, and an
-  exception. Two agree where a value can be both: any with every one, con
-  with con0 and ptr.
+  exception. A value goes from where it is made to where it is taken,
+  under the order x <= x, x <= any, con0 <= con, ptr <= con: what is
+  below is right; what is above is a downcast -- any into a typed
+  representation, con into con0 or ptr -- which only ML's types justify,
+  trusted and counted (`--pass-stats`: `, N downcasts` on the line of
+  `lower`); anything else is a breach (plans/correctness/linting.md, D8
+  and M6).
+
+`LowShapes` (`lib/compiler/backend/lowshapes.sml`), after `lower` at
+the same level (`shapes`; plans/correctness/linting.md, D14 and M6),
+checks the shapes of the values: a tuple of n fields, a value of a
+datatype (by its stamp), a closure, an object of another kind, no object,
+or unknown. Each variable has the one its Mid type says, which `Lower`
+keeps where the check runs (`Lower.lastTys`), but for one it shares
+between types on purpose (`defAny`), or else the one the operation that
+makes it says:
+
+* what makes a variable agrees with its type, and what a jump, a known
+  call, a closure's captured value or a field read of a tuple or
+  constructor made in the function passes with where it goes;
+* a `Select` is of a tuple of more fields than its index, a `Call` of a
+  closure, `ConTag`, `IfTag` and `Switch` of a datatype's value;
+* a `Field` and a `Decon` are of a datatype's value; every `Con` of one
+  constructor in the program has one number of fields, which every
+  `Field` of it is below, two or more, and every `Decon` is 1 of: the
+  layout's producers held to its consumers, wherever they are -- what a
+  constructor built boxed in one function and taken apart flat in another
+  breaks -- and each field a `Con` makes, a `Field` reads or a `Decon`
+  takes agrees with what the datatype declares of it;
+* a `Field` and a `Decon` of a datatype of more than one constructor are
+  of a value whose tag is known to be theirs where they are: a test of its
+  tag comes first on every way there (`IfTag`, `Switch`, or `ConTag`
+  compared with a constant or with another's `ConTag`), or that
+  constructor made it, or every jump to the block's parameter it is passes
+  such a value; a datatype whose layout a functor's argument gives is left
+  out.
+
+`--pass-stats` counts what it checked against a known shape and what it
+did not (`, N shaped, M unshaped`); `RUNE_SHAPES=1` runs it at every
+level, `0` at none.
 
 Low carries no types, but what each variable holds, as a representation
 (`Low.rep`, from Mid's types in `Lower.repOfTy`; plans/jit.md, M8): an

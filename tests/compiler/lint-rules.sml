@@ -7,6 +7,7 @@
      simplify) and a unit's code read back (Pipeline.codeRoundTrip; M3);
    * LowLint's rule of what is defined on every way to a use, by dominance,
      and midcanon's renaming (MidCanon.checkRenaming; linting roadmap, M2);
+   * every rule of LowShapes (M6), the review's second finding among them;
    * the invariant of results in globals (LowLint.results; docs/ir.md, What
      a Low keeps), on Low made by hand: what Lower makes of results is
      taken, and every breach of each of its rules is refused. The facts: f1
@@ -86,6 +87,157 @@ struct
      low ("a jump back to a block nothing reached",
           [block (0, [], Goto (2, [])), block (1, [], Return 0), block (2, [], Goto (1, []))], "which nothing reached before");
      low ("dead code, unchecked", [block (0, [], Return 0), block (1, [], Return 9)], ""))
+
+  (* ---- LowShapes (M6): each rule taken where it holds and refused where
+     it is broken, on Low made by hand with the types of its variables.
+     Datatype st has two constructors, A of int * int, laid out flat in two
+     fields, and B of int, boxed; datatype one has one, C of int * int. *)
+  val st = 900011
+  val () = Ty.bindDatatypeDirect (st, {params = [], cons = [(0, "A", SOME (Ty.tuple [Ty.int, Ty.int])), (1, "B", SOME Ty.int)]})
+  val sty = Ty.con (st, "t", [])
+  val oneDt = 900012
+  val () = Ty.bindDatatypeDirect (oneDt, {params = [], cons = [(0, "C", SOME (Ty.tuple [Ty.int, Ty.int]))]})
+  val oty = Ty.con (oneDt, "u", [])
+  val pair = Ty.tuple [Ty.int, Ty.int]
+  fun funcP (id, params, ncaptured, blocks) : func =
+    {id = id, name = "f" ^ Int.toString id, params = params, ncaptured = ncaptured, nvars = 20, blocks = blocks, pos = NONE,
+     reps = Vector.tabulate (20, fn _ => RAny), result = RAny, captures = []}
+  (* the program's functions, each with its variables' types *)
+  fun shapes (what, fs : (func * (var * Ty.ty) list) list, wanted) =
+    let
+      val tys = IntTable.table 8
+      val () = List.app (fn (f : func, ts) =>
+                           let val t = IntTable.table 8 in List.app (fn (x, ty) => IntTable.insert (t, x, ty)) ts; IntTable.insert (tys, #id f, t) end)
+                        fs
+      fun tysOf id = case IntTable.find (tys, id) of SOME t => (fn x => IntTable.find (t, x)) | NONE => (fn _ => NONE)
+    in checked ("shapes: " ^ what, fn () => LowShapes.checkWith tysOf (List.map #1 fs), wanted) end
+  (* one function of a parameter v0 of datatype st, whose blocks are given *)
+  fun onSt (what, blocks, ts, wanted) = shapes (what, [(funcP (0, [0], 0, blocks), (0, sty) :: ts)], wanted)
+  (* LowLint's representations, directed (M6): a value goes where it is
+     taken, under x <= x, x <= any, con0 <= con, ptr <= con; what is above
+     a downcast, counted; anything else a breach *)
+  fun repsOf (rs : rep list) = Vector.tabulate (20, fn x => if x < List.length rs then List.nth (rs, x) else RAny)
+  fun withReps (blocks, rs) : func =
+    {id = 0, name = "f0", params = [0], ncaptured = 0, nvars = 20, blocks = blocks, pos = NONE, reps = repsOf rs, result = RAny,
+     captures = []}
+  fun downcastsOf (key, blocks, rs) =
+    let
+      val () = Pass.stats := true
+      val () = Pass.checkAt (key, 0) LowLint.check [withReps (blocks, rs)]
+      val () = Pass.stats := false
+    in
+      case List.find (fn (k, _) => k = key) (!Pass.checked) of
+        SOME (_, {tallies, ...}) => (case List.find (fn (w, _) => w = "downcasts") (!tallies) of SOME (_, n) => !n | NONE => 0)
+      | NONE => ~1
+    end
+  fun directed () =
+    (checked ("low reps: an int into an int", fn () => LowLint.check [withReps ([block (0, [Def (1, Const (Lambda.CInt 1))], Return 1)], [RAny, RInt])], "");
+     checked ("low reps: a ptr into an int", fn () => LowLint.check [withReps ([block (0, [Def (1, Const (Lambda.CString "s"))], Return 1)], [RAny, RInt])],
+              "v1 is int where what makes it is ptr");
+     checked ("low reps: con0 into con", fn () => LowLint.check [withReps ([block (0, [Def (1, Con0 0)], Return 1)], [RAny, RCon])], "");
+     report ("low reps: any into int, a downcast counted",
+             downcastsOf ("downcasts-1", [block (0, [Def (1, Global 7)], Return 1)], [RAny, RInt]) = 1, "not counted once");
+     report ("low reps: an int into an int, no downcast",
+             downcastsOf ("downcasts-0", [block (0, [Def (1, Const (Lambda.CInt 1))], Return 1)], [RAny, RInt]) = 0, "counted"))
+
+  fun shapeRules () =
+    (* a Select within its tuple *)
+    (shapes ("a Select of field 1 of a pair", [(funcP (0, [0], 0, [block (0, [Def (1, Select (1, 0))], Return 1)]), [(0, pair)])], "");
+     shapes ("a Select of field 2 of a pair", [(funcP (0, [0], 0, [block (0, [Def (1, Select (2, 0))], Return 1)]), [(0, pair)])],
+             "a Select of field 2 of v0, which is a tuple of 2");
+     shapes ("a Select of a datatype's value", [(funcP (0, [0], 0, [block (0, [Def (1, Select (0, 0))], Return 1)]), [(0, sty)])],
+             "which is a value of datatype");
+     (* what makes a variable agrees with its type *)
+     shapes ("a tuple made where the type says a datatype",
+             [(funcP (0, [0], 0, [block (0, [Def (1, Unit), Def (2, Tuple [1, 1])], Return 2)]), [(2, sty)])],
+             "is made a tuple of 2 where its type says a value of datatype");
+     (* Field and Decon on a datatype's value, after a test of its tag *)
+     onSt ("a Field after an IfTag of its tag",
+           [block (0, [], IfTag (0, 0, 1, 2)), block (1, [Def (1, Field (0, 1, 0))], Return 1), block (2, [Def (2, Decon (1, 0))], Return 2)],
+           [], "");
+     onSt ("a Field where no test comes first", [block (0, [Def (1, Field (0, 1, 0))], Return 1)], [],
+           "a Field of constructor 0 of v0, where no test of its tag comes first");
+     onSt ("a Decon where the test says the other tag",
+           [block (0, [], IfTag (0, 0, 1, 2)), block (1, [Def (1, Decon (1, 0))], Return 1), block (2, [], Return 0)],
+           [], "a Decon of constructor 1 of v0, whose tag is 0");
+     onSt ("a Field after a Switch, in its case",
+           [block (0, [], Switch (0, [(0, 1)], 2)), block (1, [Def (1, Field (0, 0, 0))], Return 1), block (2, [Def (2, Decon (1, 0))], Return 2)],
+           [], "");
+     onSt ("a Field after ConTag compared with a constant",
+           [block (0, [Def (1, ConTag 0), Def (2, Const (Lambda.CInt (IntInf.fromInt 0))), Def (3, Prim ("imm_eq", [1, 2]))], If (3, 1, 2)),
+            block (1, [Def (4, Field (0, 0, 0))], Return 4), block (2, [], Return 0)],
+           [], "");
+     onSt ("a Field of a value whose tag a test says is another's, tested",
+           [block (0, [Def (2, ConTag 0), Def (3, ConTag 1), Def (4, Prim ("imm_eq", [2, 3]))], If (4, 1, 3)),
+            block (1, [], IfTag (0, 0, 2, 3)), block (2, [Def (5, Field (0, 1, 1))], Return 5), block (3, [], Return 0)],
+           [(1, sty)], "");
+     onSt ("a Field of a block's parameter every jump to which passes the constructor",
+           [block (0, [Def (1, Unit), Def (2, Con (0, [1, 1]))], If (1, 1, 2)), block (1, [], Goto (3, [2])),
+            block (2, [], Goto (3, [2])), blockP (3, [3], [Def (4, Field (0, 0, 3))], Return 4)],
+           [(2, sty), (3, sty)], "");
+     onSt ("a Field reached on another way without a test",
+           [block (0, [Def (1, Unit)], If (1, 1, 2)), block (1, [], IfTag (0, 0, 2, 3)), block (2, [Def (2, Field (0, 0, 0))], Return 2),
+            block (3, [], Return 0)],
+           [], "where no test of its tag comes first");
+     onSt ("a Field after a join of the ways of either tag",
+           [block (0, [], IfTag (0, 0, 1, 2)), block (1, [], Goto (3, [])), block (2, [], Goto (3, [])),
+            block (3, [Def (1, Field (0, 0, 0))], Return 1)],
+           [], "whose tag may be any of 0, 1 here");
+     shapes ("a Field of a datatype of one constructor, untested",
+             [(funcP (0, [0], 0, [block (0, [Def (1, Field (0, 1, 0))], Return 1)]), [(0, oty)])], "");
+     shapes ("a Field of a pair", [(funcP (0, [0], 0, [block (0, [Def (1, Field (0, 1, 0))], Return 1)]), [(0, pair)])],
+             "a Field of constructor 0 of v0, which is a tuple of 2");
+     (* one number of fields per constructor across the program: the
+        review's second finding, a constructor built boxed in one function
+        and taken apart flat in another, and the other way round *)
+     shapes ("a constructor made flat in one function and taken apart flat in another",
+             [(funcP (1, [0], 0, [block (0, [Def (1, Unit), Def (2, Con (0, [1, 1]))], Return 2)]), [(2, sty)]),
+              (funcP (2, [0], 0, [block (0, [], IfTag (0, 0, 1, 2)), block (1, [Def (1, Field (0, 1, 0))], Return 1), block (2, [], Return 0)]),
+               [(0, sty)])], "");
+     shapes ("a constructor built boxed in one function and taken apart flat in another",
+             [(funcP (1, [0], 0, [block (0, [Def (1, Unit), Def (2, Con (0, [1]))], Return 2)]), [(2, sty)]),
+              (funcP (2, [0], 0, [block (0, [], IfTag (0, 0, 1, 2)), block (1, [Def (1, Field (0, 1, 0))], Return 1), block (2, [], Return 0)]),
+               [(0, sty)])], "which the program makes of 1 field, its argument boxed");
+     shapes ("a constructor built flat in one function and taken whole in another",
+             [(funcP (1, [0], 0, [block (0, [Def (1, Unit), Def (2, Con (1, [1, 1]))], Return 2)]), [(2, sty)]),
+              (funcP (2, [0], 0, [block (0, [], IfTag (0, 1, 1, 2)), block (1, [Def (1, Decon (1, 0))], Return 1), block (2, [], Return 0)]),
+               [(0, sty)])], "laid out flat");
+     shapes ("a constructor made of two numbers of fields",
+             [(funcP (1, [0], 0, [block (0, [Def (1, Unit), Def (2, Con (0, [1, 1]))], Return 2)]), [(2, sty)]),
+              (funcP (2, [0], 0, [block (0, [Def (1, Unit), Def (2, Con (0, [1, 1, 1]))], Return 2)]), [(2, sty)])],
+             "made of 3 fields, where function f1 (f1), b0 makes it of 2");
+     (* each field as the datatype declares it *)
+     onSt ("a Field read as its declared int",
+           [block (0, [], IfTag (0, 0, 1, 2)), block (1, [Def (1, Field (0, 1, 0))], Return 1), block (2, [], Return 0)],
+           [(1, Ty.int)], "");
+     onSt ("a Field read as a pair where the declaration says an int",
+           [block (0, [], IfTag (0, 0, 1, 2)), block (1, [Def (1, Field (0, 1, 0))], Return 1), block (2, [], Return 0)],
+           [(1, pair)], "where field 1 of constructor 0 of datatype 900011 as it is declared is no object");
+     shapes ("a constructor made of a pair where the declaration says an int",
+             [(funcP (0, [0], 0, [block (0, [Def (1, Unit), Def (2, Tuple [1, 1]), Def (3, Con (0, [1, 2]))], Return 3)]), [(3, sty)])],
+             "v2 is a tuple of 2 where field 1 of constructor 0 of datatype 900011 as it is declared is no object");
+     (* a Call of a closure, a tag of a datatype's value *)
+     shapes ("a Call of a pair", [(funcP (0, [0], 0, [block (0, [Def (1, Call (0, 0))], Return 1)]), [(0, pair)])],
+             "a Call of v0, which is a tuple of 2");
+     shapes ("an IfTag of a pair", [(funcP (0, [0], 0, [block (0, [], IfTag (0, 0, 1, 1)), block (1, [], Return 0)]), [(0, pair)])],
+             "an IfTag of v0, which is a tuple of 2");
+     (* agreement where a value goes: a jump, a known call, a closure's
+        captured value, a field read of what the function made *)
+     shapes ("a pair passed to a block's parameter of a datatype",
+             [(funcP (0, [0], 0, [block (0, [], Goto (1, [0])), blockP (1, [1], [], Return 1)]), [(0, pair), (1, sty)])],
+             "where parameter 0 of b1 is a value of datatype");
+     shapes ("a pair passed to a function's parameter of a datatype",
+             [(funcP (0, [0], 0, [block (0, [Def (1, CallK (1, [0]))], Return 1)]), [(0, pair)]),
+              (funcP (1, [0], 0, [block (0, [], Return 0)]), [(0, sty)])],
+             "where parameter 0 of f1 is a value of datatype");
+     shapes ("a pair captured where the function reads a datatype",
+             [(funcP (0, [0], 0, [block (0, [Def (1, Closure (1, [SOME 0]))], Return 1)]), [(0, pair)]),
+              (funcP (1, [0], 1, [block (0, [Def (1, Env 0)], Return 1)]), [(1, sty)])],
+             "where env 0 of f1 is a value of datatype");
+     shapes ("a field of a tuple made here read as another shape",
+             [(funcP (0, [0], 0, [block (0, [Def (1, Unit), Def (2, Tuple [0, 1]), Def (3, Select (0, 2))], Return 3)]),
+               [(0, pair), (3, sty)])],
+             "where field 0 of v2 is a tuple of 2"))
 
   (* ---- midcanon's renaming (M2): what midcanon made of a program taken,
      and every way of renaming otherwise refused *)
@@ -197,6 +349,8 @@ struct
      codes ();
      levels ();
      lowWays ();
+     directed ();
+     shapeRules ();
      renamings ();
      checked ("counters: a check that takes no name", fn () => ignore (Ty.con (7, "t", [])), "");
      checked ("counters: a check that takes a stamp", fn () => ignore (Elaborate.freshStamp ()), "moved the compiler's counters");

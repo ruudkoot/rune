@@ -122,9 +122,24 @@ struct
   val () = CompilerState.cellRoot ("Pass.checks", checks)
   (* each check, at every depth -- a unit's stages run inside unit-passes
      -- by its key (checkAt), in the order they first ran: how many times
-     it ran, and the processor time and the instructions it took *)
-  val checked : (string * {runs : int ref, time : Time.time ref, instructions : int ref}) list ref = ref []
+     it ran, the processor time and the instructions it took, and what it
+     counted (tally) *)
+  type checkCount = {runs : int ref, time : Time.time ref, instructions : int ref, tallies : (string * int ref) list ref}
+  val checked : (string * checkCount) list ref = ref []
   val () = CompilerState.cellRoot ("Pass.checked", checked)
+  (* the check running now, where --pass-stats counts *)
+  val current : checkCount option ref = ref NONE
+  val () = CompilerState.cellRoot ("Pass.current", current)
+  (* n more of what the check running now counts -- LowLint's downcasts,
+     the shapes it checked -- which --pass-stats gives on its line, after
+     its instructions, ", N WHAT" *)
+  fun tally (what : string, n : int) : unit =
+    case (!stats, !current) of
+      (true, SOME {tallies, ...}) =>
+        (case List.find (fn (w, _) => w = what) (!tallies) of
+           SOME (_, r) => r := !r + n
+         | NONE => tallies := !tallies @ [(what, ref n)])
+    | _ => ()
 
   (* the processor time the process has taken: from its start, with the
      collector's. Every stage is timed by it, so that the stages and the time
@@ -154,23 +169,26 @@ struct
     else
       let
         val names = !counters ()
+        val entry =
+          if !stats then
+            SOME (case List.find (fn (k, _) => k = key) (!checked) of
+                    SOME (_, c) => c
+                  | NONE =>
+                      let val c = {runs = ref 0, time = ref Time.zeroTime, instructions = ref 0, tallies = ref []}
+                      in checked := !checked @ [(key, c)]; c end)
+          else NONE
+        val outer = !current
+        val () = current := entry
         val t0 = if !stats then used () else Time.zeroTime
         val i0 = if !stats then !instructions () else 0
         fun count () =
-          if !stats then
-            let
-              val {runs, time, instructions = n} =
-                case List.find (fn (k, _) => k = key) (!checked) of
-                  SOME (_, c) => c
-                | NONE =>
-                    let val c = {runs = ref 0, time = ref Time.zeroTime, instructions = ref 0}
-                    in checked := !checked @ [(key, c)]; c end
-            in
-              runs := !runs + 1;
-              time := Time.+ (!time, Time.- (used (), t0));
-              n := !n + (!instructions () - i0)
-            end
-          else ()
+          (current := outer;
+           case entry of
+             SOME {runs, time, instructions = n, ...} =>
+               (runs := !runs + 1;
+                time := Time.+ (!time, Time.- (used (), t0));
+                n := !n + (!instructions () - i0))
+           | NONE => ())
         fun found msg =
           (breach := SOME (key, level);
            raise Error.Bug ("lint after " ^ key ^ ": " ^ msg
@@ -180,6 +198,7 @@ struct
                                  " (found at a boundary: --lint=2 names the pass that made it)"
                                else "")))
         val () = check y handle Error.Bug msg => (count (); found msg)
+                              | e => (current := outer; raise e)
         val () = count ()
       in
         if !counters () = names then () else found "the check moved the compiler's counters of names"
@@ -259,10 +278,11 @@ struct
                  then (outer := Time.+ (!outer, !checks); line ("checks", 0, !checks))
                  else ()
         val () =
-          List.app (fn (name, {runs, time, instructions = n}) =>
+          List.app (fn (name, {runs, time, instructions = n, tallies}) =>
                       eprint ("check " ^ name ^ ": " ^ Int.toString (!runs) ^ (if !runs = 1 then " run, " else " runs, ")
                               ^ Time.toString (!time) ^ " s"
-                              ^ (if !instructions () < 0 then "" else ", " ^ Int.toString (!n) ^ " instructions") ^ "\n"))
+                              ^ (if !instructions () < 0 then "" else ", " ^ Int.toString (!n) ^ " instructions")
+                              ^ String.concat (List.map (fn (w, k) => ", " ^ Int.toString (!k) ^ " " ^ w) (!tallies)) ^ "\n"))
                    (!checked)
         val total = Time.- (used (), !origin)
         val share = if Time.toReal total > 0.0 then 100.0 * Time.toReal (!outer) / Time.toReal total else 100.0

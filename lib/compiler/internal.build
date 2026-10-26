@@ -25,6 +25,7 @@ files
   backend/lowlint.sml
   backend/rep.sml
   backend/lower.sml
+  backend/lowshapes.sml
   backend/stack.sml
   backend/regcodes.sml
   backend/regs.sml
