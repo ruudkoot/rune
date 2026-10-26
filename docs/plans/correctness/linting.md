@@ -97,7 +97,7 @@ What it rests on:
 | G1 | How AstLint goes on (the owner's) | A | |
 | M13 | AstLint of the module language | A | not started |
 | M14 | The editor's types | A | not started |
-| M15 | Overloading's context and free type variables, as options | A | not started |
+| M15 | Overloading's context and free type variables, as options | A | done in part (2026-10-26): the options; the default's move to `declaration` follows |
 | M16 | Retire | | not started |
 
 The owner took every recommendation, D1 to D19, on 2026-10-26
@@ -149,6 +149,38 @@ passes on its exact commit.
     `repl_printer_add`.
   - **Cost:** start-up +0.44% of `compile-hello` (the tables are built at
     start).
+
+- **M15, the options** (`32bb74cb3`, `80e4fe4db`, `b1bc26e9b`, merged
+  `f7eb8c8cd`; `make check` 21,580 of 21,580).
+  - **What landed:**
+    - `--overloading=binding|declaration|toplevel|topdec` and
+      `--free-tyvars=refuse|monotype|dummy|later|later-monotype`, in the
+      cache's configuration, the REPL, the compiler library, the help, the
+      man page and `docs/language.md`;
+    - the check of rules 87-89, moved out of `--flex-records`;
+    - `tests/overloading`, E13's programs under every mode;
+    - two declarations of `RuneForeign` written so that the Basis
+      elaborates in every mode.
+  - **The count under `declaration`:** nothing breaks in Rune's sources,
+    the Basis, the benchmarks, MLton's 606 files or HaMLet. One SML/NJ
+    regression program breaks, which SML/NJ and MLKit refuse too. HOL4
+    breaks at 7 sites in 3 files: integer constants that a later
+    declaration or the signature makes `IntInf.int`, one annotation each.
+  - **The owner's call (2026-10-26):** the default moves to
+    `declaration`, and HOL4 builds with `--overloading=toplevel` until the
+    annotations land in the HOL4 tree. The move is M15's last commit.
+  - **Where the implementations are less tidy than D18 and D19 say:**
+    - MLton's `topdec` context also ends at a functor or signature
+      declaration, and Poly/ML lets an application settle a functor body's
+      overloading. Rune settles a functor body where it ends.
+    - HaMLet, under `refuse`, runs E13's functor program; Rune refuses it
+      at the functor.
+    - SML/NJ makes dummy types at structure level only, not "at any
+      depth".
+    - MLton accepts two applications of a functor at two types, against
+      rule 54. Rune's `later-monotype` does not.
+  - **In the REPL,** `later*` treats the end of an input as the end of the
+    program: no weak variables across inputs (`src/repl/repl.sml`).
 
 ## Found while writing this roadmap
 
