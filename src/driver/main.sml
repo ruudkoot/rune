@@ -1178,7 +1178,7 @@ struct
       else
         SOME (Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = Pass.checkAt ("translate", 1) LambdaLint.check,
                           size = Lambda.size}
-                         Translate.transProgram (preludeProg @ userProg @ finalProg))
+                         (fn decs => Fault.lambda ("translate", Translate.transProgram decs)) (preludeProg @ userProg @ finalProg))
     end
 
   (* -O0 is the same stages with no optional pass *)

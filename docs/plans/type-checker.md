@@ -37,11 +37,16 @@ and what is stopped by a budget for now. Nothing below is a decision yet.
   after its own, and of every datatype that names it, and every type made
   of the datatype gives it as itself (`Ty.extrasOf`). Bytecode did not
   change for any program of the suites, the benchmarks or the compiler.
-* Not yet looked at: an exception declared in a function with an argument
-  of the function's type variable (`exception E of 'a`) passes the lint
-  today, because neither lint checks `MkExn`'s argument against the
-  exception's (`Ty.exnArgs`); were it checked, the same question would
-  come up.
+* An exception declared in a function with an argument of the function's
+  type variable (`exception E of 'a`) passed the lint, because neither
+  lint checked `MkExn`'s argument against the exception's (`Ty.exnArgs`).
+  Both do now (plans/correctness/linting.md, M4), and the same question
+  came up: a copy of the function at `int` makes a copy of the exception
+  whose payload is an `int`. It is answered as for datatypes, by carrying
+  the argument with the copy: each pass that copies code registers the
+  copy's exception under its stamp at the copy's types (`Ty.copyExn`;
+  `Ty.retypeExn` where `Simplify` puts a body at the call's types in
+  place), and the payload must have that type exactly.
 * `--passes=` with a list does not reproduce `-O1`: `inline`,
   `specialise` and `trees` must be listed too, or bisecting a pass misleads.
 

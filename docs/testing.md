@@ -97,13 +97,17 @@ level 0, at `-O2` and in units, and fails where the two differ by a byte,
 a unit's files and their bases too; `compiler/*` compares a program's
 units with `--mid-roundtrip` and without; and `Pass.checkAt` stops a
 compile whose check moved a counter of the compiler's names
-([ir.md](ir.md), *Options*). A rule that no program the compiler makes
-breaks is broken by hand instead: `compiler/lint-rules` compiles the
-compiler's internals with `tests/compiler/lint-rules.sml`, which gives
-each rule of the guard of the counters, of the levels, of LowLint's ways,
-of `midcanon`'s renaming and of the invariant of results in globals what
-breaks it. The Basis and the compiler library of `lib/cache` are compiled
-with `--lint` (`make basis-cache`).
+([ir.md](ir.md), *Options*). Every rule of every lint has a negative
+test ([ir.md](ir.md), *Tests*): `faults/STAGE:KIND` (tier `test-ir`)
+compiles `tests/compiler/faults.sml` with a fault made on purpose after
+the stage (`RUNE_FAULT=STAGE:KIND[@N]`, for the tests alone) and wants that
+stage's lint to refuse it with the rule's message, and `compiler/lint-rules`
+compiles the compiler's internals with `tests/compiler/lint-rules.sml`,
+which gives each rule no fault reaches -- of LambdaLint, MidLint, LowLint,
+`midcanon`'s renaming, the guard of the counters, the levels, LowLint's
+ways and the invariant of results in globals -- what breaks it, by hand.
+The Basis and the compiler library of `lib/cache` are compiled with
+`--lint` (`make basis-cache`).
 
 * `bin/rune-test list [FILTER]` lists the tests (`make/*`,
   `tag:check & !runner/*`), and `explain FILTER` shows each one's command,
@@ -782,6 +786,38 @@ this stricter exit behavior makes the adequacy result usable in automation.
 bytecode, controller crash or failure before the first law fails the job.
 The property seed and environment are inherited; the default law idle limit
 is 30 seconds and the sample count is 20 per file.
+
+### Mutants of the compiler
+
+`make test-compiler-mutants` (tier `test-compiler-mutants`,
+`tests/runner/compilermutants.sml`; never part of `make check`: it takes
+hours, about a quarter of an hour of CPU a mutant) asks which check
+catches which bug seeded in the compiler (plans/correctness/linting.md, E3
+and M4). Each of its 68 mutants (`tests/runner/compilermutantlist.sml`) is
+one or more exact edits of the compiler's sources -- a type substitution
+dropped, a representation swapped, a fix reverted -- built with
+`bin/rune.rbc` into a compiler of its own. It compiles a fixed corpus as
+`bin/rune.rbc` did, at level 0: `tests/lang` and `tests/perf` at `-O0` and
+`-O2`, 24 tests of the Basis, a sample of `tests/lang` on the stack target
+and in units (`--units`, and `--units --whole -O2`), `tests/errors` for the
+mutants of the elaborator and Translate, a dynamic module and the program
+that loads it (`tests/compiler/mutants`), a functor of an earlier unit
+inlined (`tests/units/functor-earlier`), a functor's function kept in its
+unit (`mod.functor.functions_capture`, in units), and the bootstrap. An
+item whose bytes differ exercises the mutant; up to 160 of those are
+compiled again at level 2 and run in each of their ways against
+`bin/rune.rbc`'s runs (run twice; an unstable run gives no verdict). Where
+no byte differs, a quarter of that sample of the corpus and its extra items
+are compiled at level 2 still, for a mutant only a lint sees. Each mutant's job says what saw
+it -- `LINT` (which lint, after which stage), `OTHER` (the compiler
+stopping, a program of `tests/errors` accepted, the VM's loader or checks,
+the output, `-O0` against `-O2`, the bootstrap's stage two), `UNCAUGHT`,
+`UNEXERCISED` or `STILLBORN` -- and the summary, with how many of the 27 a
+lint caught in E3 one still catches, is in `tests/out/compiler-mutants`.
+A controller that breaks is a FAIL, never a verdict; the good compiler's
+lint refusing an item it compiles is one too. `COMPILER_MUTANTS=E01,M02`
+runs those mutants alone, and `COMPILER_MUTANTS_QUICK=N` keeps the first N
+items of each part of the corpus, to try the harness.
 
 Benchmark correctness and deterministic-budget drivers use
 `bin/rune-bench-check` and `bin/rune-budget`. `suite NAME` selects the typed
