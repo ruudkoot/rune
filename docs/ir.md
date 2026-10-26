@@ -777,8 +777,10 @@ only another of n, never through a closure. It costs 0.1 to 0.6% of a
 compile (plans/correctness/linting.md, E9).
 
 `LowLint` checks, after `lower` (what is defined on every way to a use by
-dominance, over a function's blocks cut at each push, so that it costs in
-proportion to the function; plans/correctness/linting.md, M2):
+dominance, over a function's blocks cut at each push, a walk up the tree
+of dominators from each use, where a map of what is available, filtered at
+every join, cost blocks times variables: 26M instructions on HaMLet's Low
+against 234M; plans/correctness/linting.md, M2):
 
 * **SSA:** every variable is defined once in its function and on every way
   to each of its uses; a handler's block sees only what was defined where
