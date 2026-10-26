@@ -110,6 +110,9 @@ struct
     (* the functors inlined across units: what a unit's basis keeps *)
     @ (if not (StringMap.isEmpty (!Elaborate.inlineFunctors))
        then [("inline", String.concatWith "," (StringMap.listKeys (!Elaborate.inlineFunctors)))] else [])
+    (* and the functions (functors-units M10) *)
+    @ (if not (StringMap.isEmpty (!Elaborate.inlineValues))
+       then [("inline-val", String.concatWith "," (StringMap.listKeys (!Elaborate.inlineValues)))] else [])
 
   (* The hash of the configuration of this compile *)
   fun configuration () : string =

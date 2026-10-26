@@ -123,7 +123,14 @@ named by placeholders, which are no names of the unit's. A functor marked
 to be inlined ([build.md](build.md), *Inline functors*) has its
 function's Mid written too, its positions in the unit's own source by
 nothing but that, and a unit that expands it depends on it (the usage
-`inl F`). The tables give each instance of a body's datatype the layout
+`inl F`). A function marked to be inlined ([build.md](build.md), *Inline
+functions*), and every function that only applies a primitive to its
+parameter, has its Mid written too, as the expansion leaves it, with the
+functions of the unit it calls while the group is under 400 Mid nodes,
+the schemes of the unit's globals it names that nothing else types (a
+copy's own), and its positions in another unit's source by that unit's
+name; a later unit that names it copies it (functors-units' M10), and
+depends on it by the usage `inlv NAME`. The tables give each instance of a body's datatype the layout
 the body fixed (`Ty.pinned`), unless the unit expanded the application
 that named it (an application of a functor the unit declares or marks,
 *The expansion* in [ir.md](ir.md)), whose instance is laid out from its
@@ -333,6 +340,12 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   applied a functor elaborated a copy of its body, and used the units of
   the names the body looked up and of the functors it applied in turn
   (the usage `funat IDENTITY`);
+* a function marked to be inlined, or that only applies a primitive, is
+  copied into a unit that names it, which uses its Mid too (`inlv NAME`,
+  by the name the unit used, held by the hash of the Mid): an edit of its
+  body compiles the units that copied it again, and an edit beside it
+  does not (S77); which functions the libraries mark is in the cache's
+  configuration, as which functors they do;
 * in the REPL, what a declaration of a file used echoes is compiled with
   it: two usages more say what that was compiled by, `echo on` whether it
   echoed at all (the print depth was above 0) and `p KEY` whether a printer

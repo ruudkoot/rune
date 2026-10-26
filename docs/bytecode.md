@@ -248,7 +248,7 @@ source      varint len, bytes   the hash of its source, by which the
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    12 (UnitBasis.version)
+version     varint    13 (UnitBasis.version)
 probe       varint len, bytes   the probe of the compiler's hash
                                 (Pickle.probe): a basis made by a
                                 compiler whose hash gives other values
@@ -259,11 +259,24 @@ counts      3 × varint   its own names of each kind
             ... the fixity directives, the environment, the signatures,
                 functors (each its signature: its parameter's and its
                 body's summary; the global of its function; and the
-                function's Mid where it is marked to be inlined) and overloading it
+                function's Mid where it is marked to be inlined), its
+                functions copied into the units that name them (each its
+                global and its Mid), the schemes of the globals those name
+                that nothing else types, and the overloading it
                 declared, and the tables of its own names, each name of a
                 kind written as built in, the unit's own (a number), or
                 another unit's (its place, a number) ...
 ```
+
+Version 13 (functors-units' M10) adds, after the functors, the functions
+a later unit that names one copies: those marked to be inlined (`inline
+val`) and those that only apply a primitive, each its global and its Mid
+as the expansion left it, with the functions of the unit it calls and,
+like a marked functor's, what it takes of the globals it names; a
+position in another unit's source is that unit's name. Then the schemes
+of the unit's globals those name that nothing else types, each as a
+function of no parameter whose result is the global's type ([units.md](units.md),
+*The export basis*).
 
 Version 9 adds the probe, and every hash is rx2fw, two lanes of 63 bits
 in 32 hexadecimal digits ([plans/functors-units.md](plans/functors-units.md),

@@ -384,6 +384,23 @@ gives one is refused as for any option it does not know.
     `UnitBasis.funcode`), and a later unit expands an application of it
     as it expands its own functors' (`Expand.imported`). Such a unit has a
     usage `inl F`, which holds while the body's Mid is the same.
+  - **Functions across units** (functors-units M10). A function marked to
+    be inlined (`inline val` in a build file; docs/build.md), and every
+    function that only applies a primitive to its parameter
+    (`Expand.primOfFunction`, which sees through a variable that only
+    copies another, as a pattern with types leaves), has its Mid kept in
+    its unit's basis as the expansion leaves it (`Expand.keepValues`),
+    with the unit's functions it calls while the group is under 400 Mid
+    nodes and the schemes of the unit's globals it names that nothing
+    else types (`ToMid.importedSchemes`). In a build in units, a unit's
+    expansion first gives the unit a copy of each such function that it
+    names, through the globals that are it (`Expand.withInlined`; a
+    definition that only is another global, `val app = app` in List,
+    keeps naming the first), as a function of its own top level, its
+    names fresh, and each use of the function one of the copy; Simplify
+    then puts a copy where it is called or specialises it by its own
+    rules. A whole compile and `--units --whole` have no copies. The unit
+    has a usage `inlv NAME`, which holds while the Mid is the same.
   - **What a later unit calls.** A unit's basis says which of its globals
     are another global at the same types (`val andb = Word.andb` in a
     copy: `Expand.globalAliases`), and which are functions that apply a

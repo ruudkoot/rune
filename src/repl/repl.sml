@@ -664,9 +664,12 @@ struct
       val rest = go args
     in
       if not (!noInline) then
-        Elaborate.inlineFunctors :=
-          List.foldl (fn (n, m) => StringMap.insert (m, n, ())) (!Elaborate.inlineFunctors)
-                     (BasisManifest.inlineFunctors (OS.Path.concat (lib, "basis")))
+        (Elaborate.inlineFunctors :=
+           List.foldl (fn (n, m) => StringMap.insert (m, n, ())) (!Elaborate.inlineFunctors)
+                      (BasisManifest.inlineFunctors (OS.Path.concat (lib, "basis")));
+         Elaborate.inlineValues :=
+           List.foldl (fn (n, m) => StringMap.insert (m, n, ())) (!Elaborate.inlineValues)
+                      (BasisManifest.inlineValues (OS.Path.concat (lib, "basis"))))
       else ();
       rest
     end

@@ -217,6 +217,12 @@ struct
     headerWords (TextIO.openIn (dir ^ "/MANIFEST"), "# inline:")
     handle IO.Io _ => []
 
+  (* The values it marks to be inlined across units, on its # inline val:
+     lines (`inline val ... end`; functors-units M10) *)
+  fun inlineValues (dir : string) : string list =
+    headerWords (TextIO.openIn (dir ^ "/MANIFEST"), "# inline val:")
+    handle IO.Io _ => []
+
   (* The directories of the named libraries and of those they are written on,
      each once, every library after the ones it names. *)
   fun libraries (libDir : string, names : string list) : string list =

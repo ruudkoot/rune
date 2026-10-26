@@ -36,11 +36,15 @@ dec      ::= path                            a file, compiled in the basis befor
            | "libraries" name ... "end"      libraries selected by this build,
                                              or dependencies in library metadata
            | "inline" "functor" id ... "end" functors copied into every unit that
-                                             applies them (below; a prototype)
+                                             applies them (below)
+           | "inline" "val" name ... "end"   functions copied into every unit that
+                                             names them (below)
 exports  ::= "(" export "," ... ")"          export ::= kind id
 kind     ::= "structure" | "signature" | "functor" | "type"
 path     ::= a file's path, relative to the build file's directory, in which
              $(NAME) is the path variable NAME (--path NAME=DIR)
+name     ::= a long name of a value, as a word, or as a string where it holds
+             characters a path does not ("Word32.>>")
 string   ::= "..."
 ```
 
@@ -163,7 +167,7 @@ does for its own functors and within the same budget. Such a unit depends on
 the body: an edit of the body compiles it again, and an edit that leaves the
 body alone does not. The declaration names functors and declares nothing,
 so the sources stay standard SML. `--build-list` and the hosts' build files
-ignore it.
+ignore it, as they do `inline val` (below).
 
 The Basis Library marks its own functors in `lib/basis/library.build`.
 These are the functors that make its structures in units other than their
@@ -173,6 +177,36 @@ every compile marks them unless `--no-inline-functors` is given.
 A program whose sources must stay as they are marks its functors on the
 command line: `--inline-functor=Table` (repeatable, or a comma list), or
 `inline functor ... end` in the program's own build file.
+
+## Functions inlined across units
+
+`inline val NAME ... end` marks functions to be copied into every unit
+that names them (docs/plans/functors-units.md, M10). A name is a long
+name of the value as the unit that declares it binds it: `not`,
+`Word32.andb`, and as a string where it holds characters a path does not
+take, `"Word32.>>"`. The unit's basis keeps the function's Mid as the
+expansion leaves it, with the functions of the same unit it calls, while
+the group is under 400 Mid nodes, and a later unit that names it, by any
+name -- `List.app` is `app` -- has a copy of it as a function of its own
+top level. Simplify then puts the copy where it is called, or specialises
+it, by its own rules, as it does in a whole program. Such a unit depends on
+the body ([units.md](units.md), the usage `inlv NAME`): an edit of the
+body, or of what it calls, compiles it again, and an edit beside it does
+not (S77 of `tests/incremental/SCENARIOS.md`). A whole compile and
+`--units --whole` are the same bytes with the marks and without. A
+function that only applies a primitive to its parameter (`fun sub (s, i)
+= RuneReals.sub (s, i)`) needs no mark: its unit's basis keeps every such
+function, and a later unit's copy is the primitive's application, which
+keeps the function's frame in a trace, as a whole program does.
+
+The Basis Library marks the functions that a profile of MLton's
+benchmarks built in units found called across units on their hot paths:
+`not`, `o`, `valOf`, `app`, `foldl` and `foldr`; `Word32.+`, `Word32.>>`,
+`Word32.andb` and `Word32.fromLarge`; and `Word8Array.sub`,
+`PackWord32Little.subArr` and `PackWord32Big.subArr`. `--basis-index`
+writes them to the manifest's header (`# inline val:`), every compile
+marks them as it does the functors, and `--no-inline-functors` leaves them
+out too. A program marks its own in its build file.
 
 ## Virtual modules
 

@@ -38,7 +38,7 @@ struct
   (* a pickle that names a unit the session has not loaded *)
   exception Missing of string
 
-  val version = 12
+  val version = 13
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -596,6 +596,9 @@ struct
     (* a functor inlined where it is applied: the unit that bound it, and
        its Mid's hash where that unit is another *)
     else if String.isPrefix "inl " key then binderOf ("fun " ^ String.extract (key, 4, NONE))
+    (* a function inlined where it is named: the unit that bound the name,
+       as of the value's usage (functors-units M10) *)
+    else if String.isPrefix "inlv " key then binderOfKey ("v " ^ String.extract (key, 5, NONE))
     else
     case String.fields (fn c => c = #" ") key of
       [kind, name] =>
@@ -629,6 +632,11 @@ struct
       | "inl" => (case StringMap.find (!sessionFuns, name) of
                     SOME (Elaborate.FunInfo {code = g, ...}) => inlineHash g
                   | _ => NONE)
+      (* a function inlined where it is named: its Mid's hash, through the
+         globals that are it (functors-units M10) *)
+      | "inlv" => inStr (fn e => case StringMap.find (Env.vals e, last) of
+                                   SOME (Env.Val {stamp, ...}) => Option.mapPartial inlineHash (Expand.inlinedValue stamp)
+                                 | _ => NONE)
       | "fix" => SOME (hashAt ("fix", case StringMap.find (#table (!sessionFixity), name) of
                                         NONE => "nonfix"
                                       | SOME Fixity.Nonfix => "nonfix"
@@ -753,6 +761,8 @@ struct
       IntTable.removeRange (Ty.exnArgs, s0, s1);
       IntTable.removeRange (!Expand.globalAliases, s0, s1);
       IntTable.removeRange (!Expand.primGlobals, s0, s1);
+      IntTable.removeRange (!Expand.importedValues, s0, s1);
+      IntTable.removeRange (!ToMid.importedSchemes, s0, s1);
       IntTable.removeRange (!inlineHashes, s0, s1);
       IntTable.removeRange (Ty.realizations, t0, t1);
       Ty.pinned := IntMap.filteri (fn (stamp, _) => stamp < t0 orelse stamp >= t1) (!Ty.pinned);
@@ -773,6 +783,8 @@ struct
       IntTable.removeRange (Ty.exnArgs, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
       IntTable.removeRange (!Expand.globalAliases, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
       IntTable.removeRange (!Expand.primGlobals, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
+      IntTable.removeRange (!Expand.importedValues, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
+      IntTable.removeRange (!ToMid.importedSchemes, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
       IntTable.removeRange (Ty.realizations, Vector.sub (at, kTycon), Vector.sub (now, kTycon));
       Ty.datatypes := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.datatypes);
       Ty.pinned := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.pinned);
@@ -1122,6 +1134,44 @@ struct
                (w, IntTable.find (!Expand.declaredBodies, code))
     end
 
+  (* A function marked to be inlined (functors-units M10): its global, and
+     its Mid as a marked functor's function is written, with what it takes
+     of the globals it names, and the hash over both (the usage "inlv") *)
+  fun inlineValue (e : enc, s : int, f : Mid.fundef) : unit =
+    let
+      val w = #w e
+      val () = name (e, kStamp, s)
+      val p0 = !(#used w)
+      val named : int list ref = ref []
+      val seen : unit IntTable.table = IntTable.table 64
+      fun global g =
+        (if isSome (IntTable.find (seen, g)) then () else (IntTable.insert (seen, g, ()); named := g :: !named);
+         name (e, kStamp, g))
+      fun prim h = (P.option P.string (w, IntMap.find (!Translate.primAliases, h));
+                    P.option P.string (w, IntTable.find (!Expand.primGlobals, h)))
+      (* a position's file: the unit's own by nothing, another unit's source
+         (a functor's whose copy the function is) by that unit's name, which
+         the reader makes where its source is then, so that the bytes do not
+         depend on the path a compile was given a source by (S61) *)
+      fun fileName f =
+        if f = #file e then NONE
+        else case List.find (fn (l : loaded) => #file l = f) (!units) of
+               SOME l => SOME ("\001" ^ #name l)
+             | NONE => SOME f
+    in
+      MidCodec.write (w, {stamp = global, tycon = fn c => name (e, kTycon, c),
+                          tvar = fn v => name (e, kTvar, v),
+                          file = fn f => P.option P.string (w, fileName f)}) f;
+      P.list (fn (w, g) =>
+                (prim g;
+                 P.option (fn (_, h) => (name (e, kStamp, h); prim h)) (w, IntTable.find (!Expand.globalAliases, g));
+                 P.bool (w, IntMap.member (!Lower.knownBefore, g));
+                 P.option P.string (w, inlineHash g)))
+             (w, List.rev (!named));
+      IntTable.insert (!inlineHashes, s,
+                       ref (Hash (P.hash (CharArraySlice.vector (CharArraySlice.slice (!(#bytes w), p0, SOME (!(#used w) - p0)))))))
+    end
+
   (* ---- overloading ---- *)
 
   fun overload (e : enc, (s, {kind, ops, literal} : Overload.entry)) : unit =
@@ -1226,6 +1276,19 @@ struct
                                      case StringMap.find (!Elaborate.funs, n) of
                                        SOME f => funref (e, f)
                                      | NONE => bug ("no functor " ^ n))) (w, funNames)
+      (* the functions it declares that are marked to be inlined, as its
+         expansion left them *)
+      val () = P.list (fn (_, (s, f)) => inlineValue (e, s, f))
+                      (w, List.mapPartial (fn s => Option.map (fn f => (s, f)) (IntTable.find (!Expand.declaredValues, s)))
+                                          (!Expand.declaredOrder))
+      (* the schemes of the unit's globals those name that nothing else
+         types (a copy's own): each as a function of no parameter whose
+         result is the global's type *)
+      val () = P.list (fn (w, (g, (vs, t))) =>
+                         MidCodec.write (w, {stamp = fn s => name (e, kStamp, s), tycon = fn c => name (e, kTycon, c),
+                                             tvar = fn v => name (e, kTvar, v), file = fn _ => P.option P.string (w, NONE)})
+                                        {name = g, tyvars = vs, params = [], result = t, body = Mid.Return (Mid.Atom Mid.Unit)})
+                      (w, !Expand.declaredSchemes)
       val before' = #overloads (#snapshot start)
       val () = P.list (fn (_, x) => overload (e, x))
                       (w, IntMap.listItemsi (IntMap.filteri (fn (s, _) => not (IntMap.member (before', s))) (!Overload.table)))
@@ -1772,6 +1835,50 @@ struct
           val f = Elaborate.FunInfo {param = param, paramSig = paramSig, summary = summary, binding = binding, code = code}
         in ownFuns := IntMap.insert (!ownFuns, code, f); f end
       val funs = P.rlist (fn r => let val n = P.rstring r in (n, rfunref r) end) r
+      (* its functions marked to be inlined: what a later unit that names
+         one copies (Expand.withInlined) *)
+      val _ =
+        P.rlist (fn r =>
+                   let
+                     val s = rname (d, kStamp)
+                     val p0 = !(#pos r)
+                     val base = !privateNext
+                     val most = ref 0
+                     fun local' i = (if i > !most then most := i else (); base - i)
+                     fun fileOf NONE = file
+                       | fileOf (SOME f) =
+                           if String.isPrefix "\001" f
+                           then let val n = String.extract (f, 1, NONE)
+                                in case List.find (fn (l : loaded) => #name l = n) (!units) of
+                                     SOME l => #file l
+                                   | NONE => n
+                                end
+                           else f
+                     val (body, names) =
+                       MidCodec.read (r, {stamp = fn () => rname (d, kStamp), tycon = fn () => rname (d, kTycon),
+                                          tvar = fn () => rname (d, kTvar),
+                                          file = fn () => fileOf (P.roption P.rstring r), local' = local'})
+                       handle MidCodec.Bad m => raise P.Bad m
+                     fun prim () = (P.roption P.rstring r; P.roption P.rstring r; ())
+                     val _ = P.rlist (fn _ => (prim (); P.roption (fn _ => (rname (d, kStamp); prim ())) r;
+                                               P.rbool r; P.roption P.rstring r)) r
+                     val p1 = !(#pos r)
+                   in
+                     privateNext := base - !most - 1;
+                     IntTable.insert (!Expand.importedValueNames, s, names);
+                     IntTable.insert (!Expand.importedValues, s, body);
+                     Expand.anyImported := true;
+                     IntTable.insert (!inlineHashes, s, ref (Bytes (String.substring (#s r, p0, p1 - p0))))
+                   end) r
+      val _ =
+        P.rlist (fn r =>
+                   let
+                     val ({name = g, tyvars, result, ...}, _) =
+                       MidCodec.read (r, {stamp = fn () => rname (d, kStamp), tycon = fn () => rname (d, kTycon),
+                                          tvar = fn () => rname (d, kTvar), file = fn () => (P.roption P.rstring r; file),
+                                          local' = fn i => ~1 - i})
+                       handle MidCodec.Bad m => raise P.Bad m
+                   in IntTable.insert (!ToMid.importedSchemes, g, (tyvars, result)) end) r
       val overloads =
         P.rlist (fn r =>
                    let

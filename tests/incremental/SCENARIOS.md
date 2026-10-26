@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S76. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S77. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
@@ -349,6 +349,12 @@ when the scenarios above were all green
   the session had compiled, which the code keeps, and the entry was not
   what compiling the declaration gave: HOL4's build, verified, stopped at
   a file its configuration had used at another place.
+* **S77, a function marked to be inlined.** A build file marks `A.inc`
+  (`inline val A.inc end`); `b.sml` names it, `c.sml` names `A.other`.
+  An edit of `inc`'s body compiles `a.sml` and `b.sml`, which copied it
+  (its usage `inlv A.inc` holds by the body's Mid), and not `c.sml` nor
+  `main.sml`; an edit of `other`'s body compiles `a.sml` alone; and every
+  build is the bytes of one without the cache (functors-units M10).
 * **S59, one unit in two sessions.** `c.sml` uses `a.sml` and `b.sml`,
   which do not use each other. Built after them in one order and then in
   the other through one cache, `c.sml`'s entry is taken, and compiled

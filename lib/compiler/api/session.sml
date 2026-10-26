@@ -59,6 +59,16 @@ struct
                                  (root ^ "/basis" :: (BasisManifest.libraries (root,#libraries config)
                                                       handle BasisManifest.Usage _ => [])))
                            | _ => []))
+          (* and the functions (functors-units M10) *)
+          val () =
+            Elaborate.inlineValues:=
+              List.foldl (fn (n,m) => StringMap.insert (m,n,())) StringMap.empty
+                (case (noInline,#lib config) of
+                   (false,SOME root) =>
+                     List.concat (List.map BasisManifest.inlineValues
+                       (root ^ "/basis" :: (BasisManifest.libraries (root,#libraries config)
+                                            handle BasisManifest.Usage _ => [])))
+                 | _ => [])
           val cacheHits=ref 0
           val compiled=ref 0
           val env = ref Env.initial

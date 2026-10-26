@@ -22,6 +22,7 @@ struct
     | Cache of string
     | Libraries of string list                   (* the libraries a library is written on *)
     | Inline of string list                      (* functors to inline across units (M6b) *)
+    | InlineVal of string list                   (* functions to inline across units (functors-units M10) *)
 
   exception Error of string
   exception LocatedError of Source.span * string
@@ -144,12 +145,15 @@ struct
         | W "libraries" => Libraries (paths "library")
         | W "inline" =>
             let
-              val () = expect "functor"
+              val kind = case next () of
+                           W "functor" => Inline
+                         | W "val" => InlineVal
+                         | _ => error "expected functor or val after inline"
               fun names () = case next () of
                                W "end" => []
                              | W n => n :: names ()
                              | S n => n :: names ()
-            in Inline (names ()) end
+            in kind (names ()) end
         | word as W s => if List.exists (fn k => k = s) keywords then error ("unexpected " ^ s) else File (reference ("source",word))
         | word as S _ => File (reference ("source",word))
     in
