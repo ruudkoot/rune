@@ -2,7 +2,9 @@
    primitive's number is its place in this list, from 0, so a new one goes
    at the end. lib/basis binds each with `_prim "name" : ty`, and its C is
    `p_<name>` in runtime/prims.c. `ty` is the type the library gives it, for
-   documentation and for the hosts' RUNE_PRIM (tests/basis/host). Primitives
+   documentation, for the hosts' RUNE_PRIM (tests/basis/host), and for the
+   compiler, which has it read as an SML type (Isa.primType: a function's,
+   of as many arguments as `arity`; PrimTys, Prims.repsOf). Primitives
    that return an option rely on the prelude declaring
    `datatype 'a option = NONE | SOME of 'a` (NONE = tag 0, SOME = tag 1), and
    those that return an order on `datatype order = LESS | EQUAL | GREATER`.

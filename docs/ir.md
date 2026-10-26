@@ -766,7 +766,8 @@ leaves implicit is explicit.
 * **Representations:** a variable holds what its representation says,
   where something else says too: the operation that makes it, a primitive
   that takes it (`Prims.repsOf`, made from the primitive's type in
-  `src/isa/prims.sml`), a field of a tuple or a constructor made in the
+  `src/isa/prims.sml`, which `runeisa` reads as an SML type: `PrimTys`),
+  a field of a tuple or a constructor made in the
   function, a block's or a known function's parameter it is passed to,
   what a closure's function reads of a value it captures, and an
   exception. Two agree where a value can be both: any with every one, con
