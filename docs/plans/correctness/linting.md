@@ -85,7 +85,7 @@ What it rests on:
 | M1 | The fixes found, and the guards that cost nothing | P | done (2026-10-26) |
 | M2 | Lints that cost less, with the same rules | P | done (2026-10-26) |
 | M3 | Levels | P | done (2026-10-26) |
-| M4 | The missing rules of LambdaLint and MidLint, a negative test for every rule | I | not started |
+| M4 | The missing rules of LambdaLint and MidLint, a negative test for every rule | I | done (2026-10-26); a `Select` past its tuple's fields is M6's (shapes) |
 | M5 | Mid is System F | I | not started |
 | M6 | Shapes and layouts in LowLint | I | not started |
 | M7 | The instruction sets described for checking | B | done (2026-10-26) |

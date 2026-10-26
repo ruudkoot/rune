@@ -13,6 +13,9 @@
      scheme has at them.
    * calls: a function of other than one parameter (a worker, M8) is only
      called, with an argument for each, and never used as a value.
+   * constants, primitives, exceptions' payloads and the casts the
+     compiler makes, by IrRules (linting roadmap, M4); a Do sets each
+     global it lists on every way that returns;
    * casts (functors-units.md, D3) of a
      record's slots (functor_cast, which only Translate's records make: a
      program's own unsafe_cast is not checked): each is to unit or from
@@ -47,11 +50,16 @@ struct
      global it names and does not define, the parameters' types of a
      function of several parameters it names and does not define, and
      whether it may set such a global. *)
-  type surround = {global : int -> scheme option, nary : int -> Ty.ty list option, sets : bool}
+  type surround = {global : int -> scheme option, nary : int -> Ty.ty list option, sets : bool, setter : int -> bool}
 
-  fun checkWith ({global = outer, nary = outerNary, sets} : surround) (p : program) : unit =
+  fun checkWith ({global = outer, nary = outerNary, sets, setter} : surround) (p : program) : unit =
     let
       fun bug msg = Error.bug msg
+      val mayOuter = sets
+      (* the globals a function sets (a Do's rule), and the depth of
+         functions the walk is in *)
+      val setInFun : unit IntTable.table = IntTable.table 16
+      val inFun = ref 0
       val bound : unit IntTable.table = IntTable.table 256
       fun bind x =
         case IntTable.find (bound, x) of
@@ -115,13 +123,6 @@ struct
                                   then IntTable.insert (toUnit, x, d) else ()
              | _ => ())
         | _ => ()
-      (* a record's slot is unit: a functor_cast is to it or from it *)
-      fun toOrFromUnit t =
-        case Ty.view t of
-          Ty.Arrow (d, c) =>
-            if Ty.equal (d, Ty.unit) orelse Ty.equal (c, Ty.unit) then ()
-            else bug ("a functor_cast from " ^ Ty.toString d ^ " to " ^ Ty.toString c ^ ", neither unit")
-        | _ => bug ("a functor_cast of type " ^ Ty.toString t)
       fun castBack (t, a) =
         case (Ty.view t, a) of
           (Ty.Arrow (d, c), Var (x, _)) => castFrom (d, c, x)
@@ -166,7 +167,7 @@ struct
                  case outer g of
                    SOME s => instance (fn () => "g" ^ Int.toString g, s, args)
                  | NONE => bug ("global g" ^ Int.toString g ^ " is not defined"))
-        | Const (_, t) => t
+        | Const (c, t) => (Option.app bug (IrRules.const (c, t)); t)
         | Con0 (tag, t) =>
             (case conArg ("a nullary constructor", t, tag) of
                NONE => t
@@ -198,19 +199,28 @@ struct
               | _ => wrong ()
             end
         | Prim (p, t, args) =>
-            ((case (p, args) of ("functor_cast", [a]) => (castBack (t, a); toOrFromUnit t) | _ => ());
+            ((case (p, args) of ("functor_cast", [a]) => castBack (t, a) | _ => ());
+             (* its description's, and a cast's origin's rule (IrRules.use):
+                a record's slot is unit, a functor_cast to it or from it *)
+             Option.app bug (IrRules.use (p, t));
+             (* open_layout's descriptor is a CInt given its datatype *)
+             let
+               val layout = p = "open_layout"
+               fun arg a = case a of Const (_, t) => if layout then t else atom a | _ => atom a
+             in
              case Ty.view t of
                Ty.Arrow (d, res) =>
                  (case (args, Ty.view d) of
-                    ([a], _) => expect (fn () => "the argument of " ^ p, atom a, d)
+                    ([a], _) => expect (fn () => "the argument of " ^ p, arg a, d)
                   | (xs, Ty.Tuple ds) =>
                       if List.length xs = List.length ds then
-                        ListPair.app (fn (x, d) => expect (fn () => "an argument of " ^ p, atom x, d)) (xs, ds)
+                        ListPair.app (fn (x, d) => expect (fn () => "an argument of " ^ p, arg x, d)) (xs, ds)
                       else bug ("primitive " ^ p ^ " of type " ^ Ty.toString t ^ " given "
                                 ^ Int.toString (List.length xs) ^ " arguments")
                   | _ => bug ("primitive " ^ p ^ " of type " ^ Ty.toString t);
                   res)
-             | _ => bug ("primitive " ^ p ^ " of type " ^ Ty.toString t))
+             | _ => bug ("primitive " ^ p ^ " of type " ^ Ty.toString t)
+             end)
         | Tuple xs => Ty.tuple (List.map atom xs)
         | Select (i, a) =>
             let val t = atom a
@@ -235,11 +245,20 @@ struct
             in case Ty.view t of Ty.Con _ => Ty.int | _ => bug ("the tag of what has type " ^ Ty.toString t) end
         | NewExn _ => Ty.exnCon
         | BuiltinExn _ => Ty.exnCon
-        | MkExn (c, p) => (expect (the "an exception constructor", atom c, Ty.exnCon); ignore (atom p); Ty.exn)
+        | MkExn (c, p) =>
+            (expect (the "an exception constructor", atom c, Ty.exnCon);
+             let val t = atom p
+             in case c of
+                  Var (x, _) => Option.app bug (IrRules.payload (x, t))
+                | Global (g, _) => Option.app bug (IrRules.payload (g, t))
+                | _ => ()
+             end;
+             Ty.exn)
         | ExnCon a => (expect (the "an exception", atom a, Ty.exn); Ty.exnCon)
         | ExnArg (t, a) => (expect (the "an exception", atom a, Ty.exn); t)
         | SetGlobal (g, a) =>
-            (case (IntTable.find (globals, g), if sets then outer g else NONE) of
+            (if !inFun > 0 then IntTable.insert (setInFun, g, ()) else ();
+             case (IntTable.find (globals, g), if mayOuter then outer g else NONE) of
                (SOME (_, t), _) => (expect (fn () => "the value of global g" ^ Int.toString g, atom a, t); Ty.unit)
              | (NONE, SOME (_, t)) => (expect (fn () => "the value of global g" ^ Int.toString g, atom a, t); Ty.unit)
              | (NONE, NONE) => bug ("global g" ^ Int.toString g ^ " is not defined"))
@@ -284,46 +303,105 @@ struct
         else
           (List.app (fn (x, _) => bind x) params;
            List.app (fn (x, t) => enter (x, ([], t))) params;
+           inFun := !inFun + 1;
            exp (IntMap.empty, body, result);
+           inFun := !inFun - 1;
            List.app (fn (x, _) => leave x) params)
 
+      (* The globals set on every way through e that returns, NONE where
+         none returns (a raise): a Do sets each it lists on every way that
+         returns (linting roadmap, M4) -- after simplify, one that always
+         raises still lists what it no longer sets. A handler's way may
+         leave its body anywhere, so it is the handler's alone. A global a
+         function sets is the exception: a dynamic module's slots are set
+         by the function the runtime is given, at the load and at each
+         reload (Translate, RuneDynamic.take), which Lift may move out of
+         the Do *)
+      fun meet (NONE, b) = b
+        | meet (a, NONE) = a
+        | meet (SOME a, SOME b) = SOME (IntMap.filteri (fn (g, _) => IntMap.member (b, g)) a)
+      fun sets (joins : unit IntMap.map option IntMap.map, e : exp) : unit IntMap.map option =
+        let
+          fun step (SetGlobal (g, _), k) = Option.map (fn m => IntMap.insert (m, g, ())) k
+            | step (_, k) = k
+        in
+          case e of
+            Let (_, _, r, b) => step (r, sets (joins, b))
+          | Fun (_, b) => sets (joins, b)
+          | Join (j, _, body, sc) => sets (IntMap.insert (joins, j, sets (joins, body)), sc)
+          | Jump (j, _) => (case IntMap.find (joins, j) of SOME k => k | NONE => SOME IntMap.empty)
+          | If (_, t, f) => meet (sets (joins, t), sets (joins, f))
+          | Handle (a, _, h) => meet (sets (joins, a), sets (joins, h))
+          | Raise _ => NONE
+          | Return r => step (r, SOME IntMap.empty)
+          | Mark (_, a) => sets (joins, a)
+        end
+
       fun valueOf e = case e of Mark (_, e) => valueOf e | Return r => SOME r | _ => NONE
+      (* each Do's globals and what it sets on every way, checked once
+         every function is seen *)
+      val dos : ((var * scheme) list * unit IntMap.map) list ref = ref []
       fun def d =
         case d of
           Val (g, (_, t), e) => (bind g; exp (IntMap.empty, e, t); Option.app (fn r => noteCast (g, r)) (valueOf e))
         | Funs fs => List.app (fn f => (bind (#name f); fundef f)) fs
-        | Do (gs, e) => (List.app (fn (g, _) => bind g) gs; exp (IntMap.empty, e, Ty.unit))
+        | Do (gs, e) =>
+            (List.app (fn (g, _) => bind g) gs;
+             exp (IntMap.empty, e, Ty.unit);
+             case sets (IntMap.empty, e) of
+               NONE => ()
+             | SOME set => dos := (gs, set) :: !dos)
+      fun unset (gs, set) =
+        case List.find (fn (g, _) => not (IntMap.member (set, g) orelse isSome (IntTable.find (setInFun, g)) orelse setter g)) gs of
+          SOME (g, _) => bug ("a Do lists g" ^ Int.toString g ^ ", which a way of it that returns does not set")
+        | NONE => ()
     in
-      List.app def p
+      List.app def p;
+      List.app unset (List.rev (!dos))
     end
 
   (* A whole program, or a unit's, whose globals of units before it are
      ToMid's to say (importedScheme) *)
   fun check (p : program) : unit =
-    checkWith {global = fn g => if !Pass.whole then NONE else !importedScheme g, nary = fn _ => NONE, sets = false} p
+    checkWith {global = fn g => if !Pass.whole then NONE else !importedScheme g, nary = fn _ => NONE, sets = false,
+               setter = fn _ => false} p
 
   (* A part of a program checked in what is around it (Simplify's
      definitions, each as it is made: the linting roadmap, E9): the schemes
      of the globals and the functions of several parameters of the program
      it was taken from, and of the parts checked before it, which `extend`
      adds; a part may set a global of those. *)
-  type context = {schemes : scheme IntTable.table, nary : Ty.ty list IntTable.table}
-  fun extend ({schemes, nary} : context) (p : program) : unit =
+  type context = {schemes : scheme IntTable.table, nary : Ty.ty list IntTable.table, setters : unit IntTable.table}
+  fun extend ({schemes, nary, setters} : context) (p : program) : unit =
     let
+      (* the globals a function sets, for a Do's rule *)
+      fun exp (inFun, e) =
+        case e of
+          Let (_, _, r, b) => (rhs (inFun, r); exp (inFun, b))
+        | Fun (fs, b) => (List.app (fn f => exp (true, #body f)) fs; exp (inFun, b))
+        | Join (_, _, b, sc) => (exp (inFun, b); exp (inFun, sc))
+        | If (_, t, f) => (exp (inFun, t); exp (inFun, f))
+        | Handle (a, _, h) => (exp (inFun, a); exp (inFun, h))
+        | Return r => rhs (inFun, r)
+        | Mark (_, a) => exp (inFun, a)
+        | _ => ()
+      and rhs (true, SetGlobal (g, _)) = IntTable.insert (setters, g, ())
+        | rhs _ = ()
       fun fundef (f : fundef) =
         (IntTable.insert (schemes, #name f, (#tyvars f, funTy f));
-         case #params f of [_] => () | ps => IntTable.insert (nary, #name f, List.map #2 ps))
+         case #params f of [_] => () | ps => IntTable.insert (nary, #name f, List.map #2 ps);
+         exp (true, #body f))
     in
-      List.app (fn Val (g, s, _) => IntTable.insert (schemes, g, s)
+      List.app (fn Val (g, s, e) => (IntTable.insert (schemes, g, s); exp (false, e))
                  | Funs fs => List.app fundef fs
-                 | Do (gs, _) => List.app (fn (g, s) => IntTable.insert (schemes, g, s)) gs) p
+                 | Do (gs, e) => (List.app (fn (g, s) => IntTable.insert (schemes, g, s)) gs; exp (false, e))) p
     end
   fun context (p : program) : context =
-    let val c = {schemes = IntTable.table 1024, nary = IntTable.table 64}
+    let val c = {schemes = IntTable.table 1024, nary = IntTable.table 64, setters = IntTable.table 16}
     in extend c p; c end
-  fun checkIn ({schemes, nary} : context) (part : program) : unit =
+  fun checkIn ({schemes, nary, setters} : context) (part : program) : unit =
     checkWith {global = fn g => case IntTable.find (schemes, g) of
                                   SOME s => SOME s
                                 | NONE => if !Pass.whole then NONE else !importedScheme g,
-               nary = fn x => IntTable.find (nary, x), sets = true} part
+               nary = fn x => IntTable.find (nary, x), sets = true, setter = fn g => isSome (IntTable.find (setters, g))} part
 end

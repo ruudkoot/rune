@@ -364,6 +364,9 @@ struct
         let
           val {global, extra, outer} = valOf (IntTable.find (lifted, name))
           val fresh = List.map (fn x => (x, freshStamp ())) extra
+          (* an exception it captured, a parameter now: its argument under the
+             parameter's name (Ty.copyExn), for MidLint's check of MkExn *)
+          val () = List.app (fn (x, y) => Ty.copyExn (x, y, fn t => t)) fresh
           val s = List.foldl (fn ((x, y), m) => IntMap.insert (m, x, y)) IntMap.empty fresh
           val ps = List.map (fn (x, y) => (y, case IntTable.find (schemes, x) of SOME (_, t) => t | NONE => Ty.unit)) fresh
           (* named as it was, by its first parameter now *)
