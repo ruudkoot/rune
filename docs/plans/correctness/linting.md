@@ -88,7 +88,7 @@ What it rests on:
 | M4 | The missing rules of LambdaLint and MidLint, a negative test for every rule | I | not started |
 | M5 | Mid is System F | I | not started |
 | M6 | Shapes and layouts in LowLint | I | not started |
-| M7 | The instruction sets described for checking | B | not started |
+| M7 | The instruction sets described for checking | B | done (2026-10-26) |
 | M8 | A verifier of the register code | B | not started |
 | M9 | Units and the link | B | not started |
 | M10 | The stack code's check, in the compiler | B | not started |
@@ -119,6 +119,36 @@ The tracks do not wait for each other, after M1:
   and gives the editor a type at every node. It also makes overloading's
   context and the treatment of free type variables options (M15). Gate
   G1, after AstLint of the Core, is the owner's.
+
+## The implementation so far
+
+The owner took every decision as recommended and asked for every milestone
+(2026-10-26). Each milestone is merged into `linting` after `make check`
+passes on its exact commit.
+
+- **M7** (`ac2e7e2ad`, merged `efa5148f1`; `make check` 21,251 of 21,251).
+  - **The register instructions are described for checking in
+    `src/isa/regs.sml`:**
+    - each operand's role and the value it holds;
+    - the implicit traffic of `PRIM`, `PRIMPUSH`, `CALL`, `RESULT` and
+      `CATCH`;
+    - "followed by" (`RESULT`, `SWITCH`'s table, `CATCH` at a handler);
+    - which primitives each instruction may name;
+    - the closures' and known calls' facts that E7's rules need.
+  - **RegGen writes the tables into `regcodes.sml`**, and
+    `Regs.imagePrims` is generated. `RegIsa.check` holds a description
+    together, and `runeisa --test` refuses 43 wrong ones (in
+    `make check-isa`).
+  - **Primitives' types are parsed** by a real parser (`Isa.parseTy`; all
+    414 parse) into `PrimTys`, and `Prims.repsOf` comes from them. This
+    moved here from M4, which needs it later.
+  - **The fingerprint and the output are unchanged.** The loader's
+    `prim_result` keeps the old reading, so the C does not change.
+  - **Found:** with the parse, the primitives without a result rep are 8,
+    not 28. The split on `*` misread 20, among them `rt_debug_hook` and
+    `repl_printer_add`.
+  - **Cost:** start-up +0.44% of `compile-hello` (the tables are built at
+    start).
 
 ## Found while writing this roadmap
 
