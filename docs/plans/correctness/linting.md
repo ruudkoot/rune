@@ -14,7 +14,7 @@ neither the syntax the elaborator typed nor the bytecode it writes.
   be on for a user. Lint never runs at all in some places: the link, the
   cache, the frozen Basis, the register target in `check-levels`.
 
-This roadmap plans four things:
+This roadmap plans five things:
 - **Lint in the right places, at a cost that allows levels.**
   - Two fixes cut the lints to 35-60% of their cost with the same rules.
   - Four levels run from always on to deep.
@@ -31,6 +31,9 @@ This roadmap plans four things:
 - **Types on the syntax, and AstLint:** an independent checker of the
   elaborator's derivations, following the Definition, and types for the
   editor at every node. The groundwork for error messages comes with it.
+- **Two choices the Definition leaves open, as options of the language:**
+  overloading's context and free type variables at top level, as
+  `--flex-records` is for flexible records (the owner's direction).
 
 Writing it found two bugs:
 - **Rune rejects a valid program** (the value restriction misses
@@ -48,7 +51,7 @@ What it rests on:
 - **The code:** a reading of the lints and the pipeline, the elaborator's
   annotations, the module language, the back end, the loader and what
   tier 2 trusts (*Where we are*).
-- **Thirteen experiments** (*The experiments*):
+- **Fourteen experiments** (*The experiments*):
   - what each lint costs (E1), and cheaper levels (E2);
   - which check catches which bug, by mutants of the compiler (E3), and
     the history of the compiler's bugs (E4);
@@ -59,7 +62,9 @@ What it rests on:
   - lint where it does not run (E9), and the IR lints' missing rules
     (E10);
   - the literature, and eighteen other systems' checks, all but Lua's read
-    in their sources (E11).
+    in their sources (E11);
+  - overloading's context and free type variables at top level, in eight
+    compilers (E13).
 - **Throwaway prototypes:**
   - an instrument for the lints' cost, and the lints in new places;
   - `SourceTy` and the tables of types on the syntax;
@@ -92,9 +97,12 @@ What it rests on:
 | G1 | How AstLint goes on (the owner's) | A | |
 | M13 | AstLint of the module language | A | not started |
 | M14 | The editor's types | A | not started |
-| M15 | Retire | | not started |
+| M15 | Overloading's context and free type variables, as options | A | not started |
+| M16 | Retire | | not started |
 
-D1 to D17 are undecided; they are the owner's (*Decisions*).
+D1 to D17 are undecided; they are the owner's (*Decisions*). D18 and D19,
+the options of M15, are the owner's direction of 2026-10-26; their modes'
+names and defaults are recommendations.
 
 The tracks do not wait for each other, after M1:
 - **P, placement and cost,** puts lint where it does not run and makes it
@@ -106,8 +114,9 @@ The tracks do not wait for each other, after M1:
   interfaces at the link.
 - **A, the syntax,** gives every node an id, records the elaborator's
   witnesses in a type language of the source, checks them with AstLint,
-  and gives the editor a type at every node. Gate G1, after AstLint of the
-  Core, is the owner's.
+  and gives the editor a type at every node. It also makes overloading's
+  context and the treatment of free type variables options (M15). Gate
+  G1, after AstLint of the Core, is the owner's.
 
 ## Found while writing this roadmap
 
@@ -175,6 +184,16 @@ this roadmap.
   They are not bugs, but a verifier must not refuse them. That is why it
   takes declared reps rather than reps derived from stores (D9).
 
+- **Rune's overloading is settled in a larger context than Appendix E
+  allows** (E13): a whole structure or `local`, where the bound is the
+  smallest enclosing structure-level declaration. `docs/language.md` lists
+  it as a deviation. Its three contexts are not one:
+  - overloading per declaration at top level;
+  - flexible records and free type variables per topdec, to
+    `;`.
+
+  D18, D19, M15.
+
 **Outside this roadmap:**
 - **SML/NJ rejects `(conexp : ty)` too.** SML/NJ 110.79, 110.99.9 and
   2026.2 reject E6's program. Moscow ML 2.10.1 accepts the declaration but
@@ -184,6 +203,14 @@ this roadmap.
   compiles, on a loaded machine. It did not come back in 46 more runs.
   Nothing in the compiler's SML can corrupt the C heap, so it is the VM's.
   It is worth a run under ASan. Not this roadmap's.
+- **MLKit 4.7.25 fails with an internal error** (E13) on a functor whose
+  result keeps a free type variable:
+  `functor F () = struct val id = (fn x => x) (fn x => x) end`, then
+  `structure A = F ()` ("Impossible: IntModules.reelaborate.ParseElab.FAILURE").
+- **SML/NJ gives a dummy type at each value declaration** (E13). It
+  rejects programs the Definition accepts: `val r = ref []` determined by a
+  later declaration of the same topdec, or inside a
+  structure. Not reported.
 
 ## The request
 
@@ -221,6 +248,18 @@ the brief gets wrong*, W1).
 - **Form:** that of `docs/plans/functors-units.md`.
 - **The threshold for a check that is always on** is the roadmap's to
   measure and propose (D13).
+- **Trimming:** cut only what is fluff, not to a length.
+
+**The owner's direction after M0 was first written (2026-10-26):** the
+owner asked what other compilers do about two places where the Definition
+leaves the choice to the implementation:
+- the context that resolves overloading (Appendix E);
+- what becomes of free type variables at top level (rules 87-89, Appendix
+  G.8).
+
+On the answer (E13) the owner directed: "like flex-records i want to make
+this a language options". The modes and defaults are this roadmap's
+proposal (D18, D19), and M15 builds them.
 
 | The brief asks | Answered in |
 |---|---|
@@ -251,6 +290,11 @@ the brief gets wrong*, W1).
 | the elaborated program checked again | as AstLint, above |
 | a cheaper lint | E1, E2; D13; M2, M3 |
 | lint at the boundary of units | E7, E9; D15; M9 |
+
+| The owner's direction (2026-10-26) | Answered in |
+|---|---|
+| what other compilers do about overloading's context and free type variables at top level | E13; *What the Definition says* |
+| both as options of the language, as `--flex-records` is | D18, D19; M15 |
 
 ## What the brief gets wrong, leaves open, or makes dangerous
 
@@ -636,7 +680,7 @@ by restoring the elaborator's snapshot (`unitbasis.sml:734-752`;
     Definition makes new names;
   - `ref` and `array` admit equality whatever their argument.
 - **Overloading:** a variable of kind `KOverload`, settled by
-  `resolvePending` at the end of each top-level declaration (`:2138`) and
+  `resolvePending` at the end of each declaration at top level (`:2138`) and
   of each functor body (`:1708`). `finish` (`:261-270`) settles the
   flexible records of `program` mode and runs the deferred exhaustiveness
   checks.
@@ -650,7 +694,7 @@ by restoring the elaborator's snapshot (`unitbasis.sml:734-752`;
     (`topdec-monomorphic`, `:297`);
   - at the program's end.
 
-  A topdec is not a top-level declaration: it runs to `;` or the end of
+  A topdec is not a declaration at top level: it runs to `;` or the end of
   the file.
 - **Closure (rules 87-89):** `checkClosed` and `pendingClosed`
   (`:2054-2065, 2137-2146`).
@@ -673,7 +717,7 @@ by restoring the elaborator's snapshot (`unitbasis.sml:734-752`;
 type mismatch between *A* and *B* (*reason*)" (`elaborate.sml:125-134`).
 - `Diagnostic` renders a level, a span and a message; it has no datatype
   of errors (`util/diagnostic.sml:83-209`).
-- Recovery is per top-level declaration: a snapshot is restored and the
+- Recovery is per declaration at top level: a snapshot is restored and the
   error reported (`elaborate.sml:2075-2158`). A declaration that fails
   leaves its names unbound, so
   `fun f (x, y) = if x then y + 1 else "no"  val z = f (true, 2)`
@@ -979,10 +1023,17 @@ implementation, and must therefore be read in Rune's terms:
   Rule 15 then requires `U ∩ tyvars VE' = ∅`.
 - **Overloading** (Appendix E). The type of an overloaded identifier or
   constant must be determined "by the surrounding text", with defaults
-  (`int`, `word`, `real`, `string`, `char`) otherwise. How much text is
-  surrounding is the implementation's: Rune settles it at the end of each
-  top-level declaration and after each functor body (`resolvePending`). A
-  checker can verify that each choice belongs to its class. That the
+  (`int`, `word`, `real`, `string`, `char`) otherwise. The surrounding text
+  is "no larger than the smallest enclosing structure-level declaration",
+  and an implementation may require a smaller one.
+  - Rune today settles it at the end of each declaration at top level, a
+    whole structure or `local`, and after each functor body
+    (`resolvePending`). That is larger than the bound: a documented
+    deviation, runespec's `E.topdec`.
+  - E13 found four choices among eight compilers; D18 makes the context an
+    option.
+
+  A checker can verify that each choice belongs to its class. That the
   choice equals the default where nothing determined it can be checked
   only against a record of the choice, since both choices type-check.
 - **Flexible records** (4.11, item 1). A pattern row with `...` must be
@@ -991,7 +1042,9 @@ implementation, and must therefore be read in Rune's terms:
   verify the record the row became, but not the policy that chose when.
 - **Free type variables at top level** (rules 87 and 89, Appendix G.8):
   `tyvars B'' = ∅`. Implementations may refuse such a program or replace
-  the variables by monotypes; runespec's reading is named `87.free`.
+  the variables by monotypes; runespec's reading is named `87.free`. E13
+  found five behaviours, two of them outside G.8. D19 makes the choice an
+  option.
 - **Further restrictions** (4.11, items 2 and 3): matches that are not
   exhaustive and redundant rules are warnings, not part of typing.
 - **Equality.** Datatypes admit equality by the greatest fixed point (4.9,
@@ -1370,7 +1423,7 @@ shared. *Decisions*, D1.
 
 ## The experiments
 
-Thirteen experiments came before the writing, by five agents and the lead,
+Fourteen experiments came before the writing, by five agents and the lead,
 each in a snapshot of its own built from `d551f19dd`.
 
 **How they were measured**
@@ -1939,7 +1992,7 @@ nodes at 20 applications, 1,745 steps and 278 nodes at 128.
   five `--flex-records` modes.
 - **With targeted programs** (`tests/flexrec`, and four of the
   experiment's own: `ref nil`, and a flexible record that a later
-  declaration settles), types change after a top-level declaration's end
+  declaration settles), types change after a declaration at top level ends,
   in every mode that accepts such a program.
 - **After a topdec's end** they change only under `--flex-records=program`.
 - **So zonking:**
@@ -2754,6 +2807,100 @@ compared with today's facts, and `typeAt`'s scan was timed on real spans.
 - **Keep or work out on demand.** Either works. Keeping costs 8 bytes a
   node; working out costs a tenth of a second on the largest declaration.
 
+### E13. Overloading's context, and free type variables at top level, in eight compilers
+
+**Question.** Appendix E leaves the size of overloading's "surrounding
+text" to the implementation, below a bound. Appendix G.8 leaves what
+becomes of a type variable free at top level to the implementation, as
+one of two answers. What do the implementations choose, and where does
+Rune stand?
+
+**How** (`results/E13/`, `run.sh`). Thirteen small programs, run on:
+- Rune (`d551f19dd`);
+- HaMLet 2.0.1;
+- MLton 20241230;
+- Poly/ML 5.9.2;
+- SML/NJ 110.99.9 and 2026.2;
+- MLKit 4.7.25;
+- Moscow ML 2.10.1 (`mosmlc`, with `-toplevel` for the programs that mix
+  structures and values).
+
+**Overloading.** `fun double x = x + x` and then `double 2.0`, placed in
+different contexts. A means accepted, with `+` at `real`; R means rejected,
+`+` defaulted to `int`:
+
+| Where | the Definition | HaMLet | SML/NJ, MLKit | Rune, Moscow ML | MLton, Poly/ML |
+|---|---|---|---|---|---|
+| one `structure … end` | R | R | R | A | A |
+| one `local … end` | R | R | R | A | A |
+| two declarations at top level, no `;` | R | R | R | R | A |
+| the same, with `;` | R | R | R | R | R |
+| `val y = let fun double … in double 2.0 end` | A or R | R | A | A | A |
+| `let val d = fn x => x + x val z = d 2.0 …` | A or R | R | A | A | A |
+| `(fn x => x + x) 2.0` | A | A | A | A | A |
+
+Appendix E bounds the context from above: "no larger than the smallest
+enclosing structure-level declaration", and smaller if the implementation
+asks. So there are four choices:
+- **the innermost `val` or `fun` (HaMLet):** below the bound, as allowed;
+- **the smallest enclosing structure-level declaration (SML/NJ, MLKit):**
+  the bound itself;
+- **the declaration at top level (Rune, Moscow ML):** a whole structure, or
+  a `local`. This is above the bound, which `docs/language.md` lists among
+  its *Deviations* (Overloading) and runespec names `E.topdec`;
+- **the topdec, to `;` or the end of the file (MLton,
+  Poly/ML):** further above it.
+
+**Free type variables at top level.** `val r = ref []` and its kin:
+
+| Program | Rune | HaMLet | Poly/ML | SML/NJ | MLton | MLKit | Moscow ML |
+|---|---|---|---|---|---|---|---|
+| `val r = ref []`, never used | refused | refused | warned; a unique monotype | warned; a dummy type `?.X1` | warned; left open | refused | refused |
+| then `r := [1]`, no `;` | runs | runs | runs | error | runs | runs | runs |
+| then `r := [1]`, after a `;` | refused | refused | error | error | runs | runs | runs |
+| `r` in a structure, set by a later declaration | runs | runs | runs | error | runs | runs | runs |
+| `val x = [] @ []`, never used | refused | refused | monotype | dummy | warned | refused | refused |
+| a functor's result `val id = (fn x => x) (fn x => x)`, then `A.id 1` | refused at the functor | runs | error | error | runs | crashes | runs |
+
+There are five behaviours, along two axes: when the type must be
+determined, and what becomes of it if it is not.
+- **Refused at the end of the topdec (Rune, HaMLet):** G.8's
+  first answer. Rune also refuses at a functor's declaration, as rule 89
+  says; HaMLet does not look into a functor's result.
+- **A fresh monotype at the end of the topdec (Poly/ML):**
+  G.8's second answer.
+- **A dummy type at the end of each value declaration, at any depth
+  (SML/NJ):** too early. It rejects two programs the Definition accepts: a
+  later use in the same topdec, and one inside a structure.
+- **Determined by any later use in the program; refused if none
+  determines it (MLKit, and Moscow ML in a compiled unit):** the "arbitrary
+  monotype" chosen with hindsight.
+- **Determined by any later use, and only a warning if none does (MLton):**
+  the same, for a whole program.
+
+**Rune's three contexts are not one.**
+- Overloading is settled per declaration at top level.
+- Flexible records and free type variables are settled per topdec, to
+  `;` (`--flex-records`' default, `topdec`).
+- `docs/language.md` ties the second to the first: "In the modes of a
+  top-level declaration, the free type variables of rules 87-89 are those
+  left where the top-level declaration ends".
+
+**Also found:**
+- MLKit 4.7.25 fails with an internal error on the functor
+  ("Impossible: IntModules.reelaborate.ParseElab.FAILURE").
+- SML/NJ rejects the two valid programs above.
+
+Neither is reported.
+
+**For the roadmap** (D18, D19, M15):
+- **The owner's direction (2026-10-26):** like `--flex-records`, both
+  become options of the language, each mode named after what it does and
+  which implementation does it.
+- **Overloading's default is the Definition's bound;** Rune's present
+  context becomes an option.
+- **Free type variables keep Rune's present default.**
+
 ## Constraints
 
 What any design here must keep.
@@ -2877,7 +3024,7 @@ What is added, in tables by node id, is about 6-8% of the nodes (E5):
 - the type variables each binding generalised, taken *at the binding*,
   before a group's first generalisation marks them all (E6);
 - the defaults chosen for overloaded identifiers and constants;
-- whether each top-level declaration elaborated, so that a failed one's
+- whether each declaration at top level elaborated, so that a failed one's
   records are known to be junk.
 
 The tables are dropped by ranges of ids, as `UnitBasis.undo` drops stamps.
@@ -2933,6 +3080,19 @@ rather than stamps, and AstLint checks matching by paths and one-way
 matching, and discharges the axioms (D5, after gate G1). Programs the
 elaborator wrongly *rejects*, as `(conexp : ty)` was, are runespec's to
 find, not AstLint's (D16).
+
+### Two choices of the language as options (D18, D19)
+
+- **Overloading** is resolved, and defaulted, at the end of the context
+  `--overloading` names. The default, `declaration`, is Appendix E's bound.
+- **Free type variables at top level** are treated as `--free-tyvars`
+  says. The default, `refuse`, is Rune's present answer to rules 87-89.
+- **`--flex-records`** keeps flexible records alone.
+
+All three are in the cache's configuration. AstLint takes them as its
+configuration: it checks what each mode makes checkable (a default within
+its class; no free type variable where the mode refuses one), and names
+each mode by its reading.
 
 ### The editor's types (D7)
 
@@ -3071,6 +3231,8 @@ None is decided; they are the owner's.
 | D15. The boundary of units | A: verify once per unit, check interfaces at the link |
 | D16. runespec | A: independent of AstLint; a third oracle once merged |
 | D17. What Mid's type variables mean | A: Mid is System F |
+| D18. Overloading's context, as an option (the owner's direction) | `--overloading=binding\|declaration\|toplevel\|topdec`, default `declaration`, Appendix E's bound |
+| D19. Free type variables at top level, as an option (the owner's direction) | `--free-tyvars=refuse\|monotype\|dummy\|later\|later-monotype`, default `refuse`, as today |
 
 ### D1. How nodes of the syntax are keyed
 
@@ -3140,8 +3302,9 @@ a node.
   - each declaration's result;
   - closure at the top level.
 
-  Rune's documented deviations and extensions are read as Rune reads them,
-  each named by runespec's reading (`spec/notes/M10-deviations.md`, and
+  Rune's documented deviations and extensions, and the modes of
+  `--flex-records`, `--overloading` and `--free-tyvars` (D18, D19), are read
+  as Rune reads them, each named by runespec's reading (`spec/notes/M10-deviations.md`, and
   `docs/language.md`). Policy is checked only by its result: when a
   flexible record was settled, which default was chosen where both
   type-check. The parser's rewrites are trusted.
@@ -3202,7 +3365,7 @@ The brief asks for groundwork only; the error-message roadmap comes later.
   - spans on clauses, match rules, labels and sequences of type variables
     (today a declaration's fact spans its whole `fun`, E12);
   - one printer over `SourceTy` for messages, hovers and AstLint;
-  - each top-level declaration's status.
+  - each declaration's status, at top level.
 
   **Recommended.**
 - **B. A, plus an error type** in `Types.ty` and `SourceTy`, so that a
@@ -3415,6 +3578,72 @@ id is unique.
   impossible, and leaves every substitution's correctness to the ids'
   uniqueness.
 
+### D18. Overloading's context, as an option
+
+The owner's direction (2026-10-26): as `--flex-records` does for flexible
+records, an option chooses the context that must resolve an overloaded
+identifier or constant (Appendix E). Its modes are E13's four choices,
+named as `--flex-records`' are where the context is the same:
+
+| `--overloading=` | The context | Whose | Within Appendix E |
+|---|---|---|---|
+| `binding` | the innermost `val` or `fun` | HaMLet's | yes, below the bound |
+| `declaration` | the smallest enclosing structure-level declaration | SML/NJ's and MLKit's | yes, the bound |
+| `toplevel` | the declaration at top level: a whole structure, `local` or functor | Moscow ML's, and Rune's until now | no |
+| `topdec` | the topdec: to `;` or the end of the file | MLton's and Poly/ML's | no |
+
+- **A. Default `declaration`.** **Recommended.**
+  - It is the most the Definition allows, and what SML/NJ and MLKit do.
+  - It follows the owner's rule from the functors-units brief: the
+    Definition by default, other compilers' leniency as an option.
+  - It breaks what relies on more. M15 measures that on the compiler, the
+    Basis, MLton's sources, the corpora and HOL4 before it changes the
+    default. HOL4, built with Poly/ML, is the likeliest to need `topdec`.
+- **B. Default `toplevel`, as today.** Nothing breaks, and Rune stays
+  outside the Definition by default.
+- **C. Default `topdec`,** as `--flex-records`' default is. The most
+  lenient; MLton's and Poly/ML's programs compile unchanged. Furthest from
+  the Definition.
+
+There is no `program` mode: defaulting at the end of a program would make
+a unit's types depend on the units compiled after it.
+
+### D19. Free type variables at top level, as an option
+
+The owner's direction (2026-10-26). Rules 87 and 89 forbid a free type
+variable in the basis, and Appendix G.8 lets an implementation refuse the
+program or replace the variables by monotypes. E13 found five behaviours,
+along two axes: when the type must be determined, and what becomes of one
+that is not. An option chooses one:
+
+| `--free-tyvars=` | Determined by | If not | Whose | Within G.8 |
+|---|---|---|---|---|
+| `refuse` | the end of the topdec | an error | HaMLet's, and Rune's | yes |
+| `monotype` | the end of the topdec | a warning, and a fresh monotype | Poly/ML's | yes |
+| `dummy` | the end of each value declaration, at any depth | a warning, and a dummy type | SML/NJ's | no: it rejects valid programs |
+| `later` | any later use in the program, or the unit | an error | MLKit's and Moscow ML's | arguably, the monotype chosen with hindsight |
+| `later-monotype` | any later use in the program, or the unit | a warning, and a fresh monotype | MLton's | arguably |
+
+- **A. Default `refuse`, as today.** **Recommended.** It is within G.8,
+  and gives the error where the type was left open. `monotype` lets a
+  `ref []` that nothing uses pass in silence, and a later use fail with a
+  message about an invented type.
+- **B. Default `monotype`.** Also within G.8; quieter, and its errors come
+  later and further from their cause.
+
+The option is separate from `--flex-records`, which today also fixes
+where rules 87-89 are checked. A flexible record still open when the check
+runs counts as a free type variable, unless its own context ends later. In
+the REPL, which compiles each topdec at once, `later` and
+`later-monotype` keep a variable open across inputs until a use fixes it,
+as OCaml's weak type variables are. Or they are refused there; M15
+decides by what it costs.
+
+Both options join the cache's configuration, as `flex` does
+(`unitcache.sml:108`). AstLint reads them as its configuration (D3), named
+by runespec's readings `E.default`, `E.topdec` and `87.free`, with new
+readings for the modes runespec does not have.
+
 ## The milestones
 
 Each milestone is one commit or a few, and each commit leaves `make check`
@@ -3428,7 +3657,7 @@ shows the same bytes with it on and off. The sizes are lines of code and
 tests.
 
 The tracks are those of *Status*. M1 comes first; after it, I, B and A do
-not wait for each other except where a milestone says so. M15 closes them
+not wait for each other except where a milestone says so. M16 closes them
 all.
 
 ### M1. The fixes found, and the guards that cost nothing (P; S, about 300)
@@ -3762,7 +3991,38 @@ After M12, the owner decides two things from what AstLint cost and found:
 * **Touches:** `lib/compiler/api/facts.sml`, `api/analysis.sml`,
   `api/analysis-engine.sml`, `src/lsp/worker-analysis.sml`.
 
-### M15. Retire (S)
+### M15. Overloading's context and free type variables, as options (A; M, about 400)
+
+* **What:** D18 and D19, the owner's direction.
+  - **`--overloading=binding|declaration|toplevel|topdec`.** The elaborator
+    resolves and defaults the open overloaded variables at the end of the
+    chosen context; `toplevel` is what `resolvePending` does today.
+  - **`--free-tyvars=refuse|monotype|dummy|later|later-monotype`.** The
+    check of rules 87-89 is moved out of `--flex-records`' context, which
+    then decides only flexible records.
+  - **Wiring:** both go into the cache's configuration, the REPL's and the
+    compiler library's settings, the help, the man page and
+    `docs/language.md`. Under the defaults the *Deviations* row
+    *Overloading* is no longer a deviation.
+  - **A suite in the manner of `tests/flexrec`:** E13's programs under
+    every mode of each, each held to what the implementation it follows
+    did with them.
+  - **First, before any default changes:** the compiler, the Basis,
+    MLton's 606 files, the `rune-corpus-sml97` packages and HOL4 compiled
+    under `--overloading=declaration`, counting what breaks. The default
+    moves when the owner accepts the count; a corpus that needs more
+    names its mode in its build.
+* **Done when:**
+  - Rune reproduces E13's tables, mode by mode;
+  - every corpus compiles under the defaults or under the mode its build
+    names;
+  - `make check` is green.
+* **Touches:** `lib/compiler/elab/elaborate.sml`, `src/driver/options.sml`,
+  `lib/compiler/driver/unitcache.sml`, `src/repl/repl.sml`,
+  `lib/compiler/api/session.sml`, `docs/language.md`, the man page, a new
+  `tests/overloading` beside `tests/flexrec`.
+
+### M16. Retire (S)
 
 * **What:**
   - the final measurements: E1 and E2 again, on the merged tree;
@@ -3804,6 +4064,8 @@ Not this roadmap's:
 - **A in order M11, M12, G1, M13,** because AstLint needs the witnesses,
   and the module language needs what the Core showed. M14 can follow
   M11 at once, with M12's synthesis when it lands.
+- **M15 independent:** it changes typing, not checks, and is best before
+  M12, whose AstLint takes its modes as configuration.
 - **I independent:** M4, M5 and M6 touch the lints alone. M5's Lift fix
   and M4's casts change the compiler's output and are tested as such.
 
@@ -3816,7 +4078,8 @@ Not this roadmap's:
   - **`--lint=LEVEL`** (0 to 3), with `RUNE_LINT=LEVEL` and `--lint=off`
     (M3);
   - **`RUNE_FAULT=STAGE:KIND[@N]`**, for the tests only (M4);
-  - **`--pass-stats`** gains a line per check (M1).
+  - **`--pass-stats`** gains a line per check (M1);
+  - **`--overloading=MODE`** and **`--free-tyvars=MODE`** (M15, D18, D19).
 - **No new switch for AstLint or `RegVerify`:** their levels place them.
 - **Files whose formats change:**
   - the unit file (`.rbu`), with the verifier's facts (M8) and the
@@ -3826,6 +4089,8 @@ Not this roadmap's:
   The `.rbc` and the image do not change (D9).
 - **What the owner decides:**
   - D1 to D17;
+  - the modes and defaults of D18 and D19, and whether the default of
+    `--overloading` moves once M15 has counted what it breaks;
   - gate G1, after M12;
   - whether the test of `CALL`'s function index (E7b's C-call) lands in
     the VM now or with the VM roadmap (D8).
@@ -3866,6 +4131,10 @@ Not this roadmap's:
   harness.
 - **middle-end.md** made Mid typed in the manner of System F (its D3).
   D17 holds Mid to that.
+- **docs/language.md's *Deviations*: Overloading and Flexible records.**
+  M15 rewrites the first, which under D18's default is no longer a
+  deviation. It moves the check of rules 87-89 out of the second, and adds
+  rows for the two options. `tests/flexrec` is the model for M15's suite.
 - **A future roadmap: the VM's verifier.** It gets E7b's measures and the
   test of `CALL`'s function index (E7b's C-call, D8), E7's reproducer, and the tables M7 generates from `src/isa`. Its
   verifier must be sound by design (*What the literature says*).
@@ -3896,6 +4165,11 @@ Not this roadmap's:
 7. **The witnesses outgrow 8%.** On a corpus unlike these, more nodes may
    need one. The tables are by id, so the cost is measured, not guessed
    (M11's budgets).
+8. **A default that changes what compiles.** `--overloading=declaration`
+   rejects a structure or `local` that today resolves overloading across
+   its declarations, which MLton and Poly/ML accept as well. M15 counts the
+   breakage on every corpus first, and the owner decides whether the
+   default moves.
 
 ## Testing
 
