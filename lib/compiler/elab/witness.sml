@@ -96,7 +96,9 @@ struct
 
   (* --dump-witnesses: each entry recorded of a node of the files wanted, in
      the order it was recorded, with its node's span and its types read as
-     SourceTy, one printer for all (after Elaborate.finish) *)
+     SourceTy, one printer for all (after Elaborate.finish); the types of
+     each declaration at top level read in a batch of their own (its
+     entries end with its status) *)
   fun dump (wanted : string -> bool, say : string -> unit) : unit =
     let
       val p = SourceTy.newPrinter ()
@@ -118,5 +120,11 @@ struct
           | 5 => with' (defaults, fn t => "default " ^ show t)
           | _ => with' (status, fn ok => if ok then "elaborated" else "failed")
         end
-    in SourceTy.batch (fn () => List.app one (List.rev (!log))) end
+      (* the log, oldest first, cut after each status *)
+      fun declarations ([], [], acc) = List.rev acc
+        | declarations ([], cur, acc) = List.rev (List.rev cur :: acc)
+        | declarations (e :: rest, cur, acc) =
+            if e mod 8 = 6 then declarations (rest, [], List.rev (e :: cur) :: acc)
+            else declarations (rest, e :: cur, acc)
+    in List.app (fn es => SourceTy.batch (fn () => List.app one es)) (declarations (List.rev (!log), [], [])) end
 end
