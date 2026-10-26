@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S78. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S79. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
@@ -363,6 +363,13 @@ when the scenarios above were all green
   (its usage `inlv A.inc` holds by the body's Mid), and not `c.sml` nor
   `main.sml`; an edit of `other`'s body compiles `a.sml` alone; and every
   build is the bytes of one without the cache (functors-units M10).
+* **S79, a signature's structure by reference in its own unit.** `s.sml`
+  declares `ELT` and `PAIR`, whose structures `A` and `B` are `ELT`'s, and
+  `u.sml` matches `PAIR`. `s.sml`'s basis writes `A` and `B` as references
+  to `ELT`, written before them in the same basis (functors-units M11,
+  part 2), and the build is the bytes of one without the cache. A comment
+  added to `s.sml` compiles it alone; then `ELT` gains `val y : t`, and
+  `u.sml` is compiled again and fails, as a build without the cache does.
 * **S59, one unit in two sessions.** `c.sml` uses `a.sml` and `b.sml`,
   which do not use each other. Built after them in one order and then in
   the other through one cache, `c.sml`'s entry is taken, and compiled

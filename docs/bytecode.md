@@ -248,7 +248,7 @@ source      varint len, bytes   the hash of its source, by which the
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    13 (UnitBasis.version)
+version     varint    14 (UnitBasis.version)
 probe       varint len, bytes   the probe of the compiler's hash
                                 (Pickle.probe): a basis made by a
                                 compiler whose hash gives other values
@@ -267,6 +267,21 @@ counts      3 × varint   its own names of each kind
                 kind written as built in, the unit's own (a number), or
                 another unit's (its place, a number) ...
 ```
+
+Version 14 (functors-units' M11) begins each environment with a byte: 0
+and the environment whole, as before, or 1 and a reference to a structure
+of a signature written before, renamed. That is the signature by its unit
+(a varint: 0 this unit, whose signatures come before its functors; n + 1
+the unit at place n of the header's) and its name, the path in it (a
+list of strings), the image of each of the structure's own type names in
+the order of their first occurrence in it (type functions), and its
+values' stamps and whether they are global: each a byte, 0 where they are
+the structure's own, or 1 and the list (names; booleans), in the order of
+the values by name and then each structure's in turn. Only the
+environments of a unit's signatures and functors are references; a unit
+of another name loaded in the place of the one named reads the reference
+in its signature, as it reads every other name of it, by the paths
+([units.md](units.md), *The export basis*).
 
 Version 13 (functors-units' M10) adds, after the functors, the functions
 a later unit that names one copies: those marked to be inlined (`inline

@@ -178,6 +178,9 @@ struct
     | "S77" => (c "e.sml s.sml u.sml main.sml"; b [] "e.sml s.sml u.sml main.sml"; prints s "1";
                  f "e.sml" 1; build s []; fails s;
                  f "u.sml" 1; b [] "u.sml"; prints s "1")
+    | "S79" => (c "s.sml u.sml main.sml"; b [] "s.sml u.sml main.sml"; prints s "1b";
+                 f "s.sml" 1; b [] "s.sml"; prints s "1b";
+                 f "s.sml" 2; build s []; fails s)
     | "S72" => (c "a.sml m.sml b.sml"; b [] "a.sml m.sml b.sml"; prints s "2";
                  let val withM = cache s
                  in c "a.sml b.sml"; b [] "a.sml b.sml"; prints s "2";
