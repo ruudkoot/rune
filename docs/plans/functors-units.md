@@ -110,6 +110,10 @@ on 2026-10-26 with G1 at 1.59 in instructions (*M11*). The campaign's logs, scri
 
 ### The last checks
 
+- `make check` at M11's close (`56c86ddd4`, the merge of `fu-m11`):
+  21,249 passed, 3 skipped, and `terminal/edit-complete` failed, the race of
+  `docs/bugreport/rune/terminal-tests-resize-races`, passing three times in
+  three after.
 - `make check` at M9's commit (`00d7a33f3`): 21,247 passed, 3 skipped; at M8's
   (`cd18b5403`): 21,247 passed, 3 skipped, every compile linted
   (`RUNE_LINT`, which every test's compile has run since `13829a969`).
@@ -151,8 +155,10 @@ measurements*; instruction counts, the machine shared and loaded):
 - **Faster incremental compilation, F1 to F3** (M2, M4): MLton's build in
   units hashes 1,122 MB, from 2,146; a warm build with no edit 60.2G
   instructions, from 153.1G, and after a leaf's edit 60.2G, from 493.0G.
-  Gate G1 is not met: a build in units costs 2.41 times the whole compile
-  in instructions and 2.07 in processor time, against 1.5 (*Left open*).
+  Gate G1 was not met at M9: a build in units cost 2.41 times the whole
+  compile in instructions and 2.07 in processor time, against 1.5; M11's
+  shared summaries brought it to 1.59 in instructions and 1.46 to 1.60 in
+  processor time (*Left open*).
 - **Typing that follows the Definition** (M3, M7): the four corners are
   closed; MLton's leniency is not offered (D7).
 - **Nested functors that do not blow up** (M8): the budget bounds what
@@ -197,15 +203,23 @@ measurements*; instruction counts, the machine shared and loaded):
 
 ### Left open
 
-- **Gate G1.** A build in units costs 2.41 times the whole compile in
-  instructions (2.07 in processor time, at loads near 20), against 1.5.
-  Of the 1,122 MB it hashes, 887 MB are the fingerprints of signatures and
-  functors in usages: *Shared summaries* in *Later*, and a fingerprint of
-  each signature worked out once, are where the rest is.
+- **Gate G1.** A build in units costs 1.59 times the whole compile in
+  instructions, and 1.46 to 1.60 in processor time at loads of 11 to 16,
+  against 1.5 (M11, from 2.41 at M9): about a tenth short.
+- **What M10 left of the gap at run time** (1.035 of a whole compile in
+  bytecode instructions on MLton's benchmark set): `wc-input1` 1.21 and
+  `wc-scanStream` 1.13 (a whole compile inlines `TextIO.input1`, called
+  once, which a copy is too big for), `smith-normal-form` 1.11 (IntInf's
+  insides), `pidigits` 1.10 (starting a larger program); `map` left
+  unmarked, its copy making `hamlet`'s collector work 1.4% more, for a
+  reason not found, though `boyer` would gain 7%; and a compile reads the
+  manifest's header twice, once for each kind of mark (0.9% of
+  `compile-hello`).
 - **A cold build of MLton in units** costs 7.7% more than static
   interpretation did: a functor's code is now made where it is declared.
-- **Shared summaries** (M8): an interface quadratic in a program's depth
-  costs quadratic time in the front end and a unit's basis.
+- **Shared summaries in the elaborator** (M8, M11's part 3): an interface
+  quadratic in a program's depth costs quadratic time in the front end;
+  M11 made fingerprints and bases refer to what was written before.
 - **A marked functor's Mid** is decoded whenever its unit is loaded,
   about 2.5M instructions for a build that loads the I/O stack; and a
   unit keeps a marked functor's function beside its copies, so
@@ -223,6 +237,11 @@ measurements*; instruction counts, the machine shared and loaded):
   is made in two copies (performance/basis.md).
 - **What the lint does not check** (correctness/linting.md, which the
   owner keeps).
+- **Two races at the terminal**, written down as Rune's own bug reports
+  (`docs/bugreport/rune`): a line typed while a REPL command runs is
+  echoed twice and not run, the terminal being cooked while a command
+  runs (`terminal/repl-debug` failed twice by it); and `terminal/term-resize`
+  and `terminal/edit-complete` resize before the program is ready.
 - **Rune's int64 VM** has a 64-bit `Word` whatever the bytecode, and
   `lib/random`'s `hashString` differs on `smlnj32` (E6).
 - **Not measured**: E8's control, an edit of HOL4's `Table`, which needs a
@@ -231,10 +250,12 @@ measurements*; instruction counts, the machine shared and loaded):
 - **Untested**: the history replay (`bin/rune-incremental mutate
   --history`), which compiles the compiler once a commit; M9 fixed it in
   three places.
-- **Two commits fail `make check` by themselves**, their fixes being the
+- **Three commits fail `make check` by themselves**, their fixes being the
   commits after them, merged before the history could be rewritten:
-  `13829a969`, which lints every test's compile before `28d93a928`,
-  `dca8b2f17` and `fb9cb5903`, and `1b4b3912f`, the merge of the
+  `d2371dd6b`, M10's tip, before `9e6537368` registered its hook as a
+  compiler root (`make test-compiler-state`); `13829a969`, which lints every
+  test's compile before `28d93a928`,
+  `dca8b2f17` and `fb9cb5903`; and `1b4b3912f`, the merge of the
   prototype's `fu-m5`, before `879728070` (`make check-isa`). Every
   milestone's tip passes.
 - **The bug reports to other compilers** are written and not sent.
@@ -430,7 +451,8 @@ the only way.
   `valOf`, `app`, `foldl`, `foldr`, `Word32.+`, `Word32.>>`, `Word32.andb`,
   `Word32.fromLarge`, `Word8Array.sub` and the packing's `subArr`, each for
   the program its profile named. A function that only applies a primitive
-  is copied whether marked or not. Measured and left unmarked: `map` (its
+  is copied whether marked or not, which the owner kept (2026-10-26).
+  Measured and left unmarked: `map` (its
   copy makes `hamlet`'s collector work 1.4% more, though `boyer` would
   gain 7%), `null`, `TextIO.input1` (too big for Simplify to inline once
   copied), and `getOpt`, `isSome`, `hd` and `tl` (in no profile).
