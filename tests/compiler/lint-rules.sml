@@ -27,7 +27,7 @@ struct
 
   fun func (id, blocks) : func =
     {id = id, name = "f" ^ Int.toString id, params = [0], ncaptured = 0, nvars = 10, blocks = blocks, pos = NONE,
-     reps = Vector.tabulate (10, fn _ => RAny)}
+     reps = Vector.tabulate (10, fn _ => RAny), result = RAny, captures = []}
   fun block (label, instrs, transfer) : block = {label = label, params = [], instrs = instrs, transfer = transfer}
   val here : pos = (Source.noSpan, [])
 
@@ -176,7 +176,7 @@ struct
     in go 0 end
   fun unitOf (nlocals, items) : Link.unitCode =
     {code = {consts = [], nglobals = 0, funcs = [{id = 0, nlocals = nlocals, code = items, name = "<toplevel>", meta = NONE}],
-             files = [], inlines = [], nlabels = 0},
+             files = [], inlines = [], nlabels = 0, globalReps = []},
      identity = "lint-rules", provenance = NONE, globals = [], imports = [], exports = []}
   val ret = [Code.Op (opcode "UNIT", []), Code.Op (opcode "RET", [])]
   fun bytesOf u = String.concat (UnitFile.chunks (Opcodes.fingerprint, u))

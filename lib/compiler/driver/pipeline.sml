@@ -70,9 +70,12 @@ struct
                                     | x => SOME x) items
         end
       fun canonMeta (_, NONE : Code.meta option) = NONE
-        | canonMeta (items, SOME {arity, reps, blocks, loops}) =
+        | canonMeta (items, SOME {arity, reps, blocks, loops, result, captures}) =
             let val off = offsets items
-            in SOME {arity = arity, reps = reps, blocks = List.map (fn (l, ps) => (off l, ps)) blocks, loops = List.map off loops} end
+            in
+              SOME {arity = arity, reps = reps, blocks = List.map (fn (l, ps) => (off l, ps)) blocks, loops = List.map off loops,
+                    result = result, captures = captures}
+            end
       fun firstDiff (a, b) =
         let
           fun go (i, x :: xs, y :: ys) = if x = y then go (i + 1, xs, ys) else "item " ^ Int.toString i ^ ": " ^ item x ^ " / " ^ item y
@@ -94,6 +97,7 @@ struct
       same (#nglobals c, #nglobals c', "another number of globals");
       same (#files c, #files c', "other files");
       same (#inlines c, #inlines c', "other inlined frames");
+      same (#globalReps c, #globalReps c', "other representations of globals");
       same (List.length (#funcs c), List.length (#funcs c'), "another number of functions");
       ListPair.app (fn (f : Code.func, f' : Code.func) =>
                       let
@@ -197,17 +201,12 @@ struct
   (* Low to the code of the target --target names *)
   fun targetStage (low : Low.program) : Code.program =
     if !CompilerSettings.target = "registers" then
-      (* the code checked (RegVerify) where the lint is on, as the stage's
-         check, or where RUNE_REGVERIFY says without it; corrupted first
-         where RUNE_REGVERIFY_INJECT says, for the check's tests *)
-      let
-        val code = Pass.stage {name = "registers", showIn = SOME Low.show, show = Code.dump, check = RegVerify.stage,
-                               size = Code.size}
-                              (RegVerify.inject o Regs.program) low
-      in
-        if Pass.linting () then () else RegVerify.stage code;
-        code
-      end
+      (* the code checked (RegVerify) as the stage's check, from level 1 or
+         where RUNE_REGVERIFY says; corrupted first where
+         RUNE_REGVERIFY_INJECT says, for the check's tests *)
+      Pass.stage {name = "registers", showIn = SOME Low.show, show = Code.dump, check = RegVerify.stage,
+                  size = Code.size}
+                 (RegVerify.inject o Regs.program) low
     else
       Pass.stage {name = "stack", showIn = SOME Low.show, show = Code.dump, check = fn _ => (), size = Code.size}
                  Stack.program low

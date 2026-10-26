@@ -36,9 +36,12 @@
      no known call calls, a primitive's arguments and result are what its
      type says (Prims.repsOf).
 
-   It runs where the lint is on (Pass.linting), after the stage `registers`
-   (stage) and on every program Link makes (linked); RUNE_REGVERIFY=1 runs
-   it without the lint, 0 not at all, and census prints its counts.
+   It runs from level 1 of the lint, the boundaries, by its cost (docs/ir.md,
+   Levels: the compiler's compile 4.4% more, HaMLet's 1.6%, MLton's 0.8%),
+   through Pass.checkAt, after the stage `registers` (stage, key regverify)
+   and on every program Link makes (linked, key regverify-link);
+   RUNE_REGVERIFY=1 runs it at every level, 0 at none, and census prints
+   its counts.
    RUNE_REGVERIFY_INJECT corrupts the code Regs made, for its negative
    tests (inject). *)
 structure RegVerify =
@@ -84,7 +87,9 @@ struct
   (* ---- the switch ---- *)
 
   fun setting () = case OS.Process.getEnv "RUNE_REGVERIFY" of SOME s => s | NONE => ""
-  fun on () = case setting () of "" => Pass.linting () | "0" => false | _ => true
+  (* the level of lint it runs from: 1, unless RUNE_REGVERIFY says always
+     (any level, off too) or never *)
+  fun level () = case setting () of "" => SOME 1 | "0" => NONE | _ => SOME Pass.off
 
   (* ---- the primitives, by number ---- *)
 
@@ -790,7 +795,7 @@ struct
 
   (* site: where it runs ("registers", "link"); mode as verify's *)
   fun run (site : string, mode : string, p : C.program) : unit =
-    if not (on ()) orelse List.all (fn (f : C.func) => not (isSome (#meta f))) (#funcs p) then ()
+    if List.all (fn (f : C.func) => not (isSome (#meta f))) (#funcs p) then ()
     else
       let
         val {breaches, messages, counts} = verify (mode, p)
@@ -805,9 +810,13 @@ struct
                      ^ String.concatWith "; " (List.take (messages, Int.min (5, List.length messages))))
       end
 
-  (* the stage's check (Pass.stage's, under the lint), and the link's *)
-  fun stage (p : C.program) = run ("registers", if !Pass.whole then "whole" else "unit", p)
-  fun linked (p : C.program) = run ("link", "linked", p)
+  (* the stage's check, and the link's, each by its key and level *)
+  fun checked (key : string, site : string, mode : unit -> string) (p : C.program) : unit =
+    case level () of
+      SOME l => Pass.checkAt (key, l) (fn p => run (site, mode (), p)) p
+    | NONE => ()
+  fun stage (p : C.program) = checked ("regverify", "registers", fn () => if !Pass.whole then "whole" else "unit") p
+  fun linked (p : C.program) = checked ("regverify-link", "link", fn () => "linked") p
 
   (* ---- faults, for the negative tests of the check ----
      RUNE_REGVERIFY_INJECT=KIND or KIND@N corrupts the N-th place (from 0)

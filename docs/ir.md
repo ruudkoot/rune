@@ -67,7 +67,7 @@ linting roadmap, D12 and D13), each from its level up:
 |---|---|---|
 | `off` | none of level 0's; the passes' own assertions, the decoders and the loader, as always | -- |
 | 0 | always on, where nothing says otherwise in `rune`: the invariant of results in globals after every `lower` (`results`), and the functor bodies a unit's basis decoded, linted at the next unit's passes (`functor-body`) | 0.16%; 0.54% |
-| 1 | the boundaries between representations: `LambdaLint` after `translate`, `MidLint` after `mid` (and of the units' Mid `--units --whole` concatenates, `midconcat`) and of what `lower` is given (`prelower`), `midcanon`'s renaming, `LowLint` after `lower`; what the REPL and the compiler library run where nothing says otherwise | 14.9%; 28.6% |
+| 1 | the boundaries between representations: `LambdaLint` after `translate`, `MidLint` after `mid` (and of the units' Mid `--units --whole` concatenates, `midconcat`) and of what `lower` is given (`prelower`), `midcanon`'s renaming, `LowLint` after `lower`, `RegVerify` after `registers` and at every link (*The register target*); what the REPL and the compiler library run where nothing says otherwise | 14.9%; 28.6%, without `RegVerify` |
 | 2 | every pass: `MidLint` after each optional pass on Mid, and inside `simplify` of each definition as it is made, with the copies its calls made, in the program around it (`simplify-def`), and a unit's code read back as its file says it (`code-rt`: `UnitFile.read` of the bytes written, the same code but for the reader's normal form, and the same bytes written again); what `--lint` runs, and every test | 33.9%; 66.9%, and 12% more of a compile in units for `code-rt` |
 | 3 | and Mid's text read back after every stage of Mid (`KEY-roundtrip`), as `--mid-roundtrip` does after `mid` alone from level 1; one tier of `make check` (`make test-ir`) | about 9 times the compile |
 
@@ -894,8 +894,10 @@ middle end may ask of it):
 stack target.
 
 **`RegVerify`** (`lib/compiler/backend/regverify.sml`) checks the register
-code where the lint is on: after `registers`, and every program `Link` makes
-of units, those read back from the cache and from `.rbu` files included
+code from level 1 of the lint, the boundaries (*Levels*), by its cost: 4.4%
+of compiling the compiler, 1.6% of HaMLet, 0.8% of MLton. It runs after
+`registers` (`regverify`), and on every program `Link` makes
+of units (`regverify-link`), those read back from the cache and from `.rbu` files included
 ([plans/correctness/linting.md](plans/correctness/linting.md), M8). Its
 rules are the tables `runeisa` writes from `src/isa/regs.sml` (`RegCodes`:
 what each instruction reads and writes, what it leaves and takes, what
@@ -931,7 +933,7 @@ and a dataflow, one pass over each function:
 
 It checks `Regs` and `Link`, not that the code is safe for an untrusted
 `.rbc`: that is the VM's ([plans/correctness/vm-verifier.md](plans/correctness/vm-verifier.md)).
-`RUNE_REGVERIFY=1` runs it without the lint, `0` not at all, and `census`
+`RUNE_REGVERIFY=1` runs it at every level, `off` too, `0` not at all, and `census`
 prints what it counted; `RUNE_REGVERIFY_INJECT=KIND` corrupts the code
 `Regs` made, before the check, in one of eleven ways, which its tests
 (`register/@regverify-*`) hold it to refusing.

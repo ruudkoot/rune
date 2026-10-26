@@ -213,7 +213,7 @@ struct
       val () = if !stats then line (name, size y, t) else ()
       val after = used ()
       val () = if asked (dumpAfter, name) then print ("(* after " ^ name ^ " *)\n" ^ show y ^ "\n") else ()
-      val () = if linting' 0 then check y else ()
+      val () = check y
       val () =
         if !depth = 0
         then (outer := Time.+ (!outer, t);
