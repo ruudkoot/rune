@@ -252,6 +252,7 @@ DOC_LIBS := $(REPL_LIBS) compiler
 # Compiler ownership audit and interleaved-session acceptance.
 COMPILER_STATE_AUDIT_SRCS := $(shell sh scripts/build-files.sh tools/compiler/state-audit.build)
 COMPILER_STATE_TEST_SRCS := $(shell sh scripts/build-files.sh tests/compiler/state-tests.build)
+COMPILER_WITNESS_TEST_SRCS := $(shell sh scripts/build-files.sh tests/compiler/witness-tests.build)
 .PHONY: test-compiler-state
 bin/rune-compiler-state-audit.rbc: $(RUNE) $(COMPILER_STATE_AUDIT_SRCS) tools/compiler/state-audit.build manifests
 	$(RUNE) --build tools/compiler/state-audit.build -o $@
@@ -264,7 +265,11 @@ bin/rune-compiler-state-duplicate.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/
 	$(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml -o $@
 bin/rune-compiler-state-tests.rbc: $(RUNE) $(COMPILER_STATE_TEST_SRCS) tests/compiler/state-tests.build manifests
 	$(RUNE) --build tests/compiler/state-tests.build -o $@
-test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc
+# the syntax's node ids, the elaborator's witnesses and SourceTy (the linting roadmap's M11)
+bin/rune-compiler-witness-tests.rbc: $(RUNE) $(COMPILER_WITNESS_TEST_SRCS) tests/compiler/witness-tests.build manifests
+	$(RUNE) --build tests/compiler/witness-tests.build -o $@
+test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc \
+                     bin/rune-compiler-witness-tests.rbc
 	bin/rune-compiler-state-audit --self-test $(wildcard lib/compiler/*.sml lib/compiler/*/*.sml)
 	bin/runevm bin/rune-compiler-state-model.rbc
 	bin/runevm --jit=all bin/rune-compiler-state-model.rbc
@@ -272,6 +277,7 @@ test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model
 	bin/runevm --jit=all bin/rune-compiler-state-duplicate.rbc
 	bin/runevm bin/rune-compiler-state-tests.rbc
 	bin/runevm --jit=all bin/rune-compiler-state-tests.rbc
+	bin/runevm bin/rune-compiler-witness-tests.rbc
 
 # Frontend baselines and edit traces for the language-server roadmap.
 LSP_BENCH_SRCS := $(shell sh scripts/build-files.sh tools/lsp/bench.build)
@@ -1969,6 +1975,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/rune-lsp-worker-wire-tests.rbc bin/rune-lsp-worker-process-tests.rbc bin/rune-lsp-worker-echo.rbc \
                bin/rune-lsp-worker-analysis-tests.rbc bin/rune-lsp-analysis-worker.rbc bin/rune-lsp-jobs-tests.rbc bin/rune-lsp-semantic-tests.rbc \
                bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc \
+               bin/rune-compiler-witness-tests.rbc \
                bin/rune-boot bin/rune.rbc bin/rune.stack.rbc bin/runedoc.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc \
                bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy \
                build/librune.a bin/runevm-gcbits bin/runevm-cards \

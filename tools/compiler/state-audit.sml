@@ -6,76 +6,76 @@ struct
   datatype kind = Cell | Array | RefArray | Table | RefTable | TableMap | TableOption | TableVector
   type root = {key : string, name : string, kind : kind, span : Source.span}
   type registration = {key : string, variable : string, adapter : string, clone : string option}
-  fun name (EVar (id, _, _)) = SOME (longidToString id)
-    | name (ETyped (e, _, _)) = name e
+  fun name (EVar (id, _, _, _)) = SOME (longidToString id)
+    | name (ETyped (e, _, _, _)) = name e
     | name _ = NONE
-  fun patName (PVar (([], n), _, _)) = SOME n
-    | patName (PTyped (p, _, _)) = patName p
+  fun patName (PVar (([], n), _, _, _)) = SOME n
+    | patName (PTyped (p, _, _, _)) = patName p
     | patName _ = NONE
-  fun patType (PTyped (_, t, _)) = SOME t | patType _ = NONE
+  fun patType (PTyped (_, t, _, _)) = SOME t | patType _ = NONE
   fun hasTable t =
     case t of
-      TyCon (ts, (path, n), _) => (path = ["IntTable"] andalso n = "table") orelse List.exists hasTable ts
-    | TyRecord (fs, _) => List.exists (hasTable o #2) fs
-    | TyTuple (ts, _) => List.exists hasTable ts
+      TyCon (ts, (path, n), _, _) => (path = ["IntTable"] andalso n = "table") orelse List.exists hasTable ts
+    | TyRecord (fs, _, _) => List.exists (hasTable o #2) fs
+    | TyTuple (ts, _, _) => List.exists hasTable ts
     | _ => false
   fun mutableType t =
     case t of
-      TyCon (ts,(path,n),_) =>
+      TyCon (ts,(path,n),_, _) =>
         (path=[] andalso (n="ref" orelse n="array")) orelse
         (path=["IntTable"] andalso n="table") orelse List.exists mutableType ts
-    | TyRecord (fs,_) => List.exists (mutableType o #2) fs
-    | TyTuple (ts,_) => List.exists mutableType ts
+    | TyRecord (fs,_, _) => List.exists (mutableType o #2) fs
+    | TyTuple (ts,_, _) => List.exists mutableType ts
     | _ => false
   fun typeKind t =
     case t of
-      TyCon ([inner], ([], "ref"), _) =>
+      TyCon ([inner], ([], "ref"), _, _) =>
         (case inner of
-           TyCon (_, (["IntTable"], "table"), _) => RefTable
-         | TyCon (_, ([], "array"), _) => RefArray
-         | TyCon (_, ([], "option"), _) => if hasTable inner then TableOption else Cell
-         | TyCon (_, (["StringMap"], "map"), _) => if hasTable inner then TableMap else Cell
+           TyCon (_, (["IntTable"], "table"), _, _) => RefTable
+         | TyCon (_, ([], "array"), _, _) => RefArray
+         | TyCon (_, ([], "option"), _, _) => if hasTable inner then TableOption else Cell
+         | TyCon (_, (["StringMap"], "map"), _, _) => if hasTable inner then TableMap else Cell
          | _ => Cell)
-    | TyCon (_, (["IntTable"], "table"), _) => Table
-    | TyCon (_, ([], "array"), _) => Array
-    | TyCon (_, ([], "vector"), _) => if hasTable t then TableVector else Cell
+    | TyCon (_, (["IntTable"], "table"), _, _) => Table
+    | TyCon (_, ([], "array"), _, _) => Array
+    | TyCon (_, ([], "vector"), _, _) => if hasTable t then TableVector else Cell
     | _ => Cell
   val allocators = ["ref", "Array.array", "Array.tabulate", "Array.fromList", "IntTable.table"]
   (* Eager collection builders invoke their callback during initialization.
      A function value itself allocates no persistent scratch cells yet. *)
   fun allocations eager e =
     case e of
-      EApp (f, a, _) =>
+      EApp (f, a, _, _) =>
         let val n = name f
             val callback = List.exists (fn x => SOME x = n)
               ["Vector.tabulate", "Array.tabulate", "List.tabulate", "Vector.map", "Array.map", "List.map"]
             val direct = case n of SOME x => if List.exists (fn y => x = y) allocators then [x] else [] | NONE => []
         in direct @ allocations false f @ allocations callback a end
-    | ERecord (fs, _) => List.concat (List.map (allocations eager o #2) fs)
-    | ETuple (es, _) => List.concat (List.map (allocations eager) es)
-    | EList (es, _, _) => List.concat (List.map (allocations eager) es)
-    | ESeq (es, _) => List.concat (List.map (allocations eager) es)
-    | ETyped (e, _, _) => allocations eager e
-    | EIf (a,b,c,_) => allocations eager a @ allocations eager b @ allocations eager c
-    | EAndalso (a,b,_) => allocations eager a @ allocations eager b
-    | EOrelse (a,b,_) => allocations eager a @ allocations eager b
-    | EHandle (e, rs, _) => allocations eager e @ List.concat (List.map (allocations eager o #2) rs)
-    | ECase (e, rs, _) => allocations eager e @ List.concat (List.map (allocations eager o #2) rs)
-    | ELet (ds,e,_) => List.concat (List.map values ds) @ allocations eager e
-    | EFn (rs,_,_) => if eager then List.concat (List.map (allocations false o #2) rs) else []
+    | ERecord (fs, _, _) => List.concat (List.map (allocations eager o #2) fs)
+    | ETuple (es, _, _) => List.concat (List.map (allocations eager) es)
+    | EList (es, _, _, _) => List.concat (List.map (allocations eager) es)
+    | ESeq (es, _, _) => List.concat (List.map (allocations eager) es)
+    | ETyped (e, _, _, _) => allocations eager e
+    | EIf (a,b,c,_, _) => allocations eager a @ allocations eager b @ allocations eager c
+    | EAndalso (a,b,_, _) => allocations eager a @ allocations eager b
+    | EOrelse (a,b,_, _) => allocations eager a @ allocations eager b
+    | EHandle (e, rs, _, _) => allocations eager e @ List.concat (List.map (allocations eager o #2) rs)
+    | ECase (e, rs, _, _) => allocations eager e @ List.concat (List.map (allocations eager o #2) rs)
+    | ELet (ds,e,_, _) => List.concat (List.map values ds) @ allocations eager e
+    | EFn (rs,_,_, _) => if eager then List.concat (List.map (allocations false o #2) rs) else []
     | _ => []
-  and values (DVal (_,bs,_)) = List.concat (List.map (allocations false o #2) bs)
-    | values (DLocal (a,b,_)) = List.concat (List.map values (a@b))
+  and values (DVal (_,bs,_, _)) = List.concat (List.map (allocations false o #2) bs)
+    | values (DLocal (a,b,_, _)) = List.concat (List.map values (a@b))
     | values _ = []
 
   fun cloneName e =
     case name e of SOME n => SOME n
-    | NONE => (case e of EApp (f,a,_) =>
+    | NONE => (case e of EApp (f,a,_, _) =>
                  (case (name f, name a) of (SOME x,SOME y) => SOME (x ^ " " ^ y) | _ => NONE)
                | _ => NONE)
   fun registration e =
     case e of
-      EApp (EVar ((["CompilerState"], adapter),_,_), ETuple (EScon (SString key,_,_) :: variable :: rest,_),_) =>
+      EApp (EVar ((["CompilerState"], adapter),_,_, _), ETuple (EScon (SString key,_,_, _) :: variable :: rest,_, _),_, _) =>
         (case name variable of
            SOME v => SOME {key=key, variable=v, adapter=adapter,
                           clone=case rest of [clone] => cloneName clone | _ => NONE}
@@ -108,17 +108,17 @@ struct
         end
       fun walk prefix d =
         case d of
-          DVal (_,bs,_) => List.app (value prefix) bs
-        | DStructure (bs,_) => List.app (fn b => str (if prefix="" then #name b else prefix ^ "." ^ #name b) (#strexp b)) bs
-        | DFunctor (bs,_) => List.app (fn b => str (if prefix="" then #name b else prefix ^ "." ^ #name b) (#body b)) bs
-        | DLocal (a,b,_) => List.app (walk prefix) (a@b)
-        | DAbstype (_,_,ds,_) => List.app (walk prefix) ds
+          DVal (_,bs,_, _) => List.app (value prefix) bs
+        | DStructure (bs,_, _) => List.app (fn b => str (if prefix="" then #name b else prefix ^ "." ^ #name b) (#strexp b)) bs
+        | DFunctor (bs,_, _) => List.app (fn b => str (if prefix="" then #name b else prefix ^ "." ^ #name b) (#body b)) bs
+        | DLocal (a,b,_, _) => List.app (walk prefix) (a@b)
+        | DAbstype (_,_,ds,_, _) => List.app (walk prefix) ds
         | _ => ()
       and str prefix s =
         case s of
-          StrStruct (ds,_) => List.app (walk prefix) ds
-        | StrAscribe (s,_,_,_) => str prefix s
-        | StrLet (ds,s,_) => (List.app (walk prefix) ds;str prefix s)
+          StrStruct (ds,_, _) => List.app (walk prefix) ds
+        | StrAscribe (s,_,_,_, _) => str prefix s
+        | StrLet (ds,s,_, _) => (List.app (walk prefix) ds;str prefix s)
         | _ => ()
       val () = List.app (walk "") ds
       fun expected kind =

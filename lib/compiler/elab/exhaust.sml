@@ -45,14 +45,14 @@ struct
 
   fun simplify (p : pat) : spat =
     (step (); case p of
-      PWild _ => Any
-    | PScon (sc, _, _) => Const sc
-    | PVar (_, slot, sp) =>
+      PWild (_, _) => Any
+    | PScon (sc, _, _, _) => Const sc
+    | PVar (_, slot, sp, _) =>
         (case info (slot, sp) of
            PIVar _ => Any
          | PICon i => Con (i, [])
          | PIExn i => Exn (i, []))
-    | PRecord (fields, flex, slot, sp) =>
+    | PRecord (fields, flex, slot, sp, _) =>
         let
           val labels =
             if flex then
@@ -61,22 +61,22 @@ struct
                               Types.TRecord fs => List.map #1 fs
                             | _ => Error.bug "flexible record pattern did not resolve to a record")
                | NONE => Error.bug ("flexible record pattern not annotated at " ^ Source.describe sp))
-            else List.map #1 (Types.sortFields fields)
+            else List.map #1 (Types.sortFields (List.map (fn (l, p, _) => (l, p)) fields))
         in
-          Rec (List.map (fn l => case List.find (fn (l', _) => l' = l) fields of
-                                   SOME (_, p) => simplify p
+          Rec (List.map (fn l => case List.find (fn (l', _, _) => l' = l) fields of
+                                   SOME (_, p, _) => simplify p
                                  | NONE => Any) labels)
         end
-    | PTuple (ps, _) => Rec (List.map simplify ps)
-    | PList ([], _) => Con (nilInfo (), [])
-    | PList (p :: rest, sp) => Con (consInfo (), [Rec [simplify p, simplify (PList (rest, sp))]])
-    | PApp (_, slot, arg, sp) =>
+    | PTuple (ps, _, _) => Rec (List.map simplify ps)
+    | PList ([], _, _) => Con (nilInfo (), [])
+    | PList (p :: rest, sp, _) => Con (consInfo (), [Rec [simplify p, simplify (PList (rest, sp, noId))]])
+    | PApp (_, slot, arg, sp, _) =>
         (case info (slot, sp) of
            PICon i => if #isRef i then Ref (simplify arg) else Con (i, [simplify arg])
          | PIExn i => Exn (i, [simplify arg])
          | PIVar _ => Error.bug "constructor application pattern annotated as variable")
-    | PTyped (p, _, _) => simplify p
-    | PLayered (_, _, p, _, _) => simplify p
+    | PTyped (p, _, _, _) => simplify p
+    | PLayered (_, _, p, _, _, _) => simplify p
     | POr _ => Error.bug "an or-pattern not expanded into its alternatives")
 
   (* --- heads (constructors) of the first column --- *)

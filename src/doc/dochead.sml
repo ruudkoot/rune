@@ -50,29 +50,29 @@ struct
   fun parseExp (code : string) : Ast.exp option =
     (case Parser.parseTokensWith (Lexer.tokenize (Source.fromString ("<usage>", "val it = " ^ expandFields code)),
                                   Fixity.initial) of
-       ([Ast.DVal (_, [(_, e)], _)], _) => SOME e
+       ([Ast.DVal (_, [(_, e)], _, _)], _) => SOME e
      | _ => NONE)
     handle Error.CompileError _ => NONE
 
   (* f a1 ... an as (f, [a1, ..., an]), for an unqualified f *)
   fun unfold (e : Ast.exp, args : Ast.exp list) : (string * Ast.exp list) option =
     case e of
-      Ast.EApp (f, a, _) => unfold (f, a :: args)
-    | Ast.EVar (([], name), _, _) => SOME (name, args)
+      Ast.EApp (f, a, _, _) => unfold (f, a :: args)
+    | Ast.EVar (([], name), _, _, _) => SOME (name, args)
     | _ => NONE
 
   (* The variables of the arguments: what is not applied and does not look
      like a constructor. *)
   fun variables (e : Ast.exp) : string list =
     case e of
-      Ast.EVar (([], x), _, _) =>
+      Ast.EVar (([], x), _, _, _) =>
         if Char.isLower (String.sub (x, 0)) andalso x <> "true" andalso x <> "false" andalso x <> "nil" then [x] else []
-    | Ast.ETuple (es, _) => List.concat (List.map variables es)
-    | Ast.EList (es, _, _) => List.concat (List.map variables es)
-    | Ast.ESeq (es, _) => List.concat (List.map variables es)
-    | Ast.ERecord (fields, _) => List.concat (List.map (fn (_, e) => variables e) fields)
-    | Ast.ETyped (e', _, _) => variables e'
-    | Ast.EApp (_, a, _) => variables a
+    | Ast.ETuple (es, _, _) => List.concat (List.map variables es)
+    | Ast.EList (es, _, _, _) => List.concat (List.map variables es)
+    | Ast.ESeq (es, _, _) => List.concat (List.map variables es)
+    | Ast.ERecord (fields, _, _) => List.concat (List.map (fn (_, e, _) => variables e) fields)
+    | Ast.ETyped (e', _, _, _) => variables e'
+    | Ast.EApp (_, a, _, _) => variables a
     | _ => []
 
   fun distinct (xs : string list) : string list =
@@ -95,21 +95,21 @@ struct
   fun mismatch (ty : Ast.ty, args : Ast.exp list) : string option =
     case (args, ty) of
       ([], _) => NONE
-    | (a :: rest, Ast.TyArrow (dom, cod, _)) =>
+    | (a :: rest, Ast.TyArrow (dom, cod, _, _)) =>
         (case argMismatch (dom, a) of SOME why => SOME why | NONE => mismatch (cod, rest))
     | (_, Ast.TyCon _) => NONE
     | _ => SOME "it has more arguments than the type has arrows"
 
   and argMismatch (dom : Ast.ty, a : Ast.exp) : string option =
     case (a, dom) of
-      (Ast.ETuple (es as _ :: _ :: _, _), Ast.TyTuple (tys, _)) =>
+      (Ast.ETuple (es as _ :: _ :: _, _, _), Ast.TyTuple (tys, _, _)) =>
         if List.length es = List.length tys then NONE
         else SOME ("it has a tuple of " ^ Int.toString (List.length es) ^ " where the type has one of " ^
                    Int.toString (List.length tys))
-    | (Ast.ETuple (_ :: _ :: _, _), Ast.TyCon _) => NONE
-    | (Ast.ETuple (_ :: _ :: _, _), Ast.TyVar _) => NONE
-    | (Ast.ETuple (_ :: _ :: _, _), _) => SOME "it has a tuple where the type has none"
-    | (Ast.ERecord (fields, _), Ast.TyRecord (tys, _)) =>
+    | (Ast.ETuple (_ :: _ :: _, _, _), Ast.TyCon _) => NONE
+    | (Ast.ETuple (_ :: _ :: _, _, _), Ast.TyVar _) => NONE
+    | (Ast.ETuple (_ :: _ :: _, _, _), _) => SOME "it has a tuple where the type has none"
+    | (Ast.ERecord (fields, _, _), Ast.TyRecord (tys, _, _)) =>
         let
           val want = List.map #1 tys
           val have = List.map #1 fields

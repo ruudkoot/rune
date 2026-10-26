@@ -52,76 +52,76 @@ struct
       fun ty (sc, t) =
         case t of
           TyVar _ => ()
-        | TyRecord (fs, _) => List.app (fn (_, t) => ty (sc, t)) fs
-        | TyTuple (ts, _) => List.app (fn t => ty (sc, t)) ts
-        | TyCon (args, id, _) => (List.app (fn t => ty (sc, t)) args; longTy (sc, id))
-        | TyArrow (a, b, _) => (ty (sc, a); ty (sc, b))
+        | TyRecord (fs, _, _) => List.app (fn (_, t, _) => ty (sc, t)) fs
+        | TyTuple (ts, _, _) => List.app (fn t => ty (sc, t)) ts
+        | TyCon (args, id, _, _) => (List.app (fn t => ty (sc, t)) args; longTy (sc, id))
+        | TyArrow (a, b, _, _) => (ty (sc, a); ty (sc, b))
       fun pat (sc, p) =
         case p of
-          PVar (id, _, _) => longStr (sc, id)
-        | PRecord (fs, _, _, _) => List.app (fn (_, p) => pat (sc, p)) fs
-        | PTuple (ps, _) => List.app (fn p => pat (sc, p)) ps
-        | PList (ps, _) => List.app (fn p => pat (sc, p)) ps
-        | PApp (id, _, p, _) => (longStr (sc, id); pat (sc, p))
-        | PTyped (p, t, _) => (pat (sc, p); ty (sc, t))
-        | PLayered (_, t, p, _, _) => (Option.app (fn t => ty (sc, t)) t; pat (sc, p))
-        | POr (ps, _) => List.app (fn p => pat (sc, p)) ps
+          PVar (id, _, _, _) => longStr (sc, id)
+        | PRecord (fs, _, _, _, _) => List.app (fn (_, p, _) => pat (sc, p)) fs
+        | PTuple (ps, _, _) => List.app (fn p => pat (sc, p)) ps
+        | PList (ps, _, _) => List.app (fn p => pat (sc, p)) ps
+        | PApp (id, _, p, _, _) => (longStr (sc, id); pat (sc, p))
+        | PTyped (p, t, _, _) => (pat (sc, p); ty (sc, t))
+        | PLayered (_, t, p, _, _, _) => (Option.app (fn t => ty (sc, t)) t; pat (sc, p))
+        | POr (ps, _, _) => List.app (fn p => pat (sc, p)) ps
         | _ => ()
       fun exp (sc, e) =
         case e of
-          EVar (id, _, _) => longStr (sc, id)
-        | ERecord (fs, _) => List.app (fn (_, e) => exp (sc, e)) fs
-        | ETuple (es, _) => List.app (fn e => exp (sc, e)) es
-        | EList (es, _, _) => List.app (fn e => exp (sc, e)) es
-        | ESeq (es, _) => List.app (fn e => exp (sc, e)) es
-        | ELet (ds, e, _) => exp (decs (sc, ds), e)
-        | EApp (f, a, _) => (exp (sc, f); exp (sc, a))
-        | ETyped (e, t, _) => (exp (sc, e); ty (sc, t))
-        | EAndalso (a, b, _) => (exp (sc, a); exp (sc, b))
-        | EOrelse (a, b, _) => (exp (sc, a); exp (sc, b))
-        | EHandle (e, rs, _) => (exp (sc, e); rules (sc, rs))
-        | ERaise (e, _) => exp (sc, e)
-        | EIf (a, b, c, _) => (exp (sc, a); exp (sc, b); exp (sc, c))
-        | EWhile (a, b, _) => (exp (sc, a); exp (sc, b))
-        | ECase (e, rs, _) => (exp (sc, e); rules (sc, rs))
-        | EFn (rs, _, _) => rules (sc, rs)
-        | EPrim (_, t, _, _) => ty (sc, t)
+          EVar (id, _, _, _) => longStr (sc, id)
+        | ERecord (fs, _, _) => List.app (fn (_, e, _) => exp (sc, e)) fs
+        | ETuple (es, _, _) => List.app (fn e => exp (sc, e)) es
+        | EList (es, _, _, _) => List.app (fn e => exp (sc, e)) es
+        | ESeq (es, _, _) => List.app (fn e => exp (sc, e)) es
+        | ELet (ds, e, _, _) => exp (decs (sc, ds), e)
+        | EApp (f, a, _, _) => (exp (sc, f); exp (sc, a))
+        | ETyped (e, t, _, _) => (exp (sc, e); ty (sc, t))
+        | EAndalso (a, b, _, _) => (exp (sc, a); exp (sc, b))
+        | EOrelse (a, b, _, _) => (exp (sc, a); exp (sc, b))
+        | EHandle (e, rs, _, _) => (exp (sc, e); rules (sc, rs))
+        | ERaise (e, _, _) => exp (sc, e)
+        | EIf (a, b, c, _, _) => (exp (sc, a); exp (sc, b); exp (sc, c))
+        | EWhile (a, b, _, _) => (exp (sc, a); exp (sc, b))
+        | ECase (e, rs, _, _) => (exp (sc, e); rules (sc, rs))
+        | EFn (rs, _, _, _) => rules (sc, rs)
+        | EPrim (_, t, _, _, _) => ty (sc, t)
         | _ => ()
       and rules (sc, rs) = List.app (fn (p, e) => (pat (sc, p); exp (sc, e))) rs
       (* a declaration's uses, and the scope after it *)
       and dec (sc : scope, d : dec) : scope =
         case d of
-          DVal (_, bs, _) => (List.app (fn (p, e) => (pat (sc, p); exp (sc, e))) bs; sc)
-        | DValRec (_, bs, _) => (List.app (fn (p, e) => (pat (sc, p); exp (sc, e))) bs; sc)
-        | DFun (_, fs, _) =>
+          DVal (_, bs, _, _) => (List.app (fn (p, e) => (pat (sc, p); exp (sc, e))) bs; sc)
+        | DValRec (_, bs, _, _) => (List.app (fn (p, e) => (pat (sc, p); exp (sc, e))) bs; sc)
+        | DFun (_, fs, _, _) =>
             (List.app (fn (f : fundef) =>
-                         List.app (fn {pats, resty, body} =>
+                         List.app (fn {pats, resty, body, ...} =>
                                      (List.app (fn p => pat (sc, p)) pats; Option.app (fn t => ty (sc, t)) resty;
                                       exp (sc, body)))
                                   (#clauses f)) fs;
              sc)
-        | DType (tbs, _) =>
+        | DType (tbs, _, _) =>
             (List.app (fn (b : typbind) => ty (sc, #ty b)) tbs; List.foldl (fn (b : typbind, sc) => bindTy (sc, #name b)) sc tbs)
-        | DDatatype (dbs, tbs, _) =>
+        | DDatatype (dbs, tbs, _, _) =>
             let val sc' = List.foldl (fn (b : datbind, sc) => bindTy (sc, #name b)) sc dbs
             in
               List.app (fn (b : datbind) => List.app (fn (_, t, _) => Option.app (fn t => ty (sc', t)) t) (#cons b)) dbs;
               List.app (fn (b : typbind) => ty (sc', #ty b)) tbs;
               List.foldl (fn (b : typbind, sc) => bindTy (sc, #name b)) sc' tbs
             end
-        | DDatatypeRepl (n, id, _) => (longTy (sc, id); bindTy (sc, n))
-        | DAbstype (dbs, tbs, ds, sp) =>
-            let val sc' = dec (sc, DDatatype (dbs, tbs, sp)) in decs (sc', ds) end
-        | DException (bs, _) =>
-            (List.app (fn ExnDecl (_, t, _, _) => Option.app (fn t => ty (sc, t)) t | ExnRepl (_, id, _, _) => longStr (sc, id)) bs;
+        | DDatatypeRepl (n, id, _, _) => (longTy (sc, id); bindTy (sc, n))
+        | DAbstype (dbs, tbs, ds, sp, n) =>
+            let val sc' = dec (sc, DDatatype (dbs, tbs, sp, n)) in decs (sc', ds) end
+        | DException (bs, _, _) =>
+            (List.app (fn ExnDecl (_, t, _, _, _) => Option.app (fn t => ty (sc, t)) t | ExnRepl (_, id, _, _, _) => longStr (sc, id)) bs;
              sc)
-        | DLocal (a, b, _) => decs (decs (sc, a), b)
-        | DOpen (ids, _) => (List.app (fn (p, n) => longStr (sc, (p @ [n], ""))) ids; sc)
+        | DLocal (a, b, _, _) => decs (decs (sc, a), b)
+        | DOpen (ids, _, _) => (List.app (fn (p, n) => longStr (sc, (p @ [n], ""))) ids; sc)
         | DOverload {strid, ...} => (case strid of s :: _ => longStr (sc, ([s], "")) | [] => (); sc)
-        | DStructure (bs, _) =>
+        | DStructure (bs, _, _) =>
             (List.app (fn (b : strbind) => strexp (sc, #strexp b)) bs; List.foldl (fn (b : strbind, sc) => bindStr (sc, #name b)) sc bs)
-        | DSignature (bs, _) => (List.app (fn (b : sigbind) => ignore (sigexp (sc, #sigexp b))) bs; sc)
-        | DFunctor (bs, _) =>
+        | DSignature (bs, _, _) => (List.app (fn (b : sigbind) => ignore (sigexp (sc, #sigexp b))) bs; sc)
+        | DFunctor (bs, _, _) =>
             (List.app (fn (b : funbind) =>
                          let
                            val inner = sigexp (sc, #paramSig b)
@@ -135,19 +135,19 @@ struct
       and decs (sc, ds) = List.foldl (fn (d, sc) => dec (sc, d)) sc ds
       and strexp (sc, se) =
         case se of
-          StrStruct (ds, _) => ignore (decs (sc, ds))
-        | StrId ((p, n), _) => longStr (sc, (p @ [n], ""))
-        | StrAscribe (se, sg, _, _) => (strexp (sc, se); ignore (sigexp (sc, sg)))
-        | StrApp (f, arg, _) => (use (Fun, f); strexp (sc, arg))
-        | StrLet (ds, se, _) => strexp (decs (sc, ds), se)
-        | StrDynamic (_, sg, _, _) => ignore (sigexp (sc, sg))
-        | StrExport (_, sg, se, _, _) => (ignore (sigexp (sc, sg)); strexp (sc, se))
+          StrStruct (ds, _, _) => ignore (decs (sc, ds))
+        | StrId ((p, n), _, _) => longStr (sc, (p @ [n], ""))
+        | StrAscribe (se, sg, _, _, _) => (strexp (sc, se); ignore (sigexp (sc, sg)))
+        | StrApp (f, arg, _, _) => (use (Fun, f); strexp (sc, arg))
+        | StrLet (ds, se, _, _) => strexp (decs (sc, ds), se)
+        | StrDynamic (_, sg, _, _, _) => ignore (sigexp (sc, sg))
+        | StrExport (_, sg, se, _, _, _) => (ignore (sigexp (sc, sg)); strexp (sc, se))
       (* a signature's uses, and the names its specifications bind *)
       and sigexp (sc, sg) : scope =
         case sg of
-          SigSig (specs, _) => List.foldl (fn (s, inner) => spec (sc, inner, s)) empty specs
-        | SigId (n, _) => (use (Sig, n); empty)
-        | SigWhere (sg, clauses, _) =>
+          SigSig (specs, _, _) => List.foldl (fn (s, inner) => spec (sc, inner, s)) empty specs
+        | SigId (n, _, _) => (use (Sig, n); empty)
+        | SigWhere (sg, clauses, _, _) =>
             let val inner = sigexp (sc, sg)
             in List.app (fn (_, _, t, _) => ty (sc, t)) clauses; inner end
       and spec (sc : scope, inner : scope, s : spec) : scope =
@@ -156,19 +156,19 @@ struct
           val here = {strs = StringMap.unionWith #1 (#strs inner, #strs sc), tys = StringMap.unionWith #1 (#tys inner, #tys sc)}
         in
           case s of
-            SpecVal (ds, _) => (List.app (fn (_, t, _) => ty (here, t)) ds; inner)
-          | SpecType (ds, _) => List.foldl (fn ((_, n, _), i) => bindTy (i, n)) inner ds
-          | SpecEqtype (ds, _) => List.foldl (fn ((_, n, _), i) => bindTy (i, n)) inner ds
-          | SpecDatatype (dbs, _) =>
+            SpecVal (ds, _, _) => (List.app (fn (_, t, _) => ty (here, t)) ds; inner)
+          | SpecType (ds, _, _) => List.foldl (fn ((_, n, _), i) => bindTy (i, n)) inner ds
+          | SpecEqtype (ds, _, _) => List.foldl (fn ((_, n, _), i) => bindTy (i, n)) inner ds
+          | SpecDatatype (dbs, _, _) =>
               let val inner' = List.foldl (fn (b : datbind, i) => bindTy (i, #name b)) inner dbs
                   val here' = List.foldl (fn (b : datbind, h) => bindTy (h, #name b)) here dbs
               in List.app (fn (b : datbind) => List.app (fn (_, t, _) => Option.app (fn t => ty (here', t)) t) (#cons b)) dbs;
                  inner'
               end
-          | SpecDatatypeRepl (n, id, _) => (longTy (here, id); bindTy (inner, n))
-          | SpecException (ds, _) => (List.app (fn (_, t, _) => Option.app (fn t => ty (here, t)) t) ds; inner)
-          | SpecStructure (ds, _) => List.foldl (fn ((n, sg, _), i) => (ignore (sigexp (here, sg)); bindStr (i, n))) inner ds
-          | SpecInclude (sg, _) =>
+          | SpecDatatypeRepl (n, id, _, _) => (longTy (here, id); bindTy (inner, n))
+          | SpecException (ds, _, _) => (List.app (fn (_, t, _) => Option.app (fn t => ty (here, t)) t) ds; inner)
+          | SpecStructure (ds, _, _) => List.foldl (fn ((n, sg, _), i) => (ignore (sigexp (here, sg)); bindStr (i, n))) inner ds
+          | SpecInclude (sg, _, _) =>
               let val i' = sigexp (here, sg)
               in {strs = StringMap.unionWith #1 (#strs i', #strs inner), tys = StringMap.unionWith #1 (#tys i', #tys inner)} end
           | SpecSharingType _ => inner
@@ -182,12 +182,12 @@ struct
       fun broken (d, what) = breaks := (spanOfDec d, what) :: !breaks
       fun top (sc, d, exported) =
         case d of
-          DStructure (bs, _) => (if exported then List.app (fn (b : strbind) => declare (Str, #name b)) bs else (); dec (sc, d))
-        | DSignature (bs, _) => (if exported then List.app (fn (b : sigbind) => declare (Sig, #name b)) bs else (); dec (sc, d))
-        | DFunctor (bs, _) => (if exported then List.app (fn (b : funbind) => declare (Fun, #name b)) bs else (); dec (sc, d))
-        | DType (bs, _) => (if exported then List.app (fn (b : typbind) => declare (Tycon, #name b)) bs else (); dec (sc, d))
+          DStructure (bs, _, _) => (if exported then List.app (fn (b : strbind) => declare (Str, #name b)) bs else (); dec (sc, d))
+        | DSignature (bs, _, _) => (if exported then List.app (fn (b : sigbind) => declare (Sig, #name b)) bs else (); dec (sc, d))
+        | DFunctor (bs, _, _) => (if exported then List.app (fn (b : funbind) => declare (Fun, #name b)) bs else (); dec (sc, d))
+        | DType (bs, _, _) => (if exported then List.app (fn (b : typbind) => declare (Tycon, #name b)) bs else (); dec (sc, d))
         | DOverload _ => dec (sc, d)
-        | DLocal (a, b, _) =>
+        | DLocal (a, b, _, _) =>
             let val sc' = List.foldl (fn (d, sc) => top (sc, d, false)) sc a
             in List.foldl (fn (d, sc) => top (sc, d, exported)) sc' b end
         | DVal _ => (broken (d, "a value"); dec (sc, d))

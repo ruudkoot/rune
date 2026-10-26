@@ -122,37 +122,38 @@ struct
   (* Can matching this pattern fail? *)
   fun refutable (p : pat) : bool =
     case p of
-      PWild _ => false
+      PWild (_, _) => false
     | PScon _ => true
-    | PVar (_, slot, sp) =>
+    | PVar (_, slot, sp, _) =>
         (case info (slot, sp) of
            PIVar _ => false
          | PICon i => #ncons i > 1
          | PIExn _ => true)
-    | PRecord (fields, _, _, _) => List.exists (fn (_, p) => refutable p) fields
-    | PTuple (ps, _) => List.exists refutable ps
+    | PRecord (fields, _, _, _, _) => List.exists (fn (_, p, _) => refutable p) fields
+    | PTuple (ps, _, _) => List.exists refutable ps
     | PList _ => true
-    | PApp (_, slot, arg, sp) =>
+    | PApp (_, slot, arg, sp, _) =>
         (case info (slot, sp) of
            PICon i => (#ncons i > 1 andalso not (#isRef i)) orelse refutable arg
          | _ => true)
-    | PTyped (p, _, _) => refutable p
-    | PLayered (_, _, p, _, _) => refutable p
-    | POr (ps, _) => List.all refutable ps
+    | PTyped (p, _, _, _) => refutable p
+    | PLayered (_, _, p, _, _, _) => refutable p
+    | POr (ps, _, _) => List.all refutable ps
 
   (* compilePat (p, v, k): test/destructure the value in variable v against
      p, binding its variables, then continue with k. *)
   fun compilePat (p : pat, v : int, k : lexp) : lexp =
     case p of
-      PWild _ => k
-    | PScon (sc, slot, _) => testEq (Var v, sconExp (sc, slot), sconTy (sc, slot), k)
-    | PVar (_, slot, sp) =>
+      PWild (_, _) => k
+    | PScon (sc, slot, _, _) => testEq (Var v, sconExp (sc, slot), sconTy (sc, slot), k)
+    | PVar (_, slot, sp, _) =>
         (case info (slot, sp) of
            PIVar (stamp, g) => bindVar (stamp, g, Var v, k)
          | PICon i => if #ncons i <= 1 then k else testTag (v, #tag i, k)
          | PIExn i => testExn (v, exnConExp i, k))
-    | PRecord (fields, flex, slot, sp) =>
+    | PRecord (fields, flex, slot, sp, _) =>
         let
+          val fields = unlabel fields
           val labels = if flex then recordLabels (slot, sp) else List.map #1 (Types.sortFields fields)
           fun index lab =
             case Types.labelIndex (List.map (fn l => (l, ())) labels, lab) of
@@ -161,11 +162,11 @@ struct
         in
           compileFields (List.map (fn (l, p) => (index l, p)) fields, v, k)
         end
-    | PTuple ([], _) => k
-    | PTuple (ps, _) =>
+    | PTuple ([], _, _) => k
+    | PTuple (ps, _, _) =>
         compileFields (ListPair.zip (List.tabulate (List.length ps, fn i => i), ps), v, k)
-    | PList ([], _) => testTag (v, Types.nilTag (), k)
-    | PList (p :: rest, sp) =>
+    | PList ([], _, _) => testTag (v, Types.nilTag (), k)
+    | PList (p :: rest, sp, _) =>
         let
           val cell = freshVar ()
           val hd = freshVar ()
@@ -175,9 +176,9 @@ struct
             Let (cell, Decon (Types.consTag (), Var v),
               Let (hd, Select (0, Var cell),
                 Let (tl, Select (1, Var cell),
-                  compilePat (p, hd, compilePat (PList (rest, sp), tl, k))))))
+                  compilePat (p, hd, compilePat (PList (rest, sp, noId), tl, k))))))
         end
-    | PApp (_, slot, arg, sp) =>
+    | PApp (_, slot, arg, sp, _) =>
         (case info (slot, sp) of
            PICon i =>
              let val w = freshVar ()
@@ -191,8 +192,8 @@ struct
              let val w = freshVar ()
              in testExn (v, exnConExp i, Let (w, ExnArg (exnArgTy i, Var v), compilePat (arg, w, k))) end
          | PIVar _ => Error.bug "constructor application pattern annotated as variable")
-    | PTyped (p, _, _) => compilePat (p, v, k)
-    | PLayered (_, _, p, slot, sp) =>
+    | PTyped (p, _, _, _) => compilePat (p, v, k)
+    | PLayered (_, _, p, slot, sp, _) =>
         (case info (slot, sp) of
            PIVar (stamp, g) => bindVar (stamp, g, Var v, compilePat (p, v, k))
          | _ => Error.bug "layered pattern annotated as constructor")
@@ -203,7 +204,7 @@ struct
       [] => k
     | (i, p) :: rest =>
         (case p of
-           PWild _ => compileFields (rest, v, k)
+           PWild (_, _) => compileFields (rest, v, k)
          | _ =>
            let val w = freshVar ()
            in Let (w, Select (i, Var v), compilePat (p, w, compileFields (rest, v, k))) end)
@@ -250,23 +251,23 @@ struct
      variable holding the value) and its rule. *)
   type row = {pats : pat list, binds : (int * bool * int) list, rule : int}
 
-  fun isWild (PWild _) = true
+  fun isWild (PWild (_, _)) = true
     | isWild _ = false
 
   (* p against the value in v, its variables taken off and bound to v *)
   fun strip (p : pat, v : int, binds : (int * bool * int) list) : pat * (int * bool * int) list =
     case p of
-      PTyped (q, _, _) => strip (q, v, binds)
-    | PLayered (_, _, q, slot, sp) =>
+      PTyped (q, _, _, _) => strip (q, v, binds)
+    | PLayered (_, _, q, slot, sp, _) =>
         (case info (slot, sp) of
            PIVar (stamp, g) => strip (q, v, (stamp, g, v) :: binds)
          | _ => Error.bug "layered pattern annotated as constructor")
-    | PVar (_, slot, sp) =>
+    | PVar (_, slot, sp, _) =>
         (case info (slot, sp) of
-           PIVar (stamp, g) => (PWild sp, (stamp, g, v) :: binds)
-         | PICon i => if #ncons i <= 1 then (PWild sp, binds) else (p, binds)
+           PIVar (stamp, g) => (PWild (sp, noId), (stamp, g, v) :: binds)
+         | PICon i => if #ncons i <= 1 then (PWild (sp, noId), binds) else (p, binds)
          | PIExn _ => (p, binds))
-    | PTuple ([], sp) => (PWild sp, binds)
+    | PTuple ([], sp, _) => (PWild (sp, noId), binds)
     | _ => (p, binds)
 
   fun stripRow (cols : int list) ({pats, binds, rule} : row) : row =
@@ -290,17 +291,17 @@ struct
         | _ => acc
       fun go (p, acc) =
         case p of
-          PWild _ => acc
+          PWild (_, _) => acc
         | PScon _ => acc
-        | PVar (_, slot, sp) => localVar (slot, sp, acc)
-        | PRecord (fields, _, _, _) => List.foldl (fn ((_, p), acc) => go (p, acc)) acc fields
-        | PTuple (ps, _) => List.foldl go acc ps
-        | PList (ps, _) => List.foldl go acc ps
-        | PApp (_, _, arg, _) => go (arg, acc)
-        | PTyped (p, _, _) => go (p, acc)
-        | PLayered (_, _, p, slot, sp) => go (p, localVar (slot, sp, acc))
-        | POr (p :: _, _) => go (p, acc)       (* every alternative binds the same *)
-        | POr ([], _) => acc
+        | PVar (_, slot, sp, _) => localVar (slot, sp, acc)
+        | PRecord (fields, _, _, _, _) => List.foldl (fn ((_, p, _), acc) => go (p, acc)) acc fields
+        | PTuple (ps, _, _) => List.foldl go acc ps
+        | PList (ps, _, _) => List.foldl go acc ps
+        | PApp (_, _, arg, _, _) => go (arg, acc)
+        | PTyped (p, _, _, _) => go (p, acc)
+        | PLayered (_, _, p, slot, sp, _) => go (p, localVar (slot, sp, acc))
+        | POr (p :: _, _, _) => go (p, acc)       (* every alternative binds the same *)
+        | POr ([], _, _) => acc
     in List.rev (List.foldl go [] ps) end
 
   val varsOf = boundVars false
@@ -318,16 +319,16 @@ struct
 
   fun kind (p : pat) : kind =
     case p of
-      PTuple (ps, _) => KProd (List.length ps)
-    | PRecord (_, _, _, _) => KProd (List.length (fieldsOf p))
+      PTuple (ps, _, _) => KProd (List.length ps)
+    | PRecord (_, _, _, _, _) => KProd (List.length (fieldsOf p))
     | PList _ => KCon (2, listCons ())
     | PScon _ => KConst
-    | PVar (_, slot, sp) =>
+    | PVar (_, slot, sp, _) =>
         (case info (slot, sp) of
            PICon i => KCon (#ncons i, #siblings i)
          | PIExn _ => KExn
          | PIVar _ => Error.bug "a variable where a test is")
-    | PApp (_, slot, _, sp) =>
+    | PApp (_, slot, _, sp, _) =>
         (case info (slot, sp) of
            PICon i => if #isRef i then KRef else KCon (#ncons i, #siblings i)
          | PIExn _ => KExn
@@ -338,25 +339,26 @@ struct
      order, wild where it names none. *)
   and fieldsOf (p : pat) : pat list =
     case p of
-      PRecord (fields, flex, slot, sp) =>
-        let val labels = if flex then recordLabels (slot, sp) else List.map #1 (Types.sortFields fields)
-        in List.map (fn l => case List.find (fn (l', _) => l' = l) fields of SOME (_, q) => q | NONE => PWild sp) labels end
+      PRecord (fields, flex, slot, sp, _) =>
+        let val fields = unlabel fields
+            val labels = if flex then recordLabels (slot, sp) else List.map #1 (Types.sortFields fields)
+        in List.map (fn l => case List.find (fn (l', _) => l' = l) fields of SOME (_, q) => q | NONE => PWild (sp, noId)) labels end
     | _ => Error.bug "fields of what is no record pattern"
 
   (* The constructor a pattern tests for, by tag, and its argument's
      pattern; NONE for a wild one. *)
   fun conOf (p : pat) : (int * pat option) option =
     case p of
-      PList ([], _) => SOME (Types.nilTag (), NONE)
-    | PList (q :: rest, sp) => SOME (Types.consTag (), SOME (PTuple ([q, PList (rest, sp)], sp)))
-    | PVar (_, slot, sp) => (case info (slot, sp) of PICon i => SOME (#tag i, NONE) | _ => NONE)
-    | PApp (_, slot, arg, sp) => (case info (slot, sp) of PICon i => SOME (#tag i, SOME arg) | _ => NONE)
+      PList ([], _, _) => SOME (Types.nilTag (), NONE)
+    | PList (q :: rest, sp, _) => SOME (Types.consTag (), SOME (PTuple ([q, PList (rest, sp, noId)], sp, noId)))
+    | PVar (_, slot, sp, _) => (case info (slot, sp) of PICon i => SOME (#tag i, NONE) | _ => NONE)
+    | PApp (_, slot, arg, sp, _) => (case info (slot, sp) of PICon i => SOME (#tag i, SOME arg) | _ => NONE)
     | _ => NONE
 
   fun exnOf (p : pat) : (exninfo * pat option) option =
     case p of
-      PVar (_, slot, sp) => (case info (slot, sp) of PIExn e => SOME (e, NONE) | _ => NONE)
-    | PApp (_, slot, arg, sp) => (case info (slot, sp) of PIExn e => SOME (e, SOME arg) | _ => NONE)
+      PVar (_, slot, sp, _) => (case info (slot, sp) of PIExn e => SOME (e, NONE) | _ => NONE)
+    | PApp (_, slot, arg, sp, _) => (case info (slot, sp) of PIExn e => SOME (e, SOME arg) | _ => NONE)
     | _ => NONE
 
   fun sameExn (a : exninfo, b : exninfo) = #stamp a = #stamp b andalso #builtin a = #builtin b
@@ -509,9 +511,9 @@ struct
                 val ws = fresh arity
                 fun fields q =
                   case q of
-                    PTuple (ps, _) => ps
+                    PTuple (ps, _, _) => ps
                   | PRecord _ => fieldsOf q
-                  | _ => List.tabulate (arity, fn _ => PWild sp)
+                  | _ => List.tabulate (arity, fn _ => PWild (sp, noId))
                 val sub = tree (replace (cols, c, ws), List.map (fn r => put (r, fields (cell r))) rows)
               in
                 #2 (List.foldr (fn (w, (i, k)) => (i - 1, Let (w, Select (i, Var v), k))) (arity - 1, sub) ws)
@@ -519,7 +521,7 @@ struct
           | KRef =>
               let
                 val w = freshVar ()
-                fun inner q = case q of PApp (_, _, arg, _) => arg | _ => PWild sp
+                fun inner q = case q of PApp (_, _, arg, _, _) => arg | _ => PWild (sp, noId)
               in
                 Let (w, Prim ("ref_get", NONE, [Var v]), tree (replace (cols, c, [w]), List.map (fn r => put (r, [inner (cell r)])) rows))
               end
@@ -535,10 +537,10 @@ struct
                     val w = freshVar ()
                     fun rowFor r =
                       case conOf (cell r) of
-                        NONE => SOME (put (r, if hasArg then [PWild sp] else []))
+                        NONE => SOME (put (r, if hasArg then [PWild (sp, noId)] else []))
                       | SOME (t', arg) =>
                           if t' <> t then NONE
-                          else SOME (put (r, if hasArg then [case arg of SOME a => a | NONE => PWild sp] else []))
+                          else SOME (put (r, if hasArg then [case arg of SOME a => a | NONE => PWild (sp, noId)] else []))
                     val sub = tree (replace (cols, c, if hasArg then [w] else []), List.mapPartial rowFor rows)
                   in
                     if hasArg then Let (w, Decon (t, Var v), sub) else sub
@@ -567,8 +569,8 @@ struct
                   let val q = cell r
                   in
                     if same q then
-                      put (r, PWild sp :: (if hasArg then [case exnOf q of SOME (_, SOME a) => a | _ => PWild sp] else []))
-                    else put (r, q :: (if hasArg then [PWild sp] else []))
+                      put (r, PWild (sp, noId) :: (if hasArg then [case exnOf q of SOME (_, SOME a) => a | _ => PWild (sp, noId)] else []))
+                    else put (r, q :: (if hasArg then [PWild (sp, noId)] else []))
                   end
                 val yes = tree (replace (cols, c, v :: (if hasArg then [w] else [])), List.map yesRow rows)
                 val yes = if hasArg then Let (w, ExnArg (exnArgTy e, Var v), yes) else yes
@@ -578,15 +580,15 @@ struct
               end
           | KConst =>
               let
-                val (sc, slot) = case p of PScon (sc, slot, _) => (sc, slot) | _ => Error.bug "a constant pattern"
+                val (sc, slot) = case p of PScon (sc, slot, _, _) => (sc, slot) | _ => Error.bug "a constant pattern"
                 fun same q =
                   case q of
-                    PScon (sc', slot', _) =>
+                    PScon (sc', slot', _, _) =>
                       if literal (sc, slot) andalso literal (sc', slot') then sconConst sc = sconConst sc' else sc = sc'
                   | _ => false
                 fun other q =
                   case q of
-                    PScon (sc', slot', _) => literal (sc, slot) andalso literal (sc', slot') andalso sconConst sc <> sconConst sc'
+                    PScon (sc', slot', _, _) => literal (sc, slot) andalso literal (sc', slot') andalso sconConst sc <> sconConst sc'
                   | _ => false
                 (* where the value is the constant, a row of another literal
                    cannot match; one of another constant is still tested *)
@@ -594,7 +596,7 @@ struct
                   let
                     val yes = tree (cols, List.mapPartial (fn r => let val q = cell r
                                                                    in
-                                                                     if same q then SOME (put (r, [PWild sp]))
+                                                                     if same q then SOME (put (r, [PWild (sp, noId)]))
                                                                      else if other q then NONE
                                                                      else SOME r
                                                                    end) rows)
@@ -609,7 +611,7 @@ struct
                    it jumps to (performance M5) *)
                 fun stringOf q =
                   case q of
-                    PScon (sc' as SString s, slot', _) => if literal (sc', slot') then SOME s else NONE
+                    PScon (sc' as SString s, slot', _, _) => if literal (sc', slot') then SOME s else NONE
                   | _ => NONE
                 val strings =
                   List.foldl (fn (r, acc) => case stringOf (cell r) of
