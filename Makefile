@@ -1343,12 +1343,14 @@ check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/runeopt-boot bin/run
 
 # Every instruction says where it came from, and the line is one the file has.
 # The intermediate representations (docs/ir.md): the dumps of tests/ir, and
-# every program of tests/lang and tests/perf the same at -O0 and -O2 with the
-# lint of every pass on (docs/plans/middle-end.md, M2).
+# every program of tests/lang and tests/perf the same at -O0 and -O2, whole
+# and in units, on both bytecodes and at tier 2 of the JIT, with the lint of
+# every pass on, which makes the same bytes as with it off
+# (docs/plans/middle-end.md, M2; docs/plans/correctness/linting.md, M1).
 test-ir: $(RUNE) bin/rune-test
 	$(RUNE_TEST) --tier test-ir
 
-check-levels: $(RUNE) $(RUNEVM) bin/rune-test
+check-levels: $(RUNE) vm basis-cache bin/rune-test
 	$(RUNE_TEST) --tier check-levels
 
 # Every program of tests/lang and tests/perf compiled a unit per file (--units)
