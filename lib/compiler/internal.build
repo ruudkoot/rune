@@ -28,6 +28,7 @@ files
   backend/stack.sml
   backend/regcodes.sml
   backend/regs.sml
+  backend/regverify.sml
   backend/emit.sml
   backend/link.sml
   backend/unitfile.sml

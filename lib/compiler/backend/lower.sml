@@ -42,6 +42,17 @@ struct
   val selfRefs : bool IntMap.map ref = ref IntMap.empty
   val () = CompilerState.cellRoot ("Lower.selfRefs", selfRefs)
 
+  (* What the code made of the program declares, from the types, for a
+     check of it (RegVerify; docs/plans/correctness/linting.md, D9): what
+     each global holds, by its stamp -- any where the program does not say,
+     or where results share it (slotsOf, sumsOf) -- and where each closure is
+     made: the function that makes it, and what it captures (Low.Closure),
+     whose representations there are what the closure's slots hold. *)
+  val globalReps : L.rep IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Lower.globalReps", globalReps)
+  val closureSites : (int * L.var option list) IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Lower.closureSites", closureSites)
+
   (* How many uses of each variable take a field of it (Select) in the
      function it is bound in: where that is all its uses, the argument of a
      constructor made of its fields is never made whole (Rep, M11). *)
@@ -878,6 +889,14 @@ struct
                                  subst = let val t = IntTable.table 64
                                          in List.app (fn (x, v) => IntTable.insert (t, x, v)) bound; t end})
       val () = (currentSlots := outerSlots; currentSum := outerSum)
+      (* what it returns: a datatype's tag where it returns the datatype in
+         globals, the first field where it returns a tuple so *)
+      val result =
+        if isSome (IntMap.find (!sumFuns, #name f)) then L.RCon0
+        else
+          case IntMap.find (!slotFuns, #name f) of
+            SOME _ => (case Ty.view (#result f) of Ty.Tuple (t :: _) => repOfTy t | _ => L.RAny)
+          | NONE => repOfTy (#result f)
       val () =
         if !debugInfo then
           debugVars := {id = id, vars = !binds, env = #2 (List.foldl (fn (c, (i, acc)) => (i + 1, (c, i) :: acc)) (0, []) cs)}
@@ -887,7 +906,8 @@ struct
     in
       funcs := {id = id, name = name, params = List.map #2 ps, ncaptured = List.length cs, nvars = !(#nvars b),
                 blocks = List.rev (!(#blocks b)), pos = pos,
-                reps = Vector.tabulate (!(#nvars b), fn x => case IntTable.find (#reps b, x) of SOME r => r | NONE => L.RAny)}
+                reps = Vector.tabulate (!(#nvars b), fn x => case IntTable.find (#reps b, x) of SOME r => r | NONE => L.RAny),
+                result = result, captures = []}
                :: !funcs;
       id
     end
@@ -1271,6 +1291,7 @@ struct
                               if List.exists (fn l => l = c) later then (NONE :: vs, (#name f, i, c) :: ps, i + 1)
                               else (SOME (var (b, cx, c)) :: vs, ps, i + 1))
                            ([], [], 0) cs
+              val () = closureSites := IntMap.insert (!closureSites, fid, (#fid b, List.rev vs))
               val v = def (b, L.Closure (fid, List.rev vs))
             in go (rest, bindAs (cx, #name f, v), patches @ List.rev ps) end
       val (cx, patches) = go (fs, cx, [])
@@ -1300,15 +1321,42 @@ struct
       fun block ({label, params, instrs, transfer} : L.block) : L.block =
         {label = label, params = params, instrs = List.map instr instrs,
          transfer = case transfer of L.TailCallK (g, vs) => L.TailCallK (fid g, vs) | t => t}
-      val {id, name, params, ncaptured, nvars, blocks, pos, reps} = f
+      val {id, name, params, ncaptured, nvars, blocks, pos, reps, result, captures} = f
     in
       {id = id, name = name, params = params, ncaptured = ncaptured, nvars = nvars, blocks = List.map block blocks,
-       pos = pos, reps = reps}
+       pos = pos, reps = reps, result = result, captures = captures}
+    end
+
+  (* What each closure of f captures holds: what the function that makes it
+     says of the values it captures there, and a closure of its group made
+     after it, in the heap. *)
+  fun withCaptures (repsOf : int -> L.rep vector option) (f : L.func) : L.func =
+    let
+      val {id, name, params, ncaptured, nvars, blocks, pos, reps, result, ...} = f
+      val captures =
+        case IntMap.find (!closureSites, id) of
+          SOME (maker, vs) =>
+            (case repsOf maker of
+               SOME rs => List.map (fn SOME v => (Vector.sub (rs, v) handle Subscript => L.RAny) | NONE => L.RPtr) vs
+             | NONE => List.map (fn _ => L.RAny) vs)
+        | NONE => List.tabulate (ncaptured, fn _ => L.RAny)
+    in
+      {id = id, name = name, params = params, ncaptured = ncaptured, nvars = nvars, blocks = blocks,
+       pos = pos, reps = reps, result = result, captures = captures}
     end
 
   fun program (p : M.program, names : string IntMap.map) : L.program =
     let
       val () = (useCounts := IntTable.table 4096; captures := IntMap.empty; selfRefs := IntMap.empty; funcs := [];
+                closureSites := IntMap.empty;
+                globalReps :=
+                  List.foldl (fn (M.Val (g, (_, t), _), m) => IntMap.insert (m, g, repOfTy t)
+                               | (M.Funs fs, m) =>
+                                   List.foldl (fn (f, m) => case #params f of
+                                                              [_] => IntMap.insert (m, #name f, L.RPtr)
+                                                            | _ => m) m fs
+                               | (M.Do (gs, _), m) => List.foldl (fn ((g, (_, t)), m) => IntMap.insert (m, g, repOfTy t)) m gs)
+                             IntMap.empty p;
                 selectUses := IntTable.table 1024; selectFields := IntTable.table 1024; sumUses := IntTable.table 1024; sumRead := IntTable.table 1024; binderFn := IntTable.table 4096; nextFn := 0; virtuals := IntTable.table 1024;
                 nextFuncId := 0; funNames := names; globalFids := IntMap.empty; imported := IntMap.empty;
                 debugVars := []; binds := [];
@@ -1371,9 +1419,11 @@ struct
       val () = if !debugInfo then debugVars := {id = id, vars = !binds, env = []} :: !debugVars else ()
       val topFunc : L.func = {id = id, name = "<toplevel>", params = [param], ncaptured = 0, nvars = !(#nvars b),
                               blocks = List.rev (!(#blocks b)), pos = NONE,
-                              reps = Vector.tabulate (!(#nvars b), fn x => case IntTable.find (#reps b, x) of SOME r => r | NONE => L.RAny)}
+                              reps = Vector.tabulate (!(#nvars b), fn x => case IntTable.find (#reps b, x) of SOME r => r | NONE => L.RAny),
+                              result = L.RUnit, captures = []}
+      val byId = List.foldl (fn (f : L.func, m) => IntMap.insert (m, #id f, f)) IntMap.empty (topFunc :: !funcs)
+      fun repsOf id = Option.map #reps (IntMap.find (byId, id))
     in
-      IntMap.listItems (List.foldl (fn (f : L.func, m) => IntMap.insert (m, #id f, resolve f)) IntMap.empty
-                                   (topFunc :: !funcs))
+      IntMap.listItems (IntMap.map (resolve o withCaptures repsOf) byId)
     end
 end

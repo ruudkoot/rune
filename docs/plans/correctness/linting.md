@@ -89,7 +89,7 @@ What it rests on:
 | M5 | Mid is System F | I | not started |
 | M6 | Shapes and layouts in LowLint | I | not started |
 | M7 | The instruction sets described for checking | B | done (2026-10-26) |
-| M8 | A verifier of the register code | B | not started |
+| M8 | A verifier of the register code | B | done (2026-10-26); its level comes with M3 |
 | M9 | Units and the link | B | not started |
 | M10 | The stack code's check, in the compiler | B | not started |
 | M11 | Node ids, witnesses and `SourceTy` | A | not started |
@@ -204,6 +204,40 @@ passes on its exact commit.
       rule 54. Rune's `later-monotype` does not.
   - **In the REPL,** `later*` treats the end of an input as the end of the
     program: no weak variables across inputs (`src/repl/repl.sml`).
+
+- **M8** (`969420178`, merged `0a0e2855e`; `make check` 21,263 of 21,263).
+  - **`RegVerify`** (`backend/regverify.sml`) checks the register code in
+    one forward pass, after `registers` and on every program
+    `Link.program` makes.
+    - Its per-instruction rules come from M7's tables. The order of reps,
+      "unset", the meets, the handlers' depths and the tag facts are
+      written by hand.
+    - Lower declares each function's result rep and captures, and each
+      global's rep. They are carried in `Code` and, for cached units, in
+      the unit file (version 3). The `.rbc` format is unchanged.
+  - **What it found:** no breach on `tests/lang` (every level, units,
+    debug information), `tests/basis` (all 240, both levels), the 510
+    benchmark programs, the bootstrap (whole, in units, cold, warm, from
+    `.rbu` files) or MLton, whole and in 791 units.
+  - **What it catches:** E7's eleven corruptions, injected by
+    `RUNE_REGVERIFY_INJECT` (`tests/register/regverify.sml`), and E3's
+    mutants R02, R03, R06, L09, K01 and K02.
+  - **What it costs:** +0.8% (small), +1.6% (HaMLet), +4.4% (the
+    bootstrap), +0.8% (MLton), about half the prototype's. It is over
+    D13's threshold, so it goes to level 1 (M3). A REPL line takes about
+    0.03 ms.
+  - **Departures:**
+    - D9 said the VM would not change, but the VM's own unit loader
+      (`runtime/loader.c`) had to accept the unit file's version 3.
+    - The link still verifies the whole program (+10-19% on cached
+      builds) until M9 cuts it to interfaces.
+  - **The handover:** `docs/plans/correctness/vm-verifier.md` holds the
+    segfault's recipe, E7b's measures and the tables a C verifier could
+    be generated from.
+  - **Found on the way:** the REPL dies printing the results of
+    `tests/lang/mod.functor.functions_review.sml` ("fatal error …
+    expected tuple"), with or without the lint, and in the main tree's
+    `rune-repl` too. It is not this roadmap's.
 
 ## Found while writing this roadmap
 

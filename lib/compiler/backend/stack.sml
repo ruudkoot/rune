@@ -382,6 +382,6 @@ struct
     in
       {consts = List.rev (!C.consts), nglobals = !C.nglobals, funcs = sorted, files = List.rev (!C.files),
        inlines = List.rev (!C.inlines),
-       nlabels = !C.nextLabel}
+       nlabels = !C.nextLabel, globalReps = []}
     end
 end
