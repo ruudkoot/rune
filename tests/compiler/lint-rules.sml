@@ -24,7 +24,7 @@ struct
 
   fun func (id, blocks) : func =
     {id = id, name = "f" ^ Int.toString id, params = [0], ncaptured = 0, nvars = 10, blocks = blocks, pos = NONE,
-     reps = Vector.tabulate (10, fn _ => RAny)}
+     reps = Vector.tabulate (10, fn _ => RAny), result = RAny, captures = []}
   fun block (label, instrs, transfer) : block = {label = label, params = [], instrs = instrs, transfer = transfer}
   val here : pos = (Source.noSpan, [])
 
