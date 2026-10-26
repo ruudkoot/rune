@@ -8,6 +8,7 @@ files
   api/prelude.sml
   api/session.sml
   api/build-query.sml
+  api/node-types.sml
   api/query.sml
   api/facts.sml
   api/analysis-engine.sml

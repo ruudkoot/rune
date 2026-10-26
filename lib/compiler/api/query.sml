@@ -99,6 +99,8 @@ struct
                 val narrowed=LibraryScope.restrict (prior,current,exports)
             in env:= #env narrowed;Elaborate.sigs:= #sigs narrowed;Elaborate.funs:= #funs narrowed;fixity:=incoming end end
         val ()=List.app library (#groups plan)
+        (* the user's declarations recorded for their node types (CompilerNodeTypes) *)
+        val ()=(Elaborate.forgetLintRecords ();Elaborate.lintRecords:=true)
         fun user input =
           let val ds=parse input
               val ()=Elaborate.allowPrim:= #allowPrim config
@@ -108,7 +110,9 @@ struct
         val ()=Elaborate.finish ()
         val ()=if !Error.errors=0 then () else raise CompilerSession.Failed
           (List.map CompilerSession.sourceError (List.rev (!Error.kept)))
-        val found=List.mapPartial (fn ds => at (ds,file,offset)) (!syntax)
-      in case found of [] => NONE | ty :: _ =>
+        val tops=List.rev (!Elaborate.tops)
+        val () = Elaborate.lintRecords:=false
+      in case CompilerNodeTypes.typeAtNow (tops,!env,file,offset) of SOME ty => SOME ty | NONE =>
+         case List.mapPartial (fn ds => at (ds,file,offset)) (!syntax) of [] => NONE | ty :: _ =>
            SOME (Types.toStringNamed (fn c => Env.qualifiedName (!env,c),Types.newPrinter ()) ty) end)
 end

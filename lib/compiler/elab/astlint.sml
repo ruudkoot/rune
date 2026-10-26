@@ -69,7 +69,39 @@ struct
      scope), and the explicit type variables in scope by name (4.6) *)
   type ctx = {env : env, ftv : unit IntMap.map, scope : S.ty StringMap.map}
   (* the variables a pattern binds: name, stamp, type, global *)
-  type binding = string * int * S.ty * bool
+  type binding = string * int * S.ty * bool * Source.span
+
+  (* What a check or a typer reads of the elaborator's records, by node id
+     (the witnesses) and by stamp (the binders): AstLint's of the tables as
+     they are after Elaborate.finish (global), the editor's of the copies it
+     keeps of a unit's (CompilerNodeTypes) *)
+  type reader = {instance : int -> Types.ty option, nodeType : int -> Types.ty option,
+                 created : int -> Types.tycon list option, scoped : int -> (string * Types.ty) list option,
+                 generalised : int -> Types.tvar ref list option, binder : int -> Types.ty option,
+                 moduleResult : int -> Env.env option, functorParam : int -> Env.env option}
+  fun entryOf (t : 'a Witness.entry IntTable.table) (n : int) : 'a option =
+    if n < 0 then NONE else Option.map #value (IntTable.find (t, n))
+  val global : reader =
+    {instance = entryOf Witness.instances, nodeType = entryOf Witness.types, created = entryOf Witness.created,
+     scoped = entryOf Witness.scoped, generalised = entryOf Witness.generalised,
+     binder = fn stamp => IntTable.find (Ty.binders, stamp),
+     moduleResult = fn n => IntTable.find (Elaborate.moduleResults, n),
+     functorParam = fn n => IntTable.find (Elaborate.functorParams, n)}
+
+  (* a node's type as the typer worked it out (an expression's, a
+     pattern's, or a binder's with the variables its own binding
+     generalised): what the editor shows (CompilerNodeTypes) *)
+  type node = {kind : string, span : Source.span, ty : S.ty, own : int list}
+  fun kindOfExp e =
+    case e of
+      EScon _ => "EScon" | EVar _ => "EVar" | ERecord _ => "ERecord" | ETuple _ => "ETuple" | ESelect _ => "ESelect"
+    | EList _ => "EList" | ESeq _ => "ESeq" | ELet _ => "ELet" | EApp _ => "EApp" | ETyped _ => "ETyped"
+    | EAndalso _ => "EAndalso" | EOrelse _ => "EOrelse" | EHandle _ => "EHandle" | ERaise _ => "ERaise" | EIf _ => "EIf"
+    | EWhile _ => "EWhile" | ECase _ => "ECase" | EFn _ => "EFn" | EPrim _ => "EPrim"
+  fun kindOfPat p =
+    case p of
+      PWild _ => "PWild" | PScon _ => "PScon" | PVar _ => "PVar" | PRecord _ => "PRecord" | PTuple _ => "PTuple"
+    | PList _ => "PList" | PApp _ => "PApp" | PTyped _ => "PTyped" | PLayered _ => "PLayered" | POr _ => "POr"
 
   exception Stop
 
@@ -185,8 +217,10 @@ struct
      under SourceTy's budget, a declaration whose types are past it not
      checked (and counted). The alarms, at most the first 20 of them shown,
      make an Error.Bug. *)
-  fun run (tops : {dec : dec, env : Env.env, delta : Env.env} list) : {checked : int, skipped : int, alarms : int} =
+  fun runWith ({reader, observe, fatal} : {reader : reader, observe : (node -> unit) option, fatal : bool})
+              (tops : {dec : dec, env : Env.env, delta : Env.env} list) : {checked : int, skipped : int, alarms : int} =
     let
+      fun note (n : node) = case observe of SOME f => f n | NONE => ()
       val alarms : (string * Source.span * string) list ref = ref []
       val nalarms = ref 0
       fun alarm (rule, sp, msg) = (nalarms := !nalarms + 1; if !nalarms <= 20 then alarms := (rule, sp, msg) :: !alarms else ())
@@ -436,8 +470,7 @@ struct
       fun extend ({env, ftv, scope} : ctx, delta : env) : ctx = {env = plus (env, delta), ftv = addFtv (ftv, ownFree delta), scope = scope}
 
       (* ---- what the elaborator recorded, read ---- *)
-      fun entry (table : 'a Witness.entry IntTable.table, n : int) : 'a option =
-        if n < 0 then NONE else Option.map #value (IntTable.find (table, n))
+      fun entry (lookup : int -> 'a option, n : int) : 'a option = if n < 0 then NONE else lookup n
       (* a type witness of a node: the instance at a constructor pattern
          (rules 35, 41), the type of a wildcard (32), of a raise (11), of
          a [] pattern *)
@@ -452,7 +485,7 @@ struct
         | NONE => stop ("slot", sp, what ^ ": an empty slot")
       (* a binder's type (rules 32-34's variable, a fun's, a val rec's) *)
       fun binderTy (sp, stamp) : S.ty =
-        case IntTable.find (Ty.binders, stamp) of
+        case #binder reader stamp of
           SOME t => let val z = zonk t in if faulty "binder" then other z else z end
         | NONE => stop ("witness", sp, "no type of the variable's binder")
       fun expect (rule, sp, what, want : S.ty, got : S.ty) =
@@ -488,7 +521,7 @@ struct
           val implicit = List.filter (fn v => not (StringMap.member (#scope c, v)) andalso not (List.exists (fn w => w = v) explicit))
                                      (ungValDec d)
           val mine = explicit @ implicit
-          val recorded = case entry (Witness.scoped, idOfDec d) of
+          val recorded = case entry (#scoped reader, idOfDec d) of
                            SOME vs => List.map (fn (v, t) => (v, zonk t)) vs
                          | NONE => []
           val recorded = case recorded of _ :: rest => if faulty "scope" then rest else recorded | [] => []
@@ -539,8 +572,10 @@ struct
 
       (* ---- patterns (rules 32-43): the type and the variables bound ---- *)
       fun synthPat (c : ctx, p : pat) : S.ty * binding list =
+        let val r = synthPat0 (c, p) in note {kind = kindOfPat p, span = spanOfPat p, ty = #1 r, own = []}; r end
+      and synthPat0 (c : ctx, p : pat) : S.ty * binding list =
         case p of
-          PWild (sp, n) => (witnessed (Witness.types, n, sp, "a wildcard", "wildcard"), [])
+          PWild (sp, n) => (witnessed (#nodeType reader, n, sp, "a wildcard", "wildcard"), [])
         | PScon (sc, slot, sp, _) => let val t = slotTy (sp, "a constant", !slot, "constant") in checkScon (sp, sc, t); (t, []) end
         | PVar (longid as (_, name), slot, sp, n) =>
             (case !slot of
@@ -552,10 +587,10 @@ struct
                       SOME (LCon _) => alarm ("34 status", sp, name ^ " is a constructor in the context, bound as a variable")
                     | SOME (LExn _) => alarm ("34 status", sp, name ^ " is an exception in the context, bound as a variable")
                     | _ => ());
-                   (t, [(name, stamp, t, global)])
+                   (t, [(name, stamp, t, global, sp)])
                  end
              | SOME (PICon info) =>
-                 let val t = witnessed (Witness.instances, n, sp, "constructor " ^ name, "instance")
+                 let val t = witnessed (#instance reader, n, sp, "constructor " ^ name, "instance")
                  in
                    (* rule 35 *)
                    case findVal (#env c, longid) of
@@ -599,7 +634,7 @@ struct
             let val rs = List.map (fn p => synthPat (c, p)) ps
             in (S.tuple (List.map #1 rs), List.concat (List.map #2 rs)) end
         | PList ([], sp, n) =>
-            let val t = witnessed (Witness.types, n, sp, "[]", "nil")
+            let val t = witnessed (#nodeType reader, n, sp, "[]", "nil")
             in
               (case S.node t of
                  S.Con {stamp, args = [_], ...} => if stamp = listStamp then () else alarm ("35 instance", sp, "[] at " ^ show t)
@@ -621,7 +656,7 @@ struct
               case !slot of
                 SOME (PICon info) =>
                   (* rule 41 *)
-                  let val t = witnessed (Witness.instances, n, sp, "constructor " ^ name, "instance")
+                  let val t = witnessed (#instance reader, n, sp, "constructor " ^ name, "instance")
                   in
                     case findVal (#env c, longid) of
                       SOME (LCon {scheme, info = i}) =>
@@ -655,7 +690,7 @@ struct
               val () = case tyopt of SOME ty => expect ("43 annotation", sp, "a layered pattern's annotation", elabTy (c, ty), tp) | NONE => ()
               val b = case !slot of
                         SOME (PIVar (stamp, global)) =>
-                          (expect ("43 layered", sp, "the layered variable " ^ name, binderTy (sp, stamp), tp); (name, stamp, tp, global))
+                          (expect ("43 layered", sp, "the layered variable " ^ name, binderTy (sp, stamp), tp); (name, stamp, tp, global, sp))
                       | _ => stop ("slot", sp, "a layered pattern without its variable")
             in (tp, b :: bs) end
         | POr (p1 :: rest, sp, _) =>
@@ -667,15 +702,15 @@ struct
                                     in
                                       expect ("or-pattern", sp, "an alternative", t1, t);
                                       if List.length bs = List.length bs1
-                                         andalso List.all (fn (n, s, _, _) => List.exists (fn (n', s', _, _) => n = n' andalso s = s') bs1) bs
+                                         andalso List.all (fn (n, s, _, _, _) => List.exists (fn (n', s', _, _, _) => n = n' andalso s = s') bs1) bs
                                       then () else alarm ("or-pattern", sp, "the alternatives bind other variables")
                                     end) rest
             in (t1, bs1) end
         | POr ([], sp, _) => stop ("or-pattern", sp, "an empty or-pattern")
 
       fun bindingsCtx (c : ctx, bs : binding list) : ctx =
-        {env = plus (#env c, ownVals (List.map (fn (n, s, t, g) => (n, LVal {stamp = s, scheme = {bound = [], ty = t}, global = g})) bs)),
-         ftv = List.foldl (fn ((_, _, t, _), m) => addFtv (m, tyvars t)) (#ftv c) bs,
+        {env = plus (#env c, ownVals (List.map (fn (n, s, t, g, _) => (n, LVal {stamp = s, scheme = {bound = [], ty = t}, global = g})) bs)),
+         ftv = List.foldl (fn ((_, _, t, _, _), m) => addFtv (m, tyvars t)) (#ftv c) bs,
          scope = #scope c}
 
       (* the names in the types of an environment's values, for a let's
@@ -698,6 +733,8 @@ struct
 
       (* ---- expressions (rules 1-14) ---- *)
       fun synthExp (c : ctx, e : exp) : S.ty =
+        let val t = synthExp0 (c, e) in note {kind = kindOfExp e, span = spanOfExp e, ty = t, own = []}; t end
+      and synthExp0 (c : ctx, e : exp) : S.ty =
         case e of
           EScon (sc, slot, sp, _) => let val t = slotTy (sp, "a constant", !slot, "constant") in checkScon (sp, sc, t); t end
         | EVar (longid as (_, name), slot, sp, _) =>
@@ -810,7 +847,7 @@ struct
         | ERaise (e, sp, n) =>
             (* rule 11 *)
             (expect ("11 raise", sp, "the exception raised", exnTy, synthExp (c, e));
-             witnessed (Witness.types, n, sp, "a raise", "raise"))
+             witnessed (#nodeType reader, n, sp, "a raise", "raise"))
         | EIf (a, b, d, sp, _) =>
             let
               val () = expect ("A if", sp, "the condition", boolTy, synthExp (c, a))
@@ -859,7 +896,7 @@ struct
              finish: a flexible record's row settled since by its uses
              (4.11.program, --flex-records) is the variables of the record
              it became *)
-          val theirs = case entry (Witness.generalised, node) of
+          val theirs = case entry (#generalised reader, node) of
                          SOME rs => List.foldl (fn (r, acc) => List.foldl (fn (v, acc) => if member (v, acc) then acc else v :: acc)
                                                                           acc (tyvars (zonk (Types.TVar r)))) [] rs
                        | NONE => []
@@ -887,9 +924,12 @@ struct
                                val () = expect ("25 binding", spanOfPat p, "the value bound", tp, te)
                                val g = closure (c, us, spanOfPat p, tp, nonexpansive (c, e), idOfPat p, "val")
                              in
-                               List.map (fn (n, s, t, gl) =>
-                                            (n, LVal {stamp = s, scheme = {bound = List.filter (fn v => member (v, tyvars t)) g, ty = t},
-                                                      global = gl})) bs
+                               List.map (fn (n, s, t, gl, bsp) =>
+                                            let val own = List.filter (fn v => member (v, tyvars t)) g
+                                            in
+                                              note {kind = "binder", span = bsp, ty = t, own = own};
+                                              (n, LVal {stamp = s, scheme = {bound = own, ty = t}, global = gl})
+                                            end) bs
                              end) binds
             in ownVals (List.concat vals) end
         | DValRec (tvs, binds, sp, _) =>
@@ -910,7 +950,7 @@ struct
                                val (vs, tys) = vars p
                                val bs = List.map (fn (n, slot, psp) =>
                                                      case !slot of
-                                                       SOME (PIVar (s, g)) => (n, s, binderTy (psp, s), g)
+                                                       SOME (PIVar (s, g)) => (n, s, binderTy (psp, s), g, psp)
                                                      | _ => stop ("slot", psp, "a val rec variable without its slot")) vs
                              in (p, e, tys, bs) end) binds
               val crec = bindingsCtx (ci, List.concat (List.map #4 prepared))
@@ -919,9 +959,9 @@ struct
                 List.map (fn (p, e, tys, bs) =>
                              let
                                val te = synthExp (crec, e)
-                               val t = case bs of (_, _, t, _) :: _ => t | [] => te
+                               val t = case bs of (_, _, t, _, _) :: _ => t | [] => te
                              in
-                               List.app (fn (n, _, t', _) => expect ("26 rec", spanOfPat p, "val rec's " ^ n, t, t')) bs;
+                               List.app (fn (n, _, t', _, _) => expect ("26 rec", spanOfPat p, "val rec's " ^ n, t, t')) bs;
                                List.app (fn ty => expect ("26 annotation", spanOfPat p, "a val rec annotation", elabTy (ci, ty), t)) tys;
                                if isFn e then () else alarm ("26 rec", spanOfExp e, "val rec of other than fn");
                                expect ("26 rec", spanOfExp e, "the function bound", t, te);
@@ -930,7 +970,11 @@ struct
               val vals =
                 List.map (fn (p, t, bs) =>
                              let val g = closure (c, us, spanOfPat p, t, true, idOfPat p, "val rec")
-                             in List.map (fn (n, s, t, gl) => (n, LVal {stamp = s, scheme = {bound = g, ty = t}, global = gl})) bs end) typed
+                             in
+                               List.map (fn (n, s, t, gl, bsp) =>
+                                            (note {kind = "binder", span = bsp, ty = t, own = g};
+                                             (n, LVal {stamp = s, scheme = {bound = g, ty = t}, global = gl}))) bs
+                             end) typed
             in ownVals (List.concat vals) end
         | DFun (tvs, fundefs, sp, _) =>
             (* Appendix A: fun is val rec of a fn of its clauses *)
@@ -939,7 +983,7 @@ struct
               val prepared =
                 List.map (fn (f : fundef) =>
                              case !(#info f) of
-                               SOME (PIVar (s, g)) => let val t = binderTy (#span f, s) in (f, t, (#name f, s, t, g)) end
+                               SOME (PIVar (s, g)) => let val t = binderTy (#span f, s) in (f, t, (#name f, s, t, g, #span f)) end
                              | _ => stop ("slot", #span f, "fun " ^ #name f ^ " without its slot")) fundefs
               val crec = bindingsCtx (ci, List.map #3 prepared)
               val () =
@@ -955,8 +999,20 @@ struct
                                           in expect ("13 match", span, "a clause of " ^ #name f, t, ct) end)
                                       (#clauses f)) prepared
               val vals =
-                List.map (fn (f : fundef, t, (n, s, _, gl)) =>
-                             let val g = closure (c, us, #span f, t, true, #id f, "fun " ^ n)
+                List.map (fn (f : fundef, t, (n, s, _, gl, _)) =>
+                             let
+                               val g = closure (c, us, #span f, t, true, #id f, "fun " ^ n)
+                               (* the function's name where a clause begins with it (not
+                                  an infix clause's), for the editor *)
+                               val () = List.app (fn ({pats, span, ...} : clause) =>
+                                                     let val stop = #start span + size n
+                                                     in case pats of
+                                                          p :: _ => if #start (spanOfPat p) >= stop
+                                                                    then note {kind = "binder", span = {file = #file span, start = #start span, stop = stop},
+                                                                               ty = t, own = g}
+                                                                    else ()
+                                                        | [] => ()
+                                                     end) (#clauses f)
                              in (n, LVal {stamp = s, scheme = {bound = g, ty = t}, global = gl}) end) prepared
             in ownVals vals end
         | DType (tbs, _, _) =>
@@ -971,7 +1027,7 @@ struct
         | DDatatype (dbs, tbs, sp, n) =>
             (* rule 17, its datbinds by rule 28, the names new ones *)
             let
-              val created = case entry (Witness.created, n) of
+              val created = case entry (#created reader, n) of
                               SOME cs => cs
                             | NONE => stop ("17 datatype", sp, "no record of the names the datatype declaration created")
               val names' =
@@ -1085,7 +1141,7 @@ struct
         | DFunctor (binds, _, _) =>
             (List.app (fn (b : funbind) =>
                           let
-                            val pe = case IntTable.find (Elaborate.functorParams, #id b) of
+                            val pe = case entry (#functorParam reader, #id b) of
                                        SOME e => e
                                      | NONE => stop ("86 functor", #span b, "no record of functor " ^ #name b ^ "'s parameter")
                             val cb = case #param b of
@@ -1108,7 +1164,7 @@ struct
         | StrDynamic (_, _, _, sp, n) => axiom (n, sp, "a dynamic module")
         | StrExport (_, _, body, _, sp, n) => (ignore (checkStrexp (c, body, made)); axiom (n, sp, "an export"))
       and axiom (n, sp, what) : str =
-        case IntTable.find (Elaborate.moduleResults, n) of
+        case entry (#moduleResult reader, n) of
           SOME e => SBase e
         | NONE => stop ("D5 axiom", sp, "no record of the result of " ^ what)
 
@@ -1152,14 +1208,16 @@ struct
           val sp = spanOfDec dec
           val c0 = {env = [Base env], ftv = IntMap.empty, scope = StringMap.empty}
         in
-          (S.batch (fn () => let val mine = checkDec (c0, dec, ref []) in compareDelta (sp, mine, delta); closed (sp, mine) end);
+          ((if fatal then S.batch else S.batchFinished)
+             (fn () => let val mine = checkDec (c0, dec, ref [])
+                       in case observe of NONE => (compareDelta (sp, mine, delta); closed (sp, mine)) | SOME _ => () end);
            checked := !checked + 1)
           handle Stop => checked := !checked + 1
                | S.Budget => skipped := !skipped + 1
         end
       val () = List.app top tops
     in
-      if !nalarms = 0 then {checked = !checked, skipped = !skipped, alarms = 0}
+      if !nalarms = 0 orelse not fatal then {checked = !checked, skipped = !skipped, alarms = !nalarms}
       else
         raise Error.Bug ("astlint: " ^ Int.toString (!nalarms) ^ " alarm(s) in " ^ Int.toString (!checked) ^ " declarations: "
                          ^ String.concatWith "; " (List.map (fn (rule, sp, msg) => Source.describe sp ^ ": [" ^ rule ^ "] " ^ msg)
@@ -1169,7 +1227,17 @@ struct
   (* What the driver runs after Elaborate.finish (Pass.checkAt ("astlint",
      2)): the declarations elaborated since the records were last dropped,
      which are dropped after *)
+  fun run tops = runWith {reader = global, observe = NONE, fatal = true} tops
   fun check () : unit =
     let val tops = List.rev (!Elaborate.tops)
     in (ignore (run tops); Elaborate.forgetLintRecords ()) handle e => (Elaborate.forgetLintRecords (); raise e) end
+
+  (* The typer the editor uses (CompilerNodeTypes): a declaration's every
+     node worked out as AstLint works it out, from what a reader gives, each
+     node handed to observe; nothing an alarm would find stops it but where
+     no type can be worked out further (a missing witness), and the types
+     are those of a finished unit (SourceTy.batchFinished, so the caller
+     vouches that its unit's elaboration has ended) *)
+  fun typeDecl (reader : reader, observe : node -> unit, top : {dec : dec, env : Env.env, delta : Env.env}) : unit =
+    ignore (runWith {reader = reader, observe = SOME observe, fatal = false} [top])
 end

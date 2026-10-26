@@ -176,6 +176,12 @@ struct
     if not (!settled) then Error.bug "SourceTy: a type read before Elaborate.finish"
     else (let val r = f () in restore (); r end) handle e => (restore (); raise e)
 
+  (* a batch of a unit's types after its elaboration ended, which no
+     elaboration since can change (the editor's, of a unit it keeps), where
+     settled may say otherwise of the elaboration going on *)
+  fun batchFinished (f : unit -> 'a) : 'a =
+    (let val r = f () in restore (); r end) handle e => (restore (); raise e)
+
   fun ofType (t : Types.ty) : ty = batch (fn () => zonk t)
 
   (* --- printing --- *)

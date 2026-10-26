@@ -388,10 +388,17 @@ struct
                   val errors = !Error.errors
                   val recovering = !Elaborate.recover
                   val () = Elaborate.recover := true
-                  val () = Elaborate.elabTop (here, decs) handle e => (Elaborate.recover := recovering; raise e)
+                  (* AstLint at level 2, as rune runs it (docs/ir.md, AstLint):
+                     the input's declarations, not the echo's *)
+                  val () = Elaborate.lintRecords := Pass.linting' 2
+                  val () = Elaborate.elabTop (here, decs)
+                           handle e => (Elaborate.recover := recovering; Elaborate.lintRecords := false; raise e)
                   val () = Elaborate.recover := recovering
-                  val () = if !Error.errors > errors then (Error.warnings := []; raise Reported) else ()
+                  val () = if !Error.errors > errors then (Error.warnings := []; Elaborate.lintRecords := false;
+                                                            Elaborate.forgetLintRecords (); raise Reported) else ()
                   val () = Elaborate.finish ()
+                  val () = Pass.checkAt ("astlint", 2) AstLint.check () handle e => (Elaborate.lintRecords := false; raise e)
+                  val () = Elaborate.lintRecords := false
                   val delta = !Elaborate.lastDelta
                   val () = warnings := map Error.formatWarning (List.rev (!Error.warnings))
                   val () = Error.flushWarnings ()

@@ -83,9 +83,12 @@ struct
               val start = UnitBasis.begin (!env,!fixity)
               val (decs,outgoing) = Parser.parseTokensWith (Lexer.tokenize input,!fixity)
               val () = Elaborate.allowPrim:=allow
+              (* AstLint at level 2, as rune runs it (docs/ir.md, AstLint) *)
+              val () = Elaborate.lintRecords:=Pass.linting' 2
               val () = Elaborate.elabTop (env,decs)
               val () = Elaborate.finish ()
               val () = if !Error.errors=0 then () else raise Failed (List.map sourceError (List.rev (!Error.kept)))
+              val () = Pass.checkAt ("astlint",2) AstLint.check ()
               val result = Pipeline.unitThrough {start=start,name=name,file=file,text=fn () => text,mode=mode,
                 decs=decs,delta= !Elaborate.lastDelta,fixity=outgoing,used=[],fresh=false}
               val code = #code result
