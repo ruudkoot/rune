@@ -455,12 +455,14 @@ endif
 # The frozen Basis and compiler libraries (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
 # compile in units reads after its own cache and never writes; made again,
-# empty first, when the compiler or the library changes
+# empty first, when the compiler or the library changes. Compiled with the
+# lint of every pass, which changes no byte of it, so that no unit a
+# compile takes from there went unchecked (docs/plans/correctness/linting.md, M1)
 basis-cache: lib/cache/made
 lib/cache/made: bin/rune bin/rune.rbc bin/runevm $(wildcard lib/basis/*.sml lib/compiler/*.sml lib/compiler/*/*.sml lib/compiler/*.build) lib/basis/MANIFEST lib/compiler/MANIFEST
 	rm -rf lib/cache
-	bin/rune --units --basis all --library compiler --cache-dir lib/cache examples/hello.sml -o build/basis-cache.rbc
-	bin/rune --units --basis all --library compiler --target=stack --cache-dir lib/cache examples/hello.sml -o build/basis-cache.stack.rbc
+	bin/rune --units --lint --basis all --library compiler --cache-dir lib/cache examples/hello.sml -o build/basis-cache.rbc
+	bin/rune --units --lint --basis all --library compiler --target=stack --cache-dir lib/cache examples/hello.sml -o build/basis-cache.stack.rbc
 	touch $@
 
 # ---------------------------------------------------------------- environment
