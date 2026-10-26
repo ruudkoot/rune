@@ -466,6 +466,12 @@ struct
                       in nameFun (vname, e'); MatchComp.bindVar (stamp, g, e', k ()) end)
                  | _ => general (p, e, k))
             | PWild (_, _) => Seq (transExp e, k ())
+            (* a typed pattern binds as its pattern does: a variable is
+               bound to the value itself, not to a variable bound to it,
+               whose type would name the variables of its scheme where
+               nothing binds them (Mid is System F: the linting roadmap's
+               M5; MLton's IntSize.memoize) *)
+            | PTyped (q, _, _, _) => one ((q, e), k)
             | _ => general (p, e, k)
           and general (p, e, k) =
             let val t = MatchComp.freshVar ()

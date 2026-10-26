@@ -814,7 +814,7 @@ struct
           val ls = lines (read (f "out"))
         in
           List.app (fn l => if String.isPrefix "FAIL " l then say (l ^ "\n") else ()) ls;
-          if code = 0 andalso List.length (List.filter (String.isPrefix "PASS ") ls) >= 136 then ()
+          if code = 0 andalso List.length (List.filter (String.isPrefix "PASS ") ls) >= 142 then ()
           else fail ("compiler.lint-rules: exit " ^ Int.toString code ^ ", " ^ Int.toString (List.length ls) ^ " lines: "
                      ^ firstLine (f "err"))
         end
@@ -840,6 +840,9 @@ struct
       val word = "which is no instance of its description"
       val range = "out of the range of int"
       val unset = "which a way of it that returns does not set"
+      (* a type variable no binder binds (Mid is System F: M5) *)
+      val poly = ("poly", "which no binder around it binds")
+      val rebind = ("rebind", "again, where it is in scope")
     in
       at ("translate", "faults")
         [("scope", notInScope), ("twice", "is bound twice"), ("jump", "arguments"),
@@ -853,7 +856,7 @@ struct
       @ at ("mid", "faults")
           [("scope", notInScope), ("twice", "is bound twice"), ("jump", "arguments"),
            ("jump-out", "join point j999999937 is not in scope"), ("type", "where string is wanted"),
-           ("poly", "abstracts over 0 variables"), ("tyargs", "abstracts over"), ("select", "of a tuple of"),
+           poly, rebind, ("tyargs", "abstracts over"), ("select", "of a tuple of"),
            ("con", "has no constructor"), ("mkexn", payload), ("prim-name", word), ("const-kind", "a constant 0w"),
            ("const-range", range), ("do-drop", "is not defined"), ("do-unset", unset),
            ("functor-cast", "neither unit"), ("open-cast", "neither unit nor flat")]
@@ -865,15 +868,15 @@ struct
            ("do-unset", "a right-hand side of another kind"), ("functor-cast", "renamed two ways")]
       @ at ("expand", "faults")
           [("scope", notInScope), ("mkexn-copy", payload), ("functor-cast", "neither unit"),
-           ("open-cast", "neither unit nor flat"), ("poly", "abstracts over 0 variables"), ("do-unset", unset)]
+           ("open-cast", "neither unit nor flat"), poly, ("do-unset", unset)]
       @ at ("expand", "dynamic") [("dynamic-cast", "a dynamic_cast from string to int, neither unit")]
-      @ at ("shake", "faults") [("scope", notInScope), ("poly", "abstracts over 0 variables")]
+      @ at ("shake", "faults") [("scope", notInScope), poly]
       @ at ("lift", "faults") [("scope", notInScope), ("mkexn-copy", payload), ("nary", "used as a value")]
       @ at ("workers", "faults") [("nary", "used as a value"), ("tyargs", "abstracts over")]
       @ at ("simplify", "faults")
           [("scope", notInScope), ("type", "where string is wanted"), ("jump", "arguments"), ("mkexn", payload),
            ("mkexn-copy", payload), ("const-kind", "a constant 0w"), ("const-range", range), ("nary", "used as a value"),
-           ("poly", "abstracts over 0 variables"), ("tyargs", "abstracts over"), ("do-unset", unset),
+           poly, rebind, ("tyargs", "abstracts over"), ("do-unset", unset),
            ("select", "of a tuple of"), ("con", "has no constructor"), ("prim-name", word)]
       @ at ("refs", "faults") [("scope", notInScope), ("type", "where string is wanted")]
       @ at ("lower", "faults")
