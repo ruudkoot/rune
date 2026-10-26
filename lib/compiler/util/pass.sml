@@ -30,6 +30,17 @@ struct
      --pass-stats with RUNE_MEM set prints it after each unit *)
   val liveBytes : (unit -> int) ref = ref (fn () => ~1)
   val () = CompilerState.cellRoot ("Pass.liveBytes", liveBytes)
+  (* the bytecode instructions the process has run, where it can ask its
+     runtime (Rune's own main sets it): --pass-stats counts each check's *)
+  val instructions : (unit -> int) ref = ref (fn () => ~1)
+  val () = CompilerState.cellRoot ("Pass.instructions", instructions)
+  (* the compiler's counters of names -- stamps, type names, functions,
+     labels -- which no check may move (Pipeline sets it): a check that
+     took a fresh name would make the names after it others than a compile
+     without it does, and one did hide a bug it should have caught
+     (docs/plans/correctness/linting.md, E3) *)
+  val counters : (unit -> int list) ref = ref (fn () => [])
+  val () = CompilerState.cellRoot ("Pass.counters", counters)
   val fuel : int option ref = ref NONE
   val () = CompilerState.cellRoot ("Pass.fuel", fuel)
 
@@ -76,6 +87,11 @@ struct
   val () = CompilerState.cellRoot ("Pass.sizes", sizes)
   val checks = ref Time.zeroTime
   val () = CompilerState.cellRoot ("Pass.checks", checks)
+  (* each check, at every depth -- a unit's stages run inside unit-passes
+     -- by its key (checkAt), in the order they first ran: how many times
+     it ran, and the processor time and the instructions it took *)
+  val checked : (string * {runs : int ref, time : Time.time ref, instructions : int ref}) list ref = ref []
+  val () = CompilerState.cellRoot ("Pass.checked", checked)
 
   (* the processor time the process has taken: from its start, with the
      collector's. Every stage is timed by it, so that the stages and the time
@@ -87,10 +103,46 @@ struct
   fun line (name : string, size : int, t : Time.time) : unit =
     eprint ("pass " ^ name ^ ": " ^ Int.toString size ^ " nodes, " ^ Time.toString t ^ " s\n")
 
+  (* A check of y, by its key (the stage it follows, mostly), at whatever
+     depth: counted for --pass-stats under the key, and held to moving none
+     of the compiler's counters, as every check is to changing nothing of
+     the compile. A breach is a bug of the compiler, Error.Bug, which names
+     the key: "lint after KEY". *)
+  fun checkAt (key : string) (check : 'b -> unit) (y : 'b) : unit =
+    let
+      val names = !counters ()
+      val t0 = if !stats then used () else Time.zeroTime
+      val i0 = if !stats then !instructions () else 0
+      fun count () =
+        if !stats then
+          let
+            val {runs, time, instructions = n} =
+              case List.find (fn (k, _) => k = key) (!checked) of
+                SOME (_, c) => c
+              | NONE =>
+                  let val c = {runs = ref 0, time = ref Time.zeroTime, instructions = ref 0}
+                  in checked := !checked @ [(key, c)]; c end
+          in
+            runs := !runs + 1;
+            time := Time.+ (!time, Time.- (used (), t0));
+            n := !n + (!instructions () - i0)
+          end
+        else ()
+      val () = check y handle Error.Bug msg => (count (); raise Error.Bug ("lint after " ^ key ^ ": " ^ msg))
+      val () = count ()
+    in
+      if !counters () = names then ()
+      else raise Error.Bug ("lint after " ^ key ^ ": the check moved the compiler's counters of names")
+    end
+
+  (* --lint's checks: checkAt where the compile is linted *)
+  fun lintAt (key : string) (check : 'b -> unit) (y : 'b) : unit = if linting () then checkAt key check y else ()
+
   (* Run a stage of the pipeline: `name` for the options, `show` to print
-     what it made, `check` its lint (raising Error.Bug), `size` a count of
-     what it made for --pass-stats. The input is printed with --dump-before
-     by the stage before's `show`, which the caller passes as `showIn`. *)
+     what it made, `check` its lint, run where the compile is linted (its
+     checks, each by lintAt), `size` a count of what it made for
+     --pass-stats. The input is printed with --dump-before by the stage
+     before's `show`, which the caller passes as `showIn`. *)
   fun stage {name : string, showIn : ('a -> string) option, show : 'b -> string, check : 'b -> unit,
              size : 'b -> int}
             (f : 'a -> 'b) (x : 'a) : 'b =
@@ -111,9 +163,7 @@ struct
       val () = if !stats then line (name, size y, t) else ()
       val after = used ()
       val () = if asked (dumpAfter, name) then print ("(* after " ^ name ^ " *)\n" ^ show y ^ "\n") else ()
-      val () =
-        if linting () then (check y handle Error.Bug msg => raise Error.Bug ("lint after " ^ name ^ ": " ^ msg))
-        else ()
+      val () = if linting () then check y else ()
       val () =
         if !depth = 0
         then (outer := Time.+ (!outer, t);
@@ -132,8 +182,10 @@ struct
      the compiler's own code (loading it, and its top-level declarations),
      shown as the stage `startup`; and at the end the time of the sizes it
      counted as the stage `stats`, that of --lint and the dumps as `checks`,
-     then the total beside the sum of the outermost stages, which
-     tests/compiler holds to it *)
+     then each check at every depth, `check KEY: N runs, T s` (and `, I
+     instructions` where the runtime counts them), which those times hold
+     already, and last the total beside the sum of the outermost stages,
+     which tests/compiler holds to it *)
   (* where the process's processor time starts: 0, or below it where a host
      counts from before the process (SML/NJ's exported heap may), so that no
      stage is negative *)
@@ -156,6 +208,12 @@ struct
         val () = if linting () orelse not (List.null (!dumpBefore)) orelse not (List.null (!dumpAfter))
                  then (outer := Time.+ (!outer, !checks); line ("checks", 0, !checks))
                  else ()
+        val () =
+          List.app (fn (name, {runs, time, instructions = n}) =>
+                      eprint ("check " ^ name ^ ": " ^ Int.toString (!runs) ^ (if !runs = 1 then " run, " else " runs, ")
+                              ^ Time.toString (!time) ^ " s"
+                              ^ (if !instructions () < 0 then "" else ", " ^ Int.toString (!n) ^ " instructions") ^ "\n"))
+                   (!checked)
         val total = Time.- (used (), !origin)
         val share = if Time.toReal total > 0.0 then 100.0 * Time.toReal (!outer) / Time.toReal total else 100.0
       in

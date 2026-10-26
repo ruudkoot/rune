@@ -82,14 +82,14 @@ What it rests on:
 | Milestone | What | Track | State |
 |---|---|---|---|
 | M0 | This roadmap | | done (2026-10-25) |
-| M1 | The fixes found, and the guards that cost nothing | P | not started |
-| M2 | Lints that cost less, with the same rules | P | not started |
+| M1 | The fixes found, and the guards that cost nothing | P | done (2026-10-26) |
+| M2 | Lints that cost less, with the same rules | P | done (2026-10-26) |
 | M3 | Levels | P | not started |
 | M4 | The missing rules of LambdaLint and MidLint, a negative test for every rule | I | not started |
 | M5 | Mid is System F | I | not started |
 | M6 | Shapes and layouts in LowLint | I | not started |
-| M7 | The instruction sets described for checking | B | not started |
-| M8 | A verifier of the register code | B | not started |
+| M7 | The instruction sets described for checking | B | done (2026-10-26) |
+| M8 | A verifier of the register code | B | done (2026-10-26); its level comes with M3 |
 | M9 | Units and the link | B | not started |
 | M10 | The stack code's check, in the compiler | B | not started |
 | M11 | Node ids, witnesses and `SourceTy` | A | not started |
@@ -97,7 +97,7 @@ What it rests on:
 | G1 | How AstLint goes on (the owner's) | A | |
 | M13 | AstLint of the module language | A | not started |
 | M14 | The editor's types | A | not started |
-| M15 | Overloading's context and free type variables, as options | A | not started |
+| M15 | Overloading's context and free type variables, as options | A | done (2026-10-26) |
 | M16 | Retire | | not started |
 
 The owner took every recommendation, D1 to D19, on 2026-10-26
@@ -119,6 +119,156 @@ The tracks do not wait for each other, after M1:
   and gives the editor a type at every node. It also makes overloading's
   context and the treatment of free type variables options (M15). Gate
   G1, after AstLint of the Core, is the owner's.
+
+## The implementation so far
+
+The owner took every decision as recommended and asked for every milestone
+(2026-10-26). Each milestone is merged into `linting` after `make check`
+passes on its exact commit.
+
+- **M1** (`78e29e130`, `1835c1da7`, `6e09be6bc`, `eb976d841`, `903e3dc82`,
+  merged `71bad1be4`; `make check` 21,307 of 21,307).
+  - **The two bugs, fixed:**
+    - the value restriction takes `(conexp : ty) atexp`, with a test in
+      `tests/lang` and one that `ref`'s stays expansive;
+    - `--mid-roundtrip` reads Mid back with counters of its own.
+  - **No check may move the compiler's counters:** `Pass.checkAt` refuses
+    one that moves the counters of stamps, type names, type variables,
+    records, functions, labels or private names.
+  - **Each check is counted at every depth** in `--pass-stats`. HaMLet in
+    units: the old `checks` line said 0.005 s; the checks take 2.2 s.
+  - **The invariant of `results` is always on:** 0.14% of HaMLet, 0.53% of
+    the bootstrap.
+  - **`check-levels`** compiles both targets and a true `--units` build
+    (UL). The register target is compared lint on against lint off, and
+    runs at tier 2 with `--checked`. Its CPU is about 2.3 to 2.75 times
+    what it was (more builds and runs per program); M3 weighs cuts against
+    "make check does not grow".
+  - **`lib/cache` is built with `--lint`:** all 768 entries are the same
+    bytes.
+  - **A departure:** the Mid round trip gives its type names stamps from a
+    range below every stamp the compiler makes, never reused, because
+    `Ty.con` hash-conses by stamp and keeps the first name it saw.
+- **M2** (`54a2d65c4`, `8aeee5c0e`, merged `6a02ec637`; `make check`
+  21,307 of 21,307).
+  - **What changed:**
+    - MidLint keeps imperative tables, with one scope table entered and
+      left;
+    - LowLint checks availability by dominance over the blocks;
+    - `midcanon` is checked as a renaming of its input (`midconcat` keys
+      the lint of units' Mid joined under `--units --whole`).
+
+    The rules and the messages are the same.
+  - **What `--lint` costs now:**
+    - HaMLet -O1: +31.5% (+83.4% before);
+    - the bootstrap -O1: +60.1% (+148.3%);
+    - MLton whole: +14.1% (+39.5%);
+    - MLton `--units --whole`: +7.2% (+16.3%).
+
+    LambdaLint is now the largest single check.
+  - **A departure:** LowLint's walk up the dominator tree is not strictly
+    linear (5.8 steps a use on HaMLet, 1.8 on the bootstrap).
+
+- **M7** (`ac2e7e2ad`, merged `efa5148f1`; `make check` 21,251 of 21,251).
+  - **The register instructions are described for checking in
+    `src/isa/regs.sml`:**
+    - each operand's role and the value it holds;
+    - the implicit traffic of `PRIM`, `PRIMPUSH`, `CALL`, `RESULT` and
+      `CATCH`;
+    - "followed by" (`RESULT`, `SWITCH`'s table, `CATCH` at a handler);
+    - which primitives each instruction may name;
+    - the closures' and known calls' facts that E7's rules need.
+  - **RegGen writes the tables into `regcodes.sml`**, and
+    `Regs.imagePrims` is generated. `RegIsa.check` holds a description
+    together, and `runeisa --test` refuses 43 wrong ones (in
+    `make check-isa`).
+  - **Primitives' types are parsed** by a real parser (`Isa.parseTy`; all
+    414 parse) into `PrimTys`, and `Prims.repsOf` comes from them. This
+    moved here from M4, which needs it later.
+  - **The fingerprint and the output are unchanged.** The loader's
+    `prim_result` keeps the old reading, so the C does not change.
+  - **Found:** with the parse, the primitives without a result rep are 8,
+    not 28. The split on `*` misread 20, among them `rt_debug_hook` and
+    `repl_printer_add`.
+  - **Cost:** start-up +0.44% of `compile-hello` (the tables are built at
+    start).
+
+- **M15, the options** (`32bb74cb3`, `80e4fe4db`, `b1bc26e9b`, merged
+  `f7eb8c8cd`; `make check` 21,580 of 21,580).
+  - **What landed:**
+    - `--overloading=binding|declaration|toplevel|topdec` and
+      `--free-tyvars=refuse|monotype|dummy|later|later-monotype`, in the
+      cache's configuration, the REPL, the compiler library, the help, the
+      man page and `docs/language.md`;
+    - the check of rules 87-89, moved out of `--flex-records`;
+    - `tests/overloading`, E13's programs under every mode;
+    - two declarations of `RuneForeign` written so that the Basis
+      elaborates in every mode.
+  - **The count under `declaration`:** nothing breaks in Rune's sources,
+    the Basis, the benchmarks, MLton's 606 files or HaMLet. One SML/NJ
+    regression program breaks, which SML/NJ and MLKit refuse too. HOL4
+    breaks at 7 sites in 3 files: integer constants that a later
+    declaration or the signature makes `IntInf.int`, one annotation each.
+  - **The owner's call (2026-10-26):** the default moves to
+    `declaration`, and HOL4 builds with `--overloading=toplevel` until the
+    annotations land in the HOL4 tree.
+  - **The move** (`bff52625b`, merged `a1121a6b2`; `make check` 21,626 of
+    21,626).
+    - It needed seven more annotations in the repository that the count
+      had missed: string sorts whose `<` would now default to `int`
+      (`tests/runner/sh.sml`, `basis.sml`, `laws.sml`,
+      `tools/builder/common.sml`), `tools/measure/jit-dump.sml`,
+      `tests/ffi/performance-model.sml`, and
+      `lib/ffi/win32/model/model.sml`.
+    - `docs/plans/hol4.md` says how HOL4 builds with
+      `--overloading=toplevel`, and `hol4-overloading-declaration.patch`
+      beside it holds the seven annotations for the HOL4 tree.
+  - **Where the implementations are less tidy than D18 and D19 say:**
+    - MLton's `topdec` context also ends at a functor or signature
+      declaration, and Poly/ML lets an application settle a functor body's
+      overloading. Rune settles a functor body where it ends.
+    - HaMLet, under `refuse`, runs E13's functor program; Rune refuses it
+      at the functor.
+    - SML/NJ makes dummy types at structure level only, not "at any
+      depth".
+    - MLton accepts two applications of a functor at two types, against
+      rule 54. Rune's `later-monotype` does not.
+  - **In the REPL,** `later*` treats the end of an input as the end of the
+    program: no weak variables across inputs (`src/repl/repl.sml`).
+
+- **M8** (`969420178`, merged `0a0e2855e`; `make check` 21,263 of 21,263).
+  - **`RegVerify`** (`backend/regverify.sml`) checks the register code in
+    one forward pass, after `registers` and on every program
+    `Link.program` makes.
+    - Its per-instruction rules come from M7's tables. The order of reps,
+      "unset", the meets, the handlers' depths and the tag facts are
+      written by hand.
+    - Lower declares each function's result rep and captures, and each
+      global's rep. They are carried in `Code` and, for cached units, in
+      the unit file (version 3). The `.rbc` format is unchanged.
+  - **What it found:** no breach on `tests/lang` (every level, units,
+    debug information), `tests/basis` (all 240, both levels), the 510
+    benchmark programs, the bootstrap (whole, in units, cold, warm, from
+    `.rbu` files) or MLton, whole and in 791 units.
+  - **What it catches:** E7's eleven corruptions, injected by
+    `RUNE_REGVERIFY_INJECT` (`tests/register/regverify.sml`), and E3's
+    mutants R02, R03, R06, L09, K01 and K02.
+  - **What it costs:** +0.8% (small), +1.6% (HaMLet), +4.4% (the
+    bootstrap), +0.8% (MLton), about half the prototype's. It is over
+    D13's threshold, so it goes to level 1 (M3). A REPL line takes about
+    0.03 ms.
+  - **Departures:**
+    - D9 said the VM would not change, but the VM's own unit loader
+      (`runtime/loader.c`) had to accept the unit file's version 3.
+    - The link still verifies the whole program (+10-19% on cached
+      builds) until M9 cuts it to interfaces.
+  - **The handover:** `docs/plans/correctness/vm-verifier.md` holds the
+    segfault's recipe, E7b's measures and the tables a C verifier could
+    be generated from.
+  - **Found on the way:** the REPL dies printing the results of
+    `tests/lang/mod.functor.functions_review.sml` ("fatal error …
+    expected tuple"), with or without the lint, and in the main tree's
+    `rune-repl` too. It is not this roadmap's.
 
 ## Found while writing this roadmap
 

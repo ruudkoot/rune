@@ -198,7 +198,7 @@ struct
           val ()=if #instance state=module then () else fail "unregisterClass" 0w6
           val ()=if !(#windows state)=0 andalso !(#active state)=0 then () else fail "unregisterClass" 0w1412
       in classes:=List.filter(fn(c:classState)=> #token c<>token)(!classes);note("unregister " ^ String.toString(#name state)) end
-    fun createWindowEx{class,instance=module,title,style,extendedStyle,x,y,width,height,parent}=activation(fn()=>
+    fun createWindowEx{class,instance=module,title,style,extendedStyle:Word32.word,x,y,width,height,parent}=activation(fn()=>
       let val state=findClass "createWindowEx" class
           val ()=if #instance state=module andalso module=instance then () else fail "createWindowEx" 0w6
           val ()=text "createWindowEx" title

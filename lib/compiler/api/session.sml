@@ -14,7 +14,14 @@ struct
      marks, and whether the marks are left out (docs/build.md, Inline
      functors) *)
   type functors = {inline : string list, noInline : bool}
-  type config = {target : string, allowPrim : bool, lib : string option, libraries : string list, functors : functors}
+  (* language: the contexts of overloading and of free type variables at
+     top level (--overloading, --free-tyvars; docs/language.md) *)
+  type language = {overloading : Elaborate.overloadMode, freeTyvars : Elaborate.freeMode}
+  type config = {target : string, allowPrim : bool, lib : string option, libraries : string list, functors : functors,
+                 language : language}
+  (* the language's choices of config, set in the compiler of an attempt *)
+  fun language (config : config) : unit =
+    (Elaborate.overloading := #overloading (#language config); Elaborate.freeTyvars := #freeTyvars (#language config))
   type platform = {link : string -> unit -> unit, inherited : (string * string option) list,
                    prepare : bool -> unit, current : unit -> (string * string) list}
   datatype session = Session of {token : unit ref, namespace : string, config : config, sources : input list ref,
@@ -47,6 +54,7 @@ struct
           val () = (Pass.whole:=false; Pipeline.keepMid:=true; CompilerSettings.target:= #target config;
                     Error.keep:=true;Error.silent:=true;Elaborate.recover:=true)
           val () = CompilerSettings.libDir:= #lib config
+          val () = language config
           (* the functors to inline, set in this attempt's own compiler as
              rune's options set them *)
           val {inline,noInline} = #functors config

@@ -55,7 +55,7 @@ struct
     in go ("", String.fields (fn c => c = #"/") path) end
 
   (* merge sort of strings *)
-  fun sort xs =
+  fun sort (xs : string list) =
     let
       fun merge ([], ys) = ys
         | merge (xs, []) = xs

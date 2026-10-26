@@ -1,0 +1,47 @@
+diff --git a/src/portableML/poly/Arbintcore.sml b/src/portableML/poly/Arbintcore.sml
+index 158294c30..6a49bd392 100644
+--- a/src/portableML/poly/Arbintcore.sml
++++ b/src/portableML/poly/Arbintcore.sml
+@@ -7,9 +7,9 @@ open IntInf
+ 
+ type num = Arbnumcore.num
+ 
+-val zero = 0
+-val one = 1
+-val two = 2
++val zero : IntInf.int = 0
++val one : IntInf.int = 1
++val two : IntInf.int = 2
+ 
+ fun toString x =
+    (if x < 0
+diff --git a/src/portableML/poly/Arbnumcore.sml b/src/portableML/poly/Arbnumcore.sml
+index 29c45decc..37a25f5cb 100644
+--- a/src/portableML/poly/Arbnumcore.sml
++++ b/src/portableML/poly/Arbnumcore.sml
+@@ -12,9 +12,9 @@ open IntInf
+ 
+ type num = int
+ 
+-val zero = 0
+-val one = 1
+-val two = 2
++val zero : IntInf.int = 0
++val one : IntInf.int = 1
++val two : IntInf.int = 2
+ 
+ fun times2 x = 2 * x
+ fun div2 x = x div 2
+diff --git a/tools/Holmake/poly/MB_Monitor.sml b/tools/Holmake/poly/MB_Monitor.sml
+index 4bb5d4b5c..548fe030a 100644
+--- a/tools/Holmake/poly/MB_Monitor.sml
++++ b/tools/Holmake/poly/MB_Monitor.sml
+@@ -34,7 +34,7 @@ fun nextchar #"|" = #"/"
+   | nextchar #"\\" = #"|"
+   | nextchar c = c
+ 
+-val time_units = [("m", 60), ("h", 60), ("d", 24)]
++val time_units : (string * LargeInt.int) list = [("m", 60), ("h", 60), ("d", 24)]
+ 
+ fun compact_time sz0 withsecs ld rd t =
+     let

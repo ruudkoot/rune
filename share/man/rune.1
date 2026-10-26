@@ -242,6 +242,47 @@ each use) or
 .B program
 (the whole program, or the unit).
 .TP
+.BI \-\-overloading= MODE
+What must determine the type of an overloaded operator or constant
+.RB ( + ,
+.BR 1 )
+before it defaults
+.RB ( int ,
+.BR real ,
+\&...), which the Definition bounds by the smallest enclosing declaration at
+structure level:
+.B binding
+(the innermost value declaration, as HaMLet),
+.B declaration
+(the default: the declaration at structure level it is in, the Definition's
+bound, as SML/NJ and MLKit),
+.B toplevel
+(the declaration at top level, a whole structure, local or functor, as Moscow
+ML and Rune before the option) or
+.B topdec
+(the top-level declaration, to a
+.B ;
+or the end of the file, as Poly/ML and MLton). A functor's body is settled
+where it ends in every mode.
+.TP
+.BI \-\-free\-tyvars= MODE
+What becomes of a type variable that a top-level declaration leaves free
+.RB ( "val r = ref []" ),
+which the Definition refuses or makes a monotype:
+.B refuse
+(the default, as HaMLet: an error, where the top-level declaration ends, to a
+.B ;
+or the end of the file),
+.B monotype
+(a new type there, with a warning, as Poly/ML),
+.B dummy
+(a new type where each value declaration at structure level ends, as SML/NJ),
+.B later
+(what any later use in the program, or the unit, makes of it, an error where
+none does, as MLKit and Moscow ML) or
+.B later\-monotype
+(the same, a new type where none does, as MLton).
+.TP
 .BI \-\-functor\-budget= N
 The nodes of the middle end the copies of a top-level application of a
 functor, and of the applications in them, may hold (1000000 by default;

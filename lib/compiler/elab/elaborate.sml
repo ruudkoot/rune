@@ -88,8 +88,10 @@ struct
   val pendingFlex : (tvar ref * span) list ref = ref []
   val () = CompilerState.cellRoot ("Elaborate.pendingFlex", pendingFlex)
   (* the declarations of the topdec so far, whose free variables are checked
-     where it ends (rules 87 to 89; elabTop) *)
-  val pendingClosed : (env * span) list ref = ref []
+     where it ends (rules 87 to 89; elabTop), or of the program so far under
+     --free-tyvars=later and later-monotype, with there the result of each
+     functor (SOME its name) whose body left one free *)
+  val pendingClosed : (env * span * string option) list ref = ref []
   val () = CompilerState.cellRoot ("Elaborate.pendingClosed", pendingClosed)
 
   (* How large the context is that must determine a flexible record's
@@ -109,6 +111,45 @@ struct
     | FlexTopdec => "topdec" | FlexProgram => "program"
   fun flexModeOf name =
     List.find (fn m => flexModeName m = name) [FlexBinding, FlexDeclaration, FlexTopdecMono, FlexTopdec, FlexProgram]
+
+  (* How large the context is that must determine an overloaded identifier
+     or constant, where it is defaulted (Appendix E: no larger than the
+     smallest enclosing structure-level declaration; docs/language.md,
+     --overloading): the innermost value declaration (HaMLet), the
+     declaration at structure level (SML/NJ, MLKit: the bound, and the
+     default), the declaration at top level -- a whole structure, local or
+     functor -- (Moscow ML, and Rune before the option), or the topdec, to a
+     `;` or the end of the file (MLton, Poly/ML). A functor's body, compiled
+     once, is settled where it ends in every mode *)
+  datatype overloadMode = OverBinding | OverDeclaration | OverToplevel | OverTopdec
+  val overloading = ref OverDeclaration
+  val () = CompilerState.cellRoot ("Elaborate.overloading", overloading)
+  fun overloadModeName m =
+    case m of
+      OverBinding => "binding" | OverDeclaration => "declaration" | OverToplevel => "toplevel" | OverTopdec => "topdec"
+  fun overloadModeOf name =
+    List.find (fn m => overloadModeName m = name) [OverBinding, OverDeclaration, OverToplevel, OverTopdec]
+
+  (* What becomes of a type variable a declaration leaves free in the basis
+     (rules 87-89; Appendix G.8 allows an error or a monotype;
+     docs/language.md, --free-tyvars): an error where the topdec ends
+     (HaMLet, and Rune before the option: the default), a new type there
+     (Poly/ML), a new type where each value declaration at structure level
+     ends (SML/NJ's dummy types), or whatever a later use in the program --
+     the unit, with --units; a REPL's input -- makes of it, and an error
+     (MLKit, Moscow ML) or a new type (MLton) where none does *)
+  datatype freeMode = FreeRefuse | FreeMonotype | FreeDummy | FreeLater | FreeLaterMonotype
+  val freeTyvars = ref FreeRefuse
+  val () = CompilerState.cellRoot ("Elaborate.freeTyvars", freeTyvars)
+  fun freeModeName m =
+    case m of
+      FreeRefuse => "refuse" | FreeMonotype => "monotype" | FreeDummy => "dummy" | FreeLater => "later"
+    | FreeLaterMonotype => "later-monotype"
+  fun freeModeOf name =
+    List.find (fn m => freeModeName m = name) [FreeRefuse, FreeMonotype, FreeDummy, FreeLater, FreeLaterMonotype]
+  (* whether the free type variables wait for the end of what is elaborated
+     together (a program, a unit, a REPL's input) *)
+  fun freeLater () = case !freeTyvars of FreeLater => true | FreeLaterMonotype => true | _ => false
 
   (* Exhaustiveness and redundancy reports are deferred to the end of the
      top-level declaration, when flexible record patterns have their types.
@@ -225,10 +266,15 @@ struct
   val wordDefault = ref wordTy
   val () = CompilerState.cellRoot ("Elaborate.wordDefault", wordDefault)
 
+  (* The overloaded variables and the constants of the context that ends
+     here, each variable that its context left open defaulted -- the one it
+     was unified with, where it was: an inner context defaults what its own
+     phrases are overloaded at, as HaMLet does (--overloading=binding) --
+     and each constant checked against its type *)
   fun resolvePending () =
     (List.app (fn r =>
-                 case !r of
-                   Unbound {kind = KOverload names, ...} =>
+                 case prune (TVar r) of
+                   TVar (r' as ref (Unbound {kind = KOverload names, ...})) =>
                      let
                        val default =
                          if List.exists (fn n => n = "int") names then !intDefault
@@ -237,11 +283,34 @@ struct
                          else if List.exists (fn n => n = "char") names then charTy
                          else if List.exists (fn n => n = "string") names then stringTy
                          else Error.bug "resolvePending: empty overload class"
-                     in Unify.unify (TVar r, default) end
+                     in Unify.unify (TVar r', default) end
                  | _ => ()) (!pendingOverloads);
      pendingOverloads := [];
      List.app checkLiteral (List.rev (!pendingLiterals));
      pendingLiterals := [])
+
+  (* A context of overloading inside another: a value declaration under
+     --overloading=binding, and a functor's body, which is compiled once.
+     What the contexts around it wait for is put aside while it is
+     elaborated, and its own are resolved where it ends *)
+  fun overloadContext (f : unit -> 'a) : 'a =
+    let
+      val outer = (!pendingOverloads, !pendingLiterals)
+      val () = (pendingOverloads := []; pendingLiterals := [])
+      val result = f ()
+    in
+      resolvePending ();
+      pendingOverloads := #1 outer;
+      pendingLiterals := #2 outer;
+      result
+    end
+
+  (* The depth of the abstypes at structure level whose bodies are being
+     elaborated: a value declaration in one is not a declaration at
+     structure level (--overloading=declaration, --free-tyvars=dummy), the
+     abstype is, as SML/NJ and MLKit have it *)
+  val abstypeDepth = ref 0
+  val () = CompilerState.cellRoot ("Elaborate.abstypeDepth", abstypeDepth)
 
   (* Section 4.11: the program context must determine every flexible record.
      Checked once the whole program is elaborated, together with the deferred
@@ -495,7 +564,7 @@ struct
         | TCon (_, args) => List.app ty args
         | TRecord fields => List.app (fn (_, a) => ty a) fields
         | TArrow (a, b) => (ty a; ty b)
-    in List.app (fn (e, _) => appEnvTypes ty e) (!pendingClosed); !found end
+    in List.app (fn (e, _, _) => appEnvTypes ty e) (!pendingClosed); !found end
 
   (* Whether a summary may stand for every application: no type variable of
      it that unification may still bind -- one not generalised, or a
@@ -531,6 +600,114 @@ struct
                           | _ => ()) vals;
          StringMap.appi (fn (n, s) => walk (prefix ^ n ^ ".", s)) strs)
     in (walk ("", e); NONE) handle Found f => SOME f end
+
+  (* Rules 87-89: a top-level declaration may not leave free type variables
+     in the basis, e.g. val r = ref nil. Not an overloaded variable, which
+     the end of its context defaults (--overloading), nor a flexible record,
+     which the end of its context settles (--flex-records) *)
+  fun freeTyvar (t : ty) : ty option =
+    case prune t of
+      t as TVar (ref (Unbound {level, kind, ...})) =>
+        (case kind of KFlex _ => NONE | KOverload _ => NONE | _ => if level = genericLevel then NONE else SOME t)
+    | TVar _ => NONE
+    | TCon (_, args) => List.foldl (fn (a, NONE) => freeTyvar a | (_, r) => r) NONE args
+    | TRecord fields => List.foldl (fn ((_, a), NONE) => freeTyvar a | (_, r) => r) NONE fields
+    | TArrow (a, b) => (case freeTyvar a of NONE => freeTyvar b | r => r)
+
+  (* the free type variables of a type, each once, in the order met *)
+  fun freeVarsOf (t : ty) : tvar ref list =
+    let
+      val found : tvar ref list ref = ref []
+      fun ty t =
+        case freeTyvar t of
+          NONE => ()
+        | SOME _ =>
+            case prune t of
+              TVar r => if List.exists (fn r' => r' = r) (!found) then () else found := r :: !found
+            | TCon (_, args) => List.app ty args
+            | TRecord fields => List.app (fn (_, a) => ty a) fields
+            | TArrow (a, b) => (ty a; ty b)
+    in ty t; List.rev (!found) end
+
+  (* where a free type variable is found: a top-level declaration's value,
+     or one of the result of the functor named *)
+  fun ofValue (n : string, functor' : string option) : string =
+    "the type of " ^ n ^ (case functor' of SOME f => " in the result of functor " ^ f | NONE => "")
+
+  (* --free-tyvars=refuse: an error at the first value whose type keeps a
+     free type variable *)
+  fun checkClosed (delta : env, sp) : unit =
+    (StringMap.appi (fn (n, v) =>
+                        let val scheme = case v of Val {scheme, ...} => scheme | _ => unitTy
+                        in
+                          case freeTyvar scheme of
+                            NONE => ()
+                          | SOME _ =>
+                              err (sp, "the type of " ^ n ^ ", " ^ toString scheme
+                                       ^ ", contains a type variable that cannot be generalised "
+                                       ^ "(a top-level declaration may not have free type variables)")
+                        end) (vals delta);
+     StringMap.app (fn e => checkClosed (e, sp)) (strs delta))
+
+  (* --free-tyvars=later: the same where what is elaborated together ends,
+     past every use that could have determined the variable *)
+  fun checkLater (delta : env, sp, functor' : string option) : unit =
+    (StringMap.appi (fn (n, Val {scheme, ...}) =>
+                        (case freeTyvar scheme of
+                           NONE => ()
+                         | SOME _ =>
+                             err (sp, ofValue (n, functor') ^ ", " ^ toString scheme
+                                      ^ ", contains a type variable that nothing after it determines "
+                                      ^ "(the program may not have free type variables)"))
+                      | _ => ()) (vals delta);
+     StringMap.app (fn e => checkLater (e, sp, functor')) (strs delta))
+
+  (* --free-tyvars=monotype, dummy and later-monotype: each free type
+     variable of a value's type made a new type, ?.X1, ?.X2, ... in the order
+     the check meets them (count), of no arity, admitting equality where
+     the variable does, which no value has and no other type equals; with
+     a warning that says so *)
+  fun newTypes (count : int ref, keep : tvar ref list, delta : env, sp, functor' : string option) : unit =
+    (StringMap.appi (fn (n, Val {scheme, ...}) =>
+                        (case List.filter (fn r => not (List.exists (fn r' => r' = r) keep)) (freeVarsOf scheme) of
+                           [] => ()
+                         | rs =>
+                             let
+                               val was = toString scheme
+                               fun make r =
+                                 case !r of
+                                   Unbound {eq, ...} =>
+                                     (count := !count + 1;
+                                      r := Bound (TCon (freshTycon ("?.X" ^ Int.toString (!count), 0, eq), [])))
+                                 | Bound _ => ()
+                             in
+                               List.app make rs;
+                               Error.warn (sp, ofValue (n, functor') ^ ", " ^ was
+                                               ^ ", contains a type variable that cannot be generalised: it is made a new type, "
+                                               ^ toString scheme ^ " (--free-tyvars=" ^ freeModeName (!freeTyvars) ^ ")")
+                             end)
+                      | _ => ()) (vals delta);
+     StringMap.app (fn e => newTypes (count, keep, e, sp, functor')) (strs delta))
+
+  (* the free type variables of the values of an environment, each once *)
+  fun envFreeVars (e : env) : tvar ref list =
+    let
+      val found : tvar ref list ref = ref []
+      fun walk (Env {vals, strs, ...}) =
+        (StringMap.app (fn Val {scheme, ...} =>
+                             List.app (fn r => if List.exists (fn r' => r' = r) (!found) then () else found := r :: !found)
+                                      (freeVarsOf scheme)
+                         | _ => ()) vals;
+         StringMap.app walk strs)
+    in walk e; List.rev (!found) end
+
+  (* The free type variables of the declarations given, in order, treated as
+     --free-tyvars says where its context for them ends *)
+  fun closeAt (entries : (env * span * string option) list) : unit =
+    case !freeTyvars of
+      FreeRefuse => List.app (fn (e, sp, _) => checkClosed (e, sp)) entries
+    | FreeLater => List.app checkLater entries
+    | _ => let val count = ref 0 in List.app (fn (e, sp, f) => newTypes (count, [], e, sp, f)) entries end
 
   (* The values and exceptions of an environment renamed by f, a stamp to
      a stamp, each once *)
@@ -1167,6 +1344,16 @@ struct
 
   (* ------------------------------------------------------------------ *)
   (* Expressions                                                          *)
+  (* What names the function of an application, where it is an identifier
+     alone or in parentheses with a type, nested any number of times:
+     4.7's conexp where it names a constructor or an exception --
+     `(SOME : 'a -> 'a option) nil`, `((op :: : t) : t) (x, xs)`. The
+     parser keeps no parentheses, so a typed expression in the function's
+     place had them *)
+  fun conexp (EVar (_, slot, _)) = !slot
+    | conexp (ETyped (e, _, _)) = conexp e
+    | conexp _ = NONE
+
   fun nonexpansive e =
     case e of
       EScon _ => true
@@ -1178,8 +1365,8 @@ struct
     | ERecord (fs, _) => List.all (fn (_, e) => nonexpansive e) fs
     | EList (es, _, _) => List.all nonexpansive es
     | ETyped (e, _, _) => nonexpansive e
-    | EApp (EVar (_, slot, _), a, _) =>
-        (case !slot of
+    | EApp (f, a, _) =>
+        (case conexp f of
            SOME (VCon (info, _)) => not (#isRef info) andalso nonexpansive a
          | SOME (VExn _) => nonexpansive a
          | _ => false)                     (* a constructor that lost its status is an ordinary variable *)
@@ -1314,7 +1501,37 @@ struct
           in go (rest, plus (env, d'), plus (delta, d'), #stop span) end
     in go (decs, env, Env.empty,case decs of [] => 0 | d::_ => #start (spanOfDec d)) end
 
-  and elabDec (env, level, top, outerScope : scope, d : dec) : env =
+  (* A declaration, and the contexts its kind of declaration ends: a value
+     declaration's, for overloading under --overloading=binding (at any
+     depth) and declaration (at structure level), and for its free type
+     variables under --free-tyvars=dummy (at structure level, as SML/NJ's
+     dummy types); an abstype at structure level is one declaration there *)
+  and elabDec (args as (_, _, top, _, d) : env * int * bool * scope * dec) : env =
+    let
+      fun ends (delta : env) : env =
+        (if top andalso !abstypeDepth = 0 then
+           ((case !overloading of OverDeclaration => resolvePending () | _ => ());
+            case !freeTyvars of FreeDummy => newTypes (ref 0, [], delta, spanOfDec d, NONE) | _ => ())
+         else ();
+         delta)
+      fun value () = ends (case !overloading of OverBinding => overloadContext (fn () => elabDecIn args) | _ => elabDecIn args)
+    in
+      case d of
+        DVal _ => value ()
+      | DValRec _ => value ()
+      | DFun _ => value ()
+      | DAbstype _ =>
+          if top then
+            let
+              val saved = !abstypeDepth
+              val () = abstypeDepth := saved + 1
+              val delta = elabDecIn args handle e => (abstypeDepth := saved; raise e)
+            in abstypeDepth := saved; ends delta end
+          else elabDecIn args
+      | _ => elabDecIn args
+    end
+
+  and elabDecIn (env, level, top, outerScope : scope, d : dec) : env =
     case d of
       DVal (tvs, binds, sp) =>
         let
@@ -1641,18 +1858,30 @@ struct
              basis's own, which a declaration later in the topdec may
              determine, the summary shares. Whether the body's result has a
              summary: none where a flexible record is left, which refuses
-             the declaration too (refuse, below) *)
+             the declaration too (refuse, below). That is --free-tyvars=refuse;
+             under monotype (Poly/ML) the body's variable is made a new type
+             here, under dummy it was where its declaration ended, and under
+             later and later-monotype (Moscow ML, MLton) every application
+             shares it, as the basis's, until the end of what is elaborated
+             together *)
           fun closure (b : funbind, result : env) : bool =
             let
               val closed = closedEnv (result, [])
               val shared = if closed then [] else basisTyvars ()
-              val () =
+              val shared =
                 case if closed then NONE else bodyTyvar (result, shared) of
                   SOME (n, t) =>
-                    err (#span b, "the type of " ^ n ^ " in the result of functor " ^ #name b ^ ", " ^ toString t
-                                   ^ ", contains a type variable that cannot be generalised "
-                                   ^ "(a functor's result may not have free type variables)")
-                | NONE => ()
+                    (case !freeTyvars of
+                       FreeRefuse =>
+                         err (#span b, "the type of " ^ n ^ " in the result of functor " ^ #name b ^ ", " ^ toString t
+                                        ^ ", contains a type variable that cannot be generalised "
+                                        ^ "(a functor's result may not have free type variables)")
+                     | _ =>
+                         if freeLater () then
+                           (pendingClosed := (result, #span b, SOME (#name b)) :: !pendingClosed;
+                            shared @ List.filter (fn r => not (List.exists (fn r' => r' = r) shared)) (envFreeVars result))
+                         else (newTypes (ref 0, shared, result, #span b, SOME (#name b)); shared))
+                | NONE => shared
             in closed orelse closedEnv (result, shared) end
           (* the body elaborated once, its annotations kept for its code,
              its declarations local to the function it is compiled to,
@@ -1702,10 +1931,13 @@ struct
               val saved = !inBody
               val flexBefore = List.length (!pendingFlex)
               val () = inBody := true
-              val result = ElabStats.within ElabStats.FunDecl (fn () => elabStrexp (bodyEnv, level, top, outerScope, #body b))
-                           handle e => (inBody := saved; raise e)
+              (* its overloading settled where it ends, in every mode: the
+                 function compiled once is typed there (--overloading) *)
+              val result =
+                overloadContext (fn () =>
+                  ElabStats.within ElabStats.FunDecl (fn () => elabStrexp (bodyEnv, level, top, outerScope, #body b)))
+                handle e => (inBody := saved; raise e)
               val () = inBody := saved
-              val () = resolvePending ()
               (* a result that keeps a flexible record of the body's, which
                  the body compiled once must determine, is refused here, one
                  of rule 89's two answers (D8): no program around it can
@@ -2040,30 +2272,6 @@ struct
 
   (* ------------------------------------------------------------------ *)
   (* Elaborate top-level declarations, extending env in place. *)
-  (* Rules 87-89: a top-level declaration may not leave free type variables
-     in the basis, e.g. val r = ref nil. *)
-  fun freeTyvar (t : ty) : ty option =
-    case prune t of
-      t as TVar (ref (Unbound {level, kind, ...})) =>
-        (case kind of KFlex _ => NONE | _ => if level = genericLevel then NONE else SOME t)
-    | TVar _ => NONE
-    | TCon (_, args) => List.foldl (fn (a, NONE) => freeTyvar a | (_, r) => r) NONE args
-    | TRecord fields => List.foldl (fn ((_, a), NONE) => freeTyvar a | (_, r) => r) NONE fields
-    | TArrow (a, b) => (case freeTyvar a of NONE => freeTyvar b | r => r)
-
-  fun checkClosed (delta : env, sp) : unit =
-    (StringMap.appi (fn (n, v) =>
-                        let val scheme = case v of Val {scheme, ...} => scheme | _ => unitTy
-                        in
-                          case freeTyvar scheme of
-                            NONE => ()
-                          | SOME _ =>
-                              err (sp, "the type of " ^ n ^ ", " ^ toString scheme
-                                       ^ ", contains a type variable that cannot be generalised "
-                                       ^ "(a top-level declaration may not have free type variables)")
-                        end) (vals delta);
-     StringMap.app (fn e => checkClosed (e, sp)) (strs delta))
-
   (* What a top-level declaration may change of the elaborator's state
      besides the environment it extends, which elabTop changes only once
      the declaration has elaborated: put back after a declaration that
@@ -2076,16 +2284,20 @@ struct
                    datatypes : Ty.datatypeInfo IntMap.map, overloads : Overload.entry IntMap.map,
                    dataCons : (string * valstatus) list IntMap.map,
                    pendingFlex : (tvar ref * span) list, pendingChecks : (unit -> unit) list,
-                   pendingClosed : (env * span) list}
+                   pendingClosed : (env * span * string option) list,
+                   pendingOverloads : tvar ref list, pendingLiterals : (scon * ty * Source.span) list}
   fun snapshot () : snapshot =
     {sigs = !sigs, funs = !funs, datatypes = !Ty.datatypes, overloads = !Overload.table, dataCons = !dataCons,
-     pendingFlex = !pendingFlex, pendingChecks = !pendingChecks, pendingClosed = !pendingClosed}
+     pendingFlex = !pendingFlex, pendingChecks = !pendingChecks, pendingClosed = !pendingClosed,
+     pendingOverloads = !pendingOverloads, pendingLiterals = !pendingLiterals}
   (* also the declarations whose free variables wait for the topdec's end:
-     the one that failed is not checked again at each end after it *)
+     the one that failed is not checked again at each end after it; and
+     the overloading the declarations before it leave to the topdec's end
+     (--overloading=topdec), none in the other modes *)
   fun restore ({sigs = s, funs = f, datatypes = d, overloads = ov, dataCons = dc, pendingFlex = pf, pendingChecks = pc,
-                pendingClosed = pcl} : snapshot) =
+                pendingClosed = pcl, pendingOverloads = po, pendingLiterals = pl} : snapshot) =
     (sigs := s; funs := f; Ty.datatypes := d; Ty.extras := Ty.Unknown; Overload.table := ov; dataCons := dc;
-     pendingOverloads := []; pendingLiterals := []; pendingFlex := pf; pendingChecks := pc; pendingClosed := pcl)
+     pendingOverloads := po; pendingLiterals := pl; pendingFlex := pf; pendingChecks := pc; pendingClosed := pcl)
 
   (* Whether a top-level declaration that fails to elaborate is reported
      (Error.report), undone and skipped, and the next one elaborated, so
@@ -2128,22 +2340,24 @@ struct
                       val () = Types.startWork (spanOfDec d)
                       val () = Unify.flexHook := (fn r => pendingFlex := (r, spanOfDec d) :: !pendingFlex)
                       val delta = elabDec (!env, 0, true, ref StringMap.empty, d)
+                      val ends = Parser.endsTopdec (spanOfDec d)
                       (* the modes that settle flexible records where a
-                         top-level declaration ends check rules 87-89 there
-                         too, as the Definition does: a variable a later
-                         declaration of the same topdec determines is not
-                         free (a flexible record not generalised under
-                         topdec-monomorphic, or val r = ref nil) *)
-                      val byTopdec = case !flexRecords of FlexDeclaration => false | FlexProgram => false | _ => true
-                    in resolvePending ();
-                       if byTopdec then pendingClosed := (delta, spanOfDec d) :: !pendingClosed
-                       else checkClosed (delta, spanOfDec d);
+                         top-level declaration ends *)
+                      val flexByTopdec = case !flexRecords of FlexDeclaration => false | FlexProgram => false | _ => true
+                    in (* overloading, where a top-level declaration ends,
+                          or the topdec (--overloading=topdec) *)
+                       (case !overloading of OverTopdec => if ends then resolvePending () else () | _ => resolvePending ());
+                       (* rules 87-89 where the topdec ends, as the
+                          Definition does: a variable a later declaration
+                          of the same topdec determines is not free (val r
+                          = ref nil); or where what is elaborated together
+                          ends (--free-tyvars=later, later-monotype) *)
+                       pendingClosed := (delta, spanOfDec d, NONE) :: !pendingClosed;
                        env := plus (!env, delta);
                        lastDelta := plus (!lastDelta, delta);
-                       if byTopdec andalso Parser.endsTopdec (spanOfDec d) then
-                         (settleFlex ();
-                          List.app checkClosed (List.rev (!pendingClosed));
-                          pendingClosed := [])
+                       if ends then
+                         ((if flexByTopdec then settleFlex () else ());
+                          if freeLater () then () else (closeAt (List.rev (!pendingClosed)); pendingClosed := []))
                        else ();
                        if !ElabStats.on then stats d else ();
                        Types.stopWork () end
@@ -2153,12 +2367,19 @@ struct
                   | SOME s =>
                       go () handle Error.CompileError e =>
                         (Types.stopWork (); restore s;
-                         (* a failure where the topdec ends came from its checks, all made *)
-                         if Parser.endsTopdec (spanOfDec d) then pendingClosed := [] else ();
-                         Error.report e)
+                         Error.report e;
+                         if Parser.endsTopdec (spanOfDec d) then
+                           ((* a failure where the topdec ends came from its
+                               checks, all made; and what the declarations
+                               before it left to the end is settled *)
+                            if freeLater () then () else pendingClosed := [];
+                            resolvePending () handle Error.CompileError e' => Error.report e';
+                            pendingOverloads := []; pendingLiterals := [])
+                         else ())
                 end) decs;
      (* what is elaborated together ends a topdec (a file, a REPL's unit) *)
-     List.app checkClosed (List.rev (!pendingClosed));
+     resolvePending ();
+     closeAt (List.rev (!pendingClosed));
      pendingClosed := []) end
 
   fun elabProgram (decs : dec list) : env =

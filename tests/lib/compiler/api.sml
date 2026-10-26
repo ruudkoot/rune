@@ -60,6 +60,29 @@ struct
         val _=text (context,"good.sml","val answer=42\n")
         val ()=check ("bad flag is a diagnostic",fails (fn () => ignore (C.session {lib=NONE,flags=["--unknown"]})))
     in C.close context end
+  (* --overloading and --free-tyvars, as rune takes them: each session
+     compiles and answers queries in its own modes *)
+  fun language () =
+    let val twoDeclarations="fun double x = x + x\nval y = double 2.0\n"
+        val oneStructure="structure X = struct fun double x = x + x val y = double 2.0 end\n"
+        val laterUse="val r = ref [];\nval () = r := [1];\n"
+        val default=session ()
+        val ()=check ("the default settles overloading where a declaration at structure level ends",
+          fails (fn () => ignore (text (default,"two.sml",twoDeclarations)))
+          andalso fails (fn () => ignore (text (default,"one.sml",oneStructure))))
+        val ()=check ("the default refuses a free type variable where its topdec ends",
+          fails (fn () => ignore (text (default,"later.sml",laterUse))))
+        val topdec=C.session {lib=NONE,flags=["--overloading=topdec"]}
+        val _=text (topdec,"two.sml",twoDeclarations)
+        val ()=check ("a query answers in the session's mode",C.typeAt (topdec,{file="two.sml",offset=4})=SOME "real -> real")
+        val toplevel=C.session {lib=NONE,flags=["--overloading=toplevel"]}
+        val _=text (toplevel,"one.sml",oneStructure)
+        val later=C.session {lib=NONE,flags=["--free-tyvars=later"]}
+        val _=text (later,"later.sml",laterUse)
+        val ()=check ("an unknown mode is a diagnostic",
+          fails (fn () => ignore (C.session {lib=NONE,flags=["--overloading=program"]}))
+          andalso fails (fn () => ignore (C.session {lib=NONE,flags=["--free-tyvars=open"]})))
+    in C.close default;C.close topdec;C.close toplevel;C.close later end
   fun queries () =
     let val context=session ()
         val _=text (context,"local.sml","val result=let val r=ref [] val _=r:=[1] in !r end\n")
@@ -242,6 +265,7 @@ structure CompilerApiTestMain = Main (struct
   val tests=Test.describe "compiler-api"
     [Test.it "isolation" CompilerApiTests.isolation,
      Test.it "diagnostics" CompilerApiTests.diagnostics,
+     Test.it "language" CompilerApiTests.language,
      Test.it "queries" CompilerApiTests.queries,
      Test.it "artifacts" CompilerApiTests.artifacts,
      Test.it "projects" CompilerApiTests.projects,

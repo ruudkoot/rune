@@ -25,6 +25,7 @@ struct
     let val {lib,libraries,target,allowPrim,...}=config
         val ()=CompilerSettings.target:=target
         val ()=CompilerSettings.libDir:=lib
+        val ()=CompilerSession.language config
         val ()=UnitBasis.startSession ()
         val scopeEnv=ref NONE : (int*Env.env*SigMatch.sigma StringMap.map*Elaborate.funinfo StringMap.map) option ref
         val application=ref NONE : (int*application) option ref

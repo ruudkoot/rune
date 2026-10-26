@@ -31,11 +31,15 @@ its `--count` differs.
 The front end runs on one unit as on a program: its tokens are parsed with
 the fixity the units before left, and its declarations are elaborated one
 by one into the environment they left. Overloading and the literals are
-settled at the end of each top-level declaration, as in a whole program,
-and so are the flexible records, in the default mode of `--flex-records`
-([language.md](language.md), *Flexible records*), a file's end ending one;
-the reports of the matches at the end of the unit. So nothing of a unit
-waits on the units after it. Under `--flex-records=program`, which settles
+settled at the end of the context `--overloading` names (by default each
+declaration at structure level), as in a whole program; the flexible
+records at the end of each top-level declaration, in the default mode of
+`--flex-records` ([language.md](language.md), *Overloading*, *Flexible
+records*), a file's end ending one; the free type
+variables where the topdec ends, or at the end of the unit under
+`--free-tyvars=later` and `later-monotype` (*Free type variables*); the
+reports of the matches at the end of the unit. So nothing of a unit waits
+on the units after it. Under `--flex-records=program`, which settles
 flexible records at the end of the program, a unit settles them at its
 end: a program that leaves one to a declaration of a later file then
 compiles whole and not with `--units`.
@@ -309,7 +313,8 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   it finds only those (S71); a basis says the probe too, and one of another
   is not read (S70). The configuration's `units/about` lists what it is
   made of
-  (`-O`, `--passes`, `--int-bits`, `--fuel`). A compiler built from other
+  (`-O`, `--passes`, `--int-bits`, `--fuel`, `--flex-records`,
+  `--overloading`, `--free-tyvars`). A compiler built from other
   sources, or another level, finds none of another's entries, and two
   configurations live side by side;
 * in that, a directory per *key*, the hash of the unit's name, its source

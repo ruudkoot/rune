@@ -369,9 +369,12 @@ struct
           end
     in go (0, []) end
 
-  (* A program from its text, as `show` or `showAll` wrote it. Its datatypes
-     are made anew and registered (Ty.bindDatatypeDirect). *)
-  fun parse (text : string) : program =
+  (* A program from its text, as `show` or `showAll` wrote it, whose
+     names and type variables are numbered by `stamp` and whose type names
+     by `tycon`. Its datatypes are made anew and registered
+     (Ty.bindDatatypeDirect). *)
+  fun parseWith ({stamp = freshStamp, tycon = freshTycon} : {stamp : unit -> int, tycon : unit -> int}) (text : string)
+                : program =
     let
       val toks = ref (tokens text)
       (* the abbreviations of types declared so far (type %N TYPE) *)
@@ -395,7 +398,7 @@ struct
       fun stampOf s =
         case StringMap.find (!names, s) of
           SOME x => x
-        | NONE => let val x = Elaborate.freshStamp () in names := StringMap.insert (!names, s, x); x end
+        | NONE => let val x = freshStamp () in names := StringMap.insert (!names, s, x); x end
       fun var prefix () =
         let val s = id ()
         in if String.isPrefix prefix s then stampOf s else fail ("a name " ^ prefix ^ "N") end
@@ -403,16 +406,16 @@ struct
       fun tyvarId s =
         case StringMap.find (!tyvarIds, s) of
           SOME x => x
-        | NONE => let val x = Elaborate.freshStamp () in tyvarIds := StringMap.insert (!tyvarIds, s, x); x end
+        | NONE => let val x = freshStamp () in tyvarIds := StringMap.insert (!tyvarIds, s, x); x end
       fun tyvar () = case next () of TYVAR s => tyvarId s | _ => fail "a type variable"
 
       (* type names: the built-in ones, and those the text declares *)
       val tycons : (int * string) StringMap.map ref =
         ref (List.foldl (fn ((stamp, n), m) => StringMap.insert (m, n, (stamp, n))) StringMap.empty builtinNames)
       fun base n = case String.fields (fn c => c = #"/") n of b :: _ => b | [] => n
-      fun declare (n, arity) =
-        let val c = Types.freshTycon (base n, arity, true)
-        in tycons := StringMap.insert (!tycons, n, (#stamp c, base n)); #stamp c end
+      fun declare (n, _ : int) =
+        let val c = freshTycon ()
+        in tycons := StringMap.insert (!tycons, n, (c, base n)); c end
 
       (* every type the text declares, first, since a datatype may use one
          declared after it *)
@@ -680,12 +683,36 @@ struct
       top []
     end
 
+  (* What --read-mid reads: a program whose names are the compiler's own,
+     from the elaborator's counters. *)
+  fun parse (text : string) : program =
+    parseWith {stamp = Elaborate.freshStamp, tycon = fn () => #stamp (Types.freshTycon ("", 0, true))} text
+
   (* Whether printing what `parse` reads of the printed program prints it
-     again, positions and all: the check of the two against each other. *)
+     again, positions and all: the check of the two against each other
+     (--mid-roundtrip). Like every check it changes nothing of the compile,
+     and moves none of its counters (docs/ir.md, Options): the program read
+     is thrown away, so its names and type variables are numbered by a
+     counter of its own, from where the elaborator's is; its type names by
+     one of the round trip's, below every one the compiler makes, which are
+     0 and up, and never the same twice, since a type keeps the name its
+     type name's stamp was first made with (Ty.con) and a unit's basis
+     writes it; and the datatypes it declares are dropped from Ty's table
+     after. *)
+  val scratchTycon = ref ~1073741823   (* in a host's 31 bits, which hold down to ~1073741824 *)
+  val () = CompilerState.cellRoot ("MidText.scratchTycon", scratchTycon)
   fun roundTrip (p : program) : unit =
     let
+      fun counter c = fn () => !c before c := !c + 1
       val text = showAll p
-      val again = showAll (parse text) handle Syntax msg => Error.bug ("MidText.parse: " ^ msg)
+      val datatypes = !Ty.datatypes
+      val extras = !Ty.extras
+      fun restore () = (Ty.datatypes := datatypes; Ty.extras := extras)
+      val again =
+        (showAll (parseWith {stamp = counter (ref (!Elaborate.stampCounter)), tycon = counter scratchTycon} text)
+         handle Syntax msg => Error.bug ("MidText.parse: " ^ msg))
+        handle e => (restore (); raise e)
+      val () = restore ()
     in
       if text = again then ()
       else

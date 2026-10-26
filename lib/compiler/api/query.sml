@@ -68,6 +68,7 @@ struct
         val ()=CompilerSession.checked session
         (* types only: no copy of a functor's body (D15) *)
         val ()=(Error.silent:=true;Error.keep:=true;Elaborate.recover:=true;Elaborate.makesCode:=false)
+        val ()=CompilerSession.language config
         val env=ref Env.initial
         val fixity=ref Fixity.initial
         val syntax=ref [] : Ast.program list ref
