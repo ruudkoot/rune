@@ -82,7 +82,9 @@ What it rests on:
 | G2 | Go or no-go for M7 and M8 (the owner's) | F | go (the owner, 2026-10-25): inline functors bring performance back to today's, and the four checks asked before M7 are clean |
 | M7 | Functors compiled once | F | done (2026-10-25) |
 | M8 | Nested functors that do not blow up | F | done (2026-10-25) |
-| M9 | Retire | | not started |
+| M9 | Retire | | done (2026-10-25) |
+| M10 | Small functions inlined across units; `--inline-functor` retired | F | added (the owner, 2026-10-26); in progress |
+| M11 | Shared summaries, measured, and built where they gain | H | added (the owner, 2026-10-26); in progress |
 
 The owner decided D1 to D17 on 2026-10-21, each as recommended
 (*Decisions*). D1's functors compiled once wait on gate G2, which stays the
@@ -96,6 +98,145 @@ The tracks do not wait for each other:
 - **F, functors,** compiles each functor once, as a function, and gives whole
   programs their copies back in the middle end. Its two prototypes come
   first and end at gate G2, which is the owner's.
+
+## At the close
+
+M0 to M9 are done (2026-10-25). This section gathers what a later review
+needs: the last checks, the bugs found and where they went, and what is
+left open. The owner then added M10 and M11 (2026-10-26; *The
+milestones*), which take up two of the items left open. The campaign's logs, scripts and raw results are in the drafts
+(`~/.cache/claude-rune-drafts/functors-units`, `impl/` and `results/`).
+
+### The last checks
+
+- `make check` at M9's commit (`00d7a33f3`): 21,247 passed, 3 skipped; at M8's
+  (`cd18b5403`): 21,247 passed, 3 skipped, every compile linted
+  (`RUNE_LINT`, which every test's compile has run since `13829a969`).
+- MLton's compiler, 606 files, through one cache (S44 to S48, at M7's
+  `d6fc91727`): cold 606 units, warm 0, a leaf 1, a root 1, an interface
+  236, a functor's body 1, and the last warm build the bytes of a build
+  without the cache; at M8's `cd18b5403`, for E8, the same but for the
+  interface, which E8 does not edit.
+- HOL4 built to `hol.state` through the cache with `RUNE_VERIFY_CACHE=1`
+  (at `d6fc91727`, a fresh clone): 362 s, no entry differs.
+- MLton's benchmark set and the bootstrap against today (*M7* in *The
+  implementation so far*): no program past 1.05; the bootstrap's
+  instructions and output today's.
+
+### What the roadmap promised, and what it gave
+
+Against the brief's six asks, with M9's numbers (*Measuring*, *The final
+measurements*; instruction counts, the machine shared and loaded):
+- **F4, division by a constant in tier 2** (M1): `Pickle.hash`'s old loop
+  takes 158 machine instructions a byte, from 178; MLton's build in units
+  at tier 2, the test case, takes 669.6G instructions, from 1,628.9G with
+  M2 and M4 beside it.
+- **Functor bodies elaborated once, copies kept for whole programs**
+  (M5 to M8), and its three assumptions:
+  - *copies make faster code*: kept, by the expansion: MLton's benchmark
+    set at 0.997 whole and 0.981 in units of today's bytecode
+    instructions;
+  - *elaborating once makes compiling faster*: in a whole compile a little
+    (MLton 117.3G against 119.8G; its applications' elaboration, 23.9 s of
+    41.8, is now 7 ms of typing and 1.8 s of expansion), and an edit of a
+    body far more (S48: one unit in 43 s, from six in 461 s); but a cold
+    build of MLton in units costs 7.7% more than static interpretation
+    did, since a functor is now compiled to code where it is declared;
+  - *it makes units, the cache and pickling simpler*: the elaborator,
+    units and `Ast` lost 532 lines net, issue 1's binders and `funat` and
+    15's functor trigger went, and issue 9's paths serve inline copies
+    alone; the compiler as a whole grew, by the expansion and the records
+    (E10 predicted both).
+- **Faster incremental compilation, F1 to F3** (M2, M4): MLton's build in
+  units hashes 1,122 MB, from 2,146; a warm build with no edit 60.2G
+  instructions, from 153.1G, and after a leaf's edit 60.2G, from 493.0G.
+  Gate G1 is not met: a build in units costs 2.41 times the whole compile
+  in instructions and 2.07 in processor time, against 1.5 (*Left open*).
+- **Typing that follows the Definition** (M3, M7): the four corners are
+  closed; MLton's leniency is not offered (D7).
+- **Nested functors that do not blow up** (M8): the budget bounds what
+  the expansion makes, and every mode grows linearly in what it copies;
+  the front end stays exponential where the program's own environment is
+  (funnest at depth 16, two applications a body).
+- **The literature and the other compilers** (E11), read before the
+  design.
+
+### Bugs found in Rune
+
+| Bug | Found | Fixed |
+|---|---|---|
+| Fingerprints dropped a type variable's equality and a signature's local names' arity and equality: a warm build took entries a build without the cache refused (build-cache issue 16) | E9 | M2 (`0605214ab`) |
+| A functor's or signature's usage was fingerprinted after the unit's own declarations (issue 17) | E5, E9 | M2 (`88a48f2fd`) |
+| A recursive group's fingerprint depended on which member came first (issue 18) | E5 | M4 (`9fe4621af`) |
+| The link was quadratic (issue 19); every basis was hashed twice in a warm build (issue 20) | E3, E5 | M2 |
+| Errors printed `Int64.int` as `_int64` | E1 | M3 (`59694b2b3`) |
+| Four corners where an application was typed by its copy, (a) to (d) | E1 | (b) M3, (a), (c), (d) M7 |
+| Three readers of a unit's provenance took its hash for 24 digits | M4 | M4 |
+| `CharVector.tabulate` and the byte slices' `vector` recursed once a byte, and stopped the compiler on MLton's sources | M4 | `0b96dc0ae`; the list functions left (*Left open*) |
+| The REPL kept a functor's old body through the cache (issue 21); gave a file used again its first load's identity (issue 22); linked a cached unit to the first of two loads (issue 23) | M6b, and fixing 22 | `a99d0a2ac` |
+| The REPL's units were never linted: the lint lacked the earlier units' globals | linting every test's compile | `13829a969` |
+| Lower's `results` gave a global two constructors share the first one's representation, which the register code hands the JIT | the generator of functor programs; every test linted | `28d93a928` |
+| A `_dynamic` structure's slots were missing from the globals Mid's `Do` lists | every test linted | `dca8b2f17` |
+| IntInf's SML arithmetic (the stack VM's, `--intinf=sml`) dropped a limb of a sum: every `pidigits` printed wrong digits | the benchmark catalogue under the flag | `c2929ef70`; `pidigits` in `make check` (`4bdeddea3`) |
+| The REPL named a declaration's printer by the session's count, so an entry did not verify in another session (issue 24) | M7, HOL4 verified through the cache | M7 (`5f0a1a440`) |
+| The compiler library read the probe M4 put before a unit's name as the name | M7's `make check` | `d551f19dd` |
+| `make check-cross` did not rebuild `runeopt-boot` | M7 | `2612d1439` |
+| At -O1 a call in a top-level definition's tail dropped the `<toplevel>` frame -O0 shows | the review of `expand.sml` | M7, by `simplifyDef` |
+| A pickle grew past the host's longest array: an uncaught `Size` | M8, funnest at depth 14 | M8 (`20bf44f01`) |
+| The prototype's own: four corners the expansion met in MLton, ML-Yacc and `fxp`; the review's seven findings, two of them miscompiles no lint saw; the generator's two; M7's two; and three regressions of the campaign's own (prims.sml edited by hand, the manifest read twice, the basis prefix the library reads) | M6, the review, the generator, M7, `make check` | before or in M7 and M8 (build-cache-issues.md, *Found on the way*) |
+
+### Bugs found in other compilers
+
+| System | What | Report |
+|---|---|---|
+| SML/NJ 110.99.9, amd64 | "MLRisc bug: AMD64MCEmitter: MOVABSQ unimplemented" on a word constant of 2^30 or more that a spill moves | `docs/bugreport/smlnj/MLRISC/movabsq-spilled` (E6); not sent upstream |
+| `smlnj32` | `Word64`'s `fromInt`, shifts and `+` are wrong | none |
+| MLKit 4.7.25 | an internal error (`IntModules.reelaborate`) on a functor whose body has `val r = ref []`, applied after a `;` | none |
+| SML/NJ 110.99.9 | accepts equality through a functor's opaquely ascribed result | none (a deviation of its own) |
+
+### Left open
+
+- **Gate G1.** A build in units costs 2.41 times the whole compile in
+  instructions (2.07 in processor time, at loads near 20), against 1.5.
+  Of the 1,122 MB it hashes, 887 MB are the fingerprints of signatures and
+  functors in usages: *Shared summaries* in *Later*, and a fingerprint of
+  each signature worked out once, are where the rest is.
+- **A cold build of MLton in units** costs 7.7% more than static
+  interpretation did: a functor's code is now made where it is declared.
+- **Shared summaries** (M8): an interface quadratic in a program's depth
+  costs quadratic time in the front end and a unit's basis.
+- **A marked functor's Mid** is decoded whenever its unit is loaded,
+  about 2.5M instructions for a build that loads the I/O stack; and a
+  unit keeps a marked functor's function beside its copies, so
+  `wordcount` in units starts in 1.08 times today's machine instructions.
+- **The expansion's limits**: a datatype of at most 8 flat fields
+  (`maxFlat`) and 256 tags (`flatTags`), and no dynamic module in a
+  functor's body.
+- **Instances' names in traces**: a copy is named by its functor
+  (functors.md, *Names in traces*), as other compilers name it; passing
+  the instance to the functor's function is the design for later.
+- **Build-cache issue 15**'s left part: an entry taken across a unit that
+  changed keeps the old unit's identity.
+- **The Basis's list functions** recurse once an element, and stop at
+  the VM's bounded stack past ten million elements; a byte slice's vector
+  is made in two copies (performance/basis.md).
+- **What the lint does not check** (correctness/linting.md, which the
+  owner keeps).
+- **Rune's int64 VM** has a 64-bit `Word` whatever the bytecode, and
+  `lib/random`'s `hashString` differs on `smlnj32` (E6).
+- **Not measured**: E8's control, an edit of HOL4's `Table`, which needs a
+  build and a rebuild of HOL4 under each compiler; HOL4's kernel declares
+  no functor (E2).
+- **Untested**: the history replay (`bin/rune-incremental mutate
+  --history`), which compiles the compiler once a commit; M9 fixed it in
+  three places.
+- **Two commits fail `make check` by themselves**, their fixes being the
+  commits after them, merged before the history could be rewritten:
+  `13829a969`, which lints every test's compile before `28d93a928`,
+  `dca8b2f17` and `fb9cb5903`, and `1b4b3912f`, the merge of the
+  prototype's `fu-m5`, before `879728070` (`make check-isa`). Every
+  milestone's tip passes.
+- **The bug reports to other compilers** are written and not sent.
 
 ## The implementation so far
 
@@ -2596,6 +2737,15 @@ continues to make copies".
     units only. *Later*, if G2's measures of the Basis and of HOL ask for
     it.
 
+**Built, in another form (M6b, the owner's ruling at G2):** inline
+functors, chosen by a mark rather than by the stability of their unit. The
+Basis's 19 functors are marked in `lib/basis/library.build`, and a program
+marks its own with `--inline-functor`; every unit that applies a marked
+functor expands it, and depends on its body by the usage `inl F`, so a
+marked functor of a unit that changes works too. HOL4's `Table`, measured
+marked and not, left its kernel's work at 0.976 of today's either way
+(*Gate G2*).
+
 ### D3. The functor's run-time interface
 
 **Decided: A, with dynamic modules on the same records in M7** (2026-10-21), as recommended.
@@ -3605,29 +3755,90 @@ what naming the instance would take is in [functors.md](functors.md),
 * A section *At the close*, after *Status*, as utf8.md has: what was found,
   what is left.
 
+### M10. Small functions inlined across units, and `--inline-functor` retired (F; M)
+
+Added by the owner (2026-10-26).
+
+* **Why:** a build in units still runs MLton's 35 benchmarks in 1.15 times
+  the bytecode instructions of a whole compile and 1.24 times the machine
+  instructions (geometric means at M7's tip; E4 found 17% and 23% before
+  functors were compiled once, which left it as it was). The worst:
+  `fft-realarray` 3.27 times the machine instructions, `tensor` 2.89,
+  `zern` 2.65, `raytrace-realarray` 2.09, `checksum` 1.79, `tak` 1.74 --
+  small Basis functions called across units.
+* **What:**
+  - the worst programs' calls across units profiled in a build in units,
+    and the functions that matter marked by name;
+  - `inline val NAME ... end` in a library's or a program's build file
+    (the Basis's in `lib/basis/library.build`), read with the marked
+    functors (the manifest's `# inline:`); a keyword, `_inline`, may take
+    the marks' place later;
+  - a marked function's Mid in its unit's basis as M6b writes a marked
+    functor's (what it names, and the hash over it), loaded by its global;
+    a usage `inl` of the value that holds by that hash;
+  - in a build in units, a call of a marked function of another unit
+    given its body (the expansion's copier), which Simplify inlines or not
+    by its own rules;
+  - `--inline-functor` retired: no build used it (HOL4's `Table` gained
+    nothing by it, *Gate G2*), and a program marks its functors in its build
+    file; the driver, the REPL and the compiler library lose it, and its
+    tests mark their functors in build files.
+* **Done when:** the gap is at most 1.05 in bytecode instructions on the
+  geometric mean, with the machine instructions written down; no program
+  slower in units than now; whole compiles the same bytes; S42,
+  `check-levels`; a scenario in which an edit of a marked function's body
+  compiles its appliers again and nothing else; `make check`.
+
+### M11. Shared summaries, measured, and built where they gain (H; M)
+
+Added by the owner (2026-10-26).
+
+* **Why:** gate G1 (a build in units 2.41 times a whole compile in
+  instructions, 2.07 in processor time, against 1.5). Of the 1,122 MB a
+  build in units of MLton's 606 files hashes, 887 MB are fingerprints of
+  signatures (512 MB in 530 hashes) and functors (375 MB in 242): about a
+  megabyte each, written whole, nested signatures and all. Its bases are
+  about 222 MB, which `unit-export` (77 s) and `unit-load` (21 s) write and
+  read, of the build's 246 s.
+* **E12, the measure, first:** how much of those streams and of the bases
+  a reference to a nested signature, or to a summary written before, would
+  replace -- an instrumented compiler counting the bytes, on MLton's 606
+  files, the compiler and HOL4.
+* **Part 1, fingerprints:** a nested signature hashed as a reference to its
+  own fingerprint (as Merkle's trees), memoised by the signature; built if
+  E12 predicts the usages' hashed bytes halved or `unit-usages` 30% faster
+  on MLton.
+* **Part 2, bases:** a signature or a functor's summary written once and
+  named after by its unit and its number, as types and constructors are
+  (issue 14); built if E12 predicts MLton's bases 30% smaller or export and
+  load together 20% faster.
+* **Part 3, the elaborator's** (an instantiation that keeps what it does not
+  rename): *Later*.
+* **The gate of a part built:** M4's soundness checker over the edits, the
+  scenarios and the tester (`bin/rune-incremental mutate`), MLton's S44 to
+  S48 with the last warm build the bytes of one without the cache, HOL4
+  through the cache with `RUNE_VERIFY_CACHE=1`; the version keys bumped.
+* **Done when:** E12 is written down, each part built or not by its
+  threshold, and G1 measured again.
+
 ### Later
 
 - **Compiling against a functor's signature alone** (SMLSC's functor
   specifications; incremental-compilation.md's *Ready for, not built*): with
   functors as functions, a client can be compiled against `functor F (X : S)
-  : T` before `F` exists, as M9 of that roadmap does for structures.
+  : T` before `F` exists, as M9 of that roadmap does for structures. The
+  owner left it to the build system's next roadmap (2026-10-26), with
+  higher-order modules.
 - **Memoised applications** (D13 C).
-- **Shared summaries** (M8): a basis that names a signature written before,
-  and an instantiation that keeps what it does not rename, so that an
-  interface quadratic in a program's depth (funnest at one application a
-  body: each functor's result holds every level below it) costs linear
-  time in the front end and in a unit's basis.
+- **Shared summaries in the elaborator** (M8, M11's part 3): an
+  instantiation that keeps what it does not rename, so that an interface
+  quadratic in a program's depth (funnest at one application a body: each
+  functor's result holds every level below it) costs linear time in the
+  front end; M11 measures and builds the fingerprints' and the bases'.
 - **Equality functions in the argument** (D6 B), if a build in units shows
   the walk.
-- **The functors of stable units expanded across units** (D2 C), if G2's
-  measures of the Basis and HOL4 ask for it.
 - **A cache shared between people who do not trust each other** (issue 7):
   SHA-256 for identities (D11 D).
-- **Inlining small functions across units** (incremental-compilation.md,
-  *Ready for, not built*): builds in units run 17% more instructions and 23%
-  more cycles than whole on MLton's benchmark set today, mostly from small
-  Basis functions
-  called across units, functors or not (E4).
 
 ### Why this order
 
@@ -3710,7 +3921,8 @@ what naming the instance would take is in [functors.md](functors.md),
   no longer a risk.
 - **Run time in units** (X2). The Basis's functors and HOL4's `Table` are
   called across units. If G2 finds that cost too high, D2 C (stable units'
-  functors expanded across units) comes back.
+  functors expanded across units) comes back. It did, as inline functors
+  (M6b; D2).
 - **Refusing (b)** may refuse programs other compilers accept (E1); M3 lists
   them before it lands.
 - **The soundness of the cache** with fingerprints by structure (M4): the
