@@ -1008,7 +1008,11 @@ struct
     let
       val prog = if fingerprint = RegCodes.fingerprint then (Code.opcodeNames := RegCodes.names;
                                                              Link.program (Regs.program, RegCodes.linked, units))
-                 else Link.program (Stack.program, Opcodes.linked, units)
+                 else
+                   (* the stack code linked, checked at level 2 as a whole
+                      program's is after its stack stage (StackCheck) *)
+                   let val p = Link.program (Stack.program, Opcodes.linked, units)
+                   in Pipeline.checkStack p; p end
       (* the units' exports, for a unit loaded into the program later,
          where it may load one *)
       val () = Emit.trailer := (if !keepExports then Emit.unitsSection (!Link.lastExports) else "")
