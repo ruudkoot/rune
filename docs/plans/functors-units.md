@@ -83,7 +83,7 @@ What it rests on:
 | M7 | Functors compiled once | F | done (2026-10-25) |
 | M8 | Nested functors that do not blow up | F | done (2026-10-25) |
 | M9 | Retire | | done (2026-10-25) |
-| M10 | Small functions inlined across units; `--inline-functor` retired | F | added (the owner, 2026-10-26); in progress |
+| M10 | Small functions inlined across units; `--inline-functor` retired | F | done (2026-10-26) |
 | M11 | Shared summaries, measured, and built where they gain | H | added (the owner, 2026-10-26); E12 measured: parts 1 and 2 pass their thresholds; part 1 built (2026-10-26); part 2 waits for M10 |
 
 The owner decided D1 to D17 on 2026-10-21, each as recommended
@@ -414,6 +414,42 @@ the only way.
   funnest at depth 14 stopped with an uncaught `Size`. At depth 16 and two
   applications a body the program's own static environment has 131,071
   structures, and no mode compiles it in 6 GB: a limit of the program.
+
+**M10** (by an agent; `d403b2593`, `979ea8116`, merged at `1ef31349d`):
+- Profiled first, in units against whole: `fft-realarray`, `tensor`,
+  `zern` and `raytrace-realarray` lost their time in `RealArray`'s `sub` and
+  `update` called across units, `checksum` in `Word32`'s and the packing's
+  small functions, `tak` in `not`, `ratio-regions` in `List.app`'s
+  closures, `peek` in `valOf`, `vliw` and `fxp` in `o`. `Seq.sub` only
+  applies a primitive, but the expansion did not see it, a typed pattern
+  leaving a variable that copies another; it does now.
+- `inline val NAME ... end` in a build file marks a function by its long
+  name (a string where a path cannot spell it, `"Word32.>>"`), the
+  manifest's `# inline val:` carrying the Basis's; marked: `not`, `o`,
+  `valOf`, `app`, `foldl`, `foldr`, `Word32.+`, `Word32.>>`, `Word32.andb`,
+  `Word32.fromLarge`, `Word8Array.sub` and the packing's `subArr`, each for
+  the program its profile named. A function that only applies a primitive
+  is copied whether marked or not. Measured and left unmarked: `map` (its
+  copy makes `hamlet`'s collector work 1.4% more, though `boyer` would
+  gain 7%), `null`, `TextIO.input1` (too big for Simplify to inline once
+  copied), and `getOpt`, `isSome`, `hd` and `tl` (in no profile).
+- A marked function's Mid, with the functions of its unit it calls (up to
+  400 Mid nodes) and the schemes of what it names, is in its unit's basis
+  (`UnitBasis.version` 13); a unit that names it gets a copy, which
+  Simplify inlines or specialises keeping its frames, and records the
+  usage `inlv NAME`, which holds by the Mid's hash (S78).
+- The gap, a build in units over a whole compile on MLton's benchmark set:
+  1.035 in bytecode instructions (from 1.150) and 1.076 in machine
+  instructions (from 1.242) on the geometric mean; `fft-realarray` 1.000
+  (from 2.645), `tak` 1.000 (1.625), `tensor` 1.013 (1.784), `zern` 1.009
+  (1.833); no program slower in units than before, and whole compiles the
+  same bytes. Left: `wc-input1` 1.21 and `wc-scanStream` 1.13 (a whole
+  compile inlines `input1`, called once), `smith-normal-form` 1.11 (IntInf's
+  insides), `pidigits` 1.10 (starting a larger program), and `map`'s copy.
+- `--inline-functor` is retired: a program marks its functors in its build
+  file, and `--no-inline-functors` drops the value marks too. The REPL reads
+  no build file, so it marks nothing of a program's own; the Basis's marks
+  apply there as everywhere.
 
 ## Found while writing this roadmap
 
