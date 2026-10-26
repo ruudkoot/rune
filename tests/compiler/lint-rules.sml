@@ -2,6 +2,8 @@
    refused where it is broken by hand (tests/runner/tools.sml,
    compiler/lint-rules):
    * a check moves none of the compiler's counters of names (Pass.checkAt);
+   * LowLint's rule of what is defined on every way to a use, by dominance,
+     and midcanon's renaming (MidCanon.checkRenaming; linting roadmap, M2);
    * the invariant of results in globals (LowLint.results; docs/ir.md, What
      a Low keeps), on Low made by hand: what Lower makes of results is
      taken, and every breach of each of its rules is refused. The facts: f1
@@ -48,8 +50,79 @@ struct
     (Pass.checkAt "test" check (); report (what, wanted = "", "accepted"))
     handle Error.Bug m => report (what, wanted <> "" andalso String.isSubstring wanted m, "refused: " ^ m)
 
+  (* ---- LowLint's ways: what is defined on every way to a use, by
+     dominance (M2); one function, its blocks as given *)
+  fun low (what, blocks, wanted) = checked ("low: " ^ what, fn () => LowLint.check [func (0, blocks)], wanted)
+  fun blockP (label, params, instrs, transfer) : block = {label = label, params = params, instrs = instrs, transfer = transfer}
+  val notOnEvery = "is used where it is not defined on every way"
+  fun lowWays () =
+    (low ("a diamond, what its head defines used after it",
+          [block (0, [Def (1, Unit)], If (1, 1, 2)), block (1, [Def (2, Unit)], Goto (3, [])), block (2, [], Goto (3, [])),
+           block (3, [], Return 1)], "");
+     low ("a diamond, what one side defines used after it",
+          [block (0, [Def (1, Unit)], If (1, 1, 2)), block (1, [Def (2, Unit)], Goto (3, [])), block (2, [], Goto (3, [])),
+           block (3, [], Return 2)], notOnEvery);
+     low ("a use before its definition", [block (0, [Def (1, Select (0, 2)), Def (2, Unit)], Return 1)], notOnEvery);
+     low ("a block's parameter, given by every jump",
+          [block (0, [Def (1, Unit)], If (1, 1, 2)), block (1, [], Goto (3, [1])), block (2, [], Goto (3, [1])),
+           blockP (3, [4], [], Return 4)], "");
+     low ("a handler, what was defined before its push",
+          [block (0, [Def (1, Unit), Push 2, Def (3, Unit), Pop], Goto (1, [])), block (1, [], Return 3),
+           blockP (2, [4], [], Return 1)], "");
+     low ("a handler, what was defined after its push",
+          [block (0, [Def (1, Unit), Push 2, Def (3, Unit), Pop], Goto (1, [])), block (1, [], Return 3),
+           blockP (2, [4], [], Return 3)], notOnEvery);
+     low ("a block reached with handlers and without",
+          [block (0, [Def (1, Unit)], If (1, 1, 2)), block (1, [Push 4], Goto (3, [])), block (2, [], Goto (3, [])),
+           block (3, [], Return 1), blockP (4, [5], [], Return 5)], "is reached with");
+     low ("a jump back to a loop's head, what reaches it defined",
+          [block (0, [Def (1, Unit)], Goto (1, [])), block (1, [Def (2, Unit)], If (1, 1, 2)), block (2, [], Return 2)], "");
+     low ("a jump back to a head from where what reaches it is not defined",
+          [block (0, [Def (1, Unit)], If (1, 1, 3)), block (1, [Def (2, Unit)], Goto (2, [])), block (2, [], Return 1),
+           block (3, [], Goto (2, []))], "which the jump has not");
+     low ("a jump back to a block nothing reached",
+          [block (0, [], Goto (2, [])), block (1, [], Return 0), block (2, [], Goto (1, []))], "which nothing reached before");
+     low ("dead code, unchecked", [block (0, [], Return 0), block (1, [], Return 9)], ""))
+
+  (* ---- midcanon's renaming (M2): what midcanon made of a program taken,
+     and every way of renaming otherwise refused *)
+  structure M = Mid
+  val dt = 900001
+  val () = Ty.bindDatatypeDirect (dt, {params = [], cons = [(0, "A", NONE), (1, "B", SOME Ty.int)]})
+  val dty = Ty.con (dt, "t", [])
+  val one = M.Const (Lambda.CInt (IntInf.fromInt 1), Ty.int)
+  (* g1 = let v2 = 1 in let v3 = B v2 in v3; g4 = A *)
+  fun prog (g1, v2, v3, g4, c, t) =
+    [M.Val (g1, ([], t), M.Let (v2, ([], Ty.int), M.Atom c, M.Let (v3, ([], t), M.Con (1, t, M.Var (v2, [])), M.Return (M.Atom (M.Var (v3, [])))))),
+     M.Val (g4, ([], t), M.Return (M.Atom (M.Con0 (0, t))))]
+  val p = prog (11, 12, 13, 14, one, dty)
+  fun renaming (what, p', wanted) = checked ("midcanon: " ^ what, fn () => MidCanon.checkRenaming p p', wanted)
+  fun renamings () =
+    let
+      val p' = MidCanon.program p
+      val dty' = case p' of M.Val (_, (_, t), _) :: _ => t | _ => dty
+    in
+      renaming ("what midcanon makes", p', "");
+      renaming ("the program itself", p, "");
+      renaming ("a name renamed two ways",
+                [M.Val (21, ([], dty'), M.Let (22, ([], Ty.int), M.Atom one,
+                                               M.Let (23, ([], dty'), M.Con (1, dty', M.Var (29, [])), M.Return (M.Atom (M.Var (23, [])))))),
+                 M.Val (24, ([], dty'), M.Return (M.Atom (M.Con0 (0, dty'))))], "renamed to");
+      renaming ("two names renamed one", prog (21, 22, 22, 24, one, dty'), "is the new name of");
+      renaming ("a constant changed", prog (21, 22, 23, 24, M.Const (Lambda.CInt (IntInf.fromInt 2), Ty.int), dty'), "a constant changed");
+      renaming ("a built-in type name renamed",
+                [M.Val (21, ([], dty'), M.Let (22, ([], Ty.con (900002, "int", [])), M.Atom one,
+                                               M.Let (23, ([], dty'), M.Con (1, dty', M.Var (22, [])), M.Return (M.Atom (M.Var (23, [])))))),
+                 M.Val (24, ([], dty'), M.Return (M.Atom (M.Con0 (0, dty'))))], "built-in type name");
+      renaming ("a datatype not entered again", prog (21, 22, 23, 24, one, Ty.con (900003, "t", [])), "not entered again");
+      renaming ("a definition of another kind", [M.Funs [], M.Val (24, ([], dty'), M.Return (M.Atom (M.Con0 (0, dty'))))],
+                "of another kind")
+    end
+
   fun main () =
-    (checked ("counters: a check that takes no name", fn () => ignore (Ty.con (7, "t", [])), "");
+    (lowWays ();
+     renamings ();
+     checked ("counters: a check that takes no name", fn () => ignore (Ty.con (7, "t", [])), "");
      checked ("counters: a check that takes a stamp", fn () => ignore (Elaborate.freshStamp ()), "moved the compiler's counters");
      checked ("counters: a check that takes a type name", fn () => ignore (Types.freshTycon ("t", 0, false)),
               "moved the compiler's counters");

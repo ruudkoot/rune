@@ -48,7 +48,7 @@ struct
       val mid =
         if !Pass.whole
         then Pass.stage {name = "midcanon", showIn = SOME MidText.show, show = MidText.show,
-                         check = Pass.lintAt "midcanon" MidLint.check,
+                         check = Pass.lintAt "midcanon" (MidCanon.checkRenaming mid),
                          size = Mid.size}
                         MidCanon.program mid
         else mid

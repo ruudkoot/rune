@@ -10,7 +10,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 |---|---|---|---|
 | `translate` | the elaborated syntax | `Lambda` (`lib/compiler/core/lambda.sml`) | `LambdaLint` |
 | `mid` | `Lambda` | `Mid` (`lib/compiler/core/mid.sml`, by `ToMid`) | `MidLint` |
-| `midcanon` | `Mid` | `Mid` numbered canonically (`lib/compiler/core/midcanon.sml`), as one made of its units' `Mid` is; a whole program only | `MidLint` |
+| `midcanon` | `Mid` | `Mid` numbered canonically (`lib/compiler/core/midcanon.sml`), as one made of its units' `Mid` is; a whole program only | its renaming (`MidCanon.checkRenaming`); `MidLint` of the units' `Mid` it concatenates (`midconcat`) |
 | `expand` | `Mid` | `Mid`, functors' applications copied (`lib/compiler/core/expand.sml`; *Functors compiled once* below), from `-O1` | `MidLint` |
 | `shake` | `Mid` | `Mid`, what nothing reaches gone (`lib/compiler/core/shake.sml`), from `-O1` | `MidLint` |
 | `lift` | `Mid` | `Mid`, local functions that never escape made functions of the top level (`lib/compiler/core/lift.sml`), from `-O1` | `MidLint` |
@@ -79,8 +79,9 @@ stages of the pipeline above, the compile's stages are:
 
 After them, a line `check KEY` for each check that ran, at whatever depth,
 by its key (`Pass.checkAt`): the stage it follows (`translate`, `mid`,
-`midcanon`, ..., `lower`), `mid-roundtrip`, and `results`, which runs
-inside `lower`. They are counted in the stages' times already, `checks`
+`midcanon`, ..., `lower`), `midconcat` (the units' `Mid` concatenated, with
+`--units --whole`), `mid-roundtrip`, and `results`, which runs inside
+`lower`. They are counted in the stages' times already, `checks`
 or a unit's `unit-passes`, so they show what a compile in units lints,
 which `checks` does not, and are not added to the total again.
 
@@ -469,6 +470,18 @@ have generalised them: a variable of the program or a function; a variable
   back; where the expansion knows the slot's value, a cast left between two
   ground types that differ is a bug of the expansion.
 
+It keeps its tables in hash tables, and what is in scope in one table,
+entered and left as it walks: stamps' being unique, which it checks, makes
+that the same as a map for each scope, at about 40% of its cost
+(plans/correctness/linting.md, M2). After `midcanon` it is not run again:
+`MidCanon.checkRenaming` checks that what `midcanon` made is what it was
+given with each name of each kind renamed by a bijection -- stamps, type
+names that are not built in, type variables -- node for node, and each
+datatype entered again under its new name, its constructors, layout and
+openness the old one's; so it keeps what `MidLint` checked after `mid`. The
+units' `Mid` that `--units --whole` concatenates is linted by `MidLint`
+(`midconcat`), since a unit taken from the cache was not.
+
 ### Mid as text
 
 `MidText.show` prints a program (`--dump-after=mid`), and `MidText.parse`
@@ -763,7 +776,9 @@ global of its fields that some call reads; and it calls in tail position
 only another of n, never through a closure. It costs 0.1 to 0.6% of a
 compile (plans/correctness/linting.md, E9).
 
-`LowLint` checks, after `lower`:
+`LowLint` checks, after `lower` (what is defined on every way to a use by
+dominance, over a function's blocks cut at each push, so that it costs in
+proportion to the function; plans/correctness/linting.md, M2):
 
 * **SSA:** every variable is defined once in its function and on every way
   to each of its uses; a handler's block sees only what was defined where
