@@ -51,7 +51,9 @@ It waited out its 20 s on:
 CDEFGH
 ```
 
-the middle row missing. The wait matches the first ten letters, so the
+the middle row missing. Again on 2026-10-26 in `make check` at
+`56c86ddd4`, at a load of 13 to 18, the same screen; it passed three times
+in three runs after. The wait matches the first ten letters, so the
 resize can come while the rest of the typed text is still arriving or being
 drawn; what was seen fits a redraw at the new width that the keys after it
 then extend from a wrong row. Not run down: it is either the editor's
