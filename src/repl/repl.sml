@@ -652,7 +652,8 @@ struct
 
   (* The compiler's settings for what the session compiles, before the
      REPL's own arguments (rune-repl.load.rbc LIST OPTION... [--make-image
-     IMAGE]): --inline-functor=F[,F...], --no-inline-functors and --lint.
+     IMAGE]): --inline-functor=F[,F...], --no-inline-functors and --lint
+     (--lint=LEVEL).
      They are the image's: they hold for every session started from the
      image. The functors the Basis Library's build file marks to be
      inlined are, but with --no-inline-functors. *)
@@ -664,8 +665,12 @@ struct
             else if a = "--no-inline-functors" then (noInline := true; Elaborate.inlineFunctors := StringMap.empty; go rest)
             (* every pass's output checked, as rune --lint checks it (the
                globals of the units before a declaration typed for the lint
-               by UnitBasis.startSession, as in a build in units) *)
-            else if a = "--lint" then (Pass.lint := true; go rest)
+               by UnitBasis.startSession, as in a build in units); the
+               REPL's own level is 1, the boundaries *)
+            else if a = "--lint" then (Pass.lintGiven := SOME 2; go rest)
+            else if String.isPrefix "--lint=" a andalso
+                    List.exists (fn l => l = String.extract (a, 7, NONE)) ["off", "0", "1", "2", "3"]
+            then (Pass.lintGiven := Pass.levelOf (String.extract (a, 7, NONE)); go rest)
             else a :: rest
         | go [] = []
       val rest = go args

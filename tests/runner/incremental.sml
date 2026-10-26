@@ -223,14 +223,15 @@ struct
                            ("import-read", ["reads a.sml@", "'s global 1 as int, where it holds ptr"])];
                  #environment s := []; b [] "b.sml"; prints s "12")
     | "S79" => (c "a.sml b.sml";
-                 (* built without the lint: its entries are not marked
-                    checked, and a build with the lint compiles both again
-                    and marks them; then takes them *)
+                 (* built at rune's own level of the lint, 0
+                    (RUNE_LINT empty): its entries are marked 0, and a build
+                    at level 2 compiles both again and marks them 2; then
+                    takes them, and so does one at 0 *)
                  #environment s := [("RUNE_LINT", "")]; build s [];
                  check s "expected a successful build" (#status (!(#result s)) = 0);
                  #environment s := []; b [] "a.sml b.sml";
                  check s ("the build did not say the entries were not checked: " ^ #errors (!(#result s)))
-                   (String.isSubstring "b.sml: its entry was not checked by the lint" (#errors (!(#result s))));
+                   (String.isSubstring "b.sml: its entry was checked at a lower level of the lint (0)" (#errors (!(#result s))));
                  b [] "";
                  #environment s := [("RUNE_LINT", "")]; b [] ""; #environment s := [])
     | "S80" => (c "a.sml b.sml"; b [] "a.sml b.sml";

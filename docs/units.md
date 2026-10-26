@@ -222,8 +222,9 @@ checked whole when it was compiled (`RegVerify`; [ir.md](ir.md), *The
 register target*), so this is what is left to check of the program; the
 check of the whole linked program is there for tests, where
 `RUNE_REGVERIFY_LINK` is set and not empty, and `RUNE_LINK_CHECK=0` leaves
-the interfaces out, to measure them. The check runs at every link, linted
-or not, as a check of `Pass.checkAt` (`--pass-stats` counts it as `link`). A unit file keeps what its unit
+the interfaces out, to measure them. The check runs at every link, at
+level 0 of the lint, which is always on but where `--lint=off` says
+(`Pass.checkAt`; `--pass-stats` counts it as `link`). A unit file keeps what its unit
 expects (version 4), so a unit relinked from its file against another
 build of an import is held to it too (S78 of
 `tests/incremental/SCENARIOS.md`). The stack code expects nothing.
@@ -372,19 +373,22 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
 * an entry keeps the warnings its compile gave, which a compile that takes
   it from the cache gives again;
 * an entry is marked with the level of the lint its compile ran
-  (`UnitCache.level`: 2 where the lint is on, `--lint` or `RUNE_LINT`, else
-  0), its Mid linted and its register code verified at that level; a
-  compile takes an entry of its own level or above without checking it
-  again, and to a compile with the lint an entry made without it is no
-  entry ("its entry was not checked by the lint"): the unit is compiled
-  again, checked, and stored marked where the cache can be written (S79;
-  the linting roadmap's M9);
+  (`UnitCache.level`: `--lint=N` or `RUNE_LINT`, else the program's own,
+  0 for `rune`; at most 2, level 3's round trips not being asked of an
+  entry, and at most 0 where `RUNE_REGVERIFY=0` leaves the register code
+  unchecked; [ir.md](ir.md), *Levels*), its Mid linted and its register
+  code verified at that level; a compile takes an entry of its own level or
+  above without checking it again, and to a compile at a higher level an
+  entry of a lower is no entry ("its entry was checked at a lower level of
+  the lint (N)"): the unit is compiled again, checked, and stored marked
+  where the cache can be written (S79; the linting roadmap's M9);
 * an entry keeps the schemes of what its code names of other units, as
   text (`UnitBasis.importedSchemes`), and where its usages hold by their
   binders each is held to the scheme the unit there now has when the entry
   is taken, a cheap check of what the binders say: one that differs is no
   entry, and the unit is compiled ("its entry had another scheme of ...";
-  `Pass.checkAt`, which `--pass-stats` counts as `schemes`);
+  a check of level 0, `Pass.checkAt`, which `--pass-stats` counts as
+  `schemes`);
   where usages hold by fingerprint, the fingerprints are of the schemes
   already;
 * an entry is one file, its usages, warnings, basis, the basis's identity
@@ -487,8 +491,8 @@ compiler library's Unicode and JSON dependencies, for each bytecode, into
 compile reads it after its own cache and never writes it, so that a
 program's first compile takes the Basis Library's units from there where
 their usages hold, which they do but for the seals of structures the
-program does not name. It is made with the lint (`--lint`), so its entries
-are marked and a compile with the lint takes them too.
+program does not name. It is made with the lint at level 2, so its entries
+are marked 2 and a compile at any level takes them.
 
 The public [compiler library](lib/compiler/README.md) writes units with
 `.rbi` checked-basis, `.rbm` Mid and `.rbs` source companions. The source

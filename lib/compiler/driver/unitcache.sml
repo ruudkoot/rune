@@ -46,15 +46,19 @@ struct
                 others : (string * string) list, pickle : string, identity : string, code : string, mid : string,
                 level : int, schemes : (string * (int * string) list) list}
 
-  (* The mark of what a compile checks of a unit: the level of its lint --
-     every pass's, today's --lint, is 2 (the linting roadmap's D13), none 0,
-     nor where RUNE_REGVERIFY=0 leaves the register code unchecked.
-     An entry serves a compile whose level is at most its own: one made
-     without the lint is, for a compile with it, an entry not there, and the
-     unit is compiled again under the lint and the entry stored marked, where
-     the cache can be written. The frozen Basis is made with the lint
-     (make basis-cache), so that a compile with it takes its entries. *)
-  fun level () : int = if Pass.linting () andalso RegVerify.on () then 2 else 0
+  (* The mark of what a compile checks of a unit: the level of its lint
+     (Pass.lintLevel; the linting roadmap's D12 and D13), off ~1 to 2 --
+     level 3's round trips of Mid's text are not asked of an entry -- and
+     no more than 0 where RUNE_REGVERIFY=0 leaves the register code
+     unchecked at the levels that check it. An entry serves a compile whose
+     level is at most its own: one made at a lower level is, for a compile
+     at a higher, an entry not there, and the unit is compiled again at
+     that level and the entry stored marked, where the cache can be
+     written. The frozen libraries are made at level 2 (make basis-cache),
+     so that a compile at any level takes their entries. *)
+  fun level () : int =
+    let val l = Int.min (Pass.lintLevel (), 2)
+    in if l >= 1 andalso not (isSome (RegVerify.level ())) then 0 else l end
 
   (* an entry found, or why there is none *)
   datatype found = Found of entry | Missed of string
@@ -239,7 +243,7 @@ struct
            val identity = P.rstring r
            val code = P.rstring r
            val mid = P.rstring r
-           val lvl = P.rnat r
+           val lvl = P.rint r
            val schemes = P.rlist (fn r => let val u = P.rstring r
                                           in (u, P.rlist (fn r => let val n = P.rnat r in (n, P.rstring r) end) r) end) r
          in
@@ -279,10 +283,11 @@ struct
         | try (n :: rest, why, byFingerprint) =
             case read (OS.Path.joinDirFile {dir = d, file = n}) of
               Found (e as {usages, level = l, ...}) =>
-                (* one made without the lint, for a compile with it: none
-                   (level) *)
+                (* one checked at a lower level of the lint than the
+                   compile's: none (level) *)
                 if l < level ()
-                then try (rest, if why = "no entry" then "its entry was not checked by the lint" else why, byFingerprint)
+                then try (rest, if why = "no entry" then "its entry was checked at a lower level of the lint (" ^ Int.toString l ^ ")"
+                                else why, byFingerprint)
                 else
                   (case UnitBasis.broken usages of
                      NONE => if UnitBasis.exact usages then Found e
@@ -391,7 +396,7 @@ struct
       val body = P.writer ()
       val () = (usages (body, us); P.list P.string (body, warnings); P.string (body, file);
                 usages (body, others); P.string (body, pickle); P.string (body, identity); P.string (body, code);
-                P.string (body, mid); P.nat (body, lvl);
+                P.string (body, mid); P.int (body, lvl);
                 P.list (fn (w, (u, ns)) => (P.string (w, u); P.list (fn (w, (n, t)) => (P.nat (w, n); P.string (w, t))) (w, ns)))
                        (body, schemes))
       val b = P.contents body

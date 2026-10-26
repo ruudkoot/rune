@@ -371,10 +371,11 @@ when the scenarios above were all green
   where it holds ptr" (linting M9); the units are not stored. Built
   again without the switch, `b.sml` is compiled and the program prints
   12. Before, each was linked as the code had it, and ran.
-* **S79, an entry made without the lint.** The project built with
-  `RUNE_LINT` empty, then with the lint: both units are compiled again,
-  "its entry was not checked by the lint", and stored marked; built again
-  with the lint and then without, each takes them all (linting M9).
+* **S79, an entry checked at a lower level of the lint.** The project
+  built with `RUNE_LINT` empty, at `rune`'s own level, 0, then at level 2:
+  both units are compiled again, "its entry was checked at a lower level of
+  the lint (0)", and stored marked 2; built again at 2 and then at 0, each
+  takes them all (linting M9).
 * **S80, an entry whose schemes are not its units'.** Built, then `b.sml`'s
   entry made to say that each value it names of another unit had another
   scheme (`CachePlant.schemes`): its usages hold by their binders, and the

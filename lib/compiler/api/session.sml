@@ -51,6 +51,9 @@ struct
       fun work () =
         let
           val () = UnitBasis.startSession ()
+          (* the library lints at the boundaries where RUNE_LINT says
+             nothing else (docs/ir.md, Levels) *)
+          val () = Pass.lintDefault := 1
           val () = (Pass.whole:=false; Pipeline.keepMid:=true; CompilerSettings.target:= #target config;
                     Error.keep:=true;Error.silent:=true;Elaborate.recover:=true)
           val () = CompilerSettings.libDir:= #lib config
@@ -91,8 +94,11 @@ struct
               val loaded = #loaded result
               val () = (env:=Env.plus (#env start,#delta loaded);
                         fixity:=Fixity.extend (#fixity start,#directives loaded);UnitBasis.bind loaded)
+              val bytes = String.concat (UnitFile.chunks (fingerprint,code))
+              (* its code read back, at level 2 *)
+              val () = Pass.checkAt ("code-rt",2) (Pipeline.codeRoundTrip (fingerprint,bytes)) code
               val artifact = {identity= #identity code,fingerprint=fingerprint,code=code,
-                bytes=String.concat (UnitFile.chunks (fingerprint,code)),pickle= #pickle (#exported result),
+                bytes=bytes,pickle= #pickle (#exported result),
                 mid=mid,source=source,library=library}
             in (ordinal+1,artifact :: artifacts) end
           fun compile (Text source,(ordinal,artifacts)) =
@@ -355,7 +361,10 @@ struct
     in List.filter (fn a : artifact => List.exists (fn identity => identity= #identity a) wanted) catalog end
   fun owned action =
     let val owner=CompilerState.session ()
-        val result=CompilerState.withSession (owner,action) handle e => (CompilerState.close owner;raise e)
+        (* the library lints at the boundaries where RUNE_LINT says nothing
+           else (docs/ir.md, Levels) *)
+        val result=CompilerState.withSession (owner,fn () => (Pass.lintDefault:=1;action ()))
+                   handle e => (CompilerState.close owner;raise e)
     in CompilerState.close owner;result end
   fun writeProgram (compiled,path) = owned (fn () =>
     let

@@ -343,12 +343,12 @@ struct
       (* the interfaces: what each unit expects of the units before it,
          against what they declare -- in time linear in the imports, where a
          check of the whole program took a fifth of a warm build (the linting
-         roadmap's D15); a check of every link, linted or not, which
-         --pass-stats counts as "link" and which moves none of the compiler's
-         counters (Pass.checkAt) *)
+         roadmap's D15); a check of level 0, always on but where --lint=off
+         says, which --pass-stats counts as "link" and which moves none of
+         the compiler's counters (Pass.checkAt; the roadmap's D12) *)
       val () =
         if List.null (!calls) andalso List.null (!reads) then ()
-        else Pass.checkAt "link" (fn () =>
+        else Pass.checkAt ("link", 0) (fn () =>
           let
             val metas = Array.array (List.length funcs, NONE)
             val () = List.app (fn ({id, meta, name, ...} : func) =>

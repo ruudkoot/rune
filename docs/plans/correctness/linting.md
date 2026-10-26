@@ -84,7 +84,7 @@ What it rests on:
 | M0 | This roadmap | | done (2026-10-25) |
 | M1 | The fixes found, and the guards that cost nothing | P | done (2026-10-26) |
 | M2 | Lints that cost less, with the same rules | P | done (2026-10-26) |
-| M3 | Levels | P | not started |
+| M3 | Levels | P | done (2026-10-26) |
 | M4 | The missing rules of LambdaLint and MidLint, a negative test for every rule | I | not started |
 | M5 | Mid is System F | I | not started |
 | M6 | Shapes and layouts in LowLint | I | not started |
@@ -168,6 +168,37 @@ passes on its exact commit.
     LambdaLint is now the largest single check.
   - **A departure:** LowLint's walk up the dominator tree is not strictly
     linear (5.8 steps a use on HaMLet, 1.8 on the bootstrap).
+
+- **M3** (`caa0330a8`, `242ab89a1`, `387974796` with two merges of
+  `linting`; merged `6a7cf3315`; `make check` 21,648 of 21,648).
+  - **The switches:** `--lint=off|0|1|2|3` and `RUNE_LINT=LEVEL`. A bare
+    `--lint` is 2, and `bin/rune-test` sets `RUNE_LINT=2`.
+  - **The defaults:** 0 for `rune`, 1 for the REPL and the compiler
+    library.
+  - **What runs at each level:**
+    - 0: `results` and the functor bodies decoded;
+    - 1: the boundaries, with `regverify` and `regverify-link`;
+    - 2: every pass, with MidLint per definition inside `simplify` and
+      the code's round trip;
+    - 3: the Mid round trip after every stage (`make test-ir`).
+  - **Diagnosis:** a breach at level 1 compiles again at level 2, in a
+    fresh session, to name the pass.
+  - **What each level costs** (HaMLet -O1 / the bootstrap -O1):
+
+    | Level | Cost |
+    |---|---|
+    | 0 | +0.14% / +0.52% |
+    | 1 | +16.4% / +32.8% |
+    | 2 | +35.4% / +70.7% |
+
+  - **`check-levels`** costs 1.92 times its CPU before M1 (2.27 at M2).
+    The stack target builds no UL, and the register target is compared
+    with a build at level 0 only at -O2 and in UL.
+  - **Departures:**
+    - A breach at level 0 is not compiled again: the seal it needs costs
+      about 305,000 instructions on every compile and would put two
+      budgets over. Its message names `--lint=2` instead.
+    - Level 0 moved no budget past its limit; none was re-based.
 
 - **M7** (`ac2e7e2ad`, merged `efa5148f1`; `make check` 21,251 of 21,251).
   - **The register instructions are described for checking in

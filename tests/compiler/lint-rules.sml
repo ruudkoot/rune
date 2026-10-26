@@ -1,7 +1,10 @@
 (* The rules of the checks that no program the compiler makes breaks, each
    refused where it is broken by hand (tests/runner/tools.sml,
    compiler/lint-rules):
-   * a check moves none of the compiler's counters of names (Pass.checkAt);
+   * a check moves none of the compiler's counters of names (Pass.checkAt),
+     and runs from its level up (M3);
+   * a part of a program checked in its context (MidLint.checkIn, inside
+     simplify) and a unit's code read back (Pipeline.codeRoundTrip; M3);
    * LowLint's rule of what is defined on every way to a use, by dominance,
      and midcanon's renaming (MidCanon.checkRenaming; linting roadmap, M2);
    * the invariant of results in globals (LowLint.results; docs/ir.md, What
@@ -47,7 +50,7 @@ struct
     handle Error.Bug m => report (what, String.isSubstring wanted m, "refused otherwise: " ^ m)
 
   fun checked (what, check, wanted) =
-    (Pass.checkAt "test" check (); report (what, wanted = "", "accepted"))
+    (Pass.checkAt ("test", 0) check (); report (what, wanted = "", "accepted"))
     handle Error.Bug m => report (what, wanted <> "" andalso String.isSubstring wanted m, "refused: " ^ m)
 
   (* ---- LowLint's ways: what is defined on every way to a use, by
@@ -119,8 +122,81 @@ struct
                 "of another kind")
     end
 
+  (* ---- the levels (M3): a check runs from its level up; one that is
+     always on says so, and how to turn it off; one at a boundary, found
+     below level 2, how to find the pass *)
+  fun atLevel (given, key, level, wanted) =
+    let
+      val saved = !Pass.lintGiven
+      val () = Pass.lintGiven := given
+      val what = "levels: a check of level " ^ Int.toString level ^ " at "
+                 ^ (case given of SOME n => if n < 0 then "off" else Int.toString n | NONE => "the default")
+      val result = (Pass.checkAt (key, level) (fn () => Error.bug "a breach") (); NONE) handle Error.Bug m => SOME m
+    in
+      Pass.lintGiven := saved;
+      case (result, wanted) of
+        (NONE, NONE) => report (what, true, "")
+      | (SOME m, SOME w) => report (what, String.isSubstring w m, "refused otherwise: " ^ m)
+      | (NONE, SOME _) => report (what, false, "not run")
+      | (SOME m, NONE) => report (what, false, "run: " ^ m)
+    end
+  fun levels () =
+    (atLevel (SOME 0, "always", 0, SOME "--lint=off turns the check off");
+     atLevel (SOME Pass.off, "always", 0, NONE);
+     atLevel (SOME 0, "boundary", 1, NONE);
+     atLevel (SOME 1, "boundary", 1, SOME "--lint=2 names the pass");
+     atLevel (SOME 1, "pass", 2, NONE);
+     atLevel (SOME 2, "pass", 2, SOME "lint after pass: ");
+     atLevel (SOME 2, "deep", 3, NONE);
+     atLevel (SOME 3, "deep", 3, SOME "lint after deep: ");
+     report ("levels: what --lint= and RUNE_LINT say",
+             List.map Pass.levelOf ["", "off", "0", "1", "2", "3", "yes"]
+             = [NONE, SOME Pass.off, SOME 0, SOME 1, SOME 2, SOME 3, SOME 2], "levelOf"))
+
+  (* ---- a part checked in a context (MidLint.checkIn, simplify-def; M3):
+     the globals of the context are named and set, others are not *)
+  fun parts () =
+    let
+      val ctx = MidLint.context [M.Val (31, ([], Ty.int), M.Return (M.Atom one))]
+      fun part (what, p, wanted) = checked ("checkIn: " ^ what, fn () => MidLint.checkIn ctx p, wanted)
+    in
+      part ("a global of the context named", [M.Val (32, ([], Ty.int), M.Return (M.Atom (M.Global (31, []))))], "");
+      part ("a global of the context set",
+            [M.Do ([], M.Let (33, ([], Ty.unit), M.SetGlobal (31, one), M.Return (M.Atom M.Unit)))], "");
+      part ("a global of no context named", [M.Val (32, ([], Ty.int), M.Return (M.Atom (M.Global (39, []))))],
+            "global g39 is not defined");
+      part ("a global of the context at another type", [M.Val (32, ([], Ty.unit), M.Return (M.Atom (M.Global (31, []))))],
+            "where unit is wanted")
+    end
+
+  (* ---- a unit's code read back (Pipeline.codeRoundTrip, code-rt; M3) *)
+  fun opcode n =
+    let fun go i = if i >= Vector.length Opcodes.names then raise Fail ("no opcode " ^ n)
+                   else if Vector.sub (Opcodes.names, i) = n then i else go (i + 1)
+    in go 0 end
+  fun unitOf (nlocals, items) : Link.unitCode =
+    {code = {consts = [], nglobals = 0, funcs = [{id = 0, nlocals = nlocals, code = items, name = "<toplevel>", meta = NONE}],
+             files = [], inlines = [], nlabels = 0, globalReps = []},
+     identity = "lint-rules", provenance = NONE, globals = [], imports = [], exports = []}
+  val ret = [Code.Op (opcode "UNIT", []), Code.Op (opcode "RET", [])]
+  fun bytesOf u = String.concat (UnitFile.chunks (Opcodes.fingerprint, u))
+  fun codes () =
+    let
+      val u = unitOf (0, ret)
+      fun back (what, bytes, wanted) =
+        checked ("code-rt: " ^ what, fn () => Pipeline.codeRoundTrip (Opcodes.fingerprint, bytes) u, wanted)
+    in
+      back ("a unit's own bytes", bytesOf u, "");
+      back ("bytes of a unit of another number of locals", bytesOf (unitOf (1, ret)), "another number of locals");
+      back ("bytes of a unit of other code", bytesOf (unitOf (0, Code.Op (opcode "UNIT", []) :: ret)), "other code");
+      back ("bytes that are no unit", "not a unit", "UnitFile.read")
+    end
+
   fun main () =
-    (lowWays ();
+    (parts ();
+     codes ();
+     levels ();
+     lowWays ();
      renamings ();
      checked ("counters: a check that takes no name", fn () => ignore (Ty.con (7, "t", [])), "");
      checked ("counters: a check that takes a stamp", fn () => ignore (Elaborate.freshStamp ()), "moved the compiler's counters");

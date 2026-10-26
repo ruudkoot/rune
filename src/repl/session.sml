@@ -425,6 +425,8 @@ struct
            Pipeline.unitThrough {start = start, name = name, file = file, text = fn () => text, mode = srcMode,
                                  decs = decs @ pdecs, delta = delta, fixity = #fixity start, used = used, fresh = true}
          val bytes = String.concat (UnitFile.chunks (Pipeline.fingerprint (), code))
+         (* its code read back, at level 2 *)
+         val () = Pass.checkAt ("code-rt", 2) (Pipeline.codeRoundTrip (Pipeline.fingerprint (), bytes)) code
          (* linked as it was loaded, under an identity of its own where it
             is a file used again (Pipeline.unitThrough's fresh) *)
          val linked = if #identity (#unit loaded) = #identity code then bytes

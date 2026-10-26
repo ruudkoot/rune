@@ -1126,11 +1126,11 @@ struct
         | go (x :: rest) = case inUnit x of NONE => go rest | some => some
     in go us end
   (* the check where an entry is taken: SchemeChanged where one differs; a
-     check of every compile in units, which --pass-stats counts as
-     "schemes" and which moves none of the compiler's counters
-     (Pass.checkAt) *)
+     check of level 0, always on but where --lint=off says, which
+     --pass-stats counts as "schemes" and which moves none of the
+     compiler's counters (Pass.checkAt; the linting roadmap's D12) *)
   fun checkSchemes (us : (string * (int * string) list) list) : unit =
-    Pass.checkAt "schemes" (fn us => Option.app (fn k => raise SchemeChanged k) (schemesHold us)) us
+    Pass.checkAt ("schemes", 0) (fn us => Option.app (fn k => raise SchemeChanged k) (schemesHold us)) us
 
   (* The files a unit's code names other than file, its own, which are the
      sources of units of the session -- the bodies of the functors marked to
@@ -2196,6 +2196,8 @@ struct
                                        tvar = fn () => rname (d, kTvar),
                                        file = fn () => getOpt (P.roption P.rstring r, file), local' = local'})
                     handle MidCodec.Bad m => raise P.Bad m
+                  (* linted at the next unit's passes, always on (Pipeline.functorBodies) *)
+                  val () = if Pass.linting' 0 then MidLint.pendingBodies := body :: !MidLint.pendingBodies else ()
                   val opens = P.rlist (fn _ => rname (d, kTycon)) r
                   fun prim () = (P.roption P.rstring r; P.roption P.rstring r; ())
                   val _ = P.rlist (fn _ => (prim (); P.roption (fn _ => (rname (d, kStamp); prim ())) r;
