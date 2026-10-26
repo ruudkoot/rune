@@ -476,6 +476,47 @@ passes on its exact commit.
       library need the hook first, and the editor's latency must be
       measured.
 
+- **M5** (`5fa556034`, `9dda1ba70`; merged `5fad13018`; `make check`
+  21,888 of 21,888).
+  - **Lift** collects only free type variables: not those a `Let`'s scheme
+    binds, nor those an inner function abstracts over. A lifted group
+    also abstracts over the type variables of the lifted functions it
+    calls. E10's program is `tests/lang/dec.fun_lift-inner-poly`.
+  - **ToMid binds or grounds every type variable:**
+    - a `Do`'s globals bind their variables over its whole expression, as
+      a `Val`'s do. This fixes `val (id, constant) = ...` and
+      `val Box id = ...` at top level, which re-generalised a lambda's
+      parameter;
+    - a variable ToMid makes for a step that is a value, and an anonymous
+      `fn`, abstract over the variables no binder around them binds;
+    - a variable still unbound after that becomes `unit` where it stands
+      (`ToMid.ground`), as in `let val [] = nil`.
+  - **Translate** binds a typed pattern as its inner pattern: `val x : ty
+    = e` binds `x` itself, as `val x = e` does, and not a temporary that
+    `x` is then bound to. The temporary was not generalised, so its type
+    named its scheme's variables where nothing bound them. This fixes the
+    alias in a functor body (`mod.functor.functions_expand`) and MLton's
+    `IntSize.memoize`.
+  - **The lints:** MidLint keeps an environment of type variables: a type
+    names only the variables of binders around it, and no binder binds
+    one again in its scope. LambdaLint refuses an instance that does not
+    give a variable an enclosing scope fixes as itself. A new fault,
+    `rebind`, and six cases in `compiler/lint-rules`.
+  - **Found:** E10's breaches are gone. `tests/lang`, `tests/perf`, the
+    benchmarks, the bootstrap, HaMLet and MLton, whole and in units, are
+    clean at level 2.
+  - **What changed in the output:** Translate's change is behind almost
+    all of it. Every program of `tests/lang` and `tests/perf` compiles to
+    other bytes at -O0 to -O2, since the Basis's typed bindings become a
+    `Val` or `Funs`, and every one runs the same. The bootstrap shrinks
+    from 3,956,112 to 3,951,266 bytes; MLton's 606 files grow 0.15%.
+    ToMid's grounding changes two programs.
+  - **What it costs:** level 0 +0.36% of the bootstrap and +0.22% of
+    HaMLet, from the grounding walk, which always runs. Level 2 +38.2% of
+    HaMLet (M4 +36.6%), +75.4% of the bootstrap.
+  - **A departure:** Translate was not among the files the plan said M5
+    would touch.
+
 ## Found while writing this roadmap
 
 Each finding is answered by a milestone, unless it is said to be outside
