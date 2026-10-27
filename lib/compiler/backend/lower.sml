@@ -347,7 +347,10 @@ struct
      more than one type on purpose, has none; nor has one whose first type
      another gave (setTy), as with its representation. *)
   val lastTys : Ty.ty option array ref IntTable.table ref = ref (IntTable.table 1)
-  val () = CompilerState.cellRoot ("Lower.lastTys", lastTys)
+  (* a ref of a table, as the state's audit has it (tools/compiler): the
+     table copied, its arrays shared, which only the lowering of one program
+     and the check of it after read *)
+  val () = CompilerState.refRoot ("Lower.lastTys", lastTys, IntTable.copy)
   val keepTys = ref false
   val () = CompilerState.cellRoot ("Lower.keepTys", keepTys)
   (* whether the shapes will be checked, which LowShapes sets *)
