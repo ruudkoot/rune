@@ -83,7 +83,10 @@ link's check of the units' interfaces is held to its refusals by S78 of
 the entries checked at its level (S79; [units.md](units.md), *The cache*);
 the check of the stack code's, at level 2, are `stack/@rbccheck-*`, six
 corruptions `RUNE_RBCCHECK_INJECT` makes and one at a link of units, each
-refused with its own message ([ir.md](ir.md), *The stack target*).
+refused with its own message ([ir.md](ir.md), *The stack target*); and
+`AstLint`, the check of the elaborated Core (level 2; [ir.md](ir.md),
+*AstLint*), whose are `compiler/astlint-faults`: the twelve corruptions
+`RUNE_ASTLINT_FAULT` makes of what it reads.
 `RUNE_LINT=1` lints at the boundaries alone, `RUNE_LINT=0` runs only what
 is always on, and `RUNE_LINT=` (empty) what each program runs by itself:
 level 0 in `rune`, 1 in the REPL and the compiler library. One tier lints

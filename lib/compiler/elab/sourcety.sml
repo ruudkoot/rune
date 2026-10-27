@@ -21,16 +21,17 @@ struct
   datatype ty = T of {id : int, node : node}
   and node =
       (* a type variable: its number (Types' id), whether it ranges over
-         equality types, the name an explicit one has in the source, and
-         the classes of an overloaded one *)
-      Var of {tv : int, eq : bool, name : string option, classes : string list}
+         equality types, the name an explicit one has in the source, the
+         classes of an overloaded one, and whether it is generic, bound by
+         the scheme it occurs in (Types.genericLevel) *)
+      Var of {tv : int, eq : bool, name : string option, classes : string list, generic : bool}
       (* a type name, by stamp, applied *)
     | Con of {stamp : int, name : string, args : ty list}
       (* a record, its labels in the order Types sorts them *)
     | Record of (string * ty) list
     | Arrow of ty * ty
       (* a flexible record still open: a generalised one, in a scheme *)
-    | Flex of {tv : int, eq : bool, fields : (string * ty) list}
+    | Flex of {tv : int, eq : bool, generic : bool, fields : (string * ty) list}
 
   fun id (T {id, ...}) = id
   fun node (T {node, ...}) = node
@@ -38,11 +39,11 @@ struct
 
   (* --- hash-consing: one node for each type, by its parts' ids --- *)
   datatype key =
-      KVar of int * bool * string option * string list
+      KVar of int * bool * string option * string list * bool
     | KCon of int * int list
     | KRecord of (string * int) list
     | KArrow of int * int
-    | KFlex of int * bool * (string * int) list
+    | KFlex of int * bool * bool * (string * int) list
 
   (* within 31 bits wherever it is computed, so that no host's int
      overflows (SML/NJ's 32-bit one has 31, MLton's 32) *)
@@ -51,19 +52,19 @@ struct
   fun mixString (h, s) = CharVector.foldl (fn (c, h) => mix (h, Char.ord c)) h s
   fun hash k =
     case k of
-      KVar (tv, eq, _, _) => mix (mix (1, tv), if eq then 1 else 0)
+      KVar (tv, eq, _, _, g) => mix (mix (mix (1, tv), if eq then 1 else 0), if g then 1 else 0)
     | KCon (s, xs) => List.foldl (fn (x, h) => mix (h, x)) (mix (2, s)) xs
     | KRecord fs => List.foldl (fn ((l, x), h) => mix (mixString (h, l), x)) 3 fs
     | KArrow (a, b) => mix (mix (4, a), b)
-    | KFlex (tv, _, fs) => List.foldl (fn ((l, x), h) => mix (mixString (h, l), x)) (mix (5, tv)) fs
+    | KFlex (tv, _, _, fs) => List.foldl (fn ((l, x), h) => mix (mixString (h, l), x)) (mix (5, tv)) fs
 
   fun keyOf (n : node) : key =
     case n of
-      Var {tv, eq, name, classes} => KVar (tv, eq, name, classes)
+      Var {tv, eq, name, classes, generic} => KVar (tv, eq, name, classes, generic)
     | Con {stamp, args, ...} => KCon (stamp, List.map id args)
     | Record fs => KRecord (List.map (fn (l, t) => (l, id t)) fs)
     | Arrow (a, b) => KArrow (id a, id b)
-    | Flex {tv, eq, fields} => KFlex (tv, eq, List.map (fn (l, t) => (l, id t)) fields)
+    | Flex {tv, eq, generic, fields} => KFlex (tv, eq, generic, List.map (fn (l, t) => (l, id t)) fields)
 
   (* the nodes made, by the hash of their keys; the number of the next *)
   val pool : (key * ty) list IntTable.table = IntTable.table 16
@@ -84,10 +85,12 @@ struct
           in made := !made + 1; IntTable.insert (pool, h, (k, t) :: bucket); t end
     end
 
-  fun var (tv, eq, name, classes) = mk (Var {tv = tv, eq = eq, name = name, classes = classes})
+  fun var (tv, eq, name, classes, generic) = mk (Var {tv = tv, eq = eq, name = name, classes = classes, generic = generic})
   fun con (stamp, name, args) = mk (Con {stamp = stamp, name = name, args = args})
   fun record fs = mk (Record fs)
   fun arrow (a, b) = mk (Arrow (a, b))
+  (* a tuple: a record of the labels 1 to n, in Types' order *)
+  fun tuple (ts : ty list) = record (ListPair.zip (List.tabulate (List.length ts, fn i => Int.toString (i + 1)), ts))
 
   (* --- the equality of type names, by stamp --- *)
   (* whether each type name admits equality: what the declaration that
@@ -149,13 +152,16 @@ struct
               if stamp <= markerBase then valOf (Array.sub (!results, markerBase - stamp))
               else let val z = zonk t' in remember (r, z); z end
           | Types.Bound t' => let val z = zonk t' in remember (r, z); z end
-          | Types.Unbound {id = tv, kind, eq, ...} =>
-              (case kind of
-                 Types.KPlain => var (tv, eq, NONE, [])
-               | Types.KRigid n => var (tv, eq, SOME n, [])
-               | Types.KOverload ns => var (tv, eq, NONE, ns)
-               | Types.KFlex (fields, _) =>
-                   mk (Flex {tv = tv, eq = eq, fields = List.map (fn (l, a) => (l, zonk a)) fields})))
+          | Types.Unbound {id = tv, kind, eq, level} =>
+              let val generic = level = Types.genericLevel
+              in
+                case kind of
+                  Types.KPlain => var (tv, eq, NONE, [], generic)
+                | Types.KRigid n => var (tv, eq, SOME n, [], generic)
+                | Types.KOverload ns => var (tv, eq, NONE, ns, generic)
+                | Types.KFlex (fields, _) =>
+                    mk (Flex {tv = tv, eq = eq, generic = generic, fields = List.map (fn (l, a) => (l, zonk a)) fields})
+              end)
      | Types.TCon (c, args) =>
          ((case IntTable.find (equality, #stamp c) of
              NONE => IntTable.insert (equality, #stamp c, #eq c)

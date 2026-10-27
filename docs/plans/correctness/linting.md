@@ -86,25 +86,26 @@ What it rests on:
 | M2 | Lints that cost less, with the same rules | P | done (2026-10-26) |
 | M3 | Levels | P | done (2026-10-26) |
 | M4 | The missing rules of LambdaLint and MidLint, a negative test for every rule | I | done (2026-10-26); a `Select` past its tuple's fields is M6's (shapes) |
-| M5 | Mid is System F | I | not started |
+| M5 | Mid is System F | I | done (2026-10-26) |
 | M6 | Shapes and layouts in LowLint | I | not started |
 | M7 | The instruction sets described for checking | B | done (2026-10-26) |
 | M8 | A verifier of the register code | B | done (2026-10-26); its level comes with M3 |
 | M9 | Units and the link | B | done (2026-10-26) |
 | M10 | The stack code's check, in the compiler | B | done (2026-10-26) |
 | M11 | Node ids, witnesses and `SourceTy` | A | done (2026-10-26) |
-| M12 | AstLint of the Core | A | not started |
-| G1 | How AstLint goes on (the owner's) | A | |
+| M12 | AstLint of the Core | A | done (2026-10-26); at level 2, and G1 is next |
+| G1 | How AstLint goes on (the owner's) | A | decided (2026-10-26): M13 in two steps; AstLint stays at level 2 |
 | M13 | AstLint of the module language | A | not started |
 | M14 | The editor's types | A | not started |
 | M15 | Overloading's context and free type variables, as options | A | done (2026-10-26) |
 | M16 | Retire | | not started |
 
 The owner took every recommendation, D1 to D19, on 2026-10-26
-(*Decisions*). Two calls stay the owner's:
-- gate G1, after M12;
-- the move of `--overloading`'s default, once M15 has counted what it
-  breaks (D18).
+(*Decisions*). The two calls left to the owner are made:
+- **gate G1** (2026-10-26): the module language is checked, in M13's two
+  steps, and AstLint stays at level 2 for now;
+- **the move of `--overloading`'s default** (D18): moved to
+  `declaration`, with HOL4's build passing `--overloading=toplevel`.
 
 The tracks do not wait for each other, after M1:
 - **P, placement and cost,** puts lint where it does not run and makes it
@@ -418,6 +419,103 @@ passes on its exact commit.
     descriptions, which the compiler now uses; `fault.sml` adds 19.5M.
   - **A departure:** the fault hook is in `backend/fault.sml`, called from
     the pipeline, not in `util/pass.sml`, which knows no IR.
+
+- **M12** (`1a3cab697`, merged `9265b1ffc`; `make check` 21,696 of
+  21,696).
+  - **AstLint** (`elab/astlint.sml`) runs after `Elaborate.finish`, before
+    Translate and `UnitBasis.undo`, at level 2.
+    - It reads the syntax, M11's witnesses, the slots Translate reads and
+      `Ty.binders`, zonked to `SourceTy`, one top-level declaration at a
+      time.
+    - It builds its own environment and works out every node's type
+      bottom up, by equality of `SourceTy` and one-way matching of
+      schemes. It computes Clos, 4.7's nonexpansive expressions and 4.6's
+      scope itself, and calls neither `Unify`, `SigMatch` nor `Types`.
+    - Each alarm names its rule, as `[15 Clos]`.
+  - **What it checks:**
+    - instances, with equality and overloading classes;
+    - Clos against what each binding generalised, and rule 15's side
+      condition;
+    - 4.9's maximal equality;
+    - the classes of constants;
+    - every slot Translate reads;
+    - each top-level result, and the closure of 87-89;
+    - that a `let`'s names do not escape into its type or its context.
+  - **The module language is axioms** (D5): at level 2 only, the
+    elaborator records each top-level declaration's environment, the
+    results of ascriptions, applications, dynamic modules and exports, and
+    each functor's parameter. At levels 0 and 1 it records nothing.
+  - **Negative tests:** `RUNE_ASTLINT_FAULT=KIND` corrupts what AstLint
+    reads, in 12 ways, each refused with its rule's message
+    (`compiler/astlint-faults`).
+  - **Found:**
+    - no alarm on `tests/lang`, the modes of `--overloading`,
+      `--flex-records` and `--free-tyvars`, the Basis, the compiler,
+      HaMLet, MLton's 606 files, or HOL4 built to `hol.state`;
+    - all 13 elaborator mutants caught (E3's eight and E6's five). Some of
+      them give programs that are silently wrong (equality off prints
+      `false`), which no other check catches;
+    - no bug of the elaborator;
+    - two false alarms of its own, fixed before the commit.
+  - **What it costs,** in instructions: 0.25M of hello, 137M of HaMLet (8%
+    of a level-0 compile), 306M of the bootstrap (17%). MLton's 606 files:
+    8.9 s of 66.9 s.
+  - **Not done:** the REPL and the compiler library do not run AstLint
+    yet, at any level (`docs/ir.md` says so). A declaration past
+    `SourceTy`'s budget of steps is skipped and counted, but the count is
+    shown nowhere; none was seen.
+  - **Agent A's view for G1:**
+    - **M13, in two steps.** First, transparent ascriptions and functor
+      arguments, matched one way against the recorded results, with no new
+      records. Then opaque ascriptions and applications, with M13's records
+      of the fresh names. E3's two mutants of signature matching (E12,
+      E13) and the bugs B15 and B34 are invisible while the module
+      language is axioms.
+    - **Keep AstLint at level 2 for now.** Its cost is like level 1's
+      set, so level 1 is affordable for `rune`, but the REPL and the
+      library need the hook first, and the editor's latency must be
+      measured.
+
+- **M5** (`5fa556034`, `9dda1ba70`; merged `5fad13018`; `make check`
+  21,888 of 21,888).
+  - **Lift** collects only free type variables: not those a `Let`'s scheme
+    binds, nor those an inner function abstracts over. A lifted group
+    also abstracts over the type variables of the lifted functions it
+    calls. E10's program is `tests/lang/dec.fun_lift-inner-poly`.
+  - **ToMid binds or grounds every type variable:**
+    - a `Do`'s globals bind their variables over its whole expression, as
+      a `Val`'s do. This fixes `val (id, constant) = ...` and
+      `val Box id = ...` at top level, which re-generalised a lambda's
+      parameter;
+    - a variable ToMid makes for a step that is a value, and an anonymous
+      `fn`, abstract over the variables no binder around them binds;
+    - a variable still unbound after that becomes `unit` where it stands
+      (`ToMid.ground`), as in `let val [] = nil`.
+  - **Translate** binds a typed pattern as its inner pattern: `val x : ty
+    = e` binds `x` itself, as `val x = e` does, and not a temporary that
+    `x` is then bound to. The temporary was not generalised, so its type
+    named its scheme's variables where nothing bound them. This fixes the
+    alias in a functor body (`mod.functor.functions_expand`) and MLton's
+    `IntSize.memoize`.
+  - **The lints:** MidLint keeps an environment of type variables: a type
+    names only the variables of binders around it, and no binder binds
+    one again in its scope. LambdaLint refuses an instance that does not
+    give a variable an enclosing scope fixes as itself. A new fault,
+    `rebind`, and six cases in `compiler/lint-rules`.
+  - **Found:** E10's breaches are gone. `tests/lang`, `tests/perf`, the
+    benchmarks, the bootstrap, HaMLet and MLton, whole and in units, are
+    clean at level 2.
+  - **What changed in the output:** Translate's change is behind almost
+    all of it. Every program of `tests/lang` and `tests/perf` compiles to
+    other bytes at -O0 to -O2, since the Basis's typed bindings become a
+    `Val` or `Funs`, and every one runs the same. The bootstrap shrinks
+    from 3,956,112 to 3,951,266 bytes; MLton's 606 files grow 0.15%.
+    ToMid's grounding changes two programs.
+  - **What it costs:** level 0 +0.36% of the bootstrap and +0.22% of
+    HaMLet, from the grounding walk, which always runs. Level 2 +38.2% of
+    HaMLet (M4 +36.6%), +75.4% of the bootstrap.
+  - **A departure:** Translate was not among the files the plan said M5
+    would touch.
 
 ## Found while writing this roadmap
 
@@ -4300,9 +4398,21 @@ After M12, the owner decides two things from what AstLint cost and found:
 - whether the module language is checked as M13 plans, or stays axioms;
 - whether AstLint stays at level 2 or moves to 1.
 
+**Decided (2026-10-26):**
+- **The module language is checked, in two steps** (M13). First,
+  transparent ascriptions and functor arguments are matched one way
+  against the results M12 records, with no new records. Then opaque
+  ascriptions and applications, with the records of the fresh names.
+- **AstLint stays at level 2.** Level 1 is reconsidered once the REPL and
+  the compiler library run it, and the editor's latency is measured.
+
 ### M13. AstLint of the module language (A; L, about 1,000; after G1)
 
-* **What:** D5 B's second step (D5 A's records).
+* **What:** D5 B's second step (D5 A's records), in two steps (G1):
+  - **First, without new records:** transparent ascriptions and functor
+    arguments, their schemes matched one way against the results M12
+    records.
+  - **Then, with them:** opaque ascriptions and applications.
   - **The elaborator records** the fresh names the module language chose:
     - the bound names of each signature expression (rule 65's `T`) and the
       representatives of sharing classes (rule 78's `t`);
@@ -4431,10 +4541,9 @@ Not this roadmap's:
 
   The `.rbc` and the image do not change (D9).
 - **What the owner decides:** the owner took D1 to D19 as recommended
-  (2026-10-26). What stays the owner's:
-  - whether the default of `--overloading` moves, once M15 has counted
-    what it breaks;
-  - gate G1, after M12;
+  (2026-10-26), and made the two calls left to it the same day: the
+  default of `--overloading` moves (D18), and gate G1 goes on to M13 in
+  two steps with AstLint at level 2. What stays the owner's:
   - whether the test of `CALL`'s function index (E7b's C-call) lands in
     the VM now or with the VM roadmap (D8).
 

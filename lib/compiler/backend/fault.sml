@@ -12,7 +12,7 @@
      Lambda: scope twice jump jump-out con select const-type const-kind
              const-range mkexn prim-name cast functor-cast dynamic-cast
              open-cast inst fail letrec global
-     Mid:    scope twice jump jump-out type poly tyargs select con mkexn
+     Mid:    scope twice jump jump-out type poly rebind tyargs select con mkexn
              mkexn-copy prim-name const-kind const-range do-drop do-unset
              nary cast functor-cast dynamic-cast open-cast
      Low:    twice undef jump nojump pop push callk closure env rep select
@@ -150,46 +150,10 @@ struct
           let
             val (hit, did) = counter n
             val firstLet = ref ~1
+            (* rebind: the type variables of the functions around, one of
+               which a Let inside is made to bind again *)
+            val around : int list ref = ref []
             fun stampOf c = case c of M.Var (y, _) => y | M.Global (g, _) => g | _ => ~1
-            (* poly: the binders some use gives types, whose losing their
-               variables a use shows (the rule that no type variable is
-               free, which would see it anywhere, is M5's) *)
-            val instantiated : unit IntTable.table = IntTable.table 64
-            fun noteAtom a =
-              case a of
-                M.Var (x, _ :: _) => IntTable.insert (instantiated, x, ())
-              | M.Global (x, _ :: _) => IntTable.insert (instantiated, x, ())
-              | _ => ()
-            fun noteRhs r =
-              case r of
-                M.Atom a => noteAtom a
-              | M.App (f, xs) => List.app noteAtom (f :: xs)
-              | M.Prim (_, _, xs) => List.app noteAtom xs
-              | M.Tuple xs => List.app noteAtom xs
-              | M.Select (_, a) => noteAtom a
-              | M.Con (_, _, a) => noteAtom a
-              | M.Decon (_, _, a) => noteAtom a
-              | M.ConTag a => noteAtom a
-              | M.MkExn (c, a) => (noteAtom c; noteAtom a)
-              | M.ExnCon a => noteAtom a
-              | M.ExnArg (_, a) => noteAtom a
-              | M.SetGlobal (_, a) => noteAtom a
-              | _ => ()
-            fun noteExp e =
-              case e of
-                M.Let (_, _, r, b) => (noteRhs r; noteExp b)
-              | M.Fun (fs, b) => (List.app (fn f => noteExp (#body f)) fs; noteExp b)
-              | M.Join (_, _, b, sc) => (noteExp b; noteExp sc)
-              | M.Jump (_, xs) => List.app noteAtom xs
-              | M.If (c, t, f) => (noteAtom c; noteExp t; noteExp f)
-              | M.Handle (a, _, h) => (noteExp a; noteExp h)
-              | M.Raise a => noteAtom a
-              | M.Return r => noteRhs r
-              | M.Mark (_, a) => noteExp a
-            val () =
-              if kind <> "poly" then ()
-              else List.app (fn M.Val (_, _, e) => noteExp e | M.Funs fs => List.app (fn f => noteExp (#body f)) fs | M.Do (_, e) => noteExp e) p
-            fun used x = isSome (IntTable.find (instantiated, x))
             fun atom a =
               case a of
                 M.Var (x, args) =>
@@ -238,12 +202,15 @@ struct
             fun exp e =
               case e of
                 M.Let (x, s as (tvs, t), r, b) =>
-                  if kind = "twice" andalso !firstLet < 0 then (firstLet := x; M.Let (x, s, rhs r, exp b))
+                  if kind = "rebind" andalso null tvs andalso not (null (!around))
+                     andalso hit ("v" ^ Int.toString x ^ "'s scheme made to bind 'a" ^ Int.toString (hd (!around)) ^ " again")
+                  then M.Let (x, ([hd (!around)], t), r, b)
+                  else if kind = "twice" andalso !firstLet < 0 then (firstLet := x; M.Let (x, s, rhs r, exp b))
                   else if kind = "twice" andalso hit ("v" ^ Int.toString x ^ " made v" ^ Int.toString (!firstLet))
                   then M.Let (!firstLet, s, r, b)
                   else if kind = "type" andalso null tvs andalso Ty.equal (t, Ty.int) andalso hit ("v" ^ Int.toString x ^ " of int given type string")
                   then M.Let (x, (tvs, Ty.string), r, b)
-                  else if kind = "poly" andalso not (null tvs) andalso used x andalso hit ("v" ^ Int.toString x ^ "'s scheme made to bind no type variable")
+                  else if kind = "poly" andalso not (null tvs) andalso hit ("v" ^ Int.toString x ^ "'s scheme made to bind no type variable")
                   then M.Let (x, ([], t), r, exp b)
                   else M.Let (x, s, rhs r, exp b)
               | M.Fun (fs, b) => M.Fun (List.map fundef fs, exp b)
@@ -258,11 +225,17 @@ struct
               | M.Return r => M.Return (rhs r)
               | M.Mark (pos, a) => M.Mark (pos, exp a)
             and fundef (f : M.fundef) =
-              {name = #name f,
-               tyvars = if kind = "poly" andalso not (null (#tyvars f)) andalso used (#name f)
-                           andalso hit ("function v" ^ Int.toString (#name f) ^ " made to bind no type variable")
-                        then [] else #tyvars f,
-               params = #params f, result = #result f, body = exp (#body f)}
+              let
+                val tyvars = if kind = "poly" andalso not (null (#tyvars f))
+                                andalso hit ("function v" ^ Int.toString (#name f) ^ " made to bind no type variable")
+                             then [] else #tyvars f
+                val saved = !around
+                val () = around := tyvars @ saved
+                val body = exp (#body f)
+              in
+                around := saved;
+                {name = #name f, tyvars = tyvars, params = #params f, result = #result f, body = body}
+              end
             (* a Do's expression with its first SetGlobal made unit *)
             fun unsetIt g = hit ("g" ^ Int.toString g ^ " no longer set by its Do")
             fun unset e =

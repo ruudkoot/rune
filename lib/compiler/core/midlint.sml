@@ -10,7 +10,12 @@
      -- a function's result, the join point's, the global's -- and every
      step's type is found from its atoms; a use of a variable gives a type
      for each variable its binder abstracts over, and has the type its
-     scheme has at them.
+     scheme has at them;
+   * type variables in scope (Mid is System F: the linting roadmap's D17,
+     M5): a type names only the variables of the binders around it -- a
+     Let's scheme over its type and step, a function's over its
+     parameters, result and body, a global's over its definition -- and no
+     binder binds one again where it is in scope.
    * calls: a function of other than one parameter (a worker, M8) is only
      called, with an argument for each, and never used as a value.
    * constants, primitives, exceptions' payloads and the casts the
@@ -65,6 +70,23 @@ struct
         case IntTable.find (bound, x) of
           SOME () => bug ("variable v" ^ Int.toString x ^ " is bound twice")
         | NONE => IntTable.insert (bound, x, ())
+      (* the type variables in scope (Mid is System F: the linting roadmap's
+         D17, M5): a binder's own -- a Let's scheme over its type and its
+         step, a function's over its parameters, result and body, a
+         global's over its definition -- and an enclosing one's. A type
+         names only those, and no binder binds one again. *)
+      val tyScope : unit IntTable.table = IntTable.table 64
+      fun bindTvs (what : unit -> string, tvs) =
+        List.app (fn a => case IntTable.find (tyScope, a) of
+                            SOME () => bug (what () ^ " binds 'a" ^ Int.toString a ^ " again, where it is in scope")
+                          | NONE => IntTable.insert (tyScope, a, ())) tvs
+      fun leaveTvs tvs = List.app (fn a => IntTable.removeRange (tyScope, a, a + 1)) tvs
+      fun scoped (what : unit -> string, t : Ty.ty) =
+        case Ty.gens t of
+          [] => ()
+        | gs => List.app (fn a => if isSome (IntTable.find (tyScope, a)) then ()
+                                  else bug (what () ^ " names 'a" ^ Int.toString a ^ ", which no binder around it binds: "
+                                            ^ Ty.toString t)) gs
       fun expect (what : unit -> string, t, want) =
         if Ty.equal (t, want) then ()
         else bug (what () ^ " has type " ^ Ty.toString t ^ " where " ^ Ty.toString want ^ " is wanted")
@@ -157,11 +179,13 @@ struct
       and callee (a : atom) : Ty.ty =
         case a of
           Var (x, args) =>
-            (case IntTable.find (scope, x) of
+            (List.app (fn t => scoped (fn () => "a use of v" ^ Int.toString x, t)) args;
+             case IntTable.find (scope, x) of
                SOME s => instance (fn () => "v" ^ Int.toString x, s, args)
              | NONE => bug ("variable v" ^ Int.toString x ^ " is not in scope"))
         | Global (g, args) =>
-            (case IntTable.find (globals, g) of
+            (List.app (fn t => scoped (fn () => "a use of g" ^ Int.toString g, t)) args;
+             case IntTable.find (globals, g) of
                SOME s => instance (fn () => "g" ^ Int.toString g, s, args)
              | NONE =>
                  case outer g of
@@ -169,7 +193,8 @@ struct
                  | NONE => bug ("global g" ^ Int.toString g ^ " is not defined"))
         | Const (c, t) => (Option.app bug (IrRules.const (c, t)); t)
         | Con0 (tag, t) =>
-            (case conArg ("a nullary constructor", t, tag) of
+            (scoped (the "a nullary constructor", t);
+             case conArg ("a nullary constructor", t, tag) of
                NONE => t
              | SOME _ => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " is not nullary"))
         | Unit => Ty.unit
@@ -199,7 +224,8 @@ struct
               | _ => wrong ()
             end
         | Prim (p, t, args) =>
-            ((case (p, args) of ("functor_cast", [a]) => castBack (t, a) | _ => ());
+            (scoped (fn () => "primitive " ^ p, t);
+             (case (p, args) of ("functor_cast", [a]) => castBack (t, a) | _ => ());
              (* its description's, and a cast's origin's rule (IrRules.use):
                 a record's slot is unit, a functor_cast to it or from it *)
              Option.app bug (IrRules.use (p, t));
@@ -232,11 +258,13 @@ struct
               | _ => bug ("a field of what has type " ^ Ty.toString t)
             end
         | Con (tag, t, a) =>
-            (case conArg ("a constructor", t, tag) of
+            (scoped (the "a constructor", t);
+             case conArg ("a constructor", t, tag) of
                SOME arg => (expect (the "the argument of a constructor", atom a, arg); t)
              | NONE => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " takes no argument"))
         | Decon (tag, t, a) =>
-            (expect (the "what a deconstruction takes apart", atom a, t);
+            (scoped (the "a deconstruction", t);
+             expect (the "what a deconstruction takes apart", atom a, t);
              case conArg ("a deconstruction", t, tag) of
                SOME arg => arg
              | NONE => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " has no argument"))
@@ -255,7 +283,7 @@ struct
              end;
              Ty.exn)
         | ExnCon a => (expect (the "an exception", atom a, Ty.exn); Ty.exnCon)
-        | ExnArg (t, a) => (expect (the "an exception", atom a, Ty.exn); t)
+        | ExnArg (t, a) => (scoped (the "an exception's payload", t); expect (the "an exception", atom a, Ty.exn); t)
         | SetGlobal (g, a) =>
             (if !inFun > 0 then IntTable.insert (setInFun, g, ()) else ();
              case (IntTable.find (globals, g), if mayOuter then outer g else NONE) of
@@ -267,8 +295,11 @@ struct
          type want *)
       fun exp (labels : Ty.ty list IntMap.map, e : exp, want : Ty.ty) : unit =
         case e of
-          Let (x, s as (_, t), r, b) =>
-            (expect (fn () => "the value of v" ^ Int.toString x, rhs r, t);
+          Let (x, s as (tvs, t), r, b) =>
+            (bindTvs (fn () => "v" ^ Int.toString x, tvs);
+             scoped (fn () => "the type of v" ^ Int.toString x, t);
+             expect (fn () => "the value of v" ^ Int.toString x, rhs r, t);
+             leaveTvs tvs;
              bind x;
              noteCast (x, r);
              enter (x, s); exp (labels, b, want); leave x)
@@ -279,7 +310,7 @@ struct
              List.app (fn f => leave (#name f)) fs)
         | Join (j, params, body, sc) =>
             (bind j;
-             List.app (fn (x, _) => bind x) params;
+             List.app (fn (x, t) => (bind x; scoped (fn () => "the type of v" ^ Int.toString x, t))) params;
              List.app (fn (x, t) => enter (x, ([], t))) params;
              exp (labels, body, want);
              List.app (fn (x, _) => leave x) params;
@@ -298,15 +329,18 @@ struct
         | Return r => expect (the "a result", rhs r, want)
         | Mark (_, a) => exp (labels, a, want)
 
-      and fundef (f as {params, result, body, ...} : fundef) =
+      and fundef (f as {tyvars, params, result, body, ...} : fundef) =
         if null params then bug ("function v" ^ Int.toString (#name f) ^ " has no parameter")
         else
-          (List.app (fn (x, _) => bind x) params;
+          (bindTvs (fn () => "function v" ^ Int.toString (#name f), tyvars);
+           List.app (fn (x, t) => (bind x; scoped (fn () => "the type of v" ^ Int.toString x, t))) params;
+           scoped (fn () => "the result of function v" ^ Int.toString (#name f), result);
            List.app (fn (x, t) => enter (x, ([], t))) params;
            inFun := !inFun + 1;
            exp (IntMap.empty, body, result);
            inFun := !inFun - 1;
-           List.app (fn (x, _) => leave x) params)
+           List.app (fn (x, _) => leave x) params;
+           leaveTvs tyvars)
 
       (* The globals set on every way through e that returns, NONE where
          none returns (a raise): a Do sets each it lists on every way that
@@ -343,14 +377,30 @@ struct
       val dos : ((var * scheme) list * unit IntMap.map) list ref = ref []
       fun def d =
         case d of
-          Val (g, (_, t), e) => (bind g; exp (IntMap.empty, e, t); Option.app (fn r => noteCast (g, r)) (valueOf e))
+          Val (g, (tvs, t), e) =>
+            (bind g;
+             bindTvs (fn () => "g" ^ Int.toString g, tvs);
+             scoped (fn () => "the type of g" ^ Int.toString g, t);
+             exp (IntMap.empty, e, t);
+             leaveTvs tvs;
+             Option.app (fn r => noteCast (g, r)) (valueOf e))
         | Funs fs => List.app (fn f => (bind (#name f); fundef f)) fs
         | Do (gs, e) =>
-            (List.app (fn (g, _) => bind g) gs;
+            let
+              (* the type variables of the globals' schemes, each once: one
+                 declaration may give two globals its variables *)
+              val tvs = List.foldl (fn ((_, (vs, _)), acc) => List.foldl (fn (a, acc) => if List.exists (fn b => b = a) acc then acc else a :: acc) acc vs)
+                                   [] gs
+            in
+             List.app (fn (g, _) => bind g) gs;
+             bindTvs (fn () => "a Do", tvs);
+             List.app (fn (g, (_, t)) => scoped (fn () => "the type of g" ^ Int.toString g, t)) gs;
              exp (IntMap.empty, e, Ty.unit);
+             leaveTvs tvs;
              case sets (IntMap.empty, e) of
                NONE => ()
-             | SOME set => dos := (gs, set) :: !dos)
+             | SOME set => dos := (gs, set) :: !dos
+            end
       fun unset (gs, set) =
         case List.find (fn (g, _) => not (IntMap.member (set, g) orelse isSome (IntTable.find (setInFun, g)) orelse setter g)) gs of
           SOME (g, _) => bug ("a Do lists g" ^ Int.toString g ^ ", which a way of it that returns does not set")

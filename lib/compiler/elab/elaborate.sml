@@ -11,6 +11,27 @@ struct
   val allowPrim = ref false
   val () = CompilerState.cellRoot ("Elaborate.allowPrim", allowPrim)
 
+  (* What AstLint reads beside the witnesses (elab/astlint.sml; the linting
+     roadmap's D5 B: the module language as axioms), kept only where it
+     will run (lintRecords, which the driver sets at --lint=2 and above):
+     each declaration at top level that elaborated, with the environment it
+     was elaborated in and what it added; and by node id, the environment
+     an ascription, a functor's application, a dynamic module or an export
+     gave, and by a functor binding's id its parameter's, as its body sees
+     it. forgetLintRecords drops them once AstLint has read them. *)
+  val lintRecords = ref false
+  val () = CompilerState.cellRoot ("Elaborate.lintRecords", lintRecords)
+  val tops : {dec : dec, env : env, delta : env} list ref = ref []
+  val () = CompilerState.cellRoot ("Elaborate.tops", tops)
+  val moduleResults : env IntTable.table = IntTable.table 64
+  val () = CompilerState.tableRoot ("Elaborate.moduleResults", moduleResults)
+  val functorParams : env IntTable.table = IntTable.table 16
+  val () = CompilerState.tableRoot ("Elaborate.functorParams", functorParams)
+  fun noteModule (table, id : int, e : env) : env =
+    (if !lintRecords andalso id >= 0 then IntTable.insert (table, id, e) else (); e)
+  fun forgetLintRecords () =
+    (tops := []; IntTable.removeRange (moduleResults, 0, !Ast.nextId); IntTable.removeRange (functorParams, 0, !Ast.nextId))
+
   (* Signatures and functors are components of the basis, not of
      environments (Section 5.1); both are declared at top level only. *)
   val sigs : SigMatch.sigma StringMap.map ref = ref StringMap.empty
@@ -1853,6 +1874,10 @@ struct
           val absTys = Env {origins=Env.origins delta1,vals = StringMap.empty,
                             tys = StringMap.map (fn TyStr {fcn, ...} => TyStr {fcn = realizeFcn (phi, fcn), cons = []}) (tys delta1),
                             strs = StringMap.empty}
+          (* what a name admits by its stamp, for whatever reads the
+             types after the abstype (SourceTy.admitsEq): no equality,
+             Rune's reading of rule 19's Abs, the same names outside *)
+          val () = IntMap.appi (fn (stamp, _) => SourceTy.setEquality (stamp, false)) phi
         in plus (absTys, realizeEnv (phi, delta2)) end
     | DException (exbinds, _, _) =>
         List.foldl (fn (eb, delta) =>
@@ -1988,6 +2013,7 @@ struct
                                                          andalso not (IntMap.member (!Ty.datatypes, #stamp c)), #env sigma)
                       else []
               val pEnv = if code then localParam (#env sigma) else #env sigma
+              val _ = noteModule (functorParams, #id b, pEnv)
               val bodyEnv = case #param b of
                               SOME x => bindStrAt (env, x, pEnv, #span b)
                             | NONE => plus (env, pEnv)
@@ -2089,12 +2115,12 @@ struct
         ((Env.noteUse (env,"s",(path,sname),sp);case findStr (env, path @ [sname]) of
            SOME e => e
          | NONE => err (sp, "unbound structure: " ^ longidToString (path, sname))))
-    | StrAscribe (se, sigexp, opaque, sp, _) =>
+    | StrAscribe (se, sigexp, opaque, sp, n) =>
         let
           val e = elabStrexp (env, level, top, scope, se)
           val sigma = elabSigexp (env, sigexp)
-        in ElabStats.during ElabStats.Match (fn () => SigMatch.ascribe (sigma, e, opaque, sp)) end
-    | StrApp (funid, arg, sp, _) =>
+        in noteModule (moduleResults, n, ElabStats.during ElabStats.Match (fn () => SigMatch.ascribe (sigma, e, opaque, sp))) end
+    | StrApp (funid, arg, sp, n) =>
         (Usage.use ("fun", funid);
          case StringMap.find (!funs, funid) of
            NONE => err (sp, "unbound functor: " ^ funid)
@@ -2156,12 +2182,12 @@ struct
                  in freshExceptions (realizeEnv (phi, result)) end
              in
                (* --pass-stats=elab: the match and the call are the application's *)
-               ElabStats.application (!makesCode) (if !makesCode then call else typed)
+               noteModule (moduleResults, n, ElabStats.application (!makesCode) (if !makesCode then call else typed))
              end)
     | StrLet (decs, body, _, _) =>
         let val delta = elabDecs (env, level, top, scope, decs)
         in elabStrexp (plus (env, delta), level, top, scope, body) end
-    | StrDynamic (from, sigexp, slot, sp, _) =>
+    | StrDynamic (from, sigexp, slot, sp, n) =>
         (* a structure the program loads when it runs (D18): an instance
            of the signature with nothing behind it -- fresh abstract types,
            as an opaque ascription gives -- and a fresh global per value
@@ -2220,9 +2246,9 @@ struct
           val reloadable = List.all (fn (_, c') => List.exists (fn s => s = #stamp c') specified) fresh
         in
           slot := SOME {fingerprint = !sigFingerprint sigma, slots = slots, via = via, temp = temp, reloadable = reloadable};
-          e
+          noteModule (moduleResults, n, e)
         end
-    | StrExport (_, sigexp, body, slot, sp, _) =>
+    | StrExport (_, sigexp, body, slot, sp, n) =>
         (* a dynamic module's implementation (D17): its body elaborated,
            its datatypes numbered by their constructors' names as the
            signature's are, ascribed to the signature opaquely, and its
@@ -2245,7 +2271,7 @@ struct
                        List.map (fn (_, e) => collect e) (StringMap.listItemsi strs))
         in
           slot := SOME {fingerprint = !sigFingerprint sigma, slots = collect ascribed, via = via, temp = 0, reloadable = false};
-          ascribed
+          noteModule (moduleResults, n, ascribed)
         end
 
   (* ------------------------------------------------------------------ *)
@@ -2434,7 +2460,8 @@ struct
                       val () = forgetRecords ()
                       val () = Types.startWork (spanOfDec d)
                       val () = Unify.flexHook := (fn r => pendingFlex := (r, spanOfDec d) :: !pendingFlex)
-                      val delta = elabDec (!env, 0, true, ref StringMap.empty, d)
+                      val prior = !env
+                      val delta = elabDec (prior, 0, true, ref StringMap.empty, d)
                       val ends = Parser.endsTopdec (spanOfDec d)
                       (* the modes that settle flexible records where a
                          top-level declaration ends *)
@@ -2456,6 +2483,7 @@ struct
                        else ();
                        if !ElabStats.on then stats d else ();
                        Witness.elaborated (idOfDec d, spanOfDec d, true);
+                       if !lintRecords then tops := {dec = d, env = prior, delta = delta} :: !tops else ();
                        Types.stopWork () end
                 in
                   case saved of

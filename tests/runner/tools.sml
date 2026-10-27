@@ -768,6 +768,34 @@ struct
       | _ => check ("pass-stats: the last line is the total", false)
     end
 
+  (* ---- tests/compiler: AstLint's rules, each refused where the datum it
+     checks is corrupted (RUNE_ASTLINT_FAULT, the linting roadmap's M12):
+     tests/compiler/astlint-faults.sml compiles at --lint=2, and with each
+     fault stops with its rule's message *)
+  val astlintFaults =
+    [("instance", "[41 instance] constructor B at"), ("wildcard", "[41 instance] constructor B's argument"),
+     ("raise", "[13 match] a clause of g"), ("nil", "[35 instance] [] at"), ("constant", "[E constant]"),
+     ("select", "[38 record] #1 of"), ("flex", "[38 record] a flexible record left open"),
+     ("binder", "[13 match] a clause of f: exn expected"), ("scope", "[4.6 scope]"), ("generalise", "[15 Clos]"),
+     ("equality", "[4.9 equality] datatype t"), ("result", "[result] f: its scheme")]
+  fun astlintFaultTests () =
+    let
+      val dir = run ^ "/compiler/astlint"
+      val () = (rmTree dir; mkdirs dir)
+      fun f x = dir ^ "/" ^ x
+      fun compile fault =
+        exec {cmd = ["/bin/sh", "-c", "RUNE_LINT=2 RUNE_ASTLINT_FAULT=" ^ fault
+                                     ^ " exec bin/rune --no-prelude --typecheck-only tests/compiler/astlint-faults.sml"],
+              dir = NONE, stdin = "", stdout = f (fault ^ ".err"), stderr = f (fault ^ ".err"), timeout = 300}
+    in
+      if compile "" = 0 then () else fail ("astlint-faults: the program is refused: " ^ firstLine (f ".err"));
+      List.app (fn (fault, msg) =>
+                  if compile fault = 0 then fail ("astlint-faults: " ^ fault ^ ": compiled")
+                  else if contains (f (fault ^ ".err"), "lint after astlint") andalso contains (f (fault ^ ".err"), msg) then ()
+                  else fail ("astlint-faults: " ^ fault ^ ": not refused with " ^ msg ^ ": " ^ firstLine (f (fault ^ ".err"))))
+               astlintFaults
+    end
+
   (* ---- tests/compiler: the rules of a check that no program the compiler
      makes breaks, each refused on IR made by hand (lint-tests.build) *)
   fun lintRules () =
@@ -786,7 +814,7 @@ struct
           val ls = lines (read (f "out"))
         in
           List.app (fn l => if String.isPrefix "FAIL " l then say (l ^ "\n") else ()) ls;
-          if code = 0 andalso List.length (List.filter (String.isPrefix "PASS ") ls) >= 169 then ()
+          if code = 0 andalso List.length (List.filter (String.isPrefix "PASS ") ls) >= 175 then ()
           else fail ("compiler.lint-rules: exit " ^ Int.toString code ^ ", " ^ Int.toString (List.length ls) ^ " lines: "
                      ^ firstLine (f "err"))
         end
@@ -812,6 +840,9 @@ struct
       val word = "which is no instance of its description"
       val range = "out of the range of int"
       val unset = "which a way of it that returns does not set"
+      (* a type variable no binder binds (Mid is System F: M5) *)
+      val poly = ("poly", "which no binder around it binds")
+      val rebind = ("rebind", "again, where it is in scope")
     in
       at ("translate", "faults")
         [("scope", notInScope), ("twice", "is bound twice"), ("jump", "arguments"),
@@ -825,7 +856,7 @@ struct
       @ at ("mid", "faults")
           [("scope", notInScope), ("twice", "is bound twice"), ("jump", "arguments"),
            ("jump-out", "join point j999999937 is not in scope"), ("type", "where string is wanted"),
-           ("poly", "abstracts over 0 variables"), ("tyargs", "abstracts over"), ("select", "of a tuple of"),
+           poly, rebind, ("tyargs", "abstracts over"), ("select", "of a tuple of"),
            ("con", "has no constructor"), ("mkexn", payload), ("prim-name", word), ("const-kind", "a constant 0w"),
            ("const-range", range), ("do-drop", "is not defined"), ("do-unset", unset),
            ("functor-cast", "neither unit"), ("open-cast", "neither unit nor flat")]
@@ -837,15 +868,15 @@ struct
            ("do-unset", "a right-hand side of another kind"), ("functor-cast", "renamed two ways")]
       @ at ("expand", "faults")
           [("scope", notInScope), ("mkexn-copy", payload), ("functor-cast", "neither unit"),
-           ("open-cast", "neither unit nor flat"), ("poly", "abstracts over 0 variables"), ("do-unset", unset)]
+           ("open-cast", "neither unit nor flat"), poly, ("do-unset", unset)]
       @ at ("expand", "dynamic") [("dynamic-cast", "a dynamic_cast from string to int, neither unit")]
-      @ at ("shake", "faults") [("scope", notInScope), ("poly", "abstracts over 0 variables")]
+      @ at ("shake", "faults") [("scope", notInScope), poly]
       @ at ("lift", "faults") [("scope", notInScope), ("mkexn-copy", payload), ("nary", "used as a value")]
       @ at ("workers", "faults") [("nary", "used as a value"), ("tyargs", "abstracts over")]
       @ at ("simplify", "faults")
           [("scope", notInScope), ("type", "where string is wanted"), ("jump", "arguments"), ("mkexn", payload),
            ("mkexn-copy", payload), ("const-kind", "a constant 0w"), ("const-range", range), ("nary", "used as a value"),
-           ("poly", "abstracts over 0 variables"), ("tyargs", "abstracts over"), ("do-unset", unset),
+           poly, rebind, ("tyargs", "abstracts over"), ("do-unset", unset),
            ("select", "of a tuple of"), ("con", "has no constructor"), ("prim-name", word)]
       @ at ("refs", "faults") [("scope", notInScope), ("type", "where string is wanted")]
       @ at ("lower", "faults")
@@ -1166,6 +1197,7 @@ struct
     | ["compiler", rune] => SOME (fn () => compilerProtection rune)
     | ["compiler-lint-rules"] => SOME lintRules
     | ["fault-one", spec] => SOME (fn () => faultOne spec)
+    | ["compiler-astlint-faults"] => SOME astlintFaultTests
     | ["limits", rune, vm] => SOME (fn () => limits (rune, vm))
     | ["gc-log", rune, vm] => SOME (fn () => gcLog (rune, vm))
     | ["colour-contrast"] => SOME (fn () => contrast false)
@@ -1255,6 +1287,7 @@ struct
          (Test.describe "compiler"
             (tagged ["test"] (job ("stack", ["compiler", "bin/rune-stack"], [], 300, 600))
              :: tagged ["test"] (job ("lint-rules", ["compiler-lint-rules"], [], 800, 900))
+             :: tagged ["test"] (job ("astlint-faults", ["compiler-astlint-faults"], [], 500, 600))
              :: List.map (fn h => Test.requires [h] (tagged ["test-all"] (job (h, ["compiler", "bin/rune-" ^ h], [], 500, 600))))
                          ["mlton", "smlnj-legacy", "smlnj32", "smlnj-dev", "polyml", "mlkit"])),
        tagged ["check", "covers:tests/runtime/*"]
