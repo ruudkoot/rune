@@ -58,6 +58,11 @@ of results in globals (see *Low*).
 | `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same |
 | `--functor-budget=N` | the Mid nodes `expand` may copy for a top-level application and those in its copies (1000000 by default; 0 copies none) |
 
+Without `--pass-stats`, stages do not read clocks, count their results'
+nodes, or update timing totals. A unit's elapsed time is sampled only
+when those statistics are requested. Linting and dumps still run when
+requested, independently of timing.
+
 **What `--pass-stats` shows** is the whole compile: the stages add up to
 the process's processor time from its start, which `tests/compiler` holds
 them to (within 2%, and 15% on SML/NJ's builds, whose processor time counts

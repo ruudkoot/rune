@@ -409,6 +409,14 @@ struct
                                        ^ "ulimit -c 0; exec \"$0\" \"$@\"", fromRoot rune] @ args,
               dir = SOME dir, stdin = "", stdout = f "out", stderr = f "err", timeout = 60}
       fun check (what, ok) = if ok then () else fail ("compiler." ^ what)
+      val () = check ("clock contract: compiled",
+                      r (["--target=registers", fromRoot "tests/compiler/pass-clock-prefix.sml",
+                          fromRoot "lib/compiler/util/pass.sml",
+                          fromRoot "tests/compiler/pass-clock.sml", "-o", "pass-clock.rbc"], NONE) = 0)
+      val () = check ("clock contract: executed",
+                      exec {cmd = [fromRoot "bin/runevm", "pass-clock.rbc"], dir = SOME dir,
+                            stdin = "", stdout = f "clock.out", stderr = f "clock.err", timeout = 60} = 0
+                      andalso read (f "clock.out") = "pass clock contract: ok\n")
       val () = write (f "input.sml", "val _ = print \"42\\n\"\n")
       val () = write (f "second.sml", "val answer = 42\n")
       val input = read (f "input.sml") and second = read (f "second.sml")
