@@ -48,12 +48,15 @@ void x64_label_init(X64Label *l) { l->at = -1; l->refs = NULL; l->tables = NULL;
 void x64_label_free(X64Label *l) { free(l->refs); free(l->tables); l->refs = NULL; l->tables = NULL; l->nrefs = l->refs_cap = 0; }
 int x64_bound(const X64Label *l) { return l->at >= 0; }
 static void patch32(X64 *a, int32_t at, int32_t v) {
+    if (a->failed) return;
+    if (at < 0 || (size_t)at > a->n || a->n - (size_t)at < 4) { a->failed = 1; return; }
     for (int i = 0; i < 4; i++) a->buf[at + i] = (uint8_t)((uint32_t)v >> (8 * i));
 }
 /* A reference is a rel32 at refs[i], relative to the byte after it, or,
    when it is negative (-(at + 1)), an offset written at at relative to the
    table start kept in table[i]. */
 void x64_bind(X64 *a, X64Label *l) {
+    if (a->failed) return;
     l->at = (int32_t)a->n;
     for (int i = 0; i < l->nrefs; i++) {
         if (l->refs[i] >= 0) patch32(a, l->refs[i], l->at - (l->refs[i] + 4));
@@ -62,17 +65,24 @@ void x64_bind(X64 *a, X64Label *l) {
     l->nrefs = 0;
 }
 static int ref_room(X64 *a, X64Label *l) {
+    if (a->failed) return 0;
     if (l->nrefs == l->refs_cap) {
         int cap = l->refs_cap ? l->refs_cap * 2 : 4;
         int32_t *r = realloc(l->refs, (size_t)cap * sizeof *r);
+        if (!r) { a->failed = 1; return 0; }
+        /* Commit each successful realloc before the next can fail: the
+           old address may already be freed even though the pair did not
+           grow together. Cleanup always owns the current allocations. */
+        l->refs = r;
         int32_t *t = realloc(l->tables, (size_t)cap * sizeof *t);
-        if (!r || !t) { free(r == l->refs ? NULL : r); a->failed = 1; return 0; }
-        l->refs = r; l->tables = t;
+        if (!t) { a->failed = 1; return 0; }
+        l->tables = t;
         l->refs_cap = cap;
     }
     return 1;
 }
 void x64_offset32_at(X64 *a, size_t at, size_t table_at, X64Label *l) {
+    if (a->failed) return;
     if (l->at >= 0) { patch32(a, (int32_t)at, l->at - (int32_t)table_at); return; }
     if (!ref_room(a, l)) return;
     l->refs[l->nrefs] = -((int32_t)at + 1);
@@ -82,6 +92,7 @@ void x64_offset32_at(X64 *a, size_t at, size_t table_at, X64Label *l) {
 /* a rel32 to l, patched now or when l is bound */
 static int ref_room(X64 *a, X64Label *l);
 static void rel32(X64 *a, X64Label *l) {
+    if (a->failed) return;
     if (l->at >= 0) { x64_u32(a, (uint32_t)(l->at - ((int32_t)a->n + 4))); return; }
     if (!ref_room(a, l)) return;
     l->refs[l->nrefs] = (int32_t)a->n;

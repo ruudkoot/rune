@@ -212,7 +212,7 @@ void as_stub_leave(Asm *a, int win) {
    register by the convention) */
 size_t as_trampoline(Asm *a, int win, uint64_t addr) {
     (void)win;
-    while (a->n % 16) a64_brk(a);
+    while (!a->failed && a->n % 16) a64_brk(a);
     size_t at = a->n;
     a64_mov_rr(a, X0, R_VM);
     a64_ldr_lit(a, X16, 12);   /* the address at 16 */
