@@ -383,7 +383,9 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   two compiles at once never see half of one. One that cannot be read, or
   does not hold what its hash says, is no entry, and the unit is compiled
   and the entry written again. A cache that cannot be written is one that
-  is not there. Nothing in a key is a time.
+  is not there. Nothing in a key is a time. Temporary publication names
+  come from an OS reservation held until the write finishes, as for
+  bytecode output; generating them does not format clocks or process ids.
 
 **Fingerprints** (GHC's rule; the incremental roadmap's M6, the third
 part). A usage keeps, beside the unit that bound the name, the

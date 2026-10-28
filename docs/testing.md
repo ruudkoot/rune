@@ -404,6 +404,29 @@ test program (`building.md`, *Bootstrapping*). This rests on the compiler
 being deterministic: ordered maps, counter-generated stamps, reals passed
 through as text.
 
+`reproducible/counts` also repeats a small whole compile and a compile in
+units without a cache, with a cold cache, and with a warm cache. Within
+each case, bytecode and VM instruction/allocation counts must agree.
+Sources, options, environment, and initial filesystem state are held
+fixed: in particular the output exists before each run, so the checks
+against overwriting an input perform the same work. Different cache
+states and filesystem errors need different work and are separate cases.
+Normal stages do not sample clocks or accumulate timing totals;
+`--pass-stats` explicitly requests that measurement. Temporary names are
+reserved by the OS and never enter emitted bytecode or cache keys.
+
+For controlled variation, `bin/rune-test compiler-stress --seed 1 --runs 16`
+uses a fixed pseudo-random sequence to vary the VM's nursery size and JIT
+thresholds while it runs the compiler on the same source. Every eighth
+case also verifies the heap. Each result must match the ordinary run's
+bytecode and VM instruction/allocation counts. The commands and errors
+are kept under the test output directory in `compiler-stress-SEED` for
+replay with `sh case-N.command`; each command restores the working
+directory, output-file state, and the runner's lint and arithmetic-backend
+settings. Other inherited environment settings must remain the same.
+The seed changes testing conditions only; normal compilation
+does not choose random settings.
+
 The example inventory covers top-level sources and sources one directory
 below `examples`. `tests/runner/exampleprojects.sml` distinguishes standalone
 programs from `.build` applications and their shared fragments. Example job

@@ -13,6 +13,7 @@ enum { SCRATCH = X16 };   /* the encoder's own: IP0, which no code of the JIT ke
 void a64_init(A64 *a) { memset(a, 0, sizeof *a); }
 void a64_free(A64 *a) { free(a->buf); memset(a, 0, sizeof *a); }
 int a64_room(A64 *a, size_t more) {
+    if (a->failed) return 0;
     if (a->n + more <= a->cap) return 1;
     size_t cap = a->cap ? a->cap * 2 : 1024;
     while (cap < a->n + more) cap *= 2;
@@ -33,6 +34,8 @@ int a64_bound(const A64Label *l) { return l->at >= 0; }
 
 /* a reference to l at `at`, resolved now or when l is bound */
 static void patch(A64 *a, size_t at, int kind, size_t table, int64_t target) {
+    if (a->failed) return;
+    if (at > a->n || a->n - at < 4) { a->failed = 1; return; }
     uint8_t *p = a->buf + at;
     int64_t rel = target - (int64_t)at;
     switch (kind) {
@@ -54,6 +57,7 @@ static void patch(A64 *a, size_t at, int kind, size_t table, int64_t target) {
     }
 }
 static void refer(A64 *a, A64Label *l, size_t at, int kind, size_t table) {
+    if (a->failed) return;
     if (l->at >= 0) { patch(a, at, kind, table, l->at); return; }
     if (l->nfix == l->cap) {
         int cap = l->cap ? l->cap * 2 : 4;
@@ -65,6 +69,7 @@ static void refer(A64 *a, A64Label *l, size_t at, int kind, size_t table) {
     l->nfix++;
 }
 void a64_bind(A64 *a, A64Label *l) {
+    if (a->failed) return;
     l->at = (int64_t)a->n;
     for (int i = 0; i < l->nfix; i++) patch(a, l->fix[i].at, l->fix[i].kind, l->fix[i].table, l->at);
     l->nfix = 0;

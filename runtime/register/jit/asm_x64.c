@@ -200,7 +200,7 @@ int as_arg(int win, int i) {
    on through the address beside it, C returning to the caller; on
    Windows it makes the space and the call itself. */
 size_t as_trampoline(Asm *a, int win, uint64_t addr) {
-    while (a->n % 16) x64_byte(a, 0xCC);
+    while (!a->failed && a->n % 16) x64_byte(a, 0xCC);
     size_t at = a->n;
     x64_mov_rr(a, as_arg(win, 0), R_VM);                        /* 3 bytes */
     if (!win) {
@@ -211,7 +211,7 @@ size_t as_trampoline(Asm *a, int win, uint64_t addr) {
         x64_byte(a, 0xFF); x64_byte(a, 0x15); x64_u32(a, 11);  /* call [rip + 11]: from 13, the address at 24 */
         x64_add_ri(a, RSP, 40);
         x64_ret(a);
-        while (a->n - at < 24) x64_byte(a, 0xCC);
+        while (!a->failed && a->n - at < 24) x64_byte(a, 0xCC);
         x64_u64(a, addr);
     }
     return at;

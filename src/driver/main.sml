@@ -660,7 +660,7 @@ struct
       (* --pass-stats: what each unit took, start to end *)
       and timedUnit (src as (name, _, _, _, _), acc, quiet) =
         let
-          val t0 = Time.now ()
+          val t0 = if !Pass.stats then Time.now () else Time.zeroTime
           val (acc, compiledIt) = unitHere (src, acc, quiet)
           val () = if !Pass.stats
                    then TextIO.output (TextIO.stdErr, "unit " ^ name ^ " took "

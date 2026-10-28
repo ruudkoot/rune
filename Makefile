@@ -1291,7 +1291,7 @@ RUNE_TEST = GC_STRESS=$(GC_STRESS) $(if $(filter command line environment,$(orig
             NATIVE_HOST=$(NATIVE_HOST) MAKE='$(CHECK_MAKE)' \
             bin/rune-test run $(if $(filter command line environment,$(origin JOBS)),-j $(JOBS))
 LOW_LEVEL_BINS := build/heap_test build/heap_test-gcbits build/heap_test-cards \
-                  build/register/x64_test build/register/a64_test build/register/masm_test build/register/divconst_test
+                  build/register/x64_test build/register/x64_fail_test build/register/a64_test build/register/a64_fail_test build/register/masm_test build/register/divconst_test
 .PHONY: $(LOW_LEVEL_BINS)
 build/heap_test: tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile
 	@mkdir -p build
@@ -1804,6 +1804,12 @@ test-register: bin/runevm $(RUNE) vm bin/rune.stack.rbc bin/rune-test
 build/register/x64_test: tests/register/x64_test.c runtime/register/jit/x64.c runtime/sys/sys_$(SYS).c $(VM_HDRS) Makefile
 	@mkdir -p build/register
 	$(CC) $(CFLAGS) $(RT_INC) -o $@ tests/register/x64_test.c runtime/register/jit/x64.c runtime/sys/sys_$(SYS).c
+build/register/x64_fail_test: tests/register/x64_fail_test.c tests/register/allocation_probe.h tests/register/trampoline_probe.h runtime/register/jit/x64.c runtime/register/jit/x64.h runtime/register/jit/asm_x64.c runtime/register/jit/asm.h Makefile
+	@mkdir -p build/register
+	$(CC) $(CFLAGS) $(RT_INC) -o $@ tests/register/x64_fail_test.c
+build/register/a64_fail_test: tests/register/a64_fail_test.c tests/register/allocation_probe.h tests/register/trampoline_probe.h runtime/register/jit/a64.c runtime/register/jit/a64.h runtime/register/jit/asm_a64.c runtime/register/jit/asm.h Makefile
+	@mkdir -p build/register
+	$(CC) $(CFLAGS) $(RT_INC) -o $@ tests/register/a64_fail_test.c
 build/register/a64_test: tests/register/a64_test.c runtime/register/jit/a64.c $(VM_HDRS) Makefile
 	@mkdir -p build/register
 	$(CC) $(CFLAGS) $(RT_INC) -o $@ tests/register/a64_test.c runtime/register/jit/a64.c

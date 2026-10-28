@@ -345,7 +345,11 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   a move of an immediate that 32 bits hold is the move to the low half,
   a test of bits the low byte has is a test of that byte (a tag's test
   is two to four bytes, not seven), a multiplication by a small
-  constant has it in a byte.
+  constant has it in a byte. Allocation failure stops emission and label
+  patching; each successful reallocation immediately replaces its owned
+  pointer, so cleanup is safe if the next allocation fails. The
+  `x64-allocation-failures` check moves every reallocated buffer and fails
+  each allocation in turn.
 * **`masm.h`, `masm.c`**: the macro-assembler, and the conventions the
   code keeps. `r13` is the VM (`r12` would make every memory operand
   based on it a byte longer), `r14` the frame's registers (the stack plus
@@ -899,8 +903,18 @@ The emitters, the macro-assembler and the compiler are written over the
 holds them to naming no encoder -- and a target is one implementation
 of it over its encoder: x86-64 in `asm_x64.c` over `x64.c`, aarch64 in
 `asm_a64.c` over `a64.c` (each encoder tested against the bytes
-`llvm-mc` gives, `tests/register/x64_test.c` and `a64_test.c`). What the
-implementation gives:
+`llvm-mc` gives, `tests/register/x64_test.c` and `a64_test.c`). Both encoders
+stop emitting, recording references and patching labels after allocation failure,
+and check patch offsets against the emitted buffer. `x64_fail_test.c` and
+`a64_fail_test.c` fail every allocation in a workload with a moving
+allocator, then finish and destroy it; they also fail a table word at the
+buffer's end with forward and already bound labels. The AArch64 encoder
+uses a single array of references, so it has no paired-reallocation
+ownership to keep, but its table patches need the same failure guards.
+Trampoline padding also stops on failure; otherwise its alignment loop,
+or the Windows x86-64 trailing padding loop, can wait forever for a failed
+buffer to grow. Both allocation fixtures cover these paths too.
+What the implementation gives:
 
 * **The registers**, under the portable names: the three the code keeps
   (`R_VM`, `R_BASER`, `R_COUNT`; and `R_BASEI`, the allocation pointer

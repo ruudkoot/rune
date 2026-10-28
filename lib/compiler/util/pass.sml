@@ -95,27 +95,32 @@ struct
              size : 'b -> int}
             (f : 'a -> 'b) (x : 'a) : 'b =
     let
-      fun since t0 = Time.- (used (), t0)
-      val start = used ()
+      (* The ordinary compile never samples a clock or accumulates timing
+         values. Measuring a pass is work requested by --pass-stats. *)
+      val measuring = !stats
+      fun now () = if measuring then used () else Time.zeroTime
+      fun since t0 = if measuring then Time.- (used (), t0) else Time.zeroTime
+      val start = now ()
       val () =
         case showIn of
           SOME s => if asked (dumpBefore, name) then print ("(* before " ^ name ^ " *)\n" ^ s x ^ "\n") else ()
         | NONE => ()
       val dumped = since start
-      val t0 = used ()
-      val () = depth := !depth + 1
-      val y = f x handle e => (depth := !depth - 1; raise e)
-      val () = depth := !depth - 1
+      val t0 = now ()
+      val () = if measuring then depth := !depth + 1 else ()
+      fun leave () = if measuring then depth := !depth - 1 else ()
+      val y = f x handle e => (leave (); raise e)
+      val () = leave ()
       val t = since t0
-      val counted = used ()
-      val () = if !stats then line (name, size y, t) else ()
-      val after = used ()
+      val counted = now ()
+      val () = if measuring then line (name, size y, t) else ()
+      val after = now ()
       val () = if asked (dumpAfter, name) then print ("(* after " ^ name ^ " *)\n" ^ show y ^ "\n") else ()
       val () =
         if linting () then (check y handle Error.Bug msg => raise Error.Bug ("lint after " ^ name ^ ": " ^ msg))
         else ()
       val () =
-        if !depth = 0
+        if measuring andalso !depth = 0
         then (outer := Time.+ (!outer, t);
               sizes := Time.+ (!sizes, Time.- (after, counted));
               checks := Time.+ (!checks, Time.+ (dumped, since after)))
