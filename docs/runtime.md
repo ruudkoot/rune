@@ -848,13 +848,17 @@ primitives `term_size`, `term_resizes`, `term_enter`, `term_leave` and
   on Windows the window (`srWindow`, not the buffer) of
   `GetConsoleScreenBufferInfo`. `term_resizes` counts `SIGWINCH`, from its
   first call; the handler is installed with `SA_RESTART`, so that no other
-  call is cut short, and ends a wait in `poll` all the same. On Windows a
+  call is cut short. The handler also writes a byte to a non-blocking
+  pipe, and `term_read` waits on that pipe with the terminal, so a signal
+  that arrived while the program was not in `poll`, between looking at
+  the count and the next read, still ends the read. A `poll` that the
+  signal interrupts ends all the same. On Windows a
   size record that `term_read` reads is counted when the window's size has
   changed (the console sends them for its buffer too).
-* **Reading.** `term_read` waits in `poll` at most the time given, then
-  reads what is there; nothing in the time, a resize and the user's
-  interrupt end it with nothing (the interrupt is then raised, as in a
-  read of `TextIO`). On Windows it reads the console's records
+* **Reading.** `term_read` waits in `poll` at most the time given, on the
+  terminal and on the resize pipe, then reads what is there; nothing in
+  the time, a resize and the user's interrupt end it with nothing (the
+  interrupt is then raised, as in a read of `TextIO`). On Windows it reads the console's records
   (`ReadConsoleInputW`): the character of a key-down, repeated as the
   record says (32 times at most), the character of an Alt key-up, which is
   how a character typed on the numeric keypad or pasted from outside the
@@ -873,6 +877,7 @@ UTF-16, which in VT input mode is every key, arrows included.
 `sys_none.c` fails them with `ENOSYS`. `tests/terminal`'s `term-keys`,
 `term-resize` and `term-restore` drive the probe `tests/terminal/keys.sml`
 on a terminal, the first two on Linux and on Windows alike.
+`term-wake` checks that a `SIGWINCH` delivered before the read still ends it.
 
 ## Numbers
 

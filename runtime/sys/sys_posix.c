@@ -1579,7 +1579,54 @@ static void on_term_signal(int sig) {
 }
 
 #ifdef SIGWINCH
-static void on_resize(int sig) { (void)sig; term_resize_count++; }
+/* A byte on this pipe is "the window changed". poll waits on it with the
+   terminal, so a SIGWINCH that arrives while the editor is drawing, after
+   it has looked at the count and before the next poll, still ends the
+   read. The count itself moves in the handler, as term_resizes reports it,
+   whether or not a read is waiting. Both ends are non-blocking: the
+   handler's write never blocks, and a full pipe already has a byte, which
+   is enough to wake the read. */
+static int term_wake_r = -1, term_wake_w = -1;
+extern int pipe2(int pipefd[2], int flags);
+static void term_wake_open(void) {
+    if (term_wake_r >= 0) return;
+    int fds[2];
+    if (pipe2(fds, O_NONBLOCK | O_CLOEXEC) != 0) return;
+    term_wake_r = fds[0];
+    term_wake_w = fds[1];
+}
+static void term_wake_drain(void) {
+    int fd = term_wake_r;
+    if (fd < 0) return;
+    char buf[64];
+    int saved = errno;
+    for (;;) {
+        ssize_t n = read(fd, buf, sizeof buf);
+        if (n < 0) {
+            if (errno == EINTR) continue;
+            break;
+        }
+        if (n == 0) break;
+    }
+    errno = saved;
+}
+static void on_resize(int sig) {
+    int saved = errno;
+    (void)sig;
+    term_resize_count++;
+    if (term_wake_w >= 0) {
+        char byte = 1;
+        /* EAGAIN: a byte is already waiting. EINTR: try the one byte again. */
+        for (;;) {
+            ssize_t n = write(term_wake_w, &byte, 1);
+            if (n >= 0 || errno != EINTR) break;
+        }
+    }
+    errno = saved;
+}
+#else
+static const int term_wake_r = -1;
+static void term_wake_drain(void) { }
 #endif
 
 int sys_term_size(int fd, int *cols, int *rows) {
@@ -1599,11 +1646,15 @@ int sys_term_size(int fd, int *cols, int *rows) {
 int64_t sys_term_resizes(void) {
 #ifdef SIGWINCH
     if (!term_resize_counting) {
+        /* the pipe before the handler, so a signal never writes a closed end */
+        term_wake_open();
         struct sigaction sa;
         memset(&sa, 0, sizeof sa);
         sa.sa_handler = on_resize;
         sigemptyset(&sa.sa_mask);
-        sa.sa_flags = SA_RESTART;   /* poll is ended all the same (sys_term_read) */
+        /* other calls are not cut short. poll is ended anyway, and a signal
+           that arrived earlier left a byte the next poll sees (sys_term_read) */
+        sa.sa_flags = SA_RESTART;
         if (sigaction(SIGWINCH, &sa, NULL) != 0) return -1;
         term_resize_counting = 1;
     }
@@ -1651,15 +1702,30 @@ int sys_term_leave(void) {
 
 int64_t sys_term_read(int in, char *buf, int64_t n, int64_t ms) {
     if (!isatty(in)) { errno = ENOTTY; return -1; }
-    struct pollfd q;
-    q.fd = in; q.events = POLLIN; q.revents = 0;
-    int r = poll(&q, 1, ms < 0 ? -1 : ms > INT_MAX ? INT_MAX : (int)ms);
-    if (r < 0) return errno == EINTR ? 0 : -1;
+    struct pollfd q[2];
+    int nfd = 1;
+    q[0].fd = in; q[0].events = POLLIN; q[0].revents = 0;
+    if (term_wake_r >= 0) {
+        q[1].fd = term_wake_r; q[1].events = POLLIN; q[1].revents = 0;
+        nfd = 2;
+    }
+    int r = poll(q, (nfds_t)nfd, ms < 0 ? -1 : ms > INT_MAX ? INT_MAX : (int)ms);
+    if (r < 0) {
+        if (errno != EINTR) return -1;
+        term_wake_drain();
+        return 0;
+    }
+    /* a byte left unread would make every later poll return at once */
+    if (nfd == 2 && (q[1].revents & (POLLIN | POLLHUP | POLLERR))) term_wake_drain();
     if (r == 0) return 0;
-    ssize_t k = read(in, buf, (size_t)n);
-    if (k < 0) return errno == EINTR || errno == EAGAIN ? 0 : -1;
-    if (k == 0) { errno = 0; return -2; }
-    return (int64_t)k;
+    if (q[0].revents & (POLLIN | POLLHUP | POLLERR)) {
+        ssize_t k = read(in, buf, (size_t)n);
+        if (k < 0) return errno == EINTR || errno == EAGAIN ? 0 : -1;
+        if (k == 0) { errno = 0; return -2; }
+        return (int64_t)k;
+    }
+    /* the resize pipe alone: the wait ended, and nothing was typed */
+    return 0;
 }
 
 /* ---------------------------------------------------------- the heap's memory */

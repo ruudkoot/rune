@@ -4,9 +4,13 @@ Found 2026-10-25, from failures of `terminal/term-resize` and
 `terminal/edit-complete` in `make check` at `d551f19dd` during the
 functors-units roadmap, at loads of 30 to 44 (the machine shared with
 another session's runs). Run again at that load, both passed once in
-three; at ordinary loads they pass. `term-resize` is fixed: `keys.sml`
-reads `Terminal.resizes` before it says its size, so the handler is in
-place when the script resizes. `edit-complete` is open.
+three; at ordinary loads they pass. Status: fixed. `keys.sml` reads
+`Terminal.resizes` before it says its size, so the handler is in place
+when the script resizes. `edit-complete` was a lost wake-up: a `SIGWINCH`
+that arrived after the editor had read the count and before `poll` never
+ended the next read. The handler now writes a byte to a pipe that
+`sys_term_read` polls with the terminal, and `term-wake` checks that a
+signal delivered before the read still ends it.
 
 ## `terminal/term-resize`
 

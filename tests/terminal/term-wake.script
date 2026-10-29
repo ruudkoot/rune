@@ -1,0 +1,5 @@
+# A SIGWINCH that arrived before the read still ends it (the self-pipe).
+# Not on Windows: the console queues a size record, which has no signal.
+start 80 24 @WAKE@
+wait ^woke$ 5
+exited 0

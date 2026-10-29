@@ -73,12 +73,14 @@ struct
                {cmd=[fromRoot "bin/rune"] @ libraries @ [source,"-o",prepared ^ "/" ^ name ^ ".rbc"],dir=SOME root,stdin="",
                 stdout=prepared ^ "/" ^ name ^ ".out",stderr=prepared ^ "/" ^ name ^ ".err",timeout=120}
           in need (status=0,"terminal probe compile failed: " ^ name ^ ": " ^ read (prepared ^ "/" ^ name ^ ".err")) end
-    in compile "keys" [] "tests/terminal/keys.sml";compile "readline" ["--library","terminal"] "examples/readline.sml";
+    in compile "keys" [] "tests/terminal/keys.sml";compile "wake" [] "tests/terminal/wake.sml";
+       compile "readline" ["--library","terminal"] "examples/readline.sml";
        compile "display" ["--library","test/runner"] "tests/runner/displayfixture.sml" end
   fun substitutions windows =
     let val vm=fromRoot (if windows then "bin/runevm.exe" else "bin/runevm")
     in [("REPL",quote vm ^ " --heap-size 67108864 --restore " ^ quote (fromRoot "bin/rune-repl.img") ^ " --"),
         ("KEYS",quote vm ^ " --stack-size 1048576 " ^ quote (prepared ^ "/keys.rbc")),
+        ("WAKE",quote vm ^ " " ^ quote (prepared ^ "/wake.rbc")),
         ("READLINE",quote vm ^ " " ^ quote (prepared ^ "/readline.rbc")),("VERSION",version ()),("DIR",fromRoot "tests/terminal")] end
   fun start windows name columns rows command =
     let fun assignments ("env" :: rest) env=assignments rest env
