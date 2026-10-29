@@ -827,8 +827,16 @@ NEW_HDRS := runtime/register/regvm.h runtime/register/live.h runtime/register/re
 # RUNE_JIT=0 builds it without the JIT (docs/plans/jit.md): the
 # interpreter alone, which refuses --jit.
 RUNE_JIT ?= 1
-JIT_SRCS := runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c runtime/register/jit/dump.c
+# Two encoders of the same JIT. The x86-64 one also provides as_* where
+# the JIT does not run (JIT_TARGET is not 2: a 32-bit x86, PowerPC), so
+# those cross VMs link it. A native aarch64 Linux build is the aarch64
+# encoder, the same sources as the cross VM bin/runevm-aarch64.
+JIT_SRCS_X64 := runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c runtime/register/jit/dump.c
+JIT_SRCS_A64 := runtime/register/jit.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c runtime/register/jit/dump.c
+HOST_AARCH64 := $(shell [ "$$(uname -s) $$(uname -m)" = "Linux aarch64" ] && echo yes)
+JIT_SRCS := $(if $(filter yes,$(HOST_AARCH64)),$(JIT_SRCS_A64),$(JIT_SRCS_X64))
 JIT_HDRS := runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/asm.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
+JIT_HDRS += $(if $(filter yes,$(HOST_AARCH64)),runtime/register/jit/a64.h)
 NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS)
 bin/runevm: $(NEW_LOOP) $(GMP_DIR)/intinf.o build/gmp/selected build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) bin/rune-build | build/.doctor-vm
 	@mkdir -p bin
@@ -853,6 +861,9 @@ bin/runevm-stack-asan: build/foreign-selected $(VM_SRCS) $(VM_HDRS) | build/.doc
 # runtime/register with the sanitizers: its loop, its instruction set's part, and the
 # runtime but for the stack bytecode's part
 NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
+# The x86-64 encoder, including where it is only the stub for a machine
+# the JIT does not target. Independent of the host, unlike NEW_SRCS.
+NEW_SRCS_X64 := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS_X64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
 bin/runevm-asan: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-asan
 	@mkdir -p bin
 	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) $(GMP_FLAGS) $(FFI_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
@@ -1001,7 +1012,7 @@ WINCFLAGS32 ?= -msse2 -mfpmath=sse -Wl,--large-address-aware
 WIN_SRCS    := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_win.c
 # runtime/register for Windows: its loop and its instruction set's part in place of
 # the stack bytecode's (runtime/stack/isa_stack.c), as bin/runevm-asan is built
-WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
+WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS_X64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32 -lpsapi
 FFI_WIN64_PREFIX ?= build/deps/libffi-win64/install
 FFI_WIN32_PREFIX ?= build/deps/libffi-win32/install
@@ -1135,7 +1146,6 @@ DIST_A64FLAGS ?= --target=aarch64-linux-gnu -B$(A64ROOT)/bin -L$(A64ROOT)/lib -I
 DIST_PPCFLAGS ?= --target=powerpc64-linux-gnu -B$(PPCROOT)/bin -L$(PPCROOT)/lib -I$(PPCROOT)/include \
               -Wl,-dynamic-linker,/lib64/ld64.so.1
 QEMUA64    ?= qemu-aarch64
-JIT_SRCS_A64 := runtime/register/jit.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c runtime/register/jit/dump.c
 NEW_SRCS_A64 := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS_A64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
 PORT_TIMEOUT ?= 900
 GMP_LINUX32_PREFIX ?= $(GMP_CROSS_PREFIX)/linux32
@@ -1169,15 +1179,15 @@ bin/runevm-stack-ppc64: bin/runevm-stack-ppc64.bin Makefile
 
 # runtime/register for the same two machines, from the sources bin/runevm-asan is
 # built from (its instruction set's part in place of the stack bytecode's)
-bin/runevm32: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
+bin/runevm32: build/foreign-selected $(NEW_SRCS_X64) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
 	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_LINUX32_PREFIX)' --cc '$(PORTCC32)' \
 	  --cflags='$(CFLAGS) $(PORTFLAGS32)' --runner '' --config build/gmp/linux32 --out $@ \
-	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
+	  --sources $(NEW_SRCS_X64) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
-bin/runevm-ppc64.bin: build/foreign-selected $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
+bin/runevm-ppc64.bin: build/foreign-selected $(NEW_SRCS_X64) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
 	bin/rune-build build-gmp-vm --mode '$(GMP)' --prefix '$(GMP_PPC64_PREFIX)' --cc '$(PPCCC)' \
 	  --cflags='$(CFLAGS) $(PPCFLAGS)' --runner '$(QEMUPPC) -L $(PPCROOT)' --config build/gmp/ppc64 --out $@ \
-	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
+	  --sources $(NEW_SRCS_X64) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
 bin/runevm-ppc64: bin/runevm-ppc64.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-ppc64.bin" "$$@"\n' '$(QEMUPPC) -L $(PPCROOT)' > $@
@@ -1212,9 +1222,9 @@ bin/runevm$(1)-ffi$(2)$(3): $$(if $$(filter -stack,$(1)),$$(VM_SRCS),$(4)) $$(VM
 	  --sources $$(if $$(filter -stack,$(1)),$$(VM_SRCS),$(4)) \
 	  --objects $$($(6))/lib/libffi.a --headers $$(VM_HDRS) $$(NEW_HDRS) $$(JIT_HDRS) Makefile $$($(6))/rune-ffi-dependency.json
 endef
-$(eval $(call ffi-cross-vm,,32,,$(NEW_SRCS),linux32,FFI_LINUX32_PREFIX,PORTCC32,PORTFLAGS32,,))
+$(eval $(call ffi-cross-vm,,32,,$(NEW_SRCS_X64),linux32,FFI_LINUX32_PREFIX,PORTCC32,PORTFLAGS32,,))
 $(eval $(call ffi-cross-vm,,-aarch64,.bin,$(NEW_SRCS_A64),aarch64,FFI_AARCH64_PREFIX,A64CC,A64FLAGS,-DRUNE_JIT=1,$(QEMUA64) -L $(A64ROOT)))
-$(eval $(call ffi-cross-vm,,-ppc64,.bin,$(NEW_SRCS),ppc64,FFI_PPC64_PREFIX,PPCCC,PPCFLAGS,,$(QEMUPPC) -L $(PPCROOT)))
+$(eval $(call ffi-cross-vm,,-ppc64,.bin,$(NEW_SRCS_X64),ppc64,FFI_PPC64_PREFIX,PPCCC,PPCFLAGS,,$(QEMUPPC) -L $(PPCROOT)))
 $(eval $(call ffi-cross-vm,-stack,32,,$(NEW_SRCS),linux32,FFI_LINUX32_PREFIX,PORTCC32,PORTFLAGS32,,))
 $(eval $(call ffi-cross-vm,-stack,-aarch64,.bin,$(NEW_SRCS_A64),aarch64,FFI_AARCH64_PREFIX,A64CC,A64FLAGS,,$(QEMUA64) -L $(A64ROOT)))
 $(eval $(call ffi-cross-vm,-stack,-ppc64,.bin,$(NEW_SRCS),ppc64,FFI_PPC64_PREFIX,PPCCC,PPCFLAGS,,$(QEMUPPC) -L $(PPCROOT)))
@@ -1240,11 +1250,11 @@ bin/dist/runevm: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) Makefile $(GMP_C
 	  --config build/gmp/native-dist --out $@ \
 	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) Makefile
 
-bin/dist/runevm32: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force gmp-dep-portability | build/.doctor-portability
+bin/dist/runevm32: $(NEW_SRCS_X64) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force gmp-dep-portability | build/.doctor-portability
 	@mkdir -p bin/dist
 	bin/rune-build build-gmp-vm --mode yes --prefix '$(GMP_LINUX32_PREFIX)' --cc '$(PORTCC32)' \
 	  --cflags='$(CFLAGS) $(PORTFLAGS32)' --runner '' --config build/gmp/linux32-dist --out $@ \
-	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
+	  --sources $(NEW_SRCS_X64) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
 bin/dist/runevm.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) build/runevm-x64.o gmp-force gmp-dep-windows | build/.doctor-windows
 	@mkdir -p bin/dist
@@ -1266,11 +1276,11 @@ bin/dist/runevm-aarch64: $(NEW_SRCS_A64) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runt
 	  --cflags='$(CFLAGS) $(DIST_A64FLAGS) -DRUNE_JIT=1' --runner '$(QEMUA64) -L $(A64ROOT)' --config build/gmp/aarch64-dist --out $@ \
 	  --sources $(NEW_SRCS_A64) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/register/jit/a64.h runtime/register/jit/asm.h Makefile
 
-bin/dist/runevm-ppc64: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force gmp-dep-portability | build/.doctor-portability
+bin/dist/runevm-ppc64: $(NEW_SRCS_X64) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force gmp-dep-portability | build/.doctor-portability
 	@mkdir -p bin/dist
 	bin/rune-build build-gmp-vm --mode yes --prefix '$(GMP_PPC64_PREFIX)' --cc '$(PPCCC)' \
 	  --cflags='$(CFLAGS) $(DIST_PPCFLAGS)' --runner '$(QEMUPPC) -L $(PPCROOT)' --config build/gmp/ppc64-dist --out $@ \
-	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
+	  --sources $(NEW_SRCS_X64) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
 # The PowerPC VM runs under an emulator and is about ten times slower, so the
 # Basis suite gets longer than the two minutes a program is otherwise given:

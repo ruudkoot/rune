@@ -445,11 +445,13 @@ without a gcc for the target, using the linker and the headers of a sysroot
 `libgcc-13-dev-arm64-cross` and `binutils-aarch64-linux-gnu`). `make doctor
 --scope portability` says what is missing and what to install.
 
-That ARM VM is a cross build. On a machine whose `uname -m` is `aarch64`,
-`make bin/runevm` is the host build and still links `JIT_SRCS`, the x86-64
-encoder (`runtime/register/jit/x64.c` and `asm_x64.c`), not `JIT_SRCS_A64`.
-GitHub Actions runs that host build on `ubuntu-24.04-arm`
-(`.github/workflows/aarch64.yml`).
+That ARM VM is a cross build from another machine. On aarch64 Linux,
+`make bin/runevm` is the host build and links the same encoder
+(`JIT_SRCS_A64`: `runtime/register/jit/a64.c` and `asm_a64.c`). The x86-64
+encoder stays on the host when the host is not aarch64, and on the 32-bit,
+PowerPC and Windows VMs, where it also supplies `as_*` for a machine the
+JIT does not target. GitHub Actions runs the host build on
+`ubuntu-24.04-arm` (`.github/workflows/aarch64.yml`).
 
 `make test-portability` runs `tests/lang` and `tests/runtime` on each, once with
 the stack bytecode on `bin/runevm-stack32` and `bin/runevm-stack-ppc64` and once with

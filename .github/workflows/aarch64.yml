@@ -1,11 +1,8 @@
-# The host build of the register VM on aarch64-linux. ubuntu-24.04-arm is a
-# native arm64 machine (docs/building.md, Another machine's VM): `make
-# bin/runevm` there links JIT_SRCS, which is the x86-64 encoder
-# (runtime/register/jit/x64.c and asm_x64.c) even though the compiler defines
-# __aarch64__ and the portable assembler then wants asm_a64.c. The qemu
-# cross target bin/runevm-aarch64 uses JIT_SRCS_A64 and is a different
-# build. This job is that host build (issue 77). MLton is only what
-# bin/rune-build needs to configure GMP before the VM is linked.
+# The host build of the register VM on aarch64-linux (docs/building.md,
+# Another machine's VM). ubuntu-24.04-arm is a native arm64 machine, so
+# `make bin/runevm` links JIT_SRCS_A64, the same encoder as the qemu cross
+# target bin/runevm-aarch64. MLton is only what bin/rune-build needs to
+# configure GMP before the VM is linked.
 name: aarch64
 
 on:
