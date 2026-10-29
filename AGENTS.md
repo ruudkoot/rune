@@ -339,6 +339,10 @@ keep these invariants:
   push to `master` (`.github/workflows/check.yml`), on Ubuntu 24.04 with the
   packages of `cloud/SETUP.md` and the hosts kept in the Actions cache. A
   pull request is not ready until it passes there too.
+* The host build of the register VM also runs there on aarch64-linux
+  (`.github/workflows/aarch64.yml`, the `ubuntu-24.04-arm` runner): MLton
+  from `scripts/fetch-hosts.sh mlton`, then `make bin/runevm`. That is this
+  machine's VM. The qemu build of `bin/runevm-aarch64` is a different one.
 * `make check` never compiles `runtime/sys/sys_win.c`, so a green `make check` says
   nothing about Windows. A change to the VM core, to `runtime/sys/sys.h` or to the
   system layers is done only once `make windows` builds all four VMs and
