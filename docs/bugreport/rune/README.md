@@ -11,4 +11,5 @@ cache, [plans/build-cache-issues.md](../../plans/build-cache-issues.md)).
   reproduces it).
 * [terminal-tests-resize-races](terminal-tests-resize-races/BUGREPORT.md):
   `terminal/term-resize` and `terminal/edit-complete` resize before the
-  program is ready (2026-10-25, open; the first's cause found).
+  program is ready (2026-10-25; `term-resize` fixed: `keys.sml` arms the
+  count before it says its size. `edit-complete` is open).

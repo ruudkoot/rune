@@ -43,7 +43,11 @@ fun loop seen =
        | _ => loop seen)
 
 val () = Terminal.enter {undo = ""}
+(* the first resizes installs SIGWINCH. A resize before that is ignored,
+   so the count is taken before the size is said: the script resizes as
+   soon as it sees the size. *)
+val seen = Terminal.resizes ()
 val () = say ("size " ^ sizeText ())
-val () = loop (Terminal.resizes ())
+val () = loop seen
 val () = Terminal.leave ()
 val () = say "bye"

@@ -3,8 +3,10 @@
 Found 2026-10-25, from failures of `terminal/term-resize` and
 `terminal/edit-complete` in `make check` at `d551f19dd` during the
 functors-units roadmap, at loads of 30 to 44 (the machine shared with
-another session's runs). Status: open. Run again at that load, both passed
-once in three; at ordinary loads they pass.
+another session's runs). Run again at that load, both passed once in
+three; at ordinary loads they pass. `term-resize` is fixed: `keys.sml`
+reads `Terminal.resizes` before it says its size, so the handler is in
+place when the script resizes. `edit-complete` is open.
 
 ## `terminal/term-resize`
 
