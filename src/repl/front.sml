@@ -6,13 +6,14 @@
    typed (ReplHighlight), Tab completing from the session (ReplComplete),
    the history shared with every Rune program's (History.defaultFile), and
    Enter submitting only an entry that a `;` ends at the top (ReplScan, D12).
-   While what was compiled runs, the terminal is quiet (Terminal.quiet):
-   keys typed ahead are neither echoed nor lost, and Ctrl-C is the user's
-   interrupt. The editor goes quiet as soon as a line is accepted
-   (LineEdit.keepRaw): putting the terminal back would turn echo on, and
-   staying fully raw would take Ctrl-C as a byte. A program
-   that reads the standard input gets it as at a shell, echoed and edited
-   by lines, for that read (D18). Where the
+   While what was compiled runs, and while a command runs, the terminal is
+   quiet (Terminal.quiet): keys typed ahead are neither echoed nor lost,
+   and Ctrl-C is the user's interrupt. The editor goes quiet as soon as a
+   line is accepted (LineEdit.keepRaw): putting the terminal back would
+   turn echo on, and staying fully raw would take Ctrl-C as a byte.
+   :sh and :edit hand the terminal on for what they run, and take it quiet
+   again after. A program that reads the standard input gets it as at a
+   shell, echoed and edited by lines, for that read (D18). Where the
    terminal is known to take them, the prompt and the output are marked for
    it (OSC 133). The prompt's mark is sent once the editor has the terminal
    raw (LineEdit.beforePrompt): sent earlier, a key typed at the mark is
@@ -320,10 +321,11 @@ struct
   fun readEntry (sessionEnv : Env.env, isWhole : string -> bool) : entry =
     (case LineEdit.readLine (config (sessionEnv, isWhole), !history) of
        LineEdit.Line t =>
-         (* a line that will run is already quiet; a blank line or a
-            command is put back, since nothing else makes it quiet *)
-         (if CharVector.all Char.isSpace t orelse isCommand t then Terminal.leave () else ();
-          holding := false; mark "C"; Entry t)
+         (* the editor left the terminal quiet, and it stays quiet. A
+            command used to be put back, and a line typed while it ran was
+            echoed and its return became a newline, so the line was not
+            run. A command that hands the terminal on releases it itself. *)
+         (holding := false; mark "C"; Entry t)
      | LineEdit.Interrupted => (holding := false; Interrupted)
      | LineEdit.End => (holding := false; EndOfInput))
     handle SML90.Interrupt =>

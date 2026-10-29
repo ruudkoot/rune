@@ -1,7 +1,11 @@
 # A line typed while a REPL command runs is not run
 
 Found 2026-10-26, from two failures of `terminal/repl-debug` in `make check`
-during the functors-units roadmap. Status: open.
+during the functors-units roadmap. Status: fixed. A command is held quiet
+as code is (`ReplFront.hold` from `editorLoop`); `:sh` and `:edit` hand the
+terminal on with `ReplFront.shellLike`, and take it quiet again after.
+`tests/terminal/repl-typeahead.script` types the next line once the command
+has started and not yet finished.
 
 ## What happens
 

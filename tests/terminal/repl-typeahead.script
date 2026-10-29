@@ -1,0 +1,15 @@
+# A line typed while a command runs is the next entry. The command prints
+# started and then sleeps; the line is sent in that window, and must run.
+# Not on Windows, for the reason repl-quiet is not.
+start 80 24 @REPL@
+wait ^-$
+send :use @DIR@/typeahead-sleep.sml
+keys Enter
+wait ^started$
+send val typedAhead = 40 + 2;
+keys Enter
+wait ^awake$
+wait ^val typedAhead = 42 : int$
+send val () = OS.Process.exit OS.Process.success;
+keys Enter
+exited 0

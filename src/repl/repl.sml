@@ -588,7 +588,10 @@ struct
         (if CharVector.all Char.isSpace text then ()
          else
            let
-             val () = if ReplFront.isCommand text then () else ReplFront.hold ()
+             (* a command is held quiet too, so a line typed while it runs
+                is the next entry and not echoed. :sh and :edit hand the
+                terminal on for what they run *)
+             val () = ReplFront.hold ()
              val (_, ok) = step (text, true)
            in
              ReplComplete.noteUses text;

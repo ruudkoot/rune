@@ -159,12 +159,13 @@ lib/terminal ([plans/repl.md](plans/repl.md), M5 and M6):
   protocol is on while an entry is read, so that Escape needs no wait
   and Ctrl-I is not Tab. A terminal that answers neither is measured by
   `TERM_PROGRAM`, as before.
-* **While a declaration runs** the terminal is quiet (`Terminal.quiet`):
-  keys typed ahead are neither echoed into what it writes nor lost, and
-  are the editor's at the next prompt, also those that reach the REPL in
-  one burst with the Enter of the entry before them; Ctrl-C is the
-  interrupt. A program that reads `TextIO.stdIn` gets each read as at a
-  shell, echoed and edited by lines.
+* **While a declaration or a command runs** the terminal is quiet
+  (`Terminal.quiet`): keys typed ahead are neither echoed into what it
+  writes nor lost, and are the editor's at the next prompt, also those
+  that reach the REPL in one burst with the Enter of the entry before
+  them; Ctrl-C is the interrupt. `:sh` and `:edit` hand the terminal on
+  for what they run, and take it quiet again after. A program that reads
+  `TextIO.stdIn` gets each read as at a shell, echoed and edited by lines.
 * **A line left unfinished** by the program -- `print "abc"` -- is marked
   `%` (zsh's way) and what the REPL writes next starts on a line of its
   own.
@@ -198,7 +199,7 @@ and any unique prefix of a command's name names it (`:t` for `:type`).
 | `:use file` | `use` |
 | `:reload`, `:reload!` | uses again the files that changed and those that name what they bind; `!` goes back to the start or the mark first (*Reload*) |
 | `:mark` | where `:reload!` comes back to from now on |
-| `:edit [name or file]` | `$VISUAL` or `$EDITOR` at a name's definition or at a file, and the file used again |
+| `:edit [name or file]` | `$VISUAL` or `$EDITOR` at a name's definition or at a file, on the terminal as it was, and the file used again |
 | `:cd dir`, `:pwd` | the directory |
 | `:sh command` | a command of the shell, on the terminal as it was |
 | `:set setting value`, `:show` | the settings: `depth`, `length`, `string`, `width`, `feedback`, `prompt`, `prompt2`, `time`, `watch`, `debug`, `pause` |
