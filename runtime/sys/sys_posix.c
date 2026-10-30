@@ -1511,6 +1511,57 @@ static volatile sig_atomic_t term_resize_count;
 static int term_resize_counting;
 static int term_handlers;
 
+/* A resize can arrive while the editor draws, before its next poll. Keep
+   a notification readable until that read, rather than relying on EINTR.
+   Each process owns its pipe: a fork must not drain its parent's wake-up. */
+static int term_resize_reader = -1;
+static volatile sig_atomic_t term_resize_writer = -1;
+static volatile sig_atomic_t term_resize_owner;
+static sig_atomic_t term_resize_read_count;
+
+static int term_resize_channel(void) {
+    if (term_resize_reader >= 0 && term_resize_owner == getpid()) return 0;
+    int writer = term_resize_writer;
+    term_resize_writer = -1;
+    if (writer >= 0) close(writer);
+    if (term_resize_reader >= 0) close(term_resize_reader);
+    term_resize_reader = -1;
+    int p[2];
+    if (pipe(p) != 0) return -1;
+    for (int i = 0; i < 2; i++) {
+        int flags = fcntl(p[i], F_GETFL);
+        if (flags < 0 || fcntl(p[i], F_SETFL, flags | O_NONBLOCK) < 0 ||
+            fcntl(p[i], F_SETFD, FD_CLOEXEC) < 0) {
+            int saved = errno;
+            close(p[0]); close(p[1]); errno = saved;
+            return -1;
+        }
+    }
+    term_resize_reader = p[0];
+    term_resize_owner = getpid();
+    term_resize_writer = p[1];
+    return 0;
+}
+
+static void term_resized(void) {
+    int saved = errno;
+    term_resize_count = term_resize_count == SIG_ATOMIC_MAX ? 0 : term_resize_count + 1;
+    if (term_resize_writer >= 0 && term_resize_owner == getpid()) {
+        char byte = 0;
+        /* A full pipe already wakes the reader. Retry only an interrupt. */
+        ssize_t n;
+        do { n = write(term_resize_writer, &byte, 1); } while (n < 0 && errno == EINTR);
+    }
+    errno = saved;
+}
+
+static void term_resize_drain(void) {
+    char buf[256];
+    ssize_t n;
+    do { n = read(term_resize_reader, buf, sizeof buf); } while (n > 0 || (n < 0 && errno == EINTR));
+    term_resize_read_count = term_resize_count;
+}
+
 /* raw, or quiet (sys_term_enter): term_quiet says which the terminal is put
    in again after a stop */
 static int term_quiet;
@@ -1573,13 +1624,13 @@ static void on_term_signal(int sig) {
     term_catch(sig);
     if (fd >= 0 && term_raw(fd) == 0) {
         term_fd = fd;
-        term_resize_count++;
+        term_resized();
     }
     errno = saved;
 }
 
 #ifdef SIGWINCH
-static void on_resize(int sig) { (void)sig; term_resize_count++; }
+static void on_resize(int sig) { (void)sig; term_resized(); }
 #endif
 
 int sys_term_size(int fd, int *cols, int *rows) {
@@ -1598,12 +1649,13 @@ int sys_term_size(int fd, int *cols, int *rows) {
 
 int64_t sys_term_resizes(void) {
 #ifdef SIGWINCH
+    if (term_resize_channel() != 0) return -1;
     if (!term_resize_counting) {
         struct sigaction sa;
         memset(&sa, 0, sizeof sa);
         sa.sa_handler = on_resize;
         sigemptyset(&sa.sa_mask);
-        sa.sa_flags = SA_RESTART;   /* poll is ended all the same (sys_term_read) */
+        sa.sa_flags = SA_RESTART;   /* the pipe also wakes a later poll */
         if (sigaction(SIGWINCH, &sa, NULL) != 0) return -1;
         term_resize_counting = 1;
     }
@@ -1651,11 +1703,23 @@ int sys_term_leave(void) {
 
 int64_t sys_term_read(int in, char *buf, int64_t n, int64_t ms) {
     if (!isatty(in)) { errno = ENOTTY; return -1; }
-    struct pollfd q;
-    q.fd = in; q.events = POLLIN; q.revents = 0;
-    int r = poll(&q, 1, ms < 0 ? -1 : ms > INT_MAX ? INT_MAX : (int)ms);
-    if (r < 0) return errno == EINTR ? 0 : -1;
+    if (term_resize_counting && term_resize_channel() != 0) return -1;
+    /* Also covers a child's signal before it made a pipe of its own, and
+       a stop/continue before resize counting was requested. */
+    if (term_resize_count != term_resize_read_count) {
+        if (term_resize_reader >= 0) term_resize_drain();
+        else term_resize_read_count = term_resize_count;
+        return 0;
+    }
+    struct pollfd q[2] = {{in, POLLIN, 0}, {term_resize_reader, POLLIN, 0}};
+    int r = poll(q, 2, ms < 0 ? -1 : ms > INT_MAX ? INT_MAX : (int)ms);
+    if (r < 0) {
+        if (errno != EINTR) return -1;
+        if (term_resize_reader >= 0) term_resize_drain();
+        return 0;
+    }
     if (r == 0) return 0;
+    if (q[1].revents & POLLIN) { term_resize_drain(); return 0; }
     ssize_t k = read(in, buf, (size_t)n);
     if (k < 0) return errno == EINTR || errno == EAGAIN ? 0 : -1;
     if (k == 0) { errno = 0; return -2; }

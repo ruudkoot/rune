@@ -2335,7 +2335,7 @@ bin/rune-protocol-check: bin/rune-protocol-check.rbc bin/runevm Makefile
 
 TERMINAL_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/commandwords.sml tests/runner/windowsdir.sml \
                  tests/runner/terminalpattern.sml tests/runner/terminalio.sml tests/runner/terminalchecks.sml tests/runner/terminalraw.sml \
-                 tests/runner/terminaldisplay.sml tests/runner/terminalplatform.sml tests/runner/terminalfaults.sml tests/runner/terminal-main.sml
+                 tests/runner/terminaldisplay.sml tests/runner/terminalplatform.sml tests/runner/terminalfaults.sml tests/runner/terminalraces.sml tests/runner/terminal-main.sml
 bin/rune-terminal.rbc: $(RUNE) $(TERMINAL_SRCS) manifests
 	$(RUNE) --library test/runner $(TERMINAL_SRCS) -o $@
 bin/rune-terminal: bin/rune-terminal.rbc bin/runevm Makefile

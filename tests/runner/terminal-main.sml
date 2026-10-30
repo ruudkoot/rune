@@ -24,6 +24,7 @@ struct
     | main ["windows-one",bits,name]=TerminalPlatform.one bits name ()
     | main ["windows-cmd",bits]=TerminalPlatform.cmd bits ()
     | main ["faults"]=TerminalFaults.one ()
+    | main ["races"]=TerminalRaces.one ()
     | main ["display"]=TerminalDisplay.one ()
     | main ("raw" :: columns :: rows :: file :: "--" :: program :: args)=
        let fun integer text=case Int.fromString text of SOME n => n | NONE => raise Fail "invalid terminal dimension"
