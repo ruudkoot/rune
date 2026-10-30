@@ -4,6 +4,7 @@ scripts/benchmark-inventory.py	python	P2.15	retired	47905cad71530f5284dd9df26ac5
 scripts/benchmark-provenance.sh	shell	P2.14	retired	e53a16aca070fc7cfb65858cfbd2396838271f87	tools/measure/basics.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure provenance
 scripts/benchmark-result.sh	shell	P2.14	retired	ee2bc4a115ff1b3e74f9cc34ea968d730c8f6cbb	tools/measure/common.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure classify
 scripts/bisect-fuel.sh	shell	P2.14	retired	17ccadd553085766765df4c7a7d2c1000eba015b	tools/measure/basics.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure bisect-fuel
+scripts/boot-host.sh	shell	Retain: bootstrap/setup	retained	9ad404eec4771063a69398e12edb4e739c7846b0	-	bootstrap/setup
 scripts/build-files.sh	shell	Retain: bootstrap/setup	retained	c18b727ec7fab7fbe785a83d5d62fb291c91d343	-	bootstrap/setup
 scripts/build-gmp-vm.py	python	P2.16	retired	3369d018cfd306205f06fa4a28b2bb1895beee26	tools/builder/cross-vm.sml	clean-bootstrap-configs-and-package-members
 scripts/build-gmp.py	python	P2.16	retired	131865ee41c4253f0370b843a34e8dbd9a3e62bc	tools/builder/gmp-build.sml	clean-bootstrap-configs-and-package-members

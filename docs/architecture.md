@@ -159,12 +159,17 @@ body are generative per application.
 ## Bootstrapping
 
 The compiler is compiled by itself, and the result is what Rune ships.
-`make boot` first compiles the sources with a host build (`BOOTHOST`, by
-default MLton) into `build/bootstrap/rune.rbc`, a stage-0 image that is not
-shipped. `bin/rune-bootstrap` runs that image on `runevm` and compiles the
-same sources into `bin/rune.rbc`; it also writes every library `MANIFEST`.
-`runevm` executes `bin/rune.rbc` as `bin/rune-boot`, and `bin/rune` names
-that. The host builds `bin/rune-mlton`, `bin/rune-smlnj-legacy`,
+`make boot` first compiles the sources into `build/bootstrap/rune.rbc`, a
+stage-0 image that is not shipped. The compiler for that step is the first
+of the Rune release, Poly/ML and MLton, unless `BOOTHOST` names one. The
+release compiles the current sources against the Basis it ships, and that
+image runs on the release's `runevm`; Poly/ML and MLton compile them against
+their own Basis. Each of those compilers emits this tree's bytecode.
+`bin/rune-bootstrap` runs that image on `bin/runevm` and compiles the same
+sources into `bin/rune.rbc`; it also writes every library `MANIFEST`.
+`runevm` executes `bin/rune.rbc` as
+`bin/rune-boot`, and `bin/rune` names that. The host builds
+`bin/rune-mlton`, `bin/rune-smlnj-legacy`,
 `bin/rune-smlnj32`, `bin/rune-smlnj-dev`, `bin/rune-polyml` and `bin/rune-mlkit`
 exist to build stage 0 and to check the compiler: `make bootstrap` verifies
 that the self-hosted compiler reproduces `bin/rune.rbc` byte for byte (and

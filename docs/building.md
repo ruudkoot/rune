@@ -80,9 +80,10 @@ runtime. The recipe also selects a generic compiler target triple: fat
 assembly dispatch alone does not remove CPU-specific inline helpers from C. This follows
 [GMP's package-build guidance](https://gmplib.org/manual/Notes-for-Package-Builds).
 On non-x86 native machines omit that flag and select the intended target.
-The provisioning recipe is Standard ML, built by the pinned native MLton before
-GMP configuration or VM creation. Its pure models also build as Rune bytecode
-after bootstrapping; see [the build tool](../tools/builder/README.md).
+The provisioning recipe is Standard ML, compiled by the first of the Rune
+release, Poly/ML and MLton before GMP configuration or VM creation. The
+release runs it on the release's `runevm`. Its pure models also build as Rune
+bytecode after bootstrapping; see [the build tool](../tools/builder/README.md).
 
 The recipe verifies GMP 6.3.0's source archive SHA-256
 `a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898`,
@@ -150,9 +151,11 @@ rebuilding the enabled ones.
 
 ## Prerequisites
 
-The build/configuration/package tool requires the pinned native MLton, even
-when another host builds the compiler. It builds without a Rune VM or target
-GMP dependency. Python 3 remains necessary for independent arithmetic oracles,
+The build/configuration/package tool is compiled by the first of the Rune
+release, Poly/ML and MLton, the same order as the compiler (`scripts/boot-host.sh`).
+The release runs it on the release's `runevm`, so this tree's VM is not
+required. Poly/ML and MLton produce a native executable and need no Rune VM
+or target GMP dependency. Python 3 remains necessary for independent arithmetic oracles,
 Jupyter/ZMTP peers and host provisioning. Standard ML owns compiler interruption,
 VM limits and distribution assertions. The Windows icon is a checked canonical
 asset paired with its PNG source digest; packaging needs no Pillow.
@@ -180,10 +183,12 @@ asset paired with its PNG source digest; packaging needs no Pillow.
   C++ compiler, GMP (`libgmp-dev`) and a C compiler that builds 32-bit
   programs (`gcc-multilib`), and, for SML/NJ 2026.2, CMake 3.23 or later
   and python3. The 2026.2 build is the slow one: it compiles LLVM. No root
-  access. `make` needs MLton (`BOOTHOST` names the host build that
-  compiles the stage-0 image, default `mlton`; the compiler that ships is
-  compiled by that image on `runevm`); `make test-all`,
-  `make check-cross`, the matrix targets and `make check` need all six.
+  access. `make` needs a bootstrap compiler, the first of the Rune
+  release, Poly/ML and MLton (`scripts/boot-host.sh`; `BOOTHOST` names one
+  instead). Each compiles the compiler sources against its own Basis. The
+  compiler that ships is compiled by that stage-0 image. `make test-all`,
+  `make check-cross`, the matrix targets and `make check` need all six
+  SML hosts.
 
 `make doctor` checks all of this (and the tools of the test, sanitizer, host
 matrix and profiling targets), by running the tools rather than just looking
@@ -203,7 +208,7 @@ name the tools to check.
 
 | Command | Result |
 |---|---|
-| `make hosts` | install MLton 20241230, SML/NJ 110.99.9 (64- and 32-bit), SML/NJ 2026.2, Poly/ML 5.9.2 and MLKit 4.7.25 under `${RUNE_HOSTS:-~/.local/rune-hosts}`; needed once, before anything else |
+| `make hosts` | install the Rune 0.1 release, MLton 20241230, SML/NJ 110.99.9 (64- and 32-bit), SML/NJ 2026.2, Poly/ML 5.9.2 and MLKit 4.7.25 under `${RUNE_HOSTS:-~/.local/rune-hosts}`; needed once, before anything else |
 | `make` | `bin/rune` (the self-hosted compiler), `bin/runevm`, `bin/runevm-stack`, `bin/runedoc` and `bin/runeopt` |
 | `make mlton` / `make smlnj-legacy` / `make smlnj32` / `make smlnj-dev` / `make polyml` / `make mlkit` | `bin/rune-mlton`, `bin/rune-smlnj-legacy`, `bin/rune-smlnj32`, `bin/rune-smlnj-dev`, `bin/rune-polyml`, `bin/rune-mlkit`; none of them is `bin/rune` |
 | `make host-builds` | all six host builds, of the compiler, of `runedoc` and of `runeopt` |
@@ -270,8 +275,10 @@ The matrix targets are described in [basis-compat.md](basis-compat.md) and
 are; `MLTON`, `MLBUILD`, `SMLNJ`, `MLBUILD32`, `SMLNJ32`, `MLBUILD_DEV`,
 `SMLNJ_DEV`, `POLY` and `POLYC` name their commands one by one.
 
-`CC=clang make vm` selects another C compiler. `BOOTHOST=smlnj-legacy make` picks the
-host build that compiles stage 0 of the bootstrap.
+`CC=clang make vm` selects another C compiler. `BOOTHOST=smlnj-legacy make` picks
+that host to compile stage 0. With `BOOTHOST` unset, the bootstrap compiler
+is the Rune release, then Poly/ML, then MLton. The release compiles the
+current sources against the Basis shipped in the release.
 
 ## Windows
 
@@ -700,19 +707,23 @@ The compiler is written in the language it compiles, so it builds itself, and
 the result is the compiler you get:
 
 1. `make boot` compiles `build/config.sml`, the files of `rune.build` and
-   `src/main/rune-main.sml` with `bin/rune-$(BOOTHOST)` into
-   `build/bootstrap/rune.rbc` (stage 0). That host build reads a private
-   copy of the Basis under `build/bootstrap/lib`, so it does not write the
-   `MANIFEST` files that ship. `BOOTHOST` is `mlton`, `smlnj-legacy`,
-   `smlnj32`, `smlnj-dev`, `polyml` or `mlkit`; they all emit the same
-   bytecode, so it only decides which host build compiles stage 0.
-2. `bin/rune-bootstrap` runs stage 0 on `runevm`. It writes every library
-   `MANIFEST` (`rune --basis-index`) and compiles the same sources into
-   `bin/rune.rbc` (stage 1, register bytecode). `make boot` then writes
-   `bin/rune-boot`, a wrapper that runs
+   `src/main/rune-main.sml` into `build/bootstrap/rune.rbc` (stage 0). The
+   compiler is the first of the Rune release (`scripts/fetch-hosts.sh`
+   installs v0.1), Poly/ML and MLton (`scripts/boot-host.sh`). `BOOTHOST`
+   names one of those, or `smlnj-legacy`, `smlnj32`, `smlnj-dev` or
+   `mlkit`, instead. The release compiles those sources against the Basis
+   shipped in the release, and that image (`build/bootstrap/rune-host.rbc`)
+   runs on the release's `runevm`. Poly/ML and MLton compile them against
+   their own Basis. The resulting compiler reads a private copy of this
+   tree's Basis under `build/bootstrap/lib`, so it does not write the
+   `MANIFEST` files that ship, and it emits this tree's bytecode.
+2. `bin/rune-bootstrap` runs stage 0 on `bin/runevm`. It writes
+   every library `MANIFEST` (`rune --basis-index`) and compiles the same
+   sources into `bin/rune.rbc` (stage 1, register bytecode). `make boot`
+   then writes `bin/rune-boot`, a wrapper that runs
    `runevm --heap-size $(RUNE_HEAP) bin/rune.rbc`, and points `bin/rune` at
    it. `make` and `make dist` do this too: the compiler and the indexes in
-   a distribution archive are stage 1, not the host build.
+   a distribution archive are stage 1, not the bootstrap compiler.
 3. `bin/rune` takes the same options as the host builds, so `make test` runs
    the whole suite with it and `make check-cross` compares its bytecode with
    the six host builds on every test program, the examples, and the

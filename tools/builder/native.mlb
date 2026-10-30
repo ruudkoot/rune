@@ -26,3 +26,4 @@ $(SML_LIB)/basis/mlton.mlb
 ../../tools/builder/package-runtime.sml
 ../../tools/builder/setup-mlton.sml
 ../../tools/builder/main.sml
+../../tools/builder/run.sml

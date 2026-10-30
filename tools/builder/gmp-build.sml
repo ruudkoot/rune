@@ -56,7 +56,7 @@ struct
           in json (output ^ "/result.json") (Json.Object [("state",str "verified"),("url",case url of NONE => Json.Null | SOME url => str url),("archive",str archive),("sha256",str (hash archive))]);0 end
     in work () handle e => (json (output ^ "/result.json") (Json.Object [("state",str "failed"),("error",str (errorName e)),("message",str (message e))]);raise e) end
   fun recipe () =
-    let val names=["tools/builder/io.sig","tools/builder/native-io.sml","tools/builder/rune-io.sml","tools/builder/common.sml","tools/builder/options.sml","tools/builder/gmp-build.sml","tools/builder/archive.sml"]
+    let val names=["tools/builder/io.sig","tools/builder/native-io.sml","tools/builder/polyml-io.sml","tools/builder/rune-io.sml","tools/builder/common.sml","tools/builder/options.sml","tools/builder/gmp-build.sml","tools/builder/archive.sml"]
         val names=List.filter (exists o fromRoot) names
         val text=String.concat (List.map (fn name => name ^ "\000" ^ hash (fromRoot name) ^ "\000") names)
     in Hex.fromBytes (Sha256.digest text) end

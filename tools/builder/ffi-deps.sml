@@ -57,7 +57,7 @@ struct
                (target=top orelse String.isPrefix(top ^ "/")target),"unsafe dependency archive link " ^ name) end else ()
     in () end
   fun recipe ()=Hex.fromBytes(Sha256.digest(String.concat(List.map(fn name=>name ^ "\000" ^ hash(fromRoot name) ^ "\000")
-    ["tools/builder/ffi-deps.sml","tools/builder/ffi-probe.c","tools/builder/common.sml","tools/builder/archive.sml","tools/builder/io.sig","tools/builder/native-io.sml","tools/builder/rune-io.sml"])))
+    ["tools/builder/ffi-deps.sml","tools/builder/ffi-probe.c","tools/builder/common.sml","tools/builder/archive.sml","tools/builder/io.sig","tools/builder/native-io.sml","tools/builder/polyml-io.sml","tools/builder/rune-io.sml"])))
   fun download archive checksum urls offline run =
     if exists archive then (need(hash archive=checksum,"cached dependency archive checksum mismatch: " ^ archive);NONE) else
     let val ()=need(not offline,"offline dependency archive is missing: " ^ archive)
