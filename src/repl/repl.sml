@@ -588,7 +588,6 @@ struct
         (if CharVector.all Char.isSpace text then ()
          else
            let
-             val () = if ReplFront.isCommand text then () else ReplFront.hold ()
              val (_, ok) = step (text, true)
            in
              ReplComplete.noteUses text;

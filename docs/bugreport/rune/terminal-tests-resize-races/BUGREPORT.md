@@ -3,7 +3,8 @@
 Found 2026-10-25, from failures of `terminal/term-resize` and
 `terminal/edit-complete` in `make check` at `d551f19dd` during the
 functors-units roadmap, at loads of 30 to 44 (the machine shared with
-another session's runs). Status: open. Run again at that load, both passed
+another session's runs). Status: fixed 2026-10-29;
+[fixes and regressions](../terminal-races-fixed.md). Run again at that load, both passed
 once in three; at ordinary loads they pass.
 
 ## `terminal/term-resize`
@@ -32,6 +33,12 @@ before printing the size (`val seen = Terminal.resizes ()` first, then
 `say`, then `loop seen`).
 
 ## `terminal/edit-complete`
+
+The later [under-load investigation](../terminal-tests-under-load/BUGREPORT.md)
+established that the apparent missing row was the old drawing truncated by
+the resize: no redraw happened. The fix preserves the original script and
+its expected screen, and makes the runtime retain resize wake-ups.
+The analysis below is the original, preliminary diagnosis.
 
 The script (`tests/terminal/edit-complete.script`) types
 `abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGH`, waits only for

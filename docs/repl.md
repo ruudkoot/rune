@@ -159,12 +159,14 @@ lib/terminal ([plans/repl.md](plans/repl.md), M5 and M6):
   protocol is on while an entry is read, so that Escape needs no wait
   and Ctrl-I is not Tab. A terminal that answers neither is measured by
   `TERM_PROGRAM`, as before.
-* **While a declaration runs** the terminal is quiet (`Terminal.quiet`):
+* **While a declaration or command runs** the terminal is quiet (`Terminal.quiet`):
   keys typed ahead are neither echoed into what it writes nor lost, and
   are the editor's at the next prompt, also those that reach the REPL in
   one burst with the Enter of the entry before them; Ctrl-C is the
   interrupt. A program that reads `TextIO.stdIn` gets each read as at a
-  shell, echoed and edited by lines.
+  shell, echoed and edited by lines. `:sh` and `:edit` likewise give their
+  external program the terminal as at a shell, then make it quiet again.
+  Blank entries also keep keys typed ahead quiet until the next prompt.
 * **A line left unfinished** by the program -- `print "abc"` -- is marked
   `%` (zsh's way) and what the REPL writes next starts on a line of its
   own.

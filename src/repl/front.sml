@@ -6,7 +6,7 @@
    typed (ReplHighlight), Tab completing from the session (ReplComplete),
    the history shared with every Rune program's (History.defaultFile), and
    Enter submitting only an entry that a `;` ends at the top (ReplScan, D12).
-   While what was compiled runs, the terminal is quiet (Terminal.quiet):
+   While a declaration or command runs, the terminal is quiet (Terminal.quiet):
    keys typed ahead are neither echoed nor lost, and Ctrl-C is the user's
    interrupt. The editor goes quiet as soon as a line is accepted
    (LineEdit.keepRaw): putting the terminal back would turn echo on, and
@@ -246,11 +246,11 @@ struct
   fun echo (name : string, shown : RuneCompiler.pretty, ty : string) : unit =
     (freshLine (); print (render (echoDoc (name, shown, ty)) ^ "\n"))
 
-  (* ---- the terminal while code runs (D18) ---- *)
+  (* ---- the terminal while an entry runs (D18) ---- *)
 
   val holding = ref false
 
-  (* the terminal quiet while what was compiled runs *)
+  (* the terminal quiet while a declaration or command runs *)
   fun hold () =
     if !editing andalso not (!holding) then ((Terminal.quiet (); holding := true) handle OS.SysErr _ => ()) else ()
 
@@ -320,10 +320,10 @@ struct
   fun readEntry (sessionEnv : Env.env, isWhole : string -> bool) : entry =
     (case LineEdit.readLine (config (sessionEnv, isWhole), !history) of
        LineEdit.Line t =>
-         (* a line that will run is already quiet; a blank line or a
-            command is put back, since nothing else makes it quiet *)
-         (if CharVector.all Char.isSpace t orelse isCommand t then Terminal.leave () else ();
-          holding := false; mark "C"; Entry t)
+         (* keepRaw has already made every accepted line quiet, including
+            commands and blanks. Record that ownership so shellLike can
+            release it for an external program or a read of standard input. *)
+         (holding := true; mark "C"; Entry t)
      | LineEdit.Interrupted => (holding := false; Interrupted)
      | LineEdit.End => (holding := false; EndOfInput))
     handle SML90.Interrupt =>

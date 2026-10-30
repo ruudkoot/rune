@@ -1,7 +1,8 @@
 # A line typed while a REPL command runs is not run
 
 Found 2026-10-26, from two failures of `terminal/repl-debug` in `make check`
-during the functors-units roadmap. Status: open.
+during the functors-units roadmap. Status: fixed 2026-10-29;
+[fix and regression](../terminal-races-fixed.md).
 
 ## What happens
 
