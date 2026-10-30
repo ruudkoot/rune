@@ -181,7 +181,8 @@ asset paired with its PNG source digest; packaging needs no Pillow.
   programs (`gcc-multilib`), and, for SML/NJ 2026.2, CMake 3.23 or later
   and python3. The 2026.2 build is the slow one: it compiles LLVM. No root
   access. `make` needs MLton (`BOOTHOST` names the host build that
-  bootstraps `bin/rune`, default `mlton`); `make test-all`,
+  compiles the stage-0 image, default `mlton`; the compiler that ships is
+  compiled by that image on `runevm`); `make test-all`,
   `make check-cross`, the matrix targets and `make check` need all six.
 
 `make doctor` checks all of this (and the tools of the test, sanitizer, host
@@ -211,7 +212,7 @@ name the tools to check.
 | `make vm` | `bin/runevm-stack`, and `bin/runevm`, `runtime/register`'s loop for the register bytecode |
 | `make vm-asan` | `bin/runevm-stack-asan` and `bin/runevm-asan` with AddressSanitizer/UBSan; `make test-register-asan` runs `tests/lang` on the latter |
 | `make test-register-jit` | `runtime/register` with every function compiled (`--jit=all`): `tests/lang` (at tier 2 too, and returning by `ret`, `--jit-returns=call`: [plans/native-frames.md](plans/native-frames.md), M7) and the Basis Library suite (`rune:jit`), every program of `tests/lang` and `tests/perf`, `tests/opt/prims.sml` and the compiler compiling itself printing and counting the same interpreted, compiled, with every other function compiled (`--jit-only=odd`, so that calls, returns and raises cross between the tiers both ways) and under `--jit-stress` (tiered up at the lowest thresholds and invalidated every fifth call) and every instruction occurring in them (the oracle `jit` of `tests/runner/oracles.sml`), `runevm --jit-check`, and a recursion 200,000 deep under a machine stack of 1 MB, which holds the driver to never nesting ([plans/jit.md](plans/jit.md), M3-M5); part of `make check`. `make RUNE_JIT=0` builds `runtime/register` without the JIT. `RUNEVM_JIT=MODE` in the environment is the mode where no `--jit=` is given |
-| `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot`; `bin/rune.stack.rbc` is the same compiler in the stack bytecode |
+| `make boot` | `bin/rune.rbc` (the compiler compiled by the stage-0 image on `runevm`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot`; `bin/rune.stack.rbc` is the same compiler in the stack bytecode |
 | `make test` | the programs of `tests/lang` and `tests/errors` compiled by `bin/rune-stack` (`bin/rune --target=stack`, written by every `make`, for `RUNE=` if you give one) and run on `bin/runevm-stack`, on the runner (`bin/rune-test run --tier test`; `tests/runner/lang.sml`), and `make test-steps`: the compiler's own tests, the runtime's limits and collector log, `bin/rune-windows vm` (bytecode files and options the VM must refuse with a message) and the C test of the heap. `make test-heap`, `test-gc`, `test-all`, `test-native`, `test-register` and `test-register-jit` run `tests/lang` in their ways the same way, each by its tag, and the rest of what they run as `make TARGET-steps` |
 | `make test-all` | run the suite with each of the six host builds |
 | `make isa` | write the tables of the instruction set and the primitives again from their descriptions in `src/isa`, with `runeisa` built by MLton: `runtime/stack/opcodes.def`, `runtime/prims.def`, `runtime/isa.h`, `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `lib/compiler/backend/opcodes.sml`, `lib/compiler/backend/prims.sml`; they are committed |
@@ -270,7 +271,7 @@ are; `MLTON`, `MLBUILD`, `SMLNJ`, `MLBUILD32`, `SMLNJ32`, `MLBUILD_DEV`,
 `SMLNJ_DEV`, `POLY` and `POLYC` name their commands one by one.
 
 `CC=clang make vm` selects another C compiler. `BOOTHOST=smlnj-legacy make` picks the
-host build that compiles stage 1 of the bootstrap.
+host build that compiles stage 0 of the bootstrap.
 
 ## Windows
 
@@ -699,18 +700,25 @@ The compiler is written in the language it compiles, so it builds itself, and
 the result is the compiler you get:
 
 1. `make boot` compiles `build/config.sml`, the files of `rune.build` and
-   `src/main/rune-main.sml` with `bin/rune-$(BOOTHOST)` into `bin/rune.rbc`
-   (stage 1), writes `bin/rune-boot`, a wrapper that runs
+   `src/main/rune-main.sml` with `bin/rune-$(BOOTHOST)` into
+   `build/bootstrap/rune.rbc` (stage 0). That host build reads a private
+   copy of the Basis under `build/bootstrap/lib`, so it does not write the
+   `MANIFEST` files that ship. `BOOTHOST` is `mlton`, `smlnj-legacy`,
+   `smlnj32`, `smlnj-dev`, `polyml` or `mlkit`; they all emit the same
+   bytecode, so it only decides which host build compiles stage 0.
+2. `bin/rune-bootstrap` runs stage 0 on `runevm`. It writes every library
+   `MANIFEST` (`rune --basis-index`) and compiles the same sources into
+   `bin/rune.rbc` (stage 1, register bytecode). `make boot` then writes
+   `bin/rune-boot`, a wrapper that runs
    `runevm --heap-size $(RUNE_HEAP) bin/rune.rbc`, and points `bin/rune` at
-   it. `make` does this too. `BOOTHOST` is `mlton`, `smlnj-legacy`, `smlnj32`,
-   `smlnj-dev`, `polyml` or `mlkit`; they all emit the same bytecode, so it only decides which host
-   build compiles stage 1.
-2. `bin/rune` takes the same options as the host builds, so `make test` runs
+   it. `make` and `make dist` do this too: the compiler and the indexes in
+   a distribution archive are stage 1, not the host build.
+3. `bin/rune` takes the same options as the host builds, so `make test` runs
    the whole suite with it and `make check-cross` compares its bytecode with
    the six host builds on every test program, the examples, and the
    compiler sources themselves. `check-cross` knows it as the build `boot`,
    hence the name `bin/rune-boot`.
-3. `make bootstrap` compiles the compiler with `bin/rune` into
+4. `make bootstrap` compiles the compiler with `bin/rune` into
    `bin/rune.stage2.rbc` and checks with `cmp` that it is identical to
    `bin/rune.rbc`: the compiler reproduces itself byte for byte. It does the
    same with `--target=stack` against `bin/rune.stack.rbc`.

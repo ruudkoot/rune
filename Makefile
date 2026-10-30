@@ -9,8 +9,9 @@
 #   make mlton|smlnj-legacy|smlnj32|smlnj-dev|polyml|mlkit   build the compiler with one of them
 #   make host-builds  build the compiler with all six
 #   make vm         build bin/runevm (runtime/register, the register bytecode's VM) and bin/runevm-stack
-#   make boot       bin/rune.rbc (the compiler compiled by bin/rune-$(BOOTHOST)),
-#                   the bin/rune-boot wrapper that runs it on runevm, and bin/rune -> it; bin/rune.stack.rbc is the stack bytecode of the same
+#   make boot       bin/rune.rbc (the compiler compiled by the stage-0 image on
+#                   runevm), the bin/rune-boot wrapper that runs it on runevm,
+#                   and bin/rune -> it; bin/rune.stack.rbc is the stack bytecode of the same
 #   make test       run the test suite with bin/rune
 #   make install    install rune, runevm, runevm-stack, runedoc, runeopt and the basis library under PREFIX
 #                   (/usr/local as root, ~/.local otherwise); as root nothing
@@ -51,12 +52,16 @@
 #   make test-register   the suites through runtime/register's first loop and the register
 #                   bytecode (docs/bytecode.md); part of make check
 #
-# bin/rune is the compiler Rune ships: itself, on the VM. The host builds
-# bin/rune-mlton, bin/rune-smlnj-legacy, bin/rune-smlnj32, bin/rune-smlnj-dev,
-# bin/rune-polyml and bin/rune-mlkit exist to bootstrap it and to check that
-# all seven agree (check-cross). Every target that runs the compiler uses
-# $(RUNE), so `make test RUNE=bin/rune-mlton` is the fast loop.
-# `make BOOTHOST=smlnj-legacy` bootstraps with another host.
+# bin/rune is the compiler Rune ships: itself, on the VM. A host build
+# (bin/rune-$(BOOTHOST), MLton unless BOOTHOST says otherwise) compiles only
+# the stage-0 image, build/bootstrap/rune.rbc. bin/rune-bootstrap runs that
+# image on runevm and is what compiles bin/rune.rbc and the library
+# MANIFESTs. The host builds bin/rune-mlton, bin/rune-smlnj-legacy,
+# bin/rune-smlnj32, bin/rune-smlnj-dev, bin/rune-polyml and bin/rune-mlkit
+# exist for that stage-0 image and to check that all seven agree
+# (check-cross). Every target that runs the compiler uses $(RUNE), so
+# `make test RUNE=bin/rune-mlton` is the fast loop.
+# `make BOOTHOST=smlnj-legacy` builds stage 0 with another host.
 #
 # The SML systems are the releases scripts/fetch-hosts.sh installs under
 # $(HOSTS), never ones the machine has on its PATH: MLTON, MLBUILD, SMLNJ,
@@ -232,6 +237,9 @@ unexport FORCE_COLOR CLICOLOR_FORCE
 # sizes keep the resident set of JOBS parallel compilers down).
 BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
+# What compiles the compiler that ships, and the MANIFEST of every library:
+# the stage-0 image, on runevm. Not bin/rune-$(BOOTHOST).
+BOOTSTRAP_RUNE := bin/rune-bootstrap
 RUNE_HEAP ?= 67108864
 # what every rune wrapper does first: `rune -i ARGS` is the REPL beside it,
 # bin/rune-repl (docs/repl.md), with ARGS
@@ -243,8 +251,9 @@ all: vm boot runedoc runeopt runeffi manifests basis-cache
 
 # The MANIFEST of each library (BasisManifest; docs/build.md), what each of
 # its files provides and requires, made from the library's build file and
-# its sources by the first host's compiler, which builds before any rune
-# (rune --basis-index)
+# its sources by the stage-0 compiler running on runevm
+# ($(BOOTSTRAP_RUNE) --basis-index). The host compiler is not used here:
+# it only builds that stage-0 image, against a private copy of the Basis.
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter lsp
 DOC_LIBS := $(REPL_LIBS) compiler
@@ -378,67 +387,67 @@ test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rb
 	bin/runevm bin/rune-lsp-semantic-tests.rbc bin/runevm bin/runelsp.rbc
 
 manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/compiler/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST lib/ffi/runtime/MANIFEST lib/ffi/win32/common/MANIFEST lib/ffi/win32/model/MANIFEST lib/ffi/win32/mock/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST) lib/sdl/MANIFEST lib/ffi/win32/sdldriver/MANIFEST
-lib/compiler/MANIFEST: lib/compiler/library.build $(wildcard lib/compiler/*.build lib/compiler/*.sml lib/compiler/*/*.sml) lib/json/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/compiler
-lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/basis
-lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/random
-lib/test/property/MANIFEST: lib/test/property/library.build $(wildcard lib/test/property/*.sml) lib/random/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/test/property
-lib/test/property/basis/MANIFEST: lib/test/property/basis/library.build $(wildcard lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml) lib/test/property/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/test/property/basis
+lib/compiler/MANIFEST: lib/compiler/library.build $(wildcard lib/compiler/*.build lib/compiler/*.sml lib/compiler/*/*.sml) lib/json/MANIFEST lib/unicode/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/compiler
+lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/basis
+lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/random
+lib/test/property/MANIFEST: lib/test/property/library.build $(wildcard lib/test/property/*.sml) lib/random/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/test/property
+lib/test/property/basis/MANIFEST: lib/test/property/basis/library.build $(wildcard lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml) lib/test/property/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/test/property/basis
 # the unit-testing library (docs/plans/unit-testing.md, M1), written on test/property
-lib/test/unit/MANIFEST: lib/test/unit/library.build $(wildcard lib/test/unit/*.sml) lib/test/property/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/test/unit
+lib/test/unit/MANIFEST: lib/test/unit/library.build $(wildcard lib/test/unit/*.sml) lib/test/property/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/test/unit
 # the runner (docs/plans/unit-testing.md, M3), written on test/unit and terminal
-lib/test/runner/MANIFEST: lib/test/runner/library.build $(wildcard lib/test/runner/*.sml) lib/test/unit/MANIFEST lib/terminal/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/test/runner
+lib/test/runner/MANIFEST: lib/test/runner/library.build $(wildcard lib/test/runner/*.sml) lib/test/unit/MANIFEST lib/terminal/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/test/runner
 # the libraries of docs/plans/repl.md (The libraries), each after those it
 # is written on
-lib/unicode/MANIFEST: lib/unicode/library.build $(wildcard lib/unicode/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/unicode
-lib/json/MANIFEST: lib/json/library.build $(wildcard lib/json/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/json
-lib/language/c/MANIFEST: lib/language/c/library.build $(wildcard lib/language/c/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/language/c
-lib/terminal/MANIFEST: lib/terminal/library.build $(wildcard lib/terminal/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/terminal
-lib/pretty/MANIFEST: lib/pretty/library.build $(wildcard lib/pretty/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/pretty
-lib/markdown/MANIFEST: lib/markdown/library.build $(wildcard lib/markdown/*.sml) lib/basis/MANIFEST lib/pretty/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/markdown
-lib/digest/MANIFEST: lib/digest/library.build $(wildcard lib/digest/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/digest
-lib/jsonrpc/MANIFEST: lib/jsonrpc/library.build $(wildcard lib/jsonrpc/*.sml) lib/basis/MANIFEST lib/json/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/jsonrpc
-lib/lsp/MANIFEST: lib/lsp/library.build $(wildcard lib/lsp/*.sml) lib/jsonrpc/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/lsp
-lib/dap/MANIFEST: lib/dap/library.build $(wildcard lib/dap/*.sml) lib/basis/MANIFEST lib/jsonrpc/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/dap
-lib/zmtp/MANIFEST: lib/zmtp/library.build $(wildcard lib/zmtp/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/zmtp
-lib/jupyter/MANIFEST: lib/jupyter/library.build $(wildcard lib/jupyter/*.sml) lib/basis/MANIFEST lib/zmtp/MANIFEST lib/json/MANIFEST lib/digest/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/jupyter
+lib/unicode/MANIFEST: lib/unicode/library.build $(wildcard lib/unicode/*.sml) lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/unicode
+lib/json/MANIFEST: lib/json/library.build $(wildcard lib/json/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/json
+lib/language/c/MANIFEST: lib/language/c/library.build $(wildcard lib/language/c/*.sml) lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/language/c
+lib/terminal/MANIFEST: lib/terminal/library.build $(wildcard lib/terminal/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/terminal
+lib/pretty/MANIFEST: lib/pretty/library.build $(wildcard lib/pretty/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/pretty
+lib/markdown/MANIFEST: lib/markdown/library.build $(wildcard lib/markdown/*.sml) lib/basis/MANIFEST lib/pretty/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/markdown
+lib/digest/MANIFEST: lib/digest/library.build $(wildcard lib/digest/*.sml) lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/digest
+lib/jsonrpc/MANIFEST: lib/jsonrpc/library.build $(wildcard lib/jsonrpc/*.sml) lib/basis/MANIFEST lib/json/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/jsonrpc
+lib/lsp/MANIFEST: lib/lsp/library.build $(wildcard lib/lsp/*.sml) lib/jsonrpc/MANIFEST lib/unicode/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/lsp
+lib/dap/MANIFEST: lib/dap/library.build $(wildcard lib/dap/*.sml) lib/basis/MANIFEST lib/jsonrpc/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/dap
+lib/zmtp/MANIFEST: lib/zmtp/library.build $(wildcard lib/zmtp/*.sml) lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/zmtp
+lib/jupyter/MANIFEST: lib/jupyter/library.build $(wildcard lib/jupyter/*.sml) lib/basis/MANIFEST lib/zmtp/MANIFEST lib/json/MANIFEST lib/digest/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/jupyter
 
-lib/ffi/model/MANIFEST: lib/ffi/model/library.build $(wildcard lib/ffi/model/*.sml) lib/json/MANIFEST lib/language/c/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/ffi/model
-lib/ffi/marshal/MANIFEST: lib/ffi/marshal/library.build $(wildcard lib/ffi/marshal/*.sml) lib/unicode/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/ffi/marshal
-lib/ffi/runtime/MANIFEST: lib/ffi/runtime/library.build $(wildcard lib/ffi/runtime/*.sml) lib/ffi/marshal/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/ffi/runtime
-lib/ffi/win32/common/MANIFEST: lib/ffi/win32/common/library.build $(wildcard lib/ffi/win32/common/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/common
-lib/ffi/win32/model/MANIFEST: lib/ffi/win32/model/library.build $(wildcard lib/ffi/win32/model/*.sml) lib/ffi/win32/common/MANIFEST lib/unicode/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/model
-lib/ffi/win32/mock/MANIFEST: lib/ffi/win32/mock/library.build $(wildcard lib/ffi/win32/mock/*.sml) lib/ffi/win32/model/MANIFEST lib/basis/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/mock
-lib/sdl/MANIFEST: lib/sdl/library.build $(wildcard lib/sdl/*.sml) lib/ffi/runtime/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/sdl
-lib/ffi/win32/sdldriver/MANIFEST: lib/ffi/win32/sdldriver/library.build $(wildcard lib/ffi/win32/sdldriver/*.sml) lib/sdl/MANIFEST lib/ffi/win32/common/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/sdldriver
-lib/ffi/win32/native/MANIFEST: lib/ffi/win32/native/library.build $(wildcard lib/ffi/win32/native/*.sml) lib/ffi/win32/common/MANIFEST lib/ffi/runtime/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index lib/ffi/win32/native
+lib/ffi/model/MANIFEST: lib/ffi/model/library.build $(wildcard lib/ffi/model/*.sml) lib/json/MANIFEST lib/language/c/MANIFEST lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/model
+lib/ffi/marshal/MANIFEST: lib/ffi/marshal/library.build $(wildcard lib/ffi/marshal/*.sml) lib/unicode/MANIFEST lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/marshal
+lib/ffi/runtime/MANIFEST: lib/ffi/runtime/library.build $(wildcard lib/ffi/runtime/*.sml) lib/ffi/marshal/MANIFEST lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/runtime
+lib/ffi/win32/common/MANIFEST: lib/ffi/win32/common/library.build $(wildcard lib/ffi/win32/common/*.sml) lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/win32/common
+lib/ffi/win32/model/MANIFEST: lib/ffi/win32/model/library.build $(wildcard lib/ffi/win32/model/*.sml) lib/ffi/win32/common/MANIFEST lib/unicode/MANIFEST lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/win32/model
+lib/ffi/win32/mock/MANIFEST: lib/ffi/win32/mock/library.build $(wildcard lib/ffi/win32/mock/*.sml) lib/ffi/win32/model/MANIFEST lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/win32/mock
+lib/sdl/MANIFEST: lib/sdl/library.build $(wildcard lib/sdl/*.sml) lib/ffi/runtime/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/sdl
+lib/ffi/win32/sdldriver/MANIFEST: lib/ffi/win32/sdldriver/library.build $(wildcard lib/ffi/win32/sdldriver/*.sml) lib/sdl/MANIFEST lib/ffi/win32/common/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/win32/sdldriver
+lib/ffi/win32/native/MANIFEST: lib/ffi/win32/native/library.build $(wildcard lib/ffi/win32/native/*.sml) lib/ffi/win32/common/MANIFEST lib/ffi/runtime/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/win32/native
 manifests: lib/ffi/win32/native/MANIFEST
 
 # Immutable generated FFI sets are real source libraries. Their MANIFESTs
@@ -448,8 +457,8 @@ FFI_GENERATED_LIBRARIES := $(patsubst %/library.build,%,$(foreach family,sdl win
 FFI_GENERATED_MANIFESTS := $(addsuffix /MANIFEST,$(FFI_GENERATED_LIBRARIES))
 manifests: $(FFI_GENERATED_MANIFESTS)
 ifneq ($(strip $(FFI_GENERATED_MANIFESTS)),)
-$(FFI_GENERATED_MANIFESTS): %/MANIFEST: %/library.build $(foreach family,sdl win32,$(wildcard lib/ffi/$(family)/generated/*/sets/*/*.sml)) lib/ffi/runtime/MANIFEST bin/rune-$(BOOTHOST)
-	bin/rune-$(BOOTHOST) --basis-index $(@D)
+$(FFI_GENERATED_MANIFESTS): %/MANIFEST: %/library.build $(foreach family,sdl win32,$(wildcard lib/ffi/$(family)/generated/*/sets/*/*.sml)) lib/ffi/runtime/MANIFEST $(BOOTSTRAP_RUNE)
+	$(BOOTSTRAP_RUNE) --basis-index $(@D)
 endif
 
 # The frozen Basis and compiler libraries (docs/units.md, The cache): every unit of
@@ -1781,19 +1790,45 @@ perf: $(RUNE) vm bin/rune-matrix bin/rune-test | $(MATRIX_DOCTOR)
 	  bin/rune-matrix --perf --configs $(PERF_CONFIGS)
 
 # ---------------------------------------------------------------- bootstrap
-# Stage 1: a host build compiles the compiler to bytecode. bin/rune-boot runs
-# it on runevm and is what bin/rune names; `bootstrap` checks that it
-# reproduces itself byte for byte. check-cross knows the build as `boot`.
-# All host builds emit the same bytecode, so BOOTHOST (mlton, smlnj-legacy,
-# smlnj32, smlnj-dev, polyml or mlkit) only decides which one builds stage 1,
-# not what comes out.
-bin/rune.rbc: bin/rune-$(BOOTHOST) bin/runevm $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
-	bin/rune-$(BOOTHOST) --lint --mid-roundtrip -o $@ $(BOOT_SRCS)
+# Stage 0 is a host build of the compiler (BOOTHOST: mlton, smlnj-legacy,
+# smlnj32, smlnj-dev, polyml or mlkit). It exists only to compile the
+# compiler that ships, and it reads a private copy of the Basis so the
+# MANIFEST files under lib/ can be written later by that compiler. All host
+# builds emit the same bytecode, so BOOTHOST decides which host builds
+# stage 0, not what comes out.
+# Stage 1 is that image on runevm ($(BOOTSTRAP_RUNE)). It writes every
+# library MANIFEST and bin/rune.rbc, the register bytecode dist ships.
+# bin/rune-boot runs stage 1 on runevm and is what bin/rune names;
+# `bootstrap` checks that stage 1 reproduces itself byte for byte.
+# check-cross knows that build as `boot`.
+BOOT_LIB := build/bootstrap/lib
+BOOT_BASIS := $(BOOT_LIB)/basis
+$(BOOT_BASIS)/.linked: lib/basis/library.build $(filter-out lib/basis/MANIFEST,$(wildcard lib/basis/*))
+	set -e; rm -rf $(BOOT_BASIS); mkdir -p $(BOOT_BASIS); \
+	for f in lib/basis/*; do \
+	  b=$$(basename "$$f"); \
+	  [ "$$b" = MANIFEST ] && continue; \
+	  ln -s "$(CURDIR)/$$f" "$(BOOT_BASIS)/$$b"; \
+	done; \
+	touch $@
+$(BOOT_BASIS)/MANIFEST: $(BOOT_BASIS)/.linked bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --lib $(BOOT_LIB) --basis-index $(BOOT_BASIS)
+build/bootstrap/rune.rbc: bin/rune-$(BOOTHOST) $(BOOT_BASIS)/MANIFEST $(BOOT_SRCS)
+	@mkdir -p build/bootstrap
+	bin/rune-$(BOOTHOST) --lib $(BOOT_LIB) --lint --mid-roundtrip -o $@ $(BOOT_SRCS)
+bin/rune-bootstrap: build/bootstrap/rune.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/../build/bootstrap/rune.rbc" --lib "$$d/../lib" "$$@"\n' > $@
+	chmod +x $@
+
+# The compiler that ships: stage 0, running on runevm, compiling the same
+# sources to register bytecode. dist packs this file.
+bin/rune.rbc: $(BOOTSTRAP_RUNE) $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
+	$(BOOTSTRAP_RUNE) --lint --mid-roundtrip -o $@ $(BOOT_SRCS)
 
 # The same compiler in the stack bytecode, which runevm-stack runs: what the
 # suites of the stack VM, runeopt's translations and its budgets are made of.
-bin/rune.stack.rbc: bin/rune-$(BOOTHOST) bin/runevm-stack $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
-	bin/rune-$(BOOTHOST) --target=stack --lint --mid-roundtrip -o $@ $(BOOT_SRCS)
+bin/rune.stack.rbc: $(BOOTSTRAP_RUNE) $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
+	$(BOOTSTRAP_RUNE) --target=stack --lint --mid-roundtrip -o $@ $(BOOT_SRCS)
 
 # bin/rune making the register bytecode of runtime/register
 # The suites through runtime/register's first loop (docs/plans/middle-end.md, M5): the
