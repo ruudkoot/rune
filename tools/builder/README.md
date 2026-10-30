@@ -1,26 +1,29 @@
 # Standard ML build and packaging tools
 
-The bootstrap executable is compiled by the installed native MLton from
-`native.mlb`. It links the ordinary Basis Library, UTF-8/JSON/SHA256 utilities,
-the shared build models and a small POSIX process adapter. It requires no Rune
-VM, compiler bytecode, REPL image or target GMP configuration. MLton and its
-build-host runtime are external host requirements; they are independent of
-whether the resulting Rune VM enables GMP.
+The bootstrap executable is compiled by the first of the Rune release, Poly/ML
+and MLton (`scripts/boot-host.sh`). It links UTF-8/JSON/SHA256 utilities, the
+shared build models and a process adapter. The release compiles it against the
+Basis shipped in the release and runs the image on that release's `runevm`.
+Poly/ML (`polyml-io.sml`) and MLton (`native.mlb`, `native-io.sml`) produce a
+native executable and need no Rune VM, compiler bytecode or target GMP
+configuration. Which of the three is used is independent of whether the
+resulting Rune VM enables GMP.
 
 The dependency order is:
 
-1. The retained host provisioning adapter makes the pinned native MLton available.
-2. MLton builds the native SML executable and its generated launcher.
-3. That executable configures GMP, discovers runtime inputs and builds the VMs.
+1. The bootstrap compiler is the Rune release, then Poly/ML, then MLton.
+2. That compiler builds this tool and its launcher.
+3. The tool configures GMP, discovers runtime inputs and builds the VMs.
 4. A VM and compiler can then build the portable Rune entrypoint from the same
    models. This post-bootstrap bytecode is used in retained relinking material.
 5. Documentation, installation and distribution consume these verified artifacts.
 
-The native and Rune entrypoints have separate process adapters. Standard ML owns
+The host and Rune entrypoints have separate process adapters. Standard ML owns
 options, hashes, cache identity, dependency discovery, ABI admission, archive
-records, comparisons and publication. The native adapter uses POSIX process
-control and MLton's signal handler boundary; the Rune adapter uses Subprocess.
-Both use finite waits, owned child cleanup and argument vectors. External C
+records, comparisons and publication. The MLton adapter uses POSIX process
+control and MLton's signal handler boundary; the Poly/ML adapter uses `Signal`;
+the Rune adapter uses Subprocess.
+All three use finite waits, owned child cleanup and argument vectors. External C
 compilers, pkg-config, make, tar/xz, curl, gzip and Git provide their respective
 host observations, builds, transport and compression.
 

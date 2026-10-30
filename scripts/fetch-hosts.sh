@@ -3,14 +3,21 @@
 # suite compares it with, under a user-local prefix (`make hosts`). Nothing is
 # installed system-wide, no root access is needed, and an SML system that the
 # machine itself has is never used.
-#   scripts/fetch-hosts.sh [--force] [mlton] [smlnj-legacy] [smlnj32] [smlnj-dev] [polyml] [mlkit]     (default: all six)
+#   scripts/fetch-hosts.sh [--force] [rune] [mlton] [smlnj-legacy] [smlnj32] [smlnj-dev] [polyml] [mlkit]
+#                                                   (default: rune and all six SML hosts)
 # Prefix: ${RUNE_HOSTS:-$HOME/.local/rune-hosts}. Each system goes to
 # <prefix>/<host>-<version>, and <prefix>/<host> is a symlink to it, so
-# <prefix>/mlton/bin/mlton, <prefix>/smlnj-legacy/bin/sml, <prefix>/smlnj32/bin/sml,
+# <prefix>/rune/bin/rune, <prefix>/mlton/bin/mlton, <prefix>/smlnj-legacy/bin/sml, <prefix>/smlnj32/bin/sml,
 # <prefix>/smlnj-dev/bin/sml, <prefix>/polyml/bin/poly and <prefix>/mlkit/bin/mlkit
 # are the commands. MLTON_VERSION, SMLNJ_VERSION, SMLNJ_DEV_VERSION,
 # POLYML_VERSION and MLKIT_VERSION (with MLKIT_SHA256) select other releases.
 # `make doctor` checks the tools this script needs.
+#  * Rune: the release archive from github.com/ruudkoot/rune (RUNE_BOOT_VERSION,
+#    v0.1). Its compiler is the first bootstrap compiler (scripts/boot-host.sh).
+#    It compiles the current sources against the Basis in the release; that
+#    image runs on the release's runevm. Linux uses rune-<version>-linux.tar.gz
+#    and Windows rune-<version>-windows.zip. The archive's installer writes
+#    <prefix>/rune-<version>/{bin,lib}.
 #  * MLton: the binary release from github.com/MLton/mlton (MLton is written
 #    in SML and needs an MLton to build; links against the system's GMP).
 #    Under MSYS2 the release for the environment of the shell (UCRT64,
@@ -62,6 +69,7 @@ if [ -z "${RUNE_HOSTS_SIGPIPE:-}" ] && env --default-signal=PIPE true >/dev/null
   exec env --default-signal=PIPE RUNE_HOSTS_SIGPIPE=1 "$0" "$@"
 fi
 
+RUNE_BOOT_VERSION=${RUNE_BOOT_VERSION:-0.1}
 MLTON_VERSION=${MLTON_VERSION:-20241230}
 SMLNJ_VERSION=${SMLNJ_VERSION:-110.99.9}
 SMLNJ_DEV_VERSION=${SMLNJ_DEV_VERSION:-2026.2}
@@ -75,15 +83,15 @@ hosts=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --force) force=1 ;;
-    mlton|smlnj-legacy|smlnj32|smlnj-dev|polyml|mlkit) hosts="$hosts $1" ;;
-    *) echo "usage: scripts/fetch-hosts.sh [--force] [mlton] [smlnj-legacy] [smlnj32] [smlnj-dev] [polyml] [mlkit]" >&2; exit 2 ;;
+    rune|mlton|smlnj-legacy|smlnj32|smlnj-dev|polyml|mlkit) hosts="$hosts $1" ;;
+    *) echo "usage: scripts/fetch-hosts.sh [--force] [rune] [mlton] [smlnj-legacy] [smlnj32] [smlnj-dev] [polyml] [mlkit]" >&2; exit 2 ;;
   esac
   shift
 done
 if [ -z "$hosts" ]; then
   case "$(uname -s)" in
-    MINGW*|MSYS*) hosts=mlton ;;
-    *) hosts="mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit" ;;
+    MINGW*|MSYS*) hosts="rune mlton" ;;
+    *) hosts="rune mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit" ;;
   esac
 fi
 
@@ -334,6 +342,37 @@ install_mlkit() {
   activate mlkit "$v"
 }
 
+install_rune() {
+  v=$RUNE_BOOT_VERSION
+  if installed rune "$v"; then echo "rune $v is already installed"; return; fi
+  case "$(uname -s)" in
+    Linux) archive=rune-$v-linux.tar.gz ;;
+    MINGW*|MSYS*) archive=rune-$v-windows.zip ;;
+    *) echo "fetch-hosts: no Rune $v release for $(uname -s) $(uname -m)" >&2; return 1 ;;
+  esac
+  fetch "https://github.com/ruudkoot/rune/releases/download/v$v/$archive" "$prefix/src/$archive"
+  rm -rf "$prefix/rune-$v" "$prefix/src/rune-$v-unpack"
+  mkdir -p "$prefix/src/rune-$v-unpack"
+  case "$archive" in
+    *.tar.gz) tar -xzf "$prefix/src/$archive" -C "$prefix/src/rune-$v-unpack" ;;
+    *.zip)
+      command -v unzip > /dev/null 2>&1 ||
+        { echo "fetch-hosts: unzip is required to install the Windows Rune release" >&2; return 1; }
+      unzip -q "$prefix/src/$archive" -d "$prefix/src/rune-$v-unpack" ;;
+  esac
+  root=$(find "$prefix/src/rune-$v-unpack" -mindepth 1 -maxdepth 1 -type d | head -n 1)
+  [ -n "$root" ] || { echo "fetch-hosts: $archive has no top directory" >&2; return 1; }
+  case "$(uname -s)" in
+    Linux) sh "$root/install.sh" --prefix "$prefix/rune-$v" ;;
+    MINGW*|MSYS*)
+      dest=$prefix/rune-$v
+      if command -v cygpath > /dev/null 2>&1; then dest=$(cygpath -w "$dest"); fi
+      cmd //c "\"$root/install.bat\" --prefix \"$dest\" --no-register" ;;
+  esac
+  printf '%s\n' "$v" > "$prefix/rune-$v/VERSION"
+  activate rune "$v"
+}
+
 status=0
 # say TEXT: a line on the job log now. The shell buffers a pipe in blocks,
 # so a builtin echo can sit unseen for the whole of a long build; env's
@@ -513,6 +552,7 @@ if [ -n "$later" ]; then
 fi
 
 say "== installed under $prefix"
+[ -x "$prefix/rune/bin/rune" ] && "$prefix/rune/bin/rune" --version
 [ -x "$prefix/mlton/bin/mlton" ] && "$prefix/mlton/bin/mlton" | head -1
 [ -x "$prefix/smlnj-legacy/bin/sml" ] && "$prefix/smlnj-legacy/bin/sml" @SMLversion
 [ -x "$prefix/smlnj32/bin/sml" ] && "$prefix/smlnj32/bin/sml" @SMLversion
