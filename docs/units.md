@@ -219,10 +219,11 @@ together -- `rune` fails with "the units do not fit together:" and up to
 three of them (`Link.Mismatch`), and the compiler library's
 `Session.writeProgram` raises `Fail` with the same. Each unit's code was
 checked whole when it was compiled (`RegVerify`; [ir.md](ir.md), *The
-register target*), so this is what is left to check of the program; the
-check of the whole linked program is there for tests, where
-`RUNE_REGVERIFY_LINK` is set and not empty, and `RUNE_LINK_CHECK=0` leaves
-the interfaces out, to measure them. The check runs at every link, at
+register target*), so this is what is left to check of the program. The
+whole linked program is checked at level 2 of the lint, so in every test,
+and where `RUNE_REGVERIFY_LINK` is set and not empty: interfaces see a
+function misnumbered but not a global of the same representation.
+`RUNE_LINK_CHECK=0` leaves the interfaces out, to measure them. The check runs at every link, at
 level 0 of the lint, which is always on but where `--lint=off` says
 (`Pass.checkAt`; `--pass-stats` counts it as `link`). A unit file keeps what its unit
 expects (version 4), so a unit relinked from its file against another

@@ -41,7 +41,7 @@
    through Pass.checkAt, after the stage `registers` (stage, key regverify),
    each unit once when it is compiled: a link checks the units' interfaces
    (Link.Mismatch), and checks the whole program it makes only where
-   RUNE_REGVERIFY_LINK says (linked, key regverify-link), for tests.
+   level 2 or RUNE_REGVERIFY_LINK says (linked, key regverify-link).
    RUNE_REGVERIFY=1 runs it at every level, 0 at none, and census prints
    its counts.
    RUNE_REGVERIFY_INJECT corrupts the code Regs made, for its negative
@@ -818,13 +818,20 @@ struct
       SOME l => Pass.checkAt (key, l) (fn p => run (site, mode (), p)) p
     | NONE => ()
   fun stage (p : C.program) = checked ("regverify", "registers", fn () => if !Pass.whole then "whole" else "unit") p
-  (* the program a link makes, checked whole where RUNE_REGVERIFY_LINK is
-     set and not empty: each unit is checked when it is compiled, and the
-     link checks their interfaces (Link; the linting roadmap's M9) *)
+  (* the program a link makes, checked whole at level 2, and at this
+     check's own level where RUNE_REGVERIFY_LINK is set and not empty: each
+     unit is checked when it is compiled and the link checks their
+     interfaces at every level, which sees no global misnumbered (Link; the
+     linting roadmap's M9 and M16) *)
   fun linked (p : C.program) =
-    case OS.Process.getEnv "RUNE_REGVERIFY_LINK" of
-      SOME s => if s = "" then () else checked ("regverify-link", "link", fn () => "linked") p
-    | NONE => ()
+    let
+      val asked = case OS.Process.getEnv "RUNE_REGVERIFY_LINK" of SOME s => s <> "" | NONE => false
+    in
+      case level () of
+        SOME l => Pass.checkAt ("regverify-link", if asked then l else Int.max (l, 2))
+                    (fn p => run ("link", "linked", p)) p
+      | NONE => ()
+    end
 
   (* ---- faults, for the negative tests of the check ----
      RUNE_REGVERIFY_INJECT=KIND or KIND@N corrupts the N-th place (from 0)

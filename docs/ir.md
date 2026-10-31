@@ -67,10 +67,10 @@ linting roadmap, D12 and D13), each from its level up:
 | Level | What runs | What it costs, in instructions (HaMLet `-O1`; the compiler `-O1`) |
 |---|---|---|
 | `off` | none of level 0's; the passes' own assertions, the decoders and the loader, as always | -- |
-| 0 | always on, where nothing says otherwise in `rune`: the invariant of results in globals after every `lower` (`results`), and the functor bodies a unit's basis decoded, linted at the next unit's passes (`functor-body`) | 0.14%; 0.52% |
-| 1 | the boundaries between representations: `LambdaLint` after `translate`, `MidLint` after `mid` (and of the units' Mid `--units --whole` concatenates, `midconcat`) and of what `lower` is given (`prelower`), `midcanon`'s renaming, `LowLint` and `LowShapes` after `lower`, `RegVerify` after `registers` and at every link (*The register target*); what the REPL and the compiler library run where nothing says otherwise | 16.4%; 32.8% |
-| 2 | every pass: `AstLint` after elaboration (`astlint`, *AstLint* below), `MidLint` after each optional pass on Mid, and inside `simplify` of each definition as it is made, with the copies its calls made, in the program around it (`simplify-def`), and a unit's code read back as its file says it (`code-rt`: `UnitFile.read` of the bytes written, the same code but for the reader's normal form, and the same bytes written again); what `--lint` runs, and every test | 35.4%; 70.7%, and 11% more of a compile in units for `code-rt`; `AstLint` 8%; 17% more (*AstLint*) |
-| 3 | and Mid's text read back after every stage of Mid (`KEY-roundtrip`), as `--mid-roundtrip` does after `mid` alone from level 1; one tier of `make check` (`make test-ir`) | about 9 times the compile |
+| 0 | always on, where nothing says otherwise in `rune`: the invariant of results in globals after every `lower` (`results`), the functor bodies a unit's basis decoded, linted at the next unit's passes (`functor-body`), the units' interfaces at a link (`link`), and the imported schemes of an entry the cache gives (`schemes`) | 0.15%; 0.51% |
+| 1 | the boundaries between representations: `LambdaLint` after `translate`, `MidLint` after `mid` (and of the units' Mid `--units --whole` concatenates, `midconcat`) and of what `lower` is given (`prelower`), `midcanon`'s renaming, `LowLint` and `LowShapes` after `lower`, `RegVerify` after `registers` (*The register target*); what the REPL and the compiler library run where nothing says otherwise | 20.2%; 37.1% |
+| 2 | every pass: `AstLint` after elaboration (`astlint`, *AstLint* below), `MidLint` after each optional pass on Mid, and inside `simplify` of each definition as it is made, with the copies its calls made, in the program around it (`simplify-def`), a unit's code read back as its file says it (`code-rt`: `UnitFile.read` of the bytes written, the same code but for the reader's normal form, and the same bytes written again), and the whole program a link makes (`regverify-link`, *The register target*); what `--lint` runs, and every test | 57.3%; 97.2%, of which `AstLint` 15.2%; 18.2% (*AstLint*), and 11% more of a compile in units for `code-rt` |
+| 3 | and Mid's text read back after every stage of Mid (`KEY-roundtrip`), as `--mid-roundtrip` does after `mid` alone from level 1; one tier of `make check` (`make test-ir`) | about 10 times the compile |
 
 `--lint=LEVEL` gives the level; else `RUNE_LINT` (a level, `off`, or
 anything else not empty, 2; empty or unset, the program's own); else 0 in
@@ -274,12 +274,16 @@ rule's message. The thirteen mutants of the elaborator that the roadmap's E3 and
 E6 found nothing else catching, or catching late, each accepting what the
 Definition rejects or recording a wrong instance, are all caught by it.
 
-What it costs (`--pass-stats`'s `check astlint`, instructions): 0.25
-million of `examples/hello.sml`'s 2.9 million at level 2, 10.5 million of
-`compile-sigs`' 65 million, 137 million of HaMLet's 2.48 billion (8% of
-its compile at level 0), 306 million of the bootstrap's 3.41 billion (17%
-of its compile at level 0). At levels 0 and 1 it costs nothing: the
-elaborator keeps its records for it only at 2.
+What it costs (`--pass-stats`'s `check astlint`, instructions, each against
+the compile with the lint off): 0.26 million of `examples/hello.sml`'s 2.2
+million, 13.3 million of `compile-sigs`' 38 million, 183 million of HaMLet's
+1.21 billion (15%), 388 million of the compiler's 2.13 billion (18%), and
+77.8 billion of MLton's 606 files' 23.8 billion, more than three compiles:
+it walks each structure and value of the module language several times.
+MLton compiled whole at level 2 peaks at 10.3 GB against 6.0 GB at level 1,
+and stops in the elaborator under a heap limit of 5 GiB, which level 1
+passes. At levels 0 and 1 it costs nothing: the elaborator keeps its
+records for it only at 2.
 
 ## What a `Lambda` keeps
 
@@ -1109,9 +1113,10 @@ of compiling the compiler, 1.6% of HaMLet, 0.8% of MLton. It runs after
 ([plans/correctness/linting.md](plans/correctness/linting.md), M8); a unit
 taken from the cache was checked when its entry was made, which the
 entry's mark says, and `Link` checks the units' interfaces against each
-other rather than the whole program again (M9; [units.md](units.md),
-*Linking*), which `RUNE_REGVERIFY_LINK` set and not empty asks for too
-(`regverify-link`). Its
+other at every level (M9; [units.md](units.md), *Linking*). The whole
+program a link makes is checked again only at level 2, or where
+`RUNE_REGVERIFY_LINK` is set and not empty (`regverify-link`, M16): an
+interface does not see a global misnumbered. Its
 rules are the tables `runeisa` writes from `src/isa/regs.sml` (`RegCodes`:
 what each instruction reads and writes, what it leaves and takes, what
 must follow it, which primitives it names), what Lower declares of the

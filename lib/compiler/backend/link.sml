@@ -398,8 +398,9 @@ struct
             | ws => raise Mismatch (String.concatWith "; " (List.take (ws, Int.min (3, List.length ws)))
                                     ^ (if List.length ws > 3 then "; and " ^ Int.toString (List.length ws - 3) ^ " more" else ""))
           end) ()
-      (* the program checked whole too, where RUNE_REGVERIFY_LINK says: for
-         tests (docs/plans/correctness/linting.md, M8 and M9) *)
+      (* the program checked whole too, at level 2 or where
+         RUNE_REGVERIFY_LINK says (docs/plans/correctness/linting.md, M9
+         and M16) *)
       val () = RegVerify.linked prog
     in
       prog

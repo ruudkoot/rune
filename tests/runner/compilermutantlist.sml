@@ -58,7 +58,7 @@ struct
         "an inner val does not guard its explicit type variables (4.6): they scope at the outer one", "",
        [(el,
          "      DVal _ => acc                          (* a smaller value declaration guards its variables *)",
-         "      DVal (_, binds, _) => List.foldl (fn ((p, e), acc) => unguardedExp (e, unguardedPat (p, acc))) acc binds")]),
+         "      DVal (_, binds, _, _) => List.foldl (fn ((p, e), acc) => unguardedExp (e, unguardedPat (p, acc))) acc binds")]),
      m ("E06", "tyvar scope widened", "elaborate", el ^ ":445",
         "rule 15's side condition dropped: a scoped type variable need not be generalised", "",
        [(el,
