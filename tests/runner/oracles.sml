@@ -329,6 +329,28 @@ struct
             else say ("FAIL regverify." ^ kind ^ ": refused for another reason: " ^ firstNonEmpty err ^ "\n")
     end
 
+  (* tier 2 tests CALL's function index, trusted register or not: a call of
+     what is no closure stops there and goes nowhere *)
+  fun callIndex () =
+    let
+      val out = run ^ "/regverify"
+      val () = mkdirs out
+      val rbc = out ^ "/call-index.rbc"
+      val log = out ^ "/call-index.out"
+      val status = execEnv (fn e => e)
+                           {cmd = ["bin/rune", "-O0", "tests/register/call-index.sml", "-o", rbc], dir = NONE,
+                            stdin = "", stdout = log, stderr = log, timeout = 0}
+    in
+      if status <> 0 then say ("FAIL call-index: does not compile: " ^ firstLine log ^ "\n")
+      else
+        let val status = execEnv (fn e => e)
+                                 {cmd = ["bin/runevm", "--jit=all", "--jit-tier=2", rbc], dir = NONE,
+                                  stdin = "", stdout = log, stderr = log, timeout = 60}
+        in if status <> 0 andalso String.isSubstring "bad function index" (read log) then ()
+           else say ("FAIL call-index: status " ^ Int.toString status ^ ": " ^ firstLine log ^ "\n")
+        end
+    end
+
   (* the check of the stack code (StackCheck: the loader's checks and
      runeopt's RbcCheck, at level 2; docs/plans/correctness/linting.md,
      M10) on tests/opt/rbccheck.sml with the lint, whole and linked from
@@ -1222,6 +1244,7 @@ struct
     | ["register-prims"] => SOME registerPrims
     | ["register-dead-roots"] => SOME registerDeadRoots
     | ["regverify-one", kind] => SOME (fn () => regverifyOne kind)
+    | ["call-index"] => SOME callIndex
     | ["rbccheck-one", kind] => SOME (fn () => rbccheckOne kind)
     | ["jit-one", src] => SOME (fn () => jitOne src)
     | ["jit-probe"] => SOME jitProbe
@@ -1302,7 +1325,8 @@ struct
             (perProgram ("register-one", langPerf, [], name)
              @ [job ("@bootstrap", ["register-bootstrap"], [], 1, 1500, 3600),
                 job ("@prims", ["register-prims"], [], 1, 500, 600),
-                job ("@dead-roots", ["register-dead-roots"], [], 1, 500, 600)]
+                job ("@dead-roots", ["register-dead-roots"], [], 1, 500, 600),
+                job ("@call-index", ["call-index"], [], 1, 500, 600)]
              @ List.map (fn k => job ("@regverify-" ^ k, ["regverify-one", k], [], 1, 500, 600))
                         ("clean" :: List.map #1 regverifyKinds))),
        tagged (["check", "test-register-jit", "covers:tests/register/*", "covers:tests/opt/*"] @ langCovers)
