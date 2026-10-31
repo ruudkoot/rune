@@ -16,16 +16,21 @@
    (4.6) itself. It never unifies, and calls nothing of Unify, SigMatch or
    Types' operations: only SourceTy's zonk of what it reads.
 
-   The module language is taken as given (D5 B), its results axioms: the
-   environment a declaration at top level was elaborated in (the Basis and
-   the units before), and the results of ascriptions (rules 52, 53),
-   functor applications (rule 54), dynamic modules and exports, and a
-   functor's parameter as its body sees it (rule 86). But a transparent
-   ascription's structure must enrich its result (5.5), and a functor's
-   argument its parameter's signature, realised by paths (5.6): M13's first
-   step, matching schemes one way. Signatures are not read; nor is
-   _overload (its classes, Overload.table, are an axiom), and _prim's
-   annotation is trusted.
+   The module language (M13) is read as chapter 5 has it, from the records
+   of the choices it made, its fresh names (Elaborate.sigRecords, freshFrom,
+   appliedNames, functorRecords; schemes, not stamps, E6). Each signature
+   expression is read against what it gave (rules 62-84): its flexible
+   names are the classes of its specified types by its sharing equations
+   (rule 78), and new (65). A match finds its realisation by paths (5.6),
+   and the structure must enrich the signature so realised (5.5), by
+   one-way matching of schemes; a result, recorded, must then be what
+   rules 52, 53 and 54 and a dynamic module say it is, its new names new,
+   and what a functor's body gave its signature (rule 86). What stays an
+   axiom is what is imported: the environment a declaration at top level
+   was elaborated in (the Basis and the units before), and the signatures
+   and functors of those. _overload's classes (Overload.table) are an
+   axiom too, and _prim's annotation is trusted. The editor's typer reads
+   none of it (observe).
 
    Where Rune reads the book otherwise, it is read as Rune reads it, by
    runespec's names of the readings (spec/notes/M10-deviations.md on branch
@@ -224,33 +229,46 @@ struct
               (tops : {dec : dec, env : Env.env, delta : Env.env} list) : {checked : int, skipped : int, alarms : int} =
     let
       fun note (n : node) = case observe of SOME f => f n | NONE => ()
-      (* the functors the run declares, how many times each (total) and
-         how many of them the check has met (seen): Elaborate.funs holds a
-         functor's last binding, which an application refers to only where
-         the run declares it never, or once and before the application *)
-      fun functorsOfDec (d, m) =
+      (* what the module language is checked with: the signatures and
+         functors the run has declared so far (AstLint's own, from the
+         elaborator's records of each declaration), or those of the basis
+         (Elaborate.sigs, Elaborate.funs: imported, axioms) where the run
+         declares that name nowhere; those two hold a name's last binding,
+         which is not the imported one where the run declares it later *)
+      val checking = not (isSome observe)
+      fun inDec (d, acc as (fs, ss)) =
         case d of
           DFunctor (binds, _, _) =>
-            List.foldl (fn (b : funbind, m) => functorsOfStr (#body b, StringMap.insert (m, #name b, 1 + getOpt (StringMap.find (m, #name b), 0))))
-                       m binds
-        | DLocal (a, b, _, _) => List.foldl functorsOfDec (List.foldl functorsOfDec m a) b
-        | DStructure (binds, _, _) => List.foldl (fn (b : strbind, m) => functorsOfStr (#strexp b, m)) m binds
-        | _ => m
-      and functorsOfStr (se, m) =
+            List.foldl (fn (b : funbind, (fs, ss)) => inStr (#body b, (StringMap.insert (fs, #name b, ()), ss))) acc binds
+        | DSignature (binds, _, _) => (fs, List.foldl (fn (b : sigbind, ss) => StringMap.insert (ss, #name b, ())) ss binds)
+        | DLocal (a, b, _, _) => List.foldl inDec (List.foldl inDec acc a) b
+        | DStructure (binds, _, _) => List.foldl (fn (b : strbind, acc) => inStr (#strexp b, acc)) acc binds
+        | _ => acc
+      and inStr (se, acc) =
         case se of
-          StrStruct (decs, _, _) => List.foldl functorsOfDec m decs
-        | StrAscribe (se, _, _, _, _) => functorsOfStr (se, m)
-        | StrApp (_, arg, _, _) => functorsOfStr (arg, m)
-        | StrLet (decs, body, _, _) => functorsOfStr (body, List.foldl functorsOfDec m decs)
-        | StrExport (_, _, body, _, _, _) => functorsOfStr (body, m)
-        | _ => m
-      val functorsTotal = List.foldl (fn ({dec, ...}, m) => functorsOfDec (dec, m)) StringMap.empty tops
-      val functorsSeen : int StringMap.map ref = ref StringMap.empty
-      fun lastBinding funid =
-        case (StringMap.find (functorsTotal, funid), StringMap.find (!functorsSeen, funid)) of
-          (NONE, _) => true
-        | (SOME 1, SOME 1) => true
-        | _ => false
+          StrStruct (decs, _, _) => List.foldl inDec acc decs
+        | StrAscribe (se, _, _, _, _) => inStr (se, acc)
+        | StrApp (_, arg, _, _) => inStr (arg, acc)
+        | StrLet (decs, body, _, _) => inStr (body, List.foldl inDec acc decs)
+        | StrExport (_, _, body, _, _, _) => inStr (body, acc)
+        | _ => acc
+      val (runFunctors, runSigs) =
+        if checking then List.foldl (fn ({dec, ...}, acc) => inDec (dec, acc)) (StringMap.empty, StringMap.empty) tops
+        else (StringMap.empty, StringMap.empty)
+      val sigsMet : SigMatch.sigma StringMap.map ref = ref StringMap.empty
+      val functorsMet : (SigMatch.sigma * Elaborate.summary) StringMap.map ref = ref StringMap.empty
+      fun signatureOf name =
+        case StringMap.find (!sigsMet, name) of
+          SOME s => SOME s
+        | NONE => if StringMap.member (runSigs, name) then NONE else StringMap.find (!Elaborate.sigs, name)
+      fun functorOf name =
+        case StringMap.find (!functorsMet, name) of
+          SOME f => SOME f
+        | NONE =>
+            if StringMap.member (runFunctors, name) then NONE
+            else case StringMap.find (!Elaborate.funs, name) of
+                   SOME (Elaborate.FunInfo {paramSig, summary, ...}) => SOME (paramSig, summary)
+                 | NONE => NONE
       val alarms : (string * Source.span * string) list ref = ref []
       val nalarms = ref 0
       fun alarm (rule, sp, msg) = (nalarms := !nalarms + 1; if !nalarms <= 20 then alarms := (rule, sp, msg) :: !alarms else ())
@@ -322,7 +340,7 @@ struct
       (* the attribute of a name met in the environment and nowhere in the
          table by stamp (a functor's parameter's, never zonked before) *)
       val occEq : bool IntTable.table = IntTable.table 64
-      fun noteName (stamp, eq) = if isSome (IntTable.find (occEq, stamp)) then () else IntTable.insert (occEq, stamp, eq)
+      fun noteName (stamp, eq) = if eq orelse not (isSome (IntTable.find (occEq, stamp))) then IntTable.insert (occEq, stamp, eq) else ()
       fun nameEq stamp =
         case IntTable.find (eqOf, stamp) of
           SOME b => b
@@ -446,11 +464,12 @@ struct
       val nextOwn = ref ~1
       fun ownVar (eq : bool) : int * S.ty =
         let val v = !nextOwn in nextOwn := v - 1; (v, S.var (v, eq, NONE, [], true)) end
+      fun convFcn fcn =
+        case fcn of
+          Types.TName c => FName {stamp = #stamp c, name = #name c, arity = #arity c, eq = #eq c}
+        | Types.TAbbrev (ps, body) => FAbbrev (ps, zonk body)
       fun convTy (Env.TyStr {fcn, cons}) : tystr =
-        TS {fcn = case fcn of
-                    Types.TName c => FName {stamp = #stamp c, name = #name c, arity = #arity c, eq = #eq c}
-                  | Types.TAbbrev (ps, body) => FAbbrev (ps, zonk body),
-            cons = List.map (fn (n, v) => (n, convVal v)) cons}
+        TS {fcn = convFcn fcn, cons = List.map (fn (n, v) => (n, convVal v)) cons}
 
       fun findValIn (layers : env, name) : vstat option =
         case layers of
@@ -462,6 +481,18 @@ struct
           [] => NONE
         | Own {tys, ...} :: rest => (case StringMap.find (tys, name) of SOME v => SOME v | NONE => findTyIn (rest, name))
         | Base e :: rest => (case StringMap.find (Env.tys e, name) of SOME v => SOME (convTy v) | NONE => findTyIn (rest, name))
+      (* a type's function and its constructors' names, no scheme read *)
+      fun findFcnIn (layers : env, name) : (tyfcn * string list) option =
+        case layers of
+          [] => NONE
+        | Own {tys, ...} :: rest =>
+            (case StringMap.find (tys, name) of
+               SOME (TS {fcn, cons}) => SOME (fcn, List.map #1 cons)
+             | NONE => findFcnIn (rest, name))
+        | Base e :: rest =>
+            (case StringMap.find (Env.tys e, name) of
+               SOME (Env.TyStr {fcn, cons}) => SOME (convFcn fcn, List.map #1 cons)
+             | NONE => findFcnIn (rest, name))
       fun findStrIn (layers : env, name) : str option =
         case layers of
           [] => NONE
@@ -473,6 +504,7 @@ struct
         | findPath (env, s :: rest) = case findStrIn (env, s) of SOME st => findPath (layersOf st, rest) | NONE => NONE
       fun findVal (env, (path, name)) = Option.mapPartial (fn e => findValIn (e, name)) (findPath (env, path))
       fun findTy (env, (path, name)) = Option.mapPartial (fn e => findTyIn (e, name)) (findPath (env, path))
+      fun findFcn (env, (path, name)) = Option.mapPartial (fn e => findFcnIn (e, name)) (findPath (env, path))
 
       fun mergeOwn ({vals = v1, tys = t1, strs = s1}, {vals = v2, tys = t2, strs = s2}) =
         {vals = StringMap.foldli (fn (k, v, m) => StringMap.insert (m, k, v)) v1 v2,
@@ -549,16 +581,17 @@ struct
          the same variables of AstLint's own, equal *)
       fun fcnArity (FName {arity, ...}) = arity
         | fcnArity (FAbbrev (ps, _)) = List.length ps
-      fun sameFcn (sp, fa, fs) =
-        fcnArity fa = fcnArity fs andalso
-        (let val vs = List.tabulate (fcnArity fa, fn _ => #2 (ownVar false))
-         in S.same (applyFcn (sp, fa, vs), applyFcn (sp, fs, vs)) end)
+      fun sameFcn (sp, FName {stamp = a, arity = n, ...}, FName {stamp = b, arity = m, ...}) = a = b andalso n = m
+        | sameFcn (sp, fa, fs) =
+            fcnArity fa = fcnArity fs andalso
+            (let val vs = List.tabulate (fcnArity fa, fn _ => #2 (ownVar false))
+             in S.same (applyFcn (sp, fa, vs), applyFcn (sp, fs, vs)) end)
       (* a realisation (5.2) of type names by stamp, applied *)
-      fun realise (phi : tyfcn IntMap.map) (t : S.ty) : S.ty =
-        if IntMap.isEmpty phi then t
+      fun realise (phi : tyfcn IntMap.map) : S.ty -> S.ty =
+        if IntMap.isEmpty phi then (fn t => t)
         else
           let
-            val memo = IntTable.table 16
+            val memo = IntTable.table 256
             fun go t =
               case IntTable.find (memo, S.id t) of
                 SOME r => r
@@ -574,45 +607,69 @@ struct
                               | S.Flex {tv, eq, generic, fields} =>
                                   S.mk (S.Flex {tv = tv, eq = eq, generic = generic, fields = List.map (fn (l, a) => (l, go a)) fields})
                   in IntTable.insert (memo, S.id t, r); r end
-          in go t end
-      fun realiseFcn phi fcn =
+          in go end
+      fun realiseFcn (phi, r) fcn =
         case fcn of
           FName {stamp, ...} => (case IntMap.find (phi, stamp) of SOME f => f | NONE => fcn)
-        | FAbbrev (ps, body) => FAbbrev (ps, realise phi body)
+        | FAbbrev (ps, body) => FAbbrev (ps, r body)
       (* rule 2's instance of 4.5, one way: the structure's scheme at least
          as general as the specification's, whose bound variables stand for
          themselves *)
       fun asGeneral (sp, what, actual : scheme, spec : scheme) =
-        if matchScheme (sp, what, actual, #ty spec) then ()
+        if S.same (#ty actual, #ty spec) orelse matchScheme (sp, what, actual, #ty spec) then ()
         else alarm ("5.5 enrichment", sp, what ^ ": " ^ show (#ty actual) ^ " in the structure is not as general as "
                                          ^ show (#ty spec))
+      fun bothWays (sp, what, a : scheme, b : scheme) =
+        if S.same (#ty a, #ty b) andalso sameSet (#bound a, #bound b) then ()
+        else (asGeneral (sp, what, a, b); asGeneral (sp, what, b, a))
       fun schemeOfV (v : vstat) : scheme =
         case v of
           LVal {scheme, ...} => scheme | LCon {scheme, ...} => scheme | LPrim {scheme, ...} => scheme
         | LConAsVal {scheme, ...} => scheme | LExn {ty, ...} => {bound = [], ty = ty} | LExnAsVal {ty, ...} => {bound = [], ty = ty}
+      fun domainSizes (layers : env) =
+        case layers of
+          [Base e] => (StringMap.numItems (Env.vals e), StringMap.numItems (Env.tys e), StringMap.numItems (Env.strs e))
+        | _ =>
+            let
+              fun add m k = StringMap.foldli (fn (n, _, m) => StringMap.insert (m, n, ())) k m
+              val (v, t, s) =
+                List.foldl (fn (Own {vals, tys, strs}, (v, t, s)) => (add vals v, add tys t, add strs s)
+                             | (Base e, (v, t, s)) => (add (Env.vals e) v, add (Env.tys e) t, add (Env.strs e) s))
+                           (StringMap.empty, StringMap.empty, StringMap.empty) layers
+            in (StringMap.numItems v, StringMap.numItems t, StringMap.numItems s) end
+      (* how a structure is held to a specification: enriching it (5.5), or
+         being it, with schemes equal and, in the first case, no more than
+         it (domain) *)
+      val enriching = {both = false, domain = false}
+      val being = {both = true, domain = true}
+      val beingPart = {both = true, domain = false}
       (* 5.5: the structure (actual, AstLint's own) enriches the
          specification (spec, the elaborator's environment, its type names
          realised by phi): every type there, with the same function and
          constructors; every value, its scheme at least as general, of its
          status, a constructor's or exception's the same; every structure,
-         again. The identity of what the elaborator's result says it holds
-         (its stamps, a constructor's information) is the structure's *)
-      fun enrich (sp, path : string list, phi : tyfcn IntMap.map, spec : Env.env, actual : env, identity : bool) : unit =
+         again *)
+      fun enrich (sp, path : string list, phi : tyfcn IntMap.map, how : {both : bool, domain : bool},
+                  spec : Env.env, actual : env) : unit =
+        enrichBy (sp, path, phi, realise phi, how, spec, actual)
+      and enrichBy (sp, path, phi, r, how as {both, domain}, spec, actual) : unit =
         let
           fun name n = String.concatWith "." (path @ [n])
-          val r = realise phi
           fun rs ({bound, ty} : scheme) : scheme = {bound = bound, ty = r ty}
+          fun compare (what, a, s) = if both then bothWays (sp, what, a, s) else asGeneral (sp, what, a, s)
           val () =
             StringMap.appi
-              (fn (n, ts) =>
-                  let val TS {fcn = fs, cons = cs} = convTy ts
+              (fn (n, Env.TyStr {fcn, cons}) =>
+                  let
+                    val fs = convFcn fcn
+                    fun sorted l = List.map #1 (sortLabels (List.map (fn n => (n, ())) l))
                   in
-                    case findTyIn (actual, n) of
+                    case findFcnIn (actual, n) of
                       NONE => alarm ("5.5 enrichment", sp, "type " ^ name n ^ " is not in the structure")
-                    | SOME (TS {fcn = fa, cons = ca}) =>
-                        (if sameFcn (sp, fa, realiseFcn phi fs) then ()
+                    | SOME (fa, ca) =>
+                        (if sameFcn (sp, fa, realiseFcn (phi, r) fs) then ()
                          else alarm ("5.5 enrichment", sp, "type " ^ name n ^ " is another type in the structure");
-                         if List.null cs orelse List.map #1 (sortLabels cs) = List.map #1 (sortLabels ca) then ()
+                         if (List.null cons andalso not both) orelse sorted (List.map #1 cons) = sorted ca then ()
                          else alarm ("5.5 enrichment", sp, "datatype " ^ name n ^ " has other constructors in the structure"))
                   end)
               (Env.tys spec)
@@ -623,46 +680,78 @@ struct
                     NONE => alarm ("5.5 enrichment", sp, "value " ^ name n ^ " is not in the structure")
                   | SOME av =>
                       (case (convVal sv, av) of
-                         (LVal {stamp, scheme, ...}, _) =>
-                           (asGeneral (sp, name n, schemeOfV av, rs (if faulty "enrich" then {bound = [], ty = other (#ty scheme)} else scheme));
-                            case av of
-                              LVal {stamp = s, ...} => if not identity orelse (s = stamp andalso not (faulty "identity")) then ()
-                                                        else alarm ("5.5 identity", sp, "value " ^ name n ^ ": another variable")
-                            | _ => ())
-                       | (LConAsVal {scheme, info}, LCon {scheme = sa, info = ia}) =>
-                           (asGeneral (sp, name n, sa, rs scheme);
-                            if sameCon (info, ia) then () else alarm ("5.5 identity", sp, "value " ^ name n ^ ": another constructor"))
-                       | (LExnAsVal {ty, info}, LExn {ty = ta, info = ia}) =>
-                           (asGeneral (sp, name n, {bound = [], ty = ta}, {bound = [], ty = r ty});
-                            if sameExn (info, ia) then () else alarm ("5.5 identity", sp, "value " ^ name n ^ ": another exception"))
-                       | (LPrim {scheme, name = pn}, LPrim {scheme = sa, name = pa}) =>
-                           (asGeneral (sp, name n, sa, rs scheme);
-                            if pn = pa then () else alarm ("5.5 identity", sp, "value " ^ name n ^ ": another primitive"))
-                       | (LConAsVal {scheme, ...}, _) => asGeneral (sp, name n, schemeOfV av, rs scheme)
-                       | (LExnAsVal {ty, ...}, _) => asGeneral (sp, name n, schemeOfV av, {bound = [], ty = r ty})
-                       | (LPrim {scheme, ...}, _) => asGeneral (sp, name n, schemeOfV av, rs scheme)
-                       | (LCon {scheme, info}, LCon {scheme = sa, info = ia}) =>
-                           (asGeneral (sp, name n, sa, rs scheme); asGeneral (sp, name n, rs scheme, sa);
+                         (LCon {scheme, info}, LCon {scheme = sa, info = ia}) =>
+                           (bothWays (sp, name n, sa, rs scheme);
                             if sameCon (info, ia) then () else alarm ("5.5 identity", sp, "constructor " ^ name n ^ ": another"))
-                       | (LExn {ty, info}, LExn {ty = ta, info = ia}) =>
-                           (if S.same (r ty, ta) then () else alarm ("5.5 enrichment", sp, "exception " ^ name n ^ ": another type");
-                            if not identity orelse sameExn (info, ia) then ()
-                            else alarm ("5.5 identity", sp, "exception " ^ name n ^ ": another exception"))
                        | (LCon _, _) => alarm ("5.5 enrichment", sp, name n ^ " is a constructor in the specification, not in the structure")
-                       | (LExn _, _) => alarm ("5.5 enrichment", sp, name n ^ " is an exception in the specification, not in the structure")))
+                       | (LExn {ty, ...}, LExn {ty = ta, ...}) =>
+                           if S.same (r ty, ta) then () else alarm ("5.5 enrichment", sp, "exception " ^ name n ^ ": another type")
+                       | (LExn _, _) => alarm ("5.5 enrichment", sp, name n ^ " is an exception in the specification, not in the structure")
+                       | (LVal {scheme, ...}, _) =>
+                           compare (name n, schemeOfV av, rs (if faulty "enrich" then {bound = [], ty = other (#ty scheme)} else scheme))
+                       | (sv', _) => compare (name n, schemeOfV av, rs (schemeOfV sv'))))
               (Env.vals spec)
           val () =
             StringMap.appi
               (fn (n, se) =>
                   case findStrIn (actual, n) of
                     NONE => alarm ("5.5 enrichment", sp, "structure " ^ name n ^ " is not in the structure")
-                  | SOME st => enrich (sp, path @ [n], phi, se, layersOf st, identity))
+                  | SOME st => enrichBy (sp, path @ [n], phi, r, how, se, layersOf st))
               (Env.strs spec)
-        in () end
+        in
+          if not domain then ()
+          else
+            let val (v, t, s) = domainSizes actual
+            in
+              if StringMap.numItems (Env.vals spec) = v andalso StringMap.numItems (Env.tys spec) = t
+                 andalso StringMap.numItems (Env.strs spec) = s then ()
+              else alarm ("5.5 enrichment", sp, (case path of [] => "the structure" | _ => String.concatWith "." path)
+                                                ^ " holds more than its specification")
+            end
+        end
+      (* rules 52, 53: a result has its signature's types and schemes but
+         what each value is, which the structure says *)
+      fun identities (sp, path : string list, result : Env.env, actual : env) : unit =
+        let
+          fun name n = String.concatWith "." (path @ [n])
+          fun another n = alarm ("5.5 identity", sp, "value " ^ name n ^ ": another variable")
+          fun con (n, i, i') = if sameCon (i, i') then () else alarm ("5.5 identity", sp, "value " ^ name n ^ ": another constructor")
+          fun exn (n, i, i') = if sameExn (i, i') then () else alarm ("5.5 identity", sp, "value " ^ name n ^ ": another exception")
+        in
+          StringMap.appi
+            (fn (n, rv) =>
+                case (rv, findValIn (actual, n)) of
+                  (_, NONE) => ()
+                | (Env.Val {stamp, ...}, SOME (LVal {stamp = s, ...})) => if s = stamp andalso not (faulty "identity") then () else another n
+                | (Env.Con {info, ...}, SOME (LCon {info = i, ...})) => con (n, info, i)
+                | (Env.ConAsVal {info, ...}, SOME (LCon {info = i, ...})) => con (n, info, i)
+                | (Env.ConAsVal {info, ...}, SOME (LConAsVal {info = i, ...})) => con (n, info, i)
+                | (Env.Exn {info, ...}, SOME (LExn {info = i, ...})) => exn (n, info, i)
+                | (Env.ExnAsVal {info, ...}, SOME (LExn {info = i, ...})) => exn (n, info, i)
+                | (Env.ExnAsVal {info, ...}, SOME (LExnAsVal {info = i, ...})) => exn (n, info, i)
+                | (Env.Prim {name = p, ...}, SOME (LPrim {name = q, ...})) => if p = q then () else alarm ("5.5 identity", sp, "value " ^ name n ^ ": another primitive")
+                | _ => another n)
+            (Env.vals result);
+          StringMap.appi (fn (n, e) => case findStrIn (actual, n) of
+                                         SOME st => identities (sp, path @ [n], e, layersOf st)
+                                       | NONE => ())
+                         (Env.strs result)
+        end
+      (* a type function admits equality: applied to variables that do *)
+      fun fcnAdmitsEq fcn =
+        case fcn of
+          (* a name's own attribute, which a sharing raises under one stamp *)
+          FName {stamp, eq, ...} =>
+            stamp = refStamp orelse stamp = arrayStamp orelse getOpt (IntTable.find (eqOf, stamp), eq)
+        | FAbbrev _ =>
+            let val vs = List.tabulate (fcnArity fcn, fn _ => #2 (ownVar true))
+            in admitsEq (applyFcn (Source.noSpan, fcn, vs)) end
       (* 5.6: the realisation of a signature's bound names that its match
          against a structure finds, by paths: each bound name the type the
-         structure has at the path the signature has it *)
-      fun phiByPaths (sp, bound : Types.tycon list, sigEnv : Env.env, actual : env) : tyfcn IntMap.map =
+         structure has at the path the signature has it. demands: where
+         an equality type of the signature must find one, as a match must
+         (and not where the path is what the name became) *)
+      fun phiByPaths (sp, bound : Types.tycon list, sigEnv : Env.env, actual : env, demands : bool) : tyfcn IntMap.map =
         let
           val boundSet = List.foldl (fn (c : Types.tycon, m) => IntMap.insert (m, #stamp c, c)) IntMap.empty bound
           fun walk (path : string list, e : Env.env, layers : env, phi) =
@@ -673,9 +762,12 @@ struct
                       (case IntMap.find (boundSet, #stamp c) of
                          SOME bc =>
                            if IntMap.member (phi, #stamp c) then phi
-                           else (case findTyIn (layers, n) of
-                                   SOME (TS {fcn, ...}) =>
-                                     (if (#eq bc orelse faulty "match") andalso not (fcnAdmitsEq fcn)
+                           else (case findFcnIn (layers, n) of
+                                   SOME (fcn, _) =>
+                                     (if fcnArity fcn <> #arity bc
+                                      then alarm ("5.6 match", sp, "type " ^ String.concatWith "." (path @ [n])
+                                                                    ^ " has another arity in the structure")
+                                      else if demands andalso (#eq bc orelse faulty "match") andalso not (fcnAdmitsEq fcn)
                                       then alarm ("5.6 match", sp, "type " ^ String.concatWith "." (path @ [n])
                                                                     ^ " must admit equality")
                                       else ();
@@ -692,9 +784,30 @@ struct
                                    | NONE => phi) phi (Env.strs e)
             end
         in walk ([], sigEnv, actual, IntMap.empty) end
-      and fcnAdmitsEq fcn =
-        let val vs = List.tabulate (fcnArity fcn, fn _ => #2 (ownVar true))
-        in admitsEq (applyFcn (Source.noSpan, fcn, vs)) end
+      (* the names a realisation gives a signature's are new: of their
+         arity and equality, one for each, from the counter before they
+         were made, and among those of within (rules 53, 54, 65) *)
+      fun freshNames (sp, rule, bound : Types.tycon list, phi : tyfcn IntMap.map, first : int, within : Types.tycon list option) =
+        let
+          val seen = IntTable.table 16
+          val inside = Option.map (List.foldl (fn (c : Types.tycon, m) => IntMap.insert (m, #stamp c, ())) IntMap.empty) within
+        in
+          List.app (fn (c : Types.tycon) =>
+                       case IntMap.find (phi, #stamp c) of
+                         SOME (FName {stamp, arity, eq, ...}) =>
+                           if stamp < first orelse faulty "fresh" orelse isSome (IntTable.find (seen, stamp))
+                              orelse (case inside of SOME m => not (IntMap.member (m, stamp)) | NONE => false)
+                           then alarm (rule, sp, "type " ^ #name c ^ ": its name is not new")
+                           else if arity <> #arity c orelse eq <> #eq c
+                           then alarm (rule, sp, "type " ^ #name c ^ ": another arity or equality")
+                           else IntTable.insert (seen, stamp, ())
+                       | _ => alarm (rule, sp, "type " ^ #name c ^ " has no name of its own"))
+                   bound
+        end
+      fun recordOf (table, n, sp, what) =
+        case IntTable.find (table, n) of
+          SOME r => r
+        | NONE => stop ("D5 axiom", sp, "no record of " ^ what)
 
       (* ---- 4.6: the scope of a value declaration ---- *)
       fun valScope (c : ctx, explicit : tyvarseq, d : dec, sp) : ctx * int list =
@@ -1319,21 +1432,359 @@ struct
         | DStructure (binds, _, _) =>
             [Own {vals = StringMap.empty, tys = StringMap.empty,
                   strs = List.foldl (fn (b : strbind, m) => StringMap.insert (m, #name b, checkStrexp (c, #strexp b, made))) StringMap.empty binds}]
-        | DSignature _ => []
-        | DFunctor (binds, _, _) =>
-            (List.app (fn (b : funbind) => functorsSeen := StringMap.insert (!functorsSeen, #name b,
-                                                           1 + getOpt (StringMap.find (!functorsSeen, #name b), 0))) binds;
-             List.app (fn (b : funbind) =>
-                          let
-                            val pe = case entry (#functorParam reader, #id b) of
-                                       SOME e => e
-                                     | NONE => stop ("86 functor", #span b, "no record of functor " ^ #name b ^ "'s parameter")
-                            val cb = case #param b of
-                                       SOME x => extend (c, [Own {vals = StringMap.empty, tys = StringMap.empty,
-                                                                  strs = StringMap.insert (StringMap.empty, x, SBase pe)}])
-                                     | NONE => extend (c, [Base pe])
-                          in ignore (checkStrexp (cb, #body b, ref [])) end) binds;
+        | DSignature (binds, _, _) =>
+            (* rule 67: every binding in the same basis *)
+            (if checking then
+               let val met = List.map (fn (b : sigbind) => (#name b, checkSig (c, #sigexp b, NONE, being))) binds
+               in sigsMet := List.foldl (fn ((n, s), m) => StringMap.insert (m, n, s)) (!sigsMet) met end
+             else ();
              [])
+        | DFunctor (binds, _, _) =>
+            let
+              val met =
+                List.mapPartial
+                  (fn (b : funbind) =>
+                      let
+                        val pe = case entry (#functorParam reader, #id b) of
+                                   SOME e => e
+                                 | NONE => stop ("86 functor", #span b, "no record of functor " ^ #name b ^ "'s parameter")
+                        val sigma = if checking then SOME (checkSig (c, #paramSig b, NONE, being)) else NONE
+                        val () = case sigma of
+                                   SOME {env = e, ...} => enrich (#span b, [], IntMap.empty, being, e, [Base pe])
+                                 | NONE => ()
+                        val cb = case #param b of
+                                   SOME x => extend (c, [Own {vals = StringMap.empty, tys = StringMap.empty,
+                                                              strs = StringMap.insert (StringMap.empty, x, SBase pe)}])
+                                 | NONE => extend (c, [Base pe])
+                        val body = checkStrexp (cb, #body b, ref [])
+                      in
+                        case sigma of
+                          NONE => NONE
+                        | SOME sg =>
+                            let
+                              (* rule 86: the functor's signature is what its
+                                 body gave, and T' the names of it the body
+                                 made *)
+                              val {summary as {generated, result}, lo, ...} =
+                                recordOf (Elaborate.functorRecords, #id b, #span b, "functor " ^ #name b)
+                              val theirs = List.foldl (fn (c : Types.tycon, m) => IntMap.insert (m, #stamp c, ())) IntMap.empty generated
+                              val made = namesOfEnv result
+                              val made = if faulty "functor" then IntMap.insert (made, lo, ()) else made
+                              val () = IntMap.appi (fn (s, ()) => if s >= lo andalso not (IntMap.member (theirs, s))
+                                                                  then alarm ("86 functor", #span b, "functor " ^ #name b ^ ": a type its body made is not in T'")
+                                                                  else ()) made
+                              val () = enrich (#span b, [], IntMap.empty, being, result, layersOf body)
+                            in SOME (#name b, (sg, summary)) end
+                      end) binds
+            in
+              functorsMet := List.foldl (fn ((n, f), m) => StringMap.insert (m, n, f)) (!functorsMet) met;
+              []
+            end
+
+      (* the type names of an environment's types and schemes *)
+      and namesOfEnv (e : Env.env) : unit IntMap.map =
+        let
+          fun addTy (t, m) = List.foldl (fn (s, m) => IntMap.insert (m, s, ())) m (names t)
+          fun go (e, m) =
+            let
+              val m = StringMap.foldl (fn (ts, m) =>
+                                          case convTy ts of
+                                            TS {fcn = FName {stamp, ...}, ...} => IntMap.insert (m, stamp, ())
+                                          | TS {fcn = FAbbrev (_, body), ...} => addTy (body, m)) m (Env.tys e)
+              val m = StringMap.foldl (fn (v, m) => addTy (#ty (schemeOfV (convVal v)), m)) m (Env.vals e)
+            in StringMap.foldl go m (Env.strs e) end
+        in go (e, IntMap.empty) end
+
+      (* ---- signature expressions (rules 62-84): what the elaborator
+         recorded of each, against its syntax. A signature in a
+         specification was elaborated in a context whose names a later
+         sharing of the enclosing signature may realise: its specifications
+         are read in the context as it ended (c) and against the
+         enclosing signature's result (view), and only its flexible names
+         against its own record ---- *)
+      and checkSig (c : ctx, se : sigexp, view : Env.env option, how) : SigMatch.sigma =
+        case se of
+          SigId (name, sp, n) =>
+            (* rule 65: an instance of what the name is bound to, its
+               flexible names new *)
+            let
+              val {first, sigma} = recordOf (Elaborate.sigRecords, n, sp, "signature " ^ name)
+              val own = [Base (#env sigma)]
+              val seen = case view of SOME v => [Base v] | NONE => own
+            in
+              case signatureOf name of
+                SOME {bound, env = e, ...} =>
+                  (freshNames (sp, "65 instance", bound, phiByPaths (sp, bound, e, own, false), first, SOME (#bound sigma));
+                   enrich (sp, [], phiByPaths (sp, bound, e, seen, false), how, e, seen);
+                   sigma)
+              | NONE => sigma
+            end
+        | SigWhere (_, _, sp, n) =>
+            (* rule 64: the clauses of a chain realise what the chain starts from *)
+            let
+              fun chain (SigWhere (s, clauses, _, _), acc) = chain (s, clauses @ acc)
+                | chain (s, acc) = (s, acc)
+              val (base, clauses) = chain (se, [])
+              val {sigma, ...} = recordOf (Elaborate.sigRecords, n, sp, "a signature's where")
+              val v = getOpt (view, #env sigma)
+              val {bound, env = e, ...} = checkSig (c, base, SOME v, how)
+              val boundSet = List.foldl (fn (k : Types.tycon, m) => IntMap.insert (m, #stamp k, k)) IntMap.empty bound
+              fun clause ((tvs, longid, ty, csp), defined) =
+                let
+                  val params = List.map (fn v => (v, ownVar false)) tvs
+                  val scope = List.foldl (fn ((v, (_, t)), m) => StringMap.insert (m, v, t)) StringMap.empty params
+                  val body = elabTy ({env = #env c, ftv = #ftv c, scope = scope}, ty)
+                  val fcn = FAbbrev (List.map (#1 o #2) params, body)
+                  fun refuse why = (alarm ("64 where", csp, "type " ^ longidToString longid ^ " " ^ why); defined)
+                in
+                  case findFcn ([Base e], longid) of
+                    SOME (FName f, cons) =>
+                      (case IntMap.find (boundSet, #stamp f) of
+                         NONE => refuse "is not a flexible type of the signature"
+                       | SOME k =>
+                           if IntMap.member (defined, #stamp f) then refuse "is defined twice"
+                           else if List.length tvs <> #arity k then refuse "is given another arity"
+                           else if #eq k andalso not (fcnAdmitsEq fcn) then refuse "must admit equality"
+                           else if not (List.null cons) andalso not (isSome (fnName (body, params)))
+                           then refuse "is a datatype, given what is no type name"
+                           else
+                             ((case findFcn ([Base v], longid) of
+                                 SOME (g, _) => if sameFcn (csp, g, fcn) then ()
+                                                else ignore (refuse "is another type in the elaborator's signature")
+                               | NONE => ignore (refuse "is not in the elaborator's signature"));
+                              IntMap.insert (defined, #stamp f, ())))
+                  | _ => refuse "is not a flexible type of the signature"
+                end
+              val defined = List.foldl clause IntMap.empty clauses
+              val left = List.filter (fn (k : Types.tycon) => not (IntMap.member (defined, #stamp k))) bound
+            in
+              if sameSet (List.map #stamp left, List.map #stamp (#bound sigma)) then ()
+              else alarm ("64 where", sp, "the flexible names left are others");
+              sigma
+            end
+        | SigSig (specs, sp, n) => checkSpecs (c, specs, sp, n, view)
+
+      (* a name a function's body is, applied to its parameters as they are *)
+      and fnName (body : S.ty, params : (string * (int * S.ty)) list) =
+        case S.node body of
+          S.Con {stamp, args, ...} =>
+            if List.length args = List.length params andalso ListPair.all (fn (a, (_, (_, t))) => S.same (a, t)) (args, params)
+            then SOME stamp else NONE
+        | _ => NONE
+
+      (* rules 68-84. The specifications are read in order, each in the
+         context with what the signature has so far, as the view has it. A
+         path of a flexible type has a class, by the sharing equations; the
+         classes are the signature's flexible names, one for each (rule
+         78) *)
+      and checkSpecs (c : ctx, specs, sp, n, view) : SigMatch.sigma =
+        let
+          val {first, sigma} = recordOf (Elaborate.sigRecords, n, sp, "a signature")
+          val e = #env sigma
+          val top = [Base e]
+          val v = getOpt (view, e)
+          val flexible : (int * bool * bool) StringMap.map ref = ref StringMap.empty
+          val parent : string StringMap.map ref = ref StringMap.empty
+          fun root k = case StringMap.find (!parent, k) of SOME p => root p | NONE => k
+          fun union (a, b) =
+            let val (ra, rb) = (root a, root b) in if ra = rb then () else parent := StringMap.insert (!parent, ra, rb) end
+          fun key (path, name) = String.concatWith "." (path @ [name])
+          val tysSoFar : tystr StringMap.map ref = ref StringMap.empty
+          val strsSoFar : str StringMap.map ref = ref StringMap.empty
+          val valsSeen : unit StringMap.map ref = ref StringMap.empty
+          val tysSeen : unit StringMap.map ref = ref StringMap.empty
+          val strsSeen : unit StringMap.map ref = ref StringMap.empty
+          fun seen (r, k) = r := StringMap.insert (!r, k, ())
+          fun soFar scope : ctx =
+            {env = Own {vals = StringMap.empty, tys = !tysSoFar, strs = !strsSoFar} :: #env c, ftv = #ftv c, scope = scope}
+          fun missing (what, name, dsp) = alarm ("65 signature", dsp, what ^ " " ^ name ^ " is not in the elaborator's signature")
+          fun flex (path, name, eq, dsp) =
+            case findFcn (top, (path, name)) of
+              SOME (FName {stamp, eq = have, ...}, _) =>
+                flexible := StringMap.insert (!flexible, key (path, name), (stamp, eq, have))
+            | _ => alarm ("65 signature", dsp, "type " ^ key (path, name) ^ " has no name of its own in the elaborator's signature")
+          fun tyHere (name, dsp) =
+            (seen (tysSeen, name);
+             case StringMap.find (Env.tys v, name) of
+               SOME ts => (let val t = convTy ts in tysSoFar := StringMap.insert (!tysSoFar, name, t); SOME t end)
+             | NONE => (missing ("type", name, dsp); NONE))
+          fun strHere (name, dsp) =
+            (seen (strsSeen, name);
+             case StringMap.find (Env.strs v, name) of
+               SOME target => (strsSoFar := StringMap.insert (!strsSoFar, name, SBase target); SOME target)
+             | NONE => (missing ("structure", name, dsp); NONE))
+          (* the flexible types of a signature in a specification, at their
+             paths: one name is one class *)
+          fun flexibleOf (prefix, {bound, env = ce, ...} : SigMatch.sigma, dsp) =
+            let
+              val boundSet = List.foldl (fn (k : Types.tycon, m) => IntMap.insert (m, #stamp k, ())) IntMap.empty bound
+              val met : string IntMap.map ref = ref IntMap.empty
+              fun walk (path, s) =
+                (StringMap.appi (fn (name, Env.TyStr {fcn = Types.TName k, ...}) =>
+                                    if IntMap.member (boundSet, #stamp k) then
+                                      (flex (prefix @ path, name, #eq k, dsp);
+                                       case IntMap.find (!met, #stamp k) of
+                                         SOME q => union (q, key (prefix @ path, name))
+                                       | NONE => met := IntMap.insert (!met, #stamp k, key (prefix @ path, name)))
+                                    else ()
+                                  | _ => ()) (Env.tys s);
+                 StringMap.appi (fn (name, sub) => walk (path @ [name], sub)) (Env.strs s))
+            in walk ([], ce) end
+          fun spec s =
+            case s of
+              SpecVal (descs, _, _) =>
+                (* rule 79: implicitly closed *)
+                List.app (fn (name, ty, dsp) =>
+                             let
+                               val owns = List.map (fn v => (v, ownVar (String.isPrefix "''" v))) (tyvarsOfTy (ty, []))
+                               val scope = List.foldl (fn ((v, (_, t)), m) => StringMap.insert (m, v, t)) StringMap.empty owns
+                               val t = elabTy (soFar scope, ty)
+                               val mine = {bound = List.map (#1 o #2) owns, ty = t}
+                             in
+                               seen (valsSeen, name);
+                               case StringMap.find (Env.vals v, name) of
+                                 SOME (Env.Val {scheme, ...}) =>
+                                   let
+                                     val theirs = schemeOf scheme
+                                     val theirs = if faulty "signature" then {bound = [], ty = other (#ty theirs)} else theirs
+                                   in
+                                     if matchScheme (dsp, name, mine, #ty theirs) andalso matchScheme (dsp, name, theirs, t) then ()
+                                     else alarm ("79 val", dsp, "value " ^ name ^ ": " ^ show t ^ " specified, " ^ show (#ty theirs)
+                                                                ^ " in the elaborator's signature")
+                                   end
+                               | _ => missing ("value", name, dsp)
+                             end) descs
+            | SpecType (descs, _, _) => typeDescs (descs, false)
+            | SpecEqtype (descs, _, _) => typeDescs (descs, true)
+            | SpecDatatype (dbs, dsp, i) =>
+                (* rules 80-82, the datatype's own check (rule 17), its
+                   names then realised to what the view has *)
+                let
+                  val own = checkDec (soFar StringMap.empty, DDatatype (dbs, [], dsp, i), ref [])
+                  val phi =
+                    List.foldl (fn (db : datbind, m) =>
+                                   case (findTyIn (own, #name db), tyHere (#name db, #span db)) of
+                                     (SOME (TS {fcn = FName f, ...}), SOME (TS {fcn = g, ...})) =>
+                                       (flex ([], #name db, #eq f, #span db); IntMap.insert (m, #stamp f, g))
+                                   | _ => m) IntMap.empty dbs
+                  val r = realise phi
+                in
+                  List.app (fn (db : datbind) =>
+                               List.app (fn (name, _, csp) =>
+                                            (seen (valsSeen, name);
+                                             case (findValIn (own, name), StringMap.find (Env.vals v, name)) of
+                                               (SOME (LCon {scheme = {bound, ty}, info}), SOME (Env.Con {scheme, info = i})) =>
+                                                 (bothWays (csp, name, {bound = bound, ty = r ty}, schemeOf scheme);
+                                                  if sameCon (info, i) then () else missing ("constructor", name, csp))
+                                             | _ => missing ("constructor", name, csp))) (#cons db)) dbs
+                end
+            | SpecDatatypeRepl (name, longid, dsp, i) =>
+                let
+                  val own = checkDec (soFar StringMap.empty, DDatatypeRepl (name, longid, dsp, i), ref [])
+                in
+                  case (findTyIn (own, name), tyHere (name, dsp)) of
+                    (SOME (TS {fcn = f, cons}), SOME (TS {fcn = g, ...})) =>
+                      (if sameFcn (dsp, f, g) then ()
+                       else alarm ("82 datatype", dsp, "datatype " ^ name ^ " is another type in the elaborator's signature");
+                       List.app (fn (k, _) => seen (valsSeen, k)) cons)
+                  | _ => ()
+                end
+            | SpecException (descs, _, _) =>
+                List.app (fn (name, tyopt, dsp) =>
+                             let
+                               val t = case tyopt of
+                                         NONE => exnTy
+                                       | SOME ty => S.arrow (elabTy (soFar StringMap.empty, ty), exnTy)
+                             in
+                               seen (valsSeen, name);
+                               case StringMap.find (Env.vals v, name) of
+                                 SOME (Env.Exn {ty, ...}) =>
+                                   if S.same (zonk ty, t) then () else alarm ("83 exception", dsp, "exception " ^ name ^ ": another type")
+                               | _ => missing ("exception", name, dsp)
+                             end) descs
+            | SpecStructure (descs, _, _) =>
+                (* rule 84: every description in the same basis *)
+                let val here = soFar StringMap.empty
+                in
+                  List.app (fn (name, sg, dsp) =>
+                               case StringMap.find (Env.strs v, name) of
+                                 SOME target => flexibleOf ([name], checkSig (here, sg, SOME target, being), dsp)
+                               | NONE => missing ("structure", name, dsp)) descs;
+                  List.app (fn (name, _, dsp) => ignore (strHere (name, dsp))) descs
+                end
+            | SpecInclude (sg, dsp, _) =>
+                (* rule 75: what it specifies is the signature's, here *)
+                let val included = checkSig (soFar StringMap.empty, sg, SOME v, beingPart)
+                    val ce = #env included
+                in
+                  flexibleOf ([], included, dsp);
+                  StringMap.appi (fn (name, _) => ignore (tyHere (name, dsp))) (Env.tys ce);
+                  StringMap.appi (fn (name, _) => seen (valsSeen, name)) (Env.vals ce);
+                  StringMap.appi (fn (name, _) => ignore (strHere (name, dsp))) (Env.strs ce)
+                end
+            | SpecSharingType (ids, dsp, _) =>
+                (* rule 78 *)
+                let
+                  val keys = List.map key ids
+                  fun one k = if StringMap.member (!flexible, k) then ()
+                              else alarm ("78 sharing", dsp, "type " ^ k ^ " is not a flexible type of the signature")
+                in
+                  List.app one keys;
+                  case keys of
+                    k0 :: rest => if faulty "sharing" then () else List.app (fn k => union (k0, k)) rest
+                  | [] => ()
+                end
+            | SpecSharing (ids, _, _) =>
+                (* the derived form: every type two of the structures both specify *)
+                let
+                  fun pairs [] = []
+                    | pairs (x :: rest) = List.map (fn y => (x, y)) rest @ pairs rest
+                  val prefixes = List.map (fn id => key id ^ ".") ids
+                in
+                  List.app (fn (p, q) =>
+                               StringMap.appi (fn (k, _) =>
+                                                  if String.isPrefix p k then
+                                                    let val k' = q ^ String.extract (k, size p, NONE)
+                                                    in if StringMap.member (!flexible, k') then union (k, k') else () end
+                                                  else ()) (!flexible))
+                           (pairs prefixes)
+                end
+          and typeDescs (descs, eq) =
+            List.app (fn (tvs, name, dsp) =>
+                         (ignore (tyHere (name, dsp));
+                          case findFcn (top, ([], name)) of
+                            SOME (FName {arity, ...}, _) =>
+                              if arity <> List.length tvs then alarm ("72 type", dsp, "type " ^ name ^ " has another arity")
+                              else flex ([], name, eq, dsp)
+                          | _ => alarm ("72 type", dsp, "type " ^ name ^ " has no name of its own in the elaborator's signature"))) descs
+          val () = List.app spec specs
+          (* the classes: of one name each, and that a name's only *)
+          val classes =
+            StringMap.foldli
+              (fn (k, (stamp, eq, have), m) =>
+                  let val r = root k
+                  in
+                    case StringMap.find (m, r) of
+                      NONE => StringMap.insert (m, r, (stamp, eq, have))
+                    | SOME (s, q, h) =>
+                        (if s = stamp then () else alarm ("78 sharing", sp, "type " ^ k ^ " is shared, and is another name in the elaborator's signature");
+                         StringMap.insert (m, r, (s, q orelse eq, h)))
+                  end) StringMap.empty (!flexible)
+          val names =
+            StringMap.foldli
+              (fn (r, (stamp, eq, have), m) =>
+                  (if IntMap.member (m, stamp) then alarm ("78 sharing", sp, "type " ^ r ^ " is the same name as another, with no sharing equation")
+                   else ();
+                   if eq = have then () else alarm ("78 sharing", sp, "type " ^ r ^ ": its class admits equality otherwise");
+                   if stamp < first then alarm ("65 signature", sp, "type " ^ r ^ ": its name is not new") else ();
+                   IntMap.insert (m, stamp, ()))) IntMap.empty classes
+          val () = if sameSet (IntMap.foldli (fn (s, (), acc) => s :: acc) [] names, List.map #stamp (#bound sigma)) then ()
+                   else alarm ("65 signature", sp, "the elaborator's flexible names are others")
+          val () = if StringMap.numItems (Env.vals e) = StringMap.numItems (!valsSeen)
+                      andalso StringMap.numItems (Env.tys e) = StringMap.numItems (!tysSeen)
+                      andalso StringMap.numItems (Env.strs e) = StringMap.numItems (!strsSeen) then ()
+                   else alarm ("65 signature", sp, "the elaborator's signature holds what is not specified")
+        in sigma end
 
       and checkStrexp (c : ctx, se : strexp, made) : str =
         case se of
@@ -1342,37 +1793,90 @@ struct
             (case findPath (#env c, path @ [name]) of
                SOME e => SOwn e
              | NONE => stop ("51 structure", sp, "structure " ^ longidToString (path, name) ^ " is not in the context"))
-        | StrAscribe (se, _, false, sp, n) =>
-            (* rule 52: the structure enriches the result the elaborator
-               made of the signature, which its types and identities are *)
+        | StrAscribe (se, sigexp, opaque, sp, n) =>
             let val actual = checkStrexp (c, se, made)
-                val result = axiom (n, sp, "an ascription")
+            in ascribed (c, actual, sigexp, opaque, sp, n, "an ascription") end
+        | StrApp (funid, arg, sp, n) =>
+            (* rule 54: the argument matches the parameter's signature, and
+               the result is the functor's, realised by what the match
+               found, and the names the body made by new ones *)
+            let
+              val actual = checkStrexp (c, arg, made)
+              val result = axiom (n, sp, "a functor's application")
             in
-              (case (observe, result) of
-                 (NONE, SBase e) => enrich (sp, [], IntMap.empty, e, layersOf actual, true)
+              (case (checking, functorOf funid, result) of
+                 (true, SOME ({bound, env = pEnv, ...}, {generated, result = rEnv}), SBase re) =>
+                   let
+                     val layers = layersOf actual
+                     val phi = phiByPaths (sp, bound, pEnv, layers, true)
+                     val () = enrich (sp, [], phi, enriching, pEnv, layers)
+                     val names = recordOf (Elaborate.appliedNames, n, sp, "the names of an application")
+                     val rho = List.foldl (fn ((k : Types.tycon, k' : Types.tycon), m) => IntMap.insert (m, #stamp k, convFcn (Types.TName k')))
+                                          IntMap.empty names
+                     val () = freshNames (sp, "54 application", generated, rho, recordOf (Elaborate.freshFrom, n, sp, "an application"), NONE)
+                     val all = IntMap.foldli (fn (s, f, m) => IntMap.insert (m, s, f)) phi rho
+                     val rEnv' = if faulty "apply" then pEnv else rEnv
+                   in enrich (sp, [], all, being, rEnv', [Base re]) end
                | _ => ());
               result
             end
-        | StrAscribe (se, _, true, sp, n) => (ignore (checkStrexp (c, se, made)); axiom (n, sp, "an ascription"))
-        | StrApp (funid, arg, sp, n) =>
-            (* rule 54's match: the argument enriches the parameter's
-               signature, its bound names realised by paths (5.6); the
-               application's result is taken as given *)
-            let val actual = checkStrexp (c, arg, made)
-            in
-              (case (observe, StringMap.find (!Elaborate.funs, funid)) of
-                 (NONE, SOME (Elaborate.FunInfo {paramSig = {bound, env = pEnv, ...}, ...})) =>
-                   if not (lastBinding funid) then ()
-                   else
-                     let val layers = layersOf actual
-                         val phi = phiByPaths (sp, bound, pEnv, layers)
-                     in enrich (sp, [], phi, pEnv, layers, false) end
-               | _ => ());
-              axiom (n, sp, "a functor's application")
-            end
         | StrLet (decs, body, _, _) => let val delta = checkDecs (c, decs, made) in checkStrexp (extend (c, delta), body, made) end
-        | StrDynamic (_, _, _, sp, n) => axiom (n, sp, "a dynamic module")
-        | StrExport (_, _, body, _, sp, n) => (ignore (checkStrexp (c, body, made)); axiom (n, sp, "an export"))
+        | StrDynamic (_, sigexp, _, sp, n) =>
+            (* an instance of the signature, with nothing behind it: its
+               flexible names new, as an opaque ascription's *)
+            let val result = axiom (n, sp, "a dynamic module")
+            in
+              (case (checking, result) of
+                 (true, SBase re) =>
+                   let
+                     val {bound, env = e, ...} = checkSig (c, sigexp, NONE, being)
+                     val layers = [Base re]
+                     val rho = phiByPaths (sp, bound, e, layers, false)
+                   in
+                     freshNames (sp, "53 opaque", bound, rho, recordOf (Elaborate.freshFrom, n, sp, "a dynamic module"), NONE);
+                     enrich (sp, [], rho, being, e, layers)
+                   end
+               | _ => ());
+              result
+            end
+        | StrExport (_, sigexp, body, _, sp, n) =>
+            let val actual = checkStrexp (c, body, made)
+            in ascribed (c, actual, sigexp, true, sp, n, "an export") end
+      (* rules 52, 53: the structure matches the signature, and the result
+         is the signature, realised by what the match found or, opaquely,
+         by new names, each standing for what the match found *)
+      and ascribed (c, actual, sigexp, opaque, sp, n, what) : str =
+        let val result = axiom (n, sp, what)
+        in
+          (case (checking, result) of
+             (true, SBase re) =>
+               let
+                 val {bound, env = e, ...} = checkSig (c, sigexp, NONE, being)
+                 val layers = layersOf actual
+                 val rl = [Base re]
+                 val phi = phiByPaths (sp, bound, e, layers, true)
+               in
+                 enrich (sp, [], phi, enriching, e, layers);
+                 if opaque then
+                   let val rho = phiByPaths (sp, bound, e, rl, false)
+                   in
+                     freshNames (sp, "53 opaque", bound, rho, recordOf (Elaborate.freshFrom, n, sp, what), NONE);
+                     List.app (fn (k : Types.tycon) =>
+                                  case (IntMap.find (rho, #stamp k), IntMap.find (phi, #stamp k)) of
+                                    (SOME (FName {stamp, ...}), SOME f) =>
+                                      (case IntTable.find (Ty.realizations, stamp) of
+                                         SOME g => if sameFcn (sp, convFcn g, f) then ()
+                                                   else alarm ("53 opaque", sp, "type " ^ #name k ^ " stands for another type")
+                                       | NONE => alarm ("53 opaque", sp, "type " ^ #name k ^ " stands for nothing"))
+                                  | _ => ()) bound;
+                     enrich (sp, [], rho, being, e, rl)
+                   end
+                 else enrich (sp, [], phi, being, e, rl);
+                 identities (sp, [], re, layers)
+               end
+           | _ => ());
+          result
+        end
       and axiom (n, sp, what) : str =
         case entry (#moduleResult reader, n) of
           SOME e => SBase e

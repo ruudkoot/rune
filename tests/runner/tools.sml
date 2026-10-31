@@ -778,7 +778,9 @@ struct
      ("select", "[38 record] #1 of"), ("flex", "[38 record] a flexible record left open"),
      ("binder", "[13 match] a clause of f: exn expected"), ("scope", "[4.6 scope]"), ("generalise", "[15 Clos]"),
      ("equality", "[4.9 equality] datatype t"), ("result", "[result] f: its scheme"), ("enrich", "[5.5 enrichment] v: int in the structure"),
-     ("identity", "[5.5 identity] value v: another variable"), ("match", "[5.6 match] type u must admit equality")]
+     ("identity", "[5.5 identity] value v: another variable"), ("match", "[5.6 match] type u must admit equality"),
+     ("signature", "[79 val] value v:"), ("sharing", "[78 sharing] type"), ("fresh", "[65 instance] type p: its name is not new"),
+     ("apply", "[5.5 enrichment] type u is not in the structure"), ("functor", "[86 functor] functor F: a type its body made")]
   fun astlintFaultTests () =
     let
       val dir = run ^ "/compiler/astlint"

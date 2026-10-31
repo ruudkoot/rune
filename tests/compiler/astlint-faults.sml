@@ -16,3 +16,5 @@ val m = id n
 structure S : sig val v : int end = struct val v = 1 end
 functor F (X : sig type u val w : int end) = struct val y = X.w end
 structure R = F (struct type u = int -> int val w = 2 end)
+signature G = sig type p type q sharing type p = q val z : p end
+structure O :> G = struct type p = int type q = int val z = 1 end

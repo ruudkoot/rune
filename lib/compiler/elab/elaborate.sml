@@ -12,9 +12,8 @@ struct
   val () = CompilerState.cellRoot ("Elaborate.allowPrim", allowPrim)
 
   (* What AstLint reads beside the witnesses (elab/astlint.sml; the linting
-     roadmap's D5 B: the module language as axioms), kept only where it
-     will run (lintRecords, which the driver sets at --lint=2 and above):
-     each declaration at top level that elaborated, with the environment it
+     roadmap's D5), kept only where it will run (lintRecords, which the
+     driver sets at --lint=2 and above): each declaration at top level that elaborated, with the environment it
      was elaborated in and what it added; and by node id, the environment
      an ascription, a functor's application, a dynamic module or an export
      gave, and by a functor binding's id its parameter's, as its body sees
@@ -27,10 +26,21 @@ struct
   val () = CompilerState.tableRoot ("Elaborate.moduleResults", moduleResults)
   val functorParams : env IntTable.table = IntTable.table 16
   val () = CompilerState.tableRoot ("Elaborate.functorParams", functorParams)
-  fun noteModule (table, id : int, e : env) : env =
-    (if !lintRecords andalso id >= 0 then IntTable.insert (table, id, e) else (); e)
-  fun forgetLintRecords () =
-    (tops := []; IntTable.removeRange (moduleResults, 0, !Ast.nextId); IntTable.removeRange (functorParams, 0, !Ast.nextId))
+  (* The fresh names the module language chose (the roadmap's M13, D5 A),
+     as schemes, not stamps (E6: one stamp carries several schemes after an
+     ascription): by a signature expression's id what it gave (rule 65's T,
+     rule 78's representatives among it) and the type counter before it;
+     by the id of an opaque ascription, an application, a dynamic module or
+     an export the type counter before the names it made (rules 53, 54); by
+     an application's id the names it made for the body's (rule 54's T') *)
+  val sigRecords : {first : int, sigma : SigMatch.sigma} IntTable.table = IntTable.table 64
+  val () = CompilerState.tableRoot ("Elaborate.sigRecords", sigRecords)
+  val freshFrom : int IntTable.table = IntTable.table 64
+  val () = CompilerState.tableRoot ("Elaborate.freshFrom", freshFrom)
+  val appliedNames : (tycon * tycon) list IntTable.table = IntTable.table 16
+  val () = CompilerState.tableRoot ("Elaborate.appliedNames", appliedNames)
+  fun noteModule (table, id : int, x : 'a) : 'a =
+    (if !lintRecords andalso id >= 0 then IntTable.insert (table, id, x) else (); x)
 
   (* Signatures and functors are components of the basis, not of
      environments (Section 5.1); both are declared at top level only. *)
@@ -53,6 +63,16 @@ struct
                   code : int}   (* the global of its function *)
   val funs : funinfo StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("Elaborate.funs", funs)
+  (* by a functor binding's id, for AstLint: the functor's signature, and
+     the type counter where its body began, from which T' is the names E'
+     has (generatedDeep) *)
+  val functorRecords : {sigma : SigMatch.sigma, summary : summary, lo : int} IntTable.table = IntTable.table 16
+  val () = CompilerState.tableRoot ("Elaborate.functorRecords", functorRecords)
+  fun forgetLintRecords () =
+    (tops := [];
+     IntTable.removeRange (moduleResults, 0, !Ast.nextId); IntTable.removeRange (functorParams, 0, !Ast.nextId);
+     IntTable.removeRange (sigRecords, 0, !Ast.nextId); IntTable.removeRange (freshFrom, 0, !Ast.nextId);
+     IntTable.removeRange (appliedNames, 0, !Ast.nextId); IntTable.removeRange (functorRecords, 0, !Ast.nextId))
 
   (* A functor's body is elaborated once, at its declaration, and compiled
      there to a function of its argument's record to its result's
@@ -2070,6 +2090,7 @@ struct
               val summary =
                 if closure (b, result) then {generated = generatedDeep (lo, result), result = placeholders result}
                 else refuse ()
+              val _ = noteModule (functorRecords, #id b, {sigma = sigma, summary = summary, lo = lo})
               val func = freshStamp ()
               val () =
                 if not code then ()
@@ -2119,6 +2140,7 @@ struct
         let
           val e = elabStrexp (env, level, top, scope, se)
           val sigma = elabSigexp (env, sigexp)
+          val _ = noteModule (freshFrom, n, !tyconCounter)
         in noteModule (moduleResults, n, ElabStats.during ElabStats.Match (fn () => SigMatch.ascribe (sigma, e, opaque, sp))) end
     | StrApp (funid, arg, sp, n) =>
         (Usage.use ("fun", funid);
@@ -2141,7 +2163,8 @@ struct
                    val {generated, result} = summary
                    val (phi, specE) = ElabStats.during ElabStats.Match (fn () => SigMatch.match (paramSig, argEnv, sp))
                    val descs = descriptors (code, paramSig, phi, sp)
-                   val fresh = List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) generated
+                   val _ = noteModule (freshFrom, n, !tyconCounter)
+                   val fresh = noteModule (appliedNames, n, List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) generated)
                    val bound = List.map (fn (c : tycon) => (c, case IntMap.find (phi, #stamp c) of
                                                                 SOME f => f
                                                               | NONE => TName c)) (#bound paramSig)
@@ -2177,8 +2200,9 @@ struct
                    val {generated, result} = summary
                    val (phi, _) = ElabStats.during ElabStats.Match (fn () => SigMatch.match (paramSig, argEnv, sp))
                    val _ = descriptors (code, paramSig, phi, sp)
-                   val phi = List.foldl (fn (c, m) => IntMap.insert (m, #stamp c, TName (freshTycon (#name c, #arity c, #eq c))))
-                                        phi generated
+                   val _ = noteModule (freshFrom, n, !tyconCounter)
+                   val fresh = noteModule (appliedNames, n, List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) generated)
+                   val phi = List.foldl (fn ((c, c'), m) => IntMap.insert (m, #stamp c, TName c')) phi fresh
                  in freshExceptions (realizeEnv (phi, result)) end
              in
                (* --pass-stats=elab: the match and the call are the application's *)
@@ -2201,6 +2225,7 @@ struct
                      DynamicFile _ => if isSome (!dynamicAt) then () else dynamicAt := SOME sp
                    | DynamicVirtual _ => ()
           val sigma = elabSigexp (env, sigexp)
+          val _ = noteModule (freshFrom, n, !tyconCounter)
           (* the signature's names made fresh (rule 65), and each datatype it
              specifies given its constructors under its fresh name -- from the
              specification's constructors, their schemes and tags -- which no
@@ -2256,6 +2281,7 @@ struct
         let
           val sigma = elabSigexp (env, sigexp)
           val e = elabStrexp (env, level, top, scope, body)
+          val _ = noteModule (freshFrom, n, !tyconCounter)
           val ascribed = ElabStats.during ElabStats.Match (fn () => SigMatch.ascribe (sigma, e, true, sp))
           val via = dynamicVia (env, "export", sp)
           (* each structure a record, as _dynamic reads it (DynRecord) *)
@@ -2277,6 +2303,12 @@ struct
   (* ------------------------------------------------------------------ *)
   (* Signature expressions and specifications (rules 62-84).             *)
   and elabSigexp (env, se : sigexp) : SigMatch.sigma =
+    let
+      val first = !tyconCounter
+      val sigma = elabSigexp' (env, se)
+      val id = case se of SigId (_, _, n) => n | SigSig (_, _, n) => n | SigWhere (_, _, _, n) => n
+    in #sigma (noteModule (sigRecords, id, {first = first, sigma = sigma})) end
+  and elabSigexp' (env, se : sigexp) : SigMatch.sigma =
     case se of
       SigId (n, sp, _) =>
         (Usage.use ("sig", n);
