@@ -25,13 +25,19 @@
    differs, a sample of the corpus and its extra items are linted still,
    for a mutant only a lint sees (E3's T09).
 
-   Jobs (tier test-compiler-mutants, which make test-compiler-mutants runs,
-   never make check: it takes hours): the good compiler's outputs, lints
-   and runs in a job for each part of the corpus; a job for each mutant
-   after them, which says what saw it; and a summary, in
-   tests/out/compiler-mutants. COMPILER_MUTANTS=E01,M02 runs those alone;
+   Jobs (tier test-compiler-mutants, which make test-compiler-mutants runs
+   and the nightly's job of its own: it takes hours): the good compiler's
+   outputs, lints and runs in a job for each part of the corpus; a job for
+   each mutant after them, which says what saw it; and a summary, in
+   tests/out/compiler-mutants, which fails where a mutant in lintCaught is
+   caught by no lint any more. COMPILER_MUTANTS=E01,M02 runs those alone;
    COMPILER_MUTANTS_QUICK=N keeps the first N items of each part, to try
-   the harness. A broken controller is a FAIL, never a verdict. *)
+   the harness. A broken controller is a FAIL, never a verdict.
+
+   make check holds the mutants to the sources, as nothing else does between
+   full runs: prepare, and a job for each mutant that builds it (built-ID).
+   A mutant that no longer applies or compiles seeds nothing, and that is a
+   FAIL in both tiers. *)
 structure CompilerMutants =
 struct
   open Sh
@@ -90,8 +96,8 @@ struct
          ways = ["interp", "t2c"], group = "", level = ""}
         :: List.map (fn (i : item) => {id = #id i, part = "extra", flags = #flags i, srcs = #srcs i, module = [], run = #run i,
                                        ways = #ways i, group = "", level = ""})
-                    (units ("functor-earlier", ["tests/units/functor-earlier/u0.sml", "tests/units/functor-earlier/u1.sml"],
-                            ["--inline-functor=G"], "tests/units/functor-earlier/none")
+                    (units ("functor-earlier", [],
+                            ["--build", "tests/units/functor-earlier/p.build"], "tests/units/functor-earlier/none")
                      (* a functor's function kept in its unit, whose closure
                         must not capture what a tuple Lower does not make
                         would hold (54a0d1928) *)
@@ -339,6 +345,14 @@ struct
   val lintCaughtInE3 = ["E07", "E12", "T01", "T02", "T03", "T05", "T06", "T08", "M01", "M02", "M07", "M08", "M09", "M10",
                         "M11", "M12", "M15", "M16", "M18", "M21", "L01", "L02", "L03", "L05", "L06", "L07", "L08"]
 
+  (* the mutants a lint catches (the roadmap's M16): the summary fails where
+     one of them no longer is, and one that a lint comes to catch is added *)
+  val lintCaught = ["E01", "E02", "E03", "E04", "E05", "E06", "E07", "E10", "E12", "E13", "E14",
+                    "T01", "T02", "T03", "T05", "T06", "T07", "T08", "T09", "T10", "M01", "M02",
+                    "M05", "M07", "M08", "M09", "M10", "M11", "M12", "M15", "M16", "M18", "M19",
+                    "M20", "M21", "L01", "L02", "L03", "L04", "L05", "L06", "L07", "L08", "L09",
+                    "L10", "R01", "R02", "R03", "R06", "K01", "K02", "X01", "X02", "X03"]
+
   (* counts of keys, in the order first met *)
   fun tally keys =
     List.foldl (fn (k, acc) => case List.find (fn (k', _) => k' = k) acc of
@@ -346,18 +360,30 @@ struct
                                | NONE => acc @ [(k, 1)]) [] keys
   fun showTally t = String.concatWith ", " (List.map (fn (k, n) => k ^ " " ^ Int.toString n) t)
 
+  fun named id = case List.find (fn (m : mutant) => #id m = id) CompilerMutantList.mutants of
+                   SOME m => m
+                 | NONE => raise Failed ("no mutant " ^ id)
+
+  (* make check's: the mutant applies and builds *)
+  fun builtJob id () =
+    let val (rbc, status) = build (named id)
+    in
+      rmTree (dirOf id);
+      need (isSome rbc, id ^ " no longer compiles: " ^ status);
+      say ("PASS compiler-mutants: " ^ id ^ " builds\n")
+    end
+
   fun mutantJob id () =
     let
-      val m = case List.find (fn (m : mutant) => #id m = id) CompilerMutantList.mutants of
-                SOME m => m
-              | NONE => raise Failed ("no mutant " ^ id)
+      val m = named id
       val d = dirOf id
       val (gcomp, glint, gruns) = goodTables ()
       val (rbc, status) = build m
       fun verdict text = (mkdirs (dirOf "verdicts"); write (dirOf "verdicts/" ^ id, text ^ "\n"); say (text ^ "\n"))
     in
       case rbc of
-        NONE => verdict ("STILLBORN " ^ id ^ " (" ^ #pass m ^ "): " ^ status)
+        NONE => (verdict ("STILLBORN " ^ id ^ " (" ^ #pass m ^ "): " ^ status);
+                 raise Failed (id ^ " no longer compiles: " ^ status))
       | SOME rbc =>
           let
             val elab = List.exists (fn p => p = #pass m) ["parse", "elaborate", "translate"]
@@ -493,11 +519,16 @@ struct
         ^ Int.toString (count "UNEXERCISED") ^ " not exercised, " ^ Int.toString (count "STILLBORN") ^ " stillborn; "
         ^ Int.toString (length stillLint) ^ " of the " ^ Int.toString (length inE3) ^ " a lint caught in E3 still caught by one\n"
       val public = fromRoot "tests/out/compiler-mutants"
+      (* a shortened corpus proves nothing about a mutant *)
+      val lost = if quick () > 0 then []
+                 else List.filter (fn i => List.exists (fn (m : mutant) => #id m = i) (selected ())
+                                           andalso not (List.exists (String.isPrefix ("LINT " ^ i ^ " ")) vs)) lintCaught
     in
       rmTree public; mkdirs public;
       write (public ^ "/results.txt", String.concat vs);
       write (public ^ "/summary.txt", summary);
-      say summary
+      say summary;
+      need (null lost, "no lint catches " ^ String.concatWith ", " lost ^ " any more")
     end
 
   and selected () =
@@ -512,6 +543,7 @@ struct
       ["compiler-mutants-prepare"] => SOME (protect prepare)
     | ["compiler-mutants-good", part] => SOME (protect (goodPart part))
     | ["compiler-mutant", id] => SOME (protect (mutantJob id))
+    | ["compiler-mutant-built", id] => SOME (protect (builtJob id))
     | ["compiler-mutants-final"] => SOME (protect final)
     | _ => NONE
 
@@ -526,11 +558,13 @@ struct
       val goods = List.map (fn p => "compiler-mutants/good-" ^ p) parts
       val ms = List.map #id (selected ())
     in
-      Test.tag "test-compiler-mutants" (Test.tag "covers:tests/runner/compilermutant*"
+      Test.tag "covers:tests/runner/compilermutant*"
         (Test.describe "compiler-mutants"
-           (job ("prepare", ["compiler-mutants-prepare"], [], 300)
-            :: List.map (fn p => job ("good-" ^ p, ["compiler-mutants-good", p], ["compiler-mutants/prepare"], 2000)) parts
-            @ List.map (fn i => job (i, ["compiler-mutant", i], goods, 2500)) ms
-            @ [job ("final", ["compiler-mutants-final"], List.map (fn i => "compiler-mutants/" ^ i) ms, 300)])))
+           (Test.tag "check" (Test.tag "test-compiler-mutants" (job ("prepare", ["compiler-mutants-prepare"], [], 300)))
+            :: List.map (fn i => Test.tag "check" (job ("built-" ^ i, ["compiler-mutant-built", i], ["compiler-mutants/prepare"], 1500))) ms
+            @ List.map (Test.tag "test-compiler-mutants")
+                (List.map (fn p => job ("good-" ^ p, ["compiler-mutants-good", p], ["compiler-mutants/prepare"], 2000)) parts
+                 @ List.map (fn i => job (i, ["compiler-mutant", i], goods, 2500)) ms
+                 @ [job ("final", ["compiler-mutants-final"], List.map (fn i => "compiler-mutants/" ^ i) ms, 300)])))
     end
 end

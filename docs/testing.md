@@ -77,8 +77,9 @@ stop at the first breach, which is a bug of the compiler. That includes
 the check of the register code (`RegVerify`, at level 1; [ir.md](ir.md),
 *The register target*), whose own negative tests are
 `register/@regverify-*`: the eleven corruptions its switch
-`RUNE_REGVERIFY_INJECT` makes, each refused with its own message; the
-link's check of the units' interfaces is held to its refusals by S80 of
+`RUNE_REGVERIFY_INJECT` makes, each refused with its own message;
+`register/@call-index` holds tier 2 to testing `CALL`'s function index in a
+register it trusts; the link's check of the units' interfaces is held to its refusals by S80 of
 `tests/incremental/SCENARIOS.md`, and a compile takes from a cache only
 the entries checked at its level (S81; [units.md](units.md), *The cache*);
 the check of the stack code's, at level 2, are `stack/@rbccheck-*`, six
@@ -481,7 +482,9 @@ and artifact names include their directory, so root `hello.sml` and SDL's
 members fail the inventory audit.
 
 `check-cross` and `check-positions` compile the Win32 mock application through
-`examples/win32/mock.build`. The generated providers have focused compilation
+`examples/win32/mock.build`, and `lib/ffi/win32/mock/contract` compiles the
+shared Win32 contract against the mock and runs it, which needs no SDL. The
+generated providers have focused compilation
 gates: `make test-sdl-hosts` generates the complete SDL binding and compares
 bytecode for both SDL examples across all seven Rune compiler builds;
 `make test-win32-hosts` does the same for the native Win32 application using
@@ -828,8 +831,9 @@ is 30 seconds and the sample count is 20 per file.
 ### Mutants of the compiler
 
 `make test-compiler-mutants` (tier `test-compiler-mutants`,
-`tests/runner/compilermutants.sml`; never part of `make check`: it takes
-about an hour and a quarter at eight jobs, 7.6 hours of CPU) asks which check
+`tests/runner/compilermutants.sml`) takes about an hour and a quarter at eight
+jobs, 7.6 hours of CPU, so it runs as a job of its own in the nightly
+workflow and not in `make check`. It asks which check
 catches which bug seeded in the compiler (plans/correctness/linting.md, E3
 and M4). Each of its 68 mutants (`tests/runner/compilermutantlist.sml`) is
 one or more exact edits of the compiler's sources -- a type substitution
@@ -850,12 +854,19 @@ are compiled at level 2 still, for a mutant only a lint sees. Each mutant's job 
 it -- `LINT` (which lint, after which stage), `OTHER` (the compiler
 stopping, a program of `tests/errors` accepted, the VM's loader or checks,
 the output, `-O0` against `-O2`, the bootstrap's stage two), `UNCAUGHT`,
-`UNEXERCISED` or `STILLBORN` -- and the summary, with how many of the 27 a
-lint caught in E3 one still catches, is in `tests/out/compiler-mutants`.
+or `UNEXERCISED` -- and the summary, with how many of the 27 a lint caught in
+E3 one still catches, is in `tests/out/compiler-mutants`.
 A controller that breaks is a FAIL, never a verdict; the good compiler's
-lint refusing an item it compiles is one too. `COMPILER_MUTANTS=E01,M02`
+lint refusing an item it compiles is one too, and so are a mutant that no
+longer compiles, which seeds nothing, and a mutant of `lintCaught`, the 54 a
+lint catches, that a lint no longer does (add one a lint comes to catch). `COMPILER_MUTANTS=E01,M02`
 runs those mutants alone, and `COMPILER_MUTANTS_QUICK=N` keeps the first N
 items of each part of the corpus, to try the harness.
+
+`make check` holds the mutants to the sources between those runs, as they
+went stale unseen when nothing did: `compiler-mutants/prepare` applies every
+mutant's edits, and `compiler-mutants/built-ID` builds each one, about 7
+minutes of CPU in all. It says nothing of what catches them.
 
 Benchmark correctness and deterministic-budget drivers use
 `bin/rune-bench-check` and `bin/rune-budget`. `suite NAME` selects the typed

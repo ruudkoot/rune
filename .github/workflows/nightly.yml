@@ -17,6 +17,45 @@ permissions:
   contents: read
 
 jobs:
+  # The compiler's mutants in full (docs/testing.md, Mutants of the compiler):
+  # hours on two cores, too long for make check, which only builds them, and
+  # for the job below. It fails where a mutant stops compiling or a mutant a
+  # lint catches stops being caught.
+  compiler-mutants:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    env:
+      FFI: "yes"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Packages
+        run: |
+          sudo apt-get update -q
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
+            libgmp-dev libffi-dev pkg-config gcc-multilib cmake g++ python3
+
+      - name: Host SML systems (cache)
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/rune-hosts
+          key: rune-hosts-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/fetch-hosts.sh') }}
+
+      - name: make hosts
+        run: make hosts
+
+      - name: make test-compiler-mutants
+        run: env --default-signal=PIPE make test-compiler-mutants
+
+      - name: Keep the verdicts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiler-mutants
+          path: tests/out/compiler-mutants/*
+          if-no-files-found: ignore
+          retention-days: 14
+
   nightly:
     runs-on: ubuntu-24.04
     timeout-minutes: 360
