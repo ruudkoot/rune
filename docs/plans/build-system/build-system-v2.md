@@ -1,0 +1,60 @@
+- this is a draft roadmap for an improved build system in rune
+- please note this is about building sml code via .build files. bootstrapping the rune compuler itself via the Makefile is out of scope (other than the .build file used to build rune via rune)
+- the .build files are nice but there are some shortcomings we want to address
+  - we somehow still have a dependency on MANIFEST files that need to be generated. the .build files should be all we need
+  - we have library.build files for each library but most applications seem to still import the individual .sml files from libraries directly. this is not modular. ideally a library form a nice abstract package that an application includes/imports as a whole (or in a way that is controlled by the library specification if in part)
+  - probably need to go over all the .build files and make them consistent and nice. there is a mish mash of direct file includes, library keywords and 'use' command to import libraries. the build language should have one way of doing things ideally. maybe also throw a warning when tring to directly include a file that is under a library.build? i guess we can't outright forbid including a .sml files that is in a folder managed by a library.build becase of test?
+    - libraries should be more than a collection of .sml files under the same folder. they should offer something like the abstraction and encapsulation that a structures/signature has. i.e. a program is not supposed to reach into the internals of the library.
+      - additionally we can use libraries for hierachical unit compilation. we could have a --units --whole equivalents that compiles the units that make up a library into one big unit (i.e. still an open program unlike regular --whole). that would allow for additional optimizations over the library compiler into smaller units and speed up incremental compilation of programs using libraries (compiling against one big library unit expected to be faster than all the units that make up the library).
+    - perhaps we need different rules for code under src and lib directory. code under lib is libraries and most go via the library interface from outside? perhaps that also helps runedoc with knowing what docs to generate.
+      - i would like to retain some level of nested structure under lib. e.g. testing libraries go under lib/test not lib directly
+      - i also wonder about namespace management. how do we prevent different libraries from clashing? e.g. like we have with the COMPILER signature in basis and lib/compiler.
+    - finaly it would be nice to have different versions of the basis library that build can choose. i think smlnj does something similar e.g. BASIS_2024 signature. it would be the same basis codebases just some additional functions unhidden in the signature.
+    - tests are the bane of any module system as tests often need to break open the abstration a module system is trying to provide. we should deal with that as well eventually. how to other languages and build systems deal with that?
+  - i have the idea of using the sml term level language to compose modules. when used in the build system this should still keep strict phase separatation. an ideation of the design can be found in docs/plans/build-system/ideation.md. review and analyze it throroughly and critically. it is ideation only not a settled design.
+    - docs/plans/build-system/ideation1.md
+    - docs/plans/build-system/ideation2.md
+    - docs/plans/build-system/ideation3.md
+      - higher-order modules and applicative functors will likely be a separate future roadmap (unless you think you need them now). but there is some discussion on build system related things here as well
+- second thinkg to address is separate compilation
+  - i think we are in a much better place after completing the functors-units.md roadmap.
+    - units and pickling are still a complex and fragile part of the codes (see e.g. build-cache-issues.md). we are dependent on tests for correctness. is it possible to put this on a firmer / more formal footing?
+  - sml 97 was designed as an interactive / repl based languages and not everything meshes well with separate compilation. to scale to extremely large codebases and systems we need state-of-the-art support for seprate compilation
+  - do research on the sml separate compilation literature
+  - as we have a repl now i think we can leave the interactive part of the sml 97 definition and required software to be build via the build system to be in the separately compilable restriction / subset. verify this by checking we can keep supporting sml 97 definition via the repl and that e.g. rune, hol4 and mlton as would be build via the build system are in the separtely compileable subset / restriction
+  - as an additional artifact produce docs/plans/rune2/separate-compilation.md
+    - this will be a roadmap for rune 2.0 - an evolution of rune in which we no longer aim to be standard ml '97. instead we'll become an new optimal programming language. this plan describes how modules, the build system, separate compilation, and units look should look like
+    - e.g. separate compilation units should have minimal/no dependence on other units other than what the units declare what they expect
+    - we may want to rethink our sequence of intermediate languages so we have one ir that can go into separate compilation units and is optimal from that point of view (e.g. allows the optization passes application to open programs before being written to the unit file, is efficiently combinable/linkable with the other units during incremantal compilation). we still want to support very fast incremental compilations and optimal code generation during whole program compilation. but ideally we have the in-between as well: well-optimized code during fast incremental compiles and the option to generate code close or identical to a whole program compile from units (while still being cheaper than a whole program compile)
+    - we clear how we would differ from sml 97 (if anything) and what we would keep the same
+- a closely related item is the language server we have now
+  - it currently meets is functional and non-functional requirments but i think it will not scale to a very large code base (10,000,000+ lines, 100,000+ .sml files, 1000 .build files)
+  - it currently treats each .build file as a completely separate entity. work needs to be shared rather than duplicated as this will not scale beyond a dozen .build files
+  - leverage the fact that sml in the rune repo is in the separately compilable subset. ideally we keep loose .sml files / files intended for the repl working as well but i'm willing to compromise on this
+  - i think the lsp may be doing some in-memory caching. really it should be leveraging an on-disk cache for analysis etc. as we cannot recheck 100,000+ files on each lsp reload. ideally this is a cache shared with the compiler itself. i.e. the lsp uses the results from the separate compilation. and conversely the lsp may precompile some .sml files as we edit. so a later unit-based application compile already has work done
+  - probably we will have to introduce library-level / global-level caching/aggregation/database as well to make the lsp scale but we can do that in a future roadmap. let's first focus on making the indivudal file case fast by avoiding parsing/analysis.
+  - i don't like the lsp currently asks under which build files it needs to analyze an sml files. in a properly modular language i would expect this not to matter?
+- i don't fully understand the difference between stuff stored in .rune folders and the files under rune/lib/cache. investigate, explain, propose more coherent ways of doing this
+- please do thorough research on build systems and library/namespace management, both in the literature and exisiting implementations (some available under /home/ruud/reference)
+  - ocaml's dune seems especially relevant to me
+  - haskell's backpack is interesting though i believe in the end it was never able to be implemented due to haskell's type classes being anti-modular
+  - also look more widely at e.g. sml's smackage, haskell's cabal, rust's crate, etc. we are not looking to create a full package manager here though. just libraries within a single extremely large code base / monorepo. package manager will be a future roadmap that can build on top of the foundations creted here.
+  - https://github.com/HOL-Theorem-Prover/holbuild
+
+# compiling against a functor's signature alone
+- (added by claude, 2026-10-26, from the functors-units roadmap's *Later*; SMLSC calls these functor specifications)
+- what: a client compiled against `functor F (X : S) : T` before F's body exists, F's function supplied later: at link time (a "virtual" functor whose implementation the .build file chooses) or at load time (a `_dynamic` functor, a plugin)
+- structures have this already (incremental-compilation.md, M9): `structure X = _virtual : SIG` bound in the build language, and `structure X = _dynamic "path" : SIG` loaded at run time, each with an ABI fingerprint checked at link or load
+- what functors-units (M7) already provides
+  - a functor is a function over fixed nested records (D3), so its run-time interface follows from its signature
+  - every application is typed by the functor's summary alone (M3, M7): a client never needs the body to type-check
+  - dynamic modules use the same nested records (8188270fd)
+  - the incremental benefit is there already: a client depends only on F's signature, so an edit of F's body recompiles nothing else (S8, S65, S66; MLton's S48: 1 unit instead of 6)
+- what this would add: compiling clients before F exists, choosing F's implementation per build, functors as plugins
+- what is missing
+  - syntax and semantics for a functor's signature without a body: SML '97 has none (SML/NJ has `funsig FS (X : S) = T`, SMLSC functor specifications in signatures), so a language extension with its sml97-extensions.md entry and docs/language.md rows
+  - an ABI fingerprint for a functor: its parameter's and result's signatures, and the descriptors the caller works out for its argument's datatypes (D4)
+  - binding: an import slot resolved at link (the .build file) or at load (`_dynamic`), a mismatch an error
+  - tests and docs, the fingerprint stable across the five host builds
+  - a few hundred lines, like the structure half of the incremental M9
+- pros of doing it now: the machinery is fresh and mostly there; it completes SMLSC-style separate compilation for functors; per-build implementation choice and functor plugins

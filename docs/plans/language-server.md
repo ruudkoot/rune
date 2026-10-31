@@ -1403,3 +1403,6 @@ of a shipped server.
 [gopls]: https://github.com/golang/tools/blob/b65ac2ee22000e2f9929e539355d84d651833ed1/gopls/doc/design/implementation.md
 [zls]: https://github.com/zigtools/zls/blob/bbd60390ffc1c12cd1aa91688fd2940b22966ee9/src/DocumentStore.zig
 [clangd]: https://github.com/llvm/llvm-project/blob/ee73fb814cafaf9ae33359f42e10ca849f86f159/clang-tools-extra/clangd/TUScheduler.h
+
+### Added by the Human
+- https://github.com/MatthewFluet/company-mlton

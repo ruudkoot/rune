@@ -1,0 +1,27 @@
+- this is a draft roadmap to revise and simplify the bootstrap process of rune
+- the current bootstrap process is complex, the Makefile is complex and we accidentally started to develop a tools/builder already without a plan. i will refer to a tool called runemake in what follows but it is very likely that is the same thing (or will supercede) tools/builder
+  - it may be that runemake will need to be a multi-stage tool. that is up to you find out while makeing the roadmap.
+- like with the tests the aim is to move most of the complexity into sml 97 / rune and keep the non-sml parts (Makefile, shell scripts) as simple as possible
+  - i want to be able to bootstrap without nearly any prerequisites.
+  - what is unavoidable is building runevm. to keep it simple we can build an initial boostrap runevm using the system C compiler and a very simple script/makefile. to avoid complexity there should be no gmp and no jit. if anything else needs to go let me know. this should be a vm capable of running the register bytecode.
+  - the bootstrap compiler can be shipped as a bytecode image under bootstrap directory. this is compiler can be used to compile runemake. then runemake will compile the real runevm and rune from source etc. etc.
+    - check how to efficiently store the bytecode in git. e.g. maybe we have to strip debug symbols from it. we can also consider storing binary rbc vs a textual representation of it if that allow git to store it more effiently (especially over versions where there is some overlap). benchmark/prototype this is necessary. since rbc is not compressed at the moment it is possible that git will deal with it effiently already when delta compressing
+  - this should be close to what polyml does - please check
+- Makefile and make can be kept to run a few things useful for a human - but should do a simple dispatch to runemake for most:
+  - just make to build rune fully (via runemake mostly)
+  - make dist to create distribution archives
+  - make release VERSION=V does the steps to create a release
+    - creates a tag vV-bootstrap
+    - creates the bootstrap bytecode, test and commits it
+      - the tag ensure this compiler will say it is a bootstrap compiler if anyone would ever run it directly
+    - creates a tag vV at the commit with the bootstrap bytecode comitted
+  - make doctor for a simple doctor checking only the prerequisites to build bootstrap runevm and runemake
+    - runemake doctor can do the full doctor with all the prerequisites needed for tests and the non-rune builds of rune
+  - make install to install
+- make sure everything (runevm, rune, runemake) is properly staged so we are guaranteed to have reached a fixed point on the final builds of runevm, rune, runemake and all other tools. and check we have reached a fixedpoint by comparing the final stages.
+  - keep output folders of different stages cleanly separated
+- we should retaint the ability to build rune using other sml 97 compilers (poylml, mlton, smlnj, mlkit) and without using the bytecode image under bootstrap to keep us honest. it will not how rune is every build in practise however. so try to keep the complexity of this outside of the bootstrap Makefile and put it in a separate scripts.
+  - note that there are two things to check here: 1) full bootstrapping using other sml97 compiler w/o using the bytecode image and 2) that the full rune compiler source can be compulers by non-rune compilers. the two test slightly different things and we need to test both.
+- we need several github CI actions to very the bootstrap process works. e.g. bootstrapping with system C compiler compiled runevm and the bytecode image under bootstrap for a variety of platforms and system C compilers.
+  - we also should have actions to check rune can be bootstrapped by other sml compilers (rune 0.1 release, polyml, mlton, ...) w/o makeing use of the bytecode image under bootstrap. i.e. from sml source only.
+- clean up all the complexity that has been build up so far. e.g. the Makefile and tools/builder and the scripts directory.
