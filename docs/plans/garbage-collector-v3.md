@@ -85,3 +85,8 @@ on its last tip (*Where we ended* there):
 
 ## Interesting references
 - https://go.dev/blog/greenteagc
+- https://github.com/UBMLtonGroup/RTMLton
+- https://github.com/MPLLang/mpl
+- thread safe basis
+  - https://github.com/MPLLang/mpl/issues/41
+  - https://github.com/MPLLang/mpl/pull/175
