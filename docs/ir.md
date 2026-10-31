@@ -228,12 +228,34 @@ the elaborator recorded:
 
 An alarm names the rule it breaks (`[15 Clos]`, `[4.9 equality]`, `[2
 instance]`) and stops the compile as every check does (`Pass.checkAt`).
-The module language is taken as given: the environment a declaration at
-top level was elaborated in, and what the elaborator records, only at
-level 2, of the results of ascriptions, functor applications, dynamic
-modules and exports, and of functor parameters (`Elaborate.tops`,
-`moduleResults`, `functorParams`), are axioms; signatures and
-`_overload` are not read, and `_prim`'s annotation is trusted. Where Rune
+The module language is read as chapter 5 has it, from what the elaborator
+records, only at level 2, of what it chose (`Elaborate.moduleResults`,
+`functorParams`, `sigRecords`, `freshFrom`, `appliedNames`,
+`functorRecords`; schemes rather than stamps, as one stamp carries several
+schemes after an ascription):
+
+* each signature expression against what it gave (rules 62-84): every
+  specification against the result, the flexible names the classes of the
+  specified types by the sharing equations, one name for each (`[78
+  sharing]`), new (`[65 signature]`, `[65 instance]`), and `where type`
+  (`[64 where]`);
+* a match: the realisation by paths (`[5.6 match]`, an `eqtype` admitting
+  equality among it), then enrichment by one-way matching of schemes (`[5.5
+  enrichment]`);
+* a result against what the rule says: a transparent ascription's the
+  signature so realised, an opaque one's the signature with new names
+  (`[53 opaque]`), each standing for what the match found (`Ty.realizations`),
+  both with what each value is from the structure (`[5.5 identity]`); an
+  application's the functor's, with the argument's types and new names
+  for those the body made (`[54 application]`); a dynamic module's an
+  instance of its signature; an export's as an opaque ascription's;
+* a functor's parameter against its signature, and what the body gave
+  against the functor's (`[86 functor]`).
+
+What stays an axiom is what is imported: the environment a declaration at
+top level was elaborated in, with the signatures and functors of the
+units before it. So is `_overload`'s class, and `_prim`'s annotation is
+trusted. Where Rune
 reads the book otherwise it is read as Rune reads it, by runespec's names
 of the readings: the modes of `--overloading`, `--flex-records` and
 `--free-tyvars` by their results after `finish` (`E.topdec`,
@@ -246,8 +268,9 @@ type at every node (`CompilerNodeTypes`, [language-server.md](language-server.md
 `RUNE_ASTLINT_FAULT=KIND`, for the tests, corrupts the first datum of a
 kind as `AstLint` reads it -- `instance`, `wildcard`, `raise`, `nil`,
 `constant`, `select`, `flex`, `binder`, `scope`, `generalise`, `equality`,
-`result` -- and `compiler/astlint-faults` holds each to its rule's
-message. The thirteen mutants of the elaborator that the roadmap's E3 and
+`result`, `enrich`, `identity`, `match`, `signature`, `sharing`, `fresh`,
+`apply`, `functor` -- and `compiler/astlint-faults` holds each to its
+rule's message. The thirteen mutants of the elaborator that the roadmap's E3 and
 E6 found nothing else catching, or catching late, each accepting what the
 Definition rejects or recording a wrong instance, are all caught by it.
 
