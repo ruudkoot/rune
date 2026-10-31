@@ -1273,8 +1273,8 @@ struct
   val () = CompilerState.refRoot ("Elaborate.openMemo", openMemo, IntTable.copy)
   fun descriptors (code : int, paramSig : SigMatch.sigma, phi : realisation, sp : Source.span) : desc list =
     List.map (fn (c, tag, _) =>
-                case IntMap.find (phi, #stamp c) of
-                  SOME (TName a) =>
+                case Option.mapPartial fcnIsName (IntMap.find (phi, #stamp c)) of
+                  SOME a =>
                     (case openAt (#stamp a, tag) of
                        SOME {desc, ...} => DescVar desc
                      | NONE =>

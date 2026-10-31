@@ -3,7 +3,8 @@
 `contract.sml` defines `Win32ContractFn`, using only the public `WIN32`
 signature and `test/unit`. The exact same test source is instantiated against
 native Windows, SDL and mocks. Platform entrypoints perform provider startup
-and shutdown; the functor exports its lazy `tests` tree.
+and shutdown; the functor exports its lazy `tests` tree. The mock's instance
+(`mock-contract-main.sml`) runs in `make check` as `lib/ffi/win32/mock/contract`.
 
 ```sml
 structure Contract = Win32ContractFn

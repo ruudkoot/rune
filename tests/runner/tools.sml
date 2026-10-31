@@ -1195,6 +1195,12 @@ struct
     | ["lib-toy"] => SOME libToy
     | ["lib-random-kat"] => SOME libRandomKat
     | ["lib-check", kind, n, lib, src] => SOME (fn () => libCheck (kind, n, ["--library", lib], src))
+    (* the Win32 contract against the mock, which needs no SDL: the only
+       compile of Win32ContractFn that make check has *)
+    | ["lib-win32-contract"] =>
+        SOME (fn () => libCheck ("passes", "ffi-win32-mock-contract",
+                                 ["--library", "ffi/win32/mock", "--library", "test/unit", "tests/ffi/win32/contract.sml"],
+                                 "tests/ffi/win32/mock-contract-main.sml"))
     | ["lib-basis-check", lib] => SOME (fn () => libBasisCheck lib)
     | ["lib-examples", lib, guarded] => SOME (fn () => libExamples (lib, guarded = "guarded"))
     | ["lib-laws"] => SOME libLaws
@@ -1255,6 +1261,7 @@ struct
               job ("runner-props", ["lib-check", "passes", "runner-props", "test/runner", "tests/lib/runner/props.sml"], [], 300, 600)]
              @ [job ("compiler/api", ["lib-suite", "compiler", "tests/lib/compiler/api.sml"], [], 500, 600),
                 job ("compiler/@check", ["lib-basis-check", "compiler"], [], 500, 600),
+                job ("ffi/win32/mock/contract", ["lib-win32-contract"], [], 500, 600),
                 job ("compiler/@examples", ["lib-examples", "compiler", "guarded"], [], 500, 600)]
              @ List.concat (List.map (fn lib => let val t = String.translate (fn #"/" => "-" | c => str c) lib
                                                 in [job (t ^ "-check", ["lib-basis-check", lib], [], 300, 600),
