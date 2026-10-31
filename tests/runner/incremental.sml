@@ -178,6 +178,9 @@ struct
     | "S77" => (c "e.sml s.sml u.sml main.sml"; b [] "e.sml s.sml u.sml main.sml"; prints s "1";
                  f "e.sml" 1; build s []; fails s;
                  f "u.sml" 1; b [] "u.sml"; prints s "1")
+    | "S79" => (c "s.sml u.sml main.sml"; b [] "s.sml u.sml main.sml"; prints s "1b";
+                 f "s.sml" 1; b [] "s.sml"; prints s "1b";
+                 f "s.sml" 2; build s []; fails s)
     | "S72" => (c "a.sml m.sml b.sml"; b [] "a.sml m.sml b.sml"; prints s "2";
                  let val withM = cache s
                  in c "a.sml b.sml"; b [] "a.sml b.sml"; prints s "2";
@@ -202,7 +205,7 @@ struct
                  check s "the build did not say the cache's hash differs"
                    (String.isSubstring "holds entries made by a compiler whose hash differs" (#errors (!(#result s)))))
     | "S73" => (c "a.sml b.sml c.sml"; b [] "a.sml b.sml c.sml"; f "a.sml" 1; f "b.sml" 1; b [] "a.sml b.sml")
-    | "S78" => (c "a.sml b.sml"; b [] "a.sml b.sml"; prints s "10";
+    | "S80" => (c "a.sml b.sml"; b [] "a.sml b.sml"; prints s "10";
                  (* b.sml compiled again as against another a.sml
                     (RUNE_REGVERIFY_INJECT): calling A.add with one argument
                     more, or expecting other representations of A.add's
@@ -222,7 +225,7 @@ struct
                            ("import-result", ["and takes its result as ptr, where it returns int"]),
                            ("import-read", ["reads a.sml@", "'s global 1 as int, where it holds ptr"])];
                  #environment s := []; b [] "b.sml"; prints s "12")
-    | "S79" => (c "a.sml b.sml";
+    | "S81" => (c "a.sml b.sml";
                  (* built at rune's own level of the lint, 0
                     (RUNE_LINT empty): its entries are marked 0, and a build
                     at level 2 compiles both again and marks them 2; then
@@ -234,7 +237,7 @@ struct
                    (String.isSubstring "b.sml: its entry was checked at a lower level of the lint (0)" (#errors (!(#result s))));
                  b [] "";
                  #environment s := [("RUNE_LINT", "")]; b [] ""; #environment s := [])
-    | "S80" => (c "a.sml b.sml"; b [] "a.sml b.sml";
+    | "S82" => (c "a.sml b.sml"; b [] "a.sml b.sml";
                  (* b.sml's entry made to say what it names of other units
                     had other schemes: it is no entry, and b.sml is compiled
                     again *)

@@ -34,6 +34,11 @@ struct
      level every generic variable of a type is the global's own. *)
   val globalSchemes : M.scheme IntMap.map ref = ref IntMap.empty
   val () = CompilerState.cellRoot ("ToMid.globalSchemes", globalSchemes)
+  (* the schemes of the globals of earlier units that a copy of a function
+     marked to be inlined names and their bases type no other way (a copy's
+     own, made by the expansion; UnitBasis; functors-units M10) *)
+  val importedSchemes : M.scheme IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("ToMid.importedSchemes", importedSchemes, IntTable.copy)
   fun globalScheme (g : int) : M.scheme =
     case IntMap.find (!globalSchemes, g) of
       SOME s => s
@@ -44,7 +49,9 @@ struct
               SOME t => let val t = Ty.fromTypes t in (gens t, t) end
             | NONE =>
                 if isSome (IntTable.find (Ty.exnArgs, g)) then ([], Ty.exnCon)
-                else bug ("global g" ^ Int.toString g ^ " has no type")
+                else case IntTable.find (!importedSchemes, g) of
+                       SOME s => s
+                     | NONE => bug ("global g" ^ Int.toString g ^ " has no type")
         in globalSchemes := IntMap.insert (!globalSchemes, g, s); s end
 
   (* What the translation of an expression is in:

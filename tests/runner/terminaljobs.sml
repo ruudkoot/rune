@@ -16,7 +16,9 @@ struct
       (Test.describe "terminal" (job "prepare" ["prepare"] [] ::
           List.map (fn name => job name ["one",name] ["terminal/prepare"]) scripts @
           List.map (fn name => job name ["raw-one",name] ["terminal/prepare"]) raw @
-          [job "runner-display" ["display"] ["terminal/prepare"],Test.requires ["cc"] (job "faults" ["faults"] ["terminal/prepare"])])))
+          [job "runner-display" ["display"] ["terminal/prepare"],
+           Test.requires ["cc"] (job "races" ["races"] ["terminal/prepare"]),
+           Test.requires ["cc"] (job "faults" ["faults"] ["terminal/prepare"])])))
   val windowsTree=Test.requires ["windows"] (tags (["test-windows","nightly","windows","vm"] @ covers)
       (Test.describe "terminal" (job "windows-prepare" ["windows-prepare"] ["terminal/prepare"] ::
            List.map (fn bits => Test.describe ("windows-" ^ bits)

@@ -239,14 +239,33 @@ struct
           (emit ("s",(prefix,name),span,originOf (env,"s",(prefix,name)));prefixes (prefix @ [name],rest))
     in emit (kind,id,span,originOf (env,kind,id));prefixes ([],path) end
 
+  (* whether a value's global is a function of an earlier unit's marked to
+     be inlined, whose Mid the session has (UnitBasis; functors-units M10):
+     a unit that names it copies it, and uses its Mid too ("inlv") *)
+  val inlinedValue : (int -> bool) ref = ref (fn _ => false)
+  val ()=CompilerState.cellRoot ("Env.inlinedValue",inlinedValue)
+
   fun findVal (env, (path, name)) =
-    case path of
-      [] =>
-        let val r = StringMap.find (vals env, name)
-        in useIf ("v", name, sameBinding, r, fn s => StringMap.find (vals s, name)); r end
-    | s :: _ => (longUse ("v", env, s, path, name); case findStr' (env, path) of
-                                                    SOME e => StringMap.find (vals e, name)
-                                                  | NONE => NONE)
+    let
+      fun inlined (SOME (Val {stamp, ...})) = !inlinedValue stamp
+        | inlined _ = false
+    in
+      case path of
+        [] =>
+          let val r = StringMap.find (vals env, name)
+          in useIf ("v", name, sameBinding, r, fn s => StringMap.find (vals s, name));
+             if !Usage.recording andalso inlined r then useIf ("inlv", name, sameBinding, r, fn s => StringMap.find (vals s, name))
+             else ();
+             r
+          end
+      | s :: _ =>
+          let
+            val () = longUse ("v", env, s, path, name)
+            val r = case findStr' (env, path) of
+                      SOME e => StringMap.find (vals e, name)
+                    | NONE => NONE
+          in if !Usage.recording andalso inlined r then longUse ("inlv", env, s, path, name) else (); r end
+    end
 
   fun findTy (env, (path, name)) =
     case path of

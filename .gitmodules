@@ -1,0 +1,3 @@
+[submodule "corpus/HOL"]
+	path = corpus/hol4/HOL
+	url = https://github.com/ruudkoot/HOL.git

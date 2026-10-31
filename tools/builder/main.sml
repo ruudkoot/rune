@@ -21,4 +21,3 @@ struct
               case e of Usage _ => 2 | _ => 1))
     in if status=0 then () else Posix.Process.exit (Word8.fromInt status) end
 end
-val ()=BuildMain.run ()

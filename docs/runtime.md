@@ -848,7 +848,10 @@ primitives `term_size`, `term_resizes`, `term_enter`, `term_leave` and
   on Windows the window (`srWindow`, not the buffer) of
   `GetConsoleScreenBufferInfo`. `term_resizes` counts `SIGWINCH`, from its
   first call; the handler is installed with `SA_RESTART`, so that no other
-  call is cut short, and ends a wait in `poll` all the same. On Windows a
+  call is cut short. It also writes to a nonblocking pipe, polled beside
+  the terminal, so a resize delivered while the editor draws still wakes
+  its next read. The pipe is private to each process, including after a
+  fork, and closed on exec. On Windows a
   size record that `term_read` reads is counted when the window's size has
   changed (the console sends them for its buffer too).
 * **Reading.** `term_read` waits in `poll` at most the time given, then

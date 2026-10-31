@@ -24,9 +24,9 @@ struct
          | Fail message => invalid message
   fun session {lib,flags} =
     let
-      (* --inline-functor=F[,F...] and --no-inline-functors, as rune takes
-         them (docs/build.md, Inline functors) *)
-      val inline=ref [] val noInline=ref false
+      (* --no-inline-functors, as rune takes it (docs/build.md, Inline
+         functors and functions) *)
+      val noInline=ref false
       (* --overloading=MODE and --free-tyvars=MODE, as rune takes them
          (docs/language.md) *)
       val overloading=ref Elaborate.OverDeclaration val freeTyvars=ref Elaborate.FreeRefuse
@@ -36,9 +36,7 @@ struct
            SOME m => (cell:=m;true)
          | NONE => invalid ("unsupported compiler-library flag: " ^ flag))
       fun prototype flag =
-        if String.isPrefix "--inline-functor=" flag then
-          (inline:= !inline @ List.filter (fn n => n<>"") (String.fields (fn c => c = #",") (String.extract (flag,17,NONE)));true)
-        else if flag="--no-inline-functors" then (noInline:=true;inline:=[];true)
+        if flag="--no-inline-functors" then (noInline:=true;true)
         else choice ("--overloading=",Elaborate.overloadModeOf,overloading) flag
              orelse choice ("--free-tyvars=",Elaborate.freeModeOf,freeTyvars) flag
       fun options ([],target,allow,mode,libraries) = (target,allow,mode,List.rev libraries)
@@ -54,7 +52,7 @@ struct
             else invalid ("unsupported compiler-library flag: " ^ flag)
       val (target,allow,mode,libraries)=options (flags,"registers",false,Source.Ascii,[])
     in Session {compiler=C.session ({target=target,allowPrim=allow,lib=lib,libraries=libraries,
-                                     functors={inline= !inline,noInline= !noInline},
+                                     functors={noInline= !noInline},
                                      language={overloading= !overloading,freeTyvars= !freeTyvars}},
       {link=CompilerApiPlatform.link,inherited=CompilerApiPlatform.inherited,
        prepare=CompilerApiPlatform.prepare,current=CompilerApiPlatform.current}),mode=mode} end

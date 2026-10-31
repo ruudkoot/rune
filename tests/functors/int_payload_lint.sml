@@ -11,4 +11,4 @@ fun mk_t (d, n) = if d <= 0 then C0 n else (case n mod 2 of 0 => C0 n | _ => C1 
 fun obs v = (case v of C0 p1 => 1 + p1 | C1 (p2, p3) => size p2 + p3)
 fun mk n = (count := !count + 1; mk_t (1, n))
 val () = print (Int.toString (obs (mk 0)) ^ " " ^ Int.toString (obs (mk 1)) ^ "\n")
-(* options --inline-functor= --functor-budget=0 *)
+(* options inline= --functor-budget=0 *)

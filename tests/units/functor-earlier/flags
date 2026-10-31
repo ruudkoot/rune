@@ -1,1 +1,1 @@
---lint --inline-functor=G
+--lint --build tests/units/functor-earlier/p.build

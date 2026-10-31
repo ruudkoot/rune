@@ -86,6 +86,11 @@ instructions, a seventh of compiling `examples/hello.sml`, so `rune` takes
 it at level 1 and not at 0. The REPL and the library name the boundary,
 and that `--lint=2` would name the pass.
 
+Without `--pass-stats`, stages do not read clocks, count their results'
+nodes, or update timing totals. A unit's elapsed time is sampled only
+when those statistics are requested. Linting and dumps still run when
+requested, independently of timing.
+
 **What `--pass-stats` shows** is the whole compile: the stages add up to
 the process's processor time from its start, which `tests/compiler` holds
 them to (within 2%, and 15% on SML/NJ's builds, whose processor time counts
@@ -544,11 +549,28 @@ gives one is refused as for any option it does not know.
     function inlined there keeps the frame of `<toplevel>`
     (`tests/lang/mod.functor.functions_trace`).
   - **Across units** (M6b). A functor marked to be inlined (`inline
-    functor` in a build file, `--inline-functor=F`; docs/build.md) has its
-    function's Mid kept in its unit's basis (`MidCodec`,
-    `UnitBasis.funcode`), and a later unit expands an application of it
-    as it expands its own functors' (`Expand.imported`). Such a unit has a
-    usage `inl F`, which holds while the body's Mid is the same.
+    functor` in a build file; docs/build.md) has its function's Mid kept
+    in its unit's basis (`MidCodec`, `UnitBasis.funcode`), and a later
+    unit expands an application of it as it expands its own functors'
+    (`Expand.imported`). Such a unit has a usage `inl F`, which holds
+    while the body's Mid is the same.
+  - **Functions across units** (functors-units M10). A function marked to
+    be inlined (`inline val` in a build file; docs/build.md), and every
+    function that only applies a primitive to its parameter
+    (`Expand.primOfFunction`, which sees through a variable that only
+    copies another, as a pattern with types leaves), has its Mid kept in
+    its unit's basis as the expansion leaves it (`Expand.keepValues`),
+    with the unit's functions it calls while the group is under 400 Mid
+    nodes and the schemes of the unit's globals it names that nothing
+    else types (`ToMid.importedSchemes`). In a build in units, a unit's
+    expansion first gives the unit a copy of each such function that it
+    names, through the globals that are it (`Expand.withInlined`; a
+    definition that only is another global, `val app = app` in List,
+    keeps naming the first), as a function of its own top level, its
+    names fresh, and each use of the function one of the copy; Simplify
+    then puts a copy where it is called or specialises it by its own
+    rules. A whole compile and `--units --whole` have no copies. The unit
+    has a usage `inlv NAME`, which holds while the Mid is the same.
   - **What a later unit calls.** A unit's basis says which of its globals
     are another global at the same types (`val andb = Word.andb` in a
     copy: `Expand.globalAliases`), and which are functions that apply a
@@ -1155,7 +1177,7 @@ It checks `Regs` and `Link`, not that the code is safe for an untrusted
 prints what it counted; `RUNE_REGVERIFY_INJECT=KIND` corrupts the code
 `Regs` made, before the check, in one of eleven ways, which its tests
 (`register/@regverify-*`) hold it to refusing, or in three more what the
-unit expects of its imports, which S78 of `tests/incremental/SCENARIOS.md`
+unit expects of its imports, which S80 of `tests/incremental/SCENARIOS.md`
 holds the link to refusing; a unit so made is not stored in the cache.
 
 ## Tests

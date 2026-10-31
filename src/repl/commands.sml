@@ -211,8 +211,7 @@ struct
   (* ---- the shell ---- *)
 
   fun shell (command : string) : unit =
-    (ReplFront.release ();
-     ignore (OS.Process.system command))
+    ReplFront.shellLike (fn () => ignore (OS.Process.system command))
 
   fun editor () : string =
     case (OS.Process.getEnv "VISUAL", OS.Process.getEnv "EDITOR") of
@@ -232,7 +231,8 @@ struct
                            then raise Fail (what ^ " was not defined in a file of yours") else (f, l)
           | [] => (what, 0)
     in
-      ignore (OS.Process.system (editor () ^ (if line > 0 then " +" ^ Int.toString line else "") ^ " '" ^ file ^ "'"));
+      ReplFront.shellLike (fn () =>
+        ignore (OS.Process.system (editor () ^ (if line > 0 then " +" ^ Int.toString line else "") ^ " '" ^ file ^ "'")));
       !ReplLoop.reloadHook file
     end
 

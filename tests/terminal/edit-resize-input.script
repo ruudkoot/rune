@@ -1,0 +1,14 @@
+# windows
+# Continue typing across a resize, then resize again with no key to wake
+# the editor. Keep the entire input in both redraws.
+start 40 12 @READLINE@
+wait ^>$
+send abcdefghij
+wait ^> abcdefghij$
+resize 20 12
+send klmnopqrstuvwxyz0123456789ABCDEFGH
+wait ^> abcdefghijklmnopqr\nstuvwxyz0123456789AB\nCDEFGH$
+resize 60 12
+wait ^> abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGH$
+keys C-u C-d
+wait ^bye$

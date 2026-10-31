@@ -84,11 +84,9 @@ struct
     \                    default; 0 makes none: every application a call of the\n\
     \                    functor's function, docs/ir.md); every functor is\n\
     \                    compiled once (--functors= and --datatype-tags= are gone)\n\
-    \  --inline-functor=F[,F...] expand the applications of functor F in every\n\
-    \                    unit, not only its own: its unit keeps its function's\n\
-    \                    Mid, and the units that apply it depend on its body (as\n\
-    \                    a library's `inline functor ... end`, docs/build.md)\n\
-    \  --no-inline-functors none inlined across units, the libraries' marks too\n\
+    \  --no-inline-functors none of the functors and functions the libraries'\n\
+    \                    build files mark (`inline functor`, `inline val`)\n\
+    \                    inlined across units (docs/build.md)\n\
     \  --flex-records=M  what must determine a flexible record's labels\n\
     \                    (docs/language.md): binding, declaration,\n\
     \                    topdec-monomorphic, topdec (default) or program\n\
@@ -331,11 +329,6 @@ struct
              (case Int.fromString v of
                 SOME n => if n >= 0 then (Pass.fuel := SOME n; parse rest) else raise Usage "--fuel requires a number"
               | NONE => raise Usage "--fuel requires a number")
-         | SOME ("--inline-functor", v) =>
-             (Elaborate.inlineFunctors :=
-                List.foldl (fn (n, m) => if n = "" then m else StringMap.insert (m, n, ())) (!Elaborate.inlineFunctors)
-                           (String.fields (fn c => c = #",") v);
-              parse rest)
          | SOME ("--functor-budget", v) =>
              (case Int.fromString v of
                 SOME n => if n >= 0 then (Expand.budget := n; parse rest) else raise Usage "--functor-budget requires a number"

@@ -185,12 +185,42 @@ struct
          in check s ("a file used at another place in a session, the cache verified: " ^ output)
               (String.isSubstring "val v = 3 : int" output andalso String.isSubstring "val w = 3 : int" output
                andalso not (String.isSubstring "not what compiling it gives" output)) end)
+    | "S78" =>
+        (* a function marked to be inlined (`inline val`): an edit of its
+           body compiles the declaring unit and the units that copied it,
+           and nothing else; an edit beside it, the declaring unit alone *)
+        let
+          val () = own s ""
+          val () = put s "a.sml" "structure A = struct fun inc x = x + 1 fun other x = x * 2 end"
+          val () = put s "b.sml" "val b = A.inc 41"
+          val () = put s "c.sml" "val c = A.other 3"
+          val () = put s "main.sml" "val () = print (Int.toString b ^ \" \" ^ Int.toString c ^ \"\\n\")"
+          val () = put s "p.build" "inline val A.inc end\nfiles a.sml b.sml c.sml main.sml end"
+          fun bld expected output =
+            let
+              val r = command s "" [#compiler s, "--build", "p.build", "--units", "--cache-dir", "cache", "--explain-rebuild",
+                                    "-o", "p.rbc"]
+              val () = #result s := r
+              val got = compiled s
+              val () = check s ("compiled [" ^ String.concatWith " " got ^ "], wanted [" ^ expected ^ "]")
+                             (#status r = 0 andalso got = String.tokens Char.isSpace expected)
+              val plain = command s "" [#compiler s, "--build", "p.build", "--units", "--no-cache", "-o", "nocache.rbc"]
+              val () = check s "cached program differs from uncached compilation"
+                             (#status plain = 0 andalso same (path s "p.rbc", path s "nocache.rbc"))
+            in prints s output end
+        in
+          bld "a.sml b.sml c.sml main.sml" "42 6";
+          edit s "a.sml" "fun inc x = x + 1" "fun inc x = x + 2";
+          bld "a.sml b.sml" "43 6";
+          edit s "a.sml" "fun other x = x * 2" "fun other x = x * 2 + 0";
+          bld "a.sml" "43 6"
+        end
     | "S58" => parallel s
     | _ => simple s
     end
   val cases = ["S1", "S2", "S3", "S5", "S6", "S8", "S17", "S18", "S19", "S29", "S13", "S24", "S31", "S33", "S34", "S36", "S28", "S40",
                "S4", "S7", "S9", "S10", "S11", "S12", "S14", "S15", "S16", "S20", "S21", "S22", "S23", "S25", "S26", "S30", "S32", "S35",
-               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76", "S77", "S78", "S79", "S80"]
+               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76", "S77", "S78", "S79", "S80", "S81", "S82"]
   fun runCase name compiler =
     let val s = create name compiler
     in one s; say ("PASS incremental." ^ name ^ ": " ^ Int.toString (!(#assertions s)) ^ " assertions\n") end

@@ -26,17 +26,27 @@
    top-level value or fixity directive belongs in an always file); `rune
    --basis-check` checks that. `rune --basis-deps FILE...` prints the files a
    program loads, and `rune --basis all` loads every file. *)
-(* The functors that --functors=functions inlines in every unit that
-   applies them, not only their own (docs/build.md, M6b of
-   docs/plans/functors-units.md): the Basis's own functors, which make its
-   structures in units other than theirs -- the words, ints, vectors, arrays
-   and slices, the packing, the streams -- and the I/O functors a program may
-   apply. Without, a call of Word8.+ or of TextIO's input goes through the
-   functor's records. *)
+(* The functors expanded in every unit that applies them, not only their
+   own (docs/build.md, Inline functors; M6b of docs/plans/functors-units.md):
+   the Basis's own functors, which make its structures in units other than
+   theirs -- the words, ints, vectors, arrays and slices, the packing, the
+   streams -- and the I/O functors a program may apply. Without, a call of
+   Word8.+ or of TextIO's input goes through the functor's records. *)
 inline functor
   RuneIntNFn RuneWordNFn RuneByteArrayFn RuneStringVectorFn RuneMonoVectorFn RuneMonoVectorSliceFn
   RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoArray2Fn RunePackWordFn RunePackRealFn RunePackReal32Fn
   RunePrimIOFn RuneStreamIOFn RuneImperativeIOFn RunePosixTTYFlagsFn PrimIO StreamIO ImperativeIO
+end
+(* The functions a unit that names them copies, for Simplify to put where
+   they are called, as a whole program has them (docs/build.md, Inline
+   functions; M10 of docs/plans/functors-units.md): those that a profile of
+   MLton's benchmarks built in units found called across units on their hot
+   paths. A function that only applies a primitive needs no mark: a unit
+   after it calls the primitive. *)
+inline val
+  not o valOf app foldl foldr
+  Word32.+ "Word32.>>" Word32.andb Word32.fromLarge
+  Word8Array.sub PackWord32Little.subArr PackWord32Big.subArr
 end
 annotate "always" "host=swap" in
   initial.sml

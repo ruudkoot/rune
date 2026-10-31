@@ -956,6 +956,96 @@ struct
     end
 
   (* ---- reproducible: the compiler's builds, the same bytes *)
+  fun reproCounts () =
+    let
+      val out = run ^ "/reproducible-counts"
+      val () = (rmTree out; mkdirs out)
+      fun f name = out ^ "/" ^ name
+      fun compile flags =
+        let
+          (* Output existence is part of the initial filesystem state:
+             every invocation performs the same input-alias checks. *)
+          val () = write (f "output.rbc", "previous output")
+          val status = exec {cmd = ["bin/runevm", "--heap-size", "67108864", "--count", "bin/rune.rbc",
+                                    "--no-prelude", "tests/compiler/determinism.sml", "-o", f "output.rbc"] @ flags,
+                             dir = NONE, stdin = "", stdout = f "stdout", stderr = f "stderr", timeout = 120}
+          val counts = countOf (f "stderr")
+        in
+          if status <> 0 orelse counts = "" then
+            (say ("FAIL reproducible counts: compile failed or did not count: " ^ read (f "stderr") ^ "\n"); NONE)
+          else SOME (counts, read (f "output.rbc"))
+        end
+      fun check (name, flags, cold) =
+        let
+          fun one () = (if cold then rmTree (f "cache") else (); compile flags)
+          val first = one ()
+          val second = one ()
+          val third = one ()
+        in
+          if isSome first andalso first = second andalso second = third then ()
+          else say ("FAIL reproducible counts: " ^ name ^ " changed its instructions, allocations, or bytecode\n")
+        end
+      val cached = ["--units", "--cache-dir", f "cache"]
+    in
+      check ("whole", [], false);
+      check ("units without cache", ["--units", "--no-cache"], false);
+      check ("cold cache", cached, true);
+      check ("warm cache", cached, false)
+    end
+
+  (* Seeded changes to collection and tiering boundaries, outside the
+     compiler's semantics. The commands are kept for individual replay. *)
+  fun compilerStress (seedText, runsText) =
+    case (Int.fromString seedText, Int.fromString runsText) of
+      (SOME seed, SOME runs) =>
+        if seed < 0 orelse seed > 1073741823 orelse runs < 1 orelse runs > 10000 then
+          say "FAIL compiler-stress: seed must be 0..1073741823 and runs 1..10000\n"
+        else
+          let
+            val out = run ^ "/compiler-stress-" ^ Int.toString seed
+            val () = (rmTree out; mkdirs out)
+            fun f name = out ^ "/" ^ name
+            val random = ref (Word32.fromInt seed)
+            fun draw bound =
+              (random := Word32.+ (Word32.* (!random, 0w1664525), 0w1013904223);
+               Word32.toInt (Word32.mod (!random, Word32.fromInt bound)))
+            fun compile (name, options) =
+              let
+                val () = write (f "output.rbc", "previous output")
+                val cmd = ["bin/runevm", "--heap-size", "67108864", "--count"] @ options
+                          @ ["bin/rune.rbc", "--lib", "lib", "--target=stack", "-O0",
+                             "tests/lang/mod.functor.functions_trace.sml", "-o", f "output.rbc"]
+                (* A direct replay needs the runner's arithmetic and lint
+                   settings and the same pre-existing output file too. *)
+                val replay = ["env", "RUNEVM_INTINF=sml", "RUNE_LINT=" ^ env ("RUNE_LINT", "")] @ cmd
+                val () = write (f (name ^ ".command"),
+                  "cd " ^ quote root ^ " || exit 1\n"
+                  ^ "printf '%s' 'previous output' > " ^ quote (f "output.rbc") ^ " || exit 1\n"
+                  ^ "exec " ^ String.concatWith " " (List.map quote replay) ^ "\n")
+                val status = exec {cmd = cmd, dir = NONE, stdin = "", stdout = f (name ^ ".out"),
+                                   stderr = f (name ^ ".err"), timeout = 120}
+                val counts = countOf (f (name ^ ".err"))
+              in
+                if status = 0 andalso counts <> "" then SOME (counts, read (f "output.rbc"))
+                else (say ("FAIL compiler-stress: " ^ name ^ ": " ^ read (f (name ^ ".err")) ^ "\n"); NONE)
+              end
+            val reference = compile ("reference", [])
+            fun one i =
+              let
+                val nursery = 786432 + 8 * draw 65537
+                val threshold = 1 + draw 1000
+                val options = ["--nursery", Int.toString nursery, "--nursery-max", Int.toString nursery,
+                               "--jit-calls=" ^ Int.toString threshold, "--jit-work=" ^ Int.toString threshold]
+                              @ (if i mod 8 = 0 then ["--gc-verify"] else [])
+                val name = "case-" ^ Int.toString i
+              in
+                if isSome reference andalso compile (name, options) = reference then ()
+                else say ("FAIL compiler-stress: seed " ^ seedText ^ ", " ^ name ^
+                          " changed output or VM counts; replay " ^ f (name ^ ".command") ^ "\n")
+              end
+          in List.app one (List.tabulate (runs, fn i => i)) end
+    | _ => say "FAIL compiler-stress: expected integer seed and run count\n"
+
   val reproBuilds =
     (* name, directory (the copy or the tree), flags, the builds before it *)
     [("units-nocache", false, ["--no-cache"], []),
@@ -1151,6 +1241,8 @@ struct
     | ["doc-cross"] => SOME docCross
     | ["opt-cross"] => SOME optCross
     | ["repro-copy"] => SOME reproCopy
+    | ["repro-counts"] => SOME reproCounts
+    | ["compiler-stress", "--seed", seed, "--runs", runs] => SOME (fn () => compilerStress (seed, runs))
     | ["repro-build", n] => SOME (fn () => reproBuild n)
     | ["repro-compare"] => SOME reproCompare
     | ["bootstrap", target] => SOME (fn () => bootstrapOne target)
@@ -1245,8 +1337,9 @@ struct
          (Test.describe "expectations" [job ("cross-deviations", ["cross-deviations"], [], 1, 256, 120)]),
        tagged ["check", "check-reproducible", "covers:examples/hello.sml"]
          (Test.describe "reproducible"
-            (job ("copy", ["repro-copy"], [], 1, 100, 600)
-             :: List.map (fn (n, _, flags, earlier) =>
+            ([job ("copy", ["repro-copy"], [], 1, 100, 600),
+              job ("counts", ["repro-counts"], [], 1, 300, 600)]
+             @ List.map (fn (n, _, flags, earlier) =>
                             job (n, ["repro-build", n], List.map (fn b => "reproducible/" ^ b) earlier,
                                  if List.exists (fn x => x = "J") flags then 4 else 1, 1500, 3600))
                          reproBuilds

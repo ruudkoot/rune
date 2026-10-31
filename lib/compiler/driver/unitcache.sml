@@ -132,6 +132,9 @@ struct
     (* the functors inlined across units: what a unit's basis keeps *)
     @ (if not (StringMap.isEmpty (!Elaborate.inlineFunctors))
        then [("inline", String.concatWith "," (StringMap.listKeys (!Elaborate.inlineFunctors)))] else [])
+    (* and the functions (functors-units M10) *)
+    @ (if not (StringMap.isEmpty (!Elaborate.inlineValues))
+       then [("inline-val", String.concatWith "," (StringMap.listKeys (!Elaborate.inlineValues)))] else [])
 
   (* The hash of the configuration of this compile *)
   fun configuration () : string =
@@ -350,19 +353,24 @@ struct
     if d = "" orelse d = "." orelse d = "/" orelse (OS.FileSys.isDir d handle OS.SysErr _ => false) then ()
     else (mkdirs (OS.Path.dir d); OS.FileSys.mkDir d handle OS.SysErr _ => ())
 
-  (* a name of its own for what is being written *)
-  val written = ref 0
-  val () = CompilerState.cellRoot ("UnitCache.written", written)
-  fun unique () =
-    (written := !written + 1;
-     LargeInt.toString (Time.toMicroseconds (Time.now ()) mod 1000000000000) ^ "-"
-     ^ SysWord.fmt StringCvt.DEC (Posix.Process.pidToWord (Posix.ProcEnv.getpid ())) ^ "-" ^ Int.toString (!written))
+  (* The system reserves a name; the file to publish is beside its
+     destination so that rename stays on one filesystem. Keep the
+     reservation until publication finishes, as Emit does. Clock readings
+     and process ids never enter the compiler's arithmetic or its cache. *)
+  fun withTemporary (path : string) (write : string -> unit) : unit =
+    let
+      val reservation = OS.FileSys.tmpName ()
+      val temporary = path ^ ".tmp-" ^ OS.Path.file reservation
+      fun remove p = OS.FileSys.remove p handle OS.SysErr _ => ()
+      fun clean () = (remove temporary; remove reservation)
+    in
+      (write temporary; clean ()) handle ex => (clean (); raise ex)
+    end
 
   (* storePaths: a unit's paths kept by its identity, whole or not at all *)
   fun storePaths (dir : string, config : string, identity : string, ps : (int * int * string) list) : unit =
     let
       val p = pathsFile (dir, config, identity)
-      val tmp = p ^ ".tmp-" ^ unique ()
       val body = P.writer ()
       val () = (P.string (body, identity);
                 P.list (fn (w, (k, n, path)) => (P.nat (w, k); P.nat (w, n); P.string (w, path))) (body, ps))
@@ -372,11 +380,14 @@ struct
                 P.string (w, UnitBasis.during "cache" (fn () => UnitBasis.hashAt ("paths", b))); P.bytes (w, b))
     in
       (mkdirs (OS.Path.dir p);
-       let val out = BinIO.openOut tmp
-       in BinIO.output (out, Byte.stringToBytes (P.contents w)); BinIO.closeOut out end;
-       OS.FileSys.rename {old = tmp, new = p})
-      handle IO.Io _ => ((OS.FileSys.remove tmp) handle OS.SysErr _ => ())
-           | OS.SysErr _ => ((OS.FileSys.remove tmp) handle OS.SysErr _ => ())
+       withTemporary p (fn tmp =>
+         (let val out = BinIO.openOut tmp
+          in
+            (BinIO.output (out, Byte.stringToBytes (P.contents w)); BinIO.closeOut out)
+            handle ex => (BinIO.closeOut out handle _ => (); raise ex)
+          end;
+          OS.FileSys.rename {old = tmp, new = p})))
+      handle IO.Io _ => () | OS.SysErr _ => ()
     end
 
   (* store: the entry of a key written, whole or not at all, by the hash of
@@ -392,7 +403,6 @@ struct
       val u = P.writer ()
       val () = usages (u, us)
       val p = OS.Path.joinDirFile {dir = d, file = UnitBasis.hashAt ("store", P.contents u)}
-      val tmp = p ^ ".tmp-" ^ unique ()
       val body = P.writer ()
       val () = (usages (body, us); P.list P.string (body, warnings); P.string (body, file);
                 usages (body, others); P.string (body, pickle); P.string (body, identity); P.string (body, code);
@@ -406,15 +416,22 @@ struct
     in
       (mkdirs d;
        if (OS.FileSys.access (about, []) handle OS.SysErr _ => false) then ()
-       else (let val () = mkdirs (OS.Path.dir about)
-                 val t = about ^ ".tmp-" ^ unique ()
-                 val out = TextIO.openOut t
-             in TextIO.output (out, aboutText ()); TextIO.closeOut out; OS.FileSys.rename {old = t, new = about} end
+       else ((mkdirs (OS.Path.dir about);
+              withTemporary about (fn t =>
+                (let val out = TextIO.openOut t
+                 in
+                   (TextIO.output (out, aboutText ()); TextIO.closeOut out)
+                   handle ex => (TextIO.closeOut out handle _ => (); raise ex)
+                 end;
+                 OS.FileSys.rename {old = t, new = about})))
              handle IO.Io _ => () | OS.SysErr _ => ());
-       let val out = BinIO.openOut tmp
-       in BinIO.output (out, Byte.stringToBytes (P.contents w)); BinIO.closeOut out end;
-       OS.FileSys.rename {old = tmp, new = p})
-      handle IO.Io _ => ((OS.FileSys.remove tmp) handle OS.SysErr _ => ())
-           | OS.SysErr _ => ((OS.FileSys.remove tmp) handle OS.SysErr _ => ())
+       withTemporary p (fn tmp =>
+         (let val out = BinIO.openOut tmp
+          in
+            (BinIO.output (out, Byte.stringToBytes (P.contents w)); BinIO.closeOut out)
+            handle ex => (BinIO.closeOut out handle _ => (); raise ex)
+          end;
+          OS.FileSys.rename {old = tmp, new = p})))
+      handle IO.Io _ => () | OS.SysErr _ => ()
     end)
 end

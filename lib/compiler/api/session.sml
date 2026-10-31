@@ -10,10 +10,10 @@ struct
   exception Failed of diagnostic list
   exception Closed
   datatype input = Text of source | Loaded of artifact | MidInput of {source : source, pickle : string, mid : string}
-  (* functors: the functors to inline across units besides the libraries'
-     marks, and whether the marks are left out (docs/build.md, Inline
-     functors) *)
-  type functors = {inline : string list, noInline : bool}
+  (* functors: whether the libraries' marks of the functors and functions
+     to inline across units are left out (docs/build.md, Inline functors
+     and functions) *)
+  type functors = {noInline : bool}
   (* language: the contexts of overloading and of free type variables at
      top level (--overloading, --free-tyvars; docs/language.md) *)
   type language = {overloading : Elaborate.overloadMode, freeTyvars : Elaborate.freeMode}
@@ -60,16 +60,26 @@ struct
           val () = language config
           (* the functors to inline, set in this attempt's own compiler as
              rune's options set them *)
-          val {inline,noInline} = #functors config
+          val {noInline} = #functors config
           val () =
             Elaborate.inlineFunctors:=
               List.foldl (fn (n,m) => StringMap.insert (m,n,())) StringMap.empty
-                (inline @ (case (noInline,#lib config) of
-                             (false,SOME root) =>
-                               List.concat (List.map BasisManifest.inlineFunctors
-                                 (root ^ "/basis" :: (BasisManifest.libraries (root,#libraries config)
-                                                      handle BasisManifest.Usage _ => [])))
-                           | _ => []))
+                (case (noInline,#lib config) of
+                   (false,SOME root) =>
+                     List.concat (List.map BasisManifest.inlineFunctors
+                       (root ^ "/basis" :: (BasisManifest.libraries (root,#libraries config)
+                                            handle BasisManifest.Usage _ => [])))
+                 | _ => [])
+          (* and the functions (functors-units M10) *)
+          val () =
+            Elaborate.inlineValues:=
+              List.foldl (fn (n,m) => StringMap.insert (m,n,())) StringMap.empty
+                (case (noInline,#lib config) of
+                   (false,SOME root) =>
+                     List.concat (List.map BasisManifest.inlineValues
+                       (root ^ "/basis" :: (BasisManifest.libraries (root,#libraries config)
+                                            handle BasisManifest.Usage _ => [])))
+                 | _ => [])
           val cacheHits=ref 0
           val compiled=ref 0
           val env = ref Env.initial

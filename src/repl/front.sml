@@ -6,7 +6,7 @@
    typed (ReplHighlight), Tab completing from the session (ReplComplete),
    the history shared with every Rune program's (History.defaultFile), and
    Enter submitting only an entry that a `;` ends at the top (ReplScan, D12).
-   While what was compiled runs, the terminal is quiet (Terminal.quiet):
+   While a declaration or command runs, the terminal is quiet (Terminal.quiet):
    keys typed ahead are neither echoed nor lost, and Ctrl-C is the user's
    interrupt. The editor goes quiet as soon as a line is accepted
    (LineEdit.keepRaw): putting the terminal back would turn echo on, and
@@ -41,24 +41,14 @@ struct
     \  --unicode[=ENC]  read the files used as Unicode text in the encoding ENC, utf8 (the default) or latin1,\n\
     \                 and what is typed as UTF-8 (docs/units.md, Source modes)\n\
     \  --no-unicode-lints  do not warn of what UTS #39 finds in names and comments\n\
-    \  --inline-functor=F[,F...]  expand the applications of functor F in every unit that applies them\n\
-    \                 (docs/build.md, Inline functors)\n\
-    \  --no-inline-functors  none, the Basis Library's marks too\n\
+    \  --no-inline-functors  none of the Basis Library's functors and functions marked to be inlined\n\
+    \                 across units (docs/build.md)\n\
     \  --overloading=M  what must determine an overloaded operator's or constant's type: binding, declaration\n\
-    \                 (the default), toplevel or topdec (docs/language.md)\n\
     \  --free-tyvars=M  what becomes of a type variable a declaration leaves free: refuse (the default),\n\
     \                 monotype, dummy, later or later-monotype, which the end of the input decides (docs/language.md)\n\
     \  --engine       the engine, for a front: JSON-RPC on the descriptors 3 and 4 (docs/repl-protocol.md)\n\
     \  --engine-connect PORT  the same on a connection to 127.0.0.1:PORT, its token in RUNE_ENGINE_TOKEN\n\
     \  FILE           used before the first prompt\n"
-
-  (* --inline-functor=F[,F...] (docs/build.md, Inline functors): the
-     functors the declarations compiled after are to expand in every unit
-     that applies them *)
-  fun inline (names : string) : unit =
-    Elaborate.inlineFunctors :=
-      List.foldl (fn (n, m) => if n = "" then m else StringMap.insert (m, n, ())) (!Elaborate.inlineFunctors)
-                 (String.fields (fn c => c = #",") names)
 
   fun parseArgs (args : string list) : options =
     let
@@ -95,8 +85,8 @@ struct
                    after --unicode is a file *)
                 else if a = "--unicode" then (mode := Source.Unicode Source.Utf8; go rest)
                 else if a = "--no-unicode-lints" then (Lexer.lints := false; go rest)
-                else if String.isPrefix "--inline-functor=" a then (inline (String.extract (a, 17, NONE)); go rest)
-                else if a = "--no-inline-functors" then (Elaborate.inlineFunctors := StringMap.empty; go rest)
+                else if a = "--no-inline-functors" then
+                  (Elaborate.inlineFunctors := StringMap.empty; Elaborate.inlineValues := StringMap.empty; go rest)
                 (* the language's choices, as rune takes them (docs/language.md) *)
                 else if String.isPrefix "--overloading=" a then
                   (case Elaborate.overloadModeOf (String.extract (a, 14, NONE)) of
@@ -270,11 +260,11 @@ struct
   fun echo (name : string, shown : RuneCompiler.pretty, ty : string) : unit =
     (freshLine (); print (render (echoDoc (name, shown, ty)) ^ "\n"))
 
-  (* ---- the terminal while code runs (D18) ---- *)
+  (* ---- the terminal while an entry runs (D18) ---- *)
 
   val holding = ref false
 
-  (* the terminal quiet while what was compiled runs *)
+  (* the terminal quiet while a declaration or command runs *)
   fun hold () =
     if !editing andalso not (!holding) then ((Terminal.quiet (); holding := true) handle OS.SysErr _ => ()) else ()
 
@@ -344,10 +334,10 @@ struct
   fun readEntry (sessionEnv : Env.env, isWhole : string -> bool) : entry =
     (case LineEdit.readLine (config (sessionEnv, isWhole), !history) of
        LineEdit.Line t =>
-         (* a line that will run is already quiet; a blank line or a
-            command is put back, since nothing else makes it quiet *)
-         (if CharVector.all Char.isSpace t orelse isCommand t then Terminal.leave () else ();
-          holding := false; mark "C"; Entry t)
+         (* keepRaw has already made every accepted line quiet, including
+            commands and blanks. Record that ownership so shellLike can
+            release it for an external program or a read of standard input. *)
+         (holding := true; mark "C"; Entry t)
      | LineEdit.Interrupted => (holding := false; Interrupted)
      | LineEdit.End => (holding := false; EndOfInput))
     handle SML90.Interrupt =>

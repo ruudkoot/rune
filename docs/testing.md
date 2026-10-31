@@ -78,9 +78,9 @@ the check of the register code (`RegVerify`, at level 1; [ir.md](ir.md),
 *The register target*), whose own negative tests are
 `register/@regverify-*`: the eleven corruptions its switch
 `RUNE_REGVERIFY_INJECT` makes, each refused with its own message; the
-link's check of the units' interfaces is held to its refusals by S78 of
+link's check of the units' interfaces is held to its refusals by S80 of
 `tests/incremental/SCENARIOS.md`, and a compile takes from a cache only
-the entries checked at its level (S79; [units.md](units.md), *The cache*);
+the entries checked at its level (S81; [units.md](units.md), *The cache*);
 the check of the stack code's, at level 2, are `stack/@rbccheck-*`, six
 corruptions `RUNE_RBCCHECK_INJECT` makes and one at a link of units, each
 refused with its own message ([ir.md](ir.md), *The stack target*); and
@@ -361,7 +361,8 @@ of its functor's function, and from `-O1`, where the expansion gives
 applications their copies back (always under `--lint`); `--units --whole`
 makes the whole compile's bytes (S42 of
 [plans/functors-units.md](plans/functors-units.md)); and so it does with
-some of its functors marked `--inline-functor`, and under a small
+some of its functors marked to be inlined (`inline functor` in a build
+file the runner writes beside the units), and under a small
 `--functor-budget`, which leaves some applications calls. A program's units
 are its files: a prelude of signatures and leaf structures, its functors (a
 unit each, or several to one), its applications and its prints, so that a
@@ -448,6 +449,29 @@ compiled by itself reproduces `bin/rune.rbc` byte for byte, and
 test program (`building.md`, *Bootstrapping*). This rests on the compiler
 being deterministic: ordered maps, counter-generated stamps, reals passed
 through as text.
+
+`reproducible/counts` also repeats a small whole compile and a compile in
+units without a cache, with a cold cache, and with a warm cache. Within
+each case, bytecode and VM instruction/allocation counts must agree.
+Sources, options, environment, and initial filesystem state are held
+fixed: in particular the output exists before each run, so the checks
+against overwriting an input perform the same work. Different cache
+states and filesystem errors need different work and are separate cases.
+Normal stages do not sample clocks or accumulate timing totals;
+`--pass-stats` explicitly requests that measurement. Temporary names are
+reserved by the OS and never enter emitted bytecode or cache keys.
+
+For controlled variation, `bin/rune-test compiler-stress --seed 1 --runs 16`
+uses a fixed pseudo-random sequence to vary the VM's nursery size and JIT
+thresholds while it runs the compiler on the same source. Every eighth
+case also verifies the heap. Each result must match the ordinary run's
+bytecode and VM instruction/allocation counts. The commands and errors
+are kept under the test output directory in `compiler-stress-SEED` for
+replay with `sh case-N.command`; each command restores the working
+directory, output-file state, and the runner's lint and arithmetic-backend
+settings. Other inherited environment settings must remain the same.
+The seed changes testing conditions only; normal compilation
+does not choose random settings.
 
 The example inventory covers top-level sources and sources one directory
 below `examples`. `tests/runner/exampleprojects.sml` distinguishes standalone

@@ -4,6 +4,8 @@
 #   scripts/doctor.sh [--quiet] [--scope SCOPE]...
 # Scopes (default: all):
 #   vm      C99 compiler for bin/runevm and bin/runevm-stack
+#   rune    the Rune release that bootstraps the compiler and the build tool
+#           (scripts/boot-host.sh)
 #   mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit   the SML system behind
 #           bin/rune-<scope>: the release that scripts/fetch-hosts.sh
 #           installed (`make hosts`)
@@ -25,7 +27,9 @@
 #   portability  a 32-bit x86 compiler and a big-endian 64-bit PowerPC one,
 #           with qemu to run the latter (make portability,
 #           make test-portability); not part of all either
-#   build = vm mlton      hosts = mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit
+#   build = vm rune       hosts = rune mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit
+#   The build tool and the compiler use the release, then Poly/ML, then MLton.
+#   mlton stays in hosts and all; it is the last of those three.
 #   all = everything but windows
 # Tools every target needs (sh, make, awk, ...) are checked with any scope.
 # Exit status: 0 when everything required by the scopes is present, else 1.
@@ -44,10 +48,10 @@ done
 expanded=""
 for s in $scopes; do
   case "$s" in
-    all) expanded="$expanded vm mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit check asan sys matrix perf native terminal" ;;
-    build) expanded="$expanded vm mlton" ;;
-    hosts) expanded="$expanded mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit" ;;
-    vm|mlton|smlnj-legacy|smlnj32|smlnj-dev|polyml|mlkit|check|asan|sys|matrix|perf|native|terminal|windows|portability) expanded="$expanded $s" ;;
+    all) expanded="$expanded vm rune mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit check asan sys matrix perf native terminal" ;;
+    build) expanded="$expanded vm rune" ;;
+    hosts) expanded="$expanded rune mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit" ;;
+    vm|rune|mlton|smlnj-legacy|smlnj32|smlnj-dev|polyml|mlkit|check|asan|sys|matrix|perf|native|terminal|windows|portability) expanded="$expanded $s" ;;
     *) echo "doctor: unknown scope '$s'" >&2; exit 2 ;;
   esac
 done
@@ -69,6 +73,7 @@ SMLNJ_DEV=${SMLNJ_DEV:-$hosts/smlnj-dev/bin/sml}
 POLYC=${POLYC:-$hosts/polyml/bin/polyc}
 POLY=${POLY:-$(dirname "$POLYC")/poly}
 MLKIT=${MLKIT:-$hosts/mlkit/bin/mlkit}
+RUNE_RELEASE=${RUNE_RELEASE:-$hosts/rune/bin/rune}
 MLKIT_LIB=${MLKIT_LIB:-$(dirname "$(dirname "$MLKIT")")/lib/mlkit}
 WINCC=${WINCC:-x86_64-w64-mingw32-gcc}
 WINCC32=${WINCC32:-i686-w64-mingw32-gcc}
@@ -252,6 +257,15 @@ fi
 cat > "$tmp/hello.sml" << 'EOF'
 val () = print "ok\n"
 EOF
+
+if in_scope rune; then
+  section "Rune release (bootstrap)"
+  if [ ! -x "$RUNE_RELEASE" ]; then bad rune "not installed: $RUNE_RELEASE" hosts
+  elif "$RUNE_RELEASE" --version > "$tmp/rune-version.txt" 2>&1; then
+    ok rune "$(head -1 "$tmp/rune-version.txt") ($RUNE_RELEASE)"
+  else bad rune "does not run: $RUNE_RELEASE" hosts
+  fi
+fi
 
 if in_scope mlton; then
   section "MLton (bin/rune-mlton)"

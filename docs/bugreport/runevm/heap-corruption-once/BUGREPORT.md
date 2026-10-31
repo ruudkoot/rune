@@ -8,6 +8,11 @@ one.
 
 ## Status: open, not reproduced
 
+The [October 28 investigation](INVESTIGATION.md) records further attempts,
+compiler determinism changes, and independently reproduced encoder
+allocation-failure defects on x86-64 and AArch64. Neither defect has been
+established as the cause of this incident.
+
 ## What happened
 
 * **Where:** E3 of `docs/plans/correctness/linting.md`, round 2b, the good compiler's pass:

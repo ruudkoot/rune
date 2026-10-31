@@ -127,11 +127,38 @@ named by placeholders, which are no names of the unit's. A functor marked
 to be inlined ([build.md](build.md), *Inline functors*) has its
 function's Mid written too, its positions in the unit's own source by
 nothing but that, and a unit that expands it depends on it (the usage
-`inl F`). The tables give each instance of a body's datatype the layout
+`inl F`). A function marked to be inlined ([build.md](build.md), *Inline
+functions*), and every function that only applies a primitive to its
+parameter, has its Mid written too, as the expansion leaves it, with the
+functions of the unit it calls while the group is under 400 Mid nodes,
+the schemes of the unit's globals it names that nothing else types (a
+copy's own), and its positions in another unit's source by that unit's
+name; a later unit that names it copies it (functors-units' M10), and
+depends on it by the usage `inlv NAME`. The tables give each instance of a body's datatype the layout
 the body fixed (`Ty.pinned`), unless the unit expanded the application
 that named it (an application of a functor the unit declares or marks,
 *The expansion* in [ir.md](ir.md)), whose instance is laid out from its
-realised types. Until functors-units' M7 a functor's body was parsed
+realised types.
+
+In a unit's signatures and functors, an environment that is a structure
+of a signature written before, renamed, is a reference to it
+(functors-units' M11; `UnitBasis.version` 14). The reference gives the
+signature by its unit -- an earlier one, or this one, whose signatures
+come before its functors -- and its name, the path in it, and the
+renaming: the image of each of the structure's own type names, and its
+values' stamps and whether they are global where they are not the
+structure's own. The structure is found as a fingerprint finds one it
+names by reference (*Fingerprints*, below), or among the unit's own
+signatures written before by its first value's stamp; a functor's
+result, among the structures its parameter is written as references to.
+A walk checks that reading the structure's names again makes the
+environment -- the same type variables and type names but the
+structure's own, the same constructors and exceptions -- and where it
+does not, the environment is written whole. MLton's bases are 22 MB,
+from 222 MB. A unit loaded against another of the same name (below)
+reads a reference into that unit's signature, as it reads its other
+names, by their paths: its usages hold, so the structure is the same but
+for its names. Until functors-units' M7 a functor's body was parsed
 again from the source on loading, and elaborated again by each unit that
 applied it, which then depended on the unit that declared it and on what
 the body's names were bound to.
@@ -227,7 +254,7 @@ function misnumbered but not a global of the same representation.
 level 0 of the lint, which is always on but where `--lint=off` says
 (`Pass.checkAt`; `--pass-stats` counts it as `link`). A unit file keeps what its unit
 expects (version 4), so a unit relinked from its file against another
-build of an import is held to it too (S78 of
+build of an import is held to it too (S80 of
 `tests/incremental/SCENARIOS.md`). The stack code expects nothing.
 
 ## Unit files
@@ -363,6 +390,12 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   applied a functor elaborated a copy of its body, and used the units of
   the names the body looked up and of the functors it applied in turn
   (the usage `funat IDENTITY`);
+* a function marked to be inlined, or that only applies a primitive, is
+  copied into a unit that names it, which uses its Mid too (`inlv NAME`,
+  by the name the unit used, held by the hash of the Mid): an edit of its
+  body compiles the units that copied it again, and an edit beside it
+  does not (S78); which functions the libraries mark is in the cache's
+  configuration, as which functors they do;
 * in the REPL, what a declaration of a file used echoes is compiled with
   it: two usages more say what that was compiled by, `echo on` whether it
   echoed at all (the print depth was above 0) and `p KEY` whether a printer
@@ -382,7 +415,7 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   above without checking it again, and to a compile at a higher level an
   entry of a lower is no entry ("its entry was checked at a lower level of
   the lint (N)"): the unit is compiled again, checked, and stored marked
-  where the cache can be written (S79; the linting roadmap's M9);
+  where the cache can be written (S81; the linting roadmap's M9);
 * an entry keeps the schemes of what its code names of other units, as
   text (`UnitBasis.importedSchemes`), and where its usages hold by their
   binders each is held to the scheme the unit there now has when the entry
@@ -399,7 +432,9 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   two compiles at once never see half of one. One that cannot be read, or
   does not hold what its hash says, is no entry, and the unit is compiled
   and the entry written again. A cache that cannot be written is one that
-  is not there. Nothing in a key is a time.
+  is not there. Nothing in a key is a time. Temporary publication names
+  come from an OS reservation held until the write finishes, as for
+  bytecode output; generating them does not format clocks or process ids.
 
 **Fingerprints** (GHC's rule; the incremental roadmap's M6, the third
 part). A usage keeps, beside the unit that bound the name, the

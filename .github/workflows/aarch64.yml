@@ -1,0 +1,46 @@
+# The host build of the register VM on aarch64-linux (docs/building.md,
+# Another machine's VM). ubuntu-24.04-arm is a native arm64 machine, so
+# `make bin/runevm` links JIT_SRCS_A64, the same encoder as the qemu cross
+# target bin/runevm-aarch64. MLton is only what bin/rune-build needs to
+# configure GMP before the VM is linked.
+name: aarch64
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aarch64-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vm:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Packages
+        run: |
+          sudo apt-get update -q
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
+            build-essential libgmp-dev pkg-config
+          uname -s -m
+          cc --version | head -1
+
+      - name: MLton (cache)
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/rune-hosts
+          key: rune-hosts-${{ runner.os }}-${{ runner.arch }}-mlton-${{ hashFiles('scripts/fetch-hosts.sh') }}
+
+      - name: Install MLton
+        run: sh scripts/fetch-hosts.sh mlton
+
+      - name: make bin/runevm
+        run: make bin/runevm

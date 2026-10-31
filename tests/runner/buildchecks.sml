@@ -281,7 +281,10 @@ struct
          [job "encoder-independence" ["build-asm-check"] [],
           tagged ["quick"] (job "encoder-faults" ["build-asm-faults"] []),
           executable "executable-memory" "bin/runevm" ["--jit-check"],
-          executable "x64" "build/register/x64_test" [],executable "a64" "build/register/a64_test" [],
+          executable "x64" "build/register/x64_test" [],
+          executable "x64-allocation-failures" "build/register/x64_fail_test" [],
+          executable "a64" "build/register/a64_test" [],
+          executable "a64-allocation-failures" "build/register/a64_fail_test" [],
           executable "masm" "build/register/masm_test" [],executable "divconst" "build/register/divconst_test" [],
           job "compile-deeprec" ["build-jit-compile"] [],
           Test.describe "deeprec" (List.map (fn (name,_) => job name ["build-jit-deep",name] ["low-level/jit/compile-deeprec"]) modes)])]

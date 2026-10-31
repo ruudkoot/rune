@@ -1,0 +1,32 @@
+- this is a draft roadmap to add a haskell 98 compiler to rune
+- haskell 98 will be support by an rhc program seprate from rune
+  - rhc will be implemented in sml97 / rune not in haskell 98
+  - rhc is a second class citizen compared to rune. i.e. not language server, repl, runedoc etc.
+    - do design a large test suite (accept/reject and all the other goodness we have for rune)
+      - add an independent type checking lint pass
+      - ast pretty printer to check round tripping
+      - a corpus of fully haskell 98 compliant programs may be hard to find. i have left nofib under /home/ruud/haskell/nofib. but give no guarantee that all or even some are exactly haskell 98 as per the revised report.
+    - we do want separate / incremental compilation under rhc. this may be the biggest design decision. can we re-use the rune separate compilation build cache for this? and without changes or with only changes that are a clear improvement for rune as well? or are bigger changes needed? and should we do a separate incremental compilation system for rhc in that case?
+  - rhc will use lib/compiler. rhc's frontend will live under lib/language/haskell. the driver under src/rhc
+    - lib/language/haskell may also be used for other tools than rhc in the future to analyze and process haskell source code
+  - the key decision will be where to hook the two up together
+    - lib/language/haskell will have its own lexer, parser, ast, type checker and elaborator (e.g. type class to dictionary transformation)
+    - lambda, mid are the obvious candidates. low a less obvious candidate. lambda should be conceptually close to GHC's Core. evaluation strategy would differ but it is not clear to me how that impacts this IR. perhaps some optimization passes are valid under a non-strict evaluation strategy and not under a strict evaluation strategy (or vice versa). but not clear if that impacts the design of the IR itself rather than the optimization passes rhc will plug into the compiler pipeline.
+    - analyze the changes needed to rune's lambda, mid, low, bytecode and vm. each change should be a decision in the roadmap (e.g. large change that is optimizal for haskell, mid-sized change that works for haskell and is also a good thing for rune/sml97, a small change that haskell can live with minimizes the changes to rune, a limited/no changes that keeps rune the same but rhc would have to workaround in some way). basically: no silent changes to rune to support rhc.
+    - one of the reasons to do rhc/haskell98 now is to prepare rune for a laze evaluation extensions (in the style of sml/nj's lazy ml). doing haskell first ensures the whole stack supports lazy evalaution properly and the lazy ml can be a properly supported language extension to rune later
+    - also use this roadmap to improve the overall architecture of the rune compiler and lib/compiler. ensure everything is abstracted properly so compiler passes can be assembled in a clean, efficieny, correct and testable pipeline easily. and so e.g. optimization passes can be swapped in and out cleanly in the future.
+      - it should also include a review of the various intermediate representations to make sure they all make sense overall: split between the IRs and the contructs available (or not available) in each.
+- the language target is haskell 98 as per the revised report
+  - https://www.haskell.org/onlinereport/
+  - the Prelude and other modules of the haskell 98 standard library are also discussed in the report.
+    - we should include those under share/rhc/haskell98 (as this is haskell code, lib only has sml97 code)
+  - ghc, hugs and haskell-srcs-exts are available under /home/ruud/haskell for study. they can be used as oracles but may deviate from the report
+  - ghc is not written in haskell 98 so compiling it with rhc will not be achievable in this roadmap
+  - hugs may be written in haskell 98?
+  - adding language extensions will a follow-up roadmap. to not a goal here, but keep it in mind.
+  - i think haskell 98 only needs a unification based type inferences. so no hm(x) needed. in the future we may add a second hm(x) based type inferences to support modern haskell, but this is not a goal of this roadmap.
+    - haskell2010 will be a future language mode of rhc. not a goal of this roadmap.
+    - then later feature parity with current ghc
+- as always study the academic literature and existing implemenations thoroughly.
+  - another agent produced a haskell 98 compatibility study under haskell98-compatibility.md
+    - rhc intends to follow the haskell 98 revised report to the same extent that rune follows the sml 97 definition (with documented deviations only where the report is wrong, contradictory, ambiguous and always documented and pinned by tests)

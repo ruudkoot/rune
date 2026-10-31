@@ -68,9 +68,10 @@ rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=WHEN] [--basic] [--unic
 * `--no-unicode-lints`: the warnings of UTS #39 on the names, and of a
   lookalike of `*)` in a comment, are left out, as `rune` leaves them out
   ([language.md](language.md), *Identifiers*).
-* `--inline-functor=F[,F...]`, `--no-inline-functors`: the functors to
-  expand in every unit that applies them, as `rune` takes the options
-  ([build.md](build.md), *Functors inlined across units*).
+* `--no-inline-functors`: the Basis Library's functors and functions
+  marked to be inlined are not ([build.md](build.md), *Functors inlined
+  across units*, *Functions inlined across units*), as `rune` takes the
+  option.
 
 On Windows, `rune-repl.cmd` beside `runevm.exe` is `rune-repl` for the
 command prompt and PowerShell.
@@ -158,12 +159,14 @@ lib/terminal ([plans/repl.md](plans/repl.md), M5 and M6):
   protocol is on while an entry is read, so that Escape needs no wait
   and Ctrl-I is not Tab. A terminal that answers neither is measured by
   `TERM_PROGRAM`, as before.
-* **While a declaration runs** the terminal is quiet (`Terminal.quiet`):
+* **While a declaration or command runs** the terminal is quiet (`Terminal.quiet`):
   keys typed ahead are neither echoed into what it writes nor lost, and
   are the editor's at the next prompt, also those that reach the REPL in
   one burst with the Enter of the entry before them; Ctrl-C is the
   interrupt. A program that reads `TextIO.stdIn` gets each read as at a
-  shell, echoed and edited by lines.
+  shell, echoed and edited by lines. `:sh` and `:edit` likewise give their
+  external program the terminal as at a shell, then make it quiet again.
+  Blank entries also keep keys typed ahead quiet until the next prompt.
 * **A line left unfinished** by the program -- `print "abc"` -- is marked
   `%` (zsh's way) and what the REPL writes next starts on a line of its
   own.
@@ -585,8 +588,8 @@ the REPL's own `use`, put into `RuneCompiler.useHook` when it starts.
 * The loader takes options before `--make-image` (`runevm
   bin/rune-repl.load.rbc UNITS OPTIONS --make-image IMAGE`), which the
   image keeps for every session started from it: the Basis Library's
-  marked functors are inlined across units unless `--no-inline-functors`
-  is given there, and `--lint` makes every session from the image check
+  marked functors and functions are inlined across units unless
+  `--no-inline-functors` is given there, and `--lint` makes every session from the image check
   what each pass makes, as `rune --lint` does (`--lint=LEVEL` lints at
   that level, [ir.md](ir.md), *Levels*). Where neither it nor `RUNE_LINT`
   says otherwise, the REPL lints at level 1, the boundaries.

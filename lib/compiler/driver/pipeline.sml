@@ -137,6 +137,10 @@ struct
   (* a unit's Mid as ToMid made it, with what it needs of the tables, kept
      where a whole program is to be made of its units' (--whole; the
      incremental roadmap's M7) *)
+  (* a name of a function of an earlier unit's marked to be inlined is a
+     usage of its Mid too (Env.findVal; functors-units M10) *)
+  val () = Env.inlinedValue := (fn g => isSome (Expand.inlinedValue g))
+
   val keepMid = ref false
   val () = CompilerState.cellRoot ("Pipeline.keepMid", keepMid)
   val lastMid : MidCanon.unitMid option ref = ref NONE
@@ -285,6 +289,10 @@ struct
     keeping file (fn () =>
     let
       val timed = Pass.timed
+      (* the functions it declares that are marked to be inlined, whose Mid
+         its basis keeps (functors-units M10) *)
+      val () = Elaborate.markValues delta
+      val () = (Expand.declaredOrder := []; Expand.declaredSchemes := [])
       val sc = timed "unit-passes" (fn () => unitOf decs)
       val x = timed "unit-export" (fn () => UnitBasis.export {start = start, name = name, file = file, text = text, mode = mode,
                                                              delta = delta, fixity = fixity, used = used})

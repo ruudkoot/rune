@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S80. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S82. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
@@ -357,7 +357,20 @@ when the scenarios above were all green
   a build without the cache does; then `u.sml` gains `y`, and it alone is
   compiled. Were the reference to tell `ELT`'s change apart no better than
   its name, `u.sml` would be taken from the cache and the build succeed.
-* **S78, a unit linked against an import that changed.** `b.sml` calls
+* **S78, a function marked to be inlined.** A build file marks `A.inc`
+  (`inline val A.inc end`); `b.sml` names it, `c.sml` names `A.other`.
+  An edit of `inc`'s body compiles `a.sml` and `b.sml`, which copied it
+  (its usage `inlv A.inc` holds by the body's Mid), and not `c.sml` nor
+  `main.sml`; an edit of `other`'s body compiles `a.sml` alone; and every
+  build is the bytes of one without the cache (functors-units M10).
+* **S79, a signature's structure by reference in its own unit.** `s.sml`
+  declares `ELT` and `PAIR`, whose structures `A` and `B` are `ELT`'s, and
+  `u.sml` matches `PAIR`. `s.sml`'s basis writes `A` and `B` as references
+  to `ELT`, written before them in the same basis (functors-units M11,
+  part 2), and the build is the bytes of one without the cache. A comment
+  added to `s.sml` compiles it alone; then `ELT` gains `val y : t`, and
+  `u.sml` is compiled again and fails, as a build without the cache does.
+* **S80, a unit linked against an import that changed.** `b.sml` calls
   `a.sml`'s `A.add` and reads its `A.r`. Built, then `b.sml` edited and
   compiled again as against another `a.sml`, by `RUNE_REGVERIFY_INJECT`:
   `arity` has its code call `A.add` with one argument more, and what the
@@ -371,12 +384,12 @@ when the scenarios above were all green
   where it holds ptr" (linting M9); the units are not stored. Built
   again without the switch, `b.sml` is compiled and the program prints
   12. Before, each was linked as the code had it, and ran.
-* **S79, an entry checked at a lower level of the lint.** The project
+* **S81, an entry checked at a lower level of the lint.** The project
   built with `RUNE_LINT` empty, at `rune`'s own level, 0, then at level 2:
   both units are compiled again, "its entry was checked at a lower level of
   the lint (0)", and stored marked 2; built again at 2 and then at 0, each
   takes them all (linting M9).
-* **S80, an entry whose schemes are not its units'.** Built, then `b.sml`'s
+* **S82, an entry whose schemes are not its units'.** Built, then `b.sml`'s
   entry made to say that each value it names of another unit had another
   scheme (`CachePlant.schemes`): its usages hold by their binders, and the
   schemes do not, so it is no entry, "its entry had another scheme of

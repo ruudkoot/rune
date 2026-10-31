@@ -81,7 +81,7 @@ struct
      body for (Expand; docs/ir.md, Functors compiled once). *)
 
   (* The functors to inline (docs/build.md, Inline functors),
-     by name (--inline-functor, a library's `inline functor`): each is still
+     by name (a build file's `inline functor`): each is still
      compiled to a function, and its unit's basis keeps the function's Mid
      too (UnitBasis.funcode), so that a unit that applies it expands it
      there (Expand) and depends on its body. markedFunctions: the functions
@@ -93,6 +93,39 @@ struct
   val () = CompilerState.refRoot ("Elaborate.markedFunctions", markedFunctions, IntTable.copy)
   val inlinedFunctions : unit IntTable.table ref = ref (IntTable.table 16)
   val () = CompilerState.refRoot ("Elaborate.inlinedFunctions", inlinedFunctions, IntTable.copy)
+
+  (* The functions to inline across units (docs/build.md, Inline
+     functions; functors-units M10), by the long names their units declare
+     them by (a library's `inline val`): a unit's basis keeps such a
+     function's Mid (UnitBasis), and a unit after it that names it has a
+     copy of it (Expand), which Simplify puts where it is called or not by
+     its own rules. markedValues: the globals of the ones the unit being
+     compiled declares (markValues) *)
+  val inlineValues : unit StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("Elaborate.inlineValues", inlineValues)
+  val markedValues : unit IntTable.table ref = ref (IntTable.table 16)
+  val () = CompilerState.refRoot ("Elaborate.markedValues", markedValues, IntTable.copy)
+  val markedList : int list ref = ref []
+  val () = CompilerState.cellRoot ("Elaborate.markedList", markedList)
+
+  (* the globals of the marked values a unit's declarations, delta, bind,
+     in the order of their names *)
+  fun markValues (delta : Env.env) : unit =
+    markedList :=
+      List.rev
+        (StringMap.foldli (fn (name, (), acc) =>
+                             let
+                               val path = String.fields (fn c => c = #".") name
+                               val strs = List.take (path, List.length path - 1)
+                             in
+                               case Env.findStr' (delta, strs) of
+                                 SOME e => (case StringMap.find (Env.vals e, List.last path) of
+                                              SOME (Env.Val {stamp, global = true, ...}) =>
+                                                (IntTable.insert (!markedValues, stamp, ()); stamp :: acc)
+                                            | _ => acc)
+                               | NONE => acc
+                             end)
+                          [] (!inlineValues))
 
   (* Whether code is made of what is elaborated: not under --typecheck-only
      and --serve, nor in the analyses of the compiler library, which only
