@@ -807,7 +807,7 @@ struct
       fun recordOf (table, n, sp, what) =
         case IntTable.find (table, n) of
           SOME r => r
-        | NONE => stop ("D5 axiom", sp, "no record of " ^ what)
+        | NONE => stop ("D5 record", sp, "no record of " ^ what)
 
       (* ---- 4.6: the scope of a value declaration ---- *)
       fun valScope (c : ctx, explicit : tyvarseq, d : dec, sp) : ctx * int list =
@@ -1802,7 +1802,7 @@ struct
                found, and the names the body made by new ones *)
             let
               val actual = checkStrexp (c, arg, made)
-              val result = axiom (n, sp, "a functor's application")
+              val result = recorded (n, sp, "a functor's application")
             in
               (case (checking, functorOf funid, result) of
                  (true, SOME ({bound, env = pEnv, ...}, {generated, result = rEnv}), SBase re) =>
@@ -1824,7 +1824,7 @@ struct
         | StrDynamic (_, sigexp, _, sp, n) =>
             (* an instance of the signature, with nothing behind it: its
                flexible names new, as an opaque ascription's *)
-            let val result = axiom (n, sp, "a dynamic module")
+            let val result = recorded (n, sp, "a dynamic module")
             in
               (case (checking, result) of
                  (true, SBase re) =>
@@ -1846,7 +1846,7 @@ struct
          is the signature, realised by what the match found or, opaquely,
          by new names, each standing for what the match found *)
       and ascribed (c, actual, sigexp, opaque, sp, n, what) : str =
-        let val result = axiom (n, sp, what)
+        let val result = recorded (n, sp, what)
         in
           (case (checking, result) of
              (true, SBase re) =>
@@ -1877,10 +1877,10 @@ struct
            | _ => ());
           result
         end
-      and axiom (n, sp, what) : str =
+      and recorded (n, sp, what) : str =
         case entry (#moduleResult reader, n) of
           SOME e => SBase e
-        | NONE => stop ("D5 axiom", sp, "no record of the result of " ^ what)
+        | NONE => stop ("D5 record", sp, "no record of the result of " ^ what)
 
       (* ---- a declaration at top level: its result against the
          elaborator's, and rules 87-89's closure of what it leaves ---- *)
