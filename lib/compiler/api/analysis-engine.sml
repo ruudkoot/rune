@@ -9,7 +9,10 @@ struct
   fun unitName (file,rank) = file ^ "#" ^ Int.toString rank
   type fact={unit:string,file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}
   type typeDefinition={id:string,origin:Env.origin}
-  type entry={key:string,name:string,allow:bool,mode:Source.mode,pickle:string,facts:fact list,types:typeDefinition list,syntax:CompilerSyntax.t,uses:(string*(string list*string)*Source.span*Env.origin*bool) list}
+  (* typing: what the editor's types are worked out from when first asked
+     (CompilerNodeTypes), for a unit of the inputs *)
+  type entry={key:string,name:string,allow:bool,mode:Source.mode,pickle:string,facts:fact list,types:typeDefinition list,syntax:CompilerSyntax.t,uses:(string*(string list*string)*Source.span*Env.origin*bool) list,
+    typing:CompilerNodeTypes.t option}
   type snapshot={facts:fact list,diagnostics:CompilerSession.diagnostic list,reused:int,checked:int,types:typeDefinition list,dependencies:source list,
     uses:(string*(string*(string list*string)*Source.span*Env.origin*bool)) list,
     candidates:candidate list,role:string,fields:(string*string) list,application:application option,
@@ -72,6 +75,8 @@ struct
         val ()=poll ()
         (* an analysis makes no code: no copy of a functor's body (D15) *)
         val ()=(Error.keep:=true;Error.silent:=true;Elaborate.recover:=false;Elaborate.makesCode:=false)
+        (* what the editor's types read of each unit, kept (CompilerNodeTypes) *)
+        val ()=Elaborate.lintRecords:=true
         val env=ref Env.initial
         val fixity=ref Fixity.initial
         val scopes=CompilerBuildContext.new (env,fixity)
@@ -121,6 +126,8 @@ struct
               val ()=Source.register (Source.fromStringIn (mode,file,text))
               val key=Pickle.hash (!chain ^ ":" ^ name ^ ":" ^ Bool.toString allow ^ ":" ^ Source.modeName mode ^ ":" ^ text)
               val start=UnitBasis.begin (!env,!fixity)
+              val ()=Elaborate.forgetLintRecords ()
+              val firstId= !Ast.nextId
               val previous=case !cursor of [] => NONE | entry :: rest => (cursor:=rest;SOME entry)
               val cached=case previous of SOME entry =>
                 if !prefix andalso not (case query of SOME query => #unit query=name | NONE => false) andalso #name entry=name andalso #allow entry=allow andalso #mode entry=mode
@@ -186,12 +193,16 @@ struct
                       in {unit=name,file= #file span,start= #start span,stop= #stop span,ty=shown,derived=derived,
                         constructors=StringMap.listKeys (!constructors),arguments=arguments ty}:fact end
                     val frozen=List.map frozenType (CompilerFacts.collect syntax)
+                    val typing=if not keepFacts then NONE else
+                      SOME (CompilerNodeTypes.capture {tops=List.rev (!Elaborate.tops),ids=(firstId,!Ast.nextId),
+                        stamps=(Vector.sub (#counters start,UnitBasis.kStamp),!Elaborate.stampCounter),env= !env})
+                    val ()=Elaborate.forgetLintRecords ()
                     val typeDefinitions=IntMap.foldli (fn (stamp,origin,all) =>
                       if stamp<Vector.sub (#counters start,UnitBasis.kTycon) then all else
                         {id=typeId stamp,origin=origin} :: all) [] (!Env.typeOrigins)
                     val ()=UnitBasis.undo start
                 in checked:= !checked+1;{key=key,name=name,allow=allow,mode=mode,pickle= #pickle exported,facts=frozen,types=typeDefinitions,
-                  syntax=syntaxTree,uses=List.rev (!unitUses)}:entry end)
+                  syntax=syntaxTree,uses=List.rev (!unitUses),typing=typing}:entry end)
               val loaded=UnitBasis.load {pickle= #pickle entry,file=file,at= #counters start}
               val ()=env:=Env.plus (#env start,#delta loaded)
               val ()=fixity:=Fixity.extend (#fixity start,#directives loaded)

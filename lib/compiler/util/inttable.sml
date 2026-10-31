@@ -29,6 +29,9 @@ sig
   val bump : int table * int -> unit
   (* every key from lo up to hi, but not hi, taken out *)
   val removeRange : 'a table * int * int -> unit
+  (* a table of its own of the keys from lo up to hi, but not hi, and their
+     values *)
+  val copyRange : 'a table * int * int -> 'a table
 end
 
 structure IntTable :> INT_TABLE =
@@ -113,5 +116,17 @@ struct
       fun all i = if i >= Array.length b then () else (out i; all (i + 1))
     in
       if hi <= lo then () else if hi - lo < Array.length b then keys lo else all 0
+    end
+
+  (* key by key where the range is the smaller, else bucket by bucket *)
+  fun copyRange (source as {buckets, ...} : 'a table, lo, hi) : 'a table =
+    let
+      val t = table 16
+      val b = !buckets
+      fun bucket i = List.app (fn (k, cell) => if k >= lo andalso k < hi then insert (t, k, !cell) else ()) (Array.sub (b, i))
+      fun keys k = if k >= hi then () else ((case find (source, k) of SOME v => insert (t, k, v) | NONE => ()); keys (k + 1))
+      fun all i = if i >= Array.length b then () else (bucket i; all (i + 1))
+    in
+      (if hi <= lo then () else if hi - lo < Array.length b then keys lo else all 0); t
     end
 end

@@ -69,7 +69,7 @@ linting roadmap, D12 and D13), each from its level up:
 | `off` | none of level 0's; the passes' own assertions, the decoders and the loader, as always | -- |
 | 0 | always on, where nothing says otherwise in `rune`: the invariant of results in globals after every `lower` (`results`), and the functor bodies a unit's basis decoded, linted at the next unit's passes (`functor-body`) | 0.14%; 0.52% |
 | 1 | the boundaries between representations: `LambdaLint` after `translate`, `MidLint` after `mid` (and of the units' Mid `--units --whole` concatenates, `midconcat`) and of what `lower` is given (`prelower`), `midcanon`'s renaming, `LowLint` after `lower`, `RegVerify` after `registers` and at every link (*The register target*); what the REPL and the compiler library run where nothing says otherwise | 16.4%; 32.8% |
-| 2 | every pass: `AstLint` after elaboration (`astlint`, *AstLint* below; in `rune`, not yet in the REPL or the compiler library), `MidLint` after each optional pass on Mid, and inside `simplify` of each definition as it is made, with the copies its calls made, in the program around it (`simplify-def`), and a unit's code read back as its file says it (`code-rt`: `UnitFile.read` of the bytes written, the same code but for the reader's normal form, and the same bytes written again); what `--lint` runs, and every test | 35.4%; 70.7%, and 11% more of a compile in units for `code-rt`; `AstLint` 8%; 17% more (*AstLint*) |
+| 2 | every pass: `AstLint` after elaboration (`astlint`, *AstLint* below), `MidLint` after each optional pass on Mid, and inside `simplify` of each definition as it is made, with the copies its calls made, in the program around it (`simplify-def`), and a unit's code read back as its file says it (`code-rt`: `UnitFile.read` of the bytes written, the same code but for the reader's normal form, and the same bytes written again); what `--lint` runs, and every test | 35.4%; 70.7%, and 11% more of a compile in units for `code-rt`; `AstLint` 8%; 17% more (*AstLint*) |
 | 3 | and Mid's text read back after every stage of Mid (`KEY-roundtrip`), as `--mid-roundtrip` does after `mid` alone from level 1; one tier of `make check` (`make test-ir`) | about 9 times the compile |
 
 `--lint=LEVEL` gives the level; else `RUNE_LINT` (a level, `off`, or
@@ -237,8 +237,9 @@ of the readings: the modes of `--overloading`, `--flex-records` and
 `--free-tyvars` by their results after `finish` (`E.topdec`,
 `4.11.program`, `87.free`), `4.4.scoped`, an abstype's names the same
 stamps without equality outside, and `ref` and `array` admitting equality
-whatever their argument. `rune` runs it; the REPL and the compiler library
-do not yet.
+whatever their argument. `rune`, the REPL (each input's declarations) and
+the compiler library's compiles run it; its typer also gives the editor a
+type at every node (`CompilerNodeTypes`, [language-server.md](language-server.md)).
 
 `RUNE_ASTLINT_FAULT=KIND`, for the tests, corrupts the first datum of a
 kind as `AstLint` reads it -- `instance`, `wildcard`, `raise`, `nil`,

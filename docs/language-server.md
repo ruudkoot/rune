@@ -169,7 +169,17 @@ queries check sources from configured or discovered build plans, including
 closed sources and disk-only changes.
 
 Hover and declaration/definition/type-definition/implementation navigation
-use compiler type and binding records. Document and workspace symbols use
+use compiler type and binding records. Hover answers at every node of the
+syntax: the first question about a declaration at top level works out the
+type of each of its nodes from what the elaborator recorded of them
+(`CompilerNodeTypes`, with AstLint's typer; the linting roadmap's M14), and
+keeps them for the unit, with an index from positions to the innermost node.
+Where an infix application and its tuple share a span, the application's
+type is shown; a binder shows its type with the variables its own binding
+generalised named first (`'a. 'a -> 'a`), and a lambda's variable, whose
+type may name an enclosing binding's, none. One printer for the unit names
+a type variable alike in every hover. Positions no node covers (a keyword)
+keep the occurrence records' answer. Document and workspace symbols use
 validated source tokens and compiler binding identities. Hierarchical document
 symbols nest named lexical scopes, classify declared functions from captured
 syntax and merge clauses belonging to one function binding. Parameters and
