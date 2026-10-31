@@ -25,8 +25,14 @@
      that takes it (Prims.repsOf, from the primitive's type), a field of a
      tuple or a constructor made in the function, a block's or a known
      function's parameter it is passed to, what a closure's function reads
-     of a value it captures, and an exception. Two agree where a value can
-     be both: any with every one, con with con0 and ptr.
+     of a value it captures, and an exception. A value goes from where it
+     is made to where it is taken, under the order x <= x, x <= any,
+     con0 <= con, ptr <= con: what is below is right; what is above, a
+     downcast -- any into a typed representation, con into con0 or ptr --
+     which only ML's types justify, trusted and counted (--pass-stats,
+     "downcasts" on the line of `lower`); anything else a breach (the
+     linting roadmap's D8 and M6).
+   The shapes of the values, a layout across functions, are LowShapes'.
    A breach is a bug of the compiler, raised as Error.Bug. *)
 structure LowLint =
 struct
@@ -217,12 +223,9 @@ struct
       (* ---- representations ---- *)
 
       fun repIn (rs : rep vector, x : var) = if x >= 0 andalso x < Vector.length rs then Vector.sub (rs, x) else RAny
-      (* two agree where a value can be both: any with every one, con with
-         con0 and ptr *)
-      fun agree (a, b) =
-        a = RAny orelse b = RAny orelse a = b
-        orelse (a = RCon andalso (b = RCon0 orelse b = RPtr))
-        orelse (b = RCon andalso (a = RCon0 orelse a = RPtr))
+      (* where a value of representation a may be taken as b: a <= b *)
+      fun below (a, b) = a = b orelse b = RAny orelse (b = RCon andalso (a = RCon0 orelse a = RPtr))
+      val downcasts = ref 0
       (* what an operation makes, where it alone says *)
       fun makes (oper : operation) : rep =
         case oper of
@@ -270,9 +273,17 @@ struct
             List.foldl (fn ({label, params, ...} : block, m) => IntMap.insert (m, label, params)) IntMap.empty blocks
           (* what made each variable, for those whose parts are read back *)
           val made : operation IntTable.table = IntTable.table 64
+          (* a value of representation a goes where b is: right, a downcast,
+             or a breach *)
+          fun goes (a, b, breach) =
+            if below (a, b) then ()
+            else if below (b, a) then downcasts := !downcasts + 1
+            else bug (breach ())
+          (* r into x, and x into where r is *)
+          fun into (here, x, r, what) =
+            goes (r, repOf x, fn () => here ^ ": v" ^ Int.toString x ^ " is " ^ repName (repOf x) ^ " where " ^ what ^ " is " ^ repName r)
           fun want (here, x, r, what) =
-            if agree (repOf x, r) then ()
-            else bug (here ^ ": v" ^ Int.toString x ^ " is " ^ repName (repOf x) ^ " where " ^ what ^ " is " ^ repName r)
+            goes (repOf x, r, fn () => here ^ ": v" ^ Int.toString x ^ " is " ^ repName (repOf x) ^ " where " ^ what ^ " is " ^ repName r)
           fun args (here, xs, rs, what) =
             let
               fun go (k, x :: xs, r :: rs) = (want (here, x, r, what k); go (k + 1, xs, rs))
@@ -288,12 +299,12 @@ struct
           fun field (here, x, v, parts, i) =
             if i < List.length parts then
               let val y = List.nth (parts, i)
-              in want (here, x, repOf y, "field " ^ Int.toString i ^ " of v" ^ Int.toString v ^ ", v" ^ Int.toString y ^ ",") end
+              in into (here, x, repOf y, "field " ^ Int.toString i ^ " of v" ^ Int.toString v ^ ", v" ^ Int.toString y ^ ",") end
             else ()
           fun instr here i =
             case i of
               Def (x, oper) =>
-                (want (here, x, makes oper, "what makes it");
+                (into (here, x, makes oper, "what makes it");
                  case oper of
                    Prim (name, xs) =>
                      (case Prims.repsOf name of
@@ -312,7 +323,7 @@ struct
                  IntTable.insert (made, x, oper))
             | Push h =>
                 (case IntMap.find (paramsOf, h) of
-                   SOME [e] => want (here, e, RPtr, "the exception")
+                   SOME [e] => into (here, e, RPtr, "the exception")
                  | _ => ())
             | _ => ()
           fun block ({label, instrs, transfer, ...} : block) =
@@ -332,7 +343,8 @@ struct
         end
     in
       List.app func p;
-      List.app representations p
+      List.app representations p;
+      Pass.tally ("downcasts", !downcasts)
     end
 
   (* What Lower keeps of results in globals (performance M8; docs/ir.md,

@@ -184,7 +184,7 @@ struct
          (level 1 alone: every pass's lint at 2 did) *)
       val () = if !passed andalso Pass.lintLevel () = 1 then Pass.checkAt ("prelower", 1) MidLint.check mid else ()
     in
-      Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = Pass.checkAt ("lower", 1) LowLint.check,
+      Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = fn p => (Pass.checkAt ("lower", 1) LowLint.check p; LowShapes.stage p),
                   size = Low.size}
                  (fn m => lowered (Fault.low ("lower", Lower.program (m, !Translate.funNames)))) mid
     end

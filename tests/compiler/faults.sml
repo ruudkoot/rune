@@ -4,8 +4,9 @@
    their tags, an exception's payload, primitives, constants, handlers,
    closures and known calls, a functor's slots and its parameter's
    constructor of an abstract type (functor_cast, open_cast), an exception
-   of a function's type variable (type-checker.md's open case), and a
-   declaration of the top level that sets two globals (a Do). *)
+   of a function's type variable (type-checker.md's open case), a
+   declaration of the top level that sets two globals (a Do), and a field
+   of a tuple a function is given (a Select in Low). *)
 datatype shape = Circle of int | Rect of int * int | Tri of int * int * int | Dot
 fun area s = case s of Circle r => 3 * r * r | Rect (w, h) => w * h | Tri (a, b, c) => a + b + c | Dot => 0
 exception Bad of int
@@ -40,3 +41,6 @@ val () = print (Int.toString total ^ " " ^ Int.toString (safe 150) ^ " " ^ Int.t
                 ^ " " ^ first "a" ^ " " ^ A.look (A.build 0) ^ " " ^ A.look (A.build 5) ^ "\n")
 val fs = List.map adder [1, 2, 3]
 val () = print (String.concatWith "," (List.map (fn f => Int.toString (f 5)) fs) ^ "\n")
+val pairs = [(1, "a"), (2, "bb")]
+val lens = List.map (fn p => #1 p + String.size (#2 p)) pairs
+val () = print (String.concatWith "," (List.map Int.toString lens) ^ "\n")
